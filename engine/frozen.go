@@ -84,20 +84,12 @@ func FreezeReadsATree(path string) bool {
 
 // languageOfPath is the language a path's extension names, PHP when it names none.
 func languageOfPath(path string) contract.Language {
-	switch filepath.Ext(path) {
-	case ".vue":
-		return contract.Vue
-	case ".ts":
-		return contract.TypeScript
-	case ".py":
-		return contract.Python
-	case ".cs":
-		return contract.CSharp
-	case ".go":
-		return contract.Go
+	language, named := contract.LanguageOfPath(path)
+	if !named {
+		return contract.PHP
 	}
 
-	return contract.PHP
+	return language
 }
 
 func declaresFreeze(comment string) bool {

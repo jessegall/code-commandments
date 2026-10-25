@@ -10,7 +10,7 @@ import (
 )
 
 // surfaceDirs are the path segments that mark a test or fixture tree, matched whole so src/Contest is none.
-var surfaceDirs = []string{"tests", "test", "spec", "specs", "stubs", "fixtures", "fixture", "mocks", "__mocks__", "__snapshots__", "snapshots"}
+var surfaceDirs = []string{"tests", "test", "spec", "specs", "stubs", "fixtures", "fixture", "mocks", "__mocks__", "__snapshots__", "snapshots", "testdata"}
 
 // SourceReminder nudges the agent, when it edits a test, stub or fixture judge never scans, to check the
 // fix belongs at the source: the first such edit of a session, then every tenth.
@@ -63,7 +63,9 @@ func isSymptomSurface(file string) bool {
 
 	base := segments[len(segments)-1]
 
-	for _, suffix := range []string{"test.php", "stub.php", "fixture.php", "mock.php", ".stub", ".snap", ".fixture"} {
+	// Each language names its tests its own way, and Go's is a suffix on the file rather than a folder: a
+	// package's test file sits beside the code it tests, so nothing but the name says it is one.
+	for _, suffix := range []string{"test.php", "stub.php", "fixture.php", "mock.php", "_test.go", ".stub", ".snap", ".fixture"} {
 		if strings.HasSuffix(base, suffix) {
 			return true
 		}

@@ -144,6 +144,15 @@ func (m Match) Identity() string {
 	return m.node.Name
 }
 
+// Field is the slot this node fills in its parent: `body`, `else`, `args`. The root fills none.
+func (m Match) Field() string {
+	if m.node == nil {
+		return ""
+	}
+
+	return m.node.Field
+}
+
 // Kind is the language's own name for the node.
 func (m Match) Kind() string {
 	if m.node == nil {

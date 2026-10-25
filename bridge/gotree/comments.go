@@ -5,6 +5,8 @@ import (
 	"go/parser"
 	"sort"
 	"strings"
+
+	"github.com/jessegall/code-commandments/contract"
 )
 
 // comments are every comment group of the file, in source order, each told which node it belongs to.
@@ -13,24 +15,23 @@ import (
 // function are the function's one doc comment, which is how a reader of it wants them. A group's kind is doc
 // where the parser gave it to a declaration as its documentation, which is the only thing that makes a `//` line
 // a doc comment in Go.
-func (w *writer) comments(parsed *ast.File) []comment {
+func (w *writer) comments(parsed *ast.File) []contract.Comment {
 	documents := documented(parsed)
-	comments := []comment{}
+	comments := []contract.Comment{}
 
 	for _, group := range parsed.Comments {
-		span := w.span(group)
-		held := comment{
+		start, end, line := w.span(group)
+		held := contract.Comment{
 			ID:   len(comments),
 			Kind: kindOfComment(group, documents[group]),
-			Text: group.Text(),
-			Span: span,
+			Text: w.text(group),
+			Span: contract.Span{Start: start, End: end, Line: line},
 		}
-		held.Text = w.text(group)
 		if attached, trailing := w.attachment(group); attached != nil {
 			held.Attached, held.Trailing = attached, trailing
 		}
 		if isGoCode(group) {
-			held.Extras = &commentExtras{Go: &goComment{Code: true}}
+			held.Extras = &contract.CommentExtras{Go: &contract.GoComment{Code: true}}
 		}
 		comments = append(comments, held)
 	}
@@ -40,12 +41,12 @@ func (w *writer) comments(parsed *ast.File) []comment {
 
 // text is the comment as written, markers and all, which is what the contract asks for: Group.Text strips them.
 func (w *writer) text(group *ast.CommentGroup) string {
-	span := w.span(group)
-	if span[0] < 0 || span[1] > len(w.source) || span[0] >= span[1] {
+	start, end, _ := w.span(group)
+	if start < 0 || end > len(w.source) || start >= end {
 		return group.Text()
 	}
 
-	return string(w.source[span[0]:span[1]])
+	return string(w.source[start:end])
 }
 
 // documented are the comment groups the parser handed to a declaration as its documentation.
@@ -91,24 +92,57 @@ func kindOfComment(group *ast.CommentGroup, documents bool) string {
 // comment belongs to the outermost node that starts at the first token after it, and a trailing one to the
 // outermost node that ends on its own line before it. A comment with code on neither side belongs to nothing.
 func (w *writer) attachment(group *ast.CommentGroup) (*int, bool) {
-	span := w.span(group)
-	if trailing := w.endingBefore(span); trailing != nil {
+	start, end, line := w.span(group)
+	if trailing := w.endingBefore(start, line); trailing != nil {
 		return trailing, true
 	}
 
-	return w.startingAfter(span), false
+	return w.startingAfter(end), false
 }
 
 // startingAfter is the outermost node that starts at the first node position after the comment ends, which is
 // what the comment leads. Nothing is skipped over in between, so a comment with a blank line and then code still
 // leads that code, as Go's own documentation rules do not: the contract's rule is one for every language.
-func (w *writer) startingAfter(span [3]int) *int {
+//
+// The nodes are read through an index sorted once per file, since a file holds thousands of nodes and hundreds of
+// comments and walking all of the first for each of the second is what made a large file take seconds.
+func (w *writer) startingAfter(after int) *int {
+	byStart := w.byStart()
+	at := sort.Search(len(byStart), func(i int) bool { return byStart[i].Span.Start >= after })
+	if at == len(byStart) {
+		return nil
+	}
+
+	return &byStart[at].ID
+}
+
+// byStart is the file's nodes by where they start, the outermost first where two start together, built once.
+func (w *writer) byStart() []*contract.Node {
+	if w.started != nil {
+		return w.started
+	}
+	w.started = append([]*contract.Node(nil), w.nodes...)
+	sort.SliceStable(w.started, func(a, b int) bool {
+		if w.started[a].Span.Start != w.started[b].Span.Start {
+			return w.started[a].Span.Start < w.started[b].Span.Start
+		}
+
+		return w.started[a].ID < w.started[b].ID
+	})
+
+	return w.started
+}
+
+// endingBefore is the outermost node that ends on the comment's own line before it starts, which the comment
+// trails. A comment on a line of its own trails nothing.
+func (w *writer) endingBefore(before, line int) *int {
 	best := -1
-	for _, held := range w.nodes {
-		if held.Span[0] < span[1] {
+	for _, at := range w.endingOn(line) {
+		held := w.nodes[at]
+		if held.Span.End > before {
 			continue
 		}
-		if best < 0 || held.Span[0] < w.nodes[best].Span[0] || (held.Span[0] == w.nodes[best].Span[0] && held.ID < w.nodes[best].ID) {
+		if best < 0 || held.Span.End > w.nodes[best].Span.End || (held.Span.End == w.nodes[best].Span.End && held.ID < w.nodes[best].ID) {
 			best = held.ID
 		}
 	}
@@ -119,39 +153,16 @@ func (w *writer) startingAfter(span [3]int) *int {
 	return &w.nodes[best].ID
 }
 
-// endingBefore is the outermost node that ends on the comment's own line before it starts, which the comment
-// trails. A comment on a line of its own trails nothing.
-func (w *writer) endingBefore(span [3]int) *int {
-	var ending []*node
-	for _, held := range w.nodes {
-		if held.Span[1] <= span[0] && w.lineOfEnd(held) == span[2] {
-			ending = append(ending, held)
-		}
-	}
-	if len(ending) == 0 {
-		return nil
-	}
-	sort.SliceStable(ending, func(a, b int) bool {
-		if ending[a].Span[1] != ending[b].Span[1] {
-			return ending[a].Span[1] > ending[b].Span[1]
-		}
-
-		return ending[a].ID < ending[b].ID
-	})
-
-	return &ending[0].ID
-}
-
-// lineOfEnd is the line a node's last byte sits on.
-func (w *writer) lineOfEnd(held *node) int {
-	line := held.Span[2]
-	for at := held.Span[0]; at < held.Span[1] && at < len(w.source); at++ {
-		if w.source[at] == '\n' {
-			line++
+// endingOn are the numbers of the nodes whose last byte sits on that line, grouped once per file.
+func (w *writer) endingOn(line int) []int {
+	if w.ending == nil {
+		w.ending = map[int][]int{}
+		for at, end := range w.ends {
+			w.ending[end] = append(w.ending[end], at)
 		}
 	}
 
-	return line
+	return w.ending[line]
 }
 
 // isGoCode says whether the comment's words are one Go statement from end to end rather than prose, which is what

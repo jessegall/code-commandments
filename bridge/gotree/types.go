@@ -9,6 +9,8 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+
+	"github.com/jessegall/code-commandments/contract"
 )
 
 // checker type-checks the module's own packages from the sources the run already has, and answers an empty
@@ -213,12 +215,12 @@ func stub(path string) *types.Package {
 
 // typeOf is the contract's type for what the checker gave, with origin saying where it came from. Nothing is
 // invented: a type the checker did not give is no type at all.
-func typeOf(held types.Type, origin string) *typeLine {
+func typeOf(held types.Type, origin string) *contract.Type {
 	if held == nil || held == types.Typ[types.Invalid] {
 		return nil
 	}
 
-	line := &typeLine{Text: types.TypeString(held, qualify), Origin: origin}
+	line := &contract.Type{Text: types.TypeString(held, qualify), Origin: origin}
 	switch shape := held.(type) {
 	case *types.Basic:
 		line.Kind, line.Name, line.ValueType = "keyword", shape.Name(), true
@@ -233,11 +235,11 @@ func typeOf(held types.Type, origin string) *typeLine {
 	case *types.Pointer:
 		line.Kind, line.Nullable, line.Element = "pointer", true, typeOf(shape.Elem(), origin)
 	case *types.Slice:
-		line.Kind, line.Args, line.Element = "array", []*typeLine{typeOf(shape.Elem(), origin)}, typeOf(shape.Elem(), origin)
+		line.Kind, line.Args, line.Element = "array", []*contract.Type{typeOf(shape.Elem(), origin)}, typeOf(shape.Elem(), origin)
 	case *types.Array:
-		line.Kind, line.Args, line.Element, line.ValueType = "array", []*typeLine{typeOf(shape.Elem(), origin)}, typeOf(shape.Elem(), origin), true
+		line.Kind, line.Args, line.Element, line.ValueType = "array", []*contract.Type{typeOf(shape.Elem(), origin)}, typeOf(shape.Elem(), origin), true
 	case *types.Map:
-		line.Kind, line.Args = "map", []*typeLine{typeOf(shape.Key(), origin), typeOf(shape.Elem(), origin)}
+		line.Kind, line.Args = "map", []*contract.Type{typeOf(shape.Key(), origin), typeOf(shape.Elem(), origin)}
 		line.Element = typeOf(shape.Elem(), origin)
 	case *types.Chan:
 		line.Kind = "opaque"
@@ -245,7 +247,7 @@ func typeOf(held types.Type, origin string) *typeLine {
 		line.Kind, line.ValueType = "object", true
 		for i := range shape.NumFields() {
 			field := shape.Field(i)
-			line.Fields = append(line.Fields, typeField{Name: field.Name(), Type: typeOf(field.Type(), origin)})
+			line.Fields = append(line.Fields, contract.TypeField{Name: field.Name(), Type: typeOf(field.Type(), origin)})
 		}
 	case *types.Interface:
 		line.Kind, line.Nullable = "opaque", true
@@ -276,7 +278,7 @@ func typeOf(held types.Type, origin string) *typeLine {
 
 // resultOf is what a function answers: the one type it returns, the tuple of several, and nothing where it
 // returns nothing at all.
-func resultOf(results *types.Tuple, origin string) *typeLine {
+func resultOf(results *types.Tuple, origin string) *contract.Type {
 	switch {
 	case results == nil, results.Len() == 0:
 		return nil
@@ -288,7 +290,7 @@ func resultOf(results *types.Tuple, origin string) *typeLine {
 }
 
 // elementOf is the element of a collection, where the type is one: it is what a rule about a bag of values reads.
-func elementOf(held types.Type, origin string) *typeLine {
+func elementOf(held types.Type, origin string) *contract.Type {
 	switch shape := held.(type) {
 	case *types.Slice:
 		return typeOf(shape.Elem(), origin)

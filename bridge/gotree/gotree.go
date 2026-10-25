@@ -20,6 +20,8 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+
+	"github.com/jessegall/code-commandments/contract"
 )
 
 // Name and Version name the bridge in a stream's header. The version is the Go release whose parser read the
@@ -43,6 +45,34 @@ const contractVersion = 4
 // platform builds or one with no package clause to read, is still written: its tree is there and its types are
 // not, which is the honest answer rather than a silent gap.
 func Write(out io.Writer, paths, write []string) error {
+	stream, err := Stream(paths, write)
+	if err != nil {
+		return err
+	}
+
+	lines := json.NewEncoder(out)
+	if err := lines.Encode(map[string]any{"header": stream.Header}); err != nil {
+		return err
+	}
+	for _, file := range stream.Files {
+		if err := lines.Encode(map[string]any{"file": file}); err != nil {
+			return err
+		}
+	}
+
+	return lines.Encode(map[string]any{"trailer": stream.Trailer})
+}
+
+// Stream is the tree of every Go file under the paths, held to the contract and ready for the engine, without
+// ever being written out: this bridge runs in the same process as the engine, so the stream it builds is the
+// stream the engine reads. Writing it as JSON and parsing it straight back costs most of what this bridge takes,
+// and buys nothing a bridge over a pipe does not have to pay for.
+//
+// The files in write are the ones the run reports on, and the rest are context, read so that a rule spanning
+// files has what it needs. A file that belongs to no package the checker could build, one this platform does not
+// build or one with no package clause to read, is still there: its tree is written and its types are not, which
+// is the honest answer rather than a silent gap.
+func Stream(paths, write []string) (*contract.Stream, error) {
 	found := GoFiles(paths)
 	judged := map[string]bool{}
 	for _, path := range resolved(write) {
@@ -50,22 +80,13 @@ func Write(out io.Writer, paths, write []string) error {
 	}
 	context := func(path string) bool { return len(judged) > 0 && !judged[path] }
 
-	lines := json.NewEncoder(out)
-	header := map[string]any{"header": map[string]any{
-		"contract": "tree", "version": contractVersion, "language": "go",
-		"bridge": map[string]any{"name": Name, "version": Version()},
-		"roots":  resolved(paths),
-	}}
-	if err := lines.Encode(header); err != nil {
-		return err
-	}
-
 	fset := token.NewFileSet()
-	checked := newChecker(fset, PackagesOf(found))
+	packages := PackagesOf(found)
+	checked := newChecker(fset, packages)
 	written := map[string]bool{}
-	count := 0
+	var files []*contract.File
 
-	for _, one := range PackagesOf(found) {
+	for _, one := range packages {
 		_, facts := checked.check(one)
 		for _, parsed := range checked.filesOf(one) {
 			path := fset.Position(parsed.Pos()).Filename
@@ -73,14 +94,11 @@ func Write(out io.Writer, paths, write []string) error {
 				continue
 			}
 			written[path] = true
-			line, err := fileLine(fset, parsed, path, one.Path, facts, context(path))
+			file, err := fileLine(fset, parsed, path, one.Path, facts, context(path))
 			if err != nil {
-				return err
+				return nil, err
 			}
-			if err := lines.Encode(map[string]any{"file": line}); err != nil {
-				return err
-			}
-			count++
+			files = append(files, file)
 		}
 	}
 
@@ -94,121 +112,30 @@ func Write(out io.Writer, paths, write []string) error {
 		}
 		parsed, parseErr := parser.ParseFile(fset, path, source, parser.ParseComments|parser.SkipObjectResolution)
 		if parsed == nil {
-			return fmt.Errorf("%s: %w", path, parseErr)
+			return nil, fmt.Errorf("%s: %w", path, parseErr)
 		}
-		line, err := fileLine(fset, parsed, path, "", nil, context(path))
+		file, err := fileLine(fset, parsed, path, "", nil, context(path))
 		if err != nil {
-			return err
+			return nil, err
 		}
-		if err := lines.Encode(map[string]any{"file": line}); err != nil {
-			return err
-		}
-		count++
+		files = append(files, file)
 	}
 
-	return lines.Encode(map[string]any{"trailer": map[string]any{"files": count}})
-}
+	header := contract.Header{
+		Contract: "tree",
+		Version:  contractVersion,
+		Language: contract.Go,
+		Bridge:   contract.Bridge{Name: Name, Version: Version()},
+		Roots:    resolved(paths),
+	}
 
-// file is one source file's tree and comments, as the contract's file line.
-type file struct {
-	Path     string      `json:"path"`
-	Language string      `json:"language"`
-	Errors   int         `json:"errors"`
-	Context  bool        `json:"context,omitempty"`
-	Module   string      `json:"module,omitempty"`
-	Resolver *resolver   `json:"resolver,omitempty"`
-	Root     *node       `json:"root"`
-	Comments []comment   `json:"comments"`
-	Types    []*typeLine `json:"types,omitempty"`
-}
-
-// resolver says which resolver a file had and whether it ran on it, so a type that is absent always reads as
-// "could not", never as "did not try".
-type resolver struct {
-	Tool string `json:"tool"`
-	Ran  bool   `json:"ran"`
-}
-
-// typeLine is one type as the contract writes it: its canonical text, its shape, and what the checker knows
-// about it. A file says each of its types once and its nodes name them by place.
-type typeLine struct {
-	Text       string      `json:"text"`
-	Kind       string      `json:"kind"`
-	Name       string      `json:"name,omitempty"`
-	Args       []*typeLine `json:"args,omitempty"`
-	Members    []*typeLine `json:"members,omitempty"`
-	Fields     []typeField `json:"fields,omitempty"`
-	Parameters []*typeLine `json:"parameters,omitempty"`
-	Returns    *typeLine   `json:"returns,omitempty"`
-	Nullable   bool        `json:"nullable,omitempty"`
-	ValueType  bool        `json:"valueType,omitempty"`
-	Element    *typeLine   `json:"element,omitempty"`
-	Origin     string      `json:"origin"`
-}
-
-// typeField is one field of a struct type.
-type typeField struct {
-	Name string    `json:"name"`
-	Type *typeLine `json:"type"`
-}
-
-// target is the declaration a call reaches.
-type target struct {
-	Symbol string `json:"symbol"`
-	Type   string `json:"type,omitempty"`
-	Name   string `json:"name"`
-}
-
-// node is one syntax node. Only the facts syntax alone gives are here; the types a checker gives are the
-// bridge's second half, and no node carries a fact the engine fills.
-type node struct {
-	ID           int             `json:"id"`
-	Kind         string          `json:"kind"`
-	Role         string          `json:"role"`
-	Is           []string        `json:"is,omitempty"`
-	Span         [3]int          `json:"span"`
-	Field        string          `json:"field,omitempty"`
-	Children     []*node         `json:"children,omitempty"`
-	Name         string          `json:"name,omitempty"`
-	ResolvedType *int            `json:"resolvedType,omitempty"`
-	Literal      string          `json:"literal,omitempty"`
-	Value        json.RawMessage `json:"value,omitempty"`
-	Operator     string          `json:"operator,omitempty"`
-	Flags        []string        `json:"flags,omitempty"`
-	Declared     *typeLine       `json:"declared,omitempty"`
-	Returns      *typeLine       `json:"returns,omitempty"`
-	Symbol       string          `json:"symbol,omitempty"`
-	Refers       string          `json:"refers,omitempty"`
-	Target       *target         `json:"target,omitempty"`
-	Constant     bool            `json:"constant,omitempty"`
-}
-
-// comment is one comment group, which is what Go calls a run of lines with nothing but comment between them.
-type comment struct {
-	ID       int            `json:"id"`
-	Kind     string         `json:"kind"`
-	Text     string         `json:"text"`
-	Span     [3]int         `json:"span"`
-	Attached *int           `json:"attached,omitempty"`
-	Trailing bool           `json:"trailing,omitempty"`
-	Extras   *commentExtras `json:"extras,omitempty"`
-}
-
-// commentExtras are the facts only Go has about a comment.
-type commentExtras struct {
-	Go *goComment `json:"go,omitempty"`
-}
-
-// goComment holds whether the comment's words are code rather than prose, which is what a rule about a comment
-// that only restates its statement reads.
-type goComment struct {
-	Code bool `json:"code,omitempty"`
+	return contract.Accept(header, files, nil, contract.Trailer{Files: len(files)})
 }
 
 // fileLine is one file's line: the tree the parser read, the comments, and the types the checker gave its
 // nodes. A file the parser could only partly read is still written, with errors counting what it could not read,
 // so a tree is never lost whole for a syntax error in it.
-func fileLine(fset *token.FileSet, parsed *ast.File, path, module string, facts *types.Info, context bool) (*file, error) {
+func fileLine(fset *token.FileSet, parsed *ast.File, path, module string, facts *types.Info, context bool) (*contract.File, error) {
 	source, err := read(path)
 	if err != nil {
 		return nil, err
@@ -218,13 +145,13 @@ func fileLine(fset *token.FileSet, parsed *ast.File, path, module string, facts 
 	tree.owners = ownersIn(parsed, facts, module)
 	root := tree.node(parsed, "", false)
 
-	return &file{
+	return &contract.File{
 		Path:     path,
-		Language: "go",
+		Language: contract.Go,
 		Errors:   errorsIn(parsed, source),
 		Context:  context,
 		Module:   module,
-		Resolver: &resolver{Tool: "go/types", Ran: facts != nil},
+		Resolver: &contract.Resolver{Tool: "go/types", Ran: facts != nil},
 		Root:     root,
 		Comments: tree.comments(parsed),
 		Types:    tree.types,
@@ -237,35 +164,54 @@ type writer struct {
 	fset   *token.FileSet
 	source []byte
 	next   int
-	nodes  []*node
+	nodes  []*contract.Node
+	// ends is the line each node's last byte sits on, by the node's own number, read from the parser's positions
+	// rather than counted again: a comment is attached by the line a node ends on, and counting the bytes of
+	// every node for every comment is what made a file of ten thousand nodes take seconds.
+	ends []int
 	// facts are what the checker learned about this file's very nodes; none where no package could be checked.
 	facts *types.Info
 	// module is the import path of the package the file belongs to, which a field's or a method's id starts with.
 	module string
 	// types are the distinct types the file's nodes resolve to, said once each, and index is where each one sits.
-	types []*typeLine
+	types []*contract.Type
 	index map[string]int
 	// owners is the id of the type that declares each field name the file writes, as the checker says it.
 	owners map[*ast.Ident]string
+	// started is the file's nodes by where they start, and ending the numbers of those ending on each line: both
+	// are built once, the first time a comment asks what it belongs to.
+	started []*contract.Node
+	ending  map[int][]int
 }
 
 // node is the node for one ast node: its own facts, then its children in source order, each told which field of
 // this node it fills. inType says the node stands where a type is written, which Go's own tree does not say,
 // since a type and an expression are the same nodes there.
-func (w *writer) node(held ast.Node, field string, inType bool) *node {
-	built := &node{ID: w.next, Kind: kindOf(held), Field: field, Span: w.span(held)}
+func (w *writer) node(held ast.Node, field string, inType bool) *contract.Node {
+	start, end, line := w.span(held)
+	built := contract.NewNode(contract.Node{
+		ID:    w.next,
+		Kind:  kindOf(held),
+		Role:  roleOf(held, inType),
+		Is:    neutralOf(held),
+		Span:  contract.Span{Start: start, End: end, Line: line},
+		Field: field,
+		Name:  nameOf(held),
+	})
 	w.next++
 	w.nodes = append(w.nodes, built)
+	w.ends = append(w.ends, w.endLine(held))
 
-	built.Role = roleOf(held, inType)
-	built.Is = neutralOf(held)
-	built.Name = nameOf(held)
-	built.Operator = operatorOf(held)
-	built.Flags = flagsOf(held)
-	if literal, value := literalOf(held); literal != "" {
-		built.Literal, built.Value = literal, value
+	if operator := operatorOf(held); operator != "" {
+		built.Own().Operator = operator
 	}
-
+	if flags := flagsOf(held); len(flags) > 0 {
+		built.Own().Flags = flags
+	}
+	if literal, value := literalOf(held); literal != "" {
+		built.Own().Literal = literal
+		built.Own().Value = value
+	}
 	w.typed(held, built)
 
 	for _, slot := range w.slots(held) {
@@ -364,14 +310,23 @@ func isComment(held ast.Node) bool {
 // A node the parser recovered from a syntax error can end before it starts, or nowhere at all: a function whose
 // body never opened has no closing brace to end at. Such a node ends where it begins, so its span is empty and
 // no reader is handed bytes the node does not stand for.
-func (w *writer) span(held ast.Node) [3]int {
+func (w *writer) span(held ast.Node) (int, int, int) {
 	start := w.fset.Position(held.Pos())
 	end := start
 	if held.End().IsValid() {
 		end = w.fset.Position(held.End())
 	}
 
-	return [3]int{start.Offset, max(start.Offset, end.Offset), start.Line}
+	return start.Offset, max(start.Offset, end.Offset), start.Line
+}
+
+// endLine is the line the node's last byte sits on, as the parser knows it.
+func (w *writer) endLine(held ast.Node) int {
+	if !held.End().IsValid() {
+		return w.fset.Position(held.Pos()).Line
+	}
+
+	return w.fset.Position(held.End()).Line
 }
 
 // kindOf is the name Go's own parser gives the node's type, which is the vocabulary the contract asks for.
@@ -404,14 +359,14 @@ func errorsIn(parsed *ast.File, source []byte) int {
 	return 0
 }
 
-// quoted is the JSON for a value a literal decodes to.
-func quoted(value any) json.RawMessage {
-	raw, err := json.Marshal(value)
+// quoted is the value a literal decodes to, as the contract carries one.
+func quoted(value any) *contract.Value {
+	held, err := contract.ValueOf(value)
 	if err != nil {
 		return nil
 	}
 
-	return raw
+	return held
 }
 
 // decimal is an integer literal as a decimal string, whatever base it was written in, so no width is lost.

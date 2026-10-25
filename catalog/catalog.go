@@ -27,10 +27,11 @@ const (
 	TypeScript Engine = "typescript"
 	Python     Engine = "python"
 	CSharp     Engine = "csharp"
+	Go         Engine = "go"
 )
 
 // Engines is every engine, in curriculum order.
-var Engines = []Engine{PHP, Vue, TypeScript, Python, CSharp}
+var Engines = []Engine{PHP, Vue, TypeScript, Python, CSharp, Go}
 
 // formerly are the names two engines were published under before they were named after their language. A config,
 // a rule file, a filter and a skill slug a project wrote then is read the same way now, and always will be: what

@@ -136,6 +136,13 @@
             "default": "true",
             "group": "Languages"
         },
+        "language_go": {
+            "title": "Go",
+            "help": "Enables Go sin detection",
+            "type": "flag",
+            "default": "true",
+            "group": "Languages"
+        },
         "sin_csharp-blank-string-default": {
             "title": "BlankStringDefault",
             "help": "a `string` parameter or property defaulted to `\"\"` and then checked with `== \"\"` or `string.IsNullOrEmpty` — the blank is being used to mean \"missing\"",

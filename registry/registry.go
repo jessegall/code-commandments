@@ -11,6 +11,7 @@ import (
 	_ "github.com/jessegall/code-commandments/detectors/backend/spatie"
 	_ "github.com/jessegall/code-commandments/detectors/csharp"
 	_ "github.com/jessegall/code-commandments/detectors/frontend"
+	_ "github.com/jessegall/code-commandments/detectors/go"
 	_ "github.com/jessegall/code-commandments/detectors/python"
 	_ "github.com/jessegall/code-commandments/detectors/typescript"
 	_ "github.com/jessegall/code-commandments/published/spatie"
@@ -22,6 +23,7 @@ import (
 	_ "github.com/jessegall/code-commandments/sins/backend/spatie"
 	_ "github.com/jessegall/code-commandments/sins/csharp"
 	_ "github.com/jessegall/code-commandments/sins/frontend"
+	_ "github.com/jessegall/code-commandments/sins/go"
 	_ "github.com/jessegall/code-commandments/sins/python"
 	_ "github.com/jessegall/code-commandments/sins/typescript"
 	_ "github.com/jessegall/code-commandments/skill/backend"
@@ -30,6 +32,7 @@ import (
 	_ "github.com/jessegall/code-commandments/skill/backend/spatie"
 	_ "github.com/jessegall/code-commandments/skill/csharp"
 	_ "github.com/jessegall/code-commandments/skill/frontend"
+	_ "github.com/jessegall/code-commandments/skill/go"
 	_ "github.com/jessegall/code-commandments/skill/python"
 	_ "github.com/jessegall/code-commandments/skill/typescript"
 )

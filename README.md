@@ -4,7 +4,7 @@
 
 **code-commandments** judges a codebase against a set of architectural disciplines.
 Every violation (a "sin") is reported as a `file:line`, grouped under the **skill**
-that teaches the fix. It reads five languages, each parsed by its own compiler:
+that teaches the fix. It reads six languages, each parsed by its own compiler:
 
 <!-- BEGIN: languages-table (auto-generated, run `composer readme`) -->
 | Language | Files |
@@ -14,6 +14,7 @@ that teaches the fix. It reads five languages, each parsed by its own compiler:
 | **TypeScript** | `.ts`, `.tsx`, `.mts`, `.cts`, `.js`, `.jsx`, `.mjs`, `.cjs` |
 | **Python** | `.py` |
 | **C#** | `.cs` |
+| **Go** | `.go` |
 <!-- END: languages-table -->
 
 One set of disciplines covers them all. A rule is written once against a generic

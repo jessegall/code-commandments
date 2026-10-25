@@ -124,6 +124,13 @@ The PHP tool kept no C# bridge up, so it had no need to say whether a project ha
 as a service, and the journal asks `has-csharp` before it starts it, so a project with no C# starts none and lists
 none as running; the help overview lists the verb. Nothing changes for a project.
 
+### The Go engine's own setting
+
+The plugin's settings are one flag per language the tool reads, and the tool now reads Go, so a scan answers
+`language_go` beside the five the PHP tool answered. A language the PHP tool never had cannot be in a recording of
+it. Nothing changes for a project: the flag reads false where a project writes no Go, which is every project the
+PHP tool ever ran in.
+
 ### What the briefing says `make` writes
 
 The briefing `sync` publishes into a project's `AGENTS.md` and its `commandments` skill said, from the PHP tool, that

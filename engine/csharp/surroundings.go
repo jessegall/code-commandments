@@ -1246,7 +1246,6 @@ func (n Node) buildsItsOwn() bool {
 	return value.Exists() && value.At(0).Is("ObjectCreationExpression", "ImplicitObjectCreationExpression", "CollectionExpression", "ArrayCreationExpression", "ImplicitArrayCreationExpression")
 }
 
-
 // GuardsWhatTheTypeRulesOut says whether the node compares a value with null that its own declared type has
 // already ruled out: a parameter or a field whose type the compiler reads as not nullable, and which is one of
 // the project's own types rather than one the scan never saw. One of two things is then true and both are

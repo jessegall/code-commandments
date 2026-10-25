@@ -1,10 +1,11 @@
 package gotree
 
 import (
-	"encoding/json"
 	"go/ast"
 	"go/types"
 	"strings"
+
+	"github.com/jessegall/code-commandments/contract"
 )
 
 // typed writes onto the node what only the checker can know: the type an expression has, whether the compiler
@@ -13,37 +14,65 @@ import (
 //
 // Every one of them is absent where the checker did not give it. A type reached through an import outside the
 // module is such a case, by the decision doc 3 holds, and no rule reads a type that is not there.
-func (w *writer) typed(held ast.Node, built *node) {
+func (w *writer) typed(held ast.Node, built *contract.Node) {
 	if w.facts == nil {
 		return
 	}
 
 	if expression, isExpression := held.(ast.Expr); isExpression {
 		if facts, found := w.facts.Types[expression]; found {
-			built.ResolvedType = w.typeIndex(typeOf(facts.Type, "compiler"))
-			built.Constant = facts.Value != nil
+			if at := w.typeIndex(typeOf(facts.Type, "compiler")); at != nil {
+				built.ResolvedType = at
+			}
+			if facts.Value != nil {
+				built.Own().Constant = true
+			}
 		}
 	}
 
 	switch node := held.(type) {
 	case *ast.Ident:
-		built.Refers = w.refers(node)
+		w.say(built, func(facts *contract.Facts) { facts.Refers = w.refers(node) })
 	case *ast.CallExpr:
-		built.Target = w.target(node)
+		if reached := w.target(node); reached != nil {
+			built.Own().Target = reached
+		}
 	case *ast.FuncDecl:
-		built.Symbol = w.symbol(node.Name)
-		built.Returns = w.resultType(node.Type)
+		w.say(built, func(facts *contract.Facts) { facts.Symbol = w.symbol(node.Name) })
+		w.sayType(built, func(facts *contract.Facts) { facts.Returns = w.resultType(node.Type) })
 	case *ast.FuncLit:
-		built.Returns = w.resultType(node.Type)
+		w.sayType(built, func(facts *contract.Facts) { facts.Returns = w.resultType(node.Type) })
 	case *ast.TypeSpec:
-		built.Symbol = w.symbol(node.Name)
+		w.say(built, func(facts *contract.Facts) { facts.Symbol = w.symbol(node.Name) })
 	case *ast.ValueSpec:
-		built.Symbol = w.oneSymbol(node.Names)
-		built.Declared = w.writtenType(node.Type)
+		w.say(built, func(facts *contract.Facts) { facts.Symbol = w.oneSymbol(node.Names) })
+		w.sayType(built, func(facts *contract.Facts) { facts.Declared = w.writtenType(node.Type) })
 	case *ast.Field:
-		built.Symbol = w.oneSymbol(node.Names)
-		built.Declared = w.writtenType(node.Type)
+		w.say(built, func(facts *contract.Facts) { facts.Symbol = w.oneSymbol(node.Names) })
+		w.sayType(built, func(facts *contract.Facts) { facts.Declared = w.writtenType(node.Type) })
 	}
+}
+
+// say writes a fact onto the node, and leaves the node sharing the empty facts where there is nothing to say: a
+// node with no fact of its own must never be given one, since every such node shares the one empty value, and a
+// fact written through it would land on all of them at once.
+func (w *writer) say(built *contract.Node, write func(*contract.Facts)) {
+	held := &contract.Facts{}
+	write(held)
+	if held.Symbol == "" && held.Refers == "" {
+		return
+	}
+	write(built.Own())
+}
+
+// sayType is say for a fact that is a type.
+func (w *writer) sayType(built *contract.Node, write func(*contract.Facts)) {
+	held := &contract.Facts{}
+	write(held)
+	if held.Declared == nil && held.Returns == nil {
+		return
+	}
+	write(built.Own())
 }
 
 // refers is the id of the declaration a name names, where the name is a use of one that can be reached by id.
@@ -103,7 +132,7 @@ func (w *writer) fieldSymbol(name *ast.Ident, object types.Object) string {
 
 // target is the declaration a call reaches: the function or method it names, with the type that declares it.
 // A call of something the checker could not resolve, or of a value rather than a declaration, reaches nothing.
-func (w *writer) target(call *ast.CallExpr) *target {
+func (w *writer) target(call *ast.CallExpr) *contract.Target {
 	named := calleeIdent(call.Fun)
 	if named == nil {
 		return nil
@@ -121,7 +150,7 @@ func (w *writer) target(call *ast.CallExpr) *target {
 		return nil
 	}
 
-	reached := &target{Symbol: id, Name: function.Name()}
+	reached := &contract.Target{Symbol: id, Name: function.Name()}
 	if signature, isSignature := function.Type().(*types.Signature); isSignature && signature.Recv() != nil && function.Pkg() != nil {
 		if receiver := receiverName(signature.Recv().Type()); receiver != "" {
 			reached.Type = function.Pkg().Path() + "." + receiver
@@ -150,7 +179,7 @@ func calleeIdent(callee ast.Expr) *ast.Ident {
 }
 
 // writtenType is the type a declaration writes, as the source wrote it.
-func (w *writer) writtenType(written ast.Expr) *typeLine {
+func (w *writer) writtenType(written ast.Expr) *contract.Type {
 	if written == nil {
 		return nil
 	}
@@ -164,12 +193,12 @@ func (w *writer) writtenType(written ast.Expr) *typeLine {
 
 // resultType is what a function says it answers: the one type it returns, or the tuple of several. A function
 // that returns nothing says nothing.
-func (w *writer) resultType(signature *ast.FuncType) *typeLine {
+func (w *writer) resultType(signature *ast.FuncType) *contract.Type {
 	if signature == nil || signature.Results == nil || len(signature.Results.List) == 0 {
 		return nil
 	}
 
-	var results []*typeLine
+	var results []*contract.Type
 	for _, field := range signature.Results.List {
 		written := w.writtenType(field.Type)
 		if written == nil {
@@ -183,11 +212,11 @@ func (w *writer) resultType(signature *ast.FuncType) *typeLine {
 		return results[0]
 	}
 
-	return &typeLine{Text: "(" + textsOf(results) + ")", Kind: "tuple", Members: results, Origin: "written"}
+	return &contract.Type{Text: "(" + textsOf(results) + ")", Kind: "tuple", Members: results, Origin: "written"}
 }
 
 // textsOf is the types' own texts, comma separated, which is how Go spells a list of results.
-func textsOf(types []*typeLine) string {
+func textsOf(types []*contract.Type) string {
 	texts := make([]string, 0, len(types))
 	for _, held := range types {
 		texts = append(texts, held.Text)
@@ -199,20 +228,21 @@ func textsOf(types []*typeLine) string {
 // typeIndex is where the file says that type, adding it to the file's list the first time it is seen: a type
 // every expression shares is written once and named by its place, which is what keeps a large file's line from
 // repeating one type thousands of times.
-func (w *writer) typeIndex(held *typeLine) *int {
+func (w *writer) typeIndex(held *contract.Type) *int {
 	if held == nil {
 		return nil
 	}
-	key, err := json.Marshal(held)
-	if err != nil {
-		return nil
-	}
-	if at, seen := w.index[string(key)]; seen {
+
+	// A type's text is canonical and names every package it mentions by path, so the text, its shape and where
+	// it came from name the type: two types that agree on all three are one type. Marshalling each one to
+	// compare it would spend an encoding on every typed expression in the tree, hundreds of thousands of them.
+	key := held.Origin + "\x00" + held.Kind + "\x00" + held.Text
+	if at, seen := w.index[key]; seen {
 		return &at
 	}
 	at := len(w.types)
 	w.types = append(w.types, held)
-	w.index[string(key)] = at
+	w.index[key] = at
 
 	return &at
 }

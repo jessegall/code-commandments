@@ -56,6 +56,13 @@
         "help": "Enables C# sin detection"
     },
     {
+        "key": "language_go",
+        "title": "Go",
+        "kind": "flag",
+        "default": true,
+        "help": "Enables Go sin detection"
+    },
+    {
         "key": "sin_csharp-blank-string-default",
         "title": "BlankStringDefault",
         "kind": "flag",

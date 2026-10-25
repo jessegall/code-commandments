@@ -1,10 +1,12 @@
 package scan
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 
 	"github.com/jessegall/code-commandments/bridge"
+	"github.com/jessegall/code-commandments/bridge/gotree"
 	"github.com/jessegall/code-commandments/cli/source"
 	"github.com/jessegall/code-commandments/contract"
 	"github.com/jessegall/code-commandments/engine/frontend"
@@ -80,6 +82,68 @@ func (p Process) named(err error) error {
 	}
 
 	return p.Named(err)
+}
+
+// InProcess is the reach of a bridge the binary carries: it answers from this very process, so there is no
+// command to start, no socket to dial and no service to keep up, and a run of the tool leaves nothing behind.
+type InProcess struct {
+	// Stream is the tree it builds for the files asked, held to the contract as a read of a stream holds one.
+	Stream func(paths, write []string) (*contract.Stream, error)
+}
+
+// Open answers the bridge a run asks, which for this one is the bridge itself.
+func (p InProcess) Open(held Bridge, roots []string) (bridge.Asker, error) {
+	return inProcess{reach: p}, nil
+}
+
+// Own says that this language needs no process, so no service is kept up for it and no socket is ever dialled
+// for it either. A service that started for it would have nothing to keep.
+func (p InProcess) Own(held Bridge, roots []string) (bridge.Asker, bool, error) {
+	return nil, false, nil
+}
+
+// inProcess answers a request by building the tree here and now.
+type inProcess struct {
+	reach InProcess
+}
+
+// AskTallied is the whole stream for the request. It is built, never written: the engine reads the stream this
+// bridge holds, so nothing is encoded to be parsed straight back. Measured over this repository, that is 8
+// seconds against 19 for the same tree through JSON.
+func (p inProcess) AskTallied(request bridge.Request, tally func()) (*contract.Stream, error) {
+	stream, err := p.reach.Stream(request.Paths, request.Write)
+	if err != nil {
+		return nil, err
+	}
+	for range stream.Files {
+		tally()
+	}
+
+	return stream, nil
+}
+
+// AskEach hands each line of the answer on, for a reader that cuts a stream it never holds whole.
+func (p inProcess) AskEach(request bridge.Request, each func(line contract.Line, raw []byte) error) error {
+	stream, err := p.reach.Stream(request.Paths, request.Write)
+	if err != nil {
+		return err
+	}
+	for _, file := range stream.Files {
+		raw, err := json.Marshal(map[string]any{"file": file})
+		if err != nil {
+			return err
+		}
+		if err := each(contract.Line{File: file}, raw); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// Close lets go of nothing: this bridge holds nothing to let go of.
+func (p inProcess) Close() error {
+	return nil
 }
 
 // process is a bridge that runs as a process, as a run asks it: every ask goes to the warm bridge a session keeps
@@ -166,8 +230,8 @@ func (p *process) Close() error {
 	return p.own.Close()
 }
 
-// Bridges are the bridges a scan reads, in the order the PHP tool read them.
-var Bridges = []Bridge{PHPBridge, Frontend, CSharp, Python}
+// Bridges are the bridges a scan reads, in the order the PHP tool read them, with Go after them.
+var Bridges = []Bridge{PHPBridge, Frontend, CSharp, Python, GoBridge}
 
 // PHPBridge is the PHP bridge, php-parser, kept up as the plugin's php service.
 var PHPBridge = Bridge{Kind: "php", Word: "php", Languages: []source.Language{source.PHP}, Label: "PHP",
@@ -188,6 +252,14 @@ var CSharp = Bridge{Kind: "roslyn", Word: "csharp", Languages: []source.Language
 	InOwnOrder: true,
 	Reach:      Process{Command: func(roots []string) ([]string, error) { return bridge.Roslyn(roots...) }, Named: bridge.RoslynFailure},
 	Notice:     bridge.RoslynNotice,
+}
+
+// GoBridge is the Go bridge. It is the one bridge that runs in this process: the tool is written in Go, so the
+// parser and the type checker are already in the binary, and there is nothing to install, start or keep warm.
+var GoBridge = Bridge{Kind: "go", Word: "go", Languages: []source.Language{source.Go}, Label: "Go",
+	InOwnOrder: true,
+	Reach:      InProcess{Stream: gotree.Stream},
+	Notice:     nothingToSay,
 }
 
 // Python is the Python bridge, mypy, kept up as the plugin's mypy service.

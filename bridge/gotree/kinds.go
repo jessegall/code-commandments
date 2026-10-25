@@ -1,11 +1,12 @@
 package gotree
 
 import (
-	"encoding/json"
 	"go/ast"
 	"go/token"
 	"strconv"
 	"strings"
+
+	"github.com/jessegall/code-commandments/contract"
 )
 
 // roleOf is what the node is in the contract's terms. Go writes a type with the same nodes it writes an
@@ -194,7 +195,7 @@ func flagsOf(held ast.Node) []string {
 // literalOf is what kind of literal the node is and the value it decodes to. Go writes true, false and nil as
 // identifiers rather than literals, so they are not here: what they mean is the type checker's to say, and a
 // shadowed `nil` means something else entirely.
-func literalOf(held ast.Node) (string, json.RawMessage) {
+func literalOf(held ast.Node) (string, *contract.Value) {
 	node, isLiteral := held.(*ast.BasicLit)
 	if !isLiteral {
 		return "", nil

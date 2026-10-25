@@ -18,7 +18,7 @@ func init() {
 		Extends:     func(declaration engine.Match) []engine.Match { return basesWhere(declaration, false) },
 		Implements:  func(declaration engine.Match) []engine.Match { return basesWhere(declaration, true) },
 		Annotations: attributes,
-		TypeOf:   func(node engine.Match) string { return Node{Match: node}.Type().Name() },
+		TypeOf:      func(node engine.Match) string { return Node{Match: node}.Type().Name() },
 		TypeKind: engine.Kinds(map[string]string{"ClassDeclaration": "class", "InterfaceDeclaration": "interface",
 			"EnumDeclaration": "enum", "RecordDeclaration": "record", "RecordStructDeclaration": "record", "StructDeclaration": "struct"}),
 		ReturnType:    engine.InField("ReturnType"),

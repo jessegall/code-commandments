@@ -22,11 +22,12 @@ import (
 
 // languages are the languages each engine judges.
 var languages = map[catalog.Engine][]contract.Language{
-	catalog.PHP:    {contract.PHP},
-	catalog.Vue:   {contract.Vue},
+	catalog.PHP:        {contract.PHP},
+	catalog.Vue:        {contract.Vue},
 	catalog.TypeScript: {contract.TypeScript, contract.Vue},
 	catalog.Python:     {contract.Python},
 	catalog.CSharp:     {contract.CSharp},
+	catalog.Go:         {contract.Go},
 }
 
 // cases are the naming styles nameCase tells apart, each the whole name.
@@ -193,9 +194,9 @@ var layered = map[catalog.Engine]struct {
 	separator     string
 	caseSensitive bool
 }{
-	catalog.PHP: {`\`, false},
-	catalog.Python:  {".", true},
-	catalog.CSharp:  {".", true},
+	catalog.PHP:    {`\`, false},
+	catalog.Python: {".", true},
+	catalog.CSharp: {".", true},
 }
 
 // Rule is a project's own detector.

@@ -28,10 +28,10 @@ func init() {
 			WritesAttribute: func(element engine.Match, name string) bool {
 				return vue.Of(element).Writes(name)
 			},
-			BodyHash:      func(function engine.Match) string { return typescript.Of(function).BodyHash() },
-			TestFile:      testFile,
-			Implicit:      engine.KindIn("Constructor"),
-			NamespaceOf:   func(symbol string) string { return engine.Before(symbol, "#") },
+			BodyHash:    func(function engine.Match) string { return typescript.Of(function).BodyHash() },
+			TestFile:    testFile,
+			Implicit:    engine.KindIn("Constructor"),
+			NamespaceOf: func(symbol string) string { return engine.Before(symbol, "#") },
 			Labels: func(name engine.Match) bool {
 				return name.Parent().Kind() == "PropertyAssignment" && name.Node().Field == "name"
 			},

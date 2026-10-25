@@ -4,10 +4,10 @@ package source
 
 import (
 	"path/filepath"
-	"slices"
 	"strings"
 
 	"github.com/jessegall/code-commandments/catalog"
+	"github.com/jessegall/code-commandments/contract"
 )
 
 // Language is a language the tool reads, named by its file extension.
@@ -20,46 +20,59 @@ const (
 	TypeScript Language = "ts"
 	Python     Language = "py"
 	CSharp     Language = "cs"
+	Go         Language = "go"
 )
 
 // Languages is every language, in the order they are declared.
-var Languages = []Language{PHP, Vue, TypeScript, Python, CSharp}
+var Languages = []Language{PHP, Vue, TypeScript, Python, CSharp, Go}
 
-// extensions are the extensions each language's files carry beyond its own: TypeScript's compiler reads the
-// module and JSX forms, and JavaScript, as one language.
-var extensions = map[Language][]string{
-	TypeScript: {"tsx", "mts", "cts", "js", "jsx", "mjs", "cjs"},
+// written are the languages of the stream by the name their extension spells them with here, so the one table
+// of extensions, which the contract holds below every reader, answers for this spelling too.
+var written = map[contract.Language]Language{
+	contract.PHP:        PHP,
+	contract.Vue:        Vue,
+	contract.TypeScript: TypeScript,
+	contract.Python:     Python,
+	contract.CSharp:     CSharp,
+	contract.Go:         Go,
 }
 
-// Extensions is every extension this language's files carry, its own first: what a reader is told the tool
-// reads, from the same table the walk reads.
-func (l Language) Extensions() []string {
-	return append([]string{string(l)}, extensions[l]...)
-}
-
-// OfFile is the language of the file at path; anything unrecognised reads as PHP.
-func OfFile(path string) Language {
-	extension := strings.TrimPrefix(filepath.Ext(path), ".")
-	for _, language := range []Language{Vue, TypeScript, Python, CSharp} {
-		if extension == string(language) || slices.Contains(extensions[language], extension) {
-			return language
+// Written is the language of the stream this one is.
+func (l Language) Written() contract.Language {
+	for stream, named := range written {
+		if named == l {
+			return stream
 		}
 	}
 
-	return PHP
+	return contract.PHP
+}
+
+// Extensions is every extension this language's files carry, its own first: what a reader is told the tool
+// reads, from the one table every reader of an extension reads.
+func (l Language) Extensions() []string {
+	return contract.ExtensionsOf(l.Written())
+}
+
+// OfFile is the language of the file at path; anything unrecognised reads as PHP, which is the one language
+// whose files carry extensions the tool does not list (.inc, .module).
+//
+// Every language the tool reads is asked before that default, so a file of one is never read as PHP: a .go file
+// judged by the PHP rules is a wrong answer nothing reports, which is worse than no answer at all.
+func OfFile(path string) Language {
+	stream, named := contract.LanguageOfPath(path)
+	if !named {
+		return PHP
+	}
+
+	return written[stream]
 }
 
 // Judges says whether the file at path is in a language the tool reads.
 func Judges(path string) bool {
-	extension := strings.TrimPrefix(filepath.Ext(path), ".")
+	_, named := contract.LanguageOfPath(path)
 
-	for _, language := range Languages {
-		if extension == string(language) || slices.Contains(extensions[language], extension) {
-			return true
-		}
-	}
-
-	return false
+	return named
 }
 
 // Engine is the engine that reads a file of this language.
@@ -71,6 +84,8 @@ func (l Language) Engine() catalog.Engine {
 		return catalog.Python
 	case CSharp:
 		return catalog.CSharp
+	case Go:
+		return catalog.Go
 	default:
 		return catalog.PHP
 	}
@@ -112,6 +127,8 @@ func (l Language) Label() string {
 		return "TypeScript"
 	case Python:
 		return "Python"
+	case Go:
+		return "Go"
 	default:
 		return "C#"
 	}
@@ -145,11 +162,12 @@ func Real(path string) string {
 
 // engines are the languages each engine's rules read.
 var engines = map[catalog.Engine][]Language{
-	catalog.PHP:    {PHP},
-	catalog.Vue:   {Vue, TypeScript},
+	catalog.PHP:        {PHP},
+	catalog.Vue:        {Vue, TypeScript},
 	catalog.TypeScript: {Vue, TypeScript},
 	catalog.Python:     {Python},
 	catalog.CSharp:     {CSharp},
+	catalog.Go:         {Go},
 }
 
 // OfEngine are the languages the engine's rules read.
