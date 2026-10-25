@@ -15,7 +15,12 @@ if [ "$#" -eq 0 ]; then
 fi
 
 exec scripts/dev bash -c '
+    # The listing compiles every package named, which on a large one is most of a minute with nothing to show. So
+    # each step says it has begun: a card then reads "building" and "N tests to run" instead of sitting empty
+    # until the first test ends.
+    printf "building the tests of %s packages\n" "$#"
     total=$(go test -list . "$@" 2>/dev/null | grep -c "^\(Test\|Example\|Fuzz\)" || true)
+    printf "0/%s tests to run\n" "$total"
     finished=0
     failed=0
     status=0

@@ -5,9 +5,12 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/jessegall/code-commandments/cli/config"
 )
 
 // mergingOf is the event the journal holds just before a worker's branch is taken in, as it really sends it: the
@@ -228,5 +231,27 @@ func TestTheJudgeIsGivenLessThanTheWholeWindow(t *testing.T) {
 
 	if given := (merging{}).deadline(); given > 0 {
 		t.Errorf("a window the journal never named gives the judge %s, and there is nothing to judge in it", given)
+	}
+}
+
+// TestAMergeReadsTheFoldersTheProjectDeclares holds the merge hold to the same folders `judge --branch` reads. A
+// worker's worktree is where the journal links its library folders in, a .venv and a node_modules pointing at the
+// main checkout's, so a hold that walked the worktree's own root read every library the project never judges:
+// 115.6s against 17.7s on agent-journal's tree, and minutes of waiting for each merge.
+func TestAMergeReadsTheFoldersTheProjectDeclares(t *testing.T) {
+	worktree := tempFolder(t)
+	held := merging{worktree: worktree}
+
+	declared := held.roots(config.Config{Paths: []string{"src", "bridge/php/src"}})
+	want := []string{filepath.Join(worktree, "src"), filepath.Join(worktree, "bridge/php/src")}
+	if !slices.Equal(declared, want) {
+		t.Errorf("the hold reads %v, not the folders the project declares", declared)
+	}
+	if slices.Contains(declared, worktree) {
+		t.Error("the hold reads the worktree's own root, where the libraries are linked in")
+	}
+
+	if whole := held.roots(config.Config{}); !slices.Equal(whole, []string{worktree}) {
+		t.Errorf("a project declaring no folder is read as %v, not as the worktree itself", whole)
 	}
 }

@@ -188,20 +188,35 @@ func (m merging) sins() []SinMark {
 	return nil
 }
 
-// deep judges the branch as `judge --branch=<base>` judges it: the whole worktree is read, so a rule that spans
-// files has the context it needs, and every rule runs over it.
+// deep judges the branch as `judge --branch=<base>` judges it: the folders the project declares are read whole, so
+// a rule that spans files has the context it needs, and every rule runs over it.
 func (m merging) deep(project config.Config, rules []detectors.Detector) []SinMark {
 	changed := m.changed(project)
 	if len(changed) == 0 {
 		return nil
 	}
 
-	codebase, err := scan.Walk([]string{m.worktree}, source.Under(m.worktree, project.Excluded)).Load()
+	codebase, err := scan.Walk(m.roots(project), source.Under(m.worktree, project.Excluded)).Load()
 	if err != nil {
 		return m.shallow(project, rules)
 	}
 
 	return m.marks(codebase, rules, changed)
+}
+
+// roots are the folders a judge of this project reads, resolved inside the worktree: the ones the project
+// declares, and the worktree itself only for a project that declares none.
+//
+// It reads what `judge --branch` reads and nothing more. A walk of the worktree's own root is not the same thing:
+// the journal links a worker's library folders into its worktree, a .venv and a node_modules pointing at the main
+// checkout's, so the root holds every library the project never judges. Reading them cost agent-journal 115.6s
+// against 17.7s for the same branch judged by its declared folders, and a merge there waited minutes.
+func (m merging) roots(project config.Config) []string {
+	if len(project.Paths) == 0 {
+		return []string{m.worktree}
+	}
+
+	return config.Absolute(m.worktree, project.Paths)
 }
 
 // shallow judges the changed files alone, by the rules that need no more than one file: what fits a window of
