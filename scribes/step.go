@@ -59,7 +59,7 @@ func Steps(engine catalog.Engine, scanner *Scanner, given []detectors.Detector) 
 		}
 	}
 	slices.SortStableFunc(fixable, func(a, b detectors.Detector) int {
-		return strings.Compare(className(engine, a), className(engine, b))
+		return strings.Compare(className(a), className(b))
 	})
 
 	steps := make([]Step, 0, len(fixable))
@@ -67,17 +67,58 @@ func Steps(engine catalog.Engine, scanner *Scanner, given []detectors.Detector) 
 		steps = append(steps, DetectorStep{detector: detector, scribe: scribesOf[catalog.Name(detector)], scanner: scanner})
 	}
 
+	for _, detector := range given {
+		if fixing, fixes := selfFixing(engine, detector); fixes {
+			steps = append(steps, DetectorStep{detector: detector, scribe: func() Scribe { return SelfFixScribe{fixing} }, scanner: scanner})
+		}
+	}
+
 	return steps
 }
 
-// className is the detector's PHP class name under its engine's namespace: its package's folders, capitalised,
-// then its own name.
-func className(engine catalog.Engine, detector detectors.Detector) string {
+// selfFixing is the detector as one that states its own fix, when it judges the engine and declares one.
+func selfFixing(engine catalog.Engine, detector detectors.Detector) (detectors.SelfFixing, bool) {
+	fixing, states := detector.(detectors.SelfFixing)
+	judges, _ := detectors.EngineOf(detector)
+
+	return fixing, states && fixing.Fixes() && judges == engine
+}
+
+// SelfFixScribe writes the fix a self-fixing detector states for each finding in place of the node it found.
+type SelfFixScribe struct {
+	detector detectors.SelfFixing
+}
+
+// Rewrite replaces each finding's source with the text its detector states for it.
+func (s SelfFixScribe) Rewrite(findings []engine.Match, _ *engine.Codebase) (Rewrites, error) {
+	draft := NewDraft()
+	for _, finding := range findings {
+		text, fixes := s.detector.FixFor(finding)
+		if !fixes {
+			continue
+		}
+
+		span, err := finding.Span()
+		if err != nil {
+			return Rewrites{}, err
+		}
+
+		draft.Edit(span, text)
+	}
+
+	return draft.Rewrites(), nil
+}
+
+// className is the detector's PHP class name under its engine's namespace: its package's folders below the engine's
+// own, capitalised, then its own name. The engine's folder is skipped by position, not by the engine's name, because
+// the Go folders keep the former names (detectors/backend) the engines no longer carry.
+func className(detector detectors.Detector) string {
 	kind := reflect.TypeOf(detector)
 	for kind.Kind() == reflect.Pointer {
 		kind = kind.Elem()
 	}
-	_, folder, _ := strings.Cut(kind.PkgPath(), "/detectors/"+string(engine))
+	_, below, _ := strings.Cut(kind.PkgPath(), "/detectors/")
+	_, folder, _ := strings.Cut(below, "/")
 	var name strings.Builder
 	for _, segment := range strings.Split(strings.Trim(folder, "/"), "/") {
 		if segment != "" {

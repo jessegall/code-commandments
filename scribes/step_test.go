@@ -21,7 +21,7 @@ func TestRepentableDetectorsRunInThePHPToolsDiscoveryOrder(t *testing.T) {
 		}
 	}
 	slices.SortStableFunc(repentable, func(a, b detectors.Detector) int {
-		return strings.Compare(className(catalog.PHP, a), className(catalog.PHP, b))
+		return strings.Compare(className(a), className(b))
 	})
 
 	var names []string

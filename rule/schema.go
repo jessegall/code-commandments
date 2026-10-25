@@ -67,6 +67,29 @@ func Schema() []byte {
 					"reject": object{"type": "array", "items": object{"$ref": "#/definitions/step"}, "description": "Any step passing drops the node."},
 				},
 			},
+			"fix": object{
+				"type":                 "object",
+				"description":          "The rewrite `repent` applies to each node the rule finds; leave it out and the sin is fixed by hand.",
+				"oneOf":                []object{{"required": []string{"replace"}}, {"required": []string{"substitute"}}},
+				"additionalProperties": false,
+				"properties": object{
+					"replace": object{"type": "string", "description": "The text written in place of the found node; each {target} stands for the source of the node an \"of\" target names, hops joined by /, such as {child:left} or {child:arguments/child:body}.",
+						"examples": []string{"{child:left} > 0 && {child:right}"}},
+					"substitute": object{
+						"type":        "array",
+						"description": "Regular-expression substitutions applied in order to the found node's source.",
+						"items": object{
+							"type":                 "object",
+							"required":             []string{"matches", "with"},
+							"additionalProperties": false,
+							"properties": object{
+								"matches": object{"type": "string", "description": "A Go regular expression."},
+								"with":    object{"type": "string", "description": "What each match becomes; ${1} stands for a group."},
+							},
+						},
+					},
+				},
+			},
 		},
 	}
 

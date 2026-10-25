@@ -44,6 +44,7 @@ type file struct {
 	Engine string  `json:"engine"`
 	Sin    sinFile `json:"sin"`
 	Find   find    `json:"find"`
+	Fix    *Fix    `json:"fix,omitempty"`
 }
 
 type sinFile struct {
@@ -203,6 +204,7 @@ type Rule struct {
 	engine catalog.Engine
 	sin    ownSin
 	find   find
+	fix    *Fix
 }
 
 // Skills finds the skill a rule's sin names: the project's own, else a shipped one.
@@ -267,13 +269,19 @@ func Parse(name string, text []byte, skills Skills) (Rule, error) {
 		}
 	}
 
+	if read.Fix != nil {
+		if err := read.Fix.prepare(); err != nil {
+			return Rule{}, fmt.Errorf("%s: %w", name, err)
+		}
+	}
+
 	return Rule{name, engine, ownSin{sins.Definition{
 		Name:        read.Sin.Name,
 		Skill:       taught,
 		Description: read.Sin.Description,
 		Rule:        read.Sin.Rule,
 		Suggestion:  read.Sin.Suggestion,
-	}}, read.Find}, nil
+	}}, read.Find, read.Fix}, nil
 }
 
 // WithLayers is the rule looking a layer step's name up in the layers the project declares for its engine.

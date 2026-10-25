@@ -30,6 +30,13 @@ type Repentable interface {
 	Repentable()
 }
 
+// SelfFixing is a detector that states its own fix for each finding, as a project's rule with a fix does: the text
+// to write in place of the node it found. The shared scribe writes what it states, so it needs no scribe of its own.
+type SelfFixing interface {
+	Fixes() bool
+	FixFor(finding engine.Match) (string, bool)
+}
+
 // RunsLast marks a repentable detector whose fix reshapes code the other fixes have settled, so it runs after them.
 type RunsLast interface {
 	RunsLast()
