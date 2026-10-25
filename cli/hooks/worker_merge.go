@@ -58,7 +58,7 @@ const defaultBase = "main"
 func MergeHeld(line map[string]any) string {
 	merge := mergeOf(line)
 
-	marks := merge.sins()
+	marks := merge.sinsWithin()
 	if len(marks) == 0 {
 		return ""
 	}
@@ -66,6 +66,28 @@ func MergeHeld(line map[string]any) string {
 	refusal := mergeReason(merge.worker, marks)
 
 	return (JournalAnswer{Refuse: &refusal}).Line4()
+}
+
+// sinsWithin is what the judge found, and nothing where it did not answer in time. The window is a deadline and
+// not only a permission: nobody here knows how large the worktree is, and a tree that outlasts even a generous
+// window would answer late, which is the fault that costs the plugin itself. A judge still running when the
+// deadline passes is left to finish into nothing and the merge is let through.
+func (m merging) sinsWithin() []SinMark {
+	answered := make(chan []SinMark, 1)
+	go func() { answered <- m.sins() }()
+
+	select {
+	case marks := <-answered:
+		return marks
+	case <-time.After(m.deadline()):
+		return nil
+	}
+}
+
+// deadline is how much of the window the judge is given: all but a tenth of it, so the answer is written and read
+// inside the window too.
+func (m merging) deadline() time.Duration {
+	return m.window - max(m.window/10, 200*time.Millisecond)
 }
 
 // merging is a worker's merge as the event describes it: who it is, where its work stands, what its branch was cut

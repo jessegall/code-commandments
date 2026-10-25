@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 )
 
 // mergingOf is the event the journal holds just before a worker's branch is taken in, as it really sends it: the
@@ -208,5 +209,24 @@ func wrote(t *testing.T, root string, files map[string]string) {
 		if err := os.WriteFile(filepath.Join(root, path), []byte(text), 0o644); err != nil {
 			t.Fatal(err)
 		}
+	}
+}
+
+// TestTheJudgeIsGivenLessThanTheWholeWindow holds the deadline inside the window: the answer still has to be
+// written and read, so a judge given the whole of it would answer at the moment the journal stops waiting, which
+// is the fault that switches the plugin off.
+func TestTheJudgeIsGivenLessThanTheWholeWindow(t *testing.T) {
+	for window, want := range map[time.Duration]time.Duration{
+		180 * time.Second: 162 * time.Second,
+		10 * time.Second:  9 * time.Second,
+		time.Second:       800 * time.Millisecond,
+	} {
+		if given := (merging{window: window}).deadline(); given != want {
+			t.Errorf("a window of %s gives the judge %s, want %s", window, given, want)
+		}
+	}
+
+	if given := (merging{}).deadline(); given > 0 {
+		t.Errorf("a window the journal never named gives the judge %s, and there is nothing to judge in it", given)
 	}
 }

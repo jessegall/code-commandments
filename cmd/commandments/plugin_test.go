@@ -301,9 +301,11 @@ const windowMs = 10
 
 // decidedMs is the longest window a hold may declare at a moment that is not the agent's work but a command the
 // user ran and waits on: `journal worker merge`, which takes a branch in. A gate there cannot report later — answer
-// late and the work has already landed — so it answers in the moment, and its ceiling is what a person will wait
-// for a merge rather than what a tool call can spare.
-const decidedMs = 10_000
+// late and the work has already landed — so it answers in the moment, and its ceiling is the journal's own
+// workers.merge_hold_seconds, three minutes by default, which it caps a merge hold's window at from 4.61.0 on. An
+// older journal cuts our window down to its 50 ms instead, so declaring the whole of it costs nothing there, and
+// the judge holds itself to the window as a deadline either way.
+const decidedMs = 180_000
 
 // decided are the events a hold may take its time at: the ones that are not the agent's own work. Every other
 // event is a moment of that work, and a window there is the fault the rule above exists to keep away.
