@@ -299,17 +299,19 @@ func TestBothPluginManifestsPinTheSameRelease(t *testing.T) {
 // can only be an answer already known.
 const windowMs = 10
 
-// decidedMs is the longest window a hold may declare at a moment that is not the agent's work but a command the
-// user ran and waits on: `journal worker merge`, which takes a branch in. A gate there cannot report later — answer
-// late and the work has already landed — so it answers in the moment, and its ceiling is the journal's own
-// workers.merge_hold_seconds, three minutes by default, which it caps a merge hold's window at from 4.61.0 on. An
-// older journal cuts our window down to its 50 ms instead, so declaring the whole of it costs nothing there, and
-// the judge holds itself to the window as a deadline either way.
+// decidedMs is the longest window a hold may declare at a moment that is not the agent's work but a command
+// someone ran and waits on: `journal worker merge`, which takes a branch in, and a worker's own clock-out, where
+// the worker waits to hear whether its work is clean. A gate at either cannot report later — answer late and the
+// work has already landed, or already reached the agent that sent the worker — so it answers in the moment. Its
+// ceiling is the journal's own, three minutes by default: workers.merge_hold_seconds for the merge and
+// plugins.clock_out_window_seconds for the clock-out, each of which the journal cuts our declared window down to.
+// An older journal cuts it to its 50 ms instead, so declaring the whole of it costs nothing there, and the judge
+// holds itself to the window as a deadline either way.
 const decidedMs = 180_000
 
 // decided are the events a hold may take its time at: the ones that are not the agent's own work. Every other
 // event is a moment of that work, and a window there is the fault the rule above exists to keep away.
-var decided = []string{"worker_merging"}
+var decided = []string{"worker_delivering", "worker_merging"}
 
 // TestEveryHoldIsAnsweredFromWhatIsAlreadyKnown holds the manifest to the rule every hook of ours answers under: the
 // plugin never makes the journal wait on work while the agent works. An event it HOLDS at a moment of that work is
