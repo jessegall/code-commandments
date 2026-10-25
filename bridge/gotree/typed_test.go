@@ -294,3 +294,52 @@ func keys[V any](held map[string]V) []string {
 
 	return names
 }
+
+// TestAFileThatDoesNotTypeCheckKeepsTheFactsAroundIt holds a type error to what it costs: the line the checker
+// cannot follow, and nothing else. The file beside it is typed, and so is the rest of its own file.
+//
+// The errors are not reported, and this is where the measuring shows why: an import outside the module is
+// answered with an empty package, so every file that touches the standard library raises one. What a reader
+// needs is in the stream per file, where the resolver says whether one ran at all.
+func TestAFileThatDoesNotTypeCheckKeepsTheFactsAroundIt(t *testing.T) {
+	root := module(t, map[string]string{
+		"go.mod":  "module example.com/shop\n",
+		"bad.go":  "package shop\n\nfunc total() int { return \"not a number\" }\n",
+		"good.go": "package shop\n\nfunc rate() int { return 2 }\n",
+	})
+
+	var written bytes.Buffer
+	if err := gotree.Write(&written, []string{root}, nil); err != nil {
+		t.Fatalf("a type error stopped the whole stream: %v", err)
+	}
+	stream, err := contract.ReadAll(bytes.NewReader(written.Bytes()))
+	if err != nil {
+		t.Fatalf("the stream breaks the contract: %v", err)
+	}
+
+	good := fileNamed(t, stream, "good.go")
+	if good.Resolver == nil || !good.Resolver.Ran {
+		t.Error("the file beside the bad one says no resolver ran on it")
+	}
+	typeNamed(t, good, "int")
+	typeNamed(t, fileNamed(t, stream, "bad.go"), "int")
+}
+
+// TestTheWholeModuleAlwaysWritesTheSameStream holds a run of several packages to one answer. The checker keeps
+// what it learned in maps, which Go walks in a different order every run, so a stream built from them in that
+// order would differ between two runs of the same unchanged tree, and the engine's own recordings and memoised
+// readings would read that as a change in the code.
+func TestTheWholeModuleAlwaysWritesTheSameStream(t *testing.T) {
+	root := module(t, typedModule)
+
+	var once, again bytes.Buffer
+	if err := gotree.Write(&once, []string{root}, nil); err != nil {
+		t.Fatal(err)
+	}
+	if err := gotree.Write(&again, []string{root}, nil); err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(once.Bytes(), again.Bytes()) {
+		t.Error("two runs over the same module wrote two different streams")
+	}
+}

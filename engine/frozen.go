@@ -93,6 +93,8 @@ func languageOfPath(path string) contract.Language {
 		return contract.Python
 	case ".cs":
 		return contract.CSharp
+	case ".go":
+		return contract.Go
 	}
 
 	return contract.PHP

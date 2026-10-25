@@ -11,8 +11,9 @@ import (
 )
 
 var (
-	// skippedFolders never hold the project's own source.
-	skippedFolders = []string{"vendor", "node_modules", "site-packages", "__pycache__"}
+	// skippedFolders never hold the project's own source: a dependency store, a cache, and the folder Go's own
+	// toolchain ignores, which holds a test's fixtures rather than code anyone ships.
+	skippedFolders = []string{"vendor", "node_modules", "site-packages", "__pycache__", "testdata"}
 
 	// skippedSuffixes end the name of a folder a package installer made.
 	skippedSuffixes = []string{".egg-info"}

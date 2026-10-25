@@ -142,7 +142,16 @@ func (c *checker) check(one Package) (*types.Package, *types.Info) {
 		Selections: map[*ast.SelectorExpr]*types.Selection{},
 	}
 	config := &types.Config{
-		Importer:                 c,
+		Importer: c,
+		// An error never stops the check: the facts it did reach are kept, so a package with one line the
+		// checker cannot follow is still typed everywhere else, and a file that does not compile still carries
+		// every type around what is wrong with it.
+		//
+		// The errors themselves are not reported, and measuring says why: every import outside the module is
+		// answered with an empty package by the decision doc 3 holds, so every file that touches the standard
+		// library raises "undefined: fs.FS" and the like. Naming them would name nearly every package of a real
+		// tree and tell a reader nothing. What a reader needs is already in the stream per file: the resolver
+		// says whether one ran, and a fact the checker did not give is absent rather than guessed.
 		Error:                    func(error) {},
 		DisableUnusedImportCheck: true,
 	}

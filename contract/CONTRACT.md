@@ -394,8 +394,11 @@ A type checker checks a package where a tree is read per file, so the files of a
 packages the compiler would compile them as, and a package is completed from its own folder: a request naming
 one file is still typed against its whole package, since otherwise every name its siblings declare would read as
 unresolved, and the files the request did not name are `context`. A file's `module` is the import path of the
-package it belongs to. A file no platform builds, by its `//go:build` line or its name's own suffixes, is still
-written with its tree and carries no types, which is the honest answer rather than a silent gap.
+package it belongs to. A file this platform does not build, by its `//go:build` line or its name's own suffixes, is
+still written with its tree and carries no types, which is the honest answer rather than a silent gap: it is
+judged by every rule that reads syntax, wherever it is read, and by the rules that read types only where the
+platform it is written for builds it. A file a generator wrote, which Go marks with a line of its own before the
+package clause, is read so that everything through it resolves and is never reported on.
 
 `nullable` is the one place the contract reads absence, and for Go that is a pointer and an interface: a nil
 pointer and a nil interface are a value that is missing, while a nil slice ranges cleanly and a nil map reads, so
