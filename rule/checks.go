@@ -34,6 +34,8 @@ var Checks = []Group{
 		{"nameCase", `{"nameCase": "snake"}`, "its name, less a leading `$` or `_`, is written `camel`, `pascal`, `snake`, `upper` or `kebab` case"},
 		{"hasModifier", `{"hasModifier": "static"}`, "it carries the modifier"},
 		{"hasFlag", `{"hasFlag": "byRef"}`, "it carries the flag its language's tree sets"},
+		{"operator", `{"operator": "*"}`, "its operator is exactly it: `*` and `??` tell two binary expressions apart, `+=` an assignment, `!` a unary one, `extends` a heritage clause"},
+		{"operatorIn", `{"operatorIn": ["*", "/"]}`, "its operator is one of them"},
 	}},
 	{"What it says", []Check{
 		{"text", `{"text": "select * from users"}`, "a literal's text is exactly it"},

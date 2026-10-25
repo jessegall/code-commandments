@@ -263,11 +263,7 @@ func (n Node) Text() string {
 
 // Operator is the operator token of a binary, assignment or unary expression.
 func (n Node) Operator() string {
-	if !n.Exists() {
-		return ""
-	}
-
-	return n.Node().Operator
+	return n.Match.Operator()
 }
 
 // IsStep says whether the expression is in a `for` loop's step list.

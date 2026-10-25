@@ -25,11 +25,7 @@ func Of(m engine.Match) Node {
 
 // Operator is the operator of a binary, unary or assignment expression; empty on any other node.
 func (n Node) Operator() string {
-	if n.Node() == nil {
-		return ""
-	}
-
-	return n.Node().Operator
+	return n.Match.Operator()
 }
 
 // IsEquality says whether the node is an equality comparison, strict or loose: ===, ==.

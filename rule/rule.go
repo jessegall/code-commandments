@@ -82,6 +82,8 @@ type Step struct {
 	Layer          string   `json:"layer,omitempty"`
 	HasModifier    string   `json:"hasModifier,omitempty"`
 	HasFlag        string   `json:"hasFlag,omitempty"`
+	Operator       string   `json:"operator,omitempty"`
+	OperatorIn     []string `json:"operatorIn,omitempty"`
 	WithinLoop     *bool    `json:"withinLoop,omitempty"`
 	Documented     *bool    `json:"documented,omitempty"`
 	File           string   `json:"file,omitempty"`
@@ -555,6 +557,7 @@ func (s Step) checks() int {
 	for _, set := range []bool{s.Is != "", s.Kind != "", s.Name != "", s.NameIn != nil, s.NameLike != "",
 		s.NameMatches != "", s.NameCase != "", s.Text != nil, s.TextLike != "", s.TextMatches != "", s.Resolves != "",
 		s.ResolvesLike != "", s.NamespaceLike != "", s.Layer != "", s.HasModifier != "", s.HasFlag != "", s.WithinLoop != nil,
+		s.Operator != "", len(s.OperatorIn) > 0,
 		s.Documented != nil, s.File != "", s.FileMatches != "", s.Position != "", s.TopLevel != nil, s.Descendant != nil, s.Inside != nil,
 		s.Next != nil, s.Previous != nil, s.NestedAtLeast != nil, s.Counts != nil, s.Parameters != nil, s.Arguments != nil,
 		s.Lines != nil, s.Members != nil, s.Complexity != nil, s.Extends != "", s.ExtendsAny != "", s.Implements != "", s.Uses != "", s.All != nil, s.Any != nil, s.Not != nil, s.HasAttribute != "", s.Sibling != "", s.IsA != "",
@@ -779,6 +782,10 @@ func (s Step) check(match engine.Match) bool {
 		return subject.HasModifier(s.HasModifier)
 	case s.HasFlag != "":
 		return subject.HasFlag(s.HasFlag)
+	case s.Operator != "":
+		return subject.Operator() == s.Operator
+	case len(s.OperatorIn) > 0:
+		return slices.Contains(s.OperatorIn, subject.Operator())
 	case s.WithinLoop != nil:
 		return subject.IsWithinLoop() == *s.WithinLoop
 	case s.Documented != nil:

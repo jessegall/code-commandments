@@ -342,3 +342,30 @@ func TestAPathPatternReadsFromTheProjectWhateverTheDepthJudged(t *testing.T) {
 		}
 	}
 }
+
+// TestARuleTellsOperatorsApart holds the two steps a consumer asked for: a binary expression's kind says nothing
+// about what it does, so `price.amount * rate` and `price.amount ?? fallback` read as the same node, and a rule
+// about money arithmetic could only be written with a name heuristic, which the disciplines forbid.
+func TestARuleTellsOperatorsApart(t *testing.T) {
+	money := frontendtest.FromSource(t, map[string]string{"src/money.ts": `export function totals(price: { amount: number }, rate: number, fallback: number) {
+    const scaled = price.amount * rate;
+    const safe = price.amount ?? fallback;
+    const share = (scaled / safe) * 100;
+    let running = 0;
+    running += scaled;
+
+    return { scaled, safe, share, running };
+}
+`})
+
+	for _, each := range []typed{
+		{"typescript", `{"select": "kind:BinaryExpression", "where": [{"operator": "*"}]}`, "[2 4]"},
+		{"typescript", `{"select": "kind:BinaryExpression", "where": [{"operator": "??"}]}`, "[3]"},
+		{"typescript", `{"select": "kind:BinaryExpression", "where": [{"operatorIn": ["*", "/"]}]}`, "[2 4 4]"},
+		{"typescript", `{"select": "kind:BinaryExpression", "where": [{"operator": "+="}]}`, "[6]"},
+	} {
+		if got := found(t, each.engine, each.query, money); got != each.want {
+			t.Errorf("%s: found %s, want %s", each.query, got, each.want)
+		}
+	}
+}

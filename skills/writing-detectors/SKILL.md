@@ -71,6 +71,8 @@ does not — which is how a `where` says what only a `reject` could.
 | `{"nameCase": "snake"}` | its name, less a leading `$` or `_`, is written `camel`, `pascal`, `snake`, `upper` or `kebab` case |
 | `{"hasModifier": "static"}` | it carries the modifier |
 | `{"hasFlag": "byRef"}` | it carries the flag its language's tree sets |
+| `{"operator": "*"}` | its operator is exactly it: `*` and `??` tell two binary expressions apart, `+=` an assignment, `!` a unary one, `extends` a heritage clause |
+| `{"operatorIn": ["*", "/"]}` | its operator is one of them |
 
 **What it says**
 

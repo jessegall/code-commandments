@@ -224,6 +224,19 @@ func (m Match) HasFlag(flag string) bool {
 	return m.node != nil && slices.Contains(m.node.Flags, flag)
 }
 
+// Operator is the operator token the node carries: `*` and `??` for a binary expression, `+=` for an assignment,
+// `!` for a unary one, `extends` for a heritage clause; empty for a node that carries none.
+//
+// Every bridge writes it, which is why it is read here rather than per language: `price.amount * rate` and
+// `price.amount ?? fallback` are the same kind of node, and only the operator tells them apart.
+func (m Match) Operator() string {
+	if m.node == nil {
+		return ""
+	}
+
+	return m.node.Operator
+}
+
 // HasModifier says whether the node is declared with the modifier: export, readonly, public, static.
 func (m Match) HasModifier(modifier string) bool {
 	return m.node != nil && slices.Contains(m.node.Modifiers, modifier)
