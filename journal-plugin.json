@@ -1,6 +1,6 @@
 {
   "name": "code-commandments",
-  "version": "6.11.0",
+  "version": "6.11.1",
   "title": "Code Commandments",
   "description": "The static code checker judges the codebase, its hooks run inside the journal, and every rule and language is a switch in its settings",
   "journal": "4.59.1",
@@ -44,6 +44,19 @@
       ],
       "reader": "judge",
       "background": true
+    },
+    {
+      "name": "commandments",
+      "description": "Run any code-commandments verb through the binary this plugin fetched: report, info, repent, exemptions, make",
+      "line": "bin/commandments-release {args}",
+      "args": [
+        "report follow",
+        "report forget <issue>",
+        "report --detector=<rule> --reason=<why> --ref=<path:line>",
+        "info <sin>",
+        "repent --dry-run",
+        "judge --changes"
+      ]
     }
   ],
   "cards": [
@@ -82,7 +95,7 @@
   "setup": [
     {
       "name": "Fetch the checker's release binary, checked against its SHA256SUMS",
-      "run": "COMMANDMENTS_RELEASE=v6.11.0 sh .journal-plugin/fetch"
+      "run": "COMMANDMENTS_RELEASE=v6.11.1 sh .journal-plugin/fetch"
     },
     {
       "name": "Write the chosen switches into config.json",
