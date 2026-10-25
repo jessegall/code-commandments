@@ -216,10 +216,16 @@ func field(entry string, count, at int) string {
 	return ""
 }
 
+// MergeBase is the commit where the head checked out at root left base, empty when the two share no history or
+// either is unknown there.
+func MergeBase(root, base string) string {
+	return ask(root, "merge-base", base, "HEAD")
+}
+
 // ChangedVsBranch are the judged files new or changed on this branch since it left base, committed or
 // not; ok is false when base shares no history with HEAD.
 func ChangedVsBranch(root, base string) (changed map[string]bool, ok bool) {
-	mergeBase := ask(root, "merge-base", base, "HEAD")
+	mergeBase := MergeBase(root, base)
 	if mergeBase == "" {
 		return nil, false
 	}
@@ -252,11 +258,17 @@ func Listed(root string, relative []string) map[string]bool {
 
 // ChangedLinesOf are the lines of file that differ from HEAD; every line, for a file git does not track.
 func ChangedLinesOf(root, file string) ChangedLines {
+	return ChangedLinesSince(root, "HEAD", file)
+}
+
+// ChangedLinesSince are the lines of file that differ from the commit, the working tree's own changes among them;
+// every line, for a file git does not track. A merge base is what a branch's own lines are read from.
+func ChangedLinesSince(root, commit, file string) ChangedLines {
 	if ask(root, "ls-files", "--", file) == "" {
 		return Everywhere()
 	}
 
-	return FromDiff(run(root, "diff", "-U0", "HEAD", "--", file))
+	return FromDiff(run(root, "diff", "-U0", commit, "--", file))
 }
 
 var anyLineBreak = regexp.MustCompile(`\r\n|[\n\r\x0B\f]`)
