@@ -34,6 +34,7 @@ func Schema(root string) []byte {
 			"$schema":  object{"type": "string", "description": "The schema this file is checked against, written by `" + tool + " sync`."},
 			"paths":    list("The source roots judge scans when it is given no path, relative to the project.", object{"type": "string"}),
 			"exclude":  list("Paths never reported on nor rewritten; they are still parsed, so findings elsewhere stay correct.", object{"type": "string"}),
+			"base":     object{"type": "string", "minLength": 1, "description": "The branch `--branch` compares against when it names none: this project's trunk. Left out, it is main. A branch named on the command line always wins."},
 			"parallel": object{"type": "integer", "minimum": 1, "description": "How many detectors judge runs at once when no --parallel says; more use more cores and memory. Left out, judge runs 2."},
 			"disable": object{
 				"description":          "Rules and languages turned off. A detector is off when it, its sin or its skill is named here.",

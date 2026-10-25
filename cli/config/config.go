@@ -19,6 +19,9 @@ type Config struct {
 	Paths []string
 	// Excluded are paths never reported on nor rewritten, though still parsed.
 	Excluded []string
+	// Base is the branch `--branch` compares against when it names none: the project's trunk, for a project whose
+	// trunk is not `main`. Nothing can work that out reliably, which is why the project says it once.
+	Base string
 	// Disabled are the rules turned off: a detector, a sin, or a whole skill.
 	Disabled []Rule
 	// DisabledLanguages are the languages the project does not write.

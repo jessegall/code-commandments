@@ -14,6 +14,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/jessegall/code-commandments/cli/config"
 	"github.com/jessegall/code-commandments/cli/git"
 	"github.com/jessegall/code-commandments/cli/help"
 	"github.com/jessegall/code-commandments/cli/scan"
@@ -24,15 +25,32 @@ import (
 // Latest names the newest checklist.
 const Latest = "latest"
 
-// defaultBase is the branch --branch compares against when it names none.
+// defaultBase is the branch --branch compares against when neither the command line nor the project names one.
+//
+// It stays `main` because nothing can work a branch's own base out reliably: a pushed branch's upstream is its own
+// remote branch, so the merge base is its own tip and nothing would be judged, and the repository's default branch
+// is not the trunk in a project that works on another one. A project whose trunk is not main declares it instead,
+// and a base named on the command line always wins over both.
 const defaultBase = "main"
+
+// BaseOf is the branch a run compares a branch against where nothing names one: the one the project declares,
+// else main. Every reader of that question asks here, so the flag, the nested-repository form and the hold on a
+// worker's merge cannot disagree about a project's trunk.
+func BaseOf(path string) string {
+	project, err := config.Load(path)
+	if err != nil || strings.TrimSpace(project.Base) == "" {
+		return defaultBase
+	}
+
+	return strings.TrimSpace(project.Base)
+}
 
 // Options are the scope flags, parsed here and documented by every command that adopts them.
 func Options() []help.Option {
 	return []help.Option{
 		{Spec: "--changes", Does: "only files changed in the working tree (alias: --git)"},
-		{Spec: "--branch[=BASE]", Does: "only files new/changed on this branch vs BASE (default: main)"},
-		{Spec: "--branch=REPO:[BASE..]HEAD", Does: "only files HEAD changed since it left BASE (default: main) in the repository REPO, a folder under the path with its own .git"},
+		{Spec: "--branch[=BASE]", Does: "only files new/changed on this branch vs BASE (default: the project's `base`, else main)"},
+		{Spec: "--branch=REPO:[BASE..]HEAD", Does: "only files HEAD changed since it left BASE (default: that repository's `base`, else main) in the repository REPO, a folder under the path with its own .git"},
 		{Spec: "--pr=REPO#N", Does: "only the files pull request N changes in the repository REPO, asked of GitHub with gh"},
 		{Spec: "--repent[=ID]", Does: "only the files listed in a past run's checklist (bare: the latest)"},
 	}
@@ -96,7 +114,7 @@ func restrictTo(args []string, path string, space workspace.Workspace, excluded 
 		return chosen, true, err
 	}
 
-	if base, given := branch(args); given {
+	if base, given := branch(args, path); given {
 		if repository, head, named := strings.Cut(base, ":"); named {
 			chosen, err := nestedBranchChanges(repository, head, path)
 
@@ -139,7 +157,7 @@ func nestedBranchChanges(name, spec, path string) (picked, error) {
 	}
 	base, head, ranged := strings.Cut(spec, "..")
 	if !ranged {
-		base, head = defaultBase, spec
+		base, head = BaseOf(repository), spec
 	}
 	changed, ok := git.ChangedOn(repository, base, head)
 	if !ok {
@@ -333,8 +351,8 @@ func Repent(args []string) (string, bool) {
 	return optional(args, "--repent", Latest)
 }
 
-func branch(args []string) (string, bool) {
-	return optional(args, "--branch", defaultBase)
+func branch(args []string, path string) (string, bool) {
+	return optional(args, "--branch", BaseOf(path))
 }
 
 func optional(args []string, flag, bare string) (string, bool) {

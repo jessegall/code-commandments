@@ -15,9 +15,11 @@ Options:
                                  nullable-callback
   --exclude=A,B                  skip findings in paths containing any fragment
   --changes                      only files changed in the working tree (alias: --git)
-  --branch[=BASE]                only files new/changed on this branch vs BASE (default: main)
-  --branch=REPO:[BASE..]HEAD     only files HEAD changed since it left BASE (default: main) in the
-                                 repository REPO, a folder under the path with its own .git
+  --branch[=BASE]                only files new/changed on this branch vs BASE (default: the
+                                 project's `base`, else main)
+  --branch=REPO:[BASE..]HEAD     only files HEAD changed since it left BASE (default: that
+                                 repository's `base`, else main) in the repository REPO, a folder
+                                 under the path with its own .git
   --pr=REPO#N                    only the files pull request N changes in the repository REPO, asked
                                  of GitHub with gh
   --repent[=ID]                  only the files listed in a past run's checklist (bare: the latest)

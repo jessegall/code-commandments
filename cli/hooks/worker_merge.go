@@ -12,6 +12,7 @@ import (
 	"github.com/jessegall/code-commandments/cli/git"
 	"github.com/jessegall/code-commandments/cli/natural"
 	"github.com/jessegall/code-commandments/cli/scan"
+	"github.com/jessegall/code-commandments/cli/scope"
 	"github.com/jessegall/code-commandments/cli/source"
 	"github.com/jessegall/code-commandments/detectors"
 	"github.com/jessegall/code-commandments/engine"
@@ -48,10 +49,6 @@ const (
 	wholeTreeWindow    = time.Minute
 	changedFilesWindow = 5 * time.Second
 )
-
-// defaultBase is the branch a worker's work is measured against when nothing names one: the same default
-// `judge --branch` has.
-const defaultBase = "main"
 
 // MergeHeld is the answer to a worker's merge: nothing when its changes are clean, and a refusal naming the sins
 // when they are not, which holds the merge and leaves the worker's proofs and task as they were.
@@ -246,8 +243,9 @@ func (m merging) changed(project config.Config) map[string]bool {
 }
 
 // cutFrom is what the worker's work is measured against: the base the event names, which is the branch its
-// environment was on, and otherwise the branch the main checkout has now, since a worker is cut from that branch
-// and not from main.
+// environment was on; otherwise the branch the main checkout has now, since a worker is cut from that branch and
+// not from the trunk; and otherwise what the project declares its trunk to be, which is the same answer a bare
+// `judge --branch` takes.
 func (m merging) cutFrom() string {
 	if m.base != "" {
 		return m.base
@@ -257,7 +255,7 @@ func (m merging) cutFrom() string {
 		return branch
 	}
 
-	return defaultBase
+	return scope.BaseOf(m.worktree)
 }
 
 // marks are the rules' findings that stand on a line the worker changed, each a mark of the moment: none of them
