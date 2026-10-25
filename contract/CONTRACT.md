@@ -357,7 +357,9 @@ literal is written as a `float`. A declaration carries the `name` of the identif
 identifier itself, except where it declares several at once (`a, b int`), which carries none.
 
 A comment group is one comment: the run of `//` lines above a declaration is that declaration's one doc comment,
-and its `kind` is `doc` only where the parser gave the group to a declaration as its documentation. A node the
+and its `kind` is `doc` only where the parser gave the group to a declaration as its documentation. A comment
+meant to be read on its own, as a fixture's marker is, needs a blank line between it and what follows, which is
+what leaves it a comment of its own rather than the next declaration's documentation. A node the
 parser recovered from a syntax error can end before it starts; such a node's span ends where it begins, so no
 reader is handed bytes the node does not stand for.
 
