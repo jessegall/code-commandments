@@ -154,8 +154,8 @@ func (m Match) Kind() string {
 }
 
 // calleeFields are where each language keeps what a call calls: PHP's name, Python's func, TypeScript's
-// expression.
-var calleeFields = []string{"name", "func", "expression"}
+// expression, Go's fun.
+var calleeFields = []string{"name", "func", "expression", "fun"}
 
 // CalleeName is the name a call calls, in any language: the function, or the method a member call reaches
 // (select in DB::select, join in os.path.join), without its namespace; empty for anything else.

@@ -16,6 +16,7 @@ const (
 	TypeScript Language = "typescript"
 	Python     Language = "python"
 	CSharp     Language = "csharp"
+	Go         Language = "go"
 )
 
 // Header opens a stream.
@@ -117,26 +118,26 @@ type Node struct {
 // Facts are what only some nodes carry: a literal and its value, an operator, modifiers and flags, types written
 // or returned, a symbol, a reference, a call's target, the file an import resolves to, and what the engine fills.
 type Facts struct {
-	Literal   string      `json:"literal,omitempty"`
-	Value     *Value      `json:"value,omitempty"`
-	Operator  string      `json:"operator,omitempty"`
-	Modifiers []string    `json:"modifiers,omitempty"`
-	Flags     []string    `json:"flags,omitempty"`
-	Declared  *Type       `json:"declared,omitempty"`
-	Returns   *Type       `json:"returns,omitempty"`
-	Symbol    string      `json:"symbol,omitempty"`
-	Refers    string      `json:"refers,omitempty"`
-	Target    *Target     `json:"target,omitempty"`
-	Resolves  string      `json:"resolves,omitempty"`
-	Constant  bool        `json:"constant,omitempty"`
-	Inherited bool        `json:"inherited,omitempty"`
+	Literal   string   `json:"literal,omitempty"`
+	Value     *Value   `json:"value,omitempty"`
+	Operator  string   `json:"operator,omitempty"`
+	Modifiers []string `json:"modifiers,omitempty"`
+	Flags     []string `json:"flags,omitempty"`
+	Declared  *Type    `json:"declared,omitempty"`
+	Returns   *Type    `json:"returns,omitempty"`
+	Symbol    string   `json:"symbol,omitempty"`
+	Refers    string   `json:"refers,omitempty"`
+	Target    *Target  `json:"target,omitempty"`
+	Resolves  string   `json:"resolves,omitempty"`
+	Constant  bool     `json:"constant,omitempty"`
+	Inherited bool     `json:"inherited,omitempty"`
 
 	// FillsOutside says that every declaration an inherited member fills was written outside this solution, so
 	// its signature is not the project's to change. Only the compiler knows: a sibling project's interface
 	// compiles from source while a package's type arrives as metadata, and the scan may hold neither.
 	FillsOutside bool `json:"fills-outside,omitempty"`
 
-	Extras    *NodeExtras `json:"extras,omitempty"`
+	Extras *NodeExtras `json:"extras,omitempty"`
 }
 
 // none is the Facts of every node that carries none; it is read, never written.
@@ -327,6 +328,12 @@ type CommentExtras struct {
 	CSharp *CSharpComment `json:"csharp,omitempty"`
 	PHP    *PHPComment    `json:"php,omitempty"`
 	Python *PythonComment `json:"python,omitempty"`
+	Go     *GoComment     `json:"go,omitempty"`
+}
+
+// GoComment is what only Go says about a comment.
+type GoComment struct {
+	Code bool `json:"code,omitempty"`
 }
 
 // PHPComment is what only PHP says about a comment.

@@ -10,7 +10,7 @@
     {"type": "object", "properties": {"trailer": {"$ref": "#/$defs/trailer"}}, "required": ["trailer"], "additionalProperties": false}
   ],
   "$defs": {
-    "language": {"enum": ["php", "vue", "typescript", "python", "csharp"]},
+    "language": {"enum": ["php", "vue", "typescript", "python", "csharp", "go"]},
     "count": {"type": "integer", "minimum": 0},
     "id": {"type": "integer", "minimum": 0},
     "symbolId": {"type": "string", "minLength": 1},
@@ -233,6 +233,12 @@
           "minProperties": 1
         },
         "php": {
+          "type": "object",
+          "properties": {"code": {"const": true}},
+          "additionalProperties": false,
+          "minProperties": 1
+        },
+        "go": {
           "type": "object",
           "properties": {"code": {"const": true}},
           "additionalProperties": false,

@@ -12,6 +12,9 @@ var engineNodeFacts = map[Language][]string{
 	CSharp:     {"resolves"},
 	TypeScript: {"constant", "inherited"},
 	Vue:        {"constant", "inherited"},
+	// Go's own compiler is in this binary, so its bridge writes every fact a checker gives and the engine fills
+	// none. Nothing reads implicit interface satisfaction yet, so inherited is written by nobody.
+	Go: {},
 }
 
 // bridgeProgramFacts are the program facts each language's bridge fills.
@@ -21,6 +24,9 @@ var bridgeProgramFacts = map[Language][]string{
 	CSharp:     {"symbols"},
 	TypeScript: {"aliases"},
 	Vue:        {"aliases"},
+	// A Go package is a folder the import path names, which the tree already says, so no program fact is left
+	// for the bridge to carry.
+	Go: {},
 }
 
 func (n *Node) carries(fact string) bool {

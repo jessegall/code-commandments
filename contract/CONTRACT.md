@@ -62,23 +62,23 @@ resolver ran on it at all, so an absent fact always reads as "could not", never 
 
 ## Who fills it
 
-| fact | php | python | csharp | typescript, vue |
-|---|---|---|---|---|
-| syntax: `kind` … `flags`, `declared`, `returns`, comments | bridge | bridge | bridge | bridge |
-| names in `declared`/`returns` resolved to a class | bridge (NameResolver) | engine | bridge (Roslyn) | bridge (checker) |
-| `resolved` | engine | bridge (mypy) | bridge (Roslyn) | bridge (checker) |
-| `symbol` | bridge | bridge | bridge | bridge |
-| `refers` | bridge (NameResolver) | engine | bridge (Roslyn) | bridge (checker) |
-| `target` | engine | engine | bridge (Roslyn) | bridge (checker) |
-| `resolves` | — | engine | — | bridge |
-| `constant`, `inherited` | engine | engine | bridge (Roslyn) | engine |
-| `fills-outside` | — | — | bridge (Roslyn) | — |
-| comment `refs` resolution | engine | engine | bridge (Roslyn) | engine |
-| docblock types (`@var`, `@param`, `list<X>`) | engine, from the comment's text and the file's `use` nodes | engine | — | engine |
-| `program.symbols` | bridge (reflection over vendor) | — | bridge (referenced assemblies) | — |
-| `program.packages` | — | bridge | — | — |
-| `program.aliases` | — | — | — | bridge |
-| `file.test` | — | — | bridge (`IsTestProject`) | — |
+| fact | php | python | csharp | typescript, vue | go |
+|---|---|---|---|---|---|
+| syntax: `kind` … `flags`, `declared`, `returns`, comments | bridge | bridge | bridge | bridge | bridge |
+| names in `declared`/`returns` resolved to a class | bridge (NameResolver) | engine | bridge (Roslyn) | bridge (checker) | bridge (go/types) |
+| `resolved` | engine | bridge (mypy) | bridge (Roslyn) | bridge (checker) | bridge (go/types) |
+| `symbol` | bridge | bridge | bridge | bridge | bridge |
+| `refers` | bridge (NameResolver) | engine | bridge (Roslyn) | bridge (checker) | bridge (go/types) |
+| `target` | engine | engine | bridge (Roslyn) | bridge (checker) | bridge (go/types) |
+| `resolves` | — | engine | — | bridge | — |
+| `constant`, `inherited` | engine | engine | bridge (Roslyn) | engine | bridge (go/types) for `constant`, — for `inherited` |
+| `fills-outside` | — | — | bridge (Roslyn) | — | — |
+| comment `refs` resolution | engine | engine | bridge (Roslyn) | engine | — |
+| docblock types (`@var`, `@param`, `list<X>`) | engine, from the comment's text and the file's `use` nodes | engine | — | engine | — |
+| `program.symbols` | bridge (reflection over vendor) | — | bridge (referenced assemblies) | — | — |
+| `program.packages` | — | bridge | — | — | — |
+| `program.aliases` | — | — | — | bridge | — |
+| `file.test` | — | — | bridge (`IsTestProject`) | — | — |
 
 "engine" means the field never appears in the stream: the engine computes it after reading, into the
 same field, so a detector reads it the same way whoever filled it. "—" means the language has no
@@ -324,16 +324,37 @@ language's keys are closed and typed in the schema, just as the generic ones are
 
 ## Languages
 
-`language` is one of `php`, `vue`, `typescript`, `python`, `csharp`. Each writes `kind` and `field` in
+`language` is one of `php`, `vue`, `typescript`, `python`, `csharp`, `go`. Each writes `kind` and `field` in
 its own parser's vocabulary, so a bridge never translates:
 
 | language | `kind` | `field` |
 |---|---|---|
 | php | php-parser's `getType()`: `Stmt_Class`, `Expr_MethodCall`, `Scalar_String`, `Name_FullyQualified`; `File` for the file root | php-parser's sub-node names (`getSubNodeNames()`); `stmts` under the root |
+| go | the name of the node's type in Go's `go/ast`: `FuncDecl`, `CallExpr`, `SelectorExpr`, `RangeStmt`, `ChanType`; `File` for the file root | the `ast` struct field the child fills, lowercased: `body`, `fun`, `args`, `recv`, `rhs` |
 | csharp | Roslyn's `SyntaxKind`: `MethodDeclaration`, `InvocationExpression` | the Roslyn property the child is: `Expression`, `ArgumentList`, `Body` |
 | python | the class name in Python's `ast`: `FunctionDef`, `ClassDef`, `Call`, `Attribute`, `Compare` | the `ast` field: `body`, `args`, `func`, `test` |
 | typescript | TypeScript's `SyntaxKind`: `ClassDeclaration`, `CallExpression`, `TypeReference` | the compiler's property name: `expression`, `arguments`, `body` |
 | vue | `Component` (the file root), `Block`, `Element`, `Text`, `Interpolation`, `Attribute`, `Directive` | `blocks`, `children`, `attributes`, `arg`, `value`, `alias`, `iterable` |
+
+**Go.** The tree is read from `go/ast` by reflection over its own structs, so every node the language has is
+written without the bridge being taught it: `kind` is the struct's name and `field` is the struct field the child
+fills. A field holding a comment is no child, since comments live on the file, and `ast.File`'s own second list of
+unresolved names is not read twice.
+
+Go writes a type with the same nodes it writes an expression with, so `role: type` is given to a child filling a
+`type` field and to everything below it. A method's receiver is the child in field `recv`, a field list like any
+parameter list, which is how a method is bound to the type it is declared on: Go declares a method outside its
+type, so nesting says nothing about what a method belongs to.
+
+`true`, `false` and `nil` are predeclared identifiers in Go, not literals, so they are written as `Ident` and what
+they mean is the checker's to say. A rune literal is an `int` whose value is its code point, and an imaginary
+literal is written as a `float`. A declaration carries the `name` of the identifier it declares as well as the
+identifier itself, except where it declares several at once (`a, b int`), which carries none.
+
+A comment group is one comment: the run of `//` lines above a declaration is that declaration's one doc comment,
+and its `kind` is `doc` only where the parser gave the group to a declaration as its documentation. A node the
+parser recovered from a syntax error can end before it starts; such a node's span ends where it begins, so no
+reader is handed bytes the node does not stand for.
 
 **Python.** A node whose `ast` class holds one name as a plain string writes it as `name`: a `FunctionDef`'s
 or `ClassDef`'s own, an `arg`, a `Name`, an `Attribute`'s attribute, a named `keyword`, an `alias`'s imported
