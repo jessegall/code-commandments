@@ -100,7 +100,7 @@ func (b Bridge) read(roots, files []string, tally func()) (*contract.Stream, err
 	if server, kept := keptFor(b.Kind, roots); kept {
 		defer server.Close()
 
-		if stream, err := server.AskTallied(b.request(roots, files), tally); err == nil {
+		if stream, err := server.AskTallied(b.Request(roots, files), tally); err == nil {
 			return stream, nil
 		}
 	}
@@ -120,7 +120,7 @@ func (b Bridge) read(roots, files []string, tally func()) (*contract.Stream, err
 	}
 	defer server.Close()
 
-	stream, err := server.AskTallied(b.request(roots, files), tally)
+	stream, err := server.AskTallied(b.Request(roots, files), tally)
 	if err != nil {
 		return nil, b.failed(err)
 	}
@@ -128,9 +128,10 @@ func (b Bridge) read(roots, files []string, tally func()) (*contract.Stream, err
 	return stream, nil
 }
 
-// request is what the bridge is asked: the files to write, and the roots as well for a bridge that compiles
-// everything under them so each type resolves.
-func (b Bridge) request(roots, files []string) bridge.Request {
+// Request is what the bridge is asked: the files to write, and the roots as well for a bridge that compiles
+// everything under them so each type resolves. A service warming its own bridge asks exactly this, so what it
+// loads is what a run will ask for.
+func (b Bridge) Request(roots, files []string) bridge.Request {
 	if b.WholeRoots {
 		return bridge.Request{Paths: roots, Write: files}
 	}

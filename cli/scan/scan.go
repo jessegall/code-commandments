@@ -117,7 +117,7 @@ func (s Sources) Count(languages ...source.Language) int {
 // Within is how many files of the languages the target takes in.
 func (s Sources) Within(target interface{ Includes(string) bool }, languages ...source.Language) int {
 	count := 0
-	for _, file := range s.files(languages) {
+	for _, file := range s.Files(languages...) {
 		if target.Includes(file) {
 			count++
 		}
@@ -195,7 +195,7 @@ func (s Sources) Load() (*engine.Codebase, error) {
 		}
 
 		if !read.InOwnOrder {
-			bridge.InWalkOrder(stream, s.files(read.Languages))
+			bridge.InWalkOrder(stream, s.Files(read.Languages...))
 		}
 		streams = append(streams, stream)
 	}
@@ -230,7 +230,7 @@ func (s Sources) bridge() map[int]bridged {
 		go func() {
 			slots <- struct{}{}
 			defer func() { <-slots }()
-			stream, err := read.Read(s.roots, s.files(read.Languages), tally)
+			stream, err := read.Read(s.roots, s.Files(read.Languages...), tally)
 			finished <- bridged{index, stream, err}
 		}()
 	}
@@ -297,7 +297,9 @@ func (s Sources) project() string {
 	return git.Root(root)
 }
 
-func (s Sources) files(languages []source.Language) []string {
+// Files are the walked files of these languages, in the order the walk met them: what Load hands the bridge that
+// reads them, and what a service warming that bridge asks it for.
+func (s Sources) Files(languages ...source.Language) []string {
 	var files []string
 
 	for _, language := range languages {

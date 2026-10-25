@@ -71,6 +71,10 @@ func (s Serve) Run(in *cli.Input, console cli.Console) (int, error) {
 	defer listener.Close()
 	os.Chmod(path, 0o600)
 
+	// Behind the listener, never in front of it: the socket answers from this moment, and the reading of the
+	// project happens in the time the service would otherwise spend idle.
+	go warm(s.Bridge, project, server, console)
+
 	if err := bridge.Answer(listener, server); err != nil {
 		console.Warn(err.Error())
 
