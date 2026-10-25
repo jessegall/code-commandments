@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+# Fails while an open pull request on this repository waits for a verdict: one with no review and no comment from
+# the repository's owner. The journal runs it as a check; it lists each waiting request in $JOURNAL_REPORT, grouped
+# by who opened it, so one from anyone but the owner is marked to be handled with care.
+#
+# A request is answered by accepting it (a review, or a merge, which closes it) or by denying it with the reason in
+# a comment. A comment of the owner's counts, since a request is often answered by what the review found rather
+# than by a verdict button.
+set -euo pipefail
+
+owner=$(gh repo view --json owner --jq .owner.login)
+report=${JOURNAL_REPORT:-$(mktemp)}
+
+gh pr list --state open --limit 200 --json number,title,author,url,comments,reviews --jq "
+  [.[] | select(([.comments[].author.login] + [.reviews[].author.login]) | index(\"$owner\") | not)]
+  | {
+      title: \"Pull requests waiting for a verdict\",
+      summary: \"\(length) open pull request(s) have no review or reply from $owner\",
+      findings: [.[] | {
+        name: \"#\(.number)\",
+        where: .url,
+        text: .title,
+        group: (if .author.login == \"$owner\" then \"Opened by $owner\" else \"Opened by \(.author.login), handle with care\" end)
+      }]
+    }" > "$report"
+
+waiting=$(python3 -I -c 'import json, sys; print(len(json.load(open(sys.argv[1]))["findings"]))' "$report")
+if [ "$waiting" -gt 0 ]; then
+  python3 -I -c 'import json, sys; [print(f["name"], f["text"], "-", f["group"]) for f in json.load(open(sys.argv[1]))["findings"]]' "$report"
+  exit 1
+fi
+
+echo "Every open pull request has a verdict."

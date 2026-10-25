@@ -1,6 +1,6 @@
 exit: 0
 --- stdout
-commandments repent — Auto-fix sins — run every Scribe: the maintenance rewriters (Spatie Data hints) and each Repentable detector's own fix, PHP and Vue.
+commandments repent — Auto-fix sins — run every Scribe: the maintenance rewriters (Spatie Data hints) and each Repentable detector's own fix, PHP, Vue and TypeScript, and the fix a project's own rule declares.
 
 Usage:
   commandments repent [path]        apply every fix, re-scanning until it converges (the default —

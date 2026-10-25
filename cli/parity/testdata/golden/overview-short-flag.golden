@@ -15,7 +15,8 @@ Commands:
                    to `from<Type>`, rewrite their call sites to `::from(...)`, and regenerate the
                    `@method from(...)`/`collect(...)` docblock hints.
   repent           Auto-fix sins — run every Scribe: the maintenance rewriters (Spatie Data hints)
-                   and each Repentable detector's own fix, PHP and Vue.
+                   and each Repentable detector's own fix, PHP, Vue and TypeScript, and the fix a
+                   project's own rule declares.
   scaffold         Generate the reusable helper a sin's fix uses — written into your source root
                    with its namespace injected. Idempotent: an existing file is skipped.
   report           File a GitHub issue about code-commandments itself (via `gh`) — a false

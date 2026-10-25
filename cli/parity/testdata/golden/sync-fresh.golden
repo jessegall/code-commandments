@@ -471,7 +471,7 @@ sha256 cf8762933d2c807c4872e1558093d0f5797dca893320011a92d4210efc8aa656
 === created .agents/skills/commandments-vue-vue-control-flow/reference/examples.md
 sha256 a3ab3bdd6342f9a4088b064c2a5a97451264f8785bdf101fa1c8c5ec73619b8e
 === created .agents/skills/commandments-writing-detectors/SKILL.md
-sha256 80b62cac88e9adc819156eb2e47f10040c515290085d151274a92ec98eac5c9b
+sha256 9b99ee9b578129541b95c88af00151ddae10071de5015fa12d82a15287d88b17
 === created .agents/skills/commandments/SKILL.md
 sha256 be26c19aed8f2719a6cbeea651bd209f03f0ef47a3c51121b937123577f1dd01
 === created .claude/settings.json
