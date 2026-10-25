@@ -98,6 +98,46 @@ func TestAPointerAdmitsAbsenceAndASliceDoesNot(t *testing.T) {
 	if !pointer.Nullable {
 		t.Error("a pointer is not written as admitting absence")
 	}
+	if pointer.Kind != "pointer" {
+		t.Errorf("a pointer is written as kind %q", pointer.Kind)
+	}
+	if pointer.Element == nil || pointer.Element.Text != "string" {
+		t.Errorf("a pointer carries %+v as what it points at", pointer.Element)
+	}
+}
+
+// TestAMapCarriesItsKeyAndItsValue holds a map to a kind of its own, with its value as its element: that is what
+// a rule about a bag of values read by keys written in the source reads, where reading `map[` off the text would
+// be parsing the type again.
+func TestAMapCarriesItsKeyAndItsValue(t *testing.T) {
+	source := "package shop" + "\n" + "\n" + "func read(row map[string]any) any { return row[" + "\"" + "total" + "\"" + "] }" + "\n"
+	root := module(t, map[string]string{
+		"go.mod": "module example.com/shop" + "\n",
+		"bag.go": source,
+	})
+
+	var written bytes.Buffer
+	if err := gotree.Write(&written, []string{root}, nil); err != nil {
+		t.Fatal(err)
+	}
+	stream, err := contract.ReadAll(bytes.NewReader(written.Bytes()))
+	if err != nil {
+		t.Fatalf("the stream breaks the contract: %v", err)
+	}
+
+	held := typeNamed(t, fileNamed(t, stream, "bag.go"), "map[string]any")
+	if held.Kind != "map" {
+		t.Errorf("a map is written as kind %q", held.Kind)
+	}
+	if held.Element == nil || held.Element.Text != "any" {
+		t.Errorf("a map carries %+v as its element", held.Element)
+	}
+	if len(held.Args) != 2 || held.Args[0].Text != "string" {
+		t.Errorf("a map carries %d args, where its key comes first", len(held.Args))
+	}
+	if held.Nullable {
+		t.Error("a map is written as admitting absence, where a nil map reads")
+	}
 }
 
 // TestADeclarationCarriesItsOwnId holds the symbols to the way CONTRACT.md spells Go's: a package-level

@@ -32,7 +32,7 @@ func Version() string {
 }
 
 // contractVersion is the version of contract/CONTRACT.md this bridge writes.
-const contractVersion = 3
+const contractVersion = 4
 
 // Write writes the stream for every Go file under the paths: a header, one line per file, and the trailer. The
 // files in write are the ones the run reports on, and the rest are context, read so that a rule spanning files

@@ -146,6 +146,30 @@ each line against the schema, and checks every span, line and comment against th
 | which files are judged vs only inform | `file.context` | bridge | python (`shop/settings.py`, which `cli` imports from) |
 | a comment that reads as code | `comment.extras.python.code` | bridge | — (`# return self.labels[-1]` in `label_queue`, checked by the bridge test) |
 
+## Go
+
+The facts Go carries and the rule that reads each are the table in [`CONTRACT.md`](CONTRACT.md) under **What Go
+has and where the tree carries it**: nothing is written that no rule reads. A sample under
+[`samples/`](samples/) waits for the Go fixture, so every row below is held by `bridge/gotree`'s own tests,
+which read each stream back through the strict reader and the schema.
+
+| fact | field | who | shown in |
+|---|---|---|---|
+| byte spans on every node, and on comments | `span` | bridge | — (the bridge's tests check every span against the file's bytes) |
+| the parser's own vocabulary | `kind` (the `ast` type's name), `field` (the `ast` struct field) | bridge | — |
+| a type as written against a type as structure | `role: type` carried down a `type` field, `declared`, `returns` | bridge | — |
+| each expression's type, and what the checker folds | `resolved` (through the file's `types`), `constant` | bridge (go/types) | — |
+| a declaration's id, a name's reference, a call's target | `symbol`, `refers`, `target` | bridge (go/types) | — |
+| a method's receiver | the child in field `recv` | bridge | — |
+| several results, named results | `returns` as a `tuple`; each result `Field`'s `name` and `declared` | bridge | — |
+| a pointer, a map, a channel | `kind: pointer` with its `element`, `kind: map` with its key and value, a channel's direction as the `ChanType`'s `operator` | bridge | — |
+| absence | `nullable` on a pointer and an interface alone | bridge | — |
+| the package a file belongs to | `file.module`, and `file.context` for a sibling read only to type it | bridge | — |
+| which files are judged vs only read | `file.context` | bridge | — |
+| a comment, its kind and what it is attached to | `file.comments[]`, `kind: doc` where the parser documented a declaration | bridge | — |
+| a comment that reads as code | `comment.extras.go.code` | bridge | — |
+| a file that does not compile | `file.errors`, with the tree the parser recovered | bridge | — |
+
 ## C#
 
 | fact | field | who | shown in |

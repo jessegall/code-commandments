@@ -1,11 +1,12 @@
 # The generic tree contract
 
-Every language bridge — PHP, Vue, TypeScript, Python, C# — answers in this one shape, and the engine
+Every language bridge — PHP, Vue, TypeScript, Python, C#, Go — answers in this one shape, and the engine
 reads only this shape. A bridge is a small parser: it parses its language, and it writes what only that
 language's own compiler or checker can know. Everything else the engine derives itself, into the same
-fields, once it has read the stream. *Who fills it* says which is which. Version 3; a version 2 stream is the same contract without a target's
-`parameters`, a version 1 stream is version 2 without the Python extras `as`, `names` and `code` and the flag
-`elif`, and a reader of version 3 reads both.
+fields, once it has read the stream. *Who fills it* says which is which. Version 4; a version 3 stream is the same contract without the type kinds
+`pointer` and `map`, a version 2 stream is version 3 without a target's `parameters`, a version 1 stream is
+version 2 without the Python extras `as`, `names` and `code` and the flag `elif`, and a reader of version 4
+reads every one of them.
 
 What the engine must be able to read is listed per engine in [`inventory/`](inventory/). The mapping
 from each of those facts to a field here is in [`COVERAGE.md`](COVERAGE.md). The machine-checked form
@@ -151,7 +152,7 @@ kinds. A rule that holds for every language asks `is` instead. It is a list draw
 | `type-declaration` | a declaration of a type: class, interface, trait, enum, struct, record, type alias |
 | `parameter` | a function's parameter |
 | `block` | a statement list |
-| `branch` | a branching construct: if, else-if, switch, match, ternary, conditional |
+| `branch` | a branching construct: if, else-if, switch, match, ternary, conditional, Go's select and type switch |
 | `loop` | a loop: for, foreach, for-in/of, while, do |
 | `return` | a return |
 | `throw` | a throw or raise |
@@ -203,7 +204,7 @@ canonical `text`, because detectors match that text directly (a C#
 | key | when | what |
 |---|---|---|
 | `text` | always | the language's canonical spelling, fully qualified where it names a class: `global::System.String?`, `str \| None`, `?\Shop\Money`, `Ref<number>` |
-| `kind` | always | `named`, `keyword`, `parameter` (a type parameter such as `T`), `union`, `intersection`, `array`, `tuple`, `object`, `function`, `literal`, `opaque` |
+| `kind` | always | `named`, `keyword`, `parameter` (a type parameter such as `T`), `union`, `intersection`, `array`, `tuple`, `object`, `function`, `literal`, `pointer`, `map`, `opaque` |
 | `name` | `named`, `keyword`, `parameter` | the fully qualified class name, the keyword, or the parameter's name: `Shop\Money`, `shop.money.Money`, `int`, `T` |
 | `args` | generics, arrays | the type arguments in order; an array's element |
 | `members` | `union`, `intersection`, `tuple` | the member types in order, as written |
@@ -214,10 +215,13 @@ canonical `text`, because detectors match that text directly (a C#
 | `nullable` | it admits absence | `true`: `?T`, a union with `null`, `None` or `undefined`, a C# nullable reference. This flag is the one place absence is read; the members show which kind of absence |
 | `valueType` | the compiler says so | `true` for a value type (a C# struct, enum, or primitive) |
 | `element` | a collection whose element type is known | the element type, from a generic, a docblock `list<X>`, or an attribute such as `#[DataCollectionOf(X::class)]` |
+| `args` | generics, arrays, maps | for a map, its key and then its value |
 | `constructs` | the expression names a class | the class a call of it builds: Python `Money` in `Money.of(...)`, `str` in `str(x)` |
 | `origin` | always | where the type came from: `written` (the source's own annotation), `docblock`, `attribute`, `inferred` (the engine's own sound inference), `compiler` (Roslyn, mypy, tsc) |
 
-`?T` is the type `T` with `nullable: true`; the node's `nullable-sugar` flag says it was written that
+A `pointer` carries what it points at as its `element`, and a `map` its value, with its key and value in `args`:
+both are kinds of their own because a rule reads them structurally, where reading a `*` or a `map[` off the
+text would be parsing a type again. `?T` is the type `T` with `nullable: true`; the node's `nullable-sugar` flag says it was written that
 way. `opaque` is for a type the bridge does not model: a conditional, mapped or template-literal type,
 or `keyof`, or a resolved type with no single class. It keeps `text` exactly as written and no
 structure (`name`, `args`, `members`, `fields`, `parameters`, `returns`, `value`, `element`), but the facts the
@@ -356,6 +360,27 @@ A comment group is one comment: the run of `//` lines above a declaration is tha
 and its `kind` is `doc` only where the parser gave the group to a declaration as its documentation. A node the
 parser recovered from a syntax error can end before it starts; such a node's span ends where it begins, so no
 reader is handed bytes the node does not stand for.
+
+**What Go has and where the tree carries it.** Each row is a construct the other four languages have no field
+for, and every one of them is carried because a rule reads it. A construct no rule reads is written nowhere.
+
+| Go construct | where it is | the rule that reads it |
+|---|---|---|
+| a method's receiver | the child in field `recv`, a field list as any parameter list is | feature-envy, handed-out-collection, unread-collaborator: a method belongs to the type its receiver names, not to a nesting, so the type a method belongs to is the declaration that receiver's type names, which a reader joins by symbol id: `example.com/shop/cart.Cart.Total` belongs to `example.com/shop/cart.Cart` |
+| an embedded field | a `Field` with no `name` and a `declared` type | coupled-fields: a field with no name of its own is an embedded one, and what it embeds is the type it declares |
+| several results | `returns` is a `tuple` of them, each result a `Field` of the function type's `results` | the `(T, error)` pardon: a caller handling the error where it stands is Go's design, not a sin |
+| a named result | that `Field` carries its own `name` and `declared` | the same pardon: a bare `return` with named results is not an empty answer |
+| `select`, a type switch | the neutral `branch`, as every other choice is | deep-nesting, type-switch: a select is a choice the reader holds open, and a type switch asks what a value IS |
+| `panic` | a `CallExpr` like any other; no node is a `throw` | nothing: Go has no throw to flag, and the exception rules were dropped for Go |
+| a receiver's name | an ordinary `parameter`; no node is a `self-reference` | nothing: `self-reference` asks for `$this`, which Go has not |
+| implicit interface satisfaction | nowhere | nothing reads it, so the bridge never computes it. `inherited` is absent for Go, and a rule that wanted it would have to ask `types.Implements` through a new fact |
+| a pointer | a type of kind `pointer`, with what it points at as its `element` and `nullable: true` | phantom-nullable: a pointer field every read dereferences is a pointer that should be a value |
+| a map | a type of kind `map`, its key and value in `args` and its value as its `element` | dict-bag, dict-return-bag, raw-decoded-return: a `map[string]any` read by keys written in the source is Go's bag |
+| a channel and its direction | the `ChanType` node's `operator`, `chan`, `chan<-` or `<-chan`; the type itself is `opaque` with the text the compiler spells | nothing reads a channel's element, so it keeps no structure |
+| a generic constraint | nowhere | nothing reads it |
+| exported against unexported | the `name`'s own first letter | every rule about reach: in Go capitalisation IS the visibility, so the decorator reads the name and no `public` or `private` modifier is invented |
+| `error` | a `named` type whose `name` is `error`, since the language itself declares it | every error rule and the `if err != nil` pardon, read through the type rather than by matching a name |
+| `true`, `false`, `nil` | an `Ident` whose `refers` names the universe's own declaration | nothing yet; what they mean is the checker's, and a shadowed `nil` means something else |
 
 **Go's types.** They come from `go/types`, with the module's own packages checked from the sources the run
 already read and an empty package answered for anything outside the module, the standard library included. That

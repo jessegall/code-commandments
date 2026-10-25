@@ -222,13 +222,14 @@ func typeOf(held types.Type, origin string) *typeLine {
 		}
 		line.Element = elementOf(shape.Underlying(), origin)
 	case *types.Pointer:
-		line.Kind, line.Nullable = "opaque", true
+		line.Kind, line.Nullable, line.Element = "pointer", true, typeOf(shape.Elem(), origin)
 	case *types.Slice:
 		line.Kind, line.Args, line.Element = "array", []*typeLine{typeOf(shape.Elem(), origin)}, typeOf(shape.Elem(), origin)
 	case *types.Array:
 		line.Kind, line.Args, line.Element, line.ValueType = "array", []*typeLine{typeOf(shape.Elem(), origin)}, typeOf(shape.Elem(), origin), true
 	case *types.Map:
-		line.Kind = "opaque"
+		line.Kind, line.Args = "map", []*typeLine{typeOf(shape.Key(), origin), typeOf(shape.Elem(), origin)}
+		line.Element = typeOf(shape.Elem(), origin)
 	case *types.Chan:
 		line.Kind = "opaque"
 	case *types.Struct:

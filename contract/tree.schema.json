@@ -109,7 +109,7 @@
       "type": "object",
       "properties": {
         "text": {"type": "string", "minLength": 1},
-        "kind": {"enum": ["named", "keyword", "parameter", "union", "intersection", "array", "tuple", "object", "function", "literal", "opaque"]},
+        "kind": {"enum": ["named", "keyword", "parameter", "union", "intersection", "array", "tuple", "object", "function", "literal", "pointer", "map", "opaque"]},
         "name": {"type": "string", "minLength": 1},
         "args": {"type": "array", "items": {"$ref": "#/$defs/type"}},
         "members": {"type": "array", "items": {"$ref": "#/$defs/type"}},
@@ -134,6 +134,8 @@
         {"if": {"properties": {"kind": {"enum": ["named", "keyword", "parameter"]}}}, "then": {"required": ["name"]}},
         {"if": {"properties": {"kind": {"enum": ["union", "intersection", "tuple"]}}}, "then": {"required": ["members"]}},
         {"if": {"properties": {"kind": {"const": "literal"}}}, "then": {"required": ["value"]}},
+        {"if": {"properties": {"kind": {"const": "pointer"}}}, "then": {"required": ["element"]}},
+        {"if": {"properties": {"kind": {"const": "map"}}}, "then": {"required": ["element"]}},
         {"if": {"properties": {"kind": {"const": "opaque"}}}, "then": {"properties": {"text": {}, "kind": {}, "origin": {}, "nullable": {}, "valueType": {}, "constructs": {}}, "additionalProperties": false}}
       ]
     },
