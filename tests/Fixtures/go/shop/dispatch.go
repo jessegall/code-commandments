@@ -18,8 +18,8 @@ func (b *Bay) Dispatch(bays []*Bay) int {
 	sent := 0
 	for _, bay := range bays {
 		if !bay.closed {
-			// @sin DeepNesting
 			for _, crate := range bay.crates {
+				// @sin DeepNesting
 				if crate.Packed {
 					sent++
 				}
