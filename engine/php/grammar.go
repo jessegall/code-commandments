@@ -19,6 +19,7 @@ func init() {
 		Traits:        traitNames,
 		DeclaredName:  propertyName,
 		ClassOf:       classOf,
+		TypeOf:        typeOf,
 		Annotations:   attributes,
 		TypeKind:      engine.Kinds(map[string]string{"Stmt_Class": "class", "Stmt_Interface": "interface", "Stmt_Enum": "enum", "Stmt_Trait": "trait"}),
 		ReturnType:    engine.InField("returnType"),

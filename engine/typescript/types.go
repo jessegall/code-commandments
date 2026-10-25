@@ -71,6 +71,28 @@ func (n Node) Declared() *contract.Type {
 	return n.Node().Declared
 }
 
+// TypeName is the type the expression has: what the checker gave it, else what the engine infers from its shape,
+// else the type the source writes for a declaration.
+//
+// The checker is asked first because it answers what nothing else can: `price.amount` is a `number` and
+// `label.amount` a `string` without a line of inference here, which is the difference between an amount and a
+// label a rule about money has to see.
+func (n Node) TypeName() string {
+	if resolved := n.Resolved(); resolved != nil && resolved.Name != "" {
+		return resolved.Name
+	}
+
+	if inferred, told := n.InferType(); told && inferred != nil {
+		return inferred.Render()
+	}
+
+	if declared := n.Declared(); declared != nil {
+		return declared.Name
+	}
+
+	return ""
+}
+
 // Resolved is the type the checker gives an expression; nil where it gave none.
 func (n Node) Resolved() *contract.Type {
 	if n.Node() == nil {

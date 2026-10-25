@@ -23,6 +23,7 @@ func init() {
 			ReturnType:    engine.InField("type"),
 			ParameterType: engine.InField("type"),
 			Constructs:    engine.OfKind("NewExpression", "expression"),
+			TypeOf:        func(node engine.Match) string { return typescript.Of(node).TypeName() },
 			DocTags:       jsDocTags,
 			WritesAttribute: func(element engine.Match, name string) bool {
 				return vue.Of(element).Writes(name)

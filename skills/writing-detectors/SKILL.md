@@ -92,6 +92,8 @@ does not — which is how a `where` says what only a `reject` could.
 |---|---|
 | `{"resolves": "App\\Models\\User"}` | what its name refers to, resolved, is that — or, for a value that names nothing (a variable, a property), the class it holds: that exact class, not one extending it |
 | `{"resolvesLike": "App\\Models\\*"}` | what its name refers to, resolved, matches the glob, or the class a value holds does: `{"resolvesLike": "*Service", "of": "child:var"}` is a receiver of any *Service |
+| `{"type": "number"}` | the type the expression has, as its language reads it: what a checker gave it, what its shape says, or the type its declaration writes — a primitive among them, where `resolves` answers a class alone |
+| `{"typeLike": "Money*"}` | the type the expression has matches the glob |
 | `{"calls": {"name": "dd"}}` | a call of its own — not one inside a function nested in it — passes the step |
 | `{"argument": {"at": 0, "is": "literal"}}` | the argument at that place passes the step; a negative `at` counts from the end, `-1` the last, and none there passes nothing |
 | `{"constructs": "Date*"}` | a construction, or on anything else one of its own, creates an instance of a type the glob names — in Python, a call of a class |

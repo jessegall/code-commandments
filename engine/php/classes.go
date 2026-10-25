@@ -20,6 +20,12 @@ func traitNames(declaration engine.Match) []engine.Match {
 
 // classOf is the class a node is about: the one a name or an `X::class` names, the one a new constructs, else the
 // class an expression's value is, as the type engine reads it; empty for a value of no class.
+// typeOf is the type an expression holds, a primitive among them, where classOf answers a class alone: a rule
+// about money has to tell a numeric amount from a formatted label, and both are strings to a class reader.
+func typeOf(node engine.Match) string {
+	return strings.TrimLeft(TypesOf(node.Codebase()).TypeOf(node), `?\`)
+}
+
 func classOf(node engine.Match) string {
 	switch {
 	case isName(node):

@@ -369,3 +369,26 @@ func TestARuleTellsOperatorsApart(t *testing.T) {
 		}
 	}
 }
+
+// TestARuleReadsAnExpressionsType holds the step a consumer asked for and could not write: in their codebase most
+// amounts rendered in a view are preformatted strings, so only the type tells a numeric Money.amount from a label,
+// and a rule written on names instead is the heuristic the disciplines forbid.
+func TestARuleReadsAnExpressionsType(t *testing.T) {
+	money := frontendtest.FromSource(t, map[string]string{"src/money.ts": `export function totals(price: { amount: number }, label: { amount: string }) {
+    const paid = price.amount;
+    const shown = label.amount;
+
+    return { paid, shown };
+}
+`})
+
+	for _, each := range []typed{
+		{"typescript", `{"select": "kind:PropertyAccessExpression", "where": [{"type": "number"}]}`, "[2]"},
+		{"typescript", `{"select": "kind:PropertyAccessExpression", "where": [{"type": "string"}]}`, "[3]"},
+		{"typescript", `{"select": "kind:PropertyAccessExpression", "where": [{"typeLike": "str*"}]}`, "[3]"},
+	} {
+		if got := found(t, each.engine, each.query, money); got != each.want {
+			t.Errorf("%s: found %s, want %s", each.query, got, each.want)
+		}
+	}
+}

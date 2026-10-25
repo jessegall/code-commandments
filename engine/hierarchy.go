@@ -164,6 +164,23 @@ func (m Match) Class() string {
 	return m.Refers()
 }
 
+// TypeName is the type the expression has as its language reads it: `number` for `price.amount` where the
+// checker says so, `App\Models\User` for a value holding one. Empty where the language cannot tell.
+//
+// This is what Class answers for a class alone: a rule about money cannot tell a numeric amount from a
+// preformatted label without the primitive types too.
+func (m Match) TypeName() string {
+	if m.node == nil {
+		return ""
+	}
+
+	if read := m.grammar().TypeOf; read != nil {
+		return read(m)
+	}
+
+	return m.Class()
+}
+
 // Traits are the nodes naming the traits the type declaration uses directly, in source order.
 func (m Match) Traits() []Match {
 	return m.listed(m.grammar().Traits)

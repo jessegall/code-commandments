@@ -31,6 +31,9 @@ type Grammar struct {
 	// ClassOf is the class a node that declares none is about: the one it names, constructs or holds a value of;
 	// empty when the language cannot tell.
 	ClassOf func(Match) string
+	// TypeOf is the type an expression has, whatever kind of type it is: a class, but a number or a string too,
+	// where ClassOf answers a class alone. Empty where the language cannot tell.
+	TypeOf func(Match) string
 	// Annotations are the nodes naming each attribute or decorator a declaration carries.
 	Annotations func(Match) []Match
 	// TypeKind is what kind of type a type declaration declares, in the neutral words of TypeKinds.
