@@ -124,6 +124,14 @@ The PHP tool kept no C# bridge up, so it had no need to say whether a project ha
 as a service, and the journal asks `has-csharp` before it starts it, so a project with no C# starts none and lists
 none as running; the help overview lists the verb. Nothing changes for a project.
 
+### `judge --list` names the languages the project is read in
+
+The PHP tool listed the rules and stopped. The Go tool ends the listing with the languages this project is read in,
+because a rule of a language the project is not written in never runs, and a listing without them leaves a reader
+wondering which of the rules above will ever fire. In the recording the line reads `PHP, Vue, TypeScript, Python,
+C#`, with no Go: the case's project declares no Go module, which is the same answer a judge of it gives. Nothing
+changes for a project; the rules listed above the line are the same rules in the same order.
+
 ### The Go engine's own setting
 
 The plugin's settings are one flag per language the tool reads, and the tool now reads Go, so a scan answers

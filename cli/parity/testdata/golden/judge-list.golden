@@ -304,6 +304,9 @@ exit: 0
   LoopWithConditionDetector
   SwitchCaseDetector
 
+[1;33mlanguages read here[0m
+  PHP, Vue, TypeScript, Python, C#
+
 --- stderr
 
 --- files

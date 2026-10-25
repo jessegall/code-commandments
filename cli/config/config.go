@@ -226,5 +226,16 @@ func (c Config) Writes(language source.Language) bool {
 
 // Holds says whether the project writes the language and has a file of it under root, outside what it leaves out.
 func (c Config) Holds(root string, language source.Language) bool {
-	return c.Writes(language) && len(source.FilesIn(root, string(language), source.Under(root, c.Excluded))) > 0
+	return c.Reads(root, language) && len(source.FilesIn(root, string(language), source.Under(root, c.Excluded))) > 0
+}
+
+// Reads says whether the tree at root is one this project writes the language in: the project has not turned the
+// language off, and, where a language declares itself with a file of its own, that file is there.
+//
+// A file of a language is not the same thing as a project written in it. A `.go` file turns up in a PHP shop as a
+// one-off script or a tool somebody dropped in a folder, and judging it would hand that project a set of findings
+// it never asked for, from a release it only upgraded. A Go module declares itself with a go.mod, and has had to
+// since Go 1.16, so the declaration is what is asked for rather than the file.
+func (c Config) Reads(root string, language source.Language) bool {
+	return c.Writes(language) && language.DeclaredIn(root)
 }

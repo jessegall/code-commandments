@@ -3,7 +3,10 @@
 package source
 
 import (
+	"io/fs"
+	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 
 	"github.com/jessegall/code-commandments/catalog"
@@ -66,6 +69,84 @@ func OfFile(path string) Language {
 	}
 
 	return written[stream]
+}
+
+// manifests are the files whose presence says a tree is written in the language, for a language where a file of
+// it alone does not say so.
+//
+// Go is such a language. A `.go` file turns up in a PHP shop as a one-off script, a vendored helper, a tool
+// somebody dropped in scripts/, and judging it would hand that project a set of findings it never asked for from
+// a release it only upgraded. A Go project, on the other hand, always declares itself: a module has a go.mod, and
+// has had to since Go 1.16.
+var manifests = map[Language][]string{
+	Go: {"go.mod"},
+}
+
+// DeclaredIn says whether the tree at root is written in this language: either the language needs no declaring,
+// or the file that declares it is there — at the root, above it, or under it, since a judge may be pointed at one
+// folder of a module, at the module itself, or at a tree holding several.
+func (l Language) DeclaredIn(root string) bool {
+	named := manifests[l]
+	if len(named) == 0 {
+		return true
+	}
+
+	return declaredAt(root, named) || declaredAbove(root, named) || declaredUnder(root, named)
+}
+
+// declaredAt says whether one of the files is in the folder itself.
+func declaredAt(folder string, named []string) bool {
+	for _, name := range named {
+		if _, err := os.Stat(filepath.Join(folder, name)); err == nil {
+			return true
+		}
+	}
+
+	return false
+}
+
+// declaredAbove says whether a folder above this one holds the declaring file, which is where a module keeps it
+// when a judge is pointed at one folder of it.
+func declaredAbove(root string, named []string) bool {
+	at := root
+	for {
+		parent := filepath.Dir(at)
+		if parent == at {
+			return false
+		}
+		if declaredAt(parent, named) {
+			return true
+		}
+		at = parent
+	}
+}
+
+// declaredUnder says whether a folder under this one holds the declaring file, which is where a tree of several
+// modules keeps them. It stops at the first.
+func declaredUnder(root string, named []string) bool {
+	found := false
+	filepath.WalkDir(root, func(path string, entry fs.DirEntry, err error) error {
+		switch {
+		case err != nil:
+			return nil
+		case found:
+			return fs.SkipAll
+		case entry.IsDir():
+			if path != root && !descends(path, Excluded{}) {
+				return fs.SkipDir
+			}
+
+			return nil
+		case slices.Contains(named, entry.Name()):
+			found = true
+
+			return fs.SkipAll
+		}
+
+		return nil
+	})
+
+	return found
 }
 
 // Judges says whether the file at path is in a language the tool reads.

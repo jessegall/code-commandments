@@ -170,7 +170,7 @@ func (c Command) judge(options options, selected []detectors.Detector, judged co
 	progress.Status("parsing")
 	parsing := time.Now()
 
-	languages := languagesFor(selected, judged)
+	languages := languagesFor(selected, judged, options.path)
 	sources := scan.Walk(roots, source.Under(options.path, judged.Excluded)).Only(languages...)
 	whole, byProject := wholeAndByProject(selected)
 
@@ -390,14 +390,14 @@ var publishers = map[catalog.Engine][]source.Language{
 }
 
 // languagesFor are the languages the selected rules read, less those the project does not write.
-func languagesFor(selected []detectors.Detector, project config.Config) []source.Language {
+func languagesFor(selected []detectors.Detector, project config.Config, root string) []source.Language {
 	var languages []source.Language
 
 	for _, detector := range selected {
 		engine, _ := detectors.EngineOf(detector)
 
 		for _, language := range append(slices.Clone(source.OfEngine(engine)), publishers[engine]...) {
-			if project.Writes(language) && !slices.Contains(languages, language) {
+			if project.Reads(root, language) && !slices.Contains(languages, language) {
 				languages = append(languages, language)
 			}
 		}
@@ -593,7 +593,23 @@ func list(cwd string, console cli.Console) (int, error) {
 		}
 	}
 
+	console.Say("", "\033[1;33mlanguages read here\033[0m", "  "+strings.Join(languagesRead(cwd, project), ", "))
+
 	return 0, nil
+}
+
+// languagesRead are the languages this project is read in, as a person reads them: a rule of a language the
+// project is not written in never runs, so a listing of the rules without them leaves a reader wondering which
+// of these will ever fire.
+func languagesRead(root string, project config.Config) []string {
+	var named []string
+	for _, language := range source.Languages {
+		if project.Reads(root, language) {
+			named = append(named, language.Label())
+		}
+	}
+
+	return named
 }
 
 // options are what the arguments ask of a run.
