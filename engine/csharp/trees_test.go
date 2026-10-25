@@ -28,6 +28,14 @@ func TestANullForgivenInsideAnExpressionTreeForgivesNothing(t *testing.T) {
 			"namespace Shop;\n\npublic sealed class Saga { public string? Key { get; set; } }\n\npublic sealed class Setup\n{\n    public int Length(Saga saga) => saga.Key!.Length;\n}\n",
 			1,
 		},
+		"inside one of several lambdas a `params` parameter takes": {
+			"namespace Shop;\n\nusing System;\nusing System.Linq.Expressions;\n\npublic sealed class Saga { public string Tenant { get; set; } = \"\"; public string? Key { get; set; } }\n\npublic sealed class Store\n{\n    public void UniqueIndex(params Expression<Func<Saga, object>>[] by) { }\n}\n\npublic sealed class Setup\n{\n    public void Run(Store store)\n    {\n        store.UniqueIndex(saga => saga.Tenant, saga => saga.Key!);\n    }\n}\n",
+			0,
+		},
+		"inside a lambda a named argument hands over": {
+			"namespace Shop;\n\nusing System;\nusing System.Linq.Expressions;\n\npublic sealed class Saga { public string? Key { get; set; } }\n\npublic sealed class Store\n{\n    public void Index(string name, Expression<Func<Saga, object>> by) { }\n}\n\npublic sealed class Setup\n{\n    public void Run(Store store)\n    {\n        store.Index(name: \"uix_saga_key\", by: saga => saga.Key!);\n    }\n}\n",
+			0,
+		},
 		"inside a tree held by a variable of its own": {
 			"namespace Shop;\n\nusing System;\nusing System.Linq.Expressions;\n\npublic sealed class Saga { public string? Key { get; set; } }\n\npublic sealed class Setup\n{\n    public void Run()\n    {\n        Expression<Func<Saga, object>> by = saga => saga.Key!;\n    }\n}\n",
 			0,
