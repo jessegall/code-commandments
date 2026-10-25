@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+# Runs the tests of the packages named, in the capped dev container, and prints how many of those packages have
+# finished before each result line. go test says nothing while a package runs and one line as each one ends, so a
+# count of the ended ones against the total is the only progress such a run can offer, and a reader shows it as a
+# bar. Scoped by argument on purpose: the whole tree is a release gate, never a habit.
+set -euo pipefail
+
+root="$(cd "$(dirname "$0")/.." && pwd -P)"
+cd "$root"
+
+if [ "$#" -eq 0 ]; then
+    echo "scripts/tested: name the packages to test, such as scripts/tested ./cli/hooks/ ./cli/git/" >&2
+    exit 2
+fi
+
+exec scripts/dev bash -c '
+    set -o pipefail
+    total=$(go list "$@" | wc -l | tr -d " ")
+    finished=0
+    env GOMEMLIMIT=3GiB GOMAXPROCS=2 go test -p 2 -parallel 2 "$@" 2>&1 | while IFS= read -r line; do
+        case "$line" in
+            ok*|FAIL*|"?"*)
+                finished=$((finished + 1))
+                printf "%s/%s packages %s\n" "$finished" "$total" "$line"
+                ;;
+            *)
+                printf "%s\n" "$line"
+                ;;
+        esac
+    done
+' tested "$@"
