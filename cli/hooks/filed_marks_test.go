@@ -2,6 +2,7 @@ package hooks
 
 import (
 	"os"
+	"path/filepath"
 	"slices"
 	"strings"
 	"testing"
@@ -136,5 +137,29 @@ func fileReport(t *testing.T, root, detector, file string, line int) {
 
 	if _, err := os.Stat(reported.Path(root)); err != nil {
 		t.Fatalf("the record was not written: %v", err)
+	}
+}
+
+// TestAMergeJudgesOnlyTheFoldersTheProjectDeclares holds the hold to the same tree a judge reads. A project that
+// names src as the folder to check is never judged anywhere else, so a merge refused over a file outside it would
+// refuse work for a sin the project never asked about, which is what a worker's own test file showed.
+func TestAMergeJudgesOnlyTheFoldersTheProjectDeclares(t *testing.T) {
+	root, _, _ := projectWithASin(t)
+	sinful := "def refund(order) -> int:\n    if order.late:\n        raise ValueError(order)\n    else:\n        return order.total\n"
+
+	if err := os.MkdirAll(filepath.Join(root, "tests"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := os.WriteFile(filepath.Join(root, "tests", "test_refund.py"), []byte(sinful), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	if held := MergeHeld(mergingOf(root, generousWindow, "tests/test_refund.py")); held != "" {
+		t.Errorf("a merge was held over a file outside the folders this project declares: %q", held)
+	}
+
+	if held := MergeHeld(mergingOf(root, generousWindow, "src/refund.py")); held == "" {
+		t.Error("a merge was let through for a sin inside the folders this project declares")
 	}
 }

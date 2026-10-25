@@ -225,6 +225,11 @@ func (m merging) shallow(project config.Config, rules []detectors.Detector) []Si
 
 // changed are the judged files the worker changed, as paths on disk: the ones the event names, and otherwise what
 // its branch changed since it left its base, committed or not.
+//
+// A merge is judged by the same configuration a judge of the whole tree is, which is the one question
+// `config.IsJudged` answers: the language the project writes, the folders it declares, and the folders it leaves
+// out. A hold that read a file no judge of the project would ever read holds a merge over a sin the project never
+// asked about, which is what a worker's branch being refused over its own test file showed.
 func (m merging) changed(project config.Config) map[string]bool {
 	listed := git.Listed(m.worktree, m.files)
 	if len(m.files) == 0 {
@@ -232,7 +237,7 @@ func (m merging) changed(project config.Config) map[string]bool {
 	}
 
 	for file := range listed {
-		if !project.Writes(source.OfFile(file)) {
+		if !project.IsJudged(m.worktree, file) {
 			delete(listed, file)
 		}
 	}
