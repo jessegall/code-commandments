@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
 	"slices"
 	"strconv"
 	"strings"
@@ -290,6 +291,43 @@ const Plugin = ".journal-plugin/plugin.json"
 // PluginSchema is the journal plugin's settings as version 4 of the agent journal reads them: the same registry's.
 const PluginSchema = ".journal-plugin/settings.json"
 
+// Journal4Plugin is version 4 of the agent journal's manifest, at the root as that version reads it.
+const Journal4Plugin = "journal-plugin.json"
+
+// pinned finds the release a manifest fetches the tool from: version 3 names it as a setting of its own, version 4
+// inside the command its setup runs, and both are written as a tag.
+var pinned = regexp.MustCompile(`COMMANDMENTS_RELEASE(?:=|": ")v([0-9]+\.[0-9]+\.[0-9]+)`)
+
+// released is the release a manifest fetches the tool from, read from its own text.
+//
+// A manifest's version and the release it fetches were kept apart by hand and drifted eleven releases, which is
+// how two consumers came to report a fault that a release had already fixed: the number a journal shows on its
+// plugins page could not tell them whether they had it.
+func released(path string) (string, error) {
+	text, err := os.ReadFile(path)
+	if err != nil {
+		return "", err
+	}
+
+	release := pinned.FindStringSubmatch(string(text))
+	if release == nil {
+		return "", fmt.Errorf("no COMMANDMENTS_RELEASE is pinned, so the manifest cannot name its version")
+	}
+
+	return release[1], nil
+}
+
+// renamedVersion is the manifest's text with its version set to the release, leaving the rest of the file as it
+// was written: version 4's manifest is kept by hand, and a reformatting of it would bury every later change.
+func renamedVersion(text, release string) (string, error) {
+	written := regexp.MustCompile(`("version":\s*)"[^"]*"`)
+	if !written.MatchString(text) {
+		return "", fmt.Errorf("the manifest names no version to set")
+	}
+
+	return written.ReplaceAllString(text, `${1}"`+release+`"`), nil
+}
+
 // SettingsSchema is PluginSettings as version 4's settings file lists them, each with its key, title, kind, help and
 // a default in its own JSON type.
 func SettingsSchema() []any {
@@ -358,7 +396,28 @@ func Generated(root string) (map[string]string, error) {
 		return nil, fmt.Errorf("%s is not a JSON object", Plugin)
 	}
 	manifest.Set("settings", PluginSettings())
+
+	release, err := released(filepath.Join(root, Plugin))
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", Plugin, err)
+	}
+
+	manifest.Set("version", release)
 	documents[Plugin] = jsonfile.Text(manifest)
+
+	four, err := os.ReadFile(filepath.Join(root, Journal4Plugin))
+	if err != nil {
+		return nil, err
+	}
+
+	fourth, err := released(filepath.Join(root, Journal4Plugin))
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", Journal4Plugin, err)
+	}
+
+	if documents[Journal4Plugin], err = renamedVersion(string(four), fourth); err != nil {
+		return nil, fmt.Errorf("%s: %w", Journal4Plugin, err)
+	}
 	schema, err := jsonfile.Pretty(SettingsSchema(), true)
 	if err != nil {
 		return nil, err
