@@ -46,7 +46,7 @@
         "module": {"type": "string", "minLength": 1},
         "resolver": {
           "type": "object",
-          "properties": {"tool": {"enum": ["roslyn", "mypy", "tsc"]}, "ran": {"type": "boolean"}},
+          "properties": {"tool": {"enum": ["roslyn", "mypy", "tsc", "go/types"]}, "ran": {"type": "boolean"}},
           "required": ["tool", "ran"],
           "additionalProperties": false
         },

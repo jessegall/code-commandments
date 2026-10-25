@@ -94,7 +94,7 @@ such fact.
 | `context` | the file informs but is not judged | `true`: a file outside `write` that the engine still needs to resolve types, targets and ancestry into. It is never reported on |
 | `test` | the bridge knows it | `true` for a file of a test project |
 | `module` | the language names modules | the dotted module the file is (Python `shop.cart`) |
-| `resolver` | a bridge resolver exists for the language | `{"tool", "ran"}`: the resolver (`roslyn`, `mypy`, `tsc`) and whether it ran on this file |
+| `resolver` | a bridge resolver exists for the language | `{"tool", "ran"}`: the resolver (`roslyn`, `mypy`, `tsc`, `go/types`) and whether it ran on this file |
 | `root` | always | the file's root node |
 | `comments` | always | every comment in the file, in source order (see *Comments*) |
 | `types` | a node names its type by `resolvedType` | the distinct types the file's nodes resolve to, each said once: a type thousands of expressions share is written one time, and the reader puts it back on each node |
@@ -234,6 +234,7 @@ the spelling is fixed:
 | php | `Shop\Cart` | `Shop\Cart::add()`, `Shop\Cart::$items`, `Shop\Cart::MAX` | `Shop\total()` |
 | python | `shop.cart.Cart` | `shop.cart.Cart.add` | `shop.cart.total` |
 | csharp | `global::Shop.Cart` | `global::Shop.Cart.Add(global::System.Int32)` | a local function: its member's id, `.`, its name |
+| go | `example.com/shop/cart.Cart` | `example.com/shop/cart.Cart.Add`, a field `example.com/shop/cart.Cart.lines` | `example.com/shop/cart.Total` |
 | typescript, vue | `<path>#Cart` | `<path>#Cart.add`, a namespace member `<path>#Ns.f` | `<path>#total`, a default export `<path>#default` |
 
 - **One id may name several declarations**: a C# partial class, an overload set in TS, a Python
@@ -355,6 +356,28 @@ A comment group is one comment: the run of `//` lines above a declaration is tha
 and its `kind` is `doc` only where the parser gave the group to a declaration as its documentation. A node the
 parser recovered from a syntax error can end before it starts; such a node's span ends where it begins, so no
 reader is handed bytes the node does not stand for.
+
+**Go's types.** They come from `go/types`, with the module's own packages checked from the sources the run
+already read and an empty package answered for anything outside the module, the standard library included. That
+is a decision about what a consumer pays, and it is measured: typing a module's own sources gives 86 percent of
+the expressions a full typing gives and 89 percent of its cross-package named types, in a fortieth of the time,
+with no Go toolchain installed. What it loses is every type reached through an import outside the module, and
+such a type is absent rather than guessed, so no rule reads one the checker never gave. A file's `resolver`
+says `go/types` and whether it ran.
+
+A type checker checks a package where a tree is read per file, so the files of a request are grouped into the
+packages the compiler would compile them as, and a package is completed from its own folder: a request naming
+one file is still typed against its whole package, since otherwise every name its siblings declare would read as
+unresolved, and the files the request did not name are `context`. A file's `module` is the import path of the
+package it belongs to. A file no platform builds, by its `//go:build` line or its name's own suffixes, is still
+written with its tree and carries no types, which is the honest answer rather than a silent gap.
+
+`nullable` is the one place the contract reads absence, and for Go that is a pointer and an interface: a nil
+pointer and a nil interface are a value that is missing, while a nil slice ranges cleanly and a nil map reads, so
+neither is written as admitting absence. A pointer, a map and a channel have no kind of their own in *Types* and
+are written `opaque`, which keeps the text the compiler spells and the facts it knows; `valueType` is true for a
+basic type, a struct and an array, which Go copies. A function's `returns` is the one type it answers, or a
+`tuple` of several, which is Go's own shape and where every `(T, error)` reading starts.
 
 **Python.** A node whose `ast` class holds one name as a plain string writes it as `name`: a `FunctionDef`'s
 or `ClassDef`'s own, an `arg`, a `Name`, an `Attribute`'s attribute, a named `keyword`, an `alias`'s imported

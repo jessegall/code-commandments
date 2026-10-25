@@ -61,6 +61,7 @@ func PackagesOf(files []string) []Package {
 	packages := make([]Package, 0, len(order))
 	for _, key := range order {
 		one := held[key]
+		one.Files = append(one.Files, siblingsOf(*one)...)
 		sort.Strings(one.Files)
 		packages = append(packages, *one)
 	}
@@ -73,6 +74,36 @@ func PackagesOf(files []string) []Package {
 	})
 
 	return packages
+}
+
+// siblingsOf are the package's other files in its own folder, which the run was not handed.
+//
+// A package is what the checker checks, so a request naming one file is still typed against the whole package it
+// belongs to: without its siblings, every name they declare would read as unresolved, and the hooks judge one
+// file at a time. The siblings are read, not reported on, which the file line's context says.
+func siblingsOf(one Package) []string {
+	entries, err := os.ReadDir(one.Folder)
+	if err != nil {
+		return nil
+	}
+	held := map[string]bool{}
+	for _, path := range one.Files {
+		held[filepath.Base(path)] = true
+	}
+
+	var siblings []string
+	for _, entry := range entries {
+		name := entry.Name()
+		if entry.IsDir() || held[name] || !strings.HasSuffix(name, ".go") || !builds(one.Folder, name) {
+			continue
+		}
+		path := filepath.Join(one.Folder, name)
+		if packageClause(path) == one.Name {
+			siblings = append(siblings, path)
+		}
+	}
+
+	return siblings
 }
 
 // builds says whether the current platform builds the file at all, as go/build decides it.

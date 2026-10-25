@@ -139,3 +139,29 @@ func named(packages []gotree.Package) []string {
 
 	return names
 }
+
+// TestOneFileIsTypedAgainstItsWholePackage holds a request naming one file to the package it belongs to: the
+// checker checks a package, so without its siblings every name they declare would read as unresolved, and the
+// hooks judge one file at a time. The siblings are read, not reported on.
+func TestOneFileIsTypedAgainstItsWholePackage(t *testing.T) {
+	root := module(t, map[string]string{
+		"go.mod":       "module example.com/shop\n",
+		"cart/cart.go": "package shop\n\nfunc Total() int { return rate() }\n",
+		"cart/rate.go": "package shop\n\nfunc rate() int { return 2 }\n",
+		"cart/note.go": "package shop_test\n\nfunc note() {}\n",
+	})
+
+	packages := gotree.PackagesOf([]string{filepath.Join(root, "cart/cart.go")})
+
+	if len(packages) != 1 {
+		t.Fatalf("one file is grouped into %d packages", len(packages))
+	}
+	if len(packages[0].Files) != 2 {
+		t.Fatalf("the package holds %v, where its folder holds a sibling of the same package", packages[0].Files)
+	}
+	for _, held := range packages[0].Files {
+		if filepath.Base(held) == "note.go" {
+			t.Error("a file of another package in the same folder was taken into this one")
+		}
+	}
+}

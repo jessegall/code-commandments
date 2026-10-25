@@ -13,6 +13,7 @@ import (
 	"go/ast"
 	"go/parser"
 	"go/token"
+	"go/types"
 	"io"
 	"reflect"
 	"runtime"
@@ -31,17 +32,23 @@ func Version() string {
 }
 
 // contractVersion is the version of contract/CONTRACT.md this bridge writes.
-const contractVersion = 2
+const contractVersion = 3
 
 // Write writes the stream for every Go file under the paths: a header, one line per file, and the trailer. The
 // files in write are the ones the run reports on, and the rest are context, read so that a rule spanning files
 // has what it needs.
+//
+// The files are grouped into packages and each package is type-checked once, because a type checker works in
+// packages where a tree is read per file. A file that belongs to no package the checker could build, one no
+// platform builds or one with no package clause to read, is still written: its tree is there and its types are
+// not, which is the honest answer rather than a silent gap.
 func Write(out io.Writer, paths, write []string) error {
-	files := GoFiles(paths)
+	found := GoFiles(paths)
 	judged := map[string]bool{}
 	for _, path := range resolved(write) {
 		judged[path] = true
 	}
+	context := func(path string) bool { return len(judged) > 0 && !judged[path] }
 
 	lines := json.NewEncoder(out)
 	header := map[string]any{"header": map[string]any{
@@ -53,46 +60,127 @@ func Write(out io.Writer, paths, write []string) error {
 		return err
 	}
 
-	written := 0
-	for _, path := range files {
-		file, err := fileLine(path, len(judged) > 0 && !judged[path])
+	fset := token.NewFileSet()
+	checked := newChecker(fset, PackagesOf(found))
+	written := map[string]bool{}
+	count := 0
+
+	for _, one := range PackagesOf(found) {
+		_, facts := checked.check(one)
+		for _, parsed := range checked.filesOf(one) {
+			path := fset.Position(parsed.Pos()).Filename
+			if written[path] {
+				continue
+			}
+			written[path] = true
+			line, err := fileLine(fset, parsed, path, one.Path, facts, context(path))
+			if err != nil {
+				return err
+			}
+			if err := lines.Encode(map[string]any{"file": line}); err != nil {
+				return err
+			}
+			count++
+		}
+	}
+
+	for _, path := range found {
+		if written[path] {
+			continue
+		}
+		source, err := read(path)
+		if err != nil {
+			continue
+		}
+		parsed, parseErr := parser.ParseFile(fset, path, source, parser.ParseComments|parser.SkipObjectResolution)
+		if parsed == nil {
+			return fmt.Errorf("%s: %w", path, parseErr)
+		}
+		line, err := fileLine(fset, parsed, path, "", nil, context(path))
 		if err != nil {
 			return err
 		}
-		if err := lines.Encode(map[string]any{"file": file}); err != nil {
+		if err := lines.Encode(map[string]any{"file": line}); err != nil {
 			return err
 		}
-		written++
+		count++
 	}
 
-	return lines.Encode(map[string]any{"trailer": map[string]any{"files": written}})
+	return lines.Encode(map[string]any{"trailer": map[string]any{"files": count}})
 }
 
 // file is one source file's tree and comments, as the contract's file line.
 type file struct {
-	Path     string    `json:"path"`
-	Language string    `json:"language"`
-	Errors   int       `json:"errors"`
-	Context  bool      `json:"context,omitempty"`
-	Root     *node     `json:"root"`
-	Comments []comment `json:"comments"`
+	Path     string      `json:"path"`
+	Language string      `json:"language"`
+	Errors   int         `json:"errors"`
+	Context  bool        `json:"context,omitempty"`
+	Module   string      `json:"module,omitempty"`
+	Resolver *resolver   `json:"resolver,omitempty"`
+	Root     *node       `json:"root"`
+	Comments []comment   `json:"comments"`
+	Types    []*typeLine `json:"types,omitempty"`
+}
+
+// resolver says which resolver a file had and whether it ran on it, so a type that is absent always reads as
+// "could not", never as "did not try".
+type resolver struct {
+	Tool string `json:"tool"`
+	Ran  bool   `json:"ran"`
+}
+
+// typeLine is one type as the contract writes it: its canonical text, its shape, and what the checker knows
+// about it. A file says each of its types once and its nodes name them by place.
+type typeLine struct {
+	Text       string      `json:"text"`
+	Kind       string      `json:"kind"`
+	Name       string      `json:"name,omitempty"`
+	Args       []*typeLine `json:"args,omitempty"`
+	Members    []*typeLine `json:"members,omitempty"`
+	Fields     []typeField `json:"fields,omitempty"`
+	Parameters []*typeLine `json:"parameters,omitempty"`
+	Returns    *typeLine   `json:"returns,omitempty"`
+	Nullable   bool        `json:"nullable,omitempty"`
+	ValueType  bool        `json:"valueType,omitempty"`
+	Element    *typeLine   `json:"element,omitempty"`
+	Origin     string      `json:"origin"`
+}
+
+// typeField is one field of a struct type.
+type typeField struct {
+	Name string    `json:"name"`
+	Type *typeLine `json:"type"`
+}
+
+// target is the declaration a call reaches.
+type target struct {
+	Symbol string `json:"symbol"`
+	Type   string `json:"type,omitempty"`
+	Name   string `json:"name"`
 }
 
 // node is one syntax node. Only the facts syntax alone gives are here; the types a checker gives are the
 // bridge's second half, and no node carries a fact the engine fills.
 type node struct {
-	ID       int             `json:"id"`
-	Kind     string          `json:"kind"`
-	Role     string          `json:"role"`
-	Is       []string        `json:"is,omitempty"`
-	Span     [3]int          `json:"span"`
-	Field    string          `json:"field,omitempty"`
-	Children []*node         `json:"children,omitempty"`
-	Name     string          `json:"name,omitempty"`
-	Literal  string          `json:"literal,omitempty"`
-	Value    json.RawMessage `json:"value,omitempty"`
-	Operator string          `json:"operator,omitempty"`
-	Flags    []string        `json:"flags,omitempty"`
+	ID           int             `json:"id"`
+	Kind         string          `json:"kind"`
+	Role         string          `json:"role"`
+	Is           []string        `json:"is,omitempty"`
+	Span         [3]int          `json:"span"`
+	Field        string          `json:"field,omitempty"`
+	Children     []*node         `json:"children,omitempty"`
+	Name         string          `json:"name,omitempty"`
+	ResolvedType *int            `json:"resolvedType,omitempty"`
+	Literal      string          `json:"literal,omitempty"`
+	Value        json.RawMessage `json:"value,omitempty"`
+	Operator     string          `json:"operator,omitempty"`
+	Flags        []string        `json:"flags,omitempty"`
+	Declared     *typeLine       `json:"declared,omitempty"`
+	Returns      *typeLine       `json:"returns,omitempty"`
+	Symbol       string          `json:"symbol,omitempty"`
+	Refers       string          `json:"refers,omitempty"`
+	Target       *target         `json:"target,omitempty"`
+	Constant     bool            `json:"constant,omitempty"`
 }
 
 // comment is one comment group, which is what Go calls a run of lines with nothing but comment between them.
@@ -117,29 +205,29 @@ type goComment struct {
 	Code bool `json:"code,omitempty"`
 }
 
-// fileLine parses the file and builds its line. A file the parser could only partly read is still written, with
-// errors counting what it could not read, so a tree is never lost whole for a syntax error in it.
-func fileLine(path string, context bool) (*file, error) {
+// fileLine is one file's line: the tree the parser read, the comments, and the types the checker gave its
+// nodes. A file the parser could only partly read is still written, with errors counting what it could not read,
+// so a tree is never lost whole for a syntax error in it.
+func fileLine(fset *token.FileSet, parsed *ast.File, path, module string, facts *types.Info, context bool) (*file, error) {
 	source, err := read(path)
 	if err != nil {
 		return nil, err
 	}
-	fset := token.NewFileSet()
-	parsed, parseErr := parser.ParseFile(fset, path, source, parser.ParseComments|parser.SkipObjectResolution)
-	if parsed == nil {
-		return nil, fmt.Errorf("%s: %w", path, parseErr)
-	}
 
-	tree := &writer{fset: fset, source: source}
+	tree := &writer{fset: fset, source: source, facts: facts, index: map[string]int{}, module: module}
+	tree.owners = ownersIn(parsed, facts, module)
 	root := tree.node(parsed, "", false)
 
 	return &file{
 		Path:     path,
 		Language: "go",
-		Errors:   errorsIn(parseErr),
+		Errors:   errorsIn(parsed, source),
 		Context:  context,
+		Module:   module,
+		Resolver: &resolver{Tool: "go/types", Ran: facts != nil},
 		Root:     root,
 		Comments: tree.comments(parsed),
+		Types:    tree.types,
 	}, nil
 }
 
@@ -150,6 +238,15 @@ type writer struct {
 	source []byte
 	next   int
 	nodes  []*node
+	// facts are what the checker learned about this file's very nodes; none where no package could be checked.
+	facts *types.Info
+	// module is the import path of the package the file belongs to, which a field's or a method's id starts with.
+	module string
+	// types are the distinct types the file's nodes resolve to, said once each, and index is where each one sits.
+	types []*typeLine
+	index map[string]int
+	// owners is the id of the type that declares each field name the file writes, as the checker says it.
+	owners map[*ast.Ident]string
 }
 
 // node is the node for one ast node: its own facts, then its children in source order, each told which field of
@@ -168,6 +265,8 @@ func (w *writer) node(held ast.Node, field string, inType bool) *node {
 	if literal, value := literalOf(held); literal != "" {
 		built.Literal, built.Value = literal, value
 	}
+
+	w.typed(held, built)
 
 	for _, slot := range w.slots(held) {
 		built.Children = append(built.Children, w.node(slot.held, slot.field, inType || isTypeField(slot.field)))
@@ -291,16 +390,18 @@ func lowerFirst(name string) string {
 	return strings.ToLower(name[:1]) + name[1:]
 }
 
-// errorsIn counts the syntax errors the parser reported for one file.
-func errorsIn(err error) int {
-	if err == nil {
-		return 0
-	}
-	if list, isList := err.(interface{ Len() int }); isList {
-		return list.Len()
+// errorsIn counts what the parser could not read in the file, by parsing it once more for its errors alone: the
+// tree a run writes comes from the checker's own parse, which keeps no error list of its own.
+func errorsIn(parsed *ast.File, source []byte) int {
+	if _, err := parser.ParseFile(token.NewFileSet(), "errors.go", source, parser.SkipObjectResolution); err != nil {
+		if list, isList := err.(interface{ Len() int }); isList {
+			return list.Len()
+		}
+
+		return 1
 	}
 
-	return 1
+	return 0
 }
 
 // quoted is the JSON for a value a literal decodes to.
