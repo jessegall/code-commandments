@@ -44,9 +44,32 @@ def sources(paths: list[str], chosen: Options) -> list[BuildSource]:
         return []
 
 
-def stamp(path: str) -> tuple[float, int]:
-    status = os.stat(path)
+def stamp(path: str) -> tuple[float, int] | None:
+    """What the file was when it was read, and None for a file that is no longer there: a file deleted between
+    mypy's listing of the folder and this read, a worktree removed under the run, is no part of the project this
+    request asks about, and asking the filesystem about it used to end the stream in the middle."""
+    try:
+        status = os.stat(path)
+    except OSError:
+        return None
     return status.st_mtime, status.st_size
+
+
+def present(found: list[BuildSource]) -> tuple[list[BuildSource], dict[str, tuple[float, int]]]:
+    """The sources whose files are still there, and what each was when it was read. A module with no file of its
+    own is kept as it is; one whose file is gone is left out of both, so nothing asks mypy to build it."""
+    kept: list[BuildSource] = []
+    stamps: dict[str, tuple[float, int]] = {}
+    for source in found:
+        if not source.path:
+            kept.append(source)
+            continue
+        held = stamp(source.path)
+        if held is None:
+            continue
+        stamps[source.path] = held
+        kept.append(source)
+    return kept, stamps
 
 
 def built(found: list[BuildSource], chosen: Options) -> FineGrainedBuildManager | None:
@@ -83,17 +106,22 @@ class Session:
         self.manager: FineGrainedBuildManager | None = None
         self.stamps: dict[str, tuple[float, int]] = {}
 
+    def holds(self, key: tuple[tuple[str, ...], str | None], stamps: dict[str, tuple[float, int]]) -> bool:
+        """Whether this session already holds a build of that same project, which is what can be updated rather
+        than built again: the same paths and interpreter, and the same files. A file added or removed changes what
+        the build is OF, and an update can only say that a file it already knows has changed."""
+        return self.manager is not None and key == self.key and stamps.keys() == self.stamps.keys()
+
     def checked(self, paths: list[str], python: str | None) -> CheckedProject:
         chosen = options(python)
-        found = sources(paths, chosen)
-        stamps = {s.path: stamp(s.path) for s in found if s.path}
+        found, stamps = present(sources(paths, chosen))
         key = (tuple(sorted(paths)), python)
-        if self.manager is None or key != self.key or stamps.keys() != self.stamps.keys():
-            self.manager = built(found, chosen)
-        else:
+        if self.holds(key, stamps):
             changed = [(s.module, s.path) for s in found if s.path and stamps[s.path] != self.stamps[s.path] and s.module in self.manager.graph]
             if changed:
                 self.manager.update(changed, [])
+        else:
+            self.manager = built(found, chosen)
         self.key, self.stamps = key, stamps
         if self.manager is None:
             return CheckedProject(found, {}, {})

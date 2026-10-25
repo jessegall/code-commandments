@@ -220,8 +220,37 @@ func (n Node) IsInventingOnMiss() bool {
 			found = append(found, value)
 		}
 	}
+	if len(empty) == 0 || len(found) == 0 {
+		return false
+	}
 
-	return len(empty) > 0 && len(found) > 0 && !slices.ContainsFunc(found, func(value Node) bool { return !n.isLookedUp(value) })
+	// A def that answers a question invents nothing: where every other return is a comparison or a test over
+	// comparisons, its False is the other answer and not a blank standing in for what the def looked up. A
+	// predicate reads what it is asked about, so the lookup is there either way.
+	if !slices.ContainsFunc(found, func(value Node) bool { return !value.IsBooleanAnswer() }) {
+		return false
+	}
+
+	return !slices.ContainsFunc(found, func(value Node) bool { return !n.isLookedUp(value) })
+}
+
+// IsBooleanAnswer says whether the expression answers a question rather than handing a value back: a comparison,
+// a `not`, an `and` or `or` over answers, or True and False themselves.
+func (n Node) IsBooleanAnswer() bool {
+	switch n.Kind() {
+	case "Compare":
+		return true
+	case "UnaryOp":
+		return n.Node().Operator == "not"
+	case "BoolOp":
+		parts := n.ChildrenIn("values")
+
+		return len(parts) > 0 && !slices.ContainsFunc(parts, func(part Node) bool { return !part.IsBooleanAnswer() })
+	case "Constant":
+		return n.Node().Literal == "bool"
+	}
+
+	return false
 }
 
 // isLookedUp says whether the returned value is a lookup the def makes, or a local it assigned one to.

@@ -527,18 +527,31 @@ def is_code(words: str) -> bool:
         body = ast.parse(text).body if text else []
     except (SyntaxError, ValueError):
         return False
-    if len(body) != 1 or body[0].end_lineno != text.count("\n") + 1 or body[0].end_col_offset != len(text.split("\n")[-1].encode()):
+    if not one_statement_whole(body, text):
         return False
     return not (isinstance(body[0], ast.Expr) and isinstance(body[0].value, ast.Name))
+
+
+def one_statement_whole(body: list[ast.stmt], text: str) -> bool:
+    """Whether the parse is one statement that reaches the last character of the text. Prose often parses, but as
+    several statements, or as one that stops partway and leaves the rest unread."""
+    if len(body) != 1:
+        return False
+    lines = text.split("\n")
+    return body[0].end_lineno == len(lines) and body[0].end_col_offset == len(lines[-1].encode())
 
 
 SKIPPED_FOLDERS = {"vendor", "node_modules", "site-packages", "__pycache__"}
 
 
 def python_files(paths: list[str]) -> list[str]:
-    """Every `.py` file under the paths, resolved, in walk order: a folder that is a link, hidden, a dependency
-    store, bytecode, an `.egg-info` or a virtual environment is not walked. A module a package shadows is still
-    one, so it is written even where mypy leaves it out."""
+    """Every `.py` file under the paths that is there to be read, resolved, in walk order: a folder that is a link,
+    hidden, a dependency store, bytecode, an `.egg-info` or a virtual environment is not walked. A module a package
+    shadows is still one, so it is written even where mypy leaves it out.
+
+    A name the walk met whose file cannot be opened is left out: a link to a file that is gone, a file deleted
+    under the run, a worktree removed while it was judged. Each used to end the stream in the middle, with every
+    other file of the request lost with it."""
     found: list[str] = []
     for root in paths:
         if os.path.isfile(root):
@@ -547,7 +560,16 @@ def python_files(paths: list[str]) -> list[str]:
         for folder, subfolders, names in os.walk(root):
             subfolders[:] = sorted(sub for sub in subfolders if walks(os.path.join(folder, sub)))
             found += [os.path.realpath(os.path.join(folder, name)) for name in sorted(names) if name.endswith(".py")]
-    return list(dict.fromkeys(found))
+    return [path for path in dict.fromkeys(found) if readable(path)]
+
+
+def readable(path: str) -> bool:
+    """Whether the file is there to be read now."""
+    try:
+        with open(path, "rb"):
+            return True
+    except OSError:
+        return False
 
 
 def walks(folder: str) -> bool:

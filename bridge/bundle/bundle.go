@@ -60,8 +60,18 @@ func Archived(name string, archive []byte) Bundle {
 	}
 }
 
+// wholeMark names the file that says the folder holds every file of the bundle. It is written with them, inside
+// the draft that is renamed into place, so a folder carrying it carried them all at the moment it appeared.
+const wholeMark = ".whole"
+
 // Folder is where this version of the bundle lives, written out whole on its first use: a folder is renamed into
 // place only once every file is in it, so a run never reads one half written.
+//
+// A folder that is there but does not hold the bundle's files is written again. That is not a theory: the folder
+// also holds what the runtime builds beside the sources, and `python -m venv <folder>/venv` creates the folder it
+// needs, so a folder removed by hand came back holding a virtual environment and nothing else. The mark, and not
+// the folder's existence, is what says the sources are there, and a run that finds it missing writes them back
+// instead of failing on them for good.
 func (b Bundle) Folder() (string, error) {
 	key, err := b.key()
 	if err != nil {
@@ -73,7 +83,7 @@ func (b Bundle) Folder() (string, error) {
 		return "", err
 	}
 	folder := filepath.Join(cache, "code-commandments", b.name, hex.EncodeToString(sum[:])[:16])
-	if _, err := os.Stat(folder); err == nil {
+	if _, err := os.Stat(filepath.Join(folder, wholeMark)); err == nil {
 		return folder, nil
 	}
 	files, err := b.files()
@@ -83,27 +93,82 @@ func (b Bundle) Folder() (string, error) {
 	if err := os.MkdirAll(filepath.Dir(folder), 0o755); err != nil {
 		return "", err
 	}
+	if _, err := os.Stat(folder); err == nil {
+		return folder, heal(folder, files)
+	}
 	draft, err := os.MkdirTemp(filepath.Dir(folder), ".unpacking-")
 	if err != nil {
 		return "", err
 	}
 	defer os.RemoveAll(draft)
-	for name, content := range files {
-		target := filepath.Join(draft, filepath.FromSlash(name))
-		if err := os.MkdirAll(filepath.Dir(target), 0o755); err != nil {
-			return "", err
-		}
-		if err := os.WriteFile(target, content, 0o644); err != nil {
-			return "", err
-		}
+	if err := write(draft, files); err != nil {
+		return "", err
 	}
 	if err := os.Rename(draft, folder); err != nil {
 		if _, held := os.Stat(folder); held != nil {
 			return "", err
 		}
+		if _, held := os.Stat(filepath.Join(folder, wholeMark)); held != nil {
+			return folder, heal(folder, files)
+		}
 	}
 
 	return folder, nil
+}
+
+// write puts every file of the bundle in the folder, and the mark last, so the mark is never there before them.
+func write(folder string, files map[string][]byte) error {
+	for name, content := range files {
+		target := filepath.Join(folder, filepath.FromSlash(name))
+		if err := os.MkdirAll(filepath.Dir(target), 0o755); err != nil {
+			return err
+		}
+		if err := os.WriteFile(target, content, 0o644); err != nil {
+			return err
+		}
+	}
+
+	return os.WriteFile(filepath.Join(folder, wholeMark), nil, 0o644)
+}
+
+// heal writes the bundle's files into a folder that is already there, each through a name of its own and renamed
+// into place, so a run reading the folder while this one writes it reads a whole file or none. What the runtime
+// built beside the sources, a virtual environment among it, is left where it is: it belongs to this same version
+// of the bundle, and building it again is the cost this heals.
+func heal(folder string, files map[string][]byte) error {
+	for name, content := range files {
+		target := filepath.Join(folder, filepath.FromSlash(name))
+		if err := os.MkdirAll(filepath.Dir(target), 0o755); err != nil {
+			return err
+		}
+		draft, err := os.CreateTemp(filepath.Dir(target), ".writing-")
+		if err != nil {
+			return err
+		}
+		if _, err := draft.Write(content); err != nil {
+			draft.Close()
+			os.Remove(draft.Name())
+
+			return err
+		}
+		if err := draft.Close(); err != nil {
+			os.Remove(draft.Name())
+
+			return err
+		}
+		if err := os.Chmod(draft.Name(), 0o644); err != nil {
+			os.Remove(draft.Name())
+
+			return err
+		}
+		if err := os.Rename(draft.Name(), target); err != nil {
+			os.Remove(draft.Name())
+
+			return err
+		}
+	}
+
+	return os.WriteFile(filepath.Join(folder, wholeMark), nil, 0o644)
 }
 
 // TreesFolder is where a language's bridge keeps each file's tree between runs, beside the bundles written out.
@@ -146,6 +211,11 @@ func Files(sources fs.FS, root string) (map[string][]byte, error) {
 		relative := name
 		if root != "." {
 			relative = name[len(root)+1:]
+		}
+		// The mark a written-out folder carries is the bundle's own bookkeeping, never one of its sources, so
+		// reading a folder back answers the files that were carried into it and nothing else.
+		if relative == wholeMark {
+			return nil
 		}
 		files[relative] = content
 

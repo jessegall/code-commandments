@@ -96,3 +96,39 @@ func TestAnArchiveNeverWritesOutsideItsFolder(t *testing.T) {
 		t.Errorf("the archive unpacks to %v", unpacked)
 	}
 }
+
+// TestAFolderThatLostItsFilesIsWrittenAgain holds a bundle to what the folder HOLDS rather than to the folder
+// being there. The runtime builds beside the sources, and `python -m venv <folder>/venv` creates the folder it
+// needs, so a folder removed by hand came back holding a virtual environment and nothing else: pip then failed on
+// a requirements file that was never written again, every run, for good.
+func TestAFolderThatLostItsFilesIsWrittenAgain(t *testing.T) {
+	t.Setenv("XDG_CACHE_HOME", t.TempDir())
+	carried := Embedded("mypy", fstest.MapFS{"mypy/tree.py": {Data: []byte("the bridge")}, "mypy/requirements.txt": {Data: []byte("mypy==1.0")}}, "mypy")
+	folder, err := carried.Folder()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if err := os.RemoveAll(folder); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.MkdirAll(filepath.Join(folder, "venv", "bin"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+
+	again, err := carried.Folder()
+	if err != nil {
+		t.Fatalf("a folder holding only what the runtime built was not written again: %v", err)
+	}
+	if again != folder {
+		t.Errorf("the bundle answers %s, not the folder its version lives in", again)
+	}
+	for name, want := range map[string]string{"tree.py": "the bridge", "requirements.txt": "mypy==1.0"} {
+		if held, err := os.ReadFile(filepath.Join(folder, name)); err != nil || string(held) != want {
+			t.Errorf("%s reads %q, %v", name, held, err)
+		}
+	}
+	if _, err := os.Stat(filepath.Join(folder, "venv", "bin")); err != nil {
+		t.Error("healing the folder threw away what the runtime had built in it")
+	}
+}
