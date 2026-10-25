@@ -144,7 +144,10 @@ func scribesTable() Table {
 	for _, maintainer := range maintainers {
 		lines = append(lines, "| `"+maintainer.Name()+"` | "+cell(maintainer.Summary())+" |")
 	}
-	lines = append(lines, "")
+	lines = append(lines, "", "### A project's own rules", "",
+		"A rule in `.commandments/custom/` that declares a `fix` is repented like a shipped detector, for the PHP, Vue and TypeScript engines: "+
+			"`replace` writes a template in place of the found node, each `{child:left}`-style placeholder standing for a related node's source, "+
+			"and `substitute` rewrites the node's source with regular expressions. The writing-detectors skill shows both.", "")
 	for _, engine := range engines() {
 		lines = append(lines, "### "+heading(engine), "")
 		var rows []string

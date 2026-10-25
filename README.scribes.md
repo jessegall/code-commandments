@@ -12,6 +12,10 @@ Whole-tree PHP rewrites, run on every `repent`:
 |---|---|
 | `DataHintScribe` | Brings a Spatie `Data` class's magic surface in line with the spatie-data skill: renames object factories to `from<Type>`, regenerates `@method` docblock lines, and adds `@method collect()` when used. |
 
+### A project's own rules
+
+A rule in `.commandments/custom/` that declares a `fix` is repented like a shipped detector, for the PHP, Vue and TypeScript engines: `replace` writes a template in place of the found node, each `{child:left}`-style placeholder standing for a related node's source, and `substitute` rewrites the node's source with regular expressions. The writing-detectors skill shows both.
+
 ### Csharp
 
 

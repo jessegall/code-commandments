@@ -367,11 +367,34 @@ never against what the code happens to do today.
   difference is only the author's intent — the rule is not viable. Cut it. That is a successful
   outcome, not a failure.
 
-## It does not auto-fix
+## Auto-fix it only when the fix is mechanical
 
-A rule of your own reports; it never rewrites. If the honest fix depends on what the code MEANS —
-which value object to introduce, where absence really belongs — an auto-fix would launder the problem
-instead of solving it. Let the skill teach the reader.
+A rule reports by default. If the honest fix depends on what the code MEANS — which value object to
+introduce, where absence really belongs — an auto-fix would launder the problem instead of solving it.
+Leave `fix` out and let the skill teach the reader.
+
+When the fix follows from the found node alone, declare it under `fix`, and `repent` applies it to
+every finding (PHP, Vue and TypeScript rules). Name exactly one of:
+
+- `replace` — the text written in place of the found node. Each `{target}` stands for the source of
+  the node an `"of"` target names, hops joined by `/`:
+
+  ```json
+  "fix": { "replace": "{child:left} > 0 && {child:right}" }
+  ```
+
+  turns `items.length && <List />` into `items.length > 0 && <List />`, and
+  `{ "replace": "{child:arguments/child:body}" }` unwraps `useMemo(() => total * rate, [total, rate])`
+  to `total * rate`. A finding whose placeholder reaches no node is left for a human.
+- `substitute` — Go regular-expression substitutions applied in order to the found node's source,
+  `${1}` standing for a group:
+
+  ```json
+  "fix": { "substitute": [{ "matches": "(^|[\\s:\"'`])ml-", "with": "${1}ms-" }] }
+  ```
+
+Narrow the rule's `where` until every node it finds takes the fix: a `replace` that unwraps a callback
+belongs on a rule that admits only an expression body.
 
 ## The cadence, in order
 

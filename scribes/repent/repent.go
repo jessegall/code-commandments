@@ -35,12 +35,13 @@ func Run(roots []string, scope scribes.Scope, given []detectors.Detector, only s
 }
 
 // Chain is the chain repent runs over the two scanners: every maintainer, then a step for each repentable detector
-// given, backend before frontend within each stage.
+// given, backend before frontend within each stage; the frontend bridge reads TypeScript as well as Vue.
 func Chain(backend, vue *scribes.Scanner, given []detectors.Detector) *scribes.Chain {
 	var steps []scribes.Step
 	steps = append(steps, scribes.MaintenanceSteps(catalog.PHP, backend)...)
 	steps = append(steps, scribes.Steps(catalog.PHP, backend, given)...)
 	steps = append(steps, scribes.Steps(catalog.Vue, vue, given)...)
+	steps = append(steps, scribes.Steps(catalog.TypeScript, vue, given)...)
 
 	return scribes.Default(steps...)
 }

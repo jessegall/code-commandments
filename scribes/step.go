@@ -67,7 +67,46 @@ func Steps(engine catalog.Engine, scanner *Scanner, given []detectors.Detector) 
 		steps = append(steps, DetectorStep{detector: detector, scribe: scribesOf[catalog.Name(detector)], scanner: scanner})
 	}
 
+	for _, detector := range given {
+		if fixing, fixes := selfFixing(engine, detector); fixes {
+			steps = append(steps, DetectorStep{detector: detector, scribe: func() Scribe { return SelfFixScribe{fixing} }, scanner: scanner})
+		}
+	}
+
 	return steps
+}
+
+// selfFixing is the detector as one that states its own fix, when it judges the engine and declares one.
+func selfFixing(engine catalog.Engine, detector detectors.Detector) (detectors.SelfFixing, bool) {
+	fixing, states := detector.(detectors.SelfFixing)
+	judges, _ := detectors.EngineOf(detector)
+
+	return fixing, states && fixing.Fixes() && judges == engine
+}
+
+// SelfFixScribe writes the fix a self-fixing detector states for each finding in place of the node it found.
+type SelfFixScribe struct {
+	detector detectors.SelfFixing
+}
+
+// Rewrite replaces each finding's source with the text its detector states for it.
+func (s SelfFixScribe) Rewrite(findings []engine.Match, _ *engine.Codebase) (Rewrites, error) {
+	draft := NewDraft()
+	for _, finding := range findings {
+		text, fixes := s.detector.FixFor(finding)
+		if !fixes {
+			continue
+		}
+
+		span, err := finding.Span()
+		if err != nil {
+			return Rewrites{}, err
+		}
+
+		draft.Edit(span, text)
+	}
+
+	return draft.Rewrites(), nil
 }
 
 // className is the detector's PHP class name under its engine's namespace: its package's folders, capitalised,

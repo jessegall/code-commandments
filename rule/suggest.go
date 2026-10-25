@@ -7,7 +7,7 @@ import (
 )
 
 // outer are the types a rule file is written in around its steps, whose shapes the schema spells out by hand.
-var outer = []reflect.Type{reflect.TypeFor[file](), reflect.TypeFor[sinFile](), reflect.TypeFor[find]()}
+var outer = []reflect.Type{reflect.TypeFor[file](), reflect.TypeFor[sinFile](), reflect.TypeFor[find](), reflect.TypeFor[Fix](), reflect.TypeFor[Substitution]()}
 
 // jsonKeys are the keys a type is written with, an embedded type's among them.
 func jsonKeys(written reflect.Type) []string {

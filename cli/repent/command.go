@@ -13,6 +13,7 @@ import (
 	"github.com/jessegall/code-commandments/cli"
 	"github.com/jessegall/code-commandments/cli/config"
 	"github.com/jessegall/code-commandments/cli/counter"
+	"github.com/jessegall/code-commandments/cli/custom"
 	"github.com/jessegall/code-commandments/cli/help"
 	"github.com/jessegall/code-commandments/cli/judge"
 	"github.com/jessegall/code-commandments/cli/scaffold"
@@ -48,7 +49,7 @@ func (Command) Names() []string {
 
 // Help documents it.
 func (Command) Help() help.Help {
-	return help.Of("Auto-fix sins — run every Scribe: the maintenance rewriters (Spatie Data hints) and each Repentable detector's own fix, PHP and Vue.").
+	return help.Of("Auto-fix sins — run every Scribe: the maintenance rewriters (Spatie Data hints) and each Repentable detector's own fix, PHP, Vue and TypeScript, and the fix a project's own rule declares.").
 		Form("repent [path]", "apply every fix, re-scanning until it converges (the default — this WRITES)").
 		Form("repent [path] --dry-run[=FILE]", "preview a unified diff instead, to the screen or a file").
 		Form("repent --only=NAME", "run ONE rewriter (a Scribe or a Repentable detector, lenient name match)").
@@ -141,7 +142,9 @@ func (c Command) Run(in *cli.Input, console cli.Console) (int, error) {
 		installed = config.Everything
 	}
 
-	converged, err := run.Run(roots, targets, config.Packaged(detectors.All(), installed), only)
+	fixers := append(config.Packaged(detectors.All(), installed), custom.Load(project).Enabled(judged)...)
+
+	converged, err := run.Run(roots, targets, fixers, only)
 	if err != nil {
 		return 0, err
 	}
