@@ -92,9 +92,9 @@ func (Journal4Hook) Run(in *cli.Input, console cli.Console) (int, error) {
 
 // Apart4 answers a version 4 event that is not a moment of the agent's own work, and says whether it was one.
 //
-// The plugin's own update applies its settings and renders its skills again. A worker's merge is held while its
-// changes are judged: the one event where our answer still decides whether work lands, so it is answered in full
-// and never from the queue.
+// The plugin's own update applies its settings and renders its skills again. A worker's delivery and its merge
+// are held while its changes are judged: the two events where our answer still decides whether work lands, so
+// each is answered in full and never from the queue.
 //
 // Both the program and the service answer through this, because they used to answer these two events apart: the
 // service decided from a map of the agent's moments, and an event missing from that map fell through to version
@@ -106,6 +106,8 @@ func Apart4(in *cli.Input, console cli.Console, line map[string]any) (string, bo
 		said, code, err := JournalConfig{}.Apply(in, console)
 
 		return Configured4(said), true, code, err
+	case deliveringEvent:
+		return DeliveryHeld(line), true, 0, nil
 	case mergeEvent:
 		return MergeHeld(line), true, 0, nil
 	}
@@ -235,9 +237,38 @@ func Moment4Of(line map[string]any) (map[string]any, bool) {
 		agent["cwd"] = project
 	}
 
+	// A worker writes inside a worktree of its own, which the journal keeps under the project's
+	// `.journal/worktrees/<n>/`, and the project a file belongs to is the tree it sits in rather than the one the
+	// journal runs from. Judged against the main checkout, every one of a worker's files lies outside the folders
+	// the project declares, so every edit it makes reads as a file the project does not judge and the worker is
+	// told nothing of its own sins until somebody merges them.
+	if worktree := worktreeOf(asText(tool["file"])); worktree != "" {
+		agent["cwd"] = worktree
+	}
+
 	// The event's own data rides along: the edit the journal already worked out is in it, and a judge that reads it
 	// never asks git for the lines nor the disk for the file.
 	return map[string]any{"event": "hook." + hook, "agent": agent, "tool": tool, "env": line["environment"], "data": data}, true
+}
+
+// worktreesIn is the folder the journal keeps a worker's own trees in, under the project.
+const worktreesIn = "/.journal/worktrees/"
+
+// worktreeOf is the worker's own tree the file sits in, as the journal lays them out; empty for a file of the
+// project itself, which is judged against the project as it always was.
+func worktreeOf(file string) string {
+	at := strings.Index(file, worktreesIn)
+	if at < 0 {
+		return ""
+	}
+
+	below := file[at+len(worktreesIn):]
+	named := strings.Index(below, "/")
+	if named <= 0 {
+		return ""
+	}
+
+	return file[:at+len(worktreesIn)+named]
 }
 
 // Line4 is the answer as version 4 of the journal reads it: a refusal with the advice beside its reason, or the

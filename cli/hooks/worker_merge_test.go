@@ -165,9 +165,13 @@ func TestAWorkerAnswersForItsOwnLinesOnly(t *testing.T) {
 // workerBranchOf is a project whose base branch holds the first files and a worker's worktree of it, on a branch
 // of its own, that committed the second: the shape a merge is really judged in, with the main checkout left on the
 // base branch, which is what the hold falls back to when the event names no base.
+//
+// The worktree sits where the journal puts one, under the project's own `.journal/worktrees/<n>-<name>`, because
+// that is what the hold and the edit marks meet: a worker's file is inside the project it is cut from.
 func workerBranchOf(t *testing.T, base, branch map[string]string) string {
 	t.Helper()
-	root, worktree := tempFolder(t), filepath.Join(tempFolder(t), "worker-12")
+	root := tempFolder(t)
+	worktree := filepath.Join(root, ".journal", "worktrees", "12-Lady-Lovelace")
 	t.Setenv("JOURNAL_ROOT", root)
 
 	gitIn(t, root, "init", "-q", "-b", "trunk")
@@ -253,5 +257,91 @@ func TestAMergeReadsTheFoldersTheProjectDeclares(t *testing.T) {
 
 	if whole := held.roots(config.Config{}); !slices.Equal(whole, []string{worktree}) {
 		t.Errorf("a project declaring no folder is read as %v, not as the worktree itself", whole)
+	}
+}
+
+// deliveringOf is the event the journal holds when a worker delivers its work, as it really sends it: the same
+// fields a merge carries, under `data`, with the window it waits for the answer in.
+func deliveringOf(worktree string, window int, files ...string) map[string]any {
+	held := mergingOf(worktree, window, files...)
+	held["event"] = "worker_delivering"
+
+	return held
+}
+
+// TestAWorkerIsHeldBeforeItsWorkReachesTheAgent holds the earlier of the two moments. The work is committed,
+// rebased and green by then, and has not yet reached the main agent, so a refusal here is refused to the WORKER:
+// it fixes what it wrote, runs its tests again and comes back, and only clean work reaches the agent that asked.
+func TestAWorkerIsHeldBeforeItsWorkReachesTheAgent(t *testing.T) {
+	root, _, _ := projectWithASin(t)
+
+	held := DeliveryHeld(deliveringOf(root, generousWindow, "src/refund.py"))
+	if held == "" {
+		t.Fatal("a worker carrying a sin delivered its work unheld")
+	}
+
+	var answer map[string]any
+	if err := json.Unmarshal([]byte(held), &answer); err != nil {
+		t.Fatalf("the hold answered %q: %v", held, err)
+	}
+	if answer["answer"] != "refuse" {
+		t.Errorf("the hold answered %v, want a refusal", answer["answer"])
+	}
+	if reason := asText(answer["reason"]); !strings.Contains(reason, "Lady Lovelace") || !strings.Contains(reason, "1 sin") {
+		t.Errorf("the reason reads %q, naming neither the worker nor what it carries", reason)
+	}
+}
+
+// TestACleanWorkerDeliversUnheld holds the other half: the hold costs a worker nothing when its own lines are
+// clean, whatever the project around it carries.
+func TestACleanWorkerDeliversUnheld(t *testing.T) {
+	worktree := workerBranchOf(t, map[string]string{
+		".commandments/config.json": `{"paths": ["src"]}`,
+		"src/refund.py":             "def refund(order) -> int:\n    if order.late:\n        raise ValueError(order)\n    else:\n        return order.total\n",
+	}, map[string]string{
+		"src/ship.py": "def ship(order) -> str:\n    return order.carrier\n",
+	})
+
+	if held := DeliveryHeld(deliveringOf(worktree, generousWindow)); held != "" {
+		t.Errorf("a worker was held on delivery for a sin its branch never wrote: %q", held)
+	}
+}
+
+// TestBothMomentsReadTheWorkTheSameWay holds the two doors to one reading: nothing about which sins a worker
+// answers for changes with the moment it is asked, so a delivery and a merge of the same branch answer alike.
+func TestBothMomentsReadTheWorkTheSameWay(t *testing.T) {
+	root, _, _ := projectWithASin(t)
+
+	delivery := DeliveryHeld(deliveringOf(root, generousWindow, "src/refund.py"))
+	merge := MergeHeld(mergingOf(root, generousWindow, "src/refund.py"))
+
+	if delivery != merge {
+		t.Errorf("the delivery answered %q and the merge %q", delivery, merge)
+	}
+}
+
+// TestAWorkersEditIsJudgedInItsOwnWorktree holds a worker's edit to the tree it sits in. A worker writes inside
+// the project's `.journal/worktrees/<n>/`, and judged against the main checkout every one of its files lies
+// outside the folders the project declares: every edit then reads as a file the project does not judge, and the
+// worker hears nothing about its own sins until somebody merges them.
+func TestAWorkersEditIsJudgedInItsOwnWorktree(t *testing.T) {
+	worktree := workerBranchOf(t, map[string]string{
+		".commandments/config.json": `{"paths": ["src"]}`,
+		"src/ship.py":               "def ship(order) -> str:\n    return order.carrier\n",
+	}, map[string]string{
+		"src/refund.py": "def refund(order) -> int:\n    if order.late:\n        raise ValueError(order)\n    else:\n        return order.total\n",
+	})
+
+	moment, known := Moment4Of(map[string]any{
+		"v": 1, "event": "file_edited", "session": "worker-1", "environment": "worker",
+		"data": map[string]any{"path": filepath.Join(worktree, "src", "refund.py")},
+	})
+	if !known {
+		t.Fatal("a file_edited event is no moment the plugin reads")
+	}
+
+	agent, _ := moment["agent"].(map[string]any)
+	if asText(agent["cwd"]) != worktree {
+		t.Errorf("the edit is judged in %q, not in the worktree the file sits in", asText(agent["cwd"]))
 	}
 }

@@ -18,11 +18,21 @@ import (
 	"github.com/jessegall/code-commandments/engine"
 )
 
-// mergeEvent is the event the journal holds just before a worker's branch is taken in, and mergedEvent the one it
-// sends once it landed.
+// The moments a worker's work is held at, and the event the journal sends once a merge landed.
+//
+// A worker is asked twice about the same thing, and on purpose. deliveringEvent comes first: the work is
+// committed, rebased onto the project's branch and its own tests have passed, and it has not yet reached the main
+// agent, so a refusal there is refused to the WORKER, which fixes what it wrote, runs its tests again and comes
+// back. Only clean work reaches the agent that asked for it. mergeEvent comes later, when that work is taken in,
+// and stays as the second check: a branch that sat while the project moved is judged again against where it is
+// going.
+//
+// The asking is after the worker's tests on purpose. A worker whose tests are still failing has a fault to fix
+// first, and holding its work over a sin before it even runs green would tell it two things at once.
 const (
-	mergeEvent  = "worker_merging"
-	mergedEvent = "worker_merge_result"
+	deliveringEvent = "worker_delivering"
+	mergeEvent      = "worker_merging"
+	mergedEvent     = "worker_merge_result"
 )
 
 // mergeSinsShown is how many sins a held merge names before it counts the rest: the reason is read in a line of
@@ -56,14 +66,30 @@ const (
 // Only the lines the worker changed are reported, whatever the depth: a worker answers for its own work, and the
 // sins a file already carried are the project's.
 func MergeHeld(line map[string]any) string {
-	merge := mergeOf(line)
+	return workHeld(line)
+}
 
-	marks := merge.sinsWithin()
+// DeliveryHeld is the answer to a worker delivering its work, which is the same question asked earlier: the work
+// is committed, rebased and green, and has not yet reached the main agent, so a refusal is refused to the worker,
+// which fixes what it wrote and comes back rather than leaving it for whoever merges.
+//
+// It is the same reading as the merge's. Nothing about which sins a worker answers for changes with the moment it
+// is asked, so there is one reading of that and two doors to it.
+func DeliveryHeld(line map[string]any) string {
+	return workHeld(line)
+}
+
+// workHeld is the answer to either moment: nothing when the worker's own lines are clean, and a refusal naming
+// the sins when they are not.
+func workHeld(line map[string]any) string {
+	work := mergeOf(line)
+
+	marks := work.sinsWithin()
 	if len(marks) == 0 {
 		return ""
 	}
 
-	refusal := mergeReason(merge.worker, marks)
+	refusal := mergeReason(work.worker, marks)
 
 	return (JournalAnswer{Refuse: &refusal}).Line4()
 }
