@@ -37,8 +37,13 @@ GENERATORS=(
 )
 
 restaged=()
+step=0
 for generator in "${GENERATORS[@]}"; do
     command="${generator%%|*}"
+    step=$((step + 1))
+    # Each generator is a container run of most of ten seconds, so the commit says which one it is on: a commit
+    # that printed nothing for half a minute reads as a hung commit.
+    echo "$step/${#GENERATORS[@]} generating ${generator#*|}"
     if ! errors="$($command 2>&1 > /dev/null)"; then
         echo "✗ $command failed" >&2
         echo "$errors" >&2
