@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
-# Runs the tests of the packages named, in the capped dev container, and prints how many of those packages have
-# finished before each result line. go test says nothing while a package runs and one line as each one ends, so a
-# count of the ended ones against the total is the only progress such a run can offer, and a reader shows it as a
-# bar. Scoped by argument on purpose: the whole tree is a release gate, never a habit.
+# Runs the tests of the packages named, in the capped dev container, and says how far along it is: `-list` says how
+# many tests there are before any of them runs, `-v` says a line as each one ends, and this prefixes those lines
+# with the count, so a card watching a long run shows a bar instead of sitting silent until a whole package ends.
+# It ends by naming how many ran and how many failed. Scoped by argument on purpose: the whole tree is a release
+# gate, never a habit.
 set -euo pipefail
 
 root="$(cd "$(dirname "$0")/.." && pwd -P)"
@@ -14,18 +15,33 @@ if [ "$#" -eq 0 ]; then
 fi
 
 exec scripts/dev bash -c '
-    set -o pipefail
-    total=$(go list "$@" | wc -l | tr -d " ")
+    total=$(go test -list . "$@" 2>/dev/null | grep -c "^\(Test\|Example\|Fuzz\)" || true)
     finished=0
-    env GOMEMLIMIT=3GiB GOMAXPROCS=2 go test -p 2 -parallel 2 "$@" 2>&1 | while IFS= read -r line; do
+    failed=0
+    status=0
+
+    # A subtest prints its own `---` line, indented, so only the unindented ones are counted: those are the tests
+    # `-list` counted. The run goes through a process substitution and not a pipe, so the counts belong to this
+    # shell and the last line can tell the whole story.
+    while IFS= read -r line; do
         case "$line" in
-            ok*|FAIL*|"?"*)
+            "go-test-status:"*)
+                status=${line#go-test-status:}
+                ;;
+            "--- PASS: "*|"--- SKIP: "*|"--- FAIL: "*)
                 finished=$((finished + 1))
-                printf "%s/%s packages %s\n" "$finished" "$total" "$line"
+                case "$line" in
+                    "--- FAIL: "*) failed=$((failed + 1)) ;;
+                esac
+                printf "%s/%s tests %s\n" "$finished" "$total" "$line"
                 ;;
             *)
                 printf "%s\n" "$line"
                 ;;
         esac
-    done
+    done < <(env GOMEMLIMIT=3GiB GOMAXPROCS=2 go test -v -p 2 -parallel 2 "$@" 2>&1; echo "go-test-status:$?")
+
+    printf "%s tests, %s failed\n" "$finished" "$failed"
+
+    exit "$status"
 ' tested "$@"

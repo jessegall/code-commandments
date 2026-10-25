@@ -15,11 +15,12 @@ scripts/dev go generate ./registry
 scripts/dev --mount ../some-app go run ./engine/frontend/parity ../some-app
 ```
 
-`scripts/tested` is `go test` of the packages you name, with the number of packages that
-have finished printed before each result line. A `go test` run says nothing while a package
-runs and one line as each one ends, so that count is the only progress such a run can
-offer, and an agent's reader shows it as a bar instead of a card that sits silent for three
-minutes. It names no packages of its own: the whole tree is a release gate, never a habit.
+`scripts/tested` is `go test` of the packages you name, with the number of tests that have
+finished printed before each test's own line, and the totals on the last line. It asks
+`-list` how many tests there are before the first one runs and reads `-v`'s line per test as
+it goes, so a card watching a long run shows a bar instead of sitting silent until a whole
+package ends. It names no packages of its own: the whole tree is a release gate, never a
+habit.
 
 - **The image** (`docker/dev/Dockerfile`): Go, PHP for the PHP bridge, composer for
   the consumer and shim tests, node for the frontend bridge, Python with the pinned mypy, git
