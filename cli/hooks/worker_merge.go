@@ -38,9 +38,12 @@ const mergeSinsShown = 5
 // faulting plugin is switched off, so no sin is worth answering late for: the branch is still there to judge, and
 // the agent's own hooks judge every file it writes.
 //
-// The manifest declares ten seconds today, and the journal sends the window it cut ours to, so the shallow judge
-// is what a merge really gets; the whole tree waits on raising that declaration, which waits in turn on the
-// journal release that lets a merge hold take longer than a tool call.
+// The manifest asks for three minutes, which is what a journal from 4.61.0 on caps a merge hold at
+// (workers.merge_window_seconds); it sends the window it cut ours to as the event's `window_ms` and the branch the
+// work merges into as its `base`, and it asks about at most workers.merge_limit merges at once, the queue's own
+// wait not counted against the window. An older journal cuts every hold to its general ceiling of fifty
+// milliseconds and names no window at all, so a merge there is judged not at all, which is the honest answer when
+// the journal gave us no time to answer in.
 const (
 	wholeTreeWindow    = time.Minute
 	changedFilesWindow = 5 * time.Second
