@@ -12,5 +12,8 @@ case "$(uname -m)" in
 esac
 
 cd "$root"
-exec scripts/dev env GOMEMLIMIT=3GiB GOMAXPROCS=2 GOOS="$os" GOARCH="$arch" CGO_ENABLED=0 \
+scripts/dev env GOMEMLIMIT=3GiB GOMAXPROCS=2 GOOS="$os" GOARCH="$arch" CGO_ENABLED=0 \
     go build -trimpath -o bin/commandments-go ./cmd/commandments
+
+# A build that says nothing leaves its reader nothing to show, so it names what it wrote.
+echo "wrote bin/commandments-go for $os/$arch, $(du -h bin/commandments-go | cut -f1)"

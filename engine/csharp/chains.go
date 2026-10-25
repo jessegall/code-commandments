@@ -253,6 +253,9 @@ func (n Node) MayFillAContract() bool {
 	})
 }
 
+// enumerable is the type every LINQ query over a collection resolves its call to.
+const enumerable = "global::System.Linq.Enumerable"
+
 // LoopsOver is every `foreach` in the code over a collection the name holds: `foreach (var line in order.Lines)`.
 func (n Node) LoopsOver(name string) []Node {
 	var loops []Node
@@ -269,9 +272,41 @@ func (n Node) LoopsOver(name string) []Node {
 // `order.Lines.Sum(…)` on it.
 func (n Node) QueriesCollectionOf(name string) bool {
 	return slices.ContainsFunc(n.expressionParts(), func(call Node) bool {
-		return call.IsCall() && call.Target().Type() == "global::System.Linq.Enumerable" &&
-			call.At(0).Is("SimpleMemberAccessExpression") && call.At(0).At(0).ChainRoot().Name() == name
+		return call.IsCall() && queries(call) && call.At(0).At(0).ChainRoot().Name() == name
 	})
+}
+
+// QueriedName is the name whose collection the query a lambda was handed reads: `rows` for the `row => ...` of
+// `rows.Where(row => ...)`, and nothing for a lambda that is no query's.
+func (n Node) QueriedName() string {
+	argument := n.Parent()
+	if !argument.Is("Argument") {
+		return ""
+	}
+
+	call := argument.Parent().Parent()
+	if !call.IsCall() || !queries(call) {
+		return ""
+	}
+
+	return call.At(0).At(0).ChainRoot().Name()
+}
+
+// queries says whether the call is a LINQ query over a collection something holds.
+func queries(call Node) bool {
+	return call.Target().Type() == enumerable && call.At(0).Is("SimpleMemberAccessExpression")
+}
+
+// LambdaNames are the names a lambda binds its own parameters to.
+func (n Node) LambdaNames() []string {
+	var names []string
+	for _, part := range append(n.All(), n.firstChild("ParameterList").All()...) {
+		if part.Is("Parameter") && part.Name() != "" {
+			names = append(names, part.Name())
+		}
+	}
+
+	return names
 }
 
 // WritesMemberOf says whether the code writes one of the name's members: `order.Status = …`, `order.Total += …`,
@@ -282,13 +317,24 @@ func (n Node) WritesMemberOf(name string) bool {
 	})
 }
 
+// MemberReadsOn are the reads of a member of each of the names, as the nodes that read them: `order.Lines` is one
+// read of `order`.
+func (n Node) MemberReadsOn(names []string) map[string][]Node {
+	reads := map[string][]Node{}
+	for _, read := range n.expressionParts() {
+		if read.Is("SimpleMemberAccessExpression") && read.At(0).Is("IdentifierName") && slices.Contains(names, read.At(0).Name()) {
+			reads[read.At(0).Name()] = append(reads[read.At(0).Name()], read)
+		}
+	}
+
+	return reads
+}
+
 // MemberReachesOn is how often the code reads a member of each of the names: `order.Lines` counts once for `order`.
 func (n Node) MemberReachesOn(names []string) map[string]int {
 	reaches := map[string]int{}
-	for _, read := range n.expressionParts() {
-		if read.Is("SimpleMemberAccessExpression") && read.At(0).Is("IdentifierName") && slices.Contains(names, read.At(0).Name()) {
-			reaches[read.At(0).Name()]++
-		}
+	for name, reads := range n.MemberReadsOn(names) {
+		reaches[name] = len(reads)
 	}
 
 	return reaches

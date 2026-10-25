@@ -21,6 +21,30 @@ type Fixture struct {
 	Resolver ScenarioResolver
 }
 
+// Within is the location as the fixture holds it: under the folder every one of its files lies in, so a verdict
+// names `Shop/Orders/Invoicing.cs:8` and not the whole path of the machine it ran on.
+func (f Fixture) Within(location string) string {
+	return strings.TrimPrefix(location, f.folder()+"/")
+}
+
+// folder is the folder every file of the fixture lies under, empty when they share none.
+func (f Fixture) folder() string {
+	folder := ""
+	for at, file := range f.Codebase.Files() {
+		held := file.Path[:strings.LastIndex(file.Path, "/")+1]
+		if at == 0 {
+			folder = held
+
+			continue
+		}
+		for folder != "" && !strings.HasPrefix(held, folder) {
+			folder = folder[:strings.LastIndex(folder[:len(folder)-1], "/")+1]
+		}
+	}
+
+	return strings.TrimSuffix(folder, "/")
+}
+
 // Result is how one detector fared against the fixture's markers.
 type Result struct {
 	Detector         string

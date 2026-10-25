@@ -84,7 +84,10 @@ func (n Node) UnpacksTargetFromContainerParam(program *Program) bool {
 // EnviedParameter is the parameter the method envies: the one other object it loops the collection of or writes
 // the members of, reaching into it more than into its own state; empty when it envies nothing. A type that may
 // fill a contract, a method that builds anything, a parameter of the method's own type, and a loop handing each
-// element to one of the method's own collaborators are not envy.
+// element to the work the type does itself are not envy.
+//
+// A read that is a criterion of a query over the type's own state is not a reach into the other object: it says
+// which of the type's own rows are wanted.
 func (n Node) EnviedParameter(program *Program) string {
 	host := n.EnclosingType()
 	if !host.Exists() || host.MayFillAContract() || n.constructs() {
@@ -99,11 +102,8 @@ func (n Node) EnviedParameter(program *Program) string {
 			owned = append(owned, parameter.Name())
 		}
 	}
-	reaches := n.MemberReachesOn(owned)
-	ownReaches := 0
-	for _, expression := range n.OutermostExpressions() {
-		ownReaches += len(expression.OwnStateReferences(own))
-	}
+	reaches := n.reachesNotCriteria(owned, own)
+	ownReaches := n.ownStateReaches(own)
 	if len(reaches) != 1 {
 		return ""
 	}
@@ -117,7 +117,7 @@ func (n Node) EnviedParameter(program *Program) string {
 	loops := n.LoopsOver(envied)
 	mutates := n.WritesMemberOf(envied)
 	iterates := len(loops) > 0 || n.QueriesCollectionOf(envied)
-	if iterates && !mutates && len(loops) > 0 && !slices.ContainsFunc(loops, func(loop Node) bool { return !n.handsElementOn(loop, own) }) {
+	if iterates && !mutates && len(loops) > 0 && !slices.ContainsFunc(loops, func(loop Node) bool { return !n.handsElementOn(loop, own, host) }) {
 		return ""
 	}
 	if n.WalksRecursively(envied, loops) {
@@ -128,6 +128,29 @@ func (n Node) EnviedParameter(program *Program) string {
 	}
 
 	return ""
+}
+
+// reachesNotCriteria is how often the method reads a member of each of the names, leaving out the reads that are
+// criteria of a query over the type's own state.
+func (n Node) reachesNotCriteria(names, own []string) map[string]int {
+	counted := map[string]int{}
+	for name, reads := range n.MemberReadsOn(names) {
+		if kept := slices.DeleteFunc(reads, func(read Node) bool { return read.IsCriterionOfOwnQuery(own) }); len(kept) > 0 {
+			counted[name] = len(kept)
+		}
+	}
+
+	return counted
+}
+
+// ownStateReaches is how often the method reads its own type's state.
+func (n Node) ownStateReaches(own []string) int {
+	reaches := 0
+	for _, expression := range n.OutermostExpressions() {
+		reaches += len(expression.OwnStateReferences(own))
+	}
+
+	return reaches
 }
 
 // WalksRecursively says whether the method walks the parameter by calling itself on a part of it: an interpreter
@@ -149,6 +172,7 @@ func (n Node) WalksRecursively(parameter string, loops []Node) bool {
 			walked = append(walked, loop.Name())
 		}
 	}
+	walked = append(walked, n.partsBoundByAQueryOver(parameter)...)
 
 	for _, expression := range n.OutermostExpressions() {
 		for _, call := range expression.Flatten() {
@@ -184,14 +208,71 @@ func (n Node) constructs() bool {
 	})
 }
 
-// handsElementOn says whether the loop hands its element to one of the collaborators the type holds under its own
-// names, `printer.Print(line)`: the orchestrator doing its own job. Calling this method again is recursion.
-func (n Node) handsElementOn(loop Node, own []string) bool {
+// handsElementOn says whether the loop hands its element to the work the type does itself: to a collaborator it
+// holds under its own name, `printer.Print(line)`, or to a method of its own, `Lookup(id)`. Either way the loop
+// drives the type's own job one element at a time, and the collection it reads carries no behaviour that could
+// take it over. Calling this method again is recursion, which WalksRecursively reads.
+func (n Node) handsElementOn(loop Node, own []string, host Node) bool {
 	return slices.ContainsFunc(loop.expressionParts(), func(call Node) bool {
-		return call.IsCall() && call.At(0).Is("SimpleMemberAccessExpression") &&
-			slices.Contains(own, call.At(0).At(0).MemberName()) && call.CalledName() != n.Name() &&
+		return call.IsCall() && call.CalledName() != n.Name() &&
+			(heldUnderOwnName(call, own) || isTheTypesOwnWork(call, host)) &&
 			slices.ContainsFunc(call.Arguments(), func(argument Node) bool { return argument.Is("IdentifierName") && argument.Name() == loop.Name() })
 	})
+}
+
+// heldUnderOwnName says whether the call is made on a collaborator the type holds as its own state.
+func heldUnderOwnName(call Node, own []string) bool {
+	return call.At(0).Is("SimpleMemberAccessExpression") && slices.Contains(own, call.At(0).At(0).MemberName())
+}
+
+// isTheTypesOwnWork says whether the call is the type's own work: a method it declares, as the compiler resolved
+// the call, or a call written with no receiver at all that the compiler could not bind.
+//
+// A method whose tree is judged without the package one of its calls names binds nothing else in that method
+// either, since the element's type is then an error type and every call taking it fails to resolve. A rule may
+// not report what the engine could not read, so an unbound call written as the type's own is taken as the type's
+// own — which is what it nearly always is, a method beside it or a local function of its own.
+func isTheTypesOwnWork(call Node, host Node) bool {
+	if !call.Target().Exists() {
+		return call.At(0).Is("IdentifierName", "GenericName")
+	}
+
+	return host.Symbol() != "" && call.Target().Type() == host.Symbol()
+}
+
+// IsCriterionOfOwnQuery says whether the read of another object's member stands inside a lambda that a query over
+// the type's OWN state was handed: `rows.Where(row => row.Name == descriptor.Name)`.
+//
+// Such a read says WHICH of the type's own rows are wanted. It is a criterion, not a reach into the other
+// object's data, and a method like that moved onto the object it reads would take the type's own collection with
+// it, which is the envy turned around.
+func (n Node) IsCriterionOfOwnQuery(own []string) bool {
+	for held := n; held.Exists(); held = held.Parent() {
+		if !held.Is("SimpleLambdaExpression", "ParenthesizedLambdaExpression") {
+			continue
+		}
+		if queried := held.QueriedName(); queried != "" && slices.Contains(own, queried) {
+			return true
+		}
+	}
+
+	return false
+}
+
+// partsBoundByAQueryOver are the names the parts of the parameter are bound to by a query over them: the `part` of
+// `expression.Parts.All(part => ...)`, which walks those parts as surely as a `foreach` over them does.
+func (n Node) partsBoundByAQueryOver(parameter string) []string {
+	var names []string
+	for _, part := range n.expressionParts() {
+		if !part.Is("SimpleLambdaExpression", "ParenthesizedLambdaExpression") {
+			continue
+		}
+		if part.QueriedName() == parameter {
+			names = append(names, part.LambdaNames()...)
+		}
+	}
+
+	return names
 }
 
 // HoldsCoupledFields says whether the type holds one value as several of its own fields: two or more value fields

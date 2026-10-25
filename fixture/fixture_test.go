@@ -152,7 +152,7 @@ func TestTheHarnessFailsADetectorThatMissesAMark(t *testing.T) {
 	if !slices.Equal(result.Missed, []string{"/toy/batches.php:11"}) || !passedBut(result, "Missed") {
 		t.Fatalf("got %+v", result)
 	}
-	if failures := prove(proving(t, TooNarrowDetector{})); !contains(failures, "missed marked sins") {
+	if failures := prove(proving(t, TooNarrowDetector{})); !contains(failures, "missed the sin marked at") {
 		t.Fatalf("got %v", failures)
 	}
 }
@@ -174,7 +174,7 @@ func TestTheHarnessFailsADetectorThatFlagsItsOwnFix(t *testing.T) {
 	if !slices.Equal(result.FlaggedFixed, []string{"/toy/Cart.php:33"}) {
 		t.Fatalf("got %+v", result)
 	}
-	if failures := prove(proving(t, StaticCallDetector{})); !contains(failures, "flagged its own #[Fixed] resolution") {
+	if failures := prove(proving(t, StaticCallDetector{})); !contains(failures, "flagged its own fixed resolution at") {
 		t.Fatalf("got %v", failures)
 	}
 }

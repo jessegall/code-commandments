@@ -19,7 +19,7 @@ func Prove(t testing.TB, f fixture.Fixture) {
 		t.Error("no detectors were verified against the fixture")
 	}
 	for _, result := range f.Verify() {
-		report(t, result)
+		report(t, f, result)
 	}
 	for _, name := range f.WithoutRighteous() {
 		t.Errorf("%s has no @righteous twin — add one good example of what it must leave alone", name)
@@ -45,20 +45,21 @@ func Prove(t testing.TB, f fixture.Fixture) {
 	}
 }
 
-// report fails the test for each way a detector's findings missed its markers.
-func report(t testing.TB, result fixture.Result) {
+// report fails the test for each way a detector's findings missed its markers, one failure per place, each named
+// as the fixture holds it: a verdict is read in a line, and a list of whole paths is read in none.
+func report(t testing.TB, f fixture.Fixture, result fixture.Result) {
 	t.Helper()
-	if len(result.Missed) > 0 {
-		t.Errorf("%s missed marked sins: %v", result.Detector, result.Missed)
+	for _, missed := range result.Missed {
+		t.Errorf("%s missed the sin marked at %s", result.Detector, f.Within(missed))
 	}
-	if len(result.FlaggedRighteous) > 0 {
-		t.Errorf("%s flagged its righteous twin, code it must leave alone: %v", result.Detector, result.FlaggedRighteous)
+	for _, righteous := range result.FlaggedRighteous {
+		t.Errorf("%s flagged its righteous twin at %s, code it must leave alone", result.Detector, f.Within(righteous))
 	}
-	if len(result.FlaggedFixed) > 0 {
-		t.Errorf("%s flagged its own #[Fixed] resolution, so the published good example still is the sin: %v", result.Detector, result.FlaggedFixed)
+	for _, fixed := range result.FlaggedFixed {
+		t.Errorf("%s flagged its own fixed resolution at %s, so the published good example still is the sin", result.Detector, f.Within(fixed))
 	}
-	if len(result.Unexpected) > 0 {
-		t.Errorf("%s flagged unmarked code (a false positive, or an unmarked sin): %v", result.Detector, result.Unexpected)
+	for _, unexpected := range result.Unexpected {
+		t.Errorf("%s flagged unmarked code at %s: a false positive, or a sin nobody marked", result.Detector, f.Within(unexpected))
 	}
 }
 
