@@ -1,6 +1,7 @@
 package service
 
 import (
+	"github.com/jessegall/code-commandments/cli/scan"
 	"os"
 	"strings"
 	"sync"
@@ -44,7 +45,7 @@ func TestAProjectWithNoCSharpKeepsNoBridge(t *testing.T) {
 	out := &lockedBuffer{}
 	ended := make(chan int, 1)
 	go func() {
-		code, _ := Serve{Bridge: CSharp}.Run(&cli.Input{}, cli.Console{Out: out, Err: out})
+		code, _ := Serve{Bridge: scan.CSharp}.Run(&cli.Input{}, cli.Console{Out: out, Err: out})
 		ended <- code
 	}()
 

@@ -156,8 +156,12 @@ Exit code is non-zero when sins are found.
 | `commandments journal-serve` | Answer the agent journal's hooks from one running process, over the socket the journal names in $JOURNAL_PLUGIN_SOCKET. |
 | `commandments roslyn-serve` | Keep the C# bridge running for this project, answering each run of the tool over a socket named for the project. |
 | `commandments mypy-serve` | Keep the Python bridge running for this project, answering each run of the tool over a socket named for the project. |
+| `commandments frontend-serve` | Keep the Vue and TypeScript bridge running for this project, answering each run of the tool over a socket named for the project. |
+| `commandments php-serve` | Keep the PHP bridge running for this project, answering each run of the tool over a socket named for the project. |
 | `commandments has-csharp` | Say whether this project has C# to judge: exit 0 when it has, 1 when it has none. |
 | `commandments has-python` | Say whether this project has Python to judge: exit 0 when it has, 1 when it has none. |
+| `commandments has-frontend` | Say whether this project has Vue and TypeScript to judge: exit 0 when it has, 1 when it has none. |
+| `commandments has-php` | Say whether this project has PHP to judge: exit 0 when it has, 1 when it has none. |
 | `commandments journal-config` | Write the agent journal plugin's chosen switches into .commandments/config.json, and refresh what the project is told. |
 | `commandments journal-scan` | Scan the project for the folders to check and the ones to leave out, for the agent journal plugin. |
 | `commandments journal-skills` | Render the skills into the agent journal plugin's folder, for the journal to publish. |

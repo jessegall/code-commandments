@@ -2,6 +2,7 @@ package service
 
 import (
 	"bytes"
+	"github.com/jessegall/code-commandments/cli/scan"
 	"os"
 	"path/filepath"
 	"strings"
@@ -27,7 +28,7 @@ func TestHasCSharpAnswersWhatTheProjectHolds(t *testing.T) {
 		t.Setenv("CLAUDE_PROJECT_DIR", project)
 
 		var out bytes.Buffer
-		code, err := Has{CSharp}.Run(&cli.Input{}, cli.Console{Out: &out, Err: &out})
+		code, err := Has{scan.CSharp}.Run(&cli.Input{}, cli.Console{Out: &out, Err: &out})
 		os.Chdir(was)
 
 		if err != nil || code != want || !strings.Contains(out.String(), "C# to judge") {
@@ -56,7 +57,7 @@ func TestHasCSharpAnswersForTheProjectTheJournalNames(t *testing.T) {
 	t.Setenv("JOURNAL_ROOT", filepath.Join(project, ".journal"))
 
 	var out bytes.Buffer
-	code, err := Has{CSharp}.Run(&cli.Input{}, cli.Console{Out: &out, Err: &out})
+	code, err := Has{scan.CSharp}.Run(&cli.Input{}, cli.Console{Out: &out, Err: &out})
 
 	if err != nil || code != cli.Refused || !strings.Contains(out.String(), project+" has no C#") {
 		t.Errorf("exit %d (%v), said %q", code, err, out.String())

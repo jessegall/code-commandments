@@ -74,9 +74,16 @@ Hooks (wired automatically — you rarely run these by hand):
                   socket named for the project.
   mypy-serve      Keep the Python bridge running for this project, answering each run of the tool
                   over a socket named for the project.
+  frontend-serve  Keep the Vue and TypeScript bridge running for this project, answering each run of
+                  the tool over a socket named for the project.
+  php-serve       Keep the PHP bridge running for this project, answering each run of the tool over
+                  a socket named for the project.
   has-csharp      Say whether this project has C# to judge: exit 0 when it has, 1 when it has none.
   has-python      Say whether this project has Python to judge: exit 0 when it has, 1 when it has
                   none.
+  has-frontend    Say whether this project has Vue and TypeScript to judge: exit 0 when it has, 1
+                  when it has none.
+  has-php         Say whether this project has PHP to judge: exit 0 when it has, 1 when it has none.
   hook            Run ONE hook directly, by name — the form every wired hook is written as.
 
 Global options:

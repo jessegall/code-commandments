@@ -25,11 +25,12 @@ func TestABridgeThatStopsPartwayLeavesWhatItReadToBeJudged(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	whole := readers
-	readers = []reader{{name: "PHP", languages: []source.Language{source.PHP}, stream: func(_, _ []string, _ func()) (*contract.Stream, error) {
+	whole, route := Bridges, read
+	Bridges = []Bridge{{Kind: "php", Word: "php", Label: "PHP", Languages: []source.Language{source.PHP}}}
+	read = func(Bridge, []string, []string, func()) (*contract.Stream, error) {
 		return written, errors.New("signal: killed")
-	}}}
-	t.Cleanup(func() { readers = whole })
+	}
+	t.Cleanup(func() { Bridges, read = whole, route })
 
 	codebase, err := Walk([]string{root}, source.Excluded{}).Load()
 

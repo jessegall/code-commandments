@@ -18,7 +18,6 @@ import (
 	"github.com/jessegall/code-commandments/cli/workspace"
 	"github.com/jessegall/code-commandments/contract"
 	"github.com/jessegall/code-commandments/engine"
-	"github.com/jessegall/code-commandments/engine/frontend"
 	"github.com/jessegall/code-commandments/engine/php"
 )
 
@@ -151,8 +150,8 @@ func (s Sources) Reporting(each func(done, total int)) Sources {
 // Bridged is how many files Load hands its bridges to read.
 func (s Sources) Bridged() int {
 	count := 0
-	for _, read := range readers {
-		count += s.Count(read.languages...)
+	for _, read := range Bridges {
+		count += s.Count(read.Languages...)
 	}
 
 	return count
@@ -177,26 +176,26 @@ func (s Sources) Load() (*engine.Codebase, error) {
 	sayTooLarge(s.tooLarge)
 
 	answered := s.bridge()
-	for index, read := range readers {
+	for index, read := range Bridges {
 		answer, ran := answered[index]
 		if !ran {
 			continue
 		}
-		files := s.Count(read.languages...)
+		files := s.Count(read.Languages...)
 		stream, err := answer.stream, answer.err
 		if leftUnread(err, files) {
 			continue
 		}
 		if err != nil {
 			stream = partly(stream, err, files)
-			incomplete.Bridges = append(incomplete.Bridges, "the "+read.name+" bridge")
+			incomplete.Bridges = append(incomplete.Bridges, "the "+read.Label+" bridge")
 		}
 		if stream == nil {
 			continue
 		}
 
-		if !read.bridgeOrder {
-			bridge.InWalkOrder(stream, s.files(read.languages))
+		if !read.InOwnOrder {
+			bridge.InWalkOrder(stream, s.files(read.Languages))
 		}
 		streams = append(streams, stream)
 	}
@@ -223,15 +222,15 @@ func (s Sources) bridge() map[int]bridged {
 	slots := make(chan struct{}, bridgesAtOnce)
 	running := 0
 	tally := s.tally()
-	for index, read := range readers {
-		if s.Count(read.languages...) == 0 {
+	for index, read := range Bridges {
+		if s.Count(read.Languages...) == 0 {
 			continue
 		}
 		running++
 		go func() {
 			slots <- struct{}{}
 			defer func() { <-slots }()
-			stream, err := read.stream(s.roots, s.files(read.languages), tally)
+			stream, err := read.Read(s.roots, s.files(read.Languages), tally)
 			finished <- bridged{index, stream, err}
 		}()
 	}
@@ -306,63 +305,6 @@ func (s Sources) files(languages []source.Language) []string {
 	}
 
 	return files
-}
-
-// reader is one bridge and the languages it reads: the files it writes, under the roots the walk started from. A
-// reader with nothing to read them with answers no stream. A stream is put in walk order, unless the reader keeps
-// the order its bridge answers in, as the PHP tool keeps C#'s, project by project.
-type reader struct {
-	name        string
-	languages   []source.Language
-	stream      func(roots, files []string, tally func()) (*contract.Stream, error)
-	bridgeOrder bool
-}
-
-// readers are the bridges, each with the languages it reads.
-var readers = []reader{
-	{name: "PHP", languages: []source.Language{source.PHP}, stream: func(_, files []string, tally func()) (*contract.Stream, error) {
-		return php.Here().Cached().StreamTallied(tally, files...)
-	}},
-	{name: "frontend", languages: []source.Language{source.Vue, source.TypeScript}, stream: func(_, files []string, tally func()) (*contract.Stream, error) {
-		return frontend.Here().Cached().StreamTallied(tally, files...)
-	}},
-	{name: "C#", languages: []source.Language{source.CSharp}, stream: csharp, bridgeOrder: true},
-	{name: "Python", languages: []source.Language{source.Python}, stream: python},
-}
-
-// csharp is the C# files read by the Roslyn bridge, which compiles every project under the roots so each type
-// resolves and writes only the files: through the bridge a session keeps up for the project, else one of its own for
-// this run. Without a bridge, or with one that fails, it answers why, and the files go unread.
-func csharp(roots, files []string, tally func()) (*contract.Stream, error) {
-	roots, files = resolved(roots), resolved(files)
-	server, err := roslyn(roots)
-	if err != nil {
-		return nil, err
-	}
-	defer server.Close()
-	stream, err := server.AskTallied(bridge.Request{Paths: roots, Write: files}, tally)
-	if err != nil {
-		return nil, bridge.RoslynFailure(err)
-	}
-
-	return stream, nil
-}
-
-// python is the Python files read by the mypy bridge: through the warm session a journal keeps up for the project, so
-// a hook typing one edited file loads nothing mypy already holds, else in a run of its own.
-func python(roots, files []string, tally func()) (*contract.Stream, error) {
-	if server, kept := keptFor("mypy", resolved(roots)); kept {
-		defer server.Close()
-		if stream, err := server.AskTallied(bridge.Request{Paths: resolved(files), Write: resolved(files)}, tally); err == nil {
-			return stream, nil
-		}
-	}
-	command, err := bridge.Mypy()
-	if err != nil {
-		return nil, err
-	}
-
-	return bridge.OnceTallied(command, tally, files...)
 }
 
 // keptFor is the bridge of the kind a session keeps up for the project the run works on, when every root lies in it.

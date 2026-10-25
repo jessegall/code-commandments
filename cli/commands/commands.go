@@ -15,9 +15,10 @@ import (
 	makecommand "github.com/jessegall/code-commandments/cli/make"
 	"github.com/jessegall/code-commandments/cli/repent"
 	"github.com/jessegall/code-commandments/cli/report"
-	"github.com/jessegall/code-commandments/cli/service"
 	"github.com/jessegall/code-commandments/cli/rules"
 	"github.com/jessegall/code-commandments/cli/scaffold"
+	"github.com/jessegall/code-commandments/cli/scan"
+	"github.com/jessegall/code-commandments/cli/service"
 	"github.com/jessegall/code-commandments/cli/session"
 	"github.com/jessegall/code-commandments/cli/sync"
 	"github.com/jessegall/code-commandments/cli/task"
@@ -45,10 +46,14 @@ func Kernel(version string) *cli.Kernel {
 		hooks.JournalHook{},
 		hooks.Journal4Hook{},
 		hooks.JournalServe{},
-		service.Serve{Bridge: service.CSharp},
-		service.Serve{Bridge: service.Python},
-		service.Has{Bridge: service.CSharp},
-		service.Has{Bridge: service.Python},
+		service.Serve{Bridge: scan.CSharp},
+		service.Serve{Bridge: scan.Python},
+		service.Serve{Bridge: scan.Frontend},
+		service.Serve{Bridge: scan.PHPBridge},
+		service.Has{Bridge: scan.CSharp},
+		service.Has{Bridge: scan.Python},
+		service.Has{Bridge: scan.Frontend},
+		service.Has{Bridge: scan.PHPBridge},
 		hooks.JournalConfig{},
 		hooks.JournalScan{},
 		hooks.JournalSkills{},

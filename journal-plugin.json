@@ -1,6 +1,6 @@
 {
   "name": "code-commandments",
-  "version": "6.12.0",
+  "version": "6.13.0",
   "title": "Code Commandments",
   "description": "The static code checker judges the codebase, its hooks run inside the journal, and every rule and language is a switch in its settings",
   "journal": "4.59.1",
@@ -95,7 +95,7 @@
   "setup": [
     {
       "name": "Fetch the checker's release binary, checked against its SHA256SUMS",
-      "run": "COMMANDMENTS_RELEASE=v6.12.0 sh .journal-plugin/fetch"
+      "run": "COMMANDMENTS_RELEASE=v6.13.0 sh .journal-plugin/fetch"
     },
     {
       "name": "Write the chosen switches into config.json",
@@ -135,6 +135,24 @@
         "mypy-serve"
       ],
       "when": "\"$JOURNAL_PLUGIN_DIR/bin/commandments-release\" has-python",
+      "restart": "always"
+    },
+    {
+      "name": "frontend",
+      "command": [
+        "bin/commandments-release",
+        "frontend-serve"
+      ],
+      "when": "\"$JOURNAL_PLUGIN_DIR/bin/commandments-release\" has-frontend",
+      "restart": "always"
+    },
+    {
+      "name": "php",
+      "command": [
+        "bin/commandments-release",
+        "php-serve"
+      ],
+      "when": "\"$JOURNAL_PLUGIN_DIR/bin/commandments-release\" has-php",
       "restart": "always"
     }
   ],

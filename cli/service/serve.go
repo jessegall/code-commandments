@@ -29,7 +29,7 @@ func (s Serve) Help() help.Help {
 
 // Run serves the project's bridge until it stops, then ends, so the journal starts it again.
 func (s Serve) Run(in *cli.Input, console cli.Console) (int, error) {
-	project, holds, err := s.here()
+	project, holds, err := here(s.Bridge)
 	if err != nil {
 		return 0, err
 	}
@@ -41,13 +41,13 @@ func (s Serve) Run(in *cli.Input, console cli.Console) (int, error) {
 		return 0, nil
 	}
 
-	command, err := s.command(project)
+	command, err := s.Start([]string{project})
 	if err != nil {
 		console.Warn(err.Error())
 
 		return 1, nil
 	}
-	if notice := s.notice(); notice != "" {
+	if notice := s.Notice(); notice != "" {
 		console.Warn(notice)
 	}
 

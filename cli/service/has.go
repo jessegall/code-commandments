@@ -25,7 +25,7 @@ func (h Has) Help() help.Help {
 
 // Run answers for the project the journal runs it for, else the one the working folder is in.
 func (h Has) Run(_ *cli.Input, console cli.Console) (int, error) {
-	project, holds, err := h.here()
+	project, holds, err := here(h.Bridge)
 	if err != nil {
 		return 0, err
 	}

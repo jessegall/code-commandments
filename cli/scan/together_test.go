@@ -39,13 +39,16 @@ func TestTheBridgesRunTwoAtATime(t *testing.T) {
 
 		return nil, nil
 	}
-	whole := readers
-	readers = []reader{
-		{name: "PHP", languages: []source.Language{source.PHP}, stream: bridge},
-		{name: "Python", languages: []source.Language{source.Python}, stream: bridge},
-		{name: "C#", languages: []source.Language{source.CSharp}, stream: bridge},
+	whole, route := Bridges, read
+	Bridges = []Bridge{
+		{Kind: "php", Word: "php", Label: "PHP", Languages: []source.Language{source.PHP}},
+		{Kind: "mypy", Word: "python", Label: "Python", Languages: []source.Language{source.Python}},
+		{Kind: "roslyn", Word: "csharp", Label: "C#", Languages: []source.Language{source.CSharp}},
 	}
-	t.Cleanup(func() { readers = whole })
+	read = func(_ Bridge, roots, files []string, tally func()) (*contract.Stream, error) {
+		return bridge(roots, files, tally)
+	}
+	t.Cleanup(func() { Bridges, read = whole, route })
 
 	var told []string
 	report := func(done, total int) { told = append(told, fmt.Sprintf("%d/%d", done, total)) }

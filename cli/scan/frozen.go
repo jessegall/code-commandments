@@ -37,10 +37,10 @@ func IsFrozen(path string) bool {
 
 // streamOf is the files read through their language's bridge.
 func streamOf(language source.Language, files ...string) (*contract.Stream, error) {
-	for _, read := range readers {
-		for _, reads := range read.languages {
+	for _, read := range Bridges {
+		for _, reads := range read.Languages {
 			if reads == language {
-				return read.stream([]string{filepath.Dir(files[0])}, files, func() {})
+				return read.Read([]string{filepath.Dir(files[0])}, files, func() {})
 			}
 		}
 	}
