@@ -81,18 +81,18 @@ func readCSharp(roots, files []string, complete func(*engine.Codebase) error) (*
 
 // askCSharp asks one bridge for the files and cuts what it answers into units.
 func askCSharp(roots, files []string, complete func(*engine.Codebase) error) (*Units, error) {
-	server, err := roslyn(roots)
+	asker, err := CSharp.Reach.Open(CSharp, roots)
 	if err != nil {
 		return nil, err
 	}
-	defer server.Close()
+	defer asker.Close()
 	folder, err := os.MkdirTemp("", "commandments-units-")
 	if err != nil {
 		return nil, err
 	}
 	units := &Units{folder: folder}
 	cutter := &cutter{units: units, owners: map[string]string{}, complete: complete}
-	if err := server.AskEach(bridge.Request{Paths: roots, Write: files}, cutter.take); err != nil {
+	if err := asker.AskEach(CSharp.Request(roots, files), cutter.take); err != nil {
 		units.Close()
 
 		return nil, err

@@ -11,7 +11,6 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
-
 )
 
 // Release is the version this build was released as, stamped through main by the release build; a local build is dev,
@@ -245,4 +244,3 @@ func dotnetFolders() []string {
 		return []string{"/usr/share/dotnet", "/usr/lib/dotnet", "/usr/local/share/dotnet", "/opt/dotnet", filepath.Join(home, ".dotnet")}
 	}
 }
-

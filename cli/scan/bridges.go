@@ -12,8 +12,8 @@ import (
 )
 
 // Bridge is one language's bridge: the name its socket and its service carry, the word its has- verb uses, the
-// languages it reads, the name a reader of a report sees, how it is started, and what it must be told once where
-// starting it says something a person should know.
+// languages it reads, the name a reader of a report sees, how it is reached, and what it must be told once where
+// reaching it says something a person should know.
 //
 // Every bridge is reached the same way, by Read below. A bridge that had a path of its own is how three of these
 // four came to pay a process's start-up on every run while one did not.
@@ -27,8 +27,143 @@ type Bridge struct {
 	WholeRoots bool
 	// InOwnOrder says whether the bridge's stream already stands in the order a walk of the tree gives.
 	InOwnOrder bool
-	Start      func(roots []string) ([]string, error)
-	Notice     func() string
+	// Reach is how this bridge is reached, and the one thing that differs between a bridge that runs as a process
+	// and a language this binary parses itself.
+	Reach  Reach
+	Notice func() string
+}
+
+// Reach is how a bridge is reached. A run asks it with Open and takes whatever answers; a service asks it with
+// Own for a bridge of its own to keep up, and is told when the language needs none.
+type Reach interface {
+	// Open answers the bridge a run asks: for a bridge that runs as a process, the warm one a session keeps up
+	// for this project when there is one, and one for this run alone when there is not.
+	Open(held Bridge, roots []string) (bridge.Asker, error)
+	// Own answers a bridge of this process's own, never a warm one, which is what a service keeps up. False says
+	// the language needs no process, so no service is kept for it and no socket is dialled for it either.
+	Own(held Bridge, roots []string) (bridge.Asker, bool, error)
+}
+
+// Process is the reach of a bridge that runs as a process: the command that starts it, and, for a bridge whose
+// absence a person must be told about by name, how its failures are named.
+type Process struct {
+	Command func(roots []string) ([]string, error)
+	Named   func(err error) error
+}
+
+// Open is the bridge a run asks: one asker that goes to the warm bridge for each ask and starts one of its own
+// when there is none, or when the warm one could not answer.
+func (p Process) Open(held Bridge, roots []string) (bridge.Asker, error) {
+	return &process{held: held, reach: p, roots: roots}, nil
+}
+
+// Own is a bridge of this process's own, which is what a service keeps up: never the warm one, since a service
+// that found a socket would be answering through another service for the same project.
+func (p Process) Own(held Bridge, roots []string) (bridge.Asker, bool, error) {
+	command, err := p.Command(roots)
+	if err != nil {
+		return nil, true, p.named(err)
+	}
+
+	server, err := bridge.Serve(command)
+	if err != nil {
+		return nil, true, p.named(err)
+	}
+
+	return server, true, nil
+}
+
+// named names the bridge's part in what went wrong, for a bridge that says so by name.
+func (p Process) named(err error) error {
+	if err == nil || p.Named == nil {
+		return err
+	}
+
+	return p.Named(err)
+}
+
+// process is a bridge that runs as a process, as a run asks it: every ask goes to the warm bridge a session keeps
+// up for this project, and to one started for this run when there is none. The run's own is started once and let
+// go of when the run closes the asker.
+//
+// A run never leaves a bridge behind. The warm ones belong to the journal's plugin, which starts them with the
+// session and stops them with it; a run of the tool that daemonised one of its own would orphan it.
+type process struct {
+	held  Bridge
+	reach Process
+	roots []string
+	own   *bridge.Server
+}
+
+// AskTallied is the whole stream, from the warm bridge when it answers and from one of this run's own when it
+// does not: a warm bridge that fails an ask is a bridge gone, not an answer.
+func (p *process) AskTallied(request bridge.Request, tally func()) (*contract.Stream, error) {
+	if server, kept := keptFor(p.held.Kind, p.roots); kept {
+		defer server.Close()
+
+		if stream, err := server.AskTallied(request, tally); err == nil {
+			return stream, nil
+		}
+	}
+
+	server, err := p.start()
+	if err != nil {
+		return nil, err
+	}
+
+	stream, err := server.AskTallied(request, tally)
+
+	return stream, p.reach.named(err)
+}
+
+// AskEach hands each line of the answer on as it arrives. It takes no second ask, since the lines already handed
+// over cannot be handed over again: a reader that wants another try asks again itself.
+func (p *process) AskEach(request bridge.Request, each func(line contract.Line, raw []byte) error) error {
+	if server, kept := keptFor(p.held.Kind, p.roots); kept {
+		defer server.Close()
+
+		return p.reach.named(server.AskEach(request, each))
+	}
+
+	server, err := p.start()
+	if err != nil {
+		return err
+	}
+
+	return p.reach.named(server.AskEach(request, each))
+}
+
+// start is the bridge this run holds of its own, started once.
+func (p *process) start() (*bridge.Server, error) {
+	if p.own != nil {
+		return p.own, nil
+	}
+
+	command, err := p.reach.Command(p.roots)
+	if err != nil {
+		return nil, p.reach.named(err)
+	}
+
+	if notice := p.held.Notice(); notice != "" {
+		fmt.Fprintf(os.Stderr, "⚠ %s\n", notice)
+	}
+
+	server, err := bridge.Serve(command)
+	if err != nil {
+		return nil, p.reach.named(err)
+	}
+	p.own = server
+
+	return server, nil
+}
+
+// Close lets go of the bridge this run started, if it started one.
+func (p *process) Close() error {
+	if p.own == nil {
+		return nil
+	}
+
+	return p.own.Close()
 }
 
 // Bridges are the bridges a scan reads, in the order the PHP tool read them.
@@ -36,14 +171,14 @@ var Bridges = []Bridge{PHPBridge, Frontend, CSharp, Python}
 
 // PHPBridge is the PHP bridge, php-parser, kept up as the plugin's php service.
 var PHPBridge = Bridge{Kind: "php", Word: "php", Languages: []source.Language{source.PHP}, Label: "PHP",
-	Start:  func([]string) ([]string, error) { return php.Here().Cached().Command() },
+	Reach:  Process{Command: func([]string) ([]string, error) { return php.Here().Cached().Command() }},
 	Notice: nothingToSay,
 }
 
 // Frontend is the bridge that reads Vue and TypeScript, one bridge for both because one parser reads both, kept up
 // as the plugin's frontend service.
 var Frontend = Bridge{Kind: "frontend", Word: "frontend", Languages: []source.Language{source.Vue, source.TypeScript}, Label: "Vue and TypeScript",
-	Start:  func([]string) ([]string, error) { return frontend.Here().Cached().Command() },
+	Reach:  Process{Command: func([]string) ([]string, error) { return frontend.Here().Cached().Command() }},
 	Notice: nothingToSay,
 }
 
@@ -51,13 +186,13 @@ var Frontend = Bridge{Kind: "frontend", Word: "frontend", Languages: []source.La
 var CSharp = Bridge{Kind: "roslyn", Word: "csharp", Languages: []source.Language{source.CSharp}, Label: "C#",
 	WholeRoots: true,
 	InOwnOrder: true,
-	Start:      func(roots []string) ([]string, error) { return bridge.Roslyn(roots...) },
+	Reach:      Process{Command: func(roots []string) ([]string, error) { return bridge.Roslyn(roots...) }, Named: bridge.RoslynFailure},
 	Notice:     bridge.RoslynNotice,
 }
 
 // Python is the Python bridge, mypy, kept up as the plugin's mypy service.
 var Python = Bridge{Kind: "mypy", Word: "python", Languages: []source.Language{source.Python}, Label: "Python",
-	Start:  func([]string) ([]string, error) { return bridge.Mypy() },
+	Reach:  Process{Command: func([]string) ([]string, error) { return bridge.Mypy() }},
 	Notice: nothingToSay,
 }
 
@@ -93,39 +228,17 @@ func (b Bridge) Read(roots, files []string, tally func()) (*contract.Stream, err
 	return read(b, roots, files, tally)
 }
 
-// read is the funnel's own body: ask for the warm bridge, else start one for this run.
+// read is the funnel's own body: open the bridge, however it is reached, and ask it.
 func (b Bridge) read(roots, files []string, tally func()) (*contract.Stream, error) {
 	roots, files = resolved(roots), resolved(files)
 
-	if server, kept := keptFor(b.Kind, roots); kept {
-		defer server.Close()
-
-		if stream, err := server.AskTallied(b.Request(roots, files), tally); err == nil {
-			return stream, nil
-		}
-	}
-
-	command, err := b.Start(roots)
+	asker, err := b.Reach.Open(b, roots)
 	if err != nil {
-		return nil, b.failed(err)
+		return nil, err
 	}
+	defer asker.Close()
 
-	if notice := b.Notice(); notice != "" {
-		fmt.Fprintf(os.Stderr, "⚠ %s\n", notice)
-	}
-
-	server, err := bridge.Serve(command)
-	if err != nil {
-		return nil, b.failed(err)
-	}
-	defer server.Close()
-
-	stream, err := server.AskTallied(b.Request(roots, files), tally)
-	if err != nil {
-		return nil, b.failed(err)
-	}
-
-	return stream, nil
+	return asker.AskTallied(b.Request(roots, files), tally)
 }
 
 // Request is what the bridge is asked: the files to write, and the roots as well for a bridge that compiles
@@ -137,13 +250,4 @@ func (b Bridge) Request(roots, files []string) bridge.Request {
 	}
 
 	return bridge.Request{Paths: files, Write: files}
-}
-
-// failed names the bridge in what went wrong, since a reader of the report is told which language went unread.
-func (b Bridge) failed(err error) error {
-	if b.Kind == CSharp.Kind {
-		return bridge.RoslynFailure(err)
-	}
-
-	return err
 }

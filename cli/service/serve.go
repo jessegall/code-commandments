@@ -41,23 +41,23 @@ func (s Serve) Run(in *cli.Input, console cli.Console) (int, error) {
 		return 0, nil
 	}
 
-	command, err := s.Start([]string{project})
+	bridged, needed, err := s.Reach.Own(s.Bridge, []string{project})
 	if err != nil {
 		console.Warn(err.Error())
 
 		return 1, nil
+	}
+	if !needed {
+		stopped := cli.StopSignals()
+		console.Say(s.Label + " needs no bridge of its own, so none is kept up for " + project + ".")
+		<-stopped
+
+		return 0, nil
 	}
 	if notice := s.Notice(); notice != "" {
 		console.Warn(notice)
 	}
-
-	server, err := bridge.Serve(command)
-	if err != nil {
-		console.Warn(err.Error())
-
-		return 1, nil
-	}
-	defer server.Close()
+	defer bridged.Close()
 
 	path := bridge.ServiceSocket(s.Kind, project)
 	os.Remove(path)
@@ -73,9 +73,9 @@ func (s Serve) Run(in *cli.Input, console cli.Console) (int, error) {
 
 	// Behind the listener, never in front of it: the socket answers from this moment, and the reading of the
 	// project happens in the time the service would otherwise spend idle.
-	go warm(s.Bridge, project, server, console)
+	go warm(s.Bridge, project, bridged, console)
 
-	if err := bridge.Answer(listener, server); err != nil {
+	if err := bridge.Answer(listener, bridged); err != nil {
 		console.Warn(err.Error())
 
 		return 1, nil

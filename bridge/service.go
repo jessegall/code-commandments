@@ -49,7 +49,7 @@ func Service(kind, project string) (*Server, bool) {
 
 // Answer answers each connection's request through the bridge, one at a time, until the listener closes; a bridge
 // that fails ends it, answering why.
-func Answer(listener net.Listener, server *Server) error {
+func Answer(listener net.Listener, asked Asker) error {
 	for {
 		connection, err := listener.Accept()
 		if errors.Is(err, net.ErrClosed) {
@@ -64,19 +64,14 @@ func Answer(listener net.Listener, server *Server) error {
 		// left behind reads a broken pipe, calls the plugin at fault and switches it off, which stops every
 		// discipline being enforced until someone switches it on again. The reason goes to stderr, which is the
 		// service's own log.
-		// A request that fails costs that request and nothing more. The service outlives it: a bridge that dies
-		// under one request would otherwise take the service down with it, and a journal writing to the socket it
-		// left behind reads a broken pipe, calls the plugin at fault and switches it off, which stops every
-		// discipline being enforced until someone switches it on again. The reason goes to stderr, which is the
-		// service's own log.
-		if err := answer(connection, server); err != nil {
+		if err := answer(connection, asked); err != nil {
 			fmt.Fprintln(os.Stderr, "a request was not answered: "+err.Error())
 		}
 	}
 }
 
 // answer is one connection: its request line asked of the bridge, and every line of the stream written back.
-func answer(connection net.Conn, server *Server) error {
+func answer(connection net.Conn, asked Asker) error {
 	defer connection.Close()
 
 	line, err := bufio.NewReader(connection).ReadBytes('\n')
@@ -88,7 +83,7 @@ func answer(connection net.Conn, server *Server) error {
 		return nil
 	}
 
-	return server.AskEach(request, func(_ contract.Line, raw []byte) error {
+	return asked.AskEach(request, func(_ contract.Line, raw []byte) error {
 		connection.Write(raw)
 		connection.Write([]byte{'\n'})
 

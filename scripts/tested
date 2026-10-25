@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
-# Runs the tests of the packages named, in the capped dev container, and says how far along it is: `-list` says how
-# many tests there are before any of them runs, `-v` says a line as each one ends, and this prefixes those lines
-# with the count, so a card watching a long run shows a bar instead of sitting silent until a whole package ends.
-# It ends by naming how many ran and how many failed. Scoped by argument on purpose: the whole tree is a release
-# gate, never a habit.
+# Runs the tests of the packages named, in the capped dev container, and says how far along it is WHILE it runs:
+# `-list` says how many tests there are before any of them runs, `-json` says an event the moment each one ends,
+# and the filter below turns those into one line per test, prefixed with the count. `go test -v` buffers a
+# package's whole output until that package ends, which on a slow package is minutes of an empty screen; the json
+# stream does not. It ends by naming how many ran and how many failed. Scoped by argument on purpose: the whole
+# tree is a release gate, never a habit.
 set -euo pipefail
 
 root="$(cd "$(dirname "$0")/.." && pwd -P)"
@@ -16,37 +17,63 @@ fi
 
 exec scripts/dev bash -c '
     # The listing compiles every package named, which on a large one is most of a minute with nothing to show. So
-    # each step says it has begun: a card then reads "building" and "N tests to run" instead of sitting empty
-    # until the first test ends.
+    # each step says it has begun: a card reads "building" and then "N tests to run" instead of sitting empty.
     printf "building the tests of %s packages\n" "$#"
     total=$(go test -list . "$@" 2>/dev/null | grep -c "^\(Test\|Example\|Fuzz\)" || true)
     printf "0/%s tests to run\n" "$total"
-    finished=0
-    failed=0
-    status=0
 
-    # A subtest prints its own `---` line, indented, so only the unindented ones are counted: those are the tests
-    # `-list` counted. The run goes through a process substitution and not a pipe, so the counts belong to this
-    # shell and the last line can tell the whole story.
-    while IFS= read -r line; do
-        case "$line" in
-            "go-test-status:"*)
-                status=${line#go-test-status:}
-                ;;
-            "--- PASS: "*|"--- SKIP: "*|"--- FAIL: "*)
-                finished=$((finished + 1))
-                case "$line" in
-                    "--- FAIL: "*) failed=$((failed + 1)) ;;
-                esac
-                printf "%s/%s tests %s\n" "$finished" "$total" "$line"
-                ;;
-            *)
-                printf "%s\n" "$line"
-                ;;
-        esac
-    done < <(env GOMEMLIMIT=3GiB GOMAXPROCS=2 go test -v -p 2 -parallel 2 "$@" 2>&1; echo "go-test-status:$?")
+    # The filter is handed to python as an argument, never on its input: its input is the json stream.
+    filter=$(cat <<"FILTER"
+import json
+import sys
 
-    printf "%s tests, %s failed\n" "$finished" "$failed"
+total = sys.argv[1]
+finished = 0
+failed = 0
+said = {}
+
+# A subtest is counted with its parent, not on its own: the listing before the run counted only the tests a
+# package declares, so counting subtests would run the bar past its end.
+for line in sys.stdin:
+    line = line.rstrip("\n")
+    try:
+        event = json.loads(line)
+    except ValueError:
+        print(line, flush=True)
+        continue
+
+    action, test, output = event.get("Action"), event.get("Test", ""), event.get("Output", "")
+    if action == "output" and not test:
+        text = output.rstrip("\n")
+        if text.startswith(("ok  ", "FAIL", "---", "panic:")) or "no test files" in text:
+            print(text, flush=True)
+        continue
+    if action == "output" and test:
+        said.setdefault(test, []).append(output.rstrip("\n"))
+        continue
+    if action not in ("pass", "fail", "skip") or not test:
+        continue
+
+    kept = said.pop(test, [])
+    if "/" in test:
+        if action == "fail":
+            print("\n".join(kept), flush=True)
+        continue
+
+    finished += 1
+    if action == "fail":
+        failed += 1
+    print("%d/%s tests --- %s: %s (%.2fs)" % (finished, total, action.upper(), test, event.get("Elapsed", 0.0)), flush=True)
+    if action == "fail":
+        print("\n".join(kept), flush=True)
+
+print("%d tests, %d failed" % (finished, failed), flush=True)
+FILTER
+)
+
+    set +e
+    env GOMEMLIMIT=3GiB GOMAXPROCS=2 go test -json -p 2 -parallel 2 "$@" 2>&1 | python3 -u -c "$filter" "$total"
+    status=${PIPESTATUS[0]}
 
     exit "$status"
 ' tested "$@"

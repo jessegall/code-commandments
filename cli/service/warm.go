@@ -17,13 +17,13 @@ import (
 // front of it: an ask arriving while it reads is answered, waiting only on the bridge's own lock, which is the
 // wait that ask would have paid in any case. A warm-up that fails says so and the service serves cold, since a
 // bridge that cannot read the project now may still answer the one file a hook asks about.
-func warm(held Bridge, project string, server *bridge.Server, console cli.Console) {
+func warm(held Bridge, project string, bridged bridge.Asker, console cli.Console) {
 	files := filesOf(held, project)
 	if len(files) == 0 {
 		return
 	}
 
-	if _, err := server.AskTallied(held.Request([]string{project}, files), func() {}); err != nil {
+	if _, err := bridged.AskTallied(held.Request([]string{project}, files), func() {}); err != nil {
 		console.Warn("The " + held.Label + " bridge could not be read into warm, so the first run pays for it: " + err.Error())
 
 		return

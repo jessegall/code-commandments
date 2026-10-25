@@ -320,28 +320,6 @@ func keptFor(kind string, roots []string) (*bridge.Server, bool) {
 	return bridge.Service(kind, project)
 }
 
-// roslyn is the C# bridge for the roots: the one a session keeps up for the project that holds them all, else one
-// started for this run, or why there is none, a bridge that fails to start among them; a machine with no .NET SDK is
-// told once that C# is judged without the frameworks' types.
-func roslyn(roots []string) (*bridge.Server, error) {
-	if server, kept := keptFor("roslyn", roots); kept {
-		return server, nil
-	}
-	command, err := bridge.Roslyn(roots...)
-	if err != nil {
-		return nil, err
-	}
-	if notice := bridge.RoslynNotice(); notice != "" {
-		fmt.Fprintf(os.Stderr, "⚠ %s\n", notice)
-	}
-	server, err := bridge.Serve(command)
-	if err != nil {
-		return nil, bridge.RoslynFailure(err)
-	}
-
-	return server, nil
-}
-
 // sayUnreadable says, on STDERR, which classes the scanned project's own loader failed on: each stays outside the
 // scan, and the run says why rather than letting it vanish.
 func sayUnreadable(streams []*contract.Stream) {
