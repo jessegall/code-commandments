@@ -29,9 +29,11 @@ func (InventedDefaultDetector) Find(codebase *engine.Codebase) []engine.Match {
 		Where(engine.As(cs.Node.FillsArgument)).
 		Reject(engine.As(cs.Node.AddsNothing)).
 		Get()
+	program := cs.In(codebase).Program
 	answered := cs.In(codebase).
 		WhereFunction().
 		Where(engine.As(cs.Node.IsInventingOnMiss)).
+		Reject(engine.As(func(n cs.Node) bool { return program.EveryCallerAccumulates(n) })).
 		Get()
 
 	return append(filled, answered...)

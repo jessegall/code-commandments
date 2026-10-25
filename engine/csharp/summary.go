@@ -48,6 +48,10 @@ type StateFact struct {
 type Callers struct {
 	OutsideTests int
 	Asserting    int
+	// Accumulating are the calls outside the tests whose answer goes straight into a sum: a zero answered where
+	// a lookup missed adds nothing at such a call, which is the one use that cannot tell a measured zero from a
+	// miss and has nothing to be warned about.
+	Accumulating int
 }
 
 // spelling is a call filling a parameter, by position, with a constant of a type: `Emit(Token.BraceOpen)`.
@@ -127,7 +131,11 @@ func (s *Summary) Merge(other *Summary) {
 	}
 	for symbol, callers := range other.callers {
 		held := s.callers[symbol]
-		s.callers[symbol] = Callers{held.OutsideTests + callers.OutsideTests, held.Asserting + callers.Asserting}
+		s.callers[symbol] = Callers{
+			held.OutsideTests + callers.OutsideTests,
+			held.Asserting + callers.Asserting,
+			held.Accumulating + callers.Accumulating,
+		}
 	}
 	for held, count := range other.references {
 		s.references[held] += count
@@ -212,6 +220,10 @@ func (s *Summary) enrolCall(call Node) {
 		held.OutsideTests++
 		if call.ResultIsAssertedPresent() {
 			held.Asserting++
+		}
+
+		if call.AnswerIsAccumulated() {
+			held.Accumulating++
 		}
 		s.callers[symbol] = held
 	}

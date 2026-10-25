@@ -180,6 +180,37 @@ func (n Node) AddsNothing() bool {
 	return added.Is("Argument") && strings.Contains(callOf(added), "Increment")
 }
 
+// AnswerIsAccumulated says whether what the call answers goes straight into a sum: added to something, added into
+// something, or handed to a call that increments.
+//
+// This is the use AddsNothing already pardons where the zero is written at the site, one step further out. A
+// method that answers zero where a lookup missed is indistinguishable from one that measured zero, and at a site
+// that only adds the answer that is true by construction rather than by accident: the zero contributes nothing
+// either way, so there is nothing the reader could have been told.
+func (n Node) AnswerIsAccumulated() bool {
+	answer := n.OutermostParentheses()
+	taken := answer.Parent()
+
+	if taken.Is("AddExpression", "AddAssignmentExpression") {
+		return sums(taken)
+	}
+
+	return taken.Is("Argument") && strings.Contains(callOf(taken), "Increment")
+}
+
+// sums says whether the addition adds numbers, where C# writes a string's concatenation with the same `+`: a zero
+// joined into a sentence is read by whoever reads the sentence, which is the sin this rule names, and a zero added
+// to a number is not read at all.
+func sums(addition Node) bool {
+	return slices.Contains(numbers, strings.TrimPrefix(addition.Type().Name(), "global::System."))
+}
+
+// numbers are the types an addition of numbers answers, as the bridge names them.
+var numbers = []string{
+	"int", "long", "short", "byte", "sbyte", "uint", "ulong", "ushort", "float", "double", "decimal",
+	"Int32", "Int64", "Int16", "Byte", "SByte", "UInt32", "UInt64", "UInt16", "Single", "Double", "Decimal",
+}
+
 // callOf is the name of the call an argument is handed to.
 func callOf(argument Node) string {
 	call := argument.Parent().Parent()

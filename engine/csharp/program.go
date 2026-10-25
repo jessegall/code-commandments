@@ -99,6 +99,19 @@ func (p *Program) CallsTo(method Node) Callers {
 	return p.facts.callers[method.Symbol()]
 }
 
+// EveryCallerAccumulates says whether the method is called outside the tests and every such call adds its answer
+// into a sum.
+//
+// A method that answers an empty scalar where a lookup missed is the sin this rule names, because a caller cannot
+// tell the miss from a measurement. Where every caller only adds the answer, it cannot: a zero contributes
+// nothing to a sum whichever it was, which is what makes a measure like self-information in nats or a count of an
+// empty set honest rather than laundered.
+func (p *Program) EveryCallerAccumulates(method Node) bool {
+	callers := p.CallsTo(method)
+
+	return callers.OutsideTests > 0 && callers.Accumulating == callers.OutsideTests
+}
+
 // ReachesOwnSignature says whether the call reaches a method the codebase declares and may change the signature
 // of: its own, and not one an interface or a base class dictates.
 func (p *Program) ReachesOwnSignature(call Node) bool {

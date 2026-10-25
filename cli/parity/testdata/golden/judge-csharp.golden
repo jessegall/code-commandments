@@ -1,7 +1,7 @@
 exit: 1
 --- stdout
 
-[1;33mcsharp/absence[0m  (19)
+[1;33mcsharp/absence[0m  (20)
   [1;36m↳ LOAD the skill `commandments-csharp-absence` before fixing[0m
     [2mDon't fix from memory. If you think it's already loaded, assume it is NOT — a compaction may have dropped it — and load it again to be sure.[0m
   [36mShop/Addresses/PostcodeChecks.cs:7[0m  CoalesceExpression  [2m[CancelledCoalesceDetector][0m
@@ -17,6 +17,7 @@ exit: 1
   [36mShop/Pricing/CouponBooks.cs:22[0m  SuppressNullableWarningExpression  [2m[NullForgivenDetector][0m
   [36mShop/Pricing/DiscountCodes.cs:9[0m  CoalesceExpression  [2m[CancelledCoalesceDetector][0m
   [36mShop/Pricing/Labels.cs:8[0m  MethodDeclaration For  [2m[InventedDefaultDetector][0m
+  [36mShop/Rarity/FacetScores.cs:37[0m  MethodDeclaration Weight  [2m[InventedDefaultDetector][0m
   [36mShop/Shipping/Tracking.cs:15[0m  SuppressNullableWarningExpression  [2m[NullForgivenDetector][0m
   [36mShop/Stock/BinResolvers.cs:8[0m  MethodDeclaration Resolve  [2m[DeNulledFinderDetector][0m
   [36mShop/Stock/Reservations.cs:10[0m  ConditionalExpression  [2m[InventedDefaultDetector][0m
@@ -342,7 +343,7 @@ exit: 1
   [36mShop/Stock/Listings.cs:15[0m  MethodDeclaration Page  [2m[DataClumpDetector][0m
     [2m↳ same shape as: Shop/Stock/Listings.cs:8[0m
 
-[1m238 sins[0m across 17 skills.
+[1m239 sins[0m across 17 skills.
 [2m↳ the rule above all: trace each sin to where the value is BORN and fix it THERE — read fix-at-the-source.[0m
 [2m↳ don't recognise a rule above? `commandments info <sin>` — what it flags, why it is a sin, the fix, an example.[0m
 
