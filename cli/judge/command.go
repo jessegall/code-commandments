@@ -67,8 +67,10 @@ func (Command) Help() help.Help {
 			".commandments/config.json — auto-detected on first run from your composer.json PSR-4 map (plus " +
 			"app/src), so scaffolding like database/, storage/ and config/ is not judged. Run `commandments config " +
 			"reindex` to re-detect them, or pass an explicit [path] to scan it directly. Add a path under " +
-			"\"exclude\" to subtract it from ANY run — the tree is still parsed (so " +
-			"cross-file rules stay correct) but nothing in it is ever reported or rewritten.").
+			"\"exclude\" to subtract it from ANY run: that tree is not read at all, so nothing in it is " +
+			"ever reported or rewritten. One rule may be let in anyway with a \"judges\" call under it in " +
+			"\"configure\" — `{\"configure\": {\"NoRawSqlDetector\": [{\"judges\": [\"tests\"]}]}}` reads tests/ for " +
+			"that rule and no other.").
 		Note("A rule that BREAKS is skipped so the rest of the run survives — but the run is not green: it " +
 			"names the rules that could not run and exits 3 (rather than 0) when nothing else was found, " +
 			"because a run missing a rule has not judged what that rule judges. A bridge that stops partway " +
@@ -167,7 +169,7 @@ func (c Command) judge(options options, selected []detectors.Detector, judged co
 		return choseNone(targets, console), nil
 	}
 
-	roots, err := sourceRoots(options)
+	roots, err := sourceRoots(options, judged)
 	if err != nil {
 		return 0, err
 	}
@@ -177,7 +179,7 @@ func (c Command) judge(options options, selected []detectors.Detector, judged co
 	parsing := time.Now()
 
 	languages := languagesFor(selected, judged, options.path)
-	sources := scan.Walk(roots, source.Under(options.path, judged.Excluded)).Only(languages...)
+	sources := scan.Walk(roots, source.Under(options.path, judged.Excluded).Judging(judged.JudgedDespiteExclusion())).Only(languages...)
 	whole, byProject := wholeAndByProject(selected)
 
 	read := sources.Only(slices.DeleteFunc(slices.Clone(languages), func(language source.Language) bool { return language == source.CSharp })...)
@@ -215,7 +217,7 @@ func (c Command) judge(options options, selected []detectors.Detector, judged co
 		csharpFiles = files
 	}
 
-	judgement.Findings = keep(asWalked(judgement.Findings, sources.GivenOf()), options.exclude, targets)
+	judgement.Findings = keep(asWalked(judgement.Findings, sources.GivenOf()), options.exclude, targets, judged)
 
 	if space.IsJournalDriven() {
 		if err := dashboard.Record(space, judgement.Findings, judgedPaths(targets, sources)); err != nil {
@@ -467,12 +469,35 @@ func wholeAndByProject(rules []detectors.Detector) (whole, byProject []detectors
 }
 
 // sourceRoots are what the run scans: the path it was given, or the roots the config declares.
-func sourceRoots(options options) ([]string, error) {
+func sourceRoots(options options, judged config.Config) ([]string, error) {
 	if options.pathGiven {
 		return []string{strings.TrimRight(options.path, "/")}, nil
 	}
 
-	return config.DeclaredRoots(options.path)
+	roots, err := config.DeclaredRoots(options.path)
+	if err != nil {
+		return nil, err
+	}
+
+	// A folder one rule judges despite the exclusion is a root of its own when the declared paths do not already
+	// hold it: a project names `src` and excludes `tests`, so a walk rooted at `src` never meets a test file and
+	// the rule allowed in would have nothing to read. A run GIVEN a path is not widened, since it was asked for
+	// that path and nothing else.
+	for _, folder := range judged.JudgedDespiteExclusion() {
+		full := strings.TrimRight(options.path, "/") + "/" + folder
+		if !slices.ContainsFunc(roots, func(root string) bool { return under(full, root) }) {
+			roots = append(roots, full)
+		}
+	}
+
+	return roots, nil
+}
+
+// under says whether the folder is the root or sits inside it.
+func under(folder, root string) bool {
+	root = strings.TrimRight(root, "/")
+
+	return folder == root || strings.HasPrefix(folder, root+"/")
 }
 
 // judgedPaths is each file the run judged, by its absolute real path: its scope's files, or every file it walked.
@@ -516,11 +541,19 @@ func locationAsWalked(location string, given scan.Given) string {
 // keep are the findings the run reports: in no excluded path fragment, and in scope — which for a scope about
 // lines means the finding stands on a line the change touched, and for every other scope means its file is a
 // target.
-func keep(findings []engine.Finding, exclude []string, targets scope.Scope) []engine.Finding {
+//
+// A finding inside a folder the project excludes is reported when its OWN rule judges that folder, as the
+// project's config says. The folder stays excluded for every other rule, which is the whole of the allowance:
+// a project's tests judged by everything bury the few rules that belong there, and judged by none leave those
+// rules reporting nothing.
+func keep(findings []engine.Finding, exclude []string, targets scope.Scope, judged config.Config) []engine.Finding {
 	var kept []engine.Finding
 
 	for _, finding := range findings {
-		if isExcluded(finding.File, exclude) || !targets.Covers(finding.File, finding.Line) {
+		if isExcluded(finding.File, exclude) {
+			continue
+		}
+		if !targets.Covers(finding.File, finding.Line) && !judgesItsFolder(judged, finding, targets) {
 			continue
 		}
 
@@ -528,6 +561,25 @@ func keep(findings []engine.Finding, exclude []string, targets scope.Scope) []en
 	}
 
 	return kept
+}
+
+// judgesItsFolder says whether the finding's own rule judges the excluded folder the finding stands in, and the
+// run was asked for that file at all.
+func judgesItsFolder(judged config.Config, finding engine.Finding, targets scope.Scope) bool {
+	folders := judged.Judged(config.RuleNamed(config.Detector, finding.Detector))
+	if len(folders) == 0 {
+		return false
+	}
+	if !targets.CoversJudged(finding.File, finding.Line) {
+		return false
+	}
+
+	return slices.ContainsFunc(folders, func(folder string) bool { return inFolder(finding.File, folder) })
+}
+
+// inFolder says whether the file sits in the folder, which the config names relative to the project.
+func inFolder(file, folder string) bool {
+	return strings.Contains(file, "/"+folder+"/") || strings.HasPrefix(file, folder+"/")
 }
 
 func isExcluded(path string, exclude []string) bool {

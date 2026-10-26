@@ -335,6 +335,24 @@ func (s Scope) Covers(file string, line int) bool {
 	return changed.Covers(line)
 }
 
+// CoversJudged says whether the scope would cover a finding at this line of this file but for the paths the
+// project excludes: the question to ask about a finding whose OWN rule judges the excluded folder it stands in.
+//
+// The exclusion is the only restriction set aside. A run told to judge one path still reports nothing outside
+// it, and a run about the lines a change touched still reports nothing the change did not write, whatever a
+// rule is allowed to judge: a whitelist says which rule may look inside an excluded folder, never that a run
+// should widen past what it was asked for.
+func (s Scope) CoversJudged(file string, line int) bool {
+	allowed := s
+	allowed.restrictions = slices.DeleteFunc(slices.Clone(s.restrictions), func(restriction FileScope) bool {
+		_, byExclusion := restriction.(Excluded)
+
+		return byExclusion
+	})
+
+	return allowed.Covers(file, line)
+}
+
 // canonicalLines are the lines keyed by each file as the scope resolves it, so a finding's path and a diff's
 // path are the same key however either was spelled.
 func canonicalLines(lines map[string]git.ChangedLines) map[string]git.ChangedLines {

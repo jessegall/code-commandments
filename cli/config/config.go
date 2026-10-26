@@ -17,7 +17,8 @@ import (
 type Config struct {
 	// Paths are the source roots judge scans when it is given no path.
 	Paths []string
-	// Excluded are paths never reported on nor rewritten, though still parsed.
+	// Excluded are paths the walk does not read at all, so nothing in them is reported on or rewritten. One rule
+	// may be let into such a folder with a judges call under it; see judges.go.
 	Excluded []string
 	// Base is the branch `--branch` compares against when it names none: the project's trunk, for a project whose
 	// trunk is not `main`. Nothing can work that out reliably, which is why the project says it once.
@@ -193,6 +194,8 @@ func (c Config) Positional() Config {
 // project has not turned off, lying in one of the declared source roots. A source root holds more than source —
 // a README, a lockfile, a template, and the languages a project judges nothing in — and a nudge that counts
 // those as judged files is counting edits no rule could ever have an opinion about.
+// A folder one rule judges despite the exclusion counts here too, so an edit inside it is looked at; WHICH
+// rules may mark it is the look's own question, and RulesFor answers that.
 func (c Config) IsJudged(root, file string) bool {
 	home := strings.TrimRight(root, "/")
 	absolute := file
@@ -205,7 +208,7 @@ func (c Config) IsJudged(root, file string) bool {
 		return false
 	}
 
-	for _, relative := range c.Paths {
+	for _, relative := range append(slices.Clone(c.Paths), c.JudgedDespiteExclusion()...) {
 		dir := home + "/" + strings.Trim(relative, "/")
 		if relative == "." {
 			dir = home

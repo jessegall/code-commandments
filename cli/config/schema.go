@@ -33,7 +33,7 @@ func Schema(root string) []byte {
 		"properties": object{
 			"$schema":  object{"type": "string", "description": "The schema this file is checked against, written by `" + tool + " sync`."},
 			"paths":    list("The source roots judge scans when it is given no path, relative to the project.", object{"type": "string"}),
-			"exclude":  list("Paths never reported on nor rewritten; they are still parsed, so findings elsewhere stay correct.", object{"type": "string"}),
+			"exclude":  list("Paths judge does not read at all, so nothing in them is reported on or rewritten. One rule may be let in anyway with a `judges` call under it in `configure`.", object{"type": "string"}),
 			"base":     object{"type": "string", "minLength": 1, "description": "The branch `--branch` compares against when it names none: this project's trunk. Left out, it is main. A branch named on the command line always wins."},
 			"parallel": object{"type": "integer", "minimum": 1, "description": "How many detectors judge runs at once when no --parallel says; more use more cores and memory. Left out, judge runs 2."},
 			"disable": object{
@@ -54,7 +54,7 @@ func Schema(root string) []byte {
 			"hooks":     list("Hooks turned on beyond the ones every project runs, by name.", object{"type": "string"}),
 			"agents":    list("Agents a config from the PHP tool turned on by name. Every project runs both agents the tool ships and it ships no other, so each name here is skipped, and said so.", object{"type": "string"}),
 			"configure": object{
-				"description":   "Shipped detectors tuned, keyed by engine/Name. Each step calls one of the detector's methods with its arguments in order, as {\"layer\": [\"App\\\\Http\", [\"App\\\\Domain\"]]}.",
+				"description":   "Detectors tuned, keyed by engine/Name for a shipped rule or by name for one of the project's own. Each step calls one of the detector's methods with its arguments in order, as {\"layer\": [\"App\\\\Http\", [\"App\\\\Domain\"]]}. One step is the config's own rather than the detector's: {\"judges\": [\"tests\"]} lets this one rule judge a folder the project excludes, which stays excluded for every other rule.",
 				"type":          "object",
 				"propertyNames": rules(detectorRules()),
 				"additionalProperties": list("The calls, in order.", object{

@@ -65,7 +65,9 @@ func (SkillReminder) Handle(event Event) Response {
 			continue
 		}
 
-		marks := marksIn(marking, file, single, event.ChangedLines(file))
+		// A file inside a folder the project excludes is marked only by the rules it let in there, where a file
+		// of its declared paths is marked by them all.
+		marks := marksIn(marking, file, project.RulesFor(event.Root, file, single), event.ChangedLines(file))
 		activity = append(activity, marks...)
 
 		found, order := bySkill(marks)

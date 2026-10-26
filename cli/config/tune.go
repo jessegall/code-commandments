@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"reflect"
+	"slices"
 	"unicode"
 
 	"github.com/jessegall/code-commandments/catalog"
@@ -72,13 +73,22 @@ func tune(list []detectors.Detector, configurators []Configurator) ([]detectors.
 	tuned := append([]detectors.Detector(nil), list...)
 
 	for _, configurator := range configurators {
+		calls := slices.DeleteFunc(slices.Clone(configurator.Calls), func(call Call) bool { return call.Method == Judges })
+
+		// A configurator that only says which excluded folder its rule judges names no method of the detector,
+		// and the detector it names may be the project's own rule, which this list never holds. Reading it as a
+		// call would refuse a config that is right.
+		if len(calls) == 0 {
+			continue
+		}
+
 		at := indexOf(tuned, configurator.Target)
 
 		if at < 0 {
 			return nil, &cli.InvalidConfiguration{Reason: "configure(" + configurator.Target.ID() + "): that detector is not registered, or was disabled."}
 		}
 
-		for _, call := range configurator.Calls {
+		for _, call := range calls {
 			detector, err := apply(tuned[at], call)
 			if err != nil {
 				return nil, &cli.InvalidConfiguration{Reason: "configure(" + configurator.Target.ID() + "): " + err.Error()}

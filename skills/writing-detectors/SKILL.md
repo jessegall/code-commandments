@@ -280,6 +280,25 @@ That writes `NoRawSqlDetector.json` and, when the skill is new, `skills/no-raw-s
 the rest of the process. The folder is kept out of the `.commandments/` gitignore: they are your rules,
 so commit them.
 
+## Let one rule into a folder the project excludes
+
+An excluded folder is excluded for every rule, which is usually right and sometimes exactly wrong: a project
+excludes `tests` because the rules about naming read a test's name as a sentence, which is what a test name is,
+and one project measured 9,773 findings in 85 files that way. But a rule written ABOUT tests belongs there.
+
+Name the folder under that one rule, beside its other `configure` steps:
+
+```json
+"configure": {"TestsDriveTheRealPath": [{"judges": ["tests"]}]}
+```
+
+The folder stays excluded for every other rule, and `judges` is the config's own step rather than a method of
+the detector, so it reads the same under a rule of yours as under a shipped one (a shipped rule is keyed
+`engine/Name`, yours by its bare name). An edit inside the folder then raises that rule's marks live, as any
+other edit does, instead of waiting for somebody to run a judge over the folder by hand. A run GIVEN a path is
+never widened by it: a whitelist says which rule may look inside an excluded folder, not that a run should
+reach past what it was asked for.
+
 They are named as yours wherever they fire: `judge` prints `[NoRawSqlDetector (custom)]` in the
 console and in `sins.md`, `judge --list` lists them so, and `report --detector` refuses them — nothing
 upstream can fix a rule the package does not ship.

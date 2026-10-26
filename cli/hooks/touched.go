@@ -2,6 +2,7 @@ package hooks
 
 import (
 	"os"
+	"slices"
 	"sort"
 	"strings"
 	"time"
@@ -53,13 +54,18 @@ func (t Touched) Claim(limit int) (claimed []string, more bool) {
 	var touched []stamped
 	home := strings.TrimRight(t.root, "/")
 
-	for _, relative := range t.project.Paths {
+	// A folder one rule judges despite the exclusion is walked like a declared path, so an edit a shell made
+	// inside it is seen at all; which rules may mark it is RulesFor's answer, not this one's.
+	judged := t.project.JudgedDespiteExclusion()
+	excluded := source.Under(home, t.project.Excluded).Judging(judged)
+
+	for _, relative := range append(slices.Clone(t.project.Paths), judged...) {
 		dir := home + "/" + strings.Trim(relative, "/")
 		if relative == "." {
 			dir = home
 		}
 
-		for _, path := range source.Sources(dir, source.Under(home, t.project.Excluded)) {
+		for _, path := range source.Sources(dir, excluded) {
 			info, err := os.Stat(path)
 
 			// At or after, never strictly after: an mtime has one-second resolution, so a file written in the

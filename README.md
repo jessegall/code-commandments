@@ -201,14 +201,18 @@ A `.commandments/config.json` is scaffolded on install, with a schema beside it
         "languages": ["python"]
     },
     "configure": {
-        "php/DataClumpDetector": [{"minClasses": [3]}]
+        "php/DataClumpDetector": [{"minClasses": [3]}],
+        "NoRawSqlDetector": [{"judges": ["tests"]}]
     },
     "detectors": ["NoRawSqlDetector"]
 }
 ```
 
 - `paths`: the source roots judge and repent scan with no path given (auto-detected on first run).
-- `exclude`: paths never reported on nor rewritten; still parsed, so findings elsewhere stay right.
+- `exclude`: paths judge does not read at all, so nothing in them is reported on or rewritten.
+- `judges`, written under a rule inside `configure`: that one rule reads an excluded folder anyway, and
+  no other rule does. `"configure": {"NoRawSqlDetector": [{"judges": ["tests"]}]}` judges `tests/` for
+  your own SQL rule while every naming rule stays out of it.
 - `disable`: rules turned off by their sin, their detector, or their whole skill — and whole
   languages, agents or hooks.
 - `configure`: a shipped detector tuned, each step one of its methods with its arguments in order.
@@ -603,8 +607,8 @@ vendor/bin/commandments repent src --branch             # only branch changes vs
 vendor/bin/commandments repent src --branch=develop     # ...vs a different base
 ```
 
-The whole tree is still parsed (cross-file rewrites stay correct); only the files
-that get written are scoped.
+Everything the scan reads is parsed (cross-file rewrites stay correct); only the
+files that get written are scoped.
 
 ### Prop types when extracting components
 

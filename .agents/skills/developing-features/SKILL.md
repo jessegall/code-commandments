@@ -39,6 +39,35 @@ self-checking fixture (the sin markers are the spec; ≥3 diverse + a righteous 
 `writing-detectors` and `detector-fixtures`. Every Go build and test runs through `scripts/dev`, scoped to the
 packages you touched; .NET runs only in its capped container.
 
+## 2b. Prove it the cheapest way that really proves it
+
+Reaching for the whole binary when a package test covers the change is what makes this project feel slow. The
+Go build is not the cost; the cost is `cli/parity` and `cmd/commandments`, which each build the binary and take
+MINUTES, where a package test is a second or two. Both of those earn their time when the binary's own behaviour
+is what changed. Nothing else should go through them.
+
+| What you changed | What proves it | Roughly |
+|---|---|---|
+| a config key, a schema, how a config is read | `./cli/config` | 2s |
+| a help line, a usage screen, a README table | `./cli/doc` | 6s |
+| a report's wording, what a run says, what it keeps | `./cli/judge` | 2s |
+| a hook's answer, a mark, what the journal is told | `./cli/hooks` | 2min, it judges real fixtures |
+| what sync publishes, wires or withdraws | `./cli/sync` | 2s |
+| a detector or an engine reading | that engine's package + its fixture harness | 3s–60s |
+| a skill's own prose | `./skill/render/...`, which starts the C# bridges | 13min |
+| the plugin's reader patterns and its manifest | nothing to build; they are data | 0s |
+| the binary's own behaviour, end to end | `./cli/parity`, `./cmd/commandments` | minutes |
+
+Three things follow. A shipped reader or a manifest is DATA: two reader fixes shipped on 2026-10-26 with no
+build at all, proved by matching their patterns against real `judge` output. When a change's only cover is a
+parity case, that is a gap rather than the price: write the package test beside the behaviour, and parity goes
+back to proving what only it can, which is that the binary as a whole still answers as the PHP tool did.
+
+And measure a package before you trust a number here. These were measured on 2026-10-26, and the surprise was
+the generators: `skill/render` and `skill/render/generate` take seven and thirteen minutes, because rendering a
+skill's examples judges the fixtures, which starts the C# bridges. The cheap route is not always the obvious
+one, so a package whose test you are about to avoid is worth timing once.
+
 ## 3. Not ready to ship? Mark it unpublished and CALIBRATE
 
 A new detector almost always needs several calibrate→tighten rounds. Give the detector AND its sin the method
