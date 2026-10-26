@@ -171,10 +171,13 @@ func referrers(c *Codebase) map[string][]Match {
 					continue
 				}
 
+				// A call is listed under what it reaches and under the type it reaches it on, and never under
+				// the name it already refers to, which is the reference itself rather than a reach.
 				for _, symbol := range []string{node.Target.Symbol, node.Target.Type} {
-					if symbol != "" && symbol != node.Refers {
-						index[symbol] = append(index[symbol], Match{node: node, file: file})
+					if symbol == "" || symbol == node.Refers {
+						continue
 					}
+					index[symbol] = append(index[symbol], Match{node: node, file: file})
 				}
 			}
 		}

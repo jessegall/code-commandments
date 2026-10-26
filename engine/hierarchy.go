@@ -275,10 +275,11 @@ func (m Match) supertypesOf(symbol string, inScan func(Match) []Match, outside f
 	var supertypes []string
 	declared := false
 	for _, declaration := range m.file.Codebase().Declarations(symbol) {
-		if declaration.file.Language() == m.file.Language() {
-			declared = true
-			supertypes = append(supertypes, named(inScan(declaration))...)
+		if declaration.file.Language() != m.file.Language() {
+			continue
 		}
+		declared = true
+		supertypes = append(supertypes, named(inScan(declaration))...)
 	}
 
 	if declared {

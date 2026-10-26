@@ -99,20 +99,31 @@ func reachPairs(units []ReachedUnit, minimum int) [][2]string {
 	var order [][2]string
 	shared := map[[2]string]int{}
 	for _, resource := range holders {
-		keys := byResource[resource]
-		for at, one := range keys {
-			for _, other := range keys[at+1:] {
-				pair := [2]string{min(one, other), max(one, other)}
-				if _, seen := shared[pair]; !seen {
-					order = append(order, pair)
-				}
-				shared[pair]++
+		// A pair is listed the first time a resource joins it and counted every time, since the count is
+		// what tells a pair sharing one resource from a pair sharing a mechanism.
+		for _, pair := range PairsAmong(byResource[resource]) {
+			if _, seen := shared[pair]; !seen {
+				order = append(order, pair)
 			}
+			shared[pair]++
 		}
 	}
 	sort.SliceStable(order, func(a, b int) bool { return shared[order[a]] > shared[order[b]] })
 
 	return slices.DeleteFunc(order, func(pair [2]string) bool { return shared[pair] < minimum })
+}
+
+// PairsAmong is every pair the names make with one another, each once, in a settled order so the same two
+// names are the same pair however they were met.
+func PairsAmong(names []string) [][2]string {
+	var pairs [][2]string
+	for at, one := range names {
+		for _, other := range names[at+1:] {
+			pairs = append(pairs, [2]string{min(one, other), max(one, other)})
+		}
+	}
+
+	return pairs
 }
 
 // twinReading holds the callers the judge named, so each is asked once.
@@ -169,10 +180,11 @@ func (r *twinReading) routesThrough(caller, callee string) bool {
 				if calling == caller {
 					return true
 				}
-				if !seen[calling] {
-					seen[calling] = true
-					next = append(next, calling)
+				if seen[calling] {
+					continue
 				}
+				seen[calling] = true
+				next = append(next, calling)
 			}
 		}
 		frontier = next
