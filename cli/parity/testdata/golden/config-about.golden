@@ -9,6 +9,7 @@ exit: 0
   [36mVue detectors ........[0m 19 running  ·  20 available
   [36mPython detectors .....[0m 78 running  ·  78 available
   [36mC# detectors .........[0m 63 running  ·  63 available
+  [36mGo detectors .........[0m 3 running  ·  3 available
   [36mCustom detectors .....[0m 0
   [36mExemption packages ...[0m 3 built-in  ·  0 registered
   [36mSkills ...............[0m 66

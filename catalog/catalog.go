@@ -8,6 +8,8 @@ import (
 	"slices"
 	"strings"
 	"sync"
+
+	"github.com/jessegall/code-commandments/contract"
 )
 
 // Unpublished marks a rule still being calibrated. Every catalog leaves it out, so it never reaches
@@ -32,6 +34,34 @@ const (
 
 // Engines is every engine, in curriculum order.
 var Engines = []Engine{PHP, Vue, TypeScript, Python, CSharp, Go}
+
+// languages are the languages each engine's rules read, which is nearly always the one the engine is named
+// after: the exception is the frontend, where a Vue rule and a TypeScript rule each read both, since a Vue
+// file carries a script and a .ts file is judged by the same disciplines.
+var languages = map[Engine][]contract.Language{
+	PHP:        {contract.PHP},
+	Vue:        {contract.Vue, contract.TypeScript},
+	TypeScript: {contract.Vue, contract.TypeScript},
+	Python:     {contract.Python},
+	CSharp:     {contract.CSharp},
+	Go:         {contract.Go},
+}
+
+// LanguagesOf are the languages the engine's rules read; none for an engine nothing declares. A name an engine
+// was published under before is read as the engine it means, since that is the whole point of EngineNamed and a
+// caller holding a name from a config has no reason to resolve it twice.
+func LanguagesOf(engine Engine) []contract.Language {
+	if named, known := EngineNamed(string(engine)); known {
+		engine = named
+	}
+
+	return languages[engine]
+}
+
+// Reads says whether the engine's rules read the language.
+func Reads(engine Engine, language contract.Language) bool {
+	return slices.Contains(languages[engine], language)
+}
 
 // formerly are the names two engines were published under before they were named after their language. A config,
 // a rule file, a filter and a skill slug a project wrote then is read the same way now, and always will be: what

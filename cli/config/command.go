@@ -83,6 +83,7 @@ func (c Command) about(root string, console cli.Console) (int, error) {
 		{"Vue detectors", []catalog.Engine{catalog.Vue, catalog.TypeScript}},
 		{"Python detectors", []catalog.Engine{catalog.Python}},
 		{"C# detectors", []catalog.Engine{catalog.CSharp}},
+		{"Go detectors", []catalog.Engine{catalog.Go}},
 	} {
 		row(console, engine.label, strconv.Itoa(countIn(enabled, engine.engines))+" running  ·  "+strconv.Itoa(countIn(detectors.All(), engine.engines))+" available")
 	}

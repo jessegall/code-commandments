@@ -44,6 +44,8 @@ func ProbeExtension(e Engine) string {
 		return "py"
 	case catalog.CSharp:
 		return "cs"
+	case catalog.Go:
+		return "go"
 	default:
 		return "php"
 	}

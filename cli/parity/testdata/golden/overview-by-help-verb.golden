@@ -84,6 +84,7 @@ Hooks (wired automatically — you rarely run these by hand):
   has-frontend    Say whether this project has Vue and TypeScript to judge: exit 0 when it has, 1
                   when it has none.
   has-php         Say whether this project has PHP to judge: exit 0 when it has, 1 when it has none.
+  has-go          Say whether this project has Go to judge: exit 0 when it has, 1 when it has none.
   hook            Run ONE hook directly, by name — the form every wired hook is written as.
 
 Global options:

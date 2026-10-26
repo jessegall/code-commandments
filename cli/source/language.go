@@ -241,17 +241,13 @@ func Real(path string) string {
 	return resolved
 }
 
-// engines are the languages each engine's rules read.
-var engines = map[catalog.Engine][]Language{
-	catalog.PHP:        {PHP},
-	catalog.Vue:        {Vue, TypeScript},
-	catalog.TypeScript: {Vue, TypeScript},
-	catalog.Python:     {Python},
-	catalog.CSharp:     {CSharp},
-	catalog.Go:         {Go},
-}
-
-// OfEngine are the languages the engine's rules read.
+// OfEngine are the languages the engine's rules read, as the catalog says: which FILES a rule of that engine is
+// run over, where a Vue rule is run over .vue and .ts files alike.
 func OfEngine(engine catalog.Engine) []Language {
-	return engines[engine]
+	var read []Language
+	for _, language := range catalog.LanguagesOf(engine) {
+		read = append(read, written[language])
+	}
+
+	return read
 }

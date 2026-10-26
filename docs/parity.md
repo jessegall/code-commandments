@@ -139,6 +139,28 @@ The plugin's settings are one flag per language the tool reads, and the tool now
 it. Nothing changes for a project: the flag reads false where a project writes no Go, which is every project the
 PHP tool ever ran in.
 
+### `has-go` in the help overview, and `config about`'s Go row
+
+Both follow from the tool reading a sixth language, and both are the same kind of difference as `has-csharp`
+above: a surface that lists one entry per language now lists one more. `has-go` is there because the journal asks
+a `has-` verb before it starts a language's bridge service, and a project is entitled to the same answer about Go
+as about the other five; Go needs no service of its own, since its bridge runs in the tool's own process, so the
+verb answers and nothing is started. `config about` gains a `Go detectors` row beside the other engines'.
+
+Nothing changes for a project. A project with no Go module is told it has no Go to judge, and its Go row reads the
+rules available rather than the rules running.
+
+### The judge reports the LINES a change touched
+
+`judge --changes` named every sin in every changed FILE. It now names only the sins standing on lines the change
+added or modified, which is what the file-edit check has always done and what a worker's hold has always read. A
+project that wants the old reading asks for `--changed-files`, which is the same scope under a name that says so.
+
+This is the one difference in this list that changes what a project is told rather than only adding to it, and it
+was asked for: a worker spent half an hour clearing sins it had not written, because a gate it was told to run
+judged whole files. The recordings of the three `--changes` cases now read as clean runs, and that is the change
+working: each case appends a single blank line to a file that already held sins, and no sin stands on a blank line.
+
 ### What the briefing says `make` writes
 
 The briefing `sync` publishes into a project's `AGENTS.md` and its `commandments` skill said, from the PHP tool, that

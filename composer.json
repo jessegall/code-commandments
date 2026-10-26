@@ -1,6 +1,6 @@
 {
     "name": "jessegall/code-commandments",
-    "description": "An architecture compiler — judges a PHP, Vue, TypeScript, Python and C# codebase against architectural disciplines and points every violation at the skill that fixes it",
+    "description": "An architecture compiler — judges a PHP, Vue, TypeScript, Python, C# and Go codebase against architectural disciplines and points every violation at the skill that fixes it",
     "keywords": [
         "laravel",
         "code-quality",

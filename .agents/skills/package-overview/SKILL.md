@@ -5,7 +5,7 @@ description: The map of the code-commandments package — what the layers are (S
 
 # code-commandments — the package map
 
-**A compiler for architecture.** It judges a PHP, Vue, TypeScript, Python and C# codebase against
+**A compiler for architecture.** It judges a PHP, Vue, TypeScript, Python, C# and Go codebase against
 architectural disciplines and reports each violation ("sin") as a `file:line` that points at the skill teaching
 the fix. One static Go binary; built agent-first: the output is a worklist + a curriculum, not warnings to
 triage.

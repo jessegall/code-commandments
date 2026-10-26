@@ -20,7 +20,11 @@ import (
 	"github.com/jessegall/code-commandments/skill"
 )
 
-// languages are the languages each engine judges.
+// languages are the languages each engine's own CHECKS may be written in, which is not the same question as
+// catalog.LanguagesOf, and the two tables differ on purpose. The catalog answers which files an engine's rules
+// are run over: a Vue rule is run over .vue and .ts files alike. This answers which language's checks a rule may
+// compose, where a Vue rule may ask vue things and a TypeScript rule may ask either, since a .vue file carries a
+// script and the TypeScript engine reads both.
 var languages = map[catalog.Engine][]contract.Language{
 	catalog.PHP:        {contract.PHP},
 	catalog.Vue:        {contract.Vue},

@@ -1,6 +1,6 @@
 # Code Commandments
 
-> A static code checker for PHP, Vue, TypeScript, Python and C#, built to drive AI coding agents.
+> A static code checker for PHP, Vue, TypeScript, Python, C# and Go, built to drive AI coding agents.
 
 **code-commandments** judges a codebase against a set of architectural disciplines.
 Every violation (a "sin") is reported as a `file:line`, grouped under the **skill**
@@ -163,6 +163,7 @@ Exit code is non-zero when sins are found.
 | `commandments has-python` | Say whether this project has Python to judge: exit 0 when it has, 1 when it has none. |
 | `commandments has-frontend` | Say whether this project has Vue and TypeScript to judge: exit 0 when it has, 1 when it has none. |
 | `commandments has-php` | Say whether this project has PHP to judge: exit 0 when it has, 1 when it has none. |
+| `commandments has-go` | Say whether this project has Go to judge: exit 0 when it has, 1 when it has none. |
 | `commandments journal-config` | Write the agent journal plugin's chosen switches into .commandments/config.json, and refresh what the project is told. |
 | `commandments journal-scan` | Scan the project for the folders to check and the ones to leave out, for the agent journal plugin. |
 | `commandments journal-skills` | Render the skills into the agent journal plugin's folder, for the journal to publish. |

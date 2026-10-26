@@ -130,18 +130,9 @@ func measure(path, heap, judged string, fields bool) (reading, error) {
 	return read, nil
 }
 
-// engineLanguages are the languages each engine's rules judge, as judge selects them.
-var engineLanguages = map[catalog.Engine][]contract.Language{
-	catalog.PHP:        {contract.PHP},
-	catalog.Vue:        {contract.Vue, contract.TypeScript},
-	catalog.TypeScript: {contract.Vue, contract.TypeScript},
-	catalog.Python:     {contract.Python},
-	catalog.CSharp:     {contract.CSharp},
-}
-
 // reads says whether the engine judges any language the codebase holds.
 func reads(engine catalog.Engine, held map[contract.Language]bool) bool {
-	for _, language := range engineLanguages[engine] {
+	for _, language := range catalog.LanguagesOf(engine) {
 		if held[language] {
 			return true
 		}
