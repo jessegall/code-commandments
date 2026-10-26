@@ -39,24 +39,7 @@ func TestJudgingTheFixtureInHalvesFindsWhatJudgingItWholeFinds(t *testing.T) {
 
 	for _, detector := range detectors.Of(catalog.CSharp) {
 		want := placed(detector, detector.Find(whole))
-		var got []place
-		if aggregating, isAggregating := detector.(detectors.Aggregating); isAggregating {
-			var records []detectors.Candidate
-			var at []place
-			for _, part := range halves {
-				for _, candidate := range aggregating.Candidates(part) {
-					at = append(at, placed(detector, []engine.Match{candidate.At})...)
-					records = append(records, detectors.Candidate{Record: candidate.Record})
-				}
-			}
-			for _, chosen := range aggregating.Decide(records) {
-				got = append(got, at[chosen])
-			}
-		} else {
-			for _, part := range halves {
-				got = append(got, placed(detector, detector.Find(part))...)
-			}
-		}
+		got := foundInHalves(detector, halves)
 		if found, whole := locations(got), locations(want); !slices.Equal(found, whole) {
 			t.Errorf("%s finds %v in halves, %v whole", catalog.Name(detector), found, whole)
 		}
@@ -149,4 +132,33 @@ func locations(places []place) []string {
 	slices.Sort(located)
 
 	return located
+}
+
+// foundInHalves is where the detector's findings land when each half is judged on its own. An aggregating
+// detector gathers its candidates from every half and decides over all of them together, which is the whole
+// reason it aggregates; every other detector simply finds in each half, and the two lists are joined.
+func foundInHalves(detector detectors.Detector, halves []*engine.Codebase) []place {
+	var found []place
+	aggregating, isAggregating := detector.(detectors.Aggregating)
+	if !isAggregating {
+		for _, part := range halves {
+			found = append(found, placed(detector, detector.Find(part))...)
+		}
+
+		return found
+	}
+
+	var records []detectors.Candidate
+	var at []place
+	for _, part := range halves {
+		for _, candidate := range aggregating.Candidates(part) {
+			at = append(at, placed(detector, []engine.Match{candidate.At})...)
+			records = append(records, detectors.Candidate{Record: candidate.Record})
+		}
+	}
+	for _, chosen := range aggregating.Decide(records) {
+		found = append(found, at[chosen])
+	}
+
+	return found
 }

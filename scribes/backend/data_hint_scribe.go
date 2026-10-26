@@ -79,12 +79,12 @@ func (DataHintScribe) Maintain(codebase *engine.Codebase, pass scribes.Pass) (sc
 			continue
 		}
 		source := sourceText(class.node)
-		if !docblockOnly {
-			for _, made := range class.factories {
-				if renamed, ok := renames[fqcn+"\x00"+made.name]; ok {
-					add(class.file, over(made.named, renamed))
-				}
+		for _, made := range class.factories {
+			renamed, isRenamed := renames[fqcn+"\x00"+made.name]
+			if docblockOnly || !isRenamed {
+				continue
 			}
+			add(class.file, over(made.named, renamed))
 		}
 		if edit, ok := docblockEdit(class.node, source, methodLines(class, source, collectUsed[fqcn], docblockOnly)); ok {
 			add(class.file, edit)

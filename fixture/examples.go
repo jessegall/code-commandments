@@ -167,19 +167,28 @@ func recurringGroups(codebase *engine.Codebase, proven []detectors.Detector) map
 		if !recurs {
 			continue
 		}
-		byFile := map[string]map[int]string{}
-		for _, finding := range detector.Find(codebase) {
-			if key, ok := grouped.GroupKey(finding); ok {
-				if byFile[finding.File()] == nil {
-					byFile[finding.File()] = map[int]string{}
-				}
-				byFile[finding.File()][finding.Line()] = key
-			}
-		}
-		groups[render.Key(detector)] = byFile
+		groups[render.Key(detector)] = groupedByFile(grouped, detector.Find(codebase))
 	}
 
 	return groups
+}
+
+// groupedByFile are the group keys the detector gives its findings, by the file and the line each sits at. A
+// finding it gives no key for belongs to no group and is left out.
+func groupedByFile(grouped detectors.Grouped, found []engine.Match) map[string]map[int]string {
+	byFile := map[string]map[int]string{}
+	for _, finding := range found {
+		key, keyed := grouped.GroupKey(finding)
+		if !keyed {
+			continue
+		}
+		if byFile[finding.File()] == nil {
+			byFile[finding.File()] = map[int]string{}
+		}
+		byFile[finding.File()][finding.Line()] = key
+	}
+
+	return byFile
 }
 
 // declarationSources is every PHP declaration an attribute of the tag marks, by the name the attribute gives: the
@@ -724,7 +733,6 @@ func pointer(text string) *string {
 	return &text
 }
 
-
 // exampleMarker is an @example line's words: the name, and which half the file tells.
 var exampleMarker = regexp.MustCompile(`^@example\s+(\w+)\s+(bad|good)$`)
 
@@ -791,13 +799,12 @@ func (e examples) over(carved render.Examples, proven []detectors.Detector) rend
 			if len(good[language]) > 0 {
 				example.Good = pointer(group(good[language], false))
 			}
-			var kept []render.Example
-			for _, other := range carved[render.Key(detector)] {
-				if other.Language != language {
-					kept = append(kept, other)
-				}
-			}
-			carved[render.Key(detector)] = append(kept, example)
+			// This language's example replaces whatever was carved for it before, and every other
+			// language's stands.
+			others := slices.DeleteFunc(slices.Clone(carved[render.Key(detector)]), func(other render.Example) bool {
+				return other.Language == language
+			})
+			carved[render.Key(detector)] = append(others, example)
 		}
 	}
 

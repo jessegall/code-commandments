@@ -18,13 +18,16 @@ func (o *scriptedOracle) ResolveAll(queries []vue.TypeQuery) map[string]map[stri
 	o.asked = append(o.asked, queries...)
 	resolved := map[string]map[string]string{}
 	for _, query := range queries {
+		file := query.Component.File()
 		for _, name := range query.Names {
-			if typed, ok := o.types[name]; ok {
-				if resolved[query.Component.File()] == nil {
-					resolved[query.Component.File()] = map[string]string{}
-				}
-				resolved[query.Component.File()][name] = typed
+			typed, scripted := o.types[name]
+			if !scripted {
+				continue
 			}
+			if resolved[file] == nil {
+				resolved[file] = map[string]string{}
+			}
+			resolved[file][name] = typed
 		}
 	}
 

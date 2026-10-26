@@ -34,10 +34,11 @@ func (DivergentTwinDetector) Find(codebase *engine.Codebase) []engine.Match {
 	seen := map[string]bool{}
 	for _, divergence := range program.Divergences() {
 		for _, key := range []string{divergence.Poorer, divergence.Richer} {
-			if !seen[key] {
-				seen[key] = true
-				findings = append(findings, byKey[key])
+			if seen[key] {
+				continue
 			}
+			seen[key] = true
+			findings = append(findings, byKey[key])
 		}
 	}
 

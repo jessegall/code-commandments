@@ -121,13 +121,14 @@ func TestTheMarkerTheFixtureWritesIsReadAsAComment(t *testing.T) {
 
 	for _, file := range codebase.Files() {
 		for _, comment := range file.File.Comments {
-			if comment.Text == "// @sin DeepNesting" {
-				if comment.Attached == nil {
-					t.Error("the marker belongs to no node, so the harness could not tell what it marks")
-				}
-
-				return
+			if comment.Text != "// @sin DeepNesting" {
+				continue
 			}
+			if comment.Attached == nil {
+				t.Error("the marker belongs to no node, so the harness could not tell what it marks")
+			}
+
+			return
 		}
 	}
 	t.Error("the file's comments hold no marker, though the fixture writes one")

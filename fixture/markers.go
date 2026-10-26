@@ -111,10 +111,7 @@ func commentMarkers(codebase *engine.Codebase) []Marker {
 		for _, comment := range file.File.Comments {
 			words := strings.TrimSpace(commentDelimiters.ReplaceAllString(strings.TrimSpace(comment.Text), ""))
 			for _, found := range commentMarker.FindAllStringSubmatch(words, -1) {
-				marked, ok := file.Match(0), true
-				if found[2] == "" {
-					marked, ok = markedBy(file, comment)
-				}
+				marked, ok := markedFor(file, comment, found[2])
 				if !ok {
 					continue
 				}
@@ -132,6 +129,17 @@ func commentMarkers(codebase *engine.Codebase) []Marker {
 	}
 
 	return markers
+}
+
+// markedFor is the node a marker marks. A marker that names a half of an example, which is what its second
+// word says, is about the whole FILE, since what the reader is shown is the file; every other marker is about
+// the node its comment leads, and not every comment leads one.
+func markedFor(file *engine.File, comment contract.Comment, half string) (engine.Match, bool) {
+	if half != "" {
+		return file.Match(0), true
+	}
+
+	return markedBy(file, comment)
 }
 
 // markedBy is the code a marker comment marks: the node it leads, or, for a comment on a line of its own that leads

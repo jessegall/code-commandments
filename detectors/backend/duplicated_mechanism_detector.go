@@ -117,15 +117,13 @@ func mechanismPairs(codebase *engine.Codebase, units map[string]mechanismUnit, o
 	overlap := map[[2]string]int{}
 	var pairs [][2]string
 	for _, verb := range verbs {
-		locations := holders[verb]
-		for at, one := range locations {
-			for _, other := range locations[at+1:] {
-				pair := [2]string{min(one, other), max(one, other)}
-				if overlap[pair] == 0 {
-					pairs = append(pairs, pair)
-				}
-				overlap[pair]++
+		// Each pair of holders is listed the first time a verb joins them, and counted every time: the
+		// count is what tells a pair sharing one verb from a pair sharing a mechanism.
+		for _, pair := range pairsAmong(holders[verb]) {
+			if overlap[pair] == 0 {
+				pairs = append(pairs, pair)
 			}
+			overlap[pair]++
 		}
 	}
 	pairs = slices.DeleteFunc(pairs, func(pair [2]string) bool { return overlap[pair] < mechanismMinShared })
@@ -188,11 +186,25 @@ func isMechanism(codebase *engine.Codebase, shared []string) bool {
 	}
 	weight, verbs := 0.0, 0
 	for _, resource := range shared {
-		if !reach.IsType(resource) {
-			verbs++
-			weight += reach.Classes.WeightOf(resource)
+		if reach.IsType(resource) {
+			continue
 		}
+		verbs++
+		weight += reach.Classes.WeightOf(resource)
 	}
 
 	return verbs >= mechanismMinVerbs && weight >= mechanismMinWeight
+}
+
+// pairsAmong is every pair the locations make with one another, each once, named in a settled order so the same
+// two locations are the same pair however they were met.
+func pairsAmong(locations []string) [][2]string {
+	var pairs [][2]string
+	for at, one := range locations {
+		for _, other := range locations[at+1:] {
+			pairs = append(pairs, [2]string{min(one, other), max(one, other)})
+		}
+	}
+
+	return pairs
 }

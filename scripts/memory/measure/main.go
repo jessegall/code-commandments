@@ -132,8 +132,8 @@ func measure(path, heap, judged string, fields bool) (reading, error) {
 
 // engineLanguages are the languages each engine's rules judge, as judge selects them.
 var engineLanguages = map[catalog.Engine][]contract.Language{
-	catalog.PHP:    {contract.PHP},
-	catalog.Vue:   {contract.Vue, contract.TypeScript},
+	catalog.PHP:        {contract.PHP},
+	catalog.Vue:        {contract.Vue, contract.TypeScript},
 	catalog.TypeScript: {contract.Vue, contract.TypeScript},
 	catalog.Python:     {contract.Python},
 	catalog.CSharp:     {contract.CSharp},
@@ -152,6 +152,27 @@ func reads(engine catalog.Engine, held map[contract.Language]bool) bool {
 
 // population prints the share of nodes that set each field of the node, and how many distinct values the
 // strings among them take.
+// counted records what one node's exported fields hold: each field that is set at all, and every distinct
+// string a field of strings has carried. The two tallies are the caller's, one slot per field of the contract's
+// node, so this adds to them rather than answering.
+func counted(node *contract.Node, kind reflect.Type, set []int, distinct []map[string]bool) {
+	value := reflect.ValueOf(node).Elem()
+	for i := range kind.NumField() {
+		if !kind.Field(i).IsExported() || value.Field(i).IsZero() {
+			continue
+		}
+		set[i]++
+		text, isString := value.Field(i).Interface().(string)
+		if !isString {
+			continue
+		}
+		if distinct[i] == nil {
+			distinct[i] = map[string]bool{}
+		}
+		distinct[i][text] = true
+	}
+}
+
 func population(codebase *engine.Codebase) {
 	kind := reflect.TypeOf(contract.Node{})
 	set := make([]int, kind.NumField())
@@ -160,19 +181,7 @@ func population(codebase *engine.Codebase) {
 	for _, file := range codebase.Files() {
 		for _, node := range file.Nodes() {
 			total++
-			value := reflect.ValueOf(node).Elem()
-			for i := range kind.NumField() {
-				if !kind.Field(i).IsExported() || value.Field(i).IsZero() {
-					continue
-				}
-				set[i]++
-				if text, isString := value.Field(i).Interface().(string); isString {
-					if distinct[i] == nil {
-						distinct[i] = map[string]bool{}
-					}
-					distinct[i][text] = true
-				}
-			}
+			counted(node, kind, set, distinct)
 		}
 	}
 	for i := range kind.NumField() {

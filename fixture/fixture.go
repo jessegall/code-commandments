@@ -72,18 +72,27 @@ func (f Fixture) ChainDepths() map[string]int {
 		}
 		deepest := 0
 		for _, finding := range detector.Find(f.Codebase) {
-			files := map[string]bool{}
-			for _, step := range chained.ChainPath(finding, f.Codebase) {
-				if _, file, found := strings.Cut(step, "@"); found {
-					files[file] = true
-				}
-			}
-			deepest = max(deepest, len(files))
+			deepest = max(deepest, len(filesAlong(chained.ChainPath(finding, f.Codebase))))
 		}
 		depths[catalog.Name(detector)] = deepest
 	}
 
 	return depths
+}
+
+// filesAlong are the files a chain's steps name, each once: a step is written as a symbol and the file it was
+// found in, apart by an @, and a step naming no file is a step this does not count.
+func filesAlong(steps []string) map[string]bool {
+	files := map[string]bool{}
+	for _, step := range steps {
+		_, file, named := strings.Cut(step, "@")
+		if !named {
+			continue
+		}
+		files[file] = true
+	}
+
+	return files
 }
 
 // MinRecurrenceFiles is how many files a recurrence detector's widest group must reach.
@@ -206,13 +215,7 @@ func (f Fixture) Ambiguous() []string {
 			halves[marker.File][marker.Class][marker.Tag] = true
 		}
 		for file, classes := range halves {
-			paired := 0
-			for _, tags := range classes {
-				if len(tags) == 2 {
-					paired++
-				}
-			}
-			if paired > 1 {
+			if pairedIn(classes) > 1 {
 				ambiguous = append(ambiguous, fmt.Sprintf("%s has two scenarios in %s", catalog.Name(detector), file))
 			}
 		}
@@ -220,6 +223,20 @@ func (f Fixture) Ambiguous() []string {
 	slices.Sort(ambiguous)
 
 	return ambiguous
+}
+
+// pairedIn is how many of the classes hold BOTH halves of a scenario, a sin and the fix of it. Two of them in
+// one file is what makes that file ambiguous, since which fix repairs which sin is then nobody's to decide.
+func pairedIn(classes map[string]map[Tag]bool) int {
+	paired := 0
+	for _, tags := range classes {
+		if len(tags) != 2 {
+			continue
+		}
+		paired++
+	}
+
+	return paired
 }
 
 // keys are the names a marker may give a detector by: its own, its sin's type and its sin's name.
