@@ -15,17 +15,17 @@
         "windows-arm64": 21495808
     },
     "measured": {
-        "darwin-amd64": 18563872,
-        "darwin-arm64": 17441650,
-        "linux-amd64": 18358434,
-        "linux-arm64": 17170594,
-        "roslyn-bridge-darwin-amd64": 41573774,
-        "roslyn-bridge-darwin-arm64": 39884574,
-        "roslyn-bridge-linux-amd64": 41502670,
-        "roslyn-bridge-linux-arm64": 39910428,
-        "roslyn-bridge-windows-amd64": 40533659,
-        "roslyn-bridge-windows-arm64": 39862437,
-        "windows-amd64": 18752000,
-        "windows-arm64": 17266176
+        "darwin-amd64": 21054176,
+        "darwin-arm64": 19724370,
+        "linux-amd64": 20787362,
+        "linux-arm64": 19398818,
+        "roslyn-bridge-darwin-amd64": 41602414,
+        "roslyn-bridge-darwin-arm64": 39920222,
+        "roslyn-bridge-linux-amd64": 41530101,
+        "roslyn-bridge-linux-arm64": 39934354,
+        "roslyn-bridge-windows-amd64": 40553462,
+        "roslyn-bridge-windows-arm64": 39883938,
+        "windows-amd64": 21233152,
+        "windows-arm64": 19513856
     }
 }
