@@ -101,11 +101,13 @@ func readRouteActions(codebase *engine.Codebase) *RouteActions {
 	surface := ResponseSurfaceOf(codebase)
 	for _, file := range codebase.Of(contract.PHP).Files() {
 		for _, node := range file.Nodes() {
-			if registration := file.Match(node.ID); IsRegistration(registration) {
-				for _, action := range ActionsOf(registration) {
-					read.registered[action] = true
-					read.actions[action] = true
-				}
+			registration := file.Match(node.ID)
+			if !IsRegistration(registration) {
+				continue
+			}
+			for _, action := range ActionsOf(registration) {
+				read.registered[action] = true
+				read.actions[action] = true
 			}
 		}
 		for _, node := range file.Nodes() {
@@ -113,9 +115,10 @@ func readRouteActions(codebase *engine.Codebase) *RouteActions {
 				continue
 			}
 			for _, method := range php.Methods(file.Match(node.ID)) {
-				if php.IsPublic(method.Node()) && isRequestHandler(method, program, surface) {
-					read.actions[ActionKey(node.Symbol, method.Name())] = true
+				if !php.IsPublic(method.Node()) || !isRequestHandler(method, program, surface) {
+					continue
 				}
+				read.actions[ActionKey(node.Symbol, method.Name())] = true
 			}
 		}
 	}

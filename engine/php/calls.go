@@ -166,15 +166,18 @@ func ChainsOf(codebase *engine.Codebase) *Chains {
 	return chains.Of(codebase)
 }
 
+// declaringKinds are the declarations whose members a chain is read from: a class and an enum both hold
+// properties and methods a chain can reach through.
+var declaringKinds = []string{"Stmt_Class", "Stmt_Enum"}
+
 func indexChains(codebase *engine.Codebase) *Chains {
 	read := &Chains{properties: map[string]map[string]string{}, returns: map[string]map[string]string{}}
 	for _, file := range codebase.Of(contract.PHP).Files() {
-		for _, kind := range []string{"Stmt_Class", "Stmt_Enum"} {
-			for _, node := range file.Nodes() {
-				if node.Kind == kind && node.Symbol != "" {
-					read.index(file.Match(node.ID))
-				}
+		for _, node := range file.Nodes() {
+			if !slices.Contains(declaringKinds, node.Kind) || node.Symbol == "" {
+				continue
 			}
+			read.index(file.Match(node.ID))
 		}
 	}
 
@@ -187,12 +190,16 @@ func (c *Chains) index(declaration engine.Match) {
 		if member.Kind() != "Stmt_Property" {
 			continue
 		}
-		if class := writtenClass(member.Node().Declared); class != "" {
-			for _, item := range member.Children() {
-				if item.Node().Field == "props" {
-					properties[item.Name()] = strings.TrimLeft(class, `\`)
-				}
+		class := writtenClass(member.Node().Declared)
+		if class == "" {
+			continue
+		}
+		// One property statement may declare several properties, and each of them holds that class.
+		for _, item := range member.Children() {
+			if item.Node().Field != "props" {
+				continue
 			}
+			properties[item.Name()] = strings.TrimLeft(class, `\`)
 		}
 	}
 	for _, param := range ConstructorParams(declaration) {

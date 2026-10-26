@@ -39,12 +39,15 @@ func readContainerBindings(codebase *engine.Codebase) *ContainerBindings {
 	for _, file := range codebase.Of(contract.PHP).Files() {
 		registrations := map[string][]contract.Span{}
 		for _, node := range file.Nodes() {
-			if abstract := BoundAbstractOf(file.Match(node.ID)); abstract != "" {
-				registrations[abstract] = append(registrations[abstract], node.Span)
-				if !slices.Contains(bound, abstract) {
-					bound = append(bound, abstract)
-				}
+			abstract := BoundAbstractOf(file.Match(node.ID))
+			if abstract == "" {
+				continue
 			}
+			registrations[abstract] = append(registrations[abstract], node.Span)
+			if slices.Contains(bound, abstract) {
+				continue
+			}
+			bound = append(bound, abstract)
 		}
 		for _, node := range file.Nodes() {
 			named := namedClass(file.Match(node.ID))

@@ -59,9 +59,11 @@ func (s *ResponseSurface) collectControllerReturns(controller engine.Match, type
 				continue
 			}
 			for _, node := range append([]engine.Match{statement}, descendants(statement)...) {
-				if expression := node.Child("expr"); node.Kind() == "Stmt_Return" && expression.Exists() {
-					s.collect([]engine.Match{expression}, types)
+				expression := node.Child("expr")
+				if node.Kind() != "Stmt_Return" || !expression.Exists() {
+					continue
 				}
+				s.collect([]engine.Match{expression}, types)
 			}
 		}
 	}

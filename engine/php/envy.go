@@ -265,6 +265,43 @@ func mutatesMembersOf(body []engine.Match, param string) bool {
 	return false
 }
 
+// handsTheElementOn says whether the loop gives each element of the collection to somebody else: a call that
+// takes the element together with `$this` or with a collaborator of the class. The method's own recursion is not
+// that, since a method calling itself on each element is the walk itself rather than a hand-off.
+func handsTheElementOn(loop engine.Match, element, self string, collaborators []string) bool {
+	for _, inner := range loop.ChildrenIn("stmts") {
+		for _, call := range withDescendants(inner) {
+			if call.Kind() != "Expr_MethodCall" && call.Kind() != "Expr_StaticCall" {
+				continue
+			}
+			if isOwnRecursion(call, self) {
+				continue
+			}
+			involved := variablesInCall(call)
+			if !slices.Contains(involved, element) {
+				continue
+			}
+			if slices.Contains(involved, "this") {
+				return true
+			}
+			if slices.ContainsFunc(collaborators, func(name string) bool { return slices.Contains(involved, name) }) {
+				return true
+			}
+		}
+	}
+
+	return false
+}
+
+// isOwnRecursion says whether the call is the method calling itself on `$this`.
+func isOwnRecursion(call engine.Match, self string) bool {
+	if call.Kind() != "Expr_MethodCall" || call.Child("name").Kind() != "Identifier" {
+		return false
+	}
+
+	return call.Child("name").Name() == self && variableName(call.Child("var")) == "this"
+}
+
 // delegatesElementToCollaborator says whether a loop over the parameter's structure hands each element to the
 // method's own class or another of its parameters: orchestration, not envy.
 func delegatesElementToCollaborator(method engine.Match, body []engine.Match, param string) bool {
@@ -281,22 +318,8 @@ func delegatesElementToCollaborator(method engine.Match, body []engine.Match, pa
 			if loop.Kind() != "Stmt_Foreach" || !isMemberAccessOf(loop.Child("expr"), param) || element.Kind() != "Expr_Variable" || element.Name() == "" {
 				continue
 			}
-			for _, inner := range loop.ChildrenIn("stmts") {
-				for _, call := range withDescendants(inner) {
-					if call.Kind() != "Expr_MethodCall" && call.Kind() != "Expr_StaticCall" {
-						continue
-					}
-					if call.Kind() == "Expr_MethodCall" && call.Child("name").Kind() == "Identifier" && call.Child("name").Name() == self && variableName(call.Child("var")) == "this" {
-						continue
-					}
-					involved := variablesInCall(call)
-					if !slices.Contains(involved, element.Name()) {
-						continue
-					}
-					if slices.Contains(involved, "this") || slices.ContainsFunc(collaborators, func(name string) bool { return slices.Contains(involved, name) }) {
-						return true
-					}
-				}
+			if handsTheElementOn(loop, element.Name(), self, collaborators) {
+				return true
 			}
 		}
 	}

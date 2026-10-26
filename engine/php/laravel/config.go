@@ -26,15 +26,8 @@ var configKeys = php.Memoised(func(codebase *engine.Codebase) *ConfigKeys {
 	for _, file := range php.In(codebase).Files() {
 		root := file.Match(0)
 		for _, node := range root.Descendants() {
-			switch node.Kind() {
-			case "Scalar_String":
-				text, _ := node.Text()
+			if text, written := writtenText(node); written {
 				keys.literals = append(keys.literals, text)
-			case "Scalar_InterpolatedString":
-				if parts := node.ChildrenIn("parts"); len(parts) > 0 && parts[0].Kind() == "InterpolatedStringPart" {
-					text, _ := parts[0].Text()
-					keys.literals = append(keys.literals, text)
-				}
 			}
 		}
 		prefix := vendored.prefixOf(file.Path)
@@ -115,6 +108,25 @@ func (v vendorConfigs) publishedIn(root string) map[string]bool {
 	v[root] = names
 
 	return names
+}
+
+// writtenText is the text a string written in the source begins with: a plain string whole, and an interpolated
+// one up to its first interpolation, which is as much of a config key as the source settles. A node that is no
+// written string has none.
+func writtenText(node engine.Match) (string, bool) {
+	switch node.Kind() {
+	case "Scalar_String":
+		return node.Text()
+	case "Scalar_InterpolatedString":
+		parts := node.ChildrenIn("parts")
+		if len(parts) == 0 || parts[0].Kind() != "InterpolatedStringPart" {
+			return "", false
+		}
+
+		return parts[0].Text()
+	}
+
+	return "", false
 }
 
 func returnedArray(root engine.Match) engine.Match {

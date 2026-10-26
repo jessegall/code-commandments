@@ -27,15 +27,19 @@ func IndexOf(codebase *engine.Codebase) *Index {
 func buildIndex(codebase *engine.Codebase) *Index {
 	index := &Index{program: ProgramOf(codebase), byName: map[string][]engine.Match{}}
 	files := codebase.Of(contract.PHP).Files()
+	// A kind at a time, since the order a name's calls are listed in is the order they are answered in, and
+	// the PHP tool listed every send of one kind before the next.
 	for _, kind := range sends {
 		for _, file := range files {
 			for _, node := range file.Nodes() {
 				if node.Kind != kind {
 					continue
 				}
-				if name := child(node, "name"); name.Kind == "Identifier" {
-					index.byName[name.Name] = append(index.byName[name.Name], file.Match(node.ID))
+				name := child(node, "name")
+				if name.Kind != "Identifier" {
+					continue
 				}
+				index.byName[name.Name] = append(index.byName[name.Name], file.Match(node.ID))
 			}
 		}
 	}

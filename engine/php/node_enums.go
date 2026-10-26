@@ -155,17 +155,28 @@ func (n Node) ArgumentArrayLiterals(position int) []string {
 	return literals
 }
 
+// scalarLiteralsOf are the strings and integers the conditions are written as, in order; a condition written as
+// anything else contributes none.
+func scalarLiteralsOf(conditions []engine.Match) []string {
+	var literals []string
+	for _, condition := range conditions {
+		literal, written := scalarLiteral(condition)
+		if !written {
+			continue
+		}
+		literals = append(literals, literal)
+	}
+
+	return literals
+}
+
 // ArmConditionLiterals is every string or integer a match's arms or a switch's cases test for.
 func (n Node) ArmConditionLiterals() []string {
 	var literals []string
 	switch n.Kind() {
 	case "Expr_Match":
 		for _, arm := range n.ChildrenIn("arms") {
-			for _, condition := range (Node{Match: arm}).ChildrenIn("conds") {
-				if literal, ok := scalarLiteral(condition); ok {
-					literals = append(literals, literal)
-				}
-			}
+			literals = append(literals, scalarLiteralsOf((Node{Match: arm}).ChildrenIn("conds"))...)
 		}
 	case "Stmt_Switch":
 		for _, branch := range n.ChildrenIn("cases") {

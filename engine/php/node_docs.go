@@ -241,22 +241,25 @@ func (n Node) HasCeremonyDocblock() bool {
 func (n Node) CodeWords() []string {
 	var words []string
 	seen := map[string]bool{}
+	// Each word is kept once, in the order it was first met, whether it came from what the construct is or
+	// from what the code spells.
+	keep := func(word string) {
+		if seen[word] {
+			return
+		}
+		seen[word] = true
+		words = append(words, word)
+	}
 	var harvest func(node engine.Match, root bool)
 	harvest = func(node engine.Match, root bool) {
 		if !root && strings.HasPrefix(node.Kind(), "Stmt_") {
 			return
 		}
 		for _, word := range constructWords(node.Kind()) {
-			if stem := prose.Stem(word); !seen[stem] {
-				seen[stem] = true
-				words = append(words, stem)
-			}
+			keep(prose.Stem(word))
 		}
 		for _, word := range prose.Words(spelled(node)) {
-			if !seen[word] {
-				seen[word] = true
-				words = append(words, word)
-			}
+			keep(word)
 		}
 		for _, child := range node.Children() {
 			harvest(child, false)

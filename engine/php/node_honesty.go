@@ -267,6 +267,42 @@ func isNonNullLiteral(expr engine.Match) bool {
 	return expr.Kind() == "Expr_ConstFetch" && (name == "true" || name == "false")
 }
 
+// privateNullablesOf are the names of the class's own private nullable properties. One property statement may
+// declare several, and each of them is its own property.
+func privateNullablesOf(class engine.Match) map[string]bool {
+	nullable := map[string]bool{}
+	for _, member := range (Node{Match: class}).ChildrenIn("stmts") {
+		if member.Kind() != "Stmt_Property" {
+			continue
+		}
+		if !slices.Contains(member.Node().Modifiers, "private") || !Written(member.Node().Declared).IsNullable() {
+			continue
+		}
+		for _, item := range (Node{Match: member}).ChildrenIn("props") {
+			nullable[item.Name()] = true
+		}
+	}
+
+	return nullable
+}
+
+// assignedIn are the named properties of its own the method assigns to, anywhere in its body.
+func assignedIn(method engine.Match, named map[string]bool) map[string]bool {
+	assigned := map[string]bool{}
+	for _, statement := range (Node{Match: method}).ChildrenIn("stmts") {
+		for _, held := range withDescendants(statement) {
+			if held.Kind() != "Expr_Assign" {
+				continue
+			}
+			if property := ownProperty(held.Child("var")); named[property] {
+				assigned[property] = true
+			}
+		}
+	}
+
+	return assigned
+}
+
 // transientNullables is, per class, each private nullable property a method other than the constructor assigns.
 var transientNullables = Memoised(func(codebase *engine.Codebase) map[string]map[string]bool {
 	byClass := map[string]map[string]bool{}
@@ -275,25 +311,14 @@ var transientNullables = Memoised(func(codebase *engine.Codebase) map[string]map
 		if name == "" {
 			continue
 		}
-		nullable := map[string]bool{}
-		for _, member := range (Node{Match: class}).ChildrenIn("stmts") {
-			if member.Kind() == "Stmt_Property" && slices.Contains(member.Node().Modifiers, "private") && Written(member.Node().Declared).IsNullable() {
-				for _, item := range (Node{Match: member}).ChildrenIn("props") {
-					nullable[item.Name()] = true
-				}
-			}
-		}
+		nullable := privateNullablesOf(class)
 		transient := map[string]bool{}
 		for _, method := range Methods(class) {
 			if strings.EqualFold(method.Name(), "__construct") {
 				continue
 			}
-			for _, statement := range (Node{Match: method}).ChildrenIn("stmts") {
-				for _, assign := range withDescendants(statement) {
-					if property := ownProperty(assign.Child("var")); assign.Kind() == "Expr_Assign" && nullable[property] {
-						transient[property] = true
-					}
-				}
+			for property := range assignedIn(method, nullable) {
+				transient[property] = true
 			}
 		}
 		byClass[name] = transient
