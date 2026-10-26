@@ -405,6 +405,17 @@ func soleReturnedArray(node engine.Match, field string) (engine.Match, bool) {
 
 // TransformerOutputIn is the folder the TypeScript transformer writes into, as the codebase configures it: an
 // `outputDirectory(...)` call, or an `output_file` config key, read from literals, concatenation, variables, `__DIR__`,
+// namesKey says whether the array entry is written with that literal string as its key.
+func namesKey(item engine.Match, key string) bool {
+	written := item.Child("key")
+	if item.Kind() != "ArrayItem" || written.Kind() != "Scalar_String" {
+		return false
+	}
+	text, _ := written.Node().Value.Text()
+
+	return text == key
+}
+
 // `dirname` and Laravel's path helpers. Empty when the codebase says nothing a reader can resolve.
 func TransformerOutputIn(codebase *engine.Codebase) string {
 	for _, file := range codebase.Of(contract.PHP).Files() {
@@ -428,15 +439,15 @@ func TransformerOutputIn(codebase *engine.Codebase) string {
 			}
 		}
 		for _, item := range nodes {
-			if key := item.Child("key"); item.Kind() == "ArrayItem" && key.Kind() == "Scalar_String" {
-				if written, _ := key.Node().Value.Text(); written == "output_file" {
-					if output, ok := evaluate(item.Child("value"), path, assignments); ok {
-						return normalise(output)
-					}
-
-					break
-				}
+			if !namesKey(item, "output_file") {
+				continue
 			}
+			if output, told := evaluate(item.Child("value"), path, assignments); told {
+				return normalise(output)
+			}
+
+			// The key is there and says nothing this can read, so no later entry answers for it either.
+			break
 		}
 	}
 

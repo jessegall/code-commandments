@@ -86,13 +86,24 @@ func (n Node) SelfFieldNestedReachTriples() [][3]string {
 		default:
 			continue
 		}
-		directs, reaches := directFieldsAndReaches(expression)
-		for _, reach := range reaches {
-			for _, direct := range directs {
-				if direct != reach[0] {
-					triples = append(triples, [3]string{direct, reach[0], reach[1]})
-				}
+		triples = append(triples, tripledWith(directFieldsAndReaches(expression))...)
+	}
+
+	return triples
+}
+
+// tripledWith pairs each property the expression reads directly with each [base, field] it reaches through
+// another one: the triple a reader of the rule needs, which is the own property, the property reached through,
+// and the field taken off it. A direct read of the very property being reached through is no triple, since
+// there is nothing being reached past.
+func tripledWith(directs []string, reaches [][2]string) [][3]string {
+	var triples [][3]string
+	for _, reach := range reaches {
+		for _, direct := range directs {
+			if direct == reach[0] {
+				continue
 			}
+			triples = append(triples, [3]string{direct, reach[0], reach[1]})
 		}
 	}
 

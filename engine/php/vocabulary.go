@@ -26,15 +26,15 @@ var vocabularies = Memoised(func(codebase *engine.Codebase) Vocabulary {
 			if member.Kind() != "Stmt_ClassConst" || slices.Contains(modifiers, "private") || slices.Contains(modifiers, "protected") {
 				continue
 			}
-			for _, constant := range (Node{Match: member}).ChildrenIn("consts") {
-				value, ok := constant.Child("value").Text()
-				if constant.Child("value").Kind() != "Scalar_String" || !ok || value == "" || isNumeric(value) {
-					continue
-				}
-				if vocabulary.namesByClass[owner] == nil {
-					vocabulary.namesByClass[owner] = map[string]string{}
-				}
-				vocabulary.namesByClass[owner][value] = constant.Name()
+			words := wordsNamedBy(member)
+			if len(words) == 0 {
+				continue
+			}
+			if vocabulary.namesByClass[owner] == nil {
+				vocabulary.namesByClass[owner] = map[string]string{}
+			}
+			for value, name := range words {
+				vocabulary.namesByClass[owner][value] = name
 			}
 		}
 	}
@@ -78,6 +78,23 @@ func (v Vocabulary) NameFor(literal engine.Match) string {
 }
 
 // slotOf is the method and argument position an expression is passed in, as Class::method#position; empty unless
+// wordsNamedBy are the words a constant statement gives a name to, each word with the name it was given. A
+// constant whose value is no written string, or is empty, or reads as a number, names no word: a vocabulary is
+// made of words, and a number is not one.
+func wordsNamedBy(member engine.Match) map[string]string {
+	named := map[string]string{}
+	for _, constant := range (Node{Match: member}).ChildrenIn("consts") {
+		written := constant.Child("value")
+		value, isText := written.Text()
+		if written.Kind() != "Scalar_String" || !isText || value == "" || isNumeric(value) {
+			continue
+		}
+		named[value] = constant.Name()
+	}
+
+	return named
+}
+
 // it is an argument of a static call or of a call on $this.
 func slotOf(expression engine.Match) string {
 	argument := expression.Parent()

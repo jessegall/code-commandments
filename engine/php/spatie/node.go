@@ -194,6 +194,23 @@ func (n Node) NestedWireTypeMissingTypeScript() bool {
 	return ok && !classHasAttribute(declaration, "TypeScript")
 }
 
+// realClassesOf are the classes the union's members name, leaving out the two that say nothing about which
+// class a value is: null, and the Option the php-types package wraps one in.
+func realClassesOf(members []*contract.Type) []string {
+	var classes []string
+	for _, member := range members {
+		for _, class := range php.Written(member).Names() {
+			class = strings.TrimLeft(class, `\`)
+			if strings.ToLower(class) == "null" || class == Optional {
+				continue
+			}
+			classes = append(classes, class)
+		}
+	}
+
+	return classes
+}
+
 // NestedWireTypeFqcn is the one class a field puts on the wire: its `#[DataCollectionOf]` element, or its type.
 func (n Node) NestedWireTypeFqcn() string {
 	if n.Kind() != "Param" && n.Kind() != "Stmt_Property" {
@@ -226,14 +243,7 @@ func soleClassNameOfType(written *contract.Type) string {
 	case written == nil:
 		return ""
 	case written.Kind == "union":
-		var classes []string
-		for _, member := range written.Members {
-			for _, class := range php.Written(member).Names() {
-				if class = strings.TrimLeft(class, `\`); strings.ToLower(class) != "null" && class != Optional {
-					classes = append(classes, class)
-				}
-			}
-		}
+		classes := realClassesOf(written.Members)
 		if len(classes) == 1 {
 			return classes[0]
 		}

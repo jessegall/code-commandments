@@ -437,11 +437,13 @@ func (n Node) ArgumentSubjectType() string {
 	for _, argument := range arguments {
 		asked := 0
 		for _, node := range withDescendants(argument.Child("value")) {
-			if isMethodSend(node) || node.Kind() == "Expr_PropertyFetch" {
-				asked++
-				subjects[types.TypeOf(node.Child("var"))] = true
+			if !isMethodSend(node) && node.Kind() != "Expr_PropertyFetch" {
+				continue
 			}
+			asked++
+			subjects[types.TypeOf(node.Child("var"))] = true
 		}
+		// An argument that asks nothing of anybody is no projection of a subject, so there is none to name.
 		if asked == 0 {
 			return ""
 		}

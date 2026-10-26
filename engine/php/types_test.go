@@ -57,10 +57,12 @@ func members(program *Program, types *Types, class string) map[string]any {
 			methods = append(methods, method.Name())
 		}
 		for _, trait := range traitsOf(declaration.Node()) {
-			if used, ok := program.Declaration(trait); ok {
-				for _, method := range Methods(used) {
-					methods = append(methods, method.Name())
-				}
+			used, declared := program.Declaration(trait)
+			if !declared {
+				continue
+			}
+			for _, method := range Methods(used) {
+				methods = append(methods, method.Name())
 			}
 		}
 	}
