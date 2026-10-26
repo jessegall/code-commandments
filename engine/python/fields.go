@@ -36,12 +36,14 @@ func (p *Program) coupledValues(class Node, values map[string]bool, fieldCount i
 	for _, group := range p.assembledGroups(class) {
 		var kept, guarded []string
 		for _, name := range group {
-			if values[name] {
-				kept = append(kept, name)
-				if slices.Contains(tested, name) {
-					guarded = append(guarded, name)
-				}
+			if !values[name] {
+				continue
 			}
+			kept = append(kept, name)
+			if !slices.Contains(tested, name) {
+				continue
+			}
+			guarded = append(guarded, name)
 		}
 		if len(kept) < 2 || len(kept) >= fieldCount {
 			continue

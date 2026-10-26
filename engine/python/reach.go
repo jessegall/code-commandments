@@ -146,15 +146,16 @@ func (n Node) OwnExpressions() []Node {
 		}
 	}
 	for _, child := range n.Children() {
-		if child.Node().Field == "args" || child.Node().Field == "body" {
-			if child.IsDefinition() {
-				continue
-			}
-			if child.Node().Role == "expression" && child.IsEvaluated() {
-				own = append(own, child)
-			}
-			walk(child)
+		if child.Node().Field != "args" && child.Node().Field != "body" {
+			continue
 		}
+		if child.IsDefinition() {
+			continue
+		}
+		if child.Node().Role == "expression" && child.IsEvaluated() {
+			own = append(own, child)
+		}
+		walk(child)
 	}
 
 	return own

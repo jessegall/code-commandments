@@ -17,10 +17,11 @@ func groups(fingerprints map[string]string) []string {
 	}
 	var shared []string
 	for _, keys := range byHash {
-		if len(keys) > 1 {
-			slices.Sort(keys)
-			shared = append(shared, strings.Join(keys, " = "))
+		if len(keys) < 2 {
+			continue
 		}
+		slices.Sort(keys)
+		shared = append(shared, strings.Join(keys, " = "))
 	}
 	slices.Sort(shared)
 

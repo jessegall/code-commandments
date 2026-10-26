@@ -27,10 +27,8 @@ func fill(codebase *engine.Codebase) {
 			if refers, ok := program.refersTo(node, module); ok {
 				facts.Own().Refers = refers
 			}
-			if node.Kind() == "alias" {
-				if reached, ok := module.importedModule(node.Parent(), node); ok {
-					facts.Own().Resolves = reached.File.Path
-				}
+			if reached, resolved := resolvedImport(module, node); resolved {
+				facts.Own().Resolves = reached
 			}
 			if node.IsFunction() && program.IsOverride(node) {
 				facts.Own().Inherited = true
@@ -46,6 +44,20 @@ func fill(codebase *engine.Codebase) {
 			}
 		}
 	}
+}
+
+// resolvedImport is the path of the module an import alias reaches: nothing for a node that is no alias, and
+// nothing for an alias naming a module this codebase does not hold.
+func resolvedImport(module *Module, node Node) (string, bool) {
+	if node.Kind() != "alias" {
+		return "", false
+	}
+	reached, held := module.importedModule(node.Parent(), node)
+	if !held {
+		return "", false
+	}
+
+	return reached.File.Path, true
 }
 
 // targetOf is the contract's target for a def: its symbol, its name, and the class that declares it.

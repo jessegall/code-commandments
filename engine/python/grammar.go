@@ -39,9 +39,9 @@ func init() {
 		Continues:     func(branch engine.Match) bool { return Node{Match: branch}.IsElif() },
 		// Python hangs a body straight off its construct, so its statements are the children of the field and
 		// there is no block to read through.
-		Body:              engine.InFields("body"),
-		Otherwise:         engine.InFields("orelse"),
-		Condition:         condition,
+		Body:      engine.InFields("body"),
+		Otherwise: engine.InFields("orelse"),
+		Condition: condition,
 		ComparisonSubject: func(held engine.Match) engine.Match {
 			subject, _ := Node{Match: held}.ComparisonSubject()
 
