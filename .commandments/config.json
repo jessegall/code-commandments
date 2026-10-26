@@ -4,11 +4,32 @@
         "bridge/php/bridge.php",
         "bridge/php/src",
         "bridge/mypy",
-        "bridge/roslyn"
+        "bridge/roslyn",
+        "bridge/bundle",
+        "bridge/gotree",
+        "catalog",
+        "cli",
+        "cmd",
+        "contract",
+        "detectors",
+        "engine",
+        "fixture",
+        "listing",
+        "prose",
+        "published",
+        "registry",
+        "rule",
+        "scribes",
+        "scripts",
+        "skill",
+        "skills",
+        "sins",
+        "stubs"
     ],
     "exclude": [
         "coverage",
-        "dist"
+        "dist",
+        "testdata"
     ],
     "parallel": 2
 }
