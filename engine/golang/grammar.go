@@ -135,7 +135,7 @@ func elementName(loop engine.Match) string {
 	if loop.Kind() != "RangeStmt" {
 		return ""
 	}
-	value := loop.Child("Value")
+	value := loop.Child("value")
 	if value.Kind() != "Ident" || value.Name() == "_" {
 		return ""
 	}
