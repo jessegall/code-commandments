@@ -5,3 +5,4 @@ label: Judging the project against its commandments
 commands: commandments judge
 finished: ^(?:\d+ sins? in \d+ files?$|✓ |↳ checklist written to )
 failed: ^(?:✗ |⚠ )
+summary: ^(\d+ sins? across \d+ skills?\.|✓ .+)$

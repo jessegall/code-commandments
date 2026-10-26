@@ -4,8 +4,9 @@ A reader picks the lines of a command's output worth showing while it runs. The 
 from a `<name>.pattern` file: its first line says what it picks, its second is the regular expression
 that picks it, and `key: value` lines follow — `progress:`, whose groups are a count and a total,
 `label:`, the words the card is titled with, `commands:`, the commands a background run is watched
-through even when nothing names the reader, and `finished:` and `failed:`, the lines a card settles
-on once the run ends.
+through even when nothing names the reader, `finished:` and `failed:`, the lines a card settles
+on once the run ends, and `summary:`, the one line a closed card shows, whose last match in the
+output is what the reader answers with.
 
 ## `judge.pattern`
 
@@ -22,6 +23,9 @@ Reads `commandments judge`, which the `sins` alias runs.
 - **Settles** on the count and the checklist path, so a finished run's card says what it found and
   where the work is rather than whichever finding came last. A run that could not read everything
   settles on the line saying so.
+- **Summarises** with the verdict itself, the count of sins or the clean line. The lines a run settles
+  on end with the checklist's path, which says where the work is but not what was found, so a card
+  closed without a summary showed nothing of the answer.
 - The output a journal command reads is not a terminal, so it carries no colour and the patterns need
   no escape sequences.
 
