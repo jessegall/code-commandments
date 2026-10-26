@@ -15,7 +15,6 @@
  },
  {
   "name": "sync-keeps-what-the-project-wrote",
-  "pending": "task 120: the project's AGENTS.md is written with CRLF and sync appends its block with LF, so the file comes out mixed where this recording holds it all as LF. The block has to be written in the document's own line endings before this can match.",
   "args": [
    "sync"
   ],
