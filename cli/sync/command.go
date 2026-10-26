@@ -75,9 +75,19 @@ func Sync(root string, console cli.Console) error {
 
 	lib := library.At(root, project)
 
-	published, err := lib.Publish()
-	if err != nil {
-		return err
+	// Who publishes the skills depends on how the tool is installed. As the journal's plugin, the journal copies
+	// the plugin's own rendered skills into the agents' folders and takes them away when the plugin goes, so this
+	// side stands aside and withdraws what it published before: two publishers of one path would fight over it.
+	// As a plain package, which is every project without a journal, this side is the only publisher there is.
+	driven := workspace.At(root, "").IsJournalDriven()
+
+	var published []string
+	if driven {
+		lib.Withdraw()
+	} else {
+		if published, err = lib.Publish(); err != nil {
+			return err
+		}
 	}
 
 	for _, refusal := range agents.Brief(root, project) {
@@ -115,6 +125,12 @@ func Sync(root string, console cli.Console) error {
 	var names []string
 	for _, agent := range kept {
 		names = append(names, agent.Name())
+	}
+
+	if driven {
+		console.Say("↻ code-commandments synced — the agent journal publishes the skills here, so this run left them to it; " + strings.Join(names, ", ") + " read them from it.")
+
+		return nil
 	}
 
 	console.Say("↻ code-commandments synced — " + strconv.Itoa(len(published)) + " skills published to " + library.Dir + ", read by " + strings.Join(names, ", ") + ".")

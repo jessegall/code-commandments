@@ -92,6 +92,7 @@ func (SkillReminder) Handle(event Event) Response {
 
 	response.Activity = activity
 	response.Judged = files
+	response.Requires = owed(fresh)
 
 	return response
 }
@@ -226,6 +227,23 @@ func safely(rule detectors.Detector, codebase *engine.Codebase) (matches []engin
 }
 
 // attribution names what was changed, as the nudge opens with it.
+// owed are the ids of the skills the fresh findings teach, each once. A journal holds the agent to these, where
+// the nudge alone only names them, and a sin fixed from memory of a skill that was never read is how a finding
+// gets silenced rather than resolved. A project's own rule is named here like a shipped one, since its skill is
+// published under the same prefix.
+func owed(marks []SinMark) []string {
+	var ids []string
+	for _, mark := range marks {
+		id := skill.IDFor(mark.Rule.Sin().Definition().Slug())
+		if id == "" || slices.Contains(ids, id) {
+			continue
+		}
+		ids = append(ids, id)
+	}
+
+	return ids
+}
+
 // nudge is what a check says the moment an edit commits a sin: each new sin, the file and line it is in, and the
 // one command that judges that file for that sin. It names them rather than sending the agent to find out what it
 // was just told, and it says nothing else — not the files it read, not how many it left out, not the skill, which

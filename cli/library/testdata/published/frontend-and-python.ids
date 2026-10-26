@@ -19,6 +19,7 @@ commandments-python-behaviour-per-method
 commandments-python-repeated-call-helper
 commandments-python-templates
 commandments-python-tell-dont-ask
+commandments-go-flow
 commandments-python-documentation
 commandments-python-dependency-direction
 commandments-python-pass-the-object

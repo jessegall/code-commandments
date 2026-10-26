@@ -25,6 +25,10 @@ type Response struct {
 	// Judged is every file the check read, whether it found anything in it or not: a file whose sins are all
 	// gone yields no marks, and without naming it here nothing would ever settle them.
 	Judged []string
+	// Requires are the ids of the skills the agent must read before it goes on, which only a journal enforces:
+	// naming the skill of a finding is advice an agent may read past, and a finding fixed from memory is how a
+	// sin gets silenced instead of resolved.
+	Requires []string
 }
 
 // Silent says nothing.
@@ -62,12 +66,18 @@ func Instructing(text string) Response {
 func Merge(responses []Response) Response {
 	var reasons, contexts, instructions []string
 	var activity []SinMark
-	var judged []string
+	var judged, requires []string
 	quietly := true
 
 	for _, response := range responses {
 		activity = append(activity, response.Activity...)
 		judged = append(judged, response.Judged...)
+
+		for _, id := range response.Requires {
+			if !slices.Contains(requires, id) {
+				requires = append(requires, id)
+			}
+		}
 
 		if response.blockReason != nil {
 			reasons = append(reasons, *response.blockReason)
@@ -86,6 +96,7 @@ func Merge(responses []Response) Response {
 	merged := merge(reasons, contexts, instructions, quietly)
 	merged.Activity = activity
 	merged.Judged = judged
+	merged.Requires = requires
 
 	return merged
 }

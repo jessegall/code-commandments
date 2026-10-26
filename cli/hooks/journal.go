@@ -194,6 +194,11 @@ type JournalAnswer struct {
 	// Repented are the sins Settles names, each with how it was shown, for version 4 of the journal, which settles a
 	// card in place and says which sin it was.
 	Repented []Repented
+	// Requires are the ids of the skills the agent is owed, which version 4 of the journal keeps on the agent's row
+	// and holds every tool but a read of that skill until it is read. An id this plugin does not publish changes
+	// nothing there, and an id already read or already owed changes nothing either, so it is sent every time a sin
+	// of that skill is found rather than remembered here: a compaction takes our memory of it and not the journal's.
+	Requires []string
 }
 
 // JSON is the answer as the journal reads it, leaving out what it does not say.
@@ -240,16 +245,16 @@ func answerOf(merged Response) JournalAnswer {
 	if merged.blockReason != nil {
 		reason := *merged.blockReason
 
-		return JournalAnswer{Refuse: &reason, Whisper: &reason}
+		return JournalAnswer{Refuse: &reason, Whisper: &reason, Requires: merged.Requires}
 	}
 
 	if merged.context != nil && strings.TrimSpace(*merged.context) != "" {
 		whisper := strings.TrimSpace(*merged.context)
 
-		return JournalAnswer{Whisper: &whisper}
+		return JournalAnswer{Whisper: &whisper, Requires: merged.Requires}
 	}
 
-	return JournalAnswer{}
+	return JournalAnswer{Requires: merged.Requires}
 }
 
 // Queue is the file the journal hands its plugin for commands it runs later, one per line: how advice worked

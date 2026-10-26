@@ -1,3 +1,6 @@
+.agents/skills/commandments-go-flow/SKILL.md
+.agents/skills/commandments-go-flow/reference/detectors.md
+.agents/skills/commandments-go-flow/reference/examples.md
 .agents/skills/commandments-php-absence/SKILL.md
 .agents/skills/commandments-php-absence/evals/triggers.json
 .agents/skills/commandments-php-absence/reference/detectors.md

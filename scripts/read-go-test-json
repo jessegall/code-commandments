@@ -1,0 +1,67 @@
+#!/usr/bin/env python3
+"""Read `go test -json` on standard input and print the lines a person wants from it.
+
+A buffered `go test` says nothing until a package ends, so a run of ours streams with `-json`. That stream is
+one JSON object per event, which is unreadable in a card, so this turns it back into lines: the tests that
+failed with what they printed, a count of the tests finished as they finish, and each package's own result.
+
+The journal names the stage in JOURNAL_OUTPUT_STAGE, which is `running`, `finished` or `failed`; the lines are
+the same either way, so nothing here reads it.
+"""
+
+import json
+import sys
+
+
+def main() -> int:
+    finished = 0
+    failures: dict[str, list[str]] = {}
+    said: list[str] = []
+
+    for line in sys.stdin:
+        line = line.strip()
+        if not line.startswith("{"):
+            continue
+        try:
+            event = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+
+        action = event.get("Action", "")
+        package = short(event.get("Package", ""))
+        test = event.get("Test", "")
+
+        if test and action == "output":
+            text = event.get("Output", "").rstrip("\n")
+            if text.strip().startswith(("---", "===")) or "FAIL" in text:
+                continue
+            failures.setdefault(test, []).append(text)
+            continue
+
+        if test and action in ("pass", "fail", "skip"):
+            finished += 1
+            if action == "fail":
+                said.append(f"{finished} FAIL {test}")
+                said.extend(f"    {text}" for text in failures.get(test, [])[-4:])
+            else:
+                said.append(f"{finished} {action} {test}")
+                failures.pop(test, None)
+            continue
+
+        if not test and action in ("pass", "fail"):
+            elapsed = event.get("Elapsed", 0)
+            mark = "ok" if action == "pass" else "FAIL"
+            said.append(f"{mark} {package} ({elapsed:.1f}s, {finished} tests)")
+
+    print("\n".join(said))
+
+    return 0
+
+
+def short(package: str) -> str:
+    """The package as a reader needs it: the path under the module, never the module itself again."""
+    return package.rsplit("/code-commandments/", 1)[-1]
+
+
+if __name__ == "__main__":
+    sys.exit(main())

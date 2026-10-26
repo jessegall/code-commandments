@@ -312,6 +312,10 @@ func (a JournalAnswer) Shape4() map[string]any {
 		answer["cards"] = cards
 	}
 
+	if len(a.Requires) > 0 {
+		answer["require_skills"] = a.Requires
+	}
+
 	return answer
 }
 

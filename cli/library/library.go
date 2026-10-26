@@ -131,6 +131,15 @@ func (l Library) Reconcile(dir string, current []string) {
 	}
 }
 
+// Withdraw takes away every skill the last sync published and publishes none, for a project where the agent
+// journal publishes them instead: the tool is installed as its plugin, the journal copies the plugin's own
+// rendered skills into the agents' folders and takes them away again when the plugin goes. Two publishers of one
+// path would fight over it, so this side stands aside and leaves nothing of its own behind. A folder the tool
+// never put there is left alone, as it is on any other run.
+func (l Library) Withdraw() {
+	l.Reconcile(l.Dir(), nil)
+}
+
 // standalone are the hand-written skills the binary ships, by slug: every folder beside the generated one
 // that holds a SKILL.md.
 func standalone() []string {
