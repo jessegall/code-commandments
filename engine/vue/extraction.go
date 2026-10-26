@@ -178,13 +178,15 @@ func (x *Extraction) DominantObject() (string, bool) {
 	if len(props) == 0 {
 		return "", false
 	}
+	// How often each prop is the root of something the markup reads, which is what makes one of them dominant.
 	counts := map[string]int{}
 	for _, element := range x.elements() {
 		for _, read := range element.Reads() {
 			for _, root := range read.Roots() {
-				if slices.Contains(props, root) {
-					counts[root]++
+				if !slices.Contains(props, root) {
+					continue
 				}
+				counts[root]++
 			}
 		}
 	}
@@ -352,11 +354,13 @@ func (x *Extraction) Markup() string {
 		}
 	}
 	source := string(span.Source)
+	// Only what the element carries INSIDE the span is cut out of it; a binding outside it belongs to another.
 	for _, carried := range x.Carried() {
-		if carried.Start >= span.Start && carried.End <= span.End {
-			start, end := RemovalSpan(source, span.Start, span.End, carried.Start, carried.End)
-			splices = append(splices, splice{start: start, end: end})
+		if carried.Start < span.Start || carried.End > span.End {
+			continue
 		}
+		start, end := RemovalSpan(source, span.Start, span.End, carried.Start, carried.End)
+		splices = append(splices, splice{start: start, end: end})
 	}
 
 	return engine.Reindent(spliceSource(source, span.Start, span.End, splices), span.Column(), "    ")
@@ -413,10 +417,13 @@ func (x *Extraction) forwarded() *forwardedEmits {
 				continue
 			}
 			forwarded.splices = append(forwarded.splices, splice{start: span.Start, end: span.End, text: directive.Match.Name() + `="$emit('` + call.Name + `'` + call.TrailingArguments() + `)"`})
-			if arity, seen := forwarded.arity[call.Name]; !seen || arity < call.Arity() {
-				if !seen {
-					forwarded.events = append(forwarded.events, call.Name)
-				}
+			// An event is listed the first time it is met, and its arity is the widest any call gives it,
+			// since the component has to declare the one that carries every call.
+			arity, seen := forwarded.arity[call.Name]
+			if !seen {
+				forwarded.events = append(forwarded.events, call.Name)
+			}
+			if !seen || arity < call.Arity() {
 				forwarded.arity[call.Name] = call.Arity()
 			}
 			rewrites++

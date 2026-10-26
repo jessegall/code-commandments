@@ -332,9 +332,11 @@ func (n Node) assembledGroups(own []string, program *Program) [][]string {
 		switch {
 		case built.Is("TupleExpression", "CollectionExpression"):
 			for _, element := range built.All() {
-				if expressions := element.Expressions(); len(expressions) > 0 {
-					parts = append(parts, expressions[0])
+				expressions := element.Expressions()
+				if len(expressions) == 0 {
+					continue
 				}
+				parts = append(parts, expressions[0])
 			}
 		case built.Is("ObjectCreationExpression", "ImplicitObjectCreationExpression") && n.buildsAnotherOwnType(built, program):
 			parts = built.Arguments()

@@ -273,9 +273,11 @@ func TestTheProgramReadsWholeAsThePhpEngineReadsIt(t *testing.T) {
 		if parameters := method.Parameters(); wasRecorded && (len(parameters) == 0 || !parameters[0].HasModifier("this")) {
 			outside := 0
 			for _, caller := range callers {
-				if file, _, _ := strings.Cut(caller, "@"); !tests[file] {
-					outside++
+				file, _, _ := strings.Cut(caller, "@")
+				if tests[file] {
+					continue
 				}
+				outside++
 			}
 			if calls := program.CallsTo(method).OutsideTests; calls != outside {
 				t.Errorf("%s: %d calls outside the tests, PHP's callers say %d", method.Symbol(), calls, outside)

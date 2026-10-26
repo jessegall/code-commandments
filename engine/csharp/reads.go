@@ -372,6 +372,36 @@ func (n Node) writtenElements() []Node {
 }
 
 // NamedCases is the enum members the switch names in its cases, arms and labels guarded by `when` left out,
+// unguardedLabelsOf are the case labels of a switch section that stand on their own: a label carrying a `when`
+// clause answers for more than the case it names, so it says nothing about which cases are covered.
+func unguardedLabelsOf(section Node) []Node {
+	var labels []Node
+	for _, label := range section.All() {
+		if !label.Is("CaseSwitchLabel", "CasePatternSwitchLabel") || label.isGuarded() {
+			continue
+		}
+		labels = append(labels, label)
+	}
+
+	return labels
+}
+
+// appendEnumCaseNames adds the name of every enum case written anywhere inside the expression, each once.
+func appendEnumCaseNames(named []string, value Node) []string {
+	for _, node := range value.Flatten() {
+		if !node.IsEnumCase() {
+			continue
+		}
+		name := node.At(1).Name()
+		if slices.Contains(named, name) {
+			continue
+		}
+		named = append(named, name)
+	}
+
+	return named
+}
+
 // since they do not match every time.
 func (n Node) NamedCases() []string {
 	var tests []Node
@@ -384,21 +414,13 @@ func (n Node) NamedCases() []string {
 		}
 	case n.Is("SwitchStatement"):
 		for _, section := range n.All()[1:] {
-			for _, label := range section.All() {
-				if label.Is("CaseSwitchLabel", "CasePatternSwitchLabel") && !label.isGuarded() {
-					tests = append(tests, label)
-				}
-			}
+			tests = append(tests, unguardedLabelsOf(section)...)
 		}
 	}
 	var named []string
 	for _, test := range tests {
 		for _, value := range test.OutermostExpressions() {
-			for _, node := range value.Flatten() {
-				if node.IsEnumCase() && !slices.Contains(named, node.At(1).Name()) {
-					named = append(named, node.At(1).Name())
-				}
-			}
+			named = appendEnumCaseNames(named, value)
 		}
 	}
 
@@ -543,10 +565,12 @@ func (n Node) StateTypes() []State {
 			if !declaration.Is("VariableDeclaration") {
 				continue
 			}
+			// One declaration may name several fields, and each of them holds that type.
 			for _, declarator := range declaration.All() {
-				if declarator.Is("VariableDeclarator") {
-					keep(declarator.Name(), declaration.DeclaredType())
+				if !declarator.Is("VariableDeclarator") {
+					continue
 				}
+				keep(declarator.Name(), declaration.DeclaredType())
 			}
 		}
 	}

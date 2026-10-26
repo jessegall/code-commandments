@@ -34,9 +34,11 @@ func (n Node) OwnMembersTestedForNull(own []string) []string {
 				sides = test.All()
 			}
 			for _, side := range sides {
-				if name := side.WithoutParentheses().MemberName(); slices.Contains(own, name) && !slices.Contains(tested, name) {
-					tested = append(tested, name)
+				name := side.WithoutParentheses().MemberName()
+				if !slices.Contains(own, name) || slices.Contains(tested, name) {
+					continue
 				}
+				tested = append(tested, name)
 			}
 		}
 	}

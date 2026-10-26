@@ -41,14 +41,29 @@ func (n Node) switchPatterns() []Node {
 	case n.Is("SwitchStatement"):
 		for _, section := range n.All()[1:] {
 			for _, label := range section.All() {
-				if label.Is("CasePatternSwitchLabel", "CaseSwitchLabel") {
-					patterns = append(patterns, label.At(0))
+				if !label.Is("CasePatternSwitchLabel", "CaseSwitchLabel") {
+					continue
 				}
+				patterns = append(patterns, label.At(0))
 			}
 		}
 	}
 
 	return patterns
+}
+
+// typeNamesIn are the names of the types a pattern writes, as the compiler resolved them; a type it could not
+// resolve names nothing.
+func typeNamesIn(pattern Node) []string {
+	var names []string
+	for _, part := range pattern.All() {
+		if !part.IsTypeNode() || !part.Type().Exists() {
+			continue
+		}
+		names = append(names, part.Type().Name())
+	}
+
+	return names
 }
 
 // SwitchedTypes is the types the `switch` asks its subject to be, one per case that tests a type: `Circle` and
@@ -57,11 +72,7 @@ func (n Node) SwitchedTypes() []string {
 	var types, named []string
 	for _, pattern := range n.switchPatterns() {
 		if pattern.Is("DeclarationPattern", "TypePattern", "RecursivePattern") {
-			for _, part := range pattern.All() {
-				if part.IsTypeNode() && part.Type().Exists() {
-					types = append(types, part.Type().Name())
-				}
-			}
+			types = append(types, typeNamesIn(pattern)...)
 		}
 		if pattern.isTypeName() {
 			named = append(named, pattern.Type().Name())

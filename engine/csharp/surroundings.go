@@ -497,6 +497,25 @@ func (n Node) IsInventingOnMiss() bool {
 	return invented > 0 && real > 0
 }
 
+// declaredNamesIn are the names a call declares as it is made: C# lets a lookup bind its answer in place, as
+// `TryGetValue(key, out var found)` does, and each such name is one the code around it then reads.
+func declaredNamesIn(call Node) []string {
+	var names []string
+	for _, part := range call.Flatten() {
+		if !part.Is("DeclarationExpression") {
+			continue
+		}
+		for _, designation := range part.All() {
+			if !designation.Is("SingleVariableDesignation") || designation.Name() == "" {
+				continue
+			}
+			names = append(names, designation.Name())
+		}
+	}
+
+	return names
+}
+
 // lookedUpNames is the names of the `out` variables a `TryGetValue` among the nodes fills.
 func lookedUpNames(scope []Node) []string {
 	var names []string
@@ -506,16 +525,7 @@ func lookedUpNames(scope []Node) []string {
 				if !lookup.IsLookup() || !lookup.IsCall() {
 					continue
 				}
-				for _, part := range lookup.Flatten() {
-					if !part.Is("DeclarationExpression") {
-						continue
-					}
-					for _, designation := range part.All() {
-						if designation.Is("SingleVariableDesignation") && designation.Name() != "" {
-							names = append(names, designation.Name())
-						}
-					}
-				}
+				names = append(names, declaredNamesIn(lookup)...)
 			}
 		}
 	}

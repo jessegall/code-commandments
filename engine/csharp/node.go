@@ -408,10 +408,12 @@ func (n Node) Answers() []Node {
 	case "SwitchExpression":
 		var all []Node
 		for _, arm := range n.All() {
-			if arm.Is("SwitchExpressionArm") {
-				expressions := arm.Expressions()
-				all = append(all, expressions[len(expressions)-1].Answers()...)
+			if !arm.Is("SwitchExpressionArm") {
+				continue
 			}
+			// An arm's last expression is its answer; whatever precedes it is the pattern it matched.
+			expressions := arm.Expressions()
+			all = append(all, expressions[len(expressions)-1].Answers()...)
 		}
 
 		return all
