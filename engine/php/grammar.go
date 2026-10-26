@@ -43,6 +43,7 @@ func init() {
 		Otherwise:   otherwise,
 		Condition:   condition,
 		ElementName: elementName,
+		Computes:    computes,
 	})
 
 }
@@ -180,4 +181,17 @@ func elementName(loop engine.Match) string {
 	}
 
 	return element.Name()
+}
+
+// computes says whether the expression works a value out of its parts: PHP names every binary operator, every
+// compound assignment and every unary one with a prefix of its own, so the prefix is the whole answer.
+func computes(held engine.Match) bool {
+	kind := held.Kind()
+	for _, prefix := range []string{"Expr_BinaryOp_", "Expr_AssignOp_"} {
+		if strings.HasPrefix(kind, prefix) {
+			return true
+		}
+	}
+
+	return slices.Contains([]string{"Expr_UnaryMinus", "Expr_UnaryPlus", "Expr_BooleanNot", "Expr_BitwiseNot", "Expr_PreInc", "Expr_PreDec", "Expr_PostInc", "Expr_PostDec"}, kind)
 }

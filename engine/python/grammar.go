@@ -43,6 +43,8 @@ func init() {
 		Otherwise:   engine.InFields("orelse"),
 		Condition:   condition,
 		ElementName: elementName,
+		// Python files every operator under one of five kinds, an augmented assignment among them.
+		Computes: engine.KindIn("BinOp", "BoolOp", "Compare", "UnaryOp", "AugAssign"),
 		ComparisonSubject: func(held engine.Match) engine.Match {
 			subject, _ := Node{Match: held}.ComparisonSubject()
 

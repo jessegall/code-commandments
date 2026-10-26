@@ -44,6 +44,7 @@ func init() {
 		Condition:         condition,
 		ComparisonSubject: func(held engine.Match) engine.Match { return Node{Match: held}.ComparisonSubject().Match },
 		ElementName:       elementName,
+		Computes:          computes,
 	})
 
 }
@@ -188,4 +189,22 @@ func elementName(loop engine.Match) string {
 	}
 
 	return loop.Name()
+}
+
+// computes says whether the expression works a value out of its parts. Roslyn names each operator as its own
+// kind, and every one of them ends in Expression, so the list is the operators themselves: arithmetic and bit
+// work, the unary forms, and every compound assignment. A comparison and a conjunction are neutral kinds
+// already, and the engine asks those first.
+func computes(held engine.Match) bool {
+	return Node{Match: held}.Is(
+		"AddExpression", "SubtractExpression", "MultiplyExpression", "DivideExpression", "ModuloExpression",
+		"LeftShiftExpression", "RightShiftExpression", "UnsignedRightShiftExpression",
+		"BitwiseAndExpression", "BitwiseOrExpression", "ExclusiveOrExpression",
+		"UnaryMinusExpression", "UnaryPlusExpression", "BitwiseNotExpression", "LogicalNotExpression",
+		"PreIncrementExpression", "PreDecrementExpression", "PostIncrementExpression", "PostDecrementExpression",
+		"SimpleAssignmentExpression", "AddAssignmentExpression", "SubtractAssignmentExpression",
+		"MultiplyAssignmentExpression", "DivideAssignmentExpression", "ModuloAssignmentExpression",
+		"AndAssignmentExpression", "OrAssignmentExpression", "ExclusiveOrAssignmentExpression",
+		"LeftShiftAssignmentExpression", "RightShiftAssignmentExpression", "CoalesceAssignmentExpression",
+	)
 }

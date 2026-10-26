@@ -218,6 +218,19 @@ func (m Match) Condition() Match {
 	return Match{}
 }
 
+// Computes says whether the node works a value out of its parts rather than passing them on: an assignment, a
+// comparison, a conjunction, or whatever else the language calls an operator over its parts.
+func (m Match) Computes() bool {
+	if m.Is(Assignment) || m.Is(Comparison) || m.Is(Conjunction) {
+		return true
+	}
+	if read := m.grammar().Computes; read != nil && m.node != nil {
+		return read(m)
+	}
+
+	return false
+}
+
 // ElementName is the name the loop binds for each item of what it walks; empty for a loop that binds none and
 // for anything that is no loop.
 func (m Match) ElementName() string {

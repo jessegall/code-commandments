@@ -83,23 +83,17 @@ func (n Node) mutates(name string) bool {
 	return false
 }
 
-// delegatesElements says whether each loop hands its element to one of self's own collaborators,
-// `self.printer.print(line)`: the orchestrator doing its own job.
+// delegatesElements says whether each loop passes its element on instead of working it out: the reading is
+// engine.PassesItsElementOn, one for every language and the same in all of them.
 //
-// The walk is engine.HandsItsElementOn, one for every language, and this is Python's answer to the one question
-// only a language can answer: whose call is this. Everything of self's is reached through `self.`, so this one
-// test covers both cases C# names separately. PHP also counts a call joining the element with another parameter
-// the method was handed, which its fixture argues for and Python has no case of yet.
-func (n Node) delegatesElements(loops []Node, self string) bool {
+// Python used to answer this itself, pardoning a call reached through `self`; the shared reading asks instead
+// whether the element reaches a call whole, which covers a collaborator the method was handed as well.
+func (n Node) delegatesElements(loops []Node, _ string) bool {
 	if len(loops) == 0 {
 		return false
 	}
 
-	return !slices.ContainsFunc(loops, func(loop Node) bool {
-		return !engine.HandsItsElementOn(loop.Match, func(call engine.Match) bool {
-			return Node{Match: call}.Callee().RootName() == self
-		})
-	})
+	return !slices.ContainsFunc(loops, func(loop Node) bool { return !engine.PassesItsElementOn(loop.Match) })
 }
 
 // bodyExpressions is every evaluated expression inside a loop's body.

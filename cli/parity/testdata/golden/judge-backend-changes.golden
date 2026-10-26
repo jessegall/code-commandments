@@ -1,6 +1,6 @@
 exit: 0
 --- stdout
-[32m✓ No sins found in 2 files, the lines changed in the working tree, of 632 read.[0m
+[32m✓ No sins found in 2 files, the lines changed in the working tree, of 635 read.[0m
 
 --- stderr
 ⚠ no class of a package is read: composer.json declares dependencies but vendor/autoload.php is not there: run composer install

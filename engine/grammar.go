@@ -93,6 +93,11 @@ type Grammar struct {
 	// its `is Thing thing`, Python's `:=`. A condition holding one cannot be moved behind a name, because the name
 	// it binds would go with it.
 	Declares func(Match) bool
+	// Computes says whether an expression works a value out of its parts rather than passing them on: an
+	// arithmetic or string operator, a comparison, a logical operator, a unary minus or a compound assignment.
+	// The neutral kinds already say what an assignment, a comparison and a conjunction are, so a language needs
+	// only to add the operators its own tree names in its own way.
+	Computes func(Match) bool
 	// ElementName is the name a loop binds for each item of what it walks: the `$line` of
 	// `foreach ($order->lines as $line)`. Empty for a loop that binds nothing, such as a `while`, and for any
 	// other node. Each language files it somewhere else — a field of the statement, a target, an identifier token

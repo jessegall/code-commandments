@@ -265,66 +265,23 @@ func mutatesMembersOf(body []engine.Match, param string) bool {
 	return false
 }
 
-// delegatesElementToCollaborator says whether a loop over the parameter's structure hands each element to the
-// method's own class or to another of the collaborators it was handed: orchestration, not envy.
+// delegatesElementToCollaborator says whether a loop over the parameter's structure passes each element on
+// instead of working it out: orchestration, not envy.
 //
-// The reading is engine.HandsItsElementOn, one for every language; what only PHP can say is which call counts as
-// its own, and PHP says it with `$this` and with the names of the method's other parameters.
+// The reading is engine.PassesItsElementOn, one for every language and the same in all of them. PHP used to
+// answer it here, pardoning a call that joined the element with `$this` or with another parameter, which said
+// nothing about whether the loop also worked the element out; the shared reading asks that instead.
 func delegatesElementToCollaborator(method engine.Match, body []engine.Match, param string) bool {
-	var collaborators []string
-	for name := range allParamTypes(method) {
-		if name != param {
-			collaborators = append(collaborators, name)
-		}
-	}
-	mine := func(call engine.Match) bool { return callsOwnOrCollaborator(call, collaborators) }
 	for _, statement := range body {
 		for _, loop := range withDescendants(statement) {
 			if loop.Kind() != "Stmt_Foreach" || !isMemberAccessOf(loop.Child("expr"), param) {
 				continue
 			}
-			if engine.HandsItsElementOn(loop, mine) {
+			if engine.PassesItsElementOn(loop) {
 				return true
 			}
 		}
 	}
 
 	return false
-}
-
-// callsOwnOrCollaborator says whether the call is one the method's own class makes, sent to `$this` or handed
-// it, or one that joins the element with another object the method was handed.
-func callsOwnOrCollaborator(call engine.Match, collaborators []string) bool {
-	if call.Kind() != "Expr_MethodCall" && call.Kind() != "Expr_StaticCall" {
-		return false
-	}
-	involved := variablesInCall(call)
-	if slices.Contains(involved, "this") {
-		return true
-	}
-
-	return slices.ContainsFunc(collaborators, func(name string) bool { return slices.Contains(involved, name) })
-}
-
-func variablesInCall(call engine.Match) []string {
-	var names []string
-	receiver := call.Child("var")
-	if call.Kind() == "Expr_StaticCall" {
-		receiver = call.Child("class")
-	}
-	for receiver.Kind() == "Expr_PropertyFetch" {
-		receiver = receiver.Child("var")
-	}
-	if name := variableName(receiver); name != "" {
-		names = append(names, name)
-	}
-	for _, argument := range call.ChildrenIn("args") {
-		for _, variable := range withDescendants(argument) {
-			if name := variableName(variable); name != "" {
-				names = append(names, name)
-			}
-		}
-	}
-
-	return names
 }

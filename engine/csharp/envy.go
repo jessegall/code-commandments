@@ -119,7 +119,7 @@ func (n Node) EnviedParameter(program *Program) string {
 	loops := n.LoopsOver(envied)
 	mutates := n.WritesMemberOf(envied)
 	iterates := len(loops) > 0 || n.QueriesCollectionOf(envied)
-	if iterates && !mutates && len(loops) > 0 && n.everyLoopPassesItsElementOn(loops, own, host) {
+	if iterates && !mutates && len(loops) > 0 && n.everyLoopPassesItsElementOn(loops) {
 		return ""
 	}
 	if n.WalksRecursively(envied, loops) {
@@ -210,96 +210,14 @@ func (n Node) constructs() bool {
 	})
 }
 
-// everyLoopPassesItsElementOn says whether each of the loops passes its element on instead of working on it:
-// to the work the type does itself, or out as text. Neither is the collection's own behaviour, so neither moves
-// onto the type that holds it.
-func (n Node) everyLoopPassesItsElementOn(loops []Node, own []string, host Node) bool {
-	return !slices.ContainsFunc(loops, func(loop Node) bool {
-		return !n.handsElementOn(loop, own, host) && !loop.writesItsElementAsText()
-	})
-}
-
-// writesItsElementAsText says whether every use the loop makes of its element reaches a string interpolation
-// without being computed on: `sb.AppendLine($"  - {question}")`, `$"{line.Told()}"`, `$"{line.Count}"`.
+// everyLoopPassesItsElementOn says whether each of the loops passes its element on instead of working it out:
+// the reading is engine.PassesItsElementOn, one for every language.
 //
-// Such a loop writes the collection out; it does not work on it. What it knows is the format — a prompt's
-// wording, a report's layout — and the format is the writer's own, so a method moved onto the type it reads
-// would carry the format onto a value object that must not know it. The element may be printed as itself, asked
-// (a call on it, which is this rule's own answer), or have one member printed; a hole that computes over its
-// members (`$"{line.Price * line.Count}"`) is working it out from outside and still fires.
-func (n Node) writesItsElementAsText() bool {
-	element := n.Name()
-	if element == "" {
-		return false
-	}
-	written := 0
-	for _, part := range n.expressionParts() {
-		if !part.Is("IdentifierName") || part.Name() != element {
-			continue
-		}
-		if !reachesTextUncomputed(part) {
-			return false
-		}
-		written++
-	}
-
-	return written > 0
-}
-
-// reachesTextUncomputed says whether the use stands in an interpolation hole with nothing but reads of itself
-// and calls on itself between: the hole prints it, rather than working something out of it.
-func reachesTextUncomputed(use Node) bool {
-	held := use
-	for parent := use.Parent(); parent.Exists(); parent = parent.Parent() {
-		if parent.Is("Interpolation") {
-			return true
-		}
-		asked := parent.Is("InvocationExpression") && parent.At(0).Node() == held.Node()
-		read := parent.Is("SimpleMemberAccessExpression") && parent.At(0).Node() == held.Node()
-		if !asked && !read {
-			return false
-		}
-		held = parent
-	}
-
-	return false
-}
-
-// handsElementOn says whether the loop hands its element to the work the type does itself: to a collaborator it
-// holds under its own name, `printer.Print(line)`, or to a method of its own, `Lookup(id)`. Either way the loop
-// drives the type's own job one element at a time, and the collection it reads carries no behaviour that could
-// take it over.
-//
-// The walk is engine.HandsItsElementOn, one for every language, and this is C#'s answer to the one question only
-// a language can answer: whose call is this. PHP also counts a call joining the element with another parameter
-// the method was handed, which its fixture argues for and C# has no case of yet; Python's comment names the same
-// difference.
-func (n Node) handsElementOn(loop Node, own []string, host Node) bool {
-	return engine.HandsItsElementOn(loop.Match, func(call engine.Match) bool {
-		held := Node{Match: call}
-
-		return heldUnderOwnName(held, own) || isTheTypesOwnWork(held, host)
-	})
-}
-
-// heldUnderOwnName says whether the call is made on a collaborator the type holds as its own state.
-func heldUnderOwnName(call Node, own []string) bool {
-	return call.At(0).Is("SimpleMemberAccessExpression") && slices.Contains(own, call.At(0).At(0).MemberName())
-}
-
-// isTheTypesOwnWork says whether the call is the type's own work: a method it declares, as the compiler resolved
-// the call, or a call written with no receiver at all that the compiler could not bind.
-//
-// A method whose tree is judged without the package one of its calls names binds nothing else in that method
-// either, since the element's type is then an error type and every call taking it fails to resolve. A rule may
-// not report what the engine could not read, so an unbound call written as the type's own is taken as the type's
-// own — which is what it nearly always is, a method beside it or a local function of its own.
-func isTheTypesOwnWork(call Node, host Node) bool {
-	if !call.Target().Exists() {
-		return call.At(0).Is("IdentifierName", "GenericName")
-	}
-
-	return host.Symbol() != "" && call.Target().Type() == host.Symbol()
+// C# used to add a second clause here for a loop that wrote its element out as text, which the shared reading
+// covers: an element reaching an interpolation inside a call's argument is handed over like any other, and a
+// hole that works an answer out of the element's members still fires.
+func (n Node) everyLoopPassesItsElementOn(loops []Node) bool {
+	return !slices.ContainsFunc(loops, func(loop Node) bool { return !engine.PassesItsElementOn(loop.Match) })
 }
 
 // IsCriterionOfOwnQuery says whether the read of another object's member stands inside a lambda that a query over
