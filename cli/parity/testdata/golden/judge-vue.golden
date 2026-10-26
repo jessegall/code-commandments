@@ -55,9 +55,10 @@ exit: 1
   [32m↳ auto-fixable: commandments repent --repent=latest --sin=deep-data-reach[0m
   [32m↳ auto-fixable: commandments repent --repent=latest --sin=compound-inline-component[0m
 
-[1m32 sins[0m across 1 skill.
 [2m↳ the rule above all: trace each sin to where the value is BORN and fix it THERE — read fix-at-the-source.[0m
 [2m↳ don't recognise a rule above? `commandments info <sin>` — what it flags, why it is a sin, the fix, an example.[0m
+
+[1m32 sins[0m across 1 skill.
 
 --- stderr
 

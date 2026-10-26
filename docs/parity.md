@@ -161,6 +161,23 @@ was asked for: a worker spent half an hour clearing sins it had not written, bec
 judged whole files. The recordings of the three `--changes` cases now read as clean runs, and that is the change
 working: each case appends a single blank line to a file that already held sins, and no sin stands on a blank line.
 
+### The count is the report's last line
+
+The PHP tool ended a judge with two lines of advice after its count, so the last line a reader saw was "don't
+recognise a rule above?" rather than "78 sins across 1 skill." The count is last now, and the advice stands
+above it, where an agent reading top to bottom still meets it before the findings leave the screen.
+
+It matters because the last line is the one a log tail, a chat card or a glance actually shows, and that line
+should be the verdict. Nothing changes for a project: the same lines are printed, in a better order.
+
+### A warning says what is wrong, then why
+
+`⚠ no class of a package is read: …` carried its reasoning in the same sentence, which ran to 230 characters.
+What is wrong and what to run stand on the first line now, and why it matters on a second, dimmed one, which is
+the shape the judge already uses for everything else it adds under a finding.
+
+Nothing changes for a project, and nothing is lost: both halves are still said, on one line each.
+
 ### What the briefing says `make` writes
 
 The briefing `sync` publishes into a project's `AGENTS.md` and its `commandments` skill said, from the PHP tool, that

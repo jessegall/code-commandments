@@ -3,6 +3,7 @@ exit: 0
 [32m✓ No sins found in 2 files, the lines changed in the working tree, of 632 read.[0m
 
 --- stderr
-⚠ no class of a package is read: composer.json declares dependencies but vendor/autoload.php is not there: run composer install. A method a package's interface fixes reads as the class's own, so a rule that would excuse it cannot
+⚠ no class of a package is read: composer.json declares dependencies but vendor/autoload.php is not there: run composer install
+  ↳ a method a package's interface fixes reads as the class's own, so a rule that would excuse it cannot
 
 --- files

@@ -25,9 +25,10 @@ exit: 1
   [36mshop/settings.py:12[0m  FunctionDef read_settings  [2m[DuplicateFunctionDetector][0m
     [2m↳ same shape as: shop/cli.py:11[0m
 
-[1m10 sins[0m across 1 skill.
 [2m↳ the rule above all: trace each sin to where the value is BORN and fix it THERE — read fix-at-the-source.[0m
 [2m↳ don't recognise a rule above? `vendor/bin/commandments info <sin>` — what it flags, why it is a sin, the fix, an example.[0m
+
+[1m10 sins[0m across 1 skill.
 
 --- stderr
 

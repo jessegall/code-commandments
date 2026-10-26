@@ -43,11 +43,13 @@ exit: 1
   [36mapp/Webhooks/PaymentEventHandler.php:31[0m  Shop\Webhooks\PaymentEventHandler::handle  [2m[ArrayBagDetector][0m
   [36mapp/Webhooks/PaymentEventHandler.php:33[0m  Shop\Webhooks\PaymentEventHandler::handle  [2m[ArrayBagDetector][0m
 
-[1m12 sins[0m across 7 skills.
 [2m↳ the rule above all: trace each sin to where the value is BORN and fix it THERE — read fix-at-the-source.[0m
 [2m↳ don't recognise a rule above? `vendor/bin/commandments info <sin>` — what it flags, why it is a sin, the fix, an example.[0m
 
+[1m12 sins[0m across 7 skills.
+
 --- stderr
-⚠ no class of a package is read: composer.json declares dependencies but vendor/autoload.php is not there: run composer install. A method a package's interface fixes reads as the class's own, so a rule that would excuse it cannot
+⚠ no class of a package is read: composer.json declares dependencies but vendor/autoload.php is not there: run composer install
+  ↳ a method a package's interface fixes reads as the class's own, so a rule that would excuse it cannot
 
 --- files

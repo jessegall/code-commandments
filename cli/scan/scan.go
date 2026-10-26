@@ -334,8 +334,12 @@ func sayUnreadable(streams []*contract.Stream) {
 		if stream.Program == nil {
 			continue
 		}
+		// What is wrong and what to run stand on the first line, and why it matters on the second: one line
+		// carrying both ran to 230 characters, which is past what a reader takes in and past what a log tail or
+		// a card can show.
 		if stream.Program.Loader != "" {
-			fmt.Fprintf(os.Stderr, "⚠ no class of a package is read: %s. A method a package's interface fixes reads as the class's own, so a rule that would excuse it cannot\n", stream.Program.Loader)
+			fmt.Fprintf(os.Stderr, "⚠ no class of a package is read: %s\n", stream.Program.Loader)
+			fmt.Fprintln(os.Stderr, "  ↳ a method a package's interface fixes reads as the class's own, so a rule that would excuse it cannot")
 		}
 		for _, unreadable := range stream.Program.Unreadable {
 			fmt.Fprintf(os.Stderr, "⚠ %s could not be loaded by the project's own loader (%s), so it is read as outside the scan\n", unreadable.Symbol, unreadable.Reason)

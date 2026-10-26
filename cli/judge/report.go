@@ -119,7 +119,14 @@ func (r Report) Console() string {
 		}
 	}
 
-	lines = append(lines, "\n\033[1m"+natural.Counted(r.total, "sin")+"\033[0m across "+natural.Counted(len(r.skills), "skill")+".")
+	// The advice is about the findings above it, and the caveats about the run, so both stand before the count.
+	// The count is LAST because it is the verdict: a reader who takes in one line of a report takes in that one,
+	// and a card or a log tail that shows the final line shows the number rather than a note about reading a
+	// skill.
+	lines = append(lines,
+		"\n\033[2m↳ the rule above all: trace each sin to where the value is BORN and fix it THERE — read fix-at-the-source.\033[0m",
+		"\033[2m↳ don't recognise a rule above? `"+binary.Here()+" info <sin>` — what it flags, why it is a sin, the fix, an example.\033[0m",
+	)
 
 	if len(r.filed) > 0 {
 		lines = append(lines, r.reportedConsole())
@@ -129,10 +136,7 @@ func (r Report) Console() string {
 		lines = append(lines, r.skipped.Console())
 	}
 
-	lines = append(lines,
-		"\033[2m↳ the rule above all: trace each sin to where the value is BORN and fix it THERE — read fix-at-the-source.\033[0m",
-		"\033[2m↳ don't recognise a rule above? `"+binary.Here()+" info <sin>` — what it flags, why it is a sin, the fix, an example.\033[0m",
-	)
+	lines = append(lines, "\n\033[1m"+natural.Counted(r.total, "sin")+"\033[0m across "+natural.Counted(len(r.skills), "skill")+".")
 
 	return strings.Join(lines, "\n")
 }

@@ -57,9 +57,10 @@ exit: 1
   [36mclient/line-pruning.ts:8[0m  CallExpr  [2m[CollectionMutatedWhileIteratedDetector][0m
   [36mclient/shelf-tags.ts:7[0m  CallExpr  [2m[CollectionMutatedWhileIteratedDetector][0m
 
-[1m29 sins[0m across 3 skills.
 [2m↳ the rule above all: trace each sin to where the value is BORN and fix it THERE — read fix-at-the-source.[0m
 [2m↳ don't recognise a rule above? `vendor/bin/commandments info <sin>` — what it flags, why it is a sin, the fix, an example.[0m
+
+[1m29 sins[0m across 3 skills.
 
 --- stderr
 

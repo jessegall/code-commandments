@@ -8,9 +8,10 @@ exit: 1
   [36mshop/packing_slips.py:8[0m  call  [2m[AssembledTemplateDetector][0m
   [36mshop/receipt_banner.py:7[0m  call  [2m[AssembledTemplateDetector][0m
 
-[1m3 sins[0m across 1 skill.
 [2m↳ the rule above all: trace each sin to where the value is BORN and fix it THERE — read fix-at-the-source.[0m
 [2m↳ don't recognise a rule above? `vendor/bin/commandments info <sin>` — what it flags, why it is a sin, the fix, an example.[0m
+
+[1m3 sins[0m across 1 skill.
 [2m↳ checklist written to out/list.md — fix each item, then delete its line[0m
 
 --- stderr
