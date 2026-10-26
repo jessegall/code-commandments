@@ -27,10 +27,13 @@ func (p *Program) graph() *callGraph {
 					continue
 				}
 				target, ok := p.Callee(call)
+				// A call is held against every target it could reach, which is every target but the one it
+				// resolves to: that one is the call's own, recorded below.
 				for _, reached := range p.heldTargets(call, heirs) {
-					if !ok || reached != target {
-						p.calls.held[reached] = append(p.calls.held[reached], call)
+					if ok && reached == target {
+						continue
 					}
+					p.calls.held[reached] = append(p.calls.held[reached], call)
 				}
 				if !ok {
 					continue
@@ -95,9 +98,11 @@ func (p *Program) heirs() map[Node][]Node {
 				continue
 			}
 			for _, base := range class.ChildrenIn("bases") {
-				if parent, ok := p.ClassNamed(base, module); ok {
-					direct[parent] = append(direct[parent], class)
+				parent, named := p.ClassNamed(base, module)
+				if !named {
+					continue
 				}
+				direct[parent] = append(direct[parent], class)
 			}
 		}
 	}

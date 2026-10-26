@@ -23,9 +23,11 @@ func TestTheCallIndexAnswersAsThePHPOneDoes(t *testing.T) {
 		override, overridden, outside := false, false, false
 		for _, def := range found[symbol] {
 			for _, call := range codebase.Program.CallersOf(def) {
-				if at := place(call); !slices.Contains(callers, at) {
-					callers = append(callers, at)
+				at := place(call)
+				if slices.Contains(callers, at) {
+					continue
 				}
+				callers = append(callers, at)
 			}
 			override = codebase.Program.IsOverride(def)
 			overridden = codebase.Program.IsOverridden(def)

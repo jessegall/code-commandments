@@ -50,10 +50,14 @@ func (p *Program) readVocabularies() {
 				if argument.Kind() != "Attribute" || owner.Kind() != "Name" {
 					continue
 				}
-				class, ok := p.ClassCalled(owner.Name())
-				if ok && len(class.StringConstants()) > 0 && !slices.Contains(p.vocabulary.classes[slot], class) {
-					p.vocabulary.classes[slot] = append(p.vocabulary.classes[slot], class)
+				class, called := p.ClassCalled(owner.Name())
+				if !called || len(class.StringConstants()) == 0 {
+					continue
 				}
+				if slices.Contains(p.vocabulary.classes[slot], class) {
+					continue
+				}
+				p.vocabulary.classes[slot] = append(p.vocabulary.classes[slot], class)
 			}
 		}
 	}

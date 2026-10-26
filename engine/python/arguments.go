@@ -53,9 +53,10 @@ func (p *Program) DerivedArgumentCalls() []Node {
 				continue
 			}
 			for _, call := range calls {
-				if !slices.Contains(derived, call) {
-					derived = append(derived, call)
+				if slices.Contains(derived, call) {
+					continue
 				}
+				derived = append(derived, call)
 			}
 		}
 	}
