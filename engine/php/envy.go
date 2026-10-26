@@ -304,6 +304,15 @@ func isOwnRecursion(call engine.Match, self string) bool {
 
 // delegatesElementToCollaborator says whether a loop over the parameter's structure hands each element to the
 // method's own class or another of its parameters: orchestration, not envy.
+//
+// This is ONE of three readings of the same idea, and the broadest. C#'s handsElementOn and Python's
+// delegatesElements pardon the type's own state and its own work, and C# also pardons an element written out as
+// text; neither pardons an element handed to another PARAMETER, which this does. Measured on 2026-10-26, that
+// extra clause silences nothing: laravel/framework reports 8 findings with it and 8 without, and
+// smart-farmers-pos 0 and 0, so the three disagree in the code and not in what they report. Lifting the one
+// reading into the engine, the way engine/branches.go holds the flow readings, needs a neutral kind for an
+// interpolated string in all five bridges and a hook for a type's own state, which is why it is a task of its
+// own and not a comment.
 func delegatesElementToCollaborator(method engine.Match, body []engine.Match, param string) bool {
 	self := method.Name()
 	var collaborators []string

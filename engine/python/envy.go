@@ -84,6 +84,10 @@ func (n Node) mutates(name string) bool {
 // delegatesElements says whether each loop hands its element to one of self's own collaborators,
 // `self.printer.print(line)`: the orchestrator doing its own job. Calling the method the loops are in again is
 // recursion, which belongs where the collection is.
+//
+// Everything of self's is reached through `self.`, so this one test covers both cases C#'s handsElementOn names
+// separately. It does not pardon an element written out as text, which C# does, nor one handed to another
+// parameter, which PHP does; PHP's comment carries the measurement of that difference.
 func (n Node) delegatesElements(loops []Node, self string) bool {
 	return len(loops) > 0 && !slices.ContainsFunc(loops, func(loop Node) bool {
 		return !slices.ContainsFunc(loop.bodyExpressions(), func(call Node) bool {

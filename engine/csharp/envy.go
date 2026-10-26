@@ -267,6 +267,10 @@ func reachesTextUncomputed(use Node) bool {
 // holds under its own name, `printer.Print(line)`, or to a method of its own, `Lookup(id)`. Either way the loop
 // drives the type's own job one element at a time, and the collection it reads carries no behaviour that could
 // take it over. Calling this method again is recursion, which WalksRecursively reads.
+//
+// Python's delegatesElements reads the same two cases. PHP's delegatesElementToCollaborator also pardons an
+// element handed to another PARAMETER, which this does not, and its comment carries the measurement of what that
+// difference costs.
 func (n Node) handsElementOn(loop Node, own []string, host Node) bool {
 	return slices.ContainsFunc(loop.expressionParts(), func(call Node) bool {
 		return call.IsCall() && call.CalledName() != n.Name() &&
