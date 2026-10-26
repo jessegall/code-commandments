@@ -260,7 +260,7 @@ exit: 1
   [36mShop/Stock/Palletising.cs:11[0m  LogicalAndExpression  [2m[RepeatedTypeGuardDetector][0m
     [2m↳ same shape as: Shop/Reports/Damage.cs:15, Shop/Shipping/Crates.cs:26[0m
 
-[1;33mcsharp/tell-dont-ask[0m  (21)
+[1;33mcsharp/tell-dont-ask[0m  (22)
   [1;36m↳ LOAD the skill `commandments-csharp-tell-dont-ask` before fixing[0m
     [2mDon't fix from memory. If you think it's already loaded, assume it is NOT — a compaction may have dropped it — and load it again to be sure.[0m
   [36mShop/Checkout/SourceOwners.cs:19[0m  SwitchExpression  [2m[TypeSwitchDetector][0m
@@ -273,6 +273,7 @@ exit: 1
   [36mShop/Orders/Refunds.cs:10[0m  MethodDeclaration Amount  [2m[FeatureEnvyDetector][0m
   [36mShop/Packing/DealerFacts.cs:20[0m  MethodDeclaration ApplyPlan  [2m[FeatureEnvyDetector][0m
   [36mShop/Packing/DealerFacts.cs:27[0m  MethodDeclaration ApplyLanguage  [2m[FeatureEnvyDetector][0m
+  [36mShop/Packing/PackingNotes.cs:24[0m  MethodDeclaration WriteLines  [2m[FeatureEnvyDetector][0m
   [36mShop/Packing/ShiftRosters.cs:20[0m  MethodDeclaration StampSlots  [2m[FeatureEnvyDetector][0m
   [36mShop/Packing/TillSlips.cs:20[0m  MethodDeclaration AddLines  [2m[FeatureEnvyDetector][0m
   [36mShop/Packing/TillSlips.cs:27[0m  MethodDeclaration AddTax  [2m[FeatureEnvyDetector][0m
@@ -346,7 +347,7 @@ exit: 1
 [2m↳ the rule above all: trace each sin to where the value is BORN and fix it THERE — read fix-at-the-source.[0m
 [2m↳ don't recognise a rule above? `commandments info <sin>` — what it flags, why it is a sin, the fix, an example.[0m
 
-[1m239 sins[0m across 17 skills.
+[1m240 sins[0m across 17 skills.
 
 --- stderr
 

@@ -106,7 +106,7 @@ sha256 c6378ffcbce661a10b9afccc18c7e4ce64127799791beeb54251455bf5450437
 === created .agents/skills/commandments-csharp-role-vocabulary/SKILL.md
 sha256 0fb876c9620263f7bfe6ea10e376f206c5a66aabc13275e8203794106e07bafa
 === created .agents/skills/commandments-csharp-tell-dont-ask/SKILL.md
-sha256 ff4f60a11fc3d65c1f73eb07d152c44b13dd77578523131fb70851cd7683f375
+sha256 a9fa17c120cae5e2f114d2a2e9e12f07687ae4eb05b3fb5e8a87d43f7f81053d
 === created .agents/skills/commandments-csharp-tell-dont-ask/evals/triggers.json
 sha256 f3192247b1a8bf31f77fe6cb49f9b0add81c39ce84934582acf7b17a9fd20a63
 === created .agents/skills/commandments-csharp-tell-dont-ask/reference/detectors.md
