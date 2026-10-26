@@ -218,6 +218,16 @@ func (m Match) Condition() Match {
 	return Match{}
 }
 
+// ElementName is the name the loop binds for each item of what it walks; empty for a loop that binds none and
+// for anything that is no loop.
+func (m Match) ElementName() string {
+	if read := m.grammar().ElementName; read != nil && m.node != nil {
+		return read(m)
+	}
+
+	return ""
+}
+
 // ComparisonSubject is what the comparison tests against a constant: the side that is no constant, when the other
 // one is; no node for anything else.
 func (m Match) ComparisonSubject() Match {

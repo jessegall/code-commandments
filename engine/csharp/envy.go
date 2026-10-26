@@ -5,6 +5,8 @@ import (
 	"sort"
 	"strings"
 	"unicode"
+
+	"github.com/jessegall/code-commandments/engine"
 )
 
 // keyTypes are the types that read as a lookup key: an identity, not a collaborator.
@@ -266,16 +268,17 @@ func reachesTextUncomputed(use Node) bool {
 // handsElementOn says whether the loop hands its element to the work the type does itself: to a collaborator it
 // holds under its own name, `printer.Print(line)`, or to a method of its own, `Lookup(id)`. Either way the loop
 // drives the type's own job one element at a time, and the collection it reads carries no behaviour that could
-// take it over. Calling this method again is recursion, which WalksRecursively reads.
+// take it over.
 //
-// Python's delegatesElements reads the same two cases. PHP's delegatesElementToCollaborator also pardons an
-// element handed to another PARAMETER, which this does not, and its comment carries the measurement of what that
-// difference costs.
+// The walk is engine.HandsItsElementOn, one for every language, and this is C#'s answer to the one question only
+// a language can answer: whose call is this. PHP also counts a call joining the element with another parameter
+// the method was handed, which its fixture argues for and C# has no case of yet; Python's comment names the same
+// difference.
 func (n Node) handsElementOn(loop Node, own []string, host Node) bool {
-	return slices.ContainsFunc(loop.expressionParts(), func(call Node) bool {
-		return call.IsCall() && call.CalledName() != n.Name() &&
-			(heldUnderOwnName(call, own) || isTheTypesOwnWork(call, host)) &&
-			slices.ContainsFunc(call.Arguments(), func(argument Node) bool { return argument.Is("IdentifierName") && argument.Name() == loop.Name() })
+	return engine.HandsItsElementOn(loop.Match, func(call engine.Match) bool {
+		held := Node{Match: call}
+
+		return heldUnderOwnName(held, own) || isTheTypesOwnWork(held, host)
 	})
 }
 

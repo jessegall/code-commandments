@@ -39,9 +39,10 @@ func init() {
 		},
 		Continues: engine.KindIn("Stmt_ElseIf"),
 		// PHP hangs a body straight off its construct, as its statements, so there is no block to read through.
-		Body:      engine.InFields("stmts"),
-		Otherwise: otherwise,
-		Condition: condition,
+		Body:        engine.InFields("stmts"),
+		Otherwise:   otherwise,
+		Condition:   condition,
+		ElementName: elementName,
 	})
 
 }
@@ -164,4 +165,19 @@ func condition(held engine.Match) engine.Match {
 	}
 
 	return held.Child("cond")
+}
+
+// elementName is the name a foreach binds for each item: the `$line` of `foreach ($order->lines as $line)`.
+// Nothing for a `for` or a `while`, which bind no item, and nothing for a foreach that unpacks its item into
+// several names, since no one name holds it.
+func elementName(loop engine.Match) string {
+	if loop.Kind() != "Stmt_Foreach" {
+		return ""
+	}
+	element := loop.Child("valueVar")
+	if element.Kind() != "Expr_Variable" {
+		return ""
+	}
+
+	return element.Name()
 }

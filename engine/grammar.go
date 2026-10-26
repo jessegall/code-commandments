@@ -93,6 +93,11 @@ type Grammar struct {
 	// its `is Thing thing`, Python's `:=`. A condition holding one cannot be moved behind a name, because the name
 	// it binds would go with it.
 	Declares func(Match) bool
+	// ElementName is the name a loop binds for each item of what it walks: the `$line` of
+	// `foreach ($order->lines as $line)`. Empty for a loop that binds nothing, such as a `while`, and for any
+	// other node. Each language files it somewhere else — a field of the statement, a target, an identifier token
+	// on the loop itself — so only the language can say.
+	ElementName func(Match) string
 	// Binds says whether a statement only binds a name to a value and acts on nothing: `$order = $this->orders->find($id);`,
 	// `order = self.orders.find(id)`, `var order = _orders.Find(id);`. The languages file an assignment so differently —
 	// a statement of its own, an expression wrapped in one, a declaration — that only the language can say.

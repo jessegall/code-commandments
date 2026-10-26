@@ -2,6 +2,8 @@ package python
 
 import (
 	"slices"
+
+	"github.com/jessegall/code-commandments/engine"
 )
 
 // EnviedParameter is the parameter a method envies: one other object it was handed that it reaches through more
@@ -82,19 +84,20 @@ func (n Node) mutates(name string) bool {
 }
 
 // delegatesElements says whether each loop hands its element to one of self's own collaborators,
-// `self.printer.print(line)`: the orchestrator doing its own job. Calling the method the loops are in again is
-// recursion, which belongs where the collection is.
+// `self.printer.print(line)`: the orchestrator doing its own job.
 //
-// Everything of self's is reached through `self.`, so this one test covers both cases C#'s handsElementOn names
-// separately. It does not pardon an element written out as text, which C# does, nor one handed to another
-// parameter, which PHP does; PHP's comment carries the measurement of that difference.
+// The walk is engine.HandsItsElementOn, one for every language, and this is Python's answer to the one question
+// only a language can answer: whose call is this. Everything of self's is reached through `self.`, so this one
+// test covers both cases C# names separately. PHP also counts a call joining the element with another parameter
+// the method was handed, which its fixture argues for and Python has no case of yet.
 func (n Node) delegatesElements(loops []Node, self string) bool {
-	return len(loops) > 0 && !slices.ContainsFunc(loops, func(loop Node) bool {
-		return !slices.ContainsFunc(loop.bodyExpressions(), func(call Node) bool {
-			callee := call.Callee()
+	if len(loops) == 0 {
+		return false
+	}
 
-			return call.IsCall() && callee.Kind() == "Attribute" && callee.RootName() == self && callee.DottedName() != self+"."+n.Name() &&
-				slices.ContainsFunc(call.Arguments(), func(argument Node) bool { return argument.DottedName() == loop.Child("target").DottedName() })
+	return !slices.ContainsFunc(loops, func(loop Node) bool {
+		return !engine.HandsItsElementOn(loop.Match, func(call engine.Match) bool {
+			return Node{Match: call}.Callee().RootName() == self
 		})
 	})
 }

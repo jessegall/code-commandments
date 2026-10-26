@@ -20,6 +20,7 @@ func init() {
 		Otherwise:         otherwise,
 		Condition:         condition,
 		BindsItsOwnTest:   bindsItsOwnTest,
+		ElementName:       elementName,
 		ComparisonSubject: comparisonSubject,
 		// A Go symbol is a package path and the names under it, so the namespace is everything before the last
 		// name: example.com/shop/cart.Cart.Total belongs to example.com/shop/cart.
@@ -125,4 +126,19 @@ func comparisonSubject(held engine.Match) engine.Match {
 // `init` statement of the `if`, before the semicolon, and scopes what it binds to the branch alone.
 func bindsItsOwnTest(branch engine.Match) bool {
 	return branch.Kind() == "IfStmt" && branch.Child("init").Exists()
+}
+
+// elementName is the name a range loop binds for each item: the `line` of `for _, line := range order.Lines`.
+// Nothing for a three-clause `for`, which binds no item, and nothing where the value is discarded or absent,
+// since the loop then walks a collection without holding its items.
+func elementName(loop engine.Match) string {
+	if loop.Kind() != "RangeStmt" {
+		return ""
+	}
+	value := loop.Child("Value")
+	if value.Kind() != "Ident" || value.Name() == "_" {
+		return ""
+	}
+
+	return value.Name()
 }

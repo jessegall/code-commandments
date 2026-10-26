@@ -43,6 +43,7 @@ func init() {
 		Otherwise:         otherwise,
 		Condition:         condition,
 		ComparisonSubject: func(held engine.Match) engine.Match { return Node{Match: held}.ComparisonSubject().Match },
+		ElementName:       elementName,
 	})
 
 }
@@ -176,4 +177,15 @@ func condition(held engine.Match) engine.Match {
 	}
 
 	return engine.Match{}
+}
+
+// elementName is the name a foreach binds for each item: the `line` of `foreach (var line in slip.Lines)`.
+// Roslyn writes that name as a token on the statement itself, so the loop answers its own name. A
+// ForEachVariableStatement deconstructs its item into several names, and none of them holds the item.
+func elementName(loop engine.Match) string {
+	if loop.Kind() != "ForEachStatement" {
+		return ""
+	}
+
+	return loop.Name()
 }

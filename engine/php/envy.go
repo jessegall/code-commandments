@@ -265,75 +265,45 @@ func mutatesMembersOf(body []engine.Match, param string) bool {
 	return false
 }
 
-// handsTheElementOn says whether the loop gives each element of the collection to somebody else: a call that
-// takes the element together with `$this` or with a collaborator of the class. The method's own recursion is not
-// that, since a method calling itself on each element is the walk itself rather than a hand-off.
-func handsTheElementOn(loop engine.Match, element, self string, collaborators []string) bool {
-	for _, inner := range loop.ChildrenIn("stmts") {
-		for _, call := range withDescendants(inner) {
-			if call.Kind() != "Expr_MethodCall" && call.Kind() != "Expr_StaticCall" {
-				continue
-			}
-			if isOwnRecursion(call, self) {
-				continue
-			}
-			involved := variablesInCall(call)
-			if !slices.Contains(involved, element) {
-				continue
-			}
-			if slices.Contains(involved, "this") {
-				return true
-			}
-			if slices.ContainsFunc(collaborators, func(name string) bool { return slices.Contains(involved, name) }) {
-				return true
-			}
-		}
-	}
-
-	return false
-}
-
-// isOwnRecursion says whether the call is the method calling itself on `$this`.
-func isOwnRecursion(call engine.Match, self string) bool {
-	if call.Kind() != "Expr_MethodCall" || call.Child("name").Kind() != "Identifier" {
-		return false
-	}
-
-	return call.Child("name").Name() == self && variableName(call.Child("var")) == "this"
-}
-
 // delegatesElementToCollaborator says whether a loop over the parameter's structure hands each element to the
-// method's own class or another of its parameters: orchestration, not envy.
+// method's own class or to another of the collaborators it was handed: orchestration, not envy.
 //
-// This is ONE of three readings of the same idea, and the broadest. C#'s handsElementOn and Python's
-// delegatesElements pardon the type's own state and its own work, and C# also pardons an element written out as
-// text; neither pardons an element handed to another PARAMETER, which this does. Measured on 2026-10-26, that
-// extra clause silences nothing: laravel/framework reports 8 findings with it and 8 without, and
-// smart-farmers-pos 0 and 0, so the three disagree in the code and not in what they report. Lifting the one
-// reading into the engine, the way engine/branches.go holds the flow readings, needs a neutral kind for an
-// interpolated string in all five bridges and a hook for a type's own state, which is why it is a task of its
-// own and not a comment.
+// The reading is engine.HandsItsElementOn, one for every language; what only PHP can say is which call counts as
+// its own, and PHP says it with `$this` and with the names of the method's other parameters.
 func delegatesElementToCollaborator(method engine.Match, body []engine.Match, param string) bool {
-	self := method.Name()
 	var collaborators []string
 	for name := range allParamTypes(method) {
 		if name != param {
 			collaborators = append(collaborators, name)
 		}
 	}
+	mine := func(call engine.Match) bool { return callsOwnOrCollaborator(call, collaborators) }
 	for _, statement := range body {
 		for _, loop := range withDescendants(statement) {
-			element := loop.Child("valueVar")
-			if loop.Kind() != "Stmt_Foreach" || !isMemberAccessOf(loop.Child("expr"), param) || element.Kind() != "Expr_Variable" || element.Name() == "" {
+			if loop.Kind() != "Stmt_Foreach" || !isMemberAccessOf(loop.Child("expr"), param) {
 				continue
 			}
-			if handsTheElementOn(loop, element.Name(), self, collaborators) {
+			if engine.HandsItsElementOn(loop, mine) {
 				return true
 			}
 		}
 	}
 
 	return false
+}
+
+// callsOwnOrCollaborator says whether the call is one the method's own class makes, sent to `$this` or handed
+// it, or one that joins the element with another object the method was handed.
+func callsOwnOrCollaborator(call engine.Match, collaborators []string) bool {
+	if call.Kind() != "Expr_MethodCall" && call.Kind() != "Expr_StaticCall" {
+		return false
+	}
+	involved := variablesInCall(call)
+	if slices.Contains(involved, "this") {
+		return true
+	}
+
+	return slices.ContainsFunc(collaborators, func(name string) bool { return slices.Contains(involved, name) })
 }
 
 func variablesInCall(call engine.Match) []string {

@@ -1,6 +1,5 @@
 package engine
 
-
 // HasRedundantElse says whether the branch carries an `else` though its taken path already left: the else's
 // statements can stand after it, at the enclosing level, because the exit above them already said the rest runs
 // only when the condition did not hold. A branch whose else is the next rung is a ladder, not a guard with an

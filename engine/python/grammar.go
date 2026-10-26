@@ -39,9 +39,10 @@ func init() {
 		Continues:     func(branch engine.Match) bool { return Node{Match: branch}.IsElif() },
 		// Python hangs a body straight off its construct, so its statements are the children of the field and
 		// there is no block to read through.
-		Body:      engine.InFields("body"),
-		Otherwise: engine.InFields("orelse"),
-		Condition: condition,
+		Body:        engine.InFields("body"),
+		Otherwise:   engine.InFields("orelse"),
+		Condition:   condition,
+		ElementName: elementName,
 		ComparisonSubject: func(held engine.Match) engine.Match {
 			subject, _ := Node{Match: held}.ComparisonSubject()
 
@@ -269,4 +270,18 @@ func condition(held engine.Match) engine.Match {
 	}
 
 	return held.Child("test")
+}
+
+// elementName is the name a `for` binds for each item: the `line` of `for line in order.lines:`. Nothing for a
+// `while`, and nothing for a loop that unpacks its item into a tuple, since no one name holds it.
+func elementName(loop engine.Match) string {
+	if loop.Kind() != "For" && loop.Kind() != "AsyncFor" {
+		return ""
+	}
+	target := loop.Child("target")
+	if target.Kind() != "Name" {
+		return ""
+	}
+
+	return target.Name()
 }
