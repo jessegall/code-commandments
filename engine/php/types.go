@@ -142,12 +142,14 @@ func (t *Types) index(declaration engine.Match) {
 		if own, ok := DocComment(member); ok {
 			doc = own.Text
 		}
+		// One property statement may declare several properties, and each of them is its own field.
 		for _, item := range member.Children() {
-			if item.Node().Field == "props" {
-				set(t.fieldType, class, item.Name(), typeName(Written(member.Node().Declared)))
-				t.recordCollectionElement(class, item.Name(), member)
-				t.recordDocumentedElement(class, item.Name(), doc, "", member.Source())
+			if item.Node().Field != "props" {
+				continue
 			}
+			set(t.fieldType, class, item.Name(), typeName(Written(member.Node().Declared)))
+			t.recordCollectionElement(class, item.Name(), member)
+			t.recordDocumentedElement(class, item.Name(), doc, "", member.Source())
 		}
 	}
 	for _, method := range Methods(declaration) {
@@ -178,29 +180,49 @@ func (t *Types) recordCollectionElement(class, field string, owner engine.Match)
 			if !strings.HasSuffix(attribute.Child("name").Name(), "DataCollectionOf") {
 				continue
 			}
-			var first engine.Match
-			for _, arg := range attribute.Children() {
-				if arg.Node().Field == "args" {
-					first = arg.Child("value")
-					break
-				}
+			element := classNamedBy(firstArgument(attribute))
+			if element == "" {
+				continue
 			}
-			element := ""
-			switch first.Kind() {
-			case "Expr_ClassConstFetch":
-				if class := first.Child("class"); isName(class) {
-					element = strings.TrimLeft(class.Name(), `\`)
-				}
-			case "Scalar_String":
-				if value, ok := first.Node().Value.Text(); ok {
-					element = strings.TrimLeft(value, `\`)
-				}
-			}
-			if element != "" {
-				set(t.element, class, field, element)
-			}
+			set(t.element, class, field, element)
 		}
 	}
+}
+
+// firstArgument is the value an attribute is handed first; no node for an attribute handed nothing.
+func firstArgument(attribute engine.Match) engine.Match {
+	for _, arg := range attribute.Children() {
+		if arg.Node().Field != "args" {
+			continue
+		}
+
+		return arg.Child("value")
+	}
+
+	return engine.Match{}
+}
+
+// classNamedBy is the class an attribute's argument names, written either as `X::class` or as the string of its
+// name; empty for an argument that names no class, and for one PHP could not read a name out of.
+func classNamedBy(argument engine.Match) string {
+	switch argument.Kind() {
+	case "Expr_ClassConstFetch":
+		named := argument.Child("class")
+		if !isName(named) {
+			return ""
+		}
+
+		return strings.TrimLeft(named.Name(), `\`)
+	case "Scalar_String":
+		value, isText := argument.Node().Value.Text()
+		if !isText {
+			return ""
+		}
+
+		return strings.TrimLeft(value, `\`)
+	}
+
+	return ""
 }
 
 // recordDocumentedElement records the element a field's docblock declares, unless an attribute already has.

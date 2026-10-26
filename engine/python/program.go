@@ -191,43 +191,73 @@ func (m *Module) bind() {
 	bound := &bindings{modules: map[string]*Module{}, members: map[string]Node{}, ids: map[string]string{}, absolute: map[string]string{}}
 	for _, statement := range m.Nodes() {
 		if statement.IsImport() {
-			for _, alias := range statement.ChildrenIn("names") {
-				if id, ok := m.importedId(alias); ok {
-					bound.ids[alias.boundAs()] = id
-				}
-				if statement.Level() == 0 {
-					bound.absolute[alias.boundAs()] = alias.dottedBinding()
-				}
-			}
+			m.bindNames(statement, bound)
 		}
 		switch statement.Kind() {
 		case "Import":
-			for _, alias := range statement.ChildrenIn("names") {
-				if found, ok := m.program.moduleNamed(alias.Name(), m, 0); ok {
-					key := alias.boundAs()
-					if key == strings.Split(alias.Name(), ".")[0] {
-						key = alias.Name()
-					}
-					bound.modules[key] = found
-				}
-			}
+			m.bindModules(statement, bound)
 		case "ImportFrom":
-			source, sourced := m.program.moduleNamed(statement.Name(), m, statement.Level())
-			for _, alias := range statement.ChildrenIn("names") {
-				if sourced {
-					if declared, ok := source.Declared(alias.Name()); ok {
-						bound.members[alias.boundAs()] = declared
-						continue
-					}
-				}
-				submodule := strings.TrimPrefix(statement.Name()+"."+alias.Name(), ".")
-				if found, ok := m.program.moduleNamed(submodule, m, statement.Level()); ok {
-					bound.modules[alias.boundAs()] = found
-				}
-			}
+			m.bindFrom(statement, bound)
 		}
 	}
 	m.imports = bound
+}
+
+// bindNames records what each of the import's aliases binds: the id its name resolves to, and, for an import
+// that is not relative, the dotted name it stands for.
+func (m *Module) bindNames(statement Node, bound *bindings) {
+	for _, alias := range statement.ChildrenIn("names") {
+		if id, ok := m.importedId(alias); ok {
+			bound.ids[alias.boundAs()] = id
+		}
+		if statement.Level() != 0 {
+			continue
+		}
+		bound.absolute[alias.boundAs()] = alias.dottedBinding()
+	}
+}
+
+// bindModules binds each name a plain `import x` brings in to the module it reaches. A dotted import binds only
+// its first part as a name, so `import a.b` is held under `a.b` rather than under the `a` the binding reads as.
+func (m *Module) bindModules(statement Node, bound *bindings) {
+	for _, alias := range statement.ChildrenIn("names") {
+		found, reached := m.program.moduleNamed(alias.Name(), m, 0)
+		if !reached {
+			continue
+		}
+		key := alias.boundAs()
+		if key == strings.Split(alias.Name(), ".")[0] {
+			key = alias.Name()
+		}
+		bound.modules[key] = found
+	}
+}
+
+// bindFrom binds each name a `from x import y` brings in: the declaration the source module makes under that
+// name, and where it makes none, the submodule the two names together reach.
+func (m *Module) bindFrom(statement Node, bound *bindings) {
+	source, sourced := m.program.moduleNamed(statement.Name(), m, statement.Level())
+	for _, alias := range statement.ChildrenIn("names") {
+		if declared, isDeclared := declaredBy(source, sourced, alias.Name()); isDeclared {
+			bound.members[alias.boundAs()] = declared
+
+			continue
+		}
+		submodule := strings.TrimPrefix(statement.Name()+"."+alias.Name(), ".")
+		if found, reached := m.program.moduleNamed(submodule, m, statement.Level()); reached {
+			bound.modules[alias.boundAs()] = found
+		}
+	}
+}
+
+// declaredBy is the declaration the source module makes under the name; none where the import named no module
+// this codebase holds, which is every import of something outside it.
+func declaredBy(source *Module, sourced bool, name string) (Node, bool) {
+	if !sourced {
+		return Node{}, false
+	}
+
+	return source.Declared(name)
 }
 
 // Imports is every module of the codebase an import in the module reaches, with the import that reaches it: the
