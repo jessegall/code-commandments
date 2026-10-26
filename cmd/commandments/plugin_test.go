@@ -258,9 +258,98 @@ type hold struct {
 }
 
 // service is one program the journal keeps running for the plugin, and whether it answers the journal's events.
+// Version 4 names it and writes its command as a list; version 3 writes the services as an object whose key is the
+// name and whose run is the same command as one line, so both are read into this.
 type service struct {
-	Name    string `json:"name"`
-	Answers bool   `json:"answers"`
+	Name    string   `json:"name"`
+	Answers bool     `json:"answers"`
+	Command []string `json:"command"`
+	Run     string   `json:"run"`
+	When    string   `json:"when"`
+	Restart string   `json:"restart"`
+}
+
+// line is the command this service runs, however its manifest writes it.
+func (s service) line() string {
+	if s.Run != "" {
+		return s.Run
+	}
+
+	return strings.Join(s.Command, " ")
+}
+
+// kept is what each manifest says the journal keeps running, by name.
+type kept map[string]service
+
+// keptBy is the services the manifest declares, read from either shape its protocol writes them in.
+func keptBy(t *testing.T, name ...string) kept {
+	t.Helper()
+	content, err := os.ReadFile(filepath.Join(append([]string{"..", ".."}, name...)...))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var listed struct {
+		Services json.RawMessage `json:"services"`
+	}
+	if err := json.Unmarshal(content, &listed); err != nil {
+		t.Fatal(err)
+	}
+
+	var asList []service
+	if json.Unmarshal(listed.Services, &asList) == nil {
+		held := kept{}
+		for _, one := range asList {
+			held[one.Name] = one
+		}
+
+		return held
+	}
+
+	var asObject map[string]service
+	if err := json.Unmarshal(listed.Services, &asObject); err != nil {
+		t.Fatal(err)
+	}
+	held := kept{}
+	for name, one := range asObject {
+		one.Name = name
+		held[name] = one
+	}
+
+	return held
+}
+
+// TestBothPluginManifestsKeepTheSameServices holds the two manifests to one answer about what is kept running. The
+// plugin is declared twice, once for each journal protocol, and which bridges stay warm must not depend on which
+// file the journal reads: a service missing from one of them starts that language's bridge cold for every single
+// run, which is the whole cost the warming exists to remove. The frontend and php services were added to version
+// 4's file alone and version 3's went without them for seven releases, which is what this catches.
+func TestBothPluginManifestsKeepTheSameServices(t *testing.T) {
+	held, offered := keptBy(t, ".journal-plugin", "plugin.json"), keptBy(t, "journal-plugin.json")
+
+	for name, one := range offered {
+		same, declared := held[name]
+		if !declared {
+			t.Errorf("journal-plugin.json keeps the %s service and .journal-plugin/plugin.json keeps none", name)
+
+			continue
+		}
+		if same.line() != one.line() {
+			t.Errorf("the %s service runs %q in one manifest and %q in the other", name, same.line(), one.line())
+		}
+		if same.When != one.When {
+			t.Errorf("the %s service is started when %q in one manifest and when %q in the other", name, same.When, one.When)
+		}
+		if same.Restart != one.Restart {
+			t.Errorf("the %s service restarts %q in one manifest and %q in the other", name, same.Restart, one.Restart)
+		}
+	}
+
+	for name := range held {
+		if _, declared := offered[name]; !declared {
+			t.Errorf(".journal-plugin/plugin.json keeps the %s service and journal-plugin.json keeps none", name)
+		}
+	}
 }
 
 // TestBothPluginManifestsPinTheSameRelease holds the two manifests to one answer. The plugin is declared twice, once
