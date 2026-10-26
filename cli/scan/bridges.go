@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"sync"
 
 	"github.com/jessegall/code-commandments/bridge"
 	"github.com/jessegall/code-commandments/bridge/gotree"
@@ -60,7 +61,9 @@ func (p Process) Open(held Bridge, roots []string) (bridge.Asker, error) {
 }
 
 // Own is a bridge of this process's own, which is what a service keeps up: never the warm one, since a service
-// that found a socket would be answering through another service for the same project.
+// that found a socket would be answering through another service for the same project. It is started here rather
+// than at the first ask, so a service whose bridge cannot start at all says so the moment it starts, and it is
+// held by an asker that starts a fresh one when this one has gone.
 func (p Process) Own(held Bridge, roots []string) (bridge.Asker, bool, error) {
 	command, err := p.Command(roots)
 	if err != nil {
@@ -72,7 +75,7 @@ func (p Process) Own(held Bridge, roots []string) (bridge.Asker, bool, error) {
 		return nil, true, p.named(err)
 	}
 
-	return server, true, nil
+	return &kept{held: held, reach: p, roots: roots, server: server}, true, nil
 }
 
 // named names the bridge's part in what went wrong, for a bridge that says so by name.
@@ -144,6 +147,119 @@ func (p inProcess) AskEach(request bridge.Request, each func(line contract.Line,
 // Close lets go of nothing: this bridge holds nothing to let go of.
 func (p inProcess) Close() error {
 	return nil
+}
+
+// kept is the bridge a service holds for the whole session: asked while it answers, and started afresh once it has
+// gone. A bridge dies under a single request for reasons that are no fault of the next one — killed for a silence
+// longer than a read may wait, or gone of its own accord — and a service that kept the corpse answered every later
+// request with a broken pipe for the rest of its life. Measured in one project: six deaths, then 4,159 unanswered
+// requests, with every Python rule silent the whole time and nothing saying so.
+//
+// So a service reads a failure the way the run side already reads one — a bridge that fails an ask is a bridge gone,
+// not an answer — and this is the one place that reading lives for a bridge of this process's own.
+type kept struct {
+	held   Bridge
+	reach  Process
+	roots  []string
+	server *bridge.Server
+	mu     sync.Mutex
+}
+
+// AskTallied is the whole stream for the request, from the bridge this service holds, and from one started afresh
+// when that one has gone. The second ask is safe where AskEach's is not: nothing of the answer has been handed over
+// yet, so the whole stream is still the first thing its caller sees.
+func (k *kept) AskTallied(request bridge.Request, tally func()) (*contract.Stream, error) {
+	k.mu.Lock()
+	defer k.mu.Unlock()
+
+	server, err := k.serving()
+	if err != nil {
+		return nil, err
+	}
+
+	stream, err := server.AskTallied(request, tally)
+	if err == nil {
+		return stream, nil
+	}
+	k.gone(err)
+
+	if server, err = k.serving(); err != nil {
+		return nil, err
+	}
+
+	stream, err = server.AskTallied(request, tally)
+	if err != nil {
+		k.gone(err)
+	}
+
+	return stream, k.reach.named(err)
+}
+
+// AskEach hands each line of the answer on as it arrives, from the bridge this service holds. It takes no second
+// ask, since the lines already handed over cannot be handed over again: the asker that reads them asks again itself,
+// and the bridge it reaches then is a fresh one.
+func (k *kept) AskEach(request bridge.Request, each func(line contract.Line, raw []byte) error) error {
+	k.mu.Lock()
+	defer k.mu.Unlock()
+
+	server, err := k.serving()
+	if err != nil {
+		return err
+	}
+
+	if err := server.AskEach(request, each); err != nil {
+		k.gone(err)
+
+		return k.reach.named(err)
+	}
+
+	return nil
+}
+
+// serving is the bridge this service holds, started when there is none.
+func (k *kept) serving() (*bridge.Server, error) {
+	if k.server != nil {
+		return k.server, nil
+	}
+
+	command, err := k.reach.Command(k.roots)
+	if err != nil {
+		return nil, k.reach.named(err)
+	}
+
+	server, err := bridge.Serve(command)
+	if err != nil {
+		return nil, k.reach.named(err)
+	}
+	k.server = server
+
+	return server, nil
+}
+
+// gone lets go of a bridge that failed, so the next ask starts a fresh one, and says once why this one went. A
+// service's stderr is its log, and one line per death reads as what it is where thousands of broken pipes read as
+// nothing at all.
+func (k *kept) gone(err error) {
+	if k.server == nil {
+		return
+	}
+	fmt.Fprintf(os.Stderr, "the %s bridge went and a fresh one answers from here: %v\n", k.held.Label, err)
+	k.server.Close()
+	k.server = nil
+}
+
+// Close lets go of the bridge this service holds.
+func (k *kept) Close() error {
+	k.mu.Lock()
+	defer k.mu.Unlock()
+
+	if k.server == nil {
+		return nil
+	}
+	server := k.server
+	k.server = nil
+
+	return server.Close()
 }
 
 // process is a bridge that runs as a process, as a run asks it: every ask goes to the warm bridge a session keeps
