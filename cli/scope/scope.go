@@ -48,7 +48,8 @@ func BaseOf(path string) string {
 // Options are the scope flags, parsed here and documented by every command that adopts them.
 func Options() []help.Option {
 	return []help.Option{
-		{Spec: "--changes", Does: "only files changed in the working tree (alias: --git)"},
+		{Spec: "--changes", Does: "only the lines changed in the working tree"},
+		{Spec: "--changed-files", Does: "every file changed in the working tree, whole"},
 		{Spec: "--branch[=BASE]", Does: "only files new/changed on this branch vs BASE (default: the project's `base`, else main)"},
 		{Spec: "--branch=REPO:[BASE..]HEAD", Does: "only files HEAD changed since it left BASE (default: that repository's `base`, else main) in the repository REPO, a folder under the path with its own .git"},
 		{Spec: "--pr=REPO#N", Does: "only the files pull request N changes in the repository REPO, asked of GitHub with gh"},
@@ -63,10 +64,13 @@ type FileScope interface {
 
 // Scope is a set of target files (every file, when unscoped) less what its restrictions leave out.
 type Scope struct {
-	files        map[string]bool
-	scoped       bool
-	by           string
-	unseen       []string
+	files  map[string]bool
+	scoped bool
+	by     string
+	unseen []string
+	// lines are the lines of each file this scope is about, where it is about lines at all. A scope with none
+	// is about whole files, which is every scope but --changes.
+	lines        map[string]git.ChangedLines
 	restrictions []FileScope
 }
 
@@ -78,7 +82,8 @@ func FromArgs(args []string, path string, space workspace.Workspace, excluded []
 		return Scope{}, err
 	}
 
-	return Scope{files: canonical(picked.files), scoped: scoped, by: picked.by, unseen: picked.unseen, restrictions: always(path, excluded)}, nil
+	return Scope{files: canonical(picked.files), scoped: scoped, by: picked.by, unseen: picked.unseen,
+		lines: canonicalLines(picked.lines), restrictions: always(path, excluded)}, nil
 }
 
 // ChosenBy says what chose the files, as a reader reads it: "the files changed on this branch since main"; empty
@@ -99,6 +104,9 @@ type picked struct {
 	files  map[string]bool
 	by     string
 	unseen []string
+	// lines are the lines of each file the change touched, where the scope is about lines rather than files.
+	// No entry at all means the whole of every file the scope names.
+	lines map[string]git.ChangedLines
 }
 
 func restrictTo(args []string, path string, space workspace.Workspace, excluded []string) (picked, bool, error) {
@@ -125,10 +133,24 @@ func restrictTo(args []string, path string, space workspace.Workspace, excluded 
 		return picked{files: files, by: "the files changed on this branch since " + base, unseen: nestedUnder(path, excluded)}, true, err
 	}
 
-	if slices.Contains(args, "--changes") {
+	if slices.Contains(args, "--changed-files") {
 		files, err := workingTreeChanges(path)
 
 		return picked{files: files, by: "the files changed in the working tree", unseen: nestedUnder(path, excluded)}, true, err
+	}
+
+	if slices.Contains(args, "--changes") {
+		files, err := workingTreeChanges(path)
+		if err != nil {
+			return picked{}, true, err
+		}
+
+		return picked{
+			files:  files,
+			by:     "the lines changed in the working tree",
+			unseen: nestedUnder(path, excluded),
+			lines:  changedLinesOf(git.Root(path), files),
+		}, true, nil
 	}
 
 	return picked{}, false, nil
@@ -291,6 +313,46 @@ func (s Scope) Includes(file string) bool {
 	return err == nil && s.files[real]
 }
 
+// Covers says whether a finding at this line of this file is reported. A scope about whole files covers every
+// line of the files it names, and one about lines covers only what the change touched: a sin the change did not
+// write is somebody else's to answer for, and the moment to say so is when they open that file.
+func (s Scope) Covers(file string, line int) bool {
+	if !s.Includes(file) {
+		return false
+	}
+	if len(s.lines) == 0 {
+		return true
+	}
+	real, err := resolve(file)
+	if err != nil {
+		real = file
+	}
+	changed, named := s.lines[real]
+	if !named {
+		return true
+	}
+
+	return changed.Covers(line)
+}
+
+// canonicalLines are the lines keyed by each file as the scope resolves it, so a finding's path and a diff's
+// path are the same key however either was spelled.
+func canonicalLines(lines map[string]git.ChangedLines) map[string]git.ChangedLines {
+	if len(lines) == 0 {
+		return nil
+	}
+	canonical := map[string]git.ChangedLines{}
+	for file, changed := range lines {
+		real, err := resolve(file)
+		if err != nil {
+			real = file
+		}
+		canonical[real] = changed
+	}
+
+	return canonical
+}
+
 // Permits says whether every file that exists is a target: a cross-file fix touching one that is not is
 // dropped whole.
 func (s Scope) Permits(files []string) bool {
@@ -389,6 +451,17 @@ func checklist(id string, space workspace.Workspace) (map[string]bool, error) {
 	}
 
 	return files, nil
+}
+
+// changedLinesOf are the lines each of the files has that the working tree changed, read once per file. A file
+// the diff cannot be read for covers every line, which is what a file with no history is anyway.
+func changedLinesOf(root string, files map[string]bool) map[string]git.ChangedLines {
+	lines := map[string]git.ChangedLines{}
+	for file := range files {
+		lines[file] = git.ChangedLinesOf(root, file)
+	}
+
+	return lines
 }
 
 func workingTreeChanges(path string) (map[string]bool, error) {

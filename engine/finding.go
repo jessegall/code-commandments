@@ -7,6 +7,10 @@ type Finding struct {
 	Skill    string
 	Sin      string
 	File     string
+	// Line is the line the sin was found at, which Location names too. A reader wants the location; a scope
+	// about the lines a change touched wants the number, and parsing it back out of the text would be reading
+	// our own writing.
+	Line     int
 	Location string
 	Scope    string
 	Twins    []string

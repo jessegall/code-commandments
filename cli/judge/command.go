@@ -502,12 +502,14 @@ func locationAsWalked(location string, given scan.Given) string {
 	return given.Of(location[:at]) + location[at:]
 }
 
-// keep are the findings the run reports: in no excluded path fragment, and in scope.
+// keep are the findings the run reports: in no excluded path fragment, and in scope — which for a scope about
+// lines means the finding stands on a line the change touched, and for every other scope means its file is a
+// target.
 func keep(findings []engine.Finding, exclude []string, targets scope.Scope) []engine.Finding {
 	var kept []engine.Finding
 
 	for _, finding := range findings {
-		if isExcluded(finding.File, exclude) || !targets.Includes(finding.File) {
+		if isExcluded(finding.File, exclude) || !targets.Covers(finding.File, finding.Line) {
 			continue
 		}
 

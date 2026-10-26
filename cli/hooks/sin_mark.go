@@ -64,6 +64,7 @@ func (m SinMark) Finding() engine.Finding {
 		Skill:    sin.Slug(),
 		Sin:      sin.Name,
 		File:     m.Match.File(),
+		Line:     m.Match.Line(),
 		Location: m.Match.Location(),
 		Scope:    m.Match.Scope(),
 	}

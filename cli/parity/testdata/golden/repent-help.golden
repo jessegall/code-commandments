@@ -11,7 +11,8 @@ Usage:
                                     name match)
 
 Options:
-  --changes                      only files changed in the working tree (alias: --git)
+  --changes                      only the lines changed in the working tree
+  --changed-files                every file changed in the working tree, whole
   --branch[=BASE]                only files new/changed on this branch vs BASE (default: the
                                  project's `base`, else main)
   --branch=REPO:[BASE..]HEAD     only files HEAD changed since it left BASE (default: that

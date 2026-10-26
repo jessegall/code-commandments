@@ -11,7 +11,7 @@ exit: 0
   [36mC# detectors .........[0m 63 running  ·  63 available
   [36mCustom detectors .....[0m 0
   [36mExemption packages ...[0m 3 built-in  ·  0 registered
-  [36mSkills ...............[0m 65
+  [36mSkills ...............[0m 66
 
   [2mRun `commandments config reindex` to re-detect the source roots.[0m
 

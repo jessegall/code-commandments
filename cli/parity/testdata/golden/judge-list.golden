@@ -80,6 +80,10 @@ exit: 0
   HandedOutCollectionDetector
   MutableValueObjectDetector
   PositionalTupleReturnDetector
+[1;33mgo/flow[0m
+  DeepNestingDetector
+  LoopWrappedInIfDetector
+  RedundantElseDetector
 [1;33mphp/absence[0m
   BlankStringDefaultDetector
   BlankStringOnTheWireDetector

@@ -134,6 +134,7 @@ func findings(detector detectors.Detector, matches []engine.Match) []engine.Find
 			Skill:    sin.Slug(),
 			Sin:      sin.Name,
 			File:     match.File(),
+			Line:     match.Line(),
 			Location: location,
 			Scope:    match.Scope(),
 			Twins:    twins,
