@@ -42,3 +42,8 @@ Tell instead: give the base type an abstract member — `shape.Area()` — and l
   is where those types are made, not a switch over them.
 - **A closed set you don't own.** Switching over types from a library you cannot change is the only place
   the per-type behaviour can live.
+- **Writing the data out.** A loop that puts each element of another object's collection into a `StringBuilder`
+  as text — printed as itself, asked (`$"{line.Told()}"`), or one member printed — knows the format, not the
+  data. The wording of a prompt or the layout of a report is the writer's own, and moving the method onto the
+  type it reads would carry that format onto a value object. A hole that works the answer out from the element's
+  members (`$"{line.Price * line.Count}"`) is this sin again: that answer belongs on the element.

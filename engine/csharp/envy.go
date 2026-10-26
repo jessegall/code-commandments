@@ -83,8 +83,8 @@ func (n Node) UnpacksTargetFromContainerParam(program *Program) bool {
 
 // EnviedParameter is the parameter the method envies: the one other object it loops the collection of or writes
 // the members of, reaching into it more than into its own state; empty when it envies nothing. A type that may
-// fill a contract, a method that builds anything, a parameter of the method's own type, and a loop handing each
-// element to the work the type does itself are not envy.
+// fill a contract, a method that builds anything, a parameter of the method's own type, and a loop that passes
+// each element on rather than working on it are not envy.
 //
 // A read that is a criterion of a query over the type's own state is not a reach into the other object: it says
 // which of the type's own rows are wanted.
@@ -117,7 +117,7 @@ func (n Node) EnviedParameter(program *Program) string {
 	loops := n.LoopsOver(envied)
 	mutates := n.WritesMemberOf(envied)
 	iterates := len(loops) > 0 || n.QueriesCollectionOf(envied)
-	if iterates && !mutates && len(loops) > 0 && !slices.ContainsFunc(loops, func(loop Node) bool { return !n.handsElementOn(loop, own, host) }) {
+	if iterates && !mutates && len(loops) > 0 && n.everyLoopPassesItsElementOn(loops, own, host) {
 		return ""
 	}
 	if n.WalksRecursively(envied, loops) {
@@ -206,6 +206,61 @@ func (n Node) constructs() bool {
 	return slices.ContainsFunc(n.expressionParts(), func(node Node) bool {
 		return node.Is("ObjectCreationExpression", "ImplicitObjectCreationExpression", "AnonymousObjectCreationExpression")
 	})
+}
+
+// everyLoopPassesItsElementOn says whether each of the loops passes its element on instead of working on it:
+// to the work the type does itself, or out as text. Neither is the collection's own behaviour, so neither moves
+// onto the type that holds it.
+func (n Node) everyLoopPassesItsElementOn(loops []Node, own []string, host Node) bool {
+	return !slices.ContainsFunc(loops, func(loop Node) bool {
+		return !n.handsElementOn(loop, own, host) && !loop.writesItsElementAsText()
+	})
+}
+
+// writesItsElementAsText says whether every use the loop makes of its element reaches a string interpolation
+// without being computed on: `sb.AppendLine($"  - {question}")`, `$"{line.Told()}"`, `$"{line.Count}"`.
+//
+// Such a loop writes the collection out; it does not work on it. What it knows is the format — a prompt's
+// wording, a report's layout — and the format is the writer's own, so a method moved onto the type it reads
+// would carry the format onto a value object that must not know it. The element may be printed as itself, asked
+// (a call on it, which is this rule's own answer), or have one member printed; a hole that computes over its
+// members (`$"{line.Price * line.Count}"`) is working it out from outside and still fires.
+func (n Node) writesItsElementAsText() bool {
+	element := n.Name()
+	if element == "" {
+		return false
+	}
+	written := 0
+	for _, part := range n.expressionParts() {
+		if !part.Is("IdentifierName") || part.Name() != element {
+			continue
+		}
+		if !reachesTextUncomputed(part) {
+			return false
+		}
+		written++
+	}
+
+	return written > 0
+}
+
+// reachesTextUncomputed says whether the use stands in an interpolation hole with nothing but reads of itself
+// and calls on itself between: the hole prints it, rather than working something out of it.
+func reachesTextUncomputed(use Node) bool {
+	held := use
+	for parent := use.Parent(); parent.Exists(); parent = parent.Parent() {
+		if parent.Is("Interpolation") {
+			return true
+		}
+		asked := parent.Is("InvocationExpression") && parent.At(0).Node() == held.Node()
+		read := parent.Is("SimpleMemberAccessExpression") && parent.At(0).Node() == held.Node()
+		if !asked && !read {
+			return false
+		}
+		held = parent
+	}
+
+	return false
 }
 
 // handsElementOn says whether the loop hands its element to the work the type does itself: to a collaborator it
