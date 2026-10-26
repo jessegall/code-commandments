@@ -25,6 +25,6 @@ func (RedundantElseDetector) Sin() sins.Sin {
 func (RedundantElseDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return py.In(codebase).
 		WhereStatement().
-		Where(engine.As(py.Node.HasRedundantElse)).
+		Where(engine.HasRedundantElse).
 		Get()
 }

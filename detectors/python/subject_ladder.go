@@ -28,6 +28,6 @@ func (SubjectLadderDetector) Sin() sins.Sin {
 func (SubjectLadderDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return py.In(codebase).
 		WhereStatement().
-		Where(engine.As(func(n py.Node) bool { return n.SubjectLadderLength() >= ladderRungs })).
+		Where(func(held engine.Match) bool { return engine.SubjectLadderLength(held) >= ladderRungs }).
 		Get()
 }

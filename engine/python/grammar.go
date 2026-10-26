@@ -37,6 +37,16 @@ func init() {
 		Implicit:      implicit,
 		NamespaceOf:   func(symbol string) string { return engine.Before(symbol, ".") },
 		Continues:     func(branch engine.Match) bool { return Node{Match: branch}.IsElif() },
+		// Python hangs a body straight off its construct, so its statements are the children of the field and
+		// there is no block to read through.
+		Body:              engine.InFields("body"),
+		Otherwise:         engine.InFields("orelse"),
+		Condition:         condition,
+		ComparisonSubject: func(held engine.Match) engine.Match {
+			subject, _ := Node{Match: held}.ComparisonSubject()
+
+			return subject.Match
+		},
 	})
 
 }
@@ -249,4 +259,14 @@ func isAbstract(class engine.Match) bool {
 	}
 
 	return slices.ContainsFunc(class.Lineage(), func(ancestor string) bool { return slices.Contains(abstractions, ancestor) })
+}
+
+// condition is what a branch or a loop decides by: an `if`'s and a `while`'s test. A `match` decides by matching
+// its subject against patterns, which is no condition and has no inverse, and a `for` decides by nothing.
+func condition(held engine.Match) engine.Match {
+	if !slices.Contains([]string{"If", "IfExp", "While"}, held.Kind()) {
+		return engine.Match{}
+	}
+
+	return held.Child("test")
 }

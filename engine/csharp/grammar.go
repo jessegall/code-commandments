@@ -38,7 +38,11 @@ func init() {
 		Labels: func(name engine.Match) bool {
 			return name.Parent().Kind() == "NameColon" || name.Parent().Kind() == "NameEquals"
 		},
-		Continues: func(branch engine.Match) bool { return Node{Match: branch}.IsElseIf() },
+		Continues:         func(branch engine.Match) bool { return Node{Match: branch}.IsElseIf() },
+		Body:              body,
+		Otherwise:         otherwise,
+		Condition:         condition,
+		ComparisonSubject: func(held engine.Match) engine.Match { return Node{Match: held}.ComparisonSubject().Match },
 	})
 
 }
@@ -124,4 +128,52 @@ func parameters(function engine.Match) []engine.Match {
 	}
 
 	return declared
+}
+
+// body are the statements a construct runs as its own: the statements of the block it holds, or the one statement
+// it holds where C# lets a body go unbraced. A construct that writes its own parts before its body, as a foreach
+// writes the type and the name it binds, is read past by taking the first STATEMENT it holds rather than the
+// first child.
+func body(held engine.Match) []engine.Match {
+	for _, child := range (Node{Match: held}).Children() {
+		if !child.IsStatement() {
+			continue
+		}
+		if child.Is("Block") {
+			return child.Match.Children()
+		}
+
+		return []engine.Match{child.Match}
+	}
+
+	return nil
+}
+
+// otherwise are the statements a branch runs when its condition does not hold: the ones its else clause holds. An
+// `else if` is an `if` directly under that clause, which stands as the one statement.
+func otherwise(branch engine.Match) []engine.Match {
+	for _, child := range (Node{Match: branch}).Children() {
+		if child.Is("ElseClause") {
+			return body(child.Match)
+		}
+	}
+
+	return nil
+}
+
+// condition is what a branch or a loop decides by: the expression it holds. A `do` writes its condition after its
+// body and a `switch` holds its subject exactly as an `if` holds its condition, so the construct is named by kind
+// and its condition found by role rather than by position.
+func condition(held engine.Match) engine.Match {
+	node := Node{Match: held}
+	if !node.Is("IfStatement", "WhileStatement", "DoStatement", "ConditionalExpression") {
+		return engine.Match{}
+	}
+	for _, child := range node.All() {
+		if child.IsExpression() {
+			return child.Match
+		}
+	}
+
+	return engine.Match{}
 }

@@ -25,6 +25,6 @@ func (LoopWrappedInIfDetector) Sin() sins.Sin {
 func (LoopWrappedInIfDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return py.In(codebase).
 		WhereStatement().
-		Where(engine.As(py.Node.IsSoleLoopBodyGuard)).
+		Where(engine.IsSoleLoopBodyGuard).
 		Get()
 }

@@ -157,63 +157,6 @@ func (n Node) BranchingDepth() int {
 	return depth
 }
 
-// IsSoleLoopBodyGuard says whether the if is the whole body of a loop, guarding two or more statements of work
-// that end in no bail-out, with no else: the loop's real body wrapped in a condition.
-func (n Node) IsSoleLoopBodyGuard() bool {
-	body := n.ChildrenIn("body")
-	if n.Kind() != "If" || len(n.ChildrenIn("orelse")) > 0 || len(body) < 2 || body[len(body)-1].IsBailOut() {
-		return false
-	}
-	loop := n.Parent()
-
-	return slices.Contains([]string{"For", "AsyncFor", "While"}, loop.Kind()) && n.Node().Field == "body" && len(loop.ChildrenIn("body")) == 1
-}
-
-// HasRedundantElse says whether the if has an else though its body always leaves: the else's statements can
-// stand after the if, unindented.
-func (n Node) HasRedundantElse() bool {
-	orelse, body := n.ChildrenIn("orelse"), n.ChildrenIn("body")
-	if n.Kind() != "If" || n.IsElif() || len(orelse) == 0 || (len(orelse) == 1 && orelse[0].IsElif()) {
-		return false
-	}
-
-	return len(body) > 0 && body[len(body)-1].IsBailOut()
-}
-
-// SubjectLadderLength is how many rungs an if and its elifs have when every one compares one subject to a
-// constant with `==`; zero when they are no such ladder, or the if is itself an elif.
-func (n Node) SubjectLadderLength() int {
-	if n.Kind() != "If" || n.IsElif() {
-		return 0
-	}
-	chain := n.Chain()
-	var subjects []string
-	for _, rung := range chain {
-		subject, ok := rung.Child("test").ComparisonSubject()
-		if !ok {
-			return 0
-		}
-		if hash := subject.ExpressionHash(); !slices.Contains(subjects, hash) {
-			subjects = append(subjects, hash)
-		}
-	}
-	if len(subjects) != 1 {
-		return 0
-	}
-
-	return len(chain)
-}
-
-// Chain is the if and each elif after it.
-func (n Node) Chain() []Node {
-	chain := []Node{n}
-	for orelse := n.ChildrenIn("orelse"); len(orelse) == 1 && orelse[0].IsElif(); orelse = orelse[0].ChildrenIn("orelse") {
-		chain = append(chain, orelse[0])
-	}
-
-	return chain
-}
-
 // ComparisonSubject is what an `==` comparison tests against a literal: the side that is no literal, when the
 // other one is.
 func (n Node) ComparisonSubject() (Node, bool) {

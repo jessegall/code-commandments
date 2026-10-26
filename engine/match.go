@@ -196,6 +196,38 @@ func (m Match) Receiver() Match {
 	return Match{}
 }
 
+// Body are the statements the node runs as its own: a branch's taken path, a loop's body. A language that wraps
+// them in a block is read through it, so a reader of the answer never has to know which does.
+func (m Match) Body() []Match {
+	return m.listed(m.grammar().Body)
+}
+
+// Otherwise are the statements the branch runs when its condition does not hold: its else. A language that writes
+// an else-if files that branch here as the one statement.
+func (m Match) Otherwise() []Match {
+	return m.listed(m.grammar().Otherwise)
+}
+
+// Condition is what the branch or loop decides by; no node for a construct that decides by no condition, such as
+// a switch, whose subject its cases are matched against is not one.
+func (m Match) Condition() Match {
+	if read := m.grammar().Condition; read != nil && m.node != nil {
+		return read(m)
+	}
+
+	return Match{}
+}
+
+// ComparisonSubject is what the comparison tests against a constant: the side that is no constant, when the other
+// one is; no node for anything else.
+func (m Match) ComparisonSubject() Match {
+	if read := m.grammar().ComparisonSubject; read != nil && m.node != nil {
+		return read(m)
+	}
+
+	return Match{}
+}
+
 // Declares says whether the node declares a name the code around it then uses.
 func (m Match) Declares() bool {
 	read := m.grammar().Declares
@@ -292,6 +324,12 @@ func (m Match) Written() string {
 	}
 
 	return string(source[m.node.Span.Start:m.node.Span.End])
+}
+
+// IsConstant says whether the expression's value is known at compile time, as the language's own compiler
+// decided: a literal, and a name a constant declaration bound to one.
+func (m Match) IsConstant() bool {
+	return m.node != nil && m.node.Constant
 }
 
 // Text is a literal's decoded string value; false when the node is no string literal.

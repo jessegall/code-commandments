@@ -69,6 +69,19 @@ type Grammar struct {
 	Labels func(Match) bool
 	// Continues says whether a branch continues the one it sits in rather than nesting inside it: an else-if.
 	Continues func(Match) bool
+	// Body are the statements a construct runs as its own: a branch's taken path, a loop's body. A language that
+	// wraps them in a block is read through it, so the answer is the statements themselves either way.
+	Body func(Match) []Match
+	// Otherwise are the statements a branch runs when its condition does not hold: its else. A language that
+	// writes an else-if files that branch here as the one statement, which is what tells a ladder from a guard.
+	Otherwise func(Match) []Match
+	// Condition is what a branch or a loop decides by. No node for a construct that decides by no condition: a
+	// switch has a subject its cases are matched against, which is not a condition and has no inverse.
+	Condition func(Match) Match
+	// ComparisonSubject is what a comparison tests against a constant: the side that is no constant, when the
+	// other one is. No node for anything else, which is what tells a ladder over one subject from a chain of
+	// unrelated tests.
+	ComparisonSubject func(Match) Match
 	// Receiver is the object a call or a member read is sent to: the `$order` of `$order->ship()`; no node for a
 	// free function's call, which is sent to nobody.
 	Receiver func(Match) Match

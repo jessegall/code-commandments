@@ -191,16 +191,6 @@ func (n Node) IsNonCountingFor() bool {
 	return !slices.ContainsFunc(steps, func(step engine.Match) bool { return slices.Contains(counterSteps, step.Kind()) })
 }
 
-// HasRedundantElse says whether the node is an if with an else and no elseif whose own body ends by leaving.
-func (n Node) HasRedundantElse() bool {
-	if n.Kind() != "Stmt_If" || !n.Child("else").Exists() || len(n.ChildrenIn("elseifs")) > 0 {
-		return false
-	}
-	body := n.ChildrenIn("stmts")
-
-	return len(body) > 0 && Node{Match: body[len(body)-1]}.IsBailOut()
-}
-
 // IsBailOut says whether the node is a statement that leaves: return, continue, break or a thrown expression.
 func (n Node) IsBailOut() bool {
 	switch n.Kind() {

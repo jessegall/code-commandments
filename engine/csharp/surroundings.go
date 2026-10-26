@@ -82,83 +82,6 @@ func (n Node) IsElseIf() bool {
 	return n.Is("IfStatement") && n.Parent().Is("ElseClause")
 }
 
-// HasRedundantElse says whether the `if`'s branch already left, yet it carries an `else`. An `if` whose `else` is
-// the next rung is a ladder, not a guard.
-func (n Node) HasRedundantElse() bool {
-	if !n.Is("IfStatement") || n.IsElseIf() {
-		return false
-	}
-	children := n.Children()
-	if len(children) < 2 || children[1].Children()[0].Is("IfStatement") {
-		return false
-	}
-	statements := []Node{children[0]}
-	if children[0].Is("Block") {
-		statements = children[0].Children()
-	}
-
-	return len(statements) > 0 && statements[len(statements)-1].IsBailOut()
-}
-
-// SubjectLadderLength is how many rungs the `if` ladder has when every one compares the same subject with a
-// constant; zero for a ladder whose rungs test anything else, and for an `else if` itself.
-func (n Node) SubjectLadderLength() int {
-	if !n.Is("IfStatement") || n.IsElseIf() {
-		return 0
-	}
-	rungs := n.rungs()
-	var subjects []string
-	for _, rung := range rungs {
-		subject := rung.At(0).ComparisonSubject()
-		if !subject.Exists() {
-			return 0
-		}
-		if hash := ExpressionHash(subject); !slices.Contains(subjects, hash) {
-			subjects = append(subjects, hash)
-		}
-	}
-	if len(subjects) != 1 {
-		return 0
-	}
-
-	return len(rungs)
-}
-
-// rungs is the `if` statements of the ladder the `if` opens: itself, then each `else if` in turn.
-func (n Node) rungs() []Node {
-	children := n.Children()
-	if len(children) < 2 {
-		return []Node{n}
-	}
-	if next := children[1].Children(); len(next) > 0 && next[0].Is("IfStatement") {
-		return append([]Node{n}, next[0].rungs()...)
-	}
-
-	return []Node{n}
-}
-
-// IsSoleLoopBodyGuard says whether the `if`, with no `else`, is the whole body of a loop, burying two statements or
-// more a level deep behind its condition. A body that ends by leaving the loop picks the one item it wanted.
-func (n Node) IsSoleLoopBodyGuard() bool {
-	children := n.Children()
-	if !n.Is("IfStatement") || len(children) != 1 {
-		return false
-	}
-	work := []Node{children[0]}
-	if children[0].Is("Block") {
-		work = children[0].Children()
-	}
-	if len(work) < 2 || work[len(work)-1].IsBailOut() {
-		return false
-	}
-	holder, loop := Node{}, n.Parent()
-	if loop.Is("Block") {
-		holder, loop = loop, loop.Parent()
-	}
-
-	return loop.IsLoop() && (!holder.Exists() || len(holder.Children()) == 1)
-}
-
 // FillsArgument says whether the expression is handed straight to a call as one of its arguments.
 func (n Node) FillsArgument() bool {
 	return n.Parent().Is("Argument")
@@ -778,8 +701,8 @@ func (n Node) ComparedLiterals() []string {
 			}
 		}
 	case n.Is("IfStatement") && !n.IsElseIf():
-		for _, rung := range n.rungs() {
-			values = append(values, rung.At(0))
+		for _, rung := range engine.LadderRungs(n.Match) {
+			values = append(values, Node{Match: rung}.At(0))
 		}
 	}
 	var literals []string

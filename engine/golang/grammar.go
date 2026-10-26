@@ -14,6 +14,12 @@ func init() {
 		ReturnType: engine.InField("results"),
 		Continues:  continues,
 		TestFile:   testFile,
+		// Go always braces a body, so its statements are the block's; an `else` holds either that block or the
+		// `if` of an `else if`.
+		Body:              body,
+		Otherwise:         otherwise,
+		Condition:         condition,
+		ComparisonSubject: comparisonSubject,
 		// A Go symbol is a package path and the names under it, so the namespace is everything before the last
 		// name: example.com/shop/cart.Cart.Total belongs to example.com/shop/cart.
 		NamespaceOf: namespaceOf,
@@ -63,4 +69,53 @@ func namespaceOf(symbol string) string {
 	}
 
 	return symbol[:at]
+}
+
+// body are the statements a construct runs as its own: the statements of the block it holds. Go braces every
+// body, so there is always a block to read through, and a construct holding none answers with nothing.
+func body(held engine.Match) []engine.Match {
+	return held.Child("body").Children()
+}
+
+// otherwise are the statements a branch runs when its condition does not hold. Go writes the else as either a
+// block of statements or the `if` of an `else if`, which stands as the one statement.
+func otherwise(branch engine.Match) []engine.Match {
+	held := branch.Child("else")
+	if held.Kind() == "BlockStmt" {
+		return held.Children()
+	}
+	if !held.Exists() {
+		return nil
+	}
+
+	return []engine.Match{held}
+}
+
+// condition is what a branch or a loop decides by. A `switch` holds a tag its cases are matched against and a
+// `select` holds nothing at all, neither of which is a condition with an inverse; a `range` decides by nothing,
+// and a `for` by the cond it carries, which a bare `for {}` does not.
+func condition(held engine.Match) engine.Match {
+	if held.Kind() != "IfStmt" && held.Kind() != "ForStmt" {
+		return engine.Match{}
+	}
+
+	return held.Child("cond")
+}
+
+// comparisonSubject is what an `==` tests against a constant: the side that is no constant, when the other one
+// is. Go's constants are its literals and the names a const declaration binds, both of which the type checker
+// calls constant, so a comparison against a named const of a defined type reads as one too.
+func comparisonSubject(held engine.Match) engine.Match {
+	if held.Kind() != "BinaryExpr" || held.Operator() != "==" {
+		return engine.Match{}
+	}
+	left, right := held.Child("x"), held.Child("y")
+	switch {
+	case !left.IsConstant() && right.IsConstant():
+		return left
+	case left.IsConstant() && !right.IsConstant():
+		return right
+	}
+
+	return engine.Match{}
 }

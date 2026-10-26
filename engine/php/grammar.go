@@ -37,6 +37,9 @@ func init() {
 			return engine.Before(strings.TrimSuffix(class, "()"), `\`)
 		},
 		Continues: engine.KindIn("Stmt_ElseIf"),
+		// PHP hangs a body straight off its construct, as its statements, so there is no block to read through.
+		Body:      engine.InFields("stmts"),
+		Otherwise: otherwise,
 	})
 
 }
@@ -121,4 +124,32 @@ func phpDocTags(declaration engine.Match) []string {
 	}
 
 	return tags
+}
+
+// otherwise are the statements a branch runs when its condition does not hold. PHP files a ladder FLAT: an `if`
+// keeps its `elseif`s in a list of its own, beside its `else`, rather than nesting each in the one before. So the
+// next rung is the next entry of that list, and the `else` is only reached once the list is spent.
+func otherwise(branch engine.Match) []engine.Match {
+	owner := branch
+	if branch.Kind() == "Stmt_ElseIf" {
+		owner = branch.Parent()
+	}
+	if owner.Kind() != "Stmt_If" {
+		return nil
+	}
+	rungs := owner.ChildrenIn("elseifs")
+	next, found := 0, branch.Kind() != "Stmt_ElseIf"
+	for at, rung := range rungs {
+		if rung.Node() == branch.Node() {
+			next, found = at+1, true
+		}
+	}
+	if !found {
+		return nil
+	}
+	if next < len(rungs) {
+		return []engine.Match{rungs[next]}
+	}
+
+	return owner.Child("else").Body()
 }
