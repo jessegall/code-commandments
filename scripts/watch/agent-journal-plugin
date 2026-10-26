@@ -15,12 +15,15 @@ if ! pgrep -f "agent-journal/.journal/plugins/code-commandments/bin/commandments
     exit 1
 fi
 
+# A service that has been restarted says so by warming again, and the failures before that warm are history. So
+# only what a service wrote SINCE its last warm says whether it is answering now.
 for log in "$data"/*.log; do
     [ -f "$log" ] || continue
-    if tail -n 30 "$log" | grep -q "broken pipe"; then
-        echo "$(basename "$log") ends in unanswered requests: its bridge has gone and the service is not replacing it"
+    since=$(awk '/is warm:/ { kept = ""; next } { kept = kept $0 "\n" } END { printf "%s", kept }' "$log")
+    if printf '%s' "$since" | grep -q "broken pipe"; then
+        echo "$(basename "$log") holds unanswered requests since its bridge last warmed: the service is not replacing a bridge that has gone"
         exit 1
     fi
 done
 
-echo "plugin $version is up and no service log ends in unanswered requests"
+echo "plugin $version is up and every service has answered since it last warmed"
