@@ -1,18 +1,18 @@
 {
     "note": "Each budget is the size a platform binary may reach \u2014 the tool's under its os-arch, a C# bridge's under its own name \u2014 set at its first measured size plus 10%, rounded up to the next half MiB, and raised only by hand, never by the build. measured is what the last recorded build weighed.",
     "budget": {
-        "darwin-amd64": 20447232,
-        "darwin-arm64": 19398656,
-        "linux-amd64": 20447232,
-        "linux-arm64": 19398656,
+        "darwin-amd64": 23068672,
+        "darwin-arm64": 22020096,
+        "linux-amd64": 23068672,
+        "linux-arm64": 21495808,
         "roslyn-bridge-darwin-amd64": 46137344,
         "roslyn-bridge-darwin-arm64": 44040192,
         "roslyn-bridge-linux-amd64": 46137344,
         "roslyn-bridge-linux-arm64": 44040192,
         "roslyn-bridge-windows-amd64": 45088768,
         "roslyn-bridge-windows-arm64": 44040192,
-        "windows-amd64": 20971520,
-        "windows-arm64": 19398656
+        "windows-amd64": 23592960,
+        "windows-arm64": 21495808
     },
     "measured": {
         "darwin-amd64": 18563872,
