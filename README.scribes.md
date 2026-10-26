@@ -19,6 +19,9 @@ A rule in `.commandments/custom/` that declares a `fix` is repented like a shipp
 ### Csharp
 
 
+### Go
+
+
 ### Php
 
 | Sin | The fix `repent` applies |

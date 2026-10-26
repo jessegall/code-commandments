@@ -53,3 +53,15 @@ func (r *Router) Retried(batch []Message) []Message {
 
 	return again
 }
+
+// Open says whether the router will take a batch, and why it will not.
+func (r *Router) Open(kind string) (bool, string) {
+	// @sin RedundantElse
+	if !r.open {
+		return false, "the router is closed"
+	} else {
+		r.queues[kind] = nil
+
+		return true, ""
+	}
+}

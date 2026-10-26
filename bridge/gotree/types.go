@@ -219,6 +219,12 @@ func typeOf(held types.Type, origin string) *contract.Type {
 	if held == nil || held == types.Typ[types.Invalid] {
 		return nil
 	}
+	// A call that answers nothing is typed as a tuple of no members: `delete(m, k)` and every function
+	// declared with no results. That is Go's spelling of "there is no value here", and the contract spells
+	// the same thing by carrying no type at all, as a function returning nothing already does.
+	if tuple, void := held.(*types.Tuple); void && tuple.Len() == 0 {
+		return nil
+	}
 
 	line := &contract.Type{Text: types.TypeString(held, qualify), Origin: origin}
 	switch shape := held.(type) {

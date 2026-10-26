@@ -504,6 +504,27 @@
         "help": "a method that returns `(decimal, decimal, string)` — unnamed values the caller reads by position, where two of the same type can be swapped and nothing notices"
     },
     {
+        "key": "sin_deep-go-nesting",
+        "title": "DeepNesting",
+        "kind": "flag",
+        "default": true,
+        "help": "An `if`, `for`, `switch` or `select` opening a fourth level of choices inside one Go function — a decision buried inside a decision"
+    },
+    {
+        "key": "sin_go-loop-wrapped-in-if",
+        "title": "LoopWrappedInIf",
+        "kind": "flag",
+        "default": true,
+        "help": "A `for` whose whole body is one `if`, burying the work a level deep where `continue` past what does not apply would keep it flat"
+    },
+    {
+        "key": "sin_redundant-go-else",
+        "title": "RedundantElse",
+        "kind": "flag",
+        "default": true,
+        "help": "An `else` after an `if` branch that already left — it ends in `return`, `break`, `continue`, `goto` or `panic` — indenting the rest of the function for nothing"
+    },
+    {
         "key": "sin_blank-string-default",
         "title": "BlankStringDefault",
         "kind": "flag",

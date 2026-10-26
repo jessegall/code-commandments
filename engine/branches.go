@@ -25,8 +25,16 @@ func HasRedundantElse(branch Match) bool {
 // deep behind its condition where `continue` past what does not apply would keep them flat. A body that ends by
 // leaving the loop is picking the one item it wanted, not guarding its work, and a branch with an else decides
 // between two paths rather than guarding one.
+//
+// A branch that BINDS a name for its own body is not this either: Go's `if v, ok := m[k]; ok`, C#'s `out var`
+// and `is T v`, Python's `:=`. Inverting one into a guard takes the binding out of the branch and into the loop,
+// widening a name that was scoped to the only code entitled to read it, so the fix the rule would ask for is
+// worse than what it flagged. The condition reader pardons the same shape for the same reason.
 func IsSoleLoopBodyGuard(branch Match) bool {
 	if !branch.Is(Branch) || !branch.Condition().Exists() || len(branch.Otherwise()) > 0 {
+		return false
+	}
+	if branch.BindsItsOwnTest() {
 		return false
 	}
 	work := branch.Body()
@@ -78,4 +86,16 @@ func SubjectLadderLength(branch Match) int {
 	}
 
 	return len(rungs)
+}
+
+// BindsItsOwnTest says whether the branch binds a name in its header for its own body to read. A language whose
+// grammar answers for itself is asked, since Go files the binding as a statement beside the condition rather
+// than inside it; otherwise the condition's own declarations answer, which is where C# and Python write theirs.
+func (m Match) BindsItsOwnTest() bool {
+	if read := m.grammar().BindsItsOwnTest; read != nil && m.node != nil {
+		return read(m)
+	}
+	condition := m.Condition()
+
+	return declaresAName(append(condition.Descendants(), condition))
 }

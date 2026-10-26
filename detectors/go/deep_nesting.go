@@ -21,19 +21,23 @@ func init() {
 	detectors.Register(catalog.Go, DeepNestingDetector{})
 }
 
-// Unpublished keeps the detector out of every catalog while it is calibrated: it is the first Go rule, and it
-// has no fixture of its own until the Go fixture exists.
-func (DeepNestingDetector) Unpublished() {}
-
 // Sin is the sin the detector finds.
 func (DeepNestingDetector) Sin() sins.Sin {
 	return gosins.DeepNesting{}
 }
 
 // Find is every branch or loop that opens a fourth level of choices inside its own function.
+//
+// A guard clause is never the one named, however deep it sits. `if err != nil { return err }` is the line Go
+// asks for after every call that can fail and `if !ok { continue }` is how a loop says what it skips: neither
+// buried anything, there is nothing inside them for a reader to come back to, and their authors cannot take
+// them away, so told to flatten one they can only ignore the finding. Where the region around a guard is
+// genuinely too deep, the construct that made it deep is named instead; where nothing else is, the choices a
+// reader really holds open are within the rule and there is nothing to report.
 func (DeepNestingDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return golang.In(codebase).
 		WhereChoice().
 		Where(engine.As(func(n golang.Node) bool { return n.ChoicesAbove() == choicesAllowed })).
+		Reject(engine.Match.OnlyLeaves).
 		Get()
 }

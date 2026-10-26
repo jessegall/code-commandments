@@ -75,6 +75,10 @@ type Grammar struct {
 	// Otherwise are the statements a branch runs when its condition does not hold: its else. A language that
 	// writes an else-if files that branch here as the one statement, which is what tells a ladder from a guard.
 	Otherwise func(Match) []Match
+	// BindsItsOwnTest says whether a branch binds a name in its header for its own body to read, which its
+	// condition tests: Go files it as the `init` statement of its `if`, where C# and Python write it inside the
+	// condition itself. Where a language registers none, the condition's own declarations answer it.
+	BindsItsOwnTest func(Match) bool
 	// Condition is what a branch or a loop decides by. No node for a construct that decides by no condition: a
 	// switch has a subject its cases are matched against, which is not a condition and has no inverse.
 	Condition func(Match) Match

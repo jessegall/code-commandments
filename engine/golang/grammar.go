@@ -19,6 +19,7 @@ func init() {
 		Body:              body,
 		Otherwise:         otherwise,
 		Condition:         condition,
+		BindsItsOwnTest:   bindsItsOwnTest,
 		ComparisonSubject: comparisonSubject,
 		// A Go symbol is a package path and the names under it, so the namespace is everything before the last
 		// name: example.com/shop/cart.Cart.Total belongs to example.com/shop/cart.
@@ -118,4 +119,10 @@ func comparisonSubject(held engine.Match) engine.Match {
 	}
 
 	return engine.Match{}
+}
+
+// bindsItsOwnTest says whether the branch binds a name in its header for its own body: Go writes that as the
+// `init` statement of the `if`, before the semicolon, and scopes what it binds to the branch alone.
+func bindsItsOwnTest(branch engine.Match) bool {
+	return branch.Kind() == "IfStmt" && branch.Child("init").Exists()
 }

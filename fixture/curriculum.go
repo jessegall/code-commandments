@@ -31,6 +31,7 @@ func Curriculum(fixtures string) (render.Examples, error) {
 		{"frontend", []source.Language{source.Vue, source.TypeScript}, append(detectors.Of(catalog.Vue), detectors.Of(catalog.TypeScript)...), source.Vue},
 		{"python", []source.Language{source.Python}, detectors.Of(catalog.Python), source.Python},
 		{"csharp", []source.Language{source.CSharp}, detectors.Of(catalog.CSharp), source.CSharp},
+		{"go", []source.Language{source.Go}, detectors.Of(catalog.Go), source.Go},
 	} {
 		root := filepath.Join(fixtures, engine.folder)
 		codebase, err := scan.Walk([]string{root}, source.Under(root, nil)).Only(engine.languages...).Load()

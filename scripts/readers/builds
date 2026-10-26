@@ -1,0 +1,9 @@
+#!/bin/sh
+# What a build wrote or a judge found, and the errors that stopped either.
+#
+# A compiler error is named by its file and its line alone: the folder and the column say nothing a reader of
+# the card needs, and the type note Go appends in parentheses repeats what the message already said. The whole
+# line is still in the output behind the card, for whoever opens it.
+grep -E 'wrote |regenerated|[0-9]+ (sins?|findings?|files?|packages?|sins? across)|^✓|^⚠|rror|^#|panic:|cannot|refus|\.(go|cs):[0-9]+:[0-9]+:' \
+  | sed -E 's#^[^ ]*/([^/ ]+\.(go|cs)):([0-9]+):[0-9]+: #\1:\3 #' \
+  | sed -E 's/ \((type|variable|value|declared|have|want|imported) [^()]*\)$//'

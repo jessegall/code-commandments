@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"slices"
+	"strings"
 
 	"github.com/jessegall/code-commandments/cli/doc"
 	_ "github.com/jessegall/code-commandments/registry"
@@ -36,5 +37,7 @@ func main() {
 		return
 	}
 	slices.Sort(written)
-	fmt.Println("README regenerated:", written)
+	// What was rewritten is said in words and counted, because a reader of one line wants to know how much
+	// moved. A Go slice printed as itself is a line of paths nobody takes in at a glance.
+	fmt.Printf("README regenerated: %d of %d documents (%s)\n", len(written), len(documents), strings.Join(written, ", "))
 }

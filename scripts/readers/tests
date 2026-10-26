@@ -1,0 +1,10 @@
+#!/bin/sh
+# A go test run: each package as it finishes, the tests that failed, and the short lines they printed.
+#
+# A failure's own line is kept, but shortened where the test printed something no reader of a card can take in
+# at a glance: a JSON pointer into a tree is cut to its last two steps, since the path above them is the same
+# for every node and says nothing, and any line still over 120 characters is cut there. The whole line stays in
+# the output behind the card.
+grep -E '^ok\s|^FAIL\s+\S+|^\s*--- FAIL|[0-9]+/[0-9]+ tests|[0-9]+ tests, [0-9]+ failed|_test\.go:[0-9]+:|^\s*[a-z_/]+\.go:[0-9]+:[0-9]+:|panic:' \
+  | sed -E 's#(/(file|root)[a-zA-Z0-9_/]*)/([a-zA-Z0-9_]+/[a-zA-Z0-9_]+)#.../\3#g' \
+  | cut -c1-120

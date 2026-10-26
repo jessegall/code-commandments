@@ -93,6 +93,15 @@ func says(statement Match) bool {
 	return false
 }
 
+// OnlyLeaves says whether the branch does nothing but leave the body it stands in: a guard clause, which is the
+// shape the flow discipline asks for rather than one it objects to. Go's `if err != nil { return err }` is the
+// one every function writes, and `if !ok { continue }` is how a loop says what it skips. A reader holds neither
+// open, because there is nothing inside them to come back to, so a rule counting what the code buries must not
+// count these.
+func (m Match) OnlyLeaves() bool {
+	return onlyLeaves(m)
+}
+
 // onlyLeaves says whether the branch does nothing but leave the body it stands in.
 func onlyLeaves(branch Match) bool {
 	for _, child := range branch.Children() {

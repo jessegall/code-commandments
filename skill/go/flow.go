@@ -24,9 +24,6 @@ func init() {
 	skill.Register(catalog.Go, Flow{})
 }
 
-// Unpublished keeps the skill out of every catalog while the Go rules that point at it are calibrated.
-func (Flow) Unpublished() {}
-
 // Definition is what the skill states about itself.
 func (Flow) Definition() skill.Definition {
 	return skill.Definition{

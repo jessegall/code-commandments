@@ -962,6 +962,45 @@
             ],
             "detail": true
         },
+        "sin_deep-go-nesting": {
+            "title": "DeepNesting",
+            "help": "An `if`, `for`, `switch` or `select` opening a fourth level of choices inside one Go function — a decision buried inside a decision",
+            "type": "flag",
+            "default": "true",
+            "group": "go/flow",
+            "when": [
+                {
+                    "language_go": true
+                }
+            ],
+            "detail": true
+        },
+        "sin_go-loop-wrapped-in-if": {
+            "title": "LoopWrappedInIf",
+            "help": "A `for` whose whole body is one `if`, burying the work a level deep where `continue` past what does not apply would keep it flat",
+            "type": "flag",
+            "default": "true",
+            "group": "go/flow",
+            "when": [
+                {
+                    "language_go": true
+                }
+            ],
+            "detail": true
+        },
+        "sin_redundant-go-else": {
+            "title": "RedundantElse",
+            "help": "An `else` after an `if` branch that already left — it ends in `return`, `break`, `continue`, `goto` or `panic` — indenting the rest of the function for nothing",
+            "type": "flag",
+            "default": "true",
+            "group": "go/flow",
+            "when": [
+                {
+                    "language_go": true
+                }
+            ],
+            "detail": true
+        },
         "sin_blank-string-default": {
             "title": "BlankStringDefault",
             "help": "`string $x = ''` standing in for absence — then asked `$x === ''`",

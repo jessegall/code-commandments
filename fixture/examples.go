@@ -377,7 +377,7 @@ func (m moduleSpan) collect(tag Tag, marked sources) {
 			continue
 		}
 		shown[line] = true
-		names := markersAbove(lines, line, tag)
+		names := markersAbove(lines, line, tag, language)
 		if len(names) == 0 {
 			continue
 		}
@@ -439,7 +439,7 @@ func commentsAbove(lines []string, at int, language source.Language) []string {
 
 // markersAbove is the names in the run of marker comments of the tag above line at (1-based): blank lines and
 // markers of other tags are stepped over, anything else ends the run.
-func markersAbove(lines []string, at int, tag Tag) []string {
+func markersAbove(lines []string, at int, tag Tag, language source.Language) []string {
 	var names []string
 	for n := min(at-1, len(lines)); n >= 1; n-- {
 		text := strings.TrimSpace(lines[n-1])
@@ -447,6 +447,14 @@ func markersAbove(lines []string, at int, tag Tag) []string {
 			continue
 		}
 		found := markerWord.FindStringSubmatch(text)
+		// A comment that is not a marker is the declaration's own documentation, which in Go stands BETWEEN a
+		// marker and what it marks: Go gives a comment group touching a declaration to that declaration, so a
+		// marker written there would make everything it marks read as documented, and the fixture writes it
+		// above the documentation with a blank line between. The walk reads past prose and stops at code, so a
+		// marker still only ever reaches the declaration it was written for.
+		if found == nil && language.IsCommentLine(lines[n-1]) {
+			continue
+		}
 		if found == nil {
 			break
 		}

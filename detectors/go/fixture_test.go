@@ -20,7 +20,11 @@ import (
 
 // calibrating are the Go detectors still being calibrated, which no catalog lists. They are proven here by name
 // until each has been read against real Go code and published, so a rule is never half-built AND unproven.
-var calibrating = []detectors.Detector{godetectors.DeepNestingDetector{}}
+var calibrating = []detectors.Detector{
+	godetectors.DeepNestingDetector{},
+	godetectors.RedundantElseDetector{},
+	godetectors.LoopWrappedInIfDetector{},
+}
 
 // shop is tests/Fixtures/go as the engine reads it, through the real bridge. The Go bridge runs in this very
 // process, so the fixture is read live rather than from a frozen stream.

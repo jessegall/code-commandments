@@ -14,9 +14,6 @@ func init() {
 	sins.Register(catalog.Go, DeepNesting{})
 }
 
-// Unpublished keeps the sin out of every catalog while its detector is calibrated.
-func (DeepNesting) Unpublished() {}
-
 // Definition is what the sin states about itself.
 func (DeepNesting) Definition() sins.Definition {
 	return sins.Definition{
