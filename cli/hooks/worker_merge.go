@@ -203,6 +203,7 @@ func (m merging) sins() []SinMark {
 		return nil
 	}
 	rules = append(rules, custom.Load(m.worktree).Enabled(project)...)
+	project = project.Judging(rules)
 
 	switch {
 	case m.window >= wholeTreeWindow:

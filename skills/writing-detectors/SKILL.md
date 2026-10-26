@@ -286,18 +286,34 @@ An excluded folder is excluded for every rule, which is usually right and someti
 excludes `tests` because the rules about naming read a test's name as a sentence, which is what a test name is,
 and one project measured 9,773 findings in 85 files that way. But a rule written ABOUT tests belongs there.
 
-Name the folder under that one rule, beside its other `configure` steps:
+**Write it in the rule's own file.** The folders a rule of yours judges belong with the rule, in the file you
+wrote and no install rewrites:
 
 ```json
-"configure": {"TestsDriveTheRealPath": [{"judges": ["tests"]}]}
+{
+    "engine": "python",
+    "judges": ["tests"],
+    "sin": {"name": "tests-drive-the-real-path", "skill": "tests-drive-the-real-path"},
+    "find": { "...": "..." }
+}
 ```
 
-The folder stays excluded for every other rule, and `judges` is the config's own step rather than a method of
-the detector, so it reads the same under a rule of yours as under a shipped one (a shipped rule is keyed
-`engine/Name`, yours by its bare name). An edit inside the folder then raises that rule's marks live, as any
-other edit does, instead of waiting for somebody to run a judge over the folder by hand. A run GIVEN a path is
-never widened by it: a whitelist says which rule may look inside an excluded folder, not that a run should
-reach past what it was asked for.
+A shipped rule carries no such list, because you could not change one inside a rule the package ships. Name its
+folders in the config instead, under that one rule, beside its other `configure` steps:
+
+```json
+"configure": {"php/FacadeCallDetector": [{"judges": ["tests"]}]}
+```
+
+The two are read as one answer, so a folder named in both counts once, and `judges` is the config's own step
+rather than a method of the detector, which is why it reads the same under a rule of yours (keyed by its bare
+name) as under a shipped one (keyed `engine/Name`).
+
+The folder stays excluded for every other rule. An edit inside it raises that rule's marks live, as any other
+edit does, instead of waiting for somebody to run a judge over the folder by hand. A run GIVEN a path is never
+widened by it: a whitelist says which rule may look inside an excluded folder, not that a run should reach past
+what it was asked for. A folder you merely left out of `paths`, rather than naming under `exclude`, is reached
+the same way.
 
 They are named as yours wherever they fire: `judge` prints `[NoRawSqlDetector (custom)]` in the
 console and in `sins.md`, `judge --list` lists them so, and `report --detector` refuses them — nothing

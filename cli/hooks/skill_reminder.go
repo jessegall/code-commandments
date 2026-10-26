@@ -44,7 +44,6 @@ func (SkillReminder) Handle(event Event) Response {
 	}
 
 	project, _ := config.Load(event.Root)
-	files := edited(event, project)
 
 	enabled, err := project.Enabled(config.InstalledIn(event.Root))
 	if err != nil {
@@ -52,6 +51,11 @@ func (SkillReminder) Handle(event Event) Response {
 	}
 
 	enabled = append(enabled, custom.Load(event.Root).Enabled(project)...)
+
+	// A rule of the project's own may name the folders it judges in its own file, so the config is read with what
+	// the rules declare before anything asks which files are looked at or which rules may mark one.
+	project = project.Judging(enabled)
+	files := edited(event, project)
 
 	single := slices.DeleteFunc(enabled, detectors.ReadsBeyondOneFile)
 

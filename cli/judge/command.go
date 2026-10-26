@@ -143,6 +143,10 @@ func (c Command) Run(in *cli.Input, console cli.Console) (int, error) {
 		return 0, err
 	}
 
+	// A rule of the project's own may name the folders it judges in its own file, so the config that scopes this
+	// run is read with what the rules themselves declare: one answer, whichever of the two the project wrote it in.
+	judged = judged.Judging(selected)
+
 	targets, err := scope.FromArgs(in.Raw(), options.path, space, judged.Excluded)
 
 	if scope.IsUnavailable(err) {

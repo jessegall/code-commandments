@@ -45,11 +45,12 @@ var cases = map[string]*regexp.Regexp{
 
 // file is a rule as it is written.
 type file struct {
-	Schema string  `json:"$schema,omitempty"`
-	Engine string  `json:"engine"`
-	Sin    sinFile `json:"sin"`
-	Find   find    `json:"find"`
-	Fix    *Fix    `json:"fix,omitempty"`
+	Schema string   `json:"$schema,omitempty"`
+	Engine string   `json:"engine"`
+	Sin    sinFile  `json:"sin"`
+	Find   find     `json:"find"`
+	Fix    *Fix     `json:"fix,omitempty"`
+	Judges []string `json:"judges,omitempty"`
 }
 
 type sinFile struct {
@@ -210,6 +211,7 @@ type Rule struct {
 	sin    ownSin
 	find   find
 	fix    *Fix
+	judges []string
 }
 
 // Skills finds the skill a rule's sin names: the project's own, else a shipped one.
@@ -286,7 +288,20 @@ func Parse(name string, text []byte, skills Skills) (Rule, error) {
 		Description: read.Sin.Description,
 		Rule:        read.Sin.Rule,
 		Suggestion:  read.Sin.Suggestion,
-	}}, read.Find, read.Fix}, nil
+	}}, read.Find, read.Fix, folders(read.Judges)}, nil
+}
+
+// folders are the folders a rule's judges key names, without the slashes around them, as the config layer reads the
+// same key: a folder is named relative to the project, so "/tests/" and "tests" are the one folder.
+func folders(named []string) []string {
+	var kept []string
+	for _, folder := range named {
+		if trimmed := strings.Trim(strings.TrimSpace(folder), "/"); trimmed != "" {
+			kept = append(kept, trimmed)
+		}
+	}
+
+	return kept
 }
 
 // WithLayers is the rule looking a layer step's name up in the layers the project declares for its engine.
@@ -449,6 +464,14 @@ func (r Rule) Engine() catalog.Engine {
 // Sin is the sin the rule finds.
 func (r Rule) Sin() sins.Sin {
 	return r.sin
+}
+
+// Judges are the folders this rule judges although the project leaves them out or excludes them, as the rule's own
+// file names them. A rule of the project's own carries this itself, because the file is the project's own and no
+// install rewrites it, so the whitelist survives a reinstall; a shipped rule carries none, and takes the folders
+// from the project's config, which is the only place a consumer can change them.
+func (r Rule) Judges() []string {
+	return r.judges
 }
 
 // Find runs the rule's query over the files of its engine.

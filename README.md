@@ -680,6 +680,12 @@ each. Beside it, a skill of your own (a folder holding a `SKILL.md`) teaches the
 discipline that proves a rule fires on what you meant — classify by what the code **is**, never by a name
 or a hardcoded list.
 
+A rule of yours may also name the folders it judges although you left them out of `paths` or named them
+under `exclude` — `"judges": ["tests"]`, beside its `engine`. They stay out of reach of every other rule,
+and because the list sits in the file you wrote, nothing an install or a rewritten config does can lose it.
+A shipped rule takes the same key from your config instead (`"configure": {"php/XDetector": [{"judges":
+["tests"]}]}`), since a folder list inside a rule the package ships would not be yours to change.
+
 A rule you own is marked as yours everywhere it is named: `judge` prints its findings as
 `[YourDetector (custom)]` (in the console and in the checklist, with a note that the fix belongs in
 `.commandments/custom/`), `judge --list` tags it, and `commandments report --detector=YourDetector` refuses

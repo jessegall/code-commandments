@@ -7,8 +7,8 @@ import (
 	"testing"
 
 	"github.com/jessegall/code-commandments/bridge"
-	"github.com/jessegall/code-commandments/contract"
 	"github.com/jessegall/code-commandments/cli/source"
+	"github.com/jessegall/code-commandments/contract"
 )
 
 const servedHeader = `{"header": {"contract": "tree", "version": 1, "language": "python", "bridge": {"name": "test", "version": "1"}, "roots": ["/abs/src"]}}`

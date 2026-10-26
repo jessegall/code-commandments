@@ -43,6 +43,11 @@ func Schema() []byte {
 		"properties": object{
 			"$schema": object{"type": "string"},
 			"engine":  object{"enum": engineNames(), "description": "The engine the rule judges."},
+			"judges": object{
+				"type":        "array",
+				"items":       object{"type": "string"},
+				"description": "Folders this rule judges although the project leaves them out of \"paths\" or names them under \"exclude\", relative to the project, such as [\"tests\"]. They stay out of reach of every other rule. Writing it here rather than in the config keeps it with the rule, so it is not lost when the config is written again.",
+			},
 			"sin": object{
 				"type":                 "object",
 				"required":             []string{"name", "skill"},

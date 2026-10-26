@@ -4,6 +4,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/jessegall/code-commandments/catalog"
 	"github.com/jessegall/code-commandments/detectors"
 )
 
@@ -126,9 +127,10 @@ func (c Config) RulesFor(root, file string, rules []detectors.Detector) []detect
 // bare name and `disable` turns it off by the same. A lookup that asked for only one of the two would miss the
 // project's own rules, which are the ones most likely to be let into an excluded folder.
 func namesOf(detector detectors.Detector) []Rule {
-	named := rulesOf(detector)[0]
+	engine, _ := detectors.EngineOf(detector)
+	name := catalog.Name(detector)
 
-	return []Rule{named, {Kind: Detector, Name: named.Name}}
+	return []Rule{{Kind: Detector, Engine: engine, Name: name}, {Kind: Detector, Name: name}}
 }
 
 // judgedFolderOf is the excluded-but-judged folder the file sits in; empty for a file in none of them, which is
@@ -148,4 +150,49 @@ func (c Config) judgedFolderOf(root, file string) string {
 	}
 
 	return ""
+}
+
+// Declaring is a rule that names the folders it judges in its own file. A project's own rule is such a file: the
+// project wrote it, no install rewrites it, and the rule and the folders it judges belong together in it, so the
+// whitelist survives a config written again. A shipped rule declares none, since a folder list inside a rule the
+// tool ships could not be changed by the project that runs it; those folders are named in the config, which is
+// where a consumer can change them.
+type Declaring interface {
+	Name() string
+	Judges() []string
+}
+
+// Judging is this config read with what the rules themselves declare, which is how the two sources become one: a
+// rule's own judges key is written as the very call the config writes under that rule, so every reader below, and
+// the walk, the report filter and the hook above them, answers from this one place and a folder named in both
+// sources counts once.
+func (c Config) Judging(rules []detectors.Detector) Config {
+	var declared []Configurator
+
+	for _, rule := range rules {
+		declaring, declares := rule.(Declaring)
+		if !declares {
+			continue
+		}
+		folders := declaring.Judges()
+		if len(folders) == 0 {
+			continue
+		}
+
+		var args []Arg
+		for _, folder := range folders {
+			args = append(args, Arg{Value: folder})
+		}
+		declared = append(declared, Configurator{
+			Target: Rule{Kind: Detector, Name: declaring.Name()},
+			Calls:  []Call{{Method: Judges, Args: args}},
+		})
+	}
+
+	if len(declared) == 0 {
+		return c
+	}
+	c.Configurators = append(slices.Clone(c.Configurators), declared...)
+
+	return c
 }

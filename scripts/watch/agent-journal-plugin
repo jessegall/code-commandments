@@ -1,0 +1,26 @@
+#!/bin/sh
+# Whether the code-commandments plugin in the agent-journal project is answering, not merely running.
+plugin=/Users/jessegall/projects/agent-journal/.journal/plugins/code-commandments
+data=/Users/jessegall/projects/agent-journal/.journal/plugin-data/code-commandments
+
+if [ ! -d "$plugin" ]; then
+    echo "the plugin is not installed in agent-journal, so there is nothing to answer for"
+    exit 0
+fi
+
+version=$(sed -n 's/.*"version": *"\([^"]*\)".*/\1/p' "$plugin/journal-plugin.json" | head -1)
+
+if ! pgrep -f "agent-journal/.journal/plugins/code-commandments/bin/commandments-release journal-serve" >/dev/null; then
+    echo "the hook service of plugin $version is not running, so no edit there is judged"
+    exit 1
+fi
+
+for log in "$data"/*.log; do
+    [ -f "$log" ] || continue
+    if tail -n 30 "$log" | grep -q "broken pipe"; then
+        echo "$(basename "$log") ends in unanswered requests: its bridge has gone and the service is not replacing it"
+        exit 1
+    fi
+done
+
+echo "plugin $version is up and no service log ends in unanswered requests"
