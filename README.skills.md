@@ -31,7 +31,7 @@ _66 skills._
 
 | Skill | What it teaches |
 |---|---|
-| `Flow` | guard at the top and leave, keep the body flat, no `else` after a branch that already left, and a switch over a defined type rather than a ladder of comparisons on one subject. |
+| `Flow` | guard at the top and leave, keep the body flat, no `else` after a branch that already left, and a switch over a defined type rather than a ladder of comparisons on one subject, which no rule enforces and the skill says so. |
 
 ### Php
 

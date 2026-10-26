@@ -33,7 +33,7 @@ func (Flow) Definition() skill.Definition {
 		Title:     "Go flow — guard at the top, keep the body flat",
 		Trigger:   "Shaping a Go function body: an error check at the top, an `if` that decides whether the rest of the function runs, an if/else-if chain over one value, a `for` whose whole body sits under one `if`, a block four choices deep, or an `else` after a branch that already returned. Read this BEFORE writing any of them, and when a Go flow finding points here.",
 		Intro:     flowIntro,
-		Summary:   "guard at the top and leave, keep the body flat, no `else` after a branch that already left, and a switch over a defined type rather than a ladder of comparisons on one subject.",
+		Summary:   "guard at the top and leave, keep the body flat, no `else` after a branch that already left, and a switch over a defined type rather than a ladder of comparisons on one subject, which no rule enforces and the skill says so.",
 		Principle: flowPrinciple,
 		Languages: []string{"go"},
 		Related: []skill.Relation{

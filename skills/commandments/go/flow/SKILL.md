@@ -54,6 +54,11 @@ and let the body sit at the loop's own level.
 `switch` for exactly that, and a defined type with `iota` constants for the set of cases, so the
 ladder is both longer and less safe than what the language offers.
 
+**No rule enforces this one.** A rule for it was written and cut: it found the ladder nowhere in four
+real codebases and about two thousand Go files, because Go's own `switch` is easier to write than the
+ladder is. It is here because the advice holds and because the habit travels in from languages whose
+`switch` is worse, not because anything will tell you off.
+
 ### Depth is the symptom
 
 Every `if`, `for`, `switch` and `select` is one more choice the reader holds open. Four deep means a
