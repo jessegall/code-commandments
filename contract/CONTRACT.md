@@ -208,7 +208,7 @@ canonical `text`, because detectors match that text directly (a C#
 | `name` | `named`, `keyword`, `parameter` | the fully qualified class name, the keyword, or the parameter's name: `Shop\Money`, `shop.money.Money`, `int`, `T` |
 | `args` | generics, arrays | the type arguments in order; an array's element |
 | `members` | `union`, `intersection`, `tuple` | the member types in order, as written |
-| `fields` | `object` | `[{"name", "type", "optional"?}]`, an object type's fields, each named by its key as written, which may be `""` |
+| `fields` | `object` | `[{"name", "type"?, "optional"?}]`, an object type's fields, each named by its key as written, which may be `""`; a field carries no `type` where the resolver could not read one |
 | `parameters` | `function` | the parameter types in order |
 | `returns` | `function` | the return type |
 | `value` | `literal` | the literal's value, decoded as a node's `value` is |

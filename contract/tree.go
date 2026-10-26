@@ -250,10 +250,12 @@ type Type struct {
 	Origin     string      `json:"origin"`
 }
 
-// TypeField is one field of an object type.
+// TypeField is one field of an object type. Its type is absent where the resolver could not read one: Go answers
+// every import outside the module with an empty package, so a field of another package's type is known by name
+// alone, and inventing a type for it would be worse than saying nothing.
 type TypeField struct {
 	Name     string `json:"name"`
-	Type     *Type  `json:"type"`
+	Type     *Type  `json:"type,omitempty"`
 	Optional bool   `json:"optional,omitempty"`
 }
 

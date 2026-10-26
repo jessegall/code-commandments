@@ -116,7 +116,7 @@
         "fields": {"type": "array", "items": {
           "type": "object",
           "properties": {"name": {"type": "string"}, "type": {"$ref": "#/$defs/type"}, "optional": {"const": true}},
-          "required": ["name", "type"],
+          "required": ["name"],
           "additionalProperties": false
         }},
         "parameters": {"type": "array", "items": {"$ref": "#/$defs/type"}},
