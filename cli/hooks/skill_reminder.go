@@ -179,6 +179,12 @@ func marksIn(marking Marking, file string, rules []detectors.Detector, changed g
 		}
 
 		for _, match := range safely(rule, codebase) {
+			// Only a finding IN this file is this file's mark. For most languages the scan loaded nothing
+			// else, but Go's types come from a whole package, so a scan shown one Go file reads its siblings
+			// too, and a sin one of them holds is the sibling's own business.
+			if match.File() != file {
+				continue
+			}
 			marks = append(marks, marking.Of(rule, match, changed))
 		}
 	}

@@ -132,6 +132,7 @@ most:**
 - **`commandments-csharp-method-mood`** — commands are orders (`Hide()`), state checks are questions (`IsHidden`, `HasParent`).
 - **`commandments-python-repeated-call-helper`** — a keyword call, a guard or a type check written the same way at 2+ sites belongs as one named method on the type it is about.
 - **`commandments-csharp-repeated-call-helper`** — a call, a guard or a type check written the same way at 2+ sites belongs as one named member on the type it is about.
+- **`commandments-go-flow`** — guard at the top and leave, keep the body flat, no `else` after a branch that already left, and a switch over a defined type rather than a ladder of comparisons on one subject.
 - **`commandments-python-documentation`** — concise, present-tense docstrings; rare comments; never narrate the past.
 - **`commandments-csharp-documentation`** — short, present-tense doc comments; rare comments; never narrate the past.
 
