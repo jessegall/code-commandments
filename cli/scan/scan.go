@@ -61,11 +61,18 @@ func (s Sources) GivenOf() Given {
 
 	for _, files := range s.byLanguage {
 		for _, file := range files {
-			if real, err := filepath.EvalSymlinks(file); err == nil {
-				if absolute, err := filepath.Abs(real); err == nil {
-					given[absolute] = file
-				}
+			// A file is found again by the path it really has, so one whose links or absolute form cannot be
+			// had is no entry at all: keying it by anything else would answer a later look wrongly. That is
+			// stricter than resolved() below, which keeps what it was given, because this is a key.
+			real, err := filepath.EvalSymlinks(file)
+			if err != nil {
+				continue
 			}
+			absolute, err := filepath.Abs(real)
+			if err != nil {
+				continue
+			}
+			given[absolute] = file
 		}
 	}
 

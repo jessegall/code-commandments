@@ -217,10 +217,11 @@ func (c Command) prove(in *cli.Input, root string, console cli.Console) (int, er
 	}
 
 	for _, marker := range markers {
-		if !slices.ContainsFunc(proven, marker.Naming) {
-			failed = true
-			console.Write("\033[31m✗\033[0m " + source.Relative(root, marker.Location) + " marks " + marker.Name + ", which is no rule of the project\n")
+		if slices.ContainsFunc(proven, marker.Naming) {
+			continue
 		}
+		failed = true
+		console.Write("\033[31m✗\033[0m " + source.Relative(root, marker.Location) + " marks " + marker.Name + ", which is no rule of the project\n")
 	}
 
 	if failed {

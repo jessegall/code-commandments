@@ -76,11 +76,7 @@ func (c Command) judgeUnits(sources scan.Sources, rules []detectors.Detector, op
 				continue
 			}
 			for _, candidate := range candidates {
-				held := weighed{record: candidate.Record}
-				if candidate.At.Exists() {
-					held.finding = findings(rule, []engine.Match{candidate.At})[0]
-				}
-				read[i] = append(read[i], held)
+				read[i] = append(read[i], weighedOf(rule, candidate))
 			}
 		}
 	}
@@ -101,6 +97,17 @@ func (c Command) judgeUnits(sources scan.Sources, rules []detectors.Detector, op
 	judgement.Findings = Twinned(judgement.Findings)
 
 	return judgement, files, nil
+}
+
+// weighedOf is the candidate as the judgement holds it: the record the rule kept, and the finding the rule
+// makes of the node it was found at, where it names one. A candidate that names no node is a record alone.
+func weighedOf(rule detectors.Detector, candidate detectors.Candidate) weighed {
+	held := weighed{record: candidate.Record}
+	if candidate.At.Exists() {
+		held.finding = findings(rule, []engine.Match{candidate.At})[0]
+	}
+
+	return held
 }
 
 // candidatesOf is the rule's candidates in the codebase, or what it failed with.

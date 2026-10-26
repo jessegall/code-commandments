@@ -61,12 +61,13 @@ func TestAMarkOfAReportedSinIsStillMade(t *testing.T) {
 
 	filed := 0
 	for _, mark := range marks {
-		if mark.IsFiled() {
-			filed++
+		if !mark.IsFiled() {
+			continue
+		}
+		filed++
 
-			if mark.Filed.Issue != 814 {
-				t.Errorf("the mark names issue %d", mark.Filed.Issue)
-			}
+		if mark.Filed.Issue != 814 {
+			t.Errorf("the mark names issue %d", mark.Filed.Issue)
 		}
 	}
 

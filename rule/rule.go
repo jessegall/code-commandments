@@ -321,16 +321,23 @@ func withLayers(steps []Step, stack *engine.LayerStack) []Step {
 	return copied
 }
 
+// layersInto has each step the pointers name look its layers up in the stack, in place, leaving a nil one alone.
+// The step itself says which of its own fields hold a nested step, and this says what is done to each of them.
+func layersInto(stack *engine.LayerStack, steps ...**Step) {
+	for _, nested := range steps {
+		if *nested == nil {
+			continue
+		}
+		copied := (*nested).withLayers(stack)
+		*nested = &copied
+	}
+}
+
 // withLayers is a copy of the step, and of every step nested in it, that looks layers up in the stack.
 func (s Step) withLayers(stack *engine.LayerStack) Step {
 	s.layers = stack
 
-	for _, nested := range []**Step{&s.Descendant, &s.Inside, &s.Next, &s.Previous, &s.Calls} {
-		if *nested != nil {
-			copied := (*nested).withLayers(stack)
-			*nested = &copied
-		}
-	}
+	layersInto(stack, &s.Descendant, &s.Inside, &s.Next, &s.Previous, &s.Calls)
 
 	if s.NestedAtLeast != nil {
 		counted := *s.NestedAtLeast
@@ -340,12 +347,7 @@ func (s Step) withLayers(stack *engine.LayerStack) Step {
 
 	if s.Counts != nil {
 		counted := *s.Counts
-		for _, nested := range []**Step{&counted.Descendant, &counted.Child} {
-			if *nested != nil {
-				copied := (*nested).withLayers(stack)
-				*nested = &copied
-			}
-		}
+		layersInto(stack, &counted.Descendant, &counted.Child)
 		s.Counts = &counted
 	}
 

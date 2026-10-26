@@ -1,6 +1,7 @@
 package agents
 
 import (
+	"go/ast"
 	"go/parser"
 	"go/token"
 	"strings"
@@ -20,11 +21,20 @@ func TestAnAgentKnowsNothingOfHooks(t *testing.T) {
 
 	for _, pkg := range files {
 		for name, file := range pkg.Files {
-			for _, imported := range file.Imports {
-				if strings.HasSuffix(strings.Trim(imported.Path.Value, `"`), "/cli/hooks") {
-					t.Errorf("%s imports cli/hooks; an agent declares that it Enforces and sync wires the hooks", name)
-				}
+			if imports(file, "/cli/hooks") {
+				t.Errorf("%s imports cli/hooks; an agent declares that it Enforces and sync wires the hooks", name)
 			}
 		}
 	}
+}
+
+// imports says whether the file imports the package the path ends in.
+func imports(file *ast.File, path string) bool {
+	for _, imported := range file.Imports {
+		if strings.HasSuffix(strings.Trim(imported.Path.Value, `"`), path) {
+			return true
+		}
+	}
+
+	return false
 }

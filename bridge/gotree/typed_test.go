@@ -275,10 +275,11 @@ func textsIn(file *contract.File) []string {
 	seen := map[string]bool{}
 	for _, node := range file.Nodes() {
 		for _, held := range []*contract.Type{node.Resolved, node.Declared, node.Returns} {
-			if held != nil && !seen[held.Text] {
-				seen[held.Text] = true
-				texts = append(texts, held.Text)
+			if held == nil || seen[held.Text] {
+				continue
 			}
+			seen[held.Text] = true
+			texts = append(texts, held.Text)
 		}
 	}
 

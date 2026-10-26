@@ -43,37 +43,52 @@ func GoFiles(paths []string) []string {
 
 			continue
 		}
-		var folders []string
-		filepath.WalkDir(root, func(path string, entry fs.DirEntry, err error) error {
-			if err != nil {
-				return nil
-			}
-			if entry.IsDir() {
-				if path != root && !walks(entry.Name()) {
-					return fs.SkipDir
-				}
-				folders = append(folders, path)
-
-				return nil
-			}
-
-			return nil
-		})
-		sort.Strings(folders)
-		for _, folder := range folders {
-			entries, err := os.ReadDir(folder)
-			if err != nil {
-				continue
-			}
-			for _, entry := range entries {
-				if !entry.IsDir() {
-					keep(filepath.Join(folder, entry.Name()))
-				}
+		for _, folder := range foldersUnder(root) {
+			for _, file := range filesIn(folder) {
+				keep(file)
 			}
 		}
 	}
 
 	return found
+}
+
+// foldersUnder are the folders worth reading under the root, the root itself among them, in order: every folder
+// beneath it that the Go toolchain would compile, which is what walks decides, and nothing inside one it skips.
+func foldersUnder(root string) []string {
+	var folders []string
+	filepath.WalkDir(root, func(path string, entry fs.DirEntry, err error) error {
+		if err != nil || !entry.IsDir() {
+			return nil
+		}
+		if path != root && !walks(entry.Name()) {
+			return fs.SkipDir
+		}
+		folders = append(folders, path)
+
+		return nil
+	})
+	sort.Strings(folders)
+
+	return folders
+}
+
+// filesIn are the paths of the files the folder holds directly; a folder it holds is not one, since the walk
+// reached that folder itself. A folder that cannot be read holds nothing as far as this is concerned.
+func filesIn(folder string) []string {
+	entries, err := os.ReadDir(folder)
+	if err != nil {
+		return nil
+	}
+	var files []string
+	for _, entry := range entries {
+		if entry.IsDir() {
+			continue
+		}
+		files = append(files, filepath.Join(folder, entry.Name()))
+	}
+
+	return files
 }
 
 // walks says whether a folder is walked at all.

@@ -265,21 +265,29 @@ func layersOf(config Config, engine catalog.Engine) []Layer {
 				continue
 			}
 
-			layer := Layer{Namespace: namespace}
-
-			if len(call.Args) > 1 {
-				for _, used := range asList(call.Args[1].Value) {
-					if each, isText := used.(string); isText {
-						layer.MayUse = append(layer.MayUse, each)
-					}
-				}
-			}
-
-			layers = append(layers, layer)
+			layers = append(layers, Layer{Namespace: namespace, MayUse: mayUse(call)})
 		}
 	}
 
 	return layers
+}
+
+// mayUse are the namespaces a `layer` call names as the ones its layer may reach: the second argument's names,
+// and none where the call names only the layer itself. A value that is no name is no namespace.
+func mayUse(call Call) []string {
+	if len(call.Args) < 2 {
+		return nil
+	}
+	var names []string
+	for _, used := range asList(call.Args[1].Value) {
+		name, isText := used.(string)
+		if !isText {
+			continue
+		}
+		names = append(names, name)
+	}
+
+	return names
 }
 
 // asList is the value as a list: a list as it is, a lone name as a list of one.
