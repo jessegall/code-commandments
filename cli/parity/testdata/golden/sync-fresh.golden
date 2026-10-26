@@ -135,7 +135,7 @@ sha256 ce8902d46333c0a3f297f8c14da4e17f5b75446e03b6131ef6f6eb27920a57d0
 === created .agents/skills/commandments-csharp-value-objects/reference/examples.md
 sha256 aee787e70e4bef7a8bcf993dd71c188c052c3b8de5a083ab846436653ab1e719
 === created .agents/skills/commandments-go-flow/SKILL.md
-sha256 88dad2b85e62d39c5bf1563305326775957c3594fb721d01417823eb25eaf845
+sha256 b37d390f3c714fec79a3511a0e1b2293324d5d572f96efffffdeca1c0c57aa14
 === created .agents/skills/commandments-go-flow/reference/detectors.md
 sha256 8be730e97a1eddad87d904a63774166d3fede8e1e106d21835c986148602a67e
 === created .agents/skills/commandments-go-flow/reference/examples.md
@@ -479,7 +479,7 @@ sha256 a3ab3bdd6342f9a4088b064c2a5a97451264f8785bdf101fa1c8c5ec73619b8e
 === created .agents/skills/commandments-writing-detectors/SKILL.md
 sha256 9b99ee9b578129541b95c88af00151ddae10071de5015fa12d82a15287d88b17
 === created .agents/skills/commandments/SKILL.md
-sha256 9d473d12e054b30b0a46a8440924963870434ae49e4a8f9db361965be7794517
+sha256 d3f8198fa20d0c0ab5c59d91033dbac55574230059a4ecefc870d55144eca79b
 === created .claude/settings.json
 {
     "hooks": {

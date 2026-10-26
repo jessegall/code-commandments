@@ -91,6 +91,12 @@ func (c Command) Run(in *cli.Input, console cli.Console) (int, error) {
 		return list(cwd, console)
 	}
 
+	// One path is what the command takes, and a second was being dropped without a word: a run named two
+	// files judged the first and said nothing of the other, which reads as a clean answer about both.
+	if extra, named := in.Argument(1); named {
+		return help.Usage(console.Err, c, "judge takes one path; "+extra+" would never be judged. Name a folder that holds both, or run judge once for each."), nil
+	}
+
 	info, err := os.Stat(options.path)
 	if err != nil {
 		console.Warn("Nothing to judge at " + options.path)
@@ -304,11 +310,16 @@ func choseNone(targets scope.Scope, console cli.Console) int {
 	return chosenNoneInUnseen
 }
 
-// judgedCount names the files a clean run judged: every file it read, or, scoped, the ones its scope chose of them.
+// judgedCount names the files a clean run judged: every file it read, or, scoped, the ones its scope chose of
+// them. A scope that cannot say HOW it chose, which is what naming one file is, says it in no clause at all
+// rather than leaving an empty one between two commas.
 func judgedCount(targets scope.Scope, chosen, scanned int) string {
 	files := strconv.Itoa(chosen) + " " + plural(chosen, "file", "files")
 	if !targets.IsScoped() {
 		return files
+	}
+	if targets.ChosenBy() == "" {
+		return files + " of " + strconv.Itoa(scanned) + " read"
 	}
 
 	return files + ", " + targets.ChosenBy() + ", of " + strconv.Itoa(scanned) + " read"
