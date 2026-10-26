@@ -20,7 +20,7 @@ func (LoopInvertedGuardDetector) Sin() sins.Sin { return backendsins.LoopInverte
 // Find is every if that is its loop's only statement and guards two or more of its own.
 func (LoopInvertedGuardDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return php.In(codebase).
-		Where(engine.As(php.Node.IsSoleLoopBodyGuard)).
+		Where(engine.IsSoleLoopBodyGuard).
 		Get()
 }
 

@@ -142,19 +142,6 @@ func (n Node) IsCallReceiver() bool {
 }
 
 // IsSoleLoopBodyGuard says whether the node is an if with no else that is the only statement of a loop's body and
-// guards two or more statements of its own.
-func (n Node) IsSoleLoopBodyGuard() bool {
-	if n.Kind() != "Stmt_If" || n.Child("else").Exists() || len(n.ChildrenIn("elseifs")) > 0 {
-		return false
-	}
-	loop := n.Up()
-	if !slices.Contains([]string{"Stmt_Foreach", "Stmt_For", "Stmt_While"}, loop.Kind()) {
-		return false
-	}
-	body := loop.ChildrenIn("stmts")
-
-	return len(body) == 1 && body[0].Node() == n.Node() && len(n.ChildrenIn("stmts")) >= 2
-}
 
 // IsOutermostNestedTernary says whether the node is a ternary with a ternary in a branch, and no ternary around it
 // in its function.

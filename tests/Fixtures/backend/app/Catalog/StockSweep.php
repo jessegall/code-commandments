@@ -4,6 +4,7 @@ namespace Shop\Catalog;
 
 use JesseGall\CodeCommandments\Sins\Backend\LoopInvertedGuard;
 
+use JesseGall\CodeCommandments\Testing\Righteous;
 use JesseGall\CodeCommandments\Testing\Sinful;
 use Shop\Models\Product;
 
@@ -38,6 +39,25 @@ final class StockSweep
             }
 
             $this->raisePurchaseOrder($product);
+        }
+    }
+
+    /**
+     * The first product worth reordering, reordered, and the sweep stops there. The body ends by LEAVING the
+     * loop, so the condition is picking the one product it wanted rather than guarding the sweep's work:
+     * inverting it into a `continue` would add a negation and say the same thing less plainly.
+     *
+     * @param  array<int, Product>  $products
+     */
+    #[Righteous(LoopInvertedGuard::class)]
+    public function reorderFirst(array $products): void
+    {
+        foreach ($products as $product) {
+            if ($product->stock < $product->reorder_point) {
+                $this->raisePurchaseOrder($product);
+
+                return;
+            }
         }
     }
 

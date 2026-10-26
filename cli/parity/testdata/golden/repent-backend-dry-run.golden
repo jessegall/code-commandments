@@ -409,7 +409,7 @@ exit: 0
  
 --- a/app/Catalog/StockSweep.php
 +++ b/app/Catalog/StockSweep.php
-@@ -20,10 +20,12 @@
+@@ -21,10 +21,12 @@
      public function reorder(array $products): void
      {
          foreach ($products as $product) {

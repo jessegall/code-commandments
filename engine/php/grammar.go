@@ -1,6 +1,7 @@
 package php
 
 import (
+	"slices"
 	"strings"
 
 	"github.com/jessegall/code-commandments/contract"
@@ -40,6 +41,7 @@ func init() {
 		// PHP hangs a body straight off its construct, as its statements, so there is no block to read through.
 		Body:      engine.InFields("stmts"),
 		Otherwise: otherwise,
+		Condition: condition,
 	})
 
 }
@@ -152,4 +154,14 @@ func otherwise(branch engine.Match) []engine.Match {
 	}
 
 	return owner.Child("else").Body()
+}
+
+// condition is what a branch or a loop decides by. A `switch` holds its subject under the same name, which its
+// cases are matched against rather than decided by, and a `foreach` decides by nothing at all.
+func condition(held engine.Match) engine.Match {
+	if !slices.Contains([]string{"Stmt_If", "Stmt_ElseIf", "Stmt_While", "Stmt_Do", "Expr_Ternary"}, held.Kind()) {
+		return engine.Match{}
+	}
+
+	return held.Child("cond")
 }
