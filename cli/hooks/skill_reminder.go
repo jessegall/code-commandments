@@ -1,7 +1,6 @@
 package hooks
 
 import (
-	"github.com/jessegall/code-commandments/cli/binary"
 	"os"
 	"slices"
 	"strconv"
@@ -250,30 +249,84 @@ func owed(marks []SinMark) []string {
 	return ids
 }
 
-// nudge is what a check says the moment an edit commits a sin: each new sin, the file and line it is in, and the
-// one command that judges that file for that sin. It names them rather than sending the agent to find out what it
-// was just told, and it says nothing else — not the files it read, not how many it left out, not the skill, which
-// the command itself prints.
+// nudge is what a check says the moment an edit commits a sin: each new sin, the file and lines it is in, the thing
+// it is about where the finding names one, and the skill that teaches the fix. It names them rather than sending
+// the agent to find out what it was just told.
+//
+// Every word of it is read by an agent on every edit, so it is said once. The findings of one sin in one file are
+// one line, naming that file and that skill once however many there are, because three findings used to repeat the
+// path, the skill and a whole judge command three times over. The command is gone with them: an agent that is told
+// the file and the sin can judge it, and the line that said how was half of the line.
+//
+// The skill is named with every sin raised, always, and that is not a length to save. A mark that says only what is
+// wrong leaves the reader to guess the discipline that says how to fix it, and a guess is how a finding gets
+// silenced instead of fixed; a compaction drops a loaded skill without saying so, which is why the discipline
+// itself tells an agent to assume it is NOT loaded. Naming it once a session would trade that for a few words.
 func nudge(event Event, marks []SinMark) string {
-	command := func(mark SinMark) string {
-		return "`" + binary.Invocation(event.Root) + " judge " + mark.FileFrom(event.Root) +
-			" --sin=" + mark.Rule.Sin().Definition().Name + "`"
-	}
-	// The skill is named with the sin, always: a mark that says only what is wrong leaves the reader to guess the
-	// discipline that says how to fix it, and a guess is how a finding gets silenced instead of fixed.
-	teaches := func(mark SinMark) string {
-		return "load `" + skill.IDFor(mark.Rule.Sin().Definition().Slug()) + "`"
-	}
+	grouped, order := byFileAndSin(event.Root, marks)
 
 	if len(marks) == 1 {
-		return "Code Commandments — " + marks[0].ShownFrom(event.Root) + ": " + teaches(marks[0]) +
-			", then fix it at its source. Run " + command(marks[0]) + "."
+		return "Code Commandments — " + grouped[order[0]].line(event.Root) + ", then fix it at its source."
 	}
 
-	lines := []string{"Code Commandments — " + strconv.Itoa(len(marks)) + " new sins:"}
-	for _, mark := range marks {
-		lines = append(lines, "  • "+mark.ShownFrom(event.Root)+" — "+teaches(mark)+", run "+command(mark))
+	lines := []string{"Code Commandments — " + strconv.Itoa(len(marks)) + " new sins, each to fix at its source:"}
+	for _, key := range order {
+		lines = append(lines, "  "+grouped[key].line(event.Root))
 	}
 
 	return strings.Join(lines, "\n")
+}
+
+// raised is every finding of one sin in one file, which is what the agent is told about as one thing: the file and
+// the skill are the same for all of them, and only the line and the name they stand on differ.
+type raised struct {
+	file  string
+	sin   string
+	skill string
+	lines []string
+	named []string
+}
+
+// line is what the agent reads for them: the file once, the lines it holds them on, the sin, what it is about where
+// the findings name something, and the skill that teaches the fix.
+func (r raised) line(root string) string {
+	said := r.file + ":" + strings.Join(r.lines, ",") + " " + r.sin
+
+	if len(r.named) > 0 {
+		said += " (" + strings.Join(r.named, ", ") + ")"
+	}
+
+	return said + " — load `" + r.skill + "`"
+}
+
+// byFileAndSin gathers the marks by the file and the sin they share, in the order they were found, so the lines
+// read in the order the file does.
+func byFileAndSin(root string, marks []SinMark) (map[string]raised, []string) {
+	grouped := map[string]raised{}
+	var order []string
+
+	for _, mark := range marks {
+		file := mark.FileFrom(root)
+		sin := mark.Rule.Sin().Definition().Name
+		key := file + "\x00" + sin
+
+		held, gathered := grouped[key]
+		if !gathered {
+			held = raised{file: file, sin: sin, skill: skill.IDFor(mark.Rule.Sin().Definition().Slug())}
+			order = append(order, key)
+		}
+
+		held.lines = append(held.lines, strconv.Itoa(mark.Match.Line()))
+
+		// What the finding is about, where it is about a thing with a name: a variable, a method, a parameter. It
+		// is the fix in one word for the rules about naming, and it saves the agent reading the file to find out
+		// which of three names on the line was meant. A finding about a block names nothing, and says nothing.
+		if named := mark.Match.Name(); named != "" && !slices.Contains(held.named, named) {
+			held.named = append(held.named, named)
+		}
+
+		grouped[key] = held
+	}
+
+	return grouped, order
 }
