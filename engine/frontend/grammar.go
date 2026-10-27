@@ -28,7 +28,10 @@ func init() {
 			WritesAttribute: func(element engine.Match, name string) bool {
 				return vue.Of(element).Writes(name)
 			},
-			BodyHash:    func(function engine.Match) string { return typescript.Of(function).BodyHash() },
+			BodyHash: func(function engine.Match) string { return typescript.Of(function).BodyHash() },
+			NodeHash: func(node engine.Match, normalize bool) string {
+				return typescript.Of(node).NodeHash(normalize)
+			},
 			TestFile:    testFile,
 			Implicit:    engine.KindIn("Constructor"),
 			NamespaceOf: func(symbol string) string { return engine.Before(symbol, "#") },

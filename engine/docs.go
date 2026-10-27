@@ -32,6 +32,18 @@ func (m Match) BodyHash() string {
 	return ""
 }
 
+// NodeHash is the formatting-blind fingerprint of this one node, as its language takes it: two subtrees written
+// alike hash alike, whatever their spacing, comments or quotes. Normalising blanks the names of locals and the
+// text of data literals too, so two readings that differ only in what they call a local, or which string they
+// hold, hash alike. Empty where the node's language registers no rules for it.
+func (m Match) NodeHash(normalize bool) string {
+	if read := m.grammar().NodeHash; read != nil {
+		return read(m, normalize)
+	}
+
+	return ""
+}
+
 // Copies is how many functions of the codebase have this one's body, itself among them; none for a function
 // whose body its language cannot fingerprint.
 func (m Match) Copies() int {

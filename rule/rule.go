@@ -135,6 +135,9 @@ type Step struct {
 	DocTag         string   `json:"docTag,omitempty"`
 	Duplicated     *Bounds  `json:"duplicated,omitempty"`
 	Callers        *Bounds  `json:"callers,omitempty"`
+	Repeated       *Repeats `json:"repeated,omitempty"`
+	DeclaredBy     string   `json:"declaredBy,omitempty"`
+	AnsweredBy     *bool    `json:"answeredBy,omitempty"`
 	TestCode       *bool    `json:"testCode,omitempty"`
 	PHP            string   `json:"php,omitempty"`
 	Python         string   `json:"python,omitempty"`
@@ -602,7 +605,7 @@ func (s Step) checks() int {
 		s.Next != nil, s.Previous != nil, s.NestedAtLeast != nil, s.Counts != nil, s.Parameters != nil, s.Arguments != nil,
 		s.Lines != nil, s.Members != nil, s.Complexity != nil, s.Extends != "", s.ExtendsAny != "", s.Implements != "", s.Uses != "", s.All != nil, s.Any != nil, s.Not != nil, s.HasAttribute != "", s.Sibling != "", s.IsA != "",
 		s.TypeKind != "", s.HasAnnotation != "", s.ReturnType != "", s.ParameterType != "", s.Constructs != "", s.Unused != nil,
-		s.CalledFrom != "", s.Calls != nil, s.Argument != nil, s.CommentLike != "", s.CommentMatches != "", s.DocTag != "", s.Duplicated != nil, s.Callers != nil,
+		s.CalledFrom != "", s.Calls != nil, s.Argument != nil, s.CommentLike != "", s.CommentMatches != "", s.DocTag != "", s.Duplicated != nil, s.Callers != nil, s.Repeated != nil, s.DeclaredBy != "", s.AnsweredBy != nil,
 		s.TestCode != nil, s.PHP != "", s.Python != "", s.CSharp != "", s.TypeScript != "", s.Vue != "", s.Rule != ""} {
 		if set {
 			count++
@@ -647,6 +650,8 @@ func (s *Step) prepare() error {
 		s.pattern = glob(strings.TrimPrefix(s.Constructs, `\`))
 	case isGlob(s.Extends), isGlob(s.ExtendsAny), isGlob(s.Implements), isGlob(s.Uses), isGlob(s.IsA):
 		s.pattern = glob(strings.TrimPrefix(s.Extends+s.ExtendsAny+s.Implements+s.Uses+s.IsA, `\`))
+	case s.DeclaredBy != "":
+		s.pattern = glob(strings.TrimPrefix(s.DeclaredBy, `\`))
 	case s.CommentLike != "":
 		s.pattern = glob(s.CommentLike)
 	case s.CommentMatches != "":
@@ -743,6 +748,18 @@ func (s Step) validSizes() error {
 		named["members"] = &s.Members.Bounds
 	}
 
+	if s.Repeated != nil {
+		named["repeated"] = &s.Repeated.Bounds
+
+		if s.Repeated.Files < 0 {
+			return fmt.Errorf("repeated cannot ask for fewer than no files, and %s asks for %d", s.describe(), s.Repeated.Files)
+		}
+
+		if s.Repeated.By != "" && s.Repeated.By != owner {
+			return fmt.Errorf("repeated groups by %q, and the only thing it groups by is %q: %s", s.Repeated.By, owner, s.describe())
+		}
+	}
+
 	for name, bounds := range named {
 		if err := bounds.valid(name); err != nil {
 			return err
@@ -751,6 +768,50 @@ func (s Step) validSizes() error {
 
 	return nil
 }
+
+// Repeats is how widely a node must be written for the step to keep it: in that many functions, spread over that
+// many files, read the way its choices say. It is what says a thing is written again and again where `duplicated`
+// says it of a whole function body alone.
+type Repeats struct {
+	Bounds
+	// Files is the fewest files those functions must be spread over. One thing written three times in one file is
+	// often one function's business; across two it is nobody's, which is what makes it a missing funnel.
+	Files int `json:"files,omitempty"`
+	// Exact counts what is written, down to the names of locals and the text of literals. Without it the reading
+	// is the normalized one, as `duplicated` reads a body: blind to what a local is called and which datum a
+	// literal holds. A repeated string literal asks for the exact reading, since normalising reads every string as
+	// the same datum.
+	Exact bool `json:"exact,omitempty"`
+	// EitherWay counts a question and its negation as one: `==` with `!=`, `is` with `is not`, `in` with `not in`.
+	// A funnel is missing whichever way its question is asked.
+	EitherWay bool `json:"eitherWay,omitempty"`
+	// By is what groups the repeats, `owner` for the type that declares what the left side reads, so one question
+	// about the fields of two classes that share a name is two questions; empty groups them by what is written.
+	By string `json:"by,omitempty"`
+}
+
+// reading is how the engine is asked to read a node for these choices.
+func (r Repeats) reading() engine.Reading {
+	return engine.Reading{Exact: r.Exact, EitherWay: r.EitherWay, ByOwner: r.By == owner}
+}
+
+// spread is the fewest files the repeats must be spread over: the one the node itself is in, when the step
+// names none.
+func (r Repeats) spread() int {
+	if r.Files < 1 {
+		return 1
+	}
+
+	return r.Files
+}
+
+// owner is the one thing `by` may name: the type that declares the field the left side reads.
+const owner = "owner"
+
+// declaredBy names the type that declares the member a node reads, as a target to step onto and as the check that
+// matches its name. The two are ONE answer, the engine's: the check is the one-line spelling of the commonest
+// question, whose field is this, and the target is how every other check composes on it.
+const declaredBy = "declaredBy"
 
 // valid checks the bounds bound something, below zero nowhere, and leave room between them.
 func (b Bounds) valid(size string) error {
@@ -918,6 +979,18 @@ func (s Step) check(match engine.Match) bool {
 		return copies > 0 && s.Duplicated.holds(copies)
 	case s.Callers != nil:
 		return s.Callers.holds(len(subject.Referrers()))
+	case s.Repeated != nil:
+		functions, files := subject.Repeats(s.Repeated.reading())
+
+		return functions > 0 && s.Repeated.holds(functions) && files >= s.Repeated.spread()
+	case s.DeclaredBy != "":
+		declarer := subject.Declarer()
+
+		return declarer != "" && s.pattern.MatchString(declarer)
+	case s.AnsweredBy != nil:
+		// Either way: a method that answers the question answers it asked the other way round too, since the
+		// caller's fix is the same name with a `not` in front of it.
+		return (subject.Answering(engine.Reading{EitherWay: true}) != "") == *s.AnsweredBy
 	case s.TestCode != nil:
 		return subject.IsTest() == *s.TestCode
 	case s.PHP != "", s.Python != "", s.CSharp != "", s.TypeScript != "", s.Vue != "":
@@ -1299,6 +1372,8 @@ func (s Step) subject(match engine.Match) engine.Match {
 		return match.EnclosingType()
 	case s.Of == "root":
 		return match.Root()
+	case s.Of == declaredBy:
+		return match.Declaring()
 	case strings.HasPrefix(s.Of, "closest:"):
 		return match.Closest(engine.Neutral(strings.TrimPrefix(s.Of, "closest:")))
 	case strings.HasPrefix(s.Of, "child:"):

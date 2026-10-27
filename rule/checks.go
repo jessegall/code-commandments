@@ -49,6 +49,8 @@ var Checks = []Group{
 	{"What it refers to", []Check{
 		{"resolves", `{"resolves": "App\\Models\\User"}`, "what its name refers to, resolved, is that — or, for a value that names nothing (a variable, a property), the class it holds: that exact class, not one extending it"},
 		{"resolvesLike", `{"resolvesLike": "App\\Models\\*"}`, "what its name refers to, resolved, matches the glob, or the class a value holds does: `{\"resolvesLike\": \"*Service\", \"of\": \"child:var\"}` is a receiver of any *Service"},
+		{"declaredBy", `{"declaredBy": "App\\Models\\*"}`, "the member it reads is declared by a class the glob names: the class its receiver holds, followed up its own parents until one declares that member. It is whose field this is, which no name can say, and it is empty — so the step keeps nothing — where the receiver has no type in the scan or no declaration of it declares the member"},
+		{"answeredBy", `{"answeredBy": false}`, "the type that declares what it reads already names the question it asks — a method of that type whose whole body returns the same thing, read either way round — or does NOT with `false`. It is what tells `use the name that exists` from `give it a name`, and a question asked by the very method that names it is never one of the places asking it"},
 		{"type", `{"type": "number"}`, "the type the expression has, as its language reads it: what a checker gave it, what its shape says, or the type its declaration writes — a primitive among them, where `resolves` answers a class alone"},
 		{"typeLike", `{"typeLike": "Money*"}`, "the type the expression has matches the glob"},
 		{"calls", `{"calls": {"name": "dd"}}`, "a call of its own — not one inside a function nested in it — passes the step"},
@@ -85,6 +87,7 @@ var Checks = []Group{
 		{"count", `{"count": {"descendant": {"is": "return"}, "atLeast": 4}}`, "that many of its descendants pass the step — or `\"child\"`, with `\"field\"` to count one field's children; with `\"distinct\": \"child:var\"` (any target `of` takes), the counted nodes whose target is written the same count once: `atMost: 1` is one receiver"},
 		{"duplicated", `{"duplicated": {"atLeast": 2}}`, "that many functions of the codebase, it among them, have its body, read from the tree, blind to spacing and comments"},
 		{"callers", `{"callers": {"atLeast": 2}}`, "that many calls of the codebase reach the declaration, each resolved through the tree: `atMost: 0` is a declaration nothing calls"},
+		{"repeated", `{"repeated": {"atLeast": 3, "files": 2}}`, "that many functions of the codebase hold a node reading as this one does, spread over at least `files` of them (one when it says none), read from the tree as `duplicated` reads a body: blind to what a local is called and which datum a literal holds. `\"exact\": true` keeps both, which a repeated string literal needs; `\"eitherWay\": true` reads a question and its negation as one (`==` with `!=`, `is` with `is not`, `in` with `not in`); `\"by\": \"owner\"` groups by the type that declares what the left side reads, so one question about the fields of two classes that share a name is two. Anything is counted, not only a comparison: a member access of a chain counts the reach `event.data.part(X).tasks` written again and again"},
 	}},
 	{"Its type", []Check{
 		{"typeKind", `{"typeKind": "interface"}`, "a type declaration declares a `class`, `interface`, `enum`, `trait`, `record`, `struct` or `protocol`"},
@@ -148,6 +151,7 @@ var Targets = []Target{
 	{"closest:<kind>", "the nearest node above it of the neutral kind, such as `closest:loop`"},
 	{"root", "its file's root"},
 	{"child:<field>", "its child filling the field, such as `child:class`"},
+	{"declaredBy", "the declaration of the type that declares the member it reads, so every check composes on whose field it is: `{\"of\": \"declaredBy\", \"file\": \"app/Models/**\"}` is a field of a model, read from anywhere"},
 }
 
 // Reference is the checks as the writing-detectors skill shows them: a table per group, then the targets of "of".

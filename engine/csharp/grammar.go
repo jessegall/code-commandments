@@ -26,6 +26,9 @@ func init() {
 		Constructs:    engine.OfKind("ObjectCreationExpression", "Type"),
 		DocTags:       xmlTags,
 		BodyHash:      func(function engine.Match) string { return Node{Match: function}.BodyHash() },
+		NodeHash: func(node engine.Match, normalize bool) string {
+			return engine.SyntaxHash([]engine.Match{node}, hashing, normalize)
+		},
 		Implicit: engine.KindIn("ConstructorDeclaration", "DestructorDeclaration", "OperatorDeclaration",
 			"ConversionOperatorDeclaration"),
 		Inherited: func(member engine.Match) bool { return Node{Match: member}.IsInherited() },

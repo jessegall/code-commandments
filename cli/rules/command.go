@@ -35,7 +35,7 @@ func (Command) Names() []string {
 func (Command) Help() help.Help {
 	return help.Of("Work on a rule of your own: see the tree it reads, try it on a path, prove it on the samples that mark it, and print the schema an editor checks it by.").
 		Form("rule explain <file> [--line=N]", "print the tree a rule reads in the file: every node's line, kind, neutral kinds, field, name and what it resolves to").
-		Form("rule try <Rule> <path>", "run one rule over the path without turning it on, and print each match with its line").
+		Form("rule try <Rule> <path>…", "run one rule over the paths without turning it on, and print each match with its line: a folder, or the files a change touched").
 		Form("rule prove [path]", "check every rule of the project flags exactly the code its samples mark, and nothing else").
 		Form("rule schema", "print the JSON Schema of a rule file").
 		Option("--line=N", "with `explain`, only the nodes that start on line N, each with what it holds").
@@ -110,9 +110,9 @@ func (c Command) explain(in *cli.Input, console cli.Console) (int, error) {
 // try runs one rule over a path, printing each match and how many there are.
 func (c Command) try(in *cli.Input, root string, console cli.Console) (int, error) {
 	named, given := in.Argument(1)
-	path, pathed := in.Argument(2)
-	if !given || !pathed {
-		return help.Usage(console.Err, c, "name the rule and the path to try it on, e.g. `"+binary.Here()+" rule try NoRawSql app/`."), nil
+	paths := in.Arguments()[min(2, len(in.Arguments())):]
+	if !given || len(paths) == 0 {
+		return help.Usage(console.Err, c, "name the rule and the paths to try it on, e.g. `"+binary.Here()+" rule try NoRawSql app/`."), nil
 	}
 
 	project, err := config.Load(root)
@@ -129,7 +129,9 @@ func (c Command) try(in *cli.Input, root string, console cli.Console) (int, erro
 
 	tried = tried.WithLayers(project.Layers(tried.Engine()))
 
-	codebase, err := scan.Walk([]string{path}, source.Under(root, project.Excluded)).Only(source.OfEngine(tried.Engine())...).Load()
+	// Every path in one scan, so a rule that reads across files is as right over the files of a change as it is
+	// over the whole folder they sit in.
+	codebase, err := scan.Walk(paths, source.Under(root, project.Excluded)).Only(source.OfEngine(tried.Engine())...).Load()
 	if err != nil {
 		return 0, err
 	}
@@ -139,7 +141,7 @@ func (c Command) try(in *cli.Input, root string, console cli.Console) (int, erro
 		console.Write(fmt.Sprintf("%s:%d  %s\n", match.Judged(), match.Line(), sourceLine(match)))
 	}
 
-	console.Write(fmt.Sprintf("%d match(es) of %s in %s\n", len(found), tried.Name(), path))
+	console.Write(fmt.Sprintf("%d match(es) of %s in %s\n", len(found), tried.Name(), strings.Join(paths, ", ")))
 
 	return 0, nil
 }

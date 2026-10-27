@@ -29,9 +29,12 @@ func init() {
 		Callers:       callers,
 		DocTags:       phpDocTags,
 		BodyHash:      func(function engine.Match) string { return Node{Match: function}.BodyHash() },
-		TestFile:      testFile,
-		Implicit:      magic,
-		Labels:        func(name engine.Match) bool { return name.Parent().Kind() == "Arg" && name.Node().Field == "name" },
+		NodeHash: func(node engine.Match, normalize bool) string {
+			return engine.SyntaxHash([]engine.Match{node}, Hashing, normalize)
+		},
+		TestFile: testFile,
+		Implicit: magic,
+		Labels:   func(name engine.Match) bool { return name.Parent().Kind() == "Arg" && name.Node().Field == "name" },
 		NamespaceOf: func(symbol string) string {
 			class, _, _ := strings.Cut(symbol, "::")
 

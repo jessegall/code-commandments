@@ -9,6 +9,34 @@ import (
 	"github.com/jessegall/code-commandments/engine"
 )
 
+// typeName is the type an expression has: the class mypy resolved it to, and the class the node itself names where
+// mypy typed nothing, which is the only answer anything here had before.
+//
+// Python registered no TypeOf at all, so every reading of a Python expression's type fell through to the class the
+// NODE names — which a class name answers and a variable holding an instance never does. The fact was there and
+// unread the whole time: the bridge records what mypy typed for every expression it typed, by its byte span, the
+// contract carries it on the node, and the decorator already reads it. Every rule asking `type` or `typeLike` of
+// Python, and every detector asking a receiver what it holds, was answered no.
+func typeName(node engine.Match) string {
+	if class, typed := (Node{Match: node}).ResolvedClass(); typed {
+		return class
+	}
+
+	return node.Class()
+}
+
+// assignedName is the name an assignment gives the one thing it declares: a dataclass field, `state: TaskState`,
+// is an AnnAssign carrying no name of its own, with the name on its target. Nothing answered this for Python, so
+// every reader asking a type's members by name — whose field is this among them — found a class's fields nameless.
+func assignedName(statement engine.Match) string {
+	targets := append(statement.ChildrenIn("target"), statement.ChildrenIn("targets")...)
+	if len(targets) != 1 || targets[0].Kind() != "Name" {
+		return ""
+	}
+
+	return targets[0].Name()
+}
+
 // protocols are the classes a class lists among its bases to declare itself a protocol.
 var protocols = []string{"typing.Protocol", "typing_extensions.Protocol"}
 
@@ -27,16 +55,21 @@ func init() {
 		Implements:    contracts,
 		Annotations:   decorators,
 		TypeKind:      classKind,
+		TypeOf:        typeName,
+		DeclaredName:  assignedName,
 		ReturnType:    engine.InField("returns"),
 		ParameterType: engine.InField("annotation"),
 		Constructs:    constructed,
 		Callers:       callers,
 		DocTags:       docTags,
 		BodyHash:      func(def engine.Match) string { return Node{Match: def}.BodyHash() },
-		TestFile:      testFile,
-		Implicit:      implicit,
-		NamespaceOf:   func(symbol string) string { return engine.Before(symbol, ".") },
-		Continues:     func(branch engine.Match) bool { return Node{Match: branch}.IsElif() },
+		NodeHash: func(node engine.Match, normalize bool) string {
+			return engine.SyntaxHash([]engine.Match{node}, hashing, normalize)
+		},
+		TestFile:    testFile,
+		Implicit:    implicit,
+		NamespaceOf: func(symbol string) string { return engine.Before(symbol, ".") },
+		Continues:   func(branch engine.Match) bool { return Node{Match: branch}.IsElif() },
 		// Python hangs a body straight off its construct, so its statements are the children of the field and
 		// there is no block to read through.
 		Body:        engine.InFields("body"),

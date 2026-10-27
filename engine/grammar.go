@@ -51,6 +51,10 @@ type Grammar struct {
 	DocTags func(Match) []string
 	// BodyHash is the formatting-blind fingerprint of a function's body; empty for a node without one.
 	BodyHash func(Match) string
+	// NodeHash is the formatting-blind fingerprint of ONE node, as its language takes it, with the names of locals
+	// and the text of data literals blanked when normalize is set. It is what reads a repeat of anything that is
+	// not a whole function body; empty where a language registers none, and then nothing of that language repeats.
+	NodeHash func(node Match, normalize bool) string
 	// TestFile says whether a file is test code, as the language's conventions name one: by its path as judged,
 	// relative to the folder the scan was pointed at, and by its absolute path, where the project's own settings
 	// for its tests are found.

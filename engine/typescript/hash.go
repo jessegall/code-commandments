@@ -259,3 +259,9 @@ func callsAName(expression engine.Match) bool {
 
 	return expression.Kind() == "Identifier"
 }
+
+// NodeHash is a formatting-blind fingerprint of ONE node: two subtrees written alike hash alike, and normalising
+// blanks the names of locals and the text of data literals as well.
+func (n Node) NodeHash(normalize bool) string {
+	return engine.SyntaxHash([]engine.Match{n.Match}, hashing, normalize)
+}
