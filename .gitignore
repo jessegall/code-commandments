@@ -86,3 +86,7 @@ __pycache__/
 # What scripts/plugin/prove builds and installs from.
 /.plugin-proof/
 /.journal
+
+# The key the published skills were last written from, which lets the generator see at once that nothing it reads
+# has moved. It is derived from this machine's own build, so it belongs to the checkout and not to the history.
+/skills/commandments/.written-from
