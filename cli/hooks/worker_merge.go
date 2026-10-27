@@ -20,15 +20,20 @@ import (
 
 // The moments a worker's work is held at, and the event the journal sends once a merge landed.
 //
-// A worker is asked twice about the same thing, and on purpose. deliveringEvent comes first: the work is
-// committed, rebased onto the project's branch and its own tests have passed, and it has not yet reached the main
-// agent, so a refusal there is refused to the WORKER, which fixes what it wrote, runs its tests again and comes
-// back. Only clean work reaches the agent that asked for it. mergeEvent comes later, when that work is taken in,
-// and stays as the second check: a branch that sat while the project moved is judged again against where it is
-// going.
+// deliveringEvent is the one the plugin subscribes to: the work is committed, rebased onto the project's branch and
+// its own tests have passed, and it has not yet reached the main agent, so a refusal there is refused to the
+// WORKER, which fixes what it wrote, runs its tests again and comes back. Only clean work reaches the agent that
+// asked for it.
 //
 // The asking is after the worker's tests on purpose. A worker whose tests are still failing has a fault to fix
 // first, and holding its work over a sin before it even runs green would tell it two things at once.
+//
+// mergeEvent is the same reading at the later moment, when the work is taken in, and NO journal raises it any more:
+// the manifest stopped subscribing to it on the user's ruling that the judging belongs at clock-out alone, since a
+// merge paid for it under load. What that gives up is the one thing the later moment could see and the earlier one
+// could not: a branch that sat while the project moved, whose lines meet files that have changed under them, so a
+// rule reading across files is answered against where the branch is going rather than where it was written. The
+// reading is kept here because putting it back is one line of the manifest.
 const (
 	deliveringEvent = "worker_delivering"
 	mergeEvent      = "worker_merging"
