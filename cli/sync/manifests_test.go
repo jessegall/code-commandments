@@ -276,26 +276,24 @@ func TestBothManifestsDeclareTheHealthTheServicesReallyAnswer(t *testing.T) {
 		t.Errorf("the manifest writes %q and the service answers %q", offered.Request, health.Request)
 	}
 
+	// The journal matches the LINE, not the fields: it reads one line back and holds it to the answer declared here,
+	// where a value in angle brackets stands for anything. So the declared answer is the text a service writes, down
+	// to the order of its keys and a space that is not there — a reordering of the fields the answer is built from
+	// would be read as a service that failed, every minute, until the plugin was marked broken. That is the one
+	// thing a type's field order does not tell a reader, so it is held here.
+	anything := regexp.MustCompile(`<[^>]*>`)
+
+	for _, service := range []string{"hooks", "roslyn", "mypy", "frontend", "php"} {
+		if said, declared := health.Answer(service), anything.ReplaceAllString(offered.Answer, service); said != declared {
+			t.Errorf("the %s service answers %s and the manifest declares %s", service, said, declared)
+		}
+	}
+
 	declared := map[string]any{}
 	if err := json.Unmarshal([]byte(offered.Answer), &declared); err != nil {
 		t.Fatalf("the answer the manifest declares is no JSON: %v", err)
 	}
-	answered := map[string]any{}
-	if err := json.Unmarshal([]byte(health.Answer("hooks")), &answered); err != nil {
-		t.Fatal(err)
-	}
-
 	if declared["health"] != "up" {
 		t.Errorf("the manifest says a service answers %v, and up is what it says", declared["health"])
-	}
-	for key := range answered {
-		if _, says := declared[key]; !says {
-			t.Errorf("the service answers with %q and the manifest declares no such key: %v", key, declared)
-		}
-	}
-	for key := range declared {
-		if _, answers := answered[key]; !answers {
-			t.Errorf("the manifest declares %q and no answer carries it: %v", key, answered)
-		}
 	}
 }
