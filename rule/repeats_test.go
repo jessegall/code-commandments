@@ -288,3 +288,104 @@ class Event:
 		t.Errorf("the reach written in three listeners was counted as %s", got)
 	}
 }
+
+// TestHowFarAClassLineRuns holds the one size a class cannot be read for from its own file. A project that allows
+// two levels of its own could not say so: `extendsAny` asks whether a type is somewhere in the line, and nothing
+// asked how far the line runs. `within` is what keeps the answer about the project's own levels, since the
+// framework class underneath them is nobody's to flatten.
+func TestHowFarAClassLineRuns(t *testing.T) {
+	project := pythontest.FromSource(t, map[string]string{
+		"shop/__init__.py": "",
+		"shop/models.py": `class Model:
+    pass
+
+
+class Scoped(Model):
+    pass
+
+
+class Task(Scoped):
+    pass
+
+
+class Deep(Task):
+    pass
+
+
+class Loose:
+    pass
+`,
+	})
+
+	for query, want := range map[string]string{
+		// Task stands on Scoped and Model: two levels, which is the limit.
+		`{"select": "type-declaration", "where": [{"ancestors": {"atMost": 2, "within": "shop.*"}}]}`: "[models.py:1 models.py:17 models.py:5 models.py:9]",
+		// Deep stands on three, which is past it.
+		`{"select": "type-declaration", "where": [{"ancestors": {"atLeast": 3, "within": "shop.*"}}]}`: "[models.py:13]",
+		// A class whose line holds nothing of the project's own: Model and Loose, each standing on nothing.
+		`{"select": "type-declaration", "where": [{"ancestors": {"atMost": 0, "within": "shop.*"}}]}`: "[models.py:1 models.py:17]",
+	} {
+		if got := foundAt(t, "python", query, project); got != want {
+			t.Errorf("%s:\n got %s\nwant %s", query, got, want)
+		}
+	}
+}
+
+// TestAFieldSetFromOutsideItsOwnFile holds the question a frozen model asks of everyone else: its changes go
+// through the methods it wrote for them, and a named argument that sets one of its fields from another file has
+// gone around those methods. Three shapes name the same field — a copy function taking the object, a method of its
+// own, and a construction — and the look-alikes are a keyword that is no field of anything and the model's own
+// file, where setting its fields is its own business.
+func TestAFieldSetFromOutsideItsOwnFile(t *testing.T) {
+	project := pythontest.FromSource(t, map[string]string{
+		"shop/__init__.py": "",
+		"shop/models.py": `from dataclasses import dataclass, replace
+
+
+@dataclass(frozen=True)
+class Task:
+    state: str
+    worker: int | None
+
+    def started(self) -> "Task":
+        return replace(self, state="started")
+`,
+		"shop/handlers.py": `from dataclasses import replace
+
+from shop.models import Task
+
+
+def start(task: Task) -> Task:
+    return replace(task, state="started")
+
+
+def take(task: Task) -> Task:
+    return replace(task, worker=1)
+
+
+def fresh() -> Task:
+    return Task(state="open", worker=None)
+`,
+		"shop/other.py": `def log(message: str, urgent: bool = False) -> None:
+    print(message, urgent)
+
+
+def shout(message: str) -> None:
+    log(message, urgent=True)
+`,
+	})
+
+	for query, want := range map[string]string{
+		// A field of Task set by name on a task the call was handed, from a file that is not Task's own. The
+		// construction on line 15 names fields too and is not among them: it holds no task to change.
+		`{"select": "kind:keyword", "where": [{"declaredBy": "*Task"}, {"declaredElsewhere": true}]}`: "[handlers.py:11 handlers.py:7]",
+		// The model's own file sets its own fields, which is what its methods are for.
+		`{"select": "kind:keyword", "where": [{"declaredBy": "*Task"}, {"declaredElsewhere": false}]}`: "[models.py:10]",
+		// A keyword that names a field of nothing is nobody's business: other.py is not among these.
+		`{"select": "kind:keyword", "where": [{"declaredBy": "*"}]}`: "[handlers.py:11 handlers.py:7 models.py:10]",
+	} {
+		if got := foundAt(t, "python", query, project); got != want {
+			t.Errorf("%s:\n got %s\nwant %s", query, got, want)
+		}
+	}
+}

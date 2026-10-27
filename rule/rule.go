@@ -73,78 +73,80 @@ type find struct {
 
 // Step is one check of a rule's query, on the node itself or, with Of or a nested step, on one related to it.
 type Step struct {
-	Is             string   `json:"is,omitempty"`
-	Kind           string   `json:"kind,omitempty"`
-	Name           string   `json:"name,omitempty"`
-	NameIn         []string `json:"nameIn,omitempty"`
-	NameLike       string   `json:"nameLike,omitempty"`
-	NameMatches    string   `json:"nameMatches,omitempty"`
-	NameCase       string   `json:"nameCase,omitempty"`
-	Text           *string  `json:"text,omitempty"`
-	TextLike       string   `json:"textLike,omitempty"`
-	TextMatches    string   `json:"textMatches,omitempty"`
-	Resolves       string   `json:"resolves,omitempty"`
-	ResolvesLike   string   `json:"resolvesLike,omitempty"`
-	NamespaceLike  string   `json:"namespaceLike,omitempty"`
-	Layer          string   `json:"layer,omitempty"`
-	HasModifier    string   `json:"hasModifier,omitempty"`
-	HasFlag        string   `json:"hasFlag,omitempty"`
-	Type           string   `json:"type,omitempty"`
-	TypeLike       string   `json:"typeLike,omitempty"`
-	Operator       string   `json:"operator,omitempty"`
-	OperatorIn     []string `json:"operatorIn,omitempty"`
-	WithinLoop     *bool    `json:"withinLoop,omitempty"`
-	Documented     *bool    `json:"documented,omitempty"`
-	File           string   `json:"file,omitempty"`
-	FileMatches    string   `json:"fileMatches,omitempty"`
-	Position       string   `json:"position,omitempty"`
-	TopLevel       *bool    `json:"topLevel,omitempty"`
-	Of             string   `json:"of,omitempty"`
-	Descendant     *Step    `json:"descendant,omitempty"`
-	Inside         *Step    `json:"inside,omitempty"`
-	Next           *Step    `json:"next,omitempty"`
-	Previous       *Step    `json:"previous,omitempty"`
-	NestedAtLeast  *Nesting `json:"nestedAtLeast,omitempty"`
-	Counts         *Count   `json:"count,omitempty"`
-	Parameters     *Bounds  `json:"parameters,omitempty"`
-	Arguments      *Bounds  `json:"arguments,omitempty"`
-	Lines          *Bounds  `json:"lines,omitempty"`
-	Members        *Tally   `json:"members,omitempty"`
-	Complexity     *Bounds  `json:"complexity,omitempty"`
-	Extends        string   `json:"extends,omitempty"`
-	ExtendsAny     string   `json:"extendsAny,omitempty"`
-	Implements     string   `json:"implements,omitempty"`
-	Uses           string   `json:"uses,omitempty"`
-	HasAttribute   string   `json:"hasAttribute,omitempty"`
-	Sibling        string   `json:"sibling,omitempty"`
-	IsA            string   `json:"isA,omitempty"`
-	All            []Step   `json:"all,omitempty"`
-	Any            []Step   `json:"any,omitempty"`
-	Not            *Step    `json:"not,omitempty"`
-	TypeKind       string   `json:"typeKind,omitempty"`
-	HasAnnotation  string   `json:"hasAnnotation,omitempty"`
-	ReturnType     string   `json:"returnType,omitempty"`
-	ParameterType  string   `json:"parameterType,omitempty"`
-	Constructs     string   `json:"constructs,omitempty"`
-	Unused         *bool    `json:"unused,omitempty"`
-	CalledFrom     string   `json:"calledFrom,omitempty"`
-	Calls          *Step    `json:"calls,omitempty"`
-	Argument       *Argued  `json:"argument,omitempty"`
-	CommentLike    string   `json:"commentLike,omitempty"`
-	CommentMatches string   `json:"commentMatches,omitempty"`
-	DocTag         string   `json:"docTag,omitempty"`
-	Duplicated     *Bounds  `json:"duplicated,omitempty"`
-	Callers        *Bounds  `json:"callers,omitempty"`
-	Repeated       *Repeats `json:"repeated,omitempty"`
-	DeclaredBy     string   `json:"declaredBy,omitempty"`
-	AnsweredBy     *bool    `json:"answeredBy,omitempty"`
-	TestCode       *bool    `json:"testCode,omitempty"`
-	PHP            string   `json:"php,omitempty"`
-	Python         string   `json:"python,omitempty"`
-	CSharp         string   `json:"csharp,omitempty"`
-	TypeScript     string   `json:"typescript,omitempty"`
-	Vue            string   `json:"vue,omitempty"`
-	Rule           string   `json:"rule,omitempty"`
+	Is                string     `json:"is,omitempty"`
+	Kind              string     `json:"kind,omitempty"`
+	Name              string     `json:"name,omitempty"`
+	NameIn            []string   `json:"nameIn,omitempty"`
+	NameLike          string     `json:"nameLike,omitempty"`
+	NameMatches       string     `json:"nameMatches,omitempty"`
+	NameCase          string     `json:"nameCase,omitempty"`
+	Text              *string    `json:"text,omitempty"`
+	TextLike          string     `json:"textLike,omitempty"`
+	TextMatches       string     `json:"textMatches,omitempty"`
+	Resolves          string     `json:"resolves,omitempty"`
+	ResolvesLike      string     `json:"resolvesLike,omitempty"`
+	NamespaceLike     string     `json:"namespaceLike,omitempty"`
+	Layer             string     `json:"layer,omitempty"`
+	HasModifier       string     `json:"hasModifier,omitempty"`
+	HasFlag           string     `json:"hasFlag,omitempty"`
+	Type              string     `json:"type,omitempty"`
+	TypeLike          string     `json:"typeLike,omitempty"`
+	Operator          string     `json:"operator,omitempty"`
+	OperatorIn        []string   `json:"operatorIn,omitempty"`
+	WithinLoop        *bool      `json:"withinLoop,omitempty"`
+	Documented        *bool      `json:"documented,omitempty"`
+	File              string     `json:"file,omitempty"`
+	FileMatches       string     `json:"fileMatches,omitempty"`
+	Position          string     `json:"position,omitempty"`
+	TopLevel          *bool      `json:"topLevel,omitempty"`
+	Of                string     `json:"of,omitempty"`
+	Descendant        *Step      `json:"descendant,omitempty"`
+	Inside            *Step      `json:"inside,omitempty"`
+	Next              *Step      `json:"next,omitempty"`
+	Previous          *Step      `json:"previous,omitempty"`
+	NestedAtLeast     *Nesting   `json:"nestedAtLeast,omitempty"`
+	Counts            *Count     `json:"count,omitempty"`
+	Parameters        *Bounds    `json:"parameters,omitempty"`
+	Arguments         *Bounds    `json:"arguments,omitempty"`
+	Lines             *Bounds    `json:"lines,omitempty"`
+	Members           *Tally     `json:"members,omitempty"`
+	Complexity        *Bounds    `json:"complexity,omitempty"`
+	Extends           string     `json:"extends,omitempty"`
+	ExtendsAny        string     `json:"extendsAny,omitempty"`
+	Implements        string     `json:"implements,omitempty"`
+	Uses              string     `json:"uses,omitempty"`
+	HasAttribute      string     `json:"hasAttribute,omitempty"`
+	Sibling           string     `json:"sibling,omitempty"`
+	IsA               string     `json:"isA,omitempty"`
+	All               []Step     `json:"all,omitempty"`
+	Any               []Step     `json:"any,omitempty"`
+	Not               *Step      `json:"not,omitempty"`
+	TypeKind          string     `json:"typeKind,omitempty"`
+	HasAnnotation     string     `json:"hasAnnotation,omitempty"`
+	ReturnType        string     `json:"returnType,omitempty"`
+	ParameterType     string     `json:"parameterType,omitempty"`
+	Constructs        string     `json:"constructs,omitempty"`
+	Unused            *bool      `json:"unused,omitempty"`
+	CalledFrom        string     `json:"calledFrom,omitempty"`
+	Calls             *Step      `json:"calls,omitempty"`
+	Argument          *Argued    `json:"argument,omitempty"`
+	CommentLike       string     `json:"commentLike,omitempty"`
+	CommentMatches    string     `json:"commentMatches,omitempty"`
+	DocTag            string     `json:"docTag,omitempty"`
+	Duplicated        *Bounds    `json:"duplicated,omitempty"`
+	Callers           *Bounds    `json:"callers,omitempty"`
+	Ancestors         *Ancestors `json:"ancestors,omitempty"`
+	Repeated          *Repeats   `json:"repeated,omitempty"`
+	DeclaredBy        string     `json:"declaredBy,omitempty"`
+	AnsweredBy        *bool      `json:"answeredBy,omitempty"`
+	DeclaredElsewhere *bool      `json:"declaredElsewhere,omitempty"`
+	TestCode          *bool      `json:"testCode,omitempty"`
+	PHP               string     `json:"php,omitempty"`
+	Python            string     `json:"python,omitempty"`
+	CSharp            string     `json:"csharp,omitempty"`
+	TypeScript        string     `json:"typescript,omitempty"`
+	Vue               string     `json:"vue,omitempty"`
+	Rule              string     `json:"rule,omitempty"`
 
 	// pattern is the step's glob or regular expression, compiled once when the rule is read.
 	pattern *regexp.Regexp
@@ -605,7 +607,7 @@ func (s Step) checks() int {
 		s.Next != nil, s.Previous != nil, s.NestedAtLeast != nil, s.Counts != nil, s.Parameters != nil, s.Arguments != nil,
 		s.Lines != nil, s.Members != nil, s.Complexity != nil, s.Extends != "", s.ExtendsAny != "", s.Implements != "", s.Uses != "", s.All != nil, s.Any != nil, s.Not != nil, s.HasAttribute != "", s.Sibling != "", s.IsA != "",
 		s.TypeKind != "", s.HasAnnotation != "", s.ReturnType != "", s.ParameterType != "", s.Constructs != "", s.Unused != nil,
-		s.CalledFrom != "", s.Calls != nil, s.Argument != nil, s.CommentLike != "", s.CommentMatches != "", s.DocTag != "", s.Duplicated != nil, s.Callers != nil, s.Repeated != nil, s.DeclaredBy != "", s.AnsweredBy != nil,
+		s.CalledFrom != "", s.Calls != nil, s.Argument != nil, s.CommentLike != "", s.CommentMatches != "", s.DocTag != "", s.Duplicated != nil, s.Callers != nil, s.Repeated != nil, s.DeclaredBy != "", s.AnsweredBy != nil, s.DeclaredElsewhere != nil, s.Ancestors != nil,
 		s.TestCode != nil, s.PHP != "", s.Python != "", s.CSharp != "", s.TypeScript != "", s.Vue != "", s.Rule != ""} {
 		if set {
 			count++
@@ -652,6 +654,8 @@ func (s *Step) prepare() error {
 		s.pattern = glob(strings.TrimPrefix(s.Extends+s.ExtendsAny+s.Implements+s.Uses+s.IsA, `\`))
 	case s.DeclaredBy != "":
 		s.pattern = glob(strings.TrimPrefix(s.DeclaredBy, `\`))
+	case s.Ancestors != nil && s.Ancestors.Within != "":
+		s.pattern = glob(strings.TrimPrefix(s.Ancestors.Within, `\`))
 	case s.CommentLike != "":
 		s.pattern = glob(s.CommentLike)
 	case s.CommentMatches != "":
@@ -748,6 +752,10 @@ func (s Step) validSizes() error {
 		named["members"] = &s.Members.Bounds
 	}
 
+	if s.Ancestors != nil {
+		named["ancestors"] = &s.Ancestors.Bounds
+	}
+
 	if s.Repeated != nil {
 		named["repeated"] = &s.Repeated.Bounds
 
@@ -767,6 +775,17 @@ func (s Step) validSizes() error {
 	}
 
 	return nil
+}
+
+// Ancestors is how long a type's own line of parents may be, and which of them count. It is the one size a class
+// cannot be read for from its own file: `extendsAny` asks whether a type is somewhere in the line, and nothing
+// asked how far the line runs.
+type Ancestors struct {
+	Bounds
+	// Within counts only the parents whose name matches the glob, so a project bounds the levels of its OWN and
+	// says nothing about the framework class underneath them, which it did not write and cannot flatten. Every
+	// parent counts where it says nothing.
+	Within string `json:"within,omitempty"`
 }
 
 // Repeats is how widely a node must be written for the step to keep it: in that many functions, spread over that
@@ -979,6 +998,8 @@ func (s Step) check(match engine.Match) bool {
 		return copies > 0 && s.Duplicated.holds(copies)
 	case s.Callers != nil:
 		return s.Callers.holds(len(subject.Referrers()))
+	case s.Ancestors != nil:
+		return s.Ancestors.holds(len(s.ancestors(subject)))
 	case s.Repeated != nil:
 		functions, files := subject.Repeats(s.Repeated.reading())
 
@@ -987,6 +1008,8 @@ func (s Step) check(match engine.Match) bool {
 		declarer := subject.Declarer()
 
 		return declarer != "" && s.pattern.MatchString(declarer)
+	case s.DeclaredElsewhere != nil:
+		return subject.DeclaredElsewhere() == *s.DeclaredElsewhere
 	case s.AnsweredBy != nil:
 		// Either way: a method that answers the question answers it asked the other way round too, since the
 		// caller's fix is the same name with a `not` in front of it.
@@ -1381,6 +1404,24 @@ func (s Step) subject(match engine.Match) engine.Match {
 	default:
 		return match
 	}
+}
+
+// ancestors are the classes of the type's own line of parents that the step counts, nearest first: every one of
+// them, or only those a glob names, which is how a project counts its own levels and not a framework's.
+func (s Step) ancestors(subject engine.Match) []string {
+	line := subject.Lineage()
+	if s.Ancestors.Within == "" {
+		return line
+	}
+
+	var within []string
+	for _, class := range line {
+		if s.pattern.MatchString(class) {
+			within = append(within, class)
+		}
+	}
+
+	return within
 }
 
 // inFile says whether the file's path, or any tail of it, matches the glob.

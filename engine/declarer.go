@@ -16,17 +16,12 @@ func (m Match) Declaring() Match {
 		return Match{}
 	}
 
-	reads := m.reads()
-	if !reads.Exists() {
-		return Match{}
-	}
-
-	read := reads.Name()
+	read, holder := m.names()
 	if read == "" {
 		return Match{}
 	}
 
-	held := reads.Receiver().TypeName()
+	held := holder.TypeName()
 	if held == "" {
 		return Match{}
 	}
@@ -40,24 +35,61 @@ func (m Match) Declaring() Match {
 	return Match{}
 }
 
-// reads is the node whose member this question is about: the node itself where it reads one, and the left side of
-// a comparison, which is what asks about a field — `task.state == TaskState.STARTED` is a question about Task, and
-// the comparison reads no member of its own.
-func (m Match) reads() Match {
-	if m.Is(MemberAccess) {
-		return m
+// names is the member this question is about and the node holding the value that member belongs to.
+//
+// Three nodes name a member. A member access names its own, held by its receiver. A comparison names the one its
+// left side reads, since `task.state == TaskState.STARTED` is a question about Task and the comparison reads no
+// member of its own. And an argument passed BY NAME names the member it sets on a value the call was handed:
+// `replace(task, state=…)` and `task.with_(state=…)` both name a field of the task.
+//
+// A CONSTRUCTION names nobody's field but its own type's, and building a value is not changing one: `Task(state=…)`
+// from anywhere is how a Task is made, so it holds no value whose field is being set and answers nothing here. The
+// value is what tells the two apart — a receiver, or an argument that is not itself passed by name — which is why
+// a call carrying none is left alone.
+func (m Match) names() (string, Match) {
+	switch {
+	case m.Is(MemberAccess):
+		return m.Name(), m.Receiver()
+	case m.Is(Comparison):
+		children := m.Children()
+		if len(children) == 0 || !children[0].Is(MemberAccess) {
+			return "", Match{}
+		}
+
+		return children[0].Name(), children[0].Receiver()
+	case m.HasFlag("named"):
+		return m.Name(), subjectOf(m.Parent())
 	}
 
-	if !m.Is(Comparison) {
+	return "", Match{}
+}
+
+// subjectOf is what a call is about, for a field set by one of its named arguments.
+func subjectOf(call Match) Match {
+	if !call.Is(Call) && !call.Is(Construction) {
 		return Match{}
 	}
 
-	children := m.Children()
-	if len(children) == 0 || !children[0].Is(MemberAccess) {
-		return Match{}
+	if receiver := call.Receiver(); receiver.Exists() {
+		return receiver
 	}
 
-	return children[0]
+	for _, argument := range call.Arguments() {
+		if !argument.HasFlag("named") {
+			return argument
+		}
+	}
+
+	return Match{}
+}
+
+// DeclaredElsewhere says whether what the node names is declared in another file than this one. It is the question
+// a rule about a type's own business asks: a field set from outside the file that declares it has gone around the
+// methods its class wrote for changing itself. False where nothing declares it, so a rule says the owner too.
+func (m Match) DeclaredElsewhere() bool {
+	declaring := m.Declaring()
+
+	return declaring.Exists() && declaring.File() != m.File()
 }
 
 // Declarer is the name of that type, as the scan names it: the whole dotted or namespaced name, so a glob over it
