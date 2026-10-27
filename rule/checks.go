@@ -58,6 +58,7 @@ var Checks = []Group{
 		{"argument", `{"argument": {"at": 0, "is": "literal"}}`, "the argument at that place passes the step; a negative `at` counts from the end, `-1` the last, and none there passes nothing. With no `at` at all, ANY argument passing the step is enough, which is how a rule asks about one passed by name, whose place is not what identifies it"},
 		{"constructs", `{"constructs": "Date*"}`, "a construction, or on anything else one of its own, creates an instance of a type the glob names — in Python, a call of a class"},
 		{"unused", `{"unused": true}`, "nothing refers to it: a function or type from outside itself, through the names and calls the scan resolves and its language's call graph; a parameter, by its name read in its function"},
+		{"referredFrom", `{"referredFrom": {"is": "parameter"}}`, "something referring to it — a call, a name, a written type — passes the step. It is `calledFrom` asking about the REFERENCE rather than the file it sits in, which is what tells one side of a thing from another: an event class named by a dispatch and by no listener's parameter is heard by nobody, and `{\"not\": {\"referredFrom\": …}}` says exactly that"},
 		{"calledFrom", `{"calledFrom": "app/Http/**"}`, "something referring to it — a call, most often — sits in a file the glob matches, read as `file` reads one"},
 	}},
 	{"Where it sits", []Check{

@@ -389,3 +389,54 @@ def shout(message: str) -> None:
 		}
 	}
 }
+
+// TestAThingReferredToFromOneSideOfTheProject holds the question `calledFrom` could only ask of a FOLDER: which
+// side of the project refers to a thing. An event nobody listens for is raised and never heard, and the shape that
+// says so is a reference that passes a step rather than a reference in a path — a listener names an event in the
+// type of a parameter, wherever its file happens to sit.
+func TestAThingReferredToFromOneSideOfTheProject(t *testing.T) {
+	project := pythontest.FromSource(t, map[string]string{
+		"shop/__init__.py": "",
+		"shop/events.py": `from dataclasses import dataclass
+
+
+@dataclass(frozen=True)
+class TaskStarted:
+    number: int
+
+
+@dataclass(frozen=True)
+class TaskForgotten:
+    number: int
+`,
+		"shop/listeners.py": `from shop.events import TaskStarted
+
+
+def on_task_started(event: TaskStarted) -> None:
+    print(event.number)
+`,
+		"shop/work.py": `from shop.events import TaskForgotten, TaskStarted
+
+
+def start(number: int) -> TaskStarted:
+    return TaskStarted(number=number)
+
+
+def forget(number: int) -> TaskForgotten:
+    return TaskForgotten(number=number)
+`,
+	})
+
+	for query, want := range map[string]string{
+		// An event some parameter is typed as is heard by something.
+		// The reference is the NAME in the annotation; the parameter is what holds it, which is why the step
+		// steps up to the parent before asking what it is.
+		`{"select": "type-declaration", "where": [{"referredFrom": {"of": "parent", "is": "parameter"}}]}`: "[events.py:4]",
+		// One that nothing names in a parameter is raised and never heard, which is the finding.
+		`{"select": "type-declaration", "where": [{"not": {"referredFrom": {"of": "parent", "is": "parameter"}}}]}`: "[events.py:9]",
+	} {
+		if got := foundAt(t, "python", query, project); got != want {
+			t.Errorf("%s:\n got %s\nwant %s", query, got, want)
+		}
+	}
+}

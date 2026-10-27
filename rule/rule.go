@@ -127,6 +127,7 @@ type Step struct {
 	ParameterType     string     `json:"parameterType,omitempty"`
 	Constructs        string     `json:"constructs,omitempty"`
 	Unused            *bool      `json:"unused,omitempty"`
+	ReferredFrom      *Step      `json:"referredFrom,omitempty"`
 	CalledFrom        string     `json:"calledFrom,omitempty"`
 	Calls             *Step      `json:"calls,omitempty"`
 	Argument          *Argued    `json:"argument,omitempty"`
@@ -410,7 +411,7 @@ func (s Step) withLayers(stack *engine.LayerStack) Step {
 func (s *Step) nested() []*Step {
 	var nested []*Step
 
-	for _, step := range []*Step{s.Descendant, s.Inside, s.Next, s.Previous, s.Calls} {
+	for _, step := range []*Step{s.Descendant, s.Inside, s.Next, s.Previous, s.Calls, s.ReferredFrom} {
 		if step != nil {
 			nested = append(nested, step)
 		}
@@ -607,7 +608,7 @@ func (s Step) checks() int {
 		s.Next != nil, s.Previous != nil, s.NestedAtLeast != nil, s.Counts != nil, s.Parameters != nil, s.Arguments != nil,
 		s.Lines != nil, s.Members != nil, s.Complexity != nil, s.Extends != "", s.ExtendsAny != "", s.Implements != "", s.Uses != "", s.All != nil, s.Any != nil, s.Not != nil, s.HasAttribute != "", s.Sibling != "", s.IsA != "",
 		s.TypeKind != "", s.HasAnnotation != "", s.ReturnType != "", s.ParameterType != "", s.Constructs != "", s.Unused != nil,
-		s.CalledFrom != "", s.Calls != nil, s.Argument != nil, s.CommentLike != "", s.CommentMatches != "", s.DocTag != "", s.Duplicated != nil, s.Callers != nil, s.Repeated != nil, s.DeclaredBy != "", s.AnsweredBy != nil, s.DeclaredElsewhere != nil, s.Ancestors != nil,
+		s.CalledFrom != "", s.ReferredFrom != nil, s.Calls != nil, s.Argument != nil, s.CommentLike != "", s.CommentMatches != "", s.DocTag != "", s.Duplicated != nil, s.Callers != nil, s.Repeated != nil, s.DeclaredBy != "", s.AnsweredBy != nil, s.DeclaredElsewhere != nil, s.Ancestors != nil,
 		s.TestCode != nil, s.PHP != "", s.Python != "", s.CSharp != "", s.TypeScript != "", s.Vue != "", s.Rule != ""} {
 		if set {
 			count++
@@ -984,6 +985,8 @@ func (s Step) check(match engine.Match) bool {
 		return unused(subject) == *s.Unused
 	case s.CalledFrom != "":
 		return slices.ContainsFunc(subject.Referrers(), func(caller engine.Match) bool { return inFile(s.pattern, caller.FromProject()) })
+	case s.ReferredFrom != nil:
+		return slices.ContainsFunc(subject.Referrers(), s.ReferredFrom.check)
 	case s.Calls != nil:
 		return slices.ContainsFunc(subject.OwnDescendants(), func(below engine.Match) bool { return below.Is(engine.Call) && s.Calls.check(below) })
 	case s.Argument != nil:
