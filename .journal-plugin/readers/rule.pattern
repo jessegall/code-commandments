@@ -1,0 +1,8 @@
+# each rule proved or failed, each match a rule found with the line it stands on, and the count a run ends on
+^(?:[✓✗⚠] |\S+:\d+  |\d+ match\(es\) of |    )
+label: Working on a rule of the project's own
+topic: rule (try|prove|explain|schema)
+commands: commandments rule
+finished: ^(?:\d+ match\(es\) of |[✓✗] |No )
+failed: ^(?:✗ |No rules in|No samples at|No node starts)
+summary: ^(\d+ match\(es\) of .+|[✓✗] .+)$

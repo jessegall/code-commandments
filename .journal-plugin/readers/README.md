@@ -29,6 +29,28 @@ Reads `commandments judge`, which the `sins` alias runs.
 - The output a journal command reads is not a terminal, so it carries no colour and the patterns need
   no escape sequences.
 
+## `rule.pattern`
+
+Reads `commandments rule`, which the `rules` alias runs: `try` runs one rule of the project's own over a
+path, `prove` holds every one of them to the samples that mark it, `explain` prints a file's tree, and
+`schema` prints the schema an editor checks a rule by.
+
+- **Picks** each rule proved or failed (`✓ NoRawSqlDetector`), the reasons indented under a failure, each
+  match a tried rule found with the line it stands on (`src/Orders.php:14  DB::select(...)`), the count a
+  try ends on (`3 match(es) of NoRawSqlDetector in src`), and a refusal, which for these verbs is usually
+  that there is nothing to work with: no rules to prove, no samples to prove them against, or no node on
+  the line named.
+- **Says what the run is about** with `topic`, read over the command line, since one reader serves four
+  verbs and the card's title alone cannot say which: the card reads *Working on a rule of the project's
+  own · prove*.
+- **Settles** on the count or the last rule's verdict, so a finished card says what came of it.
+- **Counts nothing.** None of these verbs prints a count of a total, and a bar drawn from a number that
+  is not one reads as a lie: a single-group pattern is taken for a percentage, so a running count of 105
+  shows as 100% complete. `prove` could honestly count the rules it has proved against the number it
+  will prove, and when it prints that, this reader gains a `progress:` line over it.
+- The output a journal command reads is not a terminal, so the colour these verbs write on one is
+  dropped before the reader sees it.
+
 ## The alias
 
 `journal-plugin.json` names the `sins` alias, which runs `bin/commandments-release judge {args}` with
