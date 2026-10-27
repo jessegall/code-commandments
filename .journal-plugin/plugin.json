@@ -1,6 +1,6 @@
 {
     "name": "code-commandments",
-    "version": "6.22.0",
+    "version": "6.23.0",
     "title": "Code Commandments",
     "description": "The static code checker judges the codebase, its hooks run inside the journal, and every rule and language is a switch in its settings",
     "journal": "2.267.16",
@@ -46,7 +46,7 @@
     },
     "env": {
         "CLAUDE_PROJECT_DIR": "{project}",
-        "COMMANDMENTS_RELEASE": "v6.22.0"
+        "COMMANDMENTS_RELEASE": "v6.23.0"
     },
     "setup": [
         {
@@ -3957,6 +3957,11 @@
     },
     "skills": "journal-skills/.agents/skills",
     "installed": "bin/commandments-release journal-scan",
+    "health": {
+        "socket_env": "COMMANDMENTS_HEALTH_SOCKET",
+        "request": "{\"health\":1}",
+        "answer": "{\"health\":\"up\",\"service\":\"<the service's own name>\"}"
+    },
     "services": {
         "hooks": {
             "run": "bin/commandments-release journal-serve",

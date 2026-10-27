@@ -15,6 +15,7 @@ import (
 
 	"github.com/jessegall/code-commandments/cli"
 	"github.com/jessegall/code-commandments/cli/dashboard"
+	"github.com/jessegall/code-commandments/cli/health"
 	"github.com/jessegall/code-commandments/cli/help"
 	"github.com/jessegall/code-commandments/cli/workspace"
 	"github.com/jessegall/code-commandments/engine"
@@ -29,6 +30,9 @@ const (
 	advising = "COMMANDMENTS_ADVISING"
 	// pluginSocket is where the journal expects the plugin's service to listen.
 	pluginSocket = "JOURNAL_PLUGIN_SOCKET"
+	// hooksService is the name the manifest gives this service, which is the name it answers the journal's health
+	// question under: the journal restarts the service that went quiet, so the answer says which one answered.
+	hooksService = "hooks"
 )
 
 // JournalHook is `journal-hook`: the entry point the agent journal's plugin calls for every moment.
@@ -78,12 +82,12 @@ func AnswerNow(given map[string]any) JournalAnswer {
 	return answerWith(given, every, true)
 }
 
-// answer4On is the service's answer to one of version 4's events: the held one carries the gates alone, since a
-// window of milliseconds is no time to work anything out and a refusal there is the only thing that can still stop
-// a command; every other event is heard after the journal's reply, so nothing waits on its answer and it carries
-// what the handlers found, exactly as the program would have answered it.
+// answer4On is the service's answer to one of version 4's events: an event judged after carries the gates alone,
+// since the journal waits on every answer it asks for and a judge does not fit the window it allows; the rest of
+// that moment is handed to the adviser. Every other event carries what the handlers found, exactly as the program
+// would have answered it.
 func answer4On(given map[string]any, event string) string {
-	if event == heldEvent {
+	if judgedAfter(event) {
 		return answerWith(given, isGate, false).Line4()
 	}
 
@@ -99,7 +103,7 @@ func adviseNow(given map[string]any) {
 
 // adviseAsked works out the advice of a moment the service answered and writes it where that journal reads it.
 func adviseAsked(moment asked) {
-	if !moment.four {
+	if !moment.queued {
 		adviseNow(moment.given)
 
 		return
@@ -319,6 +323,11 @@ func (JournalServe) Help() help.Help {
 // itself, and ends, so the journal starts it again on the new code. A socket it cannot listen on, as a Windows
 // binary cannot on MSYS2's, leaves it waiting for the stop, so the journal does not start it again.
 func (s JournalServe) Run(in *cli.Input, console cli.Console) (int, error) {
+	// Before anything else, so the journal's health question is answered from the moment this process is up and in
+	// every path below, the one that cannot listen on the plugin's socket included: a service waiting for its stop
+	// is still a service that is up.
+	defer health.Serve(hooksService)()
+
 	path := os.Getenv(pluginSocket)
 	if path == "" {
 		return help.Usage(console.Err, s, "The journal names the socket in $"+pluginSocket+"; there is none to listen on."), nil
@@ -376,6 +385,15 @@ func serve(listener net.Listener, current func() bool, advice *adviser) {
 			line, _ := bufio.NewReader(connection).ReadString('\n')
 			read := payloadOf([]byte(line))
 
+			// How this service is, asked on the socket it already answers the journal's events on. It is a fact
+			// this process knows by running, so it is said at once and nothing of the moment is read for it.
+			if health.Asked(read) {
+				connection.Write([]byte(health.Answer(hooksService) + "\n"))
+				connection.Close()
+
+				return
+			}
+
 			// An event that is not a moment of the agent's work is answered in full, through the same path the
 			// program takes: this is where the service used to fall through to version 3's answer, which version 4
 			// drops whole.
@@ -388,13 +406,13 @@ func serve(listener net.Listener, current func() bool, advice *adviser) {
 				return
 			}
 
-			// Version 4 asks on this socket inside a window of a few milliseconds, so the gates answer from what
-			// they already know and everything else is worked out after the answer, as it is for version 3.
+			// Version 4 asks on this socket inside a window the journal sets, so the gates answer from what they
+			// already know and everything else is worked out after the answer, as it is for version 3.
 			if moment, four := Moment4Of(read); four {
 				given := Stamped(moment)
 				connection.Write([]byte(answer4On(given, asText(read["event"])) + "\n"))
 				connection.Close()
-				advice.add(asked{given, asText(read["event"]) == heldEvent})
+				advice.add(asked{given, judgedAfter(asText(read["event"]))})
 
 				return
 			}
@@ -419,11 +437,12 @@ func serve(listener net.Listener, current func() bool, advice *adviser) {
 	}
 }
 
-// asked is one moment the service answered, and which journal asked it: the advice of version 4's moment goes to
-// the queue it drains, and version 3's to the queue it hands the service.
+// asked is one moment the service answered, and where its advice belongs: an event version 4 answered with the
+// gates alone is judged after, into the queue that journal drains, and anything else version 3 asked goes to the
+// queue it hands the service.
 type asked struct {
-	given map[string]any
-	four  bool
+	given  map[string]any
+	queued bool
 }
 
 // adviser works out each moment's advice on one goroutine of its own, in the order the moments came: the service

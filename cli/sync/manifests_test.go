@@ -8,6 +8,8 @@ import (
 	"slices"
 	"strings"
 	"testing"
+
+	"github.com/jessegall/code-commandments/cli/health"
 )
 
 // The plugin is declared twice, once for each journal protocol, and what the two say has to agree: the release
@@ -225,6 +227,75 @@ func TestEveryHoldIsAnsweredFromWhatIsAlreadyKnown(t *testing.T) {
 	for _, held := range manifest.Holds {
 		if held.Event == "file_edited" {
 			t.Error("file_edited is held: an edit would wait on the judge of it, which is the fault all of this answers")
+		}
+	}
+}
+
+// declaredHealth is what a manifest says about the question the journal asks each service about itself: the variable
+// it names the socket in, the line it writes, and the answer it reads back.
+type declaredHealth struct {
+	SocketEnv string `json:"socket_env"`
+	Request   string `json:"request"`
+	Answer    string `json:"answer"`
+}
+
+// healthOf is the health a manifest declares.
+func healthOf(t *testing.T, name ...string) declaredHealth {
+	t.Helper()
+	content, err := os.ReadFile(filepath.Join(append([]string{"..", ".."}, name...)...))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var manifest struct {
+		Health declaredHealth `json:"health"`
+	}
+	if err := json.Unmarshal(content, &manifest); err != nil {
+		t.Fatal(err)
+	}
+
+	return manifest.Health
+}
+
+// TestBothManifestsDeclareTheHealthTheServicesReallyAnswer holds the manifest to the code. The journal reads this
+// block to learn how to ask a service how it is: it makes a socket, names it in that variable for every service it
+// starts, writes that line and reads the answer — and allows 200ms, after which it restarts the service, and marks
+// the plugin broken after five silences. So a variable named here that the service does not listen on, or a request
+// it does not answer, is a plugin that reads as broken while every service is up.
+func TestBothManifestsDeclareTheHealthTheServicesReallyAnswer(t *testing.T) {
+	held, offered := healthOf(t, ".journal-plugin", "plugin.json"), healthOf(t, "journal-plugin.json")
+
+	if held != offered {
+		t.Errorf(".journal-plugin/plugin.json declares the health %+v and journal-plugin.json %+v", held, offered)
+	}
+
+	if offered.SocketEnv != health.Socket {
+		t.Errorf("the manifest names the socket in $%s and the service listens on $%s", offered.SocketEnv, health.Socket)
+	}
+	if offered.Request != health.Request {
+		t.Errorf("the manifest writes %q and the service answers %q", offered.Request, health.Request)
+	}
+
+	declared := map[string]any{}
+	if err := json.Unmarshal([]byte(offered.Answer), &declared); err != nil {
+		t.Fatalf("the answer the manifest declares is no JSON: %v", err)
+	}
+	answered := map[string]any{}
+	if err := json.Unmarshal([]byte(health.Answer("hooks")), &answered); err != nil {
+		t.Fatal(err)
+	}
+
+	if declared["health"] != "up" {
+		t.Errorf("the manifest says a service answers %v, and up is what it says", declared["health"])
+	}
+	for key := range answered {
+		if _, says := declared[key]; !says {
+			t.Errorf("the service answers with %q and the manifest declares no such key: %v", key, declared)
+		}
+	}
+	for key := range declared {
+		if _, answers := answered[key]; !answers {
+			t.Errorf("the manifest declares %q and no answer carries it: %v", key, answered)
 		}
 	}
 }

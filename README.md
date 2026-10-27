@@ -153,7 +153,7 @@ Exit code is non-zero when sins are found.
 | `commandments task` | The work in front of this session — numbered tasks, one markdown file each, moved between queue, active and history. |
 | `commandments hooks` | The wired hook entry point — reads one hook payload from stdin, runs every registered handler, and merges their responses into one. |
 | `commandments journal-hook` | The agent journal's entry point — reads one journal hook payload from stdin, runs every registered handler, and answers in the journal's shape. |
-| `commandments journal4-hook` | Version 4 of the agent journal's entry point — reads one event line from stdin and answers it: the held event (a command about to run) with the gates alone, from what they already know, and every other with what its handlers found, since the journal hears those after its own reply. |
+| `commandments journal4-hook` | Version 4 of the agent journal's entry point — reads one event line from stdin and answers it: a command about to run and a file just changed with the gates alone, from what they already know, and every other event with what its handlers found. |
 | `commandments journal-serve` | Answer the agent journal's hooks from one running process, over the socket the journal names in $JOURNAL_PLUGIN_SOCKET. |
 | `commandments roslyn-serve` | Keep the C# bridge running for this project, answering each run of the tool over a socket named for the project. |
 | `commandments mypy-serve` | Keep the Python bridge running for this project, answering each run of the tool over a socket named for the project. |
@@ -413,14 +413,22 @@ one event, `command_starting` — one per command of a shell line, as the journa
 five milliseconds, which only a warm process can answer: the `hooks` service (`commandments journal-serve`) answers
 it on the socket the journal names, with the gates alone and from facts it already keeps, such as the worktrees a
 branch is shared with, re-read only when git writes one. Judging happens on `file_edited`, one event per file a tool
-changed, which the journal sends after its reply with the edit already recorded, so a scan never makes anyone wait;
-what it finds goes to the queue the journal drains at the agent's next hook — a folder of one file per answer, each
+changed, with the edit already recorded; that event is answered the same way, with the gates alone, and judged in a
+run of its own, because the journal waits on every answer it asks for and a judge of one file on a loaded machine
+takes longer than any window it allows. What it finds goes to the queue the journal drains at the agent's next hook — a folder of one file per answer, each
 the shape of an answer with the environment it is for, renamed into place so a drain never reads a half-written one.
 The chat gets **one mark per file**, keyed by the file and listing the sins it holds, which a later judging rewrites
 where it stands and which turns green when the file holds none; thirty sins in a file are one card, not thirty.
 `file_edited` is heard and never held: holding it would block the tool's result on a judge, which is the one thing
 this whole path exists to prevent. A change to the settings arrives as `plugin.updated` and is written by
 `journal-config`, as before.
+
+Every service the journal keeps up for the plugin says how it is, so one that has died is restarted rather than
+quietly leaving its discipline unenforced. The manifest's `health` block names the variable the journal puts a
+socket path in for each service it starts, `COMMANDMENTS_HEALTH_SOCKET`, and the line it writes there; the service
+answers `{"health":"up","service":"<its name>"}` at once, from the fact that it is running, on a listener of its
+own — never behind the work it is doing, since a bridge halfway through parsing a project is up and must not be
+restarted for being busy. The `hooks` service answers the same question on the socket it already answers events on.
 
 While the plugin is installed, `install` and `sync` wire **no** Claude Code hooks of their own: the
 journal calls them. Take the plugin away and the next `composer update` wires them back.

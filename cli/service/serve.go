@@ -6,6 +6,7 @@ import (
 
 	"github.com/jessegall/code-commandments/bridge"
 	"github.com/jessegall/code-commandments/cli"
+	"github.com/jessegall/code-commandments/cli/health"
 	"github.com/jessegall/code-commandments/cli/help"
 )
 
@@ -29,6 +30,12 @@ func (s Serve) Help() help.Help {
 
 // Run serves the project's bridge until it stops, then ends, so the journal starts it again.
 func (s Serve) Run(in *cli.Input, console cli.Console) (int, error) {
+	// Before anything else, so the journal's health question is answered from the moment this process is up and
+	// however this run ends up spending its life: a bridge kept warm, or a service with no language to judge
+	// waiting for its stop, is a service that is up either way. It answers on a listener of its own, so a question
+	// never waits behind the parse the bridge is in the middle of.
+	defer health.Serve(s.Kind)()
+
 	project, holds, err := here(s.Bridge)
 	if err != nil {
 		return 0, err

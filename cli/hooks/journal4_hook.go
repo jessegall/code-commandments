@@ -49,16 +49,15 @@ func (Journal4Hook) Names() []string {
 
 // Help documents it.
 func (Journal4Hook) Help() help.Help {
-	return help.Of("Version 4 of the agent journal's entry point — reads one event line from stdin and answers it: the held event (a command about to run) with the gates alone, from what they already know, and every other with what its handlers found, since the journal hears those after its own reply.").
+	return help.Of("Version 4 of the agent journal's entry point — reads one event line from stdin and answers it: a command about to run and a file just changed with the gates alone, from what they already know, and every other event with what its handlers found.").
 		Form("journal4-hook", "answer the event line on stdin (run by the journal plugin; you rarely run this by hand)").
-		Note("Judging happens on `file_edited`, one event per file a tool changed, and what it finds is written to the queue the journal drains at the agent's next hook. A journal that gives the plugin no folder of its own drains no queue, and then every event is answered in full, as before a queue existed.").
+		Note("Judging happens on `file_edited`, one event per file a tool changed, and never on the way out: the journal waits on every answer it asks for, and a judge on a loaded machine is slower than the window it allows. What the judge finds is written to the queue the journal drains at the agent's next hook. A journal that gives the plugin no folder of its own drains no queue, and then every event is answered in full, as before a queue existed.").
 		In(help.Hooks)
 }
 
-// Run answers the event on stdin. The event the journal may HOLD is answered with nothing worked out, and judged in
-// a run of its own that writes to the queue; every other event is heard after the journal's reply, so its answer may
-// carry everything found without anything waiting on it. A change of sixty files costs the held event's answer what a
-// change of one does.
+// Run answers the event on stdin. A command about to run and a file just changed are answered with nothing worked
+// out, and judged in a run of its own that writes to the queue; every other event is answered with what its handlers
+// found. A change of sixty files costs each answer what a change of one does.
 func (Journal4Hook) Run(in *cli.Input, console cli.Console) (int, error) {
 	raw, _ := io.ReadAll(os.Stdin)
 	var line map[string]any
@@ -83,7 +82,7 @@ func (Journal4Hook) Run(in *cli.Input, console cli.Console) (int, error) {
 	}
 
 	console.Write(Answer4Now(line) + "\n")
-	if asText(line["event"]) == heldEvent {
+	if judgedAfter(asText(line["event"])) {
 		judge4Detached(raw, line)
 	}
 
@@ -120,11 +119,27 @@ func Apart4(in *cli.Input, console cli.Console, line map[string]any) (string, bo
 // judge the journal waits on is the fault this whole path exists to keep away.
 const heldEvent = "command_starting"
 
-// Answer4Now is the answer the journal is handed. The held event is answered with the gates alone, since a refusal
-// there is the only thing that can still stop a command; what else that moment was worth goes to the queue. Every
-// other event is heard AFTER the journal's reply, so nothing waits on its answer and it carries everything found. A
-// journal that named the plugin no folder of its own drains no queue, and then even the held event is answered in
-// full, as it was before a queue existed.
+// editedEvent is the file a tool changed, one event per file, and where the judging of the project happens.
+const editedEvent = "file_edited"
+
+// judgedAfter are the events answered with the gates alone and judged afterwards, what they find reaching the agent
+// through the queue.
+//
+// The journal waits on EVERY answer it asks for, each inside a window: milliseconds for the held event, and ten
+// seconds for anything else. So "heard after the journal's reply" never meant "nothing waits on it" — judging on
+// the way out means judging inside that window. On a loaded machine a judge of ONE file took twenty seconds of wall
+// time for a fifth of a second of its own work, all of it waiting on the machine, so every file_edited answer was
+// late and the agent heard nothing of the sins it had just written. Answered this way, the answer costs what the
+// gates already know and the sins arrive one hook later.
+func judgedAfter(event string) bool {
+	return event == heldEvent || event == editedEvent
+}
+
+// Answer4Now is the answer the journal is handed. An event judged after is answered with the gates alone, since a
+// refusal is the only thing that can still stop a command and nothing can stop an edit that has already landed;
+// what else those moments were worth goes to the queue. Every other event is answered with everything found, each
+// of them cheap to work out. A journal that named the plugin no folder of its own drains no queue, and then every
+// event is answered in full, as it was before a queue existed.
 func Answer4Now(line map[string]any) string {
 	moment, known := Moment4Of(line)
 	if !known {
@@ -133,7 +148,7 @@ func Answer4Now(line map[string]any) string {
 	if _, queued := Queue4In(os.Getenv(pluginData)); !queued {
 		return Answer4Of(line)
 	}
-	if asText(line["event"]) != heldEvent {
+	if !judgedAfter(asText(line["event"])) {
 		return Answer4Of(line)
 	}
 

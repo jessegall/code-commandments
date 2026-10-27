@@ -120,7 +120,8 @@ func TestAFileEditedIsJudgedAndItsSinsGoToTheQueue(t *testing.T) {
 	}
 }
 
-// drained is the queue as the journal drains it: every file it holds, oldest name first, read whole.
+// drained is the queue as the journal drains it: every file it holds, oldest name first, read whole and deleted, so
+// a second drain answers for what happened since the first.
 func drained(t *testing.T, data string) []map[string]any {
 	t.Helper()
 	queue, _ := Queue4In(data)
@@ -141,6 +142,9 @@ func drained(t *testing.T, data string) []map[string]any {
 			t.Fatalf("the journal cannot read %s: %v", file, err)
 		}
 		read = append(read, said)
+		if err := os.Remove(file); err != nil {
+			t.Fatal(err)
+		}
 	}
 
 	if left, _ := filepath.Glob(filepath.Join(queue.Path(), "*.tmp")); len(left) > 0 {
@@ -148,6 +152,48 @@ func drained(t *testing.T, data string) []map[string]any {
 	}
 
 	return read
+}
+
+// saidAfter is one event judged the way the journal has it judged: its answer went out with the gates alone, the judge
+// ran after it, and this is the one thing it wrote to the queue for the agent's next hook. An event the judge had
+// nothing to say about answers an empty line, so a test may read a card that is not there.
+func saidAfter(t *testing.T, data string, line map[string]any) map[string]any {
+	t.Helper()
+	Judge4Into(line, data)
+
+	said := drained(t, data)
+	if len(said) > 1 {
+		t.Fatalf("one event left %d answers in the queue: %v", len(said), said)
+	}
+	if len(said) == 0 {
+		return map[string]any{}
+	}
+
+	return said[0]
+}
+
+// cardsOf are the cards one answer carries, each as the journal reads it.
+func cardsOf(said map[string]any) []map[string]any {
+	raised, _ := said["cards"].([]any)
+
+	var cards []map[string]any
+	for _, each := range raised {
+		card, _ := each.(map[string]any)
+		cards = append(cards, card)
+	}
+
+	return cards
+}
+
+// settles says whether one of the cards settles the key as repented, which is how a mark turns green where it stands.
+func settles(cards []map[string]any, key string) bool {
+	for _, card := range cards {
+		if asText(card["key"]) == key && asText(card["kind"]) == "sin-resolved" {
+			return true
+		}
+	}
+
+	return false
 }
 
 // TestTheAnswerIsTheSameHoweverManyFilesTheToolChanged holds the answer to the one thing a hook must never depend on:
@@ -190,16 +236,31 @@ func TestWithNoFolderOfItsOwnTheHookAnswersTheHeldEventInFull(t *testing.T) {
 	}
 }
 
-// TestAnEventHeardAfterTheReplySaysWhatItFound holds the other half: every event but the held one is heard AFTER the
-// journal has replied to the agent, so nothing waits on its answer and the sins it found are said there and then.
-// Keeping them quiet instead would cost the agent every mark it works by, for no gain in what waits.
-func TestAnEventHeardAfterTheReplySaysWhatItFound(t *testing.T) {
-	root, file, _ := projectWithASin(t)
+// TestAnEditIsAnsweredWithoutReadingTheFileAtAll holds the correction of a belief that cost the agent every mark it
+// works by. An edit was answered with everything the judge found, because the journal hears it AFTER its own reply
+// and nothing seemed to wait on that answer. The journal waits on every answer it asks for: on a loaded machine a
+// judge of one file took twenty seconds of wall time for a fifth of a second of work, every answer was late, and no
+// sin reached the chat at all. So an edit of a file full of sins is answered exactly as an edit of a clean one, and
+// what the judge finds goes to the queue.
+func TestAnEditIsAnsweredWithoutReadingTheFileAtAll(t *testing.T) {
+	root, _, data := projectWithASin(t)
 	t.Setenv("JOURNAL_ROOT", root)
 
-	answer := Answer4Now(eventOf("file_edited", file))
-	if !strings.Contains(answer, "redundant-python-else") {
-		t.Errorf("the heard event says nothing of the sin it found: %s", answer)
+	clean := filepath.Join(root, "src", "orders.py")
+	if err := os.WriteFile(clean, []byte("def total(order) -> int:\n    return order.total\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	sinful := Answer4Now(eventOf("file_edited", "src/refund.py"))
+	if sinful != Answer4Now(eventOf("file_edited", "src/orders.py")) {
+		t.Errorf("an edit of a sinful file is answered %s and of a clean one %s", sinful, Answer4Now(eventOf("file_edited", "src/orders.py")))
+	}
+	if strings.Contains(sinful, "redundant-python-else") || strings.Contains(sinful, "sin-found") {
+		t.Errorf("the edit's own answer carries what the judge found: %s", sinful)
+	}
+
+	if said := saidAfter(t, data, eventOf("file_edited", "src/refund.py")); !strings.Contains(asText(said["tell"]), "redundant-python-else") {
+		t.Errorf("the queue the agent reads names no sin: %v", said)
 	}
 }
 
@@ -291,7 +352,7 @@ func TestTheServiceAnswersTheHeldEventWithTheGatesAloneAndAdvisesAfter(t *testin
 
 	select {
 	case moment := <-advised:
-		if !moment.four {
+		if !moment.queued {
 			t.Error("the moment was handed on as version 3's")
 		}
 	case <-time.After(5 * time.Second):
@@ -381,20 +442,14 @@ func TestTheEditTheJournalHandsUsDecidesWhichSinsAreFresh(t *testing.T) {
 // under that SAME key, which is how the journal settles one in place. Without it a sin fixed stays orange for good,
 // which is what the journal's own project saw.
 func TestASinRepentedTurnsItsCardGreenOnTheEventThatRepentsIt(t *testing.T) {
-	root, file, _ := projectWithASin(t)
+	root, file, data := projectWithASin(t)
 	t.Setenv("JOURNAL_ROOT", root)
-	sinful := eventOf("file_edited", "src/refund.py")
 
-	raised := Answer4Now(sinful)
-	if !strings.Contains(raised, "sin-found") {
-		t.Fatalf("the sinful edit raised nothing: %s", raised)
+	raised := cardsOf(saidAfter(t, data, eventOf("file_edited", "src/refund.py")))
+	if len(raised) != 1 {
+		t.Fatalf("the sinful edit raised %v", raised)
 	}
-
-	var first map[string]any
-	if err := json.Unmarshal([]byte(raised), &first); err != nil {
-		t.Fatal(err)
-	}
-	key := asText(first["cards"].([]any)[0].(map[string]any)["key"])
+	key := asText(raised[0]["key"])
 	if key == "" {
 		t.Fatal("the card raised carries no key, so nothing can settle it")
 	}
@@ -404,22 +459,10 @@ func TestASinRepentedTurnsItsCardGreenOnTheEventThatRepentsIt(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	settled := Answer4Now(eventOf("file_edited", "src/refund.py"))
-
-	var second map[string]any
-	if err := json.Unmarshal([]byte(settled), &second); err != nil {
-		t.Fatalf("the repenting edit answered %q: %v", settled, err)
+	settled := cardsOf(saidAfter(t, data, eventOf("file_edited", "src/refund.py")))
+	if !settles(settled, key) {
+		t.Errorf("the repenting edit raised %v, none of it settling %s", settled, key)
 	}
-
-	cards, _ := second["cards"].([]any)
-	for _, each := range cards {
-		card, _ := each.(map[string]any)
-		if asText(card["key"]) == key && asText(card["kind"]) == "sin-resolved" {
-			return
-		}
-	}
-
-	t.Errorf("the repenting edit raised %v, none of it settling %s", cards, key)
 }
 
 // TestASinGoneOutsideTheEditIsStillRepented holds the rule to the shape that broke it in the journal's own project:
@@ -428,19 +471,14 @@ func TestASinRepentedTurnsItsCardGreenOnTheEventThatRepentsIt(t *testing.T) {
 // the file against every key found in it now, and never only the lines the edit touched, or a card nobody will ever
 // settle stays orange for good.
 func TestASinGoneOutsideTheEditIsStillRepented(t *testing.T) {
-	root, file, _ := projectWithASin(t)
+	root, file, data := projectWithASin(t)
 	t.Setenv("JOURNAL_ROOT", root)
 
-	raised := Answer4Now(eventOf("file_edited", "src/refund.py"))
-	var first map[string]any
-	if err := json.Unmarshal([]byte(raised), &first); err != nil {
-		t.Fatal(err)
+	raised := cardsOf(saidAfter(t, data, eventOf("file_edited", "src/refund.py")))
+	if len(raised) != 1 {
+		t.Fatalf("the sinful edit raised %v", raised)
 	}
-	cards, _ := first["cards"].([]any)
-	if len(cards) != 1 {
-		t.Fatalf("the sinful edit raised %v", cards)
-	}
-	key := asText(cards[0].(map[string]any)["key"])
+	key := asText(raised[0]["key"])
 
 	// The sin at the top is taken out by nobody we hear from, and the edit we DO hear about adds a line at the end.
 	repaired := "def refund(order) -> int:\n    if order.late:\n        raise ValueError(order)\n    return order.total\n\n\ndef total(order) -> int:\n    return order.total\n"
@@ -459,20 +497,10 @@ func TestASinGoneOutsideTheEditIsStillRepented(t *testing.T) {
 		},
 	}
 
-	var second map[string]any
-	if err := json.Unmarshal([]byte(Answer4Now(elsewhere)), &second); err != nil {
-		t.Fatal(err)
+	settled := cardsOf(saidAfter(t, data, elsewhere))
+	if !settles(settled, key) {
+		t.Errorf("the edit elsewhere settled %v, none of it the sin that is gone, %s", settled, key)
 	}
-
-	settled, _ := second["cards"].([]any)
-	for _, each := range settled {
-		card, _ := each.(map[string]any)
-		if asText(card["key"]) == key && asText(card["kind"]) == "sin-resolved" {
-			return
-		}
-	}
-
-	t.Errorf("the edit elsewhere settled %v, none of it the sin that is gone, %s", settled, key)
 }
 
 // TestGoingIdleSettlesAMarkNothingEditedAgain holds the mark of a file the agent stops touching: a sin was
@@ -480,11 +508,11 @@ func TestASinGoneOutsideTheEditIsStillRepented(t *testing.T) {
 // agent moving on to another file — and nothing would ever judge that file again, so its mark stayed orange for
 // good. Going idle judges the files that still carry a mark, and the one that is clean turns green.
 func TestGoingIdleSettlesAMarkNothingEditedAgain(t *testing.T) {
-	root, file, _ := projectWithASin(t)
+	root, file, data := projectWithASin(t)
 	t.Setenv("JOURNAL_ROOT", root)
 
-	if raised := Answer4Now(eventOf("file_edited", "src/refund.py")); !strings.Contains(raised, "sin-found") {
-		t.Fatalf("the sinful edit raised nothing: %s", raised)
+	if raised := cardsOf(saidAfter(t, data, eventOf("file_edited", "src/refund.py"))); len(raised) != 1 {
+		t.Fatalf("the sinful edit raised %v", raised)
 	}
 
 	righteous := "def refund(order) -> int:\n    if order.late:\n        raise ValueError(order)\n    return order.total\n"
@@ -497,8 +525,8 @@ func TestGoingIdleSettlesAMarkNothingEditedAgain(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if edited := Answer4Now(eventOf("file_edited", "src/orders.py")); strings.Contains(edited, "sins:src/refund.py") {
-		t.Fatalf("an edit elsewhere settled another file's mark, which is not what settles it: %s", edited)
+	if edited := saidAfter(t, data, eventOf("file_edited", "src/orders.py")); strings.Contains(asText(edited["tell"]), "sins:src/refund.py") || settles(cardsOf(edited), "sins:src/refund.py") {
+		t.Fatalf("an edit elsewhere settled another file's mark, which is not what settles it: %v", edited)
 	}
 
 	idle := Answer4Now(eventOf("idle", ""))
@@ -507,25 +535,19 @@ func TestGoingIdleSettlesAMarkNothingEditedAgain(t *testing.T) {
 		t.Fatalf("going idle answered %q: %v", idle, err)
 	}
 
-	cards, _ := answer["cards"].([]any)
-	for _, each := range cards {
-		card, _ := each.(map[string]any)
-		if asText(card["key"]) == "sins:src/refund.py" && asText(card["kind"]) == "sin-resolved" {
-			return
-		}
+	if cards := cardsOf(answer); !settles(cards, "sins:src/refund.py") {
+		t.Errorf("going idle answered %v, none of it settling the mark of the file that is now clean", cards)
 	}
-
-	t.Errorf("going idle answered %v, none of it settling the mark of the file that is now clean", cards)
 }
 
 // TestGoingIdleRaisesNothingNew holds the sweep to settling alone: a file that still holds its sin keeps the mark
 // it has, and going idle never announces a sin as if it had just been committed.
 func TestGoingIdleRaisesNothingNew(t *testing.T) {
-	root, _, _ := projectWithASin(t)
+	root, _, data := projectWithASin(t)
 	t.Setenv("JOURNAL_ROOT", root)
 
-	if raised := Answer4Now(eventOf("file_edited", "src/refund.py")); !strings.Contains(raised, "sin-found") {
-		t.Fatalf("the sinful edit raised nothing: %s", raised)
+	if raised := cardsOf(saidAfter(t, data, eventOf("file_edited", "src/refund.py"))); len(raised) != 1 {
+		t.Fatalf("the sinful edit raised %v", raised)
 	}
 
 	if idle := Answer4Now(eventOf("idle", "")); strings.Contains(idle, "sin-found") || strings.Contains(idle, "sin-resolved") {
