@@ -39,7 +39,7 @@ const (
 )
 
 // Neutrals are every neutral kind, in the order the contract lists them.
-var Neutrals = []Neutral{Function, TypeDeclaration, Parameter, Block, Branch, Loop, Return, Throw, BailOut, ExpressionStatement, Call, Construction, MemberAccess, NullSafe, SelfReference, Identifier, Assignment, Comparison, Literal, Import, Catch}
+var Neutrals = []Neutral{Function, TypeDeclaration, Parameter, Block, Branch, Loop, Return, Throw, BailOut, ExpressionStatement, Call, Construction, MemberAccess, NullSafe, SelfReference, Identifier, Assignment, Comparison, Conjunction, Literal, Import, Catch}
 
 // Located is anything a finding can point at.
 type Located interface {
@@ -163,8 +163,12 @@ func (m Match) Kind() string {
 }
 
 // calleeFields are where each language keeps what a call calls: PHP's name, Python's func, TypeScript's
-// expression, Go's fun.
-var calleeFields = []string{"name", "func", "expression", "fun"}
+// expression, Go's fun, C#'s Expression, which is Roslyn's own property name.
+var calleeFields = []string{"name", "func", "expression", "fun", "Expression"}
+
+// namedFields are where a member access keeps the name it reaches, when the access itself carries none: PHP's and
+// Python's name, C#'s Name.
+var namedFields = []string{"name", "Name"}
 
 // CalleeName is the name a call calls, in any language: the function, or the method a member call reaches
 // (select in DB::select, join in os.path.join), without its namespace; empty for anything else.
@@ -175,12 +179,24 @@ func (m Match) CalleeName() string {
 			continue
 		}
 
-		name := callee.Name()
-		if name == "" {
-			name = callee.Child("name").Name()
-		}
+		name := calleeOf(callee)
 
 		return name[strings.LastIndexAny(name, `\.`)+1:]
+	}
+
+	return ""
+}
+
+// calleeOf is the name the callee carries itself, else the name the member it reaches carries.
+func calleeOf(callee Match) string {
+	if name := callee.Name(); name != "" {
+		return name
+	}
+
+	for _, field := range namedFields {
+		if named := callee.Child(field); named.Exists() {
+			return named.Name()
+		}
 	}
 
 	return ""

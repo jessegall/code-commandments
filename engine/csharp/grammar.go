@@ -1,6 +1,7 @@
 package csharp
 
 import (
+	"slices"
 	"strings"
 
 	"github.com/jessegall/code-commandments/contract"
@@ -10,7 +11,7 @@ import (
 func init() {
 	engine.ReadAs(contract.CSharp, engine.Grammar{
 		Arguments:   arguments,
-		Receiver:    engine.InField("Expression"),
+		Receiver:    receiver,
 		Declares:    engine.KindIn("SingleVariableDesignation", "DeclarationPattern"),
 		Binds:       engine.KindIn("LocalDeclarationStatement"),
 		Members:     engine.InFields("Members"),
@@ -50,6 +51,42 @@ func init() {
 		Computes:          computes,
 	})
 
+}
+
+// sentTo are the kinds that keep the object they reach on their own Expression field: a member read, a pointer
+// one and an element read.
+var sentTo = []string{"SimpleMemberAccessExpression", "PointerMemberAccessExpression", "ElementAccessExpression"}
+
+// receiver is the object the node is sent to. An invocation keeps what it calls on its own Expression field, so
+// the call is read through its callee and answers the same object the access inside it does. A member binding —
+// the `Close` of `slot?.Close()` — reaches an object that is not under it at all: Roslyn keeps that one on the
+// conditional access above, with the binding below it.
+func receiver(node engine.Match) engine.Match {
+	if slices.Contains(sentTo, node.Kind()) {
+		return node.Child("Expression")
+	}
+
+	if node.Kind() == "MemberBindingExpression" {
+		return conditioned(node)
+	}
+
+	if node.Kind() != "InvocationExpression" && node.Kind() != "ObjectCreationExpression" {
+		return engine.Match{}
+	}
+
+	return receiver(node.Child("Expression"))
+}
+
+// conditioned is the object a `?.` reaches: the conditional access above the binding holds it, however many calls
+// and accesses stand between.
+func conditioned(binding engine.Match) engine.Match {
+	for above := binding.Parent(); above.Exists(); above = above.Parent() {
+		if above.Kind() == "ConditionalAccessExpression" {
+			return above.Child("Expression")
+		}
+	}
+
+	return engine.Match{}
 }
 
 // xmlTags are the elements a declaration's XML doc comments open, each once where it opens: `summary`, `param`,

@@ -3,6 +3,7 @@ package rule_test
 import (
 	"testing"
 
+	"github.com/jessegall/code-commandments/engine/csharp/csharptest"
 	"github.com/jessegall/code-commandments/engine/python/pythontest"
 )
 
@@ -167,6 +168,42 @@ def place(orders: OrderRepository) -> None:
 		`{"select": "call", "where": [{"of": "receiver", "is": "identifier"}]}`:             "[checkout.py:11]",
 	} {
 		if got := foundAt(t, "python", query, project); got != want {
+			t.Errorf("%s:\n got %s\nwant %s", query, got, want)
+		}
+	}
+}
+
+// TestTheReceiverTargetReadsTheSameWayInCSharp holds it where Roslyn keeps the callee under the same field name a
+// member access keeps its object under, so a call answered its own member access until the grammar stepped through
+// it: a plausible wrong answer, which is worse for a rule than no answer.
+func TestTheReceiverTargetReadsTheSameWayInCSharp(t *testing.T) {
+	project := csharptest.FromSource(t, map[string]string{"Shop/Checkout.cs": `namespace Shop;
+
+public sealed class OrderRepository
+{
+    public void Save() { }
+}
+
+public sealed class Checkout
+{
+    private readonly OrderRepository orders = new();
+
+    public void Place()
+    {
+        orders.Save();
+        Helper();
+    }
+
+    private void Helper() { }
+}
+`})
+
+	for query, want := range map[string]string{
+		`{"select": "call", "where": [{"of": "receiver", "typeLike": "*OrderRepository"}]}`: "[Checkout.cs:14]",
+		// Helper() is sent to nobody, so only the call on the repository has a receiver at all.
+		`{"select": "call", "where": [{"of": "receiver", "is": "identifier"}]}`: "[Checkout.cs:14]",
+	} {
+		if got := foundAt(t, "csharp", query, project); got != want {
 			t.Errorf("%s:\n got %s\nwant %s", query, got, want)
 		}
 	}

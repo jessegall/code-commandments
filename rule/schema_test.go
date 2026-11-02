@@ -33,8 +33,17 @@ func TestTheSchemaDescribesEveryKeyARuleIsWrittenWith(t *testing.T) {
 	}
 
 	step := schema.Definitions["step"].Properties
-	if step["nameLike"]["description"] == nil || step["descendant"]["$ref"] != "#/definitions/step" || step["lines"]["$ref"] != "#/definitions/bounds" {
-		t.Errorf("a step's checks are described and nested ones refer to their shapes: %v %v %v", step["nameLike"], step["descendant"], step["lines"])
+	if step["nameLike"]["description"] == nil || step["inside"]["$ref"] != "#/definitions/step" || step["lines"]["$ref"] != "#/definitions/bounds" {
+		t.Errorf("a step's checks are described and nested ones refer to their shapes: %v %v %v", step["nameLike"], step["inside"], step["lines"])
+	}
+
+	// A step that carries a key of its own refers to the shape that holds both it and the step nested in it.
+	if step["descendant"]["$ref"] != "#/definitions/descended" || step["child"]["$ref"] != "#/definitions/childed" {
+		t.Errorf("a bounded step refers to its own shape: %v %v", step["descendant"], step["child"])
+	}
+
+	if within := schema.Definitions["descended"].Properties["within"]; within["description"] == nil {
+		t.Errorf("the schema says what a descendant's within means: %v", within)
 	}
 
 	if nesting := schema.Definitions["nesting"].Properties; nesting["count"]["type"] != "integer" {

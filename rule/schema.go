@@ -16,12 +16,15 @@ type object = map[string]any
 
 // shapes are the types a step holds, each a definition of the schema of its own, by the name it is defined under.
 var shapes = map[reflect.Type]string{
-	reflect.TypeFor[Step]():    "step",
-	reflect.TypeFor[Bounds]():  "bounds",
-	reflect.TypeFor[Count]():   "count",
-	reflect.TypeFor[Tally]():   "tally",
-	reflect.TypeFor[Argued]():  "argued",
-	reflect.TypeFor[Nesting](): "nesting",
+	reflect.TypeFor[Step]():      "step",
+	reflect.TypeFor[Bounds]():    "bounds",
+	reflect.TypeFor[Count]():     "count",
+	reflect.TypeFor[Tally]():     "tally",
+	reflect.TypeFor[Argued]():    "argued",
+	reflect.TypeFor[Childed]():   "childed",
+	reflect.TypeFor[Descended](): "descended",
+	reflect.TypeFor[Same]():      "same",
+	reflect.TypeFor[Nesting]():   "nesting",
 }
 
 // Schema is the JSON Schema of a rule file, read from the types a rule is parsed into so it cannot drift from
@@ -131,7 +134,7 @@ func fieldsOf(shape reflect.Type, properties object) {
 			property["description"] = "The node the step judges in place of the one it is on: parent, enclosingFunction, enclosingType, root, closest:<kind> or child:<field>."
 		}
 
-		if says, counting := countKeys[key]; counting && shape == reflect.TypeFor[Count]() {
+		if says, own := ownKeys[shape][key]; own {
 			property["description"] = says
 		} else if check, found := checkNamed(key); found && field.Type.Kind() != reflect.Int {
 			property["description"] = check.Keeps
@@ -168,11 +171,23 @@ func typeOf(written reflect.Type) object {
 	}
 }
 
-// countKeys are what a count's own keys mean, which are not the checks of the same name.
-var countKeys = map[string]string{
-	"descendant": "count the descendants that pass this step",
-	"child":      "count the children that pass this step",
-	"field":      "count only the children filling this field",
+// ownKeys are what a shape's own keys mean, where they are not the checks of the same name.
+var ownKeys = map[reflect.Type]map[string]string{
+	reflect.TypeFor[Count](): {
+		"descendant": "count the descendants that pass this step",
+		"child":      "count the children that pass this step",
+		"field":      "count only the children filling this field",
+	},
+	reflect.TypeFor[Childed](): {
+		"field": "step onto only the children filling this field of the tree",
+	},
+	reflect.TypeFor[Same](): {
+		"of":     "the path from the node to the one it is compared with, any target \"of\" takes",
+		"target": "one more step from there, such as \"child:iter\" for the collection a loop walks",
+	},
+	reflect.TypeFor[Descended](): {
+		"within": "\"ownBody\" steps only onto the nodes the node holds itself, stopping at a function nested in it",
+	},
 }
 
 // closedValues are the keys whose value is one of a few, and those few: the one list the parser checks a value

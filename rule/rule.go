@@ -100,7 +100,8 @@ type Step struct {
 	Position          string     `json:"position,omitempty"`
 	TopLevel          *bool      `json:"topLevel,omitempty"`
 	Of                string     `json:"of,omitempty"`
-	Descendant        *Step      `json:"descendant,omitempty"`
+	Descendant        *Descended `json:"descendant,omitempty"`
+	Child             *Childed   `json:"child,omitempty"`
 	Inside            *Step      `json:"inside,omitempty"`
 	Next              *Step      `json:"next,omitempty"`
 	Previous          *Step      `json:"previous,omitempty"`
@@ -136,11 +137,18 @@ type Step struct {
 	DocTag            string     `json:"docTag,omitempty"`
 	Duplicated        *Bounds    `json:"duplicated,omitempty"`
 	Callers           *Bounds    `json:"callers,omitempty"`
+	UnnamedCondition  *bool      `json:"unnamedCondition,omitempty"`
+	BindsItsOwnTest   *bool      `json:"bindsItsOwnTest,omitempty"`
+	RedundantElse     *bool      `json:"redundantElse,omitempty"`
+	SoleLoopBodyGuard *bool      `json:"soleLoopBodyGuard,omitempty"`
+	PassesItsElement  *bool      `json:"passesItsElementOn,omitempty"`
+	LadderRungs       *Bounds    `json:"ladderRungs,omitempty"`
 	Ancestors         *Ancestors `json:"ancestors,omitempty"`
 	Repeated          *Repeats   `json:"repeated,omitempty"`
 	DeclaredBy        string     `json:"declaredBy,omitempty"`
 	AnsweredBy        *bool      `json:"answeredBy,omitempty"`
 	DeclaredElsewhere *bool      `json:"declaredElsewhere,omitempty"`
+	SameAs            *Same      `json:"sameAs,omitempty"`
 	TestCode          *bool      `json:"testCode,omitempty"`
 	PHP               string     `json:"php,omitempty"`
 	Python            string     `json:"python,omitempty"`
@@ -182,6 +190,73 @@ type Count struct {
 	Field      string `json:"field,omitempty"`
 	Distinct   string `json:"distinct,omitempty"`
 	Bounds
+}
+
+// Same is a check across two nodes: the node the step is about names the same thing as the node reached by
+// following Of from it and then, where Target names one, that target from there.
+type Same struct {
+	Of     string `json:"of"`
+	Target string `json:"target,omitempty"`
+}
+
+// names says whether the two nodes name the same thing: the same text, else the same tree, which answers where
+// one side's source cannot be read.
+func (Same) names(subject, other engine.Match) bool {
+	if !other.Exists() {
+		return false
+	}
+
+	if written := subject.Written(); written != "" && written == other.Written() {
+		return true
+	}
+
+	return subject.SameSyntax(other)
+}
+
+// other is the node the subject is compared with: Of away from the subject, then Target away from that.
+func (a Same) other(subject engine.Match) engine.Match {
+	reached := (Step{Of: a.Of}).subject(subject)
+	if a.Target == "" {
+		return reached
+	}
+
+	return (Step{Of: a.Target}).subject(reached)
+}
+
+// Descended is a step on the nodes below one: every node inside it, or, with Within "ownBody", only the nodes it
+// holds itself, which stop at a function nested in it — so a rule can say "this body does it" rather than "someone
+// does it in here", which is a different claim wherever a closure is handed away.
+type Descended struct {
+	Step
+	Within string `json:"within,omitempty"`
+}
+
+// ownBody is the one thing Within says: the nodes the node itself holds.
+const ownBody = "ownBody"
+
+// descendants are the nodes below the node that the step is about.
+func (d Descended) descendants(match engine.Match) []engine.Match {
+	if d.Within == ownBody {
+		return match.OwnDescendants()
+	}
+
+	return match.Descendants()
+}
+
+// Childed is a step on the node's own children, one level down: those filling the field Field names, or every
+// one of them when it names none.
+type Childed struct {
+	Step
+	Field string `json:"field,omitempty"`
+}
+
+// children are the children the step is about.
+func (c Childed) children(match engine.Match) []engine.Match {
+	if c.Field != "" {
+		return match.ChildrenIn(c.Field)
+	}
+
+	return match.Children()
 }
 
 // Argued is a step on one of a call's arguments: the one At places from the first, or from the last when At is
@@ -362,7 +437,13 @@ func layersInto(stack *engine.LayerStack, steps ...**Step) {
 func (s Step) withLayers(stack *engine.LayerStack) Step {
 	s.layers = stack
 
-	layersInto(stack, &s.Descendant, &s.Inside, &s.Next, &s.Previous, &s.Calls)
+	layersInto(stack, &s.Inside, &s.Next, &s.Previous, &s.Calls)
+
+	if s.Descendant != nil {
+		descended := *s.Descendant
+		descended.Step = descended.Step.withLayers(stack)
+		s.Descendant = &descended
+	}
 
 	if s.NestedAtLeast != nil {
 		counted := *s.NestedAtLeast
@@ -388,6 +469,12 @@ func (s Step) withLayers(stack *engine.LayerStack) Step {
 		s.Argument = &argued
 	}
 
+	if s.Child != nil {
+		childed := *s.Child
+		childed.Step = childed.Step.withLayers(stack)
+		s.Child = &childed
+	}
+
 	for _, listed := range []*[]Step{&s.All, &s.Any} {
 		if *listed != nil {
 			*listed = withLayers(*listed, stack)
@@ -411,7 +498,7 @@ func (s Step) withLayers(stack *engine.LayerStack) Step {
 func (s *Step) nested() []*Step {
 	var nested []*Step
 
-	for _, step := range []*Step{s.Descendant, s.Inside, s.Next, s.Previous, s.Calls, s.ReferredFrom} {
+	for _, step := range []*Step{s.Inside, s.Next, s.Previous, s.Calls, s.ReferredFrom} {
 		if step != nil {
 			nested = append(nested, step)
 		}
@@ -435,6 +522,14 @@ func (s *Step) nested() []*Step {
 
 	if s.Argument != nil {
 		nested = append(nested, &s.Argument.Step)
+	}
+
+	if s.Child != nil {
+		nested = append(nested, &s.Child.Step)
+	}
+
+	if s.Descendant != nil {
+		nested = append(nested, &s.Descendant.Step)
 	}
 
 	for i := range s.All {
@@ -604,11 +699,11 @@ func (s Step) checks() int {
 		s.NameMatches != "", s.NameCase != "", s.Text != nil, s.TextLike != "", s.TextMatches != "", s.Resolves != "",
 		s.ResolvesLike != "", s.NamespaceLike != "", s.Layer != "", s.HasModifier != "", s.HasFlag != "", s.WithinLoop != nil,
 		s.Operator != "", len(s.OperatorIn) > 0, s.Type != "", s.TypeLike != "",
-		s.Documented != nil, s.File != "", s.FileMatches != "", s.Position != "", s.TopLevel != nil, s.Descendant != nil, s.Inside != nil,
+		s.Documented != nil, s.File != "", s.FileMatches != "", s.Position != "", s.TopLevel != nil, s.Descendant != nil, s.Child != nil, s.Inside != nil,
 		s.Next != nil, s.Previous != nil, s.NestedAtLeast != nil, s.Counts != nil, s.Parameters != nil, s.Arguments != nil,
 		s.Lines != nil, s.Members != nil, s.Complexity != nil, s.Extends != "", s.ExtendsAny != "", s.Implements != "", s.Uses != "", s.All != nil, s.Any != nil, s.Not != nil, s.HasAttribute != "", s.Sibling != "", s.IsA != "",
 		s.TypeKind != "", s.HasAnnotation != "", s.ReturnType != "", s.ParameterType != "", s.Constructs != "", s.Unused != nil,
-		s.CalledFrom != "", s.ReferredFrom != nil, s.Calls != nil, s.Argument != nil, s.CommentLike != "", s.CommentMatches != "", s.DocTag != "", s.Duplicated != nil, s.Callers != nil, s.Repeated != nil, s.DeclaredBy != "", s.AnsweredBy != nil, s.DeclaredElsewhere != nil, s.Ancestors != nil,
+		s.CalledFrom != "", s.ReferredFrom != nil, s.Calls != nil, s.Argument != nil, s.CommentLike != "", s.CommentMatches != "", s.DocTag != "", s.Duplicated != nil, s.Callers != nil, s.Repeated != nil, s.DeclaredBy != "", s.AnsweredBy != nil, s.DeclaredElsewhere != nil, s.SameAs != nil, s.Ancestors != nil, s.RedundantElse != nil, s.UnnamedCondition != nil, s.BindsItsOwnTest != nil, s.SoleLoopBodyGuard != nil, s.PassesItsElement != nil, s.LadderRungs != nil,
 		s.TestCode != nil, s.PHP != "", s.Python != "", s.CSharp != "", s.TypeScript != "", s.Vue != "", s.Rule != ""} {
 		if set {
 			count++
@@ -707,6 +802,22 @@ func (s Step) valid() error {
 		return fmt.Errorf("a members step that makes no check counts every member, so its of %q judges nothing", s.Members.Step.Of)
 	}
 
+	if s.SameAs != nil {
+		for key, of := range map[string]string{"sameAs": s.SameAs.Of, "target": s.SameAs.Target} {
+			if key == "target" && of == "" {
+				continue
+			}
+
+			if !slices.ContainsFunc(Targets, func(target Target) bool { return target.Takes(of) }) {
+				return errors.New(noneOf(key, of, targetKeys()))
+			}
+		}
+	}
+
+	if s.Descendant != nil && s.Descendant.Within != "" && s.Descendant.Within != ownBody {
+		return errors.New(noneOf("within", s.Descendant.Within, []string{ownBody}))
+	}
+
 	if s.NestedAtLeast != nil && s.NestedAtLeast.Count < 1 {
 		return fmt.Errorf("nestedAtLeast needs a count of 1 or more, and %s has %d", s.describe(), s.NestedAtLeast.Count)
 	}
@@ -755,6 +866,10 @@ func (s Step) validSizes() error {
 
 	if s.Ancestors != nil {
 		named["ancestors"] = &s.Ancestors.Bounds
+	}
+
+	if s.LadderRungs != nil {
+		named["ladderRungs"] = s.LadderRungs
 	}
 
 	if s.Repeated != nil {
@@ -954,7 +1069,11 @@ func (s Step) check(match engine.Match) bool {
 	case s.TopLevel != nil:
 		return topLevel(subject) == *s.TopLevel
 	case s.Descendant != nil:
-		return slices.ContainsFunc(subject.Descendants(), s.Descendant.check)
+		return slices.ContainsFunc(s.Descendant.descendants(subject), s.Descendant.check)
+	case s.Child != nil:
+		return slices.ContainsFunc(s.Child.children(subject), s.Child.check)
+	case s.SameAs != nil:
+		return s.SameAs.names(subject, s.SameAs.other(subject))
 	case s.Inside != nil:
 		return slices.ContainsFunc(subject.Ancestors(), s.Inside.check)
 	case s.Next != nil:
@@ -1031,6 +1150,20 @@ func (s Step) check(match engine.Match) bool {
 		return copies > 0 && s.Duplicated.holds(copies)
 	case s.Callers != nil:
 		return s.Callers.holds(len(subject.Referrers()))
+	case s.UnnamedCondition != nil:
+		return engine.TestsAnUnnamedConcept(subject) == *s.UnnamedCondition
+	case s.BindsItsOwnTest != nil:
+		return subject.BindsItsOwnTest() == *s.BindsItsOwnTest
+	case s.RedundantElse != nil:
+		return engine.HasRedundantElse(subject) == *s.RedundantElse
+	case s.SoleLoopBodyGuard != nil:
+		return engine.IsSoleLoopBodyGuard(subject) == *s.SoleLoopBodyGuard
+	case s.PassesItsElement != nil:
+		return engine.PassesItsElementOn(subject) == *s.PassesItsElement
+	case s.LadderRungs != nil:
+		rungs := engine.SubjectLadderLength(subject)
+
+		return rungs > 0 && s.LadderRungs.holds(rungs)
 	case s.Ancestors != nil:
 		return s.Ancestors.holds(len(s.ancestors(subject)))
 	case s.Repeated != nil:
