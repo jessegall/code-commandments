@@ -2,6 +2,7 @@ package scan
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"sync"
@@ -413,13 +414,52 @@ var read = func(b Bridge, roots, files []string, tally func()) (*contract.Stream
 // A command never leaves a bridge behind. The warm ones belong to the journal's plugin, which starts them with the
 // session and stops them with it; a run of the tool that daemonised one of its own would orphan it.
 func (b Bridge) Read(roots, files []string, tally func()) (*contract.Stream, error) {
-	return read(b, roots, files, tally)
+	return b.readHalving(roots, files, tally, halvingsAtMost)
 }
 
-// read is the funnel's own body: open the bridge, however it is reached, and ask it.
+// read is the funnel's own body: open the bridge, however it is reached, and ask it once.
 func (b Bridge) read(roots, files []string, tally func()) (*contract.Stream, error) {
 	roots, files = resolved(roots), resolved(files)
 
+	return b.ask(roots, files, tally)
+}
+
+// halvingsAtMost is how many times a dying set is cut in two. A bridge that dies on one file of a thousand is
+// found in ten cuts, and each cut costs a bridge run, so the floor is what keeps one death from becoming hundreds
+// of them: past it the rest of the set is reported unread, as it always was.
+const halvingsAtMost = 8
+
+// readHalving asks the bridge for the files, and where it dies asks for each half of them, down to the floor.
+//
+// What is halved is what the bridge WRITES, never what it compiles: a C# bridge is asked to compile whole roots and
+// write the named files, so each half is still read against the whole project and every type that crosses the halves
+// goes on resolving. Halving the compilation instead would answer, and answer differently — a type declared in the
+// other half would read as a type the scan never saw — which is worse than a file left unread, because nothing says
+// so.
+//
+// A bridge that dies on the whole set and on both halves of it has died on something that is not the set, and the
+// floor ends it there.
+func (b Bridge) readHalving(roots, files []string, tally func(), halvings int) (*contract.Stream, error) {
+	stream, err := read(b, roots, files, tally)
+	if err == nil || halvings <= 0 || len(files) < 2 {
+		return stream, err
+	}
+
+	first, second := files[:len(files)/2], files[len(files)/2:]
+	read, firstErr := b.readHalving(roots, first, tally, halvings-1)
+	rest, secondErr := b.readHalving(roots, second, tally, halvings-1)
+
+	// Both halves dying says the fault is not the set, so the first answer stands as it was: a half-read stream
+	// told as what the bridge managed is better than a story about halves nobody asked for.
+	if firstErr != nil && secondErr != nil {
+		return stream, err
+	}
+
+	return joined(read, rest), errors.Join(firstErr, secondErr)
+}
+
+// ask is one request to one bridge, opened however this bridge is reached and closed after.
+func (b Bridge) ask(roots, files []string, tally func()) (*contract.Stream, error) {
 	asker, err := b.Reach.Open(b, roots)
 	if err != nil {
 		return nil, err
@@ -427,6 +467,23 @@ func (b Bridge) read(roots, files []string, tally func()) (*contract.Stream, err
 	defer asker.Close()
 
 	return asker.AskTallied(b.Request(roots, files), tally)
+}
+
+// joined is two readings of one project as one stream: the files of both, and the first reading's own header,
+// program and trailer, since both halves were read against the same roots by the same bridge. The trailer's count
+// is the files the stream really holds, which is what a reader of it counts on.
+func joined(read, rest *contract.Stream) *contract.Stream {
+	switch {
+	case read == nil:
+		return rest
+	case rest == nil:
+		return read
+	}
+
+	read.Files = append(read.Files, rest.Files...)
+	read.Trailer.Files = len(read.Files)
+
+	return read
 }
 
 // Request is what the bridge is asked: the files to write, and the roots as well for a bridge that compiles
