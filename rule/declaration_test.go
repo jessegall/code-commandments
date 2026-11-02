@@ -99,3 +99,75 @@ class Shift
 		}
 	}
 }
+
+// TestARuleStepsOntoTheObjectACallIsSentTo holds the receiver target, which composes every check in the catalogue
+// onto what a call is sent to: a question about the OBJECT rather than about the call. No receiver must mean no
+// node, never a silent pass, or a rule about calls on a repository would keep every free function too.
+func TestARuleStepsOntoTheObjectACallIsSentTo(t *testing.T) {
+	project := phpProject(t, map[string]string{
+		"app/OrderRepository.php": `<?php
+
+namespace App;
+
+class OrderRepository
+{
+    public function save(): void {}
+}
+`,
+		"app/Checkout.php": `<?php
+
+namespace App;
+
+class Checkout
+{
+    public function __construct(private OrderRepository $orders) {}
+
+    public function place(): void
+    {
+        $this->orders->save();
+        helper();
+    }
+}
+`,
+	})
+
+	for query, want := range map[string]string{
+		`{"select": "call", "where": [{"of": "receiver", "resolvesLike": "*Repository"}]}`: "[Checkout.php:11]",
+		// A call of a bare name is sent to nobody, so the step keeps nothing rather than passing silently.
+		`{"select": "call", "where": [{"of": "receiver", "is": "identifier"}]}`: "[]",
+	} {
+		if got := foundAt(t, "backend", query, project); got != want {
+			t.Errorf("%s:\n got %s\nwant %s", query, got, want)
+		}
+	}
+}
+
+// TestTheReceiverTargetReadsTheSameWayInPython holds it in a second language, where a call is its own node and the
+// object is reached through what it calls.
+func TestTheReceiverTargetReadsTheSameWayInPython(t *testing.T) {
+	project := pythontest.FromSource(t, map[string]string{
+		"shop/__init__.py": "",
+		"shop/checkout.py": `class OrderRepository:
+    def save(self) -> None:
+        pass
+
+
+def helper() -> None:
+    pass
+
+
+def place(orders: OrderRepository) -> None:
+    orders.save()
+    helper()
+`,
+	})
+
+	for query, want := range map[string]string{
+		`{"select": "call", "where": [{"of": "receiver", "typeLike": "*OrderRepository"}]}`: "[checkout.py:11]",
+		`{"select": "call", "where": [{"of": "receiver", "is": "identifier"}]}`:             "[checkout.py:11]",
+	} {
+		if got := foundAt(t, "python", query, project); got != want {
+			t.Errorf("%s:\n got %s\nwant %s", query, got, want)
+		}
+	}
+}

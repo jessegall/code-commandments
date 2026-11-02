@@ -10,6 +10,28 @@ import (
 // caller doing it is one caller's business, two or more is the finder's.
 const deNulledBy = 2
 
+// NoCallerHandlesTheAbsence says whether nothing that calls the def outside the tests handles the absence it may
+// answer: each caller reads the result through, hands it where one is required, or asserts it away.
+//
+// TRUE where the def has no callers at all, which is the difference from IsDeNulledFinder: that one measures a
+// finder against the callers deciding the same absence over and over, and needs two of them before the finder is
+// at fault, where a STORE's signature invites every future caller to decide whatever it is called from today. One
+// caller that handles the absence honestly is the whole answer either way: the absence is then real, said in the
+// type, and the callers are doing what the type asks.
+func (p *Program) NoCallerHandlesTheAbsence(def Node) bool {
+	for _, call := range p.CallersOf(def) {
+		if call.Match.IsTest() {
+			continue
+		}
+
+		if !p.ResultIsTakenAsPresent(call) {
+			return false
+		}
+	}
+
+	return true
+}
+
 // IsDeNulledFinder says whether the def answers `X | None` for an object and every caller outside the tests, two
 // or more of them, turns that None into a failure where it stands — asserting it away, raising on it, or reading
 // through it as though it could not be there. The annotation then says the value may be missing and no caller

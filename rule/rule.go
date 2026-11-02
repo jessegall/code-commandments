@@ -838,6 +838,10 @@ const declaredBy = "declaredBy"
 // member it is without the two ever disagreeing.
 const declarationTarget = "declaration"
 
+// receiverTarget names the object a node is sent to, which every language answers through its own grammar: the
+// `$order` of `$order->ship()` and the `order` of `order.ship()` alike.
+const receiverTarget = "receiver"
+
 // valid checks the bounds bound something, below zero nowhere, and leave room between them.
 func (b Bounds) valid(size string) error {
 	switch {
@@ -1407,6 +1411,8 @@ func (s Step) subject(match engine.Match) engine.Match {
 		return match.Declaring()
 	case s.Of == declarationTarget:
 		return match.Declared()
+	case s.Of == receiverTarget:
+		return match.Receiver()
 	case strings.HasPrefix(s.Of, "closest:"):
 		return match.Closest(engine.Neutral(strings.TrimPrefix(s.Of, "closest:")))
 	case strings.HasPrefix(s.Of, "child:"):

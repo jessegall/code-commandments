@@ -37,6 +37,20 @@ func assignedName(statement engine.Match) string {
 	return targets[0].Name()
 }
 
+// receiver is what a node is sent to: the value an attribute is read from, and, for a CALL, what the attribute it
+// calls is sent to — the `orders` of `orders.save()`.
+//
+// A call is its own node here, where PHP's method call is one node holding both, so without the second step a rule
+// asking what a call is sent to was answered nothing in Python while being answered the object in PHP. Go reads a
+// call the same way through its own grammar, so this is the shape the question already had.
+func receiver(node engine.Match) engine.Match {
+	if node.Kind() == "Call" {
+		return node.Child("func").Child("value")
+	}
+
+	return node.Child("value")
+}
+
 // protocols are the classes a class lists among its bases to declare itself a protocol.
 var protocols = []string{"typing.Protocol", "typing_extensions.Protocol"}
 
@@ -46,7 +60,7 @@ var abstractions = []string{"abc.ABC"}
 func init() {
 	engine.ReadAs(contract.Python, engine.Grammar{
 		Arguments:     values,
-		Receiver:      engine.InField("value"),
+		Receiver:      receiver,
 		Declares:      engine.KindIn("NamedExpr"),
 		Binds:         engine.KindIn("Assign", "AnnAssign", "NamedExpr"),
 		Members:       members,

@@ -2,6 +2,7 @@ package frontend
 
 import (
 	"path"
+	"slices"
 	"strings"
 
 	"github.com/jessegall/code-commandments/contract"
@@ -24,6 +25,8 @@ func init() {
 			ParameterType: engine.InField("type"),
 			Constructs:    engine.OfKind("NewExpression", "expression"),
 			TypeOf:        func(node engine.Match) string { return typescript.Of(node).TypeName() },
+			Receiver:      receiver,
+			Condition:     condition,
 			DocTags:       jsDocTags,
 			WritesAttribute: func(element engine.Match, name string) bool {
 				return vue.Of(element).Writes(name)
@@ -116,4 +119,45 @@ func jsDocTags(declaration engine.Match) []string {
 	}
 
 	return tags
+}
+
+// sentTo are the kinds that read a member of something: the object is the expression they are sent to.
+var sentTo = []string{"PropertyAccessExpression", "ElementAccessExpression"}
+
+// receiver is the object a node is sent to: the `order` of `order.ship` and of `order.ship()`.
+//
+// A call is a node of its own here, where PHP's method call is one node holding both, so a call is read through
+// what it calls: `order.ship()` is a call of a property access of `order`, and a rule asking for the receiver of
+// either means the same object. Nothing for a call of a bare name, which is sent to nobody.
+func receiver(node engine.Match) engine.Match {
+	if slices.Contains(sentTo, node.Kind()) {
+		return node.Child("expression")
+	}
+
+	if node.Kind() != "CallExpression" && node.Kind() != "NewExpression" {
+		return engine.Match{}
+	}
+
+	return receiver(node.Child("expression"))
+}
+
+// asked are the kinds that decide by a condition, and the field each keeps it in. A for-of and a for-in decide
+// nothing: they walk what they are given, and their expression is that, not a question.
+var asked = map[string]string{
+	"IfStatement":           "expression",
+	"WhileStatement":        "expression",
+	"DoStatement":           "expression",
+	"SwitchStatement":       "expression",
+	"ConditionalExpression": "condition",
+	"ForStatement":          "condition",
+}
+
+// condition is the question a branch, a loop or a conditional expression decides by; no node for anything else.
+func condition(held engine.Match) engine.Match {
+	field, decides := asked[held.Kind()]
+	if !decides {
+		return engine.Match{}
+	}
+
+	return held.Child(field)
 }

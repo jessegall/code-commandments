@@ -154,6 +154,7 @@ var Targets = []Target{
 	{"closest:<kind>", "the nearest node above it of the neutral kind, such as `closest:loop`"},
 	{"root", "its file's root"},
 	{"child:<field>", "its child filling the field, such as `child:class`"},
+	{"receiver", "the object it is sent to: the `$order` of `$order->ship()` and the `order` of `order.ship()`, whether the step is asked of the read or of the call around it, so `{\"of\": \"receiver\", \"resolvesLike\": \"*Repository\"}` is anything sent to a repository. No node for a call of a bare name, which is sent to nobody"},
 	{"declaration", "the declaration of the member it reaches: the method a call runs, the field an access reads, the field a named argument sets. The resolver's own answer where its bridge followed the call, and the declaring type's own members otherwise, so `{\"of\": \"declaration\", \"hasModifier\": \"static\"}` is a call of a static method wherever it was written"},
 	{"declaredBy", "the declaration of the type that declares the member it reads, so every check composes on whose field it is: `{\"of\": \"declaredBy\", \"file\": \"app/Models/**\"}` is a field of a model, read from anywhere"},
 }
