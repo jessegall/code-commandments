@@ -842,6 +842,23 @@ const declarationTarget = "declaration"
 // `$order` of `$order->ship()` and the `order` of `order.ship()` alike.
 const receiverTarget = "receiver"
 
+// conditionTarget names the question a branch or a loop decides by, and subjectTarget what a comparison tests
+// against a constant. The two are what a rule about a decision needs: one steps onto the question, the other onto
+// the thing being asked about.
+const (
+	conditionTarget = "condition"
+	subjectTarget   = "subject"
+	// returnTypeTarget and parameterTypeTarget land on the type NODE a signature writes, so everything a rule can
+	// ask of a type composes on it — what it resolves to, what it is a kind of, the shape it has. Globbing the
+	// type's TEXT is what a rule had instead, and the catalogue said the smell out loud: `{"returnType": "?*"}`
+	// was how a rule asked whether a return may be absent.
+	returnTypeTarget    = "returnType"
+	parameterTypeTarget = "parameterType"
+	// annotationTarget opens the target that names one: `annotation:Route` lands on the attribute or decorator of
+	// that name, where hasAnnotation says only that one is there.
+	annotationTarget = "annotation:"
+)
+
 // valid checks the bounds bound something, below zero nowhere, and leave room between them.
 func (b Bounds) valid(size string) error {
 	switch {
@@ -999,7 +1016,11 @@ func (s Step) check(match engine.Match) bool {
 	case s.Calls != nil:
 		return slices.ContainsFunc(subject.OwnDescendants(), func(below engine.Match) bool { return below.Is(engine.Call) && s.Calls.check(below) })
 	case s.Argument != nil:
-		return (subject.Is(engine.Call) || subject.Is(engine.Construction)) && s.Argument.passes(subject.Arguments())
+		// Whatever was HANDED to the node, wherever its language keeps it: a call's arguments, a construction's,
+		// and an annotation's, which is what makes `{"of": "annotation:Route", "argument": …}` answer what the
+		// attribute was given rather than only that it is there. A node handed nothing has no arguments to pass,
+		// so the kinds need no guard of their own.
+		return s.Argument.passes(subject.Arguments())
 	case s.CommentLike != "", s.CommentMatches != "":
 		return s.commented(subject)
 	case s.DocTag != "":
@@ -1413,6 +1434,16 @@ func (s Step) subject(match engine.Match) engine.Match {
 		return match.Declared()
 	case s.Of == receiverTarget:
 		return match.Receiver()
+	case s.Of == conditionTarget:
+		return match.Condition()
+	case s.Of == subjectTarget:
+		return match.ComparisonSubject()
+	case strings.HasPrefix(s.Of, annotationTarget):
+		return match.Annotated(strings.TrimPrefix(s.Of, annotationTarget))
+	case s.Of == returnTypeTarget:
+		return match.ReturnType()
+	case s.Of == parameterTypeTarget:
+		return match.ParameterType()
 	case strings.HasPrefix(s.Of, "closest:"):
 		return match.Closest(engine.Neutral(strings.TrimPrefix(s.Of, "closest:")))
 	case strings.HasPrefix(s.Of, "child:"):

@@ -171,3 +171,216 @@ def place(orders: OrderRepository) -> None:
 		}
 	}
 }
+
+// TestARuleStepsOntoWhatABranchDecidesBy holds the condition target, and holds it to the look-alike the engine's
+// own grammar names: a `for` over a collection decides nothing, since it walks what it is given, so a rule about
+// what a branch asks must keep nothing for it.
+func TestARuleStepsOntoWhatABranchDecidesBy(t *testing.T) {
+	project := pythontest.FromSource(t, map[string]string{
+		"shop/__init__.py": "",
+		"shop/decide.py": `def ready() -> bool:
+    return True
+
+
+def work(lines: list[str], flag: bool) -> int:
+    if ready():
+        return 1
+
+    if flag:
+        return 2
+
+    for line in lines:
+        print(line)
+
+    return 3
+`,
+	})
+
+	for query, want := range map[string]string{
+		// The branch that decides by what a call answers, and not the one deciding by a name.
+		`{"select": "branch", "where": [{"of": "condition", "is": "call"}]}`:       "[decide.py:6]",
+		`{"select": "branch", "where": [{"of": "condition", "is": "identifier"}]}`: "[decide.py:9]",
+		// A loop over a collection decides nothing, so a question about a condition keeps it out.
+		`{"select": "loop", "where": [{"of": "condition", "is": "identifier"}]}`: "[]",
+	} {
+		if got := foundAt(t, "python", query, project); got != want {
+			t.Errorf("%s:\n got %s\nwant %s", query, got, want)
+		}
+	}
+}
+
+// TestARuleStepsOntoWhatAComparisonTestsAgainstAConstant holds the subject target in two languages, with the one
+// shape it must refuse: a comparison of two constants tests no subject, so a rule about a field's own question
+// keeps nothing for it.
+func TestARuleStepsOntoWhatAComparisonTestsAgainstAConstant(t *testing.T) {
+	python := pythontest.FromSource(t, map[string]string{
+		"shop/__init__.py": "",
+		"shop/tasks.py": `from dataclasses import dataclass
+
+
+@dataclass(frozen=True)
+class Task:
+    state: str
+
+
+def started(task: Task) -> bool:
+    return task.state == "started"
+
+
+def always() -> bool:
+    return 1 == 1
+`,
+	})
+
+	for query, want := range map[string]string{
+		`{"select": "comparison", "where": [{"of": "subject", "declaredBy": "*Task"}]}`: "[tasks.py:10]",
+		`{"select": "comparison", "where": [{"of": "subject", "is": "literal"}]}`:       "[]",
+	} {
+		if got := foundAt(t, "python", query, python); got != want {
+			t.Errorf("%s:\n got %s\nwant %s", query, got, want)
+		}
+	}
+
+	php := phpProject(t, map[string]string{
+		"app/Orders.php": `<?php
+
+namespace App;
+
+class Orders
+{
+    public function paid(string $state): bool
+    {
+        return $state === 'paid';
+    }
+
+    public function always(): bool
+    {
+        return 1 === 1;
+    }
+}
+`,
+	})
+
+	for query, want := range map[string]string{
+		`{"select": "comparison", "where": [{"of": "subject", "is": "identifier"}]}`: "[Orders.php:9]",
+		`{"select": "comparison", "where": [{"of": "subject", "is": "literal"}]}`:    "[]",
+	} {
+		if got := foundAt(t, "backend", query, php); got != want {
+			t.Errorf("%s:\n got %s\nwant %s", query, got, want)
+		}
+	}
+}
+
+// TestARuleStepsOntoTheTypeASignatureWrites holds the two type targets, which turn a glob over a type's TEXT into
+// a question about the type itself: what it resolves to, what it is a kind of, what it holds. The look-alike is a
+// signature that writes no type at all, which must answer no node rather than pass.
+func TestARuleStepsOntoTheTypeASignatureWrites(t *testing.T) {
+	project := phpProject(t, map[string]string{
+		"app/Lines.php": `<?php
+
+namespace App;
+
+use Illuminate\Support\Collection;
+
+class Lines extends Collection
+{
+}
+`,
+		"app/Order.php": `<?php
+
+namespace App;
+
+class Order
+{
+    public function lines(): Lines
+    {
+        return new Lines();
+    }
+
+    public function total(): int
+    {
+        return 0;
+    }
+
+    public function untyped()
+    {
+        return null;
+    }
+
+    public function priced(Lines $lines, int $rate): int
+    {
+        return $rate;
+    }
+}
+`,
+	})
+
+	for query, want := range map[string]string{
+		// The function answering a collection, known through what its written type resolves to rather than through
+		// the letters of the type's name.
+		`{"select": "function", "where": [{"of": "returnType", "resolvesLike": "App\\Lines"}]}`: "[Order.php:7]",
+		// Both the total and the priced read answer an int, which is the point of asking the type rather than
+		// the name of the method.
+		`{"select": "function", "where": [{"of": "returnType", "name": "int"}]}`: "[Order.php:12 Order.php:22]",
+		// A function that writes no return type answers no node, so a rule about what a function returns keeps
+		// nothing for it rather than keeping everything.
+		`{"select": "function", "where": [{"of": "returnType", "nameLike": "*"}]}`: "[Order.php:12 Order.php:22 Order.php:7]",
+		// A parameter's own written type, read the same way.
+		`{"select": "parameter", "where": [{"of": "parameterType", "resolvesLike": "App\\Lines"}]}`: "[Order.php:22]",
+	} {
+		if got := foundAt(t, "backend", query, project); got != want {
+			t.Errorf("%s:\n got %s\nwant %s", query, got, want)
+		}
+	}
+}
+
+// TestARuleStepsOntoAnAnnotationItNames holds the last of the phase's targets, and the difference it makes:
+// hasAnnotation says an attribute is THERE, where this asks what it was handed. The look-alike is a declaration
+// carrying a differently named annotation with the same argument, which must keep nothing.
+func TestARuleStepsOntoAnAnnotationItNames(t *testing.T) {
+	project := phpProject(t, map[string]string{
+		"app/Routes.php": `<?php
+
+namespace App;
+
+use Attribute;
+
+#[Attribute]
+class Route
+{
+    public function __construct(public string $path) {}
+}
+
+#[Attribute]
+class Menu
+{
+    public function __construct(public string $path) {}
+}
+
+class Admin
+{
+    #[Route('/admin/orders')]
+    public function orders(): void {}
+
+    #[Route('/public/prices')]
+    public function prices(): void {}
+
+    #[Menu('/admin/hidden')]
+    public function hidden(): void {}
+}
+`,
+	})
+
+	for query, want := range map[string]string{
+		// What the attribute was handed, asked of the attribute the rule names.
+		`{"select": "function", "where": [{"of": "annotation:Route", "argument": {"at": 0, "textLike": "/admin*"}}]}`: "[Routes.php:21]",
+		// The menu carries the same argument under another name, and a rule about routes keeps nothing for it.
+		`{"select": "function", "where": [{"of": "annotation:Route", "argument": {"at": 0, "textLike": "*hidden"}}]}`: "[]",
+		// Every method the attribute is on, whatever it was handed.
+		`{"select": "function", "where": [{"of": "annotation:Route", "argument": {"at": 0, "textLike": "*"}}]}`: "[Routes.php:21 Routes.php:24]",
+	} {
+		if got := foundAt(t, "backend", query, project); got != want {
+			t.Errorf("%s:\n got %s\nwant %s", query, got, want)
+		}
+	}
+}

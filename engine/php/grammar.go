@@ -42,11 +42,12 @@ func init() {
 		},
 		Continues: engine.KindIn("Stmt_ElseIf"),
 		// PHP hangs a body straight off its construct, as its statements, so there is no block to read through.
-		Body:        engine.InFields("stmts"),
-		Otherwise:   otherwise,
-		Condition:   condition,
-		ElementName: elementName,
-		Computes:    computes,
+		Body:              engine.InFields("stmts"),
+		Otherwise:         otherwise,
+		Condition:         condition,
+		ComparisonSubject: comparisonSubject,
+		ElementName:       elementName,
+		Computes:          computes,
 	})
 
 }
@@ -105,14 +106,12 @@ func callers(function engine.Match) []engine.Match {
 
 // attributes are the names of the attributes a declaration carries, in every group.
 func attributes(declaration engine.Match) []engine.Match {
-	var names []engine.Match
+	var carried []engine.Match
 	for _, group := range declaration.ChildrenIn("attrGroups") {
-		for _, attribute := range group.ChildrenIn("attrs") {
-			names = append(names, attribute.Child("name"))
-		}
+		carried = append(carried, group.ChildrenIn("attrs")...)
 	}
 
-	return names
+	return carried
 }
 
 // magic says whether PHP itself calls the method: a constructor, a destructor or any other magic method.
@@ -169,6 +168,41 @@ func condition(held engine.Match) engine.Match {
 	}
 
 	return held.Child("cond")
+}
+
+// constantSides are the kinds PHP writes a constant value as: a literal, a class constant or an enum case
+// (`State::Paid`), and a bare constant name. The bridge writes no `constant` fact of its own here, so the kind is
+// what says it, which is the same reading IsOperand already makes of a derivation's leaves.
+var constantSides = []string{"Scalar_String", "Scalar_Int", "Scalar_Float", "Expr_ClassConstFetch", "Expr_ConstFetch"}
+
+// comparisonSubject is what a comparison tests against a constant: the side that is no constant, when the other
+// one is. It is what tells a ladder over ONE subject — `$order->state === State::Paid` and the next arm asking the
+// same read against another case — from a chain of unrelated tests, and PHP answered it nowhere, which is why the
+// rules built on it could not be written for PHP at all.
+//
+// Nothing where neither side is a constant, since `$a === $b` tests no subject against anything, and nothing where
+// both are: a comparison of two constants decides nothing about a subject.
+func comparisonSubject(held engine.Match) engine.Match {
+	if !slices.Contains([]string{"===", "==", "!==", "!="}, held.Operator()) {
+		return engine.Match{}
+	}
+
+	left, right := held.Child("left"), held.Child("right")
+	leftIsConstant, rightIsConstant := isConstantSide(left), isConstantSide(right)
+
+	switch {
+	case !leftIsConstant && rightIsConstant:
+		return left
+	case leftIsConstant && !rightIsConstant:
+		return right
+	}
+
+	return engine.Match{}
+}
+
+// isConstantSide says whether the side of a comparison is a constant value.
+func isConstantSide(side engine.Match) bool {
+	return slices.Contains(constantSides, side.Kind())
 }
 
 // elementName is the name a foreach binds for each item: the `$line` of `foreach ($order->lines as $line)`.

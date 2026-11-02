@@ -52,18 +52,38 @@ func (m Match) ParameterType() Match {
 // IsAnnotated says whether an attribute or decorator the declaration carries names the type, by any name its
 // language lets one be written by: `[Serializable]` is SerializableAttribute in C#.
 func (m Match) IsAnnotated(want string) bool {
+	return m.Annotated(want).Exists()
+}
+
+// Annotated is that annotation itself, so what it was HANDED can be read: its arguments, what they resolve to,
+// where they point. IsAnnotated asks whether one is there and this answers which one it is, from the one body, and
+// no node where the declaration carries none.
+func (m Match) Annotated(want string) Match {
 	names := []string{want}
 	if read := m.grammar().AnnotationNames; read != nil {
 		names = read(want)
 	}
 
 	for _, annotation := range m.Annotations() {
-		if slices.ContainsFunc(names, annotation.Names) {
-			return true
+		if annotation.writtenBy(names) {
+			return annotation
 		}
 	}
 
-	return false
+	return Match{}
+}
+
+// writtenBy says whether the annotation is written by one of those names: its own, or the name it HOLDS, since a
+// language may write an annotation as a node carrying its name rather than as the name itself — PHP's
+// `#[Route('/admin')]` is an attribute holding both the name and what it was handed.
+func (m Match) writtenBy(names []string) bool {
+	if slices.ContainsFunc(names, m.Names) {
+		return true
+	}
+
+	named := m.Child("name")
+
+	return named.Exists() && slices.ContainsFunc(names, named.Names)
 }
 
 // Names says whether the node names the type: by the symbol it resolves to when want is qualified, and

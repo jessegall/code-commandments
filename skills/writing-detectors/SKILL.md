@@ -210,6 +210,13 @@ does not — which is how a `where` says what only a `reject` could.
 | `closest:<kind>` | the nearest node above it of the neutral kind, such as `closest:loop` |
 | `root` | its file's root |
 | `child:<field>` | its child filling the field, such as `child:class` |
+| `annotation:<name>` | the annotation of that name the declaration carries: the attribute, the decorator. `hasAnnotation` says one is THERE, where this asks what it was handed — `{"of": "annotation:Route", "argument": {"at": 0, "textLike": "/admin*"}}` is a route under /admin. No node where the declaration carries no annotation of that name |
+| `returnType` | the type NODE a function writes as its return, so everything a rule asks of a type composes on it: `{"of": "returnType", "isA": "Collection"}` is a function answering a collection, where globbing the type's text could only match its spelling. No node for a function that writes none, which is no pass but no answer |
+| `parameterType` | the type NODE a parameter writes, read as `returnType` reads a function's |
+| `condition` | the question it decides by: the test of an `if`, a `while` or a conditional expression, so `{"of": "condition", "is": "call"}` is a branch deciding by what a call answers. No node for what decides nothing, a `for` over a collection among them, which walks what it is given |
+| `subject` | what a comparison tests against a constant: the side that is no constant, when the other one is. It is what a ladder over ONE subject is told by, and it answers nothing where neither side is a constant or both are, since two values compared test no subject and two constants decide nothing about one |
+| `receiver` | the object it is sent to: the `$order` of `$order->ship()` and the `order` of `order.ship()`, whether the step is asked of the read or of the call around it, so `{"of": "receiver", "resolvesLike": "*Repository"}` is anything sent to a repository. No node for a call of a bare name, which is sent to nobody |
+| `declaration` | the declaration of the member it reaches: the method a call runs, the field an access reads, the field a named argument sets. The resolver's own answer where its bridge followed the call, and the declaring type's own members otherwise, so `{"of": "declaration", "hasModifier": "static"}` is a call of a static method wherever it was written |
 | `declaredBy` | the declaration of the type that declares the member it reads, so every check composes on whose field it is: `{"of": "declaredBy", "file": "app/Models/**"}` is a field of a model, read from anywhere |
 <!-- END: rule-checks -->
 
