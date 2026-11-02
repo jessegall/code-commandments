@@ -10,8 +10,11 @@ description: "How to write a commandment of your OWN — a project-local rule th
 
 ## A rule is a question the engine answers
 
-A rule of your own is data the binary runs — a `.json` file in `.commandments/custom/` — and it asks
-the same engine every shipped rule asks. It names the engine it judges, the sin it finds, and a query:
+A rule of your own is data the binary runs — a `.json` file in `.commandments/custom/`, in that folder or any
+folder under it, so a project with rules for several parts of its code groups them by what they protect
+(`custom/core/`, `custom/viewer/`) — and it asks the same engine every shipped rule asks. A rule is named by its
+FILE wherever it sits, so moving one into a folder leaves every mention of it in the config standing, and two files
+of one name are both refused rather than one of them quietly winning. It names the engine it judges, the sin it finds, and a query:
 a **selector** that opens it, then **`where`** steps that keep a node and **`reject`** steps that drop
 one. **Each step makes exactly one check**; a rule is only as good as the question each step asks.
 
@@ -211,8 +214,10 @@ does not — which is how a `where` says what only a `reject` could.
 <!-- END: rule-checks -->
 
 **A list of words, named once.** Several rules often check against the same words, and editing that list in four
-files is how the fifth word ends up in three of them. Declare it once in `.commandments/custom/lists.json` — the
-one file in that folder that is not a rule — and name it where the words would go:
+files is how the fifth word ends up in three of them. Declare it once in a `lists.json` under
+`.commandments/custom/` — the one file name there that is not a rule, read wherever it sits, so the lists may live
+beside the rules that check against them or in a folder of their own, and a rule names a LIST and never the file it
+is in — and name it where the words would go:
 
 ```json
 { "poetry": ["ephemeral", "sublime", "liminal"] }

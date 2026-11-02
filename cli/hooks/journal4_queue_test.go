@@ -626,3 +626,59 @@ func TestTheServiceAnswersEveryVersion4EventInVersion4sShape(t *testing.T) {
 		listener.Close()
 	}
 }
+
+// TestAnEditNamesItsOwnLinesWhateverTheJournalCallsThem holds the plugin to both journals. Version 4 wrote an
+// edit's rows with a `kind`, version 5 writes the same fact as `line_type`, and the lines are what tell a sin the
+// edit just wrote from one that was already in the file. Reading one spelling only left every edit of the other
+// looking like an edit that carried nothing, which is answered by asking git for a diff the journal had already
+// worked out: right, and a process per file for nothing.
+func TestAnEditNamesItsOwnLinesWhateverTheJournalCallsThem(t *testing.T) {
+	for name, kind := range map[string]string{"version 4's kind": "kind", "version 5's line_type": "line_type"} {
+		t.Run(name, func(t *testing.T) {
+			root, _, data := projectWithASin(t)
+			t.Setenv("JOURNAL_ROOT", root)
+
+			// The sin stands on the file's second line, and the edit says it wrote a line elsewhere, so a plugin
+			// that reads the rows raises nothing and one that ignores them asks git and raises the sin.
+			said := saidAfter(t, data, map[string]any{
+				"v": 1, "event": "file_edited", "session": "s1", "environment": "main",
+				"data": map[string]any{
+					"path": "src/refund.py", "kind": "edit", "added": 1, "removed": 0, "tool_use": 41,
+					"lines": []any{map[string]any{kind: "add", "line": 5, "text": "    return order.total"}},
+				},
+			})
+
+			if strings.Contains(asText(said["tell"]), "redundant-python-else") {
+				t.Errorf("the edit's own rows were not read, so a sin away from the edit was raised: %v", said)
+			}
+		})
+	}
+}
+
+// TestTheJournalsMinuteBeatSweepsLikeGoingIdle holds version 5's `ticked`, which reaches a plugin once a minute
+// for every open agent that is no subagent. It stands for the same moment as going idle: the files that still
+// carry a mark are judged again, so one something else put right turns green within the minute instead of waiting
+// for the agent to stop working.
+func TestTheJournalsMinuteBeatSweepsLikeGoingIdle(t *testing.T) {
+	root, file, data := projectWithASin(t)
+	t.Setenv("JOURNAL_ROOT", root)
+
+	if raised := cardsOf(saidAfter(t, data, eventOf("file_edited", "src/refund.py"))); len(raised) != 1 {
+		t.Fatalf("the sinful edit raised %v", raised)
+	}
+
+	righteous := "def refund(order) -> int:\n    if order.late:\n        raise ValueError(order)\n    return order.total\n"
+	if err := os.WriteFile(file, []byte(righteous), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	beaten := Answer4Now(eventOf("ticked", ""))
+	var answer map[string]any
+	if err := json.Unmarshal([]byte(beaten), &answer); err != nil {
+		t.Fatalf("the beat answered %q: %v", beaten, err)
+	}
+
+	if cards := cardsOf(answer); !settles(cards, "sins:src/refund.py") {
+		t.Errorf("the beat answered %v, none of it settling the mark of the file that is now clean", cards)
+	}
+}

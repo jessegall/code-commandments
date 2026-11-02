@@ -19,6 +19,7 @@ class PrinterRegistry:
     def register(self, till: str, printer: ReceiptPrinter) -> None:
         self._printers[till] = printer
 
+    # @sin DeNulledFinder
     def get(self, till: str) -> ReceiptPrinter | None:
         # @sin NullableRegistryLookup
         return self._printers.get(till)
@@ -38,3 +39,12 @@ class HonestPrinterRegistry:
     # @fixed NullableRegistryLookup
     def __contains__(self, till: str) -> bool:
         return till in self._printers
+
+
+def print_receipt(registry: PrinterRegistry, till: str, text: str) -> None:
+    """Every caller prints through the registry's answer, so a till it lacks is a crash and not a decision."""
+    registry.get(till).print_line(text)
+
+
+def print_banner(registry: PrinterRegistry, till: str) -> None:
+    registry.get(till).print_line("--- end of day ---")

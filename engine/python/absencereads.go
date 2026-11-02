@@ -692,3 +692,34 @@ func (n Node) everPutsNoneIn(name string) bool {
 		return node.Kind() == "Assign" && len(targets) == 1 && targets[0].Name() == name && node.Child("value").IsNone()
 	})
 }
+
+// matched is the class a regular expression's match is held by, as the checker names it.
+const matched = "re.Match"
+
+// FallsBackOnAGroupOfAMatch says whether the expression falls back on a group of a regular-expression match.
+//
+// Such a group is absent by the PATTERN's own grammar, so the fallback is the parse's reading of what the text
+// leaves out rather than a value invented for a missing one: a time written `3pm` has no minutes, and minute 0 is
+// what `3pm` means, which is the choice the absence discipline allows (#816). The signal is the class the read is
+// sent to, so it holds only where the checker really typed it: a project whose values nothing has typed keeps
+// being judged rather than excused for having no types.
+func (n Node) FallsBackOnAGroupOfAMatch() bool {
+	subject, ok := n.FallbackSubject()
+	if !ok {
+		return false
+	}
+
+	class, typed := subject.heldBy().ResolvedClass()
+
+	return typed && class == matched
+}
+
+// heldBy is what the read is sent to: the receiver of a call's own callee, `match` of `match.group(2)`, and the
+// receiver of a plain member read.
+func (n Node) heldBy() Node {
+	if n.IsCall() {
+		return n.Callee().Child("value")
+	}
+
+	return n.Child("value")
+}

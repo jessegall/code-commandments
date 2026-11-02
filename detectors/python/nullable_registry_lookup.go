@@ -31,6 +31,12 @@ func (NullableRegistryLookupDetector) Find(codebase *engine.Codebase) []engine.M
 		Where(engine.As(py.Node.IsReturnedValue)).
 		Where(engine.As(py.Node.MissesToNone)).
 		Where(engine.As(py.Node.LooksUpOwnDict)).
+		// What the CALLERS do is the evidence, and the same measure the PHP rule uses: a store hands out
+		// `X | None` and every caller outside the tests, two or more, turns that None into a failure, so the
+		// absence is impossible and the store's own type says otherwise. Without it the rule fired on a store
+		// whose absence is honest and whose callers say so — a cache of measurements a worker may not have yet
+		// (#815), where None tells unavailable data apart from a measured zero and the viewer hides the figure.
+		Where(engine.As(func(n py.Node) bool { return program.IsDeNulledFinder(n.EnclosingFunction()) })).
 		Reject(engine.As(func(n py.Node) bool { return program.IsOverride(n.EnclosingFunction()) })).
 		Get()
 }

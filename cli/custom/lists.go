@@ -20,29 +20,67 @@ type Lists map[string][]string
 // named finds a list by its name.
 var named = regexp.MustCompile(`\$\{([A-Za-z][A-Za-z0-9_-]*)\}`)
 
-// readLists reads the custom folder's lists; none when there is no file, and an error the folder reports when the
-// file is there and cannot be read, since a rule naming a list from it would otherwise fail for no stated reason.
-func readLists(dir string) (Lists, error) {
-	text, err := os.ReadFile(filepath.Join(dir, ListsFile))
-	if os.IsNotExist(err) {
-		return Lists{}, nil
-	}
-	if err != nil {
-		return nil, fmt.Errorf("%s: %w", ListsFile, err)
-	}
+// readLists reads every lists.json the custom folder holds, wherever it sits: a project groups its rules in folders
+// and keeps the lists they check against beside them, or in a folder of their own. The lists of all of them are one
+// set, since a rule names a list and never a file, so a name two files declare is refused rather than one of the two
+// quietly winning.
+//
+// None when there is no such file, and an error the folder reports for one that cannot be read, since a rule naming
+// a list from it would otherwise fail for no stated reason.
+func readLists(dir string, files []string) (Lists, error) {
+	lists := Lists{}
+	declaring := map[string]string{}
 
-	var lists Lists
-	if err := json.Unmarshal(text, &lists); err != nil {
-		return nil, fmt.Errorf("%s: %w, where a list is written as {\"poetry\": [\"ephemeral\", \"sublime\"]}", ListsFile, err)
-	}
+	for _, path := range files {
+		read, err := readListsFile(path, shortOf(dir, path))
+		if err != nil {
+			return nil, err
+		}
 
-	for name, words := range lists {
-		if len(words) == 0 {
-			return nil, fmt.Errorf("%s: the list %q is empty, so every rule naming it would check against nothing", ListsFile, name)
+		for name, words := range read {
+			if where, declared := declaring[name]; declared {
+				return nil, fmt.Errorf("%s: the list %q is declared in %s too, and a rule names a list, never the file it is in", shortOf(dir, path), name, where)
+			}
+
+			declaring[name] = shortOf(dir, path)
+			lists[name] = words
 		}
 	}
 
 	return lists, nil
+}
+
+// readListsFile is one file's lists, named by its path from the custom folder so the reason says which file.
+func readListsFile(path, short string) (Lists, error) {
+	text, err := os.ReadFile(path)
+	if os.IsNotExist(err) {
+		return Lists{}, nil
+	}
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", short, err)
+	}
+
+	var lists Lists
+	if err := json.Unmarshal(text, &lists); err != nil {
+		return nil, fmt.Errorf("%s: %w, where a list is written as {\"poetry\": [\"ephemeral\", \"sublime\"]}", short, err)
+	}
+
+	for name, words := range lists {
+		if len(words) == 0 {
+			return nil, fmt.Errorf("%s: the list %q is empty, so every rule naming it would check against nothing", short, name)
+		}
+	}
+
+	return lists, nil
+}
+
+// shortOf is the file's path from the custom folder, which is how the folder's own warnings name a file.
+func shortOf(dir, path string) string {
+	if short, err := filepath.Rel(dir, path); err == nil {
+		return filepath.ToSlash(short)
+	}
+
+	return filepath.Base(path)
 }
 
 // Expand is the rule's text with every list it names written out: `"$poetry"` standing alone in a list of words

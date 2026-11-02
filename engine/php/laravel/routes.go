@@ -281,8 +281,11 @@ func groupPrefix(group engine.Match) string {
 			}
 		}
 	}
+	// `as` and `name` are one call on the router: Route::as('admin.')->group(…) and Route::name('admin.')->group(…)
+	// register the same prefix, since the registrar passes both to the same attribute. Reading only `name` left
+	// every route of a group opened with `as` unregistered, so each of them read as a name nothing registers (#818).
 	for link := group; link.Exists(); {
-		if routeCallName(link) == "name" {
+		if named := routeCallName(link); named == "name" || named == "as" {
 			literal, _ := literalArgument(link)
 
 			return literal

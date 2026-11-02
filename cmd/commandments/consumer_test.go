@@ -173,9 +173,13 @@ func TestAProjectWithOnlyTheBinaryIsWiredJudgedAndKeepsItsOwnRules(t *testing.T)
 		t.Errorf("judge said\n%s", judged)
 	}
 
+	// One line per file and sin, as the per-edit nudge has said it since v6.22.0: the file and the lines it
+	// stands on, the sin, and the skill that teaches the fix.
 	hooked := c.feed(0, `{"hook_event_name":"PostToolUse","session_id":"s1","tool_name":"Write","tool_input":{"file_path":"src/app.py"}}`, "commandments", "hooks")
-	if !strings.Contains(hooked, "no-eval at") || !strings.Contains(hooked, "commandments-no-eval") {
-		t.Errorf("the per-edit hook said\n%s", hooked)
+	for _, said := range []string{"src/app.py:2", "no-eval", "commandments-no-eval", "at its source"} {
+		if !strings.Contains(hooked, said) {
+			t.Errorf("the per-edit hook does not say %q:\n%s", said, hooked)
+		}
 	}
 
 	stopped := c.feed(0, `{"hook_event_name":"Stop","session_id":"s1"}`, "commandments", "hooks")

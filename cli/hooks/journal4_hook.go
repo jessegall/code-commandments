@@ -36,6 +36,10 @@ var hooksOf4 = map[string]string{
 	"subagent_started": "SubagentStart",
 	"prompt_submitted": "UserPromptSubmit",
 	"compacting":       "PreCompact",
+	// Version 5 beats once a minute for every open agent that is no subagent. It stands for the same moment as
+	// going idle, which is where a file that still carries a mark is judged again: a file something else put
+	// right then stops reading as sinful within the minute instead of waiting for the agent to stop working.
+	"ticked": "Stop",
 }
 
 // Journal4Hook is `journal4-hook`: the entry point version 4 of the agent journal runs for every event the plugin

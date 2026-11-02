@@ -28,6 +28,7 @@ func (InventedDefaultDetector) Find(codebase *engine.Codebase) []engine.Match {
 		Where(engine.As(fallsBackToEmptyScalar)).
 		Where(engine.As(py.Node.FillsArgument)).
 		Reject(engine.As(py.Node.IsKeyedDefault)).
+		Reject(engine.As(py.Node.FallsBackOnAGroupOfAMatch)).
 		Get()
 	returned := py.In(codebase).
 		WhereStatement().

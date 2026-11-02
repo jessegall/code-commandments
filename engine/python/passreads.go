@@ -33,8 +33,14 @@ func (n Node) ArgumentSubjectType() (string, bool) {
 	return types[0], true
 }
 
-// ResolvedClass is the class mypy types the expression as, None aside.
+// ResolvedClass is the class mypy types the expression as, None aside. No class for NO node: a navigator that
+// answered nothing, such as the receiver of a call made on a bare name, must leave every question about it false
+// rather than take the run down with it.
 func (n Node) ResolvedClass() (string, bool) {
+	if n.Node() == nil {
+		return "", false
+	}
+
 	resolved := n.Node().Resolved
 	if resolved == nil || resolved.Kind != "named" {
 		return "", false

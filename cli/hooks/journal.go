@@ -92,12 +92,17 @@ func MomentOf(given map[string]any) Moment {
 
 // changedLinesOf are the line numbers of the rows an edit added, as the journal's own edit row records them. A
 // removed row is not a line of the file any more, so only what was added can hold a sin.
+//
+// A row says which kind it is under `kind` or under `line_type`, since version 5 of the journal names the same
+// fact by the second word. Reading one spelling only would leave every edit of the other looking like an edit
+// that carried no lines at all, which is answered by asking git for the diff: right, but a process per file where
+// the journal had already worked it out.
 func changedLinesOf(data map[string]any) []int {
 	rows, _ := data["lines"].([]any)
 	var lines []int
 	for _, each := range rows {
 		row, _ := each.(map[string]any)
-		if asText(row["kind"]) != "add" {
+		if asText(firstOf(row["kind"], row["line_type"])) != "add" {
 			continue
 		}
 		lines = append(lines, intOf(row["line"]))

@@ -43,6 +43,10 @@ type Project struct {
 	Rules  []rule.Rule
 	// Unreadable are the rule files the tool cannot run, each with the reason.
 	Unreadable []string
+	// Refused are the rules whose file was found and could not be read, by name. A configured rule among them is
+	// not missing: its own reason is already said, and telling the reader to check it is present sends them
+	// looking for a file that is there.
+	Refused []string
 	// Classes are PHP classes left from the PHP tool, which the binary cannot run, under the project.
 	Classes []string
 }
@@ -61,28 +65,39 @@ func Load(root string) Project {
 		}
 	}
 
-	lists, err := readLists(dir)
+	rules, listFiles := jsonUnder(dir)
+
+	lists, err := readLists(dir, listFiles)
 	if err != nil {
 		project.Unreadable = append(project.Unreadable, err.Error())
 	}
 
-	rules, _ := filepath.Glob(filepath.Join(dir, "*.json"))
-	sort.Strings(rules)
+	named := map[string]string{}
 
 	for _, path := range rules {
-		if filepath.Base(path) == ListsFile {
-			continue
-		}
-
 		text, err := os.ReadFile(path)
 		if err != nil {
 			continue
 		}
 
+		// A rule is named by its FILE, whatever folder holds it, so moving one into a folder leaves every
+		// mention of it in the config standing. Two files of one name would then be one rule with two bodies,
+		// and which of them judged would depend on the order a folder is read in, so neither is read.
 		name := strings.TrimSuffix(filepath.Base(path), ".json")
+		if where, taken := named[name]; taken {
+			project.Unreadable = append(project.Unreadable, fmt.Sprintf("%s: a rule named %s is read from %s as well, and a rule's name is its file's; rename one of the two",
+				shortOf(dir, path), name, where))
+			project.Refused = append(project.Refused, name)
+
+			continue
+		}
+
+		named[name] = shortOf(dir, path)
+
 		written, err := lists.Expand(name, text)
 		if err != nil {
 			project.Unreadable = append(project.Unreadable, err.Error())
+			project.Refused = append(project.Refused, name)
 
 			continue
 		}
@@ -90,6 +105,7 @@ func Load(root string) Project {
 		read, err := rule.Parse(name, written, project.skill)
 		if err != nil {
 			project.Unreadable = append(project.Unreadable, err.Error())
+			project.Refused = append(project.Refused, name)
 
 			continue
 		}
@@ -112,6 +128,42 @@ func Load(root string) Project {
 	}
 
 	return project
+}
+
+// jsonUnder are the JSON files of the custom folder: the rules, at any depth, and the lists files beside them.
+//
+// A rule is read wherever it sits, since a project with rules for several parts of its code groups them by what
+// they protect — `core/` for its domain, `viewer/` for its interface — and one flat folder of twenty rules shows
+// nothing about which part each one guards. The skills folder is left out: a skill is a folder holding a SKILL.md
+// and whatever JSON it keeps beside it is its own business, not a rule.
+func jsonUnder(dir string) (rules, lists []string) {
+	filepath.WalkDir(dir, func(path string, entry os.DirEntry, err error) error {
+		if err != nil {
+			return nil
+		}
+
+		if entry.IsDir() {
+			if path != dir && filepath.Base(path) == SkillsFolder {
+				return filepath.SkipDir
+			}
+
+			return nil
+		}
+
+		switch {
+		case filepath.Base(path) == ListsFile:
+			lists = append(lists, path)
+		case strings.HasSuffix(path, ".json"):
+			rules = append(rules, path)
+		}
+
+		return nil
+	})
+
+	sort.Strings(rules)
+	sort.Strings(lists)
+
+	return rules, lists
 }
 
 // skill is the skill a slug names: the project's own first, then a shipped one.
@@ -172,16 +224,18 @@ func (p Project) Warnings(project config.Config) []string {
 	var missing []string
 
 	for _, name := range project.Detectors {
-		if !slices.ContainsFunc(p.Rules, func(own rule.Rule) bool { return own.Name() == name }) {
-			missing = append(missing, name)
+		if slices.ContainsFunc(p.Rules, func(own rule.Rule) bool { return own.Name() == name }) || slices.Contains(p.Refused, name) {
+			continue
 		}
+
+		missing = append(missing, name)
 	}
 
 	var warnings []string
 
 	if len(missing) > 0 {
-		warnings = append(warnings, fmt.Sprintf("⚠ %d configured detector(s) could not be loaded, and were skipped:\n  %s\n"+
-			"  A project's own rules live in .commandments/custom/ as <Name>.json — check they are present and committed.",
+		warnings = append(warnings, fmt.Sprintf("⚠ %d configured detector(s) are declared nowhere, and judge nothing:\n  %s\n"+
+			"  A project's own rules live in .commandments/custom/ as <Name>.json, in that folder or any folder under it — check they are present and committed.",
 			len(missing), strings.Join(missing, "\n  ")))
 	}
 
