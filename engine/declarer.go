@@ -59,9 +59,28 @@ func (m Match) names() (string, Match) {
 		return children[0].Name(), children[0].Receiver()
 	case m.HasFlag("named"):
 		return m.Name(), subjectOf(m.Parent())
+	case m.Is(Call):
+		callee := m.calledNode()
+		if !callee.Is(MemberAccess) {
+			return "", Match{}
+		}
+
+		return callee.Name(), callee.Receiver()
 	}
 
 	return "", Match{}
+}
+
+// calledNode is what a call calls, wherever its language keeps it: the member access of a method call, or the bare
+// name of a free function.
+func (m Match) calledNode() Match {
+	for _, field := range calleeFields {
+		if called := m.Child(field); called.Exists() {
+			return called
+		}
+	}
+
+	return Match{}
 }
 
 // subjectOf is what a call is about, for a field set by one of its named arguments.
@@ -78,6 +97,52 @@ func subjectOf(call Match) Match {
 		if !argument.HasFlag("named") {
 			return argument
 		}
+	}
+
+	return Match{}
+}
+
+// Declared is the MEMBER this node names, as the scan declares it: the method a call reaches, the field an access
+// reads, the field a named argument sets. Where `Declaring` answers whose member it is, this answers which member,
+// so a rule may step onto the declaration itself and ask anything of it — the modifiers it carries, the file it
+// sits in, the layer it belongs to.
+//
+// The bridge's own resolution answers it where the bridge wrote one, since a resolver that followed the call knows
+// better than any walk here; otherwise the declaring type's own members answer it, by the name the node reads. No
+// node where neither does, as every navigator here answers nothing rather than a guess.
+func (m Match) Declared() Match {
+	if m.file == nil {
+		return Match{}
+	}
+
+	if resolved := m.resolvedTarget(); resolved.Exists() {
+		return resolved
+	}
+
+	read, _ := m.names()
+	declaring := m.Declaring()
+	if read == "" || !declaring.Exists() {
+		return Match{}
+	}
+
+	for _, member := range declaring.Members() {
+		if member.DeclaredName() == read {
+			return member
+		}
+	}
+
+	return Match{}
+}
+
+// resolvedTarget is the declaration the bridge resolved this call or construction to; no node where it wrote none,
+// which is every language whose bridge does not follow a call, and every call it could not follow.
+func (m Match) resolvedTarget() Match {
+	if m.node == nil || m.node.Target == nil || m.node.Target.Symbol == "" {
+		return Match{}
+	}
+
+	for _, declaration := range m.file.Codebase().Declarations(m.node.Target.Symbol) {
+		return declaration
 	}
 
 	return Match{}

@@ -833,6 +833,11 @@ const owner = "owner"
 // question, whose field is this, and the target is how every other check composes on it.
 const declaredBy = "declaredBy"
 
+// declarationTarget names the member a node reaches rather than the type that declares it: the method a call runs,
+// the field an access reads. One engine answer stands behind both, so a rule asks whose member it is or which
+// member it is without the two ever disagreeing.
+const declarationTarget = "declaration"
+
 // valid checks the bounds bound something, below zero nowhere, and leave room between them.
 func (b Bounds) valid(size string) error {
 	switch {
@@ -1400,6 +1405,8 @@ func (s Step) subject(match engine.Match) engine.Match {
 		return match.Root()
 	case s.Of == declaredBy:
 		return match.Declaring()
+	case s.Of == declarationTarget:
+		return match.Declared()
 	case strings.HasPrefix(s.Of, "closest:"):
 		return match.Closest(engine.Neutral(strings.TrimPrefix(s.Of, "closest:")))
 	case strings.HasPrefix(s.Of, "child:"):
