@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/jessegall/code-commandments/cli/binary"
 	"github.com/jessegall/code-commandments/cli/health"
 	"github.com/jessegall/code-commandments/cli/hooks"
 )
@@ -372,4 +373,44 @@ func TestTheDeclaredHoldIsTheWindowTheCodeFallsBackTo(t *testing.T) {
 	}
 
 	t.Error("the manifest asks for no hold on worker_delivering, so a delivery has no time to be judged in")
+}
+
+// TestTheJudgingAliasIsOneAWorkerMayRun holds the manifest to what the briefing tells every agent to do. The
+// briefing says to run `journal sins`, workers included, and the journal refuses an alias to a worker unless the
+// manifest says `workers` — so without it the tool instructed an agent to run a command it was then refused.
+//
+// Only an alias that READS may carry it. `sins` judges and nothing else; `rules` holds `rule migrate`, which
+// rewrites a project's own rule files, so it must not.
+func TestTheJudgingAliasIsOneAWorkerMayRun(t *testing.T) {
+	text, err := os.ReadFile(filepath.Join("..", "..", "journal-plugin.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var read struct {
+		Aliases []struct {
+			Name    string `json:"name"`
+			Workers bool   `json:"workers"`
+		} `json:"aliases"`
+	}
+	if err := json.Unmarshal(text, &read); err != nil {
+		t.Fatal(err)
+	}
+
+	mayRun := map[string]bool{}
+	for _, alias := range read.Aliases {
+		mayRun[alias.Name] = alias.Workers
+	}
+
+	judging := strings.TrimPrefix(binary.Alias, "journal ")
+	if !mayRun[judging] {
+		t.Errorf("the %s alias is refused to a worker, and the briefing tells every agent to run %q", judging, binary.Alias)
+	}
+
+	// A worker may read; it may not be handed a verb that rewrites the project's own rules.
+	for _, writes := range []string{"rules", "commandments"} {
+		if mayRun[writes] {
+			t.Errorf("the %s alias is open to workers, and it can write", writes)
+		}
+	}
 }
