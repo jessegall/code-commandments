@@ -1,10 +1,11 @@
 package doc_test
 
 import (
-	"os"
-	"regexp"
 	"fmt"
+	"os"
 	"path/filepath"
+	"regexp"
+	"strings"
 	"testing"
 
 	"github.com/jessegall/code-commandments/cli/doc"
@@ -24,6 +25,31 @@ func TestTheGeneratedDocumentsAreCurrent(t *testing.T) {
 	for path, content := range documents {
 		if current, _ := os.ReadFile(filepath.Join(root, path)); string(current) != content {
 			t.Errorf("%s is stale: scripts/dev go run ./cli/doc/readme", path)
+		}
+	}
+}
+
+// TestThePreCommitHookNamesEveryGeneratedDocument holds the hook's list to what the generator actually writes.
+// The hook re-stages a generated file by name, so a document the list leaves out is rewritten on disk and
+// committed stale: the plugin manifests were left out, and v6.39.0 went out saying it was 6.38.0 — the very
+// drift the manifests' own version was derived to end.
+func TestThePreCommitHookNamesEveryGeneratedDocument(t *testing.T) {
+	root := filepath.Join("..", "..")
+	documents, err := doc.Generated(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	hook, err := os.ReadFile(filepath.Join(root, "scripts", "hooks", "pre-commit"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	generators := regexp.MustCompile(`(?s)GENERATORS=\((.*?)\n\)`).FindSubmatch(hook)
+	if generators == nil {
+		t.Fatal("the pre-commit hook names no GENERATORS")
+	}
+	for path := range documents {
+		if !strings.Contains(string(generators[1]), path) {
+			t.Errorf("the pre-commit hook re-stages no %s, so a commit carries it stale", path)
 		}
 	}
 }
