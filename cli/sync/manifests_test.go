@@ -297,3 +297,41 @@ func TestBothManifestsDeclareTheHealthTheServicesReallyAnswer(t *testing.T) {
 		t.Errorf("the manifest says a service answers %v, and up is what it says", declared["health"])
 	}
 }
+
+// TestBothManifestsFitTheSameLanguages holds the two manifests to naming the same languages, which is what a
+// journal reads to decide whether to suggest this plugin to a project at all. The version-4 manifest named NONE,
+// so a current journal would have offered it to a project with not one language we judge, and neither named Go,
+// which we judge. A list that is only in one of the two is a project told the wrong thing by whichever protocol
+// its journal speaks.
+func TestBothManifestsFitTheSameLanguages(t *testing.T) {
+	var fits []string
+	for _, name := range [][]string{{".journal-plugin", "plugin.json"}, {"journal-plugin.json"}} {
+		text, err := os.ReadFile(filepath.Join(append([]string{"..", ".."}, name...)...))
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		var read struct {
+			Fits struct {
+				Languages []string `json:"languages"`
+			} `json:"fits"`
+		}
+		if err := json.Unmarshal(text, &read); err != nil {
+			t.Fatalf("%s: %v", filepath.Join(name...), err)
+		}
+
+		if len(read.Fits.Languages) == 0 {
+			t.Errorf("%s names no languages it fits, so it is suggested to every project", filepath.Join(name...))
+
+			continue
+		}
+
+		listed := slices.Clone(read.Fits.Languages)
+		slices.Sort(listed)
+		fits = append(fits, strings.Join(listed, ","))
+	}
+
+	if len(fits) == 2 && fits[0] != fits[1] {
+		t.Errorf("the manifests fit different languages: %s against %s", fits[0], fits[1])
+	}
+}
