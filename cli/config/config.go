@@ -45,11 +45,13 @@ type Config struct {
 // Load reads the config of the project at dir: its config.json, else its config.php until sync migrates
 // it; a project with neither has the empty config.
 func Load(dir string) (Config, error) {
-	if _, err := os.Stat(workspace.JSONConfig(dir)); !errors.Is(err, os.ErrNotExist) {
-		return ReadJSON(workspace.JSONConfig(dir))
+	settings := workspace.SettingsRoot(dir)
+
+	if _, err := os.Stat(workspace.JSONConfig(settings)); !errors.Is(err, os.ErrNotExist) {
+		return ReadJSON(workspace.JSONConfig(settings))
 	}
 
-	return ReadPHP(workspace.Config(dir))
+	return ReadPHP(workspace.Config(settings))
 }
 
 // Configurator tunes one detector: the detector and the calls it makes on it, in order.

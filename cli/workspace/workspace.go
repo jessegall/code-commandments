@@ -113,6 +113,25 @@ func ProjectRoot(cwd string) string {
 	}
 }
 
+// SettingsRoot is the folder a project's settings are read from, for work done in dir: the main checkout of the
+// repository, so every worktree of one project is judged by the one config its owner set.
+//
+// A worktree is a place to do work and not a project of its own. Read from the worktree, the settings are
+// whatever its branch happens to carry: an older set of excluded folders, an older tuning of a rule, or, where
+// the branch has no config at all, nothing — and a worker is then judged by rules nobody chose, silently, with
+// its findings reading exactly like everyone else's.
+//
+// A folder in no repository is its own settings root, which is what a temporary folder and a project outside git
+// both are.
+func SettingsRoot(dir string) string {
+	project := git.ProjectRoot(dir)
+	if project == "" {
+		return dir
+	}
+
+	return project
+}
+
 // Config is the path of the project config under dir.
 func Config(dir string) string {
 	return At(dir, "").Shared("config.php")
