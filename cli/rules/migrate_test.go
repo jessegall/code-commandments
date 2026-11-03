@@ -212,3 +212,50 @@ func TestMigrateMovesNoSettingsOverSettingsThatAreAlreadyThere(t *testing.T) {
 		}
 	}
 }
+
+// TestProveSaysWhereAMarkGoesWhenBothHalvesAppear holds the hint that would have saved the first project to meet
+// it an afternoon. A mark written above a declaration while the rule flags something INSIDE it makes both halves
+// true at once: the mark is missed where it stands and the finding is unmarked where it is, and the two lines give
+// a reader no reason to connect them. The confusion is earned — PHP marks a declaration with an attribute that
+// covers everything inside it, while Python, C# and Vue mark the line below a comment.
+func TestProveSaysWhereAMarkGoesWhenBothHalvesAppear(t *testing.T) {
+	marked := `{"engine": "python", "sin": {"name": "no-dump", "description": "x", "skill": "php/absence"},
+		"find": {"select": "call", "where": [{"name": "dump"}]}}`
+
+	// The mark sits above the def; the call it must flag is inside it.
+	root := written(t, map[string]string{
+		".commandments/custom/NoDump.json": marked,
+		".commandments/custom/samples/shop/till.py": `# @sin NoDump
+def show(value):
+    dump(value)
+`,
+	})
+
+	said, code := run(t, root, "prove", ".commandments/custom/samples/shop")
+	if code == 0 {
+		t.Fatalf("the sample passed, so there is nothing to explain: %s", said)
+	}
+
+	if !strings.Contains(said, "marks the line BELOW it") {
+		t.Errorf("prove does not say where the mark goes: %s", said)
+	}
+}
+
+// TestProveSaysNothingAboutMarksWhenOnlyOneHalfAppears holds the hint to the one case it is about. A rule that
+// merely missed its mark, with nothing flagged anywhere, has a different problem, and telling its author to move
+// the comment would send them looking in the wrong place.
+func TestProveSaysNothingAboutMarksWhenOnlyOneHalfAppears(t *testing.T) {
+	root := written(t, map[string]string{
+		".commandments/custom/NoDump.json": `{"engine": "python", "sin": {"name": "no-dump", "description": "x", "skill": "php/absence"},
+			"find": {"select": "call", "where": [{"name": "nothing_calls_this"}]}}`,
+		".commandments/custom/samples/shop/till.py": `def show(value):
+    # @sin NoDump
+    dump(value)
+`,
+	})
+
+	said, _ := run(t, root, "prove", ".commandments/custom/samples/shop")
+	if strings.Contains(said, "marks the line BELOW it") {
+		t.Errorf("prove explains a mark where nothing was flagged: %s", said)
+	}
+}

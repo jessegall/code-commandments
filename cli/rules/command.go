@@ -221,6 +221,8 @@ func (c Command) prove(in *cli.Input, root string, console cli.Console) (int, er
 				console.Write("    " + reason.says + " " + source.Relative(root, place) + "\n")
 			}
 		}
+
+		sayWhereAMarkGoes(result, console)
 	}
 
 	for _, marker := range markers {
@@ -236,6 +238,41 @@ func (c Command) prove(in *cli.Input, root string, console cli.Console) (int, er
 	}
 
 	return 0, nil
+}
+
+// sayWhereAMarkGoes explains the one shape that reads as two unrelated faults and is one: a mark written above a
+// declaration while the rule flags something INSIDE it. Both halves are then true at once — the mark is missed
+// where it stands, and the finding is unmarked where it is — and a reader looking at the two lines has no reason
+// to connect them.
+//
+// It is said when a rule both missed a mark and flagged something unmarked in the same file, because that is when
+// the mistake is possible at all, and it is said as the thing to check rather than as a verdict: the two can also
+// be genuinely unrelated, and nothing here can tell a sample's author what they meant.
+//
+// The confusion is honestly earned. PHP marks a declaration with an ATTRIBUTE, `#[Sinful(X::class)]`, which
+// covers anything the detector flags inside it; Python, C# and Vue mark a line with a comment, which covers the
+// line below it. Anyone who learnt the first writes the second the same way.
+func sayWhereAMarkGoes(result fixture.Result, console cli.Console) {
+	if len(result.Missed) == 0 || len(result.Unexpected) == 0 {
+		return
+	}
+
+	for _, missed := range result.Missed {
+		for _, unexpected := range result.Unexpected {
+			if fileOf(missed) != fileOf(unexpected) {
+				continue
+			}
+
+			console.Write("    \033[33m⚠\033[0m a mark and a finding in one file: a `@sin` comment marks the line BELOW it, not the declaration it sits above. If the mark is above a function and the rule flags something inside it, move the mark to just above that line.\n")
+
+			return
+		}
+	}
+}
+
+// fileOf is the file a place names, which a fixture writes as `path:line`.
+func fileOf(place string) string {
+	return place[:max(strings.LastIndex(place, ":"), 0)]
 }
 
 // warnUntwinned says when no sample marks a look-alike the rule must leave alone: a rule proven only on what it
