@@ -20,11 +20,13 @@ type Reading struct {
 	ByOwner bool
 }
 
-// Repeats is how widely the node's reading occurs in the codebase: how many functions hold a node that reads the
-// same, and how many files those functions are in. The node itself counts, so one that nothing repeats answers one
-// and one. A node outside every function is no site, as a repeat is about the places that ask a question; a node
-// its language cannot fingerprint, and one whose reading the choices refuse, answer none.
-func (m Match) Repeats(as Reading) (functions, files int) {
+// Repeats is how widely the node's reading occurs in the codebase: how many PLACES hold a node that reads the
+// same, and how many files those places are in. A place is the function the node sits in, or, where no function
+// does, the type declaration it sits in, so a value written in a class body — the event a listener declares it
+// hears — is a place of its own and not nothing. The node itself counts, so one that nothing repeats answers one
+// and one. A node in neither a function nor a type is no place at all; so is a node its language cannot
+// fingerprint, and one whose reading the choices refuse.
+func (m Match) Repeats(as Reading) (places, files int) {
 	if m.file == nil {
 		return 0, 0
 	}
@@ -36,20 +38,30 @@ func (m Match) Repeats(as Reading) (functions, files int) {
 
 	// The member that names the question is neither one of the places asking it nor a place to report: its body is
 	// where the answer lives, and a rule that flagged it would ask the reader to name what is already named.
-	if names(m, m.EnclosingFunction()) {
+	if names(m, siteOf(m)) {
 		return 0, 0
 	}
 
 	held := repeats(m.file.Codebase(), m.Kind(), as)[read]
 
-	return len(held.functions), len(held.files)
+	return len(held.places), len(held.files)
 }
 
-// spread is where one reading was found: the functions that hold it and the files those are in, each by its
-// location, so the same function met twice counts once.
+// spread is where one reading was found: the places that hold it and the files those are in, each by its
+// location, so the same place met twice counts once.
 type spread struct {
-	functions map[string]bool
-	files     map[string]bool
+	places map[string]bool
+	files  map[string]bool
+}
+
+// siteOf is the place a node is counted in: the function it sits in, else the type declaration it sits in, which
+// is where a value a class declares about itself lives. No place for a node in neither.
+func siteOf(node Match) Match {
+	if function := node.EnclosingFunction(); function.Exists() {
+		return function
+	}
+
+	return node.EnclosingType()
 }
 
 // counted is the analysis one reading of one kind of node is counted by.
@@ -71,17 +83,17 @@ func repeats(c *Codebase, kind string, as Reading) map[string]spread {
 				continue
 			}
 
-			function := node.EnclosingFunction()
-			if !function.Exists() || names(node, function) {
+			site := siteOf(node)
+			if !site.Exists() || names(node, site) {
 				continue
 			}
 
 			held, seen := found[read]
 			if !seen {
-				held = spread{functions: map[string]bool{}, files: map[string]bool{}}
+				held = spread{places: map[string]bool{}, files: map[string]bool{}}
 			}
 
-			held.functions[function.Location()] = true
+			held.places[site.Location()] = true
 			held.files[node.File()] = true
 			found[read] = held
 		}
@@ -98,6 +110,10 @@ func repeats(c *Codebase, kind string, as Reading) map[string]spread {
 // The type matters as much as the shape: a free function whose body returns the same question is a place asking
 // it, not a name for it, and reading every one-line function as a name would hide the very sites a rule is for.
 func names(node, function Match) bool {
+	if !function.Is(Function) {
+		return false
+	}
+
 	declarer := node.Declarer()
 	if declarer == "" || function.EnclosingType().Identity() != declarer {
 		return false

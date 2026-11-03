@@ -440,3 +440,46 @@ def forget(number: int) -> TaskForgotten:
 		}
 	}
 }
+
+// A repeat was counted only inside a function, so a value a class declares ABOUT ITSELF could never be counted:
+// two listeners declaring the same event is the shape a project asked for, and the class body is where that value
+// lives. A place is now the function a node sits in, or the type declaration where no function does.
+
+// TestAValueTwoClassesDeclareIsARepeat holds the ask itself: two listeners naming one event over two files are two
+// places, a third naming another event is one, and the string a method passes is counted in its own method as
+// before.
+func TestAValueTwoClassesDeclareIsARepeat(t *testing.T) {
+	project := pythontest.FromSource(t, map[string]string{
+		"shop/__init__.py": "",
+		"shop/mark.py": `class MarkListener:
+    event = "process.saved"
+
+    def handle(self, run: object) -> None:
+        pass
+`,
+		"shop/dock.py": `class DockListener:
+    event = "process.saved"
+
+    def handle(self, run: object) -> None:
+        pass
+`,
+		"shop/label.py": `class LabelListener:
+    event = "label.printed"
+
+    def handle(self, run: object) -> None:
+        pass
+`,
+	})
+
+	// The event two classes declare is one reading in two places, over two files; the one only a single class
+	// declares is one place. exact is asked for because the normalised reading blanks a literal's datum, which
+	// would read every event string as the same one.
+	for query, want := range map[string]string{
+		`{"select": "literal", "where": [{"of": "parent", "name": "event"}, {"repeated": {"atLeast": 2, "files": 2, "exact": true}}]}`: "[dock.py:2 mark.py:2]",
+		`{"select": "literal", "where": [{"of": "parent", "name": "event"}, {"repeated": {"atMost": 1, "exact": true}}]}`:              "[label.py:2]",
+	} {
+		if got := foundAt(t, "python", query, project); got != want {
+			t.Errorf("python %s:\n got %s\nwant %s", query, got, want)
+		}
+	}
+}
