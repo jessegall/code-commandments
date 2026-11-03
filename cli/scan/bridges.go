@@ -274,6 +274,19 @@ type process struct {
 	reach Process
 	roots []string
 	own   *bridge.Server
+	// missed says the warm bridge was reached and could not answer, which is said once: a service that went away
+	// mid-session is ordinary and needs no second word, and a service that is up and cannot answer makes every run
+	// pay a start-up it should not have paid, which nothing else would say.
+	missed sync.Once
+}
+
+// sayWarmBridgeMissed says, on STDERR, that the bridge this session keeps up was reached and could not answer, so
+// this run started one of its own. Without it the two are indistinguishable from outside: a run with no service and
+// a run whose service cannot answer both just take the long way round, and the second is a fault worth knowing.
+func (p *process) sayWarmBridgeMissed(err error) {
+	p.missed.Do(func() {
+		fmt.Fprintf(os.Stderr, "⚠ the %s bridge this session keeps up could not answer, so this run starts its own and pays its start-up: %v\n", p.held.Kind, err)
+	})
 }
 
 // AskTallied is the whole stream, from the warm bridge when it answers and from one of this run's own when it
@@ -282,9 +295,12 @@ func (p *process) AskTallied(request bridge.Request, tally func()) (*contract.St
 	if server, kept := keptFor(p.held.Kind, p.roots); kept {
 		defer server.Close()
 
-		if stream, err := server.AskTallied(request, tally); err == nil {
+		stream, err := server.AskTallied(request, tally)
+		if err == nil {
 			return stream, nil
 		}
+
+		p.sayWarmBridgeMissed(err)
 	}
 
 	server, err := p.start()

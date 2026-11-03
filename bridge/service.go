@@ -19,14 +19,32 @@ import (
 // ServiceSocket is where the bridge of the kind ("roslyn", "mypy") a session keeps up for the project answers: a
 // socket named for the bridge and the project, since a project's own path may be longer than a socket's may be, in
 // /tmp, whose path is short wherever $TMPDIR points.
+//
+// The project is named by its CANONICAL path, because the two sides reach it differently and must still meet: a
+// service is given the path the journal holds, and a run of the tool works out the repository its folder is in,
+// which resolves every link on the way. One link anywhere above the project, which is ordinary on a Mac, would
+// otherwise have them name two sockets, and the miss is SILENT - the run simply starts a bridge of its own and
+// pays its whole start-up, every time, while a warm one sits unreached beside it.
 func ServiceSocket(kind, project string) string {
-	sum := sha1.Sum([]byte(project))
+	sum := sha1.Sum([]byte(canonical(project)))
 	folder := "/tmp"
 	if runtime.GOOS == "windows" {
 		folder = os.TempDir()
 	}
 
 	return filepath.Join(folder, "code-commandments-"+kind+"-"+hex.EncodeToString(sum[:])[:12]+".sock")
+}
+
+// canonical is the path with its links resolved and no trailing separator, which is the one spelling of a folder
+// everything naming a socket for it agrees on. A path that cannot be resolved, because nothing is there, is
+// answered as it was written: a name is still wanted for it, and two sides that cannot resolve it agree anyway.
+func canonical(project string) string {
+	resolved, err := filepath.EvalSymlinks(project)
+	if err != nil {
+		return filepath.Clean(project)
+	}
+
+	return filepath.Clean(resolved)
 }
 
 // Service is the bridge of the kind the session keeps up for the project, reached at its socket; false when no session

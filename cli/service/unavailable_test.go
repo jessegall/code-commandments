@@ -46,9 +46,7 @@ func TestAServiceWhoseToolIsNotInstalledStaysUpAndSaysWhy(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(root, "Cart.php"), []byte("<?php\n\nclass Cart {}\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.Chdir(root); err != nil {
-		t.Fatal(err)
-	}
+	t.Chdir(root)
 
 	serve := service.Serve{Bridge: scan.Bridge{
 		Kind:      "php",
