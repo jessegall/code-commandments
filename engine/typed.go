@@ -56,13 +56,23 @@ func (m Match) ElementType() *contract.Type {
 
 	switch {
 	case typed == nil:
-		return nil
+		return m.elementItsLanguageKnows()
 	case typed.Element != nil:
 		return typed.Element
 	case typed.Kind == "array" && len(typed.Args) == 1:
 		return typed.Args[0]
 	case typed.Kind == "map" && len(typed.Args) == 2:
 		return typed.Args[1]
+	}
+
+	return m.elementItsLanguageKnows()
+}
+
+// elementItsLanguageKnows is the element the language reads from something its type cannot carry, which is how a
+// PHP array says what it holds: nothing where its language says nothing.
+func (m Match) elementItsLanguageKnows() *contract.Type {
+	if read := m.grammar().ElementOf; read != nil && m.node != nil {
+		return read(m)
 	}
 
 	return nil

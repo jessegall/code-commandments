@@ -330,6 +330,84 @@ export function either(): Order | number {
 	}
 }
 
+// TestAPhpArraysElementIsWhatItsDeclarationSays holds the element where the type itself cannot carry it: a PHP
+// array says nothing about what it holds, and a docblock or an attribute is the only thing that does.
+func TestAPhpArraysElementIsWhatItsDeclarationSays(t *testing.T) {
+	codebase := phpCodebase(t, "Till.php", `<?php
+
+namespace App;
+
+final class Order {}
+
+final class Till
+{
+    /** @var list<Order> */
+    private array $lines = [];
+
+    private array $rows = [];
+
+    public function count(): int
+    {
+        $held = $this->lines;
+        $plain = $this->rows;
+
+        return count($held) + count($plain);
+    }
+}
+`)
+
+	for query, want := range map[string]string{
+		// The array the docblock types, read where it is used.
+		`{"select": "member-access", "where": [{"elementType": "*Order"}]}`: "[16]",
+		// The array nothing types holds nothing a rule can name, which is the honest answer.
+		`{"select": "member-access", "where": [{"elementType": "*"}]}`: "[16]",
+	} {
+		if got := found(t, "backend", query, codebase); got != want {
+			t.Errorf("%s: found %s, want %s", query, got, want)
+		}
+	}
+}
+
+// TestACollectionsElementAnswersForPythonToo holds the element where the bridge writes it from a generic rather
+// than from an array type: a sequence holds its only argument, a mapping its second, and a generic nobody can
+// read holds nothing rather than a guess.
+func TestACollectionsElementAnswersForPythonToo(t *testing.T) {
+	codebase := pythontest.FromSource(t, map[string]string{
+		"shop/__init__.py": "",
+		"shop/till.py": `class Order:
+    pass
+
+
+def orders() -> list[Order]:
+    return []
+
+
+def byId() -> dict[str, Order]:
+    return {}
+
+
+def counts() -> dict[Order, int]:
+    return {}
+
+
+def one() -> Order:
+    return Order()
+`,
+	})
+
+	for query, want := range map[string]string{
+		// A sequence of orders and a mapping TO orders both hold an order; a mapping keyed BY one does not.
+		`{"select": "function", "where": [{"elementType": "*Order"}]}`: "[5 9]",
+		`{"select": "function", "where": [{"elementType": "int"}]}`:    "[13]",
+		// A type that is no collection has no element to name.
+		`{"select": "function", "where": [{"elementType": "*"}]}`: "[5 9 13]",
+	} {
+		if got := found(t, "python", query, codebase); got != want {
+			t.Errorf("python %s: found %s, want %s", query, got, want)
+		}
+	}
+}
+
 // TestARuleAsksWhatACollectionHolds holds the element, and holds it to saying nothing where the collection's
 // element is unknown: a bag of unknowns is no bag of the type the rule asked about, and guessing one would make
 // every rule about a typed collection fire on every untyped one.

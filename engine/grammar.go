@@ -31,6 +31,11 @@ type Grammar struct {
 	// ClassOf is the class a node that declares none is about: the one it names, constructs or holds a value of;
 	// empty when the language cannot tell.
 	ClassOf func(Match) string
+	// ElementOf is the type a collection the node reads holds, where the language knows it from something the
+	// type itself cannot carry: PHP's array says nothing about its contents, and a docblock `list<X>` or a
+	// `#[DataCollectionOf(X::class)]` is the only thing that does. Left out, the type object answers alone.
+	ElementOf func(Match) *contract.Type
+
 	// CodeWords are the content words the node's own head spells: the construct it is and its keywords, then the
 	// names and literal text it is written with, what it holds aside. A comment measured against them shows
 	// whether it says anything the code does not, which is the one judgement that needs a language's own

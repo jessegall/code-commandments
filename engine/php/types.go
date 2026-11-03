@@ -26,7 +26,7 @@ type Types struct {
 	nullable   map[string]map[string][]bool
 	paramType  map[string]map[string][]string
 	variadic   map[string]map[string]bool
-	element    map[string]map[string]string
+	element    map[string]map[string]*contract.Type
 	parentOf   map[string]string
 	traitsOf   map[string][]string
 
@@ -63,7 +63,7 @@ func indexTypes(codebase *engine.Codebase) *Types {
 		nullable:   map[string]map[string][]bool{},
 		paramType:  map[string]map[string][]string{},
 		variadic:   map[string]map[string]bool{},
-		element:    map[string]map[string]string{},
+		element:    map[string]map[string]*contract.Type{},
 		parentOf:   map[string]string{},
 		traitsOf:   map[string][]string{},
 		locals:     map[scope]map[string]held{},
@@ -198,9 +198,15 @@ func (t *Types) recordCollectionElement(class, field string, owner engine.Match)
 			if element == "" {
 				continue
 			}
-			set(t.element, class, field, element)
+			set(t.element, class, field, elementType(element, "attribute"))
 		}
 	}
+}
+
+// elementType is the element a collection is declared to hold, as the contract carries one: a class named by the
+// declaration that said so, which is the only thing that says what a PHP array holds.
+func elementType(class, origin string) *contract.Type {
+	return &contract.Type{Text: `\` + class, Kind: "named", Name: class, Origin: origin}
 }
 
 // firstArgument is the value an attribute is handed first; no node for an attribute handed nothing.
@@ -245,7 +251,7 @@ func (t *Types) recordDocumentedElement(class, field, doc, variable string, file
 		return
 	}
 	if written := ElementNamed(doc, variable); written != "" {
-		set(t.element, class, field, Resolve(written, file))
+		set(t.element, class, field, elementType(Resolve(written, file), "docblock"))
 	}
 }
 
@@ -348,7 +354,11 @@ func (t *Types) PropertyTypeOf(fqcn, field string) string {
 
 // CollectionElementOf is the element class the field's collection is declared to hold.
 func (t *Types) CollectionElementOf(fqcn, field string) string {
-	return t.element[t.DeclaringClassOf(fqcn, field)][field]
+	if element := t.element[t.DeclaringClassOf(fqcn, field)][field]; element != nil {
+		return element.Name
+	}
+
+	return ""
 }
 
 // MethodIsVariadic says whether the method takes a variadic parameter.
@@ -481,6 +491,23 @@ func (t *Types) resolve(expr engine.Match, locals map[string]held, self string) 
 	return held{}
 }
 
+// ElementOf is the element the collection a member access reads is declared to hold: the class a docblock
+// `list<X>` or a `#[DataCollectionOf(X::class)]` names, which is the only thing that says what a PHP array holds,
+// since the type itself says `array` and no more. No type for anything else, and none where no declaration says.
+func (t *Types) ElementOf(access engine.Match) *contract.Type {
+	name := access.Child("name")
+	if !slices.Contains([]string{"Expr_PropertyFetch", "Expr_NullsafePropertyFetch"}, access.Kind()) || name.Kind() != "Identifier" {
+		return nil
+	}
+
+	held := t.heldBy(access.Child("var"))
+	if held.class == "" {
+		return nil
+	}
+
+	return t.element[t.DeclaringClassOf(held.class, name.Name())][name.Name()]
+}
+
 // localTypes is the class each variable of a function holds: what it captures, its parameters, then each
 // assignment in the order written, nested functions' included, the last one winning; then a `foreach` over a typed
 // collection field types its value. Read once per function and class.
@@ -515,8 +542,8 @@ func (t *Types) localTypes(function engine.Match, self string) map[string]held {
 			continue
 		}
 		owner := t.resolve(collection.Child("var"), locals, self)
-		if element := t.element[owner.class][collection.Child("name").Name()]; owner.class != "" && element != "" {
-			locals[value.Name()] = held{class: element}
+		if element := t.element[owner.class][collection.Child("name").Name()]; owner.class != "" && element != nil {
+			locals[value.Name()] = held{class: element.Name}
 		}
 	}
 	t.mutex.Lock()

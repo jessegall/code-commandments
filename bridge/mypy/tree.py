@@ -70,6 +70,7 @@ class WrittenType:
     members: tuple[WrittenType, ...] | None = None
     args: tuple[WrittenType, ...] | None = None
     nullable: bool = False
+    element: WrittenType | None = None
 
     def to_json(self) -> dict[str, object]:
         """The type as the contract writes it: a union's nullability, read off its members, after the rest."""
@@ -80,6 +81,7 @@ class WrittenType:
             ("name", ABSENT if self.name is None else self.name),
             ("members", ABSENT if self.members is None else [member.to_json() for member in self.members]),
             ("args", ABSENT if self.args is None else [arg.to_json() for arg in self.args]),
+            ("element", ABSENT if self.element is None else self.element.to_json()),
             ("nullable", True if own else ABSENT),
             ("origin", "written"),
             ("nullable", True if self.nullable and not own else ABSENT),
@@ -456,7 +458,8 @@ class TreeWriter:
         if isinstance(annotation, ast.Subscript):
             base = self.type(annotation.value, quoted)
             items = annotation.slice.elts if isinstance(annotation.slice, ast.Tuple) else [annotation.slice]
-            return WrittenType(text, "named", base.name, args=tuple(self.type(item, quoted) for item in items))
+            args = tuple(self.type(item, quoted) for item in items)
+            return WrittenType(text, "named", base.name, args=args, element=element_of(base.name, args))
         if isinstance(annotation, (ast.Name, ast.Attribute)):
             return WrittenType(text, "named", ast.unparse(annotation))
         return WrittenType(text, "opaque")
@@ -526,6 +529,29 @@ class TreeWriter:
                 return identity
         return None
 
+
+
+# SEQUENCES hold their element as their only type argument, and MAPPINGS hold it as their second, after the key.
+# The names are matched on their last part, since one is written `list`, `typing.List` and `collections.abc.Sequence`
+# for the same thing. A collection not named here keeps its arguments and says nothing about an element, which is
+# the honest answer: inventing one for a generic nobody can read would be worse than none.
+SEQUENCES = ("list", "List", "set", "Set", "frozenset", "FrozenSet", "deque", "Sequence", "MutableSequence",
+             "Iterable", "Iterator", "Collection", "AbstractSet", "MutableSet")
+MAPPINGS = ("dict", "Dict", "defaultdict", "OrderedDict", "Mapping", "MutableMapping")
+
+
+def element_of(name: str | None, args: tuple[WrittenType, ...]) -> WrittenType | None:
+    """The type a collection holds, which the contract carries as its `element`: a sequence's only argument, or a
+    mapping's second one, after its key.
+    """
+    if name is None:
+        return None
+    last = name.rsplit(".", 1)[-1]
+    if last in SEQUENCES and len(args) == 1:
+        return args[0]
+    if last in MAPPINGS and len(args) == 2:
+        return args[1]
+    return None
 
 
 def is_union(annotation: ast.expr) -> bool:

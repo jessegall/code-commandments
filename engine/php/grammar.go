@@ -30,6 +30,7 @@ func init() {
 		DocTags:       phpDocTags,
 		BodyHash:      func(function engine.Match) string { return Node{Match: function}.BodyHash() },
 		CodeWords:     func(node engine.Match) []string { return Node{Match: node}.CodeWords() },
+		ElementOf:     func(node engine.Match) *contract.Type { return TypesOf(node.Codebase()).ElementOf(node) },
 		NodeHash: func(node engine.Match, normalize bool) string {
 			return engine.SyntaxHash([]engine.Match{node}, Hashing, normalize)
 		},
