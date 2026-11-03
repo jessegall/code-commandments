@@ -1377,6 +1377,10 @@ func (s Step) namesPattern(named engine.Match) bool {
 // and a declaration the tool cannot name are not judged unused.
 func unused(declaration engine.Match) bool {
 	switch {
+	case declaration.DeclaresAField():
+		// A promoted constructor parameter is the field it declares: nothing reads it as a parameter, and
+		// everything reads it as `$this->held`.
+		return declaration.IsUnreadMember()
 	case declaration.Is(engine.Parameter):
 		return declaration.IsUnread()
 	case declaration.Is(engine.Function), declaration.Is(engine.TypeDeclaration):

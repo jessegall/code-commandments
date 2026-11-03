@@ -69,6 +69,51 @@ final class Till
 	}
 }
 
+// TestAPromotedParameterIsTheFieldItDeclares holds the commonest field shape in modern PHP: a promoted
+// constructor parameter declares a field, so a read of `$this->held` resolves to it and a rule asking what the
+// class declares sees it. Before this the class claimed not to declare it at all.
+func TestAPromotedParameterIsTheFieldItDeclares(t *testing.T) {
+	project := phpProject(t, map[string]string{
+		"app/Printer.php": `<?php
+
+namespace App;
+
+final class Printer
+{
+    public function send(string $slip): void {}
+}
+`,
+		"app/Till.php": `<?php
+
+namespace App;
+
+final class Till
+{
+    public function __construct(
+        private Printer $unread,
+        private Printer $read,
+    ) {}
+
+    public function close(string $slip): void
+    {
+        $this->read->send($slip);
+    }
+}
+`,
+	})
+
+	for query, want := range map[string]string{
+		// The promoted parameter nothing reads, and only that one.
+		`{"select": "parameter", "where": [{"unused": true}, {"hasModifier": "private"}]}`: "[Till.php:8]",
+		// Both are members of the class now, which is what a rule about what a type declares asks.
+		`{"select": "type-declaration", "where": [{"members": {"name": "read", "atLeast": 1}}]}`: "[Till.php:5]",
+	} {
+		if got := foundAt(t, "backend", query, project); got != want {
+			t.Errorf("%s:\n got %s\nwant %s", query, got, want)
+		}
+	}
+}
+
 // What a field is READ by differs by language more than the rest of this plan's questions do, and two gaps are
 // open rather than hidden: a C# field declaration carries no name of its own (its declarator does) and a C#
 // identifier carries no `refers`, so nothing can resolve a bare-name read to it; and a PHP promoted constructor

@@ -13,7 +13,7 @@ func init() {
 		Arguments:     values,
 		Receiver:      engine.InAnyField("var", "class"),
 		Binds:         binding,
-		Members:       engine.InFields("stmts"),
+		Members:       declaredMembers,
 		Parameters:    engine.InFields("params"),
 		Extends:       engine.InFields("extends"),
 		Implements:    engine.InFields("implements"),
@@ -52,6 +52,24 @@ func init() {
 		Computes:          computes,
 	})
 
+}
+
+// declaredMembers are what a PHP class declares: the statements of its body, and the promoted parameters of its
+// constructor, each of which declares a field though it is written in a signature. A rule asking what a type
+// declares has to see both, since a promoted parameter IS the field most modern PHP classes hold, and a read of
+// `$this->held` resolves to nothing while the class claims not to declare it.
+//
+// They come after the body's own members, which is the order a reader meets them in: the constructor is a member
+// too, and its parameters are written inside it.
+func declaredMembers(declaration engine.Match) []engine.Match {
+	declared := declaration.ChildrenIn("stmts")
+	for _, parameter := range ConstructorParams(declaration) {
+		if slices.Contains(parameter.Node().Flags, "promoted") {
+			declared = append(declared, parameter)
+		}
+	}
+
+	return declared
 }
 
 // binding says whether a statement only binds a name to a value: PHP files every assignment as an expression

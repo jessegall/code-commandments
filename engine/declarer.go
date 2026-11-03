@@ -251,12 +251,33 @@ func (m Match) operator() string {
 	return m.node.Operator
 }
 
+// DeclaresAField says whether the parameter also declares a field of its type: PHP's promoted constructor
+// parameter, which is written in a signature and read as `$this->held` everywhere else. The type's own members
+// answer it, so a language says so by listing the parameter among them.
+func (m Match) DeclaresAField() bool {
+	if !m.Is(Parameter) {
+		return false
+	}
+
+	for _, member := range m.EnclosingType().Members() {
+		if member.node == m.node {
+			return true
+		}
+	}
+
+	return false
+}
+
 // IsUnreadMember says whether nothing in the codebase reads the member: no node reaches its declaration, the
 // language itself does not reach it by name (a serialized property, a constructor), and it overrides nothing, so
 // no caller reaches it through a supertype. It is false for anything that is no member, since a rule asking it of
 // a statement would be asking nothing.
 func (m Match) IsUnreadMember() bool {
-	if m.Role() != "member" || m.Is(Function) || m.Is(TypeDeclaration) {
+	if m.Is(Function) || m.Is(TypeDeclaration) {
+		return false
+	}
+
+	if m.Role() != "member" && !m.DeclaresAField() {
 		return false
 	}
 
