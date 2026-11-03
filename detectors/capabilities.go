@@ -14,9 +14,13 @@ type CrossFile interface {
 	CrossFile()
 }
 
-// ReadsBeyondOneFile says whether shown one file the detector could find the wrong thing, as the PHP tool's
-// CrossFileSet answers it: its verdict needs the whole tree, it groups recurrences across files, or it reaches beyond
-// the file by what it calls. A per-file check asks only the rest.
+// ReadsBeyondOneFile says whether, shown one file, the detector could find the wrong thing: its verdict needs the
+// whole tree, it groups recurrences across files, or it says outright that it reaches beyond the file.
+//
+// Which detectors those are is MEASURED, not declared: the fixture harness asks each one the same question of one
+// file and of the whole fixture tree, and fails a detector whose answers differ while it carries no CrossFile
+// method (fixture/reads.go). That replaced a list the removed PHP tool had recorded, and correcting the markers
+// against the measurement moved 67 of them, in both directions. A per-file check asks only the rest.
 func ReadsBeyondOneFile(detector Detector) bool {
 	_, wholeTree := detector.(WholeTree)
 	_, grouped := detector.(Grouped)
