@@ -71,6 +71,7 @@ does not — which is how a `where` says what only a `reject` could.
 | `{"nameIn": ["select", "statement"]}` | its name is one of them |
 | `{"nameLike": "get*"}` | its name matches the glob, `*` any run of characters and `?` one |
 | `{"nameMatches": "^(get\|set)[A-Z]"}` | its name matches the regular expression |
+| `{"nameMood": "question"}` | its name is in that linguistic mood: `bare-verb` is the verb and nothing else (`holds`, `ships`), `third-person` narrates a verb (`entersTestMode`), and `question` opens with a question word (`is`, `has`, `can`, `should`). It reads the mood, never a list of words a rule writes. It is the one check here that judges a NAME, and it answers only whether the name READS a certain way: what makes that a sin is the mood against what the thing DOES, so pair it with what the member answers or whether it changes anything, as the shipped rules do |
 | `{"nameCase": "snake"}` | its name, less a leading `$` or `_`, is written `camel`, `pascal`, `snake`, `upper` or `kebab` case |
 | `{"hasModifier": "static"}` | it carries the modifier |
 | `{"hasFlag": "byRef"}` | it carries the flag its language's tree sets |
@@ -84,8 +85,10 @@ does not — which is how a `where` says what only a `reject` could.
 | `{"text": "select * from users"}` | a literal's text is exactly it |
 | `{"textLike": "*where id*"}` | a literal's text matches the glob |
 | `{"textMatches": "(?i)^select"}` | a literal's text matches the regular expression |
-| `{"commentLike": "*TODO*"}` | a comment on it, or in the run of comments directly above it, matches the glob |
-| `{"commentMatches": "(?i)\\b(TODO\|FIXME)\\b"}` | a comment on it, or in the run of comments directly above it, matches the regular expression |
+| `{"commentIs": "history"}` | a comment is one of the calibrated readings of prose: `history` narrates why the code was CHANGED rather than what it does, `strawman` defends against a mistake nobody was going to make, and `restates` says nothing the code it documents does not. The readings are the prose package's own, measured by its tests in every language, and the set is closed: a rule asks for a judgement that was calibrated, never for prose matching words it writes itself. Asked of a comment (`"select": "comment"`) it judges that comment, and asked of code it judges the comments written for it |
+| `{"docReference": {"resolves": false}}` | a doc comment names code that is GONE: a reference it makes (`<see cref>`, `{@see}`, `@see`, Sphinx `:class:`) resolves to nothing, and the project would have had to own it. Two references are left alone, which is the whole difference between this and a broken-link scanner: one the compiler could never have resolved anyway, and one whose owner is declared outside the scan, since nothing here can say whether that owner still has the member. The resolving is the bridge's own |
+| `{"commentLike": "*TODO*"}` | a comment on it, or in the run of comments directly above it, matches the glob - and, asked of a comment itself (`"select": "comment"`), what THAT comment says, so one key reads a comment however a rule reached it |
+| `{"commentMatches": "(?i)\\b(TODO\|FIXME)\\b"}` | a comment on it, or the comment itself, matches the regular expression, read as commentLike reads one |
 | `{"docTag": "deprecated"}` | its documentation carries the tag: `@tag` in PHPDoc and JSDoc, an XML element in C#, a Sphinx field or directive or a Google/NumPy section in a Python docstring |
 | `{"documented": false}` | it carries a doc comment, or not with `false` |
 

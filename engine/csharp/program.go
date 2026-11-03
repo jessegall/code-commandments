@@ -5,7 +5,6 @@ import (
 	"slices"
 	"strconv"
 	"strings"
-	"sync"
 
 	"github.com/jessegall/code-commandments/contract"
 	"github.com/jessegall/code-commandments/engine"
@@ -18,7 +17,6 @@ type Program struct {
 	codebase     *engine.Codebase
 	facts        *Summary
 	vocabularies map[string][]string
-	documented   sync.Map
 }
 
 // Of is the C# program the codebase holds, read once: its own summary, unless the codebase is one part of a
@@ -225,21 +223,4 @@ func (p *Program) DeclaresType(symbol string) bool {
 	_, declared := p.facts.types[symbol]
 
 	return declared
-}
-
-// documentable is the declarations and statements a comment in the file may be about, in the order a pre-order
-// walk meets them, which is the order they start in.
-func (p *Program) documentable(file *engine.File) []Node {
-	if held, ok := p.documented.Load(file); ok {
-		return held.([]Node)
-	}
-	var documentable []Node
-	for _, match := range file.Match(0).Descendants() {
-		if node := (Node{match}); !node.IsExpression() && node.hierarchyRole() != "other" {
-			documentable = append(documentable, node)
-		}
-	}
-	held, _ := p.documented.LoadOrStore(file, documentable)
-
-	return held.([]Node)
 }

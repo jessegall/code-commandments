@@ -6,10 +6,8 @@ import (
 	"io"
 	"regexp"
 	"slices"
-	"sort"
 	"strings"
 
-	"github.com/jessegall/code-commandments/contract"
 	"github.com/jessegall/code-commandments/engine"
 	"github.com/jessegall/code-commandments/prose"
 )
@@ -27,10 +25,10 @@ var signatureTags = []string{"summary", "remarks", "param", "typeparam", "return
 // prosePart is a run of a doc comment's prose outside any tag.
 const prosePart = "#text"
 
-// Comment is a C# comment as a detector reads it: a line, block or doc comment, in the file it is written in.
+// Comment is a C# comment as a detector reads it: the engine's comment, with what only C# knows about one — a doc
+// comment's XML tags, the bridge's judgement that a comment holds code — read off it.
 type Comment struct {
-	contract.Comment
-	File *engine.File
+	engine.Commented
 }
 
 // IsDoc says whether the comment is a documentation comment.
@@ -41,33 +39,6 @@ func (c Comment) IsDoc() bool {
 // IsCode says whether the line or block comment parses as one C# statement, as the bridge judged it.
 func (c Comment) IsCode() bool {
 	return c.Extras != nil && c.Extras.CSharp != nil && c.Extras.CSharp.Code
-}
-
-// ProseLines is the words the comment says, as a reader reads them: its markers and a doc comment's XML tags taken
-// away, one line per line.
-func (c Comment) ProseLines() []string {
-	body := c.Text
-	if c.Kind == "block" && len(body) >= 4 {
-		body = body[2 : len(body)-2]
-	}
-	var lines []string
-	for _, line := range lineBreak.Split(markup.ReplaceAllString(body, ""), -1) {
-		lines = append(lines, strings.TrimSpace(strings.TrimLeft(strings.TrimSpace(line), "/*")))
-	}
-
-	return lines
-}
-
-// Prose is the comment's words as one line.
-func (c Comment) Prose() string {
-	var kept []string
-	for _, line := range c.ProseLines() {
-		if line != "" {
-			kept = append(kept, line)
-		}
-	}
-
-	return strings.TrimSpace(strings.Join(kept, " "))
 }
 
 // Paragraphs is how many paragraphs of prose the comment holds: runs of words, a blank line or a tag on a line of
@@ -168,46 +139,17 @@ func (c Comment) RestatesOnly(words []string) bool {
 		!slices.ContainsFunc(tags, func(tag DocTag) bool { return !tag.IsAboutTheSignature() || !tag.SaysNothingBeyond(words) })
 }
 
-// IsDangling says whether the doc reference names nothing the code has: it resolves to nothing, and either the
-// qualifier that does resolve is declared here, or nothing of it resolves though the compiler could have seen it.
-func IsDangling(ref contract.Ref) bool {
-	if ref.Symbol != "" {
-		return false
-	}
-	ownedHere := ref.OwnedHere != nil && *ref.OwnedHere
-
-	return ownedHere || (ref.Owner == "" && !ref.Blind)
-}
-
 // Documented is the code the comment is about: the first declaration or statement after it, the outermost of
 // those starting there; no node when nothing follows.
 func (c Comment) Documented() Node {
-	documentable := Of(c.File.Codebase()).documentable(c.File)
-	at := sort.Search(len(documentable), func(i int) bool { return documentable[i].Node().Span.Start >= c.Span.End })
-	if at == len(documentable) {
-		return Node{}
-	}
-
-	return documentable[at]
+	return Node{c.Documents()}
 }
 
-// Line is the line the comment is reported on: the line of the code it documents, or its own when it documents
-// nothing.
-func (c Comment) Line() int {
-	if documented := c.Documented(); documented.Exists() {
-		return documented.Line()
-	}
-
-	return c.Span.Line
-}
-
-// Comments is every comment in the C# files of the codebase.
+// Comments is every comment in the C# files of the codebase, each read as C# reads one.
 func (c *Codebase) Comments() []Comment {
 	var comments []Comment
-	for _, file := range c.Files() {
-		for _, comment := range file.File.Comments {
-			comments = append(comments, Comment{Comment: comment, File: file})
-		}
+	for _, comment := range c.Codebase.Comments() {
+		comments = append(comments, Comment{Commented: comment})
 	}
 
 	return comments
@@ -218,7 +160,7 @@ func (c *Codebase) Comments() []Comment {
 func (n Node) CommentsAbove() []Comment {
 	var above []Comment
 	for _, comment := range n.Match.CommentsAbove() {
-		held := Comment{Comment: comment, File: n.Source()}
+		held := Comment{Commented: engine.Commented{Comment: comment, File: n.Source()}}
 		if !held.IsDoc() && !prose.IsFixtureMarker(held.Prose()) {
 			above = append(above, held)
 		}
@@ -253,7 +195,7 @@ func (c *Codebase) WhereComment(check func(Comment) bool) []engine.Match {
 	var found []engine.Match
 	for _, comment := range c.Comments() {
 		if check(comment) {
-			found = append(found, comment.File.CommentMatch(comment.Comment, comment.Line()))
+			found = append(found, comment.Match())
 		}
 	}
 

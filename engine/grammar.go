@@ -31,6 +31,18 @@ type Grammar struct {
 	// ClassOf is the class a node that declares none is about: the one it names, constructs or holds a value of;
 	// empty when the language cannot tell.
 	ClassOf func(Match) string
+	// CodeWords are the content words the node's own head spells: the construct it is and its keywords, then the
+	// names and literal text it is written with, what it holds aside. A comment measured against them shows
+	// whether it says anything the code does not, which is the one judgement that needs a language's own
+	// vocabulary rather than its prose.
+	CodeWords func(Match) []string
+
+	// Documentable says whether a comment of the language can be about the node, where the language's tree files
+	// something as a role a reader would not read it as: C# writes a property's accessor as a member, and no
+	// comment above a property documents its getter. Left out, the engine's own reading answers: anything that is
+	// neither an expression nor a piece of syntax.
+	Documentable func(Match) bool
+
 	// TypeOf is the type an expression has, whatever kind of type it is: a class, but a number or a string too,
 	// where ClassOf answers a class alone. Empty where the language cannot tell.
 	TypeOf func(Match) string

@@ -3,6 +3,7 @@ package csharp_test
 import (
 	"testing"
 
+	"github.com/jessegall/code-commandments/engine"
 	"github.com/jessegall/code-commandments/engine/csharp"
 	"github.com/jessegall/code-commandments/engine/csharp/csharptest"
 )
@@ -40,7 +41,7 @@ func TestADocCommentReadsAsItsTags(t *testing.T) {
 	if documented := doc.Documented(); !documented.Is("MethodDeclaration") || doc.Line() != 8 {
 		t.Errorf("the doc comment documents %s on line %d", documented.Kind(), doc.Line())
 	}
-	if refs := doc.Refs; len(refs) != 1 || !csharp.IsDangling(refs[0]) {
+	if refs := doc.Refs; len(refs) != 1 || !engine.Dangling(refs[0]) {
 		t.Errorf("the reference to Gone is not dangling: %+v", refs)
 	}
 }

@@ -49,6 +49,8 @@ func init() {
 		ComparisonSubject: func(held engine.Match) engine.Match { return Node{Match: held}.ComparisonSubject().Match },
 		ElementName:       elementName,
 		Computes:          computes,
+		Documentable:      documentable,
+		CodeWords:         func(node engine.Match) []string { return Node{Match: node}.CodeWords() },
 	})
 
 }
@@ -87,6 +89,15 @@ func conditioned(binding engine.Match) engine.Match {
 	}
 
 	return engine.Match{}
+}
+
+// documentable says whether a C# comment can be about the node. Roslyn files a property's accessor as a member of
+// its own and a pattern as a role of its own, and no comment above a property documents its getter; a namespace
+// declaration is a member a comment does document, and a local function is a statement.
+func documentable(node engine.Match) bool {
+	held := Node{Match: node}
+
+	return !held.IsExpression() && held.hierarchyRole() != "other"
 }
 
 // xmlTags are the elements a declaration's XML doc comments open, each once where it opens: `summary`, `param`,

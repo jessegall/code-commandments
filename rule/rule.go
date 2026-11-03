@@ -17,6 +17,7 @@ import (
 	"github.com/jessegall/code-commandments/catalog"
 	"github.com/jessegall/code-commandments/contract"
 	"github.com/jessegall/code-commandments/engine"
+	"github.com/jessegall/code-commandments/prose"
 	"github.com/jessegall/code-commandments/sins"
 	"github.com/jessegall/code-commandments/skill"
 )
@@ -81,6 +82,7 @@ type Step struct {
 	NameLike          string          `json:"nameLike,omitempty"`
 	NameMatches       string          `json:"nameMatches,omitempty"`
 	NameCase          string          `json:"nameCase,omitempty"`
+	NameMood          string          `json:"nameMood,omitempty"`
 	Text              *string         `json:"text,omitempty"`
 	TextLike          string          `json:"textLike,omitempty"`
 	TextMatches       string          `json:"textMatches,omitempty"`
@@ -135,6 +137,8 @@ type Step struct {
 	CalledFrom        string          `json:"calledFrom,omitempty"`
 	Calls             *Step           `json:"calls,omitempty"`
 	Argument          *Argued         `json:"argument,omitempty"`
+	CommentIs         string          `json:"commentIs,omitempty"`
+	DocReference      *Referenced     `json:"docReference,omitempty"`
 	CommentLike       string          `json:"commentLike,omitempty"`
 	CommentMatches    string          `json:"commentMatches,omitempty"`
 	DocTag            string          `json:"docTag,omitempty"`
@@ -711,6 +715,10 @@ func admits(named string, match engine.Match) bool {
 		return match.Kind() == kind
 	}
 
+	if named == commentSelector {
+		return match.Kind() == engine.CommentKind
+	}
+
 	return match.Is(engine.Neutral(named))
 }
 
@@ -720,12 +728,20 @@ func selector(named string) (func(*engine.Codebase) *engine.Query, error) {
 		return func(c *engine.Codebase) *engine.Query { return c.WhereKind(kind) }, nil
 	}
 
+	if named == commentSelector {
+		return func(c *engine.Codebase) *engine.Query { return c.WhereComment() }, nil
+	}
+
 	if !slices.Contains(engine.Neutrals, engine.Neutral(named)) {
-		return nil, fmt.Errorf("select %q is neither a neutral kind (%s) nor kind:<Kind>%s", named, neutralList(), didYouMean(named, neutralNames()))
+		return nil, fmt.Errorf("select %q is neither a neutral kind (%s), nor %s, nor kind:<Kind>%s", named, neutralList(), commentSelector, didYouMean(named, append(neutralNames(), commentSelector)))
 	}
 
 	return func(c *engine.Codebase) *engine.Query { return c.WhereIs(engine.Neutral(named)) }, nil
 }
+
+// commentSelector is what a rule selects to report on comments rather than code: a comment is no node of the tree,
+// so it is named rather than being one of the neutral kinds.
+const commentSelector = "comment"
 
 // noneOf says a key's value is none of the ones it may take, naming the nearest when it is a slip of the
 // keyboard. What it lists and what a slip is measured against can differ: an engine lists the names of today and
@@ -767,14 +783,14 @@ func (s Step) checks() int {
 	count := 0
 
 	for _, set := range []bool{s.Is != "", s.Kind != "", s.Name != "", s.NameIn != nil, s.NameLike != "",
-		s.NameMatches != "", s.NameCase != "", s.Text != nil, s.TextLike != "", s.TextMatches != "", s.Resolves != "",
+		s.NameMatches != "", s.NameCase != "", s.NameMood != "", s.Text != nil, s.TextLike != "", s.TextMatches != "", s.Resolves != "",
 		s.ResolvesLike != "", s.NamespaceLike != "", s.Layer != "", s.HasModifier != "", s.HasFlag != "", s.WithinLoop != nil,
 		s.Operator != "", len(s.OperatorIn) > 0, s.Type != "", s.TypeLike != "",
 		len(s.Value) > 0, s.Documented != nil, s.File != "", s.FileMatches != "", s.Position != "", s.Field != "", s.Role != "", s.TopLevel != nil, s.Descendant != nil, s.Child != nil, s.Inside != nil,
 		s.Next != nil, s.Previous != nil, s.NestedAtLeast != nil, s.Counts != nil, s.Parameters != nil, s.Arguments != nil,
 		s.Lines != nil, s.Members != nil, s.Complexity != nil, s.Extends != "", s.ExtendsAny != "", s.Implements != "", s.Uses != "", s.All != nil, s.Any != nil, s.Not != nil, s.HasAttribute != "", s.Sibling != "", s.IsA != "",
 		s.TypeKind != "", s.HasAnnotation != "", s.ReturnType != "", s.ParameterType != "", s.Constructs != "", s.Unused != nil,
-		s.CalledFrom != "", s.ReferredFrom != nil, s.Calls != nil, s.Argument != nil, s.CommentLike != "", s.CommentMatches != "", s.DocTag != "", s.Duplicated != nil, s.Callers != nil, s.Repeated != nil, s.DeclaredBy != "", s.AnsweredBy != nil, s.DeclaredElsewhere != nil, s.SameAs != nil, s.Ancestors != nil, s.RedundantElse != nil, s.UnnamedCondition != nil, s.BindsItsOwnTest != nil, s.SoleLoopBodyGuard != nil, s.PassesItsElement != nil, s.LadderRungs != nil, s.Nullable != nil, s.TypeShape != "", s.TypeOrigin != "", s.ElementType != "",
+		s.CalledFrom != "", s.ReferredFrom != nil, s.Calls != nil, s.Argument != nil, s.CommentIs != "", s.DocReference != nil, s.CommentLike != "", s.CommentMatches != "", s.DocTag != "", s.Duplicated != nil, s.Callers != nil, s.Repeated != nil, s.DeclaredBy != "", s.AnsweredBy != nil, s.DeclaredElsewhere != nil, s.SameAs != nil, s.Ancestors != nil, s.RedundantElse != nil, s.UnnamedCondition != nil, s.BindsItsOwnTest != nil, s.SoleLoopBodyGuard != nil, s.PassesItsElement != nil, s.LadderRungs != nil, s.Nullable != nil, s.TypeShape != "", s.TypeOrigin != "", s.ElementType != "",
 		s.TestCode != nil, s.Overrides != nil, s.Implicit != nil, s.PHP != "", s.Python != "", s.CSharp != "", s.TypeScript != "", s.Vue != "", s.Rule != ""} {
 		if set {
 			count++
@@ -861,8 +877,8 @@ func (s Step) valid() error {
 		return fmt.Errorf("is %q is no neutral kind: %s%s", s.Is, neutralList(), didYouMean(s.Is, neutralNames()))
 	}
 
-	for key, value := range map[string]string{"typeKind": s.TypeKind, "nameCase": s.NameCase, "position": s.Position,
-		"typeShape": s.TypeShape, "typeOrigin": s.TypeOrigin, "role": s.Role} {
+	for key, value := range map[string]string{"typeKind": s.TypeKind, "nameCase": s.NameCase, "nameMood": s.NameMood, "position": s.Position,
+		"typeShape": s.TypeShape, "typeOrigin": s.TypeOrigin, "role": s.Role, "commentIs": s.CommentIs} {
 		if allowed := closedValues[key]; value != "" && !slices.Contains(allowed, value) {
 			return errors.New(noneOf(key, value, allowed))
 		}
@@ -874,6 +890,10 @@ func (s Step) valid() error {
 
 	if err := s.validValue(); err != nil {
 		return err
+	}
+
+	if s.DocReference != nil && s.DocReference.Resolves == nil {
+		return fmt.Errorf("a docReference asks whether the reference resolves, and %s asks nothing", s.describe())
 	}
 
 	if s.Members != nil && s.Members.Step.checks() == 0 && s.Members.Step.Of != "" {
@@ -1098,6 +1118,8 @@ func (s Step) check(match engine.Match) bool {
 		name := nameOf(subject)
 
 		return name != "" && s.pattern.MatchString(name)
+	case s.NameMood != "":
+		return moodOf(s.NameMood, bare(nameOf(subject)))
 	case s.NameCase != "":
 		return cases[s.NameCase].MatchString(bare(nameOf(subject)))
 	case s.Text != nil:
@@ -1222,6 +1244,10 @@ func (s Step) check(match engine.Match) bool {
 		// attribute was given rather than only that it is there. A node handed nothing has no arguments to pass,
 		// so the kinds need no guard of their own.
 		return s.Argument.passes(subject.Arguments())
+	case s.CommentIs != "":
+		return s.commentIs(subject)
+	case s.DocReference != nil:
+		return s.DocReference.holds(subject)
 	case s.CommentLike != "", s.CommentMatches != "":
 		return s.commented(subject)
 	case s.DocTag != "":
@@ -1387,7 +1413,63 @@ func (s *Step) ownChecks(judged []contract.Language) error {
 }
 
 // commented says whether a comment on the node, or in the run directly above it, matches the step's pattern.
+// Referenced is a question about the code a doc comment NAMES: with Resolves false, a reference that names code
+// the project would have had to own and no longer declares, which is the one question the bridges' own resolving
+// already answers.
+type Referenced struct {
+	Resolves *bool `json:"resolves"`
+}
+
+// holds says whether a comment of the node makes a reference the question keeps. It is asked of each REFERENCE, so
+// a comment that names no code at all keeps nothing either way; and a reference the compiler could never have
+// resolved, or whose owner is declared outside the scan, counts as neither, since nothing here can say whether
+// that owner still has the member.
+func (r Referenced) holds(subject engine.Match) bool {
+	for _, comment := range commentsOf(subject) {
+		for _, ref := range comment.Refs {
+			if engine.Dangling(ref) == !*r.Resolves {
+				return true
+			}
+		}
+	}
+
+	return false
+}
+
+// commentIs asks a calibrated judgement of what a comment says: of the comment the step is on, and of a comment
+// written for the code it is on, so a rule reaches the judgement whether it selected comments or code.
+func (s Step) commentIs(subject engine.Match) bool {
+	for _, comment := range commentsOf(subject) {
+		if comment.Is(s.CommentIs) {
+			return true
+		}
+	}
+
+	return false
+}
+
+// commentsOf are the comments the step's judgement is asked of: the comment itself where the step is on one, else
+// the comments written on the node and in the run above it.
+func commentsOf(subject engine.Match) []engine.Commented {
+	if comment, ok := subject.AsComment(); ok {
+		return []engine.Commented{comment}
+	}
+
+	var comments []engine.Commented
+	for _, comment := range append(subject.Comments(), subject.CommentsAbove()...) {
+		comments = append(comments, engine.Commented{Comment: comment, File: subject.Source()})
+	}
+
+	return comments
+}
+
 func (s Step) commented(subject engine.Match) bool {
+	// Asked of a comment, the question is about that comment: a rule selecting comments reads what each one says
+	// with the same key a rule about code reads its comments with.
+	if subject.Kind() == engine.CommentKind {
+		return s.pattern.MatchString(subject.Written())
+	}
+
 	for _, comment := range append(subject.Comments(), subject.CommentsAbove()...) {
 		if s.pattern.MatchString(comment.Text) {
 			return true
@@ -1583,6 +1665,25 @@ func atPosition(match engine.Match, position string) bool {
 // runs when its file is loaded.
 func topLevel(match engine.Match) bool {
 	return !match.Closest(engine.Function).Exists() && !match.EnclosingType().Exists()
+}
+
+// moods are the linguistic moods a name can be in, by the name a rule asks for one. The set is closed: this is the
+// one check in the catalogue that reads a NAME, which is only justified where the sin IS the name, and it never
+// becomes a list of words a rule writes for itself.
+var moods = []string{"bare-verb", "third-person", "question"}
+
+// moodOf says whether the name is in that mood, as the prose package reads one.
+func moodOf(mood, name string) bool {
+	switch mood {
+	case "bare-verb":
+		return prose.IsBareVerb(name)
+	case "third-person":
+		return prose.IsThirdPerson(name)
+	case "question":
+		return prose.ReadsAsQuestion(name)
+	}
+
+	return false
 }
 
 // nameOf is the name a reader gives the node: its own, or, for a call, the name it calls.

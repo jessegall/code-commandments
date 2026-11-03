@@ -29,6 +29,7 @@ func init() {
 		Callers:       callers,
 		DocTags:       phpDocTags,
 		BodyHash:      func(function engine.Match) string { return Node{Match: function}.BodyHash() },
+		CodeWords:     func(node engine.Match) []string { return Node{Match: node}.CodeWords() },
 		NodeHash: func(node engine.Match, normalize bool) string {
 			return engine.SyntaxHash([]engine.Match{node}, Hashing, normalize)
 		},

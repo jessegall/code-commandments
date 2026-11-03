@@ -25,5 +25,5 @@ func (DanglingDocReferenceDetector) Sin() sins.Sin {
 
 // Find is every place the sin is committed.
 func (DanglingDocReferenceDetector) Find(codebase *engine.Codebase) []engine.Match {
-	return cs.In(codebase).WhereComment(func(comment cs.Comment) bool { return slices.ContainsFunc(comment.Refs, cs.IsDangling) })
+	return cs.In(codebase).WhereComment(func(comment cs.Comment) bool { return slices.ContainsFunc(comment.Refs, engine.Dangling) })
 }
