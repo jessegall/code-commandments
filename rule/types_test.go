@@ -213,6 +213,10 @@ def spare() -> Money | None:
     return None
 
 
+def quoted() -> "Money | None":
+    return None
+
+
 def held() -> Money:
     return Money()
 
@@ -272,7 +276,9 @@ export function named(): Maybe<Money> {
 		// A union of two real types is no absence, and neither is a class called Maybe.
 		{"backend", `{"select": "function", "where": [{"nullable": false}]}`, "[19 24 29]"},
 
-		{"python", `{"select": "function", "where": [{"nullable": true}]}`, "[9]"},
+		// The quoted form is the same type as the plain one, which is how Python writes a type that is not
+		// defined yet, and it used to be read as a class called "Money | None".
+		{"python", `{"select": "function", "where": [{"nullable": true}]}`, "[9 13]"},
 
 		{"csharp", `{"select": "function", "where": [{"nullable": true}]}`, "[9]"},
 

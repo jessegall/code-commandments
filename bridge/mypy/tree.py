@@ -444,27 +444,42 @@ class TreeWriter:
             flags.append("group")
         return flags
 
-    def type(self, annotation: ast.expr) -> WrittenType:
-        text = ast.get_source_segment(self.source.decode(), annotation) or ast.unparse(annotation)
+    def type(self, annotation: ast.expr, quoted: bool = False) -> WrittenType:
+        text = ast.unparse(annotation) if quoted else (ast.get_source_segment(self.source.decode(), annotation) or ast.unparse(annotation))
         if isinstance(annotation, ast.Constant) and annotation.value is None:
             return WrittenType(text, "keyword", "None", nullable=True)
         if isinstance(annotation, ast.Constant) and isinstance(annotation.value, str):
-            return WrittenType(text, "named", annotation.value)
+            return self.forward_reference(text, annotation.value)
         if is_union(annotation):
-            members = tuple(self.union_members(annotation))
+            members = tuple(self.union_members(annotation, quoted))
             return WrittenType(text, "union", members=members, nullable=any(member.name == "None" for member in members))
         if isinstance(annotation, ast.Subscript):
-            base = self.type(annotation.value)
+            base = self.type(annotation.value, quoted)
             items = annotation.slice.elts if isinstance(annotation.slice, ast.Tuple) else [annotation.slice]
-            return WrittenType(text, "named", base.name, args=tuple(self.type(item) for item in items))
+            return WrittenType(text, "named", base.name, args=tuple(self.type(item, quoted) for item in items))
         if isinstance(annotation, (ast.Name, ast.Attribute)):
             return WrittenType(text, "named", ast.unparse(annotation))
         return WrittenType(text, "opaque")
 
-    def union_members(self, annotation: ast.expr) -> list[WrittenType]:
+    def forward_reference(self, text: str, spelled: str) -> WrittenType:
+        """A type in quotes, which is how Python writes one that is not defined yet: `"Money | None"` IS the type
+        `Money | None`, and every checker reads it that way, so a rule about absence or about a type's shape must
+        too. The quotes' contents are parsed and read as the annotation they spell, while the text stays as the
+        source wrote it, quotes and all. A reference that parses as nothing is a name, which is what it looks
+        like. The inner types' own text is unparsed rather than read from the file, since what is inside the
+        quotes has no span of its own there.
+        """
+        try:
+            parsed = ast.parse(spelled, mode="eval").body
+        except SyntaxError:
+            return WrittenType(text, "named", spelled)
+        read = self.type(parsed, quoted=True)
+        return WrittenType(text, read.kind, read.name, members=read.members, args=read.args, nullable=read.nullable)
+
+    def union_members(self, annotation: ast.expr, quoted: bool = False) -> list[WrittenType]:
         if is_union(annotation):
-            return self.union_members(annotation.left) + self.union_members(annotation.right)
-        return [self.type(annotation)]
+            return self.union_members(annotation.left, quoted) + self.union_members(annotation.right, quoted)
+        return [self.type(annotation, quoted)]
 
     def comments(self) -> list[Comment]:
         found: list[tuple[int, int, str]] = []
