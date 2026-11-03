@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/jessegall/code-commandments/cli"
+	"github.com/jessegall/code-commandments/cli/config"
 	"github.com/jessegall/code-commandments/cli/custom"
 	"github.com/jessegall/code-commandments/cli/workspace"
 )
@@ -41,7 +42,7 @@ func (c Command) migrate(in *cli.Input, root string, console cli.Console) (int, 
 		return 0, err
 	}
 
-	merged, failures := mergeByEngine(files, preview)
+	merged, failures := mergeByEngine(root, files, preview)
 	for _, said := range merged {
 		console.Say(said)
 	}
@@ -58,7 +59,7 @@ func (c Command) migrate(in *cli.Input, root string, console cli.Console) (int, 
 	case len(failures) == 0 && len(merged) == 0:
 		return console.Say("✓ Every rule of your own reads as it is: " + plural(len(project.Rules), "rule", "rules") + ", nothing to change."), nil
 	case len(failures) == 0:
-		return console.Say("✓ " + plural(len(merged), "rule", "rules") + " merged, and every rule reads."), nil
+		return console.Say("✓ Every rule reads, and what could be merged was."), nil
 	}
 
 	console.Warn("✗ " + plural(len(failures), "rule", "rules") + " could not be settled here, each named above. A rule naming a construct no parser writes is a rule that found nothing before this release said so: fix the word, or name the engine that writes it.")
@@ -89,7 +90,7 @@ func ruleFiles(dir string) ([]string, error) {
 // mergeByEngine merges the rule files that differ in nothing but the engine they judge into one file naming them
 // all, and says what it did. A file it cannot read as JSON is no merge candidate and is left for the parser to
 // report, which says more about it than this could.
-func mergeByEngine(files []string, preview bool) (said []string, failures []string) {
+func mergeByEngine(root string, files []string, preview bool) (said []string, failures []string) {
 	same := map[string][]string{}
 	var order []string
 
@@ -110,6 +111,10 @@ func mergeByEngine(files []string, preview bool) (said []string, failures []stri
 			continue
 		}
 
+		slices.SortStableFunc(group, func(one, other string) int {
+			return len(filepath.Base(one)) - len(filepath.Base(other))
+		})
+
 		into, engines, err := merge(group, preview)
 		if err != nil {
 			failures = append(failures, err.Error())
@@ -128,9 +133,46 @@ func mergeByEngine(files []string, preview bool) (said []string, failures []stri
 		}
 
 		said = append(said, leading+filepath.Base(into)+" now judges "+strings.Join(engines, " and ")+", replacing "+strings.Join(was, " and "))
+
+		// The config reaches a rule by its NAME, so a merge that left the replaced names there would leave a
+		// list naming rules nothing declares and, worse, a rule's own settings stranded under a name no rule
+		// answers to. That is silent loss, which is the one thing a migration must not do.
+		said = append(said, renamedInConfig(root, group, into, preview)...)
 	}
 
 	return said, failures
+}
+
+// renamedInConfig carries the replaced rules' names over to the one that survived, in the lists that name them
+// and in the settings keyed by them, and says what it moved and what it could not.
+func renamedInConfig(root string, group []string, into string, preview bool) []string {
+	if preview {
+		return nil
+	}
+
+	var said []string
+	surviving := nameOf(into)
+
+	for _, path := range group[1:] {
+		replaced := nameOf(path)
+		renamed, clash, err := config.RenameRule(workspace.JSONConfig(root), replaced, surviving)
+
+		switch {
+		case err != nil:
+			said = append(said, "  ✗ "+replaced+" could not be renamed in config.json: "+err.Error())
+		case clash != "":
+			said = append(said, "  ✗ "+clash)
+		case renamed:
+			said = append(said, "  ↳ config.json now names "+surviving+" where it named "+replaced)
+		}
+	}
+
+	return said
+}
+
+// nameOf is the rule's name, which is its file's without the extension.
+func nameOf(path string) string {
+	return strings.TrimSuffix(filepath.Base(path), ".json")
 }
 
 // apartFromEngine is the rule's own text with its engine left out, as one string: two rules with the same one are
@@ -167,9 +209,12 @@ func apartFromEngine(path string) (string, bool) {
 	return string(apart), true
 }
 
-// merge writes the first file of the group naming every engine the group judges, and removes the rest. The first
-// is kept because a name is a rule's identity everywhere a config mentions it, and keeping the first by path
-// keeps the choice the same from one run to the next.
+// merge writes the first file of the group naming every engine the group judges, and removes the rest.
+//
+// The first is the one with the SHORTEST name, because a per-engine copy is almost always the rule's own name
+// with its engine worked into it: keeping `PoeticMethodName` over `GoPoeticMethodName` leaves a rule that now
+// judges Go and Python reading as what it is, where keeping the other would name one of its engines in every
+// finding. A tie keeps the order the paths were read in, so the choice is the same from one run to the next.
 func merge(group []string, preview bool) (into string, engines []string, err error) {
 	into = group[0]
 	for _, path := range group {

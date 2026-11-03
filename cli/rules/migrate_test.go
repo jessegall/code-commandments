@@ -1,6 +1,7 @@
 package rules
 
 import (
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"strings"
@@ -121,5 +122,93 @@ func TestMigrateSaysSoWhenAProjectHasNoRulesOfItsOwn(t *testing.T) {
 	said, code := run(t, t.TempDir(), "migrate")
 	if code != 0 || !strings.Contains(said, "nothing to migrate") {
 		t.Errorf("a project with no rules of its own: %d, %s", code, said)
+	}
+}
+
+// TestMigrateCarriesTheConfigOverWithTheRule holds the loss this cost a real project within an hour of release.
+// A config reaches a rule by its NAME, so a merge that leaves the replaced names there leaves a list naming
+// rules nothing declares and, worse, a rule's own settings stranded under a name no rule answers to. The settings
+// are not lost, they are simply never read again, which is the quietest way for a tool to start being wrong.
+func TestMigrateCarriesTheConfigOverWithTheRule(t *testing.T) {
+	root := written(t, map[string]string{
+		".commandments/custom/PoeticName.json":   neutral("poetic-name", "backend"),
+		".commandments/custom/GoPoeticName.json": neutral("go-poetic-name", "go"),
+		".commandments/config.json": `{
+  "paths": ["src"],
+  "detectors": ["PoeticName", "GoPoeticName"],
+  "configure": {"GoPoeticName": [{"judges": ["tests"]}]}
+}
+`,
+	})
+
+	said, code := run(t, root, "migrate")
+	if code != 0 {
+		t.Errorf("migrate ended with %d: %s", code, said)
+	}
+
+	// The shorter name survives, because a per-engine copy is the rule's name with its engine worked in: a rule
+	// judging backend and Go must not be called GoPoeticName in every finding.
+	if !strings.Contains(said, "PoeticName.json now judges backend and go") {
+		t.Errorf("the wrong name survived, or the merge is not said: %s", said)
+	}
+
+	text, err := os.ReadFile(filepath.Join(root, ".commandments/config.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var read struct {
+		Detectors []string                      `json:"detectors"`
+		Configure map[string][]map[string][]any `json:"configure"`
+	}
+	if err := json.Unmarshal(text, &read); err != nil {
+		t.Fatal(err)
+	}
+
+	if len(read.Detectors) != 1 || read.Detectors[0] != "PoeticName" {
+		t.Errorf("the config names %v, so judge warns about a detector nothing declares", read.Detectors)
+	}
+
+	if _, stranded := read.Configure["GoPoeticName"]; stranded {
+		t.Error("the settings are still under the replaced name, where nothing reads them")
+	}
+
+	moved, carried := read.Configure["PoeticName"]
+	if !carried || len(moved) != 1 || len(moved[0]["judges"]) != 1 {
+		t.Errorf("the judges setting did not come across: %v", read.Configure)
+	}
+}
+
+// TestMigrateMovesNoSettingsOverSettingsThatAreAlreadyThere holds the one case it must not decide: two sets of
+// settings for one rule is a question only the project can answer, and a migration that guessed would lose one
+// of them in silence. It touches neither and says so.
+func TestMigrateMovesNoSettingsOverSettingsThatAreAlreadyThere(t *testing.T) {
+	root := written(t, map[string]string{
+		".commandments/custom/PoeticName.json":   neutral("poetic-name", "backend"),
+		".commandments/custom/GoPoeticName.json": neutral("go-poetic-name", "go"),
+		".commandments/config.json": `{
+  "paths": ["src"],
+  "configure": {
+    "PoeticName": [{"judges": ["src"]}],
+    "GoPoeticName": [{"judges": ["tests"]}]
+  }
+}
+`,
+	})
+
+	said, _ := run(t, root, "migrate")
+	if !strings.Contains(said, "both carry settings of their own") {
+		t.Errorf("the clash is not said: %s", said)
+	}
+
+	text, err := os.ReadFile(filepath.Join(root, ".commandments/config.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	for _, name := range []string{"PoeticName", "GoPoeticName"} {
+		if !strings.Contains(string(text), `"`+name+`"`) {
+			t.Errorf("%s's settings were taken away although the clash was unresolved: %s", name, text)
+		}
 	}
 }
