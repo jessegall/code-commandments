@@ -48,8 +48,10 @@ var cases = map[string]*regexp.Regexp{
 
 // file is a rule as it is written.
 type file struct {
-	Schema string   `json:"$schema,omitempty"`
-	Engine string   `json:"engine"`
+	Schema string `json:"$schema,omitempty"`
+	// Engine is the engine the rule judges, or the engines: one name for nearly every rule, and a list for one
+	// that is wholly neutral, which is then written once instead of once per engine.
+	Engine engines  `json:"engine"`
 	Sin    sinFile  `json:"sin"`
 	Find   find     `json:"find"`
 	Fix    *Fix     `json:"fix,omitempty"`
@@ -108,6 +110,7 @@ type Step struct {
 	Of                string          `json:"of,omitempty"`
 	Descendant        *Descended      `json:"descendant,omitempty"`
 	Child             *Childed        `json:"child,omitempty"`
+	Body              *Step           `json:"body,omitempty"`
 	Inside            *Step           `json:"inside,omitempty"`
 	Next              *Step           `json:"next,omitempty"`
 	Previous          *Step           `json:"previous,omitempty"`
@@ -352,23 +355,54 @@ type Tally struct {
 
 // layered are the engines a project declares dependency layers for, and how each spells a namespace: the
 // separator between its parts and whether its case matters, as that engine's dependency detector reads them.
-var layered = map[catalog.Engine]struct {
-	separator     string
-	caseSensitive bool
-}{
+var layered = map[catalog.Engine]layerSpelling{
 	catalog.PHP:    {`\`, false},
 	catalog.Python: {".", true},
 	catalog.CSharp: {".", true},
 }
 
+// layerSpelling is how one engine spells a namespace: the separator between its parts, and whether its case
+// matters.
+type layerSpelling struct {
+	separator     string
+	caseSensitive bool
+}
+
 // Rule is a project's own detector.
 type Rule struct {
-	name   string
-	engine catalog.Engine
-	sin    ownSin
-	find   find
-	fix    *Fix
-	judges []string
+	name string
+	// engines are the engines the rule judges, in the order its own file names them. A rule that is wholly
+	// neutral names several, and then it is written ONCE: the neutral kinds mean the same in every language, so a
+	// loop whose body sits under one `if` is the same sin wherever it is written, and repeating the rule per
+	// engine was the repetition that made it six rules to keep in step.
+	engines []catalog.Engine
+	sin     ownSin
+	find    find
+	fix     *Fix
+	judges  []string
+}
+
+// engines are the engines a rule's own file names, written as one name or as a list of them. Both spellings read
+// into the same thing, because one engine is the common case and a list should cost the common case nothing.
+type engines []string
+
+// UnmarshalJSON reads one name or a list of them.
+func (e *engines) UnmarshalJSON(text []byte) error {
+	var one string
+	if json.Unmarshal(text, &one) == nil {
+		*e = engines{one}
+
+		return nil
+	}
+
+	var several []string
+	if err := json.Unmarshal(text, &several); err != nil {
+		return fmt.Errorf("engine is one engine's name or a list of them")
+	}
+
+	*e = several
+
+	return nil
 }
 
 // Skills finds the skill a rule's sin names: the project's own, else a shipped one.
@@ -393,10 +427,25 @@ func Parse(name string, text []byte, skills Skills) (Rule, error) {
 		return Rule{}, fmt.Errorf("%s: the rule is one JSON object, and more follows it", name)
 	}
 
-	engine, _ := catalog.EngineNamed(read.Engine)
-	if _, known := languages[engine]; !known {
-		return Rule{}, fmt.Errorf("%s: %s", name, noneOf("engine", read.Engine, engineNames(), append(engineNames(), catalog.FormerNames()...)))
+	if len(read.Engine) == 0 {
+		return Rule{}, fmt.Errorf("%s: a rule names the engine it judges, or the engines", name)
 	}
+
+	var judges []catalog.Engine
+	for _, named := range read.Engine {
+		engine, _ := catalog.EngineNamed(named)
+		if _, known := languages[engine]; !known {
+			return Rule{}, fmt.Errorf("%s: %s", name, noneOf("engine", named, engineNames(), append(engineNames(), catalog.FormerNames()...)))
+		}
+
+		if slices.Contains(judges, engine) {
+			return Rule{}, fmt.Errorf("%s: engine %q is named twice", name, named)
+		}
+
+		judges = append(judges, engine)
+	}
+
+	judged := judgedLanguages(judges)
 
 	if read.Sin.Name == "" || read.Sin.Skill == "" {
 		return Rule{}, fmt.Errorf("%s: a sin needs a name and the skill that teaches its fix", name)
@@ -416,7 +465,7 @@ func Parse(name string, text []byte, skills Skills) (Rule, error) {
 			return Rule{}, fmt.Errorf("%s: %w", name, err)
 		}
 
-		if err := selected(read.Find.Select, languages[engine]); err != nil {
+		if err := selected(read.Find.Select, judged); err != nil {
 			return Rule{}, fmt.Errorf("%s: %w", name, err)
 		}
 	}
@@ -427,16 +476,20 @@ func Parse(name string, text []byte, skills Skills) (Rule, error) {
 				return Rule{}, fmt.Errorf("%s: %w", name, err)
 			}
 
-			if err := steps[i].ownChecks(languages[engine]); err != nil {
+			if err := steps[i].ownChecks(judged); err != nil {
 				return Rule{}, fmt.Errorf("%s: %w", name, err)
 			}
 
-			if err := steps[i].declaredValues(languages[engine]); err != nil {
+			if err := steps[i].declaredValues(judged); err != nil {
 				return Rule{}, fmt.Errorf("%s: %w", name, err)
 			}
 
-			if _, declares := layered[engine]; !declares && steps[i].usesLayers() {
-				return Rule{}, fmt.Errorf("%s: a layer step needs declared layers, and the %s engine has none", name, engine)
+			// EVERY engine a rule names has to declare layers, since one step is read against one stack: a
+			// rule judging two engines where only one has layers would read the other's names against nothing.
+			for _, engine := range judges {
+				if _, declares := layered[engine]; !declares && steps[i].usesLayers() {
+					return Rule{}, fmt.Errorf("%s: a layer step needs declared layers, and the %s engine has none", name, engine)
+				}
 			}
 		}
 	}
@@ -447,7 +500,7 @@ func Parse(name string, text []byte, skills Skills) (Rule, error) {
 		}
 	}
 
-	return Rule{name, engine, ownSin{sins.Definition{
+	return Rule{name, judges, ownSin{sins.Definition{
 		Name:        read.Sin.Name,
 		Skill:       taught,
 		Description: read.Sin.Description,
@@ -469,9 +522,11 @@ func folders(named []string) []string {
 	return kept
 }
 
-// WithLayers is the rule looking a layer step's name up in the layers the project declares for its engine.
+// WithLayers is the rule looking a layer step's name up in the layers the project declares for its engine. A rule
+// that judges several takes the spelling of the first that declares layers at all, which is the only one a layer
+// step can have been written for: Parse refuses a layer step unless every engine the rule names declares them.
 func (r Rule) WithLayers(declared map[string][]string) Rule {
-	spelling, declares := layered[r.engine]
+	spelling, declares := firstLayered(r.engines)
 	if !declares {
 		return r
 	}
@@ -559,6 +614,11 @@ func (s Step) withLayers(stack *engine.LayerStack) Step {
 		s.Child = &childed
 	}
 
+	if s.Body != nil {
+		copied := s.Body.withLayers(stack)
+		s.Body = &copied
+	}
+
 	for _, listed := range []*[]Step{&s.All, &s.Any} {
 		if *listed != nil {
 			*listed = withLayers(*listed, stack)
@@ -612,6 +672,10 @@ func (s *Step) nested() []*Step {
 		nested = append(nested, &s.Child.Step)
 	}
 
+	if s.Body != nil {
+		nested = append(nested, s.Body)
+	}
+
 	if s.Descendant != nil {
 		nested = append(nested, &s.Descendant.Step)
 	}
@@ -641,9 +705,60 @@ func (r Rule) Name() string {
 	return r.name
 }
 
-// Engine is the engine the rule judges.
+// Engine is the first engine the rule judges, which is the only one for nearly every rule. A reader that must
+// know about all of them asks Engines.
 func (r Rule) Engine() catalog.Engine {
-	return r.engine
+	if len(r.engines) == 0 {
+		return ""
+	}
+
+	return r.engines[0]
+}
+
+// Engines are every engine the rule judges, in the order its file names them.
+func (r Rule) Engines() []catalog.Engine {
+	return r.engines
+}
+
+// engineList is the engines named as a reader reads them, with the noun that fits: the python engine, or the php
+// and python engines.
+func engineList(engines []catalog.Engine) string {
+	var names []string
+	for _, engine := range engines {
+		names = append(names, string(engine))
+	}
+
+	if len(names) == 1 {
+		return "the " + names[0] + " engine"
+	}
+
+	return "the " + strings.Join(names, " and ") + " engines"
+}
+
+// firstLayered is the layer spelling of the first engine that declares layers; none where no engine does.
+func firstLayered(engines []catalog.Engine) (layerSpelling, bool) {
+	for _, engine := range engines {
+		if spelling, declares := layered[engine]; declares {
+			return spelling, true
+		}
+	}
+
+	return layerSpelling{}, false
+}
+
+// judgedLanguages are the languages of every engine the rule judges, each once: what its query is narrowed to, and
+// what its own words are held against.
+func judgedLanguages(engines []catalog.Engine) []contract.Language {
+	var judged []contract.Language
+	for _, engine := range engines {
+		for _, language := range languages[engine] {
+			if !slices.Contains(judged, language) {
+				judged = append(judged, language)
+			}
+		}
+	}
+
+	return judged
 }
 
 // Sin is the sin the rule finds.
@@ -666,7 +781,7 @@ func (r Rule) Find(codebase *engine.Codebase) []engine.Match {
 	}
 
 	selected, _ := selector(r.find.Select)
-	query := selected(codebase.Of(languages[r.engine]...))
+	query := selected(codebase.Of(judgedLanguages(r.engines)...))
 
 	for _, step := range r.find.Where {
 		query = query.Where(step.check)
@@ -851,7 +966,7 @@ func (s Step) checks() int {
 		s.NameMatches != "", s.NameCase != "", s.NameMood != "", s.Text != nil, s.TextLike != "", s.TextMatches != "", s.Resolves != "",
 		s.ResolvesLike != "", s.NamespaceLike != "", s.Layer != "", s.HasModifier != "", s.HasFlag != "", s.WithinLoop != nil,
 		s.Operator != "", len(s.OperatorIn) > 0, s.Type != "", s.TypeLike != "",
-		len(s.Value) > 0, s.Documented != nil, s.File != "", s.FileMatches != "", s.Position != "", s.Field != "", s.Role != "", s.TopLevel != nil, s.Descendant != nil, s.Child != nil, s.Inside != nil,
+		len(s.Value) > 0, s.Documented != nil, s.File != "", s.FileMatches != "", s.Position != "", s.Field != "", s.Role != "", s.TopLevel != nil, s.Descendant != nil, s.Child != nil, s.Body != nil, s.Inside != nil,
 		s.Next != nil, s.Previous != nil, s.NestedAtLeast != nil, s.Counts != nil, s.Parameters != nil, s.Arguments != nil,
 		s.Lines != nil, s.Members != nil, s.Complexity != nil, s.Extends != "", s.ExtendsAny != "", s.Implements != "", s.Uses != "", s.All != nil, s.Any != nil, s.Not != nil, s.HasAttribute != "", s.Sibling != "", s.IsA != "",
 		s.TypeKind != "", s.HasAnnotation != "", s.ReturnType != "", s.ParameterType != "", s.Constructs != "", s.Unused != nil,
@@ -1241,6 +1356,8 @@ func (s Step) check(match engine.Match) bool {
 		return slices.ContainsFunc(s.Descendant.descendants(subject), s.Descendant.check)
 	case s.Child != nil:
 		return slices.ContainsFunc(s.Child.children(subject), s.Child.check)
+	case s.Body != nil:
+		return slices.ContainsFunc(subject.Body(), s.Body.check)
 	case s.SameAs != nil:
 		return s.SameAs.names(subject, s.SameAs.other(subject))
 	case s.Inside != nil:

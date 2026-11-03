@@ -38,7 +38,10 @@ func (Command) Help() help.Help {
 		Form("rule try <Rule> <path>…", "run one rule over the paths without turning it on, and print each match with its line: a folder, or the files a change touched").
 		Form("rule prove [path]", "check every rule of the project flags exactly the code its samples mark, and nothing else").
 		Form("rule schema", "print the JSON Schema of a rule file").
+		Form("rule migrate [--dry-run]", "bring your own rules up to this release: merge the copies that differ only in the engine they judge into one rule naming them all, and name every rule this release no longer reads, with the reason").
 		Option("--line=N", "with `explain`, only the nodes that start on line N, each with what it holds").
+		Option("--dry-run", "with `migrate`, say what would change and change nothing").
+		Note("`rule migrate` never stops at the first rule it cannot settle: it reads every one, merges every set of copies it can, and ends by naming what is left. A rule naming a construct no parser writes is named rather than repaired, since the nearest real word is a guess and a guess written into your own file is worse than a message.").
 		Note("<Rule> is a rule of `.commandments/custom/` by its name — `NoRawSql` or `NoRawSqlDetector` — or the path of a rule file anywhere.").
 		Note("A sample marks the code a rule must flag with a comment above it — `// @sin NoRawSqlDetector`, `# @sin …` in Python, `<!-- @sin … -->` in a Vue template — the code it must leave alone with `@righteous NoRawSqlDetector`, and its fix with `@fixed NoRawSqlDetector`. `rule prove` reads `.commandments/custom/samples/` unless given a path, and fails when a rule misses a mark, flags anything unmarked, has no `@sin` mark at all, or cannot be read, and when a mark names no rule of the project.")
 }
@@ -57,12 +60,14 @@ func (c Command) Run(in *cli.Input, console cli.Console) (int, error) {
 		return c.try(in, root, console)
 	case "prove":
 		return c.prove(in, root, console)
+	case "migrate":
+		return c.migrate(in, root, console)
 	case "schema":
 		console.Write(string(rule.Schema()))
 
 		return 0, nil
 	default:
-		return help.Usage(console.Err, c, "name what to do: `rule explain`, `rule try`, `rule prove` or `rule schema`."), nil
+		return help.Usage(console.Err, c, "name what to do: `rule explain`, `rule try`, `rule prove`, `rule schema` or `rule migrate`."), nil
 	}
 }
 

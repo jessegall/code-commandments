@@ -91,8 +91,10 @@ func (r *Rule) named(name string, known map[string]*Rule, chain []string) (*Rule
 		return nil, fmt.Errorf("%s: no rule is called %q, among the project's own", r.name, name)
 	}
 
-	if found.engine != r.engine {
-		return nil, fmt.Errorf("%s: rule %s judges the %s engine, and this one judges %s", r.name, found.Name(), found.engine, r.engine)
+	// A rule built on another must judge the same engines: the one it is built on narrows the codebase to its
+	// own languages, so a rule reaching into a narrower one would be handed nodes of a language it never judges.
+	if !slices.Equal(found.engines, r.engines) {
+		return nil, fmt.Errorf("%s: rule %s judges %s, and this one judges %s", r.name, found.Name(), engineList(found.engines), engineList(r.engines))
 	}
 
 	if err := found.resolve(known, chain); err != nil {

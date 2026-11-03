@@ -49,7 +49,11 @@ func Schema() []byte {
 		"definitions":          definitions,
 		"properties": object{
 			"$schema": object{"type": "string"},
-			"engine":  object{"enum": engineNames(), "description": "The engine the rule judges."},
+			// One name or a list of them: a rule that is wholly neutral names several and is written once.
+			"engine": object{"description": "The engine the rule judges, or the engines: one name, or a list of them for a rule the neutral kinds let judge several.", "anyOf": []object{
+				{"enum": engineNames()},
+				{"type": "array", "minItems": 1, "items": object{"enum": engineNames()}},
+			}},
 			"judges": object{
 				"type":        "array",
 				"items":       object{"type": "string"},
