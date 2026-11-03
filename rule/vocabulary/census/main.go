@@ -134,6 +134,8 @@ type counted struct {
 	parser string
 	from   string
 	fields []string
+	// answeredFor are the keys the parser answered for, which are the keys a refusal may be made against.
+	answeredFor []string
 }
 
 // saw records that the language was read from that source, written by that bridge.
@@ -194,6 +196,14 @@ func (c *counted) declares(declared contract.Declaration) {
 	c.from = declared.From
 	c.fields = declared.Fields
 
+	// Which KEYS the parser answered for, since only those may refuse a rule. Every declaration names kinds; one
+	// names fields where it joined them to a kind or listed them for the language; none names an operator, a flag
+	// or a modifier, so those stay a census and refuse nothing.
+	c.answeredFor = []string{"kind"}
+	if len(declared.DeclaredFields()) > 0 {
+		c.answeredFor = append(c.answeredFor, "field")
+	}
+
 	for _, kind := range declared.Kinds {
 		construct, seen := c.constructs[kind.Kind]
 		if !seen {
@@ -208,7 +218,7 @@ func (c *counted) declares(declared contract.Declaration) {
 // written writes the language's vocabulary, every list sorted so the file is the same from one run to the next.
 func (c *counted) written(language contract.Language) error {
 	vocabulary := rule.Vocabulary{Language: language, Bridges: c.bridges, Sources: c.sources,
-		Parser: c.parser, Declares: c.from, DeclaredFields: c.fields}
+		Parser: c.parser, Declares: c.from, DeclaredFields: c.fields, DeclaresKeys: c.answeredFor}
 	for _, construct := range c.constructs {
 		for _, list := range []*[]string{&construct.Roles, &construct.Is, &construct.Fields, &construct.Operators, &construct.Modifiers, &construct.Flags, &construct.Vouched} {
 			sort.Strings(*list)

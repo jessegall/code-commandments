@@ -8,6 +8,10 @@
     ],
     "parser": "python 3.14 ast",
     "declares": "every ast.AST subclass of the interpreter running the bridge, each one's _fields",
+    "declaresKeys": [
+        "kind",
+        "field"
+    ],
     "collided": {
         "expr": [
             "Expr",

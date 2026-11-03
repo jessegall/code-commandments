@@ -8,6 +8,10 @@
     ],
     "parser": "@vue/compiler-sfc with typescript 6.0.3",
     "declares": "this bridge's own writer table in vue.mjs for the markup, and its kind table over ts.SyntaxKind for everything a \u003cscript\u003e block or a template expression holds, since a block's content is one TypeScript SourceFile among its children",
+    "declaresKeys": [
+        "kind",
+        "field"
+    ],
     "collided": {
         "class": [
             "ClassDeclaration",

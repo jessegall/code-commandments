@@ -9,6 +9,9 @@
     ],
     "parser": "typescript 6.0.3",
     "declares": "this bridge's own kind table over ts.SyntaxKind; a field is the parent node's own property name, read as the child is written, so none are declared",
+    "declaresKeys": [
+        "kind"
+    ],
     "collided": {
         "class": [
             "ClassDeclaration",

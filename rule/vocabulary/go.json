@@ -4,6 +4,10 @@
     "sources": null,
     "parser": "go/ast of go1.26.10",
     "declares": "every node type go/ast has, listed in this bridge beside its writer, each one's kind and fields read off the type with the same readings the writer makes",
+    "declaresKeys": [
+        "kind",
+        "field"
+    ],
     "constructs": [
         {
             "kind": "ArrayType",

@@ -111,10 +111,16 @@ final class Till
 	}
 }
 
-// TestWhichLanguageWritesAConstructIsReadable holds the reading the schema's completion and a later refusal are
-// both built on: whether a language a rule judges has been SEEN writing a word, and which languages have. It is a
-// reading and not yet a refusal, because the census is observed: `+=` is missing from the TypeScript rows because
-// no fixture happens to hold one, and a rule using it would have been refused for being ahead of the census.
+// TestWhichLanguageWritesAConstructIsReadable holds the reading the schema's completion and the rule refusal are
+// both built on: whether a language a rule judges writes a word, and which languages write it anywhere.
+//
+// It answers per KEY, and that is the whole of what makes it safe to refuse on. A parser answers for the kinds it
+// can emit and most of them for the slots a child fills, so for those keys the rows are the whole of what the
+// language has and a word outside them is nobody's. No parser answers for the operators, flags and modifiers a
+// node carries, because nothing asked them to, so for those keys the rows are a census again: `+=` is missing from
+// the TypeScript operators because no fixture holds one, and a rule using it must not be refused for being ahead
+// of a sample. Whose word it is is read from every language's rows either way, since naming the owner is a hint
+// and never a refusal.
 func TestWhichLanguageWritesAConstructIsReadable(t *testing.T) {
 	php := []contract.Language{contract.PHP}
 
@@ -127,25 +133,80 @@ func TestWhichLanguageWritesAConstructIsReadable(t *testing.T) {
 		{"kind", "Expr_StaticCall", true, contract.PHP},
 		// The spelling derived from a kind names it too.
 		{"kind", "static-call", true, contract.PHP},
-		// Another language's kind: not seen here, and the rows say whose it is, which is the answer a rule author
-		// needs and could not get before.
+		// Another language's kind: php's parser declares its kinds, so this is not php's and the rows say whose it
+		// is, which is the answer a rule author needs and could not get before.
 		{"kind", "InvocationExpression", false, contract.CSharp},
-		{"hasModifier", "sealed", false, contract.CSharp},
+		// A field, which php's parser also declares, so the same refusal holds.
 		{"field", "ReturnType", false, contract.CSharp},
 		// A slip of the keyboard is nobody's word.
 		{"kind", "static-calls", false, ""},
+		// But a MODIFIER is offered, because no parser was ever asked which modifiers it writes: php's rows hold
+		// only what a fixture showed, so a modifier missing from them may still be one php writes. It is still
+		// known as C#'s, which is the hint without the refusal.
+		{"hasModifier", "sealed", true, contract.CSharp},
+		// And so is an operator nobody declared, however little it looks like php's.
+		{"operator", "??=", true, ""},
 	} {
 		seen, elsewhere := rule.Written(php, each.key, each.named)
 		if seen != each.seen {
-			t.Errorf("php has been seen writing the %s %q: %v, want %v", each.key, each.named, seen, each.seen)
+			t.Errorf("php writes the %s %q: %v, want %v", each.key, each.named, seen, each.seen)
 		}
 
 		if each.elsewhere != "" && !slices.Contains(elsewhere, each.elsewhere) {
 			t.Errorf("the %s %q is written by %v, and %s writes it", each.key, each.named, elsewhere, each.elsewhere)
 		}
+	}
+}
 
-		if each.elsewhere == "" && len(elsewhere) > 0 {
-			t.Errorf("the %s %q is written by %v, and it is nobody's word", each.key, each.named, elsewhere)
+// TestARuleNamingAConstructNoParserWritesIsRefused holds the refusal the declared vocabulary made possible, and
+// the three answers it owes a rule author. Before this, such a rule parsed, ran and matched nothing, which reads
+// as a rule that found no sins: the worst way for a tool like this to be wrong.
+func TestARuleNamingAConstructNoParserWritesIsRefused(t *testing.T) {
+	for _, each := range []struct {
+		why   string
+		find  string
+		said  string
+		stops bool
+	}{
+		{
+			why:   "a typo is nobody's word, and the nearest real one is offered",
+			find:  `{"select": "kind:Expr_StaticCalls"}`,
+			said:  "Expr_StaticCalls",
+			stops: true,
+		},
+		{
+			why:   "another language's kind is named as that language's, since a rule author reaching for it has the wrong engine, not a typo",
+			find:  `{"select": "function", "where": [{"kind": "InvocationExpression"}]}`,
+			said:  "csharp",
+			stops: true,
+		},
+		{
+			why:   "a nested step is read too, since a rule hides most of its words below its first one",
+			find:  `{"select": "function", "where": [{"child": {"kind": "ClassDeclaration"}}]}`,
+			said:  "ClassDeclaration",
+			stops: true,
+		},
+		{
+			why:   "a modifier no parser was asked about is left alone, so a rule is never refused for being ahead of a census",
+			find:  `{"select": "function", "where": [{"hasModifier": "sealed"}]}`,
+			stops: false,
+		},
+		{
+			why:   "and the construct php really writes passes, by its own word or by its spelling",
+			find:  `{"select": "construct:static-call"}`,
+			stops: false,
+		},
+	} {
+		written := `{"engine": "backend", "sin": {"name": "x", "skill": "php/absence"}, "find": ` + each.find + `}`
+		_, err := rule.Parse("X", []byte(written), shipped)
+
+		switch {
+		case each.stops && err == nil:
+			t.Errorf("%s: the rule parsed", each.why)
+		case each.stops && !strings.Contains(err.Error(), each.said):
+			t.Errorf("%s: refused with %v, which does not name %q", each.why, err, each.said)
+		case !each.stops && err != nil:
+			t.Errorf("%s: %v", each.why, err)
 		}
 	}
 }

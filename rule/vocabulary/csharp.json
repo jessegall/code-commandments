@@ -111,6 +111,10 @@
         "WhenNotNull",
         "WhenTrue"
     ],
+    "declaresKeys": [
+        "kind",
+        "field"
+    ],
     "collided": {
         "checked": [
             "CheckedExpression",

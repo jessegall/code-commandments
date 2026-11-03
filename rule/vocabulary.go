@@ -100,6 +100,12 @@ type Vocabulary struct {
 	// Fields are slots a child fills that belong to no one kind, for a parser that cannot say which kind holds
 	// which: C# names a kind per syntax KIND and its fields per syntax CLASS, and one class answers many kinds.
 	DeclaredFields []string `json:"fields,omitempty"`
+	// DeclaresKeys are the KEYS the parser answered for, and they are what a refusal may be made against. A parser
+	// answers for the kinds it can emit, and most of them for the slots a child fills; none of them answers for
+	// the operators, flags or modifiers a node may carry, because nothing asked them to. For a key the parser
+	// never covered, the rows are a census again — a sample, where a value's absence means only that no fixture
+	// held it — so that key refuses nothing, however complete the kinds beside it are.
+	DeclaresKeys []string `json:"declaresKeys,omitempty"`
 	// Collided are the spellings more than one kind derives, each with the kinds that derive it. Those kinds carry
 	// no spelling at all: a rule writing one word that means two constructs could not be read back, and choosing
 	// a winner would be the curated table this is generated to avoid.
@@ -166,6 +172,12 @@ func Vocabularies() (map[contract.Language]Vocabulary, error) {
 	}
 
 	return found, nil
+}
+
+// DeclaresKey says whether the language's own parser answered for that key, so a value outside the rows is a value
+// no parser will write rather than one no fixture held.
+func (v Vocabulary) DeclaresKey(key string) bool {
+	return slices.Contains(v.DeclaresKeys, key)
 }
 
 // Kinds are every kind the language is seen emitting.

@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"maps"
 	"path"
 	"path/filepath"
 	"regexp"
@@ -414,6 +415,10 @@ func Parse(name string, text []byte, skills Skills) (Rule, error) {
 		if _, err := selector(read.Find.Select); err != nil {
 			return Rule{}, fmt.Errorf("%s: %w", name, err)
 		}
+
+		if err := selected(read.Find.Select, languages[engine]); err != nil {
+			return Rule{}, fmt.Errorf("%s: %w", name, err)
+		}
 	}
 
 	for _, steps := range [][]Step{read.Find.Where, read.Find.Reject} {
@@ -423,6 +428,10 @@ func Parse(name string, text []byte, skills Skills) (Rule, error) {
 			}
 
 			if err := steps[i].ownChecks(languages[engine]); err != nil {
+				return Rule{}, fmt.Errorf("%s: %w", name, err)
+			}
+
+			if err := steps[i].declaredValues(languages[engine]); err != nil {
 				return Rule{}, fmt.Errorf("%s: %w", name, err)
 			}
 
@@ -765,6 +774,30 @@ func selector(named string) (func(*engine.Codebase) *engine.Query, error) {
 	}
 
 	return func(c *engine.Codebase) *engine.Query { return c.WhereIs(engine.Neutral(named)) }, nil
+}
+
+// selected refuses a select naming a kind or a spelling no parser of the judged languages declares. It is read
+// apart from the steps because a select is not one: it is where most rules name a construct, and a selector that
+// matched nothing was the whole rule finding nothing in silence.
+func selected(named string, judged []contract.Language) error {
+	kind, own := strings.CutPrefix(named, "kind:")
+	if !own {
+		spelling, construct := strings.CutPrefix(named, constructSelector)
+		if !construct {
+			return nil
+		}
+		kind = spelling
+	}
+
+	written, elsewhere := Written(judged, "kind", kind)
+	switch {
+	case written:
+		return nil
+	case len(elsewhere) > 0:
+		return fmt.Errorf("select names %s's construct %q, and this rule judges %s", spoken(elsewhere), kind, spoken(judged))
+	}
+
+	return fmt.Errorf("no parser of %s writes the construct %q%s", spoken(judged), kind, didYouMean(kind, append(values(judged, "kind"), spellings(judged)...)))
 }
 
 // constructSelector opens a select that names a construct by its SPELLING rather than by the language's own kind:
@@ -1459,22 +1492,30 @@ func (s *Step) vocabularyKeys() map[string]string {
 		"hasModifier": s.HasModifier}
 }
 
-// Written says whether one of the languages has been SEEN writing that value for the key, and which languages
-// have been seen writing it anywhere. It is what the schema offers as completion and what a hint is drawn from,
-// and it is deliberately not what a rule is refused by: the census is observed, so a construct no fixture
-// exercises is missing from it, and refusing on that would refuse a rule for being ahead of the census. The
-// declared vocabulary, which a parser vouches for, is what a refusal needs.
+// Written says whether one of the languages writes that value for the key, and which languages write it anywhere.
+// It is what the schema offers as completion, what a hint is drawn from, and what a rule is refused by.
+//
+// It became a refusal when the vocabulary stopped being a census. A census is a sample: a construct no fixture
+// exercised was missing from it, and refusing on that would have refused a rule for being ahead of the sample,
+// which is why this reading was written and then left unused. Every language's parser now DECLARES what it can
+// emit, so the set is the whole of what the language has, and a value outside it is a value no parser will ever
+// write — a typo, or another language's construct.
 func Written(judged []contract.Language, key, named string) (seen bool, elsewhere []contract.Language) {
 	return offered(judged, key, named), owning(key, named)
 }
 
 // offered says whether one of the languages writes that value for the key, by its own word or, for a kind, by the
-// spelling the vocabulary derives. A language nothing was recorded for offers everything, since refusing against
-// an empty census would refuse a rule for being ahead of it.
+// spelling the vocabulary derives.
+//
+// A language offers EVERYTHING for a key its own parser never answered for. A census alone cannot tell a typo from
+// a construct nothing exercised, so a key the parser did not cover is still a sample and refuses nothing, however
+// complete the kinds beside it are. Today every parser answers for the kinds it can emit and most for the slots a
+// child fills; none answers for the operators, flags or modifiers a node carries, because nothing asked them to.
+// That is what keeps this honest as a refusal: it refuses against what a parser vouches for, or not at all.
 func offered(judged []contract.Language, key, named string) bool {
 	for _, language := range judged {
 		vocabulary, held := VocabularyOf(language)
-		if !held {
+		if !held || !vocabulary.DeclaresKey(key) {
 			return true
 		}
 
@@ -1488,6 +1529,47 @@ func offered(judged []contract.Language, key, named string) bool {
 	}
 
 	return false
+}
+
+// declaredValues refuses a value no parser of the languages this rule judges declares: a kind, a field, an
+// operator, a flag or a modifier that is a typo, or that belongs to a language the rule does not judge. Before
+// this it matched nothing in silence, which reads as a rule that found no sins.
+func (s *Step) declaredValues(judged []contract.Language) error {
+	for _, key := range slices.Sorted(maps.Keys(s.vocabularyKeys())) {
+		named := s.vocabularyKeys()[key]
+		if named == "" {
+			continue
+		}
+
+		written, elsewhere := Written(judged, key, named)
+		if written {
+			continue
+		}
+
+		if len(elsewhere) > 0 {
+			return fmt.Errorf("%s %q is %s's, and this rule judges %s", key, named, spoken(elsewhere), spoken(judged))
+		}
+
+		return fmt.Errorf("no parser of %s writes the %s %q%s", spoken(judged), key, named, didYouMean(named, values(judged, key)))
+	}
+
+	for _, nested := range s.nested() {
+		if err := nested.declaredValues(judged); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// spoken is the languages named as a reader reads them.
+func spoken(languages []contract.Language) string {
+	var names []string
+	for _, language := range languages {
+		names = append(names, string(language))
+	}
+
+	return strings.Join(names, " and ")
 }
 
 // owning are the languages that DO write the value, so a rule naming another language's construct is told whose

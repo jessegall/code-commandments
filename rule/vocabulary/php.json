@@ -9,6 +9,10 @@
     ],
     "parser": "php-parser",
     "declares": "php-parser's own node classes: each one's getType() and getSubNodeNames()",
+    "declaresKeys": [
+        "kind",
+        "field"
+    ],
     "collided": {
         "const": [
             "Const",
