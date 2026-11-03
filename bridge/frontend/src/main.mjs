@@ -2,6 +2,7 @@ import { existsSync, lstatSync, readdirSync, realpathSync } from 'node:fs'
 import { join, resolve } from 'node:path'
 import { createInterface } from 'node:readline'
 import ts from 'typescript'
+import { declarations } from './declares.mjs'
 import { Source } from './source.mjs'
 import { Program } from './program.mjs'
 import { Tree } from './tree.mjs'
@@ -125,6 +126,11 @@ function parse(argv) {
 }
 
 async function main() {
+    // The one ask besides a tree: what this bridge can emit, one declaration per language it writes.
+    if (process.argv.slice(2).includes('--declares')) {
+        for (const declared of declarations()) process.stdout.write(JSON.stringify(declared) + '\n')
+        return
+    }
     const request = parse(process.argv.slice(2))
     // A line is written a piece at a time, waiting for the reader to take each: a reader parsing as it reads would
     // otherwise leave the whole stream queued in this process's memory.

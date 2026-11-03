@@ -1,0 +1,621 @@
+{
+    "language": "go",
+    "bridges": null,
+    "sources": null,
+    "parser": "go/ast of go1.26.10",
+    "declares": "every node type go/ast has, listed in this bridge beside its writer, each one's kind and fields read off the type with the same readings the writer makes",
+    "constructs": [
+        {
+            "kind": "ArrayType",
+            "spells": "array-type",
+            "roles": null,
+            "fields": [
+                "elt",
+                "len"
+            ],
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "AssignStmt",
+            "spells": "assign-stmt",
+            "roles": null,
+            "fields": [
+                "lhs",
+                "rhs"
+            ],
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "BadDecl",
+            "spells": "bad-decl",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "BadExpr",
+            "spells": "bad-expr",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "BadStmt",
+            "spells": "bad-stmt",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "BasicLit",
+            "spells": "basic-lit",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "BinaryExpr",
+            "spells": "binary-expr",
+            "roles": null,
+            "fields": [
+                "x",
+                "y"
+            ],
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "BlockStmt",
+            "spells": "block-stmt",
+            "roles": null,
+            "fields": [
+                "list"
+            ],
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "BranchStmt",
+            "spells": "branch-stmt",
+            "roles": null,
+            "fields": [
+                "label"
+            ],
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "CallExpr",
+            "spells": "call-expr",
+            "roles": null,
+            "fields": [
+                "args",
+                "fun"
+            ],
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "CaseClause",
+            "spells": "case-clause",
+            "roles": null,
+            "fields": [
+                "body",
+                "list"
+            ],
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "ChanType",
+            "spells": "chan-type",
+            "roles": null,
+            "fields": [
+                "value"
+            ],
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "CommClause",
+            "spells": "comm-clause",
+            "roles": null,
+            "fields": [
+                "body",
+                "comm"
+            ],
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "CompositeLit",
+            "spells": "composite-lit",
+            "roles": null,
+            "fields": [
+                "elts",
+                "type"
+            ],
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "DeclStmt",
+            "spells": "decl-stmt",
+            "roles": null,
+            "fields": [
+                "decl"
+            ],
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "DeferStmt",
+            "spells": "defer-stmt",
+            "roles": null,
+            "fields": [
+                "call"
+            ],
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "Ellipsis",
+            "spells": "ellipsis",
+            "roles": null,
+            "fields": [
+                "elt"
+            ],
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "EmptyStmt",
+            "spells": "empty-stmt",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "ExprStmt",
+            "spells": "expr-stmt",
+            "roles": null,
+            "fields": [
+                "x"
+            ],
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "Field",
+            "spells": "field",
+            "roles": null,
+            "fields": [
+                "names",
+                "tag",
+                "type"
+            ],
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "FieldList",
+            "spells": "field-list",
+            "roles": null,
+            "fields": [
+                "list"
+            ],
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "File",
+            "spells": "file",
+            "roles": null,
+            "fields": [
+                "decls",
+                "doc",
+                "imports",
+                "name"
+            ],
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "ForStmt",
+            "spells": "for-stmt",
+            "roles": null,
+            "fields": [
+                "body",
+                "cond",
+                "init",
+                "post"
+            ],
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "FuncDecl",
+            "spells": "func-decl",
+            "roles": null,
+            "fields": [
+                "body",
+                "name",
+                "recv",
+                "type"
+            ],
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "FuncLit",
+            "spells": "func-lit",
+            "roles": null,
+            "fields": [
+                "body",
+                "type"
+            ],
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "FuncType",
+            "spells": "func-type",
+            "roles": null,
+            "fields": [
+                "params",
+                "results",
+                "typeParams"
+            ],
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "GenDecl",
+            "spells": "gen-decl",
+            "roles": null,
+            "fields": [
+                "specs"
+            ],
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "GoStmt",
+            "spells": "go-stmt",
+            "roles": null,
+            "fields": [
+                "call"
+            ],
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "Ident",
+            "spells": "ident",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "IfStmt",
+            "spells": "if-stmt",
+            "roles": null,
+            "fields": [
+                "body",
+                "cond",
+                "else",
+                "init"
+            ],
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "ImportSpec",
+            "spells": "import-spec",
+            "roles": null,
+            "fields": [
+                "name",
+                "path"
+            ],
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "IncDecStmt",
+            "spells": "inc-dec-stmt",
+            "roles": null,
+            "fields": [
+                "x"
+            ],
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "IndexExpr",
+            "spells": "index-expr",
+            "roles": null,
+            "fields": [
+                "index",
+                "x"
+            ],
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "IndexListExpr",
+            "spells": "index-list-expr",
+            "roles": null,
+            "fields": [
+                "indices",
+                "x"
+            ],
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "InterfaceType",
+            "spells": "interface-type",
+            "roles": null,
+            "fields": [
+                "methods"
+            ],
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "KeyValueExpr",
+            "spells": "key-value-expr",
+            "roles": null,
+            "fields": [
+                "key",
+                "value"
+            ],
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "LabeledStmt",
+            "spells": "labeled-stmt",
+            "roles": null,
+            "fields": [
+                "label",
+                "stmt"
+            ],
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "MapType",
+            "spells": "map-type",
+            "roles": null,
+            "fields": [
+                "key",
+                "value"
+            ],
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "ParenExpr",
+            "spells": "paren-expr",
+            "roles": null,
+            "fields": [
+                "x"
+            ],
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "RangeStmt",
+            "spells": "range-stmt",
+            "roles": null,
+            "fields": [
+                "body",
+                "key",
+                "value",
+                "x"
+            ],
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "ReturnStmt",
+            "spells": "return-stmt",
+            "roles": null,
+            "fields": [
+                "results"
+            ],
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "SelectStmt",
+            "spells": "select-stmt",
+            "roles": null,
+            "fields": [
+                "body"
+            ],
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "SelectorExpr",
+            "spells": "selector-expr",
+            "roles": null,
+            "fields": [
+                "sel",
+                "x"
+            ],
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "SendStmt",
+            "spells": "send-stmt",
+            "roles": null,
+            "fields": [
+                "chan",
+                "value"
+            ],
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "SliceExpr",
+            "spells": "slice-expr",
+            "roles": null,
+            "fields": [
+                "high",
+                "low",
+                "max",
+                "x"
+            ],
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "StarExpr",
+            "spells": "star-expr",
+            "roles": null,
+            "fields": [
+                "x"
+            ],
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "StructType",
+            "spells": "struct-type",
+            "roles": null,
+            "fields": [
+                "fields"
+            ],
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "SwitchStmt",
+            "spells": "switch-stmt",
+            "roles": null,
+            "fields": [
+                "body",
+                "init",
+                "tag"
+            ],
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "TypeAssertExpr",
+            "spells": "type-assert-expr",
+            "roles": null,
+            "fields": [
+                "type",
+                "x"
+            ],
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "TypeSpec",
+            "spells": "type-spec",
+            "roles": null,
+            "fields": [
+                "name",
+                "type",
+                "typeParams"
+            ],
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "TypeSwitchStmt",
+            "spells": "type-switch-stmt",
+            "roles": null,
+            "fields": [
+                "assign",
+                "body",
+                "init"
+            ],
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "UnaryExpr",
+            "spells": "unary-expr",
+            "roles": null,
+            "fields": [
+                "x"
+            ],
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "ValueSpec",
+            "spells": "value-spec",
+            "roles": null,
+            "fields": [
+                "names",
+                "type",
+                "values"
+            ],
+            "vouched": [
+                "declared"
+            ]
+        }
+    ]
+}

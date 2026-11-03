@@ -6,7 +6,150 @@
     "sources": [
         "contract/samples/csharp.jsonl"
     ],
+    "parser": "roslyn 5.9.0.0",
+    "declares": "this bridge's own writer tables: every SyntaxKind it can name a node by, and every Roslyn property a child fills. A kind is a syntax KIND and a field is a property of a syntax CLASS, and one class answers many kinds, so the fields are listed for the language rather than joined to a kind the parser never joined them to",
+    "fields": [
+        "AccessorList",
+        "Accessors",
+        "Alias",
+        "AlignmentClause",
+        "ArgumentList",
+        "Arguments",
+        "Arms",
+        "AttributeLists",
+        "Attributes",
+        "BaseList",
+        "Block",
+        "Body",
+        "ByExpression",
+        "CallingConvention",
+        "CallingConventions",
+        "Catches",
+        "Clauses",
+        "Condition",
+        "ConstraintClauses",
+        "Constraints",
+        "Container",
+        "Content",
+        "Contents",
+        "Continuation",
+        "Cref",
+        "Declaration",
+        "Default",
+        "Designation",
+        "ElementType",
+        "Elements",
+        "Else",
+        "End",
+        "EndTag",
+        "EqualsValue",
+        "ErrorCodes",
+        "ExplicitInterfaceSpecifier",
+        "Expression",
+        "ExpressionBody",
+        "ExpressionColon",
+        "Expressions",
+        "Externs",
+        "Filter",
+        "FilterExpression",
+        "Finally",
+        "FormatClause",
+        "FromClause",
+        "GoverningExpression",
+        "GroupExpression",
+        "Identifier",
+        "InExpression",
+        "Incrementors",
+        "Initializer",
+        "Initializers",
+        "Into",
+        "Labels",
+        "Left",
+        "LeftExpression",
+        "LeftOperand",
+        "Member",
+        "Members",
+        "Name",
+        "NameColon",
+        "NameEquals",
+        "NamespaceOrType",
+        "Operand",
+        "Orderings",
+        "Parameter",
+        "ParameterList",
+        "Parameters",
+        "Pattern",
+        "Patterns",
+        "PositionalPatternClause",
+        "Prefix",
+        "PropertyPatternClause",
+        "RankSpecifiers",
+        "ReturnType",
+        "Right",
+        "RightExpression",
+        "RightOperand",
+        "Sections",
+        "SelectOrGroup",
+        "Sizes",
+        "Start",
+        "StartTag",
+        "Statement",
+        "Statements",
+        "Subpatterns",
+        "Target",
+        "Type",
+        "TypeArgumentList",
+        "TypeParameterList",
+        "Types",
+        "UnmanagedCallingConventionList",
+        "Usings",
+        "Value",
+        "Variable",
+        "Variables",
+        "WhenClause",
+        "WhenFalse",
+        "WhenNotNull",
+        "WhenTrue"
+    ],
+    "collided": {
+        "checked": [
+            "CheckedExpression",
+            "CheckedStatement"
+        ],
+        "field": [
+            "FieldDeclaration",
+            "FieldExpression"
+        ],
+        "ref-type": [
+            "RefType",
+            "RefTypeExpression"
+        ],
+        "switch": [
+            "SwitchExpression",
+            "SwitchStatement"
+        ],
+        "throw": [
+            "ThrowExpression",
+            "ThrowStatement"
+        ],
+        "unchecked": [
+            "UncheckedExpression",
+            "UncheckedStatement"
+        ],
+        "unsafe": [
+            "UnsafeExpression",
+            "UnsafeStatement"
+        ]
+    },
     "constructs": [
+        {
+            "kind": "AbstractKeyword",
+            "spells": "abstract-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
         {
             "kind": "AccessorList",
             "spells": "accessor-list",
@@ -17,9 +160,18 @@
                 "Accessors"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/csharp/Shop/Shipping/Tracking.cs:10"
+        },
+        {
+            "kind": "AddAccessorDeclaration",
+            "spells": "add-accessor",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
         },
         {
             "kind": "AddAssignmentExpression",
@@ -38,9 +190,162 @@
                 "+="
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/csharp/Shop/Reports/PageReader.cs:22"
+        },
+        {
+            "kind": "AddExpression",
+            "spells": "add",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "AddKeyword",
+            "spells": "add-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "AddressOfExpression",
+            "spells": "address-of",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "AliasKeyword",
+            "spells": "alias-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "AliasQualifiedName",
+            "spells": "alias-qualified-name",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "AllowsConstraintClause",
+            "spells": "allows-constraint-clause",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "AllowsKeyword",
+            "spells": "allows-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "AmpersandAmpersandToken",
+            "spells": "ampersand-ampersand-token",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "AmpersandEqualsToken",
+            "spells": "ampersand-equals-token",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "AmpersandToken",
+            "spells": "ampersand-token",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "AndAssignmentExpression",
+            "spells": "and-assignment",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "AndKeyword",
+            "spells": "and-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "AndPattern",
+            "spells": "and-pattern",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "AnnotationsKeyword",
+            "spells": "annotations-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "AnonymousMethodExpression",
+            "spells": "anonymous-method",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "AnonymousObjectCreationExpression",
+            "spells": "anonymous-object-creation",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "AnonymousObjectMemberDeclarator",
+            "spells": "anonymous-object-member-declarator",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "ArgListExpression",
+            "spells": "arg-list",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "ArgListKeyword",
+            "spells": "arg-list-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
         },
         {
             "kind": "Argument",
@@ -52,6 +357,7 @@
                 "Expression"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/csharp/Shop/Orders/GiftWrapping.cs:7"
@@ -66,9 +372,42 @@
                 "Arguments"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/csharp/Shop/Orders/GiftWrapping.cs:7"
+        },
+        {
+            "kind": "ArrayCreationExpression",
+            "spells": "array-creation",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "ArrayInitializerExpression",
+            "spells": "array-initializer",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "ArrayRankSpecifier",
+            "spells": "array-rank-specifier",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "ArrayType",
+            "spells": "array-type",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
         },
         {
             "kind": "ArrowExpressionClause",
@@ -80,9 +419,202 @@
                 "Expression"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/csharp/Shop/Orders/GiftWrapping.cs:7"
+        },
+        {
+            "kind": "AsExpression",
+            "spells": "as",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "AsKeyword",
+            "spells": "as-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "AscendingKeyword",
+            "spells": "ascending-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "AscendingOrdering",
+            "spells": "ascending-ordering",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "AssemblyKeyword",
+            "spells": "assembly-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "AsteriskEqualsToken",
+            "spells": "asterisk-equals-token",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "AsteriskToken",
+            "spells": "asterisk-token",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "AsyncKeyword",
+            "spells": "async-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "Attribute",
+            "spells": "attribute",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "AttributeArgument",
+            "spells": "attribute-argument",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "AttributeArgumentList",
+            "spells": "attribute-argument-list",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "AttributeList",
+            "spells": "attribute-list",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "AttributeTargetSpecifier",
+            "spells": "attribute-target-specifier",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "AwaitExpression",
+            "spells": "await",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "AwaitKeyword",
+            "spells": "await-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "BackslashToken",
+            "spells": "backslash-token",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "BadDirectiveTrivia",
+            "spells": "bad-directive-trivia",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "BadToken",
+            "spells": "bad-token",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "BarBarToken",
+            "spells": "bar-bar-token",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "BarEqualsToken",
+            "spells": "bar-equals-token",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "BarToken",
+            "spells": "bar-token",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "BaseConstructorInitializer",
+            "spells": "base-constructor-initializer",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "BaseExpression",
+            "spells": "base",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "BaseKeyword",
+            "spells": "base-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
         },
         {
             "kind": "BaseList",
@@ -94,9 +626,34 @@
                 "Types"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/csharp/Shop/Stock/Audits.cs:9"
+        },
+        {
+            "kind": "BitwiseAndExpression",
+            "spells": "bitwise-and",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "BitwiseNotExpression",
+            "spells": "bitwise-not",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "BitwiseOrExpression",
+            "spells": "bitwise-or",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
         },
         {
             "kind": "Block",
@@ -111,9 +668,18 @@
                 "Statements"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/csharp/Shop/Stock/Audits.cs:20"
+        },
+        {
+            "kind": "BoolKeyword",
+            "spells": "bool-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
         },
         {
             "kind": "BracketedArgumentList",
@@ -125,9 +691,138 @@
                 "Arguments"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/csharp/Shop/Shipping/Tracking.cs:15"
+        },
+        {
+            "kind": "BracketedParameterList",
+            "spells": "bracketed-parameter-list",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "BreakKeyword",
+            "spells": "break-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "BreakStatement",
+            "spells": "break",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "ByKeyword",
+            "spells": "by-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "ByteKeyword",
+            "spells": "byte-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "CaretEqualsToken",
+            "spells": "caret-equals-token",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "CaretToken",
+            "spells": "caret-token",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "CaseKeyword",
+            "spells": "case-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "CasePatternSwitchLabel",
+            "spells": "case-pattern-switch-label",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "CaseSwitchLabel",
+            "spells": "case-switch-label",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "CastExpression",
+            "spells": "cast",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "CatchClause",
+            "spells": "catch-clause",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "CatchDeclaration",
+            "spells": "catch",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "CatchFilterClause",
+            "spells": "catch-filter-clause",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "CatchKeyword",
+            "spells": "catch-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "CharKeyword",
+            "spells": "char-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
         },
         {
             "kind": "CharacterLiteralExpression",
@@ -139,9 +834,58 @@
                 "literal"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/csharp/Shop/Shipping/Tracking.cs:15"
+        },
+        {
+            "kind": "CharacterLiteralToken",
+            "spells": "character-literal-token",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "CheckedExpression",
+            "spells": "",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "CheckedKeyword",
+            "spells": "checked-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "CheckedStatement",
+            "spells": "",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "ChecksumKeyword",
+            "spells": "checksum-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "ClassConstraint",
+            "spells": "class-constraint",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
         },
         {
             "kind": "ClassDeclaration",
@@ -163,9 +907,106 @@
                 "static"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/csharp/Shop/Orders/GiftWrapping.cs:5"
+        },
+        {
+            "kind": "ClassKeyword",
+            "spells": "class-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "CloseBraceToken",
+            "spells": "close-brace-token",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "CloseBracketToken",
+            "spells": "close-bracket-token",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "CloseParenToken",
+            "spells": "close-paren-token",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "ClosedKeyword",
+            "spells": "closed-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "CoalesceAssignmentExpression",
+            "spells": "coalesce-assignment",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "CoalesceExpression",
+            "spells": "coalesce",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "CollectionExpression",
+            "spells": "collection",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "CollectionInitializerExpression",
+            "spells": "collection-initializer",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "ColonColonToken",
+            "spells": "colon-colon-token",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "ColonToken",
+            "spells": "colon-token",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "CommaToken",
+            "spells": "comma-token",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
         },
         {
             "kind": "CompilationUnit",
@@ -177,9 +1018,50 @@
                 "Members"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/csharp/Shop/Orders/GiftWrapping.cs:1"
+        },
+        {
+            "kind": "ComplexElementInitializerExpression",
+            "spells": "complex-element-initializer",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "ConditionalAccessExpression",
+            "spells": "conditional-access",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "ConditionalExpression",
+            "spells": "conditional",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "ConflictMarkerTrivia",
+            "spells": "conflict-marker-trivia",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "ConstKeyword",
+            "spells": "const-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
         },
         {
             "kind": "ConstantPattern",
@@ -191,9 +1073,314 @@
                 "Expression"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/csharp/Shop/Reports/PageReader.cs:24"
+        },
+        {
+            "kind": "ConstructorConstraint",
+            "spells": "constructor-constraint",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "ConstructorDeclaration",
+            "spells": "constructor",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "ContinueKeyword",
+            "spells": "continue-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "ContinueStatement",
+            "spells": "continue",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "ConversionOperatorDeclaration",
+            "spells": "conversion-operator",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "ConversionOperatorMemberCref",
+            "spells": "conversion-operator-member-cref",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "CrefBracketedParameterList",
+            "spells": "cref-bracketed-parameter-list",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "CrefParameter",
+            "spells": "cref-parameter",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "CrefParameterList",
+            "spells": "cref-parameter-list",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "DecimalKeyword",
+            "spells": "decimal-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "DeclarationExpression",
+            "spells": "declaration",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "DeclarationPattern",
+            "spells": "declaration-pattern",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "DefaultConstraint",
+            "spells": "default-constraint",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "DefaultExpression",
+            "spells": "default",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "DefaultKeyword",
+            "spells": "default-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "DefaultLiteralExpression",
+            "spells": "default-literal",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "DefaultSwitchLabel",
+            "spells": "default-switch-label",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "DefineDirectiveTrivia",
+            "spells": "define-directive-trivia",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "DefineKeyword",
+            "spells": "define-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "DelegateDeclaration",
+            "spells": "delegate",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "DelegateKeyword",
+            "spells": "delegate-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "DescendingKeyword",
+            "spells": "descending-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "DescendingOrdering",
+            "spells": "descending-ordering",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "DestructorDeclaration",
+            "spells": "destructor",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "DisableKeyword",
+            "spells": "disable-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "DisabledTextTrivia",
+            "spells": "disabled-text-trivia",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "DiscardDesignation",
+            "spells": "discard-designation",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "DiscardPattern",
+            "spells": "discard-pattern",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "DivideAssignmentExpression",
+            "spells": "divide-assignment",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "DivideExpression",
+            "spells": "divide",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "DoKeyword",
+            "spells": "do-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "DoStatement",
+            "spells": "do",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "DocumentationCommentExteriorTrivia",
+            "spells": "documentation-comment-exterior-trivia",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "DollarToken",
+            "spells": "dollar-token",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "DotDotToken",
+            "spells": "dot-dot-token",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "DotToken",
+            "spells": "dot-token",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "DoubleKeyword",
+            "spells": "double-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "DoubleQuoteToken",
+            "spells": "double-quote-token",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
         },
         {
             "kind": "ElementAccessExpression",
@@ -206,9 +1393,202 @@
                 "Expression"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/csharp/Shop/Shipping/Tracking.cs:15"
+        },
+        {
+            "kind": "ElementBindingExpression",
+            "spells": "element-binding",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "ElifDirectiveTrivia",
+            "spells": "elif-directive-trivia",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "ElifKeyword",
+            "spells": "elif-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "ElseClause",
+            "spells": "else-clause",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "ElseDirectiveTrivia",
+            "spells": "else-directive-trivia",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "ElseKeyword",
+            "spells": "else-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "EmptyStatement",
+            "spells": "empty",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "EnableKeyword",
+            "spells": "enable-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "EndIfDirectiveTrivia",
+            "spells": "end-if-directive-trivia",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "EndIfKeyword",
+            "spells": "end-if-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "EndOfDirectiveToken",
+            "spells": "end-of-directive-token",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "EndOfDocumentationCommentToken",
+            "spells": "end-of-documentation-comment-token",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "EndOfFileToken",
+            "spells": "end-of-file-token",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "EndOfLineTrivia",
+            "spells": "end-of-line-trivia",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "EndRegionDirectiveTrivia",
+            "spells": "end-region-directive-trivia",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "EndRegionKeyword",
+            "spells": "end-region-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "EnumDeclaration",
+            "spells": "enum",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "EnumKeyword",
+            "spells": "enum-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "EnumMemberDeclaration",
+            "spells": "enum-member",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "EqualsEqualsToken",
+            "spells": "equals-equals-token",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "EqualsExpression",
+            "spells": "equals",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "EqualsGreaterThanToken",
+            "spells": "equals-greater-than-token",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "EqualsKeyword",
+            "spells": "equals-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "EqualsToken",
+            "spells": "equals-token",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
         },
         {
             "kind": "EqualsValueClause",
@@ -220,9 +1600,114 @@
                 "Value"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/csharp/Shop/Shipping/Tracking.cs:10"
+        },
+        {
+            "kind": "ErrorDirectiveTrivia",
+            "spells": "error-directive-trivia",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "ErrorKeyword",
+            "spells": "error-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "EventDeclaration",
+            "spells": "event",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "EventFieldDeclaration",
+            "spells": "event-field",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "EventKeyword",
+            "spells": "event-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "ExclamationEqualsToken",
+            "spells": "exclamation-equals-token",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "ExclamationToken",
+            "spells": "exclamation-token",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "ExclusiveOrAssignmentExpression",
+            "spells": "exclusive-or-assignment",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "ExclusiveOrExpression",
+            "spells": "exclusive-or",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "ExplicitInterfaceSpecifier",
+            "spells": "explicit-interface-specifier",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "ExplicitKeyword",
+            "spells": "explicit-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "ExpressionColon",
+            "spells": "expression-colon",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "ExpressionElement",
+            "spells": "expression-element",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
         },
         {
             "kind": "ExpressionStatement",
@@ -237,13 +1722,70 @@
                 "Expression"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/csharp/Shop/Reports/PageReader.cs:22"
         },
         {
+            "kind": "ExtensionBlockDeclaration",
+            "spells": "extension-block",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "ExtensionKeyword",
+            "spells": "extension-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "ExtensionMemberCref",
+            "spells": "extension-member-cref",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "ExternAliasDirective",
+            "spells": "extern-alias-directive",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "ExternKeyword",
+            "spells": "extern-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "FalseKeyword",
+            "spells": "false-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "FalseLiteralExpression",
+            "spells": "false-literal",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
             "kind": "FieldDeclaration",
-            "spells": "field",
+            "spells": "",
             "roles": [
                 "member"
             ],
@@ -254,9 +1796,34 @@
                 "private"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/csharp/Shop/Shipping/Tracking.cs:7"
+        },
+        {
+            "kind": "FieldExpression",
+            "spells": "",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "FieldKeyword",
+            "spells": "field-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "FileKeyword",
+            "spells": "file-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
         },
         {
             "kind": "FileScopedNamespaceDeclaration",
@@ -269,9 +1836,82 @@
                 "Name"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/csharp/Shop/Orders/GiftWrapping.cs:1"
+        },
+        {
+            "kind": "FinallyClause",
+            "spells": "finally-clause",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "FinallyKeyword",
+            "spells": "finally-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "FixedKeyword",
+            "spells": "fixed-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "FixedStatement",
+            "spells": "fixed",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "FloatKeyword",
+            "spells": "float-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "ForEachKeyword",
+            "spells": "for-each-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "ForEachStatement",
+            "spells": "for-each",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "ForEachVariableStatement",
+            "spells": "for-each-variable",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "ForKeyword",
+            "spells": "for-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
         },
         {
             "kind": "ForStatement",
@@ -288,9 +1928,74 @@
                 "Statement"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/csharp/Shop/Reports/PageReader.cs:20"
+        },
+        {
+            "kind": "FromClause",
+            "spells": "from-clause",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "FromKeyword",
+            "spells": "from-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "FunctionPointerCallingConvention",
+            "spells": "function-pointer-calling-convention",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "FunctionPointerParameter",
+            "spells": "function-pointer-parameter",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "FunctionPointerParameterList",
+            "spells": "function-pointer-parameter-list",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "FunctionPointerType",
+            "spells": "function-pointer-type",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "FunctionPointerUnmanagedCallingConvention",
+            "spells": "function-pointer-unmanaged-calling-convention",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "FunctionPointerUnmanagedCallingConventionList",
+            "spells": "function-pointer-unmanaged-calling-convention-list",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
         },
         {
             "kind": "GenericName",
@@ -302,6 +2007,7 @@
                 "TypeArgumentList"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/csharp/Shop/Orders/GiftWrapping.cs:7"
@@ -313,9 +2019,162 @@
                 "member"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/csharp/Shop/Shipping/Tracking.cs:10"
+        },
+        {
+            "kind": "GetKeyword",
+            "spells": "get-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "GlobalKeyword",
+            "spells": "global-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "GlobalStatement",
+            "spells": "global",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "GotoCaseStatement",
+            "spells": "goto-case",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "GotoDefaultStatement",
+            "spells": "goto-default",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "GotoKeyword",
+            "spells": "goto-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "GotoStatement",
+            "spells": "goto",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "GreaterThanEqualsToken",
+            "spells": "greater-than-equals-token",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "GreaterThanExpression",
+            "spells": "greater-than",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "GreaterThanGreaterThanEqualsToken",
+            "spells": "greater-than-greater-than-equals-token",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "GreaterThanGreaterThanGreaterThanEqualsToken",
+            "spells": "greater-than-greater-than-greater-than-equals-token",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "GreaterThanGreaterThanGreaterThanToken",
+            "spells": "greater-than-greater-than-greater-than-token",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "GreaterThanGreaterThanToken",
+            "spells": "greater-than-greater-than-token",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "GreaterThanOrEqualExpression",
+            "spells": "greater-than-or-equal",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "GreaterThanToken",
+            "spells": "greater-than-token",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "GroupClause",
+            "spells": "group-clause",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "GroupKeyword",
+            "spells": "group-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "HashToken",
+            "spells": "hash-token",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "HiddenKeyword",
+            "spells": "hidden-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
         },
         {
             "kind": "IdentifierName",
@@ -328,9 +2187,34 @@
                 "identifier"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/csharp/Shop/Orders/GiftWrapping.cs:1"
+        },
+        {
+            "kind": "IdentifierToken",
+            "spells": "identifier-token",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "IfDirectiveTrivia",
+            "spells": "if-directive-trivia",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "IfKeyword",
+            "spells": "if-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
         },
         {
             "kind": "IfStatement",
@@ -346,9 +2230,26 @@
                 "Statement"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/csharp/Shop/Reports/PageReader.cs:24"
+        },
+        {
+            "kind": "IgnoredDirectiveTrivia",
+            "spells": "ignored-directive-trivia",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "ImplicitArrayCreationExpression",
+            "spells": "implicit-array-creation",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
         },
         {
             "kind": "ImplicitElementAccess",
@@ -360,9 +2261,74 @@
                 "ArgumentList"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/csharp/Shop/Stock/Audits.cs:14"
+        },
+        {
+            "kind": "ImplicitKeyword",
+            "spells": "implicit-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "ImplicitObjectCreationExpression",
+            "spells": "implicit-object-creation",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "ImplicitStackAllocArrayCreationExpression",
+            "spells": "implicit-stack-alloc-array-creation",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "InKeyword",
+            "spells": "in-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "IncompleteMember",
+            "spells": "incomplete-member",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "IndexExpression",
+            "spells": "index",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "IndexerDeclaration",
+            "spells": "indexer",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "IndexerMemberCref",
+            "spells": "indexer-member-cref",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
         },
         {
             "kind": "InitAccessorDeclaration",
@@ -371,9 +2337,26 @@
                 "member"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/csharp/Shop/Shipping/Tracking.cs:10"
+        },
+        {
+            "kind": "InitKeyword",
+            "spells": "init-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "IntKeyword",
+            "spells": "int-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
         },
         {
             "kind": "InterfaceDeclaration",
@@ -391,9 +2374,58 @@
                 "public"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/csharp/Shop/Stock/Audits.cs:4"
+        },
+        {
+            "kind": "InterfaceKeyword",
+            "spells": "interface-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "InternalKeyword",
+            "spells": "internal-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "InterpolatedMultiLineRawStringStartToken",
+            "spells": "interpolated-multi-line-raw-string-start-token",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "InterpolatedRawStringEndToken",
+            "spells": "interpolated-raw-string-end-token",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "InterpolatedSingleLineRawStringStartToken",
+            "spells": "interpolated-single-line-raw-string-start-token",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "InterpolatedStringEndToken",
+            "spells": "interpolated-string-end-token",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
         },
         {
             "kind": "InterpolatedStringExpression",
@@ -408,9 +2440,18 @@
                 "Contents"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/csharp/Shop/Stock/Audits.cs:22"
+        },
+        {
+            "kind": "InterpolatedStringStartToken",
+            "spells": "interpolated-string-start-token",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
         },
         {
             "kind": "InterpolatedStringText",
@@ -419,9 +2460,34 @@
                 "other"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/csharp/Shop/Stock/Audits.cs:22"
+        },
+        {
+            "kind": "InterpolatedStringTextToken",
+            "spells": "interpolated-string-text-token",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "InterpolatedStringToken",
+            "spells": "interpolated-string-token",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "InterpolatedVerbatimStringStartToken",
+            "spells": "interpolated-verbatim-string-start-token",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
         },
         {
             "kind": "Interpolation",
@@ -433,9 +2499,34 @@
                 "Expression"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/csharp/Shop/Stock/Audits.cs:22"
+        },
+        {
+            "kind": "InterpolationAlignmentClause",
+            "spells": "interpolation-alignment-clause",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "InterpolationFormatClause",
+            "spells": "interpolation-format-clause",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "IntoKeyword",
+            "spells": "into-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
         },
         {
             "kind": "InvocationExpression",
@@ -451,9 +2542,26 @@
                 "Expression"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/csharp/Shop/Orders/GiftWrapping.cs:7"
+        },
+        {
+            "kind": "IsExpression",
+            "spells": "is",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "IsKeyword",
+            "spells": "is-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
         },
         {
             "kind": "IsPatternExpression",
@@ -466,9 +2574,194 @@
                 "Pattern"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/csharp/Shop/Reports/PageReader.cs:24"
+        },
+        {
+            "kind": "JoinClause",
+            "spells": "join-clause",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "JoinIntoClause",
+            "spells": "join-into-clause",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "JoinKeyword",
+            "spells": "join-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "LabeledStatement",
+            "spells": "labeled",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "LeftShiftAssignmentExpression",
+            "spells": "left-shift-assignment",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "LeftShiftExpression",
+            "spells": "left-shift",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "LessThanEqualsToken",
+            "spells": "less-than-equals-token",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "LessThanExpression",
+            "spells": "less-than",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "LessThanLessThanEqualsToken",
+            "spells": "less-than-less-than-equals-token",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "LessThanLessThanToken",
+            "spells": "less-than-less-than-token",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "LessThanOrEqualExpression",
+            "spells": "less-than-or-equal",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "LessThanSlashToken",
+            "spells": "less-than-slash-token",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "LessThanToken",
+            "spells": "less-than-token",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "LetClause",
+            "spells": "let-clause",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "LetKeyword",
+            "spells": "let-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "LineDirectivePosition",
+            "spells": "line-directive-position",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "LineDirectiveTrivia",
+            "spells": "line-directive-trivia",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "LineKeyword",
+            "spells": "line-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "LineSpanDirectiveTrivia",
+            "spells": "line-span-directive-trivia",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "List",
+            "spells": "list",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "ListPattern",
+            "spells": "list-pattern",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "LoadDirectiveTrivia",
+            "spells": "load-directive-trivia",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "LoadKeyword",
+            "spells": "load-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
         },
         {
             "kind": "LocalDeclarationStatement",
@@ -480,9 +2773,42 @@
                 "Declaration"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/csharp/Shop/Reports/PageReader.cs:17"
+        },
+        {
+            "kind": "LocalFunctionStatement",
+            "spells": "local-function",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "LockKeyword",
+            "spells": "lock-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "LockStatement",
+            "spells": "lock",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "LogicalAndExpression",
+            "spells": "logical-and",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
         },
         {
             "kind": "LogicalNotExpression",
@@ -497,9 +2823,58 @@
                 "!"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/csharp/Shop/Orders/GiftWrapping.cs:7"
+        },
+        {
+            "kind": "LogicalOrExpression",
+            "spells": "logical-or",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "LongKeyword",
+            "spells": "long-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "MakeRefExpression",
+            "spells": "make-ref",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "MakeRefKeyword",
+            "spells": "make-ref-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "ManagedKeyword",
+            "spells": "managed-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "MemberBindingExpression",
+            "spells": "member-binding",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
         },
         {
             "kind": "MethodDeclaration",
@@ -521,9 +2896,210 @@
                 "static"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/csharp/Shop/Orders/GiftWrapping.cs:7"
+        },
+        {
+            "kind": "MethodKeyword",
+            "spells": "method-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "MinusEqualsToken",
+            "spells": "minus-equals-token",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "MinusGreaterThanToken",
+            "spells": "minus-greater-than-token",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "MinusMinusToken",
+            "spells": "minus-minus-token",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "MinusToken",
+            "spells": "minus-token",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "ModuleKeyword",
+            "spells": "module-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "ModuloAssignmentExpression",
+            "spells": "modulo-assignment",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "ModuloExpression",
+            "spells": "modulo",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "MultiLineCommentTrivia",
+            "spells": "multi-line-comment-trivia",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "MultiLineDocumentationCommentTrivia",
+            "spells": "multi-line-documentation-comment-trivia",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "MultiLineRawStringLiteralToken",
+            "spells": "multi-line-raw-string-literal-token",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "MultiplyAssignmentExpression",
+            "spells": "multiply-assignment",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "MultiplyExpression",
+            "spells": "multiply",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "NameColon",
+            "spells": "name-colon",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "NameEquals",
+            "spells": "name-equals",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "NameMemberCref",
+            "spells": "name-member-cref",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "NameOfKeyword",
+            "spells": "name-of-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "NamespaceDeclaration",
+            "spells": "namespace",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "NamespaceKeyword",
+            "spells": "namespace-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "NewKeyword",
+            "spells": "new-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "None",
+            "spells": "none",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "NotEqualsExpression",
+            "spells": "not-equals",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "NotKeyword",
+            "spells": "not-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "NotPattern",
+            "spells": "not-pattern",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "NullKeyword",
+            "spells": "null-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
         },
         {
             "kind": "NullLiteralExpression",
@@ -535,9 +3111,26 @@
                 "literal"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/csharp/Shop/Shipping/Tracking.cs:10"
+        },
+        {
+            "kind": "NullableDirectiveTrivia",
+            "spells": "nullable-directive-trivia",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "NullableKeyword",
+            "spells": "nullable-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
         },
         {
             "kind": "NullableType",
@@ -552,6 +3145,7 @@
                 "nullable-sugar"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/csharp/Shop/Shipping/Tracking.cs:7"
@@ -566,9 +3160,18 @@
                 "literal"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/csharp/Shop/Shipping/Tracking.cs:15"
+        },
+        {
+            "kind": "NumericLiteralToken",
+            "spells": "numeric-literal-token",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
         },
         {
             "kind": "ObjectCreationExpression",
@@ -584,6 +3187,7 @@
                 "Type"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/csharp/Shop/Stock/Audits.cs:12"
@@ -598,9 +3202,170 @@
                 "Expressions"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/csharp/Shop/Stock/Audits.cs:13"
+        },
+        {
+            "kind": "ObjectKeyword",
+            "spells": "object-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "OmittedArraySizeExpression",
+            "spells": "omitted-array-size",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "OmittedArraySizeExpressionToken",
+            "spells": "omitted-array-size-expression-token",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "OmittedTypeArgument",
+            "spells": "omitted-type-argument",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "OmittedTypeArgumentToken",
+            "spells": "omitted-type-argument-token",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "OnKeyword",
+            "spells": "on-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "OpenBraceToken",
+            "spells": "open-brace-token",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "OpenBracketToken",
+            "spells": "open-bracket-token",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "OpenParenToken",
+            "spells": "open-paren-token",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "OperatorDeclaration",
+            "spells": "operator",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "OperatorKeyword",
+            "spells": "operator-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "OperatorMemberCref",
+            "spells": "operator-member-cref",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "OrAssignmentExpression",
+            "spells": "or-assignment",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "OrKeyword",
+            "spells": "or-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "OrPattern",
+            "spells": "or-pattern",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "OrderByClause",
+            "spells": "order-by-clause",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "OrderByKeyword",
+            "spells": "order-by-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "OutKeyword",
+            "spells": "out-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "OverrideKeyword",
+            "spells": "override-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "ParamKeyword",
+            "spells": "param-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
         },
         {
             "kind": "Parameter",
@@ -615,6 +3380,7 @@
                 "Type"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/csharp/Shop/Orders/GiftWrapping.cs:7"
@@ -629,9 +3395,18 @@
                 "Parameters"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/csharp/Shop/Orders/GiftWrapping.cs:7"
+        },
+        {
+            "kind": "ParamsKeyword",
+            "spells": "params-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
         },
         {
             "kind": "ParenthesizedExpression",
@@ -643,9 +3418,170 @@
                 "Expression"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/csharp/Shop/Stock/Audits.cs:22"
+        },
+        {
+            "kind": "ParenthesizedLambdaExpression",
+            "spells": "parenthesized-lambda",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "ParenthesizedPattern",
+            "spells": "parenthesized-pattern",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "ParenthesizedVariableDesignation",
+            "spells": "parenthesized-variable-designation",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "PartialKeyword",
+            "spells": "partial-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "PercentEqualsToken",
+            "spells": "percent-equals-token",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "PercentToken",
+            "spells": "percent-token",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "PlusEqualsToken",
+            "spells": "plus-equals-token",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "PlusPlusToken",
+            "spells": "plus-plus-token",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "PlusToken",
+            "spells": "plus-token",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "PointerIndirectionExpression",
+            "spells": "pointer-indirection",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "PointerMemberAccessExpression",
+            "spells": "pointer-member-access",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "PointerType",
+            "spells": "pointer-type",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "PositionalPatternClause",
+            "spells": "positional-pattern-clause",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "PostDecrementExpression",
+            "spells": "post-decrement",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "PostIncrementExpression",
+            "spells": "post-increment",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "PragmaChecksumDirectiveTrivia",
+            "spells": "pragma-checksum-directive-trivia",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "PragmaKeyword",
+            "spells": "pragma-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "PragmaWarningDirectiveTrivia",
+            "spells": "pragma-warning-directive-trivia",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "PreDecrementExpression",
+            "spells": "pre-decrement",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "PreIncrementExpression",
+            "spells": "pre-increment",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
         },
         {
             "kind": "PredefinedType",
@@ -654,9 +3590,34 @@
                 "type"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/csharp/Shop/Orders/GiftWrapping.cs:7"
+        },
+        {
+            "kind": "PreprocessingMessageTrivia",
+            "spells": "preprocessing-message-trivia",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "PrimaryConstructorBaseType",
+            "spells": "primary-constructor-base-type",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "PrivateKeyword",
+            "spells": "private-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
         },
         {
             "kind": "PropertyDeclaration",
@@ -674,9 +3635,50 @@
                 "public"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/csharp/Shop/Shipping/Tracking.cs:10"
+        },
+        {
+            "kind": "PropertyKeyword",
+            "spells": "property-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "PropertyPatternClause",
+            "spells": "property-pattern-clause",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "ProtectedKeyword",
+            "spells": "protected-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "PublicKeyword",
+            "spells": "public-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "QualifiedCref",
+            "spells": "qualified-cref",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
         },
         {
             "kind": "QualifiedName",
@@ -689,9 +3691,82 @@
                 "Right"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/csharp/Shop/Orders/GiftWrapping.cs:1"
+        },
+        {
+            "kind": "QueryBody",
+            "spells": "query-body",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "QueryContinuation",
+            "spells": "query-continuation",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "QueryExpression",
+            "spells": "query",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "QuestionQuestionEqualsToken",
+            "spells": "question-question-equals-token",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "QuestionQuestionToken",
+            "spells": "question-question-token",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "QuestionToken",
+            "spells": "question-token",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "RangeExpression",
+            "spells": "range",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "RazorContentToken",
+            "spells": "razor-content-token",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "ReadOnlyKeyword",
+            "spells": "read-only-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
         },
         {
             "kind": "RecordDeclaration",
@@ -710,9 +3785,178 @@
                 "sealed"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/csharp/Shop/Reports/PageReader.cs:4"
+        },
+        {
+            "kind": "RecordKeyword",
+            "spells": "record-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "RecordStructDeclaration",
+            "spells": "record-struct",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "RecursivePattern",
+            "spells": "recursive-pattern",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "RefExpression",
+            "spells": "ref",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "RefKeyword",
+            "spells": "ref-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "RefStructConstraint",
+            "spells": "ref-struct-constraint",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "RefType",
+            "spells": "",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "RefTypeExpression",
+            "spells": "",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "RefTypeKeyword",
+            "spells": "ref-type-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "RefValueExpression",
+            "spells": "ref-value",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "RefValueKeyword",
+            "spells": "ref-value-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "ReferenceDirectiveTrivia",
+            "spells": "reference-directive-trivia",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "ReferenceKeyword",
+            "spells": "reference-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "RegionDirectiveTrivia",
+            "spells": "region-directive-trivia",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "RegionKeyword",
+            "spells": "region-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "RelationalPattern",
+            "spells": "relational-pattern",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "RemoveAccessorDeclaration",
+            "spells": "remove-accessor",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "RemoveKeyword",
+            "spells": "remove-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "RequiredKeyword",
+            "spells": "required-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "RestoreKeyword",
+            "spells": "restore-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "ReturnKeyword",
+            "spells": "return-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
         },
         {
             "kind": "ReturnStatement",
@@ -728,9 +3972,122 @@
                 "Expression"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/csharp/Shop/Stock/Audits.cs:22"
+        },
+        {
+            "kind": "RightShiftAssignmentExpression",
+            "spells": "right-shift-assignment",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "RightShiftExpression",
+            "spells": "right-shift",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "SByteKeyword",
+            "spells": "s-byte-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "SafeKeyword",
+            "spells": "safe-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "ScopedKeyword",
+            "spells": "scoped-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "ScopedType",
+            "spells": "scoped-type",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "SealedKeyword",
+            "spells": "sealed-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "SelectClause",
+            "spells": "select-clause",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "SelectKeyword",
+            "spells": "select-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "SemicolonToken",
+            "spells": "semicolon-token",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "SetAccessorDeclaration",
+            "spells": "set-accessor",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "SetKeyword",
+            "spells": "set-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "ShebangDirectiveTrivia",
+            "spells": "shebang-directive-trivia",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "ShortKeyword",
+            "spells": "short-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
         },
         {
             "kind": "SimpleAssignmentExpression",
@@ -752,6 +4109,7 @@
                 "step"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/csharp/Shop/Shipping/Tracking.cs:12"
@@ -766,6 +4124,7 @@
                 "Type"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/csharp/Shop/Stock/Audits.cs:9"
@@ -784,6 +4143,7 @@
                 "Parameter"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/csharp/Shop/Orders/GiftWrapping.cs:7"
@@ -802,9 +4162,146 @@
                 "Name"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/csharp/Shop/Orders/GiftWrapping.cs:7"
+        },
+        {
+            "kind": "SingleLineCommentTrivia",
+            "spells": "single-line-comment-trivia",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "SingleLineDocumentationCommentTrivia",
+            "spells": "single-line-documentation-comment-trivia",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "SingleLineRawStringLiteralToken",
+            "spells": "single-line-raw-string-literal-token",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "SingleQuoteToken",
+            "spells": "single-quote-token",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "SingleVariableDesignation",
+            "spells": "single-variable-designation",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "SizeOfExpression",
+            "spells": "size-of",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "SizeOfKeyword",
+            "spells": "size-of-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "SkippedTokensTrivia",
+            "spells": "skipped-tokens-trivia",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "SlashEqualsToken",
+            "spells": "slash-equals-token",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "SlashGreaterThanToken",
+            "spells": "slash-greater-than-token",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "SlashToken",
+            "spells": "slash-token",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "SlicePattern",
+            "spells": "slice-pattern",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "SpreadElement",
+            "spells": "spread-element",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "StackAllocArrayCreationExpression",
+            "spells": "stack-alloc-array-creation",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "StackAllocKeyword",
+            "spells": "stack-alloc-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "StaticKeyword",
+            "spells": "static-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "StringKeyword",
+            "spells": "string-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
         },
         {
             "kind": "StringLiteralExpression",
@@ -816,9 +4313,66 @@
                 "literal"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/csharp/Shop/Orders/GiftWrapping.cs:7"
+        },
+        {
+            "kind": "StringLiteralToken",
+            "spells": "string-literal-token",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "StructConstraint",
+            "spells": "struct-constraint",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "StructDeclaration",
+            "spells": "struct",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "StructKeyword",
+            "spells": "struct-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "Subpattern",
+            "spells": "subpattern",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "SubtractAssignmentExpression",
+            "spells": "subtract-assignment",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "SubtractExpression",
+            "spells": "subtract",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
         },
         {
             "kind": "SuppressNullableWarningExpression",
@@ -833,9 +4387,162 @@
                 "!"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/csharp/Shop/Shipping/Tracking.cs:10"
+        },
+        {
+            "kind": "SwitchExpression",
+            "spells": "",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "SwitchExpressionArm",
+            "spells": "switch-expression-arm",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "SwitchKeyword",
+            "spells": "switch-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "SwitchSection",
+            "spells": "switch-section",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "SwitchStatement",
+            "spells": "",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "ThisConstructorInitializer",
+            "spells": "this-constructor-initializer",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "ThisExpression",
+            "spells": "this",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "ThisKeyword",
+            "spells": "this-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "ThrowExpression",
+            "spells": "",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "ThrowKeyword",
+            "spells": "throw-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "ThrowStatement",
+            "spells": "",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "TildeToken",
+            "spells": "tilde-token",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "TrueKeyword",
+            "spells": "true-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "TrueLiteralExpression",
+            "spells": "true-literal",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "TryKeyword",
+            "spells": "try-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "TryStatement",
+            "spells": "try",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "TupleElement",
+            "spells": "tuple-element",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "TupleExpression",
+            "spells": "tuple",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "TupleType",
+            "spells": "tuple-type",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
         },
         {
             "kind": "TypeArgumentList",
@@ -847,9 +4554,322 @@
                 "Arguments"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/csharp/Shop/Orders/GiftWrapping.cs:7"
+        },
+        {
+            "kind": "TypeConstraint",
+            "spells": "type-constraint",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "TypeCref",
+            "spells": "type-cref",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "TypeKeyword",
+            "spells": "type-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "TypeOfExpression",
+            "spells": "type-of",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "TypeOfKeyword",
+            "spells": "type-of-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "TypeParameter",
+            "spells": "type-parameter",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "TypeParameterConstraintClause",
+            "spells": "type-parameter-constraint-clause",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "TypeParameterList",
+            "spells": "type-parameter-list",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "TypePattern",
+            "spells": "type-pattern",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "TypeVarKeyword",
+            "spells": "type-var-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "UIntKeyword",
+            "spells": "u-int-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "ULongKeyword",
+            "spells": "u-long-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "UShortKeyword",
+            "spells": "u-short-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "UnaryMinusExpression",
+            "spells": "unary-minus",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "UnaryPlusExpression",
+            "spells": "unary-plus",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "UncheckedExpression",
+            "spells": "",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "UncheckedKeyword",
+            "spells": "unchecked-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "UncheckedStatement",
+            "spells": "",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "UndefDirectiveTrivia",
+            "spells": "undef-directive-trivia",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "UndefKeyword",
+            "spells": "undef-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "UnderscoreToken",
+            "spells": "underscore-token",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "UnionDeclaration",
+            "spells": "union",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "UnionKeyword",
+            "spells": "union-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "UnknownAccessorDeclaration",
+            "spells": "unknown-accessor",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "UnmanagedKeyword",
+            "spells": "unmanaged-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "UnsafeExpression",
+            "spells": "",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "UnsafeKeyword",
+            "spells": "unsafe-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "UnsafeStatement",
+            "spells": "",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "UnsignedRightShiftAssignmentExpression",
+            "spells": "unsigned-right-shift-assignment",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "UnsignedRightShiftExpression",
+            "spells": "unsigned-right-shift",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "UsingDirective",
+            "spells": "using-directive",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "UsingKeyword",
+            "spells": "using-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "UsingStatement",
+            "spells": "using",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "Utf8MultiLineRawStringLiteralToken",
+            "spells": "utf8-multi-line-raw-string-literal-token",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "Utf8SingleLineRawStringLiteralToken",
+            "spells": "utf8-single-line-raw-string-literal-token",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "Utf8StringLiteralExpression",
+            "spells": "utf8-string-literal",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "Utf8StringLiteralToken",
+            "spells": "utf8-string-literal-token",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "VarKeyword",
+            "spells": "var-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "VarPattern",
+            "spells": "var-pattern",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
         },
         {
             "kind": "VariableDeclaration",
@@ -862,6 +4882,7 @@
                 "Variables"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/csharp/Shop/Shipping/Tracking.cs:7"
@@ -876,9 +4897,346 @@
                 "Initializer"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/csharp/Shop/Shipping/Tracking.cs:7"
+        },
+        {
+            "kind": "VirtualKeyword",
+            "spells": "virtual-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "VoidKeyword",
+            "spells": "void-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "VolatileKeyword",
+            "spells": "volatile-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "WarningDirectiveTrivia",
+            "spells": "warning-directive-trivia",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "WarningKeyword",
+            "spells": "warning-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "WarningsKeyword",
+            "spells": "warnings-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "WhenClause",
+            "spells": "when-clause",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "WhenKeyword",
+            "spells": "when-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "WhereClause",
+            "spells": "where-clause",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "WhereKeyword",
+            "spells": "where-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "WhileKeyword",
+            "spells": "while-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "WhileStatement",
+            "spells": "while",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "WhitespaceTrivia",
+            "spells": "whitespace-trivia",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "WithElement",
+            "spells": "with-element",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "WithExpression",
+            "spells": "with",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "WithInitializerExpression",
+            "spells": "with-initializer",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "WithKeyword",
+            "spells": "with-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "XmlCDataEndToken",
+            "spells": "xml-c-data-end-token",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "XmlCDataSection",
+            "spells": "xml-c-data-section",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "XmlCDataStartToken",
+            "spells": "xml-c-data-start-token",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "XmlComment",
+            "spells": "xml-comment",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "XmlCommentEndToken",
+            "spells": "xml-comment-end-token",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "XmlCommentStartToken",
+            "spells": "xml-comment-start-token",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "XmlCrefAttribute",
+            "spells": "xml-cref-attribute",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "XmlElement",
+            "spells": "xml-element",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "XmlElementEndTag",
+            "spells": "xml-element-end-tag",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "XmlElementStartTag",
+            "spells": "xml-element-start-tag",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "XmlEmptyElement",
+            "spells": "xml-empty-element",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "XmlEntityLiteralToken",
+            "spells": "xml-entity-literal-token",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "XmlName",
+            "spells": "xml-name",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "XmlNameAttribute",
+            "spells": "xml-name-attribute",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "XmlPrefix",
+            "spells": "xml-prefix",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "XmlProcessingInstruction",
+            "spells": "xml-processing-instruction",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "XmlProcessingInstructionEndToken",
+            "spells": "xml-processing-instruction-end-token",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "XmlProcessingInstructionStartToken",
+            "spells": "xml-processing-instruction-start-token",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "XmlText",
+            "spells": "xml-text",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "XmlTextAttribute",
+            "spells": "xml-text-attribute",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "XmlTextLiteralNewLineToken",
+            "spells": "xml-text-literal-new-line-token",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "XmlTextLiteralToken",
+            "spells": "xml-text-literal-token",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "YieldBreakStatement",
+            "spells": "yield-break",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "YieldKeyword",
+            "spells": "yield-keyword",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "YieldReturnStatement",
+            "spells": "yield-return",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
         }
     ]
 }

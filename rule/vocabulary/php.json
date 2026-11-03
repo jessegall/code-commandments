@@ -7,6 +7,14 @@
         "contract/samples/php.jsonl",
         "engine/php/testdata/shop.jsonl.gz"
     ],
+    "parser": "php-parser",
+    "declares": "php-parser's own node classes: each one's getType() and getSubNodeNames()",
+    "collided": {
+        "const": [
+            "Const",
+            "Stmt_Const"
+        ]
+    },
     "constructs": [
         {
             "kind": "Arg",
@@ -15,7 +23,9 @@
                 "other"
             ],
             "fields": [
+                "byRef",
                 "name",
+                "unpack",
                 "value"
             ],
             "flags": [
@@ -23,6 +33,7 @@
                 "spread"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/backend/app/Billing/Checkout.php:13"
@@ -34,13 +45,16 @@
                 "other"
             ],
             "fields": [
+                "byRef",
                 "key",
+                "unpack",
                 "value"
             ],
             "flags": [
                 "spread"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/backend/app/Notifications/SlackNotifier.php:18"
@@ -56,6 +70,7 @@
                 "name"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/backend/app/Billing/Checkout.php:13"
@@ -70,6 +85,7 @@
                 "attrs"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/backend/app/Billing/Checkout.php:13"
@@ -81,16 +97,18 @@
                 "other"
             ],
             "fields": [
+                "byRef",
                 "var"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/shop/app/Providers/AuditServiceProvider.php:23"
         },
         {
             "kind": "Const",
-            "spells": "const",
+            "spells": "",
             "roles": [
                 "other"
             ],
@@ -99,6 +117,7 @@
                 "value"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/backend/app/Reporting/AccessAuditor.php:13"
@@ -114,6 +133,7 @@
                 "value"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/shop/routes/web.php:3"
@@ -128,6 +148,7 @@
                 "items"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/backend/app/Notifications/SlackNotifier.php:18"
@@ -143,6 +164,7 @@
                 "var"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/shop/app/Authoring/AssistantGateway.php:23"
@@ -158,14 +180,17 @@
             ],
             "fields": [
                 "attrGroups",
+                "byRef",
                 "expr",
                 "params",
-                "returnType"
+                "returnType",
+                "static"
             ],
             "modifiers": [
                 "static"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/shop/app/Catalog/GradeSelector.php:64"
@@ -190,9 +215,58 @@
                 "step"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/backend/app/Fulfillment/LegChain.php:17"
+        },
+        {
+            "kind": "Expr_AssignOp_BitwiseAnd",
+            "spells": "assign-op-bitwise-and",
+            "roles": null,
+            "fields": [
+                "expr",
+                "var"
+            ],
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "Expr_AssignOp_BitwiseOr",
+            "spells": "assign-op-bitwise-or",
+            "roles": null,
+            "fields": [
+                "expr",
+                "var"
+            ],
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "Expr_AssignOp_BitwiseXor",
+            "spells": "assign-op-bitwise-xor",
+            "roles": null,
+            "fields": [
+                "expr",
+                "var"
+            ],
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "Expr_AssignOp_Coalesce",
+            "spells": "assign-op-coalesce",
+            "roles": null,
+            "fields": [
+                "expr",
+                "var"
+            ],
+            "vouched": [
+                "declared"
+            ]
         },
         {
             "kind": "Expr_AssignOp_Concat",
@@ -211,9 +285,22 @@
                 ".="
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/shop/app/Reporting/ReceiptLines.php:27"
+        },
+        {
+            "kind": "Expr_AssignOp_Div",
+            "spells": "assign-op-div",
+            "roles": null,
+            "fields": [
+                "expr",
+                "var"
+            ],
+            "vouched": [
+                "declared"
+            ]
         },
         {
             "kind": "Expr_AssignOp_Minus",
@@ -232,9 +319,34 @@
                 "-="
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/shop/app/Customers/LoyaltyDigest.php:30"
+        },
+        {
+            "kind": "Expr_AssignOp_Mod",
+            "spells": "assign-op-mod",
+            "roles": null,
+            "fields": [
+                "expr",
+                "var"
+            ],
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "Expr_AssignOp_Mul",
+            "spells": "assign-op-mul",
+            "roles": null,
+            "fields": [
+                "expr",
+                "var"
+            ],
+            "vouched": [
+                "declared"
+            ]
         },
         {
             "kind": "Expr_AssignOp_Plus",
@@ -253,9 +365,94 @@
                 "+="
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/backend/app/Fulfillment/LegChain.php:20"
+        },
+        {
+            "kind": "Expr_AssignOp_Pow",
+            "spells": "assign-op-pow",
+            "roles": null,
+            "fields": [
+                "expr",
+                "var"
+            ],
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "Expr_AssignOp_ShiftLeft",
+            "spells": "assign-op-shift-left",
+            "roles": null,
+            "fields": [
+                "expr",
+                "var"
+            ],
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "Expr_AssignOp_ShiftRight",
+            "spells": "assign-op-shift-right",
+            "roles": null,
+            "fields": [
+                "expr",
+                "var"
+            ],
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "Expr_AssignRef",
+            "spells": "assign-ref",
+            "roles": null,
+            "fields": [
+                "expr",
+                "var"
+            ],
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "Expr_BinaryOp_BitwiseAnd",
+            "spells": "binary-op-bitwise-and",
+            "roles": null,
+            "fields": [
+                "left",
+                "right"
+            ],
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "Expr_BinaryOp_BitwiseOr",
+            "spells": "binary-op-bitwise-or",
+            "roles": null,
+            "fields": [
+                "left",
+                "right"
+            ],
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "Expr_BinaryOp_BitwiseXor",
+            "spells": "binary-op-bitwise-xor",
+            "roles": null,
+            "fields": [
+                "left",
+                "right"
+            ],
+            "vouched": [
+                "declared"
+            ]
         },
         {
             "kind": "Expr_BinaryOp_BooleanAnd",
@@ -274,6 +471,7 @@
                 "\u0026\u0026"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/backend/app/Notifications/SlackNotifier.php:35"
@@ -295,6 +493,7 @@
                 "||"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/shop/app/Billing/LedgerEntry.php:34"
@@ -313,6 +512,7 @@
                 "??"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/shop/app/Auth/BenchGuard.php:32"
@@ -331,6 +531,7 @@
                 "."
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/shop/app/Audit/AuditTrail.php:11"
@@ -349,9 +550,22 @@
                 "/"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/backend/app/Fulfillment/LabelPrintDefaults.php:35"
+        },
+        {
+            "kind": "Expr_BinaryOp_Equal",
+            "spells": "binary-op-equal",
+            "roles": null,
+            "fields": [
+                "left",
+                "right"
+            ],
+            "vouched": [
+                "declared"
+            ]
         },
         {
             "kind": "Expr_BinaryOp_Greater",
@@ -370,6 +584,7 @@
                 "\u003e"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/shop/app/Catalog/PriceResolver.php:24"
@@ -391,6 +606,7 @@
                 "\u003e="
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/backend/app/Orders/DiscountTier.php:17"
@@ -412,6 +628,7 @@
                 "==="
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/shop/app/Authoring/DraftAnnouncement.php:20"
@@ -433,9 +650,34 @@
                 "and"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/shop/app/Kiosk/IdleWatch.php:26"
+        },
+        {
+            "kind": "Expr_BinaryOp_LogicalOr",
+            "spells": "binary-op-logical-or",
+            "roles": null,
+            "fields": [
+                "left",
+                "right"
+            ],
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "Expr_BinaryOp_LogicalXor",
+            "spells": "binary-op-logical-xor",
+            "roles": null,
+            "fields": [
+                "left",
+                "right"
+            ],
+            "vouched": [
+                "declared"
+            ]
         },
         {
             "kind": "Expr_BinaryOp_Minus",
@@ -451,6 +693,7 @@
                 "-"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/shop/app/Catalog/PriceUpdater.php:23"
@@ -469,6 +712,7 @@
                 "%"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/shop/app/Http/Pages/Hydration/Leaves.php:73"
@@ -487,9 +731,22 @@
                 "*"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/shop/app/Catalog/LegacyImportRow.php:30"
+        },
+        {
+            "kind": "Expr_BinaryOp_NotEqual",
+            "spells": "binary-op-not-equal",
+            "roles": null,
+            "fields": [
+                "left",
+                "right"
+            ],
+            "vouched": [
+                "declared"
+            ]
         },
         {
             "kind": "Expr_BinaryOp_NotIdentical",
@@ -508,9 +765,22 @@
                 "!=="
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/backend/app/Fulfillment/LegChain.php:19"
+        },
+        {
+            "kind": "Expr_BinaryOp_Pipe",
+            "spells": "binary-op-pipe",
+            "roles": null,
+            "fields": [
+                "left",
+                "right"
+            ],
+            "vouched": [
+                "declared"
+            ]
         },
         {
             "kind": "Expr_BinaryOp_Plus",
@@ -526,6 +796,7 @@
                 "+"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/shop/app/Authoring/TagSweep.php:25"
@@ -544,9 +815,34 @@
                 "**"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/shop/app/Http/Pages/FlatCluster/RealtimeCard.php:36"
+        },
+        {
+            "kind": "Expr_BinaryOp_ShiftLeft",
+            "spells": "binary-op-shift-left",
+            "roles": null,
+            "fields": [
+                "left",
+                "right"
+            ],
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "Expr_BinaryOp_ShiftRight",
+            "spells": "binary-op-shift-right",
+            "roles": null,
+            "fields": [
+                "left",
+                "right"
+            ],
+            "vouched": [
+                "declared"
+            ]
         },
         {
             "kind": "Expr_BinaryOp_Smaller",
@@ -565,6 +861,7 @@
                 "\u003c"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/shop/app/Catalog/PriceResolver.php:25"
@@ -586,9 +883,33 @@
                 "\u003c="
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/shop/app/Catalog/AvailabilityResolver.php:30"
+        },
+        {
+            "kind": "Expr_BinaryOp_Spaceship",
+            "spells": "binary-op-spaceship",
+            "roles": null,
+            "fields": [
+                "left",
+                "right"
+            ],
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "Expr_BitwiseNot",
+            "spells": "bitwise-not",
+            "roles": null,
+            "fields": [
+                "expr"
+            ],
+            "vouched": [
+                "declared"
+            ]
         },
         {
             "kind": "Expr_BooleanNot",
@@ -603,6 +924,7 @@
                 "!"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/shop/app/Audit/EvidencePath.php:23"
@@ -617,9 +939,21 @@
                 "expr"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/shop/app/Data/WarehouseStockData.php:27"
+        },
+        {
+            "kind": "Expr_Cast_Bool",
+            "spells": "cast-bool",
+            "roles": null,
+            "fields": [
+                "expr"
+            ],
+            "vouched": [
+                "declared"
+            ]
         },
         {
             "kind": "Expr_Cast_Double",
@@ -631,6 +965,7 @@
                 "expr"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/shop/app/Domain/RangeFilter.php:32"
@@ -645,9 +980,21 @@
                 "expr"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/backend/app/Fulfillment/LabelPrintDefaults.php:35"
+        },
+        {
+            "kind": "Expr_Cast_Object",
+            "spells": "cast-object",
+            "roles": null,
+            "fields": [
+                "expr"
+            ],
+            "vouched": [
+                "declared"
+            ]
         },
         {
             "kind": "Expr_Cast_String",
@@ -659,9 +1006,32 @@
                 "expr"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/shop/app/Authoring/TagSweep.php:25"
+        },
+        {
+            "kind": "Expr_Cast_Unset",
+            "spells": "cast-unset",
+            "roles": null,
+            "fields": [
+                "expr"
+            ],
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "Expr_Cast_Void",
+            "spells": "cast-void",
+            "roles": null,
+            "fields": [
+                "expr"
+            ],
+            "vouched": [
+                "declared"
+            ]
         },
         {
             "kind": "Expr_ClassConstFetch",
@@ -677,6 +1047,7 @@
                 "name"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/backend/app/Billing/Checkout.php:13"
@@ -691,6 +1062,7 @@
                 "expr"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/shop/app/Reporting/InvoiceNumberFormatter.php:36"
@@ -705,8 +1077,11 @@
                 "function"
             ],
             "fields": [
+                "attrGroups",
+                "byRef",
                 "params",
                 "returnType",
+                "static",
                 "stmts",
                 "uses"
             ],
@@ -714,6 +1089,7 @@
                 "static"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/shop/app/Providers/AuditServiceProvider.php:23"
@@ -731,6 +1107,7 @@
                 "name"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/backend/app/Fulfillment/LabelPrintDefaults.php:25"
@@ -745,9 +1122,51 @@
                 "expr"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/shop/app/Reporting/FootnoteBlock.php:29"
+        },
+        {
+            "kind": "Expr_Error",
+            "spells": "error",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "Expr_ErrorSuppress",
+            "spells": "error-suppress",
+            "roles": null,
+            "fields": [
+                "expr"
+            ],
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "Expr_Eval",
+            "spells": "eval",
+            "roles": null,
+            "fields": [
+                "expr"
+            ],
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "Expr_Exit",
+            "spells": "exit",
+            "roles": null,
+            "fields": [
+                "expr"
+            ],
+            "vouched": [
+                "declared"
+            ]
         },
         {
             "kind": "Expr_FuncCall",
@@ -763,9 +1182,22 @@
                 "name"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/backend/app/Fulfillment/LabelPrintDefaults.php:35"
+        },
+        {
+            "kind": "Expr_Include",
+            "spells": "include",
+            "roles": null,
+            "fields": [
+                "expr",
+                "type"
+            ],
+            "vouched": [
+                "declared"
+            ]
         },
         {
             "kind": "Expr_Instanceof",
@@ -781,6 +1213,7 @@
                 "instanceof"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/shop/app/Catalog/LegacyImportRow.php:78"
@@ -795,6 +1228,7 @@
                 "vars"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/shop/app/Catalog/LanguageTexts.php:31"
@@ -809,6 +1243,7 @@
                 "items"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/shop/app/Webhooks/StripeSignature.php:14"
@@ -827,6 +1262,7 @@
                 "cond"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/backend/app/Reporting/GradeCalculator.php:39"
@@ -846,6 +1282,7 @@
                 "var"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/backend/app/Billing/Checkout.php:23"
@@ -864,6 +1301,7 @@
                 "class"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/backend/app/Fulfillment/LabelPrintDefaults.php:20"
@@ -884,6 +1322,7 @@
                 "var"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/shop/app/Auth/BenchGuard.php:27"
@@ -903,9 +1342,21 @@
                 "var"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/shop/app/Catalog/ProductFinder.php:27"
+        },
+        {
+            "kind": "Expr_PostDec",
+            "spells": "post-dec",
+            "roles": null,
+            "fields": [
+                "var"
+            ],
+            "vouched": [
+                "declared"
+            ]
         },
         {
             "kind": "Expr_PostInc",
@@ -923,9 +1374,21 @@
                 "step"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/shop/app/Catalog/StockDigest.php:58"
+        },
+        {
+            "kind": "Expr_PreDec",
+            "spells": "pre-dec",
+            "roles": null,
+            "fields": [
+                "var"
+            ],
+            "vouched": [
+                "declared"
+            ]
         },
         {
             "kind": "Expr_PreInc",
@@ -940,9 +1403,21 @@
                 "++"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/shop/app/Telemetry/Meter.php:14"
+        },
+        {
+            "kind": "Expr_Print",
+            "spells": "print",
+            "roles": null,
+            "fields": [
+                "expr"
+            ],
+            "vouched": [
+                "declared"
+            ]
         },
         {
             "kind": "Expr_PropertyFetch",
@@ -958,9 +1433,21 @@
                 "var"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/backend/app/Billing/Checkout.php:23"
+        },
+        {
+            "kind": "Expr_ShellExec",
+            "spells": "shell-exec",
+            "roles": null,
+            "fields": [
+                "parts"
+            ],
+            "vouched": [
+                "declared"
+            ]
         },
         {
             "kind": "Expr_StaticCall",
@@ -977,6 +1464,7 @@
                 "name"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/shop/app/Billing/LedgerEntry.php:29"
@@ -995,6 +1483,7 @@
                 "name"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/shop/app/Diagnostics/ProbeSuite.php:25"
@@ -1017,6 +1506,7 @@
                 "short-ternary"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/backend/app/Fulfillment/LabelPrintDefaults.php:35"
@@ -1034,6 +1524,7 @@
                 "expr"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/shop/app/Catalog/LanguageTexts.php:44"
@@ -1051,9 +1542,21 @@
                 "-"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/shop/app/Billing/LedgerEntry.php:34"
+        },
+        {
+            "kind": "Expr_UnaryPlus",
+            "spells": "unary-plus",
+            "roles": null,
+            "fields": [
+                "expr"
+            ],
+            "vouched": [
+                "declared"
+            ]
         },
         {
             "kind": "Expr_Variable",
@@ -1065,10 +1568,37 @@
                 "identifier",
                 "self-reference"
             ],
+            "fields": [
+                "name"
+            ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/backend/app/Billing/Checkout.php:17"
+        },
+        {
+            "kind": "Expr_Yield",
+            "spells": "yield",
+            "roles": null,
+            "fields": [
+                "key",
+                "value"
+            ],
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "Expr_YieldFrom",
+            "spells": "yield-from",
+            "roles": null,
+            "fields": [
+                "expr"
+            ],
+            "vouched": [
+                "declared"
+            ]
         },
         {
             "kind": "File",
@@ -1080,6 +1610,7 @@
                 "stmts"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/backend/app/Billing/Checkout.php:1"
@@ -1091,7 +1622,11 @@
                 "other",
                 "type"
             ],
+            "fields": [
+                "name"
+            ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/backend/app/Billing/Checkout.php:13"
@@ -1105,10 +1640,25 @@
             "is": [
                 "literal"
             ],
+            "fields": [
+                "value"
+            ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/shop/app/Casts/EncryptedNote.php:25"
+        },
+        {
+            "kind": "IntersectionType",
+            "spells": "intersection-type",
+            "roles": null,
+            "fields": [
+                "types"
+            ],
+            "vouched": [
+                "declared"
+            ]
         },
         {
             "kind": "MatchArm",
@@ -1121,6 +1671,7 @@
                 "conds"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/backend/app/Reporting/GradeCalculator.php:40"
@@ -1135,7 +1686,11 @@
             "is": [
                 "self-reference"
             ],
+            "fields": [
+                "name"
+            ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/backend/app/Billing/Checkout.php:3"
@@ -1147,10 +1702,25 @@
                 "other",
                 "type"
             ],
+            "fields": [
+                "name"
+            ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/backend/app/Billing/Checkout.php:13"
+        },
+        {
+            "kind": "Name_Relative",
+            "spells": "name-relative",
+            "roles": null,
+            "fields": [
+                "name"
+            ],
+            "vouched": [
+                "declared"
+            ]
         },
         {
             "kind": "NullableType",
@@ -1165,6 +1735,7 @@
                 "nullable-sugar"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/backend/app/Billing/Checkout.php:17"
@@ -1180,9 +1751,13 @@
             ],
             "fields": [
                 "attrGroups",
+                "byRef",
                 "default",
+                "flags",
+                "hooks",
                 "type",
-                "var"
+                "var",
+                "variadic"
             ],
             "modifiers": [
                 "private",
@@ -1195,6 +1770,7 @@
                 "variadic"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/backend/app/Billing/Checkout.php:17"
@@ -1209,10 +1785,15 @@
                 "function"
             ],
             "fields": [
+                "attrGroups",
                 "body",
-                "name"
+                "byRef",
+                "flags",
+                "name",
+                "params"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/backend/app/Fulfillment/LabelPrintDefaults.php:20"
@@ -1228,6 +1809,7 @@
                 "name"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/backend/app/Fulfillment/LabelPrintDefaults.php:19"
@@ -1241,7 +1823,11 @@
             "is": [
                 "literal"
             ],
+            "fields": [
+                "value"
+            ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/shop/app/Checkout/PricingService.php:27"
@@ -1255,7 +1841,11 @@
             "is": [
                 "literal"
             ],
+            "fields": [
+                "value"
+            ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/backend/app/Fulfillment/LabelPrintDefaults.php:20"
@@ -1273,9 +1863,82 @@
                 "parts"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/shop/app/Casts/EncryptedNote.php:25"
+        },
+        {
+            "kind": "Scalar_MagicConst_Class",
+            "spells": "magic-const-class",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "Scalar_MagicConst_Dir",
+            "spells": "magic-const-dir",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "Scalar_MagicConst_File",
+            "spells": "magic-const-file",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "Scalar_MagicConst_Function",
+            "spells": "magic-const-function",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "Scalar_MagicConst_Line",
+            "spells": "magic-const-line",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "Scalar_MagicConst_Method",
+            "spells": "magic-const-method",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "Scalar_MagicConst_Namespace",
+            "spells": "magic-const-namespace",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "Scalar_MagicConst_Property",
+            "spells": "magic-const-property",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "Scalar_MagicConst_Trait",
+            "spells": "magic-const-trait",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
         },
         {
             "kind": "Scalar_String",
@@ -1286,10 +1949,48 @@
             "is": [
                 "literal"
             ],
+            "fields": [
+                "value"
+            ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/backend/app/Fulfillment/LabelPrintDefaults.php:40"
+        },
+        {
+            "kind": "StaticVar",
+            "spells": "static-var",
+            "roles": null,
+            "fields": [
+                "default",
+                "var"
+            ],
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "Stmt_Block",
+            "spells": "block",
+            "roles": null,
+            "fields": [
+                "stmts"
+            ],
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "Stmt_Break",
+            "spells": "break",
+            "roles": null,
+            "fields": [
+                "num"
+            ],
+            "vouched": [
+                "declared"
+            ]
         },
         {
             "kind": "Stmt_Case",
@@ -1302,6 +2003,7 @@
                 "stmts"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/backend/app/Shipping/CarrierPicker.php:18"
@@ -1321,6 +2023,7 @@
                 "var"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/backend/app/Notifications/SlackNotifier.php:28"
@@ -1337,6 +2040,7 @@
             "fields": [
                 "attrGroups",
                 "extends",
+                "flags",
                 "implements",
                 "name",
                 "stmts"
@@ -1347,6 +2051,7 @@
                 "readonly"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/backend/app/Billing/Checkout.php:13"
@@ -1358,7 +2063,9 @@
                 "member"
             ],
             "fields": [
+                "attrGroups",
                 "consts",
+                "flags",
                 "type"
             ],
             "modifiers": [
@@ -1367,6 +2074,7 @@
                 "public"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/backend/app/Reporting/AccessAuditor.php:13"
@@ -1382,6 +2090,8 @@
             ],
             "fields": [
                 "attrGroups",
+                "byRef",
+                "flags",
                 "name",
                 "params",
                 "returnType",
@@ -1395,9 +2105,22 @@
                 "static"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/backend/app/Billing/Checkout.php:16"
+        },
+        {
+            "kind": "Stmt_Const",
+            "spells": "",
+            "roles": null,
+            "fields": [
+                "attrGroups",
+                "consts"
+            ],
+            "vouched": [
+                "declared"
+            ]
         },
         {
             "kind": "Stmt_Continue",
@@ -1408,7 +2131,11 @@
             "is": [
                 "bail-out"
             ],
+            "fields": [
+                "num"
+            ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/shop/app/Catalog/AvailabilityResolver.php:31"
@@ -1420,12 +2147,37 @@
                 "statement"
             ],
             "fields": [
-                "declares"
+                "declares",
+                "stmts"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/shop/routes/web.php:3"
+        },
+        {
+            "kind": "Stmt_Do",
+            "spells": "do",
+            "roles": null,
+            "fields": [
+                "cond",
+                "stmts"
+            ],
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "Stmt_Echo",
+            "spells": "echo",
+            "roles": null,
+            "fields": [
+                "exprs"
+            ],
+            "vouched": [
+                "declared"
+            ]
         },
         {
             "kind": "Stmt_Else",
@@ -1437,6 +2189,7 @@
                 "stmts"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/shop/app/Catalog/AvailabilityResolver.php:32"
@@ -1455,6 +2208,7 @@
                 "stmts"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/backend/app/Orders/DiscountTier.php:19"
@@ -1470,11 +2224,13 @@
             ],
             "fields": [
                 "attrGroups",
+                "implements",
                 "name",
                 "scalarType",
                 "stmts"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/shop/app/Billing/LedgerEntry.php:12"
@@ -1486,10 +2242,12 @@
                 "member"
             ],
             "fields": [
+                "attrGroups",
                 "expr",
                 "name"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/shop/app/Billing/LedgerEntry.php:15"
@@ -1508,6 +2266,7 @@
                 "expr"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/backend/app/Fulfillment/LegChain.php:17"
@@ -1522,6 +2281,7 @@
                 "stmts"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/shop/app/Routing/PrefixStack.php:33"
@@ -1542,6 +2302,7 @@
                 "stmts"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/backend/app/Fulfillment/LegChain.php:19"
@@ -1556,12 +2317,14 @@
                 "loop"
             ],
             "fields": [
+                "byRef",
                 "expr",
                 "keyVar",
                 "stmts",
                 "valueVar"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/backend/app/Notifications/SlackNotifier.php:25"
@@ -1576,14 +2339,64 @@
                 "function"
             ],
             "fields": [
+                "attrGroups",
+                "byRef",
                 "name",
+                "params",
                 "returnType",
                 "stmts"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/shop/bootstrap/helpers.php:7"
+        },
+        {
+            "kind": "Stmt_Global",
+            "spells": "global",
+            "roles": null,
+            "fields": [
+                "vars"
+            ],
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "Stmt_Goto",
+            "spells": "goto",
+            "roles": null,
+            "fields": [
+                "name"
+            ],
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "Stmt_GroupUse",
+            "spells": "group-use",
+            "roles": null,
+            "fields": [
+                "prefix",
+                "type",
+                "uses"
+            ],
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "Stmt_HaltCompiler",
+            "spells": "halt-compiler",
+            "roles": null,
+            "fields": [
+                "remaining"
+            ],
+            "vouched": [
+                "declared"
+            ]
         },
         {
             "kind": "Stmt_If",
@@ -1601,9 +2414,21 @@
                 "stmts"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/backend/app/Orders/DiscountTier.php:17"
+        },
+        {
+            "kind": "Stmt_InlineHTML",
+            "spells": "inline-h-t-m-l",
+            "roles": null,
+            "fields": [
+                "value"
+            ],
+            "vouched": [
+                "declared"
+            ]
         },
         {
             "kind": "Stmt_Interface",
@@ -1616,13 +2441,26 @@
             ],
             "fields": [
                 "attrGroups",
+                "extends",
                 "name",
                 "stmts"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/shop/app/Contracts/HttpClient.php:8"
+        },
+        {
+            "kind": "Stmt_Label",
+            "spells": "label",
+            "roles": null,
+            "fields": [
+                "name"
+            ],
+            "vouched": [
+                "declared"
+            ]
         },
         {
             "kind": "Stmt_Namespace",
@@ -1635,6 +2473,7 @@
                 "stmts"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/backend/app/Billing/Checkout.php:3"
@@ -1646,6 +2485,7 @@
                 "statement"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/shop/app/Orders/OrderResolver.php:44"
@@ -1658,6 +2498,7 @@
             ],
             "fields": [
                 "attrGroups",
+                "flags",
                 "hooks",
                 "props",
                 "type"
@@ -1670,6 +2511,7 @@
                 "static"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/backend/app/Fulfillment/LabelPrintDefaults.php:19"
@@ -1688,9 +2530,21 @@
                 "expr"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/backend/app/Billing/Checkout.php:23"
+        },
+        {
+            "kind": "Stmt_Static",
+            "spells": "static",
+            "roles": null,
+            "fields": [
+                "vars"
+            ],
+            "vouched": [
+                "declared"
+            ]
         },
         {
             "kind": "Stmt_Switch",
@@ -1706,6 +2560,7 @@
                 "cond"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/backend/app/Shipping/CarrierPicker.php:17"
@@ -1725,6 +2580,7 @@
                 "stmts"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/shop/app/Http/Pages/Hydration/OptionalOrMissing.php:17"
@@ -1736,12 +2592,41 @@
                 "statement"
             ],
             "fields": [
+                "adaptations",
                 "traits"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/backend/app/Http/Pages/Hydration/OptCoords.php:12"
+        },
+        {
+            "kind": "Stmt_TraitUseAdaptation_Alias",
+            "spells": "trait-use-adaptation-alias",
+            "roles": null,
+            "fields": [
+                "method",
+                "newModifier",
+                "newName",
+                "trait"
+            ],
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "Stmt_TraitUseAdaptation_Precedence",
+            "spells": "trait-use-adaptation-precedence",
+            "roles": null,
+            "fields": [
+                "insteadof",
+                "method",
+                "trait"
+            ],
+            "vouched": [
+                "declared"
+            ]
         },
         {
             "kind": "Stmt_TryCatch",
@@ -1755,6 +2640,7 @@
                 "stmts"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/backend/app/Notifications/SlackNotifier.php:26"
@@ -1769,6 +2655,7 @@
                 "vars"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/shop/app/Concurrent/CartSession.php:32"
@@ -1783,9 +2670,11 @@
                 "import"
             ],
             "fields": [
+                "type",
                 "uses"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/backend/app/Billing/Checkout.php:5"
@@ -1804,6 +2693,7 @@
                 "stmts"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/shop/app/Catalog/SupplierFeed.php:25"
@@ -1818,6 +2708,7 @@
                 "types"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/shop/app/Auth/BenchGuard.php:20"
@@ -1829,9 +2720,12 @@
                 "other"
             ],
             "fields": [
-                "name"
+                "alias",
+                "name",
+                "type"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/backend/app/Billing/Checkout.php:5"
@@ -1842,7 +2736,11 @@
             "roles": [
                 "other"
             ],
+            "fields": [
+                "name"
+            ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/backend/app/Fulfillment/LabelPrintDefaults.php:19"
@@ -1854,6 +2752,7 @@
                 "other"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/shop/app/Catalog/ShelfTagBatch.php:29"

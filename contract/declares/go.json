@@ -1,0 +1,354 @@
+{
+    "language": "go",
+    "parser": "go/ast of go1.26.10",
+    "from": "every node type go/ast has, listed in this bridge beside its writer, each one's kind and fields read off the type with the same readings the writer makes",
+    "kinds": [
+        {
+            "kind": "ArrayType",
+            "fields": [
+                "elt",
+                "len"
+            ]
+        },
+        {
+            "kind": "AssignStmt",
+            "fields": [
+                "lhs",
+                "rhs"
+            ]
+        },
+        {
+            "kind": "BadDecl"
+        },
+        {
+            "kind": "BadExpr"
+        },
+        {
+            "kind": "BadStmt"
+        },
+        {
+            "kind": "BasicLit"
+        },
+        {
+            "kind": "BinaryExpr",
+            "fields": [
+                "x",
+                "y"
+            ]
+        },
+        {
+            "kind": "BlockStmt",
+            "fields": [
+                "list"
+            ]
+        },
+        {
+            "kind": "BranchStmt",
+            "fields": [
+                "label"
+            ]
+        },
+        {
+            "kind": "CallExpr",
+            "fields": [
+                "args",
+                "fun"
+            ]
+        },
+        {
+            "kind": "CaseClause",
+            "fields": [
+                "body",
+                "list"
+            ]
+        },
+        {
+            "kind": "ChanType",
+            "fields": [
+                "value"
+            ]
+        },
+        {
+            "kind": "CommClause",
+            "fields": [
+                "body",
+                "comm"
+            ]
+        },
+        {
+            "kind": "CompositeLit",
+            "fields": [
+                "elts",
+                "type"
+            ]
+        },
+        {
+            "kind": "DeclStmt",
+            "fields": [
+                "decl"
+            ]
+        },
+        {
+            "kind": "DeferStmt",
+            "fields": [
+                "call"
+            ]
+        },
+        {
+            "kind": "Ellipsis",
+            "fields": [
+                "elt"
+            ]
+        },
+        {
+            "kind": "EmptyStmt"
+        },
+        {
+            "kind": "ExprStmt",
+            "fields": [
+                "x"
+            ]
+        },
+        {
+            "kind": "Field",
+            "fields": [
+                "names",
+                "tag",
+                "type"
+            ]
+        },
+        {
+            "kind": "FieldList",
+            "fields": [
+                "list"
+            ]
+        },
+        {
+            "kind": "File",
+            "fields": [
+                "decls",
+                "doc",
+                "imports",
+                "name"
+            ]
+        },
+        {
+            "kind": "ForStmt",
+            "fields": [
+                "body",
+                "cond",
+                "init",
+                "post"
+            ]
+        },
+        {
+            "kind": "FuncDecl",
+            "fields": [
+                "body",
+                "name",
+                "recv",
+                "type"
+            ]
+        },
+        {
+            "kind": "FuncLit",
+            "fields": [
+                "body",
+                "type"
+            ]
+        },
+        {
+            "kind": "FuncType",
+            "fields": [
+                "params",
+                "results",
+                "typeParams"
+            ]
+        },
+        {
+            "kind": "GenDecl",
+            "fields": [
+                "specs"
+            ]
+        },
+        {
+            "kind": "GoStmt",
+            "fields": [
+                "call"
+            ]
+        },
+        {
+            "kind": "Ident"
+        },
+        {
+            "kind": "IfStmt",
+            "fields": [
+                "body",
+                "cond",
+                "else",
+                "init"
+            ]
+        },
+        {
+            "kind": "ImportSpec",
+            "fields": [
+                "name",
+                "path"
+            ]
+        },
+        {
+            "kind": "IncDecStmt",
+            "fields": [
+                "x"
+            ]
+        },
+        {
+            "kind": "IndexExpr",
+            "fields": [
+                "index",
+                "x"
+            ]
+        },
+        {
+            "kind": "IndexListExpr",
+            "fields": [
+                "indices",
+                "x"
+            ]
+        },
+        {
+            "kind": "InterfaceType",
+            "fields": [
+                "methods"
+            ]
+        },
+        {
+            "kind": "KeyValueExpr",
+            "fields": [
+                "key",
+                "value"
+            ]
+        },
+        {
+            "kind": "LabeledStmt",
+            "fields": [
+                "label",
+                "stmt"
+            ]
+        },
+        {
+            "kind": "MapType",
+            "fields": [
+                "key",
+                "value"
+            ]
+        },
+        {
+            "kind": "ParenExpr",
+            "fields": [
+                "x"
+            ]
+        },
+        {
+            "kind": "RangeStmt",
+            "fields": [
+                "body",
+                "key",
+                "value",
+                "x"
+            ]
+        },
+        {
+            "kind": "ReturnStmt",
+            "fields": [
+                "results"
+            ]
+        },
+        {
+            "kind": "SelectStmt",
+            "fields": [
+                "body"
+            ]
+        },
+        {
+            "kind": "SelectorExpr",
+            "fields": [
+                "sel",
+                "x"
+            ]
+        },
+        {
+            "kind": "SendStmt",
+            "fields": [
+                "chan",
+                "value"
+            ]
+        },
+        {
+            "kind": "SliceExpr",
+            "fields": [
+                "high",
+                "low",
+                "max",
+                "x"
+            ]
+        },
+        {
+            "kind": "StarExpr",
+            "fields": [
+                "x"
+            ]
+        },
+        {
+            "kind": "StructType",
+            "fields": [
+                "fields"
+            ]
+        },
+        {
+            "kind": "SwitchStmt",
+            "fields": [
+                "body",
+                "init",
+                "tag"
+            ]
+        },
+        {
+            "kind": "TypeAssertExpr",
+            "fields": [
+                "type",
+                "x"
+            ]
+        },
+        {
+            "kind": "TypeSpec",
+            "fields": [
+                "name",
+                "type",
+                "typeParams"
+            ]
+        },
+        {
+            "kind": "TypeSwitchStmt",
+            "fields": [
+                "assign",
+                "body",
+                "init"
+            ]
+        },
+        {
+            "kind": "UnaryExpr",
+            "fields": [
+                "x"
+            ]
+        },
+        {
+            "kind": "ValueSpec",
+            "fields": [
+                "names",
+                "type",
+                "values"
+            ]
+        }
+    ]
+}

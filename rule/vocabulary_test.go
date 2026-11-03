@@ -73,8 +73,11 @@ func holds(t *testing.T, vocabulary Vocabulary, node *contract.Node, source stri
 	}
 }
 
-// TestAVocabularySaysWhereItsRowsCameFrom holds the two things that make a generated file readable: which streams
-// it was read from, and that every row says who vouches for it.
+// TestAVocabularySaysWhereItsRowsCameFrom holds the two things that make a generated file readable: where its
+// rows came from, and that every row says who vouches for it. A row has two possible vouchers and they answer
+// different questions: a stream shows what a kind is really written WITH — its role, its flags, the slots its
+// children fill — and a parser shows only that the kind exists, so a row the parser alone vouches for carries
+// neither a role nor an example and is no less honest for it.
 func TestAVocabularySaysWhereItsRowsCameFrom(t *testing.T) {
 	committed, err := Vocabularies()
 	if err != nil {
@@ -82,21 +85,84 @@ func TestAVocabularySaysWhereItsRowsCameFrom(t *testing.T) {
 	}
 
 	if len(committed) == 0 {
-		t.Fatal("no vocabulary is committed, and the census reads five languages")
+		t.Fatal("no vocabulary is committed, and the census reads six languages")
 	}
 
 	for language, vocabulary := range committed {
-		if len(vocabulary.Sources) == 0 || len(vocabulary.Bridges) == 0 || len(vocabulary.Constructs) == 0 {
-			t.Errorf("%s names %d sources, %d bridges and %d constructs", language, len(vocabulary.Sources), len(vocabulary.Bridges), len(vocabulary.Constructs))
+		if len(vocabulary.Constructs) == 0 {
+			t.Errorf("%s names no constructs", language)
+		}
+
+		// A language is covered by a recorded stream, by its parser's own declaration, or by both. One covered
+		// by neither has rows nothing answers for.
+		if len(vocabulary.Sources) == 0 && vocabulary.Parser == "" {
+			t.Errorf("%s was read from no stream and declared by no parser", language)
+		}
+
+		if len(vocabulary.Sources) > 0 && len(vocabulary.Bridges) == 0 {
+			t.Errorf("%s names %d sources and no bridge that wrote them", language, len(vocabulary.Sources))
+		}
+
+		if vocabulary.Parser != "" && vocabulary.Declares == "" {
+			t.Errorf("%s names the parser %q and does not say where its declaration was read", language, vocabulary.Parser)
 		}
 
 		for _, construct := range vocabulary.Constructs {
-			if len(construct.Vouched) == 0 || len(construct.Roles) == 0 {
-				t.Errorf("%s %q is vouched by %v in the roles %v", language, construct.Kind, construct.Vouched, construct.Roles)
+			if !construct.Observed() && !construct.Declared() {
+				t.Errorf("%s %q is vouched by %v", language, construct.Kind, construct.Vouched)
 			}
 
-			if slices.Contains(construct.Vouched, "observed") && construct.Example == "" {
-				t.Errorf("%s %q is observed and says nowhere it was seen", language, construct.Kind)
+			if construct.Observed() && (construct.Example == "" || len(construct.Roles) == 0) {
+				t.Errorf("%s %q is observed, says it was seen at %q and is in the roles %v", language, construct.Kind, construct.Example, construct.Roles)
+			}
+
+			if !construct.Observed() && construct.Example != "" {
+				t.Errorf("%s %q was never seen in a stream and names the place %q", language, construct.Kind, construct.Example)
+			}
+		}
+	}
+}
+
+// TestEveryObservedConstructIsOneItsParserDeclares is the invariant the declared half exists for: a parser
+// answers for its whole vocabulary, so anything a stream really carries must be something it declared. A kind or
+// a slot that fails it means one of two things, and both need a person: a bridge renamed what it writes, or a
+// recorded declaration is older than the bridge that wrote the stream.
+func TestEveryObservedConstructIsOneItsParserDeclares(t *testing.T) {
+	committed, err := Vocabularies()
+	if err != nil {
+		t.Fatalf("the committed vocabularies cannot be read: %v", err)
+	}
+
+	for language, vocabulary := range committed {
+		if vocabulary.Parser == "" {
+			continue
+		}
+
+		declares(t, language, vocabulary)
+	}
+}
+
+// declares reports every kind and slot the language is seen writing that its own parser does not declare.
+func declares(t *testing.T, language contract.Language, vocabulary Vocabulary) {
+	t.Helper()
+
+	known := map[string]bool{}
+	for _, field := range vocabulary.Fields() {
+		known[field] = true
+	}
+
+	for _, construct := range vocabulary.Constructs {
+		if !construct.Observed() {
+			continue
+		}
+
+		if !construct.Declared() {
+			t.Errorf("%s writes %q, which %s does not declare: record the declarations again (scripts/dev go run ./contract/declares/record)", language, construct.Kind, vocabulary.Parser)
+		}
+
+		for _, field := range construct.Fields {
+			if !known[field] {
+				t.Errorf("%s writes %q with a child in the slot %q, which %s does not declare", language, construct.Kind, field, vocabulary.Parser)
 			}
 		}
 	}

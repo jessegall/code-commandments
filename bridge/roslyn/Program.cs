@@ -11,6 +11,9 @@ using CodeCommandments.Bridge;
 //
 // roslyn-bridge --listen <port> — --serve over a TCP socket, one connection at a time: the service a session keeps up.
 //
+// roslyn-bridge --declares — what this bridge can emit, as one JSON object: the kinds it names a node by and the
+// slots a child fills. It is the one ask besides a tree, and a census of recorded streams cannot answer it.
+//
 // --diagnose               — the compiler's most common errors on stderr first: why a call did not resolve.
 //
 // A failure in any of them ends the bridge with one line on stderr and exit code 1. It never reaches the runtime's
@@ -28,6 +31,15 @@ catch (Exception failure)
 
 static int Run(string[] args, Workspace workspace)
 {
+    // The one ask besides a tree: what this bridge can emit, which a census of recorded streams cannot say.
+    if (args.Contains("--declares"))
+    {
+        using var declared = Console.OpenStandardOutput();
+        Declaration.Write(declared);
+
+        return 0;
+    }
+
     if (args.Contains("--serve"))
     {
         using var output = Console.OpenStandardOutput();
@@ -54,7 +66,7 @@ static int Run(string[] args, Workspace workspace)
 
     if (roots.Count == 0)
     {
-        Console.Error.WriteLine("usage: roslyn-bridge [--diagnose] <path>... | roslyn-bridge --serve | roslyn-bridge --listen <port>");
+        Console.Error.WriteLine("usage: roslyn-bridge [--diagnose] <path>... | roslyn-bridge --serve | roslyn-bridge --listen <port> | roslyn-bridge --declares");
 
         return 2;
     }

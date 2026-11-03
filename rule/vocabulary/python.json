@@ -6,7 +6,69 @@
     "sources": [
         "contract/samples/python.jsonl"
     ],
+    "parser": "python 3.14 ast",
+    "declares": "every ast.AST subclass of the interpreter running the bridge, each one's _fields",
+    "collided": {
+        "expr": [
+            "Expr",
+            "expr"
+        ],
+        "mod": [
+            "Mod",
+            "mod"
+        ],
+        "slice": [
+            "Slice",
+            "slice"
+        ],
+        "type-ignore": [
+            "TypeIgnore",
+            "type_ignore"
+        ]
+    },
     "constructs": [
+        {
+            "kind": "Add",
+            "spells": "add",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "And",
+            "spells": "and",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "AnnAssign",
+            "spells": "ann-assign",
+            "roles": null,
+            "fields": [
+                "annotation",
+                "simple",
+                "target",
+                "value"
+            ],
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "Assert",
+            "spells": "assert",
+            "roles": null,
+            "fields": [
+                "msg",
+                "test"
+            ],
+            "vouched": [
+                "declared"
+            ]
+        },
         {
             "kind": "Assign",
             "spells": "assign",
@@ -18,15 +80,62 @@
             ],
             "fields": [
                 "targets",
+                "type_comment",
                 "value"
             ],
             "operators": [
                 "="
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/python/shop/basket_totals.py:6"
+        },
+        {
+            "kind": "AsyncFor",
+            "spells": "async-for",
+            "roles": null,
+            "fields": [
+                "body",
+                "iter",
+                "orelse",
+                "target",
+                "type_comment"
+            ],
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "AsyncFunctionDef",
+            "spells": "async-function-def",
+            "roles": null,
+            "fields": [
+                "args",
+                "body",
+                "decorator_list",
+                "name",
+                "returns",
+                "type_comment",
+                "type_params"
+            ],
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "AsyncWith",
+            "spells": "async-with",
+            "roles": null,
+            "fields": [
+                "body",
+                "items",
+                "type_comment"
+            ],
+            "vouched": [
+                "declared"
+            ]
         },
         {
             "kind": "Attribute",
@@ -38,9 +147,12 @@
                 "member-access"
             ],
             "fields": [
+                "attr",
+                "ctx",
                 "value"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/python/shop/basket_totals.py:6"
@@ -55,6 +167,7 @@
                 "assignment"
             ],
             "fields": [
+                "op",
                 "target",
                 "value"
             ],
@@ -63,9 +176,37 @@
                 "-"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/python/shop/packing.py:15"
+        },
+        {
+            "kind": "AugLoad",
+            "spells": "aug-load",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "AugStore",
+            "spells": "aug-store",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "Await",
+            "spells": "await",
+            "roles": null,
+            "fields": [
+                "value"
+            ],
+            "vouched": [
+                "declared"
+            ]
         },
         {
             "kind": "BinOp",
@@ -75,6 +216,7 @@
             ],
             "fields": [
                 "left",
+                "op",
                 "right"
             ],
             "operators": [
@@ -82,9 +224,54 @@
                 "-"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/python/shop/basket_totals.py:15"
+        },
+        {
+            "kind": "BitAnd",
+            "spells": "bit-and",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "BitOr",
+            "spells": "bit-or",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "BitXor",
+            "spells": "bit-xor",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "BoolOp",
+            "spells": "bool-op",
+            "roles": null,
+            "fields": [
+                "op",
+                "values"
+            ],
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "Break",
+            "spells": "break",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
         },
         {
             "kind": "Call",
@@ -97,9 +284,11 @@
             ],
             "fields": [
                 "args",
-                "func"
+                "func",
+                "keywords"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/python/shop/basket_totals.py:15"
@@ -115,9 +304,14 @@
             ],
             "fields": [
                 "bases",
-                "body"
+                "body",
+                "decorator_list",
+                "keywords",
+                "name",
+                "type_params"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/python/shop/basket_totals.py:4"
@@ -133,12 +327,14 @@
             ],
             "fields": [
                 "comparators",
-                "left"
+                "left",
+                "ops"
             ],
             "operators": [
                 "is"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/python/shop/order_numbers.py:31"
@@ -153,10 +349,54 @@
             "is": [
                 "literal"
             ],
+            "fields": [
+                "kind",
+                "value"
+            ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/python/shop/basket_totals.py:5"
+        },
+        {
+            "kind": "Continue",
+            "spells": "continue",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "Del",
+            "spells": "del",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "Delete",
+            "spells": "delete",
+            "roles": null,
+            "fields": [
+                "targets"
+            ],
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "Dict",
+            "spells": "dict",
+            "roles": null,
+            "fields": [
+                "keys",
+                "values"
+            ],
+            "vouched": [
+                "declared"
+            ]
         },
         {
             "kind": "DictComp",
@@ -170,9 +410,26 @@
                 "value"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/python/shop/cli.py:15"
+        },
+        {
+            "kind": "Div",
+            "spells": "div",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "Eq",
+            "spells": "eq",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
         },
         {
             "kind": "ExceptHandler",
@@ -185,16 +442,18 @@
             ],
             "fields": [
                 "body",
+                "name",
                 "type"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/python/shop/quantity_parsing.py:14"
         },
         {
             "kind": "Expr",
-            "spells": "expr",
+            "spells": "",
             "roles": [
                 "statement"
             ],
@@ -205,9 +464,37 @@
                 "value"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/python/shop/basket_totals.py:10"
+        },
+        {
+            "kind": "Expression",
+            "spells": "expression",
+            "roles": null,
+            "fields": [
+                "body"
+            ],
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "ExtSlice",
+            "spells": "ext-slice",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "FloorDiv",
+            "spells": "floor-div",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
         },
         {
             "kind": "For",
@@ -221,9 +508,12 @@
             "fields": [
                 "body",
                 "iter",
-                "target"
+                "orelse",
+                "target",
+                "type_comment"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/python/shop/packing.py:7"
@@ -235,6 +525,7 @@
                 "expression"
             ],
             "fields": [
+                "conversion",
                 "format_spec",
                 "value"
             ],
@@ -242,6 +533,7 @@
                 "!r"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/python/shop/voucher_guards.py:8"
@@ -259,12 +551,40 @@
                 "args",
                 "body",
                 "decorator_list",
-                "returns"
+                "name",
+                "returns",
+                "type_comment",
+                "type_params"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/python/shop/basket_totals.py:5"
+        },
+        {
+            "kind": "FunctionType",
+            "spells": "function-type",
+            "roles": null,
+            "fields": [
+                "argtypes",
+                "returns"
+            ],
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "GeneratorExp",
+            "spells": "generator-exp",
+            "roles": null,
+            "fields": [
+                "elt",
+                "generators"
+            ],
+            "vouched": [
+                "declared"
+            ]
         },
         {
             "kind": "Global",
@@ -272,10 +592,30 @@
             "roles": [
                 "statement"
             ],
+            "fields": [
+                "names"
+            ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/python/shop/order_numbers.py:30"
+        },
+        {
+            "kind": "Gt",
+            "spells": "gt",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "GtE",
+            "spells": "gt-e",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
         },
         {
             "kind": "If",
@@ -288,12 +628,27 @@
             ],
             "fields": [
                 "body",
+                "orelse",
                 "test"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/python/shop/cli.py:12"
+        },
+        {
+            "kind": "IfExp",
+            "spells": "if-exp",
+            "roles": null,
+            "fields": [
+                "body",
+                "orelse",
+                "test"
+            ],
+            "vouched": [
+                "declared"
+            ]
         },
         {
             "kind": "Import",
@@ -308,6 +663,7 @@
                 "names"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/python/shop/cli.py:4"
@@ -322,12 +678,80 @@
                 "import"
             ],
             "fields": [
+                "level",
+                "module",
                 "names"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/python/shop/cli.py:5"
+        },
+        {
+            "kind": "In",
+            "spells": "in",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "Index",
+            "spells": "index",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "Interactive",
+            "spells": "interactive",
+            "roles": null,
+            "fields": [
+                "body"
+            ],
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "Interpolation",
+            "spells": "interpolation",
+            "roles": null,
+            "fields": [
+                "conversion",
+                "format_spec",
+                "str",
+                "value"
+            ],
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "Invert",
+            "spells": "invert",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "Is",
+            "spells": "is",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "IsNot",
+            "spells": "is-not",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
         },
         {
             "kind": "JoinedStr",
@@ -342,9 +766,30 @@
                 "values"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/python/shop/voucher_guards.py:8"
+        },
+        {
+            "kind": "LShift",
+            "spells": "l-shift",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "Lambda",
+            "spells": "lambda",
+            "roles": null,
+            "fields": [
+                "args",
+                "body"
+            ],
+            "vouched": [
+                "declared"
+            ]
         },
         {
             "kind": "List",
@@ -353,12 +798,58 @@
                 "expression"
             ],
             "fields": [
+                "ctx",
                 "elts"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/python/shop/billing/invoice.py:11"
+        },
+        {
+            "kind": "ListComp",
+            "spells": "list-comp",
+            "roles": null,
+            "fields": [
+                "elt",
+                "generators"
+            ],
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "Load",
+            "spells": "load",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "Lt",
+            "spells": "lt",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "LtE",
+            "spells": "lt-e",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "MatMult",
+            "spells": "mat-mult",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
         },
         {
             "kind": "Match",
@@ -374,9 +865,93 @@
                 "subject"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/python/shop/packing.py:10"
+        },
+        {
+            "kind": "MatchAs",
+            "spells": "match-as",
+            "roles": null,
+            "fields": [
+                "name",
+                "pattern"
+            ],
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "MatchClass",
+            "spells": "match-class",
+            "roles": null,
+            "fields": [
+                "cls",
+                "kwd_attrs",
+                "kwd_patterns",
+                "patterns"
+            ],
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "MatchMapping",
+            "spells": "match-mapping",
+            "roles": null,
+            "fields": [
+                "keys",
+                "patterns",
+                "rest"
+            ],
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "MatchOr",
+            "spells": "match-or",
+            "roles": null,
+            "fields": [
+                "patterns"
+            ],
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "MatchSequence",
+            "spells": "match-sequence",
+            "roles": null,
+            "fields": [
+                "patterns"
+            ],
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "MatchSingleton",
+            "spells": "match-singleton",
+            "roles": null,
+            "fields": [
+                "value"
+            ],
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "MatchStar",
+            "spells": "match-star",
+            "roles": null,
+            "fields": [
+                "name"
+            ],
+            "vouched": [
+                "declared"
+            ]
         },
         {
             "kind": "MatchValue",
@@ -388,9 +963,18 @@
                 "value"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/python/shop/packing.py:11"
+        },
+        {
+            "kind": "Mod",
+            "spells": "",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
         },
         {
             "kind": "Module",
@@ -399,12 +983,22 @@
                 "other"
             ],
             "fields": [
-                "body"
+                "body",
+                "type_ignores"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/python/shop/basket_totals.py:1"
+        },
+        {
+            "kind": "Mult",
+            "spells": "mult",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
         },
         {
             "kind": "Name",
@@ -417,10 +1011,90 @@
                 "identifier",
                 "self-reference"
             ],
+            "fields": [
+                "ctx",
+                "id"
+            ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/python/shop/basket_totals.py:5"
+        },
+        {
+            "kind": "NamedExpr",
+            "spells": "named-expr",
+            "roles": null,
+            "fields": [
+                "target",
+                "value"
+            ],
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "Nonlocal",
+            "spells": "nonlocal",
+            "roles": null,
+            "fields": [
+                "names"
+            ],
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "Not",
+            "spells": "not",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "NotEq",
+            "spells": "not-eq",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "NotIn",
+            "spells": "not-in",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "Or",
+            "spells": "or",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "Param",
+            "spells": "param",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "ParamSpec",
+            "spells": "param-spec",
+            "roles": null,
+            "fields": [
+                "default_value",
+                "name"
+            ],
+            "vouched": [
+                "declared"
+            ]
         },
         {
             "kind": "Pass",
@@ -429,9 +1103,26 @@
                 "statement"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/python/shop/settings.py:8"
+        },
+        {
+            "kind": "Pow",
+            "spells": "pow",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "RShift",
+            "spells": "r-shift",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
         },
         {
             "kind": "Raise",
@@ -448,6 +1139,7 @@
                 "exc"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/python/shop/cli.py:13"
@@ -466,9 +1158,74 @@
                 "value"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/python/shop/basket_totals.py:15"
+        },
+        {
+            "kind": "Set",
+            "spells": "set",
+            "roles": null,
+            "fields": [
+                "elts"
+            ],
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "SetComp",
+            "spells": "set-comp",
+            "roles": null,
+            "fields": [
+                "elt",
+                "generators"
+            ],
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "Slice",
+            "spells": "",
+            "roles": null,
+            "fields": [
+                "lower",
+                "step",
+                "upper"
+            ],
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "Starred",
+            "spells": "starred",
+            "roles": null,
+            "fields": [
+                "ctx",
+                "value"
+            ],
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "Store",
+            "spells": "store",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "Sub",
+            "spells": "sub",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
         },
         {
             "kind": "Subscript",
@@ -477,13 +1234,34 @@
                 "type"
             ],
             "fields": [
+                "ctx",
                 "slice",
                 "value"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/python/shop/basket_totals.py:5"
+        },
+        {
+            "kind": "Suite",
+            "spells": "suite",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "TemplateStr",
+            "spells": "template-str",
+            "roles": null,
+            "fields": [
+                "values"
+            ],
+            "vouched": [
+                "declared"
+            ]
         },
         {
             "kind": "Try",
@@ -493,12 +1271,29 @@
             ],
             "fields": [
                 "body",
-                "handlers"
+                "finalbody",
+                "handlers",
+                "orelse"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/python/shop/quantity_parsing.py:12"
+        },
+        {
+            "kind": "TryStar",
+            "spells": "try-star",
+            "roles": null,
+            "fields": [
+                "body",
+                "finalbody",
+                "handlers",
+                "orelse"
+            ],
+            "vouched": [
+                "declared"
+            ]
         },
         {
             "kind": "Tuple",
@@ -507,12 +1302,80 @@
                 "expression"
             ],
             "fields": [
+                "ctx",
                 "elts"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/python/shop/cli.py:15"
+        },
+        {
+            "kind": "TypeAlias",
+            "spells": "type-alias",
+            "roles": null,
+            "fields": [
+                "name",
+                "type_params",
+                "value"
+            ],
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "TypeIgnore",
+            "spells": "",
+            "roles": null,
+            "fields": [
+                "lineno",
+                "tag"
+            ],
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "TypeVar",
+            "spells": "type-var",
+            "roles": null,
+            "fields": [
+                "bound",
+                "default_value",
+                "name"
+            ],
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "TypeVarTuple",
+            "spells": "type-var-tuple",
+            "roles": null,
+            "fields": [
+                "default_value",
+                "name"
+            ],
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "UAdd",
+            "spells": "u-add",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "USub",
+            "spells": "u-sub",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
         },
         {
             "kind": "UnaryOp",
@@ -521,12 +1384,14 @@
                 "expression"
             ],
             "fields": [
+                "op",
                 "operand"
             ],
             "operators": [
                 "not"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/python/shop/cli.py:12"
@@ -542,12 +1407,49 @@
             ],
             "fields": [
                 "body",
+                "orelse",
                 "test"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/python/shop/packing.py:6"
+        },
+        {
+            "kind": "With",
+            "spells": "with",
+            "roles": null,
+            "fields": [
+                "body",
+                "items",
+                "type_comment"
+            ],
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "Yield",
+            "spells": "yield",
+            "roles": null,
+            "fields": [
+                "value"
+            ],
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "YieldFrom",
+            "spells": "yield-from",
+            "roles": null,
+            "fields": [
+                "value"
+            ],
+            "vouched": [
+                "declared"
+            ]
         },
         {
             "kind": "alias",
@@ -555,7 +1457,12 @@
             "roles": [
                 "other"
             ],
+            "fields": [
+                "asname",
+                "name"
+            ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/python/shop/cli.py:4"
@@ -571,9 +1478,12 @@
             ],
             "fields": [
                 "annotation",
-                "default"
+                "arg",
+                "default",
+                "type_comment"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/python/shop/basket_totals.py:5"
@@ -585,12 +1495,33 @@
                 "other"
             ],
             "fields": [
-                "args"
+                "args",
+                "kwarg",
+                "kwonlyargs",
+                "posonlyargs",
+                "vararg"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/python/shop/basket_totals.py:5"
+        },
+        {
+            "kind": "boolop",
+            "spells": "boolop",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "cmpop",
+            "spells": "cmpop",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
         },
         {
             "kind": "comprehension",
@@ -599,13 +1530,52 @@
                 "other"
             ],
             "fields": [
+                "ifs",
+                "is_async",
                 "iter",
                 "target"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/python/shop/cli.py:15"
+        },
+        {
+            "kind": "excepthandler",
+            "spells": "excepthandler",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "expr",
+            "spells": "",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "expr_context",
+            "spells": "expr-context",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "keyword",
+            "spells": "keyword",
+            "roles": null,
+            "fields": [
+                "arg",
+                "value"
+            ],
+            "vouched": [
+                "declared"
+            ]
         },
         {
             "kind": "match_case",
@@ -615,12 +1585,90 @@
             ],
             "fields": [
                 "body",
+                "guard",
                 "pattern"
             ],
             "vouched": [
+                "declared",
                 "observed"
             ],
             "example": "/fixtures/python/shop/packing.py:11"
+        },
+        {
+            "kind": "mod",
+            "spells": "",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "operator",
+            "spells": "operator",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "pattern",
+            "spells": "pattern",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "slice",
+            "spells": "",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "stmt",
+            "spells": "stmt",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "type_ignore",
+            "spells": "",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "type_param",
+            "spells": "type-param",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "unaryop",
+            "spells": "unaryop",
+            "roles": null,
+            "vouched": [
+                "declared"
+            ]
+        },
+        {
+            "kind": "withitem",
+            "spells": "withitem",
+            "roles": null,
+            "fields": [
+                "context_expr",
+                "optional_vars"
+            ],
+            "vouched": [
+                "declared"
+            ]
         }
     ]
 }

@@ -6,8 +6,10 @@
 // bridges once wrote them. A language whose fixture tree is reachable only through a bridge is therefore covered
 // by its sample alone, which the committed file says in its `sources`.
 //
-// What a census cannot say is what a parser has never been asked to emit here. That is the declared half of the
-// vocabulary, and it is the row's `vouched` that keeps the two apart.
+// What a census of streams cannot say is what a parser CAN emit but no fixture happened to contain. That is the
+// declared half, and it comes from the recorded declarations under contract/declares, each written by asking a
+// bridge itself. The row's `vouched` keeps the two apart: `observed` means a stream really carries it, `declared`
+// means the parser says it can be emitted, and a row the parser alone vouches for carries no example.
 package main
 
 import (
@@ -54,6 +56,15 @@ func write() error {
 		}
 	}
 
+	for language, declared := range declarations() {
+		held, seen := census[language]
+		if !seen {
+			held = &counted{constructs: map[string]*rule.Construct{}}
+			census[language] = held
+		}
+		held.declares(declared)
+	}
+
 	for language, held := range census {
 		if err := held.written(language); err != nil {
 			return err
@@ -61,6 +72,34 @@ func write() error {
 	}
 
 	return nil
+}
+
+// declarations are the recorded declarations, by language: what each bridge says its parser can emit. A language
+// with no recorded declaration is left as the streams showed it, and the committed file says so by naming no
+// parser.
+func declarations() map[contract.Language]contract.Declaration {
+	found := map[contract.Language]contract.Declaration{}
+	files, err := filepath.Glob(filepath.Join(rule.DeclarationsFolder, "*.json"))
+	if err != nil {
+		return found
+	}
+
+	for _, file := range files {
+		handle, err := os.Open(file)
+		if err != nil {
+			continue
+		}
+		declared, err := contract.ReadDeclarations(handle)
+		handle.Close()
+		if err != nil {
+			continue
+		}
+		for _, one := range declared {
+			found[one.Language] = one
+		}
+	}
+
+	return found
 }
 
 // read is the stream a source holds, through the contract's own reader so a stream that breaks it is refused here
@@ -90,6 +129,11 @@ type counted struct {
 	constructs map[string]*rule.Construct
 	sources    []string
 	bridges    []string
+	// parser and from are what the language's own parser declared, and where that declaration was read; fields
+	// are the slots it could not join to a kind.
+	parser string
+	from   string
+	fields []string
 }
 
 // saw records that the language was read from that source, written by that bridge.
@@ -142,16 +186,37 @@ func add(into *[]string, values ...string) {
 	}
 }
 
+// declares folds in what the language's own parser says it can emit: a kind a stream carried is vouched for by
+// both, a kind only the parser knows becomes a row of its own with no example, and a declared field joins the row
+// it belongs to. A field the parser could not join to a kind is kept for the language.
+func (c *counted) declares(declared contract.Declaration) {
+	c.parser = declared.Parser
+	c.from = declared.From
+	c.fields = declared.Fields
+
+	for _, kind := range declared.Kinds {
+		construct, seen := c.constructs[kind.Kind]
+		if !seen {
+			construct = &rule.Construct{Kind: kind.Kind, Spells: rule.Spelling(kind.Kind)}
+			c.constructs[kind.Kind] = construct
+		}
+		add(&construct.Vouched, "declared")
+		add(&construct.Fields, kind.Fields...)
+	}
+}
+
 // written writes the language's vocabulary, every list sorted so the file is the same from one run to the next.
 func (c *counted) written(language contract.Language) error {
-	vocabulary := rule.Vocabulary{Language: language, Bridges: c.bridges, Sources: c.sources}
+	vocabulary := rule.Vocabulary{Language: language, Bridges: c.bridges, Sources: c.sources,
+		Parser: c.parser, Declares: c.from, DeclaredFields: c.fields}
 	for _, construct := range c.constructs {
-		for _, list := range []*[]string{&construct.Roles, &construct.Is, &construct.Fields, &construct.Operators, &construct.Modifiers, &construct.Flags} {
+		for _, list := range []*[]string{&construct.Roles, &construct.Is, &construct.Fields, &construct.Operators, &construct.Modifiers, &construct.Flags, &construct.Vouched} {
 			sort.Strings(*list)
 		}
 		vocabulary.Constructs = append(vocabulary.Constructs, *construct)
 	}
 
+	sort.Strings(vocabulary.DeclaredFields)
 	sort.Strings(vocabulary.Bridges)
 	sort.Strings(vocabulary.Sources)
 	sort.Slice(vocabulary.Constructs, func(a, b int) bool {

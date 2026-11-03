@@ -61,6 +61,39 @@ class Literal:
 
 
 @dataclass(frozen=True)
+class DeclaredKind:
+    """One kind a parser can emit, and the slots a child of it fills."""
+
+    kind: str
+    fields: tuple[str, ...] = ()
+
+    def to_json(self) -> dict[str, object]:
+        """The kind as the contract writes it: a kind whose children fill no slot names none."""
+        return written((
+            ("kind", self.kind),
+            ("fields", list(self.fields) if self.fields else ABSENT),
+        ))
+
+
+@dataclass(frozen=True)
+class Declaration:
+    """What this bridge's parser CAN emit, as the contract's one ask besides a tree reads it."""
+
+    parser: str
+    read_from: str
+    kinds: tuple[DeclaredKind, ...]
+
+    def to_json(self) -> dict[str, object]:
+        """The declaration as the contract writes it."""
+        return written((
+            ("language", "python"),
+            ("parser", self.parser),
+            ("from", self.read_from),
+            ("kinds", [kind.to_json() for kind in self.kinds]),
+        ))
+
+
+@dataclass(frozen=True)
 class WrittenType:
     """A type as an annotation writes it: a name, `None`, a union, a subscripted name, or something opaque."""
 
@@ -691,7 +724,32 @@ def to_json(record: FileLine) -> dict[str, object]:
     return record.to_json()
 
 
+def declared() -> Declaration:
+    """What Python's own parser can emit: every ast.AST subclass is a kind, named as the bridge names it, and its
+    `_fields` are the slots its children fill. The two adjustments the bridge makes to those fields are made here
+    too, so the declaration says what the stream really writes: `arguments` drops the defaults it pairs onto the
+    parameters they belong to, and an `arg` gains the `default` it was paired with."""
+    kinds: list[DeclaredKind] = []
+    for name in dir(ast):
+        held = getattr(ast, name)
+        if not isinstance(held, type) or not issubclass(held, ast.AST) or held is ast.AST:
+            continue
+        fields = [field for field in held._fields if field not in ("defaults", "kw_defaults")]
+        if held is ast.arg:
+            fields = [*fields, "default"]
+        kinds.append(DeclaredKind(name, tuple(sorted(fields))))
+
+    return Declaration(
+        parser=f"python {sys.version_info.major}.{sys.version_info.minor} ast",
+        read_from="every ast.AST subclass of the interpreter running the bridge, each one's _fields",
+        kinds=tuple(sorted(kinds, key=lambda kind: kind.kind)),
+    )
+
+
 def main(argv: list[str]) -> int:
+    if "--declares" in argv:
+        sys.stdout.write(json.dumps(declared().to_json(), ensure_ascii=False) + "\n")
+        return 0
     session = Session()
     if "--serve" in argv:
         for request in sys.stdin:

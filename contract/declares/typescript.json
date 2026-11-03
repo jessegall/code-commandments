@@ -1,0 +1,1087 @@
+{
+    "language": "typescript",
+    "parser": "typescript 6.0.3",
+    "from": "this bridge's own kind table over ts.SyntaxKind; a field is the parent node's own property name, read as the child is written, so none are declared",
+    "kinds": [
+        {
+            "kind": "AbstractKeyword"
+        },
+        {
+            "kind": "AccessorKeyword"
+        },
+        {
+            "kind": "AmpersandAmpersandEqualsToken"
+        },
+        {
+            "kind": "AmpersandAmpersandToken"
+        },
+        {
+            "kind": "AmpersandEqualsToken"
+        },
+        {
+            "kind": "AmpersandToken"
+        },
+        {
+            "kind": "AnyKeyword"
+        },
+        {
+            "kind": "ArrayBindingPattern"
+        },
+        {
+            "kind": "ArrayLiteralExpression"
+        },
+        {
+            "kind": "ArrayType"
+        },
+        {
+            "kind": "ArrowFunction"
+        },
+        {
+            "kind": "AsExpression"
+        },
+        {
+            "kind": "AsKeyword"
+        },
+        {
+            "kind": "AssertKeyword"
+        },
+        {
+            "kind": "AssertsKeyword"
+        },
+        {
+            "kind": "AsteriskAsteriskEqualsToken"
+        },
+        {
+            "kind": "AsteriskAsteriskToken"
+        },
+        {
+            "kind": "AsteriskEqualsToken"
+        },
+        {
+            "kind": "AsteriskToken"
+        },
+        {
+            "kind": "AsyncKeyword"
+        },
+        {
+            "kind": "AtToken"
+        },
+        {
+            "kind": "AwaitExpression"
+        },
+        {
+            "kind": "AwaitKeyword"
+        },
+        {
+            "kind": "BacktickToken"
+        },
+        {
+            "kind": "BarBarEqualsToken"
+        },
+        {
+            "kind": "BarBarToken"
+        },
+        {
+            "kind": "BarEqualsToken"
+        },
+        {
+            "kind": "BarToken"
+        },
+        {
+            "kind": "BigIntKeyword"
+        },
+        {
+            "kind": "BigIntLiteral"
+        },
+        {
+            "kind": "BinaryExpression"
+        },
+        {
+            "kind": "BindingElement"
+        },
+        {
+            "kind": "Block"
+        },
+        {
+            "kind": "BooleanKeyword"
+        },
+        {
+            "kind": "BreakKeyword"
+        },
+        {
+            "kind": "BreakStatement"
+        },
+        {
+            "kind": "Bundle"
+        },
+        {
+            "kind": "CallExpression"
+        },
+        {
+            "kind": "CallSignature"
+        },
+        {
+            "kind": "CaretEqualsToken"
+        },
+        {
+            "kind": "CaretToken"
+        },
+        {
+            "kind": "CaseBlock"
+        },
+        {
+            "kind": "CaseClause"
+        },
+        {
+            "kind": "CaseKeyword"
+        },
+        {
+            "kind": "CatchClause"
+        },
+        {
+            "kind": "CatchKeyword"
+        },
+        {
+            "kind": "ClassDeclaration"
+        },
+        {
+            "kind": "ClassExpression"
+        },
+        {
+            "kind": "ClassKeyword"
+        },
+        {
+            "kind": "ClassStaticBlockDeclaration"
+        },
+        {
+            "kind": "CloseBraceToken"
+        },
+        {
+            "kind": "CloseBracketToken"
+        },
+        {
+            "kind": "CloseParenToken"
+        },
+        {
+            "kind": "ColonToken"
+        },
+        {
+            "kind": "CommaListExpression"
+        },
+        {
+            "kind": "CommaToken"
+        },
+        {
+            "kind": "ComputedPropertyName"
+        },
+        {
+            "kind": "ConditionalExpression"
+        },
+        {
+            "kind": "ConditionalType"
+        },
+        {
+            "kind": "ConflictMarkerTrivia"
+        },
+        {
+            "kind": "ConstKeyword"
+        },
+        {
+            "kind": "ConstructSignature"
+        },
+        {
+            "kind": "Constructor"
+        },
+        {
+            "kind": "ConstructorKeyword"
+        },
+        {
+            "kind": "ConstructorType"
+        },
+        {
+            "kind": "ContinueKeyword"
+        },
+        {
+            "kind": "ContinueStatement"
+        },
+        {
+            "kind": "Count"
+        },
+        {
+            "kind": "DebuggerKeyword"
+        },
+        {
+            "kind": "DebuggerStatement"
+        },
+        {
+            "kind": "DeclareKeyword"
+        },
+        {
+            "kind": "Decorator"
+        },
+        {
+            "kind": "DefaultClause"
+        },
+        {
+            "kind": "DefaultKeyword"
+        },
+        {
+            "kind": "DeferKeyword"
+        },
+        {
+            "kind": "DeleteExpression"
+        },
+        {
+            "kind": "DeleteKeyword"
+        },
+        {
+            "kind": "DoKeyword"
+        },
+        {
+            "kind": "DoStatement"
+        },
+        {
+            "kind": "DotDotDotToken"
+        },
+        {
+            "kind": "DotToken"
+        },
+        {
+            "kind": "ElementAccessExpression"
+        },
+        {
+            "kind": "ElseKeyword"
+        },
+        {
+            "kind": "EmptyStatement"
+        },
+        {
+            "kind": "EndOfFileToken"
+        },
+        {
+            "kind": "EnumDeclaration"
+        },
+        {
+            "kind": "EnumKeyword"
+        },
+        {
+            "kind": "EnumMember"
+        },
+        {
+            "kind": "EqualsEqualsEqualsToken"
+        },
+        {
+            "kind": "EqualsEqualsToken"
+        },
+        {
+            "kind": "EqualsGreaterThanToken"
+        },
+        {
+            "kind": "EqualsToken"
+        },
+        {
+            "kind": "ExclamationEqualsEqualsToken"
+        },
+        {
+            "kind": "ExclamationEqualsToken"
+        },
+        {
+            "kind": "ExclamationToken"
+        },
+        {
+            "kind": "ExportAssignment"
+        },
+        {
+            "kind": "ExportDeclaration"
+        },
+        {
+            "kind": "ExportKeyword"
+        },
+        {
+            "kind": "ExportSpecifier"
+        },
+        {
+            "kind": "ExpressionStatement"
+        },
+        {
+            "kind": "ExpressionWithTypeArguments"
+        },
+        {
+            "kind": "ExtendsKeyword"
+        },
+        {
+            "kind": "ExternalModuleReference"
+        },
+        {
+            "kind": "FalseKeyword"
+        },
+        {
+            "kind": "FinallyKeyword"
+        },
+        {
+            "kind": "ForInStatement"
+        },
+        {
+            "kind": "ForKeyword"
+        },
+        {
+            "kind": "ForOfStatement"
+        },
+        {
+            "kind": "ForStatement"
+        },
+        {
+            "kind": "FromKeyword"
+        },
+        {
+            "kind": "FunctionDeclaration"
+        },
+        {
+            "kind": "FunctionExpression"
+        },
+        {
+            "kind": "FunctionKeyword"
+        },
+        {
+            "kind": "FunctionType"
+        },
+        {
+            "kind": "GetAccessor"
+        },
+        {
+            "kind": "GetKeyword"
+        },
+        {
+            "kind": "GlobalKeyword"
+        },
+        {
+            "kind": "GreaterThanEqualsToken"
+        },
+        {
+            "kind": "GreaterThanGreaterThanEqualsToken"
+        },
+        {
+            "kind": "GreaterThanGreaterThanGreaterThanEqualsToken"
+        },
+        {
+            "kind": "GreaterThanGreaterThanGreaterThanToken"
+        },
+        {
+            "kind": "GreaterThanGreaterThanToken"
+        },
+        {
+            "kind": "GreaterThanToken"
+        },
+        {
+            "kind": "HashToken"
+        },
+        {
+            "kind": "HeritageClause"
+        },
+        {
+            "kind": "Identifier"
+        },
+        {
+            "kind": "IfKeyword"
+        },
+        {
+            "kind": "IfStatement"
+        },
+        {
+            "kind": "ImplementsKeyword"
+        },
+        {
+            "kind": "ImportAttribute"
+        },
+        {
+            "kind": "ImportAttributes"
+        },
+        {
+            "kind": "ImportClause"
+        },
+        {
+            "kind": "ImportDeclaration"
+        },
+        {
+            "kind": "ImportEqualsDeclaration"
+        },
+        {
+            "kind": "ImportKeyword"
+        },
+        {
+            "kind": "ImportSpecifier"
+        },
+        {
+            "kind": "ImportType"
+        },
+        {
+            "kind": "ImportTypeAssertionContainer"
+        },
+        {
+            "kind": "InKeyword"
+        },
+        {
+            "kind": "IndexSignature"
+        },
+        {
+            "kind": "IndexedAccessType"
+        },
+        {
+            "kind": "InferKeyword"
+        },
+        {
+            "kind": "InferType"
+        },
+        {
+            "kind": "InstanceOfKeyword"
+        },
+        {
+            "kind": "InterfaceDeclaration"
+        },
+        {
+            "kind": "InterfaceKeyword"
+        },
+        {
+            "kind": "IntersectionType"
+        },
+        {
+            "kind": "IntrinsicKeyword"
+        },
+        {
+            "kind": "IsKeyword"
+        },
+        {
+            "kind": "JSDoc"
+        },
+        {
+            "kind": "JSDocAllType"
+        },
+        {
+            "kind": "JSDocAugmentsTag"
+        },
+        {
+            "kind": "JSDocAuthorTag"
+        },
+        {
+            "kind": "JSDocCallbackTag"
+        },
+        {
+            "kind": "JSDocClassTag"
+        },
+        {
+            "kind": "JSDocCommentTextToken"
+        },
+        {
+            "kind": "JSDocDeprecatedTag"
+        },
+        {
+            "kind": "JSDocEnumTag"
+        },
+        {
+            "kind": "JSDocFunctionType"
+        },
+        {
+            "kind": "JSDocImplementsTag"
+        },
+        {
+            "kind": "JSDocImportTag"
+        },
+        {
+            "kind": "JSDocLink"
+        },
+        {
+            "kind": "JSDocLinkCode"
+        },
+        {
+            "kind": "JSDocLinkPlain"
+        },
+        {
+            "kind": "JSDocMemberName"
+        },
+        {
+            "kind": "JSDocNameReference"
+        },
+        {
+            "kind": "JSDocNamepathType"
+        },
+        {
+            "kind": "JSDocNonNullableType"
+        },
+        {
+            "kind": "JSDocNullableType"
+        },
+        {
+            "kind": "JSDocOptionalType"
+        },
+        {
+            "kind": "JSDocOverloadTag"
+        },
+        {
+            "kind": "JSDocOverrideTag"
+        },
+        {
+            "kind": "JSDocParameterTag"
+        },
+        {
+            "kind": "JSDocPrivateTag"
+        },
+        {
+            "kind": "JSDocPropertyTag"
+        },
+        {
+            "kind": "JSDocProtectedTag"
+        },
+        {
+            "kind": "JSDocPublicTag"
+        },
+        {
+            "kind": "JSDocReadonlyTag"
+        },
+        {
+            "kind": "JSDocReturnTag"
+        },
+        {
+            "kind": "JSDocSatisfiesTag"
+        },
+        {
+            "kind": "JSDocSeeTag"
+        },
+        {
+            "kind": "JSDocSignature"
+        },
+        {
+            "kind": "JSDocTag"
+        },
+        {
+            "kind": "JSDocTemplateTag"
+        },
+        {
+            "kind": "JSDocText"
+        },
+        {
+            "kind": "JSDocThisTag"
+        },
+        {
+            "kind": "JSDocThrowsTag"
+        },
+        {
+            "kind": "JSDocTypeExpression"
+        },
+        {
+            "kind": "JSDocTypeLiteral"
+        },
+        {
+            "kind": "JSDocTypeTag"
+        },
+        {
+            "kind": "JSDocTypedefTag"
+        },
+        {
+            "kind": "JSDocUnknownType"
+        },
+        {
+            "kind": "JSDocVariadicType"
+        },
+        {
+            "kind": "JsxAttribute"
+        },
+        {
+            "kind": "JsxAttributes"
+        },
+        {
+            "kind": "JsxClosingElement"
+        },
+        {
+            "kind": "JsxClosingFragment"
+        },
+        {
+            "kind": "JsxElement"
+        },
+        {
+            "kind": "JsxExpression"
+        },
+        {
+            "kind": "JsxFragment"
+        },
+        {
+            "kind": "JsxNamespacedName"
+        },
+        {
+            "kind": "JsxOpeningElement"
+        },
+        {
+            "kind": "JsxOpeningFragment"
+        },
+        {
+            "kind": "JsxSelfClosingElement"
+        },
+        {
+            "kind": "JsxSpreadAttribute"
+        },
+        {
+            "kind": "JsxText"
+        },
+        {
+            "kind": "JsxTextAllWhiteSpaces"
+        },
+        {
+            "kind": "KeyOfKeyword"
+        },
+        {
+            "kind": "LabeledStatement"
+        },
+        {
+            "kind": "LessThanEqualsToken"
+        },
+        {
+            "kind": "LessThanLessThanEqualsToken"
+        },
+        {
+            "kind": "LessThanLessThanToken"
+        },
+        {
+            "kind": "LessThanSlashToken"
+        },
+        {
+            "kind": "LessThanToken"
+        },
+        {
+            "kind": "LetKeyword"
+        },
+        {
+            "kind": "LiteralType"
+        },
+        {
+            "kind": "MappedType"
+        },
+        {
+            "kind": "MetaProperty"
+        },
+        {
+            "kind": "MethodDeclaration"
+        },
+        {
+            "kind": "MethodSignature"
+        },
+        {
+            "kind": "MinusEqualsToken"
+        },
+        {
+            "kind": "MinusMinusToken"
+        },
+        {
+            "kind": "MinusToken"
+        },
+        {
+            "kind": "MissingDeclaration"
+        },
+        {
+            "kind": "ModuleBlock"
+        },
+        {
+            "kind": "ModuleDeclaration"
+        },
+        {
+            "kind": "ModuleKeyword"
+        },
+        {
+            "kind": "MultiLineCommentTrivia"
+        },
+        {
+            "kind": "NamedExports"
+        },
+        {
+            "kind": "NamedImports"
+        },
+        {
+            "kind": "NamedTupleMember"
+        },
+        {
+            "kind": "NamespaceExport"
+        },
+        {
+            "kind": "NamespaceExportDeclaration"
+        },
+        {
+            "kind": "NamespaceImport"
+        },
+        {
+            "kind": "NamespaceKeyword"
+        },
+        {
+            "kind": "NeverKeyword"
+        },
+        {
+            "kind": "NewExpression"
+        },
+        {
+            "kind": "NewKeyword"
+        },
+        {
+            "kind": "NewLineTrivia"
+        },
+        {
+            "kind": "NoSubstitutionTemplateLiteral"
+        },
+        {
+            "kind": "NonNullExpression"
+        },
+        {
+            "kind": "NonTextFileMarkerTrivia"
+        },
+        {
+            "kind": "NotEmittedStatement"
+        },
+        {
+            "kind": "NotEmittedTypeElement"
+        },
+        {
+            "kind": "NullKeyword"
+        },
+        {
+            "kind": "NumberKeyword"
+        },
+        {
+            "kind": "NumericLiteral"
+        },
+        {
+            "kind": "ObjectBindingPattern"
+        },
+        {
+            "kind": "ObjectKeyword"
+        },
+        {
+            "kind": "ObjectLiteralExpression"
+        },
+        {
+            "kind": "OfKeyword"
+        },
+        {
+            "kind": "OmittedExpression"
+        },
+        {
+            "kind": "OpenBraceToken"
+        },
+        {
+            "kind": "OpenBracketToken"
+        },
+        {
+            "kind": "OpenParenToken"
+        },
+        {
+            "kind": "OptionalType"
+        },
+        {
+            "kind": "OutKeyword"
+        },
+        {
+            "kind": "OverrideKeyword"
+        },
+        {
+            "kind": "PackageKeyword"
+        },
+        {
+            "kind": "Parameter"
+        },
+        {
+            "kind": "ParenthesizedExpression"
+        },
+        {
+            "kind": "ParenthesizedType"
+        },
+        {
+            "kind": "PartiallyEmittedExpression"
+        },
+        {
+            "kind": "PercentEqualsToken"
+        },
+        {
+            "kind": "PercentToken"
+        },
+        {
+            "kind": "PlusEqualsToken"
+        },
+        {
+            "kind": "PlusPlusToken"
+        },
+        {
+            "kind": "PlusToken"
+        },
+        {
+            "kind": "PostfixUnaryExpression"
+        },
+        {
+            "kind": "PrefixUnaryExpression"
+        },
+        {
+            "kind": "PrivateIdentifier"
+        },
+        {
+            "kind": "PrivateKeyword"
+        },
+        {
+            "kind": "PropertyAccessExpression"
+        },
+        {
+            "kind": "PropertyAssignment"
+        },
+        {
+            "kind": "PropertyDeclaration"
+        },
+        {
+            "kind": "PropertySignature"
+        },
+        {
+            "kind": "ProtectedKeyword"
+        },
+        {
+            "kind": "PublicKeyword"
+        },
+        {
+            "kind": "QualifiedName"
+        },
+        {
+            "kind": "QuestionDotToken"
+        },
+        {
+            "kind": "QuestionQuestionEqualsToken"
+        },
+        {
+            "kind": "QuestionQuestionToken"
+        },
+        {
+            "kind": "QuestionToken"
+        },
+        {
+            "kind": "ReadonlyKeyword"
+        },
+        {
+            "kind": "RegularExpressionLiteral"
+        },
+        {
+            "kind": "RequireKeyword"
+        },
+        {
+            "kind": "RestType"
+        },
+        {
+            "kind": "ReturnKeyword"
+        },
+        {
+            "kind": "ReturnStatement"
+        },
+        {
+            "kind": "SatisfiesExpression"
+        },
+        {
+            "kind": "SatisfiesKeyword"
+        },
+        {
+            "kind": "SemicolonClassElement"
+        },
+        {
+            "kind": "SemicolonToken"
+        },
+        {
+            "kind": "SetAccessor"
+        },
+        {
+            "kind": "SetKeyword"
+        },
+        {
+            "kind": "ShebangTrivia"
+        },
+        {
+            "kind": "ShorthandPropertyAssignment"
+        },
+        {
+            "kind": "SingleLineCommentTrivia"
+        },
+        {
+            "kind": "SlashEqualsToken"
+        },
+        {
+            "kind": "SlashToken"
+        },
+        {
+            "kind": "SourceFile"
+        },
+        {
+            "kind": "SpreadAssignment"
+        },
+        {
+            "kind": "SpreadElement"
+        },
+        {
+            "kind": "StaticKeyword"
+        },
+        {
+            "kind": "StringKeyword"
+        },
+        {
+            "kind": "StringLiteral"
+        },
+        {
+            "kind": "SuperKeyword"
+        },
+        {
+            "kind": "SwitchKeyword"
+        },
+        {
+            "kind": "SwitchStatement"
+        },
+        {
+            "kind": "SymbolKeyword"
+        },
+        {
+            "kind": "SyntaxList"
+        },
+        {
+            "kind": "SyntheticExpression"
+        },
+        {
+            "kind": "SyntheticReferenceExpression"
+        },
+        {
+            "kind": "TaggedTemplateExpression"
+        },
+        {
+            "kind": "TemplateExpression"
+        },
+        {
+            "kind": "TemplateHead"
+        },
+        {
+            "kind": "TemplateLiteralType"
+        },
+        {
+            "kind": "TemplateLiteralTypeSpan"
+        },
+        {
+            "kind": "TemplateMiddle"
+        },
+        {
+            "kind": "TemplateSpan"
+        },
+        {
+            "kind": "TemplateTail"
+        },
+        {
+            "kind": "ThisKeyword"
+        },
+        {
+            "kind": "ThisType"
+        },
+        {
+            "kind": "ThrowKeyword"
+        },
+        {
+            "kind": "ThrowStatement"
+        },
+        {
+            "kind": "TildeToken"
+        },
+        {
+            "kind": "TrueKeyword"
+        },
+        {
+            "kind": "TryKeyword"
+        },
+        {
+            "kind": "TryStatement"
+        },
+        {
+            "kind": "TupleType"
+        },
+        {
+            "kind": "TypeAliasDeclaration"
+        },
+        {
+            "kind": "TypeAssertionExpression"
+        },
+        {
+            "kind": "TypeKeyword"
+        },
+        {
+            "kind": "TypeLiteral"
+        },
+        {
+            "kind": "TypeOfExpression"
+        },
+        {
+            "kind": "TypeOfKeyword"
+        },
+        {
+            "kind": "TypeOperator"
+        },
+        {
+            "kind": "TypeParameter"
+        },
+        {
+            "kind": "TypePredicate"
+        },
+        {
+            "kind": "TypeQuery"
+        },
+        {
+            "kind": "TypeReference"
+        },
+        {
+            "kind": "UndefinedKeyword"
+        },
+        {
+            "kind": "UnionType"
+        },
+        {
+            "kind": "UniqueKeyword"
+        },
+        {
+            "kind": "Unknown"
+        },
+        {
+            "kind": "UnknownKeyword"
+        },
+        {
+            "kind": "UsingKeyword"
+        },
+        {
+            "kind": "VarKeyword"
+        },
+        {
+            "kind": "VariableDeclaration"
+        },
+        {
+            "kind": "VariableDeclarationList"
+        },
+        {
+            "kind": "VariableStatement"
+        },
+        {
+            "kind": "VoidExpression"
+        },
+        {
+            "kind": "VoidKeyword"
+        },
+        {
+            "kind": "WhileKeyword"
+        },
+        {
+            "kind": "WhileStatement"
+        },
+        {
+            "kind": "WhitespaceTrivia"
+        },
+        {
+            "kind": "WithKeyword"
+        },
+        {
+            "kind": "WithStatement"
+        },
+        {
+            "kind": "YieldExpression"
+        },
+        {
+            "kind": "YieldKeyword"
+        }
+    ]
+}

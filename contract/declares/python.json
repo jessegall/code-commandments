@@ -1,0 +1,754 @@
+{
+    "language": "python",
+    "parser": "python 3.14 ast",
+    "from": "every ast.AST subclass of the interpreter running the bridge, each one's _fields",
+    "kinds": [
+        {
+            "kind": "Add"
+        },
+        {
+            "kind": "And"
+        },
+        {
+            "kind": "AnnAssign",
+            "fields": [
+                "annotation",
+                "simple",
+                "target",
+                "value"
+            ]
+        },
+        {
+            "kind": "Assert",
+            "fields": [
+                "msg",
+                "test"
+            ]
+        },
+        {
+            "kind": "Assign",
+            "fields": [
+                "targets",
+                "type_comment",
+                "value"
+            ]
+        },
+        {
+            "kind": "AsyncFor",
+            "fields": [
+                "body",
+                "iter",
+                "orelse",
+                "target",
+                "type_comment"
+            ]
+        },
+        {
+            "kind": "AsyncFunctionDef",
+            "fields": [
+                "args",
+                "body",
+                "decorator_list",
+                "name",
+                "returns",
+                "type_comment",
+                "type_params"
+            ]
+        },
+        {
+            "kind": "AsyncWith",
+            "fields": [
+                "body",
+                "items",
+                "type_comment"
+            ]
+        },
+        {
+            "kind": "Attribute",
+            "fields": [
+                "attr",
+                "ctx",
+                "value"
+            ]
+        },
+        {
+            "kind": "AugAssign",
+            "fields": [
+                "op",
+                "target",
+                "value"
+            ]
+        },
+        {
+            "kind": "AugLoad"
+        },
+        {
+            "kind": "AugStore"
+        },
+        {
+            "kind": "Await",
+            "fields": [
+                "value"
+            ]
+        },
+        {
+            "kind": "BinOp",
+            "fields": [
+                "left",
+                "op",
+                "right"
+            ]
+        },
+        {
+            "kind": "BitAnd"
+        },
+        {
+            "kind": "BitOr"
+        },
+        {
+            "kind": "BitXor"
+        },
+        {
+            "kind": "BoolOp",
+            "fields": [
+                "op",
+                "values"
+            ]
+        },
+        {
+            "kind": "Break"
+        },
+        {
+            "kind": "Call",
+            "fields": [
+                "args",
+                "func",
+                "keywords"
+            ]
+        },
+        {
+            "kind": "ClassDef",
+            "fields": [
+                "bases",
+                "body",
+                "decorator_list",
+                "keywords",
+                "name",
+                "type_params"
+            ]
+        },
+        {
+            "kind": "Compare",
+            "fields": [
+                "comparators",
+                "left",
+                "ops"
+            ]
+        },
+        {
+            "kind": "Constant",
+            "fields": [
+                "kind",
+                "value"
+            ]
+        },
+        {
+            "kind": "Continue"
+        },
+        {
+            "kind": "Del"
+        },
+        {
+            "kind": "Delete",
+            "fields": [
+                "targets"
+            ]
+        },
+        {
+            "kind": "Dict",
+            "fields": [
+                "keys",
+                "values"
+            ]
+        },
+        {
+            "kind": "DictComp",
+            "fields": [
+                "generators",
+                "key",
+                "value"
+            ]
+        },
+        {
+            "kind": "Div"
+        },
+        {
+            "kind": "Eq"
+        },
+        {
+            "kind": "ExceptHandler",
+            "fields": [
+                "body",
+                "name",
+                "type"
+            ]
+        },
+        {
+            "kind": "Expr",
+            "fields": [
+                "value"
+            ]
+        },
+        {
+            "kind": "Expression",
+            "fields": [
+                "body"
+            ]
+        },
+        {
+            "kind": "ExtSlice"
+        },
+        {
+            "kind": "FloorDiv"
+        },
+        {
+            "kind": "For",
+            "fields": [
+                "body",
+                "iter",
+                "orelse",
+                "target",
+                "type_comment"
+            ]
+        },
+        {
+            "kind": "FormattedValue",
+            "fields": [
+                "conversion",
+                "format_spec",
+                "value"
+            ]
+        },
+        {
+            "kind": "FunctionDef",
+            "fields": [
+                "args",
+                "body",
+                "decorator_list",
+                "name",
+                "returns",
+                "type_comment",
+                "type_params"
+            ]
+        },
+        {
+            "kind": "FunctionType",
+            "fields": [
+                "argtypes",
+                "returns"
+            ]
+        },
+        {
+            "kind": "GeneratorExp",
+            "fields": [
+                "elt",
+                "generators"
+            ]
+        },
+        {
+            "kind": "Global",
+            "fields": [
+                "names"
+            ]
+        },
+        {
+            "kind": "Gt"
+        },
+        {
+            "kind": "GtE"
+        },
+        {
+            "kind": "If",
+            "fields": [
+                "body",
+                "orelse",
+                "test"
+            ]
+        },
+        {
+            "kind": "IfExp",
+            "fields": [
+                "body",
+                "orelse",
+                "test"
+            ]
+        },
+        {
+            "kind": "Import",
+            "fields": [
+                "names"
+            ]
+        },
+        {
+            "kind": "ImportFrom",
+            "fields": [
+                "level",
+                "module",
+                "names"
+            ]
+        },
+        {
+            "kind": "In"
+        },
+        {
+            "kind": "Index"
+        },
+        {
+            "kind": "Interactive",
+            "fields": [
+                "body"
+            ]
+        },
+        {
+            "kind": "Interpolation",
+            "fields": [
+                "conversion",
+                "format_spec",
+                "str",
+                "value"
+            ]
+        },
+        {
+            "kind": "Invert"
+        },
+        {
+            "kind": "Is"
+        },
+        {
+            "kind": "IsNot"
+        },
+        {
+            "kind": "JoinedStr",
+            "fields": [
+                "values"
+            ]
+        },
+        {
+            "kind": "LShift"
+        },
+        {
+            "kind": "Lambda",
+            "fields": [
+                "args",
+                "body"
+            ]
+        },
+        {
+            "kind": "List",
+            "fields": [
+                "ctx",
+                "elts"
+            ]
+        },
+        {
+            "kind": "ListComp",
+            "fields": [
+                "elt",
+                "generators"
+            ]
+        },
+        {
+            "kind": "Load"
+        },
+        {
+            "kind": "Lt"
+        },
+        {
+            "kind": "LtE"
+        },
+        {
+            "kind": "MatMult"
+        },
+        {
+            "kind": "Match",
+            "fields": [
+                "cases",
+                "subject"
+            ]
+        },
+        {
+            "kind": "MatchAs",
+            "fields": [
+                "name",
+                "pattern"
+            ]
+        },
+        {
+            "kind": "MatchClass",
+            "fields": [
+                "cls",
+                "kwd_attrs",
+                "kwd_patterns",
+                "patterns"
+            ]
+        },
+        {
+            "kind": "MatchMapping",
+            "fields": [
+                "keys",
+                "patterns",
+                "rest"
+            ]
+        },
+        {
+            "kind": "MatchOr",
+            "fields": [
+                "patterns"
+            ]
+        },
+        {
+            "kind": "MatchSequence",
+            "fields": [
+                "patterns"
+            ]
+        },
+        {
+            "kind": "MatchSingleton",
+            "fields": [
+                "value"
+            ]
+        },
+        {
+            "kind": "MatchStar",
+            "fields": [
+                "name"
+            ]
+        },
+        {
+            "kind": "MatchValue",
+            "fields": [
+                "value"
+            ]
+        },
+        {
+            "kind": "Mod"
+        },
+        {
+            "kind": "Module",
+            "fields": [
+                "body",
+                "type_ignores"
+            ]
+        },
+        {
+            "kind": "Mult"
+        },
+        {
+            "kind": "Name",
+            "fields": [
+                "ctx",
+                "id"
+            ]
+        },
+        {
+            "kind": "NamedExpr",
+            "fields": [
+                "target",
+                "value"
+            ]
+        },
+        {
+            "kind": "Nonlocal",
+            "fields": [
+                "names"
+            ]
+        },
+        {
+            "kind": "Not"
+        },
+        {
+            "kind": "NotEq"
+        },
+        {
+            "kind": "NotIn"
+        },
+        {
+            "kind": "Or"
+        },
+        {
+            "kind": "Param"
+        },
+        {
+            "kind": "ParamSpec",
+            "fields": [
+                "default_value",
+                "name"
+            ]
+        },
+        {
+            "kind": "Pass"
+        },
+        {
+            "kind": "Pow"
+        },
+        {
+            "kind": "RShift"
+        },
+        {
+            "kind": "Raise",
+            "fields": [
+                "cause",
+                "exc"
+            ]
+        },
+        {
+            "kind": "Return",
+            "fields": [
+                "value"
+            ]
+        },
+        {
+            "kind": "Set",
+            "fields": [
+                "elts"
+            ]
+        },
+        {
+            "kind": "SetComp",
+            "fields": [
+                "elt",
+                "generators"
+            ]
+        },
+        {
+            "kind": "Slice",
+            "fields": [
+                "lower",
+                "step",
+                "upper"
+            ]
+        },
+        {
+            "kind": "Starred",
+            "fields": [
+                "ctx",
+                "value"
+            ]
+        },
+        {
+            "kind": "Store"
+        },
+        {
+            "kind": "Sub"
+        },
+        {
+            "kind": "Subscript",
+            "fields": [
+                "ctx",
+                "slice",
+                "value"
+            ]
+        },
+        {
+            "kind": "Suite"
+        },
+        {
+            "kind": "TemplateStr",
+            "fields": [
+                "values"
+            ]
+        },
+        {
+            "kind": "Try",
+            "fields": [
+                "body",
+                "finalbody",
+                "handlers",
+                "orelse"
+            ]
+        },
+        {
+            "kind": "TryStar",
+            "fields": [
+                "body",
+                "finalbody",
+                "handlers",
+                "orelse"
+            ]
+        },
+        {
+            "kind": "Tuple",
+            "fields": [
+                "ctx",
+                "elts"
+            ]
+        },
+        {
+            "kind": "TypeAlias",
+            "fields": [
+                "name",
+                "type_params",
+                "value"
+            ]
+        },
+        {
+            "kind": "TypeIgnore",
+            "fields": [
+                "lineno",
+                "tag"
+            ]
+        },
+        {
+            "kind": "TypeVar",
+            "fields": [
+                "bound",
+                "default_value",
+                "name"
+            ]
+        },
+        {
+            "kind": "TypeVarTuple",
+            "fields": [
+                "default_value",
+                "name"
+            ]
+        },
+        {
+            "kind": "UAdd"
+        },
+        {
+            "kind": "USub"
+        },
+        {
+            "kind": "UnaryOp",
+            "fields": [
+                "op",
+                "operand"
+            ]
+        },
+        {
+            "kind": "While",
+            "fields": [
+                "body",
+                "orelse",
+                "test"
+            ]
+        },
+        {
+            "kind": "With",
+            "fields": [
+                "body",
+                "items",
+                "type_comment"
+            ]
+        },
+        {
+            "kind": "Yield",
+            "fields": [
+                "value"
+            ]
+        },
+        {
+            "kind": "YieldFrom",
+            "fields": [
+                "value"
+            ]
+        },
+        {
+            "kind": "alias",
+            "fields": [
+                "asname",
+                "name"
+            ]
+        },
+        {
+            "kind": "arg",
+            "fields": [
+                "annotation",
+                "arg",
+                "default",
+                "type_comment"
+            ]
+        },
+        {
+            "kind": "arguments",
+            "fields": [
+                "args",
+                "kwarg",
+                "kwonlyargs",
+                "posonlyargs",
+                "vararg"
+            ]
+        },
+        {
+            "kind": "boolop"
+        },
+        {
+            "kind": "cmpop"
+        },
+        {
+            "kind": "comprehension",
+            "fields": [
+                "ifs",
+                "is_async",
+                "iter",
+                "target"
+            ]
+        },
+        {
+            "kind": "excepthandler"
+        },
+        {
+            "kind": "expr"
+        },
+        {
+            "kind": "expr_context"
+        },
+        {
+            "kind": "keyword",
+            "fields": [
+                "arg",
+                "value"
+            ]
+        },
+        {
+            "kind": "match_case",
+            "fields": [
+                "body",
+                "guard",
+                "pattern"
+            ]
+        },
+        {
+            "kind": "mod"
+        },
+        {
+            "kind": "operator"
+        },
+        {
+            "kind": "pattern"
+        },
+        {
+            "kind": "slice"
+        },
+        {
+            "kind": "stmt"
+        },
+        {
+            "kind": "type_ignore"
+        },
+        {
+            "kind": "type_param"
+        },
+        {
+            "kind": "unaryop"
+        },
+        {
+            "kind": "withitem",
+            "fields": [
+                "context_expr",
+                "optional_vars"
+            ]
+        }
+    ]
+}

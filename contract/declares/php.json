@@ -1,0 +1,1162 @@
+{
+    "language": "php",
+    "parser": "php-parser",
+    "from": "php-parser's own node classes: each one's getType() and getSubNodeNames()",
+    "kinds": [
+        {
+            "kind": "Arg",
+            "fields": [
+                "byRef",
+                "name",
+                "unpack",
+                "value"
+            ]
+        },
+        {
+            "kind": "ArrayItem",
+            "fields": [
+                "byRef",
+                "key",
+                "unpack",
+                "value"
+            ]
+        },
+        {
+            "kind": "Attribute",
+            "fields": [
+                "args",
+                "name"
+            ]
+        },
+        {
+            "kind": "AttributeGroup",
+            "fields": [
+                "attrs"
+            ]
+        },
+        {
+            "kind": "ClosureUse",
+            "fields": [
+                "byRef",
+                "var"
+            ]
+        },
+        {
+            "kind": "Const",
+            "fields": [
+                "name",
+                "value"
+            ]
+        },
+        {
+            "kind": "DeclareItem",
+            "fields": [
+                "key",
+                "value"
+            ]
+        },
+        {
+            "kind": "Expr_Array",
+            "fields": [
+                "items"
+            ]
+        },
+        {
+            "kind": "Expr_ArrayDimFetch",
+            "fields": [
+                "dim",
+                "var"
+            ]
+        },
+        {
+            "kind": "Expr_ArrowFunction",
+            "fields": [
+                "attrGroups",
+                "byRef",
+                "expr",
+                "params",
+                "returnType",
+                "static"
+            ]
+        },
+        {
+            "kind": "Expr_Assign",
+            "fields": [
+                "expr",
+                "var"
+            ]
+        },
+        {
+            "kind": "Expr_AssignOp_BitwiseAnd",
+            "fields": [
+                "expr",
+                "var"
+            ]
+        },
+        {
+            "kind": "Expr_AssignOp_BitwiseOr",
+            "fields": [
+                "expr",
+                "var"
+            ]
+        },
+        {
+            "kind": "Expr_AssignOp_BitwiseXor",
+            "fields": [
+                "expr",
+                "var"
+            ]
+        },
+        {
+            "kind": "Expr_AssignOp_Coalesce",
+            "fields": [
+                "expr",
+                "var"
+            ]
+        },
+        {
+            "kind": "Expr_AssignOp_Concat",
+            "fields": [
+                "expr",
+                "var"
+            ]
+        },
+        {
+            "kind": "Expr_AssignOp_Div",
+            "fields": [
+                "expr",
+                "var"
+            ]
+        },
+        {
+            "kind": "Expr_AssignOp_Minus",
+            "fields": [
+                "expr",
+                "var"
+            ]
+        },
+        {
+            "kind": "Expr_AssignOp_Mod",
+            "fields": [
+                "expr",
+                "var"
+            ]
+        },
+        {
+            "kind": "Expr_AssignOp_Mul",
+            "fields": [
+                "expr",
+                "var"
+            ]
+        },
+        {
+            "kind": "Expr_AssignOp_Plus",
+            "fields": [
+                "expr",
+                "var"
+            ]
+        },
+        {
+            "kind": "Expr_AssignOp_Pow",
+            "fields": [
+                "expr",
+                "var"
+            ]
+        },
+        {
+            "kind": "Expr_AssignOp_ShiftLeft",
+            "fields": [
+                "expr",
+                "var"
+            ]
+        },
+        {
+            "kind": "Expr_AssignOp_ShiftRight",
+            "fields": [
+                "expr",
+                "var"
+            ]
+        },
+        {
+            "kind": "Expr_AssignRef",
+            "fields": [
+                "expr",
+                "var"
+            ]
+        },
+        {
+            "kind": "Expr_BinaryOp_BitwiseAnd",
+            "fields": [
+                "left",
+                "right"
+            ]
+        },
+        {
+            "kind": "Expr_BinaryOp_BitwiseOr",
+            "fields": [
+                "left",
+                "right"
+            ]
+        },
+        {
+            "kind": "Expr_BinaryOp_BitwiseXor",
+            "fields": [
+                "left",
+                "right"
+            ]
+        },
+        {
+            "kind": "Expr_BinaryOp_BooleanAnd",
+            "fields": [
+                "left",
+                "right"
+            ]
+        },
+        {
+            "kind": "Expr_BinaryOp_BooleanOr",
+            "fields": [
+                "left",
+                "right"
+            ]
+        },
+        {
+            "kind": "Expr_BinaryOp_Coalesce",
+            "fields": [
+                "left",
+                "right"
+            ]
+        },
+        {
+            "kind": "Expr_BinaryOp_Concat",
+            "fields": [
+                "left",
+                "right"
+            ]
+        },
+        {
+            "kind": "Expr_BinaryOp_Div",
+            "fields": [
+                "left",
+                "right"
+            ]
+        },
+        {
+            "kind": "Expr_BinaryOp_Equal",
+            "fields": [
+                "left",
+                "right"
+            ]
+        },
+        {
+            "kind": "Expr_BinaryOp_Greater",
+            "fields": [
+                "left",
+                "right"
+            ]
+        },
+        {
+            "kind": "Expr_BinaryOp_GreaterOrEqual",
+            "fields": [
+                "left",
+                "right"
+            ]
+        },
+        {
+            "kind": "Expr_BinaryOp_Identical",
+            "fields": [
+                "left",
+                "right"
+            ]
+        },
+        {
+            "kind": "Expr_BinaryOp_LogicalAnd",
+            "fields": [
+                "left",
+                "right"
+            ]
+        },
+        {
+            "kind": "Expr_BinaryOp_LogicalOr",
+            "fields": [
+                "left",
+                "right"
+            ]
+        },
+        {
+            "kind": "Expr_BinaryOp_LogicalXor",
+            "fields": [
+                "left",
+                "right"
+            ]
+        },
+        {
+            "kind": "Expr_BinaryOp_Minus",
+            "fields": [
+                "left",
+                "right"
+            ]
+        },
+        {
+            "kind": "Expr_BinaryOp_Mod",
+            "fields": [
+                "left",
+                "right"
+            ]
+        },
+        {
+            "kind": "Expr_BinaryOp_Mul",
+            "fields": [
+                "left",
+                "right"
+            ]
+        },
+        {
+            "kind": "Expr_BinaryOp_NotEqual",
+            "fields": [
+                "left",
+                "right"
+            ]
+        },
+        {
+            "kind": "Expr_BinaryOp_NotIdentical",
+            "fields": [
+                "left",
+                "right"
+            ]
+        },
+        {
+            "kind": "Expr_BinaryOp_Pipe",
+            "fields": [
+                "left",
+                "right"
+            ]
+        },
+        {
+            "kind": "Expr_BinaryOp_Plus",
+            "fields": [
+                "left",
+                "right"
+            ]
+        },
+        {
+            "kind": "Expr_BinaryOp_Pow",
+            "fields": [
+                "left",
+                "right"
+            ]
+        },
+        {
+            "kind": "Expr_BinaryOp_ShiftLeft",
+            "fields": [
+                "left",
+                "right"
+            ]
+        },
+        {
+            "kind": "Expr_BinaryOp_ShiftRight",
+            "fields": [
+                "left",
+                "right"
+            ]
+        },
+        {
+            "kind": "Expr_BinaryOp_Smaller",
+            "fields": [
+                "left",
+                "right"
+            ]
+        },
+        {
+            "kind": "Expr_BinaryOp_SmallerOrEqual",
+            "fields": [
+                "left",
+                "right"
+            ]
+        },
+        {
+            "kind": "Expr_BinaryOp_Spaceship",
+            "fields": [
+                "left",
+                "right"
+            ]
+        },
+        {
+            "kind": "Expr_BitwiseNot",
+            "fields": [
+                "expr"
+            ]
+        },
+        {
+            "kind": "Expr_BooleanNot",
+            "fields": [
+                "expr"
+            ]
+        },
+        {
+            "kind": "Expr_Cast_Array",
+            "fields": [
+                "expr"
+            ]
+        },
+        {
+            "kind": "Expr_Cast_Bool",
+            "fields": [
+                "expr"
+            ]
+        },
+        {
+            "kind": "Expr_Cast_Double",
+            "fields": [
+                "expr"
+            ]
+        },
+        {
+            "kind": "Expr_Cast_Int",
+            "fields": [
+                "expr"
+            ]
+        },
+        {
+            "kind": "Expr_Cast_Object",
+            "fields": [
+                "expr"
+            ]
+        },
+        {
+            "kind": "Expr_Cast_String",
+            "fields": [
+                "expr"
+            ]
+        },
+        {
+            "kind": "Expr_Cast_Unset",
+            "fields": [
+                "expr"
+            ]
+        },
+        {
+            "kind": "Expr_Cast_Void",
+            "fields": [
+                "expr"
+            ]
+        },
+        {
+            "kind": "Expr_ClassConstFetch",
+            "fields": [
+                "class",
+                "name"
+            ]
+        },
+        {
+            "kind": "Expr_Clone",
+            "fields": [
+                "expr"
+            ]
+        },
+        {
+            "kind": "Expr_Closure",
+            "fields": [
+                "attrGroups",
+                "byRef",
+                "params",
+                "returnType",
+                "static",
+                "stmts",
+                "uses"
+            ]
+        },
+        {
+            "kind": "Expr_ConstFetch",
+            "fields": [
+                "name"
+            ]
+        },
+        {
+            "kind": "Expr_Empty",
+            "fields": [
+                "expr"
+            ]
+        },
+        {
+            "kind": "Expr_Error"
+        },
+        {
+            "kind": "Expr_ErrorSuppress",
+            "fields": [
+                "expr"
+            ]
+        },
+        {
+            "kind": "Expr_Eval",
+            "fields": [
+                "expr"
+            ]
+        },
+        {
+            "kind": "Expr_Exit",
+            "fields": [
+                "expr"
+            ]
+        },
+        {
+            "kind": "Expr_FuncCall",
+            "fields": [
+                "args",
+                "name"
+            ]
+        },
+        {
+            "kind": "Expr_Include",
+            "fields": [
+                "expr",
+                "type"
+            ]
+        },
+        {
+            "kind": "Expr_Instanceof",
+            "fields": [
+                "class",
+                "expr"
+            ]
+        },
+        {
+            "kind": "Expr_Isset",
+            "fields": [
+                "vars"
+            ]
+        },
+        {
+            "kind": "Expr_List",
+            "fields": [
+                "items"
+            ]
+        },
+        {
+            "kind": "Expr_Match",
+            "fields": [
+                "arms",
+                "cond"
+            ]
+        },
+        {
+            "kind": "Expr_MethodCall",
+            "fields": [
+                "args",
+                "name",
+                "var"
+            ]
+        },
+        {
+            "kind": "Expr_New",
+            "fields": [
+                "args",
+                "class"
+            ]
+        },
+        {
+            "kind": "Expr_NullsafeMethodCall",
+            "fields": [
+                "args",
+                "name",
+                "var"
+            ]
+        },
+        {
+            "kind": "Expr_NullsafePropertyFetch",
+            "fields": [
+                "name",
+                "var"
+            ]
+        },
+        {
+            "kind": "Expr_PostDec",
+            "fields": [
+                "var"
+            ]
+        },
+        {
+            "kind": "Expr_PostInc",
+            "fields": [
+                "var"
+            ]
+        },
+        {
+            "kind": "Expr_PreDec",
+            "fields": [
+                "var"
+            ]
+        },
+        {
+            "kind": "Expr_PreInc",
+            "fields": [
+                "var"
+            ]
+        },
+        {
+            "kind": "Expr_Print",
+            "fields": [
+                "expr"
+            ]
+        },
+        {
+            "kind": "Expr_PropertyFetch",
+            "fields": [
+                "name",
+                "var"
+            ]
+        },
+        {
+            "kind": "Expr_ShellExec",
+            "fields": [
+                "parts"
+            ]
+        },
+        {
+            "kind": "Expr_StaticCall",
+            "fields": [
+                "args",
+                "class",
+                "name"
+            ]
+        },
+        {
+            "kind": "Expr_StaticPropertyFetch",
+            "fields": [
+                "class",
+                "name"
+            ]
+        },
+        {
+            "kind": "Expr_Ternary",
+            "fields": [
+                "cond",
+                "else",
+                "if"
+            ]
+        },
+        {
+            "kind": "Expr_Throw",
+            "fields": [
+                "expr"
+            ]
+        },
+        {
+            "kind": "Expr_UnaryMinus",
+            "fields": [
+                "expr"
+            ]
+        },
+        {
+            "kind": "Expr_UnaryPlus",
+            "fields": [
+                "expr"
+            ]
+        },
+        {
+            "kind": "Expr_Variable",
+            "fields": [
+                "name"
+            ]
+        },
+        {
+            "kind": "Expr_Yield",
+            "fields": [
+                "key",
+                "value"
+            ]
+        },
+        {
+            "kind": "Expr_YieldFrom",
+            "fields": [
+                "expr"
+            ]
+        },
+        {
+            "kind": "File",
+            "fields": [
+                "stmts"
+            ]
+        },
+        {
+            "kind": "Identifier",
+            "fields": [
+                "name"
+            ]
+        },
+        {
+            "kind": "InterpolatedStringPart",
+            "fields": [
+                "value"
+            ]
+        },
+        {
+            "kind": "IntersectionType",
+            "fields": [
+                "types"
+            ]
+        },
+        {
+            "kind": "MatchArm",
+            "fields": [
+                "body",
+                "conds"
+            ]
+        },
+        {
+            "kind": "Name",
+            "fields": [
+                "name"
+            ]
+        },
+        {
+            "kind": "Name_FullyQualified",
+            "fields": [
+                "name"
+            ]
+        },
+        {
+            "kind": "Name_Relative",
+            "fields": [
+                "name"
+            ]
+        },
+        {
+            "kind": "NullableType",
+            "fields": [
+                "type"
+            ]
+        },
+        {
+            "kind": "Param",
+            "fields": [
+                "attrGroups",
+                "byRef",
+                "default",
+                "flags",
+                "hooks",
+                "type",
+                "var",
+                "variadic"
+            ]
+        },
+        {
+            "kind": "PropertyHook",
+            "fields": [
+                "attrGroups",
+                "body",
+                "byRef",
+                "flags",
+                "name",
+                "params"
+            ]
+        },
+        {
+            "kind": "PropertyItem",
+            "fields": [
+                "default",
+                "name"
+            ]
+        },
+        {
+            "kind": "Scalar_Float",
+            "fields": [
+                "value"
+            ]
+        },
+        {
+            "kind": "Scalar_Int",
+            "fields": [
+                "value"
+            ]
+        },
+        {
+            "kind": "Scalar_InterpolatedString",
+            "fields": [
+                "parts"
+            ]
+        },
+        {
+            "kind": "Scalar_MagicConst_Class"
+        },
+        {
+            "kind": "Scalar_MagicConst_Dir"
+        },
+        {
+            "kind": "Scalar_MagicConst_File"
+        },
+        {
+            "kind": "Scalar_MagicConst_Function"
+        },
+        {
+            "kind": "Scalar_MagicConst_Line"
+        },
+        {
+            "kind": "Scalar_MagicConst_Method"
+        },
+        {
+            "kind": "Scalar_MagicConst_Namespace"
+        },
+        {
+            "kind": "Scalar_MagicConst_Property"
+        },
+        {
+            "kind": "Scalar_MagicConst_Trait"
+        },
+        {
+            "kind": "Scalar_String",
+            "fields": [
+                "value"
+            ]
+        },
+        {
+            "kind": "StaticVar",
+            "fields": [
+                "default",
+                "var"
+            ]
+        },
+        {
+            "kind": "Stmt_Block",
+            "fields": [
+                "stmts"
+            ]
+        },
+        {
+            "kind": "Stmt_Break",
+            "fields": [
+                "num"
+            ]
+        },
+        {
+            "kind": "Stmt_Case",
+            "fields": [
+                "cond",
+                "stmts"
+            ]
+        },
+        {
+            "kind": "Stmt_Catch",
+            "fields": [
+                "stmts",
+                "types",
+                "var"
+            ]
+        },
+        {
+            "kind": "Stmt_Class",
+            "fields": [
+                "attrGroups",
+                "extends",
+                "flags",
+                "implements",
+                "name",
+                "stmts"
+            ]
+        },
+        {
+            "kind": "Stmt_ClassConst",
+            "fields": [
+                "attrGroups",
+                "consts",
+                "flags",
+                "type"
+            ]
+        },
+        {
+            "kind": "Stmt_ClassMethod",
+            "fields": [
+                "attrGroups",
+                "byRef",
+                "flags",
+                "name",
+                "params",
+                "returnType",
+                "stmts"
+            ]
+        },
+        {
+            "kind": "Stmt_Const",
+            "fields": [
+                "attrGroups",
+                "consts"
+            ]
+        },
+        {
+            "kind": "Stmt_Continue",
+            "fields": [
+                "num"
+            ]
+        },
+        {
+            "kind": "Stmt_Declare",
+            "fields": [
+                "declares",
+                "stmts"
+            ]
+        },
+        {
+            "kind": "Stmt_Do",
+            "fields": [
+                "cond",
+                "stmts"
+            ]
+        },
+        {
+            "kind": "Stmt_Echo",
+            "fields": [
+                "exprs"
+            ]
+        },
+        {
+            "kind": "Stmt_Else",
+            "fields": [
+                "stmts"
+            ]
+        },
+        {
+            "kind": "Stmt_ElseIf",
+            "fields": [
+                "cond",
+                "stmts"
+            ]
+        },
+        {
+            "kind": "Stmt_Enum",
+            "fields": [
+                "attrGroups",
+                "implements",
+                "name",
+                "scalarType",
+                "stmts"
+            ]
+        },
+        {
+            "kind": "Stmt_EnumCase",
+            "fields": [
+                "attrGroups",
+                "expr",
+                "name"
+            ]
+        },
+        {
+            "kind": "Stmt_Expression",
+            "fields": [
+                "expr"
+            ]
+        },
+        {
+            "kind": "Stmt_Finally",
+            "fields": [
+                "stmts"
+            ]
+        },
+        {
+            "kind": "Stmt_For",
+            "fields": [
+                "cond",
+                "init",
+                "loop",
+                "stmts"
+            ]
+        },
+        {
+            "kind": "Stmt_Foreach",
+            "fields": [
+                "byRef",
+                "expr",
+                "keyVar",
+                "stmts",
+                "valueVar"
+            ]
+        },
+        {
+            "kind": "Stmt_Function",
+            "fields": [
+                "attrGroups",
+                "byRef",
+                "name",
+                "params",
+                "returnType",
+                "stmts"
+            ]
+        },
+        {
+            "kind": "Stmt_Global",
+            "fields": [
+                "vars"
+            ]
+        },
+        {
+            "kind": "Stmt_Goto",
+            "fields": [
+                "name"
+            ]
+        },
+        {
+            "kind": "Stmt_GroupUse",
+            "fields": [
+                "prefix",
+                "type",
+                "uses"
+            ]
+        },
+        {
+            "kind": "Stmt_HaltCompiler",
+            "fields": [
+                "remaining"
+            ]
+        },
+        {
+            "kind": "Stmt_If",
+            "fields": [
+                "cond",
+                "else",
+                "elseifs",
+                "stmts"
+            ]
+        },
+        {
+            "kind": "Stmt_InlineHTML",
+            "fields": [
+                "value"
+            ]
+        },
+        {
+            "kind": "Stmt_Interface",
+            "fields": [
+                "attrGroups",
+                "extends",
+                "name",
+                "stmts"
+            ]
+        },
+        {
+            "kind": "Stmt_Label",
+            "fields": [
+                "name"
+            ]
+        },
+        {
+            "kind": "Stmt_Namespace",
+            "fields": [
+                "name",
+                "stmts"
+            ]
+        },
+        {
+            "kind": "Stmt_Nop"
+        },
+        {
+            "kind": "Stmt_Property",
+            "fields": [
+                "attrGroups",
+                "flags",
+                "hooks",
+                "props",
+                "type"
+            ]
+        },
+        {
+            "kind": "Stmt_Return",
+            "fields": [
+                "expr"
+            ]
+        },
+        {
+            "kind": "Stmt_Static",
+            "fields": [
+                "vars"
+            ]
+        },
+        {
+            "kind": "Stmt_Switch",
+            "fields": [
+                "cases",
+                "cond"
+            ]
+        },
+        {
+            "kind": "Stmt_Trait",
+            "fields": [
+                "attrGroups",
+                "name",
+                "stmts"
+            ]
+        },
+        {
+            "kind": "Stmt_TraitUse",
+            "fields": [
+                "adaptations",
+                "traits"
+            ]
+        },
+        {
+            "kind": "Stmt_TraitUseAdaptation_Alias",
+            "fields": [
+                "method",
+                "newModifier",
+                "newName",
+                "trait"
+            ]
+        },
+        {
+            "kind": "Stmt_TraitUseAdaptation_Precedence",
+            "fields": [
+                "insteadof",
+                "method",
+                "trait"
+            ]
+        },
+        {
+            "kind": "Stmt_TryCatch",
+            "fields": [
+                "catches",
+                "finally",
+                "stmts"
+            ]
+        },
+        {
+            "kind": "Stmt_Unset",
+            "fields": [
+                "vars"
+            ]
+        },
+        {
+            "kind": "Stmt_Use",
+            "fields": [
+                "type",
+                "uses"
+            ]
+        },
+        {
+            "kind": "Stmt_While",
+            "fields": [
+                "cond",
+                "stmts"
+            ]
+        },
+        {
+            "kind": "UnionType",
+            "fields": [
+                "types"
+            ]
+        },
+        {
+            "kind": "UseItem",
+            "fields": [
+                "alias",
+                "name",
+                "type"
+            ]
+        },
+        {
+            "kind": "VarLikeIdentifier",
+            "fields": [
+                "name"
+            ]
+        },
+        {
+            "kind": "VariadicPlaceholder"
+        }
+    ]
+}

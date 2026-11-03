@@ -24,6 +24,11 @@ var vocabularies embed.FS
 // streams the contract keeps as its samples, and the whole backend and frontend fixtures as the PHP and frontend
 // bridges once wrote them. The generator and the test that holds the vocabularies to them read this one list, so
 // a stream added to the census is a stream the test checks.
+// DeclarationsFolder is where the recorded declarations live, one file per language: what each bridge says its
+// parser CAN emit, which a census of recorded streams cannot say. They are recorded by
+// contract/declares/record, as the contract's sample streams are.
+const DeclarationsFolder = "contract/declares"
+
 var VocabularySources = []string{
 	"contract/samples/php.jsonl",
 	"contract/samples/python.jsonl",
@@ -58,10 +63,23 @@ type Construct struct {
 	Modifiers []string `json:"modifiers,omitempty"`
 	// Flags are the syntax facts it carries that are no keyword.
 	Flags []string `json:"flags,omitempty"`
-	// Vouched says who answers for the row: `observed` means a recorded stream really carries it.
+	// Vouched says who answers for the row: `observed` means a recorded stream really carries it, and `declared`
+	// means the language's own parser says it can be emitted. A row vouched only by the parser has never been
+	// seen in a stream, so it carries no example.
 	Vouched []string `json:"vouched"`
-	// Example is where the census first met it, as the stream names the place: `path:line`.
+	// Example is where the census first met it, as the stream names the place: `path:line`. None for a row only
+	// the parser vouches for, since no stream holds it.
 	Example string `json:"example,omitempty"`
+}
+
+// Observed says whether a recorded stream really carries the construct.
+func (c Construct) Observed() bool {
+	return slices.Contains(c.Vouched, "observed")
+}
+
+// Declared says whether the language's own parser says the construct can be emitted.
+func (c Construct) Declared() bool {
+	return slices.Contains(c.Vouched, "declared")
 }
 
 // Vocabulary is everything one language's bridge is seen emitting: the value space of the kind, field, operator,
@@ -73,6 +91,15 @@ type Vocabulary struct {
 	Bridges []string `json:"bridges"`
 	// Sources are the recorded streams the census read, so what the rows do and do not cover is readable.
 	Sources []string `json:"sources"`
+	// Parser names what declared the language's own vocabulary, and Declares says in plain words where that
+	// declaration was READ, because a declaration is only worth its source: a parser's own node classes is one
+	// thing and a bridge's own writer tables are another. Both are empty for a language nothing declared, whose
+	// rows are then only what some fixture happened to hold.
+	Parser   string `json:"parser,omitempty"`
+	Declares string `json:"declares,omitempty"`
+	// Fields are slots a child fills that belong to no one kind, for a parser that cannot say which kind holds
+	// which: C# names a kind per syntax KIND and its fields per syntax CLASS, and one class answers many kinds.
+	DeclaredFields []string `json:"fields,omitempty"`
 	// Collided are the spellings more than one kind derives, each with the kinds that derive it. Those kinds carry
 	// no spelling at all: a rule writing one word that means two constructs could not be read back, and choosing
 	// a winner would be the curated table this is generated to avoid.
@@ -151,9 +178,18 @@ func (v Vocabulary) Kinds() []string {
 	return kinds
 }
 
-// Fields are every slot a child fills in the language, each once.
+// Fields are every slot a child fills in the language, each once: the slots the rows carry, and the ones the
+// language's parser declares without saying which kind holds them.
 func (v Vocabulary) Fields() []string {
-	return v.gathered(func(construct Construct) []string { return construct.Fields })
+	fields := v.gathered(func(construct Construct) []string { return construct.Fields })
+	for _, field := range v.DeclaredFields {
+		if !slices.Contains(fields, field) {
+			fields = append(fields, field)
+		}
+	}
+	slices.Sort(fields)
+
+	return fields
 }
 
 // Operators are every operator token the language carries, each once.
