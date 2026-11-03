@@ -8,8 +8,10 @@ import (
 	"slices"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/jessegall/code-commandments/cli/health"
+	"github.com/jessegall/code-commandments/cli/hooks"
 )
 
 // The plugin is declared twice, once for each journal protocol, and what the two say has to agree: the release
@@ -334,4 +336,40 @@ func TestBothManifestsFitTheSameLanguages(t *testing.T) {
 	if len(fits) == 2 && fits[0] != fits[1] {
 		t.Errorf("the manifests fit different languages: %s against %s", fits[0], fits[1])
 	}
+}
+
+// TestTheDeclaredHoldIsTheWindowTheCodeFallsBackTo holds the manifest's promise to the code that relies on it.
+// The journal's `worker_delivering` carries no `window_ms`, because the hold is ours to declare and it honours it
+// without repeating it, so the code falls back to the window we asked for. If the manifest asked for less than
+// the code assumes, a delivery would be judged for longer than the journal waits and the answer would arrive
+// after the hold was over; if it asked for more, the time would go unused.
+func TestTheDeclaredHoldIsTheWindowTheCodeFallsBackTo(t *testing.T) {
+	text, err := os.ReadFile(filepath.Join("..", "..", "journal-plugin.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var read struct {
+		Holds []struct {
+			Event    string `json:"event"`
+			WindowMS int    `json:"window_ms"`
+		} `json:"holds"`
+	}
+	if err := json.Unmarshal(text, &read); err != nil {
+		t.Fatal(err)
+	}
+
+	for _, hold := range read.Holds {
+		if hold.Event != "worker_delivering" {
+			continue
+		}
+
+		if asked := time.Duration(hold.WindowMS) * time.Millisecond; asked != hooks.DeclaredWindow {
+			t.Errorf("the manifest asks the journal to hold a delivery for %s and the code judges in %s", asked, hooks.DeclaredWindow)
+		}
+
+		return
+	}
+
+	t.Error("the manifest asks for no hold on worker_delivering, so a delivery has no time to be judged in")
 }

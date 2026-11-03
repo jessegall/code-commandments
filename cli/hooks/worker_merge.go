@@ -1,6 +1,7 @@
 package hooks
 
 import (
+	"encoding/json"
 	"maps"
 	"os"
 	"slices"
@@ -63,6 +64,17 @@ const mergeSinsShown = 5
 const (
 	wholeTreeWindow    = time.Minute
 	changedFilesWindow = 5 * time.Second
+	// DeclaredWindow is the window this plugin's own manifest asks the journal to hold a delivery for, and what a
+	// delivery is judged in when the event names none.
+	//
+	// It is OUR number rather than the journal's to send: we declare the hold, so an event that carries no
+	// `window_ms` is an event from a journal that honoured the hold without repeating it, not an event with no
+	// time to answer in. Read as zero, as it was, every delivery fell through both depths and answered "clean",
+	// so a worker's work passed unjudged while the manifest promised three minutes of judging — the quietest way
+	// for this tool to be wrong, and it was wrong that way for every delivery the journal ever sent.
+	//
+	// A test holds the manifest's declared hold to this, so the two can never drift.
+	DeclaredWindow = 180 * time.Second
 )
 
 // MergeHeld is the answer to a worker's merge: nothing when its changes are clean, and a refusal naming the sins
@@ -172,9 +184,15 @@ func windowOf(named any) time.Duration {
 		return time.Duration(window) * time.Millisecond
 	case int:
 		return time.Duration(window) * time.Millisecond
+	case json.Number:
+		if milliseconds, err := window.Int64(); err == nil {
+			return time.Duration(milliseconds) * time.Millisecond
+		}
 	}
 
-	return 0
+	// The window this plugin asked for, since an event that names none came from a journal honouring the hold
+	// without repeating it. Answering nothing here is what let every delivery pass unjudged.
+	return DeclaredWindow
 }
 
 // namedFiles are the files the event names, as the worktree holds them: a workspace of repositories names each
