@@ -385,6 +385,65 @@ suffix, or a hardcoded list. The name, text and `file` checks exist because a ca
 point; reach for them last, and never as a list of the exceptions you happened to meet. Names lie, and a
 rule built on one fires on the wrong code the first time somebody renames well.
 
+## Ask about the TYPE, not the name it was reached by
+
+A name tells you what a reader typed; a type tells you what the value IS. The difference shows the moment
+someone copies the value into a variable:
+
+```json
+{
+    "select": "member-access",
+    "where": [
+        { "nameMatches": "^_" },
+        { "of": "receiver", "typeLike": "*ShellLine" }
+    ],
+    "reject": [{ "of": "receiver", "is": "self-reference" }]
+}
+```
+
+That finds `line._source_line` AND `copied = line; copied._source_line`, because the receiver's type follows
+the copy. Written with `name` and `descendant` instead, naming the variable the value usually sits in, the
+second one walks straight past. A rule that misses the shape somebody reached for by accident is not
+protecting anything.
+
+Two things to know before you lean on it:
+
+- **`type` and `typeLike` are the ones to use.** `resolves` and `resolvesLike` answer a CLASS a name refers
+  to, which the PHP engine fills; in Python they answer nothing at all, so a rule built on them there finds
+  nothing and looks broken. `isA` reads PHP's `instanceof` and answers nothing in Python either.
+- **Reject the owner reading its own state**, as above. Without that, the rule fires inside the class whose
+  field it is, which is the one place the read is nobody else's business.
+
+## One rule, every language it fits
+
+`engine` takes a name or a LIST of them, so a rule that asks only what every language answers is written
+once instead of once per engine:
+
+```json
+{
+    "engine": ["python", "go", "csharp"],
+    "sin": { "name": "loop-wrapped-in-if", "description": "…", "skill": "…" },
+    "find": { "select": "loop", "where": [{ "body": { "is": "branch" } }] }
+}
+```
+
+Two things make that work, and both are easy to get wrong.
+
+**Use the neutral words.** `loop`, `branch`, `call`, `assignment`, `comparison`, `member-access`, `literal`,
+`import`, `catch`, `function`, `type-declaration` and the rest mean the same in every language, because each
+language maps its own nodes onto them. A `kind:` or an `operator` is one language's own word, so a step naming
+one simply never matches in the others — allowed, and sometimes what you want, but then say so to yourself.
+
+**Use `body`, not `child`, for what a construct contains.** A loop's body is a block statement in C# and bare
+statements in Python, so `child` finds your branch in one language and not the other, while `body` reads
+through whatever each language wraps it in. This is the difference that makes a neutral rule look like two
+rules.
+
+Where the languages genuinely differ, a step carries the per-language check in the same file — `{"php":
+"facadeCall"}` — answered only by that language. And `commandments rule migrate` merges rules you already have
+that differ in nothing but the engine they judge; it leaves alone any pair that differs in more, because then
+they are two rules and merging them would change what one of them finds.
+
 ## See what a rule reads before you write it
 
 A query names what the tree holds, so read the tree first:
@@ -423,6 +482,28 @@ A rule whose finding is about a file itself, such as one selecting `kind: Source
 `file`/`fileMatches` alone, reports on the file's first line, which no leading comment can mark. Mark that
 sample with `@sin-file NoFormOutsideFormsDetector` anywhere in the file (`@righteous-file` and `@fixed-file`
 likewise): it marks the whole file, wherever the comment stands.
+
+**A comment marks the LINE below it, not the declaration it sits above.** This is the one trap that costs an
+afternoon, because it reads as something else entirely. If the rule flags a member read inside a method, the
+mark goes directly above THAT line:
+
+```python
+def through(tool: Tool) -> str:
+    copied = tool.shell
+
+    # @sin NoWholeLineRead
+    return copied._source_line
+```
+
+Put the mark above the `def` instead and both halves of one mistake are reported as if they were two faults:
+the mark is missed where it stands, and the finding is unmarked where it is. `rule prove` now says so when it
+sees both in one file, but the mistake is easy and the reason is worth knowing. PHP is where the habit comes
+from: there a marker is an ATTRIBUTE on a declaration, `#[Sinful(X::class)]`, and it covers anything the
+detector flags inside it. Python, C#, Vue and Go mark a line.
+
+**A sample is judged by your other rules too.** It sits in the project, so a sample written to prove one rule
+can be flagged by another, and then `rule prove` fails that other rule on code you wrote as a fixture. Write
+samples that would pass review, or mark them `@righteous` for the rules they trip.
 
 ```bash
 vendor/bin/commandments rule prove
@@ -513,3 +594,10 @@ belongs on a rule that admits only an expression body.
 | `commandments rule migrate [--dry-run]` | bring your own rules up to this release: merge the copies that differ only in the engine they judge into one rule naming them all, and name every rule this release no longer reads, with the reason |
 
 <!-- END: commands:make,rule -->
+
+## Rules that work, one per kind of question
+
+[`reference/examples.md`](reference/examples.md) holds a working rule for each shape of question: by what a
+node IS, by the type a value HAS, one rule for several languages, by where the code sits, by how much there is
+of it, by what only the resolver knows, and one rule built on another. Every one of them is parsed by a test,
+so none of them can rot into a shape the tool no longer runs.
