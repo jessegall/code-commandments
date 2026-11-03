@@ -284,7 +284,24 @@ func (m Match) IsUnreadMember() bool {
 	// Both ways a member is reached are asked: what resolves to its declaration through the type a receiver
 	// holds, and what refers to its symbol where its language's resolver binds names to symbols. A member nothing
 	// reaches either way is read by nothing.
-	return !m.IsImplicit() && !m.IsOverride() && len(m.Readers()) == 0 && len(m.Referrers()) == 0
+	return !m.IsImplicit() && !m.IsOverride() && len(m.Readers()) == 0 && len(m.ReadingReferrers()) == 0
+}
+
+// ReadingReferrers are the referrers that READ the declaration rather than overwrite it. A plain assignment stores
+// a value and reads none, so a field a constructor fills and nothing else touches is a field nothing reads — the
+// same reading `Readers` makes of a reach resolved through a receiver, asked here of a reach the language's own
+// resolver bound by name. Every referrer of a declaration nothing can assign to, a function or a type, reads it.
+func (m Match) ReadingReferrers() []Match {
+	var reading []Match
+	for _, referrer := range m.Referrers() {
+		if referrer.IsOverwritten() {
+			continue
+		}
+
+		reading = append(reading, referrer)
+	}
+
+	return reading
 }
 
 // readersOf indexes every node of the codebase by the declaration it reaches, each by that declaration's own

@@ -2,6 +2,8 @@ package rule_test
 
 import (
 	"testing"
+
+	"github.com/jessegall/code-commandments/engine/csharp/csharptest"
 )
 
 // A field nothing reads is a collaborator the class was given and never used, and the `unused` check could not
@@ -114,9 +116,60 @@ final class Till
 	}
 }
 
-// What a field is READ by differs by language more than the rest of this plan's questions do, and two gaps are
-// open rather than hidden: a C# field declaration carries no name of its own (its declarator does) and a C#
-// identifier carries no `refers`, so nothing can resolve a bare-name read to it; and a PHP promoted constructor
-// parameter is not among its class's members, so `$this->held` resolves to nothing. Both are filed. Python is in
-// neither state and never will be: an instance field there IS an assignment in the constructor, with no
-// declaration for a rule to select.
+// TestARuleFindsACSharpFieldNothingReads holds the C# shape of the same question, which reaches its field by a
+// different road: a field there is read by its BARE name, `till.Send(slip)` rather than `this.till.Send(slip)`, so
+// there is no receiver whose type says which member the read reaches. The resolver's own binding answers it
+// instead — the bridge writes `refers` on the name and the field's own symbol on the declaration that declares it
+// — and the field read through `this` is held beside it, since that one resolves both ways.
+//
+// Python is in neither state and never will be: an instance field there IS an assignment in the constructor, with
+// no declaration for a rule to select.
+func TestARuleFindsACSharpFieldNothingReads(t *testing.T) {
+	project := csharptest.FromSource(t, map[string]string{
+		"Shop/Printer.cs": `namespace Shop;
+
+public sealed class Printer
+{
+    public void Send(string slip) {}
+}
+`,
+		"Shop/Till.cs": `namespace Shop;
+
+public sealed class Till
+{
+    private readonly Printer unread;
+
+    private readonly Printer read;
+
+    private readonly Printer readThroughThis;
+
+    public Till(Printer printer)
+    {
+        unread = printer;
+        read = printer;
+        readThroughThis = printer;
+    }
+
+    public void Close(string slip)
+    {
+        read.Send(slip);
+        this.readThroughThis.Send(slip);
+    }
+}
+`,
+	})
+
+	for query, want := range map[string]string{
+		// The field nothing reads, and only that one: the writes in the constructor are no reads.
+		`{"select": "kind:FieldDeclaration", "where": [{"unused": true}]}`: "[Till.cs:5]",
+		// Read by its bare name and read through `this` are both read.
+		`{"select": "kind:FieldDeclaration", "where": [{"unused": false}]}`: "[Till.cs:7 Till.cs:9]",
+		// And the class declares each of them by name, which it could not say before: a C# field declaration
+		// carries no name of its own, so a rule asking what a type declares found none of its fields.
+		`{"select": "type-declaration", "where": [{"members": {"name": "read", "atLeast": 1}}]}`: "[Till.cs:3]",
+	} {
+		if got := foundAt(t, "csharp", query, project); got != want {
+			t.Errorf("%s:\n got %s\nwant %s", query, got, want)
+		}
+	}
+}

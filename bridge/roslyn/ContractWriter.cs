@@ -518,6 +518,12 @@ public sealed class ContractWriter(IReadOnlyList<string> roots, IReadOnlySet<str
         {
             var declared = node is BaseNamespaceDeclarationSyntax or CompilationUnitSyntax ? null : model.GetDeclaredSymbol(node);
 
+            // A field or event declaration declares no symbol of its own: C# hangs the name and the symbol on each
+            // declarator below it, so `private readonly Printer till;` is a member the reader sees and a symbol
+            // nothing carries. The declaration IS that field when it declares one, so it carries its symbol; one
+            // declaring several (`int a, b;`) is no single member and carries none.
+            declared ??= OnlyDeclarator(node) is { } only ? model.GetDeclaredSymbol(only) : null;
+
             if (declared is not null)
             {
                 json.WriteString("symbol", declared.OriginalDefinition.ToDisplayString(Readings.Declared));
@@ -622,19 +628,53 @@ public sealed class ContractWriter(IReadOnlyList<string> roots, IReadOnlySet<str
             run.Remember(original.ContainingType);
         }
 
-        /// <summary>The type a name in a type position names.</summary>
+        /// <summary>The declarator a field or event declaration declares, when it declares exactly one; none for anything else.</summary>
+        private static VariableDeclaratorSyntax? OnlyDeclarator(SyntaxNode node)
+        {
+            if (node is not BaseFieldDeclarationSyntax field)
+            {
+                return null;
+            }
+
+            var declarators = field.Declaration.Variables;
+
+            return declarators.Count == 1 ? declarators[0] : null;
+        }
+
+        /// <summary>
+        /// The declaration a name names: the type a name in a type position names, and the state a name in an
+        /// expression reads. A field is read by its BARE name in C# — `till.Send(slip)`, not `this.till.Send(slip)`
+        /// — so a reader with no receiver to resolve through has nothing but this to say which member it reaches.
+        /// </summary>
         private void Refers(Utf8JsonWriter json, SyntaxNode node)
         {
-            if (node is not (SimpleNameSyntax or QualifiedNameSyntax) || !SyntaxFacts.IsInTypeOnlyContext((TypeSyntax)node))
+            if (node is not (SimpleNameSyntax or QualifiedNameSyntax))
             {
                 return;
             }
 
-            if (model.GetSymbolInfo(node).Symbol is INamedTypeSymbol named)
+            var named = model.GetSymbolInfo(node).Symbol;
+
+            if (SyntaxFacts.IsInTypeOnlyContext((TypeSyntax)node))
             {
-                json.WriteString("refers", named.OriginalDefinition.ToDisplayString(Readings.Qualified));
-                run.Remember(named);
+                if (named is INamedTypeSymbol type)
+                {
+                    json.WriteString("refers", type.OriginalDefinition.ToDisplayString(Readings.Qualified));
+                    run.Remember(type);
+                }
+
+                return;
             }
+
+            // A member declared in the solution, and only those: a method's own name is already said by the call's
+            // `target`, so saying it again here would count one call as two reaches, and a local or a parameter is
+            // named only within its function, where a name alone cannot tell two of them apart.
+            if (named is not (IFieldSymbol or IPropertySymbol or IEventSymbol) || !named.Locations.Any(where => where.IsInSource))
+            {
+                return;
+            }
+
+            json.WriteString("refers", named.OriginalDefinition.ToDisplayString(Readings.Declared));
         }
 
         /// <summary>

@@ -40,12 +40,23 @@ func (n Node) EnclosingType() Node {
 	return Node{}
 }
 
-// DeclaredName is the name the node declares or reads; an accessor answers for the property, indexer or event it
-// belongs to.
+// DeclaredName is the name the node declares or reads. Two C# declarations carry none of their own: an accessor,
+// which answers for the property, indexer or event it belongs to, and a field or event declaration, which hangs
+// the name on each declarator below it — so `private readonly Printer till;` is the member a reader sees while
+// `till` is where the name and the symbol live.
 func (n Node) DeclaredName() string {
-	if n.Name() != "" || !strings.HasSuffix(n.Kind(), "AccessorDeclaration") {
+	if n.Name() != "" {
 		return n.Name()
 	}
+
+	if only := n.OnlyDeclarator(); only.Exists() {
+		return only.Name()
+	}
+
+	if !strings.HasSuffix(n.Kind(), "AccessorDeclaration") {
+		return ""
+	}
+
 	for _, member := range n.Ancestors() {
 		if member.Is("PropertyDeclaration", "IndexerDeclaration", "EventDeclaration") && member.Name() != "" {
 			return member.Name()
@@ -53,6 +64,40 @@ func (n Node) DeclaredName() string {
 	}
 
 	return ""
+}
+
+// Declarators are the variables a field or event declaration declares, each of which carries the name and the
+// symbol the declaration itself carries none of; none for anything that is no such declaration.
+func (n Node) Declarators() []Node {
+	if !n.Is("FieldDeclaration", "EventFieldDeclaration") {
+		return nil
+	}
+
+	var declared []Node
+	for _, declarator := range n.firstChild("VariableDeclaration").All() {
+		if declarator.Is("VariableDeclarator") {
+			declared = append(declared, declarator)
+		}
+	}
+
+	return declared
+}
+
+// OnlyDeclarator is the one variable a field or event declaration declares; no node for anything else, and none
+// for a declaration of several (`int a, b;`), which is no single member and names itself after none of them.
+func (n Node) OnlyDeclarator() Node {
+	declared := n.Declarators()
+	if len(declared) != 1 {
+		return Node{}
+	}
+
+	return declared[0]
+}
+
+// DeclaresVariableNamed says whether the field or event declaration declares a variable of that name, whichever
+// of the several a declaration may hold it is.
+func (n Node) DeclaresVariableNamed(name string) bool {
+	return slices.ContainsFunc(n.Declarators(), func(declarator Node) bool { return declarator.Name() == name })
 }
 
 // IsStub says whether the body only says it is not written yet: `throw new NotImplementedException()`, as a block
@@ -1166,9 +1211,9 @@ func (n Node) returnedWhole() Node {
 // it builds itself, so what a getter hands out is the type's own insides and not something it was lent.
 func (n Node) keepsACollectionIn(name string) bool {
 	return slices.ContainsFunc(n.Descendants(), func(member Node) bool {
-		declarator := member.firstChild("VariableDeclaration").firstChild("VariableDeclarator")
-
-		return member.Is("FieldDeclaration") && declarator.Name() == name && declarator.buildsItsOwn()
+		return slices.ContainsFunc(member.Declarators(), func(declarator Node) bool {
+			return declarator.Name() == name && declarator.buildsItsOwn()
+		})
 	})
 }
 
@@ -1270,7 +1315,7 @@ func (n Node) declaresAMemberNamed(name string) bool {
 			return member.Name() == name
 		}
 
-		return member.Is("FieldDeclaration") && member.firstChild("VariableDeclaration").firstChild("VariableDeclarator").Name() == name
+		return member.DeclaresVariableNamed(name)
 	})
 }
 

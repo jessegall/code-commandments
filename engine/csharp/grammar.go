@@ -10,11 +10,14 @@ import (
 
 func init() {
 	engine.ReadAs(contract.CSharp, engine.Grammar{
-		Arguments:   arguments,
-		Receiver:    receiver,
-		Declares:    engine.KindIn("SingleVariableDesignation", "DeclarationPattern"),
-		Binds:       engine.KindIn("LocalDeclarationStatement"),
-		Members:     engine.InFields("Members"),
+		Arguments: arguments,
+		Receiver:  receiver,
+		Declares:  engine.KindIn("SingleVariableDesignation", "DeclarationPattern"),
+		Binds:     engine.KindIn("LocalDeclarationStatement"),
+		Members:   engine.InFields("Members"),
+		DeclaredName: func(declaration engine.Match) string {
+			return Node{Match: declaration}.DeclaredName()
+		},
 		Parameters:  parameters,
 		Extends:     func(declaration engine.Match) []engine.Match { return basesWhere(declaration, false) },
 		Implements:  func(declaration engine.Match) []engine.Match { return basesWhere(declaration, true) },

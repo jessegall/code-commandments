@@ -127,7 +127,7 @@ Every syntax node, nested as the language nests them. Tokens, whitespace and com
 | `resolved` | expressions the resolver typed | the type the compiler or checker gives the expression |
 | `resolvedType` | in place of `resolved` | the index in the file's `types` of that type; a reader treats it as `resolved` |
 | `symbol` | declarations | the declaration's symbol id (see *Symbols*) |
-| `refers` | names and imports that resolve | the symbol id the name names — a class name its class, an import binding what it imports — whether or not that declaration is in the scan |
+| `refers` | names and imports that resolve | the symbol id the name names — a class name its class, an import binding what it imports, a C# name read in an expression the field, property or event it reads — whether or not that declaration is in the scan |
 | `target` | calls and constructions that resolve | the declaration called (see *Symbols*) |
 | `resolves` | imports and component tags that resolve | the absolute path of the file the import or tag reaches |
 | `constant` | expressions with a compile-time value | `true`: a literal, an enum case, a constant, or arithmetic on them, as the compiler folds it |
@@ -408,6 +408,18 @@ neither is written as admitting absence. A pointer, a map and a channel have no 
 are written `opaque`, which keeps the text the compiler spells and the facts it knows; `valueType` is true for a
 basic type, a struct and an array, which Go copies. A function's `returns` is the one type it answers, or a
 `tuple` of several, which is Go's own shape and where every `(T, error)` reading starts.
+
+**C#.** A field or an event declaration carries no name and no symbol of its own: C# hangs both on each
+`VariableDeclarator` below it, so `private readonly Printer till;` is the member a reader sees while `till` is
+where the name lives. A declaration that declares exactly one of them carries that declarator's `symbol`, since
+the declaration IS that field; one declaring several (`int a, b;`) is no single member and carries none.
+
+A C# field is read by its BARE name — `till.Send(slip)`, not `this.till.Send(slip)` — so a read has no receiver
+whose type would say which member it reaches, and the resolver's own binding is the only thing that can:
+a `SimpleName` in an expression carries `refers` naming the field, property or event it reads, where that member
+is declared in the solution. A method is left out of this, because a call's `target` already names it and saying
+it twice would count one call as two reaches; a local and a parameter are left out because a name alone cannot
+tell two of them apart, each being named only within its own function.
 
 **Python.** A node whose `ast` class holds one name as a plain string writes it as `name`: a `FunctionDef`'s
 or `ClassDef`'s own, an `arg`, a `Name`, an `Attribute`'s attribute, a named `keyword`, an `alias`'s imported
