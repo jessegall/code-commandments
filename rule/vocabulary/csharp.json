@@ -1,0 +1,884 @@
+{
+    "language": "csharp",
+    "bridges": [
+        "contract/samples/emit/csharp.py 1"
+    ],
+    "sources": [
+        "contract/samples/csharp.jsonl"
+    ],
+    "constructs": [
+        {
+            "kind": "AccessorList",
+            "spells": "accessor-list",
+            "roles": [
+                "other"
+            ],
+            "fields": [
+                "Accessors"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/csharp/Shop/Shipping/Tracking.cs:10"
+        },
+        {
+            "kind": "AddAssignmentExpression",
+            "spells": "add-assignment",
+            "roles": [
+                "expression"
+            ],
+            "is": [
+                "assignment"
+            ],
+            "fields": [
+                "Left",
+                "Right"
+            ],
+            "operators": [
+                "+="
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/csharp/Shop/Reports/PageReader.cs:22"
+        },
+        {
+            "kind": "Argument",
+            "spells": "argument",
+            "roles": [
+                "other"
+            ],
+            "fields": [
+                "Expression"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/csharp/Shop/Orders/GiftWrapping.cs:7"
+        },
+        {
+            "kind": "ArgumentList",
+            "spells": "argument-list",
+            "roles": [
+                "other"
+            ],
+            "fields": [
+                "Arguments"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/csharp/Shop/Orders/GiftWrapping.cs:7"
+        },
+        {
+            "kind": "ArrowExpressionClause",
+            "spells": "arrow-expression-clause",
+            "roles": [
+                "other"
+            ],
+            "fields": [
+                "Expression"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/csharp/Shop/Orders/GiftWrapping.cs:7"
+        },
+        {
+            "kind": "BaseList",
+            "spells": "base-list",
+            "roles": [
+                "other"
+            ],
+            "fields": [
+                "Types"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/csharp/Shop/Stock/Audits.cs:9"
+        },
+        {
+            "kind": "Block",
+            "spells": "block",
+            "roles": [
+                "statement"
+            ],
+            "is": [
+                "block"
+            ],
+            "fields": [
+                "Statements"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/csharp/Shop/Stock/Audits.cs:20"
+        },
+        {
+            "kind": "BracketedArgumentList",
+            "spells": "bracketed-argument-list",
+            "roles": [
+                "other"
+            ],
+            "fields": [
+                "Arguments"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/csharp/Shop/Shipping/Tracking.cs:15"
+        },
+        {
+            "kind": "CharacterLiteralExpression",
+            "spells": "character-literal",
+            "roles": [
+                "expression"
+            ],
+            "is": [
+                "literal"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/csharp/Shop/Shipping/Tracking.cs:15"
+        },
+        {
+            "kind": "ClassDeclaration",
+            "spells": "class",
+            "roles": [
+                "member"
+            ],
+            "is": [
+                "type-declaration"
+            ],
+            "fields": [
+                "BaseList",
+                "Members",
+                "ParameterList"
+            ],
+            "modifiers": [
+                "public",
+                "sealed",
+                "static"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/csharp/Shop/Orders/GiftWrapping.cs:5"
+        },
+        {
+            "kind": "CompilationUnit",
+            "spells": "compilation-unit",
+            "roles": [
+                "other"
+            ],
+            "fields": [
+                "Members"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/csharp/Shop/Orders/GiftWrapping.cs:1"
+        },
+        {
+            "kind": "ConstantPattern",
+            "spells": "constant-pattern",
+            "roles": [
+                "pattern"
+            ],
+            "fields": [
+                "Expression"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/csharp/Shop/Reports/PageReader.cs:24"
+        },
+        {
+            "kind": "ElementAccessExpression",
+            "spells": "element-access",
+            "roles": [
+                "expression"
+            ],
+            "fields": [
+                "ArgumentList",
+                "Expression"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/csharp/Shop/Shipping/Tracking.cs:15"
+        },
+        {
+            "kind": "EqualsValueClause",
+            "spells": "equals-value-clause",
+            "roles": [
+                "other"
+            ],
+            "fields": [
+                "Value"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/csharp/Shop/Shipping/Tracking.cs:10"
+        },
+        {
+            "kind": "ExpressionStatement",
+            "spells": "expression",
+            "roles": [
+                "statement"
+            ],
+            "is": [
+                "expression-statement"
+            ],
+            "fields": [
+                "Expression"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/csharp/Shop/Reports/PageReader.cs:22"
+        },
+        {
+            "kind": "FieldDeclaration",
+            "spells": "field",
+            "roles": [
+                "member"
+            ],
+            "fields": [
+                "Declaration"
+            ],
+            "modifiers": [
+                "private"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/csharp/Shop/Shipping/Tracking.cs:7"
+        },
+        {
+            "kind": "FileScopedNamespaceDeclaration",
+            "spells": "file-scoped-namespace",
+            "roles": [
+                "other"
+            ],
+            "fields": [
+                "Members",
+                "Name"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/csharp/Shop/Orders/GiftWrapping.cs:1"
+        },
+        {
+            "kind": "ForStatement",
+            "spells": "for",
+            "roles": [
+                "statement"
+            ],
+            "is": [
+                "loop"
+            ],
+            "fields": [
+                "Declaration",
+                "Incrementors",
+                "Statement"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/csharp/Shop/Reports/PageReader.cs:20"
+        },
+        {
+            "kind": "GenericName",
+            "spells": "generic-name",
+            "roles": [
+                "type"
+            ],
+            "fields": [
+                "TypeArgumentList"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/csharp/Shop/Orders/GiftWrapping.cs:7"
+        },
+        {
+            "kind": "GetAccessorDeclaration",
+            "spells": "get-accessor",
+            "roles": [
+                "member"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/csharp/Shop/Shipping/Tracking.cs:10"
+        },
+        {
+            "kind": "IdentifierName",
+            "spells": "identifier-name",
+            "roles": [
+                "expression",
+                "type"
+            ],
+            "is": [
+                "identifier"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/csharp/Shop/Orders/GiftWrapping.cs:1"
+        },
+        {
+            "kind": "IfStatement",
+            "spells": "if",
+            "roles": [
+                "statement"
+            ],
+            "is": [
+                "branch"
+            ],
+            "fields": [
+                "Condition",
+                "Statement"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/csharp/Shop/Reports/PageReader.cs:24"
+        },
+        {
+            "kind": "ImplicitElementAccess",
+            "spells": "implicit-element-access",
+            "roles": [
+                "expression"
+            ],
+            "fields": [
+                "ArgumentList"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/csharp/Shop/Stock/Audits.cs:14"
+        },
+        {
+            "kind": "InitAccessorDeclaration",
+            "spells": "init-accessor",
+            "roles": [
+                "member"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/csharp/Shop/Shipping/Tracking.cs:10"
+        },
+        {
+            "kind": "InterfaceDeclaration",
+            "spells": "interface",
+            "roles": [
+                "member"
+            ],
+            "is": [
+                "type-declaration"
+            ],
+            "fields": [
+                "Members"
+            ],
+            "modifiers": [
+                "public"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/csharp/Shop/Stock/Audits.cs:4"
+        },
+        {
+            "kind": "InterpolatedStringExpression",
+            "spells": "interpolated-string",
+            "roles": [
+                "expression"
+            ],
+            "is": [
+                "literal"
+            ],
+            "fields": [
+                "Contents"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/csharp/Shop/Stock/Audits.cs:22"
+        },
+        {
+            "kind": "InterpolatedStringText",
+            "spells": "interpolated-string-text",
+            "roles": [
+                "other"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/csharp/Shop/Stock/Audits.cs:22"
+        },
+        {
+            "kind": "Interpolation",
+            "spells": "interpolation",
+            "roles": [
+                "other"
+            ],
+            "fields": [
+                "Expression"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/csharp/Shop/Stock/Audits.cs:22"
+        },
+        {
+            "kind": "InvocationExpression",
+            "spells": "invocation",
+            "roles": [
+                "expression"
+            ],
+            "is": [
+                "call"
+            ],
+            "fields": [
+                "ArgumentList",
+                "Expression"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/csharp/Shop/Orders/GiftWrapping.cs:7"
+        },
+        {
+            "kind": "IsPatternExpression",
+            "spells": "is-pattern",
+            "roles": [
+                "expression"
+            ],
+            "fields": [
+                "Expression",
+                "Pattern"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/csharp/Shop/Reports/PageReader.cs:24"
+        },
+        {
+            "kind": "LocalDeclarationStatement",
+            "spells": "local-declaration",
+            "roles": [
+                "statement"
+            ],
+            "fields": [
+                "Declaration"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/csharp/Shop/Reports/PageReader.cs:17"
+        },
+        {
+            "kind": "LogicalNotExpression",
+            "spells": "logical-not",
+            "roles": [
+                "expression"
+            ],
+            "fields": [
+                "Operand"
+            ],
+            "operators": [
+                "!"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/csharp/Shop/Orders/GiftWrapping.cs:7"
+        },
+        {
+            "kind": "MethodDeclaration",
+            "spells": "method",
+            "roles": [
+                "member"
+            ],
+            "is": [
+                "function"
+            ],
+            "fields": [
+                "Body",
+                "ExpressionBody",
+                "ParameterList",
+                "ReturnType"
+            ],
+            "modifiers": [
+                "public",
+                "static"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/csharp/Shop/Orders/GiftWrapping.cs:7"
+        },
+        {
+            "kind": "NullLiteralExpression",
+            "spells": "null-literal",
+            "roles": [
+                "expression"
+            ],
+            "is": [
+                "literal"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/csharp/Shop/Shipping/Tracking.cs:10"
+        },
+        {
+            "kind": "NullableType",
+            "spells": "nullable-type",
+            "roles": [
+                "type"
+            ],
+            "fields": [
+                "ElementType"
+            ],
+            "flags": [
+                "nullable-sugar"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/csharp/Shop/Shipping/Tracking.cs:7"
+        },
+        {
+            "kind": "NumericLiteralExpression",
+            "spells": "numeric-literal",
+            "roles": [
+                "expression"
+            ],
+            "is": [
+                "literal"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/csharp/Shop/Shipping/Tracking.cs:15"
+        },
+        {
+            "kind": "ObjectCreationExpression",
+            "spells": "object-creation",
+            "roles": [
+                "expression"
+            ],
+            "is": [
+                "construction"
+            ],
+            "fields": [
+                "Initializer",
+                "Type"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/csharp/Shop/Stock/Audits.cs:12"
+        },
+        {
+            "kind": "ObjectInitializerExpression",
+            "spells": "object-initializer",
+            "roles": [
+                "expression"
+            ],
+            "fields": [
+                "Expressions"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/csharp/Shop/Stock/Audits.cs:13"
+        },
+        {
+            "kind": "Parameter",
+            "spells": "parameter",
+            "roles": [
+                "other"
+            ],
+            "is": [
+                "parameter"
+            ],
+            "fields": [
+                "Type"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/csharp/Shop/Orders/GiftWrapping.cs:7"
+        },
+        {
+            "kind": "ParameterList",
+            "spells": "parameter-list",
+            "roles": [
+                "other"
+            ],
+            "fields": [
+                "Parameters"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/csharp/Shop/Orders/GiftWrapping.cs:7"
+        },
+        {
+            "kind": "ParenthesizedExpression",
+            "spells": "parenthesized",
+            "roles": [
+                "expression"
+            ],
+            "fields": [
+                "Expression"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/csharp/Shop/Stock/Audits.cs:22"
+        },
+        {
+            "kind": "PredefinedType",
+            "spells": "predefined-type",
+            "roles": [
+                "type"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/csharp/Shop/Orders/GiftWrapping.cs:7"
+        },
+        {
+            "kind": "PropertyDeclaration",
+            "spells": "property",
+            "roles": [
+                "member"
+            ],
+            "fields": [
+                "AccessorList",
+                "ExpressionBody",
+                "Initializer",
+                "Type"
+            ],
+            "modifiers": [
+                "public"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/csharp/Shop/Shipping/Tracking.cs:10"
+        },
+        {
+            "kind": "QualifiedName",
+            "spells": "qualified-name",
+            "roles": [
+                "expression"
+            ],
+            "fields": [
+                "Left",
+                "Right"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/csharp/Shop/Orders/GiftWrapping.cs:1"
+        },
+        {
+            "kind": "RecordDeclaration",
+            "spells": "record",
+            "roles": [
+                "member"
+            ],
+            "is": [
+                "type-declaration"
+            ],
+            "fields": [
+                "ParameterList"
+            ],
+            "modifiers": [
+                "public",
+                "sealed"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/csharp/Shop/Reports/PageReader.cs:4"
+        },
+        {
+            "kind": "ReturnStatement",
+            "spells": "return",
+            "roles": [
+                "statement"
+            ],
+            "is": [
+                "bail-out",
+                "return"
+            ],
+            "fields": [
+                "Expression"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/csharp/Shop/Stock/Audits.cs:22"
+        },
+        {
+            "kind": "SimpleAssignmentExpression",
+            "spells": "simple-assignment",
+            "roles": [
+                "expression"
+            ],
+            "is": [
+                "assignment"
+            ],
+            "fields": [
+                "Left",
+                "Right"
+            ],
+            "operators": [
+                "="
+            ],
+            "flags": [
+                "step"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/csharp/Shop/Shipping/Tracking.cs:12"
+        },
+        {
+            "kind": "SimpleBaseType",
+            "spells": "simple-base-type",
+            "roles": [
+                "other"
+            ],
+            "fields": [
+                "Type"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/csharp/Shop/Stock/Audits.cs:9"
+        },
+        {
+            "kind": "SimpleLambdaExpression",
+            "spells": "simple-lambda",
+            "roles": [
+                "expression"
+            ],
+            "is": [
+                "function"
+            ],
+            "fields": [
+                "ExpressionBody",
+                "Parameter"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/csharp/Shop/Orders/GiftWrapping.cs:7"
+        },
+        {
+            "kind": "SimpleMemberAccessExpression",
+            "spells": "simple-member-access",
+            "roles": [
+                "expression"
+            ],
+            "is": [
+                "member-access"
+            ],
+            "fields": [
+                "Expression",
+                "Name"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/csharp/Shop/Orders/GiftWrapping.cs:7"
+        },
+        {
+            "kind": "StringLiteralExpression",
+            "spells": "string-literal",
+            "roles": [
+                "expression"
+            ],
+            "is": [
+                "literal"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/csharp/Shop/Orders/GiftWrapping.cs:7"
+        },
+        {
+            "kind": "SuppressNullableWarningExpression",
+            "spells": "suppress-nullable-warning",
+            "roles": [
+                "expression"
+            ],
+            "fields": [
+                "Operand"
+            ],
+            "operators": [
+                "!"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/csharp/Shop/Shipping/Tracking.cs:10"
+        },
+        {
+            "kind": "TypeArgumentList",
+            "spells": "type-argument-list",
+            "roles": [
+                "other"
+            ],
+            "fields": [
+                "Arguments"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/csharp/Shop/Orders/GiftWrapping.cs:7"
+        },
+        {
+            "kind": "VariableDeclaration",
+            "spells": "variable",
+            "roles": [
+                "other"
+            ],
+            "fields": [
+                "Type",
+                "Variables"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/csharp/Shop/Shipping/Tracking.cs:7"
+        },
+        {
+            "kind": "VariableDeclarator",
+            "spells": "variable-declarator",
+            "roles": [
+                "other"
+            ],
+            "fields": [
+                "Initializer"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/csharp/Shop/Shipping/Tracking.cs:7"
+        }
+    ]
+}

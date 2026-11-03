@@ -1,0 +1,626 @@
+{
+    "language": "python",
+    "bridges": [
+        "contract/samples/emit/python.py 1"
+    ],
+    "sources": [
+        "contract/samples/python.jsonl"
+    ],
+    "constructs": [
+        {
+            "kind": "Assign",
+            "spells": "assign",
+            "roles": [
+                "statement"
+            ],
+            "is": [
+                "assignment"
+            ],
+            "fields": [
+                "targets",
+                "value"
+            ],
+            "operators": [
+                "="
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/python/shop/basket_totals.py:6"
+        },
+        {
+            "kind": "Attribute",
+            "spells": "attribute",
+            "roles": [
+                "expression"
+            ],
+            "is": [
+                "member-access"
+            ],
+            "fields": [
+                "value"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/python/shop/basket_totals.py:6"
+        },
+        {
+            "kind": "AugAssign",
+            "spells": "aug-assign",
+            "roles": [
+                "statement"
+            ],
+            "is": [
+                "assignment"
+            ],
+            "fields": [
+                "target",
+                "value"
+            ],
+            "operators": [
+                "+",
+                "-"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/python/shop/packing.py:15"
+        },
+        {
+            "kind": "BinOp",
+            "spells": "bin-op",
+            "roles": [
+                "expression"
+            ],
+            "fields": [
+                "left",
+                "right"
+            ],
+            "operators": [
+                "+",
+                "-"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/python/shop/basket_totals.py:15"
+        },
+        {
+            "kind": "Call",
+            "spells": "call",
+            "roles": [
+                "expression"
+            ],
+            "is": [
+                "call"
+            ],
+            "fields": [
+                "args",
+                "func"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/python/shop/basket_totals.py:15"
+        },
+        {
+            "kind": "ClassDef",
+            "spells": "class-def",
+            "roles": [
+                "member"
+            ],
+            "is": [
+                "type-declaration"
+            ],
+            "fields": [
+                "bases",
+                "body"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/python/shop/basket_totals.py:4"
+        },
+        {
+            "kind": "Compare",
+            "spells": "compare",
+            "roles": [
+                "expression"
+            ],
+            "is": [
+                "comparison"
+            ],
+            "fields": [
+                "comparators",
+                "left"
+            ],
+            "operators": [
+                "is"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/python/shop/order_numbers.py:31"
+        },
+        {
+            "kind": "Constant",
+            "spells": "constant",
+            "roles": [
+                "expression",
+                "type"
+            ],
+            "is": [
+                "literal"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/python/shop/basket_totals.py:5"
+        },
+        {
+            "kind": "DictComp",
+            "spells": "dict-comp",
+            "roles": [
+                "expression"
+            ],
+            "fields": [
+                "generators",
+                "key",
+                "value"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/python/shop/cli.py:15"
+        },
+        {
+            "kind": "ExceptHandler",
+            "spells": "except-handler",
+            "roles": [
+                "other"
+            ],
+            "is": [
+                "catch"
+            ],
+            "fields": [
+                "body",
+                "type"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/python/shop/quantity_parsing.py:14"
+        },
+        {
+            "kind": "Expr",
+            "spells": "expr",
+            "roles": [
+                "statement"
+            ],
+            "is": [
+                "expression-statement"
+            ],
+            "fields": [
+                "value"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/python/shop/basket_totals.py:10"
+        },
+        {
+            "kind": "For",
+            "spells": "for",
+            "roles": [
+                "statement"
+            ],
+            "is": [
+                "loop"
+            ],
+            "fields": [
+                "body",
+                "iter",
+                "target"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/python/shop/packing.py:7"
+        },
+        {
+            "kind": "FormattedValue",
+            "spells": "formatted-value",
+            "roles": [
+                "expression"
+            ],
+            "fields": [
+                "format_spec",
+                "value"
+            ],
+            "operators": [
+                "!r"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/python/shop/voucher_guards.py:8"
+        },
+        {
+            "kind": "FunctionDef",
+            "spells": "function-def",
+            "roles": [
+                "member"
+            ],
+            "is": [
+                "function"
+            ],
+            "fields": [
+                "args",
+                "body",
+                "decorator_list",
+                "returns"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/python/shop/basket_totals.py:5"
+        },
+        {
+            "kind": "Global",
+            "spells": "global",
+            "roles": [
+                "statement"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/python/shop/order_numbers.py:30"
+        },
+        {
+            "kind": "If",
+            "spells": "if",
+            "roles": [
+                "statement"
+            ],
+            "is": [
+                "branch"
+            ],
+            "fields": [
+                "body",
+                "test"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/python/shop/cli.py:12"
+        },
+        {
+            "kind": "Import",
+            "spells": "import",
+            "roles": [
+                "statement"
+            ],
+            "is": [
+                "import"
+            ],
+            "fields": [
+                "names"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/python/shop/cli.py:4"
+        },
+        {
+            "kind": "ImportFrom",
+            "spells": "import-from",
+            "roles": [
+                "statement"
+            ],
+            "is": [
+                "import"
+            ],
+            "fields": [
+                "names"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/python/shop/cli.py:5"
+        },
+        {
+            "kind": "JoinedStr",
+            "spells": "joined-str",
+            "roles": [
+                "expression"
+            ],
+            "is": [
+                "literal"
+            ],
+            "fields": [
+                "values"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/python/shop/voucher_guards.py:8"
+        },
+        {
+            "kind": "List",
+            "spells": "list",
+            "roles": [
+                "expression"
+            ],
+            "fields": [
+                "elts"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/python/shop/billing/invoice.py:11"
+        },
+        {
+            "kind": "Match",
+            "spells": "match",
+            "roles": [
+                "statement"
+            ],
+            "is": [
+                "branch"
+            ],
+            "fields": [
+                "cases",
+                "subject"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/python/shop/packing.py:10"
+        },
+        {
+            "kind": "MatchValue",
+            "spells": "match-value",
+            "roles": [
+                "pattern"
+            ],
+            "fields": [
+                "value"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/python/shop/packing.py:11"
+        },
+        {
+            "kind": "Module",
+            "spells": "module",
+            "roles": [
+                "other"
+            ],
+            "fields": [
+                "body"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/python/shop/basket_totals.py:1"
+        },
+        {
+            "kind": "Name",
+            "spells": "name",
+            "roles": [
+                "expression",
+                "type"
+            ],
+            "is": [
+                "identifier",
+                "self-reference"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/python/shop/basket_totals.py:5"
+        },
+        {
+            "kind": "Pass",
+            "spells": "pass",
+            "roles": [
+                "statement"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/python/shop/settings.py:8"
+        },
+        {
+            "kind": "Raise",
+            "spells": "raise",
+            "roles": [
+                "statement"
+            ],
+            "is": [
+                "bail-out",
+                "throw"
+            ],
+            "fields": [
+                "cause",
+                "exc"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/python/shop/cli.py:13"
+        },
+        {
+            "kind": "Return",
+            "spells": "return",
+            "roles": [
+                "statement"
+            ],
+            "is": [
+                "bail-out",
+                "return"
+            ],
+            "fields": [
+                "value"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/python/shop/basket_totals.py:15"
+        },
+        {
+            "kind": "Subscript",
+            "spells": "subscript",
+            "roles": [
+                "type"
+            ],
+            "fields": [
+                "slice",
+                "value"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/python/shop/basket_totals.py:5"
+        },
+        {
+            "kind": "Try",
+            "spells": "try",
+            "roles": [
+                "statement"
+            ],
+            "fields": [
+                "body",
+                "handlers"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/python/shop/quantity_parsing.py:12"
+        },
+        {
+            "kind": "Tuple",
+            "spells": "tuple",
+            "roles": [
+                "expression"
+            ],
+            "fields": [
+                "elts"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/python/shop/cli.py:15"
+        },
+        {
+            "kind": "UnaryOp",
+            "spells": "unary-op",
+            "roles": [
+                "expression"
+            ],
+            "fields": [
+                "operand"
+            ],
+            "operators": [
+                "not"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/python/shop/cli.py:12"
+        },
+        {
+            "kind": "While",
+            "spells": "while",
+            "roles": [
+                "statement"
+            ],
+            "is": [
+                "loop"
+            ],
+            "fields": [
+                "body",
+                "test"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/python/shop/packing.py:6"
+        },
+        {
+            "kind": "alias",
+            "spells": "alias",
+            "roles": [
+                "other"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/python/shop/cli.py:4"
+        },
+        {
+            "kind": "arg",
+            "spells": "arg",
+            "roles": [
+                "other"
+            ],
+            "is": [
+                "parameter"
+            ],
+            "fields": [
+                "annotation",
+                "default"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/python/shop/basket_totals.py:5"
+        },
+        {
+            "kind": "arguments",
+            "spells": "arguments",
+            "roles": [
+                "other"
+            ],
+            "fields": [
+                "args"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/python/shop/basket_totals.py:5"
+        },
+        {
+            "kind": "comprehension",
+            "spells": "comprehension",
+            "roles": [
+                "other"
+            ],
+            "fields": [
+                "iter",
+                "target"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/python/shop/cli.py:15"
+        },
+        {
+            "kind": "match_case",
+            "spells": "match-case",
+            "roles": [
+                "other"
+            ],
+            "fields": [
+                "body",
+                "pattern"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/python/shop/packing.py:11"
+        }
+    ]
+}

@@ -1,0 +1,516 @@
+{
+    "language": "vue",
+    "bridges": [
+        "bridge/frontend 1"
+    ],
+    "sources": [
+        "contract/samples/vue.jsonl"
+    ],
+    "collided": {
+        "variable": [
+            "VariableDeclaration",
+            "VariableStatement"
+        ]
+    },
+    "constructs": [
+        {
+            "kind": "ArrayType",
+            "spells": "array-type",
+            "roles": [
+                "type"
+            ],
+            "fields": [
+                "elementType"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/frontend/components/DeliveryOptionCard.vue:4"
+        },
+        {
+            "kind": "Attribute",
+            "spells": "attribute",
+            "roles": [
+                "markup"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/frontend/components/CustomerContactCard.vue:2"
+        },
+        {
+            "kind": "BinaryExpression",
+            "spells": "binary",
+            "roles": [
+                "expression"
+            ],
+            "is": [
+                "comparison"
+            ],
+            "fields": [
+                "left",
+                "right"
+            ],
+            "operators": [
+                "\u003e"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/frontend/components/StockIndicator.vue:8"
+        },
+        {
+            "kind": "Block",
+            "spells": "block",
+            "roles": [
+                "markup"
+            ],
+            "fields": [
+                "attributes",
+                "children"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/frontend/components/CustomerContactCard.vue:2"
+        },
+        {
+            "kind": "CallExpression",
+            "spells": "call",
+            "roles": [
+                "expression"
+            ],
+            "is": [
+                "call"
+            ],
+            "fields": [
+                "arguments",
+                "expression",
+                "typeArguments"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/frontend/components/CustomerContactCard.vue:8"
+        },
+        {
+            "kind": "Component",
+            "spells": "component",
+            "roles": [
+                "markup"
+            ],
+            "fields": [
+                "blocks"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/frontend/components/CustomerContactCard.vue:1"
+        },
+        {
+            "kind": "Directive",
+            "spells": "directive",
+            "roles": [
+                "markup"
+            ],
+            "fields": [
+                "alias",
+                "arg",
+                "iterable",
+                "value"
+            ],
+            "flags": [
+                "shorthand"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/frontend/components/CustomerContactCard.vue:13"
+        },
+        {
+            "kind": "Element",
+            "spells": "element",
+            "roles": [
+                "markup"
+            ],
+            "fields": [
+                "attributes",
+                "children"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/frontend/components/CustomerContactCard.vue:12"
+        },
+        {
+            "kind": "ExpressionStatement",
+            "spells": "expression",
+            "roles": [
+                "statement"
+            ],
+            "is": [
+                "expression-statement"
+            ],
+            "fields": [
+                "expression"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/frontend/components/CustomerContactCard.vue:8"
+        },
+        {
+            "kind": "Identifier",
+            "spells": "identifier",
+            "roles": [
+                "expression",
+                "other",
+                "pattern"
+            ],
+            "is": [
+                "identifier"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/frontend/components/CustomerContactCard.vue:6"
+        },
+        {
+            "kind": "ImportClause",
+            "spells": "import-clause",
+            "roles": [
+                "other"
+            ],
+            "fields": [
+                "namedBindings"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/frontend/components/CustomerContactCard.vue:6"
+        },
+        {
+            "kind": "ImportDeclaration",
+            "spells": "import",
+            "roles": [
+                "statement"
+            ],
+            "is": [
+                "import"
+            ],
+            "fields": [
+                "importClause",
+                "moduleSpecifier"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/frontend/components/CustomerContactCard.vue:6"
+        },
+        {
+            "kind": "ImportSpecifier",
+            "spells": "import-specifier",
+            "roles": [
+                "other"
+            ],
+            "fields": [
+                "name"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/frontend/components/CustomerContactCard.vue:6"
+        },
+        {
+            "kind": "Interpolation",
+            "spells": "interpolation",
+            "roles": [
+                "markup"
+            ],
+            "fields": [
+                "value"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/frontend/components/CustomerContactCard.vue:13"
+        },
+        {
+            "kind": "NamedImports",
+            "spells": "named-imports",
+            "roles": [
+                "other"
+            ],
+            "fields": [
+                "elements"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/frontend/components/CustomerContactCard.vue:6"
+        },
+        {
+            "kind": "NamedTupleMember",
+            "spells": "named-tuple-member",
+            "roles": [
+                "type"
+            ],
+            "fields": [
+                "name",
+                "type"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/frontend/components/DeliveryOptionCard.vue:5"
+        },
+        {
+            "kind": "NumberKeyword",
+            "spells": "number-keyword",
+            "roles": [
+                "type"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/frontend/components/StockIndicator.vue:2"
+        },
+        {
+            "kind": "NumericLiteral",
+            "spells": "numeric-literal",
+            "roles": [
+                "expression"
+            ],
+            "is": [
+                "literal"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/frontend/components/StockIndicator.vue:8"
+        },
+        {
+            "kind": "PropertyAccessExpression",
+            "spells": "property-access",
+            "roles": [
+                "expression"
+            ],
+            "is": [
+                "member-access"
+            ],
+            "fields": [
+                "expression",
+                "name"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/frontend/components/CustomerContactCard.vue:13"
+        },
+        {
+            "kind": "PropertySignature",
+            "spells": "property-signature",
+            "roles": [
+                "member"
+            ],
+            "fields": [
+                "name",
+                "type"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/frontend/components/CustomerContactCard.vue:8"
+        },
+        {
+            "kind": "SourceFile",
+            "spells": "source-file",
+            "roles": [
+                "other"
+            ],
+            "fields": [
+                "statements"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/frontend/components/CustomerContactCard.vue:2"
+        },
+        {
+            "kind": "StringKeyword",
+            "spells": "string-keyword",
+            "roles": [
+                "type"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/frontend/components/DeliveryOptionCard.vue:4"
+        },
+        {
+            "kind": "StringLiteral",
+            "spells": "string-literal",
+            "roles": [
+                "expression"
+            ],
+            "is": [
+                "literal"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/frontend/components/CustomerContactCard.vue:6"
+        },
+        {
+            "kind": "TemplateExpression",
+            "spells": "template",
+            "roles": [
+                "expression"
+            ],
+            "is": [
+                "literal"
+            ],
+            "fields": [
+                "head",
+                "templateSpans"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/frontend/components/CustomerContactCard.vue:13"
+        },
+        {
+            "kind": "TemplateHead",
+            "spells": "template-head",
+            "roles": [
+                "other"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/frontend/components/CustomerContactCard.vue:13"
+        },
+        {
+            "kind": "TemplateSpan",
+            "spells": "template-span",
+            "roles": [
+                "other"
+            ],
+            "fields": [
+                "expression",
+                "literal"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/frontend/components/CustomerContactCard.vue:13"
+        },
+        {
+            "kind": "TemplateTail",
+            "spells": "template-tail",
+            "roles": [
+                "other"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/frontend/components/CustomerContactCard.vue:13"
+        },
+        {
+            "kind": "Text",
+            "spells": "text",
+            "roles": [
+                "markup"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/frontend/components/DeliveryOptionCard.vue:18"
+        },
+        {
+            "kind": "TupleType",
+            "spells": "tuple-type",
+            "roles": [
+                "type"
+            ],
+            "fields": [
+                "elements"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/frontend/components/DeliveryOptionCard.vue:5"
+        },
+        {
+            "kind": "TypeLiteral",
+            "spells": "type-literal",
+            "roles": [
+                "type"
+            ],
+            "fields": [
+                "members"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/frontend/components/CustomerContactCard.vue:8"
+        },
+        {
+            "kind": "TypeReference",
+            "spells": "type-reference",
+            "roles": [
+                "type"
+            ],
+            "fields": [
+                "typeName"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/frontend/components/CustomerContactCard.vue:8"
+        },
+        {
+            "kind": "VariableDeclaration",
+            "spells": "",
+            "roles": [
+                "other"
+            ],
+            "fields": [
+                "initializer",
+                "name"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/frontend/components/DeliveryOptionCard.vue:5"
+        },
+        {
+            "kind": "VariableDeclarationList",
+            "spells": "variable-declaration-list",
+            "roles": [
+                "other"
+            ],
+            "fields": [
+                "declarations"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/frontend/components/DeliveryOptionCard.vue:5"
+        },
+        {
+            "kind": "VariableStatement",
+            "spells": "",
+            "roles": [
+                "statement"
+            ],
+            "fields": [
+                "declarationList"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/frontend/components/DeliveryOptionCard.vue:5"
+        }
+    ]
+}

@@ -1,0 +1,694 @@
+{
+    "language": "typescript",
+    "bridges": [
+        "bridge/frontend 1"
+    ],
+    "sources": [
+        "contract/samples/typescript.jsonl",
+        "engine/php/testdata/shop-frontend.jsonl.gz"
+    ],
+    "collided": {
+        "variable": [
+            "VariableDeclaration",
+            "VariableStatement"
+        ]
+    },
+    "constructs": [
+        {
+            "kind": "ArrayLiteralExpression",
+            "spells": "array-literal",
+            "roles": [
+                "expression"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/frontend/client/label-printer.ts:10"
+        },
+        {
+            "kind": "ArrayType",
+            "spells": "array-type",
+            "roles": [
+                "type"
+            ],
+            "fields": [
+                "elementType"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/frontend/client/label-printer.ts:10"
+        },
+        {
+            "kind": "ArrowFunction",
+            "spells": "arrow-function",
+            "roles": [
+                "expression"
+            ],
+            "is": [
+                "function"
+            ],
+            "fields": [
+                "body",
+                "parameters"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/frontend/client/stock-lookup.ts:16"
+        },
+        {
+            "kind": "AwaitExpression",
+            "spells": "await",
+            "roles": [
+                "expression"
+            ],
+            "fields": [
+                "expression"
+            ],
+            "operators": [
+                "await"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/frontend/client/stock-lookup.ts:11"
+        },
+        {
+            "kind": "BinaryExpression",
+            "spells": "binary",
+            "roles": [
+                "expression"
+            ],
+            "is": [
+                "comparison"
+            ],
+            "fields": [
+                "left",
+                "right"
+            ],
+            "operators": [
+                "!==",
+                "===",
+                "??"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/frontend/client/label-printer.ts:27"
+        },
+        {
+            "kind": "Block",
+            "spells": "block",
+            "roles": [
+                "other",
+                "statement"
+            ],
+            "is": [
+                "block"
+            ],
+            "fields": [
+                "statements"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/frontend/client/label-printer.ts:19"
+        },
+        {
+            "kind": "BooleanKeyword",
+            "spells": "boolean-keyword",
+            "roles": [
+                "type"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/frontend/client/stock-lookup.ts:20"
+        },
+        {
+            "kind": "CallExpression",
+            "spells": "call",
+            "roles": [
+                "expression"
+            ],
+            "is": [
+                "call"
+            ],
+            "fields": [
+                "arguments",
+                "expression"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/frontend/client/label-printer.ts:27"
+        },
+        {
+            "kind": "ClassDeclaration",
+            "spells": "class",
+            "roles": [
+                "member"
+            ],
+            "is": [
+                "type-declaration"
+            ],
+            "fields": [
+                "members",
+                "name"
+            ],
+            "modifiers": [
+                "export"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/frontend/client/label-printer.ts:8"
+        },
+        {
+            "kind": "ConditionalExpression",
+            "spells": "conditional",
+            "roles": [
+                "expression"
+            ],
+            "is": [
+                "branch"
+            ],
+            "fields": [
+                "condition",
+                "whenFalse",
+                "whenTrue"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/shop/client/checkout.ts:8"
+        },
+        {
+            "kind": "ExpressionStatement",
+            "spells": "expression",
+            "roles": [
+                "statement"
+            ],
+            "is": [
+                "expression-statement"
+            ],
+            "fields": [
+                "expression"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/shop/client/kiosk.ts:7"
+        },
+        {
+            "kind": "FunctionDeclaration",
+            "spells": "function",
+            "roles": [
+                "member"
+            ],
+            "is": [
+                "function"
+            ],
+            "fields": [
+                "body",
+                "name",
+                "parameters",
+                "type"
+            ],
+            "modifiers": [
+                "async",
+                "export"
+            ],
+            "flags": [
+                "async"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/frontend/client/stock-lookup.ts:10"
+        },
+        {
+            "kind": "Identifier",
+            "spells": "identifier",
+            "roles": [
+                "expression",
+                "other"
+            ],
+            "is": [
+                "identifier"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/frontend/client/label-printer.ts:4"
+        },
+        {
+            "kind": "IfStatement",
+            "spells": "if",
+            "roles": [
+                "statement"
+            ],
+            "is": [
+                "branch"
+            ],
+            "fields": [
+                "expression",
+                "thenStatement"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/frontend/client/stock-lookup.ts:12"
+        },
+        {
+            "kind": "InterfaceDeclaration",
+            "spells": "interface",
+            "roles": [
+                "member"
+            ],
+            "is": [
+                "type-declaration"
+            ],
+            "fields": [
+                "members",
+                "name"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/frontend/client/label-printer.ts:4"
+        },
+        {
+            "kind": "MethodDeclaration",
+            "spells": "method",
+            "roles": [
+                "member"
+            ],
+            "is": [
+                "function"
+            ],
+            "fields": [
+                "body",
+                "name",
+                "type"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/frontend/client/label-printer.ts:19"
+        },
+        {
+            "kind": "NewExpression",
+            "spells": "new",
+            "roles": [
+                "expression"
+            ],
+            "is": [
+                "construction"
+            ],
+            "fields": [
+                "arguments",
+                "expression"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/frontend/client/stock-lookup.ts:13"
+        },
+        {
+            "kind": "NullKeyword",
+            "spells": "null-keyword",
+            "roles": [
+                "expression"
+            ],
+            "is": [
+                "literal"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/shop/client/checkout.ts:15"
+        },
+        {
+            "kind": "NumberKeyword",
+            "spells": "number-keyword",
+            "roles": [
+                "type"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/frontend/client/stock-lookup.ts:6"
+        },
+        {
+            "kind": "NumericLiteral",
+            "spells": "numeric-literal",
+            "roles": [
+                "expression"
+            ],
+            "is": [
+                "literal"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/frontend/client/stock-lookup.ts:21"
+        },
+        {
+            "kind": "ObjectLiteralExpression",
+            "spells": "object-literal",
+            "roles": [
+                "expression"
+            ],
+            "fields": [
+                "properties"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/frontend/client/label-printer.ts:12"
+        },
+        {
+            "kind": "Parameter",
+            "spells": "parameter",
+            "roles": [
+                "other"
+            ],
+            "is": [
+                "parameter"
+            ],
+            "fields": [
+                "name",
+                "type"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/frontend/client/stock-lookup.ts:10"
+        },
+        {
+            "kind": "PrefixUnaryExpression",
+            "spells": "prefix-unary",
+            "roles": [
+                "expression"
+            ],
+            "fields": [
+                "operand"
+            ],
+            "operators": [
+                "!"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/frontend/client/stock-lookup.ts:12"
+        },
+        {
+            "kind": "PropertyAccessExpression",
+            "spells": "property-access",
+            "roles": [
+                "expression"
+            ],
+            "is": [
+                "member-access",
+                "null-safe"
+            ],
+            "fields": [
+                "expression",
+                "name"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/frontend/client/label-printer.ts:21"
+        },
+        {
+            "kind": "PropertyAssignment",
+            "spells": "property-assignment",
+            "roles": [
+                "other"
+            ],
+            "fields": [
+                "initializer",
+                "name"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/frontend/client/label-printer.ts:12"
+        },
+        {
+            "kind": "PropertyDeclaration",
+            "spells": "property",
+            "roles": [
+                "member"
+            ],
+            "fields": [
+                "initializer",
+                "name",
+                "type"
+            ],
+            "modifiers": [
+                "private",
+                "readonly"
+            ],
+            "flags": [
+                "optional"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/frontend/client/label-printer.ts:10"
+        },
+        {
+            "kind": "PropertySignature",
+            "spells": "property-signature",
+            "roles": [
+                "member"
+            ],
+            "fields": [
+                "name",
+                "type"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/frontend/client/label-printer.ts:5"
+        },
+        {
+            "kind": "ReturnStatement",
+            "spells": "return",
+            "roles": [
+                "statement"
+            ],
+            "is": [
+                "bail-out",
+                "return"
+            ],
+            "fields": [
+                "expression"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/frontend/client/label-printer.ts:21"
+        },
+        {
+            "kind": "SourceFile",
+            "spells": "source-file",
+            "roles": [
+                "other"
+            ],
+            "fields": [
+                "statements"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/frontend/client/label-printer.ts:1"
+        },
+        {
+            "kind": "StringKeyword",
+            "spells": "string-keyword",
+            "roles": [
+                "type"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/frontend/client/label-printer.ts:5"
+        },
+        {
+            "kind": "StringLiteral",
+            "spells": "string-literal",
+            "roles": [
+                "expression"
+            ],
+            "is": [
+                "literal"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/frontend/client/label-printer.ts:12"
+        },
+        {
+            "kind": "TemplateExpression",
+            "spells": "template",
+            "roles": [
+                "expression"
+            ],
+            "is": [
+                "literal"
+            ],
+            "fields": [
+                "head",
+                "templateSpans"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/frontend/client/stock-lookup.ts:11"
+        },
+        {
+            "kind": "TemplateHead",
+            "spells": "template-head",
+            "roles": [
+                "other"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/frontend/client/stock-lookup.ts:11"
+        },
+        {
+            "kind": "TemplateSpan",
+            "spells": "template-span",
+            "roles": [
+                "other"
+            ],
+            "fields": [
+                "expression",
+                "literal"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/frontend/client/stock-lookup.ts:11"
+        },
+        {
+            "kind": "TemplateTail",
+            "spells": "template-tail",
+            "roles": [
+                "other"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/frontend/client/stock-lookup.ts:11"
+        },
+        {
+            "kind": "ThisKeyword",
+            "spells": "this-keyword",
+            "roles": [
+                "expression"
+            ],
+            "is": [
+                "self-reference"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/frontend/client/label-printer.ts:21"
+        },
+        {
+            "kind": "ThrowStatement",
+            "spells": "throw",
+            "roles": [
+                "statement"
+            ],
+            "is": [
+                "bail-out",
+                "throw"
+            ],
+            "fields": [
+                "expression"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/frontend/client/stock-lookup.ts:13"
+        },
+        {
+            "kind": "TypeReference",
+            "spells": "type-reference",
+            "roles": [
+                "type"
+            ],
+            "fields": [
+                "typeArguments",
+                "typeName"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/frontend/client/label-printer.ts:12"
+        },
+        {
+            "kind": "VariableDeclaration",
+            "spells": "",
+            "roles": [
+                "other"
+            ],
+            "fields": [
+                "initializer",
+                "name",
+                "type"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/frontend/client/stock-lookup.ts:11"
+        },
+        {
+            "kind": "VariableDeclarationList",
+            "spells": "variable-declaration-list",
+            "roles": [
+                "other"
+            ],
+            "fields": [
+                "declarations"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/frontend/client/stock-lookup.ts:11"
+        },
+        {
+            "kind": "VariableStatement",
+            "spells": "",
+            "roles": [
+                "statement"
+            ],
+            "fields": [
+                "declarationList"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/fixtures/frontend/client/stock-lookup.ts:11"
+        },
+        {
+            "kind": "VoidKeyword",
+            "spells": "void-keyword",
+            "roles": [
+                "type"
+            ],
+            "vouched": [
+                "observed"
+            ],
+            "example": "/shop/client/kiosk.ts:5"
+        }
+    ]
+}

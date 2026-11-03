@@ -3,7 +3,10 @@ package rule
 import (
 	"encoding/json"
 	"reflect"
+	"slices"
 	"strings"
+
+	"github.com/jessegall/code-commandments/catalog"
 
 	"github.com/jessegall/code-commandments/contract"
 	"github.com/jessegall/code-commandments/engine"
@@ -102,9 +105,84 @@ func Schema() []byte {
 		},
 	}
 
+	schema["allOf"] = perEngine(definitions)
+
 	written, _ := json.MarshalIndent(schema, "", "    ")
 
 	return append(written, '\n')
+}
+
+// perEngine is one rule per engine, each saying that a rule judging that engine writes its steps with the values
+// that engine's languages really emit: an editor then completes the kinds of the language being judged and marks
+// another language's kind as wrong where it is written, which is the likeliest mistake a rule author makes. The
+// definitions gain one step shape per engine, which is the same step with the language's own value space on the
+// five keys a bridge spells.
+func perEngine(definitions object) []object {
+	var rules []object
+	for _, engine := range engineNames() {
+		language := languages[catalog.Engine(engine)]
+		if len(language) == 0 {
+			continue
+		}
+
+		name := "step-" + engine
+		definitions[name] = stepOf(language)
+		rules = append(rules, object{
+			"if": object{"properties": object{"engine": object{"const": engine}}, "required": []string{"engine"}},
+			"then": object{"properties": object{"find": object{"properties": object{
+				"where":  object{"items": object{"$ref": "#/definitions/" + name}},
+				"reject": object{"items": object{"$ref": "#/definitions/" + name}},
+			}}}},
+		})
+	}
+
+	return rules
+}
+
+// stepOf is the step as those languages let it be written: every key as the step shape has it, and the five whose
+// value a bridge spells narrowed to what the committed vocabularies list, kinds beside their spellings. A key
+// stays as it was where nothing was recorded for the language, since an empty census must not refuse a rule for
+// being ahead of it.
+func stepOf(judged []contract.Language) object {
+	step := shapeOf(reflect.TypeFor[Step]())
+	properties, held := step["properties"].(object)
+	if !held {
+		return step
+	}
+
+	narrowed := object{}
+	for key, property := range properties {
+		narrowed[key] = property
+	}
+
+	for key, offered := range map[string][]string{"kind": append(values(judged, "kind"), spellings(judged)...),
+		"field": values(judged, "field"), "operator": values(judged, "operator"),
+		"hasFlag": values(judged, "hasFlag"), "hasModifier": values(judged, "hasModifier")} {
+		if len(offered) == 0 {
+			continue
+		}
+
+		held, is := narrowed[key].(object)
+		if !is {
+			continue
+		}
+
+		// OFFERED, not required: the census is observed, so a construct no fixture exercises is missing from it,
+		// and an enum alone would mark a rule wrong for being ahead of the census. An editor completes the values
+		// of the enum inside an anyOf and accepts any other string, which is exactly the honest claim — these are
+		// the ones this language has been seen writing.
+		listed := object{"anyOf": []object{{"enum": slices.Sorted(slices.Values(offered))}, {"type": "string"}}}
+		for name, value := range held {
+			if name != "type" {
+				listed[name] = value
+			}
+		}
+		narrowed[key] = listed
+	}
+
+	step["properties"] = narrowed
+
+	return step
 }
 
 // shapeOf is the schema of a type a step holds: its fields, an embedded type's among them, and nothing else.

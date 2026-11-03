@@ -26,7 +26,7 @@ type Group struct {
 var Checks = []Group{
 	{"What it is and what it is called", []Check{
 		{"is", `{"is": "loop"}`, "it answers the neutral kind"},
-		{"kind", `{"kind": "Expr_StaticCall"}`, "it is the language's own kind"},
+		{"kind", `{"kind": "Expr_StaticCall"}`, "it is the language's own kind, written as the language writes it or as the vocabulary spells it: `Expr_StaticCall` and `static-call` are one construct. The spellings are derived from the kinds, so the editor's own completion lists what a language really emits, and a spelling two kinds share is the spelling of neither"},
 		{"name", `{"name": "select"}`, "its name — a call's or an access's is its name child's — is it"},
 		{"nameIn", `{"nameIn": ["select", "statement"]}`, "its name is one of them"},
 		{"nameLike", `{"nameLike": "get*"}`, "its name matches the glob, `*` any run of characters and `?` one"},

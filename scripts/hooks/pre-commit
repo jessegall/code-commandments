@@ -30,6 +30,7 @@ HOOK
 fi
 
 GENERATORS=(
+    "scripts/dev env GOMEMLIMIT=3GiB GOMAXPROCS=2 go run ./rule/vocabulary/census|rule/vocabulary"
     "scripts/dev env GOMEMLIMIT=3GiB GOMAXPROCS=2 go run ./cli/doc/readme|README.md README.sins.md README.scribes.md README.skills.md"
     "scripts/dev env GOMEMLIMIT=3GiB GOMAXPROCS=2 go run ./skill/render/generate|skills/commandments"
     "scripts/dev env GOMEMLIMIT=3GiB GOMAXPROCS=2 go run ./cli/doc/refresh|README.md skills"

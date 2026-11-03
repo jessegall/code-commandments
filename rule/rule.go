@@ -715,11 +715,33 @@ func admits(named string, match engine.Match) bool {
 		return match.Kind() == kind
 	}
 
+	if spelling, construct := strings.CutPrefix(named, constructSelector); construct {
+		return namesTheKind(spelling, match)
+	}
+
 	if named == commentSelector {
 		return match.Kind() == engine.CommentKind
 	}
 
 	return match.Is(engine.Neutral(named))
+}
+
+// namesTheKind says whether the word is the SPELLING of the node's kind, as that language's committed vocabulary
+// derives it: a rule writes `static-call` or `Expr_StaticCall` and means the same construct. A spelling two kinds
+// of a language share is the spelling of neither, so it names nothing here either.
+func namesTheKind(word string, subject engine.Match) bool {
+	if subject.Source() == nil {
+		return false
+	}
+
+	vocabulary, held := VocabularyOf(subject.Source().Language())
+	if !held {
+		return false
+	}
+
+	construct, spelled := vocabulary.Spelled(word)
+
+	return spelled && construct.Kind == subject.Kind()
 }
 
 // selector opens the query a rule's select names: a neutral kind, or `kind:` and a language's own kind.
@@ -732,12 +754,22 @@ func selector(named string) (func(*engine.Codebase) *engine.Query, error) {
 		return func(c *engine.Codebase) *engine.Query { return c.WhereComment() }, nil
 	}
 
+	if spelling, construct := strings.CutPrefix(named, constructSelector); construct && spelling != "" {
+		return func(c *engine.Codebase) *engine.Query {
+			return c.Where(func(match engine.Match) bool { return namesTheKind(spelling, match) })
+		}, nil
+	}
+
 	if !slices.Contains(engine.Neutrals, engine.Neutral(named)) {
-		return nil, fmt.Errorf("select %q is neither a neutral kind (%s), nor %s, nor kind:<Kind>%s", named, neutralList(), commentSelector, didYouMean(named, append(neutralNames(), commentSelector)))
+		return nil, fmt.Errorf("select %q is neither a neutral kind (%s), nor %s, nor construct:<spelling>, nor kind:<Kind>%s", named, neutralList(), commentSelector, didYouMean(named, append(neutralNames(), commentSelector)))
 	}
 
 	return func(c *engine.Codebase) *engine.Query { return c.WhereIs(engine.Neutral(named)) }, nil
 }
+
+// constructSelector opens a select that names a construct by its SPELLING rather than by the language's own kind:
+// `construct:static-call`.
+const constructSelector = "construct:"
 
 // commentSelector is what a rule selects to report on comments rather than code: a comment is no node of the tree,
 // so it is named rather than being one of the neutral kinds.
@@ -1109,7 +1141,7 @@ func (s Step) check(match engine.Match) bool {
 	case s.Is != "":
 		return subject.Is(engine.Neutral(s.Is))
 	case s.Kind != "":
-		return subject.Kind() == s.Kind
+		return subject.Kind() == s.Kind || namesTheKind(s.Kind, subject)
 	case s.Name != "":
 		return nameOf(subject) == s.Name
 	case s.NameIn != nil:
@@ -1410,6 +1442,117 @@ func (s *Step) ownChecks(judged []contract.Language) error {
 	}
 
 	return nil
+}
+
+// vocabularyKeys are the checks whose value is a word one language's bridge writes, each read from the committed
+// vocabularies of the languages a rule judges: the value space nobody could discover before it was generated.
+func (s *Step) vocabularyKeys() map[string]string {
+	return map[string]string{"kind": s.Kind, "field": s.Field, "operator": s.Operator, "hasFlag": s.HasFlag,
+		"hasModifier": s.HasModifier}
+}
+
+// Written says whether one of the languages has been SEEN writing that value for the key, and which languages
+// have been seen writing it anywhere. It is what the schema offers as completion and what a hint is drawn from,
+// and it is deliberately not what a rule is refused by: the census is observed, so a construct no fixture
+// exercises is missing from it, and refusing on that would refuse a rule for being ahead of the census. The
+// declared vocabulary, which a parser vouches for, is what a refusal needs.
+func Written(judged []contract.Language, key, named string) (seen bool, elsewhere []contract.Language) {
+	return offered(judged, key, named), owning(key, named)
+}
+
+// offered says whether one of the languages writes that value for the key, by its own word or, for a kind, by the
+// spelling the vocabulary derives. A language nothing was recorded for offers everything, since refusing against
+// an empty census would refuse a rule for being ahead of it.
+func offered(judged []contract.Language, key, named string) bool {
+	for _, language := range judged {
+		vocabulary, held := VocabularyOf(language)
+		if !held {
+			return true
+		}
+
+		if slices.Contains(valuesOf(vocabulary, key), named) {
+			return true
+		}
+
+		if _, spelled := vocabulary.Spelled(named); key == "kind" && spelled {
+			return true
+		}
+	}
+
+	return false
+}
+
+// owning are the languages that DO write the value, so a rule naming another language's construct is told whose
+// it is rather than told it is nothing.
+func owning(key, named string) []contract.Language {
+	var owners []contract.Language
+	for _, language := range contract.Languages {
+		vocabulary, held := VocabularyOf(language)
+		if !held {
+			continue
+		}
+
+		_, spelled := vocabulary.Spelled(named)
+		if slices.Contains(valuesOf(vocabulary, key), named) || (key == "kind" && spelled) {
+			owners = append(owners, language)
+		}
+	}
+
+	return owners
+}
+
+// values are the values the languages write for the key, each once, which is what a slip of the keyboard is
+// measured against.
+func values(judged []contract.Language, key string) []string {
+	var offered []string
+	for _, language := range judged {
+		if vocabulary, held := VocabularyOf(language); held {
+			offered = append(offered, valuesOf(vocabulary, key)...)
+		}
+	}
+
+	return offered
+}
+
+// spellings are the spellings the languages derive, which a slip over a spelling is measured against beside the
+// kinds themselves.
+func spellings(judged []contract.Language) []string {
+	var derived []string
+	for _, language := range judged {
+		if vocabulary, held := VocabularyOf(language); held {
+			derived = append(derived, vocabulary.Spellings()...)
+		}
+	}
+
+	return derived
+}
+
+// valuesOf are the values one vocabulary writes for the key.
+func valuesOf(vocabulary Vocabulary, key string) []string {
+	switch key {
+	case "kind":
+		return vocabulary.Kinds()
+	case "field":
+		return vocabulary.Fields()
+	case "operator":
+		return vocabulary.Operators()
+	case "hasFlag":
+		return vocabulary.Flags()
+	case "hasModifier":
+		return vocabulary.Modifiers()
+	}
+
+	return nil
+}
+
+// said is the languages as a reader reads them.
+func said(languages []contract.Language) string {
+	var names []string
+	for _, language := range languages {
+		names = append(names, string(language))
+	}
+
+	return strings.Join(names, ", ")
 }
 
 // commented says whether a comment on the node, or in the run directly above it, matches the step's pattern.
