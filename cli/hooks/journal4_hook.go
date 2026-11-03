@@ -173,7 +173,10 @@ func Judge4Into(line map[string]any, folder string) {
 	}
 
 	// The gates answered on the way out; what is left is everything else the moment was worth.
-	_ = queue.Tell(answerWith(Stamped(moment), not(isGate), true), asText(line["environment"]))
+	// The agent the event came from, written back unchanged, so the journal hands this answer to that agent and
+	// to no other: a worker and the main agent share an environment, and until this was named a worker could be
+	// told about an edit made in a tree it does not have.
+	_ = queue.Tell(answerWith(Stamped(moment), not(isGate), true), asText(line["environment"]), asAgent(line["agent"]))
 }
 
 // judge4Detached starts that run, in a session of its own so it outlives this one. It reads the event from a file it

@@ -278,6 +278,24 @@ func intOf(value any) int {
 	return 0
 }
 
+// asAgent is the journal's own agent number, as an event's `agent` carries it: a whole number, however the JSON
+// decoder read it, and 0 where the event names none. 0 is no agent, since the journal numbers its agents from 1,
+// so an event without one is told apart from an event with one rather than read as the first.
+func asAgent(value any) int {
+	switch typed := value.(type) {
+	case int:
+		return typed
+	case float64:
+		return int(typed)
+	case json.Number:
+		if whole, err := typed.Int64(); err == nil {
+			return int(whole)
+		}
+	}
+
+	return 0
+}
+
 func asText(value any) string {
 	switch typed := value.(type) {
 	case string:

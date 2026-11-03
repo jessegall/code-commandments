@@ -46,7 +46,7 @@ func TestAServiceWhoseToolIsNotInstalledStaysUpAndSaysWhy(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(root, "Cart.php"), []byte("<?php\n\nclass Cart {}\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	t.Chdir(root)
+	chdir(t, root)
 
 	serve := service.Serve{Bridge: scan.Bridge{
 		Kind:      "php",
@@ -104,7 +104,7 @@ func TestAServiceWhoseToolIsNotInstalledTellsTheJournal(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(root, "Cart.php"), []byte("<?php\n\nclass Cart {}\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	t.Chdir(root)
+	chdir(t, root)
 
 	data := t.TempDir()
 	t.Setenv("JOURNAL_PLUGIN_DATA", data)
@@ -147,4 +147,22 @@ func TestAServiceWhoseToolIsNotInstalledTellsTheJournal(t *testing.T) {
 			t.Errorf("what was told the journal does not carry %q: %s", wanted, told)
 		}
 	}
+}
+
+// chdir puts the test in the folder and puts the working folder back when it ends. It is what t.Chdir does, which
+// the go this module declares has not got: os.Chdir alone leaves every later test in the package standing
+// somewhere else, and the failures then read as regressions in tests that never moved.
+func chdir(t *testing.T, folder string) {
+	t.Helper()
+
+	previous, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if err := os.Chdir(folder); err != nil {
+		t.Fatal(err)
+	}
+
+	t.Cleanup(func() { os.Chdir(previous) })
 }

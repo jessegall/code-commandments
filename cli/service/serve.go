@@ -60,7 +60,8 @@ func tell(unavailable bridge.Unavailable, console cli.Console) {
 		unavailable.Error() + ". Tell the user what to install; until then every rule of that language finds nothing, " +
 		"which is not the same as finding no sins."
 
-	if err := queue.Tell(hooks.JournalAnswer{Whisper: &words}, os.Getenv(journalEnvironment)); err != nil {
+	// No agent: a service is nobody's, and what it has to say is for whichever agent next reads the queue.
+	if err := queue.Tell(hooks.JournalAnswer{Whisper: &words}, os.Getenv(journalEnvironment), 0); err != nil {
 		console.Warn("what the bridge cannot do could not be told to the journal: " + err.Error())
 	}
 }

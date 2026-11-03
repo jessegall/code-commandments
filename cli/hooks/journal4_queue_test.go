@@ -275,13 +275,13 @@ func TestAQueuedAnswerIsTheAnswersOwnShapeInAFileOfItsOwn(t *testing.T) {
 	}
 
 	advice := "Code Commandments — a sin at src/A.php:3"
-	if err := queue.Tell(JournalAnswer{Whisper: &advice, Raises: []Raise{{Event: "sin-found", Brief: "1 sin in src/A.php", Key: "sins:src/A.php"}}}, "main"); err != nil {
+	if err := queue.Tell(JournalAnswer{Whisper: &advice, Raises: []Raise{{Event: "sin-found", Brief: "1 sin in src/A.php", Key: "sins:src/A.php"}}}, "main", 0); err != nil {
 		t.Fatal(err)
 	}
-	if err := queue.Tell(JournalAnswer{Raises: []Raise{{Event: "sin-resolved", Brief: "src/A.php is clean", Key: "sins:src/A.php"}}}, "main"); err != nil {
+	if err := queue.Tell(JournalAnswer{Raises: []Raise{{Event: "sin-resolved", Brief: "src/A.php is clean", Key: "sins:src/A.php"}}}, "main", 0); err != nil {
 		t.Fatal(err)
 	}
-	if err := queue.Tell(JournalAnswer{}, "main"); err != nil {
+	if err := queue.Tell(JournalAnswer{}, "main", 0); err != nil {
 		t.Fatal(err)
 	}
 

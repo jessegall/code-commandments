@@ -20,7 +20,7 @@ func TestARunSaysWhenTheWarmBridgeCouldNotAnswer(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Chdir(project)
+	chdir(t, project)
 
 	// A listener that accepts and says nothing is a service that is up and cannot answer, which is the state this
 	// is about: dialling it succeeds, and the ask does not.
@@ -68,7 +68,7 @@ func TestARunSaysNothingWhenNoServiceIsKeptUp(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Chdir(project)
+	chdir(t, project)
 
 	said := swapStderr(t)
 	held := &process{
@@ -103,4 +103,22 @@ func swapStderr(t *testing.T) func() string {
 
 		return taken.String()
 	}
+}
+
+// chdir puts the test in the folder and puts the working folder back when it ends. It is what t.Chdir does, which
+// the go this module declares has not got: os.Chdir alone leaves every later test in the package standing
+// somewhere else, and the failures then read as regressions in tests that never moved.
+func chdir(t *testing.T, folder string) {
+	t.Helper()
+
+	previous, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if err := os.Chdir(folder); err != nil {
+		t.Fatal(err)
+	}
+
+	t.Cleanup(func() { os.Chdir(previous) })
 }

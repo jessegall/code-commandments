@@ -36,16 +36,25 @@ func (q Queue4) Path() string {
 	return q.path
 }
 
-// Tell writes what was worked out after the answer went back: one file, the answer's own shape with the environment
-// it is for, so the journal hands the words to that environment's agent at its next hook. A refusal is told as
+// Tell writes what was worked out after the answer went back: one file, the answer's own shape with the agent and
+// the environment it is FOR, so the journal hands the words to that agent at its next hook. A refusal is told as
 // words too — nothing here can stop a tool that has already run, and the reason is worth more said than dropped.
-func (q Queue4) Tell(answer JournalAnswer, env string) error {
+//
+// Naming the agent is what keeps one agent's answer from reaching another. The journal hands a queued answer to
+// the first agent whose hook drains the queue unless the file names one, and while this wrote only the
+// environment, a worker could be told about the main agent's edit: a file it had never seen, in a tree it does
+// not have. An agent of 0 names nobody, which is the honest answer where the event carried none, and the journal
+// then hands the answer on as it always did.
+func (q Queue4) Tell(answer JournalAnswer, env string, agent int) error {
 	shape := told(answer).Shape4()
 	if len(shape) <= 1 {
 		return nil
 	}
 	if env != "" {
 		shape["env"] = env
+	}
+	if agent != 0 {
+		shape["agent"] = agent
 	}
 
 	said, err := json.Marshal(shape)
