@@ -483,3 +483,46 @@ func TestAValueTwoClassesDeclareIsARepeat(t *testing.T) {
 		}
 	}
 }
+
+// TestARepeatedQuestionAnswersForGo holds the fact the hashes were missing for: Go registered neither, so every
+// repeat and duplicate question answered nothing for it while answering for five other languages.
+func TestARepeatedQuestionAnswersForGo(t *testing.T) {
+	project := goProject(t, map[string]string{
+		"go.mod": "module example.com/shop\n",
+		"shop/mark.go": `package shop
+
+func Marked(run *Run) bool {
+	return run.State == "saved"
+}
+
+type Run struct {
+	State string
+}
+`,
+		"shop/dock.go": `package shop
+
+func Docked(run *Run) bool {
+	return run.State == "saved"
+}
+`,
+		"shop/label.go": `package shop
+
+func Labelled(run *Run) bool {
+	return run.State == "printed"
+}
+`,
+	})
+
+	for query, want := range map[string]string{
+		// The same question asked in two files, blind to what the local is called: the normalised reading.
+		`{"select": "comparison", "where": [{"repeated": {"atLeast": 3, "files": 3}}]}`: "[dock.go:4 label.go:4 mark.go:4]",
+		// Asked exactly, the datum counts: the two asking about "saved" are one question, and the one asking
+		// about "printed" is its own.
+		`{"select": "comparison", "where": [{"repeated": {"atLeast": 2, "exact": true}}]}`: "[dock.go:4 mark.go:4]",
+		`{"select": "comparison", "where": [{"repeated": {"atMost": 1, "exact": true}}]}`:  "[label.go:4]",
+	} {
+		if got := foundAt(t, "go", query, project); got != want {
+			t.Errorf("go %s:\n got %s\nwant %s", query, got, want)
+		}
+	}
+}

@@ -25,6 +25,8 @@ func init() {
 		// A Go symbol is a package path and the names under it, so the namespace is everything before the last
 		// name: example.com/shop/cart.Cart.Total belongs to example.com/shop/cart.
 		NamespaceOf: namespaceOf,
+		BodyHash:    BodyHash,
+		NodeHash:    NodeHash,
 	})
 }
 
