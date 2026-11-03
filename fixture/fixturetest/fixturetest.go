@@ -3,6 +3,7 @@
 package fixturetest
 
 import (
+	"slices"
 	"testing"
 
 	"github.com/jessegall/code-commandments/catalog"
@@ -38,9 +39,35 @@ func Prove(t testing.TB, f fixture.Fixture) {
 			t.Errorf("%s is a chain detector but its deepest finding crosses only %d file(s); it must follow a value through %d or more", detector, deepest, fixture.MinChainFiles)
 		}
 	}
+	proveWhatEachRuleReads(t, f)
 	for detector, widest := range f.RecurrenceSpans() {
 		if widest < fixture.MinRecurrenceFiles {
 			t.Errorf("%s is a recurrence detector but its widest group touches only %d file(s); mark one recurring group across two classes or files, not twice in one", detector, widest)
+		}
+	}
+}
+
+// proveWhatEachRuleReads holds every detector to saying whether it reads more than the file it reports in, which
+// is what lets a scoped run read the files it judges and nothing else. It is measured, by asking each detector
+// the same question of one file and of the whole fixture: a rule whose answers differ reads across files, and one
+// that does not SAY so would answer a one-file scan as though it were the whole program.
+func proveWhatEachRuleReads(t testing.TB, f fixture.Fixture) {
+	t.Helper()
+
+	across := f.ReadsAcrossFiles()
+	for _, name := range across {
+		if !slices.Contains(f.MarkedAcrossFiles(), name) {
+			t.Errorf("%s answers differently for one file than for the whole fixture, so it reads across files: give it the method CrossFile(), or it will answer a scoped run as though one file were the whole program", name)
+		}
+	}
+
+	// The other direction is told, not failed. "Its answers do not change on THIS fixture" is weaker than "it
+	// never reads across files": a rule that compares routes across files still finds the fixture's duplicate
+	// pair when both sit in one file. Taking the marker off on that evidence would starve the rule, where leaving
+	// it on only costs a scoped run the scan it would have read anyway.
+	for _, name := range f.MarkedAcrossFiles() {
+		if !slices.Contains(across, name) {
+			t.Logf("%s says it reads across files and answers the same for one file as for the whole fixture: either the marker is not needed, or the fixture never exercises what it reads across", name)
 		}
 	}
 }

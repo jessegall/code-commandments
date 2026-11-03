@@ -304,6 +304,24 @@ func (s Sources) project() string {
 	return git.Root(root)
 }
 
+// JustThese are the sources narrowed to the files the scope holds, keeping each in the language the walk read it
+// as: a scoped run whose rules all read one file at a time needs the files it judges parsed and no others, and
+// the walk's own answer about what each file IS stays the answer. The scope is asked rather than a path compared,
+// since a walk names a file as its root named it and a scope names it as the repository does.
+func (s Sources) JustThese(holds func(path string) bool) Sources {
+	kept := Sources{byLanguage: map[source.Language][]string{}, roots: s.roots, tooLarge: s.tooLarge, read: s.read}
+
+	for language, walked := range s.byLanguage {
+		for _, file := range walked {
+			if holds(file) {
+				kept.byLanguage[language] = append(kept.byLanguage[language], file)
+			}
+		}
+	}
+
+	return kept
+}
+
 // Files are the walked files of these languages, in the order the walk met them: what Load hands the bridge that
 // reads them, and what a service warming that bridge asks it for.
 func (s Sources) Files(languages ...source.Language) []string {

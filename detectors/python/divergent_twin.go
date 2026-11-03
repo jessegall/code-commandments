@@ -52,3 +52,7 @@ func (DivergentTwinDetector) GroupKey(match engine.Match) (string, bool) {
 
 	return key, key != ""
 }
+
+// CrossFile says the rule reads more than the file it reports in, which the fixture measures by asking it
+// of one file and of the whole tree: a scoped run reads the whole scan while it is enabled.
+func (DivergentTwinDetector) CrossFile() {}

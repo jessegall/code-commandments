@@ -18,6 +18,25 @@ type Unpublished interface {
 	Unpublished()
 }
 
+// CrossFile marks a rule that reads MORE than the file it reports in: a recurrence across sites, a twin, a
+// caller, what refers to a declaration, a layer stack, what another engine published. Such a rule needs the whole
+// scan to answer honestly, where every other rule answers from the file it is looking at, so a scoped run can
+// read the files it judges and nothing else when none of these is enabled.
+//
+// The marker sits on the rule, as Unpublished does, and the fixture harness proves it both ways: a rule whose
+// answers differ between one file and the whole tree MUST carry it, and one that carries it while answering the
+// same either way is named too, so the marker cannot rot in either direction.
+type CrossFile interface {
+	CrossFile()
+}
+
+// IsCrossFile says whether a rule reads more than the file it reports in.
+func IsCrossFile(rule any) bool {
+	_, crossFile := rule.(CrossFile)
+
+	return crossFile
+}
+
 // Engine is the part of the curriculum a rule belongs to.
 type Engine string
 

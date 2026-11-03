@@ -194,6 +194,21 @@ func (f *File) Source() ([]byte, error) {
 	return f.source, f.err
 }
 
+// Alone is a codebase holding this file and nothing else, its nodes the ones already parsed: the same scan roots
+// and project, so every path reads as it does in the whole codebase, and its language's facts filled again for a
+// scan of one file.
+//
+// It exists so that whether a rule reads MORE than the file it reports in is measured rather than declared: the
+// rule is asked the same question twice, once of the file alone and once of the whole scan, and a rule whose
+// answers differ is one that reads across files.
+func (f *File) Alone() *Codebase {
+	stream := &contract.Stream{Header: f.stream.Header, Files: []*contract.File{f.File}, Program: f.stream.Program}
+	alone := New(f.read, stream)
+	alone.scanned, alone.project = f.codebase.scanned, f.codebase.project
+
+	return alone
+}
+
 // Codebase is the codebase the file was read into.
 func (f *File) Codebase() *Codebase {
 	return f.codebase

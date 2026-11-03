@@ -190,11 +190,22 @@ func (c Command) judge(options options, selected []detectors.Detector, judged co
 		return choseNone(targets, console), nil
 	}
 
+	languages = reaching(targets, languages)
+
 	progress := cli.NewProgress(console.Err)
 	progress.Status("parsing")
 	parsing := time.Now()
 
 	sources := scan.Walk(roots, source.Under(options.path, judged.Excluded).Judging(judged.JudgedDespiteExclusion())).Only(languages...)
+
+	// A scoped run whose every rule answers from the file it reports in needs the files it judges parsed and no
+	// others: judging one changed file on this repository read 1469 of them and cost eleven seconds, where the
+	// file alone costs a third of one. Which rules those are is measured by the fixture harness and said on the
+	// rule itself, so a rule that reads a recurrence, a caller or a twin keeps the whole scan.
+	if len(targets.Files()) > 0 && !readsAcrossFiles(selected) {
+		sources = sources.JustThese(targets.Includes)
+	}
+
 	whole, byProject := wholeAndByProject(selected)
 
 	read := sources.Only(slices.DeleteFunc(slices.Clone(languages), func(language source.Language) bool { return language == source.CSharp })...)
@@ -432,6 +443,63 @@ func languagesFor(selected []detectors.Detector, project config.Config, root str
 	}
 
 	return languages
+}
+
+// readsAcrossFiles says whether any of the rules reads more than the file it reports in, which is what decides
+// whether a scoped run may read the files it judges alone.
+func readsAcrossFiles(selected []detectors.Detector) bool {
+	for _, detector := range selected {
+		if catalog.IsCrossFile(detector) {
+			return true
+		}
+	}
+
+	return false
+}
+
+// reaching are the languages a SCOPED run has to read: the ones its own files are in, and the ones that publish
+// facts for those, since a rule about a Vue component asks what the PHP server published. Every other language is
+// read for nothing — a finding of it lies in a file the run would not report — and on this repository that is ten
+// of the twenty-one seconds a worker pays per task. An unscoped run judges the whole path and reads it all.
+func reaching(targets scope.Scope, languages []source.Language) []source.Language {
+	files := targets.Files()
+	if len(files) == 0 {
+		return languages
+	}
+
+	var changed []source.Language
+	for path := range files {
+		if language := source.OfFile(path); !slices.Contains(changed, language) {
+			changed = append(changed, language)
+		}
+	}
+
+	var reads []source.Language
+	for _, language := range languages {
+		if slices.Contains(changed, language) || publishesFor(language, changed) {
+			reads = append(reads, language)
+		}
+	}
+
+	return reads
+}
+
+// publishesFor says whether the language's facts are read by the rules of a language that changed: the PHP a Vue
+// rule asks about, and the Vue and TypeScript a PHP rule asks about.
+func publishesFor(language source.Language, changed []source.Language) bool {
+	for engine, published := range publishers {
+		if !slices.Contains(published, language) {
+			continue
+		}
+
+		for _, reads := range source.OfEngine(engine) {
+			if slices.Contains(changed, reads) {
+				return true
+			}
+		}
+	}
+
+	return false
 }
 
 // ofNoLanguage says whether a scoped run's own files are of no language the chosen rules read: every one of them

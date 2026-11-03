@@ -31,3 +31,7 @@ func (d RepeatedTypeGuardDetector) Find(codebase *engine.Codebase) []engine.Matc
 
 	return recurring(candidates, d.GroupKey, 2, func([]engine.Match) bool { return true })
 }
+
+// CrossFile says the rule reads more than the file it reports in, which the fixture measures by asking it
+// of one file and of the whole tree: a scoped run reads the whole scan while it is enabled.
+func (RepeatedTypeGuardDetector) CrossFile() {}

@@ -56,3 +56,7 @@ func rootNamespace(class string) string {
 
 // WholeTree says the verdict needs every file: a reference is dangling only if no file declares it.
 func (DanglingDocReferenceDetector) WholeTree() {}
+
+// CrossFile says the rule reads more than the file it reports in, which the fixture measures by asking it
+// of one file and of the whole tree: a scoped run reads the whole scan while it is enabled.
+func (DanglingDocReferenceDetector) CrossFile() {}
