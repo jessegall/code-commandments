@@ -49,14 +49,14 @@ func (m Match) Declaring() Match {
 func (m Match) names() (string, Match) {
 	switch {
 	case m.Is(MemberAccess):
-		return m.Name(), m.Receiver()
+		return m.NameRead(), m.Receiver()
 	case m.Is(Comparison):
 		children := m.Children()
 		if len(children) == 0 || !children[0].Is(MemberAccess) {
 			return "", Match{}
 		}
 
-		return children[0].Name(), children[0].Receiver()
+		return children[0].NameRead(), children[0].Receiver()
 	case m.HasFlag("named"):
 		return m.Name(), subjectOf(m.Parent())
 	case m.Is(Call):
@@ -65,7 +65,7 @@ func (m Match) names() (string, Match) {
 			return "", Match{}
 		}
 
-		return callee.Name(), callee.Receiver()
+		return callee.NameRead(), callee.Receiver()
 	}
 
 	return "", Match{}
@@ -193,4 +193,94 @@ func (m Match) declaration(class, member string) (Match, bool) {
 	}
 
 	return Match{}, false
+}
+
+// Readers are the nodes that reach this declaration by name: every member access, call and named argument of the
+// codebase whose own Declared answers it. It is how a question about a MEMBER is answered where a symbol cannot
+// answer it — a field read as `$this->held`, `self.held` or `this.held` refers to no symbol in most languages, so
+// the declaration it reaches is resolved through the type its receiver holds, which is the same walk a rule's
+// `declaration` target makes.
+//
+// The declaration's own name node is no reader, and neither is anything inside the declaration itself: a field is
+// not read by the line that declares it.
+func (m Match) Readers() []Match {
+	if m.file == nil || !m.Exists() {
+		return nil
+	}
+
+	var readers []Match
+	for _, reader := range readersOf(m.file.Codebase())[m.Location()] {
+		// What a plain assignment writes to is no reader of it: a field only ever written is a field nothing
+		// reads, which is the whole question a rule about an unread member asks.
+		if reader.node == m.node || m.isAbove(reader) || reader.IsOverwritten() {
+			continue
+		}
+
+		readers = append(readers, reader)
+	}
+
+	return readers
+}
+
+// IsOverwritten says whether the node is what a plain assignment writes TO: the left side of an `=`, which
+// stores a value and reads none. A compound assignment and an increment read the old value before writing it, so
+// neither is this, and a language that writes no operator for its plain assignment says so by writing none.
+func (m Match) IsOverwritten() bool {
+	parent := m.Parent()
+	if !parent.Is(Assignment) || !slices.Contains([]string{"=", ""}, parent.operator()) {
+		return false
+	}
+
+	written := parent.Children()
+
+	return len(written) > 0 && m.isAtOrWithin(written[0])
+}
+
+// isAtOrWithin says whether this node is that one or sits inside it, which is how the written side of an
+// assignment holds a member access: `$this->lines[0] = x` writes through the access rather than reading it.
+func (m Match) isAtOrWithin(other Match) bool {
+	return m.node == other.node || other.isAbove(m)
+}
+
+// operator is the operator token the node carries; none for a node carrying no operator.
+func (m Match) operator() string {
+	if m.node == nil || m.node.Facts == nil {
+		return ""
+	}
+
+	return m.node.Operator
+}
+
+// IsUnreadMember says whether nothing in the codebase reads the member: no node reaches its declaration, the
+// language itself does not reach it by name (a serialized property, a constructor), and it overrides nothing, so
+// no caller reaches it through a supertype. It is false for anything that is no member, since a rule asking it of
+// a statement would be asking nothing.
+func (m Match) IsUnreadMember() bool {
+	if m.Role() != "member" || m.Is(Function) || m.Is(TypeDeclaration) {
+		return false
+	}
+
+	// Both ways a member is reached are asked: what resolves to its declaration through the type a receiver
+	// holds, and what refers to its symbol where its language's resolver binds names to symbols. A member nothing
+	// reaches either way is read by nothing.
+	return !m.IsImplicit() && !m.IsOverride() && len(m.Readers()) == 0 && len(m.Referrers()) == 0
+}
+
+// readersOf indexes every node of the codebase by the declaration it reaches, each by that declaration's own
+// location, read once: a question about one member otherwise walks the whole codebase, and a rule asks it of
+// every member there is.
+func readersOf(c *Codebase) map[string][]Match {
+	return Analysis(c, "readers", func(c *Codebase) map[string][]Match {
+		index := map[string][]Match{}
+		for _, file := range c.files {
+			for _, node := range file.Nodes() {
+				reader := Match{node: node, file: file}
+				if declared := reader.Declared(); declared.Exists() {
+					index[declared.Location()] = append(index[declared.Location()], reader)
+				}
+			}
+		}
+
+		return index
+	})
 }

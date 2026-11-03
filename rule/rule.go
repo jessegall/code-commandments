@@ -1381,6 +1381,10 @@ func unused(declaration engine.Match) bool {
 		return declaration.IsUnread()
 	case declaration.Is(engine.Function), declaration.Is(engine.TypeDeclaration):
 		return declaration.Node().Symbol != "" && !declaration.IsImplicit() && !declaration.IsOverride() && len(declaration.Referrers()) == 0
+	case declaration.Role() == "member":
+		// A field refers to no symbol in most languages: it is read as `$this->held`, `self.held` or `this.held`,
+		// so what reaches it is resolved through the type its receiver holds rather than by a name.
+		return declaration.IsUnreadMember()
 	}
 
 	return false

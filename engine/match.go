@@ -199,7 +199,14 @@ func (m Match) CalleeName() string {
 	return ""
 }
 
-// calleeOf is the name the callee carries itself, else the name the member it reaches carries.
+// NameRead is the name a member access or a callee READS, wherever its language keeps it: the node's own name, or
+// the one its name child carries, which is where PHP writes a property fetch's member and where Roslyn writes a
+// member access's. It is empty for anything that reads no name.
+func (m Match) NameRead() string {
+	return calleeOf(m)
+}
+
+// calleeOf is the name the node carries itself, else the name the member it reaches carries.
 func calleeOf(callee Match) string {
 	if name := callee.Name(); name != "" {
 		return name
