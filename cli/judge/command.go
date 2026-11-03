@@ -178,11 +178,22 @@ func (c Command) judge(options options, selected []detectors.Detector, judged co
 		return 0, err
 	}
 
+	languages := languagesFor(selected, judged, options.path)
+
+	// A scoped run whose files are of no language the chosen rules read has nothing to judge, and saying so costs
+	// a look at their names. Walking the tree to find that out is what a worker pays for on every task whose
+	// changes are in another language: measured at four seconds on this repository, for an answer that needs the
+	// scan not to happen.
+	if ofNoLanguage(targets, languages) {
+		deleteChecklist(options.checklist)
+
+		return choseNone(targets, console), nil
+	}
+
 	progress := cli.NewProgress(console.Err)
 	progress.Status("parsing")
 	parsing := time.Now()
 
-	languages := languagesFor(selected, judged, options.path)
 	sources := scan.Walk(roots, source.Under(options.path, judged.Excluded).Judging(judged.JudgedDespiteExclusion())).Only(languages...)
 	whole, byProject := wholeAndByProject(selected)
 
@@ -421,6 +432,23 @@ func languagesFor(selected []detectors.Detector, project config.Config, root str
 	}
 
 	return languages
+}
+
+// ofNoLanguage says whether a scoped run's own files are of no language the chosen rules read: every one of them
+// is a file those rules would never open. An unscoped run names no files and is never this.
+func ofNoLanguage(targets scope.Scope, languages []source.Language) bool {
+	files := targets.Files()
+	if len(files) == 0 || len(languages) == 0 {
+		return false
+	}
+
+	for path := range files {
+		if slices.Contains(languages, source.OfFile(path)) {
+			return false
+		}
+	}
+
+	return true
 }
 
 // scannedLanguages are the languages a run counts as judged: PHP always, and every other language whose

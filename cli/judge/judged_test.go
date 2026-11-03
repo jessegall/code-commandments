@@ -72,3 +72,58 @@ func TestARunOverOneFileJudgesOnlyThatFile(t *testing.T) {
 		t.Errorf("Order.php in: %v, Line.php in: %v", targets.Includes(file), targets.Includes(filepath.Join(folder, "Line.php")))
 	}
 }
+
+// A worker judges its own task's changes, and a task that changed one Go file used to walk every Python file of
+// the tree to conclude that a Python rule has nothing to judge: four seconds for an answer that needs the scan
+// not to happen. The names of the changed files answer it.
+
+// TestChangesOfAnotherLanguageAreAnsweredBeforeAnyScan holds the reading itself: a scoped run whose files are of
+// no language the chosen rules read judges nothing, and one that holds a single file of such a language does not.
+func TestChangesOfAnotherLanguageAreAnsweredBeforeAnyScan(t *testing.T) {
+	root, err := filepath.EvalSymlinks(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, name := range []string{"shop/till.go", "shop/till.py"} {
+		path := filepath.Join(root, name)
+		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(path, nil, 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	goFile := filepath.Join(root, "shop/till.go")
+	pythonFile := filepath.Join(root, "shop/till.py")
+
+	for name, each := range map[string]struct {
+		files     []string
+		languages []source.Language
+		answered  bool
+	}{
+		"a Go change and Python rules":        {[]string{goFile}, []source.Language{source.Python}, true},
+		"a Go change and Go rules":            {[]string{goFile}, []source.Language{source.Go}, false},
+		"a change in Python and Python rules": {[]string{pythonFile}, []source.Language{source.Python}, false},
+		// A run that names no files judges the whole path, so it is never answered this way.
+		"an unscoped run": {nil, []source.Language{source.Python}, false},
+		// And a run whose rules read nothing is not answered here either: it has its own answer to give.
+		"rules that read no language": {[]string{goFile}, nil, false},
+	} {
+		t.Run(name, func(t *testing.T) {
+			targets, err := scope.FromArgs(nil, root, workspace.At(root, ""), nil)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			// A change scopes the run to its own files, which is what `--changes` hands the judge.
+			for _, file := range each.files {
+				targets = targets.NarrowedTo(file)
+			}
+
+			if answered := ofNoLanguage(targets, each.languages); answered != each.answered {
+				t.Errorf("answered before scanning: %v, want %v", answered, each.answered)
+			}
+		})
+	}
+}
