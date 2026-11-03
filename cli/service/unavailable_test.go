@@ -90,3 +90,61 @@ func TestAServiceWhoseToolIsNotInstalledStaysUpAndSaysWhy(t *testing.T) {
 		t.Errorf("the service does not say what is and is not judged: %q", errs.String())
 	}
 }
+
+// TestAServiceWhoseToolIsNotInstalledTellsTheJournal holds the second half of the same fix. A service's own words
+// go nowhere, because the journal sends its output to /dev/null, so a bridge that says on its console why it can
+// judge nothing says it to no one: the project lists a service as running that judges nothing, which reads as a
+// plugin that found nothing rather than one that looked at nothing. So it is said through the queue the journal
+// drains at every one of the agent's hooks, which a service reaches because it is given the same data folder.
+func TestAServiceWhoseToolIsNotInstalledTellsTheJournal(t *testing.T) {
+	root, err := filepath.EvalSymlinks(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(root, "Cart.php"), []byte("<?php\n\nclass Cart {}\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	t.Chdir(root)
+
+	data := t.TempDir()
+	t.Setenv("JOURNAL_PLUGIN_DATA", data)
+	t.Setenv("JOURNAL_ENV", "a-session-of-its-own")
+
+	serve := service.Serve{Bridge: scan.Bridge{
+		Kind:      "php",
+		Word:      "php",
+		Languages: []source.Language{source.PHP},
+		Label:     "PHP",
+		Reach:     missing{},
+	}}
+
+	var out, errs bytes.Buffer
+	answered := make(chan int, 1)
+	go func() {
+		code, _ := serve.Run(&cli.Input{}, cli.Console{Out: &out, Err: &errs})
+		answered <- code
+	}()
+
+	queued := filepath.Join(data, "queue")
+	waited := time.Now()
+	var told []byte
+	for told == nil {
+		if time.Since(waited) > 10*time.Second {
+			t.Fatalf("the service told the journal nothing in ten seconds: %q", errs.String())
+		}
+		files, _ := filepath.Glob(filepath.Join(queued, "*.json"))
+		for _, file := range files {
+			told, _ = os.ReadFile(file)
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+
+	syscall.Kill(os.Getpid(), syscall.SIGTERM)
+	<-answered
+
+	for _, wanted := range []string{"php on the PATH", "a-session-of-its-own", "not the same as finding no sins"} {
+		if !strings.Contains(string(told), wanted) {
+			t.Errorf("what was told the journal does not carry %q: %s", wanted, told)
+		}
+	}
+}

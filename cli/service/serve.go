@@ -9,6 +9,16 @@ import (
 	"github.com/jessegall/code-commandments/cli"
 	"github.com/jessegall/code-commandments/cli/health"
 	"github.com/jessegall/code-commandments/cli/help"
+	"github.com/jessegall/code-commandments/cli/hooks"
+)
+
+const (
+	// pluginData is the folder the journal gives its plugin, which a service is given as a hook is: the queue the
+	// journal drains at every one of the agent's hooks lives inside it.
+	pluginData = "JOURNAL_PLUGIN_DATA"
+	// journalEnvironment is the environment the journal started this service for, so what it has to say reaches
+	// that environment's agent rather than another's.
+	journalEnvironment = "JOURNAL_ENV"
 )
 
 // Serve is `roslyn-serve`, `mypy-serve`: the bridge kept up for the project.
@@ -27,6 +37,30 @@ func (s Serve) Help() help.Help {
 		Form(s.Kind+"-serve", "serve until the bridge stops (started by the journal as a plugin service)").
 		Note("A project with no " + s.Label + " to judge keeps no bridge: the service waits until it is stopped, fetching and starting nothing.").
 		In(help.Hooks)
+}
+
+// tell puts what a service cannot do where the user will read it. A service's own words go nowhere: the journal
+// sends its output to /dev/null, so a bridge that says on its console why it can judge nothing is a bridge saying
+// it to no one, and the project then lists a service as running that judges nothing, which reads as a plugin that
+// found nothing rather than one that looked at nothing.
+//
+// It is said through the queue the journal already drains at every one of the agent's hooks, which a service
+// reaches because it is given the same data folder a hook is. A journal that names no folder drains nothing, and
+// then this costs the service nothing and changes nothing: the words are still on its console for whoever reads
+// one.
+func tell(unavailable bridge.Unavailable, console cli.Console) {
+	queue, queued := hooks.Queue4In(os.Getenv(pluginData))
+	if !queued {
+		return
+	}
+
+	words := "A bridge the session keeps up cannot run on this machine, so part of this project is judged by nothing: " +
+		unavailable.Error() + ". Tell the user what to install; until then every rule of that language finds nothing, " +
+		"which is not the same as finding no sins."
+
+	if err := queue.Tell(hooks.JournalAnswer{Whisper: &words}, os.Getenv(journalEnvironment)); err != nil {
+		console.Warn("what the bridge cannot do could not be told to the journal: " + err.Error())
+	}
 }
 
 // Run serves the project's bridge until it stops, then ends, so the journal starts it again.
@@ -60,6 +94,7 @@ func (s Serve) Run(in *cli.Input, console cli.Console) (int, error) {
 	if unavailable := bridge.Unavailable(nil); errors.As(err, &unavailable) {
 		stopped := cli.StopSignals()
 		console.Warn(unavailable.Error())
+		tell(unavailable, console)
 		<-stopped
 
 		return 0, nil
