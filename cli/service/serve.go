@@ -1,6 +1,7 @@
 package service
 
 import (
+	"errors"
 	"net"
 	"os"
 
@@ -49,6 +50,20 @@ func (s Serve) Run(in *cli.Input, console cli.Console) (int, error) {
 	}
 
 	bridged, needed, err := s.Reach.Own(s.Bridge, []string{project})
+	// A bridge that cannot run on this machine at all - no node, no php, no docker - is in the same position as a
+	// project with no language to judge: it says so once and waits to be stopped, answering the journal's health
+	// question all the while. Ending here instead asks the journal to start it again, and `restart: always` does,
+	// for a condition that cannot change while the session runs: the service then fails over and over, is recorded
+	// as a fault and listed as stopped, while its `when` command keeps passing, because the project really does
+	// have the language. Every run of the tool then pays the bridge's whole start-up, which on a large tree is
+	// seconds of it, and nothing says why.
+	if unavailable := bridge.Unavailable(nil); errors.As(err, &unavailable) {
+		stopped := cli.StopSignals()
+		console.Warn(unavailable.Error())
+		<-stopped
+
+		return 0, nil
+	}
 	if err != nil {
 		console.Warn(err.Error())
 
