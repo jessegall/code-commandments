@@ -21,8 +21,8 @@ var functionLikes = []string{"Stmt_ClassMethod", "Stmt_Function", "Expr_Closure"
 // holds the members of both.
 type Types struct {
 	program    *Program
-	fieldType  map[string]map[string]string
-	returnType map[string]map[string]string
+	fieldType  map[string]map[string]held
+	returnType map[string]map[string]held
 	nullable   map[string]map[string][]bool
 	paramType  map[string]map[string][]string
 	variadic   map[string]map[string]bool
@@ -31,7 +31,21 @@ type Types struct {
 	traitsOf   map[string][]string
 
 	mutex  sync.Mutex
-	locals map[scope]map[string]string
+	locals map[scope]map[string]held
+}
+
+// held is the type an expression holds: the class every reader of the type engine asks for, and the written type
+// the engine read that class off, where a declaration wrote one. Keeping the written type is what lets the fill
+// say a value admits null, what shape its type has and where the type came from, rather than naming a class and
+// calling the answer its own.
+type held struct {
+	class   string
+	written *contract.Type
+}
+
+// typed is the class a written type names, with that type kept beside it.
+func typed(written TypeName) held {
+	return held{class: typeName(written), written: written.written}
 }
 
 var resolvers = Memoised(indexTypes)
@@ -44,15 +58,15 @@ func TypesOf(codebase *engine.Codebase) *Types {
 func indexTypes(codebase *engine.Codebase) *Types {
 	types := &Types{
 		program:    ProgramOf(codebase),
-		fieldType:  map[string]map[string]string{},
-		returnType: map[string]map[string]string{},
+		fieldType:  map[string]map[string]held{},
+		returnType: map[string]map[string]held{},
 		nullable:   map[string]map[string][]bool{},
 		paramType:  map[string]map[string][]string{},
 		variadic:   map[string]map[string]bool{},
 		element:    map[string]map[string]string{},
 		parentOf:   map[string]string{},
 		traitsOf:   map[string][]string{},
-		locals:     map[scope]map[string]string{},
+		locals:     map[scope]map[string]held{},
 	}
 	for _, file := range codebase.Of(contract.PHP).Files() {
 		for _, node := range file.Nodes() {
@@ -89,7 +103,7 @@ func (t *Types) indexOutside(symbol contract.OutsideSymbol) {
 			if returns == nil {
 				returns = member.Documented
 			}
-			set(t.returnType, class, member.Name, typeName(Written(returns)))
+			set(t.returnType, class, member.Name, typed(Written(returns)))
 			var nullable []bool
 			var written []string
 			variadic := false
@@ -103,7 +117,7 @@ func (t *Types) indexOutside(symbol contract.OutsideSymbol) {
 			set(t.paramType, class, member.Name, written)
 			set(t.variadic, class, member.Name, variadic)
 		case "property":
-			set(t.fieldType, class, member.Name, typeName(Written(member.Declared)))
+			set(t.fieldType, class, member.Name, typed(Written(member.Declared)))
 		}
 	}
 }
@@ -126,7 +140,7 @@ func (t *Types) index(declaration engine.Match) {
 			continue
 		}
 		field := param.Name()
-		set(t.fieldType, class, field, typeName(Written(param.Node().Declared)))
+		set(t.fieldType, class, field, typed(Written(param.Node().Declared)))
 		t.recordCollectionElement(class, field, param)
 		doc := constructorDoc
 		if own, ok := DocComment(param); ok {
@@ -147,14 +161,14 @@ func (t *Types) index(declaration engine.Match) {
 			if item.Node().Field != "props" {
 				continue
 			}
-			set(t.fieldType, class, item.Name(), typeName(Written(member.Node().Declared)))
+			set(t.fieldType, class, item.Name(), typed(Written(member.Node().Declared)))
 			t.recordCollectionElement(class, item.Name(), member)
 			t.recordDocumentedElement(class, item.Name(), doc, "", member.Source())
 		}
 	}
 	for _, method := range Methods(declaration) {
 		name := method.Name()
-		set(t.returnType, class, name, typeName(Written(method.Node().Returns)))
+		set(t.returnType, class, name, typed(Written(method.Node().Returns)))
 		var nullable []bool
 		var written []string
 		variadic := false
@@ -252,7 +266,7 @@ func (t *Types) TypeIn(expr, function engine.Match, self string) string {
 		return ""
 	}
 
-	return t.resolve(expr, t.localTypes(function, self), self)
+	return t.resolve(expr, t.localTypes(function, self), self).class
 }
 
 // scope is a function read as though it sat in a class: `$this` is that class.
@@ -270,8 +284,8 @@ func (t *Types) Fill(codebase *engine.Codebase) {
 				continue
 			}
 			expression := file.Match(node.ID)
-			if class := t.TypeOf(expression); class != "" {
-				node.Resolved = resolvedType(class)
+			if resolved := t.heldBy(expression); resolved.class != "" {
+				node.Resolved = resolvedType(resolved)
 			}
 			t.fillTarget(expression)
 		}
@@ -279,12 +293,30 @@ func (t *Types) Fill(codebase *engine.Codebase) {
 	engine.Untouched()
 }
 
-func resolvedType(class string) *contract.Type {
-	if slices.Contains(specialClassNames, strings.ToLower(class)) {
-		return &contract.Type{Text: class, Kind: "keyword", Name: class, Origin: "inferred"}
+// heldBy is the type the expression holds, with the written type the engine read it off where there is one.
+func (t *Types) heldBy(expr engine.Match) held {
+	function := enclosingFunction(expr)
+	if !function.Exists() {
+		return held{}
 	}
 
-	return &contract.Type{Text: `\` + class, Kind: "named", Name: class, Origin: "inferred"}
+	return t.resolve(expr, t.localTypes(function, EnclosingClassName(expr)), EnclosingClassName(expr))
+}
+
+// resolvedType is the type the engine fills on an expression. Where a declaration wrote the type the class was
+// read off, that type IS the answer: its nullability, its shape and the origin that says whether a human wrote it
+// or a docblock claimed it all survive, and nothing is parsed back out of a name. Otherwise the engine worked the
+// class out itself — a construction, a `static` return — and says so.
+func resolvedType(resolved held) *contract.Type {
+	if named := Written(resolved.written).Named(); named != nil && strings.TrimLeft(named.Name, `\`) == resolved.class {
+		return named
+	}
+
+	if slices.Contains(specialClassNames, strings.ToLower(resolved.class)) {
+		return &contract.Type{Text: resolved.class, Kind: "keyword", Name: resolved.class, Origin: "inferred"}
+	}
+
+	return &contract.Type{Text: `\` + resolved.class, Kind: "named", Name: resolved.class, Origin: "inferred"}
 }
 
 // DeclaringClassOf is the class in the chain from fqcn up that declares the field.
@@ -311,7 +343,7 @@ func (t *Types) DeclaringClassOfMethod(fqcn, method string) string {
 
 // PropertyTypeOf is the class the field is declared to hold.
 func (t *Types) PropertyTypeOf(fqcn, field string) string {
-	return t.fieldType[t.DeclaringClassOf(fqcn, field)][field]
+	return t.fieldType[t.DeclaringClassOf(fqcn, field)][field].class
 }
 
 // CollectionElementOf is the element class the field's collection is declared to hold.
@@ -373,61 +405,63 @@ func (t *Types) methodDeclaredBy(class, method string, seen map[string]bool) str
 	return ""
 }
 
-func (t *Types) resolve(expr engine.Match, locals map[string]string, self string) string {
+// resolve is the type an expression holds, read through the function's locals and the class around it. It answers
+// the written type beside the class wherever a declaration wrote one, and nothing at all where nothing can be said.
+func (t *Types) resolve(expr engine.Match, locals map[string]held, self string) held {
 	switch expr.Kind() {
 	case "Expr_Variable":
 		if expr.Name() == "" {
-			return ""
+			return held{}
 		}
 		if expr.Name() == "this" {
-			return self
+			return held{class: self}
 		}
 
 		return locals[expr.Name()]
 	case "Expr_New":
 		if class := expr.Child("class"); isName(class) {
-			return strings.TrimLeft(class.Name(), `\`)
+			return held{class: strings.TrimLeft(class.Name(), `\`)}
 		}
 	case "Expr_StaticCall":
 		class, method := expr.Child("class"), expr.Child("name")
 		if !isName(class) || method.Kind() != "Identifier" {
-			return ""
+			return held{}
 		}
 		owner := strings.TrimLeft(class.Name(), `\`)
 		returned := t.returnType[owner][method.Name()]
-		if isSelfReferential(returned) || (returned == "" && strings.HasPrefix(method.Name(), "from")) {
-			return owner
+		if isSelfReferential(returned.class) || (returned.class == "" && strings.HasPrefix(method.Name(), "from")) {
+			return held{class: owner}
 		}
 
 		return returned
 	case "Expr_PropertyFetch":
 		name := expr.Child("name")
 		if name.Kind() != "Identifier" {
-			return ""
+			return held{}
 		}
 		receiver := t.resolve(expr.Child("var"), locals, self)
-		if receiver == "" {
-			return ""
+		if receiver.class == "" {
+			return held{}
 		}
 
-		return t.fieldType[t.DeclaringClassOf(receiver, name.Name())][name.Name()]
+		return t.fieldType[t.DeclaringClassOf(receiver.class, name.Name())][name.Name()]
 	case "Expr_MethodCall", "Expr_NullsafeMethodCall":
 		name := expr.Child("name")
 		if name.Kind() != "Identifier" {
-			return ""
+			return held{}
 		}
 		receiver := t.resolve(expr.Child("var"), locals, self)
-		if receiver == "" {
-			return ""
+		if receiver.class == "" {
+			return held{}
 		}
-		returned := t.returnType[receiver][name.Name()]
-		if isSelfReferential(returned) {
-			return receiver
+		returned := t.returnType[receiver.class][name.Name()]
+		if isSelfReferential(returned.class) {
+			return held{class: receiver.class}
 		}
 
 		return returned
 	case "Expr_BinaryOp_Coalesce":
-		if left := t.resolve(expr.Child("left"), locals, self); left != "" {
+		if left := t.resolve(expr.Child("left"), locals, self); left.class != "" {
 			return left
 		}
 
@@ -437,20 +471,20 @@ func (t *Types) resolve(expr engine.Match, locals map[string]string, self string
 		if !chosen.Exists() {
 			chosen = expr.Child("cond")
 		}
-		if resolved := t.resolve(chosen, locals, self); resolved != "" {
+		if resolved := t.resolve(chosen, locals, self); resolved.class != "" {
 			return resolved
 		}
 
 		return t.resolve(expr.Child("else"), locals, self)
 	}
 
-	return ""
+	return held{}
 }
 
 // localTypes is the class each variable of a function holds: what it captures, its parameters, then each
 // assignment in the order written, nested functions' included, the last one winning; then a `foreach` over a typed
 // collection field types its value. Read once per function and class.
-func (t *Types) localTypes(function engine.Match, self string) map[string]string {
+func (t *Types) localTypes(function engine.Match, self string) map[string]held {
 	t.mutex.Lock()
 	cached, ok := t.locals[scope{function.Node(), self}]
 	t.mutex.Unlock()
@@ -460,7 +494,7 @@ func (t *Types) localTypes(function engine.Match, self string) map[string]string
 	locals := t.capturedTypes(function, self)
 	for _, param := range Params(function) {
 		if variable := param.Child("var"); variable.Kind() == "Expr_Variable" && variable.Name() != "" {
-			locals[variable.Name()] = typeName(Written(param.Node().Declared))
+			locals[variable.Name()] = typed(Written(param.Node().Declared))
 		}
 	}
 	descendants := descendantsOf(function)
@@ -481,8 +515,8 @@ func (t *Types) localTypes(function engine.Match, self string) map[string]string
 			continue
 		}
 		owner := t.resolve(collection.Child("var"), locals, self)
-		if element := t.element[owner][collection.Child("name").Name()]; owner != "" && element != "" {
-			locals[value.Name()] = element
+		if element := t.element[owner.class][collection.Child("name").Name()]; owner.class != "" && element != "" {
+			locals[value.Name()] = held{class: element}
 		}
 	}
 	t.mutex.Lock()
@@ -497,8 +531,8 @@ func (t *Types) localTypes(function engine.Match, self string) map[string]string
 
 // capturedTypes is what a function inherits from the one around it: an arrow function every variable, a closure the
 // ones it names in `use`.
-func (t *Types) capturedTypes(function engine.Match, self string) map[string]string {
-	captured := map[string]string{}
+func (t *Types) capturedTypes(function engine.Match, self string) map[string]held {
+	captured := map[string]held{}
 	enclosing := enclosingFunction(function)
 	if !enclosing.Exists() {
 		return captured

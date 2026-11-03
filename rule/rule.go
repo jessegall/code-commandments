@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"slices"
+	"strconv"
 	"strings"
 
 	"github.com/jessegall/code-commandments/catalog"
@@ -73,89 +74,98 @@ type find struct {
 
 // Step is one check of a rule's query, on the node itself or, with Of or a nested step, on one related to it.
 type Step struct {
-	Is                string     `json:"is,omitempty"`
-	Kind              string     `json:"kind,omitempty"`
-	Name              string     `json:"name,omitempty"`
-	NameIn            []string   `json:"nameIn,omitempty"`
-	NameLike          string     `json:"nameLike,omitempty"`
-	NameMatches       string     `json:"nameMatches,omitempty"`
-	NameCase          string     `json:"nameCase,omitempty"`
-	Text              *string    `json:"text,omitempty"`
-	TextLike          string     `json:"textLike,omitempty"`
-	TextMatches       string     `json:"textMatches,omitempty"`
-	Resolves          string     `json:"resolves,omitempty"`
-	ResolvesLike      string     `json:"resolvesLike,omitempty"`
-	NamespaceLike     string     `json:"namespaceLike,omitempty"`
-	Layer             string     `json:"layer,omitempty"`
-	HasModifier       string     `json:"hasModifier,omitempty"`
-	HasFlag           string     `json:"hasFlag,omitempty"`
-	Type              string     `json:"type,omitempty"`
-	TypeLike          string     `json:"typeLike,omitempty"`
-	Operator          string     `json:"operator,omitempty"`
-	OperatorIn        []string   `json:"operatorIn,omitempty"`
-	WithinLoop        *bool      `json:"withinLoop,omitempty"`
-	Documented        *bool      `json:"documented,omitempty"`
-	File              string     `json:"file,omitempty"`
-	FileMatches       string     `json:"fileMatches,omitempty"`
-	Position          string     `json:"position,omitempty"`
-	TopLevel          *bool      `json:"topLevel,omitempty"`
-	Of                string     `json:"of,omitempty"`
-	Descendant        *Descended `json:"descendant,omitempty"`
-	Child             *Childed   `json:"child,omitempty"`
-	Inside            *Step      `json:"inside,omitempty"`
-	Next              *Step      `json:"next,omitempty"`
-	Previous          *Step      `json:"previous,omitempty"`
-	NestedAtLeast     *Nesting   `json:"nestedAtLeast,omitempty"`
-	Counts            *Count     `json:"count,omitempty"`
-	Parameters        *Bounds    `json:"parameters,omitempty"`
-	Arguments         *Bounds    `json:"arguments,omitempty"`
-	Lines             *Bounds    `json:"lines,omitempty"`
-	Members           *Tally     `json:"members,omitempty"`
-	Complexity        *Bounds    `json:"complexity,omitempty"`
-	Extends           string     `json:"extends,omitempty"`
-	ExtendsAny        string     `json:"extendsAny,omitempty"`
-	Implements        string     `json:"implements,omitempty"`
-	Uses              string     `json:"uses,omitempty"`
-	HasAttribute      string     `json:"hasAttribute,omitempty"`
-	Sibling           string     `json:"sibling,omitempty"`
-	IsA               string     `json:"isA,omitempty"`
-	All               []Step     `json:"all,omitempty"`
-	Any               []Step     `json:"any,omitempty"`
-	Not               *Step      `json:"not,omitempty"`
-	TypeKind          string     `json:"typeKind,omitempty"`
-	HasAnnotation     string     `json:"hasAnnotation,omitempty"`
-	ReturnType        string     `json:"returnType,omitempty"`
-	ParameterType     string     `json:"parameterType,omitempty"`
-	Constructs        string     `json:"constructs,omitempty"`
-	Unused            *bool      `json:"unused,omitempty"`
-	ReferredFrom      *Step      `json:"referredFrom,omitempty"`
-	CalledFrom        string     `json:"calledFrom,omitempty"`
-	Calls             *Step      `json:"calls,omitempty"`
-	Argument          *Argued    `json:"argument,omitempty"`
-	CommentLike       string     `json:"commentLike,omitempty"`
-	CommentMatches    string     `json:"commentMatches,omitempty"`
-	DocTag            string     `json:"docTag,omitempty"`
-	Duplicated        *Bounds    `json:"duplicated,omitempty"`
-	Callers           *Bounds    `json:"callers,omitempty"`
-	UnnamedCondition  *bool      `json:"unnamedCondition,omitempty"`
-	BindsItsOwnTest   *bool      `json:"bindsItsOwnTest,omitempty"`
-	RedundantElse     *bool      `json:"redundantElse,omitempty"`
-	SoleLoopBodyGuard *bool      `json:"soleLoopBodyGuard,omitempty"`
-	PassesItsElement  *bool      `json:"passesItsElementOn,omitempty"`
-	LadderRungs       *Bounds    `json:"ladderRungs,omitempty"`
-	Ancestors         *Ancestors `json:"ancestors,omitempty"`
-	Repeated          *Repeats   `json:"repeated,omitempty"`
-	DeclaredBy        string     `json:"declaredBy,omitempty"`
-	AnsweredBy        *bool      `json:"answeredBy,omitempty"`
-	DeclaredElsewhere *bool      `json:"declaredElsewhere,omitempty"`
-	SameAs            *Same      `json:"sameAs,omitempty"`
-	TestCode          *bool      `json:"testCode,omitempty"`
-	PHP               string     `json:"php,omitempty"`
-	Python            string     `json:"python,omitempty"`
-	CSharp            string     `json:"csharp,omitempty"`
-	TypeScript        string     `json:"typescript,omitempty"`
-	Vue               string     `json:"vue,omitempty"`
-	Rule              string     `json:"rule,omitempty"`
+	Is                string          `json:"is,omitempty"`
+	Kind              string          `json:"kind,omitempty"`
+	Name              string          `json:"name,omitempty"`
+	NameIn            []string        `json:"nameIn,omitempty"`
+	NameLike          string          `json:"nameLike,omitempty"`
+	NameMatches       string          `json:"nameMatches,omitempty"`
+	NameCase          string          `json:"nameCase,omitempty"`
+	Text              *string         `json:"text,omitempty"`
+	TextLike          string          `json:"textLike,omitempty"`
+	TextMatches       string          `json:"textMatches,omitempty"`
+	Resolves          string          `json:"resolves,omitempty"`
+	ResolvesLike      string          `json:"resolvesLike,omitempty"`
+	NamespaceLike     string          `json:"namespaceLike,omitempty"`
+	Layer             string          `json:"layer,omitempty"`
+	HasModifier       string          `json:"hasModifier,omitempty"`
+	HasFlag           string          `json:"hasFlag,omitempty"`
+	Type              string          `json:"type,omitempty"`
+	TypeLike          string          `json:"typeLike,omitempty"`
+	Operator          string          `json:"operator,omitempty"`
+	OperatorIn        []string        `json:"operatorIn,omitempty"`
+	WithinLoop        *bool           `json:"withinLoop,omitempty"`
+	Documented        *bool           `json:"documented,omitempty"`
+	File              string          `json:"file,omitempty"`
+	FileMatches       string          `json:"fileMatches,omitempty"`
+	Position          string          `json:"position,omitempty"`
+	Field             string          `json:"field,omitempty"`
+	Role              string          `json:"role,omitempty"`
+	TopLevel          *bool           `json:"topLevel,omitempty"`
+	Of                string          `json:"of,omitempty"`
+	Descendant        *Descended      `json:"descendant,omitempty"`
+	Child             *Childed        `json:"child,omitempty"`
+	Inside            *Step           `json:"inside,omitempty"`
+	Next              *Step           `json:"next,omitempty"`
+	Previous          *Step           `json:"previous,omitempty"`
+	NestedAtLeast     *Nesting        `json:"nestedAtLeast,omitempty"`
+	Counts            *Count          `json:"count,omitempty"`
+	Parameters        *Bounds         `json:"parameters,omitempty"`
+	Arguments         *Bounds         `json:"arguments,omitempty"`
+	Lines             *Bounds         `json:"lines,omitempty"`
+	Members           *Tally          `json:"members,omitempty"`
+	Complexity        *Bounds         `json:"complexity,omitempty"`
+	Extends           string          `json:"extends,omitempty"`
+	ExtendsAny        string          `json:"extendsAny,omitempty"`
+	Implements        string          `json:"implements,omitempty"`
+	Uses              string          `json:"uses,omitempty"`
+	HasAttribute      string          `json:"hasAttribute,omitempty"`
+	Sibling           string          `json:"sibling,omitempty"`
+	IsA               string          `json:"isA,omitempty"`
+	All               []Step          `json:"all,omitempty"`
+	Any               []Step          `json:"any,omitempty"`
+	Not               *Step           `json:"not,omitempty"`
+	TypeKind          string          `json:"typeKind,omitempty"`
+	HasAnnotation     string          `json:"hasAnnotation,omitempty"`
+	ReturnType        string          `json:"returnType,omitempty"`
+	ParameterType     string          `json:"parameterType,omitempty"`
+	Constructs        string          `json:"constructs,omitempty"`
+	Unused            *bool           `json:"unused,omitempty"`
+	ReferredFrom      *Step           `json:"referredFrom,omitempty"`
+	CalledFrom        string          `json:"calledFrom,omitempty"`
+	Calls             *Step           `json:"calls,omitempty"`
+	Argument          *Argued         `json:"argument,omitempty"`
+	CommentLike       string          `json:"commentLike,omitempty"`
+	CommentMatches    string          `json:"commentMatches,omitempty"`
+	DocTag            string          `json:"docTag,omitempty"`
+	Duplicated        *Bounds         `json:"duplicated,omitempty"`
+	Callers           *Bounds         `json:"callers,omitempty"`
+	UnnamedCondition  *bool           `json:"unnamedCondition,omitempty"`
+	BindsItsOwnTest   *bool           `json:"bindsItsOwnTest,omitempty"`
+	RedundantElse     *bool           `json:"redundantElse,omitempty"`
+	SoleLoopBodyGuard *bool           `json:"soleLoopBodyGuard,omitempty"`
+	PassesItsElement  *bool           `json:"passesItsElementOn,omitempty"`
+	LadderRungs       *Bounds         `json:"ladderRungs,omitempty"`
+	Ancestors         *Ancestors      `json:"ancestors,omitempty"`
+	Repeated          *Repeats        `json:"repeated,omitempty"`
+	DeclaredBy        string          `json:"declaredBy,omitempty"`
+	AnsweredBy        *bool           `json:"answeredBy,omitempty"`
+	DeclaredElsewhere *bool           `json:"declaredElsewhere,omitempty"`
+	SameAs            *Same           `json:"sameAs,omitempty"`
+	Value             json.RawMessage `json:"value,omitempty"`
+	Nullable          *bool           `json:"nullable,omitempty"`
+	TypeShape         string          `json:"typeShape,omitempty"`
+	TypeOrigin        string          `json:"typeOrigin,omitempty"`
+	ElementType       string          `json:"elementType,omitempty"`
+	TestCode          *bool           `json:"testCode,omitempty"`
+	Overrides         *bool           `json:"overrides,omitempty"`
+	Implicit          *bool           `json:"implicit,omitempty"`
+	PHP               string          `json:"php,omitempty"`
+	Python            string          `json:"python,omitempty"`
+	CSharp            string          `json:"csharp,omitempty"`
+	TypeScript        string          `json:"typescript,omitempty"`
+	Vue               string          `json:"vue,omitempty"`
+	Rule              string          `json:"rule,omitempty"`
 
 	// pattern is the step's glob or regular expression, compiled once when the rule is read.
 	pattern *regexp.Regexp
@@ -168,6 +178,67 @@ type Step struct {
 
 	// named is the rule Rule names, found once when every rule has been read.
 	named *Rule
+}
+
+// valueHolds says whether the node is a literal of the very value the rule wrote, kind and all, which is the whole
+// point of asking a value rather than matching text: a bare `true` and the string "true" are not one argument, and
+// neither are `1` and "1". A number is read as a number, so `0` and `0.0` are one value; a node whose value its
+// language did not fold holds nothing.
+func valueHolds(asked json.RawMessage, subject engine.Match) bool {
+	// A null literal carries no value of its own: there is nothing to decode, and its KIND is what says it is
+	// null, which is how every language's bridge writes it and how the engine has always read it.
+	if bytes.Equal(asked, []byte("null")) {
+		return subject.LiteralKind() == "null"
+	}
+
+	held := subject.Value()
+	if held == nil {
+		return false
+	}
+
+	if number, isNumber := asNumber(asked); isNumber {
+		text, isText := held.Text()
+		was, err := strconv.ParseFloat(text, 64)
+
+		return isText && err == nil && was == number && slices.Contains([]string{"int", "float"}, subject.LiteralKind())
+	}
+
+	written, err := held.MarshalJSON()
+
+	return err == nil && bytes.Equal(written, asked)
+}
+
+// asNumber is the value as a number, when the rule wrote one.
+func asNumber(asked json.RawMessage) (float64, bool) {
+	var number float64
+	if err := json.Unmarshal(asked, &number); err != nil {
+		return 0, false
+	}
+
+	return number, true
+}
+
+// valueScalars are the values a rule may ask a literal for, which are the values a language folds one to.
+var valueScalars = []string{"string", "number", "boolean", "null"}
+
+// validValue refuses a value no literal can hold, so a rule asking for an object or a list is told rather than
+// matching nothing.
+func (s Step) validValue() error {
+	if len(s.Value) == 0 {
+		return nil
+	}
+
+	var probe any
+	if err := json.Unmarshal(s.Value, &probe); err != nil {
+		return fmt.Errorf("%s asks for a value that is no JSON: %w", s.describe(), err)
+	}
+
+	switch probe.(type) {
+	case nil, string, bool, float64:
+		return nil
+	}
+
+	return fmt.Errorf("a value is a string, a number, a boolean or null, and %s is none of them: %s", s.Value, s.describe())
 }
 
 // Nesting is a step counted: the node and the nodes above it that pass it, at least Count of them.
@@ -699,12 +770,12 @@ func (s Step) checks() int {
 		s.NameMatches != "", s.NameCase != "", s.Text != nil, s.TextLike != "", s.TextMatches != "", s.Resolves != "",
 		s.ResolvesLike != "", s.NamespaceLike != "", s.Layer != "", s.HasModifier != "", s.HasFlag != "", s.WithinLoop != nil,
 		s.Operator != "", len(s.OperatorIn) > 0, s.Type != "", s.TypeLike != "",
-		s.Documented != nil, s.File != "", s.FileMatches != "", s.Position != "", s.TopLevel != nil, s.Descendant != nil, s.Child != nil, s.Inside != nil,
+		len(s.Value) > 0, s.Documented != nil, s.File != "", s.FileMatches != "", s.Position != "", s.Field != "", s.Role != "", s.TopLevel != nil, s.Descendant != nil, s.Child != nil, s.Inside != nil,
 		s.Next != nil, s.Previous != nil, s.NestedAtLeast != nil, s.Counts != nil, s.Parameters != nil, s.Arguments != nil,
 		s.Lines != nil, s.Members != nil, s.Complexity != nil, s.Extends != "", s.ExtendsAny != "", s.Implements != "", s.Uses != "", s.All != nil, s.Any != nil, s.Not != nil, s.HasAttribute != "", s.Sibling != "", s.IsA != "",
 		s.TypeKind != "", s.HasAnnotation != "", s.ReturnType != "", s.ParameterType != "", s.Constructs != "", s.Unused != nil,
-		s.CalledFrom != "", s.ReferredFrom != nil, s.Calls != nil, s.Argument != nil, s.CommentLike != "", s.CommentMatches != "", s.DocTag != "", s.Duplicated != nil, s.Callers != nil, s.Repeated != nil, s.DeclaredBy != "", s.AnsweredBy != nil, s.DeclaredElsewhere != nil, s.SameAs != nil, s.Ancestors != nil, s.RedundantElse != nil, s.UnnamedCondition != nil, s.BindsItsOwnTest != nil, s.SoleLoopBodyGuard != nil, s.PassesItsElement != nil, s.LadderRungs != nil,
-		s.TestCode != nil, s.PHP != "", s.Python != "", s.CSharp != "", s.TypeScript != "", s.Vue != "", s.Rule != ""} {
+		s.CalledFrom != "", s.ReferredFrom != nil, s.Calls != nil, s.Argument != nil, s.CommentLike != "", s.CommentMatches != "", s.DocTag != "", s.Duplicated != nil, s.Callers != nil, s.Repeated != nil, s.DeclaredBy != "", s.AnsweredBy != nil, s.DeclaredElsewhere != nil, s.SameAs != nil, s.Ancestors != nil, s.RedundantElse != nil, s.UnnamedCondition != nil, s.BindsItsOwnTest != nil, s.SoleLoopBodyGuard != nil, s.PassesItsElement != nil, s.LadderRungs != nil, s.Nullable != nil, s.TypeShape != "", s.TypeOrigin != "", s.ElementType != "",
+		s.TestCode != nil, s.Overrides != nil, s.Implicit != nil, s.PHP != "", s.Python != "", s.CSharp != "", s.TypeScript != "", s.Vue != "", s.Rule != ""} {
 		if set {
 			count++
 		}
@@ -728,6 +799,8 @@ func (s *Step) prepare() error {
 		s.pattern = glob(strings.TrimPrefix(s.ResolvesLike, `\`))
 	case s.TypeLike != "":
 		s.pattern = glob(strings.TrimPrefix(s.TypeLike, `\`))
+	case s.ElementType != "":
+		s.pattern = glob(strings.TrimPrefix(s.ElementType, `\`))
 	case s.NamespaceLike != "":
 		s.pattern = glob(strings.TrimPrefix(s.NamespaceLike, `\`))
 	case s.File != "":
@@ -788,13 +861,18 @@ func (s Step) valid() error {
 		return fmt.Errorf("is %q is no neutral kind: %s%s", s.Is, neutralList(), didYouMean(s.Is, neutralNames()))
 	}
 
-	for key, value := range map[string]string{"typeKind": s.TypeKind, "nameCase": s.NameCase, "position": s.Position} {
+	for key, value := range map[string]string{"typeKind": s.TypeKind, "nameCase": s.NameCase, "position": s.Position,
+		"typeShape": s.TypeShape, "typeOrigin": s.TypeOrigin, "role": s.Role} {
 		if allowed := closedValues[key]; value != "" && !slices.Contains(allowed, value) {
 			return errors.New(noneOf(key, value, allowed))
 		}
 	}
 
 	if err := s.validSizes(); err != nil {
+		return err
+	}
+
+	if err := s.validValue(); err != nil {
 		return err
 	}
 
@@ -1066,6 +1144,10 @@ func (s Step) check(match engine.Match) bool {
 		return s.pattern.MatchString(filepath.ToSlash(subject.FromProject()))
 	case s.Position != "":
 		return atPosition(subject, s.Position)
+	case s.Field != "":
+		return subject.Field() == s.Field
+	case s.Role != "":
+		return subject.Role() == s.Role
 	case s.TopLevel != nil:
 		return topLevel(subject) == *s.TopLevel
 	case s.Descendant != nil:
@@ -1180,6 +1262,26 @@ func (s Step) check(match engine.Match) bool {
 		// Either way: a method that answers the question answers it asked the other way round too, since the
 		// caller's fix is the same name with a `not` in front of it.
 		return (subject.Answering(engine.Reading{EitherWay: true}) != "") == *s.AnsweredBy
+	case s.TypeShape != "":
+		typed := subject.Typed()
+
+		return typed != nil && typed.Kind == s.TypeShape
+	case s.TypeOrigin != "":
+		typed := subject.Typed()
+
+		return typed != nil && typed.Origin == s.TypeOrigin
+	case s.ElementType != "":
+		return s.elementNamed(subject)
+	case len(s.Value) > 0:
+		return valueHolds(s.Value, subject)
+	case s.Nullable != nil:
+		// A node whose type the engine cannot read answers nothing about absence, whichever way the check is
+		// written, so no type is no pass and never a silent `not nullable`.
+		return subject.Typed() != nil && subject.AdmitsAbsence() == *s.Nullable
+	case s.Overrides != nil:
+		return subject.IsOverride() == *s.Overrides
+	case s.Implicit != nil:
+		return subject.IsImplicit() == *s.Implicit
 	case s.TestCode != nil:
 		return subject.IsTest() == *s.TestCode
 	case s.PHP != "", s.Python != "", s.CSharp != "", s.TypeScript != "", s.Vue != "":
@@ -1362,6 +1464,25 @@ func (s Step) typed(written engine.Match) bool {
 	refers := strings.TrimPrefix(written.Refers(), `\`)
 
 	return refers != "" && s.pattern.MatchString(refers)
+}
+
+// elementNamed says whether the type's element is the one the glob names: the type a collection holds, which a
+// bridge reads from a generic argument, a docblock `list<X>` or an attribute such as `#[DataCollectionOf(X)]`. A
+// collection whose element nothing says is kept by nothing, since a bag of unknowns is not a bag of the type the
+// rule asked about.
+func (s Step) elementNamed(subject engine.Match) bool {
+	element := subject.ElementType()
+	if element == nil {
+		return false
+	}
+
+	for _, named := range []string{element.Name, element.Text} {
+		if named != "" && s.pattern.MatchString(strings.TrimLeft(named, `?\`)) {
+			return true
+		}
+	}
+
+	return false
 }
 
 // typeGlob reads a pattern over types, where `*` is any run of characters and nothing else is special, so `?*`

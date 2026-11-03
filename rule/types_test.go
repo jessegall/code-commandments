@@ -155,3 +155,279 @@ func TestATypeKindTheToolDoesNotKnowSaysWhich(t *testing.T) {
 		t.Errorf("typeKind module: %v", err)
 	}
 }
+
+// Absence is the one thing every one of these languages spells differently and means identically, and a rule could
+// only glob the text for it: `?*` is PHP's, `*|null` catches one more spelling, and neither says anything about
+// `str | None` or a C# `string?`. One check over the type object answers it in all of them, and refuses the two
+// look-alikes a glob gets wrong: a union of two real types, and a type merely NAMED like absence.
+
+// TestARuleAsksWhetherATypeAdmitsAbsence holds the reading in four languages, each with its own spelling and its
+// own look-alike in the same file.
+func TestARuleAsksWhetherATypeAdmitsAbsence(t *testing.T) {
+	codebases := map[string]*engine.Codebase{
+		"backend": phpCodebase(t, "Till.php", `<?php
+
+namespace App;
+
+final class Maybe {}
+
+final class Till
+{
+    public function spare(): ?Money
+    {
+        return null;
+    }
+
+    public function orNull(): Money|null
+    {
+        return null;
+    }
+
+    public function held(): Money
+    {
+        return new Money();
+    }
+
+    public function either(): int|string
+    {
+        return 1;
+    }
+
+    public function named(): Maybe
+    {
+        return new Maybe();
+    }
+}
+`),
+		"python": pythontest.FromSource(t, map[string]string{
+			"shop/__init__.py": "",
+			"shop/till.py": `class Money:
+    pass
+
+
+class Maybe:
+    pass
+
+
+def spare() -> Money | None:
+    return None
+
+
+def held() -> Money:
+    return Money()
+
+
+def either() -> int | str:
+    return 1
+
+
+def named() -> Maybe:
+    return Maybe()
+`,
+		}),
+		"csharp": csharptest.FromSource(t, map[string]string{"Shop/Till.cs": `namespace Shop;
+
+public sealed class Money { }
+
+public sealed class Maybe<T> { }
+
+public sealed class Till
+{
+    public string? Spare() => null;
+
+    public string Held() => "held";
+
+    public Maybe<string> Named() => new();
+}
+`}),
+		"typescript": frontendtest.FromSource(t, map[string]string{"src/till.ts": `export class Money {}
+
+export class Maybe<T> {}
+
+export function spare(): Money | null {
+    return null
+}
+
+export function missing(): Money | undefined {
+    return undefined
+}
+
+export function held(): Money {
+    return new Money()
+}
+
+export function named(): Maybe<Money> {
+    return new Maybe()
+}
+`}),
+	}
+
+	for _, each := range []struct {
+		engine string
+		query  string
+		want   string
+	}{
+		// PHP writes absence two ways, and both are the same type.
+		{"backend", `{"select": "function", "where": [{"nullable": true}]}`, "[9 14]"},
+		// A union of two real types is no absence, and neither is a class called Maybe.
+		{"backend", `{"select": "function", "where": [{"nullable": false}]}`, "[19 24 29]"},
+
+		{"python", `{"select": "function", "where": [{"nullable": true}]}`, "[9]"},
+
+		{"csharp", `{"select": "function", "where": [{"nullable": true}]}`, "[9]"},
+
+		{"typescript", `{"select": "function", "where": [{"nullable": true}]}`, "[5 9]"},
+		{"typescript", `{"select": "function", "where": [{"nullable": false}]}`, "[13 17]"},
+	} {
+		if got := found(t, each.engine, each.query, codebases[each.engine]); got != each.want {
+			t.Errorf("%s %s: found %s, want %s", each.engine, each.query, got, each.want)
+		}
+	}
+}
+
+// A type's SHAPE and what a collection holds are facts the bridges write and nothing read, so a rule had to glob a
+// type's text for both: `*[]` for an array, `list<*>` for its element. These hold the two checks over the type
+// object, where the shape is the bridge's own word and the element is the type it read rather than a name parsed
+// back out of a string.
+
+// TestARuleAsksWhatShapeATypeHas holds the shapes apart in the language whose bridge writes the most of them, and
+// holds a generic that is no collection to being neither.
+func TestARuleAsksWhatShapeATypeHas(t *testing.T) {
+	codebase := frontendtest.FromSource(t, map[string]string{"src/till.ts": `export class Order {}
+
+export function listed(): Order[] {
+    return []
+}
+
+export function paired(): [number, string] {
+    return [1, 'a']
+}
+
+export function one(): Order {
+    return new Order()
+}
+
+export function either(): Order | number {
+    return 1
+}
+`})
+
+	for query, want := range map[string]string{
+		`{"select": "function", "where": [{"typeShape": "array"}]}`: "[3]",
+		`{"select": "function", "where": [{"typeShape": "tuple"}]}`: "[7]",
+		`{"select": "function", "where": [{"typeShape": "named"}]}`: "[11]",
+		`{"select": "function", "where": [{"typeShape": "union"}]}`: "[15]",
+	} {
+		if got := found(t, "typescript", query, codebase); got != want {
+			t.Errorf("%s: found %s, want %s", query, got, want)
+		}
+	}
+}
+
+// TestARuleAsksWhatACollectionHolds holds the element, and holds it to saying nothing where the collection's
+// element is unknown: a bag of unknowns is no bag of the type the rule asked about, and guessing one would make
+// every rule about a typed collection fire on every untyped one.
+func TestARuleAsksWhatACollectionHolds(t *testing.T) {
+	codebase := frontendtest.FromSource(t, map[string]string{"src/orders.ts": `export class Order {}
+
+export function orders(): Order[] {
+    return []
+}
+
+export function anything(): unknown[] {
+    return []
+}
+
+export function one(): Order {
+    return new Order()
+}
+`})
+
+	for query, want := range map[string]string{
+		`{"select": "function", "where": [{"elementType": "*Order"}]}`:  "[3]",
+		`{"select": "function", "where": [{"elementType": "unknown"}]}`: "[7]",
+		// The one that holds nothing: a type that is no collection has no element to name.
+		`{"select": "function", "where": [{"elementType": "*"}]}`: "[3 7]",
+	} {
+		if got := found(t, "typescript", query, codebase); got != want {
+			t.Errorf("%s: found %s, want %s", query, got, want)
+		}
+	}
+}
+
+// TestAShapeTheContractDoesNotFixSaysWhich holds the closed set, since the shapes are the contract's own words and
+// a rule file is written by hand.
+func TestAShapeTheContractDoesNotFixSaysWhich(t *testing.T) {
+	written := `{"engine": "typescript", "sin": {"name": "x", "skill": "php/absence"}, "find": {"select": "function", "where": [{"typeShape": "collection"}]}}`
+
+	if _, err := rule.Parse("X", []byte(written), shipped); err == nil || !strings.Contains(err.Error(), "none of named, keyword") {
+		t.Errorf("typeShape collection: %v", err)
+	}
+}
+
+// Where a type came FROM is the fact that tells a type a human wrote from one a tool worked out, and it decides
+// two things nothing else can: a rule about a type a docblock carries where the signature carries none, and the
+// exemption every honesty rule needs — do not judge a type nobody wrote.
+
+// TestARuleAsksWhereATypeCameFrom holds the origins the bridges and the engine really write: a declaration's own
+// annotation, and the engine's own inference where no annotation says anything.
+func TestARuleAsksWhereATypeCameFrom(t *testing.T) {
+	codebase := phpCodebase(t, "Desk.php", `<?php
+
+namespace App;
+
+final class Slip {}
+
+final class Desk
+{
+    public function make(): Slip
+    {
+        $slip = new Slip();
+
+        return $slip;
+    }
+}
+`)
+
+	for query, want := range map[string]string{
+		// The return type the method writes.
+		`{"select": "function", "where": [{"typeOrigin": "written"}]}`: "[9]",
+		// The construction's type is the engine's own reading, and says so rather than borrowing the word written.
+		`{"select": "construction", "where": [{"typeOrigin": "inferred"}]}`: "[11]",
+		`{"select": "construction", "where": [{"typeOrigin": "written"}]}`:  "[]",
+	} {
+		if got := found(t, "backend", query, codebase); got != want {
+			t.Errorf("%s: found %s, want %s", query, got, want)
+		}
+	}
+}
+
+// TestATypeNobodyWroteIsLeftAlone holds the exemption as a reject, which is how an honesty rule uses it: the rule
+// judges the types a human wrote and leaves the checker's own readings alone, so proving the positive alone would
+// not prove the thing such a rule depends on.
+func TestATypeNobodyWroteIsLeftAlone(t *testing.T) {
+	codebase := frontendtest.FromSource(t, map[string]string{"src/till.ts": `export function total(count: number): number {
+    return count + 1
+}
+`})
+
+	// Every name in the body carries the type the checker read, and nobody wrote any of them.
+	read := `{"select": "identifier", "where": [{"typeShape": "keyword"}]}`
+	if got := found(t, "typescript", read, codebase); got == "[]" {
+		t.Fatalf("%s: found nothing, and the checker types every name here", read)
+	}
+
+	spared := `{"select": "identifier", "where": [{"typeShape": "keyword"}], "reject": [{"typeOrigin": "compiler"}]}`
+	if got := found(t, "typescript", spared, codebase); got != "[]" {
+		t.Errorf("%s: found %s, and the checker's own readings are what the exemption spares", spared, got)
+	}
+}
+
+// TestAnOriginTheContractDoesNotFixSaysWhich holds the closed set.
+func TestAnOriginTheContractDoesNotFixSaysWhich(t *testing.T) {
+	written := `{"engine": "backend", "sin": {"name": "x", "skill": "php/absence"}, "find": {"select": "function", "where": [{"typeOrigin": "guessed"}]}}`
+
+	if _, err := rule.Parse("X", []byte(written), shipped); err == nil || !strings.Contains(err.Error(), "none of written, docblock") {
+		t.Errorf("typeOrigin guessed: %v", err)
+	}
+}

@@ -116,10 +116,11 @@ does not — which is how a `where` says what only a `reject` could.
 | `{"fileMatches": "(^\|/)pages/.*(Create\|Edit)\\.vue$"}` | its path from the project (the repository it lies in, else the folder judged) matches the regular expression, for paths a glob cannot say, such as alternatives |
 | `{"namespaceLike": "App\\Http\\*"}` | the namespace, package or module it is declared in matches the glob |
 | `{"layer": "App\\Domain"}` | it sits in that layer of the stack the project declares (backend, Python, C#) |
-| `{"testCode": true}` | it is test code, as its bridge marks it or its language names test files |
 | `{"topLevel": true}` | it sits outside every function, closures too, and every type — code that runs when its file loads |
 | `{"withinLoop": true}` | it sits inside a loop, or not with `false` |
 | `{"position": "first"}` | it is the `first`, `last` or `only` one of its siblings (an only one is also first and last) |
+| `{"field": "cond"}` | it fills that slot of its parent in the tree — the language's own name for the slot, such as `cond`, `body`, `else`, `args` — which is the one axis of place the other checks never ask: a call standing AS a condition rather than one handed as an argument. The names are its language's, so a rule written with one judges that language |
+| `{"role": "member"}` | it is that kind of thing, in the words every bridge writes: `statement`, `expression`, `member` (any declaration of a type, a function, a property or an enum case), `type` (a type as written), `pattern`, `markup` or `other`. It is how a rule says `a declaration` without naming a kind per language, which is what a rule about the order or the company of members needs |
 | `{"descendant": {"is": "return"}}` | some node inside it passes the step; with `"within": "ownBody"` only the nodes it holds ITSELF are stepped onto, stopping at a function nested in it, which is the difference between a method that saves and one that hands a closure holding the save to a queue |
 | `{"child": {"is": "return"}}` | some node one level inside it passes the step, which `descendant` at any depth cannot say: a function whose own body returns, and nothing for one that returns only inside an `if`. With `"field"` only the children filling that field of the tree are stepped onto, as a count's field narrows what it counts |
 | `{"inside": {"is": "catch"}}` | some node above it, up to the file's root, passes the step |
@@ -136,6 +137,14 @@ does not — which is how a `where` says what only a `reject` could.
 | `{"ladderRungs": {"atLeast": 3}}` | its ladder has that many rungs AND every one compares the same subject with a constant, which is the shape whose answer is a dispatch on that subject or a lookup keyed by it. Nothing for a ladder of unrelated tests, and nothing for a branch that is itself a rung, so one ladder is counted once |
 | `{"passesItsElementOn": true}` | a loop hands its item on to something else, every use of it; a loop whose item reaches nothing, and one that only hands the item to the method it stands in, answer no. It is the pardon the walk-the-collection rules share |
 | `{"nestedAtLeast": {"is": "loop", "count": 3}}` | it and the nodes above it that pass the step number at least `count` |
+
+**Whether it is ours to judge**
+
+| Check | Keeps the node when |
+|---|---|
+| `{"testCode": true}` | it is test code, as its bridge marks it or its language names test files |
+| `{"overrides": true}` | a function is a member its type owes a supertype: its language's compiler says so, or one of the same name is declared by a type it extends or a contract it honours, in the scan or outside it. It is the exemption every rule about a signature needs, since the signature is not the overriding method's to change — and it is what a name check gets wrong, where a method merely SHARING a name with another class's is nobody's to answer for |
+| `{"implicit": true}` | the language itself calls the declaration or binds the parameter: a constructor, a magic or dunder method, Python's `self` and `cls`. Nothing the project writes calls it by that name, so a rule about how a thing is called, named or reached has nothing to say about it |
 
 **How big it is**
 
@@ -165,7 +174,12 @@ does not — which is how a `where` says what only a `reject` could.
 | `{"hasAnnotation": "Route"}` | a declaration carries the attribute or decorator |
 | `{"hasAttribute": "data-dusk"}` | a template element writes the attribute, plain or bound: `data-dusk` or `:data-dusk` |
 | `{"sibling": "{folder}.php"}` | a file the scan read matches the pattern, read from its file's folder: `{folder}.php` beside it, `../{folder}.php` one folder up, `{folder}` standing for the name of that folder |
-| `{"returnType": "?*"}` | a function's written return type matches the pattern, spaces dropped, or the type it names resolves to; it reads the text, so `?*` finds PHP's `?int` and `*\|null` finds `int\|null` |
+| `{"value": true}` | it is a literal of that very value, kind and all: the decoded value its language folded, read as the rule wrote it. `{"value": true}` is a bare `true` and NOT the string "true" nor the number 1, `{"value": 0}` is the number zero read as a number, so `0` and `0.0` are one value, and `{"value": null}` is the literal null. It is what a rule about a flag handed to a call needs, where `{"is": "literal"}` cannot tell a boolean from a label and `{"text": "true"}` matches a string that merely says so |
+| `{"nullable": true}` | its type admits absence, however its language spells it: `?Money`, `Money\|null`, `str \| None`, `string?`, `number \| undefined`. It reads the TYPE, so a union of two real types is not it and neither is a type merely named like one (`Maybe<T>`), which a glob over the text cannot tell apart. Asked of an expression it is the type the value holds, of a declaration the type it writes, and of a type node the type of the declaration it is written on; a node whose type the engine cannot read keeps nothing either way, since nothing known about a type says nothing about absence |
+| `{"typeShape": "tuple"}` | its type has that shape, read from the type itself: `named`, `keyword`, `parameter`, `union`, `intersection`, `array`, `tuple`, `object`, `function`, `literal`, `pointer`, `map` or `opaque`. It is how a rule says `this answers a positional tuple` or `this hands back a bare array` without reading a type's text, and `opaque` is the honest answer for a type its bridge does not model |
+| `{"typeOrigin": "docblock"}` | its type came from there: `written` (the source's own annotation), `docblock`, `attribute`, `inferred` (the engine's own sound inference) or `compiler` (Roslyn, mypy, tsc). It is two rules nothing else can say: a type a docblock carries where the signature carries none, and the exemption `do not judge a type nobody wrote` — a reject on `inferred` leaves the engine's own reading alone |
+| `{"elementType": "App\\Models\\*"}` | its type is a collection OF that type, read from a generic argument, a docblock `list<X>`, or an attribute such as `#[DataCollectionOf(X::class)]`. A collection whose element nothing says keeps nothing, since a bag of unknowns is not a bag of the type asked about |
+| `{"returnType": "?*"}` | a function's written return type matches the pattern, spaces dropped, or the type it names resolves to; it reads the text, so `*\|null` finds `int\|null` — for absence itself ask `nullable` of the type, which every language answers the same way |
 | `{"parameterType": "array"}` | a parameter's written type matches the pattern, read as returnType reads one |
 
 **Its language's own**

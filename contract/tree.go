@@ -250,6 +250,18 @@ type Type struct {
 	Origin     string      `json:"origin"`
 }
 
+// Roles are the roles a node can fill, as CONTRACT.md fixes them: every bridge writes one of these on every node.
+var Roles = []string{"statement", "expression", "member", "type", "pattern", "markup", "other"}
+
+// TypeShapes are the shapes a type can have, as CONTRACT.md fixes them: every bridge writes one of these as a
+// type's kind, and a rule asks about a type's structure by one of these words.
+var TypeShapes = []string{"named", "keyword", "parameter", "union", "intersection", "array", "tuple", "object",
+	"function", "literal", "pointer", "map", "opaque"}
+
+// TypeOrigins are where a type can come from, as CONTRACT.md fixes them: the source's own annotation, a docblock,
+// an attribute, the engine's own sound inference, or the language's checker.
+var TypeOrigins = []string{"written", "docblock", "attribute", "inferred", "compiler"}
+
 // TypeField is one field of an object type. Its type is absent where the resolver could not read one: Go answers
 // every import outside the module with an empty package, so a field of another package's type is known by name
 // alone, and inventing a type for it would be worse than saying nothing.

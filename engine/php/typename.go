@@ -79,6 +79,34 @@ func (n TypeName) NullableClass() string {
 	return ""
 }
 
+// Named is the type as ONE name, null aside: itself where it is written as a name or a keyword, and a nullable
+// union's sole non-null member, marked nullable and spelled `?T`, since `?T` and `T|null` are the same type and
+// only one of the two is written as a name. No type where it names no single one, such as a union of two classes
+// or an array shape, since inventing a name for those would be worse than saying nothing.
+func (n TypeName) Named() *contract.Type {
+	switch {
+	case n.written == nil:
+		return nil
+	case n.isNamed():
+		return n.written
+	case !n.isUnion():
+		return nil
+	}
+
+	member := n.soleNonNullMember()
+	if member == nil || !member.isNamed() {
+		return nil
+	}
+	if !n.isNullableUnion() {
+		return member.written
+	}
+	nullable := *member.written
+	nullable.Nullable = true
+	nullable.Text = "?" + member.written.Text
+
+	return &nullable
+}
+
 // IsNullable says whether the type admits null as it is written: `?T`, or a union with null.
 func (n TypeName) IsNullable() bool {
 	return n.isSugared() || n.isNullableUnion()

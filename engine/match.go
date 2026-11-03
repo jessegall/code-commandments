@@ -153,6 +153,18 @@ func (m Match) Field() string {
 	return m.node.Field
 }
 
+// Role is what the node IS, in the neutral words of contract.Roles: a statement, an expression, a member (any
+// declaration of a type, a function, a property or an enum case), a written type, a pattern, markup, or other.
+// Every bridge writes one on every node, which is how a rule asks about a declaration without naming a kind per
+// language.
+func (m Match) Role() string {
+	if m.node == nil {
+		return ""
+	}
+
+	return m.node.Role
+}
+
 // Kind is the language's own name for the node.
 func (m Match) Kind() string {
 	if m.node == nil {

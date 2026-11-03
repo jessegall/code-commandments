@@ -5,6 +5,7 @@ import (
 	"reflect"
 	"strings"
 
+	"github.com/jessegall/code-commandments/contract"
 	"github.com/jessegall/code-commandments/engine"
 )
 
@@ -130,6 +131,10 @@ func fieldsOf(shape reflect.Type, properties object) {
 		}
 
 		property := typeOf(field.Type)
+		if key == "value" {
+			// A literal's own value, which is a scalar and not the bytes its field is held as.
+			property = object{"type": valueScalars}
+		}
 		if key == "of" {
 			property["description"] = "The node the step judges in place of the one it is on: parent, enclosingFunction, enclosingType, root, closest:<kind> or child:<field>."
 		}
@@ -193,10 +198,13 @@ var ownKeys = map[reflect.Type]map[string]string{
 // closedValues are the keys whose value is one of a few, and those few: the one list the parser checks a value
 // against, the schema offers, and a slip of the keyboard is matched with.
 var closedValues = map[string][]string{
-	"is":       neutralNames(),
-	"typeKind": engine.TypeKinds,
-	"nameCase": {"camel", "pascal", "snake", "upper", "kebab"},
-	"position": {"first", "last", "only"},
+	"is":         neutralNames(),
+	"typeKind":   engine.TypeKinds,
+	"typeShape":  contract.TypeShapes,
+	"typeOrigin": contract.TypeOrigins,
+	"role":       contract.Roles,
+	"nameCase":   {"camel", "pascal", "snake", "upper", "kebab"},
+	"position":   {"first", "last", "only"},
 }
 
 // checkNamed is the catalog's check of the key.

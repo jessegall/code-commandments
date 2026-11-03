@@ -118,7 +118,7 @@ Every syntax node, nested as the language nests them. Tokens, whitespace and com
 | `children` | it has any | its child nodes, in source order |
 | `name` | declarations, names, identifiers, members, elements, attributes | the name as written (`add`, `Cart`, `self`, `div`); never empty, so a key written as `""` and a name a syntax error left missing carry none |
 | `literal` | literals | `string`, `int`, `float`, `bool`, `null`, `undefined`, `bytes`, `ellipsis`, `interpolated`, `format` |
-| `value` | literals the language folds, static attributes | the decoded value: a string without quotes or escapes, `true`/`false`, `null`. An `int` or `float` is a decimal string, so no width is lost |
+| `value` | literals the language folds, static attributes | the decoded value: a string without quotes or escapes, or `true`/`false`. An `int` or `float` is a decimal string, so no width is lost. A null literal carries none, since there is nothing to decode and its `literal` of `null` already says what it is |
 | `operator` | binary, unary, assignment, update expressions; a TypeScript heritage clause | the operator token: `==`, `??`, `+=`, `!`, `not`, `await`, `instanceof`; a heritage clause's keyword, `extends` or `implements` |
 | `modifiers` | the node carries any | the modifier keywords written on it: `public`, `static`, `readonly`, `final`, `abstract`, `override`, `async`, `const`, `partial`, `out`. In source order where the parser keeps it, otherwise the language's own order. A language's implicit default (TS `public`) is not written |
 | `flags` | the node has any | syntax facts that are not modifier keywords (see *Flags*) |
