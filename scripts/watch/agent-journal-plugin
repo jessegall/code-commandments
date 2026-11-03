@@ -10,7 +10,11 @@ fi
 
 version=$(sed -n 's/.*"version": *"\([^"]*\)".*/\1/p' "$plugin/journal-plugin.json" | head -1)
 
-if ! pgrep -f "agent-journal/.journal/plugins/code-commandments/bin/commandments-release journal-serve" >/dev/null; then
+# The process is matched by the plugin's own folder and the binary alone, never by the verb or the exact path it
+# was launched with: the journal launches it from .journal-plugin/../bin and the verb is the protocol's own
+# (journal4-hook today, journal-serve before it), so naming either made this check report a fault that was not
+# there while the service judged every edit.
+if ! pgrep -f "agent-journal/.journal/plugins/code-commandments/.*commandments-release" >/dev/null; then
     echo "the hook service of plugin $version is not running, so no edit there is judged"
     exit 1
 fi
