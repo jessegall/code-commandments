@@ -702,7 +702,43 @@ public sealed class ContractWriter(IReadOnlyList<string> roots, IReadOnlySet<str
             _ => true,
         };
 
-        private void Type(Utf8JsonWriter json, ITypeSymbol type, string origin)
+        /// <summary>
+        /// The element a collection type holds: a dictionary's value, else what the type enumerates; none for
+        /// anything that holds nothing. A string enumerates its characters and is no collection to any rule, so it
+        /// holds none.
+        /// </summary>
+        private ITypeSymbol? Element(INamedTypeSymbol named)
+        {
+            if (named.SpecialType == SpecialType.System_String)
+            {
+                return null;
+            }
+
+            var implemented = named.AllInterfaces.Insert(0, named);
+
+            foreach (var mapping in new[] { "System.Collections.Generic.IDictionary`2", "System.Collections.Generic.IReadOnlyDictionary`2" })
+            {
+                var declaration = model.Compilation.GetTypeByMetadataName(mapping);
+                var found = implemented.FirstOrDefault(candidate => SymbolEqualityComparer.Default.Equals(candidate.OriginalDefinition, declaration));
+
+                if (found is not null)
+                {
+                    return found.TypeArguments[1];
+                }
+            }
+
+            var enumerated = implemented.FirstOrDefault(candidate => candidate.OriginalDefinition.SpecialType == SpecialType.System_Collections_Generic_IEnumerable_T);
+
+            return enumerated?.TypeArguments[0];
+        }
+
+        /// <summary>
+        /// Writes <paramref name="type"/> as the contract writes a type. <paramref name="holding"/> is false for the
+        /// element of a collection, whose own element is not written: a type may enumerate itself
+        /// (`class Tree : IEnumerable&lt;Tree&gt;`), and an element the source never wrote would then be written
+        /// forever. One level is what a rule asks for.
+        /// </summary>
+        private void Type(Utf8JsonWriter json, ITypeSymbol type, string origin, bool holding = true)
         {
             json.WriteStartObject();
             json.WriteString("text", type.ToDisplayString(Readings.Qualified));
@@ -747,6 +783,12 @@ public sealed class ContractWriter(IReadOnlyList<string> roots, IReadOnlySet<str
                         }
 
                         json.WriteEndArray();
+                    }
+
+                    if (holding && Element(named) is { } held && IsSpelled(held))
+                    {
+                        json.WritePropertyName("element");
+                        Type(json, held, origin, false);
                     }
 
                     run.Remember(named);

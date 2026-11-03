@@ -214,7 +214,7 @@ canonical `text`, because detectors match that text directly (a C#
 | `value` | `literal` | the literal's value, decoded as a node's `value` is |
 | `nullable` | it admits absence | `true`: `?T`, a union with `null`, `None` or `undefined`, a C# nullable reference. This flag is the one place absence is read; the members show which kind of absence |
 | `valueType` | the compiler says so | `true` for a value type (a C# struct, enum, or primitive) |
-| `element` | a collection whose element type is known | the element type, from a generic, a docblock `list<X>`, or an attribute such as `#[DataCollectionOf(X::class)]` |
+| `element` | a collection whose element type is known | the element type, from a generic, what a C# type enumerates, a docblock `list<X>`, or an attribute such as `#[DataCollectionOf(X::class)]`. An element carries no element of its own: a type may enumerate itself, so one level is written and that is what a rule asks for |
 | `args` | generics, arrays, maps | for a map, its key and then its value |
 | `constructs` | the expression names a class | the class a call of it builds: Python `Money` in `Money.of(...)`, `str` in `str(x)` |
 | `origin` | always | where the type came from: `written` (the source's own annotation), `docblock`, `attribute`, `inferred` (the engine's own sound inference), `compiler` (Roslyn, mypy, tsc) |
@@ -413,6 +413,11 @@ basic type, a struct and an array, which Go copies. A function's `returns` is th
 `VariableDeclarator` below it, so `private readonly Printer till;` is the member a reader sees while `till` is
 where the name lives. A declaration that declares exactly one of them carries that declarator's `symbol`, since
 the declaration IS that field; one declaring several (`int a, b;`) is no single member and carries none.
+
+A C# collection says what it holds without the bridge being taught which types are collections: the `element` of a
+named type is its value where it implements `IDictionary<K, V>` or `IReadOnlyDictionary<K, V>`, and otherwise what
+it enumerates, which Roslyn answers for `List<T>`, `IEnumerable<T>` and every type of a project's own that
+implements one. A `string` enumerates its characters and is no collection to any rule, so it holds none.
 
 A C# field is read by its BARE name — `till.Send(slip)`, not `this.till.Send(slip)` — so a read has no receiver
 whose type would say which member it reaches, and the resolver's own binding is the only thing that can:

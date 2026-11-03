@@ -408,6 +408,46 @@ def one() -> Order:
 	}
 }
 
+// TestACollectionsElementAnswersForCSharpToo holds the element where Roslyn answers it from what a type
+// implements rather than from a generic the bridge was taught: anything enumerable holds what it enumerates, a
+// dictionary holds its value, and a string, which enumerates its characters, is no collection to any rule.
+func TestACollectionsElementAnswersForCSharpToo(t *testing.T) {
+	codebase := csharptest.FromSource(t, map[string]string{"Shop/Till.cs": `using System.Collections.Generic;
+
+namespace Shop;
+
+public sealed class Order {}
+
+public sealed class Till
+{
+    public List<Order> Orders() => new();
+
+    public IEnumerable<Order> Shipped() => Orders();
+
+    public Dictionary<string, Order> ById() => new();
+
+    public Dictionary<Order, int> Counts() => new();
+
+    public Order One() => new();
+
+    public string Name() => "till";
+}
+`})
+
+	for query, want := range map[string]string{
+		// A list and anything enumerable hold their element; a dictionary holds its value, not its key.
+		`{"select": "function", "where": [{"elementType": "*Order"}]}`: "[9 11 13]",
+		// C# spells a keyword type as the type it is, so the element of a count is `System.Int32`.
+		`{"select": "function", "where": [{"elementType": "*Int32"}]}`: "[15]",
+		// The ones that hold nothing: a type that is no collection, and a string, which enumerates characters.
+		`{"select": "function", "where": [{"elementType": "*"}]}`: "[9 11 13 15]",
+	} {
+		if got := found(t, "csharp", query, codebase); got != want {
+			t.Errorf("csharp %s: found %s, want %s", query, got, want)
+		}
+	}
+}
+
 // TestARuleAsksWhatACollectionHolds holds the element, and holds it to saying nothing where the collection's
 // element is unknown: a bag of unknowns is no bag of the type the rule asked about, and guessing one would make
 // every rule about a typed collection fire on every untyped one.
