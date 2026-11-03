@@ -36,6 +36,8 @@ func (s Serve) Help() help.Help {
 	return help.Of("Keep the "+s.Label+" bridge running for this project, answering each run of the tool over a socket named for the project.").
 		Form(s.Kind+"-serve", "serve until the bridge stops (started by the journal as a plugin service)").
 		Note("A project with no " + s.Label + " to judge keeps no bridge: the service waits until it is stopped, fetching and starting nothing.").
+		Note("A bridge that cannot run here at all, for want of its own toolchain, waits too, and says once what to install rather than ending and being started again for a thing that will not appear while the session runs.").
+		Note("A run of the tool says nothing when it judges through this service, since that is the ordinary way of it, and warns when it reached the service and got no answer. So a run that is slow and silent found no service: the socket is named for the project's canonical path, which `ls /tmp/code-commandments-" + s.Kind + "-*.sock` lists, and a run works the project out from the repository its folder is in.").
 		In(help.Hooks)
 }
 
