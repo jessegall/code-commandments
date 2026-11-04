@@ -417,6 +417,10 @@ func Parse(name string, text []byte, skills Skills) (Rule, error) {
 	var read file
 	if err := decoder.Decode(&read); err != nil {
 		if key, unknown := unknownKey(err); unknown {
+			if where := belongsIn(key); where != "" {
+				return Rule{}, fmt.Errorf("%s: nothing reads %q where it stands%s", name, key, where)
+			}
+
 			return Rule{}, fmt.Errorf("%s: no check or key is called %q%s", name, key, didYouMean(key, knownKeys()))
 		}
 
