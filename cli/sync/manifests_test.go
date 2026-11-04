@@ -375,6 +375,55 @@ func TestTheDeclaredHoldIsTheWindowTheCodeFallsBackTo(t *testing.T) {
 	t.Error("the manifest asks for no hold on worker_delivering, so a delivery has no time to be judged in")
 }
 
+// TestEachAliasSaysWhatKindOfCommandItIs holds the category each alias declares. The journal classifies a shell
+// command to decide how to treat it, and an alias that declares nothing is classified as unknown; it also refuses
+// the whole plugin install on a category it does not know, so a wrong word here breaks every install rather than
+// one alias.
+//
+// `sins` judges and `rules` tries and proves a rule, which is what a check is. `commandments` declares none on
+// purpose: it is the open passthrough, and the same alias runs `repent`, which rewrites a project's source, and
+// `report`, which files an issue over the network. No one category is true of it, and a category drives how the
+// journal treats the command, so guessing one there would be a lie about what the command does.
+func TestEachAliasSaysWhatKindOfCommandItIs(t *testing.T) {
+	text, err := os.ReadFile(filepath.Join("..", "..", "journal-plugin.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var read struct {
+		Aliases []struct {
+			Name     string `json:"name"`
+			Category string `json:"category"`
+		} `json:"aliases"`
+	}
+	if err := json.Unmarshal(text, &read); err != nil {
+		t.Fatal(err)
+	}
+
+	// Every category the journal knows (core/base/driver/command_category.py). One it does not know refuses the
+	// install, so the set is part of the contract and not a loose spelling.
+	known := []string{"search", "read", "edit", "version control", "test run", "build", "check", "package", "network", "process", "journal", "unknown"}
+
+	declared := map[string]string{}
+	for _, alias := range read.Aliases {
+		declared[alias.Name] = alias.Category
+
+		if alias.Category != "" && !slices.Contains(known, alias.Category) {
+			t.Errorf("the %s alias declares the category %q, which the journal does not know, and the install is refused for the whole plugin", alias.Name, alias.Category)
+		}
+	}
+
+	for _, checking := range []string{"sins", "rules"} {
+		if declared[checking] != "check" {
+			t.Errorf("the %s alias declares %q, and it runs a check", checking, declared[checking])
+		}
+	}
+
+	if declared["commandments"] != "" {
+		t.Errorf("the commandments alias declares %q, and it is the passthrough that also repents and reports", declared["commandments"])
+	}
+}
+
 // TestTheJudgingAliasIsOneAWorkerMayRun holds the manifest to what the briefing tells every agent to do. The
 // briefing says to run `journal sins`, workers included, and the journal refuses an alias to a worker unless the
 // manifest says `workers` — so without it the tool instructed an agent to run a command it was then refused.
