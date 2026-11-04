@@ -225,7 +225,7 @@ func (m merging) sins() []SinMark {
 	if err != nil {
 		return nil
 	}
-	rules = append(rules, custom.Load(m.worktree).Enabled(project)...)
+	rules = append(rules, custom.InForce(m.worktree).Enabled(project)...)
 	project = project.Judging(rules)
 
 	switch {

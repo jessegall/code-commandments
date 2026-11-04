@@ -51,7 +51,20 @@ type Project struct {
 	Classes []string
 }
 
-// Load reads the custom folder of the project at root.
+// InForce reads the project's own commandments as a RUN is judged by them: from the tree the settings come
+// from, which for a worktree is the main checkout.
+//
+// The rules a run judges by and the config that turns them on have to be one tree's. Read apart, a worktree cut
+// before a rule was committed is told that a configured detector is "declared nowhere" — and, far worse than the
+// warning, that rule judges nothing there while every other rule still fires, so the run reads as a pass.
+//
+// A command that works ON a rule — scaffolding one, trying one, migrating the files — reads with Load instead,
+// since the rule it is working on is the one in the folder it was run in.
+func InForce(dir string) Project {
+	return Load(workspace.SettingsRoot(dir))
+}
+
+// Load reads the custom folder of the project at root, exactly as given.
 func Load(root string) Project {
 	dir := workspace.CustomDir(root)
 	var project Project

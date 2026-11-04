@@ -146,7 +146,7 @@ func (c Command) Run(in *cli.Input, console cli.Console) (int, error) {
 		installed = config.Everything
 	}
 
-	fixers := append(config.Packaged(detectors.All(), installed), custom.Load(project).Enabled(judged)...)
+	fixers := append(config.Packaged(detectors.All(), installed), custom.InForce(project).Enabled(judged)...)
 
 	converged, err := run.Run(roots, targets, filedIn(project), fixers, only)
 	if err != nil {

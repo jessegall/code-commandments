@@ -82,6 +82,7 @@
 .agents/skills/commandments-php-value-objects/reference/detectors.md
 .agents/skills/commandments-php-value-objects/reference/examples.md
 .agents/skills/commandments-writing-detectors/SKILL.md
+.agents/skills/commandments-writing-detectors/reference/examples.md
 .agents/skills/commandments/SKILL.md
 .commandments/published-skills
 composer.json

@@ -53,7 +53,7 @@ func ownRules() []detectors.Detector {
 	}
 
 	var own []detectors.Detector
-	for _, rule := range custom.Load(workspace.ProjectRoot(cwd)).Rules {
+	for _, rule := range custom.InForce(workspace.ProjectRoot(cwd)).Rules {
 		own = append(own, rule)
 	}
 

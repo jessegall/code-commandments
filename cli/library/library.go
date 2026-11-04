@@ -93,7 +93,7 @@ func (l Library) Publish() ([]string, error) {
 
 	// The project's own skills live with the project, which is not the library's folder when the journal's plugin
 	// renders the curriculum into its own.
-	for _, own := range custom.Load(l.judged).Skills {
+	for _, own := range custom.InForce(l.judged).Skills {
 		id := own.Definition().ID()
 
 		if len(Written([]skill.Skill{own}, l.project)) > 0 && copiedFrom(os.DirFS(own.Dir), ".", l.Path(id), l.naming) {

@@ -351,7 +351,7 @@ func summarise(reason string) string {
 // ownRule is the project's own rule the name means, and whether there is one.
 func ownRule(name string) (detectors.Detector, bool) {
 	var own []detectors.Detector
-	for _, read := range custom.Load(workspace.ProjectRoot(workingFolder())).Rules {
+	for _, read := range custom.InForce(workspace.ProjectRoot(workingFolder())).Rules {
 		own = append(own, read)
 	}
 

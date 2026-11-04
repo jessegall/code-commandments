@@ -49,7 +49,7 @@ func (SkillReminder) Handle(event Event) Response {
 		return Silent()
 	}
 
-	enabled = append(enabled, custom.Load(event.Root).Enabled(project)...)
+	enabled = append(enabled, custom.InForce(event.Root).Enabled(project)...)
 
 	// A rule of the project's own may name the folders it judges in its own file, so the config is read with what
 	// the rules declare before anything asks which files are looked at or which rules may mark one.

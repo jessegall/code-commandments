@@ -35,7 +35,7 @@ func swept(record Announced, root string) (marks []SinMark, read []string) {
 		return nil, nil
 	}
 
-	enabled = append(enabled, custom.Load(root).Enabled(project)...)
+	enabled = append(enabled, custom.InForce(root).Enabled(project)...)
 	project = project.Judging(enabled)
 	single := slices.DeleteFunc(enabled, detectors.ReadsBeyondOneFile)
 	marking := Marks(root)

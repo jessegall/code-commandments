@@ -114,7 +114,7 @@ func Sync(root string, console cli.Console) error {
 
 	removeLegacyArtifacts(root)
 	removeHostRoslynBuilds(console)
-	console.Warn(custom.Load(root).ClassWarnings()...)
+	console.Warn(custom.InForce(root).ClassWarnings()...)
 	console.Warn(agents.Unshipped(project)...)
 	fetchRoslyn(root, project, console)
 

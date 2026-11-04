@@ -126,7 +126,7 @@ func (c Command) Run(in *cli.Input, console cli.Console) (int, error) {
 		return 0, err
 	}
 
-	own := custom.Load(cwd)
+	own := custom.InForce(cwd)
 	console.Warn(own.Warnings(project)...)
 	enabled = append(enabled, own.Enabled(project)...)
 
@@ -730,7 +730,7 @@ func list(cwd string, console cli.Console) (int, error) {
 		return 0, err
 	}
 
-	enabled = append(config.InClassOrder(config.Detector, enabled), custom.Load(cwd).Enabled(project)...)
+	enabled = append(config.InClassOrder(config.Detector, enabled), custom.InForce(cwd).Enabled(project)...)
 	bySkill := map[string][]string{}
 
 	for _, detector := range enabled {
