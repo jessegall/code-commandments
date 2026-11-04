@@ -370,8 +370,13 @@ func ask(dir string, args ...string) string {
 }
 
 // run runs git in dir and answers its output, empty when it fails.
+//
+// Every call carries --no-optional-locks: git takes the repository's index lock to write back an index it
+// refreshed while reading, and these calls are made from a hook, beside a session that is running git itself.
+// A status read taking that lock made a `git commit` in the same checkout fail with "Unable to create
+// index.lock". Nothing here writes to the repository, so the refresh it would save is never worth a lock.
 func run(dir string, args ...string) string {
-	out, err := exec.Command("git", append([]string{"-C", dir}, args...)...).Output()
+	out, err := exec.Command("git", append([]string{"--no-optional-locks", "-C", dir}, args...)...).Output()
 	if err != nil && len(out) == 0 {
 		return ""
 	}

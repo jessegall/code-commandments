@@ -2,13 +2,14 @@ package hooks
 
 import (
 	"os"
-	"os/exec"
 	"path/filepath"
 	"slices"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/jessegall/code-commandments/cli/git"
 )
 
 // rebasing are the flags that make a pull rewrite the branch.
@@ -128,25 +129,5 @@ func worktreeMark(root string) string {
 
 // readWorktrees asks git, which is the slow answer the mark above keeps us from asking for twice.
 func readWorktrees(root string) []string {
-	listing, _ := exec.Command("git", "-C", root, "worktree", "list", "--porcelain").Output()
-	self := realPath(root)
-
-	var others []string
-
-	for _, line := range strings.Split(string(listing), "\n") {
-		if path, declared := strings.CutPrefix(line, "worktree "); declared && realPath(path) != self {
-			others = append(others, path)
-		}
-	}
-
-	return others
-}
-
-func realPath(path string) string {
-	real, err := filepath.EvalSymlinks(path)
-	if err != nil {
-		return ""
-	}
-
-	return real
+	return git.Worktrees(root)
 }
