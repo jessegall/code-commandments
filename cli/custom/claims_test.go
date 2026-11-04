@@ -25,7 +25,7 @@ const claimingSkill = "---\n" +
 
 func TestASkillIsToldWhichRulesItNamesAreDeclaredNowhere(t *testing.T) {
 	loaded := Load(project(t, map[string]string{
-		"RawSqlDetector.json":       rawSQL,
+		"RawSqlDetector.json":        rawSQL,
 		"skills/no-raw-sql/SKILL.md": claimingSkill,
 	}))
 
@@ -52,7 +52,7 @@ func TestASkillThatNamesOnlyDeclaredRulesIsNotWarnedAbout(t *testing.T) {
 	const honest = "---\nname: No raw SQL\ndescription: x\n---\n\n## When it fires\n\n- **`raw-sql`** - a query at a call site.\n"
 
 	loaded := Load(project(t, map[string]string{
-		"RawSqlDetector.json":       rawSQL,
+		"RawSqlDetector.json":        rawSQL,
 		"skills/no-raw-sql/SKILL.md": honest,
 	}))
 
@@ -66,7 +66,7 @@ func TestTheSinsLineOfARenderedSkillIsReadWhereverItStands(t *testing.T) {
 		"- `commandments info <sin>` — what one rule flags. The sins here: `raw-sql`, `no-such-rule`.\n"
 
 	loaded := Load(project(t, map[string]string{
-		"RawSqlDetector.json":       rawSQL,
+		"RawSqlDetector.json":        rawSQL,
 		"skills/no-raw-sql/SKILL.md": rendered,
 	}))
 
@@ -82,7 +82,7 @@ func TestANameInProseIsNoClaim(t *testing.T) {
 		"- `another-missing-rule` - a bullet under no heading about what fires.\n"
 
 	loaded := Load(project(t, map[string]string{
-		"RawSqlDetector.json":  prose,
+		"RawSqlDetector.json":        prose,
 		"skills/no-raw-sql/SKILL.md": prose,
 	}))
 

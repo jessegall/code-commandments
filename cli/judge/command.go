@@ -202,8 +202,12 @@ func (c Command) judge(options options, selected []detectors.Detector, judged co
 	// others: judging one changed file on this repository read 1469 of them and cost eleven seconds, where the
 	// file alone costs a third of one. Which rules those are is measured by the fixture harness and said on the
 	// rule itself, so a rule that reads a recurrence, a caller or a twin keeps the whole scan.
-	if len(targets.Files()) > 0 && !readsAcrossFiles(selected) {
-		sources = sources.JustThese(targets.Includes)
+	if len(targets.Files()) > 0 {
+		if across := readAcrossFiles(selected); len(across) > 0 {
+			sayWhyTheWholeTreeIsRead(across, len(selected), len(targets.Files()), console)
+		} else {
+			sources = sources.JustThese(targets.Includes)
+		}
 	}
 
 	whole, byProject := wholeAndByProject(selected)
@@ -447,16 +451,37 @@ func languagesFor(selected []detectors.Detector, project config.Config, root str
 	return languages
 }
 
-// readsAcrossFiles says whether any of the rules reads more than the file it reports in, which is what decides
+// readAcrossFiles are the rules that read more than the file they report in, by name, which is what decides
 // whether a scoped run may read the files it judges alone.
-func readsAcrossFiles(selected []detectors.Detector) bool {
+func readAcrossFiles(selected []detectors.Detector) []string {
+	var across []string
 	for _, detector := range selected {
 		if catalog.IsCrossFile(detector) {
-			return true
+			across = append(across, catalog.Name(detector))
 		}
 	}
 
-	return false
+	return across
+}
+
+// sayWhyTheWholeTreeIsRead says, on a scoped run that had to read the whole path anyway, what made it.
+//
+// A rule that reads a recurrence, a caller or a twin cannot answer from the file it reports in, so the path is
+// parsed whole however few files the run judges. That is correct, and from outside it is indistinguishable from
+// --changes being ignored: a consumer watching "reading 107/5323" for thirteen changed files reported it as a bug,
+// with the count as the only thing they had to go on.
+//
+// So the run says it. How MANY of the selected rules read that way is the fact that matters, since on a full
+// curriculum it is scores of them and no single name is the cause; one such rule is named, because then it is.
+// The last clause is what the reader actually has to know: the scope still decided what was reported.
+func sayWhyTheWholeTreeIsRead(across []string, selected, judged int, console cli.Console) {
+	reason := strconv.Itoa(len(across)) + " of the " + strconv.Itoa(selected) + " rules read across files"
+	if len(across) == 1 {
+		reason = across[0] + " reads across files"
+	}
+
+	fmt.Fprintf(console.Err, "· reading the whole path, not only the %d %s judged: %s, so the scope chose what is reported, not what is read\n",
+		judged, plural(judged, "file", "files"), reason)
 }
 
 // reaching are the languages a SCOPED run has to read: the ones its own files are in, and the ones that publish
