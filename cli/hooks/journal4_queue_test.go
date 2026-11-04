@@ -313,10 +313,18 @@ func TestAQueuedAnswerIsTheAnswersOwnShapeInAFileOfItsOwn(t *testing.T) {
 // answer needs may be worked out on the way.
 func TestTheServiceAnswersTheHeldEventWithTheGatesAloneAndAdvisesAfter(t *testing.T) {
 	_, line := projectAnotherWorktreeStandsOn(t)
-	socket := filepath.Join(t.TempDir(), "serve.sock")
+	// A socket's path is short by the operating system's rule, which a test's own folder is not: bound under one,
+	// listening answers "invalid argument" and this test skipped itself wherever it ran.
+	short, err := os.MkdirTemp("", "s")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(short)
+
+	socket := filepath.Join(short, "serve.sock")
 	listener, err := net.Listen("unix", socket)
 	if err != nil {
-		t.Skipf("no socket to listen on: %v", err)
+		t.Fatalf("no socket to listen on: %v", err)
 	}
 	defer listener.Close()
 

@@ -115,7 +115,7 @@ func adviseAsked(moment asked) {
 	}
 
 	// The agent the moment came from, so this answer reaches that agent and no other.
-	_ = queue.Tell(answerWith(moment.given, not(isGate), true), asText(moment.given["env"]), asAgent(moment.given["agent"]))
+	_ = queue.Tell(answerWith(moment.given, not(isGate), true), asText(moment.given["env"]), MomentOf(moment.given).Agent)
 }
 
 // adviseDetached works the advice out in a run of its own, so the journal is not kept waiting on it. The run reads

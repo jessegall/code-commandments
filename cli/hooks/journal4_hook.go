@@ -176,7 +176,9 @@ func Judge4Into(line map[string]any, folder string) {
 	// The agent the event came from, written back unchanged, so the journal hands this answer to that agent and
 	// to no other: a worker and the main agent share an environment, and until this was named a worker could be
 	// told about an edit made in a tree it does not have.
-	_ = queue.Tell(answerWith(Stamped(moment), not(isGate), true), asText(line["environment"]), asAgent(line["agent"]))
+	given := Stamped(moment)
+
+	_ = queue.Tell(answerWith(given, not(isGate), true), asText(line["environment"]), MomentOf(given).Agent)
 }
 
 // judge4Detached starts that run, in a session of its own so it outlives this one. It reads the event from a file it
@@ -254,7 +256,11 @@ func Moment4Of(line map[string]any) (map[string]any, bool) {
 		tool["name"] = "Write"
 	}
 
-	agent := map[string]any{"session": line["session"]}
+	// The agent's own number rides along with its session and its folder: every queued answer is FOR one agent,
+	// and the moment is the only thing the service keeps of the event it was read from. Without it, an answer
+	// worked out on the service's path named nobody and the journal gave it to the first agent that drained the
+	// queue, so a worker was told about the main agent's edit.
+	agent := map[string]any{"session": line["session"], "id": line["agent"]}
 	if project, named := os.LookupEnv("JOURNAL_ROOT"); named {
 		agent["cwd"] = project
 	}

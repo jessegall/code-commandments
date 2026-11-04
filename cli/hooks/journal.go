@@ -34,6 +34,10 @@ type Moment struct {
 	// what a file just created is.
 	Changed      []int
 	ChangedWhole bool
+	// Agent is the journal's number for the agent the moment is of; 0 where it named none, since the journal
+	// numbers its agents from 1. A queued answer is written FOR that agent, so one agent's sins never reach
+	// another's session.
+	Agent int
 }
 
 // changedKey is where a payload carries the lines an edit wrote, so the handlers read them instead of asking git
@@ -78,6 +82,7 @@ func MomentOf(given map[string]any) Moment {
 		Event:    strings.TrimPrefix(event, "hook."),
 		Cwd:      asText(cwd),
 		Session:  textOrNil(agent["session"]),
+		Agent:    asAgent(agent["id"]),
 		Tool:     textOrNil(firstOf(tool["name"], data["tool"])),
 		Command:  textOrNil(firstOf(tool["command"], data["command"])),
 		File:     textOrNil(firstOf(tool["file"], data["file"])),
