@@ -219,7 +219,7 @@ func (p Project) Enabled(project config.Config) []detectors.Detector {
 }
 
 // Warnings are what a run says about the custom folder before it judges: rules the config turns on that are
-// not there or cannot run, and PHP classes the binary skips.
+// not there or cannot run, rules a skill says fire that are declared nowhere, and PHP classes the binary skips.
 func (p Project) Warnings(project config.Config) []string {
 	var missing []string
 
@@ -242,6 +242,8 @@ func (p Project) Warnings(project config.Config) []string {
 	for _, reason := range p.Unreadable {
 		warnings = append(warnings, "⚠ .commandments/custom/"+reason)
 	}
+
+	warnings = append(warnings, p.ClaimWarnings()...)
 
 	return append(warnings, p.ClassWarnings()...)
 }
