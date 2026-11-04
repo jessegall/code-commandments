@@ -9,6 +9,7 @@ import (
 
 	"github.com/jessegall/code-commandments/bridge"
 	"github.com/jessegall/code-commandments/bridge/gotree"
+	"github.com/jessegall/code-commandments/cli"
 	"github.com/jessegall/code-commandments/cli/source"
 	"github.com/jessegall/code-commandments/contract"
 	"github.com/jessegall/code-commandments/engine/frontend"
@@ -278,6 +279,22 @@ type process struct {
 	// mid-session is ordinary and needs no second word, and a service that is up and cannot answer makes every run
 	// pay a start-up it should not have paid, which nothing else would say.
 	missed sync.Once
+	// reached says it answered, which a run asked for its timing says once.
+	reached sync.Once
+}
+
+// sayWarmBridgeUsed says, when a run was asked where its time went, that this bridge answered from the service the
+// session keeps up rather than being started here. It is the single most diagnostic fact about a slow run: a cold
+// bridge costs its whole start-up, and until a run said so a consumer had to time thousands of edits from outside
+// to find it out. Said once, like its unhappy twin.
+func (p *process) sayWarmBridgeUsed() {
+	if !cli.Timed() {
+		return
+	}
+
+	p.reached.Do(func() {
+		fmt.Fprintf(os.Stderr, "· the %s bridge answered from the service this session keeps up\n", p.held.Kind)
+	})
 }
 
 // sayWarmBridgeMissed says, on STDERR, that the bridge this session keeps up was reached and could not answer, so
@@ -297,6 +314,8 @@ func (p *process) AskTallied(request bridge.Request, tally func()) (*contract.St
 
 		stream, err := server.AskTallied(request, tally)
 		if err == nil {
+			p.sayWarmBridgeUsed()
+
 			return stream, nil
 		}
 

@@ -36,6 +36,23 @@ const JournalReport = "JOURNAL_REPORT"
 // journal command run through a reader of ours reads them, and a terminal is not what it has.
 const PlainProgress = "COMMANDMENTS_PLAIN_PROGRESS"
 
+// Timing names the variable that asks a run to say where its time went, on STDERR: how long it spent reading
+// and how long judging, and whether each bridge answered from the service the session keeps up or started one of
+// its own.
+//
+// It exists because a consumer had to find that out for us. They timed 3,364 edits from their own side over nine
+// hours to tell us a median of 2.8 seconds and a tail of 318, and we could not tell them which part of a run
+// those seconds were in — it turned out to be a cold bridge every time, which one line would have said.
+//
+// A variable rather than a flag, so a hook or a service can ask for it without the command line changing, and
+// nothing is printed unless something asks.
+const Timing = "COMMANDMENTS_TIMING"
+
+// Timed says whether this run was asked where its time went.
+func Timed() bool {
+	return os.Getenv(Timing) != ""
+}
+
 // Watched says whether a journal is reading this run: a check that named its report, or a command that asked for
 // the counted lines. What it reads is a card in someone's chat rather than a terminal, so a run it watches counts
 // in plain lines and says what it found in words.

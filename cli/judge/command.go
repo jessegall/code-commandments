@@ -386,8 +386,10 @@ func saying(selected []detectors.Detector) map[string]string {
 // run runs the tasks across the workers, or one by one and timed under --benchmark.
 func (Command) run(tasks []Task, options options, progress *cli.Progress, parseSeconds float64, console cli.Console) Judgement {
 	if !options.benchmark {
+		judging := time.Now()
 		judgement := Run(tasks, options.parallel, progress, console.Err)
 		progress.Finish()
+		sayWhereTheTimeWent(parseSeconds, time.Since(judging).Seconds(), len(tasks), console)
 
 		return judgement
 	}
@@ -832,4 +834,19 @@ func optionsOf(in *cli.Input, space workspace.Workspace) options {
 		benchmark:     in.HasFlag("benchmark"),
 		ignore:        in.HasFlag("ignore-package-requirements"),
 	}
+}
+
+// sayWhereTheTimeWent says, when a run was asked, the one split that has answered every question about this
+// tool's speed: how long it spent READING and how long JUDGING. They are of different orders — reading is the
+// bridges and the parse, judging is the rules — and knowing which of the two a slow run was in has settled every
+// such question put to us, where guessing at it has settled none.
+//
+// `--benchmark` already profiles each rule, but it runs them one at a time to do so, which measures something
+// else. This times the run as it really happened and costs nothing when nobody asks.
+func sayWhereTheTimeWent(reading, judging float64, rules int, console cli.Console) {
+	if !cli.Timed() {
+		return
+	}
+
+	fmt.Fprintf(console.Err, "· read in %.2fs, judged in %.2fs by %s\n", reading, judging, natural.Counted(rules, "rule"))
 }
