@@ -335,9 +335,24 @@ func (s Sources) Files(languages ...source.Language) []string {
 }
 
 // keptFor is the bridge of the kind a session keeps up for the project the run works on, when every root lies in it.
+//
+// The project is whose SERVICE it is, and only one is kept per project: a worktree has none of its own. Asked
+// from a worktree, this used to name a socket nobody listens on, so every judging of a worker's edit started a
+// bridge of its own and paid its whole start-up — measured on a real tree as 88 seconds for one small file while
+// three workers edited at once, against a median of 2.8 seconds for the same work in the main checkout. The
+// files judged are still the worktree's; only the bridge is shared.
+//
+// The journal is ASKED first, because it knows: it hands every program it runs a JOURNAL_ROOT naming the main
+// checkout, which is the same folder it keeps the service for. Working it out from git was the oversight — a
+// second answer to a question already answered, and the one that got it wrong in a worktree. The git lookup
+// stays for a run the journal did not start, where nobody has told us anything.
 func keptFor(kind string, roots []string) (*bridge.Server, bool) {
-	cwd, _ := os.Getwd()
-	project := workspace.ProjectRoot(cwd)
+	project, told := workspace.JournalProject()
+	if !told {
+		cwd, _ := os.Getwd()
+		project = workspace.SettingsRoot(workspace.ProjectRoot(cwd))
+	}
+
 	if !within(project, roots) {
 		return nil, false
 	}
