@@ -245,7 +245,7 @@ func (b *Base) ViewFrom(checkout string, rebuilt []*contract.Stream, project str
 	standsFor := map[string]bool{}
 	if real(checkout) != real(project) {
 		for path := range fresh {
-			if under, inside := relative(checkout, path); inside {
+			if under, inside := Under(checkout, path); inside {
 				standsFor[filepath.Join(project, under)] = true
 			}
 		}
@@ -311,8 +311,10 @@ func (b *Base) ViewFrom(checkout string, rebuilt []*contract.Stream, project str
 	return view
 }
 
-// relative is the path under the folder, and whether it lies there at all.
-func relative(folder, path string) (string, bool) {
+// Under is the path's place under the folder, and whether it lies there at all. It is what makes a checkout's
+// file stand in for the project's own, and what tells a run reading this project's tree from one reading
+// another's beside it.
+func Under(folder, path string) (string, bool) {
 	under, err := filepath.Rel(real(folder), real(path))
 	if err != nil || strings.HasPrefix(under, "..") {
 		return "", false

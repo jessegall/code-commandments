@@ -110,6 +110,12 @@ func OneFile(path string) Sources {
 	return Sources{byLanguage: map[source.Language][]string{source.OfFile(path): {path}}, roots: []string{filepath.Dir(path)}}
 }
 
+// Roots are the folders the walk was started from, which is what tells a run reading one project's tree from a
+// run reading another's beside it.
+func (s Sources) Roots() []string {
+	return s.roots
+}
+
 // Count is how many files the languages have.
 func (s Sources) Count(languages ...source.Language) int {
 	count := 0

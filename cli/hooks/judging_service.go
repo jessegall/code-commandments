@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/jessegall/code-commandments/cli"
-	"github.com/jessegall/code-commandments/cli/config"
+	"github.com/jessegall/code-commandments/cli/git"
 	"github.com/jessegall/code-commandments/cli/judge"
 	"github.com/jessegall/code-commandments/cli/scan"
 	"github.com/jessegall/code-commandments/cli/source"
@@ -86,7 +86,7 @@ func judgedFor(request warm.Request, root string) warm.Answer {
 
 	code, err := (judge.Command{
 		In:      request.In,
-		Reading: heldOrDeclined(root, &declined),
+		Reading: heldOrDeclined(root, request.In, &declined),
 	}).Run(cli.InputOf("judge", request.Judge...), cli.Console{Out: &out, Err: &errs})
 
 	if declined {
@@ -100,59 +100,103 @@ func judgedFor(request warm.Request, root string) warm.Answer {
 	return warm.Answer{Out: out.String(), Err: errs.String(), Code: code}
 }
 
+// spliced is how many files the service reads again for one judging. What it reads it reads in the process every
+// hook of the session is answered by, so it reads in front of every edit. Up to this many the read is the files
+// the judging differs by, which is seconds; past it the change is checkout-sized, the base it would be spliced
+// into is half a tree out of date, and the run reads the tree in its own process where it blocks nobody.
+const spliced = 200
+
 // heldOrDeclined is how the service reads a codebase for a run: the tree it holds for the branch, with the files
-// that have moved since read again. A run about files no base holds is declined, and says so through the flag, so
-// the run reads them in its own process rather than in the one every hook of the session is answered by.
-func heldOrDeclined(root string, declined *bool) func(scan.Sources) (*engine.Codebase, error) {
+// that differ from it read again. A judging the base cannot cover is declined, and says so through the flag, so
+// the run reads it in its own process rather than in the one every hook of the session is answered by.
+//
+// A worker's judging is answered the same way, which is most of why this exists. A worktree's files are not the
+// base's, so asking the base whether it holds them answered no every time: every worker's hand-in read the tree
+// from scratch, 17 to 55 seconds, and started a language bridge of its own beside the warm one, which is what
+// still cost an edit 6 to 12 seconds of parsing while three hand-ins ran. What a worktree differs by git says
+// exactly, and warm.Base.ViewFrom already splices those files in over the project's own by the path each has
+// under its own checkout.
+func heldOrDeclined(root, in string, declined *bool) func(scan.Sources) (*engine.Codebase, error) {
 	return func(sources scan.Sources) (*engine.Codebase, error) {
-		named, base, ok := baseFor(root)
-
-		// Every language's files, because Files with none named answers none: asking it that way made this
-		// decline every run and, before that, made every run read the tree here rather than use the base.
-		asked := sources.Files(source.Languages...)
-
-		if !ok || len(asked) == 0 {
+		named, base, held := baseFor(root)
+		if !held {
 			*declined = true
 
 			return engine.Load(), nil
 		}
 
-		for _, file := range asked {
-			if _, known := base.Holds(file); !known {
+		// Every language's files, because Files with none named answers none: asking it that way made this
+		// decline every run and, before that, made every run read the tree here rather than use the base.
+		if len(sources.Files(source.Languages...)) == 0 {
+			*declined = true
+
+			return engine.Load(), nil
+		}
+
+		// The checkout the run reads, which for a worker is its own worktree. A run pointed at a tree outside
+		// it, another project beside this one or a calibration over a consumer's sources, reaches this service
+		// too, since a run finds the service from the folder it was started in; this base has nothing to say
+		// about those files.
+		checkout := checkoutOf(named.project, in)
+		for _, walked := range sources.Roots() {
+			if _, inside := warm.Under(checkout, walked); !inside {
 				*declined = true
 
 				return engine.Load(), nil
 			}
 		}
 
-		project, err := config.Load(named.project)
-		if err != nil {
+		read, covered := differingFrom(base, named, checkout)
+		if !covered || len(read) > spliced {
 			*declined = true
 
 			return engine.Load(), nil
 		}
 
-		return viewOf(base, named, project, asked)
+		return viewOf(base, named, checkout, read)
 	}
 }
 
-// viewOf is the base with every file that has moved read again, which is the tree a judging is answered against.
-func viewOf(base *warm.Base, named branchRoot, project config.Config, asked []string) (*engine.Codebase, error) {
-	var moved []string
-	for _, file := range asked {
-		if unchanged, known := base.Holds(file); known && !unchanged {
-			moved = append(moved, file)
-		}
+// differingFrom are the files the service must read before the base answers, and whether it can answer at all:
+// the base's own files whose content has moved since it read them, and, for a run in a worktree, every file that
+// worktree differs from the branch the base was read at by, committed or not.
+//
+// The two are joined rather than one replacing the other. A worktree's file is a file of its OWN that no base
+// ever read, so the base's fingerprints say nothing about it; and the main checkout drifts under the base on its
+// own account, which is exactly what those fingerprints do say. A worktree whose branch shares no history with
+// the base's cannot be answered from it, and saying nothing differs would be the worst answer of the three: a
+// green tick over every sin the worker wrote.
+func differingFrom(base *warm.Base, named branchRoot, checkout string) ([]string, bool) {
+	read := base.Moved()
+
+	if checkout == named.project {
+		return read, true
 	}
 
-	if len(moved) == 0 {
+	changed, told := git.ChangedVsBranch(checkout, named.branch)
+	if !told {
+		return nil, false
+	}
+
+	for file := range changed {
+		read = append(read, file)
+	}
+
+	return read, true
+}
+
+// viewOf is the base with these files read again in place of its own, which is the tree a judging is answered
+// against. Nothing is excluded from that read: these are the files we have WORKED OUT differ, and a worker's lie
+// in a worktree under a folder the project excludes, so excluding again would read none of them.
+func viewOf(base *warm.Base, named branchRoot, checkout string, read []string) (*engine.Codebase, error) {
+	if len(read) == 0 {
 		return base.Codebase(), nil
 	}
 
-	rebuilt, err := scan.Walk(moved, source.Under(named.project, project.Excluded)).Load()
+	rebuilt, err := scan.Walk(read, source.Excluded{}).Load()
 	if err != nil || rebuilt == nil {
 		return base.Codebase(), err
 	}
 
-	return base.View(rebuilt.Streams(), named.project), nil
+	return base.ViewFrom(checkout, rebuilt.Streams(), named.project), nil
 }

@@ -1,6 +1,7 @@
 package hooks
 
 import (
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -153,5 +154,57 @@ func TestAJudgingTheBaseCannotCoverIsDeclined(t *testing.T) {
 
 	if answer, asked := warm.Asked(root, warm.Request{Judge: []string{root, "--no-checklist"}, In: root}); asked {
 		t.Errorf("with no base held the service judged it anyway: exit %d\n%s", answer.Code, answer.Out)
+	}
+}
+
+// TestAWorkersHandInJudgingIsAnsweredFromTheBase holds the saving for the judging a worker runs on its way out.
+// A worktree's files are not the base's, so asking the base whether it holds them answered no every time and
+// every hand-in read the whole tree in its own process, 17 to 55 seconds, and started a language bridge of its
+// own beside the warm one: that second bridge is what still cost an edit 6 to 12 seconds of parsing while three
+// hand-ins ran on a consumer's tree. Answered from the base, a hand-in reads the files its worktree differs by
+// and nothing else.
+//
+// It must still FIND the worker's sin: answering "no sins" from a tree that holds the project's copy of the file
+// instead of the worker's would be the worst of the three answers, a green tick over everything the worker wrote.
+func TestAWorkersHandInJudgingIsAnsweredFromTheBase(t *testing.T) {
+	root, _ := workerProject(t)
+
+	project := git.ProjectRoot(root)
+	branch := git.CurrentBranch(project)
+
+	settings, _ := config.Load(root)
+	codebase, err := scan.Walk([]string{filepath.Join(root, "src")}, source.Under(root, settings.Excluded)).Load()
+	if err != nil || codebase == nil {
+		t.Fatalf("the python bridge cannot run here: %v", err)
+	}
+
+	kept.Hold(project, branch, []string{root}, codebase)
+	t.Cleanup(func() { kept.Drop(project, branch) })
+
+	listener, listening := Judging(root)
+	if !listening {
+		t.Fatalf("the service cannot listen on %s", warm.Socket(root))
+	}
+	defer listener.Close()
+
+	go serveJudging(listener, root)
+
+	// The run is the one a worker makes on its way out: started in its own worktree, with no path of its own,
+	// so the folders come from the project's configuration and the root they join to is the worktree's.
+	worktree := filepath.Join(root, ".journal", "worktrees", "worker-1")
+
+	answer, asked := warm.Asked(root, warm.Request{Judge: []string{"--no-checklist"}, In: worktree})
+	if !asked {
+		t.Fatal("a worker's hand-in judging was declined, so it reads the whole tree in its own process")
+	}
+
+	if answer.Code != 1 {
+		t.Errorf("the hand-in exits %d, want 1 for the sin the worker wrote:\n%s%s", answer.Code, answer.Out, answer.Err)
+	}
+
+	for _, said := range []string{"DocumentedAnywhereDetector", "order.py:2"} {
+		if !strings.Contains(answer.Out, said) {
+			t.Errorf("the hand-in's answer does not name %s, so it judged the project's copy and not the worker's:\n%s%s", said, answer.Out, answer.Err)
+		}
 	}
 }
