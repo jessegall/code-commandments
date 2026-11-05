@@ -238,6 +238,11 @@ func (b *Base) Moved() []string {
 	return moved
 }
 
+// Files is how many files the base holds, which is the size of the program it answers from.
+func (b *Base) Files() int {
+	return len(b.marks)
+}
+
 // Languages are the languages the base holds files of, which is what it can be ASKED about. A base reads the
 // languages the project writes, less C#, whose bridge compiles whole units of its own and is kept warm as a
 // service rather than held here — so a C# file is one a base never holds, however the project is configured.

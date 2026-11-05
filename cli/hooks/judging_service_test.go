@@ -1,6 +1,7 @@
 package hooks
 
 import (
+	"fmt"
 	"io/fs"
 	"os"
 	"os/exec"
@@ -469,9 +470,24 @@ func TestAWorkersChangesAreJudgedWhereTheServiceAnswersIt(t *testing.T) {
 	// here, so `git status` in this checkout is the only thing that knows about it.
 	worktree := filepath.Join(root, ".journal", "worktrees", "worker-1")
 
+	// And MANY of them, since one is exactly the convenient difference that hides a bug: a consumer's worker
+	// with hundreds of uncommitted files was served and answered "no source file under the path is among the
+	// lines changed", which reads as a clean pass over every one of them.
+	for at := 0; at < leastReadInOneGo-50; at++ {
+		many := filepath.Join(worktree, "src", fmt.Sprintf("part%03d.py", at))
+		if err := os.WriteFile(many, []byte(fmt.Sprintf(`class Part%03d:
+    def total(self):
+        """Says the total."""
+        return 0
+`, at)), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+
 	answer, asked := warm.Asked(root, warm.Request{Judge: []string{"--changes", "--no-checklist"}, In: worktree})
 	if !asked {
-		t.Skipf("the service declined this judging, so the scope it would have used was never asked: %s", answer.Because)
+		t.Fatalf("the service declined a worker's judging of %d files, inside the %d it reads for one: %s",
+			leastReadInOneGo-50, leastReadInOneGo, answer.Because)
 	}
 
 	if strings.Contains(answer.Out, "Nothing to judge") {
@@ -480,6 +496,14 @@ func TestAWorkersChangesAreJudgedWhereTheServiceAnswersIt(t *testing.T) {
 
 	if !strings.Contains(answer.Out, "order.py") {
 		t.Errorf("the worker's own changed file is not in the answer:\n%s%s", answer.Out, answer.Err)
+	}
+
+	// And every one of the many, not merely the first: a scope that keeps a handful and drops the rest answers a
+	// clean pass over the rest, and nothing says so.
+	for _, named := range []string{"part000.py", "part100.py", fmt.Sprintf("part%03d.py", leastReadInOneGo-51)} {
+		if !strings.Contains(answer.Out, named) {
+			t.Errorf("%s was changed in the worktree and is not in the answer:\n%s%s", named, answer.Out, answer.Err)
+		}
 	}
 }
 
@@ -633,6 +657,14 @@ func TestAWorkerIsServedInTheShapeTheJournalReallyLaysOut(t *testing.T) {
 		"src/viewer/window.py":           "class Window:\n    pass\n",
 		"tools/journal-hook/__init__.py": "",
 		"tools/journal-hook/hook.py":     "class Hook:\n    pass\n",
+
+		// OUTSIDE every declared path, and a language the project judges. The tree is read over the declared
+		// paths while a run walks the checkout it stands in, so these are files the tree was never going to
+		// hold — the third and last thing a file counted as "never read" can be, after a counterpart built wrong
+		// and a language the tree holds nothing of.
+		"scripts/release.py":         "class Release:\n    pass\n",
+		"docs/examples/sample.py":    "class Sample:\n    pass\n",
+		"src/sandbox/throwaway.py":   "class Throwaway:\n    pass\n",
 		// A language the TREE does not read: the C# bridge compiles whole units of its own and is kept warm as a
 		// service, so a base never holds one. The walk still finds the file, and asking the tree about it answers
 		// no every time — which is a file counted as changed for ever, in a count that decides whether a worker
@@ -708,10 +740,30 @@ func TestAWorkerIsServedInTheShapeTheJournalReallyLaysOut(t *testing.T) {
 		t.Fatal("the worktree shares no history with the branch the tree was read at")
 	}
 
-	if len(differs.Unread) != 0 {
-		t.Errorf("%d of the worktree's %d files count as files the tree never read: %v\neach stands in for the "+
-			"project's own copy under a declared path, and the tree read every one of those",
-			len(differs.Unread), len(asked), differs.Unread)
+	// The files outside every declared path are the ONLY ones the tree can honestly call new to it, and they
+	// must be exactly those: anything else counted means the mapping or the languages are wrong again.
+	outside := map[string]bool{}
+	for _, under := range []string{"scripts/release.py", "docs/examples/sample.py", "src/sandbox/throwaway.py"} {
+		outside[filepath.Join(worktree, under)] = true
+	}
+
+	counted := map[string]bool{}
+	for _, file := range differs.Unread {
+		counted[file] = true
+
+		if !outside[file] {
+			t.Errorf("%s counts as a file the tree never read, while it lies under a declared path the tree was "+
+				"read over (%d counted of %d asked: %v)", file, len(differs.Unread), len(asked), differs.Unread)
+		}
+	}
+
+	// And each of them IS counted, so the check above is not passing for the want of anything to look at: a file
+	// the tree was never read over is honestly new to it, and reading it is what the splice is for.
+	for file := range outside {
+		if !counted[file] {
+			t.Errorf("%s lies outside every declared path, so the tree never read it, yet nothing counts it: the "+
+				"judging would be answered as though that file did not exist", file)
+		}
 	}
 
 	// And the judging itself is served, which is the whole point of the mapping.
@@ -722,5 +774,42 @@ func TestAWorkerIsServedInTheShapeTheJournalReallyLaysOut(t *testing.T) {
 
 	if !strings.Contains(answer.Out, "order.py") {
 		t.Errorf("the served answer does not name the worker's own sin:\n%s%s", answer.Out, answer.Err)
+	}
+}
+
+// TestHowManyFilesAreReadInOneGoIsAFractionOfTheTree holds the number that decides whether a judging is served
+// at all, against the two costs it stands between. Reading the files that differ costs one bridge ask, in the
+// process every hook of the session is answered by; declining costs the RUN a whole-tree read of 25 to 55 seconds
+// in a process of its own, plus a second language bridge beside the warm one.
+//
+// Measured on a 1000-file tree (TestWhatAnAskCostsByItsFiles): one file 1.03s, 200 files 2.48s, 400 files 3.81s,
+// 800 files 6.86s. So the ask is about a second plus seven milliseconds a file, and serving wins by a wide margin
+// at every count that fits in memory. What it cannot win is a change the size of the tree: past that the base is
+// half a tree out of date and reading it here buys nothing.
+//
+// So the number is a FRACTION of the tree, not a constant: a constant is either too small for a big tree, which
+// declined a consumer's every worker hand-in, or too large for a small one, where a quarter is a handful.
+func TestHowManyFilesAreReadInOneGoIsAFractionOfTheTree(t *testing.T) {
+	for _, held := range []struct {
+		files, want int
+		why         string
+	}{
+		{files: 0, want: leastReadInOneGo, why: "a tree with nothing in it still splices what a judging differs by"},
+		{files: 100, want: leastReadInOneGo, why: "a quarter of a small tree is a handful, and reading a handful is free"},
+		{files: 1200, want: 300, why: "a quarter of the tree, which is three seconds of reading"},
+		{files: 2800, want: 700, why: "a quarter of a middling tree, about six seconds"},
+		{files: 5286, want: mostReadInOneGo, why: "a quarter of a consumer's tree is over ten seconds, which is " +
+			"longer than every hook of a session may wait on one judging"},
+		{files: 100_000, want: mostReadInOneGo, why: "a quarter of a huge tree would block every hook of the session"},
+	} {
+		if got := readsInOneGo(held.files); got != held.want {
+			t.Errorf("a tree of %d files splices %d files for one judging, want %d: %s",
+				held.files, got, held.want, held.why)
+		}
+	}
+
+	// And the floor is never above the ceiling, whatever the two are set to.
+	if leastReadInOneGo > mostReadInOneGo {
+		t.Errorf("the least a judging splices, %d, is more than the most, %d", leastReadInOneGo, mostReadInOneGo)
 	}
 }

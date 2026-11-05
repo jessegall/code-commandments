@@ -601,7 +601,7 @@ class RebuildKind(Kind):
 	// Past the cap is the whole point: a handful would be miscounted and the judging still served, which is how
 	// this fuzz passed while a consumer's every worker hand-in read 5913 files in its own process. The count is
 	// tied to the cap rather than guessed, so the fixture cannot drift out of the condition it is here to hold.
-	for at := 0; at <= readInOneGo; at++ {
+	for at := 0; at <= leastReadInOneGo; at++ {
 		written[fmt.Sprintf("shop/goods/Thing%d.cs", at)] = fmt.Sprintf("namespace Shop;\n\npublic class Thing%d {}\n", at)
 	}
 
@@ -733,7 +733,7 @@ func TestWhatAnAskCostsByItsFiles(t *testing.T) {
 	// Up past the caps that are set from this: an edit takes a drifted tree in rather than giving it up while it
 	// can afford to read what drifted, and the service splices a judging's own differing files for the same
 	// reason. Both numbers are a guess until the curve past a hundred files is on the record.
-	for _, many := range []int{1, 2, 3, 5, 9, 25, 50, 100, 200, 1} {
+	for _, many := range []int{1, 2, 3, 5, 9, 25, 50, 100, 200, 400, 800, 1} {
 		asked := filesOf(t, root, many)
 
 		// Every file is touched first, so the ask is one of files that really have moved, as an edit's is.

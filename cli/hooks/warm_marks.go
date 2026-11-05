@@ -65,7 +65,7 @@ func AgainstTheProgram(marking Marking, file string, rules []detectors.Detector,
 	if swept {
 		moved = append(moved, base.Unheld(unannouncedIn(held.project))...)
 	}
-	if len(moved) > readInOneGo {
+	if len(moved) > readsInOneGo(base.Files()) {
 		kept.Drop(held.project, held.branch)
 
 		return nil, 0, false

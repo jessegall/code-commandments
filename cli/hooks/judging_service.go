@@ -124,20 +124,38 @@ func holdsTheLanguageOf(base *warm.Base, file string) bool {
 	return false
 }
 
-// readInOneGo is how many files this process reads in one go before the change is bigger than the tree, which is
-// one question with one answer wherever it is asked: a judging splices this many files over the base it is
-// answered from, and an edit takes this many drifted files INTO the tree rather than giving the tree up. What
-// this process reads it reads in front of every edit of the session, since every hook is answered here.
+// How many files this process reads in one go before the change is bigger than the tree, which is one question
+// with one answer wherever it is asked: a judging splices this many files over the base it is answered from, and
+// an edit takes this many drifted files INTO the tree rather than giving the tree up. What this process reads it
+// reads in front of every edit of the session, since every hook is answered here.
 //
-// A bridge's cost is nearly all per ASK, so the number is far higher than the cost of one file suggests. Measured
-// on a 1000-file tree (TestWhatAnAskCostsByItsFiles): one file 849ms, 9 files 932ms, 25 files 1.05s, 100 files
-// 1.97s, 200 files 2.48s. Past this the alternative is the cheaper one: the base is half a tree out of date, so a
-// judging reads the tree in its own process where it blocks nobody, and an edit gives the tree up for a re-read.
+// A FRACTION of the tree, because a constant is wrong at both ends. Measured on a 1000-file tree
+// (TestWhatAnAskCostsByItsFiles): one file 1.03s, 200 files 2.48s, 400 files 3.81s, 800 files 6.86s — about a
+// second plus seven milliseconds a file, against 25 to 55 seconds for the whole-tree read a decline costs the
+// run, plus a second language bridge beside the warm one. Serving wins at every count that fits in memory. What
+// it cannot win is a change the SIZE of the tree: past that the base is half a tree out of date and reading it
+// here buys nothing.
 //
-// The edit's side of it was 25, which is a merge, a rebase, a formatter or an install given up on: a re-read of
-// 25 to 55 seconds, and until it lands every edit is judged on its own file alone with every cross-file rule
-// quietly left out, the only sign being the answers going thin.
-const readInOneGo = 200
+// 25 was the edit's number and 200 the judging's, and both were constants. 25 gave the tree up for a merge, a
+// rebase or an install. 200 declined every hand-in of a consumer's workers, whose own branches differ by more
+// than that on their own.
+const (
+	// leastReadInOneGo is what even a small tree splices: a quarter of a hundred files is a handful, and reading
+	// a handful costs the second an ask costs anyway.
+	leastReadInOneGo = 200
+
+	// mostReadInOneGo is where a quarter of the tree stops being worth it: about eight seconds of reading, which
+	// is as long as every hook of a session may wait on one judging.
+	mostReadInOneGo = 1000
+
+	// partOfTheTree is how much of the tree may differ and still be read here.
+	partOfTheTree = 4
+)
+
+// readsInOneGo is how many files a judging reads for a tree of that many files.
+func readsInOneGo(files int) int {
+	return min(mostReadInOneGo, max(leastReadInOneGo, files/partOfTheTree))
+}
 
 // heldOrDeclined is how the service reads a codebase for a run: the tree it holds for the branch, with the files
 // that differ from it read again. A judging the base cannot cover is declined, and says so through the flag, so
@@ -189,9 +207,9 @@ func heldOrDeclined(root, in string, declined *string) func(scan.Sources) (*engi
 		}
 
 		read, gone := differs.read(), differs.Gone
-		if len(read) > readInOneGo {
+		if reads := readsInOneGo(base.Files()); len(read) > reads {
 			*declined = fmt.Sprintf("%d files differ from the tree, past the %d this service reads for one judging"+
-				" (%s)", len(read), readInOneGo, differs.where())
+				" (%s)", len(read), reads, differs.where())
 
 			return engine.Load(), nil
 		}
