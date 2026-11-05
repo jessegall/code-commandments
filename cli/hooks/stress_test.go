@@ -308,6 +308,11 @@ func serviceAt(t *testing.T, root string) string {
 	}
 	t.Cleanup(func() { os.Chdir(was) })
 
+	// The service says it IS the service, which is a process-wide fact, so it is put back when this test ends:
+	// left set, a later test that holds a one-shot run to reading no tree reads this one's flag instead and
+	// fails for the want of a cleanup somebody else owed it.
+	t.Cleanup(func() { serving.Store(false) })
+
 	go func() { JournalServe{}.Run(cli.InputOf("journal-serve"), quiet()) }()
 
 	for until := time.Now().Add(30 * time.Second); time.Now().Before(until); time.Sleep(50 * time.Millisecond) {
