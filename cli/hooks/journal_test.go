@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 )
 
 // TestAdviceIsQueuedInTheMomentsEnvironment holds the queue to what the journal runs: bare commands, recorded in
@@ -78,5 +79,58 @@ func TestAdviceIsQueuedWhereThePayloadSays(t *testing.T) {
 		if _, err := os.Stat(other); !os.IsNotExist(err) {
 			t.Errorf("%s was written: %v", filepath.Base(other), err)
 		}
+	}
+}
+
+// TestAConfigChangeEndsTheServiceThatHoldsTheTree holds the one thing that keeps a held tree honest about the
+// project's own settings. A base is read with the excludes, roots and languages in force at the time and is
+// keyed by nothing else, so a newly excluded folder or a dropped root would stay in the program it answers from.
+// What saves it is that the service ENDS when the config moves, and the tree goes with the process, so the next
+// one reads the tree the new settings describe.
+//
+// Held here because it is the only thing that saves it: were the service to stop watching the config, or to keep
+// serving across a change, a held base would answer from settings the project has replaced and nothing would say
+// so.
+func TestAConfigChangeEndsTheServiceThatHoldsTheTree(t *testing.T) {
+	root := t.TempDir()
+
+	settings := filepath.Join(root, ".commandments", "config.json")
+	if err := os.MkdirAll(filepath.Dir(settings), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(settings, []byte(`{"paths": ["src"]}`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	was := stamp(root)
+	if was == 0 {
+		t.Fatal("the service watches nothing of this project, so nothing would end it")
+	}
+
+	time.Sleep(10 * time.Millisecond)
+	if err := os.WriteFile(settings, []byte(`{"paths": ["src"], "exclude": ["src/generated"]}`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	if stamp(root) == was {
+		t.Error("the project's config changed and the service reads the same stamp, so it serves on with a tree read under the settings before it")
+	}
+
+	// A rule of the project's own counts too: it is what a judging reads, so a tree held under the one before it
+	// is a tree held under rules the project has replaced.
+	own := filepath.Join(root, ".commandments", "custom", "OwnRule.json")
+	if err := os.MkdirAll(filepath.Dir(own), 0o755); err != nil {
+		t.Fatal(err)
+	}
+
+	moved := stamp(root)
+
+	time.Sleep(10 * time.Millisecond)
+	if err := os.WriteFile(own, []byte(`{"engine": "python"}`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	if stamp(root) == moved {
+		t.Error("a rule of the project's own was written and the service reads the same stamp")
 	}
 }
