@@ -3,6 +3,7 @@ package hooks
 import (
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/jessegall/code-commandments/cli/config"
 	"github.com/jessegall/code-commandments/cli/git"
@@ -68,5 +69,50 @@ func TestARunFindsNoServiceWhereNoneListens(t *testing.T) {
 
 	if _, asked := warm.Asked(root, warm.Request{Judge: []string{root}, In: root}); asked {
 		t.Error("a run was answered by a service nobody started")
+	}
+}
+
+// TestTheAnswerSaysHowLongThePluginTookOverTheEvent holds the duration the journal shows on the sins card. It is
+// counted from the moment the plugin was handed the event to the moment its answer was ready, which is all this
+// side can honestly know: the time before the event is the journal's own.
+func TestTheAnswerSaysHowLongThePluginTookOverTheEvent(t *testing.T) {
+	root, data := migrationProject(t)
+
+	// An answer is what carries the duration, so the base is held and the sin found: with nothing to say the
+	// plugin answers nothing at all, which is the point of saying it only beside an answer.
+	project := git.ProjectRoot(root)
+	branch := git.CurrentBranch(project)
+
+	settings, _ := config.Load(root)
+	codebase, err := scan.Walk([]string{root}, source.Under(root, settings.Excluded)).Load()
+	if err != nil || codebase == nil {
+		t.Fatalf("the python bridge cannot run here: %v", err)
+	}
+
+	kept.Hold(project, branch, []string{root}, codebase)
+	t.Cleanup(func() { kept.Drop(project, branch) })
+
+	Judge4Into(map[string]any{
+		"v": 1, "event": "file_edited", "session": "s1", "environment": "main", "agent": 78,
+		"data": map[string]any{
+			"path": "shop/migrations/m004_drop_fades.py", "kind": "edit", "added": 1, "removed": 0, "tool_use": 41,
+			"lines": []any{
+				map[string]any{"line_type": "add", "line": 4, "text": "class DropFadesMigration(RebuildMigration):"},
+			},
+		},
+	}, data)
+
+	queued := drained(t, data)
+	if len(queued) != 1 {
+		t.Fatalf("the judge left %d answer(s)", len(queued))
+	}
+
+	took, said := queued[0]["judged_ms"].(float64)
+	if !said || took < 1 {
+		t.Errorf("the answer says judged_ms %v, said %v; it should carry the milliseconds it took", took, said)
+	}
+
+	if took > float64(10*time.Minute/time.Millisecond) {
+		t.Errorf("the answer says it took %v ms, which is no duration of one event", took)
 	}
 }

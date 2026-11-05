@@ -15,8 +15,15 @@ jobs:
   # whose checkout pins another would install a binary that is not its own.
   pin:
     runs-on: ubuntu-latest
+    outputs:
+      # The release the C# bridges can be taken from, empty when they must be built. A bridge is a self-contained
+      # runtime per platform, five of the six minutes a release takes and two of them on a macOS runner, and for a
+      # release that did not touch the bridge the six assets are byte for byte the last release's.
+      bridges-from: ${{ steps.bridges.outputs.from }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: The journal plugin pins this release
         run: |
           pinned="$(jq -r .env.COMMANDMENTS_RELEASE .journal-plugin/plugin.json)"
@@ -30,8 +37,34 @@ jobs:
             exit 1
           fi
 
+      - name: Take the C# bridges from the last release where nothing of them changed
+        id: bridges
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          previous="$(git tag --sort=-version:refname --list 'v*' | grep -v "^$GITHUB_REF_NAME$" | head -1)"
+          [ -n "$previous" ] || exit 0
+
+          # What a bridge is built from: its own sources, the script that publishes it, and this workflow, which
+          # names the SDK it is built with. A change anywhere in them is a bridge that must be built; everything
+          # else about a release leaves it identical.
+          if ! git diff --quiet "$previous" "$GITHUB_REF_NAME" -- bridge/roslyn scripts/release/roslyn .github/workflows/release.yml; then
+            echo "the bridge changed since $previous, so it is built" >&2
+            exit 0
+          fi
+
+          published="$(gh release view "$previous" --json assets -q '[.assets[] | select(.name | startswith("roslyn-bridge-"))] | length' 2>/dev/null || echo 0)"
+          if [ "$published" != "6" ]; then
+            echo "$previous publishes $published bridges, not six, so they are built" >&2
+            exit 0
+          fi
+
+          echo "from=$previous" >> "$GITHUB_OUTPUT"
+          echo "the bridges come from $previous" >&2
+
   bridges:
     needs: pin
+    if: needs.pin.outputs.bridges-from == ''
     strategy:
       matrix:
         include:
@@ -54,15 +87,26 @@ jobs:
           path: dist/
 
   binaries:
-    needs: bridges
+    needs: [pin, bridges]
+    # The bridges job is skipped where they are taken from the last release, and a skipped job must not skip this one.
+    if: always() && needs.pin.result == 'success' && (needs.bridges.result == 'success' || needs.bridges.result == 'skipped')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
+        if: needs.pin.outputs.bridges-from == ''
         with:
           pattern: bridges-*
           path: dist
           merge-multiple: true
+      - name: Take the C# bridges from the release that already holds them
+        if: needs.pin.outputs.bridges-from != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p dist
+          gh release download "${{ needs.pin.outputs.bridges-from }}" --pattern 'roslyn-bridge-*' --dir dist
+          ls -l dist
       - name: Cross-compile, check every binary against its budget, and sum them all
         run: scripts/dev env GOMEMLIMIT=3GiB GOMAXPROCS=2 scripts/release/build "$GITHUB_REF_NAME" dist
       - name: Publish the release

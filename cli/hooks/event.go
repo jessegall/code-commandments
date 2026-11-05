@@ -36,6 +36,17 @@ func Stamped(payload map[string]any) map[string]any {
 	return payload
 }
 
+// sinceStamp is how long the plugin has been over this event, in milliseconds, counted from the moment it was
+// handed it. Zero where it was never stamped, which is an answer nobody can time rather than one that was free.
+func sinceStamp(payload map[string]any) int64 {
+	stamp := stampOf(payload)
+	if stamp == 0 {
+		return 0
+	}
+
+	return max(1, (time.Now().UnixNano()-stamp)/int64(time.Millisecond))
+}
+
 // stampOf is when the hook was handed the payload, in unix nanoseconds; zero when it was not stamped.
 func stampOf(payload map[string]any) int64 {
 	stamp, _ := payload[receivedKey].(string)

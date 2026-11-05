@@ -344,6 +344,12 @@ func (a JournalAnswer) Shape4() map[string]any {
 		answer["require_skills"] = a.Requires
 	}
 
+	// How long the plugin took describes an ANSWER, so it is said only where there is one: on its own it would
+	// turn an event the plugin has nothing to say about into an answer, and an answer is a card in the chat.
+	if a.JudgedMs > 0 && len(answer) > 1 {
+		answer["judged_ms"] = a.JudgedMs
+	}
+
 	return answer
 }
 
