@@ -370,3 +370,54 @@ func TestAFileAWorkerDeletedIsNotInItsProgram(t *testing.T) {
 		t.Errorf("the program still holds the worker's deleted %s", own)
 	}
 }
+
+// TestADeclineSaysWhichOfTheThreeMadeTheFilesDiffer holds the decline's own words to the one thing that makes
+// them worth anything: what to do about them. A judging reads the files it differs from the tree by, and three
+// quite different things put a file in that list — the tree's own files whose bytes have moved since it read
+// them, the files the run's walk found that the tree never read at all, and the files a worktree differs from the
+// tree's branch by. Each has a different fix and a total tells which of them nothing.
+//
+// A consumer measured 1206 differing files for a worktree whose content differs by 79, and two sessions spent an
+// hour guessing between a stale tree, a tree read over narrower paths than the run walks, and the worker's own
+// work. The number alone could not settle it, and the paths would have in one run.
+func TestADeclineSaysWhichOfTheThreeMadeTheFilesDiffer(t *testing.T) {
+	differs := Differs{
+		Moved:  []string{"/p/src/a.py"},
+		Unread: []string{"/p/.agents/skills/x.py", "/p/.agents/skills/y.py", "/p/.agents/skills/z.py"},
+		Own:    []string{"/p/src/b.py", "/p/src/c.py"},
+	}
+
+	said := differs.where()
+
+	for _, named := range []string{
+		"1 the tree's own files whose bytes moved",
+		"3 files the walk found that the tree never read",
+		"2 files this checkout differs from the tree's branch by",
+	} {
+		if !strings.Contains(said, named) {
+			t.Errorf("the decline does not say %q:\n%s", named, said)
+		}
+	}
+
+	// And the paths of the LARGEST, since what those files have in common is the whole answer: here that every
+	// one of them lies under a folder the tree was never read over.
+	for _, path := range differs.Unread {
+		if !strings.Contains(said, path) {
+			t.Errorf("the decline names no path of the group it blames:\n%s", said)
+
+			break
+		}
+	}
+
+	// Each file said once, however many of the three put it there: a file a worktree changed is also a file the
+	// tree's bytes no longer match, and counting it twice would decline a judging the service could serve.
+	twice := Differs{Moved: []string{"/p/src/a.py"}, Own: []string{"/p/src/a.py"}}
+	if read := twice.read(); len(read) != 1 {
+		t.Errorf("one file in two of the three groups reads as %v", read)
+	}
+
+	// A group with nothing in it says so rather than naming a path it does not have.
+	if said := (Differs{}).where(); !strings.Contains(said, "none to name") {
+		t.Errorf("a judging that differs by nothing says %q", said)
+	}
+}

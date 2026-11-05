@@ -148,15 +148,19 @@ func TestFromStringReadsSourcesByPath(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	codebase, err := engine.FromString(string(stream), map[string]string{slack: "<?php"})
+	// Long enough to hold the parse of any file in the sample: a source too short for its own parse's offsets is
+	// refused, which TestASourceThatCannotBeTheParsesIsRefused holds, and this test is about the PATH.
+	given := strings.Repeat("\n", 100_000)
+
+	codebase, err := engine.FromString(string(stream), map[string]string{slack: given})
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	for _, file := range codebase.Files() {
 		source, err := file.Source()
-		if (file.Path == slack) != (err == nil) || (err == nil && string(source) != "<?php") {
-			t.Fatalf("%s: got %q, %v", file.Path, source, err)
+		if (file.Path == slack) != (err == nil) || (err == nil && string(source) != given) {
+			t.Fatalf("%s: got %d bytes, %v", file.Path, len(source), err)
 		}
 	}
 }

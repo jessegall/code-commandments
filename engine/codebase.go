@@ -271,10 +271,28 @@ func (c *Codebase) Program(language contract.Language) (*contract.Program, bool)
 	return nil, false
 }
 
-// Source is the file's bytes, read once.
+// Source is the file's bytes, read once, and an error where they cannot be the ones the parse was made from.
+//
+// A parse is held in memory and its file is read from disk when a rule asks for a node's text, and between the two
+// the file can SHRINK: the agent's own next edit, a checkout, a rebase, a formatter. Every offset in that parse
+// then points past the end of what was read, and slicing it takes the whole run's detector down.
+//
+// Reported from a consumer: DuplicateFunctionDetector and NearDuplicateFunctionDetector both died with "slice
+// bounds out of range [:1111] with capacity 643" on a worker's judging and were skipped, so the run reported no
+// duplicates and nothing said the rules had not been asked. A source that cannot hold the parse's own offsets is
+// no source for it, and every reader here already answers for a read that failed.
 func (f *File) Source() ([]byte, error) {
 	f.once.Do(func() {
 		f.source, f.err = f.read(f.Path)
+		if f.err != nil {
+			return
+		}
+
+		if reaches := f.File.Reaches(); len(f.source) < reaches {
+			f.source, f.err = nil, fmt.Errorf(
+				"%s is %d bytes and the parse of it reaches %d, so it has changed since it was read",
+				f.Path, len(f.source), reaches)
+		}
 	})
 
 	return f.source, f.err

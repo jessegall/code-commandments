@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
+	"strings"
 	"time"
 
 	"github.com/jessegall/code-commandments/cli"
@@ -150,16 +151,17 @@ func heldOrDeclined(root, in string, declined *string) func(scan.Sources) (*engi
 			}
 		}
 
-		read, gone, covered := differingFrom(base, named, checkout, asked)
+		differs, covered := differingFrom(base, named, checkout, asked)
 		if !covered {
 			*declined = checkout + " shares no history with the branch the tree was read at, " + named.branch
 
 			return engine.Load(), nil
 		}
 
+		read, gone := differs.read(), differs.Gone
 		if len(read) > spliced {
-			*declined = fmt.Sprintf("%d files differ from the tree, past the %d this service reads for one judging",
-				len(read), spliced)
+			*declined = fmt.Sprintf("%d files differ from the tree, past the %d this service reads for one judging"+
+				" (%s)", len(read), spliced, differs.where())
 
 			return engine.Load(), nil
 		}
@@ -179,11 +181,13 @@ func heldOrDeclined(root, in string, declined *string) func(scan.Sources) (*engi
 // own account, which is exactly what those fingerprints do say. A worktree whose branch shares no history with
 // the base's cannot be answered from it, and saying nothing differs would be the worst answer of the three: a
 // green tick over every sin the worker wrote.
-func differingFrom(base *warm.Base, named branchRoot, checkout string, asked []string) (read, gone []string, covered bool) {
-	gone = base.Gone()
+func differingFrom(base *warm.Base, named branchRoot, checkout string, asked []string) (Differs, bool) {
+	differs := Differs{Gone: base.Gone()}
 
 	// A file that is gone cannot be read again, only left out, so it never joins what is asked for.
-	read = slices.DeleteFunc(base.Moved(), func(file string) bool { return slices.Contains(gone, file) })
+	differs.Moved = slices.DeleteFunc(base.Moved(), func(file string) bool {
+		return slices.Contains(differs.Gone, file)
+	})
 
 	// A file the base never read is read now, whatever made it: an edit, a shell, a checkout, a rename. Left
 	// out, it is judged as though it did not exist, which is the quietest wrong answer a judging can give. What
@@ -191,18 +195,18 @@ func differingFrom(base *warm.Base, named branchRoot, checkout string, asked []s
 	// all "new" merely for lying under another root.
 	for _, file := range asked {
 		if _, known := base.Holds(counterpartIn(checkout, named.project, file)); !known {
-			read = append(read, file)
+			differs.Unread = append(differs.Unread, file)
 		}
 	}
 
 	if checkout != named.project {
 		changed, told := git.ChangedVsBranch(checkout, named.branch)
 		if !told {
-			return nil, nil, false
+			return Differs{}, false
 		}
 
 		for file := range changed {
-			read = append(read, file)
+			differs.Own = append(differs.Own, file)
 		}
 
 		// A file the worktree removed is gone from the worktree's program, however much the project's own copy
@@ -210,13 +214,78 @@ func differingFrom(base *warm.Base, named branchRoot, checkout string, asked []s
 		// rule that follows an import or a parent answers about code the worker no longer has.
 		deleted, _ := git.DeletedVsBranch(checkout, named.branch)
 		for _, under := range deleted {
-			gone = append(gone, filepath.Join(named.project, under))
+			differs.Gone = append(differs.Gone, filepath.Join(named.project, under))
 		}
 	}
 
+	return differs, true
+}
+
+// Differs are the files a judging differs from the tree by, kept APART by what made each one differ: the base's
+// own files whose bytes have moved since it read them, the files the run's walk found that the base never read at
+// all, and, for a run in a worktree, the files that worktree differs from the base's branch by.
+//
+// Apart, because one count of the three cannot be read. A consumer measured 1206 differing files for a worktree
+// whose content differs by 79, and the three candidate causes — a stale tree, a tree read over narrower paths
+// than the run walks, and the worktree's own work — are indistinguishable from a total. Each has a different fix.
+type Differs struct {
+	Moved  []string
+	Unread []string
+	Own    []string
+	Gone   []string
+}
+
+// read is every file the service must read before the base answers, each said once.
+func (d Differs) read() []string {
+	read := slices.Concat(d.Moved, d.Unread, d.Own)
 	slices.Sort(read)
 
-	return slices.Compact(read), gone, true
+	return slices.Compact(read)
+}
+
+// where says which of the three the files came from, with the first few of the largest, so a decline names the
+// cause instead of a number somebody has to guess at.
+func (d Differs) where() string {
+	groups := []struct {
+		named string
+		files []string
+	}{
+		{"the tree's own files whose bytes moved", d.Moved},
+		{"files the walk found that the tree never read", d.Unread},
+		{"files this checkout differs from the tree's branch by", d.Own},
+	}
+
+	var said []string
+	largest := 0
+
+	for at, group := range groups {
+		said = append(said, fmt.Sprintf("%d %s", len(group.files), group.named))
+		if len(group.files) > len(groups[largest].files) {
+			largest = at
+		}
+	}
+
+	return strings.Join(said, ", ") + "; " + firstFew(groups[largest].files)
+}
+
+// shown is how many paths a decline names: enough to see what they have in common, few enough to read.
+const shown = 8
+
+// firstFew names the first of these paths, and how many more there are.
+func firstFew(files []string) string {
+	named := slices.Clone(files)
+	slices.Sort(named)
+
+	if len(named) == 0 {
+		return "none to name"
+	}
+
+	if len(named) <= shown {
+		return "they are " + strings.Join(named, " ")
+	}
+
+	return fmt.Sprintf("the first %d of the largest are %s and %d more",
+		shown, strings.Join(named[:shown], " "), len(named)-shown)
 }
 
 // counterpartIn is the project's own file a checkout's file stands in for: the file itself in the project's own

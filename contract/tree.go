@@ -50,6 +50,9 @@ type File struct {
 	Types []*Type `json:"types,omitempty"`
 
 	nodes []*Node
+	// reaches is the greatest byte offset the parse indexes into the file, worked out as the tree is linked. No
+	// source shorter than this can be the one the parse was made from.
+	reaches int
 }
 
 // Resolver says which resolver a file had and whether it ran.
@@ -70,6 +73,13 @@ func (f *File) Node(id int) (*Node, bool) {
 // Nodes is every node of the file in pre-order.
 func (f *File) Nodes() []*Node {
 	return f.nodes
+}
+
+// Reaches is the greatest byte offset the parse indexes into its file: the end of the furthest node or comment it
+// holds. It is what says whether a source read later can be the one this parse was made from, since every offset
+// in it is nonsense against bytes that do not reach that far.
+func (f *File) Reaches() int {
+	return f.reaches
 }
 
 // Span is a byte range into the file and the line it starts on.

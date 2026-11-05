@@ -256,7 +256,7 @@ func resolveTypes(file *File) error {
 
 // link numbers a file's nodes, gives each its parent, and checks what the schema cannot.
 func link(file *File) error {
-	file.nodes = nil
+	file.nodes, file.reaches = nil, 0
 	var walk func(node, parent *Node) error
 	walk = func(node, parent *Node) error {
 		if node.ID != len(file.nodes) {
@@ -274,6 +274,11 @@ func link(file *File) error {
 		node.parent = parent
 		if node.Facts == nil {
 			node.Facts = none
+		}
+		// How far the parse indexes into the file, which is the only thing that says whether a source read later
+		// can be the one it was made from.
+		if node.Span.End > file.reaches {
+			file.reaches = node.Span.End
 		}
 		file.nodes = append(file.nodes, node)
 		for _, child := range node.Children {
@@ -296,6 +301,9 @@ func link(file *File) error {
 		}
 		if comment.Attached != nil && *comment.Attached >= len(file.nodes) {
 			return fmt.Errorf("comment %d is attached to node %d, which the file does not hold", comment.ID, *comment.Attached)
+		}
+		if comment.Span.End > file.reaches {
+			file.reaches = comment.Span.End
 		}
 	}
 
