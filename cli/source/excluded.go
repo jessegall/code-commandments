@@ -99,6 +99,15 @@ func (e Excluded) matchedByGlob(resolved string) bool {
 			if fnmatch(pattern, candidate, !strings.Contains(pattern, "**")) {
 				return true
 			}
+
+			// A pattern opening with `**/` names a folder AT ANY DEPTH, and the project's own root is one of
+			// those depths: that is how gitignore and io/fs read it, and reading it as one segment or more is
+			// what made `**/dist` miss the dist at the top and made a kind whose own name holds a slash,
+			// `bootstrap/cache`, impossible to write as a pattern at all. fnmatch itself is held to PHP's, which
+			// knows no `**`, so the zero-segment reading lives here where the pattern is ours.
+			if anywhere, named := strings.CutPrefix(pattern, "**/"); named && fnmatch(anywhere, candidate, false) {
+				return true
+			}
 		}
 
 		parent := path.Dir(candidate)

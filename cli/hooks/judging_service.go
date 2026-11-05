@@ -104,6 +104,26 @@ func judgedFor(request warm.Request, root string) warm.Answer {
 	return warm.Answer{Out: out.String(), Err: errs.String(), Code: code}
 }
 
+// holdsTheLanguageOf says whether the tree holds files of that file's language at all.
+//
+// A base reads the languages the project writes, less C#, whose bridge compiles whole units of its own and is
+// kept warm as a service rather than held here. Asked about a file of any other language the base answers "never
+// read" every time, for ever, since nothing will ever put it there: on a consumer over a thousand such files
+// counted as files that differ, which is past what one judging reads, so every worker's hand-in was declined for
+// as long as the project held them. The tree answers about its own languages, and a file of another lies outside
+// it exactly as a file outside its roots does.
+//
+// Through the one table and never a cast: the two spell a language differently, "python" against "py".
+func holdsTheLanguageOf(base *warm.Base, file string) bool {
+	for _, held := range base.Languages() {
+		if named, known := source.Of(held); known && source.OfFile(file) == named {
+			return true
+		}
+	}
+
+	return false
+}
+
 // readInOneGo is how many files this process reads in one go before the change is bigger than the tree, which is
 // one question with one answer wherever it is asked: a judging splices this many files over the base it is
 // answered from, and an edit takes this many drifted files INTO the tree rather than giving the tree up. What
@@ -139,7 +159,8 @@ func heldOrDeclined(root, in string, declined *string) func(scan.Sources) (*engi
 		}
 
 		// Every language's files, because Files with none named answers none: asking it that way made this
-		// decline every run and, before that, made every run read the tree here rather than use the base.
+		// decline every run and, before that, made every run read the tree here rather than use the base. Which
+		// of them the TREE can answer about is differingFrom's to decide, so one place decides it.
 		asked := sources.Files(source.Languages...)
 		if len(asked) == 0 {
 			*declined = "the run reads no file of any language the tree holds"
@@ -203,6 +224,12 @@ func differingFrom(base *warm.Base, named branchRoot, checkout string, asked []s
 	// a checkout's file stands in for is what the base is asked about, so a worktree's thousand files are not
 	// all "new" merely for lying under another root.
 	for _, file := range asked {
+		// A file of a language the tree holds nothing of is not a file it failed to read: nothing will ever put
+		// it there, so counting it is a count that only grows and can never be settled.
+		if !holdsTheLanguageOf(base, file) {
+			continue
+		}
+
 		if _, known := base.Holds(warm.Counterpart(checkout, named.project, file)); !known {
 			differs.Unread = append(differs.Unread, file)
 		}

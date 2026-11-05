@@ -1,6 +1,7 @@
 package hooks
 
 import (
+	"slices"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -250,5 +251,43 @@ func TestAWorkersEarlierWorkIsInTheProgramItsNextEditIsJudgedAgainst(t *testing.
 	over := kept.Over(worktree)
 	if _, known := over.Holds(earlier); !known {
 		t.Errorf("the worker's earlier %s is not in the program its next edit is judged against", earlier)
+	}
+}
+
+// TestAWorktreesOwnConfigIsNeverRead holds where a worker's rules come from. A worktree carries whatever its
+// branch happens to hold, and that includes .commandments: read from there, a worker would be judged by an older
+// exclude list, an older tuning of a rule, or, where the branch has no config at all, by nothing — silently, with
+// its findings reading exactly like everyone else's. So the config and the project's own rules always come from
+// the MAIN checkout of the repository, found by asking git, whatever sits in the worktree.
+//
+// Held because it is true by construction today and nothing said so: a copy on a branch must not be able to
+// change how that worker is judged.
+func TestAWorktreesOwnConfigIsNeverRead(t *testing.T) {
+	root, _ := workerProject(t)
+	worktree := filepath.Join(root, ".journal", "worktrees", "worker-1")
+
+	// A config of the worktree's OWN, judging a folder the project does not and turning the project's rule off.
+	own := filepath.Join(worktree, ".commandments", "config.json")
+	if err := os.MkdirAll(filepath.Dir(own), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(own, []byte(`{"paths": ["nothing"], "detectors": []}`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	// The project's settings are what a worker's file is judged by, read from the main checkout.
+	settings, err := config.Load(projectOf(worktree))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if !slices.Contains(settings.Paths, "src") {
+		t.Errorf("the settings judge %v; the project declares src, so the worktree's own config was read", settings.Paths)
+	}
+
+	// And the file itself is judged, which the worktree's config would have refused.
+	file := filepath.Join(worktree, "src", "order.py")
+	if judged := judgedFile(worktree, file, settings.Judging(allRules(t, root, settings))); judged == "" {
+		t.Error("a worker's own file is judged by nothing, so the config came from its worktree")
 	}
 }

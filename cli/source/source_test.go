@@ -103,3 +103,43 @@ func TestAWorktreeInsideTheProjectIsNoneOfItsSource(t *testing.T) {
 		t.Error("InWorktree")
 	}
 }
+
+// TestAFolderLeftOutAtAnyDepthIsLeftOutAtTheTopToo holds what `**/` means. A project names the folders a build
+// writes, and naming them one path at a time is what makes a new module's web/dist get judged: nothing adds it to
+// the list. One pattern covers every one of them — but only if `**/` means zero or more segments, as gitignore
+// and io/fs read it. Reading it as one or more missed the folder at the top, and a kind with a slash in its own
+// name, `bootstrap/cache`, could not be written as a pattern at all.
+func TestAFolderLeftOutAtAnyDepthIsLeftOutAtTheTopToo(t *testing.T) {
+	root := t.TempDir()
+
+	for _, under := range []string{
+		"dist", "src", "modules/library/web/dist", "modules/profiles/web/dist", "bootstrap/cache",
+	} {
+		if err := os.MkdirAll(filepath.Join(root, under), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(filepath.Join(root, under, "thing.py"), []byte("x = 1\n"), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	excluded := Under(root, []string{"**/dist", "**/bootstrap/cache"})
+
+	for _, left := range []string{
+		"dist", "dist/thing.py",
+		"modules/library/web/dist", "modules/library/web/dist/thing.py",
+		"modules/profiles/web/dist/thing.py",
+		"bootstrap/cache", "bootstrap/cache/thing.py",
+	} {
+		if !excluded.Covers(filepath.Join(root, left)) {
+			t.Errorf("%s is read; one pattern covers that folder wherever it lies, the top of the project included", left)
+		}
+	}
+
+	// And nothing else is: a pattern naming a folder by its kind says nothing about the project's own source.
+	for _, read := range []string{"src", "src/thing.py", "modules"} {
+		if excluded.Covers(filepath.Join(root, read)) {
+			t.Errorf("%s is left out by a pattern that names only build folders", read)
+		}
+	}
+}

@@ -4,6 +4,7 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
+	"strings"
 	"testing"
 )
 
@@ -153,5 +154,45 @@ func TestADeclaredPathIsNeverOverruledByDetection(t *testing.T) {
 
 	if len(roots) != 1 || filepath.Base(roots[0]) != "lib" {
 		t.Errorf("the run reads %v, and the project said lib", roots)
+	}
+}
+
+// TestTheFoldersLeftOutAreNamedByKindAndNotOneAtATime holds what the scan hands the journal to write into a
+// project's settings. It used to be one path per build folder found ON DISK at that moment, which is a list that
+// goes stale the moment anyone adds a module: a consumer with 38 modules each holding web/dist had 5 of them
+// unlisted, so those were judged, and nobody had any reason to notice.
+//
+// A kind of folder is one thing wherever it lies, so it is named once, as a pattern. The project is still asked
+// which kinds it HAS, so the list stays about this project and says nothing about folders it does not keep.
+func TestTheFoldersLeftOutAreNamedByKindAndNotOneAtATime(t *testing.T) {
+	root := aTreeOf(t, map[string]string{
+		"composer.json":                  `{"autoload": {"psr-4": {"App\\": "app/"}}}`,
+		"app/Order.php":                  "<?php",
+		"vendor/a/b/thing.php":           "<?php",
+		"modules/library/web/dist/a.js":  "x",
+		"modules/profiles/web/dist/a.js": "x",
+		"modules/library/web/node_modules/p/a.js": "x",
+	})
+
+	left := BuiltFolders(root)
+
+	for _, named := range []string{"**/vendor", "**/dist", "**/node_modules"} {
+		if !slices.Contains(left, named) {
+			t.Errorf("the folders left out are %v; a kind the project keeps is named once, as %s", left, named)
+		}
+	}
+
+	// One line per kind and no more: a path per folder found is what went stale.
+	for _, path := range left {
+		if !strings.HasPrefix(path, "**/") {
+			t.Errorf("the folders left out name the path %q, which covers that one folder and no other", path)
+		}
+	}
+
+	// And nothing about a kind this project does not keep: the answer is about this project.
+	for _, absent := range []string{"**/.next", "**/venv", "**/coverage"} {
+		if slices.Contains(left, absent) {
+			t.Errorf("the folders left out name %s, which this project has nowhere", absent)
+		}
 	}
 }

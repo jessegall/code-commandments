@@ -1,6 +1,7 @@
 package hooks
 
 import (
+	"io/fs"
 	"bytes"
 	"encoding/json"
 	"flag"
@@ -26,6 +27,7 @@ import (
 	"github.com/jessegall/code-commandments/cli/judge"
 	"github.com/jessegall/code-commandments/cli/scan"
 	"github.com/jessegall/code-commandments/cli/source"
+	"github.com/jessegall/code-commandments/cli/warm"
 )
 
 // The stress harness stands the whole plugin up here — the service, its socket, the warm tree, the workers'
@@ -110,7 +112,7 @@ func TestTheStress(t *testing.T) {
 					time.Sleep(*stressApart)
 				}
 
-				took := sendEvent(t, service, stressEvent(worker, edit, stressEdit(t, root, worker, edit)))
+				took := sendEvent(t, service, stressEvent(root, worker, edit, stressEdit(t, root, worker, edit)))
 
 				last.Lock()
 				last.at = time.Now()
@@ -364,11 +366,20 @@ func stressMoment(worker int, event string) map[string]any {
 
 // stressEvent is the journal's file_edited moment for one worker's edit, as the journal writes it: the lines the
 // edit added among them, since a sin on a line the edit did not touch is not that edit's doing and is not told.
-func stressEvent(worker, edit int, added []any) map[string]any {
+func stressEvent(root string, worker, edit int, added []any) map[string]any {
+	// Named as the journal names it: relative to the project for a tree inside it, and absolutely for one cut
+	// beside it, which no path relative to the project can reach.
+	file := filepath.Join(stressWorktreeIn(root, worker), "shop", "goods", fmt.Sprintf("thing%d.py", edit))
+	named := file
+	if under, inside := warm.Under(root, file); inside {
+		named = under
+	}
+
 	return map[string]any{
-		"v": 1, "event": "file_edited", "session": fmt.Sprintf("s%d", worker), "environment": "main", "agent": worker,
+		"v": 1, "event": "file_edited", "session": fmt.Sprintf("s%d", worker), "environment": stressEnvironment,
+		"agent": worker,
 		"data": map[string]any{
-			"path":  fmt.Sprintf(".journal/worktrees/worker-%d/shop/thing%d.py", worker, edit),
+			"path": named,
 			"kind":  "edit",
 			"added": len(added), "removed": 0, "tool_use": edit + 1,
 			"lines": added,
@@ -400,7 +411,7 @@ class Deepened%d(RebuildKind):
 func stressEdit(t *testing.T, root string, worker, edit int) []any {
 	t.Helper()
 
-	path := filepath.Join(root, ".journal", "worktrees", fmt.Sprintf("worker-%d", worker), "shop", fmt.Sprintf("thing%d.py", edit))
+	path := filepath.Join(stressWorktreeIn(root, worker), "shop", "goods", fmt.Sprintf("thing%d.py", edit))
 
 	was := stressFile(edit)
 	appended := fmt.Sprintf(stressAppended, worker*1000+edit, edit)
@@ -424,7 +435,14 @@ func stressEdit(t *testing.T, root string, worker, edit int) []any {
 func stressHandInBy(t *testing.T, root string, worker int) {
 	t.Helper()
 
-	worktree := filepath.Join(root, ".journal", "worktrees", fmt.Sprintf("worker-%d", worker))
+	worktree := stressWorktreeIn(root, worker)
+
+	// SERVED, which is the whole reason the tree is kept up, and which nothing here used to check. A declined
+	// judging answers correctly by reading the tree in its own process, so it passes every assertion below while
+	// costing 25 to 55 seconds and starting a bridge of its own beside the warm one. A consumer's workers were
+	// declined on every hand-in for as long as the project held a file of a language the tree does not read, and
+	// this fuzz said nothing, because being served was never asked.
+	stressServed(t, root, worktree, worker)
 
 	began := time.Now()
 
@@ -443,6 +461,33 @@ func stressHandInBy(t *testing.T, root string, worker int) {
 	for _, sin := range []string{"DeepNestingDetector", "ThingByItsKindDetector"} {
 		if !strings.Contains(out.String(), sin) {
 			t.Errorf("worker %d's hand-in names no %s:\n%s%s", worker, sin, out.String(), errs.String())
+		}
+	}
+}
+
+// stressServed holds a judging to being answered from the tree the session keeps up. It asks the service the way
+// a run does, and a DECLINE fails the run at once, with the reason the service gives: the tree's own files whose
+// bytes moved, the files the walk found that the tree never read, and the files the checkout differs from the
+// tree's branch by, each counted apart.
+func stressServed(t *testing.T, root, in string, worker int) {
+	t.Helper()
+
+	answer, asked := warm.Asked(root, warm.Request{
+		Judge: []string{"--changes", "--no-checklist", "--parallel=2"},
+		In:    in,
+	})
+
+	if !asked {
+		t.Errorf("worker %d's hand-in was DECLINED, so it reads the whole tree in its own process: %s",
+			worker, answer.Because)
+
+		return
+	}
+
+	// And it still has to be right: a tree that answers quickly about the wrong program is worse than no tree.
+	for _, sin := range []string{"DeepNestingDetector", "ThingByItsKindDetector"} {
+		if !strings.Contains(answer.Out, sin) {
+			t.Errorf("worker %d's served hand-in names no %s:\n%s%s", worker, sin, answer.Out, answer.Err)
 		}
 	}
 }
@@ -512,7 +557,12 @@ func stressTreeAt(t *testing.T, files, workers int) string {
 
 		// Every shipped rule judges it, as a consumer's run is judged, and one rule of the project's own
 		// beside them: naming a rule here turns a custom one ON and takes none of the shipped ones off.
-		".commandments/config.json": `{"paths": ["shop"], "detectors": ["ThingByItsKindDetector"]}`,
+		//
+		// The paths are NESTED and there are several, as a journal's own are (src/core, src/viewer,
+		// tools/journal-hook): one flat folder was this fuzz's invention, and the tree is read over these while a
+		// run walks the checkout it stands in, so the two must be able to disagree for the fuzz to say anything.
+		".commandments/config.json": `{"paths": ["shop/goods", "shop/tills", "tools/hook"],
+ "detectors": ["ThingByItsKindDetector"]}`,
 
 		// A rule that cannot be answered from one file: the chain from Deepened through RebuildKind to Kind
 		// crosses three files, so an answer that names this sin proves the edit was judged against the whole
@@ -521,18 +571,38 @@ func stressTreeAt(t *testing.T, files, workers int) string {
  "sin": {"name": "thing-by-its-kind", "description": "a class the chain of its parents says is a kind", "skill": "python/absence"},
  "find": {"select": "type-declaration", "where": [{"extendsAny": "Kind"}]}}`,
 
-		"shop/__init__.py": "",
-		"shop/base.py":     "class Base:\n    number = 0\n",
-		"shop/kinds.py":    "class Kind:\n    number = 0\n",
-		"shop/rebuild.py": `from shop.kinds import Kind
+		"shop/__init__.py":       "",
+		"tools/__init__.py":       "",
+		"shop/goods/__init__.py":  "",
+		"shop/goods/base.py":      "class Base:\n    number = 0\n",
+		"shop/goods/kinds.py":     "class Kind:\n    number = 0\n",
+		"shop/goods/rebuild.py": `from shop.goods.kinds import Kind
 
 
 class RebuildKind(Kind):
     statements: list[str] = []
 `,
+		"shop/tills/__init__.py": "",
+		"shop/tills/till.py":     "class Till:\n    number = 0\n",
+		"tools/hook/__init__.py": "",
+		"tools/hook/hook.py":     "class Hook:\n    number = 0\n",
+
 	}
 	for at := 0; at < files; at++ {
-		written[fmt.Sprintf("shop/thing%d.py", at)] = stressFile(at)
+		written[fmt.Sprintf("shop/goods/thing%d.py", at)] = stressFile(at)
+	}
+
+	// Files of a language the TREE does not hold, MORE of them than one judging reads. The C# bridge compiles
+	// whole units of its own and is kept warm as a service, so no base ever holds one, while a run's walk finds
+	// every file. Asked about one, the tree answers "never read" — correctly, and for ever, since nothing will
+	// put it there — so counting those as files that differ declines every judging for as long as the project
+	// holds them.
+	//
+	// Past the cap is the whole point: a handful would be miscounted and the judging still served, which is how
+	// this fuzz passed while a consumer's every worker hand-in read 5913 files in its own process. The count is
+	// tied to the cap rather than guessed, so the fixture cannot drift out of the condition it is here to hold.
+	for at := 0; at <= readInOneGo; at++ {
+		written[fmt.Sprintf("shop/goods/Thing%d.cs", at)] = fmt.Sprintf("namespace Shop;\n\npublic class Thing%d {}\n", at)
 	}
 
 	for path, text := range written {
@@ -551,8 +621,8 @@ class RebuildKind(Kind):
 		{"-c", "user.email=t@t", "-c", "user.name=t", "commit", "-qm", "the project"},
 	}
 	for worker := 1; worker <= workers; worker++ {
-		commands = append(commands, []string{"worktree", "add", "-q", "-b", fmt.Sprintf("worker-%d", worker),
-			filepath.Join(root, ".journal", "worktrees", fmt.Sprintf("worker-%d", worker))})
+		commands = append(commands, []string{"worktree", "add", "-q", "-b", stressBranchOf(worker),
+			stressWorktreeIn(root, worker)})
 	}
 
 	for _, command := range commands {
@@ -562,6 +632,38 @@ class RebuildKind(Kind):
 	}
 
 	return root
+}
+
+// stressEnvironment is the journal's own environment name, which is the folder it keeps that environment's
+// worktrees under. A journal lays a worker's tree out at .journal/worktrees/<environment>/worker-<n>, not at
+// .journal/worktrees/worker-<n>: the shallower shape was this fuzz's own invention, and the plugin read the
+// checkout off the path by taking the first folder below worktrees, which in the real layout is the environment
+// and no checkout at all. Every worker's edit was judged against the main checkout and the fuzz said nothing.
+const stressEnvironment = "development"
+
+// stressWorktreeIn is where a worker's tree lies, in BOTH shapes a real one comes in, said in ONE place so the
+// fuzz cannot drift from the layouts it is meant to mimic.
+//
+// A journal keeps its own INSIDE the project, under an environment's folder: .journal/worktrees/<env>/worker-<n>.
+// An ordinary git worktree is cut wherever its author likes, and beside the project is the common choice. The two
+// differ in every way that has gone wrong here — whether the checkout lies inside the project at all, how deep it
+// lies, and whether a walk of the project reaches it — so the fuzz cuts both and alternates between them.
+func stressWorktreeIn(project string, worker int) string {
+	if worker%2 == 1 {
+		return filepath.Join(project, ".journal", "worktrees", stressEnvironment, fmt.Sprintf("worker-%d", worker))
+	}
+
+	return filepath.Join(filepath.Dir(project), filepath.Base(project)+fmt.Sprintf("-worker-%d", worker))
+}
+
+// stressBranchOf is the branch that worker's tree stands on: the journal names its own after the environment, and
+// an ordinary worktree carries whatever its author gave it.
+func stressBranchOf(worker int) string {
+	if worker%2 == 1 {
+		return fmt.Sprintf("journal/%s/worker-%d", stressEnvironment, worker)
+	}
+
+	return fmt.Sprintf("feature/worker-%d", worker)
 }
 
 // stressFile is one file of the project: a class of the shape a real one has, with sins real rules find, and
@@ -576,12 +678,12 @@ func stressFile(at int) string {
 	imports, uses := "", ""
 
 	for back := 1; back <= 3 && at-back >= 0; back++ {
-		imports += fmt.Sprintf("from shop.thing%d import Thing%d\n", at-back, at-back)
+		imports += fmt.Sprintf("from shop.goods.thing%d import Thing%d\n", at-back, at-back)
 		uses += fmt.Sprintf("        self.near%d = Thing%d(name)\n", at-back, at-back)
 	}
 
-	return fmt.Sprintf(`from shop.base import Base
-from shop.rebuild import RebuildKind
+	return fmt.Sprintf(`from shop.goods.base import Base
+from shop.goods.rebuild import RebuildKind
 %s
 
 class Thing%d(Base):
@@ -657,7 +759,7 @@ func filesOf(t *testing.T, root string, many int) []string {
 
 	var asked []string
 	for at := 0; at < many; at++ {
-		asked = append(asked, filepath.Join(root, "shop", fmt.Sprintf("thing%d.py", at)))
+		asked = append(asked, filepath.Join(root, "shop", "goods", fmt.Sprintf("thing%d.py", at)))
 	}
 
 	return asked
@@ -815,7 +917,7 @@ func stressCheckouts(t *testing.T, seed int64) []*stressCheckout {
 
 	folders := []string{project}
 	for worker := 1; worker <= workers; worker++ {
-		folders = append(folders, filepath.Join(project, ".journal", "worktrees", fmt.Sprintf("worker-%d", worker)))
+		folders = append(folders, stressWorktreeIn(project, worker))
 	}
 
 	var checkouts []*stressCheckout
@@ -827,7 +929,7 @@ func stressCheckouts(t *testing.T, seed int64) []*stressCheckout {
 			Service: service,
 			Named:   named + 1,
 			draw:    rand.New(rand.NewSource(seed + int64(named))),
-			mine:    []string{filepath.Join(folder, "shop", "thing0.py")},
+			mine:    []string{filepath.Join(folder, "shop", "goods", "thing0.py")},
 		}
 
 		stressRunning[checkout.Named] = checkout
@@ -871,6 +973,10 @@ func (c *stressCheckout) move(t *testing.T, move int) {
 		c.writesOddly(t)
 	case 26:
 		c.abandons(t)
+	case 27:
+		c.handsIn(t)
+
+		return
 	case 20, 21, 22, 23, 24, 25:
 		c.raises(t)
 	case 16, 17:
@@ -896,6 +1002,128 @@ func (c *stressCheckout) move(t *testing.T, move int) {
 	}
 }
 
+// handsIn runs the judging an agent runs on its way out, in its own checkout, and holds it to being ANSWERED
+// FROM THE TREE. It is the one action the fuzz never made, which is why a consumer's workers could be declined on
+// every hand-in for an afternoon while every run of this passed: a declined judging answers correctly, by reading
+// the whole tree in its own process, so nothing about the ANSWER says the tree went unused.
+func (c *stressCheckout) handsIn(t *testing.T) {
+	oneAtATime.Lock()
+	defer oneAtATime.Unlock()
+
+	// Whatever an earlier move left in the queue is taken first, as every move does, so a judging never reads
+	// somebody else's answer as its own.
+	stressHeld(t, c, c.at, c.Project, "", false, stressTake(t))
+
+	// Only where a tree is held for the branch the project stands on. Another checkout switching branch
+	// legitimately leaves none for the new one, and a judging then has nothing to be served from: that is the
+	// ground moving, not a tree going unused.
+	if _, held := c.holding(); !held {
+		return
+	}
+
+	answer, asked := warm.Asked(c.Project, warm.Request{
+		Judge: []string{"--changes", "--no-checklist", "--parallel=2"},
+		In:    c.Told,
+	})
+
+	if !asked {
+		t.Fatalf("move %d of checkout %d: its hand-in judging was DECLINED, so it reads the whole tree in its "+
+			"own process: %s", c.at, c.Named, answer.Because)
+	}
+
+	// Served, and about its OWN checkout: a tree that answers quickly about another checkout's files is the
+	// worst of the three answers, and the one the splice exists to avoid.
+	for _, named := range stressNamedIn(answer.Out) {
+		if !c.owns(named) {
+			t.Fatalf("move %d of checkout %d: its served hand-in reports %s, which is not its own (it owns %q)\n%s",
+				c.at, c.Named, named, c.under(), answer.Out)
+		}
+	}
+
+	c.countsWhatReallyDiffers(t)
+}
+
+// countsWhatReallyDiffers holds the COUNT a judging works out, which is what decides whether it is served at all.
+// Being served is not enough on its own: the same miscount one tree smaller is served and still wrong, and the
+// fault only shows as a decline once the count passes what one judging reads. On a consumer it was 1207 files
+// "the tree never read" for a worktree 127 files from the tip of the branch it was cut at, and every worker's
+// hand-in read 5913 files in its own process for an afternoon.
+//
+// Asked of every source file under the checkout, of every language, which is a superset of any one run's walk: a
+// run reads only the languages its own rules need, so a fuzz that asked exactly what a run asks could never see a
+// language the tree does not hold being counted.
+func (c *stressCheckout) countsWhatReallyDiffers(t *testing.T) {
+	named, base, held := baseFor(c.Project)
+	if !held {
+		return
+	}
+
+	checkout := checkoutOf(named.project, c.At)
+
+	var asked []string
+	filepath.WalkDir(c.At, func(path string, entry fs.DirEntry, err error) error {
+		if err != nil || entry.IsDir() || strings.Contains(path, "/.git/") {
+			return nil
+		}
+		if source.Judges(path) {
+			asked = append(asked, path)
+		}
+
+		return nil
+	})
+
+	differs, covered := differingFrom(base, named, checkout, asked)
+	if !covered {
+		return
+	}
+
+	for _, file := range differs.Unread {
+		// A file whose counterpart the tree HOLDS is not new to it: a checkout's file stands in for the project's
+		// own at the same path under it, and counting it means that mapping failed. Worked out HERE, from the
+		// run's own two paths, and never through the mapping being judged: a check that calls the same function
+		// is blind to its bug by construction, which this one was until it was watched not to fail.
+		own := file
+		if under, inside := strings.CutPrefix(file, c.At+"/"); inside {
+			own = filepath.Join(c.Project, under)
+		}
+
+		if _, known := base.Holds(own); known {
+			t.Fatalf("move %d of checkout %d: its judging counts %s as a file the tree never read, while the tree "+
+				"holds the project's own copy of it", c.at, c.Named, file)
+		}
+
+		// And a file of a language the tree holds nothing of is not a file it failed to read: nothing will ever
+		// put it there, so counting it is a count that can only grow and can never be settled.
+		if !stressHeldLanguage(base, file) {
+			t.Fatalf("move %d of checkout %d: its judging counts %s as a file the tree never read, and the tree "+
+				"holds no file of that language at all, so that count can never be settled", c.at, c.Named, file)
+		}
+	}
+}
+
+// stressHeldLanguage says whether the tree holds files of that file's language at all.
+func stressHeldLanguage(base *warm.Base, file string) bool {
+	for _, held := range base.Languages() {
+		if named, known := source.Of(held); known && source.OfFile(file) == named {
+			return true
+		}
+	}
+
+	return false
+}
+
+// stressNamedIn are the files an answer's findings name, by the file:line every finding carries.
+func stressNamedIn(said string) []string {
+	var named []string
+	for _, word := range strings.Fields(said) {
+		if at := strings.LastIndex(word, ".py:"); at > 0 {
+			named = append(named, word[:at+3])
+		}
+	}
+
+	return named
+}
+
 // holding is the branch the project stands on and whether its tree is held right now.
 func (c *stressCheckout) holding() (string, bool) {
 	project := git.ProjectRoot(c.Project)
@@ -915,11 +1143,11 @@ func (c *stressCheckout) renames(t *testing.T) {
 	}
 
 	c.wrote++
-	into := filepath.Join(c.At, "shop", fmt.Sprintf("moved%d_%d.py", c.Named, c.wrote))
+	into := filepath.Join(c.At, "shop", "goods", fmt.Sprintf("moved%d_%d.py", c.Named, c.wrote))
 
 	if c.draw.Intn(2) == 0 {
 		// Into a folder of its own, which is also a folder the tree has never seen.
-		into = filepath.Join(c.At, "shop", fmt.Sprintf("part%d", c.Named), fmt.Sprintf("moved%d.py", c.wrote))
+		into = filepath.Join(c.At, "shop", "goods", fmt.Sprintf("part%d", c.Named), fmt.Sprintf("moved%d.py", c.wrote))
 		if err := os.MkdirAll(filepath.Dir(into), 0o755); err != nil {
 			t.Fatal(err)
 		}
@@ -946,7 +1174,7 @@ func (c *stressCheckout) writesOddly(t *testing.T) {
 	switch c.draw.Intn(4) {
 	case 0:
 		// Over the gate's limit, which drops the file before any rule sees it.
-		big := filepath.Join(c.At, "shop", fmt.Sprintf("big%d_%d.py", c.Named, c.wrote))
+		big := filepath.Join(c.At, "shop", "goods", fmt.Sprintf("big%d_%d.py", c.Named, c.wrote))
 		if err := os.WriteFile(big, []byte(strings.Repeat("x = 1\n", 40000)), 0o644); err != nil {
 			t.Fatal(err)
 		}
@@ -954,7 +1182,7 @@ func (c *stressCheckout) writesOddly(t *testing.T) {
 		c.tells(t, big, 1, 40000, false)
 	case 1:
 		// Unreadable, which must be SAID rather than answered with no sins.
-		shut := filepath.Join(c.At, "shop", fmt.Sprintf("shut%d_%d.py", c.Named, c.wrote))
+		shut := filepath.Join(c.At, "shop", "goods", fmt.Sprintf("shut%d_%d.py", c.Named, c.wrote))
 		if err := os.WriteFile(shut, []byte(stressMine(c.Named)), 0o000); err != nil {
 			t.Fatal(err)
 		}
@@ -1053,7 +1281,7 @@ func (c *stressCheckout) recuts(t *testing.T) {
 	}
 
 	// Its own files are gone with the worktree, and what it holds now is the branch's own.
-	c.mine = []string{filepath.Join(c.At, "shop", "thing0.py")}
+	c.mine = []string{filepath.Join(c.At, "shop", "goods", "thing0.py")}
 }
 
 // abandons removes this worktree and does NOT cut it again, which is what the journal does when an agent's work
@@ -1098,7 +1326,7 @@ func (c *stressCheckout) abandons(t *testing.T) {
 		t.Fatalf("the worktree %s could not be cut again: %s", c.At, out)
 	}
 
-	c.mine = []string{filepath.Join(c.At, "shop", "thing0.py")}
+	c.mine = []string{filepath.Join(c.At, "shop", "goods", "thing0.py")}
 }
 
 // runs a git command in this checkout, saying what it said rather than failing: a fuzz run makes moves that git
@@ -1114,7 +1342,7 @@ func (c *stressCheckout) runs(t *testing.T, args []string) {
 func (c *stressCheckout) writes(t *testing.T, many int) {
 	for at := 0; at < many; at++ {
 		c.wrote++
-		file := filepath.Join(c.At, "shop", fmt.Sprintf("made%d_%d.py", c.Named, c.wrote))
+		file := filepath.Join(c.At, "shop", "goods", fmt.Sprintf("made%d_%d.py", c.Named, c.wrote))
 
 		written := stressMine(c.Named)
 		if err := os.WriteFile(file, []byte(written), 0o644); err != nil {
@@ -1404,7 +1632,7 @@ func stressMine(named int) string {
 	// would be demanding something the plugin is right to withhold.
 	at := int(time.Now().UnixNano() % 1000000)
 
-	return fmt.Sprintf(`from shop.rebuild import RebuildKind
+	return fmt.Sprintf(`from shop.goods.rebuild import RebuildKind
 
 
 class Mine%dAt%d(RebuildKind):

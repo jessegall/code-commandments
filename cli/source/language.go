@@ -40,6 +40,15 @@ var written = map[contract.Language]Language{
 	contract.Go:         Go,
 }
 
+// Of is the language of a stream by the name its extension spells it with here, and false for one this tool does
+// not read. It is the one table's own answer in the other direction, so nothing casts between the two spellings:
+// contract names python "python" and this names it "py", and a cast between them silently answers no language.
+func Of(stream contract.Language) (Language, bool) {
+	named, known := written[stream]
+
+	return named, known
+}
+
 // Written is the language of the stream this one is.
 func (l Language) Written() contract.Language {
 	for stream, named := range written {

@@ -33,7 +33,7 @@ func Schema(root string) []byte {
 		"properties": object{
 			"$schema":  object{"type": "string", "description": "The schema this file is checked against, written by `" + tool + " sync`."},
 			"paths":    list("The source roots judge scans when it is given no path, relative to the project.", object{"type": "string"}),
-			"exclude":  list("Paths judge does not read at all, so nothing in them is reported on or rewritten. One rule may be let in anyway with a `judges` call under it in `configure`.", object{"type": "string"}),
+			"exclude":  list("Paths judge does not read at all, so nothing in them is reported on or rewritten. A path is read against the project; a pattern holding `*` or `?` matches as fnmatch does, and one opening with `**/` names that folder wherever it lies, at the top of the project included, so `**/dist` covers every module's own. One rule may be let in anyway with a `judges` call under it in `configure`.", object{"type": "string"}),
 			"base":     object{"type": "string", "minLength": 1, "description": "The branch `--branch` compares against when it names none: this project's trunk. Left out, it is main. A branch named on the command line always wins."},
 			"parallel": object{"type": "integer", "minimum": 1, "description": "How many detectors judge runs at once when no --parallel says; more use more cores and memory. Left out, judge runs 2."},
 			"disable": object{

@@ -238,6 +238,24 @@ func (b *Base) Moved() []string {
 	return moved
 }
 
+// Languages are the languages the base holds files of, which is what it can be ASKED about. A base reads the
+// languages the project writes, less C#, whose bridge compiles whole units of its own and is kept warm as a
+// service rather than held here — so a C# file is one a base never holds, however the project is configured.
+//
+// Asking a base about a file of any other language answers "never read" every time, for ever: on a consumer that
+// was a fixed count of over a thousand files, which no fix to the path mapping could ever clear, and it declined
+// every worker's judging on its own.
+func (b *Base) Languages() []contract.Language {
+	var languages []contract.Language
+	for _, stream := range b.streams {
+		if !slices.Contains(languages, stream.Header.Language) {
+			languages = append(languages, stream.Header.Language)
+		}
+	}
+
+	return languages
+}
+
 // Gone are the files the base read that are no longer on disk. A file something removed outside the plugin's
 // sight — rm, a checkout, a rebase — is no longer part of the program, and a view that still holds it judges it
 // as though it were: a consumer's judging reported three sins in a file deleted a minute earlier, which no event

@@ -204,32 +204,63 @@ func realOr(path string) string {
 	return resolved
 }
 
-// BuiltFolders are the folders a build or an installer wrote under root, at the top or beside a detected
-// source root, sorted.
+// BuiltFolders are the KINDS of folder a build or an installer wrote under root, each named once as a pattern
+// that covers it wherever it lies, sorted.
+//
+// By its kind, because a path goes stale. This is what the journal writes into a project's settings at install,
+// and it used to be one path per folder found on disk at that moment: at the top of the project, or beside a
+// detected source root, and nowhere else. A consumer with 38 modules each holding web/dist had 5 of them in no
+// list at all, so those were judged, and a module added later is never in any list — nothing adds it. Worse, a
+// build folder nested deeper than a source root's parent was never found to begin with.
+//
+// The project is still asked which kinds it HAS, so the answer is about this project and names no folder it does
+// not keep.
 func BuiltFolders(root string) []string {
-	bases := []string{"."}
-	for _, dir := range DetectRoots(root) {
-		bases = append(bases, filepath.Dir(dir))
-	}
-
 	var found []string
 
-	for _, base := range bases {
-		for _, folder := range built {
-			path := folder
-			if base != "." {
-				path = base + "/" + folder
-			}
-
-			if isDir(root+"/"+path) && !slices.Contains(found, path) {
-				found = append(found, path)
-			}
-		}
+	for kind := range kindsUnder(root) {
+		found = append(found, "**/"+kind)
 	}
 
 	sort.Strings(found)
 
 	return found
+}
+
+// kindsUnder are the build and installer folder kinds the project keeps somewhere. The walk goes by folders
+// only, and never INTO one it has just recognised: a node_modules holds thousands of its own, and none of them is
+// a fact about this project.
+func kindsUnder(root string) map[string]bool {
+	kinds := map[string]bool{}
+
+	var look func(dir string)
+	look = func(dir string) {
+		entries, err := os.ReadDir(dir)
+		if err != nil {
+			return
+		}
+
+		for _, kind := range built {
+			if isDir(dir + "/" + kind) {
+				kinds[kind] = true
+			}
+		}
+
+		for _, entry := range entries {
+			if !entry.IsDir() || strings.HasPrefix(entry.Name(), ".") {
+				continue
+			}
+			if slices.Contains(built, entry.Name()) || source.IsWorktree(dir+"/"+entry.Name()) {
+				continue
+			}
+
+			look(dir + "/" + entry.Name())
+		}
+	}
+
+	look(root)
+
+	return kinds
 }
 
 // WritesLanguage says whether any detected source root holds a file of the language, outside built folders.

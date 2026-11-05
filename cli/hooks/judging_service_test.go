@@ -281,12 +281,21 @@ class DropTailsMigration(RebuildMigration):
 }
 
 // heldBaseOf reads the project's tree and holds it as the base, as the first hook of a session has it held.
+// Over the project's DECLARED ROOTS, which is what a session really reads, and never the whole project folder. A
+// base read over the folder holds a worktree's own files directly, at the path they have under the project, so
+// the mapping from a checkout's file to the project's own is never asked and a test over it proves nothing. A
+// real base holds only the declared paths, and then that mapping is the whole of whether a worker is served.
 func heldBaseOf(t *testing.T, root string) {
 	t.Helper()
 
 	settings, _ := config.Load(root)
 
-	codebase, err := scan.Walk([]string{root}, source.Under(root, settings.Excluded)).Load()
+	roots, err := config.DeclaredRoots(root)
+	if err != nil || len(roots) == 0 {
+		t.Fatalf("the project declares no root, so its base would be read over the whole folder: %v", err)
+	}
+
+	codebase, err := scan.Walk(roots, source.Under(root, settings.Excluded)).Load()
 	if err != nil || codebase == nil {
 		t.Fatalf("the python bridge cannot run here: %v", err)
 	}
@@ -294,7 +303,7 @@ func heldBaseOf(t *testing.T, root string) {
 	project := git.ProjectRoot(root)
 	branch := git.CurrentBranch(project)
 
-	kept.Hold(project, branch, []string{root}, codebase, nil)
+	kept.Hold(project, branch, roots, codebase, nil)
 	t.Cleanup(func() { kept.Drop(project, branch) })
 }
 
@@ -579,5 +588,126 @@ func TestAWorktreesFilesAreNotAllFilesTheTreeNeverRead(t *testing.T) {
 		t.Errorf("%d of the worktree's %d files count as files the tree never read: %v\nthe base holds the "+
 			"project's copy of each at the same path under it, so none of them is new to it",
 			len(differs.Unread), len(asked), differs.Unread)
+	}
+}
+
+// TestAWorkerIsServedInTheShapeTheJournalReallyLaysOut mimics a consumer's own layout rather than a convenient
+// one, because two tags were spent guessing at it. What is really there: declared paths NESTED two deep
+// (src/core, src/viewer, tools/journal-hook), a worktree the journal keeps TWO folders down inside the project
+// (.journal/worktrees/<environment>/worker-N), on a branch of its own, and a base read over those declared paths
+// by the session that keeps it up rather than over the project folder.
+//
+// Each of those alone is harmless. Together they are what a worker's judging actually meets, and on a consumer
+// 1207 of its files came back as files the tree never read — four figures for a branch 223 files from the tip —
+// so every hand-in was declined and read 5913 files in its own process.
+func TestAWorkerIsServedInTheShapeTheJournalReallyLaysOut(t *testing.T) {
+	root, err := filepath.EvalSymlinks(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv(pluginData, t.TempDir())
+	t.Setenv("JOURNAL_ROOT", root)
+
+	for path, text := range map[string]string{
+		".commandments/config.json": `{"paths": ["src/core", "src/viewer", "tools/journal-hook"],
+ "detectors": ["DocumentedAnywhereDetector"]}`,
+		".commandments/custom/DocumentedAnywhereDetector.json": `{"engine": "python",
+ "sin": {"name": "documented-anywhere", "description": "a documented method", "skill": "python/absence"},
+ "find": {"select": "function", "where": [{"documented": true}]}}`,
+		"src/core/__init__.py":           "",
+		"src/core/order.py":              "class Order:\n    pass\n",
+		"src/viewer/__init__.py":         "",
+		"src/viewer/window.py":           "class Window:\n    pass\n",
+		"tools/journal-hook/__init__.py": "",
+		"tools/journal-hook/hook.py":     "class Hook:\n    pass\n",
+		// A language the TREE does not read: the C# bridge compiles whole units of its own and is kept warm as a
+		// service, so a base never holds one. The walk still finds the file, and asking the tree about it answers
+		// no every time — which is a file counted as changed for ever, in a count that decides whether a worker
+		// is served at all.
+		"src/core/Order.cs":  "namespace Shop;\n\npublic class Order {}\n",
+		"src/core/Refund.cs": "namespace Shop;\n\npublic class Refund {}\n",
+	} {
+		whole := filepath.Join(root, path)
+		if err := os.MkdirAll(filepath.Dir(whole), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(whole, []byte(text), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	// The worktree where the journal really keeps one: under an environment's own folder, two below .journal.
+	worktree := filepath.Join(root, ".journal", "worktrees", "development", "worker-588")
+	for _, command := range [][]string{
+		{"init", "-q", "-b", "main"},
+		{"-c", "user.email=t@t", "-c", "user.name=t", "add", "-A"},
+		{"-c", "user.email=t@t", "-c", "user.name=t", "commit", "-qm", "the project"},
+		{"worktree", "add", "-q", "-b", "journal/development/worker-588", worktree},
+	} {
+		if out, err := exec.Command("git", append([]string{"-C", root}, command...)...).CombinedOutput(); err != nil {
+			t.Fatalf("git %v: %s", command, out)
+		}
+	}
+
+	// The worker's own sin, in its own checkout, under one of the nested declared paths.
+	if err := os.WriteFile(filepath.Join(worktree, "src", "core", "order.py"), []byte(`class Order:
+    def total(self):
+        """Says the total."""
+        return 0
+`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	heldBaseOf(t, root)
+
+	listener, listening := Judging(root)
+	if !listening {
+		t.Fatalf("the service cannot listen on %s", warm.Socket(root))
+	}
+	defer listener.Close()
+
+	go serveJudging(listener, root)
+
+	// Every file of the worktree the run walks, which is what it asks the tree about.
+	var asked []string
+	if err := filepath.WalkDir(worktree, func(path string, entry fs.DirEntry, err error) error {
+		if err != nil || entry.IsDir() || strings.Contains(path, "/.git/") {
+			return err
+		}
+		// Every language the run walks, which is what it really asks the tree about, and not the one language
+		// this fixture's rule happens to judge.
+		if strings.HasSuffix(path, ".py") || strings.HasSuffix(path, ".cs") {
+			asked = append(asked, path)
+		}
+
+		return nil
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	named, base, held := baseFor(root)
+	if !held {
+		t.Fatal("no tree is held for the project")
+	}
+
+	differs, covered := differingFrom(base, named, checkoutOf(named.project, worktree), asked)
+	if !covered {
+		t.Fatal("the worktree shares no history with the branch the tree was read at")
+	}
+
+	if len(differs.Unread) != 0 {
+		t.Errorf("%d of the worktree's %d files count as files the tree never read: %v\neach stands in for the "+
+			"project's own copy under a declared path, and the tree read every one of those",
+			len(differs.Unread), len(asked), differs.Unread)
+	}
+
+	// And the judging itself is served, which is the whole point of the mapping.
+	answer, asking := warm.Asked(root, warm.Request{Judge: []string{"--no-checklist"}, In: worktree})
+	if !asking {
+		t.Fatalf("a worker's hand-in was declined: %s", answer.Because)
+	}
+
+	if !strings.Contains(answer.Out, "order.py") {
+		t.Errorf("the served answer does not name the worker's own sin:\n%s%s", answer.Out, answer.Err)
 	}
 }
