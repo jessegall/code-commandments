@@ -41,6 +41,14 @@ func Fills(language contract.Language, fill Filler) {
 	fillers[language] = fill
 }
 
+// Fills says whether a fill is registered for that language: a codebase built anywhere but a scan carries a
+// language's own facts only where one is.
+func FillsFor(language contract.Language) bool {
+	_, registered := fillers[language]
+
+	return registered
+}
+
 // Untouched fails the run when a fill wrote a fact into the Facts nodes without any share, which would hand that
 // fact to every one of them: a fact is written through the node's Own.
 func Untouched() {

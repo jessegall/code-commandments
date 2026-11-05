@@ -281,10 +281,31 @@ type scope struct {
 	self     string
 }
 
+func init() {
+	// PHP fills through the engine's registry like every other language, so a codebase built ANYWHERE gets it:
+	// a view spliced over a warm base is built by engine.Filling, not by a scan, and it used to get no PHP fill
+	// at all. The edited file's own types then came from a one-file read, where they resolve against nothing, so
+	// a type-dependent rule answered differently on an edit than on a full judging.
+	engine.Fills(contract.PHP, func(codebase *engine.Codebase, changed []string) {
+		TypesOf(codebase).fill(codebase, changed)
+	})
+}
+
 // Fill writes what the engine fills for PHP: the `resolved` TypeOf answers for every expression inside a function,
 // and the `target` Callee finds for every call and construction.
 func (t *Types) Fill(codebase *engine.Codebase) {
+	t.fill(codebase, nil)
+}
+
+// fill writes those facts over the changed files, or over every file where none are named. The types themselves
+// are read from the whole program either way: it is the WALK that narrows, since a file nothing touched already
+// carries the facts it was read with.
+func (t *Types) fill(codebase *engine.Codebase, changed []string) {
 	for _, file := range codebase.Of(contract.PHP).Files() {
+		if len(changed) > 0 && !slices.Contains(changed, file.File.Path) {
+			continue
+		}
+
 		for _, node := range file.Nodes() {
 			if node.Role != "expression" {
 				continue

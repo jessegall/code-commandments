@@ -18,7 +18,7 @@ import (
 	"github.com/jessegall/code-commandments/cli/workspace"
 	"github.com/jessegall/code-commandments/contract"
 	"github.com/jessegall/code-commandments/engine"
-	"github.com/jessegall/code-commandments/engine/php"
+	_ "github.com/jessegall/code-commandments/engine/php"
 )
 
 // Sources are a tree's source files, by language, and the roots they were walked from.
@@ -218,9 +218,6 @@ func (s Sources) Load() (*engine.Codebase, error) {
 	codebase.Rooted(s.project())
 	sayUnreadable(streams)
 
-	if len(s.byLanguage[source.PHP]) > 0 {
-		php.TypesOf(codebase).Fill(codebase)
-	}
 	if len(incomplete.Bridges) > 0 {
 		return codebase, incomplete
 	}
