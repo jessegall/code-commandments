@@ -118,6 +118,13 @@ func (c Command) Run(in *cli.Input, console cli.Console) (int, error) {
 	space := workspace.At(workspace.ProjectRoot(cwd), "")
 	options := optionsOf(in, space)
 
+	// A path a run names is relative to the folder the RUN was started in, which is not this process's folder
+	// when the service judges on someone else's behalf: the service's own folder is the plugin's. Left
+	// unresolved, such a path was read against that folder, so `judge src` found nothing to judge and
+	// `judge --changes` scoped itself to a tree nobody had edited — both answering a green tick with exit 0
+	// over code that holds sins, which is the one answer a judging must never give.
+	options.path = within(cwd, options.path)
+
 	// A service holding this project's tree answers from memory, where this run would read the tree: 25 seconds
 	// for 1518 files and 55 for 5286. So it is asked first, and only a run that IS the service's own goes on to
 	// read anything, which is what a codebase handed in says.
@@ -859,6 +866,16 @@ type options struct {
 	parallelGiven bool
 	benchmark     bool
 	ignore        bool
+}
+
+// within is the path as the run means it: one it names relative to the folder the run was started in, and an
+// absolute one as it stands.
+func within(folder, path string) string {
+	if path == "" || filepath.IsAbs(path) {
+		return path
+	}
+
+	return filepath.Clean(filepath.Join(folder, path))
 }
 
 func optionsOf(in *cli.Input, space workspace.Workspace) options {
