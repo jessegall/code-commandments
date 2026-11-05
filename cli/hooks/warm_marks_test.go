@@ -138,3 +138,42 @@ func tells(t *testing.T, data string) string {
 
 	return strings.Join(said, "\n")
 }
+
+// TestOnlyTheServiceReadsABase holds the one process rule. A run started for one hook answers and ends, so a
+// tree it began reading would cost a worker's CPU for a quarter of a minute and be thrown away unused; only the
+// service, which outlives every hook it answers, reads one.
+func TestOnlyTheServiceReadsABase(t *testing.T) {
+	root, _ := migrationProject(t)
+	settings, _ := config.Load(root)
+
+	project := git.ProjectRoot(root)
+	branch := git.CurrentBranch(root)
+	kept.Drop(project, branch)
+
+	Warming(root, settings)
+	if warming(t) {
+		t.Error("a run that is not the service began reading a base")
+	}
+
+	Serves()
+	t.Cleanup(func() { serving = false })
+
+	Warming(root, settings)
+	if !warming(t) {
+		t.Error("the service did not begin reading a base")
+	}
+}
+
+// warming says whether a read of a base is running, which is what the keeper is told to start.
+func warming(t *testing.T) bool {
+	t.Helper()
+
+	running := false
+	reading.Range(func(_, _ any) bool {
+		running = true
+
+		return false
+	})
+
+	return running
+}

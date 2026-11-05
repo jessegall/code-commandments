@@ -77,10 +77,24 @@ func marksOver(codebase *engine.Codebase, marking Marking, file string, rules []
 	return marks
 }
 
+// serving says whether this process is the service, which is the only process a base is worth reading for: a
+// run started for one hook answers and ends, so a tree it began reading would cost a worker's CPU for a quarter
+// of a minute and be thrown away unused.
+var serving bool
+
+// Serves says this process is the service, so a base read for one hook serves every later one.
+func Serves() {
+	serving = true
+}
+
 // Warming reads a branch's base in the background, unless one is held or a read is already running. The hook
 // that asks for it is answered from the edited file alone, as every hook was; the next one is answered from the
 // program.
 func Warming(root string, project config.Config) {
+	if !serving {
+		return
+	}
+
 	named, ok := rootOf(root)
 	if !ok {
 		return

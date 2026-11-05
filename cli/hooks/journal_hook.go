@@ -352,6 +352,10 @@ func (s JournalServe) Run(in *cli.Input, console cli.Console) (int, error) {
 	root := workspace.ProjectRoot(cwd)
 	started := stamp(root)
 
+	// This process outlives every hook it answers, so a tree it reads once serves every later edit: the mark can
+	// then ask the rules that read more than the file they report in, which a run judging one file cannot.
+	Serves()
+
 	serve(listener, func() bool { return stamp(root) == started }, startAdviser(adviseAsked))
 
 	return 0, nil
