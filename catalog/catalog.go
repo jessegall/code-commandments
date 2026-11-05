@@ -30,8 +30,20 @@ type CrossFile interface {
 	CrossFile()
 }
 
-// IsCrossFile says whether a rule reads more than the file it reports in.
+// ReadsAcrossFiles is a rule that answers for ITSELF whether it reads more than the file it reports in, as a
+// project's own rule does: nothing measures a rule a consumer wrote, so it answers from the checks its file
+// writes. A rule that answers takes precedence over the marker, which it does not carry.
+type ReadsAcrossFiles interface {
+	ReadsAcrossFiles() bool
+}
+
+// IsCrossFile says whether a rule reads more than the file it reports in: what it answers for itself, else
+// whether it carries the marker its measurement earned.
 func IsCrossFile(rule any) bool {
+	if answers, states := rule.(ReadsAcrossFiles); states {
+		return answers.ReadsAcrossFiles()
+	}
+
 	_, crossFile := rule.(CrossFile)
 
 	return crossFile

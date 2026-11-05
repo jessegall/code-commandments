@@ -11,7 +11,7 @@ import (
 	_ "github.com/jessegall/code-commandments/registry"
 )
 
-func TestAReportAgainstTheProjectsOwnRuleIsRefused(t *testing.T) {
+func TestAReportAgainstTheProjectsOwnRuleIsRefusedByEitherNameItIsKnownBy(t *testing.T) {
 	guard := t.TempDir()
 	if err := os.WriteFile(filepath.Join(guard, "gh"), []byte("#!/bin/sh\necho 'gh is guarded in this test' >&2\nexit 1\n"), 0o755); err != nil {
 		t.Fatal(err)
@@ -32,14 +32,19 @@ func TestAReportAgainstTheProjectsOwnRuleIsRefused(t *testing.T) {
 	t.Cleanup(func() { os.Chdir(previous) })
 	os.Chdir(root)
 
-	var out, errs bytes.Buffer
+	// Either name the reporter was shown is the rule: the checklist prints the rule's own, a chat mark and
+	// `info` print the SIN's. Named by its sin, the refusal used to miss and the report was filed upstream,
+	// where a rule that lives in this project cannot be fixed (issue 824).
+	for _, named := range []string{"RawSql", "RawSqlDetector", "raw-sql"} {
+		var out, errs bytes.Buffer
 
-	code, err := Command{}.Run(cli.InputOf("report", "--detector=RawSql", "--reason=wrong", "--ref=src/A.php:1"), cli.Console{Out: &out, Err: &errs})
-	if err != nil {
-		t.Fatal(err)
-	}
+		code, err := Command{}.Run(cli.InputOf("report", "--detector="+named, "--reason=wrong", "--ref=src/A.php:1"), cli.Console{Out: &out, Err: &errs})
+		if err != nil {
+			t.Fatal(err)
+		}
 
-	if said := errs.String(); code != 2 || !strings.Contains(said, "RawSql is THIS project's own rule") || !strings.Contains(said, ".commandments/custom/RawSqlDetector.json") {
-		t.Errorf("exit %d\n%s%s", code, out.String(), said)
+		if said := errs.String(); code != 2 || !strings.Contains(said, named+" is THIS project's own rule") || !strings.Contains(said, ".commandments/custom/RawSqlDetector.json") {
+			t.Errorf("--detector=%s: exit %d\n%s%s", named, code, out.String(), said)
+		}
 	}
 }

@@ -56,11 +56,28 @@ func Named(name string) (Detector, bool) {
 	return NamedIn(All(), name)
 }
 
-// NamedIn is the detector among these a name means, with or without its Detector suffix, in any case.
+// NamedIn is the detector among these a name means: its own name, with or without its Detector suffix, or the
+// name of the sin it finds, however either is spelled.
+//
+// A reader names a rule by whichever name they were shown, and the two surfaces show different ones: a judge
+// finding and a checklist line print the rule's name, while a chat mark and `info` print the SIN's. So a report
+// filed as `--detector=helper-in-a-kind-folder`, read off a mark, must mean the rule whose sin that is. It did
+// not, and nothing downstream could tell: the project's-own-rule refusal and the best-design litmus both read a
+// name that meant no rule as a rule they knew nothing about, so a report against a consumer's OWN rule was filed
+// upstream, where nothing can fix it (issue 824).
+//
+// The spelling is folded for the same reason: a name is read off a line and typed back, and the case and the
+// hyphens of `ArrayBag`, `array-bag` and `array_bag` are not a difference anyone means.
 func NamedIn(detectors []Detector, name string) (Detector, bool) {
-	wanted := strings.ToLower(strings.TrimSuffix(name, "Detector"))
+	wanted := catalog.Normalise(strings.TrimSuffix(name, "Detector"))
 	for _, detector := range detectors {
-		if strings.ToLower(strings.TrimSuffix(catalog.Name(detector), "Detector")) == wanted {
+		if catalog.Normalise(strings.TrimSuffix(catalog.Name(detector), "Detector")) == wanted {
+			return detector, true
+		}
+	}
+
+	for _, detector := range detectors {
+		if catalog.Normalise(detector.Sin().Definition().Name) == wanted {
 			return detector, true
 		}
 	}
