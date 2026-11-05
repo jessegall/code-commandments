@@ -217,6 +217,10 @@ type JournalAnswer struct {
 	// ReadMs is the share of the judging that was a bridge parsing files, in milliseconds. A judging nobody can
 	// decompose is one nobody can act on: three workers editing at once cost 1.2 to 16.1 seconds for files of
 	// the same shape, and the bridge they share is the first thing to rule in or out.
+	//
+	// Nought is said, unlike the durations beside it: it is the answer a file parsed before its turn came gives,
+	// which is the whole point of parsing it then, and a reader must be able to tell it from a judging nobody
+	// timed.
 	ReadMs int64
 
 	// JudgedTotalMs is how long the plugin held the event altogether, from the moment it was handed it to the

@@ -21,7 +21,6 @@ import (
 	"github.com/jessegall/code-commandments/cli/judge"
 	"github.com/jessegall/code-commandments/cli/scan"
 	"github.com/jessegall/code-commandments/cli/source"
-	"github.com/jessegall/code-commandments/cli/warm"
 )
 
 // The stress harness stands the whole plugin up here — the service, its socket, the warm tree, the workers'
@@ -39,6 +38,7 @@ var (
 	stressHandIn  = flag.Bool("stress.hand-in", true, "run each worker's hand-in judging in the same window")
 	stressAsks    = flag.Bool("stress.asks", false, "time one ask of 1, 2, 3 and 5 files through the warm bridge instead of the load")
 	stressAhead   = flag.Bool("stress.ahead", true, "parse each edited file when its event arrives, together with every file waiting then")
+	stressApart   = flag.Duration("stress.apart", 0, "how long a worker waits between its edits; a real agent edits seconds apart, not all at once")
 )
 
 // TestTheStress measures the plugin under several workers at once: every worker edits in its own worktree while
@@ -86,7 +86,12 @@ func TestTheStress(t *testing.T) {
 	// about: a hand-in judges a whole worktree, and until it stopped sharing the bridge every edit queued behind
 	// one.
 	fired := time.Now()
+
 	var work sync.WaitGroup
+	var last struct {
+		sync.Mutex
+		at time.Time
+	}
 
 	for worker := 1; worker <= *stressWorkers; worker++ {
 		work.Add(1)
@@ -95,7 +100,15 @@ func TestTheStress(t *testing.T) {
 			defer work.Done()
 
 			for edit := 0; edit < *stressEdits; edit++ {
+				if edit > 0 {
+					time.Sleep(*stressApart)
+				}
+
 				sendEvent(t, service, stressEvent(worker, edit, stressEdit(t, root, worker, edit)))
+
+				last.Lock()
+				last.at = time.Now()
+				last.Unlock()
 			}
 
 			if *stressHandIn {
@@ -105,12 +118,14 @@ func TestTheStress(t *testing.T) {
 	}
 
 	work.Wait()
-	sent := time.Since(fired)
 
-	answers, cleared := stressAnswers(t, data, *stressWorkers**stressEdits, 15*time.Minute)
+	answers, landed := stressAnswers(t, data, *stressWorkers**stressEdits, 15*time.Minute)
 
-	t.Logf("%d edits and %d hand-ins were sent in %v; the queue cleared %v after the last of them",
-		*stressWorkers**stressEdits, stressHandIns(), sent.Round(time.Millisecond), (cleared - sent).Round(time.Millisecond))
+	// From the last EDIT, never from the last hand-in: a hand-in takes seconds of its own after the edits are in,
+	// and counted from there the queue read as having cleared before the edits were sent.
+	t.Logf("%d edits %v apart and %d hand-ins were sent in %v; the last answer landed %v after the last edit",
+		*stressWorkers**stressEdits, *stressApart, stressHandIns(), time.Since(fired).Round(time.Millisecond),
+		landed.Sub(last.at).Round(time.Millisecond))
 
 	stressReport(t, answers)
 }
@@ -319,21 +334,20 @@ func heldWithin(project, branch string, within time.Duration) bool {
 	return false
 }
 
-// answered waits for the plugin's answers and says when the last of them landed, which is the queue clearing.
-func stressAnswers(t *testing.T, data string, wanted int, within time.Duration) ([]map[string]any, time.Duration) {
+// stressAnswers waits for the plugin's answers and says when the last of them landed, which is the queue clearing.
+func stressAnswers(t *testing.T, data string, wanted int, within time.Duration) ([]map[string]any, time.Time) {
 	t.Helper()
 
 	queue, _ := Queue4In(data)
-	began := time.Now()
 
-	for until := began.Add(within); time.Now().Before(until); time.Sleep(200 * time.Millisecond) {
+	for until := time.Now().Add(within); time.Now().Before(until); time.Sleep(100 * time.Millisecond) {
 		files, _ := filepath.Glob(filepath.Join(queue.Path(), "*.json"))
 		if len(files) >= wanted {
-			return drained(t, data), time.Since(began)
+			return drained(t, data), time.Now()
 		}
 	}
 
-	return drained(t, data), time.Since(began)
+	return drained(t, data), time.Now()
 }
 
 // stressProject is a project of the size asked for, with a worktree per worker as the journal cuts them, and the
@@ -387,17 +401,30 @@ func stressProject(t *testing.T, files, workers int) (root, data string) {
 	return root, data
 }
 
-// sinful is one file of the project: a class of the shape a real one has, with sins real rules find, so what the
-// rules cost here is what they cost on a consumer's tree.
+// stressFile is one file of the project: a class of the shape a real one has, with sins real rules find, and
+// imports of its neighbours so the project has a module graph with DEPTH.
+//
+// The depth is not decoration. A type checker asked about one changed file re-checks that module and everything
+// that imports it, so what an edit costs depends on the graph above the file, not on how many files the tree
+// holds. A generated project whose files import nothing answered in 350ms whatever its size, while a real tree
+// of real code answered in 0.1 to 5.2 seconds for the same shape of edit: a harness without depth measures the
+// plugin against code nobody writes.
 func stressFile(at int) string {
-	return fmt.Sprintf(`from shop.base import Base
+	imports, uses := "", ""
 
+	for back := 1; back <= 3 && at-back >= 0; back++ {
+		imports += fmt.Sprintf("from shop.thing%d import Thing%d\n", at-back, at-back)
+		uses += fmt.Sprintf("        self.near%d = Thing%d(name)\n", at-back, at-back)
+	}
+
+	return fmt.Sprintf(`from shop.base import Base
+%s
 
 class Thing%d(Base):
     def __init__(self, name: str = "", total: int = 0):
         self.name = name
         self.total = total
-
+%s
     def priced(self, order, rate=None):
         if order is not None:
             for line in order.lines:
@@ -410,11 +437,8 @@ class Thing%d(Base):
 
     def named(self):
         return self.name or "unknown"
-`, at)
+`, imports, at, uses)
 }
-
-// _ keeps warm imported for the socket the service registers, which a reader of this file looks for.
-var _ = warm.Socket
 
 // TestWhatAnAskCostsByItsFiles answers the one question the queue's design turns on: how much of what an edit
 // pays is per ASK rather than per file. A bridge pays a fixed cost for every ask — the round trip, and mypy

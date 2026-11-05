@@ -354,7 +354,10 @@ func (a JournalAnswer) Shape4() map[string]any {
 		answer["judged_total_ms"] = a.JudgedTotalMs
 	}
 
-	if len(answer) > 1 && a.ReadMs > 0 {
+	// Said beside the judging it is part of, nought included: nought now MEANS something — the file was parsed
+	// before its turn came, so the judging parsed nothing — and left out it read as a judging nobody timed. A
+	// reader of a real run took it for exactly that.
+	if _, timed := answer["judged_ms"]; timed {
 		answer["read_ms"] = a.ReadMs
 	}
 

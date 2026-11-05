@@ -15,7 +15,7 @@ import (
 // 4.025 seconds to clear and 430ms of judging apiece, against 2.838 and 118 once they shared an ask.
 func TestEveryFileWaitingGoesOverInOneAsk(t *testing.T) {
 	asked := make(chan []string, 8)
-	parser := parsingFor(t, asked)
+	parser := parsingFor(t, asked, nil)
 
 	folder := t.TempDir()
 
@@ -62,7 +62,7 @@ func TestEveryFileWaitingGoesOverInOneAsk(t *testing.T) {
 // judging must parse it itself rather than read a tree of the version before.
 func TestAParseIsNotUsedForAFileThatMovedAgain(t *testing.T) {
 	asked := make(chan []string, 8)
-	parser := parsingFor(t, asked)
+	parser := parsingFor(t, asked, nil)
 
 	file := filepath.Join(t.TempDir(), "order.py")
 	if err := os.WriteFile(file, []byte("x = 1\n"), 0o644); err != nil {
@@ -91,16 +91,21 @@ func TestAParseIsNotUsedForAFileThatMovedAgain(t *testing.T) {
 
 // parsingFor is a parser whose asks this test can count. Its worker is NOT started: a test says when, so it can
 // have several files waiting before the first ask, as a session does.
-func parsingFor(t *testing.T, asked chan []string) *parsing {
+func parsingFor(t *testing.T, asked chan []string, hold chan struct{}) *parsing {
 	t.Helper()
 
 	parser := &parsing{
-		held:    map[string]read{},
-		waiting: map[string]bool{},
+		held:   map[string]read{},
+		asking: map[string]bool{},
+		filled: make(chan struct{}),
 		wake:    make(chan struct{}, 1),
 		ahead:   true,
 		reading: func(files []string) ([]*contract.Stream, error) {
 			asked <- files
+
+			if hold != nil {
+				<-hold
+			}
 
 			return []*contract.Stream{{
 				Header: contract.Header{Language: contract.Python},
@@ -120,4 +125,56 @@ func parsedFiles(files []string) []*contract.File {
 	}
 
 	return written
+}
+
+// TestAJudgingWaitsForAnAskAlreadyInFlight holds the one thing that made this cost more than it saved. A judging
+// whose turn comes while its own file is mid-ask must WAIT for that ask: parsing the file itself instead makes a
+// second ask to the same one-at-a-time bridge, which queues behind the first and is then thrown away, so the file
+// is parsed twice and the edit pays for both. Measured on a real tree as an edit spending 30 seconds reading
+// while three hand-ins ran.
+func TestAJudgingWaitsForAnAskAlreadyInFlight(t *testing.T) {
+	asked := make(chan []string, 8)
+	hold := make(chan struct{})
+	parser := parsingFor(t, asked, hold)
+
+	file := filepath.Join(t.TempDir(), "order.py")
+	if err := os.WriteFile(file, []byte("x = 1\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	go parser.work()
+	parser.expect(file)
+
+	select {
+	case <-asked:
+	case <-time.After(10 * time.Second):
+		t.Fatal("the file was never asked about")
+	}
+
+	answered := make(chan bool, 1)
+	go func() {
+		_, already := parser.streamsOf(file)
+		answered <- already
+	}()
+
+	select {
+	case <-answered:
+		t.Fatal("the judging answered while the ask for its own file was still in flight, so it parsed it again")
+	case <-time.After(100 * time.Millisecond):
+	}
+
+	close(hold)
+
+	select {
+	case already := <-answered:
+		if !already {
+			t.Error("the judging waited for the ask and was not given its parse")
+		}
+	case <-time.After(10 * time.Second):
+		t.Fatal("the judging never stopped waiting")
+	}
+
+	if waiting := len(asked); waiting != 0 {
+		t.Errorf("%d further ask(s) were made for a file already being asked about", waiting)
+	}
 }
