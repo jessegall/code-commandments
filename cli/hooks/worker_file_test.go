@@ -181,9 +181,14 @@ func TestAWorkersOwnFileIsMarkedWhereItIsJudgedAlone(t *testing.T) {
 		t.Errorf("the mark names %q", named)
 	}
 
-	// The base is held for the project, and an edit in another checkout of it is judged alone rather than
-	// against a program holding two copies of the worker's file.
-	if _, whole := AgainstTheProgram(Marks(root), worker, rules, git.ChangedLines{}, root); whole {
-		t.Error("a worker's file was judged against the project's tree, which holds the base's copy of it too")
+	// The base is held for the project, and the worker's edit is judged against it: its own file stands in for
+	// the project's copy, so the program holds one of each source and the folders a rule names still match.
+	against, whole := AgainstTheProgram(Marks(root), worker, rules, git.ChangedLines{}, root)
+	if !whole {
+		t.Fatal("a worker's edit is not judged against the project's tree at all")
+	}
+
+	if len(against) != 1 {
+		t.Errorf("judged against the tree, the worker's file carries %d marks, want the one its sin is", len(against))
 	}
 }

@@ -41,14 +41,11 @@ func AgainstTheProgram(marking Marking, file string, rules []detectors.Detector,
 		return nil, false
 	}
 
-	// A file of another checkout of this project, a worker's worktree, is not the base's file: its path differs
-	// from the base's copy of the same source, so splicing it in would leave the program holding BOTH, the
-	// base's older copy and the worker's, and a rule that reads a recurrence or a declaration would answer
-	// against two of everything the worker has changed. Until an overlay maps a checkout's files onto the
-	// base's by their relative path, such a file is judged alone, which is what every edit was answered by
-	// before a tree was held.
-	if checkout := git.Root(file); checkout != "" && checkout != strings.TrimRight(held.project, "/") {
-		return nil, false
+	// The checkout the file lies in, which for a worker is its own worktree: its files stand in for the
+	// project's own at the same path under it, so the program holds one copy of each source, the worker's.
+	checkout := strings.TrimRight(held.project, "/")
+	if own := git.Root(file); own != "" {
+		checkout = own
 	}
 
 	moved := base.Stale(file, time.Now())
@@ -68,7 +65,7 @@ func AgainstTheProgram(marking Marking, file string, rules []detectors.Detector,
 			return nil, false
 		}
 
-		view = base.View(rebuilt.Streams(), held.project)
+		view = base.ViewFrom(checkout, rebuilt.Streams(), held.project)
 	}
 
 	// A file the view does not hold cannot be judged against the program, and answering "no sins" for it would

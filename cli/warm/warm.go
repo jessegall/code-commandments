@@ -11,8 +11,10 @@ package warm
 
 import (
 	"os"
+	"path/filepath"
 	"slices"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -220,10 +222,32 @@ func (b *Base) Holds(path string) (unchanged bool, known bool) {
 // The streams are the base's with one slice of file pointers rebuilt, so the view costs the files it replaces
 // and nothing else. The caller parses the named files itself, through the bridge that keeps them warm.
 func (b *Base) View(rebuilt []*contract.Stream, project string) *engine.Codebase {
+	return b.ViewFrom(project, rebuilt, project)
+}
+
+// ViewFrom is the base with the files of one CHECKOUT of the project in place of its own, which is how a
+// worktree's question is answered: a worker's file at <worktree>/src/order.py stands in for the project's
+// <project>/src/order.py, matched by the path each has under its own checkout.
+//
+// Standing IN FOR it is the whole point. Added beside it, the program would hold two copies of that source, the
+// base's as it was and the worker's as it is, and a rule that reads a recurrence, a twin or a declaration would
+// answer against two of everything the worker has changed. The view is rooted at the checkout so the paths a rule
+// matches folders against are the ones the project means, src and not .journal/worktrees/worker-545/src.
+func (b *Base) ViewFrom(checkout string, rebuilt []*contract.Stream, project string) *engine.Codebase {
 	fresh := map[string]*contract.File{}
 	for _, stream := range rebuilt {
 		for _, file := range stream.Files {
 			fresh[file.Path] = file
+		}
+	}
+
+	// What each rebuilt file stands in for: the project's own file at the same path under the project.
+	standsFor := map[string]bool{}
+	if real(checkout) != real(project) {
+		for path := range fresh {
+			if under, inside := relative(checkout, path); inside {
+				standsFor[filepath.Join(project, under)] = true
+			}
 		}
 	}
 
@@ -248,12 +272,16 @@ func (b *Base) View(rebuilt []*contract.Stream, project string) *engine.Codebase
 	var spliced []*contract.Stream
 	for _, stream := range b.streams {
 		part := *stream
-		part.Files = make([]*contract.File, len(stream.Files))
-		copy(part.Files, stream.Files)
+		part.Files = nil
 
-		for i, file := range part.Files {
-			if replacement, changed := fresh[file.Path]; changed {
-				part.Files[i] = replacement
+		for _, file := range stream.Files {
+			switch {
+			case fresh[file.Path] != nil:
+				part.Files = append(part.Files, fresh[file.Path])
+			case standsFor[file.Path]:
+				// The checkout's own file stands in for this one, which is added below.
+			default:
+				part.Files = append(part.Files, file)
 			}
 		}
 
@@ -277,10 +305,20 @@ func (b *Base) View(rebuilt []*contract.Stream, project string) *engine.Codebase
 	}
 
 	view := engine.Filling(changed, spliced...)
-	view.Scanned(b.roots...)
-	view.Rooted(project)
+	view.Scanned(append(slices.Clone(b.roots), checkout)...)
+	view.Rooted(checkout)
 
 	return view
+}
+
+// relative is the path under the folder, and whether it lies there at all.
+func relative(folder, path string) (string, bool) {
+	under, err := filepath.Rel(real(folder), real(path))
+	if err != nil || strings.HasPrefix(under, "..") {
+		return "", false
+	}
+
+	return under, true
 }
 
 // fingerprints are what every file of the codebase was when it was read.
