@@ -226,3 +226,49 @@ func TestAnEditOfAFileThatIsGoneIsAnsweredWithNothing(t *testing.T) {
 		t.Error("a file that is gone was judged against the program as though it were there")
 	}
 }
+
+// TestAProjectReachedThroughALinkIsStillJudgedAgainstItsProgram holds the one thing that makes an edit answer
+// from the file alone without a word: a path that is not the one the tree holds. A scan resolves the links in
+// every path it reads, and the path an event names is joined to the root as given, so a project reached through
+// a symlinked path — /tmp on a Mac is one, and so is any checkout under a linked home — gave the tree a path it
+// does not hold. The file then reads as one the program never saw, and the rules that read more than one file
+// are quietly left out of the answer.
+func TestAProjectReachedThroughALinkIsStillJudgedAgainstItsProgram(t *testing.T) {
+	root, _ := migrationProject(t)
+
+	// The same project, reached through a link, which is how a path arrives when anything in it is linked.
+	linked := filepath.Join(t.TempDir(), "project")
+	if err := os.Symlink(root, linked); err != nil {
+		t.Skipf("this filesystem has no links: %v", err)
+	}
+
+	settings, _ := config.Load(root)
+
+	project := git.ProjectRoot(root)
+	branch := git.CurrentBranch(project)
+
+	codebase, err := scan.Walk([]string{root}, source.Under(root, settings.Excluded)).Load()
+	if err != nil || codebase == nil {
+		t.Fatalf("the python bridge cannot run here: %v", err)
+	}
+
+	kept.Hold(project, branch, []string{root}, codebase, nil)
+	t.Cleanup(func() { kept.Drop(project, branch) })
+
+	// The path the event names, which is relative, read against the linked root: exactly what a journal running
+	// in a linked folder hands over.
+	through := judgedFile(linked, "shop/migrations/m004_drop_fades.py", settings)
+	if through == "" {
+		t.Fatal("a file of the project reached through a link is judged as nothing at all")
+	}
+
+	marks, _, whole := AgainstTheProgram(Marks(linked), through, allRules(t, root, settings), git.ChangedLines{}, linked)
+
+	if !whole {
+		t.Error("a project reached through a link is not judged against its program at all, and nothing says so")
+	}
+
+	if len(marks) == 0 {
+		t.Error("the sin in a file reached through a link is not marked")
+	}
+}

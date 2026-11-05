@@ -2,10 +2,11 @@ package hooks
 
 import (
 	"os"
-	"time"
+	"path/filepath"
 	"slices"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/jessegall/code-commandments/cli/config"
 	"github.com/jessegall/code-commandments/cli/custom"
@@ -186,6 +187,14 @@ func judgedFile(root, file string, project config.Config) string {
 	absolute := file
 	if !strings.HasPrefix(file, "/") {
 		absolute = strings.TrimRight(root, "/") + "/" + strings.TrimLeft(file, "/")
+	}
+
+	// And with its links resolved, because that is the path the TREE holds: a scan resolves every path it reads,
+	// and git answers about the checkout it really found. A project reached through a linked path — a Mac's
+	// /tmp, a linked home, a checkout under either — then named a file the program does not hold, and the
+	// answer fell back to the file alone, with every rule that reads more than one file quietly left out.
+	if resolved, err := filepath.EvalSymlinks(absolute); err == nil {
+		absolute = resolved
 	}
 
 	if !project.IsJudged(checkoutOf(root, absolute), absolute) {
