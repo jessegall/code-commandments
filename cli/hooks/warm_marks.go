@@ -75,19 +75,23 @@ func AgainstTheProgram(marking Marking, file string, rules []detectors.Detector,
 		return nil, 0, false
 	}
 
-	// An edit pays for the file it named and for no other. Every file that moved is worth knowing about, but
-	// handing them all to a bridge here puts one edit's answer behind every file something else touched: a
-	// worker with twenty changed files paid for twenty parses on whichever edit landed after a sweep, and a
-	// parse of one file on a large tree is seconds. So the others give the base up instead, and the next read
-	// takes them in together, in the background, where nobody waits on it.
+	// Every other file that moved is TAKEN INTO the tree, in one ask, rather than costing the tree itself.
+	//
+	// Given up instead, as it was, the tree could not survive several agents at all: twelve of them writing
+	// meant every edit found somebody else's file moved, gave the base up for it, and was answered on its own
+	// file alone with every cross-file rule dropped, while a 25 to 55 second read started in the background and
+	// was given up again by the next edit. A bridge's cost is per ASK and not per file, so reading all of them
+	// together costs what reading one costs, and the files are parsed here only when nothing parsed them ahead.
 	elsewhere := slices.DeleteFunc(slices.Clone(moved), func(path string) bool { return path == file })
 	if len(elsewhere) > 0 {
-		kept.Drop(held.project, held.branch)
+		patched, took := taken(base, held, elsewhere)
+		if patched == nil {
+			kept.Drop(held.project, held.branch)
 
-		// And this edit is answered alone, not from the base it just gave up: that base holds the old tree of
-		// every file that moved and still holds the ones that are gone, so the edit that NOTICES the drift was
-		// the one answered from the drifted tree.
-		return nil, 0, false
+			return nil, took, false
+		}
+
+		base = patched
 	}
 
 	view := base.Codebase()
@@ -224,6 +228,47 @@ func unannouncedIn(project string) []string {
 	}
 
 	return named
+}
+
+// taken is the base with those files read again and taken into it, and how long the reading took. Nil where the
+// read failed, which is the one case the base is still given up: a tree that cannot learn what moved under it is
+// worse than no tree, since it answers with confidence about files it no longer holds.
+func taken(base *warm.Base, held branchRoot, files []string) (*warm.Base, time.Duration) {
+	reading := time.Now()
+	marks := map[string]string{}
+
+	for _, file := range files {
+		marks[file] = warm.Mark(file)
+	}
+
+	// Nothing is excluded: these are files we have WORKED OUT moved, and a worker's lie in a worktree under a
+	// folder the project excludes. A file that is gone cannot be read, and is dropped from the view instead.
+	var reading_ []string
+	var gone []string
+
+	for _, file := range files {
+		if warm.Mark(file) == "" {
+			gone = append(gone, file)
+
+			continue
+		}
+
+		reading_ = append(reading_, file)
+	}
+
+	streams := []*contract.Stream(nil)
+	if len(reading_) > 0 {
+		rebuilt, err := scan.Walk(reading_, source.Excluded{}).Load()
+		if err != nil || rebuilt == nil {
+			return nil, time.Since(reading)
+		}
+
+		streams = rebuilt.Streams()
+	}
+
+	view := base.ViewFrom(held.project, streams, held.project, gone)
+
+	return kept.Patched(base, view, marks), time.Since(reading)
 }
 
 // holds says whether the codebase read that file.

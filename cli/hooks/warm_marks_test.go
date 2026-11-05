@@ -302,11 +302,15 @@ func TestADetachedHeadIsNoBranch(t *testing.T) {
 	}
 }
 
-// TestTheEditThatFindsTheTreeDrifedIsAnsweredAlone holds the edit that notices. A sweep that finds other files
-// moved gives the base up, and the base it gives up holds the old tree of every one of them and still holds the
-// ones that are gone: answered from it, the edit that NOTICED the drift is the one answered from the drifted
-// tree. It is answered on its own file instead, as every edit is while no base is held.
-func TestTheEditThatFindsTheTreeDrifedIsAnsweredAlone(t *testing.T) {
+// TestTheEditThatFindsTheTreeDriftedTakesItIn holds what an edit does when it finds OTHER files moved under the
+// tree. It used to give the tree up for them and be answered on its own file alone; that could not survive
+// several agents at all, since twelve of them writing meant every edit found somebody else's file moved, gave
+// the tree up, lost every rule that reads more than one file, and started a 25 to 55 second read that the next
+// edit gave up again.
+//
+// A bridge's cost is per ask and not per file, so those files are read together and taken INTO the tree: the
+// edit is answered against the program, and the tree is still held after it.
+func TestTheEditThatFindsTheTreeDriftedTakesItIn(t *testing.T) {
 	root, _ := migrationProject(t)
 	settings, _ := config.Load(root)
 
@@ -323,19 +327,32 @@ func TestTheEditThatFindsTheTreeDrifedIsAnsweredAlone(t *testing.T) {
 	kept.Hold(project, branch, []string{root}, codebase, nil)
 	t.Cleanup(func() { kept.Clocked(time.Now); kept.Drop(project, branch) })
 
-	// Another file moved, which nothing announced.
-	elsewhere := filepath.Join(root, "shop", "migration.py")
-	if err := os.WriteFile(elsewhere, []byte("class Migration:\n    number = 1\n"), 0o644); err != nil {
+	// Another file moved, which nothing announced: the parent of the very class the rule follows.
+	elsewhere := filepath.Join(root, "shop", "rebuild_migration.py")
+	if err := os.WriteFile(elsewhere, []byte(`from shop.migration import Migration
+
+
+class RebuildMigration(Migration):
+    statements: list[str] = []
+    paid = True
+`), 0o644); err != nil {
 		t.Fatal(err)
 	}
 
 	edited := filepath.Join(root, "shop", "migrations", "m004_drop_fades.py")
 
-	if _, _, whole := AgainstTheProgram(Marks(root), edited, allRules(t, root, settings), git.ChangedLines{}, root); whole {
-		t.Error("the edit that found the tree drifted was answered from the drifted tree it gave up")
+	marks, _, whole := AgainstTheProgram(Marks(root), edited, allRules(t, root, settings), git.ChangedLines{}, root)
+	if !whole {
+		t.Error("the edit that found the tree drifted was answered on its own file, so every cross-file rule was dropped")
 	}
 
-	if _, held := kept.Holds(project, branch); held {
-		t.Error("a tree that has drifted elsewhere is still held")
+	// And the rule whose chain crosses three files still answers, which is what being judged against the
+	// program means.
+	if len(marks) == 0 {
+		t.Error("the sin whose chain of parents crosses three files is not found, so the program was not read")
+	}
+
+	if _, held := kept.Holds(project, branch); !held {
+		t.Error("the tree was given up for a file that moved, instead of taking it in")
 	}
 }

@@ -86,3 +86,58 @@ func TestAFileNothingCouldReadSaysSo(t *testing.T) {
 		t.Log("a file of a language with no bridge here read as no sins and said nothing; the answer then reads as clean")
 	}
 }
+
+// TestTheSweepItselfReadsOnlyWhatTheTreeCannotVouchFor holds the SWEEP, not the helper. A release said a stop
+// read only the marked files the tree cannot vouch for while the call that does it was missing from the sweep
+// altogether: the helper had a test of its own and it passed, because it called the helper.
+//
+// A test of a thing nothing calls proves the thing, never the behaviour.
+func TestTheSweepItselfReadsOnlyWhatTheTreeCannotVouchFor(t *testing.T) {
+	root, data := workerProject(t)
+	settings, _ := config.Load(root)
+
+	// A sin in the project's OWN file, and the tree read after it was written, so the tree vouches for exactly
+	// the version the mark was raised against.
+	file := filepath.Join(root, "src", "order.py")
+	if err := os.WriteFile(file, []byte("class Order:\n    def total(self):\n        \"\"\"Says the total.\"\"\"\n        return 0\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	project := git.ProjectRoot(root)
+	branch := git.CurrentBranch(project)
+
+	codebase, err := scan.Walk([]string{filepath.Join(root, "src")}, source.Under(root, settings.Excluded)).Load()
+	if err != nil || codebase == nil {
+		t.Fatalf("the python bridge cannot run here: %v", err)
+	}
+
+	kept.Hold(project, branch, []string{root}, codebase, nil)
+	t.Cleanup(func() { kept.Drop(project, branch) })
+
+	// Every line counts as the edit's, so the marks are TOUCHED: an untouched mark is nobody's doing and is
+	// never announced, so the record would stay empty and the test would prove nothing.
+	found, _, _ := marksIn(Marks(root), file, allRules(t, root, settings), git.Everywhere())
+	if len(found) == 0 {
+		t.Fatal("the sin in the project's own file is not marked, so nothing is announced and this proves nothing")
+	}
+
+	AnnouncedIn(data, Moment{Event: "Stop", Cwd: root}).Settle(root, []string{file}, found)
+
+	if named := AnnouncedIn(data, Moment{Event: "Stop", Cwd: root}).Files(); len(named) == 0 {
+		t.Fatal("the record holds no file, so the sweep has nothing to read either way")
+	}
+
+	if _, read := sweptMarks(AnnouncedIn(data, Moment{Event: "Stop", Cwd: root}), root); len(read) != 0 {
+		t.Errorf("the sweep read %v; the tree vouches for that file, so it owes a read to none", read)
+	}
+
+	// And it does owe one once the file has moved under the tree.
+	time.Sleep(10 * time.Millisecond)
+	if err := os.WriteFile(file, []byte("class Order:\n    pass\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	if _, read := sweptMarks(AnnouncedIn(data, Moment{Event: "Stop", Cwd: root}), root); len(read) == 0 {
+		t.Error("the sweep reads nothing for a marked file that has moved since the tree read it")
+	}
+}

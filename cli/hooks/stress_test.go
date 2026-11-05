@@ -732,7 +732,11 @@ func TestManyTreesAtOnce(t *testing.T) {
 
 	work.Wait()
 
-	t.Logf("%d answers were held to the three invariants as they came", answered.Load())
+	if answered.Load() == 0 {
+		t.Fatal("not one answer came back from the whole run, and every move was held to nothing")
+	}
+
+	t.Logf("%d answers were held to the invariants as they came", answered.Load())
 }
 
 // answered is how many answers the run has held to its invariants, which is what says the run proved anything at
@@ -808,6 +812,12 @@ func stressCheckouts(t *testing.T, seed int64) []*stressCheckout {
 func (c *stressCheckout) move(t *testing.T, move int) {
 	c.at = move
 
+	// A worker's own writing must never cost the PROJECT its tree. A dropped base is 25 to 55 seconds of
+	// re-reading during which every edit is judged on its own file alone, with every cross-file rule left out,
+	// and nothing says so: the only sign is the answers going thin. The git moves below are allowed to cost it,
+	// since they really do move the ground; writing a file is not.
+	branch, held := c.holding()
+
 	switch c.draw.Intn(20) {
 	case 0, 1, 2, 3:
 		c.writes(t, 1)
@@ -821,11 +831,34 @@ func (c *stressCheckout) move(t *testing.T, move int) {
 		c.deletes(t)
 	case 16, 17:
 		c.commits(t)
+
+		return
 	case 18:
 		c.switches(t)
+
+		return
 	default:
 		c.recuts(t)
+
+		return
 	}
+
+	// Only where the project is still on the branch it was: another checkout switching branch under us
+	// legitimately leaves no tree for the new one, and that is a move making the ground move, not a tree given
+	// up for nothing.
+	if now, holds := c.holding(); held && now == branch && !holds {
+		t.Fatalf("move %d of checkout %d: writing in its own checkout cost the project its tree on branch %s, so "+
+			"every edit behind it is judged on its own file alone until the tree is read again", move, c.Named, branch)
+	}
+}
+
+// holding is the branch the project stands on and whether its tree is held right now.
+func (c *stressCheckout) holding() (string, bool) {
+	project := git.ProjectRoot(c.Project)
+	branch := git.CurrentBranch(project)
+	_, held := kept.Holds(project, branch)
+
+	return branch, held
 }
 
 // commits puts what it has written into its own branch, which is what an agent does at the end of a stretch of
@@ -896,7 +929,7 @@ func (c *stressCheckout) writes(t *testing.T, many int) {
 		}
 
 		c.mine = append(c.mine, file)
-		c.tells(t, file, 1, lines(written))
+		c.tells(t, file, 1, lines(written), true)
 	}
 }
 
@@ -923,7 +956,10 @@ func (c *stressCheckout) edits(t *testing.T) {
 
 	// The lines it really added, which is what the journal carries and what decides whether a sin is THIS
 	// edit's doing: named wrongly, every sin reads as somebody else's and the answer is empty.
-	c.tells(t, file, lines(string(was)), lines(string(was))+lines(appended))
+	// No answer is OWED for an append: a sin is named once per file until it has gone and come back (Reported
+	// .Unseen keys on the file and the finding), so a second sin of the same name in one file is rightly
+	// silent. A brand-new file has nothing behind it, which is why writes demands an answer and this does not.
+	c.tells(t, file, lines(string(was)), lines(string(was))+lines(appended), false)
 }
 
 // cuts takes the lines of one of its files away again, so a sin it was told about is gone.
@@ -950,7 +986,7 @@ func (c *stressCheckout) cuts(t *testing.T) {
 
 	// A cut adds nothing, so nothing in the file is this edit's doing and no answer is owed for it. It is sent
 	// all the same: what it must not do is raise a sin as newly written, or name a line that is gone.
-	c.tells(t, file, 0, 0)
+	c.tells(t, file, 0, 0, false)
 }
 
 // deletes removes one of its files the way a shell does, with no event of its own: nothing announces a removal,
@@ -994,7 +1030,7 @@ func (c *stressCheckout) one() string {
 
 // tells the plugin what it just did, as the journal tells it: the path relative to the checkout, since that is
 // the shape the journal sends and the shape that has to be resolved against the right root.
-func (c *stressCheckout) tells(t *testing.T, file string, from, to int) {
+func (c *stressCheckout) tells(t *testing.T, file string, from, to int, owed bool) {
 	// Relative to the PROJECT, which is how the journal names a file: a worktree's own file arrives as
 	// .journal/worktrees/worker-1/shop/thing0.py, not as shop/thing0.py, and named from the checkout instead it
 	// is looked for under the project, where it does not exist, and the moment is dropped without a word.
@@ -1020,7 +1056,7 @@ func (c *stressCheckout) tells(t *testing.T, file string, from, to int) {
 		},
 	}, os.Getenv(pluginData))
 
-	stressHeld(t, c, c.at, drained(t, os.Getenv(pluginData)))
+	stressHeld(t, c, c.at, file, owed, drained(t, os.Getenv(pluginData)))
 }
 
 // lines is how many lines the text holds.
@@ -1031,59 +1067,136 @@ func lines(text string) int {
 // stressMine is a class of this checkout's own, carrying sins of its own and named after the checkout, so an
 // answer about one checkout's files can be told from an answer about another's.
 func stressMine(named int) string {
+	// Every line of it carries the same unique number, so no two blocks of this run share a line's TEXT. A
+	// mark's identity is its rule, its file and the text of the line it sits on, so two textually identical
+	// sins in one file are ONE mark: the second is never announced, and a run that demanded an answer for it
+	// would be demanding something the plugin is right to withhold.
+	at := int(time.Now().UnixNano() % 1000000)
+
 	return fmt.Sprintf(`from shop.rebuild import RebuildKind
+
 
 class Mine%dAt%d(RebuildKind):
     number = %d
 
-    def deepened(self, order, rate=None):
-        if order is not None:
-            for line in order.lines:
-                if line.total > 0:
-                    if rate is not None:
-                        return line.total * rate
+    def deepened%d(self, order%d, rate%d=None):
+        if order%d is not None:
+            for line%d in order%d.lines:
+                if line%d.total > %d:
+                    if rate%d is not None:
+                        return line%d.total * rate%d
                     else:
-                        return line.total
-        return 0
-`, named, time.Now().UnixNano()%100000, named)
+                        return line%d.total
+        return %d
+`, named, at, named, at, at, at, at, at, at, at, at, at, at, at, at, at)
 }
 
-// told are the paths a tell names.
+// toldPaths are the paths a tell names, each with the line it names them at. A card names them without a line,
+// so it needs its own reading.
 var toldPaths = regexp.MustCompile(`(?:^|\s)([\w./-]+\.py):(\d+)`)
+
+// cardPaths are the paths a card names. A card's label is "3 sins in shop/x.py" and its detail names the lines
+// without the file at all, so the tell's own pattern cannot match a single byte of either.
+var cardPaths = regexp.MustCompile(`([\w./-]+\.py)`)
 
 // stressHeld holds what the plugin just answered to what must be true of it, whatever move was made. Checked
 // here and not at the end of the run: a file deleted later would make a right answer look wrong, and an answer
 // checked a thousand moves after it was given names nothing anybody can act on.
-func stressHeld(t *testing.T, mine *stressCheckout, move int, answers []map[string]any) {
+//
+// Owed says this move wrote a sin and is therefore owed an answer about its file. Silence is an answer too, and
+// the worst one: before this said so, a run in which the plugin answered NOTHING at all passed every move.
+func stressHeld(t *testing.T, mine *stressCheckout, move int, file string, owed bool, answers []map[string]any) {
 	t.Helper()
 
-	for _, answer := range answers {
-		told := asText(answer["tell"])
+	told := false
 
+	for _, answer := range answers {
 		// Whose answer this is. The journal hands a queued answer to the agent it NAMES, so an answer about one
 		// checkout's file written for another agent is one agent told about another's work, which happened once
-		// before a moment carried its agent at all.
-		whose := asAgent(answer["agent"])
+		// before a moment carried its agent at all. Under the lock every answer drained here belongs to the
+		// move just made, so it must name that agent and no other.
+		if whose := asAgent(answer["agent"]); whose != mine.Named {
+			t.Fatalf("move %d of checkout %d: an answer came back for agent %d\n%s",
+				move, mine.Named, whose, asText(answer["tell"]))
+		}
 
-		for _, named := range toldPaths.FindAllStringSubmatch(told, -1) {
-			under := named[1]
+		// Every sin the answer REPORTS must be about a file that is really there. A resolution is the one
+		// thing that may name a file that is gone, since being gone is a way of being clean.
+		for _, named := range stressReported(answer) {
 			answered.Add(1)
 
-			// A path a tell names is relative to the project, and it must be a file that is really there: an
-			// answer about a file nobody has any more is the worst answer the plugin can give. This is the
-			// fault a consumer reported, three sins in a file deleted a minute earlier.
-			if info, err := os.Stat(filepath.Join(mine.Project, under)); err != nil || !info.Mode().IsRegular() {
-				t.Fatalf("move %d of checkout %d: an answer names %s, which is not a file: %v\n%s",
-					move, mine.Named, under, err, told)
+			if info, err := os.Stat(filepath.Join(mine.Project, named)); err != nil || !info.Mode().IsRegular() {
+				t.Fatalf("move %d of checkout %d: an answer reports a sin in %s, which is not a file: %v\n%v",
+					move, mine.Named, named, err, answer)
+			}
+		}
+
+		// And the tell, which is what the agent itself reads, is about its OWN files. Twelve trees in memory at
+		// once is where that goes wrong: a worktree's file spliced into another checkout's program, or a base
+		// keyed by a branch nobody is on, shows up here as one agent told about another's file. The cards are
+		// not held to this: every checkout here works in one environment, which keeps ONE record, so a
+		// resolution legitimately names whatever file of it became clean.
+		for _, named := range stressSaidOf(answer) {
+			if named == stressUnder(mine.Project, file) {
+				told = true
 			}
 
-			// And it is a file of the checkout the answer is FOR. Twelve trees in memory at once is where that
-			// goes wrong: a worktree's file spliced into another checkout's program, or a base keyed by a
-			// branch nobody is on, would show up here as one agent told about another's file.
-			if whose == mine.Named && !strings.HasPrefix(under, mine.under()) {
-				t.Fatalf("move %d of checkout %d: it is told about %s, which is not its own (it owns %q)\n%s",
-					move, mine.Named, under, mine.under(), told)
+			if !strings.HasPrefix(named, mine.under()) {
+				t.Fatalf("move %d of checkout %d: it is told about %s, which is not its own (it owns %q)\n%v",
+					move, mine.Named, named, mine.under(), answer)
 			}
 		}
 	}
+
+	// A move that wrote a sin is owed an answer about the file it wrote it in. Without this the run proves
+	// nothing at all: every quiet fallback in the judging ends in no answer, and a run of them passed.
+	if owed && !told {
+		t.Fatalf("move %d of checkout %d: it wrote a sin in %s and was told nothing about it; %d answers came back\n%v",
+			move, mine.Named, stressUnder(mine.Project, file), len(answers), answers)
+	}
+}
+
+// stressSaidOf are the paths the tell names, which is what the agent itself reads.
+func stressSaidOf(answer map[string]any) []string {
+	var named []string
+	for _, found := range toldPaths.FindAllStringSubmatch(asText(answer["tell"]), -1) {
+		named = append(named, found[1])
+	}
+
+	return named
+}
+
+// stressReported are the paths the answer reports a SIN in, in its tell and in its cards alike. A card is where
+// a file's sins are counted for the user — "3 sins in shop/x.py" — and reading the tell alone left every card
+// unchecked, which is where the fault a consumer reported actually surfaced.
+//
+// A card that says a file is clean is left out: a file that is gone is clean, and saying so is right.
+func stressReported(answer map[string]any) []string {
+	named := stressSaidOf(answer)
+
+	cards, _ := answer["cards"].([]any)
+	for _, card := range cards {
+		said, _ := card.(map[string]any)
+
+		label := asText(said["label"]) + " " + asText(said["brief"])
+		if strings.Contains(label, "is clean") {
+			continue
+		}
+
+		for _, part := range []string{"label", "brief", "detail"} {
+			named = append(named, cardPaths.FindAllString(asText(said[part]), -1)...)
+		}
+	}
+
+	return named
+}
+
+// stressUnder is the file as an answer names it: its path under the project.
+func stressUnder(project, file string) string {
+	under, err := filepath.Rel(project, file)
+	if err != nil {
+		return file
+	}
+
+	return under
 }

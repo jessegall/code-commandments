@@ -27,7 +27,11 @@ func sweptMarks(record Announced, root string) (marks []SinMark, read []string) 
 		return nil, nil
 	}
 
-	files := marked(record, root, project)
+	// Only the files the tree cannot vouch for: a mark's sin can only be gone if its file has changed, and every
+	// edit is judged as it lands. This call is the whole of that saving, and it was MISSING from here while a
+	// release said it was in force, with its own test green because the test called the helper rather than the
+	// sweep.
+	files := stillToRead(root, marked(record, root, project))
 	if len(files) == 0 {
 		return nil, nil
 	}
