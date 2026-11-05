@@ -7,6 +7,7 @@ import (
 	"slices"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/jessegall/code-commandments/cli/config"
 	"github.com/jessegall/code-commandments/cli/scope"
@@ -154,5 +155,47 @@ func TestTheJudgeOfChangedLinesAgreesWithTheEditCheck(t *testing.T) {
 	// And the other way: a sin the edit check leaves alone is one the judge leaves alone.
 	if scoped.Covers(file, 2) {
 		t.Error("judge --changes reports line 2, which the edit check does not call touched")
+	}
+}
+
+// TestAMomentsLinesAreDroppedWhereItsFileMovedAgain holds the marks against two edits of one file in quick
+// succession. The journal hands over the lines its edit wrote, and that is what the mark reads so a sin on a
+// line the edit did not touch is not called the edit's doing. But where a second edit lands before the first is
+// judged, the judging reads the file as it NOW is: those lines belong to a version that is gone, and marking
+// this one with them calls a line touched that this version never had, or misses the one it did.
+//
+// git answers about the file as it is, which is the version being judged, so its answer is taken instead.
+func TestAMomentsLinesAreDroppedWhereItsFileMovedAgain(t *testing.T) {
+	root := t.TempDir()
+
+	file := filepath.Join(root, "order.py")
+	if err := os.WriteFile(file, []byte("x = 1\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	carried := map[string]any{
+		"hook_event_name": "PostToolUse",
+		"tool_name":       "Edit",
+		"tool_input":      map[string]any{"file_path": file},
+	}
+	carried[changedKey] = map[string]any{"lines": []any{float64(2)}}
+	carried = Stamped(carried)
+
+	// While it still stands as the moment left it, the moment's own lines are the answer.
+	if lines := NewEvent(carried, root).ChangedLines(file); !lines.Covers(2) || lines.Covers(5) {
+		t.Error("the moment's own lines are not what the mark reads while the file stands as the moment left it")
+	}
+
+	// Written again after the moment was handed over, which is a second edit landing before the first is judged.
+	time.Sleep(10 * time.Millisecond)
+	if err := os.WriteFile(file, []byte("x = 1\ny = 2\nz = 3\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	// git has no history here, so every line of the file reads as the edit's: what matters is that the moment's
+	// own two-line answer is no longer given for a file that has moved past it.
+	lines := NewEvent(carried, root).ChangedLines(file)
+	if !lines.Covers(5) {
+		t.Error("a moment whose file moved again is still marked with the lines of the version that is gone")
 	}
 }

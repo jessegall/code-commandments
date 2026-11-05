@@ -220,11 +220,24 @@ func (e Event) FilePath() string {
 // and HEAD. A sin on a line the edit did not touch is not this edit's doing, which is the whole use of them.
 func (e Event) ChangedLines(file string) git.ChangedLines {
 	changed, carried := ChangedIn(e.payload)
-	if carried && e.FilePath() != "" && strings.HasSuffix(filepath.Clean(file), filepath.Clean(e.FilePath())) {
+	if carried && e.FilePath() != "" && strings.HasSuffix(filepath.Clean(file), filepath.Clean(e.FilePath())) && !writtenSince(file, e.Received()) {
 		return changed
 	}
 
 	return git.ChangedLinesOf(e.Root, file)
+}
+
+// writtenSince says the file was written again after this moment was handed to us, which is what two edits of one
+// file in quick succession look like. The lines the moment carries are then the lines of a version that is gone:
+// the judging reads the file as it NOW is, and marking it with the earlier edit's lines calls a line touched that
+// this version never had. git answers about the file as it is, which is the version being judged.
+func writtenSince(file string, moment time.Time) bool {
+	info, err := os.Stat(file)
+	if err != nil {
+		return false
+	}
+
+	return info.ModTime().After(moment)
 }
 
 // AgentTypeRequested is the subagent type a dispatch asks for.
