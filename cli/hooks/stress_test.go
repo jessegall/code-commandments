@@ -757,6 +757,10 @@ type stressCheckout struct {
 	At, Project string
 	Named       int
 
+	// Service is the plugin's own socket, which is how the journal really reaches it: the gates answer on the
+	// connection and the judging is worked out afterwards by the adviser, so an answer is WAITED for.
+	Service string
+
 	draw  *rand.Rand
 	mine  []string
 	wrote int
@@ -779,6 +783,9 @@ func stressCheckouts(t *testing.T, seed int64) []*stressCheckout {
 		t.Fatal(err)
 	}
 
+	// The real service, on the plugin's own socket, which the moves then reach it through.
+	service := serviceAt(t, project)
+
 	// The tree, read before anything writes, as a session has it read.
 	Warming(project, settings)
 
@@ -789,13 +796,17 @@ func stressCheckouts(t *testing.T, seed int64) []*stressCheckout {
 
 	var checkouts []*stressCheckout
 	for named, folder := range folders {
-		checkouts = append(checkouts, &stressCheckout{
+		checkout := &stressCheckout{
 			At:      folder,
 			Project: project,
+			Service: service,
 			Named:   named + 1,
 			draw:    rand.New(rand.NewSource(seed + int64(named))),
 			mine:    []string{filepath.Join(folder, "shop", "thing0.py")},
-		})
+		}
+
+		stressRunning[checkout.Named] = checkout
+		checkouts = append(checkouts, checkout)
 	}
 
 	if !heldWithin(git.ProjectRoot(project), git.CurrentBranch(project), 5*time.Minute) {
@@ -960,13 +971,15 @@ func (c *stressCheckout) raises(t *testing.T) {
 	oneAtATime.Lock()
 	defer oneAtATime.Unlock()
 
-	Judge4Into(map[string]any{
+	stressHeld(t, c, c.at, c.Project, "", false, stressDrain(t, os.Getenv(pluginData)))
+
+	sendEvent(t, c.Service, map[string]any{
 		"v": 1, "event": event, "session": fmt.Sprintf("s%d", c.Named), "environment": "main",
 		"agent": c.Named, "cwd": c.At,
 		"data": map[string]any{"command": "git status", "tool": "Bash"},
-	}, os.Getenv(pluginData))
+	})
 
-	stressHeld(t, c, c.at, c.Project, "", false, drained(t, os.Getenv(pluginData)))
+	stressHeld(t, c, c.at, c.Project, "", false, c.awaited(t, "", false))
 }
 
 // commits puts what it has written into its own branch, which is what an agent does at the end of a stretch of
@@ -1173,14 +1186,83 @@ func (c *stressCheckout) tells(t *testing.T, file string, from, to int, owed boo
 	oneAtATime.Lock()
 	defer oneAtATime.Unlock()
 
-	Judge4Into(map[string]any{
+	// Whatever an earlier move of this checkout left in the queue is taken first, and held like any other
+	// answer: left there, the wait below would end on somebody else's answer and read this move as unanswered.
+	stressHeld(t, c, c.at, against, "", false, stressDrain(t, os.Getenv(pluginData)))
+
+	// On the SOCKET, which is the only way the journal reaches the plugin. Called at the judging's own entry, as
+	// this did, nothing of the service runs: not the parse made ahead of the judging, not the adviser that
+	// decides which moment is worked out first, and not the gates. All three are where this plugin's answers are
+	// shaped, and none of them was exercised by a run that went in at the side.
+	sendEvent(t, c.Service, map[string]any{
 		"v": 1, "event": "file_edited", "session": fmt.Sprintf("s%d", c.Named), "environment": "main",
 		"agent": c.Named, "cwd": c.At,
 		"data": data,
-	}, os.Getenv(pluginData))
+	})
 
-	stressHeld(t, c, c.at, against, file, owed, drained(t, os.Getenv(pluginData)))
+	stressHeld(t, c, c.at, against, file, owed, c.awaited(t, file, owed))
 }
+
+// awaited is what the queue holds once the adviser has worked this moment out. The service answers the
+// connection at once and judges AFTERWARDS, on a goroutine of its own, so an answer is waited for rather than
+// handed back; held under the one lock, anything waiting is this checkout's own.
+func (c *stressCheckout) awaited(t *testing.T, file string, owed bool) []map[string]any {
+	t.Helper()
+
+	var held []map[string]any
+
+	// Waited for until THIS move's own answer is among them, since another checkout's lands in the same queue
+	// while this one waits: breaking on whatever arrived first read that as this move's answer and called the
+	// move unanswered.
+	for until := time.Now().Add(stressWaits); time.Now().Before(until); time.Sleep(20 * time.Millisecond) {
+		held = append(held, stressDrain(t, os.Getenv(pluginData))...)
+
+		if !owed || stressAbout(held, stressUnder(c.Project, file), stressUnder(c.At, file)) {
+			break
+		}
+	}
+
+	return held
+}
+
+// stressDrain takes what the queue holds, once nothing in it is half written. The journal's own queue writes a
+// file under a temporary name and renames it, so a drain that lands mid-write sees a name it would miss: here
+// that is a race with a service writing all the while, not a queue in a bad state, so it is waited out.
+func stressDrain(t *testing.T, data string) []map[string]any {
+	t.Helper()
+
+	queue, _ := Queue4In(data)
+
+	for until := time.Now().Add(10 * time.Second); time.Now().Before(until); time.Sleep(20 * time.Millisecond) {
+		half, _ := filepath.Glob(filepath.Join(queue.Path(), "*.tmp"))
+		if len(half) == 0 {
+			break
+		}
+	}
+
+	return drained(t, data)
+}
+
+// stressAbout says whether any of the answers names one of those paths, which is how a move knows its own
+// answer has landed.
+func stressAbout(answers []map[string]any, paths ...string) bool {
+	for _, answer := range answers {
+		for _, named := range stressReported(answer) {
+			if slices.Contains(paths, named) {
+				return true
+			}
+		}
+	}
+
+	return false
+}
+
+// stressWaits is how long a move waits for the adviser to work its moment out before saying it was answered with
+// nothing. It has to outlast a DEEP queue, not assert on one: the adviser is a single goroutine working every
+// checkout's moments in turn, and a worktree's judging is seconds, so a dozen agents moving at once can leave a
+// moment waiting for a long while and be perfectly right about it. Thirty seconds was not enough and read as the
+// plugin answering nothing, which a probe of the same shape on a quiet service disproved.
+const stressWaits = 3 * time.Minute
 
 // lines is how many lines the text holds.
 func lines(text string) int {
@@ -1234,13 +1316,14 @@ func stressHeld(t *testing.T, mine *stressCheckout, move int, against, file stri
 	told := false
 
 	for _, answer := range answers {
-		// Whose answer this is. The journal hands a queued answer to the agent it NAMES, so an answer about one
-		// checkout's file written for another agent is one agent told about another's work, which happened once
-		// before a moment carried its agent at all. Under the lock every answer drained here belongs to the
-		// move just made, so it must name that agent and no other.
-		if whose := asAgent(answer["agent"]); whose != mine.Named {
-			t.Fatalf("move %d of checkout %d: an answer came back for agent %d\n%s",
-				move, mine.Named, whose, asText(answer["tell"]))
+		// Whose answer this is. The journal hands a queued answer to the agent it NAMES, so that is who it is
+		// held against — not whoever made the last move. The service answers the connection at once and judges
+		// afterwards on its own goroutine, so one checkout's answer lands while another is moving, and reading
+		// them as the mover's made the ownership check fire on the plugin being right.
+		whose, known := stressWhose(asAgent(answer["agent"]))
+		if !known {
+			t.Fatalf("move %d of checkout %d: an answer came back for agent %d, which is no checkout of this run\n%s",
+				move, mine.Named, asAgent(answer["agent"]), asText(answer["tell"]))
 		}
 
 		// Every sin the answer REPORTS must be about a file that is really there. A resolution is the one
@@ -1248,9 +1331,9 @@ func stressHeld(t *testing.T, mine *stressCheckout, move int, against, file stri
 		for _, named := range stressReported(answer) {
 			answered.Add(1)
 
-			if info, err := os.Stat(filepath.Join(against, named)); err != nil || !info.Mode().IsRegular() {
-				t.Fatalf("move %d of checkout %d: an answer reports a sin in %s, which is not a file: %v\n%v",
-					move, mine.Named, named, err, answer)
+			if !stressStands(whose, named) {
+				t.Fatalf("move %d of checkout %d: an answer to checkout %d reports a sin in %s, which is a file "+
+					"in neither its project nor its own checkout\n%v", move, mine.Named, whose.Named, named, answer)
 			}
 		}
 
@@ -1264,9 +1347,9 @@ func stressHeld(t *testing.T, mine *stressCheckout, move int, against, file stri
 				told = true
 			}
 
-			if against == mine.Project && !strings.HasPrefix(named, mine.under()) {
-				t.Fatalf("move %d of checkout %d: it is told about %s, which is not its own (it owns %q)\n%v",
-					move, mine.Named, named, mine.under(), answer)
+			if !whose.owns(named) {
+				t.Fatalf("move %d of checkout %d: checkout %d is told about %s, which is not its own (it owns "+
+					"%q)\n%v", move, mine.Named, whose.Named, named, whose.under(), answer)
 			}
 		}
 	}
@@ -1274,9 +1357,61 @@ func stressHeld(t *testing.T, mine *stressCheckout, move int, against, file stri
 	// A move that wrote a sin is owed an answer about the file it wrote it in. Without this the run proves
 	// nothing at all: every quiet fallback in the judging ends in no answer, and a run of them passed.
 	if owed && !told {
-		t.Fatalf("move %d of checkout %d: it wrote a sin in %s and was told nothing about it; %d answers came back\n%v",
-			move, mine.Named, stressUnder(against, file), len(answers), answers)
+		// What a judging of that file finds on its own, said in the failure: a move told nothing is either a
+		// file with no sin in it, which is the harness's fault, or a sin the plugin would not say, which is
+		// the plugin's. Without this the message cannot tell the two apart.
+		settings, _ := config.Load(mine.Project)
+		found, _, unread := marksIn(Marks(mine.Project), file, allRules(t, mine.Project, settings), git.Everywhere())
+
+		var names []string
+		for _, mark := range found {
+			names = append(names, strings.TrimSpace(mark.Found()))
+		}
+
+		t.Fatalf("move %d of checkout %d: it wrote a sin in %s and was told nothing about it; %d answers came "+
+			"back. A judging of that file alone finds %d sins %v (unread %v)\n%v",
+			move, mine.Named, stressUnder(against, file), len(answers), len(found), names, unread, answers)
 	}
+}
+
+// stressRunning are the checkouts of the run by their agent number, so an answer is held against the checkout it
+// is FOR. Written once before any move and only read after.
+var stressRunning = map[int]*stressCheckout{}
+
+// stressWhose is the checkout an answer is for.
+func stressWhose(agent int) (*stressCheckout, bool) {
+	held, known := stressRunning[agent]
+
+	return held, known
+}
+
+// stressWhere is the file a path names, under the checkout's project or under the checkout itself: which of the
+// two a path is relative to depends on the shape the moment was sent in.
+func stressWhere(whose *stressCheckout, named string) string {
+	if info, err := os.Stat(filepath.Join(whose.Project, named)); err == nil && info.Mode().IsRegular() {
+		return filepath.Join(whose.Project, named)
+	}
+
+	return filepath.Join(whose.At, named)
+}
+
+// stressStands says the path an answer names is a file that is really there, under either root a path of that
+// checkout can be relative to.
+func stressStands(whose *stressCheckout, named string) bool {
+	info, err := os.Stat(stressWhere(whose, named))
+
+	return err == nil && info.Mode().IsRegular()
+}
+
+// owns says the path is one of this checkout's own files, as a path under the project or under itself.
+func (c *stressCheckout) owns(named string) bool {
+	if strings.HasPrefix(named, c.under()) {
+		return true
+	}
+
+	info, err := os.Stat(filepath.Join(c.At, named))
+
+	return err == nil && info.Mode().IsRegular()
 }
 
 // stressSaidOf are the paths the tell names, which is what the agent itself reads.
