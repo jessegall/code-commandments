@@ -12,6 +12,7 @@ import (
 	"github.com/jessegall/code-commandments/cli/git"
 	"github.com/jessegall/code-commandments/cli/scan"
 	"github.com/jessegall/code-commandments/cli/source"
+	"github.com/jessegall/code-commandments/cli/warm"
 )
 
 // TestAnEditIsJudgedAgainstTheProgramWhereItsBranchHasABase is the other half of the per-file mark. A rule that
@@ -270,5 +271,71 @@ func TestAProjectReachedThroughALinkIsStillJudgedAgainstItsProgram(t *testing.T)
 
 	if len(marks) == 0 {
 		t.Error("the sin in a file reached through a link is not marked")
+	}
+}
+
+// TestADetachedHeadIsNoBranch holds the base against the state a main checkout is in during a rebase. git calls
+// a detached HEAD by the literal name HEAD, and taken for a branch it does two wrong things at once: every
+// detached commit of a project shares one base, and a worktree answered from it is diffed against the name
+// HEAD, which resolves to the WORKER's own tip, so the worker's committed work reads as no difference at all.
+// That is a green tick over everything it wrote.
+func TestADetachedHeadIsNoBranch(t *testing.T) {
+	root, _ := migrationProject(t)
+
+	if _, ok := rootOf(root); !ok {
+		t.Fatal("a project on a branch has no base to answer from")
+	}
+
+	said, err := exec.Command("git", "-C", root, "rev-parse", "HEAD").CombinedOutput()
+	if err != nil {
+		t.Fatalf("git rev-parse: %s", said)
+	}
+
+	gitIn(t, root, "checkout", "-q", strings.TrimSpace(string(said)))
+
+	if branch := git.CurrentBranch(root); branch != "HEAD" {
+		t.Skipf("this git names a detached head %q, so the test says nothing", branch)
+	}
+
+	if _, ok := rootOf(root); ok {
+		t.Error("a detached head is taken for a branch, so a worker is diffed against its own tip and told it wrote nothing")
+	}
+}
+
+// TestTheEditThatFindsTheTreeDrifedIsAnsweredAlone holds the edit that notices. A sweep that finds other files
+// moved gives the base up, and the base it gives up holds the old tree of every one of them and still holds the
+// ones that are gone: answered from it, the edit that NOTICED the drift is the one answered from the drifted
+// tree. It is answered on its own file instead, as every edit is while no base is held.
+func TestTheEditThatFindsTheTreeDrifedIsAnsweredAlone(t *testing.T) {
+	root, _ := migrationProject(t)
+	settings, _ := config.Load(root)
+
+	project := git.ProjectRoot(root)
+	branch := git.CurrentBranch(project)
+
+	codebase, err := scan.Walk([]string{root}, source.Under(root, settings.Excluded)).Load()
+	if err != nil || codebase == nil {
+		t.Fatalf("the python bridge cannot run here: %v", err)
+	}
+
+	// Held through a clock already past a sweep, so the first question sweeps the whole tree.
+	kept.Clocked(func() time.Time { return time.Now().Add(-2 * warm.Sweep) })
+	kept.Hold(project, branch, []string{root}, codebase, nil)
+	t.Cleanup(func() { kept.Clocked(time.Now); kept.Drop(project, branch) })
+
+	// Another file moved, which nothing announced.
+	elsewhere := filepath.Join(root, "shop", "migration.py")
+	if err := os.WriteFile(elsewhere, []byte("class Migration:\n    number = 1\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	edited := filepath.Join(root, "shop", "migrations", "m004_drop_fades.py")
+
+	if _, _, whole := AgainstTheProgram(Marks(root), edited, allRules(t, root, settings), git.ChangedLines{}, root); whole {
+		t.Error("the edit that found the tree drifted was answered from the drifted tree it gave up")
+	}
+
+	if _, held := kept.Holds(project, branch); held {
+		t.Error("a tree that has drifted elsewhere is still held")
 	}
 }

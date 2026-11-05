@@ -165,3 +165,39 @@ func TestAServiceEndingWorksOutTheAdviceItHolds(t *testing.T) {
 		t.Errorf("a service ending worked out %d of the 5 moments it held; the rest are sins nobody is ever told about", advised)
 	}
 }
+
+// TestAnEditsAdviceIsWorkedOutFirst holds the order of the queue. One moment is judged at a time, which is what
+// keeps two checks of one file from running at once, so whatever is at its head decides when every edit behind it
+// is answered. A session raises a heartbeat every minute for every open agent and one at every stop, and each of
+// those settles every sin the session has announced; nobody is waiting on any of them, while an agent is waiting
+// to hear about the file it just wrote.
+func TestAnEditsAdviceIsWorkedOutFirst(t *testing.T) {
+	var worked sync.Mutex
+	var order []string
+
+	advice := &adviser{wake: make(chan struct{}, 1), advise: func(moment asked) {
+		worked.Lock()
+		order = append(order, asText(moment.given["named"]))
+		worked.Unlock()
+	}}
+
+	// Added before the worker starts, so all four are waiting when it picks the first.
+	advice.add(asked{map[string]any{"named": "a heartbeat"}, true, false})
+	advice.add(asked{map[string]any{"named": "a stop"}, true, false})
+	advice.add(asked{map[string]any{"named": "an edit"}, true, true})
+	advice.add(asked{map[string]any{"named": "another edit"}, true, true})
+
+	go advice.work()
+	advice.drained(10 * time.Second)
+
+	worked.Lock()
+	defer worked.Unlock()
+
+	if len(order) != 4 {
+		t.Fatalf("the queue worked out %d of the 4 moments it held: %v", len(order), order)
+	}
+
+	if order[0] != "an edit" || order[1] != "another edit" {
+		t.Errorf("the queue worked out %v; the edits come first, since an agent is waiting on them", order)
+	}
+}
