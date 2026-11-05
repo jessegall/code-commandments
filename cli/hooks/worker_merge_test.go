@@ -345,3 +345,27 @@ func TestAWorkersEditIsJudgedInItsOwnWorktree(t *testing.T) {
 		t.Errorf("the edit is judged in %q, not in the worktree the file sits in", asText(agent["cwd"]))
 	}
 }
+
+// TestAGateThatRunsOutOfTimeAnswersWithWhatItDidFind holds the worst answer a hand-in gate can give. It judges
+// the worker's own changes inside the window the journal allows, and on running out of time it answered with
+// NOTHING, which is the same answer as "clean": a worker's work went through unjudged and nobody was told the
+// judging had not finished.
+//
+// Measured on a consumer: a worker delivered in 171 seconds against a budget of 162, and its own judging then
+// found four sins in the work it had just handed in. Their journal keeps no record of the step answer, so from
+// outside a gate that ran out of time and a gate that found nothing are the same thing.
+//
+// So the shallow reading is taken FIRST, which costs seconds, and the deep one only improves on it. A gate that
+// runs out of time then answers with the sins it did find rather than with silence.
+func TestAGateThatRunsOutOfTimeAnswersWithWhatItDidFind(t *testing.T) {
+	root, _, _ := projectWithASin(t)
+
+	// A window the deep reading cannot fit: it is given all but a tenth, and a whole-tree read of any size is
+	// tens of seconds. The sin is in the worker's own changed lines, which one file is enough to find.
+	held := MergeHeld(mergingOf(root, int(wholeTreeWindow/time.Millisecond)+1, "src/refund.py"))
+
+	if held == "" {
+		t.Error("a gate whose deep judging cannot fit its window answered with nothing, which reads exactly as " +
+			"clean: the worker's work goes through unjudged and nobody is told the judging did not finish")
+	}
+}

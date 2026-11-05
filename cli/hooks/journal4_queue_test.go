@@ -537,15 +537,27 @@ func TestGoingIdleSettlesAMarkNothingEditedAgain(t *testing.T) {
 		t.Fatalf("an edit elsewhere settled another file's mark, which is not what settles it: %v", edited)
 	}
 
-	idle := Answer4Now(eventOf("idle", ""))
-	var answer map[string]any
-	if err := json.Unmarshal([]byte(idle), &answer); err != nil {
-		t.Fatalf("going idle answered %q: %v", idle, err)
+	// Through the QUEUE, which is where a stop's findings go: its own answer carries the gates alone, since the
+	// journal waits on every answer it asks for and a stop that swept the tree on that path ran past the limit
+	// it allows. Settled either way, one hook later.
+	if cards := settledByTheQueue(t, data, eventOf("idle", "")); !settles(cards, "sins:src/refund.py") {
+		t.Errorf("going idle settled %v, none of it the mark of the file that is now clean", cards)
+	}
+}
+
+// settledByTheQueue is the cards a moment put in the queue, which is where what it settles reaches the agent.
+func settledByTheQueue(t *testing.T, data string, line map[string]any) []map[string]any {
+	t.Helper()
+
+	Answer4Now(line)
+	Judge4Into(line, data)
+
+	var cards []map[string]any
+	for _, queued := range drained(t, data) {
+		cards = append(cards, cardsOf(queued)...)
 	}
 
-	if cards := cardsOf(answer); !settles(cards, "sins:src/refund.py") {
-		t.Errorf("going idle answered %v, none of it settling the mark of the file that is now clean", cards)
-	}
+	return cards
 }
 
 // TestGoingIdleRaisesNothingNew holds the sweep to settling alone: a file that still holds its sin keeps the mark
@@ -680,14 +692,10 @@ func TestTheJournalsMinuteBeatSweepsLikeGoingIdle(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	beaten := Answer4Now(eventOf("ticked", ""))
-	var answer map[string]any
-	if err := json.Unmarshal([]byte(beaten), &answer); err != nil {
-		t.Fatalf("the beat answered %q: %v", beaten, err)
-	}
-
-	if cards := cardsOf(answer); !settles(cards, "sins:src/refund.py") {
-		t.Errorf("the beat answered %v, none of it settling the mark of the file that is now clean", cards)
+	// Through the QUEUE, as a stop's findings go: the beat's own answer carries the gates alone, since the
+	// journal waits on every answer and a beat that swept the tree on that path ran past the limit it allows.
+	if cards := settledByTheQueue(t, data, eventOf("ticked", "")); !settles(cards, "sins:src/refund.py") {
+		t.Errorf("the beat settled %v, none of it the mark of the file that is now clean", cards)
 	}
 }
 
@@ -827,5 +835,75 @@ func TestAPathTheMomentsFolderDoesNotHoldIsReadAgainstTheProject(t *testing.T) {
 	// worker's file read it as a file outside the folders the project judges.
 	if named.Cwd != worktree {
 		t.Errorf("the moment's folder is %q, not the worktree the file lies in", named.Cwd)
+	}
+}
+
+// TestATickIsAnsweredWithTheGatesAloneAndSettlesThroughTheQueue holds the heartbeat and the stop to the same
+// promise the edit has. The journal WAITS on every answer it asks for, inside a window, so an answer worked out
+// on that path spends the wait on a scan.
+//
+// A tick and a stop were answered IN FULL, settlement and all, while a comment three lines above the code said
+// they are nobody's wait. Measured on a consumer with three workers, a fourth, the main agent and a 233-test run
+// going at once: judged_total 27955 ms for 143 ms of its own work, and the service's last fault "its service ran
+// past 60000 ms at ticked". Past that limit the journal faulted the service, and every moment it still held went
+// with it — a worker wrote a known sin, the delivery arrived, and it was never told, learning of it 99 seconds
+// later by judging its own tree.
+//
+// So the answer carries what the gates already know, and what the moment settles reaches the agent by the queue
+// one hook later, which is where an edit's findings already go.
+func TestATickIsAnsweredWithTheGatesAloneAndSettlesThroughTheQueue(t *testing.T) {
+	root, _, data := projectWithASin(t)
+	t.Setenv("JOURNAL_ROOT", root)
+
+	sinful := "class Refund:\n    def total(self):\n        if True:\n            return 1\n        else:\n            return 2\n"
+
+	for at, event := range []string{tickedEvent, idleEvent} {
+		// A sin announced to THIS agent afresh, so each event has a settlement of its own to make: each is
+		// asked the same question, and a settlement the one before it already made would leave the next with
+		// nothing to say and prove nothing.
+		agent := 7 + at
+		if err := os.WriteFile(filepath.Join(root, "src", "refund.py"), []byte(sinful), 0o644); err != nil {
+			t.Fatal(err)
+		}
+
+		Judge4Into(map[string]any{
+			"v": 1, "event": "file_edited", "session": "s1", "environment": "main", "agent": agent,
+			"data": map[string]any{"path": "src/refund.py", "kind": "edit", "added": 1, "removed": 0, "tool_use": 41},
+		}, data)
+
+		if queued := drained(t, data); len(queued) == 0 {
+			t.Fatalf("%s: the edit told nothing, so there is no sin for it to settle", event)
+		}
+
+		// Put right, which is what the moment below has to notice.
+		if err := os.WriteFile(filepath.Join(root, "src", "refund.py"), []byte("class Refund:\n    pass\n"), 0o644); err != nil {
+			t.Fatal(err)
+		}
+
+		line := map[string]any{
+			"v": 1, "event": event, "session": "s1", "environment": "main", "agent": agent,
+			"data": map[string]any{},
+		}
+
+		// The answer the journal WAITS for: the gates alone, and nothing worked out.
+		answer := Answer4Now(line)
+		for _, worked := range []string{"cards", "raise", "settle"} {
+			if strings.Contains(answer, worked) {
+				t.Errorf("%s is answered with %s worked out on the path the journal waits on: %s", event, worked, answer)
+			}
+		}
+
+		// And what it settles reaches the agent through the queue instead.
+		Judge4Into(line, data)
+
+		var said []string
+		for _, queued := range drained(t, data) {
+			written, _ := json.Marshal(queued)
+			said = append(said, string(written))
+		}
+
+		if len(said) == 0 {
+			t.Errorf("%s said nothing at all, so the sin it should have settled stays orange for good", event)
+		}
 	}
 }

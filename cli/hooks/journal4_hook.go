@@ -129,9 +129,14 @@ const heldEvent = "command_starting"
 const editedEvent = "file_edited"
 
 // tickedEvent is the journal's heartbeat, raised every minute for every open agent, and idleEvent is an agent
-// stopping. Both are answered IN FULL, settlement and all, because the journal reads what they found from that
-// answer; what they must not be is slow, since the journal waits on every one of them. They were, at 2.5
-// seconds apiece, because the settlement read every marked file in an ask of its own.
+// stopping. Nobody waits to HEAR what either found, so both are answered with the gates alone and worked out
+// afterwards, their settlement reaching the agent by the queue one hook later.
+//
+// They used to be answered in full, settlement and all, on the path the journal waits on. Measured on a consumer
+// with three workers, a fourth, the main agent and a 233-test run going at once: judged_total 27955 ms for 143 ms
+// of its own work, and the service's last fault "its service ran past 60000 ms at ticked". Past that limit the
+// journal faults the service, and every moment it still holds goes with it: a worker wrote a known sin, the
+// delivery arrived, and it was never told, learning of it 99 seconds later by judging its own tree.
 const (
 	tickedEvent = "ticked"
 	idleEvent   = "idle"
@@ -154,7 +159,12 @@ func awaited(event string) bool {
 }
 
 func judgedAfter(event string) bool {
-	return event == heldEvent || event == editedEvent
+	switch event {
+	case heldEvent, editedEvent, tickedEvent, idleEvent:
+		return true
+	}
+
+	return false
 }
 
 // Answer4Now is the answer the journal is handed. An event judged after is answered with the gates alone, since a
