@@ -249,7 +249,7 @@ func settled(moment Moment, root string, marks []SinMark, read []string) Settlem
 	// Going idle judges the files that still carry a mark, so one whose sins are gone turns green even where
 	// nothing edited that file again.
 	if moment.IsStop() {
-		swept, files := swept(record, root)
+		swept, files := sweptMarks(record, root)
 		marks = append(marks, swept...)
 		reconsidered = append(reconsidered, files...)
 	}

@@ -152,6 +152,31 @@ func TestTheStress(t *testing.T) {
 
 	stressReport(t, edits(answers))
 	stressTold(t, edits(answers))
+	stressStop(t, root, data)
+}
+
+// stressStop says where the time in a stop's answer goes. The journal waits on that answer and raises one every
+// minute for every open agent, so it is the plugin's largest debt to it; the sweep that re-reads every marked
+// file is the obvious half, and this says how much of it the sweep really is.
+func stressStop(t *testing.T, root, data string) {
+	t.Helper()
+
+	line, known := Moment4Of(stressMoment(1, "idle"))
+	if !known {
+		t.Fatal("the journal's idle event is no moment")
+	}
+
+	swept := time.Now()
+	marks, files := sweptMarks(AnnouncedIn(data, MomentOf(line)), root)
+	t.Logf("the sweep read %d marked file(s) in %v and found %d mark(s)", len(files), time.Since(swept).Round(time.Millisecond), len(marks))
+
+	settling := time.Now()
+	settlement := settled(MomentOf(line), root, nil, nil)
+	t.Logf("the settlement took %v, the sweep inside it, and settles %d", time.Since(settling).Round(time.Millisecond), len(settlement.Settles()))
+
+	whole := time.Now()
+	answerWith(Stamped(line), every, true)
+	t.Logf("the whole answer to a stop took %v", time.Since(whole).Round(time.Millisecond))
 }
 
 // edits are the answers about the files this run edited. A session raises ticked and idle beside its edits, and
