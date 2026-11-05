@@ -129,3 +129,51 @@ func gitIn(t *testing.T, dir string, args ...string) string {
 
 	return string(out)
 }
+
+// TestTheBranchAndTheMergeBaseAreAskedOnceUntilAHeadMoves holds the caching to what it is for. Asking git costs a
+// process, and the warm path asks on every edit of every agent and twice over on every judging: which branch the
+// project is on, and where a worktree's branch last met it. Neither answer can change unless a HEAD moves.
+//
+// Against the FILES that say where HEAD is, never against a clock: a cache that expires is either too short to
+// buy anything or long enough to answer about a branch nobody is on.
+func TestTheBranchAndTheMergeBaseAreAskedOnceUntilAHeadMoves(t *testing.T) {
+	root := aRepositoryWith(t, map[string]string{"src/order.py": "class Order:\n    pass\n"})
+
+	worktree := filepath.Join(root, ".journal", "worktrees", "worker-1")
+	gitIn(t, root, "worktree", "add", "-q", "-b", "a-worker", worktree)
+
+	// Asked once each, so what the answers are is on the record before any of them is counted.
+	branch, mergeBase := CurrentBranch(root), MergeBase(worktree, "main")
+	if branch != "main" || mergeBase == "" {
+		t.Fatalf("the branch is %q and the merge base %q, so this test is measuring nothing", branch, mergeBase)
+	}
+
+	before := Asked()
+	for at := 0; at < 20; at++ {
+		if said := CurrentBranch(root); said != branch {
+			t.Fatalf("the remembered branch is %q, want %q", said, branch)
+		}
+		if said := MergeBase(worktree, "main"); said != mergeBase {
+			t.Fatalf("the remembered merge base is %q, want %q", said, mergeBase)
+		}
+	}
+
+	if asked := Asked() - before; asked != 0 {
+		t.Errorf("forty answers about an unmoved HEAD cost %d git processes; every one of them was already known", asked)
+	}
+
+	// And a HEAD that MOVES is asked again, which is the whole of what makes the cache safe to have.
+	gitIn(t, root, "checkout", "-q", "-b", "somewhere-else")
+
+	if said := CurrentBranch(root); said != "somewhere-else" {
+		t.Errorf("the branch reads as %q after a switch; the cache answered about a branch nobody is on", said)
+	}
+
+	// A commit on the branch it is already on moves the ref and not HEAD, which the state must notice too.
+	gitIn(t, worktree, "-c", "user.email=t@t", "-c", "user.name=t", "commit", "-qm", "the worker's work", "--allow-empty")
+
+	if said := MergeBase(worktree, "main"); said != mergeBase {
+		t.Errorf("the merge base reads as %q after a commit on the worker's own branch, want %q, which is where "+
+			"the two still last met", said, mergeBase)
+	}
+}

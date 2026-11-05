@@ -154,7 +154,9 @@ func Head(root string) string {
 
 // CurrentBranch is the branch checked out at root.
 func CurrentBranch(root string) string {
-	return ask(root, "rev-parse", "--abbrev-ref", "HEAD")
+	return recalling("branch\x00"+root, func() string { return headState(root) }, func() string {
+		return ask(root, "rev-parse", "--abbrev-ref", "HEAD")
+	})
 }
 
 // WorkingTree is what one status call says: the commit checked out and every judged file that differs
@@ -218,8 +220,14 @@ func field(entry string, count, at int) string {
 
 // MergeBase is the commit where the head checked out at root left base, empty when the two share no history or
 // either is unknown there.
+// Remembered against both HEADs, since where two checkouts last met moves only when one of them does. A judging
+// of a worktree asks for it twice over, once for what the checkout changed and once for what it deleted, and
+// every judging asked again for an answer that had not moved.
 func MergeBase(root, base string) string {
-	return ask(root, "merge-base", base, "HEAD")
+	project := ProjectRoot(root)
+
+	return recalling("merge-base\x00"+root+"\x00"+base, func() string { return headState(root) + "\x00" + headState(project) },
+		func() string { return ask(root, "merge-base", base, "HEAD") })
 }
 
 // ChangedVsBranch are the judged files new or changed on this branch since it left base, committed or
@@ -404,12 +412,16 @@ func ask(dir string, args ...string) string {
 // answers "" where git could not answer and the caller reads that as nothing; a write that failed and said
 // nothing would be taken for a write that happened, so its error comes back.
 func wrote(dir string, args ...string) (string, error) {
+	counted()
+
 	out, err := exec.Command("git", append([]string{"-C", dir}, args...)...).CombinedOutput()
 
 	return strings.TrimSpace(string(out)), err
 }
 
 func run(dir string, args ...string) string {
+	counted()
+
 	out, err := exec.Command("git", append([]string{"--no-optional-locks", "-C", dir}, args...)...).Output()
 	if err != nil && len(out) == 0 {
 		return ""
