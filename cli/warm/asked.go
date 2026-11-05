@@ -27,11 +27,13 @@ type Request struct {
 	In    string   `json:"in"`
 }
 
-// Answer is what the service judged: what the run prints, and the code it exits with.
+// Answer is what the service judged: what the run prints, and the code it exits with. Declined says the service
+// did not judge it at all, so the run must do it itself.
 type Answer struct {
-	Out  string `json:"out"`
-	Err  string `json:"err"`
-	Code int    `json:"code"`
+	Out      string `json:"out"`
+	Err      string `json:"err"`
+	Code     int    `json:"code"`
+	Declined bool   `json:"declined,omitempty"`
 }
 
 // Asked is the service's answer to a judging, and false where no service answered: nothing listening, a service
@@ -67,7 +69,7 @@ func Asked(project string, request Request) (Answer, bool) {
 	}
 
 	var answer Answer
-	if err := json.Unmarshal(line, &answer); err != nil {
+	if err := json.Unmarshal(line, &answer); err != nil || answer.Declined {
 		return Answer{}, false
 	}
 

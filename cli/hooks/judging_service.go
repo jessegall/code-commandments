@@ -78,10 +78,20 @@ func answerJudging(connection net.Conn, root string) {
 func judgedFor(request warm.Request, root string) warm.Answer {
 	var out, errs bytes.Buffer
 
+	// A judging the base cannot cover is DECLINED rather than read here. Reading a tree inside this process
+	// costs 17 to 55 seconds of it, and this process answers every hook of the session: a worker that ran a
+	// judging of its own worktree, whose files no base holds, made two later edits of its own wait two minutes
+	// behind that read. The run pays the read in its own process instead, where it blocks nobody.
+	declined := false
+
 	code, err := (judge.Command{
 		In:      request.In,
-		Reading: held(root),
+		Reading: heldOrDeclined(root, &declined),
 	}).Run(cli.InputOf("judge", request.Judge...), cli.Console{Out: &out, Err: &errs})
+
+	if declined {
+		return warm.Answer{Declined: true}
+	}
 
 	if err != nil {
 		return warm.Answer{Out: out.String(), Err: errs.String() + err.Error() + "\n", Code: 1}
@@ -90,30 +100,36 @@ func judgedFor(request warm.Request, root string) warm.Answer {
 	return warm.Answer{Out: out.String(), Err: errs.String(), Code: code}
 }
 
-// held is how the service reads a codebase for a run: the tree it holds for the branch, with the files that have
-// moved since read again, where every file the run asks about is one the base holds; otherwise the sources are
-// read as any run reads them, so a question about a tree nobody has warmed is answered rather than refused.
-func held(root string) func(scan.Sources) (*engine.Codebase, error) {
+// heldOrDeclined is how the service reads a codebase for a run: the tree it holds for the branch, with the files
+// that have moved since read again. A run about files no base holds is declined, and says so through the flag, so
+// the run reads them in its own process rather than in the one every hook of the session is answered by.
+func heldOrDeclined(root string, declined *bool) func(scan.Sources) (*engine.Codebase, error) {
 	return func(sources scan.Sources) (*engine.Codebase, error) {
 		named, base, ok := baseFor(root)
-		if !ok {
-			return sources.Load()
-		}
 
-		asked := sources.Files()
-		if len(asked) == 0 {
-			return sources.Load()
+		// Every language's files, because Files with none named answers none: asking it that way made this
+		// decline every run and, before that, made every run read the tree here rather than use the base.
+		asked := sources.Files(source.Languages...)
+
+		if !ok || len(asked) == 0 {
+			*declined = true
+
+			return engine.Load(), nil
 		}
 
 		for _, file := range asked {
 			if _, known := base.Holds(file); !known {
-				return sources.Load()
+				*declined = true
+
+				return engine.Load(), nil
 			}
 		}
 
 		project, err := config.Load(named.project)
 		if err != nil {
-			return sources.Load()
+			*declined = true
+
+			return engine.Load(), nil
 		}
 
 		return viewOf(base, named, project, asked)

@@ -116,3 +116,27 @@ func TestTheAnswerSaysHowLongThePluginTookOverTheEvent(t *testing.T) {
 		t.Errorf("the answer says it took %v ms, which is no duration of one event", took)
 	}
 }
+
+// TestAJudgingTheBaseCannotCoverIsDeclined holds what the service must not do: read a tree inside the one
+// process that answers every hook of the session. A worker ran a judging of its own worktree, whose files no base
+// holds, and two later edits of its own waited two minutes behind that read. Declined, the run reads them in its
+// own process, where it blocks nobody.
+func TestAJudgingTheBaseCannotCoverIsDeclined(t *testing.T) {
+	root, _ := migrationProject(t)
+
+	project := git.ProjectRoot(root)
+	branch := git.CurrentBranch(project)
+	kept.Drop(project, branch)
+
+	listener, listening := Judging(root)
+	if !listening {
+		t.Fatalf("the service cannot listen on %s", warm.Socket(root))
+	}
+	defer listener.Close()
+
+	go serveJudging(listener, root)
+
+	if answer, asked := warm.Asked(root, warm.Request{Judge: []string{root, "--no-checklist"}, In: root}); asked {
+		t.Errorf("with no base held the service judged it anyway: exit %d\n%s", answer.Code, answer.Out)
+	}
+}
