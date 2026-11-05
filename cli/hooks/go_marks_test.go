@@ -167,7 +167,7 @@ func goMarks(t *testing.T, root, file string) []SinMark {
 		t.Fatal(err)
 	}
 
-	found, _ := marksIn(Marks(root), file, slices.DeleteFunc(enabled, detectors.ReadsBeyondOneFile), git.ChangedLines{})
+	found, _, _ := marksIn(Marks(root), file, slices.DeleteFunc(enabled, detectors.ReadsBeyondOneFile), git.ChangedLines{})
 
 	return found
 }

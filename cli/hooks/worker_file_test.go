@@ -171,7 +171,7 @@ func TestAWorkersOwnFileIsMarkedWhereItIsJudgedAlone(t *testing.T) {
 	}
 
 	rules := settings.RulesFor(checkoutOf(root, worker), worker, allRules(t, root, settings))
-	marks, _ := marksIn(Marks(root), worker, rules, git.ChangedLines{})
+	marks, _, _ := marksIn(Marks(root), worker, rules, git.ChangedLines{})
 
 	if len(marks) != 1 {
 		t.Fatalf("the project's rules find %d sins in the worker's own file", len(marks))

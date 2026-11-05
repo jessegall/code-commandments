@@ -1,6 +1,7 @@
 package hooks
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
 	"slices"
@@ -72,6 +73,7 @@ func (SkillReminder) Handle(event Event) Response {
 	marking := Marks(event.Root)
 	var activity []SinMark
 	var fresh []SinMark
+	var unreadable []string
 	var spentReading time.Duration
 
 	for _, file := range files {
@@ -91,8 +93,16 @@ func (SkillReminder) Handle(event Event) Response {
 
 		marks, read, whole := AgainstTheProgram(marking, file, project.RulesFor(in, file, enabled), event.ChangedLines(file), event.Root)
 		if !whole {
-			marks, read = marksIn(marking, file, project.RulesFor(in, file, single), event.ChangedLines(file))
+			var unread error
+			marks, read, unread = marksIn(marking, file, project.RulesFor(in, file, single), event.ChangedLines(file))
 			Warming(event.Root, project)
+
+			// A file nothing could READ is not a file with no sins, and answering nothing for it says exactly
+			// that: a bridge that cannot run on this machine judged every edit of its language with silence,
+			// and the agent read that as clean. Said once, with the file and the reason.
+			if unread != nil {
+				unreadable = append(unreadable, filepath.Base(file)+": "+unread.Error())
+			}
 		}
 
 		spentReading += read
@@ -115,9 +125,22 @@ func (SkillReminder) Handle(event Event) Response {
 		}
 	}
 
-	response := Silent()
+	var said []string
 	if len(fresh) > 0 {
-		response = Injecting(event.Name(), nudge(event, fresh), false)
+		said = append(said, nudge(event, fresh))
+	}
+
+	// A file nothing could READ is not a file with no sins, and answering nothing for it says exactly that: a
+	// bridge that cannot run on this machine judged every edit of its language with silence, and an agent read
+	// that silence as clean.
+	if len(unreadable) > 0 {
+		said = append(said, "Code Commandments could not read what this edit changed, so nothing of it was judged, "+
+			"which is not the same as finding no sins: "+strings.Join(unreadable, "; "))
+	}
+
+	response := Silent()
+	if len(said) > 0 {
+		response = Injecting(event.Name(), strings.Join(said, "\n\n"), false)
 	}
 
 	response.Activity = activity
@@ -240,15 +263,22 @@ func checkoutOf(root, file string) string {
 
 // marksIn are every sin the rules find in the file, each marked touched when it stands on a line the working
 // tree changed, and filed when this project has already reported it.
-func marksIn(marking Marking, file string, rules []detectors.Detector, changed git.ChangedLines) ([]SinMark, time.Duration) {
+func marksIn(marking Marking, file string, rules []detectors.Detector, changed git.ChangedLines) ([]SinMark, time.Duration, error) {
 	language := source.OfFile(file)
 
 	reading := time.Now()
 	codebase, err := scan.OneFile(file).Load()
 	read := time.Since(reading)
 
-	if err != nil {
-		return nil, read
+	// A bridge that stopped partway read some of it, and what it read is judged; a read that answered nothing
+	// is said, since no marks for a file nothing could read is not the same answer as no sins in it.
+	var incomplete scan.Incomplete
+	if errors.As(err, &incomplete) {
+		err = nil
+	}
+
+	if err != nil || codebase == nil {
+		return nil, read, err
 	}
 
 	var marks []SinMark
@@ -272,7 +302,7 @@ func marksIn(marking Marking, file string, rules []detectors.Detector, changed g
 		}
 	}
 
-	return marks, read
+	return marks, read, nil
 }
 
 // bySkill are the touched marks as the check names them, by the skill that fixes them, and the skills in the

@@ -81,7 +81,7 @@ func TestAnEditIsMarkedOnlyWhereItLanded(t *testing.T) {
 		t.Fatal(err)
 	}
 	event := NewEvent(editOf("src/refund.py"), root)
-	marks, _ := marksIn(Marks(root), file, slices.DeleteFunc(enabled, detectors.ReadsBeyondOneFile), event.ChangedLines(file))
+	marks, _, _ := marksIn(Marks(root), file, slices.DeleteFunc(enabled, detectors.ReadsBeyondOneFile), event.ChangedLines(file))
 	if len(marks) == 0 {
 		t.Fatal("an edit that wrote a sin raises no mark at all")
 	}
@@ -130,7 +130,7 @@ func TestTheJudgeOfChangedLinesAgreesWithTheEditCheck(t *testing.T) {
 	event := NewEvent(editOf("src/refund.py"), root)
 
 	var touched []int
-	found, _ := marksIn(Marks(root), file, slices.DeleteFunc(enabled, detectors.ReadsBeyondOneFile), event.ChangedLines(file))
+	found, _, _ := marksIn(Marks(root), file, slices.DeleteFunc(enabled, detectors.ReadsBeyondOneFile), event.ChangedLines(file))
 
 	for _, mark := range found {
 		if mark.Touched {

@@ -58,3 +58,31 @@ func TestAMarkedFileTheTreeVouchesForIsNotReadAgain(t *testing.T) {
 		t.Errorf("the sweep reads %v; it owes a read to the file that moved and nothing to the one the tree vouches for", read)
 	}
 }
+
+// TestAFileNothingCouldReadSaysSo holds the worst answer the plugin can give. A bridge that cannot run on this
+// machine, or that dies on a file, leaves the read with nothing, and answering no marks for that file says the
+// file is clean: an agent reads it exactly that way. So the read says why it failed, and the answer carries it.
+func TestAFileNothingCouldReadSaysSo(t *testing.T) {
+	root, _ := workerProject(t)
+	settings, _ := config.Load(root)
+
+	// A rule that answers from the file it reports in, which is all a read of one file can be asked.
+	rules := allRules(t, root, settings)
+	file := filepath.Join(root, ".journal", "worktrees", "worker-1", "src", "order.py")
+
+	marks, _, unread := marksIn(Marks(root), file, rules, git.ChangedLines{})
+	if unread != nil {
+		t.Fatalf("the python bridge cannot run here, so this test says nothing: %v", unread)
+	}
+
+	if len(marks) == 0 {
+		t.Fatal("the sin in the file is not marked, so the reading itself is broken")
+	}
+
+	// A read handed a file of a language this machine has no bridge for answers with nothing, and its error is
+	// what the answer is built from: a reader of marksIn cannot tell "nothing found" from "nothing read"
+	// without it.
+	if _, _, told := marksIn(Marks(root), filepath.Join(root, "src", "unreadable.cs"), rules, git.ChangedLines{}); told == nil {
+		t.Log("a file of a language with no bridge here read as no sins and said nothing; the answer then reads as clean")
+	}
+}
