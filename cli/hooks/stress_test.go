@@ -1,6 +1,7 @@
 package hooks
 
 import (
+	"bytes"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -128,6 +129,28 @@ func TestTheStress(t *testing.T) {
 		landed.Sub(last.at).Round(time.Millisecond))
 
 	stressReport(t, answers)
+	stressTold(t, answers)
+}
+
+// stressTold holds what the run was TOLD, not only how long it took. A harness that reads durations alone is a
+// load generator: a plugin wrong about every file but the one it reports would print the same figures, and that
+// is how two wrong answers reached a consumer before the harness could find them.
+//
+// Each answer must name the sin the edit wrote inside its own file, and the sin whose chain of parents crosses
+// three files. The second is the one worth having: it cannot be answered from the edited file at all, so an
+// answer carrying it proves the edit was judged against the whole program.
+func stressTold(t *testing.T, answers []map[string]any) {
+	t.Helper()
+
+	for at, answer := range answers {
+		told := asText(answer["tell"])
+
+		for _, sin := range []string{"deep-python-nesting", "thing-by-its-kind"} {
+			if !strings.Contains(told, sin) {
+				t.Errorf("answer %d names no %s, so the edit was not judged against what it should be:\n%s", at+1, sin, told)
+			}
+		}
+	}
 }
 
 // handIns is how many hand-in judgings ran, for the line that says so.
@@ -278,6 +301,10 @@ func stressEvent(worker, edit int, added []any) map[string]any {
 // told about. An edit that changes a line no rule flags is answered with nothing at all, which would measure the
 // queue and not the judging.
 const stressAppended = `
+
+class Deepened%d(RebuildKind):
+    number = %d
+
     def deepened(self, order, rate=None):
         if order is not None:
             for line in order.lines:
@@ -297,14 +324,16 @@ func stressEdit(t *testing.T, root string, worker, edit int) []any {
 	path := filepath.Join(root, ".journal", "worktrees", fmt.Sprintf("worker-%d", worker), "shop", fmt.Sprintf("thing%d.py", edit))
 
 	was := stressFile(edit)
-	if err := os.WriteFile(path, []byte(was+stressAppended), 0o644); err != nil {
+	appended := fmt.Sprintf(stressAppended, worker*1000+edit, edit)
+
+	if err := os.WriteFile(path, []byte(was+appended), 0o644); err != nil {
 		t.Fatal(err)
 	}
 
 	var added []any
 	from := len(strings.Split(strings.TrimRight(was, "\n"), "\n"))
 
-	for at, text := range strings.Split(strings.TrimRight(stressAppended, "\n"), "\n") {
+	for at, text := range strings.Split(strings.TrimRight(appended, "\n"), "\n") {
 		added = append(added, map[string]any{"line_type": "add", "line": from + at + 1, "text": text})
 	}
 
@@ -319,8 +348,24 @@ func stressHandInBy(t *testing.T, root string, worker int) {
 	worktree := filepath.Join(root, ".journal", "worktrees", fmt.Sprintf("worker-%d", worker))
 
 	began := time.Now()
-	code, err := (judge.Command{In: worktree}).Run(cli.InputOf("judge", "--changes", "--no-checklist", "--parallel=2"), quiet())
+
+	var out, errs bytes.Buffer
+	code, err := (judge.Command{In: worktree}).Run(cli.InputOf("judge", "--changes", "--no-checklist", "--parallel=2"),
+		cli.Console{Out: &out, Err: &errs})
+
 	t.Logf("worker %d handed in: exit %d, err %v, in %v", worker, code, err, time.Since(began).Round(time.Millisecond))
+
+	// A hand-in judges what the worker changed, and the worker changed files with sins in them, so an exit of
+	// anything else is a judging that found nothing where there is something to find.
+	if err != nil || code != 1 {
+		t.Errorf("worker %d handed in with exit %d and %v; its own changes hold sins:\n%s%s", worker, code, err, out.String(), errs.String())
+	}
+
+	for _, sin := range []string{"DeepNestingDetector", "ThingByItsKindDetector"} {
+		if !strings.Contains(out.String(), sin) {
+			t.Errorf("worker %d's hand-in names no %s:\n%s%s", worker, sin, out.String(), errs.String())
+		}
+	}
 }
 
 // heldWithin waits for the base, which is read in the background as the first hook of a session has it read.
@@ -364,9 +409,26 @@ func stressProject(t *testing.T, files, workers int) (root, data string) {
 	t.Setenv("JOURNAL_ROOT", root)
 
 	written := map[string]string{
-		".commandments/config.json": `{"paths": ["shop"]}`,
-		"shop/__init__.py":          "",
-		"shop/base.py":              "class Base:\n    number = 0\n",
+		// Every shipped rule judges it, as a consumer's run is judged, and one rule of the project's own
+		// beside them: naming a rule here turns a custom one ON and takes none of the shipped ones off.
+		".commandments/config.json": `{"paths": ["shop"], "detectors": ["ThingByItsKindDetector"]}`,
+
+		// A rule that cannot be answered from one file: the chain from Deepened through RebuildKind to Kind
+		// crosses three files, so an answer that names this sin proves the edit was judged against the whole
+		// program and not against its own file.
+		".commandments/custom/ThingByItsKindDetector.json": `{"engine": "python",
+ "sin": {"name": "thing-by-its-kind", "description": "a class the chain of its parents says is a kind", "skill": "python/absence"},
+ "find": {"select": "type-declaration", "where": [{"extendsAny": "Kind"}]}}`,
+
+		"shop/__init__.py": "",
+		"shop/base.py":     "class Base:\n    number = 0\n",
+		"shop/kinds.py":    "class Kind:\n    number = 0\n",
+		"shop/rebuild.py": `from shop.kinds import Kind
+
+
+class RebuildKind(Kind):
+    statements: list[str] = []
+`,
 	}
 	for at := 0; at < files; at++ {
 		written[fmt.Sprintf("shop/thing%d.py", at)] = stressFile(at)
@@ -418,6 +480,7 @@ func stressFile(at int) string {
 	}
 
 	return fmt.Sprintf(`from shop.base import Base
+from shop.rebuild import RebuildKind
 %s
 
 class Thing%d(Base):
