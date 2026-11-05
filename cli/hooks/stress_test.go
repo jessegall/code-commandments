@@ -14,10 +14,12 @@ import (
 	"testing"
 	"time"
 
+	"github.com/jessegall/code-commandments/bridge"
 	"github.com/jessegall/code-commandments/cli"
 	"github.com/jessegall/code-commandments/cli/config"
 	"github.com/jessegall/code-commandments/cli/git"
 	"github.com/jessegall/code-commandments/cli/judge"
+	"github.com/jessegall/code-commandments/cli/scan"
 	"github.com/jessegall/code-commandments/cli/warm"
 )
 
@@ -49,6 +51,7 @@ func TestTheStress(t *testing.T) {
 
 	root, data := stressProject(t, *stressFiles, *stressWorkers)
 	service := serviceAt(t, root)
+	stressBridge(t, git.ProjectRoot(root))
 
 	settings, err := config.Load(root)
 	if err != nil {
@@ -146,6 +149,30 @@ func said(answer map[string]any, named string) int64 {
 	said, _ := answer[named].(float64)
 
 	return int64(said)
+}
+
+// stressBridge keeps the project's language bridge up, which is what the journal's own mypy-serve does. Without
+// it every edit starts a bridge of its own and pays its whole start-up, and the figures then measure a start-up
+// that no session pays: it is the single biggest thing a harness can get wrong about this plugin.
+func stressBridge(t *testing.T, project string) {
+	t.Helper()
+
+	bridged, needed, err := scan.Python.Reach.Own(scan.Python, []string{project})
+	if err != nil || !needed {
+		t.Fatalf("the python bridge cannot be kept up here: needed %v, %v", needed, err)
+	}
+	t.Cleanup(func() { bridged.Close() })
+
+	path := bridge.ServiceSocket(scan.Python.Kind, project)
+	os.Remove(path)
+
+	listener, err := net.Listen("unix", path)
+	if err != nil {
+		t.Fatalf("the bridge service cannot listen on %s: %v", path, err)
+	}
+	t.Cleanup(func() { listener.Close() })
+
+	go bridge.Answer(listener, bridged)
 }
 
 // serviceAt starts the real service for the project, on the socket the journal names, and hands back that
