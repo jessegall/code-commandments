@@ -49,6 +49,8 @@ func TestAWorkersFileInAWorktreeIsJudged(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	// The project's own configuration, which is the one a worker is judged by: it keeps no copy of its own, so
+	// a change here reaches every worker at once.
 	project, _ := config.Load(root)
 
 	own := filepath.Join(root, "src", "order.py")
@@ -59,5 +61,15 @@ func TestAWorkersFileInAWorktreeIsJudged(t *testing.T) {
 	worker := filepath.Join(root, ".journal", "worktrees", "worker-1", "src", "order.py")
 	if judged := judgedFile(root, worker, project); judged != worker {
 		t.Errorf("a worker's file, named from the project, is judged as %q; a worker's edits are then never judged", judged)
+	}
+
+	// The worktree keeps no configuration of its own, and is judged all the same: the folders come from the
+	// project and only the root they are joined to is the worktree's.
+	if err := os.RemoveAll(filepath.Join(root, ".journal", "worktrees", "worker-1", ".commandments")); err != nil {
+		t.Fatal(err)
+	}
+
+	if judged := judgedFile(root, worker, project); judged != worker {
+		t.Errorf("with no configuration of its own the worker's file is judged as %q", judged)
 	}
 }

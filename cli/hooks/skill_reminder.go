@@ -42,14 +42,19 @@ func (SkillReminder) Handle(event Event) Response {
 		return Silent()
 	}
 
-	project, _ := config.Load(event.Root)
+	// The configuration and the project's own rules come from the PROJECT, never from a worktree. A worker has
+	// no copy of its own to keep in step, and a change in the plugin's configuration applies to every worker at
+	// once. What a worktree answers for is the root a relative path is joined to, which is its own checkout.
+	home := projectOf(event.Root)
 
-	enabled, err := project.Enabled(config.InstalledIn(event.Root))
+	project, _ := config.Load(home)
+
+	enabled, err := project.Enabled(config.InstalledIn(home))
 	if err != nil {
 		return Silent()
 	}
 
-	enabled = append(enabled, custom.InForce(event.Root).Enabled(project)...)
+	enabled = append(enabled, custom.InForce(home).Enabled(project)...)
 
 	// A rule of the project's own may name the folders it judges in its own file, so the config is read with what
 	// the rules declare before anything asks which files are looked at or which rules may mark one.
@@ -77,9 +82,13 @@ func (SkillReminder) Handle(event Event) Response {
 		// Against a view of the branch's base every rule can be asked, since the view IS the program; with no
 		// base held the file is judged alone, which only the rules that answer from one file may be asked, and
 		// a base is read in the background so the next edit is answered against the program.
-		marks, whole := AgainstTheProgram(marking, file, project.RulesFor(event.Root, file, enabled), event.ChangedLines(file), event.Root)
+		// The folders a rule names are joined to the checkout the FILE lies in, which for a worker is its own
+		// worktree: the folders are the project's, the root is the file's.
+		in := checkoutOf(event.Root, file)
+
+		marks, whole := AgainstTheProgram(marking, file, project.RulesFor(in, file, enabled), event.ChangedLines(file), event.Root)
 		if !whole {
-			marks = marksIn(marking, file, project.RulesFor(event.Root, file, single), event.ChangedLines(file))
+			marks = marksIn(marking, file, project.RulesFor(in, file, single), event.ChangedLines(file))
 			Warming(event.Root, project)
 		}
 		activity = append(activity, marks...)
@@ -166,17 +175,7 @@ func judgedFile(root, file string, project config.Config) string {
 		return ""
 	}
 
-	// A worker's file lies in a WORKTREE of this project, a checkout of its own inside the project's hidden
-	// folder, so judged from the project it reads as a path outside every declared root and was dropped: a
-	// worker's edits were never judged at all, and the plugin answered its events with nothing. What a file is
-	// judged against is the checkout it lies in, whose config is the same file under its own root.
-	if checkout := git.Root(file); checkout != "" && checkout != strings.TrimRight(root, "/") && git.BelongsTo(checkout, root) {
-		if own, err := config.Load(checkout); err == nil {
-			root, project = checkout, own
-		}
-	}
-
-	if !project.IsJudged(root, file) {
+	if !project.IsJudged(checkoutOf(root, file), file) {
 		return ""
 	}
 
@@ -190,6 +189,36 @@ func judgedFile(root, file string, project config.Config) string {
 	}
 
 	return absolute
+}
+
+// projectOf is the project a run belongs to: the main checkout of the repository the folder lies in, so a
+// worker in a worktree reads the project's configuration and the project's own rules rather than a copy of its
+// own. The folder itself where it lies in no repository.
+func projectOf(folder string) string {
+	if project := git.ProjectRoot(folder); project != "" {
+		return project
+	}
+
+	return folder
+}
+
+// checkoutOf is the root a path the project declares is joined to for this file: the checkout the file lies in,
+// where that is a checkout of this project, and the given root otherwise.
+//
+// A worktree is a checkout of its own, cut inside the project's hidden folder, so a worker's file joined to the
+// PROJECT's root reads as a path outside every declared folder: such a file was dropped before any rule ran, and
+// the plugin answered a worker's events with nothing while a judging of that file found eight sins.
+func checkoutOf(root, file string) string {
+	checkout := git.Root(file)
+	if checkout == "" || checkout == strings.TrimRight(root, "/") {
+		return root
+	}
+
+	if !git.BelongsTo(checkout, projectOf(root)) {
+		return root
+	}
+
+	return checkout
 }
 
 // marksIn are every sin the rules find in the file, each marked touched when it stands on a line the working
