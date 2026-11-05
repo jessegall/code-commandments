@@ -24,3 +24,41 @@ func TestATestsReadIsNoAssumption(t *testing.T) {
 		t.Error("the code indexing the field unguarded was not flagged")
 	}
 }
+
+// TestAFrozenValueObjectClearingAFieldThroughAMoverIsNotPhantom holds the exemption for a value object that
+// cannot assign. A frozen dataclass clears a field by making another of itself with None in its place, which is
+// what dataclasses.replace does and what a project's own mover does, so reading only assignments called such a
+// field one nothing ever sets back to None. Reported as issue 825 from a consumer whose frozen Task clears
+// closed_at through moved().
+func TestAFrozenValueObjectClearingAFieldThroughAMoverIsNotPhantom(t *testing.T) {
+	codebase := pythontest.FromSource(t, map[string]string{
+		"shop/__init__.py": "",
+		"shop/task.py": `from dataclasses import dataclass, replace
+
+
+@dataclass(frozen=True)
+class Task:
+    name: str
+    closed_at: str | None = None
+
+    def closed(self, timestamp: str) -> "Task":
+        return self.moved(closed_at=timestamp)
+
+    def reopened(self) -> "Task":
+        return self.moved(closed_at=None)
+
+    def moved(self, **fields) -> "Task":
+        return replace(self, **fields)
+`,
+		"shop/report.py": `from shop.task import Task
+
+
+def row(task: Task) -> dict:
+    return {"name": task.name, "closed": task.closed_at.upper()}
+`,
+	})
+
+	for _, found := range (pydetectors.PhantomNullableDetector{}).Find(codebase) {
+		t.Errorf("a field the class clears through its own mover is reported as phantom at %s", found.Location())
+	}
+}

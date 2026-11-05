@@ -417,7 +417,32 @@ func (n Node) boundNames() []string {
 
 // ResetsToNone says whether a method of the class other than __init__ sets the attribute back to None.
 func (n Node) ResetsToNone(name string) bool {
-	return slices.ContainsFunc(n.writesOutsideInit(name), func(write Node) bool { return write.Kind() == "Assign" && write.Child("value").IsNone() })
+	if slices.ContainsFunc(n.writesOutsideInit(name), func(write Node) bool { return write.Kind() == "Assign" && write.Child("value").IsNone() }) {
+		return true
+	}
+
+	return slices.ContainsFunc(n.Methods(), func(method Node) bool { return method.handsNoneFor(name) })
+}
+
+// handsNoneFor says whether the method hands None for that name to any call, as a keyword argument.
+//
+// A frozen value object cannot assign to itself: it clears a field by making another of itself with None in its
+// place, which is what dataclasses.replace does and what a project's own mover does. Reading only assignments
+// called such a field one nothing ever sets back to None, so a field genuinely absent half the time was reported
+// as an optional nobody honours (issue 825, a consumer's frozen Task clearing closed_at through moved()).
+func (n Node) handsNoneFor(name string) bool {
+	for _, node := range n.Match.Descendants() {
+		call := Node{Match: node}
+		if call.Kind() != "Call" {
+			continue
+		}
+
+		if value := call.Keyword(name); value.Exists() && value.IsNone() {
+			return true
+		}
+	}
+
+	return false
 }
 
 // writesOutsideInit is every statement of a method other than __init__ that writes the attribute on self.
