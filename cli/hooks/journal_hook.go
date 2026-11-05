@@ -32,6 +32,8 @@ const (
 	advising = "COMMANDMENTS_ADVISING"
 	// pluginSocket is where the journal expects the plugin's service to listen.
 	pluginSocket = "JOURNAL_PLUGIN_SOCKET"
+	// journalRoot is the project the journal runs for, which is the main checkout and never a worker's own tree.
+	journalRoot = "JOURNAL_ROOT"
 	// hooksService is the name the manifest gives this service, which is the name it answers the journal's health
 	// question under: the journal restarts the service that went quiet, so the answer says which one answered.
 	hooksService = "hooks"

@@ -783,3 +783,49 @@ func TestAWorkersCheckoutIsFoundHoweverDeepTheJournalKeepsIt(t *testing.T) {
 		t.Errorf("the moment's folder is %q; the file lies in the checkout at %s", said, deep)
 	}
 }
+
+// TestAPathTheMomentsFolderDoesNotHoldIsReadAgainstTheProject holds the OTHER shape a relative path comes in.
+// A journal names the folder the event happened in — a worker's own worktree — while naming the path relative to
+// the PROJECT, and joining the one to the other makes a path that is nowhere. Left as it came, every question
+// after it is nonsense about a relative path: the file is resolved against the worktree, which does not hold it,
+// and the moment is dropped without a word.
+//
+// Found by the many-trees fuzz, which draws all three shapes the journal sends: every failure it reported was a
+// brand-new file in a worktree announced this way, and an edit of an already-announced one hid it, since the run
+// had been told about that path before.
+func TestAPathTheMomentsFolderDoesNotHoldIsReadAgainstTheProject(t *testing.T) {
+	root, _ := workerProject(t)
+	worktree := filepath.Join(root, ".journal", "worktrees", "worker-1")
+
+	t.Setenv("JOURNAL_ROOT", root)
+
+	moment, known := Moment4Of(map[string]any{
+		"v": 1, "event": "file_edited", "session": "s1", "environment": "main", "agent": 7,
+		"data": map[string]any{
+			"path": filepath.Join(".journal", "worktrees", "worker-1", "src", "order.py"),
+			"kind": "edit", "cwd": worktree,
+			"lines": []any{map[string]any{"line_type": "add", "line": 2, "text": "    def total(self):"}},
+		},
+	})
+	if !known {
+		t.Fatal("the journal's own delivery is no moment")
+	}
+
+	named := MomentOf(moment)
+	if named.File == nil {
+		t.Fatal("the moment names no file at all")
+	}
+
+	own := filepath.Join(worktree, "src", "order.py")
+	if *named.File != own {
+		t.Errorf("the moment names %q; the worktree does not hold that path, and the project does, so it is %s",
+			*named.File, own)
+	}
+
+	// And once the file is a real path, the checkout it lies in is the worktree, which is what the rules' own
+	// folders join to. Left relative, the moment carried the project instead and every rule asked about a
+	// worker's file read it as a file outside the folders the project judges.
+	if named.Cwd != worktree {
+		t.Errorf("the moment's folder is %q, not the worktree the file lies in", named.Cwd)
+	}
+}
