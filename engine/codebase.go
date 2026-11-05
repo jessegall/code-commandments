@@ -136,6 +136,13 @@ func (c *Codebase) Files() []*File {
 	return c.files
 }
 
+// Streams are the streams the codebase was built from, one per language that was read. A reader that keeps a
+// codebase alive and wants another with one file's tree in place of this one's asks for them, since a stream is
+// what the engine is built from and re-parsing a file nothing touched is the cost worth avoiding.
+func (c *Codebase) Streams() []*contract.Stream {
+	return c.streams
+}
+
 // Of is the part of the codebase written in these languages: each file by its own language, so the
 // TypeScript a Vue stream carries is TypeScript, and each stream by the language its bridge wrote.
 func (c *Codebase) Of(languages ...contract.Language) *Codebase {
