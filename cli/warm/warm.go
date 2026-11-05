@@ -11,6 +11,7 @@ package warm
 
 import (
 	"os"
+	"slices"
 	"strconv"
 	"sync"
 	"time"
@@ -18,6 +19,13 @@ import (
 	"github.com/jessegall/code-commandments/contract"
 	"github.com/jessegall/code-commandments/engine"
 )
+
+// Sweep is how long the base trusts itself between re-statings of every file. Between sweeps the edited file
+// alone is checked, which is the file the hook knows about; a file something else changed, a git checkout, a
+// rebase or a formatter, is found at the next sweep. Re-stating every file of a 5286-file tree costs 0.3 to 1.1
+// seconds depending on what else the machine is doing, which is a third of the answer, and an edit cannot pay
+// that to learn what it already knows.
+const Sweep = 30 * time.Second
 
 // Idle is how long a base nobody has asked about is kept. Past it the memory is worth more than the next read:
 // a branch an agent has stopped working on is one nobody will ask about again, and a base is hundreds of
@@ -38,6 +46,11 @@ type Base struct {
 	codebase  *engine.Codebase
 	read      time.Time
 	lastAsked time.Time
+
+	// mu guards swept, which every question about the base writes.
+	mu sync.Mutex
+	// swept is when every file was last re-stated.
+	swept time.Time
 }
 
 // Keeper holds the bases, one per project and branch, and hands out the one a question is about.
@@ -94,6 +107,7 @@ func (k *Keeper) Hold(project, branch string, roots []string, codebase *engine.C
 		codebase:  codebase,
 		read:      k.now(),
 		lastAsked: k.now(),
+		swept:     k.now(),
 	}
 
 	k.mu.Lock()
@@ -160,6 +174,36 @@ func (b *Base) Moved() []string {
 	return moved
 }
 
+// Stale are the files that must be read again before the base answers about this edit: the edited file where it
+// has moved or is new to the base, and every file that has moved under the base when a sweep is due.
+func (b *Base) Stale(edited string, now time.Time) []string {
+	var stale []string
+	if unchanged, known := b.Holds(edited); !known || !unchanged {
+		stale = append(stale, edited)
+	}
+
+	b.mu.Lock()
+	due := now.Sub(b.swept) >= Sweep
+	if due {
+		b.swept = now
+	}
+	b.mu.Unlock()
+
+	if !due {
+		return stale
+	}
+
+	// The named file is checked either way, and the sweep knows nothing of a file the base never read, so the
+	// two answers are joined rather than one replacing the other.
+	for _, moved := range b.Moved() {
+		if moved != edited {
+			stale = append(stale, moved)
+		}
+	}
+
+	return stale
+}
+
 // Holds says whether the file is one of the base's, and whether its content is still what the base read.
 func (b *Base) Holds(path string) (unchanged bool, known bool) {
 	mark, known := b.marks[path]
@@ -183,19 +227,45 @@ func (b *Base) View(rebuilt []*contract.Stream, project string) *engine.Codebase
 		}
 	}
 
+	held := map[string]bool{}
+	for _, stream := range b.streams {
+		for _, file := range stream.Files {
+			held[file.Path] = true
+		}
+	}
+
+	// A file created since the base was read belongs to no stream of it, so it joins the stream of its own
+	// language: without this a new file would be judged as though it did not exist.
+	added := map[contract.Language][]*contract.File{}
+	for _, stream := range rebuilt {
+		for _, file := range stream.Files {
+			if !held[file.Path] {
+				added[stream.Header.Language] = append(added[stream.Header.Language], file)
+			}
+		}
+	}
+
 	var spliced []*contract.Stream
 	for _, stream := range b.streams {
-		held := *stream
-		held.Files = make([]*contract.File, len(stream.Files))
-		copy(held.Files, stream.Files)
+		part := *stream
+		part.Files = make([]*contract.File, len(stream.Files))
+		copy(part.Files, stream.Files)
 
-		for i, file := range held.Files {
+		for i, file := range part.Files {
 			if replacement, changed := fresh[file.Path]; changed {
-				held.Files[i] = replacement
+				part.Files[i] = replacement
 			}
 		}
 
-		spliced = append(spliced, &held)
+		part.Files = append(part.Files, added[stream.Header.Language]...)
+		spliced = append(spliced, &part)
+	}
+
+	// A language the base holds no stream for at all comes in whole.
+	for _, stream := range rebuilt {
+		if !slices.ContainsFunc(b.streams, func(held *contract.Stream) bool { return held.Header.Language == stream.Header.Language }) {
+			spliced = append(spliced, stream)
+		}
 	}
 
 	view := engine.Load(spliced...)

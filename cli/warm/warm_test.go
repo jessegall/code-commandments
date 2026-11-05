@@ -181,3 +181,80 @@ func declared(codebase *engine.Codebase) []string {
 func functions(codebase *engine.Codebase, name string) int {
 	return codebase.WhereFunction().Where(func(match engine.Match) bool { return match.Name() == name }).Count()
 }
+
+// TestTheBaseChecksTheEditedFileBetweenSweeps holds what an edit pays to trust the base. Re-stating every file
+// of a large tree costs a third of the answer, so between sweeps the edited file alone is checked and the rest
+// of the base is trusted; a file something else changed is found at the next sweep.
+func TestTheBaseChecksTheEditedFileBetweenSweeps(t *testing.T) {
+	root, codebase := project(t, map[string]string{
+		"shop/order.py":   "class Order:\n    pass\n",
+		"shop/invoice.py": "class Invoice:\n    pass\n",
+	})
+
+	base := warm.Keep().Hold(root, "main", []string{root}, codebase)
+	order := filepath.Join(root, "shop", "order.py")
+	invoice := filepath.Join(root, "shop", "invoice.py")
+
+	// The first question sweeps, since nothing has been swept yet.
+	now := time.Now()
+	if stale := base.Stale(order, now); len(stale) != 0 {
+		t.Errorf("a base nobody has touched says %v is stale", stale)
+	}
+
+	write(t, invoice, "class Invoice:\n    paid = True\n")
+
+	// Between sweeps the file nobody named is left alone, and the edited one is checked.
+	if stale := base.Stale(order, now.Add(time.Second)); len(stale) != 0 {
+		t.Errorf("between sweeps the base checks more than the edited file: %v", stale)
+	}
+
+	write(t, order, "class Order:\n    paid = True\n")
+
+	if stale := base.Stale(order, now.Add(2*time.Second)); len(stale) != 1 || stale[0] != order {
+		t.Errorf("the edited file is %v, want only %s", stale, order)
+	}
+
+	// Once a sweep is due, what something else changed is found too.
+	stale := base.Stale(order, now.Add(warm.Sweep))
+	if len(stale) != 2 {
+		t.Errorf("the sweep finds %v, want both files", stale)
+	}
+}
+
+// TestAFileCreatedSinceTheBaseWasReadIsInTheView holds the other half of a splice: a file the base never had is
+// added to the stream of its language, so a new file is judged rather than read as though it did not exist.
+func TestAFileCreatedSinceTheBaseWasReadIsInTheView(t *testing.T) {
+	root, codebase := project(t, map[string]string{"shop/order.py": "class Order:\n    pass\n"})
+
+	base := warm.Keep().Hold(root, "main", []string{root}, codebase)
+
+	fresh := filepath.Join(root, "shop", "refund.py")
+	write(t, fresh, "class Refund:\n    pass\n")
+
+	if stale := base.Stale(fresh, time.Now().Add(time.Second)); len(stale) != 1 || stale[0] != fresh {
+		t.Fatalf("a file the base never had is %v, want only %s", stale, fresh)
+	}
+
+	rebuilt, err := scan.OneFile(fresh).Load()
+	if err != nil {
+		t.Fatalf("the python bridge cannot run here: %v", err)
+	}
+
+	view := base.View(rebuilt.Streams(), root)
+
+	if named := declared(view); len(named) != 2 {
+		t.Errorf("the view declares %v, want the base's class and the new one", named)
+	}
+}
+
+// write puts the text in the file and moves its time on, for a filesystem whose stamp is too coarse to tell two
+// writes of one second apart.
+func write(t *testing.T, path, text string) {
+	t.Helper()
+
+	if err := os.WriteFile(path, []byte(text), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	touch(t, path)
+}

@@ -2,6 +2,7 @@ package hooks
 
 import (
 	"sync"
+	"time"
 
 	"github.com/jessegall/code-commandments/cli/config"
 	"github.com/jessegall/code-commandments/cli/git"
@@ -39,7 +40,7 @@ func AgainstTheProgram(marking Marking, file string, rules []detectors.Detector,
 		return nil, false
 	}
 
-	moved := base.Moved()
+	moved := base.Stale(file, time.Now())
 	if len(moved) > drifted {
 		kept.Drop(held.project, held.branch)
 
