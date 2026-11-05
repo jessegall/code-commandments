@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/jessegall/code-commandments/cli/config"
 	"github.com/jessegall/code-commandments/cli/git"
@@ -161,6 +162,12 @@ func TestOnlyTheServiceReadsABase(t *testing.T) {
 	Warming(root, settings)
 	if !warming(t) {
 		t.Error("the service did not begin reading a base")
+	}
+
+	// The read runs in the background, in a folder this test is about to have deleted under it, so the test
+	// waits for it rather than racing its own cleanup.
+	for until := time.Now().Add(time.Minute); warming(t) && time.Now().Before(until); {
+		time.Sleep(20 * time.Millisecond)
 	}
 }
 

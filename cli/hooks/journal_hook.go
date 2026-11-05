@@ -356,6 +356,15 @@ func (s JournalServe) Run(in *cli.Input, console cli.Console) (int, error) {
 	// then ask the rules that read more than the file they report in, which a run judging one file cannot.
 	Serves()
 
+	// And a judging asked for from a terminal is answered against that same tree, on a socket named from the
+	// project so a run that was handed nothing still finds this service. One it cannot listen on costs only
+	// that: such a run reads the tree itself, as it always did.
+	if judging, listening := Judging(root); listening {
+		defer judging.Close()
+
+		go serveJudging(judging, root)
+	}
+
 	serve(listener, func() bool { return stamp(root) == started }, startAdviser(adviseAsked))
 
 	return 0, nil

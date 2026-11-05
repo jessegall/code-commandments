@@ -1,0 +1,72 @@
+package hooks
+
+import (
+	"strings"
+	"testing"
+
+	"github.com/jessegall/code-commandments/cli/config"
+	"github.com/jessegall/code-commandments/cli/git"
+	"github.com/jessegall/code-commandments/cli/scan"
+	"github.com/jessegall/code-commandments/cli/source"
+	"github.com/jessegall/code-commandments/cli/warm"
+)
+
+// TestAJudgingAskedForOnTheSocketIsAnsweredFromTheTreeTheServiceHolds holds the command's half of the warm tree.
+// A terminal run is handed no socket and no data folder, only the folder it was started in, so the socket is
+// named from the project's path as a language bridge's is: the run computes the same name, asks, and the service
+// judges against the tree it already holds instead of the run reading 1518 or 5286 files for itself.
+//
+// The sin it names is one only a cross-file read can find, so the answer also says the judging was done against
+// the program and not against one file.
+func TestAJudgingAskedForOnTheSocketIsAnsweredFromTheTreeTheServiceHolds(t *testing.T) {
+	root, _ := migrationProject(t)
+
+	project := git.ProjectRoot(root)
+	branch := git.CurrentBranch(project)
+
+	settings, _ := config.Load(root)
+	codebase, err := scan.Walk([]string{root}, source.Under(root, settings.Excluded)).Load()
+	if err != nil || codebase == nil {
+		t.Fatalf("the python bridge cannot run here: %v", err)
+	}
+
+	kept.Hold(project, branch, []string{root}, codebase)
+	t.Cleanup(func() { kept.Drop(project, branch) })
+
+	listener, listening := Judging(root)
+	if !listening {
+		t.Fatalf("the service cannot listen on %s", warm.Socket(root))
+	}
+	defer listener.Close()
+
+	go serveJudging(listener, root)
+
+	answer, asked := warm.Asked(root, warm.Request{
+		Judge: []string{root, "--no-checklist", "--sin=migration-by-its-parents"},
+		In:    root,
+	})
+	if !asked {
+		t.Fatal("the run found no service on the socket named from the project")
+	}
+
+	// The console names the rule and the place, which is what a reader of a judging sees.
+	for _, said := range []string{"MigrationByItsParentsDetector", "m004_drop_fades.py:4"} {
+		if !strings.Contains(answer.Out, said) {
+			t.Errorf("the answer does not name %s:\n%s%s", said, answer.Out, answer.Err)
+		}
+	}
+
+	if answer.Code != 1 {
+		t.Errorf("the answer exits %d, want 1 for a run that found a sin", answer.Code)
+	}
+}
+
+// TestARunFindsNoServiceWhereNoneListens holds the fallback: nothing listening is no answer, and the run reads
+// the tree itself as every run did before one was held.
+func TestARunFindsNoServiceWhereNoneListens(t *testing.T) {
+	root, _ := migrationProject(t)
+
+	if _, asked := warm.Asked(root, warm.Request{Judge: []string{root}, In: root}); asked {
+		t.Error("a run was answered by a service nobody started")
+	}
+}

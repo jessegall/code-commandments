@@ -23,6 +23,7 @@ import (
 	"github.com/jessegall/code-commandments/cli/scan"
 	"github.com/jessegall/code-commandments/cli/scope"
 	"github.com/jessegall/code-commandments/cli/source"
+	"github.com/jessegall/code-commandments/cli/warm"
 	"github.com/jessegall/code-commandments/cli/workspace"
 	"github.com/jessegall/code-commandments/detectors"
 	"github.com/jessegall/code-commandments/engine"
@@ -41,6 +42,34 @@ type Command struct {
 
 	// Scaffoldable maps a sin to the command that scaffolds the helper its fix uses.
 	Scaffoldable map[string]string
+
+	// In is the folder the run is read from: the project, the config and the scope are all read from it. Empty
+	// is the process's own folder, which is what a terminal run means; a caller that judges on someone else's
+	// behalf names theirs, as the service does for a run in a folder that is not the service's own.
+	In string
+
+	// Reading is how the codebase is read. Empty reads it from disk, which is what a run of its own must do;
+	// a caller that already holds the tree hands it over instead, which is the whole saving of a tree kept
+	// warm: a run that would read 5286 files reads the one it changed.
+	Reading func(sources scan.Sources) (*engine.Codebase, error)
+}
+
+// folder is where the run is read from: the one a caller named, else the process's own.
+func (c Command) folder() (string, error) {
+	if c.In != "" {
+		return c.In, nil
+	}
+
+	return os.Getwd()
+}
+
+// read is the codebase the sources describe: the caller's own where it holds one, else read from disk.
+func (c Command) read(sources scan.Sources) (*engine.Codebase, error) {
+	if c.Reading != nil {
+		return c.Reading(sources)
+	}
+
+	return sources.Load()
 }
 
 // Names are the verbs it answers to.
@@ -81,13 +110,25 @@ func (Command) Help() help.Help {
 
 // Run judges the path the arguments name.
 func (c Command) Run(in *cli.Input, console cli.Console) (int, error) {
-	cwd, err := os.Getwd()
+	cwd, err := c.folder()
 	if err != nil {
 		return 0, err
 	}
 
 	space := workspace.At(workspace.ProjectRoot(cwd), "")
 	options := optionsOf(in, space)
+
+	// A service holding this project's tree answers from memory, where this run would read the tree: 25 seconds
+	// for 1518 files and 55 for 5286. So it is asked first, and only a run that IS the service's own goes on to
+	// read anything, which is what a codebase handed in says.
+	if c.Reading == nil && !options.list {
+		if answer, asked := warm.Asked(space.Root(), warm.Request{Judge: in.Raw(), In: cwd}); asked {
+			fmt.Fprint(console.Out, answer.Out)
+			fmt.Fprint(console.Err, answer.Err)
+
+			return answer.Code, nil
+		}
+	}
 
 	if options.list {
 		return list(cwd, console)
@@ -214,7 +255,7 @@ func (c Command) judge(options options, selected []detectors.Detector, judged co
 
 	read := sources.Only(slices.DeleteFunc(slices.Clone(languages), func(language source.Language) bool { return language == source.CSharp })...)
 	progress.Plan(read.Bridged() + len(whole))
-	codebase, err := read.Reporting(progress.Phase("reading")).Load()
+	codebase, err := c.read(read.Reporting(progress.Phase("reading")))
 	parseSeconds := time.Since(parsing).Seconds()
 	var incomplete scan.Incomplete
 	if errors.As(err, &incomplete) {
