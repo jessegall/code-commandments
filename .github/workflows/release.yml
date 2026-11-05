@@ -127,7 +127,13 @@ jobs:
         # twenty newest can no longer be installed, which a consumer answers by moving to one that is.
         run: |
           gh api repos/${{ github.repository }}/releases --paginate -q '.[].id' | tail -n +21 | while read -r release; do
-            gh api "repos/${{ github.repository }}/releases/$release/assets" --paginate -q '.[].id' | while read -r asset; do
+            assets="$(gh api "repos/${{ github.repository }}/releases/$release/assets" --paginate -q '.[].id')"
+
+            # Every release older than the first one with nothing left was pruned by an earlier run, so the walk
+            # stops there. Without this it asked after all 170 of them on every release, minutes of nothing.
+            [ -n "$assets" ] || break
+
+            printf '%s\n' "$assets" | while read -r asset; do
               gh api -X DELETE "repos/${{ github.repository }}/releases/assets/$asset" >/dev/null || true
             done
           done
