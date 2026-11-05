@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/jessegall/code-commandments/cli"
+	"github.com/jessegall/code-commandments/cli/git"
 	"github.com/jessegall/code-commandments/cli/help"
 )
 
@@ -292,8 +293,15 @@ func Moment4Of(line map[string]any) (map[string]any, bool) {
 	// journal runs from. Judged against the main checkout, every one of a worker's files lies outside the folders
 	// the project declares, so every edit it makes reads as a file the project does not judge and the worker is
 	// told nothing of its own sins until somebody merges them.
-	if worktree := worktreeOf(asText(tool["file"])); worktree != "" {
-		agent["cwd"] = worktree
+	// Asked of GIT, not of the path's own words. The journal lays a worker's tree out under the project, and how
+	// deep it lies is the journal's business: one keeps them at .journal/worktrees/<n>, another at
+	// .journal/worktrees/<environment>/worker-<n>. Read off the path, the first folder below worktrees was taken
+	// for the checkout, which for the second layout is the environment's folder and no checkout at all, so every
+	// edit of every worker in it was judged against the main checkout.
+	if checkout := git.Root(asText(tool["file"])); checkout != "" && checkout != asText(agent["cwd"]) {
+		if git.BelongsTo(checkout, asText(agent["cwd"])) {
+			agent["cwd"] = checkout
+		}
 	}
 
 	// The event's own data rides along: the edit the journal already worked out is in it, and a judge that reads it

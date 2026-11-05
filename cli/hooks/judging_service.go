@@ -2,6 +2,7 @@ package hooks
 
 import (
 	"bufio"
+	"fmt"
 	"bytes"
 	"errors"
 	"net"
@@ -84,15 +85,15 @@ func judgedFor(request warm.Request, root string) warm.Answer {
 	// costs 17 to 55 seconds of it, and this process answers every hook of the session: a worker that ran a
 	// judging of its own worktree, whose files no base holds, made two later edits of its own wait two minutes
 	// behind that read. The run pays the read in its own process instead, where it blocks nobody.
-	declined := false
+	declined := ""
 
 	code, err := (judge.Command{
 		In:      request.In,
 		Reading: heldOrDeclined(root, request.In, &declined),
 	}).Run(cli.InputOf("judge", request.Judge...), cli.Console{Out: &out, Err: &errs})
 
-	if declined {
-		return warm.Answer{Declined: true}
+	if declined != "" {
+		return warm.Answer{Declined: true, Because: declined}
 	}
 
 	if err != nil {
@@ -118,11 +119,11 @@ const spliced = 200
 // still cost an edit 6 to 12 seconds of parsing while three hand-ins ran. What a worktree differs by git says
 // exactly, and warm.Base.ViewFrom already splices those files in over the project's own by the path each has
 // under its own checkout.
-func heldOrDeclined(root, in string, declined *bool) func(scan.Sources) (*engine.Codebase, error) {
+func heldOrDeclined(root, in string, declined *string) func(scan.Sources) (*engine.Codebase, error) {
 	return func(sources scan.Sources) (*engine.Codebase, error) {
 		named, base, held := baseFor(root)
 		if !held {
-			*declined = true
+			*declined = "no tree is held for " + root + " on its branch yet"
 
 			return engine.Load(), nil
 		}
@@ -131,7 +132,7 @@ func heldOrDeclined(root, in string, declined *bool) func(scan.Sources) (*engine
 		// decline every run and, before that, made every run read the tree here rather than use the base.
 		asked := sources.Files(source.Languages...)
 		if len(asked) == 0 {
-			*declined = true
+			*declined = "the run reads no file of any language the tree holds"
 
 			return engine.Load(), nil
 		}
@@ -143,15 +144,22 @@ func heldOrDeclined(root, in string, declined *bool) func(scan.Sources) (*engine
 		checkout := checkoutOf(named.project, in)
 		for _, walked := range sources.Roots() {
 			if _, inside := warm.Under(checkout, walked); !inside {
-				*declined = true
+				*declined = walked + " lies outside " + checkout + ", so this tree says nothing about it"
 
 				return engine.Load(), nil
 			}
 		}
 
 		read, gone, covered := differingFrom(base, named, checkout, asked)
-		if !covered || len(read) > spliced {
-			*declined = true
+		if !covered {
+			*declined = checkout + " shares no history with the branch the tree was read at, " + named.branch
+
+			return engine.Load(), nil
+		}
+
+		if len(read) > spliced {
+			*declined = fmt.Sprintf("%d files differ from the tree, past the %d this service reads for one judging",
+				len(read), spliced)
 
 			return engine.Load(), nil
 		}
@@ -233,7 +241,7 @@ func counterpartIn(checkout, project, file string) string {
 // worktree under a folder the project excludes, so excluding again would read none of them. A file that is gone
 // is left out rather than read, since nothing announces a shell's removals and a base that still holds one
 // answers about code nobody has any more.
-func viewOf(base *warm.Base, named branchRoot, checkout string, read, gone []string, declined *bool) (*engine.Codebase, error) {
+func viewOf(base *warm.Base, named branchRoot, checkout string, read, gone []string, declined *string) (*engine.Codebase, error) {
 
 	if len(read) == 0 && len(gone) == 0 {
 		return base.Codebase(), nil
@@ -256,7 +264,7 @@ func viewOf(base *warm.Base, named branchRoot, checkout string, read, gone []str
 	// alone. Answered from the base, a worker's judging would be a green tick over every file the worker wrote,
 	// which the base does not hold: the worst answer of the three, and the one this whole path exists to avoid.
 	if err != nil || rebuilt == nil {
-		*declined = true
+		*declined = fmt.Sprintf("the %d files that differ could not be read: %v", len(read), err)
 
 		return engine.Load(), nil
 	}

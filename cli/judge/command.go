@@ -54,6 +54,15 @@ type Command struct {
 	Reading func(sources scan.Sources) (*engine.Codebase, error)
 }
 
+// whyNotServed is why this run is reading the tree rather than being answered from the one a session keeps up.
+func whyNotServed(answer warm.Answer) string {
+	if answer.Because != "" {
+		return answer.Because
+	}
+
+	return "no service answered, so there is none up for this project"
+}
+
 // folder is where the run is read from: the one a caller named, else the process's own.
 func (c Command) folder() (string, error) {
 	if c.In != "" {
@@ -137,11 +146,23 @@ func (c Command) Run(in *cli.Input, console cli.Console) (int, error) {
 			serving.Project = space.Root()
 		}
 
-		if answer, asked := warm.Asked(serving.Project, warm.Request{Judge: in.Raw(), In: cwd}); asked {
+		answer, asked := warm.Asked(serving.Project, warm.Request{Judge: in.Raw(), In: cwd})
+		if asked {
+			if cli.Timed() {
+				fmt.Fprintln(console.Err, "· judged against the tree this session keeps up, so this run read nothing")
+			}
+
 			fmt.Fprint(console.Out, answer.Out)
 			fmt.Fprint(console.Err, answer.Err)
 
 			return answer.Code, nil
+		}
+
+		// A run that reads the tree itself where a service holds one is the single biggest thing that can
+		// happen to its time — minutes against seconds — and from outside the two are indistinguishable. So it
+		// says which it did, and why, whenever it is asked to account for itself.
+		if cli.Timed() {
+			fmt.Fprintln(console.Err, "· this run reads the tree itself: "+whyNotServed(answer))
 		}
 	}
 

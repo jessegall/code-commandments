@@ -34,6 +34,10 @@ type Answer struct {
 	Err      string `json:"err"`
 	Code     int    `json:"code"`
 	Declined bool   `json:"declined,omitempty"`
+	// Because is why a judging was declined, in plain words, for the run to say when it is asked to account for
+	// its time. Without it a run that read 6,000 files and one that was answered from memory look identical
+	// from outside, and a consumer whose judging took two minutes could only guess which had happened.
+	Because string `json:"because,omitempty"`
 }
 
 // Asked is the service's answer to a judging, and false where no service answered: nothing listening, a service
@@ -69,8 +73,12 @@ func Asked(project string, request Request) (Answer, bool) {
 	}
 
 	var answer Answer
-	if err := json.Unmarshal(line, &answer); err != nil || answer.Declined {
+	if err := json.Unmarshal(line, &answer); err != nil {
 		return Answer{}, false
+	}
+
+	if answer.Declined {
+		return answer, false
 	}
 
 	return answer, true

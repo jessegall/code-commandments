@@ -1044,7 +1044,7 @@ func (c *stressCheckout) recuts(t *testing.T) {
 		return
 	}
 
-	cut := []string{"worktree", "add", "-q", "-b", fmt.Sprintf("worker-%d-%d", c.Named, c.draw.Intn(1000)), c.At}
+	cut := []string{"worktree", "add", "-q", "-b", fmt.Sprintf("worker-%d-cut-%d-%d", c.Named, c.at, c.wrote), c.At}
 	if out, err := exec.Command("git", append([]string{"-C", c.Project}, cut...)...).CombinedOutput(); err != nil {
 		t.Fatalf("the worktree %s could not be cut again: %s", c.At, out)
 	}
@@ -1090,7 +1090,7 @@ func (c *stressCheckout) abandons(t *testing.T) {
 		t.Logf("worktrees were not pruned: %s", out)
 	}
 
-	cut := []string{"worktree", "add", "-q", "-b", fmt.Sprintf("worker-%d-again-%d", c.Named, c.draw.Intn(1000)), c.At}
+	cut := []string{"worktree", "add", "-q", "-b", fmt.Sprintf("worker-%d-again-%d-%d", c.Named, c.at, c.wrote), c.At}
 	if out, err := exec.Command("git", append([]string{"-C", c.Project}, cut...)...).CombinedOutput(); err != nil {
 		t.Fatalf("the worktree %s could not be cut again: %s", c.At, out)
 	}
@@ -1184,6 +1184,13 @@ func (c *stressCheckout) cuts(t *testing.T) {
 func (c *stressCheckout) deletes(t *testing.T) {
 	file := c.one()
 	if file == "" {
+		return
+	}
+
+	// Only a file the run has already been TOLD about. An answer is drained moves after it was given, since the
+	// service judges on its own goroutine, so deleting a file whose answer is still coming makes a right answer
+	// look like one naming a file that is not there — which is the harness reading its own race as a fault.
+	if !stressWasTold(stressUnder(c.Project, file), stressUnder(c.At, file)) {
 		return
 	}
 
@@ -1298,7 +1305,7 @@ func (c *stressCheckout) awaited(t *testing.T, file string, owed bool) []map[str
 	// out by somebody else having picked its answer up first.
 	var mine []map[string]any
 
-	for until := time.Now().Add(stressWaits); time.Now().Before(until); time.Sleep(20 * time.Millisecond) {
+	for until := time.Now().Add(*stressWaits); time.Now().Before(until); time.Sleep(20 * time.Millisecond) {
 		mine = append(mine, stressTake(t)...)
 
 		if !owed || stressWasTold(stressUnder(c.Project, file), stressUnder(c.At, file)) {
@@ -1338,30 +1345,47 @@ func stressWasTold(paths ...string) bool {
 	return false
 }
 
-// stressDrain takes what the queue holds, once nothing in it is half written. The journal's own queue writes a
-// file under a temporary name and renames it, so a drain that lands mid-write sees a name it would miss: here
-// that is a race with a service writing all the while, not a queue in a bad state, so it is waited out.
+// stressDrain takes the answers the queue holds, by their own names only. The journal's queue writes a file
+// under a temporary name and renames it, so a drain lands mid-write all the time while a service is running: a
+// half-written file is simply not an answer yet, and the next drain takes it. Waiting for one to settle was not
+// enough, since another appears between the look and the read.
 func stressDrain(t *testing.T, data string) []map[string]any {
 	t.Helper()
 
 	queue, _ := Queue4In(data)
+	files, _ := filepath.Glob(filepath.Join(queue.Path(), "*.json"))
+	sort.Strings(files)
 
-	for until := time.Now().Add(10 * time.Second); time.Now().Before(until); time.Sleep(20 * time.Millisecond) {
-		half, _ := filepath.Glob(filepath.Join(queue.Path(), "*.tmp"))
-		if len(half) == 0 {
-			break
+	var taken []map[string]any
+
+	for _, path := range files {
+		text, err := os.ReadFile(path)
+		if err != nil {
+			continue
+		}
+
+		var answer map[string]any
+		if json.Unmarshal(text, &answer) != nil {
+			continue
+		}
+
+		taken = append(taken, answer)
+
+		if err := os.Remove(path); err != nil {
+			t.Fatal(err)
 		}
 	}
 
-	return drained(t, data)
+	return taken
 }
 
 // stressWaits is how long a move waits for the adviser to work its moment out before saying it was answered with
 // nothing. It has to outlast a DEEP queue, not assert on one: the adviser is a single goroutine working every
 // checkout's moments in turn, and a worktree's judging is seconds, so a dozen agents moving at once can leave a
 // moment waiting for a long while and be perfectly right about it. Thirty seconds was not enough and read as the
-// plugin answering nothing, which a probe of the same shape on a quiet service disproved.
-const stressWaits = 3 * time.Minute
+// plugin answering nothing, which a probe of the same shape on a quiet service disproved; it is a flag so a run
+// can tell a plugin that is silent from one that is merely behind.
+var stressWaits = flag.Duration("stress.waits", 3*time.Minute, "how long a move waits for its own answer before calling the plugin silent")
 
 // lines is how many lines the text holds.
 func lines(text string) int {

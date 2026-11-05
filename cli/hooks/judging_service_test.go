@@ -328,7 +328,7 @@ func TestAFileAWorkerDeletedIsNotInItsProgram(t *testing.T) {
 	stands := filepath.Join(root, "src", "order.py")
 
 	// While it is there, the worker's own copy is what the program holds, and the project's is not.
-	reading := heldOrDeclined(root, worktree, new(bool))
+	reading := heldOrDeclined(root, worktree, new(string))
 
 	codebase, err := reading(scan.Walk([]string{filepath.Join(worktree, "src")}, source.Excluded{}))
 	if err != nil || codebase == nil {

@@ -745,3 +745,41 @@ func TestAPathIsReadAgainstTheFolderTheJournalNames(t *testing.T) {
 		t.Errorf("an absolute path was not left as it came: %v", said.File)
 	}
 }
+
+// TestAWorkersCheckoutIsFoundHoweverDeepTheJournalKeepsIt holds the checkout a file lies in to GIT rather than to
+// the path's own words. How deep a journal keeps its workers' trees is its own business: one keeps them at
+// .journal/worktrees/worker-1, another at .journal/worktrees/development/worker-1. Read off the path, the first
+// folder below worktrees was taken for the checkout, which in the second layout is the environment's folder and
+// no checkout at all — so every edit of every worker in it was judged against the main checkout, and a worker
+// was told nothing of its own sins.
+func TestAWorkersCheckoutIsFoundHoweverDeepTheJournalKeepsIt(t *testing.T) {
+	root := t.TempDir()
+
+	resolved, err := filepath.EvalSymlinks(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	root = resolved
+
+	deep := filepath.Join(root, ".journal", "worktrees", "development", "worker-1")
+
+	wrote(t, root, map[string]string{"src/order.py": "class Order:\n    pass\n"})
+	gitIn(t, root, "init", "-q", "-b", "main")
+	gitIn(t, root, "-c", "user.email=t@t", "-c", "user.name=t", "add", "-A")
+	gitIn(t, root, "-c", "user.email=t@t", "-c", "user.name=t", "commit", "-qm", "the project")
+	gitIn(t, root, "worktree", "add", "-q", "-b", "a-worker", deep)
+
+	t.Setenv("JOURNAL_ROOT", root)
+
+	moment, known := Moment4Of(map[string]any{
+		"v": 1, "event": "file_edited", "session": "s1", "environment": "development", "agent": 1,
+		"data": map[string]any{"path": filepath.Join(deep, "src", "order.py"), "kind": "edit"},
+	})
+	if !known {
+		t.Fatal("the delivery is no moment")
+	}
+
+	if said := MomentOf(moment).Cwd; said != deep {
+		t.Errorf("the moment's folder is %q; the file lies in the checkout at %s", said, deep)
+	}
+}
