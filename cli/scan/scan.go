@@ -347,17 +347,42 @@ func (s Sources) Files(languages ...source.Language) []string {
 // second answer to a question already answered, and the one that got it wrong in a worktree. The git lookup
 // stays for a run the journal did not start, where nobody has told us anything.
 func keptFor(kind string, roots []string) (*bridge.Server, bool) {
-	project, told := workspace.JournalProject()
-	if !told {
-		cwd, _ := os.Getwd()
-		project = workspace.SettingsRoot(workspace.ProjectRoot(cwd))
-	}
-
-	if !within(project, roots) {
+	project, found := projectOf(roots)
+	if !found {
 		return nil, false
 	}
 
 	return bridge.Service(kind, project)
+}
+
+// projectOf is whose service a run belongs to: the project the roots it reads lie in.
+//
+// The journal is asked first, and it is right whenever the run reads the checkout it started us in. It is the
+// WRONG answer for a run pointed at another project, which is an ordinary thing to do — an agent judging a tree
+// beside its own, a calibration over a consumer's sources — and until this took the roots into account, such a
+// run named a project the roots do not lie in, found no service, and started a bridge of its own: measured at 39
+// seconds for one Python file of a 5286-file tree against 8.7 the moment the right project was named. A project
+// named by someone who could not know what this run reads is no answer; the roots answer for themselves.
+func projectOf(roots []string) (string, bool) {
+	cwd, _ := os.Getwd()
+
+	var named []string
+	if project, told := workspace.JournalProject(); told {
+		named = append(named, project)
+	}
+	named = append(named, workspace.SettingsRoot(workspace.ProjectRoot(cwd)))
+
+	if len(roots) > 0 {
+		named = append(named, workspace.SettingsRoot(workspace.ProjectRoot(roots[0])))
+	}
+
+	for _, project := range named {
+		if within(project, roots) {
+			return project, true
+		}
+	}
+
+	return "", false
 }
 
 // sayUnreadable says, on STDERR, which classes the scanned project's own loader failed on: each stays outside the
