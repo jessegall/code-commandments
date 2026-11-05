@@ -1,6 +1,7 @@
 package hooks
 
 import (
+	"strings"
 	"sync"
 	"time"
 
@@ -37,6 +38,16 @@ const drifted = 25
 func AgainstTheProgram(marking Marking, file string, rules []detectors.Detector, changed git.ChangedLines, root string) ([]SinMark, bool) {
 	held, base, ok := baseFor(root)
 	if !ok {
+		return nil, false
+	}
+
+	// A file of another checkout of this project, a worker's worktree, is not the base's file: its path differs
+	// from the base's copy of the same source, so splicing it in would leave the program holding BOTH, the
+	// base's older copy and the worker's, and a rule that reads a recurrence or a declaration would answer
+	// against two of everything the worker has changed. Until an overlay maps a checkout's files onto the
+	// base's by their relative path, such a file is judged alone, which is what every edit was answered by
+	// before a tree was held.
+	if checkout := git.Root(file); checkout != "" && checkout != strings.TrimRight(held.project, "/") {
 		return nil, false
 	}
 
