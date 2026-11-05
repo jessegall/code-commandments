@@ -61,11 +61,23 @@ func AgainstTheProgram(marking Marking, file string, rules []detectors.Detector,
 
 // marksOver are the marks the rules find in that one file of the codebase. Every rule is asked, since the
 // codebase is the whole program; only a finding IN the edited file is this edit's mark.
+//
+// Each rule is asked about the edited file alone (Reporting), so its query walks that file's nodes rather than
+// every file's while its checks still read the whole program. A rule that weighs the candidates of the whole
+// program to reach its verdict is asked about everything, since its answer about this file is decided by every
+// other candidate.
 func marksOver(codebase *engine.Codebase, marking Marking, file string, rules []detectors.Detector, changed git.ChangedLines) []SinMark {
+	narrowed := codebase.Reporting(file)
+
 	var marks []SinMark
 
 	for _, rule := range rules {
-		for _, match := range safely(rule, codebase) {
+		asked := narrowed
+		if _, weighs := rule.(detectors.Aggregating); weighs {
+			asked = codebase
+		}
+
+		for _, match := range safely(rule, asked) {
 			if match.File() != file {
 				continue
 			}

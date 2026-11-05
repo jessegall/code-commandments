@@ -11,7 +11,7 @@ func (c *Codebase) Where(check Check) *Query {
 func (c *Codebase) WhereKind(kinds ...string) *Query {
 	return &Query{selected: func(yield func(Match) bool) {
 		for _, kind := range kinds {
-			for _, file := range c.files {
+			for _, file := range c.opened() {
 				for _, node := range file.Nodes() {
 					if node.Kind == kind && !yield(Match{node: node, file: file}) {
 						return
@@ -55,7 +55,7 @@ func (c *Codebase) WhereAssign() *Query {
 // nodes is a query over every node of every file, in file and pre-order.
 func (c *Codebase) nodes() *Query {
 	return &Query{selected: func(yield func(Match) bool) {
-		for _, file := range c.files {
+		for _, file := range c.opened() {
 			for _, node := range file.Nodes() {
 				if !yield(Match{node: node, file: file}) {
 					return

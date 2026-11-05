@@ -18,11 +18,14 @@ type Codebase struct {
 	streams  []*contract.Stream
 	files    []*File
 	read     func(path string) ([]byte, error)
-	analyses sync.Map
+	analyses *sync.Map
 	// scanned are the folders and files the scan was pointed at, which a path is judged from.
 	scanned []string
 	// project is the folder the scan was read in, which a rule's path pattern is read from.
 	project string
+	// reporting are the files a selector opens over, where a reader has narrowed the codebase to them. Empty
+	// is every file, which is what a judging of a whole tree asks for.
+	reporting map[string]bool
 }
 
 // Filler fills the facts the engine owns for one language, once every file of the codebase has been read.
@@ -91,7 +94,7 @@ func ReadThrough(contents map[string]string) func(path string) ([]byte, error) {
 
 // New is the codebase the streams describe, its sources read through read.
 func New(read func(path string) ([]byte, error), streams ...*contract.Stream) *Codebase {
-	codebase := &Codebase{streams: streams, read: read}
+	codebase := &Codebase{streams: streams, read: read, analyses: &sync.Map{}}
 	for _, stream := range streams {
 		for _, file := range stream.Files {
 			codebase.files = append(codebase.files, &File{File: file, codebase: codebase, stream: stream, read: read})
@@ -146,7 +149,7 @@ func (c *Codebase) Streams() []*contract.Stream {
 // Of is the part of the codebase written in these languages: each file by its own language, so the
 // TypeScript a Vue stream carries is TypeScript, and each stream by the language its bridge wrote.
 func (c *Codebase) Of(languages ...contract.Language) *Codebase {
-	part := &Codebase{read: c.read}
+	part := &Codebase{read: c.read, analyses: &sync.Map{}, reporting: c.reporting}
 	for _, stream := range c.streams {
 		if slices.Contains(languages, stream.Header.Language) {
 			part.streams = append(part.streams, stream)
@@ -159,6 +162,46 @@ func (c *Codebase) Of(languages ...contract.Language) *Codebase {
 	}
 
 	return part
+}
+
+// Reporting is the codebase with its selectors opening over these files alone, and everything else whole: the
+// same trees, the same declarations, the same whole-program analyses, memoised where this codebase has them
+// already.
+//
+// It is how one edit is judged against the program. A rule's Find walks every node of the codebase and answers
+// with every finding anywhere, so a check of one edited file either read that file as though it were the program
+// — which is wrong for every rule that follows a chain of parents, a caller or a recurrence — or walked 5286
+// files to keep the findings of one. Narrowed to the edited file, the WALK is the file's and the ANSWERS are
+// still the program's, which is 3.32s against the fraction of it one file costs.
+//
+// A rule whose verdict weighs the candidates of the whole program (detectors.Aggregating) must not be narrowed:
+// its answer about one file is decided by every other candidate, so it is given the codebase whole.
+func (c *Codebase) Reporting(paths ...string) *Codebase {
+	narrowed := map[string]bool{}
+	for _, path := range paths {
+		narrowed[path] = true
+	}
+
+	part := *c
+	part.reporting = narrowed
+
+	return &part
+}
+
+// opened are the files a selector walks: the ones a reader narrowed the codebase to, else every file.
+func (c *Codebase) opened() []*File {
+	if len(c.reporting) == 0 {
+		return c.files
+	}
+
+	var narrowed []*File
+	for _, file := range c.files {
+		if c.reporting[file.Path] {
+			narrowed = append(narrowed, file)
+		}
+	}
+
+	return narrowed
 }
 
 // Declarations is every declaration the symbol id names: one, or several for a TypeScript overload set,
