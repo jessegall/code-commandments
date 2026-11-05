@@ -250,7 +250,7 @@ func differingFrom(base *warm.Base, named branchRoot, checkout string, asked []s
 	// a checkout's file stands in for is what the base is asked about, so a worktree's thousand files are not
 	// all "new" merely for lying under another root.
 	differs.Asked = map[string]string{}
-	differs.Tree = fmt.Sprintf("the tree holds %v and was read over %v", base.Languages(), base.Roots())
+	differs.Tree = fmt.Sprintf("the tree holds %d files of %v, read over %v", base.Files(), base.Languages(), base.Roots())
 
 	for _, file := range asked {
 		// A file of a language the tree holds nothing of is not a file it failed to read: nothing will ever put

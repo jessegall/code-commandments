@@ -397,7 +397,7 @@ func TestADeclineSaysWhichOfTheThreeMadeTheFilesDiffer(t *testing.T) {
 		Unread: []string{"/p/.agents/skills/x.py", "/p/.agents/skills/y.py", "/p/.agents/skills/z.py"},
 		Own:    []string{"/p/src/b.py", "/p/src/c.py"},
 		Asked:  map[string]string{"/p/.agents/skills/x.py": "/project/.agents/skills/x.py"},
-		Tree:   "the tree holds [python] and was read over [/project/src]",
+		Tree:   "the tree holds 1200 files of [python], read over [/project/src]",
 	}
 
 	said := differs.where()
@@ -441,7 +441,7 @@ func TestADeclineSaysWhichOfTheThreeMadeTheFilesDiffer(t *testing.T) {
 		t.Errorf("the decline does not say which path the tree was asked about:\n%s", said)
 	}
 
-	if !strings.Contains(said, "was read over [/project/src]") {
+	if !strings.Contains(said, "read over [/project/src]") {
 		t.Errorf("the decline does not say what the tree itself holds:\n%s", said)
 	}
 }
