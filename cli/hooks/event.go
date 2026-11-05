@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/jessegall/code-commandments/cli/git"
+	"github.com/jessegall/code-commandments/cli/warm"
 	"github.com/jessegall/code-commandments/cli/workspace"
 )
 
@@ -29,11 +30,29 @@ type Event struct {
 // knows when the moment happened.
 const receivedKey = "commandments_received"
 
-// Stamped is the payload marked with when the hook was handed it, now.
+// markedKey is where a payload carries what the file it names WAS when the hook was handed it, so work done later
+// can tell that file apart from a version written since without asking anyone's clock.
+const markedKey = "commandments_file_mark"
+
+// Stamped is the payload marked with when the hook was handed it, now, and with what the file it names was then.
 func Stamped(payload map[string]any) map[string]any {
 	payload[receivedKey] = strconv.FormatInt(time.Now().UnixNano(), 10)
 
+	if mark := warm.Mark(fileNamedIn(payload)); mark != "" {
+		payload[markedKey] = mark
+	}
+
 	return payload
+}
+
+// fileNamedIn is the file the payload names, in either of the two shapes we are handed one in: the journal's own
+// moment, and the harness's hook payload. Both are ours, so both are read; a payload naming no file names none.
+func fileNamedIn(payload map[string]any) string {
+	if named := MomentOf(payload).File; named != nil && *named != "" {
+		return *named
+	}
+
+	return NewEvent(payload, "").FilePath()
 }
 
 // sinceStamp is how long the plugin has been over this event, in milliseconds, counted from the moment it was
@@ -220,7 +239,7 @@ func (e Event) FilePath() string {
 // and HEAD. A sin on a line the edit did not touch is not this edit's doing, which is the whole use of them.
 func (e Event) ChangedLines(file string) git.ChangedLines {
 	changed, carried := ChangedIn(e.payload)
-	if carried && e.FilePath() != "" && strings.HasSuffix(filepath.Clean(file), filepath.Clean(e.FilePath())) && !writtenSince(file, e.Received()) {
+	if carried && e.FilePath() != "" && strings.HasSuffix(filepath.Clean(file), filepath.Clean(e.FilePath())) && !writtenSince(e.payload) {
 		return changed
 	}
 
@@ -231,13 +250,20 @@ func (e Event) ChangedLines(file string) git.ChangedLines {
 // file in quick succession look like. The lines the moment carries are then the lines of a version that is gone:
 // the judging reads the file as it NOW is, and marking it with the earlier edit's lines calls a line touched that
 // this version never had. git answers about the file as it is, which is the version being judged.
-func writtenSince(file string, moment time.Time) bool {
-	info, err := os.Stat(file)
-	if err != nil {
+//
+// Asked of the file against ITSELF, by the mark we took when we were handed the moment. It used to be asked of the
+// file's modification time against our own clock, and those are two clocks: under Docker's virtiofs, and on any
+// mount whose timestamps come from elsewhere, a file written BEFORE we stamped reports a time after it, so the
+// lines the journal handed over were thrown away for a file nobody had touched.
+//
+// A payload we could take no mark of claims nothing: its lines stand, as they did before any of this was asked.
+func writtenSince(payload map[string]any) bool {
+	was, marked := payload[markedKey].(string)
+	if !marked {
 		return false
 	}
 
-	return info.ModTime().After(moment)
+	return warm.Mark(fileNamedIn(payload)) != was
 }
 
 // AgentTypeRequested is the subagent type a dispatch asks for.

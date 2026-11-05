@@ -421,3 +421,111 @@ func TestADeclineSaysWhichOfTheThreeMadeTheFilesDiffer(t *testing.T) {
 		t.Errorf("a judging that differs by nothing says %q", said)
 	}
 }
+
+// TestAWorkersChangesAreJudgedWhereTheServiceAnswersIt holds a worker's `judge --changes` through the service,
+// which is the one shape the scope tests never cover: they run the command in the worktree with nothing warm, and
+// the service runs it in a process whose own folder is the PLUGIN's, on behalf of a run standing somewhere else.
+// A scope worked out from the wrong folder answers that nothing changed, and that answer is a green tick over
+// every line the worker wrote.
+//
+// Reported from a consumer on v7.15.4: a worker's `judge --changes` said "Nothing to judge" while its checkout
+// held uncommitted edits, minutes after a run in the same checkout judged 22 files.
+func TestAWorkersChangesAreJudgedWhereTheServiceAnswersIt(t *testing.T) {
+	root, _ := workerProject(t)
+	heldBaseOf(t, root)
+
+	listener, listening := Judging(root)
+	if !listening {
+		t.Fatalf("the service cannot listen on %s", warm.Socket(root))
+	}
+	defer listener.Close()
+
+	go serveJudging(listener, root)
+
+	// The worktree's own uncommitted edit, which workerProject left there: committed in the project, rewritten
+	// here, so `git status` in this checkout is the only thing that knows about it.
+	worktree := filepath.Join(root, ".journal", "worktrees", "worker-1")
+
+	answer, asked := warm.Asked(root, warm.Request{Judge: []string{"--changes", "--no-checklist"}, In: worktree})
+	if !asked {
+		t.Skipf("the service declined this judging, so the scope it would have used was never asked: %s", answer.Because)
+	}
+
+	if strings.Contains(answer.Out, "Nothing to judge") {
+		t.Errorf("a worker's uncommitted edit reads as nothing to judge:\n%s%s", answer.Out, answer.Err)
+	}
+
+	if !strings.Contains(answer.Out, "order.py") {
+		t.Errorf("the worker's own changed file is not in the answer:\n%s%s", answer.Out, answer.Err)
+	}
+}
+
+// TestAPathInsideAWorktreeIsTheOnlyThingJudged holds a path argument against the tree the service answers from.
+// The base is the PROJECT's, rooted at the project, and a worktree's files stand in for the project's own at the
+// same path under it. A path the run names is a path in the WORKTREE, and if what is judged is worked out against
+// the project's root instead, the answer is about the project's copies: every finding in it lies in a file the
+// run was never asked about, and a reader takes them for its own.
+//
+// Reported from a consumer on v7.15.4: a judge given an absolute path inside a worker's worktree reported 204
+// findings in the main checkout's source, none of them the worker's.
+func TestAPathInsideAWorktreeIsTheOnlyThingJudged(t *testing.T) {
+	root, _ := workerProject(t)
+	heldBaseOf(t, root)
+
+	listener, listening := Judging(root)
+	if !listening {
+		t.Fatalf("the service cannot listen on %s", warm.Socket(root))
+	}
+	defer listener.Close()
+
+	go serveJudging(listener, root)
+
+	worktree := filepath.Join(root, ".journal", "worktrees", "worker-1")
+
+	// A sin in the PROJECT's own copy of a file, which the named path does not cover: it lies in the project's
+	// src, not the worktree's, so nothing about this run may report it.
+	elsewhere := filepath.Join(root, "src", "invoice.py")
+	if err := os.WriteFile(elsewhere, []byte("class Invoice:\n    def total(self):\n        \"\"\"Says the total.\"\"\"\n        return 0\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	// The path the run names, absolute, inside the worktree, holding the worker's own sin.
+	named := filepath.Join(worktree, "src")
+
+	answer, asked := warm.Asked(root, warm.Request{Judge: []string{named, "--no-checklist"}, In: worktree})
+	if !asked {
+		t.Skipf("the service declined this judging, so what it would have judged was never asked: %s", answer.Because)
+	}
+
+	if !strings.Contains(answer.Out, "order.py") {
+		t.Errorf("the worker's own sin under the named path is not in the answer:\n%s%s", answer.Out, answer.Err)
+	}
+
+	if strings.Contains(answer.Out, "invoice.py") {
+		t.Errorf("a run named %s reported a finding in the project's own src, which that path does not cover:\n%s%s",
+			named, answer.Out, answer.Err)
+	}
+
+	// And narrower still: ONE file of the worktree named, with a sin in a sibling of its own checkout. A path
+	// that only chose what to report, while the run judged everything it read, answers with both — which is the
+	// 204 findings outside the task, in the worker's own tree rather than the project's.
+	sibling := filepath.Join(worktree, "src", "refund.py")
+	if err := os.WriteFile(sibling, []byte("class Refund:\n    def total(self):\n        \"\"\"Says the total.\"\"\"\n        return 0\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	one := filepath.Join(worktree, "src", "order.py")
+
+	answer, asked = warm.Asked(root, warm.Request{Judge: []string{one, "--no-checklist"}, In: worktree})
+	if !asked {
+		t.Skipf("the service declined the one-file judging: %s", answer.Because)
+	}
+
+	if !strings.Contains(answer.Out, "order.py") {
+		t.Errorf("a run named one file does not report that file's own sin:\n%s%s", answer.Out, answer.Err)
+	}
+
+	if strings.Contains(answer.Out, "refund.py") {
+		t.Errorf("a run named %s reported a finding in a sibling of the same checkout:\n%s%s", one, answer.Out, answer.Err)
+	}
+}

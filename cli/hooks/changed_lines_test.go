@@ -199,3 +199,52 @@ func TestAMomentsLinesAreDroppedWhereItsFileMovedAgain(t *testing.T) {
 		t.Error("a moment whose file moved again is still marked with the lines of the version that is gone")
 	}
 }
+
+// TestAMomentsLinesStandWhenOnlyTheClocksDisagree holds the lines the journal handed over against a question that
+// was never the file's to answer. Whether a file moved since we were handed the moment was asked by comparing its
+// modification time against OUR clock, and those are two clocks: under Docker's virtiofs, and on any mount whose
+// timestamps come from elsewhere, a file written before we stamped reports a time after it. The lines were then
+// thrown away and git asked instead, so with no history every line read as the edit's doing and with history a
+// line the edit really wrote could go unmarked. Nothing said either had happened.
+//
+// It showed here as a flake: this file's other test failed once in a full package run on 2026-11-05 and passed
+// five times out of five on its own. A mark compares the file against ITSELF, taken by us, read by us, so no
+// clock of anyone else's comes into it.
+func TestAMomentsLinesStandWhenOnlyTheClocksDisagree(t *testing.T) {
+	root := t.TempDir()
+
+	file := filepath.Join(root, "order.py")
+	if err := os.WriteFile(file, []byte("x = 1\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	carried := map[string]any{
+		"hook_event_name": "PostToolUse",
+		"tool_name":       "Edit",
+		"tool_input":      map[string]any{"file_path": file},
+	}
+	carried[changedKey] = map[string]any{"lines": []any{float64(2)}}
+
+	// The filesystem's clock a minute ahead of ours, which is all a mount has to be wrong by, and so it reads
+	// from the moment we are handed the event. Nothing wrote the file after that: these are the bytes the lines
+	// were handed over for.
+	ahead := time.Now().Add(time.Minute)
+	if err := os.Chtimes(file, ahead, ahead); err != nil {
+		t.Fatal(err)
+	}
+
+	carried = Stamped(carried)
+
+	if lines := NewEvent(carried, root).ChangedLines(file); !lines.Covers(2) || lines.Covers(5) {
+		t.Error("the moment's own lines were thrown away for a file nobody wrote, because its clock runs ahead of ours")
+	}
+
+	// And a file that really was written again still loses them, which is the thing the question is for.
+	if err := os.WriteFile(file, []byte("x = 1\ny = 2\nz = 3\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	if lines := NewEvent(carried, root).ChangedLines(file); !lines.Covers(5) {
+		t.Error("a moment whose file moved again is still marked with the lines of the version that is gone")
+	}
+}
