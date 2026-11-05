@@ -2,6 +2,7 @@
 package detectors
 
 import (
+	"slices"
 	"strings"
 
 	"github.com/jessegall/code-commandments/catalog"
@@ -49,6 +50,36 @@ func EngineOf(detector Detector) (catalog.Engine, bool) {
 	}
 
 	return detectors.EngineOf(detector)
+}
+
+// Several is a detector that judges more than one engine, as a project's own rule may: its file names them, and
+// a reader asking about ONE engine has to ask about all of them.
+type Several interface {
+	Engines() []catalog.Engine
+}
+
+// EnginesOf are every engine a detector judges. Nearly every rule judges one, and the first is the one EngineOf
+// answers; a rule whose file names several judges them all, and reading only the first silently switched such a
+// rule off wherever one engine was asked about. A consumer's rule naming go and python was never asked about a
+// python file in a live check, because go was written first.
+func EnginesOf(detector Detector) []catalog.Engine {
+	if several, states := detector.(Several); states {
+		if engines := several.Engines(); len(engines) > 0 {
+			return engines
+		}
+	}
+
+	engine, known := EngineOf(detector)
+	if !known {
+		return nil
+	}
+
+	return []catalog.Engine{engine}
+}
+
+// Judges says whether the detector judges that engine.
+func Judges(detector Detector, engine catalog.Engine) bool {
+	return slices.Contains(EnginesOf(detector), engine)
 }
 
 // Named is the published detector a name means, with or without its Detector suffix, in any case.

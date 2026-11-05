@@ -474,6 +474,35 @@ func selectFrom(list []detectors.Detector, skill, sin string) []detectors.Detect
 	return kept
 }
 
+// writtenIn are the languages these engines are written in, each once.
+func writtenIn(engines []catalog.Engine) []source.Language {
+	var languages []source.Language
+	for _, engine := range engines {
+		for _, language := range source.OfEngine(engine) {
+			if !slices.Contains(languages, language) {
+				languages = append(languages, language)
+			}
+		}
+	}
+
+	return languages
+}
+
+// readAlongside are the languages these engines are written in and the languages that publish facts for them,
+// which a rule of theirs may read beside its own.
+func readAlongside(engines []catalog.Engine) []source.Language {
+	languages := writtenIn(engines)
+	for _, engine := range engines {
+		for _, language := range publishers[engine] {
+			if !slices.Contains(languages, language) {
+				languages = append(languages, language)
+			}
+		}
+	}
+
+	return languages
+}
+
 // publishers are the languages whose facts an engine's rules read beside their own: the frontend asks
 // what the server publishes, and the backend what the frontend reads back.
 var publishers = map[catalog.Engine][]source.Language{
@@ -486,10 +515,10 @@ var publishers = map[catalog.Engine][]source.Language{
 func languagesFor(selected []detectors.Detector, project config.Config, root string) []source.Language {
 	var languages []source.Language
 
+	// Every engine a rule judges, since a project may write one rule for two languages: reading only the
+	// first engine's languages would leave such a rule looking at none of its other engine's files.
 	for _, detector := range selected {
-		engine, _ := detectors.EngineOf(detector)
-
-		for _, language := range append(slices.Clone(source.OfEngine(engine)), publishers[engine]...) {
+		for _, language := range readAlongside(detectors.EnginesOf(detector)) {
 			if project.Reads(root, language) && !slices.Contains(languages, language) {
 				languages = append(languages, language)
 			}
@@ -600,9 +629,7 @@ func scannedLanguages(selected []detectors.Detector) []source.Language {
 	languages := []source.Language{source.PHP}
 
 	for _, detector := range selected {
-		engine, _ := detectors.EngineOf(detector)
-
-		for _, language := range source.OfEngine(engine) {
+		for _, language := range writtenIn(detectors.EnginesOf(detector)) {
 			if !slices.Contains(languages, language) {
 				languages = append(languages, language)
 			}
@@ -633,7 +660,7 @@ func judgedFiles(sources scan.Sources, csharpFiles int, languages []source.Langu
 // a solution a project at a time.
 func wholeAndByProject(rules []detectors.Detector) (whole, byProject []detectors.Detector) {
 	for _, rule := range rules {
-		if judges, _ := detectors.EngineOf(rule); judges == catalog.CSharp {
+		if detectors.Judges(rule, catalog.CSharp) {
 			byProject = append(byProject, rule)
 		} else {
 			whole = append(whole, rule)

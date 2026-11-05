@@ -191,7 +191,10 @@ func marksIn(marking Marking, file string, rules []detectors.Detector, changed g
 	var marks []SinMark
 
 	for _, rule := range rules {
-		if engine, _ := detectors.EngineOf(rule); engine != language.Engine() {
+		// Every engine the rule judges, not the first one its file happens to name: a rule naming go and
+		// python was never asked about a python file here, which is a rule a project wrote switched off in
+		// its live check while a judge still reported it.
+		if !detectors.Judges(rule, language.Engine()) {
 			continue
 		}
 
