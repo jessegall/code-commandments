@@ -1,6 +1,7 @@
 package hooks
 
 import (
+	"fmt"
 	"path/filepath"
 	"slices"
 	"strings"
@@ -26,6 +27,29 @@ var kept = warm.Keep()
 // reading are the branches whose base is being read right now, so a burst of edits starts one read and not one
 // per edit.
 var reading sync.Map
+
+// lastRead is how the last read of each branch's base ended, so a judging that finds no tree can say whether one
+// was ever attempted and what stopped it.
+//
+// Without it "no tree is held for this project on its branch yet" is the same answer whether the session has
+// only just started, whether every read has failed, or whether the tree was dropped and never read again: a
+// consumer spent an afternoon at 170 seconds a judging with that one line to go on.
+var lastRead sync.Map
+
+// howTheReadWent is what the last read of that branch's base came to, in words, and false where none was ever
+// tried in this process.
+func howTheReadWent(named branchRoot) (string, bool) {
+	if _, running := reading.Load(named.key()); running {
+		return "a read of it is running now", true
+	}
+
+	said, tried := lastRead.Load(named.key())
+	if !tried {
+		return "", false
+	}
+
+	return said.(string), true
+}
 
 // AgainstTheProgram are the marks for one edited file judged against the whole program, through a view of its
 // branch's base, and false where no base is held yet.
@@ -358,6 +382,8 @@ func Warming(root string, project config.Config) {
 			roots = []string{named.project}
 		}
 
+		began := time.Now()
+
 		sources := scan.Walk(roots, source.Under(named.project, project.Excluded)).Only(reads(named.project, project)...)
 
 		// What every file is before the read, which is what the base is marked with: the read takes 25 to 55
@@ -366,8 +392,14 @@ func Warming(root string, project config.Config) {
 
 		codebase, err := sources.Load()
 		if err != nil || codebase == nil {
+			lastRead.Store(named.key(), fmt.Sprintf("the last read of it failed after %v: %v",
+				time.Since(began).Round(time.Second), err))
+
 			return
 		}
+
+		lastRead.Store(named.key(), fmt.Sprintf("it was last read in %v, %d files, at %s",
+			time.Since(began).Round(time.Second), len(codebase.Files()), time.Now().Format("15:04:05")))
 
 		kept.Hold(named.project, named.branch, roots, codebase, taken)
 	}()
@@ -423,6 +455,32 @@ func rootOf(path string) (branchRoot, bool) {
 	return branchRoot{project: project, branch: branch}, true
 }
 
+// baseForCheckout is the base that CHECKOUT of the project answers from: the tree held for the branch the main
+// checkout stands on, and failing that any tree the project holds at all.
+//
+// Any tree, because a worker's ROOT CHECKOUT is the checkout its main agent is on. It stands on a branch of its
+// own, cut from that one, so a branch per worker can never have a tree under its own name — and looked up by
+// the branch the main checkout happens to be on at that moment, the lookup found nothing as soon as that
+// checkout moved, which a main agent does as a matter of course. Measured on a consumer: 127 seconds of reading
+// for six changed files, "no tree is held for this project on its branch yet", on every hand-in, all afternoon.
+//
+// Whether that tree can answer ABOUT this checkout is a question about history and not about a name, and the
+// caller asks it: differingFrom asks git what the checkout differs from the tree's branch by, and refuses where
+// the two share none.
+func baseForCheckout(path, checkout string) (branchRoot, *warm.Base, bool) {
+	named, base, held := baseFor(path)
+	if held || named.project == "" || checkout == strings.TrimRight(named.project, "/") {
+		return named, base, held
+	}
+
+	any, holds := kept.Any(named.project)
+	if !holds {
+		return named, base, held
+	}
+
+	return branchRoot{project: named.project, branch: any.Branch}, any, true
+}
+
 // baseFor is the base the path answers from, with what names it.
 func baseFor(path string) (branchRoot, *warm.Base, bool) {
 	named, ok := rootOf(path)
@@ -431,6 +489,20 @@ func baseFor(path string) (branchRoot, *warm.Base, bool) {
 	}
 
 	base, held := kept.Holds(named.project, named.branch)
+
+	// A WORKTREE answers from whatever tree the project holds, whatever branch it was read at. A worker stands
+	// on a branch of its own, cut from the branch the project was on at the time, so a branch per worker can
+	// never have a tree under its own name: keyed by the branch the main checkout happens to be on NOW, the
+	// lookup found nothing the moment that checkout moved, and every worker's judging read the whole tree in
+	// its own process — measured on a consumer at 127 seconds of reading for six changed files.
+	//
+	// Whether that tree can answer about this worktree is a question about history, which differingFrom asks of
+	// git and refuses where the two share none.
+	if !held && checkoutOf(path, path) != named.project {
+		if any, holds := kept.Any(named.project); holds {
+			return branchRoot{project: named.project, branch: any.Branch}, any, true
+		}
+	}
 
 	return named, base, held
 }

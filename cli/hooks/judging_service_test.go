@@ -813,3 +813,50 @@ func TestHowManyFilesAreReadInOneGoIsAFractionOfTheTree(t *testing.T) {
 		t.Errorf("the least a judging splices, %d, is more than the most, %d", leastReadInOneGo, mostReadInOneGo)
 	}
 }
+
+// TestAWorkerIsServedFromTheTreeOfTheBranchItWasCutFrom holds the tree a worker answers from. A worker stands on
+// a branch of its own, cut from the branch the main agent works on — development, version-5, whatever it is
+// called — and a branch per worker can never have a tree under its own name. So the tree it answers from is the
+// one the project holds for the branch its own branch is BASED ON, not the one named by whatever the main
+// checkout happens to be standing on at that moment.
+//
+// Keyed and looked up by the main checkout's current branch, the lookup found nothing the moment that checkout
+// moved: measured on a consumer at 127 seconds of reading for six changed files, "no tree is held for this
+// project on its branch yet", on every hand-in, all afternoon.
+func TestAWorkerIsServedFromTheTreeOfTheBranchItWasCutFrom(t *testing.T) {
+	root, _ := workerProject(t)
+
+	// The tree as the main agent's session has it read, while that checkout stands on the branch the worker was
+	// cut from.
+	heldBaseOf(t, root)
+
+	// And then the main checkout moves, as a main agent does: a new branch for its own work. Nothing about the
+	// worker changed, and its tree must not vanish because somebody else switched.
+	for _, command := range [][]string{{"checkout", "-q", "-b", "the-main-agents-own-work"}} {
+		if out, err := exec.Command("git", append([]string{"-C", root}, command...)...).CombinedOutput(); err != nil {
+			t.Fatalf("git %v: %s", command, out)
+		}
+	}
+
+	listener, listening := Judging(root)
+	if !listening {
+		t.Fatalf("the service cannot listen on %s", warm.Socket(root))
+	}
+	defer listener.Close()
+
+	go serveJudging(listener, root)
+
+	worktree := filepath.Join(root, ".journal", "worktrees", "worker-1")
+
+	answer, asked := warm.Asked(root, warm.Request{Judge: []string{"--no-checklist"}, In: worktree})
+	if !asked {
+		t.Fatalf("a worker's judging was declined after the main checkout moved off the branch it was cut from: %s",
+			answer.Because)
+	}
+
+	// And it is the worker's OWN sin, not the project's copy of that file: the tree answers about its program
+	// with the worktree's own files standing in.
+	if !strings.Contains(answer.Out, "order.py") {
+		t.Errorf("the served answer does not name the worker's own sin:\n%s%s", answer.Out, answer.Err)
+	}
+}

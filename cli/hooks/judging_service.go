@@ -169,9 +169,18 @@ func readsInOneGo(files int) int {
 // under its own checkout.
 func heldOrDeclined(root, in string, declined *string) func(scan.Sources) (*engine.Codebase, error) {
 	return func(sources scan.Sources) (*engine.Codebase, error) {
-		named, base, held := baseFor(root)
+		// The CHECKOUT the run reads first, since which tree it may answer from depends on it: a worktree
+		// answers from any tree the project holds, a run in the project's own checkout only from its branch's.
+		checkout := checkoutOf(root, in)
+
+		named, base, held := baseForCheckout(root, checkout)
 		if !held {
 			*declined = "no tree is held for " + root + " on its branch yet"
+			if said, tried := howTheReadWent(named); tried {
+				*declined += ": " + said
+			} else {
+				*declined += " and none has been read in this process"
+			}
 
 			return engine.Load(), nil
 		}
@@ -190,7 +199,6 @@ func heldOrDeclined(root, in string, declined *string) func(scan.Sources) (*engi
 		// it, another project beside this one or a calibration over a consumer's sources, reaches this service
 		// too, since a run finds the service from the folder it was started in; this base has nothing to say
 		// about those files.
-		checkout := checkoutOf(named.project, in)
 		for _, walked := range sources.Roots() {
 			if _, inside := warm.Under(checkout, walked); !inside {
 				*declined = walked + " lies outside " + checkout + ", so this tree says nothing about it"

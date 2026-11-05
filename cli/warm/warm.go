@@ -102,6 +102,40 @@ func (k *Keeper) Holds(project, branch string) (*Base, bool) {
 	return base, true
 }
 
+// Any is a base held for that project, whatever branch it was read at, and the most recently asked for where
+// several are. It is how a WORKTREE finds a tree: a worker stands on a branch of its own, cut from the branch
+// the project was on at the time, and a branch per worker can never have a tree under its own name. Keyed by
+// the branch the main checkout happens to be on at that moment, the lookup found nothing the moment that
+// checkout moved, and every worker's judging read the whole tree in its own process.
+//
+// Whether the tree can answer about that worktree is a question about HISTORY, not about a name, and the caller
+// asks it: a worktree whose branch shares none with the base's is refused there.
+func (k *Keeper) Any(project string) (*Base, bool) {
+	k.mu.Lock()
+	defer k.mu.Unlock()
+
+	k.sweep()
+
+	var newest *Base
+	for _, base := range k.bases {
+		if base.Project != project {
+			continue
+		}
+
+		if newest == nil || base.lastAsked.After(newest.lastAsked) {
+			newest = base
+		}
+	}
+
+	if newest == nil {
+		return nil, false
+	}
+
+	newest.lastAsked = k.now()
+
+	return newest, true
+}
+
 // Hold makes the codebase the base for that project and branch, with the mark of every file it was built from,
 // so the next question knows which files have moved since.
 //
