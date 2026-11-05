@@ -152,3 +152,92 @@ func TestTheChangedLinesAreTheRunsOwnFoldersChanges(t *testing.T) {
 		t.Errorf("the changed lines hold a sin the run did not name:\n%s%s", out.String(), errs.String())
 	}
 }
+
+// TestANewFileIsAmongTheChangedLines holds what a new file is to a scope: every line of it. Reported from a
+// consumer on v7.8.1, in a worktree and in a main checkout alike — a judging of the changed lines answered a
+// green tick with exit 0 while the one new file it should have judged held eight sins.
+func TestANewFileIsAmongTheChangedLines(t *testing.T) {
+	project := sinfulProject(t)
+
+	for _, command := range [][]string{
+		{"init", "-q"},
+		{"-c", "user.email=t@t", "-c", "user.name=t", "add", "-A"},
+		{"-c", "user.email=t@t", "-c", "user.name=t", "commit", "-qm", "clean"},
+	} {
+		if out, err := exec.Command("git", append([]string{"-C", project}, command...)...).CombinedOutput(); err != nil {
+			t.Fatalf("git %v: %s", command, out)
+		}
+	}
+
+	// A file git has never seen, holding the sin, which is the whole of what changed.
+	if err := os.WriteFile(filepath.Join(project, "src", "refund.py"), []byte(`class Refund:
+    def total(self):
+        """Says the total."""
+        return 0
+`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	chdir(t, project)
+
+	var out, errs bytes.Buffer
+
+	code, err := (Command{}).Run(
+		cli.InputOf("judge", "--changes", "--no-checklist", "--parallel=1"),
+		cli.Console{Out: &out, Err: &errs},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if !strings.Contains(out.String(), "refund.py") {
+		t.Errorf("the changed lines leave out a file git has never seen (exit %d):\n%s%s", code, out.String(), errs.String())
+	}
+}
+
+// TestAWorktreesOwnNewFileIsAmongItsChangedLines holds the same answer inside a worktree, which is where a
+// consumer's worker hit it: a worktree's .git is a file and its checkout lies inside the main one, so a run that
+// read the project's main checkout instead of the checkout it stands in would see none of the worker's changes
+// and answer a green tick.
+func TestAWorktreesOwnNewFileIsAmongItsChangedLines(t *testing.T) {
+	project := sinfulProject(t)
+
+	// Where the journal really cuts them: inside the project, under its own hidden folder, which a walk of the
+	// tree never reaches.
+	worktree := filepath.Join(project, ".journal", "worktrees", "worker-1")
+	for _, command := range [][]string{
+		{"init", "-q", "-b", "main"},
+		{"-c", "user.email=t@t", "-c", "user.name=t", "add", "-A"},
+		{"-c", "user.email=t@t", "-c", "user.name=t", "commit", "-qm", "clean"},
+		{"worktree", "add", "-q", "-b", "a-worker", worktree},
+	} {
+		if out, err := exec.Command("git", append([]string{"-C", project}, command...)...).CombinedOutput(); err != nil {
+			t.Fatalf("git %v: %s", command, out)
+		}
+	}
+
+	// The worker's own new file, in its own checkout, which the main checkout knows nothing about.
+	if err := os.WriteFile(filepath.Join(worktree, "src", "refund.py"), []byte(`class Refund:
+    def total(self):
+        """Says the total."""
+        return 0
+`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	chdir(t, worktree)
+
+	var out, errs bytes.Buffer
+
+	code, err := (Command{}).Run(
+		cli.InputOf("judge", "--changes", "--no-checklist", "--parallel=1"),
+		cli.Console{Out: &out, Err: &errs},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if !strings.Contains(out.String(), "refund.py") {
+		t.Errorf("a worker's own new file is not among its worktree's changed lines (exit %d):\n%s%s", code, out.String(), errs.String())
+	}
+}

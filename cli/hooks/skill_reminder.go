@@ -77,7 +77,7 @@ func (SkillReminder) Handle(event Event) Response {
 		// Against a view of the branch's base every rule can be asked, since the view IS the program; with no
 		// base held the file is judged alone, which only the rules that answer from one file may be asked, and
 		// a base is read in the background so the next edit is answered against the program.
-		marks, whole := AgainstTheProgram(marking, file, project.RulesFor(event.Root, file, enabled), event.ChangedLines(file), event.Root, project)
+		marks, whole := AgainstTheProgram(marking, file, project.RulesFor(event.Root, file, enabled), event.ChangedLines(file), event.Root)
 		if !whole {
 			marks = marksIn(marking, file, project.RulesFor(event.Root, file, single), event.ChangedLines(file))
 			Warming(event.Root, project)
@@ -162,7 +162,21 @@ func edited(event Event, project config.Config) []string {
 }
 
 func judgedFile(root, file string, project config.Config) string {
-	if file == "" || !project.IsJudged(root, file) {
+	if file == "" {
+		return ""
+	}
+
+	// A worker's file lies in a WORKTREE of this project, a checkout of its own inside the project's hidden
+	// folder, so judged from the project it reads as a path outside every declared root and was dropped: a
+	// worker's edits were never judged at all, and the plugin answered its events with nothing. What a file is
+	// judged against is the checkout it lies in, whose config is the same file under its own root.
+	if checkout := git.Root(file); checkout != "" && checkout != strings.TrimRight(root, "/") && git.BelongsTo(checkout, root) {
+		if own, err := config.Load(checkout); err == nil {
+			root, project = checkout, own
+		}
+	}
+
+	if !project.IsJudged(root, file) {
 		return ""
 	}
 

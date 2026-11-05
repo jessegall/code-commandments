@@ -34,7 +34,7 @@ const drifted = 25
 // or a recurrence answers as though that file were the program, so those rules are kept out of a per-file mark
 // (detectors.ReadsBeyondOneFile) and an edit is never told about them. Against a view of the base they answer
 // about the real program, and the mark can carry every rule the project has enabled.
-func AgainstTheProgram(marking Marking, file string, rules []detectors.Detector, changed git.ChangedLines, root string, project config.Config) ([]SinMark, bool) {
+func AgainstTheProgram(marking Marking, file string, rules []detectors.Detector, changed git.ChangedLines, root string) ([]SinMark, bool) {
 	held, base, ok := baseFor(root)
 	if !ok {
 		return nil, false
@@ -49,7 +49,10 @@ func AgainstTheProgram(marking Marking, file string, rules []detectors.Detector,
 
 	view := base.Codebase()
 	if len(moved) > 0 {
-		rebuilt, err := scan.Walk(moved, source.Under(held.project, project.Excluded)).Load()
+		// Nothing is excluded here: these are the files we were TOLD changed, and the one an edit named has
+		// already been held to what the project judges. A worker's file lies in a worktree under a folder the
+		// project excludes, so excluding again would read none of it.
+		rebuilt, err := scan.Walk(moved, source.Excluded{}).Load()
 		if err != nil || rebuilt == nil {
 			return nil, false
 		}
@@ -57,7 +60,26 @@ func AgainstTheProgram(marking Marking, file string, rules []detectors.Detector,
 		view = base.View(rebuilt.Streams(), held.project)
 	}
 
+	// A file the view does not hold cannot be judged against the program, and answering "no sins" for it would
+	// be the worst answer of the three: a worker's new file in its own worktree got exactly that, no mark and no
+	// answer at all, while a judging of it found eight sins. Judged alone it is answered as every edit was
+	// before a tree was held.
+	if !holds(view, file) {
+		return nil, false
+	}
+
 	return marksOver(view, marking, file, rules, changed), true
+}
+
+// holds says whether the codebase read that file.
+func holds(codebase *engine.Codebase, file string) bool {
+	for _, held := range codebase.Files() {
+		if held.Path == file {
+			return true
+		}
+	}
+
+	return false
 }
 
 // marksOver are the marks the rules find in that one file of the codebase. Every rule is asked, since the
