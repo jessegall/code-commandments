@@ -400,6 +400,15 @@ func ask(dir string, args ...string) string {
 // refreshed while reading, and these calls are made from a hook, beside a session that is running git itself.
 // A status read taking that lock made a `git commit` in the same checkout fail with "Unable to create
 // index.lock". Nothing here writes to the repository, so the refresh it would save is never worth a lock.
+// wrote runs a git command that CHANGES the checkout, and says what it printed and whether it failed. A read
+// answers "" where git could not answer and the caller reads that as nothing; a write that failed and said
+// nothing would be taken for a write that happened, so its error comes back.
+func wrote(dir string, args ...string) (string, error) {
+	out, err := exec.Command("git", append([]string{"-C", dir}, args...)...).CombinedOutput()
+
+	return strings.TrimSpace(string(out)), err
+}
+
 func run(dir string, args ...string) string {
 	out, err := exec.Command("git", append([]string{"--no-optional-locks", "-C", dir}, args...)...).Output()
 	if err != nil && len(out) == 0 {
