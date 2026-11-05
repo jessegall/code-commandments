@@ -10,7 +10,11 @@ output is what the reader answers with.
 
 ## `judge.pattern`
 
-Reads `commandments judge`, which the `sins` alias runs.
+Reads the judge, which the `sins` alias runs. The commands it names the binary in every spelling it is
+really run under, `commandments`, `commandments-release` and `commandments-go`, and names the verb: a
+reader whose commands matched the binary alone was handed the output of `rule prove` as well, whose lines
+its summary cannot match, and a run a reader cannot summarise holds the agent at every edit after it.
+Reported by a consumer whose workers were held that way.
 
 - **Picks** a sin said plainly (`typed_lines.py, line 52: oldest_line_at, a sentence used as a method
   name`), the count the run ends on (`4 sins in 3 files`), the clean verdict (`✓ No sins found in 1181
@@ -31,15 +35,16 @@ Reads `commandments judge`, which the `sins` alias runs.
 
 ## `rule.pattern`
 
-Reads `commandments rule`, which the `rules` alias runs: `try` runs one rule of the project's own over a
+Reads the rule verbs, which the `rules` alias runs, named the same way, binary and verb: `try` runs one rule of the project's own over a
 path, `prove` holds every one of them to the samples that mark it, `explain` prints a file's tree, and
 `schema` prints the schema an editor checks a rule by.
 
-- **Picks** each rule proved or failed (`✓ NoRawSqlDetector`), the reasons indented under a failure, each
+- **Picks** each rule proved or failed (`✓ NoRawSqlDetector`) and each
   match a tried rule found with the line it stands on (`src/Orders.php:14  DB::select(...)`), the count a
   try ends on (`3 match(es) of NoRawSqlDetector in src`), and a refusal, which for these verbs is usually
   that there is nothing to work with: no rules to prove, no samples to prove them against, or no node on
-  the line named.
+  the line named. It does NOT pick an indented line: four spaces matched nearly every line a proof
+  prints, so a card meant to show what failed showed the whole run.
 - **Says what the run is about** with `topic`, read over the command line, since one reader serves four
   verbs and the card's title alone cannot say which: the card reads *Working on a rule of the project's
   own · prove*.

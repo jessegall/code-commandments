@@ -2,7 +2,7 @@
 ^(?:\S+, line \d+:|\d+ sins? across \d+ skills?\.$|[✓✗⚠] |↳ checklist written to )
 progress: ^(?:parsing|reading|detector) (\d+)/(\d+)$
 label: Judging the project against its commandments
-commands: commandments judge
+commands: commandments(-release|-go)? judge
 finished: ^(?:\d+ sins? across \d+ skills?\.$|✓ |↳ checklist written to )
 failed: ^(?:✗ |⚠ )
-summary: ^(\d+ sins? across \d+ skills?\.|✓ .+)$
+summary: ^(\d+ sins? across \d+ skills?\.|✓ .+|⚠ .+)$
