@@ -343,13 +343,13 @@ func (b *Base) ViewFrom(checkout string, rebuilt []*contract.Stream, project str
 		}
 	}
 
-	// What each rebuilt file stands in for: the project's own file at the same path under the project.
+	// What each rebuilt file stands in for, by the one answer to that question: a second copy of it here read
+	// the project's path as it was NAMED rather than as it is, so a project reached through a link stood every
+	// rebuilt file in for a path the base does not hold.
 	standsFor := map[string]bool{}
-	if real(checkout) != real(project) {
-		for path := range fresh {
-			if under, inside := Under(checkout, path); inside {
-				standsFor[filepath.Join(project, under)] = true
-			}
+	for path := range fresh {
+		if stands := Counterpart(checkout, project, path); stands != path {
+			standsFor[stands] = true
 		}
 	}
 
@@ -428,6 +428,31 @@ func Under(folder, path string) (string, bool) {
 	}
 
 	return under, true
+}
+
+// Counterpart is the project's own file a checkout's file stands in for: the file itself for a file of the
+// project's own checkout, and the file at the same path under the project for one of a worktree. Standing IN FOR
+// it is the point, so the program holds one copy of each source, the checkout's.
+//
+// Built on the project's REAL path, because that is what the base's keys are: a scan resolves every path it
+// reads, so a counterpart built on a project root reached through a link — a Mac's /tmp, a linked home, the
+// folder a journal names — matches no key the base holds, and then every file of a worktree counts as a file the
+// tree never read. Measured on a consumer: 1201 of them for a branch 127 files from the tip it was cut at, which
+// is past what one judging reads, so every worker's hand-in was declined and read the whole tree in its own
+// process while the main checkout's own runs were served.
+//
+// A file in neither checkout is left as it came: there is nothing to say about where it stands.
+func Counterpart(checkout, project, file string) string {
+	if real(checkout) == real(project) {
+		return file
+	}
+
+	under, inside := Under(checkout, file)
+	if !inside {
+		return file
+	}
+
+	return filepath.Join(real(project), under)
 }
 
 // marksOf are what every file of the codebase was when it was read: the mark the caller took before the read

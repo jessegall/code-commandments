@@ -1,6 +1,7 @@
 package hooks
 
 import (
+	"io/fs"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -527,5 +528,56 @@ func TestAPathInsideAWorktreeIsTheOnlyThingJudged(t *testing.T) {
 
 	if strings.Contains(answer.Out, "refund.py") {
 		t.Errorf("a run named %s reported a finding in a sibling of the same checkout:\n%s%s", one, answer.Out, answer.Err)
+	}
+}
+
+// TestAWorktreesFilesAreNotAllFilesTheTreeNeverRead holds the mapping a worktree's judging turns on. A worktree's
+// file at <worktree>/src/order.py stands in for the project's own <project>/src/order.py, and the base is asked
+// about the PROJECT's path. Asked about the worktree's instead, the base knows none of them: every file of the
+// checkout counts as a file the tree never read, the count runs past what one judging reads, and the run is
+// declined and reads the whole tree in its own process.
+//
+// Measured on a consumer on v7.15.7, in a worker whose branch is 127 files from the tip: 1201 files "the walk
+// found that the tree never read", every one of them an ordinary source file inside the worktree.
+//
+// Asked of differingFrom itself, because the whole-judging tests cannot see it: their worktrees hold two files,
+// well under what one judging reads, so a hand-in is served whether the mapping works or not.
+func TestAWorktreesFilesAreNotAllFilesTheTreeNeverRead(t *testing.T) {
+	root, _ := workerProject(t)
+	heldBaseOf(t, root)
+
+	named, base, held := baseFor(root)
+	if !held {
+		t.Fatal("no tree is held, so there is nothing to ask")
+	}
+
+	worktree := filepath.Join(root, ".journal", "worktrees", "worker-1")
+
+	// Every python file of the worktree, which is what a judging in it walks. Each one stands in for the
+	// project's own copy at the same path under it, and the base read those.
+	var asked []string
+	if err := filepath.WalkDir(filepath.Join(worktree, "src"), func(path string, entry fs.DirEntry, err error) error {
+		if err == nil && !entry.IsDir() && strings.HasSuffix(path, ".py") {
+			asked = append(asked, path)
+		}
+
+		return err
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	if len(asked) == 0 {
+		t.Fatal("the worktree holds no python file, so this proves nothing")
+	}
+
+	differs, covered := differingFrom(base, named, checkoutOf(named.project, worktree), asked)
+	if !covered {
+		t.Fatal("the worktree shares no history with the branch the tree was read at")
+	}
+
+	if len(differs.Unread) != 0 {
+		t.Errorf("%d of the worktree's %d files count as files the tree never read: %v\nthe base holds the "+
+			"project's copy of each at the same path under it, so none of them is new to it",
+			len(differs.Unread), len(asked), differs.Unread)
 	}
 }

@@ -203,7 +203,7 @@ func differingFrom(base *warm.Base, named branchRoot, checkout string, asked []s
 	// a checkout's file stands in for is what the base is asked about, so a worktree's thousand files are not
 	// all "new" merely for lying under another root.
 	for _, file := range asked {
-		if _, known := base.Holds(counterpartIn(checkout, named.project, file)); !known {
+		if _, known := base.Holds(warm.Counterpart(checkout, named.project, file)); !known {
 			differs.Unread = append(differs.Unread, file)
 		}
 	}
@@ -295,21 +295,6 @@ func firstFew(files []string) string {
 
 	return fmt.Sprintf("the first %d of the largest are %s and %d more",
 		shown, strings.Join(named[:shown], " "), len(named)-shown)
-}
-
-// counterpartIn is the project's own file a checkout's file stands in for: the file itself in the project's own
-// checkout, and the file at the same path under the project for a worktree's.
-func counterpartIn(checkout, project, file string) string {
-	if checkout == project {
-		return file
-	}
-
-	under, inside := warm.Under(checkout, file)
-	if !inside {
-		return file
-	}
-
-	return filepath.Join(project, under)
 }
 
 // viewOf is the base with these files read again in place of its own, and without the ones that are gone, which

@@ -536,3 +536,52 @@ func TestAFileWrittenBackUnchangedHasNotMoved(t *testing.T) {
 		t.Errorf("the base says %v moved, want only %s", moved, invoice)
 	}
 }
+
+// TestACheckoutsFileStandsInForTheProjectsOwnOnItsRealPath holds the one mapping a worktree's judging turns on.
+// A worker's file at <worktree>/src/order.py stands in for the project's own <project>/src/order.py, and the
+// base is asked about the project's path. A scan resolves every path it reads, so the base's keys are real
+// paths — and a counterpart built on a project root reached through a LINK, which a Mac's /tmp is, a linked home
+// is, and the folder a journal names may be, matches no key the base holds.
+//
+// Every file of the worktree then counts as a file the tree never read. Measured on a consumer on v7.15.7, in a
+// worker whose branch is 127 files from the tip it was cut at: 1201 files "the tree never read", which is past
+// what one judging reads, so the judging was declined and the run read the whole tree in its own process. Every
+// worker's hand-in paid it, and the main checkout's own runs were served, which is why it looked like anything
+// but a path.
+func TestACheckoutsFileStandsInForTheProjectsOwnOnItsRealPath(t *testing.T) {
+	root, codebase := project(t, map[string]string{
+		"src/order.py":   "class Order:\n    pass\n",
+		"src/invoice.py": "class Invoice:\n    pass\n",
+	})
+
+	// The project as something NAMES it rather than as it is: through a link, which is the condition, and the
+	// only one, under which the two paths differ.
+	linked := filepath.Join(t.TempDir(), "project")
+	if err := os.Symlink(root, linked); err != nil {
+		t.Skipf("this filesystem has no links, so the two paths cannot differ here: %v", err)
+	}
+
+	base := warm.Keep().Hold(root, "main", []string{root}, codebase, nil)
+
+	worktree := filepath.Join(root, ".journal", "worktrees", "worker-1")
+	own := filepath.Join(worktree, "src", "order.py")
+
+	// Named through the link, which is what a judging is handed.
+	stands := warm.Counterpart(worktree, linked, own)
+
+	if _, known := base.Holds(stands); !known {
+		t.Errorf("a worker's file stands in for %q, which the tree does not hold; it holds the project's copy at %q",
+			stands, filepath.Join(root, "src", "order.py"))
+	}
+
+	// And a file of the project's OWN checkout stands in for itself, whatever the project is called.
+	if stands := warm.Counterpart(root, linked, filepath.Join(root, "src", "invoice.py")); stands != filepath.Join(root, "src", "invoice.py") {
+		t.Errorf("a file of the project's own checkout stands in for %q rather than itself", stands)
+	}
+
+	// A file in neither is left as it came: nothing can be said about where it stands.
+	elsewhere := filepath.Join(t.TempDir(), "other", "thing.py")
+	if stands := warm.Counterpart(worktree, linked, elsewhere); stands != elsewhere {
+		t.Errorf("a file outside the checkout stands in for %q", stands)
+	}
+}
