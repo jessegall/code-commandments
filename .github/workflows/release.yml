@@ -74,3 +74,16 @@ jobs:
         run: |
           gh release create "$GITHUB_REF_NAME" dist/* --title "$GITHUB_REF_NAME" --generate-notes --verify-tag \
             || gh release upload "$GITHUB_REF_NAME" dist/* --clobber
+      - name: Drop the assets of every release but the newest twenty
+        env:
+          GH_TOKEN: ${{ github.token }}
+        # The assets are what the storage is: a release carries six tool binaries, six C# bridges that each ship
+        # their own runtime, and the sums over them, about 350 MB. Nothing deleted them, so 192 releases held
+        # 63.6 GB. The tags and the notes stay, so the history reads as it did; only a version older than the
+        # twenty newest can no longer be installed, which a consumer answers by moving to one that is.
+        run: |
+          gh api repos/${{ github.repository }}/releases --paginate -q '.[].id' | tail -n +21 | while read -r release; do
+            gh api "repos/${{ github.repository }}/releases/$release/assets" --paginate -q '.[].id' | while read -r asset; do
+              gh api -X DELETE "repos/${{ github.repository }}/releases/assets/$asset" >/dev/null || true
+            done
+          done
