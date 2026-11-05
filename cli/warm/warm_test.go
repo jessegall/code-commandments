@@ -199,25 +199,25 @@ func TestTheBaseChecksTheEditedFileBetweenSweeps(t *testing.T) {
 
 	// The first question sweeps, since nothing has been swept yet.
 	now := time.Now()
-	if stale := base.Stale(order, now); len(stale) != 0 {
+	if stale, _ := base.Stale(order, now); len(stale) != 0 {
 		t.Errorf("a base nobody has touched says %v is stale", stale)
 	}
 
 	write(t, invoice, "class Invoice:\n    paid = True\n")
 
 	// Between sweeps the file nobody named is left alone, and the edited one is checked.
-	if stale := base.Stale(order, now.Add(time.Second)); len(stale) != 0 {
+	if stale, _ := base.Stale(order, now.Add(time.Second)); len(stale) != 0 {
 		t.Errorf("between sweeps the base checks more than the edited file: %v", stale)
 	}
 
 	write(t, order, "class Order:\n    paid = True\n")
 
-	if stale := base.Stale(order, now.Add(2*time.Second)); len(stale) != 1 || stale[0] != order {
+	if stale, _ := base.Stale(order, now.Add(2*time.Second)); len(stale) != 1 || stale[0] != order {
 		t.Errorf("the edited file is %v, want only %s", stale, order)
 	}
 
 	// Once a sweep is due, what something else changed is found too.
-	stale := base.Stale(order, now.Add(warm.Sweep))
+	stale, _ := base.Stale(order, now.Add(warm.Sweep))
 	if len(stale) != 2 {
 		t.Errorf("the sweep finds %v, want both files", stale)
 	}
@@ -233,7 +233,7 @@ func TestAFileCreatedSinceTheBaseWasReadIsInTheView(t *testing.T) {
 	fresh := filepath.Join(root, "shop", "refund.py")
 	write(t, fresh, "class Refund:\n    pass\n")
 
-	if stale := base.Stale(fresh, time.Now().Add(time.Second)); len(stale) != 1 || stale[0] != fresh {
+	if stale, _ := base.Stale(fresh, time.Now().Add(time.Second)); len(stale) != 1 || stale[0] != fresh {
 		t.Fatalf("a file the base never had is %v, want only %s", stale, fresh)
 	}
 
@@ -278,7 +278,7 @@ func TestTheSweepNamesTheEditedFileFirst(t *testing.T) {
 	write(t, order, "class Order:\n    paid = True\n")
 	write(t, invoice, "class Invoice:\n    paid = True\n")
 
-	stale := base.Stale(order, time.Now().Add(warm.Sweep))
+	stale, _ := base.Stale(order, time.Now().Add(warm.Sweep))
 	if len(stale) != 2 {
 		t.Fatalf("the sweep names %v, want both files that moved", stale)
 	}
@@ -414,8 +414,34 @@ func TestWhatOneEditReadIsWhatTheNextIsJudgedAgainst(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	stale := next.Stale(second, time.Now().Add(warm.Sweep))
+	stale, _ := next.Stale(second, time.Now().Add(warm.Sweep))
 	if len(stale) != 1 || stale[0] != second {
 		t.Errorf("the next edit must read its own file and no other; it reads %v", stale)
+	}
+}
+
+// TestAFileTheBaseNeverReadIsNoticed holds the base against a file nobody announced. The sweep walks the files
+// the base READ, so a file a shell wrote, a pull brought or a checkout left behind is in no answer at all: every
+// rule that follows an import, a parent or a caller answers as though that file did not exist, which is a sin
+// missed rather than a sin invented, and the quietest kind of wrong. Only the base can say which of the files
+// something else names are ones it never read.
+func TestAFileTheBaseNeverReadIsNoticed(t *testing.T) {
+	root := t.TempDir()
+
+	read := filepath.Join(root, "order.py")
+	never := filepath.Join(root, "invoice.py")
+
+	for _, file := range []string{read, never} {
+		if err := os.WriteFile(file, []byte("x = 1\n"), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	// The base read one of them, as a tree read before the other file existed did.
+	base := warm.Keep().Hold(root, "main", []string{root}, codebaseOf(t, read), nil)
+
+	unheld := base.Unheld([]string{read, never})
+	if len(unheld) != 1 || unheld[0] != never {
+		t.Errorf("the base names %v as files it never read; it never read %s and it did read %s", unheld, never, read)
 	}
 }

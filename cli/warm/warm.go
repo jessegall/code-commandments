@@ -251,9 +251,10 @@ func (b *Base) Gone() []string {
 }
 
 // Stale are the files that must be read again before the base answers about this edit: the edited file where it
-// has moved or is new to the base, and every file that has moved under the base when a sweep is due.
-func (b *Base) Stale(edited string, now time.Time) []string {
-	var stale []string
+// has moved or is new to the base, and every file that has moved under the base when a sweep is due. Swept says
+// a sweep was due and happened, so a caller that knows of changes the base cannot see by itself asks about them
+// then and not on every edit.
+func (b *Base) Stale(edited string, now time.Time) (stale []string, swept bool) {
 	if unchanged, known := b.Holds(edited); !known || !unchanged {
 		stale = append(stale, edited)
 	}
@@ -266,7 +267,7 @@ func (b *Base) Stale(edited string, now time.Time) []string {
 	b.mu.Unlock()
 
 	if !due {
-		return stale
+		return stale, false
 	}
 
 	// The named file is checked either way, and the sweep knows nothing of a file the base never read, so the
@@ -277,7 +278,21 @@ func (b *Base) Stale(edited string, now time.Time) []string {
 		}
 	}
 
-	return stale
+	return stale, true
+}
+
+// Unheld are the paths the base never read. It is how a file nobody announced is noticed: the sweep walks the
+// base's own marks, so it knows nothing of a file a shell wrote, a pull brought or a checkout left behind, and
+// every cross-file rule then answers as though that file did not exist.
+func (b *Base) Unheld(paths []string) []string {
+	var unheld []string
+	for _, path := range paths {
+		if _, known := b.marks[path]; !known {
+			unheld = append(unheld, path)
+		}
+	}
+
+	return unheld
 }
 
 // Holds says whether the file is one of the base's, and whether its content is still what the base read.

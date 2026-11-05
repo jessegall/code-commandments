@@ -51,7 +51,16 @@ func AgainstTheProgram(marking Marking, file string, rules []detectors.Detector,
 		checkout = own
 	}
 
-	moved := base.Stale(file, time.Now())
+	moved, swept := base.Stale(file, time.Now())
+
+	// A file nobody announced is a change to the program too, and the sweep cannot see it: it walks the files
+	// the base READ, so a file a shell wrote, a pull brought or a checkout left behind is absent from every
+	// answer until that file is itself edited, and a rule that follows an import or a parent answers as though
+	// it did not exist. git knows them, so git is asked, and only on a sweep: it is a process, and an edit
+	// cannot pay for one to learn what it already knows.
+	if swept {
+		moved = append(moved, base.Unheld(unannouncedIn(held.project))...)
+	}
 	if len(moved) > drifted {
 		kept.Drop(held.project, held.branch)
 
@@ -195,6 +204,18 @@ func removedIn(held branchRoot, checkout string) []string {
 	}
 
 	return gone
+}
+
+// unannouncedIn are the project's files that differ from its last commit, which is where a file nobody announced
+// shows up: written by a shell it is untracked, and brought by a pull or a checkout it is a change against the
+// commit the base was read at.
+func unannouncedIn(project string) []string {
+	var named []string
+	for file := range git.ChangedVsHead(project) {
+		named = append(named, file)
+	}
+
+	return named
 }
 
 // holds says whether the codebase read that file.
