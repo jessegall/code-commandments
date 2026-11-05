@@ -268,7 +268,15 @@ func (b *Base) View(rebuilt []*contract.Stream, project string) *engine.Codebase
 		}
 	}
 
-	view := engine.Load(spliced...)
+	// Only the files this view replaces have their facts worked out again: the rest are the base's own nodes,
+	// which carry the facts they were read with. What reaches a changed file is filled with it, which the
+	// language decides, so nothing is left answering against the file as it was.
+	var changed []string
+	for path := range fresh {
+		changed = append(changed, path)
+	}
+
+	view := engine.Filling(changed, spliced...)
 	view.Scanned(b.roots...)
 	view.Rooted(project)
 

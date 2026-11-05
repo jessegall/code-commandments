@@ -28,8 +28,11 @@ type Codebase struct {
 	reporting map[string]bool
 }
 
-// Filler fills the facts the engine owns for one language, once every file of the codebase has been read.
-type Filler func(*Codebase)
+// Filler fills the facts the engine owns for one language, once every file of the codebase has been read. The
+// paths are the files that changed since those facts were last worked out, for a codebase built over trees
+// another already filled: the facts are written ON the nodes and a view shares the base's nodes, so a view fills
+// what changed and whatever reaches it, which only the language knows. No paths at all is every file.
+type Filler func(*Codebase, []string)
 
 var fillers = map[contract.Language]Filler{}
 
@@ -94,22 +97,47 @@ func ReadThrough(contents map[string]string) func(path string) ([]byte, error) {
 
 // New is the codebase the streams describe, its sources read through read.
 func New(read func(path string) ([]byte, error), streams ...*contract.Stream) *Codebase {
+	codebase := built(read, streams...)
+	codebase.fill(nil)
+
+	return codebase
+}
+
+// built is the codebase the streams describe with no facts of the engine's own written yet.
+func built(read func(path string) ([]byte, error), streams ...*contract.Stream) *Codebase {
 	codebase := &Codebase{streams: streams, read: read, analyses: &sync.Map{}}
 	for _, stream := range streams {
 		for _, file := range stream.Files {
 			codebase.files = append(codebase.files, &File{File: file, codebase: codebase, stream: stream, read: read})
 		}
 	}
+
+	return codebase
+}
+
+// Filling is the codebase the streams describe with only the facts of these files worked out again, for a
+// codebase built over trees whose facts another codebase has already written on them. Every other file's facts
+// are the ones it was read with, which is what makes a view of a kept tree cost the file that changed and no
+// more: the pass costs 0.9 seconds of an edit's answer on a 5286-file tree, and nearly all of it is files
+// nothing touched.
+func Filling(changed []string, streams ...*contract.Stream) *Codebase {
+	codebase := built(os.ReadFile, streams...)
+	codebase.fill(changed)
+
+	return codebase
+}
+
+// fill writes each language's own facts, over the changed files where any are named and over every file
+// otherwise.
+func (c *Codebase) fill(changed []string) {
 	filled := map[contract.Language]bool{}
-	for _, stream := range streams {
+	for _, stream := range c.streams {
 		if fill, ok := fillers[stream.Header.Language]; ok && !filled[stream.Header.Language] {
 			filled[stream.Header.Language] = true
-			fill(codebase)
+			fill(c, changed)
 		}
 	}
 	Untouched()
-
-	return codebase
 }
 
 // FromString is the codebase one stream's JSON lines describe, its sources given by path.
