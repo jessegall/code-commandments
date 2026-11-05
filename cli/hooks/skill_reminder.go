@@ -56,7 +56,10 @@ func (SkillReminder) Handle(event Event) Response {
 	project = project.Judging(enabled)
 	files := edited(event, project)
 
-	single := slices.DeleteFunc(enabled, detectors.ReadsBeyondOneFile)
+	// The rules that answer from the file they report in, which is all a run with no base of the branch can
+	// ask. The clone matters: DeleteFunc writes through the slice it is given, so narrowing in place would take
+	// those rules out of the enabled set every other reader here uses.
+	single := slices.DeleteFunc(slices.Clone(enabled), detectors.ReadsBeyondOneFile)
 
 	reported := ReportedIn(event.Workspace())
 	marking := Marks(event.Root)
@@ -70,7 +73,15 @@ func (SkillReminder) Handle(event Event) Response {
 
 		// A file inside a folder the project excludes is marked only by the rules it let in there, where a file
 		// of its declared paths is marked by them all.
-		marks := marksIn(marking, file, project.RulesFor(event.Root, file, single), event.ChangedLines(file))
+		//
+		// Against a view of the branch's base every rule can be asked, since the view IS the program; with no
+		// base held the file is judged alone, which only the rules that answer from one file may be asked, and
+		// a base is read in the background so the next edit is answered against the program.
+		marks, whole := AgainstTheProgram(marking, file, project.RulesFor(event.Root, file, enabled), event.ChangedLines(file), event.Root, project)
+		if !whole {
+			marks = marksIn(marking, file, project.RulesFor(event.Root, file, single), event.ChangedLines(file))
+			Warming(event.Root, project)
+		}
 		activity = append(activity, marks...)
 
 		found, order := bySkill(marks)
