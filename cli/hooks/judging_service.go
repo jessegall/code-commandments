@@ -6,6 +6,8 @@ import (
 	"errors"
 	"net"
 	"os"
+	"path/filepath"
+	"slices"
 	"time"
 
 	"github.com/jessegall/code-commandments/cli"
@@ -127,7 +129,8 @@ func heldOrDeclined(root, in string, declined *bool) func(scan.Sources) (*engine
 
 		// Every language's files, because Files with none named answers none: asking it that way made this
 		// decline every run and, before that, made every run read the tree here rather than use the base.
-		if len(sources.Files(source.Languages...)) == 0 {
+		asked := sources.Files(source.Languages...)
+		if len(asked) == 0 {
 			*declined = true
 
 			return engine.Load(), nil
@@ -146,7 +149,7 @@ func heldOrDeclined(root, in string, declined *bool) func(scan.Sources) (*engine
 			}
 		}
 
-		read, covered := differingFrom(base, named, checkout)
+		read, covered := differingFrom(base, named, checkout, asked)
 		if !covered || len(read) > spliced {
 			*declined = true
 
@@ -166,31 +169,69 @@ func heldOrDeclined(root, in string, declined *bool) func(scan.Sources) (*engine
 // own account, which is exactly what those fingerprints do say. A worktree whose branch shares no history with
 // the base's cannot be answered from it, and saying nothing differs would be the worst answer of the three: a
 // green tick over every sin the worker wrote.
-func differingFrom(base *warm.Base, named branchRoot, checkout string) ([]string, bool) {
-	read := base.Moved()
+func differingFrom(base *warm.Base, named branchRoot, checkout string, asked []string) ([]string, bool) {
+	gone := base.Gone()
 
-	if checkout == named.project {
-		return read, true
+	// A file that is gone cannot be read again, only left out, so it never joins what is asked for.
+	read := slices.DeleteFunc(base.Moved(), func(file string) bool { return slices.Contains(gone, file) })
+
+	// A file the base never read is read now, whatever made it: an edit, a shell, a checkout, a rename. Left
+	// out, it is judged as though it did not exist, which is the quietest wrong answer a judging can give. What
+	// a checkout's file stands in for is what the base is asked about, so a worktree's thousand files are not
+	// all "new" merely for lying under another root.
+	for _, file := range asked {
+		if _, known := base.Holds(counterpartIn(checkout, named.project, file)); !known {
+			read = append(read, file)
+		}
 	}
 
-	changed, told := git.ChangedVsBranch(checkout, named.branch)
-	if !told {
-		return nil, false
+	if checkout != named.project {
+		changed, told := git.ChangedVsBranch(checkout, named.branch)
+		if !told {
+			return nil, false
+		}
+
+		for file := range changed {
+			read = append(read, file)
+		}
 	}
 
-	for file := range changed {
-		read = append(read, file)
-	}
+	slices.Sort(read)
 
-	return read, true
+	return slices.Compact(read), true
 }
 
-// viewOf is the base with these files read again in place of its own, which is the tree a judging is answered
-// against. Nothing is excluded from that read: these are the files we have WORKED OUT differ, and a worker's lie
-// in a worktree under a folder the project excludes, so excluding again would read none of them.
+// counterpartIn is the project's own file a checkout's file stands in for: the file itself in the project's own
+// checkout, and the file at the same path under the project for a worktree's.
+func counterpartIn(checkout, project, file string) string {
+	if checkout == project {
+		return file
+	}
+
+	under, inside := warm.Under(checkout, file)
+	if !inside {
+		return file
+	}
+
+	return filepath.Join(project, under)
+}
+
+// viewOf is the base with these files read again in place of its own, and without the ones that are gone, which
+// is the tree a judging is answered against.
+//
+// Nothing is excluded from that read: these are the files we have WORKED OUT differ, and a worker's lie in a
+// worktree under a folder the project excludes, so excluding again would read none of them. A file that is gone
+// is left out rather than read, since nothing announces a shell's removals and a base that still holds one
+// answers about code nobody has any more.
 func viewOf(base *warm.Base, named branchRoot, checkout string, read []string) (*engine.Codebase, error) {
-	if len(read) == 0 {
+	gone := base.Gone()
+
+	if len(read) == 0 && len(gone) == 0 {
 		return base.Codebase(), nil
+	}
+
+	if len(read) == 0 {
+		return base.ViewFrom(checkout, nil, named.project, gone), nil
 	}
 
 	rebuilt, err := scan.Walk(read, source.Excluded{}).Load()
@@ -198,5 +239,5 @@ func viewOf(base *warm.Base, named branchRoot, checkout string, read []string) (
 		return base.Codebase(), err
 	}
 
-	return base.ViewFrom(checkout, rebuilt.Streams(), named.project), nil
+	return base.ViewFrom(checkout, rebuilt.Streams(), named.project, gone), nil
 }

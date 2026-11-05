@@ -176,6 +176,21 @@ func (b *Base) Moved() []string {
 	return moved
 }
 
+// Gone are the files the base read that are no longer on disk. A file something removed outside the plugin's
+// sight — rm, a checkout, a rebase — is no longer part of the program, and a view that still holds it judges it
+// as though it were: a consumer's judging reported three sins in a file deleted a minute earlier, which no event
+// had announced because nothing announces a shell's removals.
+func (b *Base) Gone() []string {
+	var gone []string
+	for path := range b.marks {
+		if Mark(path) == "" {
+			gone = append(gone, path)
+		}
+	}
+
+	return gone
+}
+
 // Stale are the files that must be read again before the base answers about this edit: the edited file where it
 // has moved or is new to the base, and every file that has moved under the base when a sweep is due.
 func (b *Base) Stale(edited string, now time.Time) []string {
@@ -222,7 +237,7 @@ func (b *Base) Holds(path string) (unchanged bool, known bool) {
 // The streams are the base's with one slice of file pointers rebuilt, so the view costs the files it replaces
 // and nothing else. The caller parses the named files itself, through the bridge that keeps them warm.
 func (b *Base) View(rebuilt []*contract.Stream, project string) *engine.Codebase {
-	return b.ViewFrom(project, rebuilt, project)
+	return b.ViewFrom(project, rebuilt, project, nil)
 }
 
 // ViewFrom is the base with the files of one CHECKOUT of the project in place of its own, which is how a
@@ -233,7 +248,14 @@ func (b *Base) View(rebuilt []*contract.Stream, project string) *engine.Codebase
 // base's as it was and the worker's as it is, and a rule that reads a recurrence, a twin or a declaration would
 // answer against two of everything the worker has changed. The view is rooted at the checkout so the paths a rule
 // matches folders against are the ones the project means, src and not .journal/worktrees/worker-545/src.
-func (b *Base) ViewFrom(checkout string, rebuilt []*contract.Stream, project string) *engine.Codebase {
+// Gone names the base's files to leave OUT of it, for files that are no longer on disk: replaced is not the only
+// way a file changes, and a program holding a file that was deleted answers about code nobody has any more.
+func (b *Base) ViewFrom(checkout string, rebuilt []*contract.Stream, project string, gone []string) *engine.Codebase {
+	dropped := map[string]bool{}
+	for _, path := range gone {
+		dropped[path] = true
+	}
+
 	fresh := map[string]*contract.File{}
 	for _, stream := range rebuilt {
 		for _, file := range stream.Files {
@@ -276,6 +298,8 @@ func (b *Base) ViewFrom(checkout string, rebuilt []*contract.Stream, project str
 
 		for _, file := range stream.Files {
 			switch {
+			case dropped[file.Path]:
+				// Gone from disk, so gone from the program.
 			case fresh[file.Path] != nil:
 				part.Files = append(part.Files, fresh[file.Path])
 			case standsFor[file.Path]:

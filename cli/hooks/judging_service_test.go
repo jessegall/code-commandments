@@ -1,6 +1,7 @@
 package hooks
 
 import (
+	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -207,4 +208,105 @@ func TestAWorkersHandInJudgingIsAnsweredFromTheBase(t *testing.T) {
 			t.Errorf("the hand-in's answer does not name %s, so it judged the project's copy and not the worker's:\n%s%s", said, answer.Out, answer.Err)
 		}
 	}
+}
+
+// TestWhatTheShellDidToTheTreeIsJudged holds the tree against what happens to it outside the plugin's sight. An
+// agent does not only edit: it removes a file with rm, writes one with a heredoc, renames one, checks a branch
+// out. None of that raises an event, so a tree held in memory learns of it only by looking — and a tree that
+// does not look answers about code that is not there and says nothing about code that is.
+//
+// Each of the three was a real wrong answer. A consumer's judging reported three sins in a file deleted a minute
+// earlier. A file created with no event of its own was judged as though it did not exist, which is the quietest
+// wrong answer there is. And a rename is both at once.
+func TestWhatTheShellDidToTheTreeIsJudged(t *testing.T) {
+	root, _ := migrationProject(t)
+	heldBaseOf(t, root)
+
+	listener, listening := Judging(root)
+	if !listening {
+		t.Fatalf("the service cannot listen on %s", warm.Socket(root))
+	}
+	defer listener.Close()
+
+	go serveJudging(listener, root)
+
+	// It is found at all to begin with, so what follows is about the tree and not about the rule.
+	if said := judgingOf(t, root); !strings.Contains(said, "m004_drop_fades.py") {
+		t.Fatalf("the sin is not found before anything is done to the tree:\n%s", said)
+	}
+
+	// Removed by the shell, as rm removes it: no event, nothing announced.
+	gone := filepath.Join(root, "shop", "migrations", "m004_drop_fades.py")
+	if err := os.Remove(gone); err != nil {
+		t.Fatal(err)
+	}
+
+	if said := judgingOf(t, root); strings.Contains(said, "m004_drop_fades.py") {
+		t.Errorf("a file the shell removed is still judged, from a tree held in memory:\n%s", said)
+	}
+
+	// Written by the shell, as a heredoc writes it: again no event.
+	made := filepath.Join(root, "shop", "migrations", "m005_drop_tails.py")
+	if err := os.WriteFile(made, []byte(`from shop.rebuild_migration import RebuildMigration
+
+
+class DropTailsMigration(RebuildMigration):
+    number = 5
+`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	if said := judgingOf(t, root); !strings.Contains(said, "m005_drop_tails.py") {
+		t.Errorf("a file written with no event of its own is judged as though it did not exist:\n%s", said)
+	}
+
+	// And renamed, which is both at once: gone from where it was, there where it now is.
+	moved := filepath.Join(root, "shop", "migrations", "m006_drop_tails.py")
+	if err := os.Rename(made, moved); err != nil {
+		t.Fatal(err)
+	}
+
+	said := judgingOf(t, root)
+
+	if strings.Contains(said, "m005_drop_tails.py") {
+		t.Errorf("a renamed file is judged at the path it no longer has:\n%s", said)
+	}
+
+	if !strings.Contains(said, "m006_drop_tails.py") {
+		t.Errorf("a renamed file is not judged at the path it now has:\n%s", said)
+	}
+
+}
+
+// heldBaseOf reads the project's tree and holds it as the base, as the first hook of a session has it held.
+func heldBaseOf(t *testing.T, root string) {
+	t.Helper()
+
+	settings, _ := config.Load(root)
+
+	codebase, err := scan.Walk([]string{root}, source.Under(root, settings.Excluded)).Load()
+	if err != nil || codebase == nil {
+		t.Fatalf("the python bridge cannot run here: %v", err)
+	}
+
+	project := git.ProjectRoot(root)
+	branch := git.CurrentBranch(project)
+
+	kept.Hold(project, branch, []string{root}, codebase)
+	t.Cleanup(func() { kept.Drop(project, branch) })
+}
+
+// judgingOf is what a full judging of the project says, answered by the service from the tree it holds.
+func judgingOf(t *testing.T, root string) string {
+	t.Helper()
+
+	answer, asked := warm.Asked(root, warm.Request{
+		Judge: []string{root, "--no-checklist", "--sin=migration-by-its-parents"},
+		In:    root,
+	})
+	if !asked {
+		t.Fatal("the judging was declined, so it says nothing about the tree the service holds")
+	}
+
+	return answer.Out + answer.Err
 }

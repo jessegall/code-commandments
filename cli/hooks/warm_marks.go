@@ -90,7 +90,9 @@ func AgainstTheProgram(marking Marking, file string, rules []detectors.Detector,
 		}
 
 		read = time.Since(reading)
-		view = base.ViewFrom(checkout, streams, held.project)
+		// No files are dropped here: a file gone anywhere but the one named has already given the base up above,
+		// and the named file is one we were told about and have just read.
+		view = base.ViewFrom(checkout, streams, held.project, nil)
 	}
 
 	// A file the view does not hold cannot be judged against the program, and answering "no sins" for it would
