@@ -59,16 +59,19 @@ func howTheReadWent(named branchRoot) (string, bool) {
 // (detectors.ReadsBeyondOneFile) and an edit is never told about them. Against a view of the base they answer
 // about the real program, and the mark can carry every rule the project has enabled.
 func AgainstTheProgram(marking Marking, file string, rules []detectors.Detector, changed git.ChangedLines, root string) ([]SinMark, time.Duration, bool) {
-	held, base, ok := baseFor(root)
-	if !ok {
-		return nil, 0, false
-	}
-
-	// The checkout the file lies in, which for a worker is its own worktree: its files stand in for the
+	// The checkout the FILE lies in, which for a worker is its own worktree: its files stand in for the
 	// project's own at the same path under it, so the program holds one copy of each source, the worker's.
-	checkout := strings.TrimRight(held.project, "/")
+	//
+	// Worked out before the tree is looked up, because which tree this edit may answer from depends on it: a
+	// worker stands on a branch of its own and answers from the tree of the checkout its main agent is on.
+	checkout := strings.TrimRight(git.ProjectRoot(root), "/")
 	if own := git.Root(file); own != "" {
 		checkout = own
+	}
+
+	held, base, ok := baseForCheckout(root, checkout)
+	if !ok {
+		return nil, 0, false
 	}
 
 	// A file that is GONE is answered with nothing at all. The tree still holds it, and judged from that memory
@@ -489,20 +492,6 @@ func baseFor(path string) (branchRoot, *warm.Base, bool) {
 	}
 
 	base, held := kept.Holds(named.project, named.branch)
-
-	// A WORKTREE answers from whatever tree the project holds, whatever branch it was read at. A worker stands
-	// on a branch of its own, cut from the branch the project was on at the time, so a branch per worker can
-	// never have a tree under its own name: keyed by the branch the main checkout happens to be on NOW, the
-	// lookup found nothing the moment that checkout moved, and every worker's judging read the whole tree in
-	// its own process — measured on a consumer at 127 seconds of reading for six changed files.
-	//
-	// Whether that tree can answer about this worktree is a question about history, which differingFrom asks of
-	// git and refuses where the two share none.
-	if !held && checkoutOf(path, path) != named.project {
-		if any, holds := kept.Any(named.project); holds {
-			return branchRoot{project: named.project, branch: any.Branch}, any, true
-		}
-	}
 
 	return named, base, held
 }

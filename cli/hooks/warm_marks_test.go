@@ -517,3 +517,54 @@ class DropFadesMigration(RebuildMigration):
 		t.Error("the tree was given up for a merge it could have read in one ask")
 	}
 }
+
+// TestAWorkersEditIsJudgedAgainstItsOwnAgentsTree holds the EDIT path to the same tree the judging path answers
+// from. An edit is what an agent feels: it writes a file and waits to be told. Judged against no tree it is
+// judged on its own file alone, with every rule that reads a parent, a caller or a recurrence quietly dropped,
+// and nothing says so — the only sign is the answers going thin.
+//
+// A worker stands on a branch of its own, cut from the branch its main agent works on, so the tree it answers
+// from is that agent's. Looked up by the branch the project checkout happens to be standing on at that instant,
+// the lookup found nothing as soon as that checkout moved: the judging path was fixed for this and the edit path
+// was not, which is the path that matters most.
+func TestAWorkersEditIsJudgedAgainstItsOwnAgentsTree(t *testing.T) {
+	root, _ := workerProject(t)
+	settings, _ := config.Load(root)
+
+	project := git.ProjectRoot(root)
+	branch := git.CurrentBranch(project)
+
+	roots, err := config.DeclaredRoots(root)
+	if err != nil || len(roots) == 0 {
+		t.Fatalf("the project declares no root: %v", err)
+	}
+
+	codebase, err := scan.Walk(roots, source.Under(root, settings.Excluded)).Load()
+	if err != nil || codebase == nil {
+		t.Fatalf("the python bridge cannot run here: %v", err)
+	}
+
+	kept.Hold(project, branch, roots, codebase, nil)
+	t.Cleanup(func() { kept.Drop(project, branch) })
+
+	// And then the main checkout moves, as a main agent does. Nothing about the worker changed.
+	if out, err := exec.Command("git", "-C", root, "checkout", "-q", "-b", "the-main-agents-own-work").CombinedOutput(); err != nil {
+		t.Fatalf("git checkout: %s", out)
+	}
+
+	worktree := filepath.Join(root, ".journal", "worktrees", "worker-1")
+	edited := filepath.Join(worktree, "src", "order.py")
+
+	// The lookup by the main checkout's CURRENT branch must really miss, or this test would pass whatever the
+	// edit path does with it.
+	if _, _, byBranch := baseFor(worktree); byBranch {
+		t.Fatalf("the tree is still found by the branch the project is on, %q, so there is nothing to prove",
+			git.CurrentBranch(project))
+	}
+
+	_, _, whole := AgainstTheProgram(Marks(root), edited, allRules(t, root, settings), git.Everywhere(), worktree)
+	if !whole {
+		t.Error("a worker's edit is judged on its own file alone after the main checkout moved off the branch it " +
+			"was cut from, so every rule that reads more than one file is dropped and nothing says so")
+	}
+}
