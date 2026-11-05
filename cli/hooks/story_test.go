@@ -109,6 +109,17 @@ class RefundKind(RebuildKind):
 		t.Errorf("EIGHT: the second worker is told about the first worker's file:\n%s", whisper)
 	}
 
+	// EIGHT AND A HALF. The first worker's sin still STANDS. The record of what has been announced is kept per
+	// environment while the files are per checkout, so a judging of the second worker swept that record, did not
+	// find the first worker's file in its own worktree, and settled it as clean: the agent that really wrote the
+	// sin watched it turn green. A judging can only honestly settle what it could see.
+	for _, settled := range storyCards(t, told) {
+		if strings.Contains(settled, "invoice.py") && strings.Contains(settled, "sin-resolved") {
+			t.Errorf("EIGHT AND A HALF: judging the second worker settled the FIRST worker's sin as clean, in a "+
+				"file its own checkout does not hold:\n%s", settled)
+		}
+	}
+
 	// NINE. The main agent finishes its own work and comes back to the branch it shares with its workers, and
 	// its own judging is served again from the tree read there.
 	storyOn(t, root, "checkout", "-q", "development")
@@ -315,4 +326,26 @@ func storyWhisper(t *testing.T, told string) string {
 	}
 
 	return said.String()
+}
+
+// storyCards are the cards an answer carries, each as the words it was written with: the environment's own
+// record of what has been announced, as against the tell, which is one agent's.
+func storyCards(t *testing.T, told string) []string {
+	t.Helper()
+
+	var said []string
+	for _, line := range strings.Split(told, "}{") {
+		var answer map[string]any
+		if json.Unmarshal([]byte(line), &answer) != nil {
+			continue
+		}
+
+		cards, _ := answer["cards"].([]any)
+		for _, card := range cards {
+			written, _ := json.Marshal(card)
+			said = append(said, string(written))
+		}
+	}
+
+	return said
 }
