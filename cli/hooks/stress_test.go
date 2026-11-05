@@ -995,7 +995,7 @@ func (c *stressCheckout) raises(t *testing.T) {
 	oneAtATime.Lock()
 	defer oneAtATime.Unlock()
 
-	stressHeld(t, c, c.at, c.Project, "", false, stressDrain(t, os.Getenv(pluginData)))
+	stressHeld(t, c, c.at, c.Project, "", false, stressTake(t))
 
 	sendEvent(t, c.Service, map[string]any{
 		"v": 1, "event": event, "session": fmt.Sprintf("s%d", c.Named), "environment": "main",
@@ -1240,15 +1240,29 @@ func (c *stressCheckout) tells(t *testing.T, file string, from, to int, owed boo
 		delete(data, "lines")
 	}
 
-	if c.draw.Intn(2) == 0 {
+	switch c.draw.Intn(3) {
+	case 0:
 		under, err := filepath.Rel(c.Project, file)
 		if err != nil {
 			t.Fatal(err)
 		}
 
 		data["path"] = under
-	} else {
+	case 1:
 		data["input"] = map[string]any{"file_path": file}
+		against = c.At
+	default:
+		// Relative to the CHECKOUT, with the folder named beside it, which is the shape a consumer's journal
+		// began sending at 17:52 on 2026-11-05. Sixteen files holding sins arrived in it and every one was
+		// dropped at the gate, because the plugin worked the folder out from its environment and never read
+		// the one it was handed.
+		under, err := filepath.Rel(c.At, file)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		data["path"] = under
+		data["cwd"] = c.Told
 		against = c.At
 	}
 
@@ -1257,7 +1271,7 @@ func (c *stressCheckout) tells(t *testing.T, file string, from, to int, owed boo
 
 	// Whatever an earlier move of this checkout left in the queue is taken first, and held like any other
 	// answer: left there, the wait below would end on somebody else's answer and read this move as unanswered.
-	stressHeld(t, c, c.at, against, "", false, stressDrain(t, os.Getenv(pluginData)))
+	stressHeld(t, c, c.at, against, "", false, stressTake(t))
 
 	// On the SOCKET, which is the only way the journal reaches the plugin. Called at the judging's own entry, as
 	// this did, nothing of the service runs: not the parse made ahead of the judging, not the adviser that
@@ -1278,20 +1292,50 @@ func (c *stressCheckout) tells(t *testing.T, file string, from, to int, owed boo
 func (c *stressCheckout) awaited(t *testing.T, file string, owed bool) []map[string]any {
 	t.Helper()
 
-	var held []map[string]any
+	// Waited for until THIS move's own answer has come, which is asked of what the whole run has been told
+	// rather than of this drain alone. The queue is ONE: a move drains every answer in it, including answers
+	// another checkout's move is still waiting for, so a move judging only its own drain could be made to time
+	// out by somebody else having picked its answer up first.
+	var mine []map[string]any
 
-	// Waited for until THIS move's own answer is among them, since another checkout's lands in the same queue
-	// while this one waits: breaking on whatever arrived first read that as this move's answer and called the
-	// move unanswered.
 	for until := time.Now().Add(stressWaits); time.Now().Before(until); time.Sleep(20 * time.Millisecond) {
-		held = append(held, stressDrain(t, os.Getenv(pluginData))...)
+		mine = append(mine, stressTake(t)...)
 
-		if !owed || stressAbout(held, stressUnder(c.Project, file), stressUnder(c.At, file)) {
+		if !owed || stressWasTold(stressUnder(c.Project, file), stressUnder(c.At, file)) {
 			break
 		}
 	}
 
-	return held
+	return mine
+}
+
+// stressToldPaths are the paths the run has been told about, however they were named, so a move knows its answer
+// came even where another move drained it. Written and read under oneAtATime.
+var stressToldPaths = map[string]bool{}
+
+// stressTake drains the queue and records every path the answers in it named.
+func stressTake(t *testing.T) []map[string]any {
+	t.Helper()
+
+	taken := stressDrain(t, os.Getenv(pluginData))
+	for _, answer := range taken {
+		for _, named := range stressReported(answer) {
+			stressToldPaths[named] = true
+		}
+	}
+
+	return taken
+}
+
+// stressWasTold says whether the run has been told about any of those paths.
+func stressWasTold(paths ...string) bool {
+	for _, named := range paths {
+		if stressToldPaths[named] {
+			return true
+		}
+	}
+
+	return false
 }
 
 // stressDrain takes what the queue holds, once nothing in it is half written. The journal's own queue writes a
@@ -1310,20 +1354,6 @@ func stressDrain(t *testing.T, data string) []map[string]any {
 	}
 
 	return drained(t, data)
-}
-
-// stressAbout says whether any of the answers names one of those paths, which is how a move knows its own
-// answer has landed.
-func stressAbout(answers []map[string]any, paths ...string) bool {
-	for _, answer := range answers {
-		for _, named := range stressReported(answer) {
-			if slices.Contains(paths, named) {
-				return true
-			}
-		}
-	}
-
-	return false
 }
 
 // stressWaits is how long a move waits for the adviser to work its moment out before saying it was answered with
@@ -1412,7 +1442,9 @@ func stressHeld(t *testing.T, mine *stressCheckout, move int, against, file stri
 		// not held to this: every checkout here works in one environment, which keeps ONE record, so a
 		// resolution legitimately names whatever file of it became clean.
 		for _, named := range stressSaidOf(answer) {
-			if named == stressUnder(against, file) {
+			// Either form the file can be named in: which one an answer uses follows the folder the moment
+			// carried, and a check that knows only one of them reads a right answer as silence.
+			if named == stressUnder(against, file) || named == stressUnder(mine.Project, file) || named == stressUnder(mine.At, file) {
 				told = true
 			}
 
@@ -1425,6 +1457,12 @@ func stressHeld(t *testing.T, mine *stressCheckout, move int, against, file stri
 
 	// A move that wrote a sin is owed an answer about the file it wrote it in. Without this the run proves
 	// nothing at all: every quiet fallback in the judging ends in no answer, and a run of them passed.
+	// Asked of the whole run and not of this drain: another move may have taken this answer out of the queue,
+	// and the question is whether the plugin SAID it, never who picked it up.
+	if !told && stressWasTold(stressUnder(against, file), stressUnder(mine.Project, file), stressUnder(mine.At, file)) {
+		told = true
+	}
+
 	if owed && !told {
 		// What a judging of that file finds on its own, said in the failure: a move told nothing is either a
 		// file with no sin in it, which is the harness's fault, or a sin the plugin would not say, which is

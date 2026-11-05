@@ -356,3 +356,69 @@ class RebuildMigration(Migration):
 		t.Error("the tree was given up for a file that moved, instead of taking it in")
 	}
 }
+
+// TestAChangeNobodyAnnouncedIsStillJudged holds the tree against the one change nothing tells it about. A shell
+// line that rewrites many files at once — a merge, a rebase, a formatter over the tree — raises no edit of its
+// own: the journal's own capture stays silent past thirty-two files, and nothing else announces one either. The
+// tree learns of it only by LOOKING.
+//
+// So the next edit after such a change must be judged against the tree as it now is. Getting this wrong has no
+// visible sign: a rule that reads a parent or a caller simply answers about code that is two commits old.
+func TestAChangeNobodyAnnouncedIsStillJudged(t *testing.T) {
+	root, _ := migrationProject(t)
+	settings, _ := config.Load(root)
+
+	project := git.ProjectRoot(root)
+	branch := git.CurrentBranch(project)
+
+	codebase, err := scan.Walk([]string{root}, source.Under(root, settings.Excluded)).Load()
+	if err != nil || codebase == nil {
+		t.Fatalf("the python bridge cannot run here: %v", err)
+	}
+
+	// The clock is already past a sweep, so the first question after the change looks at the whole tree.
+	kept.Clocked(func() time.Time { return time.Now().Add(-2 * warm.Sweep) })
+	kept.Hold(project, branch, []string{root}, codebase, nil)
+	t.Cleanup(func() { kept.Clocked(time.Now); kept.Drop(project, branch) })
+
+	// A shell line rewrites the whole chain of parents the rule follows, and announces nothing at all.
+	for path, text := range map[string]string{
+		"shop/migration.py": "class Migration:\n    number = 0\n    paid = True\n",
+		"shop/rebuild_migration.py": `from shop.migration import Migration
+
+
+class RebuildMigration(Migration):
+    statements: list[str] = []
+    paid = True
+`,
+	} {
+		if err := os.WriteFile(filepath.Join(root, path), []byte(text), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	// And then one file is edited, which is the only thing anybody is told about.
+	edited := filepath.Join(root, "shop", "migrations", "m004_drop_fades.py")
+	if err := os.WriteFile(edited, []byte(`from shop.rebuild_migration import RebuildMigration
+
+
+class DropFadesMigration(RebuildMigration):
+    number = 4
+    paid = False
+`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	marks, _, whole := AgainstTheProgram(Marks(root), edited, allRules(t, root, settings), git.Everywhere(), root)
+
+	// Judged against the program, with the files nobody announced taken in: the rule's chain of parents runs
+	// through both of them, so it can only answer if the tree looked.
+	if !whole {
+		t.Fatal("the edit after a change nobody announced is not judged against the program at all")
+	}
+
+	if len(marks) == 0 {
+		t.Error("the sin whose chain of parents runs through the files nobody announced is not found, so the tree " +
+			"answered from the version before them")
+	}
+}

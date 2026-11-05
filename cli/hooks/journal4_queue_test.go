@@ -690,3 +690,58 @@ func TestTheJournalsMinuteBeatSweepsLikeGoingIdle(t *testing.T) {
 		t.Errorf("the beat answered %v, none of it settling the mark of the file that is now clean", cards)
 	}
 }
+
+// TestAPathIsReadAgainstTheFolderTheJournalNames holds the one thing a moment's own folder is for. The journal
+// names the path of an edited file relative to the checkout the edit happened in, and says which checkout that
+// is; read against the project instead, a worker's file names a path that is not there and the moment is dropped
+// at the gate without a word.
+//
+// Reported from a consumer on v7.15.1: two workers planted sixteen files holding sins, every delivery arrived
+// within a second, and not one of them was answered. Their earlier deliveries carried absolute paths, which is
+// why this had never shown.
+func TestAPathIsReadAgainstTheFolderTheJournalNames(t *testing.T) {
+	root, _ := workerProject(t)
+	worktree := filepath.Join(root, ".journal", "worktrees", "worker-1")
+
+	t.Setenv("JOURNAL_ROOT", root)
+
+	// The delivery as a consumer's journal really sends it: the path relative to the WORKTREE, and the folder
+	// beside it.
+	moment, known := Moment4Of(map[string]any{
+		"v": 1, "event": "file_edited", "session": "s1", "environment": "main", "agent": 7,
+		"data": map[string]any{
+			"path": "src/order.py", "kind": "edit", "cwd": worktree,
+			"lines": []any{map[string]any{"line_type": "add", "line": 2, "text": "    def total(self):"}},
+		},
+	})
+	if !known {
+		t.Fatal("the journal's own delivery is no moment")
+	}
+
+	named := MomentOf(moment)
+	if named.File == nil {
+		t.Fatal("the moment names no file at all")
+	}
+
+	own := filepath.Join(worktree, "src", "order.py")
+	if *named.File != own {
+		t.Errorf("the moment names %q; the journal said the path was relative to %s, so it is %s",
+			*named.File, worktree, own)
+	}
+
+	// And the folder the moment carries is that worktree, so the rules' own folders join to the checkout the
+	// file lies in rather than to the project.
+	if named.Cwd != worktree {
+		t.Errorf("the moment's folder is %q, not the worktree the journal named", named.Cwd)
+	}
+
+	// An absolute path is left exactly as it came, which is how every delivery before this one arrived.
+	absolute, _ := Moment4Of(map[string]any{
+		"v": 1, "event": "file_edited", "session": "s1", "environment": "main", "agent": 7,
+		"data": map[string]any{"path": own, "kind": "edit", "cwd": worktree},
+	})
+
+	if said := MomentOf(absolute); said.File == nil || *said.File != own {
+		t.Errorf("an absolute path was not left as it came: %v", said.File)
+	}
+}

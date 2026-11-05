@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 
 	"github.com/jessegall/code-commandments/cli"
@@ -260,7 +261,12 @@ func Moment4Of(line map[string]any) (map[string]any, bool) {
 	}
 
 	if file := asText(firstOf(input["file_path"], input["path"], input["notebook_path"], data["path"])); file != "" {
-		tool["file"] = file
+		// Against the folder the journal SAYS it is relative to, where it says one. A path it names relative is
+		// relative to the checkout the event happened in, which is a worker's own worktree, and resolving it
+		// against the project instead names a file that is not there: a worker planted sixteen files holding
+		// sins, every delivery arrived, and every one was dropped at the gate without a word, because the
+		// folder it was handed was never read.
+		tool["file"] = within(asText(firstOf(data["cwd"], line["cwd"])), file)
 	}
 
 	// A command of a shell line is a shell command however the tool was named, and a file the journal recorded an
@@ -293,6 +299,28 @@ func Moment4Of(line map[string]any) (map[string]any, bool) {
 	// The event's own data rides along: the edit the journal already worked out is in it, and a judge that reads it
 	// never asks git for the lines nor the disk for the file.
 	return map[string]any{"event": "hook." + hook, "agent": agent, "tool": tool, "env": line["environment"], "data": data}, true
+}
+
+// within is the file as a path of its own: the one given where it is already absolute, and joined to the folder
+// the journal named it relative to otherwise. Absolute first, since everything after it — which checkout the
+// file lies in, which folders of the project hold it, whether it is there at all — is a question about a real
+// path and nonsense about a relative one.
+func within(folder, file string) string {
+	if folder == "" || strings.HasPrefix(file, "/") {
+		return file
+	}
+
+	// Only where the folder really holds it. A journal may name the folder the EVENT happened in while naming
+	// the path relative to the project — one names a worker's file src/order.py under the worktree, another
+	// names the same file .journal/worktrees/worker-1/src/order.py under the project — and joining the second
+	// to the first makes a path that is nowhere. So the folder it named is tried, and a path it does not hold is
+	// left exactly as it came, for the project to resolve as it always did.
+	joined := filepath.Join(folder, file)
+	if info, err := os.Stat(joined); err != nil || !info.Mode().IsRegular() {
+		return file
+	}
+
+	return joined
 }
 
 // worktreesIn is the folder the journal keeps a worker's own trees in, under the project.
