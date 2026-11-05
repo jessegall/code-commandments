@@ -223,6 +223,9 @@ func differingFrom(base *warm.Base, named branchRoot, checkout string, asked []s
 	// out, it is judged as though it did not exist, which is the quietest wrong answer a judging can give. What
 	// a checkout's file stands in for is what the base is asked about, so a worktree's thousand files are not
 	// all "new" merely for lying under another root.
+	differs.Asked = map[string]string{}
+	differs.Tree = fmt.Sprintf("the tree holds %v and was read over %v", base.Languages(), base.Roots())
+
 	for _, file := range asked {
 		// A file of a language the tree holds nothing of is not a file it failed to read: nothing will ever put
 		// it there, so counting it is a count that only grows and can never be settled.
@@ -230,8 +233,10 @@ func differingFrom(base *warm.Base, named branchRoot, checkout string, asked []s
 			continue
 		}
 
-		if _, known := base.Holds(warm.Counterpart(checkout, named.project, file)); !known {
+		stands := warm.Counterpart(checkout, named.project, file)
+		if _, known := base.Holds(stands); !known {
 			differs.Unread = append(differs.Unread, file)
+			differs.Asked[file] = stands
 		}
 	}
 
@@ -269,6 +274,16 @@ type Differs struct {
 	Unread []string
 	Own    []string
 	Gone   []string
+
+	// Asked is, for each file in Unread, the path the tree was really asked about: the project's own file that
+	// file stands in for. It is in the decline because without it a count is unanswerable from outside — three
+	// tags were spent guessing at a consumer's four-figure count, and the path it looked for would have said
+	// which of the candidate causes it was on the first run.
+	Asked map[string]string
+
+	// Tree is what the tree itself is: the languages it holds and the roots it was read over. Every cause that
+	// survives the path above is one of those two being narrower than what the run walks.
+	Tree string
 }
 
 // read is every file the service must read before the base answers, each said once.
@@ -301,14 +316,15 @@ func (d Differs) where() string {
 		}
 	}
 
-	return strings.Join(said, ", ") + "; " + firstFew(groups[largest].files)
+	return strings.Join(said, ", ") + "; " + firstFew(groups[largest].files, d.Asked) + "; " + d.Tree
 }
 
 // shown is how many paths a decline names: enough to see what they have in common, few enough to read.
 const shown = 8
 
-// firstFew names the first of these paths, and how many more there are.
-func firstFew(files []string) string {
+// firstFew names the first of these paths, each with the path the tree was asked about where that is a different
+// one, and how many more there are.
+func firstFew(files []string, asked map[string]string) string {
 	named := slices.Clone(files)
 	slices.Sort(named)
 
@@ -316,12 +332,24 @@ func firstFew(files []string) string {
 		return "none to name"
 	}
 
-	if len(named) <= shown {
-		return "they are " + strings.Join(named, " ")
+	more := ""
+	if len(named) > shown {
+		more = fmt.Sprintf(" and %d more", len(named)-shown)
+		named = named[:shown]
 	}
 
-	return fmt.Sprintf("the first %d of the largest are %s and %d more",
-		shown, strings.Join(named[:shown], " "), len(named)-shown)
+	var said []string
+	for _, file := range named {
+		if stands, mapped := asked[file]; mapped && stands != file {
+			said = append(said, file+" (asked about "+stands+")")
+
+			continue
+		}
+
+		said = append(said, file)
+	}
+
+	return "they are " + strings.Join(said, ", ") + more
 }
 
 // viewOf is the base with these files read again in place of its own, and without the ones that are gone, which

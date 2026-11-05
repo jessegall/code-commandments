@@ -395,6 +395,8 @@ func TestADeclineSaysWhichOfTheThreeMadeTheFilesDiffer(t *testing.T) {
 		Moved:  []string{"/p/src/a.py"},
 		Unread: []string{"/p/.agents/skills/x.py", "/p/.agents/skills/y.py", "/p/.agents/skills/z.py"},
 		Own:    []string{"/p/src/b.py", "/p/src/c.py"},
+		Asked:  map[string]string{"/p/.agents/skills/x.py": "/project/.agents/skills/x.py"},
+		Tree:   "the tree holds [python] and was read over [/project/src]",
 	}
 
 	said := differs.where()
@@ -429,6 +431,17 @@ func TestADeclineSaysWhichOfTheThreeMadeTheFilesDiffer(t *testing.T) {
 	// A group with nothing in it says so rather than naming a path it does not have.
 	if said := (Differs{}).where(); !strings.Contains(said, "none to name") {
 		t.Errorf("a judging that differs by nothing says %q", said)
+	}
+
+	// The path the tree was really ASKED about, beside the file, and what the tree itself is. Without those two a
+	// count is unanswerable from outside: three tags were spent guessing at a consumer's four-figure count, and
+	// each guess was a release.
+	if !strings.Contains(said, "asked about /project/.agents/skills/x.py") {
+		t.Errorf("the decline does not say which path the tree was asked about:\n%s", said)
+	}
+
+	if !strings.Contains(said, "was read over [/project/src]") {
+		t.Errorf("the decline does not say what the tree itself holds:\n%s", said)
 	}
 }
 
