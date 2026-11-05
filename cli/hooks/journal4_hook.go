@@ -354,6 +354,10 @@ func (a JournalAnswer) Shape4() map[string]any {
 		answer["judged_total_ms"] = a.JudgedTotalMs
 	}
 
+	if len(answer) > 1 && a.ReadMs > 0 {
+		answer["read_ms"] = a.ReadMs
+	}
+
 	return answer
 }
 

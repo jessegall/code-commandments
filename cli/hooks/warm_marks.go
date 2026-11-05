@@ -35,10 +35,10 @@ const drifted = 25
 // or a recurrence answers as though that file were the program, so those rules are kept out of a per-file mark
 // (detectors.ReadsBeyondOneFile) and an edit is never told about them. Against a view of the base they answer
 // about the real program, and the mark can carry every rule the project has enabled.
-func AgainstTheProgram(marking Marking, file string, rules []detectors.Detector, changed git.ChangedLines, root string) ([]SinMark, bool) {
+func AgainstTheProgram(marking Marking, file string, rules []detectors.Detector, changed git.ChangedLines, root string) ([]SinMark, time.Duration, bool) {
 	held, base, ok := baseFor(root)
 	if !ok {
-		return nil, false
+		return nil, 0, false
 	}
 
 	// The checkout the file lies in, which for a worker is its own worktree: its files stand in for the
@@ -52,17 +52,22 @@ func AgainstTheProgram(marking Marking, file string, rules []detectors.Detector,
 	if len(moved) > drifted {
 		kept.Drop(held.project, held.branch)
 
-		return nil, false
+		return nil, 0, false
 	}
 
 	view := base.Codebase()
+	var read time.Duration
+
 	if len(moved) > 0 {
 		// Nothing is excluded here: these are the files we were TOLD changed, and the one an edit named has
 		// already been held to what the project judges. A worker's file lies in a worktree under a folder the
 		// project excludes, so excluding again would read none of it.
+		reading := time.Now()
 		rebuilt, err := scan.Walk(moved, source.Excluded{}).Load()
+		read = time.Since(reading)
+
 		if err != nil || rebuilt == nil {
-			return nil, false
+			return nil, read, false
 		}
 
 		view = base.ViewFrom(checkout, rebuilt.Streams(), held.project)
@@ -73,10 +78,10 @@ func AgainstTheProgram(marking Marking, file string, rules []detectors.Detector,
 	// answer at all, while a judging of it found eight sins. Judged alone it is answered as every edit was
 	// before a tree was held.
 	if !holds(view, file) {
-		return nil, false
+		return nil, read, false
 	}
 
-	return marksOver(view, marking, file, rules, changed), true
+	return marksOver(view, marking, file, rules, changed), read, true
 }
 
 // holds says whether the codebase read that file.

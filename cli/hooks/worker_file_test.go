@@ -171,7 +171,7 @@ func TestAWorkersOwnFileIsMarkedWhereItIsJudgedAlone(t *testing.T) {
 	}
 
 	rules := settings.RulesFor(checkoutOf(root, worker), worker, allRules(t, root, settings))
-	marks := marksIn(Marks(root), worker, rules, git.ChangedLines{})
+	marks, _ := marksIn(Marks(root), worker, rules, git.ChangedLines{})
 
 	if len(marks) != 1 {
 		t.Fatalf("the project's rules find %d sins in the worker's own file", len(marks))
@@ -183,7 +183,7 @@ func TestAWorkersOwnFileIsMarkedWhereItIsJudgedAlone(t *testing.T) {
 
 	// The base is held for the project, and the worker's edit is judged against it: its own file stands in for
 	// the project's copy, so the program holds one of each source and the folders a rule names still match.
-	against, whole := AgainstTheProgram(Marks(root), worker, rules, git.ChangedLines{}, root)
+	against, _, whole := AgainstTheProgram(Marks(root), worker, rules, git.ChangedLines{}, root)
 	if !whole {
 		t.Fatal("a worker's edit is not judged against the project's tree at all")
 	}

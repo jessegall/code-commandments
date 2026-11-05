@@ -216,7 +216,8 @@ func answerWith(given map[string]any, runs func(Hook) bool, reportsSins bool) Jo
 	merged := Merge(responses)
 	answer := answerOf(merged)
 	answer.JudgedMs = milliseconds(spent)
-	answer.JudgedTotalMs = sinceStamp(given)
+	answer.JudgedTotalMs = heldFor(given, answer.JudgedMs)
+	answer.ReadMs = merged.ReadMs
 
 	if !reportsSins || !moment.IsPostToolUse() && !moment.IsStop() {
 		return answer
@@ -227,7 +228,8 @@ func answerWith(given map[string]any, runs func(Hook) bool, reportsSins bool) Jo
 	answer.Settles = settlement.Settles()
 	answer.Repented = settlement.Repented
 	answer.JudgedMs = milliseconds(spent)
-	answer.JudgedTotalMs = sinceStamp(given)
+	answer.JudgedTotalMs = heldFor(given, answer.JudgedMs)
+	answer.ReadMs = merged.ReadMs
 
 	return answer
 }

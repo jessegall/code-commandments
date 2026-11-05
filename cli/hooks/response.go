@@ -25,6 +25,12 @@ type Response struct {
 	// Judged is every file the check read, whether it found anything in it or not: a file whose sins are all
 	// gone yields no marks, and without naming it here nothing would ever settle them.
 	Judged []string
+	// ReadMs is how long this check spent having files parsed, in milliseconds: the share of its work that is a
+	// bridge's and not a rule's. A judging that cannot be decomposed is a judging nobody can act on, and three
+	// workers editing at once produced 1.2 to 16.1 seconds for files of the same shape with no way to say which
+	// part of it was the bridge they share.
+	ReadMs int64
+
 	// Requires are the ids of the skills the agent must read before it goes on, which only a journal enforces:
 	// naming the skill of a finding is advice an agent may read past, and a finding fixed from memory is how a
 	// sin gets silenced instead of resolved.
@@ -69,9 +75,12 @@ func Merge(responses []Response) Response {
 	var judged, requires []string
 	quietly := true
 
+	var read int64
+
 	for _, response := range responses {
 		activity = append(activity, response.Activity...)
 		judged = append(judged, response.Judged...)
+		read += response.ReadMs
 
 		for _, id := range response.Requires {
 			if !slices.Contains(requires, id) {
@@ -97,6 +106,7 @@ func Merge(responses []Response) Response {
 	merged.Activity = activity
 	merged.Judged = judged
 	merged.Requires = requires
+	merged.ReadMs = read
 
 	return merged
 }

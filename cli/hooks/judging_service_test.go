@@ -123,6 +123,13 @@ func TestTheAnswerSaysHowLongThePluginTookOverTheEvent(t *testing.T) {
 	if whole > float64(10*time.Minute/time.Millisecond) {
 		t.Errorf("the answer says it held the event %v ms, which is no duration of one", whole)
 	}
+
+	// The reading's share is a part of the judging, never more than it: it is how much of that work was a
+	// bridge parsing files rather than a rule reading the tree.
+	read, shared := queued[0]["read_ms"].(float64)
+	if shared && read > took {
+		t.Errorf("the answer says read_ms %v of a judging of %v", read, took)
+	}
 }
 
 // TestAJudgingTheBaseCannotCoverIsDeclined holds what the service must not do: read a tree inside the one

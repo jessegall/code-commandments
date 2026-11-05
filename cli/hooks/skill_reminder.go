@@ -2,6 +2,7 @@ package hooks
 
 import (
 	"os"
+	"time"
 	"slices"
 	"strconv"
 	"strings"
@@ -70,6 +71,7 @@ func (SkillReminder) Handle(event Event) Response {
 	marking := Marks(event.Root)
 	var activity []SinMark
 	var fresh []SinMark
+	var spentReading time.Duration
 
 	for _, file := range files {
 		if !project.Writes(source.OfFile(file)) {
@@ -86,11 +88,13 @@ func (SkillReminder) Handle(event Event) Response {
 		// worktree: the folders are the project's, the root is the file's.
 		in := checkoutOf(event.Root, file)
 
-		marks, whole := AgainstTheProgram(marking, file, project.RulesFor(in, file, enabled), event.ChangedLines(file), event.Root)
+		marks, read, whole := AgainstTheProgram(marking, file, project.RulesFor(in, file, enabled), event.ChangedLines(file), event.Root)
 		if !whole {
-			marks = marksIn(marking, file, project.RulesFor(in, file, single), event.ChangedLines(file))
+			marks, read = marksIn(marking, file, project.RulesFor(in, file, single), event.ChangedLines(file))
 			Warming(event.Root, project)
 		}
+
+		spentReading += read
 		activity = append(activity, marks...)
 
 		found, order := bySkill(marks)
@@ -118,6 +122,7 @@ func (SkillReminder) Handle(event Event) Response {
 	response.Activity = activity
 	response.Judged = files
 	response.Requires = owed(fresh)
+	response.ReadMs = spentReading.Milliseconds()
 
 	return response
 }
@@ -226,12 +231,15 @@ func checkoutOf(root, file string) string {
 
 // marksIn are every sin the rules find in the file, each marked touched when it stands on a line the working
 // tree changed, and filed when this project has already reported it.
-func marksIn(marking Marking, file string, rules []detectors.Detector, changed git.ChangedLines) []SinMark {
+func marksIn(marking Marking, file string, rules []detectors.Detector, changed git.ChangedLines) ([]SinMark, time.Duration) {
 	language := source.OfFile(file)
 
+	reading := time.Now()
 	codebase, err := scan.OneFile(file).Load()
+	read := time.Since(reading)
+
 	if err != nil {
-		return nil
+		return nil, read
 	}
 
 	var marks []SinMark
@@ -255,7 +263,7 @@ func marksIn(marking Marking, file string, rules []detectors.Detector, changed g
 		}
 	}
 
-	return marks
+	return marks, read
 }
 
 // bySkill are the touched marks as the check names them, by the skill that fixes them, and the skills in the

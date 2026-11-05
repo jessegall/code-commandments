@@ -80,7 +80,7 @@ func marksOfThreeSins(t *testing.T) (root string, marks []SinMark) {
 	}
 
 	edited := filepath.Join(root, "shop/ledger.go")
-	marks = marksIn(Marks(root), edited, []detectors.Detector{godetectors.LoopWrappedInIfDetector{}}, git.ChangedLines{})
+	marks, _ = marksIn(Marks(root), edited, []detectors.Detector{godetectors.LoopWrappedInIfDetector{}}, git.ChangedLines{})
 
 	if len(marks) < 3 {
 		if _, err := scan.OneFile(edited).Load(); err != nil {

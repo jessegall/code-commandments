@@ -214,6 +214,11 @@ type JournalAnswer struct {
 	// time.
 	JudgedMs int64
 
+	// ReadMs is the share of the judging that was a bridge parsing files, in milliseconds. A judging nobody can
+	// decompose is one nobody can act on: three workers editing at once cost 1.2 to 16.1 seconds for files of
+	// the same shape, and the bridge they share is the first thing to rule in or out.
+	ReadMs int64
+
 	// JudgedTotalMs is how long the plugin held the event altogether, from the moment it was handed it to the
 	// moment this answer was ready. It is the larger of the two whenever an event waited its turn, since the
 	// judging runs one event at a time: the difference between them IS that wait, which is what a reader

@@ -47,6 +47,13 @@ func sinceStamp(payload map[string]any) int64 {
 	return milliseconds(time.Duration(time.Now().UnixNano() - stamp))
 }
 
+// heldFor is how long the plugin held the event, which can never be less than the judging inside it. Where no
+// service holds the queue, the event is stamped as its judging begins, so the two measure nearly the same
+// interval and rounding alone had the part reading longer than the whole.
+func heldFor(payload map[string]any, judged int64) int64 {
+	return max(sinceStamp(payload), judged)
+}
+
 // milliseconds is the duration as the answer carries it, never nought for work that did happen: a judging too
 // quick to measure is one millisecond rather than none, since none is what an untimed answer says.
 func milliseconds(spent time.Duration) int64 {

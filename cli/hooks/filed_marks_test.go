@@ -116,7 +116,9 @@ func marksOfOneFile(t *testing.T, root, file string) []SinMark {
 		t.Fatal(err)
 	}
 
-	return marksIn(Marks(root), file, slices.DeleteFunc(enabled, detectors.ReadsBeyondOneFile), git.ChangedLines{})
+	found, _ := marksIn(Marks(root), file, slices.DeleteFunc(enabled, detectors.ReadsBeyondOneFile), git.ChangedLines{})
+
+	return found
 }
 
 // fileReport records a report about the rule's finding at this line of the file.

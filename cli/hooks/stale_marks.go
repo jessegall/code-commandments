@@ -44,7 +44,9 @@ func swept(record Announced, root string) (marks []SinMark, read []string) {
 	// going idle never raises a sin as new — only settles one that is gone. A file inside a folder the project
 	// excludes is read by the rules let in there and no others, as the check that marked it read it.
 	for _, file := range files {
-		marks = append(marks, marksIn(marking, file, project.RulesFor(root, file, single), git.ChangedLines{})...)
+		// The sweep that settles a gone sin pays no attention to what the reading cost: nothing shows it.
+		found, _ := marksIn(marking, file, project.RulesFor(root, file, single), git.ChangedLines{})
+		marks = append(marks, found...)
 	}
 
 	return marks, files
