@@ -178,3 +178,36 @@ func TestAJudgingWaitsForAnAskAlreadyInFlight(t *testing.T) {
 		t.Errorf("%d further ask(s) were made for a file already being asked about", waiting)
 	}
 }
+
+// TestAHalfWrittenFileDoesNotLoseTheGroupsParse holds the group against the commonest state a file is in while
+// an agent works: half written. Every file waiting goes over in one ask, so an ask that fails over one of them
+// would send every other file in it back to an ask of its own, which is the whole cost this exists to avoid.
+func TestAHalfWrittenFileDoesNotLoseTheGroupsParse(t *testing.T) {
+	folder := t.TempDir()
+
+	whole := filepath.Join(folder, "order.py")
+	if err := os.WriteFile(whole, []byte("class Order:\n    pass\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	half := filepath.Join(folder, "invoice.py")
+	if err := os.WriteFile(half, []byte("class Invoice:\n    def total(:\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	streams, err := readTogether([]string{whole, half})
+	if err != nil {
+		t.Fatalf("an ask carrying one half-written file answered with nothing at all: %v", err)
+	}
+
+	read := map[string]bool{}
+	for _, stream := range streams {
+		for _, file := range stream.Files {
+			read[file.Path] = true
+		}
+	}
+
+	if !read[whole] {
+		t.Errorf("the whole file %s was not read, because the file beside it was half written", whole)
+	}
+}

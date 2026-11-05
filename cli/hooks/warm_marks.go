@@ -51,6 +51,14 @@ func AgainstTheProgram(marking Marking, file string, rules []detectors.Detector,
 		checkout = own
 	}
 
+	// A file that is GONE is answered with nothing at all. The tree still holds it, and judged from that memory
+	// the agent that deleted it is told about sins in code it has just removed: a one-file read of a file that
+	// is not there answers with no files and no error, so the view came out as the base untouched and the base
+	// still held the file. The sweep below gives the base up for it, and the next read is the tree without it.
+	if warm.Mark(file) == "" {
+		return nil, 0, false
+	}
+
 	moved, swept := base.Stale(file, time.Now())
 
 	// A file nobody announced is a change to the program too, and the sweep cannot see it: it walks the files

@@ -184,3 +184,45 @@ func warming(t *testing.T) bool {
 
 	return running
 }
+
+// TestAnEditOfAFileThatIsGoneIsAnsweredWithNothing holds the mark against a moment whose file no longer exists:
+// the agent removed it after the edit, or its worktree was taken away, and the event still arrives. There is
+// nothing to judge, so the answer is nothing, and it must not be a sin reported from the tree's memory of the
+// file nor a crash on the way.
+func TestAnEditOfAFileThatIsGoneIsAnsweredWithNothing(t *testing.T) {
+	root, _ := migrationProject(t)
+	settings, _ := config.Load(root)
+
+	project := git.ProjectRoot(root)
+	branch := git.CurrentBranch(project)
+
+	codebase, err := scan.Walk([]string{root}, source.Under(root, settings.Excluded)).Load()
+	if err != nil || codebase == nil {
+		t.Fatalf("the python bridge cannot run here: %v", err)
+	}
+
+	kept.Hold(project, branch, []string{root}, codebase, nil)
+	t.Cleanup(func() { kept.Drop(project, branch) })
+
+	gone := filepath.Join(root, "shop", "migrations", "m004_drop_fades.py")
+
+	// It is found while it is there, so what follows is about the file being gone and not about the rule.
+	rules := allRules(t, root, settings)
+	if marks, _, whole := AgainstTheProgram(Marks(root), gone, rules, git.ChangedLines{}, root); !whole || len(marks) == 0 {
+		t.Fatalf("the sin is not found while the file is there: judged whole %v, %d marks", whole, len(marks))
+	}
+
+	if err := os.Remove(gone); err != nil {
+		t.Fatal(err)
+	}
+
+	marks, _, whole := AgainstTheProgram(Marks(root), gone, rules, git.ChangedLines{}, root)
+
+	if len(marks) != 0 {
+		t.Errorf("a file that is gone carries %d marks, reported from the tree's memory of it", len(marks))
+	}
+
+	if whole {
+		t.Error("a file that is gone was judged against the program as though it were there")
+	}
+}
