@@ -818,17 +818,23 @@ func (c *stressCheckout) move(t *testing.T, move int) {
 	// since they really do move the ground; writing a file is not.
 	branch, held := c.holding()
 
-	switch c.draw.Intn(20) {
+	switch c.draw.Intn(28) {
 	case 0, 1, 2, 3:
 		c.writes(t, 1)
 	case 4:
 		c.writes(t, 3)
-	case 5, 6, 7, 8, 9, 10:
+	case 5, 6, 7, 8, 9:
 		c.edits(t)
-	case 11, 12:
+	case 10, 11:
 		c.cuts(t)
-	case 13, 14, 15:
+	case 12, 13:
 		c.deletes(t)
+	case 14:
+		c.renames(t)
+	case 19:
+		c.writesOddly(t)
+	case 20, 21, 22, 23, 24, 25:
+		c.raises(t)
 	case 16, 17:
 		c.commits(t)
 
@@ -859,6 +865,108 @@ func (c *stressCheckout) holding() (string, bool) {
 	_, held := kept.Holds(project, branch)
 
 	return branch, held
+}
+
+// renames moves one of its files, which no event announces as a rename: the journal sends an edit for the path
+// that now exists and nothing at all for the path that does not, so the tree learns of the old one only by
+// looking. A move between folders is the same thing with the folder changed too.
+func (c *stressCheckout) renames(t *testing.T) {
+	was := c.one()
+	if was == "" {
+		return
+	}
+
+	c.wrote++
+	into := filepath.Join(c.At, "shop", fmt.Sprintf("moved%d_%d.py", c.Named, c.wrote))
+
+	if c.draw.Intn(2) == 0 {
+		// Into a folder of its own, which is also a folder the tree has never seen.
+		into = filepath.Join(c.At, "shop", fmt.Sprintf("part%d", c.Named), fmt.Sprintf("moved%d.py", c.wrote))
+		if err := os.MkdirAll(filepath.Dir(into), 0o755); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	if err := os.Rename(was, into); err != nil {
+		return
+	}
+
+	c.mine = slices.DeleteFunc(c.mine, func(path string) bool { return path == was })
+	c.mine = append(c.mine, into)
+
+	// The path that now exists is announced; the one that is gone is not, which is exactly what a rename looks
+	// like from the plugin's side.
+	c.tells(t, into, 1, lines(stressMine(c.Named)), false)
+}
+
+// writesOddly writes a file the plugin is right to say little about: one too large for the gate to read, one it
+// cannot read at all, one in a folder the project excludes, and one of a language this project never declared.
+// None of them may be answered with a sin, and none of them may bring the answer down.
+func (c *stressCheckout) writesOddly(t *testing.T) {
+	c.wrote++
+
+	switch c.draw.Intn(4) {
+	case 0:
+		// Over the gate's limit, which drops the file before any rule sees it.
+		big := filepath.Join(c.At, "shop", fmt.Sprintf("big%d_%d.py", c.Named, c.wrote))
+		if err := os.WriteFile(big, []byte(strings.Repeat("x = 1\n", 40000)), 0o644); err != nil {
+			t.Fatal(err)
+		}
+
+		c.tells(t, big, 1, 40000, false)
+	case 1:
+		// Unreadable, which must be SAID rather than answered with no sins.
+		shut := filepath.Join(c.At, "shop", fmt.Sprintf("shut%d_%d.py", c.Named, c.wrote))
+		if err := os.WriteFile(shut, []byte(stressMine(c.Named)), 0o000); err != nil {
+			t.Fatal(err)
+		}
+
+		c.tells(t, shut, 1, 10, false)
+	case 2:
+		// In a folder outside the ones the project declares.
+		aside := filepath.Join(c.At, "aside", fmt.Sprintf("aside%d_%d.py", c.Named, c.wrote))
+		if err := os.MkdirAll(filepath.Dir(aside), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(aside, []byte(stressMine(c.Named)), 0o644); err != nil {
+			t.Fatal(err)
+		}
+
+		c.tells(t, aside, 1, 10, false)
+	default:
+		// Another language altogether, and a file that is no source at all.
+		for named, text := range map[string]string{
+			fmt.Sprintf("shop/other%d_%d.go", c.Named, c.wrote):   "package shop\n\nfunc Other() int { return 0 }\n",
+			fmt.Sprintf("shop/notes%d_%d.md", c.Named, c.wrote):   "# notes\n",
+			fmt.Sprintf("shop/data%d_%d.json", c.Named, c.wrote):  "{}\n",
+		} {
+			file := filepath.Join(c.At, named)
+			if err := os.WriteFile(file, []byte(text), 0o644); err != nil {
+				t.Fatal(err)
+			}
+
+			c.tells(t, file, 1, 3, false)
+		}
+	}
+}
+
+// raises one of the other events a session raises. Eight of the nine the plugin subscribes to never happened
+// here: the gate that can refuse a command, the heartbeat and the stop that sweep every marked file, a session
+// starting, a subagent starting, the plugin being updated, and the hold that can stop a worker's merge landing.
+func (c *stressCheckout) raises(t *testing.T) {
+	events := []string{"ticked", "idle", "command_starting", "session_started", "tool_starting", "subagent_started", "plugin.updated", "worker_delivering"}
+	event := events[c.draw.Intn(len(events))]
+
+	oneAtATime.Lock()
+	defer oneAtATime.Unlock()
+
+	Judge4Into(map[string]any{
+		"v": 1, "event": event, "session": fmt.Sprintf("s%d", c.Named), "environment": "main",
+		"agent": c.Named, "cwd": c.At,
+		"data": map[string]any{"command": "git status", "tool": "Bash"},
+	}, os.Getenv(pluginData))
+
+	stressHeld(t, c, c.at, c.Project, "", false, drained(t, os.Getenv(pluginData)))
 }
 
 // commits puts what it has written into its own branch, which is what an agent does at the end of a stretch of
@@ -1031,17 +1139,35 @@ func (c *stressCheckout) one() string {
 // tells the plugin what it just did, as the journal tells it: the path relative to the checkout, since that is
 // the shape the journal sends and the shape that has to be resolved against the right root.
 func (c *stressCheckout) tells(t *testing.T, file string, from, to int, owed bool) {
-	// Relative to the PROJECT, which is how the journal names a file: a worktree's own file arrives as
-	// .journal/worktrees/worker-1/shop/thing0.py, not as shop/thing0.py, and named from the checkout instead it
-	// is looked for under the project, where it does not exist, and the moment is dropped without a word.
-	under, err := filepath.Rel(c.Project, file)
-	if err != nil {
-		t.Fatal(err)
-	}
-
 	var added []any
 	for line := from; line <= to; line++ {
 		added = append(added, map[string]any{"line_type": "add", "line": line, "text": "class Mine:"})
+	}
+
+	// Both shapes the journal really sends, drawn between. A relative path under data.path is read against the
+	// project, so a worktree's file arrives as .journal/worktrees/worker-1/shop/thing0.py; an ABSOLUTE path
+	// under data.input.file_path flips the moment's own folder to the worktree, and then every path in the
+	// answer is relative to that worktree instead. Only one of the two was ever sent here.
+	data := map[string]any{"kind": "edit", "added": len(added), "removed": 0, "tool_use": c.wrote + 1, "lines": added}
+	against := c.Project
+
+	// A file the move just created is announced as created, with no lines of its own: the plugin then takes
+	// every line as the edit's, which nothing in this repository had ever asked it to do.
+	if from == 1 && owed {
+		data["kind"] = "create"
+		delete(data, "lines")
+	}
+
+	if c.draw.Intn(2) == 0 {
+		under, err := filepath.Rel(c.Project, file)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		data["path"] = under
+	} else {
+		data["input"] = map[string]any{"file_path": file}
+		against = c.At
 	}
 
 	oneAtATime.Lock()
@@ -1050,13 +1176,10 @@ func (c *stressCheckout) tells(t *testing.T, file string, from, to int, owed boo
 	Judge4Into(map[string]any{
 		"v": 1, "event": "file_edited", "session": fmt.Sprintf("s%d", c.Named), "environment": "main",
 		"agent": c.Named, "cwd": c.At,
-		"data": map[string]any{
-			"path": under, "kind": "edit", "added": len(added), "removed": 0, "tool_use": c.wrote + 1,
-			"lines": added,
-		},
+		"data": data,
 	}, os.Getenv(pluginData))
 
-	stressHeld(t, c, c.at, file, owed, drained(t, os.Getenv(pluginData)))
+	stressHeld(t, c, c.at, against, file, owed, drained(t, os.Getenv(pluginData)))
 }
 
 // lines is how many lines the text holds.
@@ -1105,7 +1228,7 @@ var cardPaths = regexp.MustCompile(`([\w./-]+\.py)`)
 //
 // Owed says this move wrote a sin and is therefore owed an answer about its file. Silence is an answer too, and
 // the worst one: before this said so, a run in which the plugin answered NOTHING at all passed every move.
-func stressHeld(t *testing.T, mine *stressCheckout, move int, file string, owed bool, answers []map[string]any) {
+func stressHeld(t *testing.T, mine *stressCheckout, move int, against, file string, owed bool, answers []map[string]any) {
 	t.Helper()
 
 	told := false
@@ -1125,7 +1248,7 @@ func stressHeld(t *testing.T, mine *stressCheckout, move int, file string, owed 
 		for _, named := range stressReported(answer) {
 			answered.Add(1)
 
-			if info, err := os.Stat(filepath.Join(mine.Project, named)); err != nil || !info.Mode().IsRegular() {
+			if info, err := os.Stat(filepath.Join(against, named)); err != nil || !info.Mode().IsRegular() {
 				t.Fatalf("move %d of checkout %d: an answer reports a sin in %s, which is not a file: %v\n%v",
 					move, mine.Named, named, err, answer)
 			}
@@ -1137,11 +1260,11 @@ func stressHeld(t *testing.T, mine *stressCheckout, move int, file string, owed 
 		// not held to this: every checkout here works in one environment, which keeps ONE record, so a
 		// resolution legitimately names whatever file of it became clean.
 		for _, named := range stressSaidOf(answer) {
-			if named == stressUnder(mine.Project, file) {
+			if named == stressUnder(against, file) {
 				told = true
 			}
 
-			if !strings.HasPrefix(named, mine.under()) {
+			if against == mine.Project && !strings.HasPrefix(named, mine.under()) {
 				t.Fatalf("move %d of checkout %d: it is told about %s, which is not its own (it owns %q)\n%v",
 					move, mine.Named, named, mine.under(), answer)
 			}
@@ -1152,7 +1275,7 @@ func stressHeld(t *testing.T, mine *stressCheckout, move int, file string, owed 
 	// nothing at all: every quiet fallback in the judging ends in no answer, and a run of them passed.
 	if owed && !told {
 		t.Fatalf("move %d of checkout %d: it wrote a sin in %s and was told nothing about it; %d answers came back\n%v",
-			move, mine.Named, stressUnder(mine.Project, file), len(answers), answers)
+			move, mine.Named, stressUnder(against, file), len(answers), answers)
 	}
 }
 
