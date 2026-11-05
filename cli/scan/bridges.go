@@ -306,10 +306,24 @@ func (p *process) sayWarmBridgeMissed(err error) {
 	})
 }
 
+// sharedAsk is how many files an ask may carry and still go to the bridge a session keeps warm. That bridge
+// serves every judging on the machine, one ask at a time, so a run that hands it a tree holds up every edit
+// behind it: measured on a consumer's tree, one small file waited 61 seconds inside the bridge while a worker's
+// hand-in judged its whole worktree through the same session, and nine edits took two and a half minutes to
+// clear. A run bigger than this starts a bridge of its own and pays a start-up of seconds instead of spending
+// everyone else's minutes; a run this size or smaller is what the warm bridge exists for.
+const sharedAsk = 25
+
+// shares says whether this ask goes to the bridge the session keeps warm. The files to write are what measures
+// an ask, since a bridge that compiles whole roots is asked with the roots and writes the files either way.
+func shares(request bridge.Request) bool {
+	return len(request.Write) <= sharedAsk
+}
+
 // AskTallied is the whole stream, from the warm bridge when it answers and from one of this run's own when it
 // does not: a warm bridge that fails an ask is a bridge gone, not an answer.
 func (p *process) AskTallied(request bridge.Request, tally func()) (*contract.Stream, error) {
-	if server, kept := keptFor(p.held.Kind, p.roots); kept {
+	if server, kept := p.warm(request); kept {
 		defer server.Close()
 
 		stream, err := server.AskTallied(request, tally)
@@ -332,10 +346,19 @@ func (p *process) AskTallied(request bridge.Request, tally func()) (*contract.St
 	return stream, p.reach.named(err)
 }
 
+// warm is the bridge the session keeps up, for an ask small enough to share it.
+func (p *process) warm(request bridge.Request) (*bridge.Server, bool) {
+	if !shares(request) {
+		return nil, false
+	}
+
+	return keptFor(p.held.Kind, p.roots)
+}
+
 // AskEach hands each line of the answer on as it arrives. It takes no second ask, since the lines already handed
 // over cannot be handed over again: a reader that wants another try asks again itself.
 func (p *process) AskEach(request bridge.Request, each func(line contract.Line, raw []byte) error) error {
-	if server, kept := keptFor(p.held.Kind, p.roots); kept {
+	if server, kept := p.warm(request); kept {
 		defer server.Close()
 
 		return p.reach.named(server.AskEach(request, each))

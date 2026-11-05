@@ -2,6 +2,8 @@ package scan
 
 import (
 	"testing"
+
+	"github.com/jessegall/code-commandments/bridge"
 )
 
 // TestTheProjectIsTheOneTheRootsLieIn holds which service a run belongs to. The journal names the checkout it
@@ -26,5 +28,25 @@ func TestTheProjectIsTheOneTheRootsLieIn(t *testing.T) {
 	// A run spanning two projects belongs to neither, since no one service holds both trees.
 	if project, found := projectOf([]string{ours, theirs}); found {
 		t.Errorf("a run over two projects names %q", project)
+	}
+}
+
+// TestABigAskDoesNotTakeTheWarmBridge holds what the bridge a session keeps warm is for. It serves every judging
+// on the machine one ask at a time, so a run that hands it a tree holds up every edit behind it: measured on a
+// consumer's tree, one small file waited 61 seconds inside the bridge while a worker's hand-in judged its whole
+// worktree through the same session. An edit's ask is one file and must still share it.
+func TestABigAskDoesNotTakeTheWarmBridge(t *testing.T) {
+	one := bridge.Request{Paths: []string{"/project"}, Write: []string{"/project/src/order.py"}}
+	if !shares(one) {
+		t.Error("an edit's ask of one file does not share the warm bridge, which is what it is for")
+	}
+
+	var tree []string
+	for i := 0; i <= sharedAsk; i++ {
+		tree = append(tree, "/project/src/file.py")
+	}
+
+	if shares(bridge.Request{Paths: []string{"/project"}, Write: tree}) {
+		t.Errorf("an ask of %d files takes the warm bridge, holding up every edit behind it", len(tree))
 	}
 }
