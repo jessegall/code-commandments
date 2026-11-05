@@ -258,3 +258,30 @@ func write(t *testing.T, path, text string) {
 
 	touch(t, path)
 }
+
+// TestTheSweepNamesTheEditedFileFirst holds what an edit is allowed to pay for. The sweep's job is to notice a
+// file something else changed, and the answer it gives names the edited file along with them, so the caller can
+// parse that one and give the base up for the rest rather than putting one edit's answer behind every file
+// another worker touched.
+func TestTheSweepNamesTheEditedFileFirst(t *testing.T) {
+	root, codebase := project(t, map[string]string{
+		"shop/order.py":   "class Order:\n    pass\n",
+		"shop/invoice.py": "class Invoice:\n    pass\n",
+	})
+
+	base := warm.Keep().Hold(root, "main", []string{root}, codebase)
+	order := filepath.Join(root, "shop", "order.py")
+	invoice := filepath.Join(root, "shop", "invoice.py")
+
+	write(t, order, "class Order:\n    paid = True\n")
+	write(t, invoice, "class Invoice:\n    paid = True\n")
+
+	stale := base.Stale(order, time.Now().Add(warm.Sweep))
+	if len(stale) != 2 {
+		t.Fatalf("the sweep names %v, want both files that moved", stale)
+	}
+
+	if stale[0] != order {
+		t.Errorf("the sweep names %s first; the edited file is the one an edit may pay for", stale[0])
+	}
+}

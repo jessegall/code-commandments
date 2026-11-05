@@ -1,6 +1,7 @@
 package hooks
 
 import (
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -55,15 +56,25 @@ func AgainstTheProgram(marking Marking, file string, rules []detectors.Detector,
 		return nil, 0, false
 	}
 
+	// An edit pays for the file it named and for no other. Every file that moved is worth knowing about, but
+	// handing them all to a bridge here puts one edit's answer behind every file something else touched: a
+	// worker with twenty changed files paid for twenty parses on whichever edit landed after a sweep, and a
+	// parse of one file on a large tree is seconds. So the others give the base up instead, and the next read
+	// takes them in together, in the background, where nobody waits on it.
+	elsewhere := slices.DeleteFunc(slices.Clone(moved), func(path string) bool { return path == file })
+	if len(elsewhere) > 0 {
+		kept.Drop(held.project, held.branch)
+	}
+
 	view := base.Codebase()
 	var read time.Duration
 
-	if len(moved) > 0 {
-		// Nothing is excluded here: these are the files we were TOLD changed, and the one an edit named has
-		// already been held to what the project judges. A worker's file lies in a worktree under a folder the
-		// project excludes, so excluding again would read none of it.
+	if slices.Contains(moved, file) {
+		// Nothing is excluded here: this is the file we were TOLD changed, and it has already been held to
+		// what the project judges. A worker's file lies in a worktree under a folder the project excludes, so
+		// excluding again would read none of it.
 		reading := time.Now()
-		rebuilt, err := scan.Walk(moved, source.Excluded{}).Load()
+		rebuilt, err := scan.OneFile(file).Load()
 		read = time.Since(reading)
 
 		if err != nil || rebuilt == nil {
