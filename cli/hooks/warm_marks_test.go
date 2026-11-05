@@ -158,7 +158,7 @@ func TestOnlyTheServiceReadsABase(t *testing.T) {
 	}
 
 	Serves()
-	t.Cleanup(func() { serving = false })
+	t.Cleanup(func() { serving.Store(false) })
 
 	Warming(root, settings)
 	if !warming(t) {

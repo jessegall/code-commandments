@@ -509,6 +509,7 @@ func stressTreeAt(t *testing.T, files, workers int) string {
 	}
 
 	written := map[string]string{
+
 		// Every shipped rule judges it, as a consumer's run is judged, and one rule of the project's own
 		// beside them: naming a rule here turns a custom one ON and takes none of the shipped ones off.
 		".commandments/config.json": `{"paths": ["shop"], "detectors": ["ThingByItsKindDetector"]}`,
@@ -712,7 +713,7 @@ func TestManyTreesAtOnce(t *testing.T) {
 	t.Setenv(pluginData, data)
 
 	Serves()
-	t.Cleanup(func() { serving = false })
+	t.Cleanup(func() { serving.Store(false) })
 
 	checkouts := stressCheckouts(t, seed)
 	t.Logf("%d checkouts of one project, each making %d moves", len(checkouts), *stressMoves)
@@ -761,6 +762,10 @@ type stressCheckout struct {
 	// connection and the judging is worked out afterwards by the adviser, so an answer is WAITED for.
 	Service string
 
+	// Told is the folder as the JOURNAL names it, which is the linked path where the project is reached through
+	// one. At is the same folder resolved, which is what the plugin answers in and what this run checks against.
+	Told string
+
 	draw  *rand.Rand
 	mine  []string
 	wrote int
@@ -775,8 +780,24 @@ func stressCheckouts(t *testing.T, seed int64) []*stressCheckout {
 	t.Helper()
 
 	workers := *stressRoots * *stressWorktrees
-	project := stressTreeAt(t, 40, workers)
-	t.Setenv("JOURNAL_ROOT", project)
+	built := stressTreeAt(t, 40, workers)
+
+	// Reached through a LINK, which is how a path arrives on a Mac whose /tmp is one and in any checkout under a
+	// linked home. A scan resolves the links in every path it reads, so this is the condition v7.14.3 was
+	// released to fix, and a root with its links already resolved away cannot regress it.
+	//
+	// The link is what the journal is TOLD — the root it names and the folder each moment carries — while the
+	// run's own bookkeeping stays on resolved paths, because the plugin answers in resolved ones and a harness
+	// comparing the two shapes measures its own confusion.
+	linked := filepath.Join(t.TempDir(), "project")
+	if err := os.Symlink(built, linked); err != nil {
+		t.Logf("this filesystem has no links, so the run is made on the resolved path: %v", err)
+
+		linked = built
+	}
+
+	project := built
+	t.Setenv("JOURNAL_ROOT", linked)
 
 	settings, err := config.Load(project)
 	if err != nil {
@@ -799,6 +820,7 @@ func stressCheckouts(t *testing.T, seed int64) []*stressCheckout {
 		checkout := &stressCheckout{
 			At:      folder,
 			Project: project,
+			Told:    strings.Replace(folder, project, linked, 1),
 			Service: service,
 			Named:   named + 1,
 			draw:    rand.New(rand.NewSource(seed + int64(named))),
@@ -829,7 +851,7 @@ func (c *stressCheckout) move(t *testing.T, move int) {
 	// since they really do move the ground; writing a file is not.
 	branch, held := c.holding()
 
-	switch c.draw.Intn(28) {
+	switch c.draw.Intn(29) {
 	case 0, 1, 2, 3:
 		c.writes(t, 1)
 	case 4:
@@ -844,6 +866,8 @@ func (c *stressCheckout) move(t *testing.T, move int) {
 		c.renames(t)
 	case 19:
 		c.writesOddly(t)
+	case 26:
+		c.abandons(t)
 	case 20, 21, 22, 23, 24, 25:
 		c.raises(t)
 	case 16, 17:
@@ -975,7 +999,7 @@ func (c *stressCheckout) raises(t *testing.T) {
 
 	sendEvent(t, c.Service, map[string]any{
 		"v": 1, "event": event, "session": fmt.Sprintf("s%d", c.Named), "environment": "main",
-		"agent": c.Named, "cwd": c.At,
+		"agent": c.Named, "cwd": c.Told,
 		"data": map[string]any{"command": "git status", "tool": "Bash"},
 	})
 
@@ -1026,6 +1050,51 @@ func (c *stressCheckout) recuts(t *testing.T) {
 	}
 
 	// Its own files are gone with the worktree, and what it holds now is the branch's own.
+	c.mine = []string{filepath.Join(c.At, "shop", "thing0.py")}
+}
+
+// abandons removes this worktree and does NOT cut it again, which is what the journal does when an agent's work
+// is taken in and nobody is sent out after it. Its overlay is held by the folder's own path and nothing in the
+// plugin ever forgets one, so the next checkout to stand in that folder inherits a dead agent's files; and until
+// then, an edit announced from a folder that is gone must be answered with nothing rather than from memory.
+func (c *stressCheckout) abandons(t *testing.T) {
+	if c.At == c.Project || len(c.mine) == 0 {
+		c.commits(t)
+
+		return
+	}
+
+	c.commits(t)
+
+	if out, err := exec.Command("git", "-C", c.Project, "worktree", "remove", "--force", c.At).CombinedOutput(); err != nil {
+		t.Logf("worktree %s was not removed: %s", c.At, out)
+
+		return
+	}
+
+	// It still announces the file it last wrote, as an agent whose worktree was taken out from under it would.
+	gone := c.mine[0]
+	c.mine = nil
+	c.tells(t, gone, 1, 3, false)
+
+	// And it is cut again so the checkout has somewhere to stand for its remaining moves, on a branch of its
+	// own: the point was made by the window in between.
+	//
+	// The folder is taken away first, since announcing an edit from a gone worktree makes the plugin write its
+	// own session state back into it, and git refuses to cut a worktree where a folder already stands.
+	if err := os.RemoveAll(c.At); err != nil {
+		t.Fatal(err)
+	}
+
+	if out, err := exec.Command("git", "-C", c.Project, "worktree", "prune").CombinedOutput(); err != nil {
+		t.Logf("worktrees were not pruned: %s", out)
+	}
+
+	cut := []string{"worktree", "add", "-q", "-b", fmt.Sprintf("worker-%d-again-%d", c.Named, c.draw.Intn(1000)), c.At}
+	if out, err := exec.Command("git", append([]string{"-C", c.Project}, cut...)...).CombinedOutput(); err != nil {
+		t.Fatalf("the worktree %s could not be cut again: %s", c.At, out)
+	}
+
 	c.mine = []string{filepath.Join(c.At, "shop", "thing0.py")}
 }
 
@@ -1196,7 +1265,7 @@ func (c *stressCheckout) tells(t *testing.T, file string, from, to int, owed boo
 	// shaped, and none of them was exercised by a run that went in at the side.
 	sendEvent(t, c.Service, map[string]any{
 		"v": 1, "event": "file_edited", "session": fmt.Sprintf("s%d", c.Named), "environment": "main",
-		"agent": c.Named, "cwd": c.At,
+		"agent": c.Named, "cwd": c.Told,
 		"data": data,
 	})
 

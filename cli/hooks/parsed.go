@@ -98,7 +98,7 @@ func readTogether(files []string) ([]*contract.Stream, error) {
 // spends the rules alone. It is called on the connection's own goroutine, after the answer has gone back, so no
 // hook ever waits on it.
 func expecting(given map[string]any) {
-	if !serving || !parsed.ahead {
+	if !serving.Load() || !parsed.ahead {
 		return
 	}
 

@@ -5,6 +5,7 @@ import (
 	"slices"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/jessegall/code-commandments/cli/config"
@@ -323,18 +324,21 @@ func marksOver(codebase *engine.Codebase, marking Marking, file string, rules []
 // serving says whether this process is the service, which is the only process a base is worth reading for: a
 // run started for one hook answers and ends, so a tree it began reading would cost a worker's CPU for a quarter
 // of a minute and be thrown away unused.
-var serving bool
+//
+// Atomic because the service sets it on its OWN goroutine while every hook it answers reads it on another: a
+// plain bool there is a data race, which the race detector found the first time the fuzz was run under it.
+var serving atomic.Bool
 
 // Serves says this process is the service, so a base read for one hook serves every later one.
 func Serves() {
-	serving = true
+	serving.Store(true)
 }
 
 // Warming reads a branch's base in the background, unless one is held or a read is already running. The hook
 // that asks for it is answered from the edited file alone, as every hook was; the next one is answered from the
 // program.
 func Warming(root string, project config.Config) {
-	if !serving {
+	if !serving.Load() {
 		return
 	}
 
