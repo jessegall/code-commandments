@@ -175,13 +175,16 @@ func judgedFile(root, file string, project config.Config) string {
 		return ""
 	}
 
-	if !project.IsJudged(checkoutOf(root, file), file) {
-		return ""
-	}
-
+	// Absolute first, and only then which checkout it lies in: a file the event names is RELATIVE to the root,
+	// and asking git about a relative path asks about this process's own folder, which is the plugin's. That is
+	// what left a worker's edits unjudged even once the gate knew to look at the file's own checkout.
 	absolute := file
 	if !strings.HasPrefix(file, "/") {
 		absolute = strings.TrimRight(root, "/") + "/" + strings.TrimLeft(file, "/")
+	}
+
+	if !project.IsJudged(checkoutOf(root, absolute), absolute) {
+		return ""
 	}
 
 	if info, err := os.Stat(absolute); err != nil || !info.Mode().IsRegular() {
