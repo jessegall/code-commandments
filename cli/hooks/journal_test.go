@@ -4,6 +4,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 )
@@ -132,5 +133,35 @@ func TestAConfigChangeEndsTheServiceThatHoldsTheTree(t *testing.T) {
 
 	if stamp(root) == moved {
 		t.Error("a rule of the project's own was written and the service reads the same stamp")
+	}
+}
+
+// TestAServiceEndingWorksOutTheAdviceItHolds holds the one thing a service owes before it goes. It ends when the
+// code it runs changes — the binary, the project's config, a rule of the project's own — and the moments it had
+// answered but not yet judged went with it. Those moments were answered with the gates alone, as every edit is,
+// so the sins in them were never told at all and nothing said so.
+func TestAServiceEndingWorksOutTheAdviceItHolds(t *testing.T) {
+	var worked sync.Mutex
+	var advised int
+
+	advice := startAdviser(func(asked) {
+		time.Sleep(20 * time.Millisecond)
+
+		worked.Lock()
+		advised++
+		worked.Unlock()
+	})
+
+	for at := 0; at < 5; at++ {
+		advice.add(asked{map[string]any{"at": at}, true, at == 0})
+	}
+
+	advice.drained(10 * time.Second)
+
+	worked.Lock()
+	defer worked.Unlock()
+
+	if advised != 5 {
+		t.Errorf("a service ending worked out %d of the 5 moments it held; the rest are sins nobody is ever told about", advised)
 	}
 }

@@ -384,10 +384,21 @@ func (s JournalServe) Run(in *cli.Input, console cli.Console) (int, error) {
 		go serveJudging(judging, root)
 	}
 
-	serve(listener, func() bool { return stamp(root) == started }, startAdviser(adviseAsked))
+	advice := startAdviser(adviseAsked)
+	serve(listener, func() bool { return stamp(root) == started }, advice)
+
+	// What it has answered but not yet judged is worked out before it goes. The service ends when the code it
+	// runs changes, and its pending advice went with it: those moments were answered with the gates alone, as
+	// every edit is, so the sins in them were never told at all and nothing said so.
+	advice.drained(drainedWithin)
 
 	return 0, nil
 }
+
+// drainedWithin is how long a service ending waits for the advice it still holds. Past it the journal has been
+// kept from starting the new code long enough, and what is left is one more hook's worth of sins untold rather
+// than a service that will not go.
+const drainedWithin = 30 * time.Second
 
 // quiet is a console whose words go nowhere: the service answers on its socket, and what a command would have
 // printed is no part of that answer.
@@ -499,6 +510,9 @@ type adviser struct {
 	later  []asked
 	wake   chan struct{}
 	advise func(asked)
+	// working says a moment's advice is being worked out right now, so a service ending waits for it as well as
+	// for the ones still queued.
+	working bool
 }
 
 // startAdviser is an adviser giving each moment to advise, its goroutine started.
@@ -537,6 +551,25 @@ func (a *adviser) work() {
 			}
 
 			a.advise(given)
+
+			a.mu.Lock()
+			a.working = false
+			a.mu.Unlock()
+		}
+	}
+}
+
+// drained waits for the advice this adviser still holds to be worked out, which is what a service owes before it
+// ends.
+func (a *adviser) drained(within time.Duration) {
+	for until := time.Now().Add(within); time.Now().Before(until); time.Sleep(20 * time.Millisecond) {
+		a.mu.Lock()
+		left := len(a.pending) + len(a.later)
+		working := a.working
+		a.mu.Unlock()
+
+		if left == 0 && !working {
+			return
 		}
 	}
 }
@@ -547,6 +580,7 @@ func (a *adviser) next() (asked, bool) {
 	if len(a.pending) > 0 {
 		first := a.pending[0]
 		a.pending = a.pending[1:]
+		a.working = true
 
 		return first, true
 	}
@@ -554,6 +588,7 @@ func (a *adviser) next() (asked, bool) {
 	if len(a.later) > 0 {
 		next := a.later[0]
 		a.later = a.later[1:]
+		a.working = true
 
 		return next, true
 	}
