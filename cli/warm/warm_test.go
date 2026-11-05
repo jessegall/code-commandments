@@ -3,12 +3,14 @@ package warm_test
 import (
 	"os"
 	"path/filepath"
+	"slices"
 	"testing"
 	"time"
 
 	"github.com/jessegall/code-commandments/cli/scan"
 	"github.com/jessegall/code-commandments/cli/source"
 	"github.com/jessegall/code-commandments/cli/warm"
+	"github.com/jessegall/code-commandments/contract"
 	"github.com/jessegall/code-commandments/engine"
 )
 
@@ -22,7 +24,7 @@ func TestABaseAnswersForTheBranchItWasReadAt(t *testing.T) {
 		t.Error("a keeper with nothing in it holds a base")
 	}
 
-	keeper.Hold(root, "main", []string{root}, codebase)
+	keeper.Hold(root, "main", []string{root}, codebase, nil)
 
 	if _, held := keeper.Holds(root, "development"); held {
 		t.Error("the base read at main answered for development")
@@ -44,7 +46,7 @@ func TestABaseNobodyAsksAboutIsDropped(t *testing.T) {
 	keeper := warm.Keep()
 	root, codebase := project(t, map[string]string{"shop/order.py": "class Order:\n    pass\n"})
 
-	keeper.Hold(root, "main", []string{root}, codebase)
+	keeper.Hold(root, "main", []string{root}, codebase, nil)
 	keeper.Clocked(func() time.Time { return time.Now().Add(warm.Idle + time.Minute) })
 
 	if _, held := keeper.Holds(root, "main"); held {
@@ -65,7 +67,7 @@ func TestTheBaseSaysWhichFilesHaveMovedSinceItWasRead(t *testing.T) {
 		"shop/invoice.py": "class Invoice:\n    pass\n",
 	})
 
-	base := warm.Keep().Hold(root, "main", []string{root}, codebase)
+	base := warm.Keep().Hold(root, "main", []string{root}, codebase, nil)
 
 	if moved := base.Moved(); len(moved) != 0 {
 		t.Fatalf("a base nobody has touched says %v moved", moved)
@@ -102,7 +104,7 @@ func TestAViewIsTheBaseWithOneFileSwappedIn(t *testing.T) {
 		"shop/invoice.py": "class Invoice:\n    pass\n",
 	})
 
-	base := warm.Keep().Hold(root, "main", []string{root}, codebase)
+	base := warm.Keep().Hold(root, "main", []string{root}, codebase, nil)
 
 	order := filepath.Join(root, "shop", "order.py")
 	if err := os.WriteFile(order, []byte("class Order:\n    def total(self) -> int:\n        return 0\n"), 0o644); err != nil {
@@ -191,7 +193,7 @@ func TestTheBaseChecksTheEditedFileBetweenSweeps(t *testing.T) {
 		"shop/invoice.py": "class Invoice:\n    pass\n",
 	})
 
-	base := warm.Keep().Hold(root, "main", []string{root}, codebase)
+	base := warm.Keep().Hold(root, "main", []string{root}, codebase, nil)
 	order := filepath.Join(root, "shop", "order.py")
 	invoice := filepath.Join(root, "shop", "invoice.py")
 
@@ -226,7 +228,7 @@ func TestTheBaseChecksTheEditedFileBetweenSweeps(t *testing.T) {
 func TestAFileCreatedSinceTheBaseWasReadIsInTheView(t *testing.T) {
 	root, codebase := project(t, map[string]string{"shop/order.py": "class Order:\n    pass\n"})
 
-	base := warm.Keep().Hold(root, "main", []string{root}, codebase)
+	base := warm.Keep().Hold(root, "main", []string{root}, codebase, nil)
 
 	fresh := filepath.Join(root, "shop", "refund.py")
 	write(t, fresh, "class Refund:\n    pass\n")
@@ -269,7 +271,7 @@ func TestTheSweepNamesTheEditedFileFirst(t *testing.T) {
 		"shop/invoice.py": "class Invoice:\n    pass\n",
 	})
 
-	base := warm.Keep().Hold(root, "main", []string{root}, codebase)
+	base := warm.Keep().Hold(root, "main", []string{root}, codebase, nil)
 	order := filepath.Join(root, "shop", "order.py")
 	invoice := filepath.Join(root, "shop", "invoice.py")
 
@@ -283,5 +285,137 @@ func TestTheSweepNamesTheEditedFileFirst(t *testing.T) {
 
 	if stale[0] != order {
 		t.Errorf("the sweep names %s first; the edited file is the one an edit may pay for", stale[0])
+	}
+}
+
+// TestAWorkersFileIsNotDoubledWhenTheProjectsOwnCopyMovedToo holds what a checkout's file STANDS IN FOR against
+// the main checkout drifting under the base. Both copies then arrive at the view: the project's own because it
+// moved and was read again, and the worker's because the worker changed it. Kept together, the program holds two
+// of that one source, and every rule that reads a recurrence, a twin or a declaration answers about the worker's
+// file doubled.
+func TestAWorkersFileIsNotDoubledWhenTheProjectsOwnCopyMovedToo(t *testing.T) {
+	root := t.TempDir()
+	worktree := filepath.Join(root, ".worktrees", "worker-1")
+
+	own := filepath.Join(root, "src", "order.py")
+	theirs := filepath.Join(worktree, "src", "order.py")
+
+	base := warm.Keep().Hold(root, "main", []string{root}, codebaseOf(t, own), nil)
+
+	// Both were read again: the project's own because it drifted, the worker's because the worker changed it.
+	view := base.ViewFrom(worktree, []*contract.Stream{streamOf(own), streamOf(theirs)}, root, nil)
+
+	var held []string
+	for _, file := range view.Files() {
+		held = append(held, file.File.Path)
+	}
+
+	if slices.Contains(held, own) {
+		t.Errorf("the program holds the project's %s beside the worker's copy of it: %v", own, held)
+	}
+
+	if !slices.Contains(held, theirs) {
+		t.Errorf("the program does not hold the worker's own %s: %v", theirs, held)
+	}
+}
+
+// codebaseOf is a codebase of those files alone, as a bridge would have written it.
+func codebaseOf(t *testing.T, files ...string) *engine.Codebase {
+	t.Helper()
+
+	var streams []*contract.Stream
+	for _, file := range files {
+		streams = append(streams, streamOf(file))
+	}
+
+	return engine.Load(streams...)
+}
+
+// streamOf is a stream holding that one file.
+func streamOf(file string) *contract.Stream {
+	return &contract.Stream{
+		Header: contract.Header{Language: contract.Python},
+		Files:  []*contract.File{{Path: file, Language: contract.Python}},
+	}
+}
+
+// TestABaseHoldsWhatAFileWasBeforeItWasRead holds the base against the clock of its own read. Reading a tree
+// takes 25 to 55 seconds, and an agent keeps editing through it: a file written during the read is read as it
+// was, and marked afterwards it would be marked as it IS, so nothing would ever notice it had moved. That edit
+// is then judged against the version before it, at the lines that version had, for as long as the base lives.
+func TestABaseHoldsWhatAFileWasBeforeItWasRead(t *testing.T) {
+	root := t.TempDir()
+	file := filepath.Join(root, "order.py")
+
+	if err := os.WriteFile(file, []byte("x = 1\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	// What the file was when the read began.
+	taken := warm.Taken([]string{file})
+
+	// Written again while the read ran, which is what an agent editing through a read does.
+	time.Sleep(10 * time.Millisecond)
+	if err := os.WriteFile(file, []byte("x = 1\ny = 2\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	base := warm.Keep().Hold(root, "main", []string{root}, codebaseOf(t, file), taken)
+
+	if unchanged, known := base.Holds(file); !known || unchanged {
+		t.Errorf("a file written during the read reads as unchanged, known %v unchanged %v", known, unchanged)
+	}
+}
+
+// TestWhatOneEditReadIsWhatTheNextIsJudgedAgainst holds the base against the agent's own work. A view was thrown
+// away the moment its answer was given, so the base stayed the tree as it was FIRST read: an agent that edited
+// one file and then another had its own earlier work missing from the second answer, and every rule that reads a
+// parent, a caller or a recurrence answered about the first file as it had been. It costs nothing to keep, since
+// the view is already built and already filled.
+func TestWhatOneEditReadIsWhatTheNextIsJudgedAgainst(t *testing.T) {
+	root := t.TempDir()
+	keeper := warm.Keep()
+
+	first := filepath.Join(root, "first.py")
+	second := filepath.Join(root, "second.py")
+
+	for _, file := range []string{first, second} {
+		if err := os.WriteFile(file, []byte("x = 1\n"), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	base := keeper.Hold(root, "main", []string{root}, codebaseOf(t, first, second), nil)
+
+	// The first file is edited and read again, and what that read saw becomes the base.
+	time.Sleep(10 * time.Millisecond)
+	if err := os.WriteFile(first, []byte("x = 1\ny = 2\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	mark := warm.Mark(first)
+	view := base.ViewFrom(root, []*contract.Stream{streamOf(first)}, root, nil)
+	keeper.Patched(base, view, map[string]string{first: mark})
+
+	// The next edit asks the keeper, and gets a base that already holds the first file as it now is.
+	next, held := keeper.Holds(root, "main")
+	if !held {
+		t.Fatal("the keeper holds no base after one was patched")
+	}
+
+	if unchanged, known := next.Holds(first); !known || !unchanged {
+		t.Errorf("the file the last edit read reads as moved again, known %v unchanged %v", known, unchanged)
+	}
+
+	// And a sweep of the whole tree does not name it either, which is what used to give the base up and send
+	// every later edit back to being judged on its own file alone.
+	time.Sleep(10 * time.Millisecond)
+	if err := os.WriteFile(second, []byte("x = 1\nz = 3\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	stale := next.Stale(second, time.Now().Add(warm.Sweep))
+	if len(stale) != 1 || stale[0] != second {
+		t.Errorf("the next edit must read its own file and no other; it reads %v", stale)
 	}
 }

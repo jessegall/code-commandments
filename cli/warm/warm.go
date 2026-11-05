@@ -97,14 +97,19 @@ func (k *Keeper) Holds(project, branch string) (*Base, bool) {
 	return base, true
 }
 
-// Hold makes the codebase the base for that project and branch, with the fingerprint of every file it was built
-// from, so the next question knows which files have moved since.
-func (k *Keeper) Hold(project, branch string, roots []string, codebase *engine.Codebase) *Base {
+// Hold makes the codebase the base for that project and branch, with the mark of every file it was built from,
+// so the next question knows which files have moved since.
+//
+// Taken are the marks the caller took BEFORE the read, for the files it had then; a file the caller did not name
+// is marked as it is now. A read of a tree takes 25 to 55 seconds, so a file written during it is read as it was
+// and would otherwise be marked as it is, and nothing would ever notice it had moved: the edit that wrote it is
+// judged against the version before it, at the lines that version had.
+func (k *Keeper) Hold(project, branch string, roots []string, codebase *engine.Codebase, taken map[string]string) *Base {
 	base := &Base{
 		Project:   project,
 		Branch:    branch,
 		streams:   codebase.Streams(),
-		marks:     fingerprints(codebase),
+		marks:     marksOf(codebase, taken),
 		roots:     roots,
 		codebase:  codebase,
 		read:      k.now(),
@@ -118,6 +123,52 @@ func (k *Keeper) Hold(project, branch string, roots []string, codebase *engine.C
 	k.bases[key(project, branch)] = base
 
 	return base
+}
+
+// Patched holds the view as the base of that project and branch, with the files it read marked as they now are.
+// What one edit read is then what every later edit is judged against.
+//
+// Without it a view was thrown away the moment its answer was given, so the base stayed the tree as it was first
+// read: an agent that edited one file and then another had its own earlier work missing from the second answer,
+// and a rule that reads a parent, a caller or a recurrence answered about the file as it had been. It cost
+// nothing to keep — the view is already built and already filled — and the old base object stays whole for
+// whoever is mid-question on it, since a new one is put in its place rather than this one changed.
+func (k *Keeper) Patched(was *Base, view *engine.Codebase, read map[string]string) *Base {
+	marks := map[string]string{}
+	for path, mark := range was.marks {
+		marks[path] = mark
+	}
+
+	for path, mark := range read {
+		marks[path] = mark
+	}
+
+	base := &Base{
+		Project:   was.Project,
+		Branch:    was.Branch,
+		streams:   view.Streams(),
+		marks:     marks,
+		roots:     was.roots,
+		codebase:  view,
+		read:      was.read,
+		lastAsked: k.now(),
+		swept:     was.sweptAt(),
+	}
+
+	k.mu.Lock()
+	defer k.mu.Unlock()
+
+	k.bases[key(was.Project, was.Branch)] = base
+
+	return base
+}
+
+// sweptAt is when every file of the base was last re-stated, which the base that takes its place carries on from.
+func (b *Base) sweptAt() time.Time {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+
+	return b.swept
 }
 
 // Drop forgets the base of that project and branch, for a branch that is gone or a tree that must be read anew.
@@ -300,10 +351,13 @@ func (b *Base) ViewFrom(checkout string, rebuilt []*contract.Stream, project str
 			switch {
 			case dropped[file.Path]:
 				// Gone from disk, so gone from the program.
+			case standsFor[file.Path]:
+				// The checkout's own file stands in for this one, which is added below. Asked before whether a
+				// fresh copy of it was read: the main checkout can have drifted under the base while a worker
+				// changed the same file, and keeping the drifted copy as well put TWO of that source in the
+				// program, so every recurrence, twin and declaration rule saw the worker's file doubled.
 			case fresh[file.Path] != nil:
 				part.Files = append(part.Files, fresh[file.Path])
-			case standsFor[file.Path]:
-				// The checkout's own file stands in for this one, which is added below.
 			default:
 				part.Files = append(part.Files, file)
 			}
@@ -347,11 +401,29 @@ func Under(folder, path string) (string, bool) {
 	return under, true
 }
 
-// fingerprints are what every file of the codebase was when it was read.
-func fingerprints(codebase *engine.Codebase) map[string]string {
+// marksOf are what every file of the codebase was when it was read: the mark the caller took before the read
+// where it took one, and what the file is now where it did not.
+func marksOf(codebase *engine.Codebase, taken map[string]string) map[string]string {
 	marks := map[string]string{}
 	for _, file := range codebase.Files() {
+		if before, took := taken[file.File.Path]; took {
+			marks[file.File.Path] = before
+
+			continue
+		}
+
 		marks[file.File.Path] = Mark(file.File.Path)
+	}
+
+	return marks
+}
+
+// Taken are what these files are now, by path: the marks to hold a base with, taken before the read it is built
+// from begins.
+func Taken(paths []string) map[string]string {
+	marks := map[string]string{}
+	for _, path := range paths {
+		marks[path] = Mark(path)
 	}
 
 	return marks

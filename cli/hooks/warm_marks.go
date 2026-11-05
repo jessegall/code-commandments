@@ -64,6 +64,11 @@ func AgainstTheProgram(marking Marking, file string, rules []detectors.Detector,
 	elsewhere := slices.DeleteFunc(slices.Clone(moved), func(path string) bool { return path == file })
 	if len(elsewhere) > 0 {
 		kept.Drop(held.project, held.branch)
+
+		// And this edit is answered alone, not from the base it just gave up: that base holds the old tree of
+		// every file that moved and still holds the ones that are gone, so the edit that NOTICES the drift was
+		// the one answered from the drifted tree.
+		return nil, 0, false
 	}
 
 	view := base.Codebase()
@@ -78,6 +83,11 @@ func AgainstTheProgram(marking Marking, file string, rules []detectors.Detector,
 		// what the project judges. A worker's file lies in a worktree under a folder the project excludes, so
 		// excluding again would read none of it.
 		reading := time.Now()
+
+		// What the file is NOW, taken before it is read: marked afterwards, a file written again during the
+		// read would be held as current when the tree holds the version before it.
+		mark := warm.Mark(file)
+
 		streams, already := parsed.streamsOf(file)
 
 		if !already {
@@ -93,6 +103,13 @@ func AgainstTheProgram(marking Marking, file string, rules []detectors.Detector,
 		// No files are dropped here: a file gone anywhere but the one named has already given the base up above,
 		// and the named file is one we were told about and have just read.
 		view = base.ViewFrom(checkout, streams, held.project, nil)
+
+		// And the view becomes the base, so the next edit is judged against this file as it now is rather than
+		// as the base first read it. Only for the project's own checkout: a worktree's file is another
+		// checkout's content, which stands in for the project's for one question and is not the project's own.
+		if checkout == strings.TrimRight(held.project, "/") {
+			kept.Patched(base, view, map[string]string{file: mark})
+		}
 	}
 
 	// A file the view does not hold cannot be judged against the program, and answering "no sins" for it would
@@ -186,12 +203,18 @@ func Warming(root string, project config.Config) {
 			roots = []string{named.project}
 		}
 
-		codebase, err := scan.Walk(roots, source.Under(named.project, project.Excluded)).Only(reads(named.project, project)...).Load()
+		sources := scan.Walk(roots, source.Under(named.project, project.Excluded)).Only(reads(named.project, project)...)
+
+		// What every file is before the read, which is what the base is marked with: the read takes 25 to 55
+		// seconds, and a file written during it must read as moved afterwards rather than as the tree's own.
+		taken := warm.Taken(sources.Files(source.Languages...))
+
+		codebase, err := sources.Load()
 		if err != nil || codebase == nil {
 			return
 		}
 
-		kept.Hold(named.project, named.branch, roots, codebase)
+		kept.Hold(named.project, named.branch, roots, codebase, taken)
 	}()
 }
 
@@ -230,6 +253,15 @@ func rootOf(path string) (branchRoot, bool) {
 
 	branch := git.CurrentBranch(project)
 	if branch == "" {
+		return branchRoot{}, false
+	}
+
+	// A detached HEAD is no branch, whatever git calls it. Taken as one, every detached commit of a project
+	// shares one base, and a worktree answered from it is diffed against the literal name HEAD, which resolves
+	// to the WORKTREE's own head: the merge-base is then the worker's own tip, so its committed work reads as no
+	// difference at all and its judging is a green tick over everything it wrote. A mid-rebase checkout is
+	// detached, which is an ordinary thing for the main checkout to be.
+	if branch == "HEAD" {
 		return branchRoot{}, false
 	}
 

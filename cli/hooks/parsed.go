@@ -1,6 +1,7 @@
 package hooks
 
 import (
+	"errors"
 	"slices"
 	"sync"
 	"time"
@@ -77,6 +78,15 @@ func keepParsing() *parsing {
 // none of them.
 func readTogether(files []string) ([]*contract.Stream, error) {
 	codebase, err := scan.Walk(files, source.Excluded{}).Load()
+
+	// A bridge that stopped partway read some of the group, and what it read is worth holding: a half-written
+	// file is the commonest state a file is in mid-edit, and losing the whole group's parse over one of them
+	// sends every other file in it back to an ask of its own, which is the cost this exists to avoid.
+	var incomplete scan.Incomplete
+	if errors.As(err, &incomplete) {
+		err = nil
+	}
+
 	if err != nil || codebase == nil {
 		return nil, err
 	}

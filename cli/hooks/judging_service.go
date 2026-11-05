@@ -149,31 +149,33 @@ func heldOrDeclined(root, in string, declined *bool) func(scan.Sources) (*engine
 			}
 		}
 
-		read, covered := differingFrom(base, named, checkout, asked)
+		read, gone, covered := differingFrom(base, named, checkout, asked)
 		if !covered || len(read) > spliced {
 			*declined = true
 
 			return engine.Load(), nil
 		}
 
-		return viewOf(base, named, checkout, read)
+		return viewOf(base, named, checkout, read, gone, declined)
 	}
 }
 
-// differingFrom are the files the service must read before the base answers, and whether it can answer at all:
-// the base's own files whose content has moved since it read them, and, for a run in a worktree, every file that
-// worktree differs from the branch the base was read at by, committed or not.
+// differingFrom are the files the service must read before the base answers, the files it must leave OUT of it,
+// and whether it can answer at all. Read: the base's own files whose content has moved since it read them, every
+// file the walk found that the base never read, and, for a run in a worktree, every file that worktree differs
+// from the branch the base was read at by, committed or not. Left out: the base's files that are no longer on
+// disk, and the ones a worktree removed.
 //
 // The two are joined rather than one replacing the other. A worktree's file is a file of its OWN that no base
 // ever read, so the base's fingerprints say nothing about it; and the main checkout drifts under the base on its
 // own account, which is exactly what those fingerprints do say. A worktree whose branch shares no history with
 // the base's cannot be answered from it, and saying nothing differs would be the worst answer of the three: a
 // green tick over every sin the worker wrote.
-func differingFrom(base *warm.Base, named branchRoot, checkout string, asked []string) ([]string, bool) {
-	gone := base.Gone()
+func differingFrom(base *warm.Base, named branchRoot, checkout string, asked []string) (read, gone []string, covered bool) {
+	gone = base.Gone()
 
 	// A file that is gone cannot be read again, only left out, so it never joins what is asked for.
-	read := slices.DeleteFunc(base.Moved(), func(file string) bool { return slices.Contains(gone, file) })
+	read = slices.DeleteFunc(base.Moved(), func(file string) bool { return slices.Contains(gone, file) })
 
 	// A file the base never read is read now, whatever made it: an edit, a shell, a checkout, a rename. Left
 	// out, it is judged as though it did not exist, which is the quietest wrong answer a judging can give. What
@@ -188,17 +190,25 @@ func differingFrom(base *warm.Base, named branchRoot, checkout string, asked []s
 	if checkout != named.project {
 		changed, told := git.ChangedVsBranch(checkout, named.branch)
 		if !told {
-			return nil, false
+			return nil, nil, false
 		}
 
 		for file := range changed {
 			read = append(read, file)
 		}
+
+		// A file the worktree removed is gone from the worktree's program, however much the project's own copy
+		// of it is still on disk: left in, that copy stands in the place of a module the worker deleted, and a
+		// rule that follows an import or a parent answers about code the worker no longer has.
+		deleted, _ := git.DeletedVsBranch(checkout, named.branch)
+		for _, under := range deleted {
+			gone = append(gone, filepath.Join(named.project, under))
+		}
 	}
 
 	slices.Sort(read)
 
-	return slices.Compact(read), true
+	return slices.Compact(read), gone, true
 }
 
 // counterpartIn is the project's own file a checkout's file stands in for: the file itself in the project's own
@@ -223,8 +233,7 @@ func counterpartIn(checkout, project, file string) string {
 // worktree under a folder the project excludes, so excluding again would read none of them. A file that is gone
 // is left out rather than read, since nothing announces a shell's removals and a base that still holds one
 // answers about code nobody has any more.
-func viewOf(base *warm.Base, named branchRoot, checkout string, read []string) (*engine.Codebase, error) {
-	gone := base.Gone()
+func viewOf(base *warm.Base, named branchRoot, checkout string, read, gone []string, declined *bool) (*engine.Codebase, error) {
 
 	if len(read) == 0 && len(gone) == 0 {
 		return base.Codebase(), nil
@@ -235,8 +244,21 @@ func viewOf(base *warm.Base, named branchRoot, checkout string, read []string) (
 	}
 
 	rebuilt, err := scan.Walk(read, source.Excluded{}).Load()
+
+	// A bridge that stopped partway read some of these files, and what it read is spliced in: the alternative
+	// is answering from a base that holds none of them.
+	var incomplete scan.Incomplete
+	if errors.As(err, &incomplete) {
+		err = nil
+	}
+
+	// A read that failed is DECLINED, so the run reads in its own process, and never answered from the base
+	// alone. Answered from the base, a worker's judging would be a green tick over every file the worker wrote,
+	// which the base does not hold: the worst answer of the three, and the one this whole path exists to avoid.
 	if err != nil || rebuilt == nil {
-		return base.Codebase(), err
+		*declined = true
+
+		return engine.Load(), nil
 	}
 
 	return base.ViewFrom(checkout, rebuilt.Streams(), named.project, gone), nil

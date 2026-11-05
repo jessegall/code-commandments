@@ -236,6 +236,31 @@ func ChangedVsBranch(root, base string) (changed map[string]bool, ok bool) {
 	return pathSet(root, tracked+"\n"+untracked), true
 }
 
+// DeletedVsBranch are the judged files this branch REMOVED since it left base, as paths relative to the
+// repository at root; ok is false when base shares no history with HEAD.
+//
+// Relative, unlike every other answer here, because an absolute path is made by resolving the file and these
+// files are gone: there is nothing on disk to resolve. The caller joins them to whichever root it means, which
+// for a worktree's deletion is the project's own copy that otherwise stands in its place.
+func DeletedVsBranch(root, base string) (deleted []string, ok bool) {
+	mergeBase := MergeBase(root, base)
+	if mergeBase == "" {
+		return nil, false
+	}
+
+	for _, relative := range anyLineBreak.Split(run(root, "diff", "--name-only", "--diff-filter=D", mergeBase), -1) {
+		relative = trim(relative)
+
+		if relative == "" || !source.Judges(relative) {
+			continue
+		}
+
+		deleted = append(deleted, relative)
+	}
+
+	return deleted, true
+}
+
 // ChangedOn are the judged files the head branch changed since it left base, in the repository at root; ok is false
 // when the two share no history or either is unknown there. Checked out, the head's working tree counts too, as
 // ChangedVsBranch reads it; any other head is read from its commits alone.

@@ -54,7 +54,7 @@ func TestAnEditIsJudgedAgainstTheProgramWhereItsBranchHasABase(t *testing.T) {
 		t.Fatalf("the python bridge cannot run here: %v", err)
 	}
 
-	kept.Hold(project, branch, []string{root}, codebase)
+	kept.Hold(project, branch, []string{root}, codebase, nil)
 	t.Cleanup(func() { kept.Drop(project, branch) })
 
 	// The record of what has been announced is the plugin's, and it was written by the run above; a fresh

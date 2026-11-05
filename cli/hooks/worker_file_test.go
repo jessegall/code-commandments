@@ -150,7 +150,7 @@ func TestAWorkersOwnFileIsMarkedWhereItIsJudgedAlone(t *testing.T) {
 		t.Fatalf("the python bridge cannot run here: %v", err)
 	}
 
-	kept.Hold(project, branch, []string{root}, codebase)
+	kept.Hold(project, branch, []string{root}, codebase, nil)
 	t.Cleanup(func() { kept.Drop(project, branch) })
 
 	Judge4Into(map[string]any{

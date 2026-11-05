@@ -2,6 +2,7 @@ package hooks
 
 import (
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -33,7 +34,7 @@ func TestAJudgingAskedForOnTheSocketIsAnsweredFromTheTreeTheServiceHolds(t *test
 		t.Fatalf("the python bridge cannot run here: %v", err)
 	}
 
-	kept.Hold(project, branch, []string{root}, codebase)
+	kept.Hold(project, branch, []string{root}, codebase, nil)
 	t.Cleanup(func() { kept.Drop(project, branch) })
 
 	listener, listening := Judging(root)
@@ -92,7 +93,7 @@ func TestTheAnswerSaysHowLongThePluginTookOverTheEvent(t *testing.T) {
 		t.Fatalf("the python bridge cannot run here: %v", err)
 	}
 
-	kept.Hold(project, branch, []string{root}, codebase)
+	kept.Hold(project, branch, []string{root}, codebase, nil)
 	t.Cleanup(func() { kept.Drop(project, branch) })
 
 	Judge4Into(map[string]any{
@@ -179,7 +180,7 @@ func TestAWorkersHandInJudgingIsAnsweredFromTheBase(t *testing.T) {
 		t.Fatalf("the python bridge cannot run here: %v", err)
 	}
 
-	kept.Hold(project, branch, []string{root}, codebase)
+	kept.Hold(project, branch, []string{root}, codebase, nil)
 	t.Cleanup(func() { kept.Drop(project, branch) })
 
 	listener, listening := Judging(root)
@@ -292,7 +293,7 @@ func heldBaseOf(t *testing.T, root string) {
 	project := git.ProjectRoot(root)
 	branch := git.CurrentBranch(project)
 
-	kept.Hold(project, branch, []string{root}, codebase)
+	kept.Hold(project, branch, []string{root}, codebase, nil)
 	t.Cleanup(func() { kept.Drop(project, branch) })
 }
 
@@ -309,4 +310,63 @@ func judgingOf(t *testing.T, root string) string {
 	}
 
 	return answer.Out + answer.Err
+}
+
+// TestAFileAWorkerDeletedIsNotInItsProgram holds the other half of a worktree standing in for the project. A
+// worker's file stands IN FOR the project's own at the same path, so a file the worker deleted must leave the
+// program with it: left in, the project's copy takes the place of a module the worker removed, and every rule
+// that follows an import, a parent or a caller answers about code the worker no longer has.
+//
+// git is asked for the worktree's changes with deletions EXCLUDED, since a deleted file is nothing to read, so
+// they are asked for separately and joined to what the view leaves out.
+func TestAFileAWorkerDeletedIsNotInItsProgram(t *testing.T) {
+	root, _ := workerProject(t)
+	heldBaseOf(t, root)
+
+	worktree := filepath.Join(root, ".journal", "worktrees", "worker-1")
+	own := filepath.Join(worktree, "src", "order.py")
+	stands := filepath.Join(root, "src", "order.py")
+
+	// While it is there, the worker's own copy is what the program holds, and the project's is not.
+	reading := heldOrDeclined(root, worktree, new(bool))
+
+	codebase, err := reading(scan.Walk([]string{filepath.Join(worktree, "src")}, source.Excluded{}))
+	if err != nil || codebase == nil {
+		t.Fatalf("the worker's judging was not answered from the base: %v", err)
+	}
+
+	if !holds(codebase, own) {
+		t.Errorf("the program does not hold the worker's own file at %s", own)
+	}
+
+	if holds(codebase, stands) {
+		t.Errorf("the program holds the project's %s as well as the worker's copy of it", stands)
+	}
+
+	// Deleted by the worker, and committed, which is how a worker removes a file.
+	if err := os.Remove(own); err != nil {
+		t.Fatal(err)
+	}
+
+	for _, command := range [][]string{
+		{"-c", "user.email=t@t", "-c", "user.name=t", "add", "-A"},
+		{"-c", "user.email=t@t", "-c", "user.name=t", "commit", "-qm", "the worker drops the file"},
+	} {
+		if out, err := exec.Command("git", append([]string{"-C", worktree}, command...)...).CombinedOutput(); err != nil {
+			t.Fatalf("git %v: %s", command, out)
+		}
+	}
+
+	codebase, err = reading(scan.Walk([]string{filepath.Join(worktree, "src")}, source.Excluded{}))
+	if err != nil || codebase == nil {
+		t.Fatalf("the worker's judging was not answered from the base: %v", err)
+	}
+
+	if holds(codebase, stands) {
+		t.Errorf("the worker deleted the file and the program holds the project's %s in its place", stands)
+	}
+
+	if holds(codebase, own) {
+		t.Errorf("the program still holds the worker's deleted %s", own)
+	}
 }
