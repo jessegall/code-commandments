@@ -1,6 +1,7 @@
 package hooks
 
 import (
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -420,5 +421,99 @@ class DropFadesMigration(RebuildMigration):
 	if len(marks) == 0 {
 		t.Error("the sin whose chain of parents runs through the files nobody announced is not found, so the tree " +
 			"answered from the version before them")
+	}
+}
+
+// TestAMergeSizedChangeIsTakenIntoTheTreeRatherThanGivenUp holds the one number that decides what a merge costs
+// an agent. A shell line that rewrites a hundred files announces nothing, so the tree finds them at its next
+// sweep, and then it either reads them or gives itself up. Giving up means a re-read — 25 seconds for 1518 files
+// and 55 for 5286 — and until it lands every edit is judged on its own file alone with every cross-file rule
+// quietly left out. Nothing says so: the only sign is the answers going thin.
+//
+// Reading them instead costs one ask, and an ask is nearly all fixed cost. Measured here on a 1000-file tree
+// (TestWhatAnAskCostsByItsFiles): one file 849ms, 9 files 932ms, 25 files 1.05s, 100 files 1.97s, 200 files
+// 2.48s. So a hundred files cost about a second more than one, once, against a minute of thin answers — which is
+// why the cap is what the service splices for a judging and not the 25 it used to be.
+func TestAMergeSizedChangeIsTakenIntoTheTreeRatherThanGivenUp(t *testing.T) {
+	root, _ := migrationProject(t)
+	settings, _ := config.Load(root)
+
+	// A hundred files of the project's own, there before the tree is read, so the change below is a change to
+	// files the base HOLDS rather than files it never saw.
+	var merged []string
+	for at := 0; at < 100; at++ {
+		path := filepath.Join(root, "shop", fmt.Sprintf("part%03d.py", at))
+		if err := os.WriteFile(path, []byte(fmt.Sprintf("class Part%03d:\n    number = 0\n", at)), 0o644); err != nil {
+			t.Fatal(err)
+		}
+
+		merged = append(merged, path)
+	}
+
+	project := git.ProjectRoot(root)
+	branch := git.CurrentBranch(project)
+
+	codebase, err := scan.Walk([]string{root}, source.Under(root, settings.Excluded)).Load()
+	if err != nil || codebase == nil {
+		t.Fatalf("the python bridge cannot run here: %v", err)
+	}
+
+	// The clock already past a sweep, so the first question after the merge looks at the whole tree, as it does
+	// within half a minute of a real one.
+	kept.Clocked(func() time.Time { return time.Now().Add(-2 * warm.Sweep) })
+	kept.Hold(project, branch, []string{root}, codebase, nil)
+	t.Cleanup(func() { kept.Clocked(time.Now); kept.Drop(project, branch) })
+
+	// The merge: every one of them rewritten, with nothing announced about any of it.
+	time.Sleep(10 * time.Millisecond)
+	for at, path := range merged {
+		if err := os.WriteFile(path, []byte(fmt.Sprintf("class Part%03d:\n    number = 1\n    paid = True\n", at)), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	// And the chain of parents the rule follows rewritten with them, so the edit below can only be answered by a
+	// tree that took the merge in.
+	for path, text := range map[string]string{
+		"shop/migration.py": "class Migration:\n    number = 0\n    paid = True\n",
+		"shop/rebuild_migration.py": `from shop.migration import Migration
+
+
+class RebuildMigration(Migration):
+    statements: list[str] = []
+    paid = True
+`,
+	} {
+		if err := os.WriteFile(filepath.Join(root, path), []byte(text), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	edited := filepath.Join(root, "shop", "migrations", "m004_drop_fades.py")
+	if err := os.WriteFile(edited, []byte(`from shop.rebuild_migration import RebuildMigration
+
+
+class DropFadesMigration(RebuildMigration):
+    number = 4
+    paid = False
+`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	marks, _, whole := AgainstTheProgram(Marks(root), edited, allRules(t, root, settings), git.Everywhere(), root)
+
+	if !whole {
+		t.Fatal("a hundred files changed with nothing announced cost the tree itself, so every edit until the " +
+			"re-read lands is judged on its own file alone")
+	}
+
+	if len(marks) == 0 {
+		t.Error("the sin whose chain of parents runs through the merged files is not found, so the tree answered " +
+			"from the version before the merge")
+	}
+
+	// And the tree is still held, which is the whole claim: it was patched rather than given up.
+	if _, held := kept.Holds(project, branch); !held {
+		t.Error("the tree was given up for a merge it could have read in one ask")
 	}
 }

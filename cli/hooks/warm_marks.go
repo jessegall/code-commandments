@@ -27,11 +27,6 @@ var kept = warm.Keep()
 // per edit.
 var reading sync.Map
 
-// drifted is how many files may have moved under a base before it is given up rather than patched. A few are an
-// agent at work, and rebuilding them is what a view is for; hundreds are a checkout, a rebase or an install, and
-// the tree they belong to is a different tree.
-const drifted = 25
-
 // AgainstTheProgram are the marks for one edited file judged against the whole program, through a view of its
 // branch's base, and false where no base is held yet.
 //
@@ -70,7 +65,7 @@ func AgainstTheProgram(marking Marking, file string, rules []detectors.Detector,
 	if swept {
 		moved = append(moved, base.Unheld(unannouncedIn(held.project))...)
 	}
-	if len(moved) > drifted {
+	if len(moved) > readInOneGo {
 		kept.Drop(held.project, held.branch)
 
 		return nil, 0, false

@@ -104,11 +104,20 @@ func judgedFor(request warm.Request, root string) warm.Answer {
 	return warm.Answer{Out: out.String(), Err: errs.String(), Code: code}
 }
 
-// spliced is how many files the service reads again for one judging. What it reads it reads in the process every
-// hook of the session is answered by, so it reads in front of every edit. Up to this many the read is the files
-// the judging differs by, which is seconds; past it the change is checkout-sized, the base it would be spliced
-// into is half a tree out of date, and the run reads the tree in its own process where it blocks nobody.
-const spliced = 200
+// readInOneGo is how many files this process reads in one go before the change is bigger than the tree, which is
+// one question with one answer wherever it is asked: a judging splices this many files over the base it is
+// answered from, and an edit takes this many drifted files INTO the tree rather than giving the tree up. What
+// this process reads it reads in front of every edit of the session, since every hook is answered here.
+//
+// A bridge's cost is nearly all per ASK, so the number is far higher than the cost of one file suggests. Measured
+// on a 1000-file tree (TestWhatAnAskCostsByItsFiles): one file 849ms, 9 files 932ms, 25 files 1.05s, 100 files
+// 1.97s, 200 files 2.48s. Past this the alternative is the cheaper one: the base is half a tree out of date, so a
+// judging reads the tree in its own process where it blocks nobody, and an edit gives the tree up for a re-read.
+//
+// The edit's side of it was 25, which is a merge, a rebase, a formatter or an install given up on: a re-read of
+// 25 to 55 seconds, and until it lands every edit is judged on its own file alone with every cross-file rule
+// quietly left out, the only sign being the answers going thin.
+const readInOneGo = 200
 
 // heldOrDeclined is how the service reads a codebase for a run: the tree it holds for the branch, with the files
 // that differ from it read again. A judging the base cannot cover is declined, and says so through the flag, so
@@ -159,9 +168,9 @@ func heldOrDeclined(root, in string, declined *string) func(scan.Sources) (*engi
 		}
 
 		read, gone := differs.read(), differs.Gone
-		if len(read) > spliced {
+		if len(read) > readInOneGo {
 			*declined = fmt.Sprintf("%d files differ from the tree, past the %d this service reads for one judging"+
-				" (%s)", len(read), spliced, differs.where())
+				" (%s)", len(read), readInOneGo, differs.where())
 
 			return engine.Load(), nil
 		}

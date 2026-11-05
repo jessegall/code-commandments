@@ -628,7 +628,10 @@ func TestWhatAnAskCostsByItsFiles(t *testing.T) {
 
 	// One file again at the end, after nine: a reader comparing the two sees that the first ask of all is not
 	// what makes a single file look cheap or dear.
-	for _, many := range []int{1, 2, 3, 5, 9, 1} {
+	// Up past the caps that are set from this: an edit takes a drifted tree in rather than giving it up while it
+	// can afford to read what drifted, and the service splices a judging's own differing files for the same
+	// reason. Both numbers are a guess until the curve past a hundred files is on the record.
+	for _, many := range []int{1, 2, 3, 5, 9, 25, 50, 100, 200, 1} {
 		asked := filesOf(t, root, many)
 
 		// Every file is touched first, so the ask is one of files that really have moved, as an edit's is.
