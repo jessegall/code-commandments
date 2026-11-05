@@ -12,6 +12,7 @@ import (
 	"slices"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/jessegall/code-commandments/cli"
 	"github.com/jessegall/code-commandments/cli/dashboard"
@@ -200,15 +201,22 @@ func answerWith(given map[string]any, runs func(Hook) bool, reportsSins bool) Jo
 
 	var responses []Response
 
+	// What the judging itself costs, which is the work below and not the wait above it: an event waits its turn,
+	// since one event is judged at a time, and a reader given only the total cannot tell the two apart.
+	judging := time.Now()
+
 	for _, hook := range ForProject(event.Root) {
 		if runs(hook) && !slices.Contains(quiet, hook.Class()) {
 			responses = append(responses, Answer(hook, event))
 		}
 	}
 
+	spent := time.Since(judging)
+
 	merged := Merge(responses)
 	answer := answerOf(merged)
-	answer.JudgedMs = sinceStamp(given)
+	answer.JudgedMs = milliseconds(spent)
+	answer.JudgedTotalMs = sinceStamp(given)
 
 	if !reportsSins || !moment.IsPostToolUse() && !moment.IsStop() {
 		return answer
@@ -218,7 +226,8 @@ func answerWith(given map[string]any, runs func(Hook) bool, reportsSins bool) Jo
 	answer.Raises = append(answer.Raises, settlement.Raises(event.Root)...)
 	answer.Settles = settlement.Settles()
 	answer.Repented = settlement.Repented
-	answer.JudgedMs = sinceStamp(given)
+	answer.JudgedMs = milliseconds(spent)
+	answer.JudgedTotalMs = sinceStamp(given)
 
 	return answer
 }

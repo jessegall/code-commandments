@@ -209,11 +209,16 @@ type JournalAnswer struct {
 	// nothing there, and an id already read or already owed changes nothing either, so it is sent every time a sin
 	// of that skill is found rather than remembered here: a compaction takes our memory of it and not the journal's.
 	Requires []string
-	// JudgedMs is how long the plugin took over this event, from the moment it was handed the event to the
-	// moment this answer was ready, in milliseconds. The journal shows it on the card, so what a check costs is
-	// visible where its findings are rather than guessed from file times. Zero is not said, which is an answer
-	// that was never timed rather than one that took no time.
+	// JudgedMs is how long the judging itself took, in milliseconds: the work on the files this event named,
+	// and nothing else. Zero is not said, which is an answer that was never timed rather than one that took no
+	// time.
 	JudgedMs int64
+
+	// JudgedTotalMs is how long the plugin held the event altogether, from the moment it was handed it to the
+	// moment this answer was ready. It is the larger of the two whenever an event waited its turn, since the
+	// judging runs one event at a time: the difference between them IS that wait, which is what a reader
+	// comparing the two is being told.
+	JudgedTotalMs int64
 }
 
 // JSON is the answer as the journal reads it, leaving out what it does not say.

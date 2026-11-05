@@ -72,9 +72,10 @@ func TestARunFindsNoServiceWhereNoneListens(t *testing.T) {
 	}
 }
 
-// TestTheAnswerSaysHowLongThePluginTookOverTheEvent holds the duration the journal shows on the sins card. It is
-// counted from the moment the plugin was handed the event to the moment its answer was ready, which is all this
-// side can honestly know: the time before the event is the journal's own.
+// TestTheAnswerSaysHowLongThePluginTookOverTheEvent holds the two durations the journal shows on the sins card:
+// what the judging itself took, and how long the plugin held the event altogether. They differ by the wait an
+// event spends for its turn, since one event is judged at a time, and a reader given only the total cannot tell
+// a slow judging from a queued one. Neither counts the time before the event, which is the journal's own.
 func TestTheAnswerSaysHowLongThePluginTookOverTheEvent(t *testing.T) {
 	root, data := migrationProject(t)
 
@@ -109,11 +110,18 @@ func TestTheAnswerSaysHowLongThePluginTookOverTheEvent(t *testing.T) {
 
 	took, said := queued[0]["judged_ms"].(float64)
 	if !said || took < 1 {
-		t.Errorf("the answer says judged_ms %v, said %v; it should carry the milliseconds it took", took, said)
+		t.Errorf("the answer says judged_ms %v, said %v; it should carry the milliseconds the judging took", took, said)
 	}
 
-	if took > float64(10*time.Minute/time.Millisecond) {
-		t.Errorf("the answer says it took %v ms, which is no duration of one event", took)
+	// The total is the judging plus whatever the event waited for its turn, so it is never the smaller of the
+	// two: a reader comparing them is being told that wait.
+	whole, told := queued[0]["judged_total_ms"].(float64)
+	if !told || whole < took {
+		t.Errorf("the answer says judged_total_ms %v against a judging of %v, told %v", whole, took, told)
+	}
+
+	if whole > float64(10*time.Minute/time.Millisecond) {
+		t.Errorf("the answer says it held the event %v ms, which is no duration of one", whole)
 	}
 }
 

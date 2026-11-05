@@ -44,7 +44,13 @@ func sinceStamp(payload map[string]any) int64 {
 		return 0
 	}
 
-	return max(1, (time.Now().UnixNano()-stamp)/int64(time.Millisecond))
+	return milliseconds(time.Duration(time.Now().UnixNano() - stamp))
+}
+
+// milliseconds is the duration as the answer carries it, never nought for work that did happen: a judging too
+// quick to measure is one millisecond rather than none, since none is what an untimed answer says.
+func milliseconds(spent time.Duration) int64 {
+	return max(1, spent.Milliseconds())
 }
 
 // stampOf is when the hook was handed the payload, in unix nanoseconds; zero when it was not stamped.
