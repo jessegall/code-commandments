@@ -1,8 +1,6 @@
 package hooks
 
 import (
-	"encoding/hex"
-	"crypto/sha256"
 	"cmp"
 	"os"
 	"path/filepath"
@@ -406,9 +404,9 @@ type Announced struct {
 // sins it announced and whose queue settles them, so a moment in another environment's checkout never repents them;
 // an older record that listed sins without their identity proves nothing and starts over.
 func AnnouncedIn(folder string, moment Moment) Announced {
-	path := filepath.Join(folder, "sins"+namesTheCheckout(moment)+".json")
+	path := filepath.Join(folder, "sins"+namesTheAgent(moment)+".json")
 	if env, named := moment.Environment(); named {
-		path = filepath.Join(folder, "sins."+env+namesTheCheckout(moment)+".json")
+		path = filepath.Join(folder, "sins."+env+namesTheAgent(moment)+".json")
 	}
 	files := jsonfile.NewObject()
 
@@ -425,25 +423,23 @@ func AnnouncedIn(folder string, moment Moment) Announced {
 	return Announced{files, path}
 }
 
-// namesTheCheckout is what tells one checkout's record from another's, and nothing for the project's own.
+// namesTheAgent is what tells one agent's record from another's, and nothing where the moment names no agent.
 //
-// A record keeps a file by its path UNDER its checkout, and that path means nothing outside it: two workers of
-// one environment both hold shop/goods/order.py, and they are different files. Kept in one record they shared
-// every key, so judging one worker swept the other's files, found them absent from its own worktree and settled
-// them as clean — the agent that wrote the sin watched it turn green, which is the quietest wrong answer there
-// is. Found by the story test, which judges two workers of one environment in turn.
+// The record is what THIS AGENT has already been told, so the agent is its key, and the journal gives it on
+// every line. A record keeps a file by its path under the checkout it was announced in, and that path means
+// nothing outside it: two workers of one environment both hold shop/goods/order.py, and they are different
+// files. Kept in one record they shared every key, so judging one worker swept the other's files, found them
+// absent from its own worktree and settled them as clean — the agent that wrote the sin watched it turn green,
+// which is the quietest wrong answer there is.
 //
-// By a digest and not the path, since a path is no file name. The project's own record keeps the name it always
-// had, so nothing of the main agent's is forgotten by this.
-func namesTheCheckout(moment Moment) string {
-	checkout := git.Root(moment.Cwd)
-	if checkout == "" || checkout == strings.TrimRight(git.ProjectRoot(moment.Cwd), "/") {
+// An agent of 0 is nobody, which is the service's own answer and the honest one where the event carried none:
+// that keeps the record the environment always had.
+func namesTheAgent(moment Moment) string {
+	if moment.Agent == 0 {
 		return ""
 	}
 
-	sum := sha256.Sum256([]byte(checkout))
-
-	return "." + filepath.Base(checkout) + "-" + hex.EncodeToString(sum[:])[:8]
+	return "." + strconv.Itoa(moment.Agent)
 }
 
 // Files are the files the record holds sins for.
