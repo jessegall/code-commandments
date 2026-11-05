@@ -91,7 +91,8 @@ func TestTheStress(t *testing.T) {
 	var work sync.WaitGroup
 	var last struct {
 		sync.Mutex
-		at time.Time
+		at          time.Time
+		edit, other time.Duration
 	}
 
 	for worker := 1; worker <= *stressWorkers; worker++ {
@@ -105,10 +106,28 @@ func TestTheStress(t *testing.T) {
 					time.Sleep(*stressApart)
 				}
 
-				sendEvent(t, service, stressEvent(worker, edit, stressEdit(t, root, worker, edit)))
+				took := sendEvent(t, service, stressEvent(worker, edit, stressEdit(t, root, worker, edit)))
 
 				last.Lock()
 				last.at = time.Now()
+				if took > last.edit {
+					last.edit = took
+				}
+				last.Unlock()
+
+
+			}
+
+			// The events a session raises beside its edits: a heartbeat every minute for every open agent, and
+			// one when the agent stops. Once per worker, which is what a session raises, and after its edits,
+			// where a stop really falls.
+			for _, event := range []string{"ticked", "idle"} {
+				waited := sendEvent(t, service, stressMoment(worker, event))
+
+				last.Lock()
+				if waited > last.other {
+					last.other = waited
+				}
 				last.Unlock()
 			}
 
@@ -124,12 +143,29 @@ func TestTheStress(t *testing.T) {
 
 	// From the last EDIT, never from the last hand-in: a hand-in takes seconds of its own after the edits are in,
 	// and counted from there the queue read as having cleared before the edits were sent.
+	t.Logf("the journal waited %v for an edit's answer at worst, and %v for a ticked or idle one",
+		last.edit.Round(time.Millisecond), last.other.Round(time.Millisecond))
+
 	t.Logf("%d edits %v apart and %d hand-ins were sent in %v; the last answer landed %v after the last edit",
 		*stressWorkers**stressEdits, *stressApart, stressHandIns(), time.Since(fired).Round(time.Millisecond),
 		landed.Sub(last.at).Round(time.Millisecond))
 
-	stressReport(t, answers)
-	stressTold(t, answers)
+	stressReport(t, edits(answers))
+	stressTold(t, edits(answers))
+}
+
+// edits are the answers about the files this run edited. A session raises ticked and idle beside its edits, and
+// those are answered too, so the queue holds more than the edits: an answer about a heartbeat has nothing to say
+// about a file and must not be read as an edit that was answered with nothing.
+func edits(answers []map[string]any) []map[string]any {
+	var mine []map[string]any
+	for _, answer := range answers {
+		if strings.Contains(asText(answer["tell"]), "thing") {
+			mine = append(mine, answer)
+		}
+	}
+
+	return mine
 }
 
 // stressTold holds what the run was TOLD, not only how long it took. A harness that reads durations alone is a
@@ -256,11 +292,13 @@ func serviceAt(t *testing.T, root string) string {
 	return ""
 }
 
-// told sends one of the journal's events on the plugin's socket and reads the answer, which is exactly what the
-// journal does: the answer comes back at once and the judging is done after it, so what it costs is counted in
-// the queue and not here.
-func sendEvent(t *testing.T, socket string, event map[string]any) {
+// sendEvent sends one of the journal's events on the plugin's socket and reads the answer, which is exactly what
+// the journal does, and says how long that round trip took. The journal WAITS on it, so it is the one number the
+// plugin owes above all others: a judging that runs before the answer goes back is a journal held up.
+func sendEvent(t *testing.T, socket string, event map[string]any) time.Duration {
 	t.Helper()
+
+	began := time.Now()
 
 	connection, err := net.Dial("unix", socket)
 	if err != nil {
@@ -280,6 +318,18 @@ func sendEvent(t *testing.T, socket string, event map[string]any) {
 	answer := make([]byte, 64*1024)
 	if _, err := connection.Read(answer); err != nil {
 		t.Fatal(err)
+	}
+
+	return time.Since(began)
+}
+
+// stressMoment is one of the journal's other events, which the plugin answers IN FULL on the connection rather
+// than through the queue. A session raises them throughout: ticked every minute per open agent, idle whenever an
+// agent stops. The journal waits on each answer, so what they cost is a journal held up.
+func stressMoment(worker int, event string) map[string]any {
+	return map[string]any{
+		"v": 1, "event": event, "session": fmt.Sprintf("s%d", worker), "environment": "main", "agent": worker,
+		"data": map[string]any{},
 	}
 }
 
@@ -385,14 +435,24 @@ func stressAnswers(t *testing.T, data string, wanted int, within time.Duration) 
 
 	queue, _ := Queue4In(data)
 
+	var held []map[string]any
+
 	for until := time.Now().Add(within); time.Now().Before(until); time.Sleep(100 * time.Millisecond) {
 		files, _ := filepath.Glob(filepath.Join(queue.Path(), "*.json"))
-		if len(files) >= wanted {
-			return drained(t, data), time.Now()
+		if len(files) == 0 {
+			continue
+		}
+
+		// Read as they land, since an answer about a heartbeat lands among them and the count that matters is
+		// the edits'.
+		held = append(held, drained(t, data)...)
+		if len(edits(held)) >= wanted {
+			return held, time.Now()
 		}
 	}
 
-	return drained(t, data), time.Now()
+	return append(held, drained(t, data)...), time.Now()
+
 }
 
 // stressProject is a project of the size asked for, with a worktree per worker as the journal cuts them, and the

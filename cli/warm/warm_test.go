@@ -197,16 +197,16 @@ func TestTheBaseChecksTheEditedFileBetweenSweeps(t *testing.T) {
 	order := filepath.Join(root, "shop", "order.py")
 	invoice := filepath.Join(root, "shop", "invoice.py")
 
-	// The first question sweeps, since nothing has been swept yet.
+	// The edited file is always read again, whether its mark moved or not: it is the one file we know moved.
 	now := time.Now()
-	if stale, _ := base.Stale(order, now); len(stale) != 0 {
-		t.Errorf("a base nobody has touched says %v is stale", stale)
+	if stale, _ := base.Stale(order, now); len(stale) != 1 || stale[0] != order {
+		t.Errorf("a base asked about an edit says %v is stale; the edited file is always read again", stale)
 	}
 
 	write(t, invoice, "class Invoice:\n    paid = True\n")
 
-	// Between sweeps the file nobody named is left alone, and the edited one is checked.
-	if stale, _ := base.Stale(order, now.Add(time.Second)); len(stale) != 0 {
+	// Between sweeps the file nobody named is left alone, however much it has moved.
+	if stale, _ := base.Stale(order, now.Add(time.Second)); len(stale) != 1 || stale[0] != order {
 		t.Errorf("between sweeps the base checks more than the edited file: %v", stale)
 	}
 
@@ -443,5 +443,46 @@ func TestAFileTheBaseNeverReadIsNoticed(t *testing.T) {
 	unheld := base.Unheld([]string{read, never})
 	if len(unheld) != 1 || unheld[0] != never {
 		t.Errorf("the base names %v as files it never read; it never read %s and it did read %s", unheld, never, read)
+	}
+}
+
+// TestTheEditedFileIsAlwaysReadAgain holds the one file an event names against the clock a mark is kept by. A
+// mark is a size and a moment written, which is what the filesystem answers without reading the file, so two
+// writes of one size inside one tick of that clock carry the same mark. On a filesystem whose clock ticks by the
+// second, which is not a rare one, an edit that keeps a file's length would then read as no change at all and be
+// judged against the version before it.
+//
+// The file an event names is the one file we KNOW moved, so it is never asked about.
+func TestTheEditedFileIsAlwaysReadAgain(t *testing.T) {
+	root := t.TempDir()
+	file := filepath.Join(root, "order.py")
+
+	if err := os.WriteFile(file, []byte("if a:\n    pass\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	base := warm.Keep().Hold(root, "main", []string{root}, codebaseOf(t, file), nil)
+
+	// Written again with the mark it already had: the same length, and the moment it was written put back.
+	was, err := os.Stat(file)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if err := os.WriteFile(file, []byte("if b:\n    pass\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := os.Chtimes(file, was.ModTime(), was.ModTime()); err != nil {
+		t.Fatal(err)
+	}
+
+	if unchanged, _ := base.Holds(file); !unchanged {
+		t.Fatal("this test proves nothing: the mark moved, so the base would have read the file anyway")
+	}
+
+	stale, _ := base.Stale(file, time.Now())
+	if len(stale) != 1 || stale[0] != file {
+		t.Errorf("the edited file is not read again; the base names %v as stale", stale)
 	}
 }

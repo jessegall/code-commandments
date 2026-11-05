@@ -450,7 +450,7 @@ func serve(listener net.Listener, current func() bool, advice *adviser) {
 				// other file waiting: the parse is nearly all of what an edit pays and a bridge's cost is per
 				// ask, so the edits waiting together cost one ask between them rather than one each.
 				expecting(given)
-				advice.add(asked{given, judgedAfter(asText(read["event"]))})
+				advice.add(asked{given, judgedAfter(asText(read["event"])), awaited(asText(read["event"]))})
 
 				return
 			}
@@ -471,7 +471,7 @@ func serve(listener net.Listener, current func() bool, advice *adviser) {
 			connection.Close()
 
 			expecting(given)
-			advice.add(asked{given, false})
+			advice.add(asked{given, false, true})
 		}()
 	}
 }
@@ -482,6 +482,9 @@ func serve(listener net.Listener, current func() bool, advice *adviser) {
 type asked struct {
 	given  map[string]any
 	queued bool
+	// first says this moment's advice goes before the rest. An edit's does: the agent is waiting to be told
+	// about the file it just wrote, and a heartbeat's advice, which nothing waits on, used to go ahead of it.
+	first bool
 }
 
 // adviser works out each moment's advice on one goroutine of its own, in the order the moments came: the service
@@ -489,8 +492,13 @@ type asked struct {
 type adviser struct {
 	mu      sync.Mutex
 	pending []asked
-	wake    chan struct{}
-	advise  func(asked)
+	// later are the moments nothing waits on, worked out once no edit is waiting. A session raises a heartbeat
+	// every minute for every open agent and one at every stop, and each of those settles every sin the session
+	// has announced: measured here at 2.5 seconds apiece, and with eighteen of them ahead of nine edits the
+	// last edit was answered 48 seconds after it landed.
+	later  []asked
+	wake   chan struct{}
+	advise func(asked)
 }
 
 // startAdviser is an adviser giving each moment to advise, its goroutine started.
@@ -504,7 +512,11 @@ func startAdviser(advise func(asked)) *adviser {
 // add queues the moment's advice and wakes the worker.
 func (a *adviser) add(given asked) {
 	a.mu.Lock()
-	a.pending = append(a.pending, given)
+	if given.first {
+		a.pending = append(a.pending, given)
+	} else {
+		a.later = append(a.later, given)
+	}
 	a.mu.Unlock()
 
 	select {
@@ -517,18 +529,36 @@ func (a *adviser) work() {
 	for range a.wake {
 		for {
 			a.mu.Lock()
-			if len(a.pending) == 0 {
-				a.mu.Unlock()
+			given, held := a.next()
+			a.mu.Unlock()
 
+			if !held {
 				break
 			}
-			given := a.pending[0]
-			a.pending = a.pending[1:]
-			a.mu.Unlock()
 
 			a.advise(given)
 		}
 	}
+}
+
+// next is the moment to work out: an edit before anything else, since the agent is waiting to be told about the
+// file it just wrote. The caller holds the lock.
+func (a *adviser) next() (asked, bool) {
+	if len(a.pending) > 0 {
+		first := a.pending[0]
+		a.pending = a.pending[1:]
+
+		return first, true
+	}
+
+	if len(a.later) > 0 {
+		next := a.later[0]
+		a.later = a.later[1:]
+
+		return next, true
+	}
+
+	return asked{}, false
 }
 
 // stamp is the latest change to what a running service runs: the executable, the project's config and its

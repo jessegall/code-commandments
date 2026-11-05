@@ -246,10 +246,18 @@ func holds(codebase *engine.Codebase, file string) bool {
 // other candidate.
 func marksOver(codebase *engine.Codebase, marking Marking, file string, rules []detectors.Detector, changed git.ChangedLines) []SinMark {
 	narrowed := codebase.Reporting(file)
+	language := source.OfFile(file)
 
 	var marks []SinMark
 
 	for _, rule := range rules {
+		// Every engine the rule judges, not the first one its file happens to name: a rule naming go and python
+		// was never asked about a python file, which is a rule a project wrote switched off in its live check
+		// while a judge still reported it.
+		if !detectors.Judges(rule, language.Engine()) {
+			continue
+		}
+
 		asked := narrowed
 		if _, weighs := rule.(detectors.Aggregating); weighs {
 			asked = codebase

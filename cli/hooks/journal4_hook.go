@@ -126,6 +126,15 @@ const heldEvent = "command_starting"
 // editedEvent is the file a tool changed, one event per file, and where the judging of the project happens.
 const editedEvent = "file_edited"
 
+// tickedEvent is the journal's heartbeat, raised every minute for every open agent, and idleEvent is an agent
+// stopping. Both are answered IN FULL, settlement and all, because the journal reads what they found from that
+// answer; what they must not be is slow, since the journal waits on every one of them. They were, at 2.5
+// seconds apiece, because the settlement read every marked file in an ask of its own.
+const (
+	tickedEvent = "ticked"
+	idleEvent   = "idle"
+)
+
 // judgedAfter are the events answered with the gates alone and judged afterwards, what they find reaching the agent
 // through the queue.
 //
@@ -135,6 +144,13 @@ const editedEvent = "file_edited"
 // time for a fifth of a second of its own work, all of it waiting on the machine, so every file_edited answer was
 // late and the agent heard nothing of the sins it had just written. Answered this way, the answer costs what the
 // gates already know and the sins arrive one hook later.
+// awaited says an agent is waiting to hear what this moment found, which is what puts its advice before the
+// rest: an edit is answered to the agent that wrote the file, and a command held is answered before it runs. A
+// heartbeat and a stop are nobody's wait.
+func awaited(event string) bool {
+	return event == heldEvent || event == editedEvent
+}
+
 func judgedAfter(event string) bool {
 	return event == heldEvent || event == editedEvent
 }

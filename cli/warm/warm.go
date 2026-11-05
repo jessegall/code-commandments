@@ -250,14 +250,17 @@ func (b *Base) Gone() []string {
 	return gone
 }
 
-// Stale are the files that must be read again before the base answers about this edit: the edited file where it
-// has moved or is new to the base, and every file that has moved under the base when a sweep is due. Swept says
+// Stale are the files that must be read again before the base answers about this edit: the edited file always,
+// and every file that has moved under the base when a sweep is due. Swept says
 // a sweep was due and happened, so a caller that knows of changes the base cannot see by itself asks about them
 // then and not on every edit.
 func (b *Base) Stale(edited string, now time.Time) (stale []string, swept bool) {
-	if unchanged, known := b.Holds(edited); !known || !unchanged {
-		stale = append(stale, edited)
-	}
+	// The edited file is ALWAYS read again, never held to its mark. A mark is a size and a moment written, which
+	// is what the filesystem answers without reading the file, and two writes of one size inside one tick of
+	// that clock are the same mark: on a filesystem whose clock ticks by the second, which is not a rare one, an
+	// edit that keeps a file's length would be read as no change at all and judged against the version before
+	// it. The one file an event names is the one file we know moved, so it is not worth asking about.
+	stale = append(stale, edited)
 
 	b.mu.Lock()
 	due := now.Sub(b.swept) >= Sweep

@@ -7,6 +7,7 @@ import (
 	"github.com/jessegall/code-commandments/cli/config"
 	"github.com/jessegall/code-commandments/cli/custom"
 	"github.com/jessegall/code-commandments/cli/git"
+	"github.com/jessegall/code-commandments/cli/scan"
 	"github.com/jessegall/code-commandments/cli/source"
 	"github.com/jessegall/code-commandments/detectors"
 )
@@ -43,10 +44,16 @@ func swept(record Announced, root string) (marks []SinMark, read []string) {
 	// No lines are the moment's own: a sweep says what each file holds, and marks nothing as just committed, so
 	// going idle never raises a sin as new — only settles one that is gone. A file inside a folder the project
 	// excludes is read by the rules let in there and no others, as the check that marked it read it.
+	// Every marked file in ONE ask. A bridge's cost is per ask and not per file, so reading them one at a time
+	// paid a whole ask for each: measured here at 2.5 seconds for nine files, at every stop and every heartbeat
+	// of every open agent, and the edits waiting behind it were answered eleven seconds late.
+	codebase, err := scan.Walk(files, source.Excluded{}).Load()
+	if err != nil || codebase == nil {
+		return nil, nil
+	}
+
 	for _, file := range files {
-		// The sweep that settles a gone sin pays no attention to what the reading cost: nothing shows it.
-		found, _ := marksIn(marking, file, project.RulesFor(root, file, single), git.ChangedLines{})
-		marks = append(marks, found...)
+		marks = append(marks, marksOver(codebase, marking, file, project.RulesFor(root, file, single), git.ChangedLines{})...)
 	}
 
 	return marks, files
