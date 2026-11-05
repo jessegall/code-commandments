@@ -445,6 +445,11 @@ func serve(listener net.Listener, current func() bool, advice *adviser) {
 				given := Stamped(moment)
 				connection.Write([]byte(answer4On(given, asText(read["event"])) + "\n"))
 				connection.Close()
+
+				// The file is parsed from here, before this moment's turn in the queue, and together with every
+				// other file waiting: the parse is nearly all of what an edit pays and a bridge's cost is per
+				// ask, so the edits waiting together cost one ask between them rather than one each.
+				expecting(given)
 				advice.add(asked{given, judgedAfter(asText(read["event"]))})
 
 				return
@@ -465,6 +470,7 @@ func serve(listener net.Listener, current func() bool, advice *adviser) {
 			connection.Write([]byte(AnswerNow(given).JSON() + "\n"))
 			connection.Close()
 
+			expecting(given)
 			advice.add(asked{given, false})
 		}()
 	}

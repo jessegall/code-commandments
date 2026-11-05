@@ -168,7 +168,7 @@ func (b *Base) Roots() []string {
 func (b *Base) Moved() []string {
 	var moved []string
 	for path, mark := range b.marks {
-		if fingerprint(path) != mark {
+		if Mark(path) != mark {
 			moved = append(moved, path)
 		}
 	}
@@ -213,7 +213,7 @@ func (b *Base) Holds(path string) (unchanged bool, known bool) {
 		return false, false
 	}
 
-	return fingerprint(path) == mark, true
+	return Mark(path) == mark, true
 }
 
 // View is the base with these files' trees in place of its own, which is what one agent's question is answered
@@ -327,16 +327,19 @@ func Under(folder, path string) (string, bool) {
 func fingerprints(codebase *engine.Codebase) map[string]string {
 	marks := map[string]string{}
 	for _, file := range codebase.Files() {
-		marks[file.File.Path] = fingerprint(file.File.Path)
+		marks[file.File.Path] = Mark(file.File.Path)
 	}
 
 	return marks
 }
 
-// fingerprint is what the file is now: its size and the moment it was last written, which is what the
-// filesystem answers without reading it. A file whose content is restored to what it was reads as moved, which
-// costs one re-parse and never a wrong answer; reading every file to hash it costs more than that mistake.
-func fingerprint(path string) string {
+// Mark is what the file is now: its size and the moment it was last written, which is what the filesystem
+// answers without reading it. A file whose content is restored to what it was reads as moved, which costs one
+// re-parse and never a wrong answer; reading every file to hash it costs more than that mistake.
+//
+// It is how a base knows which of its files have moved, and how anything else holding a parse of a file knows
+// whether that parse is still the file.
+func Mark(path string) string {
 	info, err := os.Stat(path)
 	if err != nil {
 		return ""

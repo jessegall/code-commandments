@@ -70,18 +70,27 @@ func AgainstTheProgram(marking Marking, file string, rules []detectors.Detector,
 	var read time.Duration
 
 	if slices.Contains(moved, file) {
-		// Nothing is excluded here: this is the file we were TOLD changed, and it has already been held to
+		// Parsed when the event arrived, together with every other file waiting then, since a bridge's cost is
+		// per ask and not per file. Where nothing parsed it ahead, or it moved again since, it is parsed here as
+		// every edit was before.
+		//
+		// Nothing is excluded either way: this is the file we were TOLD changed, and it has already been held to
 		// what the project judges. A worker's file lies in a worktree under a folder the project excludes, so
 		// excluding again would read none of it.
 		reading := time.Now()
-		rebuilt, err := scan.OneFile(file).Load()
-		read = time.Since(reading)
+		streams, already := parsed.streamsOf(file)
 
-		if err != nil || rebuilt == nil {
-			return nil, read, false
+		if !already {
+			rebuilt, err := scan.OneFile(file).Load()
+			if err != nil || rebuilt == nil {
+				return nil, time.Since(reading), false
+			}
+
+			streams = rebuilt.Streams()
 		}
 
-		view = base.ViewFrom(checkout, rebuilt.Streams(), held.project)
+		read = time.Since(reading)
+		view = base.ViewFrom(checkout, streams, held.project)
 	}
 
 	// A file the view does not hold cannot be judged against the program, and answering "no sins" for it would

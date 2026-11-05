@@ -20,6 +20,7 @@ import (
 	"github.com/jessegall/code-commandments/cli/git"
 	"github.com/jessegall/code-commandments/cli/judge"
 	"github.com/jessegall/code-commandments/cli/scan"
+	"github.com/jessegall/code-commandments/cli/source"
 	"github.com/jessegall/code-commandments/cli/warm"
 )
 
@@ -36,6 +37,8 @@ var (
 	stressWorkers = flag.Int("stress.workers", 3, "how many workers edit and hand in at once")
 	stressEdits   = flag.Int("stress.edits", 3, "how many files each worker edits")
 	stressHandIn  = flag.Bool("stress.hand-in", true, "run each worker's hand-in judging in the same window")
+	stressAsks    = flag.Bool("stress.asks", false, "time one ask of 1, 2, 3 and 5 files through the warm bridge instead of the load")
+	stressAhead   = flag.Bool("stress.ahead", true, "parse each edited file when its event arrives, together with every file waiting then")
 )
 
 // TestTheStress measures the plugin under several workers at once: every worker edits in its own worktree while
@@ -48,6 +51,9 @@ func TestTheStress(t *testing.T) {
 	if !*stress {
 		t.Skip("the stress harness runs on request: -args -stress")
 	}
+
+	parsed.ahead = *stressAhead
+	t.Cleanup(func() { parsed.ahead = true })
 
 	root, data := stressProject(t, *stressFiles, *stressWorkers)
 	service := serviceAt(t, root)
@@ -409,3 +415,73 @@ class Thing%d(Base):
 
 // _ keeps warm imported for the socket the service registers, which a reader of this file looks for.
 var _ = warm.Socket
+
+// TestWhatAnAskCostsByItsFiles answers the one question the queue's design turns on: how much of what an edit
+// pays is per ASK rather than per file. A bridge pays a fixed cost for every ask — the round trip, and mypy
+// re-checking its module graph — and a per-file cost on top. Where the fixed part dominates, the edits waiting
+// in the queue should be handed over in ONE ask, and three edits then cost barely more than one; where it does
+// not, coalescing them buys nothing and the queue is right as it stands.
+//
+//	scripts/dev go test ./cli/hooks/ -run WhatAnAskCosts -v -args -stress -stress.asks -stress.files=1000
+func TestWhatAnAskCostsByItsFiles(t *testing.T) {
+	if !*stress || !*stressAsks {
+		t.Skip("the ask measurement runs on request: -args -stress -stress.asks")
+	}
+
+	root, _ := stressProject(t, *stressFiles, 1)
+	project := git.ProjectRoot(root)
+	stressBridge(t, project)
+
+	// Warm as a session is warm: the first ask of all pays what a session pays once, and no measurement below
+	// is that ask.
+	if _, err := scan.Walk(filesOf(t, root, 1), source.Excluded{}).Load(); err != nil {
+		t.Fatalf("the python bridge cannot answer here: %v", err)
+	}
+
+	// One file again at the end, after nine: a reader comparing the two sees that the first ask of all is not
+	// what makes a single file look cheap or dear.
+	for _, many := range []int{1, 2, 3, 5, 9, 1} {
+		asked := filesOf(t, root, many)
+
+		// Every file is touched first, so the ask is one of files that really have moved, as an edit's is.
+		for _, file := range asked {
+			stressTouch(t, file)
+		}
+
+		began := time.Now()
+		codebase, err := scan.Walk(asked, source.Excluded{}).Load()
+		took := time.Since(began)
+
+		if err != nil || codebase == nil {
+			t.Fatalf("an ask of %d files: %v", many, err)
+		}
+
+		t.Logf("%d file(s) in one ask: %v, %v each", many, took.Round(time.Millisecond), (took / time.Duration(many)).Round(time.Millisecond))
+	}
+}
+
+// filesOf are that many of the project's files, the ones an edit would have changed.
+func filesOf(t *testing.T, root string, many int) []string {
+	t.Helper()
+
+	var asked []string
+	for at := 0; at < many; at++ {
+		asked = append(asked, filepath.Join(root, "shop", fmt.Sprintf("thing%d.py", at)))
+	}
+
+	return asked
+}
+
+// stressTouch writes the file anew, so the bridge is asked about a file that has really moved.
+func stressTouch(t *testing.T, path string) {
+	t.Helper()
+
+	was, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if err := os.WriteFile(path, append(was, []byte("\n    # touched\n")...), 0o644); err != nil {
+		t.Fatal(err)
+	}
+}
