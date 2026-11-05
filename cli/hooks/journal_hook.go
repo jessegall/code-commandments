@@ -17,6 +17,7 @@ import (
 	"github.com/jessegall/code-commandments/cli/dashboard"
 	"github.com/jessegall/code-commandments/cli/health"
 	"github.com/jessegall/code-commandments/cli/help"
+	"github.com/jessegall/code-commandments/cli/warm"
 	"github.com/jessegall/code-commandments/cli/workspace"
 	"github.com/jessegall/code-commandments/engine"
 )
@@ -363,6 +364,11 @@ func (s JournalServe) Run(in *cli.Input, console cli.Console) (int, error) {
 	// that: such a run reads the tree itself, as it always did.
 	if judging, listening := Judging(root); listening {
 		defer judging.Close()
+
+		// What this service serves, written where any run can read it: a socket is named from the project, so a
+		// run that does not know the project cannot name the socket, and this is how it finds both.
+		forget, _ := warm.Register(root)
+		defer forget()
 
 		go serveJudging(judging, root)
 	}

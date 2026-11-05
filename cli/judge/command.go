@@ -129,7 +129,15 @@ func (c Command) Run(in *cli.Input, console cli.Console) (int, error) {
 	// for 1518 files and 55 for 5286. So it is asked first, and only a run that IS the service's own goes on to
 	// read anything, which is what a codebase handed in says.
 	if c.Reading == nil && !options.list {
-		if answer, asked := warm.Asked(space.Root(), warm.Request{Judge: in.Raw(), In: cwd}); asked {
+		// Which service to ask is the service's own answer: it writes down what it serves, so a run finds it
+		// without working the project out from its own folder. The project this run is in is the fallback, for a
+		// service old enough to have said nothing.
+		serving, said := warm.ServingFor(cwd)
+		if !said {
+			serving.Project = space.Root()
+		}
+
+		if answer, asked := warm.Asked(serving.Project, warm.Request{Judge: in.Raw(), In: cwd}); asked {
 			fmt.Fprint(console.Out, answer.Out)
 			fmt.Fprint(console.Err, answer.Err)
 
