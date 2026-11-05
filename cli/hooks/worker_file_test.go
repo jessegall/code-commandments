@@ -192,3 +192,63 @@ func TestAWorkersOwnFileIsMarkedWhereItIsJudgedAlone(t *testing.T) {
 		t.Errorf("judged against the tree, the worker's file carries %d marks, want the one its sin is", len(against))
 	}
 }
+
+// TestAWorkersEarlierWorkIsInTheProgramItsNextEditIsJudgedAgainst holds a worker's own overlay. An edit is never
+// the first thing a worker did: it changed other files before, and a program carrying only the file just edited
+// has the PROJECT's copies standing in for all the rest, so every rule that reads a parent, a caller or a
+// recurrence compares the edited file with code the worker has already changed.
+//
+// Found by an audit of the warm tree, and it is the half of the design that was never built: the project's own
+// checkout keeps its work by making each view the new base, and a worktree cannot, since its content belongs to
+// another checkout.
+func TestAWorkersEarlierWorkIsInTheProgramItsNextEditIsJudgedAgainst(t *testing.T) {
+	root, _ := workerProject(t)
+	worktree := filepath.Join(root, ".journal", "worktrees", "worker-1")
+
+	settings, _ := config.Load(root)
+
+	project := git.ProjectRoot(root)
+	branch := git.CurrentBranch(project)
+
+	codebase, err := scan.Walk([]string{filepath.Join(root, "src")}, source.Under(root, settings.Excluded)).Load()
+	if err != nil || codebase == nil {
+		t.Fatalf("the python bridge cannot run here: %v", err)
+	}
+
+	kept.Hold(project, branch, []string{root}, codebase, nil)
+	t.Cleanup(func() { kept.Drop(project, branch) })
+	t.Cleanup(func() { kept.Forget(worktree) })
+
+	// The worker's earlier work: a file of its own that the project does not have at all.
+	earlier := filepath.Join(worktree, "src", "invoice.py")
+	if err := os.WriteFile(earlier, []byte("class Invoice:\n    pass\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	// And now it edits another file, which is the only one this moment announces.
+	own := filepath.Join(worktree, "src", "order.py")
+	if err := os.WriteFile(own, []byte(`class Order:
+    def total(self):
+        """Says the total."""
+        return 0
+`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	rules := settings.RulesFor(checkoutOf(root, own), own, allRules(t, root, settings))
+
+	marks, _, whole := AgainstTheProgram(Marks(root), own, rules, git.ChangedLines{}, root)
+	if !whole {
+		t.Fatal("the worker's edit is not judged against the program at all")
+	}
+
+	if len(marks) != 1 {
+		t.Errorf("the worker's own file carries %d marks, want the one its sin is", len(marks))
+	}
+
+	// The program the edit was judged against holds the worker's earlier file, which no event ever announced.
+	over := kept.Over(worktree)
+	if _, known := over.Holds(earlier); !known {
+		t.Errorf("the worker's earlier %s is not in the program its next edit is judged against", earlier)
+	}
+}

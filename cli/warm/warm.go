@@ -59,13 +59,15 @@ type Base struct {
 type Keeper struct {
 	mu    sync.Mutex
 	bases map[string]*Base
+	// overlays are the checkouts' own files held over those bases, one per worktree.
+	overlays map[string]*Overlay
 	// now is the clock, so a test can age a base without waiting for one.
 	now func() time.Time
 }
 
 // Keep is a keeper with nothing in it yet.
 func Keep() *Keeper {
-	return &Keeper{bases: map[string]*Base{}, now: time.Now}
+	return &Keeper{bases: map[string]*Base{}, overlays: map[string]*Overlay{}, now: time.Now}
 }
 
 // Clocked is the keeper reading the time through this, so a test can age a base without waiting a quarter of an
@@ -189,11 +191,17 @@ func (k *Keeper) Held() int {
 	return len(k.bases)
 }
 
-// sweep drops every base nobody has asked about for Idle. The caller holds the lock.
+// sweep drops every base and overlay nobody has asked about for Idle. The caller holds the lock.
 func (k *Keeper) sweep() {
 	for named, base := range k.bases {
 		if k.now().Sub(base.lastAsked) >= Idle {
 			delete(k.bases, named)
+		}
+	}
+
+	for checkout, over := range k.overlays {
+		if k.now().Sub(over.asked) >= Idle {
+			delete(k.overlays, checkout)
 		}
 	}
 }

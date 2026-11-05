@@ -1,6 +1,7 @@
 package hooks
 
 import (
+	"path/filepath"
 	"slices"
 	"strings"
 	"sync"
@@ -12,6 +13,7 @@ import (
 	"github.com/jessegall/code-commandments/cli/source"
 	"github.com/jessegall/code-commandments/cli/warm"
 	"github.com/jessegall/code-commandments/detectors"
+	"github.com/jessegall/code-commandments/contract"
 	"github.com/jessegall/code-commandments/engine"
 )
 
@@ -100,15 +102,21 @@ func AgainstTheProgram(marking Marking, file string, rules []detectors.Detector,
 		}
 
 		read = time.Since(reading)
-		// No files are dropped here: a file gone anywhere but the one named has already given the base up above,
-		// and the named file is one we were told about and have just read.
-		view = base.ViewFrom(checkout, streams, held.project, nil)
 
-		// And the view becomes the base, so the next edit is judged against this file as it now is rather than
-		// as the base first read it. Only for the project's own checkout: a worktree's file is another
-		// checkout's content, which stands in for the project's for one question and is not the project's own.
 		if checkout == strings.TrimRight(held.project, "/") {
+			// No files are dropped here: a file gone anywhere but the one named has already given the base up
+			// above, and the named file is one we were told about and have just read.
+			view = base.ViewFrom(checkout, streams, held.project, nil)
+
+			// And the view becomes the base, so the next edit is judged against this file as it now is rather
+			// than as the base first read it.
 			kept.Patched(base, view, map[string]string{file: mark})
+		} else {
+			// A worktree cannot patch the project's base, since its content belongs to another checkout, so it
+			// keeps an overlay of its OWN: every file that worktree differs from the branch by, held together,
+			// so this edit is judged beside the worker's earlier work rather than beside the project's copies
+			// of the files the worker has already changed.
+			view = overlaid(kept.Over(checkout), base, held, file, streams, mark, time.Now())
 		}
 	}
 
@@ -121,6 +129,72 @@ func AgainstTheProgram(marking Marking, file string, rules []detectors.Detector,
 	}
 
 	return marksOver(view, marking, file, rules, changed), read, true
+}
+
+// overlaid is the base seen through this checkout's own overlay, with this edit's file taken into it.
+//
+// An overlay new to a checkout is filled with everything that checkout differs by, in one ask: an edit is never
+// the first thing a worker did, and a bridge's cost is per ask and not per file, so reading all of them costs
+// what reading one costs. What it no longer has is asked of git, at most once every Sweep, since that is a
+// process and the answer changes only when the worker commits or removes something.
+func overlaid(over *warm.Overlay, base *warm.Base, held branchRoot, file string, streams []*contract.Stream, mark string, now time.Time) *engine.Codebase {
+	if over.Empty() {
+		fill(over, held, file)
+	}
+
+	if over.SweepDue(now) {
+		over.Removed(removedIn(held, over.Checkout))
+	}
+
+	over.Patch(streams, map[string]string{file: mark})
+
+	return base.ViewFrom(over.Checkout, over.Streams(), held.project, over.Gone())
+}
+
+// fill reads everything the checkout differs from its branch by, less the file this edit already read.
+func fill(over *warm.Overlay, held branchRoot, file string) {
+	changed, told := git.ChangedVsBranch(over.Checkout, held.branch)
+	if !told {
+		return
+	}
+
+	var reading []string
+	for path := range changed {
+		if path != file {
+			reading = append(reading, path)
+		}
+	}
+
+	if len(reading) == 0 {
+		return
+	}
+
+	taken := warm.Taken(reading)
+
+	// Nothing is excluded: a worktree lies under a folder the project excludes, so excluding again would read
+	// none of it.
+	rebuilt, err := scan.Walk(reading, source.Excluded{}).Load()
+	if err != nil || rebuilt == nil {
+		return
+	}
+
+	over.Patch(rebuilt.Streams(), taken)
+}
+
+// removedIn are the project's files the checkout no longer has: what its branch removed since it left the base's,
+// named at the path the base holds them at.
+func removedIn(held branchRoot, checkout string) []string {
+	deleted, told := git.DeletedVsBranch(checkout, held.branch)
+	if !told {
+		return nil
+	}
+
+	var gone []string
+	for _, under := range deleted {
+		gone = append(gone, filepath.Join(held.project, under))
+	}
+
+	return gone
 }
 
 // holds says whether the codebase read that file.
