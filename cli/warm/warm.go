@@ -10,6 +10,9 @@
 package warm
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
+	"io"
 	"os"
 	"path/filepath"
 	"slices"
@@ -43,7 +46,7 @@ type Base struct {
 	Branch  string
 
 	streams   []*contract.Stream
-	marks     map[string]string
+	marks     map[string]Known
 	roots     []string
 	codebase  *engine.Codebase
 	read      time.Time
@@ -106,7 +109,7 @@ func (k *Keeper) Holds(project, branch string) (*Base, bool) {
 // is marked as it is now. A read of a tree takes 25 to 55 seconds, so a file written during it is read as it was
 // and would otherwise be marked as it is, and nothing would ever notice it had moved: the edit that wrote it is
 // judged against the version before it, at the lines that version had.
-func (k *Keeper) Hold(project, branch string, roots []string, codebase *engine.Codebase, taken map[string]string) *Base {
+func (k *Keeper) Hold(project, branch string, roots []string, codebase *engine.Codebase, taken map[string]Known) *Base {
 	base := &Base{
 		Project:   project,
 		Branch:    branch,
@@ -135,8 +138,8 @@ func (k *Keeper) Hold(project, branch string, roots []string, codebase *engine.C
 // and a rule that reads a parent, a caller or a recurrence answered about the file as it had been. It cost
 // nothing to keep — the view is already built and already filled — and the old base object stays whole for
 // whoever is mid-question on it, since a new one is put in its place rather than this one changed.
-func (k *Keeper) Patched(was *Base, view *engine.Codebase, read map[string]string) *Base {
-	marks := map[string]string{}
+func (k *Keeper) Patched(was *Base, view *engine.Codebase, read map[string]Known) *Base {
+	marks := map[string]Known{}
 	for path, mark := range was.marks {
 		marks[path] = mark
 	}
@@ -226,8 +229,8 @@ func (b *Base) Roots() []string {
 // 5286-file tree costs 0.022s and fingerprinting them all 0.314s, so the check is never the cost.
 func (b *Base) Moved() []string {
 	var moved []string
-	for path, mark := range b.marks {
-		if Mark(path) != mark {
+	for path, known := range b.marks {
+		if !known.Stands(path) {
 			moved = append(moved, path)
 		}
 	}
@@ -300,12 +303,12 @@ func (b *Base) Unheld(paths []string) []string {
 
 // Holds says whether the file is one of the base's, and whether its content is still what the base read.
 func (b *Base) Holds(path string) (unchanged bool, known bool) {
-	mark, known := b.marks[path]
-	if !known {
+	was, held := b.marks[path]
+	if !held {
 		return false, false
 	}
 
-	return Mark(path) == mark, true
+	return was.Stands(path), true
 }
 
 // View is the base with these files' trees in place of its own, which is what one agent's question is answered
@@ -429,8 +432,8 @@ func Under(folder, path string) (string, bool) {
 
 // marksOf are what every file of the codebase was when it was read: the mark the caller took before the read
 // where it took one, and what the file is now where it did not.
-func marksOf(codebase *engine.Codebase, taken map[string]string) map[string]string {
-	marks := map[string]string{}
+func marksOf(codebase *engine.Codebase, taken map[string]Known) map[string]Known {
+	marks := map[string]Known{}
 	for _, file := range codebase.Files() {
 		if before, took := taken[file.File.Path]; took {
 			marks[file.File.Path] = before
@@ -438,7 +441,7 @@ func marksOf(codebase *engine.Codebase, taken map[string]string) map[string]stri
 			continue
 		}
 
-		marks[file.File.Path] = Mark(file.File.Path)
+		marks[file.File.Path] = Now(file.File.Path)
 	}
 
 	return marks
@@ -446,21 +449,81 @@ func marksOf(codebase *engine.Codebase, taken map[string]string) map[string]stri
 
 // Taken are what these files are now, by path: the marks to hold a base with, taken before the read it is built
 // from begins.
-func Taken(paths []string) map[string]string {
-	marks := map[string]string{}
+func Taken(paths []string) map[string]Known {
+	marks := map[string]Known{}
 	for _, path := range paths {
-		marks[path] = Mark(path)
+		marks[path] = Now(path)
 	}
 
 	return marks
 }
 
-// Mark is what the file is now: its size and the moment it was last written, which is what the filesystem
-// answers without reading it. A file whose content is restored to what it was reads as moved, which costs one
-// re-parse and never a wrong answer; reading every file to hash it costs more than that mistake.
+// Known is what a file was when something read it: the cheap stat mark, which the filesystem answers without
+// opening the file, and the digest of its bytes, which is the only thing that settles whether it has really
+// changed. Both, because each answers a question the other cannot afford to: re-stating a 5286-file tree costs
+// 0.3 to 1.1 seconds and reading all of it costs far more, while a stat mark on its own says a file changed
+// whenever anything merely touched it.
+type Known struct {
+	// Mark is the stat mark, and empty for a file that is not there.
+	Mark string
+	// Digest is the digest of the bytes, and empty where they could not be read.
+	Digest string
+}
+
+// Now is what the file is at this moment, which is what a base is held with.
+func Now(path string) Known {
+	return Known{Mark: Mark(path), Digest: Digest(path)}
+}
+
+// Stands says whether the file is still what this says it was. The stat mark answers first and costs nothing, so
+// a tree nothing has touched is settled without a single file being opened; a file whose mark has moved is asked
+// the only question that decides it, which is whether its bytes are the ones that were read.
 //
-// It is how a base knows which of its files have moved, and how anything else holding a parse of a file knows
-// whether that parse is still the file.
+// A stat mark taken as proof is what made a worker's judging read the whole tree. A pull, a checkout, a rebase, a
+// formatter or a build writes identical bytes back over hundreds of files and gives every one of them a new time:
+// measured on a consumer, 1184 files "differed" from the tree for a branch 21 files from the tip it was cut at,
+// past the 200 the service splices for one judging, so the run read 6000 files in its own process.
+func (k Known) Stands(path string) bool {
+	if k.Mark == "" {
+		return false
+	}
+
+	now := Mark(path)
+	if now == k.Mark {
+		return true
+	}
+
+	// Gone is not unchanged, whatever a digest would say about a file nothing can read.
+	if now == "" || k.Digest == "" {
+		return false
+	}
+
+	return Digest(path) == k.Digest
+}
+
+// Digest is the digest of the file's bytes, and empty where they could not be read. Streamed, so a large file
+// costs no more memory than a small one.
+func Digest(path string) string {
+	file, err := os.Open(path)
+	if err != nil {
+		return ""
+	}
+	defer file.Close()
+
+	sum := sha256.New()
+	if _, err := io.Copy(sum, file); err != nil {
+		return ""
+	}
+
+	return hex.EncodeToString(sum.Sum(nil))
+}
+
+// Mark is the cheap part of what the file is now: its size and the moment it was last written, which is what the
+// filesystem answers without opening it. It says a file MIGHT have changed, never that it has, since anything
+// that rewrites identical bytes moves it, so it is the first question and never the last.
+//
+// It is how a base knows which of its files to ask about, and how anything else holding a parse of a file knows
+// whether that parse may no longer be the file.
 func Mark(path string) string {
 	info, err := os.Stat(path)
 	if err != nil {

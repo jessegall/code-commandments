@@ -24,7 +24,7 @@ type Overlay struct {
 	mu      sync.Mutex
 	files   map[string]*contract.File
 	headers map[contract.Language]contract.Header
-	marks   map[string]string
+	marks     map[string]Known
 	gone    map[string]bool
 	asked   time.Time
 	swept   time.Time
@@ -44,7 +44,7 @@ func (k *Keeper) Over(checkout string) *Overlay {
 			Checkout: checkout,
 			files:    map[string]*contract.File{},
 			headers:  map[contract.Language]contract.Header{},
-			marks:    map[string]string{},
+			marks:    map[string]Known{},
 			gone:     map[string]bool{},
 			swept:    k.now(),
 		}
@@ -86,7 +86,7 @@ func (o *Overlay) Empty() bool {
 
 // Patch takes these streams into the overlay: the files they hold are the checkout's own from now on, each with
 // what it was when it was read.
-func (o *Overlay) Patch(streams []*contract.Stream, marks map[string]string) {
+func (o *Overlay) Patch(streams []*contract.Stream, marks map[string]Known) {
 	o.mu.Lock()
 	defer o.mu.Unlock()
 
@@ -153,14 +153,14 @@ func (o *Overlay) Gone() []string {
 // Holds says whether the overlay holds that file, and whether it holds it as the file now is.
 func (o *Overlay) Holds(path string) (unchanged, known bool) {
 	o.mu.Lock()
-	mark, known := o.marks[path]
+	was, held := o.marks[path]
 	o.mu.Unlock()
 
-	if !known {
+	if !held {
 		return false, false
 	}
 
-	return Mark(path) == mark, true
+	return was.Stands(path), true
 }
 
 // SweepDue says whether it is time to ask again what the checkout differs by, which is asked of git rather than

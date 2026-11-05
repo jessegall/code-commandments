@@ -110,7 +110,7 @@ func AgainstTheProgram(marking Marking, file string, rules []detectors.Detector,
 
 		// What the file is NOW, taken before it is read: marked afterwards, a file written again during the
 		// read would be held as current when the tree holds the version before it.
-		mark := warm.Mark(file)
+		mark := warm.Now(file)
 
 		streams, already := parsed.streamsOf(file)
 
@@ -132,7 +132,7 @@ func AgainstTheProgram(marking Marking, file string, rules []detectors.Detector,
 
 			// And the view becomes the base, so the next edit is judged against this file as it now is rather
 			// than as the base first read it.
-			kept.Patched(base, view, map[string]string{file: mark})
+			kept.Patched(base, view, map[string]warm.Known{file: mark})
 		} else {
 			// A worktree cannot patch the project's base, since its content belongs to another checkout, so it
 			// keeps an overlay of its OWN: every file that worktree differs from the branch by, held together,
@@ -159,7 +159,7 @@ func AgainstTheProgram(marking Marking, file string, rules []detectors.Detector,
 // the first thing a worker did, and a bridge's cost is per ask and not per file, so reading all of them costs
 // what reading one costs. What it no longer has is asked of git, at most once every Sweep, since that is a
 // process and the answer changes only when the worker commits or removes something.
-func overlaid(over *warm.Overlay, base *warm.Base, held branchRoot, file string, streams []*contract.Stream, mark string, now time.Time) *engine.Codebase {
+func overlaid(over *warm.Overlay, base *warm.Base, held branchRoot, file string, streams []*contract.Stream, mark warm.Known, now time.Time) *engine.Codebase {
 	if over.Empty() {
 		fill(over, held, file)
 	}
@@ -168,7 +168,7 @@ func overlaid(over *warm.Overlay, base *warm.Base, held branchRoot, file string,
 		over.Removed(removedIn(held, over.Checkout))
 	}
 
-	over.Patch(streams, map[string]string{file: mark})
+	over.Patch(streams, map[string]warm.Known{file: mark})
 
 	return base.ViewFrom(over.Checkout, over.Streams(), held.project, over.Gone())
 }
@@ -236,10 +236,10 @@ func unannouncedIn(project string) []string {
 // worse than no tree, since it answers with confidence about files it no longer holds.
 func taken(base *warm.Base, held branchRoot, files []string) (*warm.Base, time.Duration) {
 	reading := time.Now()
-	marks := map[string]string{}
+	marks := map[string]warm.Known{}
 
 	for _, file := range files {
-		marks[file] = warm.Mark(file)
+		marks[file] = warm.Now(file)
 	}
 
 	// Nothing is excluded: these are files we have WORKED OUT moved, and a worker's lie in a worktree under a

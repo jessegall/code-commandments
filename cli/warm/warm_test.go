@@ -78,8 +78,8 @@ func TestTheBaseSaysWhichFilesHaveMovedSinceItWasRead(t *testing.T) {
 		t.Errorf("the base says order.py is known %v, unchanged %v", known, unchanged)
 	}
 
-	// The fingerprint is the file's size and the moment it was written, so a rewrite of the same length is
-	// still a move: the mod time is what the filesystem changed.
+	// Different bytes, which is the only thing that makes a file a move. The stat mark is asked first and the
+	// digest settles it, so a file merely touched is not one; see TestAFileWrittenBackUnchangedHasNotMoved.
 	if err := os.WriteFile(order, []byte("class Order:\n    paid = True\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
@@ -393,9 +393,9 @@ func TestWhatOneEditReadIsWhatTheNextIsJudgedAgainst(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	mark := warm.Mark(first)
+	mark := warm.Now(first)
 	view := base.ViewFrom(root, []*contract.Stream{streamOf(first)}, root, nil)
-	keeper.Patched(base, view, map[string]string{first: mark})
+	keeper.Patched(base, view, map[string]warm.Known{first: mark})
 
 	// The next edit asks the keeper, and gets a base that already holds the first file as it now is.
 	next, held := keeper.Holds(root, "main")
@@ -484,5 +484,55 @@ func TestTheEditedFileIsAlwaysReadAgain(t *testing.T) {
 	stale, _ := base.Stale(file, time.Now())
 	if len(stale) != 1 || stale[0] != file {
 		t.Errorf("the edited file is not read again; the base names %v as stale", stale)
+	}
+}
+
+// TestAFileWrittenBackUnchangedHasNotMoved holds what "moved" is allowed to mean. A file is held by its
+// modification time and its size, which is what the filesystem answers without reading it — and a pull, a
+// checkout, a rebase, a formatter or a build writes identical bytes back over hundreds of files at once, giving
+// every one of them a new time. Taken as proof, every one of those is a file the tree must read again.
+//
+// Measured on a consumer on v7.15.3: a worker's judging was declined with "1184 files differ from the tree, past
+// the 200 this service reads for one judging", so it read the whole tree in its own process, 35s of reading and
+// 44s of rules for THREE changed files. Its branch was 21 files from the tip it was cut at. The 1184 were files
+// whose bytes nobody had touched.
+//
+// So the stat mark stays the cheap first question, and a file that fails it is asked the only question that
+// settles it: are the bytes the ones the base read?
+func TestAFileWrittenBackUnchangedHasNotMoved(t *testing.T) {
+	root, codebase := project(t, map[string]string{
+		"shop/order.py":   "class Order:\n    pass\n",
+		"shop/invoice.py": "class Invoice:\n    pass\n",
+	})
+
+	base := warm.Keep().Hold(root, "main", []string{root}, codebase, nil)
+
+	order := filepath.Join(root, "shop", "order.py")
+	invoice := filepath.Join(root, "shop", "invoice.py")
+
+	// Written back byte for byte, as a checkout of the same content does, and touched so the filesystem's own
+	// answer about it has moved.
+	if err := os.WriteFile(order, []byte("class Order:\n    pass\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	touch(t, order)
+
+	if moved := base.Moved(); len(moved) != 0 {
+		t.Errorf("the base says %v moved; those bytes are the ones it read, so nothing has", moved)
+	}
+
+	if unchanged, known := base.Holds(order); !known || !unchanged {
+		t.Errorf("a file written back unchanged reads as known %v, unchanged %v", known, unchanged)
+	}
+
+	// And a file whose bytes really did change is still a move, whatever its length.
+	if err := os.WriteFile(invoice, []byte("class Invoice:\n    paid = True\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	touch(t, invoice)
+
+	moved := base.Moved()
+	if len(moved) != 1 || moved[0] != invoice {
+		t.Errorf("the base says %v moved, want only %s", moved, invoice)
 	}
 }
