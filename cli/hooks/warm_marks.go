@@ -244,11 +244,19 @@ func fill(over *warm.Overlay, held branchRoot, files ...string) Narrowed {
 		return cannotList
 	}
 
+	judged := judgesIn(held.project, over.Checkout)
+
 	var reading []string
 	for path := range changed {
-		if !slices.Contains(files, path) {
-			reading = append(reading, path)
+		if slices.Contains(files, path) {
+			continue
 		}
+
+		if !judged(path) {
+			continue
+		}
+
+		reading = append(reading, path)
 	}
 
 	for _, path := range alsoDirtyInTheProject(over.Checkout, held, files, reading) {
@@ -621,4 +629,15 @@ func languageInTheTree(base *warm.Base, file string) Narrowed {
 	}
 
 	return noStreamOf(language)
+}
+
+func judgesIn(project, checkout string) func(string) bool {
+	settings, err := config.Load(projectOf(project))
+	if err != nil || len(settings.Paths) == 0 {
+		return func(string) bool { return true }
+	}
+
+	return func(path string) bool {
+		return settings.IsJudged(checkout, path)
+	}
 }
