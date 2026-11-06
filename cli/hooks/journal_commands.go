@@ -30,6 +30,7 @@ const (
 	recordKey        = "judge_record"
 	ceilingKey       = "judge_nodes_held"
 	workersKey       = "judge_workers"
+	mergesKey        = "judge_merges"
 	skillsFolder     = "journal-skills"
 )
 

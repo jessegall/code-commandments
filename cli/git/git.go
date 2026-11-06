@@ -6,6 +6,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -253,6 +254,21 @@ func ChangedOn(root, base, head string) (changed map[string]bool, ok bool) {
 	}
 
 	return pathSet(root, run(root, "diff", "--name-only", "--diff-filter=d", mergeBase, head)), true
+}
+
+func ChangedBetween(root, before, after string) []string {
+	if before == "" || after == "" {
+		return nil
+	}
+
+	var named []string
+	for name := range pathSet(root, run(root, "diff", "--name-only", "--diff-filter=d", before, after)) {
+		named = append(named, name)
+	}
+
+	sort.Strings(named)
+
+	return named
 }
 
 func Listed(root string, relative []string) map[string]bool {

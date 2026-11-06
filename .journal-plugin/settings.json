@@ -40,6 +40,14 @@
         "help": "Off, a worker's edits are not judged as it writes, and its work is judged when it is taken in, which is what the main agent is asked to do after a merge. On, every worker is judged as it writes, which costs a lane of memory per worker."
     },
     {
+        "key": "judge_merges",
+        "title": "Judge what a merge brings in",
+        "type": "flag",
+        "kind": "flag",
+        "default": true,
+        "help": "On, a worker's merge is judged by the plugin itself the moment it lands, over the commits it brought in, and the main agent is told what came in without having to remember. Off, nothing is judged at a merge and what came in is judged whenever somebody next judges those files."
+    },
+    {
         "key": "judge_nodes_held",
         "title": "Most of the project the service holds",
         "type": "number",
