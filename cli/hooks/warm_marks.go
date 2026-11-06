@@ -367,6 +367,8 @@ func marksOverTogether(codebase *engine.Codebase, marking Marking, files []strin
 	narrowed := codebase.Reporting(files...)
 
 	for _, rule := range rules {
+		began := time.Now()
+		before := engine.Counted()
 		judges := map[string]bool{}
 		for _, file := range asksFor[detectors.IdentityOf(rule)] {
 			if detectors.Judges(rule, source.OfFile(file).Engine()) {
@@ -390,6 +392,8 @@ func marksOverTogether(codebase *engine.Codebase, marking Marking, files []strin
 
 			marks[match.File()] = append(marks[match.File()], marking.Of(rule, match, changedFor(match.File())))
 		}
+
+		timed(rule, time.Since(began), engine.Since(before))
 	}
 
 	return marks

@@ -28,6 +28,8 @@ func (c *Codebase) Comments() []Commented {
 }
 
 func (c *Codebase) WhereComment() *Query {
+	queries.Add(1)
+
 	return &Query{selected: func(yield func(Match) bool) {
 		for _, comment := range c.Comments() {
 			if !yield(comment.Match()) {

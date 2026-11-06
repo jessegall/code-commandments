@@ -38,9 +38,10 @@ var (
 	stressHandIn  = flag.Bool("stress.hand-in", true, "run each worker's hand-in judging in the same window")
 	stressWithin  = flag.Duration("stress.within", 10*time.Second,
 		"how long after the last edit the last answer may land before the run fails")
-	stressAsks  = flag.Bool("stress.asks", false, "time one ask of 1, 2, 3 and 5 files through the warm bridge instead of the load")
-	stressAhead = flag.Bool("stress.ahead", true, "parse each edited file when its event arrives, together with every file waiting then")
-	stressApart = flag.Duration("stress.apart", 0, "how long a worker waits between its edits; a real agent edits seconds apart, not all at once")
+	stressAsks    = flag.Bool("stress.asks", false, "time one ask of 1, 2, 3 and 5 files through the warm bridge instead of the load")
+	stressTimings = flag.Bool("stress.timings", false, "print what each rule cost over the run, the heaviest first")
+	stressAhead   = flag.Bool("stress.ahead", true, "parse each edited file when its event arrives, together with every file waiting then")
+	stressApart   = flag.Duration("stress.apart", 0, "how long a worker waits between its edits; a real agent edits seconds apart, not all at once")
 )
 
 func TestTheStress(t *testing.T) {
@@ -716,6 +717,14 @@ func TestManyTreesAtOnce(t *testing.T) {
 
 	t.Logf("%d answers were held to the invariants as they came, %d checkouts at once at the most", answered.Load(), atOnce.Load())
 
+	if *stressTimings {
+		if said := TimedRules(); said != "" {
+			t.Logf("what the rules cost over this run:\n%s", said)
+		} else {
+			t.Log("no rule was timed: the run needs COMMANDMENTS_TIME_RULES set in the service's own environment")
+		}
+	}
+
 	if *stressWorktrees > 1 && atOnce.Load() < 2 {
 		t.Errorf("no two checkouts were ever in the service at the same moment, so nothing this run claims about "+
 			"several at once was really tried: %d at the most", atOnce.Load())
@@ -877,7 +886,7 @@ func (c *stressCheckout) handsIn(t *testing.T) {
 	defer c.own.Unlock()
 	defer flying()()
 
-	stressHeld(t, c, c.at, c.Project, "", false, stressTake(t))
+	stressHeld(t, c, c.at, c.Project, "", false, stressTakeFor(t, c.Named))
 
 	if _, held := c.holding(); !held {
 		return
@@ -1053,7 +1062,7 @@ func (c *stressCheckout) raises(t *testing.T) {
 	defer c.own.Unlock()
 	defer flying()()
 
-	stressHeld(t, c, c.at, c.Project, "", false, stressTake(t))
+	stressHeld(t, c, c.at, c.Project, "", false, stressTakeFor(t, c.Named))
 
 	sendEvent(t, c.Service, map[string]any{
 		"v": 1, "event": event, "session": fmt.Sprintf("s%d", c.Named), "environment": "main",
@@ -1284,7 +1293,7 @@ func (c *stressCheckout) tells(t *testing.T, file string, from, to int, owed boo
 	defer c.own.Unlock()
 	defer flying()()
 
-	stressHeld(t, c, c.at, against, "", false, stressTake(t))
+	stressHeld(t, c, c.at, against, "", false, stressTakeFor(t, c.Named))
 
 	sendEvent(t, c.Service, map[string]any{
 		"v": 1, "event": "file_edited", "session": fmt.Sprintf("s%d", c.Named), "environment": "main",
@@ -1301,7 +1310,7 @@ func (c *stressCheckout) awaited(t *testing.T, file string, owed bool) []map[str
 	var mine []map[string]any
 
 	for until := time.Now().Add(*stressWaits); time.Now().Before(until); time.Sleep(20 * time.Millisecond) {
-		mine = append(mine, stressTake(t)...)
+		mine = append(mine, stressTakeFor(t, c.Named)...)
 
 		if !owed || stressWasTold(stressUnder(c.Project, file), stressUnder(c.At, file)) {
 			break
@@ -1316,7 +1325,13 @@ var stressToldPaths = map[string]bool{}
 func stressTake(t *testing.T) []map[string]any {
 	t.Helper()
 
-	taken := stressDrain(t, os.Getenv(pluginData))
+	return stressTakeFor(t, 0)
+}
+
+func stressTakeFor(t *testing.T, agent int) []map[string]any {
+	t.Helper()
+
+	taken := stressDrain(t, os.Getenv(pluginData), agent)
 	for _, answer := range taken {
 		for _, named := range stressReported(answer) {
 			stressToldPaths[named] = true
@@ -1336,7 +1351,7 @@ func stressWasTold(paths ...string) bool {
 	return false
 }
 
-func stressDrain(t *testing.T, data string) []map[string]any {
+func stressDrain(t *testing.T, data string, agent int) []map[string]any {
 	t.Helper()
 
 	queue, _ := Queue4In(data)
@@ -1356,14 +1371,29 @@ func stressDrain(t *testing.T, data string) []map[string]any {
 			continue
 		}
 
+		if whose := whoseAnswer(answer); agent != 0 && whose != 0 && whose != agent {
+			continue
+		}
+
 		taken = append(taken, answer)
 
-		if err := os.Remove(path); err != nil {
+		if err := os.Remove(path); err != nil && !os.IsNotExist(err) {
 			t.Fatal(err)
 		}
 	}
 
 	return taken
+}
+
+func whoseAnswer(answer map[string]any) int {
+	switch named := answer["agent"].(type) {
+	case float64:
+		return int(named)
+	case int:
+		return named
+	}
+
+	return 0
 }
 
 var stressWaits = flag.Duration("stress.waits", 3*time.Minute, "how long a move waits for its own answer before calling the plugin silent")

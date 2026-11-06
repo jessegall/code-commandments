@@ -56,7 +56,11 @@ func (q *Query) First() Match {
 }
 
 func (q *Query) passes(match Match) bool {
+	nodes.Add(1)
+
 	for _, check := range q.checks {
+		checks.Add(1)
+
 		if !check(match) {
 			return false
 		}

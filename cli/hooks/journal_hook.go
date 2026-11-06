@@ -530,11 +530,17 @@ func batched(batch []asked) asked {
 
 	var files []any
 	lines := map[string]any{}
+	stands := batch[0]
+	named := false
 
 	for _, held := range batch {
 		moment := MomentOf(held.given)
 		if moment.File == nil || *moment.File == "" {
 			continue
+		}
+
+		if !named {
+			stands, named = held, true
 		}
 
 		files = append(files, *moment.File)
@@ -552,7 +558,6 @@ func batched(batch []asked) asked {
 		}
 	}
 
-	stands := batch[0]
 	if len(files) > 1 {
 		stands.given[batchedKey] = files
 		stands.given[batchedLinesKey] = lines

@@ -859,3 +859,21 @@ func TestAJudgingForAWorkerThatIsGoneTellsNobody(t *testing.T) {
 		t.Errorf("a judging for a worker whose folder is gone left %d file(s) in the queue: %v", len(queued), queued)
 	}
 }
+
+func TestABatchStandsOnAMomentThatNamesAFile(t *testing.T) {
+	edited := "/project/src/order.py"
+
+	ticked := asked{given: map[string]any{"event": "ticked", "agent": map[string]any{"id": 3}}}
+	wrote := asked{given: map[string]any{
+		"event": "PostToolUse",
+		"agent": map[string]any{"id": 3},
+		"tool":  map[string]any{"name": "Edit", "file": edited},
+	}}
+
+	stands := batched([]asked{ticked, wrote})
+
+	moment := MomentOf(stands.given)
+	if moment.File == nil || *moment.File != edited {
+		t.Errorf("a tick that arrived first carried the batch, so the edit beside it was judged by nobody: %+v", moment)
+	}
+}

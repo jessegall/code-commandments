@@ -5,6 +5,8 @@ func (c *Codebase) Where(check Check) *Query {
 }
 
 func (c *Codebase) WhereKind(kinds ...string) *Query {
+	queries.Add(1)
+
 	return &Query{selected: func(yield func(Match) bool) {
 		for _, kind := range kinds {
 			for _, file := range c.opened() {
@@ -43,6 +45,8 @@ func (c *Codebase) WhereAssign() *Query {
 }
 
 func (c *Codebase) nodes() *Query {
+	queries.Add(1)
+
 	return &Query{selected: func(yield func(Match) bool) {
 		for _, file := range c.opened() {
 			for _, node := range file.Nodes() {
