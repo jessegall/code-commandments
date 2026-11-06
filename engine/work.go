@@ -10,17 +10,19 @@ type Work struct {
 	Checks   int64
 	Queries  int64
 	Analyses int64
+	Parts    int64
 	Visited  int64
 	Resolved int64
 	Files    int64
 }
 
-var nodes, checks, queries, analyses, visited, resolved, files atomic.Int64
+var nodes, checks, queries, analyses, parts, visited, resolved, files atomic.Int64
 
 func Counted() Work {
 	return Work{
 		Nodes: nodes.Load(), Checks: checks.Load(), Queries: queries.Load(),
-		Analyses: analyses.Load(), Visited: visited.Load(), Resolved: resolved.Load(), Files: files.Load(),
+		Analyses: analyses.Load(), Parts: parts.Load(), Visited: visited.Load(),
+		Resolved: resolved.Load(), Files: files.Load(),
 	}
 }
 
@@ -29,13 +31,18 @@ func Since(before Work) Work {
 
 	return Work{
 		Nodes: now.Nodes - before.Nodes, Checks: now.Checks - before.Checks, Queries: now.Queries - before.Queries,
-		Analyses: now.Analyses - before.Analyses, Visited: now.Visited - before.Visited,
+		Analyses: now.Analyses - before.Analyses, Parts: now.Parts - before.Parts,
+		Visited:  now.Visited - before.Visited,
 		Resolved: now.Resolved - before.Resolved, Files: now.Files - before.Files,
 	}
 }
 
 func CountedAnalysis() {
 	analyses.Add(1)
+}
+
+func CountedContribution() {
+	parts.Add(1)
 }
 
 func CountedVisit() {
@@ -51,5 +58,5 @@ func CountedFile() {
 }
 
 func (w Work) Points() int64 {
-	return w.Nodes + w.Checks + w.Queries + w.Visited + w.Resolved + w.Files*10 + w.Analyses*1000
+	return w.Nodes + w.Checks + w.Queries + w.Visited + w.Resolved + w.Parts + w.Files*10 + w.Analyses*1000
 }

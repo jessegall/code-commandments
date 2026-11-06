@@ -43,6 +43,7 @@ func timed(rule detectors.Detector, took time.Duration, did engine.Work) {
 	held.Checks += did.Checks
 	held.Queries += did.Queries
 	held.Analyses += did.Analyses
+	held.Parts += did.Parts
 	held.Visited += did.Visited
 	held.Resolved += did.Resolved
 	held.Files += did.Files
@@ -72,6 +73,7 @@ func TimedRules() string {
 		whole.Checks += did.Checks
 		whole.Queries += did.Queries
 		whole.Analyses += did.Analyses
+		whole.Parts += did.Parts
 		whole.Visited += did.Visited
 		whole.Resolved += did.Resolved
 		whole.Files += did.Files
@@ -79,15 +81,16 @@ func TimedRules() string {
 	}
 
 	said := []string{fmt.Sprintf("%d rules cost %d points in all: %d nodes, %d checks, %d queries, %d walks, "+
-		"%d files read and %d whole-program analyses built, and took %dms. A file read counts ten and an analysis "+
-		"a thousand, because that is the order of what they really cost. The most compute first:",
+		"%d files read, %d answers kept per file and %d whole-program analyses built, and took %dms. A file read "+
+		"counts ten and a whole-program analysis a thousand, because that is the order of what they really cost, "+
+		"while an answer kept against one file counts one. The most compute first:",
 		len(named), whole.Points(), whole.Nodes, whole.Checks, whole.Queries, whole.Visited, whole.Files,
-		whole.Analyses, spent.Milliseconds())}
+		whole.Parts, whole.Analyses, spent.Milliseconds())}
 
 	for _, rule := range named[:min(20, len(named))] {
 		did := timings.work[rule]
-		said = append(said, fmt.Sprintf("  %9d points %6d nodes %6d walks %3d files %3d analyses over %d asks (%7.1fms)  %s",
-			did.Points(), did.Nodes, did.Visited, did.Files, did.Analyses, timings.asked[rule],
+		said = append(said, fmt.Sprintf("  %9d points %6d nodes %9d walks %6d files %5d parts %3d analyses over %d asks (%7.1fms)  %s",
+			did.Points(), did.Nodes, did.Visited, did.Files, did.Parts, did.Analyses, timings.asked[rule],
 			float64(timings.spent[rule].Microseconds())/1000, rule))
 	}
 
