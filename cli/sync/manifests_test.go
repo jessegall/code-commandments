@@ -496,3 +496,32 @@ func TestOnlyTheVersionFourManifestCanCarryTheWorktreeKeys(t *testing.T) {
 		}
 	}
 }
+
+func TestThisPlanAddsNoServiceOfItsOwn(t *testing.T) {
+	text, err := os.ReadFile(filepath.Join("..", "..", "journal-plugin.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var read struct {
+		Services []struct {
+			Name string `json:"name"`
+		} `json:"services"`
+	}
+	if err := json.Unmarshal(text, &read); err != nil {
+		t.Fatal(err)
+	}
+
+	named := map[string]bool{"hooks": true, "roslyn": true, "mypy": true, "frontend": true, "php": true}
+
+	for _, service := range read.Services {
+		if !named[service.Name] {
+			t.Errorf("the manifest declares the service %q, and this plan adds none: a bridge per worker was refused, "+
+				"and a service a consumer cannot switch off is a service they cannot escape", service.Name)
+		}
+	}
+
+	if len(read.Services) != len(named) {
+		t.Errorf("the manifest declares %d services and there are %d we know of", len(read.Services), len(named))
+	}
+}
