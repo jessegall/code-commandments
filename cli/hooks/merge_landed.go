@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/jessegall/code-commandments/cli/binary"
 	"github.com/jessegall/code-commandments/cli/config"
 	"github.com/jessegall/code-commandments/cli/custom"
 	"github.com/jessegall/code-commandments/cli/git"
@@ -67,35 +68,39 @@ func MergeLanded(line map[string]any) string {
 
 	mark := MergedIn(workspace.At(work.project, ""))
 
-	from := firstText(mark.Upto(work.branch), work.before)
+	upto, why := mark.UptoUsable(work.project, work.branch, work.after)
+
+	from := firstText(upto, work.before)
 	if from == "" || from == work.after {
 		return ""
 	}
 
-	marks := work.sinsBrought(from)
+	marks, judged := work.sinsBrought(from)
+	if !judged {
+		return ""
+	}
 
 	if err := mark.Judged(work.branch, work.after); err != nil {
 		return ""
 	}
 
-	if len(marks) == 0 {
+	said := work.saidAbout(marks, why)
+	if said == "" {
 		return ""
 	}
-
-	said := work.saidAbout(marks)
 
 	return (JournalAnswer{Whisper: &said}).Line4()
 }
 
-func (l landed) sinsBrought(from string) []SinMark {
+func (l landed) sinsBrought(from string) ([]SinMark, bool) {
 	changed := git.ChangedBetween(l.project, from, l.after)
 	if len(changed) == 0 {
-		return nil
+		return nil, true
 	}
 
 	project, err := config.Load(l.project)
 	if err != nil {
-		return nil
+		return nil, false
 	}
 
 	rules := append(enabledIn(project, l.project), custom.InForce(l.project).Enabled(project)...)
@@ -109,7 +114,7 @@ func (l landed) sinsBrought(from string) []SinMark {
 	}
 
 	if len(files) == 0 {
-		return nil
+		return nil, true
 	}
 
 	together, _, _ := AgainstTheProgramNarrowed(Marks(l.project), files,
@@ -121,7 +126,7 @@ func (l landed) sinsBrought(from string) []SinMark {
 		marks = append(marks, together[file]...)
 	}
 
-	return marks
+	return marks, true
 }
 
 func enabledIn(project config.Config, root string) []detectors.Detector {
@@ -133,7 +138,11 @@ func enabledIn(project config.Config, root string) []detectors.Detector {
 	return enabled
 }
 
-func (l landed) saidAbout(marks []SinMark) string {
+func (l landed) saidAbout(marks []SinMark, why Narrowed) string {
+	if len(marks) == 0 && why == "" {
+		return ""
+	}
+
 	var named []string
 	for _, mark := range marks {
 		named = append(named, mark.ShownFrom(l.project))
@@ -149,8 +158,19 @@ func (l landed) saidAbout(marks []SinMark) string {
 		about = ", on task " + l.task
 	}
 
-	return "Code Commandments: the work " + who + " just merged" + about + " brings in " +
+	if len(marks) == 0 {
+		return Unjudged("what "+who+" merged"+about+" was judged over the range this merge names alone",
+			string(why), binary.Judging(l.project)+" --changes")
+	}
+
+	said := "Code Commandments: the work " + who + " just merged" + about + " brings in " +
 		strconv.Itoa(len(marks)) + " sin(s), each to fix at its source:\n  " + strings.Join(named, "\n  ")
+
+	if why != "" {
+		said += "\n\n" + Unjudged("only the range this merge names was judged", string(why), "")
+	}
+
+	return said
 }
 
 func mergesJudged() bool {

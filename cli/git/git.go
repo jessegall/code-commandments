@@ -256,6 +256,28 @@ func ChangedOn(root, base, head string) (changed map[string]bool, ok bool) {
 	return pathSet(root, run(root, "diff", "--name-only", "--diff-filter=d", mergeBase, head)), true
 }
 
+func Holds(root, commit string) bool {
+	if commit == "" {
+		return false
+	}
+
+	return succeeded(root, "cat-file", "-e", commit+"^{commit}")
+}
+
+func IsAncestor(root, older, newer string) bool {
+	if older == "" || newer == "" {
+		return false
+	}
+
+	return succeeded(root, "merge-base", "--is-ancestor", older, newer)
+}
+
+func succeeded(dir string, args ...string) bool {
+	counted()
+
+	return exec.Command("git", append([]string{"--no-optional-locks", "-C", dir}, args...)...).Run() == nil
+}
+
 func ChangedBetween(root, before, after string) []string {
 	if before == "" || after == "" {
 		return nil

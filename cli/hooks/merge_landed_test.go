@@ -1,12 +1,14 @@
 package hooks
 
 import (
+	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
 
 	"github.com/jessegall/code-commandments/cli/git"
+	"github.com/jessegall/code-commandments/cli/workspace"
 )
 
 func mergedProject(t *testing.T) (root, before, after string) {
@@ -139,5 +141,72 @@ func TestTheMergeKeyNeverRefuses(t *testing.T) {
 		if said != "" && !strings.Contains(said, `"tell"`) {
 			t.Errorf("%s was answered with something that is not a tell: %s", told.what, said)
 		}
+	}
+}
+
+func TestTheMarkOutlivesTheSession(t *testing.T) {
+	root, before, after := mergedProject(t)
+
+	if said := MergeLanded(mergeLine(root, "main", before, after)); said == "" {
+		t.Fatal("the first merge said nothing, so there is no mark to outlive anything")
+	}
+
+	space := workspace.At(root, "")
+
+	if kept := MergedIn(space).Upto("main"); kept != after {
+		t.Fatalf("the mark says the branch is judged up to %q, and the merge ended at %s", kept, after)
+	}
+
+	if path := MergedIn(space).file.Path(); strings.Contains(path, "/sessions/") {
+		t.Errorf("the mark lives in a session's own folder (%s), and a merge made between sessions is the case it exists for", path)
+	}
+}
+
+func TestAMarkThatIsNotAnAncestorIsSaidAndNotJudgedFrom(t *testing.T) {
+	root, before, after := mergedProject(t)
+
+	if said := MergeLanded(mergeLine(root, "main", before, after)); said == "" {
+		t.Fatal("the first merge said nothing")
+	}
+
+	resetTo(t, root, before)
+
+	wroteInto(t, filepath.Join(root, "src", "rewritten.py"), sinOnLineFive)
+	commitIn(t, root, "a history rewritten under us")
+
+	now := git.Head(root)
+
+	said := MergeLanded(mergeLine(root, "main", before, now))
+
+	if !strings.Contains(said, "rewritten.py") {
+		t.Errorf("the merge after a reset does not name its own file: %s", said)
+	}
+
+	if strings.Contains(said, "brought.py") {
+		t.Errorf("the merge judged from a mark that is no ancestor of what the branch is now: %s", said)
+	}
+}
+
+func TestAJudgingThatCouldNotRunLeavesTheMarkWhereItWas(t *testing.T) {
+	root, before, after := mergedProject(t)
+
+	space := workspace.At(root, "")
+
+	if err := os.RemoveAll(filepath.Join(root, ".commandments")); err != nil {
+		t.Fatal(err)
+	}
+
+	MergeLanded(mergeLine(root, "main", before, after))
+
+	if kept := MergedIn(space).Upto("main"); kept != "" {
+		t.Errorf("a judging that could not run advanced the mark to %q, so the next merge would skip this range", kept)
+	}
+}
+
+func resetTo(t *testing.T, root, commit string) {
+	t.Helper()
+
+	if out, err := exec.Command("git", "-C", root, "reset", "-q", "--hard", commit).CombinedOutput(); err != nil {
+		t.Fatalf("git reset: %s", out)
 	}
 }
