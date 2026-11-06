@@ -135,6 +135,70 @@ func (k *Keeper) PastItsCeiling() (int, int, bool) {
 	return held, k.ceiling, held > k.ceiling
 }
 
+type Lane struct {
+	Checkout string
+	Cut      string
+	Nodes    int
+	Files    int
+	Asked    time.Time
+	Filling  string
+}
+
+func (k *Keeper) Lanes() []Lane {
+	k.mu.Lock()
+	defer k.mu.Unlock()
+
+	var lanes []Lane
+	for checkout, over := range k.overlays {
+		state, _, why := over.Filling()
+		said := map[Filling]string{
+			NeverFilled:   "never read what the checkout differs by",
+			BeingFilled:   "reading what the checkout differs by",
+			Filled:        "read",
+			FillingFailed: "could not be read",
+		}[state]
+
+		if why != "" {
+			said += ": " + why
+		}
+
+		lanes = append(lanes, Lane{
+			Checkout: checkout, Cut: over.cut, Nodes: over.Nodes(), Files: over.Count(),
+			Asked: over.asked, Filling: said,
+		})
+	}
+
+	return lanes
+}
+
+func (k *Keeper) DropsLane(checkout string) bool {
+	k.mu.Lock()
+	defer k.mu.Unlock()
+
+	if _, held := k.overlays[checkout]; !held {
+		return false
+	}
+
+	delete(k.overlays, checkout)
+	k.left(checkout)
+
+	return true
+}
+
+func (k *Keeper) DropsEveryLane() int {
+	k.mu.Lock()
+	defer k.mu.Unlock()
+
+	dropped := 0
+	for checkout := range k.overlays {
+		delete(k.overlays, checkout)
+		k.left(checkout)
+		dropped++
+	}
+
+	return dropped
+}
+
 func (k *Keeper) Overlaid() int {
 	k.mu.Lock()
 	defer k.mu.Unlock()
