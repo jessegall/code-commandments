@@ -74,3 +74,37 @@ func TestNoSettingPromisesAGateThatCannotExist(t *testing.T) {
 		}
 	}
 }
+
+func TestBothManifestsCarryTheSameSettings(t *testing.T) {
+	older, err := os.ReadFile(filepath.Join("..", "..", ".journal-plugin", "plugin.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var read struct {
+		Settings map[string]struct {
+			Title string `json:"title"`
+			Help  string `json:"help"`
+		} `json:"settings"`
+	}
+	if err := json.Unmarshal(older, &read); err != nil {
+		t.Fatal(err)
+	}
+
+	for _, setting := range settingsFile(t) {
+		carried, held := read.Settings[setting.Key]
+		if !held {
+			t.Errorf("the older manifest carries no %s, so a consumer on it cannot switch what a consumer on the newer one can", setting.Key)
+
+			continue
+		}
+
+		if carried.Title != setting.Title {
+			t.Errorf("%s is titled %q in one manifest and %q in the other", setting.Key, carried.Title, setting.Title)
+		}
+
+		if carried.Help != setting.Help {
+			t.Errorf("%s is explained differently in the two manifests", setting.Key)
+		}
+	}
+}

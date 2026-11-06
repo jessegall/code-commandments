@@ -109,6 +109,34 @@
             "default": "true",
             "group": "Performance"
         },
+        "judge_workers": {
+            "title": "Judge a worker's own edits",
+            "help": "Off, a worker's edits are not judged as it writes, and its work is judged when it is taken in, which is what the main agent is asked to do after a merge. On, every worker is judged as it writes, which costs a lane of memory per worker.",
+            "type": "flag",
+            "default": "false",
+            "group": "Performance"
+        },
+        "judge_merges": {
+            "title": "Judge what a merge brings in",
+            "help": "On, a worker's merge is judged by the plugin itself the moment it lands, over the commits it brought in, and the main agent is told what came in without having to remember. Off, nothing is judged at a merge and what came in is judged whenever somebody next judges those files.",
+            "type": "flag",
+            "default": "true",
+            "group": "Performance"
+        },
+        "judge_files_at_once": {
+            "title": "Files a checkout may differ by",
+            "help": "How many changed files the service brings into one answer about a worktree. Past it the tree is let go and the answer says so, since reading more than this inside a wait costs more than the answer is worth. Zero works it out from the size of the project.",
+            "type": "number",
+            "default": "0",
+            "group": "Performance"
+        },
+        "judge_nodes_held": {
+            "title": "Most of the project the service holds",
+            "help": "A ceiling, counted in parsed nodes, over everything the service keeps in memory for this project. Past it no new checkout is held and the answer says so instead of the service growing. Zero holds nothing back.",
+            "type": "number",
+            "default": "0",
+            "group": "Performance"
+        },
         "language_php": {
             "title": "PHP",
             "help": "Enables PHP sin detection",
