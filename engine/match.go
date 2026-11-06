@@ -357,6 +357,9 @@ func (m Match) Children() []Match {
 	if m.node == nil {
 		return nil
 	}
+
+	CountedVisit()
+
 	children := make([]Match, 0, len(m.node.Children))
 	for _, child := range m.node.Children {
 		children = append(children, Match{node: child, file: m.file})

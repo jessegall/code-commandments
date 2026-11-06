@@ -24,6 +24,7 @@ func (DanglingRouteNameDetector) Find(codebase *engine.Codebase) []engine.Match 
 	}
 
 	return php.In(codebase).
+		WhereKind("Expr_FuncCall", "Expr_MethodCall", "Expr_StaticCall").
 		Where(engine.As(func(n laravelnode.Node) bool { return n.RouteNameReference() != "" })).
 		Reject(engine.As(func(n laravelnode.Node) bool { return names.IsRegistered(n.RouteNameReference()) })).
 		Get()

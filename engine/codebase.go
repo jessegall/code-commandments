@@ -52,6 +52,9 @@ func Analysis[T any](c *Codebase, key any, build func(*Codebase) T) T {
 	if held, ok := c.analyses.Load(key); ok {
 		return held.(T)
 	}
+
+	CountedAnalysis()
+
 	held, _ := c.analyses.LoadOrStore(key, build(c))
 
 	return held.(T)
@@ -68,6 +71,8 @@ type File struct {
 	err      error
 	lines    sync.Once
 	own      map[int]contract.Comment
+	attached sync.Once
+	byNode   map[int][]contract.Comment
 }
 
 func Load(streams ...*contract.Stream) *Codebase {
@@ -220,6 +225,8 @@ func (c *Codebase) Program(language contract.Language) (*contract.Program, bool)
 
 func (f *File) Source() ([]byte, error) {
 	f.once.Do(func() {
+		CountedFile()
+
 		f.source, f.err = f.read(f.Path)
 		if f.err != nil {
 			return
@@ -270,14 +277,18 @@ func (f *File) CommentMatch(comment contract.Comment, line int) Match {
 }
 
 func (f *File) Comments(node *contract.Node) []contract.Comment {
-	var attached []contract.Comment
+	f.attached.Do(f.indexComments)
+
+	return f.byNode[node.ID]
+}
+
+func (f *File) indexComments() {
+	f.byNode = map[int][]contract.Comment{}
 	for _, comment := range f.File.Comments {
-		if comment.Attached != nil && *comment.Attached == node.ID {
-			attached = append(attached, comment)
+		if comment.Attached != nil {
+			f.byNode[*comment.Attached] = append(f.byNode[*comment.Attached], comment)
 		}
 	}
-
-	return attached
 }
 
 func (f *File) CommentsAbove(node *contract.Node) []contract.Comment {

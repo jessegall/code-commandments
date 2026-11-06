@@ -42,6 +42,10 @@ func timed(rule detectors.Detector, took time.Duration, did engine.Work) {
 	held.Nodes += did.Nodes
 	held.Checks += did.Checks
 	held.Queries += did.Queries
+	held.Analyses += did.Analyses
+	held.Visited += did.Visited
+	held.Resolved += did.Resolved
+	held.Files += did.Files
 	timings.work[named] = held
 }
 
@@ -58,24 +62,32 @@ func TimedRules() string {
 		named = append(named, rule)
 	}
 
-	sort.Slice(named, func(a, b int) bool { return timings.work[named[a]].Nodes > timings.work[named[b]].Nodes })
+	sort.Slice(named, func(a, b int) bool { return timings.work[named[a]].Points() > timings.work[named[b]].Points() })
 
 	whole := engine.Work{}
 	spent := time.Duration(0)
 	for _, rule := range named {
-		whole.Nodes += timings.work[rule].Nodes
-		whole.Checks += timings.work[rule].Checks
-		whole.Queries += timings.work[rule].Queries
+		did := timings.work[rule]
+		whole.Nodes += did.Nodes
+		whole.Checks += did.Checks
+		whole.Queries += did.Queries
+		whole.Analyses += did.Analyses
+		whole.Visited += did.Visited
+		whole.Resolved += did.Resolved
+		whole.Files += did.Files
 		spent += timings.spent[rule]
 	}
 
-	said := []string{fmt.Sprintf("%d rules touched %d nodes with %d checks over %d queries, and took %dms; the most work first:",
-		len(named), whole.Nodes, whole.Checks, whole.Queries, spent.Milliseconds())}
+	said := []string{fmt.Sprintf("%d rules cost %d points in all: %d nodes, %d checks, %d queries, %d walks, "+
+		"%d files read and %d whole-program analyses built, and took %dms. A file read counts ten and an analysis "+
+		"a thousand, because that is the order of what they really cost. The most compute first:",
+		len(named), whole.Points(), whole.Nodes, whole.Checks, whole.Queries, whole.Visited, whole.Files,
+		whole.Analyses, spent.Milliseconds())}
 
 	for _, rule := range named[:min(20, len(named))] {
 		did := timings.work[rule]
-		said = append(said, fmt.Sprintf("  %9d nodes %9d checks %5d queries over %d asks (%6.1fms)  %s",
-			did.Nodes, did.Checks, did.Queries, timings.asked[rule],
+		said = append(said, fmt.Sprintf("  %9d points %6d nodes %6d walks %3d files %3d analyses over %d asks (%7.1fms)  %s",
+			did.Points(), did.Nodes, did.Visited, did.Files, did.Analyses, timings.asked[rule],
 			float64(timings.spent[rule].Microseconds())/1000, rule))
 	}
 

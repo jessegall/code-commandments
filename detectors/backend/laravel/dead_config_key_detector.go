@@ -19,6 +19,7 @@ func (DeadConfigKeyDetector) Sin() sins.Sin { return backendsins.DeadConfigKey{}
 
 func (DeadConfigKeyDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return php.In(codebase).
+		WhereKind("ArrayItem").
 		Where(func(n engine.Match) bool { return laravelnode.ConfigKeysOf(codebase).DeadKeyAt(n) != "" }).
 		Get()
 }

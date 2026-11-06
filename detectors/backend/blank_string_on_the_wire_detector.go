@@ -25,6 +25,7 @@ func (BlankStringOnTheWireDetector) Find(codebase *engine.Codebase) []engine.Mat
 	questions := published.Of[published.BlanknessQuestion](codebase)
 
 	return php.In(codebase).
+		WhereKind("Param", "Stmt_Property").
 		Where(engine.As(php.Node.IsField)).
 		Where(func(n engine.Match) bool {
 			field, ok := php.AsField(n)
