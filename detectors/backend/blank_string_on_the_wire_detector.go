@@ -2,6 +2,7 @@ package backend
 
 import (
 	"slices"
+	"strings"
 
 	"github.com/jessegall/code-commandments/catalog"
 	"github.com/jessegall/code-commandments/detectors"
@@ -24,13 +25,23 @@ func (BlankStringOnTheWireDetector) ConsumesContracts() {}
 func (BlankStringOnTheWireDetector) Find(codebase *engine.Codebase) []engine.Match {
 	questions := published.Of[published.BlanknessQuestion](codebase)
 
+	asked := map[string]bool{}
+	for _, question := range questions {
+		asked[canonicalField(question.Field)] = true
+	}
+
 	return php.In(codebase).
 		WhereKind("Param", "Stmt_Property").
 		Where(engine.As(php.Node.IsField)).
 		Where(func(n engine.Match) bool {
 			field, ok := php.AsField(n)
+
+			return ok && asked[canonicalField(field.Name)]
+		}).
+		Where(func(n engine.Match) bool {
+			field, _ := php.AsField(n)
 			class := php.EnclosingClassName(n)
-			if !ok || !field.IsPublic || php.Written(field.Type).Render() != "string" || class == "" {
+			if !field.IsPublic || php.Written(field.Type).Render() != "string" || class == "" {
 				return false
 			}
 
@@ -42,3 +53,7 @@ func (BlankStringOnTheWireDetector) Find(codebase *engine.Codebase) []engine.Mat
 }
 
 func (BlankStringOnTheWireDetector) CrossFile() {}
+
+func canonicalField(name string) string {
+	return strings.ToLower(strings.NewReplacer("_", "", "-", "").Replace(name))
+}
