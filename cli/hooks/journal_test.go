@@ -276,3 +276,41 @@ func TestAnAgentsOwnMomentsAreWorkedOutInOrder(t *testing.T) {
 			"together", most)
 	}
 }
+
+// TestAnAgentsEditsAreWorkedOutBeforeItsStop holds the one thing that decides whether a worker can walk away
+// from a sin it wrote. The journal commits a worker's work when it hands in, so anything still unjudged when it
+// stops reaches nobody: on a consumer a worker wrote a known sin, its answer was stamped three minutes fifty-one
+// later, and by then the worker had ended.
+//
+// Its own edits therefore come before its own stop, on its own goroutine. That does not close the window — the
+// stop is answered at once and the worker may end while a judging of its own is still running — but what is
+// still owed is the smallest it can be, and the hand-in gate judges a worker's changes itself rather than
+// trusting this queue, so a pending moment cannot let a sin through a hand-in.
+func TestAnAgentsEditsAreWorkedOutBeforeItsStop(t *testing.T) {
+	var worked sync.Mutex
+	var order []string
+
+	advice := startAdvisers(func(moment asked) {
+		worked.Lock()
+		order = append(order, asText(moment.given["named"]))
+		worked.Unlock()
+	})
+
+	// The stop arrives FIRST, as it does when an agent writes and then stops at once, and all of one agent.
+	advice.add(asked{map[string]any{"named": "its stop", "agent": map[string]any{"id": 7}}, true, false})
+	advice.add(asked{map[string]any{"named": "its edit", "agent": map[string]any{"id": 7}}, true, true})
+
+	advice.drained(10 * time.Second)
+
+	worked.Lock()
+	defer worked.Unlock()
+
+	if len(order) != 2 {
+		t.Fatalf("the agent's 2 moments were worked out as %v", order)
+	}
+
+	if order[0] != "its edit" {
+		t.Errorf("the agent's moments were worked out as %v; its own edit comes before its own stop, since what "+
+			"is unjudged when it stops reaches nobody", order)
+	}
+}
