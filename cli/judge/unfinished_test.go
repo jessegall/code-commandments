@@ -84,3 +84,50 @@ func TestAWholeRunThatFindsNothingTicks(t *testing.T) {
 		t.Errorf("what a run that could not finish judged does not read into the failure below it: %q", short)
 	}
 }
+
+// TestABridgeThatIsNotThereIsAPartThatCouldNotFinish holds the quieter half of the same fault. A bridge whose
+// toolchain is not installed leaves its files unread, says so on STDERR and answers no error, because every other
+// language is still judged. So a run whose every Python file went unread printed its tick and answered 0, and
+// nothing a reader or a pipeline sees tells that from a clean run.
+func TestABridgeThatIsNotThereIsAPartThatCouldNotFinish(t *testing.T) {
+	root := t.TempDir()
+	for path, contents := range map[string]string{
+		".commandments/config.json": `{"paths": ["src"]}`,
+		"src/Label.vue":             "<template>\n    <span>a label</span>\n</template>\n",
+	} {
+		full := filepath.Join(root, path)
+		if err := os.MkdirAll(filepath.Dir(full), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(full, []byte(contents), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	// No node anywhere on the PATH, which is a bridge that was never there rather than one that broke off.
+	t.Setenv("PATH", t.TempDir())
+	previous, _ := os.Getwd()
+	t.Cleanup(func() { os.Chdir(previous) })
+	os.Chdir(root)
+
+	var out, errs bytes.Buffer
+	var code int
+	stderrOf(t, func() {
+		answered, err := Command{}.Run(cli.InputOf("judge", "src", "--no-checklist", "--parallel=1"), cli.Console{Out: &out, Err: &errs})
+		if err != nil {
+			t.Fatal(err)
+		}
+		code = answered
+	})
+
+	said := out.String()
+	if code != aRuleCouldNotRun {
+		t.Fatalf("a run whose bridge is not installed answered %d:\n%s\n%s", code, said, errs.String())
+	}
+	if strings.Contains(said, "\u2713") {
+		t.Errorf("a run that read none of its files still ticked:\n%s", said)
+	}
+	if !strings.Contains(said, "the Vue and TypeScript bridge") {
+		t.Errorf("the run does not name the bridge that read nothing:\n%s", said)
+	}
+}

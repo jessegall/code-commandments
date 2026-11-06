@@ -25,6 +25,7 @@ import (
 	"github.com/jessegall/code-commandments/cli/source"
 	"github.com/jessegall/code-commandments/cli/warm"
 	"github.com/jessegall/code-commandments/cli/workspace"
+	"github.com/jessegall/code-commandments/contract"
 	"github.com/jessegall/code-commandments/detectors"
 	"github.com/jessegall/code-commandments/engine"
 )
@@ -311,6 +312,7 @@ func (c Command) judge(options options, selected []detectors.Detector, judged co
 
 	judgement := c.run(tasks, options, progress, parseSeconds, console)
 	judgement.Skipped = joined(judgement.Skipped, incomplete.Bridges...)
+	judgement.Skipped = joined(judgement.Skipped, readNothing(read, codebase)...)
 	csharpFiles := 0
 
 	if len(byProject) > 0 {
@@ -683,6 +685,46 @@ func judgedFiles(sources scan.Sources, csharpFiles int, languages []source.Langu
 	}
 
 	return judged
+}
+
+// readNothing are the bridges the scan had files for and the codebase holds not one file from.
+//
+// A bridge that is not on the machine, or one that died before its first line, is not a broken load: the scan
+// says so on STDERR, leaves its files unread and answers no error, because every other language is still judged.
+// What nobody said was that the run's verdict no longer covers that language. A judge then printed its green tick
+// and answered 0 with every Python file unread, which is a pass in the eye of whoever reads it, and nothing a
+// worker or a pipeline reads tells the two apart.
+//
+// So a bridge that read nothing is a part of the run that could not finish, named as the broken load names one,
+// and the exit code is the one a run that could not finish already has. A bridge that read SOME of its files is
+// already named by the load, and the same spelling keeps one bridge from being named twice.
+//
+// C# is left out: its rules judge a solution a project at a time, through judgeUnits, which says what it could
+// not read itself and is not in this codebase at all.
+func readNothing(sources scan.Sources, codebase *engine.Codebase) []string {
+	var silent []string
+	for _, bridge := range scan.Bridges {
+		if slices.Contains(bridge.Languages, source.CSharp) {
+			continue
+		}
+
+		if sources.Count(bridge.Languages...) == 0 {
+			continue
+		}
+
+		written := make([]contract.Language, 0, len(bridge.Languages))
+		for _, language := range bridge.Languages {
+			written = append(written, language.Written())
+		}
+
+		if len(codebase.Of(written...).Files()) > 0 {
+			continue
+		}
+
+		silent = append(silent, "the "+bridge.Label+" bridge")
+	}
+
+	return silent
 }
 
 // wholeAndByProject splits the rules into those judged over the whole codebase at once and the C# rules, which judge
