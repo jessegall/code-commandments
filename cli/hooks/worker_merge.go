@@ -111,20 +111,69 @@ func workHeld(line map[string]any) string {
 	return (JournalAnswer{Refuse: &refusal}).Line4()
 }
 
-// sinsWithin is what the judge found, and nothing where it did not answer in time. The window is a deadline and
-// not only a permission: nobody here knows how large the worktree is, and a tree that outlasts even a generous
-// window would answer late, which is the fault that costs the plugin itself. A judge still running when the
-// deadline passes is left to finish into nothing and the merge is let through.
+// sinsWithin is what the judge found inside the window, and what the SHALLOW reading found where the deep one
+// could not finish. The window is a deadline and not only a permission: nobody here knows how large the worktree
+// is, and a tree that outlasts even a generous window would answer late, which is the fault that costs the
+// plugin itself.
+//
+// So the shallow reading is taken first and kept. It is the changed files alone, read by the rules that need no
+// more than one file, and it costs seconds; the deep reading is then given the rest of the window to improve on
+// it. A judge still running when the deadline passes is left to finish into nothing, and the hand-in is answered
+// with what the shallow reading found.
+//
+// Nothing used to be the answer there, and nothing is indistinguishable from CLEAN: a gate that ran out of time
+// and a gate that found no sin said the same thing, and the work went through. Measured on a consumer: a worker
+// delivered in 171 seconds against a budget of 162, and its own judging then found four sins in the work it had
+// just handed in.
 func (m merging) sinsWithin() []SinMark {
+	within := time.After(m.deadline())
+
+	// The shallow reading first, inside its own share of the window, so there is always something honest to
+	// answer with. Where even that cannot finish, the deep one below is the only hope and nothing is all there
+	// is to say.
+	shallow := make(chan []SinMark, 1)
+	go func() { shallow <- m.shallowly() }()
+
+	var held []SinMark
+
+	select {
+	case marks := <-shallow:
+		held = marks
+	case <-within:
+		return nil
+	}
+
 	answered := make(chan []SinMark, 1)
 	go func() { answered <- m.sins() }()
 
 	select {
 	case marks := <-answered:
 		return marks
-	case <-time.After(m.deadline()):
+	case <-within:
+		return held
+	}
+}
+
+// shallowly is the shallow reading of this work, whatever window the journal gave: the changed files alone, by
+// the rules that answer from one file.
+func (m merging) shallowly() []SinMark {
+	if m.worktree == "" {
 		return nil
 	}
+
+	project, err := config.Load(m.worktree)
+	if err != nil {
+		return nil
+	}
+
+	rules, err := project.Enabled(config.InstalledIn(m.worktree))
+	if err != nil {
+		return nil
+	}
+
+	rules = append(rules, custom.InForce(m.worktree).Enabled(project)...)
+
+	return m.shallow(project.Judging(rules), rules)
 }
 
 // deadline is how much of the window the judge is given: all but a tenth of it, so the answer is written and read

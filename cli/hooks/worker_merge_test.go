@@ -369,3 +369,33 @@ func TestAGateThatRunsOutOfTimeAnswersWithWhatItDidFind(t *testing.T) {
 			"clean: the worker's work goes through unjudged and nobody is told the judging did not finish")
 	}
 }
+
+// TestAGateThatRunsOutOfTimeAnswersWithWhatItFound holds the worst answer a hand-in gate can give. It judges the
+// worker's own changes inside the window the journal allows, and on running out of time it answered with
+// NOTHING — which is the same answer as clean, so the work went through unjudged and nobody was told the judging
+// had not finished.
+//
+// Measured on a consumer: a worker delivered in 171 seconds against a budget of 162, and its own judging then
+// found four sins in the work it had just handed in. Their journal keeps no record of the step answer, so from
+// outside a gate that ran out of time and a gate that found nothing are the same thing.
+//
+// So the shallow reading is taken first and kept, and the deep one only improves on it: a gate that runs out of
+// time answers with the sins it did find.
+func TestAGateThatRunsOutOfTimeAnswersWithWhatItFound(t *testing.T) {
+	root, _, _ := projectWithASin(t)
+
+	// A window that affords the shallow reading and not a whole-tree one: the sin is in the worker's own changed
+	// lines, which one file is enough to find.
+	held := MergeHeld(mergingOf(root, int(wholeTreeWindow/time.Millisecond), "src/refund.py"))
+
+	if held == "" {
+		t.Error("a gate whose deep judging cannot fit its window answered with nothing, which reads exactly as " +
+			"clean: the worker's work goes through unjudged and nobody is told the judging did not finish")
+	}
+
+	// And a window too small even for that still answers with nothing, which is the honest answer where the
+	// journal gave no time to judge in at all.
+	if said := MergeHeld(mergingOf(root, 50, "src/refund.py")); said != "" {
+		t.Errorf("a gate given 50ms answered %q; there is no honest answer in that time", said)
+	}
+}
