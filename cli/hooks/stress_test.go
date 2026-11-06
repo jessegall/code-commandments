@@ -159,7 +159,7 @@ func stressStop(t *testing.T, root, data string) {
 	t.Logf("the sweep read %d marked file(s) in %v and found %d mark(s)", len(files), time.Since(swept).Round(time.Millisecond), len(marks))
 
 	settling := time.Now()
-	settlement := settled(MomentOf(line), root, nil, nil)
+	settlement := settled(MomentOf(line), root, nil, nil, nil)
 	t.Logf("the settlement took %v, the sweep inside it, and settles %d", time.Since(settling).Round(time.Millisecond), len(settlement.Settles()))
 
 	whole := time.Now()

@@ -197,7 +197,7 @@ func answerWith(given map[string]any, runs func(Hook) bool, reportsSins bool) Jo
 		return answer
 	}
 
-	settlement := settled(moment, event.Root, merged.Activity, merged.Judged)
+	settlement := settled(moment, event.Root, merged.Activity, merged.Judged, merged.Asked)
 	answer.Raises = append(answer.Raises, settlement.Raises(event.Root)...)
 	answer.Settles = settlement.Settles()
 	answer.Repented = settlement.Repented
@@ -208,12 +208,12 @@ func answerWith(given map[string]any, runs func(Hook) bool, reportsSins bool) Jo
 	return answer
 }
 
-func settled(moment Moment, root string, marks []SinMark, read []string) Settlement {
+func settled(moment Moment, root string, marks []SinMark, read []string, asked Asked) Settlement {
 	data := os.Getenv(pluginData)
 	reconsidered := append(read, named(moment.File)...)
 
 	if data == "" {
-		return Forgotten().Settle(root, reconsidered, marks)
+		return Forgotten().SettleAsked(root, reconsidered, marks, asked)
 	}
 
 	record := AnnouncedIn(data, moment)
@@ -238,7 +238,7 @@ func settled(moment Moment, root string, marks []SinMark, read []string) Settlem
 
 	dashboard.Record(workspace.At(root, ""), findings, judged)
 
-	return record.Settle(root, reconsidered, marks)
+	return record.SettleAsked(root, reconsidered, marks, asked)
 }
 
 func named(file *string) []string {

@@ -11,6 +11,7 @@ import (
 
 	"github.com/jessegall/code-commandments/bridge"
 	"github.com/jessegall/code-commandments/bridge/bridgetest"
+	"github.com/jessegall/code-commandments/cli/source"
 	pydetectors "github.com/jessegall/code-commandments/detectors/python"
 	"github.com/jessegall/code-commandments/engine"
 	"github.com/jessegall/code-commandments/engine/python/pythontest"
@@ -199,5 +200,48 @@ func TestAMarkWithOneSinStillOpens(t *testing.T) {
 
 	if lines[0] != "redundant-python-else at line 1" || lines[1] != rule.Sin().Definition().Description {
 		t.Errorf("the one-sin mark reads %q", raised[0].Detail)
+	}
+}
+
+func TestAPartialJudgingNeverCallsAFileClean(t *testing.T) {
+	sinful := "def refund(order) -> int:\n    if order.late:\n        raise ValueError(order)\n    else:\n        return order.total\n"
+	codebase := pythontest.FromSource(t, map[string]string{"shop/refund.py": sinful})
+	file := pythontest.File(t, codebase, "shop/refund.py").Path
+	root, data := filepath.Dir(filepath.Dir(file)), t.TempDir()
+	named := source.Relative(root, file)
+
+	rule := pydetectors.RedundantElseDetector{}
+	var marks []SinMark
+	for _, match := range rule.Find(codebase) {
+		marks = append(marks, SinMark{Rule: rule, Match: match, Touched: true})
+	}
+	if len(marks) != 1 {
+		t.Fatalf("the fixture holds %d sins, want 1", len(marks))
+	}
+
+	raised := AnnouncedIn(data, Moment{}).Settle(root, []string{file}, marks).Raises(root)
+	if len(raised) != 1 {
+		t.Fatalf("the sinful edit raised %+v", raised)
+	}
+
+	narrow := Asked{named: {"python-invented-default", "python-blank-string-default"}}
+	partial := AnnouncedIn(data, Moment{}).SettleAsked(root, []string{file}, nil, narrow)
+
+	if settles := partial.Settles(); len(settles) != 0 {
+		t.Errorf("a judging that never asked about the sin settled its mark: %v", settles)
+	}
+	if len(partial.Repented) != 0 {
+		t.Errorf("a judging that never asked about the sin called it repented: %+v", partial.Repented)
+	}
+
+	again := AnnouncedIn(data, Moment{}).Settle(root, []string{file}, marks)
+	if len(again.Found) != 0 {
+		t.Errorf("the sin was announced again as new: %+v", again.Found)
+	}
+
+	whole := Asked{named: {"redundant-python-else"}}
+	repented := AnnouncedIn(data, Moment{}).SettleAsked(root, []string{file}, nil, whole)
+	if !slices.Equal(repented.Settles(), []string{raised[0].Key}) {
+		t.Errorf("a judging that asked about the sin and found it gone settles %v, want %v", repented.Settles(), raised[0].Key)
 	}
 }

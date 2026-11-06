@@ -20,6 +20,7 @@ type Response struct {
 	instructions *string
 	Activity     []SinMark
 	Judged       []string
+	Asked        Asked
 	ReadMs       int64
 
 	Requires []string
@@ -58,10 +59,16 @@ func Merge(responses []Response) Response {
 
 	var read int64
 
+	asked := Asked{}
+
 	for _, response := range responses {
 		activity = append(activity, response.Activity...)
 		judged = append(judged, response.Judged...)
 		read += response.ReadMs
+
+		for file, sins := range response.Asked {
+			asked[file] = sins
+		}
 
 		for _, id := range response.Requires {
 			if !slices.Contains(requires, id) {
@@ -86,6 +93,7 @@ func Merge(responses []Response) Response {
 	merged := merge(reasons, contexts, instructions, quietly)
 	merged.Activity = activity
 	merged.Judged = judged
+	merged.Asked = asked
 	merged.Requires = requires
 	merged.ReadMs = read
 

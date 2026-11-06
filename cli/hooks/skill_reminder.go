@@ -80,6 +80,8 @@ func (SkillReminder) Handle(event Event) Response {
 		Warming(event.Root, project)
 	}
 
+	asked := Asked{}
+
 	for _, file := range files {
 		if !project.Writes(source.OfFile(file)) {
 			continue
@@ -87,6 +89,7 @@ func (SkillReminder) Handle(event Event) Response {
 
 		marks, against := together[file]
 		if !against {
+			asked[source.Relative(event.Root, file)] = sinsOf(project.RulesFor(checkoutOf(event.Root, file), file, single))
 			var unread error
 			var read time.Duration
 			marks, read, unread = marksIn(marking, file,
@@ -134,6 +137,7 @@ func (SkillReminder) Handle(event Event) Response {
 
 	response.Activity = activity
 	response.Judged = files
+	response.Asked = asked
 	response.Requires = owed(fresh)
 	response.ReadMs = spentReading.Milliseconds()
 
@@ -236,6 +240,15 @@ func checkoutOf(root, file string) string {
 	}
 
 	return checkout
+}
+
+func sinsOf(rules []detectors.Detector) []string {
+	named := make([]string, 0, len(rules))
+	for _, rule := range rules {
+		named = append(named, rule.Sin().Definition().Name)
+	}
+
+	return named
 }
 
 func marksIn(marking Marking, file string, rules []detectors.Detector, changed git.ChangedLines) ([]SinMark, time.Duration, error) {

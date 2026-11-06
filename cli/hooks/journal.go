@@ -370,7 +370,29 @@ func Forgotten() Announced {
 	return Announced{jsonfile.NewObject(), ""}
 }
 
+// Asked is the sins a judging put to each file it judged, by that file's path from the root. A judging that asked
+// every sin the project enabled names none, and an empty Asked means every file was asked everything.
+//
+// It is what keeps a partial judging from calling a file clean. A judging that could only ask the rules which
+// answer from one file, which is what happens after a restart and during every plugin upgrade, used to read every
+// announced sin it had not looked for as gone: it told the agent the file was FIXED, turned its card green, and
+// announced the same sins again as new once a whole judging returned.
+type Asked map[string][]string
+
+func (a Asked) asked(file string, sin string) bool {
+	names, narrowed := a[file]
+	if !narrowed {
+		return true
+	}
+
+	return sin != "" && slices.Contains(names, sin)
+}
+
 func (a Announced) Settle(root string, read []string, marks []SinMark) Settlement {
+	return a.SettleAsked(root, read, marks, nil)
+}
+
+func (a Announced) SettleAsked(root string, read []string, marks []SinMark, asked Asked) Settlement {
 	var files []string
 	now := map[string][]SinMark{}
 
@@ -430,7 +452,14 @@ func (a Announced) Settle(root string, read []string, marks []SinMark) Settlemen
 		kept := jsonfile.NewObject()
 
 		for _, id := range before.Keys() {
-			if _, holding := holds[id]; !judged[file] && !gone[file] || holding {
+			_, holding := holds[id]
+			stays := !judged[file] && !gone[file] || holding
+
+			if !stays && !gone[file] && !asked.asked(file, announcedIn(before, id).Sin) {
+				stays = true
+			}
+
+			if stays {
 				value, _ := before.Get(id)
 				kept.Set(id, value)
 			}
@@ -453,7 +482,7 @@ func (a Announced) Settle(root string, read []string, marks []SinMark) Settlemen
 			found = append(found, mark)
 
 			if _, has := kept.Get(id); !has {
-				kept.Set(id, mark.ShownFrom(root))
+				kept.Set(id, announcement{mark.ShownFrom(root), mark.Key(root), mark.Rule.Sin().Definition().Name}.written(id))
 			}
 		}
 
@@ -633,9 +662,10 @@ type Repented struct {
 	Key, Shown string
 }
 
-// announcement is a sin the record holds: how it was shown, and the key its chat mark was raised under.
+// announcement is a sin the record holds: how it was shown, the key its chat mark was raised under, and the sin it
+// is, which is what says whether a later judging even asked about it.
 type announcement struct {
-	Shown, Key string
+	Shown, Key, Sin string
 }
 
 func announcedIn(record *jsonfile.Object, id string) announcement {
@@ -643,20 +673,24 @@ func announcedIn(record *jsonfile.Object, id string) announcement {
 	if entry, carried := value.(*jsonfile.Object); carried {
 		shown, _ := entry.Get("shown")
 		key, _ := entry.Get("key")
+		sin, _ := entry.Get("sin")
 
-		return announcement{asText(shown), asText(key)}
+		return announcement{asText(shown), asText(key), asText(sin)}
 	}
 
-	return announcement{asText(value), markKey(id)}
+	return announcement{asText(value), markKey(id), ""}
 }
 
 func (a announcement) written(id string) any {
-	if a.Key == markKey(id) {
+	if a.Key == markKey(id) && a.Sin == "" {
 		return a.Shown
 	}
 	entry := jsonfile.NewObject()
 	entry.Set("shown", a.Shown)
 	entry.Set("key", a.Key)
+	if a.Sin != "" {
+		entry.Set("sin", a.Sin)
+	}
 
 	return entry
 }
