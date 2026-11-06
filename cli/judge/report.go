@@ -423,6 +423,20 @@ func (s Skipped) IsEmpty() bool {
 	return len(s) == 0
 }
 
+// Verdict is the line a run with no active sin says about what it judged: a green tick when every part of the run
+// finished, and the same words with no tick, no green and a colon when one did not.
+//
+// A tick IS the verdict, and a run that never read every file has none to give. An agent's worker read
+// "No sins found in 4 changed files" as a pass although its Vue bridge had died with 661 files unread, and the
+// failure below it, printed last and in red, was read as noise after the answer.
+func (s Skipped) Verdict(judged string) string {
+	if s.IsEmpty() {
+		return "\033[32m✓ " + judged + ".\033[0m"
+	}
+
+	return judged + ", and that is no verdict:"
+}
+
 // Console names the skipped rules for the terminal.
 func (s Skipped) Console() string {
 	if s.IsEmpty() {

@@ -355,7 +355,7 @@ func (c Command) judge(options options, selected []detectors.Detector, judged co
 			return choseNone(targets, console), nil
 		}
 
-		console.Say("\033[32m✓ " + nothingActive(filed) + " in " + judgedCount(targets, chosen, scanned) + ".\033[0m")
+		console.Say(skipped.Verdict(nothingActive(filed) + " in " + judgedCount(targets, chosen, scanned)))
 		console.Say(unseenNote(targets)...)
 
 		for _, target := range options.checklist {
