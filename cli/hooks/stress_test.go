@@ -238,22 +238,58 @@ func said(answer map[string]any, named string) int64 {
 func stressBridge(t *testing.T, project string) {
 	t.Helper()
 
+	stop := stressBridgeUp(t, project)
+
+	if *stressRestarts <= 0 {
+		return
+	}
+
+	go func() {
+		for each := 0; each < *stressRestarts; each++ {
+			time.Sleep(*stressRestartAfter)
+
+			stop()
+			t.Logf("the bridge was stopped and started again, restart %d of %d, as one that died would be",
+				each+1, *stressRestarts)
+
+			stop = stressBridgeUp(t, project)
+		}
+	}()
+}
+
+func stressBridgeUp(t *testing.T, project string) func() {
+	t.Helper()
+
 	bridged, needed, err := scan.Python.Reach.Own(scan.Python, []string{project})
 	if err != nil || !needed {
 		t.Fatalf("the python bridge cannot be kept up here: needed %v, %v", needed, err)
 	}
-	t.Cleanup(func() { bridged.Close() })
 
 	path := bridge.ServiceSocket(scan.Python.Kind, project)
 	os.Remove(path)
 
 	listener, err := net.Listen("unix", path)
 	if err != nil {
+		bridged.Close()
 		t.Fatalf("the bridge service cannot listen on %s: %v", path, err)
 	}
-	t.Cleanup(func() { listener.Close() })
 
 	go bridge.Answer(listener, bridged)
+
+	stopped := false
+	stop := func() {
+		if stopped {
+			return
+		}
+
+		stopped = true
+		listener.Close()
+		bridged.Close()
+	}
+
+	t.Cleanup(stop)
+
+	return stop
 }
 
 func serviceAt(t *testing.T, root string) string {
@@ -685,8 +721,11 @@ var (
 	stressRoots     = flag.Int("stress.roots", 3, "how many projects, each with a tree of its own")
 	stressWorktrees = flag.Int("stress.worktrees", 3, "how many worktrees are cut inside each project")
 	stressOracle    = flag.Int("stress.oracle", 0, "check one in every N answers against a fresh read of the whole worktree; 0 never does")
-	stressMoves     = flag.Int("stress.moves", 1000, "how many moves each checkout makes")
-	stressSeed      = flag.Int64("stress.seed", 0, "the seed the moves are drawn from; 0 draws one and prints it")
+	stressRestarts  = flag.Int("stress.restarts", 0, "stop the language bridge and start it again this many times during the run, as one that died would be")
+
+	stressRestartAfter = flag.Duration("stress.restart-after", 20*time.Second, "how long between the bridge restarts")
+	stressMoves        = flag.Int("stress.moves", 1000, "how many moves each checkout makes")
+	stressSeed         = flag.Int64("stress.seed", 0, "the seed the moves are drawn from; 0 draws one and prints it")
 )
 
 func TestManyTreesAtOnce(t *testing.T) {
@@ -730,6 +769,7 @@ func TestManyTreesAtOnce(t *testing.T) {
 
 	t.Logf("%d answers were held to the invariants as they came, %d checkouts at once at the most", answered.Load(), atOnce.Load())
 	t.Log(stressAnsweringSaid())
+	t.Log(stressMemorySaid(len(checkouts)))
 
 	if *stressTimings {
 		if said := TimedRules(); said != "" {
@@ -1509,6 +1549,16 @@ func stressHeld(t *testing.T, mine *stressCheckout, move int, against, file stri
 			map[bool]string{true: "DID take", false: "never took"}[TookIntoAJudging(file)],
 			left, len(found), names, unread, answers, stressSent[file]+"\nwhat happened to it: "+NotesOn(file)+"\nby name: "+NotesLike(filepath.Base(file))+", refused because "+map[bool]string{true: RefusalOf(file), false: "nothing refused it"}[RefusalOf(file) != ""])
 	}
+}
+
+func stressMemorySaid(checkouts int) string {
+	highest := MemoryHighest()
+	now := MemoryNow()
+
+	return fmt.Sprintf("the most memory this run held, over %d checkouts at once: %s. It stands at %s now. "+
+		"The service holds %d node(s) in %d lane(s) and %d base(s). A watermark is a count of bytes, not a clock, "+
+		"so it is read as a figure of THIS machine and this tree rather than asserted.",
+		checkouts, highest.Line(), now.Line(), kept.NodesHeld(), len(kept.Lanes()), kept.Held())
 }
 
 var answers struct {

@@ -7,6 +7,7 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
+	"sync"
 )
 
 // Memory is what a memory figure of this plugin means, taken three ways because the three differ by gigabytes: the
@@ -19,6 +20,27 @@ type Memory struct {
 	WithBridgesMB int
 }
 
+var highest struct {
+	sync.Mutex
+	held Memory
+}
+
+func MemoryHighest() Memory {
+	highest.Lock()
+	defer highest.Unlock()
+
+	return highest.held
+}
+
+func memoryNoted(held Memory) {
+	highest.Lock()
+	defer highest.Unlock()
+
+	if held.WithBridgesMB > highest.held.WithBridgesMB {
+		highest.held = held
+	}
+}
+
 func MemoryNow() Memory {
 	var stats runtime.MemStats
 	runtime.ReadMemStats(&stats)
@@ -26,6 +48,8 @@ func MemoryNow() Memory {
 	held := Memory{HeapMB: int(stats.HeapAlloc >> 20)}
 	held.ResidentMB = residentOf(os.Getpid())
 	held.WithBridgesMB = held.ResidentMB + bridgesResident()
+
+	memoryNoted(held)
 
 	return held
 }
