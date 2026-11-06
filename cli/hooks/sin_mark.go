@@ -90,18 +90,32 @@ func (m SinMark) ShownFrom(root string) string {
 }
 
 func seenFrom(root, file string) string {
-	home := strings.TrimRight(root, "/")
+	home := trimmedEnd(root)
 
-	if under, inside := strings.CutPrefix(file, home+"/"); inside {
+	if under, inside := under(file, home); inside {
 		return under
 	}
 
-	project := strings.TrimRight(git.ProjectRoot(home), "/")
+	project := trimmedEnd(git.ProjectRoot(home))
 	if project != "" && project != home {
-		if under, inside := strings.CutPrefix(file, project+"/"); inside {
+		if under, inside := under(file, project); inside {
 			return under
 		}
 	}
 
-	return strings.TrimPrefix(file, "/")
+	return strings.TrimLeft(file, "/\\")
+}
+
+func under(file, root string) (string, bool) {
+	for _, separator := range []string{"/", "\\"} {
+		if named, inside := strings.CutPrefix(file, root+separator); inside {
+			return named, true
+		}
+	}
+
+	return "", false
+}
+
+func trimmedEnd(path string) string {
+	return strings.TrimRight(path, "/\\")
 }
