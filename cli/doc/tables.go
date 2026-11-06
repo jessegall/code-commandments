@@ -239,6 +239,8 @@ func PluginSettings() *jsonfile.Object {
 		"folders_skipped", setting("Folders to leave out", "One folder per line, never read or reported, such as generated code. This list is what the config leaves out.", "list", "", "Folders"),
 		"judge_parallel", setting("Rules judged at once", "How many detectors the check runs side by side. More finish sooner but use more cores and memory.", "number", "2", "Performance"),
 		"judge_record", setting("Keep a record of each check", "Writes one line per check into the plugin's own folder: which checkout, whether a tree was held, what was parsed and how long the rules took. It holds counts and file names, never a line of your code, and is what `commandments why` reads back.", "flag", "true", "Performance"),
+		"judge_workers", setting("Judge a worker's own edits", "Off, a worker's edits are not judged as it writes, and its work is judged when it is taken in, which is what the main agent is asked to do after a merge. On, every worker is judged as it writes, which costs a lane of memory per worker.", "flag", "false", "Performance"),
+		"judge_nodes_held", setting("Most of the project the service holds", "A ceiling, counted in parsed nodes, over everything the service keeps in memory for this project. Past it no new checkout is held and the answer says so instead of the service growing. Zero holds nothing back.", "number", "0", "Performance"),
 	)
 	for _, language := range source.Languages {
 		settings.Set("language_"+string(language), setting(language.Label(), "Enables "+language.Label()+" sin detection", "flag", "true", "Languages"))

@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"encoding/json"
 	"errors"
+	"github.com/jessegall/code-commandments/cli/binary"
 	"io"
 	"net"
 	"os"
@@ -214,6 +215,10 @@ func answerWith(given map[string]any, runs func(Hook) bool, reportsSins bool) Jo
 		cwd, _ = os.Getwd()
 	}
 
+	if why := notForThisRole(moment); why != "" {
+		return JournalAnswer{Whisper: &why}
+	}
+
 	event := NewEvent(moment.HookPayload(), workspace.ProjectRoot(cwd))
 	workspace.At(event.Root, "").RelocateSessions()
 	quiet := quieted()
@@ -301,6 +306,27 @@ func ceilingChosen() int {
 	}
 
 	return nodes
+}
+
+func notForThisRole(moment Moment) string {
+	if moment.Role == "" || !workerRoles[moment.Role] || workersJudged() {
+		return ""
+	}
+
+	return Unjudged("a "+moment.Role+"'s own edits are not judged",
+		"the setting "+workersKey+" is off, and its work is judged when it is taken in",
+		binary.Judging(moment.Cwd)+" --changes")
+}
+
+func workersJudged() bool {
+	chosen, given := chosenSettings()
+	if !given {
+		return false
+	}
+
+	said, named := chosen[workersKey]
+
+	return named && asText(said) == "true"
 }
 
 func recorded(string) bool {

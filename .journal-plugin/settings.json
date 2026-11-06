@@ -32,6 +32,22 @@
         "help": "Writes one line per check into the plugin's own folder: which checkout, whether a tree was held, what was parsed and how long the rules took. It holds counts and file names, never a line of your code, and is what `commandments why` reads back."
     },
     {
+        "key": "judge_workers",
+        "title": "Judge a worker's own edits",
+        "type": "flag",
+        "kind": "flag",
+        "default": false,
+        "help": "Off, a worker's edits are not judged as it writes, and its work is judged when it is taken in, which is what the main agent is asked to do after a merge. On, every worker is judged as it writes, which costs a lane of memory per worker."
+    },
+    {
+        "key": "judge_nodes_held",
+        "title": "Most of the project the service holds",
+        "type": "number",
+        "kind": "number",
+        "default": 0,
+        "help": "A ceiling, counted in parsed nodes, over everything the service keeps in memory for this project. Past it no new checkout is held and the answer says so instead of the service growing. Zero holds nothing back."
+    },
+    {
         "key": "language_php",
         "title": "PHP",
         "type": "flag",

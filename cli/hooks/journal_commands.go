@@ -29,6 +29,7 @@ const (
 	parallelKey      = "judge_parallel"
 	recordKey        = "judge_record"
 	ceilingKey       = "judge_nodes_held"
+	workersKey       = "judge_workers"
 	skillsFolder     = "journal-skills"
 )
 

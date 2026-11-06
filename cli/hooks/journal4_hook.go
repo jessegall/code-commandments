@@ -229,7 +229,7 @@ func Moment4Of(line map[string]any) (map[string]any, bool) {
 		tool["name"] = "Write"
 	}
 
-	agent := map[string]any{"session": line["session"], "id": line["agent"]}
+	agent := map[string]any{"session": line["session"], "id": line["agent"], "role": firstOf(line["role"], data["role"])}
 	if project, named := os.LookupEnv(journalRoot); named {
 		agent["cwd"] = project
 	}

@@ -32,6 +32,7 @@ type Moment struct {
 	BatchedLines                 map[string]any
 	Cut                          string
 	CheckoutSaid                 string
+	Role                         string
 }
 
 const changedKey = "commandments_changed"
@@ -87,6 +88,7 @@ func MomentOf(given map[string]any) Moment {
 		BatchedLines: batchedLinesIn(given),
 		Cut:          cutIn(data),
 		CheckoutSaid: asText(agent["checkout_said"]),
+		Role:         roleIn(map[string]any{"role": firstOf(agent["role"], given["role"])}),
 	}
 }
 
