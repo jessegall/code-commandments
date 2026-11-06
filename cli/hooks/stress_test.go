@@ -684,6 +684,7 @@ var (
 	stressMany      = flag.Bool("stress.many", false, "run the many-trees run instead of the load")
 	stressRoots     = flag.Int("stress.roots", 3, "how many projects, each with a tree of its own")
 	stressWorktrees = flag.Int("stress.worktrees", 3, "how many worktrees are cut inside each project")
+	stressOracle    = flag.Int("stress.oracle", 0, "check one in every N answers against a fresh read of the whole worktree; 0 never does")
 	stressMoves     = flag.Int("stress.moves", 1000, "how many moves each checkout makes")
 	stressSeed      = flag.Int64("stress.seed", 0, "the seed the moves are drawn from; 0 draws one and prints it")
 )
@@ -1484,6 +1485,8 @@ func stressHeld(t *testing.T, mine *stressCheckout, move int, against, file stri
 		told = true
 	}
 
+	stressOracled(t, mine, move, file, answers)
+
 	if owed && !told {
 		settings, _ := config.Load(mine.Project)
 		found, _, unread := marksIn(Marks(mine.Project), file, allRules(t, mine.Project, settings), git.Everywhere())
@@ -1548,6 +1551,41 @@ func stressSaidOf(answer map[string]any) []string {
 	}
 
 	return named
+}
+
+func stressOracled(t *testing.T, mine *stressCheckout, move int, file string, answers []map[string]any) {
+	t.Helper()
+
+	if *stressOracle <= 0 || file == "" || mine.draw.Intn(*stressOracle) != 0 {
+		return
+	}
+
+	settings, _ := config.Load(mine.Project)
+
+	fresh := oracleOver(t, mine.At, file, settings)
+	told := stressLinesOf(answers, stressUnder(mine.At, file))
+
+	for _, said := range fresh {
+		line := said[strings.LastIndex(said, ":")+1:]
+		if !slices.Contains(told, line) {
+			t.Fatalf("move %d of checkout %d: a fresh read of the whole worktree finds %s in %s, and the answer "+
+				"the worker was given names lines %v, so the answer is WRONG and not merely smaller\nfresh: %v",
+				move, mine.Named, said, stressUnder(mine.At, file), told, fresh)
+		}
+	}
+}
+
+func stressLinesOf(answers []map[string]any, named string) []string {
+	var lines []string
+	for _, answer := range answers {
+		for _, found := range toldPaths.FindAllStringSubmatch(asText(answer["tell"]), -1) {
+			if found[1] == named {
+				lines = append(lines, found[2])
+			}
+		}
+	}
+
+	return lines
 }
 
 func stressRefusedIn(answer map[string]any) []string {
