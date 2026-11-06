@@ -729,6 +729,7 @@ func TestManyTreesAtOnce(t *testing.T) {
 	}
 
 	t.Logf("%d answers were held to the invariants as they came, %d checkouts at once at the most", answered.Load(), atOnce.Load())
+	t.Log(stressAnsweringSaid())
 
 	if *stressTimings {
 		if said := TimedRules(); said != "" {
@@ -1308,11 +1309,11 @@ func (c *stressCheckout) tells(t *testing.T, file string, from, to int, owed boo
 
 	stressHeld(t, c, c.at, against, "", false, stressTakeFor(t, c.Named))
 
-	sendEvent(t, c.Service, map[string]any{
+	stressAnswering(sendEvent(t, c.Service, map[string]any{
 		"v": 1, "event": "file_edited", "session": fmt.Sprintf("s%d", c.Named), "environment": "main",
 		"agent": c.Named, "cwd": c.Told,
 		"data": data,
-	})
+	}))
 
 	stressSent[file] = fmt.Sprintf("cwd %s, data %v", c.Told, data)
 
@@ -1508,6 +1509,37 @@ func stressHeld(t *testing.T, mine *stressCheckout, move int, against, file stri
 			map[bool]string{true: "DID take", false: "never took"}[TookIntoAJudging(file)],
 			left, len(found), names, unread, answers, stressSent[file]+"\nwhat happened to it: "+NotesOn(file)+"\nby name: "+NotesLike(filepath.Base(file))+", refused because "+map[bool]string{true: RefusalOf(file), false: "nothing refused it"}[RefusalOf(file) != ""])
 	}
+}
+
+var answers struct {
+	sync.Mutex
+	took []time.Duration
+}
+
+func stressAnswering(took time.Duration) {
+	answers.Lock()
+	defer answers.Unlock()
+
+	answers.took = append(answers.took, took)
+}
+
+func stressAnsweringSaid() string {
+	answers.Lock()
+	defer answers.Unlock()
+
+	if len(answers.took) == 0 {
+		return "no answer was timed"
+	}
+
+	took := slices.Clone(answers.took)
+	slices.Sort(took)
+
+	at := func(part float64) time.Duration { return took[min(int(float64(len(took))*part), len(took)-1)] }
+
+	return fmt.Sprintf("the time from an edit reaching the service to its answer, over %d edits: "+
+		"half within %s, 95 in 100 within %s, the slowest %s. It is read, never asserted: the machine is busy "+
+		"with other work and a clock would fail this run for that alone.",
+		len(took), at(0.5), at(0.95), took[len(took)-1])
 }
 
 var stressSent = map[string]string{}
