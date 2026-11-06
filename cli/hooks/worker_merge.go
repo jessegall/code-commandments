@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/jessegall/code-commandments/cli/binary"
 	"github.com/jessegall/code-commandments/cli/config"
 	"github.com/jessegall/code-commandments/cli/custom"
 	"github.com/jessegall/code-commandments/cli/git"
@@ -45,17 +46,47 @@ func workHeld(line map[string]any) string {
 		return ""
 	}
 
-	marks := work.sinsWithin()
-	if len(marks) == 0 {
+	return work.answered()
+}
+
+func (work merging) answered() string {
+	found := work.sinsWithin()
+
+	if found.got != gotWhole {
+		said := Unjudged(work.worker+"'s hand-in was not judged in full", string(found.got),
+			binary.Judging(work.worktree)+" --changes")
+
+		if len(found.marks) > 0 {
+			said = mergeTold(work.worker, "", work.worktree, found.marks) + "\n\n" + said
+		}
+
+		return (JournalAnswer{Whisper: &said}).Line4()
+	}
+
+	if len(found.marks) == 0 {
 		return ""
 	}
 
-	refusal := mergeReason(work.worker, marks, work.worktree)
+	refusal := mergeReason(work.worker, found.marks, work.worktree)
 
 	return (JournalAnswer{Refuse: &refusal}).Line4()
 }
 
-func (m merging) sinsWithin() []SinMark {
+// handIn is what a hand-in's judging came to: the marks it found, and how far it got, which a slice of marks alone cannot say.
+type handIn struct {
+	marks []SinMark
+	got   gotTo
+}
+
+type gotTo string
+
+const (
+	gotNowhere gotTo = "nothing of this hand-in was judged: the time the journal allows ran out before even the files it changed could be read"
+	gotPartly  gotTo = "only the files this hand-in changed were judged, and the rules that read across files were not asked, because the time the journal allows ran out"
+	gotWhole   gotTo = ""
+)
+
+func (m merging) sinsWithin() handIn {
 	within := time.After(m.deadline())
 
 	shallow := make(chan []SinMark, 1)
@@ -67,7 +98,7 @@ func (m merging) sinsWithin() []SinMark {
 	case marks := <-shallow:
 		held = marks
 	case <-within:
-		return nil
+		return handIn{got: gotNowhere}
 	}
 
 	answered := make(chan []SinMark, 1)
@@ -75,9 +106,9 @@ func (m merging) sinsWithin() []SinMark {
 
 	select {
 	case marks := <-answered:
-		return marks
+		return handIn{marks: marks, got: gotWhole}
 	case <-within:
-		return held
+		return handIn{marks: held, got: gotPartly}
 	}
 }
 
