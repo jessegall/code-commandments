@@ -2,6 +2,8 @@ package hooks
 
 import (
 	"os"
+	"strings"
+	"time"
 
 	"github.com/jessegall/code-commandments/cli/binary"
 	"github.com/jessegall/code-commandments/cli/config"
@@ -87,7 +89,20 @@ func MergeLanded(line map[string]any) string {
 		return ""
 	}
 
+	work.keeps(said)
+
 	return (JournalAnswer{Whisper: &said}).Line4()
+}
+
+func (l landed) keeps(said string) {
+	if recorded(l.project) {
+		Record(bookkeepingIn(l.project), Judged{
+			At: time.Now(), Event: landedEvent, Kind: "project", Checkout: l.project,
+			Branch: l.branch, Sins: strings.Count(said, "\n"), Said: "the merge",
+		})
+	}
+
+	MergesIn(workspace.At(l.project, "")).Keeps(l.branch, l.after, said)
 }
 
 func (l landed) sinsBrought(from string) ([]SinMark, bool) {
