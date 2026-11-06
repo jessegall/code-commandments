@@ -25,6 +25,7 @@ const (
 	File = "dashboards/" + Name + ".json"
 
 	findingsFile = "dashboards/findings.json"
+	unjudgedFile = "dashboards/unjudged.json"
 	top          = 20
 )
 
@@ -91,7 +92,7 @@ func Record(space workspace.Workspace, findings []engine.Finding, judged map[str
 		return err
 	}
 
-	dashboard, err := jsonfile.Pretty(Render(all, space.Root()), true)
+	dashboard, err := jsonfile.Pretty(RenderWith(all, space.Root(), Unjudgeable(space)), true)
 	if err != nil {
 		return err
 	}
@@ -139,12 +140,16 @@ func (g group) count() int {
 }
 
 func Render(findings []Stored, root string) *jsonfile.Object {
+	return RenderWith(findings, root, nil)
+}
+
+func RenderWith(findings []Stored, root string, unjudgeable []string) *jsonfile.Object {
 	tool := binary.Invocation(root)
 
 	groups := bySin(findings)
 	record, _ := reported.Of(root)
 	filed := waitingRows(record)
-	pages := jsonfile.NewObject("overview", jsonfile.NewObject("title", "Overview", "view", overview(findings, groups, filed)))
+	pages := jsonfile.NewObject("overview", jsonfile.NewObject("title", "Overview", "view", overview(findings, groups, filed, unjudgeable)))
 
 	if len(filed) > 0 {
 		pages.Set(reportsPage, jsonfile.NewObject("title", "Reported", "view", reports(filed)))
@@ -188,7 +193,30 @@ func bySin(findings []Stored) []group {
 	return groups
 }
 
-func overview(findings []Stored, groups []group, filed []reported.Row) *jsonfile.Object {
+func Unjudgeable(space workspace.Workspace) []string {
+	raw, err := os.ReadFile(space.Cache(unjudgedFile))
+	if err != nil {
+		return nil
+	}
+
+	var said []string
+	if json.Unmarshal(raw, &said) != nil {
+		return nil
+	}
+
+	return said
+}
+
+func KeepsUnjudgeable(space workspace.Workspace, said []string) error {
+	store, err := jsonfile.Pretty(said, false)
+	if err != nil {
+		return err
+	}
+
+	return atomic.Write(space.Cache(unjudgedFile), store)
+}
+
+func overview(findings []Stored, groups []group, filed []reported.Row, unjudgeable []string) *jsonfile.Object {
 	total := len(findings)
 	tone, filesTone := "danger", "warn"
 
@@ -205,6 +233,11 @@ func overview(findings []Stored, groups []group, filed []reported.Row) *jsonfile
 	if len(filed) > 0 {
 		stats = append(stats, jsonfile.NewObject("type", "stat", "label", "Reported", "value", strconv.Itoa(len(filed)),
 			"tone", "note", "note", "judged as reported, not as sins", "open", reportsPage))
+	}
+
+	if len(unjudgeable) > 0 {
+		stats = append(stats, jsonfile.NewObject("type", "stat", "label", "Could not be judged", "value", strconv.Itoa(len(unjudgeable)),
+			"tone", "warn", "note", "hand-ins and merges nobody could judge in the time allowed"))
 	}
 
 	tiles := jsonfile.NewObject("type", "row", "gap", 12, "children", stats)

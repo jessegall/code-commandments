@@ -12,6 +12,7 @@ import (
 	"github.com/jessegall/code-commandments/cli/binary"
 	"github.com/jessegall/code-commandments/cli/config"
 	"github.com/jessegall/code-commandments/cli/custom"
+	"github.com/jessegall/code-commandments/cli/dashboard"
 	"github.com/jessegall/code-commandments/cli/git"
 	"github.com/jessegall/code-commandments/cli/scan"
 	"github.com/jessegall/code-commandments/cli/scope"
@@ -56,7 +57,27 @@ func (work merging) keeps(said string) {
 		return
 	}
 
-	MergesIn(workspace.At(project, "")).Keeps(firstText(work.base, work.worker, "a hand-in"), work.worktree, said)
+	space := workspace.At(project, "")
+
+	MergesIn(space).Keeps(firstText(work.base, work.worker, "a hand-in"), work.worktree, said)
+
+	if !strings.Contains(said, "was not judged in full") {
+		return
+	}
+
+	held := dashboard.Unjudgeable(space)
+	if len(held) >= mergesKept {
+		held = held[len(held)-mergesKept+1:]
+	}
+
+	_ = dashboard.KeepsUnjudgeable(space, append(held, said))
+
+	if recorded(project) {
+		Record(bookkeepingIn(project), Judged{
+			At: time.Now(), Event: deliveringEvent, Kind: "worktree", Checkout: work.worktree,
+			Why: Narrowed(string(gotNowhere)), Said: "the hand-in",
+		})
+	}
 }
 
 func (work merging) answered() string {
