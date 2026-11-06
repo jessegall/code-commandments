@@ -116,3 +116,28 @@ func TestAMergeNeverReadsTheWorktreeFolder(t *testing.T) {
 		t.Error("a merge whose worktree folder is already gone was answered with nothing, and the folder is a race we lose")
 	}
 }
+
+func TestTheMergeKeyNeverRefuses(t *testing.T) {
+	root, before, after := mergedProject(t)
+
+	for _, told := range []struct {
+		what string
+		line map[string]any
+	}{
+		{"a merge that brought in sins", mergeLine(root, "main", before, after)},
+		{"a merge with no range at all", mergeLine(root, "main", "", "")},
+		{"a merge whose commits are the same", mergeLine(root, "main", after, after)},
+		{"a merge of a branch nobody knows", mergeLine(root, "feature/nobody", before, after)},
+	} {
+		said := MergeLanded(told.line)
+
+		if strings.Contains(said, `"refuse"`) {
+			t.Errorf("%s was refused, and a refusal from a commit script is a fault, five of which switch the plugin off: %s",
+				told.what, said)
+		}
+
+		if said != "" && !strings.Contains(said, `"tell"`) {
+			t.Errorf("%s was answered with something that is not a tell: %s", told.what, said)
+		}
+	}
+}
