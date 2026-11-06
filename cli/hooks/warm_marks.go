@@ -20,7 +20,14 @@ import (
 	"github.com/jessegall/code-commandments/engine"
 )
 
-var kept = warm.Keep()
+var kept = keeping()
+
+func keeping() *warm.Keeper {
+	held := warm.Keep()
+	held.Leaving(func(checkout string) { parsed.leaves(checkout) })
+
+	return held
+}
 
 var reading sync.Map
 

@@ -42,6 +42,7 @@ type Keeper struct {
 	mu       sync.Mutex
 	bases    map[string]*Base
 	overlays map[string]*Overlay
+	leaving  []func(checkout string)
 	now      func() time.Time
 }
 
@@ -182,9 +183,31 @@ func (k *Keeper) sweep() {
 	}
 
 	for checkout, over := range k.overlays {
-		if k.now().Sub(over.asked) >= Idle {
-			delete(k.overlays, checkout)
+		if k.now().Sub(over.asked) < Idle && !k.gone(checkout) {
+			continue
 		}
+
+		delete(k.overlays, checkout)
+		k.left(checkout)
+	}
+}
+
+func (k *Keeper) gone(checkout string) bool {
+	info, err := os.Stat(checkout)
+
+	return err != nil || !info.IsDir()
+}
+
+func (k *Keeper) Leaving(tell func(checkout string)) {
+	k.mu.Lock()
+	defer k.mu.Unlock()
+
+	k.leaving = append(k.leaving, tell)
+}
+
+func (k *Keeper) left(checkout string) {
+	for _, tell := range k.leaving {
+		tell(checkout)
 	}
 }
 

@@ -1,6 +1,7 @@
 package warm
 
 import (
+	"path/filepath"
 	"testing"
 	"time"
 )
@@ -53,5 +54,29 @@ func TestOnlyOneReadingOfACheckoutsOwnFilesRunsAtOnce(t *testing.T) {
 
 	if !over.BeginsFilling() {
 		t.Error("a reading that failed left the overlay unable to try again")
+	}
+}
+
+func TestAnOverlayOfACheckoutThatIsGoneIsLetGoWithWhatItHeld(t *testing.T) {
+	keeper := Keep()
+
+	var told []string
+	keeper.Leaving(func(checkout string) { told = append(told, checkout) })
+
+	here := t.TempDir()
+	keeper.Over(here)
+	gone := filepath.Join(t.TempDir(), "worker-9")
+	keeper.Over(gone)
+
+	if held := keeper.Overlaid(); held != 1 {
+		t.Fatalf("after the sweep the keeper holds %d overlays, and only the checkout still on disk should be held", held)
+	}
+
+	if len(told) != 1 || told[0] != gone {
+		t.Fatalf("the keeper let go of %v, and the checkout that is gone is %s", told, gone)
+	}
+
+	if _, _, why := keeper.Over(here).Filling(); why != "" {
+		t.Errorf("the overlay that stayed was disturbed: %q", why)
 	}
 }
