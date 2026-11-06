@@ -43,6 +43,7 @@ type Keeper struct {
 	bases    map[string]*Base
 	overlays map[string]*Overlay
 	cutting  map[string]string
+	ceiling  int
 	leaving  []func(checkout string)
 	now      func() time.Time
 }
@@ -233,6 +234,15 @@ func (b *Base) Moved() []string {
 	}
 
 	return moved
+}
+
+func (b *Base) Nodes() int {
+	held := 0
+	for _, file := range b.codebase.Files() {
+		held += len(file.Nodes())
+	}
+
+	return held
 }
 
 func (b *Base) Files() int {

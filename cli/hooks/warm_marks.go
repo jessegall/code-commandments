@@ -63,6 +63,7 @@ const (
 	patchFailed    Narrowed = "the held tree could not be brought up to what changed"
 	parseFailed    Narrowed = "what changed could not be parsed"
 	notInTheTree   Narrowed = "what changed is not in the tree that is held"
+	pastTheCeiling Narrowed = "the service already holds as much of this project as it is allowed to"
 )
 
 func AgainstTheProgram(marking Marking, file string, rules []detectors.Detector, changed git.ChangedLines, root string) ([]SinMark, time.Duration, bool) {
@@ -437,6 +438,7 @@ var serving atomic.Bool
 
 func Serves() {
 	serving.Store(true)
+	kept.Ceiling(ceilingChosen())
 }
 
 func Warming(root string, project config.Config) {
@@ -535,6 +537,10 @@ func answering(path, checkout string) (branchRoot, *warm.Base, Narrowed) {
 
 	if held {
 		return named, base, ""
+	}
+
+	if _, _, past := kept.PastItsCeiling(); past {
+		return named, nil, pastTheCeiling
 	}
 
 	if own || named.project == "" {

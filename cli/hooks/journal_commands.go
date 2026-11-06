@@ -28,6 +28,7 @@ const (
 	skippedKey       = "folders_skipped"
 	parallelKey      = "judge_parallel"
 	recordKey        = "judge_record"
+	ceilingKey       = "judge_nodes_held"
 	skillsFolder     = "journal-skills"
 )
 

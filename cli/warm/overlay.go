@@ -94,6 +94,46 @@ func (k *Keeper) Over(checkout string) *Overlay {
 	return over
 }
 
+func (k *Keeper) NodesHeld() int {
+	k.mu.Lock()
+	defer k.mu.Unlock()
+
+	return k.nodesHeld()
+}
+
+func (k *Keeper) nodesHeld() int {
+	held := 0
+	for _, base := range k.bases {
+		held += base.Nodes()
+	}
+
+	for _, over := range k.overlays {
+		held += over.Nodes()
+	}
+
+	return held
+}
+
+func (k *Keeper) Ceiling(nodes int) {
+	k.mu.Lock()
+	defer k.mu.Unlock()
+
+	k.ceiling = nodes
+}
+
+func (k *Keeper) PastItsCeiling() (int, int, bool) {
+	k.mu.Lock()
+	defer k.mu.Unlock()
+
+	if k.ceiling <= 0 {
+		return 0, 0, false
+	}
+
+	held := k.nodesHeld()
+
+	return held, k.ceiling, held > k.ceiling
+}
+
 func (k *Keeper) Overlaid() int {
 	k.mu.Lock()
 	defer k.mu.Unlock()
@@ -122,6 +162,18 @@ func (o *Overlay) Count() int {
 	defer o.mu.Unlock()
 
 	return len(o.files)
+}
+
+func (o *Overlay) Nodes() int {
+	o.mu.Lock()
+	defer o.mu.Unlock()
+
+	held := 0
+	for _, file := range o.files {
+		held += len(file.Nodes())
+	}
+
+	return held
 }
 
 func (o *Overlay) Filling() (Filling, time.Time, string) {
