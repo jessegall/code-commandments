@@ -4,6 +4,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/jessegall/code-commandments/cli/binary"
@@ -66,6 +67,9 @@ func MergeLanded(line map[string]any) string {
 	if !mergesJudged() || work.project == "" || work.after == "" {
 		return ""
 	}
+
+	oneMergeAtATime.Lock()
+	defer oneMergeAtATime.Unlock()
 
 	mark := MergedIn(workspace.At(work.project, ""))
 
@@ -217,3 +221,5 @@ func (l landed) tooManyFiles(from string) string {
 		"a merge is answered while the journal waits, and reading that many files is not something to do inside a wait",
 		binary.Judging(l.project)+" --branch")
 }
+
+var oneMergeAtATime sync.Mutex
