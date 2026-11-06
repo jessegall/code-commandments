@@ -66,6 +66,16 @@ const (
 	pastTheCeiling Narrowed = "the service already holds as much of this project as it is allowed to"
 )
 
+func noStreamOf(language source.Language) Narrowed {
+	said := "the tree held for this project has no " + string(language) + " in it, so only the rules that answer from one file can run here"
+
+	if language == source.CSharp {
+		said += ", and C# is read per checkout rather than per file, so its project's own types are not in that answer"
+	}
+
+	return Narrowed(said)
+}
+
 func AgainstTheProgram(marking Marking, file string, rules []detectors.Detector, changed git.ChangedLines, root string) ([]SinMark, time.Duration, bool) {
 	together, read, why := AgainstTheProgramNarrowed(marking, []string{file},
 		func(string) []detectors.Detector { return rules },
@@ -165,6 +175,10 @@ func AgainstTheProgramNarrowed(marking Marking, files []string, rulesFor func(st
 		}
 
 		read = time.Since(reading)
+
+		if why := languageInTheTree(base, file); why != "" {
+			return nil, read, why
+		}
 
 		if checkout == strings.TrimRight(held.project, "/") {
 			view = base.ViewFrom(checkout, streams, held.project, nil)
@@ -588,4 +602,17 @@ func cutOf(event Event) string {
 	}
 
 	return git.CurrentBranch(checkoutOf(event.Root, event.Root))
+}
+
+func languageInTheTree(base *warm.Base, file string) Narrowed {
+	language := source.OfFile(file)
+	if language == "" {
+		return ""
+	}
+
+	if slices.Contains(base.Languages(), language.Written()) {
+		return ""
+	}
+
+	return noStreamOf(language)
 }
