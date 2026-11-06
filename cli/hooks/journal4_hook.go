@@ -221,7 +221,7 @@ func Moment4Of(line map[string]any) (map[string]any, bool) {
 	told := toldIn(data)
 
 	if file := asText(firstOf(input["file_path"], input["path"], input["notebook_path"], data["path"])); file != "" {
-		tool["file"] = within(asText(firstOf(told.Root, data["cwd"], line["cwd"])), os.Getenv(journalRoot), file)
+		tool["file"] = within(firstText(told.Root, asText(data["cwd"]), asText(line["cwd"])), os.Getenv(journalRoot), file)
 	}
 
 	switch asText(line["event"]) {
