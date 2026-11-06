@@ -16,6 +16,7 @@ import (
 	"github.com/jessegall/code-commandments/cli/scan"
 	"github.com/jessegall/code-commandments/cli/scope"
 	"github.com/jessegall/code-commandments/cli/source"
+	"github.com/jessegall/code-commandments/cli/workspace"
 	"github.com/jessegall/code-commandments/detectors"
 	"github.com/jessegall/code-commandments/engine"
 )
@@ -49,6 +50,15 @@ func workHeld(line map[string]any) string {
 	return work.answered()
 }
 
+func (work merging) keeps(said string) {
+	project := projectOf(work.worktree)
+	if project == "" {
+		return
+	}
+
+	MergesIn(workspace.At(project, "")).Keeps(firstText(work.base, work.worker, "a hand-in"), work.worktree, said)
+}
+
 func (work merging) answered() string {
 	found := work.sinsWithin()
 
@@ -59,6 +69,8 @@ func (work merging) answered() string {
 		if len(found.marks) > 0 {
 			said = mergeTold(work.worker, "", work.worktree, found.marks) + "\n\n" + said
 		}
+
+		work.keeps(said)
 
 		return (JournalAnswer{Whisper: &said}).Line4()
 	}

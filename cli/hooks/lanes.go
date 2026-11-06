@@ -12,6 +12,7 @@ import (
 
 	"github.com/jessegall/code-commandments/cli"
 	"github.com/jessegall/code-commandments/cli/help"
+	"github.com/jessegall/code-commandments/cli/workspace"
 )
 
 const lanesEvent = "commandments.lanes"
@@ -24,7 +25,7 @@ func (Lanes) Names() []string {
 }
 
 func (Lanes) Help() help.Help {
-	return help.Of("Say what the running service holds: a lane per checkout with the commit it was cut from, how much of it is held and when it last answered, the trees held for the project, and the ceiling over them all.").
+	return help.Of("Say what the running service holds: a lane per checkout with the commit it was cut from, how much of it is held and when it last answered, the trees held for the project, the ceiling over them all, and what the last merges and hand-ins brought in.").
 		Form("lanes", "what the service holds now").
 		Form("lanes --drop <checkout>", "let that lane go, so the next question about it reads the checkout again").
 		Form("lanes --drop-all", "let every lane go").
@@ -32,7 +33,9 @@ func (Lanes) Help() help.Help {
 		Option("--drop-all", "let every lane go").
 		Note("It asks the running service, since what is held lives in that process and nowhere else. With no service " +
 			"running there is nothing to say, and a judging then reads what it needs each time. Dropping a lane is how " +
-			"a stale answer is told from a wrong rule: drop it, ask again, and compare.").
+			"a stale answer is told from a wrong rule: drop it, ask again, and compare. What the last merges and " +
+			"hand-ins brought in is read from the project's own state, so it is there whether a service is running or " +
+			"not: the journal drops a line it has no agent to tell, and a merge run at a terminal has nobody.").
 		In(help.Hooks)
 }
 
@@ -50,7 +53,8 @@ func (Lanes) Run(in *cli.Input, console cli.Console) (int, error) {
 
 	said, err := askTheService(asked)
 	if err != nil {
-		console.Warn("✋ no service is running here, so nothing is held: a judging reads what it needs each time.")
+		console.Warn("✋ no service is running here, so nothing is held: a judging reads what it needs each time." +
+			mergesSaid())
 
 		return 2, nil
 	}
@@ -119,7 +123,7 @@ func lanesHeld(drop string) string {
 
 	lanes := kept.Lanes()
 	if len(lanes) == 0 {
-		return "The service holds no lane: every question so far was answered from what it read at the time."
+		return "The service holds no lane: every question so far was answered from what it read at the time." + mergesSaid()
 	}
 
 	sort.Slice(lanes, func(one, two int) bool { return lanes[one].Checkout < lanes[two].Checkout })
@@ -131,6 +135,26 @@ func lanesHeld(drop string) string {
 			" | "+strconv.Itoa(lane.Nodes)+" nodes of "+strconv.Itoa(lane.Files)+" file(s)"+
 			" | asked "+lane.Asked.Format("15:04:05")+
 			" | "+lane.Filling)
+	}
+
+	return strings.Join(said, "\n") + mergesSaid()
+}
+
+func mergesSaid() string {
+	return mergesSaidIn(workspace.ProjectRoot(cwdOf()))
+}
+
+func mergesSaidIn(root string) string {
+	found := MergesIn(workspace.At(root, "")).Found()
+	if len(found) == 0 {
+		return ""
+	}
+
+	said := []string{"", "What the last " + strconv.Itoa(len(found)) + " merge(s) and hand-in(s) brought in, kept because a delivery with no agent has nobody to tell:"}
+	for _, each := range found {
+		branch, rest, _ := strings.Cut(each, "\t")
+		_, words, _ := strings.Cut(rest, "\t")
+		said = append(said, "  "+branch+": "+strings.ReplaceAll(words, "\n", "\n    "))
 	}
 
 	return strings.Join(said, "\n")
