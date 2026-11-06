@@ -31,6 +31,7 @@ type Moment struct {
 	Batched                      []any
 	BatchedLines                 map[string]any
 	Cut                          string
+	CheckoutSaid                 string
 }
 
 const changedKey = "commandments_changed"
@@ -85,16 +86,12 @@ func MomentOf(given map[string]any) Moment {
 		Batched:      batchedFilesIn(given),
 		BatchedLines: batchedLinesIn(given),
 		Cut:          cutIn(data),
+		CheckoutSaid: asText(agent["checkout_said"]),
 	}
 }
 
 func cutIn(data map[string]any) string {
-	checkout, named := data["checkout"].(map[string]any)
-	if !named {
-		return ""
-	}
-
-	return asText(firstOf(checkout["base_commit"], checkout["base"]))
+	return toldIn(data).Base
 }
 
 func batchedFilesIn(given map[string]any) []any {

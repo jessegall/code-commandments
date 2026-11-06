@@ -26,6 +26,7 @@ type Judged struct {
 	Dropped   Dropped
 	Memory    Memory
 	Abandoned string
+	Said      string
 }
 
 func (j Judged) Line() string {
@@ -53,6 +54,10 @@ func (j Judged) Line() string {
 
 	if j.Memory != (Memory{}) {
 		said = append(said, j.Memory.Line())
+	}
+
+	if j.Said != "" {
+		said = append(said, "checkout from "+j.Said)
 	}
 
 	if j.Abandoned != "" {
