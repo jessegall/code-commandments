@@ -172,6 +172,12 @@ func heal(folder string, files map[string][]byte) error {
 }
 
 // TreesFolder is where a language's bridge keeps each file's tree between runs, beside the bundles written out.
+//
+// A folder this run may not write is no folder at all, and is answered as none: the kept tree is a saving, never a
+// part of the answer, so a bridge handed a folder it cannot write dies on the folder instead of parsing the files.
+// An agent's worker runs in a sandbox that may write its worktree and little else, and the Vue bridge ended after
+// two lines with EPERM on ~/.cache/code-commandments/trees/frontend, leaving 661 files unread. Named through
+// XDG_CACHE_HOME, a folder the sandbox does allow is used as before.
 func TreesFolder(language string) (string, error) {
 	cache, err := CacheFolder()
 	if err != nil {
@@ -179,9 +185,33 @@ func TreesFolder(language string) (string, error) {
 	}
 
 	folder := filepath.Join(cache, "code-commandments", "trees", language)
+	if err := writable(folder); err != nil {
+		return "", err
+	}
 	sweep(folder, time.Now())
 
 	return folder, nil
+}
+
+// writable says whether the folder can hold a kept tree: it is made where it is not there, and a file of this run's
+// own is written in it and taken away again, because a folder that EXISTS is not a folder this run may write into
+// — which is the sandbox's own case, and the one the bridge used to die on.
+func writable(folder string) error {
+	if err := os.MkdirAll(folder, 0o755); err != nil {
+		return err
+	}
+	draft, err := os.CreateTemp(folder, ".writing-")
+	if err != nil {
+		return err
+	}
+	name := draft.Name()
+	if err := draft.Close(); err != nil {
+		os.Remove(name)
+
+		return err
+	}
+
+	return os.Remove(name)
 }
 
 // CacheFolder is $XDG_CACHE_HOME, else ~/.cache.

@@ -4,6 +4,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -62,4 +63,34 @@ func TestAKeptTreeIsWrittenAsTheBridgeWouldWriteItAfresh(t *testing.T) {
 	same("after a change to a declaration every file sees", root)
 	same("with one file judged and the others context", "--write="+filepath.Join(root, "total.ts"), root)
 	same("judged whole again", root)
+}
+
+// TestABridgeWhoseCacheCannotBeWrittenRunsWithNoCache holds the bridge to parsing the files when the cache folder
+// is not the run's to write: it is handed no folder, so it never dies on one. A worker sandbox may write its
+// worktree and little else, and the bridge used to end after two lines with the files unread.
+func TestABridgeWhoseCacheCannotBeWrittenRunsWithNoCache(t *testing.T) {
+	cache := t.TempDir()
+	t.Setenv("XDG_CACHE_HOME", cache)
+	trees := filepath.Join(cache, "code-commandments", "trees")
+	if err := os.MkdirAll(trees, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(trees, "frontend"), nil, 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	bridge := Here().Cached()
+	if bridge.Trees != "" {
+		t.Errorf("the bridge keeps its trees in %s, which it cannot write", bridge.Trees)
+	}
+
+	command, err := bridge.Command()
+	if err != nil {
+		t.Skip(err)
+	}
+	for _, argument := range command {
+		if strings.HasPrefix(argument, "--cache=") {
+			t.Errorf("the bridge is told %s although nothing may be kept there", argument)
+		}
+	}
 }

@@ -5,6 +5,7 @@ import (
 	"maps"
 	"os"
 	"path/filepath"
+	"runtime"
 	"testing"
 	"testing/fstest"
 )
@@ -130,5 +131,44 @@ func TestAFolderThatLostItsFilesIsWrittenAgain(t *testing.T) {
 	}
 	if _, err := os.Stat(filepath.Join(folder, "venv", "bin")); err != nil {
 		t.Error("healing the folder threw away what the runtime had built in it")
+	}
+}
+
+// TestATreesFolderThatCannotBeMadeIsAnsweredAsNone holds what a bridge is handed when the cache folder is not the
+// run's to write: no folder, so it parses the files with no cache rather than dying on the folder.
+func TestATreesFolderThatCannotBeMadeIsAnsweredAsNone(t *testing.T) {
+	cache := t.TempDir()
+	t.Setenv("XDG_CACHE_HOME", cache)
+
+	folder, err := TreesFolder("frontend")
+	if err != nil {
+		t.Fatalf("a cache folder the run may write answered %v", err)
+	}
+	if _, err := os.Stat(folder); err != nil {
+		t.Errorf("the trees folder is not there: %v", err)
+	}
+
+	inTheWay := filepath.Join(cache, "code-commandments", "trees", "php")
+	if err := os.MkdirAll(filepath.Dir(inTheWay), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(inTheWay, nil, 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	if folder, err := TreesFolder("php"); err == nil {
+		t.Errorf("a folder that cannot be made was answered as %s", folder)
+	}
+}
+
+// TestAFolderWhoseWritesAreRefusedIsNotWritable holds the sandbox's own case, which is the one the Vue bridge died
+// on: the folder is THERE and writing in it is refused. A file cannot be made under /proc whoever the run is, so it
+// stands for the worker sandbox's cache folder here.
+func TestAFolderWhoseWritesAreRefusedIsNotWritable(t *testing.T) {
+	if runtime.GOOS != "linux" {
+		t.Skip("a folder nobody may write a file into needs /proc, which only linux has")
+	}
+	if err := writable("/proc/self"); err == nil {
+		t.Error("a folder that refuses every file it is handed was called writable")
 	}
 }
