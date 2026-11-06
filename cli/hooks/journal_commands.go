@@ -31,6 +31,7 @@ const (
 	ceilingKey       = "judge_nodes_held"
 	workersKey       = "judge_workers"
 	mergesKey        = "judge_merges"
+	filesInOneGoKey  = "judge_files_at_once"
 	skillsFolder     = "journal-skills"
 )
 

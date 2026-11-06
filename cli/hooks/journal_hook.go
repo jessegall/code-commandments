@@ -318,6 +318,25 @@ func notForThisRole(moment Moment) string {
 		binary.Judging(moment.Cwd)+" --changes")
 }
 
+func filesInOneGoChosen() int {
+	chosen, given := chosenSettings()
+	if !given {
+		return 0
+	}
+
+	said, named := chosen[filesInOneGoKey]
+	if !named {
+		return 0
+	}
+
+	files, err := strconv.Atoi(strings.TrimSpace(asText(said)))
+	if err != nil || files < 1 {
+		return 0
+	}
+
+	return files
+}
+
 func workersJudged() bool {
 	chosen, given := chosenSettings()
 	if !given {
