@@ -713,4 +713,12 @@ func TestManyWarmingsAtOnceReadTheTreeOnce(t *testing.T) {
 
 	Warming(root, settings)
 	Warming(root, settings)
+
+	for until := time.Now().Add(time.Minute); warming(t) && time.Now().Before(until); {
+		time.Sleep(20 * time.Millisecond)
+	}
+
+	if warming(t) {
+		t.Error("a read of the tree is still running a minute later, and the project it reads is about to be removed")
+	}
 }
