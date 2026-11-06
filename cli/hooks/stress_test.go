@@ -1462,6 +1462,12 @@ func stressHeld(t *testing.T, mine *stressCheckout, move int, against, file stri
 			}
 		}
 
+		for _, named := range stressRefusedIn(answer) {
+			if named == stressUnder(against, file) || named == stressUnder(mine.Project, file) || named == stressUnder(mine.At, file) {
+				told = true
+			}
+		}
+
 		for _, named := range stressSaidOf(answer) {
 			if named == stressUnder(against, file) || named == stressUnder(mine.Project, file) || named == stressUnder(mine.At, file) {
 				told = true
@@ -1538,6 +1544,20 @@ func (c *stressCheckout) owns(named string) bool {
 func stressSaidOf(answer map[string]any) []string {
 	var named []string
 	for _, found := range toldPaths.FindAllStringSubmatch(asText(answer["tell"]), -1) {
+		named = append(named, found[1])
+	}
+
+	return named
+}
+
+func stressRefusedIn(answer map[string]any) []string {
+	tell := asText(answer["tell"])
+	if !strings.Contains(tell, "nothing of this edit was judged") {
+		return nil
+	}
+
+	var named []string
+	for _, found := range cardPaths.FindAllStringSubmatch(tell, -1) {
 		named = append(named, found[1])
 	}
 
