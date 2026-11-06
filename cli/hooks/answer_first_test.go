@@ -3,7 +3,9 @@ package hooks
 import (
 	"bufio"
 	"encoding/json"
+	"fmt"
 	"net"
+	"os"
 	"path/filepath"
 	"strings"
 	"sync/atomic"
@@ -21,7 +23,7 @@ func TestAnAnswerNeverWaitsOnAJudging(t *testing.T) {
 	held := make(chan struct{})
 	var judgings atomic.Int64
 
-	socket := filepath.Join(t.TempDir(), "hooks.sock")
+	socket := shortSocket(t)
 	listener, err := net.Listen("unix", socket)
 	if err != nil {
 		t.Fatal(err)
@@ -65,7 +67,7 @@ func TestTheCommandGateAnswersWhileAJudgingIsHeld(t *testing.T) {
 	under := filepath.Join("src", "made.py")
 	wroteInto(t, filepath.Join(root, under), olderSin)
 
-	socket := filepath.Join(t.TempDir(), "hooks.sock")
+	socket := shortSocket(t)
 	listener, err := net.Listen("unix", socket)
 	if err != nil {
 		t.Fatal(err)
@@ -109,6 +111,16 @@ func TestTheCommandGateAnswersWhileAJudgingIsHeld(t *testing.T) {
 	}
 
 	close(held)
+}
+
+func shortSocket(t *testing.T) string {
+	t.Helper()
+
+	socket := fmt.Sprintf("/tmp/cc-test-%d-%d.sock", os.Getpid(), time.Now().UnixNano()%100000)
+	os.Remove(socket)
+	t.Cleanup(func() { os.Remove(socket) })
+
+	return socket
 }
 
 func answerOn(t *testing.T, socket string, event map[string]any) string {

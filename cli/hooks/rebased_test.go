@@ -22,6 +22,8 @@ func TestAWorkerThatRebasesItselfIsRefilledAndNeverAnsweredFromTheOldBase(t *tes
 
 	settings, _ := config.Load(root)
 
+	warmFor(t, root, settings)
+
 	kept.CutAt(worktree, "aaaaaaa")
 
 	if said := linesToldFor(t, worktree, file, settings); !strings.Contains(said, ":2") {

@@ -20,13 +20,13 @@ func TestTheHealthAnswerDoesNotQueueBehindTheWork(t *testing.T) {
 	under := filepath.Join("src", "made.py")
 	wroteInto(t, filepath.Join(root, under), olderSin)
 
-	socket := filepath.Join(t.TempDir(), "health.sock")
+	socket := shortSocket(t)
 	t.Setenv(health.Socket, socket)
 
 	stop := health.Serve(hooksService)
 	t.Cleanup(stop)
 
-	hooks := filepath.Join(t.TempDir(), "hooks.sock")
+	hooks := shortSocket(t)
 	listener, err := net.Listen("unix", hooks)
 	if err != nil {
 		t.Fatal(err)

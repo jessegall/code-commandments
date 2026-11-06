@@ -76,6 +76,10 @@ func Record(folder string, judged Judged) {
 		return
 	}
 
+	if err := os.MkdirAll(folder, 0o755); err != nil {
+		return
+	}
+
 	file, err := os.OpenFile(filepath.Join(folder, "judgings.log"), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
 	if err != nil {
 		return

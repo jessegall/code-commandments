@@ -43,6 +43,8 @@ func TestTwoWorktreesHoldingDifferentTextForOnePathAreEachAnsweredFromTheirOwn(t
 
 	settings, _ := config.Load(root)
 
+	warmFor(t, root, settings)
+
 	kept.CutAt(first, "aaaaaaa")
 	kept.CutAt(second, "bbbbbbb")
 

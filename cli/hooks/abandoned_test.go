@@ -40,7 +40,22 @@ func TestAJudgingForAClosedLaneIsAbandonedAndQueuedForNobody(t *testing.T) {
 		t.Fatalf("the moment says it was cut from %q", cut)
 	}
 
-	kept.CutAt(checkoutOf(root, file), "bbbbbbb")
+	lane := checkoutOf(root, file)
+
+	kept.CutAt(lane, "aaaaaaa")
+	kept.Over(lane)
+	kept.CutAt(lane, "bbbbbbb")
+	kept.Over(lane)
+
+	if cut := kept.CutOf(lane); cut != "bbbbbbb" {
+		t.Fatalf("the lane says it was cut from %q, so there is no closed lane to abandon a judging for", cut)
+	}
+
+	t.Setenv(pluginData, data)
+
+	if _, queued := Queue4In(data); !queued {
+		t.Fatalf("the queue the journal drains is not named, so nothing of this test is being exercised")
+	}
 
 	before := AbandonedJudgings()
 

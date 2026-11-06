@@ -1,10 +1,10 @@
 package hooks
 
 import (
-	"os"
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/jessegall/code-commandments/cli/config"
 )
@@ -20,6 +20,8 @@ func TestAWorkerWhoseBaseIsAdvancedKeepsNoStaleTextOfItsOwn(t *testing.T) {
 	wroteInto(t, file, sinOnLineTwo)
 
 	settings, _ := config.Load(root)
+
+	warmFor(t, root, settings)
 
 	kept.CutAt(worktree, "aaaaaaa")
 
@@ -58,7 +60,8 @@ func TestAFileThatMatchesTheNewBaseIsNoLongerTheWorkersOwn(t *testing.T) {
 
 	under := filepath.Join("src", "made.py")
 	file := filepath.Join(worktree, under)
-	theProjects := readFileOr(t, filepath.Join(root, under))
+	theProjects := "class Made:\n    pass\n"
+	wroteInto(t, filepath.Join(root, under), theProjects)
 
 	wroteInto(t, file, sinOnLineTwo)
 
@@ -80,13 +83,15 @@ func TestAFileThatMatchesTheNewBaseIsNoLongerTheWorkersOwn(t *testing.T) {
 	}
 }
 
-func readFileOr(t *testing.T, file string) string {
+func warmFor(t *testing.T, root string, settings config.Config) {
 	t.Helper()
 
-	said, err := os.ReadFile(file)
-	if err != nil {
-		t.Fatal(err)
-	}
+	Serves()
+	t.Cleanup(func() { serving.Store(false) })
 
-	return string(said)
+	Warming(root, settings)
+
+	for until := time.Now().Add(time.Minute); warming(t) && time.Now().Before(until); {
+		time.Sleep(20 * time.Millisecond)
+	}
 }

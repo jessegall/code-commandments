@@ -104,8 +104,6 @@ func adviseAsked(moment asked) {
 		return
 	}
 
-	answer := answerWith(moment.given, not(isGate), true)
-
 	if why := abandoned(moment.given); why != "" {
 		abandonedJudgings.Add(1)
 		held := MomentOf(moment.given)
@@ -115,6 +113,14 @@ func adviseAsked(moment asked) {
 				At: time.Now(), Event: held.Event, Kind: "checkout", Checkout: held.Cwd, Abandoned: why,
 			})
 		}
+
+		return
+	}
+
+	answer := answerWith(moment.given, not(isGate), true)
+
+	if why := abandoned(moment.given); why != "" {
+		abandonedJudgings.Add(1)
 
 		return
 	}

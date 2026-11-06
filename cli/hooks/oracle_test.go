@@ -79,6 +79,8 @@ func TestTheLaneAnswersWhatAFreshReadOfTheWorktreeAnswers(t *testing.T) {
 
 	settings, _ := config.Load(root)
 
+	warmFor(t, root, settings)
+
 	kept.CutAt(worktree, "aaaaaaa")
 	Warming(worktree, settings)
 
