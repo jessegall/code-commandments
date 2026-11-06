@@ -2,6 +2,7 @@ package hooks
 
 import (
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -75,6 +76,16 @@ func MergeLanded(line map[string]any) string {
 		return ""
 	}
 
+	if tooMany := work.tooManyFiles(from); tooMany != "" {
+		if err := mark.Judged(work.branch, work.after); err != nil {
+			return ""
+		}
+
+		work.keeps(tooMany)
+
+		return (JournalAnswer{Whisper: &tooMany}).Line4()
+	}
+
 	marks, judged := work.sinsBrought(from)
 	if !judged {
 		return ""
@@ -108,6 +119,9 @@ func (l landed) keeps(said string) {
 func (l landed) sinsBrought(from string) ([]SinMark, bool) {
 	changed := git.ChangedBetween(l.project, from, l.after)
 	if len(changed) == 0 {
+		return nil, true
+	}
+	if len(changed) > mostFilesAMergeBringsIn {
 		return nil, true
 	}
 
@@ -189,4 +203,17 @@ func mergesJudged() bool {
 	said, named := chosen[mergesKey]
 
 	return !named || asText(said) != "false"
+}
+
+const mostFilesAMergeBringsIn = 200
+
+func (l landed) tooManyFiles(from string) string {
+	brought := len(git.ChangedBetween(l.project, from, l.after))
+	if brought <= mostFilesAMergeBringsIn {
+		return ""
+	}
+
+	return Unjudged("the merge brought in "+strconv.Itoa(brought)+" files, more than a merge is judged in one answer, so none of them was judged here",
+		"a merge is answered while the journal waits, and reading that many files is not something to do inside a wait",
+		binary.Judging(l.project)+" --branch")
 }
