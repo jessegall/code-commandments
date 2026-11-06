@@ -27,6 +27,7 @@ const (
 	judgedKey        = "folders_judged"
 	skippedKey       = "folders_skipped"
 	parallelKey      = "judge_parallel"
+	recordKey        = "judge_record"
 	skillsFolder     = "journal-skills"
 )
 

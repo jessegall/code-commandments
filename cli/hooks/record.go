@@ -23,6 +23,8 @@ type Judged struct {
 	Asked    int
 	NotAsked int
 	Sins     int
+	Dropped  Dropped
+	Memory   Memory
 }
 
 func (j Judged) Line() string {
@@ -41,6 +43,15 @@ func (j Judged) Line() string {
 		fmt.Sprintf("parsed=%d in %dms", j.Parsed, j.ReadMs),
 		fmt.Sprintf("rules=%d of %d in %dms", j.Asked, j.Asked+j.NotAsked, j.RuleMs),
 		fmt.Sprintf("sins=%d", j.Sins),
+	}
+
+	if j.Dropped != (Dropped{}) {
+		said = append(said, fmt.Sprintf("dropped=%d outside the roots, %d not a file, %d too large, %d past the budget",
+			j.Dropped.NotJudged, j.Dropped.NotAFile, j.Dropped.TooLarge, j.Dropped.PastBudget))
+	}
+
+	if j.Memory != (Memory{}) {
+		said = append(said, j.Memory.Line())
 	}
 
 	if j.Why != "" {

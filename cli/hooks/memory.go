@@ -1,0 +1,74 @@
+package hooks
+
+import (
+	"fmt"
+	"os"
+	"os/exec"
+	"runtime"
+	"strconv"
+	"strings"
+)
+
+// Memory is what a memory figure of this plugin means, taken three ways because the three differ by gigabytes: the
+// Go heap this process has, this process's own resident size, and the resident size of this process with every
+// bridge it keeps up. The language bridges hold the most and are in none of the Go numbers, so a figure that does
+// not say which of the three it is says almost nothing.
+type Memory struct {
+	HeapMB        int
+	ResidentMB    int
+	WithBridgesMB int
+}
+
+func MemoryNow() Memory {
+	var stats runtime.MemStats
+	runtime.ReadMemStats(&stats)
+
+	held := Memory{HeapMB: int(stats.HeapAlloc >> 20)}
+	held.ResidentMB = residentOf(os.Getpid())
+	held.WithBridgesMB = held.ResidentMB + bridgesResident()
+
+	return held
+}
+
+func (m Memory) Line() string {
+	return fmt.Sprintf("heap=%dMB resident=%dMB withBridges=%dMB", m.HeapMB, m.ResidentMB, m.WithBridgesMB)
+}
+
+func residentOf(pid int) int {
+	out, err := exec.Command("ps", "-o", "rss=", "-p", strconv.Itoa(pid)).Output()
+	if err != nil {
+		return 0
+	}
+
+	kilobytes, err := strconv.Atoi(strings.TrimSpace(string(out)))
+	if err != nil {
+		return 0
+	}
+
+	return kilobytes / 1024
+}
+
+func bridgesResident() int {
+	held := 0
+	for _, pid := range bridgePids() {
+		held += residentOf(pid)
+	}
+
+	return held
+}
+
+func bridgePids() []int {
+	out, err := exec.Command("pgrep", "-P", strconv.Itoa(os.Getpid())).Output()
+	if err != nil {
+		return nil
+	}
+
+	var pids []int
+	for _, line := range strings.Fields(string(out)) {
+		if pid, err := strconv.Atoi(line); err == nil {
+			pids = append(pids, pid)
+		}
+	}
+
+	return pids
+}

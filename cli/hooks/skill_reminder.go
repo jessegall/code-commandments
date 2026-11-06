@@ -192,9 +192,12 @@ func edited(event Event, project config.Config) []string {
 			continue
 		}
 		if info.Size() > int64(budget) {
+			dropped.TooLarge++
+
 			continue
 		}
 		if info.Size() > int64(left) {
+			dropped.PastBudget++
 			more = true
 
 			continue
@@ -209,6 +212,21 @@ func edited(event Event, project config.Config) []string {
 	}
 
 	return affordable
+}
+
+// Dropped are the files an edit named and the judging never looked at, by the reason it did not: the counters a
+// session's record keeps, so the honesty of a run can be read as numbers rather than guessed at.
+type Dropped struct {
+	NotJudged  int
+	NotAFile   int
+	TooLarge   int
+	PastBudget int
+}
+
+var dropped Dropped
+
+func DroppedSoFar() Dropped {
+	return dropped
 }
 
 func judgedFile(root, file string, project config.Config) string {
@@ -226,10 +244,14 @@ func judgedFile(root, file string, project config.Config) string {
 	}
 
 	if !project.IsJudged(checkoutOf(root, absolute), absolute) {
+		dropped.NotJudged++
+
 		return ""
 	}
 
 	if info, err := os.Stat(absolute); err != nil || !info.Mode().IsRegular() {
+		dropped.NotAFile++
+
 		return ""
 	}
 

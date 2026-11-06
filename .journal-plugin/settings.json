@@ -24,6 +24,14 @@
         "help": "How many detectors the check runs side by side. More finish sooner but use more cores and memory."
     },
     {
+        "key": "judge_record",
+        "title": "Keep a record of each check",
+        "type": "flag",
+        "kind": "flag",
+        "default": true,
+        "help": "Writes one line per check into the plugin's own folder: which checkout, whether a tree was held, what was parsed and how long the rules took. It holds counts and file names, never a line of your code, and is what `commandments why` reads back."
+    },
+    {
         "key": "language_php",
         "title": "PHP",
         "type": "flag",

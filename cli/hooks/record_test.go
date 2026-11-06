@@ -57,3 +57,74 @@ func TestARecordNobodyCanWriteNeverFailsAnAnswer(t *testing.T) {
 	Record("", Judged{At: time.Now()})
 	Record(filepath.Join(t.TempDir(), "not-a-folder", "deeper"), Judged{At: time.Now()})
 }
+
+func TestARecordSaysWhatTheJudgingDropped(t *testing.T) {
+	folder := t.TempDir()
+
+	Record(folder, Judged{At: time.Now(), Event: "file_edited", Checkout: "/project", Kind: "project",
+		Branch: "main", Held: true, Parsed: 2, Asked: 247,
+		Dropped: Dropped{NotJudged: 4, NotAFile: 1, TooLarge: 2, PastBudget: 3}})
+
+	read, _ := os.ReadFile(filepath.Join(folder, "judgings.log"))
+	said := string(read)
+
+	if !strings.Contains(said, "dropped=4 outside the roots, 1 not a file, 2 too large, 3 past the budget") {
+		t.Errorf("the record does not say what was dropped:\n%s", said)
+	}
+
+	plain := t.TempDir()
+	Record(plain, Judged{At: time.Now(), Event: "file_edited", Checkout: "/project", Kind: "project", Branch: "main", Held: true})
+	kept, _ := os.ReadFile(filepath.Join(plain, "judgings.log"))
+
+	if strings.Contains(string(kept), "dropped=") {
+		t.Errorf("a judging that dropped nothing says it did:\n%s", kept)
+	}
+}
+
+func TestAMemoryFigureSaysWhichMemoryItIs(t *testing.T) {
+	now := MemoryNow()
+
+	if now.HeapMB < 0 || now.ResidentMB < 0 || now.WithBridgesMB < now.ResidentMB {
+		t.Errorf("the three figures do not hold together: %+v", now)
+	}
+
+	said := now.Line()
+	for _, want := range []string{"heap=", "resident=", "withBridges="} {
+		if !strings.Contains(said, want) {
+			t.Errorf("a memory figure does not say which memory it is: %q", said)
+		}
+	}
+}
+
+func TestTheRecordHoldsNoLineOfAnybodysCode(t *testing.T) {
+	folder := t.TempDir()
+
+	Record(folder, Judged{At: time.Now(), Event: "file_edited", Checkout: "/project", Kind: "project",
+		Branch: "main", Held: true, Parsed: 1, Asked: 247, Sins: 3})
+
+	read, _ := os.ReadFile(filepath.Join(folder, "judgings.log"))
+	said := string(read)
+
+	for _, code := range []string{"def ", "class ", "function ", "return ", "{", "}", ";"} {
+		if strings.Contains(said, code) {
+			t.Errorf("the record carries something that reads like source (%q):\n%s", code, said)
+		}
+	}
+}
+
+func TestTheRecordIsOnUnlessTheSettingSaysOtherwise(t *testing.T) {
+	t.Setenv("JOURNAL_SETTINGS", `{"judge_record": "false"}`)
+	if recorded("/project") {
+		t.Error("the record is kept although the setting says not to")
+	}
+
+	t.Setenv("JOURNAL_SETTINGS", `{"judge_record": "true"}`)
+	if !recorded("/project") {
+		t.Error("the record is not kept although the setting says to")
+	}
+
+	t.Setenv("JOURNAL_SETTINGS", "")
+	if !recorded("/project") {
+		t.Error("with no settings at all the record is not kept, so a person at two in the morning has nothing to read")
+	}
+}

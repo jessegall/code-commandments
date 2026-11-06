@@ -1,6 +1,6 @@
 {
     "name": "code-commandments",
-    "version": "7.15.32",
+    "version": "7.15.33",
     "title": "Code Commandments",
     "description": "The static code checker judges the codebase, its hooks run inside the journal, and every rule and language is a switch in its settings",
     "journal": "2.267.16",
@@ -47,7 +47,7 @@
     },
     "env": {
         "CLAUDE_PROJECT_DIR": "{project}",
-        "COMMANDMENTS_RELEASE": "v7.15.32"
+        "COMMANDMENTS_RELEASE": "v7.15.33"
     },
     "setup": [
         {
@@ -100,6 +100,13 @@
             "help": "How many detectors the check runs side by side. More finish sooner but use more cores and memory.",
             "type": "number",
             "default": "2",
+            "group": "Performance"
+        },
+        "judge_record": {
+            "title": "Keep a record of each check",
+            "help": "Writes one line per check into the plugin's own folder: which checkout, whether a tree was held, what was parsed and how long the rules took. It holds counts and file names, never a line of your code, and is what `commandments why` reads back.",
+            "type": "flag",
+            "default": "true",
             "group": "Performance"
         },
         "language_php": {

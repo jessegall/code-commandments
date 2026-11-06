@@ -212,7 +212,7 @@ func answerWith(given map[string]any, runs func(Hook) bool, reportsSins bool) Jo
 
 func recordJudging(moment Moment, event Event, merged Response, answer JournalAnswer, spent time.Duration) {
 	folder := os.Getenv(pluginData)
-	if folder == "" || len(merged.Judged) == 0 {
+	if folder == "" || len(merged.Judged) == 0 || !recorded(event.Root) {
 		return
 	}
 
@@ -237,8 +237,19 @@ func recordJudging(moment Moment, event Event, merged Response, answer JournalAn
 		At: time.Now(), Event: moment.Event, Checkout: checkout, Kind: kind, Branch: named.branch,
 		Held: held, Why: why, Overlay: kept.Over(checkout).Count(), Parsed: len(merged.Judged),
 		ReadMs: merged.ReadMs, RuleMs: milliseconds(spent) - merged.ReadMs, Asked: asked, NotAsked: notAsked,
-		Sins: len(merged.Activity),
+		Sins: len(merged.Activity), Dropped: DroppedSoFar(), Memory: MemoryNow(),
 	})
+}
+
+func recorded(string) bool {
+	chosen, given := chosenSettings()
+	if !given {
+		return true
+	}
+
+	said, named := chosen[recordKey]
+
+	return !named || asText(said) != "false"
 }
 
 func settled(moment Moment, root string, marks []SinMark, read []string, asked Asked) Settlement {

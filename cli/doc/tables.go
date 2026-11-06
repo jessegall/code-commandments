@@ -238,6 +238,7 @@ func PluginSettings() *jsonfile.Object {
 		"folders_judged", setting("Folders to check", "One folder per line, from the project root. Empty, the config keeps the folders it names.", "list", "", "Folders"),
 		"folders_skipped", setting("Folders to leave out", "One folder per line, never read or reported, such as generated code. This list is what the config leaves out.", "list", "", "Folders"),
 		"judge_parallel", setting("Rules judged at once", "How many detectors the check runs side by side. More finish sooner but use more cores and memory.", "number", "2", "Performance"),
+		"judge_record", setting("Keep a record of each check", "Writes one line per check into the plugin's own folder: which checkout, whether a tree was held, what was parsed and how long the rules took. It holds counts and file names, never a line of your code, and is what `commandments why` reads back.", "flag", "true", "Performance"),
 	)
 	for _, language := range source.Languages {
 		settings.Set("language_"+string(language), setting(language.Label(), "Enables "+language.Label()+" sin detection", "flag", "true", "Languages"))
