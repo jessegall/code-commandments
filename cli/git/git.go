@@ -53,13 +53,16 @@ func walkUp(dir string) string {
 func BelongsTo(root, project string) bool {
 	root, project = real(root), real(project)
 
-	if within(root, project) {
+	if root == project {
 		return true
 	}
 
 	gitdir := gitDirOf(root)
+	if gitdir == "" || filepath.Base(filepath.Dir(gitdir)) != worktrees {
+		return false
+	}
 
-	return gitdir != "" && within(gitdir, project)
+	return within(gitdir, project)
 }
 
 func ProjectRoot(path string) string {
