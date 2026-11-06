@@ -28,6 +28,8 @@ type Moment struct {
 	Changed                      []int
 	ChangedWhole                 bool
 	Agent                        int
+	Batched                      []any
+	BatchedLines                 map[string]any
 }
 
 const changedKey = "commandments_changed"
@@ -77,7 +79,21 @@ func MomentOf(given map[string]any) Moment {
 		Received:     stampOf(given),
 		Changed:      changedLinesOf(data),
 		ChangedWhole: asText(firstOf(data["type"], data["kind"])) == "create",
+		Batched:      batchedFilesIn(given),
+		BatchedLines: batchedLinesIn(given),
 	}
+}
+
+func batchedFilesIn(given map[string]any) []any {
+	held, _ := given[batchedKey].([]any)
+
+	return held
+}
+
+func batchedLinesIn(given map[string]any) map[string]any {
+	held, _ := given[batchedLinesKey].(map[string]any)
+
+	return held
 }
 
 func changedLinesOf(data map[string]any) []int {
@@ -142,6 +158,11 @@ func (m Moment) HookPayload() map[string]any {
 
 	if m.Received != 0 {
 		payload[receivedKey] = strconv.FormatInt(m.Received, 10)
+	}
+
+	if len(m.Batched) > 0 {
+		payload[batchedKey] = m.Batched
+		payload[batchedLinesKey] = m.BatchedLines
 	}
 
 	return payload

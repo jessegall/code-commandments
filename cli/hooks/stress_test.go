@@ -1473,9 +1473,15 @@ func stressHeld(t *testing.T, mine *stressCheckout, move int, against, file stri
 			names = append(names, strings.TrimSpace(mark.Found()))
 		}
 
+		inFlight, done := JudgingNow()
+		left := DroppedSoFar()
+
 		t.Fatalf("move %d of checkout %d: it wrote a sin in %s and was told nothing about it; %d answers came "+
-			"back. A judging of that file alone finds %d sins %v (unread %v)\n%v",
-			move, mine.Named, stressUnder(against, file), len(answers), len(found), names, unread, answers)
+			"back, and the service had %d judging(s) in flight with %d finished, so it %s. It had dropped %+v. "+
+			"A judging of that file alone finds %d sins %v (unread %v)\n%v",
+			move, mine.Named, stressUnder(against, file), len(answers), inFlight, done,
+			map[bool]string{true: "had not answered YET", false: "was never going to answer"}[inFlight > 0],
+			left, len(found), names, unread, answers)
 	}
 }
 

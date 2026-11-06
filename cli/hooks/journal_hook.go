@@ -12,6 +12,7 @@ import (
 	"slices"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/jessegall/code-commandments/cli"
@@ -456,6 +457,12 @@ func serve(listener net.Listener, current func() bool, advice *advisers) {
 	}
 }
 
+var working, advised atomic.Int64
+
+func JudgingNow() (int64, int64) {
+	return working.Load(), advised.Load()
+}
+
 // asked is one moment the service answered, and where its advice belongs: an event version 4 answered with the gates alone is judged after, into the queue that journal drains, and anything else version 3 asked goes to the queue it hands the service.
 type asked struct {
 	given  map[string]any
@@ -642,7 +649,10 @@ func (a *adviser) work() {
 				break
 			}
 
+			working.Add(1)
 			a.advise(batched(batch))
+			working.Add(-1)
+			advised.Add(1)
 
 			a.mu.Lock()
 			a.working = false

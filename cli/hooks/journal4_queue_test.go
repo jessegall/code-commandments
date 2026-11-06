@@ -877,3 +877,20 @@ func TestABatchStandsOnAMomentThatNamesAFile(t *testing.T) {
 		t.Errorf("a tick that arrived first carried the batch, so the edit beside it was judged by nobody: %+v", moment)
 	}
 }
+
+func TestEveryFileOfABatchReachesTheJudging(t *testing.T) {
+	first, second := "/project/src/order.py", "/project/src/refund.py"
+
+	stands := batched([]asked{
+		{given: map[string]any{"event": "PostToolUse", "agent": map[string]any{"id": 4},
+			"tool": map[string]any{"name": "Edit", "file": first}}},
+		{given: map[string]any{"event": "PostToolUse", "agent": map[string]any{"id": 4},
+			"tool": map[string]any{"name": "Edit", "file": second}}},
+	})
+
+	carried := batchedIn(MomentOf(stands.given).HookPayload())
+
+	if len(carried) != 2 || carried[0] != first || carried[1] != second {
+		t.Errorf("the judging is told about %v of the two files the batch held, so the rest are judged by nobody", carried)
+	}
+}
