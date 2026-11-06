@@ -7,7 +7,6 @@ import (
 
 	"github.com/jessegall/code-commandments/cli"
 	"github.com/jessegall/code-commandments/cli/help"
-	"github.com/jessegall/code-commandments/cli/workspace"
 )
 
 // Why is `why`: what the last judging of a file was, and what it could not ask.
@@ -29,10 +28,7 @@ func (Why) Help() help.Help {
 func (Why) Run(in *cli.Input, console cli.Console) (int, error) {
 	asked, _ := in.FirstArgument()
 
-	folder := os.Getenv(pluginData)
-	if folder == "" {
-		folder = workspace.At(workspace.ProjectRoot(cwdOf()), "").SessionDir()
-	}
+	folder := bookkeepingIn(cwdOf())
 
 	read, err := os.ReadFile(filepath.Join(folder, "judgings.log"))
 	if err != nil {

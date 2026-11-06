@@ -110,7 +110,7 @@ func adviseAsked(moment asked) {
 		held := MomentOf(moment.given)
 
 		if recorded(held.Cwd) {
-			Record(os.Getenv(pluginData), Judged{
+			Record(bookkeepingIn(held.Cwd), Judged{
 				At: time.Now(), Event: held.Event, Kind: "checkout", Checkout: held.Cwd, Abandoned: why,
 			})
 		}
@@ -254,7 +254,7 @@ func answerWith(given map[string]any, runs func(Hook) bool, reportsSins bool) Jo
 }
 
 func recordJudging(moment Moment, event Event, merged Response, answer JournalAnswer, spent time.Duration) {
-	folder := os.Getenv(pluginData)
+	folder := bookkeepingIn(event.Root)
 	if folder == "" || len(merged.Judged) == 0 || !recorded(event.Root) {
 		return
 	}
