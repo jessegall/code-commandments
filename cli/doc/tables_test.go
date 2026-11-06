@@ -82,3 +82,41 @@ func TestEachPluginManifestNamesTheReleaseItPins(t *testing.T) {
 		}
 	}
 }
+
+// TestEverySettingAndCardSaysItsKindInBothWords holds the plugin's manifest and its settings file to both
+// journals. The journal has dropped the word kind everywhere but this plugin protocol and is moving to `type`
+// with `kind` as its fallback, so each setting's type and each card's kind is written under both words; dropping
+// the older one is for after no journal reads it.
+func TestEverySettingAndCardSaysItsKindInBothWords(t *testing.T) {
+	for _, setting := range doc.SettingsSchema() {
+		entry := setting.(*jsonfile.Object)
+		key, _ := entry.Get("key")
+		kind, _ := entry.Get("kind")
+		written, _ := entry.Get("type")
+
+		if kind == nil || written == nil || fmt.Sprint(kind) != fmt.Sprint(written) {
+			t.Errorf("the setting %v says kind %v and type %v, not one type under both words", key, kind, written)
+		}
+	}
+
+	manifest, read := jsonfile.Read(filepath.Join("..", "..", doc.Journal4Plugin))
+	if !read {
+		t.Fatalf("%s is not a JSON object", doc.Journal4Plugin)
+	}
+
+	cards, _ := manifest.Get("cards")
+	declared, _ := cards.([]any)
+	if len(declared) == 0 {
+		t.Fatalf("%s declares no cards, so nothing is asked", doc.Journal4Plugin)
+	}
+
+	for _, each := range declared {
+		card, _ := each.(*jsonfile.Object)
+		kind, _ := card.Get("kind")
+		written, _ := card.Get("type")
+
+		if kind == nil || written == nil || fmt.Sprint(kind) != fmt.Sprint(written) {
+			t.Errorf("the card %v says kind %v and type %v, not one card under both words", kind, kind, written)
+		}
+	}
+}

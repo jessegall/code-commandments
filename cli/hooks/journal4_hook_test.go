@@ -69,7 +69,9 @@ func TestTheAnswerIsSaidAsVersion4ReadsIt(t *testing.T) {
 				Settles:  []string{"sins:src/B.php"},
 				Repented: []Repented{{Key: "sin:b2", Shown: "data-clump at src/B.php:9"}},
 			},
-			`{"cards":[{"detail":"array-bag at src/A.php:3\ndata-clump at src/A.php:9","key":"sins:src/A.php","kind":"sin-found","label":"2 sins in src/A.php"},{"key":"sins:src/B.php","kind":"sin-resolved","label":"src/B.php is clean"}],"v":1}`,
+			// Which card it is is said as both `type` and `kind`: the journal has dropped the word kind
+			// everywhere but this protocol and reads `type` with `kind` as its fallback.
+			`{"cards":[{"detail":"array-bag at src/A.php:3\ndata-clump at src/A.php:9","key":"sins:src/A.php","kind":"sin-found","label":"2 sins in src/A.php","type":"sin-found"},{"key":"sins:src/B.php","kind":"sin-resolved","label":"src/B.php is clean","type":"sin-resolved"}],"v":1}`,
 		},
 	}
 
@@ -135,7 +137,7 @@ func TestTheScanAnswersSettingsInVersion4sTypes(t *testing.T) {
 // TestAppliedSettingsAreACardInVersion4 holds the answer to plugin.updated to version 4's shape: a card saying what
 // changed under one key, and no card when nothing did, never version 3's notify.
 func TestAppliedSettingsAreACardInVersion4(t *testing.T) {
-	if got := Configured4([]string{"config.json follows the plugin's switches: 2 changed"}); got != `{"cards":[{"key":"settings","kind":"configured","label":"config.json follows the plugin's switches: 2 changed"}],"v":1}` {
+	if got := Configured4([]string{"config.json follows the plugin's switches: 2 changed"}); got != `{"cards":[{"key":"settings","kind":"configured","label":"config.json follows the plugin's switches: 2 changed","type":"configured"}],"v":1}` {
 		t.Errorf("said %s", got)
 	}
 

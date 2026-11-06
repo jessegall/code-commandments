@@ -91,23 +91,24 @@ func MomentOf(given map[string]any) Moment {
 		Received: stampOf(given),
 		Changed:  changedLinesOf(data),
 		// A file the tool created is new to its last line, so every line of it is the edit's.
-		ChangedWhole: asText(data["kind"]) == "create",
+		ChangedWhole: asText(firstOf(data["type"], data["kind"])) == "create",
 	}
 }
 
 // changedLinesOf are the line numbers of the rows an edit added, as the journal's own edit row records them. A
 // removed row is not a line of the file any more, so only what was added can hold a sin.
 //
-// A row says which kind it is under `kind` or under `line_type`, since version 5 of the journal names the same
-// fact by the second word. Reading one spelling only would leave every edit of the other looking like an edit
-// that carried no lines at all, which is answered by asking git for the diff: right, but a process per file where
-// the journal had already worked it out.
+// A row says which kind it is under `type`, `kind` or `line_type`: the journal has dropped the word kind
+// everywhere but this protocol and names the fact `type` now, version 5 named it by the second word, and version
+// 4 named it `kind`. Reading one spelling only would leave every edit of the others looking like an edit that
+// carried no lines at all, which is answered by asking git for the diff: right, but a process per file where the
+// journal had already worked it out.
 func changedLinesOf(data map[string]any) []int {
 	rows, _ := data["lines"].([]any)
 	var lines []int
 	for _, each := range rows {
 		row, _ := each.(map[string]any)
-		if asText(firstOf(row["kind"], row["line_type"])) != "add" {
+		if asText(firstOf(row["type"], row["kind"], row["line_type"])) != "add" {
 			continue
 		}
 		lines = append(lines, intOf(row["line"]))

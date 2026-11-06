@@ -397,7 +397,7 @@ func (a JournalAnswer) Shape4() map[string]any {
 		if raise.Key == "" {
 			continue
 		}
-		card := map[string]any{"kind": raise.Event, "key": raise.Key, "label": raise.Brief}
+		card := card4(raise.Event, raise.Key, raise.Brief)
 		if raise.Detail != "" {
 			card["detail"] = raise.Detail
 		}
@@ -432,12 +432,22 @@ func (a JournalAnswer) Shape4() map[string]any {
 	return answer
 }
 
+// card4 is one card of an answer: which of the manifest's cards it is, the key the latest of them stands in place
+// of, and the line the chat shows.
+//
+// Which card it is, is said twice, as `type` and as `kind`. The journal has dropped the word kind everywhere but
+// this protocol and is moving to `type` with `kind` as its fallback, so both spellings carry one card through
+// either version of the journal, whichever it reads, and the older spelling can go once no journal reads it.
+func card4(kind, key, label string) map[string]any {
+	return map[string]any{"type": kind, "kind": kind, "key": key, "label": label}
+}
+
 // Configured4 is version 4's answer once the settings are applied: a card saying what changed, under one key so the
 // latest stands in place of the one before; nothing when nothing changed.
 func Configured4(said []string) string {
 	answer := map[string]any{"v": protocol4}
 	if len(said) > 0 {
-		answer["cards"] = []map[string]any{{"kind": "configured", "key": "settings", "label": strings.Join(said, "; ")}}
+		answer["cards"] = []map[string]any{card4("configured", "settings", strings.Join(said, "; "))}
 	}
 
 	text, _ := json.Marshal(answer)

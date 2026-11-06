@@ -331,8 +331,12 @@ func renamedVersion(text, release string) (string, error) {
 	return written.ReplaceAllString(text, `${1}"`+release+`"`), nil
 }
 
-// SettingsSchema is PluginSettings as version 4's settings file lists them, each with its key, title, kind, help and
-// a default in its own JSON type.
+// SettingsSchema is PluginSettings as version 4's settings file lists them, each with its key, title, type, help
+// and a default in its own JSON type.
+//
+// A setting's type is said twice, as `type` and as `kind`. The journal has dropped the word kind everywhere but
+// this protocol and is moving to `type` with `kind` as its fallback, so both spellings carry one setting through
+// either version of the journal, and the older spelling can go once no journal reads it.
 func SettingsSchema() []any {
 	settings := PluginSettings()
 	var schema []any
@@ -343,7 +347,7 @@ func SettingsSchema() []any {
 		help, _ := entry.Get("help")
 		kind, _ := entry.Get("type")
 		fallback, _ := entry.Get("default")
-		schema = append(schema, jsonfile.NewObject("key", key, "title", title, "kind", kind, "default", defaultIn4(fmt.Sprint(kind), fmt.Sprint(fallback)), "help", help))
+		schema = append(schema, jsonfile.NewObject("key", key, "title", title, "type", kind, "kind", kind, "default", defaultIn4(fmt.Sprint(kind), fmt.Sprint(fallback)), "help", help))
 	}
 
 	return schema

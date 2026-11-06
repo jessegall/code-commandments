@@ -647,13 +647,13 @@ func TestTheServiceAnswersEveryVersion4EventInVersion4sShape(t *testing.T) {
 	}
 }
 
-// TestAnEditNamesItsOwnLinesWhateverTheJournalCallsThem holds the plugin to both journals. Version 4 wrote an
-// edit's rows with a `kind`, version 5 writes the same fact as `line_type`, and the lines are what tell a sin the
-// edit just wrote from one that was already in the file. Reading one spelling only left every edit of the other
-// looking like an edit that carried nothing, which is answered by asking git for a diff the journal had already
-// worked out: right, and a process per file for nothing.
+// TestAnEditNamesItsOwnLinesWhateverTheJournalCallsThem holds the plugin to every journal. Version 4 wrote an
+// edit's rows with a `kind`, version 5 writes the same fact as `line_type`, and the journal is dropping the word
+// kind for `type`; the lines are what tell a sin the edit just wrote from one that was already in the file.
+// Reading one spelling only left every edit of the others looking like an edit that carried nothing, which is
+// answered by asking git for a diff the journal had already worked out: right, and a process per file for nothing.
 func TestAnEditNamesItsOwnLinesWhateverTheJournalCallsThem(t *testing.T) {
-	for name, kind := range map[string]string{"version 4's kind": "kind", "version 5's line_type": "line_type"} {
+	for name, kind := range map[string]string{"version 4's kind": "kind", "version 5's line_type": "line_type", "the journal's type": "type"} {
 		t.Run(name, func(t *testing.T) {
 			root, _, data := projectWithASin(t)
 			t.Setenv("JOURNAL_ROOT", root)
@@ -904,6 +904,49 @@ func TestATickIsAnsweredWithTheGatesAloneAndSettlesThroughTheQueue(t *testing.T)
 
 		if len(said) == 0 {
 			t.Errorf("%s said nothing at all, so the sin it should have settled stays orange for good", event)
+		}
+	}
+}
+
+// TestAFileTheToolWroteWholeIsReadWhicheverWordTheEventUses holds the other spelling of the same fact: an event
+// says whether the tool wrote the file or edited it, under `kind` as version 4 wrote it and under `type` as the
+// journal names it now, and a created file is new to its last line, so every line of it is the edit's. Read under
+// one spelling only, a file the tool had just written looked like an edit of a file that was already there, and
+// the sins the tool wrote on the lines it did not announce went unsaid.
+func TestAFileTheToolWroteWholeIsReadWhicheverWordTheEventUses(t *testing.T) {
+	for name, word := range map[string]string{"version 4's kind": "kind", "the journal's type": "type"} {
+		t.Run(name, func(t *testing.T) {
+			said := MomentOf(map[string]any{
+				"event": "hook.file_edited", "agent": map[string]any{"cwd": t.TempDir()},
+				"data": map[string]any{"path": "src/refund.py", word: "create", "added": 5, "removed": 0},
+			})
+
+			if !said.ChangedWhole {
+				t.Fatalf("a file the tool wrote whole, said as %q, reads as an edit of a file that was already there", word)
+			}
+
+			if whole, _ := said.HookPayload()[changedKey].(map[string]any); whole["whole"] != true {
+				t.Errorf("the payload says %v, not that the whole file is the edit's", said.HookPayload()[changedKey])
+			}
+		})
+	}
+}
+
+// TestAnAnswersCardSaysWhichCardItIsInBothWords holds the plugin's own side of the same move: the journal has
+// dropped the word kind everywhere but this protocol and reads `type` with `kind` as its fallback, so every card
+// we answer with says which of the manifest's cards it is under both words. Said under one only, a card reaches
+// one version of the journal as a card of no declared kind, and the chat shows it without its label or its tone.
+func TestAnAnswersCardSaysWhichCardItIsInBothWords(t *testing.T) {
+	answer := JournalAnswer{Raises: []Raise{{Event: "sin-found", Key: "sins:src/refund.py", Brief: "1 sin"}}}.Shape4()
+
+	cards, _ := answer["cards"].([]map[string]any)
+	if len(cards) != 1 {
+		t.Fatalf("the answer carries %v, not the one card raised", answer["cards"])
+	}
+
+	for _, word := range []string{"type", "kind"} {
+		if cards[0][word] != "sin-found" {
+			t.Errorf("the card says %q as %v, not the card it is", word, cards[0][word])
 		}
 	}
 }
