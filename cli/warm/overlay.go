@@ -33,6 +33,39 @@ type Overlay struct {
 	filling Filling
 	filled  time.Time
 	why     string
+	cut     string
+}
+
+func (k *Keeper) CutAt(checkout, cut string) {
+	if cut == "" {
+		return
+	}
+
+	k.mu.Lock()
+	defer k.mu.Unlock()
+
+	if over, held := k.overlays[checkout]; held && over.cut != "" && over.cut != cut {
+		delete(k.overlays, checkout)
+		k.left(checkout)
+	}
+
+	k.cutting[checkout] = cut
+
+	if over, held := k.overlays[checkout]; held {
+		over.cut = cut
+	}
+}
+
+func (k *Keeper) CutOf(checkout string) string {
+	k.mu.Lock()
+	defer k.mu.Unlock()
+
+	over, held := k.overlays[checkout]
+	if !held {
+		return ""
+	}
+
+	return over.cut
 }
 
 func (k *Keeper) Over(checkout string) *Overlay {
@@ -50,6 +83,7 @@ func (k *Keeper) Over(checkout string) *Overlay {
 			marks:    map[string]Known{},
 			gone:     map[string]bool{},
 			swept:    k.now(),
+			cut:      k.cutting[checkout],
 		}
 
 		k.overlays[checkout] = over

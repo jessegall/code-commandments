@@ -42,12 +42,13 @@ type Keeper struct {
 	mu       sync.Mutex
 	bases    map[string]*Base
 	overlays map[string]*Overlay
+	cutting  map[string]string
 	leaving  []func(checkout string)
 	now      func() time.Time
 }
 
 func Keep() *Keeper {
-	return &Keeper{bases: map[string]*Base{}, overlays: map[string]*Overlay{}, now: time.Now}
+	return &Keeper{bases: map[string]*Base{}, overlays: map[string]*Overlay{}, cutting: map[string]string{}, now: time.Now}
 }
 
 func (k *Keeper) Clocked(now func() time.Time) *Keeper {

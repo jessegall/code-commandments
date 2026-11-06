@@ -30,9 +30,12 @@ type Moment struct {
 	Agent                        int
 	Batched                      []any
 	BatchedLines                 map[string]any
+	Cut                          string
 }
 
 const changedKey = "commandments_changed"
+
+const cutKey = "commandments_cut"
 
 func ChangedIn(payload map[string]any) (git.ChangedLines, bool) {
 	said, carried := payload[changedKey].(map[string]any)
@@ -81,7 +84,17 @@ func MomentOf(given map[string]any) Moment {
 		ChangedWhole: asText(firstOf(data["type"], data["kind"])) == "create",
 		Batched:      batchedFilesIn(given),
 		BatchedLines: batchedLinesIn(given),
+		Cut:          cutIn(data),
 	}
+}
+
+func cutIn(data map[string]any) string {
+	checkout, named := data["checkout"].(map[string]any)
+	if !named {
+		return ""
+	}
+
+	return asText(firstOf(checkout["base_commit"], checkout["base"]))
 }
 
 func batchedFilesIn(given map[string]any) []any {
@@ -163,6 +176,10 @@ func (m Moment) HookPayload() map[string]any {
 	if len(m.Batched) > 0 {
 		payload[batchedKey] = m.Batched
 		payload[batchedLinesKey] = m.BatchedLines
+	}
+
+	if m.Cut != "" {
+		payload[cutKey] = m.Cut
 	}
 
 	return payload

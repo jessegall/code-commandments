@@ -91,6 +91,8 @@ func AgainstTheProgramNarrowed(marking Marking, files []string, rulesFor func(st
 
 	checkout := checkoutOf(root, file)
 
+	kept.CutAt(checkout, marking.Cut)
+
 	held, base, why := answering(root, checkout)
 	if why != "" {
 		return nil, 0, why
@@ -568,4 +570,12 @@ func baseFor(path string) (branchRoot, *warm.Base, bool) {
 	base, held := kept.Holds(named.project, named.branch)
 
 	return named, base, held
+}
+
+func cutOf(event Event) string {
+	if cut := event.Cut(); cut != "" {
+		return cut
+	}
+
+	return git.CurrentBranch(checkoutOf(event.Root, event.Root))
 }

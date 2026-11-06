@@ -188,6 +188,10 @@ func (e Event) Command() string {
 	return e.input("command")
 }
 
+func (e Event) Cut() string {
+	return asText(e.payload[cutKey])
+}
+
 func (e Event) FilePath() string {
 	return e.input("file_path")
 }

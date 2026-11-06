@@ -26,12 +26,19 @@ func (m SinMark) IsFiled() bool {
 type Marking struct {
 	root   string
 	record reported.Record
+	Cut    string
 }
 
 func Marks(root string) Marking {
 	record, _ := reported.Of(root)
 
 	return Marking{root: root, record: record}
+}
+
+func (m Marking) CutFrom(cut string) Marking {
+	m.Cut = cut
+
+	return m
 }
 
 func (m Marking) Of(rule detectors.Detector, match engine.Match, changed git.ChangedLines) SinMark {
