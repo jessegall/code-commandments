@@ -12,8 +12,8 @@ func TestALanguageTheTreeHasNoStreamForIsRefusedInWordsThatNameIt(t *testing.T) 
 		language source.Language
 		said     []string
 	}{
-		{source.Python, []string{"has no python in it", "only the rules that answer from one file"}},
-		{source.CSharp, []string{"has no csharp in it", "read per checkout rather than per file", "its project's own types are not in that answer"}},
+		{source.Python, []string{"has no Python in it", "only the rules that answer from one file"}},
+		{source.CSharp, []string{"has no C# in it", "read per checkout rather than per file", "its project's own types are not in that answer"}},
 	} {
 		why := string(noStreamOf(told.language))
 

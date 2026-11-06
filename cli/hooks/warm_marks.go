@@ -67,7 +67,7 @@ const (
 )
 
 func noStreamOf(language source.Language) Narrowed {
-	said := "the tree held for this project has no " + string(language) + " in it, so only the rules that answer from one file can run here"
+	said := "the tree held for this project has no " + language.Label() + " in it, so only the rules that answer from one file can run here"
 
 	if language == source.CSharp {
 		said += ", and C# is read per checkout rather than per file, so its project's own types are not in that answer"

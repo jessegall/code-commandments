@@ -1,7 +1,6 @@
 package hooks
 
 import (
-	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
@@ -211,9 +210,7 @@ func TestAJudgingThatCouldNotRunLeavesTheMarkWhereItWas(t *testing.T) {
 
 	space := workspace.At(root, "")
 
-	if err := os.RemoveAll(filepath.Join(root, ".commandments")); err != nil {
-		t.Fatal(err)
-	}
+	wroteInto(t, filepath.Join(root, ".commandments", "config.json"), "{ this is no json at all")
 
 	MergeLanded(mergeLine(root, "main", before, after))
 

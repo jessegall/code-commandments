@@ -36,9 +36,15 @@ func TestAMergeOfManyFilesIsOneThingToReadWithACount(t *testing.T) {
 
 	tell := asText(answer["tell"])
 
-	if lines := strings.Count(tell, "\n"); lines > mergeSinsShown+2 {
-		t.Errorf("the merge named %d lines of sins, and it shows %d with a count of the rest:\n%s",
-			lines, mergeSinsShown, tell)
+	named := strings.Count(tell, " at src/")
+
+	if named > mergeSinsShown {
+		t.Errorf("the merge named %d sins by file and line, and it shows %d with a count of the rest:\n%s",
+			named, mergeSinsShown, tell)
+	}
+
+	if named == 0 {
+		t.Errorf("the merge named no sin at all, so it is one thing to read and says nothing:\n%s", tell)
 	}
 
 	if !strings.Contains(tell, "more") {
