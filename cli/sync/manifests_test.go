@@ -338,6 +338,28 @@ func TestBothManifestsFitTheSameLanguages(t *testing.T) {
 	}
 }
 
+// TestTheManifestDeclaresTheFolderItReads holds the declaration the journal asked us for. A journal from plan
+// 1092 on reads a project's `.commandments` for a plugin only where the plugin's own manifest declares it, and
+// drops the list it keeps of its own; undeclared, the config, the project's own rules and its session state are a
+// folder we can no longer read, and every rule a project enabled would be read as none.
+func TestTheManifestDeclaresTheFolderItReads(t *testing.T) {
+	text, err := os.ReadFile(filepath.Join("..", "..", "journal-plugin.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var read struct {
+		Reads []string `json:"project_reads"`
+	}
+	if err := json.Unmarshal(text, &read); err != nil {
+		t.Fatal(err)
+	}
+
+	if !slices.Contains(read.Reads, ".commandments") {
+		t.Errorf("the manifest declares %v as the project folders it reads, and the config it judges by is in .commandments", read.Reads)
+	}
+}
+
 // TestNothingOfOursReachesAWorker holds Sir Jesse's ruling: a worker gets nothing from this plugin. Its edits are
 // not judged, its hand-in is not held, and the judge is not offered to it as a command.
 //
