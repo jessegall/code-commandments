@@ -83,6 +83,13 @@ func (o *Overlay) Empty() bool {
 	return len(o.files) == 0
 }
 
+func (o *Overlay) Count() int {
+	o.mu.Lock()
+	defer o.mu.Unlock()
+
+	return len(o.files)
+}
+
 func (o *Overlay) Filling() (Filling, time.Time, string) {
 	o.mu.Lock()
 	defer o.mu.Unlock()

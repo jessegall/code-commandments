@@ -53,6 +53,7 @@ func Kernel(version string) *cli.Kernel {
 		service.Has{Bridge: scan.Frontend},
 		service.Has{Bridge: scan.PHPBridge},
 		service.Has{Bridge: scan.GoBridge},
+		hooks.Why{},
 		hooks.JournalConfig{},
 		hooks.JournalScan{},
 		hooks.JournalSkills{},

@@ -197,6 +197,8 @@ func answerWith(given map[string]any, runs func(Hook) bool, reportsSins bool) Jo
 		return answer
 	}
 
+	recordJudging(moment, event, merged, answer, spent)
+
 	settlement := settled(moment, event.Root, merged.Activity, merged.Judged, merged.Asked)
 	answer.Raises = append(answer.Raises, settlement.Raises(event.Root)...)
 	answer.Settles = settlement.Settles()
@@ -206,6 +208,37 @@ func answerWith(given map[string]any, runs func(Hook) bool, reportsSins bool) Jo
 	answer.ReadMs = merged.ReadMs
 
 	return answer
+}
+
+func recordJudging(moment Moment, event Event, merged Response, answer JournalAnswer, spent time.Duration) {
+	folder := os.Getenv(pluginData)
+	if folder == "" || len(merged.Judged) == 0 {
+		return
+	}
+
+	checkout := checkoutOf(event.Root, moment.Cwd)
+	kind := "project"
+	if checkout != strings.TrimRight(git.ProjectRoot(event.Root), "/") {
+		kind = "worktree"
+	}
+
+	named, _ := rootOf(event.Root)
+	_, _, held := baseFor(event.Root)
+
+	why := Narrowed("")
+	asked, notAsked := 0, 0
+	for file, sins := range merged.Asked {
+		asked = len(sins)
+		notAsked = len(merged.Narrowed)
+		why = merged.Narrowed[file]
+	}
+
+	Record(folder, Judged{
+		At: time.Now(), Event: moment.Event, Checkout: checkout, Kind: kind, Branch: named.branch,
+		Held: held, Why: why, Overlay: kept.Over(checkout).Count(), Parsed: len(merged.Judged),
+		ReadMs: merged.ReadMs, RuleMs: milliseconds(spent) - merged.ReadMs, Asked: asked, NotAsked: notAsked,
+		Sins: len(merged.Activity),
+	})
 }
 
 func settled(moment Moment, root string, marks []SinMark, read []string, asked Asked) Settlement {
