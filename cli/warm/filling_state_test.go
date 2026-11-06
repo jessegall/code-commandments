@@ -15,7 +15,7 @@ func TestAnOverlaySaysWhetherItHasEverBeenFilled(t *testing.T) {
 	}
 
 	at := time.Now()
-	over.Fills(at)
+	over.Fills(at, "aaaaaaa")
 
 	state, when, why := over.Filling()
 	if state != Filled || !when.Equal(at) || why != "" {

@@ -193,6 +193,10 @@ func AgainstTheProgramNarrowed(marking Marking, files []string, rulesFor func(st
 }
 
 func overlaid(over *warm.Overlay, base *warm.Base, held branchRoot, files []string, streams []*contract.Stream, marks map[string]warm.Known, now time.Time) (*engine.Codebase, Narrowed) {
+	if !over.FilledAt(git.Head(over.Checkout)) {
+		over.Empties()
+	}
+
 	if state, _, _ := over.Filling(); state != warm.Filled {
 		if why := fill(over, held, files...); why != "" {
 			return nil, why
@@ -232,7 +236,7 @@ func fill(over *warm.Overlay, held branchRoot, files ...string) Narrowed {
 	}
 
 	if len(reading) == 0 {
-		over.Fills(time.Now())
+		over.Fills(time.Now(), git.Head(over.Checkout))
 
 		return ""
 	}
@@ -247,7 +251,7 @@ func fill(over *warm.Overlay, held branchRoot, files ...string) Narrowed {
 	}
 
 	over.Patch(rebuilt.Streams(), taken)
-	over.Fills(time.Now())
+	over.Fills(time.Now(), git.Head(over.Checkout))
 
 	return ""
 }

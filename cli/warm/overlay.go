@@ -34,6 +34,7 @@ type Overlay struct {
 	filled  time.Time
 	why     string
 	cut     string
+	head    string
 }
 
 func (k *Keeper) CutAt(checkout, cut string) {
@@ -196,11 +197,34 @@ func (o *Overlay) BeginsFilling() bool {
 	return true
 }
 
-func (o *Overlay) Fills(at time.Time) {
+func (o *Overlay) Fills(at time.Time, head string) {
 	o.mu.Lock()
 	defer o.mu.Unlock()
 
 	o.filling, o.filled, o.why = Filled, at, ""
+	o.head = head
+}
+
+func (o *Overlay) FilledAt(head string) bool {
+	o.mu.Lock()
+	defer o.mu.Unlock()
+
+	if o.head == "" || head == "" {
+		return true
+	}
+
+	return o.head == head
+}
+
+func (o *Overlay) Empties() {
+	o.mu.Lock()
+	defer o.mu.Unlock()
+
+	o.files = map[string]*contract.File{}
+	o.headers = map[contract.Language]contract.Header{}
+	o.marks = map[string]Known{}
+	o.gone = map[string]bool{}
+	o.filling, o.why, o.head = NeverFilled, "", ""
 }
 
 func (o *Overlay) CouldNotFill(why string) {
