@@ -115,21 +115,61 @@ func Named(name string) (Detector, bool) {
 //
 // The spelling is folded for the same reason: a name is read off a line and typed back, and the case and the
 // hyphens of `ArrayBag`, `array-bag` and `array_bag` are not a difference anyone means.
+//
+// A name several ENGINES answer to means no one rule, and is answered as none. A detector's own name is its bare
+// type name and the engines share those: of 247 rules a project had enabled, only 127 names were distinct. The
+// first of them was handed back, and All() puts PHP first, so `--detector=DeepNestingDetector` could only ever
+// mean the PHP rule however plainly a reader meant the python one — and a false-positive report then named a
+// rule the reader had never seen fire. EveryNamedIn says which they are, so a caller can ask for the one.
+//
+// Named with its engine, `python/DeepNestingDetector`, it is the one rule it says and nothing is ambiguous.
 func NamedIn(detectors []Detector, name string) (Detector, bool) {
-	wanted := catalog.Normalise(strings.TrimSuffix(name, "Detector"))
+	named := EveryNamedIn(detectors, name)
+	if len(named) != 1 {
+		return nil, false
+	}
+
+	return named[0], true
+}
+
+// EveryNamedIn is every detector among these that the name means: the one an engine-qualified name says, else
+// every rule of that bare name, in curriculum order. A sin's name is answered after a rule's, and is engine-
+// distinct, so it means at most one.
+func EveryNamedIn(detectors []Detector, name string) []Detector {
+	engine, bare, qualified := strings.Cut(name, "/")
+	if !qualified {
+		engine, bare = "", name
+	}
+
+	wanted := catalog.Normalise(strings.TrimSuffix(bare, "Detector"))
+	asked := catalog.Normalise(engine)
+
+	var named []Detector
 	for _, detector := range detectors {
-		if catalog.Normalise(strings.TrimSuffix(catalog.Name(detector), "Detector")) == wanted {
-			return detector, true
+		if catalog.Normalise(strings.TrimSuffix(catalog.Name(detector), "Detector")) != wanted {
+			continue
 		}
+
+		if asked != "" {
+			if own, _ := EngineOf(detector); catalog.Normalise(string(own)) != asked {
+				continue
+			}
+		}
+
+		named = append(named, detector)
+	}
+
+	if len(named) > 0 {
+		return named
 	}
 
 	for _, detector := range detectors {
 		if catalog.Normalise(detector.Sin().Definition().Name) == wanted {
-			return detector, true
+			return []Detector{detector}
 		}
 	}
 
-	return nil, false
+	return nil
 }
 
 // Grouped is a detector whose findings recur in groups: the key says which group a finding is in, so a

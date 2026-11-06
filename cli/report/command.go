@@ -53,7 +53,7 @@ func (Command) Help() help.Help {
 		Option(`--reason="…"`, "what is wrong (required)").
 		Option("--ref=PATH:LINE", "the code this is about — repeatable, and PATH:START-END works; the issue names the file and its lines").
 		Option("--share-code", "also show the referenced lines (those alone, secrets masked) — only when the project's owner agrees its code may be public").
-		Option("--detector=NAME", "the detector that fired — makes this a false-positive report").
+		Option("--detector=NAME", "the detector that fired — makes this a false-positive report; a name several engines share takes its engine, `python/DeepNestingDetector`").
 		Option(`--best-design="…"`, "the cleanest design you can conceive for the flagged code; REQUIRED by design-smell detectors").
 		Option(`--title="…"`, "the issue title (default: the reason's first line)").
 		Option("--global", "opt out of --ref when the defect is tied to no file at all (a crash with no args, a CLI-wide bug)").
@@ -122,6 +122,14 @@ func detectorReport(in *cli.Input, detector, reason string, refs []Reference, ve
 		return 2
 	}
 
+	if shared := sharedByEngines(detector); len(shared) > 1 {
+		console.Warn("✋ "+detector+" is the name of "+strconv.Itoa(len(shared))+" rules, one per engine, and a report has to name",
+			"  the one that fired. Say which engine it was:",
+			"    "+strings.Join(shared, "\n    "))
+
+		return 2
+	}
+
 	design, _ := in.Option("best-design")
 	designed := strings.Trim(design, " \t\n\r\x00\x0B") != ""
 
@@ -170,7 +178,18 @@ func detectorReport(in *cli.Input, detector, reason string, refs []Reference, ve
 		return code
 	}
 
-	return remember(detector, reason, refs, filed, console)
+	return remember(ruleName(detector), reason, refs, filed, console)
+}
+
+// ruleName is the rule's own name, whatever spelling named it: the record is keyed by the name a judge finding
+// carries, so a report filed as `python/DeepNestingDetector` is recognised at the line it was filed about. The
+// engine belongs in the issue, which a maintainer reads, not in the key.
+func ruleName(detector string) string {
+	if rule, found := detectors.Named(detector); found {
+		return catalog.Name(rule)
+	}
+
+	return detector
 }
 
 // remember records what was filed, one row per reference, so a judge of those lines reads the sin as reported
@@ -346,6 +365,20 @@ func summarise(reason string) string {
 	}
 
 	return first
+}
+
+// sharedByEngines is how a bare name is spelled per engine, where several engines have a rule of that name. A
+// detector's name is its bare type name and the engines share those, so `DeepNestingDetector` is the python
+// rule's name as much as the PHP one's — and a report filed against it names a rule the reporter never saw fire,
+// which nobody downstream can tell. One spelling means one rule, so the reporter picks.
+func sharedByEngines(name string) []string {
+	var spellings []string
+	for _, rule := range detectors.EveryNamedIn(detectors.All(), name) {
+		engine, _ := detectors.EngineOf(rule)
+		spellings = append(spellings, "--detector="+string(engine)+"/"+catalog.Name(rule))
+	}
+
+	return spellings
 }
 
 // ownRule is the project's own rule the name means, and whether there is one.

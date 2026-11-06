@@ -27,11 +27,15 @@ type Sources interface {
 	ReadFile(path string) (*engine.Codebase, error)
 }
 
+// A scribe is enrolled against its detector's IDENTITY, engine and name, never its name alone: a detector's name
+// is its bare type name and the engines share those, so a python rule sharing a name with a PHP one that has a
+// scribe would be handed the PHP scribe and rewrite python source with PHP. Nothing is repentable outside the
+// backend and the frontend today, which is the only reason it has not bitten.
 var scribesOf = map[string]func() Scribe{}
 
 // ScribeFor is the scribe that rewrites the detector's sin.
 func ScribeFor(detector detectors.Detector) (Scribe, bool) {
-	scribe := scribesOf[catalog.Name(detector)]
+	scribe := scribesOf[detectors.IdentityOf(detector)]
 	if scribe == nil {
 		return nil, false
 	}
@@ -41,7 +45,7 @@ func ScribeFor(detector detectors.Detector) (Scribe, bool) {
 
 // Fixes enrols the scribe that rewrites a detector's sin, from the scribe's own file.
 func Fixes(detector detectors.Detector, scribe func() Scribe) {
-	scribesOf[catalog.Name(detector)] = scribe
+	scribesOf[detectors.IdentityOf(detector)] = scribe
 }
 
 // Steps is a step for each of the engine's detectors given whose sin a scribe rewrites, over the scanner, in the
@@ -49,12 +53,12 @@ func Fixes(detector detectors.Detector, scribe func() Scribe) {
 func Steps(engine catalog.Engine, scanner *Scanner, given []detectors.Detector) []Step {
 	ofEngine := map[string]bool{}
 	for _, detector := range detectors.Of(engine) {
-		ofEngine[catalog.Name(detector)] = true
+		ofEngine[detectors.IdentityOf(detector)] = true
 	}
 	var fixable []detectors.Detector
 	for _, detector := range given {
 		_, repentable := detector.(detectors.Repentable)
-		if repentable && ofEngine[catalog.Name(detector)] && scribesOf[catalog.Name(detector)] != nil {
+		if repentable && ofEngine[detectors.IdentityOf(detector)] && scribesOf[detectors.IdentityOf(detector)] != nil {
 			fixable = append(fixable, detector)
 		}
 	}
@@ -64,7 +68,7 @@ func Steps(engine catalog.Engine, scanner *Scanner, given []detectors.Detector) 
 
 	steps := make([]Step, 0, len(fixable))
 	for _, detector := range fixable {
-		steps = append(steps, DetectorStep{detector: detector, scribe: scribesOf[catalog.Name(detector)], scanner: scanner})
+		steps = append(steps, DetectorStep{detector: detector, scribe: scribesOf[detectors.IdentityOf(detector)], scanner: scanner})
 	}
 
 	for _, detector := range given {

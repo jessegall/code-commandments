@@ -18,12 +18,16 @@ import (
 // TestADetectorReportRecordsTheSinItWasAbout holds the whole of the first phase at the one place it is used: the
 // issue is filed, and the line it was about is recorded as reported with that issue, keyed so a judge can read it
 // back.
+//
+// Four engines have a rule of the same name, so a report has to say which one fired — and it is recorded under
+// the rule's OWN name all the same, because that is the name a judge finding carries: keyed by the spelling the
+// reporter typed, the sin they just reported would be reported at them again on the next run.
 func TestADetectorReportRecordsTheSinItWasAbout(t *testing.T) {
 	root := project(t, "src/refund.py", "def refund(order):\n    return order.total or 0\n")
 	ghAnswers(t, "https://github.com/jessegall/code-commandments/issues/814\n", nil)
 
 	said := &strings.Builder{}
-	if code := detectorReport(input(t, "src/refund.py:2"), "InventedDefaultDetector", "zero is the true count", refs("src/refund.py:2"), "v6.10.2", cli.Console{Out: said, Err: said}); code != 0 {
+	if code := detectorReport(input(t, "src/refund.py:2"), "python/InventedDefaultDetector", "zero is the true count", refs("src/refund.py:2"), "v6.10.2", cli.Console{Out: said, Err: said}); code != 0 {
 		t.Fatalf("the report answered %d: %s", code, said)
 	}
 
@@ -61,7 +65,7 @@ func TestNothingIsRecordedWhereNoIssueWasFiled(t *testing.T) {
 			ghAnswers(t, test.stdout, test.err)
 
 			said := &strings.Builder{}
-			detectorReport(input(t, "src/refund.py:1"), "InventedDefaultDetector", "zero is the true count", refs("src/refund.py:1"), "v6.10.2", cli.Console{Out: said, Err: said})
+			detectorReport(input(t, "src/refund.py:1"), "python/InventedDefaultDetector", "zero is the true count", refs("src/refund.py:1"), "v6.10.2", cli.Console{Out: said, Err: said})
 
 			if _, err := os.Stat(reported.Path(root)); err == nil {
 				t.Error("a report that filed no issue wrote a row")
@@ -78,11 +82,11 @@ func TestASinAlreadyReportedIsSaidOutLoudAndNotForgotten(t *testing.T) {
 	ghAnswers(t, "https://github.com/jessegall/code-commandments/issues/814\n", nil)
 
 	first := &strings.Builder{}
-	detectorReport(input(t, "src/refund.py:1"), "InventedDefaultDetector", "zero is the true count", refs("src/refund.py:1"), "v6.10.2", cli.Console{Out: first, Err: first})
+	detectorReport(input(t, "src/refund.py:1"), "python/InventedDefaultDetector", "zero is the true count", refs("src/refund.py:1"), "v6.10.2", cli.Console{Out: first, Err: first})
 
 	ghAnswers(t, "https://github.com/jessegall/code-commandments/issues/900\n", nil)
 	said := &strings.Builder{}
-	code := detectorReport(input(t, "src/refund.py:1"), "InventedDefaultDetector", "the same again", refs("src/refund.py:1"), "v6.10.2", cli.Console{Out: said, Err: said})
+	code := detectorReport(input(t, "src/refund.py:1"), "python/InventedDefaultDetector", "the same again", refs("src/refund.py:1"), "v6.10.2", cli.Console{Out: said, Err: said})
 
 	if code == 0 {
 		t.Error("a report whose row was refused answered success")
@@ -105,7 +109,7 @@ func TestALineThatCannotBeReadIsSaidOutLoud(t *testing.T) {
 	ghAnswers(t, "https://github.com/jessegall/code-commandments/issues/814\n", nil)
 
 	said := &strings.Builder{}
-	code := detectorReport(input(t, "src/refund.py:2"), "InventedDefaultDetector", "zero is the true count", refs("src/refund.py:2"), "v6.10.2", cli.Console{Out: said, Err: said})
+	code := detectorReport(input(t, "src/refund.py:2"), "python/InventedDefaultDetector", "zero is the true count", refs("src/refund.py:2"), "v6.10.2", cli.Console{Out: said, Err: said})
 
 	if code == 0 {
 		t.Error("a report whose line could not be read answered success")
@@ -123,7 +127,7 @@ func TestEveryReferenceOfOneReportIsRecorded(t *testing.T) {
 	ghAnswers(t, "https://github.com/jessegall/code-commandments/issues/814\n", nil)
 
 	said := &strings.Builder{}
-	detectorReport(input(t, "src/refund.py:1"), "InventedDefaultDetector", "zero is the true count", refs("src/refund.py:1", "src/refund.py:2"), "v6.10.2", cli.Console{Out: said, Err: said})
+	detectorReport(input(t, "src/refund.py:1"), "python/InventedDefaultDetector", "zero is the true count", refs("src/refund.py:1", "src/refund.py:2"), "v6.10.2", cli.Console{Out: said, Err: said})
 
 	held, _ := reported.Of(root)
 	if len(held.Rows()) != 2 {
@@ -187,5 +191,5 @@ func refs(labels ...string) []Reference {
 func input(t *testing.T, ref string) *cli.Input {
 	t.Helper()
 
-	return cli.InputOf("report", "--detector=InventedDefaultDetector", "--ref="+ref)
+	return cli.InputOf("report", "--detector=python/InventedDefaultDetector", "--ref="+ref)
 }
