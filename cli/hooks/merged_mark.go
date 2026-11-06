@@ -52,6 +52,14 @@ func (m Merged) Upto(branch string) string {
 	return ""
 }
 
+func (m Merged) JudgedForward(root, branch, commit string) error {
+	if was := m.Upto(branch); was != "" && was != commit && git.Holds(root, was) && !git.IsAncestor(root, was, commit) {
+		return nil
+	}
+
+	return m.Judged(branch, commit)
+}
+
 func (m Merged) Judged(branch, commit string) error {
 	read := m.file.Read()
 

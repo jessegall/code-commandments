@@ -53,7 +53,7 @@ func TestAnAnswerNeverWaitsOnAJudging(t *testing.T) {
 		}
 	}
 
-	if judgings.Load() == 0 {
+	if !startedAJudging(&judgings) {
 		t.Fatal("no judging was ever started, so nothing was being waited on and this test proves nothing")
 	}
 
@@ -90,7 +90,7 @@ func TestTheCommandGateAnswersWhileAJudgingIsHeld(t *testing.T) {
 		"data": map[string]any{"cwd": root, "kind": "create", "path": under},
 	})
 
-	if judgings.Load() == 0 {
+	if !startedAJudging(&judgings) {
 		t.Fatal("no judging was started, so the gate was not asked while anything was in flight")
 	}
 
@@ -149,4 +149,14 @@ func answerOn(t *testing.T, socket string, event map[string]any) string {
 	}
 
 	return strings.TrimSpace(said)
+}
+
+func startedAJudging(judgings *atomic.Int64) bool {
+	for until := time.Now().Add(30 * time.Second); time.Now().Before(until); time.Sleep(20 * time.Millisecond) {
+		if judgings.Load() > 0 {
+			return true
+		}
+	}
+
+	return false
 }

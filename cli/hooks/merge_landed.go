@@ -2,6 +2,7 @@ package hooks
 
 import (
 	"os"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -75,13 +76,17 @@ func MergeLanded(line map[string]any) string {
 
 	upto, why := mark.UptoUsable(work.project, work.branch, work.after)
 
+	if upto != "" && git.IsAncestor(work.project, work.after, upto) {
+		return ""
+	}
+
 	from := firstText(upto, work.before)
 	if from == "" || from == work.after {
 		return ""
 	}
 
 	if tooMany := work.tooManyFiles(from); tooMany != "" {
-		if err := mark.Judged(work.branch, work.after); err != nil {
+		if err := mark.JudgedForward(work.project, work.branch, work.after); err != nil {
 			return ""
 		}
 
@@ -90,16 +95,16 @@ func MergeLanded(line map[string]any) string {
 		return (JournalAnswer{Whisper: &tooMany}).Line4()
 	}
 
-	marks, judged := work.sinsBrought(from)
-	if !judged {
+	marks, narrowed := work.sinsBrought(from)
+	if narrowed == couldNotRead {
 		return ""
 	}
 
-	if err := mark.Judged(work.branch, work.after); err != nil {
+	if err := mark.JudgedForward(work.project, work.branch, work.after); err != nil {
 		return ""
 	}
 
-	said := work.saidAbout(marks, why)
+	said := work.saidAbout(marks, firstNarrowed(why, narrowed))
 	if said == "" {
 		return ""
 	}
@@ -120,18 +125,18 @@ func (l landed) keeps(said string) {
 	MergesIn(workspace.At(l.project, "")).Keeps(l.branch, l.after, said)
 }
 
-func (l landed) sinsBrought(from string) ([]SinMark, bool) {
+func (l landed) sinsBrought(from string) ([]SinMark, Narrowed) {
 	changed := git.ChangedBetween(l.project, from, l.after)
 	if len(changed) == 0 {
-		return nil, true
+		return nil, ""
 	}
 	if len(changed) > mostFilesAMergeBringsIn {
-		return nil, true
+		return nil, ""
 	}
 
 	project, err := config.Load(l.project)
 	if err != nil {
-		return nil, false
+		return nil, couldNotRead
 	}
 
 	rules := append(enabledIn(project, l.project), custom.InForce(l.project).Enabled(project)...)
@@ -145,19 +150,28 @@ func (l landed) sinsBrought(from string) ([]SinMark, bool) {
 	}
 
 	if len(files) == 0 {
-		return nil, true
+		return nil, ""
 	}
 
-	together, _, _ := AgainstTheProgramNarrowed(Marks(l.project), files,
+	together, _, why := AgainstTheProgramNarrowed(Marks(l.project), files,
 		func(file string) []detectors.Detector { return project.RulesFor(l.project, file, rules) },
 		func(string) git.ChangedLines { return git.Everywhere() }, l.project)
 
+	single := slices.DeleteFunc(slices.Clone(rules), detectors.ReadsBeyondOneFile)
+
 	var marks []SinMark
 	for _, file := range files {
-		marks = append(marks, together[file]...)
+		if found, held := together[file]; held {
+			marks = append(marks, found...)
+
+			continue
+		}
+
+		found, _, _ := marksIn(Marks(l.project), file, project.RulesFor(l.project, file, single), git.Everywhere())
+		marks = append(marks, found...)
 	}
 
-	return marks, true
+	return marks, why
 }
 
 func enabledIn(project config.Config, root string) []detectors.Detector {
@@ -223,3 +237,15 @@ func (l landed) tooManyFiles(from string) string {
 }
 
 var oneMergeAtATime sync.Mutex
+
+const couldNotRead Narrowed = "the project's own config could not be read, so nothing of this merge was judged"
+
+func firstNarrowed(said ...Narrowed) Narrowed {
+	for _, each := range said {
+		if each != "" {
+			return each
+		}
+	}
+
+	return ""
+}

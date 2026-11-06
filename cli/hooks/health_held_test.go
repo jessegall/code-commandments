@@ -51,7 +51,7 @@ func TestTheHealthAnswerDoesNotQueueBehindTheWork(t *testing.T) {
 		})
 	}
 
-	if judgings.Load() == 0 {
+	if !startedAJudging(&judgings) {
 		t.Fatal("no judging was started, so nothing was holding the service and this test proves nothing")
 	}
 

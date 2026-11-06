@@ -131,6 +131,8 @@ func (m merging) sinsWithin() handIn {
 	case marks := <-shallow:
 		held = marks
 	case <-within:
+		go m.tellsLater(shallow)
+
 		return handIn{got: gotNowhere}
 	}
 

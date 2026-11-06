@@ -78,6 +78,10 @@ func TestTheSameMergeDeliveredTwiceSaysNothingTheSecondTime(t *testing.T) {
 func TestAMergeWhoseDeliveryWasLostIsPickedUpByTheNext(t *testing.T) {
 	root, before, after := mergedProject(t)
 
+	if err := MergedIn(workspace.At(root, "")).Judged("main", before); err != nil {
+		t.Fatal(err)
+	}
+
 	wroteInto(t, filepath.Join(root, "src", "later.py"), sinOnLineFive)
 	commitIn(t, root, "the work of a second merge")
 
@@ -92,8 +96,23 @@ func TestAMergeWhoseDeliveryWasLostIsPickedUpByTheNext(t *testing.T) {
 	if !strings.Contains(said, "brought.py") {
 		t.Errorf("the merge whose delivery was lost was never picked up: the second merge says %s", said)
 	}
+}
 
-	_ = before
+func TestTheFirstMergeWeEverSeeJudgesItsOwnRangeAlone(t *testing.T) {
+	root, _, after := mergedProject(t)
+
+	wroteInto(t, filepath.Join(root, "src", "later.py"), sinOnLineFive)
+	commitIn(t, root, "the work of a second merge")
+
+	said := MergeLanded(mergeLine(root, "main", after, git.Head(root)))
+
+	if !strings.Contains(said, "later.py") {
+		t.Errorf("the first merge we ever see does not name its own file: %s", said)
+	}
+
+	if strings.Contains(said, "brought.py") {
+		t.Errorf("with no mark at all the first merge judged beyond its own range, which could be a whole history: %s", said)
+	}
 }
 
 func TestAMergeIsNotJudgedWhenTheSettingIsOff(t *testing.T) {

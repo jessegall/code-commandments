@@ -212,6 +212,12 @@ func overlaid(over *warm.Overlay, base *warm.Base, held branchRoot, files []stri
 	}
 
 	if state, _, _ := over.Filling(); state != warm.Filled {
+		if _, _, past := kept.PastItsCeiling(); past {
+			return nil, pastTheCeiling
+		}
+	}
+
+	if state, _, _ := over.Filling(); state != warm.Filled {
 		if why := fill(over, held, files...); why != "" {
 			return nil, why
 		}
