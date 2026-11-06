@@ -241,6 +241,8 @@ func answerWith(given map[string]any, runs func(Hook) bool, reportsSins bool) Jo
 
 	spent := time.Since(judging)
 
+	MemoryNow()
+
 	merged := Merge(responses)
 	answer := answerOf(merged)
 	answer.JudgedMs = milliseconds(spent)

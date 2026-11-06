@@ -181,3 +181,34 @@ func orNothing(said string) string {
 
 	return said
 }
+
+func NodesHeld() int {
+	return kept.NodesHeld()
+}
+
+func LanesHeld() int {
+	return len(kept.Lanes())
+}
+
+func Holding(project string) (int, bool) {
+	base, holds := kept.Any(project)
+	if !holds {
+		return 0, false
+	}
+
+	return base.Files(), true
+}
+
+func LastRead(root string) string {
+	named, ok := rootOf(root)
+	if !ok {
+		return "this folder is no checkout we know"
+	}
+
+	said, tried := howTheReadWent(named)
+	if !tried {
+		return "nothing has read it"
+	}
+
+	return said
+}
