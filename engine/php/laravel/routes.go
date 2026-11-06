@@ -194,9 +194,29 @@ func (r *RouteNames) register(name string) {
 	}
 }
 
+var routesInAFile = new(int)
+
 func readRouteNames(codebase *engine.Codebase) *RouteNames {
 	read := &RouteNames{names: map[string]bool{}}
+
 	for _, file := range codebase.Of(contract.PHP).Files() {
+		held := engine.Contribution(routesInAFile, file, routesOfOneFile)
+
+		for name := range held.names {
+			read.names[name] = true
+		}
+
+		read.families = append(read.families, held.families...)
+		read.dynamic = read.dynamic || held.dynamic
+	}
+
+	return read
+}
+
+func routesOfOneFile(file *engine.File) *RouteNames {
+	read := &RouteNames{names: map[string]bool{}}
+
+	{
 		var matches []engine.Match
 		for _, node := range file.Nodes() {
 			matches = append(matches, file.Match(node.ID))

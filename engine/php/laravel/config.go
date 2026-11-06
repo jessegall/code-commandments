@@ -18,17 +18,16 @@ type ConfigKeys struct {
 	defaults map[string]bool
 }
 
+var literalsInAFile = new(int)
+
 var configKeys = php.Memoised(func(codebase *engine.Codebase) *ConfigKeys {
 	keys := &ConfigKeys{declared: map[*contract.Node]string{}, files: map[string]bool{}, defaults: map[string]bool{}}
 	var declaredKeys []string
 	vendored := vendorConfigs{}
 	for _, file := range php.In(codebase).Files() {
+		keys.literals = append(keys.literals, engine.Contribution(literalsInAFile, file, literalsOfOneFile)...)
+
 		root := file.Match(0)
-		for _, node := range root.Descendants() {
-			if text, written := writtenText(node); written {
-				keys.literals = append(keys.literals, text)
-			}
-		}
 		prefix := vendored.prefixOf(file.Path)
 		if returned := returnedArray(root); prefix != "" && returned.Exists() {
 			declaredKeys = append(declaredKeys, keys.collect(returned, prefix)...)
@@ -127,6 +126,17 @@ func returnedArray(root engine.Match) engine.Match {
 	}
 
 	return engine.Match{}
+}
+
+func literalsOfOneFile(file *engine.File) []string {
+	var literals []string
+	for _, node := range file.Match(0).Descendants() {
+		if text, written := writtenText(node); written {
+			literals = append(literals, text)
+		}
+	}
+
+	return literals
 }
 
 func (k *ConfigKeys) collect(array engine.Match, prefix string) []string {
