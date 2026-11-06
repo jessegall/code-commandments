@@ -1,7 +1,8 @@
 #!/bin/sh
 # Whether the code-commandments plugin in the agent-journal project is answering, not merely running.
-plugin=/Users/jessegall/projects/agent-journal/.journal/plugins/code-commandments
-data=/Users/jessegall/projects/agent-journal/.journal/plugin-data/code-commandments
+journal=/Users/jessegall/projects/agent-journal/.journal
+plugin=$journal/plugins/code-commandments
+data=$journal/plugin-data/code-commandments
 
 if [ ! -d "$plugin" ]; then
     echo "the plugin is not installed in agent-journal, so there is nothing to answer for"
@@ -9,6 +10,22 @@ if [ ! -d "$plugin" ]; then
 fi
 
 version=$(sed -n 's/.*"version": *"\([^"]*\)".*/\1/p' "$plugin/journal-plugin.json" | head -1)
+
+# A plugin the journal has switched off runs no service by design, so there is nothing here to answer for: the
+# journal starts a service only for a plugin it has enabled, and the switch back on is the person's, never ours.
+# Reported as a dead service, it sent a reader hunting our own binary every ten minutes for a switch in the
+# journal's viewer. Its own rule switches it off when the three files it digests look changed, and an upgrade
+# saving that digest after a hook had already compared it is enough to do that with nothing really changed.
+# The row is read from the newest database the journal keeps, since the live one is named for its version.
+for db in $(ls -t "$journal"/version-*.db "$journal"/journal.db 2>/dev/null); do
+    enabled=$(sqlite3 "file:$db?mode=ro" "select enabled from plugins where name = 'code-commandments'" 2>/dev/null)
+    [ -n "$enabled" ] && break
+done
+
+if [ "$enabled" = "0" ]; then
+    echo "plugin $version is switched off in agent-journal's journal, so it runs no service and no edit there is judged: it is switched on again in the journal's viewer, under Settings, Plugins"
+    exit 0
+fi
 
 # The process is matched by the plugin's own folder and the binary alone, never by the verb or the exact path it
 # was launched with: the journal launches it from .journal-plugin/../bin and the verb is the protocol's own
