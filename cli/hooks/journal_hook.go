@@ -102,7 +102,48 @@ func adviseAsked(moment asked) {
 		return
 	}
 
-	_ = queue.Tell(answerWith(moment.given, not(isGate), true), asText(moment.given["env"]), MomentOf(moment.given).Agent)
+	answer := answerWith(moment.given, not(isGate), true)
+
+	if why := abandoned(moment.given); why != "" {
+		abandonedJudgings.Add(1)
+		held := MomentOf(moment.given)
+
+		if recorded(held.Cwd) {
+			Record(os.Getenv(pluginData), Judged{
+				At: time.Now(), Event: held.Event, Kind: "checkout", Checkout: held.Cwd, Abandoned: why,
+			})
+		}
+
+		return
+	}
+
+	_ = queue.Tell(answer, asText(moment.given["env"]), MomentOf(moment.given).Agent)
+}
+
+var abandonedJudgings atomic.Int64
+
+func AbandonedJudgings() int64 { return abandonedJudgings.Load() }
+
+func abandoned(given map[string]any) string {
+	held := MomentOf(given)
+	if held.File == nil {
+		return ""
+	}
+
+	checkout := checkoutOf(workspace.ProjectRoot(held.Cwd), *held.File)
+	if gone(checkout) {
+		return string(checkoutGone)
+	}
+
+	if held.Cut == "" {
+		return ""
+	}
+
+	if cut := kept.CutOf(checkout); cut != "" && cut != held.Cut {
+		return "this checkout was cut again, from " + cut
+	}
+
+	return ""
 }
 
 func adviseDetached(raw []byte) {

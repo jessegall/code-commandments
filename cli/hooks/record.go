@@ -9,22 +9,23 @@ import (
 )
 
 type Judged struct {
-	At       time.Time
-	Event    string
-	Checkout string
-	Kind     string
-	Branch   string
-	Held     bool
-	Why      Narrowed
-	Overlay  int
-	Parsed   int
-	ReadMs   int64
-	RuleMs   int64
-	Asked    int
-	NotAsked int
-	Sins     int
-	Dropped  Dropped
-	Memory   Memory
+	At        time.Time
+	Event     string
+	Checkout  string
+	Kind      string
+	Branch    string
+	Held      bool
+	Why       Narrowed
+	Overlay   int
+	Parsed    int
+	ReadMs    int64
+	RuleMs    int64
+	Asked     int
+	NotAsked  int
+	Sins      int
+	Dropped   Dropped
+	Memory    Memory
+	Abandoned string
 }
 
 func (j Judged) Line() string {
@@ -52,6 +53,10 @@ func (j Judged) Line() string {
 
 	if j.Memory != (Memory{}) {
 		said = append(said, j.Memory.Line())
+	}
+
+	if j.Abandoned != "" {
+		said = append(said, "abandoned, because "+j.Abandoned)
 	}
 
 	if j.Why != "" {
