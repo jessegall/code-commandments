@@ -115,13 +115,11 @@ func heldOrDeclined(root, in string, declined *string) func(scan.Sources) (*engi
 	return func(sources scan.Sources) (*engine.Codebase, error) {
 		checkout := checkoutOf(root, in)
 
-		named, base, held := baseForCheckout(root, checkout)
-		if !held {
-			*declined = "no tree is held for " + root + " on its branch yet"
+		named, base, why := answering(root, checkout)
+		if why != "" {
+			*declined = string(why)
 			if said, tried := howTheReadWent(named); tried {
 				*declined += ": " + said
-			} else {
-				*declined += " and none has been read in this process"
 			}
 
 			return engine.Load(), nil

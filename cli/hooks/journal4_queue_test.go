@@ -829,3 +829,33 @@ func TestWhatWasNotAskedTravelsTheQueueToTheAgent(t *testing.T) {
 		}
 	}
 }
+
+func TestAJudgingForAWorkerThatIsGoneTellsNobody(t *testing.T) {
+	root, _, data := projectWithASin(t)
+	t.Setenv("JOURNAL_ROOT", root)
+
+	worktree := filepath.Join(root, ".journal", "worktrees", "worker-9")
+	if err := os.MkdirAll(filepath.Join(worktree, "src"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(worktree, "src", "refund.py"),
+		[]byte("def refund(order):\n    if order.late:\n        raise ValueError(order)\n    else:\n        return order.total\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	line := map[string]any{
+		"v": 1, "event": "file_edited", "session": "s9", "environment": "main", "agent": 9,
+		"cwd":  worktree,
+		"data": map[string]any{"path": "src/refund.py", "cwd": worktree, "kind": "edit", "added": 1, "removed": 0},
+	}
+
+	if err := os.RemoveAll(worktree); err != nil {
+		t.Fatal(err)
+	}
+
+	Judge4Into(line, data)
+
+	if queued := drained(t, data); len(queued) != 0 {
+		t.Errorf("a judging for a worker whose folder is gone left %d file(s) in the queue: %v", len(queued), queued)
+	}
+}

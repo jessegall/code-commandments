@@ -2,6 +2,7 @@ package hooks
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 	"slices"
 	"strings"
@@ -45,6 +46,10 @@ type Narrowed string
 
 const (
 	noTreeHeld     Narrowed = "no tree of this checkout is held yet, and one is being read now"
+	cannotList     Narrowed = "git could not say what this checkout differs from its branch by"
+	fillingFailed  Narrowed = "what this checkout differs from its branch by could not be read"
+	checkoutGone   Narrowed = "this checkout is no longer on disk"
+	beingFilled    Narrowed = "what this checkout differs from its branch by is being read now"
 	noTreeComing   Narrowed = "no tree of this checkout is held and none is being read, so only the rules that answer from one file will ever run here"
 	filesNotOnDisk Narrowed = "what changed is not on disk"
 	tooMuchMoved   Narrowed = "more files changed than one view can carry, so the tree was let go"
@@ -82,13 +87,9 @@ func AgainstTheProgramNarrowed(marking Marking, files []string, rulesFor func(st
 		checkout = own
 	}
 
-	held, base, ok := baseForCheckout(root, checkout)
-	if !ok {
-		if !serving.Load() {
-			return nil, 0, noTreeComing
-		}
-
-		return nil, 0, noTreeHeld
+	held, base, why := answering(root, checkout)
+	if why != "" {
+		return nil, 0, why
 	}
 
 	here := slices.DeleteFunc(slices.Clone(files), func(path string) bool { return warm.Mark(path) == "" })
@@ -163,7 +164,12 @@ func AgainstTheProgramNarrowed(marking Marking, files []string, rulesFor func(st
 
 			kept.Patched(base, view, marks)
 		} else {
-			view = overlaid(kept.Over(checkout), base, held, fresh, streams, marks, time.Now())
+			overlaid, why := overlaid(kept.Over(checkout), base, held, fresh, streams, marks, time.Now())
+			if why != "" {
+				return nil, read, why
+			}
+
+			view = overlaid
 		}
 	}
 
@@ -179,9 +185,11 @@ func AgainstTheProgramNarrowed(marking Marking, files []string, rulesFor func(st
 	return marksOverTogether(view, marking, judged, rulesFor, changedFor), read, ""
 }
 
-func overlaid(over *warm.Overlay, base *warm.Base, held branchRoot, files []string, streams []*contract.Stream, marks map[string]warm.Known, now time.Time) *engine.Codebase {
-	if over.Empty() {
-		fill(over, held, files...)
+func overlaid(over *warm.Overlay, base *warm.Base, held branchRoot, files []string, streams []*contract.Stream, marks map[string]warm.Known, now time.Time) (*engine.Codebase, Narrowed) {
+	if state, _, _ := over.Filling(); state != warm.Filled {
+		if why := fill(over, held, files...); why != "" {
+			return nil, why
+		}
 	}
 
 	if over.SweepDue(now) {
@@ -190,13 +198,19 @@ func overlaid(over *warm.Overlay, base *warm.Base, held branchRoot, files []stri
 
 	over.Patch(streams, marks)
 
-	return base.ViewFrom(over.Checkout, over.Streams(), held.project, over.Gone())
+	return base.ViewFrom(over.Checkout, over.Streams(), held.project, over.Gone()), ""
 }
 
-func fill(over *warm.Overlay, held branchRoot, files ...string) {
+func fill(over *warm.Overlay, held branchRoot, files ...string) Narrowed {
+	if !over.BeginsFilling() {
+		return beingFilled
+	}
+
 	changed, told := git.ChangedVsBranch(over.Checkout, held.branch)
 	if !told {
-		return
+		over.CouldNotFill(string(cannotList))
+
+		return cannotList
 	}
 
 	var reading []string
@@ -206,18 +220,57 @@ func fill(over *warm.Overlay, held branchRoot, files ...string) {
 		}
 	}
 
+	for _, path := range alsoDirtyInTheProject(over.Checkout, held, files, reading) {
+		reading = append(reading, path)
+	}
+
 	if len(reading) == 0 {
-		return
+		over.Fills(time.Now())
+
+		return ""
 	}
 
 	taken := warm.Taken(reading)
 
 	rebuilt, err := scan.Walk(reading, source.Excluded{}).Load()
 	if err != nil || rebuilt == nil {
-		return
+		over.CouldNotFill(string(fillingFailed))
+
+		return fillingFailed
 	}
 
 	over.Patch(rebuilt.Streams(), taken)
+	over.Fills(time.Now())
+
+	return ""
+}
+
+func alsoDirtyInTheProject(checkout string, held branchRoot, files, reading []string) []string {
+	var also []string
+
+	for file := range git.ChangedVsHead(held.project) {
+		under, inside := warm.Under(held.project, file)
+		if !inside {
+			continue
+		}
+
+		stands := filepath.Join(checkout, under)
+		if stands == file {
+			continue
+		}
+
+		if slices.Contains(files, stands) || slices.Contains(reading, stands) || slices.Contains(also, stands) {
+			continue
+		}
+
+		if info, err := os.Stat(stands); err != nil || info.IsDir() {
+			continue
+		}
+
+		also = append(also, stands)
+	}
+
+	return also
 }
 
 func removedIn(held branchRoot, checkout string) []string {
@@ -462,18 +515,40 @@ func rootOf(path string) (branchRoot, bool) {
 	return branchRoot{project: project, branch: branch}, true
 }
 
-func baseForCheckout(path, checkout string) (branchRoot, *warm.Base, bool) {
+func answering(path, checkout string) (branchRoot, *warm.Base, Narrowed) {
+	if info, err := os.Stat(checkout); err != nil || !info.IsDir() {
+		return branchRoot{}, nil, checkoutGone
+	}
+
 	named, base, held := baseFor(path)
-	if held || named.project == "" || checkout == strings.TrimRight(named.project, "/") {
-		return named, base, held
+	own := named.project != "" && checkout == strings.TrimRight(named.project, "/")
+
+	if held {
+		return named, base, ""
+	}
+
+	if own || named.project == "" {
+		if !serving.Load() {
+			return named, nil, noTreeComing
+		}
+
+		return named, nil, noTreeHeld
 	}
 
 	any, holds := kept.Any(named.project)
 	if !holds {
-		return named, base, held
+		if !serving.Load() {
+			return named, nil, noTreeComing
+		}
+
+		return named, nil, noTreeHeld
 	}
 
-	return branchRoot{project: named.project, branch: any.Branch}, any, true
+	if state, _, _ := kept.Over(checkout).Filling(); state == warm.BeingFilled {
+		return named, nil, beingFilled
+	}
+
+	return branchRoot{project: named.project, branch: any.Branch}, any, ""
 }
 
 func baseFor(path string) (branchRoot, *warm.Base, bool) {

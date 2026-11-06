@@ -714,15 +714,30 @@ func TestManyTreesAtOnce(t *testing.T) {
 		t.Fatal("not one answer came back from the whole run, and every move was held to nothing")
 	}
 
-	t.Logf("%d answers were held to the invariants as they came", answered.Load())
+	t.Logf("%d answers were held to the invariants as they came, %d checkouts at once at the most", answered.Load(), atOnce.Load())
+
+	if *stressWorktrees > 1 && atOnce.Load() < 2 {
+		t.Errorf("no two checkouts were ever in the service at the same moment, so nothing this run claims about "+
+			"several at once was really tried: %d at the most", atOnce.Load())
+	}
 }
 
 var answered atomic.Int64
 
-var oneAtATime sync.Mutex
+var inFlight, atOnce atomic.Int64
+
+func flying() func() {
+	if now := inFlight.Add(1); now > atOnce.Load() {
+		atOnce.Store(now)
+	}
+
+	return func() { inFlight.Add(-1) }
+}
 
 // stressCheckout is one checkout going ham: a project's own or a worktree of it, with its own files and its own moves to draw.
 type stressCheckout struct {
+	own sync.Mutex
+
 	At, Project string
 	Named       int
 
@@ -809,6 +824,10 @@ func (c *stressCheckout) move(t *testing.T, move int) {
 		c.renames(t)
 	case 19:
 		c.writesOddly(t)
+	case 15:
+		c.forgets(t)
+
+		return
 	case 26:
 		c.abandons(t)
 	case 27:
@@ -837,9 +856,26 @@ func (c *stressCheckout) move(t *testing.T, move int) {
 	}
 }
 
+func (c *stressCheckout) forgets(t *testing.T) {
+	kept.Drop(c.Project, git.CurrentBranch(c.Project))
+	kept.Forget(c.At)
+
+	c.wrote++
+	file := filepath.Join(c.At, "shop", "goods", fmt.Sprintf("forgot%d_%d.py", c.Named, c.wrote))
+
+	written := stressMine(c.Named)
+	if err := os.WriteFile(file, []byte(written), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	c.mine = append(c.mine, file)
+	c.tells(t, file, 1, lines(written), true)
+}
+
 func (c *stressCheckout) handsIn(t *testing.T) {
-	oneAtATime.Lock()
-	defer oneAtATime.Unlock()
+	c.own.Lock()
+	defer c.own.Unlock()
+	defer flying()()
 
 	stressHeld(t, c, c.at, c.Project, "", false, stressTake(t))
 
@@ -1013,8 +1049,9 @@ func (c *stressCheckout) raises(t *testing.T) {
 	events := []string{"ticked", "idle", "command_starting", "session_started", "tool_starting", "subagent_started", "plugin.updated", "worker_delivering"}
 	event := events[c.draw.Intn(len(events))]
 
-	oneAtATime.Lock()
-	defer oneAtATime.Unlock()
+	c.own.Lock()
+	defer c.own.Unlock()
+	defer flying()()
 
 	stressHeld(t, c, c.at, c.Project, "", false, stressTake(t))
 
@@ -1243,8 +1280,9 @@ func (c *stressCheckout) tells(t *testing.T, file string, from, to int, owed boo
 		against = c.At
 	}
 
-	oneAtATime.Lock()
-	defer oneAtATime.Unlock()
+	c.own.Lock()
+	defer c.own.Unlock()
+	defer flying()()
 
 	stressHeld(t, c, c.at, against, "", false, stressTake(t))
 

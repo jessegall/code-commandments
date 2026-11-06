@@ -602,3 +602,115 @@ func TestEveryWayTheJudgingNarrowsSaysWhichItWas(t *testing.T) {
 		t.Error("a judging of a file that is not on disk answers as though it had asked everything")
 	}
 }
+
+func TestAWorktreeIsJudgedAgainstItsOwnCopyOfWhatTheProjectHasUncommitted(t *testing.T) {
+	root, _ := workerProject(t)
+	worker := filepath.Join(root, ".journal", "worktrees", "worker-1")
+	named, _ := rootOf(root)
+
+	own := filepath.Join(root, "src", "order.py")
+	if err := os.WriteFile(own, []byte("class Order:\n    def total(self):\n        return 0\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	over := kept.Over(worker)
+	if why := fill(over, named, nil...); why != "" {
+		t.Fatalf("the worktree's overlay could not be filled: %s", why)
+	}
+
+	if state, _, _ := over.Filling(); state != warm.Filled {
+		t.Fatalf("a filled overlay answers %v", state)
+	}
+
+	stands := filepath.Join(worker, "src", "order.py")
+
+	held := false
+	for _, stream := range over.Streams() {
+		for _, file := range stream.Files {
+			if file.Path == stands {
+				held = true
+			}
+		}
+	}
+
+	if !held {
+		t.Errorf("the worktree's own copy of %s is not in its overlay, so it would be judged against the project's uncommitted text", stands)
+	}
+}
+
+func TestBothDoorsRefuseTheSameWorktreeForTheSameReason(t *testing.T) {
+	root, _ := workerProject(t)
+	worker := filepath.Join(root, ".journal", "worktrees", "worker-1")
+	project := git.ProjectRoot(root)
+
+	kept.Drop(project, git.CurrentBranch(project))
+	kept.Forget(worker)
+
+	named, base, why := answering(root, worker)
+	if why == "" || base != nil {
+		t.Fatalf("a worktree with no tree held and no overlay was answered from %v", named)
+	}
+
+	if _, _, projects := answering(root, project); projects != why {
+		t.Errorf("the two doors answer the same worktree differently: %q against %q", why, projects)
+	}
+
+	if _, _, why := answering(root, filepath.Join(root, ".journal", "worktrees", "worker-404")); why != checkoutGone {
+		t.Errorf("a checkout that is gone answers %q", why)
+	}
+}
+
+func TestTheThreeCheckoutsAJudgingCannotAnswerAreToldApart(t *testing.T) {
+	root, _ := workerProject(t)
+	worker := filepath.Join(root, ".journal", "worktrees", "worker-1")
+	project := git.ProjectRoot(root)
+
+	kept.Drop(project, git.CurrentBranch(project))
+	kept.Forget(worker)
+
+	if _, _, why := answering(root, filepath.Join(root, ".journal", "worktrees", "worker-404")); why != checkoutGone {
+		t.Errorf("a checkout that is not on disk answers %q", why)
+	}
+
+	if _, _, why := answering(root, worker); why == "" || why == checkoutGone {
+		t.Errorf("a checkout nobody holds a tree for answers %q", why)
+	}
+
+	over := kept.Over(worker)
+	over.CouldNotFill("git could not list it")
+	if state, _, why := over.Filling(); state != warm.FillingFailed || why == "" {
+		t.Errorf("a reading that failed answers %v because %q", state, why)
+	}
+}
+
+func TestManyWarmingsAtOnceReadTheTreeOnce(t *testing.T) {
+	root, _ := workerProject(t)
+	project := git.ProjectRoot(root)
+	named, _ := rootOf(root)
+
+	kept.Drop(project, named.branch)
+	Serves()
+
+	settings, _ := config.Load(root)
+
+	reads := 0
+	for range 5 {
+		if _, already := reading.LoadOrStore(named.key(), true); !already {
+			reads++
+		}
+	}
+
+	if reads != 1 {
+		t.Errorf("five warmings at once started %d reads of the tree", reads)
+	}
+
+	reading.Delete(named.key())
+
+	Warming(root, settings)
+	if _, running := reading.Load(named.key()); !running {
+		t.Skip("the read of the tree finished before this test could see it running")
+	}
+
+	Warming(root, settings)
+	Warming(root, settings)
+}

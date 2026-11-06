@@ -142,8 +142,24 @@ func Judge4Into(line map[string]any, folder string) {
 	}
 
 	given := Stamped(moment)
+	answer := answerWith(given, not(isGate), true)
 
-	_ = queue.Tell(answerWith(given, not(isGate), true), asText(line["environment"]), MomentOf(given).Agent)
+	data, _ := line["data"].(map[string]any)
+	if gone(asText(firstOf(data["cwd"], line["cwd"]))) {
+		return
+	}
+
+	_ = queue.Tell(answer, asText(line["environment"]), MomentOf(given).Agent)
+}
+
+func gone(cwd string) bool {
+	if cwd == "" {
+		return false
+	}
+
+	info, err := os.Stat(cwd)
+
+	return err != nil || !info.IsDir()
 }
 
 func judge4Detached(raw []byte, line map[string]any) {

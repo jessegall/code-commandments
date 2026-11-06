@@ -7,6 +7,18 @@ import (
 	"github.com/jessegall/code-commandments/contract"
 )
 
+// Filling is how far an overlay has come: a checkout whose own files have never been read, one whose files were
+// read at a moment, and one whose reading was tried and failed. An empty overlay is not a checkout with nothing
+// of its own, and reading it as one is what judged a worker with thirty changed files as if it had changed none.
+type Filling int
+
+const (
+	NeverFilled Filling = iota
+	BeingFilled
+	Filled
+	FillingFailed
+)
+
 // Overlay is one checkout's own files, held over a base.
 type Overlay struct {
 	Checkout string
@@ -18,6 +30,9 @@ type Overlay struct {
 	gone    map[string]bool
 	asked   time.Time
 	swept   time.Time
+	filling Filling
+	filled  time.Time
+	why     string
 }
 
 func (k *Keeper) Over(checkout string) *Overlay {
@@ -66,6 +81,40 @@ func (o *Overlay) Empty() bool {
 	defer o.mu.Unlock()
 
 	return len(o.files) == 0
+}
+
+func (o *Overlay) Filling() (Filling, time.Time, string) {
+	o.mu.Lock()
+	defer o.mu.Unlock()
+
+	return o.filling, o.filled, o.why
+}
+
+func (o *Overlay) BeginsFilling() bool {
+	o.mu.Lock()
+	defer o.mu.Unlock()
+
+	if o.filling == BeingFilled {
+		return false
+	}
+
+	o.filling = BeingFilled
+
+	return true
+}
+
+func (o *Overlay) Fills(at time.Time) {
+	o.mu.Lock()
+	defer o.mu.Unlock()
+
+	o.filling, o.filled, o.why = Filled, at, ""
+}
+
+func (o *Overlay) CouldNotFill(why string) {
+	o.mu.Lock()
+	defer o.mu.Unlock()
+
+	o.filling, o.why = FillingFailed, why
 }
 
 func (o *Overlay) Patch(streams []*contract.Stream, marks map[string]Known) {
