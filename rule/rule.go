@@ -461,7 +461,7 @@ func Parse(name string, text []byte, skills Skills) (Rule, error) {
 		Description: read.Sin.Description,
 		Rule:        read.Sin.Rule,
 		Suggestion:  read.Sin.Suggestion,
-	}}, read.Find, read.Fix, folders(read.Judges)}, nil
+	}}, read.Find.compiled(), read.Fix, folders(read.Judges)}, nil
 }
 
 func folders(named []string) []string {

@@ -11,6 +11,7 @@ var answeredFromTheFile = []string{
 	"hasModifier", "hasFlag", "operator", "operatorIn",
 
 	"text", "textLike", "textMatches", "commentIs", "commentLike", "commentMatches", "docTag", "documented",
+	"documents",
 
 	"file", "fileMatches", "namespaceLike", "layer", "topLevel", "withinLoop", "position", "field", "role",
 	"sameAs",
