@@ -386,7 +386,7 @@ func (s JournalServe) Run(in *cli.Input, console cli.Console) (int, error) {
 		go serveJudging(judging, root)
 	}
 
-	advice := startAdviser(adviseAsked)
+	advice := startAdvisers(adviseAsked)
 	serve(listener, func() bool { return stamp(root) == started }, advice)
 
 	// What it has answered but not yet judged is worked out before it goes. The service ends when the code it
@@ -410,7 +410,7 @@ func quiet() cli.Console {
 
 // serve answers each connection's gates at once and hands its moment to the adviser, so no gate ever waits on a
 // sin check, until a connection finds what it runs no longer current: that one it hangs up unanswered.
-func serve(listener net.Listener, current func() bool, advice *adviser) {
+func serve(listener net.Listener, current func() bool, advice *advisers) {
 	for {
 		connection, err := listener.Accept()
 		if err != nil {
@@ -500,8 +500,9 @@ type asked struct {
 	first bool
 }
 
-// adviser works out each moment's advice on one goroutine of its own, in the order the moments came: the service
-// keeps answering while it works, and two checks of one file never run at once.
+// adviser works out ONE AGENT's moments on a goroutine of its own, in the order they came: the service keeps
+// answering while it works, and two checks of one file never run at once, a file belonging to one agent's
+// checkout. One per agent is advisers, above.
 type adviser struct {
 	mu      sync.Mutex
 	pending []asked
@@ -515,6 +516,58 @@ type adviser struct {
 	// working says a moment's advice is being worked out right now, so a service ending waits for it as well as
 	// for the ones still queued.
 	working bool
+}
+
+// advisers are one adviser per AGENT, which is what keeps one agent's work off another's back.
+//
+// There used to be one for the whole project, and a moment then waited behind every moment before it, whoever
+// raised it. Measured with three workers, a fourth, the main agent and a 233-test run going at once on a
+// consumer: judged_total 27955 ms for 143 ms of its own work, and one worker's answer arrived 3 min 51 s after
+// its write, by which time the worker had ended and its sin was never told.
+//
+// Per agent and not per file, because an agent's own moments must still be worked out in order: two checks of
+// one file must never run at once, and a file belongs to the checkout of one agent. So each agent keeps the
+// ordering it had and loses the waiting it never owed.
+type advisers struct {
+	mu     sync.Mutex
+	each   map[int]*adviser
+	advise func(asked)
+}
+
+// startAdvisers is one adviser per agent, each started as that agent is first seen.
+func startAdvisers(advise func(asked)) *advisers {
+	return &advisers{each: map[int]*adviser{}, advise: advise}
+}
+
+// add gives the moment to its own agent's adviser, starting one where that agent has none yet.
+func (s *advisers) add(given asked) {
+	s.mu.Lock()
+	whose := MomentOf(given.given).Agent
+	held, known := s.each[whose]
+	if !known {
+		held = startAdviser(s.advise)
+		s.each[whose] = held
+	}
+	s.mu.Unlock()
+
+	held.add(given)
+}
+
+// drained waits for the advice every agent still holds, which is what a service owes before it ends.
+func (s *advisers) drained(within time.Duration) {
+	s.mu.Lock()
+	held := make([]*adviser, 0, len(s.each))
+	for _, each := range s.each {
+		held = append(held, each)
+	}
+	s.mu.Unlock()
+
+	// Every agent inside the one window, since they work at the same time: giving each the whole window in turn
+	// would let a service that owes five agents wait five windows before it goes.
+	until := time.Now().Add(within)
+	for _, each := range held {
+		each.drained(time.Until(until))
+	}
 }
 
 // startAdviser is an adviser giving each moment to advise, its goroutine started.

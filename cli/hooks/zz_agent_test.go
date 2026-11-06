@@ -134,7 +134,7 @@ func TestAnEditJudgedOnTheServicesPathIsQueuedForTheAgentThatMadeIt(t *testing.T
 	}
 	defer listener.Close()
 
-	go serve(listener, func() bool { return true }, startAdviser(adviseAsked))
+	go serve(listener, func() bool { return true }, startAdvisers(adviseAsked))
 
 	connection, err := net.Dial("unix", socket)
 	if err != nil {

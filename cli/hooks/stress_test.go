@@ -43,6 +43,8 @@ var (
 	stressWorkers = flag.Int("stress.workers", 3, "how many workers edit and hand in at once")
 	stressEdits   = flag.Int("stress.edits", 3, "how many files each worker edits")
 	stressHandIn  = flag.Bool("stress.hand-in", true, "run each worker's hand-in judging in the same window")
+	stressWithin  = flag.Duration("stress.within", 10*time.Second,
+		"how long after the last edit the last answer may land before the run fails")
 	stressAsks    = flag.Bool("stress.asks", false, "time one ask of 1, 2, 3 and 5 files through the warm bridge instead of the load")
 	stressAhead   = flag.Bool("stress.ahead", true, "parse each edited file when its event arrives, together with every file waiting then")
 	stressApart   = flag.Duration("stress.apart", 0, "how long a worker waits between its edits; a real agent edits seconds apart, not all at once")
@@ -145,7 +147,19 @@ func TestTheStress(t *testing.T) {
 
 	work.Wait()
 
-	answers, landed := stressAnswers(t, data, *stressWorkers**stressEdits, 15*time.Minute)
+	// An answer per BATCH rather than per edit: an agent's own edits are judged in one pass over one view and
+	// answered once, naming every file of that batch, which is one message to the agent about its three files
+	// rather than three. So the count waited for is the agents, and what every file was told is held below.
+	answers, landed := stressAnswers(t, data, stressEditedFiles(), *stressWithin)
+
+	// A BUDGET and not a stopwatch. What the plugin promises is that an agent hears about the file it wrote
+	// while it is still working on it, so a run that misses it fails rather than waiting it out and printing a
+	// number nobody acts on. Before an agent's edits were judged in one pass: 26.4 seconds for 48 edits by four
+	// workers, which is the figure this budget exists to keep from coming back.
+	if waited := landed.Sub(last.at); waited > *stressWithin {
+		t.Errorf("the last answer landed %v after the last edit, past the %v an agent may wait to hear about the "+
+			"file it just wrote", waited.Round(time.Millisecond), *stressWithin)
+	}
 
 	// From the last EDIT, never from the last hand-in: a hand-in takes seconds of its own after the edits are in,
 	// and counted from there the queue read as having cleared before the edits were sent.
@@ -209,13 +223,19 @@ func edits(answers []map[string]any) []map[string]any {
 func stressTold(t *testing.T, answers []map[string]any) {
 	t.Helper()
 
-	for at, answer := range answers {
-		told := asText(answer["tell"])
+	// Asked of what the run was told ALTOGETHER, since an agent's edits are judged in one pass and answered once
+	// for the batch: a single answer names the files of its own batch and no others, so holding each answer to
+	// naming every sin asks it for sins that are not its to name.
+	var said strings.Builder
+	for _, answer := range answers {
+		said.WriteString(asText(answer["tell"]))
+		said.WriteString("\n")
+	}
 
-		for _, sin := range []string{"deep-python-nesting", "thing-by-its-kind"} {
-			if !strings.Contains(told, sin) {
-				t.Errorf("answer %d names no %s, so the edit was not judged against what it should be:\n%s", at+1, sin, told)
-			}
+	for _, sin := range []string{"deep-python-nesting", "thing-by-its-kind"} {
+		if !strings.Contains(said.String(), sin) {
+			t.Errorf("nothing the run was told names %s, so the edits were not judged against what they should "+
+				"be:\n%s", sin, said.String())
 		}
 	}
 }
@@ -509,29 +529,55 @@ func heldWithin(project, branch string, within time.Duration) bool {
 }
 
 // stressAnswers waits for the plugin's answers and says when the last of them landed, which is the queue clearing.
-func stressAnswers(t *testing.T, data string, wanted int, within time.Duration) ([]map[string]any, time.Time) {
+// Waited for until every FILE the run edited has been named, not until a count of answers is reached. An agent's
+// edits are judged in one pass and answered once for the batch, so how many answers a run of 48 edits comes to
+// is the plugin's business and not a number this harness may assume: counting them, the run stopped at the first
+// small batch of each worker and read its own impatience as an answer.
+func stressAnswers(t *testing.T, data string, wanted []string, within time.Duration) ([]map[string]any, time.Time) {
 	t.Helper()
 
 	queue, _ := Queue4In(data)
 
 	var held []map[string]any
+	landed := time.Now()
 
 	for until := time.Now().Add(within); time.Now().Before(until); time.Sleep(100 * time.Millisecond) {
 		files, _ := filepath.Glob(filepath.Join(queue.Path(), "*.json"))
-		if len(files) == 0 {
-			continue
+		if len(files) > 0 {
+			held = append(held, drained(t, data)...)
+			landed = time.Now()
 		}
 
-		// Read as they land, since an answer about a heartbeat lands among them and the count that matters is
-		// the edits'.
-		held = append(held, drained(t, data)...)
-		if len(edits(held)) >= wanted {
-			return held, time.Now()
+		if stressNamedAll(held, wanted) {
+			return held, landed
 		}
 	}
 
 	return append(held, drained(t, data)...), time.Now()
+}
 
+// stressNamedAll says every edit of every worker has been named by some answer OF THAT WORKER, which is the only
+// honest sign that the plugin has finished with them.
+//
+// By the agent and the file's own name, never by the whole path: which shape an answer names a path in is the
+// plugin's business, and two workers' edits are the same path under their own checkouts. Comparing whole paths
+// the harness invented, this waited for ever on files that had all been answered.
+func stressNamedAll(answers []map[string]any, wanted []string) bool {
+	said := map[string]bool{}
+	for _, answer := range answers {
+		whose := int(asFloat(answer["agent"]))
+		for _, named := range stressReported(answer) {
+			said[fmt.Sprintf("%d\x00%s", whose, filepath.Base(named))] = true
+		}
+	}
+
+	for _, file := range wanted {
+		if !said[file] {
+			return false
+		}
+	}
+
+	return true
 }
 
 // stressProject is a project of the size asked for, with a worktree per worker as the journal cuts them, and the
@@ -1824,4 +1870,17 @@ func stressUnder(project, file string) string {
 	}
 
 	return under
+}
+
+// stressEditedFiles are the files this run edited, by the path an answer names them with: one per edit of each
+// worker, which is what every one of them must be told about before the run has its figure.
+func stressEditedFiles() []string {
+	var files []string
+	for worker := 1; worker <= *stressWorkers; worker++ {
+		for edit := 0; edit < *stressEdits; edit++ {
+			files = append(files, fmt.Sprintf("%d\x00thing%d.py", worker, edit))
+		}
+	}
+
+	return files
 }

@@ -329,7 +329,7 @@ func TestTheServiceAnswersTheHeldEventWithTheGatesAloneAndAdvisesAfter(t *testin
 	defer listener.Close()
 
 	advised := make(chan asked, 1)
-	go serve(listener, func() bool { return true }, startAdviser(func(moment asked) { advised <- moment }))
+	go serve(listener, func() bool { return true }, startAdvisers(func(moment asked) { advised <- moment }))
 
 	connection, err := net.Dial("unix", socket)
 	if err != nil {
@@ -598,7 +598,7 @@ func TestTheServiceAnswersEveryVersion4EventInVersion4sShape(t *testing.T) {
 			t.Fatalf("no socket to listen on: %v", err)
 		}
 
-		go serve(listener, func() bool { return true }, startAdviser(func(asked) {}))
+		go serve(listener, func() bool { return true }, startAdvisers(func(asked) {}))
 
 		connection, err := net.Dial("unix", socket)
 		if err != nil {

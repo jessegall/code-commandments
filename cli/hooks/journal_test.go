@@ -201,3 +201,74 @@ func TestAnEditsAdviceIsWorkedOutFirst(t *testing.T) {
 		t.Errorf("the queue worked out %v; the edits come first, since an agent is waiting on them", order)
 	}
 }
+
+// TestOneAgentsMomentsNeverWaitBehindAnothers holds the one thing that made a worker hear about its sin four
+// minutes late. There was ONE queue for the whole project, so a moment waited behind every moment before it,
+// whoever raised it: measured on a consumer with three workers, a fourth, the main agent and a 233-test run
+// going at once, judged_total 27955 ms for 143 ms of its own work, and one worker's answer arrived 3 min 51 s
+// after its write, by which time that worker had ended and its sin was never told at all.
+//
+// An agent's own moments are still worked out in order, since two checks of one file must never run at once and
+// a file belongs to the checkout of one agent. What goes is the waiting it never owed.
+func TestOneAgentsMomentsNeverWaitBehindAnothers(t *testing.T) {
+	slow := make(chan struct{})
+	quick := make(chan struct{})
+
+	advice := startAdvisers(func(moment asked) {
+		switch MomentOf(moment.given).Agent {
+		case 1:
+			// The first agent's moment is still being worked out when the test ends, as a judging of a large
+			// tree is while another agent writes.
+			<-slow
+		case 2:
+			close(quick)
+		}
+	})
+
+	advice.add(asked{map[string]any{"agent": map[string]any{"id": 1}}, true, true})
+	advice.add(asked{map[string]any{"agent": map[string]any{"id": 2}}, true, true})
+
+	select {
+	case <-quick:
+	case <-time.After(10 * time.Second):
+		t.Error("the second agent's moment waited on the first agent's, which is how a worker heard about its " +
+			"sin four minutes after it wrote it")
+	}
+
+	close(slow)
+	advice.drained(10 * time.Second)
+}
+
+// TestAnAgentsOwnMomentsAreWorkedOutInOrder holds the other half: one agent's moments are never worked out at
+// the same time as one another, since two checks of one file must never run at once.
+func TestAnAgentsOwnMomentsAreWorkedOutInOrder(t *testing.T) {
+	var working sync.Mutex
+	var at, most int
+
+	advice := startAdvisers(func(asked) {
+		working.Lock()
+		at++
+		most = max(most, at)
+		working.Unlock()
+
+		time.Sleep(20 * time.Millisecond)
+
+		working.Lock()
+		at--
+		working.Unlock()
+	})
+
+	for moment := 0; moment < 6; moment++ {
+		advice.add(asked{map[string]any{"agent": map[string]any{"id": 7}}, true, true})
+	}
+
+	advice.drained(10 * time.Second)
+
+	working.Lock()
+	defer working.Unlock()
+
+	if most != 1 {
+		t.Errorf("one agent had %d of its own moments worked out at once; two checks of one file must never run "+
+			"together", most)
+	}
+}
