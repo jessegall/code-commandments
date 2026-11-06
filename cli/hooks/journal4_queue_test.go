@@ -3,6 +3,7 @@ package hooks
 import (
 	"bufio"
 	"encoding/json"
+	"github.com/jessegall/code-commandments/cli/git"
 	"net"
 	"os"
 	"os/exec"
@@ -798,6 +799,33 @@ func TestAnAnswersCardSaysWhichCardItIsInBothWords(t *testing.T) {
 	for _, word := range []string{"type", "kind"} {
 		if cards[0][word] != "sin-found" {
 			t.Errorf("the card says %q as %v, not the card it is", word, cards[0][word])
+		}
+	}
+}
+
+func TestWhatWasNotAskedTravelsTheQueueToTheAgent(t *testing.T) {
+	root, _, data := projectWithASin(t)
+	t.Setenv("JOURNAL_ROOT", root)
+
+	project := git.ProjectRoot(root)
+	kept.Drop(project, git.CurrentBranch(project))
+
+	line := map[string]any{
+		"v": 1, "event": "file_edited", "session": "s1", "environment": "main",
+		"data": map[string]any{"path": "src/refund.py", "kind": "edit", "added": 1, "removed": 0, "tool_use": 42},
+	}
+
+	Judge4Into(line, data)
+
+	queued := drained(t, data)
+	if len(queued) != 1 {
+		t.Fatalf("the judge left %d file(s) in the queue", len(queued))
+	}
+
+	said := asText(queued[0]["tell"])
+	for _, want := range []string{"read across files were not asked", "not a clean answer"} {
+		if !strings.Contains(said, want) {
+			t.Errorf("the queued answer does not say %q:\n%s", want, said)
 		}
 	}
 }

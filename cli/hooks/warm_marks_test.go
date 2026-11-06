@@ -2,7 +2,6 @@ package hooks
 
 import (
 	"fmt"
-	"github.com/jessegall/code-commandments/detectors"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -16,6 +15,7 @@ import (
 	"github.com/jessegall/code-commandments/cli/scan"
 	"github.com/jessegall/code-commandments/cli/source"
 	"github.com/jessegall/code-commandments/cli/warm"
+	"github.com/jessegall/code-commandments/detectors"
 )
 
 func TestAnEditIsJudgedAgainstTheProgramWhereItsBranchHasABase(t *testing.T) {
@@ -566,5 +566,39 @@ class TwoMigration(RebuildMigration):
 		if !slices.Contains(files, file) {
 			t.Errorf("the batch attributed marks to %s, which it was not asked about", file)
 		}
+	}
+}
+
+func TestEveryWayTheJudgingNarrowsSaysWhichItWas(t *testing.T) {
+	for why, said := range map[Narrowed]string{
+		noTreeHeld:     "no tree",
+		filesNotOnDisk: "not on disk",
+		tooMuchMoved:   "more files changed",
+		patchFailed:    "brought up to",
+		parseFailed:    "could not be parsed",
+		notInTheTree:   "not in the tree",
+	} {
+		if why == "" {
+			t.Error("a reason reads as the whole program having been asked")
+		}
+		if !strings.Contains(string(why), said) {
+			t.Errorf("the reason %q does not say %q", why, said)
+		}
+	}
+
+	root := t.TempDir()
+	file := filepath.Join(root, "order.py")
+	if err := os.WriteFile(file, []byte("def total(order):\n    return order.total\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	if _, _, why := AgainstTheProgramNarrowed(Marks(root), nil, nil, nil, root); why != filesNotOnDisk {
+		t.Errorf("a judging of no files at all answers %q", why)
+	}
+
+	gone := []string{filepath.Join(root, "never-written.py")}
+	if _, _, why := AgainstTheProgramNarrowed(Marks(root), gone, func(string) []detectors.Detector { return nil },
+		func(string) git.ChangedLines { return git.ChangedLines{} }, root); why == "" {
+		t.Error("a judging of a file that is not on disk answers as though it had asked everything")
 	}
 }

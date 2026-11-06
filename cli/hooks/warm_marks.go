@@ -38,19 +38,41 @@ func howTheReadWent(named branchRoot) (string, bool) {
 	return said.(string), true
 }
 
+// Narrowed is why a judging could not put the project's whole set of rules to a file: empty where it could. The
+// rules that read across files cannot answer from one file alone, so a narrowed judging is a smaller answer, and
+// an answer nobody is told is smaller reads as a clean file.
+type Narrowed string
+
+const (
+	noTreeHeld     Narrowed = "no tree of this checkout is held yet, and one is being read now"
+	noTreeComing   Narrowed = "no tree of this checkout is held and none is being read, so only the rules that answer from one file will ever run here"
+	filesNotOnDisk Narrowed = "what changed is not on disk"
+	tooMuchMoved   Narrowed = "more files changed than one view can carry, so the tree was let go"
+	patchFailed    Narrowed = "the held tree could not be brought up to what changed"
+	parseFailed    Narrowed = "what changed could not be parsed"
+	notInTheTree   Narrowed = "what changed is not in the tree that is held"
+)
+
 func AgainstTheProgram(marking Marking, file string, rules []detectors.Detector, changed git.ChangedLines, root string) ([]SinMark, time.Duration, bool) {
-	together, read, whole := AgainstTheProgramTogether(marking, []string{file},
+	together, read, why := AgainstTheProgramNarrowed(marking, []string{file},
 		func(string) []detectors.Detector { return rules },
 		func(string) git.ChangedLines { return changed }, root)
 
-	return together[file], read, whole
+	return together[file], read, why == ""
 }
 
 func AgainstTheProgramTogether(marking Marking, files []string, rulesFor func(string) []detectors.Detector,
 	changedFor func(string) git.ChangedLines, root string) (map[string][]SinMark, time.Duration, bool) {
+	together, read, why := AgainstTheProgramNarrowed(marking, files, rulesFor, changedFor, root)
+
+	return together, read, why == ""
+}
+
+func AgainstTheProgramNarrowed(marking Marking, files []string, rulesFor func(string) []detectors.Detector,
+	changedFor func(string) git.ChangedLines, root string) (map[string][]SinMark, time.Duration, Narrowed) {
 
 	if len(files) == 0 {
-		return nil, 0, false
+		return nil, 0, filesNotOnDisk
 	}
 
 	file := files[0]
@@ -62,12 +84,16 @@ func AgainstTheProgramTogether(marking Marking, files []string, rulesFor func(st
 
 	held, base, ok := baseForCheckout(root, checkout)
 	if !ok {
-		return nil, 0, false
+		if !serving.Load() {
+			return nil, 0, noTreeComing
+		}
+
+		return nil, 0, noTreeHeld
 	}
 
 	here := slices.DeleteFunc(slices.Clone(files), func(path string) bool { return warm.Mark(path) == "" })
 	if len(here) == 0 {
-		return nil, 0, false
+		return nil, 0, filesNotOnDisk
 	}
 
 	files, file = here, here[0]
@@ -80,7 +106,7 @@ func AgainstTheProgramTogether(marking Marking, files []string, rulesFor func(st
 	if len(moved) > readsInOneGo(base.Files()) {
 		kept.Drop(held.project, held.branch)
 
-		return nil, 0, false
+		return nil, 0, tooMuchMoved
 	}
 
 	elsewhere := slices.DeleteFunc(slices.Clone(moved), func(path string) bool { return slices.Contains(files, path) })
@@ -89,7 +115,7 @@ func AgainstTheProgramTogether(marking Marking, files []string, rulesFor func(st
 		if patched == nil {
 			kept.Drop(held.project, held.branch)
 
-			return nil, took, false
+			return nil, took, patchFailed
 		}
 
 		base = patched
@@ -124,7 +150,7 @@ func AgainstTheProgramTogether(marking Marking, files []string, rulesFor func(st
 		if len(toRead) > 0 {
 			rebuilt, err := scan.Walk(toRead, source.Excluded{}).Load()
 			if err != nil || rebuilt == nil {
-				return nil, time.Since(reading), false
+				return nil, time.Since(reading), parseFailed
 			}
 
 			streams = append(streams, rebuilt.Streams()...)
@@ -143,10 +169,14 @@ func AgainstTheProgramTogether(marking Marking, files []string, rulesFor func(st
 
 	judged := slices.DeleteFunc(slices.Clone(files), func(path string) bool { return !holds(view, path) })
 	if len(judged) == 0 {
-		return nil, read, false
+		return nil, read, notInTheTree
 	}
 
-	return marksOverTogether(view, marking, judged, rulesFor, changedFor), read, len(judged) == len(files)
+	if len(judged) != len(files) {
+		return marksOverTogether(view, marking, judged, rulesFor, changedFor), read, notInTheTree
+	}
+
+	return marksOverTogether(view, marking, judged, rulesFor, changedFor), read, ""
 }
 
 func overlaid(over *warm.Overlay, base *warm.Base, held branchRoot, files []string, streams []*contract.Stream, marks map[string]warm.Known, now time.Time) *engine.Codebase {

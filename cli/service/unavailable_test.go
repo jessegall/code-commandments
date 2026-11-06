@@ -124,7 +124,7 @@ func TestAServiceWhoseToolIsNotInstalledTellsTheJournal(t *testing.T) {
 	syscall.Kill(os.Getpid(), syscall.SIGTERM)
 	<-answered
 
-	for _, wanted := range []string{"php on the PATH", "a-session-of-its-own", "not the same as finding no sins"} {
+	for _, wanted := range []string{"php on the PATH", "a-session-of-its-own", "not a clean answer, it is a smaller one"} {
 		if !strings.Contains(string(told), wanted) {
 			t.Errorf("what was told the journal does not carry %q: %s", wanted, told)
 		}

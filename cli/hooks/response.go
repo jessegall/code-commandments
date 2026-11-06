@@ -21,6 +21,7 @@ type Response struct {
 	Activity     []SinMark
 	Judged       []string
 	Asked        Asked
+	Narrowed     map[string]Narrowed
 	ReadMs       int64
 
 	Requires []string
@@ -60,6 +61,7 @@ func Merge(responses []Response) Response {
 	var read int64
 
 	asked := Asked{}
+	narrowed := map[string]Narrowed{}
 
 	for _, response := range responses {
 		activity = append(activity, response.Activity...)
@@ -68,6 +70,10 @@ func Merge(responses []Response) Response {
 
 		for file, sins := range response.Asked {
 			asked[file] = sins
+		}
+
+		for file, why := range response.Narrowed {
+			narrowed[file] = why
 		}
 
 		for _, id := range response.Requires {
@@ -94,6 +100,7 @@ func Merge(responses []Response) Response {
 	merged.Activity = activity
 	merged.Judged = judged
 	merged.Asked = asked
+	merged.Narrowed = narrowed
 	merged.Requires = requires
 	merged.ReadMs = read
 

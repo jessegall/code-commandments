@@ -684,3 +684,32 @@ func TestAWorkerIsServedFromTheTreeOfTheBranchItWasCutFrom(t *testing.T) {
 		t.Errorf("the served answer does not name the worker's own sin:\n%s%s", answer.Out, answer.Err)
 	}
 }
+
+func TestEveryReasonAJudgingDeclinesForReadsAsASentence(t *testing.T) {
+	root, _ := migrationProject(t)
+	project := git.ProjectRoot(root)
+	kept.Drop(project, git.CurrentBranch(project))
+
+	settings, _ := config.Load(root)
+	sources := scan.Walk([]string{root}, source.Under(root, settings.Excluded))
+
+	for why, in := range map[string]string{
+		"no tree is held":              root,
+		"a folder outside the project": t.TempDir(),
+	} {
+		declined := ""
+		if _, err := heldOrDeclined(root, in, &declined)(sources); err != nil {
+			t.Fatalf("%s: %v", why, err)
+		}
+
+		if declined == "" {
+			t.Errorf("%s: the judging declined with no reason at all", why)
+
+			continue
+		}
+
+		if len(strings.Fields(declined)) < 4 {
+			t.Errorf("%s: the reason is not a sentence: %q", why, declined)
+		}
+	}
+}

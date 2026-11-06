@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/jessegall/code-commandments/cli/binary"
 	"github.com/jessegall/code-commandments/cli/config"
 	"github.com/jessegall/code-commandments/cli/custom"
 	"github.com/jessegall/code-commandments/cli/git"
@@ -68,7 +69,7 @@ func (SkillReminder) Handle(event Event) Response {
 		return !project.Writes(source.OfFile(file))
 	})
 
-	together, spent, whole := AgainstTheProgramTogether(marking, judged,
+	together, spent, why := AgainstTheProgramNarrowed(marking, judged,
 		func(file string) []detectors.Detector {
 			return project.RulesFor(checkoutOf(event.Root, file), file, enabled)
 		},
@@ -76,11 +77,14 @@ func (SkillReminder) Handle(event Event) Response {
 
 	spentReading += spent
 
-	if !whole {
+	if why != "" {
 		Warming(event.Root, project)
 	}
 
 	asked := Asked{}
+	narrowed := map[string]Narrowed{}
+	askedCount := map[string]int{}
+	notAsked := map[string]int{}
 
 	for _, file := range files {
 		if !project.Writes(source.OfFile(file)) {
@@ -89,7 +93,13 @@ func (SkillReminder) Handle(event Event) Response {
 
 		marks, against := together[file]
 		if !against {
-			asked[source.Relative(event.Root, file)] = sinsOf(project.RulesFor(checkoutOf(event.Root, file), file, single))
+			narrow := project.RulesFor(checkoutOf(event.Root, file), file, single)
+			whole := project.RulesFor(checkoutOf(event.Root, file), file, enabled)
+			named := source.Relative(event.Root, file)
+			asked[named] = sinsOf(narrow)
+			narrowed[named] = why
+			askedCount[named] = len(narrow)
+			notAsked[named] = len(whole) - len(narrow)
 			var unread error
 			var read time.Duration
 			marks, read, unread = marksIn(marking, file,
@@ -125,9 +135,13 @@ func (SkillReminder) Handle(event Event) Response {
 		said = append(said, nudge(event, fresh))
 	}
 
+	if short := Shortfalls(SaidIn(event.Workspace()).Fresh(narrowed), askedCount, notAsked, binary.Judging(event.Root)); short != "" {
+		said = append(said, short)
+	}
+
 	if len(unreadable) > 0 {
-		said = append(said, "Code Commandments could not read what this edit changed, so nothing of it was judged, "+
-			"which is not the same as finding no sins: "+strings.Join(unreadable, "; "))
+		said = append(said, Unjudged("what this edit changed could not be read, so nothing of it was judged",
+			strings.Join(unreadable, "; "), ""))
 	}
 
 	response := Silent()
@@ -138,6 +152,7 @@ func (SkillReminder) Handle(event Event) Response {
 	response.Activity = activity
 	response.Judged = files
 	response.Asked = asked
+	response.Narrowed = narrowed
 	response.Requires = owed(fresh)
 	response.ReadMs = spentReading.Milliseconds()
 

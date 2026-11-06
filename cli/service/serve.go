@@ -41,9 +41,8 @@ func tell(unavailable bridge.Unavailable, console cli.Console) {
 		return
 	}
 
-	words := "A bridge the session keeps up cannot run on this machine, so part of this project is judged by nothing: " +
-		unavailable.Error() + ". Tell the user what to install; until then every rule of that language finds nothing, " +
-		"which is not the same as finding no sins."
+	words := hooks.Unjudged("a bridge the session keeps up cannot run on this machine, so every rule of that "+
+		"language finds nothing", unavailable.Error(), "") + " Tell the user what to install."
 
 	if err := queue.Tell(hooks.JournalAnswer{Whisper: &words}, os.Getenv(journalEnvironment), 0); err != nil {
 		console.Warn("what the bridge cannot do could not be told to the journal: " + err.Error())
