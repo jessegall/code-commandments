@@ -226,3 +226,40 @@ func TestSyncNamesAPhpRuleTheBinaryCannotRun(t *testing.T) {
 		t.Errorf("sync said\n%s", synced)
 	}
 }
+
+func TestAProjectWithNoJournalIsUntouchedByTheWorkerJudging(t *testing.T) {
+	c := newConsumer(t)
+
+	c.run(0, "commandments", "sync")
+
+	c.write("src/order.py", "def refund(order) -> int:\n    if order.late:\n        raise ValueError(order)\n    else:\n        return order.total\n")
+
+	judged := c.run(1, "commandments", "judge", "--no-checklist", "--parallel=2")
+
+	for _, named := range []string{"redundant-python-else", "src/order.py"} {
+		if !strings.Contains(judged, named) {
+			t.Errorf("a project with no journal does not have its sins named: %s is missing from\n%s", named, judged)
+		}
+	}
+
+	for _, journalOnly := range []string{"judge_workers", "judge_merges", "lane", "worktree", "the service already holds"} {
+		if strings.Contains(judged, journalOnly) {
+			t.Errorf("a project with no journal is told about %q, which belongs to the journal's side alone:\n%s", journalOnly, judged)
+		}
+	}
+
+	lanes := c.run(2, "commandments", "lanes")
+	if !strings.Contains(lanes, "no service is running here") {
+		t.Errorf("a project with no journal is not told plainly that nothing is held: %s", lanes)
+	}
+
+	why := c.run(2, "commandments", "why")
+	if !strings.Contains(why, "nothing has been judged in this session") && !strings.Contains(why, "judged by nobody") {
+		t.Errorf("a project with no journal cannot read its own record back: %s", why)
+	}
+
+	repented := c.run(0, "commandments", "repent", "--dry-run")
+	if strings.Contains(repented, "lane") || strings.Contains(repented, "worker") {
+		t.Errorf("repent speaks of lanes and workers in a project that has neither: %s", repented)
+	}
+}
