@@ -1,0 +1,4 @@
+#!/bin/sh
+# The journal starts a service through this file rather than the release binary itself: the binary is fetched per
+# release, and a file the journal runs that changes with every release is a file it must ask a person about.
+exec "$(dirname "$0")/../bin/commandments-release" "$@"

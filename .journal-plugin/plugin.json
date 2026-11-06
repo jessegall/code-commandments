@@ -4000,26 +4000,26 @@
     },
     "services": {
         "hooks": {
-            "run": "bin/commandments-release journal-serve",
+            "run": ".journal-plugin/serve journal-serve",
             "restart": "always"
         },
         "roslyn": {
-            "run": "bin/commandments-release roslyn-serve",
+            "run": ".journal-plugin/serve roslyn-serve",
             "when": "\"$JOURNAL_PLUGIN_DIR/bin/commandments-release\" has-csharp",
             "restart": "always"
         },
         "mypy": {
-            "run": "bin/commandments-release mypy-serve",
+            "run": ".journal-plugin/serve mypy-serve",
             "when": "\"$JOURNAL_PLUGIN_DIR/bin/commandments-release\" has-python",
             "restart": "always"
         },
         "frontend": {
-            "run": "bin/commandments-release frontend-serve",
+            "run": ".journal-plugin/serve frontend-serve",
             "when": "\"$JOURNAL_PLUGIN_DIR/bin/commandments-release\" has-frontend",
             "restart": "always"
         },
         "php": {
-            "run": "bin/commandments-release php-serve",
+            "run": ".journal-plugin/serve php-serve",
             "when": "\"$JOURNAL_PLUGIN_DIR/bin/commandments-release\" has-php",
             "restart": "always"
         }

@@ -133,7 +133,7 @@
     {
       "name": "hooks",
       "command": [
-        "bin/commandments-release",
+        ".journal-plugin/serve",
         "journal-serve"
       ],
       "answers": true,
@@ -142,7 +142,7 @@
     {
       "name": "roslyn",
       "command": [
-        "bin/commandments-release",
+        ".journal-plugin/serve",
         "roslyn-serve"
       ],
       "when": "\"$JOURNAL_PLUGIN_DIR/bin/commandments-release\" has-csharp",
@@ -151,7 +151,7 @@
     {
       "name": "mypy",
       "command": [
-        "bin/commandments-release",
+        ".journal-plugin/serve",
         "mypy-serve"
       ],
       "when": "\"$JOURNAL_PLUGIN_DIR/bin/commandments-release\" has-python",
@@ -160,7 +160,7 @@
     {
       "name": "frontend",
       "command": [
-        "bin/commandments-release",
+        ".journal-plugin/serve",
         "frontend-serve"
       ],
       "when": "\"$JOURNAL_PLUGIN_DIR/bin/commandments-release\" has-frontend",
@@ -169,7 +169,7 @@
     {
       "name": "php",
       "command": [
-        "bin/commandments-release",
+        ".journal-plugin/serve",
         "php-serve"
       ],
       "when": "\"$JOURNAL_PLUGIN_DIR/bin/commandments-release\" has-php",

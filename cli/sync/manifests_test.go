@@ -529,3 +529,46 @@ func TestThisPlanAddsNoServiceOfItsOwn(t *testing.T) {
 		t.Errorf("the manifest declares %d services and there are %d we know of", len(read.Services), len(named))
 	}
 }
+
+func TestNoFileTheJournalRunsIsFetchedPerRelease(t *testing.T) {
+	text, err := os.ReadFile(filepath.Join("..", "..", "journal-plugin.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var read struct {
+		Program  string `json:"program"`
+		Services []struct {
+			Name    string   `json:"name"`
+			Command []string `json:"command"`
+		} `json:"services"`
+	}
+	if err := json.Unmarshal(text, &read); err != nil {
+		t.Fatal(err)
+	}
+
+	fetched := "bin/commandments-release"
+
+	if read.Program == fetched {
+		t.Errorf("the program the journal runs for every event IS the fetched binary, which every release replaces: "+
+			"the journal digests the files a plugin runs, so each release would move that digest (%s)", read.Program)
+	}
+
+	for _, service := range read.Services {
+		if len(service.Command) == 0 {
+			t.Errorf("the service %s names no command", service.Name)
+
+			continue
+		}
+
+		if service.Command[0] == fetched {
+			t.Errorf("the service %s is started from the fetched binary, which every release replaces, so every "+
+				"release of ours would move the digest of a file the journal runs", service.Name)
+		}
+
+		if !strings.HasPrefix(service.Command[0], ".journal-plugin/") {
+			t.Errorf("the service %s is started from %s, which is not one of the plugin's own stable files",
+				service.Name, service.Command[0])
+		}
+	}
+}
