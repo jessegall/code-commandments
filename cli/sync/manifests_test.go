@@ -417,3 +417,82 @@ func TestNoAliasOfOursIsOpenToAWorker(t *testing.T) {
 		t.Error("the briefing does not say that work another agent wrote is judged when it is taken in")
 	}
 }
+
+func TestTheSettingsFileCarriesEverySettingTheCodeReads(t *testing.T) {
+	text, err := os.ReadFile(filepath.Join("..", "..", ".journal-plugin", "settings.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var declared []struct {
+		Key string `json:"key"`
+	}
+	if err := json.Unmarshal(text, &declared); err != nil {
+		t.Fatal(err)
+	}
+
+	var keys []string
+	for _, setting := range declared {
+		keys = append(keys, setting.Key)
+	}
+
+	for _, named := range []string{"folders_judged", "folders_skipped", "judge_parallel", "judge_record", "judge_workers", "judge_nodes_held"} {
+		if !slices.Contains(keys, named) {
+			t.Errorf("the settings file declares no %s, so a person cannot switch it and the code reads a setting nobody can set", named)
+		}
+	}
+}
+
+func TestOnlyTheVersionFourManifestCanCarryTheWorktreeKeys(t *testing.T) {
+	four, err := os.ReadFile(filepath.Join("..", "..", "journal-plugin.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var fourth struct {
+		Journal string           `json:"journal"`
+		Hears   []string         `json:"hears"`
+		Listen  []map[string]any `json:"listen"`
+	}
+	if err := json.Unmarshal(four, &fourth); err != nil {
+		t.Fatal(err)
+	}
+
+	older, err := os.ReadFile(filepath.Join("..", "..", ".journal-plugin", "plugin.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var third struct {
+		Journal string           `json:"journal"`
+		Listen  []map[string]any `json:"listen"`
+	}
+	if err := json.Unmarshal(older, &third); err != nil {
+		t.Fatal(err)
+	}
+
+	if fourth.Journal == third.Journal {
+		t.Errorf("both manifests declare journal %s, and they speak to different journals: the version four manifest and the older one", fourth.Journal)
+	}
+
+	if len(third.Listen) > 0 {
+		t.Errorf("the older manifest carries %d listen entry(s), and only the version four manifest can carry them", len(third.Listen))
+	}
+
+	if !slices.Contains(fourth.Hears, "file_edited") {
+		t.Error("the version four manifest no longer hears file_edited, and their journal keeps sending it with no date for its removal, so an edit would be heard by nobody")
+	}
+
+	for _, entry := range fourth.Listen {
+		for _, form := range []string{"guard", "listen", "commit"} {
+			named, held := entry[form].(string)
+			if !held {
+				continue
+			}
+
+			if !strings.HasPrefix(named, "service:") {
+				t.Errorf("the listen entry for %v names %s as its %s form, and only service:<name> reaches our running service; a script would start a new process per event", entry["event"], named, form)
+			}
+		}
+	}
+}
