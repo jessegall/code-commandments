@@ -247,7 +247,7 @@ func within(folder, project, file string) string {
 		return file
 	}
 
-	for _, under := range []string{folder, project} {
+	for _, under := range []string{folder, withoutLinks(folder), project, withoutLinks(project)} {
 		if under == "" {
 			continue
 		}
@@ -259,6 +259,19 @@ func within(folder, project, file string) string {
 	}
 
 	return file
+}
+
+func withoutLinks(folder string) string {
+	if folder == "" {
+		return ""
+	}
+
+	real, err := filepath.EvalSymlinks(folder)
+	if err != nil || real == folder {
+		return ""
+	}
+
+	return real
 }
 
 const worktreesIn = "/.journal/worktrees/"

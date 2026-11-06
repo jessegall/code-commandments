@@ -1301,6 +1301,8 @@ func (c *stressCheckout) tells(t *testing.T, file string, from, to int, owed boo
 		"data": data,
 	})
 
+	stressSent[file] = fmt.Sprintf("cwd %s, data %v", c.Told, data)
+
 	stressHeld(t, c, c.at, against, file, owed, c.awaited(t, file, owed))
 }
 
@@ -1477,13 +1479,17 @@ func stressHeld(t *testing.T, mine *stressCheckout, move int, against, file stri
 		left := DroppedSoFar()
 
 		t.Fatalf("move %d of checkout %d: it wrote a sin in %s and was told nothing about it; %d answers came "+
-			"back, and the service had %d judging(s) in flight with %d finished, so it %s. It had dropped %+v. "+
-			"A judging of that file alone finds %d sins %v (unread %v)\n%v",
+			"back, and the service had %d judging(s) in flight with %d finished, so it %s. It %s the file into a "+
+			"judging at all. It had dropped %+v. "+
+			"A judging of that file alone finds %d sins %v (unread %v)\n%v\nthe event it was sent as: %s",
 			move, mine.Named, stressUnder(against, file), len(answers), inFlight, done,
 			map[bool]string{true: "had not answered YET", false: "was never going to answer"}[inFlight > 0],
-			left, len(found), names, unread, answers)
+			map[bool]string{true: "DID take", false: "never took"}[TookIntoAJudging(file)],
+			left, len(found), names, unread, answers, stressSent[file])
 	}
 }
+
+var stressSent = map[string]string{}
 
 var stressRunning = map[int]*stressCheckout{}
 

@@ -459,8 +459,20 @@ func serve(listener net.Listener, current func() bool, advice *advisers) {
 
 var working, advised atomic.Int64
 
+var takenIn sync.Map
+
 func JudgingNow() (int64, int64) {
 	return working.Load(), advised.Load()
+}
+
+func tookIn(file string) {
+	takenIn.Store(file, true)
+}
+
+func TookIntoAJudging(file string) bool {
+	_, took := takenIn.Load(file)
+
+	return took
 }
 
 // asked is one moment the service answered, and where its advice belongs: an event version 4 answered with the gates alone is judged after, into the queue that journal drains, and anything else version 3 asked goes to the queue it hands the service.
