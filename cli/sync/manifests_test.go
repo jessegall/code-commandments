@@ -10,7 +10,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jessegall/code-commandments/cli/binary"
 	"github.com/jessegall/code-commandments/cli/health"
 	"github.com/jessegall/code-commandments/cli/hooks"
 )
@@ -339,40 +338,66 @@ func TestBothManifestsFitTheSameLanguages(t *testing.T) {
 	}
 }
 
-// TestTheDeclaredHoldIsTheWindowTheCodeFallsBackTo holds the manifest's promise to the code that relies on it.
-// The journal's `worker_delivering` carries no `window_ms`, because the hold is ours to declare and it honours it
-// without repeating it, so the code falls back to the window we asked for. If the manifest asked for less than
-// the code assumes, a delivery would be judged for longer than the journal waits and the answer would arrive
-// after the hold was over; if it asked for more, the time would go unused.
-func TestTheDeclaredHoldIsTheWindowTheCodeFallsBackTo(t *testing.T) {
+// TestNothingOfOursReachesAWorker holds Sir Jesse's ruling: a worker gets nothing from this plugin. Its edits are
+// not judged, its hand-in is not held, and the judge is not offered to it as a command.
+//
+// The reason is time. A worker's judge read the whole tree for its two changed files, 1 min 44 s on a 6830-file
+// project, and its hand-in held the work for the same read again; nothing a worker did was worth that. What makes
+// an edit sub-second is the tree held in memory, and a worktree had none of its own: it answered from a view over
+// another checkout's base, which is the part that never paid off. Until a worker has a tree of its own, it is
+// judged by nobody.
+//
+// The journal decides this for us: an event reaches a plugin only when the agent is the MAIN one, or when the
+// manifest's `reaches` names that agent's role for the event. So a manifest with no `reaches` is a plugin a
+// worker never wakes, and the hand-in gate's own event is not heard at all.
+//
+// The hold and the code's own window are still held to each other, for the day a worker has a tree and the gate
+// goes back on: the journal sends no `window_ms` for a delivery, because the hold is ours to declare, and the code
+// falls back to the window the manifest asked for.
+func TestNothingOfOursReachesAWorker(t *testing.T) {
 	text, err := os.ReadFile(filepath.Join("..", "..", "journal-plugin.json"))
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	var read struct {
-		Holds []struct {
-			Event    string `json:"event"`
-			WindowMS int    `json:"window_ms"`
-		} `json:"holds"`
+		Hears   []string            `json:"hears"`
+		Reaches map[string][]string `json:"reaches"`
+		Holds   []hold              `json:"holds"`
+		Aliases []struct {
+			Name    string `json:"name"`
+			Workers bool   `json:"workers"`
+		} `json:"aliases"`
 	}
 	if err := json.Unmarshal(text, &read); err != nil {
 		t.Fatal(err)
 	}
 
-	for _, hold := range read.Holds {
-		if hold.Event != "worker_delivering" {
-			continue
-		}
-
-		if asked := time.Duration(hold.WindowMS) * time.Millisecond; asked != hooks.DeclaredWindow {
-			t.Errorf("the manifest asks the journal to hold a delivery for %s and the code judges in %s", asked, hooks.DeclaredWindow)
-		}
-
-		return
+	for event, roles := range read.Reaches {
+		t.Errorf("%s reaches %v: an event of ours reaches an agent that is not the main one", event, roles)
 	}
 
-	t.Error("the manifest asks for no hold on worker_delivering, so a delivery has no time to be judged in")
+	for _, alias := range read.Aliases {
+		if alias.Workers {
+			t.Errorf("the %s command is offered to workers", alias.Name)
+		}
+	}
+
+	if slices.Contains(read.Hears, "worker_delivering") {
+		for _, held := range read.Holds {
+			if held.Event != "worker_delivering" {
+				continue
+			}
+
+			if asked := time.Duration(held.WindowMs) * time.Millisecond; asked != hooks.DeclaredWindow {
+				t.Errorf("the manifest asks the journal to hold a delivery for %s and the code judges in %s", asked, hooks.DeclaredWindow)
+			}
+
+			return
+		}
+
+		t.Error("the plugin hears worker_delivering and asks for no hold on it, so a delivery has no time to be judged in")
+	}
 }
 
 // TestEachAliasSaysWhatKindOfCommandItIs holds the category each alias declares. The journal classifies a shell
@@ -424,13 +449,18 @@ func TestEachAliasSaysWhatKindOfCommandItIs(t *testing.T) {
 	}
 }
 
-// TestTheJudgingAliasIsOneAWorkerMayRun holds the manifest to what the briefing tells every agent to do. The
-// briefing says to run `journal sins`, workers included, and the journal refuses an alias to a worker unless the
-// manifest says `workers` — so without it the tool instructed an agent to run a command it was then refused.
+// TestNoAliasOfOursIsOpenToAWorker holds the manifest to what the briefing tells an agent to do. The journal
+// refuses an alias to a worker unless the manifest says `workers`, so the two have to agree: an alias open to a
+// worker while the briefing is silent is a command nobody runs, and a briefing that tells a worker to run one the
+// manifest closes is an instruction the journal then refuses.
 //
-// Only an alias that READS may carry it. `sins` judges and nothing else; `rules` holds `rule migrate`, which
-// rewrites a project's own rule files, so it must not.
-func TestTheJudgingAliasIsOneAWorkerMayRun(t *testing.T) {
+// Sir Jesse closed all of them (message 11101). A worker's judge read the whole tree for its two changed files,
+// 1 min 44 s on a 6830-file project, and the briefing is what sent it there. So the briefing names the judge as
+// the run of the agent that TAKES work in, right after a merge, and no alias of ours is a worker's.
+//
+// `rules` and `commandments` could never be a worker's in any case: `rule migrate` rewrites a project's own rule
+// files and the passthrough also repents and reports.
+func TestNoAliasOfOursIsOpenToAWorker(t *testing.T) {
 	text, err := os.ReadFile(filepath.Join("..", "..", "journal-plugin.json"))
 	if err != nil {
 		t.Fatal(err)
@@ -451,15 +481,20 @@ func TestTheJudgingAliasIsOneAWorkerMayRun(t *testing.T) {
 		mayRun[alias.Name] = alias.Workers
 	}
 
-	judging := strings.TrimPrefix(binary.Alias, "journal ")
-	if !mayRun[judging] {
-		t.Errorf("the %s alias is refused to a worker, and the briefing tells every agent to run %q", judging, binary.Alias)
+	for name, open := range mayRun {
+		if open {
+			t.Errorf("the %s alias is open to workers, and a worker is judged by nobody here", name)
+		}
 	}
 
-	// A worker may read; it may not be handed a verb that rewrites the project's own rules.
-	for _, writes := range []string{"rules", "commandments"} {
-		if mayRun[writes] {
-			t.Errorf("the %s alias is open to workers, and it can write", writes)
-		}
+	// And the briefing says so itself, in the words a worker reads: the judge is the run of the agent that takes
+	// the work in. Said nowhere, a worker's code reaches the project with nobody having judged it at all.
+	brief, err := os.ReadFile(filepath.Join("..", "library", "brief.md"))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if !strings.Contains(string(brief), "judged when you take it in") {
+		t.Error("the briefing does not say that work another agent wrote is judged when it is taken in")
 	}
 }
