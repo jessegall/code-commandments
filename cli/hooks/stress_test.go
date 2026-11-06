@@ -914,8 +914,9 @@ func (c *stressCheckout) move(t *testing.T, move int) {
 	}
 
 	if now, holds := c.holding(); held && now == branch && !holds {
-		t.Fatalf("move %d of checkout %d: writing in its own checkout cost the project its tree on branch %s, so "+
-			"every edit behind it is judged on its own file alone until the tree is read again", move, c.Named, branch)
+		t.Fatalf("move %d of checkout %d: writing in its own checkout cost the project its tree on branch %s, and no "+
+			"read of it is running either, so every edit behind it is judged on its own file alone until something "+
+			"reads the tree again", move, c.Named, branch)
 	}
 }
 
@@ -1033,9 +1034,12 @@ func stressNamedIn(said string) []string {
 func (c *stressCheckout) holding() (string, bool) {
 	project := git.ProjectRoot(c.Project)
 	branch := git.CurrentBranch(project)
-	_, held := kept.Holds(project, branch)
 
-	return branch, held
+	if _, held := kept.Holds(project, branch); held {
+		return branch, true
+	}
+
+	return branch, ReadingNow(project)
 }
 
 func (c *stressCheckout) renames(t *testing.T) {

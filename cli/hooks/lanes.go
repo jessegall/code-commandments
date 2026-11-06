@@ -212,3 +212,14 @@ func LastRead(root string) string {
 
 	return said
 }
+
+func ReadingNow(project string) bool {
+	named, ok := rootOf(project)
+	if !ok {
+		return false
+	}
+
+	_, running := reading.Load(named.key())
+
+	return running
+}
