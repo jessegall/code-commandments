@@ -10,7 +10,6 @@ import (
 	"strings"
 
 	"github.com/jessegall/code-commandments/cli"
-	"github.com/jessegall/code-commandments/cli/git"
 	"github.com/jessegall/code-commandments/cli/help"
 )
 
@@ -233,10 +232,8 @@ func Moment4Of(line map[string]any) (map[string]any, bool) {
 		agent["cwd"] = project
 	}
 
-	if checkout := git.Root(asText(tool["file"])); checkout != "" && checkout != asText(agent["cwd"]) {
-		if git.BelongsTo(checkout, asText(agent["cwd"])) {
-			agent["cwd"] = checkout
-		}
+	if file := asText(tool["file"]); file != "" {
+		agent["cwd"] = checkoutOf(asText(agent["cwd"]), file)
 	}
 
 	return map[string]any{"event": "hook." + hook, "agent": agent, "tool": tool, "env": line["environment"], "data": data}, true
@@ -272,23 +269,6 @@ func withoutLinks(folder string) string {
 	}
 
 	return real
-}
-
-const worktreesIn = "/.journal/worktrees/"
-
-func worktreeOf(file string) string {
-	at := strings.Index(file, worktreesIn)
-	if at < 0 {
-		return ""
-	}
-
-	below := file[at+len(worktreesIn):]
-	named := strings.Index(below, "/")
-	if named <= 0 {
-		return ""
-	}
-
-	return file[:at+len(worktreesIn)+named]
 }
 
 func (a JournalAnswer) Line4() string {

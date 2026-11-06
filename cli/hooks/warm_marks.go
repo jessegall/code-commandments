@@ -89,10 +89,7 @@ func AgainstTheProgramNarrowed(marking Marking, files []string, rulesFor func(st
 
 	file := files[0]
 
-	checkout := strings.TrimRight(git.ProjectRoot(root), "/")
-	if own := git.Root(file); own != "" {
-		checkout = own
-	}
+	checkout := checkoutOf(root, file)
 
 	held, base, why := answering(root, checkout)
 	if why != "" {

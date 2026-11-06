@@ -271,7 +271,7 @@ func projectOf(folder string) string {
 }
 
 func checkoutOf(root, file string) string {
-	checkout := git.Root(file)
+	checkout := git.Root(absolutely(root, file))
 	if checkout == "" || checkout == strings.TrimRight(root, "/") {
 		return root
 	}
@@ -281,6 +281,23 @@ func checkoutOf(root, file string) string {
 	}
 
 	return checkout
+}
+
+func absolutely(root, file string) string {
+	if file == "" {
+		return file
+	}
+
+	absolute := file
+	if !filepath.IsAbs(file) {
+		absolute = filepath.Join(strings.TrimRight(root, "/"), file)
+	}
+
+	if real, err := filepath.EvalSymlinks(absolute); err == nil {
+		return real
+	}
+
+	return absolute
 }
 
 func sinsOf(rules []detectors.Detector) []string {
