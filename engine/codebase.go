@@ -18,6 +18,8 @@ type Codebase struct {
 	files     []*File
 	read      func(path string) ([]byte, error)
 	analyses  *sync.Map
+	over      *Codebase
+	carries   map[any]bool
 	scanned   []string
 	project   string
 	reporting map[string]bool
@@ -53,11 +55,38 @@ func Analysis[T any](c *Codebase, key any, build func(*Codebase) T) T {
 		return held.(T)
 	}
 
+	if over := c.carriedFrom(key); over != nil {
+		held, _ := c.analyses.LoadOrStore(key, over)
+
+		return held.(T)
+	}
+
 	CountedAnalysis()
 
 	held, _ := c.analyses.LoadOrStore(key, build(c))
 
 	return held.(T)
+}
+
+func (c *Codebase) carriedFrom(key any) any {
+	if c.over == nil || !c.carries[key] {
+		return nil
+	}
+
+	held, ok := c.over.analyses.Load(key)
+	if !ok {
+		return nil
+	}
+
+	return held
+}
+
+func (c *Codebase) Carries(over *Codebase, keys ...any) {
+	c.over = over
+	c.carries = map[any]bool{}
+	for _, key := range keys {
+		c.carries[key] = true
+	}
 }
 
 // File is one source file of a stream, with its bytes read on first need.
@@ -327,4 +356,21 @@ func (f *File) findOwnLineComments() {
 			f.own[comment.Span.Line] = comment
 		}
 	}
+}
+
+var carried []func(changed []string) (any, bool)
+
+func Carrying(over any, untouchedBy func(changed []string) bool) {
+	carried = append(carried, func(changed []string) (any, bool) { return over, untouchedBy(changed) })
+}
+
+func CarriedOver(changed []string) []any {
+	var keys []any
+	for _, each := range carried {
+		if key, carries := each(changed); carries {
+			keys = append(keys, key)
+		}
+	}
+
+	return keys
 }

@@ -15,6 +15,10 @@ func (p *PerCodebase[T]) Of(codebase *engine.Codebase) T {
 	return engine.Analysis(codebase, p, p.build)
 }
 
+func (p *PerCodebase[T]) Over() any {
+	return p
+}
+
 func (p *PerCodebase[T]) Keep(codebase *engine.Codebase, value T) {
 	engine.Keep(codebase, p, value)
 }

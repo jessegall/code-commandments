@@ -392,6 +392,7 @@ func (b *Base) ViewFrom(checkout string, rebuilt []*contract.Stream, project str
 	view := engine.Filling(changed, spliced...)
 	view.Scanned(append(slices.Clone(b.roots), checkout)...)
 	view.Rooted(checkout)
+	view.Carries(b.codebase, engine.CarriedOver(changed)...)
 
 	return view
 }
