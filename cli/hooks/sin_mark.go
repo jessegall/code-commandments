@@ -1,6 +1,7 @@
 package hooks
 
 import (
+	"strconv"
 	"strings"
 
 	"github.com/jessegall/code-commandments/catalog"
@@ -81,9 +82,26 @@ func (m SinMark) Found() string {
 }
 
 func (m SinMark) FileFrom(root string) string {
-	return strings.TrimPrefix(strings.TrimPrefix(m.Match.File(), strings.TrimRight(root, "/")), "/")
+	return seenFrom(root, m.Match.File())
 }
 
 func (m SinMark) ShownFrom(root string) string {
-	return strings.ReplaceAll(m.Found(), strings.TrimRight(root, "/")+"/", "")
+	return m.Rule.Sin().Definition().Name + " at " + m.FileFrom(root) + ":" + strconv.Itoa(m.Match.Line())
+}
+
+func seenFrom(root, file string) string {
+	home := strings.TrimRight(root, "/")
+
+	if under, inside := strings.CutPrefix(file, home+"/"); inside {
+		return under
+	}
+
+	project := strings.TrimRight(git.ProjectRoot(home), "/")
+	if project != "" && project != home {
+		if under, inside := strings.CutPrefix(file, project+"/"); inside {
+			return under
+		}
+	}
+
+	return strings.TrimPrefix(file, "/")
 }
