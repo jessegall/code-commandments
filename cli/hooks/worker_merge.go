@@ -120,8 +120,28 @@ func (m merging) sinsWithin() handIn {
 	case marks := <-answered:
 		return handIn{marks: marks, got: gotWhole}
 	case <-within:
+		go m.tellsLater(answered)
+
 		return handIn{marks: held, got: gotPartly}
 	}
+}
+
+func (m merging) tellsLater(answered chan []SinMark) {
+	marks, came := <-answered
+	if !came || len(marks) == 0 {
+		return
+	}
+
+	said := mergeTold(m.worker, " (judged after the journal stopped waiting)", m.worktree, marks)
+
+	m.keeps(said)
+
+	queue, queued := Queue4In(os.Getenv(pluginData))
+	if !queued {
+		return
+	}
+
+	_ = queue.Tell(JournalAnswer{Whisper: &said}, m.env, m.agent)
 }
 
 func (m merging) shallowly() []SinMark {
@@ -163,6 +183,8 @@ type merging struct {
 	window   time.Duration
 	limited  bool
 	role     string
+	env      string
+	agent    int
 }
 
 func mergeOf(line map[string]any) merging {
@@ -177,6 +199,8 @@ func mergeOf(line map[string]any) merging {
 		window:   window,
 		limited:  limited,
 		role:     roleIn(fields),
+		env:      asText(firstOf(line["environment"], fields["environment"])),
+		agent:    asAgent(firstOf(line["agent"], fields["agent"])),
 	}
 }
 
