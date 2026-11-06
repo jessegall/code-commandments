@@ -76,6 +76,25 @@ func (SkillReminder) Handle(event Event) Response {
 	var unreadable []string
 	var spentReading time.Duration
 
+	// Judged in ONE pass over one view: a judging of one file measured 3.7 seconds of rules with nothing to
+	// read, so an agent's twelve edits judged one after another cost it 44 seconds. The files of a batch are all
+	// of one agent, which is what makes one view right for them.
+	judged := slices.DeleteFunc(slices.Clone(files), func(file string) bool {
+		return !project.Writes(source.OfFile(file))
+	})
+
+	together, spent, whole := AgainstTheProgramTogether(marking, judged,
+		func(file string) []detectors.Detector {
+			return project.RulesFor(checkoutOf(event.Root, file), file, enabled)
+		},
+		func(file string) git.ChangedLines { return event.ChangedLines(file) }, event.Root)
+
+	spentReading += spent
+
+	if !whole {
+		Warming(event.Root, project)
+	}
+
 	for _, file := range files {
 		if !project.Writes(source.OfFile(file)) {
 			continue
@@ -89,13 +108,15 @@ func (SkillReminder) Handle(event Event) Response {
 		// a base is read in the background so the next edit is answered against the program.
 		// The folders a rule names are joined to the checkout the FILE lies in, which for a worker is its own
 		// worktree: the folders are the project's, the root is the file's.
-		in := checkoutOf(event.Root, file)
-
-		marks, read, whole := AgainstTheProgram(marking, file, project.RulesFor(in, file, enabled), event.ChangedLines(file), event.Root)
-		if !whole {
+		marks, against := together[file]
+		if !against {
+			// A file the program could not answer for is judged alone, by the rules that answer from one file,
+			// as every edit was before a tree was held.
 			var unread error
-			marks, read, unread = marksIn(marking, file, project.RulesFor(in, file, single), event.ChangedLines(file))
-			Warming(event.Root, project)
+			var read time.Duration
+			marks, read, unread = marksIn(marking, file,
+				project.RulesFor(checkoutOf(event.Root, file), file, single), event.ChangedLines(file))
+			spentReading += read
 
 			// A file nothing could READ is not a file with no sins, and answering nothing for it says exactly
 			// that: a bridge that cannot run on this machine judged every edit of its language with silence,
@@ -105,7 +126,6 @@ func (SkillReminder) Handle(event Event) Response {
 			}
 		}
 
-		spentReading += read
 		activity = append(activity, marks...)
 
 		found, order := bySkill(marks)
@@ -158,9 +178,27 @@ func edited(event Event, project config.Config) []string {
 	var files []string
 	shell, more := event.IsTool("Bash"), false
 
-	if shell {
+	switch {
+	case shell:
 		files, more = touched.Claim(touchedLimit)
-	} else {
+	case len(batchedIn(event.payload)) > 0:
+		// The batch this moment stands for: an agent's own edits, gathered so they are judged in one pass over
+		// one view rather than a pass each.
+		//
+		// Each through the SAME resolution a single file gets, and never as the journal named it. A journal
+		// names a path relative to a checkout, and everything after it — which checkout the file lies in, which
+		// folders of the project hold it, whether it is there at all — is a question about a real path and
+		// nonsense about a relative one. Carried as they came, a batch of more than one lost every file of
+		// itself: the mark answered nothing for each, every one read as a file that is gone, and the sins of
+		// all of them went untold while a batch of one, which takes the path below, was answered properly.
+		for _, named := range batchedIn(event.payload) {
+			if file := judgedFile(event.Root, named, project); file != "" {
+				files = append(files, file)
+			}
+		}
+
+		touched.MarkSeen()
+	default:
 		if file := judgedFile(event.Root, event.FilePath(), project); file != "" {
 			files = []string{file}
 		}

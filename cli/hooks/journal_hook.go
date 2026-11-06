@@ -16,6 +16,7 @@ import (
 
 	"github.com/jessegall/code-commandments/cli"
 	"github.com/jessegall/code-commandments/cli/dashboard"
+	"github.com/jessegall/code-commandments/cli/git"
 	"github.com/jessegall/code-commandments/cli/health"
 	"github.com/jessegall/code-commandments/cli/help"
 	"github.com/jessegall/code-commandments/cli/warm"
@@ -570,6 +571,117 @@ func (s *advisers) drained(within time.Duration) {
 	}
 }
 
+// batchedWithin is how long an agent's adviser gathers that agent's edits before judging them together, and
+// batchedFiles the most it gathers at once however fast they come.
+//
+// The window is the saving. Measured with eight agents writing at once, every one answered from a warm tree
+// with no reading at all: a judging of one file took 3.7 seconds of rules, so an agent's twelve edits judged one
+// after another cost it 44 seconds before it heard about the last of them. Those twelve in one pass cost about
+// one pass.
+//
+// NOTHING waits on the window. The event's own answer went out with the gates alone before the moment was ever
+// gathered, so this is a timer and not a block, and it is only ever entered while the adviser has work in hand
+// or an edit already waiting.
+const (
+	batchedWithin = 2 * time.Second
+	batchedFiles  = 100
+
+	// gatheringPause is how often the adviser looks again while it gathers, short enough that a lone edit is
+	// answered well inside the window.
+	gatheringPause = 100 * time.Millisecond
+)
+
+// batchedKey is where the moment that stands for a batch carries every file of it, and batchedLinesKey the lines
+// each of those edits wrote, by the file the journal named.
+const (
+	batchedKey      = "commandments_batched"
+	batchedLinesKey = "commandments_batched_lines"
+)
+
+// batched is the one moment that stands for the batch: the first of it, carrying every file the batch holds and
+// the lines each of those edits wrote. They are all of one agent, so one answer naming all of them is what that
+// agent is owed, and judging each moment would judge the same files again for every one.
+//
+// The LINES travel with the files, read from the MOMENT as the payload reads them. They live in the moment's own
+// data; the key they end up under belongs to the hook payload built from it. Taken from the wrong one they were
+// always absent, every file but the first fell back to asking git, and git answers nothing about work a worktree
+// has not committed: the sins of those files were found and then read as nobody's doing.
+func batched(batch []asked) asked {
+	if len(batch) == 1 {
+		return batch[0]
+	}
+
+	var files []any
+	lines := map[string]any{}
+
+	for _, held := range batch {
+		moment := MomentOf(held.given)
+		if moment.File == nil || *moment.File == "" {
+			continue
+		}
+
+		files = append(files, *moment.File)
+
+		switch {
+		case moment.ChangedWhole:
+			lines[*moment.File] = map[string]any{"whole": true}
+		case len(moment.Changed) > 0:
+			written := make([]any, 0, len(moment.Changed))
+			for _, line := range moment.Changed {
+				written = append(written, line)
+			}
+
+			lines[*moment.File] = map[string]any{"lines": written}
+		}
+	}
+
+	stands := batch[0]
+	if len(files) > 1 {
+		stands.given[batchedKey] = files
+		stands.given[batchedLinesKey] = lines
+	}
+
+	return stands
+}
+
+// batchedIn are the files the moment stands for, as the journal named them, and none where it stands alone.
+func batchedIn(payload map[string]any) []string {
+	held, batched := payload[batchedKey].([]any)
+	if !batched {
+		return nil
+	}
+
+	var files []string
+	for _, file := range held {
+		if named := asText(file); named != "" {
+			files = append(files, named)
+		}
+	}
+
+	return files
+}
+
+// batchedLinesOf are the lines the batch's own edit of that file wrote, and false where it carries none for it.
+//
+// Matched by the file's own tail, since the batch carries the paths the journal NAMED and the caller asks about
+// the resolved ones: the journal names a path relative to a checkout and the judging works in real paths.
+func batchedLinesOf(payload map[string]any, file string) (git.ChangedLines, bool) {
+	held, batched := payload[batchedLinesKey].(map[string]any)
+	if !batched {
+		return git.ChangedLines{}, false
+	}
+
+	for named, carried := range held {
+		if named != file && !strings.HasSuffix(filepath.Clean(file), filepath.Clean(named)) {
+			continue
+		}
+
+		return ChangedIn(map[string]any{changedKey: carried})
+	}
+
+	return git.ChangedLines{}, false
+}
+
 // startAdviser is an adviser giving each moment to advise, its goroutine started.
 func startAdviser(advise func(asked)) *adviser {
 	a := &adviser{wake: make(chan struct{}, 1), advise: advise}
@@ -598,14 +710,29 @@ func (a *adviser) work() {
 	for range a.wake {
 		for {
 			a.mu.Lock()
-			given, held := a.next()
+			gathering := a.gathering(time.Now())
+			a.mu.Unlock()
+
+			// Gathered for the window before it goes over, so an agent's run of edits is judged in one pass
+			// rather than a pass each. Nothing waits on it: the event's own answer went out before the moment
+			// was ever gathered.
+			if gathering {
+				time.Sleep(gatheringPause)
+
+				continue
+			}
+
+			a.mu.Lock()
+			batch, held := a.next()
 			a.mu.Unlock()
 
 			if !held {
 				break
 			}
 
-			a.advise(given)
+			// ONE moment is worked out for the batch, carrying every file of it: they are all of one agent, so
+			// one answer naming all of them is what that agent is owed.
+			a.advise(batched(batch))
 
 			a.mu.Lock()
 			a.working = false
@@ -629,15 +756,20 @@ func (a *adviser) drained(within time.Duration) {
 	}
 }
 
-// next is the moment to work out: an edit before anything else, since the agent is waiting to be told about the
-// file it just wrote. The caller holds the lock.
-func (a *adviser) next() (asked, bool) {
+// next are the moments to work out together, which for this agent's edits is as many as are waiting, up to the
+// cap: they are judged in one pass over one view. An edit comes before anything else, the agent being the one
+// waiting to hear about the file it just wrote. The caller holds the lock.
+func (a *adviser) next() ([]asked, bool) {
 	if len(a.pending) > 0 {
-		first := a.pending[0]
-		a.pending = a.pending[1:]
+		batch := a.pending
+		if len(batch) > batchedFiles {
+			batch = batch[:batchedFiles]
+		}
+
+		a.pending = a.pending[len(batch):]
 		a.working = true
 
-		return first, true
+		return batch, true
 	}
 
 	if len(a.later) > 0 {
@@ -645,10 +777,30 @@ func (a *adviser) next() (asked, bool) {
 		a.later = a.later[1:]
 		a.working = true
 
-		return next, true
+		return []asked{next}, true
 	}
 
-	return asked{}, false
+	return nil, false
+}
+
+// gathering says this agent has an edit waiting that is young enough for more of its own to join it, and that
+// the batch is not full. The caller holds the lock.
+//
+// A moment carrying no stamp is gathered for nothing and goes at once. Read through the moment's own clock it
+// would be brand new every time it was asked, so the window never closed and nothing was ever judged: the
+// adviser gathered for ever. The service stamps every moment as it arrives, so this is the answer for a moment
+// that reached the adviser another way.
+func (a *adviser) gathering(now time.Time) bool {
+	if len(a.pending) == 0 || len(a.pending) >= batchedFiles {
+		return false
+	}
+
+	stamped := stampOf(a.pending[0].given)
+	if stamped == 0 {
+		return false
+	}
+
+	return now.Sub(time.Unix(0, stamped)) < batchedWithin
 }
 
 // stamp is the latest change to what a running service runs: the executable, the project's config and its

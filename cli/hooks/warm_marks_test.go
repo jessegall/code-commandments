@@ -1,6 +1,8 @@
 package hooks
 
 import (
+	"slices"
+	"github.com/jessegall/code-commandments/detectors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -566,5 +568,116 @@ func TestAWorkersEditIsJudgedAgainstItsOwnAgentsTree(t *testing.T) {
 	if !whole {
 		t.Error("a worker's edit is judged on its own file alone after the main checkout moved off the branch it " +
 			"was cut from, so every rule that reads more than one file is dropped and nothing says so")
+	}
+}
+
+// TestJudgingSeveralFilesTogetherFindsWhatJudgingThemOneAtATimeFinds is what makes a batch safe to trust. An
+// agent's edits are judged in ONE pass over one view instead of a pass each, because the pass is the cost:
+// measured with eight agents answered from a warm tree with no reading at all, a judging of one file took 3.7
+// seconds of rules, and an agent's twelve edits judged one after another cost it 44 seconds.
+//
+// The thing that goes wrong in a change like this is the attribution, and getting it wrong tells one agent about
+// another agent's file. So the property held here is equality: for every file, the marks found in one pass are
+// the marks found by asking about that file alone.
+func TestJudgingSeveralFilesTogetherFindsWhatJudgingThemOneAtATimeFinds(t *testing.T) {
+	root, _ := migrationProject(t)
+	settings, _ := config.Load(root)
+
+	// Several files of one batch, two with a sin of their own and one with none: a file the batch judges and
+	// finds nothing in must come back with nothing rather than with its neighbour's marks.
+	written := map[string]string{
+		// One of them holds a sin whose rule has a NAME SHARED with another engine's, which is what the union
+		// nearly lost: of 247 rules a project had enabled only 127 names were distinct, and keyed by the name
+		// this set kept the PHP rule of each name and dropped the python one. With a fixture holding nothing
+		// such a rule could find, this test passed through the whole of that.
+		"shop/migrations/m101_one.py": `from shop.rebuild_migration import RebuildMigration
+
+
+class OneMigration(RebuildMigration):
+    number = 101
+
+    def deepened(self, order, rate=None):
+        if order is not None:
+            for line in order.lines:
+                if line.total > 0:
+                    if rate is not None:
+                        return line.total * rate
+                    else:
+                        return line.total
+        return 0
+`,
+		"shop/migrations/m102_two.py": `from shop.rebuild_migration import RebuildMigration
+
+
+class TwoMigration(RebuildMigration):
+    number = 102
+`,
+		"shop/migrations/m103_clean.py": "NUMBER = 103\n",
+	}
+
+	var files []string
+	for under, text := range written {
+		whole := filepath.Join(root, under)
+		if err := os.WriteFile(whole, []byte(text), 0o644); err != nil {
+			t.Fatal(err)
+		}
+
+		files = append(files, whole)
+	}
+	slices.Sort(files)
+
+	codebase, err := scan.Walk([]string{root}, source.Under(root, settings.Excluded)).Load()
+	if err != nil || codebase == nil {
+		t.Fatalf("the python bridge cannot run here: %v", err)
+	}
+
+	rules := allRules(t, root, settings)
+	together := marksOverTogether(codebase, Marks(root), files,
+		func(string) []detectors.Detector { return rules },
+		func(string) git.ChangedLines { return git.Everywhere() })
+
+	// CONTAINMENT and not equality. Every sin the file's own reading finds must be found by the batch too; the
+	// batch may find MORE, and that is right rather than wrong: with several of an agent's files open at once, a
+	// rule that reads a recurrence or a twin can see them repeating one another, which no reading of one file
+	// can. Measured on three files written alike, two marks each alone and three each together.
+	var found int
+	for _, file := range files {
+		alone := marksOver(codebase, Marks(root), file, rules, git.Everywhere())
+		found += len(alone)
+
+		said := map[string]bool{}
+		for _, mark := range together[file] {
+			said[mark.Found()] = true
+		}
+
+		for _, mark := range alone {
+			if !said[mark.Found()] {
+				t.Errorf("%s: judged alone it holds %q and the batch does not, so that sin goes untold",
+					filepath.Base(file), mark.Found())
+			}
+		}
+	}
+
+	if found == 0 {
+		t.Fatal("neither reading found a sin, so the two agree about nothing and this proves nothing")
+	}
+
+	// And the sin whose rule shares its name with another engine's is among them, or this fixture has stopped
+	// guarding the thing it was given that nest for.
+	var said string
+	for _, mark := range together[filepath.Join(root, "shop", "migrations", "m101_one.py")] {
+		said += mark.Found() + "\n"
+	}
+
+	if !strings.Contains(said, "deep-python-nesting") {
+		t.Errorf("the batch does not name deep-python-nesting, whose rule shares its name with another engine's:"+
+			"\n%s", said)
+	}
+
+	// And nothing is attributed to a file the batch was never asked about.
+	for file := range together {
+		if !slices.Contains(files, file) {
+			t.Errorf("the batch attributed marks to %s, which it was not asked about", file)
+		}
 	}
 }

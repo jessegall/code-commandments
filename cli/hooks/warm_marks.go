@@ -59,6 +59,29 @@ func howTheReadWent(named branchRoot) (string, bool) {
 // (detectors.ReadsBeyondOneFile) and an edit is never told about them. Against a view of the base they answer
 // about the real program, and the mark can carry every rule the project has enabled.
 func AgainstTheProgram(marking Marking, file string, rules []detectors.Detector, changed git.ChangedLines, root string) ([]SinMark, time.Duration, bool) {
+	together, read, whole := AgainstTheProgramTogether(marking, []string{file},
+		func(string) []detectors.Detector { return rules },
+		func(string) git.ChangedLines { return changed }, root)
+
+	return together[file], read, whole
+}
+
+// AgainstTheProgramTogether are the marks for SEVERAL files of one checkout, judged in one pass against one view
+// of the program: the files are read in one bridge ask, spliced into one view, and every rule run once over it.
+//
+// Every file must lie in ONE checkout, which is what an agent's own edits are: the view is rooted at that
+// checkout, and a file of another belongs to another program. Every path must be a REAL one, resolved as a
+// single file's is, since everything after it — which checkout it lies in, whether it is there at all — is a
+// question about a real path and nonsense about a relative one.
+func AgainstTheProgramTogether(marking Marking, files []string, rulesFor func(string) []detectors.Detector,
+	changedFor func(string) git.ChangedLines, root string) (map[string][]SinMark, time.Duration, bool) {
+
+	if len(files) == 0 {
+		return nil, 0, false
+	}
+
+	file := files[0]
+
 	// The checkout the FILE lies in, which for a worker is its own worktree: its files stand in for the
 	// project's own at the same path under it, so the program holds one copy of each source, the worker's.
 	//
@@ -78,11 +101,16 @@ func AgainstTheProgram(marking Marking, file string, rules []detectors.Detector,
 	// the agent that deleted it is told about sins in code it has just removed: a one-file read of a file that
 	// is not there answers with no files and no error, so the view came out as the base untouched and the base
 	// still held the file. The sweep below gives the base up for it, and the next read is the tree without it.
-	if warm.Mark(file) == "" {
+	// A batch is answered about the files that are still there: one of them being gone is no reason to say
+	// nothing about the rest.
+	here := slices.DeleteFunc(slices.Clone(files), func(path string) bool { return warm.Mark(path) == "" })
+	if len(here) == 0 {
 		return nil, 0, false
 	}
 
-	moved, swept := base.Stale(file, time.Now())
+	files, file = here, here[0]
+
+	moved, swept := base.StaleSince(time.Now(), files...)
 
 	// A file nobody announced is a change to the program too, and the sweep cannot see it: it walks the files
 	// the base READ, so a file a shell wrote, a pull brought or a checkout left behind is absent from every
@@ -105,7 +133,7 @@ func AgainstTheProgram(marking Marking, file string, rules []detectors.Detector,
 	// file alone with every cross-file rule dropped, while a 25 to 55 second read started in the background and
 	// was given up again by the next edit. A bridge's cost is per ASK and not per file, so reading all of them
 	// together costs what reading one costs, and the files are parsed here only when nothing parsed them ahead.
-	elsewhere := slices.DeleteFunc(slices.Clone(moved), func(path string) bool { return path == file })
+	elsewhere := slices.DeleteFunc(slices.Clone(moved), func(path string) bool { return slices.Contains(files, path) })
 	if len(elsewhere) > 0 {
 		patched, took := taken(base, held, elsewhere)
 		if patched == nil {
@@ -120,47 +148,64 @@ func AgainstTheProgram(marking Marking, file string, rules []detectors.Detector,
 	view := base.Codebase()
 	var read time.Duration
 
-	if slices.Contains(moved, file) {
-		// Parsed when the event arrived, together with every other file waiting then, since a bridge's cost is
-		// per ask and not per file. Where nothing parsed it ahead, or it moved again since, it is parsed here as
-		// every edit was before.
+	// The files of the batch that have really moved: every one we were told about, and any of the tree's own the
+	// sweep found.
+	fresh := slices.DeleteFunc(slices.Clone(files), func(path string) bool { return !slices.Contains(moved, path) })
+
+	if len(fresh) > 0 {
+		// Parsed in ONE ask, since a bridge's cost is per ask and not per file, and taken from the parse made
+		// when the events arrived wherever that already holds them.
 		//
-		// Nothing is excluded either way: this is the file we were TOLD changed, and it has already been held to
-		// what the project judges. A worker's file lies in a worktree under a folder the project excludes, so
-		// excluding again would read none of it.
+		// Nothing is excluded either way: these are the files we were TOLD changed, and each has already been
+		// held to what the project judges. A worker's file lies in a worktree under a folder the project
+		// excludes, so excluding again would read none of it.
 		reading := time.Now()
 
-		// What the file is NOW, taken before it is read: marked afterwards, a file written again during the
+		// What each file is NOW, taken before it is read: marked afterwards, a file written again during the
 		// read would be held as current when the tree holds the version before it.
-		mark := warm.Now(file)
+		marks := map[string]warm.Known{}
+		for _, path := range fresh {
+			marks[path] = warm.Now(path)
+		}
 
-		streams, already := parsed.streamsOf(file)
+		var streams []*contract.Stream
+		var toRead []string
 
-		if !already {
-			rebuilt, err := scan.OneFile(file).Load()
+		for _, path := range fresh {
+			if already, has := parsed.streamsOf(path); has {
+				streams = append(streams, already...)
+
+				continue
+			}
+
+			toRead = append(toRead, path)
+		}
+
+		if len(toRead) > 0 {
+			rebuilt, err := scan.Walk(toRead, source.Excluded{}).Load()
 			if err != nil || rebuilt == nil {
 				return nil, time.Since(reading), false
 			}
 
-			streams = rebuilt.Streams()
+			streams = append(streams, rebuilt.Streams()...)
 		}
 
 		read = time.Since(reading)
 
 		if checkout == strings.TrimRight(held.project, "/") {
-			// No files are dropped here: a file gone anywhere but the one named has already given the base up
-			// above, and the named file is one we were told about and have just read.
+			// No files are dropped here: a file gone anywhere but the ones named has already given the base up
+			// above, and the named files are ones we were told about and have just read.
 			view = base.ViewFrom(checkout, streams, held.project, nil)
 
-			// And the view becomes the base, so the next edit is judged against this file as it now is rather
-			// than as the base first read it.
-			kept.Patched(base, view, map[string]warm.Known{file: mark})
+			// And the view becomes the base, so the next edit is judged against these files as they now are
+			// rather than as the base first read them.
+			kept.Patched(base, view, marks)
 		} else {
 			// A worktree cannot patch the project's base, since its content belongs to another checkout, so it
 			// keeps an overlay of its OWN: every file that worktree differs from the branch by, held together,
 			// so this edit is judged beside the worker's earlier work rather than beside the project's copies
 			// of the files the worker has already changed.
-			view = overlaid(kept.Over(checkout), base, held, file, streams, mark, time.Now())
+			view = overlaid(kept.Over(checkout), base, held, fresh, streams, marks, time.Now())
 		}
 	}
 
@@ -168,11 +213,14 @@ func AgainstTheProgram(marking Marking, file string, rules []detectors.Detector,
 	// be the worst answer of the three: a worker's new file in its own worktree got exactly that, no mark and no
 	// answer at all, while a judging of it found eight sins. Judged alone it is answered as every edit was
 	// before a tree was held.
-	if !holds(view, file) {
+	//
+	// Asked of the batch as a whole: one file the view does not hold is no reason to say nothing about the rest.
+	judged := slices.DeleteFunc(slices.Clone(files), func(path string) bool { return !holds(view, path) })
+	if len(judged) == 0 {
 		return nil, read, false
 	}
 
-	return marksOver(view, marking, file, rules, changed), read, true
+	return marksOverTogether(view, marking, judged, rulesFor, changedFor), read, len(judged) == len(files)
 }
 
 // overlaid is the base seen through this checkout's own overlay, with this edit's file taken into it.
@@ -181,22 +229,22 @@ func AgainstTheProgram(marking Marking, file string, rules []detectors.Detector,
 // the first thing a worker did, and a bridge's cost is per ask and not per file, so reading all of them costs
 // what reading one costs. What it no longer has is asked of git, at most once every Sweep, since that is a
 // process and the answer changes only when the worker commits or removes something.
-func overlaid(over *warm.Overlay, base *warm.Base, held branchRoot, file string, streams []*contract.Stream, mark warm.Known, now time.Time) *engine.Codebase {
+func overlaid(over *warm.Overlay, base *warm.Base, held branchRoot, files []string, streams []*contract.Stream, marks map[string]warm.Known, now time.Time) *engine.Codebase {
 	if over.Empty() {
-		fill(over, held, file)
+		fill(over, held, files...)
 	}
 
 	if over.SweepDue(now) {
 		over.Removed(removedIn(held, over.Checkout))
 	}
 
-	over.Patch(streams, map[string]warm.Known{file: mark})
+	over.Patch(streams, marks)
 
 	return base.ViewFrom(over.Checkout, over.Streams(), held.project, over.Gone())
 }
 
 // fill reads everything the checkout differs from its branch by, less the file this edit already read.
-func fill(over *warm.Overlay, held branchRoot, file string) {
+func fill(over *warm.Overlay, held branchRoot, files ...string) {
 	changed, told := git.ChangedVsBranch(over.Checkout, held.branch)
 	if !told {
 		return
@@ -204,7 +252,7 @@ func fill(over *warm.Overlay, held branchRoot, file string) {
 
 	var reading []string
 	for path := range changed {
-		if path != file {
+		if !slices.Contains(files, path) {
 			reading = append(reading, path)
 		}
 	}
@@ -312,6 +360,77 @@ func holds(codebase *engine.Codebase, file string) bool {
 // every file's while its checks still read the whole program. A rule that weighs the candidates of the whole
 // program to reach its verdict is asked about everything, since its answer about this file is decided by every
 // other candidate.
+// marksOverTogether are the marks for SEVERAL files, judged in ONE pass over one view: every rule is run once
+// and each match attributed to the file it lies in, with that file's own rules and its own changed lines.
+//
+// One pass, because the pass IS the cost. Measured with eight agents writing at once, every one of them answered
+// from a warm tree with no reading at all: a judging of one file took 3.7 seconds of rules, and an agent's
+// twelve edits judged one after another cost it 44 seconds before it heard about the last of them. Twelve files
+// in one pass cost about one pass.
+//
+// A rule is asked only about the files it judges the language of, and an aggregating rule is asked about the
+// whole view, since what it weighs is the program and not the file.
+func marksOverTogether(codebase *engine.Codebase, marking Marking, files []string,
+	rulesFor func(string) []detectors.Detector, changedFor func(string) git.ChangedLines) map[string][]SinMark {
+
+	marks := map[string][]SinMark{}
+	if len(files) == 0 {
+		return marks
+	}
+
+	// Which files each rule is to be asked about, and every rule any of them is judged by: a project's own rule
+	// may name the folders it judges, so two files of one batch are not always judged by the same set.
+	//
+	// Told apart by detectors.IdentityOf, which is engine and name: a name alone is not one rule, since a
+	// detector's catalog name is its bare type name and the engines share those.
+	asksFor := map[string][]string{}
+	var rules []detectors.Detector
+
+	for _, file := range files {
+		for _, rule := range rulesFor(file) {
+			named := detectors.IdentityOf(rule)
+			if _, known := asksFor[named]; !known {
+				rules = append(rules, rule)
+			}
+
+			asksFor[named] = append(asksFor[named], file)
+		}
+	}
+
+	narrowed := codebase.Reporting(files...)
+
+	for _, rule := range rules {
+		// The files this rule is asked about: the ones it judges, of a language it judges. Asked BEFORE the rule
+		// is run, as the per-file reading asks it, since a rule of another engine run over this view does work
+		// that cannot answer — on a project with every engine's rules enabled that is most of them.
+		judges := map[string]bool{}
+		for _, file := range asksFor[detectors.IdentityOf(rule)] {
+			if detectors.Judges(rule, source.OfFile(file).Engine()) {
+				judges[file] = true
+			}
+		}
+
+		if len(judges) == 0 {
+			continue
+		}
+
+		asked := narrowed
+		if _, weighs := rule.(detectors.Aggregating); weighs {
+			asked = codebase
+		}
+
+		for _, match := range safely(rule, asked) {
+			if !judges[match.File()] {
+				continue
+			}
+
+			marks[match.File()] = append(marks[match.File()], marking.Of(rule, match, changedFor(match.File())))
+		}
+	}
+
+	return marks
+}
+
 func marksOver(codebase *engine.Codebase, marking Marking, file string, rules []detectors.Detector, changed git.ChangedLines) []SinMark {
 	narrowed := codebase.Reporting(file)
 	language := source.OfFile(file)

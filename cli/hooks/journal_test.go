@@ -181,7 +181,9 @@ func TestAnEditsAdviceIsWorkedOutFirst(t *testing.T) {
 		worked.Unlock()
 	}}
 
-	// Added before the worker starts, so all four are waiting when it picks the first.
+	// Added before the worker starts, so all four are waiting when it picks the first. All of ONE agent, which
+	// is where an order exists at all: each agent is worked out on a goroutine of its own and two agents run at
+	// the same time.
 	advice.add(asked{map[string]any{"named": "a heartbeat"}, true, false})
 	advice.add(asked{map[string]any{"named": "a stop"}, true, false})
 	advice.add(asked{map[string]any{"named": "an edit"}, true, true})
@@ -193,12 +195,14 @@ func TestAnEditsAdviceIsWorkedOutFirst(t *testing.T) {
 	worked.Lock()
 	defer worked.Unlock()
 
-	if len(order) != 4 {
-		t.Fatalf("the queue worked out %d of the 4 moments it held: %v", len(order), order)
+	// Three passes, not four: this agent's two edits are judged TOGETHER in one pass, so the moment standing for
+	// them names the first of the two, and the heartbeat and the stop follow one at a time.
+	if len(order) != 3 {
+		t.Fatalf("the agent's 4 moments were worked out in %d passes, want 3: %v", len(order), order)
 	}
 
-	if order[0] != "an edit" || order[1] != "another edit" {
-		t.Errorf("the queue worked out %v; the edits come first, since an agent is waiting on them", order)
+	if order[0] != "an edit" {
+		t.Errorf("the agent's moments were worked out as %v; its edits come first, since it is waiting on them", order)
 	}
 }
 

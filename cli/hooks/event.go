@@ -238,6 +238,13 @@ func (e Event) FilePath() string {
 // already worked out, when it carries them for this very file, and otherwise the ones git finds between the file
 // and HEAD. A sin on a line the edit did not touch is not this edit's doing, which is the whole use of them.
 func (e Event) ChangedLines(file string) git.ChangedLines {
+	// A moment standing for a batch carries the lines of every edit it stands for, by file: its own named file
+	// is only one of them, and the others would otherwise fall back to asking git, which answers nothing about
+	// work a worktree has not committed.
+	if lines, batched := batchedLinesOf(e.payload, file); batched {
+		return lines
+	}
+
 	changed, carried := ChangedIn(e.payload)
 	if carried && e.FilePath() != "" && strings.HasSuffix(filepath.Clean(file), filepath.Clean(e.FilePath())) && !writtenSince(e.payload) {
 		return changed

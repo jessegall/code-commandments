@@ -315,12 +315,18 @@ func (b *Base) Gone() []string {
 // a sweep was due and happened, so a caller that knows of changes the base cannot see by itself asks about them
 // then and not on every edit.
 func (b *Base) Stale(edited string, now time.Time) (stale []string, swept bool) {
+	return b.StaleSince(now, edited)
+}
+
+// StaleSince is the same answer for SEVERAL edited files, which is what an agent's own batch of edits is: each
+// of them is always read again, and the sweep falls due once for the batch rather than once per file.
+func (b *Base) StaleSince(now time.Time, edited ...string) (stale []string, swept bool) {
 	// The edited file is ALWAYS read again, never held to its mark. A mark is a size and a moment written, which
 	// is what the filesystem answers without reading the file, and two writes of one size inside one tick of
 	// that clock are the same mark: on a filesystem whose clock ticks by the second, which is not a rare one, an
 	// edit that keeps a file's length would be read as no change at all and judged against the version before
 	// it. The one file an event names is the one file we know moved, so it is not worth asking about.
-	stale = append(stale, edited)
+	stale = append(stale, edited...)
 
 	b.mu.Lock()
 	due := now.Sub(b.swept) >= Sweep
@@ -336,7 +342,7 @@ func (b *Base) Stale(edited string, now time.Time) (stale []string, swept bool) 
 	// The named file is checked either way, and the sweep knows nothing of a file the base never read, so the
 	// two answers are joined rather than one replacing the other.
 	for _, moved := range b.Moved() {
-		if moved != edited {
+		if !slices.Contains(edited, moved) {
 			stale = append(stale, moved)
 		}
 	}

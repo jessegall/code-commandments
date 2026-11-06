@@ -77,6 +77,22 @@ func EnginesOf(detector Detector) []catalog.Engine {
 	return []catalog.Engine{engine}
 }
 
+// IdentityOf tells one rule from another, which a NAME alone does not: a detector's catalog name is its bare
+// type name, and the engines share those. Of 247 rules a project had enabled, only 127 names were distinct, so a
+// set keyed by the name kept one rule of each name and dropped the rest — the python nesting rule among them,
+// because the PHP rule of that name comes first in curriculum order and never matches a python file, so that sin
+// was never found at all while its neighbour in the same file was.
+//
+// Engine and name, which is the identity the configuration already spells out as config.Rule{Kind, Engine, Name}
+// and the one a project names a rule by. Keyed by the type instead, every rule a project writes of its own would
+// collapse into one, since they share a type; keyed by the detector value, a rule holding a slice cannot be a
+// map key at all.
+func IdentityOf(detector Detector) string {
+	engine, _ := EngineOf(detector)
+
+	return string(engine) + "\x00" + catalog.Name(detector)
+}
+
 // Judges says whether the detector judges that engine.
 func Judges(detector Detector, engine catalog.Engine) bool {
 	return slices.Contains(EnginesOf(detector), engine)
