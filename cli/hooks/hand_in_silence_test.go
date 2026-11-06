@@ -17,7 +17,7 @@ func TestAHandInNobodyCouldJudgeSaysSo(t *testing.T) {
 	}{
 		{
 			"a hand-in whose time ran out before anything was read",
-			merging{worker: "worker 7", worktree: root, window: time.Nanosecond, limited: true},
+			merging{worker: "worker 7", worktree: root, window: time.Nanosecond},
 			[]string{"was not judged in full", "nothing of this hand-in was judged", "--changes"},
 			nil,
 		},
@@ -43,7 +43,7 @@ func TestAHandInNobodyCouldJudgeSaysSo(t *testing.T) {
 func TestAHandInThatWasJudgedInFullSaysNothingExtra(t *testing.T) {
 	root, _ := workerProject(t)
 
-	said := merging{worker: "worker 7", worktree: root, window: DeclaredWindow, limited: true}.answered()
+	said := merging{worker: "worker 7", worktree: root, window: DeclaredWindow}.answered()
 
 	if strings.Contains(said, "was not judged in full") {
 		t.Errorf("a hand-in that was judged in full carries the words of one that was not: %s", said)
@@ -53,7 +53,7 @@ func TestAHandInThatWasJudgedInFullSaysNothingExtra(t *testing.T) {
 func TestHowFarAJudgingGotIsCarriedBesideItsMarks(t *testing.T) {
 	root, _ := workerProject(t)
 
-	nowhere := merging{worker: "worker 7", worktree: root, window: time.Nanosecond, limited: true}.sinsWithin()
+	nowhere := merging{worker: "worker 7", worktree: root, window: time.Nanosecond}.sinsWithin()
 
 	if nowhere.got != gotNowhere {
 		t.Errorf("a judging whose time ran out at once says it got %q", nowhere.got)
@@ -63,7 +63,7 @@ func TestHowFarAJudgingGotIsCarriedBesideItsMarks(t *testing.T) {
 		t.Errorf("a judging that got nowhere carries %d mark(s)", len(nowhere.marks))
 	}
 
-	whole := merging{worker: "worker 7", worktree: root, window: DeclaredWindow, limited: true}.sinsWithin()
+	whole := merging{worker: "worker 7", worktree: root, window: DeclaredWindow}.sinsWithin()
 
 	if whole.got != gotWhole {
 		t.Errorf("a judging that finished says it got %q", whole.got)

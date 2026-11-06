@@ -4,6 +4,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -110,7 +111,7 @@ func TestASubmoduleIsNotOneOfTheProjectsCheckouts(t *testing.T) {
 		t.Fatalf("the submodule's .git does not name a gitdir at all")
 	}
 
-	if filepath.Base(filepath.Dir(gitdir)) != "modules" {
+	if !strings.Contains(gitdir, "/.git/modules/") {
 		t.Fatalf("the submodule's gitdir is %s, which is not in the parent's modules folder", gitdir)
 	}
 

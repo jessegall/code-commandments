@@ -11,6 +11,8 @@ import (
 )
 
 func TestAHandInNobodyCouldJudgeIsVisibleAfterwards(t *testing.T) {
+	forgetBookkeeping(t)
+
 	root, data := workerProject(t)
 	t.Setenv(pluginData, data)
 

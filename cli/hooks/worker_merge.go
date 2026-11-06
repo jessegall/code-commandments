@@ -186,7 +186,7 @@ func (m merging) shallowly() []SinMark {
 }
 
 func (m merging) deadline() time.Duration {
-	if !m.limited {
+	if m.unlimited {
 		return noDeadline
 	}
 
@@ -197,15 +197,15 @@ const noDeadline = time.Hour
 
 // merging is a worker's merge as the event describes it: who it is, where its work stands, what its branch was cut from, the files it names, and how long the journal waits for this answer.
 type merging struct {
-	worker   string
-	worktree string
-	base     string
-	files    []string
-	window   time.Duration
-	limited  bool
-	role     string
-	env      string
-	agent    int
+	worker    string
+	worktree  string
+	base      string
+	files     []string
+	window    time.Duration
+	unlimited bool
+	role      string
+	env       string
+	agent     int
 }
 
 func mergeOf(line map[string]any) merging {
@@ -213,15 +213,15 @@ func mergeOf(line map[string]any) merging {
 	window, limited := windowIn(fields)
 
 	return merging{
-		worker:   worker4Of(fields),
-		worktree: asText(fields["worktree"]),
-		base:     asText(fields["base"]),
-		files:    namedFiles(fields["files"]),
-		window:   window,
-		limited:  limited,
-		role:     roleIn(fields),
-		env:      asText(firstOf(line["environment"], fields["environment"])),
-		agent:    asAgent(firstOf(line["agent"], fields["agent"])),
+		worker:    worker4Of(fields),
+		worktree:  asText(fields["worktree"]),
+		base:      asText(fields["base"]),
+		files:     namedFiles(fields["files"]),
+		window:    window,
+		unlimited: !limited,
+		role:      roleIn(fields),
+		env:       asText(firstOf(line["environment"], fields["environment"])),
+		agent:     asAgent(firstOf(line["agent"], fields["agent"])),
 	}
 }
 
@@ -330,7 +330,7 @@ func (m merging) sins() []SinMark {
 	project = project.Judging(rules)
 
 	switch {
-	case !m.limited, m.window >= wholeTreeWindow:
+	case m.unlimited, m.window >= wholeTreeWindow:
 		return m.deep(project, rules)
 	case m.window >= changedFilesWindow:
 		return m.shallow(project, rules)

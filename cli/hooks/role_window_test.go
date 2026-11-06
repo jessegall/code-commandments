@@ -32,12 +32,12 @@ func TestTheWindowOnTheLineIsReadApartFromAbsentAndNull(t *testing.T) {
 }
 
 func TestANullWindowMeansNoLimitAndNotNoTime(t *testing.T) {
-	unlimited := merging{window: 0, limited: false}
+	unlimited := merging{window: 0, unlimited: true}
 	if unlimited.deadline() <= 0 {
 		t.Errorf("a null window gives a deadline of %s, so every delivery would pass unjudged", unlimited.deadline())
 	}
 
-	zero := merging{window: 0, limited: true}
+	zero := merging{window: 0}
 	if zero.deadline() > 0 {
 		t.Errorf("a window given as zero gives a deadline of %s, and zero means there is no time", zero.deadline())
 	}

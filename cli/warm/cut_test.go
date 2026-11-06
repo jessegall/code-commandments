@@ -14,10 +14,10 @@ func TestAWorkerCutAgainIntoTheSameFolderMeetsNothingOfTheLast(t *testing.T) {
 
 	keeper.CutAt(folder, "aaaaaaa")
 	first := keeper.Over(folder)
-	first.Patch(nil, map[string]Known{"src/made.py": {}})
+	first.Fills(keeper.now(), "aaaaaaa")
 
-	if held := first.Count(); held != 1 {
-		t.Fatalf("the first worker's overlay holds %d of its files, and it wrote 1", held)
+	if state, _, _ := first.Filling(); state != Filled {
+		t.Fatalf("the first worker's lane says it is %v rather than filled", state)
 	}
 
 	keeper.CutAt(folder, "bbbbbbb")
@@ -27,8 +27,8 @@ func TestAWorkerCutAgainIntoTheSameFolderMeetsNothingOfTheLast(t *testing.T) {
 		t.Fatal("a worker cut again into the same folder was handed the last worker's own overlay")
 	}
 
-	if held := second.Count(); held != 0 {
-		t.Errorf("the second worker's first answer carries %d of the first worker's files", held)
+	if state, _, _ := second.Filling(); state == Filled {
+		t.Error("the second worker's lane says it is already filled, so it stands on what the first worker read")
 	}
 
 	if len(told) != 1 || told[0] != folder {
@@ -46,7 +46,7 @@ func TestTheSameWorkerAskingAgainKeepsItsOwnOverlay(t *testing.T) {
 
 	keeper.CutAt(folder, "aaaaaaa")
 	first := keeper.Over(folder)
-	first.Patch(nil, map[string]Known{"src/made.py": {}})
+	first.Fills(keeper.now(), "aaaaaaa")
 
 	keeper.CutAt(folder, "aaaaaaa")
 
@@ -54,7 +54,7 @@ func TestTheSameWorkerAskingAgainKeepsItsOwnOverlay(t *testing.T) {
 		t.Fatal("a worker asking a second question from the same cut lost the overlay it had just filled")
 	}
 
-	if held := keeper.Over(folder).Count(); held != 1 {
-		t.Errorf("the worker's own file is no longer held: %d", held)
+	if state, _, _ := keeper.Over(folder).Filling(); state != Filled {
+		t.Error("the worker's lane is no longer filled, so its next answer pays the read again")
 	}
 }

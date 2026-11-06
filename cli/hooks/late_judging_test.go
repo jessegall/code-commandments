@@ -16,7 +16,7 @@ func TestAJudgingThatOutlivedItsWindowStillTellsWhatItFound(t *testing.T) {
 	wroteInto(t, filepath.Join(root, "src", "slow.py"), olderSin)
 
 	work := merging{
-		worker: "worker 7", worktree: root, window: time.Millisecond, limited: true,
+		worker: "worker 7", worktree: root, window: time.Millisecond,
 		env: "main", agent: 7,
 	}
 

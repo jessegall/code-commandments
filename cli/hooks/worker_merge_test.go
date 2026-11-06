@@ -101,13 +101,23 @@ func TestACleanBranchMergesUnheld(t *testing.T) {
 	}
 }
 
-func TestAWindowTooSmallToJudgeInJudgesNothing(t *testing.T) {
+func TestAWindowTooSmallToJudgeInJudgesNothingAndSaysSo(t *testing.T) {
 	root, _, _ := projectWithASin(t)
 
 	for name, window := range map[string]int{"a window the journal does not name": 0, "the 50 ms a journal holds by default": 50} {
 		t.Run(name, func(t *testing.T) {
-			if held := MergeHeld(mergingOf(root, window, "src/refund.py")); held != "" {
-				t.Errorf("a merge the journal gave no time to judge was answered with %q", held)
+			held := MergeHeld(mergingOf(root, window, "src/refund.py"))
+
+			if held == "" {
+				t.Error("a merge the journal gave no time to judge was answered with silence, which it reads as no objection")
+			}
+
+			if strings.Contains(held, "src/refund.py") {
+				t.Errorf("a merge the journal gave no time to judge named a sin anyway, so something was judged in no time at all: %s", held)
+			}
+
+			if !strings.Contains(held, "was not judged in full") {
+				t.Errorf("it does not say that nothing was judged: %s", held)
 			}
 		})
 	}
@@ -321,7 +331,18 @@ func TestAGateThatRunsOutOfTimeAnswersWithWhatItFound(t *testing.T) {
 			"clean: the worker's work goes through unjudged and nobody is told the judging did not finish")
 	}
 
-	if said := MergeHeld(mergingOf(root, 50, "src/refund.py")); said != "" {
-		t.Errorf("a gate given 50ms answered %q; there is no honest answer in that time", said)
+	said := MergeHeld(mergingOf(root, 50, "src/refund.py"))
+
+	if said == "" {
+		t.Error("a gate given 50ms answered with nothing, and silence is what the journal reads as no objection: " +
+			"there is no honest judging in that time, so the honest answer is to say so")
+	}
+
+	if !strings.Contains(said, "was not judged in full") {
+		t.Errorf("a gate given 50ms does not say that it could not judge: %s", said)
+	}
+
+	if strings.Contains(said, `"refuse"`) {
+		t.Errorf("a gate given 50ms refused the hand-in, and a refusal from this form is a fault: %s", said)
 	}
 }

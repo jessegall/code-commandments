@@ -61,6 +61,8 @@ func TestEveryReadCarriesTheFlag(t *testing.T) {
 
 	for name, read := range readers {
 		t.Run(name, func(t *testing.T) {
+			git.Forgets()
+
 			calls := record(read)
 			if len(calls) == 0 {
 				t.Fatalf("%s asked git nothing, so this case proves nothing about it", name)

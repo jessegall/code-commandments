@@ -72,7 +72,7 @@ func TestTheGateAnswersWithinItsWindowHoweverItEnds(t *testing.T) {
 	root, _ := workerProject(t)
 
 	for _, window := range []time.Duration{time.Nanosecond, time.Millisecond, 50 * time.Millisecond} {
-		found := merging{worker: "worker 7", worktree: root, window: window, limited: true}.sinsWithin()
+		found := merging{worker: "worker 7", worktree: root, window: window}.sinsWithin()
 
 		if found.got == gotWhole && len(found.marks) == 0 {
 			continue

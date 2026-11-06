@@ -11,6 +11,8 @@ import (
 )
 
 func TestWhyReadsTheRecordOfTheLastJudgings(t *testing.T) {
+	forgetBookkeeping(t)
+
 	folder := t.TempDir()
 	t.Setenv(pluginData, folder)
 
@@ -43,6 +45,8 @@ func TestWhyReadsTheRecordOfTheLastJudgings(t *testing.T) {
 }
 
 func TestWhyAboutAFileNobodyJudgedSaysThatItIsNotClean(t *testing.T) {
+	forgetBookkeeping(t)
+
 	folder := t.TempDir()
 	t.Setenv(pluginData, folder)
 
@@ -57,6 +61,8 @@ func TestWhyAboutAFileNobodyJudgedSaysThatItIsNotClean(t *testing.T) {
 }
 
 func TestWhyWithNoRecordSaysWhereItLooked(t *testing.T) {
+	forgetBookkeeping(t)
+
 	folder := t.TempDir()
 	t.Setenv(pluginData, folder)
 

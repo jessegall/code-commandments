@@ -15,6 +15,14 @@ var asked struct {
 	count int
 }
 
+func Forgets() {
+	remembered.Range(func(key, _ any) bool {
+		remembered.Delete(key)
+
+		return true
+	})
+}
+
 func counted() {
 	asked.Lock()
 	asked.count++
