@@ -564,6 +564,18 @@ class RebuildKind(Kind):
 
 const stressEnvironment = "development"
 
+func stressTellsOf(folder, project, linked string) string {
+	if folder == project {
+		return linked
+	}
+
+	if under, inside := strings.CutPrefix(folder, project+"/"); inside {
+		return filepath.Join(linked, under)
+	}
+
+	return folder
+}
+
 func stressWorktreeIn(project string, worker int) string {
 	if worker%2 == 1 {
 		return filepath.Join(project, ".journal", "worktrees", stressEnvironment, fmt.Sprintf("worker-%d", worker))
@@ -795,7 +807,7 @@ func stressCheckouts(t *testing.T, seed int64) []*stressCheckout {
 		checkout := &stressCheckout{
 			At:      folder,
 			Project: project,
-			Told:    strings.Replace(folder, project, linked, 1),
+			Told:    stressTellsOf(folder, project, linked),
 			Service: service,
 			Named:   named + 1,
 			draw:    rand.New(rand.NewSource(seed + int64(named))),
@@ -1485,7 +1497,7 @@ func stressHeld(t *testing.T, mine *stressCheckout, move int, against, file stri
 			move, mine.Named, stressUnder(against, file), len(answers), inFlight, done,
 			map[bool]string{true: "had not answered YET", false: "was never going to answer"}[inFlight > 0],
 			map[bool]string{true: "DID take", false: "never took"}[TookIntoAJudging(file)],
-			left, len(found), names, unread, answers, stressSent[file])
+			left, len(found), names, unread, answers, stressSent[file]+"\nwhat happened to it: "+NotesOn(file)+"\nby name: "+NotesLike(filepath.Base(file))+", refused because "+map[bool]string{true: RefusalOf(file), false: "nothing refused it"}[RefusalOf(file) != ""])
 	}
 }
 

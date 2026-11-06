@@ -7,6 +7,7 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/jessegall/code-commandments/cli/binary"
@@ -54,7 +55,7 @@ func (SkillReminder) Handle(event Event) Response {
 	enabled = append(enabled, custom.InForce(home).Enabled(project)...)
 
 	project = project.Judging(enabled)
-	files := edited(event, project)
+	files, lost := edited(event, project)
 
 	single := slices.DeleteFunc(slices.Clone(enabled), detectors.ReadsBeyondOneFile)
 
@@ -148,6 +149,12 @@ func (SkillReminder) Handle(event Event) Response {
 			strings.Join(unreadable, "; "), ""))
 	}
 
+	if len(files) == 0 && len(lost) > 0 {
+		said = append(said, Unjudged("nothing of this edit was judged: "+strings.Join(lost, ", "),
+			string(filesNotOnDisk)+", which is what a checkout cut again or removed looks like",
+			binary.Judging(event.Root)+" --changes"))
+	}
+
 	response := Silent()
 	if len(said) > 0 {
 		response = Injecting(event.Name(), strings.Join(said, "\n\n"), false)
@@ -163,9 +170,9 @@ func (SkillReminder) Handle(event Event) Response {
 	return response
 }
 
-func edited(event Event, project config.Config) []string {
+func edited(event Event, project config.Config) ([]string, []string) {
 	touched := TouchedIn(event.Workspace(), event.Root, project)
-	var files []string
+	var files, lost []string
 	shell, more := event.IsTool("Bash"), false
 
 	switch {
@@ -173,15 +180,22 @@ func edited(event Event, project config.Config) []string {
 		files, more = touched.Claim(touchedLimit)
 	case len(batchedIn(event.payload)) > 0:
 		for _, named := range batchedIn(event.payload) {
-			if file := judgedFile(event.Root, named, project); file != "" {
-				files = append(files, file)
+			file := judgedFile(event.Root, named, project)
+			if file == "" {
+				lost = append(lost, named)
+
+				continue
 			}
+
+			files = append(files, file)
 		}
 
 		touched.MarkSeen()
 	default:
 		if file := judgedFile(event.Root, event.FilePath(), project); file != "" {
 			files = []string{file}
+		} else if event.FilePath() != "" {
+			lost = append(lost, event.FilePath())
 		}
 
 		touched.MarkSeen()
@@ -215,7 +229,7 @@ func edited(event Event, project config.Config) []string {
 		touched.MarkSeen()
 	}
 
-	return affordable
+	return affordable, lost
 }
 
 // Dropped are the files an edit named and the judging never looked at, by the reason it did not: the counters a
@@ -247,8 +261,9 @@ func judgedFile(root, file string, project config.Config) string {
 		absolute = resolved
 	}
 
-	if !project.IsJudged(checkoutOf(root, absolute), absolute) {
+	if checkout := checkoutOf(root, absolute); !project.IsJudged(checkout, absolute) {
 		dropped.NotJudged++
+		refused(absolute, "the project judges "+strings.Join(project.Paths, ", ")+" under "+checkout)
 
 		return ""
 	}
@@ -260,6 +275,19 @@ func judgedFile(root, file string, project config.Config) string {
 	}
 
 	return absolute
+}
+
+var refusals sync.Map
+
+func refused(file string, why string) { refusals.Store(file, why) }
+
+func RefusalOf(file string) string {
+	why, found := refusals.Load(file)
+	if !found {
+		return ""
+	}
+
+	return why.(string)
 }
 
 func projectOf(folder string) string {

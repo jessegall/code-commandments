@@ -459,6 +459,44 @@ func serve(listener net.Listener, current func() bool, advice *advisers) {
 
 var working, advised atomic.Int64
 
+var notes sync.Map
+
+func noted(file *string, what string) {
+	if file == nil {
+		return
+	}
+
+	was, _ := notes.Load(*file)
+	had, _ := was.(string)
+	notes.Store(*file, had+what+"; ")
+}
+
+func NotesLike(name string) string {
+	var said []string
+	notes.Range(func(key, what any) bool {
+		if strings.HasSuffix(key.(string), name) {
+			said = append(said, key.(string)+" -> "+what.(string))
+		}
+
+		return true
+	})
+
+	if len(said) == 0 {
+		return "no file of that name was noted at all"
+	}
+
+	return strings.Join(said, " | ")
+}
+
+func NotesOn(file string) string {
+	what, found := notes.Load(file)
+	if !found {
+		return "nothing happened to it"
+	}
+
+	return what.(string)
+}
+
 var takenIn sync.Map
 
 func JudgingNow() (int64, int64) {
@@ -626,6 +664,8 @@ func startAdviser(advise func(asked)) *adviser {
 }
 
 func (a *adviser) add(given asked) {
+	noted(MomentOf(given.given).File, "the adviser took it in")
+
 	a.mu.Lock()
 	if given.first {
 		a.pending = append(a.pending, given)
@@ -662,6 +702,9 @@ func (a *adviser) work() {
 			}
 
 			working.Add(1)
+			for _, one := range batch {
+				noted(MomentOf(one.given).File, "the adviser advised it")
+			}
 			a.advise(batched(batch))
 			working.Add(-1)
 			advised.Add(1)
