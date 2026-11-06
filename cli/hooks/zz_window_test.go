@@ -9,15 +9,15 @@ import (
 func TestADeliveryWithNoWindowIsStillJudged(t *testing.T) {
 	for _, each := range []struct {
 		why   string
-		given any
+		given map[string]any
 		want  time.Duration
 	}{
-		{"an event that names no window asks for the one this plugin declared", nil, DeclaredWindow},
-		{"a journal that names one is believed, however its number arrives", float64(5000), 5 * time.Second},
-		{"and whether it arrives as a plain number", 5000, 5 * time.Second},
-		{"or as a decoder's own", json.Number("5000"), 5 * time.Second},
+		{"an event that names no window asks for the one this plugin declared", map[string]any{}, DeclaredWindow},
+		{"a journal that names one is believed, however its number arrives", map[string]any{"window_ms": float64(5000)}, 5 * time.Second},
+		{"and whether it arrives as a plain number", map[string]any{"window_ms": 5000}, 5 * time.Second},
+		{"or as a decoder's own", map[string]any{"window_ms": json.Number("5000")}, 5 * time.Second},
 	} {
-		if got := windowOf(each.given); got != each.want {
+		if got, _ := windowIn(each.given); got != each.want {
 			t.Errorf("%s: %s, want %s", each.why, got, each.want)
 		}
 	}

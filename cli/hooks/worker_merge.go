@@ -5,6 +5,7 @@ import (
 	"maps"
 	"os"
 	"slices"
+	"strconv"
 	"strings"
 	"time"
 
@@ -43,6 +44,9 @@ func DeliveryHeld(line map[string]any) string {
 
 func workHeld(line map[string]any) string {
 	work := mergeOf(line)
+	if !work.judgedByRole() {
+		return ""
+	}
 
 	marks := work.sinsWithin()
 	if len(marks) == 0 {
@@ -101,8 +105,14 @@ func (m merging) shallowly() []SinMark {
 }
 
 func (m merging) deadline() time.Duration {
+	if !m.limited {
+		return noDeadline
+	}
+
 	return m.window - max(m.window/10, 200*time.Millisecond)
 }
+
+const noDeadline = time.Hour
 
 // merging is a worker's merge as the event describes it: who it is, where its work stands, what its branch was cut from, the files it names, and how long the journal waits for this answer.
 type merging struct {
@@ -111,18 +121,79 @@ type merging struct {
 	base     string
 	files    []string
 	window   time.Duration
+	limited  bool
+	role     string
 }
 
 func mergeOf(line map[string]any) merging {
 	fields := eventFields(line)
+	window, limited := windowIn(fields)
 
 	return merging{
 		worker:   worker4Of(fields),
 		worktree: asText(fields["worktree"]),
 		base:     asText(fields["base"]),
 		files:    namedFiles(fields["files"]),
-		window:   windowOf(fields["window_ms"]),
+		window:   window,
+		limited:  limited,
+		role:     roleIn(fields),
 	}
+}
+
+func (m merging) judgedByRole() bool {
+	if m.role == "" {
+		return true
+	}
+
+	return !workerRoles[m.role]
+}
+
+var workerRoles = map[string]bool{
+	"worker":  true,
+	"helper":  true,
+	"medior":  true,
+	"senior":  true,
+	"builder": true,
+}
+
+func roleIn(fields map[string]any) string {
+	return strings.ToLower(strings.TrimSpace(asText(firstOf(fields["role"], fields["agent_role"]))))
+}
+
+func windowIn(fields map[string]any) (time.Duration, bool) {
+	named, given := fields["window_ms"]
+	if !given {
+		return DeclaredWindow, true
+	}
+
+	if named == nil {
+		return 0, false
+	}
+
+	if window, read := milliseconds4Of(named); read {
+		return window, true
+	}
+
+	return DeclaredWindow, true
+}
+
+func milliseconds4Of(named any) (time.Duration, bool) {
+	switch window := named.(type) {
+	case float64:
+		return time.Duration(window) * time.Millisecond, true
+	case int:
+		return time.Duration(window) * time.Millisecond, true
+	case json.Number:
+		if read, err := window.Int64(); err == nil {
+			return time.Duration(read) * time.Millisecond, true
+		}
+	case string:
+		if read, err := strconv.ParseInt(strings.TrimSpace(window), 10, 64); err == nil {
+			return time.Duration(read) * time.Millisecond, true
+		}
+	}
+
+	return 0, false
 }
 
 func eventFields(line map[string]any) map[string]any {
@@ -141,21 +212,6 @@ func eventFields(line map[string]any) map[string]any {
 	}
 
 	return fields
-}
-
-func windowOf(named any) time.Duration {
-	switch window := named.(type) {
-	case float64:
-		return time.Duration(window) * time.Millisecond
-	case int:
-		return time.Duration(window) * time.Millisecond
-	case json.Number:
-		if milliseconds, err := window.Int64(); err == nil {
-			return time.Duration(milliseconds) * time.Millisecond
-		}
-	}
-
-	return DeclaredWindow
 }
 
 func namedFiles(named any) []string {
@@ -189,7 +245,7 @@ func (m merging) sins() []SinMark {
 	project = project.Judging(rules)
 
 	switch {
-	case m.window >= wholeTreeWindow:
+	case !m.limited, m.window >= wholeTreeWindow:
 		return m.deep(project, rules)
 	case m.window >= changedFilesWindow:
 		return m.shallow(project, rules)
