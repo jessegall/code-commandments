@@ -2,8 +2,6 @@ package hooks
 
 import (
 	"os"
-	"strconv"
-	"strings"
 
 	"github.com/jessegall/code-commandments/cli/binary"
 	"github.com/jessegall/code-commandments/cli/config"
@@ -143,11 +141,6 @@ func (l landed) saidAbout(marks []SinMark, why Narrowed) string {
 		return ""
 	}
 
-	var named []string
-	for _, mark := range marks {
-		named = append(named, mark.ShownFrom(l.project))
-	}
-
 	who := "a worker"
 	if l.worker != "" {
 		who = "worker " + l.worker
@@ -163,8 +156,7 @@ func (l landed) saidAbout(marks []SinMark, why Narrowed) string {
 			string(why), binary.Judging(l.project)+" --changes")
 	}
 
-	said := "Code Commandments: the work " + who + " just merged" + about + " brings in " +
-		strconv.Itoa(len(marks)) + " sin(s), each to fix at its source:\n  " + strings.Join(named, "\n  ")
+	said := "Code Commandments: the work " + mergeTold(who+" just merged", about, l.project, marks)
 
 	if why != "" {
 		said += "\n\n" + Unjudged("only the range this merge names was judged", string(why), "")

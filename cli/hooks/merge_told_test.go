@@ -1,0 +1,65 @@
+package hooks
+
+import (
+	"encoding/json"
+	"path/filepath"
+	"strconv"
+	"strings"
+	"testing"
+
+	"github.com/jessegall/code-commandments/cli/git"
+)
+
+func TestAMergeOfManyFilesIsOneThingToReadWithACount(t *testing.T) {
+	root, before, _ := mergedProject(t)
+
+	for each := 0; each < 12; each++ {
+		wroteInto(t, filepath.Join(root, "src", "many"+strconv.Itoa(each)+".py"), olderSin)
+	}
+
+	commitIn(t, root, "a merge of many files")
+
+	said := MergeLanded(mergeLine(root, "main", before, git.Head(root)))
+
+	if said == "" {
+		t.Fatal("a merge of twelve sinful files was answered with nothing")
+	}
+
+	var answer map[string]any
+	if err := json.Unmarshal([]byte(said), &answer); err != nil {
+		t.Fatalf("the merge was answered with something that is not a line of JSON: %v", err)
+	}
+
+	if cards, held := answer["cards"].([]any); held && len(cards) > 1 {
+		t.Errorf("the merge raised %d cards, and it must be one thing to read", len(cards))
+	}
+
+	tell := asText(answer["tell"])
+
+	if lines := strings.Count(tell, "\n"); lines > mergeSinsShown+2 {
+		t.Errorf("the merge named %d lines of sins, and it shows %d with a count of the rest:\n%s",
+			lines, mergeSinsShown, tell)
+	}
+
+	if !strings.Contains(tell, "more") {
+		t.Errorf("the merge does not count the sins it did not list:\n%s", tell)
+	}
+
+	if !strings.Contains(tell, "--changes") {
+		t.Errorf("the merge does not say how to read the rest:\n%s", tell)
+	}
+}
+
+func TestTheMergeAndTheHandInUseTheSameWords(t *testing.T) {
+	root, _ := workerProject(t)
+
+	marks := []SinMark{}
+
+	if told := mergeTold("worker 7", ", on task 412", root, marks); told != "" {
+		t.Errorf("no sins at all is said as %q", told)
+	}
+
+	if from, gate := mergeTold("worker 7", "", root, marks), mergeReason("worker 7", marks, root); from != gate {
+		t.Errorf("the merge says %q and the hand-in says %q, and they are one form", from, gate)
+	}
+}

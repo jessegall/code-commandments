@@ -12,7 +12,6 @@ import (
 	"github.com/jessegall/code-commandments/cli/config"
 	"github.com/jessegall/code-commandments/cli/custom"
 	"github.com/jessegall/code-commandments/cli/git"
-	"github.com/jessegall/code-commandments/cli/natural"
 	"github.com/jessegall/code-commandments/cli/scan"
 	"github.com/jessegall/code-commandments/cli/scope"
 	"github.com/jessegall/code-commandments/cli/source"
@@ -25,8 +24,6 @@ const (
 	mergeEvent      = "worker_merging"
 	mergedEvent     = "worker_merge_result"
 )
-
-const mergeSinsShown = 5
 
 const (
 	wholeTreeWindow    = time.Minute
@@ -53,7 +50,7 @@ func workHeld(line map[string]any) string {
 		return ""
 	}
 
-	refusal := mergeReason(work.worker, marks)
+	refusal := mergeReason(work.worker, marks, work.worktree)
 
 	return (JournalAnswer{Refuse: &refusal}).Line4()
 }
@@ -344,18 +341,8 @@ func (m merging) marks(codebase *engine.Codebase, rules []detectors.Detector, ch
 	return marks
 }
 
-func mergeReason(worker string, marks []SinMark) string {
-	said := []string{worker + " carries " + natural.Counted(len(marks), "sin") + ":"}
-
-	for _, mark := range marks[:min(len(marks), mergeSinsShown)] {
-		said = append(said, "  "+mark.Found())
-	}
-
-	if more := len(marks) - mergeSinsShown; more > 0 {
-		said = append(said, "  and "+natural.Counted(more, "sin")+" more")
-	}
-
-	return strings.Join(said, "\n")
+func mergeReason(worker string, marks []SinMark, root string) string {
+	return mergeTold(worker, "", root, marks)
 }
 
 func worker4Of(fields map[string]any) string {
