@@ -18,12 +18,10 @@ func init() {
 	detectors.Register(catalog.CSharp, DeNulledFinderDetector{})
 }
 
-// Sin is the sin the detector finds.
 func (DeNulledFinderDetector) Sin() sins.Sin {
 	return cssins.DeNulledFinder{}
 }
 
-// Find is every place the sin is committed.
 func (DeNulledFinderDetector) Find(codebase *engine.Codebase) []engine.Match {
 	program := cs.In(codebase).Program
 
@@ -39,13 +37,10 @@ func (DeNulledFinderDetector) Find(codebase *engine.Codebase) []engine.Match {
 		Get()
 }
 
-// isDeNulledByEveryCaller says whether two or more calls outside the tests reach the finder, and every one asserts
-// its result is there.
 func isDeNulledByEveryCaller(finder cs.Node, program *cs.Program) bool {
 	calls := program.CallsTo(finder)
 
 	return calls.OutsideTests >= 2 && calls.Asserting == calls.OutsideTests
 }
 
-// CrossFile says the PHP tool finds it reaching beyond the file it judges, so a per-file check must not ask it.
 func (DeNulledFinderDetector) CrossFile() {}

@@ -9,10 +9,8 @@ import (
 	pysins "github.com/jessegall/code-commandments/sins/python"
 )
 
-// templateLines is how many joined lines make a template.
 const templateLines = 3
 
-// templateFixedLines is how many of them must be text written out.
 const templateFixedLines = 2
 
 // AssembledTemplateDetector finds a multi-line string assembled by joining a list of lines with a newline.
@@ -22,12 +20,10 @@ func init() {
 	detectors.Register(catalog.Python, AssembledTemplateDetector{})
 }
 
-// Sin is the sin the detector finds.
 func (AssembledTemplateDetector) Sin() sins.Sin {
 	return pysins.AssembledTemplate{}
 }
 
-// Find is every place the sin is committed.
 func (AssembledTemplateDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return py.In(codebase).
 		WhereCall().

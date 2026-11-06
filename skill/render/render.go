@@ -1,7 +1,4 @@
-// Package render writes a skill as the tree of documents it is published as: the SKILL.md a reader loads to decide
-// how to write the next line — principle, rules, one worked example, the commands that act on them — beside the
-// reference/ documents holding what they want only afterwards. All of it is a projection of the skill and its sins,
-// with no count written down, so the documents cannot drift from the detectors.
+// Package render writes a skill as the tree of documents it is published as: the SKILL.md a reader loads to decide how to write the next line — principle, rules, one worked example, the commands that act on them — beside the reference/ documents holding what they want only afterwards.
 package render
 
 import (
@@ -37,7 +34,6 @@ type Example struct {
 // Examples are the worked examples of each detector, by its Key.
 type Examples map[string][]Example
 
-// Key is how Examples name a detector: its sin's skill and its name, which alone repeats across engines.
 func Key(detector detectors.Detector) string {
 	return detector.Sin().Definition().Slug() + ":" + catalog.Name(detector)
 }
@@ -48,7 +44,6 @@ type worked struct {
 	sins    []sins.Sin
 }
 
-// Documents is every file the skill publishes, by its path relative to the skill's folder.
 func Documents(teaching skill.Skill, examples Examples) map[string]string {
 	definition := teaching.Definition()
 	taught := sinsOf(definition.Slug)
@@ -67,7 +62,6 @@ func Documents(teaching skill.Skill, examples Examples) map[string]string {
 	return documents
 }
 
-// body is the SKILL.md itself: what a reader has in front of them while writing the line.
 func body(definition skill.Definition, taught []sins.Sin, examplesOf []worked) string {
 	opening := reminder
 	if definition.Slug == fixAtSource {
@@ -99,13 +93,10 @@ func path(name string) string {
 	return "reference/" + name + ".md"
 }
 
-// banner is the rule this half of an example shows, as a divider inside the fence.
 func banner(half string) string {
 	return "----------[ " + half + " ]----------"
 }
 
-// frontmatter names the skill by its id and quotes its trigger as JSON, which is exactly the escape a YAML
-// double-quoted scalar wants: a trigger holding ": " or " #" is not plain YAML.
 func frontmatter(definition skill.Definition) string {
 	var description bytes.Buffer
 	encoder := json.NewEncoder(&description)
@@ -124,7 +115,6 @@ func blockquote(text string) string {
 	return strings.Join(lines, "\n")
 }
 
-// rules is one directive per sin, a checkbox so the one list serves writing and reviewing alike.
 func rules(taught []sins.Sin) string {
 	var rows []string
 	for _, sin := range taught {
@@ -142,7 +132,6 @@ func rules(taught []sins.Sin) string {
 	return "## Rules\n\n" + strings.Join(rows, "\n")
 }
 
-// commands is what a reader can run on the skill's rules, spelled as every report spells them.
 func commands(definition skill.Definition, taught []sins.Sin) string {
 	if len(taught) == 0 {
 		return ""
@@ -197,7 +186,6 @@ func code(values []string) string {
 	return strings.Join(quoted, ", ")
 }
 
-// referenceIndex lists the documents the skill ships beside its teaching, each with the question it answers.
 func referenceIndex(definition skill.Definition, taught []sins.Sin, examplesOf []worked) string {
 	var rows []string
 	if len(examplesOf) > 1 {
@@ -216,7 +204,6 @@ func referenceIndex(definition skill.Definition, taught []sins.Sin, examplesOf [
 	return "## Reference\n\n" + strings.Join(rows, "\n")
 }
 
-// workedExample is the one example the body carries, the first rule's; the rest live in reference/examples.md.
 func workedExample(examplesOf []worked) string {
 	if len(examplesOf) == 0 {
 		return ""
@@ -233,7 +220,6 @@ func workedExample(examplesOf []worked) string {
 	return block
 }
 
-// examplesDocument is every worked example, the body's included, so it stands on its own.
 func examplesDocument(definition skill.Definition, examplesOf []worked) string {
 	named := len(languagesOf(examplesOf)) > 1
 	var blocks []string
@@ -248,7 +234,6 @@ func examplesDocument(definition skill.Definition, examplesOf []worked) string {
 		"that really fires and really passes.\n\n" + strings.Join(blocks, "\n\n") + "\n"
 }
 
-// detectorsDocument maps each symptom to the detector that flags it, for a reader holding a finding.
 func detectorsDocument(definition skill.Definition, taught []sins.Sin) string {
 	var rows []string
 	for _, sin := range taught {
@@ -265,8 +250,6 @@ func detectorsDocument(definition skill.Definition, taught []sins.Sin) string {
 		strings.Join(rows, "\n") + "\n"
 }
 
-// workedExamples is every example of the skill's sins, one per bad and good pair, so a sinful method carrying
-// several sins shows once, headed by every sin it demonstrates.
 func workedExamples(taught []sins.Sin, examples Examples) []worked {
 	var grouped []worked
 	index := map[string]int{}
@@ -302,7 +285,6 @@ func text(half *string) string {
 	return *half
 }
 
-// languagesOf is the distinct languages the examples are written in.
 func languagesOf(examplesOf []worked) []source.Language {
 	var languages []source.Language
 	for _, group := range examplesOf {
@@ -324,8 +306,6 @@ func contains(languages []source.Language, language source.Language) bool {
 	return false
 }
 
-// example is one before and after, headed by the sins it demonstrates and their symptoms; named says the skill
-// teaches more than one language, so the heading says which this is.
 func example(group worked, named bool) string {
 	var parts []string
 	if group.example.Bad != nil {
@@ -353,7 +333,6 @@ func example(group worked, named bool) string {
 	return heading + "\n\n" + strings.Join(symptoms, "\n\n") + "\n\n```" + string(group.example.Language) + "\n" + strings.Join(parts, "\n\n") + "\n```"
 }
 
-// related links each related skill by a path made from its slug, with the note that says why.
 func related(definition skill.Definition) string {
 	if len(definition.Related) == 0 {
 		return ""
@@ -376,7 +355,6 @@ func relativeLink(from, to string) string {
 	return "../../" + toEngine + "/" + toName + "/SKILL.md"
 }
 
-// sinsOf is every published sin the skill teaches, in the order the PHP catalogs list them.
 func sinsOf(slug string) []sins.Sin {
 	var taught []sins.Sin
 	for _, sin := range config.InClassOrder(config.Sin, sins.All()) {
@@ -388,7 +366,6 @@ func sinsOf(slug string) []sins.Sin {
 	return taught
 }
 
-// detectorOf is the published detector that finds the sin.
 func detectorOf(sin sins.Sin) (detectors.Detector, bool) {
 	for _, detector := range detectors.All() {
 		if detector.Sin() == sin {

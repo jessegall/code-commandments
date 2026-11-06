@@ -8,9 +8,6 @@ import (
 	"github.com/jessegall/code-commandments/cli/warm"
 )
 
-// TestARunFindsTheServiceThatSaysItServesItsFolder holds the way out of one circle: a socket is named from the
-// project's path, so a run that does not know the project cannot name the socket. The service writes down what
-// it serves, and a run takes the record whose project holds the folder it stands in.
 func TestARunFindsTheServiceThatSaysItServesItsFolder(t *testing.T) {
 	t.Setenv("XDG_CACHE_HOME", t.TempDir())
 
@@ -30,7 +27,6 @@ func TestARunFindsTheServiceThatSaysItServesItsFolder(t *testing.T) {
 		t.Errorf("the project's own folder finds %+v, said %v", serving, said)
 	}
 
-	// A worker stands in a worktree, which lies inside the project.
 	inside := filepath.Join(project, ".journal", "worktrees", "worker-1")
 	if err := os.MkdirAll(inside, 0o755); err != nil {
 		t.Fatal(err)
@@ -51,8 +47,6 @@ func TestARunFindsTheServiceThatSaysItServesItsFolder(t *testing.T) {
 	}
 }
 
-// TestTheInnermostProjectServingAFolderIsTheOne holds which service answers where two hold the same folder: a
-// project inside a project, which a checkout under another's folder is.
 func TestTheInnermostProjectServingAFolderIsTheOne(t *testing.T) {
 	t.Setenv("XDG_CACHE_HOME", t.TempDir())
 
@@ -78,7 +72,6 @@ func TestTheInnermostProjectServingAFolderIsTheOne(t *testing.T) {
 	}
 }
 
-// folder is a folder of its own, with its links resolved as the records resolve them.
 func folder(t *testing.T) string {
 	t.Helper()
 

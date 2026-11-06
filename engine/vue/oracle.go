@@ -10,11 +10,8 @@ import (
 	"github.com/jessegall/code-commandments/engine"
 )
 
-// probeMarker opens the name of each probe's impossible type, which carries the local it asks about.
 const probeMarker = "__CcNo_"
 
-// maxOracleType is the longest resolved type worth writing: a composable's whole structure spelt inline reads worse
-// than unknown.
 const maxOracleType = 200
 
 // TypeQuery is a component and the locals whose types no reading of its source could tell.
@@ -36,7 +33,6 @@ type ProcessRunner interface {
 // ShellRunner runs the program as a process of its own.
 type ShellRunner struct{}
 
-// Run runs the program, and is empty when it could not start.
 func (ShellRunner) Run(binary string, arguments []string, cwd string) string {
 	var stdout, stderr bytes.Buffer
 	command := exec.Command(binary, arguments...)
@@ -47,19 +43,16 @@ func (ShellRunner) Run(binary string, arguments []string, cwd string) string {
 	return stdout.String() + stderr.String()
 }
 
-// VueTscOracle asks a project's own vue-tsc: each query's component is copied beside itself with a probe that
-// assigns every asked local to a type nothing is assignable to, and the checker's complaint names the local's type.
+// VueTscOracle asks a project's own vue-tsc: each query's component is copied beside itself with a probe that assigns every asked local to a type nothing is assignable to, and the checker's complaint names the local's type.
 type VueTscOracle struct {
 	root   string
 	runner ProcessRunner
 }
 
-// NewVueTscOracle is the oracle of the project at root, running vue-tsc through the runner.
 func NewVueTscOracle(root string, runner ProcessRunner) *VueTscOracle {
 	return &VueTscOracle{root: root, runner: runner}
 }
 
-// LocateVueTsc is the oracle of the nearest project at or above the path that ships vue-tsc.
 func LocateVueTsc(path string, runner ProcessRunner) (*VueTscOracle, bool) {
 	from := filepath.Dir(path)
 	if info, err := os.Stat(path); err == nil && info.IsDir() {
@@ -75,7 +68,6 @@ func LocateVueTsc(path string, runner ProcessRunner) (*VueTscOracle, bool) {
 	}
 }
 
-// VueTscAvailable says whether the project at root ships vue-tsc.
 func VueTscAvailable(root string) bool {
 	info, err := os.Stat(vueTscBinary(root))
 
@@ -86,8 +78,6 @@ func vueTscBinary(root string) string {
 	return strings.TrimRight(root, "/") + "/node_modules/.bin/vue-tsc"
 }
 
-// ResolveAll writes every probe, runs the checker once over the project, removes the probes, and reads each
-// component's types from the complaints about its own probe.
 func (o *VueTscOracle) ResolveAll(queries []TypeQuery) map[string]map[string]string {
 	paths, probes := o.writeProbes(queries)
 	if len(probes) == 0 {
@@ -153,8 +143,6 @@ func (o *VueTscOracle) arguments() []string {
 	}
 }
 
-// buildInfo is where the checker keeps what it learned for the next run: the project's own cache of its node tools,
-// its folder made.
 func (o *VueTscOracle) buildInfo() string {
 	path := strings.TrimRight(o.root, "/") + "/node_modules/.cache/code-commandments/vue-tsc.tsbuildinfo"
 	os.MkdirAll(filepath.Dir(path), 0o777)
@@ -173,9 +161,6 @@ func linesNaming(output, file string) string {
 	return strings.Join(lines, "\n")
 }
 
-// ProbeSource is the component with a probe written at the end of its `<script setup>`, where its locals are in
-// scope: each name assigned to a string-branded type nothing is assignable to, so every value, of any shape, fails
-// the same way, with the complaint naming its type. Nothing to probe without names or a setup script.
 func ProbeSource(component Component, names []string) (string, bool) {
 	setup, ok := setupScript(component)
 	if !ok || len(names) == 0 {
@@ -196,7 +181,6 @@ func ProbeSource(component Component, names []string) (string, bool) {
 	return source[:at] + probes + source[at:], true
 }
 
-// setupScript is the component's `<script setup>` block.
 func setupScript(component Component) (engine.Match, bool) {
 	for _, block := range component.ChildrenIn("blocks") {
 		if block.Name() != "script" {
@@ -212,8 +196,6 @@ func setupScript(component Component) (engine.Match, bool) {
 	return engine.Match{}, false
 }
 
-// CheckerTypes is each probed local and the type the checker resolved it to, read from its complaints; a type the
-// checker could not tell either, or one too long to be worth writing, is left out.
 func CheckerTypes(output string) map[string]string {
 	pivot := "' is not assignable to type '" + probeMarker
 	const lead = "Type '"

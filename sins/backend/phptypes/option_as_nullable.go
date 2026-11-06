@@ -11,7 +11,6 @@ type OptionAsNullable struct{}
 
 func init() { sins.Register(catalog.PHP, OptionAsNullable{}) }
 
-// Definition is what the sin states about itself.
 func (OptionAsNullable) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "option-as-nullable",

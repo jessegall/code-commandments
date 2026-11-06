@@ -11,7 +11,6 @@ type BoundaryDuplicatedOperation struct{}
 
 func init() { sins.Register(catalog.PHP, BoundaryDuplicatedOperation{}) }
 
-// Definition is what the sin states about itself.
 func (BoundaryDuplicatedOperation) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "boundary-duplicated-operation",

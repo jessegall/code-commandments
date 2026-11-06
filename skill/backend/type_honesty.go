@@ -14,14 +14,13 @@ var (
 	typeHonestyPrinciple string
 )
 
-// TypeHonesty teaches: a type must not lie: don't fake optionality — a `?T` the design always has set, then defended with `?->`/`?? <fake>` or stashed as save/restore scratch state. Make the type certain (pass it, hold it non-nullable, a per-call value object). The complement of `absence`.
+// TypeHonesty teaches: a type must not lie: don't fake optionality — a `?T` the design always has set, then defended with `?->`/`?? <fake>` or stashed as save/restore scratch state.
 type TypeHonesty struct{}
 
 func init() {
 	skill.Register(catalog.PHP, TypeHonesty{})
 }
 
-// Definition is what the skill states about itself.
 func (TypeHonesty) Definition() skill.Definition {
 	return skill.Definition{
 		Slug:      "php/type-honesty",

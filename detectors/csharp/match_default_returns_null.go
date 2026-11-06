@@ -16,12 +16,10 @@ func init() {
 	detectors.Register(catalog.CSharp, MatchDefaultReturnsNullDetector{})
 }
 
-// Sin is the sin the detector finds.
 func (MatchDefaultReturnsNullDetector) Sin() sins.Sin {
 	return cssins.MatchDefaultReturnsNull{}
 }
 
-// Find is every place the sin is committed.
 func (MatchDefaultReturnsNullDetector) Find(codebase *engine.Codebase) []engine.Match {
 	program := cs.In(codebase).Program
 

@@ -14,10 +14,8 @@ type RawDecodedArrayReturnDetector struct{}
 
 func init() { detectors.Register(catalog.PHP, RawDecodedArrayReturnDetector{}) }
 
-// Sin is the sin the detector finds.
 func (RawDecodedArrayReturnDetector) Sin() sins.Sin { return backendsins.RawDecodedArrayReturn{} }
 
-// Find is every returned json_decode that does not decode the function's own encoding.
 func (RawDecodedArrayReturnDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return php.In(codebase).
 		Where(engine.As(func(n php.Node) bool { return n.CallsFunction("json_decode") })).

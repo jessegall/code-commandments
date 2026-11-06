@@ -10,28 +10,22 @@ import (
 	"github.com/jessegall/code-commandments/engine"
 )
 
-// placeholder is one `{…}` in a replacement: the targets that lead from the found node to the node whose source
-// stands there, one hop per `/`.
 var placeholder = regexp.MustCompile(`\{([^{}]*)\}`)
 
-// Fix is the rewrite a rule declares for what it finds: the found node's source replaced by a template, or
-// rewritten by substitutions. It reads the tree the rule found, never the file around it.
+// Fix is the rewrite a rule declares for what it finds: the found node's source replaced by a template, or rewritten by substitutions.
 type Fix struct {
 	Replace    string         `json:"replace,omitempty"`
 	Substitute []Substitution `json:"substitute,omitempty"`
 }
 
-// Substitution rewrites every stretch of the found node's source the expression matches, as Go's regexp
-// ReplaceAllString does: `${1}` stands for a group.
+// Substitution rewrites every stretch of the found node's source the expression matches, as Go's regexp ReplaceAllString does: `${1}` stands for a group.
 type Substitution struct {
 	Matches string `json:"matches"`
 	With    string `json:"with"`
 
-	// pattern is Matches, compiled once when the rule is read.
 	pattern *regexp.Regexp
 }
 
-// prepare checks the fix can run, and compiles what it matches with.
 func (f *Fix) prepare() error {
 	if (f.Replace == "") == (f.Substitute == nil) {
 		return errors.New("a fix names one of replace and substitute")
@@ -57,8 +51,6 @@ func (f *Fix) prepare() error {
 	return nil
 }
 
-// text is what the fix writes in place of the found node; false when a placeholder reaches no node or the fix
-// would leave the source as it is.
 func (f Fix) text(found engine.Match) (string, bool) {
 	written := found.Written()
 	if f.Replace == "" {
@@ -85,12 +77,10 @@ func (f Fix) text(found engine.Match) (string, bool) {
 	return replaced, reached && replaced != written
 }
 
-// Fixes says whether the rule declares a fix, so repent runs it.
 func (r Rule) Fixes() bool {
 	return r.fix != nil
 }
 
-// FixFor is the text the rule's fix writes in place of a node it found; false when it has none to write there.
 func (r Rule) FixFor(found engine.Match) (string, bool) {
 	if r.fix == nil {
 		return "", false

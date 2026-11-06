@@ -19,12 +19,10 @@ import (
 // Command is `make`.
 type Command struct{}
 
-// Names are the verbs it answers to.
 func (Command) Names() []string {
 	return []string{"make"}
 }
 
-// Help documents it.
 func (Command) Help() help.Help {
 	return help.Of("Scaffold a commandment of your own — a rule naming its sin, and the skill that teaches the fix, in `.commandments/custom/`, turned on in your config, with the rest of the process printed for you.").
 		Form("make <Name>", "scaffold a PHP commandment and turn it on").
@@ -47,7 +45,6 @@ func (Command) Help() help.Help {
 			"teaches the probe-then-calibrate discipline that proves a rule fires on what you meant.")
 }
 
-// Run scaffolds the commandment the arguments name.
 func (c Command) Run(in *cli.Input, console cli.Console) (int, error) {
 	name, named := in.FirstArgument()
 	if !named || Studly(name) == "" {
@@ -110,8 +107,6 @@ func (c Command) Run(in *cli.Input, console cli.Console) (int, error) {
 	return 0, nil
 }
 
-// plan names the commandment: its sin points at the first existing skill the query matches, shipped or the
-// project's own, else at a new skill of the project's own for the query's slug or its own name.
 func plan(name string, engine Engine, query, root string) Blueprint {
 	dir := workspace.CustomDir(root)
 

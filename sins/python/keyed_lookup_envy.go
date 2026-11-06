@@ -13,7 +13,6 @@ func init() {
 	sins.Register(catalog.Python, KeyedLookupEnvy{})
 }
 
-// Definition is what the sin states about itself.
 func (KeyedLookupEnvy) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "python-keyed-lookup-envy",

@@ -11,7 +11,6 @@ type PageObjectMissingTypeScript struct{}
 
 func init() { sins.Register(catalog.PHP, PageObjectMissingTypeScript{}) }
 
-// Definition is what the sin states about itself.
 func (PageObjectMissingTypeScript) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "page-object-missing-typescript",

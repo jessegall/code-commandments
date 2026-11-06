@@ -16,14 +16,10 @@ import (
 	"github.com/jessegall/code-commandments/engine/php"
 )
 
-// root is the namespace every shipped rule is declared under.
 const root = `JesseGall\CodeCommandments\`
 
-// languageEnum is the enum a config names a language by, as in `disable(Language::Python)`.
 const languageEnum = root + "Language"
 
-// ReadPHP reads a `.commandments/config.php` without running it: the PHP bridge parses it, and every call
-// the config makes on the tool is read off the tree, the way the PHP tool's own config editor reads it.
 func ReadPHP(path string) (Config, error) {
 	if _, err := os.Stat(path); err != nil {
 		return Config{}, nil
@@ -49,8 +45,6 @@ func ReadPHP(path string) (Config, error) {
 	return config, nil
 }
 
-// insideConfigurator says whether a call is made inside a `configure(...)` closure: it tunes a detector,
-// it does not configure the project.
 func insideConfigurator(call engine.Match) bool {
 	for parent := call.Parent(); parent.Exists(); parent = parent.Parent() {
 		if isFunction(parent) && parent.Parent().Parent().Child("name").Name() == "configure" {
@@ -86,7 +80,6 @@ func (c *Config) take(call engine.Match) error {
 	}
 }
 
-// appendTexts appends each argument, a string or a `::class`, to into.
 func appendTexts(args []engine.Match, into *[]string) error {
 	for _, arg := range args {
 		value, err := valueOf(arg.Child("value"))
@@ -105,8 +98,6 @@ func appendTexts(args []engine.Match, into *[]string) error {
 	return nil
 }
 
-// appendNames appends each argument's short name: a project's own detector or package, a hook and an agent
-// are named by their class's last segment, as config.json names them.
 func appendNames(args []engine.Match, into *[]string) error {
 	var classes []string
 	if err := appendTexts(args, &classes); err != nil {
@@ -147,8 +138,6 @@ func (c *Config) disable(args []engine.Match) error {
 	return nil
 }
 
-// ruleOfClass is the rule a config.php names by class: a shipped one by its kind, engine and name, else a
-// project's own detector by its short name.
 func ruleOfClass(class string) Rule {
 	if rule, shipped := RuleOf(class); shipped {
 		return rule
@@ -157,7 +146,6 @@ func ruleOfClass(class string) Rule {
 	return Rule{Kind: Detector, Name: shortName(class)}
 }
 
-// languageCase is the language a `Language::Case` argument names.
 func languageCase(value engine.Match) (source.Language, bool) {
 	if value.Kind() != "Expr_ClassConstFetch" || value.Child("class").Node().Refers != languageEnum {
 		return "", false
@@ -172,7 +160,6 @@ func languageCase(value engine.Match) (source.Language, bool) {
 	return "", false
 }
 
-// caseOf is the enum case a language is named by.
 func caseOf(language source.Language) string {
 	switch language {
 	case source.TypeScript:
@@ -210,8 +197,6 @@ func (c *Config) configure(args []engine.Match) error {
 	return nil
 }
 
-// body are the expressions a configurator evaluates: an arrow function's one, or each statement and return
-// of a closure.
 func body(function engine.Match) []engine.Match {
 	if function.Kind() == "Expr_ArrowFunction" {
 		return []engine.Match{function.Child("expr")}
@@ -226,7 +211,6 @@ func body(function engine.Match) []engine.Match {
 	return expressions
 }
 
-// chainOn is every call the expressions make on the variable, innermost first.
 func chainOn(variable string, expressions []engine.Match) ([]Call, error) {
 	var calls []Call
 
@@ -275,7 +259,6 @@ func chain(variable string, expression engine.Match) ([]Call, error) {
 	return append(inner, call), nil
 }
 
-// valueOf reads a literal: a string, a number, true, false, null, an array of those, or a `::class`.
 func valueOf(value engine.Match) (any, error) {
 	switch value.Kind() {
 	case "Scalar_String":

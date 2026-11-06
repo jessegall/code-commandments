@@ -13,7 +13,6 @@ func init() {
 	sins.Register(catalog.CSharp, DanglingDocReference{})
 }
 
-// Definition is what the sin states about itself.
 func (DanglingDocReference) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "csharp-dangling-doc-reference",

@@ -21,7 +21,6 @@ func init() {
 	skill.Register(catalog.Python, BehaviourPerMethod{})
 }
 
-// Definition is what the skill states about itself.
 func (BehaviourPerMethod) Definition() skill.Definition {
 	return skill.Definition{
 		Slug:      "python/behaviour-per-method",

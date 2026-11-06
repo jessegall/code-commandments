@@ -15,7 +15,6 @@ import (
 	_ "github.com/jessegall/code-commandments/registry"
 )
 
-// olderSin is a Python module holding one sin a worker did not write, and room to add another.
 const olderSin = `def refund(order) -> int:
     if order.late:
         raise ValueError(order)
@@ -23,7 +22,6 @@ const olderSin = `def refund(order) -> int:
         return order.total
 `
 
-// workerEdit is that module with a second sin added at the end, which is the only part the worker wrote.
 const workerEdit = olderSin + `
 
 def ship(order) -> int:
@@ -33,7 +31,6 @@ def ship(order) -> int:
         return order.weight
 `
 
-// committedProject is a repository holding the older sin on its branch, and the path of the file holding it.
 func committedProject(t *testing.T) (root, file string) {
 	t.Helper()
 	root, err := filepath.EvalSymlinks(t.TempDir())
@@ -64,8 +61,6 @@ func committedProject(t *testing.T) (root, file string) {
 	return root, file
 }
 
-// TestAnEditIsMarkedOnlyWhereItLanded is the question Jesse's request turns on: a file already held a sin, and
-// something edited that file elsewhere. The mark is about what the edit did, so the older sin is not it.
 func TestAnEditIsMarkedOnlyWhereItLanded(t *testing.T) {
 	root, file := committedProject(t)
 	if err := os.WriteFile(file, []byte(workerEdit), 0o644); err != nil {
@@ -109,10 +104,6 @@ func TestAnEditIsMarkedOnlyWhereItLanded(t *testing.T) {
 	}
 }
 
-// TestTheJudgeOfChangedLinesAgreesWithTheEditCheck is the parity Jesse asked for by name. Two readings of one
-// diff must say the same thing: the lines the file-edit check calls touched, and the lines `judge --changes`
-// reports on. They are computed by different code for different purposes, and a project told two different
-// stories about its own change has no idea which to believe.
 func TestTheJudgeOfChangedLinesAgreesWithTheEditCheck(t *testing.T) {
 	root, file := committedProject(t)
 	if err := os.WriteFile(file, []byte(workerEdit), 0o644); err != nil {
@@ -152,19 +143,11 @@ func TestTheJudgeOfChangedLinesAgreesWithTheEditCheck(t *testing.T) {
 		t.Fatal("the edit check found nothing touched, so the two readings are not being compared at all")
 	}
 
-	// And the other way: a sin the edit check leaves alone is one the judge leaves alone.
 	if scoped.Covers(file, 2) {
 		t.Error("judge --changes reports line 2, which the edit check does not call touched")
 	}
 }
 
-// TestAMomentsLinesAreDroppedWhereItsFileMovedAgain holds the marks against two edits of one file in quick
-// succession. The journal hands over the lines its edit wrote, and that is what the mark reads so a sin on a
-// line the edit did not touch is not called the edit's doing. But where a second edit lands before the first is
-// judged, the judging reads the file as it NOW is: those lines belong to a version that is gone, and marking
-// this one with them calls a line touched that this version never had, or misses the one it did.
-//
-// git answers about the file as it is, which is the version being judged, so its answer is taken instead.
 func TestAMomentsLinesAreDroppedWhereItsFileMovedAgain(t *testing.T) {
 	root := t.TempDir()
 
@@ -181,35 +164,21 @@ func TestAMomentsLinesAreDroppedWhereItsFileMovedAgain(t *testing.T) {
 	carried[changedKey] = map[string]any{"lines": []any{float64(2)}}
 	carried = Stamped(carried)
 
-	// While it still stands as the moment left it, the moment's own lines are the answer.
 	if lines := NewEvent(carried, root).ChangedLines(file); !lines.Covers(2) || lines.Covers(5) {
 		t.Error("the moment's own lines are not what the mark reads while the file stands as the moment left it")
 	}
 
-	// Written again after the moment was handed over, which is a second edit landing before the first is judged.
 	time.Sleep(10 * time.Millisecond)
 	if err := os.WriteFile(file, []byte("x = 1\ny = 2\nz = 3\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
 
-	// git has no history here, so every line of the file reads as the edit's: what matters is that the moment's
-	// own two-line answer is no longer given for a file that has moved past it.
 	lines := NewEvent(carried, root).ChangedLines(file)
 	if !lines.Covers(5) {
 		t.Error("a moment whose file moved again is still marked with the lines of the version that is gone")
 	}
 }
 
-// TestAMomentsLinesStandWhenOnlyTheClocksDisagree holds the lines the journal handed over against a question that
-// was never the file's to answer. Whether a file moved since we were handed the moment was asked by comparing its
-// modification time against OUR clock, and those are two clocks: under Docker's virtiofs, and on any mount whose
-// timestamps come from elsewhere, a file written before we stamped reports a time after it. The lines were then
-// thrown away and git asked instead, so with no history every line read as the edit's doing and with history a
-// line the edit really wrote could go unmarked. Nothing said either had happened.
-//
-// It showed here as a flake: this file's other test failed once in a full package run on 2026-11-05 and passed
-// five times out of five on its own. A mark compares the file against ITSELF, taken by us, read by us, so no
-// clock of anyone else's comes into it.
 func TestAMomentsLinesStandWhenOnlyTheClocksDisagree(t *testing.T) {
 	root := t.TempDir()
 
@@ -225,9 +194,6 @@ func TestAMomentsLinesStandWhenOnlyTheClocksDisagree(t *testing.T) {
 	}
 	carried[changedKey] = map[string]any{"lines": []any{float64(2)}}
 
-	// The filesystem's clock a minute ahead of ours, which is all a mount has to be wrong by, and so it reads
-	// from the moment we are handed the event. Nothing wrote the file after that: these are the bytes the lines
-	// were handed over for.
 	ahead := time.Now().Add(time.Minute)
 	if err := os.Chtimes(file, ahead, ahead); err != nil {
 		t.Fatal(err)
@@ -239,7 +205,6 @@ func TestAMomentsLinesStandWhenOnlyTheClocksDisagree(t *testing.T) {
 		t.Error("the moment's own lines were thrown away for a file nobody wrote, because its clock runs ahead of ours")
 	}
 
-	// And a file that really was written again still loses them, which is the thing the question is for.
 	if err := os.WriteFile(file, []byte("x = 1\ny = 2\nz = 3\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}

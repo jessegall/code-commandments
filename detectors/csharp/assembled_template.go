@@ -18,12 +18,10 @@ func init() {
 	detectors.Register(catalog.CSharp, AssembledTemplateDetector{})
 }
 
-// Sin is the sin the detector finds.
 func (AssembledTemplateDetector) Sin() sins.Sin {
 	return cssins.AssembledTemplate{}
 }
 
-// Find is every place the sin is committed.
 func (AssembledTemplateDetector) Find(codebase *engine.Codebase) []engine.Match {
 	joins := cs.In(codebase).
 		WhereCall().

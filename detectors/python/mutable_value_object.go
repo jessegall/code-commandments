@@ -16,12 +16,10 @@ func init() {
 	detectors.Register(catalog.Python, MutableValueObjectDetector{})
 }
 
-// Sin is the sin the detector finds.
 func (MutableValueObjectDetector) Sin() sins.Sin {
 	return pysins.MutableValueObject{}
 }
 
-// Find is every place the sin is committed.
 func (MutableValueObjectDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return py.In(codebase).
 		WhereClass().

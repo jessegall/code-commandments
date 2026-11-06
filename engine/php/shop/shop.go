@@ -1,7 +1,4 @@
-// Package shop holds the PHP analyses to the answers the PHP engine gave on the backend shop fixture before it was
-// removed. Those answers are about the fixture as it read it, kept beside them in testdata/oracle/fixtures.tar.gz with
-// the backend and frontend fixtures of that day, so the live fixtures stay free to grow: the oracle's stream is that
-// frozen shop's, and Project, what the fixture's own markers are checked against, is the live fixture's.
+// Package shop holds the PHP analyses to the answers the PHP engine gave on the backend shop fixture before it was removed.
 package shop
 
 import (
@@ -27,39 +24,28 @@ import (
 	"github.com/jessegall/code-commandments/engine"
 )
 
-// Root is the path the committed stream gives the shop, so it names no machine's own folders.
 const Root = "/shop"
 
-// Repository is this checkout's root.
 func Repository() string {
 	_, source, _, _ := runtime.Caller(0)
 
 	return filepath.Join(filepath.Dir(source), "..", "..", "..")
 }
 
-// Fixture is the backend shop fixture.
 func Fixture() string {
 	return filepath.Join(Repository(), "tests", "Fixtures", "backend")
 }
 
-// Testdata is where the stream, the answers and the digest are committed.
 func Testdata() string {
 	return filepath.Join(Repository(), "engine", "php", "testdata")
 }
 
-// inputs are what the committed streams are generated from: the live fixture and the bridges that read it. The
-// oracle's answers are the PHP engine's last word, never generated again; Amend rewrites one where Go knows more.
 var inputs = []string{"tests/Fixtures/backend", "bridge/php", "bridge/frontend/dist"}
 
-// Digest is the hash of every source the committed files are generated from.
 func Digest() (string, error) {
 	return DigestOf(inputs...)
 }
 
-// DigestOf is the hash of every source git tracks under the repository's folders and files: what a committed
-// answer was generated from, so a change to any shows the answer stale. Only tracked files count, so every checkout
-// of one commit — a fresh clone, a worktree, the dev container — computes the same digest; a file git ignores, such
-// as composer.lock or vendor/, never moves it.
 func DigestOf(inputs ...string) (string, error) {
 	listing := exec.Command("git", append([]string{"ls-files", "-z", "--"}, inputs...)...)
 	listing.Dir = Repository()
@@ -87,8 +73,6 @@ func DigestOf(inputs ...string) (string, error) {
 	return hex.EncodeToString(hash.Sum(nil)), nil
 }
 
-// Frozen is the folder the fixtures the PHP engine answered about are unpacked to, once per version of them: its
-// backend and frontend folders.
 var Frozen = sync.OnceValues(func() (string, error) {
 	archive, err := os.ReadFile(filepath.Join(Oracle(), "fixtures.tar.gz"))
 	if err != nil {
@@ -98,7 +82,6 @@ var Frozen = sync.OnceValues(func() (string, error) {
 	return bundle.Archived("shop", archive).Folder()
 })
 
-// Oracle is where the PHP engine's answers are committed, beside the fixtures they are about.
 func Oracle() string {
 	return filepath.Join(Testdata(), "oracle")
 }
@@ -150,7 +133,6 @@ var oracleProject = sync.OnceValues(func() (*engine.Codebase, error) {
 	}, backend, frontend), nil
 })
 
-// readStream reads a committed stream of the shop.
 func readStream(name string) (*contract.Stream, error) {
 	handle, err := os.Open(filepath.Join(Testdata(), name))
 	if err != nil {
@@ -165,7 +147,6 @@ func readStream(name string) (*contract.Stream, error) {
 	return contract.ReadAll(unzipped)
 }
 
-// readZipped is a committed file of the shop's testdata, unzipped.
 func readZipped(name string) ([]byte, error) {
 	handle, err := os.Open(filepath.Join(Testdata(), name))
 	if err != nil {
@@ -184,8 +165,6 @@ func readFixture(path string) ([]byte, error) {
 	return os.ReadFile(filepath.Join(Fixture(), strings.TrimPrefix(path, Root+"/")))
 }
 
-// Project is the whole live shop as judge reads it: its PHP beside its frontend, so a rule reading what one side
-// publishes for the other sees both.
 func Project(t testing.TB) *engine.Codebase {
 	t.Helper()
 	codebase, err := project()
@@ -196,7 +175,6 @@ func Project(t testing.TB) *engine.Codebase {
 	return codebase
 }
 
-// OracleProject is the whole shop the PHP engine answered about, its PHP beside its frontend.
 func OracleProject(t testing.TB) *engine.Codebase {
 	t.Helper()
 	codebase, err := oracleProject()
@@ -207,7 +185,6 @@ func OracleProject(t testing.TB) *engine.Codebase {
 	return codebase
 }
 
-// Codebase is the shop the PHP engine answered about, read from the oracle's stream once per test binary.
 func Codebase(t testing.TB) *engine.Codebase {
 	t.Helper()
 	codebase, err := loaded()
@@ -227,7 +204,6 @@ type Answer struct {
 	Answer json.RawMessage `json:"answer"`
 }
 
-// Answers is every answer the PHP engine gave to the question.
 func Answers(t testing.TB, question string) []Answer {
 	t.Helper()
 	handle, err := os.Open(filepath.Join(Oracle(), "answers", question+".jsonl.gz"))
@@ -281,7 +257,6 @@ var indexes = sync.OnceValue(func() map[string]map[located]engine.Match {
 	return byFile
 })
 
-// Node is the shop's node an answer is about: the outermost of its kind at its span.
 func Node(t testing.TB, answer Answer) (engine.Match, bool) {
 	t.Helper()
 	Codebase(t)
@@ -290,8 +265,6 @@ func Node(t testing.TB, answer Answer) (engine.Match, bool) {
 	return match, ok
 }
 
-// Parity asks the Go port each question the PHP engine answered and fails with every answer that differs. The Go
-// answer is compared as JSON, so ask returns what the PHP answer decodes to: a string, a bool, a list, a map, or nil.
 func Parity(t *testing.T, question string, ask func(answer Answer, node engine.Match) any) {
 	t.Helper()
 	answers := Answers(t, question)
@@ -323,11 +296,8 @@ func Parity(t *testing.T, question string, ask func(answer Answer, node engine.M
 	}
 }
 
-// Amend is the environment variable that names the one question whose differing answers Parity writes over with
-// Go's, where the port deliberately knows more than the PHP engine did; every other question stays strict.
 const Amend = "COMMANDMENTS_AMEND_ORACLE"
 
-// amend writes the question's answers back to the oracle, each in the order and shape it was read.
 func amend(t *testing.T, question string, answers []Answer) {
 	t.Helper()
 	var written bytes.Buffer

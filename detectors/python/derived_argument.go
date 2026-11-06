@@ -9,23 +9,19 @@ import (
 	pysins "github.com/jessegall/code-commandments/sins/python"
 )
 
-// DerivedArgumentDetector finds a parameter every call fills with a piece of an object it also hands over, or with
-// one of three or more pieces of one object: the def should take the object and read the piece itself.
+// DerivedArgumentDetector finds a parameter every call fills with a piece of an object it also hands over, or with one of three or more pieces of one object: the def should take the object and read the piece itself.
 type DerivedArgumentDetector struct{}
 
 func init() {
 	detectors.Register(catalog.Python, DerivedArgumentDetector{})
 }
 
-// Sin is the sin the detector finds.
 func (DerivedArgumentDetector) Sin() sins.Sin {
 	return pysins.DerivedArgument{}
 }
 
-// Find is every place the sin is committed.
 func (DerivedArgumentDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return matches(py.In(codebase).Program.DerivedArgumentCalls())
 }
 
-// CrossFile says the PHP tool finds it reaching beyond the file it judges, so a per-file check must not ask it.
 func (DerivedArgumentDetector) CrossFile() {}

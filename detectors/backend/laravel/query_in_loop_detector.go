@@ -15,16 +15,12 @@ type QueryInLoopDetector struct{}
 
 func init() { detectors.Register(catalog.PHP, QueryInLoopDetector{}) }
 
-// Sin is the sin the detector finds.
 func (QueryInLoopDetector) Sin() sins.Sin { return backendsins.QueryInLoop{} }
 
-// Find is every call that goes to the database from inside a loop.
 func (QueryInLoopDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return php.In(codebase).
 		Where(engine.As(laravelnode.Node.RunsAQueryInALoop)).
 		Get()
 }
 
-// CrossFile says the rule reads more than the file it reports in, which the fixture measures by asking it
-// of one file and of the whole tree: a scoped run reads the whole scan while it is enabled.
 func (QueryInLoopDetector) CrossFile() {}

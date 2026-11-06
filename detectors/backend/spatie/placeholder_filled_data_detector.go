@@ -10,16 +10,13 @@ import (
 	spatiesins "github.com/jessegall/code-commandments/sins/backend/spatie"
 )
 
-// PlaceholderFilledDataDetector finds a Data object built with ” in a slot typed string: a placeholder standing in
-// for a value the type says is always there.
+// PlaceholderFilledDataDetector finds a Data object built with ” in a slot typed string: a placeholder standing in for a value the type says is always there.
 type PlaceholderFilledDataDetector struct{}
 
 func init() { detectors.Register(catalog.PHP, PlaceholderFilledDataDetector{}) }
 
-// Sin is the sin the detector finds.
 func (PlaceholderFilledDataDetector) Sin() sins.Sin { return spatiesins.PlaceholderFilledData{} }
 
-// Find is every new of a Data class that passes ” to a parameter promising a string.
 func (PlaceholderFilledDataDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return php.In(codebase).
 		WhereNew().
@@ -40,5 +37,4 @@ func fillsAStringSlotWithNothing(codebase *engine.Codebase, built php.Node) bool
 	return false
 }
 
-// CrossFile says the PHP tool finds it reaching beyond the file it judges, so a per-file check must not ask it.
 func (PlaceholderFilledDataDetector) CrossFile() {}

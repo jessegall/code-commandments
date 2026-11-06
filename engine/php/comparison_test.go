@@ -9,11 +9,6 @@ import (
 	"github.com/jessegall/code-commandments/engine/php"
 )
 
-// What a comparison tests against a constant is how a ladder over ONE subject is told from a chain of unrelated
-// tests, and PHP answered it nowhere: every rule built on it could be written for Python, C# and Go and not for
-// the engine's oldest language. These hold the answer, and hold it to saying nothing where there is no subject.
-
-// phpSource is the codebase of one PHP file holding the source.
 func phpSource(t *testing.T, source string) *engine.Codebase {
 	t.Helper()
 	path := filepath.Join(t.TempDir(), "Orders.php")
@@ -29,8 +24,6 @@ func phpSource(t *testing.T, source string) *engine.Codebase {
 	return php.In(codebase)
 }
 
-// TestWhatAComparisonTestsAgainstAConstantIsAnsweredForPHP holds the subject for each side a constant can sit on,
-// and for each shape PHP writes a constant as: an enum case, a class constant, a literal and a bare constant name.
 func TestWhatAComparisonTestsAgainstAConstantIsAnsweredForPHP(t *testing.T) {
 	codebase := phpSource(t, `<?php
 
@@ -64,11 +57,9 @@ class Orders
 }
 `)
 
-	// The subject as the file writes it, since a property fetch carries its name on a child of its own and the
-	// text is what a reader of a finding sees.
 	want := map[int]string{
-		16: "$order->state", // the member read, with the enum case on the right
-		20: "$count",        // the subject on the right, with the class constant on the left
+		16: "$order->state",
+		20: "$count",
 		24: "$word",
 		28: "$flag",
 	}
@@ -86,8 +77,6 @@ class Orders
 	}
 }
 
-// TestAComparisonOfTwoValuesTestsNoSubject holds the empty answer, which is what keeps a rule about a ladder off
-// every equality in the file: two values compared test no subject against anything, and neither do two constants.
 func TestAComparisonOfTwoValuesTestsNoSubject(t *testing.T) {
 	codebase := phpSource(t, `<?php
 

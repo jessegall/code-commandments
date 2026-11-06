@@ -24,10 +24,6 @@ func (oneReported) IsFiled(rule, file string, line int) bool {
 	return rule == "DictBagDetector" && file == "/src/a.py" && line == 7
 }
 
-// TestAPassRewritesWhatNobodyHasReported holds the rule every scribe runs under: the fix a scribe would apply to a
-// reported finding may be the very thing the report disputes, and the rewrite would change the line's text and
-// orphan the report while its issue is still open. So that one finding is left alone, and every other finding of
-// the same rule, the same file and the same line under another rule is rewritten as before.
 func TestAPassRewritesWhatNobodyHasReported(t *testing.T) {
 	pass := scribes.Pass{Scope: everything{}, Frozen: nothingFrozen{}, Filed: oneReported{}}
 
@@ -50,8 +46,6 @@ func TestAPassRewritesWhatNobodyHasReported(t *testing.T) {
 	}
 }
 
-// TestAPassThatKnowsOfNoReportRewritesEverything holds the cost on a project that has reported nothing: none. A
-// pass with no record, and a pass told that nothing is filed, both rewrite every finding in scope.
 func TestAPassThatKnowsOfNoReportRewritesEverything(t *testing.T) {
 	for name, pass := range map[string]scribes.Pass{
 		"no record at all":    {Scope: everything{}, Frozen: nothingFrozen{}},

@@ -49,8 +49,6 @@ func init() {
 	}
 }
 
-// testFile says whether a frontend file is a test's: `*.test.*` or `*.spec.*`, as Vitest and Jest collect them,
-// or any file under a __tests__ or tests folder.
 func testFile(file, _ string) bool {
 	name := path.Base(strings.ReplaceAll(file, `\`, "/"))
 
@@ -58,8 +56,6 @@ func testFile(file, _ string) bool {
 		engine.InFolderNamed(file, "__tests__", "tests", "test")
 }
 
-// heritage reads the types a declaration's clause of the keyword names: `extends` or `implements`, the clause's
-// operator.
 func heritage(keyword string) func(engine.Match) []engine.Match {
 	return func(declaration engine.Match) []engine.Match {
 		var named []engine.Match
@@ -77,7 +73,6 @@ func heritage(keyword string) func(engine.Match) []engine.Match {
 	}
 }
 
-// decorators are the names of the decorators a declaration carries: a called one by what it calls.
 func decorators(declaration engine.Match) []engine.Match {
 	var names []engine.Match
 	for _, modifier := range declaration.ChildrenIn("modifiers") {
@@ -96,8 +91,6 @@ func decorators(declaration engine.Match) []engine.Match {
 	return names
 }
 
-// atTags are the tags a JSDoc comment carries: each line that opens with `@` names one, its bare name
-// the word after the `@`.
 func atTags(comment string) []string {
 	var tags []string
 	for _, line := range strings.Split(comment, "\n") {
@@ -111,7 +104,6 @@ func atTags(comment string) []string {
 	return tags
 }
 
-// jsDocTags are the tags of a declaration's JSDoc comments.
 func jsDocTags(declaration engine.Match) []string {
 	var tags []string
 	for _, comment := range declaration.DocComments() {
@@ -121,14 +113,8 @@ func jsDocTags(declaration engine.Match) []string {
 	return tags
 }
 
-// sentTo are the kinds that read a member of something: the object is the expression they are sent to.
 var sentTo = []string{"PropertyAccessExpression", "ElementAccessExpression"}
 
-// receiver is the object a node is sent to: the `order` of `order.ship` and of `order.ship()`.
-//
-// A call is a node of its own here, where PHP's method call is one node holding both, so a call is read through
-// what it calls: `order.ship()` is a call of a property access of `order`, and a rule asking for the receiver of
-// either means the same object. Nothing for a call of a bare name, which is sent to nobody.
 func receiver(node engine.Match) engine.Match {
 	if slices.Contains(sentTo, node.Kind()) {
 		return node.Child("expression")
@@ -141,8 +127,6 @@ func receiver(node engine.Match) engine.Match {
 	return receiver(node.Child("expression"))
 }
 
-// asked are the kinds that decide by a condition, and the field each keeps it in. A for-of and a for-in decide
-// nothing: they walk what they are given, and their expression is that, not a question.
 var asked = map[string]string{
 	"IfStatement":           "expression",
 	"WhileStatement":        "expression",
@@ -152,7 +136,6 @@ var asked = map[string]string{
 	"ForStatement":          "condition",
 }
 
-// condition is the question a branch, a loop or a conditional expression decides by; no node for anything else.
 func condition(held engine.Match) engine.Match {
 	field, decides := asked[held.Kind()]
 	if !decides {

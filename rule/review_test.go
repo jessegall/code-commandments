@@ -9,7 +9,6 @@ import (
 	"github.com/jessegall/code-commandments/engine/python/pythontest"
 )
 
-// Each language's bases, parameters and receivers read as the language writes them.
 func TestBasesParametersAndReceiversReadAsTheirLanguageWritesThem(t *testing.T) {
 	csharp := csharptest.FromSource(t, map[string]string{
 		"Shop.cs": `interface IA { }
@@ -48,19 +47,13 @@ export class Account {
 `})
 
 	for _, each := range []typed{
-		// an interface's own bases are what it extends, and a class honours them through it
 		{"csharp", `{"select": "type-declaration", "where": [{"extends": "IA"}]}`, "[2]"},
 		{"csharp", `{"select": "type-declaration", "where": [{"implements": "IA"}]}`, "[3]"},
-		// a member's name and an argument's label are no reads; a bodiless member's and a record's parameters are not judged
 		{"csharp", `{"select": "parameter", "where": [{"unused": true}]}`, "[6]"},
-		// a type used only as a static call's receiver is used
 		{"csharp", `{"select": "type-declaration", "where": [{"unused": true}, {"file": "Helpers.cs"}]}`, "[2]"},
-		// a generic base names its class
 		{"python", `{"select": "type-declaration", "where": [{"typeKind": "protocol"}]}`, "[3]"},
 		{"python", `{"select": "type-declaration", "where": [{"extendsAny": "Repo"}]}`, "[7]"},
-		// a docstring and a bare pass declare nothing
 		{"python", `{"select": "type-declaration", "where": [{"members": {"atMost": 0}}]}`, "[3 5 7 9]"},
-		// a callback type's parameters are its own; a parameter property is read through the object
 		{"typescript", `{"select": "function", "where": [{"parameters": {"atMost": 2}}, {"name": "each"}]}`, "[1]"},
 		{"typescript", `{"select": "function", "where": [{"parameters": {"atLeast": 3}}]}`, "[]"},
 		{"typescript", `{"select": "parameter", "where": [{"unused": true}]}`, "[]"},
@@ -72,7 +65,6 @@ export class Account {
 	}
 }
 
-// What the language itself calls, and what a supertype dictates, is never unused.
 func TestWhatTheLanguageCallsIsNeverUnused(t *testing.T) {
 	php := phpCodebase(t, "Shape.php", `<?php
 namespace App;
@@ -119,7 +111,6 @@ final class Square implements Shape {
 	}
 }
 
-// An else-if continues its if; only a branch inside a branch nests.
 func TestAnElseIfLadderIsNoNesting(t *testing.T) {
 	query := `{"select": "branch", "where": [{"nestedAtLeast": {"is": "branch", "count": 2}}]}`
 
@@ -144,7 +135,6 @@ func TestAnElseIfLadderIsNoNesting(t *testing.T) {
 	}
 }
 
-// A Python class honours its Protocol and abstract bases as contracts; a plain base it only inherits from.
 func TestAPythonContractIsAProtocolOrAnAbstractBase(t *testing.T) {
 	python := pythontest.FromSource(t, map[string]string{"shop/__init__.py": "", "shop/contracts.py": `from abc import ABC, ABCMeta
 from typing import Protocol

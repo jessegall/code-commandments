@@ -11,7 +11,6 @@ type PositionalTupleReturn struct{}
 
 func init() { sins.Register(catalog.PHP, PositionalTupleReturn{}) }
 
-// Definition is what the sin states about itself.
 func (PositionalTupleReturn) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "positional-tuple-return",

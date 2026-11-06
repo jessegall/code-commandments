@@ -16,12 +16,10 @@ func init() {
 	detectors.Register(catalog.CSharp, CoalescedLoopSubjectDetector{})
 }
 
-// Sin is the sin the detector finds.
 func (CoalescedLoopSubjectDetector) Sin() sins.Sin {
 	return cssins.CoalescedLoopSubject{}
 }
 
-// Find is every place the sin is committed.
 func (CoalescedLoopSubjectDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return cs.In(codebase).
 		WhereKind("ForEachStatement").

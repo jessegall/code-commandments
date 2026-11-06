@@ -14,10 +14,8 @@ type RethrownUnchangedDetector struct{}
 
 func init() { detectors.Register(catalog.PHP, RethrownUnchangedDetector{}) }
 
-// Sin is the sin the detector finds.
 func (RethrownUnchangedDetector) Sin() sins.Sin { return backendsins.RethrownUnchanged{} }
 
-// Find is every catch that only throws what it caught.
 func (RethrownUnchangedDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return php.In(codebase).
 		WhereKind("Stmt_Catch").

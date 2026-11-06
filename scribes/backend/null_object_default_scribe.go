@@ -13,12 +13,9 @@ func init() {
 	scribes.Fixes(rules.AllNullableDataDetector{}, func() scribes.Scribe { return NullObjectDefaultScribe{} })
 }
 
-// NullObjectDefaultScribe reshapes a Data whose every field is a nullable object defaulting to null into one whose
-// fields default to their Null Objects, typed as never null.
+// NullObjectDefaultScribe reshapes a Data whose every field is a nullable object defaulting to null into one whose fields default to their Null Objects, typed as never null.
 type NullObjectDefaultScribe struct{}
 
-// Rewrite reshapes each class whose every promoted field has an expressible Null Object; a class with one that has
-// none is left whole.
 func (NullObjectDefaultScribe) Rewrite(findings []engine.Match, codebase *engine.Codebase) (scribes.Rewrites, error) {
 	draft := scribes.NewDraft()
 	for _, class := range classDeclarations(findings) {
@@ -57,7 +54,6 @@ func reshape(draft *scribes.Draft, class engine.Match, codebase *engine.Codebase
 	}
 }
 
-// writtenNonNullType is a nullable type as written with its null taken off: `?T` is `T`, `A|B|null` is `A|B`.
 func writtenNonNullType(typed engine.Match) (string, bool) {
 	switch typed.Kind() {
 	case "NullableType":
@@ -82,7 +78,6 @@ func isNullMember(member engine.Match) bool {
 	return (kind == "Identifier" || strings.HasPrefix(kind, "Name")) && strings.ToLower(member.Name()) == "null"
 }
 
-// defaultsToNull says whether a parameter's default is null.
 func defaultsToNull(param engine.Match) bool {
 	fallback := param.Child("default")
 

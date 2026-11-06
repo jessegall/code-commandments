@@ -13,7 +13,6 @@ func init() {
 	sins.Register(catalog.CSharp, ArrayReturnBag{})
 }
 
-// Definition is what the sin states about itself.
 func (ArrayReturnBag) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "csharp-array-return-bag",

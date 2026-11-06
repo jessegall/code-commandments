@@ -6,13 +6,10 @@ import (
 	"github.com/jessegall/code-commandments/engine"
 )
 
-// IsFunctionLike says whether the node opens a function scope: a method, a function, a closure, an arrow function or
-// a property hook.
 func (n Node) IsFunctionLike() bool {
 	return slices.Contains(functionLikes, n.Kind())
 }
 
-// EnclosingFunctionLike is the node itself when it opens a function scope, else the nearest one around it.
 func (n Node) EnclosingFunctionLike() Node {
 	for at := n; at.Exists(); at = at.Up() {
 		if at.IsFunctionLike() {
@@ -23,17 +20,14 @@ func (n Node) EnclosingFunctionLike() Node {
 	return Node{}
 }
 
-// IsLoopSubject says whether the node is the collection a foreach walks.
 func (n Node) IsLoopSubject() bool {
 	return n.Exists() && n.Parent().Kind() == "Stmt_Foreach" && n.Node().Field == "expr"
 }
 
-// IsCoalesce says whether the node is a ?? expression.
 func (n Node) IsCoalesce() bool {
 	return n.Kind() == "Expr_BinaryOp_Coalesce"
 }
 
-// CoalesceLeft is the left side of a ?? expression; no node otherwise.
 func (n Node) CoalesceLeft() Node {
 	if !n.IsCoalesce() {
 		return Node{}
@@ -42,7 +36,6 @@ func (n Node) CoalesceLeft() Node {
 	return Node{Match: n.Child("left")}
 }
 
-// CoalesceRight is the right side of a ?? expression; no node otherwise.
 func (n Node) CoalesceRight() Node {
 	if !n.IsCoalesce() {
 		return Node{}
@@ -51,17 +44,14 @@ func (n Node) CoalesceRight() Node {
 	return Node{Match: n.Child("right")}
 }
 
-// IsTernary says whether the node is a ternary, the short ?: included.
 func (n Node) IsTernary() bool {
 	return n.Kind() == "Expr_Ternary"
 }
 
-// isShortTernary says whether the node is a ?: ternary, which has no middle branch.
 func (n Node) isShortTernary() bool {
 	return n.IsTernary() && !n.Child("if").Exists()
 }
 
-// FallsBackToEmptyCollection says whether the node is a ?? or ?: whose fallback is an empty array.
 func (n Node) FallsBackToEmptyCollection() bool {
 	if n.IsCoalesce() {
 		return n.CoalesceRight().IsEmptyArrayLiteral()
@@ -70,7 +60,6 @@ func (n Node) FallsBackToEmptyCollection() bool {
 	return n.isShortTernary() && Node{Match: n.Child("else")}.IsEmptyArrayLiteral()
 }
 
-// FallbackSubject is the value a ?? or ?: falls back from; no node otherwise.
 func (n Node) FallbackSubject() Node {
 	if n.IsCoalesce() {
 		return n.CoalesceLeft()
@@ -82,8 +71,6 @@ func (n Node) FallbackSubject() Node {
 	return Node{Match: n.Child("cond")}
 }
 
-// RootVariableName is the variable a chain of property and offset reads starts from; empty when it starts
-// elsewhere, at $this, or at a variable variable.
 func (n Node) RootVariableName() string {
 	at := n.Match
 	for at.Kind() == "Expr_ArrayDimFetch" || isPropertyRead(at) {
@@ -96,7 +83,6 @@ func (n Node) RootVariableName() string {
 	return at.Name()
 }
 
-// ReachesIntoParameter says whether the node reads from a parameter of the function around it.
 func (n Node) ReachesIntoParameter() bool {
 	root := n.RootVariableName()
 	if root == "" {
@@ -111,7 +97,6 @@ func (n Node) ReachesIntoParameter() bool {
 	return false
 }
 
-// IsDeeplyNestedIf says whether the node is an if sitting inside two or more ifs of its own function.
 func (n Node) IsDeeplyNestedIf() bool {
 	if n.Kind() != "Stmt_If" {
 		return false
@@ -126,25 +111,18 @@ func (n Node) IsDeeplyNestedIf() bool {
 	return depth >= 2
 }
 
-// IsIfElseLadder says whether the node is an if with two or more elseifs.
 func (n Node) IsIfElseLadder() bool {
 	return n.Kind() == "Stmt_If" && len(n.ChildrenIn("elseifs")) >= 2
 }
 
-// IsCallArgument says whether the node is the value an argument passes.
 func (n Node) IsCallArgument() bool {
 	return n.Exists() && n.Parent().Kind() == "Arg"
 }
 
-// IsCallReceiver says whether the node is the object a method is sent to.
 func (n Node) IsCallReceiver() bool {
 	return n.Exists() && isMethodSend(n.Parent()) && n.Node().Field == "var"
 }
 
-// IsSoleLoopBodyGuard says whether the node is an if with no else that is the only statement of a loop's body and
-
-// IsOutermostNestedTernary says whether the node is a ternary with a ternary in a branch, and no ternary around it
-// in its function.
 func (n Node) IsOutermostNestedTernary() bool {
 	if !n.IsTernary() {
 		return false
@@ -165,10 +143,8 @@ func (n Node) IsOutermostNestedTernary() bool {
 	return false
 }
 
-// counterSteps are the step expressions that advance a counter.
 var counterSteps = []string{"Expr_PostInc", "Expr_PreInc", "Expr_PostDec", "Expr_PreDec", "Expr_AssignOp_Plus", "Expr_AssignOp_Minus"}
 
-// IsNonCountingFor says whether the node is a for loop with steps, none of which advances a counter.
 func (n Node) IsNonCountingFor() bool {
 	steps := n.ChildrenIn("loop")
 	if n.Kind() != "Stmt_For" || len(steps) == 0 {
@@ -178,7 +154,6 @@ func (n Node) IsNonCountingFor() bool {
 	return !slices.ContainsFunc(steps, func(step engine.Match) bool { return slices.Contains(counterSteps, step.Kind()) })
 }
 
-// IsBailOut says whether the node is a statement that leaves: return, continue, break or a thrown expression.
 func (n Node) IsBailOut() bool {
 	switch n.Kind() {
 	case "Stmt_Return", "Stmt_Continue", "Stmt_Break":
@@ -190,12 +165,10 @@ func (n Node) IsBailOut() bool {
 	return false
 }
 
-// IsShortCircuit says whether the node is a boolean and or or, in either spelling.
 func (n Node) IsShortCircuit() bool {
 	return slices.Contains([]string{"Expr_BinaryOp_BooleanAnd", "Expr_BinaryOp_BooleanOr", "Expr_BinaryOp_LogicalAnd", "Expr_BinaryOp_LogicalOr"}, n.Kind())
 }
 
-// ResultIsDiscarded says whether the node is an expression statement's whole expression, its value thrown away.
 func (n Node) ResultIsDiscarded() bool {
 	return n.Exists() && n.Parent().Kind() == "Stmt_Expression" && n.Node().Field == "expr"
 }

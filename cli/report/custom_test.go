@@ -32,9 +32,6 @@ func TestAReportAgainstTheProjectsOwnRuleIsRefusedByEitherNameItIsKnownBy(t *tes
 	t.Cleanup(func() { os.Chdir(previous) })
 	os.Chdir(root)
 
-	// Either name the reporter was shown is the rule: the checklist prints the rule's own, a chat mark and
-	// `info` print the SIN's. Named by its sin, the refusal used to miss and the report was filed upstream,
-	// where a rule that lives in this project cannot be fixed (issue 824).
 	for _, named := range []string{"RawSql", "RawSqlDetector", "raw-sql"} {
 		var out, errs bytes.Buffer
 

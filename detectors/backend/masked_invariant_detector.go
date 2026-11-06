@@ -14,15 +14,12 @@ type MaskedInvariantDetector struct{}
 
 func init() { detectors.Register(catalog.PHP, MaskedInvariantDetector{}) }
 
-// Sin is the sin the detector finds.
 func (MaskedInvariantDetector) Sin() sins.Sin { return backendsins.MaskedInvariant{} }
 
-// Find is every ?? with a non-null literal fallback over a nullsafe read of a private nullable property set outside the constructor.
 func (MaskedInvariantDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return php.In(codebase).
 		Where(engine.As(php.Node.MasksOwnState)).
 		Get()
 }
 
-// CrossFile says the PHP tool finds it reaching beyond the file it judges, so a per-file check must not ask it.
 func (MaskedInvariantDetector) CrossFile() {}

@@ -7,12 +7,7 @@ import (
 	"strings"
 )
 
-// Excluded is the paths a project told the tool to leave alone: plain folders, matched as prefixes, and
-// globs, matched against the path relative to the project and every folder above it.
-//
-// A folder some one rule judges anyway is READ despite its exclusion, since a folder nothing reads is a folder
-// no rule can judge. Whose findings may then be reported from it is the reporting layer's question, not this
-// one: here the folder is simply no longer invisible.
+// Excluded is the paths a project told the tool to leave alone: plain folders, matched as prefixes, and globs, matched against the path relative to the project and every folder above it.
 type Excluded struct {
 	root     string
 	prefixes []string
@@ -20,7 +15,6 @@ type Excluded struct {
 	judged   []string
 }
 
-// Under reads relative exclusions against root.
 func Under(root string, relative []string) Excluded {
 	root = strings.TrimRight(realOr(root), "/")
 	excluded := Excluded{root: root}
@@ -40,8 +34,6 @@ func Under(root string, relative []string) Excluded {
 	return excluded
 }
 
-// Judging reads the exclusions again with these folders judged anyway, relative to the same root: a folder a
-// rule of the project judges despite the exclusion is read, and so is everything under it.
 func (e Excluded) Judging(folders []string) Excluded {
 	judged := e.judged
 	for _, given := range folders {
@@ -54,12 +46,10 @@ func (e Excluded) Judging(folders []string) Excluded {
 	return e
 }
 
-// IsEmpty says whether nothing is excluded.
 func (e Excluded) IsEmpty() bool {
 	return len(e.prefixes) == 0 && len(e.patterns) == 0
 }
 
-// Covers says whether the path is excluded.
 func (e Excluded) Covers(given string) bool {
 	if e.IsEmpty() {
 		return false
@@ -100,11 +90,6 @@ func (e Excluded) matchedByGlob(resolved string) bool {
 				return true
 			}
 
-			// A pattern opening with `**/` names a folder AT ANY DEPTH, and the project's own root is one of
-			// those depths: that is how gitignore and io/fs read it, and reading it as one segment or more is
-			// what made `**/dist` miss the dist at the top and made a kind whose own name holds a slash,
-			// `bootstrap/cache`, impossible to write as a pattern at all. fnmatch itself is held to PHP's, which
-			// knows no `**`, so the zero-segment reading lives here where the pattern is ours.
 			if anywhere, named := strings.CutPrefix(pattern, "**/"); named && fnmatch(anywhere, candidate, false) {
 				return true
 			}
@@ -121,8 +106,6 @@ func (e Excluded) matchedByGlob(resolved string) bool {
 	return false
 }
 
-// fnmatch matches as the C library's does: `*` and `?` stop at a slash when pathname is set, `[…]` is a
-// class, and a backslash escapes the next character.
 func fnmatch(pattern, name string, pathname bool) bool {
 	any, one := ".*", "."
 	if pathname {
@@ -167,7 +150,6 @@ func fnmatch(pattern, name string, pathname bool) bool {
 	return err == nil && matcher.MatchString(name)
 }
 
-// realOr is the path with its links resolved, or the path itself when it does not exist.
 func realOr(given string) string {
 	resolved, err := filepath.EvalSymlinks(given)
 	if err != nil {

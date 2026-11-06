@@ -13,7 +13,6 @@ import (
 	_ "github.com/jessegall/code-commandments/registry"
 )
 
-// sample is a PHP file marking what NoDumpDetector must flag and what it must leave alone.
 const sample = `<?php
 
 class Shows
@@ -28,7 +27,6 @@ class Shows
 }
 `
 
-// project is a project holding two rules of its own and a sample marking one of them.
 func project(t *testing.T) string {
 	t.Helper()
 
@@ -54,7 +52,6 @@ func ruleFlagging(sin, call string) string {
 	return `{"engine": "backend", "sin": {"name": "` + sin + `", "description": "x", "skill": "php/absence"}, "find": {"select": "call", "where": [{"name": "` + call + `"}]}}`
 }
 
-// run runs rule in the project and answers what it said and its exit code.
 func run(t *testing.T, root string, args ...string) (string, int) {
 	t.Helper()
 

@@ -16,12 +16,10 @@ func init() {
 	detectors.Register(catalog.Python, DanglingDocReferenceDetector{})
 }
 
-// Sin is the sin the detector finds.
 func (DanglingDocReferenceDetector) Sin() sins.Sin {
 	return pysins.DanglingDocReference{}
 }
 
-// Find is every place the sin is committed.
 func (DanglingDocReferenceDetector) Find(codebase *engine.Codebase) []engine.Match {
 	program := py.In(codebase).Program
 
@@ -31,5 +29,4 @@ func (DanglingDocReferenceDetector) Find(codebase *engine.Codebase) []engine.Mat
 		Get()
 }
 
-// CrossFile says the PHP tool finds it reaching beyond the file it judges, so a per-file check must not ask it.
 func (DanglingDocReferenceDetector) CrossFile() {}

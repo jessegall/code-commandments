@@ -8,9 +8,6 @@ import (
 	"github.com/jessegall/code-commandments/cli/checklist"
 )
 
-// TestTheWorkLeftIsWhatStandsAboveTheReportedSection holds the count the stop reminder nags on. The lines under
-// the reported heading are findings this project has reported as wrong, which the checklist itself tells a reader
-// not to fix and not to delete, so counting them would nag at every stop for work nobody may do.
 func TestTheWorkLeftIsWhatStandsAboveTheReportedSection(t *testing.T) {
 	for name, test := range map[string]struct {
 		content string

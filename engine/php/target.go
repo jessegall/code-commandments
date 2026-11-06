@@ -9,11 +9,8 @@ import (
 	"github.com/jessegall/code-commandments/engine"
 )
 
-// cloneWith is the PHP version that can clone an object with changed properties.
 const cloneWith = "8.5"
 
-// targets is the lowest PHP version a codebase requires, read from the composer.json nearest its first file that has
-// one; empty when none says.
 var targets = Memoised(func(codebase *engine.Codebase) string {
 	for _, file := range codebase.Files() {
 		for dir := path.Dir(file.Path); ; dir = path.Dir(dir) {
@@ -37,14 +34,12 @@ var targets = Memoised(func(codebase *engine.Codebase) string {
 	return ""
 })
 
-// SupportsCloneWith says whether the project's lowest required PHP version can clone with changed properties.
 func SupportsCloneWith(codebase *engine.Codebase) bool {
 	lowest := targets.Of(codebase)
 
 	return lowest != "" && compareVersions(lowest, cloneWith) >= 0
 }
 
-// lowestVersion is the lowest major.minor a composer constraint admits; empty when it names none.
 func lowestVersion(constraint string) string {
 	lowest := ""
 	for _, clause := range strings.Fields(strings.NewReplacer("||", " ", ",", " ", "|", " ").Replace(constraint)) {
@@ -66,7 +61,6 @@ func lowestVersion(constraint string) string {
 	return lowest
 }
 
-// compareVersions orders two major.minor versions numerically.
 func compareVersions(a, b string) int {
 	left, right := strings.Split(a, "."), strings.Split(b, ".")
 	for at := range 2 {

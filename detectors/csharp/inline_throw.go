@@ -16,12 +16,10 @@ func init() {
 	detectors.Register(catalog.CSharp, InlineThrowDetector{})
 }
 
-// Sin is the sin the detector finds.
 func (InlineThrowDetector) Sin() sins.Sin {
 	return cssins.InlineThrow{}
 }
 
-// Find is every place the sin is committed.
 func (InlineThrowDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return cs.In(codebase).
 		WhereKind("CoalesceExpression").

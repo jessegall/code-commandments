@@ -5,28 +5,22 @@ import (
 	"slices"
 )
 
-// engineNodeFacts are the node facts the engine fills for each language, so a stream never carries them.
 var engineNodeFacts = map[Language][]string{
 	PHP:        {"resolved", "target", "resolves", "constant", "inherited"},
 	Python:     {"refers", "target", "resolves", "constant", "inherited"},
 	CSharp:     {"resolves"},
 	TypeScript: {"constant", "inherited"},
 	Vue:        {"constant", "inherited"},
-	// Go's own compiler is in this binary, so its bridge writes every fact a checker gives and the engine fills
-	// none. Nothing reads implicit interface satisfaction yet, so inherited is written by nobody.
-	Go: {},
+	Go:         {},
 }
 
-// bridgeProgramFacts are the program facts each language's bridge fills.
 var bridgeProgramFacts = map[Language][]string{
 	PHP:        {"symbols"},
 	Python:     {"packages"},
 	CSharp:     {"symbols"},
 	TypeScript: {"aliases"},
 	Vue:        {"aliases"},
-	// A Go package is a folder the import path names, which the tree already says, so no program fact is left
-	// for the bridge to carry.
-	Go: {},
+	Go:         {},
 }
 
 func (n *Node) carries(fact string) bool {
@@ -52,7 +46,6 @@ func (r Ref) isResolved() bool {
 	return r.Symbol != "" || r.Owner != "" || r.OwnedHere != nil || r.Blind
 }
 
-// fillsFile refuses a file that carries a fact the engine fills for its stream's language.
 func fillsFile(language Language, file *File) error {
 	if file.Test && language != CSharp {
 		return fmt.Errorf("test is a fact only the C# bridge fills")
@@ -78,7 +71,6 @@ func fillsFile(language Language, file *File) error {
 	return nil
 }
 
-// fillsProgram refuses a program line holding a fact the language's bridge has no source for.
 func fillsProgram(language Language, program *Program) error {
 	carried := map[string]bool{
 		"symbols":  len(program.Symbols) > 0,

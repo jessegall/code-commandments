@@ -16,12 +16,10 @@ func init() {
 	detectors.Register(catalog.Python, UnnamedVocabularyLiteralDetector{})
 }
 
-// Sin is the sin the detector finds.
 func (UnnamedVocabularyLiteralDetector) Sin() sins.Sin {
 	return pysins.UnnamedVocabularyLiteral{}
 }
 
-// Find is every place the sin is committed.
 func (UnnamedVocabularyLiteralDetector) Find(codebase *engine.Codebase) []engine.Match {
 	program := py.In(codebase).Program
 	var findings []engine.Match
@@ -32,5 +30,4 @@ func (UnnamedVocabularyLiteralDetector) Find(codebase *engine.Codebase) []engine
 	return findings
 }
 
-// CrossFile says the PHP tool finds it reaching beyond the file it judges, so a per-file check must not ask it.
 func (UnnamedVocabularyLiteralDetector) CrossFile() {}

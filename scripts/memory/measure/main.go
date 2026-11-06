@@ -1,7 +1,4 @@
-// Command measure reads a codebase the way judge reads it and says what holding it costs: the nodes it holds, the
-// heap they take once garbage is collected, the bytes that makes per node, and the heap's peak while every
-// detector runs. With -each it reads a C# solution one project folder at a time and reports the largest.
-// Run it under the agent limits: GOMEMLIMIT=3GiB GOMAXPROCS=2 go run ./scripts/memory/measure <path>.
+// Command measure reads a codebase the way judge reads it and says what holding it costs: the nodes it holds, the heap they take once garbage is collected, the bytes that makes per node, and the heap's peak while every detector runs.
 package main
 
 import (
@@ -82,7 +79,6 @@ func (r reading) String() string {
 	return fmt.Sprintf("files %d  nodes %d  heap %s  %d B/node  load %s", r.files, r.nodes, mib(r.heap), perNode, r.load.Round(time.Second))
 }
 
-// measure loads the path, weighs what it holds, then runs every detector over it.
 func measure(path, heap, judged string, fields bool) (reading, error) {
 	started := time.Now()
 	codebase, err := scan.Walk([]string{path}, source.Excluded{}).Load()
@@ -130,7 +126,6 @@ func measure(path, heap, judged string, fields bool) (reading, error) {
 	return read, nil
 }
 
-// reads says whether the engine judges any language the codebase holds.
 func reads(engine catalog.Engine, held map[contract.Language]bool) bool {
 	for _, language := range catalog.LanguagesOf(engine) {
 		if held[language] {
@@ -141,11 +136,6 @@ func reads(engine catalog.Engine, held map[contract.Language]bool) bool {
 	return false
 }
 
-// population prints the share of nodes that set each field of the node, and how many distinct values the
-// strings among them take.
-// counted records what one node's exported fields hold: each field that is set at all, and every distinct
-// string a field of strings has carried. The two tallies are the caller's, one slot per field of the contract's
-// node, so this adds to them rather than answering.
 func counted(node *contract.Node, kind reflect.Type, set []int, distinct []map[string]bool) {
 	value := reflect.ValueOf(node).Elem()
 	for i := range kind.NumField() {
@@ -182,7 +172,6 @@ func population(codebase *engine.Codebase) {
 	}
 }
 
-// settled is the heap in use once every collectable byte is collected.
 func settled() uint64 {
 	runtime.GC()
 	debug.FreeOSMemory()
@@ -202,7 +191,6 @@ func profile(path string) error {
 	return pprof.WriteHeapProfile(file)
 }
 
-// sample keeps the largest heap seen, every tenth of a second.
 func sample(peak *atomic.Uint64) {
 	var stats runtime.MemStats
 	for range time.Tick(100 * time.Millisecond) {
@@ -217,7 +205,6 @@ func mib(bytes uint64) string {
 	return fmt.Sprintf("%.0f MiB", float64(bytes)/(1<<20))
 }
 
-// projectFolders is the folder of every C# project under the root, as the per-project parity reads them.
 func projectFolders(root string) []string {
 	var folders []string
 	filepath.WalkDir(root, func(path string, entry fs.DirEntry, err error) error {

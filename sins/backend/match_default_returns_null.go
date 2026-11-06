@@ -11,7 +11,6 @@ type MatchDefaultReturnsNull struct{}
 
 func init() { sins.Register(catalog.PHP, MatchDefaultReturnsNull{}) }
 
-// Definition is what the sin states about itself.
 func (MatchDefaultReturnsNull) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "match-default-returns-null",

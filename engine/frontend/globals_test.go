@@ -7,11 +7,6 @@ import (
 	"testing"
 )
 
-// TestAFilesTreeDoesNotAnswerForTheWholeProgram holds a file's tree to its own code: a file reaching a global is
-// written the same whether it is read alone or beside the rest of its folder. `typeof globalThis` is the type that
-// broke this — described, it holds every ambient name there is, each printed as however many declaration files have
-// merged into it, so a file's tree changed with how many files the program was built over, which is what makes a
-// tree cache answer for the whole scan rather than for the file.
 func TestAFilesTreeDoesNotAnswerForTheWholeProgram(t *testing.T) {
 	root, err := filepath.EvalSymlinks(t.TempDir())
 	if err != nil {
@@ -36,7 +31,6 @@ func TestAFilesTreeDoesNotAnswerForTheWholeProgram(t *testing.T) {
 	}
 }
 
-// recordOf is the stream's line for the file whose path ends in name.
 func recordOf(t *testing.T, stream string, name string) string {
 	t.Helper()
 	for _, line := range strings.Split(stream, "\n") {

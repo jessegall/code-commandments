@@ -13,7 +13,6 @@ func init() {
 	sins.Register(catalog.CSharp, DataClump{})
 }
 
-// Definition is what the sin states about itself.
 func (DataClump) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "csharp-data-clump",

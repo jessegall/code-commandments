@@ -23,7 +23,6 @@ func TestTheDashboardAndStoreAreWrittenAsPhpWritesThem(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// a project with neither composer nor the journal's plugin, where the tool names itself as PHP does.
 	project := t.TempDir()
 
 	for golden, render := range map[string]func() (string, error){
@@ -40,8 +39,6 @@ func TestTheDashboardAndStoreAreWrittenAsPhpWritesThem(t *testing.T) {
 	}
 }
 
-// TestARunReplacesOnlyTheFindingsOfTheFilesItJudged holds the store to the files a run judged: a narrower run keeps
-// what it did not judge, a file it judged clean loses its findings, and a file that is gone takes its findings along.
 func TestARunReplacesOnlyTheFindingsOfTheFilesItJudged(t *testing.T) {
 	root, err := filepath.EvalSymlinks(t.TempDir())
 	if err != nil {
@@ -93,8 +90,6 @@ func TestARunReplacesOnlyTheFindingsOfTheFilesItJudged(t *testing.T) {
 	}
 }
 
-// TestAWorktreesFindingsAreNeverTheProjects holds the store to the project's own code: a finding a helper's edit in
-// a git worktree inside the project brought is not kept, and one already kept is dropped on the next run.
 func TestAWorktreesFindingsAreNeverTheProjects(t *testing.T) {
 	root, err := filepath.EvalSymlinks(t.TempDir())
 	if err != nil {

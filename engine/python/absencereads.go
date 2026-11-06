@@ -6,19 +6,16 @@ import (
 	"strings"
 )
 
-// Default is the default value a parameter is given; no node when it has none.
 func (n Node) Default() Node {
 	return n.Child("default")
 }
 
-// IsBlankString says whether the expression is the literal empty string.
 func (n Node) IsBlankString() bool {
 	text, ok := n.Text()
 
 	return ok && text == ""
 }
 
-// IsEmptyScalar says whether the expression is a literal that means nothing: an empty string, zero or False.
 func (n Node) IsEmptyScalar() bool {
 	facts := n.Node()
 	if n.Kind() != "Constant" {
@@ -38,7 +35,6 @@ func (n Node) IsEmptyScalar() bool {
 	return false
 }
 
-// OwnerDef is the def a parameter belongs to; no node for anything else.
 func (n Node) OwnerDef() Node {
 	if def := n.Parent().Parent(); n.Kind() == "arg" && def.IsFunction() {
 		return def
@@ -47,8 +43,6 @@ func (n Node) OwnerDef() Node {
 	return Node{}
 }
 
-// blankDefault is where a text slot defaulted to "" lives and how it is read there: a `str` parameter's def and
-// its name, or a class's `str` field and `self.<field>`.
 func (n Node) blankDefault() (Node, string, bool) {
 	if def := n.OwnerDef(); def.Exists() && n.Child("annotation").DottedName() == "str" && n.Default().IsBlankString() {
 		return def, n.Name(), true
@@ -61,31 +55,24 @@ func (n Node) blankDefault() (Node, string, bool) {
 	return Node{}, "", false
 }
 
-// IsBlankStringDefault says whether the node is a `str` parameter or field defaulted to "".
 func (n Node) IsBlankStringDefault() bool {
 	_, _, ok := n.blankDefault()
 
 	return ok
 }
 
-// DefaultedNameTestedForBlankness says whether the code the blank default belongs to asks whether it is blank:
-// the default stands in for a value that may be missing.
 func (n Node) DefaultedNameTestedForBlankness() bool {
 	scope, dotted, ok := n.blankDefault()
 
 	return ok && scope.AsksBlanknessOf(dotted)
 }
 
-// AsksBlanknessOf says whether anything the scope evaluates asks whether the dotted name is blank: compares it to
-// "", negates it, or tests it bare as the condition of an if, a while or a conditional expression.
 func (n Node) AsksBlanknessOf(dotted string) bool {
 	return slices.ContainsFunc(n.ExpressionsIn(), func(expression Node) bool {
 		return expression.testsBlanknessOf(dotted) || (expression.DottedName() == dotted && expression.isTested())
 	})
 }
 
-// AsksAbsenceOf says whether anything the scope evaluates asks whether the dotted name is missing: compares it to
-// None, tests it bare, or falls back from it.
 func (n Node) AsksAbsenceOf(dotted string) bool {
 	return slices.ContainsFunc(n.ExpressionsIn(), func(expression Node) bool {
 		subject, falls := expression.FallbackSubject()
@@ -109,7 +96,6 @@ func (n Node) testsNoneOf(dotted string) bool {
 	return ok && ((left.DottedName() == dotted && right.IsNone()) || (right.DottedName() == dotted && left.IsNone()))
 }
 
-// comparedWith is the two sides of a comparison made with one of the operators and nothing else.
 func (n Node) comparedWith(operators ...string) (Node, Node, bool) {
 	comparators := n.ChildrenIn("comparators")
 	if n.Kind() != "Compare" || len(comparators) != 1 || !slices.Contains(operators, n.Node().Operator) {
@@ -119,13 +105,10 @@ func (n Node) comparedWith(operators ...string) (Node, Node, bool) {
 	return n.Child("left"), comparators[0], true
 }
 
-// IsFieldOfDataBuiltClass says whether the node is a field of a class a named constructor builds from data.
 func (p *Program) IsFieldOfDataBuiltClass(n Node) bool {
 	return n.Kind() == "AnnAssign" && n.Parent().Kind() == "ClassDef" && p.IsBuiltFromData(n.Parent())
 }
 
-// IsParameterOfADispatchedMethod says whether the node is a parameter of a public method a getattr dispatches to
-// by a run-time name: the boundary hands it whatever it has.
 func (p *Program) IsParameterOfADispatchedMethod(n Node) bool {
 	method := n.OwnerDef()
 	class, bound := method.BoundClass()
@@ -133,7 +116,6 @@ func (p *Program) IsParameterOfADispatchedMethod(n Node) bool {
 	return method.Exists() && !strings.HasPrefix(method.Name(), "_") && bound && p.IsDispatchedByName(class)
 }
 
-// IsParameterEveryCallFills says whether every call of the parameter's def hands it a value.
 func (p *Program) IsParameterEveryCallFills(n Node) bool {
 	def := n.OwnerDef()
 	calls := p.CallersOf(def)
@@ -146,8 +128,6 @@ func (p *Program) IsParameterEveryCallFills(n Node) bool {
 	})
 }
 
-// IsComparedToItsFallback says whether the expression is compared, right where it stands, to the value it falls
-// back to: the fallback is cancelled by the very next test.
 func (n Node) IsComparedToItsFallback() bool {
 	fallback, ok := n.Fallback()
 	left, right, compared := n.wrapper().comparedWith("==", "!=")
@@ -155,8 +135,6 @@ func (n Node) IsComparedToItsFallback() bool {
 	return ok && compared && ((left == n && right.IsSame(fallback)) || (right == n && left.IsSame(fallback)))
 }
 
-// IsConditionalSpread says whether the node spreads a conditional choosing between a collection and an empty one:
-// `*(items if wanted else [])`.
 func (n Node) IsConditionalSpread() bool {
 	choice := n.spreadValue()
 	if choice.Kind() != "IfExp" {
@@ -167,7 +145,6 @@ func (n Node) IsConditionalSpread() bool {
 	return (then.IsEmptyCollection() && otherwise.isDisplay()) || (otherwise.IsEmptyCollection() && then.isDisplay())
 }
 
-// spreadValue is what a spread unpacks: a starred value, a `**` argument's, or a `**` dict entry itself.
 func (n Node) spreadValue() Node {
 	switch {
 	case n.Kind() == "Starred" || (n.Kind() == "keyword" && n.Name() == ""):
@@ -183,7 +160,6 @@ func (n Node) isDisplay() bool {
 	return slices.Contains([]string{"Tuple", "List", "Set", "Dict"}, n.Kind())
 }
 
-// FillsArgument says whether the expression is handed to a call as an argument, by position or by name.
 func (n Node) FillsArgument() bool {
 	wrapper := n.wrapper()
 	if wrapper.Kind() == "keyword" {
@@ -193,14 +169,12 @@ func (n Node) FillsArgument() bool {
 	return wrapper.IsCall() && wrapper.Callee() != n
 }
 
-// IsKeyedDefault says whether the expression is a mapping lookup naming its own default: `m.get(k, d)`.
 func (n Node) IsKeyedDefault() bool {
 	_, _, ok := n.defaulted()
 
 	return ok && n.IsCall()
 }
 
-// ReturnedValue is what a return statement returns; no node for any other statement.
 func (n Node) ReturnedValue() Node {
 	if n.Kind() != "Return" {
 		return Node{}
@@ -209,8 +183,6 @@ func (n Node) ReturnedValue() Node {
 	return n.Child("value")
 }
 
-// IsInventingOnMiss says whether the def answers a lookup it failed with a blank literal: some returns hand back
-// what it looked up, the rest an empty string, zero or False standing in for "not found".
 func (n Node) IsInventingOnMiss() bool {
 	var empty, found []Node
 	for _, value := range n.ReturnedValues() {
@@ -224,9 +196,6 @@ func (n Node) IsInventingOnMiss() bool {
 		return false
 	}
 
-	// A def that answers a question invents nothing: where every other return is a comparison or a test over
-	// comparisons, its False is the other answer and not a blank standing in for what the def looked up. A
-	// predicate reads what it is asked about, so the lookup is there either way.
 	if !slices.ContainsFunc(found, func(value Node) bool { return !value.IsBooleanAnswer() }) {
 		return false
 	}
@@ -234,8 +203,6 @@ func (n Node) IsInventingOnMiss() bool {
 	return !slices.ContainsFunc(found, func(value Node) bool { return !n.isLookedUp(value) })
 }
 
-// IsBooleanAnswer says whether the expression answers a question rather than handing a value back: a comparison,
-// a `not`, an `and` or `or` over answers, or True and False themselves.
 func (n Node) IsBooleanAnswer() bool {
 	switch n.Kind() {
 	case "Compare":
@@ -253,7 +220,6 @@ func (n Node) IsBooleanAnswer() bool {
 	return false
 }
 
-// isLookedUp says whether the returned value is a lookup the def makes, or a local it assigned one to.
 func (n Node) isLookedUp(value Node) bool {
 	var locals []string
 	for _, statement := range n.statementsIn() {
@@ -268,7 +234,6 @@ func (n Node) isLookedUp(value Node) bool {
 	})
 }
 
-// ownEvaluated is every expression a statement's own head evaluates, the statements it holds aside.
 func (n Node) ownEvaluated() []Node {
 	var evaluated []Node
 	for _, expression := range n.ownExpressions() {
@@ -278,8 +243,6 @@ func (n Node) ownEvaluated() []Node {
 	return evaluated
 }
 
-// isLookup says whether the part reads one of the def's parameters by a key: a call such as `row.get(key)`, or a
-// subscript by a literal, a parameter or a loop variable over one.
 func (n Node) isLookup(part Node) bool {
 	names := parameterNames(n.Parameters())
 	key, ok := part.KeyReadOf(names)
@@ -292,7 +255,6 @@ func (n Node) isLookup(part Node) bool {
 	return part.IsCall() || isText || slices.Contains(names, key.DottedName()) || isLoop
 }
 
-// keyLoops is each loop variable of the def that walks one of its parameters, with the parameter it walks.
 func (n Node) keyLoops() map[string]string {
 	names := parameterNames(n.Parameters())
 	loops := map[string]string{}
@@ -306,11 +268,8 @@ func (n Node) keyLoops() map[string]string {
 	return loops
 }
 
-// callableTypes is how an annotation spells a callable.
 var callableTypes = []string{"Callable", "typing.Callable", "collections.abc.Callable"}
 
-// HasNullNormalisedOptionalCallback says whether the def takes an optional callable defaulted to None and then asks
-// whether it was given: a missing behaviour modelled as None rather than as a behaviour that does nothing.
 func (n Node) HasNullNormalisedOptionalCallback() bool {
 	return n.IsFunction() && slices.ContainsFunc(n.Parameters(), func(parameter Node) bool {
 		callable, optional := parameter.Child("annotation").OptionalOf()
@@ -328,8 +287,6 @@ func (n Node) isCallableType() bool {
 	return slices.Contains(callableTypes, named.DottedName())
 }
 
-// IsConstantProperty says whether the method is a property that returns the same literal answer every time and
-// keeps no contract: a constant written as a method.
 func (p *Program) IsConstantProperty(n Node) bool {
 	if !n.IsPropertyGetter() || len(n.Parameters()) == 0 || n.IsStub() || p.IsOverride(n) || p.IsOverridden(n) || p.ExtendsOutside(n) {
 		return false
@@ -342,20 +299,16 @@ func (p *Program) IsConstantProperty(n Node) bool {
 	return len(body) == 1 && body[0].ReturnedValue().Exists() && len(body[0].ReturnedValue().DataNames()) == 0
 }
 
-// IsPropertyAccessorOf says whether the def is the setter or deleter of the named property.
 func (n Node) IsPropertyAccessorOf(name string) bool {
 	return slices.ContainsFunc(n.Decorators(), func(decorator Node) bool {
 		return decorator.DottedName() == name+".setter" || decorator.DottedName() == name+".deleter"
 	})
 }
 
-// IsStub says whether every statement of the def's body is a placeholder: nothing to share.
 func (n Node) IsStub() bool {
 	return n.IsFunction() && !slices.ContainsFunc(n.ChildrenIn("body"), func(statement Node) bool { return !statement.IsPlaceholder() })
 }
 
-// IsPlaceholder says whether the statement stands in for code not written: a bare string, `...`, `pass`, or a
-// raise of NotImplementedError.
 func (n Node) IsPlaceholder() bool {
 	switch n.Kind() {
 	case "Pass":
@@ -377,8 +330,6 @@ func (n Node) IsPlaceholder() bool {
 	return false
 }
 
-// DataNames is the names an expression reads data from: its names, a call's arguments rather than the function it
-// names, and none a comprehension binds itself.
 func (n Node) DataNames() []string {
 	if n.Kind() == "Name" {
 		return []string{n.Name()}
@@ -400,7 +351,6 @@ func (n Node) DataNames() []string {
 	return read
 }
 
-// boundNames is the names a comprehension binds in its own clauses.
 func (n Node) boundNames() []string {
 	var bound []string
 	for _, clause := range n.ChildrenIn("generators") {
@@ -415,7 +365,6 @@ func (n Node) boundNames() []string {
 	return bound
 }
 
-// ResetsToNone says whether a method of the class other than __init__ sets the attribute back to None.
 func (n Node) ResetsToNone(name string) bool {
 	if slices.ContainsFunc(n.writesOutsideInit(name), func(write Node) bool { return write.Kind() == "Assign" && write.Child("value").IsNone() }) {
 		return true
@@ -424,12 +373,6 @@ func (n Node) ResetsToNone(name string) bool {
 	return slices.ContainsFunc(n.Methods(), func(method Node) bool { return method.handsNoneFor(name) })
 }
 
-// handsNoneFor says whether the method hands None for that name to any call, as a keyword argument.
-//
-// A frozen value object cannot assign to itself: it clears a field by making another of itself with None in its
-// place, which is what dataclasses.replace does and what a project's own mover does. Reading only assignments
-// called such a field one nothing ever sets back to None, so a field genuinely absent half the time was reported
-// as an optional nobody honours (issue 825, a consumer's frozen Task clearing closed_at through moved()).
 func (n Node) handsNoneFor(name string) bool {
 	for _, node := range n.Match.Descendants() {
 		call := Node{Match: node}
@@ -445,7 +388,6 @@ func (n Node) handsNoneFor(name string) bool {
 	return false
 }
 
-// writesOutsideInit is every statement of a method other than __init__ that writes the attribute on self.
 func (n Node) writesOutsideInit(name string) []Node {
 	var writes []Node
 	for _, method := range n.Methods() {
@@ -462,8 +404,6 @@ func (n Node) writesOutsideInit(name string) []Node {
 	return writes
 }
 
-// FieldDeclaration is where the class first declares the field: its annotation in the class body, else the
-// statement of __init__ that first sets it.
 func (n Node) FieldDeclaration(name string) Node {
 	for _, statement := range n.ChildrenIn("body") {
 		if statement.Kind() == "AnnAssign" && statement.Child("target").DottedName() == name {
@@ -481,8 +421,6 @@ func (n Node) FieldDeclaration(name string) Node {
 	return Node{}
 }
 
-// FillsRequiredTextWithBlank says whether the call builds a dataclass of the program and hands one of its required
-// text fields an empty string: a placeholder filling a field the class says must hold text.
 func (p *Program) FillsRequiredTextWithBlank(call Node) bool {
 	class, ok := p.Dataclass(call.Callee())
 	if !call.IsCall() || !ok {
@@ -493,7 +431,6 @@ func (p *Program) FillsRequiredTextWithBlank(call Node) bool {
 	return slices.ContainsFunc(call.fieldsHandedBlank(class.InitFieldNames()), func(field string) bool { return slices.Contains(required, field) })
 }
 
-// fieldsHandedBlank is the fields a call hands an empty string, positional arguments read in the fields' order.
 func (n Node) fieldsHandedBlank(fields []string) []string {
 	var blank []string
 	for position, argument := range n.Arguments() {
@@ -510,7 +447,6 @@ func (n Node) fieldsHandedBlank(fields []string) []string {
 	return blank
 }
 
-// RequiredTextFields is the class's `str` fields that have no default.
 func (n Node) RequiredTextFields() []string {
 	var fields []string
 	for _, statement := range n.ChildrenIn("body") {
@@ -523,8 +459,6 @@ func (n Node) RequiredTextFields() []string {
 	return fields
 }
 
-// InitFieldNames is the fields a caller hands the class when building it: the annotated names of its body, less a
-// ClassVar and a `field(init=False)`, which the class keeps for itself.
 func (n Node) InitFieldNames() []string {
 	var fields []string
 	for _, statement := range n.ChildrenIn("body") {
@@ -546,15 +480,12 @@ func (n Node) isKeptOutOfInit() bool {
 	return init.Node() != nil && init.Written() == "False"
 }
 
-// IsContextManager says whether the def is decorated as a context manager.
 func (n Node) IsContextManager() bool {
 	return slices.ContainsFunc(n.Decorators(), func(decorator Node) bool {
 		return slices.Contains([]string{"contextmanager", "contextlib.contextmanager", "asynccontextmanager", "contextlib.asynccontextmanager"}, decorator.DottedName())
 	})
 }
 
-// HasOwnStateSaveAndRestore says whether the def saves one of its own attributes into a local and later writes it
-// back: scratch state set part-way through an operation and put back after.
 func (n Node) HasOwnStateSaveAndRestore() bool {
 	if !n.IsFunction() || n.IsContextManager() {
 		return false
@@ -586,13 +517,8 @@ func (n Node) HasOwnStateSaveAndRestore() bool {
 	})
 }
 
-// mutableBuilders are the builtins that make a fresh container every call: a default calling one of them is made
-// once at definition all the same, which is the whole of the fault.
 var mutableBuilders = []string{"list", "dict", "set", "bytearray", "collections.defaultdict", "collections.OrderedDict", "collections.Counter", "collections.deque"}
 
-// freshEveryCall are the calls whose whole purpose is to answer differently each time they run. A default that
-// calls one is evaluated once, when the def is defined, so every call that omits it is handed the first
-// answer: the timestamp of the import, one id for every record, one sample of the random.
 var freshEveryCall = []string{
 	"datetime.now", "datetime.utcnow", "datetime.today", "datetime.datetime.now", "datetime.datetime.utcnow",
 	"datetime.datetime.today", "date.today", "datetime.date.today", "time.time", "time.monotonic",
@@ -600,9 +526,6 @@ var freshEveryCall = []string{
 	"random.randint", "random.choice", "secrets.token_hex", "secrets.token_urlsafe",
 }
 
-// IsMutableDefault says whether the node is a parameter whose default is a container made once, when the def is
-// defined, and shared by every call that leaves it out: a list, dict or set written out or comprehended, or one
-// built by a call to a builtin that makes one. The value then carries one caller's data into the next.
 func (n Node) IsMutableDefault() bool {
 	if !n.OwnerDef().Exists() || n.Kind() != "arg" {
 		return false
@@ -611,9 +534,6 @@ func (n Node) IsMutableDefault() bool {
 	return n.Default().buildsAFreshContainer()
 }
 
-// IsFrozenDefault says whether the node is a parameter defaulted to a call that answers differently every
-// time: the call runs once, when the def is defined, and every call that omits the parameter is handed that
-// first answer for the life of the process. It is the container default's twin, with the same fix.
 func (n Node) IsFrozenDefault() bool {
 	if !n.OwnerDef().Exists() || n.Kind() != "arg" {
 		return false
@@ -623,13 +543,10 @@ func (n Node) IsFrozenDefault() bool {
 	return defaulted.IsCall() && slices.Contains(freshEveryCall, defaulted.Callee().DottedName())
 }
 
-// DeclaresNoBody says whether the node's own def declares a shape and no behaviour: a Protocol method or an
-// @overload signature, whose defaults are never the ones a call runs on.
 func (n Node) DeclaresNoBody() bool {
 	return n.OwnerDef().IsStub()
 }
 
-// buildsAFreshContainer says whether the expression makes a container of its own.
 func (n Node) buildsAFreshContainer() bool {
 	if slices.Contains([]string{"List", "Dict", "Set", "ListComp", "DictComp", "SetComp"}, n.Kind()) {
 		return true
@@ -638,11 +555,6 @@ func (n Node) buildsAFreshContainer() bool {
 	return n.IsCall() && slices.Contains(mutableBuilders, n.Callee().DottedName())
 }
 
-// GuardsWhatTheTypeRulesOut says whether the node tests a value for None that its own declared type has
-// already ruled out: a parameter annotated as a class the project itself declares, with no `| None` and no
-// default of None. One of two things is then true and both are worth saying — the annotation is lying, or the
-// guard is noise someone has to read past. The class has to be the project's own, since a type the scan never
-// saw is one the tool cannot vouch for.
 func (p *Program) GuardsWhatTheTypeRulesOut(n Node) bool {
 	tested, guards := n.testedForNone()
 	def := n.EnclosingFunction()
@@ -664,10 +576,6 @@ func (p *Program) GuardsWhatTheTypeRulesOut(n Node) bool {
 	return !def.everPutsNoneIn(tested)
 }
 
-// onlyFailsFast says whether the guard does nothing but raise. A type is a promise the checker keeps only
-// among callers who honour it, and a boundary that asserts its own contract and dies is not pretending the
-// impossible can happen; it is refusing to carry on. What this rule is about is a guard that answers the
-// impossible with a value.
 func (n Node) onlyFailsFast() bool {
 	guard := n.Parent()
 	body := guard.ChildrenIn("body")
@@ -675,9 +583,6 @@ func (n Node) onlyFailsFast() bool {
 	return guard.Kind() == "If" && len(body) == 1 && body[0].Kind() == "Raise"
 }
 
-// testedForNone is the name a comparison tests for None, and whether the node is one: `order is None` and
-// `order is not None` both say it, and nothing else here does. A falsy test says something wider than absence,
-// so it is no part of this.
 func (n Node) testedForNone() (string, bool) {
 	left, right, ok := n.comparedWith("is", "is not")
 	if !ok {
@@ -693,8 +598,6 @@ func (n Node) testedForNone() (string, bool) {
 	return "", false
 }
 
-// annotationOf is the annotation the def writes for the named parameter, and whether it writes one at all. A
-// parameter defaulted to None is annotated honestly enough by that default, so it answers no.
 func (n Node) annotationOf(name string) (Node, bool) {
 	for _, parameter := range n.Parameters() {
 		if parameter.Name() != name {
@@ -708,8 +611,6 @@ func (n Node) annotationOf(name string) (Node, bool) {
 	return Node{}, false
 }
 
-// everPutsNoneIn says whether the def itself ever assigns None to the name, which makes the guard real however
-// the parameter was annotated.
 func (n Node) everPutsNoneIn(name string) bool {
 	return slices.ContainsFunc(n.Descendants(), func(node Node) bool {
 		targets := node.ChildrenIn("targets")
@@ -718,16 +619,8 @@ func (n Node) everPutsNoneIn(name string) bool {
 	})
 }
 
-// matched is the class a regular expression's match is held by, as the checker names it.
 const matched = "re.Match"
 
-// FallsBackOnAGroupOfAMatch says whether the expression falls back on a group of a regular-expression match.
-//
-// Such a group is absent by the PATTERN's own grammar, so the fallback is the parse's reading of what the text
-// leaves out rather than a value invented for a missing one: a time written `3pm` has no minutes, and minute 0 is
-// what `3pm` means, which is the choice the absence discipline allows (#816). The signal is the class the read is
-// sent to, so it holds only where the checker really typed it: a project whose values nothing has typed keeps
-// being judged rather than excused for having no types.
 func (n Node) FallsBackOnAGroupOfAMatch() bool {
 	subject, ok := n.FallbackSubject()
 	if !ok {
@@ -739,8 +632,6 @@ func (n Node) FallsBackOnAGroupOfAMatch() bool {
 	return typed && class == matched
 }
 
-// heldBy is what the read is sent to: the receiver of a call's own callee, `match` of `match.group(2)`, and the
-// receiver of a plain member read.
 func (n Node) heldBy() Node {
 	if n.IsCall() {
 		return n.Callee().Child("value")

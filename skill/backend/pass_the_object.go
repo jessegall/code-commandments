@@ -21,7 +21,6 @@ func init() {
 	skill.Register(catalog.PHP, PassTheObject{})
 }
 
-// Definition is what the skill states about itself.
 func (PassTheObject) Definition() skill.Definition {
 	return skill.Definition{
 		Slug:      "php/pass-the-object",

@@ -13,12 +13,9 @@ func init() {
 	detectors.Register(catalog.Vue, CompoundInlineComponentDetector{})
 }
 
-// compoundBody is how many elements a compound must hold before it is big enough to be its own component.
 const compoundBody = 12
 
-// CompoundInlineComponentDetector finds a library compound, a Dialog with its DialogTitle and DialogContent,
-// assembled inline in a larger template: a component of its own waiting to be extracted. A compound that is
-// already the whole template is that component.
+// CompoundInlineComponentDetector finds a library compound, a Dialog with its DialogTitle and DialogContent, assembled inline in a larger template: a component of its own waiting to be extracted.
 type CompoundInlineComponentDetector struct{}
 
 func (CompoundInlineComponentDetector) Sin() sins.Sin {
@@ -35,5 +32,4 @@ func (CompoundInlineComponentDetector) Find(codebase *engine.Codebase) []engine.
 		Get()
 }
 
-// Repentable says a scribe rewrites the sin away.
 func (CompoundInlineComponentDetector) Repentable() {}

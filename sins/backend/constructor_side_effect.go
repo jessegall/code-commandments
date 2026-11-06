@@ -11,7 +11,6 @@ type ConstructorSideEffect struct{}
 
 func init() { sins.Register(catalog.PHP, ConstructorSideEffect{}) }
 
-// Definition is what the sin states about itself.
 func (ConstructorSideEffect) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "constructor-side-effect",

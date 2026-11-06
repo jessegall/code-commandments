@@ -4,9 +4,6 @@ import (
 	"slices"
 )
 
-// ScalarConversions is the conversion the call hands each scalar parameter of the method it calls, by position: a
-// cast to a scalar type, `X.Parse(…)`, `Convert.ToX(…)` or `.ToString()` written as the whole argument. None for a
-// call that names its arguments, whose positions are not the parameters'.
 func (n Node) ScalarConversions() map[int]string {
 	conversions := map[int]string{}
 	if !n.Target().Exists() || !n.PassesByPosition() {
@@ -25,23 +22,18 @@ func (n Node) ScalarConversions() map[int]string {
 	return conversions
 }
 
-// PassesByPosition says whether the call passes every argument by position, no `name:`, so argument n fills
-// parameter n.
 func (n Node) PassesByPosition() bool {
 	list := n.firstChild("ArgumentList")
 
 	return list.Exists() && !slices.ContainsFunc(list.All(), func(argument Node) bool { return argument.firstChild("NameColon").Exists() })
 }
 
-// FillsScalarAt says whether the parameter the call fills at the position is a scalar: text, a number, a date, a flag.
 func (n Node) FillsScalarAt(position int) bool {
 	parameters := n.Target().Parameters()
 
 	return position < len(parameters) && slices.Contains(scalars, parameters[position])
 }
 
-// ProjectionRoot is the name a member chain hangs off: `request` in `request.ChannelId` or `order.Customer.Name`;
-// no node for anything that is not a chain of member reads rooted at a name.
 func (n Node) ProjectionRoot() Node {
 	switch {
 	case !n.Is("SimpleMemberAccessExpression"):
@@ -53,8 +45,6 @@ func (n Node) ProjectionRoot() Node {
 	return n.At(0).ProjectionRoot()
 }
 
-// ReceiverName is the name the call is made on: `store` for `store.Persist(…)`; empty for a call made on nothing
-// named.
 func (n Node) ReceiverName() string {
 	callee := n.At(0)
 	if !callee.Is("SimpleMemberAccessExpression") {
@@ -67,8 +57,6 @@ func (n Node) ReceiverName() string {
 	return callee.At(0).ProjectionRoot().Name()
 }
 
-// ProjectionPath is the member path a projection reads off its root: `.Customer.Name` for `order.Customer.Name`;
-// empty for anything that is not a projection.
 func (n Node) ProjectionPath() string {
 	switch {
 	case !n.Is("SimpleMemberAccessExpression"):
@@ -80,13 +68,10 @@ func (n Node) ProjectionPath() string {
 	return n.At(0).ProjectionPath() + "." + n.At(1).Name()
 }
 
-// CalledName is the name of the member the call calls: `Persist` for `store.Persist(…)` and `Persist(…)` alike.
 func (n Node) CalledName() string {
 	return n.At(0).ReferencedName()
 }
 
-// ReferencedName is the name the reference ends in: `Persist` for `Persist` and for `store.Persist` alike; empty
-// for anything that is not a name or a member read.
 func (n Node) ReferencedName() string {
 	switch {
 	case n.Is("IdentifierName"):
@@ -98,9 +83,6 @@ func (n Node) ReferencedName() string {
 	return ""
 }
 
-// conversion is the conversion the expression is, when it is one: a cast to a scalar type, `X.Parse(…)` on a
-// scalar type, `Convert.ToX(…)`, or a value's `.ToString()`; empty when it is none, or when what it converts is a
-// constant: a literal written in another type is spelled, not held.
 func (n Node) conversion() string {
 	expression := n.WithoutParentheses()
 	converted := expression.converted()
@@ -125,8 +107,6 @@ func (n Node) conversion() string {
 	return ""
 }
 
-// converted is what the cast or call converts: the operand of a cast, the receiver of a `.ToString()` taking no
-// arguments, or the first argument of any other call; no node for anything else.
 func (n Node) converted() Node {
 	arguments := n.Arguments()
 	switch {
@@ -147,13 +127,10 @@ func (n Node) converted() Node {
 	return Node{}
 }
 
-// Parameters is the parameters the member, local function or lambda declares, in order.
 func (n Node) Parameters() []Node {
 	return n.parameters()
 }
 
-// ChainRoot is the name a chain of reads and calls hangs off: `workflow` in `workflow.Graph.Node(id)` or
-// `workflow.Graph.Nodes[id]`; no node for a chain that starts anywhere but a name.
 func (n Node) ChainRoot() Node {
 	switch {
 	case n.Is("IdentifierName"):
@@ -165,8 +142,6 @@ func (n Node) ChainRoot() Node {
 	return Node{}
 }
 
-// IsGuardThatOnlyThrows says whether the statement is an `if` with no `else` whose every statement throws: a
-// guard that refuses and nothing more.
 func (n Node) IsGuardThatOnlyThrows() bool {
 	if !n.Is("IfStatement") || n.firstChild("ElseClause").Exists() {
 		return false
@@ -183,8 +158,6 @@ func (n Node) IsGuardThatOnlyThrows() bool {
 	return len(thrown) > 0 && !slices.ContainsFunc(thrown, func(statement Node) bool { return !statement.Is("ThrowStatement") })
 }
 
-// LookupRootKeyedBy is the name the lookup is made on, when it is keyed solely by one of the keys: `workflow` for
-// `workflow.Graph.Node(nodeId)` and `workflow.Graph.Nodes[nodeId]`; no node for anything that is not such a lookup.
 func (n Node) LookupRootKeyedBy(keys []string) Node {
 	arguments := n.Arguments()
 	if len(arguments) != 1 || !arguments[0].Is("IdentifierName") || !slices.Contains(keys, arguments[0].Name()) {
@@ -200,8 +173,6 @@ func (n Node) LookupRootKeyedBy(keys []string) Node {
 	return Node{}
 }
 
-// IsResolverReturning says whether the body is the resolver of the local: the lookup kept in it, guards that only
-// throw, and the local returned. That is the one place a resolution and its refusal belong.
 func (n Node) IsResolverReturning(local string) bool {
 	statements := n.Children()
 	if len(statements) < 2 {
@@ -221,8 +192,6 @@ type StringConstant struct {
 	Name  string
 }
 
-// StringConstants is the string constants the type declares, `public const string Colon = ":"`, each value once,
-// with the first name that holds it.
 func (n Node) StringConstants() []StringConstant {
 	var constants []StringConstant
 	for _, field := range n.All() {
@@ -244,19 +213,14 @@ func (n Node) StringConstants() []StringConstant {
 	return constants
 }
 
-// MayFillAContract says whether the type may fill a contract: it names a base class or an interface, it is
-// `partial`, or one of its members implements or overrides one. Then it is a polymorphic component whose behaviour
-// is meant to act on other types.
 func (n Node) MayFillAContract() bool {
 	return n.HasModifier("partial") || slices.ContainsFunc(n.All(), func(child Node) bool {
 		return child.Is("BaseList") || (child.IsMember() && child.IsInherited())
 	})
 }
 
-// enumerable is the type every LINQ query over a collection resolves its call to.
 const enumerable = "global::System.Linq.Enumerable"
 
-// LoopsOver is every `foreach` in the code over a collection the name holds: `foreach (var line in order.Lines)`.
 func (n Node) LoopsOver(name string) []Node {
 	var loops []Node
 	for _, node := range n.Descendants() {
@@ -268,16 +232,12 @@ func (n Node) LoopsOver(name string) []Node {
 	return loops
 }
 
-// QueriesCollectionOf says whether the code queries a collection the name holds from outside: a LINQ call such as
-// `order.Lines.Sum(…)` on it.
 func (n Node) QueriesCollectionOf(name string) bool {
 	return slices.ContainsFunc(n.expressionParts(), func(call Node) bool {
 		return call.IsCall() && queries(call) && call.At(0).At(0).ChainRoot().Name() == name
 	})
 }
 
-// QueriedName is the name whose collection the query a lambda was handed reads: `rows` for the `row => ...` of
-// `rows.Where(row => ...)`, and nothing for a lambda that is no query's.
 func (n Node) QueriedName() string {
 	argument := n.Parent()
 	if !argument.Is("Argument") {
@@ -292,12 +252,10 @@ func (n Node) QueriedName() string {
 	return call.At(0).At(0).ChainRoot().Name()
 }
 
-// queries says whether the call is a LINQ query over a collection something holds.
 func queries(call Node) bool {
 	return call.Target().Type() == enumerable && call.At(0).Is("SimpleMemberAccessExpression")
 }
 
-// LambdaNames are the names a lambda binds its own parameters to.
 func (n Node) LambdaNames() []string {
 	var names []string
 	for _, part := range append(n.All(), n.firstChild("ParameterList").All()...) {
@@ -309,16 +267,12 @@ func (n Node) LambdaNames() []string {
 	return names
 }
 
-// WritesMemberOf says whether the code writes one of the name's members: `order.Status = …`, `order.Total += …`,
-// `order.Strikes++`.
 func (n Node) WritesMemberOf(name string) bool {
 	return slices.ContainsFunc(n.expressionParts(), func(write Node) bool {
 		return write.IsWrite() && write.At(0).Is("SimpleMemberAccessExpression") && write.At(0).ChainRoot().Name() == name
 	})
 }
 
-// MemberReadsOn are the reads of a member of each of the names, as the nodes that read them: `order.Lines` is one
-// read of `order`.
 func (n Node) MemberReadsOn(names []string) map[string][]Node {
 	reads := map[string][]Node{}
 	for _, read := range n.expressionParts() {
@@ -330,7 +284,6 @@ func (n Node) MemberReadsOn(names []string) map[string][]Node {
 	return reads
 }
 
-// MemberReachesOn is how often the code reads a member of each of the names: `order.Lines` counts once for `order`.
 func (n Node) MemberReachesOn(names []string) map[string]int {
 	reaches := map[string]int{}
 	for name, reads := range n.MemberReadsOn(names) {
@@ -340,7 +293,6 @@ func (n Node) MemberReachesOn(names []string) map[string]int {
 	return reaches
 }
 
-// expressionParts is every expression in the code, however deep: its statements' expressions and theirs.
 func (n Node) expressionParts() []Node {
 	var parts []Node
 	for _, expression := range n.OutermostExpressions() {

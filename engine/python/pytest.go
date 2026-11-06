@@ -9,11 +9,8 @@ import (
 	"sync"
 )
 
-// pytestDefault is the python_files pytest collects when a project names none.
 var pytestDefault = []string{"test_*.py", "*_test.py"}
 
-// pytestSettings are the files pytest reads its settings from, each with the section that holds them, in the order
-// pytest looks for them in one folder.
 var pytestSettings = []struct{ file, section string }{
 	{"pytest.ini", "pytest"},
 	{"pyproject.toml", "tool.pytest.ini_options"},
@@ -21,7 +18,6 @@ var pytestSettings = []struct{ file, section string }{
 	{"setup.cfg", "tool:pytest"},
 }
 
-// pythonFiles reads a python_files setting's value: the quoted names of a TOML list, else the words of an INI value.
 var (
 	pythonFilesKey = regexp.MustCompile(`(?m)^\s*python_files\s*=\s*(.*)$`)
 	quoted         = regexp.MustCompile(`["']([^"']+)["']`)
@@ -29,8 +25,6 @@ var (
 	pytestFiles    sync.Map
 )
 
-// pytestFilesFor is the python_files patterns pytest collects in the project the file belongs to: those the nearest
-// settings file above it names, else pytest's own.
 func pytestFilesFor(path string) []string {
 	if path == "" {
 		return pytestDefault
@@ -54,8 +48,6 @@ func pytestFilesFor(path string) []string {
 	return patterns
 }
 
-// pytestFilesIn is the python_files a settings file in the folder names, and whether one holds pytest's settings
-// at all: the first that does is the project's, as pytest takes it.
 func pytestFilesIn(folder string) ([]string, bool) {
 	for _, settings := range pytestSettings {
 		text, err := os.ReadFile(filepath.Join(folder, settings.file))
@@ -77,7 +69,6 @@ func pytestFilesIn(folder string) ([]string, bool) {
 	return nil, false
 }
 
-// sectionOf is the text of the section the header names, up to the next header, and whether the text holds it.
 func sectionOf(text, name string) (string, bool) {
 	headers := sectionHeader.FindAllStringSubmatchIndex(text, -1)
 	for i, header := range headers {
@@ -95,7 +86,6 @@ func sectionOf(text, name string) (string, bool) {
 	return "", false
 }
 
-// patternsOf is the patterns a python_files value lists: quoted, as TOML writes a list, else separated by spaces.
 func patternsOf(value string) []string {
 	if names := quoted.FindAllStringSubmatch(value, -1); len(names) > 0 {
 		patterns := make([]string, len(names))
@@ -109,15 +99,8 @@ func patternsOf(value string) []string {
 	return strings.Fields(value)
 }
 
-// raisesAssertions are the context managers that assert a block raises, by the name they are called under: pytest's
-// own `raises`, however it was imported, and unittest's on the test case.
 var raisesAssertions = []string{"raises", "assertRaises", "assertRaisesRegex"}
 
-// IsStimulusOfAnExpectedRaise says whether the raise is the subject of an assertion that it raises: it stands inside
-// a `with pytest.raises(...)` or `assertRaises(...)` block, within its own def. Such a raise reports nothing — the
-// only thing that catches it is the matcher written a line above, which matches the very type the raise names, and
-// no caller exists to tell it from any other. The failure a test provokes to watch what happens next is not a
-// failure the code is naming for someone.
 func (n Node) IsStimulusOfAnExpectedRaise() bool {
 	if n.Kind() != "Raise" {
 		return false
@@ -132,7 +115,6 @@ func (n Node) IsStimulusOfAnExpectedRaise() bool {
 	return false
 }
 
-// assertsARaise says whether the with block is entered through one of the raises assertions.
 func (n Node) assertsARaise() bool {
 	for _, item := range n.ChildrenIn("items") {
 		for _, entered := range item.Children() {

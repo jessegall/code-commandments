@@ -13,7 +13,6 @@ func init() {
 	sins.Register(catalog.CSharp, RedundantElse{})
 }
 
-// Definition is what the sin states about itself.
 func (RedundantElse) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "redundant-csharp-else",

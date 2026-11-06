@@ -7,8 +7,6 @@ import (
 	_ "github.com/jessegall/code-commandments/registry"
 )
 
-// claimingSkill names four rules under a heading about what fires, and one in prose. Only two of the four are
-// declared: raw-sql by the project's own rule, and python-bloated-docblock by a shipped one.
 const claimingSkill = "---\n" +
 	"name: No raw SQL\n" +
 	"description: Reach for this before you write a query.\n" +
@@ -40,7 +38,6 @@ func TestASkillIsToldWhichRulesItNamesAreDeclaredNowhere(t *testing.T) {
 		}
 	}
 
-	// The two that ARE declared, and the prose that is not a rule name at all.
 	for _, declared := range []string{"raw-sql`", "python-bloated-docblock", "fix-at-the-source", "lists.json", "like-this"} {
 		if strings.Contains(warnings[0], declared) {
 			t.Errorf("%q names %s, which is not an undeclared rule", warnings[0], declared)

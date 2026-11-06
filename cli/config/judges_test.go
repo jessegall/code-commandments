@@ -7,8 +7,6 @@ import (
 	"testing"
 )
 
-// TestARuleJudgesTheFolderItsConfigNames holds the whole of what a project writes to let one rule into a folder
-// it excludes: a judges call under that rule, which answers for the rule alone and for the scan as a whole.
 func TestARuleJudgesTheFolderItsConfigNames(t *testing.T) {
 	config := configWith(t, `{
         "paths": ["src"],
@@ -30,9 +28,6 @@ func TestARuleJudgesTheFolderItsConfigNames(t *testing.T) {
 	}
 }
 
-// TestAJudgesCallIsNeverSentToTheDetector holds why the call is the config layer's own. No shipped detector has
-// such a method and a project's own rule is a JSON file with no methods at all, so a whitelist applied by
-// reflection would refuse a config that is right: the rule it names is not in the shipped list either.
 func TestAJudgesCallIsNeverSentToTheDetector(t *testing.T) {
 	config := configWith(t, `{
         "paths": ["src"],
@@ -45,8 +40,6 @@ func TestAJudgesCallIsNeverSentToTheDetector(t *testing.T) {
 	}
 }
 
-// TestTheOtherConfigureCallsStillReachTheirDetector holds the other half of that: a step naming a real method is
-// applied as before, and a judges call beside it changes nothing about that.
 func TestTheOtherConfigureCallsStillReachTheirDetector(t *testing.T) {
 	config := configWith(t, `{
         "paths": ["src"],
@@ -68,8 +61,6 @@ func TestTheOtherConfigureCallsStillReachTheirDetector(t *testing.T) {
 	}
 }
 
-// TestAFolderIsNamedWhicheverWayTheConfigWritesIt holds the shapes a project may write, since a reader that only
-// took one of them would read a config that looks right as naming nothing.
 func TestAFolderIsNamedWhicheverWayTheConfigWritesIt(t *testing.T) {
 	for name, given := range map[string]string{
 		"one folder":            `[{"judges": ["tests"]}]`,
@@ -95,7 +86,6 @@ func TestAFolderIsNamedWhicheverWayTheConfigWritesIt(t *testing.T) {
 	}
 }
 
-// configWith is the config of a project whose config.json is the text.
 func configWith(t *testing.T, text string) Config {
 	t.Helper()
 	root := t.TempDir()

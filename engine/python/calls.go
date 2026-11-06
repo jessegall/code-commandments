@@ -6,8 +6,7 @@ import (
 	"sync"
 )
 
-// callGraph is which evaluated calls reach each def, and the def each one reaches; and which calls reach a def only
-// on an object of one of its subclasses, through the class a class attribute holds there.
+// callGraph is which evaluated calls reach each def, and the def each one reaches; and which calls reach a def only on an object of one of its subclasses, through the class a class attribute holds there.
 type callGraph struct {
 	once         sync.Once
 	callers      map[Node][]Node
@@ -16,7 +15,6 @@ type callGraph struct {
 	held         map[Node][]Node
 }
 
-// graph is the program's call graph, built once over every call the code evaluates.
 func (p *Program) graph() *callGraph {
 	p.calls.once.Do(func() {
 		p.calls.callers, p.calls.targets, p.calls.throughClass, p.calls.held = map[Node][]Node{}, map[Node]Node{}, map[Node]bool{}, map[Node][]Node{}
@@ -27,8 +25,6 @@ func (p *Program) graph() *callGraph {
 					continue
 				}
 				target, ok := p.Callee(call)
-				// A call is held against every target it could reach, which is every target but the one it
-				// resolves to: that one is the call's own, recorded below.
 				for _, reached := range p.heldTargets(call, heirs) {
 					if ok && reached == target {
 						continue
@@ -51,20 +47,14 @@ func (p *Program) graph() *callGraph {
 	return &p.calls
 }
 
-// CallersOf is every call that reaches the def.
 func (p *Program) CallersOf(def Node) []Node {
 	return p.graph().callers[def]
 }
 
-// HeldCallersOf is every call that reaches the method through the class a class attribute holds on an object of a
-// subclass, `self.resource.unfilled(data)` where a subclass sets `resource = Trigger`.
 func (p *Program) HeldCallersOf(method Node) []Node {
 	return p.graph().held[method]
 }
 
-// heldTargets is the methods a `self.<attribute>.<method>(…)` call reaches through the class the attribute holds: on
-// an object of the calling def's own class, and of each subclass that inherits the calling def, the method that class
-// holds declares or inherits.
 func (p *Program) heldTargets(call Node, heirs map[Node][]Node) []Node {
 	callee := call.Child("func")
 	owner := callee.Child("value")
@@ -89,7 +79,6 @@ func (p *Program) heldTargets(call Node, heirs map[Node][]Node) []Node {
 	return reached
 }
 
-// heirs is every class's subclasses, theirs too, in the program.
 func (p *Program) heirs() map[Node][]Node {
 	direct := map[Node][]Node{}
 	for _, module := range p.modules {
@@ -121,20 +110,17 @@ func (p *Program) heirs() map[Node][]Node {
 	return every
 }
 
-// TargetOf is the def an evaluated call reaches; none when it cannot be resolved.
 func (p *Program) TargetOf(call Node) (Node, bool) {
 	target, ok := p.graph().targets[call]
 
 	return target, ok
 }
 
-// DeclarationOf is where the def is declared, `path:line`: the name its calls share across processes.
 func DeclarationOf(def Node) string {
 	return fmt.Sprintf("%s:%d", def.File(), def.Line())
 }
 
-// definitions is every def of the program by where it is declared, read once: the way back from the name a call
-// graph is keyed by to the def itself.
+// definitions is every def of the program by where it is declared, read once: the way back from the name a call graph is keyed by to the def itself.
 type definitions struct {
 	once  sync.Once
 	byKey map[string]Node
@@ -155,7 +141,6 @@ func (p *Program) definitions() map[string]Node {
 	return p.defined.byKey
 }
 
-// CallersOfDeclaration is every call that reaches the def the declaration names, `path:line`.
 func (p *Program) CallersOfDeclaration(declaration string) []Node {
 	def, found := p.definitions()[declaration]
 	if !found {
@@ -165,8 +150,6 @@ func (p *Program) CallersOfDeclaration(declaration string) []Node {
 	return p.CallersOf(def)
 }
 
-// IsOverridden says whether a class of the program that names the method's class as a base declares a method of
-// the same name, overriding it.
 func (p *Program) IsOverridden(method Node) bool {
 	class := method.Parent()
 	if class.Kind() != "ClassDef" {
@@ -191,8 +174,6 @@ func (p *Program) IsOverridden(method Node) bool {
 	return false
 }
 
-// ExtendsOutside says whether the method's class names a base the program does not declare: a contract from
-// outside, which any of its methods may be keeping.
 func (p *Program) ExtendsOutside(method Node) bool {
 	class := method.Parent()
 	if class.Kind() != "ClassDef" {
@@ -208,10 +189,6 @@ func (p *Program) ExtendsOutside(method Node) bool {
 	return false
 }
 
-// ArgumentsAt is what each parameter of the call's target receives there, its name to the argument handed to it,
-// with an instance call's `self` (or a classmethod's `cls`) already bound, and the first extra positional in a
-// `*rest` parameter. None when the call does not resolve, or unpacks a `*` or `**` argument whose parts no
-// reading can place.
 func (p *Program) ArgumentsAt(call Node) (map[string]Node, bool) {
 	target, ok := p.TargetOf(call)
 	if !ok {
@@ -221,8 +198,6 @@ func (p *Program) ArgumentsAt(call Node) (map[string]Node, bool) {
 	return p.ArgumentsFor(call, target)
 }
 
-// ArgumentsFor is what each parameter of the target receives at the call, as ArgumentsAt binds them: for a call that
-// reaches a def other than the one it names, an override or the method a held class declares.
 func (p *Program) ArgumentsFor(call, target Node) (map[string]Node, bool) {
 	if slices.ContainsFunc(call.Arguments(), func(argument Node) bool { return argument.Kind() == "Starred" }) {
 		return nil, false
@@ -255,8 +230,6 @@ func (p *Program) ArgumentsFor(call, target Node) (map[string]Node, bool) {
 	return bound, true
 }
 
-// bindsFirstParameter says whether the call arrives with its target's first parameter already bound: an instance
-// method called on an instance, or a classmethod called on anything.
 func (p *Program) bindsFirstParameter(call, target Node) bool {
 	if !target.IsMethod() || target.IsStatic() || call.Callee().Kind() != "Attribute" {
 		return false
@@ -265,8 +238,6 @@ func (p *Program) bindsFirstParameter(call, target Node) bool {
 	return target.IsClassMethod() || !p.graph().throughClass[call]
 }
 
-// PassesLiteralKey says whether the call hands a string literal to a parameter its target uses as a key into
-// another, the "title" in `text_of(row, "title")`, and so reads a dict by a string key one call deeper.
 func (p *Program) PassesLiteralKey(call Node) bool {
 	target, ok := p.TargetOf(call)
 	if !ok {
@@ -285,8 +256,6 @@ func (p *Program) PassesLiteralKey(call Node) bool {
 	})
 }
 
-// ReadsForwardedKeywords says whether the key read's mapping is a parameter every call that can reach its def, through
-// the methods it overrides too, fills with the caller's own **kwargs: a generic funnel's keyword arguments handed on unchanged, a mapping no record declares.
 func (p *Program) ReadsForwardedKeywords(read Node) bool {
 	base, ok := read.StringKeyBase()
 	if !ok || base.Kind() != "Name" {
@@ -304,8 +273,6 @@ func (p *Program) ReadsForwardedKeywords(read Node) bool {
 	})
 }
 
-// KeyParameters is the def's parameters it reads another by as a key: `key` in `row[key]` or `row.get(key)`, or a
-// parameter a loop walks whose items are keys so.
 func (n Node) KeyParameters() []string {
 	names := parameterNames(n.Parameters())
 	loops := map[string]string{}
@@ -339,7 +306,6 @@ func (n Node) KeyParameters() []string {
 	return keys
 }
 
-// KeyReadOf is the key the expression reads one of the names by: `k` in `names[k]` or `names.get(k)`.
 func (n Node) KeyReadOf(names []string) (Node, bool) {
 	if n.Kind() == "Subscript" && slices.Contains(names, n.Child("value").DottedName()) {
 		return n.Child("slice"), true
@@ -352,7 +318,6 @@ func (n Node) KeyReadOf(names []string) (Node, bool) {
 	return Node{}, false
 }
 
-// parameterNames is the parameters' names, in order.
 func parameterNames(parameters []Node) []string {
 	names := make([]string, len(parameters))
 	for at, parameter := range parameters {

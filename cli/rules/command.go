@@ -1,5 +1,4 @@
-// Package rules is `rule`: the loop of writing a rule of the project's own — see the tree it reads, try it on a
-// path, prove it on the samples that mark it, and print the schema an editor checks it by.
+// Package rules is `rule`: the loop of writing a rule of the project's own — see the tree it reads, try it on a path, prove it on the samples that mark it, and print the schema an editor checks it by.
 package rules
 
 import (
@@ -26,12 +25,10 @@ import (
 // Command is `rule`.
 type Command struct{}
 
-// Names are the verbs it answers to.
 func (Command) Names() []string {
 	return []string{"rule"}
 }
 
-// Help documents it.
 func (Command) Help() help.Help {
 	return help.Of("Work on a rule of your own: see the tree it reads, try it on a path, prove it on the samples that mark it, and print the schema an editor checks it by.").
 		Form("rule explain <file> [--line=N]", "print the tree a rule reads in the file: every node's line, kind, neutral kinds, field, name and what it resolves to").
@@ -46,7 +43,6 @@ func (Command) Help() help.Help {
 		Note("A sample marks the code a rule must flag with a comment above it — `// @sin NoRawSqlDetector`, `# @sin …` in Python, `<!-- @sin … -->` in a Vue template — the code it must leave alone with `@righteous NoRawSqlDetector`, and its fix with `@fixed NoRawSqlDetector`. `rule prove` reads `.commandments/custom/samples/` unless given a path, and fails when a rule misses a mark, flags anything unmarked, has no `@sin` mark at all, or cannot be read, and when a mark names no rule of the project.")
 }
 
-// Run answers the form the arguments name.
 func (c Command) Run(in *cli.Input, console cli.Console) (int, error) {
 	root, err := os.Getwd()
 	if err != nil {
@@ -71,7 +67,6 @@ func (c Command) Run(in *cli.Input, console cli.Console) (int, error) {
 	}
 }
 
-// explain prints the tree of the file, or of the nodes starting on one line of it.
 func (c Command) explain(in *cli.Input, console cli.Console) (int, error) {
 	path, named := in.Argument(1)
 	if !named {
@@ -112,7 +107,6 @@ func (c Command) explain(in *cli.Input, console cli.Console) (int, error) {
 	return 0, nil
 }
 
-// try runs one rule over a path, printing each match and how many there are.
 func (c Command) try(in *cli.Input, root string, console cli.Console) (int, error) {
 	named, given := in.Argument(1)
 	paths := in.Arguments()[min(2, len(in.Arguments())):]
@@ -134,8 +128,6 @@ func (c Command) try(in *cli.Input, root string, console cli.Console) (int, erro
 
 	tried = tried.WithLayers(project.Layers(tried.Engine()))
 
-	// Every path in one scan, so a rule that reads across files is as right over the files of a change as it is
-	// over the whole folder they sit in.
 	codebase, err := scan.Walk(paths, source.Under(root, project.Excluded)).Only(source.OfEngine(tried.Engine())...).Load()
 	if err != nil {
 		return 0, err
@@ -151,8 +143,6 @@ func (c Command) try(in *cli.Input, root string, console cli.Console) (int, erro
 	return 0, nil
 }
 
-// prove checks every rule of the project against the markers of its samples: each flags exactly the code marked
-// @sin for it, and has such a mark; and every mark names a rule of the project.
 func (c Command) prove(in *cli.Input, root string, console cli.Console) (int, error) {
 	path := workspace.SamplesDir(root)
 	if given, named := in.Argument(1); named {
@@ -240,18 +230,6 @@ func (c Command) prove(in *cli.Input, root string, console cli.Console) (int, er
 	return 0, nil
 }
 
-// sayWhereAMarkGoes explains the one shape that reads as two unrelated faults and is one: a mark written above a
-// declaration while the rule flags something INSIDE it. Both halves are then true at once — the mark is missed
-// where it stands, and the finding is unmarked where it is — and a reader looking at the two lines has no reason
-// to connect them.
-//
-// It is said when a rule both missed a mark and flagged something unmarked in the same file, because that is when
-// the mistake is possible at all, and it is said as the thing to check rather than as a verdict: the two can also
-// be genuinely unrelated, and nothing here can tell a sample's author what they meant.
-//
-// The confusion is honestly earned. PHP marks a declaration with an ATTRIBUTE, `#[Sinful(X::class)]`, which
-// covers anything the detector flags inside it; Python, C# and Vue mark a line with a comment, which covers the
-// line below it. Anyone who learnt the first writes the second the same way.
 func sayWhereAMarkGoes(result fixture.Result, console cli.Console) {
 	if len(result.Missed) == 0 || len(result.Unexpected) == 0 {
 		return
@@ -270,20 +248,16 @@ func sayWhereAMarkGoes(result fixture.Result, console cli.Console) {
 	}
 }
 
-// fileOf is the file a place names, which a fixture writes as `path:line`.
 func fileOf(place string) string {
 	return place[:max(strings.LastIndex(place, ":"), 0)]
 }
 
-// warnUntwinned says when no sample marks a look-alike the rule must leave alone: a rule proven only on what it
-// flags has not been shown to leave anything be.
 func warnUntwinned(markers []fixture.Marker, rule detectors.Detector, console cli.Console) {
 	if len(fixture.Marking(markers, fixture.Righteous, rule)) == 0 {
 		console.Write("    \033[33m⚠\033[0m no `@righteous` look-alike shows it leaves anything alone\n")
 	}
 }
 
-// ruleNamed is the rule a name means: a file when it names one, else a rule of the project's own.
 func ruleNamed(own custom.Project, named string) (rule.Rule, error) {
 	if strings.HasSuffix(named, ".json") {
 		return own.Read(named)
@@ -311,8 +285,6 @@ func ruleNamed(own custom.Project, named string) (rule.Rule, error) {
 	return rule.Rule{}, fmt.Errorf("no rule %q in .commandments/custom/ — the project has %s%s", named, has, unreadable)
 }
 
-// Tree is the node and everything below it, a line each, indented by depth; with a line, only the nodes starting
-// on it, each with what it holds.
 func Tree(root engine.Match, line int) string {
 	var tree strings.Builder
 
@@ -333,8 +305,6 @@ func Tree(root engine.Match, line int) string {
 	return tree.String()
 }
 
-// Describe is one node as explain prints it: its line, then, indented, its kind, the neutral kinds it answers,
-// the field it fills, its name, its text and what it resolves to.
 func Describe(node engine.Match, depth int) string {
 	parts := []string{node.Kind()}
 
@@ -368,7 +338,6 @@ func Describe(node engine.Match, depth int) string {
 	return fmt.Sprintf("%5d  %s%s\n", node.Line(), strings.Repeat("  ", depth), strings.Join(parts, "  "))
 }
 
-// sourceLine is the line the match starts on, as its file spells it, trimmed.
 func sourceLine(match engine.Match) string {
 	source, err := match.Source().Source()
 	if err != nil {

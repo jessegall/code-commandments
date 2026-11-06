@@ -13,16 +13,13 @@ import (
 	backendsins "github.com/jessegall/code-commandments/sins/backend"
 )
 
-// CoupledFieldsDetector finds a class holding fields that belong together as a value of their own: assembled as a
-// group again and again, reached through a peer field, or mirrored beside the object that already holds them.
+// CoupledFieldsDetector finds a class holding fields that belong together as a value of their own: assembled as a group again and again, reached through a peer field, or mirrored beside the object that already holds them.
 type CoupledFieldsDetector struct{}
 
 func init() { detectors.Register(catalog.PHP, CoupledFieldsDetector{}) }
 
-// Sin is the sin the detector finds.
 func (CoupledFieldsDetector) Sin() sins.Sin { return backendsins.CoupledFields{} }
 
-// Find is every class of two or more fields some of which are coupled.
 func (CoupledFieldsDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return php.In(codebase).
 		WhereKind("Stmt_Class").
@@ -46,8 +43,6 @@ func isCoupled(codebase *engine.Codebase, class php.Node) bool {
 	return coupledValues(class, values, len(fields)) || crossObjectClump(codebase, class) || redundantMirror(codebase, class, fields)
 }
 
-// coupledValues says whether two or more value fields are assembled together in two places, or guarded for
-// absence together in one.
 func coupledValues(class php.Node, values map[string]bool, fieldCount int) bool {
 	if len(values) < 2 {
 		return false
@@ -84,8 +79,6 @@ func coupledValues(class php.Node, values map[string]bool, fieldCount int) bool 
 	return false
 }
 
-// crossObjectClump says whether two or more times a field is used beside a declared class's field of the same type
-// reached through another field.
 func crossObjectClump(codebase *engine.Codebase, class php.Node) bool {
 	name := php.EnclosingClassName(class.Match)
 	if name == "" {
@@ -115,8 +108,6 @@ func crossObjectClump(codebase *engine.Codebase, class php.Node) bool {
 	return false
 }
 
-// redundantMirror says whether a field copies a public value field of an object another field already holds:
-// order and orderTotal beside order->total.
 func redundantMirror(codebase *engine.Codebase, class php.Node, fields []php.Field) bool {
 	program := php.ProgramOf(codebase)
 	for _, object := range fields {
@@ -162,5 +153,4 @@ func upperFirst(name string) string {
 	return string(name[0]-'a'+'A') + name[1:]
 }
 
-// CrossFile says the PHP tool finds it reaching beyond the file it judges, so a per-file check must not ask it.
 func (CoupledFieldsDetector) CrossFile() {}

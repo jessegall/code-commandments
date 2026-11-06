@@ -13,13 +13,9 @@ func init() {
 	detectors.Register(catalog.TypeScript, NearDuplicateFunctionDetector{})
 }
 
-// nearDuplicateWeight is how much code a body must hold before a near copy of it is worth one shared function.
 const nearDuplicateWeight = 20
 
-// NearDuplicateFunctionDetector finds function bodies that are the same code with different names and data:
-// one function parameterised by what differs. A constructor, a body that is one return or one expression,
-// a table of literal answers and a script of literals fed to one callee are left alone; their likeness is
-// their form, not a copy.
+// NearDuplicateFunctionDetector finds function bodies that are the same code with different names and data: one function parameterised by what differs.
 type NearDuplicateFunctionDetector struct{}
 
 func (NearDuplicateFunctionDetector) Sin() sins.Sin {
@@ -44,13 +40,10 @@ func bodyShape(function engine.Match) string {
 	return typescript.Of(function).BodyShape()
 }
 
-// GroupKey groups a finding with the functions whose body has its shape.
 func (NearDuplicateFunctionDetector) GroupKey(match engine.Match) (string, bool) {
 	shape := bodyShape(match)
 
 	return shape, shape != ""
 }
 
-// CrossFile says the rule reads more than the file it reports in, which the fixture measures by asking it
-// of one file and of the whole tree: a scoped run reads the whole scan while it is enabled.
 func (NearDuplicateFunctionDetector) CrossFile() {}

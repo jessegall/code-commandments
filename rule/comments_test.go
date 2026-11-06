@@ -9,13 +9,6 @@ import (
 	"github.com/jessegall/code-commandments/rule"
 )
 
-// A comment is no node of the tree — every bridge writes a file's comments beside its nodes — so a rule could
-// select nothing to report on one, while three shipped comment rules per language did it through machinery that
-// lived in one language's own package. These hold the selector in three languages, and hold it to reporting a
-// comment where a reader looks for it: on the code it is about.
-
-// TestARuleSelectsComments holds the selector and the step over what a comment says, in the language whose
-// machinery it was lifted from and in two that never had any.
 func TestARuleSelectsComments(t *testing.T) {
 	php := phpCodebase(t, "Till.php", `<?php
 
@@ -35,8 +28,6 @@ final class Till
 `)
 
 	for query, want := range map[string]string{
-		// The comment is reported on the line of the code it is about, as a finding about a comment must point at
-		// the thing the comment is wrong about.
 		`{"select": "comment", "where": [{"commentLike": "*note about the class*"}]}`: "[6]",
 		`{"select": "comment", "where": [{"commentLike": "*TODO*"}]}`:                 "[11]",
 		`{"select": "comment"}`: "[6 11]",
@@ -47,8 +38,6 @@ final class Till
 	}
 }
 
-// TestACommentIsSelectedInEveryLanguage holds it where the comment markers and the trees are another language's,
-// since what a rule selects is the comment the bridge wrote and not a token it reads itself.
 func TestACommentIsSelectedInEveryLanguage(t *testing.T) {
 	python := pythontest.FromSource(t, map[string]string{
 		"shop/__init__.py": "",
@@ -65,10 +54,6 @@ class Till:
 `,
 	})
 
-	// The module's own note documents the class below it, and the docstring documents the class it sits INSIDE, so
-	// both are reported on the class's line: a docstring is attached by its bridge, which is the only way to know
-	// what a comment written inside its own subject is about. The docstring is one comment and not two things: a
-	// rule selecting comments meets it once, though the string literal is still in the tree.
 	for query, want := range map[string]string{
 		`{"select": "comment", "where": [{"commentLike": "*note about the module*"}]}`: "[2]",
 		`{"select": "comment", "where": [{"commentLike": "*TODO*"}]}`:                  "[7]",
@@ -105,12 +90,6 @@ public sealed class Till
 	}
 }
 
-// The three readings of prose the comment rules ship on are calibrated judgements with their own tests, and a
-// project could ask for none of them: a rule could only match words it wrote itself, which is the line this work
-// draws. These hold each judgement against the look-alike prose's own tests are built around.
-
-// TestARuleAsksWhatKindOfCommentItIs holds the judgements in PHP, and holds each to leaving alone the comment that
-// merely reads like it: a condition stated as a condition is no strawman, and a purpose is no history.
 func TestARuleAsksWhatKindOfCommentItIs(t *testing.T) {
 	codebase := phpCodebase(t, "Till.php", `<?php
 
@@ -136,9 +115,8 @@ final class Till
 `)
 
 	for query, want := range map[string]string{
-		`{"select": "comment", "where": [{"commentIs": "history"}]}`:  "[8]",
-		`{"select": "comment", "where": [{"commentIs": "strawman"}]}`: "[11]",
-		// The third comment states why the code does what it does, which is neither.
+		`{"select": "comment", "where": [{"commentIs": "history"}]}`:                             "[8]",
+		`{"select": "comment", "where": [{"commentIs": "strawman"}]}`:                            "[11]",
 		`{"select": "comment", "reject": [{"commentIs": "history"}, {"commentIs": "strawman"}]}`: "[15]",
 	} {
 		if got := found(t, "backend", query, codebase); got != want {
@@ -147,8 +125,6 @@ final class Till
 	}
 }
 
-// TestARuleAsksWhetherACommentRestatesTheCode holds the judgement that needs a language's own vocabulary, in two
-// languages: a comment saying only what the line spells, against one saying something the line does not.
 func TestARuleAsksWhetherACommentRestatesTheCode(t *testing.T) {
 	python := pythontest.FromSource(t, map[string]string{
 		"shop/__init__.py": "",
@@ -175,8 +151,6 @@ func TestARuleAsksWhetherACommentRestatesTheCode(t *testing.T) {
 	}
 }
 
-// TestAJudgementNobodyCalibratedSaysWhich holds the closed set, which is the whole point: a rule asks for a
-// reading that was measured, never for prose matching words it writes itself.
 func TestAJudgementNobodyCalibratedSaysWhich(t *testing.T) {
 	written := `{"engine": "backend", "sin": {"name": "x", "skill": "php/absence"}, "find": {"select": "comment", "where": [{"commentIs": "rambling"}]}}`
 
@@ -185,9 +159,6 @@ func TestAJudgementNobodyCalibratedSaysWhich(t *testing.T) {
 	}
 }
 
-// TestARuleAsksWhetherADocCommentNamesCodeThatIsGone holds the reference check with both its exemptions, which are
-// what tell it from a broken-link scanner: a reference the compiler could never have resolved, and one whose owner
-// is declared outside the scan, are not this project's to answer for.
 func TestARuleAsksWhetherADocCommentNamesCodeThatIsGone(t *testing.T) {
 	project := csharptest.FromSource(t, map[string]string{"Shop/Till.cs": `namespace Shop;
 
@@ -202,8 +173,6 @@ public sealed class Till
 public sealed class Slip { }
 `})
 
-	// The reference to Till.Vanished names a member of a class this project declares, and the class has no such
-	// member: that is code that is gone. The reference to Slip resolves, so it is nothing of the kind.
 	for query, want := range map[string]string{
 		`{"select": "comment", "where": [{"docReference": {"resolves": false}}]}`: "[7]",
 		`{"select": "comment", "where": [{"docReference": {"resolves": true}}]}`:  "[4]",
@@ -214,8 +183,6 @@ public sealed class Slip { }
 	}
 }
 
-// TestADocReferenceAskingNothingSaysSo holds the one shape the check takes, since a rule file is written by hand
-// and a question that asks nothing would quietly match everything.
 func TestADocReferenceAskingNothingSaysSo(t *testing.T) {
 	written := `{"engine": "csharp", "sin": {"name": "x", "skill": "php/absence"}, "find": {"select": "comment", "where": [{"docReference": {}}]}}`
 

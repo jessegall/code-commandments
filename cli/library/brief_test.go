@@ -7,10 +7,6 @@ import (
 	"github.com/jessegall/code-commandments/cli/config"
 )
 
-// TestTheInjectedBriefNamesNoDisciplineButWhereToFindThem holds the block written into a project's instruction
-// files to a pointer rather than a catalogue: it carries the one rule every discipline defers to and how a sin is
-// found, names the map skill for the rest, and lists no discipline of its own — the list is one load away, and an
-// instruction file long enough to be skimmed teaches nothing. The map skill still carries them all.
 func TestTheInjectedBriefNamesNoDisciplineButWhereToFindThem(t *testing.T) {
 	project := t.TempDir()
 	brief := Brief(project, config.Config{})

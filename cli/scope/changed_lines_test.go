@@ -7,8 +7,6 @@ import (
 	"github.com/jessegall/code-commandments/cli/workspace"
 )
 
-// olderAndNewer is a file whose first function was committed and whose second was added afterwards, so a diff
-// against the commit names only the lines of the second.
 const olderAndNewer = `<?php
 
 class Refunds
@@ -25,8 +23,6 @@ class Refunds
 }
 `
 
-// edited is a repository holding that file with only its first function committed, and the second added on top.
-// It answers the question the change is about: which lines did this working tree touch?
 func edited(t *testing.T) (root, file string) {
 	t.Helper()
 	root, _ = filepath.EvalSymlinks(t.TempDir())
@@ -49,9 +45,6 @@ class Refunds
 	return root, filepath.Join(root, "src", "Refunds.php")
 }
 
-// TestChangesCoversTheLinesItChangedAndNotTheRest is the whole of what --changes now means: a finding on a line
-// the working tree touched is reported, and one on a line it did not is not. A sin nobody here wrote is nobody
-// here's to answer for, and the moment to raise it is when somebody opens that line.
 func TestChangesCoversTheLinesItChangedAndNotTheRest(t *testing.T) {
 	root, file := edited(t)
 
@@ -71,8 +64,6 @@ func TestChangesCoversTheLinesItChangedAndNotTheRest(t *testing.T) {
 	}
 }
 
-// TestChangedFilesCoversTheWholeOfEachFileItNames holds the flag that keeps what --changes used to do, so that
-// nothing is lost: a run that wants a changed file's older sins asks for the file.
 func TestChangedFilesCoversTheWholeOfEachFileItNames(t *testing.T) {
 	root, file := edited(t)
 
@@ -88,8 +79,6 @@ func TestChangedFilesCoversTheWholeOfEachFileItNames(t *testing.T) {
 	}
 }
 
-// TestEveryOtherScopeStillCoversWholeFiles is the promise that nothing else moved. A scope about files answers
-// about every line of them, so a path, a branch and an unscoped run read exactly as they did.
 func TestEveryOtherScopeStillCoversWholeFiles(t *testing.T) {
 	root, file := edited(t)
 	space := workspace.At(root, "s")
@@ -110,8 +99,6 @@ func TestEveryOtherScopeStillCoversWholeFiles(t *testing.T) {
 	}
 }
 
-// TestAFileWithNoHistoryIsCoveredWhole holds the case a diff cannot answer: a file git has never seen is all
-// new, so every line of it is the change.
 func TestAFileWithNoHistoryIsCoveredWhole(t *testing.T) {
 	root, _ := edited(t)
 	write(t, root, "src/Fresh.php", olderAndNewer)
@@ -131,11 +118,8 @@ func TestAFileWithNoHistoryIsCoveredWhole(t *testing.T) {
 	}
 }
 
-// TestAModifiedLineCountsAsChanged holds the case Jesse named first: a line rewritten in place, not added. A
-// diff names it on its added side, so a sin standing on it is this change's to answer for.
 func TestAModifiedLineCountsAsChanged(t *testing.T) {
 	root, file := edited(t)
-	// The committed function's own body is rewritten, and nothing is added.
 	write(t, root, "src/Refunds.php", `<?php
 
 class Refunds
@@ -159,9 +143,6 @@ class Refunds
 	}
 }
 
-// TestADeletionBesideAnOldSinDoesNotClaimIt holds the case that would be easiest to get wrong. A deleted line is
-// on the diff's REMOVED side and exists in no file afterwards, so it can carry no finding; what matters is that
-// taking a line away does not make the lines around it this change's.
 func TestADeletionBesideAnOldSinDoesNotClaimIt(t *testing.T) {
 	root, file := edited(t)
 	write(t, root, "src/Refunds.php", `<?php
@@ -186,7 +167,6 @@ class Refunds
 `)
 	run(t, root, "add", ".")
 	run(t, root, "commit", "-q", "-m", "three functions")
-	// The middle function goes, leaving the first untouched and the third where the second was.
 	write(t, root, "src/Refunds.php", `<?php
 
 class Refunds

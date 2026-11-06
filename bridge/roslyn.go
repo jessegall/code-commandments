@@ -13,18 +13,12 @@ import (
 	"strings"
 )
 
-// Release is the version this build was released as, stamped through main by the release build; a local build is dev,
-// and has no release to fetch a C# bridge from.
 var Release = "dev"
 
-// releases is where a release's files are published, one folder per version.
 const releases = "https://github.com/jessegall/code-commandments/releases/download"
 
-// roslynVariable names the C# bridge to run instead of this release's own: an executable, or `docker` for the capped
-// image development runs it in.
 const roslynVariable = "COMMANDMENTS_ROSLYN"
 
-// dotnetVariable is how the bridge is told which .NET installation's reference packs to compile against.
 const dotnetVariable = "CODE_COMMANDMENTS_DOTNET_ROOT"
 
 // RoslynUnavailable is a run with no C# bridge to read C# with: C# goes unjudged, and everything else is judged.
@@ -32,7 +26,6 @@ type RoslynUnavailable struct {
 	reason string
 }
 
-// Error says why, and what is and is not judged.
 func (e RoslynUnavailable) Error() string {
 	return "the C# bridge is not available (" + e.reason + "), so C# is not judged; everything else is"
 }
@@ -44,8 +37,6 @@ type RoslynFailed struct {
 	reason string
 }
 
-// RoslynFailure is the bridge's failure as C# left unjudged: a bridge that failed is RoslynFailed, saying why in one
-// line; any other error is itself.
 func RoslynFailure(err error) error {
 	var failed *BridgeFailed
 	if !errors.As(err, &failed) {
@@ -55,17 +46,12 @@ func RoslynFailure(err error) error {
 	return RoslynFailed{failed.Reason()}
 }
 
-// Error says why, and what is and is not judged.
 func (e RoslynFailed) Error() string {
 	return "the C# bridge failed: " + e.reason + ", so C# is not judged; everything else is"
 }
 
 func (RoslynFailed) unavailable() {}
 
-// Roslyn is the command that runs the C# bridge over the roots: the one $COMMANDMENTS_ROSLYN names, else this release's
-// own executable, fetched once into the cache beside the tool and checked against the release's SHA256SUMS, and never
-// built here. The .NET SDK found on this machine is named to it, for the reference packs a project's frameworks
-// resolve against.
 func Roslyn(roots ...string) ([]string, error) {
 	switch named := os.Getenv(roslynVariable); named {
 	case "docker":
@@ -85,9 +71,6 @@ func Roslyn(roots ...string) ([]string, error) {
 	}
 }
 
-// RoslynExecutable is this release's C# bridge for this platform, in the cache folder the tool's own binary is kept
-// in, and whether this call fetched it: fetched on its first use and checked against the release's SHA256SUMS, a file
-// whose sum does not match never written.
 func RoslynExecutable() (executable string, fetched bool, err error) {
 	if Release == "dev" {
 		return "", false, RoslynUnavailable{"a development build has no release to fetch it from; name one in $" + roslynVariable}
@@ -111,7 +94,6 @@ func RoslynExecutable() (executable string, fetched bool, err error) {
 	return executable, true, nil
 }
 
-// fetchChecked fetches the release's file into place, once its bytes match the sum SHA256SUMS lists for it.
 func fetchChecked(name, destination string) error {
 	base := strings.TrimRight(releases, "/")
 	if named := os.Getenv("COMMANDMENTS_RELEASES"); named != "" {
@@ -144,7 +126,6 @@ func fetchChecked(name, destination string) error {
 	return os.Rename(draft, destination)
 }
 
-// sumOf is the sum SHA256SUMS lists for the file.
 func sumOf(sums, name string) (string, bool) {
 	for _, line := range strings.Split(sums, "\n") {
 		fields := strings.Fields(line)
@@ -156,8 +137,6 @@ func sumOf(sums, name string) (string, bool) {
 	return "", false
 }
 
-// fetch is the body at the address, which must answer with success, through the curl every platform the tool ships
-// for has: linking Go's own HTTP client and TLS would grow the tool by a fifth for this one download.
 func fetch(address string) ([]byte, error) {
 	curl, err := exec.LookPath("curl")
 	if err != nil {
@@ -174,7 +153,6 @@ func fetch(address string) ([]byte, error) {
 	return body, nil
 }
 
-// binaryCache is the folder a release's binaries are kept in, the tool's and its bridges', as the shim keeps them.
 func binaryCache() (string, error) {
 	cache := os.Getenv("XDG_CACHE_HOME")
 	if cache == "" && runtime.GOOS == "windows" {
@@ -191,9 +169,6 @@ func binaryCache() (string, error) {
 	return filepath.Join(cache, "code-commandments", "bin"), nil
 }
 
-// RoslynNotice is what a run says once when the bridge it runs will find no framework reference packs: that C# is
-// judged with the types that resolve without them, and what to install. Nothing for the development image, which
-// carries its own.
 func RoslynNotice() string {
 	if _, found := Dotnet(); found || os.Getenv(roslynVariable) == "docker" {
 		return ""
@@ -202,16 +177,12 @@ func RoslynNotice() string {
 	return "no .NET SDK is installed here, so C#'s framework types do not resolve and C# is judged with the types that resolve without them; install the .NET SDK to judge it whole"
 }
 
-// nameDotnet tells the bridge which .NET installation's reference packs to compile against, when this machine has one.
 func nameDotnet() {
 	if root, found := Dotnet(); found {
 		os.Setenv(dotnetVariable, root)
 	}
 }
 
-// Dotnet is the .NET SDK installed on this machine, by the folder whose packs hold the framework reference
-// assemblies: the one $DOTNET_ROOT names, the one the dotnet on the PATH belongs to, or one in a folder .NET's
-// installers use. A machine with none still judges C#, with the types that resolve without the frameworks.
 func Dotnet() (string, bool) {
 	var candidates []string
 	if root := os.Getenv("DOTNET_ROOT"); root != "" {
@@ -232,7 +203,6 @@ func Dotnet() (string, bool) {
 	return "", false
 }
 
-// dotnetFolders are the folders .NET's installers put it in on this platform, and the user's own.
 func dotnetFolders() []string {
 	home, _ := os.UserHomeDir()
 	switch runtime.GOOS {

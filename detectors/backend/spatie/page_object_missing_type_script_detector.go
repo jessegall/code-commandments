@@ -15,12 +15,10 @@ type PageObjectMissingTypeScriptDetector struct{}
 
 func init() { detectors.Register(catalog.PHP, PageObjectMissingTypeScriptDetector{}) }
 
-// Sin is the sin the detector finds.
 func (PageObjectMissingTypeScriptDetector) Sin() sins.Sin {
 	return backendsins.PageObjectMissingTypeScript{}
 }
 
-// Find is every page object missing #[TypeScript].
 func (PageObjectMissingTypeScriptDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return php.In(codebase).
 		WhereKind("Stmt_Class").
@@ -28,9 +26,6 @@ func (PageObjectMissingTypeScriptDetector) Find(codebase *engine.Codebase) []eng
 		Get()
 }
 
-// Repentable says a scribe rewrites the sin away.
 func (PageObjectMissingTypeScriptDetector) Repentable() {}
 
-// CrossFile says the rule reads more than the file it reports in, which the fixture measures by asking it
-// of one file and of the whole tree: a scoped run reads the whole scan while it is enabled.
 func (PageObjectMissingTypeScriptDetector) CrossFile() {}

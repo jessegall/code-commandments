@@ -11,7 +11,6 @@ type HandRolledWither struct{}
 
 func init() { sins.Register(catalog.PHP, HandRolledWither{}) }
 
-// Definition is what the sin states about itself.
 func (HandRolledWither) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "hand-rolled-wither",

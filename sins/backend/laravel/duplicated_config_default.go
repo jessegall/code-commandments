@@ -11,7 +11,6 @@ type DuplicatedConfigDefault struct{}
 
 func init() { sins.Register(catalog.PHP, DuplicatedConfigDefault{}) }
 
-// Definition is what the sin states about itself.
 func (DuplicatedConfigDefault) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "duplicated-config-default",

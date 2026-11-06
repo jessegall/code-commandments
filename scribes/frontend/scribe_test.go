@@ -16,7 +16,6 @@ type everywhere struct{}
 func (everywhere) Includes(string) bool { return true }
 func (everywhere) IsScoped() bool       { return false }
 
-// project writes files into a fresh folder and answers its real path.
 func project(t *testing.T, files map[string]string) string {
 	t.Helper()
 	dir, err := filepath.EvalSymlinks(t.TempDir())
@@ -36,7 +35,6 @@ func project(t *testing.T, files map[string]string) string {
 	return dir
 }
 
-// goRewrites is what the detector's step rewrites in the folder here, keyed by path relative to it.
 func goRewrites(t *testing.T, detector detectors.Detector, dir string) map[string]string {
 	t.Helper()
 	scanner := served(t)
@@ -56,8 +54,6 @@ func goRewrites(t *testing.T, detector detectors.Detector, dir string) map[strin
 	return relative
 }
 
-// sameAsPHP runs the detector's step over the files and holds its rewrite byte for byte equal to what PHP's step
-// rewrote, as recorded; it answers the rewrite.
 func sameAsPHP(t *testing.T, detector detectors.Detector, detectorClass string, files map[string]string) map[string]string {
 	t.Helper()
 	dir := project(t, files)

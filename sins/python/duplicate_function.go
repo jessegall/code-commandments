@@ -13,7 +13,6 @@ func init() {
 	sins.Register(catalog.Python, DuplicateFunction{})
 }
 
-// Definition is what the sin states about itself.
 func (DuplicateFunction) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "duplicate-python-function",

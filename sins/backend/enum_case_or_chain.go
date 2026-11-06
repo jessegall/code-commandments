@@ -11,7 +11,6 @@ type EnumCaseOrChain struct{}
 
 func init() { sins.Register(catalog.PHP, EnumCaseOrChain{}) }
 
-// Definition is what the sin states about itself.
 func (EnumCaseOrChain) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "enum-case-or-chain",

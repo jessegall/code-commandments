@@ -2,12 +2,10 @@ package python
 
 import "slices"
 
-// IsModuleLevelAssign says whether the assignment stands at the module's own level, not inside a def or a class.
 func (n Node) IsModuleLevelAssign() bool {
 	return n.Kind() == "Assign" && n.Parent().Kind() == "Module"
 }
 
-// AssignedName is the single name an assignment binds, empty where it binds none or several.
 func (n Node) AssignedName() string {
 	if !n.IsModuleLevelAssign() {
 		return ""
@@ -21,11 +19,8 @@ func (n Node) AssignedName() string {
 	return children[0].Name()
 }
 
-// builders are the names a collection written out is handed to when it is built through a call rather than its
-// own brackets: `frozenset({…})` and `set([…])` hold the same names as `{…}`.
 var builders = []string{"set", "frozenset", "tuple", "list"}
 
-// assigned is the value an assignment binds, through a collection builder to the collection written inside it.
 func (n Node) assigned() Node {
 	children := n.Children()
 	if len(children) != 2 {
@@ -44,8 +39,6 @@ func (n Node) assigned() Node {
 	return value
 }
 
-// StringMembers is every member of an assigned set, tuple or list when ALL of them are string literals: the
-// shape a collection of names takes. Nothing where the value is not one of those, or holds anything else.
 func (n Node) StringMembers() []string {
 	value := n.assigned()
 	if !isSequence(value.Kind()) {
@@ -64,9 +57,6 @@ func (n Node) StringMembers() []string {
 	return names
 }
 
-// InstanceNames is the name each member of an assigned sequence is constructed with, when every member calls
-// the SAME thing and names itself in its first argument or a `name=` keyword: the shape a registry of a type's
-// instances takes. Nothing where the members are not all such calls, or fewer than two.
 func (n Node) InstanceNames() (string, []string) {
 	value := n.assigned()
 	if !isSequence(value.Kind()) || len(value.Children()) < 2 {
@@ -96,8 +86,6 @@ func (n Node) InstanceNames() (string, []string) {
 	return constructed, names
 }
 
-// named is the name a construction gives its instance: its first positional argument, else a `name=` keyword,
-// where that argument is a string literal.
 func (n Node) named() string {
 	if arguments := n.Arguments(); len(arguments) > 0 {
 		if text, literal := arguments[0].Text(); literal && arguments[0].Kind() == "Constant" {
@@ -113,7 +101,6 @@ func (n Node) named() string {
 	return ""
 }
 
-// isSequence says whether the kind is a set, tuple or list written out in the source.
 func isSequence(kind string) bool {
 	return kind == "Set" || kind == "Tuple" || kind == "List"
 }

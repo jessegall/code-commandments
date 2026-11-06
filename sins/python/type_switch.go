@@ -13,7 +13,6 @@ func init() {
 	sins.Register(catalog.Python, TypeSwitch{})
 }
 
-// Definition is what the sin states about itself.
 func (TypeSwitch) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "python-type-switch",

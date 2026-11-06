@@ -45,13 +45,9 @@ type File struct {
 	Resolver *Resolver `json:"resolver,omitempty"`
 	Root     *Node     `json:"root"`
 	Comments []Comment `json:"comments"`
-	// Types are the distinct types the file's nodes resolve to, each said once and named by a node's resolvedType, so
-	// a type every expression shares is not written again for each; the reader puts each back on its nodes.
-	Types []*Type `json:"types,omitempty"`
+	Types    []*Type   `json:"types,omitempty"`
 
-	nodes []*Node
-	// reaches is the greatest byte offset the parse indexes into the file, worked out as the tree is linked. No
-	// source shorter than this can be the one the parse was made from.
+	nodes   []*Node
 	reaches int
 }
 
@@ -61,7 +57,6 @@ type Resolver struct {
 	Ran  bool   `json:"ran"`
 }
 
-// Node answers a node by its id, once the file is read.
 func (f *File) Node(id int) (*Node, bool) {
 	if id < 0 || id >= len(f.nodes) {
 		return nil, false
@@ -70,14 +65,10 @@ func (f *File) Node(id int) (*Node, bool) {
 	return f.nodes[id], true
 }
 
-// Nodes is every node of the file in pre-order.
 func (f *File) Nodes() []*Node {
 	return f.nodes
 }
 
-// Reaches is the greatest byte offset the parse indexes into its file: the end of the furthest node or comment it
-// holds. It is what says whether a source read later can be the one this parse was made from, since every offset
-// in it is nonsense against bytes that do not reach that far.
 func (f *File) Reaches() int {
 	return f.reaches
 }
@@ -106,27 +97,24 @@ func (s *Span) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-// Node is one syntax node. What nearly every node has is held on it; the facts only some nodes carry are held in
-// its Facts, read through the node as its own fields, and every node without any shares one empty Facts.
+// Node is one syntax node.
 type Node struct {
-	ID       int      `json:"id"`
-	Kind     string   `json:"kind"`
-	Role     string   `json:"role"`
-	Is       []string `json:"is,omitempty"`
-	Span     Span     `json:"span"`
-	Field    string   `json:"field,omitempty"`
-	Children []*Node  `json:"children,omitempty"`
-	Name     string   `json:"name,omitempty"`
-	Resolved *Type    `json:"resolved,omitempty"`
-	// ResolvedType is the index in the file's types of the type the node resolves to, in place of resolved.
-	ResolvedType *int `json:"resolvedType,omitempty"`
+	ID           int      `json:"id"`
+	Kind         string   `json:"kind"`
+	Role         string   `json:"role"`
+	Is           []string `json:"is,omitempty"`
+	Span         Span     `json:"span"`
+	Field        string   `json:"field,omitempty"`
+	Children     []*Node  `json:"children,omitempty"`
+	Name         string   `json:"name,omitempty"`
+	Resolved     *Type    `json:"resolved,omitempty"`
+	ResolvedType *int     `json:"resolvedType,omitempty"`
 	*Facts
 
 	parent *Node
 }
 
-// Facts are what only some nodes carry: a literal and its value, an operator, modifiers and flags, types written
-// or returned, a symbol, a reference, a call's target, the file an import resolves to, and what the engine fills.
+// Facts are what only some nodes carry: a literal and its value, an operator, modifiers and flags, types written or returned, a symbol, a reference, a call's target, the file an import resolves to, and what the engine fills.
 type Facts struct {
 	Literal   string   `json:"literal,omitempty"`
 	Value     *Value   `json:"value,omitempty"`
@@ -142,18 +130,13 @@ type Facts struct {
 	Constant  bool     `json:"constant,omitempty"`
 	Inherited bool     `json:"inherited,omitempty"`
 
-	// FillsOutside says that every declaration an inherited member fills was written outside this solution, so
-	// its signature is not the project's to change. Only the compiler knows: a sibling project's interface
-	// compiles from source while a package's type arrives as metadata, and the scan may hold neither.
 	FillsOutside bool `json:"fills-outside,omitempty"`
 
 	Extras *NodeExtras `json:"extras,omitempty"`
 }
 
-// none is the Facts of every node that carries none; it is read, never written.
 var none = &Facts{}
 
-// NewNode is the node, ready to read: one built outside a stream, such as a comment standing as a node.
 func NewNode(node Node) *Node {
 	if node.Facts == nil {
 		node.Facts = none
@@ -162,13 +145,10 @@ func NewNode(node Node) *Node {
 	return &node
 }
 
-// Untouched says whether the Facts every node without any shares is still empty: a fact written through a node
-// rather than through its Own lands there, on every such node at once.
 func Untouched() bool {
 	return reflect.ValueOf(*none).IsZero()
 }
 
-// Own is the node's own Facts to write a fact into, made for it when it shares the empty one.
 func (n *Node) Own() *Facts {
 	if n.Facts == none {
 		n.Facts = &Facts{}
@@ -177,12 +157,10 @@ func (n *Node) Own() *Facts {
 	return n.Facts
 }
 
-// Parent is the node whose children hold this one; the root has none.
 func (n *Node) Parent() (*Node, bool) {
 	return n.parent, n.parent != nil
 }
 
-// Answers says whether the node answers a neutral kind, such as "loop".
 func (n *Node) Answers(neutral string) bool {
 	for _, is := range n.Is {
 		if is == neutral {
@@ -193,7 +171,7 @@ func (n *Node) Answers(neutral string) bool {
 	return false
 }
 
-// Value is a literal's decoded value: a string, a boolean or null. Numbers are decimal strings.
+// Value is a literal's decoded value: a string, a boolean or null.
 type Value struct {
 	raw json.RawMessage
 }
@@ -216,17 +194,14 @@ func (v *Value) UnmarshalJSON(data []byte) error {
 	return fmt.Errorf("a value is a string, a boolean or null, got %s", data)
 }
 
-// Equal says whether two values are the same value.
 func (v Value) Equal(other Value) bool {
 	return string(v.raw) == string(other.raw)
 }
 
-// IsNull says whether the value is the literal null.
 func (v Value) IsNull() bool {
 	return string(v.raw) == "null"
 }
 
-// Text is the value as a string, when it is one.
 func (v Value) Text() (string, bool) {
 	var text string
 	err := json.Unmarshal(v.raw, &text)
@@ -234,7 +209,6 @@ func (v Value) Text() (string, bool) {
 	return text, err == nil
 }
 
-// Bool is the value as a boolean, when it is one.
 func (v Value) Bool() (bool, bool) {
 	var truth bool
 	err := json.Unmarshal(v.raw, &truth)
@@ -260,21 +234,14 @@ type Type struct {
 	Origin     string      `json:"origin"`
 }
 
-// Roles are the roles a node can fill, as CONTRACT.md fixes them: every bridge writes one of these on every node.
 var Roles = []string{"statement", "expression", "member", "type", "pattern", "markup", "other"}
 
-// TypeShapes are the shapes a type can have, as CONTRACT.md fixes them: every bridge writes one of these as a
-// type's kind, and a rule asks about a type's structure by one of these words.
 var TypeShapes = []string{"named", "keyword", "parameter", "union", "intersection", "array", "tuple", "object",
 	"function", "literal", "pointer", "map", "opaque"}
 
-// TypeOrigins are where a type can come from, as CONTRACT.md fixes them: the source's own annotation, a docblock,
-// an attribute, the engine's own sound inference, or the language's checker.
 var TypeOrigins = []string{"written", "docblock", "attribute", "inferred", "compiler"}
 
-// TypeField is one field of an object type. Its type is absent where the resolver could not read one: Go answers
-// every import outside the module with an empty package, so a field of another package's type is known by name
-// alone, and inventing a type for it would be worse than saying nothing.
+// TypeField is one field of an object type.
 type TypeField struct {
 	Name     string `json:"name"`
 	Type     *Type  `json:"type,omitempty"`
@@ -381,14 +348,10 @@ type Program struct {
 	Unreadable []UnreadableSymbol `json:"unreadable,omitempty"`
 	Packages   []string           `json:"packages,omitempty"`
 	Aliases    []Alias            `json:"aliases,omitempty"`
-	// Loader is why the scanned project's own loader was not used, empty when it was: without it no class of a
-	// package is read, so a rule that excuses a method a package's interface fixes cannot excuse it, and the run
-	// says so rather than letting the finding look like the rule's mistake.
-	Loader string `json:"loader,omitempty"`
+	Loader     string             `json:"loader,omitempty"`
 }
 
-// UnreadableSymbol is a class the scan names that the scanned project's own loader failed on, and why: it stays
-// outside the scan, said rather than dropped.
+// UnreadableSymbol is a class the scan names that the scanned project's own loader failed on, and why: it stays outside the scan, said rather than dropped.
 type UnreadableSymbol struct {
 	Symbol string `json:"symbol"`
 	Reason string `json:"reason"`

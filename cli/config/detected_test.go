@@ -8,12 +8,6 @@ import (
 	"testing"
 )
 
-// The source roots a project is judged by, when it declares none, are detected once and written into its config.
-// That detection was proved only by the recorded parity cases, which run the built binary, and it decides what
-// every later run reads: a root missed here is a tree nobody judges, and a root invented here is scaffolding
-// judged as if it were source.
-
-// aTreeOf is a project holding each of the paths, folders as folders and files with their content.
 func aTreeOf(t *testing.T, tree map[string]string) string {
 	t.Helper()
 	root, err := filepath.EvalSymlinks(t.TempDir())
@@ -41,8 +35,6 @@ func aTreeOf(t *testing.T, tree map[string]string) string {
 	return root
 }
 
-// TestTheRootsAreReadFromComposersOwnMap holds where a PHP project's roots come from: the PSR-4 map it already
-// wrote, so nobody has to say twice where the source is.
 func TestTheRootsAreReadFromComposersOwnMap(t *testing.T) {
 	root := aTreeOf(t, map[string]string{
 		"composer.json": `{"autoload": {"psr-4": {"App\\": "app/", "Lib\\": ["lib/Domain", "missing"]}}}`,
@@ -62,8 +54,6 @@ func TestTheRootsAreReadFromComposersOwnMap(t *testing.T) {
 	}
 }
 
-// TestScaffoldingIsNoSourceRoot holds the reason this detection exists at all: a run over a whole project judged
-// its seeders, its config and its migrations as if they were the code it ships, and the report was unreadable.
 func TestScaffoldingIsNoSourceRoot(t *testing.T) {
 	root := aTreeOf(t, map[string]string{
 		"composer.json":    `{"autoload": {"psr-4": {"App\\": "app/", "Seed\\": "database/seeders", "H\\": ".hidden"}}}`,
@@ -85,8 +75,6 @@ func TestScaffoldingIsNoSourceRoot(t *testing.T) {
 	}
 }
 
-// TestAFrontEndBesideItsOwnManifestIsARoot holds a project that keeps a front end of its own: the folder is found
-// by the manifest beside it, and the folders a build writes are not.
 func TestAFrontEndBesideItsOwnManifestIsARoot(t *testing.T) {
 	root := aTreeOf(t, map[string]string{
 		"web/package.json":  `{}`,
@@ -105,9 +93,6 @@ func TestAFrontEndBesideItsOwnManifestIsARoot(t *testing.T) {
 	}
 }
 
-// TestAProjectWithNothingToDetectIsJudgedWhole holds the fallback, which is the difference between judging
-// everything and judging nothing: a project whose tree says nothing about where its source is gets itself as the
-// root, so a run still reads it rather than answering clean about a tree it never opened.
 func TestAProjectWithNothingToDetectIsJudgedWhole(t *testing.T) {
 	detected := DetectRoots(aTreeOf(t, map[string]string{"README.md": "# nothing here\n"}))
 
@@ -116,8 +101,6 @@ func TestAProjectWithNothingToDetectIsJudgedWhole(t *testing.T) {
 	}
 }
 
-// TestTheDetectedRootsAreWrittenOnceAndReadBack holds the other half: a project that declares none is given the
-// detected ones in its own config, so the next run reads them rather than detecting again.
 func TestTheDetectedRootsAreWrittenOnceAndReadBack(t *testing.T) {
 	root := aTreeOf(t, map[string]string{
 		"composer.json": `{"autoload": {"psr-4": {"App\\": "app/"}}}`,
@@ -137,8 +120,6 @@ func TestTheDetectedRootsAreWrittenOnceAndReadBack(t *testing.T) {
 	}
 }
 
-// TestADeclaredPathIsNeverOverruledByDetection holds the project's own word: once it says where its source is,
-// nothing detects over it, however the tree looks.
 func TestADeclaredPathIsNeverOverruledByDetection(t *testing.T) {
 	root := aTreeOf(t, map[string]string{
 		".commandments/config.json": `{"paths": ["lib"]}`,
@@ -157,20 +138,13 @@ func TestADeclaredPathIsNeverOverruledByDetection(t *testing.T) {
 	}
 }
 
-// TestTheFoldersLeftOutAreNamedByKindAndNotOneAtATime holds what the scan hands the journal to write into a
-// project's settings. It used to be one path per build folder found ON DISK at that moment, which is a list that
-// goes stale the moment anyone adds a module: a consumer with 38 modules each holding web/dist had 5 of them
-// unlisted, so those were judged, and nobody had any reason to notice.
-//
-// A kind of folder is one thing wherever it lies, so it is named once, as a pattern. The project is still asked
-// which kinds it HAS, so the list stays about this project and says nothing about folders it does not keep.
 func TestTheFoldersLeftOutAreNamedByKindAndNotOneAtATime(t *testing.T) {
 	root := aTreeOf(t, map[string]string{
-		"composer.json":                  `{"autoload": {"psr-4": {"App\\": "app/"}}}`,
-		"app/Order.php":                  "<?php",
-		"vendor/a/b/thing.php":           "<?php",
-		"modules/library/web/dist/a.js":  "x",
-		"modules/profiles/web/dist/a.js": "x",
+		"composer.json":                           `{"autoload": {"psr-4": {"App\\": "app/"}}}`,
+		"app/Order.php":                           "<?php",
+		"vendor/a/b/thing.php":                    "<?php",
+		"modules/library/web/dist/a.js":           "x",
+		"modules/profiles/web/dist/a.js":          "x",
 		"modules/library/web/node_modules/p/a.js": "x",
 	})
 
@@ -182,14 +156,12 @@ func TestTheFoldersLeftOutAreNamedByKindAndNotOneAtATime(t *testing.T) {
 		}
 	}
 
-	// One line per kind and no more: a path per folder found is what went stale.
 	for _, path := range left {
 		if !strings.HasPrefix(path, "**/") {
 			t.Errorf("the folders left out name the path %q, which covers that one folder and no other", path)
 		}
 	}
 
-	// And nothing about a kind this project does not keep: the answer is about this project.
 	for _, absent := range []string{"**/.next", "**/venv", "**/coverage"} {
 		if slices.Contains(left, absent) {
 			t.Errorf("the folders left out name %s, which this project has nowhere", absent)

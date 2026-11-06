@@ -11,7 +11,6 @@ import (
 	"github.com/jessegall/code-commandments/engine/php"
 )
 
-// template is the config a project starts with; %ROOTS% becomes its detected source roots.
 const template = "<?php\n\ndeclare(strict_types=1);\n\nuse JesseGall\\CodeCommandments\\Config;\n\n/*\n" +
 	" | code-commandments configuration.\n" +
 	" |\n" +
@@ -35,30 +34,25 @@ const template = "<?php\n\ndeclare(strict_types=1);\n\nuse JesseGall\\CodeComman
 	"    );\n" +
 	"};\n"
 
-// Scribe writes a project's config file through its tree, so the file stays valid PHP and every line the
-// project wrote itself is kept.
+// Scribe writes a project's config file through its tree, so the file stays valid PHP and every line the project wrote itself is kept.
 type Scribe struct {
 	path string
 }
 
-// ScribeIn is the scribe of the config of the project at dir.
 func ScribeIn(dir string) Scribe {
 	return Scribe{workspace.Config(dir)}
 }
 
-// Root is the project the config belongs to: the folder above the .commandments the file sits in.
 func (s Scribe) Root() string {
 	return filepath.Dir(filepath.Dir(s.path))
 }
 
-// Render is the starting config with these roots, telling the project at root to run the executable it has.
 func Render(root string, roots []string) string {
 	written := strings.Replace(template, "%ROOTS%", renderRoots(roots), 1)
 
 	return strings.ReplaceAll(written, "%BINARY%", binary.Invocation(root))
 }
 
-// Scaffold writes the starting config when the project has none; false when it already has one.
 func (s Scribe) Scaffold(roots []string) (bool, error) {
 	if _, err := os.Stat(s.path); err == nil {
 		return false, nil
@@ -71,7 +65,6 @@ func (s Scribe) Scaffold(roots []string) (bool, error) {
 	return true, os.WriteFile(s.path, []byte(Render(s.Root(), roots)), 0o644)
 }
 
-// EnsurePaths fills an empty paths() with the roots.
 func (s Scribe) EnsurePaths(roots []string) error {
 	call, found, err := s.first("paths")
 	if err != nil || !found || len(call.ChildrenIn("args")) > 0 {
@@ -81,7 +74,6 @@ func (s Scribe) EnsurePaths(roots []string) error {
 	return s.splice(call, roots)
 }
 
-// RewritePaths writes the roots into paths(), scaffolding the config when there is none.
 func (s Scribe) RewritePaths(roots []string) error {
 	if _, err := os.Stat(s.path); err != nil {
 		_, err := s.Scaffold(roots)
@@ -97,7 +89,6 @@ func (s Scribe) RewritePaths(roots []string) error {
 	return s.splice(call, roots)
 }
 
-// splice puts the roots in place of the call's arguments, or between its empty parentheses.
 func (s Scribe) splice(call engine.Match, roots []string) error {
 	source, err := os.ReadFile(s.path)
 	if err != nil {
@@ -114,7 +105,6 @@ func (s Scribe) splice(call engine.Match, roots []string) error {
 	return os.WriteFile(s.path, []byte(string(source[:from])+renderRoots(roots)+string(source[to:])), 0o644)
 }
 
-// first is the first call of the method in the config, and whether it makes one.
 func (s Scribe) first(method string) (engine.Match, bool, error) {
 	stream, err := php.Here().Stream(s.path)
 	if err != nil {
@@ -140,13 +130,10 @@ func renderRoots(roots []string) string {
 	return strings.Join(quoted, ", ")
 }
 
-// addSlashes escapes as PHP's addslashes does: quotes, backslashes and NUL.
 func addSlashes(text string) string {
 	return strings.NewReplacer(`\`, `\\`, `'`, `\'`, `"`, `\"`, "\x00", `\0`).Replace(text)
 }
 
-// EnsureLayers writes the declaration in before the config's paths() call, and imports the detector it
-// configures; false when the config already declares layers, or has no call to write it before.
 func (s Scribe) EnsureLayers(declaration string) (bool, error) {
 	if _, err := os.Stat(s.path); err != nil {
 		return false, nil
@@ -177,8 +164,6 @@ func (s Scribe) EnsureLayers(declaration string) (bool, error) {
 	return true, os.WriteFile(s.path, []byte(importDetector(source)), 0o644)
 }
 
-// importDetector is the source with the NamespaceDependencyDetector imported after Config, unless it is
-// already imported or Config is not.
 func importDetector(source string) string {
 	existing := `use JesseGall\CodeCommandments\Config;`
 	detector := `use JesseGall\CodeCommandments\Detectors\Backend\NamespaceDependencyDetector;`

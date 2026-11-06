@@ -13,7 +13,6 @@ func init() {
 	sins.Register(catalog.Python, EnumCaseOrChain{})
 }
 
-// Definition is what the sin states about itself.
 func (EnumCaseOrChain) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "python-enum-case-or-chain",

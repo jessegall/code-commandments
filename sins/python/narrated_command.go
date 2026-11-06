@@ -13,7 +13,6 @@ func init() {
 	sins.Register(catalog.Python, NarratedCommand{})
 }
 
-// Definition is what the sin states about itself.
 func (NarratedCommand) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "python-narrated-command",

@@ -13,7 +13,6 @@ func init() {
 	sins.Register(catalog.CSharp, NamespaceDependency{})
 }
 
-// Definition is what the sin states about itself.
 func (NamespaceDependency) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "csharp-namespace-dependency",

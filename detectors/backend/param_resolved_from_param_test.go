@@ -10,7 +10,6 @@ import (
 	"github.com/jessegall/code-commandments/engine/php"
 )
 
-// packages stands in for the installed vendor: laravel-actions' ActionRequest is a FormRequest, which is a Request.
 const packages = `<?php
 namespace Illuminate\Http { class Request {} class RedirectResponse {} }
 namespace Illuminate\Foundation\Http { class FormRequest extends \Illuminate\Http\Request { public function validated(): array { return []; } } }
@@ -18,8 +17,6 @@ namespace Lorisleiva\Actions { class ActionRequest extends \Illuminate\Foundatio
 namespace Lorisleiva\Actions\Concerns { trait AsAction { public static function run(mixed ...$arguments): mixed { return null; } } }
 `
 
-// action is issue 690's shape: an action's HTTP entry resolving the route's id on the request's tenant. PARAMS is
-// what the entry takes beside the state and the id.
 const action = `<?php
 
 namespace App\Actions;
@@ -50,9 +47,6 @@ final class UpdateTrailer
 }
 `
 
-// TestAnEntryTakingAPackagesRequestIsABoundary holds the boundary exemption to a request a package declares: an
-// ActionRequest is a FormRequest outside the scan, so the entry taking one may unpack its input. The same lookup in
-// a method taking no request is still the sin.
 func TestAnEntryTakingAPackagesRequestIsABoundary(t *testing.T) {
 	for name, test := range map[string]struct {
 		params string
@@ -80,8 +74,6 @@ func TestAnEntryTakingAPackagesRequestIsABoundary(t *testing.T) {
 	}
 }
 
-// paramResolvedIn is where ParamResolvedFromParamDetector fires over the written files, the project's own vendor
-// beside them.
 func paramResolvedIn(t *testing.T, files map[string]string) []string {
 	t.Helper()
 	root := t.TempDir()

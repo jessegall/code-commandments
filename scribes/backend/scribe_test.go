@@ -11,14 +11,12 @@ import (
 	"github.com/jessegall/code-commandments/scribes"
 )
 
-// scribeCase is one scribe run as the PHP tool's ScribeTestCase runs it: its detector over one file, the findings
-// handed to the scribe.
+// scribeCase is one scribe run as the PHP tool's ScribeTestCase runs it: its detector over one file, the findings handed to the scribe.
 type scribeCase struct {
 	detector detectors.Detector
 	scribe   scribes.Scribe
 }
 
-// codebaseOf is the codebase one PHP source reads as.
 func codebaseOf(t *testing.T, source string) *engine.Codebase {
 	t.Helper()
 	path := filepath.Join(t.TempDir(), "Subject.php")
@@ -33,7 +31,6 @@ func codebaseOf(t *testing.T, source string) *engine.Codebase {
 	return codebase
 }
 
-// fix is the source with the scribe's rewrite applied, or the source itself when it rewrote nothing.
 func (c scribeCase) fix(t *testing.T, source string) string {
 	t.Helper()
 	rewrites := c.rewrites(t, source)

@@ -11,11 +11,6 @@ import (
 	_ "github.com/jessegall/code-commandments/registry"
 )
 
-// Scaffolding writes new files into the reader's own project, and cli/scaffold had no test at all: the seven
-// recorded parity cases ran the built binary to see what it wrote. What it must never do is write over something
-// they already have, or write anywhere at all when asked only to show.
-
-// minted runs the command inside the project and answers its exit code and what it said.
 func minted(t *testing.T, project string, args ...string) (code int, said string) {
 	t.Helper()
 	was, err := os.Getwd()
@@ -36,8 +31,6 @@ func minted(t *testing.T, project string, args ...string) (code int, said string
 	return code, out.String() + errs.String()
 }
 
-// aPhpProject is a project whose composer.json maps a namespace to src/, which is what scaffolding needs to know
-// where a helper goes and what to call it.
 func aPhpProject(t *testing.T) string {
 	t.Helper()
 	root, err := filepath.EvalSymlinks(t.TempDir())
@@ -54,7 +47,6 @@ func aPhpProject(t *testing.T) string {
 	return root
 }
 
-// filesUnder are every file in the tree, by path relative to it.
 func filesUnder(t *testing.T, root string) []string {
 	t.Helper()
 	var found []string
@@ -78,8 +70,6 @@ func filesUnder(t *testing.T, root string) []string {
 	return found
 }
 
-// TestAProjectWithNoPsr4RootIsToldRatherThanGuessedAt holds the refusal: a helper written where no namespace maps
-// would be a class nothing can autoload, so the command says what it could not resolve and writes nothing.
 func TestAProjectWithNoPsr4RootIsToldRatherThanGuessedAt(t *testing.T) {
 	root, err := filepath.EvalSymlinks(t.TempDir())
 	if err != nil {
@@ -103,8 +93,6 @@ func TestAProjectWithNoPsr4RootIsToldRatherThanGuessedAt(t *testing.T) {
 	}
 }
 
-// TestAPreviewWritesNothing holds --dry-run: the reader who asked to see what would be minted gets the code on
-// screen and not a single file in their tree.
 func TestAPreviewWritesNothing(t *testing.T) {
 	project := aPhpProject(t)
 	before := filesUnder(t, project)
@@ -122,8 +110,6 @@ func TestAPreviewWritesNothing(t *testing.T) {
 	}
 }
 
-// TestWhatTheProjectAlreadyHasIsNeverWrittenOver holds the one answer that protects the reader's own work: a helper
-// already there is skipped and said, never replaced with the minted one.
 func TestWhatTheProjectAlreadyHasIsNeverWrittenOver(t *testing.T) {
 	project := aPhpProject(t)
 
@@ -164,8 +150,6 @@ func TestWhatTheProjectAlreadyHasIsNeverWrittenOver(t *testing.T) {
 	}
 }
 
-// TestASinNobodyHasMintsNothingAndSaysSo holds --sin naming a rule that is not there: nothing is written, and the
-// reader is not left thinking a helper was minted for a name they mistyped.
 func TestASinNobodyHasMintsNothingAndSaysSo(t *testing.T) {
 	project := aPhpProject(t)
 	before := filesUnder(t, project)

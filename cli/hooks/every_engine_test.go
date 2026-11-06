@@ -8,11 +8,6 @@ import (
 	"testing"
 )
 
-// TestEveryEngineARuleJudgesIsAskedAboutAnEditedFile holds the live check to every engine a rule names. A project
-// may write one rule for two languages, and the mark asked only the engine written FIRST: a consumer's rule
-// naming go and python was never asked about a python file, so a rule they wrote was silently off in the live
-// check while a judge still reported it. The folder check beside it is there because that was the first
-// suspicion, and it holds too: a file glob reads the same path in a mark as in a judge.
 func TestEveryEngineARuleJudgesIsAskedAboutAnEditedFile(t *testing.T) {
 	root, err := filepath.EvalSymlinks(t.TempDir())
 	if err != nil {

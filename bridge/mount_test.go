@@ -38,7 +38,6 @@ func TestAReferenceIsReadAtAnyDepthAndInTheMSBuildNamespace(t *testing.T) {
 	}
 }
 
-// writer writes a project under the solution: its folder, the body of its <Project>, and the namespace it declares.
 func writer(t *testing.T, solution string) func(folder, body, namespace string) {
 	return func(folder, body, namespace string) {
 		if err := os.MkdirAll(filepath.Join(solution, folder), 0o755); err != nil {

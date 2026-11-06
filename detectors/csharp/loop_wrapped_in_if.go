@@ -16,12 +16,10 @@ func init() {
 	detectors.Register(catalog.CSharp, LoopWrappedInIfDetector{})
 }
 
-// Sin is the sin the detector finds.
 func (LoopWrappedInIfDetector) Sin() sins.Sin {
 	return cssins.LoopWrappedInIf{}
 }
 
-// Find is every place the sin is committed.
 func (LoopWrappedInIfDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return cs.In(codebase).
 		WhereStatement().

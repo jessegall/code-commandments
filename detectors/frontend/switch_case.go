@@ -13,8 +13,7 @@ func init() {
 	detectors.Register(catalog.Vue, SwitchCaseDetector{})
 }
 
-// SwitchCaseDetector finds a v-if/v-else-if chain that re-tests one subject against a literal case by case:
-// a dispatch on a value, which <SwitchCase :value> writes as one decision.
+// SwitchCaseDetector finds a v-if/v-else-if chain that re-tests one subject against a literal case by case: a dispatch on a value, which <SwitchCase :value> writes as one decision.
 type SwitchCaseDetector struct{}
 
 func (SwitchCaseDetector) Sin() sins.Sin {
@@ -29,5 +28,4 @@ func (SwitchCaseDetector) Find(codebase *engine.Codebase) []engine.Match {
 		Get()
 }
 
-// Repentable says a scribe rewrites the sin away.
 func (SwitchCaseDetector) Repentable() {}

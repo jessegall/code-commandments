@@ -10,9 +10,6 @@ import (
 	godetectors "github.com/jessegall/code-commandments/detectors/go"
 )
 
-// TestAFileInAJudgedFolderIsMarkedByTheRuleLetInAlone holds the half of the whitelist a project feels while it
-// writes: an edit inside an excluded folder raises the marks of the rule it let in there, live, and of no other
-// rule. Before this, such an edit raised nothing until somebody ran a judge over that folder by hand.
 func TestAFileInAJudgedFolderIsMarkedByTheRuleLetInAlone(t *testing.T) {
 	root := projectJudging(t, `{
         "paths": ["shop"],
@@ -41,9 +38,6 @@ func TestAFileInAJudgedFolderIsMarkedByTheRuleLetInAlone(t *testing.T) {
 	}
 }
 
-// TestAProjectsOwnRuleIsLetInByItsBareName holds the case the whitelist was built for, and the one a lookup by
-// the engine-qualified id alone would miss: a project turns its own rule on by its bare name and disables it by
-// the same, so that is the name it will write a judges call under.
 func TestAProjectsOwnRuleIsLetInByItsBareName(t *testing.T) {
 	root := projectJudging(t, `{
         "paths": ["shop"],
@@ -67,7 +61,6 @@ func TestAProjectsOwnRuleIsLetInByItsBareName(t *testing.T) {
 	}
 }
 
-// TestAFileInAnExcludedFolderNobodyJudgesIsMarkedByNoRule holds the default the allowance must not weaken.
 func TestAFileInAnExcludedFolderNobodyJudgesIsMarkedByNoRule(t *testing.T) {
 	root := projectJudging(t, `{"paths": ["shop"], "exclude": ["tests"]}`)
 
@@ -81,8 +74,6 @@ func TestAFileInAnExcludedFolderNobodyJudgesIsMarkedByNoRule(t *testing.T) {
 	}
 }
 
-// TestAFileInAJudgedFolderIsLookedAtAtAll holds the step before the narrowing: the hook has to read the file
-// before any rule can mark it, and a judged folder is where it would otherwise stop.
 func TestAFileInAJudgedFolderIsLookedAtAtAll(t *testing.T) {
 	root := projectJudging(t, `{
         "paths": ["shop"],
@@ -103,7 +94,6 @@ func TestAFileInAJudgedFolderIsLookedAtAtAll(t *testing.T) {
 	}
 }
 
-// projectJudging is a Go project whose config is the text, with a source file and a test file.
 func projectJudging(t *testing.T, text string) string {
 	t.Helper()
 	root, err := filepath.EvalSymlinks(t.TempDir())

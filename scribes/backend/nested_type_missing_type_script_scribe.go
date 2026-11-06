@@ -15,7 +15,6 @@ func init() {
 // NestedTypeMissingTypeScriptScribe marks the class a field puts on the wire `#[TypeScript]`, where it is declared.
 type NestedTypeMissingTypeScriptScribe struct{}
 
-// Rewrite stamps `#[TypeScript]` on each field's nested class, importing it into that class's file.
 func (NestedTypeMissingTypeScriptScribe) Rewrite(findings []engine.Match, codebase *engine.Codebase) (scribes.Rewrites, error) {
 	draft := scribes.NewDraft()
 	program := php.ProgramOf(codebase)

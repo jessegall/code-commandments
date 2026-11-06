@@ -6,14 +6,6 @@ import (
 	"github.com/jessegall/code-commandments/engine"
 )
 
-// TestACodebaseNarrowedToAFileStillAnswersForTheProgram holds the two halves of Reporting apart: a selector
-// opens over the named file alone, and everything a check reads is still the whole program.
-//
-// That is what lets one edit be judged against the program. A rule's query walks every node of the codebase, so
-// checking one edited file meant either reading that file as though it were the program, which is wrong for
-// every rule that follows a chain of parents or a caller, or walking the whole tree to keep the findings of one
-// file. Measured on a 5286-file tree: the rules that read across files cost 14.25s over the whole view and 1.75s
-// asked about the edited file, on one machine at one moment.
 func TestACodebaseNarrowedToAFileStillAnswersForTheProgram(t *testing.T) {
 	codebase := sample(t)
 
@@ -38,8 +30,6 @@ func TestACodebaseNarrowedToAFileStillAnswersForTheProgram(t *testing.T) {
 		}
 	}
 
-	// Every file is still there to be read, which is what a check that follows a chain of parents or a caller
-	// needs, and the whole-program index still names what the other files declare.
 	if held := len(narrowed.Files()); held != declarations {
 		t.Errorf("the narrowed codebase holds %d files of %d", held, declarations)
 	}
@@ -50,14 +40,11 @@ func TestACodebaseNarrowedToAFileStillAnswersForTheProgram(t *testing.T) {
 		}
 	}
 
-	// The codebase it was narrowed from is untouched.
 	if again := codebase.WhereFunction().Count(); again != whole {
 		t.Errorf("after narrowing, the codebase answers %d functions where it answered %d", again, whole)
 	}
 }
 
-// declaredElsewhere is the symbol id of a type some file other than this one declares, which a codebase
-// narrowed to this file must still name: that is what a check following a chain of parents reads.
 func declaredElsewhere(codebase *engine.Codebase, file string) (string, bool) {
 	for _, match := range codebase.WhereTypeDeclaration().Get() {
 		if match.File() != file && match.Identity() != "" {

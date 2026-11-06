@@ -9,8 +9,6 @@ import (
 	"github.com/jessegall/code-commandments/rule"
 )
 
-// component holds the three mechanical sins a project's TypeScript rules fix: a count guarding JSX, a manual memo,
-// and physical-direction utilities.
 const component = `import { useMemo } from 'react';
 
 export function Basket({ items, price, rate }: { items: string[]; price: number; rate: number }) {
@@ -21,7 +19,6 @@ export function Basket({ items, price, rate }: { items: string[]; price: number;
 }
 `
 
-// fixing is the TypeScript rule the query and fix make, failing the test when it cannot be read.
 func fixing(t *testing.T, query, fix string) rule.Rule {
 	t.Helper()
 
@@ -34,7 +31,6 @@ func fixing(t *testing.T, query, fix string) rule.Rule {
 	return read
 }
 
-// fixes are the text the rule's fix writes for each node it finds, a node it writes nothing for left out.
 func fixes(read rule.Rule, codebase *engine.Codebase) []string {
 	var written []string
 	for _, found := range read.Find(codebase) {

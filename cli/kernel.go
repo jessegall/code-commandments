@@ -8,18 +8,15 @@ import (
 	"github.com/jessegall/code-commandments/cli/help"
 )
 
-// defaultVerb is what runs when no verb is named.
 const defaultVerb = "judge"
 
-// Kernel is the one entry point behind the binary: it parses the arguments once and dispatches to the
-// Command registered for the verb. Registering a command is wiring it, and documenting it.
+// Kernel is the one entry point behind the binary: it parses the arguments once and dispatches to the Command registered for the verb.
 type Kernel struct {
 	commands []Command
 	registry map[string]Command
 	version  string
 }
 
-// NewKernel registers the commands, in the order the overview lists them.
 func NewKernel(version string, commands ...Command) *Kernel {
 	kernel := &Kernel{commands: commands, registry: map[string]Command{}, version: version}
 
@@ -32,7 +29,6 @@ func NewKernel(version string, commands ...Command) *Kernel {
 	return kernel
 }
 
-// Run parses args (everything after the program name) and answers the process exit code.
 func (k *Kernel) Run(args []string, console Console) int {
 	in := FromArgs(args)
 	named := in.Command()
@@ -87,8 +83,6 @@ func (k *Kernel) Run(args []string, console Console) int {
 	return code
 }
 
-// refuseOption turns away a flag nobody declared. With no verb named it was aimed at the tool, not at the
-// default verb, so the refusal does not name judge.
 func (k *Kernel) refuseOption(unknown, named string, console Console) int {
 	if named == "" {
 		console.Warn(fmt.Sprintf("Unknown option --%s. Try: commandments --help", unknown))
@@ -101,7 +95,6 @@ func (k *Kernel) refuseOption(unknown, named string, console Console) int {
 	return 2
 }
 
-// undeclared is the first flag the user typed that the command does not declare, or empty.
 func undeclared(in *Input, command Command) string {
 	declared := command.Help().OptionNames()
 
@@ -114,7 +107,6 @@ func undeclared(in *Input, command Command) string {
 	return ""
 }
 
-// help prints one verb's page, or the overview when it names none or one the kernel does not have.
 func (k *Kernel) help(verb string, console Console) int {
 	screen := help.NewScreen(k.documented())
 
@@ -129,7 +121,6 @@ func (k *Kernel) help(verb string, console Console) int {
 	return 0
 }
 
-// Commands are the registered commands, in registration order.
 func (k *Kernel) Commands() []Command {
 	return k.commands
 }

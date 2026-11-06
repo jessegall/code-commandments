@@ -15,7 +15,6 @@ func init() {
 // ManualHydrationLoopScribe rewrites `array_map(X::from(...), $items)` into `X::collect($items)`.
 type ManualHydrationLoopScribe struct{}
 
-// Rewrite replaces each array_map that maps a from() over its items with the collect() it means.
 func (ManualHydrationLoopScribe) Rewrite(findings []engine.Match, _ *engine.Codebase) (scribes.Rewrites, error) {
 	draft := scribes.NewDraft()
 	for _, from := range findings {
@@ -34,8 +33,6 @@ func (ManualHydrationLoopScribe) Rewrite(findings []engine.Match, _ *engine.Code
 	return draft.Rewrites(), nil
 }
 
-// mappingArrayMap is the `array_map(callback, $items)` a from() is the callback of: as `X::from(...)` itself, or as
-// `fn ($r) => X::from($r)`.
 func mappingArrayMap(from engine.Match) (engine.Match, bool) {
 	parent := from.Parent()
 	if parent.Kind() == "Expr_ArrowFunction" {
@@ -60,7 +57,6 @@ func mappingArrayMap(from engine.Match) (engine.Match, bool) {
 	return call, true
 }
 
-// passesParamVerbatim says whether an arrow function takes one parameter and hands it, as it is, to the from() it is.
 func passesParamVerbatim(arrow, from engine.Match) bool {
 	params, arguments := arrow.ChildrenIn("params"), from.ChildrenIn("args")
 	if len(params) != 1 || arrow.Child("expr").Node() != from.Node() || len(arguments) != 1 {
@@ -72,7 +68,6 @@ func passesParamVerbatim(arrow, from engine.Match) bool {
 		value.Kind() == "Expr_Variable" && value.Name() == param.Name()
 }
 
-// isFirstClassCallable says whether a call is written `X::from(...)`, a callable rather than a call.
 func isFirstClassCallable(from engine.Match) bool {
 	arguments := from.ChildrenIn("args")
 

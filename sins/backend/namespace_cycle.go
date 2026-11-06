@@ -11,7 +11,6 @@ type NamespaceCycle struct{}
 
 func init() { sins.Register(catalog.PHP, NamespaceCycle{}) }
 
-// Definition is what the sin states about itself.
 func (NamespaceCycle) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "namespace-cycle",

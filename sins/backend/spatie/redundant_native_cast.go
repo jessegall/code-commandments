@@ -11,7 +11,6 @@ type RedundantNativeCast struct{}
 
 func init() { sins.Register(catalog.PHP, RedundantNativeCast{}) }
 
-// Definition is what the sin states about itself.
 func (RedundantNativeCast) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "redundant-native-cast",

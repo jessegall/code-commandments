@@ -30,32 +30,21 @@ import (
 	"github.com/jessegall/code-commandments/engine"
 )
 
-// defaultParallel is how many workers judge runs detectors across unless --parallel says otherwise.
 const defaultParallel = 2
 
-// aRuleCouldNotRun is the exit code of a run that found nothing while a rule never ran.
 const aRuleCouldNotRun = 3
 
 // Command is `judge`: scan a codebase and report its sins, grouped by the skill that fixes each.
 type Command struct {
-	// Fixable maps a sin to the command that repents it.
 	Fixable map[string]string
 
-	// Scaffoldable maps a sin to the command that scaffolds the helper its fix uses.
 	Scaffoldable map[string]string
 
-	// In is the folder the run is read from: the project, the config and the scope are all read from it. Empty
-	// is the process's own folder, which is what a terminal run means; a caller that judges on someone else's
-	// behalf names theirs, as the service does for a run in a folder that is not the service's own.
 	In string
 
-	// Reading is how the codebase is read. Empty reads it from disk, which is what a run of its own must do;
-	// a caller that already holds the tree hands it over instead, which is the whole saving of a tree kept
-	// warm: a run that would read 5286 files reads the one it changed.
 	Reading func(sources scan.Sources) (*engine.Codebase, error)
 }
 
-// whyNotServed is why this run is reading the tree rather than being answered from the one a session keeps up.
 func whyNotServed(answer warm.Answer) string {
 	if answer.Because != "" {
 		return answer.Because
@@ -64,7 +53,6 @@ func whyNotServed(answer warm.Answer) string {
 	return "no service answered, so there is none up for this project"
 }
 
-// folder is where the run is read from: the one a caller named, else the process's own.
 func (c Command) folder() (string, error) {
 	if c.In != "" {
 		return c.In, nil
@@ -73,7 +61,6 @@ func (c Command) folder() (string, error) {
 	return os.Getwd()
 }
 
-// read is the codebase the sources describe: the caller's own where it holds one, else read from disk.
 func (c Command) read(sources scan.Sources) (*engine.Codebase, error) {
 	if c.Reading != nil {
 		return c.Reading(sources)
@@ -82,12 +69,10 @@ func (c Command) read(sources scan.Sources) (*engine.Codebase, error) {
 	return sources.Load()
 }
 
-// Names are the verbs it answers to.
 func (Command) Names() []string {
 	return []string{"judge"}
 }
 
-// Help documents it.
 func (Command) Help() help.Help {
 	return help.Of("Scan a codebase and report its sins, grouped by the skill that fixes each. Exit code 1 when sins are found, 3 when a rule could not run.").
 		Form("judge [path]", "scan a folder, or one file read with the folder it sits in — or, with none, the source roots declared in .commandments/config.json").
@@ -118,7 +103,6 @@ func (Command) Help() help.Help {
 			"A full scan is slow, so judge ONCE and work that file line-by-line, deleting each line as you fix its sin; re-run judge at the end to confirm. Files marked @code-commandments-generated are skipped — they are regenerated, not hand-authored.")
 }
 
-// Run judges the path the arguments name.
 func (c Command) Run(in *cli.Input, console cli.Console) (int, error) {
 	cwd, err := c.folder()
 	if err != nil {
@@ -128,20 +112,9 @@ func (c Command) Run(in *cli.Input, console cli.Console) (int, error) {
 	space := workspace.At(workspace.ProjectRoot(cwd), "")
 	options := optionsOf(in, space)
 
-	// A path a run names is relative to the folder the RUN was started in, which is not this process's folder
-	// when the service judges on someone else's behalf: the service's own folder is the plugin's. Left
-	// unresolved, such a path was read against that folder, so `judge src` found nothing to judge and
-	// `judge --changes` scoped itself to a tree nobody had edited — both answering a green tick with exit 0
-	// over code that holds sins, which is the one answer a judging must never give.
 	options.path = within(cwd, options.path)
 
-	// A service holding this project's tree answers from memory, where this run would read the tree: 25 seconds
-	// for 1518 files and 55 for 5286. So it is asked first, and only a run that IS the service's own goes on to
-	// read anything, which is what a codebase handed in says.
 	if c.Reading == nil && !options.list {
-		// Which service to ask is the service's own answer: it writes down what it serves, so a run finds it
-		// without working the project out from its own folder. The project this run is in is the fallback, for a
-		// service old enough to have said nothing.
 		serving, said := warm.ServingFor(cwd)
 		if !said {
 			serving.Project = space.Root()
@@ -159,9 +132,6 @@ func (c Command) Run(in *cli.Input, console cli.Console) (int, error) {
 			return answer.Code, nil
 		}
 
-		// A run that reads the tree itself where a service holds one is the single biggest thing that can
-		// happen to its time — minutes against seconds — and from outside the two are indistinguishable. So it
-		// says which it did, and why, whenever it is asked to account for itself.
 		if cli.Timed() {
 			fmt.Fprintln(console.Err, "· this run reads the tree itself: "+whyNotServed(answer))
 		}
@@ -171,8 +141,6 @@ func (c Command) Run(in *cli.Input, console cli.Console) (int, error) {
 		return list(cwd, console)
 	}
 
-	// One path is what the command takes, and a second was being dropped without a word: a run named two
-	// files judged the first and said nothing of the other, which reads as a clean answer about both.
 	if extra, named := in.Argument(1); named {
 		return help.Usage(console.Err, c, "judge takes one path; "+extra+" would never be judged. Name a folder that holds both, or run judge once for each."), nil
 	}
@@ -221,8 +189,6 @@ func (c Command) Run(in *cli.Input, console cli.Console) (int, error) {
 		return 0, err
 	}
 
-	// A rule of the project's own may name the folders it judges in its own file, so the config that scopes this
-	// run is read with what the rules themselves declare: one answer, whichever of the two the project wrote it in.
 	judged = judged.Judging(selected)
 
 	targets, err := scope.FromArgs(in.Raw(), options.path, space, judged.Excluded)
@@ -258,10 +224,6 @@ func (c Command) judge(options options, selected []detectors.Detector, judged co
 
 	languages := languagesFor(selected, judged, options.path)
 
-	// A scoped run whose files are of no language the chosen rules read has nothing to judge, and saying so costs
-	// a look at their names. Walking the tree to find that out is what a worker pays for on every task whose
-	// changes are in another language: measured at four seconds on this repository, for an answer that needs the
-	// scan not to happen.
 	if ofNoLanguage(targets, languages) {
 		deleteChecklist(options.checklist)
 
@@ -276,10 +238,6 @@ func (c Command) judge(options options, selected []detectors.Detector, judged co
 
 	sources := scan.Walk(roots, source.Under(options.path, judged.Excluded).Judging(judged.JudgedDespiteExclusion())).Only(languages...)
 
-	// A scoped run whose every rule answers from the file it reports in needs the files it judges parsed and no
-	// others: judging one changed file on this repository read 1469 of them and cost eleven seconds, where the
-	// file alone costs a third of one. Which rules those are is measured by the fixture harness and said on the
-	// rule itself, so a rule that reads a recurrence, a caller or a twin keeps the whole scan.
 	if len(targets.Files()) > 0 {
 		if across := readAcrossFiles(selected); len(across) > 0 {
 			sayWhyTheWholeTreeIsRead(across, len(selected), len(targets.Files()), console)
@@ -396,8 +354,6 @@ func (c Command) judge(options options, selected []detectors.Detector, judged co
 	return 1, nil
 }
 
-// nothingActive is what a clean run says: no sins at all, or none that this project has not already reported and
-// is waiting on an answer for. The run is clean either way, since a filed claim is not this run's to fail on.
 func nothingActive(filed []Reported) string {
 	if len(filed) == 0 {
 		return "No sins found"
@@ -406,12 +362,8 @@ func nothingActive(filed []Reported) string {
 	return "No active sins, " + natural.Counted(len(filed), "reported finding") + " aside,"
 }
 
-// chosenNoneInUnseen is the exit of a scoped run that chose no file while repositories under its path went unread:
-// an error, never a clean pass, for the files it was meant to judge were never chosen.
 const chosenNoneInUnseen = 2
 
-// choseNone says that a scoped run chose no file to judge, and why; with repositories under the path it never looked
-// into, that is an error, for their changes are the ones a reader most likely meant.
 func choseNone(targets scope.Scope, console cli.Console) int {
 	if len(targets.Unseen()) == 0 {
 		return console.Say("\033[32m✓ Nothing to judge: no source file under the path is among " + targets.ChosenBy() + ".\033[0m")
@@ -421,9 +373,6 @@ func choseNone(targets scope.Scope, console cli.Console) int {
 	return chosenNoneInUnseen
 }
 
-// judgedCount names the files a clean run judged: every file it read, or, scoped, the ones its scope chose of
-// them. A scope that cannot say HOW it chose, which is what naming one file is, says it in no clause at all
-// rather than leaving an empty one between two commas.
 func judgedCount(targets scope.Scope, chosen, scanned int) string {
 	files := strconv.Itoa(chosen) + " " + plural(chosen, "file", "files")
 	if !targets.IsScoped() {
@@ -436,8 +385,6 @@ func judgedCount(targets scope.Scope, chosen, scanned int) string {
 	return files + ", " + targets.ChosenBy() + ", of " + strconv.Itoa(scanned) + " read"
 }
 
-// unseenNote names the repositories under the path that a scoped run never looked into; nothing when it looked into
-// all.
 func unseenNote(targets scope.Scope) []string {
 	if len(targets.Unseen()) == 0 {
 		return nil
@@ -454,8 +401,6 @@ func plural(count int, one, many string) string {
 	return many
 }
 
-// saying is the words each sin a run could find is described by, keyed by its name: what a journal's card says
-// in place of the rule that found it. A project's own rule carries its own words, so both are read the same way.
 func saying(selected []detectors.Detector) map[string]string {
 	says := map[string]string{}
 	for _, rule := range selected {
@@ -466,7 +411,6 @@ func saying(selected []detectors.Detector) map[string]string {
 	return says
 }
 
-// run runs the tasks across the workers, or one by one and timed under --benchmark.
 func (Command) run(tasks []Task, options options, progress *cli.Progress, parseSeconds float64, console cli.Console) Judgement {
 	if !options.benchmark {
 		judging := time.Now()
@@ -484,7 +428,6 @@ func (Command) run(tasks []Task, options options, progress *cli.Progress, parseS
 	return judgement
 }
 
-// selectFrom narrows to one skill (a lenient slug match) and one sin (its name or its skill's slug).
 func selectFrom(list []detectors.Detector, skill, sin string) []detectors.Detector {
 	var kept []detectors.Detector
 
@@ -505,7 +448,6 @@ func selectFrom(list []detectors.Detector, skill, sin string) []detectors.Detect
 	return kept
 }
 
-// writtenIn are the languages these engines are written in, each once.
 func writtenIn(engines []catalog.Engine) []source.Language {
 	var languages []source.Language
 	for _, engine := range engines {
@@ -519,8 +461,6 @@ func writtenIn(engines []catalog.Engine) []source.Language {
 	return languages
 }
 
-// readAlongside are the languages these engines are written in and the languages that publish facts for them,
-// which a rule of theirs may read beside its own.
 func readAlongside(engines []catalog.Engine) []source.Language {
 	languages := writtenIn(engines)
 	for _, engine := range engines {
@@ -534,20 +474,15 @@ func readAlongside(engines []catalog.Engine) []source.Language {
 	return languages
 }
 
-// publishers are the languages whose facts an engine's rules read beside their own: the frontend asks
-// what the server publishes, and the backend what the frontend reads back.
 var publishers = map[catalog.Engine][]source.Language{
 	catalog.PHP:        {source.Vue, source.TypeScript},
 	catalog.Vue:        {source.PHP},
 	catalog.TypeScript: {source.PHP},
 }
 
-// languagesFor are the languages the selected rules read, less those the project does not write.
 func languagesFor(selected []detectors.Detector, project config.Config, root string) []source.Language {
 	var languages []source.Language
 
-	// Every engine a rule judges, since a project may write one rule for two languages: reading only the
-	// first engine's languages would leave such a rule looking at none of its other engine's files.
 	for _, detector := range selected {
 		for _, language := range readAlongside(detectors.EnginesOf(detector)) {
 			if project.Reads(root, language) && !slices.Contains(languages, language) {
@@ -559,8 +494,6 @@ func languagesFor(selected []detectors.Detector, project config.Config, root str
 	return languages
 }
 
-// readAcrossFiles are the rules that read more than the file they report in, by name, which is what decides
-// whether a scoped run may read the files it judges alone.
 func readAcrossFiles(selected []detectors.Detector) []string {
 	var across []string
 	for _, detector := range selected {
@@ -572,16 +505,6 @@ func readAcrossFiles(selected []detectors.Detector) []string {
 	return across
 }
 
-// sayWhyTheWholeTreeIsRead says, on a scoped run that had to read the whole path anyway, what made it.
-//
-// A rule that reads a recurrence, a caller or a twin cannot answer from the file it reports in, so the path is
-// parsed whole however few files the run judges. That is correct, and from outside it is indistinguishable from
-// --changes being ignored: a consumer watching "reading 107/5323" for thirteen changed files reported it as a bug,
-// with the count as the only thing they had to go on.
-//
-// So the run says it. How MANY of the selected rules read that way is the fact that matters, since on a full
-// curriculum it is scores of them and no single name is the cause; one such rule is named, because then it is.
-// The last clause is what the reader actually has to know: the scope still decided what was reported.
 func sayWhyTheWholeTreeIsRead(across []string, selected, judged int, console cli.Console) {
 	reason := strconv.Itoa(len(across)) + " of the " + strconv.Itoa(selected) + " rules read across files"
 	if len(across) == 1 {
@@ -592,10 +515,6 @@ func sayWhyTheWholeTreeIsRead(across []string, selected, judged int, console cli
 		judged, plural(judged, "file", "files"), reason)
 }
 
-// reaching are the languages a SCOPED run has to read: the ones its own files are in, and the ones that publish
-// facts for those, since a rule about a Vue component asks what the PHP server published. Every other language is
-// read for nothing — a finding of it lies in a file the run would not report — and on this repository that is ten
-// of the twenty-one seconds a worker pays per task. An unscoped run judges the whole path and reads it all.
 func reaching(targets scope.Scope, languages []source.Language) []source.Language {
 	files := targets.Files()
 	if len(files) == 0 {
@@ -619,8 +538,6 @@ func reaching(targets scope.Scope, languages []source.Language) []source.Languag
 	return reads
 }
 
-// publishesFor says whether the language's facts are read by the rules of a language that changed: the PHP a Vue
-// rule asks about, and the Vue and TypeScript a PHP rule asks about.
 func publishesFor(language source.Language, changed []source.Language) bool {
 	for engine, published := range publishers {
 		if !slices.Contains(published, language) {
@@ -637,8 +554,6 @@ func publishesFor(language source.Language, changed []source.Language) bool {
 	return false
 }
 
-// ofNoLanguage says whether a scoped run's own files are of no language the chosen rules read: every one of them
-// is a file those rules would never open. An unscoped run names no files and is never this.
 func ofNoLanguage(targets scope.Scope, languages []source.Language) bool {
 	files := targets.Files()
 	if len(files) == 0 || len(languages) == 0 {
@@ -654,8 +569,6 @@ func ofNoLanguage(targets scope.Scope, languages []source.Language) bool {
 	return true
 }
 
-// scannedLanguages are the languages a run counts as judged: PHP always, and every other language whose
-// rules ran.
 func scannedLanguages(selected []detectors.Detector) []source.Language {
 	languages := []source.Language{source.PHP}
 
@@ -670,8 +583,6 @@ func scannedLanguages(selected []detectors.Detector) []source.Language {
 	return languages
 }
 
-// judgedFiles is how many of the languages' files the run judged: C#'s are the files its bridge wrote, since
-// without the bridge none is read, and every other language's are the files the walk found.
 func judgedFiles(sources scan.Sources, csharpFiles int, languages []source.Language) int {
 	judged := 0
 
@@ -687,20 +598,6 @@ func judgedFiles(sources scan.Sources, csharpFiles int, languages []source.Langu
 	return judged
 }
 
-// readNothing are the bridges the scan had files for and the codebase holds not one file from.
-//
-// A bridge that is not on the machine, or one that died before its first line, is not a broken load: the scan
-// says so on STDERR, leaves its files unread and answers no error, because every other language is still judged.
-// What nobody said was that the run's verdict no longer covers that language. A judge then printed its green tick
-// and answered 0 with every Python file unread, which is a pass in the eye of whoever reads it, and nothing a
-// worker or a pipeline reads tells the two apart.
-//
-// So a bridge that read nothing is a part of the run that could not finish, named as the broken load names one,
-// and the exit code is the one a run that could not finish already has. A bridge that read SOME of its files is
-// already named by the load, and the same spelling keeps one bridge from being named twice.
-//
-// C# is left out: its rules judge a solution a project at a time, through judgeUnits, which says what it could
-// not read itself and is not in this codebase at all.
 func readNothing(sources scan.Sources, codebase *engine.Codebase) []string {
 	var silent []string
 	for _, bridge := range scan.Bridges {
@@ -727,8 +624,6 @@ func readNothing(sources scan.Sources, codebase *engine.Codebase) []string {
 	return silent
 }
 
-// wholeAndByProject splits the rules into those judged over the whole codebase at once and the C# rules, which judge
-// a solution a project at a time.
 func wholeAndByProject(rules []detectors.Detector) (whole, byProject []detectors.Detector) {
 	for _, rule := range rules {
 		if detectors.Judges(rule, catalog.CSharp) {
@@ -741,7 +636,6 @@ func wholeAndByProject(rules []detectors.Detector) (whole, byProject []detectors
 	return whole, byProject
 }
 
-// sourceRoots are what the run scans: the path it was given, or the roots the config declares.
 func sourceRoots(options options, judged config.Config) ([]string, error) {
 	if options.pathGiven {
 		return []string{strings.TrimRight(options.path, "/")}, nil
@@ -752,10 +646,6 @@ func sourceRoots(options options, judged config.Config) ([]string, error) {
 		return nil, err
 	}
 
-	// A folder one rule judges despite the exclusion is a root of its own when the declared paths do not already
-	// hold it: a project names `src` and excludes `tests`, so a walk rooted at `src` never meets a test file and
-	// the rule allowed in would have nothing to read. A run GIVEN a path is not widened, since it was asked for
-	// that path and nothing else.
 	for _, folder := range judged.JudgedDespiteExclusion() {
 		full := strings.TrimRight(options.path, "/") + "/" + folder
 		if !slices.ContainsFunc(roots, func(root string) bool { return under(full, root) }) {
@@ -766,14 +656,12 @@ func sourceRoots(options options, judged config.Config) ([]string, error) {
 	return roots, nil
 }
 
-// under says whether the folder is the root or sits inside it.
 func under(folder, root string) bool {
 	root = strings.TrimRight(root, "/")
 
 	return folder == root || strings.HasPrefix(folder, root+"/")
 }
 
-// judgedPaths is each file the run judged, by its absolute real path: its scope's files, or every file it walked.
 func judgedPaths(targets scope.Scope, sources scan.Sources) map[string]bool {
 	if files := targets.Files(); files != nil {
 		return files
@@ -788,7 +676,6 @@ func judgedPaths(targets scope.Scope, sources scan.Sources) map[string]bool {
 	return walked
 }
 
-// asWalked names every finding's file, location and twins by the path its file was walked as.
 func asWalked(findings []engine.Finding, given scan.Given) []engine.Finding {
 	for i, finding := range findings {
 		findings[i].File = given.Of(finding.File)
@@ -811,14 +698,6 @@ func locationAsWalked(location string, given scan.Given) string {
 	return given.Of(location[:at]) + location[at:]
 }
 
-// keep are the findings the run reports: in no excluded path fragment, and in scope — which for a scope about
-// lines means the finding stands on a line the change touched, and for every other scope means its file is a
-// target.
-//
-// A finding inside a folder the project excludes is reported when its OWN rule judges that folder, as the
-// project's config says. The folder stays excluded for every other rule, which is the whole of the allowance:
-// a project's tests judged by everything bury the few rules that belong there, and judged by none leave those
-// rules reporting nothing.
 func keep(findings []engine.Finding, exclude []string, targets scope.Scope, judged config.Config) []engine.Finding {
 	var kept []engine.Finding
 
@@ -836,8 +715,6 @@ func keep(findings []engine.Finding, exclude []string, targets scope.Scope, judg
 	return kept
 }
 
-// judgesItsFolder says whether the finding's own rule judges the excluded folder the finding stands in, and the
-// run was asked for that file at all.
 func judgesItsFolder(judged config.Config, finding engine.Finding, targets scope.Scope) bool {
 	folders := judged.Judged(config.RuleNamed(config.Detector, finding.Detector))
 	if len(folders) == 0 {
@@ -850,7 +727,6 @@ func judgesItsFolder(judged config.Config, finding engine.Finding, targets scope
 	return slices.ContainsFunc(folders, func(folder string) bool { return inFolder(finding.File, folder) })
 }
 
-// inFolder says whether the file sits in the folder, which the config names relative to the project.
 func inFolder(file, folder string) bool {
 	return strings.Contains(file, "/"+folder+"/") || strings.HasPrefix(file, folder+"/")
 }
@@ -889,7 +765,6 @@ func deleteChecklist(targets []string) {
 	}
 }
 
-// list prints every detector that would run here, grouped under the skill that fixes it.
 func list(cwd string, console cli.Console) (int, error) {
 	project, err := config.Load(cwd)
 	if err != nil {
@@ -936,9 +811,6 @@ func list(cwd string, console cli.Console) (int, error) {
 	return 0, nil
 }
 
-// languagesRead are the languages this project is read in, as a person reads them: a rule of a language the
-// project is not written in never runs, so a listing of the rules without them leaves a reader wondering which
-// of these will ever fire.
 func languagesRead(root string, project config.Config) []string {
 	var named []string
 	for _, language := range source.Languages {
@@ -952,22 +824,19 @@ func languagesRead(root string, project config.Config) []string {
 
 // options are what the arguments ask of a run.
 type options struct {
-	path      string
-	pathGiven bool
-	skill     string
-	sin       string
-	list      bool
-	exclude   []string
-	checklist []string
-	parallel  int
-	// parallelGiven says whether --parallel was given, so the project's own setting does not overrule it.
+	path          string
+	pathGiven     bool
+	skill         string
+	sin           string
+	list          bool
+	exclude       []string
+	checklist     []string
+	parallel      int
 	parallelGiven bool
 	benchmark     bool
 	ignore        bool
 }
 
-// within is the path as the run means it: one it names relative to the folder the run was started in, and an
-// absolute one as it stands.
 func within(folder, path string) string {
 	if path == "" || filepath.IsAbs(path) {
 		return path
@@ -1017,13 +886,6 @@ func optionsOf(in *cli.Input, space workspace.Workspace) options {
 	}
 }
 
-// sayWhereTheTimeWent says, when a run was asked, the one split that has answered every question about this
-// tool's speed: how long it spent READING and how long JUDGING. They are of different orders — reading is the
-// bridges and the parse, judging is the rules — and knowing which of the two a slow run was in has settled every
-// such question put to us, where guessing at it has settled none.
-//
-// `--benchmark` already profiles each rule, but it runs them one at a time to do so, which measures something
-// else. This times the run as it really happened and costs nothing when nobody asks.
 func sayWhereTheTimeWent(reading, judging float64, rules int, console cli.Console) {
 	if !cli.Timed() {
 		return

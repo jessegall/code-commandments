@@ -15,10 +15,8 @@ type HookMissingComputedDetector struct{}
 
 func init() { detectors.Register(catalog.PHP, HookMissingComputedDetector{}) }
 
-// Sin is the sin the detector finds.
 func (HookMissingComputedDetector) Sin() sins.Sin { return backendsins.HookMissingComputed{} }
 
-// Find is every get hook of a Data class missing #[Computed].
 func (HookMissingComputedDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return php.In(codebase).
 		WhereKind("PropertyHook").
@@ -27,5 +25,4 @@ func (HookMissingComputedDetector) Find(codebase *engine.Codebase) []engine.Matc
 		Get()
 }
 
-// Repentable says a scribe rewrites the sin away.
 func (HookMissingComputedDetector) Repentable() {}

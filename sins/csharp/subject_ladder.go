@@ -13,7 +13,6 @@ func init() {
 	sins.Register(catalog.CSharp, SubjectLadder{})
 }
 
-// Definition is what the sin states about itself.
 func (SubjectLadder) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "csharp-subject-ladder",

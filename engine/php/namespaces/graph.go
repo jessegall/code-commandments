@@ -1,5 +1,4 @@
-// Package namespaces reads which namespace of a PHP codebase references which: the graph the dependency-direction
-// rules judge, and the cycles a new reference would close.
+// Package namespaces reads which namespace of a PHP codebase references which: the graph the dependency-direction rules judge, and the cycles a new reference would close.
 package namespaces
 
 import (
@@ -55,22 +54,16 @@ var graphs = php.Memoised(func(codebase *engine.Codebase) *NamespaceGraph {
 	return graph
 })
 
-// Of is the codebase's namespace graph.
 func Of(codebase *engine.Codebase) *NamespaceGraph {
 	return graphs.Of(codebase)
 }
 
-// WouldCloseACycle says whether a reference from the referrer's namespace to the target's would close a cycle: the
-// target's namespace already references the referrer's.
 func (g *NamespaceGraph) WouldCloseACycle(referrer, target string) bool {
 	from, to := php.NamespaceOf(referrer), php.NamespaceOf(target)
 
 	return from != "" && to != "" && from != to && g.references[to][from]
 }
 
-// WouldCoupleIndependent says whether a reference from the referrer's namespace to the target's, asked of code in the
-// caller's namespace, would join two namespaces that reference each other in neither direction: the caller then
-// sits in a third namespace that references both, an adapter mapping one onto the other.
 func (g *NamespaceGraph) WouldCoupleIndependent(caller, referrer, target string) bool {
 	at, from, to := php.NamespaceOf(caller), php.NamespaceOf(referrer), php.NamespaceOf(target)
 	if at == "" || from == "" || to == "" || at == from || at == to || from == to {
@@ -80,15 +73,11 @@ func (g *NamespaceGraph) WouldCoupleIndependent(caller, referrer, target string)
 	return !g.references[from][to] && !g.references[to][from] && g.references[at][from] && g.references[at][to]
 }
 
-// declaresAnAssociation says whether the reference names one end of a two-way association a package declares: an
-// ORM relation call's argument, or a binding attribute's.
 func declaresAnAssociation(codebase *engine.Codebase, reference php.Node) bool {
 	return packages.Excuses(codebase, packages.Association, "", reference.ArgumentOfCall()) ||
 		packages.ExcusesAttribute(codebase, packages.Association, reference.EnclosingAttributeName())
 }
 
-// ArrowsClosingAMutualPair is every reference of the thinner direction of each pair of namespaces that reference
-// each other: fewer references, ties broken on the name.
 func (g *NamespaceGraph) ArrowsClosingAMutualPair() []engine.Match {
 	var cutting []engine.Match
 	for _, pair := range g.MutualPairs() {
@@ -98,7 +87,6 @@ func (g *NamespaceGraph) ArrowsClosingAMutualPair() []engine.Match {
 	return cutting
 }
 
-// MutualPairs is each pair of namespaces referencing each other, as its thinner direction, in first-seen order.
 func (g *NamespaceGraph) MutualPairs() [][2]string {
 	chosen := map[[2]string][2]string{}
 	var order [][2]string
@@ -127,8 +115,6 @@ func (g *NamespaceGraph) MutualPairs() [][2]string {
 	return pairs
 }
 
-// Distinct is the references kept once per class that makes them and class they name, imports aside: a class that
-// names another ten times crosses once.
 func Distinct(references []engine.Match) []engine.Match {
 	seen := map[[2]string]bool{}
 	var kept []engine.Match

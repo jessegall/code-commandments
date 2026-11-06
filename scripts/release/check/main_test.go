@@ -10,8 +10,6 @@ import (
 	"testing"
 )
 
-// release is a release folder holding one binary built from a tiny program for the platform, and a budget file
-// giving it the budget.
 func release(t *testing.T, platform string, budget int64) (dir, budgets string) {
 	t.Helper()
 	dir = t.TempDir()
@@ -89,8 +87,6 @@ func TestALinuxBinaryThatNeedsALoaderFails(t *testing.T) {
 	}
 }
 
-// TestACSharpBridgeIsSummedAndHeldToItsOwnBudget holds a release's C# bridge to a budget of its own, under its whole
-// name, beside the tool's, and never asks it to be static: it is .NET's executable, not Go's.
 func TestACSharpBridgeIsSummedAndHeldToItsOwnBudget(t *testing.T) {
 	dir, budgets := release(t, "linux-amd64", 64<<20)
 	if err := os.WriteFile(filepath.Join(dir, "roslyn-bridge-linux-amd64"), make([]byte, 2048), 0o755); err != nil {
@@ -115,8 +111,6 @@ func TestACSharpBridgeIsSummedAndHeldToItsOwnBudget(t *testing.T) {
 	}
 }
 
-// TestABudgetedBridgeMissingFromTheReleaseFails holds a release to every binary it budgets: a C# bridge a platform is
-// budgeted for and the folder lacks fails it, unless the folder is declared the tool's alone.
 func TestABudgetedBridgeMissingFromTheReleaseFails(t *testing.T) {
 	dir, budgets := release(t, "linux-amd64", 64<<20)
 	written, err := readBudgets(budgets)

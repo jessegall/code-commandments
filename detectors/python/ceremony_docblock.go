@@ -16,12 +16,10 @@ func init() {
 	detectors.Register(catalog.Python, CeremonyDocblockDetector{})
 }
 
-// Sin is the sin the detector finds.
 func (CeremonyDocblockDetector) Sin() sins.Sin {
 	return pysins.CeremonyDocblock{}
 }
 
-// Find is every place the sin is committed.
 func (CeremonyDocblockDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return py.In(codebase).
 		WhereFunction().

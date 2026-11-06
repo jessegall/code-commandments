@@ -11,10 +11,6 @@ import (
 	"time"
 )
 
-// TestAQueuedAnswerNamesTheAgentItIsFor holds the isolation a shared environment needs. The journal hands a
-// queued answer to the first agent whose hook drains the queue UNLESS the file names one, and a worker and the
-// main agent share an environment: while this wrote only the environment, a worker was told about the main
-// agent's edit — a file it had never seen, in a tree it does not have. That really happened.
 func TestAQueuedAnswerNamesTheAgentItIsFor(t *testing.T) {
 	words := "two sins"
 
@@ -63,8 +59,6 @@ func TestAQueuedAnswerNamesTheAgentItIsFor(t *testing.T) {
 	}
 }
 
-// TestAnEventsAgentIsReadHoweverItsNumberArrives holds the reading to the one thing it must not do: answer the
-// first agent for an event that named none. The journal numbers its agents from 1, so 0 is nobody.
 func TestAnEventsAgentIsReadHoweverItsNumberArrives(t *testing.T) {
 	for _, each := range []struct {
 		given any
@@ -83,10 +77,6 @@ func TestAnEventsAgentIsReadHoweverItsNumberArrives(t *testing.T) {
 	}
 }
 
-// TestTheMomentCarriesTheAgentTheEventNamed holds the fact where the service keeps it. The service answers the
-// journal inside a window and works the rest out afterwards, and the only thing it keeps of the event is the
-// moment it read from it: a moment that drops the agent's number leaves the answer naming nobody, however right
-// the event was.
 func TestTheMomentCarriesTheAgentTheEventNamed(t *testing.T) {
 	for _, each := range []struct {
 		why   string
@@ -110,17 +100,10 @@ func TestTheMomentCarriesTheAgentTheEventNamed(t *testing.T) {
 	}
 }
 
-// TestAnEditJudgedOnTheServicesPathIsQueuedForTheAgentThatMadeIt is the proof on the path that answers here: the
-// service, over its socket, judging after the answer went back. The program's own path read the agent off the
-// event and was right; the service kept only the moment, which carried no number, so every mark it worked out
-// named nobody and the journal gave it to the first agent that drained the queue — a worker was told about the
-// main agent's edit twice over.
 func TestAnEditJudgedOnTheServicesPathIsQueuedForTheAgentThatMadeIt(t *testing.T) {
 	root, _, data := projectWithASin(t)
 	t.Setenv("JOURNAL_ROOT", root)
 
-	// A socket's path is short by the operating system's rule, which a test's own folder is not: bound under one,
-	// listening answers "invalid argument" and the proof would skip itself.
 	short, err := os.MkdirTemp("", "s")
 	if err != nil {
 		t.Fatal(err)
@@ -170,8 +153,6 @@ func TestAnEditJudgedOnTheServicesPathIsQueuedForTheAgentThatMadeIt(t *testing.T
 	}
 }
 
-// queuedWithin is the queue once the judge has written to it, waited for: the service answers at once and works
-// the moment out afterwards, so there is nothing to hold on to but the file appearing.
 func queuedWithin(t *testing.T, data string, within time.Duration) []map[string]any {
 	t.Helper()
 	queue, _ := Queue4In(data)

@@ -6,11 +6,6 @@ import (
 	"testing"
 )
 
-// TestASocketIsNamedTheSameHoweverTheProjectWasReached holds the two sides of a kept bridge to one name. A service
-// is given the path the journal holds; a run of the tool works out the repository its own folder is in, which
-// resolves every link on the way. One link above the project, which is ordinary on a Mac, would otherwise have
-// them name two sockets, and the miss is silent: the run starts a bridge of its own and pays its whole start-up
-// while a warm one sits unreached beside it.
 func TestASocketIsNamedTheSameHoweverTheProjectWasReached(t *testing.T) {
 	real, err := filepath.EvalSymlinks(t.TempDir())
 	if err != nil {
@@ -44,8 +39,6 @@ func TestASocketIsNamedTheSameHoweverTheProjectWasReached(t *testing.T) {
 	}
 }
 
-// TestASocketIsNamedForAProjectThatIsNotThere holds the answer for a path nothing is at: a name is still wanted,
-// and two sides that cannot resolve it have to agree on it anyway.
 func TestASocketIsNamedForAProjectThatIsNotThere(t *testing.T) {
 	missing := filepath.Join(t.TempDir(), "nothing", "here")
 

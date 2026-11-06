@@ -1,6 +1,4 @@
-// Package scope decides which files a run may report on or rewrite: the whole tree, the working tree's
-// changes, a branch's changes, or the files a past checklist listed — always less what is frozen and what
-// the project excluded. The whole path is still parsed; only the targets narrow.
+// Package scope decides which files a run may report on or rewrite: the whole tree, the working tree's changes, a branch's changes, or the files a past checklist listed — always less what is frozen and what the project excluded.
 package scope
 
 import (
@@ -22,20 +20,10 @@ import (
 	"github.com/jessegall/code-commandments/cli/workspace"
 )
 
-// Latest names the newest checklist.
 const Latest = "latest"
 
-// defaultBase is the branch --branch compares against when neither the command line nor the project names one.
-//
-// It stays `main` because nothing can work a branch's own base out reliably: a pushed branch's upstream is its own
-// remote branch, so the merge base is its own tip and nothing would be judged, and the repository's default branch
-// is not the trunk in a project that works on another one. A project whose trunk is not main declares it instead,
-// and a base named on the command line always wins over both.
 const defaultBase = "main"
 
-// BaseOf is the branch a run compares a branch against where nothing names one: the one the project declares,
-// else main. Every reader of that question asks here, so the flag, the nested-repository form and the hold on a
-// worker's merge cannot disagree about a project's trunk.
 func BaseOf(path string) string {
 	project, err := config.Load(path)
 	if err != nil || strings.TrimSpace(project.Base) == "" {
@@ -45,7 +33,6 @@ func BaseOf(path string) string {
 	return strings.TrimSpace(project.Base)
 }
 
-// Options are the scope flags, parsed here and documented by every command that adopts them.
 func Options() []help.Option {
 	return []help.Option{
 		{Spec: "--changes", Does: "only the lines changed in the working tree"},
@@ -64,18 +51,14 @@ type FileScope interface {
 
 // Scope is a set of target files (every file, when unscoped) less what its restrictions leave out.
 type Scope struct {
-	files  map[string]bool
-	scoped bool
-	by     string
-	unseen []string
-	// lines are the lines of each file this scope is about, where it is about lines at all. A scope with none
-	// is about whole files, which is every scope but --changes.
+	files        map[string]bool
+	scoped       bool
+	by           string
+	unseen       []string
 	lines        map[string]git.ChangedLines
 	restrictions []FileScope
 }
 
-// FromArgs reads the scope flags from a command's raw tail for a run over path, the project excluding the
-// excluded paths. A scope that cannot be worked out (no repository, no base, no checklist) is an Unavailable.
 func FromArgs(args []string, path string, space workspace.Workspace, excluded []string) (Scope, error) {
 	picked, scoped, err := restrictTo(args, path, space, excluded)
 	if err != nil {
@@ -86,27 +69,20 @@ func FromArgs(args []string, path string, space workspace.Workspace, excluded []
 		lines: canonicalLines(picked.lines), restrictions: always(path, excluded)}, nil
 }
 
-// ChosenBy says what chose the files, as a reader reads it: "the files changed on this branch since main"; empty
-// when unscoped.
 func (s Scope) ChosenBy() string {
 	return s.by
 }
 
-// Unseen are the repositories under the path that the choice never looked into: a workspace's own checkouts, whose
-// changes a diff of the repository the path lies in cannot see.
 func (s Scope) Unseen() []string {
 	return s.unseen
 }
 
-// picked is what a scope flag chose: the files, what chose them, and the repositories under the path it never
-// looked into.
+// picked is what a scope flag chose: the files, what chose them, and the repositories under the path it never looked into.
 type picked struct {
 	files  map[string]bool
 	by     string
 	unseen []string
-	// lines are the lines of each file the change touched, where the scope is about lines rather than files.
-	// No entry at all means the whole of every file the scope names.
-	lines map[string]git.ChangedLines
+	lines  map[string]git.ChangedLines
 }
 
 func restrictTo(args []string, path string, space workspace.Workspace, excluded []string) (picked, bool, error) {
@@ -156,8 +132,6 @@ func restrictTo(args []string, path string, space workspace.Workspace, excluded 
 	return picked{}, false, nil
 }
 
-// nestedUnder are the repositories checked out beneath path, named from it: what a diff of the repository path lies
-// in never sees.
 func nestedUnder(path string, excluded []string) []string {
 	var named []string
 	if absolute, err := filepath.Abs(path); err == nil {
@@ -170,8 +144,6 @@ func nestedUnder(path string, excluded []string) []string {
 	return named
 }
 
-// nestedBranchChanges are the files head changed since it left its base in the repository named under path, the
-// spec `[BASE..]HEAD` with main for a base it does not name.
 func nestedBranchChanges(name, spec, path string) (picked, error) {
 	repository, err := nestedRepository(name, path)
 	if err != nil {
@@ -189,7 +161,6 @@ func nestedBranchChanges(name, spec, path string) (picked, error) {
 	return picked{files: changed, by: "the files " + head + " changed since " + base + " in " + name + checkedOut(repository, head)}, nil
 }
 
-// nestedRepository is the folder under path the name gives, refused unless it holds a repository of its own.
 func nestedRepository(name, path string) (string, error) {
 	repository := filepath.Join(path, name)
 	if _, err := os.Stat(filepath.Join(repository, ".git")); err != nil {
@@ -199,8 +170,6 @@ func nestedRepository(name, path string) (string, error) {
 	return repository, nil
 }
 
-// checkedOut is a note that the files are read as the repository has them, when it has another branch checked out
-// than the one that chose them.
 func checkedOut(repository, head string) string {
 	if current := git.CurrentBranch(repository); current != head {
 		return " (read as " + current + ", which is checked out there, has them)"
@@ -209,8 +178,6 @@ func checkedOut(repository, head string) string {
 	return ""
 }
 
-// pullRequestChanges are the files pull request `REPO#N` changes, asked of GitHub for the repository named under
-// path.
 func pullRequestChanges(spec, path string) (picked, error) {
 	name, number, numbered := strings.Cut(spec, "#")
 	if !numbered || name == "" || number == "" {
@@ -228,8 +195,6 @@ func pullRequestChanges(spec, path string) (picked, error) {
 	return picked{files: git.Listed(repository, files), by: "the files pull request " + spec + " (" + head + ") changes" + checkedOut(repository, head)}, nil
 }
 
-// pullRequest is the pull request's changed files, relative to its repository, and its head branch, as gh answers
-// for the repository checked out at repository.
 var pullRequest = func(repository, number string) ([]string, string, error) {
 	command := exec.Command("gh", "pr", "view", number, "--json", "files,headRefName")
 	command.Dir = repository
@@ -254,12 +219,10 @@ var pullRequest = func(repository, number string) ([]string, string, error) {
 	return files, answer.HeadRefName, nil
 }
 
-// Everything is every file, less what is frozen.
 func Everything() Scope {
 	return Scope{restrictions: always("", nil)}
 }
 
-// RestrictedTo is exactly these files, less what is frozen.
 func RestrictedTo(files []string) Scope {
 	set := map[string]bool{}
 
@@ -270,8 +233,6 @@ func RestrictedTo(files []string) Scope {
 	return Scope{files: canonical(set), scoped: true, restrictions: always("", nil)}
 }
 
-// NarrowedTo is the scope narrowed to the one file `judge <file>` names: it alone is a target, and only when the
-// scope already took it in.
 func (s Scope) NarrowedTo(file string) Scope {
 	real, err := resolve(file)
 	if err != nil {
@@ -289,14 +250,12 @@ func (s Scope) NarrowedTo(file string) Scope {
 	return s
 }
 
-// And is this scope further narrowed by a restriction.
 func (s Scope) And(restriction FileScope) Scope {
 	s.restrictions = append(slices.Clone(s.restrictions), restriction)
 
 	return s
 }
 
-// Includes says whether the file is a target.
 func (s Scope) Includes(file string) bool {
 	for _, restriction := range s.restrictions {
 		if !restriction.Includes(file) {
@@ -313,9 +272,6 @@ func (s Scope) Includes(file string) bool {
 	return err == nil && s.files[real]
 }
 
-// Covers says whether a finding at this line of this file is reported. A scope about whole files covers every
-// line of the files it names, and one about lines covers only what the change touched: a sin the change did not
-// write is somebody else's to answer for, and the moment to say so is when they open that file.
 func (s Scope) Covers(file string, line int) bool {
 	if !s.Includes(file) {
 		return false
@@ -335,13 +291,6 @@ func (s Scope) Covers(file string, line int) bool {
 	return changed.Covers(line)
 }
 
-// CoversJudged says whether the scope would cover a finding at this line of this file but for the paths the
-// project excludes: the question to ask about a finding whose OWN rule judges the excluded folder it stands in.
-//
-// The exclusion is the only restriction set aside. A run told to judge one path still reports nothing outside
-// it, and a run about the lines a change touched still reports nothing the change did not write, whatever a
-// rule is allowed to judge: a whitelist says which rule may look inside an excluded folder, never that a run
-// should widen past what it was asked for.
 func (s Scope) CoversJudged(file string, line int) bool {
 	allowed := s
 	allowed.restrictions = slices.DeleteFunc(slices.Clone(s.restrictions), func(restriction FileScope) bool {
@@ -353,8 +302,6 @@ func (s Scope) CoversJudged(file string, line int) bool {
 	return allowed.Covers(file, line)
 }
 
-// canonicalLines are the lines keyed by each file as the scope resolves it, so a finding's path and a diff's
-// path are the same key however either was spelled.
 func canonicalLines(lines map[string]git.ChangedLines) map[string]git.ChangedLines {
 	if len(lines) == 0 {
 		return nil
@@ -371,8 +318,6 @@ func canonicalLines(lines map[string]git.ChangedLines) map[string]git.ChangedLin
 	return canonical
 }
 
-// Permits says whether every file that exists is a target: a cross-file fix touching one that is not is
-// dropped whole.
 func (s Scope) Permits(files []string) bool {
 	for _, file := range files {
 		if _, err := os.Stat(file); err == nil && !s.Includes(file) {
@@ -383,17 +328,14 @@ func (s Scope) Permits(files []string) bool {
 	return true
 }
 
-// IsScoped says whether the scope names its files rather than taking every one.
 func (s Scope) IsScoped() bool {
 	return s.scoped
 }
 
-// IsEmpty says whether the scope names no file at all.
 func (s Scope) IsEmpty() bool {
 	return s.scoped && len(s.files) == 0
 }
 
-// Files are the named target files, resolved; nil when unscoped.
 func (s Scope) Files() map[string]bool {
 	return s.files
 }
@@ -426,7 +368,6 @@ func canonical(files map[string]bool) map[string]bool {
 	return set
 }
 
-// Repent is the checklist --repent names, `latest` when bare, and whether the flag is given.
 func Repent(args []string) (string, bool) {
 	return optional(args, "--repent", Latest)
 }
@@ -471,8 +412,6 @@ func checklist(id string, space workspace.Workspace) (map[string]bool, error) {
 	return files, nil
 }
 
-// changedLinesOf are the lines each of the files has that the working tree changed, read once per file. A file
-// the diff cannot be read for covers every line, which is what a file with no history is anyway.
 func changedLinesOf(root string, files map[string]bool) map[string]git.ChangedLines {
 	lines := map[string]git.ChangedLines{}
 	for file := range files {
@@ -518,7 +457,6 @@ func notARepository(path string) error {
 	return &Unavailable{"Not a git repository (or git unavailable): " + path}
 }
 
-// IsUnavailable says whether err is a scope that could not be worked out.
 func IsUnavailable(err error) bool {
 	var unavailable *Unavailable
 
@@ -530,7 +468,6 @@ type Path struct {
 	root string
 }
 
-// Under is the scope of the files under root.
 func Under(root string) Path {
 	real, err := resolve(root)
 	if err != nil {
@@ -540,7 +477,6 @@ func Under(root string) Path {
 	return Path{strings.TrimRight(real, "/")}
 }
 
-// Includes says whether the file is root or under it.
 func (p Path) Includes(file string) bool {
 	real, err := resolve(file)
 	if err != nil {
@@ -555,7 +491,6 @@ type Excluded struct {
 	paths source.Excluded
 }
 
-// Includes says whether the project did not exclude the file.
 func (e Excluded) Includes(file string) bool {
 	return !e.paths.Covers(file)
 }
@@ -565,7 +500,6 @@ type Frozen struct {
 	seen sync.Map
 }
 
-// Includes says whether the file is not frozen; a file not on disk carries no mark.
 func (f *Frozen) Includes(file string) bool {
 	real, err := resolve(file)
 	if err != nil {
@@ -582,7 +516,6 @@ func (f *Frozen) Includes(file string) bool {
 	return !frozen
 }
 
-// resolve is the file's real, absolute path, as PHP's realpath answers it.
 func resolve(file string) (string, error) {
 	real, err := filepath.EvalSymlinks(file)
 	if err != nil {

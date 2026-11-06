@@ -13,7 +13,6 @@ func init() {
 	sins.Register(catalog.PHP, RethrownUnchanged{})
 }
 
-// Definition is what the sin states about itself.
 func (RethrownUnchanged) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "rethrown-unchanged",

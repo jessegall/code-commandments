@@ -1,5 +1,4 @@
-// Package scaffold is `scaffold`: generate the reusable helper a sin's fix uses into the project, its
-// namespace filled, skipping any that is already there.
+// Package scaffold is `scaffold`: generate the reusable helper a sin's fix uses into the project, its namespace filled, skipping any that is already there.
 package scaffold
 
 import (
@@ -19,18 +18,15 @@ import (
 	"github.com/jessegall/code-commandments/stubs"
 )
 
-// frontendRoot is where a frontend helper goes.
 const frontendRoot = "resources/js"
 
 // Command is `scaffold`.
 type Command struct{}
 
-// Names are the verbs it answers to.
 func (Command) Names() []string {
 	return []string{"scaffold"}
 }
 
-// Help documents it.
 func (Command) Help() help.Help {
 	return help.Of("Generate the reusable helper a sin's fix uses — written into your source root with its namespace injected. Idempotent: an existing file is skipped.").
 		Form("scaffold", "generate every sin's scaffold that is missing").
@@ -39,7 +35,6 @@ func (Command) Help() help.Help {
 		Option("--dry-run", "print what would be created, and its contents, without writing")
 }
 
-// Scaffoldable maps each sin that scaffolds a helper to the command that does it.
 func Scaffoldable() map[string]string {
 	commands := map[string]string{}
 
@@ -53,7 +48,6 @@ func Scaffoldable() map[string]string {
 	return commands
 }
 
-// Run writes every missing helper the named sins scaffold.
 func (Command) Run(in *cli.Input, console cli.Console) (int, error) {
 	query, filtered := in.Option("sin")
 	dryRun := in.HasFlag("dry-run")
@@ -148,8 +142,6 @@ func report(created, skipped []string, query string, filtered, dryRun bool, cons
 	return 0
 }
 
-// existingOf is the helper already in the project: the target itself, or for a frontend helper a file of
-// its name anywhere under the frontend root.
 func existingOf(cwd, target string, helper sins.Scaffold) (string, bool) {
 	if info, err := os.Stat(target); err == nil && info.Mode().IsRegular() {
 		return target, true
@@ -162,7 +154,6 @@ func existingOf(cwd, target string, helper sins.Scaffold) (string, bool) {
 	return find(cwd+"/"+frontendRoot, filepath.Base(helper.Path))
 }
 
-// find is the first file named name under dir, in the order the PHP tool met its folders' entries.
 func find(dir, name string) (string, bool) {
 	for _, entry := range listing.Of(dir) {
 		path := dir + "/" + entry
@@ -198,8 +189,6 @@ func namespaceFor(root string, helper sins.Scaffold) string {
 	return root + `\` + strings.ReplaceAll(sub, "/", `\`)
 }
 
-// sourceRoot is the folder and namespace helpers go under: composer.json's PSR-4 entry for app/, else its
-// first.
 func sourceRoot(cwd string) (dir, namespace string, found bool) {
 	raw, err := os.ReadFile(cwd + "/composer.json")
 	if err != nil {
@@ -221,7 +210,6 @@ func sourceRoot(cwd string) (dir, namespace string, found bool) {
 	return strings.TrimRight(entries[0][1], "/"), strings.TrimRight(entries[0][0], `\`), true
 }
 
-// psr4 are composer.json's PSR-4 namespaces and folders, in the order the file writes them.
 func psr4(raw []byte) [][2]string {
 	var manifest struct {
 		Autoload struct {

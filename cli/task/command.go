@@ -12,21 +12,17 @@ import (
 	"github.com/jessegall/code-commandments/cli/workspace"
 )
 
-// stale is how many minutes untouched makes an active task stale, unless --for says otherwise.
 const stale = 60
 
 // Command is `task`: the numbered work in front of this session.
 type Command struct {
-	// Now is the clock tasks are stamped with.
 	Now func() time.Time
 }
 
-// Names are the verbs it answers to.
 func (Command) Names() []string {
 	return []string{"task", "tasks"}
 }
 
-// Help documents it.
 func (Command) Help() help.Help {
 	return help.Of("The work in front of this session — numbered tasks, one markdown file each, moved between queue, active and history.").
 		Form("task", "the board — every task still owed, in address order, subtasks beneath their parent").
@@ -49,7 +45,6 @@ func (Command) Help() help.Help {
 			"session ever had — which is also why a number is never handed out twice.")
 }
 
-// Run answers the form the arguments name.
 func (c Command) Run(in *cli.Input, console cli.Console) (int, error) {
 	cwd, err := os.Getwd()
 	if err != nil {
@@ -221,7 +216,6 @@ func (c Command) moved(tasks Tasks, task Task, to State, why, said string, conso
 	return console.Say(said)
 }
 
-// parentIn is the task --under names, or the board when it names none.
 func parentIn(tasks Tasks, in *cli.Input) (ID, bool) {
 	under, given := in.Option("under")
 	if !given {
@@ -251,7 +245,6 @@ func noSuchTask(id string, console cli.Console) int {
 	return console.Refuse(said, "  `"+binary.Here()+" task` lists what is open, `"+binary.Here()+" task history` what is closed.")
 }
 
-// leadingInt reads a number as PHP's (int) cast does: the leading digits with a sign, else 0.
 func leadingInt(text string) int {
 	text = strings.TrimLeft(text, " \t\n\r\v\f")
 	end := 0

@@ -14,10 +14,8 @@ type StringMatchMirrorsEnumDetector struct{}
 
 func init() { detectors.Register(catalog.PHP, StringMatchMirrorsEnumDetector{}) }
 
-// Sin is the sin the detector finds.
 func (StringMatchMirrorsEnumDetector) Sin() sins.Sin { return backendsins.StringMatchMirrorsEnum{} }
 
-// Find is every match or switch not on ->value whose case literals are one enum's values.
 func (StringMatchMirrorsEnumDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return php.In(codebase).
 		Where(engine.As(func(n php.Node) bool { return len(n.ArmConditionLiterals()) > 0 })).
@@ -26,5 +24,4 @@ func (StringMatchMirrorsEnumDetector) Find(codebase *engine.Codebase) []engine.M
 		Get()
 }
 
-// CrossFile says the PHP tool finds it reaching beyond the file it judges, so a per-file check must not ask it.
 func (StringMatchMirrorsEnumDetector) CrossFile() {}

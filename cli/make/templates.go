@@ -11,13 +11,10 @@ import (
 	"github.com/jessegall/code-commandments/catalog"
 )
 
-// shipped are the ready rules a commandment can start from.
-//
 //go:embed templates/*.json
 var shipped embed.FS
 
-// Template is a ready rule: what it flags, its sin, and its query for each engine it is written for, or for
-// every engine under "*".
+// Template is a ready rule: what it flags, its sin, and its query for each engine it is written for, or for every engine under "*".
 type Template struct {
 	Name    string                     `json:"-"`
 	Summary string                     `json:"summary"`
@@ -31,8 +28,6 @@ type TemplateSin struct {
 	Rule        string `json:"rule"`
 }
 
-// Templates are every ready rule, by name. They ship inside the binary, so one that cannot be read is a defect of
-// the build, never of the project, and stops it at once.
 func Templates() []Template {
 	entries, err := shipped.ReadDir("templates")
 	if err != nil {
@@ -60,7 +55,6 @@ func Templates() []Template {
 	return templates
 }
 
-// TemplateNamed is the ready rule of the name.
 func TemplateNamed(name string) (Template, bool) {
 	templates := Templates()
 
@@ -72,8 +66,6 @@ func TemplateNamed(name string) (Template, bool) {
 	return templates[at], true
 }
 
-// Query is the template's query for the engine; false when it is written for other engines only. A key is read
-// as any engine name is, so a template that names an engine by what it was called before still answers.
 func (t Template) Query(engine Engine) (json.RawMessage, bool) {
 	for key, query := range t.Find {
 		if named, known := catalog.EngineNamed(key); known && named == engine {
@@ -86,7 +78,6 @@ func (t Template) Query(engine Engine) (json.RawMessage, bool) {
 	return query, everywhere
 }
 
-// Engines are the engines the template is written for.
 func (t Template) Engines() []Engine {
 	var written []Engine
 	for _, engine := range Engines {
@@ -98,7 +89,6 @@ func (t Template) Engines() []Engine {
 	return written
 }
 
-// templateNames are the names of every ready rule.
 func templateNames() string {
 	var names []string
 	for _, template := range Templates() {
@@ -108,7 +98,6 @@ func templateNames() string {
 	return strings.Join(names, ", ")
 }
 
-// engineList names the engines, comma-separated.
 func engineList(engines []Engine) string {
 	var names []string
 	for _, engine := range engines {

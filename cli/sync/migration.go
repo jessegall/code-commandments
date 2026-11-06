@@ -9,13 +9,10 @@ import (
 	"github.com/jessegall/code-commandments/cli/workspace"
 )
 
-// format is the state-file format a project is brought up to; a project already there is left alone.
 const format = 5
 
-// checklists is the folder a session keeps its judge checklists in.
 const checklists = "sins"
 
-// formatLegend says what the format stamp is for.
 var formatLegend = &state.Legend{
 	About: "Which format code-commandments writes its session state files in. It exists so an upgrade " +
 		"can convert what is already on disk exactly once.",
@@ -24,9 +21,6 @@ var formatLegend = &state.Legend{
 	Safe:      "the conversion simply runs again on the next `composer update`",
 }
 
-// Migrate carries the project's session state across a format change, once: session folders move to where
-// they live now, what still has a reader is moved into place, and the files of a removed feature go. It
-// answers what it did, a line each.
 func Migrate(space workspace.Workspace) []string {
 	var done []string
 
@@ -66,17 +60,14 @@ func session(dir string) []string {
 	return done
 }
 
-// gate removes the files of the stop gate, which the agent journal replaced.
 func gate(dir string) string {
 	return removed(dir, "stop-gate file(s) removed", ".until*")
 }
 
-// plan removes the files of plan execution, which is gone.
 func plan(dir string) string {
 	return removed(dir, "plan file(s) removed", ".plan-*", ".constraints-verified")
 }
 
-// counters resets every hook counter, whose format changed.
 func counters(dir string) string {
 	return removed(dir, "hook counter(s) reset", ".*-count")
 }
@@ -100,8 +91,6 @@ func removed(dir, what string, patterns ...string) string {
 	return strconv.Itoa(count) + " " + what
 }
 
-// moveChecklists moves the judge checklists a session kept loose into its checklist folder; one already
-// there is not overwritten, and with no folder to put them in they stay where they are.
 func moveChecklists(dir string) string {
 	loose, _ := filepath.Glob(filepath.Join(dir, "sins.md"))
 	numbered, _ := filepath.Glob(filepath.Join(dir, "sins-*.md"))

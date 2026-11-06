@@ -1,5 +1,4 @@
-// Package scan reads a project's sources into the engine: it walks the roots once, hands each language's
-// files to that language's bridge, and loads every stream into one codebase, the way the engines share it.
+// Package scan reads a project's sources into the engine: it walks the roots once, hands each language's files to that language's bridge, and loads every stream into one codebase, the way the engines share it.
 package scan
 
 import (
@@ -29,24 +28,15 @@ type Sources struct {
 	read       func(done, total int)
 }
 
-// largestSource is the most source a file may hold and still be read: past it a file is generated or minified, and
-// its tree outgrows the line a stream carries it in.
 const largestSource = 2 << 20
 
-// longestWrittenLine is the longest line a person writes. Past it the file is minified, whatever its size: a
-// bundle holds a whole program on a handful of lines, and parsing one costs the memory of everything it was built
-// from while telling nobody anything, since no finding on generated code is a finding anyone can act on.
 const longestWrittenLine = 5000
 
-// smallestBundle is the size under which a line cannot be long enough to matter, so a small file is never read
-// twice to look for one.
 const smallestBundle = 64 << 10
 
-// Given is each walked file's resolved path, back to the path it was walked as: a bridge answers with
-// resolved paths, and a report names a file the way the run was asked for it.
+// Given is each walked file's resolved path, back to the path it was walked as: a bridge answers with resolved paths, and a report names a file the way the run was asked for it.
 type Given map[string]string
 
-// Of is the path the file was walked as; a file the walk never met keeps its path.
 func (g Given) Of(path string) string {
 	if given, walked := g[path]; walked {
 		return given
@@ -55,15 +45,11 @@ func (g Given) Of(path string) string {
 	return path
 }
 
-// GivenOf is where each of the sources' files was walked from.
 func (s Sources) GivenOf() Given {
 	given := Given{}
 
 	for _, files := range s.byLanguage {
 		for _, file := range files {
-			// A file is found again by the path it really has, so one whose links or absolute form cannot be
-			// had is no entry at all: keying it by anything else would answer a later look wrongly. That is
-			// stricter than resolved() below, which keeps what it was given, because this is a key.
 			real, err := filepath.EvalSymlinks(file)
 			if err != nil {
 				continue
@@ -79,8 +65,6 @@ func (s Sources) GivenOf() Given {
 	return given
 }
 
-// Walk finds the source files under every root, less what is excluded, each file once, in the order the
-// walk meets them.
 func Walk(roots []string, excluded source.Excluded) Sources {
 	sources := Sources{byLanguage: map[source.Language][]string{}, roots: roots}
 	seen := map[string]bool{}
@@ -105,18 +89,14 @@ func Walk(roots []string, excluded source.Excluded) Sources {
 	return sources
 }
 
-// OneFile is the sources of one file alone, in its language, rooted at its folder.
 func OneFile(path string) Sources {
 	return Sources{byLanguage: map[source.Language][]string{source.OfFile(path): {path}}, roots: []string{filepath.Dir(path)}}
 }
 
-// Roots are the folders the walk was started from, which is what tells a run reading one project's tree from a
-// run reading another's beside it.
 func (s Sources) Roots() []string {
 	return s.roots
 }
 
-// Count is how many files the languages have.
 func (s Sources) Count(languages ...source.Language) int {
 	count := 0
 
@@ -127,7 +107,6 @@ func (s Sources) Count(languages ...source.Language) int {
 	return count
 }
 
-// Within is how many files of the languages the target takes in.
 func (s Sources) Within(target interface{ Includes(string) bool }, languages ...source.Language) int {
 	count := 0
 	for _, file := range s.Files(languages...) {
@@ -139,7 +118,6 @@ func (s Sources) Within(target interface{ Includes(string) bool }, languages ...
 	return count
 }
 
-// Only are the sources of these languages alone.
 func (s Sources) Only(languages ...source.Language) Sources {
 	kept := Sources{byLanguage: map[source.Language][]string{}, roots: s.roots, tooLarge: s.tooLarge, read: s.read}
 
@@ -152,15 +130,12 @@ func (s Sources) Only(languages ...source.Language) Sources {
 	return kept
 }
 
-// Reporting is these sources telling each, as Load's bridges read every file, how many of the files they read are
-// read so far, and of how many.
 func (s Sources) Reporting(each func(done, total int)) Sources {
 	s.read = each
 
 	return s
 }
 
-// Bridged is how many files Load hands its bridges to read.
 func (s Sources) Bridged() int {
 	count := 0
 	for _, read := range Bridges {
@@ -170,8 +145,6 @@ func (s Sources) Bridged() int {
 	return count
 }
 
-// bridgesAtOnce is how many bridges Load runs side by side: each is a process of its own, and two keep the scan
-// within two cores.
 const bridgesAtOnce = 2
 
 // bridged is what one reader's bridge answered.
@@ -181,8 +154,6 @@ type bridged struct {
 	err    error
 }
 
-// Load streams every language's files through its bridge, two bridges at a time, and loads the streams into one
-// codebase in the readers' order, with the facts the engine fills for PHP filled.
 func (s Sources) Load() (*engine.Codebase, error) {
 	var streams []*contract.Stream
 	var incomplete Incomplete
@@ -225,8 +196,6 @@ func (s Sources) Load() (*engine.Codebase, error) {
 	return codebase, nil
 }
 
-// bridge runs the bridge of every reader with files to read, bridgesAtOnce at a time, and tells each file any of them
-// reads as it reads it; the answers are keyed by the reader's place in readers.
 func (s Sources) bridge() map[int]bridged {
 	finished := make(chan bridged)
 	slots := make(chan struct{}, bridgesAtOnce)
@@ -254,8 +223,7 @@ func (s Sources) bridge() map[int]bridged {
 	return answered
 }
 
-// Incomplete is a load a bridge broke off: the codebase holds every other language, and what the broken bridge
-// wrote before it stopped.
+// Incomplete is a load a bridge broke off: the codebase holds every other language, and what the broken bridge wrote before it stopped.
 type Incomplete struct {
 	Bridges []string
 }
@@ -264,8 +232,6 @@ func (i Incomplete) Error() string {
 	return strings.Join(i.Bridges, ", ") + " stopped before it read every file"
 }
 
-// partly is what a broken bridge read before it stopped, said on STDERR with why, so every other file is still
-// judged; nothing when it stopped before its header.
 func partly(stream *contract.Stream, err error, files int) *contract.Stream {
 	if stream == nil || stream.Header.Language == "" {
 		fmt.Fprintf(os.Stderr, "⚠ %d file(s) left unread, every other language is still judged — %v\n", files, err)
@@ -277,8 +243,6 @@ func partly(stream *contract.Stream, err error, files int) *contract.Stream {
 	return stream
 }
 
-// tally is told each file a bridge reads, from any of the bridges at once, and tells the count to whoever Reporting
-// named; nothing is told when none was.
 func (s Sources) tally() func() {
 	if s.read == nil {
 		return func() {}
@@ -294,7 +258,6 @@ func (s Sources) tally() func() {
 	}
 }
 
-// project is the repository the first root lies in, the folder a rule's path pattern is read from; none outside one.
 func (s Sources) project() string {
 	if len(s.roots) == 0 {
 		return ""
@@ -307,10 +270,6 @@ func (s Sources) project() string {
 	return git.Root(root)
 }
 
-// JustThese are the sources narrowed to the files the scope holds, keeping each in the language the walk read it
-// as: a scoped run whose rules all read one file at a time needs the files it judges parsed and no others, and
-// the walk's own answer about what each file IS stays the answer. The scope is asked rather than a path compared,
-// since a walk names a file as its root named it and a scope names it as the repository does.
 func (s Sources) JustThese(holds func(path string) bool) Sources {
 	kept := Sources{byLanguage: map[source.Language][]string{}, roots: s.roots, tooLarge: s.tooLarge, read: s.read}
 
@@ -325,8 +284,6 @@ func (s Sources) JustThese(holds func(path string) bool) Sources {
 	return kept
 }
 
-// Files are the walked files of these languages, in the order the walk met them: what Load hands the bridge that
-// reads them, and what a service warming that bridge asks it for.
 func (s Sources) Files(languages ...source.Language) []string {
 	var files []string
 
@@ -337,18 +294,6 @@ func (s Sources) Files(languages ...source.Language) []string {
 	return files
 }
 
-// keptFor is the bridge of the kind a session keeps up for the project the run works on, when every root lies in it.
-//
-// The project is whose SERVICE it is, and only one is kept per project: a worktree has none of its own. Asked
-// from a worktree, this used to name a socket nobody listens on, so every judging of a worker's edit started a
-// bridge of its own and paid its whole start-up — measured on a real tree as 88 seconds for one small file while
-// three workers edited at once, against a median of 2.8 seconds for the same work in the main checkout. The
-// files judged are still the worktree's; only the bridge is shared.
-//
-// The journal is ASKED first, because it knows: it hands every program it runs a JOURNAL_ROOT naming the main
-// checkout, which is the same folder it keeps the service for. Working it out from git was the oversight — a
-// second answer to a question already answered, and the one that got it wrong in a worktree. The git lookup
-// stays for a run the journal did not start, where nobody has told us anything.
 func keptFor(kind string, roots []string) (*bridge.Server, bool) {
 	project, found := projectOf(roots)
 	if !found {
@@ -358,14 +303,6 @@ func keptFor(kind string, roots []string) (*bridge.Server, bool) {
 	return bridge.Service(kind, project)
 }
 
-// projectOf is whose service a run belongs to: the project the roots it reads lie in.
-//
-// The journal is asked first, and it is right whenever the run reads the checkout it started us in. It is the
-// WRONG answer for a run pointed at another project, which is an ordinary thing to do — an agent judging a tree
-// beside its own, a calibration over a consumer's sources — and until this took the roots into account, such a
-// run named a project the roots do not lie in, found no service, and started a bridge of its own: measured at 39
-// seconds for one Python file of a 5286-file tree against 8.7 the moment the right project was named. A project
-// named by someone who could not know what this run reads is no answer; the roots answer for themselves.
 func projectOf(roots []string) (string, bool) {
 	cwd, _ := os.Getwd()
 
@@ -388,16 +325,11 @@ func projectOf(roots []string) (string, bool) {
 	return "", false
 }
 
-// sayUnreadable says, on STDERR, which classes the scanned project's own loader failed on: each stays outside the
-// scan, and the run says why rather than letting it vanish.
 func sayUnreadable(streams []*contract.Stream) {
 	for _, stream := range streams {
 		if stream.Program == nil {
 			continue
 		}
-		// What is wrong and what to run stand on the first line, and why it matters on the second: one line
-		// carrying both ran to 230 characters, which is past what a reader takes in and past what a log tail or
-		// a card can show.
 		if stream.Program.Loader != "" {
 			fmt.Fprintf(os.Stderr, "⚠ no class of a package is read: %s\n", stream.Program.Loader)
 			fmt.Fprintln(os.Stderr, "  ↳ a method a package's interface fixes reads as the class's own, so a rule that would excuse it cannot")
@@ -408,8 +340,6 @@ func sayUnreadable(streams []*contract.Stream) {
 	}
 }
 
-// unreadable says whether the file is generated rather than written: more source than a person writes, or a line
-// longer than one. Either way its tree costs what the program it was built from costs, and says nothing back.
 func unreadable(file string, size int64) bool {
 	if size > largestSource {
 		return true
@@ -418,8 +348,6 @@ func unreadable(file string, size int64) bool {
 	return size >= smallestBundle && holdsALongLine(file)
 }
 
-// holdsALongLine says whether any line of the file is longer than a person writes, reading no further than the
-// line that proves it.
 func holdsALongLine(file string) bool {
 	open, err := os.Open(file)
 	if err != nil {
@@ -446,15 +374,12 @@ func holdsALongLine(file string) bool {
 	}
 }
 
-// sayTooLarge names, on STDERR, each file left unread as generated; every other file is still judged.
 func sayTooLarge(files []string) {
 	for _, file := range files {
 		fmt.Fprintf(os.Stderr, "⚠ %s is left unread: it is generated or minified — more than %d MB of source, or a line longer than %d characters; exclude it in the config\n", file, largestSource>>20, longestWrittenLine)
 	}
 }
 
-// leftUnread says, on STDERR, that a language's files go unread because its bridge cannot run on this machine, and
-// whether they do: every other language is still judged.
 func leftUnread(err error, files int) bool {
 	if !isUnavailable(err) {
 		return false
@@ -464,15 +389,12 @@ func leftUnread(err error, files int) bool {
 	return true
 }
 
-// isUnavailable says whether the error is a bridge that could not be had: one that is not there, or one that
-// started and then died. What it was asked to read goes unread, and every other language is still judged.
 func isUnavailable(err error) bool {
 	var unavailable bridge.Unavailable
 
 	return errors.As(err, &unavailable)
 }
 
-// within says whether every root lies in the project.
 func within(project string, roots []string) bool {
 	for _, root := range roots {
 		if root != project && !strings.HasPrefix(root, project+string(filepath.Separator)) {
@@ -483,7 +405,6 @@ func within(project string, roots []string) bool {
 	return project != ""
 }
 
-// resolved is each path absolute with its links resolved, as a container mounts it and the bridge names it.
 func resolved(paths []string) []string {
 	var real []string
 

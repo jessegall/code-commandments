@@ -10,13 +10,8 @@ import (
 	"github.com/jessegall/code-commandments/cli/git"
 )
 
-// flag is the option that keeps a read off the repository's index lock.
 const flag = "--no-optional-locks"
 
-// TestAStatusReadNeverRewritesTheIndex is the whole point of the flag, proven against real git: a read of a
-// working tree whose index is stale leaves .git/index exactly as it was. Rewriting it takes .git/index.lock,
-// and these reads come from a hook, beside a session running git itself — a status read taking that lock made
-// `git commit` in the same checkout fail with "Unable to create index.lock", four commits in a row.
 func TestAStatusReadNeverRewritesTheIndex(t *testing.T) {
 	root := repository(t)
 	stale(t, root)
@@ -30,9 +25,6 @@ func TestAStatusReadNeverRewritesTheIndex(t *testing.T) {
 	}
 }
 
-// TestGitRewritesTheIndexWithoutTheFlag is the control: the same read without the flag DOES rewrite the index,
-// so the test above is proving something. A failure here says git stopped refreshing on a read and the guard is
-// no longer what keeps us off the lock.
 func TestGitRewritesTheIndexWithoutTheFlag(t *testing.T) {
 	root := repository(t)
 	stale(t, root)
@@ -48,8 +40,6 @@ func TestGitRewritesTheIndexWithoutTheFlag(t *testing.T) {
 	}
 }
 
-// TestEveryReadCarriesTheFlag holds every reader to it, not only the status one: each is run against a git of
-// our own that records how it was called. A reader that reaches git another way is how the lock came back.
 func TestEveryReadCarriesTheFlag(t *testing.T) {
 	outside := t.TempDir()
 	record := recordingGit(t)
@@ -85,9 +75,6 @@ func TestEveryReadCarriesTheFlag(t *testing.T) {
 	}
 }
 
-// TestNothingElseRunsGitItself keeps the one funnel the only way to git: a command or a hook that runs it
-// itself carries no flag, so it takes the lock whatever this package does. A test is left out: it builds the
-// repository it reads, and nobody is committing beside it.
 func TestNothingElseRunsGitItself(t *testing.T) {
 	funnel := filepath.Join("git", "git.go")
 
@@ -118,7 +105,6 @@ func TestNothingElseRunsGitItself(t *testing.T) {
 	}
 }
 
-// repository is a git repository holding one committed file.
 func repository(t *testing.T) string {
 	t.Helper()
 
@@ -134,8 +120,6 @@ func repository(t *testing.T) string {
 	return root
 }
 
-// stale makes the index out of date with the working tree, which is what a read would refresh: the file's
-// content is the same, so only its stamp tells git to look again.
 func stale(t *testing.T, root string) {
 	t.Helper()
 
@@ -144,8 +128,6 @@ func stale(t *testing.T, root string) {
 	write(t, filepath.Join(root, "a.go"), "package a\n")
 }
 
-// recordingGit puts a git of our own first on the path and answers a function that runs one read and gives
-// back how git was called while it ran, one line per call.
 func recordingGit(t *testing.T) func(read func()) []string {
 	t.Helper()
 

@@ -14,11 +14,8 @@ type NullableRegistryLookupDetector struct{}
 
 func init() { detectors.Register(catalog.PHP, NullableRegistryLookupDetector{}) }
 
-// Sin is the sin the detector finds.
 func (NullableRegistryLookupDetector) Sin() sins.Sin { return backendsins.NullableRegistryLookup{} }
 
-// Find is every returned `$this->items[$key] ?? null`, save in a method that answers to an ancestor's, or where the
-// lookup is only the last resort of a first-match dispatch.
 func (NullableRegistryLookupDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return php.In(codebase).
 		Where(engine.As(php.Node.IsCoalesce)).

@@ -14,10 +14,8 @@ type TernaryStatementDetector struct{}
 
 func init() { detectors.Register(catalog.PHP, TernaryStatementDetector{}) }
 
-// Sin is the sin the detector finds.
 func (TernaryStatementDetector) Sin() sins.Sin { return backendsins.TernaryStatement{} }
 
-// Find is every ternary whose value is thrown away.
 func (TernaryStatementDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return php.In(codebase).
 		Where(engine.As(php.Node.IsTernary)).
@@ -25,5 +23,4 @@ func (TernaryStatementDetector) Find(codebase *engine.Codebase) []engine.Match {
 		Get()
 }
 
-// Repentable says a scribe rewrites the sin away.
 func (TernaryStatementDetector) Repentable() {}

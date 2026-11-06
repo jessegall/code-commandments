@@ -11,9 +11,6 @@ import (
 	"github.com/jessegall/code-commandments/contract"
 )
 
-// cart is a Go file holding the shapes the tree has to carry: a documented type, a method with a receiver, a
-// call, a selector, literals of each kind, a loop, a branch, a conjunction, a comparison and a comment that is
-// code rather than prose.
 const cart = `package shop
 
 import "fmt"
@@ -43,9 +40,6 @@ func describe(c *Cart) string {
 }
 `
 
-// streamOf writes the tree of one folder and reads it back through the contract's own reader, which is the only
-// thing that says a bridge wrote the contract: the reader refuses a stream that breaks it, and in a test it holds
-// every line against the schema as well.
 func streamOf(t *testing.T, files map[string]string) *contract.Stream {
 	t.Helper()
 	root, err := filepath.EvalSymlinks(t.TempDir())
@@ -74,9 +68,6 @@ func streamOf(t *testing.T, files map[string]string) *contract.Stream {
 	return stream
 }
 
-// TestTheTreeIsTheContractsOwnShape holds the Go bridge to contract/CONTRACT.md: the stream is one the contract's
-// reader accepts, the kinds are Go's own names for its nodes, every node's span points into the file's bytes, and
-// a child says which field of its parent it fills.
 func TestTheTreeIsTheContractsOwnShape(t *testing.T) {
 	stream := streamOf(t, map[string]string{"cart.go": cart})
 
@@ -112,8 +103,6 @@ func TestTheTreeIsTheContractsOwnShape(t *testing.T) {
 	}
 }
 
-// TestEveryNodeIsNamedAsGoNamesIt holds the vocabulary to the parser's own: a method is a FuncDecl, a call a
-// CallExpr, and each child fills the field go/ast holds it in.
 func TestEveryNodeIsNamedAsGoNamesIt(t *testing.T) {
 	file := streamOf(t, map[string]string{"cart.go": cart}).Files[0]
 
@@ -135,8 +124,6 @@ func TestEveryNodeIsNamedAsGoNamesIt(t *testing.T) {
 	}
 }
 
-// TestTheNeutralQuestionsAnswerForGo holds the language-neutral facts a rule written for every language asks:
-// the function, the loop, the branch, the comparison, the conjunction and the call are all named.
 func TestTheNeutralQuestionsAnswerForGo(t *testing.T) {
 	file := streamOf(t, map[string]string{"cart.go": cart}).Files[0]
 
@@ -147,9 +134,6 @@ func TestTheNeutralQuestionsAnswerForGo(t *testing.T) {
 	}
 }
 
-// TestALiteralCarriesWhatItDecodesTo holds each literal to its decoded value, so no reader parses source text
-// again: a string without its quotes, an integer in decimal whatever base it was written in, and a rune as the
-// number it is.
 func TestALiteralCarriesWhatItDecodesTo(t *testing.T) {
 	file := streamOf(t, map[string]string{"values.go": "package shop\n\nvar (\n\tname = \"a \\\"quoted\\\" name\"\n\thex  = 0x1f\n\tmark = 'x'\n\trate = 1.5\n)\n"}).Files[0]
 
@@ -173,9 +157,6 @@ func TestALiteralCarriesWhatItDecodesTo(t *testing.T) {
 	}
 }
 
-// TestACommentSaysWhereItBelongs holds the comments to the contract's attachment rule, which is what the
-// fixture's own markers depend on: a doc comment leads the declaration under it, a trailing comment belongs to
-// what it follows on its line, and a comment whose words are code says so.
 func TestACommentSaysWhereItBelongs(t *testing.T) {
 	file := streamOf(t, map[string]string{"cart.go": cart}).Files[0]
 
@@ -210,8 +191,6 @@ func TestACommentSaysWhereItBelongs(t *testing.T) {
 	}
 }
 
-// TestAFileThatDoesNotCompileIsStillATree holds a broken file to what the parser recovered: the tree is written
-// with the errors counted, rather than the file, or the run, being lost.
 func TestAFileThatDoesNotCompileIsStillATree(t *testing.T) {
 	stream := streamOf(t, map[string]string{"broken.go": "package shop\n\nfunc total(\n", "fine.go": "package shop\n\nfunc fine() {}\n"})
 
@@ -230,8 +209,6 @@ func TestAFileThatDoesNotCompileIsStillATree(t *testing.T) {
 	}
 }
 
-// TestTheSameFileAlwaysWritesTheSameStream holds the bridge to one answer: an engine's analyses are memoised and
-// a fixture is recorded, so a tree that differed between runs would be read as a change in the code.
 func TestTheSameFileAlwaysWritesTheSameStream(t *testing.T) {
 	root, err := filepath.EvalSymlinks(t.TempDir())
 	if err != nil {
@@ -253,7 +230,6 @@ func TestTheSameFileAlwaysWritesTheSameStream(t *testing.T) {
 	}
 }
 
-// firstOf is the file's first node of that kind.
 func firstOf(t *testing.T, file *contract.File, kind string) *contract.Node {
 	t.Helper()
 	for _, node := range file.Nodes() {
@@ -266,7 +242,6 @@ func firstOf(t *testing.T, file *contract.File, kind string) *contract.Node {
 	return nil
 }
 
-// childIn is the node's child filling that field.
 func childIn(node *contract.Node, field string) *contract.Node {
 	for _, child := range node.Children {
 		if child.Field == field {
@@ -277,7 +252,6 @@ func childIn(node *contract.Node, field string) *contract.Node {
 	return nil
 }
 
-// answers says whether any node of the file answers the neutral question.
 func answers(file *contract.File, neutral string) bool {
 	for _, node := range file.Nodes() {
 		for _, is := range node.Is {
@@ -290,7 +264,6 @@ func answers(file *contract.File, neutral string) bool {
 	return false
 }
 
-// fileNamed is the stream's file whose path ends in that name.
 func fileNamed(t *testing.T, stream *contract.Stream, name string) *contract.File {
 	t.Helper()
 	for _, file := range stream.Files {

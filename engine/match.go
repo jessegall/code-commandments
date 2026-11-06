@@ -12,7 +12,6 @@ import (
 // Neutral is a language-neutral question a node answers, drawn from the contract's closed set.
 type Neutral string
 
-// The neutral kinds a node may answer; see contract/CONTRACT.md, "Neutral kinds".
 const (
 	Function            Neutral = "function"
 	TypeDeclaration     Neutral = "type-declaration"
@@ -38,7 +37,6 @@ const (
 	Catch               Neutral = "catch"
 )
 
-// Neutrals are every neutral kind, in the order the contract lists them.
 var Neutrals = []Neutral{Function, TypeDeclaration, Parameter, Block, Branch, Loop, Return, Throw, BailOut, ExpressionStatement, Call, Construction, MemberAccess, NullSafe, SelfReference, Identifier, Assignment, Comparison, Conjunction, Literal, Import, Catch}
 
 // Located is anything a finding can point at.
@@ -49,7 +47,7 @@ type Located interface {
 	Scope() string
 }
 
-// Match is one node of one file. The zero Match is no node: every question on it answers no.
+// Match is one node of one file.
 type Match struct {
 	node *contract.Node
 	file *File
@@ -57,12 +55,10 @@ type Match struct {
 
 var _ Located = Match{}
 
-// Exists says whether the match holds a node; navigation past the tree answers one that does not.
 func (m Match) Exists() bool {
 	return m.node != nil
 }
 
-// Codebase is the codebase the match's file was read into; none for no node.
 func (m Match) Codebase() *Codebase {
 	if m.file == nil {
 		return nil
@@ -71,17 +67,14 @@ func (m Match) Codebase() *Codebase {
 	return m.file.codebase
 }
 
-// Node is the generic tree node the match holds.
 func (m Match) Node() *contract.Node {
 	return m.node
 }
 
-// Source is the file the match sits in.
 func (m Match) Source() *File {
 	return m.file
 }
 
-// File is the path of the file the match sits in.
 func (m Match) File() string {
 	if m.file == nil {
 		return ""
@@ -90,7 +83,6 @@ func (m Match) File() string {
 	return m.file.Path
 }
 
-// Line is the 1-based line the node starts on.
 func (m Match) Line() int {
 	if m.node == nil {
 		return 0
@@ -99,13 +91,10 @@ func (m Match) Line() int {
 	return m.node.Span.Line
 }
 
-// Location is the match's path:line, the form a finding is reported as.
 func (m Match) Location() string {
 	return fmt.Sprintf("%s:%d", m.File(), m.Line())
 }
 
-// Scope is the enclosing type and function, Type::function, (file) outside any type; a type or a named
-// function names itself.
 func (m Match) Scope() string {
 	if m.file != nil {
 		if namer, named := scopeNamers.Load(m.file.Language()); named {
@@ -132,7 +121,6 @@ func (m Match) Scope() string {
 	return scope
 }
 
-// Identity is the declaration's symbol id, or its name where the resolver gave none.
 func (m Match) Identity() string {
 	if m.node == nil {
 		return ""
@@ -144,7 +132,6 @@ func (m Match) Identity() string {
 	return m.node.Name
 }
 
-// Field is the slot this node fills in its parent: `body`, `else`, `args`. The root fills none.
 func (m Match) Field() string {
 	if m.node == nil {
 		return ""
@@ -153,10 +140,6 @@ func (m Match) Field() string {
 	return m.node.Field
 }
 
-// Role is what the node IS, in the neutral words of contract.Roles: a statement, an expression, a member (any
-// declaration of a type, a function, a property or an enum case), a written type, a pattern, markup, or other.
-// Every bridge writes one on every node, which is how a rule asks about a declaration without naming a kind per
-// language.
 func (m Match) Role() string {
 	if m.node == nil {
 		return ""
@@ -165,7 +148,6 @@ func (m Match) Role() string {
 	return m.node.Role
 }
 
-// Kind is the language's own name for the node.
 func (m Match) Kind() string {
 	if m.node == nil {
 		return ""
@@ -174,16 +156,10 @@ func (m Match) Kind() string {
 	return m.node.Kind
 }
 
-// calleeFields are where each language keeps what a call calls: PHP's name, Python's func, TypeScript's
-// expression, Go's fun, C#'s Expression, which is Roslyn's own property name.
 var calleeFields = []string{"name", "func", "expression", "fun", "Expression"}
 
-// namedFields are where a member access keeps the name it reaches, when the access itself carries none: PHP's and
-// Python's name, C#'s Name.
 var namedFields = []string{"name", "Name"}
 
-// CalleeName is the name a call calls, in any language: the function, or the method a member call reaches
-// (select in DB::select, join in os.path.join), without its namespace; empty for anything else.
 func (m Match) CalleeName() string {
 	for _, field := range calleeFields {
 		callee := m.Child(field)
@@ -199,14 +175,10 @@ func (m Match) CalleeName() string {
 	return ""
 }
 
-// NameRead is the name a member access or a callee READS, wherever its language keeps it: the node's own name, or
-// the one its name child carries, which is where PHP writes a property fetch's member and where Roslyn writes a
-// member access's. It is empty for anything that reads no name.
 func (m Match) NameRead() string {
 	return calleeOf(m)
 }
 
-// calleeOf is the name the node carries itself, else the name the member it reaches carries.
 func calleeOf(callee Match) string {
 	if name := callee.Name(); name != "" {
 		return name
@@ -221,8 +193,6 @@ func calleeOf(callee Match) string {
 	return ""
 }
 
-// Receiver is the object the node is sent to: the `$order` of `$order->ship()` or of `$order->shipped`; no node
-// for a free function's call, a bare name or anything else sent to nobody.
 func (m Match) Receiver() Match {
 	if read := m.grammar().Receiver; read != nil {
 		return read(m)
@@ -231,20 +201,14 @@ func (m Match) Receiver() Match {
 	return Match{}
 }
 
-// Body are the statements the node runs as its own: a branch's taken path, a loop's body. A language that wraps
-// them in a block is read through it, so a reader of the answer never has to know which does.
 func (m Match) Body() []Match {
 	return m.listed(m.grammar().Body)
 }
 
-// Otherwise are the statements the branch runs when its condition does not hold: its else. A language that writes
-// an else-if files that branch here as the one statement.
 func (m Match) Otherwise() []Match {
 	return m.listed(m.grammar().Otherwise)
 }
 
-// Condition is what the branch or loop decides by; no node for a construct that decides by no condition, such as
-// a switch, whose subject its cases are matched against is not one.
 func (m Match) Condition() Match {
 	if read := m.grammar().Condition; read != nil && m.node != nil {
 		return read(m)
@@ -253,8 +217,6 @@ func (m Match) Condition() Match {
 	return Match{}
 }
 
-// Computes says whether the node works a value out of its parts rather than passing them on: an assignment, a
-// comparison, a conjunction, or whatever else the language calls an operator over its parts.
 func (m Match) Computes() bool {
 	if m.Is(Assignment) || m.Is(Comparison) || m.Is(Conjunction) {
 		return true
@@ -266,8 +228,6 @@ func (m Match) Computes() bool {
 	return false
 }
 
-// ElementName is the name the loop binds for each item of what it walks; empty for a loop that binds none and
-// for anything that is no loop.
 func (m Match) ElementName() string {
 	if read := m.grammar().ElementName; read != nil && m.node != nil {
 		return read(m)
@@ -276,8 +236,6 @@ func (m Match) ElementName() string {
 	return ""
 }
 
-// ComparisonSubject is what the comparison tests against a constant: the side that is no constant, when the other
-// one is; no node for anything else.
 func (m Match) ComparisonSubject() Match {
 	if read := m.grammar().ComparisonSubject; read != nil && m.node != nil {
 		return read(m)
@@ -286,21 +244,18 @@ func (m Match) ComparisonSubject() Match {
 	return Match{}
 }
 
-// Declares says whether the node declares a name the code around it then uses.
 func (m Match) Declares() bool {
 	read := m.grammar().Declares
 
 	return m.node != nil && read != nil && read(m)
 }
 
-// Binds says whether the node is a statement that only binds a name to a value, acting on nothing.
 func (m Match) Binds() bool {
 	read := m.grammar().Binds
 
 	return m.node != nil && read != nil && read(m)
 }
 
-// Refers is the symbol a name refers to, resolved: a class, a function, a constant; empty for anything else.
 func (m Match) Refers() string {
 	if m.node == nil {
 		return ""
@@ -309,7 +264,6 @@ func (m Match) Refers() string {
 	return m.node.Refers
 }
 
-// Resolves is the file an import, a re-export or a component tag reaches; empty for anything else.
 func (m Match) Resolves() string {
 	if m.node == nil {
 		return ""
@@ -318,16 +272,10 @@ func (m Match) Resolves() string {
 	return m.node.Resolves
 }
 
-// HasFlag says whether the bridge flags the node so: optional, variadic, shorthand, promoted.
 func (m Match) HasFlag(flag string) bool {
 	return m.node != nil && slices.Contains(m.node.Flags, flag)
 }
 
-// Operator is the operator token the node carries: `*` and `??` for a binary expression, `+=` for an assignment,
-// `!` for a unary one, `extends` for a heritage clause; empty for a node that carries none.
-//
-// Every bridge writes it, which is why it is read here rather than per language: `price.amount * rate` and
-// `price.amount ?? fallback` are the same kind of node, and only the operator tells them apart.
 func (m Match) Operator() string {
 	if m.node == nil {
 		return ""
@@ -336,12 +284,10 @@ func (m Match) Operator() string {
 	return m.node.Operator
 }
 
-// HasModifier says whether the node is declared with the modifier: export, readonly, public, static.
 func (m Match) HasModifier(modifier string) bool {
 	return m.node != nil && slices.Contains(m.node.Modifiers, modifier)
 }
 
-// Name is the name as written, for a declaration, a name or a member.
 func (m Match) Name() string {
 	if m.node == nil {
 		return ""
@@ -350,16 +296,12 @@ func (m Match) Name() string {
 	return m.node.Name
 }
 
-// WritesAttribute says whether the node is a markup element that writes the attribute, plain or bound: `data-dusk`
-// or `:data-dusk`.
 func (m Match) WritesAttribute(name string) bool {
 	read := m.grammar().WritesAttribute
 
 	return m.node != nil && read != nil && read(m, name)
 }
 
-// DeclaredName is the node's name, or, for a declaration that carries none, the name of the one thing it declares:
-// a PHP property statement declaring one property is named after it.
 func (m Match) DeclaredName() string {
 	if name := m.Name(); name != "" || m.node == nil {
 		return name
@@ -371,7 +313,6 @@ func (m Match) DeclaredName() string {
 	return ""
 }
 
-// Written is the node's source text: the bytes of its span, as the file spells them; empty for no node.
 func (m Match) Written() string {
 	if m.node == nil {
 		return ""
@@ -384,13 +325,10 @@ func (m Match) Written() string {
 	return string(source[m.node.Span.Start:m.node.Span.End])
 }
 
-// IsConstant says whether the expression's value is known at compile time, as the language's own compiler
-// decided: a literal, and a name a constant declaration bound to one.
 func (m Match) IsConstant() bool {
 	return m.node != nil && m.node.Constant
 }
 
-// Text is a literal's decoded string value; false when the node is no string literal.
 func (m Match) Text() (string, bool) {
 	if m.node == nil || m.node.Value == nil {
 		return "", false
@@ -399,12 +337,10 @@ func (m Match) Text() (string, bool) {
 	return m.node.Value.Text()
 }
 
-// Is says whether the node answers a neutral kind.
 func (m Match) Is(neutral Neutral) bool {
 	return m.node != nil && m.node.Answers(string(neutral))
 }
 
-// Parent is the node whose children hold this one; no node above the root.
 func (m Match) Parent() Match {
 	if m.node == nil {
 		return Match{}
@@ -417,7 +353,6 @@ func (m Match) Parent() Match {
 	return Match{node: parent, file: m.file}
 }
 
-// Children is the node's child nodes, in source order.
 func (m Match) Children() []Match {
 	if m.node == nil {
 		return nil
@@ -430,7 +365,6 @@ func (m Match) Children() []Match {
 	return children
 }
 
-// Child is the first child filling the field, such as "var" or "body"; no node when none does.
 func (m Match) Child(field string) Match {
 	for _, child := range m.Children() {
 		if child.node.Field == field {
@@ -441,7 +375,6 @@ func (m Match) Child(field string) Match {
 	return Match{}
 }
 
-// Descendants is every node below this one, in pre-order: children before their own children's siblings.
 func (m Match) Descendants() []Match {
 	var below []Match
 	for _, child := range m.Children() {
@@ -452,7 +385,6 @@ func (m Match) Descendants() []Match {
 	return below
 }
 
-// ChildrenIn is every child filling the field, in source order, such as a class's "bases" or a body's statements.
 func (m Match) ChildrenIn(field string) []Match {
 	var filling []Match
 	for _, child := range m.Children() {
@@ -464,7 +396,6 @@ func (m Match) ChildrenIn(field string) []Match {
 	return filling
 }
 
-// Root is the root node of the match's file; no node for no match.
 func (m Match) Root() Match {
 	if m.file == nil {
 		return Match{}
@@ -473,7 +404,6 @@ func (m Match) Root() Match {
 	return m.file.Match(0)
 }
 
-// Closest is the nearest ancestor that answers the neutral kind; no node when none does.
 func (m Match) Closest(neutral Neutral) Match {
 	for ancestor := m.Parent(); ancestor.Exists(); ancestor = ancestor.Parent() {
 		if ancestor.Is(neutral) {
@@ -484,12 +414,10 @@ func (m Match) Closest(neutral Neutral) Match {
 	return Match{}
 }
 
-// EnclosingType is the type declaration the node sits in; no node at file level.
 func (m Match) EnclosingType() Match {
 	return m.Closest(TypeDeclaration)
 }
 
-// EnclosingFunction is the nearest named function-like the node sits in; closures are passed over.
 func (m Match) EnclosingFunction() Match {
 	for function := m.Closest(Function); function.Exists(); function = function.Closest(Function) {
 		if function.Name() != "" {
@@ -500,7 +428,6 @@ func (m Match) EnclosingFunction() Match {
 	return Match{}
 }
 
-// IsWithinLoop says whether a loop encloses the node inside its own function.
 func (m Match) IsWithinLoop() bool {
 	for ancestor := m.Parent(); ancestor.Exists() && !ancestor.Is(Function); ancestor = ancestor.Parent() {
 		if ancestor.Is(Loop) {
@@ -511,7 +438,6 @@ func (m Match) IsWithinLoop() bool {
 	return false
 }
 
-// Comments is every comment attached to the node, leading and trailing.
 func (m Match) Comments() []contract.Comment {
 	if m.node == nil {
 		return nil
@@ -520,7 +446,6 @@ func (m Match) Comments() []contract.Comment {
 	return m.file.Comments(m.node)
 }
 
-// CommentsAbove is the run of own-line comments directly above the node, nearest last.
 func (m Match) CommentsAbove() []contract.Comment {
 	if m.node == nil {
 		return nil
@@ -529,7 +454,6 @@ func (m Match) CommentsAbove() []contract.Comment {
 	return m.file.CommentsAbove(m.node)
 }
 
-// IsDocumented says whether a doc comment is attached to the node.
 func (m Match) IsDocumented() bool {
 	for _, comment := range m.Comments() {
 		if comment.Kind == "doc" {
@@ -540,8 +464,6 @@ func (m Match) IsDocumented() bool {
 	return false
 }
 
-// SameSyntax says whether two nodes are written alike: the same kinds in the same slots, with the same names,
-// literals, operators, modifiers and flags, child for child. Where they sit and how they are spaced is no part of it.
 func (m Match) SameSyntax(other Match) bool {
 	return m.Exists() && other.Exists() && sameSyntax(m.node, other.node, true)
 }
@@ -563,7 +485,6 @@ func sameSyntax(a, b *contract.Node, root bool) bool {
 	return true
 }
 
-// Span is the node's byte range in its file.
 func (m Match) Span() (Span, error) {
 	if m.node == nil {
 		return Span{}, fmt.Errorf("no node to span")
@@ -576,25 +497,18 @@ func (m Match) Span() (Span, error) {
 	return Span{Path: m.file.Path, Source: source, Start: m.node.Span.Start, End: m.node.Span.End}, nil
 }
 
-// scopeNamers name the scope of a language's matches where a report says it otherwise than by the enclosing
-// type and function: a Vue element by its tag, a TypeScript declaration by its kind and name.
 var scopeNamers sync.Map
 
-// NameScopes has every match in a file of the language name its scope with namer.
 func NameScopes(language contract.Language, namer func(Match) string) {
 	scopeNamers.Store(language, namer)
 }
 
-// bodyRunners say, for a language whose tree flags fewer function-likes than it counts, whether a node runs a body.
 var bodyRunners sync.Map
 
-// RunBodiesAs has every match in a file of the language say whether it runs a body of its own as runs says.
 func RunBodiesAs(language contract.Language, runs func(Match) bool) {
 	bodyRunners.Store(language, runs)
 }
 
-// RunsABody says whether the node runs a body of its own — a function, and whatever else its language counts as
-// one, as C# counts a property written `=> value`.
 func (m Match) RunsABody() bool {
 	if m.file != nil {
 		if runs, counted := bodyRunners.Load(m.file.Language()); counted {

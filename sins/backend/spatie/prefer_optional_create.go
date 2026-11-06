@@ -11,7 +11,6 @@ type PreferOptionalCreate struct{}
 
 func init() { sins.Register(catalog.PHP, PreferOptionalCreate{}) }
 
-// Definition is what the sin states about itself.
 func (PreferOptionalCreate) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "prefer-optional-create",

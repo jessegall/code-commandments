@@ -15,15 +15,10 @@ import (
 	"strings"
 )
 
-// Module is the Go module every rule package lives in.
 const Module = "github.com/jessegall/code-commandments"
 
-// RuleRoots are the folders whose packages enrol rules from their init functions: the sins, skills and detectors,
-// and the providers that publish one engine's facts for another's detectors.
 var RuleRoots = []string{"sins", "skill", "detectors", "published"}
 
-// Enrolment is the registry source that imports every rule package under root, so no hand-kept
-// list of rules exists: a new rule folder is found by the next go generate.
 func Enrolment(root string) ([]byte, error) {
 	var packages []string
 	for _, rules := range RuleRoots {
@@ -47,7 +42,6 @@ func Enrolment(root string) ([]byte, error) {
 	return format.Source(source.Bytes())
 }
 
-// rulePackages is every package folder below one rule root, relative to root, the root itself left out.
 func rulePackages(root, rules string) ([]string, error) {
 	var packages []string
 	base := filepath.Join(root, rules)
@@ -79,8 +73,6 @@ func rulePackages(root, rules string) ([]string, error) {
 	return packages, err
 }
 
-// enrolsRules says whether a folder's package enrols something when imported: one of its source files, tests aside,
-// declares an init function. A folder under a rule root that only renders, generates or helps a test is not one.
 func enrolsRules(dir string) (bool, error) {
 	entries, err := os.ReadDir(dir)
 	if err != nil {

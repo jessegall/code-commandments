@@ -13,7 +13,6 @@ func init() {
 	sins.Register(catalog.CSharp, BareStatePredicate{})
 }
 
-// Definition is what the sin states about itself.
 func (BareStatePredicate) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "csharp-bare-state-predicate",

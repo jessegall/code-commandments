@@ -14,9 +14,6 @@ import (
 	_ "github.com/jessegall/code-commandments/registry"
 )
 
-// TestTheLibraryPublishesWhatThePHPToolPublishes holds the library to what the PHP tool published for each set of
-// languages a project writes, recorded under testdata/published: the ids it named and the files it wrote. What a
-// skill says is the tool's own and is not pinned here.
 func TestTheLibraryPublishesWhatThePHPToolPublishes(t *testing.T) {
 	for name, disabled := range map[string][]source.Language{
 		"every-language":      nil,
@@ -57,9 +54,6 @@ func TestTheLibraryPublishesWhatThePHPToolPublishes(t *testing.T) {
 	}
 }
 
-// recorded is a list the PHP tool left in testdata/published, a line an entry.
-// record writes what a set published as its recording, so a curriculum that gains or renames a skill is
-// re-recorded deliberately rather than by hand: run the test with COMMANDMENTS_RECORD=1 and read the diff.
 func record(t *testing.T, name string, lines []string) {
 	t.Helper()
 
@@ -109,7 +103,6 @@ func TestASkillTheLastSyncPublishedAndThisOneDoesNotIsTakenAway(t *testing.T) {
 	}
 }
 
-// tree is every file under the project's library and shared folder, by its path under the project.
 func tree(t *testing.T, project string) map[string]string {
 	t.Helper()
 	files := map[string]string{}
@@ -160,8 +153,6 @@ func TestAProjectsOwnSkillIsPublishedAndBriefedAsItsOwn(t *testing.T) {
 	}
 }
 
-// TestAPageASkillNoLongerShipsIsTakenAway holds a sync to publishing a skill as it stands: a reference page an
-// earlier version published and this one does not is removed, never left for an agent to read as current.
 func TestAPageASkillNoLongerShipsIsTakenAway(t *testing.T) {
 	project := t.TempDir()
 	if _, err := At(project, config.Config{}).Publish(); err != nil {
@@ -210,4 +201,3 @@ func TestAProjectsOwnSkillIsPublishedIntoALibraryElsewhere(t *testing.T) {
 		t.Errorf("published as %q", got)
 	}
 }
-

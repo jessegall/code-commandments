@@ -9,9 +9,6 @@ import (
 	"github.com/jessegall/code-commandments/listing"
 )
 
-// InWalkOrder puts the stream's files in the order a walk of the paths meets them, each folder's entries in
-// the order the PHP tool's own walk met them (listing.Of). A bridge sorts what it reads so its stream
-// is the same on every machine; a report's twins and a scribe's rewrites follow the walk instead.
 func InWalkOrder(stream *contract.Stream, paths []string) {
 	at := map[string]int{}
 
@@ -45,7 +42,6 @@ func walk(path string, at map[string]int) {
 	}
 }
 
-// rank is where the walk met the path; a path it never met goes last.
 func rank(at map[string]int, path string) int {
 	if i, met := at[resolved(path)]; met {
 		return i

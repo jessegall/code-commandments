@@ -1,5 +1,4 @@
-// Package fixture is the self-checking fixture harness: the markers written into a fixture are the
-// spec, and a detector passes only when it flags exactly what they mark.
+// Package fixture is the self-checking fixture harness: the markers written into a fixture are the spec, and a detector passes only when it flags exactly what they mark.
 package fixture
 
 import (
@@ -13,22 +12,16 @@ import (
 // Tag is what a marker says of the code it marks.
 type Tag string
 
-// The tags, as attributes and comments spell them.
 const (
 	Sinful    Tag = "sin"
 	Fixed     Tag = "fixed"
 	Righteous Tag = "righteous"
 )
 
-// attributeTags are the tags an attribute spells by its class's short name.
 var attributeTags = map[string]Tag{"Sinful": Sinful, "Fixed": Fixed, "Righteous": Righteous}
 
-// commentMarker is a marker as a comment writes it, the comment's whole text: @sin ArrayBag marks the code the
-// comment leads, and @sin-file ArrayBag the whole file, where a finding about the file itself stands, wherever the
-// comment sits. A comment that only mentions a marker in its prose marks nothing. Scanning comment text, not code.
 var commentMarker = regexp.MustCompile(`^@(sin|fixed|righteous)(-file)?\s+(\w+)$`)
 
-// commentDelimiters are what opens and closes a comment in every language the fixtures are written in.
 var commentDelimiters = regexp.MustCompile(`^(?:#|//+|/\*+|<!--)|(?:\*/|-->)$`)
 
 // Marker is one mark in a fixture: a tag, the sin or detector it names, and the code it covers.
@@ -41,12 +34,10 @@ type Marker struct {
 	covers   func(engine.Match) bool
 }
 
-// Covers says whether a finding falls on the code the marker marks.
 func (m Marker) Covers(finding engine.Match) bool {
 	return m.covers(finding)
 }
 
-// Names says whether the marker names one of these short names.
 func (m Marker) Names(names ...string) bool {
 	for _, name := range names {
 		if m.Name == name {
@@ -57,13 +48,10 @@ func (m Marker) Names(names ...string) bool {
 	return false
 }
 
-// Markers is every marker in the codebase: attributes on declarations and comments above code.
 func Markers(codebase *engine.Codebase) []Marker {
 	return append(attributeMarkers(codebase), commentMarkers(codebase)...)
 }
 
-// attributeMarkers reads #[Sinful(X::class)] and its kin; each covers the declaration it stands on,
-// a class-level one every function in the class.
 func attributeMarkers(codebase *engine.Codebase) []Marker {
 	var markers []Marker
 	for _, attribute := range codebase.WhereKind("Attribute").Get() {
@@ -92,7 +80,6 @@ func attributeMarkers(codebase *engine.Codebase) []Marker {
 	return markers
 }
 
-// markedName is the short name an attribute's first argument gives: X::class or 'X'.
 func markedName(argument engine.Match) string {
 	if class := argument.Child("class"); class.Exists() {
 		return ShortName(class.Name())
@@ -104,7 +91,6 @@ func markedName(argument engine.Match) string {
 	return ""
 }
 
-// commentMarkers reads @sin X from comments; a run of them marks the line of the node they lead.
 func commentMarkers(codebase *engine.Codebase) []Marker {
 	var markers []Marker
 	for _, file := range codebase.Files() {
@@ -131,9 +117,6 @@ func commentMarkers(codebase *engine.Codebase) []Marker {
 	return markers
 }
 
-// markedFor is the node a marker marks. A marker that names a half of an example, which is what its second
-// word says, is about the whole FILE, since what the reader is shown is the file; every other marker is about
-// the node its comment leads, and not every comment leads one.
 func markedFor(file *engine.File, comment contract.Comment, half string) (engine.Match, bool) {
 	if half != "" {
 		return file.Match(0), true
@@ -142,8 +125,6 @@ func markedFor(file *engine.File, comment contract.Comment, half string) (engine
 	return markedBy(file, comment)
 }
 
-// markedBy is the code a marker comment marks: the node it leads, or, for a comment on a line of its own that leads
-// no node, as above `: throw …` where the next token starts none, the first node written after it.
 func markedBy(file *engine.File, comment contract.Comment) (engine.Match, bool) {
 	if comment.Attached != nil {
 		return file.Match(*comment.Attached), true
@@ -161,7 +142,6 @@ func markedBy(file *engine.File, comment contract.Comment) (engine.Match, bool) 
 	return next, next.Exists()
 }
 
-// classOf is the type a node belongs to, itself when it is one, (file) outside any.
 func classOf(node engine.Match) string {
 	if node.Is(engine.TypeDeclaration) {
 		return node.Identity()
@@ -173,7 +153,6 @@ func classOf(node engine.Match) string {
 	return "(file)"
 }
 
-// functionOf is the named function a node belongs to, itself when it is one.
 func functionOf(node engine.Match) string {
 	if node.Is(engine.Function) && node.Name() != "" {
 		return node.Name()
@@ -182,7 +161,6 @@ func functionOf(node engine.Match) string {
 	return node.EnclosingFunction().Name()
 }
 
-// ShortName is a qualified name's last segment: Shop\Sins\ArrayBag, Shop.Sins.ArrayBag → ArrayBag.
 func ShortName(qualified string) string {
 	cut := strings.LastIndexAny(qualified, `\.:`)
 

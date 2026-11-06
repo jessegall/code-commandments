@@ -14,10 +14,8 @@ type FlagArgumentDetector struct{}
 
 func init() { detectors.Register(catalog.PHP, FlagArgumentDetector{}) }
 
-// Sin is the sin the detector finds.
 func (FlagArgumentDetector) Sin() sins.Sin { return backendsins.FlagArgument{} }
 
-// Find is every method, constructors aside, whose body is a two-way branch on a bool parameter or on whether a nullable one is null.
 func (FlagArgumentDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return php.In(codebase).
 		WhereKind("Stmt_ClassMethod").

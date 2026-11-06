@@ -11,7 +11,6 @@ type DeNulledFinder struct{}
 
 func init() { sins.Register(catalog.PHP, DeNulledFinder{}) }
 
-// Definition is what the sin states about itself.
 func (DeNulledFinder) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "de-nulled-finder",

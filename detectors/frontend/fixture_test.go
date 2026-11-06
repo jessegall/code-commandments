@@ -14,7 +14,6 @@ import (
 	_ "github.com/jessegall/code-commandments/registry"
 )
 
-// shop is the frontend fixture: Vue and TypeScript, and the PHP server whose types it must not copy.
 const shop = "../../tests/Fixtures/frontend"
 
 func TestTheFrontendFixtureProvesEveryDetector(t *testing.T) {
@@ -35,10 +34,8 @@ func TestTheFrontendFixtureProvesEveryDetector(t *testing.T) {
 	})
 }
 
-// fixtureBudget is how many elements the shop declares a component's template may render.
 const fixtureBudget = 30
 
-// configured is the frontend and TypeScript detectors as the shop declares them: a component budget of its own.
 func configured() []detectors.Detector {
 	var configured []detectors.Detector
 	for _, detector := range append(detectors.Of(catalog.Vue), detectors.Of(catalog.TypeScript)...) {

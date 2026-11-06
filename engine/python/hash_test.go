@@ -8,8 +8,6 @@ import (
 	"github.com/jessegall/code-commandments/engine/python"
 )
 
-// groups is the keys that share a fingerprint, each group sorted, the groups sorted: what two engines agree on
-// when their fingerprints themselves differ.
 func groups(fingerprints map[string]string) []string {
 	byHash := map[string][]string{}
 	for key, hash := range fingerprints {

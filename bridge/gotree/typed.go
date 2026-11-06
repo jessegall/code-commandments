@@ -8,12 +8,6 @@ import (
 	"github.com/jessegall/code-commandments/contract"
 )
 
-// typed writes onto the node what only the checker can know: the type an expression has, whether the compiler
-// folds it to a constant, the declaration a name refers to, the declaration a call reaches, the type a
-// declaration writes, and the id of the declaration itself.
-//
-// Every one of them is absent where the checker did not give it. A type reached through an import outside the
-// module is such a case, by the decision doc 3 holds, and no rule reads a type that is not there.
 func (w *writer) typed(held ast.Node, built *contract.Node) {
 	if w.facts == nil {
 		return
@@ -53,9 +47,6 @@ func (w *writer) typed(held ast.Node, built *contract.Node) {
 	}
 }
 
-// say writes a fact onto the node, and leaves the node sharing the empty facts where there is nothing to say: a
-// node with no fact of its own must never be given one, since every such node shares the one empty value, and a
-// fact written through it would land on all of them at once.
 func (w *writer) say(built *contract.Node, write func(*contract.Facts)) {
 	held := &contract.Facts{}
 	write(held)
@@ -65,7 +56,6 @@ func (w *writer) say(built *contract.Node, write func(*contract.Facts)) {
 	write(built.Own())
 }
 
-// sayType is say for a fact that is a type.
 func (w *writer) sayType(built *contract.Node, write func(*contract.Facts)) {
 	held := &contract.Facts{}
 	write(held)
@@ -75,7 +65,6 @@ func (w *writer) sayType(built *contract.Node, write func(*contract.Facts)) {
 	write(built.Own())
 }
 
-// refers is the id of the declaration a name names, where the name is a use of one that can be reached by id.
 func (w *writer) refers(name *ast.Ident) string {
 	object, used := w.facts.Uses[name]
 	if !used {
@@ -88,7 +77,6 @@ func (w *writer) refers(name *ast.Ident) string {
 	return w.fieldSymbol(name, object)
 }
 
-// symbol is the id of the declaration a name declares.
 func (w *writer) symbol(name *ast.Ident) string {
 	if name == nil {
 		return ""
@@ -104,8 +92,6 @@ func (w *writer) symbol(name *ast.Ident) string {
 	return w.fieldSymbol(name, object)
 }
 
-// oneSymbol is the id of a declaration that declares exactly one name; a declaration of several at once carries
-// none, as its name does.
 func (w *writer) oneSymbol(names []*ast.Ident) string {
 	if len(names) != 1 {
 		return ""
@@ -114,9 +100,6 @@ func (w *writer) oneSymbol(names []*ast.Ident) string {
 	return w.symbol(names[0])
 }
 
-// fieldSymbol is the id of a struct's field, which is the type it belongs to with the field's own name after it.
-// The checker's object for a field does not say which type holds it, so the owner is read from the file once:
-// from the selection a read of the field was reached by, and from the declaration a field was declared in.
 func (w *writer) fieldSymbol(name *ast.Ident, object types.Object) string {
 	variable, isVariable := object.(*types.Var)
 	if !isVariable || !variable.IsField() {
@@ -130,8 +113,6 @@ func (w *writer) fieldSymbol(name *ast.Ident, object types.Object) string {
 	return owner + "." + variable.Name()
 }
 
-// target is the declaration a call reaches: the function or method it names, with the type that declares it.
-// A call of something the checker could not resolve, or of a value rather than a declaration, reaches nothing.
 func (w *writer) target(call *ast.CallExpr) *contract.Target {
 	named := calleeIdent(call.Fun)
 	if named == nil {
@@ -160,7 +141,6 @@ func (w *writer) target(call *ast.CallExpr) *contract.Target {
 	return reached
 }
 
-// calleeIdent is the name a call calls: the function's own, or the member a selector reaches.
 func calleeIdent(callee ast.Expr) *ast.Ident {
 	switch held := callee.(type) {
 	case *ast.Ident:
@@ -178,7 +158,6 @@ func calleeIdent(callee ast.Expr) *ast.Ident {
 	return nil
 }
 
-// writtenType is the type a declaration writes, as the source wrote it.
 func (w *writer) writtenType(written ast.Expr) *contract.Type {
 	if written == nil {
 		return nil
@@ -191,8 +170,6 @@ func (w *writer) writtenType(written ast.Expr) *contract.Type {
 	return typeOf(facts.Type, "written")
 }
 
-// resultType is what a function says it answers: the one type it returns, or the tuple of several. A function
-// that returns nothing says nothing.
 func (w *writer) resultType(signature *ast.FuncType) *contract.Type {
 	if signature == nil || signature.Results == nil || len(signature.Results.List) == 0 {
 		return nil
@@ -215,7 +192,6 @@ func (w *writer) resultType(signature *ast.FuncType) *contract.Type {
 	return &contract.Type{Text: "(" + textsOf(results) + ")", Kind: "tuple", Members: results, Origin: "written"}
 }
 
-// textsOf is the types' own texts, comma separated, which is how Go spells a list of results.
 func textsOf(types []*contract.Type) string {
 	texts := make([]string, 0, len(types))
 	for _, held := range types {
@@ -225,17 +201,11 @@ func textsOf(types []*contract.Type) string {
 	return strings.Join(texts, ", ")
 }
 
-// typeIndex is where the file says that type, adding it to the file's list the first time it is seen: a type
-// every expression shares is written once and named by its place, which is what keeps a large file's line from
-// repeating one type thousands of times.
 func (w *writer) typeIndex(held *contract.Type) *int {
 	if held == nil {
 		return nil
 	}
 
-	// A type's text is canonical and names every package it mentions by path, so the text, its shape and where
-	// it came from name the type: two types that agree on all three are one type. Marshalling each one to
-	// compare it would spend an encoding on every typed expression in the tree, hundreds of thousands of them.
 	key := held.Origin + "\x00" + held.Kind + "\x00" + held.Text
 	if at, seen := w.index[key]; seen {
 		return &at
@@ -247,10 +217,6 @@ func (w *writer) typeIndex(held *contract.Type) *int {
 	return &at
 }
 
-// ownersIn is the id of the type that declares each field name the file writes, read from the checker: a field
-// declared in a struct belongs to the type being declared, and a field read through a receiver belongs to the
-// type that receiver has. Without it a field's id would depend on where in the file it is named, and a read of
-// `c.lines` would carry no id at all.
 func ownersIn(parsed *ast.File, facts *types.Info, module string) map[*ast.Ident]string {
 	owners := map[*ast.Ident]string{}
 	if facts == nil {
@@ -284,7 +250,6 @@ func ownersIn(parsed *ast.File, facts *types.Info, module string) map[*ast.Ident
 	return owners
 }
 
-// fieldsOf are the fields a type declaration declares, of a struct or of an interface.
 func fieldsOf(written ast.Expr) []*ast.Field {
 	switch shape := written.(type) {
 	case *ast.StructType:
@@ -300,7 +265,6 @@ func fieldsOf(written ast.Expr) []*ast.Field {
 	return nil
 }
 
-// namedOf is the id of the named type a value has, a pointer read through to the type itself.
 func namedOf(held types.Type) string {
 	if pointer, isPointer := held.(*types.Pointer); isPointer {
 		held = pointer.Elem()

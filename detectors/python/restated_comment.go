@@ -9,7 +9,6 @@ import (
 	pysins "github.com/jessegall/code-commandments/sins/python"
 )
 
-// restatedWords is how many content words a comment needs before it can be said to restate anything.
 const restatedWords = 2
 
 // RestatedCommentDetector finds a comment whose every word the statement below it already spells.
@@ -19,12 +18,10 @@ func init() {
 	detectors.Register(catalog.Python, RestatedCommentDetector{})
 }
 
-// Sin is the sin the detector finds.
 func (RestatedCommentDetector) Sin() sins.Sin {
 	return pysins.RestatedComment{}
 }
 
-// Find is every place the sin is committed.
 func (RestatedCommentDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return py.In(codebase).
 		WhereStatement().
@@ -35,7 +32,6 @@ func (RestatedCommentDetector) Find(codebase *engine.Codebase) []engine.Match {
 		Get()
 }
 
-// isInFunction says whether the statement sits in a def.
 func isInFunction(n py.Node) bool {
 	return n.EnclosingFunction().Exists()
 }

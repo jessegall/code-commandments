@@ -24,8 +24,6 @@ func TestAProjectRunsTheToolThroughPHPOnlyWhenItInstallsItSo(t *testing.T) {
 	}
 }
 
-// TestThePackagesOwnCheckoutRunsItsOwnBin holds the one composer project with no shim of the package: composer never
-// links a package's own bin into its own vendor, so the checkout is told the bin/commandments it has.
 func TestThePackagesOwnCheckoutRunsItsOwnBin(t *testing.T) {
 	checkout := t.TempDir()
 	for _, file := range []string{"composer.json", "bin/commandments"} {
@@ -42,9 +40,6 @@ func TestThePackagesOwnCheckoutRunsItsOwnBin(t *testing.T) {
 	}
 }
 
-// TestJudgingIsTheAliasWhereTheJournalCanRunIt holds the one command an agent is told to run: where the journal
-// drives the project it is the alias the plugin's manifest ships, so a briefing never names a file inside
-// .journal/plugins, and anywhere else it is the binary with its verb.
 func TestJudgingIsTheAliasWhereTheJournalCanRunIt(t *testing.T) {
 	driven := t.TempDir()
 	installed := filepath.Join(driven, ".journal", "plugins", workspace.JournalPlugin)

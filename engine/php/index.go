@@ -8,7 +8,6 @@ import (
 	"github.com/jessegall/code-commandments/engine"
 )
 
-// sends are the call kinds the call graph reads, in the order it reads them.
 var sends = []string{"Expr_MethodCall", "Expr_NullsafeMethodCall", "Expr_StaticCall"}
 
 // Index is the program's call graph: every named method send and static call, by the member it names.
@@ -19,7 +18,6 @@ type Index struct {
 
 var indexes = Memoised(buildIndex)
 
-// IndexOf is the codebase's call graph, built on first need.
 func IndexOf(codebase *engine.Codebase) *Index {
 	return indexes.Of(codebase)
 }
@@ -27,8 +25,6 @@ func IndexOf(codebase *engine.Codebase) *Index {
 func buildIndex(codebase *engine.Codebase) *Index {
 	index := &Index{program: ProgramOf(codebase), byName: map[string][]engine.Match{}}
 	files := codebase.Of(contract.PHP).Files()
-	// A kind at a time, since the order a name's calls are listed in is the order they are answered in, and
-	// the PHP tool listed every send of one kind before the next.
 	for _, kind := range sends {
 		for _, file := range files {
 			for _, node := range file.Nodes() {
@@ -47,8 +43,6 @@ func buildIndex(codebase *engine.Codebase) *Index {
 	return index
 }
 
-// CallersOf is every call of the method whose receiver is the class or a subclass of it: a static call's class, or
-// a method send's receiver as its scope declares it.
 func (i *Index) CallersOf(fqcn, method string) []engine.Match {
 	var callers []engine.Match
 	for _, call := range i.byName[method] {
@@ -64,7 +58,6 @@ func (i *Index) CallersOf(fqcn, method string) []engine.Match {
 	return callers
 }
 
-// StaticCallClass is the class a static call names, `self` and `static` read as the class they sit in.
 func StaticCallClass(call engine.Match) string {
 	class := call.Child("class")
 	if call.Kind() != "Expr_StaticCall" || !isName(class) {
@@ -77,9 +70,6 @@ func StaticCallClass(call engine.Match) string {
 	return class.Name()
 }
 
-// FunctionCallersOf are the calls of a function: naming it whole, or by its short name from its own namespace, which
-// PHP resolves to it before any global function of that name, or, for a global function, from a namespace that
-// declares none of that name, where PHP falls back to it.
 func (i *Index) FunctionCallersOf(function engine.Match) []engine.Match {
 	qualified := strings.TrimSuffix(function.Node().Symbol, "()")
 	namespace, short := "", qualified
@@ -106,14 +96,10 @@ func (i *Index) FunctionCallersOf(function engine.Match) []engine.Match {
 	return calls
 }
 
-// declaresFunction says whether the call's own namespace declares a function of the short name, which PHP calls
-// before falling back to the global one.
 func declaresFunction(call engine.Match, short string) bool {
 	return len(call.Codebase().Declarations(call.Namespace()+`\`+short+"()")) > 0
 }
 
-// functionCalls are the codebase's calls of a function by name, by the last part of that name in lower case, as
-// PHP spells a function's name in any case.
 func functionCalls(codebase *engine.Codebase) map[string][]engine.Match {
 	return engine.Analysis(codebase, "php-function-calls", func(codebase *engine.Codebase) map[string][]engine.Match {
 		byName := map[string][]engine.Match{}

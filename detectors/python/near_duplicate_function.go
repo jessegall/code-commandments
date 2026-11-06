@@ -9,7 +9,6 @@ import (
 	pysins "github.com/jessegall/code-commandments/sins/python"
 )
 
-// nearDuplicateWeight is how many nodes a body must weigh before two of one shape are not a coincidence.
 const nearDuplicateWeight = 20
 
 // NearDuplicateFunctionDetector finds two or more defs with one body's shape that differ only in their names and literals.
@@ -19,12 +18,10 @@ func init() {
 	detectors.Register(catalog.Python, NearDuplicateFunctionDetector{})
 }
 
-// Sin is the sin the detector finds.
 func (NearDuplicateFunctionDetector) Sin() sins.Sin {
 	return pysins.NearDuplicateFunction{}
 }
 
-// Find is every place the sin is committed.
 func (NearDuplicateFunctionDetector) Find(codebase *engine.Codebase) []engine.Match {
 	candidates := py.In(codebase).
 		WhereFunction().
@@ -39,18 +36,14 @@ func (NearDuplicateFunctionDetector) Find(codebase *engine.Codebase) []engine.Ma
 	return engine.NearCopies(candidates, shapeHash, bodyHash)
 }
 
-// shapeHash is the fingerprint of a def's body, blind to its names and literals.
 func shapeHash(match engine.Match) (string, bool) {
 	return py.Node{Match: match}.ShapeHash(), true
 }
 
-// GroupKey groups a finding with the defs whose body has its shape.
 func (NearDuplicateFunctionDetector) GroupKey(match engine.Match) (string, bool) {
 	shape, _ := shapeHash(match)
 
 	return shape, shape != ""
 }
 
-// CrossFile says the rule reads more than the file it reports in, which the fixture measures by asking it
-// of one file and of the whole tree: a scoped run reads the whole scan while it is enabled.
 func (NearDuplicateFunctionDetector) CrossFile() {}

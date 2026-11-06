@@ -14,10 +14,8 @@ type NonCountingForDetector struct{}
 
 func init() { detectors.Register(catalog.PHP, NonCountingForDetector{}) }
 
-// Sin is the sin the detector finds.
 func (NonCountingForDetector) Sin() sins.Sin { return backendsins.NonCountingFor{} }
 
-// Find is every for loop whose steps advance no counter.
 func (NonCountingForDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return php.In(codebase).
 		Where(engine.As(php.Node.IsNonCountingFor)).

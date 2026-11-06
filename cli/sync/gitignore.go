@@ -12,23 +12,17 @@ import (
 	"github.com/jessegall/code-commandments/cli/workspace"
 )
 
-// retiredCommandsIgnored are the root .gitignore lines that once ignored commands the tool no longer ships.
 var retiredCommandsIgnored = []string{
 	"# code-commandments published slash commands (regenerated on composer update)",
 	".claude/commands/until.md",
 	".claude/commands/stop-condition.md",
 }
 
-// staleRules are ignore rules of ours in a form since retired, removed by exact line so a rule the user
-// wrote is never taken for one. A trailing slash on the published-skills rule stopped matching once the
-// skills became links, which git records as files.
 var staleRules = append([]string{
 	".commandments/", ".commandments/*", "!.commandments/config.php", "!.commandments/repent.php",
 	".claude/skills/commandments/", ".claude/skills/commandments-*/",
 }, retiredCommandsIgnored...)
 
-// ensureGitignored adds to the project's .gitignore every rule the library and the agents need that it
-// does not already carry, each under its comment, after dropping our retired forms.
 func ensureGitignored(path string, kept []agents.Agent) error {
 	text, _ := os.ReadFile(path)
 
@@ -60,7 +54,6 @@ func ensureGitignored(path string, kept []agents.Agent) error {
 	return atomic.Write(path, existing)
 }
 
-// retiredLines are lines the tool once wrote into .commandments/.gitignore, dropped whenever it is rewritten.
 var retiredLines = []string{
 	"# A session's PLAN is tracked; everything else in its folder is this run's own state.",
 	"!sessions/*/plan/",
@@ -69,8 +62,6 @@ var retiredLines = []string{
 	"!orchestrator/**",
 }
 
-// commandmentsLines ignore everything the tool generates in .commandments while keeping the project's own
-// there tracked: the config in either form, the sins it has reported, its custom rules and each session's tasks.
 func commandmentsLines() []string {
 	return []string{
 		"# code-commandments generated state; the lines below stay tracked.",
@@ -92,7 +83,6 @@ func commandmentsLines() []string {
 	}
 }
 
-// ensureCommandmentsGitignore writes .commandments/.gitignore: our lines, then every line the project added.
 func ensureCommandmentsGitignore(root string) error {
 	path := workspace.At(root, "").Shared(".gitignore")
 	content := strings.Join(append(commandmentsLines(), linesTheProjectAdded(path)...), "\n") + "\n"

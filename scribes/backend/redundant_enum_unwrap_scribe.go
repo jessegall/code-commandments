@@ -13,7 +13,6 @@ func init() {
 // RedundantEnumUnwrapScribe hands a Data the enum itself rather than its unwrapped value, the cast rebuilding it.
 type RedundantEnumUnwrapScribe struct{}
 
-// Rewrite replaces each finding with the enum it reads the value of.
 func (RedundantEnumUnwrapScribe) Rewrite(findings []engine.Match, _ *engine.Codebase) (scribes.Rewrites, error) {
 	return replaceEach(findings, func(finding engine.Match) (string, bool) {
 		if kind := finding.Kind(); kind != "Expr_PropertyFetch" && kind != "Expr_NullsafePropertyFetch" {

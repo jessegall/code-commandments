@@ -11,7 +11,6 @@ type NearDuplicateFunction struct{}
 
 func init() { sins.Register(catalog.PHP, NearDuplicateFunction{}) }
 
-// Definition is what the sin states about itself.
 func (NearDuplicateFunction) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "near-duplicate-function",

@@ -1,6 +1,4 @@
-// Command check vets a release folder the build wrote: every linux binary of the tool is static, no binary — the
-// tool's or a C# bridge's — is over its budget in scripts/release/size-budget.json, and SHA256SUMS lists them all. --record writes the sizes measured beside the
-// budgets, which only a person raises. Run from the repository root: go run ./scripts/release/check [--record] <dir>.
+// Command check vets a release folder the build wrote: every linux binary of the tool is static, no binary — the tool's or a C# bridge's — is over its budget in scripts/release/size-budget.json, and SHA256SUMS lists them all.
 package main
 
 import (
@@ -16,7 +14,6 @@ import (
 	"strings"
 )
 
-// budgetFile is where each platform's size budget and last measured size are kept.
 const budgetFile = "scripts/release/size-budget.json"
 
 // Budgets are the size each platform's binary may reach, and the size it last measured, in bytes.
@@ -49,9 +46,6 @@ func main() {
 	fmt.Println("✓ every binary is within its budget, the linux ones static; SHA256SUMS written")
 }
 
-// check vets the binaries in dir against the budgets at budgetPath and writes their SHA256SUMS: every budgeted binary
-// must be there, the C# bridges too unless toolOnly says the folder holds the tool's alone; recording, it writes
-// the sizes measured into the budgets' file. It answers every problem found.
 func check(dir, budgetPath string, record, toolOnly bool) ([]string, error) {
 	binaries, err := filepath.Glob(filepath.Join(dir, "commandments-*"))
 	if err != nil {
@@ -78,7 +72,6 @@ func check(dir, budgetPath string, record, toolOnly bool) ([]string, error) {
 		}
 		budgets.Measured[platform] = info.Size()
 		problems = append(problems, overBudget(platform, info.Size(), budgets, budgetPath)...)
-		// A C# bridge is .NET's own executable, never static: its key is its whole name, so only the tool's are asked.
 		if linked := dynamicallyLinked(binary); strings.HasPrefix(platform, "linux-") && linked != "" {
 			problems = append(problems, fmt.Sprintf("%s is not static: %s", platform, linked))
 		}
@@ -99,8 +92,6 @@ func check(dir, budgetPath string, record, toolOnly bool) ([]string, error) {
 	return problems, nil
 }
 
-// missing is the problem with every budgeted binary the release lacks: a platform's tool, or, unless toolOnly, its
-// C# bridge.
 func missing(dir string, budgets Budgets, toolOnly bool) []string {
 	var problems []string
 	for _, key := range slices.Sorted(maps.Keys(budgets.Budget)) {
@@ -122,7 +113,6 @@ func missing(dir string, budgets Budgets, toolOnly bool) []string {
 	return problems
 }
 
-// overBudget is the problem with a binary's size: a platform with no budget, or one it has outgrown.
 func overBudget(platform string, size int64, budgets Budgets, budgetPath string) []string {
 	budget, set := budgets.Budget[platform]
 	if !set {
@@ -135,14 +125,10 @@ func overBudget(platform string, size int64, budgets Budgets, budgetPath string)
 	return nil
 }
 
-// platformOf is the key a binary's budget is kept under: the os-arch of the tool's own (commandments-linux-amd64 →
-// linux-amd64), the whole name of a C# bridge's (roslyn-bridge-linux-amd64).
 func platformOf(binary string) string {
 	return strings.TrimSuffix(strings.TrimPrefix(filepath.Base(binary), "commandments-"), ".exe")
 }
 
-// dynamicallyLinked says why an ELF binary is not static — the interpreter it asks for, or a library it needs — and
-// nothing for a static one.
 func dynamicallyLinked(binary string) string {
 	file, err := elf.Open(binary)
 	if err != nil {

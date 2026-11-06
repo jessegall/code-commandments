@@ -6,8 +6,6 @@ import (
 	"strings"
 )
 
-// UnifiedDiff is the `diff -u` of every rewritten file against what is on disk, each labelled a/ and b/
-// with its path relative to base.
 func UnifiedDiff(rewrites Rewrites, base string) (string, error) {
 	var diff strings.Builder
 	for _, path := range rewrites.paths {
@@ -21,7 +19,6 @@ func UnifiedDiff(rewrites Rewrites, base string) (string, error) {
 	return diff.String(), nil
 }
 
-// unifiedDiffOf diffs one file's content on disk, or nothing when it is new, with its rewritten content.
 func unifiedDiffOf(path, content, base string) (string, error) {
 	old, err := temporary("cc-old-", readOrEmpty(path))
 	if err != nil {
@@ -34,7 +31,6 @@ func unifiedDiffOf(path, content, base string) (string, error) {
 	}
 	defer os.Remove(rewritten)
 
-	// diff exits 1 when the files differ; what it printed is the answer either way.
 	raw, _ := exec.Command("diff", "-u", old, rewritten).Output()
 
 	relative := strings.TrimPrefix(path, base+"/")

@@ -1,5 +1,4 @@
-// Package folder lists, orders, copies and deletes folders the way the tool always has: entries sorted
-// by name, a link never walked through.
+// Package folder lists, orders, copies and deletes folders the way the tool always has: entries sorted by name, a link never walked through.
 package folder
 
 import (
@@ -9,8 +8,6 @@ import (
 	"sort"
 )
 
-// Entries are the paths directly inside dir, dotfiles included, sorted by name; none when dir is not a
-// folder.
 func Entries(dir string) []string {
 	names, err := os.ReadDir(dir)
 	if err != nil {
@@ -28,7 +25,6 @@ func Entries(dir string) []string {
 	return entries
 }
 
-// NewestFirst are the entries of dir, most recently modified first, ties in name order.
 func NewestFirst(dir string) []string {
 	entries := Entries(dir)
 
@@ -39,7 +35,6 @@ func NewestFirst(dir string) []string {
 	return entries
 }
 
-// Modified is when the path last changed, in Unix seconds; 0 when it is not there.
 func Modified(path string) int64 {
 	info, err := os.Stat(path)
 	if err != nil {
@@ -49,7 +44,6 @@ func Modified(path string) int64 {
 	return info.ModTime().Unix()
 }
 
-// Delete removes path whatever it is, a link as the link alone; true when it is gone.
 func Delete(path string) bool {
 	info, err := os.Lstat(path)
 
@@ -69,7 +63,6 @@ func Delete(path string) bool {
 	return os.Remove(path) == nil && emptied
 }
 
-// Copy copies the folder from into to, creating it; a link inside is copied as what it points at.
 func Copy(from, to string) bool {
 	if info, err := os.Stat(from); err != nil || !info.IsDir() {
 		return false
@@ -97,7 +90,6 @@ func Copy(from, to string) bool {
 	return copied
 }
 
-// CopyFile copies one file's contents.
 func CopyFile(from, to string) bool {
 	source, err := os.Open(from)
 	if err != nil {

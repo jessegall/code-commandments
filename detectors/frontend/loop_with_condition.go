@@ -13,8 +13,7 @@ func init() {
 	detectors.Register(catalog.Vue, LoopWithConditionDetector{})
 }
 
-// LoopWithConditionDetector finds a v-for and a v-if on one element: Vue gives v-if the higher priority, so
-// the condition cannot see the loop's item — filter the list in a computed, or wrap in a <template>.
+// LoopWithConditionDetector finds a v-for and a v-if on one element: Vue gives v-if the higher priority, so the condition cannot see the loop's item — filter the list in a computed, or wrap in a <template>.
 type LoopWithConditionDetector struct{}
 
 func (LoopWithConditionDetector) Sin() sins.Sin {

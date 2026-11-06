@@ -11,7 +11,6 @@ type ShortCircuitStatement struct{}
 
 func init() { sins.Register(catalog.PHP, ShortCircuitStatement{}) }
 
-// Definition is what the sin states about itself.
 func (ShortCircuitStatement) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "short-circuit-statement",

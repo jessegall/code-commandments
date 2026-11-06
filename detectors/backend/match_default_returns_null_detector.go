@@ -14,10 +14,8 @@ type MatchDefaultReturnsNullDetector struct{}
 
 func init() { detectors.Register(catalog.PHP, MatchDefaultReturnsNullDetector{}) }
 
-// Sin is the sin the detector finds.
 func (MatchDefaultReturnsNullDetector) Sin() sins.Sin { return backendsins.MatchDefaultReturnsNull{} }
 
-// Find is every match with an absence default, unless its handled arms already return null from their own declarations.
 func (MatchDefaultReturnsNullDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return php.In(codebase).
 		Where(engine.As(php.Node.IsMatchWithAbsenceDefault)).

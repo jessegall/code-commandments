@@ -11,7 +11,6 @@ type NonFinalData struct{}
 
 func init() { sins.Register(catalog.PHP, NonFinalData{}) }
 
-// Definition is what the sin states about itself.
 func (NonFinalData) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "non-final-data",

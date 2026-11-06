@@ -25,8 +25,6 @@ func bridged(t *testing.T, arguments ...string) *contract.Stream {
 	return stream
 }
 
-// needsPHP fails the test when php is missing: this repository's tests run the PHP bridge, and a test that skips
-// without it passes having proven nothing.
 func needsPHP(t *testing.T) {
 	t.Helper()
 	if _, err := exec.LookPath("php"); err != nil {
@@ -173,8 +171,6 @@ func TestAnAnonymousClassLendsItsMembersNoSymbol(t *testing.T) {
 	}
 }
 
-// TestAClassTheProjectsLoaderFailsOnIsSaidOnTheStream holds the bridge to saying which class the scanned project's own
-// autoloader threw on, and why, on the program line, where it had been dropped unseen.
 func TestAClassTheProjectsLoaderFailsOnIsSaidOnTheStream(t *testing.T) {
 	folder := written(t, map[string]string{"Cart.php": "<?php\nnamespace Shop;\nfinal class Cart extends \\Acme\\Broken {}\n"})
 	if err := os.MkdirAll(filepath.Join(folder, "vendor"), 0o755); err != nil {
@@ -193,9 +189,6 @@ func TestAClassTheProjectsLoaderFailsOnIsSaidOnTheStream(t *testing.T) {
 	}
 }
 
-// TestAProjectWithNoAutoloaderStillKnowsPhpsOwnClasses holds the bridge to listing a built-in interface a class
-// implements when the project has no vendor/autoload.php, so what overrides it is known (the frozen shop's
-// BlankText::__toString), and to listing nothing else there: the bridge's own php-parser is no project's.
 func TestAProjectWithNoAutoloaderStillKnowsPhpsOwnClasses(t *testing.T) {
 	folder := written(t, map[string]string{"Blank.php": "<?php\nnamespace Shop;\nfinal class Blank implements \\Stringable {\n    public function __toString(): string { return ''; }\n}\nfinal class Ask extends \\PhpParser\\Node\\Expr\\MethodCall {}\n"})
 	stream := bridged(t, folder)
@@ -211,9 +204,6 @@ func TestAProjectWithNoAutoloaderStillKnowsPhpsOwnClasses(t *testing.T) {
 	}
 }
 
-// TestAnAutoloaderThatDoesNotLoadHereLeavesTheStreamWhole holds the bridge to its stream when the project's
-// autoloader requires a file only another machine has, as a path repository inside a Docker stack does: the
-// warning stays off the stream, and the files are read with PHP's own declarations alone.
 func TestAnAutoloaderThatDoesNotLoadHereLeavesTheStreamWhole(t *testing.T) {
 	folder := written(t, map[string]string{
 		"vendor/autoload.php": "<?php\nrequire __DIR__ . '/../../elsewhere/helpers.php';\n",
@@ -228,8 +218,6 @@ func TestAnAutoloaderThatDoesNotLoadHereLeavesTheStreamWhole(t *testing.T) {
 	}
 }
 
-// TestAMethodAnOutsideInterfaceDeclaresIsAnOverride holds OverridesMethod to a contract the scan does not hold,
-// read through the project's autoloader, as Laravel's Arrayable::toArray is (#608).
 func TestAMethodAnOutsideInterfaceDeclaresIsAnOverride(t *testing.T) {
 	folder := written(t, map[string]string{"Visitor.php": "<?php\nnamespace Shop;\nfinal class Visitor extends \\PhpParser\\NodeVisitorAbstract implements \\PhpParser\\NodeVisitor {\n    public function enterNode(\\PhpParser\\Node $node) { return null; }\n    public function visited(): int { return 0; }\n}\n"})
 	program := ProgramOf(engine.Load(bridged(t, "--autoload=../../bridge/php/parser/autoload.php", folder)))
@@ -242,9 +230,6 @@ func TestAMethodAnOutsideInterfaceDeclaresIsAnOverride(t *testing.T) {
 	}
 }
 
-// TestAClassIsWhatItsOutsideAncestorsAre holds the program's ancestry to the outside symbols: a scanned class
-// extending a package's class is everything that class is, its parents and contracts outside the scan too — as a
-// laravel-actions ActionRequest is the FormRequest and the Request it extends.
 func TestAClassIsWhatItsOutsideAncestorsAre(t *testing.T) {
 	folder := written(t, map[string]string{"Ask.php": "<?php\nnamespace Shop;\nfinal class Ask extends \\PhpParser\\Node\\Expr\\MethodCall {}\n"})
 	program := ProgramOf(engine.Load(bridged(t, "--autoload=../../bridge/php/parser/autoload.php", folder)))
@@ -349,9 +334,6 @@ final class Till
 	}
 }
 
-// TestAProbeForAClassTheParserLacksIsNoFailure holds the bridge's php-parser loader to answering a class it does not
-// have as absent, as composer's does: requiring a file that is not there is fatal, and a scanned project asking after
-// a class php-parser dropped (`Stmt\Throw_`) cut the bridge's stream short.
 func TestAProbeForAClassTheParserLacksIsNoFailure(t *testing.T) {
 	needsPHP(t)
 	command, err := Here().Command()
@@ -365,10 +347,6 @@ func TestAProbeForAClassTheParserLacksIsNoFailure(t *testing.T) {
 	}
 }
 
-// TestAProjectWithUninstalledDependenciesSaysWhyNoPackageIsRead holds the program line to the reason its own loader
-// was not used. Without it no class of a package is read, so a method a package's interface fixes reads as the
-// class's own and the rule that excuses such a method cannot — a report of that false positive (#665) is answered
-// by the run itself, not by a reader guessing. A project that declares no dependency says nothing.
 func TestAProjectWithUninstalledDependenciesSaysWhyNoPackageIsRead(t *testing.T) {
 	uninstalled := written(t, map[string]string{
 		"composer.json":  `{"name":"acme/app","require":{"acme/excel":"^3.1"}}`,

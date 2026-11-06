@@ -8,9 +8,6 @@ import (
 	"github.com/jessegall/code-commandments/cli"
 )
 
-// TestAnIssueExistsOnlyWhereGhSaidSoAndPrintedIt holds what a report may believe about its own filing. The record
-// of a reported sin is keyed to an issue number, so a number read from anything but a created issue's own URL
-// would key a row to an issue that is not there, and the next run would file the same report again.
 func TestAnIssueExistsOnlyWhereGhSaidSoAndPrintedIt(t *testing.T) {
 	for name, test := range map[string]struct {
 		stdout string
@@ -77,8 +74,6 @@ func TestAnIssueExistsOnlyWhereGhSaidSoAndPrintedIt(t *testing.T) {
 	}
 }
 
-// TestNoGitHubCLIFilesNothingAndSaysHowToDoItByHand holds the case the record depends on most: with no gh there is
-// no issue, so there must be no row either, and the person is told where to open one.
 func TestNoGitHubCLIFilesNothingAndSaysHowToDoItByHand(t *testing.T) {
 	found := looking
 	looking = func() (string, error) { return "", errors.New("gh: not found") }
@@ -100,8 +95,6 @@ func TestNoGitHubCLIFilesNothingAndSaysHowToDoItByHand(t *testing.T) {
 	}
 }
 
-// TestAFiledIssueNamesTheURLItWasReadFrom holds the one thing a row keeps besides the number: a reader of the
-// record, or of the dashboard, opens the issue without knowing how the URL is built.
 func TestAFiledIssueNamesTheURLItWasReadFrom(t *testing.T) {
 	filed := Filed{Repository: "jessegall/code-commandments", Issue: 814}
 

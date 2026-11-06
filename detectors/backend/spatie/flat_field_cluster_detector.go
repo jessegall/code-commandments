@@ -14,27 +14,20 @@ import (
 	spatiesins "github.com/jessegall/code-commandments/sins/backend/spatie"
 )
 
-// FlatFieldClusterDetector finds a TypeScript Data class flattening the fields of a value object the project
-// already declares into prefixed scalars: shippingStreet, shippingCity beside an Address.
+// FlatFieldClusterDetector finds a TypeScript Data class flattening the fields of a value object the project already declares into prefixed scalars: shippingStreet, shippingCity beside an Address.
 type FlatFieldClusterDetector struct{}
 
 func init() { detectors.Register(catalog.PHP, FlatFieldClusterDetector{}) }
 
 const (
-	// minCluster is how many prefixed fields make a cluster.
-	minCluster = 2
-	// maxValueObjectFields is the most fields a class may have to count as a value object's shape.
+	minCluster           = 2
 	maxValueObjectFields = 6
 )
 
-// clusterScalars are the scalar types a flattened field is written in.
 var clusterScalars = []string{"string", "int", "float", "bool"}
 
-// Sin is the sin the detector finds.
 func (FlatFieldClusterDetector) Sin() sins.Sin { return spatiesins.FlatFieldCluster{} }
 
-// Find is every TypeScript Data class whose prefixed scalar fields are the fields of a value object named for the
-// prefix.
 func (FlatFieldClusterDetector) Find(codebase *engine.Codebase) []engine.Match {
 	shapes := valueObjectShapes(codebase)
 
@@ -74,8 +67,6 @@ func remaindersMatch(cluster []php.Field, shape []string) bool {
 	return true
 }
 
-// clustersByPrefix groups the class's public scalar fields by their leading camel-case word, in the order the
-// words first appear.
 func clustersByPrefix(class php.Node) (map[string][]php.Field, []string) {
 	clusters := map[string][]php.Field{}
 	var tokens []string
@@ -96,8 +87,6 @@ func clustersByPrefix(class php.Node) (map[string][]php.Field, []string) {
 	return clusters, tokens
 }
 
-// valueObjectShapes is the lower-cased public field names of every named class with at most six, by its lower-cased
-// short name, and again without a Data suffix.
 func valueObjectShapes(codebase *engine.Codebase) map[string][]string {
 	shapes := map[string][]string{}
 	for _, class := range php.In(codebase).WhereKind("Stmt_Class").Get() {
@@ -133,6 +122,4 @@ func allBoolean(cluster []php.Field) bool {
 	})
 }
 
-// CrossFile says the rule reads more than the file it reports in, which the fixture measures by asking it
-// of one file and of the whole tree: a scoped run reads the whole scan while it is enabled.
 func (FlatFieldClusterDetector) CrossFile() {}

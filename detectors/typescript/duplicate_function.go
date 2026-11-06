@@ -15,11 +15,9 @@ func init() {
 	detectors.Register(catalog.TypeScript, DuplicateFunctionDetector{})
 }
 
-// duplicateWeight is how much code a body must hold before a copy of it is worth one shared function.
 const duplicateWeight = 12
 
-// DuplicateFunctionDetector finds function bodies written twice, the same code formatting aside, across
-// modules and components alike: one shared function or composable waiting to be written.
+// DuplicateFunctionDetector finds function bodies written twice, the same code formatting aside, across modules and components alike: one shared function or composable waiting to be written.
 type DuplicateFunctionDetector struct{}
 
 func (DuplicateFunctionDetector) Sin() sins.Sin {
@@ -39,13 +37,10 @@ func bodyHash(function engine.Match) string {
 	return typescript.Of(function).BodyHash()
 }
 
-// GroupKey groups a finding with the functions whose body it repeats.
 func (DuplicateFunctionDetector) GroupKey(match engine.Match) (string, bool) {
 	hash := bodyHash(match)
 
 	return hash, hash != ""
 }
 
-// CrossFile says the rule reads more than the file it reports in, which the fixture measures by asking it
-// of one file and of the whole tree: a scoped run reads the whole scan while it is enabled.
 func (DuplicateFunctionDetector) CrossFile() {}

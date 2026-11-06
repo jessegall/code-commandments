@@ -11,7 +11,6 @@ type RawDecodedArrayReturn struct{}
 
 func init() { sins.Register(catalog.PHP, RawDecodedArrayReturn{}) }
 
-// Definition is what the sin states about itself.
 func (RawDecodedArrayReturn) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "raw-decoded-array-return",

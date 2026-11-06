@@ -11,13 +11,6 @@ import (
 	"github.com/jessegall/code-commandments/engine"
 )
 
-// Four readings the engine has made for years, for shipped rules in four languages each, and which a project could
-// not ask for: a project could not write the rule our own catalogue teaches it. Each is now a check, and each is
-// held here beside the look-alike it must refuse, since a reading that fires on the shape alone would be worse
-// than none.
-
-// TestARuleAsksForTheReadingsTheEngineAlreadyMakes holds the three branch readings and the loop one over PHP, each
-// with the shape it must leave alone in the same file.
 func TestARuleAsksForTheReadingsTheEngineAlreadyMakes(t *testing.T) {
 	project := phpProject(t, map[string]string{
 		"app/Shipping.php": `<?php
@@ -109,19 +102,13 @@ class Shipping
 `,
 	})
 
-	// The method each reading is asked about, rather than its line, since what matters is that the reading fires
-	// on the shape and not on the look-alike beside it.
 	for name, want := range map[string]struct {
 		check  string
 		fires  string
 		leaves string
 	}{
-		// The else stands though the taken path already left; the branch that decides between two real paths does
-		// not, since nothing above its else leaves.
-		"a redundant else": {`{"redundantElse": true}`, "redundant", "decided"},
-		// The whole body of a loop, burying two statements; the one that ends by leaving is picking an item.
-		"a buried guard": {`{"soleLoopBodyGuard": true}`, "buried", "picked"},
-		// Three rungs over one subject; the chain of unrelated tests has rungs and no subject, so it is no ladder.
+		"a redundant else":          {`{"redundantElse": true}`, "redundant", "decided"},
+		"a buried guard":            {`{"soleLoopBodyGuard": true}`, "buried", "picked"},
 		"a ladder over one subject": {`{"ladderRungs": {"atLeast": 3}}`, "laddered", "unrelated"},
 	} {
 		t.Run(name, func(t *testing.T) {
@@ -137,17 +124,12 @@ class Shipping
 		})
 	}
 
-	// A loop that hands its item on, and the engine's own pardon: both loops here pass their line to something
-	// else, which is what the walk-the-collection rules share.
 	passing := `{"select": "loop", "where": [{"passesItsElementOn": true}]}`
 	if found := foundAt(t, "backend", passing, project); found == "[]" {
 		t.Error("no loop reads as handing its item on, and both of them do")
 	}
 }
 
-// TestTheSameReadingsAnswerForGo holds them in a second language, since the whole point of these four is that one
-// reading serves every language the engine knows: the neutral kinds say what a branch and an exit are, and each
-// grammar says where its own tree files the taken path, the else and the item a loop binds.
 func TestTheSameReadingsAnswerForGo(t *testing.T) {
 	project := goProject(t, map[string]string{
 		"go.mod": "module example.com/shop\n",
@@ -192,8 +174,7 @@ func Bound(lines map[string]int, logged *int) {
 		leaves string
 	}{
 		"a redundant else": {`{"redundantElse": true}`, "Redundant", ""},
-		// Bound binds a name for its own body, which inverting the guard would widen, so the reading pardons it.
-		"a buried guard": {`{"soleLoopBodyGuard": true}`, "Buried", "Bound"},
+		"a buried guard":   {`{"soleLoopBodyGuard": true}`, "Buried", "Bound"},
 	} {
 		t.Run(name, func(t *testing.T) {
 			fires := `{"select": "branch", "where": [` + want.check + `, {"of": "enclosingFunction", "name": "` + want.fires + `"}]}`
@@ -213,7 +194,6 @@ func Bound(lines map[string]int, logged *int) {
 	}
 }
 
-// goProject is the codebase of those Go sources, read by the Go bridge as any run reads it.
 func goProject(t *testing.T, files map[string]string) *engine.Codebase {
 	t.Helper()
 	root, err := filepath.EvalSymlinks(t.TempDir())

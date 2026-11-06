@@ -9,19 +9,12 @@ import (
 	"github.com/jessegall/code-commandments/cli/config"
 )
 
-// The project config is the one file the Go binary writes in a different format by design: the PHP tool
-// executes a config.php, the binary reads a config.json. The two are one file when they say the same.
 const (
 	phpConfig  = ".commandments/config.php"
 	jsonConfig = ".commandments/config.json"
 	schemaFile = ".commandments/config.schema.json"
 )
 
-// EquateConfigs makes a golden's config.php and the Go run's config.json one entry when both runs wrote
-// them the same way and they declare the same settings, so a case differs only where the settings do. Both
-// sides' words name the one file the same way, whether the PHP tool or the Go binary recorded the golden, and a layer declaration it shows in config.json's form
-// is the golden's config.php one when both declare the same layers. The schema written beside a config.json
-// and the ignore rule that keeps it tracked are the rest of its form.
 func EquateConfigs(want, got Result, scratch string) (Result, Result) {
 	for _, name := range []string{jsonConfig, "config.json already declares", "config.json follows the plugin"} {
 		for _, text := range []*string{&want.Stdout, &want.Stderr, &got.Stdout, &got.Stderr} {
@@ -80,8 +73,6 @@ func entry(files, path string) (fileEntry, bool) {
 	return fileEntry{}, false
 }
 
-// sameSettings says whether the config.php and the config.json declare the same config, arguments taken in
-// order as config.json passes them.
 func sameSettings(php, json, scratch string) bool {
 	phpPath, jsonPath := filepath.Join(scratch, "config.php"), filepath.Join(scratch, "config.json")
 
@@ -102,9 +93,6 @@ func sameSettings(php, json, scratch string) bool {
 	return reflect.DeepEqual(fromPHP.Positional(), fromJSON)
 }
 
-// equateDeclarations makes the configure() statement the golden shows and the "configure" block the run
-// shows one line when both declare the same. The statement names its detector as the config.php it is
-// written into imports it.
 func equateDeclarations(want, got, scratch string) (string, string) {
 	php, shown := block(want, "$config->configure(", func(line, _ string) bool { return strings.HasSuffix(line, "));") })
 	json, alsoShown := block(got, `"configure": {`, func(line, indent string) bool { return line == indent+"}" })
@@ -118,7 +106,6 @@ func equateDeclarations(want, got, scratch string) (string, string) {
 	return strings.Replace(want, php, same, 1), strings.Replace(got, json, same, 1)
 }
 
-// block is the lines of text from the first that holds the opening to the first after it that closes it.
 func block(text, opening string, closes func(line, indent string) bool) (string, bool) {
 	lines := strings.Split(text, "\n")
 

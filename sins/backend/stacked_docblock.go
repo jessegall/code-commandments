@@ -11,7 +11,6 @@ type StackedDocblock struct{}
 
 func init() { sins.Register(catalog.PHP, StackedDocblock{}) }
 
-// Definition is what the sin states about itself.
 func (StackedDocblock) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "stacked-docblock",

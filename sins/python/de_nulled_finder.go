@@ -13,7 +13,6 @@ func init() {
 	sins.Register(catalog.Python, DeNulledFinder{})
 }
 
-// Definition is what the sin states about itself.
 func (DeNulledFinder) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "python-de-nulled-finder",

@@ -1,6 +1,4 @@
-// Package jsonfile reads and writes a JSON file the user owns (composer.json, .claude/settings.json) the way
-// the PHP tool does: keys stay in the order the file holds them, and the file is written back pretty-printed
-// with four spaces, slashes and unicode as they are, and an empty object as an empty list.
+// Package jsonfile reads and writes a JSON file the user owns (composer.json, .claude/settings.json) the way the PHP tool does: keys stay in the order the file holds them, and the file is written back pretty-printed with four spaces, slashes and unicode as they are, and an empty object as an empty list.
 package jsonfile
 
 import (
@@ -22,7 +20,6 @@ type Object struct {
 	values map[string]any
 }
 
-// NewObject is an object with these key-value pairs, in order.
 func NewObject(pairs ...any) *Object {
 	object := &Object{values: map[string]any{}}
 
@@ -33,14 +30,12 @@ func NewObject(pairs ...any) *Object {
 	return object
 }
 
-// Get is the value under the key, and whether the object has it.
 func (o *Object) Get(key string) (any, bool) {
 	value, has := o.values[key]
 
 	return value, has
 }
 
-// Set puts the value under the key: in its place when the key is there, last when it is new.
 func (o *Object) Set(key string, value any) {
 	if _, has := o.values[key]; !has {
 		o.keys = append(o.keys, key)
@@ -49,7 +44,6 @@ func (o *Object) Set(key string, value any) {
 	o.values[key] = value
 }
 
-// Delete takes the key out.
 func (o *Object) Delete(key string) {
 	if _, has := o.values[key]; !has {
 		return
@@ -66,12 +60,10 @@ func (o *Object) Delete(key string) {
 	}
 }
 
-// Keys are the object's keys, in order.
 func (o *Object) Keys() []string {
 	return append([]string(nil), o.keys...)
 }
 
-// Read is the object the file at path holds; false when there is no file, or it holds no object.
 func Read(path string) (*Object, bool) {
 	text, err := os.ReadFile(path)
 	if err != nil {
@@ -91,12 +83,10 @@ func Read(path string) (*Object, bool) {
 	return object, isObject
 }
 
-// Write writes the object to path as Text prints it.
 func Write(path string, object *Object) error {
 	return atomic.Write(path, Text(object))
 }
 
-// Text is the object pretty-printed as the PHP tool prints it, keys in order, with a closing newline.
 func Text(object *Object) string {
 	var out strings.Builder
 	encode(&out, object, "")
@@ -223,7 +213,6 @@ func encode(out *strings.Builder, value any, indent string) {
 	}
 }
 
-// quote is a string as PHP writes it with slashes and unicode unescaped.
 func quote(text string) string {
 	var out bytes.Buffer
 
@@ -234,7 +223,6 @@ func quote(text string) string {
 	return strings.TrimSuffix(out.String(), "\n")
 }
 
-// MarshalJSON writes the keys in order.
 func (o *Object) MarshalJSON() ([]byte, error) {
 	var out bytes.Buffer
 	out.WriteByte('{')
@@ -264,8 +252,6 @@ func (o *Object) MarshalJSON() ([]byte, error) {
 	return out.Bytes(), nil
 }
 
-// Pretty is value as PHP's json_encode pretty-prints it with unescaped slashes, and unescaped unicode
-// when unicode is true.
 func Pretty(value any, unicode bool) (string, error) {
 	raw, err := marshal(value)
 	if err != nil {
@@ -285,8 +271,6 @@ func Pretty(value any, unicode bool) (string, error) {
 	return escapeUnicode(indented.String()), nil
 }
 
-// Compact is value as PHP's json_encode writes it on one line with unescaped slashes, and unescaped unicode
-// when unicode is true.
 func Compact(value any, unicode bool) (string, error) {
 	raw, err := marshal(value)
 	if err != nil || unicode {
@@ -308,7 +292,6 @@ func marshal(value any) ([]byte, error) {
 	return bytes.TrimRight(out.Bytes(), "\n"), nil
 }
 
-// escapeUnicode writes every character past ASCII as a \u escape, as PHP does by default.
 func escapeUnicode(text string) string {
 	var out bytes.Buffer
 

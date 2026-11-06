@@ -7,22 +7,18 @@ import (
 	"github.com/jessegall/code-commandments/contract"
 )
 
-// Extends are the nodes naming the types the type declaration extends directly, in source order.
 func (m Match) Extends() []Match {
 	return m.listed(m.grammar().Extends)
 }
 
-// Implements are the nodes naming the contracts the type declaration honours directly, in source order.
 func (m Match) Implements() []Match {
 	return m.listed(m.grammar().Implements)
 }
 
-// Annotations are the nodes naming each attribute or decorator the declaration carries, in source order.
 func (m Match) Annotations() []Match {
 	return m.listed(m.grammar().Annotations)
 }
 
-// TypeKind is what kind of type the type declaration declares, one of TypeKinds; empty for any other node.
 func (m Match) TypeKind() string {
 	if read := m.grammar().TypeKind; read != nil && m.Is(TypeDeclaration) {
 		return read(m)
@@ -31,7 +27,6 @@ func (m Match) TypeKind() string {
 	return ""
 }
 
-// ReturnType is the node the function's return type is written as; no node when none is written.
 func (m Match) ReturnType() Match {
 	if read := m.grammar().ReturnType; read != nil && m.Is(Function) {
 		return read(m)
@@ -40,7 +35,6 @@ func (m Match) ReturnType() Match {
 	return Match{}
 }
 
-// ParameterType is the node the parameter's type is written as; no node when none is written.
 func (m Match) ParameterType() Match {
 	if read := m.grammar().ParameterType; read != nil && m.Is(Parameter) {
 		return read(m)
@@ -49,15 +43,10 @@ func (m Match) ParameterType() Match {
 	return Match{}
 }
 
-// IsAnnotated says whether an attribute or decorator the declaration carries names the type, by any name its
-// language lets one be written by: `[Serializable]` is SerializableAttribute in C#.
 func (m Match) IsAnnotated(want string) bool {
 	return m.Annotated(want).Exists()
 }
 
-// Annotated is that annotation itself, so what it was HANDED can be read: its arguments, what they resolve to,
-// where they point. IsAnnotated asks whether one is there and this answers which one it is, from the one body, and
-// no node where the declaration carries none.
 func (m Match) Annotated(want string) Match {
 	names := []string{want}
 	if read := m.grammar().AnnotationNames; read != nil {
@@ -73,9 +62,6 @@ func (m Match) Annotated(want string) Match {
 	return Match{}
 }
 
-// writtenBy says whether the annotation is written by one of those names: its own, or the name it HOLDS, since a
-// language may write an annotation as a node carrying its name rather than as the name itself — PHP's
-// `#[Route('/admin')]` is an attribute holding both the name and what it was handed.
 func (m Match) writtenBy(names []string) bool {
 	if slices.ContainsFunc(names, m.Names) {
 		return true
@@ -86,14 +72,10 @@ func (m Match) writtenBy(names []string) bool {
 	return named.Exists() && slices.ContainsFunc(names, named.Names)
 }
 
-// Names says whether the node names the type: by the symbol it resolves to when want is qualified, and
-// otherwise by that symbol's last part, or, when it resolves to none, by the last part of what it says.
 func (m Match) Names(want string) bool {
 	return NamesType(m.Named(), want)
 }
 
-// Named is the type the node names: the symbol it resolves to, or the class its compiler says calling it builds,
-// else its name, else what it says.
 func (m Match) Named() string {
 	if m.node == nil {
 		return ""
@@ -114,8 +96,6 @@ func (m Match) Named() string {
 	return strings.TrimSpace(m.Written())
 }
 
-// NamesType says whether the symbol is the type want names: the whole symbol when want is qualified, its last
-// part when want is bare. A leading `\` and C#'s global:: are no part of either.
 func NamesType(symbol, want string) bool {
 	symbol, want = BareSymbol(symbol), BareSymbol(want)
 	if symbol == "" || want == "" {
@@ -129,8 +109,6 @@ func NamesType(symbol, want string) bool {
 	return LastPart(symbol) == want
 }
 
-// BareSymbol is the symbol less a leading `\` or global::, a TypeScript symbol less the file it is in, and a
-// generic type less its type arguments: List<T> is List.
 func BareSymbol(symbol string) string {
 	if _, name, inFile := strings.Cut(symbol, "#"); inFile {
 		symbol = name
@@ -139,8 +117,6 @@ func BareSymbol(symbol string) string {
 	return strings.TrimPrefix(strings.TrimPrefix(withoutTypeArguments(symbol), "global::"), `\`)
 }
 
-// withoutTypeArguments is the symbol less every type argument list and generic arity it carries, wherever it
-// stands: N.Outer<T>.Inner is N.Outer.Inner, System.Action`1 is System.Action.
 func withoutTypeArguments(symbol string) string {
 	var kept strings.Builder
 	depth, arity := 0, false
@@ -163,13 +139,10 @@ func withoutTypeArguments(symbol string) string {
 	return kept.String()
 }
 
-// LastPart is the symbol's last segment, after its last `\` or `.`.
 func LastPart(symbol string) string {
 	return symbol[strings.LastIndexAny(symbol, `\.`)+1:]
 }
 
-// Class is the class the node is about: the one a type declaration declares, else the one it names, constructs or
-// holds a value of, as its language tells; empty when it is about none.
 func (m Match) Class() string {
 	if m.node == nil {
 		return ""
@@ -184,11 +157,6 @@ func (m Match) Class() string {
 	return m.Refers()
 }
 
-// TypeName is the type the expression has as its language reads it: `number` for `price.amount` where the
-// checker says so, `App\Models\User` for a value holding one. Empty where the language cannot tell.
-//
-// This is what Class answers for a class alone: a rule about money cannot tell a numeric amount from a
-// preformatted label without the primitive types too.
 func (m Match) TypeName() string {
 	if m.node == nil {
 		return ""
@@ -201,15 +169,10 @@ func (m Match) TypeName() string {
 	return m.Class()
 }
 
-// Traits are the nodes naming the traits the type declaration uses directly, in source order.
 func (m Match) Traits() []Match {
 	return m.listed(m.grammar().Traits)
 }
 
-// Lineage is every type the node's class extends, nearest first: a type declaration's own, or the class the node
-// names, constructs or holds a value of. It reads through the declarations the codebase holds and the ones its
-// language's program names outside the scan. A type neither says anything about ends its line, and a type met
-// twice is followed once.
 func (m Match) Lineage() []string {
 	if !m.Is(TypeDeclaration) {
 		return m.climb(m.extendsOf(m.Class()), m.extendsOf)
@@ -218,7 +181,6 @@ func (m Match) Lineage() []string {
 	return m.climb(named(m.Extends()), m.extendsOf)
 }
 
-// Parents are the types the node's class extends directly.
 func (m Match) Parents() []string {
 	if !m.Is(TypeDeclaration) {
 		return m.extendsOf(m.Class())
@@ -227,8 +189,6 @@ func (m Match) Parents() []string {
 	return named(m.Extends())
 }
 
-// Contracts is every contract the node's class honours: its own and its lineage's, and the contracts those
-// extend.
 func (m Match) Contracts() []string {
 	direct := named(m.Implements())
 	if !m.Is(TypeDeclaration) {
@@ -243,7 +203,6 @@ func (m Match) Contracts() []string {
 	})
 }
 
-// climb follows each symbol to the ones step leads it to, breadth first, each once.
 func (m Match) climb(start []string, step func(string) []string) []string {
 	var reached []string
 	for queue := start; len(queue) > 0; queue = queue[1:] {
@@ -258,12 +217,10 @@ func (m Match) climb(start []string, step func(string) []string) []string {
 	return reached
 }
 
-// extendsOf are the types the symbol's declaration extends, in the scan or outside it.
 func (m Match) extendsOf(symbol string) []string {
 	return m.supertypesOf(symbol, Match.Extends, func(outside contract.OutsideSymbol) []string { return outside.Extends })
 }
 
-// UsedTraits is every trait the node's class uses: its own, its lineage's, and the traits those use.
 func (m Match) UsedTraits() []string {
 	class := m.Class()
 	if class == "" {
@@ -277,12 +234,10 @@ func (m Match) UsedTraits() []string {
 	return m.climb(direct, m.usesOf)
 }
 
-// usesOf are the traits the symbol's declaration uses directly, in the scan or outside it.
 func (m Match) usesOf(symbol string) []string {
 	return m.supertypesOf(symbol, Match.Traits, func(outside contract.OutsideSymbol) []string { return outside.Uses })
 }
 
-// implementsOf are the contracts the symbol's declaration honours directly, in the scan or outside it.
 func (m Match) implementsOf(symbol string) []string {
 	return m.supertypesOf(symbol, Match.Implements, func(outside contract.OutsideSymbol) []string { return outside.Implements })
 }
@@ -313,8 +268,6 @@ func (m Match) supertypesOf(symbol string, inScan func(Match) []Match, outside f
 	return nil
 }
 
-// OutsideKind is the kind of type the symbol declares outside the scan, as its language's program names it;
-// empty when the program names no such symbol.
 func (m Match) OutsideKind(symbol string) string {
 	if m.file == nil {
 		return ""
@@ -323,7 +276,6 @@ func (m Match) OutsideKind(symbol string) string {
 	return outsideSymbols(m.file.Codebase(), m.file.Language())[symbol].Kind
 }
 
-// outsideSymbols are the declarations the language's program names outside the scan, by symbol.
 func outsideSymbols(c *Codebase, language contract.Language) map[string]contract.OutsideSymbol {
 	return Analysis(c, "outside-symbols:"+string(language), func(c *Codebase) map[string]contract.OutsideSymbol {
 		index := map[string]contract.OutsideSymbol{}
@@ -337,7 +289,6 @@ func outsideSymbols(c *Codebase, language contract.Language) map[string]contract
 	})
 }
 
-// named are the types the nodes name.
 func named(nodes []Match) []string {
 	names := make([]string, 0, len(nodes))
 	for _, node := range nodes {

@@ -2,13 +2,11 @@ package hooks
 
 import "fmt"
 
-// modelScale is what the choice of model is between, cheapest first, each with the work it is for.
 const modelScale = "haiku for mechanical work with a known answer (run this, read that file, list what matches); " +
 	"sonnet for ordinary work that needs care but no invention; " +
 	"opus only where the task turns on judgement — a design call, a review, an ambiguous failure."
 
-// ModelChoiceReminder asks for an explicit model when an agent is dispatched without one, since an unnamed
-// model inherits the dispatcher's.
+// ModelChoiceReminder asks for an explicit model when an agent is dispatched without one, since an unnamed model inherits the dispatcher's.
 type ModelChoiceReminder struct{}
 
 func (ModelChoiceReminder) Class() string { return "ModelChoiceReminder" }

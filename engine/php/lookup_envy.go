@@ -8,15 +8,12 @@ import (
 )
 
 const (
-	// maxLookupDepth is how deep a read chain may run before it is navigation, not a lookup.
 	maxLookupDepth = 10
 )
 
-// factTypes are the return types a lookup answers with: a fact, not an object.
 var factTypes = []string{"bool", "int", "float", "string", "array", "iterable"}
 
-// LookupEnvy is the classes a codebase owns, read for methods that look a fact up about one of them in a keyed store
-// of their own class: a question the object should answer.
+// LookupEnvy is the classes a codebase owns, read for methods that look a fact up about one of them in a keyed store of their own class: a question the object should answer.
 type LookupEnvy struct {
 	codebase *engine.Codebase
 	owned    map[string]bool
@@ -33,18 +30,14 @@ var lookupEnvies = Memoised(func(codebase *engine.Codebase) *LookupEnvy {
 	return envy
 })
 
-// LookupEnvyOf is the codebase's lookup-envy reading.
 func LookupEnvyOf(codebase *engine.Codebase) *LookupEnvy {
 	return lookupEnvies.Of(codebase)
 }
 
-// IsEnviedOwner says whether the method looks a fact up about another owned class.
 func (e *LookupEnvy) IsEnviedOwner(method engine.Match) bool {
 	return e.EnviedOwner(method) != ""
 }
 
-// EnviedOwner is the owned class a method returning a fact takes as its one owned parameter, uses only through its
-// members, and returns a keyed read about from one of its own collaborators; empty otherwise.
 func (e *LookupEnvy) EnviedOwner(method engine.Match) string {
 	class := Node{Match: method}.EnclosingClassLike()
 	body := method.ChildrenIn("stmts")
@@ -156,7 +149,6 @@ func anyArgUsesParamMember(arguments []engine.Match, param string) bool {
 	})
 }
 
-// onCollaborator says whether a call is sent to a property of $this, however deep.
 func onCollaborator(call engine.Match) bool {
 	receiver := call.Child("var")
 	if !isPropertyRead(receiver) {

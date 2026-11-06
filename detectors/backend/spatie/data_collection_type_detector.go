@@ -15,10 +15,8 @@ type DataCollectionTypeDetector struct{}
 
 func init() { detectors.Register(catalog.PHP, DataCollectionTypeDetector{}) }
 
-// Sin is the sin the detector finds.
 func (DataCollectionTypeDetector) Sin() sins.Sin { return backendsins.DataCollectionType{} }
 
-// Find is every field typed as a DataCollection.
 func (DataCollectionTypeDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return php.In(codebase).
 		Where(engine.As(php.Node.IsField)).
@@ -26,5 +24,4 @@ func (DataCollectionTypeDetector) Find(codebase *engine.Codebase) []engine.Match
 		Get()
 }
 
-// Repentable says a scribe rewrites the sin away.
 func (DataCollectionTypeDetector) Repentable() {}

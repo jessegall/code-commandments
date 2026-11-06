@@ -9,8 +9,7 @@ import (
 	"github.com/jessegall/code-commandments/engine/php"
 )
 
-// ContainerBindings is what the container is asked for and what it is told: every class the codebase names outside
-// its own registration, and the bound abstracts the codebase declares.
+// ContainerBindings is what the container is asked for and what it is told: every class the codebase names outside its own registration, and the bound abstracts the codebase declares.
 type ContainerBindings struct {
 	referenced map[string]bool
 	declared   map[string]bool
@@ -18,17 +17,14 @@ type ContainerBindings struct {
 
 var containerBindings = php.Memoised(readContainerBindings)
 
-// ContainerBindingsOf is the codebase's container bindings.
 func ContainerBindingsOf(codebase *engine.Codebase) *ContainerBindings {
 	return containerBindings.Of(codebase)
 }
 
-// IsResolvedSomewhere says whether the codebase names the class anywhere but where it binds it.
 func (b *ContainerBindings) IsResolvedSomewhere(abstract string) bool {
 	return abstract != "" && b.referenced[abstract]
 }
 
-// IsDeclaredHere says whether a bound class is one the codebase declares.
 func (b *ContainerBindings) IsDeclaredHere(abstract string) bool {
 	return abstract != "" && b.declared[abstract]
 }
@@ -67,8 +63,6 @@ func readContainerBindings(codebase *engine.Codebase) *ContainerBindings {
 	return bindings
 }
 
-// namedClass is the class a node names as a demand: a name outside an import or a declaration's head, or a string
-// holding a namespace separator.
 func namedClass(node engine.Match) string {
 	switch {
 	case isName(node):

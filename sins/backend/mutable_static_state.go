@@ -11,7 +11,6 @@ type MutableStaticState struct{}
 
 func init() { sins.Register(catalog.PHP, MutableStaticState{}) }
 
-// Definition is what the sin states about itself.
 func (MutableStaticState) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "mutable-static-state",

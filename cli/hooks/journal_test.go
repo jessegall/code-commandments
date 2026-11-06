@@ -9,9 +9,6 @@ import (
 	"time"
 )
 
-// TestAdviceIsQueuedInTheMomentsEnvironment holds the queue to what the journal runs: bare commands, recorded in
-// testdata/queued, a found sin raised under its key and a repented one settled by it, in the queue of the moment's environment beside the one the journal named. A line naming an
-// environment is refused, so none does.
 func TestAdviceIsQueuedInTheMomentsEnvironment(t *testing.T) {
 	whisper := "Code Commandments — the edit: it breaks a rule that is described at such length that its first line runs well past eighty characters.\n  • it's here\n\n    and here"
 	folder := t.TempDir()
@@ -56,9 +53,6 @@ func TestAdviceOfNoEnvironmentKeepsTheQueueTheJournalNamed(t *testing.T) {
 	}
 }
 
-// TestAdviceIsQueuedWhereThePayloadSays holds the answer to the queue the journal names for the moment's own
-// environment in plugin.queue: a helper's edit in its worktree is answered in the helper's environment, never in
-// the one the service started in, whose queue $JOURNAL_QUEUE named.
 func TestAdviceIsQueuedWhereThePayloadSays(t *testing.T) {
 	whisper := "Code Commandments — the edit breaks a rule."
 	folder := t.TempDir()
@@ -83,15 +77,6 @@ func TestAdviceIsQueuedWhereThePayloadSays(t *testing.T) {
 	}
 }
 
-// TestAConfigChangeEndsTheServiceThatHoldsTheTree holds the one thing that keeps a held tree honest about the
-// project's own settings. A base is read with the excludes, roots and languages in force at the time and is
-// keyed by nothing else, so a newly excluded folder or a dropped root would stay in the program it answers from.
-// What saves it is that the service ENDS when the config moves, and the tree goes with the process, so the next
-// one reads the tree the new settings describe.
-//
-// Held here because it is the only thing that saves it: were the service to stop watching the config, or to keep
-// serving across a change, a held base would answer from settings the project has replaced and nothing would say
-// so.
 func TestAConfigChangeEndsTheServiceThatHoldsTheTree(t *testing.T) {
 	root := t.TempDir()
 
@@ -117,8 +102,6 @@ func TestAConfigChangeEndsTheServiceThatHoldsTheTree(t *testing.T) {
 		t.Error("the project's config changed and the service reads the same stamp, so it serves on with a tree read under the settings before it")
 	}
 
-	// A rule of the project's own counts too: it is what a judging reads, so a tree held under the one before it
-	// is a tree held under rules the project has replaced.
 	own := filepath.Join(root, ".commandments", "custom", "OwnRule.json")
 	if err := os.MkdirAll(filepath.Dir(own), 0o755); err != nil {
 		t.Fatal(err)
@@ -136,10 +119,6 @@ func TestAConfigChangeEndsTheServiceThatHoldsTheTree(t *testing.T) {
 	}
 }
 
-// TestAServiceEndingWorksOutTheAdviceItHolds holds the one thing a service owes before it goes. It ends when the
-// code it runs changes — the binary, the project's config, a rule of the project's own — and the moments it had
-// answered but not yet judged went with it. Those moments were answered with the gates alone, as every edit is,
-// so the sins in them were never told at all and nothing said so.
 func TestAServiceEndingWorksOutTheAdviceItHolds(t *testing.T) {
 	var worked sync.Mutex
 	var advised int
@@ -166,11 +145,6 @@ func TestAServiceEndingWorksOutTheAdviceItHolds(t *testing.T) {
 	}
 }
 
-// TestAnEditsAdviceIsWorkedOutFirst holds the order of the queue. One moment is judged at a time, which is what
-// keeps two checks of one file from running at once, so whatever is at its head decides when every edit behind it
-// is answered. A session raises a heartbeat every minute for every open agent and one at every stop, and each of
-// those settles every sin the session has announced; nobody is waiting on any of them, while an agent is waiting
-// to hear about the file it just wrote.
 func TestAnEditsAdviceIsWorkedOutFirst(t *testing.T) {
 	var worked sync.Mutex
 	var order []string
@@ -181,9 +155,6 @@ func TestAnEditsAdviceIsWorkedOutFirst(t *testing.T) {
 		worked.Unlock()
 	}}
 
-	// Added before the worker starts, so all four are waiting when it picks the first. All of ONE agent, which
-	// is where an order exists at all: each agent is worked out on a goroutine of its own and two agents run at
-	// the same time.
 	advice.add(asked{map[string]any{"named": "a heartbeat"}, true, false})
 	advice.add(asked{map[string]any{"named": "a stop"}, true, false})
 	advice.add(asked{map[string]any{"named": "an edit"}, true, true})
@@ -195,8 +166,6 @@ func TestAnEditsAdviceIsWorkedOutFirst(t *testing.T) {
 	worked.Lock()
 	defer worked.Unlock()
 
-	// Three passes, not four: this agent's two edits are judged TOGETHER in one pass, so the moment standing for
-	// them names the first of the two, and the heartbeat and the stop follow one at a time.
 	if len(order) != 3 {
 		t.Fatalf("the agent's 4 moments were worked out in %d passes, want 3: %v", len(order), order)
 	}
@@ -206,14 +175,6 @@ func TestAnEditsAdviceIsWorkedOutFirst(t *testing.T) {
 	}
 }
 
-// TestOneAgentsMomentsNeverWaitBehindAnothers holds the one thing that made a worker hear about its sin four
-// minutes late. There was ONE queue for the whole project, so a moment waited behind every moment before it,
-// whoever raised it: measured on a consumer with three workers, a fourth, the main agent and a 233-test run
-// going at once, judged_total 27955 ms for 143 ms of its own work, and one worker's answer arrived 3 min 51 s
-// after its write, by which time that worker had ended and its sin was never told at all.
-//
-// An agent's own moments are still worked out in order, since two checks of one file must never run at once and
-// a file belongs to the checkout of one agent. What goes is the waiting it never owed.
 func TestOneAgentsMomentsNeverWaitBehindAnothers(t *testing.T) {
 	slow := make(chan struct{})
 	quick := make(chan struct{})
@@ -221,8 +182,6 @@ func TestOneAgentsMomentsNeverWaitBehindAnothers(t *testing.T) {
 	advice := startAdvisers(func(moment asked) {
 		switch MomentOf(moment.given).Agent {
 		case 1:
-			// The first agent's moment is still being worked out when the test ends, as a judging of a large
-			// tree is while another agent writes.
 			<-slow
 		case 2:
 			close(quick)
@@ -243,8 +202,6 @@ func TestOneAgentsMomentsNeverWaitBehindAnothers(t *testing.T) {
 	advice.drained(10 * time.Second)
 }
 
-// TestAnAgentsOwnMomentsAreWorkedOutInOrder holds the other half: one agent's moments are never worked out at
-// the same time as one another, since two checks of one file must never run at once.
 func TestAnAgentsOwnMomentsAreWorkedOutInOrder(t *testing.T) {
 	var working sync.Mutex
 	var at, most int
@@ -277,15 +234,6 @@ func TestAnAgentsOwnMomentsAreWorkedOutInOrder(t *testing.T) {
 	}
 }
 
-// TestAnAgentsEditsAreWorkedOutBeforeItsStop holds the one thing that decides whether a worker can walk away
-// from a sin it wrote. The journal commits a worker's work when it hands in, so anything still unjudged when it
-// stops reaches nobody: on a consumer a worker wrote a known sin, its answer was stamped three minutes fifty-one
-// later, and by then the worker had ended.
-//
-// Its own edits therefore come before its own stop, on its own goroutine. That does not close the window — the
-// stop is answered at once and the worker may end while a judging of its own is still running — but what is
-// still owed is the smallest it can be, and the hand-in gate judges a worker's changes itself rather than
-// trusting this queue, so a pending moment cannot let a sin through a hand-in.
 func TestAnAgentsEditsAreWorkedOutBeforeItsStop(t *testing.T) {
 	var worked sync.Mutex
 	var order []string
@@ -296,7 +244,6 @@ func TestAnAgentsEditsAreWorkedOutBeforeItsStop(t *testing.T) {
 		worked.Unlock()
 	})
 
-	// The stop arrives FIRST, as it does when an agent writes and then stops at once, and all of one agent.
 	advice.add(asked{map[string]any{"named": "its stop", "agent": map[string]any{"id": 7}}, true, false})
 	advice.add(asked{map[string]any{"named": "its edit", "agent": map[string]any{"id": 7}}, true, true})
 

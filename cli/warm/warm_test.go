@@ -14,8 +14,6 @@ import (
 	"github.com/jessegall/code-commandments/engine"
 )
 
-// TestABaseAnswersForTheBranchItWasReadAt holds the one rule of the keeper: a base belongs to a project AND a
-// branch, so two branches of one project are two bases and a question about one never gets the other's answer.
 func TestABaseAnswersForTheBranchItWasReadAt(t *testing.T) {
 	keeper := warm.Keep()
 	root, codebase := project(t, map[string]string{"shop/order.py": "class Order:\n    pass\n"})
@@ -40,8 +38,6 @@ func TestABaseAnswersForTheBranchItWasReadAt(t *testing.T) {
 	}
 }
 
-// TestABaseNobodyAsksAboutIsDropped holds the eviction: a base is hundreds of megabytes, so a branch nobody is
-// working on any more is not kept for the session.
 func TestABaseNobodyAsksAboutIsDropped(t *testing.T) {
 	keeper := warm.Keep()
 	root, codebase := project(t, map[string]string{"shop/order.py": "class Order:\n    pass\n"})
@@ -58,9 +54,6 @@ func TestABaseNobodyAsksAboutIsDropped(t *testing.T) {
 	}
 }
 
-// TestTheBaseSaysWhichFilesHaveMovedSinceItWasRead holds what makes the base safe to trust: an edit the service
-// did not hear about, a git checkout or a formatter among them, is found by the fingerprints rather than
-// answered from a tree that no longer matches the disk.
 func TestTheBaseSaysWhichFilesHaveMovedSinceItWasRead(t *testing.T) {
 	root, codebase := project(t, map[string]string{
 		"shop/order.py":   "class Order:\n    pass\n",
@@ -78,8 +71,6 @@ func TestTheBaseSaysWhichFilesHaveMovedSinceItWasRead(t *testing.T) {
 		t.Errorf("the base says order.py is known %v, unchanged %v", known, unchanged)
 	}
 
-	// Different bytes, which is the only thing that makes a file a move. The stat mark is asked first and the
-	// digest settles it, so a file merely touched is not one; see TestAFileWrittenBackUnchangedHasNotMoved.
 	if err := os.WriteFile(order, []byte("class Order:\n    paid = True\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
@@ -95,9 +86,6 @@ func TestTheBaseSaysWhichFilesHaveMovedSinceItWasRead(t *testing.T) {
 	}
 }
 
-// TestAViewIsTheBaseWithOneFileSwappedIn holds the splice, which is the whole of an overlay: the view answers
-// with the edited file's own tree and with the base's tree for every other file, and the base itself is left as
-// it was.
 func TestAViewIsTheBaseWithOneFileSwappedIn(t *testing.T) {
 	root, codebase := project(t, map[string]string{
 		"shop/order.py":   "class Order:\n    pass\n",
@@ -131,7 +119,6 @@ func TestAViewIsTheBaseWithOneFileSwappedIn(t *testing.T) {
 	}
 }
 
-// project is a python package of these files, read as the scan reads one, with its root.
 func project(t *testing.T, files map[string]string) (string, *engine.Codebase) {
 	t.Helper()
 
@@ -159,7 +146,6 @@ func project(t *testing.T, files map[string]string) (string, *engine.Codebase) {
 	return root, codebase
 }
 
-// touch writes the file's time forward, for a filesystem whose stamp is too coarse to tell two writes apart.
 func touch(t *testing.T, path string) {
 	t.Helper()
 
@@ -169,7 +155,6 @@ func touch(t *testing.T, path string) {
 	}
 }
 
-// declared are the names of every type the codebase declares.
 func declared(codebase *engine.Codebase) []string {
 	var named []string
 	for _, match := range codebase.WhereTypeDeclaration().Get() {
@@ -179,14 +164,10 @@ func declared(codebase *engine.Codebase) []string {
 	return named
 }
 
-// functions is how many functions of that name the codebase holds.
 func functions(codebase *engine.Codebase, name string) int {
 	return codebase.WhereFunction().Where(func(match engine.Match) bool { return match.Name() == name }).Count()
 }
 
-// TestTheBaseChecksTheEditedFileBetweenSweeps holds what an edit pays to trust the base. Re-stating every file
-// of a large tree costs a third of the answer, so between sweeps the edited file alone is checked and the rest
-// of the base is trusted; a file something else changed is found at the next sweep.
 func TestTheBaseChecksTheEditedFileBetweenSweeps(t *testing.T) {
 	root, codebase := project(t, map[string]string{
 		"shop/order.py":   "class Order:\n    pass\n",
@@ -197,7 +178,6 @@ func TestTheBaseChecksTheEditedFileBetweenSweeps(t *testing.T) {
 	order := filepath.Join(root, "shop", "order.py")
 	invoice := filepath.Join(root, "shop", "invoice.py")
 
-	// The edited file is always read again, whether its mark moved or not: it is the one file we know moved.
 	now := time.Now()
 	if stale, _ := base.Stale(order, now); len(stale) != 1 || stale[0] != order {
 		t.Errorf("a base asked about an edit says %v is stale; the edited file is always read again", stale)
@@ -205,7 +185,6 @@ func TestTheBaseChecksTheEditedFileBetweenSweeps(t *testing.T) {
 
 	write(t, invoice, "class Invoice:\n    paid = True\n")
 
-	// Between sweeps the file nobody named is left alone, however much it has moved.
 	if stale, _ := base.Stale(order, now.Add(time.Second)); len(stale) != 1 || stale[0] != order {
 		t.Errorf("between sweeps the base checks more than the edited file: %v", stale)
 	}
@@ -216,15 +195,12 @@ func TestTheBaseChecksTheEditedFileBetweenSweeps(t *testing.T) {
 		t.Errorf("the edited file is %v, want only %s", stale, order)
 	}
 
-	// Once a sweep is due, what something else changed is found too.
 	stale, _ := base.Stale(order, now.Add(warm.Sweep))
 	if len(stale) != 2 {
 		t.Errorf("the sweep finds %v, want both files", stale)
 	}
 }
 
-// TestAFileCreatedSinceTheBaseWasReadIsInTheView holds the other half of a splice: a file the base never had is
-// added to the stream of its language, so a new file is judged rather than read as though it did not exist.
 func TestAFileCreatedSinceTheBaseWasReadIsInTheView(t *testing.T) {
 	root, codebase := project(t, map[string]string{"shop/order.py": "class Order:\n    pass\n"})
 
@@ -249,8 +225,6 @@ func TestAFileCreatedSinceTheBaseWasReadIsInTheView(t *testing.T) {
 	}
 }
 
-// write puts the text in the file and moves its time on, for a filesystem whose stamp is too coarse to tell two
-// writes of one second apart.
 func write(t *testing.T, path, text string) {
 	t.Helper()
 
@@ -261,10 +235,6 @@ func write(t *testing.T, path, text string) {
 	touch(t, path)
 }
 
-// TestTheSweepNamesTheEditedFileFirst holds what an edit is allowed to pay for. The sweep's job is to notice a
-// file something else changed, and the answer it gives names the edited file along with them, so the caller can
-// parse that one and give the base up for the rest rather than putting one edit's answer behind every file
-// another worker touched.
 func TestTheSweepNamesTheEditedFileFirst(t *testing.T) {
 	root, codebase := project(t, map[string]string{
 		"shop/order.py":   "class Order:\n    pass\n",
@@ -288,11 +258,6 @@ func TestTheSweepNamesTheEditedFileFirst(t *testing.T) {
 	}
 }
 
-// TestAWorkersFileIsNotDoubledWhenTheProjectsOwnCopyMovedToo holds what a checkout's file STANDS IN FOR against
-// the main checkout drifting under the base. Both copies then arrive at the view: the project's own because it
-// moved and was read again, and the worker's because the worker changed it. Kept together, the program holds two
-// of that one source, and every rule that reads a recurrence, a twin or a declaration answers about the worker's
-// file doubled.
 func TestAWorkersFileIsNotDoubledWhenTheProjectsOwnCopyMovedToo(t *testing.T) {
 	root := t.TempDir()
 	worktree := filepath.Join(root, ".worktrees", "worker-1")
@@ -302,7 +267,6 @@ func TestAWorkersFileIsNotDoubledWhenTheProjectsOwnCopyMovedToo(t *testing.T) {
 
 	base := warm.Keep().Hold(root, "main", []string{root}, codebaseOf(t, own), nil)
 
-	// Both were read again: the project's own because it drifted, the worker's because the worker changed it.
 	view := base.ViewFrom(worktree, []*contract.Stream{streamOf(own), streamOf(theirs)}, root, nil)
 
 	var held []string
@@ -319,7 +283,6 @@ func TestAWorkersFileIsNotDoubledWhenTheProjectsOwnCopyMovedToo(t *testing.T) {
 	}
 }
 
-// codebaseOf is a codebase of those files alone, as a bridge would have written it.
 func codebaseOf(t *testing.T, files ...string) *engine.Codebase {
 	t.Helper()
 
@@ -331,7 +294,6 @@ func codebaseOf(t *testing.T, files ...string) *engine.Codebase {
 	return engine.Load(streams...)
 }
 
-// streamOf is a stream holding that one file.
 func streamOf(file string) *contract.Stream {
 	return &contract.Stream{
 		Header: contract.Header{Language: contract.Python},
@@ -339,10 +301,6 @@ func streamOf(file string) *contract.Stream {
 	}
 }
 
-// TestABaseHoldsWhatAFileWasBeforeItWasRead holds the base against the clock of its own read. Reading a tree
-// takes 25 to 55 seconds, and an agent keeps editing through it: a file written during the read is read as it
-// was, and marked afterwards it would be marked as it IS, so nothing would ever notice it had moved. That edit
-// is then judged against the version before it, at the lines that version had, for as long as the base lives.
 func TestABaseHoldsWhatAFileWasBeforeItWasRead(t *testing.T) {
 	root := t.TempDir()
 	file := filepath.Join(root, "order.py")
@@ -351,10 +309,8 @@ func TestABaseHoldsWhatAFileWasBeforeItWasRead(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// What the file was when the read began.
 	taken := warm.Taken([]string{file})
 
-	// Written again while the read ran, which is what an agent editing through a read does.
 	time.Sleep(10 * time.Millisecond)
 	if err := os.WriteFile(file, []byte("x = 1\ny = 2\n"), 0o644); err != nil {
 		t.Fatal(err)
@@ -367,11 +323,6 @@ func TestABaseHoldsWhatAFileWasBeforeItWasRead(t *testing.T) {
 	}
 }
 
-// TestWhatOneEditReadIsWhatTheNextIsJudgedAgainst holds the base against the agent's own work. A view was thrown
-// away the moment its answer was given, so the base stayed the tree as it was FIRST read: an agent that edited
-// one file and then another had its own earlier work missing from the second answer, and every rule that reads a
-// parent, a caller or a recurrence answered about the first file as it had been. It costs nothing to keep, since
-// the view is already built and already filled.
 func TestWhatOneEditReadIsWhatTheNextIsJudgedAgainst(t *testing.T) {
 	root := t.TempDir()
 	keeper := warm.Keep()
@@ -387,7 +338,6 @@ func TestWhatOneEditReadIsWhatTheNextIsJudgedAgainst(t *testing.T) {
 
 	base := keeper.Hold(root, "main", []string{root}, codebaseOf(t, first, second), nil)
 
-	// The first file is edited and read again, and what that read saw becomes the base.
 	time.Sleep(10 * time.Millisecond)
 	if err := os.WriteFile(first, []byte("x = 1\ny = 2\n"), 0o644); err != nil {
 		t.Fatal(err)
@@ -397,7 +347,6 @@ func TestWhatOneEditReadIsWhatTheNextIsJudgedAgainst(t *testing.T) {
 	view := base.ViewFrom(root, []*contract.Stream{streamOf(first)}, root, nil)
 	keeper.Patched(base, view, map[string]warm.Known{first: mark})
 
-	// The next edit asks the keeper, and gets a base that already holds the first file as it now is.
 	next, held := keeper.Holds(root, "main")
 	if !held {
 		t.Fatal("the keeper holds no base after one was patched")
@@ -407,8 +356,6 @@ func TestWhatOneEditReadIsWhatTheNextIsJudgedAgainst(t *testing.T) {
 		t.Errorf("the file the last edit read reads as moved again, known %v unchanged %v", known, unchanged)
 	}
 
-	// And a sweep of the whole tree does not name it either, which is what used to give the base up and send
-	// every later edit back to being judged on its own file alone.
 	time.Sleep(10 * time.Millisecond)
 	if err := os.WriteFile(second, []byte("x = 1\nz = 3\n"), 0o644); err != nil {
 		t.Fatal(err)
@@ -420,11 +367,6 @@ func TestWhatOneEditReadIsWhatTheNextIsJudgedAgainst(t *testing.T) {
 	}
 }
 
-// TestAFileTheBaseNeverReadIsNoticed holds the base against a file nobody announced. The sweep walks the files
-// the base READ, so a file a shell wrote, a pull brought or a checkout left behind is in no answer at all: every
-// rule that follows an import, a parent or a caller answers as though that file did not exist, which is a sin
-// missed rather than a sin invented, and the quietest kind of wrong. Only the base can say which of the files
-// something else names are ones it never read.
 func TestAFileTheBaseNeverReadIsNoticed(t *testing.T) {
 	root := t.TempDir()
 
@@ -437,7 +379,6 @@ func TestAFileTheBaseNeverReadIsNoticed(t *testing.T) {
 		}
 	}
 
-	// The base read one of them, as a tree read before the other file existed did.
 	base := warm.Keep().Hold(root, "main", []string{root}, codebaseOf(t, read), nil)
 
 	unheld := base.Unheld([]string{read, never})
@@ -446,13 +387,6 @@ func TestAFileTheBaseNeverReadIsNoticed(t *testing.T) {
 	}
 }
 
-// TestTheEditedFileIsAlwaysReadAgain holds the one file an event names against the clock a mark is kept by. A
-// mark is a size and a moment written, which is what the filesystem answers without reading the file, so two
-// writes of one size inside one tick of that clock carry the same mark. On a filesystem whose clock ticks by the
-// second, which is not a rare one, an edit that keeps a file's length would then read as no change at all and be
-// judged against the version before it.
-//
-// The file an event names is the one file we KNOW moved, so it is never asked about.
 func TestTheEditedFileIsAlwaysReadAgain(t *testing.T) {
 	root := t.TempDir()
 	file := filepath.Join(root, "order.py")
@@ -463,7 +397,6 @@ func TestTheEditedFileIsAlwaysReadAgain(t *testing.T) {
 
 	base := warm.Keep().Hold(root, "main", []string{root}, codebaseOf(t, file), nil)
 
-	// Written again with the mark it already had: the same length, and the moment it was written put back.
 	was, err := os.Stat(file)
 	if err != nil {
 		t.Fatal(err)
@@ -487,18 +420,6 @@ func TestTheEditedFileIsAlwaysReadAgain(t *testing.T) {
 	}
 }
 
-// TestAFileWrittenBackUnchangedHasNotMoved holds what "moved" is allowed to mean. A file is held by its
-// modification time and its size, which is what the filesystem answers without reading it — and a pull, a
-// checkout, a rebase, a formatter or a build writes identical bytes back over hundreds of files at once, giving
-// every one of them a new time. Taken as proof, every one of those is a file the tree must read again.
-//
-// Measured on a consumer on v7.15.3: a worker's judging was declined with "1184 files differ from the tree, past
-// the 200 this service reads for one judging", so it read the whole tree in its own process, 35s of reading and
-// 44s of rules for THREE changed files. Its branch was 21 files from the tip it was cut at. The 1184 were files
-// whose bytes nobody had touched.
-//
-// So the stat mark stays the cheap first question, and a file that fails it is asked the only question that
-// settles it: are the bytes the ones the base read?
 func TestAFileWrittenBackUnchangedHasNotMoved(t *testing.T) {
 	root, codebase := project(t, map[string]string{
 		"shop/order.py":   "class Order:\n    pass\n",
@@ -510,8 +431,6 @@ func TestAFileWrittenBackUnchangedHasNotMoved(t *testing.T) {
 	order := filepath.Join(root, "shop", "order.py")
 	invoice := filepath.Join(root, "shop", "invoice.py")
 
-	// Written back byte for byte, as a checkout of the same content does, and touched so the filesystem's own
-	// answer about it has moved.
 	if err := os.WriteFile(order, []byte("class Order:\n    pass\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
@@ -525,7 +444,6 @@ func TestAFileWrittenBackUnchangedHasNotMoved(t *testing.T) {
 		t.Errorf("a file written back unchanged reads as known %v, unchanged %v", known, unchanged)
 	}
 
-	// And a file whose bytes really did change is still a move, whatever its length.
 	if err := os.WriteFile(invoice, []byte("class Invoice:\n    paid = True\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
@@ -537,25 +455,12 @@ func TestAFileWrittenBackUnchangedHasNotMoved(t *testing.T) {
 	}
 }
 
-// TestACheckoutsFileStandsInForTheProjectsOwnOnItsRealPath holds the one mapping a worktree's judging turns on.
-// A worker's file at <worktree>/src/order.py stands in for the project's own <project>/src/order.py, and the
-// base is asked about the project's path. A scan resolves every path it reads, so the base's keys are real
-// paths — and a counterpart built on a project root reached through a LINK, which a Mac's /tmp is, a linked home
-// is, and the folder a journal names may be, matches no key the base holds.
-//
-// Every file of the worktree then counts as a file the tree never read. Measured on a consumer on v7.15.7, in a
-// worker whose branch is 127 files from the tip it was cut at: 1201 files "the tree never read", which is past
-// what one judging reads, so the judging was declined and the run read the whole tree in its own process. Every
-// worker's hand-in paid it, and the main checkout's own runs were served, which is why it looked like anything
-// but a path.
 func TestACheckoutsFileStandsInForTheProjectsOwnOnItsRealPath(t *testing.T) {
 	root, codebase := project(t, map[string]string{
 		"src/order.py":   "class Order:\n    pass\n",
 		"src/invoice.py": "class Invoice:\n    pass\n",
 	})
 
-	// The project as something NAMES it rather than as it is: through a link, which is the condition, and the
-	// only one, under which the two paths differ.
 	linked := filepath.Join(t.TempDir(), "project")
 	if err := os.Symlink(root, linked); err != nil {
 		t.Skipf("this filesystem has no links, so the two paths cannot differ here: %v", err)
@@ -566,7 +471,6 @@ func TestACheckoutsFileStandsInForTheProjectsOwnOnItsRealPath(t *testing.T) {
 	worktree := filepath.Join(root, ".journal", "worktrees", "worker-1")
 	own := filepath.Join(worktree, "src", "order.py")
 
-	// Named through the link, which is what a judging is handed.
 	stands := warm.Counterpart(worktree, linked, own)
 
 	if _, known := base.Holds(stands); !known {
@@ -574,12 +478,10 @@ func TestACheckoutsFileStandsInForTheProjectsOwnOnItsRealPath(t *testing.T) {
 			stands, filepath.Join(root, "src", "order.py"))
 	}
 
-	// And a file of the project's OWN checkout stands in for itself, whatever the project is called.
 	if stands := warm.Counterpart(root, linked, filepath.Join(root, "src", "invoice.py")); stands != filepath.Join(root, "src", "invoice.py") {
 		t.Errorf("a file of the project's own checkout stands in for %q rather than itself", stands)
 	}
 
-	// A file in neither is left as it came: nothing can be said about where it stands.
 	elsewhere := filepath.Join(t.TempDir(), "other", "thing.py")
 	if stands := warm.Counterpart(worktree, linked, elsewhere); stands != elsewhere {
 		t.Errorf("a file outside the checkout stands in for %q", stands)

@@ -11,7 +11,6 @@ type DerivedArgument struct{}
 
 func init() { sins.Register(catalog.PHP, DerivedArgument{}) }
 
-// Definition is what the sin states about itself.
 func (DerivedArgument) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "derived-argument",

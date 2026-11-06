@@ -11,7 +11,6 @@ type ErasedNullObject struct{}
 
 func init() { sins.Register(catalog.PHP, ErasedNullObject{}) }
 
-// Definition is what the sin states about itself.
 func (ErasedNullObject) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "erased-null-object",

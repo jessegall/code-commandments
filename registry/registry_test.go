@@ -27,9 +27,6 @@ func TestTheRegistryEnrolsEveryRuleFolder(t *testing.T) {
 	}
 }
 
-// A rule's name is its bare type name and four engines have a DeepNestingDetector, so the name alone cannot
-// mean one of them. It used to mean the first, and All() puts PHP first, so a report filed against the python
-// rule by the name a reader was shown went upstream against the PHP one.
 func TestANameSeveralEnginesShareMeansNoOneRule(t *testing.T) {
 	shared := detectors.EveryNamedIn(detectors.All(), "DeepNestingDetector")
 	if len(shared) < 2 {
@@ -42,8 +39,6 @@ func TestANameSeveralEnginesShareMeansNoOneRule(t *testing.T) {
 	}
 }
 
-// Named with its engine it is the one rule it says, whichever engine that is, so the reporter has a spelling to
-// give.
 func TestANameGivenItsEngineMeansThatEnginesRule(t *testing.T) {
 	for _, engine := range []catalog.Engine{catalog.PHP, catalog.Python, catalog.CSharp, catalog.Go} {
 		rule, found := detectors.Named(string(engine) + "/DeepNestingDetector")
@@ -57,8 +52,6 @@ func TestANameGivenItsEngineMeansThatEnginesRule(t *testing.T) {
 	}
 }
 
-// A scribe is enrolled against its detector's engine and name together, so a rule of another engine that shares
-// the name is handed no scribe rather than one that rewrites another language's source.
 func TestAScribeIsNeverHandedToAnotherEnginesRuleOfTheSameName(t *testing.T) {
 	fixed := 0
 	for _, rule := range detectors.All() {

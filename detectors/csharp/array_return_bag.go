@@ -16,12 +16,10 @@ func init() {
 	detectors.Register(catalog.CSharp, ArrayReturnBagDetector{})
 }
 
-// Sin is the sin the detector finds.
 func (ArrayReturnBagDetector) Sin() sins.Sin {
 	return cssins.ArrayReturnBag{}
 }
 
-// Find is every place the sin is committed.
 func (ArrayReturnBagDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return cs.In(codebase).
 		WhereExpression().
@@ -32,7 +30,6 @@ func (ArrayReturnBagDetector) Find(codebase *engine.Codebase) []engine.Match {
 		Get()
 }
 
-// distinct is how many different words there are.
 func distinct(words []string) int {
 	seen := map[string]bool{}
 	for _, word := range words {

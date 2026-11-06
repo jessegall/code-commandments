@@ -1,6 +1,4 @@
-// Package git answers what the tool asks of a repository: where it starts, which checkout is the main
-// one, what changed in the working tree or on a branch, and which lines of a file changed. Where the
-// filesystem can answer, it is read; git is asked only for what a walk cannot know.
+// Package git answers what the tool asks of a repository: where it starts, which checkout is the main one, what changed in the working tree or on a branch, and which lines of a file changed.
 package git
 
 import (
@@ -21,8 +19,6 @@ const (
 	worktrees    = "worktrees"
 )
 
-// Root is the folder holding the `.git` of the repository path is in, walked up from path; empty when it
-// is in none.
 func Root(path string) string {
 	dir := path
 
@@ -54,8 +50,6 @@ func walkUp(dir string) string {
 	}
 }
 
-// BelongsTo says whether root is project or a checkout of it: inside it, or a worktree whose git
-// directory is inside it.
 func BelongsTo(root, project string) bool {
 	root, project = real(root), real(project)
 
@@ -68,8 +62,6 @@ func BelongsTo(root, project string) bool {
 	return gitdir != "" && within(gitdir, project)
 }
 
-// ProjectRoot is the main checkout of the repository path is in, so every worktree of one project shares
-// one answer; empty when path is in no repository.
 func ProjectRoot(path string) string {
 	top := Root(path)
 
@@ -98,7 +90,6 @@ func mainWorktreeOf(top string) string {
 	return filepath.Dir(filepath.Dir(filepath.Dir(gitdir)))
 }
 
-// gitDirOf is the git directory a worktree's `.git` file names, or empty when root has no such file.
 func gitDirOf(root string) string {
 	raw, err := os.ReadFile(filepath.Join(root, ".git"))
 	if err != nil {
@@ -132,7 +123,6 @@ func askProjectRoot(path string) string {
 	}
 }
 
-// Worktrees are the other checkouts of the repository at root.
 func Worktrees(root string) []string {
 	var found []string
 
@@ -147,26 +137,22 @@ func Worktrees(root string) []string {
 	return found
 }
 
-// Head is the commit checked out at root, or empty before the first commit.
 func Head(root string) string {
 	return ask(root, "rev-parse", "HEAD")
 }
 
-// CurrentBranch is the branch checked out at root.
 func CurrentBranch(root string) string {
 	return recalling("branch\x00"+root, func() string { return headState(root) }, func() string {
 		return ask(root, "rev-parse", "--abbrev-ref", "HEAD")
 	})
 }
 
-// WorkingTree is what one status call says: the commit checked out and every judged file that differs
-// from it, tracked or not.
+// WorkingTree is what one status call says: the commit checked out and every judged file that differs from it, tracked or not.
 type WorkingTree struct {
 	Head    string
 	Changed map[string]bool
 }
 
-// Status reads the working tree at root in one call.
 func Status(root string) WorkingTree {
 	status := run(root, "status", "--porcelain=v2", "--branch", "--no-ahead-behind", "--no-renames", "--untracked-files=all", "-z")
 	head := ""
@@ -189,7 +175,6 @@ func Status(root string) WorkingTree {
 	return WorkingTree{Head: head, Changed: pathSet(root, strings.Join(paths, "\n"))}
 }
 
-// ChangedVsHead are the judged files that differ from the commit checked out.
 func ChangedVsHead(root string) map[string]bool {
 	return Status(root).Changed
 }
@@ -207,7 +192,6 @@ func statusPath(entry string) string {
 	}
 }
 
-// field is the at-th of the first count space-separated fields, the last one keeping its spaces.
 func field(entry string, count, at int) string {
 	fields := strings.SplitN(entry, " ", count)
 
@@ -218,11 +202,6 @@ func field(entry string, count, at int) string {
 	return ""
 }
 
-// MergeBase is the commit where the head checked out at root left base, empty when the two share no history or
-// either is unknown there.
-// Remembered against both HEADs, since where two checkouts last met moves only when one of them does. A judging
-// of a worktree asks for it twice over, once for what the checkout changed and once for what it deleted, and
-// every judging asked again for an answer that had not moved.
 func MergeBase(root, base string) string {
 	project := ProjectRoot(root)
 
@@ -230,8 +209,6 @@ func MergeBase(root, base string) string {
 		func() string { return ask(root, "merge-base", base, "HEAD") })
 }
 
-// ChangedVsBranch are the judged files new or changed on this branch since it left base, committed or
-// not; ok is false when base shares no history with HEAD.
 func ChangedVsBranch(root, base string) (changed map[string]bool, ok bool) {
 	mergeBase := MergeBase(root, base)
 	if mergeBase == "" {
@@ -244,12 +221,6 @@ func ChangedVsBranch(root, base string) (changed map[string]bool, ok bool) {
 	return pathSet(root, tracked+"\n"+untracked), true
 }
 
-// DeletedVsBranch are the judged files this branch REMOVED since it left base, as paths relative to the
-// repository at root; ok is false when base shares no history with HEAD.
-//
-// Relative, unlike every other answer here, because an absolute path is made by resolving the file and these
-// files are gone: there is nothing on disk to resolve. The caller joins them to whichever root it means, which
-// for a worktree's deletion is the project's own copy that otherwise stands in its place.
 func DeletedVsBranch(root, base string) (deleted []string, ok bool) {
 	mergeBase := MergeBase(root, base)
 	if mergeBase == "" {
@@ -269,9 +240,6 @@ func DeletedVsBranch(root, base string) (deleted []string, ok bool) {
 	return deleted, true
 }
 
-// ChangedOn are the judged files the head branch changed since it left base, in the repository at root; ok is false
-// when the two share no history or either is unknown there. Checked out, the head's working tree counts too, as
-// ChangedVsBranch reads it; any other head is read from its commits alone.
 func ChangedOn(root, base, head string) (changed map[string]bool, ok bool) {
 	if head == CurrentBranch(root) {
 		return ChangedVsBranch(root, base)
@@ -284,18 +252,14 @@ func ChangedOn(root, base, head string) (changed map[string]bool, ok bool) {
 	return pathSet(root, run(root, "diff", "--name-only", "--diff-filter=d", mergeBase, head)), true
 }
 
-// Listed are the judged files among paths relative to the repository at root, as pathSet resolves them.
 func Listed(root string, relative []string) map[string]bool {
 	return pathSet(root, strings.Join(relative, "\n"))
 }
 
-// ChangedLinesOf are the lines of file that differ from HEAD; every line, for a file git does not track.
 func ChangedLinesOf(root, file string) ChangedLines {
 	return ChangedLinesSince(root, "HEAD", file)
 }
 
-// ChangedLinesSince are the lines of file that differ from the commit, the working tree's own changes among them;
-// every line, for a file git does not track. A merge base is what a branch's own lines are read from.
 func ChangedLinesSince(root, commit, file string) ChangedLines {
 	if ask(root, "ls-files", "--", file) == "" {
 		return Everywhere()
@@ -306,8 +270,6 @@ func ChangedLinesSince(root, commit, file string) ChangedLines {
 
 var anyLineBreak = regexp.MustCompile(`\r\n|[\n\r\x0B\f]`)
 
-// pathSet is the absolute, resolved judged files among git's relative lines, leaving out any a walk of
-// the tree would never reach.
 func pathSet(root, lines string) map[string]bool {
 	top := real(root)
 	set := map[string]bool{}
@@ -338,12 +300,10 @@ type ChangedLines struct {
 	ranges [][2]int
 }
 
-// Everywhere covers every line: a file with no history is all new.
 func Everywhere() ChangedLines {
 	return ChangedLines{whole: true}
 }
 
-// FromDiff reads the added side of each hunk header of a zero-context diff.
 func FromDiff(diff string) ChangedLines {
 	var ranges [][2]int
 
@@ -367,8 +327,6 @@ func FromDiff(diff string) ChangedLines {
 	return ChangedLines{ranges: ranges}
 }
 
-// AtLines covers the lines given and nothing else: what a caller handed the edit already knows, so it never has to
-// ask git for a diff it was told.
 func AtLines(lines []int) ChangedLines {
 	var ranges [][2]int
 	for _, line := range lines {
@@ -378,7 +336,6 @@ func AtLines(lines []int) ChangedLines {
 	return ChangedLines{ranges: ranges}
 }
 
-// Covers says whether the line changed.
 func (c ChangedLines) Covers(line int) bool {
 	if c.whole {
 		return true
@@ -397,20 +354,10 @@ func within(path, parent string) bool {
 	return path == parent || strings.HasPrefix(path, strings.TrimRight(parent, "/")+"/")
 }
 
-// ask runs git and answers its trimmed output, empty when it fails.
 func ask(dir string, args ...string) string {
 	return trim(run(dir, args...))
 }
 
-// run runs git in dir and answers its output, empty when it fails.
-//
-// Every call carries --no-optional-locks: git takes the repository's index lock to write back an index it
-// refreshed while reading, and these calls are made from a hook, beside a session that is running git itself.
-// A status read taking that lock made a `git commit` in the same checkout fail with "Unable to create
-// index.lock". Nothing here writes to the repository, so the refresh it would save is never worth a lock.
-// wrote runs a git command that CHANGES the checkout, and says what it printed and whether it failed. A read
-// answers "" where git could not answer and the caller reads that as nothing; a write that failed and said
-// nothing would be taken for a write that happened, so its error comes back.
 func wrote(dir string, args ...string) (string, error) {
 	counted()
 

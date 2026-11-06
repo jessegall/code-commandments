@@ -14,10 +14,8 @@ type CancelledCoalesceDetector struct{}
 
 func init() { detectors.Register(catalog.PHP, CancelledCoalesceDetector{}) }
 
-// Sin is the sin the detector finds.
 func (CancelledCoalesceDetector) Sin() sins.Sin { return backendsins.CancelledCoalesce{} }
 
-// Find is every ?? falling back to an empty literal other than [] and compared with that same literal.
 func (CancelledCoalesceDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return php.In(codebase).
 		Where(engine.As(php.Node.IsCoalesce)).

@@ -13,7 +13,6 @@ func init() {
 	sins.Register(catalog.Python, ScratchStateRestore{})
 }
 
-// Definition is what the sin states about itself.
 func (ScratchStateRestore) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "python-scratch-state-restore",

@@ -14,8 +14,6 @@ type command struct {
 func (c command) Names() []string { return c.names }
 func (c command) Help() Help      { return c.help }
 
-// widget and bare are the commands testdata/page.txt and testdata/overview.txt were rendered from by the
-// PHP HelpScreen.
 var (
 	widget = command{[]string{"widget", "widgets"}, Of("Tend the widgets — every one of them, in the order they were made, with a summary long enough to wrap past the width.").
 		Form("widget", "the list").

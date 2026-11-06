@@ -15,10 +15,8 @@ type ModelMutationAtCallSiteDetector struct{}
 
 func init() { detectors.Register(catalog.PHP, ModelMutationAtCallSiteDetector{}) }
 
-// Sin is the sin the detector finds.
 func (ModelMutationAtCallSiteDetector) Sin() sins.Sin { return backendsins.ModelMutationAtCallSite{} }
 
-// Find is every save() of a model whose properties its function writes.
 func (ModelMutationAtCallSiteDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return php.In(codebase).
 		Where(engine.As(func(n php.Node) bool { return n.MethodCallName() == "save" })).
@@ -27,6 +25,4 @@ func (ModelMutationAtCallSiteDetector) Find(codebase *engine.Codebase) []engine.
 		Get()
 }
 
-// CrossFile says the rule reads more than the file it reports in, which the fixture measures by asking it
-// of one file and of the whole tree: a scoped run reads the whole scan while it is enabled.
 func (ModelMutationAtCallSiteDetector) CrossFile() {}

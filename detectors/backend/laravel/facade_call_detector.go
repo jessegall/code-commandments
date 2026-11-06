@@ -15,10 +15,8 @@ type FacadeCallDetector struct{}
 
 func init() { detectors.Register(catalog.PHP, FacadeCallDetector{}) }
 
-// Sin is the sin the detector finds.
 func (FacadeCallDetector) Sin() sins.Sin { return backendsins.FacadeCall{} }
 
-// Find is every facade call in a class, save fakes, service providers, Eloquent casts and queued job hooks.
 func (FacadeCallDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return php.In(codebase).
 		WhereKind("Expr_StaticCall").

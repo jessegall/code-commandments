@@ -16,12 +16,10 @@ func init() {
 	detectors.Register(catalog.Python, EnumCaseOrChainDetector{})
 }
 
-// Sin is the sin the detector finds.
 func (EnumCaseOrChainDetector) Sin() sins.Sin {
 	return pysins.EnumCaseOrChain{}
 }
 
-// Find is every place the sin is committed.
 func (EnumCaseOrChainDetector) Find(codebase *engine.Codebase) []engine.Match {
 	program := py.In(codebase).Program
 

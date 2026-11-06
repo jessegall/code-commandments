@@ -13,7 +13,6 @@ func init() {
 	sins.Register(catalog.CSharp, FilledParameter{})
 }
 
-// Definition is what the sin states about itself.
 func (FilledParameter) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "csharp-filled-parameter",

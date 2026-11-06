@@ -39,7 +39,6 @@ func TestTheSchemaDescribesEveryKeyARuleIsWrittenWith(t *testing.T) {
 		t.Errorf("a step's checks are described and nested ones refer to their shapes: %v %v %v", step["nameLike"], step["inside"], step["lines"])
 	}
 
-	// A step that carries a key of its own refers to the shape that holds both it and the step nested in it.
 	if step["descendant"]["$ref"] != "#/definitions/descended" || step["child"]["$ref"] != "#/definitions/childed" {
 		t.Errorf("a bounded step refers to its own shape: %v %v", step["descendant"], step["child"])
 	}
@@ -72,10 +71,6 @@ func unique(keys []string) map[string]bool {
 	return set
 }
 
-// A rule author's likeliest mistake is writing another language's tree: `InvocationExpression` under the php
-// engine finds nothing, and nothing says why. The schema now carries one step per engine, with the value space
-// that engine's languages really emit, so an editor completes the right kinds and marks the wrong ones where they
-// are written.
 func TestTheSchemaNarrowsAStepToTheEngineBeingJudged(t *testing.T) {
 	var schema struct {
 		AllOf       []map[string]any `json:"allOf"`
@@ -106,12 +101,10 @@ func TestTheSchemaNarrowsAStepToTheEngineBeingJudged(t *testing.T) {
 		t.Error("the php step offers InvocationExpression, which is C#'s")
 	}
 
-	// The spelling a rule may write instead is offered beside the language's own word.
 	if !slices.Contains(kinds, "static-call") {
 		t.Error("the php step offers no spelling beside its kinds")
 	}
 
-	// And the other four keys a bridge spells are narrowed the same way.
 	for key, want := range map[string]string{"field": "stmts", "operator": "??", "hasModifier": "readonly"} {
 		if offered := enumOf(t, php.Properties, key); !slices.Contains(offered, want) {
 			t.Errorf("the php step's %s offers %d values and not %q", key, len(offered), want)
@@ -128,12 +121,9 @@ func TestTheSchemaNarrowsAStepToTheEngineBeingJudged(t *testing.T) {
 	}
 }
 
-// enumOf is the values the key is narrowed to, and a failure where it is narrowed to none.
 func enumOf(t *testing.T, properties map[string]map[string]any, key string) []string {
 	t.Helper()
 
-	// The values are offered inside an anyOf beside a plain string: an editor completes them, and a rule writing
-	// something the census has not seen is not marked wrong for it.
 	either, held := properties[key]["anyOf"].([]any)
 	if !held || len(either) != 2 {
 		t.Fatalf("the step's %s offers no values beside a plain string: %v", key, properties[key])

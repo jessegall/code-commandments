@@ -11,7 +11,6 @@ type ConcurrentSubclass struct{}
 
 func init() { sins.Register(catalog.PHP, ConcurrentSubclass{}) }
 
-// Definition is what the sin states about itself.
 func (ConcurrentSubclass) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "concurrent-subclass",

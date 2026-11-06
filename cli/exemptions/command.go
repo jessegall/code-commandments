@@ -1,5 +1,4 @@
-// Package exemptions is `exemptions`: the tags a package registers to quiet a general rule on its own
-// boundary types, and the ones each detector honours.
+// Package exemptions is `exemptions`: the tags a package registers to quiet a general rule on its own boundary types, and the ones each detector honours.
 package exemptions
 
 import (
@@ -14,19 +13,16 @@ import (
 // Command is `exemptions`.
 type Command struct{}
 
-// Names are the verbs it answers to.
 func (Command) Names() []string {
 	return []string{"exemptions"}
 }
 
-// Help documents it.
 func (Command) Help() help.Help {
 	return help.Of("List the exemption tags — what a package registers to quiet a general rule on its own boundary types.").
 		Form("exemptions", "every registered tag, with the package that owns it").
 		Form("exemptions <sin|detector>", "the exemptions ONE detector honours")
 }
 
-// Run lists every tag, or the ones the named detectors honour.
 func (Command) Run(in *cli.Input, console cli.Console) (int, error) {
 	query, named := in.FirstArgument()
 

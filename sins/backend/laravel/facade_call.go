@@ -11,7 +11,6 @@ type FacadeCall struct{}
 
 func init() { sins.Register(catalog.PHP, FacadeCall{}) }
 
-// Definition is what the sin states about itself.
 func (FacadeCall) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "facade-call",

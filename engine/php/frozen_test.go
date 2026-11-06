@@ -8,7 +8,6 @@ import (
 	"github.com/jessegall/code-commandments/engine/php"
 )
 
-// Each case's verdict is PHP's Frozen::isFrozenFile's for the same source.
 func TestAPHPFileIsFrozenAsThePHPToolReadsIt(t *testing.T) {
 	cases := []struct {
 		source string

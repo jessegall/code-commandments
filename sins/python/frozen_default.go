@@ -13,7 +13,6 @@ func init() {
 	sins.Register(catalog.Python, FrozenDefault{})
 }
 
-// Definition is what the sin states about itself.
 func (FrozenDefault) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "python-frozen-default",

@@ -21,7 +21,6 @@ func init() {
 	skill.Register(catalog.Python, Exceptions{})
 }
 
-// Definition is what the skill states about itself.
 func (Exceptions) Definition() skill.Definition {
 	return skill.Definition{
 		Slug:      "python/exceptions",

@@ -10,8 +10,7 @@ import (
 	"github.com/jessegall/code-commandments/engine/php"
 )
 
-// ConfigKeys is the keys a Laravel project's own config files declare, the ones that state a default, and every
-// string the project writes that could read one.
+// ConfigKeys is the keys a Laravel project's own config files declare, the ones that state a default, and every string the project writes that could read one.
 type ConfigKeys struct {
 	declared map[*contract.Node]string
 	literals []string
@@ -49,18 +48,14 @@ var configKeys = php.Memoised(func(codebase *engine.Codebase) *ConfigKeys {
 	return keys
 })
 
-// ConfigKeysOf is the codebase's config keys.
 func ConfigKeysOf(codebase *engine.Codebase) *ConfigKeys {
 	return configKeys.Of(codebase)
 }
 
-// DeclaresDefault says whether a config file states a default for the key.
 func (k *ConfigKeys) DeclaresDefault(key string) bool {
 	return key != "" && k.defaults[key]
 }
 
-// DeadKeyAt is the key the config item declares when nothing reads it, in a config file something reads from;
-// empty otherwise.
 func (k *ConfigKeys) DeadKeyAt(node engine.Match) string {
 	key, declared := k.declared[node.Node()]
 	file, _, _ := strings.Cut(key, ".")
@@ -80,8 +75,6 @@ func (k *ConfigKeys) isRead(key string) bool {
 // vendorConfigs is, per project root, the config names its vendor packages publish.
 type vendorConfigs map[string]map[string]bool
 
-// prefixOf is the key prefix a file in a config folder declares, unless a vendor package publishes a config of
-// that name.
 func (v vendorConfigs) prefixOf(path string) string {
 	if filepath.Base(filepath.Dir(path)) != "config" {
 		return ""
@@ -110,9 +103,6 @@ func (v vendorConfigs) publishedIn(root string) map[string]bool {
 	return names
 }
 
-// writtenText is the text a string written in the source begins with: a plain string whole, and an interpolated
-// one up to its first interpolation, which is as much of a config key as the source settles. A node that is no
-// written string has none.
 func writtenText(node engine.Match) (string, bool) {
 	switch node.Kind() {
 	case "Scalar_String":
@@ -178,8 +168,7 @@ func statesADefault(value engine.Match) bool {
 	return false
 }
 
-// construction is how the project's own code makes its classes: the ones a constructor takes, and the ones built
-// by hand with every class each extends.
+// construction is how the project's own code makes its classes: the ones a constructor takes, and the ones built by hand with every class each extends.
 type construction struct {
 	injected map[string]bool
 	built    map[string]bool
@@ -204,8 +193,6 @@ var constructions = php.Memoised(func(codebase *engine.Codebase) *construction {
 	return made
 })
 
-// ContainerResolves says whether the container builds the class: something takes it in a constructor, or nothing
-// builds it or a subclass by hand.
 func ContainerResolves(codebase *engine.Codebase, class string) bool {
 	if class == "" {
 		return false

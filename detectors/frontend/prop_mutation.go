@@ -16,8 +16,7 @@ func init() {
 	detectors.Register(catalog.Vue, PropMutationDetector{})
 }
 
-// PropMutationDetector finds a template writing one of its component's own props, through a v-model or an
-// assignment in a handler. Only a bare prop is a write: a script local of the same name shadows it.
+// PropMutationDetector finds a template writing one of its component's own props, through a v-model or an assignment in a handler.
 type PropMutationDetector struct{}
 
 func (PropMutationDetector) Sin() sins.Sin {
@@ -48,7 +47,6 @@ func (PropMutationDetector) Find(codebase *engine.Codebase) []engine.Match {
 		Get()
 }
 
-// writesOneOf says whether the element writes one of the names: a v-model's target, or an assignment's.
 func writesOneOf(element vue.Element, names []string) bool {
 	var targets []typescript.Node
 	for _, directive := range element.Directives() {

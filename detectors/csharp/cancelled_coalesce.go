@@ -16,12 +16,10 @@ func init() {
 	detectors.Register(catalog.CSharp, CancelledCoalesceDetector{})
 }
 
-// Sin is the sin the detector finds.
 func (CancelledCoalesceDetector) Sin() sins.Sin {
 	return cssins.CancelledCoalesce{}
 }
 
-// Find is every place the sin is committed.
 func (CancelledCoalesceDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return cs.In(codebase).
 		WhereExpression().

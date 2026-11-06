@@ -11,7 +11,6 @@ type LoopInvertedGuard struct{}
 
 func init() { sins.Register(catalog.PHP, LoopInvertedGuard{}) }
 
-// Definition is what the sin states about itself.
 func (LoopInvertedGuard) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "loop-inverted-guard",

@@ -12,12 +12,6 @@ import (
 	"github.com/jessegall/code-commandments/cli/config"
 )
 
-// The layer stack a project declares is the one thing the dependency rule reads, and nothing in this package was
-// held to anything: the seventeen recorded parity cases ran the built binary. The command reads the project's own
-// config and writes it back, so its answers are held here, the refusals first, because a layer silently not added
-// is a rule silently not enforced.
-
-// asked runs the command inside the project and answers its exit code and what it said.
 func asked(t *testing.T, project string, args ...string) (code int, said string, warned string) {
 	t.Helper()
 	was, err := os.Getwd()
@@ -38,7 +32,6 @@ func asked(t *testing.T, project string, args ...string) (code int, said string,
 	return code, out.String(), errs.String()
 }
 
-// aProjectDeclaring is a project whose config declares the layers written in it.
 func aProjectDeclaring(t *testing.T, declaration string) string {
 	t.Helper()
 	root, err := filepath.EvalSymlinks(t.TempDir())
@@ -55,7 +48,6 @@ func aProjectDeclaring(t *testing.T, declaration string) string {
 	return root
 }
 
-// stackOf are the layers the project declares, in order, as the config reads them back.
 func stackOf(t *testing.T, project string) []config.Layer {
 	t.Helper()
 	layers, err := config.EditorIn(project).Layers()
@@ -66,8 +58,6 @@ func stackOf(t *testing.T, project string) []config.Layer {
 	return layers
 }
 
-// TestAVerbGivenTooLittleSaysWhatToType holds the two verbs that take arguments: a reader who typed half of one is
-// shown the form rather than left with a config that silently did not change.
 func TestAVerbGivenTooLittleSaysWhatToType(t *testing.T) {
 	project := aProjectDeclaring(t, `{"paths": ["src"]}`)
 
@@ -88,8 +78,6 @@ func TestAVerbGivenTooLittleSaysWhatToType(t *testing.T) {
 	}
 }
 
-// TestAllowingFromALayerNobodyDeclaredIsRefused holds the one answer that keeps the stack honest: a rule written
-// from a layer that is not declared would be read by nothing, so the reader is told to declare it first.
 func TestAllowingFromALayerNobodyDeclaredIsRefused(t *testing.T) {
 	project := aProjectDeclaring(t, `{
         "paths": ["src"],
@@ -106,8 +94,6 @@ func TestAllowingFromALayerNobodyDeclaredIsRefused(t *testing.T) {
 	}
 }
 
-// TestAllowingWhatIsAlreadyAllowedChangesNothing holds the second run: the reader is told it was already so, and
-// the stack is not written again.
 func TestAllowingWhatIsAlreadyAllowedChangesNothing(t *testing.T) {
 	project := aProjectDeclaring(t, `{
         "paths": ["src"],
@@ -130,8 +116,6 @@ func TestAllowingWhatIsAlreadyAllowedChangesNothing(t *testing.T) {
 	}
 }
 
-// TestAllowingWidensTheLayerItNames holds the verb doing its work: the target is added to what that layer may use,
-// and nothing else about the stack moves.
 func TestAllowingWidensTheLayerItNames(t *testing.T) {
 	project := aProjectDeclaring(t, `{
         "paths": ["src"],
@@ -160,8 +144,6 @@ func TestAllowingWidensTheLayerItNames(t *testing.T) {
 	}
 }
 
-// TestAddingALayerDeclaresItAndWhatItMayUse holds `layers add`: the namespace joins the stack with the layers the
-// option names, and the empty entries a careless list carries are left out.
 func TestAddingALayerDeclaresItAndWhatItMayUse(t *testing.T) {
 	project := aProjectDeclaring(t, `{
         "paths": ["src"],
@@ -191,7 +173,6 @@ func TestAddingALayerDeclaresItAndWhatItMayUse(t *testing.T) {
 	}
 }
 
-// contains says whether the list holds the value.
 func contains(list []string, value string) bool {
 	for _, each := range list {
 		if each == value {

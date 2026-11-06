@@ -11,7 +11,6 @@ type NonCountingFor struct{}
 
 func init() { sins.Register(catalog.PHP, NonCountingFor{}) }
 
-// Definition is what the sin states about itself.
 func (NonCountingFor) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "non-counting-for",

@@ -16,12 +16,10 @@ func init() {
 	detectors.Register(catalog.Python, ConditionalStatementDetector{})
 }
 
-// Sin is the sin the detector finds.
 func (ConditionalStatementDetector) Sin() sins.Sin {
 	return pysins.ConditionalStatement{}
 }
 
-// Find is every place the sin is committed.
 func (ConditionalStatementDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return py.In(codebase).
 		WhereKind("IfExp").

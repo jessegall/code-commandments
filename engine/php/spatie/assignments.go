@@ -13,12 +13,10 @@ import (
 	"github.com/jessegall/code-commandments/engine/php"
 )
 
-// AssignedPropertyName is the field a `$this->field = …` assigns; empty for any other node.
 func (n Node) AssignedPropertyName() string {
 	return assignedPropertyName(n.Match)
 }
 
-// assignedPropertyName is the field a `$this->field = …` assigns.
 func assignedPropertyName(node engine.Match) string {
 	target := node.Child("var")
 	if node.Kind() != "Expr_Assign" || target.Kind() != "Expr_PropertyFetch" || !isThis(target.Child("var")) || target.Child("name").Kind() != "Identifier" {
@@ -46,15 +44,12 @@ func (n Node) assignedField() (php.Field, bool) {
 	return php.Field{}, false
 }
 
-// AssignedPropertyIsPublicSlot says whether `$this->field = …` fills a public property the constructor does not
-// promote.
 func (n Node) AssignedPropertyIsPublicSlot() bool {
 	field, ok := n.assignedField()
 
 	return ok && field.IsPublic && !field.Promoted
 }
 
-// AssignmentRhsIsDeferred says whether an assignment stores a deferred value: `Lazy::…`, or a `new …Prop`.
 func (n Node) AssignmentRhsIsDeferred() bool {
 	if n.Kind() != "Expr_Assign" {
 		return false
@@ -71,7 +66,6 @@ func (n Node) AssignmentRhsIsDeferred() bool {
 	return false
 }
 
-// AssignedSlotTypeIsDeferred says whether the field a `$this->field = …` fills is typed as a deferred value.
 func (n Node) AssignedSlotTypeIsDeferred() bool {
 	field, ok := n.assignedField()
 
@@ -93,8 +87,6 @@ func namesDeferral(written *contract.Type) bool {
 	return false
 }
 
-// AssignmentReadsScopedState says whether an assignment's value reads request-scoped state: a `current()` accessor,
-// itself or through the methods and constructors it calls, four calls deep.
 func (n Node) AssignmentReadsScopedState() bool {
 	return n.Kind() == "Expr_Assign" && n.scopedStateWithin(n.Child("expr"), enclosingFunction(n.Match), php.EnclosingClassName(n.Match), 4, map[string]bool{})
 }
@@ -134,7 +126,6 @@ func (n Node) scopedStateWithin(node, function engine.Match, self string, depth 
 	return false
 }
 
-// crossInto follows a call into the method the class declares; each path keeps its own record of where it has been.
 func (n Node) crossInto(class, method string, depth int, visited map[string]bool) bool {
 	if class == "" {
 		return false
@@ -172,7 +163,6 @@ func readsScopedAccessor(node engine.Match) bool {
 	return false
 }
 
-// AssignedSlotIsEager says whether the property a `$this->field = …` fills, declared alone, is marked `#[Eager]`.
 func (n Node) AssignedSlotIsEager() bool {
 	name := assignedPropertyName(n.Match)
 	class := php.EnclosingClass(n.Match)
@@ -203,8 +193,6 @@ func (n Node) AssignedSlotIsEager() bool {
 	return false
 }
 
-// PropertyAssignedMoreThanOnce says whether the class's constructor assigns the field a `$this->field = …` fills
-// more than once.
 func (n Node) PropertyAssignedMoreThanOnce() bool {
 	name := assignedPropertyName(n.Match)
 	constructor, ok := php.Method(php.EnclosingClass(n.Match), "__construct")
@@ -226,7 +214,6 @@ func (n Node) PropertyAssignedMoreThanOnce() bool {
 	return count > 1
 }
 
-// IsOptionalAbsentMarker says whether the node builds Spatie's Optional: `new Optional` or `Optional::create()`.
 func (n Node) IsOptionalAbsentMarker() bool {
 	if n.Kind() == "Expr_New" {
 		return strings.TrimLeft(newClassName(n.Match), `\`) == Optional
@@ -236,8 +223,6 @@ func (n Node) IsOptionalAbsentMarker() bool {
 	return n.Kind() == "Expr_StaticCall" && isName(class) && strings.TrimLeft(class.Name(), `\`) == Optional && name.Kind() == "Identifier" && name.Name() == "create"
 }
 
-// IsOptionalNullFallback says whether an Optional is what a null falls back to: `$x ?? new Optional`, or a ternary
-// on a null check.
 func (n Node) IsOptionalNullFallback() bool {
 	if !n.IsOptionalAbsentMarker() {
 		return false
@@ -268,8 +253,6 @@ func isNullComparison(node engine.Match) bool {
 	return false
 }
 
-// IsSharedOptionalFactory says whether an Optional is one branch of a factory's own absent-or-present choice: a
-// parameter coalesced to it, or a ternary whose other branch is `self::from`.
 func (n Node) IsSharedOptionalFactory() bool {
 	if !n.IsOptionalAbsentMarker() {
 		return false
@@ -305,8 +288,6 @@ func (n Node) coalescesEnclosingParameter(left engine.Match) bool {
 	return false
 }
 
-// IsReplaceableNewOptional says whether a `new Optional` could be `Optional::create()`: it is no default value and no
-// attribute argument, where only a constant expression may stand.
 func (n Node) IsReplaceableNewOptional() bool {
 	if n.Kind() != "Expr_New" || strings.TrimLeft(newClassName(n.Match), `\`) != Optional {
 		return false
@@ -318,8 +299,6 @@ func (n Node) IsReplaceableNewOptional() bool {
 	return !within(n.Match, func(at engine.Match) bool { return at.Kind() == "Attribute" })
 }
 
-// TransformerLacksTsType says whether a field's `#[WithTransformer]` names a transformer whose TypeScript type is not
-// known, and the field gives none of its own.
 func (n Node) TransformerLacksTsType() bool {
 	if n.Kind() != "Attribute" || slices.Contains(knownTsTransformers, firstArgumentClassShortName(n.Match)) {
 		return false
@@ -345,8 +324,6 @@ func firstArgumentClassShortName(attribute engine.Match) string {
 	return ""
 }
 
-// FlattensValueObjectToArray says whether a public array slot, or a function's sole returned array, reads its
-// entries off one value object that is neither Data nor an enum, flattening what could be passed whole.
 func (n Node) FlattensValueObjectToArray() bool {
 	array, ok := n.publicSlotArrayOutput()
 	if !ok {
@@ -372,7 +349,6 @@ func (n Node) publicSlotArrayOutput() (engine.Match, bool) {
 	return soleArrayLiteralOutput(n.Match)
 }
 
-// soleArrayLiteralOutput is the array literal a hook is, or a method or function only returns.
 func soleArrayLiteralOutput(node engine.Match) (engine.Match, bool) {
 	switch node.Kind() {
 	case "PropertyHook":
@@ -403,9 +379,6 @@ func soleReturnedArray(node engine.Match, field string) (engine.Match, bool) {
 	return value, value.Kind() == "Expr_Array"
 }
 
-// TransformerOutputIn is the folder the TypeScript transformer writes into, as the codebase configures it: an
-// `outputDirectory(...)` call, or an `output_file` config key, read from literals, concatenation, variables, `__DIR__`,
-// namesKey says whether the array entry is written with that literal string as its key.
 func namesKey(item engine.Match, key string) bool {
 	written := item.Child("key")
 	if item.Kind() != "ArrayItem" || written.Kind() != "Scalar_String" {
@@ -416,7 +389,6 @@ func namesKey(item engine.Match, key string) bool {
 	return text == key
 }
 
-// `dirname` and Laravel's path helpers. Empty when the codebase says nothing a reader can resolve.
 func TransformerOutputIn(codebase *engine.Codebase) string {
 	for _, file := range codebase.Of(contract.PHP).Files() {
 		path := file.Path
@@ -446,7 +418,6 @@ func TransformerOutputIn(codebase *engine.Codebase) string {
 				return normalise(output)
 			}
 
-			// The key is there and says nothing this can read, so no later entry answers for it either.
 			break
 		}
 	}
@@ -483,7 +454,6 @@ func evaluate(expr engine.Match, file string, assignments map[string]engine.Matc
 	return "", false
 }
 
-// pathHelpers are Laravel's path helpers and the folder under the project root each names.
 var pathHelpers = map[string]string{"base_path": "", "resource_path": "resources", "app_path": "app", "config_path": "config", "storage_path": "storage"}
 
 func evaluateCall(call engine.Match, file string, assignments map[string]engine.Match) (string, bool) {
@@ -525,7 +495,6 @@ func evaluateCall(call engine.Match, file string, assignments map[string]engine.
 	return strings.TrimRight(root+"/"+folder+"/"+strings.TrimLeft(suffix, "/"), "/"), true
 }
 
-// projectRoot is the nearest folder above the file holding a composer.json.
 func projectRoot(file string) (string, bool) {
 	for folder := filepath.Dir(file); folder != "/" && folder != "" && folder != "."; folder = filepath.Dir(folder) {
 		if info, err := os.Stat(filepath.Join(folder, "composer.json")); err == nil && !info.IsDir() {
@@ -536,7 +505,6 @@ func projectRoot(file string) (string, bool) {
 	return "", false
 }
 
-// normalise is a path with `.` and `..` resolved and empty parts dropped, always absolute.
 func normalise(path string) string {
 	var segments []string
 	for _, segment := range strings.Split(path, "/") {

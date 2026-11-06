@@ -7,10 +7,6 @@ import (
 	"github.com/jessegall/code-commandments/engine/python/pythontest"
 )
 
-// TestAFinderEveryCallerDeNullsIsFoundAndOneWithARealChoiceIsNot holds the measure the rule is built on: the
-// annotation says the value may be missing, and the question is whether anybody agrees. Two callers turning the
-// None into a failure make it the finder's business; a caller that has something else to do about the absence is
-// the signature telling the truth, and is left alone.
 func TestAFinderEveryCallerDeNullsIsFoundAndOneWithARealChoiceIsNot(t *testing.T) {
 	const orders = "class Order:\n    def __init__(self, reference: str) -> None:\n        self.reference = reference\n\n\nclass Orders:\n    def __init__(self) -> None:\n        self.kept: dict[str, Order] = {}\n\n    def find(self, reference: str) -> Order | None:\n        return self.kept.get(reference)\n"
 

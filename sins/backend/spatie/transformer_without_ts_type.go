@@ -11,7 +11,6 @@ type TransformerWithoutTsType struct{}
 
 func init() { sins.Register(catalog.PHP, TransformerWithoutTsType{}) }
 
-// Definition is what the sin states about itself.
 func (TransformerWithoutTsType) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "transformer-without-ts-type",

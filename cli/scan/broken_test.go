@@ -11,8 +11,6 @@ import (
 	"github.com/jessegall/code-commandments/engine/php"
 )
 
-// TestABridgeThatStopsPartwayLeavesWhatItReadToBeJudged holds the load to the files a bridge wrote before it broke
-// off, as a bridge killed after its first file does: they are loaded, and the load says which bridge stopped.
 func TestABridgeThatStopsPartwayLeavesWhatItReadToBeJudged(t *testing.T) {
 	root := t.TempDir()
 	first, second := filepath.Join(root, "First.php"), filepath.Join(root, "Second.php")

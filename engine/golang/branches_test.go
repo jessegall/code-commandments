@@ -6,10 +6,6 @@ import (
 	"github.com/jessegall/code-commandments/engine"
 )
 
-// flows is a module whose branches the engine's own readings are asked about, one shape per reading: a guard with
-// an else that says nothing the return did not, the same guard with the else dedented, a loop whose whole body is
-// one condition, a loop that picks the one item it wanted and leaves, and a ladder comparing one status with the
-// constants of a defined type.
 var flows = map[string]string{
 	"go.mod": "module example.com/flows\n",
 	"orders/orders.go": `package orders
@@ -114,10 +110,6 @@ func (o Order) guarded() string {
 `,
 }
 
-// TestGosBranchesAreReadByTheEnginesOwnReadings holds Go to the readings every language is held to: the engine
-// says what a redundant else, a loop's sole guard and a subject ladder are, and Go's grammar only says where its
-// tree files a body, an else and a condition. A Go answer that differs from another language's would mean the
-// grammar is wrong, never that Go needs a reading of its own.
 func TestGosBranchesAreReadByTheEnginesOwnReadings(t *testing.T) {
 	codebase := codebaseOf(t, flows)
 
@@ -139,8 +131,6 @@ func TestGosBranchesAreReadByTheEnginesOwnReadings(t *testing.T) {
 		}
 	}
 
-	// A ladder is counted in rungs, and how many rungs make a ladder worth reporting is the detector's own
-	// calibration, so one comparison is a ladder of one and a chain over four different subjects is no ladder at all.
 	for name, want := range map[string]int{"badge": 4, "mixed": 0, "dedented": 1, "guarded": 1} {
 		if held := engine.SubjectLadderLength(branchOf(funcNamed(t, codebase, name))); held != want {
 			t.Errorf("%s reads as a ladder of %d rungs, where it is %d", name, held, want)
@@ -148,8 +138,6 @@ func TestGosBranchesAreReadByTheEnginesOwnReadings(t *testing.T) {
 	}
 }
 
-// TestALadderRungIsCountedOnceFromItsTop holds the ladder to the rule that keeps one ladder from being reported
-// four times: a branch written as another's else is a rung, not a ladder of its own.
 func TestALadderRungIsCountedOnceFromItsTop(t *testing.T) {
 	codebase := codebaseOf(t, flows)
 
@@ -164,7 +152,6 @@ func TestALadderRungIsCountedOnceFromItsTop(t *testing.T) {
 	}
 }
 
-// branchOf is the first branch the function's body holds.
 func branchOf(function engine.Match) engine.Match {
 	for _, held := range function.Descendants() {
 		if held.Is(engine.Branch) {

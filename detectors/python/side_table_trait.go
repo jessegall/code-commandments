@@ -18,15 +18,10 @@ func init() {
 	detectors.Register(catalog.Python, SideTableTraitDetector{})
 }
 
-// Sin is the sin the detector finds.
 func (SideTableTraitDetector) Sin() sins.Sin {
 	return pysins.SideTableTrait{}
 }
 
-// Find is every module-level collection of names that are the names of the instances its own module registers,
-// and that the module then uses as a handle on them. The three together are what tells a side table from an
-// ordinary lookup: the names are a type's, there is more than one of them to be a type's, and the module reaches
-// for the instances through them rather than merely holding a vocabulary that happens to look alike.
 func (SideTableTraitDetector) Find(codebase *engine.Codebase) []engine.Match {
 	assigns := byFile(py.In(codebase).WhereAssign().Where(engine.As(py.Node.IsModuleLevelAssign)).Get())
 	tested := byFile(py.In(codebase).WhereKind("Compare").Get())
@@ -56,7 +51,6 @@ func (SideTableTraitDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return found
 }
 
-// byFile groups matches by the file they stand in, so a module is read against itself alone.
 func byFile(matches []engine.Match) map[string][]engine.Match {
 	grouped := map[string][]engine.Match{}
 
@@ -67,7 +61,6 @@ func byFile(matches []engine.Match) map[string][]engine.Match {
 	return grouped
 }
 
-// registeredNames is every name the module's own registries give their instances.
 func registeredNames(written []engine.Match) []string {
 	var registered []string
 
@@ -80,8 +73,6 @@ func registeredNames(written []engine.Match) []string {
 	return registered
 }
 
-// namesInstances says whether every member of the collection is the name of a registered instance: one stray
-// member and it is a vocabulary of its own, not a table about the type.
 func namesInstances(members, registered []string) bool {
 	for _, member := range members {
 		if !slices.Contains(registered, member) {
@@ -92,10 +83,6 @@ func namesInstances(members, registered []string) bool {
 	return true
 }
 
-// asked says whether the module asks the collection about one instance — `x in QUIET` — which is the question a
-// trait answers. Iterating it is deliberately not enough: a loop that acts on each member is a caller choosing
-// what to act on, and nothing in the tree tells that from a trait. A set a module merely holds, or walks, says
-// nothing about any one instance; a set it asks about one does.
 func asked(reaches []engine.Match, table string) bool {
 	if table == "" {
 		return false

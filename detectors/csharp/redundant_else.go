@@ -16,12 +16,10 @@ func init() {
 	detectors.Register(catalog.CSharp, RedundantElseDetector{})
 }
 
-// Sin is the sin the detector finds.
 func (RedundantElseDetector) Sin() sins.Sin {
 	return cssins.RedundantElse{}
 }
 
-// Find is every place the sin is committed.
 func (RedundantElseDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return cs.In(codebase).
 		WhereStatement().

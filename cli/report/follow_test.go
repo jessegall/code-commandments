@@ -11,8 +11,6 @@ import (
 	"github.com/jessegall/code-commandments/cli/reported"
 )
 
-// TestAProjectWithNoReportsNeverAsksGitHub holds the cost of the follow-up on a project that files no reports:
-// none. It says there is nothing to follow, passes, and the GitHub CLI is never called.
 func TestAProjectWithNoReportsNeverAsksGitHub(t *testing.T) {
 	project(t, "src/refund.py", "    return order.total or 0\n")
 	asked := refuseToAsk(t)
@@ -31,8 +29,6 @@ func TestAProjectWithNoReportsNeverAsksGitHub(t *testing.T) {
 	}
 }
 
-// TestAReportStillOpenAndUnansweredIsNothingToSay holds what a quiet report costs: nothing. The run passes and
-// says every report stands as it was filed, so a check of it stays green until something happens.
 func TestAReportStillOpenAndUnansweredIsNothingToSay(t *testing.T) {
 	root := project(t, "src/refund.py", "    return order.total or 0\n")
 	record(t, root, 814)
@@ -48,8 +44,6 @@ func TestAReportStillOpenAndUnansweredIsNothingToSay(t *testing.T) {
 	}
 }
 
-// TestAFixedReportNamesTheReleaseAndWhatToDoAboutIt holds the three answers a fix can have, which differ only by
-// the version this project runs: ahead of it, behind it, or no release at all.
 func TestAFixedReportNamesTheReleaseAndWhatToDoAboutIt(t *testing.T) {
 	for name, test := range map[string]struct {
 		running string
@@ -80,8 +74,6 @@ func TestAFixedReportNamesTheReleaseAndWhatToDoAboutIt(t *testing.T) {
 	}
 }
 
-// TestAReportClosedWithNoReleaseSaysTheFindingStands holds the answer nobody wants to hear and the one the rule
-// depends on: the claim was refused, so the sin is this project's to fix, and the run never says to upgrade.
 func TestAReportClosedWithNoReleaseSaysTheFindingStands(t *testing.T) {
 	root := project(t, "src/refund.py", "    return order.total or 0\n")
 	record(t, root, 814)
@@ -101,8 +93,6 @@ func TestAReportClosedWithNoReleaseSaysTheFindingStands(t *testing.T) {
 	}
 }
 
-// TestAMaintainersQuestionIsHandedToTheAgentOnceHolds both halves of being answered: a comment from the
-// repository's owner is handed over, and the row remembers it, so the same question is not raised at every look.
 func TestAMaintainersQuestionIsHandedToTheAgentOnce(t *testing.T) {
 	root := project(t, "src/refund.py", "    return order.total or 0\n")
 	record(t, root, 814)
@@ -128,8 +118,6 @@ func TestAMaintainersQuestionIsHandedToTheAgentOnce(t *testing.T) {
 	}
 }
 
-// TestGitHubThatCannotBeAskedIsAPassWithANotice holds the one thing a scheduled check may not do: fail every
-// interval for a reason that has nothing to do with the reports.
 func TestGitHubThatCannotBeAskedIsAPassWithANotice(t *testing.T) {
 	root := project(t, "src/refund.py", "    return order.total or 0\n")
 	record(t, root, 814)
@@ -148,8 +136,6 @@ func TestGitHubThatCannotBeAskedIsAPassWithANotice(t *testing.T) {
 	}
 }
 
-// TestWhatMovedIsWrittenWhereTheCheckReadsIt holds the report the journal's check reads, so a failure reaches the
-// agent as findings rather than as a wall of console text.
 func TestWhatMovedIsWrittenWhereTheCheckReadsIt(t *testing.T) {
 	root := project(t, "src/refund.py", "    return order.total or 0\n")
 	record(t, root, 814)
@@ -180,8 +166,6 @@ func TestWhatMovedIsWrittenWhereTheCheckReadsIt(t *testing.T) {
 	}
 }
 
-// TestForgettingAReportMakesItsFindingASinAgain holds the way a settled report leaves the record, which every
-// answer above ends by asking for.
 func TestForgettingAReportMakesItsFindingASinAgain(t *testing.T) {
 	root := project(t, "src/refund.py", "    return order.total or 0\n")
 	record(t, root, 814)
@@ -202,8 +186,6 @@ func TestForgettingAReportMakesItsFindingASinAgain(t *testing.T) {
 	}
 }
 
-// TestARowGitHubDoesNotKnowIsNamedAsStale holds the row nothing will ever answer: the issue was deleted, moved or
-// written by hand, so it is named once rather than asked about for ever.
 func TestARowGitHubDoesNotKnowIsNamedAsStale(t *testing.T) {
 	root := project(t, "src/refund.py", "    return order.total or 0\n")
 	record(t, root, 814)
@@ -225,9 +207,6 @@ func TestARowGitHubDoesNotKnowIsNamedAsStale(t *testing.T) {
 	}
 }
 
-// TestAnIssueTheRecordNeverKnewIsNamedButNeverAdopted holds the mirror case: a report filed by hand, or one whose
-// row was lost, is named so it is not forgotten, and never written into the record, because a row needs the file
-// and the line such an issue has not got.
 func TestAnIssueTheRecordNeverKnewIsNamedButNeverAdopted(t *testing.T) {
 	root := project(t, "src/refund.py", "    return order.total or 0\n")
 	record(t, root, 814)
@@ -254,7 +233,6 @@ func TestAnIssueTheRecordNeverKnewIsNamedButNeverAdopted(t *testing.T) {
 	}
 }
 
-// ghLists puts an issue listing of the test's own in the place of the GitHub CLI's.
 func ghLists(t *testing.T, issues string) {
 	t.Helper()
 	listed := listing
@@ -262,9 +240,6 @@ func ghLists(t *testing.T, issues string) {
 	t.Cleanup(func() { listing = listed })
 }
 
-// TestAnAcceptedReportIsNeverAskedAboutAgain holds the answer a project cannot act on: the fix is in a release it
-// is pinned away from, so the report is kept with the reason rather than dropped, the finding stays reported, and
-// nothing asks GitHub about it again.
 func TestAnAcceptedReportIsNeverAskedAboutAgain(t *testing.T) {
 	root := project(t, "src/refund.py", "    return order.total or 0\n")
 	record(t, root, 814)
@@ -297,7 +272,6 @@ func TestAnAcceptedReportIsNeverAskedAboutAgain(t *testing.T) {
 	}
 }
 
-// record writes a report of the first line of src/refund.py, filed as the issue.
 func record(t *testing.T, root string, issue int) {
 	t.Helper()
 	row := reported.Row{
@@ -315,8 +289,6 @@ func record(t *testing.T, root string, issue int) {
 	}
 }
 
-// ghViews puts a GitHub CLI of the test's own in the place of the one on the machine, answering about any issue
-// with the one state given.
 func ghViews(t *testing.T, state string) {
 	t.Helper()
 	found, viewed, listed := looking, viewing, listing
@@ -326,7 +298,6 @@ func ghViews(t *testing.T, state string) {
 	t.Cleanup(func() { looking, viewing, listing = found, viewed, listed })
 }
 
-// refuseToAsk makes any call to the GitHub CLI a test failure, and answers whether one was made.
 func refuseToAsk(t *testing.T) *bool {
 	t.Helper()
 	asked := false

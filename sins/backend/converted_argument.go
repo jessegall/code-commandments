@@ -11,7 +11,6 @@ type ConvertedArgument struct{}
 
 func init() { sins.Register(catalog.PHP, ConvertedArgument{}) }
 
-// Definition is what the sin states about itself.
 func (ConvertedArgument) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "converted-argument",

@@ -11,7 +11,6 @@ type CoupledFields struct{}
 
 func init() { sins.Register(catalog.PHP, CoupledFields{}) }
 
-// Definition is what the sin states about itself.
 func (CoupledFields) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "coupled-fields",

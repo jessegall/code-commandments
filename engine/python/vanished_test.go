@@ -10,10 +10,6 @@ import (
 	"github.com/jessegall/code-commandments/engine"
 )
 
-// TestAFileThatIsGoneLeavesTheRestRead holds the Python bridge to a file it cannot read. mypy lists a folder and
-// the bridge then asks the filesystem about each file it listed, so a file deleted between the two, a worktree
-// removed under a run, ended the stream in the middle and lost every other file with it: "the stream ends after
-// line 1976 without a trailer". A file that is gone is no part of the project the request asks about.
 func TestAFileThatIsGoneLeavesTheRestRead(t *testing.T) {
 	root, err := filepath.EvalSymlinks(t.TempDir())
 	if err != nil {

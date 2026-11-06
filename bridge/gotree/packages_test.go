@@ -8,12 +8,6 @@ import (
 	"github.com/jessegall/code-commandments/bridge/gotree"
 )
 
-// TestFilesAreGroupedAsGoCompilesThem holds the grouping to what the compiler would compile: the files of one
-// folder are one package, a test file declaring `package shop_test` beside them is a package of its own, and a
-// file this platform does not build is no part of either.
-//
-// The grouping is what the type checker needs, because it checks a package where the tree's unit is a file: a
-// file handed to it on its own has no siblings, so every name they declare would read as unresolved.
 func TestFilesAreGroupedAsGoCompilesThem(t *testing.T) {
 	root := module(t, map[string]string{
 		"go.mod":            "module example.com/shop\n",
@@ -58,9 +52,6 @@ func TestFilesAreGroupedAsGoCompilesThem(t *testing.T) {
 	}
 }
 
-// TestAFolderOutsideAModuleHasNoImportPath holds a folder with no go.mod above it to the honest answer: nothing
-// can import it, so its path is empty rather than invented, and a type reached through such an import stays
-// unknown.
 func TestAFolderOutsideAModuleHasNoImportPath(t *testing.T) {
 	root := module(t, map[string]string{"loose/tool.go": "package tool\n\nfunc Run() {}\n"})
 
@@ -77,8 +68,6 @@ func TestAFolderOutsideAModuleHasNoImportPath(t *testing.T) {
 	}
 }
 
-// TestTheSameFilesAlwaysGroupTheSameWay holds the grouping to one answer whatever order the files arrive in,
-// since the symbols a stream numbers follow it.
 func TestTheSameFilesAlwaysGroupTheSameWay(t *testing.T) {
 	root := module(t, map[string]string{
 		"go.mod":         "module example.com/shop\n",
@@ -110,7 +99,6 @@ func TestTheSameFilesAlwaysGroupTheSameWay(t *testing.T) {
 	}
 }
 
-// module writes the files under a fresh folder and answers its resolved path.
 func module(t *testing.T, files map[string]string) string {
 	t.Helper()
 	root, err := filepath.EvalSymlinks(t.TempDir())
@@ -130,7 +118,6 @@ func module(t *testing.T, files map[string]string) string {
 	return root
 }
 
-// named is each package's import path and name, for a failure to read.
 func named(packages []gotree.Package) []string {
 	var names []string
 	for _, held := range packages {
@@ -140,9 +127,6 @@ func named(packages []gotree.Package) []string {
 	return names
 }
 
-// TestOneFileIsTypedAgainstItsWholePackage holds a request naming one file to the package it belongs to: the
-// checker checks a package, so without its siblings every name they declare would read as unresolved, and the
-// hooks judge one file at a time. The siblings are read, not reported on.
 func TestOneFileIsTypedAgainstItsWholePackage(t *testing.T) {
 	root := module(t, map[string]string{
 		"go.mod":       "module example.com/shop\n",

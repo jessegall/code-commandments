@@ -13,11 +13,9 @@ func init() {
 	detectors.Register(catalog.Vue, DuplicateElementDetector{})
 }
 
-// duplicateElements is how many elements a subtree must hold before a copy of it is a component waiting.
 const duplicateElements = 3
 
-// DuplicateElementDetector finds markup written twice, the same subtree in any template: one component waiting
-// to be extracted. Only the outermost copy is reported, not each repeated piece inside it.
+// DuplicateElementDetector finds markup written twice, the same subtree in any template: one component waiting to be extracted.
 type DuplicateElementDetector struct{}
 
 func (DuplicateElementDetector) Sin() sins.Sin {
@@ -40,7 +38,6 @@ func structureHash(m engine.Match) string {
 	return vue.Of(m).StructureHash()
 }
 
-// repeatedKeys is each key two or more of the candidates share.
 func repeatedKeys(candidates []engine.Match, key func(engine.Match) string) map[string]bool {
 	repeated := map[string]bool{}
 	for _, group := range detectors.Recurring(candidates, key) {
@@ -50,7 +47,6 @@ func repeatedKeys(candidates []engine.Match, key func(engine.Match) string) map[
 	return repeated
 }
 
-// insideRepeat says whether an element above it is itself repeated, so the copy is reported there.
 func insideRepeat(element vue.Element, repeated map[string]bool, key func(vue.Element) string) bool {
 	for above := element.Parent(); above.Exists(); above = above.Parent() {
 		if repeated[key(above)] {
@@ -72,14 +68,10 @@ func filtered(candidates []engine.Match, keep func(vue.Element) bool) []engine.M
 	return kept
 }
 
-// GroupKey groups a finding with the elements built exactly like it.
 func (DuplicateElementDetector) GroupKey(match engine.Match) (string, bool) {
 	return structureHash(match), true
 }
 
-// Repentable says a scribe rewrites the sin away.
 func (DuplicateElementDetector) Repentable() {}
 
-// CrossFile says the rule reads more than the file it reports in, which the fixture measures by asking it
-// of one file and of the whole tree: a scoped run reads the whole scan while it is enabled.
 func (DuplicateElementDetector) CrossFile() {}

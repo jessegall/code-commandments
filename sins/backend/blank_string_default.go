@@ -11,7 +11,6 @@ type BlankStringDefault struct{}
 
 func init() { sins.Register(catalog.PHP, BlankStringDefault{}) }
 
-// Definition is what the sin states about itself.
 func (BlankStringDefault) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "blank-string-default",

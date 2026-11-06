@@ -7,12 +7,6 @@ import (
 	"github.com/jessegall/code-commandments/engine/csharp/csharptest"
 )
 
-// What a node is sent to, and what a call calls, are questions the engine asks every language the same way, and C#
-// answered both wrongly: the receiver of a call was the member access rather than the object, and the name of a call
-// was nothing at all, because Roslyn files a callee under `Expression` where the other bridges use a lower-cased
-// name. A plausible wrong answer is worse than none, so these hold both to the object and the method.
-
-// sentTo is the receiver of the first node of that kind, as the engine answers it.
 func sentTo(t *testing.T, codebase *engine.Codebase, kind string) engine.Match {
 	t.Helper()
 	for _, node := range codebase.WhereKind(kind).Get() {
@@ -24,8 +18,6 @@ func sentTo(t *testing.T, codebase *engine.Codebase, kind string) engine.Match {
 	return engine.Match{}
 }
 
-// TestWhatACSharpNodeIsSentToIsTheObject holds the receiver of a method call, of a member read and of a call of a
-// bare name, which is sent to nobody.
 func TestWhatACSharpNodeIsSentToIsTheObject(t *testing.T) {
 	codebase := csharptest.FromSource(t, map[string]string{"Shop/Till.cs": `namespace Shop;
 
@@ -63,7 +55,6 @@ public sealed class Slot
 		t.Errorf("a member read is sent to %q", read.Written())
 	}
 
-	// Open(slot) reaches nobody: the call of a bare name must answer no node rather than name its own argument list.
 	var bare engine.Match
 	for _, call := range codebase.WhereKind("InvocationExpression").Get() {
 		if call.CalleeName() == "Open" && call.Receiver().Written() != "" {
@@ -76,8 +67,6 @@ public sealed class Slot
 	}
 }
 
-// TestWhatACSharpCallCallsIsItsMethod holds the name every rule asks a call by, which is also what `{"name": …}` of
-// a rule file reads.
 func TestWhatACSharpCallCallsIsItsMethod(t *testing.T) {
 	codebase := csharptest.FromSource(t, map[string]string{"Shop/Round.cs": `namespace Shop;
 
@@ -108,8 +97,6 @@ public sealed class Slot
 	}
 }
 
-// TestACallThroughAConditionalAccessIsSentToTheObjectBeforeIt holds `?.`, where Roslyn keeps the object on the
-// conditional access and the name on a binding of its own, so the object is not under the call at all.
 func TestACallThroughAConditionalAccessIsSentToTheObjectBeforeIt(t *testing.T) {
 	codebase := csharptest.FromSource(t, map[string]string{"Shop/Maybe.cs": `namespace Shop;
 

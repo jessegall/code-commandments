@@ -13,7 +13,6 @@ func init() {
 	sins.Register(catalog.Python, CeremonyDocblock{})
 }
 
-// Definition is what the sin states about itself.
 func (CeremonyDocblock) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "python-ceremony-docblock",

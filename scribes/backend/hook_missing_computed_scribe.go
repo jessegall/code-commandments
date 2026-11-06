@@ -6,7 +6,6 @@ import (
 	"github.com/jessegall/code-commandments/scribes"
 )
 
-// computed is the attribute that tells Spatie Data a hooked property is computed, not hydrated.
 const computed = `Spatie\LaravelData\Attributes\Computed`
 
 func init() {
@@ -16,7 +15,6 @@ func init() {
 // HookMissingComputedScribe marks a Data property whose value a get hook computes `#[Computed]`.
 type HookMissingComputedScribe struct{}
 
-// Rewrite stamps `#[Computed]` on each hooked property, importing it.
 func (HookMissingComputedScribe) Rewrite(findings []engine.Match, _ *engine.Codebase) (scribes.Rewrites, error) {
 	draft := scribes.NewDraft()
 	for _, finding := range findings {

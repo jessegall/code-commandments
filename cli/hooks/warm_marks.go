@@ -14,30 +14,17 @@ import (
 	"github.com/jessegall/code-commandments/cli/scan"
 	"github.com/jessegall/code-commandments/cli/source"
 	"github.com/jessegall/code-commandments/cli/warm"
-	"github.com/jessegall/code-commandments/detectors"
 	"github.com/jessegall/code-commandments/contract"
+	"github.com/jessegall/code-commandments/detectors"
 	"github.com/jessegall/code-commandments/engine"
 )
 
-// kept are the bases this process holds, one per branch. The service answers every hook of a session from one
-// process, so a tree it read once serves every later edit; a one-shot run holds none and judges the edited file
-// alone, which is what every run did before a base was ever held.
 var kept = warm.Keep()
 
-// reading are the branches whose base is being read right now, so a burst of edits starts one read and not one
-// per edit.
 var reading sync.Map
 
-// lastRead is how the last read of each branch's base ended, so a judging that finds no tree can say whether one
-// was ever attempted and what stopped it.
-//
-// Without it "no tree is held for this project on its branch yet" is the same answer whether the session has
-// only just started, whether every read has failed, or whether the tree was dropped and never read again: a
-// consumer spent an afternoon at 170 seconds a judging with that one line to go on.
 var lastRead sync.Map
 
-// howTheReadWent is what the last read of that branch's base came to, in words, and false where none was ever
-// tried in this process.
 func howTheReadWent(named branchRoot) (string, bool) {
 	if _, running := reading.Load(named.key()); running {
 		return "a read of it is running now", true
@@ -51,13 +38,6 @@ func howTheReadWent(named branchRoot) (string, bool) {
 	return said.(string), true
 }
 
-// AgainstTheProgram are the marks for one edited file judged against the whole program, through a view of its
-// branch's base, and false where no base is held yet.
-//
-// This is what the base is for. Judged against the file alone, a rule that follows a chain of parents, a caller
-// or a recurrence answers as though that file were the program, so those rules are kept out of a per-file mark
-// (detectors.ReadsBeyondOneFile) and an edit is never told about them. Against a view of the base they answer
-// about the real program, and the mark can carry every rule the project has enabled.
 func AgainstTheProgram(marking Marking, file string, rules []detectors.Detector, changed git.ChangedLines, root string) ([]SinMark, time.Duration, bool) {
 	together, read, whole := AgainstTheProgramTogether(marking, []string{file},
 		func(string) []detectors.Detector { return rules },
@@ -66,13 +46,6 @@ func AgainstTheProgram(marking Marking, file string, rules []detectors.Detector,
 	return together[file], read, whole
 }
 
-// AgainstTheProgramTogether are the marks for SEVERAL files of one checkout, judged in one pass against one view
-// of the program: the files are read in one bridge ask, spliced into one view, and every rule run once over it.
-//
-// Every file must lie in ONE checkout, which is what an agent's own edits are: the view is rooted at that
-// checkout, and a file of another belongs to another program. Every path must be a REAL one, resolved as a
-// single file's is, since everything after it — which checkout it lies in, whether it is there at all — is a
-// question about a real path and nonsense about a relative one.
 func AgainstTheProgramTogether(marking Marking, files []string, rulesFor func(string) []detectors.Detector,
 	changedFor func(string) git.ChangedLines, root string) (map[string][]SinMark, time.Duration, bool) {
 
@@ -82,11 +55,6 @@ func AgainstTheProgramTogether(marking Marking, files []string, rulesFor func(st
 
 	file := files[0]
 
-	// The checkout the FILE lies in, which for a worker is its own worktree: its files stand in for the
-	// project's own at the same path under it, so the program holds one copy of each source, the worker's.
-	//
-	// Worked out before the tree is looked up, because which tree this edit may answer from depends on it: a
-	// worker stands on a branch of its own and answers from the tree of the checkout its main agent is on.
 	checkout := strings.TrimRight(git.ProjectRoot(root), "/")
 	if own := git.Root(file); own != "" {
 		checkout = own
@@ -97,12 +65,6 @@ func AgainstTheProgramTogether(marking Marking, files []string, rulesFor func(st
 		return nil, 0, false
 	}
 
-	// A file that is GONE is answered with nothing at all. The tree still holds it, and judged from that memory
-	// the agent that deleted it is told about sins in code it has just removed: a one-file read of a file that
-	// is not there answers with no files and no error, so the view came out as the base untouched and the base
-	// still held the file. The sweep below gives the base up for it, and the next read is the tree without it.
-	// A batch is answered about the files that are still there: one of them being gone is no reason to say
-	// nothing about the rest.
 	here := slices.DeleteFunc(slices.Clone(files), func(path string) bool { return warm.Mark(path) == "" })
 	if len(here) == 0 {
 		return nil, 0, false
@@ -112,11 +74,6 @@ func AgainstTheProgramTogether(marking Marking, files []string, rulesFor func(st
 
 	moved, swept := base.StaleSince(time.Now(), files...)
 
-	// A file nobody announced is a change to the program too, and the sweep cannot see it: it walks the files
-	// the base READ, so a file a shell wrote, a pull brought or a checkout left behind is absent from every
-	// answer until that file is itself edited, and a rule that follows an import or a parent answers as though
-	// it did not exist. git knows them, so git is asked, and only on a sweep: it is a process, and an edit
-	// cannot pay for one to learn what it already knows.
 	if swept {
 		moved = append(moved, base.Unheld(unannouncedIn(held.project))...)
 	}
@@ -126,13 +83,6 @@ func AgainstTheProgramTogether(marking Marking, files []string, rulesFor func(st
 		return nil, 0, false
 	}
 
-	// Every other file that moved is TAKEN INTO the tree, in one ask, rather than costing the tree itself.
-	//
-	// Given up instead, as it was, the tree could not survive several agents at all: twelve of them writing
-	// meant every edit found somebody else's file moved, gave the base up for it, and was answered on its own
-	// file alone with every cross-file rule dropped, while a 25 to 55 second read started in the background and
-	// was given up again by the next edit. A bridge's cost is per ASK and not per file, so reading all of them
-	// together costs what reading one costs, and the files are parsed here only when nothing parsed them ahead.
 	elsewhere := slices.DeleteFunc(slices.Clone(moved), func(path string) bool { return slices.Contains(files, path) })
 	if len(elsewhere) > 0 {
 		patched, took := taken(base, held, elsewhere)
@@ -148,21 +98,11 @@ func AgainstTheProgramTogether(marking Marking, files []string, rulesFor func(st
 	view := base.Codebase()
 	var read time.Duration
 
-	// The files of the batch that have really moved: every one we were told about, and any of the tree's own the
-	// sweep found.
 	fresh := slices.DeleteFunc(slices.Clone(files), func(path string) bool { return !slices.Contains(moved, path) })
 
 	if len(fresh) > 0 {
-		// Parsed in ONE ask, since a bridge's cost is per ask and not per file, and taken from the parse made
-		// when the events arrived wherever that already holds them.
-		//
-		// Nothing is excluded either way: these are the files we were TOLD changed, and each has already been
-		// held to what the project judges. A worker's file lies in a worktree under a folder the project
-		// excludes, so excluding again would read none of it.
 		reading := time.Now()
 
-		// What each file is NOW, taken before it is read: marked afterwards, a file written again during the
-		// read would be held as current when the tree holds the version before it.
 		marks := map[string]warm.Known{}
 		for _, path := range fresh {
 			marks[path] = warm.Now(path)
@@ -193,28 +133,14 @@ func AgainstTheProgramTogether(marking Marking, files []string, rulesFor func(st
 		read = time.Since(reading)
 
 		if checkout == strings.TrimRight(held.project, "/") {
-			// No files are dropped here: a file gone anywhere but the ones named has already given the base up
-			// above, and the named files are ones we were told about and have just read.
 			view = base.ViewFrom(checkout, streams, held.project, nil)
 
-			// And the view becomes the base, so the next edit is judged against these files as they now are
-			// rather than as the base first read them.
 			kept.Patched(base, view, marks)
 		} else {
-			// A worktree cannot patch the project's base, since its content belongs to another checkout, so it
-			// keeps an overlay of its OWN: every file that worktree differs from the branch by, held together,
-			// so this edit is judged beside the worker's earlier work rather than beside the project's copies
-			// of the files the worker has already changed.
 			view = overlaid(kept.Over(checkout), base, held, fresh, streams, marks, time.Now())
 		}
 	}
 
-	// A file the view does not hold cannot be judged against the program, and answering "no sins" for it would
-	// be the worst answer of the three: a worker's new file in its own worktree got exactly that, no mark and no
-	// answer at all, while a judging of it found eight sins. Judged alone it is answered as every edit was
-	// before a tree was held.
-	//
-	// Asked of the batch as a whole: one file the view does not hold is no reason to say nothing about the rest.
 	judged := slices.DeleteFunc(slices.Clone(files), func(path string) bool { return !holds(view, path) })
 	if len(judged) == 0 {
 		return nil, read, false
@@ -223,12 +149,6 @@ func AgainstTheProgramTogether(marking Marking, files []string, rulesFor func(st
 	return marksOverTogether(view, marking, judged, rulesFor, changedFor), read, len(judged) == len(files)
 }
 
-// overlaid is the base seen through this checkout's own overlay, with this edit's file taken into it.
-//
-// An overlay new to a checkout is filled with everything that checkout differs by, in one ask: an edit is never
-// the first thing a worker did, and a bridge's cost is per ask and not per file, so reading all of them costs
-// what reading one costs. What it no longer has is asked of git, at most once every Sweep, since that is a
-// process and the answer changes only when the worker commits or removes something.
 func overlaid(over *warm.Overlay, base *warm.Base, held branchRoot, files []string, streams []*contract.Stream, marks map[string]warm.Known, now time.Time) *engine.Codebase {
 	if over.Empty() {
 		fill(over, held, files...)
@@ -243,7 +163,6 @@ func overlaid(over *warm.Overlay, base *warm.Base, held branchRoot, files []stri
 	return base.ViewFrom(over.Checkout, over.Streams(), held.project, over.Gone())
 }
 
-// fill reads everything the checkout differs from its branch by, less the file this edit already read.
 func fill(over *warm.Overlay, held branchRoot, files ...string) {
 	changed, told := git.ChangedVsBranch(over.Checkout, held.branch)
 	if !told {
@@ -263,8 +182,6 @@ func fill(over *warm.Overlay, held branchRoot, files ...string) {
 
 	taken := warm.Taken(reading)
 
-	// Nothing is excluded: a worktree lies under a folder the project excludes, so excluding again would read
-	// none of it.
 	rebuilt, err := scan.Walk(reading, source.Excluded{}).Load()
 	if err != nil || rebuilt == nil {
 		return
@@ -273,8 +190,6 @@ func fill(over *warm.Overlay, held branchRoot, files ...string) {
 	over.Patch(rebuilt.Streams(), taken)
 }
 
-// removedIn are the project's files the checkout no longer has: what its branch removed since it left the base's,
-// named at the path the base holds them at.
 func removedIn(held branchRoot, checkout string) []string {
 	deleted, told := git.DeletedVsBranch(checkout, held.branch)
 	if !told {
@@ -289,9 +204,6 @@ func removedIn(held branchRoot, checkout string) []string {
 	return gone
 }
 
-// unannouncedIn are the project's files that differ from its last commit, which is where a file nobody announced
-// shows up: written by a shell it is untracked, and brought by a pull or a checkout it is a change against the
-// commit the base was read at.
 func unannouncedIn(project string) []string {
 	var named []string
 	for file := range git.ChangedVsHead(project) {
@@ -301,9 +213,6 @@ func unannouncedIn(project string) []string {
 	return named
 }
 
-// taken is the base with those files read again and taken into it, and how long the reading took. Nil where the
-// read failed, which is the one case the base is still given up: a tree that cannot learn what moved under it is
-// worse than no tree, since it answers with confidence about files it no longer holds.
 func taken(base *warm.Base, held branchRoot, files []string) (*warm.Base, time.Duration) {
 	reading := time.Now()
 	marks := map[string]warm.Known{}
@@ -312,8 +221,6 @@ func taken(base *warm.Base, held branchRoot, files []string) (*warm.Base, time.D
 		marks[file] = warm.Now(file)
 	}
 
-	// Nothing is excluded: these are files we have WORKED OUT moved, and a worker's lie in a worktree under a
-	// folder the project excludes. A file that is gone cannot be read, and is dropped from the view instead.
 	var reading_ []string
 	var gone []string
 
@@ -342,7 +249,6 @@ func taken(base *warm.Base, held branchRoot, files []string) (*warm.Base, time.D
 	return kept.Patched(base, view, marks), time.Since(reading)
 }
 
-// holds says whether the codebase read that file.
 func holds(codebase *engine.Codebase, file string) bool {
 	for _, held := range codebase.Files() {
 		if held.Path == file {
@@ -353,23 +259,6 @@ func holds(codebase *engine.Codebase, file string) bool {
 	return false
 }
 
-// marksOver are the marks the rules find in that one file of the codebase. Every rule is asked, since the
-// codebase is the whole program; only a finding IN the edited file is this edit's mark.
-//
-// Each rule is asked about the edited file alone (Reporting), so its query walks that file's nodes rather than
-// every file's while its checks still read the whole program. A rule that weighs the candidates of the whole
-// program to reach its verdict is asked about everything, since its answer about this file is decided by every
-// other candidate.
-// marksOverTogether are the marks for SEVERAL files, judged in ONE pass over one view: every rule is run once
-// and each match attributed to the file it lies in, with that file's own rules and its own changed lines.
-//
-// One pass, because the pass IS the cost. Measured with eight agents writing at once, every one of them answered
-// from a warm tree with no reading at all: a judging of one file took 3.7 seconds of rules, and an agent's
-// twelve edits judged one after another cost it 44 seconds before it heard about the last of them. Twelve files
-// in one pass cost about one pass.
-//
-// A rule is asked only about the files it judges the language of, and an aggregating rule is asked about the
-// whole view, since what it weighs is the program and not the file.
 func marksOverTogether(codebase *engine.Codebase, marking Marking, files []string,
 	rulesFor func(string) []detectors.Detector, changedFor func(string) git.ChangedLines) map[string][]SinMark {
 
@@ -378,11 +267,6 @@ func marksOverTogether(codebase *engine.Codebase, marking Marking, files []strin
 		return marks
 	}
 
-	// Which files each rule is to be asked about, and every rule any of them is judged by: a project's own rule
-	// may name the folders it judges, so two files of one batch are not always judged by the same set.
-	//
-	// Told apart by detectors.IdentityOf, which is engine and name: a name alone is not one rule, since a
-	// detector's catalog name is its bare type name and the engines share those.
 	asksFor := map[string][]string{}
 	var rules []detectors.Detector
 
@@ -400,9 +284,6 @@ func marksOverTogether(codebase *engine.Codebase, marking Marking, files []strin
 	narrowed := codebase.Reporting(files...)
 
 	for _, rule := range rules {
-		// The files this rule is asked about: the ones it judges, of a language it judges. Asked BEFORE the rule
-		// is run, as the per-file reading asks it, since a rule of another engine run over this view does work
-		// that cannot answer — on a project with every engine's rules enabled that is most of them.
 		judges := map[string]bool{}
 		for _, file := range asksFor[detectors.IdentityOf(rule)] {
 			if detectors.Judges(rule, source.OfFile(file).Engine()) {
@@ -438,9 +319,6 @@ func marksOver(codebase *engine.Codebase, marking Marking, file string, rules []
 	var marks []SinMark
 
 	for _, rule := range rules {
-		// Every engine the rule judges, not the first one its file happens to name: a rule naming go and python
-		// was never asked about a python file, which is a rule a project wrote switched off in its live check
-		// while a judge still reported it.
 		if !detectors.Judges(rule, language.Engine()) {
 			continue
 		}
@@ -462,22 +340,12 @@ func marksOver(codebase *engine.Codebase, marking Marking, file string, rules []
 	return marks
 }
 
-// serving says whether this process is the service, which is the only process a base is worth reading for: a
-// run started for one hook answers and ends, so a tree it began reading would cost a worker's CPU for a quarter
-// of a minute and be thrown away unused.
-//
-// Atomic because the service sets it on its OWN goroutine while every hook it answers reads it on another: a
-// plain bool there is a data race, which the race detector found the first time the fuzz was run under it.
 var serving atomic.Bool
 
-// Serves says this process is the service, so a base read for one hook serves every later one.
 func Serves() {
 	serving.Store(true)
 }
 
-// Warming reads a branch's base in the background, unless one is held or a read is already running. The hook
-// that asks for it is answered from the edited file alone, as every hook was; the next one is answered from the
-// program.
 func Warming(root string, project config.Config) {
 	if !serving.Load() {
 		return
@@ -508,8 +376,6 @@ func Warming(root string, project config.Config) {
 
 		sources := scan.Walk(roots, source.Under(named.project, project.Excluded)).Only(reads(named.project, project)...)
 
-		// What every file is before the read, which is what the base is marked with: the read takes 25 to 55
-		// seconds, and a file written during it must read as moved afterwards rather than as the tree's own.
 		taken := warm.Taken(sources.Files(source.Languages...))
 
 		codebase, err := sources.Load()
@@ -527,8 +393,6 @@ func Warming(root string, project config.Config) {
 	}()
 }
 
-// reads are the languages the project writes, less C#, whose bridge compiles whole units of its own and is kept
-// warm as a service rather than held here.
 func reads(root string, project config.Config) []source.Language {
 	var languages []source.Language
 	for _, language := range source.Languages {
@@ -546,14 +410,10 @@ type branchRoot struct {
 	branch  string
 }
 
-// key names the base, for the one read at a time this holds.
 func (b branchRoot) key() string {
 	return b.project + "\x00" + b.branch
 }
 
-// rootOf is the base a path answers from. A worktree has no base of its own: it answers from the branch the
-// MAIN checkout is on, which is the branch the main agent works on whether that is called main or development,
-// and every worktree cut from it shares that one tree.
 func rootOf(path string) (branchRoot, bool) {
 	project := git.ProjectRoot(path)
 	if project == "" {
@@ -565,11 +425,6 @@ func rootOf(path string) (branchRoot, bool) {
 		return branchRoot{}, false
 	}
 
-	// A detached HEAD is no branch, whatever git calls it. Taken as one, every detached commit of a project
-	// shares one base, and a worktree answered from it is diffed against the literal name HEAD, which resolves
-	// to the WORKTREE's own head: the merge-base is then the worker's own tip, so its committed work reads as no
-	// difference at all and its judging is a green tick over everything it wrote. A mid-rebase checkout is
-	// detached, which is an ordinary thing for the main checkout to be.
 	if branch == "HEAD" {
 		return branchRoot{}, false
 	}
@@ -577,18 +432,6 @@ func rootOf(path string) (branchRoot, bool) {
 	return branchRoot{project: project, branch: branch}, true
 }
 
-// baseForCheckout is the base that CHECKOUT of the project answers from: the tree held for the branch the main
-// checkout stands on, and failing that any tree the project holds at all.
-//
-// Any tree, because a worker's ROOT CHECKOUT is the checkout its main agent is on. It stands on a branch of its
-// own, cut from that one, so a branch per worker can never have a tree under its own name — and looked up by
-// the branch the main checkout happens to be on at that moment, the lookup found nothing as soon as that
-// checkout moved, which a main agent does as a matter of course. Measured on a consumer: 127 seconds of reading
-// for six changed files, "no tree is held for this project on its branch yet", on every hand-in, all afternoon.
-//
-// Whether that tree can answer ABOUT this checkout is a question about history and not about a name, and the
-// caller asks it: differingFrom asks git what the checkout differs from the tree's branch by, and refuses where
-// the two share none.
 func baseForCheckout(path, checkout string) (branchRoot, *warm.Base, bool) {
 	named, base, held := baseFor(path)
 	if held || named.project == "" || checkout == strings.TrimRight(named.project, "/") {
@@ -603,7 +446,6 @@ func baseForCheckout(path, checkout string) (branchRoot, *warm.Base, bool) {
 	return branchRoot{project: named.project, branch: any.Branch}, any, true
 }
 
-// baseFor is the base the path answers from, with what names it.
 func baseFor(path string) (branchRoot, *warm.Base, bool) {
 	named, ok := rootOf(path)
 	if !ok {

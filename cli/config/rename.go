@@ -10,16 +10,6 @@ import (
 	"github.com/jessegall/code-commandments/cli"
 )
 
-// RenameRule is config.json with every mention of one rule's name standing for another's: the lists that name it,
-// and the per-rule settings keyed by it. It is what a migration owes a project whose rule files it moved, since a
-// name is how a config reaches a rule everywhere.
-//
-// The settings are MOVED, not merged. Where the surviving rule already has settings of its own, nothing is
-// touched and the clash is answered, because two sets of settings for one rule is a question only the project can
-// answer and a migration that guessed would lose one of them silently. That is exactly the loss this exists to
-// prevent: a rule renamed and its `judges` left behind reads as a rule that was never configured.
-//
-// A project with no config.json has nothing to rename and says so by answering false.
 func RenameRule(path, from, to string) (renamed bool, clash string, err error) {
 	text, err := os.ReadFile(path)
 	if os.IsNotExist(err) {
@@ -67,13 +57,9 @@ func RenameRule(path, from, to string) (renamed bool, clash string, err error) {
 		return false, clash, err
 	}
 
-	// Every key the format has is on the document, since a key it does not have is refused when the config is
-	// read, so writing it back whole loses nothing a reader could have meant.
 	return true, clash, os.WriteFile(path, append(written, '\n'), 0o644)
 }
 
-// replaceName puts to where from stood in the list, said once, and says whether the list held from at all. The place is
-// kept, so a config a person ordered on purpose reads as they left it.
 func replaceName(list *[]string, from, to string) bool {
 	at := slices.Index(*list, from)
 	if at < 0 {

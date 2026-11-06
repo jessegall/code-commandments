@@ -11,7 +11,6 @@ type ConditionalArraySpread struct{}
 
 func init() { sins.Register(catalog.PHP, ConditionalArraySpread{}) }
 
-// Definition is what the sin states about itself.
 func (ConditionalArraySpread) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "conditional-array-spread",

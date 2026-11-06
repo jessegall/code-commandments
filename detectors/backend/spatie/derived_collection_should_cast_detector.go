@@ -15,12 +15,10 @@ type DerivedCollectionShouldCastDetector struct{}
 
 func init() { detectors.Register(catalog.PHP, DerivedCollectionShouldCastDetector{}) }
 
-// Sin is the sin the detector finds.
 func (DerivedCollectionShouldCastDetector) Sin() sins.Sin {
 	return backendsins.DerivedCollectionCast{}
 }
 
-// Find is every array_map whose mapped factory derives the element.
 func (DerivedCollectionShouldCastDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return php.In(codebase).
 		Where(engine.As(func(n php.Node) bool { return n.CallsFunction("array_map") })).
@@ -28,6 +26,4 @@ func (DerivedCollectionShouldCastDetector) Find(codebase *engine.Codebase) []eng
 		Get()
 }
 
-// CrossFile says the rule reads more than the file it reports in, which the fixture measures by asking it
-// of one file and of the whole tree: a scoped run reads the whole scan while it is enabled.
 func (DerivedCollectionShouldCastDetector) CrossFile() {}

@@ -1,5 +1,4 @@
-// Package report is `report` and `feature-request`: file a GitHub issue about the tool through `gh`,
-// with the code it concerns read in and any secret in it masked.
+// Package report is `report` and `feature-request`: file a GitHub issue about the tool through `gh`, with the code it concerns read in and any secret in it masked.
 package report
 
 import (
@@ -8,25 +7,19 @@ import (
 	"unicode/utf8"
 )
 
-// sensitive are the words a secret's key holds.
 const sensitive = `(?:passw(?:ord|d)?|pwd|secret|secrets|api[_-]?key|apikey|access[_-]?key|` +
 	`client[_-]?secret|private[_-]?key|credentials?|authorization|auth[_-]?token|bearer|token|dsn|` +
 	`app[_-]?key|encryption[_-]?key|session[_-]?secret|webhook[_-]?secret|salt|signature|passphrase)`
 
 var (
-	// assignedSecret opens a quoted value assigned to a sensitive key: `'password' => '`, `token: "`.
 	assignedSecret = regexp.MustCompile(`(?i)(["']?` + sensitive + `["']?\s*(?:=>|:|=)\s*)(["'])`)
 
-	// defaultedSecret opens a quoted default an env or config lookup of a sensitive key falls back to.
 	defaultedSecret = regexp.MustCompile(`(?i)((?:env|getenv|config)\(\s*["'][^"']*` + sensitive + `[^"']*["']\s*,\s*)(["'])`)
 
-	// exportedSecret is a sensitive variable set to an unquoted value, as in a .env or shell file.
 	exportedSecret = regexp.MustCompile(`(?i)^(\s*(?:export\s+)?[A-Za-z_][A-Za-z0-9_]*` + sensitive + `[A-Za-z0-9_]*\s*=\s*)(\S.*)$`)
 
-	// urlCredentials are the user and password in a URL.
 	urlCredentials = regexp.MustCompile(`(?i)([a-z][a-z0-9+.\-]*://)([^\s:@/]+:[^\s:@/]+)@`)
 
-	// tokens are secrets recognisable by their shape alone.
 	tokens = []*regexp.Regexp{
 		regexp.MustCompile(`A(?:KIA|SIA|GPA|IDA|ROA|IPA|NPA|NVA)[0-9A-Z]{16}`),
 		regexp.MustCompile(`gh[pousr]_[A-Za-z0-9]{20,}`),
@@ -38,14 +31,12 @@ var (
 		regexp.MustCompile(`-----BEGIN[A-Z ]*PRIVATE KEY-----`),
 	}
 
-	// quotedRandom is a long quoted run of key characters.
 	quotedRandom = regexp.MustCompile(`"([A-Za-z0-9+/=_\-]{32,})"|'([A-Za-z0-9+/=_\-]{32,})'`)
 
 	letter = regexp.MustCompile(`[A-Za-z]`)
 	digit  = regexp.MustCompile(`[0-9]`)
 )
 
-// Redact masks every secret in one line of code, keeping its shape so the line still reads.
 func Redact(line string) string {
 	line = maskQuoted(line, assignedSecret)
 	line = maskQuoted(line, defaultedSecret)
@@ -75,8 +66,6 @@ func Redact(line string) string {
 	})
 }
 
-// maskQuoted masks the quoted value after each opening the pattern finds, the value read up to its
-// matching quote with backslash escapes, as the PCRE pattern `(["'])((?:\\.|(?!\2).)*)(\2)` reads it.
 func maskQuoted(line string, opening *regexp.Regexp) string {
 	var out strings.Builder
 	from := 0
@@ -108,8 +97,6 @@ func maskQuoted(line string, opening *regexp.Regexp) string {
 	return out.String()
 }
 
-// closingQuote is where the value opened before start closes: the greedy reading PCRE's backtracking finds,
-// each step an escape pair or a byte that is not the quote, then the quote.
 func closingQuote(line string, start int, quote byte) (int, bool) {
 	failed := map[int]bool{}
 
@@ -144,7 +131,6 @@ func closingQuote(line string, start int, quote byte) (int, bool) {
 	return from(start)
 }
 
-// mask is a run of blocks as long as the secret, counted in characters.
 func mask(secret string) string {
 	return strings.Repeat("█", max(1, utf8.RuneCountInString(secret)))
 }

@@ -13,7 +13,6 @@ func init() {
 	sins.Register(catalog.Python, MutableValueObject{})
 }
 
-// Definition is what the sin states about itself.
 func (MutableValueObject) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "python-mutable-value-object",

@@ -16,12 +16,10 @@ func init() {
 	detectors.Register(catalog.Python, MessageStringRaiseDetector{})
 }
 
-// Sin is the sin the detector finds.
 func (MessageStringRaiseDetector) Sin() sins.Sin {
 	return pysins.MessageStringRaise{}
 }
 
-// Find is every place the sin is committed.
 func (MessageStringRaiseDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return py.In(codebase).
 		WhereKind("Raise").

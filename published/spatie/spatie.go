@@ -1,5 +1,4 @@
-// Package spatie publishes what a Laravel backend's spatie/laravel-data declares for the frontend's detectors: each
-// Data class as a type the server owns, and the file its TypeScript transformer writes their types to.
+// Package spatie publishes what a Laravel backend's spatie/laravel-data declares for the frontend's detectors: each Data class as a type the server owns, and the file its TypeScript transformer writes their types to.
 package spatie
 
 import (
@@ -17,8 +16,7 @@ func init() {
 	published.Register(Contracts{})
 }
 
-// Contracts publishes the Data classes of the codebase's PHP and where their generated types are written: where the
-// transformer's config says, and wherever its manifest shows it has written.
+// Contracts publishes the Data classes of the codebase's PHP and where their generated types are written: where the transformer's config says, and wherever its manifest shows it has written.
 type Contracts struct{}
 
 func (Contracts) Contracts(codebase *engine.Codebase) []published.Contract {
@@ -50,7 +48,6 @@ func (Contracts) Contracts(codebase *engine.Codebase) []published.Contract {
 	return contracts
 }
 
-// publicFieldNames is every public field the class declares, promoted or not, once each.
 func publicFieldNames(class engine.Match) []string {
 	var names []string
 	for _, field := range php.Fields(class) {

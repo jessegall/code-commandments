@@ -11,10 +11,6 @@ import (
 	"github.com/jessegall/code-commandments/rule"
 )
 
-// TestOneRuleJudgesEveryEngineItNames holds the repetition this is here to end. The neutral kinds mean the same
-// in every language, so a loop whose whole body sits under one `if` is the same sin wherever it is written — and
-// until now that rule had to be written once per engine, six copies to keep in step. A rule names the engines it
-// judges and is written once.
 func TestOneRuleJudgesEveryEngineItNames(t *testing.T) {
 	python := pythontest.FromSource(t, map[string]string{
 		"shop/__init__.py": "",
@@ -42,10 +38,6 @@ public sealed class Till
 }
 `})
 
-	// One rule, two engines, the same neutral words, and it finds the loop in each. It asks for the BODY, which
-	// is the step that makes the two agree: C# wraps a loop's body in a block statement and Python writes bare
-	// statements, so `child` would find the branch in Python and not in C#, while the body is read through
-	// whatever each language wraps it in.
 	written := `{"engine": ["python", "csharp"], "sin": {"name": "x", "description": "x", "skill": "php/absence"},
 		"find": {"select": "loop", "where": [{"body": {"is": "branch"}}]}}`
 
@@ -65,10 +57,6 @@ public sealed class Till
 	}
 }
 
-// TestOneRuleReadsABodyTheSameInEveryLanguage holds the step that was missing, and holds it against the one that
-// leaks a language's shape. A loop's body is a block statement in C# and bare statements in Python, so `child`
-// answers them differently, which made a wholly neutral rule look like two rules. The engine always knew the
-// answer — each grammar says how its language wraps a body — and only the rule language could not ask.
 func TestOneRuleReadsABodyTheSameInEveryLanguage(t *testing.T) {
 	python := pythontest.FromSource(t, map[string]string{
 		"shop/__init__.py": "",
@@ -128,10 +116,6 @@ public sealed class Till
 	}
 }
 
-// TestARuleNamingSeveralEnginesIsStillHeldToEachOfThem holds the two ways a rule naming several can be wrong, and
-// the one way it cannot. A word only one language writes is refused, because the rule claims to judge both; an
-// engine named twice is refused as the slip it is; and naming one engine still reads exactly as it always did,
-// which is what keeps every rule written before this one working.
 func TestARuleNamingSeveralEnginesIsStillHeldToEachOfThem(t *testing.T) {
 	for _, each := range []struct {
 		why   string
@@ -140,8 +124,6 @@ func TestARuleNamingSeveralEnginesIsStillHeldToEachOfThem(t *testing.T) {
 		said  string
 	}{
 		{
-			// A kind ONE of the named engines writes is allowed, since the rule judges that engine too and the
-			// kind simply never matches in the other. What is refused is a kind none of them writes.
 			why:   "a kind no engine the rule judges writes is refused",
 			named: `["python", "csharp"]`,
 			find:  `{"select": "kind:Stmt_Property"}`,
@@ -177,7 +159,6 @@ func TestARuleNamingSeveralEnginesIsStillHeldToEachOfThem(t *testing.T) {
 		}
 	}
 
-	// One engine, written as it always was.
 	written := `{"engine": "python", "sin": {"name": "x", "description": "x", "skill": "php/absence"}, "find": {"select": "loop"}}`
 	if _, err := rule.Parse("X", []byte(written), shipped); err != nil {
 		t.Errorf("a rule naming one engine: %v", err)

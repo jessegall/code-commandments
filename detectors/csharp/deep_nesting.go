@@ -16,12 +16,10 @@ func init() {
 	detectors.Register(catalog.CSharp, DeepNestingDetector{})
 }
 
-// Sin is the sin the detector finds.
 func (DeepNestingDetector) Sin() sins.Sin {
 	return cssins.DeepNesting{}
 }
 
-// Find is every place the sin is committed.
 func (DeepNestingDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return cs.In(codebase).
 		WhereStatement().

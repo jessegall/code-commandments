@@ -13,7 +13,6 @@ func init() {
 	sins.Register(catalog.CSharp, MatchDefaultReturnsNull{})
 }
 
-// Definition is what the sin states about itself.
 func (MatchDefaultReturnsNull) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "csharp-match-default-returns-null",

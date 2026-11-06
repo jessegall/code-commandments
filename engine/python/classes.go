@@ -6,38 +6,31 @@ import (
 	"sync"
 )
 
-// classes are the classes the program declares by their own name, the first declared where several share one,
-// and the ones a getattr dispatches to by a name known only at run time.
+// classes are the classes the program declares by their own name, the first declared where several share one, and the ones a getattr dispatches to by a name known only at run time.
 type classes struct {
 	once       sync.Once
 	named      map[string]Node
 	dispatched map[Node]bool
 }
 
-// ClassCalled is the class a module here declares under the name the dotted spelling ends in: the first, when
-// several share it.
 func (p *Program) ClassCalled(dotted string) (Node, bool) {
 	p.classes.once.Do(p.findClasses)
 
 	return p.classes.called(dotted)
 }
 
-// called is the class the named classes hold under the name the dotted spelling ends in.
 func (c *classes) called(dotted string) (Node, bool) {
 	class, ok := c.named[dotted[strings.LastIndex(dotted, ".")+1:]]
 
 	return class, ok
 }
 
-// DeclaresClass says whether a module here declares a class named as the dotted spelling ends. Judging a
-// subtree can only answer no for a class declared outside it, never yes for one that is not declared.
 func (p *Program) DeclaresClass(dotted string) bool {
 	_, ok := p.ClassCalled(dotted)
 
 	return ok
 }
 
-// Ancestry is the class and every base of it the program declares, nearest first.
 func (p *Program) Ancestry(class Node) []Node {
 	var line []Node
 	seen := map[Node]bool{}
@@ -57,8 +50,6 @@ func (p *Program) Ancestry(class Node) []Node {
 	return line
 }
 
-// IsBuiltFromData says whether the class, or a base the program declares, has a named constructor that turns
-// loose data into it. Its fields then hold what the data holds.
 func (p *Program) IsBuiltFromData(class Node) bool {
 	for _, kind := range p.Ancestry(class) {
 		for _, method := range kind.Methods() {
@@ -71,9 +62,6 @@ func (p *Program) IsBuiltFromData(class Node) bool {
 	return false
 }
 
-// IsDispatchedByName says whether the class's methods are reached by a name known only at run time: a getattr
-// with a name that is no literal, on the class or on a base the program declares. Its public methods are then
-// called from outside the code and take what that boundary hands them.
 func (p *Program) IsDispatchedByName(class Node) bool {
 	p.classes.once.Do(p.findClasses)
 	for _, kind := range p.Ancestry(class) {
@@ -85,7 +73,6 @@ func (p *Program) IsDispatchedByName(class Node) bool {
 	return false
 }
 
-// findClasses reads every class declaration and every getattr by a run-time name, once.
 func (p *Program) findClasses() {
 	p.classes.named = map[string]Node{}
 	p.classes.dispatched = map[Node]bool{}
@@ -105,8 +92,6 @@ func (p *Program) findClasses() {
 	}
 }
 
-// dispatchedBy is the class a getattr with a run-time name reads from: `self` in one of its methods, or an
-// object mypy types as it. It runs while the classes are being found, so it reads them without waiting on that.
 func (p *Program) dispatchedBy(call Node) (Node, bool) {
 	arguments := call.Arguments()
 	if !call.IsCall() || call.Callee().DottedName() != "getattr" || len(arguments) < 2 || arguments[1].Node().Literal != "" {
@@ -125,7 +110,6 @@ func (p *Program) dispatchedBy(call Node) (Node, bool) {
 	return Node{}, false
 }
 
-// EnclosingClass is the nearest class around the node; no node at module level.
 func (n Node) EnclosingClass() Node {
 	for around := n.Parent(); around.Exists(); around = around.Parent() {
 		if around.Kind() == "ClassDef" {
@@ -136,8 +120,6 @@ func (n Node) EnclosingClass() Node {
 	return Node{}
 }
 
-// IsNamedConstructor says whether the def is a @classmethod that returns `cls(...)`: where loose data becomes
-// the class, the one place reading that data by key belongs.
 func (n Node) IsNamedConstructor() bool {
 	if !n.IsClassMethod() {
 		return false
@@ -151,14 +133,8 @@ func (n Node) IsNamedConstructor() bool {
 	return false
 }
 
-// protocolMarker is typing's Protocol, the base a class names to declare one. A class satisfies a Protocol by its
-// shape and never by inheriting it, so the name of the base is all the tree has to recognise one by.
 const protocolMarker = "Protocol"
 
-// AnswersAProtocol says whether the method answers a Protocol the codebase declares: some class whose own bases
-// name typing's Protocol declares a method of that name taking the same parameters. Such a signature is not its
-// author's to change — widening it would leave the protocol unanswered and every other answerer taking something
-// else — which is what an ancestor's method is to an override.
 func (p *Program) AnswersAProtocol(method Node) bool {
 	p.classes.once.Do(p.findClasses)
 	class := method.Parent()
@@ -177,8 +153,6 @@ func (p *Program) AnswersAProtocol(method Node) bool {
 	return false
 }
 
-// declaresAProtocol says whether the class declares a Protocol: one of its bases is typing's Protocol, written
-// plainly or subscripted with the types it is generic over.
 func (p *Program) declaresAProtocol(class Node) bool {
 	for _, base := range class.ChildrenIn("bases") {
 		spelled := base.DottedName()
@@ -193,13 +167,10 @@ func (p *Program) declaresAProtocol(class Node) bool {
 	return false
 }
 
-// takesAlike says whether the two defs take the same parameters by name, the receiver aside: the shape a caller
-// of the protocol relies on.
 func takesAlike(one, other Node) bool {
 	return slices.Equal(takenNames(one), takenNames(other))
 }
 
-// takenNames is the def's parameters by name, without the receiver.
 func takenNames(def Node) []string {
 	var names []string
 	for _, parameter := range def.Parameters() {

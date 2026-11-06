@@ -12,7 +12,6 @@ import (
 	_ "github.com/jessegall/code-commandments/engine/golang"
 )
 
-// codebaseOf is the codebase the Go sources describe, through the real bridge.
 func codebaseOf(t *testing.T, files map[string]string) *engine.Codebase {
 	t.Helper()
 	root, err := filepath.EvalSymlinks(t.TempDir())
@@ -41,7 +40,6 @@ func codebaseOf(t *testing.T, files map[string]string) *engine.Codebase {
 	return engine.Load(stream)
 }
 
-// fileNamed is the codebase's file whose path ends in that name.
 func fileNamed(t *testing.T, codebase *engine.Codebase, name string) *engine.File {
 	t.Helper()
 	for _, file := range codebase.Files() {
@@ -54,10 +52,6 @@ func fileNamed(t *testing.T, codebase *engine.Codebase, name string) *engine.Fil
 	return nil
 }
 
-// TestAGeneratedFileIsReadAndNeverReportedOn holds a generated Go file to Go's own convention: the line
-// go.dev/s/generatedcode names makes the file frozen, so it is read, and every type and call through it still
-// resolves, but nothing is ever reported in it. A finding there is one nobody can fix, since the next run of the
-// generator writes the file again.
 func TestAGeneratedFileIsReadAndNeverReportedOn(t *testing.T) {
 	codebase := codebaseOf(t, map[string]string{
 		"go.mod":      "module example.com/shop\n",
@@ -77,8 +71,6 @@ func TestAGeneratedFileIsReadAndNeverReportedOn(t *testing.T) {
 	}
 }
 
-// TestAGeneratedFileStillResolvesForTheRestHolds the reading of a frozen file: the types it declares are still
-// there for the files that use them, which is why a generated file is read rather than skipped.
 func TestAGeneratedFileStillResolvesForTheRest(t *testing.T) {
 	codebase := codebaseOf(t, map[string]string{
 		"go.mod":    "module example.com/shop\n",

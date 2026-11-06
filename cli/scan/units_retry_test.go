@@ -9,9 +9,6 @@ import (
 	"github.com/jessegall/code-commandments/engine"
 )
 
-// bridgeDyingOnce is a bridge that dies on its first run and answers on its next, which is how the published C#
-// bridge behaves when its protected-memory fault is one of the passing kind: the same files read cleanly on a
-// rerun. It counts its runs in a file, since each run is a process of its own.
 func bridgeDyingOnce(t *testing.T, header string) (command string, runs func() int) {
 	t.Helper()
 	folder := t.TempDir()
@@ -41,9 +38,6 @@ func bridgeDyingOnce(t *testing.T, header string) (command string, runs func() i
 	}
 }
 
-// TestABridgeThatDiesIsAskedOnceMore holds what a dying C# bridge costs: the published bridge has been seen to die
-// with a protected-memory fault that comes and goes, and one death used to leave every C# file of the run unread.
-// A second ask, over a bridge started afresh, reads them.
 func TestABridgeThatDiesIsAskedOnceMore(t *testing.T) {
 	project := t.TempDir()
 	source := filepath.Join(project, "Order.cs")

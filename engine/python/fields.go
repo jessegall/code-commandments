@@ -5,13 +5,8 @@ import (
 	"strings"
 )
 
-// scalars is the builtin types a value field holds.
 var scalars = []string{"str", "int", "float", "bool"}
 
-// IsCoupled says whether the class's own value fields are really one object. A clump is made of values (scalars,
-// enums, dataclasses), never collaborators, and shows in one of two shapes: fields assembled into one value
-// together, again and again or guarded for absence together first, and a field that mirrors what a sibling field
-// already holds.
 func (p *Program) IsCoupled(class Node) bool {
 	fields := class.FieldNames()
 	if len(fields) < 2 {
@@ -27,9 +22,6 @@ func (p *Program) IsCoupled(class Node) bool {
 	return p.coupledValues(class, values, len(fields)) || p.mirrorsASibling(class, fields)
 }
 
-// coupledValues says whether two or more value fields are assembled into one value by themselves, a proper subset
-// of the fields, the same group in two or more places or two or more of it guarded for absence together. Two
-// among a wide projection of every field is a mapping, not a clump.
 func (p *Program) coupledValues(class Node, values map[string]bool, fieldCount int) bool {
 	tested := class.AttributesTestedForAbsence()
 	occurrences := map[string]int{}
@@ -61,8 +53,6 @@ func (p *Program) coupledValues(class Node, values map[string]bool, fieldCount i
 	return false
 }
 
-// assembledGroups is every group of two or more distinct own fields handed, as they are, to one tuple, list or
-// class being built. A plain call passing them along is forwarding, not assembling one thing.
 func (p *Program) assembledGroups(class Node) [][]string {
 	var groups [][]string
 	for _, expression := range class.ExpressionsWithin() {
@@ -91,8 +81,6 @@ func (p *Program) assembledGroups(class Node) [][]string {
 	return groups
 }
 
-// mirrorsASibling says whether a field mirrors a value a sibling field already holds: `workflow_id` beside a
-// `workflow` whose class has an `id` of the same type. The datum then lives in two places.
 func (p *Program) mirrorsASibling(class Node, fields []string) bool {
 	for _, object := range fields {
 		annotation, ok := class.AttributeAnnotation(object)
@@ -116,8 +104,6 @@ func (p *Program) mirrorsASibling(class Node, fields []string) bool {
 	return false
 }
 
-// isValue says whether the annotation is a value, a builtin scalar, an enum or a dataclass, rather than a
-// collaborator.
 func (p *Program) isValue(annotation Node) bool {
 	if optional, ok := annotation.OptionalOf(); ok {
 		annotation = optional
@@ -128,7 +114,6 @@ func (p *Program) isValue(annotation Node) bool {
 	return slices.Contains(scalars, spelled) || p.IsEnum(annotation) || dataclass
 }
 
-// AttributesTestedForAbsence is the class's own attributes its body compares to None with `is` or `is not`.
 func (n Node) AttributesTestedForAbsence() []string {
 	var names []string
 	for _, statement := range n.ChildrenIn("body") {
@@ -142,7 +127,6 @@ func (n Node) AttributesTestedForAbsence() []string {
 	return names
 }
 
-// SetsOutsideInit says whether a method of the class other than __init__ writes the attribute on self.
 func (n Node) SetsOutsideInit(name string) bool {
 	for _, method := range n.Methods() {
 		if method.Name() == "__init__" {
@@ -160,7 +144,6 @@ func (n Node) SetsOutsideInit(name string) bool {
 	return false
 }
 
-// SpelledType is the type an annotation spells: a string annotation's text, else its dotted name.
 func (n Node) SpelledType() string {
 	if text, ok := n.Text(); ok {
 		return text
@@ -169,7 +152,6 @@ func (n Node) SpelledType() string {
 	return n.DottedName()
 }
 
-// OptionalOf is the type an optional annotation makes optional: `T` in `Optional[T]`, `T | None` and `None | T`.
 func (n Node) OptionalOf() (Node, bool) {
 	if n.Kind() == "Subscript" && slices.Contains([]string{"Optional", "typing.Optional"}, n.Child("value").DottedName()) {
 		return n.Child("slice"), true
@@ -185,10 +167,6 @@ func (n Node) OptionalOf() (Node, bool) {
 	return right, left.IsNone()
 }
 
-// MasksOwnState says whether the expression answers an absent scratch field of its own class with a literal,
-// `self.period.includes(day) if self.period else False` or `getattr(self.period, "label", "none")`, where the
-// field is optional only because an operation sets it part-way. At the read it should be there; the literal
-// answers a state that can only be a bug.
 func (n Node) MasksOwnState() bool {
 	field := n.maskedField()
 	class := n.EnclosingFunction().Parent()
@@ -204,8 +182,6 @@ func (n Node) MasksOwnState() bool {
 	return optional
 }
 
-// maskedField is the own field the expression reaches into with a literal standing in when it is missing; empty
-// when it is no such mask.
 func (n Node) maskedField() string {
 	if n.IsCall() && n.Callee().DottedName() == "getattr" {
 		arguments := n.Arguments()
@@ -233,7 +209,6 @@ func (n Node) maskedField() string {
 	return field
 }
 
-// isFakeAnswer says whether the value is a literal other than None: the made-up answer, not an honest absence.
 func (n Node) isFakeAnswer() bool {
 	return n.Kind() == "Constant" && !n.IsNone()
 }

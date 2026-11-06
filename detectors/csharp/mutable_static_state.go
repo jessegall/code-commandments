@@ -16,12 +16,10 @@ func init() {
 	detectors.Register(catalog.CSharp, MutableStaticStateDetector{})
 }
 
-// Sin is the sin the detector finds.
 func (MutableStaticStateDetector) Sin() sins.Sin {
 	return cssins.MutableStaticState{}
 }
 
-// Find is every place the sin is committed.
 func (MutableStaticStateDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return cs.In(codebase).
 		WhereExpression().

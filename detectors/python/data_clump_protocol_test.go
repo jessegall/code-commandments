@@ -7,10 +7,6 @@ import (
 	"github.com/jessegall/code-commandments/engine/python/pythontest"
 )
 
-// TestAClassAnsweringAProtocolOwnsNoneOfItsSignature holds the clump rule to whose signature it is asking about. A
-// Protocol is satisfied by shape and never by inheriting it, so a class answering one cannot widen its parameters
-// into a value type without leaving the protocol unanswered and every other answerer taking something else (#694).
-// The same three parameters with no protocol anywhere are still a clump.
 func TestAClassAnsweringAProtocolOwnsNoneOfItsSignature(t *testing.T) {
 	answering := pythontest.FromSource(t, map[string]string{
 		"app/client.py": `from typing import Protocol

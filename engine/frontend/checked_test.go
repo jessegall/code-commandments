@@ -8,9 +8,6 @@ import (
 	"github.com/jessegall/code-commandments/engine/frontend/frontendtest"
 )
 
-// TestAFileTooLargeToCheckIsReadByItsSyntaxAlone holds the bridge to the limit set for a generated file the checker
-// cannot type within the capped container: a file past a mebibyte of source is read whole, its resolver says it did
-// not run, and no expression in it carries a type, while a file beside it is typed as ever.
 func TestAFileTooLargeToCheckIsReadByItsSyntaxAlone(t *testing.T) {
 	var generated strings.Builder
 	for line := 0; generated.Len() <= 1<<20; line++ {

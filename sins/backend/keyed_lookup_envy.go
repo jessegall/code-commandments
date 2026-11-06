@@ -11,7 +11,6 @@ type KeyedLookupEnvy struct{}
 
 func init() { sins.Register(catalog.PHP, KeyedLookupEnvy{}) }
 
-// Definition is what the sin states about itself.
 func (KeyedLookupEnvy) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "keyed-lookup-envy",

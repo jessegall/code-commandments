@@ -28,8 +28,6 @@ public sealed class Orders
 }
 `
 
-// TestTheCallsToAMethodCountThoseThatAssertItsResultIsThere holds CallsTo to every call outside the tests, and to
-// those that force its result, throw when it is missing or test the local it lands in only to throw.
 func TestTheCallsToAMethodCountThoseThatAssertItsResultIsThere(t *testing.T) {
 	codebase := csharptest.FromSource(t, map[string]string{"Shop/Orders.cs": orders})
 	find := csharptest.First(t, codebase, "Shop/Orders.cs", "MethodDeclaration")

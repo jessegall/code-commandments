@@ -15,7 +15,6 @@ func init() {
 // ConstructorOrchestrationScribe moves a value a Data's constructor derives into a computed get hook on its property.
 type ConstructorOrchestrationScribe struct{}
 
-// Rewrite hoists each single-line assignment onto a typed declared property into that property's get hook.
 func (ConstructorOrchestrationScribe) Rewrite(findings []engine.Match, _ *engine.Codebase) (scribes.Rewrites, error) {
 	draft := scribes.NewDraft()
 	for _, finding := range findings {
@@ -27,8 +26,6 @@ func (ConstructorOrchestrationScribe) Rewrite(findings []engine.Match, _ *engine
 	return draft.Rewrites(), nil
 }
 
-// hoist marks the property `#[Computed]`, takes its readonly off, turns its `;` into the get hook that computes the
-// value, and deletes the constructor's assignment.
 func hoist(draft *scribes.Draft, assign engine.Match) {
 	class := php.Node{Match: assign}.EnclosingClassLike()
 	statement := assign.Parent()
@@ -49,7 +46,6 @@ func hoist(draft *scribes.Draft, assign engine.Match) {
 	writer.DeleteStatementLine(statement)
 }
 
-// declaredProperty is the class's property declaring the name alone; a grouped `public $a, $b;` cannot be split.
 func declaredProperty(class engine.Match, name string) (engine.Match, bool) {
 	for _, property := range class.ChildrenIn("stmts") {
 		if property.Kind() != "Stmt_Property" {

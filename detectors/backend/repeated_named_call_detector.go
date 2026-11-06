@@ -12,25 +12,21 @@ import (
 	backendsins "github.com/jessegall/code-commandments/sins/backend"
 )
 
-// RepeatedNamedCallDetector finds one variadic with-style method called with the same named construction at several
-// sites: a method missing on the receiver's type.
+// RepeatedNamedCallDetector finds one variadic with-style method called with the same named construction at several sites: a method missing on the receiver's type.
 type RepeatedNamedCallDetector struct {
 	threshold int
 }
 
 func init() { detectors.Register(catalog.PHP, RepeatedNamedCallDetector{threshold: 2}) }
 
-// Sin is the sin the detector finds.
 func (RepeatedNamedCallDetector) Sin() sins.Sin { return backendsins.RepeatedNamedCall{} }
 
-// Threshold is the detector set to flag a call once it recurs this many times, two at the least.
 func (d RepeatedNamedCallDetector) Threshold(times int) RepeatedNamedCallDetector {
 	d.threshold = max(2, times)
 
 	return d
 }
 
-// GroupKey is the declaring method and the shape of each named argument.
 func (RepeatedNamedCallDetector) GroupKey(finding engine.Match) (string, bool) {
 	codebase := finding.Codebase()
 	key := namedCallFingerprint(finding, codebase)
@@ -38,7 +34,6 @@ func (RepeatedNamedCallDetector) GroupKey(finding engine.Match) (string, bool) {
 	return key, key != ""
 }
 
-// Find is every call recurring its method and named-argument shapes as often as the threshold asks.
 func (d RepeatedNamedCallDetector) Find(codebase *engine.Codebase) []engine.Match {
 	candidates := php.In(codebase).Where(func(m engine.Match) bool { return (php.Node{Match: m}).MethodCallName() != "" }).Get()
 
@@ -73,7 +68,6 @@ func carriesConstruction(argument engine.Match) bool {
 	return false
 }
 
-// shapeOf is how an argument is built, to the extent that tells two constructions apart.
 func shapeOf(expr engine.Match) string {
 	name := expr.Child("name")
 	named := func() string {
@@ -99,6 +93,4 @@ func shapeOf(expr engine.Match) string {
 	return expr.Kind()
 }
 
-// CrossFile says the rule reads more than the file it reports in, which the fixture measures by asking it
-// of one file and of the whole tree: a scoped run reads the whole scan while it is enabled.
 func (RepeatedNamedCallDetector) CrossFile() {}

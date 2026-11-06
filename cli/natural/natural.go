@@ -1,10 +1,8 @@
-// Package natural orders text the way a person reads numbers in it, exactly as PHP's strnatcmp does:
-// `a.vue:8` before `a.vue:25`, and says a count the way a person says it.
+// Package natural orders text the way a person reads numbers in it, exactly as PHP's strnatcmp does: `a.vue:8` before `a.vue:25`, and says a count the way a person says it.
 package natural
 
 import "strconv"
 
-// Counted is a number and its noun, singular where there is one of them: `1 sin`, `3 sins`.
 func Counted(number int, noun string) string {
 	if number == 1 {
 		return "1 " + noun
@@ -13,7 +11,6 @@ func Counted(number int, noun string) string {
 	return strconv.Itoa(number) + " " + noun + "s"
 }
 
-// Compare answers -1, 0 or 1 as a sorts before, with, or after b.
 func Compare(a, b string) int {
 	if a == "" || b == "" {
 		return sign(len(a) - len(b))
@@ -88,8 +85,6 @@ func Compare(a, b string) int {
 	}
 }
 
-// compareRight weighs two runs of digits as numbers: the longer run wins, else the first digit that
-// differs.
 func compareRight(a string, i *int, b string, j *int) int {
 	bias := 0
 
@@ -109,7 +104,6 @@ func compareRight(a string, i *int, b string, j *int) int {
 	}
 }
 
-// compareLeft weighs two runs of digits as fractions: the first digit that differs wins.
 func compareLeft(a string, i *int, b string, j *int) int {
 	for ; ; *i, *j = *i+1, *j+1 {
 		endA, endB := !isDigit(at(a, *i)), !isDigit(at(b, *j))
@@ -127,7 +121,6 @@ func compareLeft(a string, i *int, b string, j *int) int {
 	}
 }
 
-// at is the byte at i, or 0 past the end, as a C string reads.
 func at(text string, i int) byte {
 	if i < len(text) {
 		return text[i]

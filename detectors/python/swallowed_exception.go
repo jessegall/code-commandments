@@ -16,12 +16,10 @@ func init() {
 	detectors.Register(catalog.Python, SwallowedExceptionDetector{})
 }
 
-// Sin is the sin the detector finds.
 func (SwallowedExceptionDetector) Sin() sins.Sin {
 	return pysins.SwallowedException{}
 }
 
-// Find is every place the sin is committed.
 func (SwallowedExceptionDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return py.In(codebase).
 		WhereKind("ExceptHandler").

@@ -7,24 +7,18 @@ import (
 	"github.com/jessegall/code-commandments/cli/workspace"
 )
 
-// ClaudeBlock names the block sync keeps in CLAUDE.md.
 const ClaudeBlock = "code-commandments skills"
 
 //go:embed claude_block.md
 var claudeInstructions string
 
-// enforcedByHooks says what enforces the disciplines where the package's own hooks are wired.
-//
 //go:embed claude_enforced_hooks.md
 var enforcedByHooks string
 
-// enforcedByJournal says it where the agent journal's plugin runs them and the package's hooks step aside.
-//
 //go:embed claude_enforced_journal.md
 var enforcedByJournal string
 
-// Claude is Claude Code: per-skill links in .claude/skills, a CLAUDE.md that imports AGENTS.md, and the
-// hooks, which make it the one agent whose disciplines are enforced rather than only written down.
+// Claude is Claude Code: per-skill links in .claude/skills, a CLAUDE.md that imports AGENTS.md, and the hooks, which make it the one agent whose disciplines are enforced rather than only written down.
 type Claude struct {
 	base
 }

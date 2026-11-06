@@ -12,18 +12,9 @@ import (
 	_ "github.com/jessegall/code-commandments/registry"
 )
 
-// TestARunJudgedForAnotherFolderReadsThatFoldersPaths holds the one thing that breaks when a service judges on
-// someone else's behalf: a path the run named is relative to the folder the RUN was started in, never to the
-// process's own.
-//
-// The service's folder is the plugin's, so an unresolved `src` was read there, found nothing, and said so with a
-// green tick and exit 0 over code holding sins. That was reported from a consumer on v7.7.0, for `judge src`,
-// `judge --changes` and `judge --changed-files` alike, and a green tick that lies is the one answer a judging
-// must never give.
 func TestARunJudgedForAnotherFolderReadsThatFoldersPaths(t *testing.T) {
 	project := sinfulProject(t)
 
-	// The process stands somewhere else entirely, as the service does.
 	elsewhere, err := filepath.EvalSymlinks(t.TempDir())
 	if err != nil {
 		t.Fatal(err)
@@ -49,7 +40,6 @@ func TestARunJudgedForAnotherFolderReadsThatFoldersPaths(t *testing.T) {
 	}
 }
 
-// sinfulProject is a python project with one rule of its own and one file that breaks it.
 func sinfulProject(t *testing.T) string {
 	t.Helper()
 
@@ -82,8 +72,6 @@ func sinfulProject(t *testing.T) string {
 	return root
 }
 
-// chdir moves the process into the folder for the test and puts it back afterwards, which is this module's own
-// idiom: it declares go 1.23, where t.Chdir is refused by vet.
 func chdir(t *testing.T, folder string) {
 	t.Helper()
 
@@ -99,9 +87,6 @@ func chdir(t *testing.T, folder string) {
 	t.Cleanup(func() { os.Chdir(was) })
 }
 
-// TestTheChangedLinesAreTheRunsOwnFoldersChanges holds the headline symptom of the same fault: judged for
-// another folder, `--changes` answered "no source file under the path is among the lines changed" with exit 0,
-// because the path it scoped itself with was the service's folder and nothing had changed there.
 func TestTheChangedLinesAreTheRunsOwnFoldersChanges(t *testing.T) {
 	project := sinfulProject(t)
 
@@ -115,7 +100,6 @@ func TestTheChangedLinesAreTheRunsOwnFoldersChanges(t *testing.T) {
 		}
 	}
 
-	// The sin is in the working tree and in no commit, which is what --changes judges.
 	if err := os.WriteFile(filepath.Join(project, "src", "order.py"), []byte(`class Order:
     def total(self):
         """Says the total."""
@@ -153,9 +137,6 @@ func TestTheChangedLinesAreTheRunsOwnFoldersChanges(t *testing.T) {
 	}
 }
 
-// TestANewFileIsAmongTheChangedLines holds what a new file is to a scope: every line of it. Reported from a
-// consumer on v7.8.1, in a worktree and in a main checkout alike — a judging of the changed lines answered a
-// green tick with exit 0 while the one new file it should have judged held eight sins.
 func TestANewFileIsAmongTheChangedLines(t *testing.T) {
 	project := sinfulProject(t)
 
@@ -169,7 +150,6 @@ func TestANewFileIsAmongTheChangedLines(t *testing.T) {
 		}
 	}
 
-	// A file git has never seen, holding the sin, which is the whole of what changed.
 	if err := os.WriteFile(filepath.Join(project, "src", "refund.py"), []byte(`class Refund:
     def total(self):
         """Says the total."""
@@ -195,15 +175,9 @@ func TestANewFileIsAmongTheChangedLines(t *testing.T) {
 	}
 }
 
-// TestAWorktreesOwnNewFileIsAmongItsChangedLines holds the same answer inside a worktree, which is where a
-// consumer's worker hit it: a worktree's .git is a file and its checkout lies inside the main one, so a run that
-// read the project's main checkout instead of the checkout it stands in would see none of the worker's changes
-// and answer a green tick.
 func TestAWorktreesOwnNewFileIsAmongItsChangedLines(t *testing.T) {
 	project := sinfulProject(t)
 
-	// Where the journal really cuts them: inside the project, under its own hidden folder, which a walk of the
-	// tree never reaches.
 	worktree := filepath.Join(project, ".journal", "worktrees", "worker-1")
 	for _, command := range [][]string{
 		{"init", "-q", "-b", "main"},
@@ -216,7 +190,6 @@ func TestAWorktreesOwnNewFileIsAmongItsChangedLines(t *testing.T) {
 		}
 	}
 
-	// The worker's own new file, in its own checkout, which the main checkout knows nothing about.
 	if err := os.WriteFile(filepath.Join(worktree, "src", "refund.py"), []byte(`class Refund:
     def total(self):
         """Says the total."""

@@ -16,7 +16,6 @@ type GenericExceptionDetector struct{}
 
 func init() { detectors.Register(catalog.PHP, GenericExceptionDetector{}) }
 
-// generic are the built-in exceptions that say nothing about what went wrong.
 var generic = []string{
 	"Exception",
 	"Error",
@@ -31,10 +30,8 @@ var generic = []string{
 	"LengthException",
 }
 
-// Sin is the sin the detector finds.
 func (GenericExceptionDetector) Sin() sins.Sin { return backendsins.GenericException{} }
 
-// Find is every new of a built-in exception that a throw throws.
 func (GenericExceptionDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return php.In(codebase).
 		Where(engine.As(func(n php.Node) bool { return slices.Contains(generic, n.NewClassName()) })).

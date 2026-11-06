@@ -11,7 +11,6 @@ type DuplicateRouteAction struct{}
 
 func init() { sins.Register(catalog.PHP, DuplicateRouteAction{}) }
 
-// Definition is what the sin states about itself.
 func (DuplicateRouteAction) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "duplicate-route-action",

@@ -11,7 +11,6 @@ type ConstructorOrchestration struct{}
 
 func init() { sins.Register(catalog.PHP, ConstructorOrchestration{}) }
 
-// Definition is what the sin states about itself.
 func (ConstructorOrchestration) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "constructor-orchestration",
@@ -23,7 +22,6 @@ func (ConstructorOrchestration) Definition() sins.Definition {
 	}
 }
 
-// Scaffolds are the helpers the fix reaches for, which scaffold generates into the project.
 func (ConstructorOrchestration) Scaffolds() []sins.Scaffold {
 	return []sins.Scaffold{
 		{Path: "Support/Eager.php", Stub: "Eager.php.stub"},

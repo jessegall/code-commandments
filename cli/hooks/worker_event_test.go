@@ -6,13 +6,6 @@ import (
 	"testing"
 )
 
-// TestAWorkersEventIsAnswered holds the whole way through for a worker's edit, which is where three faults hid
-// one behind another: the file a worker writes lies in a worktree, a checkout of its own inside the project's
-// hidden folder, and the event names it relative to the project. The gate must make it absolute first and then
-// ask which checkout it lies in, or git answers about the plugin's own folder and the file is judged by nothing.
-//
-// Reported from a consumer for worker 545: one file_edited event, no answer at all, while a judging of the same
-// file by its absolute path found eight sins.
 func TestAWorkersEventIsAnswered(t *testing.T) {
 	root, _ := workerProject(t)
 	worker := filepath.Join(root, ".journal", "worktrees", "worker-1", "src", "order.py")

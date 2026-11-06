@@ -7,10 +7,6 @@ import (
 	"github.com/jessegall/code-commandments/engine/csharp/csharptest"
 )
 
-// TestAnOutBoundByATestIsForgivenOnlyWhereTheTestGuardsIt holds the one shape where forgiving null is not the
-// author's claim: a method that answers true exactly when it filled its out parameter, read in the branch that
-// answer guards. A framework annotating the parameter narrows it for the compiler, so a `!` there says the
-// annotation is missing, which is a fix in the declaration and not at the call.
 func TestAnOutBoundByATestIsForgivenOnlyWhereTheTestGuardsIt(t *testing.T) {
 	codebase := csharptest.FromSource(t, map[string]string{
 		"Labels.cs": `using System.Collections.Generic;

@@ -15,10 +15,8 @@ type NegativeSpaceCommentDetector struct{}
 
 func init() { detectors.Register(catalog.PHP, NegativeSpaceCommentDetector{}) }
 
-// Sin is the sin the detector finds.
 func (NegativeSpaceCommentDetector) Sin() sins.Sin { return backendsins.NegativeSpaceComment{} }
 
-// Find is every node with a comment that denies a strawman.
 func (NegativeSpaceCommentDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return php.In(codebase).
 		Where(engine.As(func(n php.Node) bool { return n.HasCommentMatching(prose.Strawman) })).

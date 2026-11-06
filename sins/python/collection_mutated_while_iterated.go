@@ -13,7 +13,6 @@ func init() {
 	sins.Register(catalog.Python, CollectionMutatedWhileIterated{})
 }
 
-// Definition is what the sin states about itself.
 func (CollectionMutatedWhileIterated) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "python-collection-mutated-while-iterated",

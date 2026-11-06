@@ -13,7 +13,6 @@ func init() {
 	sins.Register(catalog.CSharp, DeepNesting{})
 }
 
-// Definition is what the sin states about itself.
 func (DeepNesting) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "deep-csharp-nesting",

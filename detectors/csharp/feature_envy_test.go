@@ -6,13 +6,6 @@ import (
 	"github.com/jessegall/code-commandments/engine/csharp/csharptest"
 )
 
-// TestTheThreeReportedEnvySites holds the rule to the three methods reported against it in #814, #812 and #808,
-// each as it is really written rather than as its report described it.
-//
-// Two of them are the sin: the resolver filters a collection the catalog hands out, and the filter builder
-// projects the criteria's own rids outside the criteria. The third writes each of a request's questions into a
-// StringBuilder as text, which is formatting — the knowledge in it is the prompt's wording, which cannot move
-// onto a value object — and the rule has no business there.
 func TestTheThreeReportedEnvySites(t *testing.T) {
 	const criteria = `using System.Collections.Generic;
 
@@ -165,12 +158,12 @@ public static class OperationCatalogQueries
 }
 `
 	codebase := csharptest.FromSource(t, map[string]string{
-		"Dealers.Search.Contracts/DealerSearchCriteria.cs":    criteria,
-		"Dealers.Discovery/DealerFilterBuilder.cs":            builder,
-		"Copywriting/Values/ContentRequest.cs":                request,
+		"Dealers.Search.Contracts/DealerSearchCriteria.cs":        criteria,
+		"Dealers.Discovery/DealerFilterBuilder.cs":                builder,
+		"Copywriting/Values/ContentRequest.cs":                    request,
 		"Copywriting.Infrastructure/Gemini/CopywritingPrompts.cs": prompts,
-		"Core/Operations/IOperationCatalog.cs":                 catalog,
-		"Api/Operations/OperationCatalogQueries.cs":            resolver,
+		"Core/Operations/IOperationCatalog.cs":                    catalog,
+		"Api/Operations/OperationCatalogQueries.cs":               resolver,
 	})
 
 	fired := map[string]bool{}
@@ -188,4 +181,3 @@ public static class OperationCatalogQueries
 		}
 	}
 }
-

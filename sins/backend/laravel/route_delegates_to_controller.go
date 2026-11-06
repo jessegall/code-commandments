@@ -11,7 +11,6 @@ type RouteDelegatesToController struct{}
 
 func init() { sins.Register(catalog.PHP, RouteDelegatesToController{}) }
 
-// Definition is what the sin states about itself.
 func (RouteDelegatesToController) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "route-delegates-to-controller",

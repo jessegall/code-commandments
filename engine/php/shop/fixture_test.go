@@ -12,7 +12,6 @@ import (
 	_ "github.com/jessegall/code-commandments/registry"
 )
 
-// tunings are the shop's own settings, as tests/Fixtures/backend/.commandments/config.php declares them for judge.
 var tunings = []detectors.Tuning{
 	detectors.Tune(func(d backend.NamespaceDependencyDetector) backend.NamespaceDependencyDetector {
 		return d.
@@ -23,7 +22,6 @@ var tunings = []detectors.Tuning{
 	}),
 }
 
-// tuned is the detectors set as the shop's config sets them.
 func tuned(t *testing.T, registered []detectors.Detector) []detectors.Detector {
 	t.Helper()
 	set, unmatched := detectors.Tuned(registered, tunings...)

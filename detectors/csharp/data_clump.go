@@ -18,17 +18,14 @@ func init() {
 	detectors.Register(catalog.CSharp, DataClumpDetector{})
 }
 
-// Sin is the sin the detector finds.
 func (DataClumpDetector) Sin() sins.Sin {
 	return cssins.DataClump{}
 }
 
-// Find is every place the sin is committed.
 func (d DataClumpDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return detectors.Aggregate(d, codebase)
 }
 
-// Candidates is every function taking scalar values, keyed by the values it takes, with the type declaring it.
 func (d DataClumpDetector) Candidates(codebase *engine.Codebase) []detectors.Candidate {
 	matches := cs.In(codebase).
 		WhereFunction().
@@ -46,7 +43,6 @@ func (d DataClumpDetector) Candidates(codebase *engine.Codebase) []detectors.Can
 	return candidates
 }
 
-// Decide is every function whose values two or more types take together.
 func (DataClumpDetector) Decide(candidates []detectors.Candidate) []int {
 	var findings []int
 	for _, clump := range engine.Recurring(len(candidates), keyOf(candidates), 1) {
@@ -62,13 +58,10 @@ func (DataClumpDetector) Decide(candidates []detectors.Candidate) []int {
 	return findings
 }
 
-// GroupKey is the group a function recurs in: the scalar parameters it takes, each `type name`.
 func (DataClumpDetector) GroupKey(match engine.Match) (string, bool) {
 	signature := cs.Node{Match: match}.ValueParamSignature()
 
 	return strings.Join(signature, ", "), len(signature) > 0
 }
 
-// CrossFile says the rule reads more than the file it reports in, which the fixture measures by asking it
-// of one file and of the whole tree: a scoped run reads the whole scan while it is enabled.
 func (DataClumpDetector) CrossFile() {}

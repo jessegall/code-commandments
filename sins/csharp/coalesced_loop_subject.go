@@ -13,7 +13,6 @@ func init() {
 	sins.Register(catalog.CSharp, CoalescedLoopSubject{})
 }
 
-// Definition is what the sin states about itself.
 func (CoalescedLoopSubject) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "csharp-coalesced-loop-subject",

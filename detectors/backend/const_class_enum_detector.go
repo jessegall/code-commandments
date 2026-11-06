@@ -14,10 +14,8 @@ type ConstClassEnumDetector struct{}
 
 func init() { detectors.Register(catalog.PHP, ConstClassEnumDetector{}) }
 
-// Sin is the sin the detector finds.
 func (ConstClassEnumDetector) Sin() sins.Sin { return backendsins.ConstClassEnum{} }
 
-// Find is every parentless class holding only two or more scalar constants.
 func (ConstClassEnumDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return php.In(codebase).
 		WhereKind("Stmt_Class").

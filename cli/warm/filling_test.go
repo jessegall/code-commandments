@@ -9,11 +9,6 @@ import (
 	"github.com/jessegall/code-commandments/engine"
 )
 
-// TestAViewFilledForWhatChangedAnswersAsOneFilledWhole holds the one thing the saving must not cost. A view
-// writes the engine's own facts again only for the files it replaces, since every other file is the base's own
-// node carrying the facts it was read with; and a fact crosses modules, so what reaches a changed file is filled
-// with it. This asks the same question of a view filled that way and of one filled whole, and requires the same
-// answer.
 func TestAViewFilledForWhatChangedAnswersAsOneFilledWhole(t *testing.T) {
 	root, codebase := project(t, map[string]string{
 		"shop/money.py": `class Money:
@@ -31,7 +26,6 @@ class Order:
 
 	base := warm.Keep().Hold(root, "main", []string{root}, codebase, nil)
 
-	// The class the other module names loses the method that module reads.
 	money := filepath.Join(root, "shop", "money.py")
 	write(t, money, `class Money:
     def amount(self) -> int:

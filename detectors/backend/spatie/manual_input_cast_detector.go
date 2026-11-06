@@ -15,10 +15,8 @@ type ManualInputCastDetector struct{}
 
 func init() { detectors.Register(catalog.PHP, ManualInputCastDetector{}) }
 
-// Sin is the sin the detector finds.
 func (ManualInputCastDetector) Sin() sins.Sin { return backendsins.ManualInputCast{} }
 
-// Find is every field every construction hand-builds.
 func (ManualInputCastDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return php.In(codebase).
 		Where(engine.As(php.Node.IsField)).
@@ -26,6 +24,4 @@ func (ManualInputCastDetector) Find(codebase *engine.Codebase) []engine.Match {
 		Get()
 }
 
-// CrossFile says the rule reads more than the file it reports in, which the fixture measures by asking it
-// of one file and of the whole tree: a scoped run reads the whole scan while it is enabled.
 func (ManualInputCastDetector) CrossFile() {}

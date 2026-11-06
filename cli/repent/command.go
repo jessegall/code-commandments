@@ -1,6 +1,4 @@
-// Package repent is `repent`: run every scribe over the project's source roots, the maintenance rewriters
-// and each repentable detector's own fix, until a sweep changes nothing, then write the result or show it as
-// a diff.
+// Package repent is `repent`: run every scribe over the project's source roots, the maintenance rewriters and each repentable detector's own fix, until a sweep changes nothing, then write the result or show it as a diff.
 package repent
 
 import (
@@ -31,14 +29,11 @@ import (
 )
 
 const (
-	// aRuleCouldNotRun is the exit code of a run a scribe broke in.
 	aRuleCouldNotRun = 3
 
-	// feedbackEvery is how many runs pass between invitations to report a bad fix.
 	feedbackEvery = 4
 )
 
-// nothingToFix says a run found nothing a scribe could rewrite, and what that does not mean.
 const nothingToFix = "\033[32m✓ Nothing to AUTO-FIX here.\033[0m \033[2mThis is NOT \"no sins\" — it only means no scribe could\n" +
 	"  rewrite this scope. A sin `judge` flags without an auto-fixer still stands; fix it BY HAND at its\n" +
 	"  source per its skill. Run `judge` to see what remains.\033[0m\n"
@@ -46,12 +41,10 @@ const nothingToFix = "\033[32m✓ Nothing to AUTO-FIX here.\033[0m \033[2mThis i
 // Command is `repent`.
 type Command struct{}
 
-// Names are the verbs it answers to.
 func (Command) Names() []string {
 	return []string{"repent"}
 }
 
-// Help documents it.
 func (Command) Help() help.Help {
 	return help.Of("Auto-fix sins — run every Scribe: the maintenance rewriters (Spatie Data hints) and each Repentable detector's own fix, PHP, Vue and TypeScript, and the fix a project's own rule declares.").
 		Form("repent [path]", "apply every fix, re-scanning until it converges (the default — this WRITES)").
@@ -68,8 +61,6 @@ func (Command) Help() help.Help {
 			"it advertises.")
 }
 
-// Fixable maps each sin a scribe repents to the command that runs it, scoped to a checklist when scope is
-// given.
 func Fixable(checklist string) map[string]string {
 	commands := map[string]string{}
 	where := ""
@@ -88,7 +79,6 @@ func Fixable(checklist string) map[string]string {
 	return commands
 }
 
-// Run rewrites the path the arguments name, or previews it.
 func (c Command) Run(in *cli.Input, console cli.Console) (int, error) {
 	given, named := in.FirstArgument()
 	path := strings.TrimRight(given, "/")
@@ -157,7 +147,6 @@ func (c Command) Run(in *cli.Input, console cli.Console) (int, error) {
 		console.Warn("\033[33m⚠ repent did not settle within " + strconv.Itoa(scribes.MaxSweeps) + " sweeps; applying what converged.\033[0m")
 	}
 
-	// PHP's roots are relative to a path left out and absolute for one given, so its labels follow suit.
 	base := path
 	if !named {
 		base = source.Real(path)
@@ -174,8 +163,6 @@ func (c Command) Run(in *cli.Input, console cli.Console) (int, error) {
 	return apply(base, converged, space, console)
 }
 
-// leftAlone names the reported findings standing in the files this run could have fixed, so a reader is not left
-// wondering why a sin they can see was not repented. Nothing is said where the project has reported nothing.
 func leftAlone(root string, targets scope.Scope) string {
 	record, _ := reported.Of(root)
 
@@ -199,9 +186,6 @@ func leftAlone(root string, targets scope.Scope) string {
 		"orphan the report. `" + binary.Here() + " report forget <issue>` takes one back.\033[0m\n"
 }
 
-// filedIn is what this project has reported, as the scribes ask it: no scribe rewrites a finding whose claim a
-// maintainer is answering, because the fix it would apply may be the very thing the report disputes, and the
-// rewrite would change the line's text and orphan the report while its issue is still open.
 func filedIn(root string) scribes.Filed {
 	record, _ := reported.Of(root)
 
@@ -214,7 +198,6 @@ type filedRecord struct {
 	record reported.Record
 }
 
-// IsFiled says whether the rule's finding at this place has been reported as wrong.
 func (f filedRecord) IsFiled(rule, file string, line int) bool {
 	_, filed := f.record.Reported(rule, f.root, file, line)
 
@@ -288,7 +271,6 @@ func preview(path string, converged scribes.Converged, file string, console cli.
 	return skipped(converged, console), nil
 }
 
-// skipped says why each scribe that broke broke, names them, and answers the run's exit code.
 func skipped(converged scribes.Converged, console cli.Console) int {
 	var names judge.Skipped
 
@@ -306,8 +288,6 @@ func skipped(converged scribes.Converged, console cli.Console) int {
 	return aRuleCouldNotRun
 }
 
-// scaffoldConstructs scaffolds the helper a rewritten component now uses, such as <SwitchCase>, when the
-// project does not have it yet.
 func scaffoldConstructs(files scribes.Rewrites, written []string, console cli.Console) error {
 	var components strings.Builder
 

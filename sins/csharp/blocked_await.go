@@ -13,7 +13,6 @@ func init() {
 	sins.Register(catalog.CSharp, BlockedAwait{})
 }
 
-// Definition is what the sin states about itself.
 func (BlockedAwait) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "csharp-blocked-await",

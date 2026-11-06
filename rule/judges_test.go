@@ -8,9 +8,6 @@ import (
 	"github.com/jessegall/code-commandments/rule"
 )
 
-// TestARuleNamesTheFoldersItJudges holds the key a project writes in the rule's own file, which is the point of it
-// being there: the file is the project's own and no install rewrites it, so the folders the rule judges are not
-// lost when the config is written again.
 func TestARuleNamesTheFoldersItJudges(t *testing.T) {
 	for written, want := range map[string]string{
 		`"judges": ["tests"]`:                "[tests]",
@@ -36,7 +33,6 @@ func TestARuleNamesTheFoldersItJudges(t *testing.T) {
 	}
 }
 
-// TestAFolderListTheToolCannotReadSaysWhy holds the key to the shape every other key is held to.
 func TestAFolderListTheToolCannotReadSaysWhy(t *testing.T) {
 	written := `{"engine": "backend", "sin": {"name": "x", "skill": "php/absence"}, "find": {"select": "call"}, "judges": "tests"}`
 

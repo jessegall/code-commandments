@@ -10,7 +10,6 @@ import (
 // By is where a finding is looked up when a detector asks whether a package excuses it.
 type By int
 
-// The places a finding is looked up by.
 const (
 	EnclosingClass By = iota
 	EnclosingMethod
@@ -27,7 +26,6 @@ type Exemptable interface {
 	Exemptions() []Exemption
 }
 
-// Exempt drops every finding a package excuses under an exemption the detector honours.
 func Exempt(codebase *engine.Codebase, detector Exemptable, findings []engine.Match) []engine.Match {
 	return slices.DeleteFunc(slices.Clone(findings), func(finding engine.Match) bool {
 		return excused(codebase, detector, finding)

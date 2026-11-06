@@ -9,10 +9,6 @@ import (
 	"github.com/jessegall/code-commandments/cli/config"
 )
 
-// TestBriefWritesTheCanonAndEachAgentsOwnFile holds what a project is told to the files that are really read: the
-// briefing goes into AGENTS.md, which every agent reads, and an agent with a file of its own gets its block there
-// too. An agent the project turned off is told nothing, and an agent that reads AGENTS.md itself is not written to
-// twice — the second write would nest its block inside the briefing's.
 func TestBriefWritesTheCanonAndEachAgentsOwnFile(t *testing.T) {
 	root := t.TempDir()
 
@@ -41,8 +37,6 @@ func TestBriefWritesTheCanonAndEachAgentsOwnFile(t *testing.T) {
 	}
 }
 
-// TestAnAgentThatReadsTheCanonIsNotWrittenToTwice holds the SameFileAs guard: where CLAUDE.md IS AGENTS.md, the
-// agent's own block must not be injected into the file that already carries the briefing.
 func TestAnAgentThatReadsTheCanonIsNotWrittenToTwice(t *testing.T) {
 	root := t.TempDir()
 
@@ -60,9 +54,6 @@ func TestAnAgentThatReadsTheCanonIsNotWrittenToTwice(t *testing.T) {
 	}
 }
 
-// TestAFileThatCannotBeTrustedIsRefusedAndTheRestAreWritten holds a refusal to the file it names: a briefing that
-// cannot be written into one file still reaches every other, since an upgrade refreshing them must not stop at the
-// first project file a reader left ambiguous.
 func TestAFileThatCannotBeTrustedIsRefusedAndTheRestAreWritten(t *testing.T) {
 	root := t.TempDir()
 	ambiguous := "<!-- BEGIN: " + BriefingBlock + " -->\n<!-- BEGIN: " + BriefingBlock + " -->\n"

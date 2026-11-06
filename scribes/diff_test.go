@@ -25,7 +25,6 @@ func TestTheUnifiedDiffIsPHPsByteForByte(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// What PHP's UnifiedDiff::of prints for the same rewrites.
 	want := "--- a/src/A.php\n+++ b/src/A.php\n@@ -1,9 +1,9 @@\n one\n two\n-three\n+THREE\n four\n five\n six\n seven\n eight\n-nine\n+nine\n\\ No newline at end of file\n--- a/src/New.vue\n+++ b/src/New.vue\n@@ -0,0 +1,2 @@\n+<template>\n+</template>\n"
 	if got != want {
 		t.Fatalf("got\n%s\nwant\n%s", got, want)

@@ -1,5 +1,4 @@
-// Package go holds the Go engine's skills: what good Go looks like, one skill per subject, which a finding
-// points an agent at.
+// Package go holds the Go engine's skills: what good Go looks like, one skill per subject, which a finding points an agent at.
 package golang
 
 import (
@@ -16,15 +15,13 @@ var (
 	flowPrinciple string
 )
 
-// Flow teaches: guard at the top and leave, keep the body flat, no `else` after a branch that already left, and
-// a switch over a defined type rather than a ladder of comparisons on one subject.
+// Flow teaches: guard at the top and leave, keep the body flat, no `else` after a branch that already left, and a switch over a defined type rather than a ladder of comparisons on one subject.
 type Flow struct{}
 
 func init() {
 	skill.Register(catalog.Go, Flow{})
 }
 
-// Definition is what the skill states about itself.
 func (Flow) Definition() skill.Definition {
 	return skill.Definition{
 		Slug:      "go/flow",

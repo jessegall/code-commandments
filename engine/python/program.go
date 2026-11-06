@@ -1,5 +1,4 @@
-// Package python is the Python engine: the program a Python stream describes — its modules, what each one
-// binds, the classes and functions they declare — and the facts the engine fills on a Python stream.
+// Package python is the Python engine: the program a Python stream describes — its modules, what each one binds, the classes and functions they declare — and the facts the engine fills on a Python stream.
 package python
 
 import (
@@ -40,8 +39,7 @@ type Module struct {
 	imports *bindings
 }
 
-// bindings are the names a module's imports bind: those bound to a module, and those bound to a function or
-// class another module declares.
+// bindings are the names a module's imports bind: those bound to a module, and those bound to a function or class another module declares.
 type bindings struct {
 	modules  map[string]*Module
 	members  map[string]Node
@@ -49,7 +47,6 @@ type bindings struct {
 	absolute map[string]string
 }
 
-// Of is the Python program of the codebase, built once.
 func Of(codebase *engine.Codebase) *Program {
 	return engine.Analysis(codebase, "python.program", build)
 }
@@ -71,18 +68,14 @@ func build(codebase *engine.Codebase) *Program {
 	return program
 }
 
-// Modules is every module, in the order the stream wrote them.
 func (p *Program) Modules() []*Module {
 	return p.modules
 }
 
-// ModuleOf is the module a node sits in.
 func (p *Program) ModuleOf(node Node) *Module {
 	return p.byPath[node.File()]
 }
 
-// ModuleCalled is the one module the codebase holds under the full dotted name; none when it holds none, or
-// more than one.
 func (p *Program) ModuleCalled(dotted string) (*Module, bool) {
 	found := p.byName[dotted]
 	if len(found) != 1 {
@@ -92,16 +85,12 @@ func (p *Program) ModuleCalled(dotted string) (*Module, bool) {
 	return found[0], true
 }
 
-// OwnsPackage says whether the codebase holds the top-level module or package, so that a reference into it
-// can be checked from here.
 func (p *Program) OwnsPackage(name string) bool {
 	_, ok := p.ModuleCalled(name)
 
 	return ok
 }
 
-// Resolves says whether the dotted name names something the codebase holds: a module, or a name bound at the
-// top of the deepest module its prefix names. What follows that name is not checked.
 func (p *Program) Resolves(dotted string) bool {
 	parts := strings.Split(dotted, ".")
 	for depth := len(parts); depth >= 1; depth-- {
@@ -113,8 +102,6 @@ func (p *Program) Resolves(dotted string) bool {
 	return false
 }
 
-// moduleNamed is the one module the dotted name reaches from the module: level dots up from its package for a
-// relative import. None when no module or more than one has that name.
 func (p *Program) moduleNamed(dotted string, from *Module, level int) (*Module, bool) {
 	if level == 0 {
 		return p.ModuleCalled(dotted)
@@ -139,19 +126,16 @@ func (p *Program) moduleNamed(dotted string, from *Module, level int) (*Module, 
 	return found[0], true
 }
 
-// Root is the module's root node.
 func (m *Module) Root() Node {
 	return Node{m.File.Match(0)}
 }
 
-// Nodes is every node of the module, in pre-order.
 func (m *Module) Nodes() []Node {
 	root := m.Root()
 
 	return append([]Node{root}, root.Descendants()...)
 }
 
-// Declared is the function or class the module's own body declares under the name.
 func (m *Module) Declared(name string) (Node, bool) {
 	for _, statement := range m.Root().ChildrenIn("body") {
 		if statement.IsDefinition() && statement.Name() == name {
@@ -162,8 +146,6 @@ func (m *Module) Declared(name string) (Node, bool) {
 	return Node{}, false
 }
 
-// Binds says whether the module binds the name at its top: a declaration, an import, or an assignment
-// outside every function and class.
 func (m *Module) Binds(name string) bool {
 	m.once.Do(func() {
 		m.binds = map[string]bool{}
@@ -180,7 +162,6 @@ func (m *Module) Binds(name string) bool {
 	return m.binds[name]
 }
 
-// bindings is what the module's imports bind, read once.
 func (m *Module) bindings() *bindings {
 	m.bound.Do(m.bind)
 
@@ -203,8 +184,6 @@ func (m *Module) bind() {
 	m.imports = bound
 }
 
-// bindNames records what each of the import's aliases binds: the id its name resolves to, and, for an import
-// that is not relative, the dotted name it stands for.
 func (m *Module) bindNames(statement Node, bound *bindings) {
 	for _, alias := range statement.ChildrenIn("names") {
 		if id, ok := m.importedId(alias); ok {
@@ -217,8 +196,6 @@ func (m *Module) bindNames(statement Node, bound *bindings) {
 	}
 }
 
-// bindModules binds each name a plain `import x` brings in to the module it reaches. A dotted import binds only
-// its first part as a name, so `import a.b` is held under `a.b` rather than under the `a` the binding reads as.
 func (m *Module) bindModules(statement Node, bound *bindings) {
 	for _, alias := range statement.ChildrenIn("names") {
 		found, reached := m.program.moduleNamed(alias.Name(), m, 0)
@@ -233,8 +210,6 @@ func (m *Module) bindModules(statement Node, bound *bindings) {
 	}
 }
 
-// bindFrom binds each name a `from x import y` brings in: the declaration the source module makes under that
-// name, and where it makes none, the submodule the two names together reach.
 func (m *Module) bindFrom(statement Node, bound *bindings) {
 	source, sourced := m.program.moduleNamed(statement.Name(), m, statement.Level())
 	for _, alias := range statement.ChildrenIn("names") {
@@ -250,8 +225,6 @@ func (m *Module) bindFrom(statement Node, bound *bindings) {
 	}
 }
 
-// declaredBy is the declaration the source module makes under the name; none where the import named no module
-// this codebase holds, which is every import of something outside it.
 func declaredBy(source *Module, sourced bool, name string) (Node, bool) {
 	if !sourced {
 		return Node{}, false
@@ -260,8 +233,6 @@ func declaredBy(source *Module, sourced bool, name string) (Node, bool) {
 	return source.Declared(name)
 }
 
-// Imports is every module of the codebase an import in the module reaches, with the import that reaches it: the
-// module imported, the one a from-import imports a name out of, or the submodule it names.
 func (m *Module) Imports() []Import {
 	var reached []Import
 	for _, statement := range m.Nodes() {
@@ -285,7 +256,6 @@ type Import struct {
 	Module    *Module
 }
 
-// importedModule is the module the import's alias reaches.
 func (m *Module) importedModule(statement, alias Node) (*Module, bool) {
 	switch statement.Kind() {
 	case "Import":
@@ -305,8 +275,6 @@ func (m *Module) importedModule(statement, alias Node) (*Module, bool) {
 	return nil, false
 }
 
-// named is what the name is bound to at the top of the module: a function or class it declares, or one it
-// imports.
 func (m *Module) named(name string) (Node, bool) {
 	if imported, ok := m.bindings().members[name]; ok {
 		return imported, true

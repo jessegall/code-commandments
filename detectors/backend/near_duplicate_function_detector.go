@@ -10,32 +10,25 @@ import (
 	backendsins "github.com/jessegall/code-commandments/sins/backend"
 )
 
-// NearDuplicateFunctionDetector finds methods of one shape that differ only in names and data: one mechanism copied
-// and edited.
+// NearDuplicateFunctionDetector finds methods of one shape that differ only in names and data: one mechanism copied and edited.
 type NearDuplicateFunctionDetector struct{}
 
 func init() { detectors.Register(catalog.PHP, NearDuplicateFunctionDetector{}) }
 
-// minNearBodyNodes is how many nodes a body must hold before two of one shape are not a coincidence.
 const minNearBodyNodes = 20
 
-// Sin is the sin the detector finds.
 func (NearDuplicateFunctionDetector) Sin() sins.Sin { return backendsins.NearDuplicateFunction{} }
 
-// Exemptions lets a package declare the methods whose signature it dictates, whose likeness is the contract's.
 func (NearDuplicateFunctionDetector) Exemptions() []packages.Exemption {
 	return []packages.Exemption{{Tag: packages.ContractMethod}}
 }
 
-// GroupKey is the shape of the method, names and data blanked.
 func (NearDuplicateFunctionDetector) GroupKey(finding engine.Match) (string, bool) {
 	key := (php.Node{Match: finding}).ShapeHash()
 
 	return key, key != ""
 }
 
-// Find is every sizeable method sharing its shape with another that it does not copy exactly, the literal tables,
-// generators, constructors, factories, one-liners, guarded accessors, deprecated methods and contract hooks aside.
 func (d NearDuplicateFunctionDetector) Find(codebase *engine.Codebase) []engine.Match {
 	candidates := php.In(codebase).
 		WhereKind("Stmt_ClassMethod").
@@ -58,6 +51,4 @@ func (d NearDuplicateFunctionDetector) Find(codebase *engine.Codebase) []engine.
 	return engine.NearCopies(candidates, shape, exact)
 }
 
-// CrossFile says the rule reads more than the file it reports in, which the fixture measures by asking it
-// of one file and of the whole tree: a scoped run reads the whole scan while it is enabled.
 func (NearDuplicateFunctionDetector) CrossFile() {}

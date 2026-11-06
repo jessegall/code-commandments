@@ -13,7 +13,6 @@ func init() {
 	sins.Register(catalog.Python, InLiteralsMirrorsEnum{})
 }
 
-// Definition is what the sin states about itself.
 func (InLiteralsMirrorsEnum) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "python-in-literals-mirrors-enum",

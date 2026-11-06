@@ -8,8 +8,6 @@ import (
 	"github.com/jessegall/code-commandments/engine"
 )
 
-// ReceiverTypeOf is the class a method send's receiver is declared as, read only from what the enclosing scope
-// writes: `$this`, a parameter's type, or `$this->field`'s declared type. Empty for anything else.
 func ReceiverTypeOf(call engine.Match) string {
 	if call.Kind() != "Expr_MethodCall" && call.Kind() != "Expr_NullsafeMethodCall" {
 		return ""
@@ -66,7 +64,6 @@ func receiverPropertyType(call engine.Match, name string) string {
 	return ""
 }
 
-// writtenClass is the one name a type is written with, a `?` aside: a class, or `self`, `static`, `parent`.
 func writtenClass(declared *contract.Type) string {
 	written := Written(declared)
 	if written.isSugared() {
@@ -79,8 +76,6 @@ func writtenClass(declared *contract.Type) string {
 	return ""
 }
 
-// Callee is the class that declares what a call reaches, and the member's name: a construction's constructor, a
-// static call's method, a method send's method on its receiver's declared type.
 func (t *Types) Callee(call engine.Match) (owner, method string) {
 	receiver := ""
 	switch call.Kind() {
@@ -112,7 +107,6 @@ func (t *Types) Callee(call engine.Match) (owner, method string) {
 	return owner, method
 }
 
-// namedClass is the class a call's class name names, self and static read as the class the call is written in.
 func namedClass(call, class engine.Match) string {
 	if name := class.Name(); name != "self" && name != "static" {
 		return name
@@ -121,7 +115,6 @@ func namedClass(call, class engine.Match) string {
 	return EnclosingClassName(call)
 }
 
-// CallName is the member a call names: `__construct` for a construction.
 func CallName(call engine.Match) string {
 	switch call.Kind() {
 	case "Expr_New":
@@ -141,7 +134,6 @@ func (t *Types) fillTarget(call engine.Match) {
 	}
 }
 
-// EnclosingClass is the nearest class-like around the node, or the node itself.
 func EnclosingClass(node engine.Match) engine.Match {
 	for at := node; at.Exists(); at = at.Parent() {
 		if slices.Contains(classLikes, at.Kind()) {
@@ -152,8 +144,7 @@ func EnclosingClass(node engine.Match) engine.Match {
 	return engine.Match{}
 }
 
-// Chains reads what a property or argumentless method chain returns, from the declared types of classes and enums
-// alone: `$order->customer->address()`, given the types its variables hold.
+// Chains reads what a property or argumentless method chain returns, from the declared types of classes and enums alone: `$order->customer->address()`, given the types its variables hold.
 type Chains struct {
 	properties map[string]map[string]string
 	returns    map[string]map[string]string
@@ -161,13 +152,10 @@ type Chains struct {
 
 var chains = Memoised(indexChains)
 
-// ChainsOf is the codebase's chain reader, indexed on first need.
 func ChainsOf(codebase *engine.Codebase) *Chains {
 	return chains.Of(codebase)
 }
 
-// declaringKinds are the declarations whose members a chain is read from: a class and an enum both hold
-// properties and methods a chain can reach through.
 var declaringKinds = []string{"Stmt_Class", "Stmt_Enum"}
 
 func indexChains(codebase *engine.Codebase) *Chains {
@@ -194,7 +182,6 @@ func (c *Chains) index(declaration engine.Match) {
 		if class == "" {
 			continue
 		}
-		// One property statement may declare several properties, and each of them holds that class.
 		for _, item := range member.Children() {
 			if item.Node().Field != "props" {
 				continue
@@ -217,7 +204,6 @@ func (c *Chains) index(declaration engine.Match) {
 	c.returns[declaration.Node().Symbol] = returns
 }
 
-// Resolve is the class the chain ends on, its variables typed by the map.
 func (c *Chains) Resolve(expr engine.Match, variables map[string]string) string {
 	switch expr.Kind() {
 	case "Expr_Variable":
@@ -246,7 +232,6 @@ func (c *Chains) Resolve(expr engine.Match, variables map[string]string) string 
 	return ""
 }
 
-// ParamTypes is each parameter of a function-like by its variable, with the one name its type is written with.
 func ParamTypes(function engine.Match) map[string]string {
 	types := map[string]string{}
 	for _, param := range Params(function) {
@@ -259,8 +244,6 @@ func ParamTypes(function engine.Match) map[string]string {
 	return types
 }
 
-// SharedFetchReceiver is the one receiver every element of an array literal reads a member of, when there are two or
-// more and all reach through the same path: `[$order->id, $order->total()]`.
 func SharedFetchReceiver(array engine.Match) (engine.Match, bool) {
 	var items []engine.Match
 	for _, item := range array.Children() {
@@ -292,7 +275,6 @@ func SharedFetchReceiver(array engine.Match) (engine.Match, bool) {
 	return receiver, receiver.Exists()
 }
 
-// fetchPath is a member chain written out: `$order->customer->address()`.
 func fetchPath(expr engine.Match) (string, bool) {
 	switch expr.Kind() {
 	case "Expr_Variable":
@@ -313,10 +295,6 @@ func fetchPath(expr engine.Match) (string, bool) {
 	return "", false
 }
 
-// ParameterFilled is the parameter of the called method an argument fills: the one it names, else the one at its
-// place; no node when the program does not declare the method, or it takes no such parameter. A new of self or
-// static reaches the constructor of the class it is written in, which Callee, answering as the PHP tool did, leaves
-// unresolved.
 func ParameterFilled(codebase *engine.Codebase, argument engine.Match) engine.Match {
 	call := argument.Parent()
 	types := TypesOf(codebase)

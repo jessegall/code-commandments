@@ -16,10 +16,6 @@ import (
 	cs "github.com/jessegall/code-commandments/engine/csharp"
 )
 
-// TestJudgingTheFixtureInHalvesFindsWhatJudgingItWholeFinds judges the C# fixture as two parts, each read alone
-// with the summary of both, the way a solution too large to hold is judged a project at a time, and holds every
-// rule to what it finds in the fixture read whole. The rules that weigh candidates across the program decide over
-// both parts' records with every match let go, so they decide from the records alone.
 func TestJudgingTheFixtureInHalvesFindsWhatJudgingItWholeFinds(t *testing.T) {
 	root, err := filepath.Abs("../../tests/Fixtures/csharp")
 	if err != nil {
@@ -55,7 +51,6 @@ type place struct {
 	group string
 }
 
-// placed is where each match stands, and the group the rule puts it in, read while its codebase is held.
 func placed(detector detectors.Detector, matches []engine.Match) []place {
 	grouped, groups := detector.(detectors.Grouped)
 	var places []place
@@ -72,7 +67,6 @@ func placed(detector detectors.Detector, matches []engine.Match) []place {
 	return places
 }
 
-// twins is, for each place in a group, the other places of its group, sorted.
 func twins(places []place) map[string][]string {
 	members := map[string][]string{}
 	for _, held := range places {
@@ -96,7 +90,6 @@ func twins(places []place) map[string][]string {
 	return named
 }
 
-// half is one of two parts of the stream, its files cut by the folder under the project they stand in.
 func half(stream *contract.Stream, which int) *contract.Stream {
 	var folders []string
 	for _, file := range stream.Files {
@@ -116,7 +109,6 @@ func half(stream *contract.Stream, which int) *contract.Stream {
 	return part
 }
 
-// folderOf is the folder under Shop the file stands in.
 func folderOf(path string) string {
 	_, under, _ := strings.Cut(path, "/Shop/")
 	folder, _, _ := strings.Cut(under, "/")
@@ -134,9 +126,6 @@ func locations(places []place) []string {
 	return located
 }
 
-// foundInHalves is where the detector's findings land when each half is judged on its own. An aggregating
-// detector gathers its candidates from every half and decides over all of them together, which is the whole
-// reason it aggregates; every other detector simply finds in each half, and the two lists are joined.
 func foundInHalves(detector detectors.Detector, halves []*engine.Codebase) []place {
 	var found []place
 	aggregating, isAggregating := detector.(detectors.Aggregating)

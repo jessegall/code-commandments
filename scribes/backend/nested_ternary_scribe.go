@@ -15,7 +15,6 @@ func init() {
 // NestedTernaryScribe rewrites a chain of ternaries nested in their else branches into one `match (true)`.
 type NestedTernaryScribe struct{}
 
-// Rewrite replaces each flat else-chain with its match.
 func (NestedTernaryScribe) Rewrite(findings []engine.Match, _ *engine.Codebase) (scribes.Rewrites, error) {
 	draft := scribes.NewDraft()
 	for _, finding := range findings {
@@ -31,8 +30,6 @@ func (NestedTernaryScribe) Rewrite(findings []engine.Match, _ *engine.Codebase) 
 	return draft.Rewrites(), nil
 }
 
-// ternaryChainAsMatch is the match (true) an else-chain of ternaries means, one arm per ternary and its last else the
-// default; a short ternary, or one buried in a condition or a then branch, is no flat chain.
 func ternaryChainAsMatch(finding engine.Match) (string, bool) {
 	if finding.Kind() != "Expr_Ternary" {
 		return "", false
@@ -62,7 +59,6 @@ func ternaryChainAsMatch(finding engine.Match) (string, bool) {
 	return "match (true) {\n" + body.String() + indent + "}", true
 }
 
-// holdsATernary says whether the node is a ternary or has one anywhere beneath it.
 func holdsATernary(node engine.Match) bool {
 	if node.Kind() == "Expr_Ternary" {
 		return true

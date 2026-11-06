@@ -16,8 +16,6 @@ import (
 	"github.com/jessegall/code-commandments/engine/python/pythontest"
 )
 
-// TestARepentedSinSettlesTheMarkItWasFoundUnder holds a sin's chat mark to its whole life: the edit that commits
-// the sin raises it under a key, and the later edit that repents it settles that same key.
 func TestARepentedSinSettlesTheMarkItWasFoundUnder(t *testing.T) {
 	sinful := "def refund(order) -> int:\n    if order.late:\n        raise ValueError(order)\n    else:\n        return order.total\n"
 	codebase := pythontest.FromSource(t, map[string]string{"shop/refund.py": sinful})
@@ -56,8 +54,6 @@ func TestARepentedSinSettlesTheMarkItWasFoundUnder(t *testing.T) {
 	}
 }
 
-// TestAWriteThatRepentsASinSettlesItThroughTheHook holds the whole path a journal moment takes: a Write that commits
-// a sin raises it under its key, and the Write that takes it out raises it repented and settles that key.
 func TestAWriteThatRepentsASinSettlesItThroughTheHook(t *testing.T) {
 	root, err := filepath.EvalSymlinks(t.TempDir())
 	if err != nil {
@@ -96,10 +92,6 @@ func TestAWriteThatRepentsASinSettlesItThroughTheHook(t *testing.T) {
 	}
 }
 
-// TestASinEditedInPlaceKeepsTheFilesOneMark holds a sin whose own line is edited while the sin stays. Its identity
-// changes, so the record repents what it knew and takes up what it found; the chat does not move, because its mark
-// is the file's and the file still holds a sin. The mark is rewritten with what the file holds now, and settles
-// only when the file holds nothing.
 func TestASinEditedInPlaceKeepsTheFilesOneMark(t *testing.T) {
 	sinful := "def refund(order) -> int:\n    if order.late:\n        raise ValueError(order)\n    else:\n        return order.total\n"
 	codebase := pythontest.FromSource(t, map[string]string{"shop/refund.py": sinful})
@@ -136,9 +128,6 @@ func TestASinEditedInPlaceKeepsTheFilesOneMark(t *testing.T) {
 	if len(edited) != 1 || edited[0].ID(root) == firstID {
 		t.Fatalf("the edit in place did not change the sin's identity: %v", edited)
 	}
-	// The sin's identity changed, so the record repents the one it knew and takes up the one it found — but the
-	// chat's mark is the FILE's, and the file still holds a sin, so the mark is rewritten where it stands and
-	// nothing is settled. One card, one file, from the first sin in it to the last.
 	again := AnnouncedIn(data, Moment{}).Settle(root, []string{file}, edited)
 	if len(again.Settles()) != 0 {
 		t.Errorf("the edit in place settled %v while the file still holds a sin", again.Settles())
@@ -157,11 +146,6 @@ func TestASinEditedInPlaceKeepsTheFilesOneMark(t *testing.T) {
 	}
 }
 
-// TestAFilesMarkNamesItsSinsAndTheirLines holds the lines under a file's mark: the file is left off, since the
-// mark's own first line names it, and each sin is given with the lines it sits on, the largest group first, so a
-// reader sees which disciplines were broken without opening anything. A mark opens only where it has two lines
-// or more, so a file holding one sin alone is given its rule's own words underneath. The marks are made by hand,
-// because what is under test is what the card shows and not which rule fires where.
 func TestAFilesMarkNamesItsSinsAndTheirLines(t *testing.T) {
 	source := strings.Repeat("\n", 6) + "a = 1\nb = 2\n" + strings.Repeat("\n", 43) + "c = 3\nd = 4\n"
 	codebase := pythontest.FromSource(t, map[string]string{"shop/orders.py": source})
@@ -198,9 +182,6 @@ func TestAFilesMarkNamesItsSinsAndTheirLines(t *testing.T) {
 	}
 }
 
-// TestAMarkWithOneSinStillOpens holds the one-sin mark to the same reading as the rest: a card opens only where
-// its lines number two or more, so the sin's own line is followed by what its rule says, and a reader who opens
-// it learns what the sin is rather than seeing the line they already read.
 func TestAMarkWithOneSinStillOpens(t *testing.T) {
 	codebase := pythontest.FromSource(t, map[string]string{"shop/orders.py": "a = 1\n"})
 	file := pythontest.File(t, codebase, "shop/orders.py")

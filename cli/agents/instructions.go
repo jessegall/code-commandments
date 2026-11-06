@@ -10,16 +10,13 @@ import (
 	"github.com/jessegall/code-commandments/cli/block"
 )
 
-// bom is the byte-order mark a file may open with; it is kept where it was found.
 const bom = "\xEF\xBB\xBF"
 
-// Instructions is a file of instructions the user owns, into which the tool keeps one block of its own:
-// injected, never overwritten.
+// Instructions is a file of instructions the user owns, into which the tool keeps one block of its own: injected, never overwritten.
 type Instructions struct {
 	path, root string
 }
 
-// InstructionsAt is the instructions file at path, in the project at root.
 func InstructionsAt(path, root string) Instructions {
 	return Instructions{path, root}
 }
@@ -33,9 +30,6 @@ func (e *Refused) Error() string {
 	return e.Reason
 }
 
-// Inject puts the body in the named block: in place of the block when the file has one, appended when it
-// has none, and as a new file when there is none. Markers that cannot be trusted, a path outside the
-// project, or a write that fails refuse it.
 func (i Instructions) Inject(name, body string) error {
 	if !i.insideTheProject() {
 		return &Refused{i.path + " resolves outside this project — left alone."}
@@ -76,7 +70,6 @@ func (i Instructions) Inject(name, body string) error {
 	return i.save(original, updated)
 }
 
-// SameFileAs says whether both name one file on disk, decided by device and inode.
 func (i Instructions) SameFileAs(other Instructions) bool {
 	mine, err := os.Stat(i.path)
 	theirs, otherErr := os.Stat(other.path)

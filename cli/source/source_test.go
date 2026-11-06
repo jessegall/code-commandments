@@ -70,8 +70,6 @@ func TestAFileIsReadByItsExtension(t *testing.T) {
 	}
 }
 
-// TestAWorktreeInsideTheProjectIsNoneOfItsSource holds the walk to the project's own code: a helper's git worktree
-// checked out inside it is left out, while a submodule and a repository of its own are read.
 func TestAWorktreeInsideTheProjectIsNoneOfItsSource(t *testing.T) {
 	root := t.TempDir()
 	for file, content := range map[string]string{
@@ -104,11 +102,6 @@ func TestAWorktreeInsideTheProjectIsNoneOfItsSource(t *testing.T) {
 	}
 }
 
-// TestAFolderLeftOutAtAnyDepthIsLeftOutAtTheTopToo holds what `**/` means. A project names the folders a build
-// writes, and naming them one path at a time is what makes a new module's web/dist get judged: nothing adds it to
-// the list. One pattern covers every one of them — but only if `**/` means zero or more segments, as gitignore
-// and io/fs read it. Reading it as one or more missed the folder at the top, and a kind with a slash in its own
-// name, `bootstrap/cache`, could not be written as a pattern at all.
 func TestAFolderLeftOutAtAnyDepthIsLeftOutAtTheTopToo(t *testing.T) {
 	root := t.TempDir()
 
@@ -136,7 +129,6 @@ func TestAFolderLeftOutAtAnyDepthIsLeftOutAtTheTopToo(t *testing.T) {
 		}
 	}
 
-	// And nothing else is: a pattern naming a folder by its kind says nothing about the project's own source.
 	for _, read := range []string{"src", "src/thing.py", "modules"} {
 		if excluded.Covers(filepath.Join(root, read)) {
 			t.Errorf("%s is left out by a pattern that names only build folders", read)

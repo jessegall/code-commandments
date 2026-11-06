@@ -9,23 +9,17 @@ import (
 	backendsins "github.com/jessegall/code-commandments/sins/backend"
 )
 
-// ComputedBooleanArgumentDetector finds a method deciding on bools that every caller computes from one and the same
-// object: it should take the object and ask it itself.
+// ComputedBooleanArgumentDetector finds a method deciding on bools that every caller computes from one and the same object: it should take the object and ask it itself.
 type ComputedBooleanArgumentDetector struct{}
 
 func init() { detectors.Register(catalog.PHP, ComputedBooleanArgumentDetector{}) }
 
-// minCallers is how many callers must compute the bools before the method should take the object.
 const minCallers = 2
 
-// Sin is the sin the detector finds.
 func (ComputedBooleanArgumentDetector) Sin() sins.Sin { return backendsins.ComputedBooleanArgument{} }
 
-// WholeTree says the verdict reads every caller, in other files.
 func (ComputedBooleanArgumentDetector) WholeTree() {}
 
-// Find is every method branching on bool parameters alone whose two or more callers, one of them outside its class,
-// all compute the arguments from one object of one class.
 func (ComputedBooleanArgumentDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return php.In(codebase).
 		WhereKind("Stmt_ClassMethod").
@@ -54,6 +48,4 @@ func callersAllAskOneObject(codebase *engine.Codebase, declaration engine.Match)
 	return reachedFromOutside && len(callers) >= minCallers && len(subjects) == 1
 }
 
-// CrossFile says the rule reads more than the file it reports in, which the fixture measures by asking it
-// of one file and of the whole tree: a scoped run reads the whole scan while it is enabled.
 func (ComputedBooleanArgumentDetector) CrossFile() {}

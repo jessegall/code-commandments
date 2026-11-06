@@ -15,10 +15,8 @@ type RawRequestInputDetector struct{}
 
 func init() { detectors.Register(catalog.PHP, RawRequestInputDetector{}) }
 
-// Sin is the sin the detector finds.
 func (RawRequestInputDetector) Sin() sins.Sin { return backendsins.RawRequestInput{} }
 
-// Find is every input(), get(), query() or post() sent to a request from outside it.
 func (RawRequestInputDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return php.In(codebase).
 		Where(engine.As(func(n php.Node) bool {

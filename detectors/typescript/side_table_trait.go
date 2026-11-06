@@ -18,15 +18,10 @@ func init() {
 // SideTableTraitDetector finds a trait of a module's registered objects kept in a collection of their names.
 type SideTableTraitDetector struct{}
 
-// Sin is the sin the detector finds.
 func (SideTableTraitDetector) Sin() sins.Sin {
 	return sin.SideTableTrait{}
 }
 
-// Find is every module-level collection of names that are the names its own module's registry gives its objects,
-// and that the module then uses as a handle on them. The three together tell a side table from an ordinary list
-// of words: the names are the registry's, there is more than one object to be a type's, and the module reaches
-// for the objects through them rather than holding a vocabulary that happens to look alike.
 func (SideTableTraitDetector) Find(codebase *engine.Codebase) []engine.Match {
 	declarations := byFile(typescript.In(codebase).
 		WhereKind("VariableDeclaration").
@@ -58,7 +53,6 @@ func (SideTableTraitDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return found
 }
 
-// byFile groups matches by the file they stand in, so a module is read against itself alone.
 func byFile(matches []engine.Match) map[string][]engine.Match {
 	grouped := map[string][]engine.Match{}
 
@@ -69,8 +63,6 @@ func byFile(matches []engine.Match) map[string][]engine.Match {
 	return grouped
 }
 
-// registeredNames is every name the module's own registries give the objects they hold, under whichever property
-// carries it.
 func registeredNames(declared []engine.Match) []string {
 	var registered []string
 
@@ -83,8 +75,6 @@ func registeredNames(declared []engine.Match) []string {
 	return registered
 }
 
-// namesInstances says whether every member of the collection names a registered object: one stray member and it
-// is a vocabulary of its own, not a table about them.
 func namesInstances(members, registered []string) bool {
 	for _, member := range members {
 		if !slices.Contains(registered, member) {
@@ -95,8 +85,6 @@ func namesInstances(members, registered []string) bool {
 	return true
 }
 
-// asksAboutOne says whether the module asks the collection whether it holds one object — the question a trait
-// answers, and the only use of it that a caller's own choice of what to act on cannot also look like.
 func asksAboutOne(calls []engine.Match, held string) bool {
 	if held == "" {
 		return false

@@ -14,10 +14,8 @@ type IfElseLadderDetector struct{}
 
 func init() { detectors.Register(catalog.PHP, IfElseLadderDetector{}) }
 
-// Sin is the sin the detector finds.
 func (IfElseLadderDetector) Sin() sins.Sin { return backendsins.IfElseLadder{} }
 
-// Find is every if with two or more elseifs.
 func (IfElseLadderDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return php.In(codebase).
 		Where(engine.As(php.Node.IsIfElseLadder)).

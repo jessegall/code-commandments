@@ -16,12 +16,10 @@ func init() {
 	detectors.Register(catalog.Python, ConstructorSideEffectDetector{})
 }
 
-// Sin is the sin the detector finds.
 func (ConstructorSideEffectDetector) Sin() sins.Sin {
 	return pysins.ConstructorSideEffect{}
 }
 
-// Find is every place the sin is committed.
 func (ConstructorSideEffectDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return py.In(codebase).
 		WhereClass().

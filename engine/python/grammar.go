@@ -9,14 +9,6 @@ import (
 	"github.com/jessegall/code-commandments/engine"
 )
 
-// typeName is the type an expression has: the class mypy resolved it to, and the class the node itself names where
-// mypy typed nothing, which is the only answer anything here had before.
-//
-// Python registered no TypeOf at all, so every reading of a Python expression's type fell through to the class the
-// NODE names — which a class name answers and a variable holding an instance never does. The fact was there and
-// unread the whole time: the bridge records what mypy typed for every expression it typed, by its byte span, the
-// contract carries it on the node, and the decorator already reads it. Every rule asking `type` or `typeLike` of
-// Python, and every detector asking a receiver what it holds, was answered no.
 func typeName(node engine.Match) string {
 	if class, typed := (Node{Match: node}).ResolvedClass(); typed {
 		return class
@@ -25,9 +17,6 @@ func typeName(node engine.Match) string {
 	return node.Class()
 }
 
-// assignedName is the name an assignment gives the one thing it declares: a dataclass field, `state: TaskState`,
-// is an AnnAssign carrying no name of its own, with the name on its target. Nothing answered this for Python, so
-// every reader asking a type's members by name — whose field is this among them — found a class's fields nameless.
 func assignedName(statement engine.Match) string {
 	targets := append(statement.ChildrenIn("target"), statement.ChildrenIn("targets")...)
 	if len(targets) != 1 || targets[0].Kind() != "Name" {
@@ -37,12 +26,6 @@ func assignedName(statement engine.Match) string {
 	return targets[0].Name()
 }
 
-// receiver is what a node is sent to: the value an attribute is read from, and, for a CALL, what the attribute it
-// calls is sent to — the `orders` of `orders.save()`.
-//
-// A call is its own node here, where PHP's method call is one node holding both, so without the second step a rule
-// asking what a call is sent to was answered nothing in Python while being answered the object in PHP. Go reads a
-// call the same way through its own grammar, so this is the shape the question already had.
 func receiver(node engine.Match) engine.Match {
 	if node.Kind() == "Call" {
 		return node.Child("func").Child("value")
@@ -51,10 +34,8 @@ func receiver(node engine.Match) engine.Match {
 	return node.Child("value")
 }
 
-// protocols are the classes a class lists among its bases to declare itself a protocol.
 var protocols = []string{"typing.Protocol", "typing_extensions.Protocol"}
 
-// abstractions are the classes a class inherits from to be an abstract base: its contract, for whoever subclasses it.
 var abstractions = []string{"abc.ABC"}
 
 func init() {
@@ -85,14 +66,11 @@ func init() {
 		Implicit:    implicit,
 		NamespaceOf: func(symbol string) string { return engine.Before(symbol, ".") },
 		Continues:   func(branch engine.Match) bool { return Node{Match: branch}.IsElif() },
-		// Python hangs a body straight off its construct, so its statements are the children of the field and
-		// there is no block to read through.
 		Body:        engine.InFields("body"),
 		Otherwise:   engine.InFields("orelse"),
 		Condition:   condition,
 		ElementName: elementName,
-		// Python files every operator under one of five kinds, an augmented assignment among them.
-		Computes: engine.KindIn("BinOp", "BoolOp", "Compare", "UnaryOp", "AugAssign"),
+		Computes:    engine.KindIn("BinOp", "BoolOp", "Compare", "UnaryOp", "AugAssign"),
 		ComparisonSubject: func(held engine.Match) engine.Match {
 			subject, _ := Node{Match: held}.ComparisonSubject()
 
@@ -102,8 +80,6 @@ func init() {
 
 }
 
-// testFile says whether a Python file is a test's, as pytest collects them: by the project's own python_files, else
-// `test_*.py` and `*_test.py`; a conftest.py, or any file under a tests folder.
 func testFile(file, path string) bool {
 	name := filepath.Base(file)
 	if name == "conftest.py" || engine.InFolderNamed(file, "tests", "test") {
@@ -117,8 +93,6 @@ func testFile(file, path string) bool {
 	})
 }
 
-// docTags are the tags a docstring carries: each Sphinx field (`:param x:`, `:deprecated:`) and directive
-// (`.. deprecated::`) by its name, and each Google or NumPy section (`Args:`, `Raises:`) by its heading in lower case.
 func docTags(definition engine.Match) []string {
 	text, documented := Node{Match: definition}.Docstring()
 	if !documented {
@@ -143,8 +117,6 @@ func docTags(definition engine.Match) []string {
 	return tags
 }
 
-// values are the values a call is handed: its positional arguments, starred ones included, then its keyword
-// arguments' values.
 func values(call engine.Match) []engine.Match {
 	handed := call.ChildrenIn("args")
 	for _, keyword := range call.ChildrenIn("keywords") {
@@ -154,8 +126,6 @@ func values(call engine.Match) []engine.Match {
 	return handed
 }
 
-// constructed is the class a call creates an instance of: its callee, when mypy says calling it builds one, or
-// when it resolves to a class.
 func constructed(call engine.Match) engine.Match {
 	if !call.Is(engine.Call) {
 		return engine.Match{}
@@ -182,7 +152,6 @@ func constructed(call engine.Match) engine.Match {
 	return engine.Match{}
 }
 
-// callers are the calls the program's call graph finds reaching a def.
 func callers(def engine.Match) []engine.Match {
 	var calls []engine.Match
 	for _, call := range Of(def.Codebase()).CallersOf(Node{Match: def}) {
@@ -192,7 +161,6 @@ func callers(def engine.Match) []engine.Match {
 	return calls
 }
 
-// decorators are the names of the decorators a definition carries: a called one by what it calls.
 func decorators(definition engine.Match) []engine.Match {
 	var names []engine.Match
 	for _, decorator := range definition.ChildrenIn("decorator_list") {
@@ -206,8 +174,6 @@ func decorators(definition engine.Match) []engine.Match {
 	return names
 }
 
-// classKind is a protocol for a class listing Protocol among its bases, an enum for one the program knows as an
-// enum, and a class otherwise.
 func classKind(class engine.Match) string {
 	for _, base := range class.Extends() {
 		if slices.ContainsFunc(protocols, base.Names) {
@@ -222,7 +188,6 @@ func classKind(class engine.Match) string {
 	return "class"
 }
 
-// parameters are the parameters a def or lambda declares.
 func parameters(function engine.Match) []engine.Match {
 	var declared []engine.Match
 	for _, parameter := range (Node{Match: function}).Parameters() {
@@ -232,7 +197,6 @@ func parameters(function engine.Match) []engine.Match {
 	return declared
 }
 
-// members are what a class body declares: its statements less a docstring and a bare pass, which declare nothing.
 func members(class engine.Match) []engine.Match {
 	var declared []engine.Match
 	for at, statement := range class.ChildrenIn("body") {
@@ -246,7 +210,6 @@ func members(class engine.Match) []engine.Match {
 	return declared
 }
 
-// bases are the classes a class inherits from, each by what it names: a generic base, Repo[User], names Repo.
 func bases(class engine.Match) []engine.Match {
 	var named []engine.Match
 	for _, base := range class.ChildrenIn("bases") {
@@ -260,8 +223,6 @@ func bases(class engine.Match) []engine.Match {
 	return named
 }
 
-// implicit says whether Python itself calls the def or binds the parameter: a dunder method such as __init__, or
-// the first parameter of a method, self or cls, that a static method does not take.
 func implicit(declaration engine.Match) bool {
 	if declaration.Is(engine.Function) {
 		return Node{Match: declaration}.IsDunder()
@@ -277,8 +238,6 @@ func implicit(declaration engine.Match) bool {
 	return len(declared) > 0 && declared[0].Node() == declaration.Node()
 }
 
-// contracts are the bases a class honours as contracts rather than inherits from: a Protocol, or an abstract base
-// class, one inheriting abc.ABC or made by the ABCMeta metaclass.
 func contracts(class engine.Match) []engine.Match {
 	var honoured []engine.Match
 	for _, base := range bases(class) {
@@ -290,7 +249,6 @@ func contracts(class engine.Match) []engine.Match {
 	return honoured
 }
 
-// isContract says whether the class the symbol names is a Protocol or an abstract base class.
 func isContract(from engine.Match, symbol string) bool {
 	for _, declaration := range from.Codebase().Declarations(symbol) {
 		if declaration.Is(engine.TypeDeclaration) && (classKind(declaration) == "protocol" || isAbstract(declaration)) {
@@ -301,7 +259,6 @@ func isContract(from engine.Match, symbol string) bool {
 	return false
 }
 
-// isAbstract says whether the class is an abstract base: it inherits abc.ABC or its metaclass is ABCMeta.
 func isAbstract(class engine.Match) bool {
 	for _, keyword := range class.ChildrenIn("keywords") {
 		if keyword.Name() == "metaclass" && keyword.Child("value").Names("abc.ABCMeta") {
@@ -312,8 +269,6 @@ func isAbstract(class engine.Match) bool {
 	return slices.ContainsFunc(class.Lineage(), func(ancestor string) bool { return slices.Contains(abstractions, ancestor) })
 }
 
-// condition is what a branch or a loop decides by: an `if`'s and a `while`'s test. A `match` decides by matching
-// its subject against patterns, which is no condition and has no inverse, and a `for` decides by nothing.
 func condition(held engine.Match) engine.Match {
 	if !slices.Contains([]string{"If", "IfExp", "While"}, held.Kind()) {
 		return engine.Match{}
@@ -322,8 +277,6 @@ func condition(held engine.Match) engine.Match {
 	return held.Child("test")
 }
 
-// elementName is the name a `for` binds for each item: the `line` of `for line in order.lines:`. Nothing for a
-// `while`, and nothing for a loop that unpacks its item into a tuple, since no one name holds it.
 func elementName(loop engine.Match) string {
 	if loop.Kind() != "For" && loop.Kind() != "AsyncFor" {
 		return ""

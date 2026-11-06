@@ -7,7 +7,6 @@ import (
 	"sync"
 )
 
-// numeric is a string PHP's is_numeric accepts: a decimal or exponent number, whitespace around it.
 var numeric = regexp.MustCompile(`^\s*[+-]?(?:\d+\.?\d*|\.\d+)(?:[eE][+-]?\d+)?\s*$`)
 
 // vocabulary is which parameter slots the program fills with a named class constant, and from which classes.
@@ -16,10 +15,6 @@ type vocabulary struct {
 	classes map[string][]Node
 }
 
-// ConstantFor is the constant that already names the string literal handed to the call, `Token.BRACE_OPEN`; none
-// when the slot it fills is never spelled by name, which is the answer for almost every string. Indexing slots
-// rather than values is what makes a raw string decidable: a slot filled with `Token.COLON` in one place and "{"
-// in another, while `Token.BRACE_OPEN` holds "{", is the codebase contradicting itself.
 func (p *Program) ConstantFor(call, literal Node) (string, bool) {
 	p.vocabulary.once.Do(p.readVocabularies)
 	value, _ := literal.Text()
@@ -37,7 +32,6 @@ func (p *Program) ConstantFor(call, literal Node) (string, bool) {
 	return "", false
 }
 
-// readVocabularies maps every slot some call fills with `Class.CONSTANT` to the classes those constants belong to.
 func (p *Program) readVocabularies() {
 	p.vocabulary.classes = map[string][]Node{}
 	for _, module := range p.modules {
@@ -63,7 +57,6 @@ func (p *Program) readVocabularies() {
 	}
 }
 
-// slotsFilled is what the call hands each parameter of the def it reaches, keyed `declaration#parameter`.
 func (p *Program) slotsFilled(call Node) map[string]Node {
 	target, ok := p.TargetOf(call)
 	bound, bindable := p.ArgumentsAt(call)
@@ -78,8 +71,6 @@ func (p *Program) slotsFilled(call Node) map[string]Node {
 	return slots
 }
 
-// StringConstants is the class's public string constants by the value they hold, the first name for a value
-// kept: `{"{": "BRACE_OPEN"}`. A value that reads as a number names nothing.
 func (n Node) StringConstants() map[string]string {
 	constants := map[string]string{}
 	for _, statement := range n.ChildrenIn("body") {

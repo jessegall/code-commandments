@@ -13,7 +13,6 @@ func init() {
 // RedundantArrowReturnTypeScribe takes the return type off an arrow function whose body already says it.
 type RedundantArrowReturnTypeScribe struct{}
 
-// Rewrite drops each arrow function's return type.
 func (RedundantArrowReturnTypeScribe) Rewrite(findings []engine.Match, _ *engine.Codebase) (scribes.Rewrites, error) {
 	draft := scribes.NewDraft()
 	for _, finding := range findings {

@@ -13,20 +13,15 @@ import (
 	backendsins "github.com/jessegall/code-commandments/sins/backend"
 )
 
-// DerivedArgumentDetector finds arguments every caller derives from an object it also passes, or reassembles from
-// one object three or more times over: the callee should take the object and derive them itself.
+// DerivedArgumentDetector finds arguments every caller derives from an object it also passes, or reassembles from one object three or more times over: the callee should take the object and derive them itself.
 type DerivedArgumentDetector struct{}
 
 func init() { detectors.Register(catalog.PHP, DerivedArgumentDetector{}) }
 
-// reassembled is how many scalar slots one call must fill from one object for them to be that object taken apart.
 const reassembled = 3
 
-// Sin is the sin the detector finds.
 func (DerivedArgumentDetector) Sin() sins.Sin { return backendsins.DerivedArgument{} }
 
-// Find is every call filling a slot redundantly, where every call site of that slot does and no caller of that
-// method name went unread.
 func (DerivedArgumentDetector) Find(codebase *engine.Codebase) []engine.Match {
 	types := php.TypesOf(codebase)
 	redundant := map[string][]engine.Match{}
@@ -75,8 +70,6 @@ func slotName(owner, method string, position int) string {
 	return owner + "::" + method + "#" + strconv.Itoa(position)
 }
 
-// redundantPositions is every argument position of the call filled from an object the call also passes whole, or
-// from one object that fills three or more scalar slots.
 func redundantPositions(codebase *engine.Codebase, call engine.Match, owner, method string) []int {
 	types := php.TypesOf(codebase)
 	whole := map[string]bool{}
@@ -113,7 +106,6 @@ func redundantPositions(codebase *engine.Codebase, call engine.Match, owner, met
 	return positions
 }
 
-// describesItself says whether the subject is the calling class's own instance: passing it on is no derivation.
 func describesItself(codebase *engine.Codebase, subject, call engine.Match) bool {
 	self := php.EnclosingClassName(call)
 	if !(php.Node{Match: call}).EnclosingFunctionLike().Exists() || self == "" {
@@ -124,8 +116,6 @@ func describesItself(codebase *engine.Codebase, subject, call engine.Match) bool
 	return resolved == "self" || resolved == "static" || resolved == self
 }
 
-// wouldInvertADependency says whether handing the callee the subject's type would make its namespace reference one
-// that already references it.
 func wouldInvertADependency(codebase *engine.Codebase, owner string, subject, call engine.Match) bool {
 	if !(php.Node{Match: call}).EnclosingFunctionLike().Exists() || php.EnclosingClassName(call) == "" {
 		return false
@@ -134,8 +124,6 @@ func wouldInvertADependency(codebase *engine.Codebase, owner string, subject, ca
 	return namespaces.Of(codebase).WouldCloseACycle(owner, php.TypesOf(codebase).TypeOf(subject))
 }
 
-// adapts says whether the call maps the subject onto the callee across two namespaces that know nothing of each
-// other, from a third that knows both: handing the callee the subject's type would couple them.
 func adapts(codebase *engine.Codebase, owner string, subject, call engine.Match) bool {
 	caller := php.EnclosingClassName(call)
 	if !(php.Node{Match: call}).EnclosingFunctionLike().Exists() || caller == "" {
@@ -145,8 +133,6 @@ func adapts(codebase *engine.Codebase, owner string, subject, call engine.Match)
 	return namespaces.Of(codebase).WouldCoupleIndependent(caller, owner, php.TypesOf(codebase).TypeOf(subject))
 }
 
-// buildsItsOwnType says whether the call builds the class it is written in: a new of it, or a call to one of its own
-// named constructors, as one named constructor hands its parts to another.
 func buildsItsOwnType(codebase *engine.Codebase, call engine.Match, owner, method string) bool {
 	self := php.EnclosingClassName(call)
 	if built := (php.Node{Match: call}).ConstructedClass(); built != "" {
@@ -161,8 +147,6 @@ func buildsItsOwnType(codebase *engine.Codebase, call engine.Match, owner, metho
 	return ok && (php.Node{Match: constructor}).IsNamedConstructor()
 }
 
-// subjectOf is the object a positional argument is derived from: a variable or class passed whole, or the one
-// variable or class a read or call reads; no node when there is none.
 func subjectOf(argument engine.Match) engine.Match {
 	if slices.Contains(argument.Node().Flags, "spread") || argument.Child("name").Exists() {
 		return engine.Match{}
@@ -198,5 +182,4 @@ func subjectOf(argument engine.Match) engine.Match {
 	return engine.Match{}
 }
 
-// CrossFile says the PHP tool finds it reaching beyond the file it judges, so a per-file check must not ask it.
 func (DerivedArgumentDetector) CrossFile() {}

@@ -1,6 +1,4 @@
-// Package library publishes the curriculum into a project: every skill the project can use, copied from the
-// binary into its skill library (.agents/skills), beside the map of them all and the briefing that names
-// them. What it published last time and no longer publishes is taken away; nothing else there is touched.
+// Package library publishes the curriculum into a project: every skill the project can use, copied from the binary into its skill library (.agents/skills), beside the map of them all and the briefing that names them.
 package library
 
 import (
@@ -22,14 +20,10 @@ import (
 	"github.com/jessegall/code-commandments/skills"
 )
 
-// Dir is the project's skill library, under its root.
 const Dir = ".agents/skills"
 
-// generated is the folder of the curriculum rendered from the skills; every other folder beside it is a
-// hand-written skill.
 const generated = "commandments"
 
-// manifest lists what the last sync published, under the project's shared folder.
 const manifest = "published-skills"
 
 // Library is a project's skill library.
@@ -40,30 +34,22 @@ type Library struct {
 	previous []string
 }
 
-// At is the library of the project at root, publishing for the languages its config says it writes.
 func At(root string, project config.Config) Library {
 	return For(root, root, project)
 }
 
-// For is a library written at root for the project at judged. The two are the same folder wherever the project
-// publishes its own, and differ for the journal's plugin, which renders the curriculum into its own folder for
-// the journal to copy: what a skill tells an agent to RUN is then the JUDGED project's invocation, never that of
-// the folder the files happen to be written in.
 func For(root, judged string, project config.Config) Library {
 	return Library{root, judged, project, readManifest(root)}
 }
 
-// Dir is the library's folder.
 func (l Library) Dir() string {
 	return filepath.Join(l.root, Dir)
 }
 
-// Path is the folder of the skill with the id.
 func (l Library) Path(id string) string {
 	return filepath.Join(l.Dir(), id)
 }
 
-// Publish writes every skill the project can use into the library, the map first, and answers their ids.
 func (l Library) Publish() ([]string, error) {
 	var ids []string
 
@@ -91,8 +77,6 @@ func (l Library) Publish() ([]string, error) {
 		}
 	}
 
-	// The project's own skills live with the project, which is not the library's folder when the journal's plugin
-	// renders the curriculum into its own.
 	for _, own := range custom.InForce(l.judged).Skills {
 		id := own.Definition().ID()
 
@@ -106,7 +90,6 @@ func (l Library) Publish() ([]string, error) {
 	return ids, writeManifest(l.root, ids)
 }
 
-// keepWrittenLanguages drops the examples for languages the project does not write from a published skill.
 func (l Library) keepWrittenLanguages(file string) {
 	if len(l.project.DisabledLanguages) == 0 {
 		return
@@ -120,9 +103,6 @@ func (l Library) keepWrittenLanguages(file string) {
 	atomic.Write(file, KeepSections(string(text), l.project))
 }
 
-// Reconcile removes from dir every skill the last sync published that this one did not: renamed, retired,
-// or a project's own that is gone. A folder the tool never put there is left where it is, even one named like
-// ours: a project may hand-place a skill in its own library, and a publish is not entitled to it.
 func (l Library) Reconcile(dir string, current []string) {
 	for _, stale := range l.previous {
 		if !slices.Contains(current, stale) {
@@ -131,17 +111,10 @@ func (l Library) Reconcile(dir string, current []string) {
 	}
 }
 
-// Withdraw takes away every skill the last sync published and publishes none, for a project where the agent
-// journal publishes them instead: the tool is installed as its plugin, the journal copies the plugin's own
-// rendered skills into the agents' folders and takes them away again when the plugin goes. Two publishers of one
-// path would fight over it, so this side stands aside and leaves nothing of its own behind. A folder the tool
-// never put there is left alone, as it is on any other run.
 func (l Library) Withdraw() {
 	l.Reconcile(l.Dir(), nil)
 }
 
-// standalone are the hand-written skills the binary ships, by slug: every folder beside the generated one
-// that holds a SKILL.md.
 func standalone() []string {
 	entries, _ := fs.ReadDir(skills.Files, ".")
 
@@ -160,14 +133,10 @@ func standalone() []string {
 	return slugs
 }
 
-// copied copies the embedded folder into to, recursively, and says whether every file arrived.
 func (l Library) copied(from, to string) bool {
 	return copiedFrom(skills.Files, from, to, l.naming)
 }
 
-// naming is the published text with the executable named as the judged project runs it. The curriculum is
-// rendered once, into the binary, so a skill cannot know which file an agent will be told to run; it writes the
-// placeholder and the answer is given here, where the project is known.
 func (l Library) naming(text []byte) []byte {
 	return []byte(strings.NewReplacer(
 		Binary, binary.Invocation(l.judged),
@@ -175,9 +144,6 @@ func (l Library) naming(text []byte) []byte {
 	).Replace(string(text)))
 }
 
-// copiedFrom copies the folder from, in the file system files, into to, recursively, and says whether every
-// file arrived. The folder is the skill's as it stands: a file an earlier version published there and this one
-// does not, a reference page since dropped, is taken away rather than left for an agent to read as current.
 func copiedFrom(files fs.FS, from, to string, naming func([]byte) []byte) bool {
 	all := true
 	published := map[string]bool{}

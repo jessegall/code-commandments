@@ -11,7 +11,6 @@ type ConstClassEnum struct{}
 
 func init() { sins.Register(catalog.PHP, ConstClassEnum{}) }
 
-// Definition is what the sin states about itself.
 func (ConstClassEnum) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "const-class-enum",

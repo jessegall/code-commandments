@@ -13,7 +13,6 @@ func init() {
 	sins.Register(catalog.Python, PhantomNullable{})
 }
 
-// Definition is what the sin states about itself.
 func (PhantomNullable) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "python-phantom-nullable",

@@ -9,7 +9,6 @@ import (
 	pysins "github.com/jessegall/code-commandments/sins/python"
 )
 
-// duplicateWeight is how many nodes a body must weigh before two alike are not a coincidence.
 const duplicateWeight = 12
 
 // DuplicateFunctionDetector finds two or more defs with the same body.
@@ -19,12 +18,10 @@ func init() {
 	detectors.Register(catalog.Python, DuplicateFunctionDetector{})
 }
 
-// Sin is the sin the detector finds.
 func (DuplicateFunctionDetector) Sin() sins.Sin {
 	return pysins.DuplicateFunction{}
 }
 
-// Find is every place the sin is committed.
 func (DuplicateFunctionDetector) Find(codebase *engine.Codebase) []engine.Match {
 	candidates := py.In(codebase).
 		WhereFunction().
@@ -35,18 +32,14 @@ func (DuplicateFunctionDetector) Find(codebase *engine.Codebase) []engine.Match 
 	return flatten(engine.RecurringBuckets(candidates, bodyHash, 2))
 }
 
-// bodyHash is the fingerprint a def's body is grouped by.
 func bodyHash(match engine.Match) (string, bool) {
 	return py.Node{Match: match}.BodyHash(), true
 }
 
-// GroupKey groups a finding with the defs whose body it repeats.
 func (DuplicateFunctionDetector) GroupKey(match engine.Match) (string, bool) {
 	hash, _ := bodyHash(match)
 
 	return hash, hash != ""
 }
 
-// CrossFile says the rule reads more than the file it reports in, which the fixture measures by asking it
-// of one file and of the whole tree: a scoped run reads the whole scan while it is enabled.
 func (DuplicateFunctionDetector) CrossFile() {}

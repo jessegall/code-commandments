@@ -11,7 +11,6 @@ type MassUpdateAtCallSite struct{}
 
 func init() { sins.Register(catalog.PHP, MassUpdateAtCallSite{}) }
 
-// Definition is what the sin states about itself.
 func (MassUpdateAtCallSite) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "mass-update-at-call-site",

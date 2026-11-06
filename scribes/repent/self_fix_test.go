@@ -13,7 +13,6 @@ import (
 	"github.com/jessegall/code-commandments/skill"
 )
 
-// ownRule is a project's TypeScript rule, with the fix given or none.
 func ownRule(t *testing.T, name, find, fix string) rule.Rule {
 	t.Helper()
 

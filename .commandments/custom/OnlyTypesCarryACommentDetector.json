@@ -1,0 +1,36 @@
+{
+  "engine": "go",
+  "sin": {
+    "name": "comment-not-on-a-type",
+    "description": "A comment anywhere but above a type: inline, above a function, above a const, inside a body.",
+    "skill": "comments-only-on-types"
+  },
+  "find": {
+    "select": "comment",
+    "reject": [
+      {
+        "documents": {
+          "is": "type-declaration"
+        }
+      },
+      {
+        "documents": {
+          "child": {
+            "is": "type-declaration"
+          }
+        }
+      },
+      {
+        "documents": {
+          "kind": "File"
+        }
+      },
+      {
+        "commentLike": "//go:*"
+      },
+      {
+        "commentLike": "*Code generated*"
+      }
+    ]
+  }
+}

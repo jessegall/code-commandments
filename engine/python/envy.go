@@ -6,11 +6,6 @@ import (
 	"github.com/jessegall/code-commandments/engine"
 )
 
-// EnviedParameter is the parameter a method envies: one other object it was handed that it reaches through more
-// than its own state, looping its collection or writing its fields, work that belongs on that object. None when
-// it envies nothing. On the backend's signals and no names: a class filling in its base's contract is a
-// polymorphic component, a method that builds a class is a mapper, and a loop that hands each element to one of
-// the method's own collaborators is orchestration.
 func (p *Program) EnviedParameter(method Node) (string, bool) {
 	class, bound := method.BoundClass()
 	if !bound || p.fillsAContract(class) || p.constructs(method) {
@@ -38,22 +33,16 @@ func (p *Program) EnviedParameter(method Node) (string, bool) {
 	return envied, iterates || mutates
 }
 
-// BoundClass is the class an instance method or classmethod is bound to; none for a function, a staticmethod or
-// a method that takes no parameter.
 func (n Node) BoundClass() (Node, bool) {
 	class := n.Parent()
 
 	return class, n.IsMethod() && !n.IsStatic() && len(n.Parameters()) > 0
 }
 
-// fillsAContract says whether the class fills in a contract its base declares, overriding one of its methods,
-// dunders aside: a polymorphic component whose behaviour is meant to act on other types.
 func (p *Program) fillsAContract(class Node) bool {
 	return slices.ContainsFunc(class.Methods(), func(member Node) bool { return !member.IsDunder() && p.IsOverride(member) })
 }
 
-// constructs says whether the method builds a class the program declares: a mapper or a factory, whose job is to
-// read another object.
 func (p *Program) constructs(method Node) bool {
 	return slices.ContainsFunc(method.ExpressionsIn(), func(expression Node) bool {
 		callee := expression.Callee().DottedName()
@@ -62,15 +51,12 @@ func (p *Program) constructs(method Node) bool {
 	})
 }
 
-// iterates says whether the method loops over a collection of the name: `for line in order.lines`, or a
-// comprehension over it.
 func (p *Program) iterates(method Node, name string) bool {
 	return len(method.LoopsOver(name)) > 0 || slices.ContainsFunc(method.ExpressionsIn(), func(expression Node) bool {
 		return expression.Kind() == "comprehension" && expression.Child("iter").ProjectionRoot() == name
 	})
 }
 
-// mutates says whether the method writes one of the name's attributes: `order.status = …`, `order.total += …`.
 func (n Node) mutates(name string) bool {
 	for _, statement := range n.statementsIn() {
 		for _, target := range statement.writtenTargets() {
@@ -83,11 +69,6 @@ func (n Node) mutates(name string) bool {
 	return false
 }
 
-// delegatesElements says whether each loop passes its element on instead of working it out: the reading is
-// engine.PassesItsElementOn, one for every language and the same in all of them.
-//
-// Python used to answer this itself, pardoning a call reached through `self`; the shared reading asks instead
-// whether the element reaches a call whole, which covers a collaborator the method was handed as well.
 func (n Node) delegatesElements(loops []Node, _ string) bool {
 	if len(loops) == 0 {
 		return false
@@ -96,7 +77,6 @@ func (n Node) delegatesElements(loops []Node, _ string) bool {
 	return !slices.ContainsFunc(loops, func(loop Node) bool { return !engine.PassesItsElementOn(loop.Match) })
 }
 
-// bodyExpressions is every evaluated expression inside a loop's body.
 func (n Node) bodyExpressions() []Node {
 	var within []Node
 	for _, statement := range n.ChildrenIn("body") {
@@ -106,8 +86,6 @@ func (n Node) bodyExpressions() []Node {
 	return within
 }
 
-// AttributeReachesOn is how many times the def reaches an attribute through each of the names: `order.total`
-// counts once for `order`.
 func (n Node) AttributeReachesOn(names []string) map[string]int {
 	reaches := map[string]int{}
 	for _, expression := range n.ExpressionsWithin() {
@@ -119,7 +97,6 @@ func (n Node) AttributeReachesOn(names []string) map[string]int {
 	return reaches
 }
 
-// LoopsOver is every for loop in the def whose iterable projects from the name: `for line in order.lines`.
 func (n Node) LoopsOver(name string) []Node {
 	var loops []Node
 	for _, statement := range n.statementsIn() {
@@ -131,8 +108,6 @@ func (n Node) LoopsOver(name string) []Node {
 	return loops
 }
 
-// ProjectionRoot is the name an attribute chain projects from, read through calls that take no argument:
-// `order` for `order.lines` and `order.lines.items()`; empty for anything else.
 func (n Node) ProjectionRoot() string {
 	switch n.Kind() {
 	case "Attribute":
@@ -150,7 +125,6 @@ func (n Node) ProjectionRoot() string {
 	return ""
 }
 
-// RootName is the name an attribute, index or call chain starts from: `order` for `order.lines[0].total()`.
 func (n Node) RootName() string {
 	switch n.Kind() {
 	case "Name":
@@ -164,13 +138,10 @@ func (n Node) RootName() string {
 	return ""
 }
 
-// ExpressionsIn is every expression the node evaluates, its own decorators included.
 func (n Node) ExpressionsIn() []Node {
 	return n.evaluatedIn()
 }
 
-// ExpressionsWithin is every expression a def's parameters and body, or a class's body, evaluate, nested
-// definitions included, the node's own head aside: its decorators, and a class's bases and keywords.
 func (n Node) ExpressionsWithin() []Node {
 	var within []Node
 	for _, child := range n.Children() {
@@ -182,7 +153,6 @@ func (n Node) ExpressionsWithin() []Node {
 	return within
 }
 
-// evaluatedIn is the node, when it is an evaluated expression, and every evaluated expression below it.
 func (n Node) evaluatedIn() []Node {
 	var evaluated []Node
 	for _, node := range append([]Node{n}, n.Descendants()...) {
@@ -194,12 +164,8 @@ func (n Node) evaluatedIn() []Node {
 	return evaluated
 }
 
-// factTypes is the types a fact comes back as: a plain answer, not an object to go on working with.
 var factTypes = []string{"bool", "int", "float", "str", "list", "dict", "set", "tuple", "frozenset"}
 
-// IsLookupEnvious says whether the method uses its one owned parameter's identity as a key to fetch a fact about
-// it through one of its own collaborators, `self.registry.get(node.key).reserved`: the object is treated as a key
-// into its own data, so the fact belongs on it.
 func (p *Program) IsLookupEnvious(method Node) bool {
 	class, bound := method.BoundClass()
 	if !bound || !slices.Contains(factTypes, method.ReturnedTypeName()) {
@@ -216,8 +182,6 @@ func (p *Program) IsLookupEnvious(method Node) bool {
 	})
 }
 
-// ReturnedTypeName is the dotted name the def's written return type spells, a subscript's own: `list` for
-// `list[int]`; empty when it writes none.
 func (n Node) ReturnedTypeName() string {
 	returns := n.Child("returns")
 	if returns.Kind() == "Subscript" {
@@ -227,8 +191,6 @@ func (n Node) ReturnedTypeName() string {
 	return returns.DottedName()
 }
 
-// usedOnlyThroughAttributes says whether every mention of the name in the method is an attribute read off it.
-// Handed on whole, an argument or a return, it is a subject the method works with, not a key.
 func (n Node) usedOnlyThroughAttributes(name string) bool {
 	mentioned := false
 	for _, read := range n.ExpressionsIn() {
@@ -244,9 +206,6 @@ func (n Node) usedOnlyThroughAttributes(name string) bool {
 	return mentioned
 }
 
-// readsAFetchKeyedBy says whether the read is an attribute of a fetch made on one of self's collaborators,
-// `self.registry.get(…)` or `self.specs[…]`, keyed by an attribute of the name that is no enum. Keyed by an enum
-// field, the fetch picks a strategy for a whole family of objects, which is dispatch.
 func (p *Program) readsAFetchKeyedBy(read Node, self, name string) bool {
 	if read.Kind() != "Attribute" {
 		return false
@@ -278,7 +237,6 @@ func (p *Program) readsAFetchKeyedBy(read Node, self, name string) bool {
 	return len(reads) > 0 && slices.ContainsFunc(reads, func(key Node) bool { return !p.isEnumField(key) })
 }
 
-// isEnumField says whether mypy types the key as a member of an enum the program declares.
 func (p *Program) isEnumField(key Node) bool {
 	resolved := key.Node().Resolved
 	if resolved == nil || resolved.Kind != "named" {

@@ -16,9 +16,7 @@ import (
 	"github.com/jessegall/code-commandments/skill/render"
 )
 
-// Marked is one marked piece of a fixture as a worked example shows it: the code, the file it is in, the lines it
-// spans there, the comment line that names where it came from (none when empty), and what a Bad and a Good must
-// share to be one before and after — the type for PHP, else the file.
+// Marked is one marked piece of a fixture as a worked example shows it: the code, the file it is in, the lines it spans there, the comment line that names where it came from (none when empty), and what a Bad and a Good must share to be one before and after — the type for PHP, else the file.
 type Marked struct {
 	File     string
 	Source   string
@@ -28,7 +26,6 @@ type Marked struct {
 	Last     int
 }
 
-// shows says whether the source shows the line of the file.
 func (m Marked) shows(file string, line int) bool {
 	return m.File == file && m.First <= line && line <= m.Last
 }
@@ -52,9 +49,6 @@ func (m Marked) scenario() string {
 // sources are marked sources by the name each marker gives.
 type sources map[string][]Marked
 
-// CarveDeclarations is the worked examples a PHP fixture carves: each detector's attribute-marked declarations, the
-// sinful against its fixed repair, else its righteous look-alike, with each half's docblock lifted into comments
-// unless the skill teaches docblocks. Files marked @example tell a rule's example instead.
 func CarveDeclarations(root string, codebase *engine.Codebase, proven []detectors.Detector) render.Examples {
 	sinful, fixed, righteous := declarationSources(codebase, Sinful), declarationSources(codebase, Fixed), declarationSources(codebase, Righteous)
 	groups := recurringGroups(codebase, proven)
@@ -88,9 +82,6 @@ func CarveDeclarations(root string, codebase *engine.Codebase, proven []detector
 	return exampleFiles(root).over(examples, proven)
 }
 
-// CarveMarks is the worked examples a fixture marked in comments carves: each detector's @sin sources against its
-// @fixed repair, else its @righteous look-alike, one example per language the rule is marked in; fallback is the
-// language of an example no marked file names. Files marked @example tell a rule's example instead.
 func CarveMarks(root string, codebase *engine.Codebase, proven []detectors.Detector, fallback source.Language) render.Examples {
 	sinful, fixed, righteous := commentSources(codebase, Sinful), commentSources(codebase, Fixed), commentSources(codebase, Righteous)
 	groups := recurringGroups(codebase, proven)
@@ -103,7 +94,6 @@ func CarveMarks(root string, codebase *engine.Codebase, proven []detectors.Detec
 	return exampleFiles(root).over(examples, proven)
 }
 
-// perLanguage is one example per language the rule is marked in: a reader working in .ts needs the .ts one.
 func perLanguage(detector detectors.Detector, bad, fixed, righteous []Marked, fallback source.Language, groups map[string]map[int]string) []render.Example {
 	badByLanguage, languages := byLanguage(bad)
 	if len(languages) == 0 {
@@ -119,9 +109,6 @@ func perLanguage(detector detectors.Detector, bad, fixed, righteous []Marked, fa
 	return examples
 }
 
-// markedExample is one language's example: the pair, a resolution spanning blocks shown whole, and a recurring
-// rule's Bad shown as the group the example is anchored on. everyBad is the rule's sinful sources in every
-// language, since a recurring group may cross from a module into a template.
 func markedExample(detector detectors.Detector, bad, fixed, righteous []Marked, language source.Language, everyBad []Marked, groups map[string]map[int]string) render.Example {
 	resolution := resolutionOf(bad, fixed)
 	good := resolution
@@ -143,7 +130,6 @@ func markedExample(detector detectors.Detector, bad, fixed, righteous []Marked, 
 	return example
 }
 
-// byLanguage is the sources grouped by the language of their file, and the languages in the order first met.
 func byLanguage(marked []Marked) (map[source.Language][]Marked, []source.Language) {
 	grouped := map[source.Language][]Marked{}
 	var languages []source.Language
@@ -158,8 +144,6 @@ func byLanguage(marked []Marked) (map[source.Language][]Marked, []source.Languag
 	return grouped, languages
 }
 
-// recurringGroups is every recurring rule's findings in the fixture, by file and line, with the group each recurs
-// in: what tells a recurrence example which of the marked groups its Good answers.
 func recurringGroups(codebase *engine.Codebase, proven []detectors.Detector) map[string]map[string]map[int]string {
 	groups := map[string]map[string]map[int]string{}
 	for _, detector := range proven {
@@ -173,8 +157,6 @@ func recurringGroups(codebase *engine.Codebase, proven []detectors.Detector) map
 	return groups
 }
 
-// groupedByFile are the group keys the detector gives its findings, by the file and the line each sits at. A
-// finding it gives no key for belongs to no group and is left out.
 func groupedByFile(grouped detectors.Grouped, found []engine.Match) map[string]map[int]string {
 	byFile := map[string]map[int]string{}
 	for _, finding := range found {
@@ -191,9 +173,6 @@ func groupedByFile(grouped detectors.Grouped, found []engine.Match) map[string]m
 	return byFile
 }
 
-// declarationSources is every PHP declaration an attribute of the tag marks, by the name the attribute gives: the
-// tightest declaration — the function it sits in, else the type — sliced from the first comment above it, without
-// the marker lines, dedented.
 func declarationSources(codebase *engine.Codebase, tag Tag) sources {
 	marked := sources{}
 	for _, attribute := range codebase.WhereKind("Attribute").Get() {
@@ -224,8 +203,6 @@ func declarationSources(codebase *engine.Codebase, tag Tag) sources {
 	return marked
 }
 
-// declarationText is the declaration from the first comment above it, less its marker lines, dedented; with the
-// lines the declaration itself opens and closes on.
 func declarationText(declaration engine.Match) (string, int, int) {
 	span, err := declaration.Span()
 	if err != nil {
@@ -249,12 +226,8 @@ func declarationText(declaration engine.Match) (string, int, int) {
 	return dedent(kept), first, last
 }
 
-// markerWord is a marker a comment's words hold anywhere: @sin Name.
 var markerWord = regexp.MustCompile(`@(\w+)\s+(\w+)`)
 
-// commentSources is every source a comment of the tag marks, by the name it gives: a template element in a Vue
-// file, a declaration or statement in a module — each .ts, .py and .cs file and each Vue script block — with a
-// template's elements first.
 func commentSources(codebase *engine.Codebase, tag Tag) sources {
 	marked := sources{}
 	var modules []moduleSpan
@@ -289,8 +262,6 @@ func commentSources(codebase *engine.Codebase, tag Tag) sources {
 	return marked
 }
 
-// elementSources files every template element a marker comment of the tag leads: the first element after the
-// comment among the children of the node holding it, shown from the indent of its line, dedented.
 func elementSources(file *engine.File, template engine.Match, tag Tag, marked sources) {
 	text, err := file.Source()
 	if err != nil {
@@ -325,7 +296,6 @@ func elementSources(file *engine.File, template engine.Match, tag Tag, marked so
 	}
 }
 
-// holding is the innermost node under node whose span holds [start, end).
 func holding(node engine.Match, start, end int) engine.Match {
 	for _, child := range node.Children() {
 		if span := child.Node().Span; span.Start <= start && end <= span.End {
@@ -336,7 +306,6 @@ func holding(node engine.Match, start, end int) engine.Match {
 	return node
 }
 
-// elementAfter is the first element among the node's children that starts at or after the offset.
 func elementAfter(node engine.Match, offset int) (engine.Match, bool) {
 	for _, child := range node.Children() {
 		if child.Kind() == "Element" && child.Node().Span.Start >= offset {
@@ -353,9 +322,6 @@ type moduleSpan struct {
 	root engine.Match
 }
 
-// collect files every node the module's markers of the tag lead: the outermost node a marked line opens, shown as the
-// function it sits in, else the type, else itself, with the comments directly above it. A node shown twice under a
-// name is filed once.
 func (m moduleSpan) collect(tag Tag, marked sources) {
 	text, err := m.file.Source()
 	if err != nil {
@@ -423,7 +389,6 @@ func (m moduleSpan) collect(tag Tag, marked sources) {
 	}
 }
 
-// innermost is the innermost span holding [start, end).
 func innermost(spans [][2]int, start, end int) ([2]int, bool) {
 	var inner [2]int
 	found := false
@@ -436,7 +401,6 @@ func innermost(spans [][2]int, start, end int) ([2]int, bool) {
 	return inner, found
 }
 
-// commentsAbove is the run of comment lines directly above line at (1-based), in order.
 func commentsAbove(lines []string, at int, language source.Language) []string {
 	var comments []string
 	for n := at - 1; n >= 1 && strings.TrimSpace(lines[n-1]) != "" && language.IsCommentLine(lines[n-1]); n-- {
@@ -446,8 +410,6 @@ func commentsAbove(lines []string, at int, language source.Language) []string {
 	return comments
 }
 
-// markersAbove is the names in the run of marker comments of the tag above line at (1-based): blank lines and
-// markers of other tags are stepped over, anything else ends the run.
 func markersAbove(lines []string, at int, tag Tag, language source.Language) []string {
 	var names []string
 	for n := min(at-1, len(lines)); n >= 1; n-- {
@@ -456,11 +418,6 @@ func markersAbove(lines []string, at int, tag Tag, language source.Language) []s
 			continue
 		}
 		found := markerWord.FindStringSubmatch(text)
-		// A comment that is not a marker is the declaration's own documentation, which in Go stands BETWEEN a
-		// marker and what it marks: Go gives a comment group touching a declaration to that declaration, so a
-		// marker written there would make everything it marks read as documented, and the fixture writes it
-		// above the documentation with a blank line between. The walk reads past prose and stops at code, so a
-		// marker still only ever reaches the declaration it was written for.
 		if found == nil && language.IsCommentLine(lines[n-1]) {
 			continue
 		}
@@ -475,12 +432,10 @@ func markersAbove(lines []string, at int, tag Tag, language source.Language) []s
 	return names
 }
 
-// isMarkerLine says whether the line is a comment of the language holding a marker.
 func isMarkerLine(line string, language source.Language) bool {
 	return language.IsCommentLine(line) && markerWord.MatchString(strings.TrimSpace(line))
 }
 
-// forKeys is the first non-empty list of sources under the keys, in order.
 func forKeys(marked sources, keys []string) []Marked {
 	for _, key := range keys {
 		if len(marked[key]) > 0 {
@@ -491,7 +446,6 @@ func forKeys(marked sources, keys []string) []Marked {
 	return nil
 }
 
-// pair is the first bad and good of one scenario, so the before and after is one piece of code repaired.
 func pair(bad, good []Marked, language source.Language) render.Example {
 	example := render.Example{Language: language}
 	resolution, resolves := counterpart(bad, good)
@@ -505,14 +459,12 @@ func pair(bad, good []Marked, language source.Language) render.Example {
 	return example
 }
 
-// anchorOf is the sinful source the example is anchored on: the one the resolution answers, else the first.
 func anchorOf(bad, good []Marked) (Marked, bool) {
 	resolution, resolves := counterpart(bad, good)
 
 	return answered(bad, resolution, resolves)
 }
 
-// recurringOf is the sources in the one recurring group the anchor belongs to, else all of them.
 func recurringOf(marked []Marked, anchor Marked, anchored bool, groups map[string]map[int]string) []Marked {
 	if !anchored {
 		return marked
@@ -531,7 +483,6 @@ func recurringOf(marked []Marked, anchor Marked, anchored bool, groups map[strin
 	return recurring
 }
 
-// groupOf is the group of a finding inside the lines the source shows, the lowest line first.
 func groupOf(marked Marked, groups map[string]map[int]string) (string, bool) {
 	lines := make([]int, 0, len(groups[marked.File]))
 	for line := range groups[marked.File] {
@@ -547,8 +498,6 @@ func groupOf(marked Marked, groups map[string]map[int]string) (string, bool) {
 	return "", false
 }
 
-// resolutionOf is the resolutions that together form one fix: the counterpart of the sinful code first, then every
-// other resolution in its file, or in a file holding no sinful code of the rule.
 func resolutionOf(bad, good []Marked) []Marked {
 	resolution, resolves := counterpart(bad, good)
 	if !resolves {
@@ -571,7 +520,6 @@ func resolutionOf(bad, good []Marked) []Marked {
 	return fix
 }
 
-// indexOf is the position of the source in the list, compared as PHP compares objects: the first equal one.
 func indexOf(marked []Marked, one Marked) int {
 	for i, each := range marked {
 		if each == one {
@@ -582,14 +530,11 @@ func indexOf(marked []Marked, one Marked) int {
 	return -1
 }
 
-// sharing is what makes a bad and a good one before and after, strongest first: the scenario, then the file.
 var sharing = []func(one, other Marked) bool{
 	func(one, other Marked) bool { return one.sharesScenarioWith(other) },
 	func(one, other Marked) bool { return one.sharesFileWith(other) },
 }
 
-// counterpart is the resolution that answers one of the bad, the first found scanning the sinful in order; else
-// the first resolution.
 func counterpart(bad, good []Marked) (Marked, bool) {
 	for _, shared := range sharing {
 		for _, one := range bad {
@@ -607,7 +552,6 @@ func counterpart(bad, good []Marked) (Marked, bool) {
 	return Marked{}, false
 }
 
-// answered is the sinful source the resolution repairs, else the first.
 func answered(bad []Marked, resolution Marked, resolves bool) (Marked, bool) {
 	if resolves {
 		for _, shared := range sharing {
@@ -625,7 +569,6 @@ func answered(bad []Marked, resolution Marked, resolves bool) (Marked, bool) {
 	return Marked{}, false
 }
 
-// lifted is the example with each half's leading docblock turned into // lines above it, its tags dropped.
 func lifted(example render.Example) render.Example {
 	if example.Bad != nil {
 		example.Bad = pointer(liftDocblock(*example.Bad))
@@ -663,11 +606,8 @@ func liftDocblock(text string) string {
 	return strings.Join(append(append(prose, ""), code...), "\n")
 }
 
-// whitespace is a run of whitespace, what two blocks are compared by.
 var whitespace = regexp.MustCompile(`\s+`)
 
-// group is several sources shown as one example, each headed by where it lives; a source another already shows
-// whole is left out.
 func group(marked []Marked, lift bool) string {
 	flat := make([]string, len(marked))
 	for i, each := range marked {
@@ -699,7 +639,6 @@ func flattened(text string) string {
 	return whitespace.ReplaceAllString(strings.TrimSpace(text), " ")
 }
 
-// dedent is the lines with their common leading indentation removed, blank lines not measured.
 func dedent(lines []string) string {
 	least := -1
 	for _, line := range lines {
@@ -724,7 +663,6 @@ func leadingSpace(line string) string {
 	return line[:len(line)-len(strings.TrimLeft(line, " \t\n\r\x00\x0B"))]
 }
 
-// lineAt is the 1-based line the offset is on.
 func lineAt(text []byte, offset int) int {
 	return 1 + strings.Count(string(text[:min(offset, len(text))]), "\n")
 }
@@ -733,16 +671,12 @@ func pointer(text string) *string {
 	return &text
 }
 
-// exampleMarker is an @example line's words: the name, and which half the file tells.
 var exampleMarker = regexp.MustCompile(`^@example\s+(\w+)\s+(bad|good)$`)
 
-// markerOnly is a comment's words that are one fixture marker and nothing else.
 var markerOnly = regexp.MustCompile(`^@(?:(?:sin|fixed|righteous)\s+\w+|example\s+\w+\s+(?:bad|good))$`)
 
-// commentWords strips the delimiters that open and close a comment line.
 var commentWords = regexp.MustCompile(`^\s*(?:\/\/|#|<!--|\/\*+|\*)\s*|\s*(?:-->|\*\/)\s*$`)
 
-// fileScopeHost is what a PHP file with no class or function hangs its marker on.
 const fileScopeHost = "static fn (): null => null;"
 
 // examples are the fixture's @example files: each half's files, by the name each is marked with.
@@ -750,7 +684,6 @@ type examples struct {
 	bad, good sources
 }
 
-// exampleFiles is the files under the fixture marked `@example Name bad|good`, in path order, each published whole.
 func exampleFiles(root string) examples {
 	found := examples{bad: sources{}, good: sources{}}
 	files := source.Sources(root, source.Under(root, nil))
@@ -785,8 +718,6 @@ func exampleFiles(root string) examples {
 	return found
 }
 
-// over is the examples with every rule that has example files told by them instead, per language, so a rule marked
-// in a template and a module keeps the half no file replaced.
 func (e examples) over(carved render.Examples, proven []detectors.Detector) render.Examples {
 	for _, detector := range proven {
 		bad, badLanguages := byLanguage(namedFor(e.bad, detector))
@@ -799,8 +730,6 @@ func (e examples) over(carved render.Examples, proven []detectors.Detector) rend
 			if len(good[language]) > 0 {
 				example.Good = pointer(group(good[language], false))
 			}
-			// This language's example replaces whatever was carved for it before, and every other
-			// language's stands.
 			others := slices.DeleteFunc(slices.Clone(carved[render.Key(detector)]), func(other render.Example) bool {
 				return other.Language == language
 			})
@@ -811,7 +740,6 @@ func (e examples) over(carved render.Examples, proven []detectors.Detector) rend
 	return carved
 }
 
-// namedFor is the files of a half marked with any name the detector goes by.
 func namedFor(half sources, detector detectors.Detector) []Marked {
 	var marked []Marked
 	for _, name := range namesOf(detector) {
@@ -821,7 +749,6 @@ func namedFor(half sources, detector detectors.Detector) []Marked {
 	return marked
 }
 
-// namesOf is every name a marker may call the detector by: its own, its sin's, or the sin's id.
 func namesOf(detector detectors.Detector) []string {
 	var names []string
 	for _, name := range []string{catalog.Name(detector), catalog.Name(detector.Sin()), detector.Sin().Definition().Name} {
@@ -844,9 +771,6 @@ func union(first, second []source.Language) []source.Language {
 	return all
 }
 
-// published is the file as a reader of the example sees it: without the fixture's markers, the imports that bring
-// them in, the host a config file's marker rides, or the PHP opening, with no run of blank lines left where they
-// stood.
 func published(lines []string, language source.Language) string {
 	var kept []string
 	for _, line := range lines {

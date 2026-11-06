@@ -1,5 +1,4 @@
-// Package atomic writes a file whole or not at all: a reader running beside the write sees the old file or
-// the new one, never half of either.
+// Package atomic writes a file whole or not at all: a reader running beside the write sees the old file or the new one, never half of either.
 package atomic
 
 import (
@@ -7,8 +6,6 @@ import (
 	"path/filepath"
 )
 
-// Write puts contents at path through a temporary file beside it and a rename, creating the folder when it
-// is not there. An existing file keeps its permissions; a new one gets the umask default.
 func Write(path, contents string) error {
 	folder := filepath.Dir(path)
 

@@ -11,7 +11,6 @@ type RepeatedGuard struct{}
 
 func init() { sins.Register(catalog.PHP, RepeatedGuard{}) }
 
-// Definition is what the sin states about itself.
 func (RepeatedGuard) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "repeated-guard",

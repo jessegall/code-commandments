@@ -7,7 +7,6 @@ import (
 	"github.com/jessegall/code-commandments/contract"
 )
 
-// keywords are the types C# spells with a keyword, by the name the compiler gives them.
 var keywords = map[string]string{
 	"bool": "global::System.Boolean", "byte": "global::System.Byte", "sbyte": "global::System.SByte", "char": "global::System.Char",
 	"decimal": "global::System.Decimal", "double": "global::System.Double", "float": "global::System.Single", "int": "global::System.Int32",
@@ -16,8 +15,7 @@ var keywords = map[string]string{
 	"nint": "global::System.IntPtr", "nuint": "global::System.UIntPtr",
 }
 
-// Type is a type as the compiler gives it: fully qualified, with `?` for a nullable, whether it is a value type,
-// and the named types inside a generic or an array. The zero Type is no type.
+// Type is a type as the compiler gives it: fully qualified, with `?` for a nullable, whether it is a value type, and the named types inside a generic or an array.
 type Type struct {
 	name        string
 	nullable    bool
@@ -25,7 +23,6 @@ type Type struct {
 	inner       []string
 }
 
-// typeOf is the contract's type read as a Type; no type for none.
 func typeOf(written *contract.Type) Type {
 	if written == nil {
 		return Type{}
@@ -40,7 +37,6 @@ func typeOf(written *contract.Type) Type {
 	return Type{name: written.Text, nullable: written.Nullable, isValueType: written.ValueType, inner: inner}
 }
 
-// namedInside is every named type inside the type's arguments and elements, at any depth, nullability aside.
 func namedInside(written *contract.Type) []string {
 	var named []string
 	for _, part := range append(append([]*contract.Type{}, written.Args...), written.Members...) {
@@ -53,32 +49,26 @@ func namedInside(written *contract.Type) []string {
 	return named
 }
 
-// Exists says whether there is a type.
 func (t Type) Exists() bool {
 	return t.name != ""
 }
 
-// Name is the type fully qualified, `?` kept: `global::System.String?`.
 func (t Type) Name() string {
 	return t.name
 }
 
-// IsNullable says whether the type admits absence: a reference annotated nullable, or a `Nullable<T>`.
 func (t Type) IsNullable() bool {
 	return t.nullable
 }
 
-// IsValueType says whether the type is a struct, an enum or a primitive: a value copied, not an object referred to.
 func (t Type) IsValueType() bool {
 	return t.isValueType
 }
 
-// Inner is the named types inside a generic or an array, however deep.
 func (t Type) Inner() []string {
 	return t.inner
 }
 
-// NamedTypes is every named type this type is made of: itself, nullability aside, and the types inside it.
 func (t Type) NamedTypes() []string {
 	return append([]string{strings.TrimSuffix(t.name, "?")}, t.inner...)
 }
@@ -88,12 +78,10 @@ type CallTarget struct {
 	target *contract.Target
 }
 
-// Exists says whether the compiler bound the call.
 func (t CallTarget) Exists() bool {
 	return t.target != nil
 }
 
-// Type is the id of the type that declares the method.
 func (t CallTarget) Type() string {
 	if t.target == nil {
 		return ""
@@ -102,7 +90,6 @@ func (t CallTarget) Type() string {
 	return t.target.Type
 }
 
-// Name is the method's name; `.ctor` for a constructor.
 func (t CallTarget) Name() string {
 	if t.target == nil {
 		return ""
@@ -111,7 +98,6 @@ func (t CallTarget) Name() string {
 	return t.target.Name
 }
 
-// Symbol is the method named as its declaration's symbol names it, so a call finds its declaration.
 func (t CallTarget) Symbol() string {
 	if t.target == nil {
 		return ""
@@ -120,8 +106,6 @@ func (t CallTarget) Symbol() string {
 	return t.target.Symbol
 }
 
-// Type is the type the node stands for: an expression's, as the compiler gives it; a parameter's or a caught
-// exception's, as declared; a written type's, read from the declaration it types or from its own syntax.
 func (n Node) Type() Type {
 	if !n.Exists() {
 		return Type{}
@@ -139,8 +123,6 @@ func (n Node) Type() Type {
 	return Type{}
 }
 
-// asWritten is the type as the written type spells it: `var` stands for the type inferred, annotation and all; a
-// type written out is the type itself, nullable when written `T?`.
 func (t Type) asWritten(written Node) Type {
 	if written.Is("IdentifierName") && written.Name() == "var" {
 		return t
@@ -153,8 +135,6 @@ func (t Type) asWritten(written Node) Type {
 	return t
 }
 
-// DeclaredType is the type a declaration names through its written type: a property's, a field's, a method's
-// return; no type for one that names none.
 func (n Node) DeclaredType() Type {
 	for _, child := range n.All() {
 		if child.IsTypeNode() {
@@ -165,8 +145,6 @@ func (n Node) DeclaredType() Type {
 	return Type{}
 }
 
-// writtenType is the type a written type stands for: the one the declaration it types declares, else the one
-// its own syntax names.
 func (n Node) writtenType() Type {
 	written := n.declaringType()
 	var inner []string
@@ -180,7 +158,6 @@ func (n Node) writtenType() Type {
 	return written
 }
 
-// declaringType is the type the declaration a written type types declares, else the one its syntax names.
 func (n Node) declaringType() Type {
 	parent := n.Parent()
 	switch {
@@ -203,8 +180,6 @@ func (n Node) declaringType() Type {
 	return n.syntacticType()
 }
 
-// syntacticType is the type a written type names by its syntax alone: the class its name refers to, a keyword's
-// type, an array or nullable of one.
 func (n Node) syntacticType() Type {
 	switch {
 	case n.Is("NullableType"):
@@ -267,7 +242,6 @@ func (n Node) syntacticType() Type {
 	return Type{}
 }
 
-// isTypeParameter says whether the name is a type parameter a declaration around it declares: `T` in `Box<T>`.
 func (n Node) isTypeParameter() bool {
 	for _, around := range n.Ancestors() {
 		for _, parameter := range around.Child("TypeParameterList").All() {
@@ -280,8 +254,6 @@ func (n Node) isTypeParameter() bool {
 	return false
 }
 
-// namesAValue says whether the type the name refers to is a value type: a struct or an enum, declared in the scan
-// or outside it.
 func (n Node) namesAValue() bool {
 	symbol := n.Node().Refers
 	if kind, declared := kindsOf(n.Codebase())[symbol]; declared {
@@ -300,8 +272,6 @@ func (n Node) namesAValue() bool {
 	return false
 }
 
-// Parameters is the types of the parameters the call fills, by position, as the compiler bound them: a generic's
-// arguments filled in, an extension method called on a receiver without its `this`.
 func (t CallTarget) Parameters() []string {
 	if t.target == nil {
 		return nil

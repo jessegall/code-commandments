@@ -8,15 +8,6 @@ import (
 	"testing"
 )
 
-// TestAProjectsRuleThatFollowsAChainOfParentsIsNotAskedAboutOneFile holds the per-file mark to the rules that can
-// answer from the file it is about. A check that follows a chain of parents, a caller or a recurrence cannot: shown
-// the edited file alone it does not fail, it ANSWERS, and the answer reaches the agent as a sin to fix.
-//
-// Issue 824 was that answer. A migration extending Migration through RebuildMigration, two files away, was marked
-// as a stranger in the migrations folder, because a rule the project wrote itself could not say how far it reads:
-// the marker a shipped rule earns by measurement is one nothing measures for a consumer's rule, so a project's own
-// rule now answers it from the checks its file writes. The rule that asks only about this file still marks, which
-// is what keeps the fix from being a silence.
 func TestAProjectsRuleThatFollowsAChainOfParentsIsNotAskedAboutOneFile(t *testing.T) {
 	root, err := filepath.EvalSymlinks(t.TempDir())
 	if err != nil {

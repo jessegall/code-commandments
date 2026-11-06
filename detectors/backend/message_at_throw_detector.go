@@ -14,10 +14,8 @@ type MessageAtThrowDetector struct{}
 
 func init() { detectors.Register(catalog.PHP, MessageAtThrowDetector{}) }
 
-// Sin is the sin the detector finds.
 func (MessageAtThrowDetector) Sin() sins.Sin { return backendsins.MessageAtThrow{} }
 
-// Find is every thrown new that passes a message string.
 func (MessageAtThrowDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return php.In(codebase).
 		WhereNew().

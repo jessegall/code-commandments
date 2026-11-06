@@ -11,7 +11,6 @@ type DerivedCollectionCast struct{}
 
 func init() { sins.Register(catalog.PHP, DerivedCollectionCast{}) }
 
-// Definition is what the sin states about itself.
 func (DerivedCollectionCast) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "derived-collection-cast",

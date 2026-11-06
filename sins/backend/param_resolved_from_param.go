@@ -11,7 +11,6 @@ type ParamResolvedFromParam struct{}
 
 func init() { sins.Register(catalog.PHP, ParamResolvedFromParam{}) }
 
-// Definition is what the sin states about itself.
 func (ParamResolvedFromParam) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "param-resolved-from-param",

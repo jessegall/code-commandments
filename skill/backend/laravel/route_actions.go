@@ -21,7 +21,6 @@ func init() {
 	skill.Register(catalog.PHP, RouteActions{})
 }
 
-// Definition is what the skill states about itself.
 func (RouteActions) Definition() skill.Definition {
 	return skill.Definition{
 		Slug:      "php/route-actions",

@@ -20,18 +20,14 @@ func init() {
 	detectors.Register(catalog.CSharp, ConvertedArgumentDetector{})
 }
 
-// Sin is the sin the detector finds.
 func (ConvertedArgumentDetector) Sin() sins.Sin {
 	return cssins.ConvertedArgument{}
 }
 
-// Find is every place the sin is committed.
 func (d ConvertedArgumentDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return detectors.Aggregate(d, codebase)
 }
 
-// Candidates is every call that converts a scalar for a parameter of the codebase's own method, keyed by the
-// parameter and the conversion, beside how many calls fill each parameter.
 func (ConvertedArgumentDetector) Candidates(codebase *engine.Codebase) []detectors.Candidate {
 	program := cs.In(codebase).Program
 	counts := map[string]int{}
@@ -54,7 +50,6 @@ func (ConvertedArgumentDetector) Candidates(codebase *engine.Codebase) []detecto
 	return append(candidates, supplied(counts, order)...)
 }
 
-// Decide is every call converting as half or more of the calls filling its parameter do.
 func (ConvertedArgumentDetector) Decide(candidates []detectors.Candidate) []int {
 	counts, _ := suppliedIn(candidates)
 	var dominant []int
@@ -68,14 +63,10 @@ func (ConvertedArgumentDetector) Decide(candidates []detectors.Candidate) []int 
 	return dominant
 }
 
-// GroupKey is the group a call recurs in: the parameter of the codebase's own method it converts a scalar for, and
-// the conversion.
 func (ConvertedArgumentDetector) GroupKey(match engine.Match) (string, bool) {
 	return conversionSlot(cs.Node{Match: match}, cs.Of(match.Codebase()))
 }
 
-// conversionSlot is the first parameter of the codebase's own method the call converts a scalar for, with the
-// conversion: `Shop.Pricing.Quote(…)#1=Convert.ToInt32`; false for a call that converts none.
 func conversionSlot(call cs.Node, program *cs.Program) (string, bool) {
 	if !program.ReachesOwnSignature(call) {
 		return "", false
@@ -93,6 +84,4 @@ func conversionSlot(call cs.Node, program *cs.Program) (string, bool) {
 	return call.Target().Symbol() + "#" + strconv.Itoa(positions[0]) + "=" + conversions[positions[0]], true
 }
 
-// CrossFile says the rule reads more than the file it reports in, which the fixture measures by asking it
-// of one file and of the whole tree: a scoped run reads the whole scan while it is enabled.
 func (ConvertedArgumentDetector) CrossFile() {}

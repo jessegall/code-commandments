@@ -15,29 +15,22 @@ type twins struct {
 	pairs []engine.Divergence
 }
 
-// TwinUnits is every def that reaches enough rare resources to be compared, keyed where it is declared, read once
-// for the program.
 func (p *Program) TwinUnits() []engine.ReachedUnit {
 	p.read()
 
 	return p.twins.units
 }
 
-// Divergences are the program's divergent pairs: two defs doing one job where one does less of it. It is the
-// single home of the reading: the detector that reports it and the check a rule names both ask it.
 func (p *Program) Divergences() []engine.Divergence {
 	p.read()
 
 	return p.twins.pairs
 }
 
-// IsDivergentTwin says whether the def is one of a divergent pair: the poorer of the two, or the richer it forgot
-// a step of.
 func (p *Program) IsDivergentTwin(def Node) bool {
 	return engine.PairOf(p.Divergences(), DeclarationOf(def)) != ""
 }
 
-// read reads the units and the pairs once.
 func (p *Program) read() {
 	p.twins.once.Do(func() {
 		p.twins.units = p.twinUnits()
@@ -68,25 +61,20 @@ type TwinJudge struct {
 	program *Program
 }
 
-// Twins is the Python judge of the program.
 func (p *Program) Twins() TwinJudge {
 	return TwinJudge{program: p}
 }
 
-// IsType says whether a resource is a class a def builds or names rather than a call it makes.
 func (TwinJudge) IsType(resource string) bool {
 	return IsTypeResource(resource)
 }
 
-// ArePolymorphicSiblings says whether the two are one method answering a contract each inherits.
 func (j TwinJudge) ArePolymorphicSiblings(poorer, richer engine.ReachedUnit) bool {
 	one, other := Node{poorer.Match}, Node{richer.Match}
 
 	return one.Name() == other.Name() && j.program.IsOverride(one) && j.program.IsOverride(other)
 }
 
-// ResultsAreIncomparable says whether both declare a result and they cannot be one value: a class of the program
-// beside a builtin, two unrelated classes, or two different builtins.
 func (j TwinJudge) ResultsAreIncomparable(poorer, richer engine.ReachedUnit) bool {
 	one, other := Node{poorer.Match}.ReturnedTypeName(), Node{richer.Match}.ReturnedTypeName()
 	if one == "" || other == "" || one == other {
@@ -101,7 +89,6 @@ func (j TwinJudge) ResultsAreIncomparable(poorer, richer engine.ReachedUnit) boo
 	return !derives(oneClass, other) && !derives(otherClass, one)
 }
 
-// derives says whether the class names the other directly among its bases.
 func derives(class Node, name string) bool {
 	return slices.ContainsFunc(class.ChildrenIn("bases"), func(base Node) bool { return lastPart(base.DottedName()) == lastPart(name) })
 }
@@ -110,7 +97,6 @@ func lastPart(dotted string) string {
 	return dotted[strings.LastIndex(dotted, ".")+1:]
 }
 
-// CallersOf is where each def that calls the one the declaration names is itself declared.
 func (j TwinJudge) CallersOf(key string) []string {
 	var callers []string
 	for _, call := range j.program.CallersOfDeclaration(key) {

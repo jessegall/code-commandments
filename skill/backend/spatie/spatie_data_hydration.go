@@ -23,7 +23,6 @@ func init() {
 	skill.Register(catalog.PHP, SpatieDataHydration{})
 }
 
-// Definition is what the skill states about itself.
 func (SpatieDataHydration) Definition() skill.Definition {
 	return skill.Definition{
 		Slug:      "php/spatie-data-hydration",

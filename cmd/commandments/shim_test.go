@@ -13,12 +13,8 @@ import (
 	"testing"
 )
 
-// fakeBinary stands in for a release binary: it says it ran, and with what.
 const fakeBinary = "#!/bin/sh\necho \"ran $*\"\n"
 
-// installed lays out a project that composer installed the package into at the version: composer itself installs a
-// project with no dependencies, writing its own autoloader, then the shim takes its place under vendor/ and
-// installed.php names the version.
 func installed(t *testing.T, version string) (shim string) {
 	t.Helper()
 	for _, tool := range []string{"php", "composer"} {
@@ -40,14 +36,12 @@ func installed(t *testing.T, version string) (shim string) {
 	return filepath.Join(vendor, "jessegall", "code-commandments", "bin", "commandments")
 }
 
-// release serves the version's release: the binary for this platform, and SHA256SUMS listing sum for it.
 func release(t *testing.T, version, binary, sum string) *httptest.Server {
 	t.Helper()
 
 	return releaseOf(t, version, "commandments-"+runtime.GOOS+"-"+runtime.GOARCH, binary, sum)
 }
 
-// releaseOf serves the version's release holding the one binary named, and SHA256SUMS listing sum for it.
 func releaseOf(t *testing.T, version, name, binary, sum string) *httptest.Server {
 	t.Helper()
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -71,7 +65,6 @@ func sumOf(content string) string {
 	return hex.EncodeToString(sum[:])
 }
 
-// shimRun runs the shim with the arguments, fetching releases from base into the cache.
 func shimRun(t *testing.T, shim, base, cache string, args ...string) (string, error) {
 	t.Helper()
 	command := exec.Command("php", append([]string{shim}, args...)...)
@@ -81,9 +74,6 @@ func shimRun(t *testing.T, shim, base, cache string, args ...string) (string, er
 	return string(out), err
 }
 
-// TestTheShimFetchesTheInstalledReleaseChecksItAndRunsIt holds the composer install's one job: the release binary of
-// the installed version for this platform, fetched once, checked against SHA256SUMS, then run with the arguments —
-// and run again from the cache with the release out of reach.
 func TestTheShimFetchesTheInstalledReleaseChecksItAndRunsIt(t *testing.T) {
 	shim := installed(t, "v9.9.9")
 	server := release(t, "v9.9.9", fakeBinary, sumOf(fakeBinary))
@@ -118,8 +108,6 @@ func TestTheShimNamesADevelopmentVersionAsNoRelease(t *testing.T) {
 	}
 }
 
-// checkout lays out the package's own tree — the shim beside a dev-built binary, with scripts/dev — as a journal
-// plugin or a composer source install clones it.
 func checkout(t *testing.T) (shim string) {
 	t.Helper()
 	if _, err := exec.LookPath("php"); err != nil {
@@ -134,7 +122,6 @@ func checkout(t *testing.T) (shim string) {
 	return filepath.Join(root, "bin", "commandments")
 }
 
-// pinnedRun runs the shim with COMMANDMENTS_RELEASE pinning the version.
 func pinnedRun(t *testing.T, shim, version, base, cache string, args ...string) (string, error) {
 	t.Helper()
 	command := exec.Command("php", append([]string{shim}, args...)...)
@@ -144,8 +131,6 @@ func pinnedRun(t *testing.T, shim, version, base, cache string, args ...string) 
 	return string(out), err
 }
 
-// TestAPinnedReleaseRunsAheadOfTheDevBuiltBinary holds a checkout that pins a release to that release: fetched,
-// checked against SHA256SUMS and run, though the tree holds scripts/dev and a dev-built binary.
 func TestAPinnedReleaseRunsAheadOfTheDevBuiltBinary(t *testing.T) {
 	shim := checkout(t)
 	server := release(t, "v9.9.9", fakeBinary, sumOf(fakeBinary))
@@ -154,8 +139,6 @@ func TestAPinnedReleaseRunsAheadOfTheDevBuiltBinary(t *testing.T) {
 	}
 }
 
-// TestAPinnedReleaseWhoseSumDiffersNeverFallsBackToTheDevBinary holds the pin closed: a binary whose sum does not
-// match is refused and nothing else runs in its place.
 func TestAPinnedReleaseWhoseSumDiffersNeverFallsBackToTheDevBinary(t *testing.T) {
 	shim := checkout(t)
 	server := release(t, "v9.9.9", fakeBinary, sumOf("another binary"))

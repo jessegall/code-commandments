@@ -16,12 +16,10 @@ func init() {
 	detectors.Register(catalog.TypeScript, CollectionMutatedWhileIteratedDetector{})
 }
 
-// Sin is the sin the detector finds.
 func (CollectionMutatedWhileIteratedDetector) Sin() sins.Sin {
 	return tssins.CollectionMutatedWhileIterated{}
 }
 
-// Find is every change made to the collection a walk around it is walking.
 func (CollectionMutatedWhileIteratedDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return ts.In(codebase).
 		WhereKind("CallExpression").

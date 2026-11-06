@@ -21,7 +21,6 @@ func init() {
 	skill.Register(catalog.Python, PassTheObject{})
 }
 
-// Definition is what the skill states about itself.
 func (PassTheObject) Definition() skill.Definition {
 	return skill.Definition{
 		Slug:      "python/pass-the-object",

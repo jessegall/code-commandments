@@ -7,9 +7,6 @@ import (
 	"github.com/jessegall/code-commandments/engine/python/pythontest"
 )
 
-// TestForwardedKeywordArgumentsAreNoDictBag holds the rule to records: a mapping every caller fills with its own
-// **kwargs is a generic funnel's keyword arguments handed on unchanged, and reading a field from it is no bag; the
-// same read of a dict a caller builds by hand still is.
 func TestForwardedKeywordArgumentsAreNoDictBag(t *testing.T) {
 	kept := "def kept(n: int, fields: dict) -> bool:\n    return bool(fields.get(\"key\"))\n"
 	forwarded := kept + "\n\ndef update(n: int, **fields) -> bool:\n    return kept(n, fields)\n"
@@ -29,10 +26,6 @@ func TestForwardedKeywordArgumentsAreNoDictBag(t *testing.T) {
 	}
 }
 
-// TestKeywordsForwardedThroughAClassAttributeAreNoDictBag holds the funnel that calls a hook on the class a class
-// attribute holds, `self.resource.unfilled(data)` with `resource = Trigger` set by each subclass: the call reaches
-// the hook through the attribute's class, so the mapping the override reads is the funnel's own **data, also when
-// the base holds a placeholder class that declares no such hook.
 func TestKeywordsForwardedThroughAClassAttributeAreNoDictBag(t *testing.T) {
 	resources := "class Resource:\n    @classmethod\n    def unfilled(cls, data: dict) -> list:\n        return []\n\n\n" +
 		"class Trigger(Resource):\n    @classmethod\n    def unfilled(cls, data: dict) -> list:\n        return [\"fact\"] if data.get(\"when\") == \"state\" else []\n\n\n"

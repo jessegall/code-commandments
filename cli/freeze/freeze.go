@@ -1,5 +1,4 @@
-// Package freeze is `freeze` and `unfreeze`: stamp a file deliberately immutable, or lift the stamp. A
-// frozen file is still scanned, so cross-file rules stay correct, but never flagged and never rewritten.
+// Package freeze is `freeze` and `unfreeze`: stamp a file deliberately immutable, or lift the stamp.
 package freeze
 
 import (
@@ -16,12 +15,10 @@ import (
 // Command is `freeze` and `unfreeze`.
 type Command struct{}
 
-// Names are the verbs it answers to.
 func (Command) Names() []string {
 	return []string{"freeze", "unfreeze"}
 }
 
-// Help documents it.
 func (Command) Help() help.Help {
 	return help.Of("Mark a file intentionally immutable, or lift the mark. A frozen file is still scanned (so cross-file rules stay correct) but never flagged and never rewritten.").
 		Form("freeze <path>", "stamp the file frozen").
@@ -29,7 +26,6 @@ func (Command) Help() help.Help {
 		Note("Idempotent: freezing a frozen file (or unfreezing an unfrozen one) reports and does nothing.")
 }
 
-// Run stamps or unstamps the file the arguments name.
 func (c Command) Run(in *cli.Input, console cli.Console) (int, error) {
 	path, named := in.FirstArgument()
 	if !named {
@@ -82,8 +78,6 @@ func unfreeze(path, contents string, console cli.Console) (int, error) {
 	return console.Say("\033[32m✓ Unfroze " + path + "\033[0m — it is a target again."), nil
 }
 
-// stamped is the source with the freeze stamp as its first line, or its second after PHP's opening line or
-// a shebang.
 func stamped(contents string, language source.Language) string {
 	stamp := language.Comment(engine.FrozenMarker + " — deliberately immutable; excluded from code-commandments " +
 		"judging & repent (run `" + binary.Here() + " unfreeze` to lift).")

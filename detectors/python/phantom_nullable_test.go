@@ -7,9 +7,6 @@ import (
 	"github.com/jessegall/code-commandments/engine/python/pythontest"
 )
 
-// TestATestsReadIsNoAssumption holds a field that is genuinely None for some objects, handed on to another optional
-// holder that is checked where it is used: a test that builds an object with the field set and indexes it assumes
-// nothing about the code, while the same index in the code itself does.
 func TestATestsReadIsNoAssumption(t *testing.T) {
 	adopted := "from dataclasses import dataclass\n\n\n" +
 		"@dataclass(frozen=True)\nclass Adopted:\n    pid: int\n    saved: list | None\n\n\n" +
@@ -25,11 +22,6 @@ func TestATestsReadIsNoAssumption(t *testing.T) {
 	}
 }
 
-// TestAFrozenValueObjectClearingAFieldThroughAMoverIsNotPhantom holds the exemption for a value object that
-// cannot assign. A frozen dataclass clears a field by making another of itself with None in its place, which is
-// what dataclasses.replace does and what a project's own mover does, so reading only assignments called such a
-// field one nothing ever sets back to None. Reported as issue 825 from a consumer whose frozen Task clears
-// closed_at through moved().
 func TestAFrozenValueObjectClearingAFieldThroughAMoverIsNotPhantom(t *testing.T) {
 	codebase := pythontest.FromSource(t, map[string]string{
 		"shop/__init__.py": "",

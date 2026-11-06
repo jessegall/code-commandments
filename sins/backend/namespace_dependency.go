@@ -11,7 +11,6 @@ type NamespaceDependency struct{}
 
 func init() { sins.Register(catalog.PHP, NamespaceDependency{}) }
 
-// Definition is what the sin states about itself.
 func (NamespaceDependency) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "namespace-dependency",

@@ -13,7 +13,6 @@ func init() {
 	sins.Register(catalog.Python, NearDuplicateFunction{})
 }
 
-// Definition is what the sin states about itself.
 func (NearDuplicateFunction) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "near-duplicate-python-function",

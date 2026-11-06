@@ -11,7 +11,6 @@ type ComputedBooleanArgument struct{}
 
 func init() { sins.Register(catalog.PHP, ComputedBooleanArgument{}) }
 
-// Definition is what the sin states about itself.
 func (ComputedBooleanArgument) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "computed-boolean-argument",

@@ -13,7 +13,6 @@ func init() {
 	sins.Register(catalog.Python, DictReturnBag{})
 }
 
-// Definition is what the sin states about itself.
 func (DictReturnBag) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "python-dict-return-bag",

@@ -15,10 +15,8 @@ type ConcurrentSubclassDetector struct{}
 
 func init() { detectors.Register(catalog.PHP, ConcurrentSubclassDetector{}) }
 
-// Sin is the sin the detector finds.
 func (ConcurrentSubclassDetector) Sin() sins.Sin { return concurrentsins.ConcurrentSubclass{} }
 
-// Find is every class that extends Concurrent.
 func (ConcurrentSubclassDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return php.In(codebase).
 		WhereKind("Stmt_Class").

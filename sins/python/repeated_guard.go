@@ -13,7 +13,6 @@ func init() {
 	sins.Register(catalog.Python, RepeatedGuard{})
 }
 
-// Definition is what the sin states about itself.
 func (RepeatedGuard) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "python-repeated-guard",

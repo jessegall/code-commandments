@@ -9,8 +9,6 @@ import (
 	"github.com/jessegall/code-commandments/cli/workspace"
 )
 
-// workspaceOfRepositories is a repository on main holding a repository of its own, trackmijn, whose feature branch
-// changes one file and adds another while main stays checked out there.
 func workspaceOfRepositories(t *testing.T) string {
 	t.Helper()
 	root, _ := filepath.EvalSymlinks(t.TempDir())
@@ -35,10 +33,6 @@ func workspaceOfRepositories(t *testing.T) string {
 	return root
 }
 
-// TestANamedRepositorysBranchOrPullRequestChoosesItsFiles holds a workspace of repositories to its own: a run from its
-// root names the repository and the branch or the pull request whose files it judges, read as the checkout has them
-// (feature's new file is not on disk while main is checked out, so it is not chosen), and a bare --branch, which only
-// asks the repository the root lies in, names the repositories it never looked into.
 func TestANamedRepositorysBranchOrPullRequestChoosesItsFiles(t *testing.T) {
 	root := workspaceOfRepositories(t)
 	space := workspace.At(root, "s")

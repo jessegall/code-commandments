@@ -9,10 +9,8 @@ import (
 	"github.com/jessegall/code-commandments/engine/php"
 )
 
-// castAttributes are the attributes that give a Data field a cast of its own.
 var castAttributes = []string{"WithCast", "WithCastAndTransformer", "WithCastable"}
 
-// loops are the statement kinds that repeat their body.
 var loops = []string{"Stmt_Foreach", "Stmt_For", "Stmt_While", "Stmt_Do"}
 
 // HydrationSlot is the Data field an argument's keyed value lands in: `Order::from(['customer' => …])`.
@@ -38,8 +36,6 @@ func (n Node) types() *php.Types {
 	return php.TypesOf(n.Codebase())
 }
 
-// IsHandedConstructedData says whether a `new` of a Data class hands one of its fields a value that is already of
-// the field's class, rather than letting the Data build it.
 func (n Node) IsHandedConstructedData() bool {
 	if n.Kind() != "Expr_New" {
 		return false
@@ -104,8 +100,6 @@ func constructsInPlace(value engine.Match, declared string) bool {
 	return value.Kind() == "Expr_StaticCall" && isName(class) && strings.TrimLeft(class.Name(), `\`) == strings.TrimLeft(declared, `\`)
 }
 
-// AlwaysHandBuiltAtConstruction says whether every `::from` of the field's Data class hands the field a value built
-// by hand, where a cast could build it.
 func (n Node) AlwaysHandBuiltAtConstruction() bool {
 	field, ok := php.AsField(n.Match)
 	if !ok {
@@ -127,7 +121,6 @@ func (n Node) castsNatively(class string) bool {
 	return n.program().IsEnum(class) || slices.Contains(nativeCastTypes, php.ShortName(class)) || n.program().Implements(class, "DateTimeInterface")
 }
 
-// IsPerItemHydration says whether the node runs once per item: in a loop, or in an `array_map` callback.
 func (n Node) IsPerItemHydration() bool {
 	return within(n.Match, isLoop) || n.isWithinArrayMap()
 }
@@ -152,15 +145,12 @@ func isArrayMapArgument(node engine.Match) bool {
 	return node.Kind() == "Arg" && call.Kind() == "Expr_FuncCall" && isName(call.Child("name")) && call.Child("name").Name() == "array_map"
 }
 
-// IsInlineProjection says whether a static call is handed an array literal as its first argument.
 func (n Node) IsInlineProjection() bool {
 	first := firstArgument(n.Match)
 
 	return n.Kind() == "Expr_StaticCall" && first.Kind() == "Arg" && first.Child("value").Kind() == "Expr_Array"
 }
 
-// IsConditionalConstruction says whether, within its loop, the node runs only on some items: under a branch, or in a
-// callback other than `array_map`'s.
 func (n Node) IsConditionalConstruction() bool {
 	loop := n.Parent()
 	for loop.Exists() && !isLoop(loop) {
@@ -183,7 +173,6 @@ func (n Node) IsConditionalConstruction() bool {
 	return false
 }
 
-// IsWithinTolerantCatch says whether the node sits in a try, inside a loop, whose catch skips the item.
 func (n Node) IsWithinTolerantCatch() bool {
 	try := n.Parent()
 	for try.Exists() && try.Kind() != "Stmt_TryCatch" {
@@ -211,7 +200,6 @@ func (n Node) IsWithinTolerantCatch() bool {
 	return false
 }
 
-// IsKeyedMapAssignment says whether the node is assigned into a keyed array slot: `$map[$key] = …`.
 func (n Node) IsKeyedMapAssignment() bool {
 	assign := n.Parent()
 	for assign.Exists() && assign.Kind() != "Expr_Assign" {
@@ -222,8 +210,6 @@ func (n Node) IsKeyedMapAssignment() bool {
 	return assign.Exists() && target.Kind() == "Expr_ArrayDimFetch" && target.Child("dim").Exists()
 }
 
-// HydrationSlot is the Data field the node's keyed value hydrates: the node a value under a string key, alone or in a
-// list, of the one array a Data's `::from` is handed.
 func (n Node) HydrationSlot() (HydrationSlot, bool) {
 	key, item, inList, ok := keyedHydrationItem(n.Match)
 	if !ok {
@@ -247,7 +233,6 @@ func (n Node) HydrationSlot() (HydrationSlot, bool) {
 	return slot, true
 }
 
-// keyedHydrationItem is the string key the node's value sits under, climbing through at most one list around it.
 func keyedHydrationItem(node engine.Match) (key string, item engine.Match, inList, ok bool) {
 	crossed := 0
 	for current := node; ; {
@@ -332,7 +317,6 @@ func soleArgumentIsVariable(call engine.Match, variable string) bool {
 	return len(arguments) == 1 && value.Kind() == "Expr_Variable" && value.Name() == variable
 }
 
-// constructedFrom is the class a static call names, `self` and `static` read as the class they sit in.
 func constructedFrom(call engine.Match) string {
 	class := call.Child("class")
 	if !isName(class) {
@@ -359,8 +343,6 @@ func (n Node) propertyHasCast(owner, property string) bool {
 	return false
 }
 
-// IsEnumUnwrapIntoItsOwnSlot says whether an enum's `->value` is handed to a Data slot typed as that same enum, which
-// Spatie would have cast from the enum itself.
 func (n Node) IsEnumUnwrapIntoItsOwnSlot() bool {
 	if n.Kind() != "Expr_PropertyFetch" && n.Kind() != "Expr_NullsafePropertyFetch" {
 		return false
@@ -384,8 +366,6 @@ func (n Node) IsEnumUnwrapIntoItsOwnSlot() bool {
 	return slotType != "" && strings.TrimLeft(slotType, `\`) == strings.TrimLeft(enum, `\`)
 }
 
-// forwardedEnumSlotType is the slot type a keyed value reaches through a method that forwards its array parameter
-// to a Data's `::from`.
 func (n Node) forwardedEnumSlotType() string {
 	key, item, _, ok := keyedHydrationItem(n.Match)
 	argument := item.Parent().Parent()
@@ -471,14 +451,12 @@ func constructedFromInClass(call engine.Match, owner string) string {
 	return strings.TrimLeft(class.Name(), `\`)
 }
 
-// FromArgIsArrayLiteral says whether the call's one argument is an array literal.
 func (n Node) FromArgIsArrayLiteral() bool {
 	arguments := php.Arguments(n.Match)
 
 	return len(arguments) == 1 && arguments[0].Child("value").Kind() == "Expr_Array"
 }
 
-// ConstructedClass is the class a static call constructs.
 func (n Node) ConstructedClass() string {
 	if n.Kind() != "Expr_StaticCall" {
 		return ""
@@ -487,23 +465,18 @@ func (n Node) ConstructedClass() string {
 	return constructedFrom(n.Match)
 }
 
-// HydratesAnAutoBuiltSlot says whether a static call builds, by hand, exactly the value its hydration slot would
-// build itself from the raw input.
 func (n Node) HydratesAnAutoBuiltSlot() bool {
 	slot, ok := n.HydrationSlot()
 
 	return ok && slot.ValueInList == slot.IsCollection && slot.ElementType != "" && slot.ElementType == n.ConstructedClass()
 }
 
-// HydrationSlotHasCast says whether the node's hydration slot carries a cast of its own.
 func (n Node) HydrationSlotHasCast() bool {
 	slot, ok := n.HydrationSlot()
 
 	return ok && slot.DestHasCast
 }
 
-// MappedFactory is the static factory an `array_map` calls per item, as a first-class callable or the one call its
-// callback makes.
 func (n Node) MappedFactory() (FactoryRef, bool) {
 	arguments := php.Arguments(n.Match)
 	if callName(n.Match) != "array_map" || len(arguments) == 0 || !arguments[0].Child("value").Exists() {
@@ -529,8 +502,6 @@ func (n Node) MappedFactory() (FactoryRef, bool) {
 	return FactoryRef{Class: owner, Method: name.Name(), ReturnsType: returns, ClosesOverContext: closesOver}, true
 }
 
-// MappedFactoryDerivesElement says whether an `array_map` calls a Data's own factory to build each element of a
-// collection slot that declares that element, so the slot could build them itself.
 func (n Node) MappedFactoryDerivesElement() bool {
 	factory, ok := n.MappedFactory()
 	if !ok || factory.Method == "from" || factory.Method == "collect" || factory.ClosesOverContext || !n.program().Extends(factory.Class, Data) {
@@ -563,7 +534,6 @@ func factoryCallOf(callable engine.Match) (engine.Match, bool) {
 	return engine.Match{}, false
 }
 
-// referencesBeyond says whether the call reads a variable its callback does not take as a parameter.
 func referencesBeyond(call, callback engine.Match) bool {
 	var params []string
 	for _, param := range php.Params(callback) {
@@ -599,8 +569,6 @@ func soleReturn(closure engine.Match) (engine.Match, bool) {
 	return returns[0].Child("expr"), true
 }
 
-// ConstructsNativeCastValue says whether the node builds a value Spatie casts itself: `Enum::from`, a date's `parse`,
-// or a `new` of an enum or date.
 func (n Node) ConstructsNativeCastValue() bool {
 	switch staticCallMethod(n.Match) {
 	case "from":
@@ -617,13 +585,10 @@ func (n Node) ConstructsNativeCastValue() bool {
 	return built != "" && n.castsNatively(strings.TrimLeft(built, `\`))
 }
 
-// HasSingleArgument says whether the call passes exactly one argument.
 func (n Node) HasSingleArgument() bool {
 	return len(php.Arguments(n.Match)) == 1
 }
 
-// SlotAcceptsNativeCast says whether the node's hydration slot is typed as what the node builds, and Spatie would cast
-// it: the same enum, or a date.
 func (n Node) SlotAcceptsNativeCast() bool {
 	slot, ok := n.HydrationSlot()
 	if !ok || slot.DeclaredType == "" {
@@ -640,8 +605,6 @@ func (n Node) SlotAcceptsNativeCast() bool {
 	return n.castsNatively(slot.DeclaredType) && !n.program().IsEnum(slot.DeclaredType)
 }
 
-// IsHandKeyRemap says whether a Data's `::from([...])` only renames snake_case keys of one source array to the
-// camelCase fields, which a name mapper does.
 func (n Node) IsHandKeyRemap() bool {
 	if staticCallMethod(n.Match) != "from" || !n.OnDataClass() || !n.FromArgIsArrayLiteral() {
 		return false
@@ -677,7 +640,6 @@ func (n Node) IsHandKeyRemap() bool {
 	return renamed
 }
 
-// snake is a camelCase name in snake_case: an underscore before every capital but a leading one.
 func snake(name string) string {
 	var out strings.Builder
 	for i, letter := range name {
@@ -690,8 +652,6 @@ func snake(name string) string {
 	return strings.ToLower(out.String())
 }
 
-// IsRedundantToArrayRoundtrip says whether a Data's `->toArray()` is handed to a slot typed as that same Data, which
-// would take the Data itself.
 func (n Node) IsRedundantToArrayRoundtrip() bool {
 	if n.Kind() != "Expr_MethodCall" || n.Child("name").Kind() != "Identifier" || n.Child("name").Name() != "toArray" {
 		return false
@@ -718,7 +678,6 @@ type DataConstructions struct {
 
 var dataConstructions = php.Memoised(readDataConstructions)
 
-// DataConstructionsOf is the codebase's Data constructions.
 func DataConstructionsOf(codebase *engine.Codebase) *DataConstructions {
 	return dataConstructions.Of(codebase)
 }
@@ -744,8 +703,6 @@ func readDataConstructions(codebase *engine.Codebase) *DataConstructions {
 	return read
 }
 
-// AlwaysHandBuilt says whether every `::from` of the class hands the property a value built by hand as the type: a
-// construction of it, a factory returning it, or an array read off one object.
 func (d *DataConstructions) AlwaysHandBuilt(fqcn, property, class string) bool {
 	sites := d.sites[strings.TrimLeft(fqcn, `\`)]
 	if len(sites) == 0 {
@@ -814,7 +771,6 @@ func (d *DataConstructions) producesType(class, of string) bool {
 	return class == of || d.program.Extends(class, of)
 }
 
-// resolveLocal is what a variable was last assigned in the site's function; anything else as it is.
 func resolveLocal(expr, site engine.Match) engine.Match {
 	if expr.Kind() != "Expr_Variable" || expr.Name() == "" {
 		return expr
@@ -861,7 +817,6 @@ func isLoop(node engine.Match) bool {
 	return slices.Contains(loops, node.Kind())
 }
 
-// within says whether an ancestor of the node passes the test.
 func within(node engine.Match, test func(engine.Match) bool) bool {
 	for at := node.Parent(); at.Exists(); at = at.Parent() {
 		if test(at) {
@@ -872,7 +827,6 @@ func within(node engine.Match, test func(engine.Match) bool) bool {
 	return false
 }
 
-// enclosingFunction is the function-like the node is, or the nearest one around it.
 func enclosingFunction(node engine.Match) engine.Match {
 	for at := node; at.Exists(); at = at.Parent() {
 		if slices.Contains([]string{"Stmt_ClassMethod", "Stmt_Function", "Expr_Closure", "Expr_ArrowFunction", "PropertyHook"}, at.Kind()) {

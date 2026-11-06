@@ -15,10 +15,8 @@ type NewDataObjectDetector struct{}
 
 func init() { detectors.Register(catalog.PHP, NewDataObjectDetector{}) }
 
-// Sin is the sin the detector finds.
 func (NewDataObjectDetector) Sin() sins.Sin { return backendsins.NewDataObject{} }
 
-// Find is every new of a rich Data class, save a parameter default and a Data handed values already built.
 func (NewDataObjectDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return php.In(codebase).
 		WhereNew().
@@ -29,9 +27,6 @@ func (NewDataObjectDetector) Find(codebase *engine.Codebase) []engine.Match {
 		Get()
 }
 
-// Repentable says a scribe rewrites the sin away.
 func (NewDataObjectDetector) Repentable() {}
 
-// CrossFile says the rule reads more than the file it reports in, which the fixture measures by asking it
-// of one file and of the whole tree: a scoped run reads the whole scan while it is enabled.
 func (NewDataObjectDetector) CrossFile() {}

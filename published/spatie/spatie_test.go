@@ -52,8 +52,6 @@ func evaluated(path string) string {
 	return real
 }
 
-// TestTheTransformersOutputIsKnownByTheManifestItWrites holds a project whose transformer is configured where the scan
-// never reads: the folder holding its manifest is its output, and only that folder.
 func TestTheTransformersOutputIsKnownByTheManifestItWrites(t *testing.T) {
 	root := t.TempDir()
 	for path, contents := range map[string]string{

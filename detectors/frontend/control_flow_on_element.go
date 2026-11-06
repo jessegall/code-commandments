@@ -13,8 +13,7 @@ func init() {
 	detectors.Register(catalog.Vue, ControlFlowOnElementDetector{})
 }
 
-// ControlFlowOnElementDetector finds a v-if, v-else-if, v-else or v-for written on a real element instead
-// of a <template> wrapper. A <Transition> child keeps its conditional: the transition needs the element itself.
+// ControlFlowOnElementDetector finds a v-if, v-else-if, v-else or v-for written on a real element instead of a <template> wrapper.
 type ControlFlowOnElementDetector struct{}
 
 func (ControlFlowOnElementDetector) Sin() sins.Sin {
@@ -31,5 +30,4 @@ func (ControlFlowOnElementDetector) Find(codebase *engine.Codebase) []engine.Mat
 		Get()
 }
 
-// Repentable says a scribe rewrites the sin away.
 func (ControlFlowOnElementDetector) Repentable() {}

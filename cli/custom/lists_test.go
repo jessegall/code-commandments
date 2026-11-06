@@ -5,14 +5,9 @@ import (
 	"testing"
 )
 
-// poetic is a rule checking a name against a list the project declares, written both ways a rule may name one: the
-// whole list among a check's words, and the list inside a pattern.
 const poetic = `{"engine": "backend", "sin": {"name": "poetic-name", "description": "a name from a poem", "skill": "no-raw-sql"},
  "find": {"select": "function", "where": [{"nameIn": ["$poetry", "plain"]}, {"nameMatches": "^(${poetry})_"}]}}`
 
-// TestARuleNamesAListTheProjectDeclaresOnce holds the whole point of a named list: the words live in one file, and a
-// rule that checks against them says their name. Written out, the rule reads as though it had listed them itself, so
-// every check that takes words or a pattern takes a list without knowing about lists at all.
 func TestARuleNamesAListTheProjectDeclaresOnce(t *testing.T) {
 	root := project(t, map[string]string{
 		ListsFile:                    `{"poetry": ["ephemeral", "sub.lime"]}`,
@@ -40,8 +35,6 @@ func TestARuleNamesAListTheProjectDeclaresOnce(t *testing.T) {
 	}
 }
 
-// TestARuleNamingAListTheProjectHasNotDeclaredIsRefused holds the other half: a rule checking against nothing would
-// pass everything and say nothing, so it is refused by name, with the lists the project does have.
 func TestARuleNamingAListTheProjectHasNotDeclaredIsRefused(t *testing.T) {
 	read := Load(project(t, map[string]string{
 		ListsFile:                    `{"prose": ["plain"]}`,
@@ -57,8 +50,6 @@ func TestARuleNamingAListTheProjectHasNotDeclaredIsRefused(t *testing.T) {
 	}
 }
 
-// TestTheListsFileIsNotReadAsARule holds the one file in the folder that is not a rule: it is the lists, and reading
-// it as a rule would report the project's own words as a broken commandment.
 func TestTheListsFileIsNotReadAsARule(t *testing.T) {
 	read := Load(project(t, map[string]string{ListsFile: `{"poetry": ["ephemeral"]}`}))
 
@@ -67,8 +58,6 @@ func TestTheListsFileIsNotReadAsARule(t *testing.T) {
 	}
 }
 
-// TestAListNobodyCanReadIsSaid holds the folder to saying why: a list that cannot be read is a rule that would fail
-// for no stated reason.
 func TestAListNobodyCanReadIsSaid(t *testing.T) {
 	for name, text := range map[string]string{
 		"a list with no words": `{"poetry": []}`,

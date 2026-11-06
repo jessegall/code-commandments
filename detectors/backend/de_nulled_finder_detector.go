@@ -10,27 +10,21 @@ import (
 	backendsins "github.com/jessegall/code-commandments/sins/backend"
 )
 
-// DeNulledFinderDetector finds a finder returning a nullable object that every caller immediately settles for null:
-// the absence belongs decided inside it.
+// DeNulledFinderDetector finds a finder returning a nullable object that every caller immediately settles for null: the absence belongs decided inside it.
 type DeNulledFinderDetector struct{}
 
 func init() { detectors.Register(catalog.PHP, DeNulledFinderDetector{}) }
 
-// travels is how many callers must settle the null before the finder should.
 const travels = 2
 
-// Sin is the sin the detector finds.
 func (DeNulledFinderDetector) Sin() sins.Sin { return backendsins.DeNulledFinder{} }
 
-// WholeTree says the verdict needs every caller, and callers live in other files.
 func (DeNulledFinderDetector) WholeTree() {}
 
-// Exemptions excuses a method whose signature the framework dictates.
 func (DeNulledFinderDetector) Exemptions() []packages.Exemption {
 	return []packages.Exemption{{Tag: packages.ContractMethod, By: []packages.By{packages.EnclosingMethod}}}
 }
 
-// Find is every method returning a nullable object whose two or more callers all settle its null.
 func (d DeNulledFinderDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return packages.Exempt(codebase, d, codebase.
 		WhereKind("Stmt_ClassMethod").

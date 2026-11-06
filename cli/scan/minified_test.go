@@ -7,10 +7,6 @@ import (
 	"testing"
 )
 
-// TestAMinifiedFileIsLeftUnreadWhateverItsSize holds the scan to what a person wrote. A bundle holds a whole
-// program on a handful of lines: parsing one costs the memory of everything it was built from, and no finding on
-// generated code is one anyone can act on. Size alone did not say so — the bundle that took the frontend bridge
-// out of memory was under a megabyte — so the line it is written on is what answers.
 func TestAMinifiedFileIsLeftUnreadWhateverItsSize(t *testing.T) {
 	folder := t.TempDir()
 

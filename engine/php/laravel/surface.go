@@ -8,20 +8,17 @@ import (
 	"github.com/jessegall/code-commandments/engine/php"
 )
 
-// ResponseSurface is every class a response is built from: what an Inertia render is handed, and what a
-// controller's public methods declare or return.
+// ResponseSurface is every class a response is built from: what an Inertia render is handed, and what a controller's public methods declare or return.
 type ResponseSurface struct {
 	bound map[string]bool
 }
 
 var responseSurfaces = php.Memoised(readResponseSurface)
 
-// ResponseSurfaceOf is the codebase's response surface.
 func ResponseSurfaceOf(codebase *engine.Codebase) *ResponseSurface {
 	return responseSurfaces.Of(codebase)
 }
 
-// IsResponseBound says whether a response is built from the class.
 func (s *ResponseSurface) IsResponseBound(fqcn string) bool {
 	return fqcn != "" && s.bound[strings.TrimLeft(fqcn, `\`)]
 }

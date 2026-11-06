@@ -16,17 +16,14 @@ func init() {
 	detectors.Register(catalog.CSharp, RepeatedTypeGuardDetector{})
 }
 
-// Sin is the sin the detector finds.
 func (RepeatedTypeGuardDetector) Sin() sins.Sin {
 	return cssins.RepeatedTypeGuard{}
 }
 
-// Find is every place the sin is committed.
 func (d RepeatedTypeGuardDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return detectors.Aggregate(d, codebase)
 }
 
-// Candidates is every guard that narrows a type, keyed by what it asks.
 func (RepeatedTypeGuardDetector) Candidates(codebase *engine.Codebase) []detectors.Candidate {
 	guards := cs.In(codebase).
 		WhereExpression().
@@ -37,12 +34,10 @@ func (RepeatedTypeGuardDetector) Candidates(codebase *engine.Codebase) []detecto
 	return keyedBy(guards, guardFingerprint)
 }
 
-// Decide is every type guard another asks too.
 func (RepeatedTypeGuardDetector) Decide(candidates []detectors.Candidate) []int {
 	return recurringAt(candidates, 2)
 }
 
-// GroupKey is the group a type-narrowing guard recurs in: what it asks, whatever order its checks are in.
 func (RepeatedTypeGuardDetector) GroupKey(match engine.Match) (string, bool) {
 	if !(cs.Node{Match: match}).IsTypeNarrowingGuard() {
 		return "", false
@@ -51,6 +46,4 @@ func (RepeatedTypeGuardDetector) GroupKey(match engine.Match) (string, bool) {
 	return guardFingerprint(match)
 }
 
-// CrossFile says the rule reads more than the file it reports in, which the fixture measures by asking it
-// of one file and of the whole tree: a scoped run reads the whole scan while it is enabled.
 func (RepeatedTypeGuardDetector) CrossFile() {}

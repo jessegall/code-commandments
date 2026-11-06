@@ -7,20 +7,11 @@ import (
 	"github.com/jessegall/code-commandments/cli/config"
 )
 
-// A project with rules for several parts of its code groups them by what they protect: core/ for its domain,
-// viewer/ for its interface text. One flat folder of twenty rules shows nothing about which part each one guards,
-// and a rule moved into a folder used to stop judging without a word. These hold the folders, the one name a rule
-// has wherever it sits, and the lists it checks against wherever those sit.
-
-// aRule is a rule file of the engine and sin named, finding every call of that name.
 func aRule(sin, called string) string {
 	return `{"engine": "python", "sin": {"name": "` + sin + `", "description": "a rule of the project's own", "skill": "python/flow"},
 	 "find": {"select": "call", "where": [{"name": "` + called + `"}]}}`
 }
 
-// TestARuleIsReadFromAnyFolderUnderTheCustomOne holds the ask itself: a rule judges from wherever the project
-// files it, at any depth, and the skills folder is not read for rules, since whatever JSON a skill keeps beside its
-// SKILL.md is its own business.
 func TestARuleIsReadFromAnyFolderUnderTheCustomOne(t *testing.T) {
 	root := project(t, map[string]string{
 		"AtTheRootDetector.json":              aRule("at-the-root", "print"),
@@ -43,10 +34,6 @@ func TestARuleIsReadFromAnyFolderUnderTheCustomOne(t *testing.T) {
 	}
 }
 
-// TestTwoRulesOfOneNameInTwoFoldersAreBothRefused holds what a rule's name is: its file's, whatever folder holds it,
-// so moving one leaves every mention of it in the config standing. Two files of one name would be one rule with two
-// bodies, and which of them judged would depend on the order a folder is read in, so neither is read and the reason
-// names both.
 func TestTwoRulesOfOneNameInTwoFoldersAreBothRefused(t *testing.T) {
 	root := project(t, map[string]string{
 		"core/SameNameDetector.json":   aRule("same-name", "print"),
@@ -65,9 +52,6 @@ func TestTwoRulesOfOneNameInTwoFoldersAreBothRefused(t *testing.T) {
 	}
 }
 
-// TestTheListsAreReadWhereverTheyAreKept holds the other half of grouping: the lists a rule checks against sit in a
-// folder of their own, and a rule in another folder names one of them, since a rule names a LIST and never the file
-// it is in.
 func TestTheListsAreReadWhereverTheyAreKept(t *testing.T) {
 	root := project(t, map[string]string{
 		"assets/lists.json": `{"poetic": ["ephemeral", "sublime"]}`,
@@ -82,8 +66,6 @@ func TestTheListsAreReadWhereverTheyAreKept(t *testing.T) {
 	}
 }
 
-// TestOneListNameInTwoFilesIsRefused holds the cost of reading them all as one set: a name two files declare is a
-// rule checking against whichever file was read last, so neither is taken and the reason names both files.
 func TestOneListNameInTwoFilesIsRefused(t *testing.T) {
 	root := project(t, map[string]string{
 		"assets/lists.json": `{"poetic": ["ephemeral"]}`,
@@ -100,10 +82,6 @@ func TestOneListNameInTwoFilesIsRefused(t *testing.T) {
 	}
 }
 
-// TestADetectorDeclaredNowhereIsToldApartFromOneThatCannotRun holds the two things a reader has to tell apart. A
-// configured rule nobody wrote is missing, and the advice to check it is present and committed is the right advice.
-// A rule whose file IS there and cannot be read has its own reason said, and calling that one missing sends the
-// reader looking for a file they are looking at.
 func TestADetectorDeclaredNowhereIsToldApartFromOneThatCannotRun(t *testing.T) {
 	root := project(t, map[string]string{
 		"BrokenDetector.json": `{"engine": "python", "sin": {"name": "broken", "description": "a rule naming a list nothing declares", "skill": "python/flow"},
@@ -128,7 +106,6 @@ func TestADetectorDeclaredNowhereIsToldApartFromOneThatCannotRun(t *testing.T) {
 	}
 }
 
-// readNames are the rules read, by name, for a failure to say what it did read.
 func readNames(read Project) []string {
 	var names []string
 	for _, own := range read.Rules {

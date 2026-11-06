@@ -1,6 +1,4 @@
-// Command readme writes the generated tables: README.{sins,scribes,skills}.md, their excerpts and the hooks and
-// agents tables in README.md, and the journal plugin's settings. Run it from the repository root, in the dev
-// container: scripts/dev go run ./cli/doc/readme.
+// Command readme writes the generated tables: README.{sins,scribes,skills}.md, their excerpts and the hooks and agents tables in README.md, and the journal plugin's settings.
 package main
 
 import (
@@ -37,7 +35,5 @@ func main() {
 		return
 	}
 	slices.Sort(written)
-	// What was rewritten is said in words and counted, because a reader of one line wants to know how much
-	// moved. A Go slice printed as itself is a line of paths nobody takes in at a glance.
 	fmt.Printf("README regenerated: %d of %d documents (%s)\n", len(written), len(documents), strings.Join(written, ", "))
 }

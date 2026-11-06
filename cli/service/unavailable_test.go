@@ -16,28 +16,17 @@ import (
 	"github.com/jessegall/code-commandments/cli/source"
 )
 
-// missing is a reach whose bridge cannot run on this machine at all, as the PHP one cannot without php and the
-// frontend one cannot without node.
+// missing is a reach whose bridge cannot run on this machine at all, as the PHP one cannot without php and the frontend one cannot without node.
 type missing struct{}
 
-// Open is never asked of it: a service asks Own.
 func (missing) Open(scan.Bridge, []string) (bridge.Asker, error) {
 	return nil, bridge.ToolchainMissing{Language: "PHP", Need: "php on the PATH"}
 }
 
-// Own answers that the toolchain is missing, which is what a bridge whose tool is not installed answers.
 func (missing) Own(scan.Bridge, []string) (bridge.Asker, bool, error) {
 	return nil, true, bridge.ToolchainMissing{Language: "PHP", Need: "php on the PATH"}
 }
 
-// TestAServiceWhoseToolIsNotInstalledStaysUpAndSaysWhy holds the service to what a service is FOR. A bridge that
-// cannot run here at all is not a fault to retry: the journal restarts a service that ends, `restart: always`, and
-// a machine with no php will have no php for the whole session, so the service failed over and over, was recorded
-// as a fault and listed as stopped, while its has- verb kept passing because the project really did have PHP. Every
-// run of the tool then paid the bridge's whole start-up, seconds of it on a large tree, with nothing saying why.
-//
-// So it says what is missing and waits to be stopped, as a service with no language to judge already did, and the
-// journal's health question is answered from a listener of its own all the while.
 func TestAServiceWhoseToolIsNotInstalledStaysUpAndSaysWhy(t *testing.T) {
 	root, err := filepath.EvalSymlinks(t.TempDir())
 	if err != nil {
@@ -63,8 +52,6 @@ func TestAServiceWhoseToolIsNotInstalledStaysUpAndSaysWhy(t *testing.T) {
 		answered <- code
 	}()
 
-	// The signal is sent once the warning is out, which is after the handler is installed: the service says what
-	// is missing between installing it and waiting on it.
 	waited := time.Now()
 	for !strings.Contains(errs.String(), "php on the PATH") {
 		if time.Since(waited) > 10*time.Second {
@@ -91,11 +78,6 @@ func TestAServiceWhoseToolIsNotInstalledStaysUpAndSaysWhy(t *testing.T) {
 	}
 }
 
-// TestAServiceWhoseToolIsNotInstalledTellsTheJournal holds the second half of the same fix. A service's own words
-// go nowhere, because the journal sends its output to /dev/null, so a bridge that says on its console why it can
-// judge nothing says it to no one: the project lists a service as running that judges nothing, which reads as a
-// plugin that found nothing rather than one that looked at nothing. So it is said through the queue the journal
-// drains at every one of the agent's hooks, which a service reaches because it is given the same data folder.
 func TestAServiceWhoseToolIsNotInstalledTellsTheJournal(t *testing.T) {
 	root, err := filepath.EvalSymlinks(t.TempDir())
 	if err != nil {
@@ -149,9 +131,6 @@ func TestAServiceWhoseToolIsNotInstalledTellsTheJournal(t *testing.T) {
 	}
 }
 
-// chdir puts the test in the folder and puts the working folder back when it ends. It is what t.Chdir does, which
-// the go this module declares has not got: os.Chdir alone leaves every later test in the package standing
-// somewhere else, and the failures then read as regressions in tests that never moved.
 func chdir(t *testing.T, folder string) {
 	t.Helper()
 

@@ -15,10 +15,8 @@ type DataToArrayRoundtripDetector struct{}
 
 func init() { detectors.Register(catalog.PHP, DataToArrayRoundtripDetector{}) }
 
-// Sin is the sin the detector finds.
 func (DataToArrayRoundtripDetector) Sin() sins.Sin { return backendsins.DataToArrayRoundtrip{} }
 
-// Find is every redundant toArray() round trip.
 func (DataToArrayRoundtripDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return php.In(codebase).
 		Where(engine.As(func(n php.Node) bool { return n.MethodCallName() == "toArray" })).
@@ -26,9 +24,6 @@ func (DataToArrayRoundtripDetector) Find(codebase *engine.Codebase) []engine.Mat
 		Get()
 }
 
-// Repentable says a scribe rewrites the sin away.
 func (DataToArrayRoundtripDetector) Repentable() {}
 
-// CrossFile says the rule reads more than the file it reports in, which the fixture measures by asking it
-// of one file and of the whole tree: a scoped run reads the whole scan while it is enabled.
 func (DataToArrayRoundtripDetector) CrossFile() {}

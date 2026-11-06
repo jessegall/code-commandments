@@ -7,7 +7,6 @@ import (
 	"github.com/jessegall/code-commandments/cli/custom"
 )
 
-// SkillStub is a new skill's SKILL.md: its front matter, and the sections a finding sends a reader to.
 func SkillStub(b Blueprint) string {
 	return "---\n" +
 		"name: " + b.Sin + "\n" +
@@ -26,8 +25,6 @@ func SkillStub(b Blueprint) string {
 		"TODO — the code as it is flagged, then as it should be.\n"
 }
 
-// RuleStub is the rule: its engine, its sin, and a query that finds nothing until it is written, or the ready
-// rule it starts from.
 func RuleStub(b Blueprint) string {
 	var find any = map[string]any{
 		"select": "call",

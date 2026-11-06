@@ -1,5 +1,4 @@
-// Package doc projects the commands' own help into the documents that describe them: the README's command
-// table and every `commands:<verbs>` block a skill embeds. Nothing here is written by hand.
+// Package doc projects the commands' own help into the documents that describe them: the README's command table and every `commands:<verbs>` block a skill embeds.
 package doc
 
 import (
@@ -19,7 +18,6 @@ const (
 	open   = "<!-- BEGIN: "
 )
 
-// Overview is the table of every command: its synopsis and its summary.
 func Overview(kernel *cli.Kernel) string {
 	var rows []string
 
@@ -35,7 +33,6 @@ func Overview(kernel *cli.Kernel) string {
 	return table("Command", "Purpose", rows)
 }
 
-// ForVerbs is the table of every form the named verbs answer to.
 func ForVerbs(kernel *cli.Kernel, verbs ...string) string {
 	var rows []string
 
@@ -70,7 +67,6 @@ func commandNamed(kernel *cli.Kernel, verb string) (cli.Command, bool) {
 	return nil, false
 }
 
-// DocumentsIn are the paths of every Markdown document under the directory, sorted.
 func DocumentsIn(directory string) ([]string, error) {
 	var documents []string
 
@@ -91,7 +87,6 @@ func DocumentsIn(directory string) ([]string, error) {
 	return documents, err
 }
 
-// Refresh renders every `commands:` block the document embeds from the commands' help.
 func Refresh(document string, kernel *cli.Kernel) (string, error) {
 	for _, name := range blockNames(document) {
 		verbs := strings.Split(strings.TrimPrefix(name, prefix), ",")
@@ -114,7 +109,6 @@ func Refresh(document string, kernel *cli.Kernel) (string, error) {
 	return refreshChecks(document)
 }
 
-// refreshChecks renders the `rule-checks` block a document embeds from the rule language's catalog.
 func refreshChecks(document string) (string, error) {
 	replaced, found, err := block.Replace(document, "rule-checks", "\n"+rule.Reference())
 	if err != nil || !found {

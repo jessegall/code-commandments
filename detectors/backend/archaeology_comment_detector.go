@@ -15,10 +15,8 @@ type ArchaeologyCommentDetector struct{}
 
 func init() { detectors.Register(catalog.PHP, ArchaeologyCommentDetector{}) }
 
-// Sin is the sin the detector finds.
 func (ArchaeologyCommentDetector) Sin() sins.Sin { return backendsins.ArchaeologyComment{} }
 
-// Find is every node with a comment that tells its history.
 func (ArchaeologyCommentDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return php.In(codebase).
 		Where(engine.As(func(n php.Node) bool { return n.HasCommentMatching(prose.History) })).

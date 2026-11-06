@@ -6,9 +6,6 @@ import (
 	"github.com/jessegall/code-commandments/engine/csharp/csharptest"
 )
 
-// TestAGuardTheTypeRulesOutIsFoundAndARealOneIsNotCS holds the rule to the fault it names: a comparison with
-// null on a value the compiler reads as not nullable. A nullable declaration, a value type, and a type the
-// scan never saw are all guards that answer a real question and must pass.
 func TestAGuardTheTypeRulesOutIsFoundAndARealOneIsNotCS(t *testing.T) {
 	const order = `namespace Shop;
 

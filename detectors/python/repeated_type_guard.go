@@ -16,12 +16,10 @@ func init() {
 	detectors.Register(catalog.Python, RepeatedTypeGuardDetector{})
 }
 
-// Sin is the sin the detector finds.
 func (RepeatedTypeGuardDetector) Sin() sins.Sin {
 	return pysins.RepeatedTypeGuard{}
 }
 
-// Find is every place the sin is committed.
 func (RepeatedTypeGuardDetector) Find(codebase *engine.Codebase) []engine.Match {
 	guards := py.In(codebase).
 		WhereKind("BoolOp").
@@ -32,11 +30,8 @@ func (RepeatedTypeGuardDetector) Find(codebase *engine.Codebase) []engine.Match 
 	return flatten(engine.RecurringBuckets(guards, guardFingerprint, 2))
 }
 
-// GroupKey groups a finding with the type checks it repeats.
 func (RepeatedTypeGuardDetector) GroupKey(match engine.Match) (string, bool) {
 	return guardFingerprint(match)
 }
 
-// CrossFile says the rule reads more than the file it reports in, which the fixture measures by asking it
-// of one file and of the whole tree: a scoped run reads the whole scan while it is enabled.
 func (RepeatedTypeGuardDetector) CrossFile() {}

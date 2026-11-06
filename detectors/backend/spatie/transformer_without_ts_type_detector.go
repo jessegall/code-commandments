@@ -15,10 +15,8 @@ type TransformerWithoutTsTypeDetector struct{}
 
 func init() { detectors.Register(catalog.PHP, TransformerWithoutTsTypeDetector{}) }
 
-// Sin is the sin the detector finds.
 func (TransformerWithoutTsTypeDetector) Sin() sins.Sin { return backendsins.TransformerWithoutTsType{} }
 
-// Find is every WithTransformer on a Data class whose transformer lacks a TypeScript type.
 func (TransformerWithoutTsTypeDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return php.In(codebase).
 		Where(engine.As(func(n php.Node) bool { return n.IsAttributeNamed("WithTransformer") })).

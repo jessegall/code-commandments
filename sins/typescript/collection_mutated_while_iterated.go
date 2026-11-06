@@ -13,7 +13,6 @@ func init() {
 	sins.Register(catalog.TypeScript, CollectionMutatedWhileIterated{})
 }
 
-// Definition is what the sin states about itself.
 func (CollectionMutatedWhileIterated) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "typescript-collection-mutated-while-iterated",

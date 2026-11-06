@@ -12,9 +12,6 @@ func init() {
 	engine.Fills(contract.Python, fill)
 }
 
-// fill writes the facts the engine owns on a Python stream (contract/CONTRACT.md, "Who fills it"): each call's
-// target, what each name and import refers to, the file each import resolves to, which methods are inherited,
-// which expressions are constant, and the class each written type names.
 func fill(codebase *engine.Codebase, changed []string) {
 	program := Of(codebase)
 	for _, module := range program.filling(changed) {
@@ -46,14 +43,6 @@ func fill(codebase *engine.Codebase, changed []string) {
 	}
 }
 
-// filling are the modules whose facts this pass writes: every module where nothing is named, and otherwise the
-// modules of the named files together with every module that reaches them, however many hops away.
-//
-// Reaching matters because a fact crosses modules: a name in one resolves to a declaration in another, a method
-// is inherited from a class another module declares, a written type names a class from elsewhere. Filling only
-// the changed module would leave every module that imports it holding facts worked out against the file as it
-// was, which is a quietly wrong answer rather than a slow one. Finding the edges costs 0.008 seconds over the
-// 978052 nodes of a 5286-file tree, so the closure is never the cost; the pass over every file is.
 func (p *Program) filling(changed []string) []*Module {
 	if len(changed) == 0 {
 		return p.Modules()
@@ -100,8 +89,6 @@ func (p *Program) filling(changed []string) []*Module {
 	return modules
 }
 
-// resolvedImport is the path of the module an import alias reaches: nothing for a node that is no alias, and
-// nothing for an alias naming a module this codebase does not hold.
 func resolvedImport(module *Module, node Node) (string, bool) {
 	if node.Kind() != "alias" {
 		return "", false
@@ -114,7 +101,6 @@ func resolvedImport(module *Module, node Node) (string, bool) {
 	return reached.File.Path, true
 }
 
-// targetOf is the contract's target for a def: its symbol, its name, and the class that declares it.
 func targetOf(def Node) *contract.Target {
 	target := &contract.Target{Symbol: def.Node().Symbol, Name: def.Name()}
 	if class := def.Parent(); class.Kind() == "ClassDef" {
@@ -124,7 +110,6 @@ func targetOf(def Node) *contract.Target {
 	return target
 }
 
-// IsOverride says whether a method, a def in a class body, overrides one a base class of the codebase declares.
 func (p *Program) IsOverride(method Node) bool {
 	class := method.Parent()
 	home := p.homes[class.Node()]
@@ -142,9 +127,6 @@ func (p *Program) IsOverride(method Node) bool {
 	return false
 }
 
-// DispatchedCallersOf is every call that can reach the method: its own, those of every method of a base class it
-// overrides, which reach it when the object is of its class, and those that reach it through the class a class
-// attribute holds.
 func (p *Program) DispatchedCallersOf(method Node) []Node {
 	calls := append(slices.Clone(p.CallersOf(method)), p.HeldCallersOf(method)...)
 	for _, overridden := range p.overriddenBy(method) {
@@ -154,7 +136,6 @@ func (p *Program) DispatchedCallersOf(method Node) []Node {
 	return calls
 }
 
-// overriddenBy is every method of the same name a base class of the method's class declares, its bases' bases too.
 func (p *Program) overriddenBy(method Node) []Node {
 	var found []Node
 	seen := map[string]bool{}
@@ -182,9 +163,6 @@ func (p *Program) overriddenBy(method Node) []Node {
 	return found
 }
 
-// refersTo is the symbol id an import alias or a name at the top of its module names: a def or class of the
-// codebase, or what an import binds, whether or not the scan holds it. A name a function binds for itself
-// refers to its own local, which has no id.
 func (p *Program) refersTo(node Node, module *Module) (string, bool) {
 	switch node.Kind() {
 	case "alias":
@@ -206,8 +184,6 @@ func (p *Program) refersTo(node Node, module *Module) (string, bool) {
 	return "", false
 }
 
-// importedId is the dotted id an import alias binds: the module it imports, or the member a from-import names.
-// A relative import names one only when it reaches a module of the codebase.
 func (m *Module) importedId(alias Node) (string, bool) {
 	statement := alias.Parent()
 	if statement.Kind() == "Import" {
@@ -231,8 +207,6 @@ func (m *Module) importedId(alias Node) (string, bool) {
 	return source.Name + "." + alias.Name(), true
 }
 
-// importedName is the dotted id the name, or the first part of a dotted name, is bound to by an import of the
-// module: `Decimal` after `from decimal import Decimal`, `decimal.Decimal` after `import decimal`.
 func (m *Module) importedName(dotted string) (string, bool) {
 	head, rest, qualified := strings.Cut(dotted, ".")
 	id, ok := m.bindings().ids[head]
@@ -246,7 +220,6 @@ func (m *Module) importedName(dotted string) (string, bool) {
 	return id, true
 }
 
-// renamedTo is the name an import alias renames what it imports to, if it renames it.
 func (alias Node) renamedTo() (string, bool) {
 	if extras := alias.Node().Extras; extras != nil && extras.Python != nil && extras.Python.As != "" {
 		return extras.Python.As, true
@@ -255,7 +228,6 @@ func (alias Node) renamedTo() (string, bool) {
 	return "", false
 }
 
-// isLocal says whether a function around the node binds the name for itself: as a parameter, or by assigning it.
 func (p *Program) isLocal(name string, node Node) bool {
 	for function := node.EnclosingFunction(); function.Exists(); function = function.Parent().EnclosingFunction() {
 		if p.locals(function)[name] {
@@ -266,7 +238,6 @@ func (p *Program) isLocal(name string, node Node) bool {
 	return false
 }
 
-// locals is every name the function binds for itself, read once.
 func (p *Program) locals(function Node) map[string]bool {
 	if held, ok := p.bound.Load(function.Node()); ok {
 		return held.(map[string]bool)
@@ -285,7 +256,6 @@ func (p *Program) locals(function Node) map[string]bool {
 	return names
 }
 
-// isConstant says whether the expression has a value before the program runs: a literal, or arithmetic on literals.
 func (node Node) isConstant() bool {
 	switch node.Kind() {
 	case "Constant":
@@ -299,10 +269,6 @@ func (node Node) isConstant() bool {
 	return false
 }
 
-// resolvedType is the written type with the class each named part spells named, read in the module: a class of
-// the codebase by its symbol id, an imported one by the id its import binds. A name that resolves to neither, such
-// as a builtin, stays as written. The written type is never changed, since decoded types are shared: a type that
-// resolves differently is a new one, and one that resolves as written is itself.
 func (p *Program) resolvedType(written *contract.Type, module *Module) *contract.Type {
 	if written == nil {
 		return nil
@@ -324,7 +290,6 @@ func (p *Program) resolvedType(written *contract.Type, module *Module) *contract
 	return &resolved
 }
 
-// resolvedTypes are the types resolved, the slice itself when none of them changed.
 func (p *Program) resolvedTypes(written []*contract.Type, module *Module) []*contract.Type {
 	resolved := make([]*contract.Type, len(written))
 	for at, inner := range written {
@@ -337,8 +302,6 @@ func (p *Program) resolvedTypes(written []*contract.Type, module *Module) []*con
 	return resolved
 }
 
-// fillRefs writes, on each docstring, the Sphinx cross-references it makes: each as written, whether the codebase
-// owns the package it names, and the symbol it reaches when the codebase resolves it.
 func (p *Program) fillRefs(module *Module) {
 	for at := range module.File.File.Comments {
 		comment := &module.File.File.Comments[at]
@@ -360,7 +323,6 @@ func (p *Program) fillRefs(module *Module) {
 	}
 }
 
-// isEnumCase says whether the expression reads a case of an enum the program declares: `Colour.RED`.
 func (p *Program) isEnumCase(node Node) bool {
 	return node.Kind() == "Attribute" && node.Child("value").Kind() == "Name" && p.IsEnum(node.Child("value"))
 }

@@ -19,7 +19,6 @@ type profile struct {
 	bytes   int64
 }
 
-// Benchmark runs the tasks one after another, timing each, and answers their judgement with the profiles.
 func Benchmark(tasks []Task, warn io.Writer) (Judgement, []profile) {
 	var judgement Judgement
 	var profiles []profile
@@ -48,7 +47,6 @@ func Benchmark(tasks []Task, warn io.Writer) (Judgement, []profile) {
 	return judgement, profiles
 }
 
-// Profiles lays the profiles out slowest first, after how long the parse took.
 func Profiles(profiles []profile, parseSeconds float64) string {
 	sort.SliceStable(profiles, func(i, j int) bool {
 		return profiles[i].seconds > profiles[j].seconds

@@ -13,7 +13,6 @@ func init() {
 	sins.Register(catalog.Python, ShortCircuitStatement{})
 }
 
-// Definition is what the sin states about itself.
 func (ShortCircuitStatement) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "python-short-circuit-statement",

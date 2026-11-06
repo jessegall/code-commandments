@@ -11,7 +11,6 @@ func init() {
 	engine.Freezes(contract.PHP, declaresFrozen, func(_ string, source []byte) bool { return bytes.Contains(source, []byte("Frozen")) })
 }
 
-// declaresFrozen says whether an attribute group of the file opens with #[Frozen], whatever the spacing inside it.
 func declaresFrozen(file *engine.File) bool {
 	source, err := file.Source()
 	if err != nil {

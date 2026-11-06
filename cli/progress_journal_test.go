@@ -8,12 +8,8 @@ import (
 	"testing"
 )
 
-// counted is how the journal reads a check's progress: the last `done/total` the output holds.
 var counted = regexp.MustCompile(`\b(\d+)\s*/\s*(\d+)\b`)
 
-// TestAJournalCheckReadsTheRunsProgressAsItGoes holds a run a journal check reads to plain lines: one counted step
-// for every file the bridges have read and every detector that has run, out of ONE total planned before the run
-// began, so the check's bar moves from the start and fills once; a run nothing reads stays silent.
 func TestAJournalCheckReadsTheRunsProgressAsItGoes(t *testing.T) {
 	run := func(check string) string {
 		t.Setenv(JournalReport, check)

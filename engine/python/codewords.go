@@ -7,7 +7,6 @@ import (
 	"github.com/jessegall/code-commandments/prose"
 )
 
-// constructs is the construct each Python statement is, and the keyword Python spells it with.
 var constructs = map[string]prose.Spelled{
 	"For":              {Construct: prose.Loop, Keywords: []string{"for"}},
 	"AsyncFor":         {Construct: prose.Loop, Keywords: []string{"for"}},
@@ -30,9 +29,6 @@ var constructs = map[string]prose.Spelled{
 	"AugAssign":        {Construct: prose.Accumulation},
 }
 
-// CodeWords is the words a statement's own head spells, as prose content words: the construct it is and its
-// keyword, then its names, attributes, keyword arguments and string literals, the statements it holds aside. A
-// comment measured against them shows whether it says anything the code does not.
 func (n Node) CodeWords() []string {
 	var spelled []string
 	if construct, ok := constructs[n.Kind()]; ok {
@@ -53,8 +49,6 @@ func (n Node) CodeWords() []string {
 	return words
 }
 
-// ownExpressions is the expressions a statement's head holds, the statements in its body aside: a def's
-// decorators, never its parameters; a with's contexts and targets.
 func (n Node) ownExpressions() []Node {
 	var own []Node
 	for _, child := range n.Children() {
@@ -69,7 +63,6 @@ func (n Node) ownExpressions() []Node {
 	return own
 }
 
-// spells is the text the expression itself spells: a name, an attribute, a keyword argument, a string.
 func (n Node) spells() []string {
 	switch n.Kind() {
 	case "Name", "Attribute", "keyword":

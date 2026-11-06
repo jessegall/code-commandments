@@ -6,12 +6,10 @@ import (
 	"github.com/jessegall/code-commandments/engine/typescript"
 )
 
-// Reads is every expression the element reads data through: its own expressions and its v-for's iterable.
 func (e Element) Reads() []typescript.Node {
 	return append(e.Expressions(), typescript.Of(e.Directive(For).Iterable()))
 }
 
-// Chains is every member chain of two or more names the element reads.
 func (e Element) Chains() [][]string {
 	var chains [][]string
 	for _, read := range e.Reads() {
@@ -21,7 +19,6 @@ func (e Element) Chains() [][]string {
 	return chains
 }
 
-// ReadRoots is each name the element reads data from, once for every expression that reads it.
 func (e Element) ReadRoots() []string {
 	var roots []string
 	for _, read := range e.Reads() {
@@ -31,7 +28,6 @@ func (e Element) ReadRoots() []string {
 	return roots
 }
 
-// Ancestry is the element and every element above it, innermost first.
 func (e Element) Ancestry() []Element {
 	var spine []Element
 	for at := e; at.Exists(); at = at.Parent() {
@@ -41,8 +37,6 @@ func (e Element) Ancestry() []Element {
 	return spine
 }
 
-// CommonAncestor is the deepest element holding every one of the elements; no node when only the template
-// holds them all.
 func CommonAncestor(elements []Element) Element {
 	if len(elements) == 0 {
 		return Element{}

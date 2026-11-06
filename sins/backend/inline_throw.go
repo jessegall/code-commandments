@@ -11,7 +11,6 @@ type InlineThrow struct{}
 
 func init() { sins.Register(catalog.PHP, InlineThrow{}) }
 
-// Definition is what the sin states about itself.
 func (InlineThrow) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "inline-throw",

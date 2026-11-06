@@ -11,7 +11,6 @@ type TypeSwitch struct{}
 
 func init() { sins.Register(catalog.PHP, TypeSwitch{}) }
 
-// Definition is what the sin states about itself.
 func (TypeSwitch) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "type-switch",

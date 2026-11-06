@@ -15,11 +15,8 @@ type RedundantNativeCastDetector struct{}
 
 func init() { detectors.Register(catalog.PHP, RedundantNativeCastDetector{}) }
 
-// Sin is the sin the detector finds.
 func (RedundantNativeCastDetector) Sin() sins.Sin { return backendsins.RedundantNativeCast{} }
 
-// Find is every from(), parse() or new of a native cast value from one argument, for a slot that casts it natively
-// and declares no cast of its own.
 func (RedundantNativeCastDetector) Find(codebase *engine.Codebase) []engine.Match {
 	factories := php.In(codebase).WhereKind("Expr_StaticCall").Where(func(n engine.Match) bool {
 		return n.Child("name").Name() == "from" || n.Child("name").Name() == "parse"
@@ -37,9 +34,6 @@ func nativeCastGate(query *engine.Query) []engine.Match {
 		Get()
 }
 
-// Repentable says a scribe rewrites the sin away.
 func (RedundantNativeCastDetector) Repentable() {}
 
-// CrossFile says the rule reads more than the file it reports in, which the fixture measures by asking it
-// of one file and of the whole tree: a scoped run reads the whole scan while it is enabled.
 func (RedundantNativeCastDetector) CrossFile() {}

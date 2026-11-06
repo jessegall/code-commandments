@@ -16,12 +16,10 @@ func init() {
 	detectors.Register(catalog.Python, InLiteralsMirrorsEnumDetector{})
 }
 
-// Sin is the sin the detector finds.
 func (InLiteralsMirrorsEnumDetector) Sin() sins.Sin {
 	return pysins.InLiteralsMirrorsEnum{}
 }
 
-// Find is every place the sin is committed.
 func (InLiteralsMirrorsEnumDetector) Find(codebase *engine.Codebase) []engine.Match {
 	program := py.In(codebase).Program
 

@@ -6,8 +6,6 @@ import (
 	"testing"
 )
 
-// TestAFileIsWrittenBackAsThePHPToolWritesIt holds a read and write-back to what the PHP tool wrote for the same
-// document, recorded in testdata/written.json.
 func TestAFileIsWrittenBackAsThePHPToolWritesIt(t *testing.T) {
 	document := `{"name":"acme/app","autoload":{"psr-4":{"App\\":"src/"}},"extra":{},"scripts":{"test":"phpunit","post-install-cmd":["@php artisan x"]},` +
 		`"config":{"allow-plugins":{"a/b":true},"platform":{"php":"8.3"},"sort-packages":false,"process-timeout":0},"note":"ünïcode / slash","none":null,"list":[]}`

@@ -13,7 +13,6 @@ func init() {
 	sins.Register(catalog.CSharp, InventedDefault{})
 }
 
-// Definition is what the sin states about itself.
 func (InventedDefault) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "csharp-invented-default",

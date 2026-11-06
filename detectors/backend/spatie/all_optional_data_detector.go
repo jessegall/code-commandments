@@ -15,10 +15,8 @@ type AllOptionalDataDetector struct{}
 
 func init() { detectors.Register(catalog.PHP, AllOptionalDataDetector{}) }
 
-// Sin is the sin the detector finds.
 func (AllOptionalDataDetector) Sin() sins.Sin { return backendsins.AllOptionalData{} }
 
-// Find is every Data class whose promoted fields are all Optional.
 func (AllOptionalDataDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return php.In(codebase).
 		WhereKind("Stmt_Class").

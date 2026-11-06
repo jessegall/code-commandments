@@ -14,10 +14,8 @@ type InlineThrowDetector struct{}
 
 func init() { detectors.Register(catalog.PHP, InlineThrowDetector{}) }
 
-// Sin is the sin the detector finds.
 func (InlineThrowDetector) Sin() sins.Sin { return backendsins.InlineThrow{} }
 
-// Find is every ?? that throws as its fallback and is passed to a call or sent a method.
 func (InlineThrowDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return php.In(codebase).
 		Where(engine.As(func(n php.Node) bool { return n.CoalesceRight().IsThrow() })).

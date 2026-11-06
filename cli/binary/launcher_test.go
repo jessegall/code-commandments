@@ -8,9 +8,6 @@ import (
 	"testing"
 )
 
-// TestTheLauncherRunsTheBinaryTheShimLastRan holds bin/hook to the binary the shim beside it recorded, and to
-// the shim whenever that record cannot be trusted: none written, its binary gone, or the environment naming
-// another.
 func TestTheLauncherRunsTheBinaryTheShimLastRan(t *testing.T) {
 	if _, err := exec.LookPath("php"); err != nil {
 		t.Skip("no php to run the shim")

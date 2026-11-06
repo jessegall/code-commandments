@@ -16,7 +16,6 @@ import (
 	_ "github.com/jessegall/code-commandments/registry"
 )
 
-// shop is tests/Fixtures/csharp as the engine reads it, through the real bridge.
 func shop(t *testing.T) *engine.Codebase {
 	t.Helper()
 	root, err := filepath.Abs("../../tests/Fixtures/csharp")
@@ -31,8 +30,6 @@ func shop(t *testing.T) *engine.Codebase {
 	return engine.Load(stream)
 }
 
-// configured is the C# detectors as tests/Fixtures/csharp/.commandments/config.php configures them: the shop
-// declares its layers.
 func configured() []detectors.Detector {
 	var configured []detectors.Detector
 	for _, detector := range detectors.Of(catalog.CSharp) {

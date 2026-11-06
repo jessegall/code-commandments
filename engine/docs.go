@@ -1,7 +1,5 @@
 package engine
 
-// DocTags are the tags the declaration's documentation carries, each by its bare name, as its language writes
-// them; none for a language that registered no reading.
 func (m Match) DocTags() []string {
 	if read := m.grammar().DocTags; read != nil && m.node != nil {
 		return read(m)
@@ -10,7 +8,6 @@ func (m Match) DocTags() []string {
 	return nil
 }
 
-// DocComments are the texts of the doc comments attached to the node.
 func (m Match) DocComments() []string {
 	var texts []string
 	for _, comment := range m.Comments() {
@@ -22,8 +19,6 @@ func (m Match) DocComments() []string {
 	return texts
 }
 
-// BodyHash is the formatting-blind fingerprint of the function's body, as its language takes it; empty for a node
-// without one.
 func (m Match) BodyHash() string {
 	if read := m.grammar().BodyHash; read != nil && m.Is(Function) {
 		return read(m)
@@ -32,10 +27,6 @@ func (m Match) BodyHash() string {
 	return ""
 }
 
-// NodeHash is the formatting-blind fingerprint of this one node, as its language takes it: two subtrees written
-// alike hash alike, whatever their spacing, comments or quotes. Normalising blanks the names of locals and the
-// text of data literals too, so two readings that differ only in what they call a local, or which string they
-// hold, hash alike. Empty where the node's language registers no rules for it.
 func (m Match) NodeHash(normalize bool) string {
 	if read := m.grammar().NodeHash; read != nil {
 		return read(m, normalize)
@@ -44,8 +35,6 @@ func (m Match) NodeHash(normalize bool) string {
 	return ""
 }
 
-// Copies is how many functions of the codebase have this one's body, itself among them; none for a function
-// whose body its language cannot fingerprint.
 func (m Match) Copies() int {
 	hash := m.BodyHash()
 	if hash == "" {
@@ -55,7 +44,6 @@ func (m Match) Copies() int {
 	return bodies(m.file.Codebase())[hash]
 }
 
-// bodies counts the functions of the codebase by their body's fingerprint.
 func bodies(c *Codebase) map[string]int {
 	return Analysis(c, "bodies", func(c *Codebase) map[string]int {
 		counts := map[string]int{}
@@ -69,8 +57,6 @@ func bodies(c *Codebase) map[string]int {
 	})
 }
 
-// IsTest says whether the node is test code: in a file its bridge marks as a test's, such as one of a C# test
-// project, or one its language's conventions name so, read from the folder the scan was pointed at.
 func (m Match) IsTest() bool {
 	if m.file == nil {
 		return false

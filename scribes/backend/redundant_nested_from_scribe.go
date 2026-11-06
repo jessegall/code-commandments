@@ -14,7 +14,6 @@ func init() {
 // RedundantNestedFromScribe hands a nested Data its array as it is, the parent's from() building it.
 type RedundantNestedFromScribe struct{}
 
-// Rewrite replaces each finding with the array it wraps.
 func (RedundantNestedFromScribe) Rewrite(findings []engine.Match, _ *engine.Codebase) (scribes.Rewrites, error) {
 	return replaceEach(findings, func(finding engine.Match) (string, bool) {
 		arguments := php.Arguments(finding)

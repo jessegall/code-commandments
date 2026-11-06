@@ -9,10 +9,6 @@ import (
 	"github.com/jessegall/code-commandments/contract"
 )
 
-// TestEveryFileWaitingGoesOverInOneAsk holds what the whole saving rests on. A bridge's cost is per ASK and not
-// per file — measured here, one ask of nine files costs 349ms against 343ms for one — so the files of the edits
-// waiting together must go over in ONE ask. Asked one at a time they cost that whole price each: nine edits took
-// 4.025 seconds to clear and 430ms of judging apiece, against 2.838 and 118 once they shared an ask.
 func TestEveryFileWaitingGoesOverInOneAsk(t *testing.T) {
 	asked := make(chan []string, 8)
 	parser := parsingFor(t, asked, nil)
@@ -30,8 +26,6 @@ func TestEveryFileWaitingGoesOverInOneAsk(t *testing.T) {
 		parser.expect(file)
 	}
 
-	// Started once all three are waiting, which is what an ask that takes 350ms means in a session: the files of
-	// every event that arrived while the last ask ran are waiting together when the next one is made.
 	go parser.work()
 
 	var groups [][]string
@@ -49,7 +43,6 @@ func TestEveryFileWaitingGoesOverInOneAsk(t *testing.T) {
 		t.Errorf("three files waiting went over in %d asks, want 1: %v", len(groups), groups)
 	}
 
-	// And each of them is then held, so the judging of that edit parses nothing at all.
 	for _, file := range files {
 		if _, already := parser.streamsOf(file); !already {
 			t.Errorf("%s was parsed ahead and is not held, so its judging parses it again", filepath.Base(file))
@@ -57,9 +50,6 @@ func TestEveryFileWaitingGoesOverInOneAsk(t *testing.T) {
 	}
 }
 
-// TestAParseIsNotUsedForAFileThatMovedAgain holds the one thing a parse held ahead must never do: answer about a
-// file as it WAS. An edit that lands while its own file is being parsed is a file that moved again, and the
-// judging must parse it itself rather than read a tree of the version before.
 func TestAParseIsNotUsedForAFileThatMovedAgain(t *testing.T) {
 	asked := make(chan []string, 8)
 	parser := parsingFor(t, asked, nil)
@@ -78,7 +68,6 @@ func TestAParseIsNotUsedForAFileThatMovedAgain(t *testing.T) {
 		t.Fatal("the file was never parsed")
 	}
 
-	// The next edit lands: same path, different content, and a mark that says so.
 	time.Sleep(10 * time.Millisecond)
 	if err := os.WriteFile(file, []byte("x = 1\ny = 2\n"), 0o644); err != nil {
 		t.Fatal(err)
@@ -89,8 +78,6 @@ func TestAParseIsNotUsedForAFileThatMovedAgain(t *testing.T) {
 	}
 }
 
-// parsingFor is a parser whose asks this test can count. Its worker is NOT started: a test says when, so it can
-// have several files waiting before the first ask, as a session does.
 func parsingFor(t *testing.T, asked chan []string, hold chan struct{}) *parsing {
 	t.Helper()
 
@@ -98,8 +85,8 @@ func parsingFor(t *testing.T, asked chan []string, hold chan struct{}) *parsing 
 		held:   map[string]read{},
 		asking: map[string]bool{},
 		filled: make(chan struct{}),
-		wake:    make(chan struct{}, 1),
-		ahead:   true,
+		wake:   make(chan struct{}, 1),
+		ahead:  true,
 		reading: func(files []string) ([]*contract.Stream, error) {
 			asked <- files
 
@@ -117,7 +104,6 @@ func parsingFor(t *testing.T, asked chan []string, hold chan struct{}) *parsing 
 	return parser
 }
 
-// parsedFiles are the files a bridge would have written for that ask.
 func parsedFiles(files []string) []*contract.File {
 	var written []*contract.File
 	for _, file := range files {
@@ -127,11 +113,6 @@ func parsedFiles(files []string) []*contract.File {
 	return written
 }
 
-// TestAJudgingWaitsForAnAskAlreadyInFlight holds the one thing that made this cost more than it saved. A judging
-// whose turn comes while its own file is mid-ask must WAIT for that ask: parsing the file itself instead makes a
-// second ask to the same one-at-a-time bridge, which queues behind the first and is then thrown away, so the file
-// is parsed twice and the edit pays for both. Measured on a real tree as an edit spending 30 seconds reading
-// while three hand-ins ran.
 func TestAJudgingWaitsForAnAskAlreadyInFlight(t *testing.T) {
 	asked := make(chan []string, 8)
 	hold := make(chan struct{})
@@ -179,9 +160,6 @@ func TestAJudgingWaitsForAnAskAlreadyInFlight(t *testing.T) {
 	}
 }
 
-// TestAHalfWrittenFileDoesNotLoseTheGroupsParse holds the group against the commonest state a file is in while
-// an agent works: half written. Every file waiting goes over in one ask, so an ask that fails over one of them
-// would send every other file in it back to an ask of its own, which is the whole cost this exists to avoid.
 func TestAHalfWrittenFileDoesNotLoseTheGroupsParse(t *testing.T) {
 	folder := t.TempDir()
 

@@ -5,7 +5,6 @@ import (
 	"github.com/jessegall/code-commandments/engine"
 )
 
-// declarations are the name a report gives each kind of TypeScript declaration a finding is at.
 var declarations = map[string]string{
 	"FunctionDeclaration": "FunctionDecl",
 	"FunctionExpression":  "FunctionDecl",
@@ -23,7 +22,6 @@ var declarations = map[string]string{
 	"PropertySignature":   "FieldDecl",
 }
 
-// typeDeclarations are the kinds a finding names as the type they declare.
 var typeDeclarations = map[string]bool{"InterfaceDeclaration": true, "TypeAliasDeclaration": true}
 
 func init() {
@@ -31,8 +29,6 @@ func init() {
 	engine.NameScopes(contract.TypeScript, scopeOf)
 }
 
-// scopeOf names where a frontend finding is: an element by its tag, a type by its name, a declaration by
-// its kind and name, and an expression by what it says.
 func scopeOf(match engine.Match) string {
 	kind := match.Kind()
 

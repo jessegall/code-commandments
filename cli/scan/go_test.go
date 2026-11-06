@@ -12,9 +12,6 @@ import (
 	"github.com/jessegall/code-commandments/contract"
 )
 
-// TestGoReachesTheEngineThroughTheOneFunnel holds the Go bridge to the same door every other language's bridge
-// comes through: the scan walks the tree, the funnel reaches the bridge, and the engine holds the codebase. What
-// differs is only how the bridge is reached, which is the one thing a bridge declares for itself.
 func TestGoReachesTheEngineThroughTheOneFunnel(t *testing.T) {
 	root := goTree(t, map[string]string{
 		"go.mod":  "module example.com/shop\n",
@@ -48,9 +45,6 @@ func TestGoReachesTheEngineThroughTheOneFunnel(t *testing.T) {
 	}
 }
 
-// TestJudgingGoStartsNothingAndKeepsNothingWarm holds the one thing that makes this bridge different: it runs in
-// this process. No command is started for it, no socket is dialled for it, and no service is kept up for it, so a
-// run of the tool over a Go tree leaves nothing behind to orphan.
 func TestJudgingGoStartsNothingAndKeepsNothingWarm(t *testing.T) {
 	held, known := scan.Named("go")
 	if !known {
@@ -78,8 +72,6 @@ func TestJudgingGoStartsNothingAndKeepsNothingWarm(t *testing.T) {
 	}
 }
 
-// TestAGoFileIsNotReadAsPHP holds the language table to a Go file: it defaulted to PHP for every extension it did
-// not know, so a .go file was judged by the PHP rules, which is a wrong answer nothing reports.
 func TestAGoFileIsNotReadAsPHP(t *testing.T) {
 	for path, want := range map[string]source.Language{
 		"cli/scan/bridges.go": source.Go,
@@ -96,7 +88,6 @@ func TestAGoFileIsNotReadAsPHP(t *testing.T) {
 	}
 }
 
-// goTree writes the files under a fresh folder and answers its resolved path.
 func goTree(t *testing.T, files map[string]string) string {
 	t.Helper()
 	root, err := filepath.EvalSymlinks(t.TempDir())

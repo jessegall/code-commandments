@@ -9,11 +9,8 @@ import (
 	"github.com/jessegall/code-commandments/engine"
 )
 
-// keyTypes are the types that read as a lookup key: an identity, not a collaborator.
 var keyTypes = []string{"global::System.String", "global::System.Int32", "global::System.Int64", "global::System.Guid"}
 
-// CapturedLocal is the local the expression's result is kept in, `var node = …` or `node = …`, through a `!`,
-// parentheses or the left of a `??`; empty when the result goes anywhere else.
 func (n Node) CapturedLocal() string {
 	node := n
 	for parent := n.Parent(); parent.Exists(); parent = parent.Parent() {
@@ -34,8 +31,6 @@ func (n Node) CapturedLocal() string {
 	return ""
 }
 
-// IsOnlyReadThrough says whether the name the root reads is used, among the reads, only to read properties off it:
-// never handed on whole, never called a method on. The root itself is not one of those uses.
 func (n Node) IsOnlyReadThrough(reads []Node) bool {
 	return !slices.ContainsFunc(reads, func(use Node) bool {
 		if use.Node() == n.Node() || !use.Is("IdentifierName") || use.Name() != n.Name() {
@@ -49,9 +44,6 @@ func (n Node) IsOnlyReadThrough(reads []Node) bool {
 	})
 }
 
-// UnpacksTargetFromContainerParam says whether the method looks its target up in a container parameter by a key
-// parameter, keeps what it found in a local, and uses the container for nothing but reading its properties, while
-// being more than the resolver. Only a container the codebase declares counts.
 func (n Node) UnpacksTargetFromContainerParam(program *Program) bool {
 	body := n.FunctionBody()
 	if !n.Is("MethodDeclaration") || !body.Exists() {
@@ -83,13 +75,6 @@ func (n Node) UnpacksTargetFromContainerParam(program *Program) bool {
 	})
 }
 
-// EnviedParameter is the parameter the method envies: the one other object it loops the collection of or writes
-// the members of, reaching into it more than into its own state; empty when it envies nothing. A type that may
-// fill a contract, a method that builds anything, a parameter of the method's own type, and a loop that passes
-// each element on rather than working on it are not envy.
-//
-// A read that is a criterion of a query over the type's own state is not a reach into the other object: it says
-// which of the type's own rows are wanted.
 func (n Node) EnviedParameter(program *Program) string {
 	host := n.EnclosingType()
 	if !host.Exists() || host.MayFillAContract() || n.constructs() {
@@ -132,8 +117,6 @@ func (n Node) EnviedParameter(program *Program) string {
 	return ""
 }
 
-// reachesNotCriteria is how often the method reads a member of each of the names, leaving out the reads that are
-// criteria of a query over the type's own state.
 func (n Node) reachesNotCriteria(names, own []string) map[string]int {
 	counted := map[string]int{}
 	for name, reads := range n.MemberReadsOn(names) {
@@ -145,7 +128,6 @@ func (n Node) reachesNotCriteria(names, own []string) map[string]int {
 	return counted
 }
 
-// ownStateReaches is how often the method reads its own type's state.
 func (n Node) ownStateReaches(own []string) int {
 	reaches := 0
 	for _, expression := range n.OutermostExpressions() {
@@ -155,13 +137,6 @@ func (n Node) ownStateReaches(own []string) int {
 	return reaches
 }
 
-// WalksRecursively says whether the method walks the parameter by calling itself on a part of it: an interpreter
-// over a tree of plain data, where each node's children are evaluated the same way.
-//
-// Such a walk cannot move onto the type it reads. The evaluation needs what the walker was given besides the node
-// — a context, a bound value, the walk itself — and a node that evaluated itself would have to be handed all of
-// it, which is the walker turned inside out. A stored expression is data, and the thing that reads it is a
-// program.
 func (n Node) WalksRecursively(parameter string, loops []Node) bool {
 	own := n.Name()
 	if own == "" || parameter == "" {
@@ -191,8 +166,6 @@ func (n Node) WalksRecursively(parameter string, loops []Node) bool {
 	return false
 }
 
-// reachesAny says whether the expression reads one of the names, as the name itself or through what it holds: the
-// node the walk was given, or an element of it the walk is looping over.
 func reachesAny(expression Node, names []string) bool {
 	for _, part := range append(expression.Flatten(), expression) {
 		if part.Is("IdentifierName") && slices.Contains(names, part.Name()) {
@@ -203,29 +176,16 @@ func reachesAny(expression Node, names []string) bool {
 	return false
 }
 
-// constructs says whether the code builds anything: `new` of any type, named or anonymous.
 func (n Node) constructs() bool {
 	return slices.ContainsFunc(n.expressionParts(), func(node Node) bool {
 		return node.Is("ObjectCreationExpression", "ImplicitObjectCreationExpression", "AnonymousObjectCreationExpression")
 	})
 }
 
-// everyLoopPassesItsElementOn says whether each of the loops passes its element on instead of working it out:
-// the reading is engine.PassesItsElementOn, one for every language.
-//
-// C# used to add a second clause here for a loop that wrote its element out as text, which the shared reading
-// covers: an element reaching an interpolation inside a call's argument is handed over like any other, and a
-// hole that works an answer out of the element's members still fires.
 func (n Node) everyLoopPassesItsElementOn(loops []Node) bool {
 	return !slices.ContainsFunc(loops, func(loop Node) bool { return !engine.PassesItsElementOn(loop.Match) })
 }
 
-// IsCriterionOfOwnQuery says whether the read of another object's member stands inside a lambda that a query over
-// the type's OWN state was handed: `rows.Where(row => row.Name == descriptor.Name)`.
-//
-// Such a read says WHICH of the type's own rows are wanted. It is a criterion, not a reach into the other
-// object's data, and a method like that moved onto the object it reads would take the type's own collection with
-// it, which is the envy turned around.
 func (n Node) IsCriterionOfOwnQuery(own []string) bool {
 	for held := n; held.Exists(); held = held.Parent() {
 		if !held.Is("SimpleLambdaExpression", "ParenthesizedLambdaExpression") {
@@ -239,8 +199,6 @@ func (n Node) IsCriterionOfOwnQuery(own []string) bool {
 	return false
 }
 
-// partsBoundByAQueryOver are the names the parts of the parameter are bound to by a query over them: the `part` of
-// `expression.Parts.All(part => ...)`, which walks those parts as surely as a `foreach` over them does.
 func (n Node) partsBoundByAQueryOver(parameter string) []string {
 	var names []string
 	for _, part := range n.expressionParts() {
@@ -255,9 +213,6 @@ func (n Node) partsBoundByAQueryOver(parameter string) []string {
 	return names
 }
 
-// HoldsCoupledFields says whether the type holds one value as several of its own fields: two or more value fields
-// assembled into one value together again and again or null-checked together, a proper subset of the fields; or a
-// field mirroring what a sibling field already holds.
 func (n Node) HoldsCoupledFields(program *Program) bool {
 	if !n.IsTypeDeclaration() || n.Is("InterfaceDeclaration", "EnumDeclaration") {
 		return false
@@ -274,8 +229,6 @@ func (n Node) HoldsCoupledFields(program *Program) bool {
 	return len(state) >= 2 && (n.assemblesValuesTogether(values, len(state), program) || mirrorsASibling(state, program))
 }
 
-// assemblesValuesTogether says whether two or more of the values, a proper subset of the type's fields, are
-// assembled into one value together in two places, or with at least half of them null-checked together.
 func (n Node) assemblesValuesTogether(values []string, fieldCount int, program *Program) bool {
 	tested := n.OwnMembersTestedForNull(values)
 	occurrences := map[string]int{}
@@ -303,8 +256,6 @@ func (n Node) assemblesValuesTogether(values []string, fieldCount int, program *
 	return false
 }
 
-// assembledGroups is every group of two or more of the type's own values handed, as they are, to one tuple,
-// collection or type of the codebase's being built.
 func (n Node) assembledGroups(own []string, program *Program) [][]string {
 	var groups [][]string
 	for _, built := range n.expressionParts() {
@@ -335,15 +286,12 @@ func (n Node) assembledGroups(own []string, program *Program) [][]string {
 	return groups
 }
 
-// buildsAnotherOwnType says whether the creation builds a type the codebase declares, other than this one.
 func (n Node) buildsAnotherOwnType(creation Node, program *Program) bool {
 	built := strings.TrimSuffix(creation.Type().Name(), "?")
 
 	return built != n.Symbol() && program.DeclaresType(built)
 }
 
-// mirrorsASibling says whether a field mirrors a value a sibling field already holds: `WorkflowId` beside a
-// `Workflow` whose type has an `Id` of the same type.
 func mirrorsASibling(state []State, program *Program) bool {
 	for _, object := range state {
 		declaration, declared := program.TypeDeclared(strings.TrimSuffix(object.Type.Name(), "?"))
@@ -362,7 +310,6 @@ func mirrorsASibling(state []State, program *Program) bool {
 	return false
 }
 
-// capitalized is the name with its first letter upper-cased.
 func capitalized(name string) string {
 	if name == "" {
 		return ""
@@ -373,8 +320,6 @@ func capitalized(name string) string {
 	return string(runes)
 }
 
-// ResultIsAssertedPresent says whether the caller asserts the call's result is there, forcing it with `!`,
-// `?? throw`, or a null test that only throws, right there or on the local it keeps the result in.
 func (n Node) ResultIsAssertedPresent() bool {
 	result := n
 	for _, around := range n.Ancestors() {
@@ -397,8 +342,6 @@ func (n Node) ResultIsAssertedPresent() bool {
 	})
 }
 
-// isAssertedAt says whether the value the read yields is asserted present where it stands: the operand of `!`, the
-// left of `?? throw`, or the subject of a null test in an `if` that only throws.
 func (n Node) isAssertedAt() bool {
 	parent := n.Parent()
 	if parent.Is("SuppressNullableWarningExpression") || (parent.Is("CoalesceExpression") && parent.At(0).Node() == n.Node() && parent.At(1).WithoutParentheses().Is("ThrowExpression")) {

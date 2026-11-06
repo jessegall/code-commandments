@@ -13,7 +13,6 @@ func init() {
 	sins.Register(catalog.Python, MaskedInvariant{})
 }
 
-// Definition is what the sin states about itself.
 func (MaskedInvariant) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "python-masked-invariant",

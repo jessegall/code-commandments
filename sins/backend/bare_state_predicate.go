@@ -11,7 +11,6 @@ type BareStatePredicate struct{}
 
 func init() { sins.Register(catalog.PHP, BareStatePredicate{}) }
 
-// Definition is what the sin states about itself.
 func (BareStatePredicate) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "bare-state-predicate",

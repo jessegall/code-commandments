@@ -13,7 +13,6 @@ func init() {
 	sins.Register(catalog.CSharp, MutableStaticState{})
 }
 
-// Definition is what the sin states about itself.
 func (MutableStaticState) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "csharp-mutable-static-state",

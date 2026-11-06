@@ -16,12 +16,10 @@ func init() {
 	detectors.Register(catalog.CSharp, ParamResolvedFromParamDetector{})
 }
 
-// Sin is the sin the detector finds.
 func (ParamResolvedFromParamDetector) Sin() sins.Sin {
 	return cssins.ParamResolvedFromParam{}
 }
 
-// Find is every place the sin is committed.
 func (ParamResolvedFromParamDetector) Find(codebase *engine.Codebase) []engine.Match {
 	program := cs.In(codebase).Program
 

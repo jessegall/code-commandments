@@ -6,9 +6,6 @@ import (
 	"github.com/jessegall/code-commandments/engine/csharp/csharptest"
 )
 
-// TestAHandedOutCollectionIsFoundAndAGuardedOneIsNotCS holds the rule to the fault it names: a property or
-// method whose whole body returns the type's own List or Dictionary. A read-only declaration, a copy, and a
-// collection the type was handed rather than built are how a type gives its collection away safely.
 func TestAHandedOutCollectionIsFoundAndAGuardedOneIsNotCS(t *testing.T) {
 	for name, test := range map[string]struct {
 		source string

@@ -13,8 +13,6 @@ import (
 	"github.com/jessegall/code-commandments/detectors"
 )
 
-// TestAReportedSinIsNotToldToTheAgent holds what a report means at the moment a file is written: the agent is not
-// sent to fix a finding whose claim a maintainer is answering, and the sin is not named at it again.
 func TestAReportedSinIsNotToldToTheAgent(t *testing.T) {
 	root, file, data := projectWithASin(t)
 	t.Setenv("JOURNAL_ROOT", root)
@@ -29,8 +27,6 @@ func TestAReportedSinIsNotToldToTheAgent(t *testing.T) {
 	}
 }
 
-// TestASinNobodyReportedIsStillToldToTheAgent holds the other half, so the one above cannot pass by silencing
-// everything: the same sin, with no report filed, reaches the agent as it always did.
 func TestASinNobodyReportedIsStillToldToTheAgent(t *testing.T) {
 	root, _, data := projectWithASin(t)
 	t.Setenv("JOURNAL_ROOT", root)
@@ -47,9 +43,6 @@ func TestASinNobodyReportedIsStillToldToTheAgent(t *testing.T) {
 	}
 }
 
-// TestAMarkOfAReportedSinIsStillMade holds the thing that must NOT simply disappear. The chat marks and the sins
-// dashboard are settled against the marks a look made, so a reported sin left out of them would settle as a sin
-// that was fixed, which is a lie about work nobody has done.
 func TestAMarkOfAReportedSinIsStillMade(t *testing.T) {
 	root, file, _ := projectWithASin(t)
 	fileReport(t, root, "RedundantElseDetector", file, 2)
@@ -76,8 +69,6 @@ func TestAMarkOfAReportedSinIsStillMade(t *testing.T) {
 	}
 }
 
-// TestAWorkersMergeIsNotHeldForAReportedSin holds the merge gate to the same rule: holding a branch over a claim a
-// maintainer is answering would hold it for as long as the answer takes.
 func TestAWorkersMergeIsNotHeldForAReportedSin(t *testing.T) {
 	root, file, _ := projectWithASin(t)
 	fileReport(t, root, "RedundantElseDetector", file, 2)
@@ -95,7 +86,6 @@ func TestAWorkersMergeIsNotHeldForAReportedSin(t *testing.T) {
 	}
 }
 
-// editOf is the line the journal sends for a file a tool changed.
 func editOf(path string) map[string]any {
 	return map[string]any{
 		"v": 1, "event": "file_edited", "session": "s1", "environment": "main",
@@ -103,7 +93,6 @@ func editOf(path string) map[string]any {
 	}
 }
 
-// marksOfOneFile is every mark a look at the file makes, as the hooks make them.
 func marksOfOneFile(t *testing.T, root, file string) []SinMark {
 	t.Helper()
 	project, err := config.Load(root)
@@ -121,7 +110,6 @@ func marksOfOneFile(t *testing.T, root, file string) []SinMark {
 	return found
 }
 
-// fileReport records a report about the rule's finding at this line of the file.
 func fileReport(t *testing.T, root, detector, file string, line int) {
 	t.Helper()
 	row := reported.Row{
@@ -143,9 +131,6 @@ func fileReport(t *testing.T, root, detector, file string, line int) {
 	}
 }
 
-// TestAMergeJudgesOnlyTheFoldersTheProjectDeclares holds the hold to the same tree a judge reads. A project that
-// names src as the folder to check is never judged anywhere else, so a merge refused over a file outside it would
-// refuse work for a sin the project never asked about, which is what a worker's own test file showed.
 func TestAMergeJudgesOnlyTheFoldersTheProjectDeclares(t *testing.T) {
 	root, _, _ := projectWithASin(t)
 	sinful := "def refund(order) -> int:\n    if order.late:\n        raise ValueError(order)\n    else:\n        return order.total\n"

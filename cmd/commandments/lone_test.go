@@ -10,10 +10,6 @@ import (
 	"github.com/jessegall/code-commandments/bridge/bridgetest"
 )
 
-// TestALoneBinaryJudgesAsTheCheckoutDoes builds the binary as a release does — its source paths trimmed and its
-// version stamped — and runs it where there is no checkout: a fresh cache, a PATH holding only the runtimes the
-// fixtures' languages need, and the fixtures copied out. It judges them exactly as a plain build run from the
-// checkout does, so nothing the binary reads lives anywhere but inside it.
 func TestALoneBinaryJudgesAsTheCheckoutDoes(t *testing.T) {
 	python := bridgetest.MypyPython(t)
 	bin := t.TempDir()

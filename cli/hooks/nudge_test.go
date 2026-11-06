@@ -13,13 +13,6 @@ import (
 	_ "github.com/jessegall/code-commandments/registry"
 )
 
-// Every word of a nudge is read by an agent on every edit it makes, so what it says is said once. These hold that:
-// the file, the skill and the sin are named once however many findings of it there are, and the judge command that
-// used to be repeated under each of them is gone.
-
-// threeSins is a Go file holding three loops whose whole body is one condition, which is one sin three times in one
-// file: the case that used to repeat the path, the skill and a whole command three times over. Each condition holds
-// work of more than one line, since a guard over a single statement buys nothing and the rule says so.
 const threeSins = `package shop
 
 func Posted(entries []Entry) int {
@@ -59,7 +52,6 @@ func Voided(entries []Entry) int {
 }
 `
 
-// marksOfThreeSins are the marks of a file holding one sin three times, as a check makes them.
 func marksOfThreeSins(t *testing.T) (root string, marks []SinMark) {
 	t.Helper()
 	root = t.TempDir()
@@ -92,8 +84,6 @@ func marksOfThreeSins(t *testing.T) (root string, marks []SinMark) {
 	return root, marks
 }
 
-// TestOneSinInOneFileIsSaidOnceHoweverManyTimesItIsFound holds the whole saving: three findings of one sin in one
-// file are one line naming that file once, that sin once and its skill once, with the lines it stands on listed.
 func TestOneSinInOneFileIsSaidOnceHoweverManyTimesItIsFound(t *testing.T) {
 	root, marks := marksOfThreeSins(t)
 
@@ -116,8 +106,6 @@ func TestOneSinInOneFileIsSaidOnceHoweverManyTimesItIsFound(t *testing.T) {
 	}
 }
 
-// TestTheJudgeCommandIsNoLongerRepeatedUnderEveryFinding holds what was dropped and why it could be: an agent told
-// the file and the sin can judge that file, and the line saying how was half the length of every bullet.
 func TestTheJudgeCommandIsNoLongerRepeatedUnderEveryFinding(t *testing.T) {
 	root, marks := marksOfThreeSins(t)
 
@@ -128,10 +116,6 @@ func TestTheJudgeCommandIsNoLongerRepeatedUnderEveryFinding(t *testing.T) {
 	}
 }
 
-// TestTheSkillIsNamedWithEverySinRaised holds the one length that is not to be saved. A mark that says only what is
-// wrong leaves the agent to guess the discipline that says how to fix it, and a guess is how a finding gets
-// silenced; a compaction drops a loaded skill without saying so, which is why the discipline tells an agent to
-// assume it is not loaded. So every sin raised names its skill, in the one-sin line as in the list.
 func TestTheSkillIsNamedWithEverySinRaised(t *testing.T) {
 	root, marks := marksOfThreeSins(t)
 
@@ -152,15 +136,11 @@ func TestTheSkillIsNamedWithEverySinRaised(t *testing.T) {
 	}
 }
 
-// TestThreeFindingsCostFarLessThanThreeBulletsDid measures the saving rather than asserting it: the line for three
-// findings of one sin is shorter than the 250 characters ONE of the old bullets took.
 func TestThreeFindingsCostFarLessThanThreeBulletsDid(t *testing.T) {
 	root, marks := marksOfThreeSins(t)
 
 	said := nudge(Event{Root: root}, marks)
 
-	// One bullet of the old shape, measured on a real project: the path, the skill and the whole judge command,
-	// about 250 characters, written once per finding.
 	const oneOldBullet = 250
 
 	if len(said) > oneOldBullet {
@@ -168,7 +148,6 @@ func TestThreeFindingsCostFarLessThanThreeBulletsDid(t *testing.T) {
 	}
 }
 
-// lineOf is the line a mark stands on, as the nudge writes it.
 func lineOf(mark SinMark) string {
 	return strings.TrimPrefix(mark.Found()[strings.LastIndex(mark.Found(), ":"):], ":")
 }

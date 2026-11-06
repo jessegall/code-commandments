@@ -11,7 +11,6 @@ type SideTableTrait struct{}
 
 func init() { sins.Register(catalog.PHP, SideTableTrait{}) }
 
-// Definition is what the sin states about itself.
 func (SideTableTrait) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "side-table-trait",

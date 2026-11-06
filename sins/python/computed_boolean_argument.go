@@ -13,7 +13,6 @@ func init() {
 	sins.Register(catalog.Python, ComputedBooleanArgument{})
 }
 
-// Definition is what the sin states about itself.
 func (ComputedBooleanArgument) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "python-computed-boolean-argument",

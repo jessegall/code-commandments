@@ -17,23 +17,19 @@ import (
 
 // Command is `config`: what the project configures, what actually runs, and re-detecting its roots.
 type Command struct {
-	// Version is the tool's own version, shown at the top of the overview.
 	Version string
 }
 
-// Names are the verbs it answers to.
 func (Command) Names() []string {
 	return []string{"config"}
 }
 
-// Help documents it.
 func (Command) Help() help.Help {
 	return help.Of("Inspect and manage .commandments/config.json — what is configured, and what is actually running.").
 		Form("config", "the effective configuration: source roots, detectors running vs available, packages, skills").
 		Form("config reindex", "re-detect the source roots from composer.json and rewrite the config's paths()")
 }
 
-// Run answers the form the arguments name.
 func (c Command) Run(in *cli.Input, console cli.Console) (int, error) {
 	root, err := os.Getwd()
 	if err != nil {
@@ -124,7 +120,6 @@ func countIn(list []detectors.Detector, engines []catalog.Engine) int {
 	return count
 }
 
-// row is one `label ....... value` line.
 func row(console cli.Console, label, value string) {
 	console.Write("  \033[36m" + label + " " + strings.Repeat(".", max(0, 22-len(label)-1)) + "\033[0m " + value + "\n")
 }

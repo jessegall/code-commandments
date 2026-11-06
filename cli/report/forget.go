@@ -11,15 +11,12 @@ import (
 	"github.com/jessegall/code-commandments/cli/workspace"
 )
 
-// The verbs `report` answers to besides filing one.
 const (
 	followVerb = "follow"
 	forgetVerb = "forget"
 	acceptVerb = "accept"
 )
 
-// forget drops the report of an issue, so the finding it covered is judged as any other again. It is what settles
-// a report: a fix that has landed, or an answer that the finding stands and the sin is this project's to fix.
 func (c Command) forget(in *cli.Input, console cli.Console) int {
 	named, given := in.Argument(1)
 	issue, err := strconv.Atoi(named)
@@ -53,9 +50,6 @@ func (c Command) forget(in *cli.Input, console cli.Console) int {
 	return 0
 }
 
-// accept keeps a report whose answer the project cannot act on: the fix is in a release it is pinned away from, so
-// nothing asks about the issue again and its finding stays reported. The sin is real and it is fixed upstream;
-// what is missing is the upgrade, which is the project's own decision to make.
 func (c Command) accept(in *cli.Input, console cli.Console) int {
 	named, given := in.Argument(1)
 	issue, err := strconv.Atoi(named)

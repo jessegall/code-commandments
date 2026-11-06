@@ -11,7 +11,6 @@ type PlaceholderFilledData struct{}
 
 func init() { sins.Register(catalog.PHP, PlaceholderFilledData{}) }
 
-// Definition is what the sin states about itself.
 func (PlaceholderFilledData) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "placeholder-filled-data",

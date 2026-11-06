@@ -18,8 +18,6 @@ func init() {
 // NewDataObjectScribe builds a Data through `X::from([...])` rather than `new X(...)`.
 type NewDataObjectScribe struct{}
 
-// Rewrite replaces each construction whose keys it can name for certain with the from() it means, laid out as the
-// arguments were.
 func (NewDataObjectScribe) Rewrite(findings []engine.Match, codebase *engine.Codebase) (scribes.Rewrites, error) {
 	shape := spatie.DataClassShapeOf(codebase)
 	draft := scribes.NewDraft()
@@ -38,8 +36,6 @@ func (NewDataObjectScribe) Rewrite(findings []engine.Match, codebase *engine.Cod
 	return draft.Rewrites(), nil
 }
 
-// fromCall is `X::from(['key' => value, ...])` for a construction of a Data whose shape is known and keeps its input
-// names; nothing when an argument is unpacked or its key cannot be named.
 func fromCall(finding engine.Match, shape *spatie.DataClassShape) (string, bool) {
 	class := finding.Child("class")
 	if finding.Kind() != "Expr_New" || !strings.HasPrefix(class.Kind(), "Name") {
@@ -65,7 +61,6 @@ func fromCall(finding engine.Match, shape *spatie.DataClassShape) (string, bool)
 	return textOf(class) + "::from([" + fromBody(entries, finding) + "])", true
 }
 
-// fromBody is the entries on one line, or one a line when the construction laid its arguments out a line each.
 func fromBody(entries []string, construction engine.Match) string {
 	span, err := construction.Span()
 	arguments := construction.ChildrenIn("args")

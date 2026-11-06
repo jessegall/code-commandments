@@ -14,7 +14,6 @@ func init() {
 // RedundantNativeCastScribe hands a Data the raw value a cast it declares already converts.
 type RedundantNativeCastScribe struct{}
 
-// Rewrite replaces each finding with the one value it converts.
 func (RedundantNativeCastScribe) Rewrite(findings []engine.Match, _ *engine.Codebase) (scribes.Rewrites, error) {
 	return replaceEach(findings, func(finding engine.Match) (string, bool) {
 		arguments := php.Arguments(finding)

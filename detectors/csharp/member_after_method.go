@@ -16,12 +16,10 @@ func init() {
 	detectors.Register(catalog.CSharp, MemberAfterMethodDetector{})
 }
 
-// Sin is the sin the detector finds.
 func (MemberAfterMethodDetector) Sin() sins.Sin {
 	return cssins.MemberAfterMethod{}
 }
 
-// Find is every place the sin is committed.
 func (MemberAfterMethodDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return cs.In(codebase).
 		Where(engine.As(cs.Node.IsStateMember)).

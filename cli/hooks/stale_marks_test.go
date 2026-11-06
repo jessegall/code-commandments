@@ -12,15 +12,6 @@ import (
 	"github.com/jessegall/code-commandments/cli/source"
 )
 
-
-// TestAMarkedFileTheTreeVouchesForIsNotReadAgain holds what a stop is allowed to cost. A stop and a heartbeat
-// sweep every file that still carries a mark, so a sin that is gone turns green even where nothing edited that
-// file again — and in a measured run of nine edits that sweep re-read seven files, found 28 marks and settled
-// nothing at all, once at every stop and every heartbeat of every open agent.
-//
-// A mark's sin can only be GONE if its file has changed, and every edit is judged as it lands, so a file the
-// tree knows stands as it read it cannot have lost the sin it carries. Where no tree is held nothing is known
-// and every marked file is read, as it always was.
 func TestAMarkedFileTheTreeVouchesForIsNotReadAgain(t *testing.T) {
 	root, _ := migrationProject(t)
 	settings, _ := config.Load(root)
@@ -36,7 +27,6 @@ func TestAMarkedFileTheTreeVouchesForIsNotReadAgain(t *testing.T) {
 	vouched := filepath.Join(root, "shop", "migrations", "m004_drop_fades.py")
 	moved := filepath.Join(root, "shop", "migration.py")
 
-	// With no tree held, nothing is known and both are read.
 	kept.Drop(project, branch)
 
 	if read := stillToRead(root, []string{vouched, moved}); len(read) != 2 {
@@ -46,7 +36,6 @@ func TestAMarkedFileTheTreeVouchesForIsNotReadAgain(t *testing.T) {
 	kept.Hold(project, branch, []string{root}, codebase, nil)
 	t.Cleanup(func() { kept.Drop(project, branch) })
 
-	// One of them has moved since the tree read it, and the other has not.
 	time.Sleep(10 * time.Millisecond)
 	if err := os.WriteFile(moved, []byte("class Migration:\n    number = 2\n"), 0o644); err != nil {
 		t.Fatal(err)
@@ -59,14 +48,10 @@ func TestAMarkedFileTheTreeVouchesForIsNotReadAgain(t *testing.T) {
 	}
 }
 
-// TestAFileNothingCouldReadSaysSo holds the worst answer the plugin can give. A bridge that cannot run on this
-// machine, or that dies on a file, leaves the read with nothing, and answering no marks for that file says the
-// file is clean: an agent reads it exactly that way. So the read says why it failed, and the answer carries it.
 func TestAFileNothingCouldReadSaysSo(t *testing.T) {
 	root, _ := workerProject(t)
 	settings, _ := config.Load(root)
 
-	// A rule that answers from the file it reports in, which is all a read of one file can be asked.
 	rules := allRules(t, root, settings)
 	file := filepath.Join(root, ".journal", "worktrees", "worker-1", "src", "order.py")
 
@@ -79,25 +64,15 @@ func TestAFileNothingCouldReadSaysSo(t *testing.T) {
 		t.Fatal("the sin in the file is not marked, so the reading itself is broken")
 	}
 
-	// A read handed a file of a language this machine has no bridge for answers with nothing, and its error is
-	// what the answer is built from: a reader of marksIn cannot tell "nothing found" from "nothing read"
-	// without it.
 	if _, _, told := marksIn(Marks(root), filepath.Join(root, "src", "unreadable.cs"), rules, git.ChangedLines{}); told == nil {
 		t.Log("a file of a language with no bridge here read as no sins and said nothing; the answer then reads as clean")
 	}
 }
 
-// TestTheSweepItselfReadsOnlyWhatTheTreeCannotVouchFor holds the SWEEP, not the helper. A release said a stop
-// read only the marked files the tree cannot vouch for while the call that does it was missing from the sweep
-// altogether: the helper had a test of its own and it passed, because it called the helper.
-//
-// A test of a thing nothing calls proves the thing, never the behaviour.
 func TestTheSweepItselfReadsOnlyWhatTheTreeCannotVouchFor(t *testing.T) {
 	root, data := workerProject(t)
 	settings, _ := config.Load(root)
 
-	// A sin in the project's OWN file, and the tree read after it was written, so the tree vouches for exactly
-	// the version the mark was raised against.
 	file := filepath.Join(root, "src", "order.py")
 	if err := os.WriteFile(file, []byte("class Order:\n    def total(self):\n        \"\"\"Says the total.\"\"\"\n        return 0\n"), 0o644); err != nil {
 		t.Fatal(err)
@@ -114,8 +89,6 @@ func TestTheSweepItselfReadsOnlyWhatTheTreeCannotVouchFor(t *testing.T) {
 	kept.Hold(project, branch, []string{root}, codebase, nil)
 	t.Cleanup(func() { kept.Drop(project, branch) })
 
-	// Every line counts as the edit's, so the marks are TOUCHED: an untouched mark is nobody's doing and is
-	// never announced, so the record would stay empty and the test would prove nothing.
 	found, _, _ := marksIn(Marks(root), file, allRules(t, root, settings), git.Everywhere())
 	if len(found) == 0 {
 		t.Fatal("the sin in the project's own file is not marked, so nothing is announced and this proves nothing")
@@ -131,7 +104,6 @@ func TestTheSweepItselfReadsOnlyWhatTheTreeCannotVouchFor(t *testing.T) {
 		t.Errorf("the sweep read %v; the tree vouches for that file, so it owes a read to none", read)
 	}
 
-	// And it does owe one once the file has moved under the tree.
 	time.Sleep(10 * time.Millisecond)
 	if err := os.WriteFile(file, []byte("class Order:\n    pass\n"), 0o644); err != nil {
 		t.Fatal(err)

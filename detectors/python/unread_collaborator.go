@@ -16,12 +16,10 @@ func init() {
 	detectors.Register(catalog.Python, UnreadCollaboratorDetector{})
 }
 
-// Sin is the sin the detector finds.
 func (UnreadCollaboratorDetector) Sin() sins.Sin {
 	return pysins.UnreadCollaborator{}
 }
 
-// Find is every collaborator an __init__ keeps and nothing reads.
 func (UnreadCollaboratorDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return py.In(codebase).
 		WhereAssign().

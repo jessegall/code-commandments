@@ -12,8 +12,6 @@ import (
 	"github.com/jessegall/code-commandments/skill/render"
 )
 
-// TestEverySkillRendersAsItIsPublished holds every skill's documents, rendered from the examples the fixtures carve,
-// to the files published under skills/commandments, byte for byte.
 func TestEverySkillRendersAsItIsPublished(t *testing.T) {
 	examples, err := fixture.Curriculum(filepath.Join("..", "..", "tests", "Fixtures"))
 	if err != nil {
@@ -35,7 +33,6 @@ func TestEverySkillRendersAsItIsPublished(t *testing.T) {
 	}
 }
 
-// firstDifference is the line where two texts part, as each has it.
 func firstDifference(want, got string) string {
 	line := 1
 	for i := 0; i < len(want) && i < len(got); i++ {

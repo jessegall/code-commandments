@@ -18,8 +18,7 @@ import (
 	"github.com/jessegall/code-commandments/scribes/repent"
 )
 
-// answer is one file the PHP tool's repent rewrote in a fixture, as it stood when the PHP tool last ran (the frozen
-// fixtures beside its answers): by one step alone, or by the whole chain ("*").
+// answer is one file the PHP tool's repent rewrote in a fixture, as it stood when the PHP tool last ran (the frozen fixtures beside its answers): by one step alone, or by the whole chain ("*").
 type answer struct {
 	Fixture string `json:"fixture"`
 	Step    string `json:"step"`
@@ -34,7 +33,6 @@ type everywhere struct{}
 func (everywhere) Includes(string) bool { return true }
 func (everywhere) IsScoped() bool       { return false }
 
-// answers is the PHP tool's rewrites, keyed by fixture, then step, then path.
 func answers(t *testing.T) map[string]map[string]map[string]answer {
 	file, err := os.Open(filepath.Join(shop.Oracle(), "repent.jsonl.gz"))
 	if err != nil {

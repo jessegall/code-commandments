@@ -10,16 +10,8 @@ import (
 	"github.com/jessegall/code-commandments/rule"
 )
 
-// fenced is a JSON block in a markdown file, which is how the skill shows a rule.
 var fenced = regexp.MustCompile("(?s)```json\n(.*?)```")
 
-// TestEveryExampleInTheSkillIsARuleTheToolCanRun holds the teaching to the tool. A skill that shows a rule
-// nobody can run teaches a reader to write one, and they find out at the first `rule prove` rather than here.
-// The examples went stale once before: a rule file's format is the one surface a document cannot be generated
-// from, since what makes a GOOD example is a judgement, so this is what keeps them honest.
-//
-// A rule built on another is parsed alone, so its `from` names a rule nothing declares; that is read as the
-// reference it is rather than as a fault, since the file it would sit in is the reader's.
 func TestEveryExampleInTheSkillIsARuleTheToolCanRun(t *testing.T) {
 	shown := filepath.Join("..", "skills", "writing-detectors", "reference", "examples.md")
 	text, err := os.ReadFile(shown)
@@ -45,7 +37,6 @@ func TestEveryExampleInTheSkillIsARuleTheToolCanRun(t *testing.T) {
 	}
 }
 
-// ordinal is the suffix a count reads with, so a failure names the example a reader can count to.
 func ordinal(count int) string {
 	switch {
 	case count%100 >= 11 && count%100 <= 13:

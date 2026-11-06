@@ -1,5 +1,4 @@
-// Package csharp is the C# engine: the reads a C# detector asks of a node the Roslyn bridge wrote, and the
-// analyses over the whole program — resolution, state flow and the namespace graph.
+// Package csharp is the C# engine: the reads a C# detector asks of a node the Roslyn bridge wrote, and the analyses over the whole program — resolution, state flow and the namespace graph.
 package csharp
 
 import (
@@ -10,7 +9,6 @@ import (
 	"github.com/jessegall/code-commandments/engine"
 )
 
-// functions are the kinds that run a body of their own: a member, an accessor, a local function, a lambda.
 var functions = []string{
 	"MethodDeclaration", "ConstructorDeclaration", "DestructorDeclaration", "OperatorDeclaration", "ConversionOperatorDeclaration",
 	"PropertyDeclaration", "IndexerDeclaration",
@@ -18,38 +16,31 @@ var functions = []string{
 	"AddAccessorDeclaration", "RemoveAccessorDeclaration", "ParenthesizedLambdaExpression", "SimpleLambdaExpression", "AnonymousMethodExpression",
 }
 
-// Node is a C# node as a detector asks about it, the C# twin of a backend NodeMatch:
-// Where(engine.As(csharp.Node.IsCall)). Its navigation stays in C# terms.
+// Node is a C# node as a detector asks about it, the C# twin of a backend NodeMatch: Where(engine.As(csharp.Node.IsCall)).
 type Node struct {
 	engine.Match
 }
 
-// Decorate is the C# view of a match.
 func (Node) Decorate(match engine.Match) Node {
 	return Node{match}
 }
 
-// Parent is the node whose children hold this one; no node above the root.
 func (n Node) Parent() Node {
 	return Node{n.Match.Parent()}
 }
 
-// Child is the first child filling the Roslyn property, such as "Expression" or "Body"; no node when none does.
 func (n Node) Child(field string) Node {
 	return Node{n.Match.Child(field)}
 }
 
-// ChildrenIn is every child filling the Roslyn property, in source order, such as a class's "Members".
 func (n Node) ChildrenIn(field string) []Node {
 	return nodes(n.Match.ChildrenIn(field))
 }
 
-// All is every child, expressions included, in source order.
 func (n Node) All() []Node {
 	return nodes(n.Match.Children())
 }
 
-// At is the child at the position, expressions included; no node past the last.
 func (n Node) At(position int) Node {
 	children := n.Match.Children()
 	if position < 0 || position >= len(children) {
@@ -59,7 +50,6 @@ func (n Node) At(position int) Node {
 	return Node{children[position]}
 }
 
-// nodes is the matches as C# nodes.
 func nodes(matches []engine.Match) []Node {
 	viewed := make([]Node, len(matches))
 	for at, match := range matches {
@@ -69,27 +59,22 @@ func nodes(matches []engine.Match) []Node {
 	return viewed
 }
 
-// Is says whether the node is one of the kinds.
 func (n Node) Is(kinds ...string) bool {
 	return n.Exists() && slices.Contains(kinds, n.Kind())
 }
 
-// IsExpression says whether the node is an expression the compiler evaluates.
 func (n Node) IsExpression() bool {
 	return n.Exists() && n.Node().Role == "expression"
 }
 
-// IsStatement says whether the node is a statement; a local function is one, though it declares.
 func (n Node) IsStatement() bool {
 	return n.Exists() && (n.Node().Role == "statement" || n.Is("LocalFunctionStatement"))
 }
 
-// IsTypeNode says whether the node is a type as written, in a position only a type can fill.
 func (n Node) IsTypeNode() bool {
 	return n.Exists() && n.Node().Role == "type"
 }
 
-// Children is the child nodes that are not expressions: statements, members, parameters, clauses.
 func (n Node) Children() []Node {
 	var kept []Node
 	for _, child := range n.All() {
@@ -101,7 +86,6 @@ func (n Node) Children() []Node {
 	return kept
 }
 
-// Expressions is the expressions this node holds directly.
 func (n Node) Expressions() []Node {
 	var kept []Node
 	for _, child := range n.All() {
@@ -113,8 +97,6 @@ func (n Node) Expressions() []Node {
 	return kept
 }
 
-// Descendants is every node beneath this one that is not an expression, at any depth, reached through
-// expressions too, so the statements of a lambda's block are found.
 func (n Node) Descendants() []Node {
 	var all []Node
 	for _, child := range n.All() {
@@ -127,7 +109,6 @@ func (n Node) Descendants() []Node {
 	return all
 }
 
-// Flatten is this expression and every expression beneath it, reached through any node between them.
 func (n Node) Flatten() []Node {
 	all := []Node{n}
 	for _, child := range n.All() {
@@ -143,7 +124,6 @@ func (n Node) Flatten() []Node {
 	return all
 }
 
-// OutermostExpressions is the outermost expressions beneath this node, however deep the nodes between.
 func (n Node) OutermostExpressions() []Node {
 	var found []Node
 	for _, child := range n.All() {
@@ -157,13 +137,10 @@ func (n Node) OutermostExpressions() []Node {
 	return found
 }
 
-// IsFunction says whether the node runs a body of its own: a member, an accessor, a local function, a lambda.
 func (n Node) IsFunction() bool {
 	return n.Is(functions...)
 }
 
-// FunctionBody is the body a function-like runs: its block, or the expression after `=>`; no node for one with
-// neither.
 func (n Node) FunctionBody() Node {
 	if !n.IsFunction() {
 		return Node{}
@@ -177,17 +154,14 @@ func (n Node) FunctionBody() Node {
 	return Node{}
 }
 
-// IsBailOut says whether the statement leaves its block.
 func (n Node) IsBailOut() bool {
 	return n.Is("ReturnStatement", "ThrowStatement", "ContinueStatement", "BreakStatement", "YieldBreakStatement")
 }
 
-// HasModifier says whether the modifier keyword is written on the node.
 func (n Node) HasModifier(modifier string) bool {
 	return n.Exists() && slices.Contains(n.Node().Modifiers, modifier)
 }
 
-// DeclaredNames is the name a declaration introduces; none for an expression.
 func (n Node) DeclaredNames() []string {
 	if n.Name() == "" || n.IsExpression() {
 		return nil
@@ -196,13 +170,10 @@ func (n Node) DeclaredNames() []string {
 	return []string{n.Name()}
 }
 
-// IsReturn says whether the node hands a value back: a `return`, or the expression body of a member that
-// returns one.
 func (n Node) IsReturn() bool {
 	return n.Is("ReturnStatement") || (n.Is("ArrowExpressionClause") && !n.isVoid())
 }
 
-// ReturnedValue is the value a return hands back; no node for anything else.
 func (n Node) ReturnedValue() Node {
 	if !n.IsReturn() {
 		return Node{}
@@ -214,38 +185,28 @@ func (n Node) ReturnedValue() Node {
 	return Node{}
 }
 
-// IsExpressionStatement says whether the node runs an expression for its effect: a statement, or the
-// expression body of a `void` member.
 func (n Node) IsExpressionStatement() bool {
 	return n.Is("ExpressionStatement") || (n.Is("ArrowExpressionClause") && n.isVoid())
 }
 
-// isVoid says whether an expression body's value is nothing.
 func (n Node) isVoid() bool {
 	expressions := n.Expressions()
 
 	return len(expressions) > 0 && expressions[0].Type().Name() == "global::System.Void"
 }
 
-// IsCall says whether the node is an invocation.
 func (n Node) IsCall() bool {
 	return n.Is("InvocationExpression")
 }
 
-// IsConstant says whether the expression has a value the compiler fixes: a literal, an enum member, a `const`,
-// arithmetic on them, or `typeof` a concrete type.
 func (n Node) IsConstant() bool {
 	return n.Exists() && n.Node().Constant
 }
 
-// IsLiteral says whether the node is a literal written in the source: a string, a number, a character, `true`,
-// `null`, `default`.
 func (n Node) IsLiteral() bool {
 	return strings.HasSuffix(n.Kind(), "LiteralExpression")
 }
 
-// Text is a literal's value as written, unescaped, or an interpolated string's text part; empty for any other
-// node.
 func (n Node) Text() string {
 	if !n.Exists() || n.Node().Value == nil {
 		return ""
@@ -261,30 +222,20 @@ func (n Node) Text() string {
 	return "null"
 }
 
-// Operator is the operator token of a binary, assignment or unary expression.
 func (n Node) Operator() string {
 	return n.Match.Operator()
 }
 
-// IsStep says whether the expression is in a `for` loop's step list.
 func (n Node) IsStep() bool {
 	return n.Exists() && slices.Contains(n.Node().Flags, "step")
 }
 
-// ForgivesNull says whether the node is a `!` over an operand declared nullable.
 func (n Node) ForgivesNull() bool {
 	extras := n.Node().Extras
 
 	return n.Exists() && extras != nil && extras.CSharp != nil && extras.CSharp.ForgivesNull
 }
 
-// ForgivesAnOutOfATest says whether the node forgives null on a variable a call bound through `out`, read inside
-// the branch that call's `true` answer guards.
-//
-// `if (rules.TryFind(id, out var found)) { use(found!); }` is the one shape where forgiving is not a claim of the
-// author's: the method answers true exactly when it filled the variable, and a caller cannot say so in the type.
-// A framework that annotates the parameter `[NotNullWhen(true)]` narrows it for the compiler and needs no `!` at
-// all, so a `!` here says the annotation is missing, which is a fix in the declaration and not at the call.
 func (n Node) ForgivesAnOutOfATest() bool {
 	if !n.ForgivesNull() {
 		return false
@@ -304,11 +255,6 @@ func (n Node) ForgivesAnOutOfATest() bool {
 	return false
 }
 
-// guards says whether the test binds the name through an `out` argument and the read sits inside the branch its
-// true answer runs, which is the only branch where the variable was filled.
-//
-// An `if` holds its condition and its branches as one list, the condition first, where a node's children are its
-// statements alone.
 func guards(test, read Node, name string) bool {
 	parts := test.All()
 	if !test.Is("IfStatement") || len(parts) < 2 || !boundByATest(parts[0], name) {
@@ -325,11 +271,6 @@ func guards(test, read Node, name string) bool {
 	return err == nil && branch.Contains(at)
 }
 
-// boundByATest says whether the condition binds the name through an `out` argument of a call whose true answer it
-// tests.
-//
-// A negated test answers the other way round: `if (!store.TryGet(id, out var found))` runs its branch where the
-// call filled nothing, and a read of the variable there is the sin this rule is about.
 func boundByATest(condition Node, name string) bool {
 	for _, part := range append(condition.Flatten(), condition) {
 		if !part.IsCall() || negatedWithin(part, condition) {
@@ -346,7 +287,6 @@ func boundByATest(condition Node, name string) bool {
 	return false
 }
 
-// negatedWithin says whether the call is negated anywhere between itself and the condition it is part of.
 func negatedWithin(call, condition Node) bool {
 	for _, ancestor := range call.Ancestors() {
 		if ancestor.Is("LogicalNotExpression") {
@@ -361,7 +301,6 @@ func negatedWithin(call, condition Node) bool {
 	return false
 }
 
-// declaresOut says whether the argument declares the name, which is how an `out` argument is written.
 func declaresOut(argument Node, name string) bool {
 	for _, part := range append(argument.All(), argument) {
 		if part.Is("SingleVariableDesignation") && part.Name() == name {
@@ -372,7 +311,6 @@ func declaresOut(argument Node, name string) bool {
 	return false
 }
 
-// Symbol is a declaration's symbol id; empty for anything else.
 func (n Node) Symbol() string {
 	if !n.Exists() {
 		return ""
@@ -381,18 +319,14 @@ func (n Node) Symbol() string {
 	return n.Node().Symbol
 }
 
-// IsInherited says whether the member overrides or implements another, decided against the whole hierarchy.
 func (n Node) IsInherited() bool {
 	return n.Exists() && n.Node().Inherited
 }
 
-// FillsOutsideTheSolution says whether every declaration the member fills was written outside this solution, so
-// its signature is not the project's to change.
 func (n Node) FillsOutsideTheSolution() bool {
 	return n.Exists() && n.Node().FillsOutside
 }
 
-// Target is the declaration a call or construction reaches; no target for one the compiler could not bind.
 func (n Node) Target() CallTarget {
 	if !n.Exists() || n.Node().Target == nil {
 		return CallTarget{}
@@ -401,8 +335,6 @@ func (n Node) Target() CallTarget {
 	return CallTarget{n.Node().Target}
 }
 
-// Answers is what an expression answers with: each arm of a switch expression, either branch of a conditional,
-// each read the same way since an arm can itself pick; the expression itself otherwise.
 func (n Node) Answers() []Node {
 	switch n.Kind() {
 	case "SwitchExpression":
@@ -411,7 +343,6 @@ func (n Node) Answers() []Node {
 			if !arm.Is("SwitchExpressionArm") {
 				continue
 			}
-			// An arm's last expression is its answer; whatever precedes it is the pattern it matched.
 			expressions := arm.Expressions()
 			all = append(all, expressions[len(expressions)-1].Answers()...)
 		}
@@ -426,8 +357,6 @@ func (n Node) Answers() []Node {
 	return []Node{n}
 }
 
-// ComparisonSubject is what the condition compares with a constant: `status` in `status == Status.Paid` or in
-// `status is Status.Paid`; no node for a condition that is not such a comparison.
 func (n Node) ComparisonSubject() Node {
 	switch {
 	case n.Is("IsPatternExpression") && n.At(1).Is("ConstantPattern"):

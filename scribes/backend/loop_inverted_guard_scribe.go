@@ -14,7 +14,6 @@ func init() {
 // LoopInvertedGuardScribe turns an if wrapping a loop's whole body into a guard that continues, the body beneath it.
 type LoopInvertedGuardScribe struct{}
 
-// Rewrite replaces each wrapping if with its inverted guard and its body, dedented a level.
 func (LoopInvertedGuardScribe) Rewrite(findings []engine.Match, _ *engine.Codebase) (scribes.Rewrites, error) {
 	draft := scribes.NewDraft()
 	for _, finding := range findings {
@@ -32,7 +31,6 @@ func (LoopInvertedGuardScribe) Rewrite(findings []engine.Match, _ *engine.Codeba
 	return draft.Rewrites(), nil
 }
 
-// invertedGuard is `if (!cond) continue;` opening its block as this very if does, then the if's body.
 func invertedGuard(finding engine.Match) (string, bool) {
 	body := finding.ChildrenIn("stmts")
 	if finding.Kind() != "Stmt_If" || len(body) == 0 {

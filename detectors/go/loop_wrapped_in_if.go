@@ -16,12 +16,10 @@ func init() {
 	detectors.Register(catalog.Go, LoopWrappedInIfDetector{})
 }
 
-// Sin is the sin the detector finds.
 func (LoopWrappedInIfDetector) Sin() sins.Sin {
 	return gosins.LoopWrappedInIf{}
 }
 
-// Find is every place the sin is committed.
 func (LoopWrappedInIfDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return golang.In(codebase).
 		WhereIs(engine.Branch).

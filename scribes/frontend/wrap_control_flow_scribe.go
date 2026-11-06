@@ -16,7 +16,6 @@ func init() {
 // WrapControlFlowScribe lifts the control flow off an element onto a <template> wrapped around it.
 type WrapControlFlowScribe struct{}
 
-// Rewrite wraps each element in a <template> carrying its structural directives, cut from the element itself.
 func (WrapControlFlowScribe) Rewrite(findings []engine.Match, _ *engine.Codebase) (scribes.Rewrites, error) {
 	draft := scribes.NewDraft()
 	for _, finding := range findings {
@@ -38,7 +37,6 @@ func (WrapControlFlowScribe) Rewrite(findings []engine.Match, _ *engine.Codebase
 	return draft.Rewrites(), nil
 }
 
-// indentInner nests every line after the first one level deeper, a blank line left blank.
 func indentInner(inner string) string {
 	lines := strings.Split(inner, "\n")
 	var nested strings.Builder

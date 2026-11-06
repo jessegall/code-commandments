@@ -11,10 +11,6 @@ import (
 	"github.com/jessegall/code-commandments/cli/workspace"
 )
 
-// TestTheReportedSinsAreTrackedWhileTheGeneratedStateIsNot holds the one thing the record depends on to be worth
-// keeping: git must carry it. Everything the tool generates under .commandments is ignored by a single `*`, so a
-// file added there is untracked unless it is named, and a record only the machine that filed it knows about makes
-// the next session file the same report again.
 func TestTheReportedSinsAreTrackedWhileTheGeneratedStateIsNot(t *testing.T) {
 	root := t.TempDir()
 	if err := os.MkdirAll(workspace.At(root, "").Dir(), 0o755); err != nil {

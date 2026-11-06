@@ -12,35 +12,21 @@ import (
 	"github.com/jessegall/code-commandments/cli/workspace"
 )
 
-// Editor changes a project's config in whichever format the project keeps it: config.json, or the
-// config.php sync has not migrated yet. A rule is named by its class, which says the same in both.
+// Editor changes a project's config in whichever format the project keeps it: config.json, or the config.php sync has not migrated yet.
 type Editor interface {
-	// Name is the config file as a message names it, under the project.
 	Name() string
-	// Disable turns the rule off, scaffolding the config first when there is none; false when it already was.
 	Disable(class string) (bool, error)
-	// Enable turns the rule back on; false when it was not off.
 	Enable(class string) (bool, error)
-	// Scaffold writes the starting config when there is none; false when there is one.
 	Scaffold(roots []string) (bool, error)
-	// EnsurePaths fills empty paths with the roots.
 	EnsurePaths(roots []string) error
-	// RewritePaths writes the roots as the paths, scaffolding the config when there is none.
 	RewritePaths(roots []string) error
-	// Layers are the layers the config declares, in the order it declares them.
 	Layers() ([]Layer, error)
-	// RewriteLayers replaces the declared layers; false when none are declared.
 	RewriteLayers(layers []Layer) (bool, error)
-	// EnsureLayers declares the layers; false when layers are declared already, or there is no config.
 	EnsureLayers(layers []Layer) (bool, error)
-	// RegisterDetector turns on the project's own detector; false when it already is.
 	RegisterDetector(class string) (bool, error)
-	// Declaration is the layers as the config declares them, to show before they are written.
 	Declaration(layers []Layer) string
 }
 
-// EditorIn is the editor of the config of the project at dir: its config.php while that is the only config
-// it has, else its config.json, which a project with no config at all starts with.
 func EditorIn(dir string) Editor {
 	_, noJSON := os.Stat(workspace.JSONConfig(dir))
 	_, noPHP := os.Stat(workspace.Config(dir))
@@ -70,7 +56,6 @@ func (p phpConfig) EnsureLayers(layers []Layer) (bool, error) {
 	return p.Scribe.EnsureLayers(RenderDeclaration(layers))
 }
 
-// RenderDeclaration is the layers as the configure() statement a config.php declares them with.
 func RenderDeclaration(layers []Layer) string {
 	return "    $config->configure(fn (NamespaceDependencyDetector $detector) => $detector" +
 		RenderChain(layers, "        ") + ");"
@@ -81,7 +66,6 @@ type jsonConfig struct {
 	path string
 }
 
-// layered is the detector a project declares an engine's layers on.
 func layered(engine catalog.Engine) Rule {
 	return Rule{Detector, engine, "NamespaceDependencyDetector"}
 }
@@ -218,7 +202,6 @@ func (j jsonConfig) RegisterDetector(class string) (bool, error) {
 	})
 }
 
-// edit applies the change to the config and writes it when the change says it changed something.
 func (j jsonConfig) edit(change func(*Config) bool) (bool, error) {
 	config, err := ReadJSON(j.path)
 	if err != nil || !change(&config) {
@@ -246,7 +229,6 @@ func (j jsonConfig) root() string {
 	return filepath.Dir(filepath.Dir(j.path))
 }
 
-// layersOf are the layers the config's layer() calls on the dependency detector declare.
 func layersOf(config Config, engine catalog.Engine) []Layer {
 	var layers []Layer
 
@@ -272,8 +254,6 @@ func layersOf(config Config, engine catalog.Engine) []Layer {
 	return layers
 }
 
-// mayUse are the namespaces a `layer` call names as the ones its layer may reach: the second argument's names,
-// and none where the call names only the layer itself. A value that is no name is no namespace.
 func mayUse(call Call) []string {
 	if len(call.Args) < 2 {
 		return nil
@@ -290,7 +270,6 @@ func mayUse(call Call) []string {
 	return names
 }
 
-// asList is the value as a list: a list as it is, a lone name as a list of one.
 func asList(value any) []any {
 	if name, named := value.(string); named {
 		return []any{name}
@@ -301,8 +280,6 @@ func asList(value any) []any {
 	return items
 }
 
-// withLayers are the configurators with the dependency detector's layer() calls replaced by the layers,
-// its other calls kept.
 func withLayers(configurators []Configurator, layers []Layer) []Configurator {
 	var calls []Call
 
@@ -335,19 +312,13 @@ func withLayers(configurators []Configurator, layers []Layer) []Configurator {
 	return append(configurators, Configurator{Target: layered(catalog.PHP), Calls: calls})
 }
 
-// Switches are the edits the agent journal's settings make: a language on or off, and the folders judged
-// and left out. Only config.json takes them; a config.php is migrated first.
+// Switches are the edits the agent journal's settings make: a language on or off, and the folders judged and left out.
 type Switches interface {
 	Editor
-	// DisableLanguage turns a language off; false when it already was.
 	DisableLanguage(language source.Language) (bool, error)
-	// EnableLanguage turns a language back on; false when it was not off.
 	EnableLanguage(language source.Language) (bool, error)
-	// JudgeFolders makes the folders the paths judged.
 	JudgeFolders(folders []string) error
-	// SkipFolders makes the folders the paths left out.
 	SkipFolders(folders []string) error
-	// RunWith makes judge run that many detectors at once when no --parallel says; false when it already did.
 	RunWith(parallel int) (bool, error)
 }
 

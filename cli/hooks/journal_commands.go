@@ -21,50 +21,36 @@ import (
 )
 
 const (
-	// journalSettings holds the switches the journal's user chose for the plugin, as JSON.
-	journalSettings = "JOURNAL_SETTINGS"
-	// journalProject names the project the plugin works for.
-	journalProject = "CLAUDE_PROJECT_DIR"
-	// journalPluginDir names the plugin's own folder, set by the journal for every command it runs for the plugin.
+	journalSettings  = "JOURNAL_SETTINGS"
+	journalProject   = "CLAUDE_PROJECT_DIR"
 	journalPluginDir = "JOURNAL_PLUGIN_DIR"
-	// judgedKey is the setting that lists the folders judged.
-	judgedKey = "folders_judged"
-	// skippedKey is the setting that lists the folders left out.
-	skippedKey = "folders_skipped"
-	// parallelKey is the setting that says how many detectors judge runs at once.
-	parallelKey = "judge_parallel"
-	// skillsFolder is where the plugin renders the skills for the journal to publish.
-	skillsFolder = "journal-skills"
+	judgedKey        = "folders_judged"
+	skippedKey       = "folders_skipped"
+	parallelKey      = "judge_parallel"
+	skillsFolder     = "journal-skills"
 )
 
-// languageKey is the setting that turns a language on or off.
 func languageKey(language source.Language) string {
 	return "language_" + string(language)
 }
 
-// sinKey is the setting that turns a sin on or off.
 func sinKey(sin sins.Sin) string {
 	return "sin_" + sin.Definition().Name
 }
 
-// JournalScan is `journal-scan`: the folders to check and to leave out, and the languages written, as the
-// plugin's settings.
+// JournalScan is `journal-scan`: the folders to check and to leave out, and the languages written, as the plugin's settings.
 type JournalScan struct{}
 
-// Names are the verbs it answers to.
 func (JournalScan) Names() []string {
 	return []string{"journal-scan"}
 }
 
-// Help documents it.
 func (JournalScan) Help() help.Help {
 	return help.Of("Scan the project for the folders to check and the ones to leave out, for the agent journal plugin.").
 		Form("journal-scan", "answer the detected folders as settings (run by the journal plugin)").
 		Option("--settings-only", "answer the settings alone, lists and switches in their own JSON types, as version 4 of the journal reads an installed command's answer")
 }
 
-// Run answers the settings: the folders the project's config already judges and leaves out, detected only where it
-// names none, so applying them back, as an upgrade does, never drops a folder the project chose.
 func (JournalScan) Run(in *cli.Input, console cli.Console) (int, error) {
 	project := journalProjectRoot()
 	judged, skipped := config.DetectRoots(project), config.BuiltFolders(project)
@@ -92,7 +78,6 @@ func (JournalScan) Run(in *cli.Input, console cli.Console) (int, error) {
 	return 0, sayScanned(console, jsonfile.NewObject("settings", settings))
 }
 
-// typedScan is the scan as version 4 of the journal keeps settings: the folders as lists, the languages as switches.
 func typedScan(project string, judged, skipped []string) *jsonfile.Object {
 	settings := jsonfile.NewObject(judgedKey, anyOf(judged), skippedKey, anyOf(skipped))
 	for _, language := range source.Languages {
@@ -102,7 +87,6 @@ func typedScan(project string, judged, skipped []string) *jsonfile.Object {
 	return settings
 }
 
-// anyOf is the folders as a JSON list, empty rather than null when there are none.
 func anyOf(folders []string) []any {
 	listed := []any{}
 	for _, folder := range folders {
@@ -112,7 +96,6 @@ func anyOf(folders []string) []any {
 	return listed
 }
 
-// sayScanned prints the scan's answer on one line.
 func sayScanned(console cli.Console, answer *jsonfile.Object) error {
 	text, err := jsonfile.Compact(answer, false)
 	if err != nil {
@@ -127,18 +110,15 @@ func sayScanned(console cli.Console, answer *jsonfile.Object) error {
 // JournalSkills is `journal-skills`: the skills rendered into the plugin's folder for the journal to publish.
 type JournalSkills struct{}
 
-// Names are the verbs it answers to.
 func (JournalSkills) Names() []string {
 	return []string{"journal-skills"}
 }
 
-// Help documents it.
 func (JournalSkills) Help() help.Help {
 	return help.Of("Render the skills into the agent journal plugin's folder, for the journal to publish.").
 		Form("journal-skills", "render the skills into ./"+skillsFolder+"/.agents/skills (run by the journal plugin)")
 }
 
-// Run renders the skills and says how many.
 func (JournalSkills) Run(in *cli.Input, console cli.Console) (int, error) {
 	console.Say("{}")
 
@@ -152,7 +132,6 @@ func (JournalSkills) Run(in *cli.Input, console cli.Console) (int, error) {
 	return 0, nil
 }
 
-// renderSkills publishes the skills the project can use into the plugin's own folder.
 func renderSkills() (int, error) {
 	project, err := config.Load(journalProjectRoot())
 	if err != nil {
@@ -164,10 +143,6 @@ func renderSkills() (int, error) {
 	return len(published), err
 }
 
-// pluginRoot is the plugin's folder: the nearest folder above the executable that holds a plugin manifest, as the
-// binary the plugin fetches into its own bin/ does, else the one the journal names, else the folder above the
-// executable's own. The executable comes first because the journal runs a plugin's setup from a staging copy while
-// JOURNAL_PLUGIN_DIR already names its final folder, which it clears before moving the copy in.
 func pluginRoot() string {
 	self, err := os.Executable()
 	if err != nil {
@@ -192,12 +167,10 @@ func pluginRoot() string {
 // JournalConfig is `journal-config`: the plugin's chosen switches written into the project's config.
 type JournalConfig struct{}
 
-// Names are the verbs it answers to.
 func (JournalConfig) Names() []string {
 	return []string{"journal-config"}
 }
 
-// Help documents it.
 func (JournalConfig) Help() help.Help {
 	return help.Of("Write the agent journal plugin's chosen switches into .commandments/config.json, and refresh what the project is told.").
 		Form("journal-config", "apply JOURNAL_SETTINGS to the project config (run by the journal plugin)").
@@ -205,8 +178,6 @@ func (JournalConfig) Help() help.Help {
 		Note("It also rewrites the briefing block in the project's AGENTS.md and each agent's own instruction file, which is how a fix to what the tool injects reaches a project the journal drives: such a project never runs composer, so nothing else would ever refresh it. Only the marked block changes, so `git diff AGENTS.md` is the whole of it; a run that changes nothing writes nothing; and a file whose markers cannot be trusted is named in the notification and left exactly as it was.")
 }
 
-// Run writes each chosen switch, renders the skills again, refreshes what the project is told, and notifies
-// what changed and what it could not write.
 func (JournalConfig) Run(in *cli.Input, console cli.Console) (int, error) {
 	said, code, err := JournalConfig{}.Apply(in, console)
 	if err != nil || code != 0 {
@@ -225,8 +196,6 @@ func (JournalConfig) Run(in *cli.Input, console cli.Console) (int, error) {
 	return 0, nil
 }
 
-// Apply writes each chosen switch, renders the skills again and refreshes what the project is told, and answers
-// what it says changed; a code other than 0 is a run that could not apply them, its reason already warned.
 func (JournalConfig) Apply(in *cli.Input, console cli.Console) ([]string, int, error) {
 	chosen, given := chosenSettings()
 	if !given {
@@ -323,10 +292,6 @@ func (JournalConfig) Apply(in *cli.Input, console cli.Console) ([]string, int, e
 	return said, 0, nil
 }
 
-// brief refreshes what the project is told, so a fix to the briefing reaches a project the journal drives and not
-// only one composer installs, and says what it could not write. A file it refuses is named and left as it was: the
-// upgrade carries on, because the switches it has already applied must not be undone by a marker a reader once
-// typed by hand, and nothing is written silently past a refusal either.
 func brief(root string) []string {
 	project, err := config.Load(root)
 	if err != nil {
@@ -342,7 +307,6 @@ func brief(root string) []string {
 	return said
 }
 
-// everySin is every sin the tool ships, those still calibrating included, engine by engine.
 func everySin() []sins.Sin {
 	var every []sins.Sin
 
@@ -353,9 +317,6 @@ func everySin() []sins.Sin {
 	return every
 }
 
-// chosenSettings are the plugin's settings as the journal gives them: the JSON itself in JOURNAL_SETTINGS in version
-// 3 of the journal, a file of it named there in version 4, whose flags, numbers and lists are JSON's own; each value
-// comes back as the text version 3 gave, a flag "true" or "false" and a list one entry per line.
 func chosenSettings() (map[string]any, bool) {
 	given := os.Getenv(journalSettings)
 	var chosen map[string]any
@@ -373,7 +334,6 @@ func chosenSettings() (map[string]any, bool) {
 	return chosen, true
 }
 
-// settingText is one setting's value as text: a list one entry per line, anything else as JSON writes it.
 func settingText(value any) any {
 	switch typed := value.(type) {
 	case nil, string:

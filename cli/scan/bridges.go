@@ -16,56 +16,34 @@ import (
 	"github.com/jessegall/code-commandments/engine/php"
 )
 
-// Bridge is one language's bridge: the name its socket and its service carry, the word its has- verb uses, the
-// languages it reads, the name a reader of a report sees, how it is reached, and what it must be told once where
-// reaching it says something a person should know.
-//
-// Every bridge is reached the same way, by Read below. A bridge that had a path of its own is how three of these
-// four came to pay a process's start-up on every run while one did not.
+// Bridge is one language's bridge: the name its socket and its service carry, the word its has- verb uses, the languages it reads, the name a reader of a report sees, how it is reached, and what it must be told once where reaching it says something a person should know.
 type Bridge struct {
-	Kind      string
-	Word      string
-	Languages []source.Language
-	Label     string
-	// WholeRoots says whether the bridge is asked for the roots and told which files to write, rather than asked
-	// for the files alone: the C# bridge compiles every project under the roots so each type resolves.
+	Kind       string
+	Word       string
+	Languages  []source.Language
+	Label      string
 	WholeRoots bool
-	// InOwnOrder says whether the bridge's stream already stands in the order a walk of the tree gives.
 	InOwnOrder bool
-	// Reach is how this bridge is reached, and the one thing that differs between a bridge that runs as a process
-	// and a language this binary parses itself.
-	Reach  Reach
-	Notice func() string
+	Reach      Reach
+	Notice     func() string
 }
 
-// Reach is how a bridge is reached. A run asks it with Open and takes whatever answers; a service asks it with
-// Own for a bridge of its own to keep up, and is told when the language needs none.
+// Reach is how a bridge is reached.
 type Reach interface {
-	// Open answers the bridge a run asks: for a bridge that runs as a process, the warm one a session keeps up
-	// for this project when there is one, and one for this run alone when there is not.
 	Open(held Bridge, roots []string) (bridge.Asker, error)
-	// Own answers a bridge of this process's own, never a warm one, which is what a service keeps up. False says
-	// the language needs no process, so no service is kept for it and no socket is dialled for it either.
 	Own(held Bridge, roots []string) (bridge.Asker, bool, error)
 }
 
-// Process is the reach of a bridge that runs as a process: the command that starts it, and, for a bridge whose
-// absence a person must be told about by name, how its failures are named.
+// Process is the reach of a bridge that runs as a process: the command that starts it, and, for a bridge whose absence a person must be told about by name, how its failures are named.
 type Process struct {
 	Command func(roots []string) ([]string, error)
 	Named   func(err error) error
 }
 
-// Open is the bridge a run asks: one asker that goes to the warm bridge for each ask and starts one of its own
-// when there is none, or when the warm one could not answer.
 func (p Process) Open(held Bridge, roots []string) (bridge.Asker, error) {
 	return &process{held: held, reach: p, roots: roots}, nil
 }
 
-// Own is a bridge of this process's own, which is what a service keeps up: never the warm one, since a service
-// that found a socket would be answering through another service for the same project. It is started here rather
-// than at the first ask, so a service whose bridge cannot start at all says so the moment it starts, and it is
-// held by an asker that starts a fresh one when this one has gone.
 func (p Process) Own(held Bridge, roots []string) (bridge.Asker, bool, error) {
 	command, err := p.Command(roots)
 	if err != nil {
@@ -80,7 +58,6 @@ func (p Process) Own(held Bridge, roots []string) (bridge.Asker, bool, error) {
 	return &kept{held: held, reach: p, roots: roots, server: server}, true, nil
 }
 
-// named names the bridge's part in what went wrong, for a bridge that says so by name.
 func (p Process) named(err error) error {
 	if err == nil || p.Named == nil {
 		return err
@@ -89,20 +66,15 @@ func (p Process) named(err error) error {
 	return p.Named(err)
 }
 
-// InProcess is the reach of a bridge the binary carries: it answers from this very process, so there is no
-// command to start, no socket to dial and no service to keep up, and a run of the tool leaves nothing behind.
+// InProcess is the reach of a bridge the binary carries: it answers from this very process, so there is no command to start, no socket to dial and no service to keep up, and a run of the tool leaves nothing behind.
 type InProcess struct {
-	// Stream is the tree it builds for the files asked, held to the contract as a read of a stream holds one.
 	Stream func(paths, write []string) (*contract.Stream, error)
 }
 
-// Open answers the bridge a run asks, which for this one is the bridge itself.
 func (p InProcess) Open(held Bridge, roots []string) (bridge.Asker, error) {
 	return inProcess{reach: p}, nil
 }
 
-// Own says that this language needs no process, so no service is kept up for it and no socket is ever dialled
-// for it either. A service that started for it would have nothing to keep.
 func (p InProcess) Own(held Bridge, roots []string) (bridge.Asker, bool, error) {
 	return nil, false, nil
 }
@@ -112,9 +84,6 @@ type inProcess struct {
 	reach InProcess
 }
 
-// AskTallied is the whole stream for the request. It is built, never written: the engine reads the stream this
-// bridge holds, so nothing is encoded to be parsed straight back. Measured over this repository, that is 8
-// seconds against 19 for the same tree through JSON.
 func (p inProcess) AskTallied(request bridge.Request, tally func()) (*contract.Stream, error) {
 	stream, err := p.reach.Stream(request.Paths, request.Write)
 	if err != nil {
@@ -127,7 +96,6 @@ func (p inProcess) AskTallied(request bridge.Request, tally func()) (*contract.S
 	return stream, nil
 }
 
-// AskEach hands each line of the answer on, for a reader that cuts a stream it never holds whole.
 func (p inProcess) AskEach(request bridge.Request, each func(line contract.Line, raw []byte) error) error {
 	stream, err := p.reach.Stream(request.Paths, request.Write)
 	if err != nil {
@@ -146,19 +114,11 @@ func (p inProcess) AskEach(request bridge.Request, each func(line contract.Line,
 	return nil
 }
 
-// Close lets go of nothing: this bridge holds nothing to let go of.
 func (p inProcess) Close() error {
 	return nil
 }
 
-// kept is the bridge a service holds for the whole session: asked while it answers, and started afresh once it has
-// gone. A bridge dies under a single request for reasons that are no fault of the next one — killed for a silence
-// longer than a read may wait, or gone of its own accord — and a service that kept the corpse answered every later
-// request with a broken pipe for the rest of its life. Measured in one project: six deaths, then 4,159 unanswered
-// requests, with every Python rule silent the whole time and nothing saying so.
-//
-// So a service reads a failure the way the run side already reads one — a bridge that fails an ask is a bridge gone,
-// not an answer — and this is the one place that reading lives for a bridge of this process's own.
+// kept is the bridge a service holds for the whole session: asked while it answers, and started afresh once it has gone.
 type kept struct {
 	held   Bridge
 	reach  Process
@@ -167,9 +127,6 @@ type kept struct {
 	mu     sync.Mutex
 }
 
-// AskTallied is the whole stream for the request, from the bridge this service holds, and from one started afresh
-// when that one has gone. The second ask is safe where AskEach's is not: nothing of the answer has been handed over
-// yet, so the whole stream is still the first thing its caller sees.
 func (k *kept) AskTallied(request bridge.Request, tally func()) (*contract.Stream, error) {
 	k.mu.Lock()
 	defer k.mu.Unlock()
@@ -197,9 +154,6 @@ func (k *kept) AskTallied(request bridge.Request, tally func()) (*contract.Strea
 	return stream, k.reach.named(err)
 }
 
-// AskEach hands each line of the answer on as it arrives, from the bridge this service holds. It takes no second
-// ask, since the lines already handed over cannot be handed over again: the asker that reads them asks again itself,
-// and the bridge it reaches then is a fresh one.
 func (k *kept) AskEach(request bridge.Request, each func(line contract.Line, raw []byte) error) error {
 	k.mu.Lock()
 	defer k.mu.Unlock()
@@ -218,7 +172,6 @@ func (k *kept) AskEach(request bridge.Request, each func(line contract.Line, raw
 	return nil
 }
 
-// serving is the bridge this service holds, started when there is none.
 func (k *kept) serving() (*bridge.Server, error) {
 	if k.server != nil {
 		return k.server, nil
@@ -238,9 +191,6 @@ func (k *kept) serving() (*bridge.Server, error) {
 	return server, nil
 }
 
-// gone lets go of a bridge that failed, so the next ask starts a fresh one, and says once why this one went. A
-// service's stderr is its log, and one line per death reads as what it is where thousands of broken pipes read as
-// nothing at all.
 func (k *kept) gone(err error) {
 	if k.server == nil {
 		return
@@ -250,7 +200,6 @@ func (k *kept) gone(err error) {
 	k.server = nil
 }
 
-// Close lets go of the bridge this service holds.
 func (k *kept) Close() error {
 	k.mu.Lock()
 	defer k.mu.Unlock()
@@ -264,29 +213,16 @@ func (k *kept) Close() error {
 	return server.Close()
 }
 
-// process is a bridge that runs as a process, as a run asks it: every ask goes to the warm bridge a session keeps
-// up for this project, and to one started for this run when there is none. The run's own is started once and let
-// go of when the run closes the asker.
-//
-// A run never leaves a bridge behind. The warm ones belong to the journal's plugin, which starts them with the
-// session and stops them with it; a run of the tool that daemonised one of its own would orphan it.
+// process is a bridge that runs as a process, as a run asks it: every ask goes to the warm bridge a session keeps up for this project, and to one started for this run when there is none.
 type process struct {
-	held  Bridge
-	reach Process
-	roots []string
-	own   *bridge.Server
-	// missed says the warm bridge was reached and could not answer, which is said once: a service that went away
-	// mid-session is ordinary and needs no second word, and a service that is up and cannot answer makes every run
-	// pay a start-up it should not have paid, which nothing else would say.
-	missed sync.Once
-	// reached says it answered, which a run asked for its timing says once.
+	held    Bridge
+	reach   Process
+	roots   []string
+	own     *bridge.Server
+	missed  sync.Once
 	reached sync.Once
 }
 
-// sayWarmBridgeUsed says, when a run was asked where its time went, that this bridge answered from the service the
-// session keeps up rather than being started here. It is the single most diagnostic fact about a slow run: a cold
-// bridge costs its whole start-up, and until a run said so a consumer had to time thousands of edits from outside
-// to find it out. Said once, like its unhappy twin.
 func (p *process) sayWarmBridgeUsed() {
 	if !cli.Timed() {
 		return
@@ -297,31 +233,18 @@ func (p *process) sayWarmBridgeUsed() {
 	})
 }
 
-// sayWarmBridgeMissed says, on STDERR, that the bridge this session keeps up was reached and could not answer, so
-// this run started one of its own. Without it the two are indistinguishable from outside: a run with no service and
-// a run whose service cannot answer both just take the long way round, and the second is a fault worth knowing.
 func (p *process) sayWarmBridgeMissed(err error) {
 	p.missed.Do(func() {
 		fmt.Fprintf(os.Stderr, "⚠ the %s bridge this session keeps up could not answer, so this run starts its own and pays its start-up: %v\n", p.held.Kind, err)
 	})
 }
 
-// sharedAsk is how many files an ask may carry and still go to the bridge a session keeps warm. That bridge
-// serves every judging on the machine, one ask at a time, so a run that hands it a tree holds up every edit
-// behind it: measured on a consumer's tree, one small file waited 61 seconds inside the bridge while a worker's
-// hand-in judged its whole worktree through the same session, and nine edits took two and a half minutes to
-// clear. A run bigger than this starts a bridge of its own and pays a start-up of seconds instead of spending
-// everyone else's minutes; a run this size or smaller is what the warm bridge exists for.
 const sharedAsk = 25
 
-// shares says whether this ask goes to the bridge the session keeps warm. The files to write are what measures
-// an ask, since a bridge that compiles whole roots is asked with the roots and writes the files either way.
 func shares(request bridge.Request) bool {
 	return len(request.Write) <= sharedAsk
 }
 
-// AskTallied is the whole stream, from the warm bridge when it answers and from one of this run's own when it
-// does not: a warm bridge that fails an ask is a bridge gone, not an answer.
 func (p *process) AskTallied(request bridge.Request, tally func()) (*contract.Stream, error) {
 	if server, kept := p.warm(request); kept {
 		defer server.Close()
@@ -346,7 +269,6 @@ func (p *process) AskTallied(request bridge.Request, tally func()) (*contract.St
 	return stream, p.reach.named(err)
 }
 
-// warm is the bridge the session keeps up, for an ask small enough to share it.
 func (p *process) warm(request bridge.Request) (*bridge.Server, bool) {
 	if !shares(request) {
 		return nil, false
@@ -355,8 +277,6 @@ func (p *process) warm(request bridge.Request) (*bridge.Server, bool) {
 	return keptFor(p.held.Kind, p.roots)
 }
 
-// AskEach hands each line of the answer on as it arrives. It takes no second ask, since the lines already handed
-// over cannot be handed over again: a reader that wants another try asks again itself.
 func (p *process) AskEach(request bridge.Request, each func(line contract.Line, raw []byte) error) error {
 	if server, kept := p.warm(request); kept {
 		defer server.Close()
@@ -372,7 +292,6 @@ func (p *process) AskEach(request bridge.Request, each func(line contract.Line, 
 	return p.reach.named(server.AskEach(request, each))
 }
 
-// start is the bridge this run holds of its own, started once.
 func (p *process) start() (*bridge.Server, error) {
 	if p.own != nil {
 		return p.own, nil
@@ -396,7 +315,6 @@ func (p *process) start() (*bridge.Server, error) {
 	return server, nil
 }
 
-// Close lets go of the bridge this run started, if it started one.
 func (p *process) Close() error {
 	if p.own == nil {
 		return nil
@@ -405,23 +323,18 @@ func (p *process) Close() error {
 	return p.own.Close()
 }
 
-// Bridges are the bridges a scan reads, in the order the PHP tool read them, with Go after them.
 var Bridges = []Bridge{PHPBridge, Frontend, CSharp, Python, GoBridge}
 
-// PHPBridge is the PHP bridge, php-parser, kept up as the plugin's php service.
 var PHPBridge = Bridge{Kind: "php", Word: "php", Languages: []source.Language{source.PHP}, Label: "PHP",
 	Reach:  Process{Command: func([]string) ([]string, error) { return php.Here().Cached().Command() }},
 	Notice: nothingToSay,
 }
 
-// Frontend is the bridge that reads Vue and TypeScript, one bridge for both because one parser reads both, kept up
-// as the plugin's frontend service.
 var Frontend = Bridge{Kind: "frontend", Word: "frontend", Languages: []source.Language{source.Vue, source.TypeScript}, Label: "Vue and TypeScript",
 	Reach:  Process{Command: func([]string) ([]string, error) { return frontend.Here().Cached().Command() }},
 	Notice: nothingToSay,
 }
 
-// CSharp is the C# bridge, Roslyn, kept up as the plugin's roslyn service.
 var CSharp = Bridge{Kind: "roslyn", Word: "csharp", Languages: []source.Language{source.CSharp}, Label: "C#",
 	WholeRoots: true,
 	InOwnOrder: true,
@@ -429,27 +342,21 @@ var CSharp = Bridge{Kind: "roslyn", Word: "csharp", Languages: []source.Language
 	Notice:     bridge.RoslynNotice,
 }
 
-// GoBridge is the Go bridge. It is the one bridge that runs in this process: the tool is written in Go, so the
-// parser and the type checker are already in the binary, and there is nothing to install, start or keep warm.
 var GoBridge = Bridge{Kind: "go", Word: "go", Languages: []source.Language{source.Go}, Label: "Go",
 	InOwnOrder: true,
 	Reach:      InProcess{Stream: gotree.Stream},
 	Notice:     nothingToSay,
 }
 
-// Python is the Python bridge, mypy, kept up as the plugin's mypy service.
 var Python = Bridge{Kind: "mypy", Word: "python", Languages: []source.Language{source.Python}, Label: "Python",
 	Reach:  Process{Command: func([]string) ([]string, error) { return bridge.Mypy() }},
 	Notice: nothingToSay,
 }
 
-// nothingToSay is the notice of a bridge whose starting says nothing a person needs to hear.
 func nothingToSay() string {
 	return ""
 }
 
-// Named is the bridge of that kind, which is how a command that keeps one up finds it; false for a kind no scan
-// reads.
 func Named(kind string) (Bridge, bool) {
 	for _, held := range Bridges {
 		if held.Kind == kind {
@@ -460,43 +367,22 @@ func Named(kind string) (Bridge, bool) {
 	return Bridge{}, false
 }
 
-// read is how every bridge is reached, whichever language it reads. It is a variable so a test can answer for a
-// bridge without starting one; nothing else replaces it, and there is one of it rather than one per language.
 var read = func(b Bridge, roots, files []string, tally func()) (*contract.Stream, error) {
 	return b.read(roots, files, tally)
 }
 
-// Read is the one way a bridge is reached, whichever language it reads: the warm bridge a session keeps for this
-// project when every root lies inside it, and otherwise one started for this run and closed when the run is done.
-//
-// A command never leaves a bridge behind. The warm ones belong to the journal's plugin, which starts them with the
-// session and stops them with it; a run of the tool that daemonised one of its own would orphan it.
 func (b Bridge) Read(roots, files []string, tally func()) (*contract.Stream, error) {
 	return b.readHalving(roots, files, tally, halvingsAtMost)
 }
 
-// read is the funnel's own body: open the bridge, however it is reached, and ask it once.
 func (b Bridge) read(roots, files []string, tally func()) (*contract.Stream, error) {
 	roots, files = resolved(roots), resolved(files)
 
 	return b.ask(roots, files, tally)
 }
 
-// halvingsAtMost is how many times a dying set is cut in two. A bridge that dies on one file of a thousand is
-// found in ten cuts, and each cut costs a bridge run, so the floor is what keeps one death from becoming hundreds
-// of them: past it the rest of the set is reported unread, as it always was.
 const halvingsAtMost = 8
 
-// readHalving asks the bridge for the files, and where it dies asks for each half of them, down to the floor.
-//
-// What is halved is what the bridge WRITES, never what it compiles: a C# bridge is asked to compile whole roots and
-// write the named files, so each half is still read against the whole project and every type that crosses the halves
-// goes on resolving. Halving the compilation instead would answer, and answer differently — a type declared in the
-// other half would read as a type the scan never saw — which is worse than a file left unread, because nothing says
-// so.
-//
-// A bridge that dies on the whole set and on both halves of it has died on something that is not the set, and the
-// floor ends it there.
 func (b Bridge) readHalving(roots, files []string, tally func(), halvings int) (*contract.Stream, error) {
 	stream, err := read(b, roots, files, tally)
 	if err == nil || halvings <= 0 || len(files) < 2 {
@@ -507,8 +393,6 @@ func (b Bridge) readHalving(roots, files []string, tally func(), halvings int) (
 	read, firstErr := b.readHalving(roots, first, tally, halvings-1)
 	rest, secondErr := b.readHalving(roots, second, tally, halvings-1)
 
-	// Both halves dying says the fault is not the set, so the first answer stands as it was: a half-read stream
-	// told as what the bridge managed is better than a story about halves nobody asked for.
 	if firstErr != nil && secondErr != nil {
 		return stream, err
 	}
@@ -516,7 +400,6 @@ func (b Bridge) readHalving(roots, files []string, tally func(), halvings int) (
 	return joined(read, rest), errors.Join(firstErr, secondErr)
 }
 
-// ask is one request to one bridge, opened however this bridge is reached and closed after.
 func (b Bridge) ask(roots, files []string, tally func()) (*contract.Stream, error) {
 	asker, err := b.Reach.Open(b, roots)
 	if err != nil {
@@ -527,9 +410,6 @@ func (b Bridge) ask(roots, files []string, tally func()) (*contract.Stream, erro
 	return asker.AskTallied(b.Request(roots, files), tally)
 }
 
-// joined is two readings of one project as one stream: the files of both, and the first reading's own header,
-// program and trailer, since both halves were read against the same roots by the same bridge. The trailer's count
-// is the files the stream really holds, which is what a reader of it counts on.
 func joined(read, rest *contract.Stream) *contract.Stream {
 	switch {
 	case read == nil:
@@ -544,9 +424,6 @@ func joined(read, rest *contract.Stream) *contract.Stream {
 	return read
 }
 
-// Request is what the bridge is asked: the files to write, and the roots as well for a bridge that compiles
-// everything under them so each type resolves. A service warming its own bridge asks exactly this, so what it
-// loads is what a run will ask for.
 func (b Bridge) Request(roots, files []string) bridge.Request {
 	if b.WholeRoots {
 		return bridge.Request{Paths: roots, Write: files}

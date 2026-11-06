@@ -8,8 +8,6 @@ import (
 	"github.com/jessegall/code-commandments/engine/php"
 )
 
-// Docblock retyping and type mentions, against what PHP's Docblock answered for the same text, recorded in
-// testdata/docblock-retype.json.
 func TestDocblockRetypingAnswersAsPHPsDocblock(t *testing.T) {
 	from := `Spatie\LaravelData\DataCollection`
 	cases := []struct{ text, name string }{

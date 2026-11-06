@@ -11,9 +11,6 @@ import (
 	"github.com/jessegall/code-commandments/cli/workspace"
 )
 
-// TestABareBranchComparesAgainstTheBranchTheProjectDeclares holds where the base of a bare `--branch` comes from.
-// Nothing can work a branch's own base out reliably, so the project says it once: a project whose trunk is
-// development judges what the branch changed since development, not everything development differs from main.
 func TestABareBranchComparesAgainstTheBranchTheProjectDeclares(t *testing.T) {
 	for name, test := range map[string]struct {
 		declared string
@@ -40,7 +37,6 @@ func TestABareBranchComparesAgainstTheBranchTheProjectDeclares(t *testing.T) {
 	}
 }
 
-// projectDeclaring is a project whose config declares the base, or declares none when it is empty.
 func projectDeclaring(t *testing.T, base string) string {
 	t.Helper()
 	root, err := filepath.EvalSymlinks(t.TempDir())
@@ -60,8 +56,6 @@ func projectDeclaring(t *testing.T, base string) string {
 		t.Fatal(err)
 	}
 
-	// A scope of a branch is read from git, so the project is one: a repository whose trunk is whatever the test
-	// declared, with one commit for a branch to have left, and the branch a test names on the command line.
 	trunk := strings.TrimSpace(base)
 	if trunk == "" {
 		trunk = "main"

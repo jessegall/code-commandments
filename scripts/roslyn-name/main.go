@@ -1,7 +1,4 @@
-// Command roslyn-name prints the image name the C# bridge's sources are built as: a digest of every source file
-// that goes into the image. scripts/roslyn-image writes it into bridge/roslyn/IMAGE and builds that tag, and a
-// test holds the file to it, so the name is never one a person chose. Run from the repository root:
-// go run ./scripts/roslyn-name.
+// Command roslyn-name prints the image name the C# bridge's sources are built as: a digest of every source file that goes into the image.
 package main
 
 import (

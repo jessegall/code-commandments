@@ -7,10 +7,6 @@ import (
 	"github.com/jessegall/code-commandments/engine/python/pythontest"
 )
 
-// TestACatchThatOnlyRaisesAgainIsFoundAndOneThatWorksIsNot holds the rule to the fault it names: a clause that
-// catches a failure, adds nothing and raises it again is a clause nobody needed. A clause that does real work
-// first, one that raises a failure of its own, and a narrow clause shielding a broader one below it are how the
-// construct earns its place and must pass.
 func TestACatchThatOnlyRaisesAgainIsFoundAndOneThatWorksIsNot(t *testing.T) {
 	for name, test := range map[string]struct {
 		source string

@@ -7,11 +7,6 @@ import (
 	"github.com/jessegall/code-commandments/engine/python/pythontest"
 )
 
-// TestTwoTypesAskingOfThemselvesRepeatNothing holds the rule to whose question a guard is. The journal's viewer
-// protocol row and its migration reader each ask whether a row is neither completed nor deleted, of their own
-// state, in two layers that may not import each other; naming that once would couple them, and each type
-// answering for itself is what the rule asks for (#689). The same question asked twice about ONE type is still
-// one question written twice.
 func TestTwoTypesAskingOfThemselvesRepeatNothing(t *testing.T) {
 	codebase := pythontest.FromSource(t, map[string]string{
 		"viewer/row.py": `class V3Row:
@@ -38,8 +33,6 @@ func TestTwoTypesAskingOfThemselvesRepeatNothing(t *testing.T) {
 	}
 }
 
-// TestOneTypeAskedTwiceIsARepeatedGuard holds the other side: the same question about one object, asked from two
-// places, is the question that object should answer.
 func TestOneTypeAskedTwiceIsARepeatedGuard(t *testing.T) {
 	codebase := pythontest.FromSource(t, map[string]string{
 		"shop/rows.py": `class Row:

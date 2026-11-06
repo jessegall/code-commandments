@@ -9,11 +9,8 @@ import (
 	"github.com/jessegall/code-commandments/prose"
 )
 
-// witherCarriedFloor is how many of its own properties a rebuild must carry over to be a hand-rolled wither.
 const witherCarriedFloor = 3
 
-// CallName is the name a call is made by: a named method or static call, or a function called by name; empty for
-// any other node.
 func (n Node) CallName() string {
 	switch n.Kind() {
 	case "Expr_MethodCall", "Expr_NullsafeMethodCall", "Expr_StaticCall":
@@ -29,8 +26,6 @@ func (n Node) CallName() string {
 	return ""
 }
 
-// IsPositionalTuple says whether the node is an array literal of three or more unkeyed items reading from two or
-// more different variables.
 func (n Node) IsPositionalTuple() bool {
 	items := n.ChildrenIn("items")
 	if n.Kind() != "Expr_Array" || len(items) < 3 {
@@ -49,7 +44,6 @@ func (n Node) IsPositionalTuple() bool {
 	return len(roots) >= 2
 }
 
-// variableRoot is the variable a chain of reads and calls starts at; empty when it starts elsewhere.
 func variableRoot(expr engine.Match) string {
 	for {
 		switch expr.Kind() {
@@ -63,7 +57,6 @@ func variableRoot(expr engine.Match) string {
 	}
 }
 
-// IsReturnExpression says whether the node is what a return or an arrow function returns.
 func (n Node) IsReturnExpression() bool {
 	parent := n.Parent()
 
@@ -76,7 +69,6 @@ var sequenceReturns = []*regexp.Regexp{
 	regexp.MustCompile(`@return\s+\??[\\\w|]+\[\]`),
 }
 
-// EnclosingFunctionReturnsSequence says whether the function around the node documents that it returns a list.
 func (n Node) EnclosingFunctionReturnsSequence() bool {
 	doc, ok := n.EnclosingFunctionLike().DocComment()
 	if !ok {
@@ -91,7 +83,6 @@ func (n Node) EnclosingFunctionReturnsSequence() bool {
 	return false
 }
 
-// DecodesItsOwnEncoding says whether the call's first argument is a json_encode, casts aside.
 func (n Node) DecodesItsOwnEncoding() bool {
 	argument := n.Argument(0)
 	for strings.HasPrefix(argument.Kind(), "Expr_Cast_") {
@@ -101,16 +92,12 @@ func (n Node) DecodesItsOwnEncoding() bool {
 	return argument.Exists() && argument.CallName() == "json_encode"
 }
 
-// IsWitherRebuild says whether the node is the new a hand-rolled wither returns.
 func (n Node) IsWitherRebuild() bool {
 	function := n.EnclosingFunctionLike()
 
 	return function.Exists() && function.HandRolledWither().Node() == n.Node() && n.Exists()
 }
 
-// HandRolledWither is the new a method's only statement returns when it rebuilds its own class, carrying three or
-// more of its own properties over and changing at least one, over a constructor that only promotes; no node
-// otherwise.
 func (n Node) HandRolledWither() Node {
 	if !n.IsSoleReturnExpression() {
 		return Node{}
@@ -140,14 +127,12 @@ func (n Node) HandRolledWither() Node {
 	return built
 }
 
-// IsSoleReturnExpression says whether the node declares a function whose only statement returns a value.
 func (n Node) IsSoleReturnExpression() bool {
 	body := n.ChildrenIn("stmts")
 
 	return n.IsFunctionDeclaration() && len(body) == 1 && body[0].Kind() == "Stmt_Return" && body[0].Child("expr").Exists()
 }
 
-// namesOwnType says whether a written name is self, static or the class around the node.
 func (n Node) namesOwnType(name engine.Match) bool {
 	spelled := strings.ToLower(name.Name())
 	if spelled == "self" || spelled == "static" {
@@ -158,15 +143,12 @@ func (n Node) namesOwnType(name engine.Match) bool {
 	return enclosing != "" && strings.ToLower(strings.TrimLeft(name.Name(), `\`)) == strings.ToLower(enclosing)
 }
 
-// IsOwnPropertyRead says whether the node reads a named property of its own object: $this->total.
 func (n Node) IsOwnPropertyRead() bool {
 	object := n.Child("var")
 
 	return n.Kind() == "Expr_PropertyFetch" && object.Kind() == "Expr_Variable" && object.Name() == "this" && n.Child("name").Kind() == "Identifier"
 }
 
-// ConstructorIsPromotionOnly says whether the class around the node has a constructor with parameters, each
-// promoted and none variadic, and an empty body.
 func (n Node) ConstructorIsPromotionOnly() bool {
 	class := n.EnclosingClassLike()
 	for _, method := range Methods(class.Match) {
@@ -186,9 +168,6 @@ func (n Node) ConstructorIsPromotionOnly() bool {
 	return false
 }
 
-// MutatesOwnFieldsAfterConstruction says whether the node is a class-like whose every field its constructor sets,
-// yet a method other than the constructor, or a trait method it takes in, writes one of them again; a method that
-// returns $this is a builder step and passes.
 func (n Node) MutatesOwnFieldsAfterConstruction(inherited []engine.Match) bool {
 	if !n.IsClassLike() {
 		return false
@@ -216,8 +195,6 @@ func (n Node) MutatesOwnFieldsAfterConstruction(inherited []engine.Match) bool {
 	return false
 }
 
-// constructedFieldNames is every field the constructor of the class around the node sets from a parameter: the
-// promoted ones, and each $this->x assigned a parameter.
 func (n Node) constructedFieldNames() map[string]bool {
 	var constructor engine.Match
 	for _, method := range Methods(n.EnclosingClassLike().Match) {
@@ -249,7 +226,6 @@ func (n Node) constructedFieldNames() map[string]bool {
 	return names
 }
 
-// selfPropertyOf is the property a $this->x read names; empty for any other node.
 func selfPropertyOf(node engine.Match) string {
 	if !(Node{Match: node}).IsOwnPropertyRead() {
 		return ""
@@ -258,7 +234,6 @@ func selfPropertyOf(node engine.Match) string {
 	return node.Child("name").Name()
 }
 
-// returnsThis says whether a return of $this sits anywhere in the method.
 func returnsThis(method engine.Match) bool {
 	return slices.ContainsFunc(descendantsOf(method), func(node engine.Match) bool {
 		returned := node.Child("expr")
@@ -267,18 +242,14 @@ func returnsThis(method engine.Match) bool {
 	})
 }
 
-// isFieldWrite says whether the node assigns a property, a compound assignment included and ??= aside.
 func isFieldWrite(node engine.Match) bool {
 	assigns := node.Kind() == "Expr_Assign" || strings.HasPrefix(node.Kind(), "Expr_AssignOp_") && node.Kind() != "Expr_AssignOp_Coalesce"
 
 	return assigns && node.Child("var").Kind() == "Expr_PropertyFetch"
 }
 
-// clumpScalars are the scalar types a data clump is made of.
 var clumpScalars = []string{"string", "int", "float", "bool"}
 
-// ValueParamSignature is the function's plainly scalar-typed parameters as "type $name", sorted, when there are
-// three or more of them; none otherwise.
 func (n Node) ValueParamSignature() []string {
 	if !n.IsFunctionDeclaration() {
 		return nil
@@ -301,8 +272,6 @@ func (n Node) ValueParamSignature() []string {
 	return fields
 }
 
-// IsNamedConstructor says whether the function builds an instance of its own class: new self, new static, or new
-// of its class's short name.
 func (n Node) IsNamedConstructor() bool {
 	if !n.IsFunctionDeclaration() {
 		return false
@@ -324,12 +293,10 @@ func (n Node) IsNamedConstructor() bool {
 	return false
 }
 
-// ArrayKeyIsString says whether the node reads an array offset by a string literal: $data['name'].
 func (n Node) ArrayKeyIsString() bool {
 	return n.Kind() == "Expr_ArrayDimFetch" && n.Child("dim").Kind() == "Scalar_String"
 }
 
-// ArrayBaseName is the variable an offset read reads from; empty when it reads from anything else.
 func (n Node) ArrayBaseName() string {
 	base := n.Child("var")
 	if n.Kind() != "Expr_ArrayDimFetch" || base.Kind() != "Expr_Variable" {
@@ -339,8 +306,6 @@ func (n Node) ArrayBaseName() string {
 	return base.Name()
 }
 
-// EnclosingParamIsArray says whether the function around the node takes the named parameter typed array, nullable
-// or not.
 func (n Node) EnclosingParamIsArray(name string) bool {
 	if name == "" {
 		return false
@@ -356,23 +321,16 @@ func (n Node) EnclosingParamIsArray(name string) bool {
 	return false
 }
 
-// IsWithinNamedConstructor says whether the function around the node builds an instance of its own class.
 func (n Node) IsWithinNamedConstructor() bool {
 	function := n.EnclosingFunctionLike()
 
 	return function.Exists() && function.IsNamedConstructor()
 }
 
-// IsWithinInheritedMethod says whether the node sits in a method an ancestor of its class declares too: the
-// signature is the ancestor's, so the shape of a parameter is not the author's to choose and there is nothing to
-// make a type of here. The ancestor may be a class of a package, which the bridge reflects.
 func (n Node) IsWithinInheritedMethod() bool {
 	return Node{Match: n.EnclosingFunction()}.NameIsInherited()
 }
 
-// IsWithinADataFile says whether the node sits in a file that declares nothing and answers with an array: a
-// config, a route table, a translation list. Whatever reads the file owns the shape of what it returns, so a type
-// here would be built only to be turned back into the array the reader takes.
 func (n Node) IsWithinADataFile() bool {
 	answers := false
 
@@ -388,8 +346,6 @@ func (n Node) IsWithinADataFile() bool {
 	return answers
 }
 
-// IsWithinSerializationBoundary says whether the node sits in __unserialize or __set_state, whose raw array the
-// language hands over, or in a method every caller of which does, three calls deep.
 func (n Node) IsWithinSerializationBoundary() bool {
 	return scopeIsSerializationBoundary(n.Codebase(), EnclosingClassName(n.Match), EnclosingFunctionName(n.Match), 0)
 }
@@ -408,7 +364,6 @@ func scopeIsSerializationBoundary(codebase *engine.Codebase, class, method strin
 	})
 }
 
-// StringKeys is every string key an array literal writes, in order.
 func (n Node) StringKeys() []string {
 	var keys []string
 	if n.Kind() != "Expr_Array" {
@@ -424,22 +379,18 @@ func (n Node) StringKeys() []string {
 	return keys
 }
 
-// HasNestedArrayValue says whether an item of the array literal holds another array literal.
 func (n Node) HasNestedArrayValue() bool {
 	return n.Kind() == "Expr_Array" && slices.ContainsFunc(n.ChildrenIn("items"), func(item engine.Match) bool {
 		return item.Kind() == "ArrayItem" && item.Child("value").Kind() == "Expr_Array"
 	})
 }
 
-// SpreadsAnotherArray says whether an item of the array literal spreads another array into it.
 func (n Node) SpreadsAnotherArray() bool {
 	return n.Kind() == "Expr_Array" && slices.ContainsFunc(n.ChildrenIn("items"), func(item engine.Match) bool {
 		return item.Kind() == "ArrayItem" && slices.Contains(item.Node().Flags, "spread")
 	})
 }
 
-// LooksLikeJsonSchema says whether the array literal's keys are a JSON schema's: structural keys, or a type among
-// JSON's with a describing key beside it.
 func (n Node) LooksLikeJsonSchema() bool {
 	if n.Kind() != "Expr_Array" {
 		return false
@@ -461,7 +412,6 @@ func (n Node) LooksLikeJsonSchema() bool {
 	return hasAny("description", "format", "title", "default", "nullable")
 }
 
-// literalForKey is the string an array literal writes under the key, when it writes one.
 func (n Node) literalForKey(key string) (string, bool) {
 	for _, item := range n.ChildrenIn("items") {
 		written, value := item.Child("key"), item.Child("value")
@@ -473,7 +423,6 @@ func (n Node) literalForKey(key string) (string, bool) {
 	return "", false
 }
 
-// IsHomogeneousLookupTable says whether every item of the array literal is a constant of one and the same class.
 func (n Node) IsHomogeneousLookupTable() bool {
 	items := n.ChildrenIn("items")
 	if n.Kind() != "Expr_Array" || len(items) < 2 {
@@ -496,8 +445,6 @@ var (
 	namedField   = regexp.MustCompile(`\{[^}]*[A-Za-z_]\w*\??\s*:`)
 )
 
-// EnclosingFunctionReturnsShapedArray says whether the function around the node documents an array shape with
-// named keys as its return.
 func (n Node) EnclosingFunctionReturnsShapedArray() bool {
 	doc, ok := n.EnclosingFunctionLike().DocComment()
 	if !ok {
@@ -509,8 +456,6 @@ func (n Node) EnclosingFunctionReturnsShapedArray() bool {
 	})
 }
 
-// ProjectsTypedObject says whether the keyed array literal only reads whole fields of one source that is already a
-// type: $this, or a parameter declared as a value-type class.
 func (n Node) ProjectsTypedObject() bool {
 	source := n.arrayProjectionSource()
 	switch source {
@@ -530,8 +475,6 @@ func (n Node) ProjectsTypedObject() bool {
 	return false
 }
 
-// arrayProjectionSource is the one variable a keyed array literal's values all read whole fields of; empty when
-// there is no such one variable.
 func (n Node) arrayProjectionSource() string {
 	items := n.ChildrenIn("items")
 	if n.Kind() != "Expr_Array" || len(items) == 0 {
@@ -568,7 +511,6 @@ func (n Node) arrayProjectionSource() string {
 	return source
 }
 
-// expressionNodes is the node and every node under it, closures and arrow functions left unopened.
 func expressionNodes(node engine.Match) []engine.Match {
 	if !node.Exists() || node.Kind() == "Expr_Closure" || node.Kind() == "Expr_ArrowFunction" {
 		return nil
@@ -581,7 +523,6 @@ func expressionNodes(node engine.Match) []engine.Match {
 	return nodes
 }
 
-// readsOnlyOwnFieldsOf says whether every use of the source in the value reads one of its fields whole.
 func readsOnlyOwnFieldsOf(value engine.Match, source string) bool {
 	for _, node := range expressionNodes(value) {
 		if node.Kind() != "Expr_Variable" || node.Name() != source {
@@ -599,8 +540,6 @@ func readsOnlyOwnFieldsOf(value engine.Match, source string) bool {
 	return true
 }
 
-// readsFieldWhole says whether what is done with a field read keeps it whole: no offset into it, and no further
-// read beyond an enum's value.
 func readsFieldWhole(beyond engine.Match) bool {
 	switch beyond.Kind() {
 	case "Expr_ArrayDimFetch":

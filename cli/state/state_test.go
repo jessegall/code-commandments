@@ -8,7 +8,6 @@ import (
 	"testing"
 )
 
-// The legends and states testdata/*.state were written from by the PHP StateFile.
 var (
 	counted = &Legend{
 		About:     "How often the judge nudge has fired this session.",

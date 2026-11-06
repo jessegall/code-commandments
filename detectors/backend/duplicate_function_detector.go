@@ -14,21 +14,16 @@ type DuplicateFunctionDetector struct{}
 
 func init() { detectors.Register(catalog.PHP, DuplicateFunctionDetector{}) }
 
-// minBodyNodes is how many nodes a body must hold before two alike are not a coincidence.
 const minBodyNodes = 12
 
-// Sin is the sin the detector finds.
 func (DuplicateFunctionDetector) Sin() sins.Sin { return backendsins.DuplicateFunction{} }
 
-// GroupKey is the fingerprint of the method's body.
 func (DuplicateFunctionDetector) GroupKey(finding engine.Match) (string, bool) {
 	key := (php.Node{Match: finding}).BodyHash()
 
 	return key, key != ""
 }
 
-// Find is every sizeable method, guarded accessors, self-seeding factories, constructors that only forward to the
-// parent, one-return bodies and deprecated ones aside, whose body another method repeats.
 func (d DuplicateFunctionDetector) Find(codebase *engine.Codebase) []engine.Match {
 	candidates := php.In(codebase).
 		WhereKind("Stmt_ClassMethod").
@@ -43,6 +38,4 @@ func (d DuplicateFunctionDetector) Find(codebase *engine.Codebase) []engine.Matc
 	return recurring(candidates, d.GroupKey, 2, func([]engine.Match) bool { return true })
 }
 
-// CrossFile says the rule reads more than the file it reports in, which the fixture measures by asking it
-// of one file and of the whole tree: a scoped run reads the whole scan while it is enabled.
 func (DuplicateFunctionDetector) CrossFile() {}

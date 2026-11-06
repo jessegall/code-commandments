@@ -11,7 +11,6 @@ type PhantomNullable struct{}
 
 func init() { sins.Register(catalog.PHP, PhantomNullable{}) }
 
-// Definition is what the sin states about itself.
 func (PhantomNullable) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "phantom-nullable",

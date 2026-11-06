@@ -8,9 +8,6 @@ import (
 	"github.com/jessegall/code-commandments/cli"
 )
 
-// TestCountedLinesAreWrittenWhereAJournalReadsThem holds the counted lines to what reads them: a journal check
-// names its report, a journal command asks for them outright, and neither has a terminal. Without either, a run
-// whose output is piped says nothing, so a log is never filled with counting.
 func TestCountedLinesAreWrittenWhereAJournalReadsThem(t *testing.T) {
 	for name, asked := range map[string]map[string]string{
 		"a journal check":    {cli.JournalReport: "/tmp/report.json", cli.PlainProgress: ""},
@@ -39,10 +36,6 @@ func TestCountedLinesAreWrittenWhereAJournalReadsThem(t *testing.T) {
 	}
 }
 
-// TestOneRunFillsOneBarOnce holds the counted lines to one count over one grand total: a run reads one engine's
-// files, judges its detectors, then reaches the next engine, and the count carries across every part instead of
-// starting again. A reader that takes the last line it saw would otherwise show a bar dropping to zero at each
-// new phase.
 func TestOneRunFillsOneBarOnce(t *testing.T) {
 	t.Setenv(cli.PlainProgress, "1")
 
@@ -59,7 +52,6 @@ func TestOneRunFillsOneBarOnce(t *testing.T) {
 		progress.Advance("")
 	}
 
-	// the next engine: its own files and its own detectors, counted into the same total
 	progress.Plan(6 + 2)
 	reading(0, 6)
 	reading(6, 6)

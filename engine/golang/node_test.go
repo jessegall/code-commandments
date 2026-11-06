@@ -7,9 +7,6 @@ import (
 	"github.com/jessegall/code-commandments/engine/golang"
 )
 
-// shop is a module whose shapes the decorator is asked about: an exported method and an unexported one, a method
-// on a pointer receiver, a call across packages, and Go's own error guard beside a comparison that only looks
-// like one.
 var shop = map[string]string{
 	"go.mod":         "module example.com/shop\n",
 	"money/money.go": "package money\n\ntype Money struct{ cents int }\n\nfunc Of(cents int) Money { return Money{cents: cents} }\n\nfunc (m Money) Cents() int { return m.cents }\n",
@@ -17,8 +14,6 @@ var shop = map[string]string{
 	"cart/till.go":   "package cart\n\nfunc ring(c *Cart) int {\n\treturn c.Total().Cents()\n}\n",
 }
 
-// TestACapitalIsTheVisibility holds the decorator to Go's own rule: a name's first letter says whether the rest
-// of the program may read it, and there is no keyword to read instead.
 func TestACapitalIsTheVisibility(t *testing.T) {
 	codebase := codebaseOf(t, shop)
 
@@ -34,8 +29,6 @@ func TestACapitalIsTheVisibility(t *testing.T) {
 	}
 }
 
-// TestAMethodBelongsToTheTypeItsReceiverNames holds the one fact Go needs that nesting cannot give: a method is
-// declared outside its type, so what it belongs to is the type its receiver names, joined by the id each carries.
 func TestAMethodBelongsToTheTypeItsReceiverNames(t *testing.T) {
 	codebase := codebaseOf(t, shop)
 
@@ -60,10 +53,6 @@ func TestAMethodBelongsToTheTypeItsReceiverNames(t *testing.T) {
 	}
 }
 
-// TestTheCallersOfAMethodAreTheEnginesOwnReading holds the Go call graph to the one the engine already has: the
-// bridge writes what each call reaches and what each name refers to, so the engine's own index answers the
-// callers of a declaration, across files and across packages. There is no Go call graph of its own to write, and
-// the rules that need one need nothing new.
 func TestTheCallersOfAMethodAreTheEnginesOwnReading(t *testing.T) {
 	codebase := codebaseOf(t, shop)
 
@@ -88,9 +77,6 @@ func TestTheCallersOfAMethodAreTheEnginesOwnReading(t *testing.T) {
 	}
 }
 
-// TestTheErrorGuardIsReadThroughItsType holds Go's own guard to the type the checker gave, never to the name
-// `err`: a project may call it anything, and a value named err that is no error is not this shape. Every rule
-// about a repeated condition or a nested one pardons it, so reading it wrongly would silence or raise dozens.
 func TestTheErrorGuardIsReadThroughItsType(t *testing.T) {
 	codebase := codebaseOf(t, shop)
 
@@ -119,7 +105,6 @@ func TestTheErrorGuardIsReadThroughItsType(t *testing.T) {
 	}
 }
 
-// funcNamed is the codebase's function declaration of that name.
 func funcNamed(t *testing.T, codebase *engine.Codebase, name string) engine.Match {
 	t.Helper()
 	for _, held := range golang.In(codebase).WhereKind("FuncDecl").Get() {

@@ -16,16 +16,13 @@ import (
 	"github.com/jessegall/code-commandments/cli/workspace"
 )
 
-// Command is `session`: where this session keeps its state, and the verbs that name, list and adopt the
-// folders sessions keep.
+// Command is `session`: where this session keeps its state, and the verbs that name, list and adopt the folders sessions keep.
 type Command struct{}
 
-// Names are the verbs it answers to.
 func (Command) Names() []string {
 	return []string{"session"}
 }
 
-// Help documents it.
 func (Command) Help() help.Help {
 	return help.Of("Where this session keeps its state — the folder holding its checklist and hook counters.").
 		Form("session", "print the folder, and what is in it").
@@ -44,7 +41,6 @@ func (Command) Help() help.Help {
 			"worktree — so a folder `list` shows under a worktree is adopted from inside that worktree.")
 }
 
-// Run answers the form the arguments name.
 func (c Command) Run(in *cli.Input, console cli.Console) (int, error) {
 	project := projectRoot()
 	root := workspace.OfSession(project, "").Root()
@@ -123,7 +119,6 @@ type checkout struct {
 	folder string
 }
 
-// checkouts are the project and every other worktree of it.
 func checkouts(root string) []string {
 	return append([]string{root}, git.Worktrees(root)...)
 }
@@ -138,7 +133,6 @@ func foldersOf(root, id string) []checkout {
 	return folders
 }
 
-// follow moves each checkout's folder to where the session's key now points.
 func follow(was []checkout, id string) {
 	for _, each := range was {
 		to := workspace.At(each.root, id).SessionDir()
@@ -315,7 +309,6 @@ func describe(key string, session Session, known bool, names []workspace.Pair) s
 	return "(ORPHAN — nothing points here; `session adopt " + key + "`)"
 }
 
-// size is a file's size as PHP printed it: bytes under a kilobyte, else kilobytes to one decimal.
 func size(file string) string {
 	bytes := sizeOf(file)
 
@@ -328,8 +321,6 @@ func size(file string) string {
 	return strconv.FormatFloat(kilobytes, 'f', -1, 64) + "K"
 }
 
-// sizeOf is a file's length, or a folder's as APFS, where the PHP tool was recorded, reports it: 64 bytes
-// and 32 more for each entry, since a folder's own size is otherwise the filesystem's to choose.
 func sizeOf(path string) int64 {
 	info, err := os.Stat(path)
 
@@ -343,7 +334,6 @@ func sizeOf(path string) int64 {
 	return info.Size()
 }
 
-// modifiedAt is when the path last changed, in UTC as PHP's default zone prints it.
 func modifiedAt(path, format string) string {
 	return time.Unix(folder.Modified(path), 0).UTC().Format(format)
 }

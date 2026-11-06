@@ -65,7 +65,6 @@ def shadowed(Decimal: int) -> int:
 `,
 }
 
-// callTo is the call in the file whose callee is spelled as given.
 func callTo(t *testing.T, file *engine.File, spelled string) *contract.Node {
 	t.Helper()
 	source, _ := file.Source()

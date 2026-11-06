@@ -1,5 +1,4 @@
-// Package commands is the tool's whole verb surface: every command, registered in the order the overview
-// lists them. Registering one here is wiring it, and documenting it.
+// Package commands is the tool's whole verb surface: every command, registered in the order the overview lists them.
 package commands
 
 import (
@@ -26,7 +25,6 @@ import (
 	_ "github.com/jessegall/code-commandments/registry"
 )
 
-// Kernel is the kernel with every command registered, in the order the overview lists them.
 func Kernel(version string) *cli.Kernel {
 	return cli.NewKernel(version,
 		judge.Command{Fixable: repent.Fixable("latest"), Scaffoldable: scaffold.Scaffoldable()},

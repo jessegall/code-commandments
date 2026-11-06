@@ -13,7 +13,6 @@ func init() {
 	sins.Register(catalog.CSharp, RestatedComment{})
 }
 
-// Definition is what the sin states about itself.
 func (RestatedComment) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "csharp-restated-comment",

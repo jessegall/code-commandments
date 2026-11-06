@@ -21,7 +21,6 @@ func init() {
 	skill.Register(catalog.CSharp, MethodMood{})
 }
 
-// Definition is what the skill states about itself.
 func (MethodMood) Definition() skill.Definition {
 	return skill.Definition{
 		Slug:      "csharp/method-mood",

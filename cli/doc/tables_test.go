@@ -14,8 +14,6 @@ import (
 	_ "github.com/jessegall/code-commandments/scribes/backend"
 )
 
-// TestTheGeneratedDocumentsAreCurrent holds the README's tables and the plugin's settings to what the catalog
-// generates today: a rule added or changed without generating again is missing from them.
 func TestTheGeneratedDocumentsAreCurrent(t *testing.T) {
 	root := filepath.Join("..", "..")
 	documents, err := doc.Generated(root)
@@ -29,10 +27,6 @@ func TestTheGeneratedDocumentsAreCurrent(t *testing.T) {
 	}
 }
 
-// TestThePreCommitHookNamesEveryGeneratedDocument holds the hook's list to what the generator actually writes.
-// The hook re-stages a generated file by name, so a document the list leaves out is rewritten on disk and
-// committed stale: the plugin manifests were left out, and v6.39.0 went out saying it was 6.38.0 — the very
-// drift the manifests' own version was derived to end.
 func TestThePreCommitHookNamesEveryGeneratedDocument(t *testing.T) {
 	root := filepath.Join("..", "..")
 	documents, err := doc.Generated(root)
@@ -54,9 +48,6 @@ func TestThePreCommitHookNamesEveryGeneratedDocument(t *testing.T) {
 	}
 }
 
-// TestEachPluginManifestNamesTheReleaseItPins holds the number a journal shows a reader to the code they have.
-// Both manifests' version sat at 1.76.0 for eleven releases while the release they fetch moved on, which is how
-// two consumers came to report a fault a release had already fixed.
 func TestEachPluginManifestNamesTheReleaseItPins(t *testing.T) {
 	root := filepath.Join("..", "..")
 
@@ -83,10 +74,6 @@ func TestEachPluginManifestNamesTheReleaseItPins(t *testing.T) {
 	}
 }
 
-// TestEverySettingAndCardSaysItsKindInBothWords holds the plugin's manifest and its settings file to both
-// journals. The journal has dropped the word kind everywhere but this plugin protocol and is moving to `type`
-// with `kind` as its fallback, so each setting's type and each card's kind is written under both words; dropping
-// the older one is for after no journal reads it.
 func TestEverySettingAndCardSaysItsKindInBothWords(t *testing.T) {
 	for _, setting := range doc.SettingsSchema() {
 		entry := setting.(*jsonfile.Object)

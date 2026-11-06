@@ -15,7 +15,6 @@ func init() {
 // PreferOptionalCreateScribe builds an Optional through its own `::create()` rather than `new`.
 type PreferOptionalCreateScribe struct{}
 
-// Rewrite replaces each `new X()` naming its class with `X::create()`.
 func (PreferOptionalCreateScribe) Rewrite(findings []engine.Match, _ *engine.Codebase) (scribes.Rewrites, error) {
 	draft := scribes.NewDraft()
 	for _, finding := range findings {

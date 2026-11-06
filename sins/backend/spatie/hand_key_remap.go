@@ -11,7 +11,6 @@ type HandKeyRemap struct{}
 
 func init() { sins.Register(catalog.PHP, HandKeyRemap{}) }
 
-// Definition is what the sin states about itself.
 func (HandKeyRemap) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "hand-key-remap",

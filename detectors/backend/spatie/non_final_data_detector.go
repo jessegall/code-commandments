@@ -15,10 +15,8 @@ type NonFinalDataDetector struct{}
 
 func init() { detectors.Register(catalog.PHP, NonFinalDataDetector{}) }
 
-// Sin is the sin the detector finds.
 func (NonFinalDataDetector) Sin() sins.Sin { return backendsins.NonFinalData{} }
 
-// Find is every Data class neither final nor abstract that has no subclass.
 func (NonFinalDataDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return php.In(codebase).
 		WhereKind("Stmt_Class").
@@ -28,5 +26,4 @@ func (NonFinalDataDetector) Find(codebase *engine.Codebase) []engine.Match {
 		Get()
 }
 
-// Repentable says a scribe rewrites the sin away.
 func (NonFinalDataDetector) Repentable() {}

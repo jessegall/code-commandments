@@ -13,7 +13,6 @@ func init() {
 	sins.Register(catalog.Python, ConditionalStatement{})
 }
 
-// Definition is what the sin states about itself.
 func (ConditionalStatement) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "python-conditional-statement",

@@ -6,15 +6,13 @@ import (
 	skills "github.com/jessegall/code-commandments/skill/python"
 )
 
-// MutableDefault is a parameter defaulted to a container, made once when the def is defined and shared by every
-// call that leaves it out.
+// MutableDefault is a parameter defaulted to a container, made once when the def is defined and shared by every call that leaves it out.
 type MutableDefault struct{}
 
 func init() {
 	sins.Register(catalog.Python, MutableDefault{})
 }
 
-// Definition is what the sin states about itself.
 func (MutableDefault) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "python-mutable-default",

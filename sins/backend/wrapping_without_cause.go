@@ -11,7 +11,6 @@ type WrappingWithoutCause struct{}
 
 func init() { sins.Register(catalog.PHP, WrappingWithoutCause{}) }
 
-// Definition is what the sin states about itself.
 func (WrappingWithoutCause) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "wrapping-without-cause",

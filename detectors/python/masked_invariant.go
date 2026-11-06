@@ -16,12 +16,10 @@ func init() {
 	detectors.Register(catalog.Python, MaskedInvariantDetector{})
 }
 
-// Sin is the sin the detector finds.
 func (MaskedInvariantDetector) Sin() sins.Sin {
 	return pysins.MaskedInvariant{}
 }
 
-// Find is every place the sin is committed.
 func (MaskedInvariantDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return py.In(codebase).
 		WhereExpression().

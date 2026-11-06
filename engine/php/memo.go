@@ -7,17 +7,14 @@ type PerCodebase[T any] struct {
 	build func(*engine.Codebase) T
 }
 
-// Memoised is the analysis build makes, kept per codebase.
 func Memoised[T any](build func(*engine.Codebase) T) *PerCodebase[T] {
 	return &PerCodebase[T]{build: build}
 }
 
-// Of is the codebase's analysis, kept on the codebase itself so it goes when the codebase does.
 func (p *PerCodebase[T]) Of(codebase *engine.Codebase) T {
 	return engine.Analysis(codebase, p, p.build)
 }
 
-// Keep makes a value built elsewhere the codebase's analysis, in place of the one build would make.
 func (p *PerCodebase[T]) Keep(codebase *engine.Codebase, value T) {
 	engine.Keep(codebase, p, value)
 }

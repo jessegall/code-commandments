@@ -5,16 +5,10 @@ import (
 	"strings"
 )
 
-// Scanned records the folders and files the scan was pointed at, which a path is judged from.
 func (c *Codebase) Scanned(roots ...string) {
 	c.scanned = roots
 }
 
-// Judged is the file's path from the folder its scan was pointed at, that folder's own name included: `src/Cart.php`
-// for a scan of `src`, whatever lies above it on the disk. A scan pointed at one file reads it from that file's
-// folder, as a scan of the folder would. A rule reads a path this way, so where the project is checked out, and
-// whether it was pointed at the file or its folder, never changes what it finds. With no scan recorded, the paths
-// its bridge was asked for stand in.
 func (f *File) Judged() string {
 	path := filepath.ToSlash(f.Path)
 	best := ""
@@ -43,8 +37,6 @@ func (f *File) Judged() string {
 	return strings.TrimPrefix(path, strings.TrimSuffix(filepath.ToSlash(filepath.Dir(best)), "/")+"/")
 }
 
-// spellings are the ways a root may be written on the disk: as given, and with its symbolic links resolved, as a
-// file's path always is.
 func spellings(root string) []string {
 	spelt := []string{root}
 	if absolute, err := filepath.Abs(root); err == nil {
@@ -60,7 +52,6 @@ func spellings(root string) []string {
 	return spelt
 }
 
-// Judged is the path of the match's file from the folder its scan was pointed at; empty for no match.
 func (m Match) Judged() string {
 	if m.file == nil {
 		return ""
@@ -69,14 +60,10 @@ func (m Match) Judged() string {
 	return m.file.Judged()
 }
 
-// Rooted records the project the scan was read in, the folder a rule's path pattern is read from.
 func (c *Codebase) Rooted(project string) {
 	c.project = project
 }
 
-// FromProject is the file's path from the project the scan was read in, `app/Actions/Trips/GetTrips.php` whatever
-// folder the scan was pointed at, so a rule's path pattern names the same files from any depth. With no project
-// recorded, or for a file outside it, it is the path Judged reads.
 func (f *File) FromProject() string {
 	path := filepath.ToSlash(f.Path)
 	if f.codebase.project == "" {
@@ -91,7 +78,6 @@ func (f *File) FromProject() string {
 	return f.Judged()
 }
 
-// FromProject is the path of the node's file from the project the scan was read in, as File.FromProject reads it.
 func (m Match) FromProject() string {
 	if m.file == nil {
 		return ""
@@ -100,7 +86,6 @@ func (m Match) FromProject() string {
 	return m.file.FromProject()
 }
 
-// InFolderNamed says whether a folder on the path has one of the names.
 func InFolderNamed(file string, names ...string) bool {
 	folders := strings.Split(filepath.ToSlash(filepath.Dir(file)), "/")
 	for _, folder := range folders {

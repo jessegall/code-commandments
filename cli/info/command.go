@@ -21,27 +21,21 @@ import (
 	"github.com/jessegall/code-commandments/skills"
 )
 
-// width is how wide a paragraph is laid out.
 const width = 88
 
-// suggested is how many rules an unknown query is shown instead.
 const suggested = 8
 
 // Command is `info`: explain one rule.
 type Command struct {
-	// Fixable maps a sin to the command that repents it.
 	Fixable map[string]string
 
-	// Scaffoldable maps a sin to the command that scaffolds the helper its fix uses.
 	Scaffoldable map[string]string
 }
 
-// Names are the verbs it answers to.
 func (Command) Names() []string {
 	return []string{"info", "explain"}
 }
 
-// Help documents it.
 func (Command) Help() help.Help {
 	return help.Of("Explain one sin — what it flags, why it is a sin, how to fix it, and a worked example.").
 		Form("info <sin|detector>", "explain a rule by sin id or detector name (lenient match)").
@@ -57,7 +51,6 @@ func (Command) Help() help.Help {
 			"and named as the project's own — those are the rules a reader is least likely to recognise.")
 }
 
-// Run explains the rule the arguments name.
 func (c Command) Run(in *cli.Input, console cli.Console) (int, error) {
 	query, named := in.Option("sin")
 
@@ -155,8 +148,6 @@ func (c Command) describe(detector detectors.Detector, full bool, console cli.Co
 	console.Write("\n")
 }
 
-// reportedHere are the reports this project has filed about the rule, newest first. It is where a teammate who
-// did not file one learns that the argument is already being had.
 func reportedHere(rule string) []reported.Row {
 	cwd, _ := os.Getwd()
 	record, _ := reported.Of(workspace.ProjectRoot(cwd))
@@ -171,8 +162,6 @@ func reportedHere(rule string) []reported.Row {
 	return mine
 }
 
-// published is the skill's examples, else its SKILL.md: each from the project's published copy first,
-// else the copy the binary carries.
 func published(teaching skill.Definition) string {
 	cwd, _ := os.Getwd()
 	library := os.DirFS(workspace.At(consumerRoot(cwd), "").LibraryDir() + "/" + teaching.ID())
@@ -189,8 +178,6 @@ func published(teaching skill.Definition) string {
 	return ""
 }
 
-// consumerRoot is the nearest folder at or above cwd with a composer.json, stopping at the home folder;
-// `.` when there is none.
 func consumerRoot(cwd string) string {
 	home := resolve(os.Getenv("HOME"))
 
@@ -207,7 +194,6 @@ func consumerRoot(cwd string) string {
 	return "."
 }
 
-// resolve is the path with its links resolved; empty when it does not exist.
 func resolve(path string) string {
 	real, err := filepath.EvalSymlinks(path)
 	if err != nil {

@@ -13,14 +13,7 @@ import (
 	"github.com/jessegall/code-commandments/contract"
 )
 
-// checker type-checks the module's own packages from the sources the run already has, and answers an empty
-// package for anything outside the module.
-//
-// That is the whole of how Go is typed here, and doc 3 holds the measurement it was decided by: typing the
-// module's own sources gives 86 percent of the expressions a full typing gives and 89 percent of its
-// cross-package types, in a fortieth of the time, with no toolchain installed. What it loses is every type
-// reached through an import outside the module, which is written as nothing at all rather than guessed, so no
-// rule reads a type the checker did not give.
+// checker type-checks the module's own packages from the sources the run already has, and answers an empty package for anything outside the module.
 type checker struct {
 	fset     *token.FileSet
 	packages map[string]Package
@@ -30,7 +23,6 @@ type checker struct {
 	checking map[string]bool
 }
 
-// newChecker holds the packages a run was handed, ready to be checked on demand.
 func newChecker(fset *token.FileSet, packages []Package) *checker {
 	held := &checker{
 		fset:     fset,
@@ -49,16 +41,11 @@ func newChecker(fset *token.FileSet, packages []Package) *checker {
 	return held
 }
 
-// Import is what the type checker asks of an import. A package of this module is checked from its own sources,
-// and anything else is an empty package: the standard library and every third-party module arrive as nothing, so
-// what they declare is unknown rather than wrong.
 func (c *checker) Import(path string) (*types.Package, error) {
 	if held, done := c.checked[path]; done {
 		return held, nil
 	}
 	if c.checking[path] {
-		// Go forbids an import cycle, so this is a cycle only a broken tree can hold: it is left unresolved
-		// rather than followed for ever.
 		return stub(path), nil
 	}
 	one, mine := c.packages[path]
@@ -82,9 +69,6 @@ func (c *checker) Import(path string) (*types.Package, error) {
 	return held, nil
 }
 
-// packageAt is a package of this module the run was not handed: a sibling of a file it was, which the folder
-// beside it holds. A run over one file still resolves its own package's siblings this way, which is what the
-// hooks ask for when they judge the file an agent has just written.
 func (c *checker) packageAt(path string) (Package, bool) {
 	for _, known := range c.packages {
 		module, root := moduleRootOf(known)
@@ -118,7 +102,6 @@ func (c *checker) packageAt(path string) (Package, bool) {
 	return Package{}, false
 }
 
-// moduleRootOf is the module path a package belongs to and the folder that module's go.mod sits in.
 func moduleRootOf(one Package) (string, string) {
 	modules := map[string]Module{}
 	module, found := moduleOf(one.Folder, modules)
@@ -129,8 +112,6 @@ func moduleRootOf(one Package) (string, string) {
 	return module.Path, module.Root
 }
 
-// check type-checks one package, parsing its files once and keeping both what it parsed and what the checker
-// learned, since the facts are keyed by the very nodes the tree is written from.
 func (c *checker) check(one Package) (*types.Package, *types.Info) {
 	if held, done := c.checked[one.Path]; done {
 		return held, c.facts[one.Path]
@@ -144,16 +125,7 @@ func (c *checker) check(one Package) (*types.Package, *types.Info) {
 		Selections: map[*ast.SelectorExpr]*types.Selection{},
 	}
 	config := &types.Config{
-		Importer: c,
-		// An error never stops the check: the facts it did reach are kept, so a package with one line the
-		// checker cannot follow is still typed everywhere else, and a file that does not compile still carries
-		// every type around what is wrong with it.
-		//
-		// The errors themselves are not reported, and measuring says why: every import outside the module is
-		// answered with an empty package by the decision doc 3 holds, so every file that touches the standard
-		// library raises "undefined: fs.FS" and the like. Naming them would name nearly every package of a real
-		// tree and tell a reader nothing. What a reader needs is already in the stream per file: the resolver
-		// says whether one ran, and a fact the checker did not give is absent rather than guessed.
+		Importer:                 c,
 		Error:                    func(error) {},
 		DisableUnusedImportCheck: true,
 	}
@@ -166,8 +138,6 @@ func (c *checker) check(one Package) (*types.Package, *types.Info) {
 	return held, info
 }
 
-// filesOf are the package's parsed files, parsed once: the tree is written from these very nodes, so the facts
-// the checker learned about them are the facts the tree carries.
 func (c *checker) filesOf(one Package) []*ast.File {
 	if held, done := c.parsed[one.Path]; done && one.Path != "" {
 		return held
@@ -190,8 +160,6 @@ func (c *checker) filesOf(one Package) []*ast.File {
 	return files
 }
 
-// importPathOr is the path a package is checked under: a folder outside any module is checked under its own
-// folder, so the checker still has one name for it.
 func importPathOr(one Package) string {
 	if one.Path != "" {
 		return one.Path
@@ -200,8 +168,6 @@ func importPathOr(one Package) string {
 	return one.Folder
 }
 
-// stub is an empty package standing for one outside the module, so the checker carries on and anything reached
-// through it has no type rather than stopping the check.
 func stub(path string) *types.Package {
 	name := path
 	if at := strings.LastIndex(path, "/"); at >= 0 {
@@ -213,15 +179,10 @@ func stub(path string) *types.Package {
 	return empty
 }
 
-// typeOf is the contract's type for what the checker gave, with origin saying where it came from. Nothing is
-// invented: a type the checker did not give is no type at all.
 func typeOf(held types.Type, origin string) *contract.Type {
 	if held == nil || held == types.Typ[types.Invalid] {
 		return nil
 	}
-	// A call that answers nothing is typed as a tuple of no members: `delete(m, k)` and every function
-	// declared with no results. That is Go's spelling of "there is no value here", and the contract spells
-	// the same thing by carrying no type at all, as a function returning nothing already does.
 	if tuple, void := held.(*types.Tuple); void && tuple.Len() == 0 {
 		return nil
 	}
@@ -282,8 +243,6 @@ func typeOf(held types.Type, origin string) *contract.Type {
 	return line
 }
 
-// resultOf is what a function answers: the one type it returns, the tuple of several, and nothing where it
-// returns nothing at all.
 func resultOf(results *types.Tuple, origin string) *contract.Type {
 	switch {
 	case results == nil, results.Len() == 0:
@@ -295,7 +254,6 @@ func resultOf(results *types.Tuple, origin string) *contract.Type {
 	return typeOf(results, origin)
 }
 
-// elementOf is the element of a collection, where the type is one: it is what a rule about a bag of values reads.
 func elementOf(held types.Type, origin string) *contract.Type {
 	switch shape := held.(type) {
 	case *types.Slice:
@@ -311,8 +269,6 @@ func elementOf(held types.Type, origin string) *contract.Type {
 	return nil
 }
 
-// isValueType says whether a value of the type is copied rather than shared, which a struct, an array and every
-// basic type are in Go.
 func isValueType(under types.Type) bool {
 	switch under.(type) {
 	case *types.Basic, *types.Struct, *types.Array:
@@ -322,8 +278,6 @@ func isValueType(under types.Type) bool {
 	return false
 }
 
-// admitsNil says whether the type admits absence. A pointer and an interface do, and that is all: a nil slice
-// ranges cleanly and a nil map reads, so neither stands for a value that is missing.
 func admitsNil(under types.Type) bool {
 	switch under.(type) {
 	case *types.Pointer, *types.Interface:
@@ -333,8 +287,6 @@ func admitsNil(under types.Type) bool {
 	return false
 }
 
-// namedPath is a named type's symbol id: the path of the package that declares it and its own name. A type the
-// language itself declares, error among them, belongs to no package and is its bare name.
 func namedPath(held *types.Named) string {
 	object := held.Obj()
 	if object == nil {
@@ -347,8 +299,6 @@ func namedPath(held *types.Named) string {
 	return object.Pkg().Path() + "." + object.Name()
 }
 
-// qualify prints a package by its full path, so a type's text names the package it is declared in and two types
-// of one name are never read as one.
 func qualify(held *types.Package) string {
 	if held == nil {
 		return ""
@@ -357,9 +307,6 @@ func qualify(held *types.Package) string {
 	return held.Path()
 }
 
-// symbolOf is the id of the declaration the object is, as CONTRACT.md spells Go's: a package-level declaration
-// is its package's path and its own name, and a method or a field is that with the type it belongs to between
-// them. A local variable is no declaration a call can reach, so it has no id.
 func symbolOf(object types.Object) string {
 	if object == nil || object.Pkg() == nil {
 		return ""
@@ -372,7 +319,6 @@ func symbolOf(object types.Object) string {
 			return path + "." + receiverName(receiver.Type()) + "." + held.Name()
 		}
 		if held.Parent() != nil && held.Parent().Parent() != types.Universe {
-			// A function declared inside another is reached by nobody outside it.
 			return ""
 		}
 
@@ -397,8 +343,6 @@ func symbolOf(object types.Object) string {
 	return ""
 }
 
-// receiverName is the name of the type a method is declared on, a pointer receiver read through to the type
-// itself, since a method belongs to the type either way.
 func receiverName(held types.Type) string {
 	if pointer, isPointer := held.(*types.Pointer); isPointer {
 		held = pointer.Elem()

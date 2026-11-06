@@ -11,10 +11,8 @@ type DuplicatedMechanism struct{}
 
 func init() { sins.Register(catalog.PHP, DuplicatedMechanism{}) }
 
-// Unpublished keeps the sin out of every catalog while its detector is calibrated.
 func (DuplicatedMechanism) Unpublished() {}
 
-// Definition is what the sin states about itself.
 func (DuplicatedMechanism) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "duplicated-mechanism",

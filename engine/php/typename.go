@@ -8,34 +8,27 @@ import (
 	"github.com/jessegall/code-commandments/engine"
 )
 
-// builtins are the type keywords that name no class.
 var builtins = []string{
 	"array", "string", "int", "float", "bool", "mixed", "object", "void",
 	"never", "iterable", "callable", "self", "static", "parent", "true",
 	"false", "null",
 }
 
-// specialClassNames are the keywords PHP writes as a class name that means the class in scope.
 var specialClassNames = []string{"self", "static", "parent"}
 
-// TypeName reads a written type: the class it names, whether it admits null, how it renders. The zero TypeName
-// is no type, and answers every question with nothing.
+// TypeName reads a written type: the class it names, whether it admits null, how it renders.
 type TypeName struct {
 	written *contract.Type
 }
 
-// Written is the type a declaration writes, such as a node's declared or returns.
 func Written(t *contract.Type) TypeName {
 	return TypeName{written: t}
 }
 
-// IsClassName says whether a name, as written in a type, names a class rather than a builtin.
 func IsClassName(name string) bool {
 	return name != "" && !slices.Contains(builtins, strings.ToLower(strings.TrimLeft(name, `?\`)))
 }
 
-// Class is the one class the type names, null aside: `Money`, `?Money`, `Money|null`. Empty for a builtin, or for
-// a union of more than one class.
 func (n TypeName) Class() string {
 	switch {
 	case n.written == nil:
@@ -49,7 +42,6 @@ func (n TypeName) Class() string {
 	return ""
 }
 
-// SimpleName is the one name the type is written with, null aside: a class or a keyword.
 func (n TypeName) SimpleName() string {
 	switch {
 	case n.written == nil:
@@ -67,7 +59,6 @@ func (n TypeName) SimpleName() string {
 	return ""
 }
 
-// NullableClass is the one class a nullable type names: `?Money`, `Money|null`.
 func (n TypeName) NullableClass() string {
 	switch {
 	case n.isSugared():
@@ -79,10 +70,6 @@ func (n TypeName) NullableClass() string {
 	return ""
 }
 
-// Named is the type as ONE name, null aside: itself where it is written as a name or a keyword, and a nullable
-// union's sole non-null member, marked nullable and spelled `?T`, since `?T` and `T|null` are the same type and
-// only one of the two is written as a name. No type where it names no single one, such as a union of two classes
-// or an array shape, since inventing a name for those would be worse than saying nothing.
 func (n TypeName) Named() *contract.Type {
 	switch {
 	case n.written == nil:
@@ -107,12 +94,10 @@ func (n TypeName) Named() *contract.Type {
 	return &nullable
 }
 
-// IsNullable says whether the type admits null as it is written: `?T`, or a union with null.
 func (n TypeName) IsNullable() bool {
 	return n.isSugared() || n.isNullableUnion()
 }
 
-// IsNullableArray says whether the type is an array that admits null: `?array`, `array|null`.
 func (n TypeName) IsNullableArray() bool {
 	if n.isSugared() {
 		return n.written.Kind == "keyword" && n.written.Name == "array"
@@ -129,8 +114,6 @@ func (n TypeName) IsNullableArray() bool {
 	return false
 }
 
-// Render is the type as a comparable string, a union's members sorted: `?Money`, `int|string`. Empty for a type
-// it cannot name.
 func (n TypeName) Render() string {
 	switch {
 	case n.written == nil:
@@ -155,7 +138,6 @@ func (n TypeName) Render() string {
 	return ""
 }
 
-// UnionIncludes says whether the type is a union with the class among its members.
 func (n TypeName) UnionIncludes(fqcn string) bool {
 	if !n.isUnion() {
 		return false
@@ -169,8 +151,6 @@ func (n TypeName) UnionIncludes(fqcn string) bool {
 	return false
 }
 
-// Names is every name the type is written with that is a name, not a keyword: its classes and `self`, `static`,
-// `parent`, in the order written.
 func (n TypeName) Names() []string {
 	if n.written == nil {
 		return nil
@@ -190,8 +170,6 @@ func (n TypeName) Names() []string {
 	return nil
 }
 
-// PromisesScalar says whether a parameter is typed exactly as the scalar, bare and with no default, so every
-// caller passes one.
 func PromisesScalar(param engine.Match, scalar string) bool {
 	declared := Written(param.Node().Declared)
 
@@ -200,8 +178,6 @@ func PromisesScalar(param engine.Match, scalar string) bool {
 		declared.written.Name == scalar
 }
 
-// Overlaps says whether two rendered types share a value: equal, a common member, `array` within `iterable`,
-// `static`/`self`/`$this` alike, or both nullable. An empty side is unknown, and overlaps anything.
 func Overlaps(one, other string) bool {
 	if one == "" || other == "" || one == other {
 		return true
@@ -234,7 +210,6 @@ func widened(rendered string) []string {
 	return members
 }
 
-// isWrittenAsName says whether the type is a name, not a keyword: a class, or `self`, `static`, `parent`.
 func (n TypeName) isWrittenAsName() bool {
 	return n.written != nil && (n.written.Kind == "named" || (n.written.Kind == "keyword" && slices.Contains(specialClassNames, strings.ToLower(n.written.Name))))
 }
@@ -243,17 +218,14 @@ func (n TypeName) isUnion() bool {
 	return n.written != nil && n.written.Kind == "union"
 }
 
-// isNamed says whether the type is one name as written, a class or a keyword, sugar aside.
 func (n TypeName) isNamed() bool {
 	return n.written != nil && (n.written.Kind == "named" || n.written.Kind == "keyword")
 }
 
-// isSugared says whether the type is written `?T`: a single name that admits null, other than null or mixed itself.
 func (n TypeName) isSugared() bool {
 	return n.isNamed() && n.written.Nullable && !slices.Contains([]string{"null", "mixed"}, strings.ToLower(n.written.Name))
 }
 
-// bare is a `?T` type without its `?`.
 func (n TypeName) bare() *contract.Type {
 	bare := *n.written
 	bare.Nullable = false

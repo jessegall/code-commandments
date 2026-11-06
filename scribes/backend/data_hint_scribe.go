@@ -10,27 +10,21 @@ import (
 	"github.com/jessegall/code-commandments/scribes"
 )
 
-// data is the class every Spatie Data extends.
 const data = `Spatie\LaravelData\Data`
 
-// collectHint documents Data::collect() as it answers: a Collection for a Collection, an array for anything else.
 const collectHint = `@method static ($items is \Illuminate\Support\Collection ? \Illuminate\Support\Collection<int, static> : array<int, static>) collect(iterable $items)`
 
 func init() {
 	scribes.Maintains(catalog.PHP, DataHintScribe{})
 }
 
-// DataHintScribe keeps a Data class's magic surface honest: a factory that is not named from… is renamed from<Type>
-// and its callers call ::from(), and the class docblock's @method lines say what from() and collect() take. A scoped
-// run only rewrites docblocks, since a rename's callers may live outside the scope.
+// DataHintScribe keeps a Data class's magic surface honest: a factory that is not named from… is renamed from<Type> and its callers call ::from(), and the class docblock's @method lines say what from() and collect() take.
 type DataHintScribe struct{}
 
-// Name is the maintainer's name, as the PHP tool names it.
 func (DataHintScribe) Name() string {
 	return "DataHintScribe"
 }
 
-// Summary is what the scribe does, for the README.
 func (DataHintScribe) Summary() string {
 	return "Brings a Spatie `Data` class's magic surface in line with the spatie-data skill: renames object factories to `from<Type>`, regenerates `@method` docblock lines, and adds `@method collect()` when used."
 }
@@ -56,7 +50,6 @@ type callSite struct {
 	named, node         engine.Match
 }
 
-// Maintain renames and documents every Data class's factories and rewrites the calls to renamed ones.
 func (DataHintScribe) Maintain(codebase *engine.Codebase, pass scribes.Pass) (scribes.Rewrites, error) {
 	docblockOnly := pass.Scope.IsScoped()
 	classes, order := dataClasses(codebase)
@@ -109,8 +102,6 @@ func (DataHintScribe) Maintain(codebase *engine.Codebase, pass scribes.Pass) (sc
 	return rewrites, nil
 }
 
-// rewriteCall is a call to a renamed factory as a call to from(): `X::from($value)` for a lone named argument, the
-// method's name otherwise.
 func rewriteCall(call callSite) scribes.Edit {
 	arguments := call.node.ChildrenIn("args")
 	if len(arguments) == 1 && arguments[0].Kind() == "Arg" && arguments[0].Child("name").Exists() {
@@ -120,8 +111,6 @@ func rewriteCall(call callSite) scribes.Edit {
 	return over(call.named, "from")
 }
 
-// planRenames is the from<Type> name each factory not named from… takes, keyed by class and factory, unless the class
-// already has a method by that name.
 func planRenames(classes map[string]dataClass, order []string) map[string]string {
 	renames := map[string]string{}
 	for _, fqcn := range order {
@@ -147,8 +136,6 @@ func planRenames(classes map[string]dataClass, order []string) map[string]string
 	return renames
 }
 
-// methodLines is the @method lines a class's docblock owes: one from() per factory, the payload overload beside
-// them, and collect() when anything collects the class.
 func methodLines(class dataClass, source string, collectUsed, docblockOnly bool) []string {
 	var lines []string
 	for _, made := range class.factories {
@@ -168,8 +155,6 @@ func methodLines(class dataClass, source string, collectUsed, docblockOnly bool)
 	return lines
 }
 
-// docblockEdit writes the @method lines into the class docblock in place of the ones it had, its prose kept, or a
-// docblock of them above a class that has none.
 func docblockEdit(class engine.Match, source string, lines []string) (scribes.Edit, bool) {
 	start := class.Node().Span.Start
 	lineStart := engine.Source(source).LineStartAt(start)
@@ -200,8 +185,6 @@ func docblockEdit(class engine.Match, source string, lines []string) (scribes.Ed
 	return scribes.Edit{Start: doc.Span.Start, End: doc.Span.End, Text: strings.Join(kept, "\n")}, true
 }
 
-// dataClasses is every class extending Data, by name, and the names in the order the files declare them; a class
-// declared twice is the one read last, standing where it was first declared.
 func dataClasses(codebase *engine.Codebase) (map[string]dataClass, []string) {
 	program := php.ProgramOf(codebase)
 	classes := map[string]dataClass{}
@@ -230,7 +213,6 @@ func dataClasses(codebase *engine.Codebase) (map[string]dataClass, []string) {
 	return classes, order
 }
 
-// isObjectFactory says whether a method is public, static, takes one parameter, and returns and builds its class.
 func isObjectFactory(method engine.Match, fqcn string) bool {
 	modifiers := method.Node().Modifiers
 	public := slices.Contains(modifiers, "public") || !slices.Contains(modifiers, "protected") && !slices.Contains(modifiers, "private")
@@ -241,7 +223,6 @@ func isObjectFactory(method engine.Match, fqcn string) bool {
 	return returnsSelf(method, fqcn) && constructsSelf(method)
 }
 
-// returnsSelf says whether a method declares it returns self, static, or its class by name.
 func returnsSelf(method engine.Match, fqcn string) bool {
 	returned := method.Child("returnType")
 	lower := strings.ToLower(returned.Name())
@@ -255,7 +236,6 @@ func returnsSelf(method engine.Match, fqcn string) bool {
 	return false
 }
 
-// constructsSelf says whether a method's body builds its class: `new self`, `new static`, or `self::from(...)`.
 func constructsSelf(method engine.Match) bool {
 	for _, statement := range method.ChildrenIn("stmts") {
 		for _, node := range append([]engine.Match{statement}, statement.Descendants()...) {
@@ -273,7 +253,6 @@ func constructsSelf(method engine.Match) bool {
 	return false
 }
 
-// scanCalls is which classes anything calls collect() on, and every static call on a named class.
 func scanCalls(codebase *engine.Codebase) (map[string]bool, []callSite) {
 	collectUsed := map[string]bool{}
 	var calls []callSite
@@ -298,7 +277,6 @@ func scanCalls(codebase *engine.Codebase) (map[string]bool, []callSite) {
 	return collectUsed, calls
 }
 
-// callClass is the class a static call names: its own for self or static, as the enclosing class declares it.
 func callClass(call engine.Match) (string, bool) {
 	class := call.Child("class")
 	if !strings.HasPrefix(class.Kind(), "Name") {
@@ -317,8 +295,6 @@ func callClass(call engine.Match) (string, bool) {
 	return strings.TrimLeft(class.Name(), `\`), true
 }
 
-// typeShortName is the short name a type is spelled by: a nullable's inner type, a union's first member, a keyword
-// capitalised, a class's last segment.
 func typeShortName(typed engine.Match) (string, bool) {
 	switch kind := typed.Kind(); {
 	case kind == "NullableType":
@@ -349,21 +325,18 @@ func upperFirst(text string) string {
 	return string(text[0]-'a'+'A') + text[1:]
 }
 
-// over is an edit replacing the node's whole span.
 func over(node engine.Match, text string) scribes.Edit {
 	span := node.Node().Span
 
 	return scribes.Edit{Start: span.Start, End: span.End, Text: text}
 }
 
-// sourceText is the text of the file a node sits in.
 func sourceText(node engine.Match) string {
 	source, _ := node.Source().Source()
 
 	return string(source)
 }
 
-// sourceOfFile is the text of a file of the codebase, as the codebase reads it.
 func sourceOfFile(codebase *engine.Codebase, path string) string {
 	source, _ := codebase.Read(path)
 

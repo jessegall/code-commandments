@@ -16,7 +16,6 @@ func init() {
 // NonFinalDataScribe seals a Data class: final, and each promoted property readonly.
 type NonFinalDataScribe struct{}
 
-// Rewrite writes `final ` before each class keyword and `readonly ` before each sealable promoted parameter.
 func (NonFinalDataScribe) Rewrite(findings []engine.Match, codebase *engine.Codebase) (scribes.Rewrites, error) {
 	draft := scribes.NewDraft()
 	program := php.ProgramOf(codebase)
@@ -42,7 +41,6 @@ func (NonFinalDataScribe) Rewrite(findings []engine.Match, codebase *engine.Code
 	return draft.Rewrites(), nil
 }
 
-// sealable says whether a parameter promotes a writable property no ancestor also declares writable.
 func sealable(param, class engine.Match, program *php.Program) bool {
 	modifiers := param.Node().Modifiers
 	if len(modifiers) == 0 || slices.Contains(modifiers, "readonly") {

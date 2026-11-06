@@ -13,7 +13,6 @@ import (
 
 const header = `{"header": {"contract": "tree", "version": 1, "language": "php", "bridge": {"name": "test", "version": "1"}, "roots": ["/abs/src"]}}`
 
-// finishes fails the test when run has not returned in time, rather than hanging the suite on it.
 func finishes(t *testing.T, limit time.Duration, run func()) {
 	t.Helper()
 	done := make(chan struct{})
@@ -28,8 +27,6 @@ func finishes(t *testing.T, limit time.Duration, run func()) {
 	}
 }
 
-// TestARunReadsPastWhatABridgeWritesAfterItsTrailer holds Run to draining the bridge's output: a bridge that writes
-// more than a pipe holds after its trailer would otherwise block on the write, and Run on its exit.
 func TestARunReadsPastWhatABridgeWritesAfterItsTrailer(t *testing.T) {
 	script := `printf '%s\n%s\n' '` + header + `' '{"trailer": {"files": 0}}'; head -c 1048576 /dev/zero`
 	finishes(t, 20*time.Second, func() {
@@ -43,8 +40,6 @@ func TestARunReadsPastWhatABridgeWritesAfterItsTrailer(t *testing.T) {
 	})
 }
 
-// TestAServedBridgeThatDiesSaysAllItWroteToStderr holds a served bridge's failure to carrying everything the bridge
-// wrote to stderr before it died, read once the bridge has written it.
 func TestAServedBridgeThatDiesSaysAllItWroteToStderr(t *testing.T) {
 	said := strings.Repeat("x", 200000) + "END"
 	server, err := Serve([]string{"sh", "-c", `head -c 200000 /dev/zero | tr '\0' x >&2; printf END >&2; exit 3`})
@@ -68,8 +63,6 @@ func TestAServedBridgeThatDiesSaysAllItWroteToStderr(t *testing.T) {
 
 const trailer = `{"trailer": {"files": 0}}`
 
-// TestARunStopsABridgeThatStaysSilent holds Run to ending, Silent, when the bridge writes nothing for as long as a
-// read may wait, even while the process it started lives on holding the pipe.
 func TestARunStopsABridgeThatStaysSilent(t *testing.T) {
 	t.Setenv(quietVariable, "2s")
 	finishes(t, 20*time.Second, func() {
@@ -81,8 +74,6 @@ func TestARunStopsABridgeThatStaysSilent(t *testing.T) {
 	})
 }
 
-// TestARunWaitsOnABridgeThatIsSlowButWriting holds the limit to one read's wait, not the run's length: a bridge
-// that writes a little at a time runs past the limit and is read whole.
 func TestARunWaitsOnABridgeThatIsSlowButWriting(t *testing.T) {
 	t.Setenv(quietVariable, "2s")
 	script := `printf '%s\n' '` + header + `'; for part in '{"trailer": ' '{"files": ' '0}' '}'; do sleep 1; printf '%s' "$part"; done; echo`
@@ -94,8 +85,6 @@ func TestARunWaitsOnABridgeThatIsSlowButWriting(t *testing.T) {
 	})
 }
 
-// TestARunSaysWhyABridgeThatDiedFailed holds a dead bridge's failure to the one line it wrote, as the C# bridge's
-// failure says it.
 func TestARunSaysWhyABridgeThatDiedFailed(t *testing.T) {
 	finishes(t, 20*time.Second, func() {
 		stream, errs, ran, err := Run([]string{"sh", "-c", `echo 'roslyn-bridge: there is no file or folder at /gone to read' >&2; exit 1`})
@@ -112,8 +101,6 @@ func TestARunSaysWhyABridgeThatDiedFailed(t *testing.T) {
 	})
 }
 
-// TestAServedBridgeThatStaysSilentIsStopped holds Ask to ending, Silent and saying so, when a served bridge takes a
-// request and never answers, and Close to returning once it has.
 func TestAServedBridgeThatStaysSilentIsStopped(t *testing.T) {
 	t.Setenv(quietVariable, "2s")
 	server, err := Serve([]string{"sh", "-c", `read request; sleep 60`})
@@ -129,8 +116,6 @@ func TestAServedBridgeThatStaysSilentIsStopped(t *testing.T) {
 	})
 }
 
-// TestAServedBridgeIsNotStoppedWhileItsCallerIsBusy holds the limit to the wait inside a read: a caller that
-// takes longer than the limit between requests finds the bridge still answering.
 func TestAServedBridgeIsNotStoppedWhileItsCallerIsBusy(t *testing.T) {
 	t.Setenv(quietVariable, "1s")
 	server, err := Serve([]string{"sh", "-c", `while read request; do printf '%s\n%s\n' '` + header + `' '` + trailer + `'; done`})
@@ -148,8 +133,6 @@ func TestAServedBridgeIsNotStoppedWhileItsCallerIsBusy(t *testing.T) {
 	})
 }
 
-// TestAServedBridgeThatLingersAfterItsInputEndsIsStopped holds Close to returning when the bridge does not end
-// with its input.
 func TestAServedBridgeThatLingersAfterItsInputEndsIsStopped(t *testing.T) {
 	server, err := Serve([]string{"sh", "-c", `while read request; do :; done; sleep 60`})
 	if err != nil {
@@ -160,8 +143,6 @@ func TestAServedBridgeThatLingersAfterItsInputEndsIsStopped(t *testing.T) {
 	})
 }
 
-// TestTheBridgeServiceThatStaysSilentIsLetGo holds a session's service to the same limit: a socket that takes the
-// request and never answers ends the read, Silent.
 func TestTheBridgeServiceThatStaysSilentIsLetGo(t *testing.T) {
 	t.Setenv(quietVariable, "2s")
 	project := t.TempDir()
@@ -193,7 +174,6 @@ func TestTheBridgeServiceThatStaysSilentIsLetGo(t *testing.T) {
 	})
 }
 
-// TestABridgeLimitThatIsNotADurationIsRefused holds a mistyped limit to failing the run, never to waiting for ever.
 func TestABridgeLimitThatIsNotADurationIsRefused(t *testing.T) {
 	t.Setenv(quietVariable, "ten minutes")
 	if _, err := Serve([]string{"sh", "-c", "cat"}); err == nil || !strings.Contains(err.Error(), quietVariable) {
@@ -201,8 +181,6 @@ func TestABridgeLimitThatIsNotADurationIsRefused(t *testing.T) {
 	}
 }
 
-// TestAnErrorTheCallerRaisesIsNeverTheBridgesFailure holds AskEach to handing back the caller's own error as it
-// is: a failed bridge leaves C# unjudged, so the caller's failure must never pass for one.
 func TestAnErrorTheCallerRaisesIsNeverTheBridgesFailure(t *testing.T) {
 	server, err := Serve([]string{"sh", "-c", `while read request; do printf '%s\n%s\n' '` + header + `' '` + trailer + `'; done`})
 	if err != nil {

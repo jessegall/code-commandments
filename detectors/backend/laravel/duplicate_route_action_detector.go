@@ -12,17 +12,13 @@ import (
 	backendsins "github.com/jessegall/code-commandments/sins/backend/laravel"
 )
 
-// DuplicateRouteActionDetector finds route actions of different controllers that are each a thin delegation to one
-// and the same operation: two entry points where one belongs.
+// DuplicateRouteActionDetector finds route actions of different controllers that are each a thin delegation to one and the same operation: two entry points where one belongs.
 type DuplicateRouteActionDetector struct{}
 
 func init() { detectors.Register(catalog.PHP, DuplicateRouteActionDetector{}) }
 
-// Sin is the sin the detector finds.
 func (DuplicateRouteActionDetector) Sin() sins.Sin { return backendsins.DuplicateRouteAction{} }
 
-// Find is every route action thinly delegating to a target that is no route action itself, where actions of two or
-// more controllers delegate to it.
 func (DuplicateRouteActionDetector) Find(codebase *engine.Codebase) []engine.Match {
 	routes := laravelnode.RouteActionsOf(codebase)
 	byTarget := map[string][]engine.Match{}
@@ -55,5 +51,4 @@ func (DuplicateRouteActionDetector) Find(codebase *engine.Codebase) []engine.Mat
 	return findings
 }
 
-// CrossFile says the PHP tool finds it reaching beyond the file it judges, so a per-file check must not ask it.
 func (DuplicateRouteActionDetector) CrossFile() {}

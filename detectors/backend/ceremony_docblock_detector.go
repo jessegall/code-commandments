@@ -14,10 +14,8 @@ type CeremonyDocblockDetector struct{}
 
 func init() { detectors.Register(catalog.PHP, CeremonyDocblockDetector{}) }
 
-// Sin is the sin the detector finds.
 func (CeremonyDocblockDetector) Sin() sins.Sin { return backendsins.CeremonyDocblock{} }
 
-// Find is every method whose doc comment only restates its native types.
 func (CeremonyDocblockDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return php.In(codebase).
 		WhereKind("Stmt_ClassMethod").

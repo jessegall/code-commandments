@@ -17,8 +17,7 @@ type SinStep interface {
 	MatchesSin(query string) bool
 }
 
-// Pass is what a step runs over: the roots, which files it may fix, which findings have been reported as wrong,
-// and every file drafted so far.
+// Pass is what a step runs over: the roots, which files it may fix, which findings have been reported as wrong, and every file drafted so far.
 type Pass struct {
 	Roots  []string
 	Scope  Scope
@@ -27,13 +26,10 @@ type Pass struct {
 	Drafts Rewrites
 }
 
-// Fixes says whether a finding in the file is one the pass may fix: in scope, and not frozen.
 func (p Pass) Fixes(path string) bool {
 	return p.Scope.Includes(path) && !p.Frozen.IsFrozen(path)
 }
 
-// Rewrites says whether the rule's finding at this place is one the pass may rewrite: its file is one it may fix,
-// and the project has not reported the finding as wrong.
 func (p Pass) Rewrites(rule, path string, line int) bool {
 	if !p.Fixes(path) {
 		return false
@@ -57,36 +53,30 @@ type Chain struct {
 	steps []Step
 }
 
-// Steps is every step, in order.
 func (c *Chain) Steps() []Step {
 	return slices.Clone(c.steps)
 }
 
-// Prepend runs a step first.
 func (c *Chain) Prepend(step Step) *Chain {
 	c.steps = append([]Step{step}, c.steps...)
 
 	return c
 }
 
-// Append runs a step last.
 func (c *Chain) Append(step Step) *Chain {
 	c.steps = append(c.steps, step)
 
 	return c
 }
 
-// Before runs a step just before the one named, or last when none is.
 func (c *Chain) Before(name string, step Step) *Chain {
 	return c.insert(name, step, 0)
 }
 
-// After runs a step just after the one named, or last when none is.
 func (c *Chain) After(name string, step Step) *Chain {
 	return c.insert(name, step, 1)
 }
 
-// Replace runs a step in place of every one named.
 func (c *Chain) Replace(name string, step Step) *Chain {
 	for index, existing := range c.steps {
 		if existing.Name() == name {
@@ -97,14 +87,12 @@ func (c *Chain) Replace(name string, step Step) *Chain {
 	return c
 }
 
-// Remove drops every step named.
 func (c *Chain) Remove(name string) *Chain {
 	c.steps = slices.DeleteFunc(c.steps, func(step Step) bool { return step.Name() == name })
 
 	return c
 }
 
-// Matching keeps the steps whose name holds the query, in any case, or that fix a sin it matches.
 func (c *Chain) Matching(query string) *Chain {
 	c.steps = slices.DeleteFunc(c.steps, func(step Step) bool {
 		if strings.Contains(strings.ToLower(step.Name()), strings.ToLower(query)) {

@@ -10,12 +10,8 @@ import (
 	"github.com/jessegall/code-commandments/cli/workspace"
 )
 
-// reportsPage is the dashboard page of what this project has reported.
 const reportsPage = "reports"
 
-// Redraw writes the dashboard again from the findings already stored, without judging anything. It is what a
-// command that changed the record calls, since a report filed or settled changes the page and nothing else does
-// until the next judge.
 func Redraw(space workspace.Workspace) error {
 	drawn, err := jsonfile.Pretty(Render(storedIn(space), space.Root()), true)
 	if err != nil {
@@ -25,9 +21,6 @@ func Redraw(space workspace.Workspace) error {
 	return atomic.Write(space.Cache(File), drawn)
 }
 
-// reports is the page listing every report this project has filed: the rule, where the finding stood, the issue,
-// and what the last look at that issue found. The local path is shown because the dashboard is local; the record
-// itself keeps no line of the project's code.
 func reports(rows []reported.Row) *jsonfile.Object {
 	if len(rows) == 0 {
 		return jsonfile.NewObject("type", "stack", "gap", 16, "children", []any{
@@ -65,8 +58,6 @@ func reports(rows []reported.Row) *jsonfile.Object {
 	})
 }
 
-// waitingRows are the reports in the order a reader wants them: the ones still waiting for an answer first, then
-// the rest, newest first within each.
 func waitingRows(record reported.Record) []reported.Row {
 	rows := record.Rows()
 	sort.SliceStable(rows, func(one, other int) bool {
@@ -76,13 +67,10 @@ func waitingRows(record reported.Record) []reported.Row {
 	return rows
 }
 
-// isWaiting says whether the report is still waiting on the maintainer: nothing has been looked at yet, or the
-// last look found it open with nothing said. A row the project has accepted waits on nobody.
 func isWaiting(row reported.Row) bool {
 	return row.Accepted == "" && row.Seen.State != "CLOSED" && row.Seen.Comments == 0
 }
 
-// state is the issue's state as the last look found it, or what the project has decided about it.
 func state(row reported.Row) string {
 	switch {
 	case row.Accepted != "":
@@ -94,8 +82,6 @@ func state(row reported.Row) string {
 	}
 }
 
-// answered says what the last look found of the maintainer's answer, or why the project accepted the answer it
-// cannot act on.
 func answered(row reported.Row) string {
 	if row.Accepted != "" {
 		return row.Accepted
@@ -111,7 +97,6 @@ func answered(row reported.Row) string {
 	}
 }
 
-// rowTone colours a row by whether it still waits on an answer.
 func rowTone(row reported.Row) string {
 	if isWaiting(row) {
 		return "warn"
@@ -120,7 +105,6 @@ func rowTone(row reported.Row) string {
 	return "note"
 }
 
-// tone colours a count: nothing waiting is good, anything waiting is worth a look.
 func tone(waiting int) string {
 	if waiting == 0 {
 		return "good"

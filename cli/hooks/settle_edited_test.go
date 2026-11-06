@@ -6,11 +6,6 @@ import (
 	"testing"
 )
 
-// TestAFileEditedUnderAnotherSpellingStillSettlesItsMarks holds the settling to the file rather than to the
-// spelling the harness happened to report. A mark is announced under the file as the engine read it — absolute,
-// with its links resolved — while the moment names the file as the tool wrote it, which may be relative to the
-// folder the moment happened in or absolute through a link. Compared as given, the two never match, so a sin
-// fixed in that file keeps its mark raised for ever.
 func TestAFileEditedUnderAnotherSpellingStillSettlesItsMarks(t *testing.T) {
 	root := t.TempDir()
 	real, err := filepath.EvalSymlinks(root)
@@ -43,10 +38,6 @@ func TestAFileEditedUnderAnotherSpellingStillSettlesItsMarks(t *testing.T) {
 	}
 }
 
-// TestAFileFixedByAShellCommandStillSettlesItsMarks holds the settling to every file the moment JUDGED, not to
-// the one a tool happened to name. A shell command that rewrites a file names no file, and a file whose sins are
-// all gone yields no marks — so nothing would ever reconsider it, and its chat marks would stay raised for ever
-// however many times it was judged. That is the regression: a fix made with Bash never settled.
 func TestAFileFixedByAShellCommandStillSettlesItsMarks(t *testing.T) {
 	root := t.TempDir()
 	real, err := filepath.EvalSymlinks(root)
@@ -66,7 +57,6 @@ func TestAFileFixedByAShellCommandStillSettlesItsMarks(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// the moment names no file of its own, as a shell command does not; it judged the file all the same
 	settlement := AnnouncedIn(data, Moment{Cwd: real}).Settle(real, []string{filepath.Join(real, "src/Card.vue")}, nil)
 
 	if len(settlement.Repented) != 1 {

@@ -66,11 +66,6 @@ func TestTheGoBinaryAnswersEveryCaseAsThePhpToolDid(t *testing.T) {
 	}
 }
 
-// differing names each field the two results disagree on, and where a field's text differs it quotes the first
-// bytes that part, so a difference the halves below cannot show is still readable.
-//
-// The halves are printed through the testing package, which indents every line of a message: a blank line and a
-// line of spaces read the same there, so a trailing-whitespace difference looks like no difference at all.
 func differing(want, got Result) string {
 	var said []string
 
@@ -100,8 +95,6 @@ func differing(want, got Result) string {
 	return strings.Join(said, ", ")
 }
 
-// parts is where two texts part, as bytes: the first that differs with what surrounds it, or the tail one has and
-// the other does not.
 func parts(want, got string) string {
 	for at := range min(len(want), len(got)) {
 		if want[at] != got[at] {

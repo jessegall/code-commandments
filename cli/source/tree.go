@@ -11,16 +11,10 @@ import (
 )
 
 var (
-	// skippedFolders never hold the project's own source: a dependency store, a cache, and the folder Go's own
-	// toolchain ignores, which holds a test's fixtures rather than code anyone ships.
 	skippedFolders = []string{"vendor", "node_modules", "site-packages", "__pycache__", "testdata"}
 
-	// skippedSuffixes end the name of a folder a package installer made.
 	skippedSuffixes = []string{".egg-info"}
 
-	// buildOutputs are the folders a build writes to, by the file beside them that says a build lives there: a C#
-	// project's .csproj, a JavaScript package's package.json, and Laravel's artisan, whose public folder holds only
-	// what the asset build compiled.
 	buildOutputs = map[string][]string{
 		"*.csproj":     {"bin", "obj"},
 		"package.json": {"dist", "build"},
@@ -28,16 +22,12 @@ var (
 	}
 )
 
-// virtualEnvironment marks a Python virtual environment's folder.
 const virtualEnvironment = "pyvenv.cfg"
 
-// Sources are the files under path in a language the tool reads, skipping what is never source and what
-// the project excluded. A path that is a file answers itself when it is one.
 func Sources(path string, excluded Excluded) []string {
 	return walk(path, excluded, Judges)
 }
 
-// FilesIn are the files under path with this extension, skipping the same folders Sources does.
 func FilesIn(path, extension string, excluded Excluded) []string {
 	return walk(path, excluded, func(file string) bool {
 		return strings.TrimPrefix(filepath.Ext(file), ".") == extension
@@ -63,9 +53,6 @@ func walk(root string, excluded Excluded, wanted func(string) bool) []string {
 	return descend(root, excluded, wanted, nil)
 }
 
-// descend collects the wanted files under dir in the order the PHP tool met them (listing.Of), going into
-// each folder as it is met, as PHP's recursive directory iterator does; the report's twins and the dashboard
-// keep that order.
 func descend(dir string, excluded Excluded, wanted func(string) bool, files []string) []string {
 	for _, name := range listing.Of(dir) {
 		path := dir + "/" + name
@@ -85,9 +72,6 @@ func descend(dir string, excluded Excluded, wanted func(string) bool, files []st
 	return files
 }
 
-// Repositories are the git repositories checked out in folders beneath path that a walk of it reaches, each a folder
-// holding a .git of its own beside the history path lies in: a workspace's independent checkouts. A worktree a helper
-// checked out is none of the project's and is never reached.
 func Repositories(path string, excluded Excluded) []string {
 	var found []string
 	var look func(dir string)
@@ -110,7 +94,6 @@ func Repositories(path string, excluded Excluded) []string {
 	return found
 }
 
-// Reaches says whether a walk from root would come down to file: no folder between them is skipped.
 func Reaches(root, file string, excluded Excluded) bool {
 	for directory := filepath.Dir(file); strings.HasPrefix(directory, root+"/"); directory = filepath.Dir(directory) {
 		if !descends(directory, excluded) {
@@ -121,8 +104,6 @@ func Reaches(root, file string, excluded Excluded) bool {
 	return true
 }
 
-// descends says whether a walk goes into the folder: not a link, not hidden, not a dependency or build
-// folder, not a git worktree checked out inside the project, not a virtual environment, not excluded.
 func descends(directory string, excluded Excluded) bool {
 	name := filepath.Base(directory)
 
@@ -147,19 +128,12 @@ func descends(directory string, excluded Excluded) bool {
 	return !isBuildOutput(directory) && !IsWorktree(directory) && !excluded.Covers(directory)
 }
 
-// IsWorktree says whether the folder is a git worktree checked out inside the project, a helper's copy of it: its
-// .git is a file naming a worktree of a repository. A submodule's .git file names a module, and a repository of its
-// own has a .git folder; both are the project's code.
 func IsWorktree(directory string) bool {
 	pointer, err := os.ReadFile(filepath.Join(directory, ".git"))
 
 	return err == nil && strings.Contains(filepath.ToSlash(string(pointer)), "/worktrees/")
 }
 
-// InWorktree says whether the file lies in a git worktree checked out below the project's root.
-// InTree says whether the file is inside the project at root. A judge of another tree — a path handed on the
-// command line, a worktree in a temporary folder — finds real sins, and they belong to that tree: this project
-// will never judge them again, so nothing here may keep them as its own.
 func InTree(root, file string) bool {
 	if real, err := filepath.EvalSymlinks(root); err == nil {
 		root = real

@@ -10,10 +10,6 @@ import (
 	"github.com/jessegall/code-commandments/engine/frontend/frontendtest"
 )
 
-// TestSyntaxAtTheEdgeKeepsTheContract holds the bridge to the contract over sources that are legal but rare: a key
-// that is the empty string, computed, numeric or not an identifier, in every place a name is written, and the
-// declarations that have no name at all. The stream is checked against the schema as it is read, so a fact the
-// bridge writes wrong fails the case that wrote it.
 func TestSyntaxAtTheEdgeKeepsTheContract(t *testing.T) {
 	cases := map[string]map[string]string{
 		"an object literal's keys": {"marks.ts": `
@@ -85,8 +81,6 @@ const key = ""
 	}
 }
 
-// TestABrokenSourceKeepsTheContract holds the bridge to the contract over sources that do not parse: the names a
-// syntax error leaves missing are written as no name, never an empty one.
 func TestABrokenSourceKeepsTheContract(t *testing.T) {
 	codebase := frontendtest.FromSource(t, map[string]string{
 		"broken.ts":  "const = 1\nfunction (a) { return a. }\nclass implements {}\nconst { : x } = {}\nlet y = { : 1 }\n",
@@ -99,8 +93,6 @@ func TestABrokenSourceKeepsTheContract(t *testing.T) {
 	}
 }
 
-// TestASymbolKeyIsNamedAsTheCodeWritesIt holds a field whose key is a symbol to the name the code spells it with:
-// TypeScript keeps such a key under a name carrying the id of the order it checked in, which no stream may write.
 func TestASymbolKeyIsNamedAsTheCodeWritesIt(t *testing.T) {
 	codebase := frontendtest.FromSource(t, map[string]string{"marked.ts": `
 declare const marker: unique symbol
@@ -140,9 +132,6 @@ export const read = marked
 	}
 }
 
-// TestALargeTypeIsPrintedShortAndDescribedWhole holds a type whose whole print runs past a kilobyte to the checker's
-// truncated print, while its fields still say it whole: a library's object type printed whole, and each type inside
-// it printed whole again, made a 38 KB component a 410 MB line no reader could take.
 func TestALargeTypeIsPrintedShortAndDescribedWhole(t *testing.T) {
 	var fields strings.Builder
 	for i := range 120 {
@@ -168,8 +157,6 @@ func TestALargeTypeIsPrintedShortAndDescribedWhole(t *testing.T) {
 	}
 }
 
-// TestAJavaScriptFileIsReadAsTheCompilerReadsIt holds the bridge to the files TypeScript's compiler reads beside a
-// .ts: JavaScript, and the module and JSX forms, each written as TypeScript.
 func TestAJavaScriptFileIsReadAsTheCompilerReadsIt(t *testing.T) {
 	codebase := frontendtest.FromSource(t, map[string]string{
 		"src/order-form.js": "export function total(lines) {\n  return lines.reduce((sum, line) => sum + line.price, 0)\n}\n",

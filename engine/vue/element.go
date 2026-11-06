@@ -1,5 +1,4 @@
-// Package vue is the engine's view of a Vue template: an element knows its tag, its directives and the
-// elements around it, read from the generic tree the frontend bridge writes.
+// Package vue is the engine's view of a Vue template: an element knows its tag, its directives and the elements around it, read from the generic tree the frontend bridge writes.
 package vue
 
 import (
@@ -15,44 +14,34 @@ type Element struct {
 	engine.Match
 }
 
-// Decorate views a match as an element.
 func (Element) Decorate(m engine.Match) Element {
 	return Element{m}
 }
 
-// Of views a match as an element.
 func Of(m engine.Match) Element {
 	return Element{m}
 }
 
-// IsElement says whether the node is a template element, not text, an attribute or a block.
 func (e Element) IsElement() bool {
 	return e.Kind() == "Element"
 }
 
-// Tag is the element's tag as written.
 func (e Element) Tag() string {
 	return e.Name()
 }
 
-// IsComponent says whether the element is a component, as Vue's compiler resolves its tag: `<Foo>`, `<my-widget>`,
-// `<component :is>` or a built-in such as `<transition>`, never a native element.
 func (e Element) IsComponent() bool {
 	return e.IsElement() && e.HasFlag("component")
 }
 
-// Writes says whether the element writes the attribute, plain or bound: `data-dusk` or `:data-dusk`.
 func (e Element) Writes(name string) bool {
 	_, plain := e.WrittenAttribute(name)
 
 	return e.IsElement() && (plain || e.Binding(name).Exists())
 }
 
-// formControls are the HTML elements that keep what a user enters in themselves.
 var formControls = []string{"input", "select", "textarea"}
 
-// HoldsState says whether the element, or any element below it, keeps state of its own between renders: a
-// component, a slot, a form control, or an element bound with v-model or given a ref.
 func (e Element) HoldsState() bool {
 	for _, element := range append([]Element{e}, e.DescendantElements()...) {
 		if element.IsComponent() || element.Tag() == "slot" || slices.Contains(formControls, element.Tag()) {
@@ -66,7 +55,6 @@ func (e Element) HoldsState() bool {
 	return false
 }
 
-// Directives is every directive written on the element, in order.
 func (e Element) Directives() []Directive {
 	var directives []Directive
 	for _, child := range e.Children() {
@@ -78,7 +66,6 @@ func (e Element) Directives() []Directive {
 	return directives
 }
 
-// Directive is the first directive of the name written on the element; no node when there is none.
 func (e Element) Directive(name Name) Directive {
 	for _, directive := range e.Directives() {
 		if directive.Named(name) {
@@ -89,17 +76,14 @@ func (e Element) Directive(name Name) Directive {
 	return Directive{}
 }
 
-// Has says whether the element carries a directive of the name, whatever its argument or modifiers.
 func (e Element) Has(name Name) bool {
 	return e.Directive(name).Exists()
 }
 
-// HasAny says whether the element carries any of the directives.
 func (e Element) HasAny(names ...Name) bool {
 	return slices.ContainsFunc(names, e.Has)
 }
 
-// Attributes is every static attribute written on the element, in order.
 func (e Element) Attributes() []engine.Match {
 	var attributes []engine.Match
 	for _, child := range e.Children() {
@@ -111,7 +95,6 @@ func (e Element) Attributes() []engine.Match {
 	return attributes
 }
 
-// Elements is the element's child elements, in order: text, interpolations and attributes left out.
 func (e Element) Elements() []Element {
 	var elements []Element
 	for _, child := range e.Children() {
@@ -123,7 +106,6 @@ func (e Element) Elements() []Element {
 	return elements
 }
 
-// Parent is the element the element sits in; no node at the template's top.
 func (e Element) Parent() Element {
 	if parent := e.Match.Parent(); parent.Kind() == "Element" {
 		return Element{parent}
@@ -132,7 +114,6 @@ func (e Element) Parent() Element {
 	return Element{}
 }
 
-// Siblings is the elements beside it under the same parent, itself included, in order.
 func (e Element) Siblings() []Element {
 	var siblings []Element
 	for _, child := range e.Match.Parent().Children() {
@@ -144,7 +125,6 @@ func (e Element) Siblings() []Element {
 	return siblings
 }
 
-// Following is the sibling elements after it, in order.
 func (e Element) Following() []Element {
 	siblings := e.Siblings()
 	for index, sibling := range siblings {
@@ -156,13 +136,10 @@ func (e Element) Following() []Element {
 	return nil
 }
 
-// IsTransitionChild says whether the element sits directly in a <Transition> or <TransitionGroup>, which
-// needs its conditional on the element itself.
 func (e Element) IsTransitionChild() bool {
 	return slices.Contains([]string{"Transition", "TransitionGroup", "transition", "transition-group"}, e.Parent().Tag())
 }
 
-// Binding is the element's v-bind of one prop, `:key` or `v-bind:key`; no node when it binds none.
 func (e Element) Binding(prop string) Directive {
 	for _, directive := range e.Directives() {
 		if directive.Named(Bind) && directive.Target() == prop {
@@ -173,7 +150,6 @@ func (e Element) Binding(prop string) Directive {
 	return Directive{}
 }
 
-// Depth is how many elements deep the element sits, itself counted: a top-level element is 1.
 func (e Element) Depth() int {
 	depth := 0
 	for at := e; at.Exists(); at = at.Parent() {
@@ -183,7 +159,6 @@ func (e Element) Depth() int {
 	return depth
 }
 
-// Height is how many element levels its subtree holds: a leaf is 1, a parent one more than its tallest child.
 func (e Element) Height() int {
 	tallest := 0
 	for _, child := range e.Elements() {
@@ -193,7 +168,6 @@ func (e Element) Height() int {
 	return tallest + 1
 }
 
-// Size is how many elements its subtree holds, itself included.
 func (e Element) Size() int {
 	size := 1
 	for _, child := range e.Elements() {
@@ -203,7 +177,6 @@ func (e Element) Size() int {
 	return size
 }
 
-// Rendered is how many elements its subtree renders, itself included: a <template> renders only what it holds.
 func (e Element) Rendered() int {
 	rendered := 0
 	if !e.IsTemplate() {
@@ -216,8 +189,6 @@ func (e Element) Rendered() int {
 	return rendered
 }
 
-// Expressions is the data the element itself reads: every directive's value but a v-for's and a slot's,
-// and each interpolation among its children. A statement-bodied handler is each of its statements.
 func (e Element) Expressions() []typescript.Node {
 	var expressions []typescript.Node
 	for _, child := range e.Children() {
@@ -237,7 +208,6 @@ func (e Element) Expressions() []typescript.Node {
 	return expressions
 }
 
-// DescendantElements is every element below it, in pre-order.
 func (e Element) DescendantElements() []Element {
 	var below []Element
 	for _, child := range e.Elements() {
@@ -248,8 +218,6 @@ func (e Element) DescendantElements() []Element {
 	return below
 }
 
-// CompoundParts is the components below it whose tag is its own plus a suffix, DialogContent and
-// DialogTitle under Dialog: the parts of a library compound, read from the tags themselves.
 func (e Element) CompoundParts() []Element {
 	var parts []Element
 	for _, element := range e.DescendantElements() {
@@ -261,13 +229,10 @@ func (e Element) CompoundParts() []Element {
 	return parts
 }
 
-// IsTemplateRoot says whether the element is the template's only top-level element.
 func (e Element) IsTemplateRoot() bool {
 	return e.Depth() == 1 && len(e.Siblings()) == 1
 }
 
-// Bindings is every prop the element binds with v-bind, :customer="order.customer", by the prop's name as
-// the child declares it: Vue reads :order-table as orderTable.
 func (e Element) Bindings() map[string]Directive {
 	bindings := map[string]Directive{}
 	for _, directive := range e.Directives() {
@@ -279,7 +244,6 @@ func (e Element) Bindings() map[string]Directive {
 	return bindings
 }
 
-// camelized is a kebab-case name as Vue maps it to a prop: order-table → orderTable.
 func camelized(name string) string {
 	parts := strings.Split(name, "-")
 	for index := 1; index < len(parts); index++ {

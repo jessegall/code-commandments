@@ -17,37 +17,18 @@ import (
 	"github.com/jessegall/code-commandments/cli/warm"
 )
 
-// TestTheStoryOfAProjectWithAMainAgentAndItsWorkers is one run of the whole thing, told as the story it really
-// is, so a break says which part of it stopped being true rather than which function changed.
-//
-// Every beat below was a bug on a consumer's machine in one evening, and each was found by them and not by this
-// suite, because what the suite had was a convenient arrangement rather than the journal's own: a worker's edit
-// dropped without a word, a file counted as changed for being touched, a decline no one could read, an edit's
-// own line numbers thrown away on a clock skew, every file of a worktree mapped to a path the tree does not
-// hold, a file of a language the tree holds nothing of counted for ever, and a worker read six thousand files
-// on every hand-in because the tree was looked up by whatever branch the main checkout stood on at that moment.
-//
-// So this test is the story and not the parts: if it passes, an agent and its workers are answered from one tree.
 func TestTheStoryOfAProjectWithAMainAgentAndItsWorkers(t *testing.T) {
-	// ONE. A project as a real one is: source under several NESTED declared paths, and files of a language the
-	// tree holds nothing of, since its bridge is a service of its own.
 	root := storyProject(t)
 
-	// TWO. The main agent works on `development`, and the tree is read for the branch that checkout stands on.
-	// Everything after this answers from it or says why it cannot.
 	storyOn(t, root, "checkout", "-q", "-b", "development")
 	tree := storyTreeFor(t, root)
 	t.Logf("the tree holds %d files of %v", tree.Files(), tree.Languages())
 
-	// THREE. Two workers, in worktrees where the journal really keeps them: under an environment's own folder,
-	// each on a branch of its own cut from development.
 	first := storyWorktree(t, root, 1)
 	second := storyWorktree(t, root, 2)
 
 	service := serviceAt(t, root)
 
-	// FOUR. The first worker writes a sin whose CHAIN runs through two other files. No one file can answer for
-	// it, so an answer that names it is proof the edit was judged against the whole program.
 	storyWrites(t, first, "shop/goods/invoice.py", `from shop.goods.rebuild import RebuildKind
 
 
@@ -61,8 +42,6 @@ class InvoiceKind(RebuildKind):
 			"was judged on its own file alone:\n%s", told)
 	}
 
-	// FIVE. That worker hands in. It must be SERVED from the tree and not read the tree itself: a declined
-	// judging answers correctly and costs 25 to 55 seconds, and nothing about the answer says it happened.
 	answer, served := warm.Asked(root, warm.Request{Judge: []string{"--no-checklist"}, In: first})
 	if !served {
 		t.Fatalf("FIVE: the first worker's hand-in was DECLINED, so it reads the whole tree in its own process: %s",
@@ -72,9 +51,6 @@ class InvoiceKind(RebuildKind):
 		t.Fatalf("FIVE: the served hand-in does not name the worker's own file:\n%s%s", answer.Out, answer.Err)
 	}
 
-	// SIX. The main agent moves to a branch of its own, which a main agent does as a matter of course. Nothing
-	// about the workers changed, and their tree must not vanish because somebody else switched: a worker answers
-	// from the tree of the checkout its own main agent is on.
 	storyOn(t, root, "checkout", "-q", "-b", "the-main-agents-own-work")
 
 	storyWrites(t, second, "shop/goods/refund.py", `from shop.goods.rebuild import RebuildKind
@@ -90,7 +66,6 @@ class RefundKind(RebuildKind):
 			"which is nothing to do with that worker:\n%s", told)
 	}
 
-	// SEVEN. And its hand-in is still served, from the tree read at the branch it was cut from.
 	answer, served = warm.Asked(root, warm.Request{Judge: []string{"--no-checklist"}, In: second})
 	if !served {
 		t.Fatalf("SEVEN: the second worker's hand-in was declined after the main checkout moved: %s", answer.Because)
@@ -99,20 +74,10 @@ class RefundKind(RebuildKind):
 		t.Fatalf("SEVEN: the served hand-in does not name that worker's own file:\n%s%s", answer.Out, answer.Err)
 	}
 
-	// EIGHT. What each worker is TOLD is about its own files and never another's: the program holds one copy of
-	// each source, the checkout's, and a worker told about a file in a tree it does not have reads as nonsense.
-	//
-	// The cards are not held to this and must not be: every checkout here works in one environment, which keeps
-	// ONE record of what has been announced, so a card settling a file that became clean legitimately names
-	// whatever file of that record it is about. It is the whisper the agent READS that is its own.
 	if whisper := storyWhisper(t, told); strings.Contains(whisper, "invoice.py") {
 		t.Errorf("EIGHT: the second worker is told about the first worker's file:\n%s", whisper)
 	}
 
-	// EIGHT AND A HALF. The first worker's sin still STANDS. The record of what has been announced is kept per
-	// environment while the files are per checkout, so a judging of the second worker swept that record, did not
-	// find the first worker's file in its own worktree, and settled it as clean: the agent that really wrote the
-	// sin watched it turn green. A judging can only honestly settle what it could see.
 	for _, settled := range storyCards(t, told) {
 		if strings.Contains(settled, "invoice.py") && strings.Contains(settled, "sin-resolved") {
 			t.Errorf("EIGHT AND A HALF: judging the second worker settled the FIRST worker's sin as clean, in a "+
@@ -120,8 +85,6 @@ class RefundKind(RebuildKind):
 		}
 	}
 
-	// NINE. The main agent finishes its own work and comes back to the branch it shares with its workers, and
-	// its own judging is served again from the tree read there.
 	storyOn(t, root, "checkout", "-q", "development")
 
 	answer, served = warm.Asked(root, warm.Request{Judge: []string{"--no-checklist"}, In: root})
@@ -135,8 +98,6 @@ class RefundKind(RebuildKind):
 	}
 }
 
-// storyProject is the project the story happens in: nested declared paths, a rule no single file can answer, and
-// files of a language the tree holds nothing of.
 func storyProject(t *testing.T) string {
 	t.Helper()
 
@@ -153,17 +114,17 @@ func storyProject(t *testing.T) string {
 		".commandments/custom/ThingByItsKindDetector.json": `{"engine": "python",
  "sin": {"name": "thing-by-its-kind", "description": "a class the chain of its parents says is a kind", "skill": "python/absence"},
  "find": {"select": "type-declaration", "where": [{"extendsAny": "Kind"}]}}`,
-		"shop/__init__.py":        "",
-		"tools/__init__.py":       "",
-		"shop/goods/__init__.py":  "",
-		"shop/goods/kinds.py":     "class Kind:\n    number = 0\n",
-		"shop/goods/rebuild.py":   "from shop.goods.kinds import Kind\n\n\nclass RebuildKind(Kind):\n    statements: list[str] = []\n",
-		"shop/tills/__init__.py":  "",
-		"shop/tills/till.py":      "class Till:\n    number = 0\n",
-		"tools/hook/__init__.py":  "",
-		"tools/hook/hook.py":      "class Hook:\n    number = 0\n",
-		"shop/goods/Order.cs":     "namespace Shop;\n\npublic class Order {}\n",
-		"shop/tills/Till.cs":      "namespace Shop;\n\npublic class Till {}\n",
+		"shop/__init__.py":       "",
+		"tools/__init__.py":      "",
+		"shop/goods/__init__.py": "",
+		"shop/goods/kinds.py":    "class Kind:\n    number = 0\n",
+		"shop/goods/rebuild.py":  "from shop.goods.kinds import Kind\n\n\nclass RebuildKind(Kind):\n    statements: list[str] = []\n",
+		"shop/tills/__init__.py": "",
+		"shop/tills/till.py":     "class Till:\n    number = 0\n",
+		"tools/hook/__init__.py": "",
+		"tools/hook/hook.py":     "class Hook:\n    number = 0\n",
+		"shop/goods/Order.cs":    "namespace Shop;\n\npublic class Order {}\n",
+		"shop/tills/Till.cs":     "namespace Shop;\n\npublic class Till {}\n",
 	}
 
 	for path, text := range written {
@@ -183,7 +144,6 @@ func storyProject(t *testing.T) string {
 	return root
 }
 
-// storyOn runs git in the project and fails the test where git does.
 func storyOn(t *testing.T, root string, args ...string) {
 	t.Helper()
 
@@ -192,7 +152,6 @@ func storyOn(t *testing.T, root string, args ...string) {
 	}
 }
 
-// storyWorktree is a worker's tree where the journal keeps one: under an environment's folder, on its own branch.
 func storyWorktree(t *testing.T, root string, worker int) string {
 	t.Helper()
 
@@ -202,7 +161,6 @@ func storyWorktree(t *testing.T, root string, worker int) string {
 	return at
 }
 
-// storyTreeFor is the tree the main agent's session has read, over the paths the project declares.
 func storyTreeFor(t *testing.T, root string) *warm.Base {
 	t.Helper()
 
@@ -227,7 +185,6 @@ func storyTreeFor(t *testing.T, root string) *warm.Base {
 	return base
 }
 
-// storyWrites is one worker writing a file in its own checkout.
 func storyWrites(t *testing.T, checkout, under, text string) {
 	t.Helper()
 
@@ -240,8 +197,6 @@ func storyWrites(t *testing.T, checkout, under, text string) {
 	}
 }
 
-// storyEdited tells the plugin about that edit the way the journal does, on the socket, and answers what the
-// worker was told: the answer goes out before the judging, so what it was told is what reached the queue.
 func storyEdited(t *testing.T, service, root, checkout string, worker int, under string) string {
 	t.Helper()
 
@@ -251,7 +206,6 @@ func storyEdited(t *testing.T, service, root, checkout string, worker int, under
 		"data": map[string]any{"path": under, "kind": "create", "added": 5, "removed": 0, "cwd": checkout},
 	})
 
-	// The queue the journal drains, waited for: the service answers the connection at once and judges afterwards.
 	for until := time.Now().Add(2 * time.Minute); time.Now().Before(until); time.Sleep(50 * time.Millisecond) {
 		if said := storyQueued(t, worker); said != "" {
 			return said
@@ -261,7 +215,6 @@ func storyEdited(t *testing.T, service, root, checkout string, worker int, under
 	return ""
 }
 
-// storyQueued is everything the queue holds for that worker, and empty while it holds nothing.
 func storyQueued(t *testing.T, worker int) string {
 	t.Helper()
 
@@ -298,16 +251,12 @@ func storyQueued(t *testing.T, worker int) string {
 	return said.String()
 }
 
-// asFloat is a JSON number, and nought for anything else.
 func asFloat(held any) float64 {
 	number, _ := held.(float64)
 
 	return number
 }
 
-// storyWhisper is the words an agent READS out of what reached its queue, which is its own business, as against
-// the cards, which are the environment's: one environment keeps one record of what has been announced, so a card
-// may name any file of it.
 func storyWhisper(t *testing.T, told string) string {
 	t.Helper()
 
@@ -328,8 +277,6 @@ func storyWhisper(t *testing.T, told string) string {
 	return said.String()
 }
 
-// storyCards are the cards an answer carries, each as the words it was written with: the environment's own
-// record of what has been announced, as against the tell, which is one agent's.
 func storyCards(t *testing.T, told string) []string {
 	t.Helper()
 

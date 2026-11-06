@@ -13,7 +13,6 @@ func init() {
 	sins.Register(catalog.Python, AssembledTemplate{})
 }
 
-// Definition is what the sin states about itself.
 func (AssembledTemplate) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "python-assembled-template",

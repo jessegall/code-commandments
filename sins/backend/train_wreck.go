@@ -13,8 +13,6 @@ func init() {
 	sins.Register(catalog.PHP, TrainWreck{})
 }
 
-
-// Definition is what the sin states about itself.
 func (TrainWreck) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "train-wreck",

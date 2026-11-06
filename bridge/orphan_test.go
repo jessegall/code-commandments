@@ -11,8 +11,6 @@ import (
 	"time"
 )
 
-// TestABridgeContainerStopsWhenTheRunThatStartedItDies starts the C# bridge serving, under a process that is then
-// killed outright, and holds its container to stopping: a container a dead run leaves behind compiles for no one.
 func TestABridgeContainerStopsWhenTheRunThatStartedItDies(t *testing.T) {
 	root, err := filepath.EvalSymlinks(t.TempDir())
 	if err != nil {
@@ -20,8 +18,6 @@ func TestABridgeContainerStopsWhenTheRunThatStartedItDies(t *testing.T) {
 	}
 	command := bridgetest.Roslyn(t, root)
 	caller := exec.Command("sh", append([]string{"-c", `exec 3<&0; "$@" <&3 & wait`, "sh"}, append(command, "--serve")...)...)
-	// The bridge's input stays open after its caller dies, as it does while a bridge busy compiling reads none of it:
-	// only stopping the container ends the run.
 	reading, input, err := os.Pipe()
 	if err != nil {
 		t.Fatal(err)
@@ -58,7 +54,6 @@ func TestABridgeContainerStopsWhenTheRunThatStartedItDies(t *testing.T) {
 	}
 }
 
-// within says whether the condition holds before the time is up, asking twice a second.
 func within(limit time.Duration, holds func() bool) bool {
 	for deadline := time.Now().Add(limit); time.Now().Before(deadline); time.Sleep(500 * time.Millisecond) {
 		if holds() {
@@ -69,7 +64,6 @@ func within(limit time.Duration, holds func() bool) bool {
 	return false
 }
 
-// childOf is the process id of a process the parent started, read from /proc; empty when there is none to read.
 func childOf(parent int) string {
 	stats, _ := filepath.Glob("/proc/[0-9]*/stat")
 	for _, stat := range stats {

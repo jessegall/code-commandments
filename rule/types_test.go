@@ -156,13 +156,6 @@ func TestATypeKindTheToolDoesNotKnowSaysWhich(t *testing.T) {
 	}
 }
 
-// Absence is the one thing every one of these languages spells differently and means identically, and a rule could
-// only glob the text for it: `?*` is PHP's, `*|null` catches one more spelling, and neither says anything about
-// `str | None` or a C# `string?`. One check over the type object answers it in all of them, and refuses the two
-// look-alikes a glob gets wrong: a union of two real types, and a type merely NAMED like absence.
-
-// TestARuleAsksWhetherATypeAdmitsAbsence holds the reading in four languages, each with its own spelling and its
-// own look-alike in the same file.
 func TestARuleAsksWhetherATypeAdmitsAbsence(t *testing.T) {
 	codebases := map[string]*engine.Codebase{
 		"backend": phpCodebase(t, "Till.php", `<?php
@@ -271,13 +264,9 @@ export function named(): Maybe<Money> {
 		query  string
 		want   string
 	}{
-		// PHP writes absence two ways, and both are the same type.
 		{"backend", `{"select": "function", "where": [{"nullable": true}]}`, "[9 14]"},
-		// A union of two real types is no absence, and neither is a class called Maybe.
 		{"backend", `{"select": "function", "where": [{"nullable": false}]}`, "[19 24 29]"},
 
-		// The quoted form is the same type as the plain one, which is how Python writes a type that is not
-		// defined yet, and it used to be read as a class called "Money | None".
 		{"python", `{"select": "function", "where": [{"nullable": true}]}`, "[9 13]"},
 
 		{"csharp", `{"select": "function", "where": [{"nullable": true}]}`, "[9]"},
@@ -291,13 +280,6 @@ export function named(): Maybe<Money> {
 	}
 }
 
-// A type's SHAPE and what a collection holds are facts the bridges write and nothing read, so a rule had to glob a
-// type's text for both: `*[]` for an array, `list<*>` for its element. These hold the two checks over the type
-// object, where the shape is the bridge's own word and the element is the type it read rather than a name parsed
-// back out of a string.
-
-// TestARuleAsksWhatShapeATypeHas holds the shapes apart in the language whose bridge writes the most of them, and
-// holds a generic that is no collection to being neither.
 func TestARuleAsksWhatShapeATypeHas(t *testing.T) {
 	codebase := frontendtest.FromSource(t, map[string]string{"src/till.ts": `export class Order {}
 
@@ -330,8 +312,6 @@ export function either(): Order | number {
 	}
 }
 
-// TestAPhpArraysElementIsWhatItsDeclarationSays holds the element where the type itself cannot carry it: a PHP
-// array says nothing about what it holds, and a docblock or an attribute is the only thing that does.
 func TestAPhpArraysElementIsWhatItsDeclarationSays(t *testing.T) {
 	codebase := phpCodebase(t, "Till.php", `<?php
 
@@ -357,10 +337,8 @@ final class Till
 `)
 
 	for query, want := range map[string]string{
-		// The array the docblock types, read where it is used.
 		`{"select": "member-access", "where": [{"elementType": "*Order"}]}`: "[16]",
-		// The array nothing types holds nothing a rule can name, which is the honest answer.
-		`{"select": "member-access", "where": [{"elementType": "*"}]}`: "[16]",
+		`{"select": "member-access", "where": [{"elementType": "*"}]}`:      "[16]",
 	} {
 		if got := found(t, "backend", query, codebase); got != want {
 			t.Errorf("%s: found %s, want %s", query, got, want)
@@ -368,9 +346,6 @@ final class Till
 	}
 }
 
-// TestACollectionsElementAnswersForPythonToo holds the element where the bridge writes it from a generic rather
-// than from an array type: a sequence holds its only argument, a mapping its second, and a generic nobody can
-// read holds nothing rather than a guess.
 func TestACollectionsElementAnswersForPythonToo(t *testing.T) {
 	codebase := pythontest.FromSource(t, map[string]string{
 		"shop/__init__.py": "",
@@ -396,11 +371,9 @@ def one() -> Order:
 	})
 
 	for query, want := range map[string]string{
-		// A sequence of orders and a mapping TO orders both hold an order; a mapping keyed BY one does not.
 		`{"select": "function", "where": [{"elementType": "*Order"}]}`: "[5 9]",
 		`{"select": "function", "where": [{"elementType": "int"}]}`:    "[13]",
-		// A type that is no collection has no element to name.
-		`{"select": "function", "where": [{"elementType": "*"}]}`: "[5 9 13]",
+		`{"select": "function", "where": [{"elementType": "*"}]}`:      "[5 9 13]",
 	} {
 		if got := found(t, "python", query, codebase); got != want {
 			t.Errorf("python %s: found %s, want %s", query, got, want)
@@ -408,9 +381,6 @@ def one() -> Order:
 	}
 }
 
-// TestACollectionsElementAnswersForCSharpToo holds the element where Roslyn answers it from what a type
-// implements rather than from a generic the bridge was taught: anything enumerable holds what it enumerates, a
-// dictionary holds its value, and a string, which enumerates its characters, is no collection to any rule.
 func TestACollectionsElementAnswersForCSharpToo(t *testing.T) {
 	codebase := csharptest.FromSource(t, map[string]string{"Shop/Till.cs": `using System.Collections.Generic;
 
@@ -435,12 +405,9 @@ public sealed class Till
 `})
 
 	for query, want := range map[string]string{
-		// A list and anything enumerable hold their element; a dictionary holds its value, not its key.
 		`{"select": "function", "where": [{"elementType": "*Order"}]}`: "[9 11 13]",
-		// C# spells a keyword type as the type it is, so the element of a count is `System.Int32`.
 		`{"select": "function", "where": [{"elementType": "*Int32"}]}`: "[15]",
-		// The ones that hold nothing: a type that is no collection, and a string, which enumerates characters.
-		`{"select": "function", "where": [{"elementType": "*"}]}`: "[9 11 13 15]",
+		`{"select": "function", "where": [{"elementType": "*"}]}`:      "[9 11 13 15]",
 	} {
 		if got := found(t, "csharp", query, codebase); got != want {
 			t.Errorf("csharp %s: found %s, want %s", query, got, want)
@@ -448,9 +415,6 @@ public sealed class Till
 	}
 }
 
-// TestARuleAsksWhatACollectionHolds holds the element, and holds it to saying nothing where the collection's
-// element is unknown: a bag of unknowns is no bag of the type the rule asked about, and guessing one would make
-// every rule about a typed collection fire on every untyped one.
 func TestARuleAsksWhatACollectionHolds(t *testing.T) {
 	codebase := frontendtest.FromSource(t, map[string]string{"src/orders.ts": `export class Order {}
 
@@ -470,8 +434,7 @@ export function one(): Order {
 	for query, want := range map[string]string{
 		`{"select": "function", "where": [{"elementType": "*Order"}]}`:  "[3]",
 		`{"select": "function", "where": [{"elementType": "unknown"}]}`: "[7]",
-		// The one that holds nothing: a type that is no collection has no element to name.
-		`{"select": "function", "where": [{"elementType": "*"}]}`: "[3 7]",
+		`{"select": "function", "where": [{"elementType": "*"}]}`:       "[3 7]",
 	} {
 		if got := found(t, "typescript", query, codebase); got != want {
 			t.Errorf("%s: found %s, want %s", query, got, want)
@@ -479,8 +442,6 @@ export function one(): Order {
 	}
 }
 
-// TestAShapeTheContractDoesNotFixSaysWhich holds the closed set, since the shapes are the contract's own words and
-// a rule file is written by hand.
 func TestAShapeTheContractDoesNotFixSaysWhich(t *testing.T) {
 	written := `{"engine": "typescript", "sin": {"name": "x", "skill": "php/absence"}, "find": {"select": "function", "where": [{"typeShape": "collection"}]}}`
 
@@ -489,12 +450,6 @@ func TestAShapeTheContractDoesNotFixSaysWhich(t *testing.T) {
 	}
 }
 
-// Where a type came FROM is the fact that tells a type a human wrote from one a tool worked out, and it decides
-// two things nothing else can: a rule about a type a docblock carries where the signature carries none, and the
-// exemption every honesty rule needs — do not judge a type nobody wrote.
-
-// TestARuleAsksWhereATypeCameFrom holds the origins the bridges and the engine really write: a declaration's own
-// annotation, and the engine's own inference where no annotation says anything.
 func TestARuleAsksWhereATypeCameFrom(t *testing.T) {
 	codebase := phpCodebase(t, "Desk.php", `<?php
 
@@ -514,9 +469,7 @@ final class Desk
 `)
 
 	for query, want := range map[string]string{
-		// The return type the method writes.
-		`{"select": "function", "where": [{"typeOrigin": "written"}]}`: "[9]",
-		// The construction's type is the engine's own reading, and says so rather than borrowing the word written.
+		`{"select": "function", "where": [{"typeOrigin": "written"}]}`:      "[9]",
 		`{"select": "construction", "where": [{"typeOrigin": "inferred"}]}`: "[11]",
 		`{"select": "construction", "where": [{"typeOrigin": "written"}]}`:  "[]",
 	} {
@@ -526,16 +479,12 @@ final class Desk
 	}
 }
 
-// TestATypeNobodyWroteIsLeftAlone holds the exemption as a reject, which is how an honesty rule uses it: the rule
-// judges the types a human wrote and leaves the checker's own readings alone, so proving the positive alone would
-// not prove the thing such a rule depends on.
 func TestATypeNobodyWroteIsLeftAlone(t *testing.T) {
 	codebase := frontendtest.FromSource(t, map[string]string{"src/till.ts": `export function total(count: number): number {
     return count + 1
 }
 `})
 
-	// Every name in the body carries the type the checker read, and nobody wrote any of them.
 	read := `{"select": "identifier", "where": [{"typeShape": "keyword"}]}`
 	if got := found(t, "typescript", read, codebase); got == "[]" {
 		t.Fatalf("%s: found nothing, and the checker types every name here", read)
@@ -547,7 +496,6 @@ func TestATypeNobodyWroteIsLeftAlone(t *testing.T) {
 	}
 }
 
-// TestAnOriginTheContractDoesNotFixSaysWhich holds the closed set.
 func TestAnOriginTheContractDoesNotFixSaysWhich(t *testing.T) {
 	written := `{"engine": "backend", "sin": {"name": "x", "skill": "php/absence"}, "find": {"select": "function", "where": [{"typeOrigin": "guessed"}]}}`
 

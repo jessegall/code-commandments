@@ -18,12 +18,10 @@ func init() {
 	detectors.Register(catalog.Python, ArchaeologyCommentDetector{})
 }
 
-// Sin is the sin the detector finds.
 func (ArchaeologyCommentDetector) Sin() sins.Sin {
 	return pysins.ArchaeologyComment{}
 }
 
-// Find is every place the sin is committed.
 func (ArchaeologyCommentDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return py.In(codebase).
 		WhereStatement().
@@ -31,8 +29,6 @@ func (ArchaeologyCommentDetector) Find(codebase *engine.Codebase) []engine.Match
 		Get()
 }
 
-// proseCommits is a check that any text of the prose written for a statement commits the sin the judge finds,
-// its Sphinx version notes set aside.
 func proseCommits(sinful func(string) bool) func(py.Node) bool {
 	return func(n py.Node) bool {
 		return slices.ContainsFunc(n.Prose(), func(text string) bool { return sinful(py.WithoutVersionNotes(text)) })

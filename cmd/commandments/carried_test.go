@@ -10,9 +10,6 @@ import (
 	"testing"
 )
 
-// TestTheBinaryFindsNothingThroughItsSourcePath holds every package the binary is built from to carrying what it
-// reads: a file found through runtime.Caller names a path on the machine that built the binary, not the one it
-// runs on.
 func TestTheBinaryFindsNothingThroughItsSourcePath(t *testing.T) {
 	listed, err := exec.Command("go", "list", "-deps", "-f", "{{if not .Standard}}{{.Dir}}|{{join .GoFiles \"|\"}}{{end}}", ".").Output()
 	if err != nil {

@@ -6,8 +6,6 @@ import (
 	"testing"
 )
 
-// TestTheSkillsAreRenderedIntoTheFolderTheJournalNames holds the plugin's skills to the plugin's folder when the
-// binary lives outside every plugin folder: the folder the journal names is the one written.
 func TestTheSkillsAreRenderedIntoTheFolderTheJournalNames(t *testing.T) {
 	plugin := t.TempDir()
 	t.Setenv(journalPluginDir, plugin)

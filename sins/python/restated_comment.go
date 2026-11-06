@@ -13,7 +13,6 @@ func init() {
 	sins.Register(catalog.Python, RestatedComment{})
 }
 
-// Definition is what the sin states about itself.
 func (RestatedComment) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "python-restated-comment",

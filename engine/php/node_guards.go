@@ -8,7 +8,6 @@ import (
 	"github.com/jessegall/code-commandments/engine"
 )
 
-// flattenConjuncts is every operand of a chain of &&, in order.
 func flattenConjuncts(node engine.Match) []engine.Match {
 	if node.Kind() == "Expr_BinaryOp_BooleanAnd" {
 		return append(flattenConjuncts(node.Child("left")), flattenConjuncts(node.Child("right"))...)
@@ -17,12 +16,10 @@ func flattenConjuncts(node engine.Match) []engine.Match {
 	return []engine.Match{node}
 }
 
-// isOutermostAnd says whether the node is a && that no && holds.
 func (n Node) isOutermostAnd() bool {
 	return n.Kind() == "Expr_BinaryOp_BooleanAnd" && n.Parent().Kind() != "Expr_BinaryOp_BooleanAnd"
 }
 
-// localAliases is every local its function assigns exactly once, and what it is assigned.
 func (n Node) localAliases() map[string]engine.Match {
 	function := n.EnclosingFunctionLike()
 	if !function.Exists() {
@@ -44,7 +41,6 @@ func (n Node) localAliases() map[string]engine.Match {
 	return assigned
 }
 
-// reachCount is how many property reads, method calls, static calls and instanceof tests sit in the node.
 func reachCount(node engine.Match) int {
 	count := 0
 	for _, each := range withDescendants(node) {
@@ -57,8 +53,6 @@ func reachCount(node engine.Match) int {
 	return count
 }
 
-// IsSubstantiveGuard says whether the node is an outermost && of two or more conjuncts, not all instanceof, that
-// between them reach into two or more things, a local assigned once read as what it holds.
 func (n Node) IsSubstantiveGuard() bool {
 	if !n.isOutermostAnd() {
 		return false
@@ -80,7 +74,6 @@ func (n Node) IsSubstantiveGuard() bool {
 	return substance >= 2
 }
 
-// IsTypeNarrowingGuard says whether the node is an outermost && with two or more instanceof conjuncts.
 func (n Node) IsTypeNarrowingGuard() bool {
 	if !n.isOutermostAnd() {
 		return false
@@ -95,8 +88,6 @@ func (n Node) IsTypeNarrowingGuard() bool {
 	return count >= 2
 }
 
-// CanonicalGuardHash is the fingerprint of a && guard's conjuncts, in any order, locals assigned once read as
-// their expressions.
 func (n Node) CanonicalGuardHash() string {
 	if n.Kind() != "Expr_BinaryOp_BooleanAnd" {
 		return ""
@@ -111,7 +102,6 @@ func (n Node) CanonicalGuardHash() string {
 	return strings.Join(hashes, "|")
 }
 
-// branchPointOf is the branch the test decides, up to its function; no node when it decides none.
 func branchPointOf(test engine.Match) engine.Match {
 	child, parent := test, test.Parent()
 	for parent.Exists() && !(Node{Match: parent}).IsFunctionLike() {
@@ -124,7 +114,6 @@ func branchPointOf(test engine.Match) engine.Match {
 	return engine.Match{}
 }
 
-// typeTests is every instanceof in the node's function that decides a branch, testing the same subject as the node.
 func (n Node) typeTests() []engine.Match {
 	function := n.EnclosingFunctionLike()
 	if n.Kind() != "Expr_Instanceof" || !function.Exists() {
@@ -141,8 +130,6 @@ func (n Node) typeTests() []engine.Match {
 	return tests
 }
 
-// IsTypeSwitchHead says whether the node is the first instanceof of a function's chain of branches testing one
-// subject against two or more classes.
 func (n Node) IsTypeSwitchHead() bool {
 	function := n.EnclosingFunctionLike()
 	own := branchPointOf(n.Match)
@@ -173,7 +160,6 @@ func (n Node) IsTypeSwitchHead() bool {
 	return len(branches) >= 2 && len(classes) >= 2
 }
 
-// classNameOf is the class a name node names; empty for an expression.
 func classNameOf(class engine.Match) string {
 	if !isName(class) {
 		return ""
@@ -182,7 +168,6 @@ func classNameOf(class engine.Match) string {
 	return class.Name()
 }
 
-// TypeSwitchClasses is every class the node's chain of type tests tests its subject against.
 func (n Node) TypeSwitchClasses() []string {
 	var classes []string
 	for _, test := range n.typeTests() {
@@ -194,7 +179,6 @@ func (n Node) TypeSwitchClasses() []string {
 	return classes
 }
 
-// IsInFromSourceFactory says whether the node sits in a static method returning its own class.
 func (n Node) IsInFromSourceFactory() bool {
 	function := n.EnclosingFunctionLike()
 	if function.Kind() != "Stmt_ClassMethod" || !slices.Contains(function.Node().Modifiers, "static") {
@@ -206,8 +190,6 @@ func (n Node) IsInFromSourceFactory() bool {
 	return returns == "self" || returns == "static" || class != "" && strings.TrimLeft(returns, `\`) == strings.TrimLeft(class, `\`)
 }
 
-// TypeSwitchTranslatesEveryArm says whether every arm of the node's type switch builds or converts from the subject:
-// a translation between type systems, not behaviour that belongs on the types.
 func (n Node) TypeSwitchTranslatesEveryArm() bool {
 	subject := StructuralHash(n.Child("expr"))
 	var arms []engine.Match
@@ -253,7 +235,6 @@ func isTranslationOf(result engine.Match, subject string) bool {
 	return slices.ContainsFunc(Arguments(result), func(argument engine.Match) bool { return StructuralHash(argument.Child("value")) == subject })
 }
 
-// NamedArguments is every argument the call passes by name.
 func (n Node) NamedArguments() []engine.Match {
 	var named []engine.Match
 	for _, argument := range Arguments(n.Match) {
@@ -265,7 +246,6 @@ func (n Node) NamedArguments() []engine.Match {
 	return named
 }
 
-// MethodCallName is the method a send names; empty for anything else.
 func (n Node) MethodCallName() string {
 	if name := n.Child("name"); isMethodSend(n.Match) && name.Kind() == "Identifier" {
 		return name.Name()

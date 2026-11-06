@@ -14,16 +14,11 @@ import (
 	"unicode/utf8"
 )
 
-// The module takes no dependency, so Go never looks for one in the composer vendor/ folder beside it:
-// this file checks a line against tree.schema.json with the JSON Schema keywords that schema uses.
-
 //go:embed tree.schema.json
 var schemaSource []byte
 
-// annotations are the schema keywords that describe and never constrain.
 var annotations = map[string]bool{"$schema": true, "$id": true, "title": true, "description": true, "$defs": true}
 
-// keywords are the constraining keywords this validator applies; any other is refused when the schema loads.
 var keywords = map[string]bool{
 	"$ref": true, "type": true, "properties": true, "required": true, "additionalProperties": true, "enum": true, "const": true,
 	"items": true, "prefixItems": true, "minItems": true, "maxItems": true, "minimum": true, "minLength": true, "pattern": true,
@@ -37,7 +32,6 @@ var (
 	patterns   sync.Map
 )
 
-// Validate checks one line of a stream against tree.schema.json.
 func Validate(line []byte) error {
 	root, err := loadedSchema()
 	if err != nil {
@@ -84,7 +78,6 @@ func decodeNumbers(data []byte) (any, error) {
 	return value, nil
 }
 
-// known refuses a schema that uses a keyword this validator would silently ignore.
 func known(schema map[string]any, at string) error {
 	for keyword, value := range schema {
 		switch {
@@ -345,7 +338,6 @@ func checkCombined(root, schema map[string]any, value any, at string) error {
 	return nil
 }
 
-// claims says whether value holds every key the schema requires, so its error is the one worth reporting.
 func claims(schema map[string]any, value any) bool {
 	object, ok := value.(map[string]any)
 	if !ok {

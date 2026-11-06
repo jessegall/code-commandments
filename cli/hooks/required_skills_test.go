@@ -9,10 +9,6 @@ import (
 	_ "github.com/jessegall/code-commandments/registry"
 )
 
-// TestTheSkillOfASinIsOwedNotMerelyNamed holds what a journal is told when an edit commits a sin: the ids of the
-// skills that teach the fix, so the journal keeps them on the agent's row and holds every tool but a read of one
-// until it is read. Naming the skill in the nudge is advice an agent may read past, and a sin fixed from memory
-// of a skill that was never read is how a finding gets silenced rather than resolved.
 func TestTheSkillOfASinIsOwedNotMerelyNamed(t *testing.T) {
 	root, edited, _ := goProject(t)
 
@@ -32,8 +28,6 @@ func TestTheSkillOfASinIsOwedNotMerelyNamed(t *testing.T) {
 	}
 }
 
-// TestOneSkillIsOwedOnceHoweverMManySinsTeachIt holds the shape of the list: a file carrying several findings of
-// one skill owes that skill once, since the agent reads it once.
 func TestOneSkillIsOwedOnceHoweverMManySinsTeachIt(t *testing.T) {
 	root, edited, _ := goProject(t)
 
@@ -50,8 +44,6 @@ func TestOneSkillIsOwedOnceHoweverMManySinsTeachIt(t *testing.T) {
 	}
 }
 
-// TestTheJournalsLineCarriesTheOwedSkills holds the key the journal reads them by, require_skills, and that an
-// answer owing nothing writes no key at all rather than an empty list.
 func TestTheJournalsLineCarriesTheOwedSkills(t *testing.T) {
 	told := "a sin is in that file"
 
@@ -89,8 +81,6 @@ func TestTheJournalsLineCarriesTheOwedSkills(t *testing.T) {
 	}
 }
 
-// TestTheOwedSkillsOfEveryCheckAreMergedOnce holds the merge: several checks of one moment each owing a skill
-// answer with one list, and a skill two of them name is owed once.
 func TestTheOwedSkillsOfEveryCheckAreMergedOnce(t *testing.T) {
 	merged := Merge([]Response{
 		{Requires: []string{"commandments-go-flow"}},

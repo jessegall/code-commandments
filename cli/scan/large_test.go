@@ -9,8 +9,6 @@ import (
 	"github.com/jessegall/code-commandments/cli/source"
 )
 
-// TestAGeneratedFileIsLeftUnreadAndTheRestIsWalked holds the walk to leaving out a file of more source than a tree
-// can carry, a minified bundle, while every other file is still walked.
 func TestAGeneratedFileIsLeftUnreadAndTheRestIsWalked(t *testing.T) {
 	root := t.TempDir()
 	if err := os.WriteFile(filepath.Join(root, "bundle.ts"), []byte(strings.Repeat("export const a = 1;\n", largestSource/19)), 0o644); err != nil {

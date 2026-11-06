@@ -11,19 +11,16 @@ import (
 // Dispatch is `hooks`: the one entry point every wired hook runs.
 type Dispatch struct{}
 
-// Names are the verbs it answers to.
 func (Dispatch) Names() []string {
 	return []string{"hooks"}
 }
 
-// Help documents it.
 func (Dispatch) Help() help.Help {
 	return help.Of("The wired hook entry point — reads one hook payload from stdin, runs every registered handler, and merges their responses into one.").
 		Form("hooks", "dispatch the moment on stdin (wired by `install`/`sync`; you rarely run this by hand)").
 		In(help.Hooks)
 }
 
-// Run answers the moment on stdin with every hook the project keeps, merged.
 func (Dispatch) Run(in *cli.Input, console cli.Console) (int, error) {
 	event := eventOnStdin()
 	if stepsAside(event) {
@@ -45,19 +42,16 @@ func (Dispatch) Run(in *cli.Input, console cli.Console) (int, error) {
 // Runner is `hook <Name>`: one hook run on its own.
 type Runner struct{}
 
-// Names are the verbs it answers to.
 func (Runner) Names() []string {
 	return []string{"hook"}
 }
 
-// Help documents it.
 func (Runner) Help() help.Help {
 	return help.Of("Run ONE hook directly, by name — the form every wired hook is written as.").
 		Form("hook <Name>", "run that hook against the payload on stdin").
 		In(help.Hooks)
 }
 
-// Run answers the moment on stdin with the hook the class names.
 func (r Runner) Run(in *cli.Input, console cli.Console) (int, error) {
 	class, _ := in.FirstArgument()
 
@@ -76,19 +70,16 @@ type Single struct {
 	About string
 }
 
-// Names are the verbs it answers to.
 func (s Single) Names() []string {
 	return s.Verbs
 }
 
-// Help documents it.
 func (s Single) Help() help.Help {
 	return help.Of(s.About).
 		Form(s.Verbs[0], "run this hook — it reads its payload from stdin, not from flags").
 		In(help.Hooks)
 }
 
-// Run answers the moment on stdin with the hook.
 func (s Single) Run(in *cli.Input, console cli.Console) (int, error) {
 	return respond(s.Hook, console), nil
 }
@@ -106,13 +97,10 @@ func respond(hook Hook, console cli.Console) int {
 	return 0
 }
 
-// stepsAside says whether a hook the package wired leaves the moment to the journal plugin: where the plugin is
-// installed it runs every handler itself, so a default hook a user kept answers nothing rather than run them twice.
 func stepsAside(event Event) bool {
 	return workspace.At(event.Root, "").IsJournalDriven()
 }
 
-// eventOnStdin is the moment the harness wrote on stdin, in the project the command runs for.
 func eventOnStdin() Event {
 	cwd, _ := os.Getwd()
 

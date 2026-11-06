@@ -15,10 +15,6 @@ import (
 const ownRule = `{"engine": "python", "find": {"select": "function", "where": [{"documented": true}]},
  "sin": {"name": "docstring-in-method", "description": "a docstring inside a method", "skill": "python/documentation"}}`
 
-// TestAWorktreeJudgesByTheProjectsOwnRules holds the rules a worker is judged by to the ones its project's owner
-// committed, as its config already is. Read apart, a worktree cut before a rule was committed is told that a
-// configured detector is "declared nowhere" — and, worse than the warning, that rule judges nothing there while
-// every other rule still fires, so the run reads as a pass.
 func TestAWorktreeJudgesByTheProjectsOwnRules(t *testing.T) {
 	project := repository(t)
 
@@ -26,7 +22,6 @@ func TestAWorktreeJudgesByTheProjectsOwnRules(t *testing.T) {
 	run(t, project, "add", "-A")
 	run(t, project, "commit", "-m", "the project's own rule")
 
-	// The worktree is cut from the commit BEFORE the rule, so its own folder has no rule at all.
 	worktree := filepath.Join(t.TempDir(), "work")
 	run(t, project, "worktree", "add", "-b", "a-worker", worktree, "HEAD~1")
 
@@ -40,8 +35,6 @@ func TestAWorktreeJudgesByTheProjectsOwnRules(t *testing.T) {
 	}
 }
 
-// TestARuleIsAuthoredInTheTreeItIsWrittenIn holds the other side: a command that works ON a rule reads the folder
-// it was run in, so a rule being written in a worktree is the one tried, proven and migrated there.
 func TestARuleIsAuthoredInTheTreeItIsWrittenIn(t *testing.T) {
 	project := repository(t)
 	run(t, project, "add", "-A")
@@ -60,12 +53,6 @@ func TestARuleIsAuthoredInTheTreeItIsWrittenIn(t *testing.T) {
 	}
 }
 
-// TestTheConfigAndTheRulesComeFromOneTree is the invariant the two tests above are symptoms of: whatever folder
-// a run is in, the config that turns a rule on and the rule it turns on are read from the SAME tree. They drifted
-// because each resolved its own root — the config lifted to the main checkout, the rules did not — so a worktree
-// was told its own configured rule was declared nowhere and that rule judged nothing there. Asking Enabled for the
-// detectors holds both halves at once: it can only answer a rule when the config that names it and the file that
-// declares it were found together.
 func TestTheConfigAndTheRulesComeFromOneTree(t *testing.T) {
 	project := repository(t)
 
@@ -103,8 +90,6 @@ func TestTheConfigAndTheRulesComeFromOneTree(t *testing.T) {
 	}
 }
 
-// TestAFolderOutsideGitKeepsItsOwnRules holds the quiet case: a folder in no repository has no main checkout to
-// look to, and reads the rules beside it as it always did.
 func TestAFolderOutsideGitKeepsItsOwnRules(t *testing.T) {
 	root := t.TempDir()
 	write(t, filepath.Join(root, ".commandments", "custom", "DocstringInMethodDetector.json"), ownRule)
@@ -114,7 +99,6 @@ func TestAFolderOutsideGitKeepsItsOwnRules(t *testing.T) {
 	}
 }
 
-// repository is a git repository with one commit, which a worktree can be cut from.
 func repository(t *testing.T) string {
 	t.Helper()
 

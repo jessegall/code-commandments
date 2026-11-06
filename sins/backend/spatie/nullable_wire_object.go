@@ -11,7 +11,6 @@ type NullableWireObject struct{}
 
 func init() { sins.Register(catalog.PHP, NullableWireObject{}) }
 
-// Definition is what the sin states about itself.
 func (NullableWireObject) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "nullable-wire-object",

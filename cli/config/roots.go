@@ -12,19 +12,13 @@ import (
 )
 
 var (
-	// notSource are top folders a PSR-4 map may name that hold no application source.
 	notSource = []string{"database", "tests", "test"}
 
-	// built are folders a build or an installer writes, never source.
 	built = []string{"vendor", "node_modules", "dist", "build", "coverage", "storage", "bootstrap/cache", "public/build", ".next", ".nuxt", "venv", ".venv", "__pycache__", "site-packages"}
 
-	// conventions are the folders source lives in by convention.
 	conventions = []string{"app", "src", "resources/js"}
 )
 
-// DetectRoots are the project's source roots: its composer.json PSR-4 folders (less tests and database),
-// the conventional app, src and resources/js, and each JS app's src beside its package.json; the project
-// itself when none is found.
 func DetectRoots(root string) []string {
 	found := map[string]bool{}
 
@@ -69,7 +63,6 @@ func DetectRoots(root string) []string {
 	return roots
 }
 
-// psr4Dirs are the folders composer.json maps namespaces to.
 func psr4Dirs(root string) []string {
 	raw, err := os.ReadFile(root + "/composer.json")
 	if err != nil {
@@ -99,7 +92,6 @@ func psr4Dirs(root string) []string {
 	return dirs
 }
 
-// listOf is one path or a list of them.
 func listOf(value any) []string {
 	switch value := value.(type) {
 	case string:
@@ -119,7 +111,6 @@ func listOf(value any) []string {
 	}
 }
 
-// Absolute are the roots under the project, `.` being the project itself.
 func Absolute(root string, roots []string) []string {
 	root = strings.TrimRight(root, "/")
 	absolute := make([]string, len(roots))
@@ -135,8 +126,6 @@ func Absolute(root string, roots []string) []string {
 	return absolute
 }
 
-// DeclaredRoots are the roots judge scans with no path given: the config's, or, when it declares none, the
-// detected ones, written into the config so the next run reads them.
 func DeclaredRoots(root string) ([]string, error) {
 	project, err := Load(root)
 	if err != nil {
@@ -164,8 +153,6 @@ func isDir(path string) bool {
 	return err == nil && info.IsDir()
 }
 
-// ToParse are the roots a run over path parses: a path outside the project is its own world; one under a
-// declared root parses the declared roots, so cross-file rules see the whole tree; any other adds itself.
 func ToParse(project, path string) ([]string, error) {
 	target := strings.TrimRight(realOr(path), "/")
 	home := strings.TrimRight(realOr(project), "/")
@@ -190,7 +177,6 @@ func ToParse(project, path string) ([]string, error) {
 	return append(roots, target), nil
 }
 
-// realOr is the path with its links resolved, or the path itself when it does not exist.
 func realOr(path string) string {
 	resolved, err := filepath.EvalSymlinks(path)
 	if err != nil {
@@ -204,17 +190,6 @@ func realOr(path string) string {
 	return resolved
 }
 
-// BuiltFolders are the KINDS of folder a build or an installer wrote under root, each named once as a pattern
-// that covers it wherever it lies, sorted.
-//
-// By its kind, because a path goes stale. This is what the journal writes into a project's settings at install,
-// and it used to be one path per folder found on disk at that moment: at the top of the project, or beside a
-// detected source root, and nowhere else. A consumer with 38 modules each holding web/dist had 5 of them in no
-// list at all, so those were judged, and a module added later is never in any list — nothing adds it. Worse, a
-// build folder nested deeper than a source root's parent was never found to begin with.
-//
-// The project is still asked which kinds it HAS, so the answer is about this project and names no folder it does
-// not keep.
 func BuiltFolders(root string) []string {
 	var found []string
 
@@ -227,9 +202,6 @@ func BuiltFolders(root string) []string {
 	return found
 }
 
-// kindsUnder are the build and installer folder kinds the project keeps somewhere. The walk goes by folders
-// only, and never INTO one it has just recognised: a node_modules holds thousands of its own, and none of them is
-// a fact about this project.
 func kindsUnder(root string) map[string]bool {
 	kinds := map[string]bool{}
 
@@ -263,7 +235,6 @@ func kindsUnder(root string) map[string]bool {
 	return kinds
 }
 
-// WritesLanguage says whether any detected source root holds a file of the language, outside built folders.
 func WritesLanguage(root string, language source.Language) bool {
 	for _, dir := range DetectRoots(root) {
 		found := false

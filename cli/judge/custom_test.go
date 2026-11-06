@@ -11,7 +11,6 @@ import (
 	_ "github.com/jessegall/code-commandments/registry"
 )
 
-// ownRuleProject is a project with a rule of its own that its one source file breaks.
 func ownRuleProject(t *testing.T) string {
 	t.Helper()
 	root := t.TempDir()
@@ -61,7 +60,6 @@ func TestAFindingOfTheProjectsOwnRuleIsMarkedAsItsOwn(t *testing.T) {
 	}
 }
 
-// layeredProject is a project whose own rules read its declared layers, its test code and its signatures.
 func layeredProject(t *testing.T) string {
 	t.Helper()
 	root := t.TempDir()

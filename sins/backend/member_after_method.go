@@ -11,7 +11,6 @@ type MemberAfterMethod struct{}
 
 func init() { sins.Register(catalog.PHP, MemberAfterMethod{}) }
 
-// Definition is what the sin states about itself.
 func (MemberAfterMethod) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "member-after-method",

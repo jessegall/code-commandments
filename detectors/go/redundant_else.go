@@ -16,12 +16,10 @@ func init() {
 	detectors.Register(catalog.Go, RedundantElseDetector{})
 }
 
-// Sin is the sin the detector finds.
 func (RedundantElseDetector) Sin() sins.Sin {
 	return gosins.RedundantElse{}
 }
 
-// Find is every place the sin is committed.
 func (RedundantElseDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return golang.In(codebase).
 		WhereIs(engine.Branch).

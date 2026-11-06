@@ -12,13 +12,6 @@ import (
 	"github.com/jessegall/code-commandments/contract"
 )
 
-// A generated vocabulary is only worth having while it is true: a bridge that starts emitting a kind, a field, an
-// operator, a modifier or a flag the committed file does not list makes every surface read from it — the schema's
-// autocomplete, the suggester's "did you mean" — a lie that reads like coverage. So the suite fails until the
-// census is run again, which is the same shape the contract's own samples are held to.
-
-// TestEveryRecordedStreamIsInTheVocabulary holds every committed vocabulary to the streams it was read from: what
-// a stream carries, the vocabulary lists.
 func TestEveryRecordedStreamIsInTheVocabulary(t *testing.T) {
 	committed, err := Vocabularies()
 	if err != nil {
@@ -42,7 +35,6 @@ func TestEveryRecordedStreamIsInTheVocabulary(t *testing.T) {
 	}
 }
 
-// holds reports every fact the node carries that its construct's row does not list.
 func holds(t *testing.T, vocabulary Vocabulary, node *contract.Node, source string) {
 	t.Helper()
 
@@ -73,11 +65,6 @@ func holds(t *testing.T, vocabulary Vocabulary, node *contract.Node, source stri
 	}
 }
 
-// TestAVocabularySaysWhereItsRowsCameFrom holds the two things that make a generated file readable: where its
-// rows came from, and that every row says who vouches for it. A row has two possible vouchers and they answer
-// different questions: a stream shows what a kind is really written WITH — its role, its flags, the slots its
-// children fill — and a parser shows only that the kind exists, so a row the parser alone vouches for carries
-// neither a role nor an example and is no less honest for it.
 func TestAVocabularySaysWhereItsRowsCameFrom(t *testing.T) {
 	committed, err := Vocabularies()
 	if err != nil {
@@ -93,8 +80,6 @@ func TestAVocabularySaysWhereItsRowsCameFrom(t *testing.T) {
 			t.Errorf("%s names no constructs", language)
 		}
 
-		// A language is covered by a recorded stream, by its parser's own declaration, or by both. One covered
-		// by neither has rows nothing answers for.
 		if len(vocabulary.Sources) == 0 && vocabulary.Parser == "" {
 			t.Errorf("%s was read from no stream and declared by no parser", language)
 		}
@@ -123,10 +108,6 @@ func TestAVocabularySaysWhereItsRowsCameFrom(t *testing.T) {
 	}
 }
 
-// TestEveryObservedConstructIsOneItsParserDeclares is the invariant the declared half exists for: a parser
-// answers for its whole vocabulary, so anything a stream really carries must be something it declared. A kind or
-// a slot that fails it means one of two things, and both need a person: a bridge renamed what it writes, or a
-// recorded declaration is older than the bridge that wrote the stream.
 func TestEveryObservedConstructIsOneItsParserDeclares(t *testing.T) {
 	committed, err := Vocabularies()
 	if err != nil {
@@ -142,7 +123,6 @@ func TestEveryObservedConstructIsOneItsParserDeclares(t *testing.T) {
 	}
 }
 
-// declares reports every kind and slot the language is seen writing that its own parser does not declare.
 func declares(t *testing.T, language contract.Language, vocabulary Vocabulary) {
 	t.Helper()
 
@@ -168,7 +148,6 @@ func declares(t *testing.T, language contract.Language, vocabulary Vocabulary) {
 	}
 }
 
-// recorded is the stream the source holds, read through the contract's own reader.
 func recorded(t *testing.T, source string) *contract.Stream {
 	t.Helper()
 
@@ -196,14 +175,6 @@ func recorded(t *testing.T, source string) *contract.Stream {
 	return stream
 }
 
-// A kind is the language's own word and a rule may write it as it is, but `Expr_StaticCall` is nobody's idea of a
-// readable rule. The spelling beside it is derived mechanically, so a bridge that adds a kind gets one without
-// anybody deciding, and the one thing that could make such a table lie — two kinds spelling the same — is handled
-// mechanically too: both lose their spelling and are named as collided.
-
-// TestEverySpellingNamesOneKind holds the table unambiguous and readable back: no two kinds share a spelling, each
-// spelling answers its own kind, and a kind that collided says so instead of carrying a word that means two
-// things.
 func TestEverySpellingNamesOneKind(t *testing.T) {
 	committed, err := Vocabularies()
 	if err != nil {
@@ -221,8 +192,6 @@ func TestEverySpellingNamesOneKind(t *testing.T) {
 	}
 }
 
-// unambiguous reports every spelling of the language that names more than one kind, that names a kind other than
-// its own, or that is missing from a kind nothing collided with.
 func unambiguous(t *testing.T, language contract.Language, vocabulary Vocabulary) {
 	t.Helper()
 
@@ -254,8 +223,6 @@ func unambiguous(t *testing.T, language contract.Language, vocabulary Vocabulary
 	}
 }
 
-// TestASpellingDropsWhatTheRoleAlreadySays holds the derivation itself, with the shapes each language pads a kind
-// with, and holds it to leaving a kind that says nothing twice alone.
 func TestASpellingDropsWhatTheRoleAlreadySays(t *testing.T) {
 	for kind, spelling := range map[string]string{
 		"Expr_StaticCall":          "static-call",
@@ -268,9 +235,8 @@ func TestASpellingDropsWhatTheRoleAlreadySays(t *testing.T) {
 		"Name_FullyQualified":      "name-fully-qualified",
 		"AnnAssign":                "ann-assign",
 		"ForEachVariableStatement": "for-each-variable",
-		// A kind that is only padding keeps its word rather than becoming nothing.
-		"Expression": "expression",
-		"Statement":  "statement",
+		"Expression":               "expression",
+		"Statement":                "statement",
 	} {
 		if got := Spelling(kind); got != spelling {
 			t.Errorf("%s spells %q, want %q", kind, got, spelling)
@@ -278,8 +244,6 @@ func TestASpellingDropsWhatTheRoleAlreadySays(t *testing.T) {
 	}
 }
 
-// TestTwoKindsSpellingTheSameLoseTheirSpelling holds the collision reading, which is what the generator clears a
-// spelling by, on a pair written here on purpose.
 func TestTwoKindsSpellingTheSameLoseTheirSpelling(t *testing.T) {
 	colliding := Vocabulary{Constructs: []Construct{
 		{Kind: "VariableDeclaration", Spells: "variable"},
@@ -292,8 +256,6 @@ func TestTwoKindsSpellingTheSameLoseTheirSpelling(t *testing.T) {
 		t.Errorf("the collisions are %v, and the two variable kinds are the only one", collisions)
 	}
 
-	// Every language the census reads really has such a pair or really has none, which the committed files say;
-	// what matters is that a collision is never written as a spelling.
 	committed, err := Vocabularies()
 	if err != nil {
 		t.Fatalf("the committed vocabularies cannot be read: %v", err)
@@ -304,7 +266,6 @@ func TestTwoKindsSpellingTheSameLoseTheirSpelling(t *testing.T) {
 	}
 }
 
-// written reports a spelling the vocabulary wrote although that spelling collided.
 func written(t *testing.T, language contract.Language, vocabulary Vocabulary) {
 	t.Helper()
 

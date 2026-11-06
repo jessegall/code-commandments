@@ -13,7 +13,6 @@ func init() {
 	sins.Register(catalog.CSharp, DuplicateMethod{})
 }
 
-// Definition is what the sin states about itself.
 func (DuplicateMethod) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "duplicate-csharp-method",

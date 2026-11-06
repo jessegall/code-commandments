@@ -9,7 +9,6 @@ import (
 	cssins "github.com/jessegall/code-commandments/sins/csharp"
 )
 
-// ladderRungs is how many rungs make a ladder.
 const ladderRungs = 4
 
 // SubjectLadderDetector finds an `if` ladder of four or more rungs comparing one subject with a constant: a `switch` written as a ladder.
@@ -19,12 +18,10 @@ func init() {
 	detectors.Register(catalog.CSharp, SubjectLadderDetector{})
 }
 
-// Sin is the sin the detector finds.
 func (SubjectLadderDetector) Sin() sins.Sin {
 	return cssins.SubjectLadder{}
 }
 
-// Find is every place the sin is committed.
 func (SubjectLadderDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return cs.In(codebase).
 		WhereStatement().

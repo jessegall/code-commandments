@@ -61,47 +61,34 @@ func TestTheChecksHoldAtTheirEdges(t *testing.T) {
 	built := phpCodebase(t, "Edges.php", edges)
 
 	for query, want := range map[string]string{
-		// a contract three interfaces up, and the interfaces themselves honouring none
-		`{"select": "type-declaration", "where": [{"implements": "Base"}]}`: "[12]",
-		// a cycle of parents ends, each class in its own lineage
-		`{"select": "type-declaration", "where": [{"extendsAny": "Loop1"}]}`: "[9 10]",
-		`{"select": "type-declaration", "where": [{"extendsAny": "Base"}]}`:  "[6 7]",
-		// a closure starts nesting again; a call inside a closure is the closure's own
-		`{"select": "loop", "where": [{"nestedAtLeast": {"is": "loop", "count": 2}}]}`: "[]",
-		`{"select": "loop", "where": [{"nestedAtLeast": {"is": "loop", "count": 1}}]}`: "[16 18]",
-		`{"select": "function", "where": [{"calls": {"name": "helper"}}]}`:             "[17]",
-		`{"select": "function", "where": [{"calls": {"name": "step"}}]}`:               "[14]",
-		// a function only calling itself is unused; one called through $this is not; a closure is not judged
-		`{"select": "function", "where": [{"unused": true}]}`: "[14 28 30 35 37]",
-		// spacing, a comment and a name's case are no part of a body
-		`{"select": "function", "where": [{"duplicated": {"atLeast": 2}}]}`: "[30 35]",
-		// arguments counted from either end, and none there on a call handed none
-		`{"select": "call", "where": [{"argument": {"at": 0, "is": "function"}}]}`:    "[17]",
-		`{"select": "call", "where": [{"argument": {"at": -1, "is": "function"}}]}`:   "[]",
-		`{"select": "call", "where": [{"argument": {"at": -1, "is": "identifier"}}]}`: "[17 19]",
-		// a node with no name, as a closure is, matches no pattern over names
-		`{"select": "call", "where": [{"argument": {"at": 0, "nameLike": "*"}}]}`: "[19]",
-		// a type's methods are their own counts
-		`{"select": "type-declaration", "where": [{"complexity": {"atMost": 1}}]}`: "[5 6 7 9 10 12]",
-		// the only statement of a block is its first and its last; the last has no next
-		`{"select": "return", "where": [{"position": "only"}]}`:       "[26 28 32 35]",
-		`{"select": "return", "where": [{"position": "first"}]}`:      "[26 28 32 35]",
-		`{"select": "return", "where": [{"next": {"is": "return"}}]}`: "[]",
-		// code inside a closure at file level runs when the closure does, not when the file loads
-		`{"select": "call", "where": [{"topLevel": true}]}`:       "[]",
-		`{"select": "assignment", "where": [{"topLevel": true}]}`: "[40]",
-		// a size of what a node cannot have matches nothing
-		`{"select": "call", "where": [{"parameters": {"atMost": 10}}]}`:                             "[]",
-		`{"select": "function", "where": [{"arguments": {"atMost": 10}}]}`:                          "[]",
-		`{"select": "call", "where": [{"members": {"atMost": 10}}]}`:                                "[]",
-		`{"select": "function", "where": [{"lines": {"atMost": 1}}]}`:                               "[26 28 35 37 40]",
-		`{"select": "type-declaration", "where": [{"members": {"atLeast": 6}}]}`:                    "[12]",
-		`{"select": "function", "where": [{"count": {"descendant": {"is": "loop"}, "atMost": 0}}]}`: "[26 28 30 35 37 40]",
-		// a reject drops what any step passes; a nested step in a reject reads the same
+		`{"select": "type-declaration", "where": [{"implements": "Base"}]}`:                              "[12]",
+		`{"select": "type-declaration", "where": [{"extendsAny": "Loop1"}]}`:                             "[9 10]",
+		`{"select": "type-declaration", "where": [{"extendsAny": "Base"}]}`:                              "[6 7]",
+		`{"select": "loop", "where": [{"nestedAtLeast": {"is": "loop", "count": 2}}]}`:                   "[]",
+		`{"select": "loop", "where": [{"nestedAtLeast": {"is": "loop", "count": 1}}]}`:                   "[16 18]",
+		`{"select": "function", "where": [{"calls": {"name": "helper"}}]}`:                               "[17]",
+		`{"select": "function", "where": [{"calls": {"name": "step"}}]}`:                                 "[14]",
+		`{"select": "function", "where": [{"unused": true}]}`:                                            "[14 28 30 35 37]",
+		`{"select": "function", "where": [{"duplicated": {"atLeast": 2}}]}`:                              "[30 35]",
+		`{"select": "call", "where": [{"argument": {"at": 0, "is": "function"}}]}`:                       "[17]",
+		`{"select": "call", "where": [{"argument": {"at": -1, "is": "function"}}]}`:                      "[]",
+		`{"select": "call", "where": [{"argument": {"at": -1, "is": "identifier"}}]}`:                    "[17 19]",
+		`{"select": "call", "where": [{"argument": {"at": 0, "nameLike": "*"}}]}`:                        "[19]",
+		`{"select": "type-declaration", "where": [{"complexity": {"atMost": 1}}]}`:                       "[5 6 7 9 10 12]",
+		`{"select": "return", "where": [{"position": "only"}]}`:                                          "[26 28 32 35]",
+		`{"select": "return", "where": [{"position": "first"}]}`:                                         "[26 28 32 35]",
+		`{"select": "return", "where": [{"next": {"is": "return"}}]}`:                                    "[]",
+		`{"select": "call", "where": [{"topLevel": true}]}`:                                              "[]",
+		`{"select": "assignment", "where": [{"topLevel": true}]}`:                                        "[40]",
+		`{"select": "call", "where": [{"parameters": {"atMost": 10}}]}`:                                  "[]",
+		`{"select": "function", "where": [{"arguments": {"atMost": 10}}]}`:                               "[]",
+		`{"select": "call", "where": [{"members": {"atMost": 10}}]}`:                                     "[]",
+		`{"select": "function", "where": [{"lines": {"atMost": 1}}]}`:                                    "[26 28 35 37 40]",
+		`{"select": "type-declaration", "where": [{"members": {"atLeast": 6}}]}`:                         "[12]",
+		`{"select": "function", "where": [{"count": {"descendant": {"is": "loop"}, "atMost": 0}}]}`:      "[26 28 30 35 37 40]",
 		`{"select": "function", "reject": [{"descendant": {"is": "loop"}}, {"hasModifier": "private"}]}`: "[30 35 37 40]",
-		// a missing doc comment carries no tag, and a comment matches by expression
-		`{"select": "function", "where": [{"docTag": "param"}]}`:                         "[]",
-		`{"select": "function", "where": [{"descendant": {"commentMatches": "note$"}}]}`: "[30]",
+		`{"select": "function", "where": [{"docTag": "param"}]}`:                                         "[]",
+		`{"select": "function", "where": [{"descendant": {"commentMatches": "note$"}}]}`:                 "[30]",
 	} {
 		if got := found(t, "backend", query, built); got != want {
 			t.Errorf("%s: found %s, want %s", query, got, want)
@@ -151,12 +138,9 @@ const made = Box.make(1);
 `})
 
 	for _, each := range []typed{
-		// a nested class's members are its own
 		{"python", `{"select": "type-declaration", "where": [{"members": {"atLeast": 2}}]}`, "[1]"},
 		{"python", `{"select": "type-declaration", "where": [{"members": {"atLeast": 3}}]}`, "[]"},
-		// starred, keyword-only and defaulted parameters count once each, self among them
 		{"python", `{"select": "function", "where": [{"parameters": {"atLeast": 3}}]}`, "[6 12]"},
-		// self is Python's to bind, never the method's to read
 		{"python", `{"select": "parameter", "where": [{"unused": true}]}`, "[6 12 12]"},
 		{"python", `{"select": "call", "where": [{"constructs": "Inner"}]}`, "[10]"},
 		{"python", `{"select": "call", "where": [{"constructs": "shop.boxes.Outer.Inner"}]}`, "[10]"},
@@ -216,17 +200,14 @@ record Point(int X, int Y);
 `})
 
 	for query, want := range map[string]string{
-		// an attribute named whole, Attribute and all, or without it
 		`{"select": "type-declaration", "where": [{"hasAnnotation": "Serializable"}]}`:          "[3]",
 		`{"select": "type-declaration", "where": [{"hasAnnotation": "SerializableAttribute"}]}`: "[3]",
-		// a generic base is the type it names; an interface outside the scan is known by its kind
-		`{"select": "type-declaration", "where": [{"extends": "List"}]}`:           "[3]",
-		`{"select": "type-declaration", "where": [{"implements": "IDisposable"}]}`: "[3]",
-		`{"select": "type-declaration", "where": [{"extends": "IDisposable"}]}`:    "[]",
-		// a defaulted and a params parameter count once each; a record's are its own
-		`{"select": "function", "where": [{"parameters": {"atLeast": 3}}]}`:            "[5]",
-		`{"select": "loop", "where": [{"nestedAtLeast": {"is": "loop", "count": 3}}]}`: "[6]",
-		`{"select": "function", "where": [{"complexity": {"atLeast": 4}}]}`:            "[6]",
+		`{"select": "type-declaration", "where": [{"extends": "List"}]}`:                        "[3]",
+		`{"select": "type-declaration", "where": [{"implements": "IDisposable"}]}`:              "[3]",
+		`{"select": "type-declaration", "where": [{"extends": "IDisposable"}]}`:                 "[]",
+		`{"select": "function", "where": [{"parameters": {"atLeast": 3}}]}`:                     "[5]",
+		`{"select": "loop", "where": [{"nestedAtLeast": {"is": "loop", "count": 3}}]}`:          "[6]",
+		`{"select": "function", "where": [{"complexity": {"atLeast": 4}}]}`:                     "[6]",
 	} {
 		if got := found(t, "csharp", query, built); got != want {
 			t.Errorf("%s: found %s, want %s", query, got, want)
@@ -238,11 +219,8 @@ func TestGlobsPathsAndTypePatternsMatchWhatTheySay(t *testing.T) {
 	built := phpCodebase(t, "Script.php", "<?php\n\n$sql = <<<SQL\nselect *\nfrom users where id = 1\nSQL;\n\nfunction pick(int | string $id): int|null { return null; }\n")
 
 	for query, want := range map[string]string{
-		// a glob's * runs across lines
-		`{"select": "literal", "where": [{"textLike": "*where id*"}]}`: "[3]",
-		// a file in no namespace has none to match
-		`{"select": "function", "where": [{"namespaceLike": "*"}]}`: "[]",
-		// spaces in a written type and in the pattern are both dropped
+		`{"select": "literal", "where": [{"textLike": "*where id*"}]}`:        "[3]",
+		`{"select": "function", "where": [{"namespaceLike": "*"}]}`:           "[]",
 		`{"select": "function", "where": [{"returnType": "int | null"}]}`:     "[8]",
 		`{"select": "parameter", "where": [{"parameterType": "int|string"}]}`: "[8]",
 	} {
@@ -291,7 +269,6 @@ func TestAPathIsReadFromTheFolderJudged(t *testing.T) {
 		t.Fatalf("the PHP bridge cannot run here: %v", err)
 	}
 
-	// a checkout under a folder named tests is not test code; only what lies under the project's own is
 	for query, want := range map[string]string{
 		`{"select": "function", "where": [{"testCode": true}]}`:                                   "[CartTest.php:2]",
 		`{"select": "function", "where": [{"testCode": false}]}`:                                  "[Cart.php:2]",
@@ -308,9 +285,6 @@ func TestAPathIsReadFromTheFolderJudged(t *testing.T) {
 	}
 }
 
-// TestAPathPatternReadsFromTheProjectWhateverTheDepthJudged holds a rule's path patterns to the repository the scan
-// was read in: judged from the project's app folder or from deep inside it, a file is named by its path from the
-// project, so a pattern that names a folder above the one judged still finds it.
 func TestAPathPatternReadsFromTheProjectWhateverTheDepthJudged(t *testing.T) {
 	project := t.TempDir()
 	for path, contents := range map[string]string{
@@ -343,9 +317,6 @@ func TestAPathPatternReadsFromTheProjectWhateverTheDepthJudged(t *testing.T) {
 	}
 }
 
-// TestARuleTellsOperatorsApart holds the two steps a consumer asked for: a binary expression's kind says nothing
-// about what it does, so `price.amount * rate` and `price.amount ?? fallback` read as the same node, and a rule
-// about money arithmetic could only be written with a name heuristic, which the disciplines forbid.
 func TestARuleTellsOperatorsApart(t *testing.T) {
 	money := frontendtest.FromSource(t, map[string]string{"src/money.ts": `export function totals(price: { amount: number }, rate: number, fallback: number) {
     const scaled = price.amount * rate;
@@ -370,9 +341,6 @@ func TestARuleTellsOperatorsApart(t *testing.T) {
 	}
 }
 
-// TestARuleReadsAnExpressionsType holds the step a consumer asked for and could not write: in their codebase most
-// amounts rendered in a view are preformatted strings, so only the type tells a numeric Money.amount from a label,
-// and a rule written on names instead is the heuristic the disciplines forbid.
 func TestARuleReadsAnExpressionsType(t *testing.T) {
 	money := frontendtest.FromSource(t, map[string]string{"src/money.ts": `export function totals(price: { amount: number }, label: { amount: string }) {
     const paid = price.amount;

@@ -11,7 +11,6 @@ type RedundantNestedFrom struct{}
 
 func init() { sins.Register(catalog.PHP, RedundantNestedFrom{}) }
 
-// Definition is what the sin states about itself.
 func (RedundantNestedFrom) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "redundant-nested-from",

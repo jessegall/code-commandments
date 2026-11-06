@@ -16,12 +16,10 @@ func init() {
 	detectors.Register(catalog.Python, ConstantClassEnumDetector{})
 }
 
-// Sin is the sin the detector finds.
 func (ConstantClassEnumDetector) Sin() sins.Sin {
 	return pysins.ConstantClassEnum{}
 }
 
-// Find is every place the sin is committed.
 func (ConstantClassEnumDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return py.In(codebase).
 		WhereClass().

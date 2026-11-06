@@ -12,9 +12,6 @@ import (
 	"github.com/jessegall/code-commandments/skill/render"
 )
 
-// Curriculum is the worked examples every engine's fixture under fixtures carves for the skills: one folder per
-// engine (backend, frontend, python, csharp), each read in its own languages alone. Without the C# bridge's image
-// it fails naming it, before anything is read: a curriculum missing one engine's examples is not one to publish.
 func Curriculum(fixtures string) (render.Examples, error) {
 	csharp := filepath.Join(fixtures, "csharp")
 	if _, err := bridge.Roslyn(csharp); err != nil {

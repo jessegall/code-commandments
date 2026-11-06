@@ -16,12 +16,10 @@ func init() {
 	detectors.Register(catalog.CSharp, RethrownUnchangedDetector{})
 }
 
-// Sin is the sin the detector finds.
 func (RethrownUnchangedDetector) Sin() sins.Sin {
 	return cssins.RethrownUnchanged{}
 }
 
-// Find is every catch clause that only throws what it caught.
 func (RethrownUnchangedDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return cs.In(codebase).
 		WhereKind("CatchClause").

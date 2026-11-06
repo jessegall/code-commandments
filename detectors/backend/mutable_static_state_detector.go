@@ -14,11 +14,8 @@ type MutableStaticStateDetector struct{}
 
 func init() { detectors.Register(catalog.PHP, MutableStaticStateDetector{}) }
 
-// Sin is the sin the detector finds.
 func (MutableStaticStateDetector) Sin() sins.Sin { return backendsins.MutableStaticState{} }
 
-// Find is every write to a static property, save a memo filled after a presence test, a static method answering to
-// an ancestor's, and test code, where the process is the lifetime and there is no second caller to leak into.
 func (MutableStaticStateDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return php.In(codebase).
 		Where(engine.As(php.Node.IsStaticStateWrite)).

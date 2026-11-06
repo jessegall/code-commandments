@@ -7,7 +7,6 @@ import (
 	"testing"
 )
 
-// streamed is what the bridge writes, byte for byte, for its arguments.
 func streamed(t *testing.T, bridge Bridge, arguments ...string) string {
 	t.Helper()
 	command, err := bridge.Command()
@@ -22,8 +21,6 @@ func streamed(t *testing.T, bridge Bridge, arguments ...string) string {
 	return string(out)
 }
 
-// TestAKeptTreeIsWrittenAsThePHPBridgeWouldWriteItAfresh holds the PHP bridge's tree cache to the stream an uncached
-// run writes: cold and warm, after a change to one file, and with files judged and read only for context.
 func TestAKeptTreeIsWrittenAsThePHPBridgeWouldWriteItAfresh(t *testing.T) {
 	needsPHP(t)
 	root, err := filepath.EvalSymlinks(t.TempDir())

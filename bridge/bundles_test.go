@@ -9,8 +9,6 @@ import (
 	"github.com/jessegall/code-commandments/bridge/bundle"
 )
 
-// TestEachArchiveHoldsItsSourcesAsTheyAre holds every carried archive to the folder it is packed from, so a change
-// to a bridge's sources cannot ship without the archive the binary runs.
 func TestEachArchiveHoldsItsSourcesAsTheyAre(t *testing.T) {
 	for archive, folder := range map[string]string{"bundles/php.tar.gz": "php", "bundles/frontend.tar.gz": "frontend/dist"} {
 		raw, err := os.ReadFile(archive)

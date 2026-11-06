@@ -8,7 +8,6 @@ import (
 	"github.com/jessegall/code-commandments/engine"
 )
 
-// Each case's verdict is PHP's Frozen::isFrozenFile's for the same path and source.
 func TestAFileOutsidePHPIsFrozenAsThePHPToolReadsIt(t *testing.T) {
 	cases := []struct {
 		path, source string
@@ -34,7 +33,6 @@ func TestAFileOutsidePHPIsFrozenAsThePHPToolReadsIt(t *testing.T) {
 	}
 }
 
-// streamOf is a stream holding one file with no nodes under its root: the verdict reads only its path and text.
 func streamOf(path, source string) string {
 	quoted, _ := json.Marshal(path)
 

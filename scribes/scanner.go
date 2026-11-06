@@ -12,8 +12,7 @@ import (
 // Reader is how one engine reads the codebase a served bridge answers a request with.
 type Reader func(server *bridge.Server, request bridge.Request) (*engine.Codebase, error)
 
-// Scanner reads one engine's files under a pass's roots as its drafts leave them, through one bridge kept serving
-// for the run.
+// Scanner reads one engine's files under a pass's roots as its drafts leave them, through one bridge kept serving for the run.
 type Scanner struct {
 	server   *bridge.Server
 	read     Reader
@@ -24,7 +23,6 @@ type Scanner struct {
 	owned    bool
 }
 
-// Serve starts the bridge the command runs, serving, read by read.
 func Serve(command []string, read Reader) (*Scanner, error) {
 	server, err := bridge.Serve(command)
 	if err != nil {
@@ -36,12 +34,10 @@ func Serve(command []string, read Reader) (*Scanner, error) {
 	return scanner, nil
 }
 
-// Over reads through a bridge already serving, which the scanner shares and leaves serving when it closes.
 func Over(server *bridge.Server, read Reader) *Scanner {
 	return &Scanner{server: server, read: read, frozen: map[string]bool{}}
 }
 
-// Scan is the codebase under the pass's roots read through its drafts; the same drafts read the same codebase.
 func (s *Scanner) Scan(pass Pass) (*engine.Codebase, error) {
 	if s.codebase != nil && slices.Equal(s.roots, pass.Roots) && s.drafts.Equal(pass.Drafts) {
 		return s.codebase, nil
@@ -58,8 +54,6 @@ func (s *Scanner) Scan(pass Pass) (*engine.Codebase, error) {
 	return codebase, nil
 }
 
-// Parse reads text no file holds yet, each under its file name, through the same bridge: a folder of its own is
-// scanned with the text drafted into it, so nothing the pass holds is read with it.
 func (s *Scanner) Parse(sources map[string]string) (*engine.Codebase, error) {
 	made, err := os.MkdirTemp("", "commandments-parse-")
 	if err != nil {
@@ -78,17 +72,14 @@ func (s *Scanner) Parse(sources map[string]string) (*engine.Codebase, error) {
 	return s.read(s.server, bridge.Request{Paths: []string{folder}, Contents: contents})
 }
 
-// ReadFile reads a file outside the pass's roots, as it stands on disk, through the same bridge.
 func (s *Scanner) ReadFile(path string) (*engine.Codebase, error) {
 	return s.read(s.server, bridge.Request{Paths: []string{path}})
 }
 
-// IsFrozen says whether a file the scanner has read is frozen.
 func (s *Scanner) IsFrozen(path string) bool {
 	return s.frozen[path]
 }
 
-// Close stops the bridge the scanner started; a shared one keeps serving.
 func (s *Scanner) Close() error {
 	if !s.owned {
 		return nil
@@ -100,7 +91,6 @@ func (s *Scanner) Close() error {
 // Frozens is frozen when any of its scanners has read the file frozen.
 type Frozens []*Scanner
 
-// IsFrozen says whether any scanner read the file frozen.
 func (f Frozens) IsFrozen(path string) bool {
 	for _, scanner := range f {
 		if scanner.IsFrozen(path) {

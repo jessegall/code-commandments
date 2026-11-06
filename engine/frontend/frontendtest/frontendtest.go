@@ -12,8 +12,6 @@ import (
 	"github.com/jessegall/code-commandments/engine/frontend"
 )
 
-// FromSource is the codebase the sources describe, keyed by their path under one project folder, as the bridge
-// and the engine read them: `{"Cart.vue": "<template>...</template>", "types.ts": "export interface ..."}`.
 func FromSource(t testing.TB, sources map[string]string) *engine.Codebase {
 	t.Helper()
 	if _, err := exec.LookPath("node"); err != nil {
@@ -40,7 +38,6 @@ func FromSource(t testing.TB, sources map[string]string) *engine.Codebase {
 	return codebase
 }
 
-// Where is the first node of the kind whose source text is the one given; the test fails when there is none.
 func Where(t testing.TB, codebase *engine.Codebase, kind, text string) engine.Match {
 	t.Helper()
 	for _, match := range codebase.WhereKind(kind).Get() {
@@ -53,7 +50,6 @@ func Where(t testing.TB, codebase *engine.Codebase, kind, text string) engine.Ma
 	return engine.Match{}
 }
 
-// Named is the first node of the kind with the name; the test fails when there is none.
 func Named(t testing.TB, codebase *engine.Codebase, kind, name string) engine.Match {
 	t.Helper()
 	for _, match := range codebase.WhereKind(kind).Get() {

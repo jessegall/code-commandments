@@ -13,7 +13,6 @@ func init() {
 	sins.Register(catalog.CSharp, BloatedDocblock{})
 }
 
-// Definition is what the sin states about itself.
 func (BloatedDocblock) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "csharp-bloated-docblock",

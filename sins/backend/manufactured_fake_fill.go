@@ -11,7 +11,6 @@ type ManufacturedFakeFill struct{}
 
 func init() { sins.Register(catalog.PHP, ManufacturedFakeFill{}) }
 
-// Definition is what the sin states about itself.
 func (ManufacturedFakeFill) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "manufactured-fake-fill",

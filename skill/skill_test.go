@@ -7,9 +7,6 @@ import (
 	"github.com/jessegall/code-commandments/skill"
 )
 
-// TestASlugNamesItsSkillUnderTheEngineItWasPublishedUnder holds a slug a project wrote before the engines were
-// named after their languages: a custom rule or a config that says `backend/absence` still means the PHP engine's
-// absence skill, and always will.
 func TestASlugNamesItsSkillUnderTheEngineItWasPublishedUnder(t *testing.T) {
 	for _, slug := range []string{"php/absence", "backend/absence"} {
 		found, known := skill.Slugged(slug)

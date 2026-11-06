@@ -11,7 +11,6 @@ type NegativeSpaceComment struct{}
 
 func init() { sins.Register(catalog.PHP, NegativeSpaceComment{}) }
 
-// Definition is what the sin states about itself.
 func (NegativeSpaceComment) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "negative-space-comment",

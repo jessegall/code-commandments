@@ -6,9 +6,7 @@ import (
 	"strings"
 )
 
-// interned holds one copy of every value a stream repeats: its strings, its lists of strings, its types and its
-// call targets. A whole solution names the same kinds, symbols and types millions of times, and a tree that holds
-// each once is several times smaller. Nothing interned is written after it is read.
+// interned holds one copy of every value a stream repeats: its strings, its lists of strings, its types and its call targets.
 type interned struct {
 	strings map[string]string
 	lists   map[string][]string
@@ -20,7 +18,6 @@ func newInterned() *interned {
 	return &interned{strings: map[string]string{}, lists: map[string][]string{}, types: map[string]*Type{}, targets: map[string]*Target{}}
 }
 
-// file interns every value the file's nodes and comments hold.
 func (in *interned) file(file *File) {
 	file.Path = in.string(file.Path)
 	file.Module = in.string(file.Module)
@@ -84,7 +81,6 @@ func (in *interned) list(texts []string) []string {
 	return texts
 }
 
-// typed is the one type equal to this one, its parts interned first so equal types are made of the same parts.
 func (in *interned) typed(written *Type) *Type {
 	if written == nil {
 		return nil
@@ -137,8 +133,6 @@ func (in *interned) target(target *Target) *Target {
 	return target
 }
 
-// typeKey names a type by its own fields and the addresses of its interned parts: two types with the same key are
-// equal in every field.
 func typeKey(t *Type) string {
 	var key strings.Builder
 	for _, text := range []string{t.Text, t.Kind, t.Name, t.Constructs, t.Origin} {

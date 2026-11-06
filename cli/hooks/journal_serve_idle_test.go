@@ -13,8 +13,6 @@ import (
 	"github.com/jessegall/code-commandments/cli"
 )
 
-// TestTheServiceWaitsForItsStopWhenItCannotListen holds journal-serve to staying up on a socket it cannot listen on,
-// as a Windows binary cannot on MSYS2's, so the journal does not start it again, and to ending cleanly on its stop.
 func TestTheServiceWaitsForItsStopWhenItCannotListen(t *testing.T) {
 	t.Setenv(pluginSocket, filepath.Join(t.TempDir(), "missing", "hooks.sock"))
 	said, err := io.Pipe()

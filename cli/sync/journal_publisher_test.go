@@ -10,8 +10,6 @@ import (
 	"github.com/jessegall/code-commandments/cli/library"
 )
 
-// TestSyncPublishesTheSkillsForAProjectWithoutAJournal holds the ordinary case, which is every project that has
-// no journal: this side is the only publisher there is, so the library is written and each agent is pointed at it.
 func TestSyncPublishesTheSkillsForAProjectWithoutAJournal(t *testing.T) {
 	root := phpProject(t)
 
@@ -27,10 +25,6 @@ func TestSyncPublishesTheSkillsForAProjectWithoutAJournal(t *testing.T) {
 	}
 }
 
-// TestSyncStandsAsideWhereTheJournalPublishes holds the other half of that rule. Installed as the journal's
-// plugin, the journal copies the plugin's own rendered skills into the agents' folders and takes them away when
-// the plugin goes; two publishers of one path would fight over it, so this side publishes nothing and withdraws
-// what it published before, leaving the journal's files alone.
 func TestSyncStandsAsideWhereTheJournalPublishes(t *testing.T) {
 	root := phpProject(t)
 
@@ -56,9 +50,6 @@ func TestSyncStandsAsideWhereTheJournalPublishes(t *testing.T) {
 	}
 }
 
-// TestASkillTheProjectPlacedItselfSurvivesStandingAside holds the limit of that withdrawal: it takes away what
-// this tool published and nothing else. A project may write a skill of its own into the library beside ours, and
-// a publish is not entitled to it however it is named.
 func TestASkillTheProjectPlacedItselfSurvivesStandingAside(t *testing.T) {
 	root := phpProject(t)
 
@@ -85,9 +76,6 @@ func TestASkillTheProjectPlacedItselfSurvivesStandingAside(t *testing.T) {
 	}
 }
 
-// TestRemovingThePluginGivesThePublishingBack holds the way back. The journal takes its copies away with the
-// plugin, and the next sync, which composer runs on install and update, is the only thing that can put skills
-// there again.
 func TestRemovingThePluginGivesThePublishingBack(t *testing.T) {
 	root := phpProject(t)
 	installPlugin(t, root)
@@ -112,13 +100,10 @@ func TestRemovingThePluginGivesThePublishingBack(t *testing.T) {
 	}
 }
 
-// quiet is a console nothing reads, for a test about what lands on disk rather than what is said.
 func quiet() cli.Console {
 	return cli.Console{Out: &bytes.Buffer{}, Err: &bytes.Buffer{}}
 }
 
-// phpProject is a project the sync has something to do: one language written, so the curriculum has skills to
-// publish for it.
 func phpProject(t *testing.T) string {
 	t.Helper()
 	root := t.TempDir()
@@ -135,8 +120,6 @@ func phpProject(t *testing.T) string {
 	return root
 }
 
-// installPlugin writes the one file that says the tool is installed as the journal's plugin, which is what
-// workspace.IsJournalDriven reads.
 func installPlugin(t *testing.T, root string) {
 	t.Helper()
 	dir := filepath.Join(root, ".journal", "plugins", "code-commandments", ".journal-plugin")
@@ -148,7 +131,6 @@ func installPlugin(t *testing.T, root string) {
 	}
 }
 
-// publishedIn is how many skills of the curriculum sit in the folder, by the prefix every published id carries.
 func publishedIn(t *testing.T, dir string) int {
 	t.Helper()
 	entries, err := os.ReadDir(dir)

@@ -13,12 +13,9 @@ func init() {
 	detectors.Register(catalog.Vue, NearDuplicateElementDetector{})
 }
 
-// nearDuplicateElements is how many elements a subtree must hold before a near copy of it is a component waiting.
 const nearDuplicateElements = 6
 
-// NearDuplicateElementDetector finds markup written twice with different bindings and text: one component
-// taking what differs as props. An exact copy is the duplicate rule's finding, and only the outermost near
-// copy is reported.
+// NearDuplicateElementDetector finds markup written twice with different bindings and text: one component taking what differs as props.
 type NearDuplicateElementDetector struct{}
 
 func (NearDuplicateElementDetector) Sin() sins.Sin {
@@ -47,11 +44,8 @@ func shapeHash(m engine.Match) string {
 	return vue.Of(m).ShapeHash()
 }
 
-// GroupKey groups a finding with the elements of its shape.
 func (NearDuplicateElementDetector) GroupKey(match engine.Match) (string, bool) {
 	return shapeHash(match), true
 }
 
-// CrossFile says the rule reads more than the file it reports in, which the fixture measures by asking it
-// of one file and of the whole tree: a scoped run reads the whole scan while it is enabled.
 func (NearDuplicateElementDetector) CrossFile() {}

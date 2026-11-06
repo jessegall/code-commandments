@@ -21,7 +21,6 @@ func init() {
 	skill.Register(catalog.PHP, BehaviourPerMethod{})
 }
 
-// Definition is what the skill states about itself.
 func (BehaviourPerMethod) Definition() skill.Definition {
 	return skill.Definition{
 		Slug:      "php/behaviour-per-method",

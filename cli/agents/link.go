@@ -10,9 +10,6 @@ import (
 	"strings"
 )
 
-// Point makes link reach target: a symbolic link, relative on POSIX and absolute on Windows (whose links
-// resolve a relative target against the process's folder), or a copy where the filesystem has no links.
-// False when the target does not exist or nothing could be put in place.
 func Point(link, target string) bool {
 	if _, err := os.Stat(target); err != nil {
 		return false
@@ -51,7 +48,6 @@ func alreadyPoints(link, target string) bool {
 	return info.IsDir() && maps.Equal(digests(link), digests(target))
 }
 
-// digests are the md5 of every file under dir, by its path under dir.
 func digests(dir string) map[string][16]byte {
 	found := map[string][16]byte{}
 
@@ -68,7 +64,6 @@ func digests(dir string) map[string][16]byte {
 	return found
 }
 
-// targetFor is the target as the link names it: relative to the link's folder, except on Windows.
 func targetFor(link, target string) string {
 	if runtime.GOOS == "windows" {
 		return target

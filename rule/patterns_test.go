@@ -10,7 +10,6 @@ import (
 	"github.com/jessegall/code-commandments/rule"
 )
 
-// found runs the query written in a backend rule over the codebase and says the lines it matched.
 func found(t *testing.T, engineName, query string, codebase *engine.Codebase) string {
 	t.Helper()
 

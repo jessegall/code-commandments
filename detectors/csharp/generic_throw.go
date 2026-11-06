@@ -16,12 +16,10 @@ func init() {
 	detectors.Register(catalog.CSharp, GenericThrowDetector{})
 }
 
-// Sin is the sin the detector finds.
 func (GenericThrowDetector) Sin() sins.Sin {
 	return cssins.GenericThrow{}
 }
 
-// Find is every place the sin is committed.
 func (GenericThrowDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return cs.In(codebase).
 		Where(engine.As(cs.Node.IsGenericThrowWithMessage)).

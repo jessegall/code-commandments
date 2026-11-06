@@ -10,14 +10,6 @@ import (
 	"github.com/jessegall/code-commandments/cli"
 )
 
-// TestARunThatCouldNotFinishGivesNoTick holds what a run says when it finds nothing while a part of it never ran:
-// no green tick, and the failure as the last thing printed. An agent's worker read "No sins found in 4 changed
-// files" as a pass although its Vue bridge had ended with 661 files unread, and read the red line below it as
-// noise after the answer.
-//
-// The bridge here ends with no trailer, as that one did, which is a bridge that broke off and not one that was
-// never there: what it was asked to read goes unread and every rule over it is a part of the run that could not
-// finish.
 func TestARunThatCouldNotFinishGivesNoTick(t *testing.T) {
 	root := t.TempDir()
 	for path, contents := range map[string]string{
@@ -68,8 +60,6 @@ func TestARunThatCouldNotFinishGivesNoTick(t *testing.T) {
 	}
 }
 
-// TestAWholeRunThatFindsNothingTicks holds the other half at the one place the line is written: a run every part of
-// which finished says so with its tick, so a tick keeps meaning a verdict.
 func TestAWholeRunThatFindsNothingTicks(t *testing.T) {
 	whole := Skipped{}.Verdict("No sins found in 4 files, the lines changed in the working tree, of 860 read")
 	if !strings.Contains(whole, "✓") || !strings.HasSuffix(strings.TrimSuffix(whole, "\033[0m"), "read.") {
@@ -85,10 +75,6 @@ func TestAWholeRunThatFindsNothingTicks(t *testing.T) {
 	}
 }
 
-// TestABridgeThatIsNotThereIsAPartThatCouldNotFinish holds the quieter half of the same fault. A bridge whose
-// toolchain is not installed leaves its files unread, says so on STDERR and answers no error, because every other
-// language is still judged. So a run whose every Python file went unread printed its tick and answered 0, and
-// nothing a reader or a pipeline sees tells that from a clean run.
 func TestABridgeThatIsNotThereIsAPartThatCouldNotFinish(t *testing.T) {
 	root := t.TempDir()
 	for path, contents := range map[string]string{
@@ -104,7 +90,6 @@ func TestABridgeThatIsNotThereIsAPartThatCouldNotFinish(t *testing.T) {
 		}
 	}
 
-	// No node anywhere on the PATH, which is a bridge that was never there rather than one that broke off.
 	t.Setenv("PATH", t.TempDir())
 	previous, _ := os.Getwd()
 	t.Cleanup(func() { os.Chdir(previous) })

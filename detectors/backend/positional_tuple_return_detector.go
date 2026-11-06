@@ -14,10 +14,8 @@ type PositionalTupleReturnDetector struct{}
 
 func init() { detectors.Register(catalog.PHP, PositionalTupleReturnDetector{}) }
 
-// Sin is the sin the detector finds.
 func (PositionalTupleReturnDetector) Sin() sins.Sin { return backendsins.PositionalTupleReturn{} }
 
-// Find is every returned unkeyed array of three or more items reading two or more variables, unless the function documents a list.
 func (PositionalTupleReturnDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return php.In(codebase).
 		Where(engine.As(php.Node.IsPositionalTuple)).

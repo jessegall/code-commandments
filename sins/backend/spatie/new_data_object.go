@@ -11,7 +11,6 @@ type NewDataObject struct{}
 
 func init() { sins.Register(catalog.PHP, NewDataObject{}) }
 
-// Definition is what the sin states about itself.
 func (NewDataObject) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "new-data-object",

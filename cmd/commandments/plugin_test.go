@@ -10,7 +10,6 @@ import (
 	"testing"
 )
 
-// pluginFolder lays out what the journal clones for the plugin: its fetch script, and the bin folder it fetches into.
 func pluginFolder(t *testing.T) (root string) {
 	t.Helper()
 	for _, tool := range []string{"sh", "curl"} {
@@ -27,8 +26,6 @@ func pluginFolder(t *testing.T) (root string) {
 	return root
 }
 
-// fetchRun runs the plugin's fetch script with the version pinned, fetching releases from base, in the environment
-// given on top of this one's.
 func fetchRun(t *testing.T, root, version, base string, env ...string) (string, error) {
 	t.Helper()
 	command := exec.Command("sh", filepath.Join(root, ".journal-plugin", "fetch"))
@@ -38,7 +35,6 @@ func fetchRun(t *testing.T, root, version, base string, env ...string) (string, 
 	return string(out), err
 }
 
-// posing is the PATH under which uname names the system and machine given, as it does on a host this one is not.
 func posing(t *testing.T, system, machine string) string {
 	t.Helper()
 	stubs := t.TempDir()
@@ -50,7 +46,6 @@ func posing(t *testing.T, system, machine string) string {
 	return "PATH=" + stubs + string(os.PathListSeparator) + os.Getenv("PATH")
 }
 
-// fetched is every file the fetch left in the plugin's bin folder.
 func fetched(t *testing.T, root string) []string {
 	t.Helper()
 	files, _ := filepath.Glob(filepath.Join(root, "bin", "*"))
@@ -58,8 +53,6 @@ func fetched(t *testing.T, root string) []string {
 	return files
 }
 
-// TestThePluginFetchesThePinnedReleaseCheckedAgainstItsSums holds the plugin's setup to its one job: the pinned
-// release's binary for this platform, checked against SHA256SUMS, written executable where every command runs it.
 func TestThePluginFetchesThePinnedReleaseCheckedAgainstItsSums(t *testing.T) {
 	root := pluginFolder(t)
 	server := release(t, "v9.9.9", fakeBinary, sumOf(fakeBinary))
@@ -104,9 +97,6 @@ func TestThePluginRefusesAPinThatIsNoRelease(t *testing.T) {
 	}
 }
 
-// TestThePluginFetchesTheWindowsBinaryUnderMSYS2 holds the fetch on Windows, where the journal runs under MSYS2: the
-// release's .exe for the machine Windows names, checked against SHA256SUMS, written as the
-// bin/commandments-release.exe MSYS2 runs for bin/commandments-release.
 func TestThePluginFetchesTheWindowsBinaryUnderMSYS2(t *testing.T) {
 	for _, host := range []struct {
 		system string
@@ -146,8 +136,6 @@ func TestThePluginRefusesAWindowsBinaryWhoseSumDiffers(t *testing.T) {
 	}
 }
 
-// TestThePluginRefusesCygwin holds the fetch to fail closed under Cygwin, which hands the Windows binary paths it
-// cannot open, so no plugin is installed whose hooks cannot find the project.
 func TestThePluginRefusesCygwin(t *testing.T) {
 	root := pluginFolder(t)
 	server := releaseOf(t, "v9.9.9", "commandments-windows-amd64.exe", fakeBinary, sumOf(fakeBinary))
@@ -160,7 +148,6 @@ func TestThePluginRefusesCygwin(t *testing.T) {
 	}
 }
 
-// TestThePluginFetchesTheLinuxBinaryUnderWSL holds the fetch on Windows under WSL, which is Linux to it.
 func TestThePluginFetchesTheLinuxBinaryUnderWSL(t *testing.T) {
 	root := pluginFolder(t)
 	server := releaseOf(t, "v9.9.9", "commandments-linux-arm64", fakeBinary, sumOf(fakeBinary))
@@ -184,7 +171,6 @@ type manifest struct {
 	Services map[string]struct{ Run string } `json:"services"`
 }
 
-// commands is every command the journal runs for the plugin.
 func (m manifest) commands() []string {
 	commands := []string{m.Refuse, m.Install}
 	for _, step := range m.Setup {
@@ -200,10 +186,6 @@ func (m manifest) commands() []string {
 	return commands
 }
 
-// TestThePluginNeedsOnlyTheBinaryItFetches holds the plugin to the release rule: an install needs no PHP, composer,
-// Go or Docker, fetches the release it pins, and every command it runs is that fetched binary. A command names it
-// bin/commandments-release on every platform: the journal runs each through /bin/sh and has no command per OS, and
-// MSYS2, which it runs under on Windows beside WSL, runs the bin/commandments-release.exe the fetch writes there.
 func TestThePluginNeedsOnlyTheBinaryItFetches(t *testing.T) {
 	content, err := os.ReadFile(filepath.Join("..", "..", ".journal-plugin", "plugin.json"))
 	if err != nil {
@@ -226,9 +208,6 @@ func TestThePluginNeedsOnlyTheBinaryItFetches(t *testing.T) {
 		}
 	}
 	runsTheBinary := regexp.MustCompile(`^(bin/commandments-release |sh \.journal-plugin/fetch$|journal check create .*\.journal/plugins/code-commandments/bin/commandments-release )`)
-	// A toolchain is forbidden where it is RUN: at the start of a command or after a shell separator. The names also
-	// read as words inside our own verbs — php-serve starts the PHP bridge service and runs no PHP itself — and
-	// forbidding the bare word called that a violation.
 	forbidden := regexp.MustCompile(`(^|[;&|(]\s*)(composer|php|go|docker)(\s|$)|scripts/(build|dev)|bin/commandments( |$)|\.exe\b`)
 	for _, command := range plugin.commands() {
 		if !runsTheBinary.MatchString(command) || forbidden.MatchString(command) {

@@ -14,10 +14,8 @@ type ErasedNullObjectDetector struct{}
 
 func init() { detectors.Register(catalog.PHP, ErasedNullObjectDetector{}) }
 
-// Sin is the sin the detector finds.
 func (ErasedNullObjectDetector) Sin() sins.Sin { return backendsins.ErasedNullObject{} }
 
-// Find is every new of a class rendering as ” that fills a string-typed default or return.
 func (ErasedNullObjectDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return php.In(codebase).
 		WhereNew().
@@ -26,5 +24,4 @@ func (ErasedNullObjectDetector) Find(codebase *engine.Codebase) []engine.Match {
 		Get()
 }
 
-// CrossFile says the PHP tool finds it reaching beyond the file it judges, so a per-file check must not ask it.
 func (ErasedNullObjectDetector) CrossFile() {}

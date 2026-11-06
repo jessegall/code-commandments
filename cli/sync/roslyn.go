@@ -10,15 +10,12 @@ import (
 	"github.com/jessegall/code-commandments/cli/source"
 )
 
-// hostRoslynBuilds is where the PHP tool built the C# bridge on the host, before it ran only in its image.
 func hostRoslynBuilds() string {
 	home, _ := os.UserHomeDir()
 
 	return filepath.Join(home, ".cache", "code-commandments", "roslyn-bridge")
 }
 
-// removeHostRoslynBuilds deletes the C# bridge builds the PHP tool left on the host: .NET no longer runs here, and the
-// builds only take room.
 func removeHostRoslynBuilds(console cli.Console) {
 	builds := hostRoslynBuilds()
 	if _, err := os.Stat(builds); err != nil {
@@ -32,8 +29,6 @@ func removeHostRoslynBuilds(console cli.Console) {
 	console.Say("↻ removed the C# bridge the PHP tool built on this machine (" + builds + "): C# is read by the bridge each release ships now.")
 }
 
-// fetchRoslyn fetches this release's C# bridge for a project that writes C#, when the cache does not hold it yet, so
-// the first judge does not wait on it. It is never built here; a fetch that fails leaves C# unjudged, and says why.
 func fetchRoslyn(root string, project config.Config, console cli.Console) {
 	if !project.Holds(root, source.CSharp) || os.Getenv("COMMANDMENTS_ROSLYN") != "" {
 		return

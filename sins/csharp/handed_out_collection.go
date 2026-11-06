@@ -13,7 +13,6 @@ func init() {
 	sins.Register(catalog.CSharp, HandedOutCollection{})
 }
 
-// Definition is what the sin states about itself.
 func (HandedOutCollection) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "csharp-handed-out-collection",

@@ -8,12 +8,8 @@ import (
 	"github.com/jessegall/code-commandments/cli/workspace"
 )
 
-// Backup is the name a migrated config.php is kept under, beside the config.json that replaces it.
 const Backup = "config.php.bak"
 
-// Migrate gives a project that keeps a config.php and no config.json the config.json that says the same,
-// read through the tree, and keeps the config.php as a backup; false when there is nothing to migrate. A
-// config.php the tree cannot read is left where it is, and the error says why.
 func Migrate(dir string) (bool, error) {
 	php, json := workspace.Config(dir), workspace.JSONConfig(dir)
 
@@ -37,8 +33,6 @@ func Migrate(dir string) (bool, error) {
 	return true, os.Rename(php, filepath.Join(filepath.Dir(php), Backup))
 }
 
-// WriteSchema writes the schema a config.json names beside it, so an editor completes the rules this
-// version of the tool ships; false when it already holds them.
 func WriteSchema(dir string) (bool, error) {
 	path := filepath.Join(filepath.Dir(workspace.JSONConfig(dir)), SchemaFile)
 	schema := Schema(dir)

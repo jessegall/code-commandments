@@ -23,7 +23,6 @@ func (SwitchCase) Definition() sins.Definition {
 	}
 }
 
-// Scaffolds is the <SwitchCase> component the fix reaches for.
 func (SwitchCase) Scaffolds() []sins.Scaffold {
 	return []sins.Scaffold{{Path: "components/SwitchCase.vue", Stub: "vue/SwitchCase.vue", Frontend: true}}
 }

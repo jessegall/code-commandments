@@ -15,15 +15,12 @@ type ConfigReadDetector struct{}
 
 func init() { detectors.Register(catalog.PHP, ConfigReadDetector{}) }
 
-// Sin is the sin the detector finds.
 func (ConfigReadDetector) Sin() sins.Sin { return backendsins.ConfigRead{} }
 
-// Exemptions excuses the composition root, where config is wired into typed objects.
 func (ConfigReadDetector) Exemptions() []packages.Exemption {
 	return []packages.Exemption{{Tag: packages.CompositionRoot, By: []packages.By{packages.EnclosingClass}}}
 }
 
-// Find is every config() call written in a class.
 func (d ConfigReadDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return packages.Exempt(codebase, d, php.In(codebase).
 		Where(engine.As(func(n php.Node) bool { return n.CallsFunction("config") })).

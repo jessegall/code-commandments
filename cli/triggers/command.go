@@ -1,5 +1,4 @@
-// Package triggers is `trigger-eval`: measure whether each skill's description pulls in its own prompts and
-// leaves its neighbours' alone, by asking a model which skills it would consult for each.
+// Package triggers is `trigger-eval`: measure whether each skill's description pulls in its own prompts and leaves its neighbours' alone, by asking a model which skills it would consult for each.
 package triggers
 
 import (
@@ -19,18 +18,15 @@ import (
 	"github.com/jessegall/code-commandments/skills"
 )
 
-// floor is the share of its own prompts a description must pull.
 const floor = 1.0
 
 // Command is `trigger-eval`.
 type Command struct{}
 
-// Names are the verbs it answers to.
 func (Command) Names() []string {
 	return []string{"trigger-eval"}
 }
 
-// Help documents it.
 func (Command) Help() help.Help {
 	return help.Of("Measure whether skill descriptions pull their own skill in — and stay out of their neighbours'.").
 		Form("trigger-eval", "score every skill that ships a trigger set").
@@ -47,7 +43,6 @@ func (Command) Help() help.Help {
 			"own prompts or answers another skill's.")
 }
 
-// Run scores the selected skills' descriptions.
 func (Command) Run(in *cli.Input, console cli.Console) (int, error) {
 	query, _ := in.Option("skill")
 	sets, err := selected(query)
@@ -88,7 +83,6 @@ type set struct {
 	not      []string
 }
 
-// selected are the trigger sets of the skills the query matches, in the curriculum's order.
 func selected(query string) ([]set, error) {
 	var sets []set
 
@@ -136,7 +130,6 @@ type Oracle struct {
 	Model string
 }
 
-// Consulted are the skill ids the model's answer names.
 func (o Oracle) Consulted(query string, ids []string, descriptions map[string]string) []string {
 	var catalogue strings.Builder
 
@@ -220,7 +213,6 @@ func queriesOf(each set) []query {
 	return queries
 }
 
-// consensus are the skills a majority of the samples consulted, in the order they were first named.
 func consensus(oracle Oracle, text string, ids []string, descriptions map[string]string, samples int) []string {
 	tally := map[string]int{}
 	var order []string
@@ -344,7 +336,6 @@ func report(card scorecard, console cli.Console) {
 	console.Say("\033[31mA description is not doing its job — rewrite it to name WHEN to reach for the skill, and what it is NOT.\033[0m")
 }
 
-// leadingInt reads a number as PHP's (int) cast does: its leading digits, else 0.
 func leadingInt(text string) int {
 	text = strings.TrimLeft(text, " \t\n\r\v\f")
 	end := 0

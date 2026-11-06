@@ -154,7 +154,6 @@ func TestAServedRoslynBridgeAskedForAPathItCannotSeeSaysSoAndExitsWithinSeconds(
 	}
 }
 
-// bounded runs the call, failing the test rather than waiting past the limit for it.
 func bounded(t *testing.T, limit time.Duration, call func() (string, bool)) (string, bool, bool) {
 	t.Helper()
 	type answer struct {

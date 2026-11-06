@@ -13,8 +13,6 @@ import (
 	"github.com/jessegall/code-commandments/contract"
 )
 
-// TestTheBridgesRunTwoAtATime holds the load to running every bridge with files to read, never more than two at
-// once, and counting every file any of them reads, out of every file they will.
 func TestTheBridgesRunTwoAtATime(t *testing.T) {
 	root := t.TempDir()
 	for _, file := range []string{"Order.php", "order.py", "Order.cs"} {

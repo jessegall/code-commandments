@@ -14,10 +14,8 @@ type InArrayMirrorsEnumDetector struct{}
 
 func init() { detectors.Register(catalog.PHP, InArrayMirrorsEnumDetector{}) }
 
-// Sin is the sin the detector finds.
 func (InArrayMirrorsEnumDetector) Sin() sins.Sin { return backendsins.InArrayMirrorsEnum{} }
 
-// Find is every in_array whose array literal holds two or more of one enum's values and nothing else.
 func (InArrayMirrorsEnumDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return php.In(codebase).
 		Where(engine.As(func(n php.Node) bool { return n.CallsFunction("in_array") })).
@@ -25,5 +23,4 @@ func (InArrayMirrorsEnumDetector) Find(codebase *engine.Codebase) []engine.Match
 		Get()
 }
 
-// CrossFile says the PHP tool finds it reaching beyond the file it judges, so a per-file check must not ask it.
 func (InArrayMirrorsEnumDetector) CrossFile() {}

@@ -13,9 +13,7 @@ func init() {
 	detectors.Register(catalog.TypeScript, DefendedCertainFieldDetector{})
 }
 
-// DefendedCertainFieldDetector finds a ?. on one of the enclosing class's own fields that the class declares
-// total: a guard against a case its own type rules out. Only the class's own fields are judged, the class
-// being the authority on its own state.
+// DefendedCertainFieldDetector finds a ?.
 type DefendedCertainFieldDetector struct{}
 
 func (DefendedCertainFieldDetector) Sin() sins.Sin {
@@ -30,7 +28,6 @@ func (DefendedCertainFieldDetector) Find(codebase *engine.Codebase) []engine.Mat
 		Get()
 }
 
-// defendsCertainField says whether the read defends an own field the class declares total.
 func defendsCertainField(read typescript.Node) bool {
 	field := read.OwnField(read.OwnFieldRead())
 

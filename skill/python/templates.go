@@ -21,7 +21,6 @@ func init() {
 	skill.Register(catalog.Python, Templates{})
 }
 
-// Definition is what the skill states about itself.
 func (Templates) Definition() skill.Definition {
 	return skill.Definition{
 		Slug:      "python/templates",

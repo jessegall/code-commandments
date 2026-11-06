@@ -8,14 +8,10 @@ import (
 	"github.com/jessegall/code-commandments/engine/php"
 )
 
-// TestOnlyARouterGroupNamesItsRoutes holds the route names to the groups a router opens: a group call on anything
-// else, and a first-class callable named group, name no route (#600).
 func TestOnlyARouterGroupNamesItsRoutes(t *testing.T) {
 	root := t.TempDir()
 	for path, source := range map[string]string{
-		"routes/web.php": "<?php\nuse Illuminate\\Support\\Facades\\Route;\nRoute::name('admin.')->group(function () {\n    Route::get('/', fn () => 1)->name('home');\n});\n",
-		// `as` is the same call as `name` on the router, and a group often reaches it through prefix and
-		// middleware first, which is the chain #818 reported as unregistered.
+		"routes/web.php":     "<?php\nuse Illuminate\\Support\\Facades\\Route;\nRoute::name('admin.')->group(function () {\n    Route::get('/', fn () => 1)->name('home');\n});\n",
 		"routes/bundles.php": "<?php\nuse Illuminate\\Support\\Facades\\Route;\nRoute::prefix('bundles')->middleware('auth')->as('application-bundles.')->group(function () {\n    Route::get('/download', fn () => 1)->name('download');\n});\n",
 		"app/Menu.php":       "<?php\nnamespace App;\nfinal class Menu\n{\n    public function build(Items $items): \\Closure\n    {\n        $items->name('orphan.')->group(fn () => null);\n\n        return self::group(...);\n    }\n\n    public static function group(): void {}\n}\n",
 	} {

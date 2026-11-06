@@ -6,18 +6,8 @@ import (
 	"github.com/jessegall/code-commandments/engine"
 )
 
-// deNulledBy is how many callers must turn the absence into a failure before a finder's `| None` is the lie: one
-// caller doing it is one caller's business, two or more is the finder's.
 const deNulledBy = 2
 
-// NoCallerHandlesTheAbsence says whether nothing that calls the def outside the tests handles the absence it may
-// answer: each caller reads the result through, hands it where one is required, or asserts it away.
-//
-// TRUE where the def has no callers at all, which is the difference from IsDeNulledFinder: that one measures a
-// finder against the callers deciding the same absence over and over, and needs two of them before the finder is
-// at fault, where a STORE's signature invites every future caller to decide whatever it is called from today. One
-// caller that handles the absence honestly is the whole answer either way: the absence is then real, said in the
-// type, and the callers are doing what the type asks.
 func (p *Program) NoCallerHandlesTheAbsence(def Node) bool {
 	for _, call := range p.CallersOf(def) {
 		if call.Match.IsTest() {
@@ -32,10 +22,6 @@ func (p *Program) NoCallerHandlesTheAbsence(def Node) bool {
 	return true
 }
 
-// IsDeNulledFinder says whether the def answers `X | None` for an object and every caller outside the tests, two
-// or more of them, turns that None into a failure where it stands — asserting it away, raising on it, or reading
-// through it as though it could not be there. The annotation then says the value may be missing and no caller
-// agrees: the absence is the finder's to decide, by raising, so the callers stop deciding it over and over.
 func (p *Program) IsDeNulledFinder(def Node) bool {
 	if def.Kind() != "FunctionDef" && def.Kind() != "AsyncFunctionDef" {
 		return false
@@ -60,9 +46,6 @@ func (p *Program) IsDeNulledFinder(def Node) bool {
 	return outside >= deNulledBy && deNulled == outside
 }
 
-// resultIsTakenAsPresent says whether the call's own result is used as though it could not be None: read through
-// where it stands, handed straight to something that requires one, or bound to a name the function then asserts,
-// casts or raises on.
 func (p *Program) ResultIsTakenAsPresent(n Node) bool {
 	if n.readThrough() || p.handedOnWhereOneIsRequired(n) {
 		return true
@@ -78,9 +61,6 @@ func (p *Program) ResultIsTakenAsPresent(n Node) bool {
 	})
 }
 
-// handedOnWhereOneIsRequired says whether the result goes straight into a parameter annotated WITHOUT `| None`.
-// That is the type checker's "Expected X, got X | None", and the caller's way of saying it knows the value is
-// there: it has not looked, and it has not left the absence to anybody else either.
 func (p *Program) handedOnWhereOneIsRequired(n Node) bool {
 	outer := n.Parent()
 	if !outer.IsCall() {
@@ -98,7 +78,6 @@ func (p *Program) handedOnWhereOneIsRequired(n Node) bool {
 	}
 
 	parameters := target.Parameters()
-	// A method's first parameter is the object it is called on, which the call does not fill.
 	if target.Parent().Kind() == "ClassDef" && len(parameters) > 0 {
 		parameters = parameters[1:]
 	}
@@ -115,8 +94,6 @@ func (p *Program) handedOnWhereOneIsRequired(n Node) bool {
 	return !optional
 }
 
-// readThrough says whether the call's result is reached into where it stands: `find(id).name`, `find(id)[0]` or
-// `find(id)()`, each of which fails at once when the answer is None.
 func (n Node) readThrough() bool {
 	parent := n.Parent()
 	if !slices.Contains([]string{"Attribute", "Subscript", "Call"}, parent.Kind()) {
@@ -126,8 +103,6 @@ func (n Node) readThrough() bool {
 	return parent.Child("value").Node() == n.Node() || parent.Child("func").Node() == n.Node()
 }
 
-// boundName is the name a plain `name = call()` binds the call's result to; empty for a result bound to anything
-// more involved, or to nothing.
 func (n Node) boundName() string {
 	assigned := n.Parent()
 	if assigned.Kind() != "Assign" && assigned.Kind() != "AnnAssign" {
@@ -147,12 +122,6 @@ func (n Node) boundName() string {
 	return targets[0].Name()
 }
 
-// takenAsPresent says whether the read of a name turns its absence into a failure: the subject of an `assert … is
-// not None`, of an `if … is None` that only raises, or the value handed to `cast`.
-//
-// Reading THROUGH the name is deliberately not enough. A caller that guards the None first and reads the value
-// after is doing exactly what the annotation asks of it, and every such caller reads through the name somewhere;
-// only the call's OWN result, read through where it stands, says nobody checked.
 func (n Node) takenAsPresent() bool {
 	if n.handedToCast() {
 		return true
@@ -168,7 +137,6 @@ func (n Node) takenAsPresent() bool {
 	return test.Parent().Kind() == "If" && test.Parent().onlyRaises()
 }
 
-// testsForNone says whether the comparison is a test of the read against None.
 func (n Node) testsForNone(read Node) bool {
 	if !slices.Contains(n.ChildrenIn("ops"), read) && n.Child("left").Node() != read.Node() {
 		return false
@@ -177,13 +145,10 @@ func (n Node) testsForNone(read Node) bool {
 	return slices.ContainsFunc(n.ChildrenIn("comparators"), func(side Node) bool { return side.IsNone() })
 }
 
-// assertsPresence says whether the assertion insists the value is there: `assert x is not None`.
 func (n Node) assertsPresence(test Node) bool {
 	return test.Node().Operator == "is not" || test.Node().Operator == "!="
 }
 
-// handedToCast says whether the read is the value of a `cast(T, x)`, which tells the type checker the None is gone
-// without anything checking that it is.
 func (n Node) handedToCast() bool {
 	call := n.Parent()
 	if !call.IsCall() || !slices.Contains([]string{"cast", "typing.cast"}, call.Callee().DottedName()) {
@@ -194,7 +159,6 @@ func (n Node) handedToCast() bool {
 	return len(arguments) == 2 && arguments[1].Node() == n.Node()
 }
 
-// onlyRaises says whether the branch's whole body is a raise.
 func (n Node) onlyRaises() bool {
 	body := n.ChildrenIn("body")
 

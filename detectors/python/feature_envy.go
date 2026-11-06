@@ -16,12 +16,10 @@ func init() {
 	detectors.Register(catalog.Python, FeatureEnvyDetector{})
 }
 
-// Sin is the sin the detector finds.
 func (FeatureEnvyDetector) Sin() sins.Sin {
 	return pysins.FeatureEnvy{}
 }
 
-// Find is every place the sin is committed.
 func (FeatureEnvyDetector) Find(codebase *engine.Codebase) []engine.Match {
 	program := py.In(codebase).Program
 
@@ -31,5 +29,4 @@ func (FeatureEnvyDetector) Find(codebase *engine.Codebase) []engine.Match {
 		Get()
 }
 
-// CrossFile says the PHP tool finds it reaching beyond the file it judges, so a per-file check must not ask it.
 func (FeatureEnvyDetector) CrossFile() {}

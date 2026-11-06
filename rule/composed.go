@@ -8,10 +8,6 @@ import (
 	"github.com/jessegall/code-commandments/catalog"
 )
 
-// Composed is every rule with the rules it names found among them: a step's `rule`, and the `from` a rule narrows.
-// A name nothing declares, a rule of another engine, and a chain that comes back to itself are refused here, when
-// the rules are read, so a judge never meets a reference that cannot be followed. A rule a reference names is a
-// copy of its own, so what one rule is built from is never moved by what another rule's refusal drops.
 func Composed(read []Rule) ([]Rule, []error) {
 	known := map[string]*Rule{}
 	for _, one := range read {
@@ -31,12 +27,10 @@ func Composed(read []Rule) ([]Rule, []error) {
 	return slices.DeleteFunc(read, func(one Rule) bool { return refused[one.Name()] }), errs
 }
 
-// reference is the name a rule is named by from another rule: its own, less a Detector suffix, in one case.
 func reference(name string) string {
 	return catalog.Normalise(strings.TrimSuffix(name, "Detector"))
 }
 
-// resolve finds every rule this one names, with the chain that led here so a cycle is named rather than followed.
 func (r *Rule) resolve(known map[string]*Rule, chain []string) error {
 	if at := slices.Index(chain, reference(r.name)); at >= 0 {
 		return fmt.Errorf("%s: a rule cannot be built from itself: %s", r.name, strings.Join(append(chain[at:], reference(r.name)), " -> "))
@@ -63,7 +57,6 @@ func (r *Rule) resolve(known map[string]*Rule, chain []string) error {
 	return nil
 }
 
-// resolve finds the rule a step names, and the rules the steps nested in it name.
 func (s *Step) resolve(within *Rule, known map[string]*Rule, chain []string) error {
 	if s.Rule != "" {
 		found, err := within.named(s.Rule, known, chain)
@@ -83,16 +76,12 @@ func (s *Step) resolve(within *Rule, known map[string]*Rule, chain []string) err
 	return nil
 }
 
-// named is the rule the name means, resolved itself first, refused when nothing declares it or it judges another
-// engine: a rule reads one language's tree, so it can only be built from a rule of its own engine.
 func (r *Rule) named(name string, known map[string]*Rule, chain []string) (*Rule, error) {
 	found, declares := known[reference(name)]
 	if !declares {
 		return nil, fmt.Errorf("%s: no rule is called %q, among the project's own", r.name, name)
 	}
 
-	// A rule built on another must judge the same engines: the one it is built on narrows the codebase to its
-	// own languages, so a rule reaching into a narrower one would be handed nodes of a language it never judges.
 	if !slices.Equal(found.engines, r.engines) {
 		return nil, fmt.Errorf("%s: rule %s judges %s, and this one judges %s", r.name, found.Name(), engineList(found.engines), engineList(r.engines))
 	}
@@ -104,8 +93,6 @@ func (r *Rule) named(name string, known map[string]*Rule, chain []string) (*Rule
 	return found, nil
 }
 
-// ComposedWith is one rule with the rules it names found among those already read: how a single rule file, read
-// on its own, still reaches what it is built from.
 func ComposedWith(one Rule, known []Rule) (Rule, error) {
 	composed, refused := Composed(append(slices.Clone(known), one))
 	if len(refused) > 0 {

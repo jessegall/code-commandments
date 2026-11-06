@@ -77,8 +77,6 @@ func TestAChainReTestingOneSubjectIsASwitchCase(t *testing.T) {
 	}
 }
 
-// TestADispatchKnowsWhichCasesRenderAView holds a dispatch to its cases: a <SwitchCase>'s slots and a chain's
-// branches, and among them only those holding a subtree that could be a component of its own.
 func TestADispatchKnowsWhichCasesRenderAView(t *testing.T) {
 	view := `<section><h3>t</h3><ul><li><b>a</b></li><li><i>b</i></li></ul></section>`
 	codebase := frontendtest.FromSource(t, map[string]string{"Cases.vue": `<template>
@@ -113,8 +111,6 @@ func TestADispatchKnowsWhichCasesRenderAView(t *testing.T) {
 	}
 }
 
-// TestAComponentMeasuresWhatItsTemplateRenders holds a component to the elements its template renders, a
-// <template> wrapper never one of them, whatever it wraps and however deep.
 func TestAComponentMeasuresWhatItsTemplateRenders(t *testing.T) {
 	codebase := frontendtest.FromSource(t, map[string]string{"Sized.vue": `<template>
   <section><h1>t</h1><template v-if="a"><p>x</p><template v-for="i in list" :key="i"><b>{{ i }}</b></template></template></section>

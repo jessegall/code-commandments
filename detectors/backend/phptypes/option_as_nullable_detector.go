@@ -10,16 +10,13 @@ import (
 	phptypessins "github.com/jessegall/code-commandments/sins/backend/phptypes"
 )
 
-// OptionAsNullableDetector finds an Option treated as a nullable: declared ?Option, or unwrapped straight back to
-// null.
+// OptionAsNullableDetector finds an Option treated as a nullable: declared ?Option, or unwrapped straight back to null.
 type OptionAsNullableDetector struct{}
 
 func init() { detectors.Register(catalog.PHP, OptionAsNullableDetector{}) }
 
-// Sin is the sin the detector finds.
 func (OptionAsNullableDetector) Sin() sins.Sin { return phptypessins.OptionAsNullable{} }
 
-// Find is every declaration of a nullable Option, and every unwrap to null that does not feed an argument.
 func (OptionAsNullableDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return append(
 		codebase.

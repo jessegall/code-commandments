@@ -8,9 +8,6 @@ import (
 	"github.com/jessegall/code-commandments/engine/csharp/csharptest"
 )
 
-// TestAConditionIsAConceptOnlyWhenItAsksSeveralObjects holds the shared reading of an unnamed condition where C#
-// files its own parts: `&&` and `||` as expressions of their own, a member read under `expression`, and a local
-// declaration as the statement that may stand above a guard.
 func TestAConditionIsAConceptOnlyWhenItAsksSeveralObjects(t *testing.T) {
 	for name, test := range map[string]struct {
 		source string

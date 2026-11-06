@@ -13,7 +13,6 @@ func init() {
 	sins.Register(catalog.Python, MessageStringRaise{})
 }
 
-// Definition is what the sin states about itself.
 func (MessageStringRaise) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "python-message-string-raise",

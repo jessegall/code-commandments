@@ -7,141 +7,60 @@ import (
 	"github.com/jessegall/code-commandments/contract"
 )
 
-// Grammar is how a language holds what every language has in a place of its own: where its tree files a call's
-// arguments or a type's parents, which declarations the language itself calls, what its test files are named.
+// Grammar is how a language holds what every language has in a place of its own: where its tree files a call's arguments or a type's parents, which declarations the language itself calls, what its test files are named.
 type Grammar struct {
-	// Arguments are the values a call is handed, each once, named, spread and unpacked ones alike.
-	Arguments func(Match) []Match
-	// Members are what a type declaration declares directly: its methods, fields, constants and nested types.
-	Members func(Match) []Match
-	// Parameters are the parameters a function declares itself, never those of a function type written in its
-	// signature.
-	Parameters func(Match) []Match
-	// Extends are the nodes naming the types a type declaration extends directly.
-	Extends func(Match) []Match
-	// Implements are the nodes naming the contracts a type declaration honours directly.
-	Implements func(Match) []Match
-	// WritesAttribute says whether a markup element writes the attribute, plain or bound.
+	Arguments       func(Match) []Match
+	Members         func(Match) []Match
+	Parameters      func(Match) []Match
+	Extends         func(Match) []Match
+	Implements      func(Match) []Match
 	WritesAttribute func(Match, string) bool
-	// DeclaredName is the name a declaration that carries none gives what it declares: a PHP property statement's
-	// one property.
-	DeclaredName func(Match) string
-	// Traits are the nodes naming the traits or mixins a type declaration uses directly.
-	Traits func(Match) []Match
-	// ClassOf is the class a node that declares none is about: the one it names, constructs or holds a value of;
-	// empty when the language cannot tell.
-	ClassOf func(Match) string
-	// ElementOf is the type a collection the node reads holds, where the language knows it from something the
-	// type itself cannot carry: PHP's array says nothing about its contents, and a docblock `list<X>` or a
-	// `#[DataCollectionOf(X::class)]` is the only thing that does. Left out, the type object answers alone.
-	ElementOf func(Match) *contract.Type
+	DeclaredName    func(Match) string
+	Traits          func(Match) []Match
+	ClassOf         func(Match) string
+	ElementOf       func(Match) *contract.Type
 
-	// CodeWords are the content words the node's own head spells: the construct it is and its keywords, then the
-	// names and literal text it is written with, what it holds aside. A comment measured against them shows
-	// whether it says anything the code does not, which is the one judgement that needs a language's own
-	// vocabulary rather than its prose.
 	CodeWords func(Match) []string
 
-	// Documentable says whether a comment of the language can be about the node, where the language's tree files
-	// something as a role a reader would not read it as: C# writes a property's accessor as a member, and no
-	// comment above a property documents its getter. Left out, the engine's own reading answers: anything that is
-	// neither an expression nor a piece of syntax.
 	Documentable func(Match) bool
 
-	// TypeOf is the type an expression has, whatever kind of type it is: a class, but a number or a string too,
-	// where ClassOf answers a class alone. Empty where the language cannot tell.
-	TypeOf func(Match) string
-	// Annotations are the nodes naming each attribute or decorator a declaration carries.
-	Annotations func(Match) []Match
-	// TypeKind is what kind of type a type declaration declares, in the neutral words of TypeKinds.
-	TypeKind func(Match) string
-	// ReturnType is the node a function's return type is written as; no node when none is written.
-	ReturnType func(Match) Match
-	// ParameterType is the node a parameter's type is written as; no node when none is written.
-	ParameterType func(Match) Match
-	// Constructs is the node naming the type a construction creates; no node for anything else.
-	Constructs func(Match) Match
-	// Callers are the calls reaching a function that its language's call graph finds beyond the symbols the tree
-	// resolves, such as a method sent to a receiver whose type the graph works out.
-	Callers func(Match) []Match
-	// DocTags are the tags a declaration's documentation carries, each by its bare name: `deprecated`, `param`.
-	DocTags func(Match) []string
-	// BodyHash is the formatting-blind fingerprint of a function's body; empty for a node without one.
-	BodyHash func(Match) string
-	// NodeHash is the formatting-blind fingerprint of ONE node, as its language takes it, with the names of locals
-	// and the text of data literals blanked when normalize is set. It is what reads a repeat of anything that is
-	// not a whole function body; empty where a language registers none, and then nothing of that language repeats.
-	NodeHash func(node Match, normalize bool) string
-	// TestFile says whether a file is test code, as the language's conventions name one: by its path as judged,
-	// relative to the folder the scan was pointed at, and by its absolute path, where the project's own settings
-	// for its tests are found.
-	TestFile func(judged, path string) bool
-	// Implicit says whether the language itself calls a declaration or binds a parameter, so no code of the
-	// project names it: a constructor, a magic or dunder method, Python's self.
-	Implicit func(Match) bool
-	// NamespaceOf is the namespace part of a declaration's symbol, in the spelling of the language.
-	NamespaceOf func(symbol string) string
-	// AnnotationNames are the names an annotation of the name may be written by, the name itself among them.
-	AnnotationNames func(name string) []string
-	// Inherited says whether a member overrides or implements another, as the language's compiler decides it,
-	// beside what the declared supertypes show.
-	Inherited func(Match) bool
-	// Labels says whether a name labels rather than reads, as a named argument's label does.
-	Labels func(Match) bool
-	// Continues says whether a branch continues the one it sits in rather than nesting inside it: an else-if.
-	Continues func(Match) bool
-	// Body are the statements a construct runs as its own: a branch's taken path, a loop's body. A language that
-	// wraps them in a block is read through it, so the answer is the statements themselves either way.
-	Body func(Match) []Match
-	// Otherwise are the statements a branch runs when its condition does not hold: its else. A language that
-	// writes an else-if files that branch here as the one statement, which is what tells a ladder from a guard.
-	Otherwise func(Match) []Match
-	// BindsItsOwnTest says whether a branch binds a name in its header for its own body to read, which its
-	// condition tests: Go files it as the `init` statement of its `if`, where C# and Python write it inside the
-	// condition itself. Where a language registers none, the condition's own declarations answer it.
-	BindsItsOwnTest func(Match) bool
-	// Condition is what a branch or a loop decides by. No node for a construct that decides by no condition: a
-	// switch has a subject its cases are matched against, which is not a condition and has no inverse.
-	Condition func(Match) Match
-	// ComparisonSubject is what a comparison tests against a constant: the side that is no constant, when the
-	// other one is. No node for anything else, which is what tells a ladder over one subject from a chain of
-	// unrelated tests.
+	TypeOf            func(Match) string
+	Annotations       func(Match) []Match
+	TypeKind          func(Match) string
+	ReturnType        func(Match) Match
+	ParameterType     func(Match) Match
+	Constructs        func(Match) Match
+	Callers           func(Match) []Match
+	DocTags           func(Match) []string
+	BodyHash          func(Match) string
+	NodeHash          func(node Match, normalize bool) string
+	TestFile          func(judged, path string) bool
+	Implicit          func(Match) bool
+	NamespaceOf       func(symbol string) string
+	AnnotationNames   func(name string) []string
+	Inherited         func(Match) bool
+	Labels            func(Match) bool
+	Continues         func(Match) bool
+	Body              func(Match) []Match
+	Otherwise         func(Match) []Match
+	BindsItsOwnTest   func(Match) bool
+	Condition         func(Match) Match
 	ComparisonSubject func(Match) Match
-	// Receiver is the object a call or a member read is sent to: the `$order` of `$order->ship()`; no node for a
-	// free function's call, which is sent to nobody.
-	Receiver func(Match) Match
-	// Declares says whether an expression declares a name the code around it then uses: C#'s `out var artists` and
-	// its `is Thing thing`, Python's `:=`. A condition holding one cannot be moved behind a name, because the name
-	// it binds would go with it.
-	Declares func(Match) bool
-	// Computes says whether an expression works a value out of its parts rather than passing them on: an
-	// arithmetic or string operator, a comparison, a logical operator, a unary minus or a compound assignment.
-	// The neutral kinds already say what an assignment, a comparison and a conjunction are, so a language needs
-	// only to add the operators its own tree names in its own way.
-	Computes func(Match) bool
-	// ElementName is the name a loop binds for each item of what it walks: the `$line` of
-	// `foreach ($order->lines as $line)`. Empty for a loop that binds nothing, such as a `while`, and for any
-	// other node. Each language files it somewhere else — a field of the statement, a target, an identifier token
-	// on the loop itself — so only the language can say.
-	ElementName func(Match) string
-	// Binds says whether a statement only binds a name to a value and acts on nothing: `$order = $this->orders->find($id);`,
-	// `order = self.orders.find(id)`, `var order = _orders.Find(id);`. The languages file an assignment so differently —
-	// a statement of its own, an expression wrapped in one, a declaration — that only the language can say.
-	Binds func(Match) bool
+	Receiver          func(Match) Match
+	Declares          func(Match) bool
+	Computes          func(Match) bool
+	ElementName       func(Match) string
+	Binds             func(Match) bool
 }
 
-// TypeKinds are the kinds of type every language's declarations are told apart by.
 var TypeKinds = []string{"class", "interface", "enum", "trait", "record", "struct", "protocol"}
 
-// grammars are the grammar of each language that registered one.
 var grammars sync.Map
 
-// ReadAs has every match in a file of the language read as the grammar says.
 func ReadAs(language contract.Language, read Grammar) {
 	grammars.Store(language, read)
 }
 
-// InFields reads the children filling any of the fields, in source order.
 func InFields(fields ...string) func(Match) []Match {
 	return func(match Match) []Match {
 		var filling []Match
@@ -157,15 +76,12 @@ func InFields(fields ...string) func(Match) []Match {
 	}
 }
 
-// InField reads the first child filling the field.
 func InField(field string) func(Match) Match {
 	return func(match Match) Match {
 		return match.Child(field)
 	}
 }
 
-// InAnyField reads the first child filling one of the fields, which is how a language that files one thing under
-// several names is read at once: PHP sends a method call to its `var` and a static one to its `class`.
 func InAnyField(fields ...string) func(Match) Match {
 	return func(match Match) Match {
 		for _, child := range match.Children() {
@@ -180,7 +96,6 @@ func InAnyField(fields ...string) func(Match) Match {
 	}
 }
 
-// OfKind reads the child filling the field of a node of the kind; no node for a node of another.
 func OfKind(kind, field string) func(Match) Match {
 	return func(match Match) Match {
 		if match.Kind() != kind {
@@ -191,14 +106,12 @@ func OfKind(kind, field string) func(Match) Match {
 	}
 }
 
-// KindIn says whether a node is of one of the kinds.
 func KindIn(kinds ...string) func(Match) bool {
 	return func(match Match) bool {
 		return slices.Contains(kinds, match.Kind())
 	}
 }
 
-// Kinds reads a node's kind as a neutral word, from the words its language's kinds stand for.
 func Kinds(words map[string]string) func(Match) string {
 	return func(match Match) string {
 		return words[match.Kind()]
@@ -218,7 +131,6 @@ func (m Match) grammar() Grammar {
 	return read.(Grammar)
 }
 
-// listed reads a list of the node's with its language's reading; none when the language registered none.
 func (m Match) listed(read func(Match) []Match) []Match {
 	if read == nil || m.node == nil {
 		return nil

@@ -1,5 +1,4 @@
-// Package rule is a detector a project writes as data: the engine it judges, the sin it finds, and the query
-// that finds it, composed from the same selectors and checks a shipped detector composes in code.
+// Package rule is a detector a project writes as data: the engine it judges, the sin it finds, and the query that finds it, composed from the same selectors and checks a shipped detector composes in code.
 package rule
 
 import (
@@ -23,11 +22,6 @@ import (
 	"github.com/jessegall/code-commandments/skill"
 )
 
-// languages are the languages each engine's own CHECKS may be written in, which is not the same question as
-// catalog.LanguagesOf, and the two tables differ on purpose. The catalog answers which files an engine's rules
-// are run over: a Vue rule is run over .vue and .ts files alike. This answers which language's checks a rule may
-// compose, where a Vue rule may ask vue things and a TypeScript rule may ask either, since a .vue file carries a
-// script and the TypeScript engine reads both.
 var languages = map[catalog.Engine][]contract.Language{
 	catalog.PHP:        {contract.PHP},
 	catalog.Vue:        {contract.Vue},
@@ -37,7 +31,6 @@ var languages = map[catalog.Engine][]contract.Language{
 	catalog.Go:         {contract.Go},
 }
 
-// cases are the naming styles nameCase tells apart, each the whole name.
 var cases = map[string]*regexp.Regexp{
 	"camel":  regexp.MustCompile(`^[a-z][a-z0-9]*([A-Z][a-z0-9]*)*$`),
 	"pascal": regexp.MustCompile(`^[A-Z][A-Za-z0-9]*[a-z][A-Za-z0-9]*$`),
@@ -48,9 +41,7 @@ var cases = map[string]*regexp.Regexp{
 
 // file is a rule as it is written.
 type file struct {
-	Schema string `json:"$schema,omitempty"`
-	// Engine is the engine the rule judges, or the engines: one name for nearly every rule, and a list for one
-	// that is wholly neutral, which is then written once instead of once per engine.
+	Schema string   `json:"$schema,omitempty"`
 	Engine engines  `json:"engine"`
 	Sin    sinFile  `json:"sin"`
 	Find   find     `json:"find"`
@@ -72,7 +63,6 @@ type find struct {
 	Where  []Step `json:"where,omitempty"`
 	Reject []Step `json:"reject,omitempty"`
 
-	// inner is the rule From names, found once when every rule has been read: the population this one narrows.
 	inner *Rule
 }
 
@@ -112,6 +102,7 @@ type Step struct {
 	Child             *Childed        `json:"child,omitempty"`
 	Body              *Step           `json:"body,omitempty"`
 	Inside            *Step           `json:"inside,omitempty"`
+	Documents         *Step           `json:"documents,omitempty"`
 	Next              *Step           `json:"next,omitempty"`
 	Previous          *Step           `json:"previous,omitempty"`
 	NestedAtLeast     *Nesting        `json:"nestedAtLeast,omitempty"`
@@ -175,26 +166,16 @@ type Step struct {
 	Vue               string          `json:"vue,omitempty"`
 	Rule              string          `json:"rule,omitempty"`
 
-	// pattern is the step's glob or regular expression, compiled once when the rule is read.
 	pattern *regexp.Regexp
 
-	// layers are the layers the project declares for the rule's engine, which a layer step looks its name up in.
 	layers *engine.LayerStack
 
-	// predicate is the language's own check the step names, found once when the rule is read.
 	predicate func(engine.Match) bool
 
-	// named is the rule Rule names, found once when every rule has been read.
 	named *Rule
 }
 
-// valueHolds says whether the node is a literal of the very value the rule wrote, kind and all, which is the whole
-// point of asking a value rather than matching text: a bare `true` and the string "true" are not one argument, and
-// neither are `1` and "1". A number is read as a number, so `0` and `0.0` are one value; a node whose value its
-// language did not fold holds nothing.
 func valueHolds(asked json.RawMessage, subject engine.Match) bool {
-	// A null literal carries no value of its own: there is nothing to decode, and its KIND is what says it is
-	// null, which is how every language's bridge writes it and how the engine has always read it.
 	if bytes.Equal(asked, []byte("null")) {
 		return subject.LiteralKind() == "null"
 	}
@@ -216,7 +197,6 @@ func valueHolds(asked json.RawMessage, subject engine.Match) bool {
 	return err == nil && bytes.Equal(written, asked)
 }
 
-// asNumber is the value as a number, when the rule wrote one.
 func asNumber(asked json.RawMessage) (float64, bool) {
 	var number float64
 	if err := json.Unmarshal(asked, &number); err != nil {
@@ -226,11 +206,8 @@ func asNumber(asked json.RawMessage) (float64, bool) {
 	return number, true
 }
 
-// valueScalars are the values a rule may ask a literal for, which are the values a language folds one to.
 var valueScalars = []string{"string", "number", "boolean", "null"}
 
-// validValue refuses a value no literal can hold, so a rule asking for an object or a list is told rather than
-// matching nothing.
 func (s Step) validValue() error {
 	if len(s.Value) == 0 {
 		return nil
@@ -261,8 +238,7 @@ type Bounds struct {
 	AtMost  *int `json:"atMost,omitempty"`
 }
 
-// Count counts the nodes below one that pass a step: its descendants, or its children, those filling one
-// field when Field names it.
+// Count counts the nodes below one that pass a step: its descendants, or its children, those filling one field when Field names it.
 type Count struct {
 	Descendant *Step  `json:"descendant,omitempty"`
 	Child      *Step  `json:"child,omitempty"`
@@ -271,15 +247,12 @@ type Count struct {
 	Bounds
 }
 
-// Same is a check across two nodes: the node the step is about names the same thing as the node reached by
-// following Of from it and then, where Target names one, that target from there.
+// Same is a check across two nodes: the node the step is about names the same thing as the node reached by following Of from it and then, where Target names one, that target from there.
 type Same struct {
 	Of     string `json:"of"`
 	Target string `json:"target,omitempty"`
 }
 
-// names says whether the two nodes name the same thing: the same text, else the same tree, which answers where
-// one side's source cannot be read.
 func (Same) names(subject, other engine.Match) bool {
 	if !other.Exists() {
 		return false
@@ -292,7 +265,6 @@ func (Same) names(subject, other engine.Match) bool {
 	return subject.SameSyntax(other)
 }
 
-// other is the node the subject is compared with: Of away from the subject, then Target away from that.
 func (a Same) other(subject engine.Match) engine.Match {
 	reached := (Step{Of: a.Of}).subject(subject)
 	if a.Target == "" {
@@ -302,18 +274,14 @@ func (a Same) other(subject engine.Match) engine.Match {
 	return (Step{Of: a.Target}).subject(reached)
 }
 
-// Descended is a step on the nodes below one: every node inside it, or, with Within "ownBody", only the nodes it
-// holds itself, which stop at a function nested in it — so a rule can say "this body does it" rather than "someone
-// does it in here", which is a different claim wherever a closure is handed away.
+// Descended is a step on the nodes below one: every node inside it, or, with Within "ownBody", only the nodes it holds itself, which stop at a function nested in it — so a rule can say "this body does it" rather than "someone does it in here", which is a different claim wherever a closure is handed away.
 type Descended struct {
 	Step
 	Within string `json:"within,omitempty"`
 }
 
-// ownBody is the one thing Within says: the nodes the node itself holds.
 const ownBody = "ownBody"
 
-// descendants are the nodes below the node that the step is about.
 func (d Descended) descendants(match engine.Match) []engine.Match {
 	if d.Within == ownBody {
 		return match.OwnDescendants()
@@ -322,14 +290,12 @@ func (d Descended) descendants(match engine.Match) []engine.Match {
 	return match.Descendants()
 }
 
-// Childed is a step on the node's own children, one level down: those filling the field Field names, or every
-// one of them when it names none.
+// Childed is a step on the node's own children, one level down: those filling the field Field names, or every one of them when it names none.
 type Childed struct {
 	Step
 	Field string `json:"field,omitempty"`
 }
 
-// children are the children the step is about.
 func (c Childed) children(match engine.Match) []engine.Match {
 	if c.Field != "" {
 		return match.ChildrenIn(c.Field)
@@ -338,31 +304,26 @@ func (c Childed) children(match engine.Match) []engine.Match {
 	return match.Children()
 }
 
-// Argued is a step on one of a call's arguments: the one At places from the first, or from the last when At is
-// negative, -1 being the last.
+// Argued is a step on one of a call's arguments: the one At places from the first, or from the last when At is negative, -1 being the last.
 type Argued struct {
 	Step
 	At int `json:"at"`
 }
 
-// Tally counts the members of a type that pass its step, or every member when it makes no check; with Inherited,
-// the members its parents and traits declare in the scan too.
+// Tally counts the members of a type that pass its step, or every member when it makes no check; with Inherited, the members its parents and traits declare in the scan too.
 type Tally struct {
 	Step
 	Bounds
 	Inherited bool `json:"inherited,omitempty"`
 }
 
-// layered are the engines a project declares dependency layers for, and how each spells a namespace: the
-// separator between its parts and whether its case matters, as that engine's dependency detector reads them.
 var layered = map[catalog.Engine]layerSpelling{
 	catalog.PHP:    {`\`, false},
 	catalog.Python: {".", true},
 	catalog.CSharp: {".", true},
 }
 
-// layerSpelling is how one engine spells a namespace: the separator between its parts, and whether its case
-// matters.
+// layerSpelling is how one engine spells a namespace: the separator between its parts, and whether its case matters.
 type layerSpelling struct {
 	separator     string
 	caseSensitive bool
@@ -370,11 +331,7 @@ type layerSpelling struct {
 
 // Rule is a project's own detector.
 type Rule struct {
-	name string
-	// engines are the engines the rule judges, in the order its own file names them. A rule that is wholly
-	// neutral names several, and then it is written ONCE: the neutral kinds mean the same in every language, so a
-	// loop whose body sits under one `if` is the same sin wherever it is written, and repeating the rule per
-	// engine was the repetition that made it six rules to keep in step.
+	name    string
 	engines []catalog.Engine
 	sin     ownSin
 	find    find
@@ -382,11 +339,9 @@ type Rule struct {
 	judges  []string
 }
 
-// engines are the engines a rule's own file names, written as one name or as a list of them. Both spellings read
-// into the same thing, because one engine is the common case and a list should cost the common case nothing.
+// engines are the engines a rule's own file names, written as one name or as a list of them.
 type engines []string
 
-// UnmarshalJSON reads one name or a list of them.
 func (e *engines) UnmarshalJSON(text []byte) error {
 	var one string
 	if json.Unmarshal(text, &one) == nil {
@@ -408,8 +363,6 @@ func (e *engines) UnmarshalJSON(text []byte) error {
 // Skills finds the skill a rule's sin names: the project's own, else a shipped one.
 type Skills func(slug string) (skill.Skill, bool)
 
-// Parse reads the rule named name, finding its sin's skill through skills. A rule the tool cannot run says
-// which part is wrong.
 func Parse(name string, text []byte, skills Skills) (Rule, error) {
 	decoder := json.NewDecoder(bytes.NewReader(text))
 	decoder.DisallowUnknownFields()
@@ -488,8 +441,6 @@ func Parse(name string, text []byte, skills Skills) (Rule, error) {
 				return Rule{}, fmt.Errorf("%s: %w", name, err)
 			}
 
-			// EVERY engine a rule names has to declare layers, since one step is read against one stack: a
-			// rule judging two engines where only one has layers would read the other's names against nothing.
 			for _, engine := range judges {
 				if _, declares := layered[engine]; !declares && steps[i].usesLayers() {
 					return Rule{}, fmt.Errorf("%s: a layer step needs declared layers, and the %s engine has none", name, engine)
@@ -513,8 +464,6 @@ func Parse(name string, text []byte, skills Skills) (Rule, error) {
 	}}, read.Find, read.Fix, folders(read.Judges)}, nil
 }
 
-// folders are the folders a rule's judges key names, without the slashes around them, as the config layer reads the
-// same key: a folder is named relative to the project, so "/tests/" and "tests" are the one folder.
 func folders(named []string) []string {
 	var kept []string
 	for _, folder := range named {
@@ -526,9 +475,6 @@ func folders(named []string) []string {
 	return kept
 }
 
-// WithLayers is the rule looking a layer step's name up in the layers the project declares for its engine. A rule
-// that judges several takes the spelling of the first that declares layers at all, which is the only one a layer
-// step can have been written for: Parse refuses a layer step unless every engine the rule names declares them.
 func (r Rule) WithLayers(declared map[string][]string) Rule {
 	spelling, declares := firstLayered(r.engines)
 	if !declares {
@@ -540,7 +486,6 @@ func (r Rule) WithLayers(declared map[string][]string) Rule {
 	return r.withLayers(&stack)
 }
 
-// withLayers is the rule, and every rule it is built from, looking a layer step's name up in the stack.
 func (r Rule) withLayers(stack *engine.LayerStack) Rule {
 	r.find.Where = withLayers(r.find.Where, stack)
 	r.find.Reject = withLayers(r.find.Reject, stack)
@@ -553,7 +498,6 @@ func (r Rule) withLayers(stack *engine.LayerStack) Rule {
 	return r
 }
 
-// withLayers are copies of the steps, and of every step nested in them, that look layers up in the stack.
 func withLayers(steps []Step, stack *engine.LayerStack) []Step {
 	copied := make([]Step, len(steps))
 
@@ -564,8 +508,6 @@ func withLayers(steps []Step, stack *engine.LayerStack) []Step {
 	return copied
 }
 
-// layersInto has each step the pointers name look its layers up in the stack, in place, leaving a nil one alone.
-// The step itself says which of its own fields hold a nested step, and this says what is done to each of them.
 func layersInto(stack *engine.LayerStack, steps ...**Step) {
 	for _, nested := range steps {
 		if *nested == nil {
@@ -576,7 +518,6 @@ func layersInto(stack *engine.LayerStack, steps ...**Step) {
 	}
 }
 
-// withLayers is a copy of the step, and of every step nested in it, that looks layers up in the stack.
 func (s Step) withLayers(stack *engine.LayerStack) Step {
 	s.layers = stack
 
@@ -642,11 +583,10 @@ func (s Step) withLayers(stack *engine.LayerStack) Step {
 	return s
 }
 
-// nested are the steps nested in this one.
 func (s *Step) nested() []*Step {
 	var nested []*Step
 
-	for _, step := range []*Step{s.Inside, s.Next, s.Previous, s.Calls, s.ReferredFrom} {
+	for _, step := range []*Step{s.Inside, s.Documents, s.Next, s.Previous, s.Calls, s.ReferredFrom} {
 		if step != nil {
 			nested = append(nested, step)
 		}
@@ -699,18 +639,14 @@ func (s *Step) nested() []*Step {
 	return nested
 }
 
-// usesLayers says whether the step, or one nested in it, is a layer step.
 func (s Step) usesLayers() bool {
 	return s.Layer != "" || slices.ContainsFunc(s.nested(), (*Step).usesLayers)
 }
 
-// Name is the detector's name: the rule file's.
 func (r Rule) Name() string {
 	return r.name
 }
 
-// Engine is the first engine the rule judges, which is the only one for nearly every rule. A reader that must
-// know about all of them asks Engines.
 func (r Rule) Engine() catalog.Engine {
 	if len(r.engines) == 0 {
 		return ""
@@ -719,13 +655,10 @@ func (r Rule) Engine() catalog.Engine {
 	return r.engines[0]
 }
 
-// Engines are every engine the rule judges, in the order its file names them.
 func (r Rule) Engines() []catalog.Engine {
 	return r.engines
 }
 
-// engineList is the engines named as a reader reads them, with the noun that fits: the python engine, or the php
-// and python engines.
 func engineList(engines []catalog.Engine) string {
 	var names []string
 	for _, engine := range engines {
@@ -739,7 +672,6 @@ func engineList(engines []catalog.Engine) string {
 	return "the " + strings.Join(names, " and ") + " engines"
 }
 
-// firstLayered is the layer spelling of the first engine that declares layers; none where no engine does.
 func firstLayered(engines []catalog.Engine) (layerSpelling, bool) {
 	for _, engine := range engines {
 		if spelling, declares := layered[engine]; declares {
@@ -750,8 +682,6 @@ func firstLayered(engines []catalog.Engine) (layerSpelling, bool) {
 	return layerSpelling{}, false
 }
 
-// judgedLanguages are the languages of every engine the rule judges, each once: what its query is narrowed to, and
-// what its own words are held against.
 func judgedLanguages(engines []catalog.Engine) []contract.Language {
 	var judged []contract.Language
 	for _, engine := range engines {
@@ -765,20 +695,14 @@ func judgedLanguages(engines []catalog.Engine) []contract.Language {
 	return judged
 }
 
-// Sin is the sin the rule finds.
 func (r Rule) Sin() sins.Sin {
 	return r.sin
 }
 
-// Judges are the folders this rule judges although the project leaves them out or excludes them, as the rule's own
-// file names them. A rule of the project's own carries this itself, because the file is the project's own and no
-// install rewrites it, so the whitelist survives a reinstall; a shipped rule carries none, and takes the folders
-// from the project's config, which is the only place a consumer can change them.
 func (r Rule) Judges() []string {
 	return r.judges
 }
 
-// Find runs the rule's query over the files of its engine.
 func (r Rule) Find(codebase *engine.Codebase) []engine.Match {
 	if r.find.inner != nil {
 		return narrowed(r.find.inner.Find(codebase), r.find)
@@ -798,7 +722,6 @@ func (r Rule) Find(codebase *engine.Codebase) []engine.Match {
 	return query.Get()
 }
 
-// narrowed is the matches a rule's own steps keep of the ones the rule it is built on found.
 func narrowed(found []engine.Match, by find) []engine.Match {
 	var kept []engine.Match
 	for _, match := range found {
@@ -810,8 +733,6 @@ func narrowed(found []engine.Match, by find) []engine.Match {
 	return kept
 }
 
-// Satisfies says whether the node is one this rule finds: what it selects admits it, every where step holds and
-// no reject step does. It is how a step that names a rule asks it about one node.
 func (r Rule) Satisfies(match engine.Match) bool {
 	if r.find.inner != nil && !r.find.inner.Satisfies(match) {
 		return false
@@ -827,17 +748,14 @@ func (r Rule) Satisfies(match engine.Match) bool {
 // steps is a run of a rule's steps, asked about one node.
 type steps []Step
 
-// hold says whether every step passes the node.
 func (s steps) hold(match engine.Match) bool {
 	return !slices.ContainsFunc(s, func(step Step) bool { return !step.check(match) })
 }
 
-// any says whether some step passes the node.
 func (s steps) any(match engine.Match) bool {
 	return slices.ContainsFunc(s, func(step Step) bool { return step.check(match) })
 }
 
-// admits says whether what a rule selects takes in the node: its language's own kind, or the neutral one.
 func admits(named string, match engine.Match) bool {
 	if kind, own := strings.CutPrefix(named, "kind:"); own {
 		return match.Kind() == kind
@@ -854,9 +772,6 @@ func admits(named string, match engine.Match) bool {
 	return match.Is(engine.Neutral(named))
 }
 
-// namesTheKind says whether the word is the SPELLING of the node's kind, as that language's committed vocabulary
-// derives it: a rule writes `static-call` or `Expr_StaticCall` and means the same construct. A spelling two kinds
-// of a language share is the spelling of neither, so it names nothing here either.
 func namesTheKind(word string, subject engine.Match) bool {
 	if subject.Source() == nil {
 		return false
@@ -872,7 +787,6 @@ func namesTheKind(word string, subject engine.Match) bool {
 	return spelled && construct.Kind == subject.Kind()
 }
 
-// selector opens the query a rule's select names: a neutral kind, or `kind:` and a language's own kind.
 func selector(named string) (func(*engine.Codebase) *engine.Query, error) {
 	if kind, own := strings.CutPrefix(named, "kind:"); own && kind != "" {
 		return func(c *engine.Codebase) *engine.Query { return c.WhereKind(kind) }, nil
@@ -895,9 +809,6 @@ func selector(named string) (func(*engine.Codebase) *engine.Query, error) {
 	return func(c *engine.Codebase) *engine.Query { return c.WhereIs(engine.Neutral(named)) }, nil
 }
 
-// selected refuses a select naming a kind or a spelling no parser of the judged languages declares. It is read
-// apart from the steps because a select is not one: it is where most rules name a construct, and a selector that
-// matched nothing was the whole rule finding nothing in silence.
 func selected(named string, judged []contract.Language) error {
 	kind, own := strings.CutPrefix(named, "kind:")
 	if !own {
@@ -919,17 +830,10 @@ func selected(named string, judged []contract.Language) error {
 	return fmt.Errorf("no parser of %s writes the construct %q%s", spoken(judged), kind, didYouMean(kind, append(values(judged, "kind"), spellings(judged)...)))
 }
 
-// constructSelector opens a select that names a construct by its SPELLING rather than by the language's own kind:
-// `construct:static-call`.
 const constructSelector = "construct:"
 
-// commentSelector is what a rule selects to report on comments rather than code: a comment is no node of the tree,
-// so it is named rather than being one of the neutral kinds.
 const commentSelector = "comment"
 
-// noneOf says a key's value is none of the ones it may take, naming the nearest when it is a slip of the
-// keyboard. What it lists and what a slip is measured against can differ: an engine lists the names of today and
-// answers to the ones it was published under before, so a slip near one of those is named too.
 func noneOf(key, value string, allowed []string, meant ...[]string) string {
 	nearest := allowed
 	if len(meant) > 0 {
@@ -939,7 +843,6 @@ func noneOf(key, value string, allowed []string, meant ...[]string) string {
 	return fmt.Sprintf("%s %q is none of %s%s", key, value, strings.Join(allowed, ", "), didYouMean(value, nearest))
 }
 
-// engineNames are the names of every engine a rule may judge.
 func engineNames() []string {
 	var names []string
 	for _, engine := range catalog.Engines {
@@ -962,7 +865,6 @@ func neutralNames() []string {
 	return names
 }
 
-// checks counts the checks a step makes; a step makes exactly one.
 func (s Step) checks() int {
 	count := 0
 
@@ -971,7 +873,7 @@ func (s Step) checks() int {
 		s.ResolvesLike != "", s.NamespaceLike != "", s.Layer != "", s.HasModifier != "", s.HasFlag != "", s.WithinLoop != nil,
 		s.Operator != "", len(s.OperatorIn) > 0, s.Type != "", s.TypeLike != "",
 		len(s.Value) > 0, s.Documented != nil, s.File != "", s.FileMatches != "", s.Position != "", s.Field != "", s.Role != "", s.TopLevel != nil, s.Descendant != nil, s.Child != nil, s.Body != nil, s.Inside != nil,
-		s.Next != nil, s.Previous != nil, s.NestedAtLeast != nil, s.Counts != nil, s.Parameters != nil, s.Arguments != nil,
+		s.Documents != nil, s.Next != nil, s.Previous != nil, s.NestedAtLeast != nil, s.Counts != nil, s.Parameters != nil, s.Arguments != nil,
 		s.Lines != nil, s.Members != nil, s.Complexity != nil, s.Extends != "", s.ExtendsAny != "", s.Implements != "", s.Uses != "", s.All != nil, s.Any != nil, s.Not != nil, s.HasAttribute != "", s.Sibling != "", s.IsA != "",
 		s.TypeKind != "", s.HasAnnotation != "", s.ReturnType != "", s.ParameterType != "", s.Constructs != "", s.Unused != nil,
 		s.CalledFrom != "", s.ReferredFrom != nil, s.Calls != nil, s.Argument != nil, s.CommentIs != "", s.DocReference != nil, s.CommentLike != "", s.CommentMatches != "", s.DocTag != "", s.Duplicated != nil, s.Callers != nil, s.Repeated != nil, s.DeclaredBy != "", s.AnsweredBy != nil, s.DeclaredElsewhere != nil, s.SameAs != nil, s.Ancestors != nil, s.RedundantElse != nil, s.UnnamedCondition != nil, s.BindsItsOwnTest != nil, s.SoleLoopBodyGuard != nil, s.PassesItsElement != nil, s.LadderRungs != nil, s.Nullable != nil, s.TypeShape != "", s.TypeOrigin != "", s.ElementType != "",
@@ -984,7 +886,6 @@ func (s Step) checks() int {
 	return count
 }
 
-// prepare checks the step can run, and compiles its glob or regular expression once.
 func (s *Step) prepare() error {
 	if err := s.valid(); err != nil {
 		return err
@@ -1040,7 +941,6 @@ func (s *Step) prepare() error {
 	return nil
 }
 
-// compile reads a regular expression, saying which one when it cannot.
 func (s *Step) compile(expression string) error {
 	compiled, err := regexp.Compile(expression)
 	if err != nil {
@@ -1119,7 +1019,6 @@ func (s Step) valid() error {
 	return nil
 }
 
-// validSizes checks every size the step bounds is bounded honestly, and a count says what it counts.
 func (s Step) validSizes() error {
 	named := map[string]*Bounds{}
 
@@ -1175,45 +1074,25 @@ func (s Step) validSizes() error {
 	return nil
 }
 
-// Ancestors is how long a type's own line of parents may be, and which of them count. It is the one size a class
-// cannot be read for from its own file: `extendsAny` asks whether a type is somewhere in the line, and nothing
-// asked how far the line runs.
+// Ancestors is how long a type's own line of parents may be, and which of them count.
 type Ancestors struct {
 	Bounds
-	// Within counts only the parents whose name matches the glob, so a project bounds the levels of its OWN and
-	// says nothing about the framework class underneath them, which it did not write and cannot flatten. Every
-	// parent counts where it says nothing.
 	Within string `json:"within,omitempty"`
 }
 
-// Repeats is how widely a node must be written for the step to keep it: in that many functions, spread over that
-// many files, read the way its choices say. It is what says a thing is written again and again where `duplicated`
-// says it of a whole function body alone.
+// Repeats is how widely a node must be written for the step to keep it: in that many functions, spread over that many files, read the way its choices say.
 type Repeats struct {
 	Bounds
-	// Files is the fewest files those functions must be spread over. One thing written three times in one file is
-	// often one function's business; across two it is nobody's, which is what makes it a missing funnel.
-	Files int `json:"files,omitempty"`
-	// Exact counts what is written, down to the names of locals and the text of literals. Without it the reading
-	// is the normalized one, as `duplicated` reads a body: blind to what a local is called and which datum a
-	// literal holds. A repeated string literal asks for the exact reading, since normalising reads every string as
-	// the same datum.
-	Exact bool `json:"exact,omitempty"`
-	// EitherWay counts a question and its negation as one: `==` with `!=`, `is` with `is not`, `in` with `not in`.
-	// A funnel is missing whichever way its question is asked.
-	EitherWay bool `json:"eitherWay,omitempty"`
-	// By is what groups the repeats, `owner` for the type that declares what the left side reads, so one question
-	// about the fields of two classes that share a name is two questions; empty groups them by what is written.
-	By string `json:"by,omitempty"`
+	Files     int    `json:"files,omitempty"`
+	Exact     bool   `json:"exact,omitempty"`
+	EitherWay bool   `json:"eitherWay,omitempty"`
+	By        string `json:"by,omitempty"`
 }
 
-// reading is how the engine is asked to read a node for these choices.
 func (r Repeats) reading() engine.Reading {
 	return engine.Reading{Exact: r.Exact, EitherWay: r.EitherWay, ByOwner: r.By == owner}
 }
 
-// spread is the fewest files the repeats must be spread over: the one the node itself is in, when the step
-// names none.
 func (r Repeats) spread() int {
 	if r.Files < 1 {
 		return 1
@@ -1222,41 +1101,22 @@ func (r Repeats) spread() int {
 	return r.Files
 }
 
-// owner is the one thing `by` may name: the type that declares the field the left side reads.
 const owner = "owner"
 
-// declaredBy names the type that declares the member a node reads, as a target to step onto and as the check that
-// matches its name. The two are ONE answer, the engine's: the check is the one-line spelling of the commonest
-// question, whose field is this, and the target is how every other check composes on it.
 const declaredBy = "declaredBy"
 
-// declarationTarget names the member a node reaches rather than the type that declares it: the method a call runs,
-// the field an access reads. One engine answer stands behind both, so a rule asks whose member it is or which
-// member it is without the two ever disagreeing.
 const declarationTarget = "declaration"
 
-// receiverTarget names the object a node is sent to, which every language answers through its own grammar: the
-// `$order` of `$order->ship()` and the `order` of `order.ship()` alike.
 const receiverTarget = "receiver"
 
-// conditionTarget names the question a branch or a loop decides by, and subjectTarget what a comparison tests
-// against a constant. The two are what a rule about a decision needs: one steps onto the question, the other onto
-// the thing being asked about.
 const (
-	conditionTarget = "condition"
-	subjectTarget   = "subject"
-	// returnTypeTarget and parameterTypeTarget land on the type NODE a signature writes, so everything a rule can
-	// ask of a type composes on it — what it resolves to, what it is a kind of, the shape it has. Globbing the
-	// type's TEXT is what a rule had instead, and the catalogue said the smell out loud: `{"returnType": "?*"}`
-	// was how a rule asked whether a return may be absent.
+	conditionTarget     = "condition"
+	subjectTarget       = "subject"
 	returnTypeTarget    = "returnType"
 	parameterTypeTarget = "parameterType"
-	// annotationTarget opens the target that names one: `annotation:Route` lands on the attribute or decorator of
-	// that name, where hasAnnotation says only that one is there.
-	annotationTarget = "annotation:"
+	annotationTarget    = "annotation:"
 )
 
-// valid checks the bounds bound something, below zero nowhere, and leave room between them.
 func (b Bounds) valid(size string) error {
 	switch {
 	case b.AtLeast == nil && b.AtMost == nil:
@@ -1270,7 +1130,6 @@ func (b Bounds) valid(size string) error {
 	return nil
 }
 
-// holds says whether the size lies within the bounds.
 func (b Bounds) holds(size int) bool {
 	return (b.AtLeast == nil || size >= *b.AtLeast) && (b.AtMost == nil || size <= *b.AtMost)
 }
@@ -1281,8 +1140,6 @@ func (s Step) describe() string {
 	return string(text)
 }
 
-// check answers the step for a node: on the node the step is about, which is the one given unless Of names
-// another.
 func (s Step) check(match engine.Match) bool {
 	subject := s.subject(match)
 	if !subject.Exists() {
@@ -1366,6 +1223,8 @@ func (s Step) check(match engine.Match) bool {
 		return s.SameAs.names(subject, s.SameAs.other(subject))
 	case s.Inside != nil:
 		return slices.ContainsFunc(subject.Ancestors(), s.Inside.check)
+	case s.Documents != nil:
+		return s.Documents.check(documents(subject))
 	case s.Next != nil:
 		return s.Next.check(subject.Next())
 	case s.Previous != nil:
@@ -1425,10 +1284,6 @@ func (s Step) check(match engine.Match) bool {
 	case s.Calls != nil:
 		return slices.ContainsFunc(subject.OwnDescendants(), func(below engine.Match) bool { return below.Is(engine.Call) && s.Calls.check(below) })
 	case s.Argument != nil:
-		// Whatever was HANDED to the node, wherever its language keeps it: a call's arguments, a construction's,
-		// and an annotation's, which is what makes `{"of": "annotation:Route", "argument": …}` answer what the
-		// attribute was given rather than only that it is there. A node handed nothing has no arguments to pass,
-		// so the kinds need no guard of their own.
 		return s.Argument.passes(subject.Arguments())
 	case s.CommentIs != "":
 		return s.commentIs(subject)
@@ -1471,8 +1326,6 @@ func (s Step) check(match engine.Match) bool {
 	case s.DeclaredElsewhere != nil:
 		return subject.DeclaredElsewhere() == *s.DeclaredElsewhere
 	case s.AnsweredBy != nil:
-		// Either way: a method that answers the question answers it asked the other way round too, since the
-		// caller's fix is the same name with a `not` in front of it.
 		return (subject.Answering(engine.Reading{EitherWay: true}) != "") == *s.AnsweredBy
 	case s.TypeShape != "":
 		typed := subject.Typed()
@@ -1487,8 +1340,6 @@ func (s Step) check(match engine.Match) bool {
 	case len(s.Value) > 0:
 		return valueHolds(s.Value, subject)
 	case s.Nullable != nil:
-		// A node whose type the engine cannot read answers nothing about absence, whichever way the check is
-		// written, so no type is no pass and never a silent `not nullable`.
 		return subject.Typed() != nil && subject.AdmitsAbsence() == *s.Nullable
 	case s.Overrides != nil:
 		return subject.IsOverride() == *s.Overrides
@@ -1503,9 +1354,6 @@ func (s Step) check(match engine.Match) bool {
 	return false
 }
 
-// constructs says whether the construction creates an instance of a type the pattern names, or, on anything
-// else, whether a construction of its own does. A qualified pattern is matched by the whole symbol the type
-// resolves to, a bare one by its last part.
 func (s Step) constructs(subject engine.Match) bool {
 	for _, below := range append([]engine.Match{subject}, subject.OwnDescendants()...) {
 		if created := below.Constructed(); created.Exists() && s.namesPattern(created) {
@@ -1516,7 +1364,6 @@ func (s Step) constructs(subject engine.Match) bool {
 	return false
 }
 
-// namesPattern says whether the type the node names matches the step's pattern.
 func (s Step) namesPattern(named engine.Match) bool {
 	symbol := engine.BareSymbol(named.Named())
 	if !strings.ContainsAny(s.Constructs, `\.`) {
@@ -1526,29 +1373,21 @@ func (s Step) namesPattern(named engine.Match) bool {
 	return s.pattern.MatchString(symbol)
 }
 
-// unused says whether nothing refers to the declaration: to a function or type from outside it, to a parameter
-// by reading its name. What the language itself calls or binds, a member a supertype dictates, anything else,
-// and a declaration the tool cannot name are not judged unused.
 func unused(declaration engine.Match) bool {
 	switch {
 	case declaration.DeclaresAField():
-		// A promoted constructor parameter is the field it declares: nothing reads it as a parameter, and
-		// everything reads it as `$this->held`.
 		return declaration.IsUnreadMember()
 	case declaration.Is(engine.Parameter):
 		return declaration.IsUnread()
 	case declaration.Is(engine.Function), declaration.Is(engine.TypeDeclaration):
 		return declaration.Node().Symbol != "" && !declaration.IsImplicit() && !declaration.IsOverride() && len(declaration.Referrers()) == 0
 	case declaration.Role() == "member":
-		// A field refers to no symbol in most languages: it is read as `$this->held`, `self.held` or `this.held`,
-		// so what reaches it is resolved through the type its receiver holds rather than by a name.
 		return declaration.IsUnreadMember()
 	}
 
 	return false
 }
 
-// passes says whether the argument at the position passes the step; none there passes nothing.
 func (a Argued) passes(arguments []engine.Match) bool {
 	at := a.At
 	if at < 0 {
@@ -1562,7 +1401,6 @@ func (a Argued) passes(arguments []engine.Match) bool {
 	return a.check(arguments[at])
 }
 
-// own is the language whose own check the step names, and the check's name; no language for any other step.
 func (s Step) own() (contract.Language, string) {
 	for language, name := range map[contract.Language]string{contract.PHP: s.PHP, contract.Python: s.Python,
 		contract.CSharp: s.CSharp, contract.TypeScript: s.TypeScript, contract.Vue: s.Vue} {
@@ -1574,8 +1412,6 @@ func (s Step) own() (contract.Language, string) {
 	return "", ""
 }
 
-// ownChecks checks each language's own check the step, or one nested in it, names: the rule's engine must judge
-// that language, and the language must offer the check.
 func (s *Step) ownChecks(judged []contract.Language) error {
 	if language, name := s.own(); language != "" {
 		if !slices.Contains(judged, language) {
@@ -1606,33 +1442,15 @@ func (s *Step) ownChecks(judged []contract.Language) error {
 	return nil
 }
 
-// vocabularyKeys are the checks whose value is a word one language's bridge writes, each read from the committed
-// vocabularies of the languages a rule judges: the value space nobody could discover before it was generated.
 func (s *Step) vocabularyKeys() map[string]string {
 	return map[string]string{"kind": s.Kind, "field": s.Field, "operator": s.Operator, "hasFlag": s.HasFlag,
 		"hasModifier": s.HasModifier}
 }
 
-// Written says whether one of the languages writes that value for the key, and which languages write it anywhere.
-// It is what the schema offers as completion, what a hint is drawn from, and what a rule is refused by.
-//
-// It became a refusal when the vocabulary stopped being a census. A census is a sample: a construct no fixture
-// exercised was missing from it, and refusing on that would have refused a rule for being ahead of the sample,
-// which is why this reading was written and then left unused. Every language's parser now DECLARES what it can
-// emit, so the set is the whole of what the language has, and a value outside it is a value no parser will ever
-// write — a typo, or another language's construct.
 func Written(judged []contract.Language, key, named string) (seen bool, elsewhere []contract.Language) {
 	return offered(judged, key, named), owning(key, named)
 }
 
-// offered says whether one of the languages writes that value for the key, by its own word or, for a kind, by the
-// spelling the vocabulary derives.
-//
-// A language offers EVERYTHING for a key its own parser never answered for. A census alone cannot tell a typo from
-// a construct nothing exercised, so a key the parser did not cover is still a sample and refuses nothing, however
-// complete the kinds beside it are. Today every parser answers for the kinds it can emit and most for the slots a
-// child fills; none answers for the operators, flags or modifiers a node carries, because nothing asked them to.
-// That is what keeps this honest as a refusal: it refuses against what a parser vouches for, or not at all.
 func offered(judged []contract.Language, key, named string) bool {
 	for _, language := range judged {
 		vocabulary, held := VocabularyOf(language)
@@ -1652,9 +1470,6 @@ func offered(judged []contract.Language, key, named string) bool {
 	return false
 }
 
-// declaredValues refuses a value no parser of the languages this rule judges declares: a kind, a field, an
-// operator, a flag or a modifier that is a typo, or that belongs to a language the rule does not judge. Before
-// this it matched nothing in silence, which reads as a rule that found no sins.
 func (s *Step) declaredValues(judged []contract.Language) error {
 	for _, key := range slices.Sorted(maps.Keys(s.vocabularyKeys())) {
 		named := s.vocabularyKeys()[key]
@@ -1683,7 +1498,6 @@ func (s *Step) declaredValues(judged []contract.Language) error {
 	return nil
 }
 
-// spoken is the languages named as a reader reads them.
 func spoken(languages []contract.Language) string {
 	var names []string
 	for _, language := range languages {
@@ -1693,8 +1507,6 @@ func spoken(languages []contract.Language) string {
 	return strings.Join(names, " and ")
 }
 
-// owning are the languages that DO write the value, so a rule naming another language's construct is told whose
-// it is rather than told it is nothing.
 func owning(key, named string) []contract.Language {
 	var owners []contract.Language
 	for _, language := range contract.Languages {
@@ -1712,8 +1524,6 @@ func owning(key, named string) []contract.Language {
 	return owners
 }
 
-// values are the values the languages write for the key, each once, which is what a slip of the keyboard is
-// measured against.
 func values(judged []contract.Language, key string) []string {
 	var offered []string
 	for _, language := range judged {
@@ -1725,8 +1535,6 @@ func values(judged []contract.Language, key string) []string {
 	return offered
 }
 
-// spellings are the spellings the languages derive, which a slip over a spelling is measured against beside the
-// kinds themselves.
 func spellings(judged []contract.Language) []string {
 	var derived []string
 	for _, language := range judged {
@@ -1738,7 +1546,6 @@ func spellings(judged []contract.Language) []string {
 	return derived
 }
 
-// valuesOf are the values one vocabulary writes for the key.
 func valuesOf(vocabulary Vocabulary, key string) []string {
 	switch key {
 	case "kind":
@@ -1756,7 +1563,6 @@ func valuesOf(vocabulary Vocabulary, key string) []string {
 	return nil
 }
 
-// said is the languages as a reader reads them.
 func said(languages []contract.Language) string {
 	var names []string
 	for _, language := range languages {
@@ -1767,17 +1573,10 @@ func said(languages []contract.Language) string {
 }
 
 // commented says whether a comment on the node, or in the run directly above it, matches the step's pattern.
-// Referenced is a question about the code a doc comment NAMES: with Resolves false, a reference that names code
-// the project would have had to own and no longer declares, which is the one question the bridges' own resolving
-// already answers.
 type Referenced struct {
 	Resolves *bool `json:"resolves"`
 }
 
-// holds says whether a comment of the node makes a reference the question keeps. It is asked of each REFERENCE, so
-// a comment that names no code at all keeps nothing either way; and a reference the compiler could never have
-// resolved, or whose owner is declared outside the scan, counts as neither, since nothing here can say whether
-// that owner still has the member.
 func (r Referenced) holds(subject engine.Match) bool {
 	for _, comment := range commentsOf(subject) {
 		for _, ref := range comment.Refs {
@@ -1790,8 +1589,6 @@ func (r Referenced) holds(subject engine.Match) bool {
 	return false
 }
 
-// commentIs asks a calibrated judgement of what a comment says: of the comment the step is on, and of a comment
-// written for the code it is on, so a rule reaches the judgement whether it selected comments or code.
 func (s Step) commentIs(subject engine.Match) bool {
 	for _, comment := range commentsOf(subject) {
 		if comment.Is(s.CommentIs) {
@@ -1802,8 +1599,15 @@ func (s Step) commentIs(subject engine.Match) bool {
 	return false
 }
 
-// commentsOf are the comments the step's judgement is asked of: the comment itself where the step is on one, else
-// the comments written on the node and in the run above it.
+func documents(subject engine.Match) engine.Match {
+	comment, is := subject.AsComment()
+	if !is {
+		return engine.Match{}
+	}
+
+	return comment.Documents()
+}
+
 func commentsOf(subject engine.Match) []engine.Commented {
 	if comment, ok := subject.AsComment(); ok {
 		return []engine.Commented{comment}
@@ -1818,8 +1622,6 @@ func commentsOf(subject engine.Match) []engine.Commented {
 }
 
 func (s Step) commented(subject engine.Match) bool {
-	// Asked of a comment, the question is about that comment: a rule selecting comments reads what each one says
-	// with the same key a rule about code reads its comments with.
 	if subject.Kind() == engine.CommentKind {
 		return s.pattern.MatchString(subject.Written())
 	}
@@ -1833,9 +1635,6 @@ func (s Step) commented(subject engine.Match) bool {
 	return false
 }
 
-// namesAny says whether any of the symbols is the type want names.
-// namesAny says whether one of the symbols is the type the step names: by name, or, for a glob such as `*Service`,
-// by its whole name or its last part matching it.
 func (s Step) namesAny(symbols []string, want string) bool {
 	if !isGlob(want) {
 		return slices.ContainsFunc(symbols, func(symbol string) bool { return engine.NamesType(symbol, want) })
@@ -1848,9 +1647,6 @@ func (s Step) namesAny(symbols []string, want string) bool {
 	})
 }
 
-// hasSibling says whether a file the scan read matches the pattern, read from the node's folder, `{folder}` standing
-// for that folder's name: `{folder}.php` beside migrations/v2/*.php is migrations/v2/v2.php, and `../{folder}.php`
-// beside fresh/orders/Helper.php is fresh/orders.php.
 func hasSibling(node engine.Match, pattern string) bool {
 	if node.Codebase() == nil {
 		return false
@@ -1870,13 +1666,10 @@ func hasSibling(node engine.Match, pattern string) bool {
 	return false
 }
 
-// isGlob says whether a type the step names is a pattern rather than a name.
 func isGlob(want string) bool {
 	return strings.ContainsAny(want, "*?[")
 }
 
-// resolved is the symbol the node refers to, else the class it is about: a variable or a property holds a value of
-// one, which is the class it resolves to.
 func resolved(node engine.Match) string {
 	if refers := node.Refers(); refers != "" {
 		return refers
@@ -1885,9 +1678,6 @@ func resolved(node engine.Match) string {
 	return node.Class()
 }
 
-// typed says whether a written type matches the step's pattern: as it is written, its spaces and the pattern's
-// dropped, or as
-// the type it names resolves; no type written matches nothing.
 func (s Step) typed(written engine.Match) bool {
 	if !written.Exists() {
 		return false
@@ -1902,10 +1692,6 @@ func (s Step) typed(written engine.Match) bool {
 	return refers != "" && s.pattern.MatchString(refers)
 }
 
-// elementNamed says whether the type's element is the one the glob names: the type a collection holds, which a
-// bridge reads from a generic argument, a docblock `list<X>` or an attribute such as `#[DataCollectionOf(X)]`. A
-// collection whose element nothing says is kept by nothing, since a bag of unknowns is not a bag of the type the
-// rule asked about.
 func (s Step) elementNamed(subject engine.Match) bool {
 	element := subject.ElementType()
 	if element == nil {
@@ -1921,8 +1707,6 @@ func (s Step) elementNamed(subject engine.Match) bool {
 	return false
 }
 
-// typeGlob reads a pattern over types, where `*` is any run of characters and nothing else is special, so `?*`
-// is PHP's nullable type.
 func typeGlob(pattern string) *regexp.Regexp {
 	parts := strings.Split(pattern, "*")
 	for i, part := range parts {
@@ -1932,7 +1716,6 @@ func typeGlob(pattern string) *regexp.Regexp {
 	return regexp.MustCompile("^" + strings.Join(parts, ".*") + "$")
 }
 
-// tally counts the nodes below the node that pass the count's step.
 func (c Count) tally(match engine.Match) int {
 	counted, step := match.Descendants(), c.Descendant
 
@@ -1964,7 +1747,6 @@ func (c Count) tally(match engine.Match) int {
 	return count
 }
 
-// tally counts the type's members that pass the step, every one when it makes no check.
 func (t Tally) tally(match engine.Match) int {
 	count := 0
 	members := match.Members()
@@ -1980,9 +1762,6 @@ func (t Tally) tally(match engine.Match) int {
 	return count
 }
 
-// depth counts the node and the nodes above it that pass the step, within its function: a function around it
-// ends the count, unless functions are what is counted. An else-if continues its if rather than nesting in it, so
-// it adds nothing.
 func (n Nesting) depth(match engine.Match) int {
 	count := 0
 
@@ -2000,8 +1779,6 @@ func (n Nesting) depth(match engine.Match) int {
 	return count
 }
 
-// atPosition says whether the node is first, last or the only one among its siblings; an only one is also
-// the first and the last.
 func atPosition(match engine.Match, position string) bool {
 	first, last := !match.Previous().Exists(), !match.Next().Exists()
 
@@ -2015,18 +1792,12 @@ func atPosition(match engine.Match, position string) bool {
 	}
 }
 
-// topLevel says whether the node sits outside every function, closures included, and every type: code that
-// runs when its file is loaded.
 func topLevel(match engine.Match) bool {
 	return !match.Closest(engine.Function).Exists() && !match.EnclosingType().Exists()
 }
 
-// moods are the linguistic moods a name can be in, by the name a rule asks for one. The set is closed: this is the
-// one check in the catalogue that reads a NAME, which is only justified where the sin IS the name, and it never
-// becomes a list of words a rule writes for itself.
 var moods = []string{"bare-verb", "third-person", "question"}
 
-// moodOf says whether the name is in that mood, as the prose package reads one.
 func moodOf(mood, name string) bool {
 	switch mood {
 	case "bare-verb":
@@ -2040,7 +1811,6 @@ func moodOf(mood, name string) bool {
 	return false
 }
 
-// nameOf is the name a reader gives the node: its own, or, for a call, the name it calls.
 func nameOf(match engine.Match) string {
 	if name := match.DeclaredName(); name != "" {
 		return name
@@ -2049,14 +1819,10 @@ func nameOf(match engine.Match) string {
 	return match.CalleeName()
 }
 
-// bare is a name without the marks a language puts before it: PHP's `$` and the leading underscores of a
-// private name.
 func bare(name string) string {
 	return strings.TrimLeft(name, "$_")
 }
 
-// glob is a pattern where `*` stands for any run of characters, separators included, and `?` for one; every
-// other character stands for itself, a backslash too, so a PHP name reads as it is written.
 func glob(pattern string) *regexp.Regexp {
 	var expression strings.Builder
 	expression.WriteString("(?s)^")
@@ -2079,8 +1845,6 @@ func glob(pattern string) *regexp.Regexp {
 	return regexp.MustCompile(expression.String())
 }
 
-// writeBracket writes the character class a pattern opens at `at`, `[0-9]` or `[!a-z]` for any but those, and
-// answers where the pattern goes on after it; a bracket never closed stands for itself.
 func writeBracket(expression *strings.Builder, pattern string, at int) int {
 	end := strings.IndexByte(pattern[at+1:], ']')
 	if end < 1 {
@@ -2097,8 +1861,6 @@ func writeBracket(expression *strings.Builder, pattern string, at int) int {
 	return at + 1 + end
 }
 
-// pathGlob reads a pattern over paths as .gitignore does: `*` and `?` stay within one folder, `**` crosses any
-// number of them.
 func pathGlob(pattern string) *regexp.Regexp {
 	var expression strings.Builder
 	expression.WriteString("^")
@@ -2162,8 +1924,6 @@ func (s Step) subject(match engine.Match) engine.Match {
 	}
 }
 
-// ancestors are the classes of the type's own line of parents that the step counts, nearest first: every one of
-// them, or only those a glob names, which is how a project counts its own levels and not a framework's.
 func (s Step) ancestors(subject engine.Match) []string {
 	line := subject.Lineage()
 	if s.Ancestors.Within == "" {
@@ -2180,7 +1940,6 @@ func (s Step) ancestors(subject engine.Match) []string {
 	return within
 }
 
-// inFile says whether the file's path, or any tail of it, matches the glob.
 func inFile(pattern *regexp.Regexp, file string) bool {
 	segments := strings.Split(strings.ReplaceAll(file, `\`, "/"), "/")
 

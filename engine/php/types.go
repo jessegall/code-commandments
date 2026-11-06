@@ -9,16 +9,9 @@ import (
 	"github.com/jessegall/code-commandments/engine"
 )
 
-// functionLikes are the kinds that open a scope of their own.
 var functionLikes = []string{"Stmt_ClassMethod", "Stmt_Function", "Expr_Closure", "Expr_ArrowFunction", "PropertyHook"}
 
-// Types resolves the class an expression holds, as far as the program declares it: a variable through the
-// assignments and parameters of its function, a construction, a static call through its declared return, a
-// property or a method send through the receiver's declarations. An answer is a class name, or `static`/`self`
-// where the source says only that; empty where nothing can be said.
-//
-// Its index keys each class's fields, methods and parameters exactly as written, and a class two files declare
-// holds the members of both.
+// Types resolves the class an expression holds, as far as the program declares it: a variable through the assignments and parameters of its function, a construction, a static call through its declared return, a property or a method send through the receiver's declarations.
 type Types struct {
 	program    *Program
 	fieldType  map[string]map[string]held
@@ -34,23 +27,18 @@ type Types struct {
 	locals map[scope]map[string]held
 }
 
-// held is the type an expression holds: the class every reader of the type engine asks for, and the written type
-// the engine read that class off, where a declaration wrote one. Keeping the written type is what lets the fill
-// say a value admits null, what shape its type has and where the type came from, rather than naming a class and
-// calling the answer its own.
+// held is the type an expression holds: the class every reader of the type engine asks for, and the written type the engine read that class off, where a declaration wrote one.
 type held struct {
 	class   string
 	written *contract.Type
 }
 
-// typed is the class a written type names, with that type kept beside it.
 func typed(written TypeName) held {
 	return held{class: typeName(written), written: written.written}
 }
 
 var resolvers = Memoised(indexTypes)
 
-// TypesOf is the codebase's type resolver, indexed on first need and kept for the codebase's life.
 func TypesOf(codebase *engine.Codebase) *Types {
 	return resolvers.Of(codebase)
 }
@@ -84,9 +72,6 @@ func indexTypes(codebase *engine.Codebase) *Types {
 	return types
 }
 
-// indexOutside records what a declaration outside the scan says of its members, as the project's autoloader let the
-// bridge read it: each method's return type, written or documented by an @method tag as a facade's are, its
-// parameters' types, and each property's type. A declaration the scan holds keeps what the scan says.
 func (t *Types) indexOutside(symbol contract.OutsideSymbol) {
 	class := symbol.Symbol
 	if _, scanned := t.program.Declaration(class); scanned {
@@ -156,7 +141,6 @@ func (t *Types) index(declaration engine.Match) {
 		if own, ok := DocComment(member); ok {
 			doc = own.Text
 		}
-		// One property statement may declare several properties, and each of them is its own field.
 		for _, item := range member.Children() {
 			if item.Node().Field != "props" {
 				continue
@@ -183,8 +167,6 @@ func (t *Types) index(declaration engine.Match) {
 	}
 }
 
-// recordCollectionElement records the element a field's `#[DataCollectionOf(X::class)]` declares; the last one
-// written wins.
 func (t *Types) recordCollectionElement(class, field string, owner engine.Match) {
 	for _, group := range owner.Children() {
 		if group.Kind() != "AttributeGroup" {
@@ -203,13 +185,10 @@ func (t *Types) recordCollectionElement(class, field string, owner engine.Match)
 	}
 }
 
-// elementType is the element a collection is declared to hold, as the contract carries one: a class named by the
-// declaration that said so, which is the only thing that says what a PHP array holds.
 func elementType(class, origin string) *contract.Type {
 	return &contract.Type{Text: `\` + class, Kind: "named", Name: class, Origin: origin}
 }
 
-// firstArgument is the value an attribute is handed first; no node for an attribute handed nothing.
 func firstArgument(attribute engine.Match) engine.Match {
 	for _, arg := range attribute.Children() {
 		if arg.Node().Field != "args" {
@@ -222,8 +201,6 @@ func firstArgument(attribute engine.Match) engine.Match {
 	return engine.Match{}
 }
 
-// classNamedBy is the class an attribute's argument names, written either as `X::class` or as the string of its
-// name; empty for an argument that names no class, and for one PHP could not read a name out of.
 func classNamedBy(argument engine.Match) string {
 	switch argument.Kind() {
 	case "Expr_ClassConstFetch":
@@ -245,7 +222,6 @@ func classNamedBy(argument engine.Match) string {
 	return ""
 }
 
-// recordDocumentedElement records the element a field's docblock declares, unless an attribute already has.
 func (t *Types) recordDocumentedElement(class, field, doc, variable string, file *engine.File) {
 	if _, ok := t.element[class][field]; ok {
 		return
@@ -255,7 +231,6 @@ func (t *Types) recordDocumentedElement(class, field, doc, variable string, file
 	}
 }
 
-// TypeOf is the class the expression holds, read in its enclosing function and class.
 func (t *Types) TypeOf(expr engine.Match) string {
 	function := enclosingFunction(expr)
 	if !function.Exists() {
@@ -265,8 +240,6 @@ func (t *Types) TypeOf(expr engine.Match) string {
 	return t.TypeIn(expr, function, EnclosingClassName(expr))
 }
 
-// TypeIn is the class the expression holds, read in the function as though it sat in the class. Empty without a
-// function.
 func (t *Types) TypeIn(expr, function engine.Match, self string) string {
 	if !function.Exists() {
 		return ""
@@ -282,24 +255,15 @@ type scope struct {
 }
 
 func init() {
-	// PHP fills through the engine's registry like every other language, so a codebase built ANYWHERE gets it:
-	// a view spliced over a warm base is built by engine.Filling, not by a scan, and it used to get no PHP fill
-	// at all. The edited file's own types then came from a one-file read, where they resolve against nothing, so
-	// a type-dependent rule answered differently on an edit than on a full judging.
 	engine.Fills(contract.PHP, func(codebase *engine.Codebase, changed []string) {
 		TypesOf(codebase).fill(codebase, changed)
 	})
 }
 
-// Fill writes what the engine fills for PHP: the `resolved` TypeOf answers for every expression inside a function,
-// and the `target` Callee finds for every call and construction.
 func (t *Types) Fill(codebase *engine.Codebase) {
 	t.fill(codebase, nil)
 }
 
-// fill writes those facts over the changed files, or over every file where none are named. The types themselves
-// are read from the whole program either way: it is the WALK that narrows, since a file nothing touched already
-// carries the facts it was read with.
 func (t *Types) fill(codebase *engine.Codebase, changed []string) {
 	for _, file := range codebase.Of(contract.PHP).Files() {
 		if len(changed) > 0 && !slices.Contains(changed, file.File.Path) {
@@ -320,7 +284,6 @@ func (t *Types) fill(codebase *engine.Codebase, changed []string) {
 	engine.Untouched()
 }
 
-// heldBy is the type the expression holds, with the written type the engine read it off where there is one.
 func (t *Types) heldBy(expr engine.Match) held {
 	function := enclosingFunction(expr)
 	if !function.Exists() {
@@ -330,10 +293,6 @@ func (t *Types) heldBy(expr engine.Match) held {
 	return t.resolve(expr, t.localTypes(function, EnclosingClassName(expr)), EnclosingClassName(expr))
 }
 
-// resolvedType is the type the engine fills on an expression. Where a declaration wrote the type the class was
-// read off, that type IS the answer: its nullability, its shape and the origin that says whether a human wrote it
-// or a docblock claimed it all survive, and nothing is parsed back out of a name. Otherwise the engine worked the
-// class out itself — a construction, a `static` return — and says so.
 func resolvedType(resolved held) *contract.Type {
 	if named := Written(resolved.written).Named(); named != nil && strings.TrimLeft(named.Name, `\`) == resolved.class {
 		return named
@@ -346,7 +305,6 @@ func resolvedType(resolved held) *contract.Type {
 	return &contract.Type{Text: `\` + resolved.class, Kind: "named", Name: resolved.class, Origin: "inferred"}
 }
 
-// DeclaringClassOf is the class in the chain from fqcn up that declares the field.
 func (t *Types) DeclaringClassOf(fqcn, field string) string {
 	for _, class := range t.ancestry(fqcn) {
 		if _, ok := t.fieldType[class][field]; ok {
@@ -357,7 +315,6 @@ func (t *Types) DeclaringClassOf(fqcn, field string) string {
 	return ""
 }
 
-// DeclaringClassOfMethod is the class in the chain from fqcn up that declares the method, itself or through a trait.
 func (t *Types) DeclaringClassOfMethod(fqcn, method string) string {
 	for _, class := range t.ancestry(fqcn) {
 		if owner := t.methodDeclaredBy(class, method, map[string]bool{}); owner != "" {
@@ -368,12 +325,10 @@ func (t *Types) DeclaringClassOfMethod(fqcn, method string) string {
 	return ""
 }
 
-// PropertyTypeOf is the class the field is declared to hold.
 func (t *Types) PropertyTypeOf(fqcn, field string) string {
 	return t.fieldType[t.DeclaringClassOf(fqcn, field)][field].class
 }
 
-// CollectionElementOf is the element class the field's collection is declared to hold.
 func (t *Types) CollectionElementOf(fqcn, field string) string {
 	if element := t.element[t.DeclaringClassOf(fqcn, field)][field]; element != nil {
 		return element.Name
@@ -382,12 +337,10 @@ func (t *Types) CollectionElementOf(fqcn, field string) string {
 	return ""
 }
 
-// MethodIsVariadic says whether the method takes a variadic parameter.
 func (t *Types) MethodIsVariadic(fqcn, method string) bool {
 	return t.variadic[t.DeclaringClassOfMethod(fqcn, method)][method]
 }
 
-// ParamTypeOf is the type the method's parameter at the position is written with: a class or a builtin.
 func (t *Types) ParamTypeOf(fqcn, method string, position int) string {
 	written := t.paramType[t.DeclaringClassOfMethod(fqcn, method)][method]
 	if position >= len(written) {
@@ -397,8 +350,6 @@ func (t *Types) ParamTypeOf(fqcn, method string, position int) string {
 	return written[position]
 }
 
-// ParamIsNullable says whether the parameter at the position accepts null, when the class itself declares the
-// method; unknown otherwise.
 func (t *Types) ParamIsNullable(fqcn, method string, position int) (nullable, known bool) {
 	accepts := t.nullable[strings.TrimLeft(fqcn, `\`)][method]
 	if position >= len(accepts) {
@@ -436,8 +387,6 @@ func (t *Types) methodDeclaredBy(class, method string, seen map[string]bool) str
 	return ""
 }
 
-// resolve is the type an expression holds, read through the function's locals and the class around it. It answers
-// the written type beside the class wherever a declaration wrote one, and nothing at all where nothing can be said.
 func (t *Types) resolve(expr engine.Match, locals map[string]held, self string) held {
 	switch expr.Kind() {
 	case "Expr_Variable":
@@ -512,9 +461,6 @@ func (t *Types) resolve(expr engine.Match, locals map[string]held, self string) 
 	return held{}
 }
 
-// ElementOf is the element the collection a member access reads is declared to hold: the class a docblock
-// `list<X>` or a `#[DataCollectionOf(X::class)]` names, which is the only thing that says what a PHP array holds,
-// since the type itself says `array` and no more. No type for anything else, and none where no declaration says.
 func (t *Types) ElementOf(access engine.Match) *contract.Type {
 	name := access.Child("name")
 	if !slices.Contains([]string{"Expr_PropertyFetch", "Expr_NullsafePropertyFetch"}, access.Kind()) || name.Kind() != "Identifier" {
@@ -529,9 +475,6 @@ func (t *Types) ElementOf(access engine.Match) *contract.Type {
 	return t.element[t.DeclaringClassOf(held.class, name.Name())][name.Name()]
 }
 
-// localTypes is the class each variable of a function holds: what it captures, its parameters, then each
-// assignment in the order written, nested functions' included, the last one winning; then a `foreach` over a typed
-// collection field types its value. Read once per function and class.
 func (t *Types) localTypes(function engine.Match, self string) map[string]held {
 	t.mutex.Lock()
 	cached, ok := t.locals[scope{function.Node(), self}]
@@ -577,8 +520,6 @@ func (t *Types) localTypes(function engine.Match, self string) map[string]held {
 	return locals
 }
 
-// capturedTypes is what a function inherits from the one around it: an arrow function every variable, a closure the
-// ones it names in `use`.
 func (t *Types) capturedTypes(function engine.Match, self string) map[string]held {
 	captured := map[string]held{}
 	enclosing := enclosingFunction(function)
@@ -602,7 +543,6 @@ func (t *Types) capturedTypes(function engine.Match, self string) map[string]hel
 	return captured
 }
 
-// typeName is the class a written type names, null aside, as written: `self` and `static` too.
 func typeName(written TypeName) string {
 	switch {
 	case written.written == nil:
@@ -622,7 +562,6 @@ func typeName(written TypeName) string {
 	return ""
 }
 
-// acceptsNull says whether a parameter takes null: untyped, nullable, mixed, or defaulting to null.
 func acceptsNull(param engine.Match) bool {
 	declared := Written(param.Node().Declared)
 
@@ -631,7 +570,6 @@ func acceptsNull(param engine.Match) bool {
 		declared.isNullableUnion() || IsNullConstant(param.Child("default"))
 }
 
-// IsNullConstant says whether the node is the constant null.
 func IsNullConstant(node engine.Match) bool {
 	return node.Exists() && node.Node().Literal == "null"
 }
@@ -640,7 +578,6 @@ func isSelfReferential(class string) bool {
 	return class == "static" || class == "self"
 }
 
-// isName says whether a node is a name as php-parser writes one: relative, qualified or fully qualified.
 func isName(node engine.Match) bool {
 	return strings.HasPrefix(node.Kind(), "Name")
 }
@@ -652,7 +589,6 @@ func set[V any](index map[string]map[string]V, class, member string, value V) {
 	index[class][member] = value
 }
 
-// Arguments is each argument a call passes, in order; a `...` placeholder passes none.
 func Arguments(call engine.Match) []engine.Match {
 	var arguments []engine.Match
 	for _, argument := range call.Children() {
@@ -664,7 +600,6 @@ func Arguments(call engine.Match) []engine.Match {
 	return arguments
 }
 
-// Params is each parameter a function-like declares, in order.
 func Params(function engine.Match) []engine.Match {
 	var params []engine.Match
 	for _, param := range function.Children() {
@@ -676,7 +611,6 @@ func Params(function engine.Match) []engine.Match {
 	return params
 }
 
-// enclosingFunction is the nearest function-like around the node, the node itself aside.
 func enclosingFunction(node engine.Match) engine.Match {
 	for at := node.Parent(); at.Exists(); at = at.Parent() {
 		if slices.Contains(functionLikes, at.Kind()) {
@@ -687,8 +621,6 @@ func enclosingFunction(node engine.Match) engine.Match {
 	return engine.Match{}
 }
 
-// EnclosingFunctionName is the name of the method or function around the node, or of the node itself; a closure
-// or arrow function passes it over. Empty outside any.
 func EnclosingFunctionName(node engine.Match) string {
 	for at := node; at.Exists(); at = at.Parent() {
 		if at.Kind() == "Stmt_ClassMethod" || at.Kind() == "Stmt_Function" {
@@ -699,8 +631,6 @@ func EnclosingFunctionName(node engine.Match) string {
 	return ""
 }
 
-// EnclosingClassName is the name of the nearest class-like around the node, or of the node itself; empty inside an
-// anonymous class.
 func EnclosingClassName(node engine.Match) string {
 	for at := node; at.Exists(); at = at.Parent() {
 		if slices.Contains(classLikes, at.Kind()) {
@@ -711,7 +641,6 @@ func EnclosingClassName(node engine.Match) string {
 	return ""
 }
 
-// descendantsOf is every node under the node, in pre-order.
 func descendantsOf(node engine.Match) []engine.Match {
 	var all []engine.Match
 	for _, child := range node.Children() {

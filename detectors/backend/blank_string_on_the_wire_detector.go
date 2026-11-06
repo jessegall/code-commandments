@@ -12,19 +12,15 @@ import (
 	backendsins "github.com/jessegall/code-commandments/sins/backend"
 )
 
-// BlankStringOnTheWireDetector finds a public string field the frontend tests for blank: the server sends ” where
-// it means absent, and every page decodes it.
+// BlankStringOnTheWireDetector finds a public string field the frontend tests for blank: the server sends ” where it means absent, and every page decodes it.
 type BlankStringOnTheWireDetector struct{}
 
 func init() { detectors.Register(catalog.PHP, BlankStringOnTheWireDetector{}) }
 
-// Sin is the sin the detector finds.
 func (BlankStringOnTheWireDetector) Sin() sins.Sin { return backendsins.BlankStringOnTheWire{} }
 
-// ConsumesContracts says the verdict reads what the frontend publishes about the server's types.
 func (BlankStringOnTheWireDetector) ConsumesContracts() {}
 
-// Find is every public string field whose class's short name and field the frontend asks is blank.
 func (BlankStringOnTheWireDetector) Find(codebase *engine.Codebase) []engine.Match {
 	questions := published.Of[published.BlanknessQuestion](codebase)
 
@@ -44,6 +40,4 @@ func (BlankStringOnTheWireDetector) Find(codebase *engine.Codebase) []engine.Mat
 		Get()
 }
 
-// CrossFile says the rule reads more than the file it reports in, which the fixture measures by asking it
-// of one file and of the whole tree: a scoped run reads the whole scan while it is enabled.
 func (BlankStringOnTheWireDetector) CrossFile() {}

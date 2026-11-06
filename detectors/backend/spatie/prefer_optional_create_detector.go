@@ -15,10 +15,8 @@ type PreferOptionalCreateDetector struct{}
 
 func init() { detectors.Register(catalog.PHP, PreferOptionalCreateDetector{}) }
 
-// Sin is the sin the detector finds.
 func (PreferOptionalCreateDetector) Sin() sins.Sin { return backendsins.PreferOptionalCreate{} }
 
-// Find is every replaceable new Optional.
 func (PreferOptionalCreateDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return php.In(codebase).
 		WhereNew().
@@ -26,5 +24,4 @@ func (PreferOptionalCreateDetector) Find(codebase *engine.Codebase) []engine.Mat
 		Get()
 }
 
-// Repentable says a scribe rewrites the sin away.
 func (PreferOptionalCreateDetector) Repentable() {}

@@ -14,10 +14,8 @@ type UnnamedConditionDetector struct{}
 
 func init() { detectors.Register(catalog.PHP, UnnamedConditionDetector{}) }
 
-// Sin is the sin the detector finds.
 func (UnnamedConditionDetector) Sin() sins.Sin { return backendsins.UnnamedCondition{} }
 
-// Find is every logical chain a branch decides by that asks something of two or more objects.
 func (UnnamedConditionDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return php.In(codebase).
 		WhereIs(engine.Conjunction).

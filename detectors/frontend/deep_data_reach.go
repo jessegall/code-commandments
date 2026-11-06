@@ -18,20 +18,14 @@ func init() {
 }
 
 const (
-	// reachTemplateLines is how long a template must be before its deep reaches are worth a component.
 	reachTemplateLines = 50
-	// reachDepth is how many hops past its root a reach must take: order.customer.name takes 2.
-	reachDepth = 2
-	// reachFields is how many distinct fields of one nested object a cluster reads.
-	reachFields = 2
+	reachDepth         = 2
+	reachFields        = 2
 )
 
-// transparent are the accessors that read through a value rather than deeper into it.
 var transparent = []string{"value", "length"}
 
-// DeepDataReachDetector finds elements of a sizeable template that reach two or more fields deep into one
-// nested object, order.customer.name and order.customer.email: a child component that wants the mid-object
-// as a prop. Each cluster is reported at the lowest element holding all its reaches.
+// DeepDataReachDetector finds elements of a sizeable template that reach two or more fields deep into one nested object, order.customer.name and order.customer.email: a child component that wants the mid-object as a prop.
 type DeepDataReachDetector struct{}
 
 func (DeepDataReachDetector) Sin() sins.Sin {
@@ -60,14 +54,12 @@ func inSizeableTemplate(element vue.Element) bool {
 	return vue.ComponentOf(element.Match).TemplateLines() >= reachTemplateLines
 }
 
-// reachesDeep says whether any data the element reads, its v-for's iterable included, reaches deep.
 func reachesDeep(element vue.Element) bool {
 	return slices.ContainsFunc(element.Reads(), func(expression typescript.Node) bool {
 		return expression.MemberDepth(transparent...) >= reachDepth
 	})
 }
 
-// byComponent groups elements by the component they sit in, in order.
 func byComponent(elements []engine.Match) [][]vue.Element {
 	var groups [][]vue.Element
 	index := map[string]int{}
@@ -84,8 +76,6 @@ func byComponent(elements []engine.Match) [][]vue.Element {
 	return groups
 }
 
-// clusters is each nested object a component's elements read two or more fields of, as the elements that
-// read it. A chain rooted in a v-model's data is the form's own state, not a reach.
 func clusters(elements []vue.Element) [][]vue.Element {
 	reactive := vue.ComponentOf(elements[0].Match).ModelRoots()
 	type object struct {
@@ -121,5 +111,4 @@ func clusters(elements []vue.Element) [][]vue.Element {
 	return found
 }
 
-// Repentable says a scribe rewrites the sin away.
 func (DeepDataReachDetector) Repentable() {}

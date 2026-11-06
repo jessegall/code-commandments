@@ -16,12 +16,10 @@ func init() {
 	detectors.Register(catalog.CSharp, CeremonyDocblockDetector{})
 }
 
-// Sin is the sin the detector finds.
 func (CeremonyDocblockDetector) Sin() sins.Sin {
 	return cssins.CeremonyDocblock{}
 }
 
-// Find is every place the sin is committed.
 func (CeremonyDocblockDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return cs.In(codebase).WhereComment(func(comment cs.Comment) bool {
 		return comment.IsDoc() && comment.RestatesOnly(comment.Documented().SignatureWords())

@@ -11,7 +11,6 @@ type ConfigRead struct{}
 
 func init() { sins.Register(catalog.PHP, ConfigRead{}) }
 
-// Definition is what the sin states about itself.
 func (ConfigRead) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "config-read",

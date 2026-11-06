@@ -14,7 +14,6 @@ func init() {
 // MemberOutOfOrderScribe regroups a class's head into the order the class layout reads in.
 type MemberOutOfOrderScribe struct{}
 
-// Rewrite reorders each class's head once, however many of its members were out of place.
 func (MemberOutOfOrderScribe) Rewrite(findings []engine.Match, _ *engine.Codebase) (scribes.Rewrites, error) {
 	draft := scribes.NewDraft()
 	for _, strays := range perClass(findings) {

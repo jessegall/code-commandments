@@ -9,16 +9,10 @@ import (
 )
 
 const (
-	// reassembled is how many pieces of one object a call must hand a def before it could take the object whole.
-	reassembled = 3
-	// convertedShare is the share of a parameter's callers that must convert what they hand it the same way.
+	reassembled    = 3
 	convertedShare = 0.5
 )
 
-// DerivedArgumentCalls is every evaluated call that fills a parameter with a piece of an object it also hands over,
-// or with one of three or more pieces of one object, when every call of that def fills the parameter so: the def
-// should take the object and read the piece itself. A def a call of the same member name cannot be resolved to is
-// left alone, since that call may fill it whole.
 func (p *Program) DerivedArgumentCalls() []Node {
 	redundant := map[string]map[string][]Node{}
 	supplied := map[string]int{}
@@ -64,9 +58,6 @@ func (p *Program) DerivedArgumentCalls() []Node {
 	return derived
 }
 
-// ConvertedArgumentCalls is every evaluated call that fills a scalar parameter through one conversion, when half or
-// more of the calls filling that parameter convert what they hand it the same way: the parameter should take what
-// they convert.
 func (p *Program) ConvertedArgumentCalls() []Node {
 	calls := p.evaluatedCalls()
 	supplied := map[string]int{}
@@ -88,7 +79,6 @@ func (p *Program) ConvertedArgumentCalls() []Node {
 	return converted
 }
 
-// evaluatedCalls is every call the program evaluates, in module and pre-order.
 func (p *Program) evaluatedCalls() []Node {
 	var calls []Node
 	for _, module := range p.modules {
@@ -102,12 +92,10 @@ func (p *Program) evaluatedCalls() []Node {
 	return calls
 }
 
-// slotOf is where a parameter of the def is declared: `declaration#parameter`.
 func slotOf(def Node, name string) string {
 	return DeclarationOf(def) + "#" + name
 }
 
-// MemberCalled is the member name a call calls through an attribute; empty for a call of a plain name.
 func (n Node) MemberCalled() string {
 	if callee := n.Callee(); callee.Kind() == "Attribute" {
 		return callee.Name()
@@ -116,15 +104,12 @@ func (n Node) MemberCalled() string {
 	return ""
 }
 
-// BuildsItsOwnClass says whether the call is its own class's __init__, called from inside the class.
 func (n Node) BuildsItsOwnClass(target Node) bool {
 	class := n.EnclosingFunction().Parent()
 
 	return target.Name() == "__init__" && class.Kind() == "ClassDef" && class.Initializer() == target
 }
 
-// RedundantParameters is the parameters the call fills with a piece of an object it also hands whole, or with one
-// of three or more pieces of one object the def could take whole.
 func (p *Program) RedundantParameters(call, target Node, bound map[string]Node) []string {
 	parameters := map[string]Node{}
 	for _, parameter := range target.Parameters() {
@@ -161,8 +146,6 @@ func (p *Program) RedundantParameters(call, target Node, bound map[string]Node) 
 	return names
 }
 
-// couldTakeWhole says whether the def could take the object the pieces come from: mypy types the name they are read
-// off as a class of the program, and importing that class's module into the def's would close no cycle.
 func (p *Program) couldTakeWhole(target Node, pieces []Node, root string) bool {
 	named, ok := pieces[0].NameRead(root)
 	if !ok {
@@ -174,7 +157,6 @@ func (p *Program) couldTakeWhole(target Node, pieces []Node, root string) bool {
 	return typed && held && !p.WouldCloseACycle(p.ModuleOf(target), subject)
 }
 
-// NameRead is the first place the expression reads the name.
 func (n Node) NameRead(name string) (Node, bool) {
 	for _, part := range append([]Node{n}, n.Descendants()...) {
 		if part.Kind() == "Name" && part.Name() == name {
@@ -185,7 +167,6 @@ func (n Node) NameRead(name string) (Node, bool) {
 	return Node{}, false
 }
 
-// ScalarArguments is what the call hands each scalar parameter of the def it reaches.
 func (p *Program) ScalarArguments(call Node) map[string]Node {
 	target, resolved := p.TargetOf(call)
 	bound, bindable := p.ArgumentsAt(call)
@@ -202,8 +183,6 @@ func (p *Program) ScalarArguments(call Node) map[string]Node {
 	return scalars
 }
 
-// ConversionKey is the first scalar parameter the call fills, in the order it writes its arguments, through a
-// conversion other than to its own class, with that conversion: `declaration#parameter=Class.method`.
 func (p *Program) ConversionKey(call Node) (string, bool) {
 	target, _ := p.TargetOf(call)
 	bound := p.ScalarArguments(call)
@@ -218,7 +197,6 @@ func (p *Program) ConversionKey(call Node) (string, bool) {
 	return "", false
 }
 
-// IsCallersOwn says whether the conversion belongs to the calling class itself, or a class nested in it.
 func (n Node) IsCallersOwn(conversion string) bool {
 	class := n.EnclosingFunction().Parent()
 	if class.Kind() != "ClassDef" {
@@ -229,8 +207,6 @@ func (n Node) IsCallersOwn(conversion string) bool {
 	return strings.HasPrefix(conversion+".", module+"."+class.Name()+".")
 }
 
-// CallersAllAskOneObject says whether two or more calls reach the method, one of them from outside its class, and
-// every one computes every argument from one and the same class of object: the method should take that object.
 func (p *Program) CallersAllAskOneObject(method Node, minimum int) bool {
 	class := method.Parent()
 	callers := p.CallersOf(method)
@@ -250,8 +226,6 @@ func (p *Program) CallersAllAskOneObject(method Node, minimum int) bool {
 	return fromOutside && len(callers) >= minimum && len(subjects) == 1
 }
 
-// NamedCallKey is the call's target and the shape of what each of its keywords builds, when one of them builds
-// something and the target takes **kwargs: two calls with one key make the same call.
 func (p *Program) NamedCallKey(call Node) (string, bool) {
 	keywords := slices.DeleteFunc(call.Keywords(), func(keyword Node) bool { return keyword.Name() == "" })
 	target, ok := p.TargetOf(call)
@@ -267,8 +241,6 @@ func (p *Program) NamedCallKey(call Node) (string, bool) {
 	return DeclarationOf(target) + "#" + strings.Join(slots, ","), true
 }
 
-// PhantomNullableFields is the declaration of each optional field of the class nothing sets back to None that one
-// or more reads assume is there and none guards: optional only on paper.
 func (p *Program) PhantomNullableFields(class Node) []Node {
 	var fields []Node
 	for _, field := range class.FieldNames() {
@@ -285,8 +257,6 @@ func (p *Program) PhantomNullableFields(class Node) []Node {
 	return fields
 }
 
-// UnnamedVocabularyLiterals is each string literal the call hands a parameter that other calls fill with a named
-// constant holding the same string.
 func (p *Program) UnnamedVocabularyLiterals(call Node) []Node {
 	var literals []Node
 	for _, argument := range append(call.Arguments(), call.Keywords()...) {
@@ -299,8 +269,6 @@ func (p *Program) UnnamedVocabularyLiterals(call Node) []Node {
 	return literals
 }
 
-// LayerViolations is the first import each module makes into each module its declared layer may not use; a test
-// module, which exercises its layer from outside it, is no part of the layer.
 func (p *Program) LayerViolations(stack engine.LayerStack) []Node {
 	var violations []Node
 	for _, module := range p.modules {

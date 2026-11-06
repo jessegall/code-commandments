@@ -16,18 +16,9 @@ import (
 	"github.com/jessegall/code-commandments/bridge/bundle"
 )
 
-// The C# bridge as development in this repository runs it: a prebuilt image in a container capped at 4 GB and
-// two cores, chosen with COMMANDMENTS_ROSLYN=docker (scripts/dev sets it), so .NET never runs on a developer's host.
-// A released tool never comes here: it runs the bridge's own executable (roslyn.go).
-
-// roslyn is the script a development run of the C# bridge goes through and the image it runs.
-//
 //go:embed roslyn/roslyn-in-docker.sh roslyn/IMAGE
 var roslyn embed.FS
 
-// RoslynImage is the image development runs the C# bridge in, built from bridge/roslyn and never published.
-// roslynSources is the folder the image is built from, under the repository root, and roslynRepository the image
-// it is published as.
 const (
 	roslynSources    = "bridge/roslyn"
 	roslynRepository = "ghcr.io/jessegall/code-commandments-roslyn"
@@ -39,12 +30,6 @@ func RoslynImage() string {
 	return strings.TrimSpace(string(image))
 }
 
-// RoslynSourcesImage is the image name the bridge's sources under root are built as: its tag is a digest of every
-// source file that goes into the image, by name and content, so a change to any of them names a different image.
-//
-// The name is written into roslyn/IMAGE, which is what RoslynImage reads and what the embedded run script uses. A
-// digest derived here rather than chosen by hand is what keeps the two from drifting: `scripts/roslyn-image` asks
-// for this name when it builds, and a test holds the file to it.
 func RoslynSourcesImage(root string) (string, error) {
 	sources := filepath.Join(root, roslynSources)
 
@@ -74,8 +59,6 @@ func RoslynSourcesImage(root string) (string, error) {
 	return roslynRepository + ":" + hex.EncodeToString(digest.Sum(nil))[:16], nil
 }
 
-// RoslynInDocker is the command that runs the C# bridge once over the roots in a capped container of its image, the
-// roots mounted read-only at their own paths. Without the image it fails, naming how to build it.
 func RoslynInDocker(roots []string) ([]string, error) {
 	if exec.Command("docker", "image", "inspect", RoslynImage()).Run() != nil {
 		return nil, RoslynUnavailable{"its development image " + RoslynImage() + " is not built: scripts/roslyn-image"}
@@ -88,7 +71,6 @@ func RoslynInDocker(roots []string) ([]string, error) {
 	return append(append([]string{"bash", script}, readOnly(roots)...), "--"), nil
 }
 
-// readOnly is the folders the roots are in, each mounted read-only: a root that is a file is read from its folder.
 func readOnly(roots []string) []string {
 	var folders []string
 	for _, root := range roots {
@@ -115,8 +97,6 @@ func readOnly(roots []string) []string {
 	return mounts
 }
 
-// referencedFolders is the folder of every project the projects at the root reference, however deep: the bridge
-// compiles a project with every project it references, which may stand outside the root.
 func referencedFolders(root string) []string {
 	pending := projectsAt(root)
 	seen := map[string]bool{}
@@ -135,7 +115,6 @@ func referencedFolders(root string) []string {
 	return folders
 }
 
-// projectsAt is every project under the folder, or the one it sits inside, as the bridge finds them.
 func projectsAt(folder string) []string {
 	var projects []string
 	filepath.WalkDir(folder, func(path string, entry fs.DirEntry, err error) error {
@@ -160,8 +139,6 @@ func projectsAt(folder string) []string {
 	return projects
 }
 
-// projectReferences is the project files the project references, by their full paths: every ProjectReference at
-// any depth, in the MSBuild namespace an older project file declares or in none.
 func projectReferences(project string) []string {
 	file, err := os.Open(project)
 	if err != nil {
@@ -187,10 +164,8 @@ func projectReferences(project string) []string {
 	}
 }
 
-// roslynLauncher is the script that starts the bridge's container, beside the image name it reads.
 var roslynLauncher = bundle.Embedded("roslyn", roslyn, "roslyn")
 
-// roslynScript is the launcher, written out under the cache folder.
 func roslynScript() (string, error) {
 	folder, err := roslynLauncher.Folder()
 

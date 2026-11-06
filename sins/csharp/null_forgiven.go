@@ -13,7 +13,6 @@ func init() {
 	sins.Register(catalog.CSharp, NullForgiven{})
 }
 
-// Definition is what the sin states about itself.
 func (NullForgiven) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "csharp-null-forgiven",

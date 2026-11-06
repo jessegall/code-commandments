@@ -31,5 +31,8 @@
         "dist",
         "testdata"
     ],
-    "parallel": 2
+    "parallel": 2,
+    "detectors": [
+        "OnlyTypesCarryACommentDetector"
+    ]
 }

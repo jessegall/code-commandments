@@ -84,8 +84,6 @@ func TestEachCallSiteBindsAsThePHPIndexSays(t *testing.T) {
 		source, _ := match.Source().Source()
 		path := strings.TrimPrefix(match.File(), fixture.root+"/")
 		key := path + "@" + itoa(match.Node().Span.Start) + "-" + itoa(match.Node().Span.End)
-		// A call in a file the golden never recorded is one the PHP engine never saw, so there is no answer to
-		// hold it to. Every file it did record stays strict, offsets and all.
 		if !recorded[path] {
 			continue
 		}
@@ -124,7 +122,6 @@ func TestEachCallSiteBindsAsThePHPIndexSays(t *testing.T) {
 	}
 }
 
-// filesIn is every file the golden holds an answer for, read off its keys, which name a file and a span.
 func filesIn[T any](want map[string]T) map[string]bool {
 	files := map[string]bool{}
 	for key := range want {

@@ -11,7 +11,6 @@ type RedundantArrowReturnType struct{}
 
 func init() { sins.Register(catalog.PHP, RedundantArrowReturnType{}) }
 
-// Definition is what the sin states about itself.
 func (RedundantArrowReturnType) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "redundant-arrow-return-type",

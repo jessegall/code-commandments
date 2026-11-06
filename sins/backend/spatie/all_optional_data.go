@@ -11,7 +11,6 @@ type AllOptionalData struct{}
 
 func init() { sins.Register(catalog.PHP, AllOptionalData{}) }
 
-// Definition is what the sin states about itself.
 func (AllOptionalData) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "all-optional-data",

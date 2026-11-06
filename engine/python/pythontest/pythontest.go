@@ -13,8 +13,6 @@ import (
 	_ "github.com/jessegall/code-commandments/engine/python"
 )
 
-// FromSource is the codebase the Python sources describe, keyed by their path under one project folder, as the
-// bridge and the engine read them: `{"shop/__init__.py": "", "shop/cart.py": "class Cart: ..."}`.
 func FromSource(t testing.TB, sources map[string]string) *engine.Codebase {
 	t.Helper()
 	root, err := filepath.EvalSymlinks(t.TempDir())
@@ -38,7 +36,6 @@ func FromSource(t testing.TB, sources map[string]string) *engine.Codebase {
 	return engine.Load(stream)
 }
 
-// File is the codebase's file whose path ends in the one given to FromSource.
 func File(t testing.TB, codebase *engine.Codebase, path string) *engine.File {
 	t.Helper()
 	for _, file := range codebase.Files() {

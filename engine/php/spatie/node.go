@@ -1,5 +1,4 @@
-// Package spatie is what the engine knows of spatie/laravel-data and its TypeScript transformer, stated once: which
-// classes are Data, how a Data is built and hydrated, and what its fields put on the wire.
+// Package spatie is what the engine knows of spatie/laravel-data and its TypeScript transformer, stated once: which classes are Data, how a Data is built and hydrated, and what its fields put on the wire.
 package spatie
 
 import (
@@ -22,7 +21,6 @@ const (
 )
 
 var (
-	// NoContainerContracts are the Spatie contracts whose implementations the package builds without the container.
 	NoContainerContracts         = []string{DataPipe, Cast}
 	containerInjectionAttributes = []string{"FromContainer", "FromContainerProperty"}
 	nativeCastTypes              = []string{"DateTimeInterface", "DateTime", "DateTimeImmutable", "Carbon", "CarbonImmutable"}
@@ -34,7 +32,6 @@ type Node struct {
 	engine.Match
 }
 
-// Decorate reads a match as a Node.
 func (Node) Decorate(m engine.Match) Node {
 	return Node{Match: m}
 }
@@ -43,12 +40,10 @@ func (n Node) program() *php.Program {
 	return php.ProgramOf(n.Codebase())
 }
 
-// IsDataClass says whether the node sits in a Data class.
 func (n Node) IsDataClass() bool {
 	return n.program().Extends(php.EnclosingClassName(n.Match), Data)
 }
 
-// InDataScope says whether the node sits in a Data class, or in a trait a Data class uses.
 func (n Node) InDataScope() bool {
 	if n.IsDataClass() {
 		return true
@@ -62,33 +57,26 @@ func (n Node) InDataScope() bool {
 	return false
 }
 
-// IsTypeScriptData says whether the node is a Data class marked `#[TypeScript]`.
 func (n Node) IsTypeScriptData() bool {
 	return n.IsDataClass() && php.HasAttribute(n.Match, "TypeScript")
 }
 
-// IsNewData says whether the node constructs a Data with `new`.
 func (n Node) IsNewData() bool {
 	return n.program().Extends(newClassName(n.Match), Data)
 }
 
-// OnDataClass says whether the node is a static call on a Data class.
 func (n Node) OnDataClass() bool {
 	return n.program().Extends(php.StaticCallClass(n.Match), Data)
 }
 
-// IsRichData says whether the node constructs a Data class that does more than map a payload onto its fields.
 func (n Node) IsRichData() bool {
 	return DataClassShapeOf(n.Codebase()).IsRich(newClassName(n.Match))
 }
 
-// IsPageObject says whether the node sits in a Data class that is a page object.
 func (n Node) IsPageObject() bool {
 	return n.IsDataClass() && IsPageObject(n.Codebase(), php.EnclosingClassName(n.Match))
 }
 
-// HasUnhiddenInjectedService says whether the class puts a container-injected service on the wire: a public field
-// filled from the container, not hidden, and not itself Data.
 func (n Node) HasUnhiddenInjectedService() bool {
 	for _, field := range php.Fields(php.EnclosingClass(n.Match)) {
 		if field.IsPublic && field.HasAttribute(containerInjectionAttributes...) && !field.HasAttribute(hidden) && !n.typeIsData(field.Type) {
@@ -105,7 +93,6 @@ func (n Node) typeIsData(written *contract.Type) bool {
 	return class != "" && n.program().Extends(class, Data)
 }
 
-// OptionalPublicFieldNames is every public field of the class that may be Optional, once each.
 func (n Node) OptionalPublicFieldNames() []string {
 	names := []string{}
 	for _, field := range php.Fields(php.EnclosingClass(n.Match)) {
@@ -117,8 +104,6 @@ func (n Node) OptionalPublicFieldNames() []string {
 	return names
 }
 
-// EveryConstructorParamOptional says whether the class's constructor promotes at least one field and every one of
-// them may be Optional.
 func (n Node) EveryConstructorParamOptional() bool {
 	var promoted []engine.Match
 	for _, param := range php.ConstructorParams(php.EnclosingClass(n.Match)) {
@@ -138,7 +123,6 @@ func (n Node) EveryConstructorParamOptional() bool {
 	return true
 }
 
-// HookMissingComputed says whether a Data property's get-only hook lacks `#[Computed]`, so Spatie reads it as input.
 func (n Node) HookMissingComputed() bool {
 	if n.Kind() != "PropertyHook" || !n.program().Extends(php.EnclosingClassName(n.Match), Data) {
 		return false
@@ -167,15 +151,12 @@ func carriesComputed(property engine.Match) bool {
 	return false
 }
 
-// PageObjectMissingTypeScript says whether the node sits in a page object that is not marked `#[TypeScript]`.
 func (n Node) PageObjectMissingTypeScript() bool {
 	class := php.EnclosingClass(n.Match)
 
 	return class.Exists() && n.IsPageObject() && !classHasAttribute(class, "TypeScript")
 }
 
-// NestedWireTypeMissingTypeScript says whether a `#[TypeScript]` Data class puts on the wire a field whose Data type
-// is not itself marked `#[TypeScript]`, leaving a hole in the generated types.
 func (n Node) NestedWireTypeMissingTypeScript() bool {
 	class := php.EnclosingClass(n.Match)
 	if !class.Exists() || !n.program().Extends(php.EnclosingClassName(n.Match), Data) || !classHasAttribute(class, "TypeScript") {
@@ -194,8 +175,6 @@ func (n Node) NestedWireTypeMissingTypeScript() bool {
 	return ok && !classHasAttribute(declaration, "TypeScript")
 }
 
-// realClassesOf are the classes the union's members name, leaving out the two that say nothing about which
-// class a value is: null, and the Option the php-types package wraps one in.
 func realClassesOf(members []*contract.Type) []string {
 	var classes []string
 	for _, member := range members {
@@ -211,7 +190,6 @@ func realClassesOf(members []*contract.Type) []string {
 	return classes
 }
 
-// NestedWireTypeFqcn is the one class a field puts on the wire: its `#[DataCollectionOf]` element, or its type.
 func (n Node) NestedWireTypeFqcn() string {
 	if n.Kind() != "Param" && n.Kind() != "Stmt_Property" {
 		return ""
@@ -256,7 +234,6 @@ func soleClassNameOfType(written *contract.Type) string {
 	return ""
 }
 
-// PropertyTypedAsDataCollection says whether a Data class's field is typed as the legacy DataCollection.
 func (n Node) PropertyTypedAsDataCollection() bool {
 	if !n.program().Extends(php.EnclosingClassName(n.Match), Data) || (n.Kind() != "Param" && n.Kind() != "Stmt_Property") {
 		return false
@@ -278,15 +255,12 @@ func (n Node) PropertyTypedAsDataCollection() bool {
 	return IsDataCollectionName(written)
 }
 
-// IsDataCollectionName says whether a written type names the legacy DataCollection.
 func IsDataCollectionName(written *contract.Type) bool {
 	names := php.Written(written).Names()
 
 	return written != nil && written.Kind != "union" && written.Kind != "intersection" && len(names) == 1 && strings.TrimLeft(names[0], `\`) == DataCollection
 }
 
-// NullableWireObject says whether a `#[TypeScript]` Data class puts on the wire a nullable Data or enum field, which
-// the generated type cannot tell from a missing one.
 func (n Node) NullableWireObject() bool {
 	class := php.EnclosingClass(n.Match)
 	if !class.Exists() || !n.program().Extends(php.EnclosingClassName(n.Match), Data) || !classHasAttribute(class, "TypeScript") {
@@ -324,7 +298,6 @@ func classHasAttribute(class engine.Match, short string) bool {
 	return false
 }
 
-// nullableClassName is the class a nullable type holds: `?X`, or a union of one class and null.
 func nullableClassName(written *contract.Type) string {
 	name := php.Written(written)
 	if written == nil {
@@ -367,7 +340,6 @@ func typeIncludesOptional(written *contract.Type) bool {
 	return false
 }
 
-// newClassName is the class a `new` names as written.
 func newClassName(node engine.Match) string {
 	if class := node.Child("class"); node.Kind() == "Expr_New" && isName(class) {
 		return class.Name()

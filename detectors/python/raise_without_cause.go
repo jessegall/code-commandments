@@ -16,12 +16,10 @@ func init() {
 	detectors.Register(catalog.Python, RaiseWithoutCauseDetector{})
 }
 
-// Sin is the sin the detector finds.
 func (RaiseWithoutCauseDetector) Sin() sins.Sin {
 	return pysins.RaiseWithoutCause{}
 }
 
-// Find is every place the sin is committed.
 func (RaiseWithoutCauseDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return py.In(codebase).
 		WhereStatement().

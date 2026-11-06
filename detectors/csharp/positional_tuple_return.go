@@ -16,12 +16,10 @@ func init() {
 	detectors.Register(catalog.CSharp, PositionalTupleReturnDetector{})
 }
 
-// Sin is the sin the detector finds.
 func (PositionalTupleReturnDetector) Sin() sins.Sin {
 	return cssins.PositionalTupleReturn{}
 }
 
-// Find is every place the sin is committed.
 func (PositionalTupleReturnDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return cs.In(codebase).
 		Where(engine.As(cs.Node.ReturnsPositionalTuple)).

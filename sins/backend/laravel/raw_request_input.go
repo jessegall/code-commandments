@@ -11,7 +11,6 @@ type RawRequestInput struct{}
 
 func init() { sins.Register(catalog.PHP, RawRequestInput{}) }
 
-// Definition is what the sin states about itself.
 func (RawRequestInput) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "raw-request-input",

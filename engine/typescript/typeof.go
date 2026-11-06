@@ -6,15 +6,12 @@ import (
 	"github.com/jessegall/code-commandments/engine"
 )
 
-// keywordKinds are the type keywords, by the kind the compiler gives them.
 var keywordKinds = map[string]string{
 	"StringKeyword": "string", "NumberKeyword": "number", "BooleanKeyword": "boolean", "VoidKeyword": "void",
 	"UnknownKeyword": "unknown", "NeverKeyword": "never", "AnyKeyword": "any", "UndefinedKeyword": "undefined",
 	"ObjectKeyword": "object", "SymbolKeyword": "symbol", "BigIntKeyword": "bigint",
 }
 
-// TypeOf is the type a type node writes, modelled as the PHP tool models it: a shape its grammar does not model is
-// kept as written, and so is the nearest enclosing type position a part it cannot model sits in.
 func TypeOf(n Node) TypeNode {
 	if typed, ok := modelled(n); ok {
 		return typed
@@ -23,7 +20,6 @@ func TypeOf(n Node) TypeNode {
 	return VerbatimType{Raw: strings.TrimSpace(n.Source())}
 }
 
-// modelled is the type the node writes, false when a part of it, up to the nearest type position, is not modelled.
 func modelled(n Node) (TypeNode, bool) {
 	if name, keyword := keywordKinds[n.Kind()]; keyword {
 		return KeywordType{Name: name}, true
@@ -99,8 +95,6 @@ func composite(n Node) (TypeNode, bool) {
 	return CompositeType{Operator: operator, Members: members}, true
 }
 
-// objectType is an object type whose every member is a named property or method; any other member leaves it
-// unmodelled.
 func objectType(n Node) (TypeNode, bool) {
 	var members []Member
 	for _, member := range n.ChildrenIn("members") {
@@ -114,7 +108,6 @@ func objectType(n Node) (TypeNode, bool) {
 	return ObjectType{Members: members}, true
 }
 
-// memberOf is a property or method signature as the PHP tool's grammar reads one; false for any other member.
 func memberOf(member Node) (Member, bool) {
 	name := member.Child("name")
 	if name.Kind() != "Identifier" && name.Kind() != "StringLiteral" {
@@ -144,8 +137,6 @@ func memberOf(member Node) (Member, bool) {
 	return Member{}, false
 }
 
-// paramsOf is a parameter list as the PHP tool's grammar prints it: modifiers and defaults dropped, a destructured
-// parameter printed as its pattern.
 func paramsOf(parameters []engine.Match) ([]Param, bool) {
 	params := make([]Param, 0, len(parameters))
 	for _, parameter := range parameters {
@@ -169,8 +160,6 @@ func paramsOf(parameters []engine.Match) ([]Param, bool) {
 	return params, true
 }
 
-// Pattern is a destructuring pattern printed as the PHP tool prints it, `{ a, b: c, ...rest }` or `[a, , b]`, and
-// the names it binds, each local then the rest.
 func Pattern(n Node) (string, []string) {
 	switch n.Kind() {
 	case "ObjectBindingPattern":

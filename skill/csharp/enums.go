@@ -21,7 +21,6 @@ func init() {
 	skill.Register(catalog.CSharp, Enums{})
 }
 
-// Definition is what the skill states about itself.
 func (Enums) Definition() skill.Definition {
 	return skill.Definition{
 		Slug:      "csharp/enums",

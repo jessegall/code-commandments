@@ -16,12 +16,10 @@ func init() {
 	detectors.Register(catalog.Python, BlockedAwaitDetector{})
 }
 
-// Sin is the sin the detector finds.
 func (BlockedAwaitDetector) Sin() sins.Sin {
 	return pysins.BlockedAwait{}
 }
 
-// Find is every blocking call made on the event loop's own thread.
 func (BlockedAwaitDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return py.In(codebase).
 		WhereCall().

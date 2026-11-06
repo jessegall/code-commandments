@@ -12,24 +12,20 @@ import (
 	"github.com/jessegall/code-commandments/engine"
 )
 
-// maxFlowSteps bounds one field's walk, so a flow through a large program ends.
 const maxFlowSteps = 5000
 
-// typePredicates are the functions that ask a value's type, and so guard it.
 var typePredicates = []string{
 	"is_null", "is_string", "is_array", "is_int", "is_integer", "is_float", "is_bool",
 	"is_object", "is_scalar", "is_iterable", "is_callable", "is_numeric", "is_countable",
 }
 
 // FlowVerdict counts where a field's value arrives: the uses that assume it is set, and the ones that guard it.
-// An untraceable field is none of either.
 type FlowVerdict struct {
 	Assume int
 	Guard  int
 }
 
-// ValueFlow follows each field's value from every read of it, through assignments, arguments, returns, other
-// fields and array slots, to where it is finally used: dereferenced or passed where null is refused, or guarded.
+// ValueFlow follows each field's value from every read of it, through assignments, arguments, returns, other fields and array slots, to where it is finally used: dereferenced or passed where null is refused, or guarded.
 type ValueFlow struct {
 	types      *Types
 	index      *Index
@@ -44,7 +40,6 @@ type ValueFlow struct {
 
 var flows = Memoised(gatherFlow)
 
-// ValueFlowOf is the codebase's value flow, its field reads gathered on first need.
 func ValueFlowOf(codebase *engine.Codebase) *ValueFlow {
 	return flows.Of(codebase)
 }
@@ -73,8 +68,6 @@ func gatherFlow(codebase *engine.Codebase) *ValueFlow {
 	return flow
 }
 
-// gather files a read under the class that declares the field; a read of a receiver it cannot type leaves every
-// field of that name untraceable.
 func (f *ValueFlow) gather(fetch engine.Match) {
 	name := fetch.Child("name")
 	if name.Kind() != "Identifier" {
@@ -97,7 +90,6 @@ func (f *ValueFlow) gather(fetch engine.Match) {
 	f.reads[owner][name.Name()] = append(f.reads[owner][name.Name()], fetch)
 }
 
-// Verdict is the field's verdict; untraceable when any read of its name escapes the engine.
 func (f *ValueFlow) Verdict(fqcn, field string) FlowVerdict {
 	if fqcn == "" {
 		return FlowVerdict{}
@@ -121,15 +113,12 @@ func (f *ValueFlow) Verdict(fqcn, field string) FlowVerdict {
 	return verdict
 }
 
-// Explain is where the field's value is assumed set, and where it is guarded.
 func (f *ValueFlow) Explain(fqcn, field string) (assume, guard []engine.Match) {
 	walk := f.walk(strings.TrimLeft(fqcn, `\`), field)
 
 	return walk.assume, walk.guard
 }
 
-// ChainPath is the longest road a read of the field takes to a use that assumes it, by the files it crosses: each
-// step `<edge>@<file name>`.
 func (f *ValueFlow) ChainPath(fqcn, field string) []string {
 	if fqcn == "" {
 		return nil
@@ -240,7 +229,6 @@ func keyed(downstream []engine.Match, edge string, key *string) []reached {
 	return moved
 }
 
-// viaArrayInsertion carries a value into the array literal it is an element of, under its literal key.
 func viaArrayInsertion(occurrence engine.Match) []reached {
 	item := occurrence.Parent()
 	if !isChild(occurrence, "ArrayItem", "value") || item.Parent().Kind() != "Expr_Array" {
@@ -251,8 +239,6 @@ func viaArrayInsertion(occurrence engine.Match) []reached {
 	return []reached{{node: item.Parent(), edge: "array", key: &key}}
 }
 
-// viaArrayElement takes the value back out of the array that carries it: an element fetch by its key, a foreach's
-// value, or a spread into another array.
 func (f *ValueFlow) viaArrayElement(occurrence engine.Match, key string) []reached {
 	parent := occurrence.Parent()
 	switch {
@@ -271,7 +257,6 @@ func (f *ValueFlow) viaArrayElement(occurrence engine.Match, key string) []reach
 	return nil
 }
 
-// viaFromArray follows an array handed to a `::from…` factory into the field its key names.
 func (f *ValueFlow) viaFromArray(occurrence engine.Match, key string, slots map[string]bool) []engine.Match {
 	call := occurrence.Parent().Parent()
 	if occurrence.Parent().Kind() != "Arg" || key == "*" || call.Kind() != "Expr_StaticCall" || !isName(call.Child("class")) ||
@@ -306,7 +291,6 @@ func keyMatches(dim engine.Match, key string) bool {
 	return ok && value == key
 }
 
-// viaAssignment follows a value assigned to a variable into every read of that variable.
 func (f *ValueFlow) viaAssignment(occurrence engine.Match) []engine.Match {
 	target := occurrence.Parent().Child("var")
 	if !isChild(occurrence, "Expr_Assign", "expr") || target.Kind() != "Expr_Variable" {
@@ -316,7 +300,6 @@ func (f *ValueFlow) viaAssignment(occurrence engine.Match) []engine.Match {
 	return readsOf(target.Name(), enclosingFunction(occurrence))
 }
 
-// viaArgument follows a value passed as an argument into the reads of the parameter it lands in.
 func (f *ValueFlow) viaArgument(occurrence engine.Match, slots map[string]bool) []engine.Match {
 	if occurrence.Parent().Kind() != "Arg" {
 		return nil
@@ -346,7 +329,6 @@ func (f *ValueFlow) readsReachedThrough(target paramTarget, slots map[string]boo
 	return slices.Concat(downstream, f.fieldSlotReads(target.class, name, slots))
 }
 
-// viaReturn follows a method's returned value to every call of it.
 func (f *ValueFlow) viaReturn(occurrence engine.Match, slots map[string]bool) []engine.Match {
 	function := enclosingFunction(occurrence)
 	if !isChild(occurrence, "Stmt_Return", "expr") || function.Kind() != "Stmt_ClassMethod" {
@@ -360,7 +342,6 @@ func (f *ValueFlow) viaReturn(occurrence engine.Match, slots map[string]bool) []
 	return f.index.CallersOf(class, function.Name())
 }
 
-// viaFieldWrite follows a value written to a field into every read of that field.
 func (f *ValueFlow) viaFieldWrite(occurrence engine.Match, slots map[string]bool) []engine.Match {
 	target := occurrence.Parent().Child("var")
 	if !isChild(occurrence, "Expr_Assign", "expr") || target.Kind() != "Expr_PropertyFetch" || target.Child("name").Kind() != "Identifier" {
@@ -397,7 +378,6 @@ func (p paramTarget) name() string {
 	return ""
 }
 
-// targetParam is the parameter an argument lands in: by its name, or its position when unpacked it has none.
 func (f *ValueFlow) targetParam(arg engine.Match) (paramTarget, bool) {
 	call := arg.Parent()
 	class, method := f.callee(call)
@@ -426,8 +406,6 @@ func (f *ValueFlow) targetParam(arg engine.Match) (paramTarget, bool) {
 	return paramTarget{class: class, method: method, param: declared[position]}, true
 }
 
-// callee is the class and method a call reaches: a method send on its receiver's type, a static call on the class
-// it names, a construction's constructor.
 func (f *ValueFlow) callee(call engine.Match) (class, method string) {
 	switch call.Kind() {
 	case "Expr_MethodCall":
@@ -476,7 +454,6 @@ func (f *ValueFlow) fieldSlotReads(class, field string, slots map[string]bool) [
 	return f.reads[class][field]
 }
 
-// methodNode is the method the class declares, the class being a class, not an interface, trait or enum.
 func (f *ValueFlow) methodNode(class, method string) (engine.Match, bool) {
 	declaration, ok := f.program.Class(class)
 	if !ok {
@@ -495,7 +472,6 @@ func mark(slots map[string]bool, slot string) bool {
 	return true
 }
 
-// readsOf is every use of the variable in the function, nested functions' included, that does not assign it.
 func readsOf(name string, function engine.Match) []engine.Match {
 	if name == "" || !function.Exists() {
 		return nil
@@ -514,10 +490,6 @@ func isDereferenced(node engine.Match) bool {
 	return isChild(node, "Expr_PropertyFetch", "var") || isChild(node, "Expr_MethodCall", "var") || isChild(node, "Expr_ArrayDimFetch", "var")
 }
 
-// isNullGuardedUse says whether the use settles or tests the value's nullness: de-nulled, type-checked, gated by a
-// question to its owner, or read as a condition. A value handed to a match or a switch as its subject is tested by
-// it, as one read in an if's condition is: `match ($activity) { null => null, ... }` is the modern spelling of the
-// guard, and reading it as an assumption makes a nullable guarded at its only reader look like a phantom.
 func isNullGuardedUse(node engine.Match) bool {
 	if isDeNulled(node) || isTypeInterrogated(node) || isGatedByOwnerPredicate(node) {
 		return true
@@ -543,7 +515,6 @@ func isTypeInterrogated(node engine.Match) bool {
 		slices.Contains(typePredicates, strings.ToLower(call.Child("name").Name()))
 }
 
-// isGatedByOwnerPredicate says whether a property read sits inside an `if` whose condition asks its owner a method.
 func isGatedByOwnerPredicate(node engine.Match) bool {
 	if node.Kind() != "Expr_PropertyFetch" {
 		return false
@@ -564,8 +535,6 @@ func isGatedByOwnerPredicate(node engine.Match) bool {
 	return false
 }
 
-// isSelfReadGuardedByStateClause says whether a `$this->field` read follows, in its function's own statements, an
-// `if` over the object's state that bails out.
 func isSelfReadGuardedByStateClause(node engine.Match) bool {
 	if node.Kind() != "Expr_PropertyFetch" || !isThis(node.Child("var")) {
 		return false
@@ -582,7 +551,6 @@ func isSelfReadGuardedByStateClause(node engine.Match) bool {
 	return false
 }
 
-// bodyOf is a function's own statements; an arrow function or an expression-bodied hook has none a guard can lead.
 func bodyOf(function engine.Match) []engine.Match {
 	var body []engine.Match
 	for _, statement := range function.Children() {
@@ -632,7 +600,6 @@ func isThis(node engine.Match) bool {
 	return node.Kind() == "Expr_Variable" && node.Name() == "this"
 }
 
-// contains says whether the node is the ancestor or the node itself.
 func contains(ancestor, node engine.Match) bool {
 	for at := node; at.Exists(); at = at.Parent() {
 		if at.Node() == ancestor.Node() {
@@ -643,8 +610,6 @@ func contains(ancestor, node engine.Match) bool {
 	return false
 }
 
-// flowClass is the class a function sits in as the value flow reads it: the nearest class around it, interfaces,
-// traits and enums passed over; empty inside an anonymous class.
 func flowClass(function engine.Match) string {
 	for at := function.Parent(); at.Exists(); at = at.Parent() {
 		if at.Kind() == "Stmt_Class" {
@@ -655,7 +620,6 @@ func flowClass(function engine.Match) string {
 	return ""
 }
 
-// Location is a match as the PHP engine names one: its file and line.
 func Location(match engine.Match) string {
 	return match.File() + ":" + strconv.Itoa(match.Line())
 }

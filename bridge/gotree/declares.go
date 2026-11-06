@@ -9,12 +9,6 @@ import (
 	"github.com/jessegall/code-commandments/contract"
 )
 
-// nodes are every node type go/ast has. Go has no registry of its own types, so the list is written here, beside
-// the writer that names them: a kind is the type's name and a field is one of its own struct fields, so the rest
-// of the declaration is read off each type rather than written out. A type Go adds and this list misses is caught
-// by the test that holds the declaration to what the streams really carry.
-//
-// A comment is no node here: the contract keeps a file's comments beside its tree, not in it.
 var nodes = []ast.Node{
 	&ast.ArrayType{}, &ast.AssignStmt{}, &ast.BadDecl{}, &ast.BadExpr{}, &ast.BadStmt{}, &ast.BasicLit{},
 	&ast.BinaryExpr{}, &ast.BlockStmt{}, &ast.BranchStmt{}, &ast.CallExpr{}, &ast.CaseClause{}, &ast.ChanType{},
@@ -28,10 +22,6 @@ var nodes = []ast.Node{
 	&ast.TypeSwitchStmt{}, &ast.UnaryExpr{}, &ast.ValueSpec{},
 }
 
-// Declares is what this bridge can emit. Go is parsed in this process, so there is no bridge to run for it: the
-// answer is read straight off go/ast with the SAME readings the writer makes — kindOf for the kind, and the
-// exported struct fields that can hold a node, named as lowerFirst names them and skipped where the writer skips
-// them — so the declaration cannot drift from the stream.
 func Declares() contract.Declaration {
 	declared := make([]contract.DeclaredKind, 0, len(nodes))
 	for _, held := range nodes {
@@ -57,8 +47,6 @@ func Declares() contract.Declaration {
 	}
 }
 
-// declaredFields are the slots a child of the node fills: its own exported struct fields that can hold a node, named as
-// the writer names them.
 func declaredFields(held ast.Node) []string {
 	structure := reflect.TypeOf(held).Elem()
 	var fields []string
@@ -74,8 +62,6 @@ func declaredFields(held ast.Node) []string {
 	return fields
 }
 
-// holdsANode says whether a struct field can hold a child: a node, or a list of them. A comment field is already
-// skipped by name, as the writer skips it.
 func holdsANode(field reflect.Type) bool {
 	if field.Kind() == reflect.Slice {
 		return holdsANode(field.Elem())

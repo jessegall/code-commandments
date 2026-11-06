@@ -5,8 +5,6 @@ import (
 	"strings"
 )
 
-// Relative is the path from root, both with their symbolic links resolved where they exist; the path as given
-// when it lies outside root. A location, `path:line`, reads the same way.
 func Relative(root, path string) string {
 	if real, err := filepath.EvalSymlinks(root); err == nil {
 		root = real

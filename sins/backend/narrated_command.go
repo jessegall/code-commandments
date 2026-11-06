@@ -11,7 +11,6 @@ type NarratedCommand struct{}
 
 func init() { sins.Register(catalog.PHP, NarratedCommand{}) }
 
-// Definition is what the sin states about itself.
 func (NarratedCommand) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "narrated-command",

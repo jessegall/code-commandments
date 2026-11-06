@@ -11,7 +11,6 @@ type OrphanedBinding struct{}
 
 func init() { sins.Register(catalog.PHP, OrphanedBinding{}) }
 
-// Definition is what the sin states about itself.
 func (OrphanedBinding) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "orphaned-binding",

@@ -10,16 +10,13 @@ import (
 	backendsins "github.com/jessegall/code-commandments/sins/backend/spatie"
 )
 
-// ManualOutputTransformDetector finds a Data class flattening a value object into an array by hand, where a
-// transformer belongs.
+// ManualOutputTransformDetector finds a Data class flattening a value object into an array by hand, where a transformer belongs.
 type ManualOutputTransformDetector struct{}
 
 func init() { detectors.Register(catalog.PHP, ManualOutputTransformDetector{}) }
 
-// Sin is the sin the detector finds.
 func (ManualOutputTransformDetector) Sin() sins.Sin { return backendsins.ManualOutputTransform{} }
 
-// Find is every get hook, #[Computed] method and assignment of a Data class that flattens a value object to an array.
 func (ManualOutputTransformDetector) Find(codebase *engine.Codebase) []engine.Match {
 	flattens := engine.As(func(n spatienode.Node) bool { return n.IsDataClass() && n.FlattensValueObjectToArray() })
 	hooks := php.In(codebase).WhereKind("PropertyHook").Where(func(n engine.Match) bool { return n.Name() == "get" }).Where(flattens).Get()
@@ -29,6 +26,4 @@ func (ManualOutputTransformDetector) Find(codebase *engine.Codebase) []engine.Ma
 	return append(append(hooks, computed...), assigned...)
 }
 
-// CrossFile says the rule reads more than the file it reports in, which the fixture measures by asking it
-// of one file and of the whole tree: a scoped run reads the whole scan while it is enabled.
 func (ManualOutputTransformDetector) CrossFile() {}

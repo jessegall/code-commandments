@@ -94,8 +94,6 @@ func TestEverythingTheBinaryCannotRunIsNamed(t *testing.T) {
 	}
 }
 
-// TestARuleNamesItsEngineByEitherName holds a rule file a project wrote before the engines were named after their
-// languages: `"engine": "backend"` still judges PHP, and its sin's skill slug is read the same way.
 func TestARuleNamesItsEngineByEitherName(t *testing.T) {
 	root := project(t, map[string]string{
 		"FormerName.json": `{"engine": "backend", "sin": {"name": "former-name", "description": "written before the rename", "skill": "backend/absence"}, "find": {"select": "call", "where": [{"name": "select"}]}}`,

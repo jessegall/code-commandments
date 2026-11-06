@@ -13,8 +13,6 @@ import (
 	"github.com/jessegall/code-commandments/engine/csharp"
 )
 
-// FromSource is the codebase the C# sources describe, keyed by their path under one project folder, as the
-// bridge and the engine read them: `{"Shop/Cart.cs": "namespace Shop; public sealed class Cart { }"}`.
 func FromSource(t testing.TB, sources map[string]string) *engine.Codebase {
 	t.Helper()
 	root, err := filepath.EvalSymlinks(t.TempDir())
@@ -38,7 +36,6 @@ func FromSource(t testing.TB, sources map[string]string) *engine.Codebase {
 	return engine.Load(stream)
 }
 
-// First is the first C# node of the kind in the codebase's file whose path ends in the one given to FromSource.
 func First(t testing.TB, codebase *engine.Codebase, path, kind string) csharp.Node {
 	t.Helper()
 	for _, file := range codebase.Files() {

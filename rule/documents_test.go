@@ -9,7 +9,6 @@ import (
 	"github.com/jessegall/code-commandments/engine/python/pythontest"
 )
 
-// billing is a PHP project holding a class and its test.
 var billing = map[string]string{
 	"src/Billing.php": `<?php
 

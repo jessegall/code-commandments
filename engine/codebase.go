@@ -1,5 +1,4 @@
-// Package engine is the one engine every language is judged through: a codebase read from the
-// generic tree, a fluent query over its nodes, and matches that know their file:line.
+// Package engine is the one engine every language is judged through: a codebase read from the generic tree, a fluent query over its nodes, and matches that know their file:line.
 package engine
 
 import (
@@ -15,55 +14,40 @@ import (
 
 // Codebase is every file the bridges wrote, each language's stream side by side.
 type Codebase struct {
-	streams  []*contract.Stream
-	files    []*File
-	read     func(path string) ([]byte, error)
-	analyses *sync.Map
-	// scanned are the folders and files the scan was pointed at, which a path is judged from.
-	scanned []string
-	// project is the folder the scan was read in, which a rule's path pattern is read from.
-	project string
-	// reporting are the files a selector opens over, where a reader has narrowed the codebase to them. Empty
-	// is every file, which is what a judging of a whole tree asks for.
+	streams   []*contract.Stream
+	files     []*File
+	read      func(path string) ([]byte, error)
+	analyses  *sync.Map
+	scanned   []string
+	project   string
 	reporting map[string]bool
 }
 
-// Filler fills the facts the engine owns for one language, once every file of the codebase has been read. The
-// paths are the files that changed since those facts were last worked out, for a codebase built over trees
-// another already filled: the facts are written ON the nodes and a view shares the base's nodes, so a view fills
-// what changed and whatever reaches it, which only the language knows. No paths at all is every file.
+// Filler fills the facts the engine owns for one language, once every file of the codebase has been read.
 type Filler func(*Codebase, []string)
 
 var fillers = map[contract.Language]Filler{}
 
-// Fills enrols the filler of one language's engine-owned facts, from that language's own package.
 func Fills(language contract.Language, fill Filler) {
 	fillers[language] = fill
 }
 
-// Fills says whether a fill is registered for that language: a codebase built anywhere but a scan carries a
-// language's own facts only where one is.
 func FillsFor(language contract.Language) bool {
 	_, registered := fillers[language]
 
 	return registered
 }
 
-// Untouched fails the run when a fill wrote a fact into the Facts nodes without any share, which would hand that
-// fact to every one of them: a fact is written through the node's Own.
 func Untouched() {
 	if !contract.Untouched() {
 		panic("a fact was written into the Facts every node without any shares; write it through Node.Own")
 	}
 }
 
-// Keep makes a value built elsewhere the codebase's analysis under the key, in place of the one its build would make.
 func Keep[T any](c *Codebase, key any, value T) {
 	c.analyses.Store(key, value)
 }
 
-// Analysis is one whole-program analysis of the codebase, built by build on first use and kept as long as the
-// codebase is. The key names the analysis: a string, or the memo that holds the build.
 func Analysis[T any](c *Codebase, key any, build func(*Codebase) T) T {
 	if held, ok := c.analyses.Load(key); ok {
 		return held.(T)
@@ -86,13 +70,10 @@ type File struct {
 	own      map[int]contract.Comment
 }
 
-// Load is the codebase the streams describe, its sources read from disk.
 func Load(streams ...*contract.Stream) *Codebase {
 	return New(os.ReadFile, streams...)
 }
 
-// ReadThrough reads a path's drafted text where contents holds one, and the disk's otherwise: the sources a
-// codebase re-read over a rewrite's drafts is read through.
 func ReadThrough(contents map[string]string) func(path string) ([]byte, error) {
 	return func(path string) ([]byte, error) {
 		if drafted, ok := contents[path]; ok {
@@ -103,7 +84,6 @@ func ReadThrough(contents map[string]string) func(path string) ([]byte, error) {
 	}
 }
 
-// New is the codebase the streams describe, its sources read through read.
 func New(read func(path string) ([]byte, error), streams ...*contract.Stream) *Codebase {
 	codebase := built(read, streams...)
 	codebase.fill(nil)
@@ -111,7 +91,6 @@ func New(read func(path string) ([]byte, error), streams ...*contract.Stream) *C
 	return codebase
 }
 
-// built is the codebase the streams describe with no facts of the engine's own written yet.
 func built(read func(path string) ([]byte, error), streams ...*contract.Stream) *Codebase {
 	codebase := &Codebase{streams: streams, read: read, analyses: &sync.Map{}}
 	for _, stream := range streams {
@@ -123,11 +102,6 @@ func built(read func(path string) ([]byte, error), streams ...*contract.Stream) 
 	return codebase
 }
 
-// Filling is the codebase the streams describe with only the facts of these files worked out again, for a
-// codebase built over trees whose facts another codebase has already written on them. Every other file's facts
-// are the ones it was read with, which is what makes a view of a kept tree cost the file that changed and no
-// more: the pass costs 0.9 seconds of an edit's answer on a 5286-file tree, and nearly all of it is files
-// nothing touched.
 func Filling(changed []string, streams ...*contract.Stream) *Codebase {
 	codebase := built(os.ReadFile, streams...)
 	codebase.fill(changed)
@@ -135,8 +109,6 @@ func Filling(changed []string, streams ...*contract.Stream) *Codebase {
 	return codebase
 }
 
-// fill writes each language's own facts, over the changed files where any are named and over every file
-// otherwise.
 func (c *Codebase) fill(changed []string) {
 	filled := map[contract.Language]bool{}
 	for _, stream := range c.streams {
@@ -148,7 +120,6 @@ func (c *Codebase) fill(changed []string) {
 	Untouched()
 }
 
-// FromString is the codebase one stream's JSON lines describe, its sources given by path.
 func FromString(stream string, sources map[string]string) (*Codebase, error) {
 	read, err := contract.ReadAll(strings.NewReader(stream))
 	if err != nil {
@@ -165,25 +136,18 @@ func FromString(stream string, sources map[string]string) (*Codebase, error) {
 	}, read), nil
 }
 
-// Read is a file of the project, one beside the sources such as a manifest, read as the sources are.
 func (c *Codebase) Read(path string) ([]byte, error) {
 	return c.read(path)
 }
 
-// Files is every file, in the order the streams wrote them.
 func (c *Codebase) Files() []*File {
 	return c.files
 }
 
-// Streams are the streams the codebase was built from, one per language that was read. A reader that keeps a
-// codebase alive and wants another with one file's tree in place of this one's asks for them, since a stream is
-// what the engine is built from and re-parsing a file nothing touched is the cost worth avoiding.
 func (c *Codebase) Streams() []*contract.Stream {
 	return c.streams
 }
 
-// Of is the part of the codebase written in these languages: each file by its own language, so the
-// TypeScript a Vue stream carries is TypeScript, and each stream by the language its bridge wrote.
 func (c *Codebase) Of(languages ...contract.Language) *Codebase {
 	part := &Codebase{read: c.read, analyses: &sync.Map{}, reporting: c.reporting}
 	for _, stream := range c.streams {
@@ -200,18 +164,6 @@ func (c *Codebase) Of(languages ...contract.Language) *Codebase {
 	return part
 }
 
-// Reporting is the codebase with its selectors opening over these files alone, and everything else whole: the
-// same trees, the same declarations, the same whole-program analyses, memoised where this codebase has them
-// already.
-//
-// It is how one edit is judged against the program. A rule's Find walks every node of the codebase and answers
-// with every finding anywhere, so a check of one edited file either read that file as though it were the program
-// — which is wrong for every rule that follows a chain of parents, a caller or a recurrence — or walked 5286
-// files to keep the findings of one. Narrowed to the edited file, the WALK is the file's and the ANSWERS are
-// still the program's, which is 3.32s against the fraction of it one file costs.
-//
-// A rule whose verdict weighs the candidates of the whole program (detectors.Aggregating) must not be narrowed:
-// its answer about one file is decided by every other candidate, so it is given the codebase whole.
 func (c *Codebase) Reporting(paths ...string) *Codebase {
 	narrowed := map[string]bool{}
 	for _, path := range paths {
@@ -224,7 +176,6 @@ func (c *Codebase) Reporting(paths ...string) *Codebase {
 	return &part
 }
 
-// opened are the files a selector walks: the ones a reader narrowed the codebase to, else every file.
 func (c *Codebase) opened() []*File {
 	if len(c.reporting) == 0 {
 		return c.files
@@ -240,13 +191,10 @@ func (c *Codebase) opened() []*File {
 	return narrowed
 }
 
-// Declarations is every declaration the symbol id names: one, or several for a TypeScript overload set,
-// a merged declaration or a C# partial class.
 func (c *Codebase) Declarations(symbol string) []Match {
 	return Analysis(c, "declarations", declarationsOf)[symbol]
 }
 
-// declarationsOf indexes every declaration of the codebase by its symbol id.
 func declarationsOf(c *Codebase) map[string][]Match {
 	index := map[string][]Match{}
 	for _, file := range c.files {
@@ -260,7 +208,6 @@ func declarationsOf(c *Codebase) map[string][]Match {
 	return index
 }
 
-// Program is the facts about the whole program one language's bridge wrote, if it wrote any.
 func (c *Codebase) Program(language contract.Language) (*contract.Program, bool) {
 	for _, stream := range c.streams {
 		if stream.Header.Language == language && stream.Program != nil {
@@ -271,16 +218,6 @@ func (c *Codebase) Program(language contract.Language) (*contract.Program, bool)
 	return nil, false
 }
 
-// Source is the file's bytes, read once, and an error where they cannot be the ones the parse was made from.
-//
-// A parse is held in memory and its file is read from disk when a rule asks for a node's text, and between the two
-// the file can SHRINK: the agent's own next edit, a checkout, a rebase, a formatter. Every offset in that parse
-// then points past the end of what was read, and slicing it takes the whole run's detector down.
-//
-// Reported from a consumer: DuplicateFunctionDetector and NearDuplicateFunctionDetector both died with "slice
-// bounds out of range [:1111] with capacity 643" on a worker's judging and were skipped, so the run reported no
-// duplicates and nothing said the rules had not been asked. A source that cannot hold the parse's own offsets is
-// no source for it, and every reader here already answers for a read that failed.
 func (f *File) Source() ([]byte, error) {
 	f.once.Do(func() {
 		f.source, f.err = f.read(f.Path)
@@ -298,13 +235,6 @@ func (f *File) Source() ([]byte, error) {
 	return f.source, f.err
 }
 
-// Alone is a codebase holding this file and nothing else, its nodes the ones already parsed: the same scan roots
-// and project, so every path reads as it does in the whole codebase, and its language's facts filled again for a
-// scan of one file.
-//
-// It exists so that whether a rule reads MORE than the file it reports in is measured rather than declared: the
-// rule is asked the same question twice, once of the file alone and once of the whole scan, and a rule whose
-// answers differ is one that reads across files.
 func (f *File) Alone() *Codebase {
 	stream := &contract.Stream{Header: f.stream.Header, Files: []*contract.File{f.File}, Program: f.stream.Program}
 	alone := New(f.read, stream)
@@ -313,17 +243,14 @@ func (f *File) Alone() *Codebase {
 	return alone
 }
 
-// Codebase is the codebase the file was read into.
 func (f *File) Codebase() *Codebase {
 	return f.codebase
 }
 
-// Language is the language the file's root is written in: a stream's own, or TypeScript inside a Vue stream.
 func (f *File) Language() contract.Language {
 	return f.File.Language
 }
 
-// Match is the file's node with the id, such as the node a comment is attached to; no node when the file holds none.
 func (f *File) Match(id int) Match {
 	node, ok := f.Node(id)
 	if !ok {
@@ -333,12 +260,8 @@ func (f *File) Match(id int) Match {
 	return Match{node: node, file: f}
 }
 
-// CommentKind is the kind a comment's match wears: a comment is no node of the tree, yet a rule about what a comment
-// says finds the comment itself.
 const CommentKind = "Comment"
 
-// CommentMatch is the comment as a finding, reported on the line given: the line of the code it is about, or its own
-// where it is about nothing. It sits in no node, and its name is the comment's kind.
 func (f *File) CommentMatch(comment contract.Comment, line int) Match {
 	span := comment.Span
 	span.Line = line
@@ -346,7 +269,6 @@ func (f *File) CommentMatch(comment contract.Comment, line int) Match {
 	return Match{node: contract.NewNode(contract.Node{ID: -1, Kind: CommentKind, Role: "other", Span: span, Name: comment.Kind}), file: f}
 }
 
-// Comments is every comment attached to the node.
 func (f *File) Comments(node *contract.Node) []contract.Comment {
 	var attached []contract.Comment
 	for _, comment := range f.File.Comments {
@@ -358,9 +280,6 @@ func (f *File) Comments(node *contract.Node) []contract.Comment {
 	return attached
 }
 
-// CommentsAbove is the run of comments standing on lines of their own directly above the node: the last on the
-// line before it, each earlier one on the line before that. A comment that trails code on its line is above
-// nothing.
 func (f *File) CommentsAbove(node *contract.Node) []contract.Comment {
 	f.lines.Do(f.findOwnLineComments)
 	var run []contract.Comment
@@ -373,8 +292,6 @@ func (f *File) CommentsAbove(node *contract.Node) []contract.Comment {
 	}
 }
 
-// isInsideItsNode says whether the comment lies inside the node it belongs to, as a Python docstring lies inside
-// its def: it is part of that node, not a comment above anything.
 func (f *File) isInsideItsNode(comment contract.Comment) bool {
 	if comment.Attached == nil {
 		return false
@@ -384,7 +301,6 @@ func (f *File) isInsideItsNode(comment contract.Comment) bool {
 	return ok && node.Span.Start <= comment.Span.Start
 }
 
-// findOwnLineComments indexes, by line, every comment with nothing but whitespace before it on its line.
 func (f *File) findOwnLineComments() {
 	f.own = map[int]contract.Comment{}
 	source, err := f.Source()

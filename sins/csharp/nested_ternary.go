@@ -13,7 +13,6 @@ func init() {
 	sins.Register(catalog.CSharp, NestedTernary{})
 }
 
-// Definition is what the sin states about itself.
 func (NestedTernary) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "csharp-nested-ternary",

@@ -16,13 +16,9 @@ func init() {
 	detectors.Register(catalog.Vue, MirroredServerTypeDetector{})
 }
 
-// mirrorFields is the fewest fields a type may have and still be judged a mirror: below it, a name and a few
-// shared fields are too weak to trust.
 const mirrorFields = 3
 
-// MirroredServerTypeDetector finds a hand-written TypeScript type that copies a type the server publishes:
-// the same name and nearly the same fields. The server should own it and the frontend import the generated
-// one. The generator's own output is that generated one, never a copy.
+// MirroredServerTypeDetector finds a hand-written TypeScript type that copies a type the server publishes: the same name and nearly the same fields.
 type MirroredServerTypeDetector struct{}
 
 func (MirroredServerTypeDetector) Sin() sins.Sin {
@@ -48,6 +44,4 @@ func (MirroredServerTypeDetector) Find(codebase *engine.Codebase) []engine.Match
 		Get()
 }
 
-// CrossFile says the rule reads more than the file it reports in, which the fixture measures by asking it
-// of one file and of the whole tree: a scoped run reads the whole scan while it is enabled.
 func (MirroredServerTypeDetector) CrossFile() {}

@@ -59,7 +59,6 @@ func read(written TypeName) map[string]any {
 	}
 }
 
-// orNil is a name, or nil for none: how PHP answers a name it cannot read.
 func orNil(name string) any {
 	if name == "" {
 		return nil

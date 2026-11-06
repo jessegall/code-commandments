@@ -11,18 +11,13 @@ import (
 )
 
 const (
-	// assumedWidth is the width used when the terminal will not say.
 	assumedWidth = 80
 
-	// comfortableWidth is as wide as prose is laid out; past it the eye loses the start of the next line.
 	comfortableWidth = 96
 )
 
-// proseMarkers open a line whose break was deliberate: an indent, a bullet, a table, a heading, a fence.
 var proseMarkers = []string{" ", "\t", "-", "*", "|", "#", ">", "`", "+"}
 
-// Wrap wraps text to the terminal, indenting every line after the first by indent so a wrapped paragraph
-// stays visibly one thing. Existing line breaks are kept.
 func Wrap(text string, indent int) string {
 	var lines []string
 
@@ -34,8 +29,6 @@ func Wrap(text string, indent int) string {
 	return strings.Join(lines, "\n"+strings.Repeat(" ", indent))
 }
 
-// Reflow joins each prose paragraph back into one line before wrapping it, leaving anything with a shape
-// of its own (a list, a table, an indented block, a fence) exactly as written.
 func Reflow(text string, indent int) string {
 	var blocks []string
 
@@ -70,14 +63,12 @@ func isProse(lines []string) bool {
 	return true
 }
 
-// Heading is a title with a rule after it, so a reader sees where one answer ends and the next begins.
 func Heading(title string) string {
 	rule := max(4, TerminalWidth()-layout.Width(title)-4)
 
 	return "\n── " + title + " " + strings.Repeat("─", rule)
 }
 
-// TerminalWidth is how wide the terminal is, asked once: COLUMNS, else tput, else assumed.
 var TerminalWidth = sync.OnceValue(func() int {
 	given := os.Getenv("COLUMNS")
 

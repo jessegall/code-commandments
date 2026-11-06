@@ -14,10 +14,8 @@ type MemberAfterMethodDetector struct{}
 
 func init() { detectors.Register(catalog.PHP, MemberAfterMethodDetector{}) }
 
-// Sin is the sin the detector finds.
 func (MemberAfterMethodDetector) Sin() sins.Sin { return backendsins.MemberAfterMethod{} }
 
-// Find is every class member that sits below a method.
 func (MemberAfterMethodDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return php.In(codebase).
 		WhereKind(classMembers...).
@@ -25,5 +23,4 @@ func (MemberAfterMethodDetector) Find(codebase *engine.Codebase) []engine.Match 
 		Get()
 }
 
-// Repentable says a scribe rewrites the sin away.
 func (MemberAfterMethodDetector) Repentable() {}

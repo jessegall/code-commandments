@@ -14,10 +14,8 @@ type MutableValueObjectDetector struct{}
 
 func init() { detectors.Register(catalog.PHP, MutableValueObjectDetector{}) }
 
-// Sin is the sin the detector finds.
 func (MutableValueObjectDetector) Sin() sins.Sin { return backendsins.MutableValueObject{} }
 
-// Find is every value-type class whose constructed fields a later method writes again.
 func (MutableValueObjectDetector) Find(codebase *engine.Codebase) []engine.Match {
 	program := php.ProgramOf(codebase)
 

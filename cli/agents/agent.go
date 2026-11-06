@@ -1,6 +1,4 @@
-// Package agents points every assistant a project uses at the one skill library: an Agent states only what
-// actually differs between them, the folder it discovers skills in, the file it reads instructions from,
-// and whether it enforces the disciplines through hooks.
+// Package agents points every assistant a project uses at the one skill library: an Agent states only what actually differs between them, the folder it discovers skills in, the file it reads instructions from, and whether it enforces the disciplines through hooks.
 package agents
 
 import (
@@ -11,25 +9,15 @@ import (
 
 // Agent is one assistant sync wires the project for.
 type Agent interface {
-	// Class is the agent's name as a config turns it off by.
 	Class() string
-	// Name is the agent as a person names it.
 	Name() string
-	// Summary is what sync gives it, in a phrase.
 	Summary() string
-	// SkillsDir is the folder it discovers skills in, under the project; empty when it reads the library.
 	SkillsDir() string
-	// CommandsDir is the folder it reads commands from, under the project; empty when it has none.
 	CommandsDir() string
-	// InstructionsFile is the file it reads instructions from; empty when AGENTS.md is its own.
 	InstructionsFile() string
-	// BlockName names the block sync keeps in that file.
 	BlockName() string
-	// Instructions are what that block says in the project at root.
 	Instructions(root string) string
-	// Ignored are the lines it adds to the project's .gitignore, each under its comment.
 	Ignored() []Ignored
-	// Enforces says whether it checks the disciplines through hooks rather than only reading them.
 	Enforces() bool
 }
 
@@ -38,20 +26,16 @@ type Ignored struct {
 	Comment, Rule string
 }
 
-// All is every agent the tool ships, in the order their classes sort.
 func All() []Agent {
 	return []Agent{Claude{}, Codex{}}
 }
 
-// ForProject is every agent the project keeps: the shipped ones less those its config turns off.
 func ForProject(project config.Config) []Agent {
 	return slices.DeleteFunc(All(), func(agent Agent) bool {
 		return project.Disables(config.Rule{Kind: config.Agent, Name: agent.Class()})
 	})
 }
 
-// Unshipped warns of each agent the project's config turns on that the tool does not ship, which sync skips: a config
-// from the PHP tool could turn on an agent of the project's own.
 func Unshipped(project config.Config) []string {
 	var warnings []string
 

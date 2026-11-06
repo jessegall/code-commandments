@@ -8,9 +8,6 @@ import (
 	"github.com/jessegall/code-commandments/engine"
 )
 
-// UnpacksTargetFromContainerParam says whether the node declares a method taking an object and a string or int key,
-// that looks the key up on the object — $workflow->graph->nodeById($id) — into a local, and uses the object for
-// nothing but reading its properties: the method wants the looked-up object, not the pair.
 func (n Node) UnpacksTargetFromContainerParam() bool {
 	if n.Kind() != "Stmt_ClassMethod" {
 		return false
@@ -37,7 +34,6 @@ func (n Node) UnpacksTargetFromContainerParam() bool {
 	return false
 }
 
-// baseType is a parameter's type with a nullable ? taken off; none for a union or an intersection.
 func baseType(written *contract.Type) *contract.Type {
 	if written == nil || written.Kind == "union" || written.Kind == "intersection" {
 		return nil
@@ -72,7 +68,6 @@ func (n Node) scalarKeyParams() []string {
 	return names
 }
 
-// keyedSolelyBy says whether the call passes exactly one argument, a key parameter.
 func keyedSolelyBy(call engine.Match, keys []string) bool {
 	var passed []engine.Match
 	for _, child := range call.Children() {
@@ -84,7 +79,6 @@ func keyedSolelyBy(call engine.Match, keys []string) bool {
 	return len(passed) == 1 && passed[0].Kind() == "Arg" && slices.Contains(keys, variableName(passed[0].Child("value")))
 }
 
-// chainRoot is what a chain of sends and property reads starts at.
 func chainRoot(node engine.Match) engine.Match {
 	for {
 		switch node.Kind() {
@@ -96,7 +90,6 @@ func chainRoot(node engine.Match) engine.Match {
 	}
 }
 
-// capturedLocal is the variable the call's result, sends chained onto it included, is assigned to.
 func capturedLocal(call engine.Match) string {
 	node, parent := call, call.Parent()
 	for isMethodSend(parent) && node.Node().Field == "var" {
@@ -109,7 +102,6 @@ func capturedLocal(call engine.Match) string {
 	return ""
 }
 
-// isTheResolver says whether the method only guards and then returns the local: it is the lookup itself.
 func (n Node) isTheResolver(local string) bool {
 	body := n.ChildrenIn("stmts")
 	if len(body) < 2 || body[len(body)-1].Kind() != "Stmt_Return" || variableName(body[len(body)-1].Child("expr")) != local {
@@ -130,7 +122,6 @@ func (n Node) isTheResolver(local string) bool {
 	return true
 }
 
-// ownerIsPureEncapsulator says whether every other use of the object parameter in the method reads a property of it.
 func (n Node) ownerIsPureEncapsulator(root engine.Match) bool {
 	owner := root.Name()
 	for _, statement := range n.ChildrenIn("stmts") {

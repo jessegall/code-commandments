@@ -16,12 +16,10 @@ func init() {
 	detectors.Register(catalog.Python, MatchWildcardReturnsNoneDetector{})
 }
 
-// Sin is the sin the detector finds.
 func (MatchWildcardReturnsNoneDetector) Sin() sins.Sin {
 	return pysins.MatchWildcardReturnsNone{}
 }
 
-// Find is every place the sin is committed.
 func (MatchWildcardReturnsNoneDetector) Find(codebase *engine.Codebase) []engine.Match {
 	program := py.In(codebase).Program
 

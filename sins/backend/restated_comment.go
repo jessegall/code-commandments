@@ -11,7 +11,6 @@ type RestatedComment struct{}
 
 func init() { sins.Register(catalog.PHP, RestatedComment{}) }
 
-// Definition is what the sin states about itself.
 func (RestatedComment) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "restated-comment",

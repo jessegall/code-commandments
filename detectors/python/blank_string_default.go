@@ -16,12 +16,10 @@ func init() {
 	detectors.Register(catalog.Python, BlankStringDefaultDetector{})
 }
 
-// Sin is the sin the detector finds.
 func (BlankStringDefaultDetector) Sin() sins.Sin {
 	return pysins.BlankStringDefault{}
 }
 
-// Find is every place the sin is committed.
 func (BlankStringDefaultDetector) Find(codebase *engine.Codebase) []engine.Match {
 	program := py.In(codebase).Program
 

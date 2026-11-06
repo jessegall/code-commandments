@@ -9,8 +9,7 @@ import (
 	"github.com/jessegall/code-commandments/engine/php"
 )
 
-// RouteActions is every method that handles a request: the ones a route registers, and the public ones that take a
-// request, return what a response binds, or render an Inertia page.
+// RouteActions is every method that handles a request: the ones a route registers, and the public ones that take a request, return what a response binds, or render an Inertia page.
 type RouteActions struct {
 	actions    map[string]bool
 	registered map[string]bool
@@ -18,32 +17,26 @@ type RouteActions struct {
 
 var routeActions = php.Memoised(readRouteActions)
 
-// RouteActionsOf is the codebase's route actions.
 func RouteActionsOf(codebase *engine.Codebase) *RouteActions {
 	return routeActions.Of(codebase)
 }
 
-// ActionKey is how a route action is named: `Class::method`.
 func ActionKey(fqcn, method string) string {
 	return strings.TrimLeft(fqcn, `\`) + "::" + method
 }
 
-// IsAction says whether the class's method handles a request.
 func (r *RouteActions) IsAction(fqcn, method string) bool {
 	return fqcn != "" && method != "" && r.actions[ActionKey(fqcn, method)]
 }
 
-// IsRegisteredAction says whether a route registers the class's method.
 func (r *RouteActions) IsRegisteredAction(fqcn, method string) bool {
 	return fqcn != "" && method != "" && r.registered[ActionKey(fqcn, method)]
 }
 
-// IsRegistration says whether the node registers a route with an action: `Route::get('/x', [C::class, 'm'])`.
 func IsRegistration(node engine.Match) bool {
 	return VerbOf(node) != "" && len(ActionsOf(node)) > 0
 }
 
-// VerbOf is the HTTP verb a route registration is made with.
 func VerbOf(node engine.Match) string {
 	name := node.Child("name")
 	if (node.Kind() != "Expr_MethodCall" && node.Kind() != "Expr_StaticCall") || name.Kind() != "Identifier" || !slices.Contains(RouteVerbs, name.Name()) {
@@ -53,7 +46,6 @@ func VerbOf(node engine.Match) string {
 	return name.Name()
 }
 
-// ActionsOf is every action a call's arguments name: `[C::class, 'method']`, or an invokable `C::class`.
 func ActionsOf(node engine.Match) []string {
 	actions := []string{}
 	for _, argument := range node.Children() {
@@ -159,8 +151,7 @@ func isRequestType(fqcn string, program *php.Program) bool {
 	return false
 }
 
-// RouteNames is every route name the codebase registers: exact names, the families a dynamic suffix or a resource
-// registers, and whether any name is built so it cannot be read at all.
+// RouteNames is every route name the codebase registers: exact names, the families a dynamic suffix or a resource registers, and whether any name is built so it cannot be read at all.
 type RouteNames struct {
 	names    map[string]bool
 	order    []string
@@ -170,18 +161,14 @@ type RouteNames struct {
 
 var routeNames = php.Memoised(readRouteNames)
 
-// RouteNamesOf is the codebase's route names.
 func RouteNamesOf(codebase *engine.Codebase) *RouteNames {
 	return routeNames.Of(codebase)
 }
 
-// HasAny says whether the codebase names any route.
 func (r *RouteNames) HasAny() bool {
 	return len(r.names) > 0
 }
 
-// IsRegistered says whether a route by the name exists: exactly, within a family, as the tail of a longer name, or
-// because some name cannot be read and so any might.
 func (r *RouteNames) IsRegistered(name string) bool {
 	if r.dynamic || r.names[name] {
 		return true
@@ -253,7 +240,6 @@ func readRouteNames(codebase *engine.Codebase) *RouteNames {
 	return read
 }
 
-// prefixOf is the name prefix the route groups around the node give it, outermost first.
 func prefixOf(node engine.Match) string {
 	var segments []string
 	for at := node; at.Exists(); at = at.Parent() {
@@ -281,9 +267,6 @@ func groupPrefix(group engine.Match) string {
 			}
 		}
 	}
-	// `as` and `name` are one call on the router: Route::as('admin.')->group(…) and Route::name('admin.')->group(…)
-	// register the same prefix, since the registrar passes both to the same attribute. Reading only `name` left
-	// every route of a group opened with `as` unregistered, so each of them read as a name nothing registers (#818).
 	for link := group; link.Exists(); {
 		if named := routeCallName(link); named == "name" || named == "as" {
 			literal, _ := literalArgument(link)
@@ -313,7 +296,6 @@ func isRouteChainCall(node engine.Match, method string) bool {
 	return routeCallName(node) == method && rootsAtRouter(node)
 }
 
-// rootsAtRouter says whether the call chain starts at the Route facade, or a variable typed as the router.
 func rootsAtRouter(node engine.Match) bool {
 	root := node
 	for root.Kind() == "Expr_MethodCall" || root.Kind() == "Expr_NullsafeMethodCall" {
@@ -357,7 +339,6 @@ func routeCallName(node engine.Match) string {
 	return ""
 }
 
-// literalArgument is the literal string a call's first argument is, whatever the argument's kind.
 func literalArgument(node engine.Match) (string, bool) {
 	value := firstArgumentValue(node)
 	if value.Kind() != "Scalar_String" {
@@ -367,7 +348,6 @@ func literalArgument(node engine.Match) (string, bool) {
 	return value.Node().Value.Text()
 }
 
-// literalPrefix is the literal text an interpolated first argument opens with.
 func literalPrefix(node engine.Match) string {
 	value := firstArgumentValue(node)
 	if value.Kind() != "Scalar_InterpolatedString" {

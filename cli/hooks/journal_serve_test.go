@@ -9,8 +9,6 @@ import (
 	"time"
 )
 
-// TestAGateIsAnsweredWhileAnEarlierMomentsAdviceStillRuns holds the service to answering the next write's gate
-// while the sin check of the one before is still working, and to checking one moment at a time.
 func TestAGateIsAnsweredWhileAnEarlierMomentsAdviceStillRuns(t *testing.T) {
 	folder := t.TempDir()
 	t.Setenv("JOURNAL_QUEUE", filepath.Join(folder, "queue"))
@@ -61,7 +59,6 @@ func TestAGateIsAnsweredWhileAnEarlierMomentsAdviceStillRuns(t *testing.T) {
 	}
 }
 
-// ask sends one moment to the service and reads its answer.
 func ask(t *testing.T, socket string) {
 	t.Helper()
 	connection, err := net.Dial("unix", socket)

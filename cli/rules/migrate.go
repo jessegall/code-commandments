@@ -15,21 +15,6 @@ import (
 	"github.com/jessegall/code-commandments/cli/workspace"
 )
 
-// migrate brings a project's own rules up to what this release reads, and says what it could not.
-//
-// There are two jobs in it and they are not the same. The first is to READ every rule with the parser of this
-// release and report each that no longer parses, because a release may refuse what an older one ran: a rule
-// naming a construct no parser writes used to run and quietly find nothing, which reads as a rule that found no
-// sins. Such a rule cannot be repaired here, since the nearest real word is a guess and a guess written into a
-// project's own file is worse than a message, so it is named with its reason and left alone.
-//
-// The second is the one that actually rewrites: a rule the neutral kinds let judge several engines no longer has
-// to be written once per engine, so copies that differ in nothing but their engine are MERGED into one file
-// naming them all. That is mechanical, because sameness is decided by the files themselves rather than by
-// reading them for intent.
-//
-// A failure never stops the next rule. Every rule is read, every merge that can be made is made, and the run
-// ends by naming what is left.
 func (c Command) migrate(in *cli.Input, root string, console cli.Console) (int, error) {
 	dir := workspace.CustomDir(root)
 	if _, err := os.Stat(dir); err != nil {
@@ -47,7 +32,6 @@ func (c Command) migrate(in *cli.Input, root string, console cli.Console) (int, 
 		console.Say(said)
 	}
 
-	// Read what is there AFTER merging, so a rule the merge wrote is read as this release reads it.
 	project := custom.Load(root)
 	for _, unreadable := range project.Unreadable {
 		console.Warn("✗ " + unreadable)
@@ -67,7 +51,6 @@ func (c Command) migrate(in *cli.Input, root string, console cli.Console) (int, 
 	return cli.Refused, nil
 }
 
-// ruleFiles are the project's own rule files, by path, in a settled order.
 func ruleFiles(dir string) ([]string, error) {
 	var found []string
 	err := filepath.WalkDir(dir, func(path string, entry os.DirEntry, err error) error {
@@ -87,9 +70,6 @@ func ruleFiles(dir string) ([]string, error) {
 	return found, err
 }
 
-// mergeByEngine merges the rule files that differ in nothing but the engine they judge into one file naming them
-// all, and says what it did. A file it cannot read as JSON is no merge candidate and is left for the parser to
-// report, which says more about it than this could.
 func mergeByEngine(root string, files []string, preview bool) (said []string, failures []string) {
 	same := map[string][]string{}
 	var order []string
@@ -134,17 +114,12 @@ func mergeByEngine(root string, files []string, preview bool) (said []string, fa
 
 		said = append(said, leading+filepath.Base(into)+" now judges "+strings.Join(engines, " and ")+", replacing "+strings.Join(was, " and "))
 
-		// The config reaches a rule by its NAME, so a merge that left the replaced names there would leave a
-		// list naming rules nothing declares and, worse, a rule's own settings stranded under a name no rule
-		// answers to. That is silent loss, which is the one thing a migration must not do.
 		said = append(said, renamedInConfig(root, group, into, preview)...)
 	}
 
 	return said, failures
 }
 
-// renamedInConfig carries the replaced rules' names over to the one that survived, in the lists that name them
-// and in the settings keyed by them, and says what it moved and what it could not.
 func renamedInConfig(root string, group []string, into string, preview bool) []string {
 	if preview {
 		return nil
@@ -170,14 +145,10 @@ func renamedInConfig(root string, group []string, into string, preview bool) []s
 	return said
 }
 
-// nameOf is the rule's name, which is its file's without the extension.
 func nameOf(path string) string {
 	return strings.TrimSuffix(filepath.Base(path), ".json")
 }
 
-// apartFromEngine is the rule's own text with its engine left out, as one string: two rules with the same one are
-// the same rule written twice. The schema line goes with the engine, since an editor's pointer says nothing about
-// what a rule finds.
 func apartFromEngine(path string) (string, bool) {
 	text, err := os.ReadFile(path)
 	if err != nil {
@@ -195,8 +166,6 @@ func apartFromEngine(path string) (string, bool) {
 
 	delete(read, "engine")
 	delete(read, "$schema")
-	// A sin's own name differs per copy as often as not, since two files cannot both be called one thing; what
-	// the rule FINDS is what decides sameness.
 	if sin, held := read["sin"].(map[string]any); held {
 		delete(sin, "name")
 	}
@@ -209,12 +178,6 @@ func apartFromEngine(path string) (string, bool) {
 	return string(apart), true
 }
 
-// merge writes the first file of the group naming every engine the group judges, and removes the rest.
-//
-// The first is the one with the SHORTEST name, because a per-engine copy is almost always the rule's own name
-// with its engine worked into it: keeping `PoeticMethodName` over `GoPoeticMethodName` leaves a rule that now
-// judges Go and Python reading as what it is, where keeping the other would name one of its engines in every
-// finding. A tie keeps the order the paths were read in, so the choice is the same from one run to the next.
 func merge(group []string, preview bool) (into string, engines []string, err error) {
 	into = group[0]
 	for _, path := range group {
@@ -262,7 +225,6 @@ func merge(group []string, preview bool) (into string, engines []string, err err
 	return into, engines, nil
 }
 
-// enginesOf are the engines a rule file names, whether it names one or a list.
 func enginesOf(path string) ([]string, error) {
 	text, err := os.ReadFile(path)
 	if err != nil {
@@ -289,7 +251,6 @@ func enginesOf(path string) ([]string, error) {
 	return several, nil
 }
 
-// shortPath is the path as the project names it, relative where it lies inside.
 func shortPath(root, path string) string {
 	if relative, err := filepath.Rel(root, path); err == nil {
 		return relative
@@ -298,7 +259,6 @@ func shortPath(root, path string) string {
 	return path
 }
 
-// plural is a count with the word that fits it.
 func plural(count int, one, many string) string {
 	if count == 1 {
 		return "1 " + one

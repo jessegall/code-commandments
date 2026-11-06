@@ -7,11 +7,8 @@ import (
 	"strings"
 )
 
-// leadingNumber is the numeric prefix PHP reads a string's integer from.
 var leadingNumber = regexp.MustCompile(`^[+-]?(\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?`)
 
-// Intval is the integer PHP's intval reads from text: its leading number after any whitespace, truncated
-// toward zero and held within the integer range; 0 when it opens with none.
 func Intval(text string) int {
 	number := leadingNumber.FindString(strings.TrimLeft(text, " \t\n\r\v\f"))
 

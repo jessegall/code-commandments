@@ -112,8 +112,6 @@ public sealed class Ledger
 }
 `
 
-// TestAPropertyWrittenAsAnArrowRunsABody holds the engine's RunsABody to C#'s own count: a property written
-// `=> value` runs a body as a method does, where an auto-property runs none.
 func TestAPropertyWrittenAsAnArrowRunsABody(t *testing.T) {
 	codebase := csharptest.FromSource(t, map[string]string{"Shop/Ledger.cs": ledger})
 	runs := map[string]bool{}

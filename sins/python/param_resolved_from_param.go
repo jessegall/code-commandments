@@ -13,7 +13,6 @@ func init() {
 	sins.Register(catalog.Python, ParamResolvedFromParam{})
 }
 
-// Definition is what the sin states about itself.
 func (ParamResolvedFromParam) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "python-param-resolved-from-param",

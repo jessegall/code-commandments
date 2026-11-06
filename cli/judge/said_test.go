@@ -7,10 +7,6 @@ import (
 	"github.com/jessegall/code-commandments/engine"
 )
 
-// TestAWatchedRunSaysWhatItFound holds the report a journal's card shows to the words a person would use: the
-// file and the line, what is declared there, and the symptom itself — no colour, no node kind, no detector
-// class, and no line so long that a card cannot show it. A finding whose scope is a piece of code rather than a
-// name lets the sin speak alone, and a line said twice is said once with how many.
 func TestAWatchedRunSaysWhatItFound(t *testing.T) {
 	findings := []engine.Finding{
 		{Detector: "SentenceMethodNameDetector", Skill: "python/method-mood", Sin: "sentence-method-name",
@@ -30,7 +26,6 @@ func TestAWatchedRunSaysWhatItFound(t *testing.T) {
 	}).Said()
 
 	lines := strings.Split(said, "\n")
-	// the groups read in the order of the skills that fix them, flow before method-mood before value-objects
 	want := []string{
 		"part.py, line 130: three parts over two objects",
 		"typed_lines.py, line 52: oldest_line_at, a sentence used as a method name",

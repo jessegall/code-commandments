@@ -6,7 +6,6 @@ import (
 	"github.com/jessegall/code-commandments/engine/csharp/csharptest"
 )
 
-// wrapped is the source as one class in a file the C# bridge reads.
 func wrapped(body string) string {
 	return `using System.Collections.Generic;
 using System.Linq;
@@ -22,10 +21,6 @@ public sealed class Desk
 `
 }
 
-// TestAChangeToTheWalkedCollectionIsFoundAndACopyIsNotCS holds the rule to the fault it names: a foreach that
-// adds to or removes from the collection it is walking reads an enumerator that has moved and throws. Changing
-// a different collection, walking a copy, and a change that leaves the loop at once are how the work is done
-// right and must pass.
 func TestAChangeToTheWalkedCollectionIsFoundAndACopyIsNotCS(t *testing.T) {
 	for name, test := range map[string]struct {
 		body string

@@ -21,8 +21,6 @@ type Group struct {
 	Checks []Check
 }
 
-// Checks are every check a step can make, grouped: the one list the reference, the schema and the suggestions
-// for a misspelt key are read from.
 var Checks = []Group{
 	{"What it is and what it is called", []Check{
 		{"is", `{"is": "loop"}`, "it answers the neutral kind"},
@@ -79,6 +77,7 @@ var Checks = []Group{
 		{"child", `{"child": {"is": "return"}}`, "some node one level inside it passes the step, which `descendant` at any depth cannot say: a function whose own body returns, and nothing for one that returns only inside an `if`. With `\"field\"` only the children filling that field of the tree are stepped onto, as a count's field narrows what it counts"},
 		{"body", `{"body": {"is": "branch"}}`, "some statement of its BODY passes the step, read through whatever its language wraps a body in: C# writes a block statement and Python writes bare statements, so `child` answers them differently and this answers them alike. It is how one rule about a loop or a function's body is written once for every language"},
 		{"inside", `{"inside": {"is": "catch"}}`, "some node above it, up to the file's root, passes the step"},
+		{"documents", `{"documents": {"is": "type-declaration"}}`, "asked of a comment (`\"select\": \"comment\"`), the declaration the comment is written for passes the step: the node it sits above, or the node whose line it ends. A comment that documents nothing passes no step, so a rule can find the comments that are written about something and the ones that are written about nothing"},
 		{"all", `{"all": [{"name": "store"}, {"hasModifier": "public"}]}`, "it passes every step listed, as one node: a public `store`, where a step alone makes one check"},
 		{"any", `{"any": [{"is": "loop"}, {"is": "branch"}]}`, "it passes one of the steps listed, so a rule says `either of these` without a second rule"},
 		{"not", `{"not": {"hasModifier": "final"}}`, "it does NOT pass the step, so a `where` can hold what only a `reject` could say"},
@@ -137,7 +136,6 @@ var Checks = []Group{
 	}},
 }
 
-// ownLanguages are the languages whose own checks a step may name, in the order the reference lists them.
 var ownLanguages = []contract.Language{contract.PHP, contract.Python, contract.CSharp, contract.TypeScript, contract.Vue}
 
 // Target is a node a step can judge in place of the one it is on, with "of".
@@ -146,7 +144,6 @@ type Target struct {
 	Means string
 }
 
-// Takes says whether the target is the one an "of" value names: the key itself, or its prefix and a word after.
 func (t Target) Takes(of string) bool {
 	for _, named := range []string{"<kind>", "<field>", "<name>"} {
 		if prefix, pattern := strings.CutSuffix(t.Key, named); pattern {
@@ -157,7 +154,6 @@ func (t Target) Takes(of string) bool {
 	return of == t.Key
 }
 
-// targetKeys are the keys of every target, as a rule may write them.
 func targetKeys() []string {
 	var keys []string
 	for _, target := range Targets {
@@ -167,7 +163,6 @@ func targetKeys() []string {
 	return keys
 }
 
-// Targets are every node "of" can name.
 var Targets = []Target{
 	{"parent", "the node whose children hold it"},
 	{"enclosingFunction", "the named function it sits in; a closure is passed over"},
@@ -185,7 +180,6 @@ var Targets = []Target{
 	{"declaredBy", "the declaration of the type that declares the member it reads, so every check composes on whose field it is: `{\"of\": \"declaredBy\", \"file\": \"app/Models/**\"}` is a field of a model, read from anywhere"},
 }
 
-// Reference is the checks as the writing-detectors skill shows them: a table per group, then the targets of "of".
 func Reference() string {
 	var reference strings.Builder
 
@@ -216,12 +210,10 @@ func Reference() string {
 	return reference.String()
 }
 
-// cell is text a table cell can hold: a pipe would end the cell, so it is escaped.
 func cell(text string) string {
 	return strings.ReplaceAll(text, "|", `\|`)
 }
 
-// keys are every check's key, in the catalog's order.
 func keys() []string {
 	var all []string
 	for _, group := range Checks {

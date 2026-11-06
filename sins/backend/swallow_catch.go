@@ -11,7 +11,6 @@ type SwallowCatch struct{}
 
 func init() { sins.Register(catalog.PHP, SwallowCatch{}) }
 
-// Definition is what the sin states about itself.
 func (SwallowCatch) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "swallow-catch",

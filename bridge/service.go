@@ -16,15 +16,6 @@ import (
 	"github.com/jessegall/code-commandments/contract"
 )
 
-// ServiceSocket is where the bridge of the kind ("roslyn", "mypy") a session keeps up for the project answers: a
-// socket named for the bridge and the project, since a project's own path may be longer than a socket's may be, in
-// /tmp, whose path is short wherever $TMPDIR points.
-//
-// The project is named by its CANONICAL path, because the two sides reach it differently and must still meet: a
-// service is given the path the journal holds, and a run of the tool works out the repository its folder is in,
-// which resolves every link on the way. One link anywhere above the project, which is ordinary on a Mac, would
-// otherwise have them name two sockets, and the miss is SILENT - the run simply starts a bridge of its own and
-// pays its whole start-up, every time, while a warm one sits unreached beside it.
 func ServiceSocket(kind, project string) string {
 	sum := sha1.Sum([]byte(canonical(project)))
 	folder := "/tmp"
@@ -35,9 +26,6 @@ func ServiceSocket(kind, project string) string {
 	return filepath.Join(folder, "code-commandments-"+kind+"-"+hex.EncodeToString(sum[:])[:12]+".sock")
 }
 
-// canonical is the path with its links resolved and no trailing separator, which is the one spelling of a folder
-// everything naming a socket for it agrees on. A path that cannot be resolved, because nothing is there, is
-// answered as it was written: a name is still wanted for it, and two sides that cannot resolve it agree anyway.
 func canonical(project string) string {
 	resolved, err := filepath.EvalSymlinks(project)
 	if err != nil {
@@ -47,8 +35,6 @@ func canonical(project string) string {
 	return filepath.Clean(resolved)
 }
 
-// Service is the bridge of the kind the session keeps up for the project, reached at its socket; false when no session
-// keeps one up for it, and a run starts its own.
 func Service(kind, project string) (*Server, bool) {
 	limit, err := quietLimit()
 	if err != nil {
@@ -65,8 +51,6 @@ func Service(kind, project string) (*Server, bool) {
 	return &Server{command: []string{kind + "-serve", project}, input: connection, output: contract.NewReader(watch(connection, limit, stop)), connection: connection, stop: stop}, true
 }
 
-// Answer answers each connection's request through the bridge, one at a time, until the listener closes; a bridge
-// that fails ends it, answering why.
 func Answer(listener net.Listener, asked Asker) error {
 	for {
 		connection, err := listener.Accept()
@@ -77,18 +61,12 @@ func Answer(listener net.Listener, asked Asker) error {
 			continue
 		}
 
-		// A request that fails costs that request and nothing more. The service outlives it: a bridge that dies
-		// under one request would otherwise take the service down with it, and a journal writing to the socket it
-		// left behind reads a broken pipe, calls the plugin at fault and switches it off, which stops every
-		// discipline being enforced until someone switches it on again. The reason goes to stderr, which is the
-		// service's own log.
 		if err := answer(connection, asked); err != nil {
 			fmt.Fprintln(os.Stderr, "a request was not answered: "+err.Error())
 		}
 	}
 }
 
-// answer is one connection: its request line asked of the bridge, and every line of the stream written back.
 func answer(connection net.Conn, asked Asker) error {
 	defer connection.Close()
 

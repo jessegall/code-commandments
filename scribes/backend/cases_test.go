@@ -13,9 +13,6 @@ import (
 	"github.com/jessegall/code-commandments/scribes"
 )
 
-// casesFile holds every source PHP's backend scribe tests read, byte for byte, with the fix, whether it rewrote and
-// how many sins its detector finds, as the PHP tool recorded them before it was removed; hintsFile, what its
-// DataHintScribe rewrote in every hints project.
 const (
 	casesFile = "testdata/scribe-cases.jsonl.gz"
 	hintsFile = "testdata/hint-answers.json.gz"
@@ -50,8 +47,6 @@ type recordedCase struct {
 	Findings int    `json:"findings"`
 }
 
-// Every source PHP's backend scribe tests read is fixed here byte for byte as PHP fixes it, and its detector finds
-// as many sins in it.
 func TestEachScribeFixesEverySourcePHPsTestsReadAsPHPDoes(t *testing.T) {
 	for _, recorded := range loadCases(t) {
 		t.Run(recorded.Test, func(t *testing.T) {
@@ -100,7 +95,6 @@ func loadCases(t *testing.T) []recordedCase {
 	return cases
 }
 
-// backendDetector is the backend detector the catalog holds under the name.
 func backendDetector(t *testing.T, name string) detectors.Detector {
 	t.Helper()
 	for _, detector := range detectors.Of(catalog.PHP) {

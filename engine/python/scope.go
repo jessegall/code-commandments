@@ -8,7 +8,6 @@ import (
 	"github.com/jessegall/code-commandments/engine"
 )
 
-// statements are the name a report gives each kind of Python statement or definition a finding is at.
 var statements = map[string]string{
 	"AnnAssign":        "AnnAssign",
 	"Assign":           "Assign",
@@ -43,7 +42,6 @@ var statements = map[string]string{
 	"Module":           "Module",
 }
 
-// expressions are the name a report gives each kind of Python expression a finding is at.
 var expressions = map[string]string{
 	"Name":          "name",
 	"Constant":      "literal",
@@ -74,15 +72,12 @@ var expressions = map[string]string{
 	"YieldFrom":     "yield",
 }
 
-// declaring are the kinds whose finding carries the name they declare.
 var declaring = map[string]bool{"ClassDef": true, "FunctionDef": true, "AsyncFunctionDef": true, "arg": true}
 
 func init() {
 	engine.NameScopes(contract.Python, scopeOf)
 }
 
-// scopeOf names where a Python finding is: a statement by its kind and the name it declares, an
-// expression by its kind, and an unpacked `*x` or `**x` as starred.
 func scopeOf(match engine.Match) string {
 	kind := match.Kind()
 
@@ -105,7 +100,6 @@ func scopeOf(match engine.Match) string {
 	return "unknown"
 }
 
-// declaredName is the first name the node binds: a definition's or a parameter's own, an import's first.
 func declaredName(match engine.Match) string {
 	kind := match.Kind()
 

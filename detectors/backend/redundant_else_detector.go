@@ -14,15 +14,12 @@ type RedundantElseDetector struct{}
 
 func init() { detectors.Register(catalog.PHP, RedundantElseDetector{}) }
 
-// Sin is the sin the detector finds.
 func (RedundantElseDetector) Sin() sins.Sin { return backendsins.RedundantElse{} }
 
-// Find is every if with an else whose own body ends by leaving.
 func (RedundantElseDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return php.In(codebase).
 		Where(engine.HasRedundantElse).
 		Get()
 }
 
-// Repentable says a scribe rewrites the sin away.
 func (RedundantElseDetector) Repentable() {}

@@ -7,11 +7,9 @@ import (
 	"github.com/jessegall/code-commandments/engine"
 )
 
-// collectionQueries are the functions that search a collection, by the position they take it at.
 var collectionQueries = map[string]int{"in_array": 1, "array_search": 1, "array_filter": 0, "array_reduce": 0, "array_column": 0, "array_sum": 0}
 
-// Envy is what the codebase declares that feature envy is read against: the classes it owns, each class-like's
-// methods, and each class's parent.
+// Envy is what the codebase declares that feature envy is read against: the classes it owns, each class-like's methods, and each class's parent.
 type Envy struct {
 	codebase  *engine.Codebase
 	owned     map[string]bool
@@ -43,20 +41,14 @@ var envies = Memoised(func(codebase *engine.Codebase) *Envy {
 	return envy
 })
 
-// EnvyOf is the codebase's feature-envy reading.
 func EnvyOf(codebase *engine.Codebase) *Envy {
 	return envies.Of(codebase)
 }
 
-// IsEnviedOwner says whether the method envies another owned class; boundary says which classes are framework entry
-// points, whose collections a method may query.
 func (e *Envy) IsEnviedOwner(method engine.Match, boundary func(class string) bool) bool {
 	return e.EnviedOwner(method, boundary) != ""
 }
 
-// EnviedOwner is the owned class the method does the work of: it queries that class's collection, or reaches
-// through one parameter of that class more than through itself, looping its structure or writing its fields; empty
-// when it envies nothing. A class filling in a contract, and a method that builds a class, envy nothing.
 func (e *Envy) EnviedOwner(method engine.Match, boundary func(class string) bool) string {
 	node := Node{Match: method}
 	class := node.EnclosingClassLike()
@@ -97,7 +89,6 @@ func (e *Envy) EnviedOwner(method engine.Match, boundary func(class string) bool
 	return ""
 }
 
-// hasStatements says whether a method declares a body; an abstract one has none.
 func hasStatements(method engine.Match) bool {
 	return !slices.Contains(method.Node().Modifiers, "abstract") && (Node{Match: method}).EnclosingClassLike().Kind() != "Stmt_Interface"
 }
@@ -131,7 +122,6 @@ func (e *Envy) fulfilsContract(class engine.Match, method string) bool {
 	return false
 }
 
-// buildsSomething says whether statements build a new object or call a static method on a named class.
 func buildsSomething(body []engine.Match) bool {
 	for _, statement := range body {
 		for _, node := range withDescendants(statement) {
@@ -178,7 +168,6 @@ func isCollectionAccess(node engine.Match) bool {
 	return isPropertyRead(node) || isMethodSend(node) && len(node.ChildrenIn("args")) == 0
 }
 
-// allParamTypes is each named parameter's written type, by its simple name.
 func allParamTypes(method engine.Match) map[string]string {
 	types := map[string]string{}
 	for _, param := range Params(method) {
@@ -209,7 +198,6 @@ func isMemberAccessOf(expr engine.Match, param string) bool {
 	return isMemberAccess(expr) && expr.Child("var").Kind() == "Expr_Variable" && expr.Child("var").Name() == param
 }
 
-// countReaches is how often the body reaches into $this, and into each candidate parameter.
 func countReaches(body []engine.Match, candidates map[string]string) (int, map[string]int) {
 	own, foreign := 0, map[string]int{}
 	for _, statement := range body {
@@ -265,12 +253,6 @@ func mutatesMembersOf(body []engine.Match, param string) bool {
 	return false
 }
 
-// delegatesElementToCollaborator says whether a loop over the parameter's structure passes each element on
-// instead of working it out: orchestration, not envy.
-//
-// The reading is engine.PassesItsElementOn, one for every language and the same in all of them. PHP used to
-// answer it here, pardoning a call that joined the element with `$this` or with another parameter, which said
-// nothing about whether the loop also worked the element out; the shared reading asks that instead.
 func delegatesElementToCollaborator(method engine.Match, body []engine.Match, param string) bool {
 	for _, statement := range body {
 		for _, loop := range withDescendants(statement) {

@@ -13,7 +13,6 @@ func init() {
 	sins.Register(catalog.Python, NullableCallback{})
 }
 
-// Definition is what the sin states about itself.
 func (NullableCallback) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "python-nullable-callback",

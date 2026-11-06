@@ -10,10 +10,8 @@ import (
 	"slices"
 )
 
-// SupportedVersions are the contract versions this package reads.
 var SupportedVersions = []int{1, 2, 3, 4}
 
-// maxLine is the longest line a stream may hold: one file's whole tree.
 const maxLine = 256 << 20
 
 // Line is one line of a stream; exactly one of its fields is set.
@@ -32,11 +30,6 @@ type Stream struct {
 	Trailer Trailer
 }
 
-// checksSchema says whether each line is checked against tree.schema.json before it is decoded: in every test, where
-// the streams of every bridge pass through, and never in a run, where checking would read each line twice — once
-// into a generic tree many times the size of the typed one — and a line is still refused a field it does not know.
-// A test binary is told by the flags `go test` registers, read when a stream is, so the tool never links Go's
-// testing package to ask.
 func checksSchema() bool {
 	return flag.Lookup("test.v") != nil
 }
@@ -52,7 +45,6 @@ type Reader struct {
 	held    *interned
 }
 
-// NewReader reads the stream r holds.
 func NewReader(r io.Reader) *Reader {
 	scanner := bufio.NewScanner(r)
 	scanner.Buffer(make([]byte, 0, 1<<20), maxLine)
@@ -60,7 +52,6 @@ func NewReader(r io.Reader) *Reader {
 	return &Reader{scanner: scanner}
 }
 
-// Next is the stream's next line; io.EOF once the trailer has been read.
 func (r *Reader) Next() (Line, error) {
 	if r.done {
 		return Line{}, io.EOF
@@ -90,20 +81,14 @@ func (r *Reader) Next() (Line, error) {
 	return line, nil
 }
 
-// ReadAll reads the whole stream r holds.
 func ReadAll(r io.Reader) (*Stream, error) {
 	return NewReader(r).Stream()
 }
 
-// Stream reads the next whole stream, header to trailer. A served bridge answers each request with one, back
-// to back on the same output, so each call starts a new stream where the last one ended. A stream that breaks after
-// its header is answered as far as it was read, with why it broke.
 func (r *Reader) Stream() (*Stream, error) {
 	return r.Tallied(func() {})
 }
 
-// Tallied reads the next whole stream as Stream does, telling tally of each file the moment it is read: how a long
-// read is counted while it runs.
 func (r *Reader) Tallied(tally func()) (*Stream, error) {
 	stream := &Stream{}
 	err := r.Each(func(line Line, _ []byte) error {
@@ -128,8 +113,6 @@ func (r *Reader) Tallied(tally func()) (*Stream, error) {
 	return stream, err
 }
 
-// Each reads the next whole stream a line at a time, handing each line to each as it is read, with the bytes it
-// was read from, which each may keep only by copying them: a stream too large to hold whole is read this way.
 func (r *Reader) Each(each func(line Line, raw []byte) error) error {
 	*r = Reader{scanner: r.scanner, number: r.number}
 	for {
@@ -226,8 +209,6 @@ func (r *Reader) acceptTrailer(trailer *Trailer) error {
 	return nil
 }
 
-// resolveTypes puts the type each node names in the file's types back on the node, as a node that writes it inline
-// holds it; the table is not kept once read.
 func resolveTypes(file *File) error {
 	var walk func(node *Node) error
 	walk = func(node *Node) error {
@@ -254,7 +235,6 @@ func resolveTypes(file *File) error {
 	return err
 }
 
-// link numbers a file's nodes, gives each its parent, and checks what the schema cannot.
 func link(file *File) error {
 	file.nodes, file.reaches = nil, 0
 	var walk func(node, parent *Node) error
@@ -275,8 +255,6 @@ func link(file *File) error {
 		if node.Facts == nil {
 			node.Facts = none
 		}
-		// How far the parse indexes into the file, which is the only thing that says whether a source read later
-		// can be the one it was made from.
 		if node.Span.End > file.reaches {
 			file.reaches = node.Span.End
 		}

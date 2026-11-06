@@ -22,7 +22,6 @@ const (
 	Read          InteractionKind = "read"
 )
 
-// DeNulls says whether the use settles whether the value is null: a null check, a `??`, a `?->`.
 func (k InteractionKind) DeNulls() bool {
 	return slices.Contains([]InteractionKind{NullChecked, Coalesced, Nullsafe}, k)
 }
@@ -33,13 +32,10 @@ type Interaction struct {
 	Kind InteractionKind
 }
 
-// IsWrite says whether the occurrence assigns the variable.
 func (i Interaction) IsWrite() bool {
 	return i.Kind == Assigned
 }
 
-// Trace is a variable's whole journey through its function: every occurrence of its name, nested functions'
-// included, in the order written.
 func Trace(variable engine.Match) []Interaction {
 	function := enclosingFunction(variable)
 	if variable.Kind() != "Expr_Variable" || variable.Name() == "" || !function.Exists() {
@@ -81,8 +77,6 @@ func interactionKind(occurrence engine.Match) InteractionKind {
 	return Read
 }
 
-// isDeNulled says whether the node's own use settles its nullness: a `?->` on it, a `??` after it, or an identity
-// comparison with null.
 func isDeNulled(node engine.Match) bool {
 	if isNullsafeReceiver(node) || isChild(node, "Expr_BinaryOp_Coalesce", "left") {
 		return true
@@ -107,13 +101,10 @@ func isNullsafeReceiver(node engine.Match) bool {
 	return isChild(node, "Expr_NullsafeMethodCall", "var") || isChild(node, "Expr_NullsafePropertyFetch", "var")
 }
 
-// isChild says whether the node fills the field of a parent of the kind.
 func isChild(node engine.Match, kind, field string) bool {
 	return node.Exists() && node.Parent().Kind() == kind && node.Node().Field == field
 }
 
-// ParameterPosition is where the named parameter sits in the function's list, counting from zero; -1 for a name
-// it does not declare.
 func ParameterPosition(function engine.Match, name string) int {
 	for at, parameter := range Params(function) {
 		if parameter.Child("var").Name() == name {
@@ -124,9 +115,6 @@ func ParameterPosition(function engine.Match, name string) int {
 	return -1
 }
 
-// ArgumentIsReadAfterTheCall says whether the variable the call hands over at the position is read again later
-// in the caller: a property read, a method call on it, or a plain read. The value the callee wrote into it is
-// what the caller came back for, which is the whole shape of a filled parameter.
 func ArgumentIsReadAfterTheCall(call engine.Match, at int) bool {
 	arguments := Arguments(call)
 	if at < 0 || at >= len(arguments) {
@@ -140,8 +128,6 @@ func ArgumentIsReadAfterTheCall(call engine.Match, at int) bool {
 		if use.Node.Node().Span.Start <= handed.Node().Span.Start {
 			continue
 		}
-		// Only a read of what the callee wrote counts: a property read, a call on the object, or handing the
-		// object back. Passing it on to something else is not the caller coming back for a value.
 		if slices.Contains([]InteractionKind{PropertyFetch, MethodCall, Returned}, use.Kind) && sharesABlock(use.Node, handed) {
 			return true
 		}
@@ -150,16 +136,12 @@ func ArgumentIsReadAfterTheCall(call engine.Match, at int) bool {
 	return false
 }
 
-// sharesABlock says whether the two nodes' own statements sit in the same block, so one really does run after
-// the other. A read in another branch may be unreachable from the call, and holding a method to that would be
-// guessing at the flow rather than reading it.
 func sharesABlock(one, other engine.Match) bool {
 	mine, theirs := ownStatement(one), ownStatement(other)
 
 	return mine.Exists() && theirs.Exists() && mine.Parent().Node() == theirs.Parent().Node() && mine.Node().Field == theirs.Node().Field
 }
 
-// ownStatement is the node itself or the ancestor of it that a block holds directly.
 func ownStatement(node engine.Match) engine.Match {
 	for held := node; held.Exists(); held = held.Parent() {
 		if slices.Contains([]string{"stmts", "finally"}, held.Node().Field) {

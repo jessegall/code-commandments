@@ -6,11 +6,9 @@ import (
 	"slices"
 )
 
-// freshSources are the SessionStart sources that begin a new session; a resume or a compaction continues one.
 var freshSources = []string{"startup", "clear"}
 
-// SessionReset clears the hook counters and prunes long-abandoned session folders when a session starts
-// fresh. It says nothing.
+// SessionReset clears the hook counters and prunes long-abandoned session folders when a session starts fresh.
 type SessionReset struct{}
 
 func (SessionReset) Class() string { return "SessionReset" }

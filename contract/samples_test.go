@@ -8,7 +8,6 @@ import (
 	"testing"
 )
 
-// fixtures is where a sample's /fixtures/ paths live in this repository.
 const fixtures = "../tests/Fixtures/"
 
 func TestEverySampleReadsAndPointsIntoItsFixture(t *testing.T) {
@@ -66,7 +65,6 @@ func lineAt(source []byte, offset int) int {
 	return strings.Count(string(source[:offset]), "\n") + 1
 }
 
-// shows are facts COVERAGE.md says a sample carries, each as a test over one node.
 var shows = map[string]map[string]func(*Node) bool{
 	"php.jsonl": {
 		"a foreach loop":    func(n *Node) bool { return n.Kind == "Stmt_Foreach" && n.Answers("loop") },

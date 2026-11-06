@@ -11,7 +11,6 @@ type NullableRegistryLookup struct{}
 
 func init() { sins.Register(catalog.PHP, NullableRegistryLookup{}) }
 
-// Definition is what the sin states about itself.
 func (NullableRegistryLookup) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "nullable-registry-lookup",

@@ -11,7 +11,6 @@ type MessageAtThrow struct{}
 
 func init() { sins.Register(catalog.PHP, MessageAtThrow{}) }
 
-// Definition is what the sin states about itself.
 func (MessageAtThrow) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "message-at-throw",

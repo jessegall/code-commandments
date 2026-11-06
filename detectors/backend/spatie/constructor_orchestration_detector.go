@@ -15,10 +15,8 @@ type ConstructorOrchestrationDetector struct{}
 
 func init() { detectors.Register(catalog.PHP, ConstructorOrchestrationDetector{}) }
 
-// Sin is the sin the detector finds.
 func (ConstructorOrchestrationDetector) Sin() sins.Sin { return backendsins.ConstructorOrchestration{} }
 
-// Find is every unconditional, once-made assignment of a public slot in a page object constructor from its own state.
 func (ConstructorOrchestrationDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return php.In(codebase).
 		WhereKind("Expr_Assign").
@@ -34,9 +32,6 @@ func (ConstructorOrchestrationDetector) Find(codebase *engine.Codebase) []engine
 		Get()
 }
 
-// Repentable says a scribe rewrites the sin away.
 func (ConstructorOrchestrationDetector) Repentable() {}
 
-// CrossFile says the rule reads more than the file it reports in, which the fixture measures by asking it
-// of one file and of the whole tree: a scoped run reads the whole scan while it is enabled.
 func (ConstructorOrchestrationDetector) CrossFile() {}

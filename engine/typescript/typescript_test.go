@@ -120,9 +120,6 @@ export function colour(status: string): string {
 	}
 }
 
-// TestAScriptOfLiteralsFedToOneCalleeIsToldFromProcedure holds IsLiteralScript to its shape: every statement hands
-// one and the same callee nothing but literals, awaited or not. Two callees in an order, an argument that is not a
-// literal, an interpolated template or a statement that is not a call are procedure.
 func TestAScriptOfLiteralsFedToOneCalleeIsToldFromProcedure(t *testing.T) {
 	codebase := frontendtest.FromSource(t, map[string]string{"scripts.ts": "export class Migration {\n" +
 		"  up(): void {\n    this.addSql(`create table \"brand\" (\"id\" text)`);\n    this.addSql('create index on brand (id)');\n  }\n" +
@@ -164,9 +161,6 @@ export const { a, b: [c] } = { a: 1, b: [2] }
 	}
 }
 
-// TestABodyWeighsWhatThePhpEngineWeighs holds BodyWeight to the PHP engine's own weights for the same bodies, each
-// measured there: a declaration initialised by a call of a plain name weighs one more, as it did not, which left
-// worldwatchmarket's context hooks a point under the near-duplicate floor.
 func TestABodyWeighsWhatThePhpEngineWeighs(t *testing.T) {
 	for body, php := range map[string]int{"const c = f(C)": 6, "const c = x.f(C)": 6, "const c = f(C)(D)": 8, "const c = new F(C)": 6, "if (c === null) {\n    y()\n  }": 9,
 		"y(A)": 5, "y()": 4, "const c = f()": 5, "const c = f(A, B)": 7, "const c = `${x}: y ${z}`": 3, "const c = v as T": 3,
@@ -179,8 +173,6 @@ func TestABodyWeighsWhatThePhpEngineWeighs(t *testing.T) {
 	}
 }
 
-// TestACastReadsAsTheValueCast holds two bodies that differ only in the type a value is cast to to one shape, as the PHP
-// engine reads them: worldwatchmarket's requireRatioAttr and requireSideAttr are one function written twice.
 func TestACastReadsAsTheValueCast(t *testing.T) {
 	codebase := frontendtest.FromSource(t, map[string]string{"casts.ts": "export function a () {\n  return v as Ratio\n}\n\nexport function b () {\n  return v as Side\n}\n"})
 	if typescript.Of(frontendtest.Named(t, codebase, "FunctionDeclaration", "a")).BodyShape() != typescript.Of(frontendtest.Named(t, codebase, "FunctionDeclaration", "b")).BodyShape() {
@@ -188,8 +180,6 @@ func TestACastReadsAsTheValueCast(t *testing.T) {
 	}
 }
 
-// TestUndefinedReadsAsTheConstantItIs holds a body answering undefined apart from one answering a name, as the PHP
-// engine holds them: worldwatchmarket's two lookup helpers differ only there.
 func TestUndefinedReadsAsTheConstantItIs(t *testing.T) {
 	codebase := frontendtest.FromSource(t, map[string]string{"answers.ts": "export function a (key: string) {\n  return key.length ? key : undefined\n}\n\nexport function b (key: string) {\n  return key.length ? key : key\n}\n"})
 	if typescript.Of(frontendtest.Named(t, codebase, "FunctionDeclaration", "a")).BodyShape() == typescript.Of(frontendtest.Named(t, codebase, "FunctionDeclaration", "b")).BodyShape() {
@@ -197,8 +187,6 @@ func TestUndefinedReadsAsTheConstantItIs(t *testing.T) {
 	}
 }
 
-// TestAnOptionalChainIsNoCopyOfAPlainOne holds a body reading a?.b apart from one reading a.b, as the PHP engine
-// holds them: smart-farmers-pos's two stock counters differ only there.
 func TestAnOptionalChainIsNoCopyOfAPlainOne(t *testing.T) {
 	codebase := frontendtest.FromSource(t, map[string]string{"chains.ts": "export function a (v: { s?: number[] }) {\n  return v?.s\n}\n\nexport function b (v: { s?: number[] }) {\n  return v.s\n}\n"})
 	if typescript.Of(frontendtest.Named(t, codebase, "FunctionDeclaration", "a")).BodyShape() == typescript.Of(frontendtest.Named(t, codebase, "FunctionDeclaration", "b")).BodyShape() {

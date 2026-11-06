@@ -7,9 +7,6 @@ import (
 	"github.com/jessegall/code-commandments/engine/python/pythontest"
 )
 
-// TestAContainerDefaultIsFoundAndAnImmutableOneIsNot holds the rule to the fault it names: a container written as
-// a default is made once when the def is defined, so one call's data turns up in the next. An immutable default
-// is the fix and must pass, as must a container built inside the body.
 func TestAContainerDefaultIsFoundAndAnImmutableOneIsNot(t *testing.T) {
 	for name, test := range map[string]struct {
 		source string

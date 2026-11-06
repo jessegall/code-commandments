@@ -1,5 +1,4 @@
-// Package hints is `hints`: keep the Spatie Data magic surface honest — rename object factories to from<Type>,
-// rewrite their calls to ::from(...), and regenerate the @method from/collect docblock hints.
+// Package hints is `hints`: keep the Spatie Data magic surface honest — rename object factories to from<Type>, rewrite their calls to ::from(...), and regenerate the @method from/collect docblock hints.
 package hints
 
 import (
@@ -21,12 +20,10 @@ import (
 // Command is `hints`.
 type Command struct{}
 
-// Names are the verbs it answers to.
 func (Command) Names() []string {
 	return []string{"hints"}
 }
 
-// Help documents it.
 func (Command) Help() help.Help {
 	return help.Of("Auto-fix the Spatie Data magic surface — rename non-`from…` object factories to `from<Type>`, rewrite their call sites to `::from(...)`, and regenerate the `@method from(...)`/`collect(...)` docblock hints.").
 		Form("hints [path]", "apply the fixes (the default — this WRITES)").
@@ -37,7 +34,6 @@ func (Command) Help() help.Help {
 			"outside the scope, so renaming is whole-tree only. `repent` runs this as one of its scribes; `hints` is the focused Data-only entry.")
 }
 
-// Run rewrites the Data classes under the path the arguments name, or previews it.
 func (Command) Run(in *cli.Input, console cli.Console) (int, error) {
 	given, named := in.FirstArgument()
 	path := strings.TrimRight(given, "/")

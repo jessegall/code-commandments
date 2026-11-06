@@ -12,13 +12,6 @@ import (
 	"github.com/jessegall/code-commandments/cli/health"
 )
 
-// The journal asks each service of a plugin how it is, on a schedule, and restarts one that has not answered inside
-// 200ms; five silences in a row mark the plugin broken. The hooks service answers on the socket it already answers
-// the journal's events on, so there is nothing for the journal to find out to ask it.
-
-// TestTheServiceSaysHowItIsOnTheSocketItAlreadyAnswersOn holds that answer to costing nothing: it is given from what
-// the process knows by running, with no moment read and no judge started, and it is never handed to the adviser as
-// a moment of the agent's work.
 func TestTheServiceSaysHowItIsOnTheSocketItAlreadyAnswersOn(t *testing.T) {
 	short, err := os.MkdirTemp("", "s")
 	if err != nil {

@@ -13,7 +13,6 @@ func init() {
 	sins.Register(catalog.CSharp, MemberAfterMethod{})
 }
 
-// Definition is what the sin states about itself.
 func (MemberAfterMethod) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "csharp-member-after-method",

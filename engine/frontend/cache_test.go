@@ -8,7 +8,6 @@ import (
 	"testing"
 )
 
-// written is what the bridge writes, byte for byte, for its arguments.
 func written(t *testing.T, bridge Bridge, arguments ...string) string {
 	t.Helper()
 	command, err := bridge.Command()
@@ -23,9 +22,6 @@ func written(t *testing.T, bridge Bridge, arguments ...string) string {
 	return string(out)
 }
 
-// TestAKeptTreeIsWrittenAsTheBridgeWouldWriteItAfresh holds the bridge's tree cache to the stream an uncached run
-// writes: run cold and warm, after a change to a file another imports, after a change to a declaration every file
-// sees, and with files judged and read only for context; and a run that changes nothing writes the same again.
 func TestAKeptTreeIsWrittenAsTheBridgeWouldWriteItAfresh(t *testing.T) {
 	root, err := filepath.EvalSymlinks(t.TempDir())
 	if err != nil {
@@ -65,9 +61,6 @@ func TestAKeptTreeIsWrittenAsTheBridgeWouldWriteItAfresh(t *testing.T) {
 	same("judged whole again", root)
 }
 
-// TestABridgeWhoseCacheCannotBeWrittenRunsWithNoCache holds the bridge to parsing the files when the cache folder
-// is not the run's to write: it is handed no folder, so it never dies on one. A worker sandbox may write its
-// worktree and little else, and the bridge used to end after two lines with the files unread.
 func TestABridgeWhoseCacheCannotBeWrittenRunsWithNoCache(t *testing.T) {
 	cache := t.TempDir()
 	t.Setenv("XDG_CACHE_HOME", cache)

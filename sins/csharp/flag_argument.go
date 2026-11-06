@@ -13,7 +13,6 @@ func init() {
 	sins.Register(catalog.CSharp, FlagArgument{})
 }
 
-// Definition is what the sin states about itself.
 func (FlagArgument) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "csharp-flag-argument",

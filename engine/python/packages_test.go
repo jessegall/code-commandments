@@ -36,9 +36,6 @@ func TestThePackageGraphDrawsTheArrowsThePHPEngineDraws(t *testing.T) {
 	}
 }
 
-// TestATestModuleDrawsNoArrowBetweenPackages holds a test to what it is: a feature's test that drives another
-// package end to end reaches across on purpose, so its import closes no cycle, while a module of the package itself
-// importing back still does.
 func TestATestModuleDrawsNoArrowBetweenPackages(t *testing.T) {
 	sources := map[string]string{
 		"pytest.ini":                "[pytest]\npython_files = test.py\n",

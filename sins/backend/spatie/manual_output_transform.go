@@ -11,7 +11,6 @@ type ManualOutputTransform struct{}
 
 func init() { sins.Register(catalog.PHP, ManualOutputTransform{}) }
 
-// Definition is what the sin states about itself.
 func (ManualOutputTransform) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "manual-output-transform",

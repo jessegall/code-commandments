@@ -1,5 +1,4 @@
-// Package php is the engine's PHP side: the bridge that parses PHP into the generic tree, and the
-// analyses the engine fills into it (resolved types, call targets) and asks of it.
+// Package php is the engine's PHP side: the bridge that parses PHP into the generic tree, and the analyses the engine fills into it (resolved types, call targets) and asks of it.
 package php
 
 import (
@@ -18,22 +17,15 @@ import (
 type Bridge struct {
 	Sources bundle.Bundle
 	PHP     string
-	// Trees is where the bridge keeps each file's tree between runs, to write again while the file is unchanged;
-	// none when empty.
-	Trees string
+	Trees   string
 }
 
-// Here is the bridge this binary carries, run by the php on PATH.
 func Here() Bridge {
 	return Bridge{Sources: bridge.PHP, PHP: "php"}
 }
 
-// quiet are the settings the bridge runs under: a coverage or debugging extension the user's PHP loads, pcov or
-// Xdebug, instruments every call the parse makes and has nothing to record, and a PHP without one ignores them.
 var quiet = []string{"-d", "pcov.enabled=0", "-d", "xdebug.mode=off"}
 
-// Command is the command that runs the bridge: the PHP found on PATH, quieted, and the script written out of the
-// binary.
 func (b Bridge) Command() ([]string, error) {
 	php, err := exec.LookPath(b.PHP)
 	if err != nil {
@@ -52,7 +44,6 @@ func (b Bridge) Command() ([]string, error) {
 	return command, nil
 }
 
-// Cached is the bridge keeping each file's tree in the user's cache folder, beside the bundles written out there.
 func (b Bridge) Cached() Bridge {
 	if trees, err := bundle.TreesFolder("php"); err == nil {
 		b.Trees = trees
@@ -61,12 +52,10 @@ func (b Bridge) Cached() Bridge {
 	return b
 }
 
-// Stream is the stream the bridge writes for its arguments: paths, and any of its flags.
 func (b Bridge) Stream(arguments ...string) (*contract.Stream, error) {
 	return b.StreamTallied(func() {}, arguments...)
 }
 
-// StreamTallied is the stream the bridge writes for its arguments, telling tally of each file the moment it is read.
 func (b Bridge) StreamTallied(tally func(), arguments ...string) (*contract.Stream, error) {
 	command, err := b.Command()
 	if err != nil {
@@ -80,8 +69,6 @@ func (b Bridge) StreamTallied(tally func(), arguments ...string) (*contract.Stre
 	return stream, err
 }
 
-// Scan is the codebase the bridge reads at paths, as Codebase::scan reads it, with the facts the engine fills for
-// PHP filled: each expression's resolved type and each call's target.
 func (b Bridge) Scan(paths ...string) (*engine.Codebase, error) {
 	stream, err := b.Stream(paths...)
 	if err != nil {
@@ -93,8 +80,6 @@ func (b Bridge) Scan(paths ...string) (*engine.Codebase, error) {
 	return codebase, nil
 }
 
-// Over is the codebase a served bridge answers the request with, its sources read through the contents the request
-// carries, with the facts the engine fills for PHP filled.
 func Over(server *bridge.Server, request bridge.Request) (*engine.Codebase, error) {
 	stream, err := server.Ask(request)
 	if err != nil {

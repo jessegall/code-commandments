@@ -1,5 +1,4 @@
-// Package bundle carries a folder of sources in the binary and writes it out once per version of them under the
-// cache folder, where the runtime that runs them finds them as files.
+// Package bundle carries a folder of sources in the binary and writes it out once per version of them under the cache folder, where the runtime that runs them finds them as files.
 package bundle
 
 import (
@@ -25,7 +24,6 @@ type Bundle struct {
 	key   func() ([]byte, error)
 }
 
-// Embedded is the bundle of the files under root in an embedded filesystem.
 func Embedded(name string, sources fs.FS, root string) Bundle {
 	files := func() (map[string][]byte, error) { return Files(sources, root) }
 	key := func() ([]byte, error) {
@@ -50,8 +48,6 @@ func Embedded(name string, sources fs.FS, root string) Bundle {
 	return Bundle{name: name, files: files, key: key}
 }
 
-// Archived is the bundle a gzipped tar holds, keyed by the archive itself so a run never unpacks it to find its
-// folder.
 func Archived(name string, archive []byte) Bundle {
 	return Bundle{
 		name:  name,
@@ -60,18 +56,8 @@ func Archived(name string, archive []byte) Bundle {
 	}
 }
 
-// wholeMark names the file that says the folder holds every file of the bundle. It is written with them, inside
-// the draft that is renamed into place, so a folder carrying it carried them all at the moment it appeared.
 const wholeMark = ".whole"
 
-// Folder is where this version of the bundle lives, written out whole on its first use: a folder is renamed into
-// place only once every file is in it, so a run never reads one half written.
-//
-// A folder that is there but does not hold the bundle's files is written again. That is not a theory: the folder
-// also holds what the runtime builds beside the sources, and `python -m venv <folder>/venv` creates the folder it
-// needs, so a folder removed by hand came back holding a virtual environment and nothing else. The mark, and not
-// the folder's existence, is what says the sources are there, and a run that finds it missing writes them back
-// instead of failing on them for good.
 func (b Bundle) Folder() (string, error) {
 	key, err := b.key()
 	if err != nil {
@@ -116,7 +102,6 @@ func (b Bundle) Folder() (string, error) {
 	return folder, nil
 }
 
-// write puts every file of the bundle in the folder, and the mark last, so the mark is never there before them.
 func write(folder string, files map[string][]byte) error {
 	for name, content := range files {
 		target := filepath.Join(folder, filepath.FromSlash(name))
@@ -131,10 +116,6 @@ func write(folder string, files map[string][]byte) error {
 	return os.WriteFile(filepath.Join(folder, wholeMark), nil, 0o644)
 }
 
-// heal writes the bundle's files into a folder that is already there, each through a name of its own and renamed
-// into place, so a run reading the folder while this one writes it reads a whole file or none. What the runtime
-// built beside the sources, a virtual environment among it, is left where it is: it belongs to this same version
-// of the bundle, and building it again is the cost this heals.
 func heal(folder string, files map[string][]byte) error {
 	for name, content := range files {
 		target := filepath.Join(folder, filepath.FromSlash(name))
@@ -171,13 +152,6 @@ func heal(folder string, files map[string][]byte) error {
 	return os.WriteFile(filepath.Join(folder, wholeMark), nil, 0o644)
 }
 
-// TreesFolder is where a language's bridge keeps each file's tree between runs, beside the bundles written out.
-//
-// A folder this run may not write is no folder at all, and is answered as none: the kept tree is a saving, never a
-// part of the answer, so a bridge handed a folder it cannot write dies on the folder instead of parsing the files.
-// An agent's worker runs in a sandbox that may write its worktree and little else, and the Vue bridge ended after
-// two lines with EPERM on ~/.cache/code-commandments/trees/frontend, leaving 661 files unread. Named through
-// XDG_CACHE_HOME, a folder the sandbox does allow is used as before.
 func TreesFolder(language string) (string, error) {
 	cache, err := CacheFolder()
 	if err != nil {
@@ -193,9 +167,6 @@ func TreesFolder(language string) (string, error) {
 	return folder, nil
 }
 
-// writable says whether the folder can hold a kept tree: it is made where it is not there, and a file of this run's
-// own is written in it and taken away again, because a folder that EXISTS is not a folder this run may write into
-// — which is the sandbox's own case, and the one the bridge used to die on.
 func writable(folder string) error {
 	if err := os.MkdirAll(folder, 0o755); err != nil {
 		return err
@@ -214,7 +185,6 @@ func writable(folder string) error {
 	return os.Remove(name)
 }
 
-// CacheFolder is $XDG_CACHE_HOME, else ~/.cache.
 func CacheFolder() (string, error) {
 	if cache := os.Getenv("XDG_CACHE_HOME"); cache != "" {
 		return cache, nil
@@ -227,7 +197,6 @@ func CacheFolder() (string, error) {
 	return filepath.Join(home, ".cache"), nil
 }
 
-// Files is every file under root in the filesystem, by its path below root.
 func Files(sources fs.FS, root string) (map[string][]byte, error) {
 	files := map[string][]byte{}
 	err := fs.WalkDir(sources, root, func(name string, entry fs.DirEntry, err error) error {
@@ -242,8 +211,6 @@ func Files(sources fs.FS, root string) (map[string][]byte, error) {
 		if root != "." {
 			relative = name[len(root)+1:]
 		}
-		// The mark a written-out folder carries is the bundle's own bookkeeping, never one of its sources, so
-		// reading a folder back answers the files that were carried into it and nothing else.
 		if relative == wholeMark {
 			return nil
 		}
@@ -255,8 +222,6 @@ func Files(sources fs.FS, root string) (map[string][]byte, error) {
 	return files, err
 }
 
-// Pack is the files as a gzipped tar that holds nothing but their paths and contents, in path order, so the same
-// files always pack the same.
 func Pack(files map[string][]byte) ([]byte, error) {
 	paths := make([]string, 0, len(files))
 	for name := range files {
@@ -284,7 +249,6 @@ func Pack(files map[string][]byte) ([]byte, error) {
 	return archive.Bytes(), nil
 }
 
-// Unpack is the files a gzipped tar holds, by path.
 func Unpack(archive []byte) (map[string][]byte, error) {
 	zipped, err := gzip.NewReader(bytes.NewReader(archive))
 	if err != nil {

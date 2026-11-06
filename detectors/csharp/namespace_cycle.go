@@ -16,15 +16,12 @@ func init() {
 	detectors.Register(catalog.CSharp, NamespaceCycleDetector{})
 }
 
-// Sin is the sin the detector finds.
 func (NamespaceCycleDetector) Sin() sins.Sin {
 	return cssins.NamespaceCycle{}
 }
 
-// Find is every place the sin is committed.
 func (NamespaceCycleDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return cs.Namespaces(codebase).ClosingAMutualPair()
 }
 
-// CrossFile says the PHP tool finds it reaching beyond the file it judges, so a per-file check must not ask it.
 func (NamespaceCycleDetector) CrossFile() {}

@@ -15,19 +15,14 @@ import (
 type Fixture struct {
 	Codebase  *engine.Codebase
 	Detectors []detectors.Detector
-	// Known is the catalog a #[Fixed] must name a sin of; nil means every published detector.
-	Known []detectors.Detector
-	// Resolver reads each detector's findings as scenarios; nil reads each as its scope.
-	Resolver ScenarioResolver
+	Known     []detectors.Detector
+	Resolver  ScenarioResolver
 }
 
-// Within is the location as the fixture holds it: under the folder every one of its files lies in, so a verdict
-// names `Shop/Orders/Invoicing.cs:8` and not the whole path of the machine it ran on.
 func (f Fixture) Within(location string) string {
 	return strings.TrimPrefix(location, f.folder()+"/")
 }
 
-// folder is the folder every file of the fixture lies under, empty when they share none.
 func (f Fixture) folder() string {
 	folder := ""
 	for at, file := range f.Codebase.Files() {
@@ -54,15 +49,12 @@ type Result struct {
 	FlaggedFixed     []string
 }
 
-// Passed says whether the detector flagged exactly what its markers mark.
 func (r Result) Passed() bool {
 	return len(r.Missed)+len(r.Unexpected)+len(r.FlaggedRighteous)+len(r.FlaggedFixed) == 0
 }
 
-// MinChainFiles is how many files a chain detector's deepest finding must cross.
 const MinChainFiles = 5
 
-// ChainDepths is, for every chain detector, how many files its deepest finding's chain crosses.
 func (f Fixture) ChainDepths() map[string]int {
 	depths := map[string]int{}
 	for _, detector := range f.Detectors {
@@ -80,8 +72,6 @@ func (f Fixture) ChainDepths() map[string]int {
 	return depths
 }
 
-// filesAlong are the files a chain's steps name, each once: a step is written as a symbol and the file it was
-// found in, apart by an @, and a step naming no file is a step this does not count.
 func filesAlong(steps []string) map[string]bool {
 	files := map[string]bool{}
 	for _, step := range steps {
@@ -95,10 +85,8 @@ func filesAlong(steps []string) map[string]bool {
 	return files
 }
 
-// MinRecurrenceFiles is how many files a recurrence detector's widest group must reach.
 const MinRecurrenceFiles = 2
 
-// RecurrenceSpans is, for every recurrence detector, how many files its widest group of findings reaches.
 func (f Fixture) RecurrenceSpans() map[string]int {
 	spans := map[string]int{}
 	for _, detector := range f.Detectors {
@@ -122,8 +110,6 @@ func (f Fixture) RecurrenceSpans() map[string]int {
 	return spans
 }
 
-// Verify runs each detector over the fixture and sorts every finding: on a mark of its sin (hit), on
-// its own fix, on its righteous twin, or on unmarked code. A sin mark nothing flagged is missed.
 func (f Fixture) Verify() []Result {
 	markers := Markers(f.Codebase)
 	results := make([]Result, 0, len(f.Detectors))
@@ -161,7 +147,6 @@ func verify(codebase *engine.Codebase, detector detectors.Detector, markers []Ma
 	return result
 }
 
-// WithoutRighteous is every proven detector with no @righteous twin in the fixture.
 func (f Fixture) WithoutRighteous() []string {
 	markers := Markers(f.Codebase)
 	var without []string
@@ -174,8 +159,6 @@ func (f Fixture) WithoutRighteous() []string {
 	return without
 }
 
-// UnknownResolutions is every #[Fixed] that names no known detector nor any published sin; a typo there
-// silently drops the resolution.
 func (f Fixture) UnknownResolutions() []string {
 	known := f.Known
 	if known == nil {
@@ -198,8 +181,6 @@ func (f Fixture) UnknownResolutions() []string {
 	return unknown
 }
 
-// Ambiguous is every file holding more than one class that carries both a sin mark and a fix for the
-// same detector: the pairing of a fix to its sin there has two equally good answers.
 func (f Fixture) Ambiguous() []string {
 	markers := Markers(f.Codebase)
 	var ambiguous []string
@@ -225,8 +206,6 @@ func (f Fixture) Ambiguous() []string {
 	return ambiguous
 }
 
-// pairedIn is how many of the classes hold BOTH halves of a scenario, a sin and the fix of it. Two of them in
-// one file is what makes that file ambiguous, since which fix repairs which sin is then nobody's to decide.
 func pairedIn(classes map[string]map[Tag]bool) int {
 	paired := 0
 	for _, tags := range classes {
@@ -239,22 +218,18 @@ func pairedIn(classes map[string]map[Tag]bool) int {
 	return paired
 }
 
-// keys are the names a marker may give a detector by: its own, its sin's type and its sin's name.
 func keys(detector detectors.Detector) []string {
 	return []string{catalog.Name(detector), catalog.Name(detector.Sin()), detector.Sin().Definition().Name}
 }
 
-// Marking are the markers with the tag that name the detector, by its own name, its sin's type or its sin's name.
 func Marking(markers []Marker, tag Tag, detector detectors.Detector) []Marker {
 	return tagged(markers, tag, detector)
 }
 
-// Naming says whether the marker names the detector, by any name a marker may give it.
 func (m Marker) Naming(detector detectors.Detector) bool {
 	return m.Names(keys(detector)...)
 }
 
-// tagged is every marker with the tag that names the detector.
 func tagged(markers []Marker, tag Tag, detector detectors.Detector) []Marker {
 	names := keys(detector)
 	var found []Marker
@@ -267,7 +242,6 @@ func tagged(markers []Marker, tag Tag, detector detectors.Detector) []Marker {
 	return found
 }
 
-// covering is the index of the first marker that covers the finding, -1 when none does.
 func covering(markers []Marker, finding engine.Match) int {
 	for index, marker := range markers {
 		if marker.Covers(finding) {

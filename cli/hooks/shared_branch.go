@@ -12,14 +12,11 @@ import (
 	"github.com/jessegall/code-commandments/cli/git"
 )
 
-// rebasing are the flags that make a pull rewrite the branch.
 var rebasing = []string{"--rebase", "-r"}
 
-// quoting marks a command whose words may be quoted text; it is not judged, rather than misread.
 var quoting = []string{"<<", "'", `"`}
 
-// SharedBranchGate refuses a rebasing pull while other worktrees stand on the branch: the rebase rewrites
-// the commits they are built on, and the duplicates it leaves look like nothing until a merge.
+// SharedBranchGate refuses a rebasing pull while other worktrees stand on the branch: the rebase rewrites the commits they are built on, and the duplicates it leaves look like nothing until a merge.
 type SharedBranchGate struct{}
 
 func (SharedBranchGate) Class() string { return "SharedBranchGate" }
@@ -76,10 +73,6 @@ func rewritesHistory(command string) bool {
 	return false
 }
 
-// otherWorktrees are the worktrees of the repository at root other than root itself.
-// standing keeps each root's worktrees, so the gate answers from what it knows when the journal waits
-// milliseconds for it. Adding or removing one writes in the git folder that holds them, which is what the
-// mark below watches: nothing else can change the answer.
 var standing = struct {
 	sync.Mutex
 	listed map[string]listing
@@ -111,9 +104,6 @@ func otherWorktrees(root string) []string {
 	return others
 }
 
-// worktreeMark says when a worktree was last added or removed: the git directory and the folder it keeps them in,
-// by their last change. A checkout whose `.git` is a file is a worktree itself, and that file's own change says
-// the same.
 func worktreeMark(root string) string {
 	var mark strings.Builder
 	for _, watched := range []string{filepath.Join(root, ".git"), filepath.Join(root, ".git", "worktrees")} {
@@ -127,7 +117,6 @@ func worktreeMark(root string) string {
 	return mark.String()
 }
 
-// readWorktrees asks git, which is the slow answer the mark above keeps us from asking for twice.
 func readWorktrees(root string) []string {
 	return git.Worktrees(root)
 }

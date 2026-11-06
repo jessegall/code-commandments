@@ -12,13 +12,11 @@ import (
 	"github.com/jessegall/code-commandments/engine"
 )
 
-// SchemaFile is the name the schema is written under, beside the project's custom folder.
 const SchemaFile = "rule.schema.json"
 
 // object is one JSON Schema object.
 type object = map[string]any
 
-// shapes are the types a step holds, each a definition of the schema of its own, by the name it is defined under.
 var shapes = map[reflect.Type]string{
 	reflect.TypeFor[Step]():      "step",
 	reflect.TypeFor[Bounds]():    "bounds",
@@ -31,8 +29,6 @@ var shapes = map[reflect.Type]string{
 	reflect.TypeFor[Nesting]():   "nesting",
 }
 
-// Schema is the JSON Schema of a rule file, read from the types a rule is parsed into so it cannot drift from
-// them, each check described as the catalog describes it.
 func Schema() []byte {
 	definitions := object{}
 	for shape, name := range shapes {
@@ -49,7 +45,6 @@ func Schema() []byte {
 		"definitions":          definitions,
 		"properties": object{
 			"$schema": object{"type": "string"},
-			// One name or a list of them: a rule that is wholly neutral names several and is written once.
 			"engine": object{"description": "The engine the rule judges, or the engines: one name, or a list of them for a rule the neutral kinds let judge several.", "anyOf": []object{
 				{"enum": engineNames()},
 				{"type": "array", "minItems": 1, "items": object{"enum": engineNames()}},
@@ -116,11 +111,6 @@ func Schema() []byte {
 	return append(written, '\n')
 }
 
-// perEngine is one rule per engine, each saying that a rule judging that engine writes its steps with the values
-// that engine's languages really emit: an editor then completes the kinds of the language being judged and marks
-// another language's kind as wrong where it is written, which is the likeliest mistake a rule author makes. The
-// definitions gain one step shape per engine, which is the same step with the language's own value space on the
-// five keys a bridge spells.
 func perEngine(definitions object) []object {
 	var rules []object
 	for _, engine := range engineNames() {
@@ -143,10 +133,6 @@ func perEngine(definitions object) []object {
 	return rules
 }
 
-// stepOf is the step as those languages let it be written: every key as the step shape has it, and the five whose
-// value a bridge spells narrowed to what the committed vocabularies list, kinds beside their spellings. A key
-// stays as it was where nothing was recorded for the language, since an empty census must not refuse a rule for
-// being ahead of it.
 func stepOf(judged []contract.Language) object {
 	step := shapeOf(reflect.TypeFor[Step]())
 	properties, held := step["properties"].(object)
@@ -171,10 +157,6 @@ func stepOf(judged []contract.Language) object {
 			continue
 		}
 
-		// OFFERED, not required: the census is observed, so a construct no fixture exercises is missing from it,
-		// and an enum alone would mark a rule wrong for being ahead of the census. An editor completes the values
-		// of the enum inside an anyOf and accepts any other string, which is exactly the honest claim — these are
-		// the ones this language has been seen writing.
 		listed := object{"anyOf": []object{{"enum": slices.Sorted(slices.Values(offered))}, {"type": "string"}}}
 		for name, value := range held {
 			if name != "type" {
@@ -189,7 +171,6 @@ func stepOf(judged []contract.Language) object {
 	return step
 }
 
-// shapeOf is the schema of a type a step holds: its fields, an embedded type's among them, and nothing else.
 func shapeOf(shape reflect.Type) object {
 	properties := object{}
 	fieldsOf(shape, properties)
@@ -197,7 +178,6 @@ func shapeOf(shape reflect.Type) object {
 	return object{"type": "object", "additionalProperties": false, "properties": properties}
 }
 
-// fieldsOf adds the schema of each of the type's written fields.
 func fieldsOf(shape reflect.Type, properties object) {
 	for i := range shape.NumField() {
 		field := shape.Field(i)
@@ -214,7 +194,6 @@ func fieldsOf(shape reflect.Type, properties object) {
 
 		property := typeOf(field.Type)
 		if key == "value" {
-			// A literal's own value, which is a scalar and not the bytes its field is held as.
 			property = object{"type": valueScalars}
 		}
 		if key == "of" {
@@ -236,7 +215,6 @@ func fieldsOf(shape reflect.Type, properties object) {
 	}
 }
 
-// typeOf is the schema of a field's type.
 func typeOf(written reflect.Type) object {
 	if written.Kind() == reflect.Pointer {
 		written = written.Elem()
@@ -258,7 +236,6 @@ func typeOf(written reflect.Type) object {
 	}
 }
 
-// ownKeys are what a shape's own keys mean, where they are not the checks of the same name.
 var ownKeys = map[reflect.Type]map[string]string{
 	reflect.TypeFor[Count](): {
 		"descendant": "count the descendants that pass this step",
@@ -277,8 +254,6 @@ var ownKeys = map[reflect.Type]map[string]string{
 	},
 }
 
-// closedValues are the keys whose value is one of a few, and those few: the one list the parser checks a value
-// against, the schema offers, and a slip of the keyboard is matched with.
 var closedValues = map[string][]string{
 	"is":         neutralNames(),
 	"typeKind":   engine.TypeKinds,
@@ -291,7 +266,6 @@ var closedValues = map[string][]string{
 	"position":   {"first", "last", "only"},
 }
 
-// checkNamed is the catalog's check of the key.
 func checkNamed(key string) (Check, bool) {
 	for _, group := range Checks {
 		for _, check := range group.Checks {

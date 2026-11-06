@@ -34,8 +34,6 @@ func (o *scriptedOracle) ResolveAll(queries []vue.TypeQuery) map[string]map[stri
 	return resolved
 }
 
-// rewrittenWith is what the extraction strategy writes over the folder with the oracle consulted, keyed by path
-// relative to it.
 func rewrittenWith(t *testing.T, detector, strategy string, oracle vue.TypeOracle, dir string) map[string]string {
 	t.Helper()
 	scanner := served(t)

@@ -14,8 +14,6 @@ import (
 	"github.com/jessegall/code-commandments/cli/config"
 )
 
-// TestThePluginsSettingSaysHowManyRulesJudgeRunsAtOnce holds journal-config to the plugin's judge_parallel: the
-// number is written into the project's config, where judge takes it when no --parallel says otherwise.
 func TestThePluginsSettingSaysHowManyRulesJudgeRunsAtOnce(t *testing.T) {
 	project := t.TempDir()
 	t.Setenv(journalProject, project)
@@ -36,8 +34,6 @@ func TestThePluginsSettingSaysHowManyRulesJudgeRunsAtOnce(t *testing.T) {
 	}
 }
 
-// TestAnUpgradeKeepsTheFoldersTheProjectChose holds journal-scan to the project's own config: the folders it answers
-// are the ones the config already judges and leaves out, so journal-config applying them back keeps every one.
 func TestAnUpgradeKeepsTheFoldersTheProjectChose(t *testing.T) {
 	project := t.TempDir()
 	t.Setenv(journalProject, project)
@@ -80,9 +76,6 @@ func TestAnUpgradeKeepsTheFoldersTheProjectChose(t *testing.T) {
 	}
 }
 
-// TestThePluginsSetupLeavesTheProjectsFoldersAlone holds the setup step to the switches: on an upgrade the journal
-// runs it with the folders it stored at install, which may be older than the config, so the folders the project
-// judges and leaves out are kept until journal-scan has read them back.
 func TestThePluginsSetupLeavesTheProjectsFoldersAlone(t *testing.T) {
 	project := t.TempDir()
 	t.Setenv(journalProject, project)
@@ -115,10 +108,6 @@ func TestThePluginsSetupLeavesTheProjectsFoldersAlone(t *testing.T) {
 	}
 }
 
-// TestAnUpgradeRefreshesWhatTheProjectIsTold holds the reason journal-config writes the briefing at all: a project
-// the journal drives never runs composer, so until now a fix to what the tool injects reached a composer project
-// and no other. The upgrade writes both instruction files, names the binary the plugin really installed rather than
-// a bare command nothing put on the PATH, and a second run leaves every byte as it was.
 func TestAnUpgradeRefreshesWhatTheProjectIsTold(t *testing.T) {
 	project := t.TempDir()
 	plugin := filepath.Join(project, ".journal", "plugins", "code-commandments")
@@ -176,9 +165,6 @@ func TestAnUpgradeRefreshesWhatTheProjectIsTold(t *testing.T) {
 	}
 }
 
-// TestAFileTheUpgradeCannotTrustIsSaidAndNotWritten holds an upgrade to doing no harm when a project's instruction
-// file cannot be read safely: a marker a reader once typed by hand must not fail the upgrade, undo the switches it
-// has already applied, or be written past in silence. The file is left exactly as it was and the refusal is said.
 func TestAFileTheUpgradeCannotTrustIsSaidAndNotWritten(t *testing.T) {
 	project := t.TempDir()
 	ambiguous := "<!-- BEGIN: " + agents.BriefingBlock + " -->\n<!-- BEGIN: " + agents.BriefingBlock + " -->\n"

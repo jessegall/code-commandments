@@ -32,8 +32,6 @@ func (b *lockedBuffer) String() string {
 	return b.text.String()
 }
 
-// TestAProjectWithNoCSharpKeepsNoBridge holds the service to a project with no C#: it fetches and starts nothing,
-// says why, and stays up until the session stops it, so the journal never starts it again in a loop.
 func TestAProjectWithNoCSharpKeepsNoBridge(t *testing.T) {
 	project := t.TempDir()
 	os.WriteFile(project+"/cart.py", []byte("x = 1\n"), 0o644)

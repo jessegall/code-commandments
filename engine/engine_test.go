@@ -12,7 +12,6 @@ import (
 
 const slack = "/fixtures/backend/app/Notifications/SlackNotifier.php"
 
-// sample is the codebase the PHP sample stream describes, its sources read from tests/Fixtures.
 func sample(t *testing.T) *engine.Codebase {
 	t.Helper()
 	file, err := os.Open("../contract/samples/php.jsonl")
@@ -148,8 +147,6 @@ func TestFromStringReadsSourcesByPath(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	// Long enough to hold the parse of any file in the sample: a source too short for its own parse's offsets is
-	// refused, which TestASourceThatCannotBeTheParsesIsRefused holds, and this test is about the PATH.
 	given := strings.Repeat("\n", 100_000)
 
 	codebase, err := engine.FromString(string(stream), map[string]string{slack: given})

@@ -8,7 +8,6 @@ import (
 	"github.com/jessegall/code-commandments/fixture"
 )
 
-// TestMain runs the tests from the repository's root, where the fixtures and the published skills are.
 func TestMain(m *testing.M) {
 	if err := os.Chdir("../../.."); err != nil {
 		panic(err)
@@ -16,8 +15,6 @@ func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
 
-// TestTheSkillsAreGeneratedFromTodaysSources holds every published skill to what the catalog and the fixtures
-// generate today: a skill or sin changed without generating again leaves its SKILL.md teaching the old rule.
 func TestTheSkillsAreGeneratedFromTodaysSources(t *testing.T) {
 	examples, err := fixture.Curriculum("tests/Fixtures")
 	if err != nil {
@@ -32,8 +29,6 @@ func TestTheSkillsAreGeneratedFromTodaysSources(t *testing.T) {
 	}
 }
 
-// TestStaleDocumentsAreNamedInOrder holds the --check report to one order: into an empty folder every document
-// is stale, and each skill's are named in name order, its SKILL.md first.
 func TestStaleDocumentsAreNamedInOrder(t *testing.T) {
 	examples, err := fixture.Curriculum("tests/Fixtures")
 	if err != nil {

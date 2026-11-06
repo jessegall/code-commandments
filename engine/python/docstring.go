@@ -9,7 +9,6 @@ import (
 )
 
 var (
-	// section is a heading the Google and NumPy docstring styles open a section with.
 	section      = regexp.MustCompile(`^(?:Args|Arguments|Parameters|Params|Other Parameters|Keyword Args|Returns?|Yields?|Raises|Attributes|Methods|Examples?|Notes?|See Also|Warnings?|Todo|References):?$`)
 	underline    = regexp.MustCompile(`^-{3,}$`)
 	versionNote  = regexp.MustCompile(`^([ \t]*)\.\. (?:versionadded|versionchanged|deprecated)::`)
@@ -24,7 +23,6 @@ var (
 	leadingSpace = " \t\n\r\x00\x0b"
 )
 
-// Docstring is the docstring of a module, class or def: the string its body opens with, decoded.
 func (n Node) Docstring() (string, bool) {
 	body := n.ChildrenIn("body")
 	if len(body) == 0 || body[0].Kind() != "Expr" {
@@ -34,9 +32,6 @@ func (n Node) Docstring() (string, bool) {
 	return body[0].Child("value").Text()
 }
 
-// WithoutVersionNotes is the docstring without its Sphinx version notes: each `.. versionadded::`,
-// `.. versionchanged::` or `.. deprecated::` directive and the lines indented under it. Those record a public API's
-// history for its users on purpose; the rest of the docstring describes the code.
 func WithoutVersionNotes(text string) string {
 	lines := strings.Split(text, "\n")
 	var kept []string
@@ -55,15 +50,12 @@ func WithoutVersionNotes(text string) string {
 	return strings.Join(kept, "\n")
 }
 
-// underNote says whether the line is indented past the note's own indentation.
 func underNote(line, indent string) bool {
 	rest, ok := strings.CutPrefix(line, indent)
 
 	return ok && rest != "" && (rest[0] == ' ' || rest[0] == '\t')
 }
 
-// ProseParagraphs is how many paragraphs of prose the docstring holds before its first section, a Google `Args:`
-// or a NumPy `Parameters` over dashes, with its version notes, markup lines and indented blocks set aside.
 func ProseParagraphs(text string) int {
 	lines := beforeFirstSection(strings.Split(WithoutVersionNotes(text), "\n"))
 	base := baseIndent(lines)
@@ -73,13 +65,10 @@ func ProseParagraphs(text string) int {
 	})
 }
 
-// isMarkup says whether the line is markup rather than prose: a doctest `>>>`, a reST field (`:param app:`) or a
-// directive (`..`).
 func isMarkup(line string) bool {
 	return strings.HasPrefix(line, ">>>") || strings.HasPrefix(line, "..") || field.MatchString(line)
 }
 
-// beforeFirstSection is the lines up to the one that opens their first section; all of them when there is none.
 func beforeFirstSection(lines []string) []string {
 	for at, line := range lines {
 		if !section.MatchString(strings.TrimSpace(line)) {
@@ -94,7 +83,6 @@ func beforeFirstSection(lines []string) []string {
 	return lines
 }
 
-// baseIndent is the indentation the body of the lines is written at: the first line sits right after the quotes.
 func baseIndent(lines []string) int {
 	base := -1
 	for _, line := range lines[min(1, len(lines)):] {
@@ -110,10 +98,6 @@ func indentOf(line string) int {
 	return len(line) - len(strings.TrimLeft(line, leadingSpace))
 }
 
-// OnlyRestates says whether the docstring says nothing but what the signature already says: no summary, and every
-// entry a bare restatement of an annotated parameter or, when the return is annotated, of the return. `Args:`
-// entries with no description, a bare `Returns:` type, NumPy `name : type` lines, Sphinx `:param x:`, `:type x:`
-// and `:rtype:` fields. A description, a type for an unannotated parameter, or any other section earns its keep.
 func OnlyRestates(text string, annotated []string, returnAnnotated bool) bool {
 	var lines []string
 	for _, line := range strings.Split(text, "\n") {
@@ -143,7 +127,6 @@ func OnlyRestates(text string, annotated []string, returnAnnotated bool) bool {
 	return restated > 0
 }
 
-// restates says whether the line, read in its section, is a bare restatement of an annotated parameter or return.
 func restates(line, current string, annotated []string, returnAnnotated bool) bool {
 	if entry := paramField.FindStringSubmatch(line); entry != nil {
 		isParam := entry[1] != ""
@@ -172,9 +155,6 @@ func restates(line, current string, annotated []string, returnAnnotated bool) bo
 	return slices.Contains(annotated, name)
 }
 
-// References is the dotted names the docstring's Sphinx cross-references point at: `shop.cart.Cart` from
-// :class:`~shop.cart.Cart` or :func:`total <shop.cart.total>`, leaving out a bare name, which resolves against
-// wherever Sphinx is told to look.
 func References(text string) []string {
 	var found []string
 	for _, reference := range crossRef.FindAllStringSubmatch(text, -1) {

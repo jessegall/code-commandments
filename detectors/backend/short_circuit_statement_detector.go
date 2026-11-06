@@ -14,10 +14,8 @@ type ShortCircuitStatementDetector struct{}
 
 func init() { detectors.Register(catalog.PHP, ShortCircuitStatementDetector{}) }
 
-// Sin is the sin the detector finds.
 func (ShortCircuitStatementDetector) Sin() sins.Sin { return backendsins.ShortCircuitStatement{} }
 
-// Find is every boolean and or or whose value is thrown away.
 func (ShortCircuitStatementDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return php.In(codebase).
 		Where(engine.As(php.Node.IsShortCircuit)).
@@ -25,5 +23,4 @@ func (ShortCircuitStatementDetector) Find(codebase *engine.Codebase) []engine.Ma
 		Get()
 }
 
-// Repentable says a scribe rewrites the sin away.
 func (ShortCircuitStatementDetector) Repentable() {}

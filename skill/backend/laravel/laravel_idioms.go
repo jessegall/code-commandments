@@ -21,7 +21,6 @@ func init() {
 	skill.Register(catalog.PHP, LaravelIdioms{})
 }
 
-// Definition is what the skill states about itself.
 func (LaravelIdioms) Definition() skill.Definition {
 	return skill.Definition{
 		Slug:      "php/laravel-idioms",

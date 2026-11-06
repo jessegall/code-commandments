@@ -15,9 +15,6 @@ namespace Shop;
 public sealed record Tag(string Name, string Runs);
 `
 
-// TestASideTableOfRegisteredNamesIsFoundCS holds the three things that together tell a side table from an
-// ordinary collection of words: the names are the file's own registry's, the file reaches for the instances
-// through them, and a collection derived from the registry or naming none of them is left alone.
 func TestASideTableOfRegisteredNamesIsFoundCS(t *testing.T) {
 	for name, source := range map[string]string{
 		"a set asked whether it holds one": registry + `
@@ -41,7 +38,6 @@ public static class Tags
 	}
 }
 
-// TestACollectionThatIsNotASideTableIsLeftAloneCS holds the negatives, each wearing the same surface shape.
 func TestACollectionThatIsNotASideTableIsLeftAloneCS(t *testing.T) {
 	for name, source := range map[string]string{
 		"ordinary vocabulary naming no instance": registry + `

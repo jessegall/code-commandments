@@ -13,13 +13,9 @@ func init() {
 	detectors.Register(catalog.Vue, InlineCaseViewsDetector{})
 }
 
-// viewCases is how many of a dispatch's cases must each render a whole view before the dispatch is doing their
-// jobs itself.
 const viewCases = 2
 
-// InlineCaseViewsDetector finds a dispatch on a value, a <SwitchCase> or a v-if chain re-testing one subject, whose
-// cases each render a whole view inline: one component doing a job per case, where each case wants a component of
-// its own and the dispatch only picks one.
+// InlineCaseViewsDetector finds a dispatch on a value, a <SwitchCase> or a v-if chain re-testing one subject, whose cases each render a whole view inline: one component doing a job per case, where each case wants a component of its own and the dispatch only picks one.
 type InlineCaseViewsDetector struct{}
 
 func (InlineCaseViewsDetector) Sin() sins.Sin {

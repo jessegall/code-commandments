@@ -11,8 +11,6 @@ import (
 	_ "github.com/jessegall/code-commandments/registry"
 )
 
-// TestInfoNamesWhatThisProjectHasReported holds where a teammate who did not file a report learns of it: the rule's
-// own explanation. Without it, a reader meeting a line a judge calls reported has nowhere to go but the record.
 func TestInfoNamesWhatThisProjectHasReported(t *testing.T) {
 	root := projectReporting(t, "InventedDefaultDetector", "src/refund.py", 1, 814)
 
@@ -42,8 +40,6 @@ func TestInfoNamesWhatThisProjectHasReported(t *testing.T) {
 	}
 }
 
-// projectReporting is a project at a temp root that has reported the rule's finding at this line, with the command
-// run from inside it.
 func projectReporting(t *testing.T, detector, path string, line, issue int) string {
 	t.Helper()
 	root, err := filepath.EvalSymlinks(t.TempDir())

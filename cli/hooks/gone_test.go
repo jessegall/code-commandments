@@ -8,8 +8,6 @@ import (
 	"testing"
 )
 
-// TestASinOfAFileThatIsGoneIsRepented holds a shell deletion to what an edit would say: every sin announced for a
-// file that no longer exists is repented and its chat mark settled, and a file still there keeps what was announced for it.
 func TestASinOfAFileThatIsGoneIsRepented(t *testing.T) {
 	root, data := t.TempDir(), t.TempDir()
 	if err := os.MkdirAll(filepath.Join(root, "src"), 0o755); err != nil {
@@ -29,7 +27,6 @@ func TestASinOfAFileThatIsGoneIsRepented(t *testing.T) {
 		t.Errorf("found %v, repented %v", settlement.Found, settlement.Repented)
 	}
 
-	// The chat's mark is the file's, so a file that is gone settles one mark however many sins it held.
 	if !slices.Equal(settlement.Settles(), []string{"sins:src/Gone.php"}) {
 		t.Errorf("settles %v", settlement.Settles())
 	}
@@ -40,9 +37,6 @@ func TestASinOfAFileThatIsGoneIsRepented(t *testing.T) {
 	}
 }
 
-// TestAnotherEnvironmentNeverRepentsTheSinsAnnouncedInThisOne holds the record to the environment whose chat shows
-// the sins: a moment in a helper's worktree, where a file announced in the main checkout does not exist, repents
-// nothing of main's, and main's own moment still settles it once the file is gone.
 func TestAnotherEnvironmentNeverRepentsTheSinsAnnouncedInThisOne(t *testing.T) {
 	main, worktree, data := t.TempDir(), t.TempDir(), t.TempDir()
 	record := `{"src/probe.py":{"a1":"redundant-python-else at src/probe.py:2"}}`

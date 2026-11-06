@@ -49,7 +49,6 @@ func codebase(t *testing.T) *engine.Codebase {
 	return phpCodebase(t, "Orders.php", orders)
 }
 
-// phpCodebase is the codebase of one PHP file holding the source.
 func phpCodebase(t *testing.T, name, source string) *engine.Codebase {
 	t.Helper()
 
@@ -101,7 +100,7 @@ func TestARuleFindsWhatItsStepsDescribe(t *testing.T) {
 func TestARuleTheToolCannotRunSaysWhy(t *testing.T) {
 	for written, reason := range map[string]string{
 		`{"engine": "cobol", "sin": {"name": "x", "skill": "php/absence"}, "find": {"select": "call"}}`:                                                  "engine \"cobol\"",
-		`{"engine": "backend", "sin": {"name": "x", "skill": "nope"}, "find": {"select": "call"}}`:                                                           "no skill \"nope\"",
+		`{"engine": "backend", "sin": {"name": "x", "skill": "nope"}, "find": {"select": "call"}}`:                                                       "no skill \"nope\"",
 		`{"engine": "backend", "sin": {"name": "x", "skill": "php/absence"}, "find": {"select": "calls"}}`:                                               "select \"calls\"",
 		`{"engine": "backend", "sin": {"name": "x", "skill": "php/absence"}, "find": {"select": "call", "where": [{"name": "a", "kind": "b"}]}}`:         "makes 2",
 		`{"engine": "backend", "sin": {"name": "x", "skill": "php/absence"}, "find": {"select": "call", "where": [{"name": "a", "of": "grandparent"}]}}`: "of \"grandparent\"",

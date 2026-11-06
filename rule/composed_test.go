@@ -8,12 +8,10 @@ import (
 	"github.com/jessegall/code-commandments/rule"
 )
 
-// written is a rule file of the engine, the sin and the query given.
 func written(engine, name, query string) []byte {
 	return []byte(`{"engine": "` + engine + `", "sin": {"name": "` + name + `", "description": "a sin the test writes", "skill": "php/laravel-idioms"}, "find": ` + query + `}`)
 }
 
-// parsed is the rule the query makes, failing the test when it cannot be read.
 func parsed(t *testing.T, name, query string) rule.Rule {
 	t.Helper()
 	read, err := rule.Parse(name, written("backend", "composed-sin", query), shipped)
@@ -24,8 +22,6 @@ func parsed(t *testing.T, name, query string) rule.Rule {
 	return read
 }
 
-// TestARuleIsBuiltFromAnotherRule holds a rule naming another: as a check on the node it is on, and as the
-// population it narrows, which is one rule found inside another.
 func TestARuleIsBuiltFromAnotherRule(t *testing.T) {
 	codebase := phpCodebase(t, "Actions.php", actions)
 	composed, refused := rule.Composed([]rule.Rule{
@@ -46,9 +42,6 @@ func TestARuleIsBuiltFromAnotherRule(t *testing.T) {
 	}
 }
 
-// TestARuleBuiltFromOneThatIsNotThereIsRefused holds the two ways a reference cannot be followed: a name nothing
-// declares, and a chain that comes back to itself. Both are refused when the rules are read, so judging never
-// meets one.
 func TestARuleBuiltFromOneThatIsNotThereIsRefused(t *testing.T) {
 	_, refused := rule.Composed([]rule.Rule{
 		parsed(t, "NamesNobody", `{"select": "call", "where": [{"rule": "NoSuchRule"}]}`),
@@ -70,8 +63,6 @@ func TestARuleBuiltFromOneThatIsNotThereIsRefused(t *testing.T) {
 	}
 }
 
-// TestARuleIsBuiltOnlyFromItsOwnEngine holds a reference to one language's tree: a rule reads the nodes of its own
-// engine, so a rule of another engine is no part it can be built from.
 func TestARuleIsBuiltOnlyFromItsOwnEngine(t *testing.T) {
 	other, err := rule.Parse("PythonRule", written("python", "python-sin", `{"select": "call", "where": [{"name": "handle"}]}`), shipped)
 	if err != nil {
@@ -84,8 +75,6 @@ func TestARuleIsBuiltOnlyFromItsOwnEngine(t *testing.T) {
 	}
 }
 
-// TestARuleNamesOneOfSelectAndFrom holds what a rule finds: the nodes it selects, or the ones another rule found,
-// never both and never neither.
 func TestARuleNamesOneOfSelectAndFrom(t *testing.T) {
 	for _, query := range []string{`{"select": "call", "from": "ActionClass"}`, `{"where": [{"name": "handle"}]}`} {
 		if _, err := rule.Parse("Neither", written("backend", "neither", query), shipped); err == nil {
@@ -94,17 +83,14 @@ func TestARuleNamesOneOfSelectAndFrom(t *testing.T) {
 	}
 }
 
-// TestARuleCombinesAWholeProgramReadingWithItsOwnChecks holds the readings a rule can name: the callers a
-// declaration has, counted over the whole scan, and a language's own reading of a divergent pair, each one check
-// among others rather than a rule of its own.
 func TestARuleCombinesAWholeProgramReadingWithItsOwnChecks(t *testing.T) {
 	codebase := phpCodebase(t, "Actions.php", actions)
 	for query, want := range map[string]string{
-		`{"select": "function", "where": [{"name": "handle"}, {"callers": {"atLeast": 1}}]}`:    "[15 20]",
-		`{"select": "function", "where": [{"name": "handle"}, {"callers": {"atMost": 0}}]}`:     "[]",
-		`{"select": "function", "where": [{"name": "render"}, {"callers": {"atMost": 0}}]}`:     "[27]",
+		`{"select": "function", "where": [{"name": "handle"}, {"callers": {"atLeast": 1}}]}`:            "[15 20]",
+		`{"select": "function", "where": [{"name": "handle"}, {"callers": {"atMost": 0}}]}`:             "[]",
+		`{"select": "function", "where": [{"name": "render"}, {"callers": {"atMost": 0}}]}`:             "[27]",
 		`{"select": "function", "where": [{"all": [{"name": "handle"}, {"callers": {"atLeast": 2}}]}]}`: "[15 20]",
-		`{"select": "function", "where": [{"php": "divergentTwin"}]}`:                           "[]",
+		`{"select": "function", "where": [{"php": "divergentTwin"}]}`:                                   "[]",
 	} {
 		found, err := rule.Parse("Reading", written("backend", "reading-sin", query), shipped)
 		if err != nil {

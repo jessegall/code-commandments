@@ -16,12 +16,10 @@ func init() {
 	detectors.Register(catalog.Python, HandedOutCollectionDetector{})
 }
 
-// Sin is the sin the detector finds.
 func (HandedOutCollectionDetector) Sin() sins.Sin {
 	return pysins.HandedOutCollection{}
 }
 
-// Find is every getter handing out a collection of its class's own.
 func (HandedOutCollectionDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return py.In(codebase).
 		WhereFunction().

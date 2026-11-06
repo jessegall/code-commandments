@@ -13,7 +13,6 @@ func init() {
 	sins.Register(catalog.Python, CancelledFallback{})
 }
 
-// Definition is what the sin states about itself.
 func (CancelledFallback) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "python-cancelled-fallback",

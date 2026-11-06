@@ -9,8 +9,6 @@ import (
 	"github.com/jessegall/code-commandments/prose"
 )
 
-// DocblockIsInline says whether a docblock with content opens or closes on a content line rather than on a line of
-// its own.
 func DocblockIsInline(text string) bool {
 	if len(docblockContent(text)) == 0 {
 		return false
@@ -20,8 +18,6 @@ func DocblockIsInline(text string) bool {
 	return prose.Trim(lines[0]) != "/**" || prose.Trim(lines[len(lines)-1]) != "*/"
 }
 
-// docblockContent is a docblock's lines with the delimiters and each line's star taken off, blank lines around
-// them dropped.
 func docblockContent(text string) []string {
 	body := prose.Trim(text)
 	body = strings.TrimPrefix(body, "/**")
@@ -44,7 +40,6 @@ func docblockContent(text string) []string {
 	return lines
 }
 
-// DocLines is a doc comment's lines, each trimmed of its delimiters and stars as a line-by-line reader sees them.
 func DocLines(text string) []string {
 	var lines []string
 	for _, line := range prose.Lines(text) {
@@ -54,14 +49,12 @@ func DocLines(text string) []string {
 	return lines
 }
 
-// DocParagraphs is how many prose paragraphs a doc comment holds, tag lines aside.
 func DocParagraphs(text string) int {
 	return prose.Paragraphs(DocLines(text), func(line string) bool { return !strings.HasPrefix(line, "@") })
 }
 
 var docReference = regexp.MustCompile(`\{@(?:see|link)\s+\\?([A-Za-z_][\w\\]*\\[\w\\]+)`)
 
-// DocReferences is every class a doc comment points at with {@see} or {@link}, once each, in order.
 func DocReferences(text string) []string {
 	var references []string
 	for _, match := range docReference.FindAllStringSubmatch(text, -1) {
@@ -73,14 +66,10 @@ func DocReferences(text string) []string {
 	return references
 }
 
-// DocblockCanonical is the docblock in canonical form at indent: its content verbatim and in order, a `*` line each,
-// between delimiters that stand alone.
 func DocblockCanonical(text, indent string) string {
 	return docblockOf(docblockContent(text), indent)
 }
 
-// DocblockMerge is several docblocks as one canonical block at indent: each block's content in order, a blank line
-// between blocks.
 func DocblockMerge(texts []string, indent string) string {
 	var lines []string
 	for _, text := range texts {
@@ -97,7 +86,6 @@ func DocblockMerge(texts []string, indent string) string {
 	return docblockOf(lines, indent)
 }
 
-// DocblocksFoldable says whether blocks fold into one coherent block: no tag, with its subject, declared by two.
 func DocblocksFoldable(texts []string) bool {
 	seen := map[string]bool{}
 	for _, text := range texts {
@@ -116,7 +104,6 @@ func DocblocksFoldable(texts []string) bool {
 	return true
 }
 
-// DocumentedParams is the parameter names a docblock's @param tags speak about, each without its `$`.
 func DocumentedParams(text string) []string {
 	var names []string
 	for _, tag := range docTags(text) {
@@ -128,7 +115,6 @@ func DocumentedParams(text string) []string {
 	return names
 }
 
-// docTags is every tag line's tag, with the variable it names when it names one: `@param $x`, `@return`.
 func docTags(text string) []string {
 	var tags []string
 	for _, line := range docblockContent(text) {
@@ -155,7 +141,6 @@ func docTags(text string) []string {
 	return tags
 }
 
-// docblockOf is content lines as a docblock at indent, a blank line a bare `*`.
 func docblockOf(lines []string, indent string) string {
 	var body strings.Builder
 	for _, line := range lines {
@@ -169,8 +154,6 @@ func docblockOf(lines []string, indent string) string {
 	return "/**" + body.String() + "\n" + indent + " */"
 }
 
-// DocblockStackIsFoldable says whether the node's stacked docblocks fold into one: no blank line between two, none
-// documenting a parameter the node does not take, and no tag declared twice.
 func (n Node) DocblockStackIsFoldable() bool {
 	blocks := n.Docblocks()
 	texts := make([]string, 0, len(blocks))
@@ -192,7 +175,6 @@ func (n Node) DocblockStackIsFoldable() bool {
 	return DocblocksFoldable(texts)
 }
 
-// ParamNames is the names of a function declaration's parameters, without their `$`.
 func (n Node) ParamNames() []string {
 	if !n.IsFunctionDeclaration() {
 		return nil
@@ -207,13 +189,10 @@ func (n Node) ParamNames() []string {
 	return names
 }
 
-// docEndLine is the line a comment ends on.
 func docEndLine(comment contract.Comment) int {
 	return comment.Span.Line + strings.Count(comment.Text, "\n")
 }
 
-// DocblockRetype is a docblock with the type it gives name changed from one class to another: in `@param T $name`,
-// `@var T $name`, and a property's bare `@var T`, a generic's arguments kept.
 func DocblockRetype(text, name, from, to string) string {
 	quoted := regexp.QuoteMeta(name)
 	rehead := func(match []string) string {
@@ -229,8 +208,6 @@ func DocblockRetype(text, name, from, to string) string {
 	return replaceSubmatches(regexp.MustCompile(`(?m)(@var\s+)([^\r\n]+?)(\s*)$`), text, rehead)
 }
 
-// DocblockMentionsType says whether a docblock spells a class's short name as a whole word, not part of another
-// name or namespace.
 func DocblockMentionsType(text, fqcn string) bool {
 	short := fqcn[strings.LastIndex(fqcn, `\`)+1:]
 	for at := 0; ; {
@@ -248,7 +225,6 @@ func DocblockMentionsType(text, fqcn string) bool {
 	}
 }
 
-// docReheaded is a type with its head class changed, `?` and generic arguments kept; nothing when another class heads it.
 func docReheaded(written, from, to string) (string, bool) {
 	prefix := ""
 	if strings.HasPrefix(written, "?") {
@@ -267,7 +243,6 @@ func docReheaded(written, from, to string) (string, bool) {
 	return "", false
 }
 
-// replaceSubmatches replaces every match of the pattern, left to right, with what replace makes of its groups.
 func replaceSubmatches(pattern *regexp.Regexp, text string, replace func([]string) string) string {
 	var out strings.Builder
 	last := 0
@@ -291,7 +266,6 @@ func isWordByte(c byte) bool {
 	return c == '_' || c >= '0' && c <= '9' || c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z'
 }
 
-// DocblockWithoutTag is a docblock's lines with every line of the tag taken out, the rest as they stand.
 func DocblockWithoutTag(text, tag string) []string {
 	tagLine := regexp.MustCompile(`^\s*\*?\s*@` + regexp.QuoteMeta(tag) + `\b`)
 	var kept []string

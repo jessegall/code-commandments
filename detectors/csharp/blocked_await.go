@@ -16,12 +16,10 @@ func init() {
 	detectors.Register(catalog.CSharp, BlockedAwaitDetector{})
 }
 
-// Sin is the sin the detector finds.
 func (BlockedAwaitDetector) Sin() sins.Sin {
 	return cssins.BlockedAwait{}
 }
 
-// Find is every blocking read of a task.
 func (BlockedAwaitDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return cs.In(codebase).
 		Where(engine.As(cs.Node.BlocksOnATask)).

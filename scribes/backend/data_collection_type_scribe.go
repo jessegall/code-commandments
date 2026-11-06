@@ -14,11 +14,9 @@ func init() {
 	scribes.Fixes(rules.DataCollectionTypeDetector{}, func() scribes.Scribe { return DataCollectionTypeScribe{} })
 }
 
-// DataCollectionTypeScribe retypes a field typed DataCollection, whose element #[DataCollectionOf] already names, as
-// an array, its docblock with it, and drops the import nothing spells any more.
+// DataCollectionTypeScribe retypes a field typed DataCollection, whose element #[DataCollectionOf] already names, as an array, its docblock with it, and drops the import nothing spells any more.
 type DataCollectionTypeScribe struct{}
 
-// Rewrite retypes each field, then asks once per file whether the import is still spelled.
 func (DataCollectionTypeScribe) Rewrite(findings []engine.Match, _ *engine.Codebase) (scribes.Rewrites, error) {
 	draft := scribes.NewDraft()
 	var files []string
@@ -42,8 +40,6 @@ func (DataCollectionTypeScribe) Rewrite(findings []engine.Match, _ *engine.Codeb
 	return draft.Rewrites(), nil
 }
 
-// retype writes `array` over the field's DataCollection type and in its docblocks, when #[DataCollectionOf] names
-// the element; without it, retyping would lose the element, so the field is left for a hand fix.
 func retype(draft *scribes.Draft, field engine.Match) bool {
 	typeName, named := dataCollectionNameIn(field.Child("type"))
 	if !named || !carriesDataCollectionOf(field) {
@@ -68,8 +64,6 @@ func retype(draft *scribes.Draft, field engine.Match) bool {
 	return true
 }
 
-// stillNamesDataCollection says whether the class, once every fixable field is retyped, still spells DataCollection:
-// a field no #[DataCollectionOf] names, or a docblock that mentions it.
 func stillNamesDataCollection(class engine.Match) bool {
 	for _, declaration := range declarationsIn(class) {
 		if _, named := dataCollectionNameIn(declaration.Child("type")); named && !carriesDataCollectionOf(declaration) {
@@ -85,7 +79,6 @@ func stillNamesDataCollection(class engine.Match) bool {
 	return false
 }
 
-// asFixed is a docblock as it reads once every fixable field of the class is retyped.
 func asFixed(text string, class engine.Match) string {
 	for _, declaration := range declarationsIn(class) {
 		name, known := fieldName(declaration)
@@ -97,7 +90,6 @@ func asFixed(text string, class engine.Match) string {
 	return text
 }
 
-// declarationsIn is every property of a class and every parameter of its methods.
 func declarationsIn(class engine.Match) []engine.Match {
 	var declarations []engine.Match
 	for _, statement := range class.ChildrenIn("stmts") {
@@ -112,7 +104,6 @@ func declarationsIn(class engine.Match) []engine.Match {
 	return declarations
 }
 
-// fieldName is the name a parameter or a property declares, its first one when it declares several.
 func fieldName(declaration engine.Match) (string, bool) {
 	if declaration.Kind() == "Param" {
 		variable := declaration.Child("var")
@@ -126,7 +117,6 @@ func fieldName(declaration engine.Match) (string, bool) {
 	return "", false
 }
 
-// dataCollectionNameIn is the DataCollection name a type spells: bare, nullable, or a member of a union.
 func dataCollectionNameIn(typed engine.Match) (engine.Match, bool) {
 	switch kind := typed.Kind(); {
 	case strings.HasPrefix(kind, "Name"):
@@ -144,7 +134,6 @@ func dataCollectionNameIn(typed engine.Match) (engine.Match, bool) {
 	return engine.Match{}, false
 }
 
-// carriesDataCollectionOf says whether a field carries #[DataCollectionOf].
 func carriesDataCollectionOf(field engine.Match) bool {
 	for _, group := range field.ChildrenIn("attrGroups") {
 		for _, attribute := range group.ChildrenIn("attrs") {

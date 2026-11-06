@@ -6,15 +6,13 @@ import (
 	"github.com/jessegall/code-commandments/cli/folder"
 )
 
-// Adoption is a stranded folder taken into a session's own: everything that fits is moved, nothing is
-// overwritten, and the stranded folder is deleted only when nothing was left behind.
+// Adoption is a stranded folder taken into a session's own: everything that fits is moved, nothing is overwritten, and the stranded folder is deleted only when nothing was left behind.
 type Adoption struct {
 	from  string
 	moved []string
 	kept  []string
 }
 
-// Take moves what it can of from into into.
 func Take(from, into string) *Adoption {
 	adoption := &Adoption{from: from}
 	adoption.absorb(from, into)
@@ -26,17 +24,14 @@ func Take(from, into string) *Adoption {
 	return adoption
 }
 
-// IsComplete says whether everything came across.
 func (a *Adoption) IsComplete() bool {
 	return len(a.kept) == 0
 }
 
-// Moved are the entries that came across, relative to the stranded folder.
 func (a *Adoption) Moved() []string {
 	return a.moved
 }
 
-// Kept are the entries left behind, because the destination had one or because they are links.
 func (a *Adoption) Kept() []string {
 	return a.kept
 }
@@ -53,7 +48,6 @@ func (a *Adoption) absorb(from, into string) {
 	}
 }
 
-// adopt moves one entry. A link is never moved nor walked through: what it points at is not this folder's.
 func (a *Adoption) adopt(entry, target string) {
 	link, _ := os.Lstat(entry)
 

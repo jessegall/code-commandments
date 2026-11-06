@@ -5,17 +5,13 @@ import (
 	"strings"
 )
 
-// A subtree worth a component of its own holds at least this many elements, this many levels deep.
 const (
 	componentElements = 6
 	componentLevels   = 3
 )
 
-// tableBound are the tags that only make sense inside their table: a component cannot stand in for one.
 var tableBound = []string{"td", "th", "tr", "tbody", "thead", "tfoot", "caption", "colgroup"}
 
-// Boundary is the element a subtree would be extracted from: climbed from an element through every parent
-// that holds nothing else, so the wrapper and its lone child are one piece.
 func (e Element) Boundary() Element {
 	for {
 		parent := e.Parent()
@@ -26,8 +22,6 @@ func (e Element) Boundary() Element {
 	}
 }
 
-// IsExtractable says whether the element's subtree could stand as a component of its own: enough elements,
-// enough levels, and not a table part that only its table can hold.
 func (e Element) IsExtractable() bool {
 	return e.IsElement() &&
 		e.Size() >= componentElements &&
@@ -35,8 +29,6 @@ func (e Element) IsExtractable() bool {
 		!slices.Contains(tableBound, strings.ToLower(e.Tag()))
 }
 
-// HoldsView says whether the element renders a whole view: it, or an element below it, could stand as a component
-// of its own. A <template> renders only what it holds, so it is never the view itself.
 func (e Element) HoldsView() bool {
 	for _, candidate := range append([]Element{e}, e.DescendantElements()...) {
 		if !candidate.IsTemplate() && candidate.IsExtractable() {

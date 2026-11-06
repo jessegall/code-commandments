@@ -11,7 +11,6 @@ type InjectedServiceNotHidden struct{}
 
 func init() { sins.Register(catalog.PHP, InjectedServiceNotHidden{}) }
 
-// Definition is what the sin states about itself.
 func (InjectedServiceNotHidden) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "injected-service-not-hidden",
@@ -23,7 +22,6 @@ func (InjectedServiceNotHidden) Definition() sins.Definition {
 	}
 }
 
-// Scaffolds are the helpers the fix reaches for, which scaffold generates into the project.
 func (InjectedServiceNotHidden) Scaffolds() []sins.Scaffold {
 	return []sins.Scaffold{
 		{Path: "TypeScript/DropDataHiddenPropertyProcessor.php", Stub: "DropDataHiddenPropertyProcessor.php.stub"},

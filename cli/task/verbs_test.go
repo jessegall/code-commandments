@@ -10,11 +10,6 @@ import (
 	"github.com/jessegall/code-commandments/cli"
 )
 
-// What the task verbs answer was proved only by the recorded parity cases, which run the built binary. The command
-// reads the session's own task list and writes to a console, so its answers are held here, and the ones chosen are
-// the refusals: a verb that quietly does nothing reads exactly like a verb that worked.
-
-// told runs the command inside the project and answers its exit code and what it said.
 func told(t *testing.T, project string, args ...string) (code int, said string, warned string) {
 	t.Helper()
 	was, err := os.Getwd()
@@ -35,7 +30,6 @@ func told(t *testing.T, project string, args ...string) (code int, said string, 
 	return code, out.String(), errs.String()
 }
 
-// aProjectWithASession is a project a session can keep its tasks in.
 func aProjectWithASession(t *testing.T) string {
 	t.Helper()
 	root, err := filepath.EvalSymlinks(t.TempDir())
@@ -49,8 +43,6 @@ func aProjectWithASession(t *testing.T) string {
 	return root
 }
 
-// TestAVerbTheToolDoesNotHaveSaysSo holds the answer to a mistyped verb, which otherwise prints the board and reads
-// as if the verb had run.
 func TestAVerbTheToolDoesNotHaveSaysSo(t *testing.T) {
 	code, _, warned := told(t, aProjectWithASession(t), "juggle")
 
@@ -62,7 +54,6 @@ func TestAVerbTheToolDoesNotHaveSaysSo(t *testing.T) {
 	}
 }
 
-// TestAddingWithoutATitleSaysWhatToType holds the one argument the verb cannot do without.
 func TestAddingWithoutATitleSaysWhatToType(t *testing.T) {
 	code, _, warned := told(t, aProjectWithASession(t), "add")
 
@@ -74,8 +65,6 @@ func TestAddingWithoutATitleSaysWhatToType(t *testing.T) {
 	}
 }
 
-// TestATaskUnderOneThatIsNotThereIsRefused holds --under: a subtask of a task nobody has would be written where
-// nothing points at it, so the verb refuses rather than queueing it loose.
 func TestATaskUnderOneThatIsNotThereIsRefused(t *testing.T) {
 	project := aProjectWithASession(t)
 
@@ -96,8 +85,6 @@ func TestATaskUnderOneThatIsNotThereIsRefused(t *testing.T) {
 	}
 }
 
-// TestStartingATaskNobodyHasSaysSo holds the refusal a reader needs most: starting a number that is not there must
-// not read as having started something.
 func TestStartingATaskNobodyHasSaysSo(t *testing.T) {
 	project := aProjectWithASession(t)
 
@@ -124,8 +111,6 @@ func TestStartingATaskNobodyHasSaysSo(t *testing.T) {
 	}
 }
 
-// TestATaskIsQueuedStartedAndClosed holds the whole life a reader puts a task through, and that each step says
-// which task it was about.
 func TestATaskIsQueuedStartedAndClosed(t *testing.T) {
 	project := aProjectWithASession(t)
 
@@ -150,8 +135,6 @@ func TestATaskIsQueuedStartedAndClosed(t *testing.T) {
 	}
 }
 
-// TestClosingWithoutSayingWhatCameOfItIsRefused holds what history keeps: a closed task with no outcome is a row
-// that says something happened and not what.
 func TestClosingWithoutSayingWhatCameOfItIsRefused(t *testing.T) {
 	project := aProjectWithASession(t)
 
@@ -169,8 +152,6 @@ func TestClosingWithoutSayingWhatCameOfItIsRefused(t *testing.T) {
 	}
 }
 
-// TestClosingATaskTwiceSaysItIsAlreadyClosed holds the second attempt, and points the reader at its log rather than
-// closing it again.
 func TestClosingATaskTwiceSaysItIsAlreadyClosed(t *testing.T) {
 	project := aProjectWithASession(t)
 
@@ -191,7 +172,6 @@ func TestClosingATaskTwiceSaysItIsAlreadyClosed(t *testing.T) {
 	}
 }
 
-// TestAnEmptyBoardSaysThereIsNothingRatherThanNothingAtAll holds the first thing a reader sees in a fresh session.
 func TestAnEmptyBoardSaysThereIsNothingRatherThanNothingAtAll(t *testing.T) {
 	code, said, warned := told(t, aProjectWithASession(t))
 

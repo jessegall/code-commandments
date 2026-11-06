@@ -14,14 +14,13 @@ var (
 	valueObjectsPrinciple string
 )
 
-// ValueObjects teaches: give related data a type: no loose `array<string,mixed>` bags, no data clumps, no primitive obsession. (Decide the type; then `spatie-data` is how to write it.)
+// ValueObjects teaches: give related data a type: no loose `array<string,mixed>` bags, no data clumps, no primitive obsession.
 type ValueObjects struct{}
 
 func init() {
 	skill.Register(catalog.PHP, ValueObjects{})
 }
 
-// Definition is what the skill states about itself.
 func (ValueObjects) Definition() skill.Definition {
 	return skill.Definition{
 		Slug:      "php/value-objects",

@@ -16,12 +16,10 @@ func init() {
 	detectors.Register(catalog.Python, DictReturnBagDetector{})
 }
 
-// Sin is the sin the detector finds.
 func (DictReturnBagDetector) Sin() sins.Sin {
 	return pysins.DictReturnBag{}
 }
 
-// Find is every place the sin is committed.
 func (DictReturnBagDetector) Find(codebase *engine.Codebase) []engine.Match {
 	program := py.In(codebase).Program
 
@@ -41,7 +39,6 @@ func (DictReturnBagDetector) Find(codebase *engine.Codebase) []engine.Match {
 		Get()
 }
 
-// hasTwoStringKeys says whether a dict display writes two or more string keys.
 func hasTwoStringKeys(n py.Node) bool {
 	return n.StringKeyCount() >= 2
 }

@@ -16,13 +16,10 @@ func init() {
 	detectors.Register(catalog.Python, MutableStaticStateDetector{})
 }
 
-// Sin is the sin the detector finds.
 func (MutableStaticStateDetector) Sin() sins.Sin {
 	return pysins.MutableStaticState{}
 }
 
-// Find is every place the sin is committed, outside test code, where the process is the lifetime and there is no
-// second caller to leak into.
 func (MutableStaticStateDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return py.In(codebase).
 		WhereStatement().

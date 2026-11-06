@@ -8,10 +8,6 @@ import (
 	"testing"
 )
 
-// TestTwoSinsOnOneLineAreBothTold holds the mark to every sin the edit's lines carry, not one per line. Two rules
-// can be right about the same line — one about the docstring inside the method, one about the method's name — and
-// a mark that named only the first would read as the second rule being gone. The marks are kept by identity, which
-// is the rule, the file and the text of the line, so two rules about one line are two marks.
 func TestTwoSinsOnOneLineAreBothTold(t *testing.T) {
 	root, err := filepath.EvalSymlinks(t.TempDir())
 	if err != nil {

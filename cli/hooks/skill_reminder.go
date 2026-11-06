@@ -20,15 +20,11 @@ import (
 )
 
 const (
-	// touchedLimit is how many changed files one shell command is checked over.
 	touchedLimit = 5
-	// budget is how many bytes of source one check reads, so a burst of large files never stalls an edit.
-	budget = 120_000
+	budget       = 120_000
 )
 
-// SkillReminder checks what an edit changed against the rules that can judge one file, the project's own among them, and names the skill
-// that teaches the fix of each finding it has not named before; a shell command's edits are the judged
-// files changed since the last look.
+// SkillReminder checks what an edit changed against the rules that can judge one file, the project's own among them, and names the skill that teaches the fix of each finding it has not named before; a shell command's edits are the judged files changed since the last look.
 type SkillReminder struct{}
 
 func (SkillReminder) Class() string { return "SkillReminder" }
@@ -45,9 +41,6 @@ func (SkillReminder) Handle(event Event) Response {
 		return Silent()
 	}
 
-	// The configuration and the project's own rules come from the PROJECT, never from a worktree. A worker has
-	// no copy of its own to keep in step, and a change in the plugin's configuration applies to every worker at
-	// once. What a worktree answers for is the root a relative path is joined to, which is its own checkout.
 	home := projectOf(event.Root)
 
 	project, _ := config.Load(home)
@@ -59,14 +52,9 @@ func (SkillReminder) Handle(event Event) Response {
 
 	enabled = append(enabled, custom.InForce(home).Enabled(project)...)
 
-	// A rule of the project's own may name the folders it judges in its own file, so the config is read with what
-	// the rules declare before anything asks which files are looked at or which rules may mark one.
 	project = project.Judging(enabled)
 	files := edited(event, project)
 
-	// The rules that answer from the file they report in, which is all a run with no base of the branch can
-	// ask. The clone matters: DeleteFunc writes through the slice it is given, so narrowing in place would take
-	// those rules out of the enabled set every other reader here uses.
 	single := slices.DeleteFunc(slices.Clone(enabled), detectors.ReadsBeyondOneFile)
 
 	reported := ReportedIn(event.Workspace())
@@ -76,9 +64,6 @@ func (SkillReminder) Handle(event Event) Response {
 	var unreadable []string
 	var spentReading time.Duration
 
-	// Judged in ONE pass over one view: a judging of one file measured 3.7 seconds of rules with nothing to
-	// read, so an agent's twelve edits judged one after another cost it 44 seconds. The files of a batch are all
-	// of one agent, which is what makes one view right for them.
 	judged := slices.DeleteFunc(slices.Clone(files), func(file string) bool {
 		return !project.Writes(source.OfFile(file))
 	})
@@ -100,27 +85,14 @@ func (SkillReminder) Handle(event Event) Response {
 			continue
 		}
 
-		// A file inside a folder the project excludes is marked only by the rules it let in there, where a file
-		// of its declared paths is marked by them all.
-		//
-		// Against a view of the branch's base every rule can be asked, since the view IS the program; with no
-		// base held the file is judged alone, which only the rules that answer from one file may be asked, and
-		// a base is read in the background so the next edit is answered against the program.
-		// The folders a rule names are joined to the checkout the FILE lies in, which for a worker is its own
-		// worktree: the folders are the project's, the root is the file's.
 		marks, against := together[file]
 		if !against {
-			// A file the program could not answer for is judged alone, by the rules that answer from one file,
-			// as every edit was before a tree was held.
 			var unread error
 			var read time.Duration
 			marks, read, unread = marksIn(marking, file,
 				project.RulesFor(checkoutOf(event.Root, file), file, single), event.ChangedLines(file))
 			spentReading += read
 
-			// A file nothing could READ is not a file with no sins, and answering nothing for it says exactly
-			// that: a bridge that cannot run on this machine judged every edit of its language with silence,
-			// and the agent read that as clean. Said once, with the file and the reason.
 			if unread != nil {
 				unreadable = append(unreadable, filepath.Base(file)+": "+unread.Error())
 			}
@@ -150,9 +122,6 @@ func (SkillReminder) Handle(event Event) Response {
 		said = append(said, nudge(event, fresh))
 	}
 
-	// A file nothing could READ is not a file with no sins, and answering nothing for it says exactly that: a
-	// bridge that cannot run on this machine judged every edit of its language with silence, and an agent read
-	// that silence as clean.
 	if len(unreadable) > 0 {
 		said = append(said, "Code Commandments could not read what this edit changed, so nothing of it was judged, "+
 			"which is not the same as finding no sins: "+strings.Join(unreadable, "; "))
@@ -171,8 +140,6 @@ func (SkillReminder) Handle(event Event) Response {
 	return response
 }
 
-// edited are the files the moment changed, within the budget: a writer's own file when it is judged, or the
-// judged files a shell command changed since the last look.
 func edited(event Event, project config.Config) []string {
 	touched := TouchedIn(event.Workspace(), event.Root, project)
 	var files []string
@@ -182,15 +149,6 @@ func edited(event Event, project config.Config) []string {
 	case shell:
 		files, more = touched.Claim(touchedLimit)
 	case len(batchedIn(event.payload)) > 0:
-		// The batch this moment stands for: an agent's own edits, gathered so they are judged in one pass over
-		// one view rather than a pass each.
-		//
-		// Each through the SAME resolution a single file gets, and never as the journal named it. A journal
-		// names a path relative to a checkout, and everything after it — which checkout the file lies in, which
-		// folders of the project hold it, whether it is there at all — is a question about a real path and
-		// nonsense about a relative one. Carried as they came, a batch of more than one lost every file of
-		// itself: the mark answered nothing for each, every one read as a file that is gone, and the sins of
-		// all of them went untold while a batch of one, which takes the path below, was answered properly.
 		for _, named := range batchedIn(event.payload) {
 			if file := judgedFile(event.Root, named, project); file != "" {
 				files = append(files, file)
@@ -214,9 +172,6 @@ func edited(event Event, project config.Config) []string {
 		if err != nil {
 			continue
 		}
-		// A file no budget could ever afford is one the tool refuses to read whole; it is past this check for
-		// good, and `judge` is what still finds it. One that merely does not fit what is left of this check's
-		// budget waits for the next, so a burst of writes is judged over several calls instead of losing its tail.
 		if info.Size() > int64(budget) {
 			continue
 		}
@@ -242,18 +197,11 @@ func judgedFile(root, file string, project config.Config) string {
 		return ""
 	}
 
-	// Absolute first, and only then which checkout it lies in: a file the event names is RELATIVE to the root,
-	// and asking git about a relative path asks about this process's own folder, which is the plugin's. That is
-	// what left a worker's edits unjudged even once the gate knew to look at the file's own checkout.
 	absolute := file
 	if !strings.HasPrefix(file, "/") {
 		absolute = strings.TrimRight(root, "/") + "/" + strings.TrimLeft(file, "/")
 	}
 
-	// And with its links resolved, because that is the path the TREE holds: a scan resolves every path it reads,
-	// and git answers about the checkout it really found. A project reached through a linked path — a Mac's
-	// /tmp, a linked home, a checkout under either — then named a file the program does not hold, and the
-	// answer fell back to the file alone, with every rule that reads more than one file quietly left out.
 	if resolved, err := filepath.EvalSymlinks(absolute); err == nil {
 		absolute = resolved
 	}
@@ -269,9 +217,6 @@ func judgedFile(root, file string, project config.Config) string {
 	return absolute
 }
 
-// projectOf is the project a run belongs to: the main checkout of the repository the folder lies in, so a
-// worker in a worktree reads the project's configuration and the project's own rules rather than a copy of its
-// own. The folder itself where it lies in no repository.
 func projectOf(folder string) string {
 	if project := git.ProjectRoot(folder); project != "" {
 		return project
@@ -280,12 +225,6 @@ func projectOf(folder string) string {
 	return folder
 }
 
-// checkoutOf is the root a path the project declares is joined to for this file: the checkout the file lies in,
-// where that is a checkout of this project, and the given root otherwise.
-//
-// A worktree is a checkout of its own, cut inside the project's hidden folder, so a worker's file joined to the
-// PROJECT's root reads as a path outside every declared folder: such a file was dropped before any rule ran, and
-// the plugin answered a worker's events with nothing while a judging of that file found eight sins.
 func checkoutOf(root, file string) string {
 	checkout := git.Root(file)
 	if checkout == "" || checkout == strings.TrimRight(root, "/") {
@@ -299,8 +238,6 @@ func checkoutOf(root, file string) string {
 	return checkout
 }
 
-// marksIn are every sin the rules find in the file, each marked touched when it stands on a line the working
-// tree changed, and filed when this project has already reported it.
 func marksIn(marking Marking, file string, rules []detectors.Detector, changed git.ChangedLines) ([]SinMark, time.Duration, error) {
 	language := source.OfFile(file)
 
@@ -308,8 +245,6 @@ func marksIn(marking Marking, file string, rules []detectors.Detector, changed g
 	codebase, err := scan.OneFile(file).Load()
 	read := time.Since(reading)
 
-	// A bridge that stopped partway read some of it, and what it read is judged; a read that answered nothing
-	// is said, since no marks for a file nothing could read is not the same answer as no sins in it.
 	var incomplete scan.Incomplete
 	if errors.As(err, &incomplete) {
 		err = nil
@@ -322,17 +257,11 @@ func marksIn(marking Marking, file string, rules []detectors.Detector, changed g
 	var marks []SinMark
 
 	for _, rule := range rules {
-		// Every engine the rule judges, not the first one its file happens to name: a rule naming go and
-		// python was never asked about a python file here, which is a rule a project wrote switched off in
-		// its live check while a judge still reported it.
 		if !detectors.Judges(rule, language.Engine()) {
 			continue
 		}
 
 		for _, match := range safely(rule, codebase) {
-			// Only a finding IN this file is this file's mark. For most languages the scan loaded nothing
-			// else, but Go's types come from a whole package, so a scan shown one Go file reads its siblings
-			// too, and a sin one of them holds is the sibling's own business.
 			if match.File() != file {
 				continue
 			}
@@ -343,8 +272,6 @@ func marksIn(marking Marking, file string, rules []detectors.Detector, changed g
 	return marks, read, nil
 }
 
-// bySkill are the touched marks as the check names them, by the skill that fixes them, and the skills in the
-// order they were found.
 func bySkill(marks []SinMark) (map[string][]string, []string) {
 	found := map[string][]string{}
 	var order []string
@@ -365,7 +292,6 @@ func bySkill(marks []SinMark) (map[string][]string, []string) {
 	return found, order
 }
 
-// safely is what the rule finds, or nothing when it fails: one broken rule never silences the others.
 func safely(rule detectors.Detector, codebase *engine.Codebase) (matches []engine.Match) {
 	defer func() {
 		if recover() != nil {
@@ -376,11 +302,6 @@ func safely(rule detectors.Detector, codebase *engine.Codebase) (matches []engin
 	return rule.Find(codebase)
 }
 
-// attribution names what was changed, as the nudge opens with it.
-// owed are the ids of the skills the fresh findings teach, each once. A journal holds the agent to these, where
-// the nudge alone only names them, and a sin fixed from memory of a skill that was never read is how a finding
-// gets silenced rather than resolved. A project's own rule is named here like a shipped one, since its skill is
-// published under the same prefix.
 func owed(marks []SinMark) []string {
 	var ids []string
 	for _, mark := range marks {
@@ -394,19 +315,6 @@ func owed(marks []SinMark) []string {
 	return ids
 }
 
-// nudge is what a check says the moment an edit commits a sin: each new sin, the file and lines it is in, the thing
-// it is about where the finding names one, and the skill that teaches the fix. It names them rather than sending
-// the agent to find out what it was just told.
-//
-// Every word of it is read by an agent on every edit, so it is said once. The findings of one sin in one file are
-// one line, naming that file and that skill once however many there are, because three findings used to repeat the
-// path, the skill and a whole judge command three times over. The command is gone with them: an agent that is told
-// the file and the sin can judge it, and the line that said how was half of the line.
-//
-// The skill is named with every sin raised, always, and that is not a length to save. A mark that says only what is
-// wrong leaves the reader to guess the discipline that says how to fix it, and a guess is how a finding gets
-// silenced instead of fixed; a compaction drops a loaded skill without saying so, which is why the discipline
-// itself tells an agent to assume it is NOT loaded. Naming it once a session would trade that for a few words.
 func nudge(event Event, marks []SinMark) string {
 	grouped, order := byFileAndSin(event.Root, marks)
 
@@ -422,8 +330,7 @@ func nudge(event Event, marks []SinMark) string {
 	return strings.Join(lines, "\n")
 }
 
-// raised is every finding of one sin in one file, which is what the agent is told about as one thing: the file and
-// the skill are the same for all of them, and only the line and the name they stand on differ.
+// raised is every finding of one sin in one file, which is what the agent is told about as one thing: the file and the skill are the same for all of them, and only the line and the name they stand on differ.
 type raised struct {
 	file  string
 	sin   string
@@ -432,8 +339,6 @@ type raised struct {
 	named []string
 }
 
-// line is what the agent reads for them: the file once, the lines it holds them on, the sin, what it is about where
-// the findings name something, and the skill that teaches the fix.
 func (r raised) line(root string) string {
 	said := r.file + ":" + strings.Join(r.lines, ",") + " " + r.sin
 
@@ -444,8 +349,6 @@ func (r raised) line(root string) string {
 	return said + " — load `" + r.skill + "`"
 }
 
-// byFileAndSin gathers the marks by the file and the sin they share, in the order they were found, so the lines
-// read in the order the file does.
 func byFileAndSin(root string, marks []SinMark) (map[string]raised, []string) {
 	grouped := map[string]raised{}
 	var order []string
@@ -463,9 +366,6 @@ func byFileAndSin(root string, marks []SinMark) (map[string]raised, []string) {
 
 		held.lines = append(held.lines, strconv.Itoa(mark.Match.Line()))
 
-		// What the finding is about, where it is about a thing with a name: a variable, a method, a parameter. It
-		// is the fix in one word for the rules about naming, and it saves the agent reading the file to find out
-		// which of three names on the line was meant. A finding about a block names nothing, and says nothing.
 		if named := mark.Match.Name(); named != "" && !slices.Contains(held.named, named) {
 			held.named = append(held.named, named)
 		}

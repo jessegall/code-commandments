@@ -1,5 +1,4 @@
-// Package layers is `layers`: read the dependency stack a project already has and propose its layer
-// declaration, or grow a declared stack in place, one layer or one arrow at a time.
+// Package layers is `layers`: read the dependency stack a project already has and propose its layer declaration, or grow a declared stack in place, one layer or one arrow at a time.
 package layers
 
 import (
@@ -20,12 +19,10 @@ import (
 // Command is `layers`.
 type Command struct{}
 
-// Names are the verbs it answers to.
 func (Command) Names() []string {
 	return []string{"layers"}
 }
 
-// Help documents it.
 func (Command) Help() help.Help {
 	return help.Of("Read the dependency stack this project ALREADY has and propose the layer declaration for it — the rule is inert until one is declared, and nobody writes that from a blank file.").
 		Form("layers [path]", "propose today's shape: every namespace with what it already uses").
@@ -41,7 +38,6 @@ func (Command) Help() help.Help {
 			"INCREMENTALLY with `add`/`allow`, or regenerates the whole block from today's shape with `--write --refresh`. Every edit goes through the AST and replaces only the ->layer(...) chain, keeping your config's own formatting.")
 }
 
-// Run answers the form the arguments name.
 func (c Command) Run(in *cli.Input, console cli.Console) (int, error) {
 	root, err := os.Getwd()
 	if err != nil {
@@ -58,8 +54,6 @@ func (c Command) Run(in *cli.Input, console cli.Console) (int, error) {
 	}
 }
 
-// propose reads the graph of the given path, else of the project's declared roots, and reports or writes
-// its shape into this project's config.
 func (c Command) propose(in *cli.Input, project string, console cli.Console) (int, error) {
 	roots := []string{}
 
@@ -189,7 +183,6 @@ func write(project string, layers []config.Layer, refresh bool, console cli.Cons
 	return 0, nil
 }
 
-// layersOf is the shape as the config declares it.
 func layersOf(shape []namespaces.Layer) []config.Layer {
 	layers := make([]config.Layer, len(shape))
 
@@ -297,7 +290,6 @@ func indexOf(layers []config.Layer, namespace string) int {
 	return -1
 }
 
-// normalisedAll are the given namespaces normalised, the blank ones dropped.
 func normalisedAll(given []string) []string {
 	var kept []string
 
@@ -310,7 +302,6 @@ func normalisedAll(given []string) []string {
 	return kept
 }
 
-// normalise is a namespace with doubled separators single and no leading one.
 func normalise(namespace string) string {
 	return strings.TrimLeft(strings.ReplaceAll(strings.Trim(namespace, " \t\n\r\x00\x0B"), `\\`, `\`), `\`)
 }

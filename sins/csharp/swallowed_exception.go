@@ -13,7 +13,6 @@ func init() {
 	sins.Register(catalog.CSharp, SwallowedException{})
 }
 
-// Definition is what the sin states about itself.
 func (SwallowedException) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "csharp-swallowed-exception",

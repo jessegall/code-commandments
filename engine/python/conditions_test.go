@@ -8,9 +8,6 @@ import (
 	"github.com/jessegall/code-commandments/engine/python/pythontest"
 )
 
-// TestAConditionIsAConceptOnlyWhenItAsksSeveralObjects holds the shared reading of an unnamed condition to what
-// it claims: parts alone are no sin, and a chain over one subject is a range check. The reading lives in the
-// engine and every language reaches it the same way, so Python stands for all of them here.
 func TestAConditionIsAConceptOnlyWhenItAsksSeveralObjects(t *testing.T) {
 	for name, test := range map[string]struct {
 		source string

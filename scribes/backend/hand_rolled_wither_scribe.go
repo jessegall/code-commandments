@@ -16,7 +16,6 @@ func init() {
 // HandRolledWitherScribe rewrites a wither that rebuilds its own class argument by argument into `clone($this, [...])`.
 type HandRolledWitherScribe struct{}
 
-// Rewrite replaces each rebuild with a clone naming only what changes.
 func (HandRolledWitherScribe) Rewrite(findings []engine.Match, _ *engine.Codebase) (scribes.Rewrites, error) {
 	draft := scribes.NewDraft()
 	for _, finding := range findings {
@@ -34,8 +33,6 @@ func (HandRolledWitherScribe) Rewrite(findings []engine.Match, _ *engine.Codebas
 	return draft.Rewrites(), nil
 }
 
-// cloneWith is `clone($this, [...])` holding one `'prop' => value` per argument not carried across verbatim; nothing
-// when an argument's property cannot be named for certain.
 func cloneWith(finding engine.Match) (string, bool) {
 	params := php.ConstructorParams(php.Node{Match: finding}.EnclosingClassLike().Match)
 	if finding.Kind() != "Expr_New" || len(params) == 0 {

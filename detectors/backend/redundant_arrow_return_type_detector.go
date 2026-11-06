@@ -14,10 +14,8 @@ type RedundantArrowReturnTypeDetector struct{}
 
 func init() { detectors.Register(catalog.PHP, RedundantArrowReturnTypeDetector{}) }
 
-// Sin is the sin the detector finds.
 func (RedundantArrowReturnTypeDetector) Sin() sins.Sin { return backendsins.RedundantArrowReturnType{} }
 
-// Find is every arrow function whose return type is its expression's plain type.
 func (RedundantArrowReturnTypeDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return php.In(codebase).
 		WhereKind("Expr_ArrowFunction").
@@ -26,5 +24,4 @@ func (RedundantArrowReturnTypeDetector) Find(codebase *engine.Codebase) []engine
 		Get()
 }
 
-// Repentable says a scribe rewrites the sin away.
 func (RedundantArrowReturnTypeDetector) Repentable() {}

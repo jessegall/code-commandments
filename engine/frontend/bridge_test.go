@@ -73,8 +73,6 @@ func TestAFileOutsideWriteOnlyInforms(t *testing.T) {
 	}
 }
 
-// TestTheBridgeShipsVuesDeclarations checks that each Vue package typing a ref is beside the bundle and tracked by git,
-// so a project with no vue installed, this checkout's own tests included, still reads a ref's value type.
 func TestTheBridgeShipsVuesDeclarations(t *testing.T) {
 	shipped := filepath.Join("..", "..", "bridge", "frontend", "dist", "types", "node_modules")
 	for _, name := range []string{"vue", "@vue/runtime-dom", "@vue/runtime-core", "@vue/reactivity", "@vue/shared"} {
@@ -99,7 +97,6 @@ func TestTheBridgeShipsVuesDeclarations(t *testing.T) {
 	}
 }
 
-// TestARealAppKeepsTheContract runs the bridge over the app COMMANDMENTS_VUE_APP names, when it names one.
 func TestARealAppKeepsTheContract(t *testing.T) {
 	app := os.Getenv("COMMANDMENTS_VUE_APP")
 	if app == "" {
@@ -152,8 +149,6 @@ func TestServeAnswersEachRequestWithAWholeStream(t *testing.T) {
 	}
 }
 
-// An import reaches the component it names though that component lies outside the scan, as it reaches a TypeScript
-// module there: the component is read from disk to be resolved, and never written.
 func TestAnImportReachesAComponentOutsideTheScan(t *testing.T) {
 	if _, err := exec.LookPath("node"); err != nil {
 		t.Skip("node is not on PATH")

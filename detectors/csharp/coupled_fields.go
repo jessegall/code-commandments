@@ -16,12 +16,10 @@ func init() {
 	detectors.Register(catalog.CSharp, CoupledFieldsDetector{})
 }
 
-// Sin is the sin the detector finds.
 func (CoupledFieldsDetector) Sin() sins.Sin {
 	return cssins.CoupledFields{}
 }
 
-// Find is every place the sin is committed.
 func (CoupledFieldsDetector) Find(codebase *engine.Codebase) []engine.Match {
 	program := cs.In(codebase).Program
 
@@ -31,5 +29,4 @@ func (CoupledFieldsDetector) Find(codebase *engine.Codebase) []engine.Match {
 		Get()
 }
 
-// CrossFile says the PHP tool finds it reaching beyond the file it judges, so a per-file check must not ask it.
 func (CoupledFieldsDetector) CrossFile() {}

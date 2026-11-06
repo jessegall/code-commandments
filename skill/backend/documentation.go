@@ -21,7 +21,6 @@ func init() {
 	skill.Register(catalog.PHP, Documentation{})
 }
 
-// Definition is what the skill states about itself.
 func (Documentation) Definition() skill.Definition {
 	return skill.Definition{
 		Slug:                  "php/documentation",

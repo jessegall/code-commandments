@@ -9,7 +9,6 @@ import (
 // Laravel excuses the framework's entry points, contract methods, casts, relations and providers.
 type Laravel struct{}
 
-// Register adds what Laravel excuses.
 func (Laravel) Register(exemptions *Exemptions) {
 	exemptions.Exempt(Boundary).Classes(laravel.RequestTypes...)
 	exemptions.Exempt(ContractMethod).
@@ -30,7 +29,6 @@ func (Laravel) Register(exemptions *Exemptions) {
 // Spatie excuses the Data package's pipes and casts, which it builds without the container.
 type Spatie struct{}
 
-// Register adds what Spatie Data excuses.
 func (Spatie) Register(exemptions *Exemptions) {
 	exemptions.Exempt(NoContainer).Classes(spatie.NoContainerContracts...)
 }
@@ -38,7 +36,6 @@ func (Spatie) Register(exemptions *Exemptions) {
 // LaravelActions excuses an action's rules(), the validation the package runs, as FormRequest::rules is.
 type LaravelActions struct{}
 
-// Register adds what lorisleiva/laravel-actions excuses.
 func (LaravelActions) Register(exemptions *Exemptions) {
 	exemptions.Exempt(ContractMethod).On(actions.AsAction, "rules")
 }

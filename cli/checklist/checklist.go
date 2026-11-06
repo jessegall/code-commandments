@@ -1,5 +1,4 @@
-// Package checklist is the worklist judge writes into a session's folder: the live `sins.md`, and the
-// runs before it kept beside it under their time stamps, newest five at most.
+// Package checklist is the worklist judge writes into a session's folder: the live `sins.md`, and the runs before it kept beside it under their time stamps, newest five at most.
 package checklist
 
 import (
@@ -23,7 +22,6 @@ const (
 	stamp        = "2006-01-02_150405"
 )
 
-// notesText explains the folder to whoever opens it.
 const notesText = "# Judge checklists\n\n" +
 	"`sins.md` is the live worklist from the last `commandments judge` run: one line per sin,\n" +
 	"grouped under the skill that fixes it. Work it top to bottom, deleting each line as you\n" +
@@ -40,18 +38,14 @@ type Checklist struct {
 	path string
 }
 
-// At is the checklist at path.
 func At(path string) Checklist {
 	return Checklist{path}
 }
 
-// InSession is the session's live checklist.
 func InSession(space workspace.Workspace) Checklist {
 	return Checklist{space.Checklist()}
 }
 
-// Prepare makes the folder a checklist is written to, explains the session's own folder the first time,
-// and marks the session as touched; false when the folder cannot be made.
 func Prepare(target string, space workspace.Workspace) bool {
 	dir := filepath.Dir(target)
 
@@ -77,13 +71,8 @@ func explain(dir string) {
 	atomic.Write(dir+"/"+notes, notesText)
 }
 
-// ReportedHeading opens the section a checklist ends with when the project has reported some of the findings as
-// wrong: lines nobody is to fix and nobody is to delete, which is why nothing below it counts as work left.
 const ReportedHeading = "## Reported — do not fix"
 
-// RemainingSins is how many sin lines the checklist still holds.
-// Lines below the reported heading are not work: they are findings this project has reported as wrong, which a
-// reader is told to leave alone, so counting them would nag for work nobody may do.
 func (c Checklist) RemainingSins() int {
 	raw, err := os.ReadFile(c.path)
 	if err != nil {
@@ -105,7 +94,6 @@ func (c Checklist) RemainingSins() int {
 	return count
 }
 
-// Fingerprint is the checklist's content hash, and whether there is a checklist.
 func (c Checklist) Fingerprint() (string, bool) {
 	raw, err := os.ReadFile(c.path)
 	if err != nil {
@@ -117,7 +105,6 @@ func (c Checklist) Fingerprint() (string, bool) {
 	return hex.EncodeToString(sum[:]), true
 }
 
-// Archive moves the live checklist aside under the time it was written, then keeps the newest five.
 func (c Checklist) Archive() {
 	info, err := os.Stat(c.path)
 	if err != nil || !info.Mode().IsRegular() {
@@ -135,7 +122,6 @@ func (c Checklist) Archive() {
 	c.PruneArchives()
 }
 
-// PruneArchives deletes all but the newest five archives.
 func (c Checklist) PruneArchives() {
 	archives := c.archives()
 
@@ -148,7 +134,6 @@ func (c Checklist) PruneArchives() {
 	}
 }
 
-// ClearAll deletes the checklist, its archives, and a session checklist folder with them.
 func (c Checklist) ClearAll() {
 	os.Remove(c.path)
 
@@ -162,7 +147,6 @@ func (c Checklist) ClearAll() {
 	}
 }
 
-// Delete removes the live checklist, as a clean run does.
 func (c Checklist) Delete() {
 	if exists(c.path) {
 		os.Remove(c.path)

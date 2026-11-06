@@ -13,11 +13,8 @@ func init() {
 	detectors.Register(catalog.Vue, ComponentBudgetDetector{})
 }
 
-// ComponentBudgetDetector finds a component whose template renders more elements than the project's declared
-// budget: how many jobs one component may hold is the project's own call, so the rule judges nothing until the
-// project declares one. Each is reported at the template's first element.
+// ComponentBudgetDetector finds a component whose template renders more elements than the project's declared budget: how many jobs one component may hold is the project's own call, so the rule judges nothing until the project declares one.
 type ComponentBudgetDetector struct {
-	// Budget is how many elements a template may render, <template> wrappers aside; none when zero.
 	Budget int
 }
 
@@ -25,7 +22,6 @@ func (ComponentBudgetDetector) Sin() sins.Sin {
 	return frontend.OversizedComponent{}
 }
 
-// Elements declares the budget: how many elements a component's template may render.
 func (d ComponentBudgetDetector) Elements(budget int) ComponentBudgetDetector {
 	d.Budget = budget
 

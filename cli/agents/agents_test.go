@@ -11,8 +11,6 @@ import (
 	"github.com/jessegall/code-commandments/cli/config"
 )
 
-// TestInstructionsAreInjectedAsThePHPToolInjectsThem holds the injection to what the PHP tool's own Instructions left
-// for each document, recorded as testdata/injected/<case>.md.
 func TestInstructionsAreInjectedAsThePHPToolInjectsThem(t *testing.T) {
 	block := "<!-- BEGIN: briefing (auto-generated, run `composer update`) -->\nold\n<!-- END: briefing -->"
 
@@ -136,9 +134,6 @@ func must(t *testing.T, err error) {
 	}
 }
 
-// TestClaudesBlockNamesWhatEnforcesTheDisciplines holds the block to the project it is written into: where the agent
-// journal runs the plugin, the plugin enforces the disciplines and the package's hooks step aside, so the block says
-// so; anywhere else the hooks wired into .claude/settings.json do.
 func TestClaudesBlockNamesWhatEnforcesTheDisciplines(t *testing.T) {
 	plain, driven := t.TempDir(), t.TempDir()
 	manifest := filepath.Join(driven, ".journal", "plugins", "code-commandments", ".journal-plugin", "plugin.json")

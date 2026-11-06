@@ -13,7 +13,6 @@ func init() {
 	sins.Register(catalog.Python, UnnamedVocabularyLiteral{})
 }
 
-// Definition is what the sin states about itself.
 func (UnnamedVocabularyLiteral) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "python-unnamed-vocabulary-literal",

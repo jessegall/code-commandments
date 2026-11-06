@@ -15,7 +15,6 @@ import (
 	"github.com/jessegall/code-commandments/rule"
 )
 
-// run runs make in a fresh project and answers the project, what it said and its exit code.
 func run(t *testing.T, root string, args ...string) (string, int) {
 	t.Helper()
 

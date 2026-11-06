@@ -10,23 +10,13 @@ import (
 	"strings"
 )
 
-// ListsFile is the one file in the custom folder that is not a rule: the project's named lists of words, so a list
-// several rules check against is written once and each of them names it.
 const ListsFile = "lists.json"
 
 // Lists are the project's named lists, by name.
 type Lists map[string][]string
 
-// named finds a list by its name.
 var named = regexp.MustCompile(`\$\{([A-Za-z][A-Za-z0-9_-]*)\}`)
 
-// readLists reads every lists.json the custom folder holds, wherever it sits: a project groups its rules in folders
-// and keeps the lists they check against beside them, or in a folder of their own. The lists of all of them are one
-// set, since a rule names a list and never a file, so a name two files declare is refused rather than one of the two
-// quietly winning.
-//
-// None when there is no such file, and an error the folder reports for one that cannot be read, since a rule naming
-// a list from it would otherwise fail for no stated reason.
 func readLists(dir string, files []string) (Lists, error) {
 	lists := Lists{}
 	declaring := map[string]string{}
@@ -50,7 +40,6 @@ func readLists(dir string, files []string) (Lists, error) {
 	return lists, nil
 }
 
-// readListsFile is one file's lists, named by its path from the custom folder so the reason says which file.
 func readListsFile(path, short string) (Lists, error) {
 	text, err := os.ReadFile(path)
 	if os.IsNotExist(err) {
@@ -74,7 +63,6 @@ func readListsFile(path, short string) (Lists, error) {
 	return lists, nil
 }
 
-// shortOf is the file's path from the custom folder, which is how the folder's own warnings name a file.
 func shortOf(dir, path string) string {
 	if short, err := filepath.Rel(dir, path); err == nil {
 		return filepath.ToSlash(short)
@@ -83,10 +71,6 @@ func shortOf(dir, path string) string {
 	return filepath.Base(path)
 }
 
-// Expand is the rule's text with every list it names written out: `"$poetry"` standing alone in a list of words
-// becomes those words, and `${poetry}` inside any string becomes them joined for a regular expression, each quoted
-// so a word with a dot in it matches that dot. A rule naming a list the project has not declared is refused, with
-// the name it asked for, rather than running against nothing.
 func (l Lists) Expand(name string, text []byte) ([]byte, error) {
 	var read any
 	if err := json.Unmarshal(text, &read); err != nil {
@@ -101,8 +85,6 @@ func (l Lists) Expand(name string, text []byte) ([]byte, error) {
 	return json.Marshal(expanded)
 }
 
-// expand walks the rule as read, since a list spliced into an array of words is a change to the array itself and
-// cannot be made by replacing text inside a string.
 func (l Lists) expand(rule string, read any) (any, error) {
 	switch held := read.(type) {
 	case string:
@@ -142,7 +124,6 @@ func (l Lists) expand(rule string, read any) (any, error) {
 	return read, nil
 }
 
-// spliced says whether the element is a whole list named on its own, `"$poetry"`, and the words it stands for.
 func (l Lists) spliced(rule string, element any) ([]any, bool, error) {
 	text, is := element.(string)
 	if !is || !strings.HasPrefix(text, "$") || strings.HasPrefix(text, "${") {
@@ -162,7 +143,6 @@ func (l Lists) spliced(rule string, element any) ([]any, bool, error) {
 	return out, true, nil
 }
 
-// inString writes every `${list}` inside the string out as an alternation a regular expression reads.
 func (l Lists) inString(rule, text string) (string, error) {
 	var failed error
 	expanded := named.ReplaceAllStringFunc(text, func(reference string) string {
@@ -185,7 +165,6 @@ func (l Lists) inString(rule, text string) (string, error) {
 	return expanded, failed
 }
 
-// undeclared is what a rule naming a list the project has not written is refused with.
 func (l Lists) undeclared(rule, name string) error {
 	var declared []string
 	for each := range l {

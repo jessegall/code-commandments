@@ -13,7 +13,6 @@ func init() {
 	sins.Register(catalog.Python, NestedConditional{})
 }
 
-// Definition is what the sin states about itself.
 func (NestedConditional) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "python-nested-conditional",

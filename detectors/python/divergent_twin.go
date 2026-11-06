@@ -9,20 +9,17 @@ import (
 	pysins "github.com/jessegall/code-commandments/sins/python"
 )
 
-// DivergentTwinDetector finds two defs doing one job where one does less of it: a step the other takes and it
-// forgot.
+// DivergentTwinDetector finds two defs doing one job where one does less of it: a step the other takes and it forgot.
 type DivergentTwinDetector struct{}
 
 func init() {
 	detectors.Register(catalog.Python, DivergentTwinDetector{})
 }
 
-// Sin is the sin the detector finds.
 func (DivergentTwinDetector) Sin() sins.Sin {
 	return pysins.DivergentTwin{}
 }
 
-// Find is every place the sin is committed: both defs of each divergent pair.
 func (DivergentTwinDetector) Find(codebase *engine.Codebase) []engine.Match {
 	program := py.In(codebase).Program
 	units := program.TwinUnits()
@@ -45,7 +42,6 @@ func (DivergentTwinDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return findings
 }
 
-// GroupKey groups a finding with the twin it diverges from.
 func (DivergentTwinDetector) GroupKey(match engine.Match) (string, bool) {
 	program := py.In(match.Codebase()).Program
 	key := engine.PairOf(program.Divergences(), py.DeclarationOf(py.Node{Match: match}))
@@ -53,6 +49,4 @@ func (DivergentTwinDetector) GroupKey(match engine.Match) (string, bool) {
 	return key, key != ""
 }
 
-// CrossFile says the rule reads more than the file it reports in, which the fixture measures by asking it
-// of one file and of the whole tree: a scoped run reads the whole scan while it is enabled.
 func (DivergentTwinDetector) CrossFile() {}

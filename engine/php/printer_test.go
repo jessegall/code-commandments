@@ -11,8 +11,6 @@ import (
 	"github.com/jessegall/code-commandments/engine/php"
 )
 
-// Every expression php-parser's standard printer writes, as the bridge carries it, against the Go port on the same
-// parsed items.
 func TestConstantExpressionsPrintAsPhpParserPrintsThem(t *testing.T) {
 	source := `<?php
 namespace App;

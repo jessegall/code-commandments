@@ -6,7 +6,6 @@ import (
 	"github.com/jessegall/code-commandments/scribes"
 )
 
-// stripped is the source with its first method's docblock removed.
 func stripped(t *testing.T, source string) string {
 	t.Helper()
 	methods := codebaseOf(t, source).WhereKind("Stmt_ClassMethod").Get()

@@ -1,18 +1,18 @@
 package hooks
 
 import (
-	"io/fs"
 	"bytes"
 	"encoding/json"
 	"flag"
 	"fmt"
+	"io/fs"
 	"math/rand"
-	"regexp"
-	"slices"
 	"net"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
+	"slices"
 	"sort"
 	"strings"
 	"sync"
@@ -30,13 +30,6 @@ import (
 	"github.com/jessegall/code-commandments/cli/warm"
 )
 
-// The stress harness stands the whole plugin up here — the service, its socket, the warm tree, the workers'
-// worktrees — and drives it the way the journal does, so what a consumer's three workers measure can be measured
-// without asking them to measure it. Every figure it prints is produced by the same code a real edit runs
-// through: the journal's own event on the plugin's own socket, answered by the real service, and a worker's
-// hand-in judging run as a terminal run makes it.
-//
-//	scripts/dev go test ./cli/hooks/ -run TheStress -v -timeout 30m -args -stress -stress.files=800
 var (
 	stress        = flag.Bool("stress", false, "run the stress harness rather than skipping it")
 	stressFiles   = flag.Int("stress.files", 400, "how many source files the project it builds holds")
@@ -45,17 +38,11 @@ var (
 	stressHandIn  = flag.Bool("stress.hand-in", true, "run each worker's hand-in judging in the same window")
 	stressWithin  = flag.Duration("stress.within", 10*time.Second,
 		"how long after the last edit the last answer may land before the run fails")
-	stressAsks    = flag.Bool("stress.asks", false, "time one ask of 1, 2, 3 and 5 files through the warm bridge instead of the load")
-	stressAhead   = flag.Bool("stress.ahead", true, "parse each edited file when its event arrives, together with every file waiting then")
-	stressApart   = flag.Duration("stress.apart", 0, "how long a worker waits between its edits; a real agent edits seconds apart, not all at once")
+	stressAsks  = flag.Bool("stress.asks", false, "time one ask of 1, 2, 3 and 5 files through the warm bridge instead of the load")
+	stressAhead = flag.Bool("stress.ahead", true, "parse each edited file when its event arrives, together with every file waiting then")
+	stressApart = flag.Duration("stress.apart", 0, "how long a worker waits between its edits; a real agent edits seconds apart, not all at once")
 )
 
-// TestTheStress measures the plugin under several workers at once: every worker edits in its own worktree while
-// its hand-in judges that whole worktree, which is the shape that made one small edit wait 61 seconds on a
-// consumer's tree. It prints what each edit cost — the judging, the share of it that was a bridge parsing, and
-// how long the plugin held the event altogether — and how long the queue took to clear after the last edit.
-//
-// It is skipped unless -stress is passed: it builds a tree, reads it, and runs for minutes.
 func TestTheStress(t *testing.T) {
 	if !*stress {
 		t.Skip("the stress harness runs on request: -args -stress")
@@ -76,8 +63,6 @@ func TestTheStress(t *testing.T) {
 	project := git.ProjectRoot(root)
 	branch := git.CurrentBranch(project)
 
-	// The base is read the way the first hook of a session has it read, and waited for: every figure below is a
-	// figure of a WARM tree, which is what a consumer measures once its session is under way.
 	warming := time.Now()
 	Warming(root, settings)
 
@@ -91,9 +76,6 @@ func TestTheStress(t *testing.T) {
 
 	drained(t, data)
 
-	// Every worker edits in its own worktree and hands in at the same time, which is the window the figures are
-	// about: a hand-in judges a whole worktree, and until it stopped sharing the bridge every edit queued behind
-	// one.
 	fired := time.Now()
 
 	var work sync.WaitGroup
@@ -123,12 +105,8 @@ func TestTheStress(t *testing.T) {
 				}
 				last.Unlock()
 
-
 			}
 
-			// The events a session raises beside its edits: a heartbeat every minute for every open agent, and
-			// one when the agent stops. Once per worker, which is what a session raises, and after its edits,
-			// where a stop really falls.
 			for _, event := range []string{"ticked", "idle"} {
 				waited := sendEvent(t, service, stressMoment(worker, event))
 
@@ -147,19 +125,8 @@ func TestTheStress(t *testing.T) {
 
 	work.Wait()
 
-	// An answer per BATCH rather than per edit: an agent's own edits are judged in one pass over one view and
-	// answered once, naming every file of that batch, which is one message to the agent about its three files
-	// rather than three. So the count waited for is the agents, and what every file was told is held below.
 	answers, landed := stressAnswers(t, data, stressEditedFiles(), *stressWithin)
 
-	// A BUDGET and not a stopwatch, and on the figure an AGENT feels: the longest any one edit waited from the
-	// moment the journal handed it over to the moment its answer was written. The tail of the whole run is a
-	// different thing — it grows with how much work the run sends and says nothing about what one agent waits —
-	// and a figure nobody acts on is not a test.
-	//
-	// Measured with eight agents and 96 edits: what an agent waits is median 43.5s and worst 60.5s, while the
-	// judging itself is median 3.7s and worst 26.3s, of which the read is median 0 and worst 20.5s. So most
-	// moments are answered from the warm tree and a few pay a large parse.
 	if waited := stressWorstWait(edits(answers)); waited > *stressWithin {
 		t.Errorf("an edit waited %v from the journal handing it over to its answer, past the %v an agent may wait "+
 			"to hear about the file it just wrote", waited.Round(time.Millisecond), *stressWithin)
@@ -167,8 +134,6 @@ func TestTheStress(t *testing.T) {
 
 	_ = landed
 
-	// From the last EDIT, never from the last hand-in: a hand-in takes seconds of its own after the edits are in,
-	// and counted from there the queue read as having cleared before the edits were sent.
 	t.Logf("the journal waited %v for an edit's answer at worst, and %v for a ticked or idle one",
 		last.edit.Round(time.Millisecond), last.other.Round(time.Millisecond))
 
@@ -181,9 +146,6 @@ func TestTheStress(t *testing.T) {
 	stressStop(t, root, data)
 }
 
-// stressStop says where the time in a stop's answer goes. The journal waits on that answer and raises one every
-// minute for every open agent, so it is the plugin's largest debt to it; the sweep that re-reads every marked
-// file is the obvious half, and this says how much of it the sweep really is.
 func stressStop(t *testing.T, root, data string) {
 	t.Helper()
 
@@ -205,9 +167,6 @@ func stressStop(t *testing.T, root, data string) {
 	t.Logf("the whole answer to a stop took %v", time.Since(whole).Round(time.Millisecond))
 }
 
-// edits are the answers about the files this run edited. A session raises ticked and idle beside its edits, and
-// those are answered too, so the queue holds more than the edits: an answer about a heartbeat has nothing to say
-// about a file and must not be read as an edit that was answered with nothing.
 func edits(answers []map[string]any) []map[string]any {
 	var mine []map[string]any
 	for _, answer := range answers {
@@ -219,19 +178,9 @@ func edits(answers []map[string]any) []map[string]any {
 	return mine
 }
 
-// stressTold holds what the run was TOLD, not only how long it took. A harness that reads durations alone is a
-// load generator: a plugin wrong about every file but the one it reports would print the same figures, and that
-// is how two wrong answers reached a consumer before the harness could find them.
-//
-// Each answer must name the sin the edit wrote inside its own file, and the sin whose chain of parents crosses
-// three files. The second is the one worth having: it cannot be answered from the edited file at all, so an
-// answer carrying it proves the edit was judged against the whole program.
 func stressTold(t *testing.T, answers []map[string]any) {
 	t.Helper()
 
-	// Asked of what the run was told ALTOGETHER, since an agent's edits are judged in one pass and answered once
-	// for the batch: a single answer names the files of its own batch and no others, so holding each answer to
-	// naming every sin asks it for sins that are not its to name.
 	var said strings.Builder
 	for _, answer := range answers {
 		said.WriteString(asText(answer["tell"]))
@@ -246,7 +195,6 @@ func stressTold(t *testing.T, answers []map[string]any) {
 	}
 }
 
-// handIns is how many hand-in judgings ran, for the line that says so.
 func stressHandIns() int {
 	if !*stressHandIn {
 		return 0
@@ -255,7 +203,6 @@ func stressHandIns() int {
 	return *stressWorkers
 }
 
-// report prints what every answer cost, and the spread, which is what a reader of a stress run is after.
 func stressReport(t *testing.T, answers []map[string]any) {
 	t.Helper()
 
@@ -281,16 +228,12 @@ func stressReport(t *testing.T, answers []map[string]any) {
 	}
 }
 
-// said is one duration an answer carries, nought where it carries none.
 func said(answer map[string]any, named string) int64 {
 	said, _ := answer[named].(float64)
 
 	return int64(said)
 }
 
-// stressBridge keeps the project's language bridge up, which is what the journal's own mypy-serve does. Without
-// it every edit starts a bridge of its own and pays its whole start-up, and the figures then measure a start-up
-// that no session pays: it is the single biggest thing a harness can get wrong about this plugin.
 func stressBridge(t *testing.T, project string) {
 	t.Helper()
 
@@ -312,19 +255,13 @@ func stressBridge(t *testing.T, project string) {
 	go bridge.Answer(listener, bridged)
 }
 
-// serviceAt starts the real service for the project, on the socket the journal names, and hands back that
-// socket: this is the plugin as the journal runs it, in this process rather than beside it.
 func serviceAt(t *testing.T, root string) string {
 	t.Helper()
 
-	// A unix socket's path is capped at about a hundred characters, and a test's own folder is most of that
-	// before the name: a socket under it could not be listened on at all, and the service then waits for its
-	// stop rather than serving, which reads as a service that never came up.
 	socket := fmt.Sprintf("/tmp/cc-stress-%d.sock", os.Getpid())
 	t.Setenv(pluginSocket, socket)
 	t.Cleanup(func() { os.Remove(socket) })
 
-	// The service names the project from the folder it runs in, as the journal starts it in the project's own.
 	was, err := os.Getwd()
 	if err != nil {
 		t.Fatal(err)
@@ -334,9 +271,6 @@ func serviceAt(t *testing.T, root string) string {
 	}
 	t.Cleanup(func() { os.Chdir(was) })
 
-	// The service says it IS the service, which is a process-wide fact, so it is put back when this test ends:
-	// left set, a later test that holds a one-shot run to reading no tree reads this one's flag instead and
-	// fails for the want of a cleanup somebody else owed it.
 	t.Cleanup(func() { serving.Store(false) })
 
 	go func() { JournalServe{}.Run(cli.InputOf("journal-serve"), quiet()) }()
@@ -354,9 +288,6 @@ func serviceAt(t *testing.T, root string) string {
 	return ""
 }
 
-// sendEvent sends one of the journal's events on the plugin's socket and reads the answer, which is exactly what
-// the journal does, and says how long that round trip took. The journal WAITS on it, so it is the one number the
-// plugin owes above all others: a judging that runs before the answer goes back is a journal held up.
 func sendEvent(t *testing.T, socket string, event map[string]any) time.Duration {
 	t.Helper()
 
@@ -385,9 +316,6 @@ func sendEvent(t *testing.T, socket string, event map[string]any) time.Duration 
 	return time.Since(began)
 }
 
-// stressMoment is one of the journal's other events, which the plugin answers IN FULL on the connection rather
-// than through the queue. A session raises them throughout: ticked every minute per open agent, idle whenever an
-// agent stops. The journal waits on each answer, so what they cost is a journal held up.
 func stressMoment(worker int, event string) map[string]any {
 	return map[string]any{
 		"v": 1, "event": event, "session": fmt.Sprintf("s%d", worker), "environment": "main", "agent": worker,
@@ -395,11 +323,7 @@ func stressMoment(worker int, event string) map[string]any {
 	}
 }
 
-// stressEvent is the journal's file_edited moment for one worker's edit, as the journal writes it: the lines the
-// edit added among them, since a sin on a line the edit did not touch is not that edit's doing and is not told.
 func stressEvent(root string, worker, edit int, added []any) map[string]any {
-	// Named as the journal names it: relative to the project for a tree inside it, and absolutely for one cut
-	// beside it, which no path relative to the project can reach.
 	file := filepath.Join(stressWorktreeIn(root, worker), "shop", "goods", fmt.Sprintf("thing%d.py", edit))
 	named := file
 	if under, inside := warm.Under(root, file); inside {
@@ -410,7 +334,7 @@ func stressEvent(root string, worker, edit int, added []any) map[string]any {
 		"v": 1, "event": "file_edited", "session": fmt.Sprintf("s%d", worker), "environment": stressEnvironment,
 		"agent": worker,
 		"data": map[string]any{
-			"path": named,
+			"path":  named,
 			"kind":  "edit",
 			"added": len(added), "removed": 0, "tool_use": edit + 1,
 			"lines": added,
@@ -418,9 +342,6 @@ func stressEvent(root string, worker, edit int, added []any) map[string]any {
 	}
 }
 
-// stressAppended is what an edit adds: a method carrying sins of its own, so the edit really has something to be
-// told about. An edit that changes a line no rule flags is answered with nothing at all, which would measure the
-// queue and not the judging.
 const stressAppended = `
 
 class Deepened%d(RebuildKind):
@@ -437,8 +358,6 @@ class Deepened%d(RebuildKind):
         return 0
 `
 
-// stressEdit writes the edit the event announces, so the file the plugin reads really has moved, and answers
-// with the lines it added as the journal reports them.
 func stressEdit(t *testing.T, root string, worker, edit int) []any {
 	t.Helper()
 
@@ -461,18 +380,11 @@ func stressEdit(t *testing.T, root string, worker, edit int) []any {
 	return added
 }
 
-// handIn runs the judging a worker runs on its way out: a terminal run in its own worktree, which asks the
-// service for the tree rather than reading one.
 func stressHandInBy(t *testing.T, root string, worker int) {
 	t.Helper()
 
 	worktree := stressWorktreeIn(root, worker)
 
-	// SERVED, which is the whole reason the tree is kept up, and which nothing here used to check. A declined
-	// judging answers correctly by reading the tree in its own process, so it passes every assertion below while
-	// costing 25 to 55 seconds and starting a bridge of its own beside the warm one. A consumer's workers were
-	// declined on every hand-in for as long as the project held a file of a language the tree does not read, and
-	// this fuzz said nothing, because being served was never asked.
 	stressServed(t, root, worktree, worker)
 
 	began := time.Now()
@@ -483,8 +395,6 @@ func stressHandInBy(t *testing.T, root string, worker int) {
 
 	t.Logf("worker %d handed in: exit %d, err %v, in %v", worker, code, err, time.Since(began).Round(time.Millisecond))
 
-	// A hand-in judges what the worker changed, and the worker changed files with sins in them, so an exit of
-	// anything else is a judging that found nothing where there is something to find.
 	if err != nil || code != 1 {
 		t.Errorf("worker %d handed in with exit %d and %v; its own changes hold sins:\n%s%s", worker, code, err, out.String(), errs.String())
 	}
@@ -496,10 +406,6 @@ func stressHandInBy(t *testing.T, root string, worker int) {
 	}
 }
 
-// stressServed holds a judging to being answered from the tree the session keeps up. It asks the service the way
-// a run does, and a DECLINE fails the run at once, with the reason the service gives: the tree's own files whose
-// bytes moved, the files the walk found that the tree never read, and the files the checkout differs from the
-// tree's branch by, each counted apart.
 func stressServed(t *testing.T, root, in string, worker int) {
 	t.Helper()
 
@@ -515,7 +421,6 @@ func stressServed(t *testing.T, root, in string, worker int) {
 		return
 	}
 
-	// And it still has to be right: a tree that answers quickly about the wrong program is worse than no tree.
 	for _, sin := range []string{"DeepNestingDetector", "ThingByItsKindDetector"} {
 		if !strings.Contains(answer.Out, sin) {
 			t.Errorf("worker %d's served hand-in names no %s:\n%s%s", worker, sin, answer.Out, answer.Err)
@@ -523,7 +428,6 @@ func stressServed(t *testing.T, root, in string, worker int) {
 	}
 }
 
-// heldWithin waits for the base, which is read in the background as the first hook of a session has it read.
 func heldWithin(project, branch string, within time.Duration) bool {
 	for until := time.Now().Add(within); time.Now().Before(until); time.Sleep(200 * time.Millisecond) {
 		if _, held := kept.Holds(project, branch); held {
@@ -534,11 +438,6 @@ func heldWithin(project, branch string, within time.Duration) bool {
 	return false
 }
 
-// stressAnswers waits for the plugin's answers and says when the last of them landed, which is the queue clearing.
-// Waited for until every FILE the run edited has been named, not until a count of answers is reached. An agent's
-// edits are judged in one pass and answered once for the batch, so how many answers a run of 48 edits comes to
-// is the plugin's business and not a number this harness may assume: counting them, the run stopped at the first
-// small batch of each worker and read its own impatience as an answer.
 func stressAnswers(t *testing.T, data string, wanted []string, within time.Duration) ([]map[string]any, time.Time) {
 	t.Helper()
 
@@ -562,12 +461,6 @@ func stressAnswers(t *testing.T, data string, wanted []string, within time.Durat
 	return append(held, drained(t, data)...), time.Now()
 }
 
-// stressNamedAll says every edit of every worker has been named by some answer OF THAT WORKER, which is the only
-// honest sign that the plugin has finished with them.
-//
-// By the agent and the file's own name, never by the whole path: which shape an answer names a path in is the
-// plugin's business, and two workers' edits are the same path under their own checkouts. Comparing whole paths
-// the harness invented, this waited for ever on files that had all been answered.
 func stressNamedAll(answers []map[string]any, wanted []string) bool {
 	said := map[string]bool{}
 	for _, answer := range answers {
@@ -586,8 +479,6 @@ func stressNamedAll(answers []map[string]any, wanted []string) bool {
 	return true
 }
 
-// stressProject is a project of the size asked for, with a worktree per worker as the journal cuts them, and the
-// plugin's data folder. Every rule the project's languages have judges it, as a consumer's run is judged.
 func stressProject(t *testing.T, files, workers int) (root, data string) {
 	t.Helper()
 
@@ -600,8 +491,6 @@ func stressProject(t *testing.T, files, workers int) (root, data string) {
 	return root, data
 }
 
-// stressTreeAt builds one project of that size with that many worktrees cut inside it, and touches no
-// environment: several of them stand at once in the many-trees run, and only the moment says which is whose.
 func stressTreeAt(t *testing.T, files, workers int) string {
 	t.Helper()
 
@@ -612,27 +501,18 @@ func stressTreeAt(t *testing.T, files, workers int) string {
 
 	written := map[string]string{
 
-		// Every shipped rule judges it, as a consumer's run is judged, and one rule of the project's own
-		// beside them: naming a rule here turns a custom one ON and takes none of the shipped ones off.
-		//
-		// The paths are NESTED and there are several, as a journal's own are (src/core, src/viewer,
-		// tools/journal-hook): one flat folder was this fuzz's invention, and the tree is read over these while a
-		// run walks the checkout it stands in, so the two must be able to disagree for the fuzz to say anything.
 		".commandments/config.json": `{"paths": ["shop/goods", "shop/tills", "tools/hook"],
  "detectors": ["ThingByItsKindDetector"]}`,
 
-		// A rule that cannot be answered from one file: the chain from Deepened through RebuildKind to Kind
-		// crosses three files, so an answer that names this sin proves the edit was judged against the whole
-		// program and not against its own file.
 		".commandments/custom/ThingByItsKindDetector.json": `{"engine": "python",
  "sin": {"name": "thing-by-its-kind", "description": "a class the chain of its parents says is a kind", "skill": "python/absence"},
  "find": {"select": "type-declaration", "where": [{"extendsAny": "Kind"}]}}`,
 
 		"shop/__init__.py":       "",
-		"tools/__init__.py":       "",
-		"shop/goods/__init__.py":  "",
-		"shop/goods/base.py":      "class Base:\n    number = 0\n",
-		"shop/goods/kinds.py":     "class Kind:\n    number = 0\n",
+		"tools/__init__.py":      "",
+		"shop/goods/__init__.py": "",
+		"shop/goods/base.py":     "class Base:\n    number = 0\n",
+		"shop/goods/kinds.py":    "class Kind:\n    number = 0\n",
 		"shop/goods/rebuild.py": `from shop.goods.kinds import Kind
 
 
@@ -643,21 +523,11 @@ class RebuildKind(Kind):
 		"shop/tills/till.py":     "class Till:\n    number = 0\n",
 		"tools/hook/__init__.py": "",
 		"tools/hook/hook.py":     "class Hook:\n    number = 0\n",
-
 	}
 	for at := 0; at < files; at++ {
 		written[fmt.Sprintf("shop/goods/thing%d.py", at)] = stressFile(at)
 	}
 
-	// Files of a language the TREE does not hold, MORE of them than one judging reads. The C# bridge compiles
-	// whole units of its own and is kept warm as a service, so no base ever holds one, while a run's walk finds
-	// every file. Asked about one, the tree answers "never read" — correctly, and for ever, since nothing will
-	// put it there — so counting those as files that differ declines every judging for as long as the project
-	// holds them.
-	//
-	// Past the cap is the whole point: a handful would be miscounted and the judging still served, which is how
-	// this fuzz passed while a consumer's every worker hand-in read 5913 files in its own process. The count is
-	// tied to the cap rather than guessed, so the fixture cannot drift out of the condition it is here to hold.
 	for at := 0; at <= leastReadInOneGo; at++ {
 		written[fmt.Sprintf("shop/goods/Thing%d.cs", at)] = fmt.Sprintf("namespace Shop;\n\npublic class Thing%d {}\n", at)
 	}
@@ -691,20 +561,8 @@ class RebuildKind(Kind):
 	return root
 }
 
-// stressEnvironment is the journal's own environment name, which is the folder it keeps that environment's
-// worktrees under. A journal lays a worker's tree out at .journal/worktrees/<environment>/worker-<n>, not at
-// .journal/worktrees/worker-<n>: the shallower shape was this fuzz's own invention, and the plugin read the
-// checkout off the path by taking the first folder below worktrees, which in the real layout is the environment
-// and no checkout at all. Every worker's edit was judged against the main checkout and the fuzz said nothing.
 const stressEnvironment = "development"
 
-// stressWorktreeIn is where a worker's tree lies, in BOTH shapes a real one comes in, said in ONE place so the
-// fuzz cannot drift from the layouts it is meant to mimic.
-//
-// A journal keeps its own INSIDE the project, under an environment's folder: .journal/worktrees/<env>/worker-<n>.
-// An ordinary git worktree is cut wherever its author likes, and beside the project is the common choice. The two
-// differ in every way that has gone wrong here — whether the checkout lies inside the project at all, how deep it
-// lies, and whether a walk of the project reaches it — so the fuzz cuts both and alternates between them.
 func stressWorktreeIn(project string, worker int) string {
 	if worker%2 == 1 {
 		return filepath.Join(project, ".journal", "worktrees", stressEnvironment, fmt.Sprintf("worker-%d", worker))
@@ -713,8 +571,6 @@ func stressWorktreeIn(project string, worker int) string {
 	return filepath.Join(filepath.Dir(project), filepath.Base(project)+fmt.Sprintf("-worker-%d", worker))
 }
 
-// stressBranchOf is the branch that worker's tree stands on: the journal names its own after the environment, and
-// an ordinary worktree carries whatever its author gave it.
 func stressBranchOf(worker int) string {
 	if worker%2 == 1 {
 		return fmt.Sprintf("journal/%s/worker-%d", stressEnvironment, worker)
@@ -723,14 +579,6 @@ func stressBranchOf(worker int) string {
 	return fmt.Sprintf("feature/worker-%d", worker)
 }
 
-// stressFile is one file of the project: a class of the shape a real one has, with sins real rules find, and
-// imports of its neighbours so the project has a module graph with DEPTH.
-//
-// The depth is not decoration. A type checker asked about one changed file re-checks that module and everything
-// that imports it, so what an edit costs depends on the graph above the file, not on how many files the tree
-// holds. A generated project whose files import nothing answered in 350ms whatever its size, while a real tree
-// of real code answered in 0.1 to 5.2 seconds for the same shape of edit: a harness without depth measures the
-// plugin against code nobody writes.
 func stressFile(at int) string {
 	imports, uses := "", ""
 
@@ -763,13 +611,6 @@ class Thing%d(Base):
 `, imports, at, uses)
 }
 
-// TestWhatAnAskCostsByItsFiles answers the one question the queue's design turns on: how much of what an edit
-// pays is per ASK rather than per file. A bridge pays a fixed cost for every ask — the round trip, and mypy
-// re-checking its module graph — and a per-file cost on top. Where the fixed part dominates, the edits waiting
-// in the queue should be handed over in ONE ask, and three edits then cost barely more than one; where it does
-// not, coalescing them buys nothing and the queue is right as it stands.
-//
-//	scripts/dev go test ./cli/hooks/ -run WhatAnAskCosts -v -args -stress -stress.asks -stress.files=1000
 func TestWhatAnAskCostsByItsFiles(t *testing.T) {
 	if !*stress || !*stressAsks {
 		t.Skip("the ask measurement runs on request: -args -stress -stress.asks")
@@ -779,21 +620,13 @@ func TestWhatAnAskCostsByItsFiles(t *testing.T) {
 	project := git.ProjectRoot(root)
 	stressBridge(t, project)
 
-	// Warm as a session is warm: the first ask of all pays what a session pays once, and no measurement below
-	// is that ask.
 	if _, err := scan.Walk(filesOf(t, root, 1), source.Excluded{}).Load(); err != nil {
 		t.Fatalf("the python bridge cannot answer here: %v", err)
 	}
 
-	// One file again at the end, after nine: a reader comparing the two sees that the first ask of all is not
-	// what makes a single file look cheap or dear.
-	// Up past the caps that are set from this: an edit takes a drifted tree in rather than giving it up while it
-	// can afford to read what drifted, and the service splices a judging's own differing files for the same
-	// reason. Both numbers are a guess until the curve past a hundred files is on the record.
 	for _, many := range []int{1, 2, 3, 5, 9, 25, 50, 100, 200, 400, 800, 1} {
 		asked := filesOf(t, root, many)
 
-		// Every file is touched first, so the ask is one of files that really have moved, as an edit's is.
 		for _, file := range asked {
 			stressTouch(t, file)
 		}
@@ -810,7 +643,6 @@ func TestWhatAnAskCostsByItsFiles(t *testing.T) {
 	}
 }
 
-// filesOf are that many of the project's files, the ones an edit would have changed.
 func filesOf(t *testing.T, root string, many int) []string {
 	t.Helper()
 
@@ -822,7 +654,6 @@ func filesOf(t *testing.T, root string, many int) []string {
 	return asked
 }
 
-// stressTouch writes the file anew, so the bridge is asked about a file that has really moved.
 func stressTouch(t *testing.T, path string) {
 	t.Helper()
 
@@ -836,12 +667,6 @@ func stressTouch(t *testing.T, path string) {
 	}
 }
 
-// The many-trees run is the harness doing the looking. Three projects, each with a tree of its own in memory and
-// three worktrees cut inside it: twelve checkouts, every one of them writing at the same time and not politely.
-// Each picks its next move at random — write a file, create several in a row, edit one, cut lines out of one,
-// delete one — and goes on picking.
-//
-//	scripts/dev go test ./cli/hooks/ -run ManyTreesAtOnce -v -timeout 30m -args -stress -stress.many
 var (
 	stressMany      = flag.Bool("stress.many", false, "run the many-trees run instead of the load")
 	stressRoots     = flag.Int("stress.roots", 3, "how many projects, each with a tree of its own")
@@ -850,16 +675,6 @@ var (
 	stressSeed      = flag.Int64("stress.seed", 0, "the seed the moves are drawn from; 0 draws one and prints it")
 )
 
-// TestManyTreesAtOnce holds what must be true however the twelve go about it. The assertions are the point, and
-// each of them is a wrong answer the plugin has really given:
-//
-// No answer names a file that is not on disk. That is the fault a consumer reported — three sins in a file
-// deleted a minute earlier — and this would have found it before they ever saw it.
-//
-// No answer names a file of another checkout. Twelve trees in memory at once is where that breaks, and nothing
-// here had ever run more than three.
-//
-// Every edit of a file that holds a sin is answered about that file, so going ham cannot make the plugin quiet.
 func TestManyTreesAtOnce(t *testing.T) {
 	if !*stress || !*stressMany {
 		t.Skip("the many-trees run goes on request: -args -stress -stress.many")
@@ -902,30 +717,17 @@ func TestManyTreesAtOnce(t *testing.T) {
 	t.Logf("%d answers were held to the invariants as they came", answered.Load())
 }
 
-// answered is how many answers the run has held to its invariants, which is what says the run proved anything at
-// all: a fuzz that asserts nothing until the end proves only that nothing crashed.
 var answered atomic.Int64
 
-// judging is held while one move is made, answered and checked. The plugin judges ONE moment at a time, so this
-// is the plugin's own shape rather than a weakening of the run: it is also what makes every answer attributable,
-// since the queue is one and a drain takes whatever is in it.
 var oneAtATime sync.Mutex
 
-// stressCheckout is one checkout going ham: a project's own or a worktree of it, with its own files and its own
-// moves to draw.
+// stressCheckout is one checkout going ham: a project's own or a worktree of it, with its own files and its own moves to draw.
 type stressCheckout struct {
-	// At is the folder the checkout stands in, Project the main checkout it belongs to, and Named its number,
-	// which every class it writes carries so an answer about its files can be told from an answer about
-	// another's.
 	At, Project string
 	Named       int
 
-	// Service is the plugin's own socket, which is how the journal really reaches it: the gates answer on the
-	// connection and the judging is worked out afterwards by the adviser, so an answer is WAITED for.
 	Service string
 
-	// Told is the folder as the JOURNAL names it, which is the linked path where the project is reached through
-	// one. At is the same folder resolved, which is what the plugin answers in and what this run checks against.
 	Told string
 
 	draw  *rand.Rand
@@ -934,23 +736,12 @@ type stressCheckout struct {
 	at    int
 }
 
-// stressCheckouts are the project's own checkout and every worktree cut inside it. One project, because the
-// journal runs a service for ONE and names it in JOURNAL_ROOT, and a moment carries no project of its own: the
-// several trees come from the BRANCHES the main checkout stands on, which is how a base is keyed and what a main
-// agent switching branch really does to one.
 func stressCheckouts(t *testing.T, seed int64) []*stressCheckout {
 	t.Helper()
 
 	workers := *stressRoots * *stressWorktrees
 	built := stressTreeAt(t, 40, workers)
 
-	// Reached through a LINK, which is how a path arrives on a Mac whose /tmp is one and in any checkout under a
-	// linked home. A scan resolves the links in every path it reads, so this is the condition v7.14.3 was
-	// released to fix, and a root with its links already resolved away cannot regress it.
-	//
-	// The link is what the journal is TOLD — the root it names and the folder each moment carries — while the
-	// run's own bookkeeping stays on resolved paths, because the plugin answers in resolved ones and a harness
-	// comparing the two shapes measures its own confusion.
 	linked := filepath.Join(t.TempDir(), "project")
 	if err := os.Symlink(built, linked); err != nil {
 		t.Logf("this filesystem has no links, so the run is made on the resolved path: %v", err)
@@ -966,10 +757,8 @@ func stressCheckouts(t *testing.T, seed int64) []*stressCheckout {
 		t.Fatal(err)
 	}
 
-	// The real service, on the plugin's own socket, which the moves then reach it through.
 	service := serviceAt(t, project)
 
-	// The tree, read before anything writes, as a session has it read.
 	Warming(project, settings)
 
 	folders := []string{project}
@@ -1000,17 +789,9 @@ func stressCheckouts(t *testing.T, seed int64) []*stressCheckout {
 	return checkouts
 }
 
-// move makes one move of the checkout's own choosing and tells the plugin about it, as the journal would. The
-// git moves are drawn rarely, as they happen rarely, and they are the ones that move the ground under a tree
-// held in memory: a base is keyed by the project and the branch its MAIN checkout stands on, so one agent
-// switching branch changes which tree every other checkout answers from.
 func (c *stressCheckout) move(t *testing.T, move int) {
 	c.at = move
 
-	// A worker's own writing must never cost the PROJECT its tree. A dropped base is 25 to 55 seconds of
-	// re-reading during which every edit is judged on its own file alone, with every cross-file rule left out,
-	// and nothing says so: the only sign is the answers going thin. The git moves below are allowed to cost it,
-	// since they really do move the ground; writing a file is not.
 	branch, held := c.holding()
 
 	switch c.draw.Intn(29) {
@@ -1050,30 +831,18 @@ func (c *stressCheckout) move(t *testing.T, move int) {
 		return
 	}
 
-	// Only where the project is still on the branch it was: another checkout switching branch under us
-	// legitimately leaves no tree for the new one, and that is a move making the ground move, not a tree given
-	// up for nothing.
 	if now, holds := c.holding(); held && now == branch && !holds {
 		t.Fatalf("move %d of checkout %d: writing in its own checkout cost the project its tree on branch %s, so "+
 			"every edit behind it is judged on its own file alone until the tree is read again", move, c.Named, branch)
 	}
 }
 
-// handsIn runs the judging an agent runs on its way out, in its own checkout, and holds it to being ANSWERED
-// FROM THE TREE. It is the one action the fuzz never made, which is why a consumer's workers could be declined on
-// every hand-in for an afternoon while every run of this passed: a declined judging answers correctly, by reading
-// the whole tree in its own process, so nothing about the ANSWER says the tree went unused.
 func (c *stressCheckout) handsIn(t *testing.T) {
 	oneAtATime.Lock()
 	defer oneAtATime.Unlock()
 
-	// Whatever an earlier move left in the queue is taken first, as every move does, so a judging never reads
-	// somebody else's answer as its own.
 	stressHeld(t, c, c.at, c.Project, "", false, stressTake(t))
 
-	// Only where a tree is held for the branch the project stands on. Another checkout switching branch
-	// legitimately leaves none for the new one, and a judging then has nothing to be served from: that is the
-	// ground moving, not a tree going unused.
 	if _, held := c.holding(); !held {
 		return
 	}
@@ -1088,8 +857,6 @@ func (c *stressCheckout) handsIn(t *testing.T) {
 			"own process: %s", c.at, c.Named, answer.Because)
 	}
 
-	// Served, and about its OWN checkout: a tree that answers quickly about another checkout's files is the
-	// worst of the three answers, and the one the splice exists to avoid.
 	for _, named := range stressNamedIn(answer.Out) {
 		if !c.owns(named) {
 			t.Fatalf("move %d of checkout %d: its served hand-in reports %s, which is not its own (it owns %q)\n%s",
@@ -1100,15 +867,6 @@ func (c *stressCheckout) handsIn(t *testing.T) {
 	c.countsWhatReallyDiffers(t)
 }
 
-// countsWhatReallyDiffers holds the COUNT a judging works out, which is what decides whether it is served at all.
-// Being served is not enough on its own: the same miscount one tree smaller is served and still wrong, and the
-// fault only shows as a decline once the count passes what one judging reads. On a consumer it was 1207 files
-// "the tree never read" for a worktree 127 files from the tip of the branch it was cut at, and every worker's
-// hand-in read 5913 files in its own process for an afternoon.
-//
-// Asked of every source file under the checkout, of every language, which is a superset of any one run's walk: a
-// run reads only the languages its own rules need, so a fuzz that asked exactly what a run asks could never see a
-// language the tree does not hold being counted.
 func (c *stressCheckout) countsWhatReallyDiffers(t *testing.T) {
 	named, base, held := baseFor(c.Project)
 	if !held {
@@ -1135,10 +893,6 @@ func (c *stressCheckout) countsWhatReallyDiffers(t *testing.T) {
 	}
 
 	for _, file := range differs.Unread {
-		// A file whose counterpart the tree HOLDS is not new to it: a checkout's file stands in for the project's
-		// own at the same path under it, and counting it means that mapping failed. Worked out HERE, from the
-		// run's own two paths, and never through the mapping being judged: a check that calls the same function
-		// is blind to its bug by construction, which this one was until it was watched not to fail.
 		own := file
 		if under, inside := strings.CutPrefix(file, c.At+"/"); inside {
 			own = filepath.Join(c.Project, under)
@@ -1149,8 +903,6 @@ func (c *stressCheckout) countsWhatReallyDiffers(t *testing.T) {
 				"holds the project's own copy of it", c.at, c.Named, file)
 		}
 
-		// And a file of a language the tree holds nothing of is not a file it failed to read: nothing will ever
-		// put it there, so counting it is a count that can only grow and can never be settled.
 		if !stressHeldLanguage(base, file) {
 			t.Fatalf("move %d of checkout %d: its judging counts %s as a file the tree never read, and the tree "+
 				"holds no file of that language at all, so that count can never be settled", c.at, c.Named, file)
@@ -1158,7 +910,6 @@ func (c *stressCheckout) countsWhatReallyDiffers(t *testing.T) {
 	}
 }
 
-// stressHeldLanguage says whether the tree holds files of that file's language at all.
 func stressHeldLanguage(base *warm.Base, file string) bool {
 	for _, held := range base.Languages() {
 		if named, known := source.Of(held); known && source.OfFile(file) == named {
@@ -1169,7 +920,6 @@ func stressHeldLanguage(base *warm.Base, file string) bool {
 	return false
 }
 
-// stressNamedIn are the files an answer's findings name, by the file:line every finding carries.
 func stressNamedIn(said string) []string {
 	var named []string
 	for _, word := range strings.Fields(said) {
@@ -1181,7 +931,6 @@ func stressNamedIn(said string) []string {
 	return named
 }
 
-// holding is the branch the project stands on and whether its tree is held right now.
 func (c *stressCheckout) holding() (string, bool) {
 	project := git.ProjectRoot(c.Project)
 	branch := git.CurrentBranch(project)
@@ -1190,9 +939,6 @@ func (c *stressCheckout) holding() (string, bool) {
 	return branch, held
 }
 
-// renames moves one of its files, which no event announces as a rename: the journal sends an edit for the path
-// that now exists and nothing at all for the path that does not, so the tree learns of the old one only by
-// looking. A move between folders is the same thing with the folder changed too.
 func (c *stressCheckout) renames(t *testing.T) {
 	was := c.one()
 	if was == "" {
@@ -1203,7 +949,6 @@ func (c *stressCheckout) renames(t *testing.T) {
 	into := filepath.Join(c.At, "shop", "goods", fmt.Sprintf("moved%d_%d.py", c.Named, c.wrote))
 
 	if c.draw.Intn(2) == 0 {
-		// Into a folder of its own, which is also a folder the tree has never seen.
 		into = filepath.Join(c.At, "shop", "goods", fmt.Sprintf("part%d", c.Named), fmt.Sprintf("moved%d.py", c.wrote))
 		if err := os.MkdirAll(filepath.Dir(into), 0o755); err != nil {
 			t.Fatal(err)
@@ -1217,20 +962,14 @@ func (c *stressCheckout) renames(t *testing.T) {
 	c.mine = slices.DeleteFunc(c.mine, func(path string) bool { return path == was })
 	c.mine = append(c.mine, into)
 
-	// The path that now exists is announced; the one that is gone is not, which is exactly what a rename looks
-	// like from the plugin's side.
 	c.tells(t, into, 1, lines(stressMine(c.Named)), false)
 }
 
-// writesOddly writes a file the plugin is right to say little about: one too large for the gate to read, one it
-// cannot read at all, one in a folder the project excludes, and one of a language this project never declared.
-// None of them may be answered with a sin, and none of them may bring the answer down.
 func (c *stressCheckout) writesOddly(t *testing.T) {
 	c.wrote++
 
 	switch c.draw.Intn(4) {
 	case 0:
-		// Over the gate's limit, which drops the file before any rule sees it.
 		big := filepath.Join(c.At, "shop", "goods", fmt.Sprintf("big%d_%d.py", c.Named, c.wrote))
 		if err := os.WriteFile(big, []byte(strings.Repeat("x = 1\n", 40000)), 0o644); err != nil {
 			t.Fatal(err)
@@ -1238,7 +977,6 @@ func (c *stressCheckout) writesOddly(t *testing.T) {
 
 		c.tells(t, big, 1, 40000, false)
 	case 1:
-		// Unreadable, which must be SAID rather than answered with no sins.
 		shut := filepath.Join(c.At, "shop", "goods", fmt.Sprintf("shut%d_%d.py", c.Named, c.wrote))
 		if err := os.WriteFile(shut, []byte(stressMine(c.Named)), 0o000); err != nil {
 			t.Fatal(err)
@@ -1246,7 +984,6 @@ func (c *stressCheckout) writesOddly(t *testing.T) {
 
 		c.tells(t, shut, 1, 10, false)
 	case 2:
-		// In a folder outside the ones the project declares.
 		aside := filepath.Join(c.At, "aside", fmt.Sprintf("aside%d_%d.py", c.Named, c.wrote))
 		if err := os.MkdirAll(filepath.Dir(aside), 0o755); err != nil {
 			t.Fatal(err)
@@ -1257,11 +994,10 @@ func (c *stressCheckout) writesOddly(t *testing.T) {
 
 		c.tells(t, aside, 1, 10, false)
 	default:
-		// Another language altogether, and a file that is no source at all.
 		for named, text := range map[string]string{
-			fmt.Sprintf("shop/other%d_%d.go", c.Named, c.wrote):   "package shop\n\nfunc Other() int { return 0 }\n",
-			fmt.Sprintf("shop/notes%d_%d.md", c.Named, c.wrote):   "# notes\n",
-			fmt.Sprintf("shop/data%d_%d.json", c.Named, c.wrote):  "{}\n",
+			fmt.Sprintf("shop/other%d_%d.go", c.Named, c.wrote):  "package shop\n\nfunc Other() int { return 0 }\n",
+			fmt.Sprintf("shop/notes%d_%d.md", c.Named, c.wrote):  "# notes\n",
+			fmt.Sprintf("shop/data%d_%d.json", c.Named, c.wrote): "{}\n",
 		} {
 			file := filepath.Join(c.At, named)
 			if err := os.WriteFile(file, []byte(text), 0o644); err != nil {
@@ -1273,9 +1009,6 @@ func (c *stressCheckout) writesOddly(t *testing.T) {
 	}
 }
 
-// raises one of the other events a session raises. Eight of the nine the plugin subscribes to never happened
-// here: the gate that can refuse a command, the heartbeat and the stop that sweep every marked file, a session
-// starting, a subagent starting, the plugin being updated, and the hold that can stop a worker's merge landing.
 func (c *stressCheckout) raises(t *testing.T) {
 	events := []string{"ticked", "idle", "command_starting", "session_started", "tool_starting", "subagent_started", "plugin.updated", "worker_delivering"}
 	event := events[c.draw.Intn(len(events))]
@@ -1294,16 +1027,11 @@ func (c *stressCheckout) raises(t *testing.T) {
 	stressHeld(t, c, c.at, c.Project, "", false, c.awaited(t, "", false))
 }
 
-// commits puts what it has written into its own branch, which is what an agent does at the end of a stretch of
-// work and what moves a checkout's HEAD under the tree.
 func (c *stressCheckout) commits(t *testing.T) {
 	c.runs(t, []string{"-c", "user.email=t@t", "-c", "user.name=t", "add", "-A"})
 	c.runs(t, []string{"-c", "user.email=t@t", "-c", "user.name=t", "commit", "-q", "--allow-empty", "-m", "work"})
 }
 
-// switches puts the MAIN checkout on another branch, which only the main one can do and which is the move that
-// worries us most: every tree is keyed by the branch the main checkout stands on, so after this every worktree
-// answers from a branch nobody is on any more.
 func (c *stressCheckout) switches(t *testing.T) {
 	if c.At != c.Project {
 		c.edits(t)
@@ -1315,8 +1043,6 @@ func (c *stressCheckout) switches(t *testing.T) {
 	c.runs(t, []string{"checkout", "-q", "-B", fmt.Sprintf("main-%d", c.draw.Intn(3))})
 }
 
-// recuts drops this worktree and cuts it again on a branch of its own, in the same folder, which is what the
-// journal does when an agent's work is taken in and another agent is sent out.
 func (c *stressCheckout) recuts(t *testing.T) {
 	if c.At == c.Project {
 		c.commits(t)
@@ -1337,14 +1063,9 @@ func (c *stressCheckout) recuts(t *testing.T) {
 		t.Fatalf("the worktree %s could not be cut again: %s", c.At, out)
 	}
 
-	// Its own files are gone with the worktree, and what it holds now is the branch's own.
 	c.mine = []string{filepath.Join(c.At, "shop", "goods", "thing0.py")}
 }
 
-// abandons removes this worktree and does NOT cut it again, which is what the journal does when an agent's work
-// is taken in and nobody is sent out after it. Its overlay is held by the folder's own path and nothing in the
-// plugin ever forgets one, so the next checkout to stand in that folder inherits a dead agent's files; and until
-// then, an edit announced from a folder that is gone must be answered with nothing rather than from memory.
 func (c *stressCheckout) abandons(t *testing.T) {
 	if c.At == c.Project || len(c.mine) == 0 {
 		c.commits(t)
@@ -1360,16 +1081,10 @@ func (c *stressCheckout) abandons(t *testing.T) {
 		return
 	}
 
-	// It still announces the file it last wrote, as an agent whose worktree was taken out from under it would.
 	gone := c.mine[0]
 	c.mine = nil
 	c.tells(t, gone, 1, 3, false)
 
-	// And it is cut again so the checkout has somewhere to stand for its remaining moves, on a branch of its
-	// own: the point was made by the window in between.
-	//
-	// The folder is taken away first, since announcing an edit from a gone worktree makes the plugin write its
-	// own session state back into it, and git refuses to cut a worktree where a folder already stands.
 	if err := os.RemoveAll(c.At); err != nil {
 		t.Fatal(err)
 	}
@@ -1386,16 +1101,12 @@ func (c *stressCheckout) abandons(t *testing.T) {
 	c.mine = []string{filepath.Join(c.At, "shop", "goods", "thing0.py")}
 }
 
-// runs a git command in this checkout, saying what it said rather than failing: a fuzz run makes moves that git
-// refuses — a commit with nothing to commit, a branch that is checked out elsewhere — and those are moves an
-// agent makes too.
 func (c *stressCheckout) runs(t *testing.T, args []string) {
 	if out, err := exec.Command("git", append([]string{"-C", c.At}, args...)...).CombinedOutput(); err != nil {
 		t.Logf("git %v in %s: %s", args, filepath.Base(c.At), out)
 	}
 }
 
-// writes creates that many files in a row, each with a sin of its own, and tells the plugin about each.
 func (c *stressCheckout) writes(t *testing.T, many int) {
 	for at := 0; at < many; at++ {
 		c.wrote++
@@ -1411,7 +1122,6 @@ func (c *stressCheckout) writes(t *testing.T, many int) {
 	}
 }
 
-// edits appends a sin to one of its files, which is the ordinary move.
 func (c *stressCheckout) edits(t *testing.T) {
 	file := c.one()
 	if file == "" {
@@ -1432,15 +1142,9 @@ func (c *stressCheckout) edits(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// The lines it really added, which is what the journal carries and what decides whether a sin is THIS
-	// edit's doing: named wrongly, every sin reads as somebody else's and the answer is empty.
-	// No answer is OWED for an append: a sin is named once per file until it has gone and come back (Reported
-	// .Unseen keys on the file and the finding), so a second sin of the same name in one file is rightly
-	// silent. A brand-new file has nothing behind it, which is why writes demands an answer and this does not.
 	c.tells(t, file, lines(string(was)), lines(string(was))+lines(appended), false)
 }
 
-// cuts takes the lines of one of its files away again, so a sin it was told about is gone.
 func (c *stressCheckout) cuts(t *testing.T) {
 	file := c.one()
 	if file == "" {
@@ -1462,22 +1166,15 @@ func (c *stressCheckout) cuts(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// A cut adds nothing, so nothing in the file is this edit's doing and no answer is owed for it. It is sent
-	// all the same: what it must not do is raise a sin as newly written, or name a line that is gone.
 	c.tells(t, file, 0, 0, false)
 }
 
-// deletes removes one of its files the way a shell does, with no event of its own: nothing announces a removal,
-// and the tree learns of it only by looking.
 func (c *stressCheckout) deletes(t *testing.T) {
 	file := c.one()
 	if file == "" {
 		return
 	}
 
-	// Only a file the run has already been TOLD about. An answer is drained moves after it was given, since the
-	// service judges on its own goroutine, so deleting a file whose answer is still coming makes a right answer
-	// look like one naming a file that is not there — which is the harness reading its own race as a fault.
 	if !stressWasTold(stressUnder(c.Project, file), stressUnder(c.At, file)) {
 		return
 	}
@@ -1489,8 +1186,6 @@ func (c *stressCheckout) deletes(t *testing.T) {
 	c.mine = slices.DeleteFunc(c.mine, func(path string) bool { return path == file })
 }
 
-// under is where this checkout's own files lie, as a path under the project, which is how the journal names them
-// and how an answer's paths read.
 func (c *stressCheckout) under() string {
 	if c.At == c.Project {
 		return "shop/"
@@ -1504,7 +1199,6 @@ func (c *stressCheckout) under() string {
 	return at + "/"
 }
 
-// one is a file of this checkout's own, drawn at random; empty where it has none left.
 func (c *stressCheckout) one() string {
 	if len(c.mine) == 0 {
 		return ""
@@ -1513,23 +1207,15 @@ func (c *stressCheckout) one() string {
 	return c.mine[c.draw.Intn(len(c.mine))]
 }
 
-// tells the plugin what it just did, as the journal tells it: the path relative to the checkout, since that is
-// the shape the journal sends and the shape that has to be resolved against the right root.
 func (c *stressCheckout) tells(t *testing.T, file string, from, to int, owed bool) {
 	var added []any
 	for line := from; line <= to; line++ {
 		added = append(added, map[string]any{"line_type": "add", "line": line, "text": "class Mine:"})
 	}
 
-	// Both shapes the journal really sends, drawn between. A relative path under data.path is read against the
-	// project, so a worktree's file arrives as .journal/worktrees/worker-1/shop/thing0.py; an ABSOLUTE path
-	// under data.input.file_path flips the moment's own folder to the worktree, and then every path in the
-	// answer is relative to that worktree instead. Only one of the two was ever sent here.
 	data := map[string]any{"kind": "edit", "added": len(added), "removed": 0, "tool_use": c.wrote + 1, "lines": added}
 	against := c.Project
 
-	// A file the move just created is announced as created, with no lines of its own: the plugin then takes
-	// every line as the edit's, which nothing in this repository had ever asked it to do.
 	if from == 1 && owed {
 		data["kind"] = "create"
 		delete(data, "lines")
@@ -1547,10 +1233,6 @@ func (c *stressCheckout) tells(t *testing.T, file string, from, to int, owed boo
 		data["input"] = map[string]any{"file_path": file}
 		against = c.At
 	default:
-		// Relative to the CHECKOUT, with the folder named beside it, which is the shape a consumer's journal
-		// began sending at 17:52 on 2026-11-05. Sixteen files holding sins arrived in it and every one was
-		// dropped at the gate, because the plugin worked the folder out from its environment and never read
-		// the one it was handed.
 		under, err := filepath.Rel(c.At, file)
 		if err != nil {
 			t.Fatal(err)
@@ -1564,14 +1246,8 @@ func (c *stressCheckout) tells(t *testing.T, file string, from, to int, owed boo
 	oneAtATime.Lock()
 	defer oneAtATime.Unlock()
 
-	// Whatever an earlier move of this checkout left in the queue is taken first, and held like any other
-	// answer: left there, the wait below would end on somebody else's answer and read this move as unanswered.
 	stressHeld(t, c, c.at, against, "", false, stressTake(t))
 
-	// On the SOCKET, which is the only way the journal reaches the plugin. Called at the judging's own entry, as
-	// this did, nothing of the service runs: not the parse made ahead of the judging, not the adviser that
-	// decides which moment is worked out first, and not the gates. All three are where this plugin's answers are
-	// shaped, and none of them was exercised by a run that went in at the side.
 	sendEvent(t, c.Service, map[string]any{
 		"v": 1, "event": "file_edited", "session": fmt.Sprintf("s%d", c.Named), "environment": "main",
 		"agent": c.Named, "cwd": c.Told,
@@ -1581,16 +1257,9 @@ func (c *stressCheckout) tells(t *testing.T, file string, from, to int, owed boo
 	stressHeld(t, c, c.at, against, file, owed, c.awaited(t, file, owed))
 }
 
-// awaited is what the queue holds once the adviser has worked this moment out. The service answers the
-// connection at once and judges AFTERWARDS, on a goroutine of its own, so an answer is waited for rather than
-// handed back; held under the one lock, anything waiting is this checkout's own.
 func (c *stressCheckout) awaited(t *testing.T, file string, owed bool) []map[string]any {
 	t.Helper()
 
-	// Waited for until THIS move's own answer has come, which is asked of what the whole run has been told
-	// rather than of this drain alone. The queue is ONE: a move drains every answer in it, including answers
-	// another checkout's move is still waiting for, so a move judging only its own drain could be made to time
-	// out by somebody else having picked its answer up first.
 	var mine []map[string]any
 
 	for until := time.Now().Add(*stressWaits); time.Now().Before(until); time.Sleep(20 * time.Millisecond) {
@@ -1604,11 +1273,8 @@ func (c *stressCheckout) awaited(t *testing.T, file string, owed bool) []map[str
 	return mine
 }
 
-// stressToldPaths are the paths the run has been told about, however they were named, so a move knows its answer
-// came even where another move drained it. Written and read under oneAtATime.
 var stressToldPaths = map[string]bool{}
 
-// stressTake drains the queue and records every path the answers in it named.
 func stressTake(t *testing.T) []map[string]any {
 	t.Helper()
 
@@ -1622,7 +1288,6 @@ func stressTake(t *testing.T) []map[string]any {
 	return taken
 }
 
-// stressWasTold says whether the run has been told about any of those paths.
 func stressWasTold(paths ...string) bool {
 	for _, named := range paths {
 		if stressToldPaths[named] {
@@ -1633,10 +1298,6 @@ func stressWasTold(paths ...string) bool {
 	return false
 }
 
-// stressDrain takes the answers the queue holds, by their own names only. The journal's queue writes a file
-// under a temporary name and renames it, so a drain lands mid-write all the time while a service is running: a
-// half-written file is simply not an answer yet, and the next drain takes it. Waiting for one to settle was not
-// enough, since another appears between the look and the read.
 func stressDrain(t *testing.T, data string) []map[string]any {
 	t.Helper()
 
@@ -1667,26 +1328,13 @@ func stressDrain(t *testing.T, data string) []map[string]any {
 	return taken
 }
 
-// stressWaits is how long a move waits for the adviser to work its moment out before saying it was answered with
-// nothing. It has to outlast a DEEP queue, not assert on one: the adviser is a single goroutine working every
-// checkout's moments in turn, and a worktree's judging is seconds, so a dozen agents moving at once can leave a
-// moment waiting for a long while and be perfectly right about it. Thirty seconds was not enough and read as the
-// plugin answering nothing, which a probe of the same shape on a quiet service disproved; it is a flag so a run
-// can tell a plugin that is silent from one that is merely behind.
 var stressWaits = flag.Duration("stress.waits", 3*time.Minute, "how long a move waits for its own answer before calling the plugin silent")
 
-// lines is how many lines the text holds.
 func lines(text string) int {
 	return len(strings.Split(strings.TrimRight(text, "\n"), "\n"))
 }
 
-// stressMine is a class of this checkout's own, carrying sins of its own and named after the checkout, so an
-// answer about one checkout's files can be told from an answer about another's.
 func stressMine(named int) string {
-	// Every line of it carries the same unique number, so no two blocks of this run share a line's TEXT. A
-	// mark's identity is its rule, its file and the text of the line it sits on, so two textually identical
-	// sins in one file are ONE mark: the second is never announced, and a run that demanded an answer for it
-	// would be demanding something the plugin is right to withhold.
 	at := int(time.Now().UnixNano() % 1000000)
 
 	return fmt.Sprintf(`from shop.goods.rebuild import RebuildKind
@@ -1707,38 +1355,22 @@ class Mine%dAt%d(RebuildKind):
 `, named, at, named, at, at, at, at, at, at, at, at, at, at, at, at, at)
 }
 
-// toldPaths are the paths a tell names, each with the line it names them at. A card names them without a line,
-// so it needs its own reading.
 var toldPaths = regexp.MustCompile(`(?:^|\s)([\w./-]+\.py):(\d+)`)
 
-// cardPaths are the paths a card names. A card's label is "3 sins in shop/x.py" and its detail names the lines
-// without the file at all, so the tell's own pattern cannot match a single byte of either.
 var cardPaths = regexp.MustCompile(`([\w./-]+\.py)`)
 
-// stressHeld holds what the plugin just answered to what must be true of it, whatever move was made. Checked
-// here and not at the end of the run: a file deleted later would make a right answer look wrong, and an answer
-// checked a thousand moves after it was given names nothing anybody can act on.
-//
-// Owed says this move wrote a sin and is therefore owed an answer about its file. Silence is an answer too, and
-// the worst one: before this said so, a run in which the plugin answered NOTHING at all passed every move.
 func stressHeld(t *testing.T, mine *stressCheckout, move int, against, file string, owed bool, answers []map[string]any) {
 	t.Helper()
 
 	told := false
 
 	for _, answer := range answers {
-		// Whose answer this is. The journal hands a queued answer to the agent it NAMES, so that is who it is
-		// held against — not whoever made the last move. The service answers the connection at once and judges
-		// afterwards on its own goroutine, so one checkout's answer lands while another is moving, and reading
-		// them as the mover's made the ownership check fire on the plugin being right.
 		whose, known := stressWhose(asAgent(answer["agent"]))
 		if !known {
 			t.Fatalf("move %d of checkout %d: an answer came back for agent %d, which is no checkout of this run\n%s",
 				move, mine.Named, asAgent(answer["agent"]), asText(answer["tell"]))
 		}
 
-		// Every sin the answer REPORTS must be about a file that is really there. A resolution is the one
-		// thing that may name a file that is gone, since being gone is a way of being clean.
 		for _, named := range stressReported(answer) {
 			answered.Add(1)
 
@@ -1748,14 +1380,7 @@ func stressHeld(t *testing.T, mine *stressCheckout, move int, against, file stri
 			}
 		}
 
-		// And the tell, which is what the agent itself reads, is about its OWN files. Twelve trees in memory at
-		// once is where that goes wrong: a worktree's file spliced into another checkout's program, or a base
-		// keyed by a branch nobody is on, shows up here as one agent told about another's file. The cards are
-		// not held to this: every checkout here works in one environment, which keeps ONE record, so a
-		// resolution legitimately names whatever file of it became clean.
 		for _, named := range stressSaidOf(answer) {
-			// Either form the file can be named in: which one an answer uses follows the folder the moment
-			// carried, and a check that knows only one of them reads a right answer as silence.
 			if named == stressUnder(against, file) || named == stressUnder(mine.Project, file) || named == stressUnder(mine.At, file) {
 				told = true
 			}
@@ -1767,18 +1392,11 @@ func stressHeld(t *testing.T, mine *stressCheckout, move int, against, file stri
 		}
 	}
 
-	// A move that wrote a sin is owed an answer about the file it wrote it in. Without this the run proves
-	// nothing at all: every quiet fallback in the judging ends in no answer, and a run of them passed.
-	// Asked of the whole run and not of this drain: another move may have taken this answer out of the queue,
-	// and the question is whether the plugin SAID it, never who picked it up.
 	if !told && stressWasTold(stressUnder(against, file), stressUnder(mine.Project, file), stressUnder(mine.At, file)) {
 		told = true
 	}
 
 	if owed && !told {
-		// What a judging of that file finds on its own, said in the failure: a move told nothing is either a
-		// file with no sin in it, which is the harness's fault, or a sin the plugin would not say, which is
-		// the plugin's. Without this the message cannot tell the two apart.
 		settings, _ := config.Load(mine.Project)
 		found, _, unread := marksIn(Marks(mine.Project), file, allRules(t, mine.Project, settings), git.Everywhere())
 
@@ -1793,19 +1411,14 @@ func stressHeld(t *testing.T, mine *stressCheckout, move int, against, file stri
 	}
 }
 
-// stressRunning are the checkouts of the run by their agent number, so an answer is held against the checkout it
-// is FOR. Written once before any move and only read after.
 var stressRunning = map[int]*stressCheckout{}
 
-// stressWhose is the checkout an answer is for.
 func stressWhose(agent int) (*stressCheckout, bool) {
 	held, known := stressRunning[agent]
 
 	return held, known
 }
 
-// stressWhere is the file a path names, under the checkout's project or under the checkout itself: which of the
-// two a path is relative to depends on the shape the moment was sent in.
 func stressWhere(whose *stressCheckout, named string) string {
 	if info, err := os.Stat(filepath.Join(whose.Project, named)); err == nil && info.Mode().IsRegular() {
 		return filepath.Join(whose.Project, named)
@@ -1814,15 +1427,12 @@ func stressWhere(whose *stressCheckout, named string) string {
 	return filepath.Join(whose.At, named)
 }
 
-// stressStands says the path an answer names is a file that is really there, under either root a path of that
-// checkout can be relative to.
 func stressStands(whose *stressCheckout, named string) bool {
 	info, err := os.Stat(stressWhere(whose, named))
 
 	return err == nil && info.Mode().IsRegular()
 }
 
-// owns says the path is one of this checkout's own files, as a path under the project or under itself.
 func (c *stressCheckout) owns(named string) bool {
 	if strings.HasPrefix(named, c.under()) {
 		return true
@@ -1833,7 +1443,6 @@ func (c *stressCheckout) owns(named string) bool {
 	return err == nil && info.Mode().IsRegular()
 }
 
-// stressSaidOf are the paths the tell names, which is what the agent itself reads.
 func stressSaidOf(answer map[string]any) []string {
 	var named []string
 	for _, found := range toldPaths.FindAllStringSubmatch(asText(answer["tell"]), -1) {
@@ -1843,11 +1452,6 @@ func stressSaidOf(answer map[string]any) []string {
 	return named
 }
 
-// stressReported are the paths the answer reports a SIN in, in its tell and in its cards alike. A card is where
-// a file's sins are counted for the user — "3 sins in shop/x.py" — and reading the tell alone left every card
-// unchecked, which is where the fault a consumer reported actually surfaced.
-//
-// A card that says a file is clean is left out: a file that is gone is clean, and saying so is right.
 func stressReported(answer map[string]any) []string {
 	named := stressSaidOf(answer)
 
@@ -1868,7 +1472,6 @@ func stressReported(answer map[string]any) []string {
 	return named
 }
 
-// stressUnder is the file as an answer names it: its path under the project.
 func stressUnder(project, file string) string {
 	under, err := filepath.Rel(project, file)
 	if err != nil {
@@ -1878,8 +1481,6 @@ func stressUnder(project, file string) string {
 	return under
 }
 
-// stressEditedFiles are the files this run edited, by the path an answer names them with: one per edit of each
-// worker, which is what every one of them must be told about before the run has its figure.
 func stressEditedFiles() []string {
 	var files []string
 	for worker := 1; worker <= *stressWorkers; worker++ {
@@ -1891,8 +1492,6 @@ func stressEditedFiles() []string {
 	return files
 }
 
-// stressWorstWait is the longest any one edit waited from the journal handing it over to its answer being
-// written, which is what an agent feels: it is held for none of it, and it writes on unaware for all of it.
 func stressWorstWait(answers []map[string]any) time.Duration {
 	var worst time.Duration
 	for _, answer := range answers {

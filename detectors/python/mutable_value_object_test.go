@@ -7,8 +7,6 @@ import (
 	"github.com/jessegall/code-commandments/engine/python/pythontest"
 )
 
-// TestAnEntityThatComparesByIdentityIsNoMutableValue holds the rule to values: a dataclass that gives up value
-// equality with eq=False is an entity known by its identity, and changing through its life is what it is for.
 func TestAnEntityThatComparesByIdentityIsNoMutableValue(t *testing.T) {
 	entity := "from dataclasses import dataclass\n\n\n@dataclass(eq=False)\nclass Shipment:\n    number: int\n    status: str = \"packed\"\n\n    def dispatch(self) -> None:\n        self.status = \"dispatched\"\n"
 	value := "from dataclasses import dataclass\n\n\n@dataclass\nclass Shipment:\n    number: int\n    status: str = \"packed\"\n\n    def dispatch(self) -> None:\n        self.status = \"dispatched\"\n"

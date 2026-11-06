@@ -6,8 +6,6 @@ import (
 	"testing"
 )
 
-// TestAPackageHookStepsAsideWhereThePluginRuns holds a default hook a user kept beside the journal plugin to
-// silence: in a project the plugin is installed in, the plugin answers every moment, so the package's hook does not.
 func TestAPackageHookStepsAsideWhereThePluginRuns(t *testing.T) {
 	plain, journaled := t.TempDir(), t.TempDir()
 	manifest := filepath.Join(journaled, ".journal", "plugins", "code-commandments", ".journal-plugin", "plugin.json")

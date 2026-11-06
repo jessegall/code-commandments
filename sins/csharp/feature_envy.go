@@ -13,7 +13,6 @@ func init() {
 	sins.Register(catalog.CSharp, FeatureEnvy{})
 }
 
-// Definition is what the sin states about itself.
 func (FeatureEnvy) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "csharp-feature-envy",

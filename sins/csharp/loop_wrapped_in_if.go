@@ -13,7 +13,6 @@ func init() {
 	sins.Register(catalog.CSharp, LoopWrappedInIf{})
 }
 
-// Definition is what the sin states about itself.
 func (LoopWrappedInIf) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "csharp-loop-wrapped-in-if",

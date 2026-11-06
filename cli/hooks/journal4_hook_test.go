@@ -10,12 +10,8 @@ import (
 	"github.com/jessegall/code-commandments/cli/workspace"
 )
 
-// TestEachVersion4EventIsReadAsTheMomentItStandsFor holds the translation in: every event version 4 of the journal
-// sends a hook for reaches the handlers as that hook, with its session, its tool, the command and the file it names.
 func TestEachVersion4EventIsReadAsTheMomentItStandsFor(t *testing.T) {
 	t.Setenv("JOURNAL_ROOT", "/the/project")
-	// The tool a moment names is the journal's own word for it, except for the two events that ARE the tool's doing:
-	// a command of a shell line is a shell command, and a file the journal recorded an edit of is a write.
 	tools := map[string]string{"command_starting": "Bash", "file_edited": "Write"}
 	for event, hook := range hooksOf4 {
 		line := map[string]any{"v": 1, "event": event, "session": "s1", "environment": "main", "data": map[string]any{"tool": "Edit", "input": map[string]any{"file_path": "src/A.php", "command": "ls"}}}
@@ -48,9 +44,6 @@ func TestEachVersion4EventIsReadAsTheMomentItStandsFor(t *testing.T) {
 	}
 }
 
-// TestTheAnswerIsSaidAsVersion4ReadsIt holds the translation out: a refusal keeps the advice beside its reason, advice
-// alone is told, a sin found is a card under its key, and a sin repented one card under the same key that names it,
-// never a second card of its own beside it.
 func TestTheAnswerIsSaidAsVersion4ReadsIt(t *testing.T) {
 	refused, advice := "the shared branch takes no edits", "Code Commandments — a sin"
 	cases := []struct {
@@ -62,15 +55,11 @@ func TestTheAnswerIsSaidAsVersion4ReadsIt(t *testing.T) {
 		{JournalAnswer{Refuse: &refused, Whisper: &advice}, `{"answer":"refuse","reason":"the shared branch takes no edits\n\nCode Commandments — a sin","v":1}`},
 		{JournalAnswer{Whisper: &advice}, `{"answer":"tell","tell":"Code Commandments — a sin","v":1}`},
 		{
-			// A card needs a key: it is how the journal finds the card to rewrite. A raise without one says
-			// nothing the chat can hold, and the sins repented are said by their own file's card.
 			JournalAnswer{
 				Raises:   []Raise{{Event: "sin-found", Brief: "2 sins in src/A.php", Key: "sins:src/A.php", Detail: "array-bag at src/A.php:3\ndata-clump at src/A.php:9"}, {Event: "sin-resolved", Brief: "src/B.php is clean", Key: "sins:src/B.php"}, {Event: "sin-found", Brief: "unkeyed"}},
 				Settles:  []string{"sins:src/B.php"},
 				Repented: []Repented{{Key: "sin:b2", Shown: "data-clump at src/B.php:9"}},
 			},
-			// Which card it is is said as both `type` and `kind`: the journal has dropped the word kind
-			// everywhere but this protocol and reads `type` with `kind` as its fallback.
 			`{"cards":[{"detail":"array-bag at src/A.php:3\ndata-clump at src/A.php:9","key":"sins:src/A.php","kind":"sin-found","label":"2 sins in src/A.php","type":"sin-found"},{"key":"sins:src/B.php","kind":"sin-resolved","label":"src/B.php is clean","type":"sin-resolved"}],"v":1}`,
 		},
 	}
@@ -82,8 +71,6 @@ func TestTheAnswerIsSaidAsVersion4ReadsIt(t *testing.T) {
 	}
 }
 
-// TestSettingsAreReadFromEitherVersionOfTheJournal holds journal-config to both: the JSON itself in JOURNAL_SETTINGS
-// from version 3, a file of it from version 4, whose flags and lists come back as the text version 3 gave.
 func TestSettingsAreReadFromEitherVersionOfTheJournal(t *testing.T) {
 	t.Setenv("JOURNAL_SETTINGS", `{"language_php": "false", "folders_judged": "src\napp"}`)
 	if chosen, given := chosenSettings(); !given || chosen["language_php"] != "false" || chosen["folders_judged"] != "src\napp" {
@@ -104,8 +91,6 @@ func TestSettingsAreReadFromEitherVersionOfTheJournal(t *testing.T) {
 	}
 }
 
-// TestTheJournalsProjectIsFoundUnderEitherVersion holds JOURNAL_ROOT to both meanings: the journal's own folder in
-// version 3, the project itself in version 4.
 func TestTheJournalsProjectIsFoundUnderEitherVersion(t *testing.T) {
 	for given, want := range map[string]string{"/the/project/.journal": "/the/project", "/the/project": "/the/project"} {
 		t.Setenv("JOURNAL_ROOT", given)
@@ -115,8 +100,6 @@ func TestTheJournalsProjectIsFoundUnderEitherVersion(t *testing.T) {
 	}
 }
 
-// TestTheScanAnswersSettingsInVersion4sTypes holds journal-scan --settings-only to the shape version 4 keeps: the
-// folders as lists, empty and never null, and each language a switch.
 func TestTheScanAnswersSettingsInVersion4sTypes(t *testing.T) {
 	scanned := typedScan(t.TempDir(), []string{"src", "app"}, nil)
 	judged, _ := scanned.Get(judgedKey)
@@ -134,8 +117,6 @@ func TestTheScanAnswersSettingsInVersion4sTypes(t *testing.T) {
 	}
 }
 
-// TestAppliedSettingsAreACardInVersion4 holds the answer to plugin.updated to version 4's shape: a card saying what
-// changed under one key, and no card when nothing did, never version 3's notify.
 func TestAppliedSettingsAreACardInVersion4(t *testing.T) {
 	if got := Configured4([]string{"config.json follows the plugin's switches: 2 changed"}); got != `{"cards":[{"key":"settings","kind":"configured","label":"config.json follows the plugin's switches: 2 changed","type":"configured"}],"v":1}` {
 		t.Errorf("said %s", got)

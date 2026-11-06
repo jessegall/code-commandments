@@ -15,10 +15,8 @@ type RedundantNestedFromDetector struct{}
 
 func init() { detectors.Register(catalog.PHP, RedundantNestedFromDetector{}) }
 
-// Sin is the sin the detector finds.
 func (RedundantNestedFromDetector) Sin() sins.Sin { return backendsins.RedundantNestedFrom{} }
 
-// Find is every ::from() of an array literal on a Data class hydrating a slot the parent builds, save per-item and cast slots.
 func (RedundantNestedFromDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return php.In(codebase).
 		WhereKind("Expr_StaticCall").
@@ -31,9 +29,6 @@ func (RedundantNestedFromDetector) Find(codebase *engine.Codebase) []engine.Matc
 		Get()
 }
 
-// Repentable says a scribe rewrites the sin away.
 func (RedundantNestedFromDetector) Repentable() {}
 
-// CrossFile says the rule reads more than the file it reports in, which the fixture measures by asking it
-// of one file and of the whole tree: a scoped run reads the whole scan while it is enabled.
 func (RedundantNestedFromDetector) CrossFile() {}

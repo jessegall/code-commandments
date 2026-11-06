@@ -10,8 +10,6 @@ import (
 	"github.com/jessegall/code-commandments/cli/workspace"
 )
 
-// project is a repository with a committed main, then a branch that changes one file and adds another,
-// and an uncommitted edit on top.
 func project(t *testing.T) string {
 	t.Helper()
 	root, _ := filepath.EvalSymlinks(t.TempDir())

@@ -13,7 +13,6 @@ func init() {
 	sins.Register(catalog.Python, RepeatedNamedCall{})
 }
 
-// Definition is what the sin states about itself.
 func (RepeatedNamedCall) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "python-repeated-named-call",

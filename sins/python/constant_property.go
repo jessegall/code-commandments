@@ -13,7 +13,6 @@ func init() {
 	sins.Register(catalog.Python, ConstantProperty{})
 }
 
-// Definition is what the sin states about itself.
 func (ConstantProperty) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "python-constant-property",

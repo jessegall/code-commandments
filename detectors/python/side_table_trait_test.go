@@ -7,9 +7,6 @@ import (
 	"github.com/jessegall/code-commandments/engine/python/pythontest"
 )
 
-// TestASideTableOfInstanceNamesIsFound holds what the sin asks: a collection of a type's own instance names that
-// the module then asks about ONE of them. That question is what a trait answers, and keeping it here rather than
-// on the type is the sin.
 func TestASideTableOfInstanceNamesIsFound(t *testing.T) {
 	for name, source := range map[string]string{
 		"a membership test": `from dataclasses import dataclass
@@ -39,10 +36,6 @@ def said(name: str) -> bool:
 	}
 }
 
-// TestACollectionThatIsNotASideTableIsLeftAlone holds the negatives, each wearing the same surface shape. The
-// third is the one that decided the rule's reach: a collection of registered names, walked to act on each, is
-// what a caller choosing what to act on looks like, and nothing in the tree tells it from a trait. Flagging it
-// would mean flagging that choice everywhere, so the rule asks for the question a trait answers instead.
 func TestACollectionThatIsNotASideTableIsLeftAlone(t *testing.T) {
 	for name, source := range map[string]string{
 		"ordinary vocabulary naming no instance": `from dataclasses import dataclass

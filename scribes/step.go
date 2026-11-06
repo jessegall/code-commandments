@@ -15,8 +15,7 @@ type Scribe interface {
 	Rewrite(findings []engine.Match, codebase *engine.Codebase) (Rewrites, error)
 }
 
-// Situated is a scribe that reads where the pass runs from before it rewrites: the project's own tools it may consult,
-// and the source the pass does not hold.
+// Situated is a scribe that reads where the pass runs from before it rewrites: the project's own tools it may consult, and the source the pass does not hold.
 type Situated interface {
 	Situate(roots []string, sources Sources)
 }
@@ -27,13 +26,8 @@ type Sources interface {
 	ReadFile(path string) (*engine.Codebase, error)
 }
 
-// A scribe is enrolled against its detector's IDENTITY, engine and name, never its name alone: a detector's name
-// is its bare type name and the engines share those, so a python rule sharing a name with a PHP one that has a
-// scribe would be handed the PHP scribe and rewrite python source with PHP. Nothing is repentable outside the
-// backend and the frontend today, which is the only reason it has not bitten.
 var scribesOf = map[string]func() Scribe{}
 
-// ScribeFor is the scribe that rewrites the detector's sin.
 func ScribeFor(detector detectors.Detector) (Scribe, bool) {
 	scribe := scribesOf[detectors.IdentityOf(detector)]
 	if scribe == nil {
@@ -43,13 +37,10 @@ func ScribeFor(detector detectors.Detector) (Scribe, bool) {
 	return scribe(), true
 }
 
-// Fixes enrols the scribe that rewrites a detector's sin, from the scribe's own file.
 func Fixes(detector detectors.Detector, scribe func() Scribe) {
 	scribesOf[detectors.IdentityOf(detector)] = scribe
 }
 
-// Steps is a step for each of the engine's detectors given whose sin a scribe rewrites, over the scanner, in the
-// order the PHP tool discovers its detectors: by class name, a package's detectors under their namespace.
 func Steps(engine catalog.Engine, scanner *Scanner, given []detectors.Detector) []Step {
 	ofEngine := map[string]bool{}
 	for _, detector := range detectors.Of(engine) {
@@ -80,7 +71,6 @@ func Steps(engine catalog.Engine, scanner *Scanner, given []detectors.Detector) 
 	return steps
 }
 
-// selfFixing is the detector as one that states its own fix, when it judges the engine and declares one.
 func selfFixing(engine catalog.Engine, detector detectors.Detector) (detectors.SelfFixing, bool) {
 	fixing, states := detector.(detectors.SelfFixing)
 	judges, _ := detectors.EngineOf(detector)
@@ -93,7 +83,6 @@ type SelfFixScribe struct {
 	detector detectors.SelfFixing
 }
 
-// Rewrite replaces each finding's source with the text its detector states for it.
 func (s SelfFixScribe) Rewrite(findings []engine.Match, _ *engine.Codebase) (Rewrites, error) {
 	draft := NewDraft()
 	for _, finding := range findings {
@@ -113,9 +102,6 @@ func (s SelfFixScribe) Rewrite(findings []engine.Match, _ *engine.Codebase) (Rew
 	return draft.Rewrites(), nil
 }
 
-// className is the detector's PHP class name under its engine's namespace: its package's folders below the engine's
-// own, capitalised, then its own name. The engine's folder is skipped by position, not by the engine's name, because
-// the Go folders keep the former names (detectors/backend) the engines no longer carry.
 func className(detector detectors.Detector) string {
 	kind := reflect.TypeOf(detector)
 	for kind.Kind() == reflect.Pointer {
@@ -140,13 +126,10 @@ type DetectorStep struct {
 	scanner  *Scanner
 }
 
-// Name is the detector's name.
 func (s DetectorStep) Name() string {
 	return catalog.Name(s.detector)
 }
 
-// Stage is when the fix runs: last when it only reshapes what the other fixes settled, after the in-place fixes
-// when its scribe says so, in place otherwise.
 func (s DetectorStep) Stage() Stage {
 	if _, last := s.detector.(detectors.RunsLast); last {
 		return Normalising
@@ -158,12 +141,10 @@ func (s DetectorStep) Stage() Stage {
 	return Fixing
 }
 
-// MatchesSin says whether the detector's sin answers to the query.
 func (s DetectorStep) MatchesSin(query string) bool {
 	return s.detector.Sin().Definition().Matches(query)
 }
 
-// Run rewrites the sins the detector finds in the files the pass may fix.
 func (s DetectorStep) Run(pass Pass) (Rewrites, error) {
 	codebase, err := s.scanner.Scan(pass)
 	if err != nil {
@@ -187,19 +168,16 @@ func (s DetectorStep) Run(pass Pass) (Rewrites, error) {
 // Maintainer regenerates what a codebase declares about itself, whether or not any sin was found.
 type Maintainer interface {
 	Name() string
-	// Summary is what the maintainer does, in a sentence, for the README.
 	Summary() string
 	Maintain(codebase *engine.Codebase, pass Pass) (Rewrites, error)
 }
 
 var maintainers = map[catalog.Engine][]Maintainer{}
 
-// Maintains enrols a maintainer of one engine's files, from the maintainer's own file.
 func Maintains(engine catalog.Engine, maintainer Maintainer) {
 	maintainers[engine] = append(maintainers[engine], maintainer)
 }
 
-// Maintainers is every enrolled maintainer, engine by engine in curriculum order, then by name.
 func Maintainers() []Maintainer {
 	var all []Maintainer
 	for _, engine := range catalog.Engines {
@@ -211,7 +189,6 @@ func Maintainers() []Maintainer {
 	return all
 }
 
-// MaintenanceSteps is a step for each maintainer of the engine's files, over the scanner, by name.
 func MaintenanceSteps(engine catalog.Engine, scanner *Scanner) []Step {
 	enrolled := slices.Clone(maintainers[engine])
 	slices.SortFunc(enrolled, func(a, b Maintainer) int { return strings.Compare(a.Name(), b.Name()) })
@@ -229,17 +206,14 @@ type MaintenanceStep struct {
 	Scanner    *Scanner
 }
 
-// Name is the maintainer's name.
 func (s MaintenanceStep) Name() string {
 	return s.Maintainer.Name()
 }
 
-// Stage is first.
 func (s MaintenanceStep) Stage() Stage {
 	return Maintenance
 }
 
-// Run maintains the codebase under the pass.
 func (s MaintenanceStep) Run(pass Pass) (Rewrites, error) {
 	codebase, err := s.Scanner.Scan(pass)
 	if err != nil {

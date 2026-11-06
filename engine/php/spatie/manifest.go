@@ -8,13 +8,8 @@ import (
 	"github.com/jessegall/code-commandments/engine"
 )
 
-// TransformerManifest is the file the TypeScript transformer writes beside the types it generates, naming each and
-// its hash, so it knows what it wrote.
 const TransformerManifest = "typescript-transformer-manifest.json"
 
-// TransformerOutputsBeside are the folders the TypeScript transformer has written into, found from the frontend files
-// themselves: the nearest folder above one that holds the transformer's manifest. They hold wherever the transformer
-// is configured, in a file the scan never reads or in no file at all.
 func TransformerOutputsBeside(codebase *engine.Codebase) []string {
 	var outputs []string
 	seen := map[string]bool{}

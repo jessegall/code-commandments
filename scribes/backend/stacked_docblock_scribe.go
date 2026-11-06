@@ -14,8 +14,6 @@ func init() {
 // StackedDocblockScribe folds a stack of docblocks over one declaration into one block.
 type StackedDocblockScribe struct{}
 
-// Rewrite merges each foldable stack into one canonical block at the indent its first block stands at; a stack that
-// would misattribute prose or promote a contradicting tag is left for a human.
 func (StackedDocblockScribe) Rewrite(findings []engine.Match, _ *engine.Codebase) (scribes.Rewrites, error) {
 	draft := scribes.NewDraft()
 	for _, finding := range findings {

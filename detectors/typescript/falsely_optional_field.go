@@ -13,8 +13,7 @@ func init() {
 	detectors.Register(catalog.TypeScript, FalselyOptionalFieldDetector{})
 }
 
-// FalselyOptionalFieldDetector finds a field declared optional that is initialised where it is declared: the
-// value exists from construction, so the ? claims an absence the object never has.
+// FalselyOptionalFieldDetector finds a field declared optional that is initialised where it is declared: the value exists from construction, so the ? claims an absence the object never has.
 type FalselyOptionalFieldDetector struct{}
 
 func (FalselyOptionalFieldDetector) Sin() sins.Sin {

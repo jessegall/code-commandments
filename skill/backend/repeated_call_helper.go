@@ -21,7 +21,6 @@ func init() {
 	skill.Register(catalog.PHP, RepeatedCallHelper{})
 }
 
-// Definition is what the skill states about itself.
 func (RepeatedCallHelper) Definition() skill.Definition {
 	return skill.Definition{
 		Slug:      "php/repeated-call-helper",

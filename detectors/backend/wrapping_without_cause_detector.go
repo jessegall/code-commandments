@@ -14,10 +14,8 @@ type WrappingWithoutCauseDetector struct{}
 
 func init() { detectors.Register(catalog.PHP, WrappingWithoutCauseDetector{}) }
 
-// Sin is the sin the detector finds.
 func (WrappingWithoutCauseDetector) Sin() sins.Sin { return backendsins.WrappingWithoutCause{} }
 
-// Find is every exception thrown inside a catch without the caught one as its cause.
 func (WrappingWithoutCauseDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return php.In(codebase).
 		WhereNew().
@@ -25,5 +23,4 @@ func (WrappingWithoutCauseDetector) Find(codebase *engine.Codebase) []engine.Mat
 		Get()
 }
 
-// Repentable says a scribe rewrites the sin away.
 func (WrappingWithoutCauseDetector) Repentable() {}

@@ -12,10 +12,8 @@ import (
 	_ "github.com/jessegall/code-commandments/detectors/frontend"
 )
 
-// extractors are the detectors whose sins ExtractComponent fixes, by name.
 var extractors = []string{"DuplicateElementDetector", "DeepNestedDetector", "DeepDataReachDetector", "CompoundInlineComponentDetector"}
 
-// enrolled is the frontend detector the catalog holds under the name.
 func enrolled(t *testing.T, name string) detectors.Detector {
 	t.Helper()
 	for _, detector := range detectors.Of(catalog.Vue) {
@@ -28,8 +26,6 @@ func enrolled(t *testing.T, name string) detectors.Detector {
 	return nil
 }
 
-// Every project PHP's ExtractComponentScribeTest builds, recorded by testdata/record/record.sh, goes through each
-// extraction step here and in PHP, and the two must write the same files byte for byte.
 func TestExtractComponentRewritesEachRecordedProjectAsThePHPToolDoes(t *testing.T) {
 	raw, err := os.ReadFile(filepath.Join("testdata", "extraction-projects.json"))
 	if err != nil {

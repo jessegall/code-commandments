@@ -14,10 +14,8 @@ type DeepNestingDetector struct{}
 
 func init() { detectors.Register(catalog.PHP, DeepNestingDetector{}) }
 
-// Sin is the sin the detector finds.
 func (DeepNestingDetector) Sin() sins.Sin { return backendsins.DeepNesting{} }
 
-// Find is every if inside two or more ifs of its own function.
 func (DeepNestingDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return php.In(codebase).
 		Where(engine.As(php.Node.IsDeeplyNestedIf)).

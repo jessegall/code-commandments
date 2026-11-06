@@ -13,7 +13,6 @@ func init() {
 	sins.Register(catalog.PHP, ImpossibleGuard{})
 }
 
-// Definition is what the sin states about itself.
 func (ImpossibleGuard) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "impossible-guard",

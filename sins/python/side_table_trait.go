@@ -13,7 +13,6 @@ func init() {
 	sins.Register(catalog.Python, SideTableTrait{})
 }
 
-// Definition is what the sin states about itself.
 func (SideTableTrait) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "python-side-table-trait",

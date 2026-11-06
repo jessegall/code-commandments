@@ -15,11 +15,8 @@ type NarratedCommandDetector struct{}
 
 func init() { detectors.Register(catalog.PHP, NarratedCommandDetector{}) }
 
-// Sin is the sin the detector finds.
 func (NarratedCommandDetector) Sin() sins.Sin { return backendsins.NarratedCommand{} }
 
-// Find is every command method, not magic nor inherited, whose name narrates a verb, unless it declares a relation
-// to its argument.
 func (NarratedCommandDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return php.In(codebase).
 		WhereKind("Stmt_ClassMethod").
@@ -31,8 +28,6 @@ func (NarratedCommandDetector) Find(codebase *engine.Codebase) []engine.Match {
 		Get()
 }
 
-// declaresAConstraint says whether a command returning its instance names a relation to its argument, as a
-// fluent constraint does: matchesWith($other).
 func declaresAConstraint(node php.Node) bool {
 	returnsNothing := node.DeclaredReturnType() == "void" || node.DeclaredReturnType() == "never"
 	if node.IsCommandMethod() && returnsNothing || node.TakesNoArguments() {

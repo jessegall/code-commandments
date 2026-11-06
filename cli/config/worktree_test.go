@@ -10,11 +10,6 @@ import (
 	"github.com/jessegall/code-commandments/cli/config"
 )
 
-// TestAWorktreeIsJudgedByTheProjectsConfig holds the settings a worker is judged by to the ones its project's
-// owner set. A worktree is a place to do work and not a project of its own: read from the worktree, the settings
-// are whatever its branch happens to carry — an older set of excluded folders, an older tuning of a rule, or,
-// where the branch has no config at all, nothing. A worker was then judged by rules nobody chose, silently, with
-// its findings reading exactly like everyone else's.
 func TestAWorktreeIsJudgedByTheProjectsConfig(t *testing.T) {
 	project := repository(t)
 
@@ -25,7 +20,6 @@ func TestAWorktreeIsJudgedByTheProjectsConfig(t *testing.T) {
 	worktree := filepath.Join(t.TempDir(), "work")
 	run(t, project, "worktree", "add", "-b", "a-worker", worktree)
 
-	// The worktree's branch changes the config, as a branch may: its own excludes are not the project's.
 	write(t, filepath.Join(worktree, ".commandments", "config.json"), `{"paths": ["src"], "exclude": ["everything-the-worker-wrote"]}`)
 
 	read, err := config.Load(worktree)
@@ -42,8 +36,6 @@ func TestAWorktreeIsJudgedByTheProjectsConfig(t *testing.T) {
 	}
 }
 
-// TestAProjectOutsideGitIsItsOwnSettingsRoot holds the quiet case: a folder in no repository has no main
-// checkout to look to, and reads its own config as it always did.
 func TestAProjectOutsideGitIsItsOwnSettingsRoot(t *testing.T) {
 	root := t.TempDir()
 	write(t, filepath.Join(root, ".commandments", "config.json"), `{"paths": ["src"], "exclude": ["dist"]}`)
@@ -58,7 +50,6 @@ func TestAProjectOutsideGitIsItsOwnSettingsRoot(t *testing.T) {
 	}
 }
 
-// repository is a git repository with one commit, which a worktree can be cut from.
 func repository(t *testing.T) string {
 	t.Helper()
 

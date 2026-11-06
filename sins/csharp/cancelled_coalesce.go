@@ -13,7 +13,6 @@ func init() {
 	sins.Register(catalog.CSharp, CancelledCoalesce{})
 }
 
-// Definition is what the sin states about itself.
 func (CancelledCoalesce) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "csharp-cancelled-coalesce",

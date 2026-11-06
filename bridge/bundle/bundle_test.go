@@ -98,10 +98,6 @@ func TestAnArchiveNeverWritesOutsideItsFolder(t *testing.T) {
 	}
 }
 
-// TestAFolderThatLostItsFilesIsWrittenAgain holds a bundle to what the folder HOLDS rather than to the folder
-// being there. The runtime builds beside the sources, and `python -m venv <folder>/venv` creates the folder it
-// needs, so a folder removed by hand came back holding a virtual environment and nothing else: pip then failed on
-// a requirements file that was never written again, every run, for good.
 func TestAFolderThatLostItsFilesIsWrittenAgain(t *testing.T) {
 	t.Setenv("XDG_CACHE_HOME", t.TempDir())
 	carried := Embedded("mypy", fstest.MapFS{"mypy/tree.py": {Data: []byte("the bridge")}, "mypy/requirements.txt": {Data: []byte("mypy==1.0")}}, "mypy")
@@ -134,8 +130,6 @@ func TestAFolderThatLostItsFilesIsWrittenAgain(t *testing.T) {
 	}
 }
 
-// TestATreesFolderThatCannotBeMadeIsAnsweredAsNone holds what a bridge is handed when the cache folder is not the
-// run's to write: no folder, so it parses the files with no cache rather than dying on the folder.
 func TestATreesFolderThatCannotBeMadeIsAnsweredAsNone(t *testing.T) {
 	cache := t.TempDir()
 	t.Setenv("XDG_CACHE_HOME", cache)
@@ -161,9 +155,6 @@ func TestATreesFolderThatCannotBeMadeIsAnsweredAsNone(t *testing.T) {
 	}
 }
 
-// TestAFolderWhoseWritesAreRefusedIsNotWritable holds the sandbox's own case, which is the one the Vue bridge died
-// on: the folder is THERE and writing in it is refused. A file cannot be made under /proc whoever the run is, so it
-// stands for the worker sandbox's cache folder here.
 func TestAFolderWhoseWritesAreRefusedIsNotWritable(t *testing.T) {
 	if runtime.GOOS != "linux" {
 		t.Skip("a folder nobody may write a file into needs /proc, which only linux has")

@@ -16,12 +16,10 @@ func init() {
 	detectors.Register(catalog.Python, ImpossibleGuardDetector{})
 }
 
-// Sin is the sin the detector finds.
 func (ImpossibleGuardDetector) Sin() sins.Sin {
 	return pysins.ImpossibleGuard{}
 }
 
-// Find is every guard a declared type has already ruled out.
 func (ImpossibleGuardDetector) Find(codebase *engine.Codebase) []engine.Match {
 	program := py.In(codebase).Program
 

@@ -6,14 +6,6 @@ import (
 	"github.com/jessegall/code-commandments/engine/python/pythontest"
 )
 
-// A missing funnel is one question asked in many places: a field of the project's own data compared with the same
-// value, the same way, in function after function, where the type that holds the field should name the question
-// once. These hold the checks that say it — the repeat, whose field it is, and whether the type already names it —
-// and the two things that make the count honest: a question asked either way round is one question, and the method
-// that NAMES the question is not one of the places asking it.
-
-// tasks is a project whose state is asked about from everywhere. Task and Plan both declare `state`, which is what
-// tells a reading by text from a reading by owner, and Task already names one of its own questions.
 var tasks = map[string]string{
 	"shop/__init__.py": "",
 	"shop/models.py": `from dataclasses import dataclass
@@ -93,21 +85,13 @@ def titled(task: Task) -> bool:
 `,
 }
 
-// TestARepeatedQuestionIsFoundWhereverItIsAsked holds the count itself: the sites of one question, in functions and
-// in files, with the method that names it left out of them.
 func TestARepeatedQuestionIsFoundWhereverItIsAsked(t *testing.T) {
 	project := pythontest.FromSource(t, tasks)
 
 	for query, want := range map[string]string{
-		// `task.state == TaskState.STARTED` is asked in reads.py and writes.py, and `!=` is the same question
-		// asked the other way round: three places, two files. Task.is_started names it and is not one of them.
-		`{"select": "comparison", "where": [{"declaredBy": "*Task"}, {"repeated": {"atLeast": 3, "files": 2, "eitherWay": true, "by": "owner"}}]}`: "[reads.py:5 reads.py:9 writes.py:5]",
-		// Without eitherWay the `!=` is a question of its own, and neither reaches three.
-		`{"select": "comparison", "where": [{"declaredBy": "*Task"}, {"repeated": {"atLeast": 3, "files": 2, "by": "owner"}}]}`: "[]",
-		// Plan.state is asked twice, so it is under the floor however it is read.
-		`{"select": "comparison", "where": [{"declaredBy": "*Plan"}, {"repeated": {"atLeast": 3, "by": "owner"}}]}`: "[]",
-		// `task.worker is None` is asked twice and `is not None` once: one question either way, in one file, so
-		// the spread is what keeps it out.
+		`{"select": "comparison", "where": [{"declaredBy": "*Task"}, {"repeated": {"atLeast": 3, "files": 2, "eitherWay": true, "by": "owner"}}]}`:                                         "[reads.py:5 reads.py:9 writes.py:5]",
+		`{"select": "comparison", "where": [{"declaredBy": "*Task"}, {"repeated": {"atLeast": 3, "files": 2, "by": "owner"}}]}`:                                                            "[]",
+		`{"select": "comparison", "where": [{"declaredBy": "*Plan"}, {"repeated": {"atLeast": 3, "by": "owner"}}]}`:                                                                        "[]",
 		`{"select": "comparison", "where": [{"declaredBy": "*Task"}, {"repeated": {"atLeast": 3, "eitherWay": true, "by": "owner"}}, {"of": "child:left", "name": "worker"}]}`:             "[writes.py:12 writes.py:16 writes.py:20]",
 		`{"select": "comparison", "where": [{"declaredBy": "*Task"}, {"repeated": {"atLeast": 3, "files": 2, "eitherWay": true, "by": "owner"}}, {"of": "child:left", "name": "worker"}]}`: "[]",
 	} {
@@ -117,10 +101,6 @@ func TestARepeatedQuestionIsFoundWhereverItIsAsked(t *testing.T) {
 	}
 }
 
-// TestAQuestionIsGroupedByWhoseFieldItIsAndNotByItsWords holds the reason the owner matters. Task and Plan both
-// declare `state` and both are asked about a member called STARTED; read by what is written, with the receiver
-// blanked, those are one question of five sites, and read by owner they are two questions, of three and of two. A
-// rule that cannot tell them apart names the wrong class as the place the method belongs.
 func TestAQuestionIsGroupedByWhoseFieldItIsAndNotByItsWords(t *testing.T) {
 	project := pythontest.FromSource(t, tasks)
 
@@ -135,9 +115,6 @@ func TestAQuestionIsGroupedByWhoseFieldItIsAndNotByItsWords(t *testing.T) {
 	}
 }
 
-// TestTheMethodThatNamesAQuestionIsNotOneOfThePlacesAskingIt holds the rule that keeps a funnel from counting among
-// the repeats it exists to remove: Task.is_started asks `self.state == TaskState.STARTED`, and with it counted
-// there would be four sites where three places ask.
 func TestTheMethodThatNamesAQuestionIsNotOneOfThePlacesAskingIt(t *testing.T) {
 	project := pythontest.FromSource(t, tasks)
 
@@ -147,8 +124,6 @@ func TestTheMethodThatNamesAQuestionIsNotOneOfThePlacesAskingIt(t *testing.T) {
 	}
 }
 
-// TestARuleKnowsWhetherTheTypeAlreadyNamesTheQuestion holds the difference between the two things such a finding
-// has to say: use the name that exists, or give it one.
 func TestARuleKnowsWhetherTheTypeAlreadyNamesTheQuestion(t *testing.T) {
 	project := pythontest.FromSource(t, tasks)
 
@@ -162,10 +137,6 @@ func TestARuleKnowsWhetherTheTypeAlreadyNamesTheQuestion(t *testing.T) {
 	}
 }
 
-// TestWhoseFieldItIsIsReadFromTheTypeAndNeverFromTheName holds `declaredBy` to answering what a name cannot: the
-// class whose own line declares the member. It answers nothing where the scan gives the receiver no type and where
-// no declaration of it declares that member, which is what keeps a rule about the project's own data off every
-// other object in the file.
 func TestWhoseFieldItIsIsReadFromTheTypeAndNeverFromTheName(t *testing.T) {
 	project := pythontest.FromSource(t, map[string]string{
 		"shop/__init__.py": "",
@@ -195,9 +166,8 @@ def untyped(whatever) -> bool:
 	})
 
 	for query, want := range map[string]string{
-		`{"select": "comparison", "where": [{"declaredBy": "*Card"}]}`: "[kinds.py:14]",
-		`{"select": "comparison", "where": [{"declaredBy": "*"}]}`:     "[kinds.py:14]",
-		// The target steps onto that declaration, so every check composes on whose field it is.
+		`{"select": "comparison", "where": [{"declaredBy": "*Card"}]}`:                            "[kinds.py:14]",
+		`{"select": "comparison", "where": [{"declaredBy": "*"}]}`:                                "[kinds.py:14]",
 		`{"select": "comparison", "where": [{"of": "declaredBy", "hasAnnotation": "dataclass"}]}`: "[kinds.py:14]",
 		`{"select": "comparison", "where": [{"of": "declaredBy", "nameLike": "Outside"}]}`:        "[]",
 	} {
@@ -207,9 +177,6 @@ def untyped(whatever) -> bool:
 	}
 }
 
-// TestARepeatedLiteralNeedsTheExactReading holds the one choice that is not about comparisons, and the reason it
-// exists: normalising blanks the text of a data literal, which is what lets two functions differing only in their
-// strings read as one body, and would read every string of a codebase as one repeat.
 func TestARepeatedLiteralNeedsTheExactReading(t *testing.T) {
 	project := pythontest.FromSource(t, map[string]string{
 		"shop/__init__.py": "",
@@ -230,10 +197,8 @@ def four(row: dict) -> object:
 	})
 
 	for query, want := range map[string]string{
-		// The same key in three functions across two files; the fourth string is its own.
 		`{"select": "literal", "where": [{"repeated": {"atLeast": 3, "files": 2, "exact": true}}]}`: "[keys.py:2 keys.py:6 more.py:2]",
-		// Read as `duplicated` reads a body, every string is the same datum, so all four count as one repeat.
-		`{"select": "literal", "where": [{"repeated": {"atLeast": 4, "files": 2}}]}`: "[keys.py:2 keys.py:6 more.py:2 more.py:6]",
+		`{"select": "literal", "where": [{"repeated": {"atLeast": 4, "files": 2}}]}`:                "[keys.py:2 keys.py:6 more.py:2 more.py:6]",
 	} {
 		if got := foundAt(t, "python", query, project); got != want {
 			t.Errorf("%s:\n got %s\nwant %s", query, got, want)
@@ -241,9 +206,6 @@ def four(row: dict) -> object:
 	}
 }
 
-// TestARepeatIsCountedForAnythingTheTreeHolds holds the step to being about any node and not only a comparison: the
-// same reach through a chain, written in function after function, is a missing helper exactly as a repeated
-// question is a missing predicate.
 func TestARepeatIsCountedForAnythingTheTreeHolds(t *testing.T) {
 	project := pythontest.FromSource(t, map[string]string{
 		"shop/__init__.py": "",
@@ -289,10 +251,6 @@ class Event:
 	}
 }
 
-// TestHowFarAClassLineRuns holds the one size a class cannot be read for from its own file. A project that allows
-// two levels of its own could not say so: `extendsAny` asks whether a type is somewhere in the line, and nothing
-// asked how far the line runs. `within` is what keeps the answer about the project's own levels, since the
-// framework class underneath them is nobody's to flatten.
 func TestHowFarAClassLineRuns(t *testing.T) {
 	project := pythontest.FromSource(t, map[string]string{
 		"shop/__init__.py": "",
@@ -318,12 +276,9 @@ class Loose:
 	})
 
 	for query, want := range map[string]string{
-		// Task stands on Scoped and Model: two levels, which is the limit.
-		`{"select": "type-declaration", "where": [{"ancestors": {"atMost": 2, "within": "shop.*"}}]}`: "[models.py:1 models.py:17 models.py:5 models.py:9]",
-		// Deep stands on three, which is past it.
+		`{"select": "type-declaration", "where": [{"ancestors": {"atMost": 2, "within": "shop.*"}}]}`:  "[models.py:1 models.py:17 models.py:5 models.py:9]",
 		`{"select": "type-declaration", "where": [{"ancestors": {"atLeast": 3, "within": "shop.*"}}]}`: "[models.py:13]",
-		// A class whose line holds nothing of the project's own: Model and Loose, each standing on nothing.
-		`{"select": "type-declaration", "where": [{"ancestors": {"atMost": 0, "within": "shop.*"}}]}`: "[models.py:1 models.py:17]",
+		`{"select": "type-declaration", "where": [{"ancestors": {"atMost": 0, "within": "shop.*"}}]}`:  "[models.py:1 models.py:17]",
 	} {
 		if got := foundAt(t, "python", query, project); got != want {
 			t.Errorf("%s:\n got %s\nwant %s", query, got, want)
@@ -331,11 +286,6 @@ class Loose:
 	}
 }
 
-// TestAFieldSetFromOutsideItsOwnFile holds the question a frozen model asks of everyone else: its changes go
-// through the methods it wrote for them, and a named argument that sets one of its fields from another file has
-// gone around those methods. Three shapes name the same field — a copy function taking the object, a method of its
-// own, and a construction — and the look-alikes are a keyword that is no field of anything and the model's own
-// file, where setting its fields is its own business.
 func TestAFieldSetFromOutsideItsOwnFile(t *testing.T) {
 	project := pythontest.FromSource(t, map[string]string{
 		"shop/__init__.py": "",
@@ -376,13 +326,9 @@ def shout(message: str) -> None:
 	})
 
 	for query, want := range map[string]string{
-		// A field of Task set by name on a task the call was handed, from a file that is not Task's own. The
-		// construction on line 15 names fields too and is not among them: it holds no task to change.
-		`{"select": "kind:keyword", "where": [{"declaredBy": "*Task"}, {"declaredElsewhere": true}]}`: "[handlers.py:11 handlers.py:7]",
-		// The model's own file sets its own fields, which is what its methods are for.
+		`{"select": "kind:keyword", "where": [{"declaredBy": "*Task"}, {"declaredElsewhere": true}]}`:  "[handlers.py:11 handlers.py:7]",
 		`{"select": "kind:keyword", "where": [{"declaredBy": "*Task"}, {"declaredElsewhere": false}]}`: "[models.py:10]",
-		// A keyword that names a field of nothing is nobody's business: other.py is not among these.
-		`{"select": "kind:keyword", "where": [{"declaredBy": "*"}]}`: "[handlers.py:11 handlers.py:7 models.py:10]",
+		`{"select": "kind:keyword", "where": [{"declaredBy": "*"}]}`:                                   "[handlers.py:11 handlers.py:7 models.py:10]",
 	} {
 		if got := foundAt(t, "python", query, project); got != want {
 			t.Errorf("%s:\n got %s\nwant %s", query, got, want)
@@ -390,10 +336,6 @@ def shout(message: str) -> None:
 	}
 }
 
-// TestAThingReferredToFromOneSideOfTheProject holds the question `calledFrom` could only ask of a FOLDER: which
-// side of the project refers to a thing. An event nobody listens for is raised and never heard, and the shape that
-// says so is a reference that passes a step rather than a reference in a path — a listener names an event in the
-// type of a parameter, wherever its file happens to sit.
 func TestAThingReferredToFromOneSideOfTheProject(t *testing.T) {
 	project := pythontest.FromSource(t, map[string]string{
 		"shop/__init__.py": "",
@@ -428,11 +370,7 @@ def forget(number: int) -> TaskForgotten:
 	})
 
 	for query, want := range map[string]string{
-		// An event some parameter is typed as is heard by something.
-		// The reference is the NAME in the annotation; the parameter is what holds it, which is why the step
-		// steps up to the parent before asking what it is.
-		`{"select": "type-declaration", "where": [{"referredFrom": {"of": "parent", "is": "parameter"}}]}`: "[events.py:4]",
-		// One that nothing names in a parameter is raised and never heard, which is the finding.
+		`{"select": "type-declaration", "where": [{"referredFrom": {"of": "parent", "is": "parameter"}}]}`:          "[events.py:4]",
 		`{"select": "type-declaration", "where": [{"not": {"referredFrom": {"of": "parent", "is": "parameter"}}}]}`: "[events.py:9]",
 	} {
 		if got := foundAt(t, "python", query, project); got != want {
@@ -441,13 +379,6 @@ def forget(number: int) -> TaskForgotten:
 	}
 }
 
-// A repeat was counted only inside a function, so a value a class declares ABOUT ITSELF could never be counted:
-// two listeners declaring the same event is the shape a project asked for, and the class body is where that value
-// lives. A place is now the function a node sits in, or the type declaration where no function does.
-
-// TestAValueTwoClassesDeclareIsARepeat holds the ask itself: two listeners naming one event over two files are two
-// places, a third naming another event is one, and the string a method passes is counted in its own method as
-// before.
 func TestAValueTwoClassesDeclareIsARepeat(t *testing.T) {
 	project := pythontest.FromSource(t, map[string]string{
 		"shop/__init__.py": "",
@@ -471,9 +402,6 @@ func TestAValueTwoClassesDeclareIsARepeat(t *testing.T) {
 `,
 	})
 
-	// The event two classes declare is one reading in two places, over two files; the one only a single class
-	// declares is one place. exact is asked for because the normalised reading blanks a literal's datum, which
-	// would read every event string as the same one.
 	for query, want := range map[string]string{
 		`{"select": "literal", "where": [{"of": "parent", "name": "event"}, {"repeated": {"atLeast": 2, "files": 2, "exact": true}}]}`: "[dock.py:2 mark.py:2]",
 		`{"select": "literal", "where": [{"of": "parent", "name": "event"}, {"repeated": {"atMost": 1, "exact": true}}]}`:              "[label.py:2]",
@@ -484,8 +412,6 @@ func TestAValueTwoClassesDeclareIsARepeat(t *testing.T) {
 	}
 }
 
-// TestARepeatedQuestionAnswersForGo holds the fact the hashes were missing for: Go registered neither, so every
-// repeat and duplicate question answered nothing for it while answering for five other languages.
 func TestARepeatedQuestionAnswersForGo(t *testing.T) {
 	project := goProject(t, map[string]string{
 		"go.mod": "module example.com/shop\n",
@@ -514,10 +440,7 @@ func Labelled(run *Run) bool {
 	})
 
 	for query, want := range map[string]string{
-		// The same question asked in two files, blind to what the local is called: the normalised reading.
-		`{"select": "comparison", "where": [{"repeated": {"atLeast": 3, "files": 3}}]}`: "[dock.go:4 label.go:4 mark.go:4]",
-		// Asked exactly, the datum counts: the two asking about "saved" are one question, and the one asking
-		// about "printed" is its own.
+		`{"select": "comparison", "where": [{"repeated": {"atLeast": 3, "files": 3}}]}`:    "[dock.go:4 label.go:4 mark.go:4]",
 		`{"select": "comparison", "where": [{"repeated": {"atLeast": 2, "exact": true}}]}`: "[dock.go:4 mark.go:4]",
 		`{"select": "comparison", "where": [{"repeated": {"atMost": 1, "exact": true}}]}`:  "[label.go:4]",
 	} {

@@ -15,12 +15,10 @@ type BoundaryDuplicatedOperationDetector struct{}
 
 func init() { detectors.Register(catalog.PHP, BoundaryDuplicatedOperationDetector{}) }
 
-// Sin is the sin the detector finds.
 func (BoundaryDuplicatedOperationDetector) Sin() sins.Sin {
 	return backendsins.BoundaryDuplicatedOperation{}
 }
 
-// Find is every method whose operation another kind of entry point repeats.
 func (BoundaryDuplicatedOperationDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return php.In(codebase).
 		WhereKind("Stmt_ClassMethod").
@@ -30,5 +28,4 @@ func (BoundaryDuplicatedOperationDetector) Find(codebase *engine.Codebase) []eng
 		Get()
 }
 
-// CrossFile says the PHP tool finds it reaching beyond the file it judges, so a per-file check must not ask it.
 func (BoundaryDuplicatedOperationDetector) CrossFile() {}

@@ -11,22 +11,17 @@ import (
 	backendsins "github.com/jessegall/code-commandments/sins/backend/laravel"
 )
 
-// ContainerReachDetector finds a class resolving a dependency from the container by hand, where it belongs injected
-// through the constructor.
+// ContainerReachDetector finds a class resolving a dependency from the container by hand, where it belongs injected through the constructor.
 type ContainerReachDetector struct{}
 
 func init() { detectors.Register(catalog.PHP, ContainerReachDetector{}) }
 
-// Sin is the sin the detector finds.
 func (ContainerReachDetector) Sin() sins.Sin { return backendsins.ContainerReach{} }
 
-// Exemptions excuses a class the framework builds without the container, which has nothing to inject into.
 func (ContainerReachDetector) Exemptions() []packages.Exemption {
 	return []packages.Exemption{{Tag: packages.NoContainer, By: []packages.By{packages.EnclosingClass}}}
 }
 
-// Find is every app() or resolve() of a named class, outside enums and a class resolving itself, in a class the
-// container builds.
 func (d ContainerReachDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return packages.Exempt(codebase, d, php.In(codebase).
 		Where(engine.As(func(n php.Node) bool { return n.CallsFunction("app") || n.CallsFunction("resolve") })).
@@ -38,6 +33,4 @@ func (d ContainerReachDetector) Find(codebase *engine.Codebase) []engine.Match {
 		Get())
 }
 
-// CrossFile says the rule reads more than the file it reports in, which the fixture measures by asking it
-// of one file and of the whole tree: a scoped run reads the whole scan while it is enabled.
 func (ContainerReachDetector) CrossFile() {}

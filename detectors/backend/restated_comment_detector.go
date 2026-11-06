@@ -18,13 +18,10 @@ type RestatedCommentDetector struct{}
 
 func init() { detectors.Register(catalog.PHP, RestatedCommentDetector{}) }
 
-// minWords is how many distinct words a comment needs before it can restate anything.
 const minWords = 2
 
-// Sin is the sin the detector finds.
 func (RestatedCommentDetector) Sin() sins.Sin { return backendsins.RestatedComment{} }
 
-// Find is every statement in a function whose line comment uses only words its own code says.
 func (RestatedCommentDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return php.In(codebase).
 		Where(engine.As(php.Node.HasLineComment)).

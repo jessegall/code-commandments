@@ -16,12 +16,10 @@ func init() {
 	detectors.Register(catalog.CSharp, ConstClassEnumDetector{})
 }
 
-// Sin is the sin the detector finds.
 func (ConstClassEnumDetector) Sin() sins.Sin {
 	return cssins.ConstClassEnum{}
 }
 
-// Find is every place the sin is committed.
 func (ConstClassEnumDetector) Find(codebase *engine.Codebase) []engine.Match {
 	program := cs.In(codebase).Program
 

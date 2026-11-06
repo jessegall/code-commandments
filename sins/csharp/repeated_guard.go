@@ -13,7 +13,6 @@ func init() {
 	sins.Register(catalog.CSharp, RepeatedGuard{})
 }
 
-// Definition is what the sin states about itself.
 func (RepeatedGuard) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "csharp-repeated-guard",

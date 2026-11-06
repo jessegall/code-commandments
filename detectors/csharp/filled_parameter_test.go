@@ -6,10 +6,6 @@ import (
 	"github.com/jessegall/code-commandments/engine/csharp/csharptest"
 )
 
-// TestAFilledParameterIsFoundAndACommandIsNotCS holds the rule to the fault it names: a method returning
-// nothing that writes a property of what it was handed, whose caller reads that property back off. A command
-// the caller never looks at again, a method that returns its answer, and an `out` parameter, which says in the
-// signature that the value comes back, are how the work is done right and must pass.
 func TestAFilledParameterIsFoundAndACommandIsNotCS(t *testing.T) {
 	const slip = `namespace Shop;
 

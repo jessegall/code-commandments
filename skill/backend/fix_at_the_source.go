@@ -14,14 +14,13 @@ var (
 	fixAtTheSourcePrinciple string
 )
 
-// FixAtTheSource teaches: the root-cause-first move: trace a value to where it's born, never patch the symptom. Governs how every change is made.
+// FixAtTheSource teaches: the root-cause-first move: trace a value to where it's born, never patch the symptom.
 type FixAtTheSource struct{}
 
 func init() {
 	skill.Register(catalog.PHP, FixAtTheSource{})
 }
 
-// Definition is what the skill states about itself.
 func (FixAtTheSource) Definition() skill.Definition {
 	return skill.Definition{
 		Slug:      "php/fix-at-the-source",

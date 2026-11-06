@@ -13,7 +13,6 @@ func init() {
 	sins.Register(catalog.PHP, HandedOutCollection{})
 }
 
-// Definition is what the sin states about itself.
 func (HandedOutCollection) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "handed-out-collection",

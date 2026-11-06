@@ -11,7 +11,6 @@ type CoalescedLoopSubject struct{}
 
 func init() { sins.Register(catalog.PHP, CoalescedLoopSubject{}) }
 
-// Definition is what the sin states about itself.
 func (CoalescedLoopSubject) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "coalesced-loop-subject",

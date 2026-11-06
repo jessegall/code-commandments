@@ -7,15 +7,12 @@ import (
 	"testing"
 )
 
-// withoutCodex turns an agent off, which leaves every hook wired.
 const withoutCodex = `<?php
 return function ($config): void {
     $config->disable(\JesseGall\CodeCommandments\Agents\CodexAgent::class);
 };
 `
 
-// TestHooksAreWiredAsThePHPToolWiresThem holds the wiring to what the PHP tool wrote for each case, recorded under
-// testdata/wired/<case>: whether it wired anything, and the settings file it left.
 func TestHooksAreWiredThroughTheLauncher(t *testing.T) {
 	for name, settings := range map[string]*string{
 		"no-settings":   nil,

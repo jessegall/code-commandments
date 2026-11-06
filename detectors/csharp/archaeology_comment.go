@@ -17,12 +17,10 @@ func init() {
 	detectors.Register(catalog.CSharp, ArchaeologyCommentDetector{})
 }
 
-// Sin is the sin the detector finds.
 func (ArchaeologyCommentDetector) Sin() sins.Sin {
 	return cssins.ArchaeologyComment{}
 }
 
-// Find is every place the sin is committed.
 func (ArchaeologyCommentDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return cs.In(codebase).WhereComment(func(comment cs.Comment) bool { return prose.NarratesHistory(comment.Prose()) })
 }

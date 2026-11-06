@@ -7,8 +7,6 @@ import (
 	"github.com/jessegall/code-commandments/engine/csharp/csharptest"
 )
 
-// costLines is issue 706's shape: two validators each hand one store method three ids read off the command they
-// check. The second validator's command is TYPE.
 const costLines = `using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -38,9 +36,6 @@ public sealed class ReviseCostLineValidator(DocumentStore store)
 }
 `
 
-// TestPiecesOfObjectsOfDifferentTypesAreNoDerivedArgument holds the rule to an object the method could take: the
-// pieces every call hands must be read off objects of one type, since a method takes one parameter type. Two
-// command types sharing no type of their own leave nothing to take whole; one command type still does.
 func TestPiecesOfObjectsOfDifferentTypesAreNoDerivedArgument(t *testing.T) {
 	for name, test := range map[string]struct {
 		command string

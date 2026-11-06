@@ -13,7 +13,6 @@ func init() {
 	sins.Register(catalog.CSharp, GenericThrow{})
 }
 
-// Definition is what the sin states about itself.
 func (GenericThrow) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "csharp-generic-throw",

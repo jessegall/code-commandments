@@ -11,7 +11,6 @@ type CancelledCoalesce struct{}
 
 func init() { sins.Register(catalog.PHP, CancelledCoalesce{}) }
 
-// Definition is what the sin states about itself.
 func (CancelledCoalesce) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "cancelled-coalesce",

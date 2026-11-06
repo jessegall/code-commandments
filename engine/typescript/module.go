@@ -7,16 +7,13 @@ import (
 	"github.com/jessegall/code-commandments/engine"
 )
 
-// reactive are the calls that wrap a value in a ref, whose type is what the call holds.
 var reactive = []string{"ref", "computed", "shallowRef", "toRef", "customRef", "reactive"}
 
-// Module is a script's top-level statements, read as the PHP tool reads a script: its imports, its variables,
-// functions and classes, its type declarations and the calls it makes at the top.
+// Module is a script's top-level statements, read as the PHP tool reads a script: its imports, its variables, functions and classes, its type declarations and the calls it makes at the top.
 type Module struct {
 	statements []Node
 }
 
-// ModuleOf reads the statements.
 func ModuleOf(statements []engine.Match) Module {
 	module := Module{}
 	for _, statement := range statements {
@@ -26,7 +23,6 @@ func ModuleOf(statements []engine.Match) Module {
 	return module
 }
 
-// ModuleOfNodes reads the statements.
 func ModuleOfNodes(statements []Node) Module {
 	return Module{statements: statements}
 }
@@ -41,12 +37,10 @@ type Import struct {
 	Statement string
 }
 
-// BindsAny says whether the import binds a name the test accepts.
 func (i Import) BindsAny(test func(string) bool) bool {
 	return slices.ContainsFunc(i.Names, test)
 }
 
-// Imports is every import of the script, each statement ended with a `;`.
 func (m Module) Imports() []Import {
 	var imports []Import
 	for _, statement := range m.statements {
@@ -99,7 +93,6 @@ func importOf(statement Node) (Import, bool) {
 	return imported, true
 }
 
-// ImportOf is the import that binds the name from a module.
 func (m Module) ImportOf(name string) (Import, bool) {
 	for _, imported := range m.Imports() {
 		if _, binds := imported.Bindings[name]; binds && imported.HasFrom {
@@ -110,7 +103,6 @@ func (m Module) ImportOf(name string) (Import, bool) {
 	return Import{}, false
 }
 
-// ReExports is the file of every module the script re-exports from, once.
 func (m Module) ReExports() []string {
 	var files []string
 	for _, statement := range m.statements {
@@ -129,7 +121,6 @@ type Call struct {
 	Arguments     []Node
 }
 
-// CallOf is the call the expression makes to a plain name.
 func CallOf(n Node) (Call, bool) {
 	callee, ok := n.CalleeName()
 	if !ok {
@@ -156,7 +147,6 @@ type Variable struct {
 	Arrow         *FunctionType
 }
 
-// Render is the declaration as written again: `const name: T = init;`.
 func (v Variable) Render() string {
 	typed, init := "", ""
 	if v.Annotation != nil {
@@ -199,8 +189,6 @@ func variableOf(statement Node) (Variable, bool) {
 	return variable, true
 }
 
-// parenthesisedArrow is the signature of an arrow function that writes its parameters in parentheses, its return
-// type left out when it declares none.
 func parenthesisedArrow(n Node) (FunctionType, bool) {
 	written := strings.TrimSpace(strings.TrimPrefix(strings.TrimSpace(n.Written()), "async"))
 	if n.Kind() != "ArrowFunction" || !strings.HasPrefix(written, "(") {
@@ -227,7 +215,6 @@ type Function struct {
 	Body         Module
 }
 
-// Signature is the function's type: its parameters and its return, void when it declares none.
 func (f Function) Signature() FunctionType {
 	var returns TypeNode = KeywordType{Name: "void"}
 	if f.ReturnType != nil {
@@ -266,8 +253,6 @@ type Returned struct {
 	Key, Local string
 }
 
-// objectShape is a returned object literal's keys, each with the local it returns, a key written again keeping its
-// place.
 func objectShape(object Node) []Returned {
 	var shape []Returned
 	set := func(key, local string) {
@@ -300,7 +285,6 @@ func objectShape(object Node) []Returned {
 	return shape
 }
 
-// Variable is the declaration of a variable binding the name.
 func (m Module) Variable(name string) (Variable, bool) {
 	for _, statement := range m.statements {
 		if variable, ok := variableOf(statement); ok && slices.Contains(variable.Names, name) {
@@ -311,7 +295,6 @@ func (m Module) Variable(name string) (Variable, bool) {
 	return Variable{}, false
 }
 
-// Function is the function declared under the name.
 func (m Module) Function(name string) (Function, bool) {
 	for _, statement := range m.statements {
 		if function, ok := functionOf(statement); ok && function.Name == name {
@@ -322,7 +305,6 @@ func (m Module) Function(name string) (Function, bool) {
 	return Function{}, false
 }
 
-// Call is the first call to the callee at the top of the script, a variable's initialiser included.
 func (m Module) Call(callee string) (Call, bool) {
 	for _, statement := range m.statements {
 		if call, ok := CallOf(Node{statement.Child("expression")}); statement.Kind() == "ExpressionStatement" && ok && call.Callee == callee {
@@ -336,7 +318,6 @@ func (m Module) Call(callee string) (Call, bool) {
 	return Call{}, false
 }
 
-// LocalNames is every name the script's top declares, once, in order: its variables, functions and classes.
 func (m Module) LocalNames() []string {
 	var names []string
 	add := func(declared ...string) {
@@ -358,7 +339,6 @@ func (m Module) LocalNames() []string {
 	return names
 }
 
-// VariableNamedFrom is the name of the first plain `const name = …` whose initialiser call the test accepts.
 func (m Module) VariableNamedFrom(test func(Call) bool) (string, bool) {
 	for _, statement := range m.statements {
 		if variable, ok := variableOf(statement); ok && variable.NamePattern && variable.InitCall != nil && test(*variable.InitCall) {
@@ -369,8 +349,6 @@ func (m Module) VariableNamedFrom(test func(Call) bool) (string, bool) {
 	return "", false
 }
 
-// DeclaredType is the type the script declares or soundly implies for a name: a function's signature, a variable's
-// annotation, an arrow's signature, a reactive wrapper's value, or an initialiser's inferred type.
 func (m Module) DeclaredType(name string) (TypeNode, bool) {
 	if function, ok := m.Function(name); ok {
 		return function.Signature(), true
@@ -397,7 +375,6 @@ func (m Module) DeclaredType(name string) (TypeNode, bool) {
 	return nil, false
 }
 
-// reactiveType is what a reactive wrapper holds: its type argument, a computed's return, or its value's type.
 func reactiveType(call Call) (TypeNode, bool) {
 	if !slices.Contains(reactive, call.Callee) {
 		return nil, false
@@ -415,7 +392,6 @@ func reactiveType(call Call) (TypeNode, bool) {
 	return call.Arguments[0].InferType()
 }
 
-// StaticConst is a plain `const NAME = …` that calls nothing, as written again: a constant a component can carry in.
 func (m Module) StaticConst(name string) (string, bool) {
 	variable, ok := m.Variable(name)
 	if !ok || variable.Keyword != "const" || variable.InitCall != nil || !variable.NamePattern {
@@ -425,7 +401,6 @@ func (m Module) StaticConst(name string) (string, bool) {
 	return variable.Render(), true
 }
 
-// DestructuredCall is the call a destructured name comes from: `const { x } = useThing()`.
 func (m Module) DestructuredCall(name string) (string, bool) {
 	variable, ok := m.Variable(name)
 	if !ok || !variable.ObjectPattern || variable.InitCall == nil {
@@ -435,7 +410,6 @@ func (m Module) DestructuredCall(name string) (string, bool) {
 	return variable.InitCall.Callee, true
 }
 
-// ReturnTypeName is the return type a function declares, printed.
 func (m Module) ReturnTypeName(function string) (TypeNode, bool) {
 	if declared, ok := m.Function(function); ok {
 		return declared.ReturnType, declared.ReturnType != nil
@@ -448,7 +422,6 @@ func (m Module) ReturnTypeName(function string) (TypeNode, bool) {
 	return variable.Arrow.Returns, true
 }
 
-// InferredReturnFields is the type of each field a composable returns, read from the locals it returns.
 func (m Module) InferredReturnFields(function string) Fields {
 	declared, ok := m.Function(function)
 	if !ok || declared.ReturnObject == nil {
@@ -476,7 +449,6 @@ type TypeDeclaration struct {
 	Type      TypeNode
 }
 
-// Render is the declaration as the PHP tool writes it again: an interface a member a line, an alias on one line.
 func (d TypeDeclaration) Render() string {
 	if !d.Interface {
 		return "type " + d.Name + d.Header + " = " + d.Type.Render() + ";"
@@ -489,7 +461,6 @@ func (d TypeDeclaration) Render() string {
 	return "interface " + d.Name + d.Header + " {\n" + strings.Join(lines, "\n") + "\n}"
 }
 
-// References is every name the declaration's types reference.
 func (d TypeDeclaration) References() []string {
 	if !d.Interface {
 		return d.Type.References()
@@ -498,7 +469,6 @@ func (d TypeDeclaration) References() []string {
 	return ObjectType{Members: d.Members}.References()
 }
 
-// Fields is the declaration's members by name, each its type as printed.
 func (d TypeDeclaration) Fields() Fields {
 	if d.Interface {
 		return ObjectType{Members: d.Members}.Fields()
@@ -529,7 +499,6 @@ func declarationOf(statement Node) (TypeDeclaration, bool) {
 	return TypeDeclaration{}, false
 }
 
-// headerOf is what a declaration writes between its name and the opener: its type parameters and what it extends.
 func headerOf(statement Node, name engine.Match, opener string) string {
 	whole, err := statement.Span()
 	named, nameErr := name.Span()
@@ -544,7 +513,6 @@ func headerOf(statement Node, name engine.Match, opener string) string {
 	return strings.TrimSpace(rest)
 }
 
-// TypeDeclaration is the interface declared under the name, else the type alias.
 func (m Module) TypeDeclaration(name string) (TypeDeclaration, bool) {
 	for _, wantInterface := range []bool{true, false} {
 		for _, statement := range m.statements {
@@ -557,7 +525,6 @@ func (m Module) TypeDeclaration(name string) (TypeDeclaration, bool) {
 	return TypeDeclaration{}, false
 }
 
-// TypeFields is the members of the type the script declares under the name.
 func (m Module) TypeFields(name string) Fields {
 	declaration, declared := m.TypeDeclaration(name)
 	if !declared {
@@ -567,8 +534,6 @@ func (m Module) TypeFields(name string) Fields {
 	return declaration.Fields()
 }
 
-// LocalTypes is each declaration the names reach within the script, the ones they reference followed in turn, in
-// the order they were reached.
 func (m Module) LocalTypes(names []string) []TypeDeclaration {
 	var reached []TypeDeclaration
 	seen := map[string]bool{}
@@ -596,7 +561,6 @@ func (m Module) LocalTypes(names []string) []TypeDeclaration {
 	return reached
 }
 
-// FieldType is a declared type's field's type, its reactive wrapper taken off.
 func (m Module) FieldType(typeName, field string) (TypeNode, bool) {
 	typed, ok := m.TypeFields(typeName).Get(field)
 	if !ok {

@@ -11,7 +11,6 @@ type GenericException struct{}
 
 func init() { sins.Register(catalog.PHP, GenericException{}) }
 
-// Definition is what the sin states about itself.
 func (GenericException) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "generic-exception",

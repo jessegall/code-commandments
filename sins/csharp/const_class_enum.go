@@ -13,7 +13,6 @@ func init() {
 	sins.Register(catalog.CSharp, ConstClassEnum{})
 }
 
-// Definition is what the sin states about itself.
 func (ConstClassEnum) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "csharp-const-class-enum",

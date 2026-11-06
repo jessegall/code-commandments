@@ -16,8 +16,6 @@ var phpArchive []byte
 //go:embed bundles/frontend.tar.gz
 var frontendArchive []byte
 
-// PHP is bridge/php with the php-parser it loads, run by the php on the PATH.
 var PHP = bundle.Archived("php", phpArchive)
 
-// Frontend is bridge/frontend's built script and the TypeScript libraries it reads, run by the node on the PATH.
 var Frontend = bundle.Archived("frontend", frontendArchive)

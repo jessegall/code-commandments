@@ -11,16 +11,13 @@ import (
 	"github.com/jessegall/code-commandments/skill"
 )
 
-// Toggle is `disable` and `enable`: turn a sin or a whole skill off or back on in the project's config,
-// edited through the tree so the file stays valid PHP and the project's own lines are untouched.
+// Toggle is `disable` and `enable`: turn a sin or a whole skill off or back on in the project's config, edited through the tree so the file stays valid PHP and the project's own lines are untouched.
 type Toggle struct{}
 
-// Names are the verbs it answers to.
 func (Toggle) Names() []string {
 	return []string{"disable", "enable"}
 }
 
-// Help documents it.
 func (Toggle) Help() help.Help {
 	return help.Of("Toggle a rule in the project's .commandments/config.json, leaving the rest of the file as you wrote it — or in a config.php from an earlier version, through its tree, so your own lines are untouched.").
 		Form("disable <sin|skill>", "turn a rule off — a skill silences every detector it teaches the fix for").
@@ -36,7 +33,6 @@ type target struct {
 	named string
 }
 
-// Run toggles the rule the arguments name.
 func (t Toggle) Run(in *cli.Input, console cli.Console) (int, error) {
 	action := in.Command()
 	query, named := in.FirstArgument()
@@ -98,7 +94,6 @@ func report(action string, chosen target, changed bool, console cli.Console) int
 	return console.Say("\033[2m" + chosen.label + " " + noun + " — nothing to do.\033[0m")
 }
 
-// matching are the sins and skills the query names exactly, else leniently: sins first, then skills.
 func matching(query string) []target {
 	var exact, lenient []target
 

@@ -1,5 +1,4 @@
-// Package fixturetest proves detectors against a self-checking fixture from a test: the harness's verdicts, read
-// by fixture, reported through testing, which the shipped tool never imports.
+// Package fixturetest proves detectors against a self-checking fixture from a test: the harness's verdicts, read by fixture, reported through testing, which the shipped tool never imports.
 package fixturetest
 
 import (
@@ -11,9 +10,6 @@ import (
 	"github.com/jessegall/code-commandments/fixture"
 )
 
-// Prove fails the test unless every detector flags exactly its marked sins, leaves its righteous
-// twin and its fixes alone, and fires on at least fixture.MinScenarios mutually diverse findings — and the
-// fixture's own markers are sound.
 func Prove(t testing.TB, f fixture.Fixture) {
 	t.Helper()
 	if len(f.Detectors) == 0 {
@@ -47,10 +43,6 @@ func Prove(t testing.TB, f fixture.Fixture) {
 	}
 }
 
-// proveWhatEachRuleReads holds every detector to saying whether it reads more than the file it reports in, which
-// is what lets a scoped run read the files it judges and nothing else. It is measured, by asking each detector
-// the same question of one file and of the whole fixture: a rule whose answers differ reads across files, and one
-// that does not SAY so would answer a one-file scan as though it were the whole program.
 func proveWhatEachRuleReads(t testing.TB, f fixture.Fixture) {
 	t.Helper()
 
@@ -61,10 +53,6 @@ func proveWhatEachRuleReads(t testing.TB, f fixture.Fixture) {
 		}
 	}
 
-	// The other direction is told, not failed. "Its answers do not change on THIS fixture" is weaker than "it
-	// never reads across files": a rule that compares routes across files still finds the fixture's duplicate
-	// pair when both sit in one file. Taking the marker off on that evidence would starve the rule, where leaving
-	// it on only costs a scoped run the scan it would have read anyway.
 	for _, name := range f.MarkedAcrossFiles() {
 		if !slices.Contains(across, name) {
 			t.Logf("%s says it reads across files and answers the same for one file as for the whole fixture: either the marker is not needed, or the fixture never exercises what it reads across", name)
@@ -72,8 +60,6 @@ func proveWhatEachRuleReads(t testing.TB, f fixture.Fixture) {
 	}
 }
 
-// report fails the test for each way a detector's findings missed its markers, one failure per place, each named
-// as the fixture holds it: a verdict is read in a line, and a list of whole paths is read in none.
 func report(t testing.TB, f fixture.Fixture, result fixture.Result) {
 	t.Helper()
 	for _, missed := range result.Missed {
@@ -90,7 +76,6 @@ func report(t testing.TB, f fixture.Fixture, result fixture.Result) {
 	}
 }
 
-// proveDiversity fails the test unless the detector fires on MinScenarios mutually diverse findings.
 func proveDiversity(t testing.TB, f fixture.Fixture, detector detectors.Detector) {
 	t.Helper()
 	scenarios, err := f.Scenarios(detector)

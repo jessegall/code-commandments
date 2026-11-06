@@ -23,8 +23,7 @@ type Definition struct {
 	Description string
 	Rule        string
 	Suggestion  string
-	// Requires is the package the sin only exists in a project with; empty when it holds everywhere.
-	Requires Package
+	Requires    Package
 }
 
 // Package is a dependency a project may declare.
@@ -36,7 +35,6 @@ type Package struct {
 // Ecosystem is where a package comes from.
 type Ecosystem string
 
-// The ecosystems a package can come from.
 const (
 	Composer Ecosystem = "composer"
 	Npm      Ecosystem = "npm"
@@ -46,49 +44,36 @@ const (
 
 var sins catalog.Catalog[Sin]
 
-// Register enrols a sin under its engine, from the sin's own file.
 func Register(engine catalog.Engine, sin Sin) {
 	sins.Register(engine, sin)
 }
 
-// All is every published sin.
 func All() []Sin {
 	return sins.All()
 }
 
-// Every is every sin registered under one engine, unpublished ones included.
 func Every(engine catalog.Engine) []Sin {
 	return sins.Every(engine)
 }
 
-// Of is every published sin of one engine.
 func Of(engine catalog.Engine) []Sin {
 	return sins.Of(engine)
 }
 
-// Slug is the slug of the skill that fixes the sin.
 func (d Definition) Slug() string {
 	return d.Skill.Definition().Slug
 }
 
-// Matches says whether a query names the sin, leniently.
 func (d Definition) Matches(query string) bool {
 	return strings.Contains(catalog.Normalise(d.Name), catalog.Normalise(query))
 }
 
-// Scopes says whether a query names the sin or the skill that fixes it, leniently.
 func (d Definition) Scopes(query string) bool {
 	needle := catalog.Normalise(query)
 
 	return strings.Contains(catalog.Normalise(d.Name), needle) || strings.Contains(catalog.Normalise(d.Slug()), needle)
 }
 
-// InstalledIn says whether the project at root depends on the package, as composer installed it — itself, or
-// replaced or provided by a package it installed, as laravel/framework replaces illuminate/support. A project composer
-// never installed into has none of its packages, as the PHP tool finds none in an install that lacks them, so a project
-// with no PHP never runs Laravel rules; a record composer wrote but that cannot be read is taken to have it, so a rule
-// is never silenced by a broken file. Only composer is read here; the other ecosystems' manifests arrive with their
-// engines.
 func (p Package) InstalledIn(root string) bool {
 	if p.Ecosystem != Composer {
 		return true

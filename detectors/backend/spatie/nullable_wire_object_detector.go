@@ -15,10 +15,8 @@ type NullableWireObjectDetector struct{}
 
 func init() { detectors.Register(catalog.PHP, NullableWireObjectDetector{}) }
 
-// Sin is the sin the detector finds.
 func (NullableWireObjectDetector) Sin() sins.Sin { return backendsins.NullableWireObject{} }
 
-// Find is every nullable wire object field.
 func (NullableWireObjectDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return php.In(codebase).
 		Where(engine.As(php.Node.IsField)).

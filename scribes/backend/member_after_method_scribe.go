@@ -16,7 +16,6 @@ func init() {
 // MemberAfterMethodScribe lifts the state a class declares below a method up above its first method.
 type MemberAfterMethodScribe struct{}
 
-// Rewrite moves each class's strays, in source order, to just above its first method.
 func (MemberAfterMethodScribe) Rewrite(findings []engine.Match, _ *engine.Codebase) (scribes.Rewrites, error) {
 	draft := scribes.NewDraft()
 	for _, strays := range perClass(findings) {
@@ -30,8 +29,6 @@ func (MemberAfterMethodScribe) Rewrite(findings []engine.Match, _ *engine.Codeba
 	return draft.Rewrites(), nil
 }
 
-// perClass is the findings grouped by the class they sit in, the groups in the order their first finding came and
-// each group in source order.
 func perClass(findings []engine.Match) [][]engine.Match {
 	var keys []string
 	groups := map[string][]engine.Match{}
@@ -52,7 +49,6 @@ func perClass(findings []engine.Match) [][]engine.Match {
 	return ordered
 }
 
-// classKey names the class a finding sits in, by its file and its name.
 func classKey(finding engine.Match) string {
 	return finding.File() + "::" + php.EnclosingClassName(finding)
 }

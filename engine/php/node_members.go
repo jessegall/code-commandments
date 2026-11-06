@@ -9,7 +9,6 @@ import (
 	"github.com/jessegall/code-commandments/prose"
 )
 
-// EnclosingClassLike is the node itself when it declares a class-like, else the nearest one around it.
 func (n Node) EnclosingClassLike() Node {
 	for at := n; at.Exists(); at = at.Up() {
 		if at.IsClassLike() {
@@ -20,7 +19,6 @@ func (n Node) EnclosingClassLike() Node {
 	return Node{}
 }
 
-// IsBelowAMethodInItsClass says whether a method comes before the node among its class's members.
 func (n Node) IsBelowAMethodInItsClass() bool {
 	seenMethod := false
 	for _, member := range n.EnclosingClassLike().ChildrenIn("stmts") {
@@ -33,7 +31,6 @@ func (n Node) IsBelowAMethodInItsClass() bool {
 	return false
 }
 
-// BreaksClassLayoutOrder says whether a member of a class's head sits below one that ranks after it.
 func (n Node) BreaksClassLayoutOrder() bool {
 	class := n.EnclosingClassLike()
 	if !class.Exists() {
@@ -52,7 +49,6 @@ func (n Node) BreaksClassLayoutOrder() bool {
 	return false
 }
 
-// classHead is a class's members above its first method.
 func classHead(class Node) []engine.Match {
 	var head []engine.Match
 	for _, member := range class.ChildrenIn("stmts") {
@@ -65,11 +61,8 @@ func classHead(class Node) []engine.Match {
 	return head
 }
 
-// unknownRank ranks a member the layout does not order.
 const unknownRank = 6
 
-// layoutRank is where a member belongs in a class's head: trait uses, enum cases, constants, static properties,
-// then properties by visibility, hooked properties after plain ones.
 func layoutRank(member engine.Match) int {
 	switch member.Kind() {
 	case "Stmt_TraitUse":
@@ -100,7 +93,6 @@ func layoutRank(member engine.Match) int {
 	return unknownRank
 }
 
-// MethodName is a method declaration's name; empty for any other node.
 func (n Node) MethodName() string {
 	if n.Kind() != "Stmt_ClassMethod" {
 		return ""
@@ -109,22 +101,18 @@ func (n Node) MethodName() string {
 	return n.Name()
 }
 
-// IsMagicMethod says whether the node declares a method whose name opens with a double underscore.
 func (n Node) IsMagicMethod() bool {
 	return strings.HasPrefix(n.MethodName(), "__")
 }
 
-// IsConstructorDeclaration says whether the node declares a constructor.
 func (n Node) IsConstructorDeclaration() bool {
 	return strings.EqualFold(n.MethodName(), "__construct")
 }
 
-// IsStaticMethod says whether the node declares a static method.
 func (n Node) IsStaticMethod() bool {
 	return n.Kind() == "Stmt_ClassMethod" && slices.Contains(n.Node().Modifiers, "static")
 }
 
-// ReturnTypeName is the return type a function-like writes; empty when it writes none.
 func (n Node) ReturnTypeName() string {
 	if !n.IsFunctionLike() {
 		return ""
@@ -133,22 +121,18 @@ func (n Node) ReturnTypeName() string {
 	return Written(n.Node().Returns).Render()
 }
 
-// DeclaredReturnType is the written return type, lower-cased; empty when none is written.
 func (n Node) DeclaredReturnType() string {
 	return strings.ToLower(n.ReturnTypeName())
 }
 
-// ReturnsBool says whether the node declares a bool return.
 func (n Node) ReturnsBool() bool {
 	return n.DeclaredReturnType() == "bool"
 }
 
-// TakesNoArguments says whether the node declares a method with no parameters.
 func (n Node) TakesNoArguments() bool {
 	return n.Kind() == "Stmt_ClassMethod" && len(Params(n.Match)) == 0
 }
 
-// IsCommandMethod says whether the node declares a method that returns nothing, or returns its own instance.
 func (n Node) IsCommandMethod() bool {
 	switch n.DeclaredReturnType() {
 	case "void", "never":
@@ -160,14 +144,12 @@ func (n Node) IsCommandMethod() bool {
 	return false
 }
 
-// NameIsInherited says whether the node declares a method an ancestor of its class declares too.
 func (n Node) NameIsInherited() bool {
 	method := n.MethodName()
 
 	return method != "" && ProgramOf(n.Codebase()).OverridesMethod(EnclosingClassName(n.Match), method)
 }
 
-// Argument is the value of the call's argument at the position; no node when there is none.
 func (n Node) Argument(position int) Node {
 	arguments := Arguments(n.Match)
 	if position >= len(arguments) {
@@ -177,7 +159,6 @@ func (n Node) Argument(position int) Node {
 	return Node{Match: arguments[position].Child("value")}
 }
 
-// IsNewlineSeparator says whether the node is PHP_EOL or a string of nothing but line ends.
 func (n Node) IsNewlineSeparator() bool {
 	if n.Kind() == "Expr_ConstFetch" {
 		return n.Child("name").Name() == "PHP_EOL"
@@ -187,7 +168,6 @@ func (n Node) IsNewlineSeparator() bool {
 	return n.Kind() == "Scalar_String" && ok && value != "" && strings.Trim(value, "\r\n") == ""
 }
 
-// LiteralItems is the value of every item of an array literal that is a plain string.
 func (n Node) LiteralItems() []string {
 	var literals []string
 	for _, item := range n.ChildrenIn("items") {
@@ -200,12 +180,10 @@ func (n Node) LiteralItems() []string {
 	return literals
 }
 
-// IsReturnedValue says whether the node is the value a return statement returns.
 func (n Node) IsReturnedValue() bool {
 	return n.Exists() && n.Parent().Kind() == "Stmt_Return"
 }
 
-// IsOwnedKeyedLookup says whether the node reads an offset of one of its own object's properties: $this->items[$key].
 func (n Node) IsOwnedKeyedLookup() bool {
 	property := n.Child("var")
 
@@ -213,7 +191,6 @@ func (n Node) IsOwnedKeyedLookup() bool {
 		property.Child("var").Kind() == "Expr_Variable" && property.Child("var").Name() == "this"
 }
 
-// SwitchesEntirelyOnABoolParam says whether the node's whole body is a two-way branch on one of its bool parameters.
 func (n Node) SwitchesEntirelyOnABoolParam() bool {
 	if !n.IsFunctionDeclaration() {
 		return false
@@ -229,8 +206,6 @@ func (n Node) SwitchesEntirelyOnABoolParam() bool {
 	return false
 }
 
-// SwitchesEntirelyOnAnAbsentParam says whether the node's whole body is a two-way branch on whether one of its
-// nullable parameters is null.
 func (n Node) SwitchesEntirelyOnAnAbsentParam() bool {
 	if !n.IsFunctionDeclaration() {
 		return false
@@ -246,8 +221,6 @@ func (n Node) SwitchesEntirelyOnAnAbsentParam() bool {
 	return false
 }
 
-// bodyIsTwoWayBranchOn says whether the node's only statement is an if/else or a two-arm match on the variable, each
-// side doing work of its own.
 func (n Node) bodyIsTwoWayBranchOn(name string, tests func(engine.Match, string) bool) bool {
 	body := n.ChildrenIn("stmts")
 	if !n.IsFunctionDeclaration() || len(body) != 1 {
@@ -299,12 +272,10 @@ func testsAbsence(condition engine.Match, name string) bool {
 	return false
 }
 
-// isNullFetch says whether the node is the constant null, in any case.
 func isNullFetch(node engine.Match) bool {
 	return node.Kind() == "Expr_ConstFetch" && strings.EqualFold(node.Child("name").Name(), "null")
 }
 
-// armDoesWork says whether a branch's statements do more than hand back a bare value.
 func armDoesWork(statements []engine.Match) bool {
 	if len(statements) != 1 {
 		return len(statements) > 0
@@ -313,19 +284,15 @@ func armDoesWork(statements []engine.Match) bool {
 	return !(statements[0].Kind() == "Stmt_Return" && isBareValue(statements[0].Child("expr")))
 }
 
-// isBareValue says whether an expression is nothing, a scalar or a constant.
 func isBareValue(expression engine.Match) bool {
 	return !expression.Exists() || strings.HasPrefix(expression.Kind(), "Scalar_") ||
 		expression.Kind() == "Expr_ConstFetch" || expression.Kind() == "Expr_ClassConstFetch"
 }
 
-// CallsFunction says whether the node calls the named function, as written.
 func (n Node) CallsFunction(name string) bool {
 	return n.Kind() == "Expr_FuncCall" && isName(n.Child("name")) && n.Child("name").Name() == name
 }
 
-// ArgumentArrayLiteral is the array literal the call passes at the position: written there, or assigned to the
-// variable passed there; no node when neither.
 func (n Node) ArgumentArrayLiteral(position int) Node {
 	argument := n.Argument(position)
 	if argument.Kind() == "Expr_Array" {
@@ -344,15 +311,12 @@ func (n Node) ArgumentArrayLiteral(position int) Node {
 	return Node{}
 }
 
-// IsNonFinalClass says whether the node is a class neither final nor abstract.
 func (n Node) IsNonFinalClass() bool {
 	modifiers := n.Node().Modifiers
 
 	return n.Kind() == "Stmt_Class" && !slices.Contains(modifiers, "final") && !slices.Contains(modifiers, "abstract")
 }
 
-// EveryConstructorParamNullable says whether the node is a class whose constructor promotes parameters, every one of
-// them nullable.
 func (n Node) EveryConstructorParamNullable() bool {
 	if n.Kind() != "Stmt_Class" {
 		return false
@@ -376,8 +340,6 @@ var (
 	methodName = regexp.MustCompile(`(\w+)\s*\(`)
 )
 
-// DocblockMethodTagRedeclaresRealMethod says whether the node's doc comment declares an @method the class-like also
-// declares for real.
 func (n Node) DocblockMethodTagRedeclaresRealMethod() bool {
 	doc, ok := n.DocComment()
 	if !n.IsClassLike() || !ok {
@@ -399,18 +361,14 @@ func (n Node) DocblockMethodTagRedeclaresRealMethod() bool {
 	return false
 }
 
-// IsField says whether the node declares a field: a promoted parameter or a property.
 func (n Node) IsField() bool {
 	return n.Kind() == "Param" && len(n.Node().Modifiers) > 0 || n.Kind() == "Stmt_Property"
 }
 
-// ClassHead is a class-like's members above its first method, in source order.
 func (n Node) ClassHead() []engine.Match {
 	return classHead(n)
 }
 
-// GroupedClassHead is a class-like's head grouped by layout rank, the groups in the order the layout puts them and
-// each group's members in source order.
 func (n Node) GroupedClassHead() [][]engine.Match {
 	byRank := map[int][]engine.Match{}
 	var ranks []int
@@ -430,7 +388,6 @@ func (n Node) GroupedClassHead() [][]engine.Match {
 	return groups
 }
 
-// FirstMethodOfItsClass is the first method among the members of the class-like around the node.
 func (n Node) FirstMethodOfItsClass() (engine.Match, bool) {
 	for _, member := range n.EnclosingClassLike().ChildrenIn("stmts") {
 		if member.Kind() == "Stmt_ClassMethod" {
@@ -441,8 +398,6 @@ func (n Node) FirstMethodOfItsClass() (engine.Match, bool) {
 	return engine.Match{}, false
 }
 
-// PromotedParamName is the name of the parameter at index when it promotes a property: modified, not variadic, and
-// named plainly.
 func PromotedParamName(params []engine.Match, index int) (string, bool) {
 	if index >= len(params) {
 		return "", false
@@ -456,21 +411,14 @@ func PromotedParamName(params []engine.Match, index int) (string, bool) {
 	return name, true
 }
 
-// crossings is how many types a chain may cross before the caller is depending on a shape three objects away.
 const crossings = 3
 
-// ReachesThroughThreeTypes says whether the node is the end of a chain of sends that crosses three or more
-// types the project declares: every link is a type the caller now depends on, so a change three objects away
-// reaches it. The count is of DISTINCT types and never of links, which is the whole of why a fluent chain
-// passes: `query()->where()->orderBy()` is as long as you like and crosses one type.
 func (n Node) ReachesThroughThreeTypes() bool {
 	if !n.isTheEndOfAChain() {
 		return false
 	}
 	program := ProgramOf(n.Codebase())
 	types := TypesOf(n.Codebase())
-	// The caller's own class is no crossing: it depends on itself already, so `$this->ledger->claim(...)`
-	// crosses the ledger and what it answers with, and nothing else.
 	own := EnclosingClassName(n.Match)
 	crossed := map[string]bool{}
 	for _, link := range n.chainLinks() {
@@ -483,8 +431,6 @@ func (n Node) ReachesThroughThreeTypes() bool {
 	return len(crossed) >= crossings
 }
 
-// isTheEndOfAChain says whether nothing is sent to what the node answers, so the longest chain is judged once
-// rather than every piece of it over again.
 func (n Node) isTheEndOfAChain() bool {
 	if !slices.Contains([]string{"Expr_MethodCall", "Expr_NullsafeMethodCall", "Expr_PropertyFetch", "Expr_NullsafePropertyFetch"}, n.Kind()) {
 		return false
@@ -497,7 +443,6 @@ func (n Node) isTheEndOfAChain() bool {
 	return parent.Child("var").Node() != n.Node()
 }
 
-// chainLinks is every receiver in the chain, the outermost first, so each link's type can be asked for.
 func (n Node) chainLinks() []engine.Match {
 	var links []engine.Match
 	held := n

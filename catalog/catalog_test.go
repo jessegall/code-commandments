@@ -74,8 +74,6 @@ func TestNameIsTheShortTypeName(t *testing.T) {
 	}
 }
 
-// TestEnrolmentImportsEveryRuleFolderOnly holds the registry to the packages that enrol a rule when imported —
-// an init function among their sources — never a renderer, a command or a test helper sitting beside them.
 func TestEnrolmentImportsEveryRuleFolderOnly(t *testing.T) {
 	root := t.TempDir()
 	write := func(path, source string) {
@@ -116,9 +114,6 @@ func TestEnrolmentImportsEveryRuleFolderOnly(t *testing.T) {
 	}
 }
 
-// TestAnEngineAnswersToTheNameItWasPublishedUnder holds the one funnel every name read from outside goes through:
-// an engine named after its language today answers to the name it carried before, so a config, a rule file, a
-// filter or a slug a project wrote then is never made wrong by a name of ours changing.
 func TestAnEngineAnswersToTheNameItWasPublishedUnder(t *testing.T) {
 	for name, want := range map[string]catalog.Engine{
 		"php":        catalog.PHP,

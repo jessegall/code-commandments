@@ -1,6 +1,4 @@
-// Command record runs the tool built from this checkout over every parity case and writes what it printed as the
-// case's golden. The goldens recorded before the switch are the PHP tool's, which the tool matched.
-// Run it from the repository root, in the dev container: `scripts/dev go run ./cli/parity/record [case-name...]`.
+// Command record runs the tool built from this checkout over every parity case and writes what it printed as the case's golden.
 package main
 
 import (

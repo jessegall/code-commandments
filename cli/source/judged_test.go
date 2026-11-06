@@ -6,9 +6,6 @@ import (
 	"testing"
 )
 
-// TestAnExcludedFolderARuleJudgesIsRead holds the first half of letting one rule into an excluded folder: the
-// folder has to be READ, since a folder nothing reads is a folder no rule can judge. Whose findings may then be
-// reported from it is the reporting layer's question, not this one.
 func TestAnExcludedFolderARuleJudgesIsRead(t *testing.T) {
 	root := treeWith(t, "src/cart.php", "tests/cart_test.php", "vendor/lib.php")
 
@@ -32,8 +29,6 @@ func TestAnExcludedFolderARuleJudgesIsRead(t *testing.T) {
 	}
 }
 
-// TestJudgingNamesTheFolderHoweverItIsWritten holds the shapes a project's config may hand over, since the
-// folder is read from a config a person wrote.
 func TestJudgingNamesTheFolderHoweverItIsWritten(t *testing.T) {
 	root := treeWith(t, "tests/cart_test.php")
 
@@ -54,8 +49,6 @@ func TestJudgingNamesTheFolderHoweverItIsWritten(t *testing.T) {
 	}
 }
 
-// TestAFolderNobodyJudgesStaysExcluded holds that the allowance is exactly as wide as the config says: naming
-// one folder does not open another, nor the exclusion as a whole.
 func TestAFolderNobodyJudgesStaysExcluded(t *testing.T) {
 	root := treeWith(t, "tests/cart_test.php", "spec/cart_spec.php")
 
@@ -69,7 +62,6 @@ func TestAFolderNobodyJudgesStaysExcluded(t *testing.T) {
 	}
 }
 
-// treeWith is a project holding each file, empty.
 func treeWith(t *testing.T, files ...string) string {
 	t.Helper()
 	root := t.TempDir()

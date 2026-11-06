@@ -6,12 +6,9 @@ import (
 	"sync"
 )
 
-// enumRoots is the standard library's enum base classes, as a base list spells them.
 var enumRoots = []string{"Enum", "StrEnum", "IntEnum", "Flag", "IntFlag", "ReprEnum"}
 
-// declarations is what the program declares by name, found once: its enums, the member values of each class that
-// is one, as literal keys, its TypedDicts, and its dataclasses. The values are kept per enum, never by name, so a
-// plain class sharing an enum's name never hides the enum's members.
+// declarations is what the program declares by name, found once: its enums, the member values of each class that is one, as literal keys, its TypedDicts, and its dataclasses.
 type declarations struct {
 	once       sync.Once
 	enums      map[string]bool
@@ -19,7 +16,6 @@ type declarations struct {
 	typedDicts map[string]bool
 }
 
-// symbolOf is the class's own qualified name, which no other class shares however many spell it alike.
 func symbolOf(class Node) string {
 	return class.Node().Symbol
 }
@@ -57,31 +53,24 @@ func (p *Program) declared() *declarations {
 	return &p.names
 }
 
-// IsEnum says whether the program declares an enum by the name: a class whose base, or the call a decorator
-// makes, is a standard enum or another enum of the program.
 func (p *Program) IsEnum(spelled Node) bool {
 	declared, ok := p.ClassNamed(spelled, p.ModuleOf(spelled))
 
 	return ok && p.declared().enums[symbolOf(declared)]
 }
 
-// IsEnumSymbol says whether the enum is the one the bridge already resolved a reference to: a resolved name is
-// an identity rather than a spelling, so it needs no module to read it in.
 func (p *Program) IsEnumSymbol(symbol string) bool {
 	return p.declared().enums[symbol]
 }
 
-// IsTypedDictClass says whether the class itself is a TypedDict, asked of the declaration rather than of a name.
 func (p *Program) IsTypedDictClass(class Node) bool {
 	return class.Kind() == "ClassDef" && p.declared().typedDicts[symbolOf(class)]
 }
 
-// IsEnumClass says whether the class itself is an enum, asked of the declaration rather than of a name.
 func (p *Program) IsEnumClass(class Node) bool {
 	return class.Kind() == "ClassDef" && p.declared().enums[symbolOf(class)]
 }
 
-// EnumsHoldAll says whether all the literal keys name members of one enum.
 func (p *Program) EnumsHoldAll(keys []string) bool {
 	if len(keys) == 0 {
 		return false
@@ -95,15 +84,12 @@ func (p *Program) EnumsHoldAll(keys []string) bool {
 	return false
 }
 
-// IsTypedDict says whether the program declares a TypedDict by the name.
 func (p *Program) IsTypedDict(spelled Node) bool {
 	declared, ok := p.ClassNamed(spelled, p.ModuleOf(spelled))
 
 	return ok && p.declared().typedDicts[symbolOf(declared)]
 }
 
-// Dataclass is the dataclass the node spells, read in the module that wrote it: a name is resolved to the
-// class it names THERE, never matched against every class of that name in the program.
 func (p *Program) Dataclass(spelled Node) (Node, bool) {
 	class, ok := p.ClassNamed(spelled, p.ModuleOf(spelled))
 	if !ok || !class.IsDataclass() {
@@ -113,8 +99,6 @@ func (p *Program) Dataclass(spelled Node) (Node, bool) {
 	return class, true
 }
 
-// isEnumBase says whether the base names a standard enum, or an enum the program declares — the one its own
-// module resolves the name to, never any class that happens to spell it the same.
 func (p *Program) isEnumBase(base Node) bool {
 	dotted := base.DottedName()
 	named := dotted[strings.LastIndex(dotted, ".")+1:]
@@ -131,8 +115,6 @@ func isTypedDictBase(base Node) bool {
 	return slices.Contains([]string{"TypedDict", "typing.TypedDict", "typing_extensions.TypedDict"}, base.DottedName())
 }
 
-// decoratorArguments is what the class's decorators are called with: `IntEnum` in `@_simple_enum(IntEnum)`, a
-// decorator that builds an enum out of a plain class body.
 func (n Node) decoratorArguments() []Node {
 	var arguments []Node
 	for _, decorator := range n.Decorators() {
@@ -142,7 +124,6 @@ func (n Node) decoratorArguments() []Node {
 	return arguments
 }
 
-// MemberValueKeys is the literal key of each value the class body assigns to a single name.
 func (n Node) MemberValueKeys() []string {
 	var keys []string
 	for _, statement := range n.ChildrenIn("body") {
@@ -154,8 +135,6 @@ func (n Node) MemberValueKeys() []string {
 	return keys
 }
 
-// LiteralKey is a literal as a comparable key, its kind and its value: `string:paid`, `number:3`; empty for any
-// other expression.
 func (n Node) LiteralKey() string {
 	facts := n.Node()
 	if n.Kind() != "Constant" || facts == nil {
@@ -177,8 +156,6 @@ func (n Node) LiteralKey() string {
 	return ""
 }
 
-// OwnedParameters is the parameters of a method of the host annotated with a class the program declares, neither
-// the host itself nor an enum, the instance's own parameter aside.
 func (p *Program) OwnedParameters(method, host Node) []string {
 	var owned []string
 	for at, parameter := range method.Parameters() {

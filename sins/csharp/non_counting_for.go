@@ -13,7 +13,6 @@ func init() {
 	sins.Register(catalog.CSharp, NonCountingFor{})
 }
 
-// Definition is what the sin states about itself.
 func (NonCountingFor) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "csharp-non-counting-for",

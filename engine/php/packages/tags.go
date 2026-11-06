@@ -1,5 +1,4 @@
-// Package packages holds what the PHP packages a project uses excuse: each package registers, under an exemption
-// tag, the types and methods of its own boundary that a general rule leaves alone.
+// Package packages holds what the PHP packages a project uses excuse: each package registers, under an exemption tag, the types and methods of its own boundary that a general rule leaves alone.
 package packages
 
 // Tag names one kind of exemption a package can register and a detector can honour.
@@ -8,7 +7,6 @@ type Tag struct {
 	Description string
 }
 
-// The tags the tool ships.
 var (
 	ArrayReturning  = Tag{"array-returning", "A class whose whole job is handing the framework arrays (a FormRequest, an MCP tool) — its array returns are contractual, exempt from array-return-bag (class-level)."}
 	Association     = Tag{"association", "A call or attribute declaring one end of a two-way association (an ORM relation like `hasOne(Picker::class)`, a binding like `#[ObservedBy(OrderObserver::class)]`) — the framework requires both ends to name each other, so the reference carries no dependency direction and cannot close a cycle."}
@@ -19,10 +17,8 @@ var (
 	NoContainer     = Tag{"no-container", "A type the framework instantiates itself, no container/DI (an Eloquent cast, a Spatie DataPipe/Cast) — a loose array parameter and per-call container reach are the framework's convention; exempt from array-bag and container-reach."}
 )
 
-// Tags is every tag the tool ships, by slug.
 var Tags = []Tag{ArrayReturning, Association, Boundary, CompositionRoot, ContractMethod, ControlSignal, NoContainer}
 
-// Tagged is the shipped tag with the slug.
 func Tagged(slug string) (Tag, bool) {
 	for _, tag := range Tags {
 		if tag.Slug == slug {

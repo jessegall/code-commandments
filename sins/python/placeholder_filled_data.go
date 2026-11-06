@@ -13,7 +13,6 @@ func init() {
 	sins.Register(catalog.Python, PlaceholderFilledData{})
 }
 
-// Definition is what the sin states about itself.
 func (PlaceholderFilledData) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "python-placeholder-filled-data",

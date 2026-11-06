@@ -6,9 +6,6 @@ import (
 	"testing"
 )
 
-// TestTheAllowanceIsReadFromTheLimitThatIsEnforced holds the bridge to the memory a container really grants
-// rather than the memory the machine reports: node reads the machine's and caps itself far under what it was
-// given — 1584 MB inside a 3 GB container — which is what takes a thousand-file frontend out of memory.
 func TestTheAllowanceIsReadFromTheLimitThatIsEnforced(t *testing.T) {
 	for name, limit := range map[string]struct {
 		written string
@@ -39,8 +36,6 @@ func TestTheAllowanceIsReadFromTheLimitThatIsEnforced(t *testing.T) {
 	}
 }
 
-// TestNothingIsSaidWhereTheMachineCapsNothing holds the change to where node is demonstrably wrong: on a machine
-// with no limit enforced, node reads real memory and its own answer is the right one.
 func TestNothingIsSaidWhereTheMachineCapsNothing(t *testing.T) {
 	kept := cgroupLimits
 	cgroupLimits = []string{filepath.Join(t.TempDir(), "absent")}
@@ -51,8 +46,6 @@ func TestNothingIsSaidWhereTheMachineCapsNothing(t *testing.T) {
 	}
 }
 
-// TestTheUsersOwnAllowanceWins holds NODE_OPTIONS above ours: someone who has said how much heap node may have
-// has said it for a reason, and a second flag would quietly take it back.
 func TestTheUsersOwnAllowanceWins(t *testing.T) {
 	folder := t.TempDir()
 	path := filepath.Join(folder, "memory.max")

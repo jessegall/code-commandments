@@ -6,9 +6,6 @@ import (
 	"github.com/jessegall/code-commandments/engine/csharp/csharptest"
 )
 
-// TestABlockingReadOfATaskIsFoundAndAnAwaitIsNotCS holds the rule to the fault it names: an answer taken out
-// of work in flight by blocking for it. An await, a constructor and an entry point with no context to
-// deadlock against, and a task completed where it stands are how the work is done right and must pass.
 func TestABlockingReadOfATaskIsFoundAndAnAwaitIsNotCS(t *testing.T) {
 	const feed = `using System.Threading.Tasks;
 

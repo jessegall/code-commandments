@@ -11,7 +11,6 @@ type RequestAccessorRecast struct{}
 
 func init() { sins.Register(catalog.PHP, RequestAccessorRecast{}) }
 
-// Definition is what the sin states about itself.
 func (RequestAccessorRecast) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "request-accessor-recast",

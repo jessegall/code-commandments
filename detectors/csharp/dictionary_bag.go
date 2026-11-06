@@ -16,12 +16,10 @@ func init() {
 	detectors.Register(catalog.CSharp, DictionaryBagDetector{})
 }
 
-// Sin is the sin the detector finds.
 func (DictionaryBagDetector) Sin() sins.Sin {
 	return cssins.DictionaryBag{}
 }
 
-// Find is every place the sin is committed.
 func (DictionaryBagDetector) Find(codebase *engine.Codebase) []engine.Match {
 	program := cs.In(codebase).Program
 	direct := cs.In(codebase).

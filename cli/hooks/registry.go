@@ -14,21 +14,16 @@ import (
 	"github.com/jessegall/code-commandments/cli/workspace"
 )
 
-// settings is Claude Code's project settings file, which holds the wired hooks.
 const settings = ".claude/settings.json"
 
-// Stamp marks every hook command the tool writes, so a sync strips only its own and never a user's.
 const Stamp = "# @code-commandments-managed"
 
-// legacySubcommands are the verbs older versions wired, taken for ours when a command ends with one.
 var legacySubcommands = []string{"remind", "judge-reminder", "plan-reminder"}
 
-// Builtins are the hooks every project runs unless its config turns one off, in the order they answer.
 func Builtins() []Hook {
 	return []Hook{JudgeReminder{}, SharedBranchGate{}, ModelChoiceReminder{}, SessionReset{}, SourceReminder{}, SkillReminder{}}
 }
 
-// ForProject are the hooks the project at root keeps.
 func ForProject(root string) []Hook {
 	project, _ := config.Load(root)
 
@@ -37,10 +32,8 @@ func ForProject(root string) []Hook {
 	})
 }
 
-// namespace is where the tool's own hooks are declared, as `hook <Class>` names one.
 const namespace = `JesseGall\CodeCommandments\Hooks\Handlers\`
 
-// Named is the builtin hook the fully qualified class names, and whether there is one.
 func Named(class string) (Hook, bool) {
 	short, qualified := strings.CutPrefix(strings.TrimLeft(class, `\`), namespace)
 
@@ -53,10 +46,6 @@ func Named(class string) (Hook, bool) {
 	return nil, false
 }
 
-// Wire writes the project's hooks into .claude/settings.json: every hook of ours dropped, then one command
-// per event the kept hooks listen for, narrowed to a tool when every hook on that event names the same one.
-// A project whose hooks the agent journal runs gets none, since its plugin calls every handler itself.
-// False when nothing changed, or the file is not JSON it can read.
 func Wire(root string) (bool, error) {
 	path := filepath.Join(root, settings)
 
@@ -100,9 +89,6 @@ func Wire(root string) (bool, error) {
 	return true, jsonfile.Write(path, file)
 }
 
-// Command is the command every wired hook runs: the project's executable, dispatching the moment. Where the
-// project installs the tool with composer, the launcher runs the binary the shim last ran, without PHP's start-up;
-// on Windows, which may have no sh, the shim runs it. Elsewhere it is the binary on the PATH.
 func Command(root string) string {
 	if !binary.ThroughPHP(root) {
 		return binary.Invocation(root) + " hooks " + Stamp
@@ -119,8 +105,6 @@ type moment struct {
 	event, matcher string
 }
 
-// moments are the events the hooks listen for, in the order they first name them; an event is narrowed to
-// a tool only when every hook on it names that same one.
 func moments(kept []Hook) []moment {
 	var events []string
 	matchers := map[string][]string{}
@@ -152,8 +136,6 @@ func moments(kept []Hook) []moment {
 	return wired
 }
 
-// stripOurs is the file's hooks with every command of ours taken out, and a group or event left empty by
-// that taken out with it.
 func stripOurs(file *jsonfile.Object) *jsonfile.Object {
 	existing, _ := file.Get("hooks")
 
@@ -236,7 +218,6 @@ func fieldOf(object *jsonfile.Object, key string) any {
 	return value
 }
 
-// fingerprint is the file as it would be written, keys in order, to tell whether wiring changed it.
 func fingerprint(file *jsonfile.Object) string {
 	return jsonfile.Text(file)
 }

@@ -9,15 +9,12 @@ import (
 	"testing"
 )
 
-// hydration is tests/Fixtures/backend/app/Http/Pages/Hydration as macOS lists it (`ls -f`), the order the
-// PHP tool met it in when the parity goldens were recorded.
 var hydration = []string{
 	"RoundtripHeader.php", "OptCoords.php", "UnwrapPaymentIntent.php", "MoveRequest.php",
 	"CollTypedRighteous.php", "RemapContract.php", "NestCollection.php", "EnumSlotRighteous.php",
 	"PlacementFactory.php", "WireNode.php", "WirePanel.php", "WireComputedRighteous.php",
 }
 
-// app is tests/Fixtures/backend/app as macOS lists it: folders, whose names hash the same way.
 var app = []string{
 	"Customers", "Ui", "Reporting", "Payments", "Wire", "Sockets", "Auth", "Casts", "Dispatch", "Contracts",
 	"Providers", "Catalog", "Enums", "Labels", "Fulfillment", "Legacy", "Repositories", "Mcp", "Models",

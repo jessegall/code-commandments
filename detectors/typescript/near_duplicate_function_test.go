@@ -7,7 +7,6 @@ import (
 	"github.com/jessegall/code-commandments/engine/frontend/frontendtest"
 )
 
-// medusaMigration is a migration as `medusa db:generate` writes it, for the table its TABLE stands for.
 const medusaMigration = "import { Migration } from '@mikro-orm/migrations';\n\n" +
 	"export class Migration_TABLE extends Migration {\n\n" +
 	"  override async up(): Promise<void> {\n" +
@@ -21,9 +20,6 @@ const medusaMigration = "import { Migration } from '@mikro-orm/migrations';\n\n"
 	"  }\n\n" +
 	"}\n"
 
-// TestMigrationsThatFeedLiteralsToOneCalleeAreNoNearCopies holds issue 675's shape: two generated migrations whose
-// up() each hands its own SQL to this.addSql share no decision to hoist, since with the SQL a parameter all that is
-// left is addSql itself. The same pair building a statement from a name it computes is a near copy, and still found.
 func TestMigrationsThatFeedLiteralsToOneCalleeAreNoNearCopies(t *testing.T) {
 	for name, test := range map[string]struct {
 		source func(table string) string

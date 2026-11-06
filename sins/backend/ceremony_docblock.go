@@ -11,7 +11,6 @@ type CeremonyDocblock struct{}
 
 func init() { sins.Register(catalog.PHP, CeremonyDocblock{}) }
 
-// Definition is what the sin states about itself.
 func (CeremonyDocblock) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "ceremony-docblock",

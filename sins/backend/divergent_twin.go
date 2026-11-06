@@ -11,7 +11,6 @@ type DivergentTwin struct{}
 
 func init() { sins.Register(catalog.PHP, DivergentTwin{}) }
 
-// Definition is what the sin states about itself.
 func (DivergentTwin) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "divergent-twin",

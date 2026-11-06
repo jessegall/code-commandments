@@ -13,7 +13,6 @@ func init() {
 	sins.Register(catalog.Python, NamespaceCycle{})
 }
 
-// Definition is what the sin states about itself.
 func (NamespaceCycle) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "python-namespace-cycle",

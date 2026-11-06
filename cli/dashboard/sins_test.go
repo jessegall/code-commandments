@@ -10,10 +10,6 @@ import (
 	"github.com/jessegall/code-commandments/engine"
 )
 
-// TestTheDashboardKeepsOnlyWhatThisProjectJudges holds the store to the project it belongs to: a judge of another
-// tree, a worktree in a temporary folder, and the samples a project's own rules are proven on all find real sins,
-// and none of them is this project's to show. A finding this project will never judge again is one nothing could
-// ever clear, so it would sit on the dashboard for good.
 func TestTheDashboardKeepsOnlyWhatThisProjectJudges(t *testing.T) {
 	root := t.TempDir()
 	if real, err := filepath.EvalSymlinks(root); err == nil {

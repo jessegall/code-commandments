@@ -16,12 +16,10 @@ func init() {
 	detectors.Register(catalog.Python, ParamResolvedFromParamDetector{})
 }
 
-// Sin is the sin the detector finds.
 func (ParamResolvedFromParamDetector) Sin() sins.Sin {
 	return pysins.ParamResolvedFromParam{}
 }
 
-// Find is every place the sin is committed.
 func (ParamResolvedFromParamDetector) Find(codebase *engine.Codebase) []engine.Match {
 	program := py.In(codebase).Program
 
@@ -31,5 +29,4 @@ func (ParamResolvedFromParamDetector) Find(codebase *engine.Codebase) []engine.M
 		Get()
 }
 
-// CrossFile says the PHP tool finds it reaching beyond the file it judges, so a per-file check must not ask it.
 func (ParamResolvedFromParamDetector) CrossFile() {}

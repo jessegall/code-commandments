@@ -16,8 +16,6 @@ import (
 	"github.com/jessegall/code-commandments/scribes"
 )
 
-// answerFile holds what PHP's frontend detector step rewrote for each project the tests give it, as the PHP tool
-// recorded it before it was removed.
 const answerFile = "testdata/php-answers.jsonl.gz"
 
 // answer is PHP's rewrite of one project by one detector's step, keyed by both.
@@ -38,7 +36,6 @@ var (
 	bridgeErr    error
 )
 
-// served is a scanner over the one frontend bridge the package's tests share, started on first use.
 func served(t *testing.T) *scribes.Scanner {
 	t.Helper()
 	bridgeOnce.Do(func() {
@@ -65,7 +62,6 @@ func TestMain(m *testing.M) {
 	os.Exit(code)
 }
 
-// answerKey names a project for one detector: the detector, and every file's path and text.
 func answerKey(detectorClass string, files map[string]string) string {
 	paths := make([]string, 0, len(files))
 	for path := range files {
@@ -81,7 +77,6 @@ func answerKey(detectorClass string, files map[string]string) string {
 	return hex.EncodeToString(hash.Sum(nil))
 }
 
-// phpAnswer is what PHP's step for the detector rewrote in the project, as recorded.
 func phpAnswer(t *testing.T, detectorClass string, files map[string]string) map[string]string {
 	t.Helper()
 	answersOnce.Do(loadAnswers)
@@ -113,4 +108,3 @@ func loadAnswers() {
 		}
 	}
 }
-

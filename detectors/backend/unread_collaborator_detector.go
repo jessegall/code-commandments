@@ -9,16 +9,13 @@ import (
 	backendsins "github.com/jessegall/code-commandments/sins/backend"
 )
 
-// UnreadCollaboratorDetector finds a private promoted constructor parameter holding a collaborator the class
-// never reads.
+// UnreadCollaboratorDetector finds a private promoted constructor parameter holding a collaborator the class never reads.
 type UnreadCollaboratorDetector struct{}
 
 func init() { detectors.Register(catalog.PHP, UnreadCollaboratorDetector{}) }
 
-// Sin is the sin the detector finds.
 func (UnreadCollaboratorDetector) Sin() sins.Sin { return backendsins.UnreadCollaborator{} }
 
-// Find is every promoted constructor parameter the class keeps private and never reads.
 func (UnreadCollaboratorDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return php.In(codebase).
 		WhereKind("Param").

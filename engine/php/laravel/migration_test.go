@@ -9,9 +9,6 @@ import (
 	_ "github.com/jessegall/code-commandments/engine/php/laravel"
 )
 
-// TestALaravelMigrationIsFrozenWithoutAMark holds a migration to what it is: run once and kept as it ran, so it is read
-// but never a target, whether Laravel wrote it as an anonymous class or a named one; a class that only shares the name
-// Migration is no migration.
 func TestALaravelMigrationIsFrozenWithoutAMark(t *testing.T) {
 	cases := map[string]bool{
 		"<?php\nuse Illuminate\\Database\\Migrations\\Migration;\n\nreturn new class extends Migration {\n    public function up(): void {}\n};\n":        true,

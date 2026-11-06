@@ -16,12 +16,10 @@ func init() {
 	detectors.Register(catalog.CSharp, SwallowedExceptionDetector{})
 }
 
-// Sin is the sin the detector finds.
 func (SwallowedExceptionDetector) Sin() sins.Sin {
 	return cssins.SwallowedException{}
 }
 
-// Find is every place the sin is committed.
 func (SwallowedExceptionDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return cs.In(codebase).
 		WhereKind("CatchClause").

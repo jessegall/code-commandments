@@ -1,6 +1,4 @@
-// Command generate writes the shop's streams in engine/php/testdata, gzipped, through the PHP and frontend bridges:
-// the live fixture's, with the digest of the sources they came from, and the frozen fixture's the PHP engine's
-// answers in testdata/oracle are about. The answers themselves are never written again.
+// Command generate writes the shop's streams in engine/php/testdata, gzipped, through the PHP and frontend bridges: the live fixture's, with the digest of the sources they came from, and the frozen fixture's the PHP engine's answers in testdata/oracle are about.
 package main
 
 import (
@@ -40,7 +38,6 @@ func generate() error {
 	return os.WriteFile(filepath.Join(shop.Testdata(), "shop.digest"), []byte(digest+"\n"), 0o644)
 }
 
-// streams writes the fixture's backend and frontend streams into the folder, its paths renamed under the shop's root.
 func streams(fixture, folder string) error {
 	backend, err := run("php", filepath.Join(shop.Repository(), "bridge", "php", "bridge.php"), "--rename="+fixture+"="+shop.Root, fixture)
 	if err != nil {
@@ -69,7 +66,6 @@ func run(name string, arguments ...string) ([]byte, error) {
 	return out.Bytes(), nil
 }
 
-// zipped writes a gzip with no name or time in its header, so the same bytes zip the same way.
 func zipped(path string, content []byte) error {
 	var out bytes.Buffer
 	writer, err := gzip.NewWriterLevel(&out, gzip.BestCompression)

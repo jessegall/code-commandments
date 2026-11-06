@@ -1,5 +1,4 @@
-// Package paritytest compares one engine's Go detectors with the findings the PHP tool recorded on a real project
-// before it was removed: the check the port was done by, kept as a regression check against those recordings.
+// Package paritytest compares one engine's Go detectors with the findings the PHP tool recorded on a real project before it was removed: the check the port was done by, kept as a regression check against those recordings.
 package paritytest
 
 import (
@@ -21,13 +20,6 @@ import (
 	"github.com/jessegall/code-commandments/engine"
 )
 
-// Compare runs the engines' detectors over the project $COMMANDMENTS_PARITY names and fails for every finding only
-// they or the PHP tool's recording, the file $COMMANDMENTS_PARITY_FINDINGS names (gzipped when it ends in .gz), makes.
-// It skips the test without a project: a real project is the parity check, not the suite.
-// $COMMANDMENTS_PARITY_EACH compares a solution project by project, one held at a time, so a solution too large to
-// hold whole is still compared. $COMMANDMENTS_PARITY_ACCOUNTED names a file of the one-sided findings whose cause is
-// known, which then pass. The Go half asks one bridge, kept running for every part, so its start-up and what it loads
-// are paid once.
 func Compare(t *testing.T, rules []catalog.Engine, command func(testing.TB, ...string) []string) {
 	t.Helper()
 	project := os.Getenv("COMMANDMENTS_PARITY")
@@ -90,11 +82,9 @@ func Compare(t *testing.T, rules []catalog.Engine, command func(testing.TB, ...s
 	t.Logf("%d findings in PHP, %d in Go, over %d part(s)", len(expected), len(found), len(parts))
 }
 
-// explanations are the one-sided findings $COMMANDMENTS_PARITY_ACCOUNTED lists, each with its cause after a `#`: a
-// difference whose cause is known and written down passes, and one listed that no longer happens fails.
+// explanations are the one-sided findings $COMMANDMENTS_PARITY_ACCOUNTED lists, each with its cause after a `#`: a difference whose cause is known and written down passes, and one listed that no longer happens fails.
 type explanations map[string]bool
 
-// accounted reads the explanations the environment names; none when it names no file.
 func accounted(t *testing.T) explanations {
 	t.Helper()
 	listed := explanations{}
@@ -115,7 +105,6 @@ func accounted(t *testing.T) explanations {
 	return listed
 }
 
-// pass says whether the one-sided finding is accounted for, and marks it met.
 func (e explanations) pass(finding string) bool {
 	if _, listed := e[finding]; !listed {
 		return false
@@ -125,7 +114,6 @@ func (e explanations) pass(finding string) bool {
 	return true
 }
 
-// unused are the explanations no finding met.
 func (e explanations) unused() []string {
 	var unused []string
 	for finding, met := range e {
@@ -138,8 +126,6 @@ func (e explanations) unused() []string {
 	return unused
 }
 
-// goFindings is every finding the engine's Go detectors make in the part, read by the server, each as `path:line Sin`
-// under the root.
 func goFindings(t *testing.T, rules []catalog.Engine, server *bridge.Server, root, part string) []string {
 	t.Helper()
 	stream, err := server.Ask(bridge.Request{Paths: []string{part}})
@@ -164,8 +150,6 @@ func goFindings(t *testing.T, rules []catalog.Engine, server *bridge.Server, roo
 	return found
 }
 
-// projectFolders is the folder of every project under the root, a project inside another's folder read as part of
-// it, and never one in a hidden folder or in build output.
 func projectFolders(root string) []string {
 	var folders []string
 	filepath.WalkDir(root, func(path string, entry fs.DirEntry, err error) error {
@@ -187,7 +171,6 @@ func projectFolders(root string) []string {
 	return folders
 }
 
-// sorted is the set's members in order.
 func sorted(set map[string]bool) []string {
 	members := make([]string, 0, len(set))
 	for member := range set {
@@ -198,7 +181,6 @@ func sorted(set map[string]bool) []string {
 	return members
 }
 
-// readKept is the findings kept in the file.
 func readKept(path string) ([]byte, error) {
 	file, err := os.Open(path)
 	if err != nil {
@@ -216,9 +198,6 @@ func readKept(path string) ([]byte, error) {
 	return io.ReadAll(unzipped)
 }
 
-// walked says whether the walk that picks the files a judge reads lets the file through: never one in a hidden
-// folder, which holds tooling, not source. The PHP tool hands its bridge only the files its walk lets through,
-// and judge's walk leaves the same out.
 func walked(file string) bool {
 	return !slices.ContainsFunc(strings.Split(file, "/"), func(part string) bool { return strings.HasPrefix(part, ".") })
 }

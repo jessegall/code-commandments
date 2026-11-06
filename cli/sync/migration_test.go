@@ -12,7 +12,6 @@ import (
 	"github.com/jessegall/code-commandments/cli/workspace"
 )
 
-// sessionFiles are what an old project's session folders hold, by path under the project.
 var sessionFiles = []string{
 	".commandments/sessions/a/.until-stop",
 	".commandments/sessions/a/.plan-1",
@@ -25,8 +24,6 @@ var sessionFiles = []string{
 	".commandments/sessions/b/kept.txt",
 }
 
-// TestTheStateMigratesAsThePHPToolMigratesIt holds the migration to what the PHP tool did and left for each case,
-// recorded under testdata/migrated/<case>: the lines it printed and the files it left.
 func TestTheStateMigratesAsThePHPToolMigratesIt(t *testing.T) {
 	for name, journal := range map[string]bool{"own": false, "journal": true} {
 		t.Run(name, func(t *testing.T) {

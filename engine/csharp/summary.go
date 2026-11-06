@@ -9,10 +9,7 @@ import (
 	"github.com/jessegall/code-commandments/engine"
 )
 
-// Summary is what the C# of one part of a program tells the rest: every fact a rule asks of the whole program,
-// held as names, counts and flags rather than as trees. A solution too large to hold whole is judged a project at
-// a time, each project with the summary of every project merged, so a rule reading the program answers as it
-// would over the whole solution at once.
+// Summary is what the C# of one part of a program tells the rest: every fact a rule asks of the whole program, held as names, counts and flags rather than as trees.
 type Summary struct {
 	types      map[string]TypeFacts
 	records    map[string][]string
@@ -28,8 +25,7 @@ type Summary struct {
 	references map[reference]int
 }
 
-// TypeFacts is what the program asks of a type it declares: what kind of declaration it is, its name, the state
-// it keeps and the string constants it declares.
+// TypeFacts is what the program asks of a type it declares: what kind of declaration it is, its name, the state it keeps and the string constants it declares.
 type TypeFacts struct {
 	Kind      string
 	Name      string
@@ -43,14 +39,10 @@ type StateFact struct {
 	Type string
 }
 
-// Callers is how the calls to one method stand: how many are made outside the tests, and how many of those assert
-// the result is there.
+// Callers is how the calls to one method stand: how many are made outside the tests, and how many of those assert the result is there.
 type Callers struct {
 	OutsideTests int
 	Asserting    int
-	// Accumulating are the calls outside the tests whose answer goes straight into a sum: a zero answered where
-	// a lookup missed adds nothing at such a call, which is the one use that cannot tell a measured zero from a
-	// miss and has nothing to be warned about.
 	Accumulating int
 }
 
@@ -71,8 +63,6 @@ func newSummary() *Summary {
 	return &Summary{types: map[string]TypeFacts{}, records: map[string][]string{}, enums: map[string][]string{}, methods: map[string]bool{}, callers: map[string]Callers{}, keys: map[string][]int{}, handedOut: map[string]bool{}, homes: map[string]string{}, references: map[reference]int{}}
 }
 
-// kindsOf is the kind of declaration of every type the program declares, by symbol, the first declaration of each:
-// read from the declarations alone, without asking any node its type, since a type asks it whether it is a value.
 func kindsOf(codebase *engine.Codebase) map[string]string {
 	return engine.Analysis(codebase, "csharp.kinds", func(codebase *engine.Codebase) map[string]string {
 		kinds := map[string]string{}
@@ -86,7 +76,6 @@ func kindsOf(codebase *engine.Codebase) map[string]string {
 	})
 }
 
-// kinds is the kind of declaration of every type the summary tells of, by symbol.
 func (s *Summary) kinds() map[string]string {
 	kinds := map[string]string{}
 	for symbol, facts := range s.types {
@@ -96,7 +85,6 @@ func (s *Summary) kinds() map[string]string {
 	return kinds
 }
 
-// Summarize is the summary of the codebase's C#.
 func Summarize(codebase *engine.Codebase) *Summary {
 	summary := newSummary()
 	program := &Program{codebase: codebase}
@@ -116,7 +104,6 @@ func Summarize(codebase *engine.Codebase) *Summary {
 	return summary
 }
 
-// Merge adds what another part of the program tells to this summary.
 func (s *Summary) Merge(other *Summary) {
 	for symbol, facts := range other.types {
 		if _, held := s.types[symbol]; !held {
@@ -159,7 +146,6 @@ func merge[V any](into, from map[string]V) {
 	}
 }
 
-// enrol files the node under every fact it adds; named gathers the nodes a call or a member access names.
 func (s *Summary) enrol(node Node, named map[*contract.Node]bool) {
 	switch {
 	case node.IsTypeDeclaration():
@@ -198,7 +184,6 @@ func (s *Summary) enrol(node Node, named map[*contract.Node]bool) {
 	}
 }
 
-// factsOf is what the program asks of the type declaration.
 func factsOf(declaration Node) TypeFacts {
 	facts := TypeFacts{Kind: declaration.Kind(), Name: declaration.Name(), Constants: declaration.StringConstants()}
 	for _, state := range declaration.StateTypes() {
@@ -212,7 +197,6 @@ func factsOf(declaration Node) TypeFacts {
 	return facts
 }
 
-// enrolCall counts the call against the method it reaches, and files the constants it fills parameters with.
 func (s *Summary) enrolCall(call Node) {
 	symbol := call.Target().Symbol()
 	if !call.IsInTest() {
@@ -237,7 +221,6 @@ func (s *Summary) enrolCall(call Node) {
 	}
 }
 
-// enrolKeys files the positions of the method's parameters it reads a dictionary by.
 func (s *Summary) enrolKeys(method Node) {
 	var names []string
 	for _, parameter := range method.firstChild("ParameterList").All() {
@@ -258,7 +241,6 @@ func (s *Summary) enrolKeys(method Node) {
 	}
 }
 
-// walkReferences counts, for every node under the one given that stands in a namespace, the types it reaches.
 func (s *Summary) walkReferences(node Node, namespace string) {
 	here := namespace
 	if node.Is("NamespaceDeclaration", "FileScopedNamespaceDeclaration") {
@@ -272,8 +254,6 @@ func (s *Summary) walkReferences(node Node, namespace string) {
 	}
 }
 
-// reachedKeys is the keys of the types the node reaches, sorted: the types its type is made of, and the type
-// declaring what it calls.
 func reachedKeys(node Node) []string {
 	var symbols []string
 	if typed := node.Type(); typed.Exists() {
@@ -293,8 +273,6 @@ func reachedKeys(node Node) []string {
 	return keys
 }
 
-// vocabularies is, for every parameter of the program's own methods, the types whose string constants some call
-// fills it with.
 func (s *Summary) vocabularies() map[string][]string {
 	vocabularies := map[string][]string{}
 	for _, spelled := range s.spellings {
@@ -314,8 +292,6 @@ func (s *Summary) vocabularies() map[string][]string {
 	return vocabularies
 }
 
-// arrowsBeside is the references between namespaces this summary counts beyond the one given, as the count of
-// references from each namespace to each other: what the rest of a program adds to a part's own arrows.
 func (s *Summary) arrowsBeside(own *Summary) engine.ArrowCounts {
 	counts := engine.ArrowCounts{}
 	for held, count := range s.references {

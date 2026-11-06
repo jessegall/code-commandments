@@ -9,23 +9,19 @@ import (
 	backendsins "github.com/jessegall/code-commandments/sins/backend"
 )
 
-// DivergentTwinDetector finds two methods doing one job where one does less of it: the fix made in one place and
-// not the other.
+// DivergentTwinDetector finds two methods doing one job where one does less of it: the fix made in one place and not the other.
 type DivergentTwinDetector struct{}
 
 func init() { detectors.Register(catalog.PHP, DivergentTwinDetector{}) }
 
-// Sin is the sin the detector finds.
 func (DivergentTwinDetector) Sin() sins.Sin { return backendsins.DivergentTwin{} }
 
-// GroupKey is the pair the method belongs to, named alike from either side.
 func (DivergentTwinDetector) GroupKey(finding engine.Match) (string, bool) {
 	key := engine.PairOf(php.Divergences(finding.Codebase()), php.ScopeOf(finding))
 
 	return key, key != ""
 }
 
-// Find is both methods of every divergent pair, the poorer first.
 func (DivergentTwinDetector) Find(codebase *engine.Codebase) []engine.Match {
 	units := map[string]engine.Match{}
 	for _, unit := range php.TwinUnits(codebase) {
@@ -39,6 +35,4 @@ func (DivergentTwinDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return findings
 }
 
-// CrossFile says the rule reads more than the file it reports in, which the fixture measures by asking it
-// of one file and of the whole tree: a scoped run reads the whole scan while it is enabled.
 func (DivergentTwinDetector) CrossFile() {}

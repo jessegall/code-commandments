@@ -21,7 +21,6 @@ func init() {
 	skill.Register(catalog.CSharp, Documentation{})
 }
 
-// Definition is what the skill states about itself.
 func (Documentation) Definition() skill.Definition {
 	return skill.Definition{
 		Slug:      "csharp/documentation",

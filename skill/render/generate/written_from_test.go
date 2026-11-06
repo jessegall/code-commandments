@@ -6,10 +6,6 @@ import (
 	"testing"
 )
 
-// The key is what keeps the pre-commit hook off a run of minutes on every commit that cannot change a generated
-// byte, so what it must do is answer the same for the same sources and differently for anything else.
-
-// aFixtureTree is a folder holding each file with its content.
 func aFixtureTree(t *testing.T, files map[string]string) string {
 	t.Helper()
 	root := t.TempDir()
@@ -27,8 +23,6 @@ func aFixtureTree(t *testing.T, files map[string]string) string {
 	return root
 }
 
-// TestTheSameSourcesAnswerTheSameKey holds the whole point: read twice with nothing changed, the answer is the
-// same, so the second run of the generator has something to compare against.
 func TestTheSameSourcesAnswerTheSameKey(t *testing.T) {
 	fixtures := aFixtureTree(t, map[string]string{
 		"backend/app/Orders.php": "<?php\n",
@@ -52,8 +46,6 @@ func TestTheSameSourcesAnswerTheSameKey(t *testing.T) {
 	}
 }
 
-// TestAFixtureThatChangedAnswersANewKey holds the half that matters most: an example carved from a fixture must be
-// written again when that fixture moves, so a changed file has to change the key.
 func TestAFixtureThatChangedAnswersANewKey(t *testing.T) {
 	for name, change := range map[string]func(t *testing.T, root string){
 		"a file's content": func(t *testing.T, root string) {
@@ -102,8 +94,6 @@ func TestAFixtureThatChangedAnswersANewKey(t *testing.T) {
 	}
 }
 
-// TestAnEmptiedFileIsNotTheSameAsOneThatWasAlwaysEmpty holds the case a hash of contents alone would miss, which is
-// why each file's name and size go into the key beside its bytes.
 func TestAnEmptiedFileIsNotTheSameAsOneThatWasAlwaysEmpty(t *testing.T) {
 	held := aFixtureTree(t, map[string]string{"backend/app/Orders.php": "<?php\n", "backend/app/Carts.php": ""})
 	moved := aFixtureTree(t, map[string]string{"backend/app/Orders.php": "", "backend/app/Carts.php": "<?php\n"})
@@ -122,8 +112,6 @@ func TestAnEmptiedFileIsNotTheSameAsOneThatWasAlwaysEmpty(t *testing.T) {
 	}
 }
 
-// TestTheKeyIsOnlyTrustedWhenItWasWrittenForTheseSkills holds how the key is read back: a mark from other sources,
-// or none at all, is not a reason to skip the work.
 func TestTheKeyIsOnlyTrustedWhenItWasWrittenForTheseSkills(t *testing.T) {
 	if alreadyWrittenFrom("a key nothing ever wrote") {
 		t.Error("a key nobody wrote was taken as the one the skills were written from")

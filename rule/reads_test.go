@@ -12,9 +12,6 @@ import (
 	"github.com/jessegall/code-commandments/skill"
 )
 
-// TestEveryCheckSaysWhetherItIsAnsweredFromItsFile holds the two lists to the vocabulary. A check neither names
-// is read as reaching beyond its file, which is the safe way to be wrong and a silent way to be right: the list
-// is what a reader goes to, so a check missing from both would read as a decision nobody made.
 func TestEveryCheckSaysWhetherItIsAnsweredFromItsFile(t *testing.T) {
 	written := jsonKeys(reflect.TypeFor[Step]())
 
@@ -40,21 +37,16 @@ func TestEveryCheckSaysWhetherItIsAnsweredFromItsFile(t *testing.T) {
 
 func TestARuleSaysWhetherItReadsBeyondTheFileItReportsIn(t *testing.T) {
 	for written, across := range map[string]bool{
-		// A layout rule reads its own file: the folder it sits in, what it declares and what it is called.
-		`{"select": "type-declaration", "where": [{"fileMatches": "/migrations/"}, {"nameLike": "*Migration"}]}`: false,
-		// Its direct parent is written in its own header; the chain above that is not.
-		`{"select": "type-declaration", "where": [{"extends": "Migration"}]}`:    false,
-		`{"select": "type-declaration", "where": [{"extendsAny": "Migration"}]}`: true,
-		// A check buried in a holder, a negation or a count reaches as far as the check itself does.
-		`{"select": "type-declaration", "where": [{"not": {"extendsAny": "Migration"}}]}`:                    true,
-		`{"select": "type-declaration", "where": [{"any": [{"name": "x"}, {"implements": "Lifecycle"}]}]}`:    true,
-		`{"select": "function", "where": [{"count": {"descendant": {"unused": true}, "atLeast": 1}}]}`:        true,
-		`{"select": "type-declaration", "where": [{"members": {"is": "function", "atLeast": 2}}]}`:            false,
-		`{"select": "type-declaration", "where": [{"members": {"inherited": true, "atLeast": 20}}]}`:          true,
-		// A target that steps onto a declaration lands wherever that declaration was written.
-		`{"select": "member-access", "where": [{"name": "total", "of": "receiver"}]}`:                                false,
-		`{"select": "member-access", "where": [{"file": "app/Models/**", "of": "declaredBy"}]}`:                      true,
-		// A reject is a check like any other: the rule still has to read what it rejects by.
+		`{"select": "type-declaration", "where": [{"fileMatches": "/migrations/"}, {"nameLike": "*Migration"}]}`:        false,
+		`{"select": "type-declaration", "where": [{"extends": "Migration"}]}`:                                           false,
+		`{"select": "type-declaration", "where": [{"extendsAny": "Migration"}]}`:                                        true,
+		`{"select": "type-declaration", "where": [{"not": {"extendsAny": "Migration"}}]}`:                               true,
+		`{"select": "type-declaration", "where": [{"any": [{"name": "x"}, {"implements": "Lifecycle"}]}]}`:              true,
+		`{"select": "function", "where": [{"count": {"descendant": {"unused": true}, "atLeast": 1}}]}`:                  true,
+		`{"select": "type-declaration", "where": [{"members": {"is": "function", "atLeast": 2}}]}`:                      false,
+		`{"select": "type-declaration", "where": [{"members": {"inherited": true, "atLeast": 20}}]}`:                    true,
+		`{"select": "member-access", "where": [{"name": "total", "of": "receiver"}]}`:                                   false,
+		`{"select": "member-access", "where": [{"file": "app/Models/**", "of": "declaredBy"}]}`:                         true,
 		`{"select": "type-declaration", "where": [{"nameLike": "*Migration"}], "reject": [{"callers": {"atMost": 0}}]}`: true,
 	} {
 		rule, err := Parse("LayoutDetector", []byte(`{"engine": "python", "sin": {"name": "helper-in-a-kind-folder", "description": "A class sits in a folder of another kind", "skill": "python/absence"}, "find": `+written+`}`), skill.Slugged)
@@ -72,11 +64,6 @@ func TestARuleSaysWhetherItReadsBeyondTheFileItReportsIn(t *testing.T) {
 	}
 }
 
-// TestAChainOfParentsIsAnsweredWrongWhenTheFileIsReadAlone measures what the lists above claim, the way the
-// fixture harness measures a shipped rule: the rule's answers about a file differ when it is shown that file
-// alone, so a per-file check and a scoped run must not show it one. This is issue 824 as the consumer hit it — a
-// migration whose base class sits two files away, reported as a stranger in the migrations folder because the
-// edited file was all the rule was given.
 func TestAChainOfParentsIsAnsweredWrongWhenTheFileIsReadAlone(t *testing.T) {
 	codebase := pythontest.FromSource(t, map[string]string{
 		"shop/__init__.py": "",
@@ -121,7 +108,6 @@ class DropFadesMigration(RebuildMigration):
 	}
 }
 
-// fileNamed is the codebase of one file of this codebase alone, named by the tail of its path.
 func fileNamed(codebase *engine.Codebase, name string) (*engine.Codebase, bool) {
 	for _, file := range codebase.Files() {
 		if strings.HasSuffix(file.File.Path, name) {
@@ -132,7 +118,6 @@ func fileNamed(codebase *engine.Codebase, name string) (*engine.Codebase, bool) 
 	return nil, false
 }
 
-// locations are the places a run found, for a failure to name.
 func locations(found []engine.Match) []string {
 	var places []string
 	for _, match := range found {

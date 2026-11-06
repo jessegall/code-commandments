@@ -13,29 +13,24 @@ type Layer struct {
 	Uses      []string
 }
 
-// DependencyOrder is the namespaces with every one after what it depends on, and those in a cycle, which no
-// order can place, after them.
+// DependencyOrder is the namespaces with every one after what it depends on, and those in a cycle, which no order can place, after them.
 type DependencyOrder struct {
 	Ordered []string
 	Cyclic  []string
 }
 
-// Total is how many namespaces the order holds.
 func (o DependencyOrder) Total() int {
 	return len(o.Ordered) + len(o.Cyclic)
 }
 
-// HasCycles says whether any namespace sits in a cycle.
 func (o DependencyOrder) HasCycles() bool {
 	return len(o.Cyclic) > 0
 }
 
-// All is the ordered namespaces, then the cyclic ones.
 func (o DependencyOrder) All() []string {
 	return append(slices.Clone(o.Ordered), o.Cyclic...)
 }
 
-// node counts the namespace among the graph's, once.
 func (g *NamespaceGraph) node(namespace string) {
 	if g.known == nil {
 		g.known = map[string]bool{}
@@ -47,8 +42,6 @@ func (g *NamespaceGraph) node(namespace string) {
 	}
 }
 
-// CurrentShape is every namespace with what it already references, in dependency order: the stack as it
-// stands, declared so everything already there passes.
 func (g *NamespaceGraph) CurrentShape() []Layer {
 	edges := map[string][]string{}
 
@@ -65,8 +58,6 @@ func (g *NamespaceGraph) CurrentShape() []Layer {
 	return shape
 }
 
-// FloorShape is the current shape's bottom: the namespaces that use nothing, and whose own subtree reaches
-// nothing outside it either.
 func (g *NamespaceGraph) FloorShape() []Layer {
 	var floor []Layer
 
@@ -79,7 +70,6 @@ func (g *NamespaceGraph) FloorShape() []Layer {
 	return floor
 }
 
-// subtreeReachesOut says whether any namespace within this one references one outside it.
 func (g *NamespaceGraph) subtreeReachesOut(namespace string) bool {
 	for from, targets := range g.references {
 		if !php.Within(from, namespace) {
@@ -96,7 +86,6 @@ func (g *NamespaceGraph) subtreeReachesOut(namespace string) bool {
 	return false
 }
 
-// DependencyOrder is every namespace ordered by the arrows between them.
 func (g *NamespaceGraph) DependencyOrder() DependencyOrder {
 	edges := map[string][]string{}
 
@@ -107,8 +96,6 @@ func (g *NamespaceGraph) DependencyOrder() DependencyOrder {
 	return topological(edges)
 }
 
-// topological orders the nodes round by round: each round takes, sorted, every node whose targets are all
-// placed; when none is free, the rest are a cycle, sorted.
 func topological(edges map[string][]string) DependencyOrder {
 	remaining := map[string]bool{}
 

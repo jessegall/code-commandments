@@ -13,7 +13,6 @@ func init() {
 	sins.Register(catalog.CSharp, SideTableTrait{})
 }
 
-// Definition is what the sin states about itself.
 func (SideTableTrait) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "csharp-side-table-trait",

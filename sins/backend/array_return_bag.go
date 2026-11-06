@@ -11,7 +11,6 @@ type ArrayReturnBag struct{}
 
 func init() { sins.Register(catalog.PHP, ArrayReturnBag{}) }
 
-// Definition is what the sin states about itself.
 func (ArrayReturnBag) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "array-return-bag",

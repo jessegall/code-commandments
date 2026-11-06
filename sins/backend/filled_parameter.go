@@ -13,7 +13,6 @@ func init() {
 	sins.Register(catalog.PHP, FilledParameter{})
 }
 
-// Definition is what the sin states about itself.
 func (FilledParameter) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "filled-parameter",

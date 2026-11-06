@@ -7,24 +7,19 @@ import (
 	"github.com/jessegall/code-commandments/engine"
 )
 
-// NamespaceGraph is every reference from one namespace of the program to another: a type named, built, called or
-// resolved in one namespace and declared in another, each an arrow at the node that makes it. A part of a program
-// judged alone holds the arrows of the rest only as counts, since they are written in files it does not hold.
+// NamespaceGraph is every reference from one namespace of the program to another: a type named, built, called or resolved in one namespace and declared in another, each an arrow at the node that makes it.
 type NamespaceGraph struct {
 	homes     map[string]string
 	arrows    engine.DependencyArrows
 	elsewhere engine.ArrowCounts
 }
 
-// Namespaces is the namespace graph of the program's C# code, read once.
 func Namespaces(codebase *engine.Codebase) *NamespaceGraph {
 	return engine.Analysis(codebase, "csharp.namespaces", func(codebase *engine.Codebase) *NamespaceGraph {
 		return graphOf(codebase, Of(codebase).facts, nil)
 	})
 }
 
-// graphOf is the codebase's arrows, the program's types at home where its facts say, beside the references the
-// facts count beyond the part's own; none beside them when the codebase is the whole program.
 func graphOf(codebase *engine.Codebase, facts, own *Summary) *NamespaceGraph {
 	graph := &NamespaceGraph{homes: facts.homes}
 	if own != nil {
@@ -37,7 +32,6 @@ func graphOf(codebase *engine.Codebase, facts, own *Summary) *NamespaceGraph {
 	return graph
 }
 
-// namespaceAround is the name of the namespace the node sits in; empty outside one.
 func (n Node) namespaceAround() string {
 	for around := n; around.Exists(); around = around.Parent() {
 		if around.Is("NamespaceDeclaration", "FileScopedNamespaceDeclaration") {
@@ -48,7 +42,6 @@ func (n Node) namespaceAround() string {
 	return ""
 }
 
-// walk files an arrow for every node under the one given that reaches a type declared in another namespace.
 func (g *NamespaceGraph) walk(node Node, namespace string) {
 	here := namespace
 	if node.Is("NamespaceDeclaration", "FileScopedNamespaceDeclaration") {
@@ -66,8 +59,6 @@ func (g *NamespaceGraph) walk(node Node, namespace string) {
 	}
 }
 
-// reachedFrom is the namespaces of the program's types the node reaches: the types its type is made of, and the
-// type declaring what it calls.
 func (g *NamespaceGraph) reachedFrom(node Node) []string {
 	symbols := []string{}
 	if typed := node.Type(); typed.Exists() {
@@ -86,19 +77,14 @@ func (g *NamespaceGraph) reachedFrom(node Node) []string {
 	return homes
 }
 
-// Arrows is every reference from one namespace to another.
 func (g *NamespaceGraph) Arrows() engine.DependencyArrows {
 	return g.arrows
 }
 
-// IndependentArrows is the references between namespaces neither of which nests the other: a namespace and its own
-// children are one part of the program.
 func (g *NamespaceGraph) IndependentArrows() engine.DependencyArrows {
 	return g.arrows.Independent(".")
 }
 
-// WouldCloseACycle says whether a reference from the referrer type to the target type would close a cycle between
-// their namespaces: the target's namespace already refers back to the referrer's.
 func (g *NamespaceGraph) WouldCloseACycle(referrer, target string) bool {
 	from, fromDeclared := g.homes[typeKey(referrer)]
 	to, toDeclared := g.homes[typeKey(target)]
@@ -106,14 +92,10 @@ func (g *NamespaceGraph) WouldCloseACycle(referrer, target string) bool {
 	return fromDeclared && toDeclared && from != to && (g.IndependentArrows().Has(to, from) || g.independentElsewhere()[engine.Pair{From: to, To: from}] > 0)
 }
 
-// ClosingAMutualPair is the references worth cutting in every pair of independent namespaces that use each other,
-// the references elsewhere in the program counted beside this part's own.
 func (g *NamespaceGraph) ClosingAMutualPair() []engine.Match {
 	return g.IndependentArrows().ClosingAMutualPairBeside(g.independentElsewhere())
 }
 
-// independentElsewhere is the references elsewhere in the program between namespaces neither of which nests the
-// other.
 func (g *NamespaceGraph) independentElsewhere() engine.ArrowCounts {
 	independent := engine.ArrowCounts{}
 	for pair, count := range g.elsewhere {
@@ -125,8 +107,6 @@ func (g *NamespaceGraph) independentElsewhere() engine.ArrowCounts {
 	return independent
 }
 
-// LayerViolations is every reference out of a declared layer into a namespace it may not use: one per file and
-// namespace it reaches, at its first reference.
 func (g *NamespaceGraph) LayerViolations(stack engine.LayerStack) []engine.Match {
 	if stack.IsEmpty() {
 		return nil
@@ -147,8 +127,6 @@ func (g *NamespaceGraph) LayerViolations(stack engine.LayerStack) []engine.Match
 	return found
 }
 
-// typeKey is the type the symbol names, its type arguments aside: `Pipeline<TIn, TOut>` as declared and
-// `Pipeline<Order, Invoice>` as used are the one type, whose home a reference through either reaches.
 func typeKey(symbol string) string {
 	if open := strings.Index(symbol, "<"); open >= 0 {
 		return symbol[:open]

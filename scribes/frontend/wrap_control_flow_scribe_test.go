@@ -7,7 +7,6 @@ import (
 	rules "github.com/jessegall/code-commandments/detectors/frontend"
 )
 
-// PHP's ControlFlowOnElementDetectorTest writes these templates in single quotes, so each `\n` is a backslash and an n.
 func TestWrapControlFlowWrapsTheElementInATemplate(t *testing.T) {
 	fixed := sameAsPHP(t, rules.ControlFlowOnElementDetector{}, "ControlFlowOnElementDetector", map[string]string{"Component.vue": `<template>\n  <div>\n    <span v-if="open" class="x">hi</span>\n  </div>\n</template>`})["Component.vue"]
 

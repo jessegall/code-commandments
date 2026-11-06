@@ -6,10 +6,6 @@ import (
 	"github.com/jessegall/code-commandments/engine/frontend/frontendtest"
 )
 
-// TestAWalkThatChangesWhatItWalksIsFoundAndACopyIsNot holds the rule to the fault it names: a walk reads a
-// collection as it stood when it began, so changing that collection under it skips an element or reads one twice.
-// A copy is a different array and says so, a change to another collection is the fix, and a change that ends the
-// walk where it stands is read once and safely.
 func TestAWalkThatChangesWhatItWalksIsFoundAndACopyIsNot(t *testing.T) {
 	for name, test := range map[string]struct {
 		source string

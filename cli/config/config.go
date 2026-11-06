@@ -1,5 +1,4 @@
-// Package config reads what a project declares about how it is judged: its `.commandments/config.json`, or,
-// until sync migrates it, the `.commandments/config.php` the PHP tool executed.
+// Package config reads what a project declares about how it is judged: its `.commandments/config.json`, or, until sync migrates it, the `.commandments/config.php` the PHP tool executed.
 package config
 
 import (
@@ -15,35 +14,19 @@ import (
 
 // Config is what a project declares about how it is judged.
 type Config struct {
-	// Paths are the source roots judge scans when it is given no path.
-	Paths []string
-	// Excluded are paths the walk does not read at all, so nothing in them is reported on or rewritten. One rule
-	// may be let into such a folder with a judges call under it; see judges.go.
-	Excluded []string
-	// Base is the branch `--branch` compares against when it names none: the project's trunk, for a project whose
-	// trunk is not `main`. Nothing can work that out reliably, which is why the project says it once.
-	Base string
-	// Disabled are the rules turned off: a detector, a sin, or a whole skill.
-	Disabled []Rule
-	// DisabledLanguages are the languages the project does not write.
+	Paths             []string
+	Excluded          []string
+	Base              string
+	Disabled          []Rule
 	DisabledLanguages []source.Language
-	// Detectors are the project's own detectors, by name.
-	Detectors []string
-	// Packages are the packages whose exemptions the project registers, by name.
-	Packages []string
-	// Hooks are the hooks the project turns on beyond the ones every project runs.
-	Hooks []string
-	// Agents are the agents a config from the PHP tool turned on by name; the tool ships none beyond the ones every
-	// project runs, so sync skips and names each.
-	Agents []string
-	// Parallel is how many detectors judge runs at once when no --parallel says; 0 leaves judge's own default.
-	Parallel int
-	// Configurators tune shipped detectors.
-	Configurators []Configurator
+	Detectors         []string
+	Packages          []string
+	Hooks             []string
+	Agents            []string
+	Parallel          int
+	Configurators     []Configurator
 }
 
-// Load reads the config of the project at dir: its config.json, else its config.php until sync migrates
-// it; a project with neither has the empty config.
 func Load(dir string) (Config, error) {
 	settings := workspace.SettingsRoot(dir)
 
@@ -66,15 +49,13 @@ type Call struct {
 	Args   []Arg
 }
 
-// Arg is one argument, named when it was passed by name. Its value is a string, an int, a bool, nil, or a
-// []any of those.
+// Arg is one argument, named when it was passed by name.
 type Arg struct {
 	Name  string
 	Value any
 }
 
-// Rule is a rule as a config names it: its kind, the engine it belongs to, and its name. A project's own
-// rule belongs to no engine.
+// Rule is a rule as a config names it: its kind, the engine it belongs to, and its name.
 type Rule struct {
 	Kind   Kind
 	Engine catalog.Engine
@@ -84,7 +65,6 @@ type Rule struct {
 // Kind is which catalog a rule is in.
 type Kind string
 
-// The kinds of rule a config can name.
 const (
 	Skill    Kind = "Skills"
 	Sin      Kind = "Sins"
@@ -93,8 +73,6 @@ const (
 	Agent    Kind = "Agents"
 )
 
-// RuleOf reads a shipped rule from its class; false when the class is none of the tool's rules. A hook or an
-// agent the tool ships is named by its short name alone.
 func RuleOf(class string) (Rule, bool) {
 	path, shipped := strings.CutPrefix(strings.TrimPrefix(class, `\`), root)
 	segments := strings.Split(path, `\`)
@@ -117,7 +95,6 @@ func RuleOf(class string) (Rule, bool) {
 	return Rule{kind, engine, segments[len(segments)-1]}, known
 }
 
-// engineOf reads the engine from a rule's namespace, past any package folder.
 func engineOf(namespace []string) (catalog.Engine, bool) {
 	if namespace[0] == "Frontend" && len(namespace) > 1 && namespace[1] == "TypeScript" {
 		return catalog.TypeScript, true
@@ -126,7 +103,6 @@ func engineOf(namespace []string) (catalog.Engine, bool) {
 	return catalog.EngineNamed(namespace[0])
 }
 
-// ID is how config.json names the rule: `engine/Name`, or the bare name of a project's own.
 func (r Rule) ID() string {
 	if r.Engine == "" {
 		return r.Name
@@ -135,12 +111,10 @@ func (r Rule) ID() string {
 	return string(r.Engine) + "/" + r.Name
 }
 
-// Shipped says whether the rule is one of the tool's own.
 func (r Rule) Shipped() bool {
 	return r.Engine != ""
 }
 
-// RuleNamed reads a rule of the kind from its config.json id.
 func RuleNamed(kind Kind, id string) Rule {
 	engine, name, shipped := strings.Cut(id, "/")
 	if !shipped {
@@ -152,8 +126,6 @@ func RuleNamed(kind Kind, id string) Rule {
 	return Rule{Kind: kind, Engine: named, Name: name}
 }
 
-// Disables says whether the config turns off any of the rules: a detector is off when it, its sin or its
-// skill is named.
 func (c Config) Disables(rules ...Rule) bool {
 	for _, disabled := range c.Disabled {
 		if slices.Contains(rules, disabled) {
@@ -164,8 +136,6 @@ func (c Config) Disables(rules ...Rule) bool {
 	return false
 }
 
-// Positional is the config with every argument passed in order, as config.json passes them: a config.php
-// may name an argument, config.json cannot.
 func (c Config) Positional() Config {
 	configurators := make([]Configurator, len(c.Configurators))
 
@@ -192,12 +162,6 @@ func (c Config) Positional() Config {
 	return c
 }
 
-// IsJudged says whether the file is one this project judges: a file of a language the tool reads, which the
-// project has not turned off, lying in one of the declared source roots. A source root holds more than source —
-// a README, a lockfile, a template, and the languages a project judges nothing in — and a nudge that counts
-// those as judged files is counting edits no rule could ever have an opinion about.
-// A folder one rule judges despite the exclusion counts here too, so an edit inside it is looked at; WHICH
-// rules may mark it is the look's own question, and RulesFor answers that.
 func (c Config) IsJudged(root, file string) bool {
 	home := strings.TrimRight(root, "/")
 	absolute := file
@@ -224,23 +188,14 @@ func (c Config) IsJudged(root, file string) bool {
 	return false
 }
 
-// Writes says whether the project writes the language.
 func (c Config) Writes(language source.Language) bool {
 	return !slices.Contains(c.DisabledLanguages, language)
 }
 
-// Holds says whether the project writes the language and has a file of it under root, outside what it leaves out.
 func (c Config) Holds(root string, language source.Language) bool {
 	return c.Reads(root, language) && len(source.FilesIn(root, string(language), source.Under(root, c.Excluded))) > 0
 }
 
-// Reads says whether the tree at root is one this project writes the language in: the project has not turned the
-// language off, and, where a language declares itself with a file of its own, that file is there.
-//
-// A file of a language is not the same thing as a project written in it. A `.go` file turns up in a PHP shop as a
-// one-off script or a tool somebody dropped in a folder, and judging it would hand that project a set of findings
-// it never asked for, from a release it only upgraded. A Go module declares itself with a go.mod, and has had to
-// since Go 1.16, so the declaration is what is asked for rather than the file.
 func (c Config) Reads(root string, language source.Language) bool {
 	return c.Writes(language) && language.DeclaredIn(root)
 }

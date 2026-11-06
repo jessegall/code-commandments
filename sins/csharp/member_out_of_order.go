@@ -13,7 +13,6 @@ func init() {
 	sins.Register(catalog.CSharp, MemberOutOfOrder{})
 }
 
-// Definition is what the sin states about itself.
 func (MemberOutOfOrder) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "csharp-member-out-of-order",

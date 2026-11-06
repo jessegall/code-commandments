@@ -15,10 +15,8 @@ type HandKeyRemapDetector struct{}
 
 func init() { detectors.Register(catalog.PHP, HandKeyRemapDetector{}) }
 
-// Sin is the sin the detector finds.
 func (HandKeyRemapDetector) Sin() sins.Sin { return backendsins.HandKeyRemap{} }
 
-// Find is every ::from() fed a hand-remapped array.
 func (HandKeyRemapDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return php.In(codebase).
 		WhereKind("Expr_StaticCall").

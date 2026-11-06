@@ -13,7 +13,6 @@ func init() {
 	sins.Register(catalog.CSharp, DictionaryBag{})
 }
 
-// Definition is what the sin states about itself.
 func (DictionaryBag) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "csharp-dictionary-bag",

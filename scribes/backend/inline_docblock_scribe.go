@@ -14,7 +14,6 @@ func init() {
 // InlineDocblockScribe opens an inline docblock out into its canonical form, a `*` line per line of content.
 type InlineDocblockScribe struct{}
 
-// Rewrite rewrites each finding's docblock in canonical form at the indent it stands at.
 func (InlineDocblockScribe) Rewrite(findings []engine.Match, _ *engine.Codebase) (scribes.Rewrites, error) {
 	draft := scribes.NewDraft()
 	for _, finding := range findings {

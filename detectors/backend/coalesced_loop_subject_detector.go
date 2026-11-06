@@ -14,10 +14,8 @@ type CoalescedLoopSubjectDetector struct{}
 
 func init() { detectors.Register(catalog.PHP, CoalescedLoopSubjectDetector{}) }
 
-// Sin is the sin the detector finds.
 func (CoalescedLoopSubjectDetector) Sin() sins.Sin { return backendsins.CoalescedLoopSubject{} }
 
-// Find is every loop subject that falls back to an empty array from a value reached through a parameter.
 func (CoalescedLoopSubjectDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return php.In(codebase).
 		Where(engine.As(php.Node.IsLoopSubject)).

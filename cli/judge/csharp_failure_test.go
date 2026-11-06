@@ -12,8 +12,6 @@ import (
 	"github.com/jessegall/code-commandments/cli"
 )
 
-// TestAJudgeWhoseCSharpBridgeFailsJudgesEverythingElse holds judge to finishing when the C# bridge dies or hangs:
-// the run says why C# is left unread, and the PHP beside it is judged.
 func TestAJudgeWhoseCSharpBridgeFailsJudgesEverythingElse(t *testing.T) {
 	for name, bridge := range map[string]string{
 		"dies":  `echo 'roslyn-bridge: there is no file or folder at /gone to read' >&2; exit 1`,
@@ -54,7 +52,6 @@ func TestAJudgeWhoseCSharpBridgeFailsJudgesEverythingElse(t *testing.T) {
 	}
 }
 
-// stderrOf is what the call wrote to the process's stderr.
 func stderrOf(t *testing.T, call func()) string {
 	t.Helper()
 	reader, writer, err := os.Pipe()

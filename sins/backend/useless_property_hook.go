@@ -11,7 +11,6 @@ type UselessPropertyHook struct{}
 
 func init() { sins.Register(catalog.PHP, UselessPropertyHook{}) }
 
-// Definition is what the sin states about itself.
 func (UselessPropertyHook) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "useless-property-hook",

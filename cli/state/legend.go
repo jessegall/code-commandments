@@ -12,25 +12,19 @@ type Variable struct {
 	Meaning string
 }
 
-// Legend is what a state file says about itself: what it is for, every value it carries and what each
-// means, the list it keeps, and that deleting it is safe. It is also the schema the file is read and
-// written against.
+// Legend is what a state file says about itself: what it is for, every value it carries and what each means, the list it keeps, and that deleting it is safe.
 type Legend struct {
 	About     string
 	Variables []Variable
 	Defaults  State
-	// List says what the list between the dividers holds; empty when the file keeps none.
-	List string
-	// Safe says why deleting the file is safe; empty is "it regenerates".
-	Safe string
+	List      string
+	Safe      string
 }
 
-// HasList says whether the file keeps a list.
 func (l *Legend) HasList() bool {
 	return l.List != ""
 }
 
-// Names are the declared names, as the file spells them.
 func (l *Legend) Names() []string {
 	names := make([]string, len(l.Variables))
 
@@ -41,12 +35,10 @@ func (l *Legend) Names() []string {
 	return names
 }
 
-// Declares says whether the name is one of the file's values.
 func (l *Legend) Declares(name string) bool {
 	return slices.Contains(l.Names(), Name(name))
 }
 
-// Render is the legend as the closing section of the file.
 func (l *Legend) Render() string {
 	blocks := []string{l.About}
 

@@ -18,7 +18,6 @@ import (
 	"github.com/jessegall/code-commandments/detectors"
 )
 
-// hedges are the words that turn a flat claim into a deferral.
 var hedges = []string{
 	" but ", " later ", " defer", " for now", " out of scope", " needs its own",
 	" its own change", " own migration", " own pr", " separate change", " separate pr",
@@ -26,23 +25,19 @@ var hedges = []string{
 	" pre-existing", " baseline", " migration-scoped",
 }
 
-// filedBy closes every issue the tool files: the verb that filed it and the release it ran, so a report is always
-// read against the code that made it.
 func filedBy(verb, version string) string {
 	return "\n_Filed via `commandments " + verb + "` from a consumer project, on code-commandments " + version + "._\n"
 }
 
-// Command is `report`: a bug in the tool, or a finding that is a false positive. Version is the release it runs.
+// Command is `report`: a bug in the tool, or a finding that is a false positive.
 type Command struct {
 	Version string
 }
 
-// Names are the verbs it answers to.
 func (Command) Names() []string {
 	return []string{"report"}
 }
 
-// Help documents it.
 func (Command) Help() help.Help {
 	return help.Of("File a GitHub issue about code-commandments itself (via `gh`) — a false positive, a wrong rule, or a bug.").
 		Form(`report --reason="…" --ref=PATH:LINE`, "a [bug-report] — a defect in the tool, pointing at the code it happened on").
@@ -70,7 +65,6 @@ func (Command) Help() help.Help {
 			"asserts flatly that the code is right and the rule is wrong, with no hedge. Some detectors (design smells) REQUIRE --best-design: the report is valid only when the flagged code ALREADY IS that best design.")
 }
 
-// Run files the report the arguments describe.
 func (c Command) Run(in *cli.Input, console cli.Console) (int, error) {
 	if verb, named := in.FirstArgument(); named && verb == followVerb {
 		return c.follow(console), nil
@@ -181,9 +175,6 @@ func detectorReport(in *cli.Input, detector, reason string, refs []Reference, ve
 	return remember(ruleName(detector), reason, refs, filed, console)
 }
 
-// ruleName is the rule's own name, whatever spelling named it: the record is keyed by the name a judge finding
-// carries, so a report filed as `python/DeepNestingDetector` is recognised at the line it was filed about. The
-// engine belongs in the issue, which a maintainer reads, not in the key.
 func ruleName(detector string) string {
 	if rule, found := detectors.Named(detector); found {
 		return catalog.Name(rule)
@@ -192,11 +183,6 @@ func ruleName(detector string) string {
 	return detector
 }
 
-// remember records what was filed, one row per reference, so a judge of those lines reads the sin as reported
-// rather than as a sin to fix and the report can be followed until it is answered.
-//
-// The issue exists by now, so a refusal to record is said out loud and answered with a failure: a run that said
-// nothing would invite a second report of the same sin, and that is a second issue for a maintainer to read.
 func remember(detector, reason string, refs []Reference, filed Filed, console cli.Console) int {
 	root := workspace.ProjectRoot(workingFolder())
 	recorded, refused := 0, 0
@@ -229,8 +215,6 @@ func remember(detector, reason string, refs []Reference, filed Filed, console cl
 	if recorded > 0 {
 		console.Write("Recorded as reported in " + reported.Filename + ": " + natural.Counted(recorded, "line") + ", issue " + strconv.Itoa(filed.Issue) + ".\n")
 
-		// The dashboard is drawn from the record, so a report filed changes it and nothing else would redraw it
-		// until the next judge.
 		if space := workspace.At(root, ""); space.IsJournalDriven() {
 			if err := dashboard.Redraw(space); err != nil {
 				console.Warn("The reports page could not be drawn again: " + err.Error())
@@ -245,8 +229,6 @@ func remember(detector, reason string, refs []Reference, filed Filed, console cl
 	return 0
 }
 
-// sinOf is the sin the rule finds, for whoever reads the record; empty where this build does not know the rule,
-// which costs the row nothing, since the rule's own name is what it is keyed by.
 func sinOf(detector string) string {
 	if rule, found := detectors.Named(detector); found {
 		return rule.Sin().Definition().Name
@@ -255,8 +237,6 @@ func sinOf(detector string) string {
 	return ""
 }
 
-// already is what to do about a refused row: the issue that already holds the sin, where that is why it was
-// refused, and otherwise the line that records it by hand.
 func already(held reported.Row) string {
 	if held.Issue > 0 {
 		return "it is already reported as issue " + strconv.Itoa(held.Issue) + "."
@@ -265,7 +245,6 @@ func already(held reported.Row) string {
 	return "report the line again once it can be read, or leave it: the issue stands either way."
 }
 
-// absolute is the reference's path as the record keys it, under the project root.
 func absolute(root, path string) string {
 	if filepath.IsAbs(path) {
 		return path
@@ -274,15 +253,12 @@ func absolute(root, path string) string {
 	return filepath.Join(root, path)
 }
 
-// workingFolder is where the command was run, which is how a project is found.
 func workingFolder() string {
 	cwd, _ := os.Getwd()
 
 	return cwd
 }
 
-// requiresBestDesign says whether the detector, or its sin, is a design smell a report must answer with the
-// cleanest design.
 func requiresBestDesign(name string) bool {
 	detector, found := detectors.Named(name)
 	if !found {
@@ -295,7 +271,6 @@ func requiresBestDesign(name string) bool {
 	return marked || sinMarked
 }
 
-// firstHedge is the first hedge any of the texts carries, read as words.
 func firstHedge(texts ...string) (string, bool) {
 	spaced := strings.NewReplacer(".", " ", ",", " ", ";", " ", ":", " ", "!", " ", "?", " ", "(", " ", ")", " ", `"`, " ", "'", " ", "\n", " ", "\t", " ")
 
@@ -312,7 +287,6 @@ func firstHedge(texts ...string) (string, bool) {
 	return "", false
 }
 
-// references are the code the report is about: every --ref, then --file with its --line.
 func references(in *cli.Input) []Reference {
 	values := in.Repeated("ref")
 
@@ -335,8 +309,6 @@ func references(in *cli.Input) []Reference {
 	return refs
 }
 
-// render names each reference by its file and lines, and shows the referenced lines only when the reporter
-// shares them: a project's code is never published without its owner's word.
 func render(refs []Reference, share bool) string {
 	var out strings.Builder
 
@@ -355,7 +327,6 @@ func render(refs []Reference, share bool) string {
 	return out.String()
 }
 
-// summarise is the reason's first line, cut to 60 characters.
 func summarise(reason string) string {
 	first, _, _ := strings.Cut(strings.TrimLeft(reason, "\n"), "\n")
 	first = strings.Trim(first, " \t\n\r\x00\x0B")
@@ -367,10 +338,6 @@ func summarise(reason string) string {
 	return first
 }
 
-// sharedByEngines is how a bare name is spelled per engine, where several engines have a rule of that name. A
-// detector's name is its bare type name and the engines share those, so `DeepNestingDetector` is the python
-// rule's name as much as the PHP one's — and a report filed against it names a rule the reporter never saw fire,
-// which nobody downstream can tell. One spelling means one rule, so the reporter picks.
 func sharedByEngines(name string) []string {
 	var spellings []string
 	for _, rule := range detectors.EveryNamedIn(detectors.All(), name) {
@@ -381,7 +348,6 @@ func sharedByEngines(name string) []string {
 	return spellings
 }
 
-// ownRule is the project's own rule the name means, and whether there is one.
 func ownRule(name string) (detectors.Detector, bool) {
 	var own []detectors.Detector
 	for _, read := range custom.InForce(workspace.ProjectRoot(workingFolder())).Rules {

@@ -13,8 +13,7 @@ import (
 	"github.com/jessegall/code-commandments/scribes"
 )
 
-// hintProject is one of PHP's HintsTest projects: its files, beside the Data stub the test writes, and the files a
-// scoped run is restricted to.
+// hintProject is one of PHP's HintsTest projects: its files, beside the Data stub the test writes, and the files a scoped run is restricted to.
 type hintProject struct {
 	name   string
 	scoped []string
@@ -29,7 +28,6 @@ func (s hintScope) Includes(path string) bool {
 }
 func (s hintScope) IsScoped() bool { return s.files != nil }
 
-// Each of PHP's HintsTest projects, rewritten here and by PHP's DataHintScribe, must come out byte for byte the same.
 func TestDataHintRewritesEachHintsProjectAsThePHPToolDoes(t *testing.T) {
 	for _, project := range hintProjects {
 		t.Run(project.name, func(t *testing.T) {
@@ -73,7 +71,6 @@ func TestDataHintRewritesEachHintsProjectAsThePHPToolDoes(t *testing.T) {
 	}
 }
 
-// hintAnswer is what PHP's DataHintScribe rewrote in the project, by path, as recorded.
 func hintAnswer(t *testing.T, project hintProject, dir string) map[string]string {
 	t.Helper()
 	hintAnswersOnce.Do(loadHintAnswers)
@@ -89,7 +86,6 @@ func hintAnswer(t *testing.T, project hintProject, dir string) map[string]string
 	return answer
 }
 
-// key names the project by what it holds: its name, its scope and every file.
 func (p hintProject) key() string {
 	names := make([]string, 0, len(p.files))
 	for name := range p.files {

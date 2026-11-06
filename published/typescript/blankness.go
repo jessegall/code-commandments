@@ -1,5 +1,4 @@
-// Package typescript publishes what the TypeScript a frontend is written in says about the server: which fields
-// of a server type it tests for blank.
+// Package typescript publishes what the TypeScript a frontend is written in says about the server: which fields of a server type it tests for blank.
 package typescript
 
 import (
@@ -10,18 +9,15 @@ import (
 	"github.com/jessegall/code-commandments/published"
 )
 
-// Blankness publishes a question for every field the frontend compares with ”, read through a variable typed as
-// one server type.
+// Blankness publishes a question for every field the frontend compares with ”, read through a variable typed as one server type.
 type Blankness struct{}
 
 func init() {
 	published.Register(Blankness{})
 }
 
-// equalities are the operators that test a value against another.
 var equalities = []string{"===", "!==", "==", "!="}
 
-// Contracts is each field of a typed holder some expression compares with ”, once per type and field.
 func (Blankness) Contracts(codebase *engine.Codebase) []published.Contract {
 	var asked []published.Contract
 	seen := map[[2]string]bool{}
@@ -48,7 +44,6 @@ func (Blankness) Contracts(codebase *engine.Codebase) []published.Contract {
 	return asked
 }
 
-// blankComparisonSubject is what an equality test compares with ”: the side that is no literal, when the other is.
 func blankComparisonSubject(node engine.Match) (engine.Match, bool) {
 	if node.Kind() != "BinaryExpression" || !slices.Contains(equalities, node.Node().Operator) {
 		return engine.Match{}, false
@@ -79,7 +74,6 @@ func isBlankLiteral(node engine.Match) bool {
 	return node.Exists() && node.Node().Literal == "string" && ok && text == ""
 }
 
-// chainOf is a pure member chain's names, root first; false for anything else.
 func chainOf(node engine.Match) ([]string, bool) {
 	switch node.Kind() {
 	case "Identifier":
@@ -96,8 +90,6 @@ func chainOf(node engine.Match) ([]string, bool) {
 	return nil, false
 }
 
-// bindingTypes is the type each name of the file is annotated with, when its annotation names exactly one type and
-// no two annotations of the name disagree.
 func bindingTypes(file *engine.File) map[string]string {
 	types, conflicted := map[string]string{}, map[string]bool{}
 	for _, node := range file.Nodes() {

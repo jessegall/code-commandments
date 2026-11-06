@@ -16,7 +16,6 @@ import (
 	"github.com/jessegall/code-commandments/engine"
 )
 
-// shipped is every backend detector the PHP tool shipped, by name: the detectors its findings speak for.
 var shipped = sync.OnceValues(func() ([]string, error) {
 	listed, err := os.ReadFile(filepath.Join(Oracle(), "detectors.txt"))
 	if err != nil {
@@ -26,8 +25,6 @@ var shipped = sync.OnceValues(func() ([]string, error) {
 	return strings.Fields(string(listed)), nil
 })
 
-// SameFindings fails unless each detector the PHP tool shipped flags exactly the shop nodes its PHP twin of the same
-// name flagged, each as often; a detector it never shipped is held by the fixture's markers alone.
 func SameFindings(t *testing.T, ported ...detectors.Detector) {
 	t.Helper()
 	codebase := OracleProject(t)
@@ -119,7 +116,6 @@ var readings = sync.OnceValues(func() (proseReadings, error) {
 	return loaded, json.Unmarshal(content, &loaded)
 })
 
-// PhpProse is what the PHP tool reads in every comment of the shop and every probe sentence.
 func PhpProse(t testing.TB) []ProseReading {
 	t.Helper()
 	loaded, err := readings()
@@ -130,7 +126,6 @@ func PhpProse(t testing.TB) []ProseReading {
 	return loaded.Texts
 }
 
-// PhpMoods is what the PHP tool reads in every function name of the shop and every probe name.
 func PhpMoods(t testing.TB) []MoodReading {
 	t.Helper()
 	loaded, err := readings()

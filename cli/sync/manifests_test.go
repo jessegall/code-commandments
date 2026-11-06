@@ -14,21 +14,14 @@ import (
 	"github.com/jessegall/code-commandments/cli/hooks"
 )
 
-// The plugin is declared twice, once for each journal protocol, and what the two say has to agree: the release
-// they pin, the services the journal keeps running, and the windows the holds declare. All three are read from
-// the files themselves, so they are proved here, beside the command that publishes the plugin, rather than in
-// the package that builds the whole binary before it can read a line of JSON.
-
-// pins is the little of a plugin manifest this gate reads: the version it declares and the release its first setup
-// step fetches. The two manifests answer the same questions in different shapes, so neither's whole type fits both.
+// pins is the little of a plugin manifest this gate reads: the version it declares and the release its first setup step fetches.
 type pins struct {
 	Version string                 `json:"version"`
 	Env     map[string]string      `json:"env"`
 	Setup   []struct{ Run string } `json:"setup"`
 }
 
-// offered is what version 4's manifest declares about the events it answers: version 3's file writes its own
-// services as an object, so only this one is read for them.
+// offered is what version 4's manifest declares about the events it answers: version 3's file writes its own services as an object, so only this one is read for them.
 type offered struct {
 	Hears    []string  `json:"hears"`
 	Holds    []hold    `json:"holds"`
@@ -42,8 +35,6 @@ type hold struct {
 }
 
 // service is one program the journal keeps running for the plugin, and whether it answers the journal's events.
-// Version 4 names it and writes its command as a list; version 3 writes the services as an object whose key is the
-// name and whose run is the same command as one line, so both are read into this.
 type service struct {
 	Name    string   `json:"name"`
 	Answers bool     `json:"answers"`
@@ -53,7 +44,6 @@ type service struct {
 	Restart string   `json:"restart"`
 }
 
-// line is the command this service runs, however its manifest writes it.
 func (s service) line() string {
 	if s.Run != "" {
 		return s.Run
@@ -65,7 +55,6 @@ func (s service) line() string {
 // kept is what each manifest says the journal keeps running, by name.
 type kept map[string]service
 
-// keptBy is the services the manifest declares, read from either shape its protocol writes them in.
 func keptBy(t *testing.T, name ...string) kept {
 	t.Helper()
 	content, err := os.ReadFile(filepath.Join(append([]string{"..", ".."}, name...)...))
@@ -103,11 +92,6 @@ func keptBy(t *testing.T, name ...string) kept {
 	return held
 }
 
-// TestBothPluginManifestsKeepTheSameServices holds the two manifests to one answer about what is kept running. The
-// plugin is declared twice, once for each journal protocol, and which bridges stay warm must not depend on which
-// file the journal reads: a service missing from one of them starts that language's bridge cold for every single
-// run, which is the whole cost the warming exists to remove. The frontend and php services were added to version
-// 4's file alone and version 3's went without them for seven releases, which is what this catches.
 func TestBothPluginManifestsKeepTheSameServices(t *testing.T) {
 	held, offered := keptBy(t, ".journal-plugin", "plugin.json"), keptBy(t, "journal-plugin.json")
 
@@ -136,10 +120,6 @@ func TestBothPluginManifestsKeepTheSameServices(t *testing.T) {
 	}
 }
 
-// TestBothPluginManifestsPinTheSameRelease holds the two manifests to one answer. The plugin is declared twice, once
-// for each journal protocol: .journal-plugin/plugin.json carries the release in its env, journal-plugin.json fetches
-// it in its first setup step, and the release workflow refuses a tag either of them does not name. Bumping one and
-// forgetting the other is what this catches, which otherwise shows up only as every release between them failing.
 func TestBothPluginManifestsPinTheSameRelease(t *testing.T) {
 	read := func(name ...string) pins {
 		content, err := os.ReadFile(filepath.Join(append([]string{"..", ".."}, name...)...))
@@ -167,32 +147,12 @@ func TestBothPluginManifestsPinTheSameRelease(t *testing.T) {
 	}
 }
 
-// windowMs is the longest window a hold of ours may declare at a moment of the AGENT's own work. It is far too
-// short to parse a file, let alone judge one, which is the point: what the journal waits for while the agent works
-// can only be an answer already known.
 const windowMs = 10
 
-// decidedMs is the longest window a hold may declare at a moment that is not the agent's work but a command
-// someone ran and waits on: `journal worker merge`, which takes a branch in, and a worker's own clock-out, where
-// the worker waits to hear whether its work is clean. A gate at either cannot report later — answer late and the
-// work has already landed, or already reached the agent that sent the worker — so it answers in the moment. Its
-// ceiling is the journal's own, three minutes by default: workers.merge_hold_seconds for the merge and
-// plugins.clock_out_window_seconds for the clock-out, each of which the journal cuts our declared window down to.
-// An older journal cuts it to its 50 ms instead, so declaring the whole of it costs nothing there, and the judge
-// holds itself to the window as a deadline either way.
 const decidedMs = 180_000
 
-// decided are the events a hold may take its time at: the ones that are not the agent's own work. Every other
-// event is a moment of that work, and a window there is the fault the rule above exists to keep away.
 var decided = []string{"worker_delivering", "worker_merging"}
 
-// TestEveryHoldIsAnsweredFromWhatIsAlreadyKnown holds the manifest to the rule every hook of ours answers under: the
-// plugin never makes the journal wait on work while the agent works. An event it HOLDS at a moment of that work is
-// asked before the tool runs, so it may only declare a window no judge could fit in, and a window that short cannot
-// start a process — which is why a service of ours has to answer it. A hold with no window took the journal's old
-// ten-second deadline, and one tool call that changed sixty files spent it on a scan and timed out; that is the
-// fault these checks keep away. The one event held longer is a worker's merge, which is not the agent working but a
-// command someone ran and waits on, and where an answer that comes later cannot stop anything.
 func TestEveryHoldIsAnsweredFromWhatIsAlreadyKnown(t *testing.T) {
 	content, err := os.ReadFile(filepath.Join("..", "..", "journal-plugin.json"))
 	if err != nil {
@@ -224,8 +184,6 @@ func TestEveryHoldIsAnsweredFromWhatIsAlreadyKnown(t *testing.T) {
 		}
 	}
 
-	// A held file_edited blocks the tool's RESULT until the file is put right, which is a judge on the answer path
-	// wearing another name: every edit would wait on a scan again.
 	for _, held := range manifest.Holds {
 		if held.Event == "file_edited" {
 			t.Error("file_edited is held: an edit would wait on the judge of it, which is the fault all of this answers")
@@ -233,15 +191,13 @@ func TestEveryHoldIsAnsweredFromWhatIsAlreadyKnown(t *testing.T) {
 	}
 }
 
-// declaredHealth is what a manifest says about the question the journal asks each service about itself: the variable
-// it names the socket in, the line it writes, and the answer it reads back.
+// declaredHealth is what a manifest says about the question the journal asks each service about itself: the variable it names the socket in, the line it writes, and the answer it reads back.
 type declaredHealth struct {
 	SocketEnv string `json:"socket_env"`
 	Request   string `json:"request"`
 	Answer    string `json:"answer"`
 }
 
-// healthOf is the health a manifest declares.
 func healthOf(t *testing.T, name ...string) declaredHealth {
 	t.Helper()
 	content, err := os.ReadFile(filepath.Join(append([]string{"..", ".."}, name...)...))
@@ -259,11 +215,6 @@ func healthOf(t *testing.T, name ...string) declaredHealth {
 	return manifest.Health
 }
 
-// TestBothManifestsDeclareTheHealthTheServicesReallyAnswer holds the manifest to the code. The journal reads this
-// block to learn how to ask a service how it is: it makes a socket, names it in that variable for every service it
-// starts, writes that line and reads the answer — and allows 200ms, after which it restarts the service, and marks
-// the plugin broken after five silences. So a variable named here that the service does not listen on, or a request
-// it does not answer, is a plugin that reads as broken while every service is up.
 func TestBothManifestsDeclareTheHealthTheServicesReallyAnswer(t *testing.T) {
 	held, offered := healthOf(t, ".journal-plugin", "plugin.json"), healthOf(t, "journal-plugin.json")
 
@@ -278,11 +229,6 @@ func TestBothManifestsDeclareTheHealthTheServicesReallyAnswer(t *testing.T) {
 		t.Errorf("the manifest writes %q and the service answers %q", offered.Request, health.Request)
 	}
 
-	// The journal matches the LINE, not the fields: it reads one line back and holds it to the answer declared here,
-	// where a value in angle brackets stands for anything. So the declared answer is the text a service writes, down
-	// to the order of its keys and a space that is not there — a reordering of the fields the answer is built from
-	// would be read as a service that failed, every minute, until the plugin was marked broken. That is the one
-	// thing a type's field order does not tell a reader, so it is held here.
 	anything := regexp.MustCompile(`<[^>]*>`)
 
 	for _, service := range []string{"hooks", "roslyn", "mypy", "frontend", "php"} {
@@ -300,11 +246,6 @@ func TestBothManifestsDeclareTheHealthTheServicesReallyAnswer(t *testing.T) {
 	}
 }
 
-// TestBothManifestsFitTheSameLanguages holds the two manifests to naming the same languages, which is what a
-// journal reads to decide whether to suggest this plugin to a project at all. The version-4 manifest named NONE,
-// so a current journal would have offered it to a project with not one language we judge, and neither named Go,
-// which we judge. A list that is only in one of the two is a project told the wrong thing by whichever protocol
-// its journal speaks.
 func TestBothManifestsFitTheSameLanguages(t *testing.T) {
 	var fits []string
 	for _, name := range [][]string{{".journal-plugin", "plugin.json"}, {"journal-plugin.json"}} {
@@ -338,10 +279,6 @@ func TestBothManifestsFitTheSameLanguages(t *testing.T) {
 	}
 }
 
-// TestTheManifestDeclaresTheFolderItReads holds the declaration the journal asked us for. A journal from plan
-// 1092 on reads a project's `.commandments` for a plugin only where the plugin's own manifest declares it, and
-// drops the list it keeps of its own; undeclared, the config, the project's own rules and its session state are a
-// folder we can no longer read, and every rule a project enabled would be read as none.
 func TestTheManifestDeclaresTheFolderItReads(t *testing.T) {
 	text, err := os.ReadFile(filepath.Join("..", "..", "journal-plugin.json"))
 	if err != nil {
@@ -360,22 +297,6 @@ func TestTheManifestDeclaresTheFolderItReads(t *testing.T) {
 	}
 }
 
-// TestNothingOfOursReachesAWorker holds Sir Jesse's ruling: a worker gets nothing from this plugin. Its edits are
-// not judged, its hand-in is not held, and the judge is not offered to it as a command.
-//
-// The reason is time. A worker's judge read the whole tree for its two changed files, 1 min 44 s on a 6830-file
-// project, and its hand-in held the work for the same read again; nothing a worker did was worth that. What makes
-// an edit sub-second is the tree held in memory, and a worktree had none of its own: it answered from a view over
-// another checkout's base, which is the part that never paid off. Until a worker has a tree of its own, it is
-// judged by nobody.
-//
-// The journal decides this for us: an event reaches a plugin only when the agent is the MAIN one, or when the
-// manifest's `reaches` names that agent's role for the event. So a manifest with no `reaches` is a plugin a
-// worker never wakes, and the hand-in gate's own event is not heard at all.
-//
-// The hold and the code's own window are still held to each other, for the day a worker has a tree and the gate
-// goes back on: the journal sends no `window_ms` for a delivery, because the hold is ours to declare, and the code
-// falls back to the window the manifest asked for.
 func TestNothingOfOursReachesAWorker(t *testing.T) {
 	text, err := os.ReadFile(filepath.Join("..", "..", "journal-plugin.json"))
 	if err != nil {
@@ -422,15 +343,6 @@ func TestNothingOfOursReachesAWorker(t *testing.T) {
 	}
 }
 
-// TestEachAliasSaysWhatKindOfCommandItIs holds the category each alias declares. The journal classifies a shell
-// command to decide how to treat it, and an alias that declares nothing is classified as unknown; it also refuses
-// the whole plugin install on a category it does not know, so a wrong word here breaks every install rather than
-// one alias.
-//
-// `sins` judges and `rules` tries and proves a rule, which is what a check is. `commandments` declares none on
-// purpose: it is the open passthrough, and the same alias runs `repent`, which rewrites a project's source, and
-// `report`, which files an issue over the network. No one category is true of it, and a category drives how the
-// journal treats the command, so guessing one there would be a lie about what the command does.
 func TestEachAliasSaysWhatKindOfCommandItIs(t *testing.T) {
 	text, err := os.ReadFile(filepath.Join("..", "..", "journal-plugin.json"))
 	if err != nil {
@@ -447,8 +359,6 @@ func TestEachAliasSaysWhatKindOfCommandItIs(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// Every category the journal knows (core/base/driver/command_category.py). One it does not know refuses the
-	// install, so the set is part of the contract and not a loose spelling.
 	known := []string{"search", "read", "edit", "version control", "test run", "build", "check", "package", "network", "process", "journal", "unknown"}
 
 	declared := map[string]string{}
@@ -471,17 +381,6 @@ func TestEachAliasSaysWhatKindOfCommandItIs(t *testing.T) {
 	}
 }
 
-// TestNoAliasOfOursIsOpenToAWorker holds the manifest to what the briefing tells an agent to do. The journal
-// refuses an alias to a worker unless the manifest says `workers`, so the two have to agree: an alias open to a
-// worker while the briefing is silent is a command nobody runs, and a briefing that tells a worker to run one the
-// manifest closes is an instruction the journal then refuses.
-//
-// Sir Jesse closed all of them (message 11101). A worker's judge read the whole tree for its two changed files,
-// 1 min 44 s on a 6830-file project, and the briefing is what sent it there. So the briefing names the judge as
-// the run of the agent that TAKES work in, right after a merge, and no alias of ours is a worker's.
-//
-// `rules` and `commandments` could never be a worker's in any case: `rule migrate` rewrites a project's own rule
-// files and the passthrough also repents and reports.
 func TestNoAliasOfOursIsOpenToAWorker(t *testing.T) {
 	text, err := os.ReadFile(filepath.Join("..", "..", "journal-plugin.json"))
 	if err != nil {
@@ -509,8 +408,6 @@ func TestNoAliasOfOursIsOpenToAWorker(t *testing.T) {
 		}
 	}
 
-	// And the briefing says so itself, in the words a worker reads: the judge is the run of the agent that takes
-	// the work in. Said nowhere, a worker's code reaches the project with nobody having judged it at all.
 	brief, err := os.ReadFile(filepath.Join("..", "library", "brief.md"))
 	if err != nil {
 		t.Fatal(err)

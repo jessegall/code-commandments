@@ -14,12 +14,9 @@ func init() {
 	detectors.Register(catalog.Vue, &DeepNestedDetector{MaxDepth: 8, MaxRemaining: 3})
 }
 
-// DeepNestedDetector finds markup nested too deep to read, where enough still lies beneath to be a component
-// of its own. Each is reported once, at the boundary it would be extracted from.
+// DeepNestedDetector finds markup nested too deep to read, where enough still lies beneath to be a component of its own.
 type DeepNestedDetector struct {
-	// MaxDepth is how deep an element may sit before it is too deep.
-	MaxDepth int
-	// MaxRemaining is how many levels must still lie beneath a too-deep element for it to be worth extracting.
+	MaxDepth     int
 	MaxRemaining int
 }
 
@@ -47,5 +44,4 @@ func (d *DeepNestedDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return boundaries
 }
 
-// Repentable says a scribe rewrites the sin away.
 func (DeepNestedDetector) Repentable() {}

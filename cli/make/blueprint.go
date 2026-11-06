@@ -1,6 +1,4 @@
-// Package make is `make`: scaffold a commandment of the project's own in `.commandments/custom/` (a rule
-// naming its sin, and the skill that teaches the fix when it is a new one), turned on in the config, with the
-// rest of the process printed.
+// Package make is `make`: scaffold a commandment of the project's own in `.commandments/custom/` (a rule naming its sin, and the skill that teaches the fix when it is a new one), turned on in the config, with the rest of the process printed.
 package make
 
 import (
@@ -12,19 +10,15 @@ import (
 	"github.com/jessegall/code-commandments/skill"
 )
 
-// Engine is the engine a new rule judges: the catalog's own, so a name is read in one place and an engine
-// renamed is renamed once.
+// Engine is the engine a new rule judges: the catalog's own, so a name is read in one place and an engine renamed is renamed once.
 type Engine = catalog.Engine
 
-// Engines are every engine, in the order they are offered.
 var Engines = catalog.Engines
 
-// ParseEngine reads an engine by name, whatever its case, and by the name it was published under before.
 func ParseEngine(name string) (Engine, bool) {
 	return catalog.EngineNamed(name)
 }
 
-// ProbeRoot is where a throwaway probe for the engine goes.
 func ProbeRoot(e Engine) string {
 	if e == catalog.Vue || e == catalog.TypeScript {
 		return "resources/js"
@@ -33,7 +27,6 @@ func ProbeRoot(e Engine) string {
 	return "src"
 }
 
-// ProbeExtension is the probe file's extension, which is also the language its skill teaches.
 func ProbeExtension(e Engine) string {
 	switch e {
 	case catalog.Vue:
@@ -51,8 +44,7 @@ func ProbeExtension(e Engine) string {
 	}
 }
 
-// Blueprint is a commandment named and placed: its sin, the engine its rule judges, and the skill that
-// teaches the fix, written anew when no existing one was named.
+// Blueprint is a commandment named and placed: its sin, the engine its rule judges, and the skill that teaches the fix, written anew when no existing one was named.
 type Blueprint struct {
 	Sin      string
 	ID       string
@@ -60,18 +52,15 @@ type Blueprint struct {
 	Slug     string
 	NewSkill bool
 	Dir      string
-	// From is the ready rule the commandment starts from; nil starts it from a query that finds nothing.
-	From *Template
+	From     *Template
 }
 
-// Of plans a commandment named name, taught by the skill slug; newSkill writes that skill too.
 func Of(name string, engine Engine, slug string, newSkill bool, dir string) Blueprint {
 	sin := Studly(strings.TrimSuffix(Studly(name), "Detector"))
 
 	return Blueprint{Sin: sin, ID: Kebab(sin), Engine: engine, Slug: slug, NewSkill: newSkill, Dir: dir}
 }
 
-// Detector is the rule's name.
 func (b Blueprint) Detector() string {
 	return b.Sin + "Detector"
 }
@@ -82,7 +71,6 @@ type File struct {
 	Is   string
 }
 
-// Files are what it writes: the skill first when it writes one, then the rule.
 func (b Blueprint) Files() []File {
 	var files []File
 
@@ -93,17 +81,14 @@ func (b Blueprint) Files() []File {
 	return append(files, File{b.RuleFile(), "the rule, and its sin `" + b.ID + "`"})
 }
 
-// SkillFile is where a new skill's SKILL.md goes.
 func (b Blueprint) SkillFile() string {
 	return filepath.Join(b.Dir, "skills", b.Slug, "SKILL.md")
 }
 
-// RuleFile is where the rule goes.
 func (b Blueprint) RuleFile() string {
 	return filepath.Join(b.Dir, b.Detector()+".json")
 }
 
-// SkillID is the id the skill is published under.
 func (b Blueprint) SkillID() string {
 	return skill.IDFor(b.Slug)
 }
@@ -114,7 +99,6 @@ var (
 	acronymToWord = regexp.MustCompile(`([A-Z]+)([A-Z][a-z])`)
 )
 
-// Studly is the name as a type name: its words, each capitalised, run together.
 func Studly(name string) string {
 	var studly strings.Builder
 
@@ -127,7 +111,6 @@ func Studly(name string) string {
 	return studly.String()
 }
 
-// Kebab is the name as an id: words split at case changes, lowercased, joined by dashes.
 func Kebab(name string) string {
 	spaced := acronymToWord.ReplaceAllString(lowerToUpper.ReplaceAllString(name, "$1-$2"), "$1-$2")
 

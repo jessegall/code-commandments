@@ -11,7 +11,6 @@ type DataMethodHintCollision struct{}
 
 func init() { sins.Register(catalog.PHP, DataMethodHintCollision{}) }
 
-// Definition is what the sin states about itself.
 func (DataMethodHintCollision) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "data-method-hint-collision",

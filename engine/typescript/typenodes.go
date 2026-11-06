@@ -5,9 +5,6 @@ import (
 	"strings"
 )
 
-// A type as the PHP tool models and prints it: the types an extracted component declares must come out byte for
-// byte as the PHP tool writes them. The model is built from the bridge's type nodes (see TypeOf), never from text.
-
 // TypeNode is a type as the PHP tool's grammar models it.
 type TypeNode interface {
 	Render() string
@@ -23,7 +20,6 @@ type Fields struct {
 	Types map[string]TypeNode
 }
 
-// Set records a member's type; a member named again keeps its place.
 func (f *Fields) Set(name string, typed TypeNode) {
 	if f.Types == nil {
 		f.Types = map[string]TypeNode{}
@@ -34,7 +30,6 @@ func (f *Fields) Set(name string, typed TypeNode) {
 	f.Types[name] = typed
 }
 
-// Get is a member's type.
 func (f Fields) Get(name string) (TypeNode, bool) {
 	typed, ok := f.Types[name]
 
@@ -85,7 +80,6 @@ type TypeofType struct {
 func (t TypeofType) Render() string      { return "typeof " + t.Target }
 func (t TypeofType) UnwrapRef() TypeNode { return t }
 
-// refWrappers are the reactive wrappers a template reads through to their value.
 var refWrappers = []string{"Ref", "ComputedRef", "ShallowRef", "WritableComputedRef", "MaybeRef", "MaybeRefOrGetter"}
 
 // NamedType is a named type and its arguments: Order, Ref<number>.
@@ -215,7 +209,6 @@ type Param struct {
 	Rest     bool
 }
 
-// Render is the parameter as written: `...name?: T`.
 func (p Param) Render() string {
 	prefix, suffix := "", ""
 	if p.Rest {
@@ -275,7 +268,6 @@ type Member struct {
 	Returns  TypeNode
 }
 
-// Type is the member's type: its property type, or the function type of its method.
 func (m Member) Type() TypeNode {
 	if m.Property != nil {
 		return m.Property
@@ -284,7 +276,6 @@ func (m Member) Type() TypeNode {
 	return FunctionType{Params: m.Params, Returns: m.Returns}
 }
 
-// Render is the member as an object type writes it.
 func (m Member) Render() string {
 	optional := ""
 	if m.Optional {
@@ -330,7 +321,6 @@ func (t ObjectType) References() []string {
 
 func (t ObjectType) UnwrapRef() TypeNode { return t }
 
-// Fields is each member's type, by name.
 func (t ObjectType) Fields() Fields {
 	var fields Fields
 	for _, member := range t.Members {
@@ -360,11 +350,9 @@ func referencesOf(types []TypeNode) []string {
 	return names
 }
 
-// Unknown is the type nothing tells.
 var Unknown TypeNode = KeywordType{Name: "unknown"}
 
-// inferredUnion is the union an expression infers, printed as the PHP tool first writes it, `string|null`, and
-// read again as the union it is once the reactive wrapper comes off.
+// inferredUnion is the union an expression infers, printed as the PHP tool first writes it, `string|null`, and read again as the union it is once the reactive wrapper comes off.
 type inferredUnion struct {
 	CompositeType
 }

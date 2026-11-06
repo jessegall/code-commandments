@@ -15,10 +15,8 @@ type AllNullableDataDetector struct{}
 
 func init() { detectors.Register(catalog.PHP, AllNullableDataDetector{}) }
 
-// Sin is the sin the detector finds.
 func (AllNullableDataDetector) Sin() sins.Sin { return backendsins.AllNullableData{} }
 
-// Find is every Data class whose promoted fields are all nullable.
 func (AllNullableDataDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return php.In(codebase).
 		WhereKind("Stmt_Class").
@@ -27,8 +25,6 @@ func (AllNullableDataDetector) Find(codebase *engine.Codebase) []engine.Match {
 		Get()
 }
 
-// Repentable says a scribe rewrites the sin away.
 func (AllNullableDataDetector) Repentable() {}
 
-// RequiresBestDesign says a report that the finding is wrong must name the cleanest design for the class.
 func (AllNullableDataDetector) RequiresBestDesign() {}

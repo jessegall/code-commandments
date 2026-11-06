@@ -16,13 +16,10 @@ func init() {
 // ShortCircuitStatementScribe rewrites `$cond && work();` standing alone as a statement into the if it means.
 type ShortCircuitStatementScribe struct{}
 
-// Rewrite replaces each such statement with an if, in the file's own brace style.
 func (ShortCircuitStatementScribe) Rewrite(findings []engine.Match, _ *engine.Codebase) (scribes.Rewrites, error) {
 	return replaceEach(findings, shortCircuitAsIf, engine.Match.Parent), nil
 }
 
-// shortCircuitAsIf is the if a statement short circuit means: the left side as written after an `and`, flipped after
-// an `or`, guarding the right side.
 func shortCircuitAsIf(finding engine.Match) (string, bool) {
 	if !strings.HasPrefix(finding.Kind(), "Expr_BinaryOp_") || finding.Parent().Kind() != "Stmt_Expression" {
 		return "", false

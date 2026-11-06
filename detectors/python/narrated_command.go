@@ -16,12 +16,10 @@ func init() {
 	detectors.Register(catalog.Python, NarratedCommandDetector{})
 }
 
-// Sin is the sin the detector finds.
 func (NarratedCommandDetector) Sin() sins.Sin {
 	return pysins.NarratedCommand{}
 }
 
-// Find is every place the sin is committed.
 func (NarratedCommandDetector) Find(codebase *engine.Codebase) []engine.Match {
 	program := py.In(codebase).Program
 

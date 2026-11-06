@@ -12,9 +12,6 @@ import (
 	"github.com/jessegall/code-commandments/engine"
 )
 
-// TestAReportedFindingIsSetAsideFromTheOnesStillToAnswerFor holds the split every surface of a run is built on:
-// what the project has reported is told apart from what it still answers for, by the rule and the line's own text,
-// so an edit above a reported line leaves it reported and a rewrite of the line itself does not.
 func TestAReportedFindingIsSetAsideFromTheOnesStillToAnswerFor(t *testing.T) {
 	root, file := projectWithARecord(t)
 
@@ -43,8 +40,6 @@ func TestAReportedFindingIsSetAsideFromTheOnesStillToAnswerFor(t *testing.T) {
 	}
 }
 
-// TestARecordNobodyCanReadLeavesEveryFindingActive holds the safe way round: a record that no longer reads as one
-// cannot quietly excuse a sin, so every finding stands and the run says the record is the thing to look at.
 func TestARecordNobodyCanReadLeavesEveryFindingActive(t *testing.T) {
 	root, file := projectWithARecord(t)
 	if err := os.WriteFile(reported.Path(root), []byte("{half a record"), 0o644); err != nil {
@@ -62,8 +57,6 @@ func TestARecordNobodyCanReadLeavesEveryFindingActive(t *testing.T) {
 	}
 }
 
-// TestAProjectThatReportedNothingIsJudgedAsBefore holds the cost of the record on a project that files no reports:
-// none, and the findings come back as they were given.
 func TestAProjectThatReportedNothingIsJudgedAsBefore(t *testing.T) {
 	root := t.TempDir()
 	given := []engine.Finding{finding("InventedDefaultDetector", filepath.Join(root, "src", "refund.py"), 2)}
@@ -75,8 +68,6 @@ func TestAProjectThatReportedNothingIsJudgedAsBefore(t *testing.T) {
 	}
 }
 
-// TestTheJournalsReportCountsOnlyWhatIsStillToAnswerFor holds the gate the journal's check reads: a reported
-// finding is not a failing finding, or a check would stay red for a claim a maintainer is already answering.
 func TestTheJournalsReportCountsOnlyWhatIsStillToAnswerFor(t *testing.T) {
 	root, file := projectWithARecord(t)
 	active, filed, _ := apart(root, []engine.Finding{
@@ -94,9 +85,6 @@ func TestTheJournalsReportCountsOnlyWhatIsStillToAnswerFor(t *testing.T) {
 	}
 }
 
-// TestTheChecklistKeepsAReportedLineWhereNobodyWillFixIt holds the worklist's own split: the lines to work are
-// above, the reported ones are in a section of their own that says not to fix them and not to delete them, and
-// the count in the heading is the work.
 func TestTheChecklistKeepsAReportedLineWhereNobodyWillFixIt(t *testing.T) {
 	root, file := projectWithARecord(t)
 	active, filed, _ := apart(root, []engine.Finding{
@@ -124,8 +112,6 @@ func TestTheChecklistKeepsAReportedLineWhereNobodyWillFixIt(t *testing.T) {
 	}
 }
 
-// TestTheConsoleNamesWhatIsReportedAndWhereToReadIt holds what a teammate who did not file the report sees: the
-// line, the rule, the issue and the day, so the argument can be read rather than guessed at.
 func TestTheConsoleNamesWhatIsReportedAndWhereToReadIt(t *testing.T) {
 	root, file := projectWithARecord(t)
 	active, filed, _ := apart(root, []engine.Finding{
@@ -144,7 +130,6 @@ func TestTheConsoleNamesWhatIsReportedAndWhereToReadIt(t *testing.T) {
 	}
 }
 
-// projectWithARecord is a project whose second line of src/refund.py is reported as InventedDefault, issue 814.
 func projectWithARecord(t *testing.T) (root, file string) {
 	t.Helper()
 	root, err := filepath.EvalSymlinks(t.TempDir())
@@ -178,7 +163,6 @@ func projectWithARecord(t *testing.T) (root, file string) {
 	return root, file
 }
 
-// finding is one finding of a rule at a line of a file.
 func finding(detector, file string, line int) engine.Finding {
 	return engine.Finding{
 		Detector: detector,

@@ -9,10 +9,6 @@ import (
 	"github.com/jessegall/code-commandments/cli/source"
 )
 
-// TestAStrayGoFileIsNoGoProject holds a language that declares itself to its own declaration. A PHP shop keeps a
-// one-off Go script in a folder somewhere; judging it would hand that project a set of findings it never asked
-// for, from a release it only upgraded. A Go module always declares itself with a go.mod, and has had to since
-// Go 1.16, so the declaration is what says a tree is written in Go.
 func TestAStrayGoFileIsNoGoProject(t *testing.T) {
 	shop := tree(t, map[string]string{
 		"composer.json":    "{}",
@@ -33,8 +29,6 @@ func TestAStrayGoFileIsNoGoProject(t *testing.T) {
 	}
 }
 
-// TestAGoModuleIsAGoProject holds the other half: a tree that declares a module is read as Go, wherever the
-// judge is pointed — at the module, at one folder of it, or at a tree holding several.
 func TestAGoModuleIsAGoProject(t *testing.T) {
 	module := tree(t, map[string]string{
 		"go.mod":       "module example.com/shop\n",
@@ -59,8 +53,6 @@ func TestAGoModuleIsAGoProject(t *testing.T) {
 	}
 }
 
-// TestALanguageThatNeedsNoDeclaringIsReadAnywhere holds every other language to what it was: a file of it is
-// enough, since nothing else declares a PHP, Python, C# or front-end project.
 func TestALanguageThatNeedsNoDeclaringIsReadAnywhere(t *testing.T) {
 	empty := tree(t, map[string]string{"README.md": "# nothing here\n"})
 	project := config.Config{}
@@ -75,7 +67,6 @@ func TestALanguageThatNeedsNoDeclaringIsReadAnywhere(t *testing.T) {
 	}
 }
 
-// TestALanguageTurnedOffIsNotReadEvenWhereItIsDeclared holds the project's own word above the declaration.
 func TestALanguageTurnedOffIsNotReadEvenWhereItIsDeclared(t *testing.T) {
 	module := tree(t, map[string]string{"go.mod": "module example.com/shop\n", "main.go": "package main\n\nfunc main() {}\n"})
 
@@ -85,7 +76,6 @@ func TestALanguageTurnedOffIsNotReadEvenWhereItIsDeclared(t *testing.T) {
 	}
 }
 
-// tree writes the files under a fresh folder and answers its resolved path.
 func tree(t *testing.T, files map[string]string) string {
 	t.Helper()
 	root, err := filepath.EvalSymlinks(t.TempDir())

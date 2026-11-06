@@ -13,7 +13,6 @@ func init() {
 	sins.Register(catalog.Python, UnreadCollaborator{})
 }
 
-// Definition is what the sin states about itself.
 func (UnreadCollaborator) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "python-unread-collaborator",

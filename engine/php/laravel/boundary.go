@@ -8,14 +8,11 @@ import (
 	"github.com/jessegall/code-commandments/engine/php"
 )
 
-// MinSharedCalls is how many domain calls two entry points share before they are one operation written twice.
 const MinSharedCalls = 3
 
-// infrastructureThreshold is how many entry points may make a call before it is infrastructure, not the operation.
 const infrastructureThreshold = 3
 
-// BoundaryOperations is every public entry point, an HTTP action, a console command or an MCP tool, with the calls
-// into the codebase's own classes it makes.
+// BoundaryOperations is every public entry point, an HTTP action, a console command or an MCP tool, with the calls into the codebase's own classes it makes.
 type BoundaryOperations struct {
 	order   []string
 	entries map[string]boundaryEntry
@@ -29,13 +26,10 @@ type boundaryEntry struct {
 
 var boundaryOperations = php.Memoised(readBoundaryOperations)
 
-// BoundaryOperationsOf is the codebase's boundary operations.
 func BoundaryOperationsOf(codebase *engine.Codebase) *BoundaryOperations {
 	return boundaryOperations.Of(codebase)
 }
 
-// TwinsOf is every entry point of another kind that performs the same operation as the class's method: at least
-// MinSharedCalls domain calls in common that are not infrastructure.
 func (b *BoundaryOperations) TwinsOf(fqcn, method string) []string {
 	subject, ok := b.entries[fqcn+"::"+method]
 	if !ok {
@@ -110,7 +104,6 @@ func kindOf(program *php.Program, actions *RouteActions, method engine.Match) st
 	return ""
 }
 
-// domainCalls is every method the entry point sends to a class the codebase declares, `$this` aside, once each.
 func domainCalls(program *php.Program, types *php.Types, method engine.Match) []string {
 	calls := []string{}
 	self := php.EnclosingClassName(method)

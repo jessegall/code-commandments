@@ -13,11 +13,7 @@ import (
 )
 
 const (
-	// pluginData is the folder the journal gives its plugin, which a service is given as a hook is: the queue the
-	// journal drains at every one of the agent's hooks lives inside it.
-	pluginData = "JOURNAL_PLUGIN_DATA"
-	// journalEnvironment is the environment the journal started this service for, so what it has to say reaches
-	// that environment's agent rather than another's.
+	pluginData         = "JOURNAL_PLUGIN_DATA"
 	journalEnvironment = "JOURNAL_ENV"
 )
 
@@ -26,12 +22,10 @@ type Serve struct {
 	Bridge
 }
 
-// Names are the verbs it answers to.
 func (s Serve) Names() []string {
 	return []string{s.Kind + "-serve"}
 }
 
-// Help documents it.
 func (s Serve) Help() help.Help {
 	return help.Of("Keep the "+s.Label+" bridge running for this project, answering each run of the tool over a socket named for the project.").
 		Form(s.Kind+"-serve", "serve until the bridge stops (started by the journal as a plugin service)").
@@ -41,15 +35,6 @@ func (s Serve) Help() help.Help {
 		In(help.Hooks)
 }
 
-// tell puts what a service cannot do where the user will read it. A service's own words go nowhere: the journal
-// sends its output to /dev/null, so a bridge that says on its console why it can judge nothing is a bridge saying
-// it to no one, and the project then lists a service as running that judges nothing, which reads as a plugin that
-// found nothing rather than one that looked at nothing.
-//
-// It is said through the queue the journal already drains at every one of the agent's hooks, which a service
-// reaches because it is given the same data folder a hook is. A journal that names no folder drains nothing, and
-// then this costs the service nothing and changes nothing: the words are still on its console for whoever reads
-// one.
 func tell(unavailable bridge.Unavailable, console cli.Console) {
 	queue, queued := hooks.Queue4In(os.Getenv(pluginData))
 	if !queued {
@@ -60,18 +45,12 @@ func tell(unavailable bridge.Unavailable, console cli.Console) {
 		unavailable.Error() + ". Tell the user what to install; until then every rule of that language finds nothing, " +
 		"which is not the same as finding no sins."
 
-	// No agent: a service is nobody's, and what it has to say is for whichever agent next reads the queue.
 	if err := queue.Tell(hooks.JournalAnswer{Whisper: &words}, os.Getenv(journalEnvironment), 0); err != nil {
 		console.Warn("what the bridge cannot do could not be told to the journal: " + err.Error())
 	}
 }
 
-// Run serves the project's bridge until it stops, then ends, so the journal starts it again.
 func (s Serve) Run(in *cli.Input, console cli.Console) (int, error) {
-	// Before anything else, so the journal's health question is answered from the moment this process is up and
-	// however this run ends up spending its life: a bridge kept warm, or a service with no language to judge
-	// waiting for its stop, is a service that is up either way. It answers on a listener of its own, so a question
-	// never waits behind the parse the bridge is in the middle of.
 	defer health.Serve(s.Kind)()
 
 	project, holds, err := here(s.Bridge)
@@ -87,13 +66,6 @@ func (s Serve) Run(in *cli.Input, console cli.Console) (int, error) {
 	}
 
 	bridged, needed, err := s.Reach.Own(s.Bridge, []string{project})
-	// A bridge that cannot run on this machine at all - no node, no php, no docker - is in the same position as a
-	// project with no language to judge: it says so once and waits to be stopped, answering the journal's health
-	// question all the while. Ending here instead asks the journal to start it again, and `restart: always` does,
-	// for a condition that cannot change while the session runs: the service then fails over and over, is recorded
-	// as a fault and listed as stopped, while its `when` command keeps passing, because the project really does
-	// have the language. Every run of the tool then pays the bridge's whole start-up, which on a large tree is
-	// seconds of it, and nothing says why.
 	if unavailable := bridge.Unavailable(nil); errors.As(err, &unavailable) {
 		stopped := cli.StopSignals()
 		console.Warn(unavailable.Error())
@@ -131,8 +103,6 @@ func (s Serve) Run(in *cli.Input, console cli.Console) (int, error) {
 	defer listener.Close()
 	os.Chmod(path, 0o600)
 
-	// Behind the listener, never in front of it: the socket answers from this moment, and the reading of the
-	// project happens in the time the service would otherwise spend idle.
 	go warm(s.Bridge, project, bridged, console)
 
 	if err := bridge.Answer(listener, bridged); err != nil {

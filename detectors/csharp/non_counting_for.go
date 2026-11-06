@@ -16,12 +16,10 @@ func init() {
 	detectors.Register(catalog.CSharp, NonCountingForDetector{})
 }
 
-// Sin is the sin the detector finds.
 func (NonCountingForDetector) Sin() sins.Sin {
 	return cssins.NonCountingFor{}
 }
 
-// Find is every place the sin is committed.
 func (NonCountingForDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return cs.In(codebase).
 		Where(engine.As(cs.Node.IsNonCountingFor)).

@@ -1,5 +1,4 @@
-// Package catalog is the one enrolment mechanism every kind of rule shares: a sin, a detector and a
-// skill each register themselves from their own file, and a catalog lists them.
+// Package catalog is the one enrolment mechanism every kind of rule shares: a sin, a detector and a skill each register themselves from their own file, and a catalog lists them.
 package catalog
 
 import (
@@ -12,33 +11,21 @@ import (
 	"github.com/jessegall/code-commandments/contract"
 )
 
-// Unpublished marks a rule still being calibrated. Every catalog leaves it out, so it never reaches
-// judge, the fixture verifier, the generated docs or a release.
+// Unpublished marks a rule still being calibrated.
 type Unpublished interface {
 	Unpublished()
 }
 
-// CrossFile marks a rule that reads MORE than the file it reports in: a recurrence across sites, a twin, a
-// caller, what refers to a declaration, a layer stack, what another engine published. Such a rule needs the whole
-// scan to answer honestly, where every other rule answers from the file it is looking at, so a scoped run can
-// read the files it judges and nothing else when none of these is enabled.
-//
-// The marker sits on the rule, as Unpublished does, and the fixture harness proves it both ways: a rule whose
-// answers differ between one file and the whole tree MUST carry it, and one that carries it while answering the
-// same either way is named too, so the marker cannot rot in either direction.
+// CrossFile marks a rule that reads MORE than the file it reports in: a recurrence across sites, a twin, a caller, what refers to a declaration, a layer stack, what another engine published.
 type CrossFile interface {
 	CrossFile()
 }
 
-// ReadsAcrossFiles is a rule that answers for ITSELF whether it reads more than the file it reports in, as a
-// project's own rule does: nothing measures a rule a consumer wrote, so it answers from the checks its file
-// writes. A rule that answers takes precedence over the marker, which it does not carry.
+// ReadsAcrossFiles is a rule that answers for ITSELF whether it reads more than the file it reports in, as a project's own rule does: nothing measures a rule a consumer wrote, so it answers from the checks its file writes.
 type ReadsAcrossFiles interface {
 	ReadsAcrossFiles() bool
 }
 
-// IsCrossFile says whether a rule reads more than the file it reports in: what it answers for itself, else
-// whether it carries the marker its measurement earned.
 func IsCrossFile(rule any) bool {
 	if answers, states := rule.(ReadsAcrossFiles); states {
 		return answers.ReadsAcrossFiles()
@@ -52,8 +39,6 @@ func IsCrossFile(rule any) bool {
 // Engine is the part of the curriculum a rule belongs to.
 type Engine string
 
-// The engines, in the order the curriculum lists them. Each is named after the language it reads, which is what
-// a finding, a config and a rule file say.
 const (
 	PHP        Engine = "php"
 	Vue        Engine = "vue"
@@ -63,12 +48,8 @@ const (
 	Go         Engine = "go"
 )
 
-// Engines is every engine, in curriculum order.
 var Engines = []Engine{PHP, Vue, TypeScript, Python, CSharp, Go}
 
-// languages are the languages each engine's rules read, which is nearly always the one the engine is named
-// after: the exception is the frontend, where a Vue rule and a TypeScript rule each read both, since a Vue
-// file carries a script and a .ts file is judged by the same disciplines.
 var languages = map[Engine][]contract.Language{
 	PHP:        {contract.PHP},
 	Vue:        {contract.Vue, contract.TypeScript},
@@ -78,9 +59,6 @@ var languages = map[Engine][]contract.Language{
 	Go:         {contract.Go},
 }
 
-// LanguagesOf are the languages the engine's rules read; none for an engine nothing declares. A name an engine
-// was published under before is read as the engine it means, since that is the whole point of EngineNamed and a
-// caller holding a name from a config has no reason to resolve it twice.
 func LanguagesOf(engine Engine) []contract.Language {
 	if named, known := EngineNamed(string(engine)); known {
 		engine = named
@@ -89,18 +67,12 @@ func LanguagesOf(engine Engine) []contract.Language {
 	return languages[engine]
 }
 
-// Reads says whether the engine's rules read the language.
 func Reads(engine Engine, language contract.Language) bool {
 	return slices.Contains(languages[engine], language)
 }
 
-// formerly are the names two engines were published under before they were named after their language. A config,
-// a rule file, a filter and a skill slug a project wrote then is read the same way now, and always will be: what
-// a user wrote is never made wrong by a name of ours changing.
 var formerly = map[string]Engine{"backend": PHP, "frontend": Vue}
 
-// FormerNames are the names an engine was published under before, in curriculum order: what a schema offers
-// beside the names of today, and what a slip of the keyboard is measured against.
 func FormerNames() []string {
 	var names []string
 	for _, engine := range Engines {
@@ -114,8 +86,6 @@ func FormerNames() []string {
 	return names
 }
 
-// EngineNamed is the engine a name means: the name it is published under, or the one it was published under
-// before. Every name read from outside the binary comes through here, so there is one place that knows both.
 func EngineNamed(name string) (Engine, bool) {
 	if engine, was := formerly[strings.ToLower(name)]; was {
 		return engine, true
@@ -129,7 +99,6 @@ func EngineNamed(name string) (Engine, bool) {
 	return "", false
 }
 
-// Label is the engine's name as a heading prints it.
 func (e Engine) Label() string {
 	switch e {
 	case Vue:
@@ -156,7 +125,6 @@ type entry[T any] struct {
 	rule   T
 }
 
-// Register enrols a rule under its engine; a type registered twice is a mistake and panics.
 func (c *Catalog[T]) Register(engine Engine, rule T) {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
@@ -168,7 +136,6 @@ func (c *Catalog[T]) Register(engine Engine, rule T) {
 	c.entries = append(c.entries, entry[T]{engine, rule})
 }
 
-// All is every published rule, engine by engine in curriculum order, then by name.
 func (c *Catalog[T]) All() []T {
 	var all []T
 	for _, engine := range Engines {
@@ -178,7 +145,6 @@ func (c *Catalog[T]) All() []T {
 	return all
 }
 
-// Of is every published rule of one engine, by name.
 func (c *Catalog[T]) Of(engine Engine) []T {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
@@ -194,7 +160,6 @@ func (c *Catalog[T]) Of(engine Engine) []T {
 	return rules
 }
 
-// Every is every rule registered under one engine, unpublished ones included, in registration order.
 func (c *Catalog[T]) Every(engine Engine) []T {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
@@ -208,7 +173,6 @@ func (c *Catalog[T]) Every(engine Engine) []T {
 	return rules
 }
 
-// EngineOf is the engine a published rule was registered under.
 func (c *Catalog[T]) EngineOf(rule T) (Engine, bool) {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
@@ -221,15 +185,12 @@ func (c *Catalog[T]) EngineOf(rule T) (Engine, bool) {
 	return "", false
 }
 
-// IsUnpublished says whether a rule is still being calibrated.
 func IsUnpublished(rule any) bool {
 	_, unpublished := rule.(Unpublished)
 
 	return unpublished
 }
 
-// Name is a rule's name, as a fixture marker and a report use it: the one it states, as a project's own rule
-// does, else its short type name, ArrayBagDetector.
 func Name(rule any) string {
 	if named, states := rule.(interface{ Name() string }); states {
 		return named.Name()
@@ -243,7 +204,6 @@ func Name(rule any) string {
 	return kind.Name()
 }
 
-// Normalise folds a name for lenient matching: lower case, letters and digits only.
 func Normalise(value string) string {
 	var folded strings.Builder
 	for _, r := range strings.ToLower(value) {

@@ -13,8 +13,6 @@ import (
 	"github.com/jessegall/code-commandments/cli/workspace"
 )
 
-// TestARunOverOneFolderJudgesOnlyItsFiles holds what a run tells the Sins dashboard it judged: a run over one
-// folder names that folder's files, so the findings it did not judge stay on the dashboard.
 func TestARunOverOneFolderJudgesOnlyItsFiles(t *testing.T) {
 	root, err := filepath.EvalSymlinks(t.TempDir())
 	if err != nil {
@@ -42,8 +40,6 @@ func TestARunOverOneFolderJudgesOnlyItsFiles(t *testing.T) {
 	}
 }
 
-// TestARunOverOneFileJudgesOnlyThatFile holds `judge <file>`: the run reads the folder the file sits in, so its
-// neighbours still inform the rules that read across files, but the file alone is judged and reported.
 func TestARunOverOneFileJudgesOnlyThatFile(t *testing.T) {
 	root, err := filepath.EvalSymlinks(t.TempDir())
 	if err != nil {
@@ -73,12 +69,6 @@ func TestARunOverOneFileJudgesOnlyThatFile(t *testing.T) {
 	}
 }
 
-// A worker judges its own task's changes, and a task that changed one Go file used to walk every Python file of
-// the tree to conclude that a Python rule has nothing to judge: four seconds for an answer that needs the scan
-// not to happen. The names of the changed files answer it.
-
-// TestChangesOfAnotherLanguageAreAnsweredBeforeAnyScan holds the reading itself: a scoped run whose files are of
-// no language the chosen rules read judges nothing, and one that holds a single file of such a language does not.
 func TestChangesOfAnotherLanguageAreAnsweredBeforeAnyScan(t *testing.T) {
 	root, err := filepath.EvalSymlinks(t.TempDir())
 	if err != nil {
@@ -105,10 +95,8 @@ func TestChangesOfAnotherLanguageAreAnsweredBeforeAnyScan(t *testing.T) {
 		"a Go change and Python rules":        {[]string{goFile}, []source.Language{source.Python}, true},
 		"a Go change and Go rules":            {[]string{goFile}, []source.Language{source.Go}, false},
 		"a change in Python and Python rules": {[]string{pythonFile}, []source.Language{source.Python}, false},
-		// A run that names no files judges the whole path, so it is never answered this way.
-		"an unscoped run": {nil, []source.Language{source.Python}, false},
-		// And a run whose rules read nothing is not answered here either: it has its own answer to give.
-		"rules that read no language": {[]string{goFile}, nil, false},
+		"an unscoped run":                     {nil, []source.Language{source.Python}, false},
+		"rules that read no language":         {[]string{goFile}, nil, false},
 	} {
 		t.Run(name, func(t *testing.T) {
 			targets, err := scope.FromArgs(nil, root, workspace.At(root, ""), nil)
@@ -116,7 +104,6 @@ func TestChangesOfAnotherLanguageAreAnsweredBeforeAnyScan(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			// A change scopes the run to its own files, which is what `--changes` hands the judge.
 			for _, file := range each.files {
 				targets = targets.NarrowedTo(file)
 			}

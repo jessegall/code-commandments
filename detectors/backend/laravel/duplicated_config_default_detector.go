@@ -15,10 +15,8 @@ type DuplicatedConfigDefaultDetector struct{}
 
 func init() { detectors.Register(catalog.PHP, DuplicatedConfigDefaultDetector{}) }
 
-// Sin is the sin the detector finds.
 func (DuplicatedConfigDefaultDetector) Sin() sins.Sin { return backendsins.DuplicatedConfigDefault{} }
 
-// Find is every read of a config key with a default argument, where the config file states a default already.
 func (DuplicatedConfigDefaultDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return php.In(codebase).
 		Where(engine.As(func(n php.Node) bool { _, ok := n.StringArgument(0); return ok })).
@@ -31,5 +29,4 @@ func (DuplicatedConfigDefaultDetector) Find(codebase *engine.Codebase) []engine.
 		Get()
 }
 
-// CrossFile says the PHP tool finds it reaching beyond the file it judges, so a per-file check must not ask it.
 func (DuplicatedConfigDefaultDetector) CrossFile() {}

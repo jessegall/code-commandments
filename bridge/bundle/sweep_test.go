@@ -7,8 +7,6 @@ import (
 	"time"
 )
 
-// TestASweepLetsGoOfTreesNotWrittenForTwoWeeks holds the trees folder to a bound: a tree no run has written for two
-// weeks goes, a fresh one stays, and a folder swept within the day is not walked again.
 func TestASweepLetsGoOfTreesNotWrittenForTwoWeeks(t *testing.T) {
 	folder := t.TempDir()
 	now := time.Now()

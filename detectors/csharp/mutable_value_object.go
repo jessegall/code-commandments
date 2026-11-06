@@ -16,12 +16,10 @@ func init() {
 	detectors.Register(catalog.CSharp, MutableValueObjectDetector{})
 }
 
-// Sin is the sin the detector finds.
 func (MutableValueObjectDetector) Sin() sins.Sin {
 	return cssins.MutableValueObject{}
 }
 
-// Find is every place the sin is committed.
 func (MutableValueObjectDetector) Find(codebase *engine.Codebase) []engine.Match {
 	setters := cs.In(codebase).
 		WhereKind("SetAccessorDeclaration").

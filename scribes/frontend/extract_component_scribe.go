@@ -13,7 +13,6 @@ import (
 	"github.com/jessegall/code-commandments/scribes"
 )
 
-// The ways a subtree is found worth a component of its own.
 const (
 	duplicates = "duplicates"
 	deepReach  = "deep-reach"
@@ -21,7 +20,6 @@ const (
 	compound   = "compound"
 )
 
-// uninformative are the words that name a container, not what it holds.
 var uninformative = []string{
 	"value", "values", "data", "item", "items", "config", "state", "props", "meta",
 	"info", "detail", "details", "result", "results", "payload", "context", "entry",
@@ -38,9 +36,7 @@ func extractor(strategy string) func() scribes.Scribe {
 	return func() scribes.Scribe { return &ExtractComponentScribe{strategy: strategy} }
 }
 
-// ExtractComponentScribe lifts a subtree into a component of its own and puts a call to it in its place: a repeated
-// subtree once for every copy, a deep one, a compound one, or one reaching deep into one object, that object its prop.
-// An existing component of the same shape is reused instead.
+// ExtractComponentScribe lifts a subtree into a component of its own and puts a call to it in its place: a repeated subtree once for every copy, a deep one, a compound one, or one reaching deep into one object, that object its prop.
 type ExtractComponentScribe struct {
 	strategy  string
 	library   *vue.ComponentLibrary
@@ -52,8 +48,6 @@ type ExtractComponentScribe struct {
 	resolved  map[string]map[string]typescript.TypeNode
 }
 
-// Situate hands the scribe the source the pass does not hold, and the project's own vue-tsc when it ships one, to
-// type the props no reading of the source could.
 func (s *ExtractComponentScribe) Situate(roots []string, sources scribes.Sources) {
 	s.sources = sources
 	if len(roots) == 0 {
@@ -64,12 +58,10 @@ func (s *ExtractComponentScribe) Situate(roots []string, sources scribes.Sources
 	}
 }
 
-// Stage is after every in-place fix.
 func (s *ExtractComponentScribe) Stage() scribes.Stage {
 	return scribes.Extracting
 }
 
-// Rewrite extracts the outermost findings, each by the scribe's strategy.
 func (s *ExtractComponentScribe) Rewrite(findings []engine.Match, codebase *engine.Codebase) (scribes.Rewrites, error) {
 	var components []vue.Component
 	for _, file := range codebase.Files() {
@@ -88,7 +80,6 @@ func (s *ExtractComponentScribe) Rewrite(findings []engine.Match, codebase *engi
 	return s.dispatch(blocks), nil
 }
 
-// readModule reads the script of a file outside the pass's roots.
 func (s *ExtractComponentScribe) readModule(path string) (typescript.Module, bool) {
 	if s.sources == nil {
 		return typescript.Module{}, false
@@ -104,8 +95,6 @@ func (s *ExtractComponentScribe) readModule(path string) (typescript.Module, boo
 	return typescript.Module{}, false
 }
 
-// prime runs the checker once for the whole run: a throwaway extraction, over a copy of the library so nothing it
-// registers is reused by the real one, collects every prop it left unknown, and the oracle resolves them all.
 func (s *ExtractComponentScribe) prime(blocks []vue.Element) {
 	dry := *s
 	dry.library = s.library.Clone()
@@ -114,7 +103,6 @@ func (s *ExtractComponentScribe) prime(blocks []vue.Element) {
 	s.resolved = s.typed(s.oracle.ResolveAll(*dry.queries))
 }
 
-// typed is the types the checker wrote, each read as a type.
 func (s *ExtractComponentScribe) typed(written map[string]map[string]string) map[string]map[string]typescript.TypeNode {
 	resolved := map[string]map[string]typescript.TypeNode{}
 	if s.sources == nil {
@@ -162,7 +150,6 @@ func (s *ExtractComponentScribe) dispatch(blocks []vue.Element) scribes.Rewrites
 	return s.nesting(blocks)
 }
 
-// elementsOf is each finding that is a template element.
 func elementsOf(findings []engine.Match) []vue.Element {
 	var elements []vue.Element
 	for _, finding := range findings {
@@ -174,7 +161,6 @@ func elementsOf(findings []engine.Match) []vue.Element {
 	return elements
 }
 
-// outermost drops each element nested inside another.
 func outermost(elements []vue.Element) []vue.Element {
 	var kept []vue.Element
 	for index, candidate := range elements {
@@ -197,7 +183,6 @@ func outermost(elements []vue.Element) []vue.Element {
 	return kept
 }
 
-// sibling is a file beside the element's own.
 func sibling(element vue.Element, name string) string {
 	return filepath.Dir(element.File()) + "/" + name
 }
@@ -239,7 +224,6 @@ func (s *ExtractComponentScribe) compound(blocks []vue.Element) scribes.Rewrites
 	return s.eachExtracted(blocks, compoundName)
 }
 
-// eachExtracted lifts each block on its own, named by name.
 func (s *ExtractComponentScribe) eachExtracted(blocks []vue.Element, name func(*vue.Extraction) string) scribes.Rewrites {
 	draft := scribes.NewDraft()
 	used := map[string]bool{}
@@ -283,7 +267,6 @@ func (s *ExtractComponentScribe) deepReach(blocks []vue.Element) scribes.Rewrite
 	return draft.Rewrites()
 }
 
-// groups is the elements grouped by their markup's structure, in the order each structure first appears.
 func groups(blocks []vue.Element) [][]vue.Element {
 	var order []string
 	byShape := map[string][]vue.Element{}
@@ -302,7 +285,6 @@ func groups(blocks []vue.Element) [][]vue.Element {
 	return grouped
 }
 
-// reused places a call to an existing component of the subtree's shape, when the library holds one.
 func (s *ExtractComponentScribe) reused(draft *scribes.Draft, boundary *vue.Extraction) bool {
 	reuse, ok := s.library.Match(boundary)
 	if !ok {
@@ -320,8 +302,6 @@ func (s *ExtractComponentScribe) placeReuse(draft *scribes.Draft, boundary *vue.
 	}
 }
 
-// create drafts the component's file, unless it would be its own source or render itself, and holds it in the
-// library for a later subtree to reuse.
 func (s *ExtractComponentScribe) create(draft *scribes.Draft, boundary *vue.Extraction, path, content string) bool {
 	if path == boundary.Path() || boundary.Renders(strings.TrimSuffix(filepath.Base(path), ".vue")) {
 		return false
@@ -341,7 +321,6 @@ func (s *ExtractComponentScribe) create(draft *scribes.Draft, boundary *vue.Extr
 	return true
 }
 
-// place puts the call to the new component where the subtree stood, and imports it.
 func (s *ExtractComponentScribe) place(draft *scribes.Draft, boundary *vue.Extraction, component, name string, bindings []vue.Binding) {
 	events, _ := boundary.EmitEvents()
 	shape := tagShape{carried: boundary.Carried(), models: boundary.Models(), forwardsSlots: boundary.HasSlots(), column: boundary.ContentSpan().Column(), emits: events}
@@ -363,7 +342,6 @@ func withLoopVars(boundary *vue.Extraction, props []string) []string {
 	return all
 }
 
-// importComponent imports the component into the file: just inside its script, or in a `<script setup>` of its own.
 func importComponent(draft *scribes.Draft, host vue.Component, component, name string) {
 	statement := "import " + name + " from '" + relativeImport(host.File(), component) + "';\n"
 	whole, err := host.Span()
@@ -387,7 +365,6 @@ func selfBindings(boundary *vue.Extraction, props []string) []vue.Binding {
 	return bindings
 }
 
-// liftStatics is the props a component takes, and the module constants among them it carries in instead.
 func liftStatics(boundary *vue.Extraction, props []string) ([]string, []string) {
 	script := boundary.Script()
 	var kept, statics []string
@@ -402,8 +379,6 @@ func liftStatics(boundary *vue.Extraction, props []string) ([]string, []string) 
 	return kept, statics
 }
 
-// render is the new component's file: its imports, the types it carries in, its constants, models, props and emits,
-// and its markup.
 func (s *ExtractComponentScribe) render(boundary *vue.Extraction, props []string, markup string, prefix []string, reachProp string, statics []string) string {
 	script := boundary.Script()
 	if variable, ok := boundary.PropsVariable(); ok {
@@ -450,7 +425,6 @@ func (s *ExtractComponentScribe) render(boundary *vue.Extraction, props []string
 	return "<script setup lang=\"ts\">\n" + head + carriedTypes(script, typeList) + scriptSetup + "</script>\n\n<template>\n" + markup + "\n</template>\n"
 }
 
-// carriedTypes is each type declaration of the script the types reach, written again.
 func carriedTypes(script typescript.Module, types []typescript.TypeNode) string {
 	var referenced []string
 	for _, typed := range types {
@@ -468,8 +442,6 @@ func carriedTypes(script typescript.Module, types []typescript.TypeNode) string 
 	return strings.Join(rendered, "\n\n") + "\n\n"
 }
 
-// resolveTypes is each prop's type: the reached object's through its path, a loop variable's element type, else what
-// the script, a composable, an Inertia form or the render tree says, its ref unwrapped, unknown when nothing does.
 func (s *ExtractComponentScribe) resolveTypes(boundary *vue.Extraction, props []string, script typescript.Module, prefix []string, reachProp string) map[string]typescript.TypeNode {
 	source := boundary.Component.PropTypes()
 	types := map[string]typescript.TypeNode{}
@@ -493,8 +465,6 @@ func (s *ExtractComponentScribe) resolveTypes(boundary *vue.Extraction, props []
 	return s.consultOracle(boundary.Component, props, types)
 }
 
-// consultOracle is where the checker joins the type chain: the throwaway extraction records each component's props
-// still unknown, and the real one takes the types the checker resolved for them, their ref unwrapped.
 func (s *ExtractComponentScribe) consultOracle(component vue.Component, props []string, types map[string]typescript.TypeNode) map[string]typescript.TypeNode {
 	var unknown []string
 	for _, prop := range props {
@@ -555,8 +525,6 @@ func (s *ExtractComponentScribe) propType(boundary *vue.Extraction, script types
 	return typescript.Unknown
 }
 
-// inertiaFormType is the type of a local an Inertia `useForm` builds: its type argument's form, else the form of the
-// object it seeds, each field its value's type.
 func inertiaFormType(script typescript.Module, prop string) (typescript.TypeNode, bool) {
 	variable, declared := script.Variable(prop)
 	imported, ok := script.ImportOf("useForm")
@@ -578,7 +546,6 @@ func inertiaFormType(script typescript.Module, prop string) (typescript.TypeNode
 	return typescript.NamedType{Name: "InertiaForm", Arguments: []typescript.TypeNode{shape}}, true
 }
 
-// objectShape is an object literal's type, each field its inferred type or unknown.
 func objectShape(object typescript.Node) (typescript.TypeNode, bool) {
 	if object.Kind() != "ObjectLiteralExpression" {
 		return nil, false
@@ -615,7 +582,6 @@ func syntheticTypeImports(script typescript.Module, types []typescript.TypeNode)
 	return ""
 }
 
-// tracedType is a composable's field's type, for a prop destructured from a composable's call.
 func (s *ExtractComponentScribe) tracedType(script typescript.Module, prop string) (typescript.TypeNode, bool) {
 	callee, ok := script.DestructuredCall(prop)
 	if !ok {
@@ -649,7 +615,6 @@ func accessType(segments []string, source typescript.Fields, script typescript.M
 	return vue.AccessType(typed, segments[1:])
 }
 
-// elementType is what an array of the type holds: its element, else an index into it.
 func elementType(typed typescript.TypeNode) typescript.TypeNode {
 	if array, ok := typed.(typescript.ArrayType); ok {
 		return array.Element
@@ -702,8 +667,6 @@ func compoundName(boundary *vue.Extraction) string {
 	return base + family
 }
 
-// midObject is the object every deep chain the element reads passes through, and its last segment, the prop it
-// becomes.
 func midObject(element vue.Element) ([]string, string) {
 	var deep [][]string
 	for _, chain := range vue.ChainsIn(element) {
@@ -762,8 +725,6 @@ type tagShape struct {
 	emits         []string
 }
 
-// tag is the call to a component: its carried directives, a binding per prop, a model for each prop it writes, a
-// listener per forwarded emit, and the host's slots passed through when it renders any.
 func tag(name string, bindings []vue.Binding, shape tagShape) string {
 	var attributes []string
 	for _, carried := range shape.carried {
@@ -795,7 +756,6 @@ func tag(name string, bindings []vue.Binding, shape tagShape) string {
 		indent + "</" + name + ">"
 }
 
-// kebab spells a camelCase name kebab-case, an acronym left whole.
 func kebab(name string) string {
 	var out strings.Builder
 	for index := 0; index < len(name); index++ {
@@ -816,7 +776,6 @@ func kebab(name string) string {
 	return out.String()
 }
 
-// relativeImport is the specifier one file imports another by.
 func relativeImport(from, to string) string {
 	if filepath.Dir(from) == filepath.Dir(to) {
 		return "./" + filepath.Base(to)
@@ -878,7 +837,6 @@ func defineEmits(events []string, arity map[string]int) string {
 	return "defineEmits<{ " + strings.Join(signatures, "; ") + " }>();\n"
 }
 
-// mentions says whether the text spells the name as a whole identifier.
 func mentions(text, name string) bool {
 	return slices.Contains(identifiers(text), name)
 }
@@ -904,7 +862,6 @@ func identifiers(text string) []string {
 	return tokens
 }
 
-// unique is a name no component beside the directory's others takes yet: Name, Name2, Name3…
 func unique(dir, name string, used map[string]bool) string {
 	candidate := name
 	for n := 2; used[dir+"\x00"+candidate]; n++ {
@@ -915,7 +872,6 @@ func unique(dir, name string, used map[string]bool) string {
 	return candidate
 }
 
-// pascal is the text's alphanumeric words, each capitalised and joined.
 func pascal(text string) string {
 	var out strings.Builder
 	word := ""

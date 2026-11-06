@@ -11,11 +11,6 @@ import (
 	_ "github.com/jessegall/code-commandments/registry"
 )
 
-// Repenting rewrites the reader's own code, and the sixteen recorded parity cases ran the built binary to see what
-// it wrote. The command reads a path and writes files, so what it does before and instead of writing is held here,
-// and the first of those is the one that would hurt most: a preview that quietly applied.
-
-// sinful is a PHP file holding a ternary whose value is thrown away, which a scribe rewrites into an if.
 const sinful = `<?php
 
 final class Orders
@@ -27,7 +22,6 @@ final class Orders
 }
 `
 
-// repented runs the command inside the project and answers its exit code, what it said, and the file as it stands.
 func repented(t *testing.T, project, file string, args ...string) (code int, said string, after string) {
 	t.Helper()
 	was, err := os.Getwd()
@@ -53,7 +47,6 @@ func repented(t *testing.T, project, file string, args ...string) (code int, sai
 	return code, out.String() + errs.String(), string(written)
 }
 
-// aProjectHolding is a project whose src folder holds the file, declared as its only source root.
 func aProjectHolding(t *testing.T, name, content string) string {
 	t.Helper()
 	root, err := filepath.EvalSymlinks(t.TempDir())
@@ -76,8 +69,6 @@ func aProjectHolding(t *testing.T, name, content string) string {
 	return root
 }
 
-// TestAPreviewWritesNothingIntoTheFile holds the answer that would hurt most if it were wrong: --dry-run shows what
-// it WOULD write, and a reader who asked to look rather than to change must get their file back untouched.
 func TestAPreviewWritesNothingIntoTheFile(t *testing.T) {
 	project := aProjectHolding(t, "Orders.php", sinful)
 
@@ -94,8 +85,6 @@ func TestAPreviewWritesNothingIntoTheFile(t *testing.T) {
 	}
 }
 
-// TestRepentingRewritesTheSinAtItsSource holds the verb doing its work: the ternary whose value was thrown away is
-// gone from the file, and the behaviour it carried is still there.
 func TestRepentingRewritesTheSinAtItsSource(t *testing.T) {
 	project := aProjectHolding(t, "Orders.php", sinful)
 
@@ -117,8 +106,6 @@ func TestRepentingRewritesTheSinAtItsSource(t *testing.T) {
 	}
 }
 
-// TestAPathThatIsNoFolderIsSaidRatherThanWritten holds the mistyped path, which otherwise reads as a tree with
-// nothing to fix.
 func TestAPathThatIsNoFolderIsSaidRatherThanWritten(t *testing.T) {
 	project := aProjectHolding(t, "Orders.php", sinful)
 
@@ -135,8 +122,6 @@ func TestAPathThatIsNoFolderIsSaidRatherThanWritten(t *testing.T) {
 	}
 }
 
-// TestATreeWithNothingToFixIsLeftAlone holds the clean run: nothing is written, and the reader is told rather than
-// left guessing whether anything happened.
 func TestATreeWithNothingToFixIsLeftAlone(t *testing.T) {
 	const clean = "<?php\n\nfinal class Orders\n{\n    public function count(): int\n    {\n        return 0;\n    }\n}\n"
 	project := aProjectHolding(t, "Orders.php", clean)
@@ -154,8 +139,6 @@ func TestATreeWithNothingToFixIsLeftAlone(t *testing.T) {
 	}
 }
 
-// TestOnlyTheRuleNamedIsApplied holds --only: the reader who names one rule gets that rule's rewrite and no other,
-// which is how a wide fix is taken in steps they can read.
 func TestOnlyTheRuleNamedIsApplied(t *testing.T) {
 	project := aProjectHolding(t, "Orders.php", sinful)
 

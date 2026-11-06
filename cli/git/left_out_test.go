@@ -8,14 +8,6 @@ import (
 	"testing"
 )
 
-// TestAFolderLeftOutOfAWorktreeIsStillCommittedWhole holds the one thing that makes this safe to do at all. A
-// worktree carries a copy of .commandments on its branch; nothing reads it, since the config and the project's
-// own rules always come from the main checkout, but anyone who opens the worktree takes it for the rules in
-// force. So it is taken off that checkout's disk.
-//
-// NOT removed. The folder is tracked, and the journal commits a worker's changes when it hands in: a deletion
-// would be committed and the merge would take the project's own rules with it on the main branch. So the test
-// that matters is not that the file is gone — it is that a commit made afterwards still carries it.
 func TestAFolderLeftOutOfAWorktreeIsStillCommittedWhole(t *testing.T) {
 	root := aRepositoryWith(t, map[string]string{
 		".commandments/config.json": `{"paths": ["src"]}`,
@@ -37,17 +29,14 @@ func TestAFolderLeftOutOfAWorktreeIsStillCommittedWhole(t *testing.T) {
 		t.Errorf("the folder is still on the worktree's disk: %v", err)
 	}
 
-	// The project's own copy is untouched, which is the whole point of doing it per checkout.
 	if _, err := os.Stat(filepath.Join(root, ".commandments", "config.json")); err != nil {
 		t.Errorf("the project's own rules went with it: %v", err)
 	}
 
-	// git sees no deletion, so a worker's hand-in commits nothing about it.
 	if said := gitIn(t, worktree, "status", "--porcelain"); strings.Contains(said, ".commandments") {
 		t.Errorf("git reports the folder as changed, so a hand-in would commit its deletion:\n%s", said)
 	}
 
-	// And the proof: the worker commits its own work, and the folder is still in the tree that commit names.
 	if err := os.WriteFile(filepath.Join(worktree, "src", "order.py"), []byte("class Order:\n    paid = True\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
@@ -59,8 +48,6 @@ func TestAFolderLeftOutOfAWorktreeIsStillCommittedWhole(t *testing.T) {
 	}
 }
 
-// TestACheckoutThatAlreadyLeavesFilesOutIsLeftAlone holds somebody else's choice. A checkout with sparse-checkout
-// patterns of its own has them for a reason, and writing ours over them would take away files the work needs.
 func TestACheckoutThatAlreadyLeavesFilesOutIsLeftAlone(t *testing.T) {
 	root := aRepositoryWith(t, map[string]string{"src/order.py": "class Order:\n    pass\n"})
 
@@ -72,14 +59,11 @@ func TestACheckoutThatAlreadyLeavesFilesOutIsLeftAlone(t *testing.T) {
 		t.Error("a checkout that already leaves files out was written over without a word")
 	}
 
-	// And its own patterns still stand.
 	if said := gitIn(t, worktree, "sparse-checkout", "list"); !strings.Contains(said, "/src/") {
 		t.Errorf("its own patterns were replaced: %q", said)
 	}
 }
 
-// TestTheMainCheckoutIsNeverLeftOut holds the guard. The main checkout is where the rules really live, and
-// leaving them out of it would judge the project by nothing at all.
 func TestTheMainCheckoutIsNeverLeftOut(t *testing.T) {
 	root := aRepositoryWith(t, map[string]string{".commandments/config.json": `{"paths": ["src"]}`})
 
@@ -92,7 +76,6 @@ func TestTheMainCheckoutIsNeverLeftOut(t *testing.T) {
 	}
 }
 
-// aRepositoryWith is a committed repository holding those files.
 func aRepositoryWith(t *testing.T, files map[string]string) string {
 	t.Helper()
 
@@ -118,7 +101,6 @@ func aRepositoryWith(t *testing.T, files map[string]string) string {
 	return root
 }
 
-// gitIn runs git in that folder and fails the test where git does.
 func gitIn(t *testing.T, dir string, args ...string) string {
 	t.Helper()
 
@@ -130,19 +112,12 @@ func gitIn(t *testing.T, dir string, args ...string) string {
 	return string(out)
 }
 
-// TestTheBranchAndTheMergeBaseAreAskedOnceUntilAHeadMoves holds the caching to what it is for. Asking git costs a
-// process, and the warm path asks on every edit of every agent and twice over on every judging: which branch the
-// project is on, and where a worktree's branch last met it. Neither answer can change unless a HEAD moves.
-//
-// Against the FILES that say where HEAD is, never against a clock: a cache that expires is either too short to
-// buy anything or long enough to answer about a branch nobody is on.
 func TestTheBranchAndTheMergeBaseAreAskedOnceUntilAHeadMoves(t *testing.T) {
 	root := aRepositoryWith(t, map[string]string{"src/order.py": "class Order:\n    pass\n"})
 
 	worktree := filepath.Join(root, ".journal", "worktrees", "worker-1")
 	gitIn(t, root, "worktree", "add", "-q", "-b", "a-worker", worktree)
 
-	// Asked once each, so what the answers are is on the record before any of them is counted.
 	branch, mergeBase := CurrentBranch(root), MergeBase(worktree, "main")
 	if branch != "main" || mergeBase == "" {
 		t.Fatalf("the branch is %q and the merge base %q, so this test is measuring nothing", branch, mergeBase)
@@ -162,14 +137,12 @@ func TestTheBranchAndTheMergeBaseAreAskedOnceUntilAHeadMoves(t *testing.T) {
 		t.Errorf("forty answers about an unmoved HEAD cost %d git processes; every one of them was already known", asked)
 	}
 
-	// And a HEAD that MOVES is asked again, which is the whole of what makes the cache safe to have.
 	gitIn(t, root, "checkout", "-q", "-b", "somewhere-else")
 
 	if said := CurrentBranch(root); said != "somewhere-else" {
 		t.Errorf("the branch reads as %q after a switch; the cache answered about a branch nobody is on", said)
 	}
 
-	// A commit on the branch it is already on moves the ref and not HEAD, which the state must notice too.
 	gitIn(t, worktree, "-c", "user.email=t@t", "-c", "user.name=t", "commit", "-qm", "the worker's work", "--allow-empty")
 
 	if said := MergeBase(worktree, "main"); said != mergeBase {

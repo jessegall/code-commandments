@@ -16,12 +16,10 @@ func init() {
 	detectors.Register(catalog.Python, PlaceholderFilledDataDetector{})
 }
 
-// Sin is the sin the detector finds.
 func (PlaceholderFilledDataDetector) Sin() sins.Sin {
 	return pysins.PlaceholderFilledData{}
 }
 
-// Find is every place the sin is committed.
 func (PlaceholderFilledDataDetector) Find(codebase *engine.Codebase) []engine.Match {
 	program := py.In(codebase).Program
 

@@ -5,9 +5,6 @@ import (
 	"os"
 )
 
-// Coloured is the stream as the tool writes to it: coloured on a terminal, or wherever CLICOLOR_FORCE asks for colour,
-// and with every colour and style sequence dropped elsewhere, so a log, a pipe or a plugin's capture reads plain
-// text. NO_COLOR drops it everywhere.
 func Coloured(stream io.Writer) io.Writer {
 	if os.Getenv("NO_COLOR") == "" && (isTerminal(stream) || os.Getenv("CLICOLOR_FORCE") != "" && os.Getenv("CLICOLOR_FORCE") != "0") {
 		return stream
@@ -22,8 +19,7 @@ type plain struct {
 	state escapeState
 }
 
-// escapeState is where a plain writer stands in the bytes it reads: in text, just past an escape, or inside a
-// control sequence, which ends at its final byte.
+// escapeState is where a plain writer stands in the bytes it reads: in text, just past an escape, or inside a control sequence, which ends at its final byte.
 type escapeState int
 
 const (
@@ -32,7 +28,6 @@ const (
 	inSequence
 )
 
-// escape opens every colour and style sequence.
 const escape = 0x1b
 
 func (p *plain) Write(written []byte) (int, error) {

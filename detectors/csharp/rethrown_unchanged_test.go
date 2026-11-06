@@ -6,7 +6,6 @@ import (
 	"github.com/jessegall/code-commandments/engine/csharp/csharptest"
 )
 
-// held is the method body as one class in a file the C# bridge reads.
 func held(body string) string {
 	return `namespace Shop;
 
@@ -21,10 +20,6 @@ public sealed class Desk
 `
 }
 
-// TestACatchThatOnlyThrowsAgainIsFoundAndOneThatWorksIsNotCS holds the rule to the fault it names: a clause
-// that catches a failure, adds nothing and throws it again is a clause nobody needed. A clause that does real
-// work first, one that throws a failure of its own, and a narrow clause shielding a broader one below it are
-// how the construct earns its place and must pass.
 func TestACatchThatOnlyThrowsAgainIsFoundAndOneThatWorksIsNotCS(t *testing.T) {
 	for name, test := range map[string]struct {
 		body string

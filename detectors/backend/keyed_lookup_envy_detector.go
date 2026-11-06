@@ -14,10 +14,8 @@ type KeyedLookupEnvyDetector struct{}
 
 func init() { detectors.Register(catalog.PHP, KeyedLookupEnvyDetector{}) }
 
-// Sin is the sin the detector finds.
 func (KeyedLookupEnvyDetector) Sin() sins.Sin { return backendsins.KeyedLookupEnvy{} }
 
-// Find is every method that envies another owned class through a keyed lookup.
 func (KeyedLookupEnvyDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return php.In(codebase).
 		WhereKind("Stmt_ClassMethod").
@@ -25,5 +23,4 @@ func (KeyedLookupEnvyDetector) Find(codebase *engine.Codebase) []engine.Match {
 		Get()
 }
 
-// CrossFile says the PHP tool finds it reaching beyond the file it judges, so a per-file check must not ask it.
 func (KeyedLookupEnvyDetector) CrossFile() {}

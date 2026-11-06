@@ -10,12 +10,10 @@ type Has struct {
 	Bridge
 }
 
-// Names are the verbs it answers to.
 func (h Has) Names() []string {
 	return []string{"has-" + h.Word}
 }
 
-// Help documents it.
 func (h Has) Help() help.Help {
 	return help.Of("Say whether this project has "+h.Label+" to judge: exit 0 when it has, 1 when it has none.").
 		Form("has-"+h.Word, "answer for the project the journal runs it for, else the one the working folder is in").
@@ -23,7 +21,6 @@ func (h Has) Help() help.Help {
 		In(help.Hooks)
 }
 
-// Run answers for the project the journal runs it for, else the one the working folder is in.
 func (h Has) Run(_ *cli.Input, console cli.Console) (int, error) {
 	project, holds, err := here(h.Bridge)
 	if err != nil {

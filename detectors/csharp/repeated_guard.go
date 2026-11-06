@@ -16,17 +16,14 @@ func init() {
 	detectors.Register(catalog.CSharp, RepeatedGuardDetector{})
 }
 
-// Sin is the sin the detector finds.
 func (RepeatedGuardDetector) Sin() sins.Sin {
 	return cssins.RepeatedGuard{}
 }
 
-// Find is every place the sin is committed.
 func (d RepeatedGuardDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return detectors.Aggregate(d, codebase)
 }
 
-// Candidates is every substantive guard, keyed by what it asks.
 func (RepeatedGuardDetector) Candidates(codebase *engine.Codebase) []detectors.Candidate {
 	guards := cs.In(codebase).
 		WhereExpression().
@@ -38,17 +35,14 @@ func (RepeatedGuardDetector) Candidates(codebase *engine.Codebase) []detectors.C
 	return keyedBy(guards, guardFingerprint)
 }
 
-// Decide is every guard another asks too.
 func (RepeatedGuardDetector) Decide(candidates []detectors.Candidate) []int {
 	return recurringAt(candidates, 2)
 }
 
-// guardFingerprint is what the guard asks, whatever order its conditions are written in.
 func guardFingerprint(match engine.Match) (string, bool) {
 	return cs.Node{Match: match}.GuardFingerprint(), true
 }
 
-// GroupKey is the group a guard recurs in: what it asks, whatever order its conditions are in.
 func (RepeatedGuardDetector) GroupKey(match engine.Match) (string, bool) {
 	if !(cs.Node{Match: match}).IsSubstantiveGuard() {
 		return "", false
@@ -57,6 +51,4 @@ func (RepeatedGuardDetector) GroupKey(match engine.Match) (string, bool) {
 	return guardFingerprint(match)
 }
 
-// CrossFile says the rule reads more than the file it reports in, which the fixture measures by asking it
-// of one file and of the whole tree: a scoped run reads the whole scan while it is enabled.
 func (RepeatedGuardDetector) CrossFile() {}

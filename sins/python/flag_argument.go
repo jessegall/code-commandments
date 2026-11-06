@@ -13,7 +13,6 @@ func init() {
 	sins.Register(catalog.Python, FlagArgument{})
 }
 
-// Definition is what the sin states about itself.
 func (FlagArgument) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "python-flag-argument",

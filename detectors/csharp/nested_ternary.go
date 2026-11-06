@@ -16,12 +16,10 @@ func init() {
 	detectors.Register(catalog.CSharp, NestedTernaryDetector{})
 }
 
-// Sin is the sin the detector finds.
 func (NestedTernaryDetector) Sin() sins.Sin {
 	return cssins.NestedTernary{}
 }
 
-// Find is every place the sin is committed.
 func (NestedTernaryDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return cs.In(codebase).
 		WhereExpression().

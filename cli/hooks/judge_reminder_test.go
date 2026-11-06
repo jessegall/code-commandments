@@ -55,9 +55,6 @@ func with(payload map[string]any, event string) map[string]any {
 	return copied
 }
 
-// TestAShellCommandIsTheSessionsEvenWhenItsStartIsTakenLate holds the reminder to a shell command's writes when the
-// work before the command runs after it: under the journal that work is done off the hook's path, so a quick command
-// has often written by the time it runs, and only the moment the hook was handed the command tells what came after.
 func TestAShellCommandIsTheSessionsEvenWhenItsStartIsTakenLate(t *testing.T) {
 	root := t.TempDir()
 	for _, args := range [][]string{{"init", "-q"}, {"-c", "user.email=a@b", "-c", "user.name=a", "commit", "-q", "--allow-empty", "-m", "init"}} {

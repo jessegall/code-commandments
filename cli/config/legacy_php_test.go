@@ -7,8 +7,6 @@ import (
 	"testing"
 )
 
-// TestAPhpConfigWithNoPhpSaysHowToTurnItIntoJSON holds a project whose settings are still a config.php, on a machine
-// with no php, to being told so and how to move them, where the run would otherwise judge by settings it cannot read.
 func TestAPhpConfigWithNoPhpSaysHowToTurnItIntoJSON(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "config.php")
 	if err := os.WriteFile(path, []byte("<?php\nreturn function ($config): void {};\n"), 0o644); err != nil {

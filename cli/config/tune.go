@@ -12,8 +12,6 @@ import (
 	"github.com/jessegall/code-commandments/sins"
 )
 
-// Enabled are the shipped detectors the project keeps: every one whose package the project has, that the
-// config does not disable by itself, its sin or its skill, tuned as the config configures it.
 func (c Config) Enabled(installed Installed) ([]detectors.Detector, error) {
 	var kept []detectors.Detector
 
@@ -29,19 +27,16 @@ func (c Config) Enabled(installed Installed) ([]detectors.Detector, error) {
 // Installed says whether the project has a package.
 type Installed func(sins.Package) bool
 
-// InstalledIn is what the project at root has installed.
 func InstalledIn(root string) Installed {
 	return func(required sins.Package) bool {
 		return required.InstalledIn(root)
 	}
 }
 
-// Everything takes every package as installed, to keep package-bound rules on any project.
 func Everything(sins.Package) bool {
 	return true
 }
 
-// Packaged are the detectors whose sin holds in the project: it requires no package, or one installed.
 func Packaged(list []detectors.Detector, installed Installed) []detectors.Detector {
 	var kept []detectors.Detector
 
@@ -54,7 +49,6 @@ func Packaged(list []detectors.Detector, installed Installed) []detectors.Detect
 	return kept
 }
 
-// rulesOf names the detector, its sin and its skill as a config names them.
 func rulesOf(detector detectors.Detector) []Rule {
 	engine, _ := detectors.EngineOf(detector)
 	sin := detector.Sin()
@@ -66,18 +60,12 @@ func rulesOf(detector detectors.Detector) []Rule {
 	}
 }
 
-// tune applies each configurator to the detector it names: every call it makes becomes the detector's
-// method of the same name, and a method that answers a detector replaces it. A configurator naming a
-// detector not in the list is an invalid configuration.
 func tune(list []detectors.Detector, configurators []Configurator) ([]detectors.Detector, error) {
 	tuned := append([]detectors.Detector(nil), list...)
 
 	for _, configurator := range configurators {
 		calls := slices.DeleteFunc(slices.Clone(configurator.Calls), func(call Call) bool { return call.Method == Judges })
 
-		// A configurator that only says which excluded folder its rule judges names no method of the detector,
-		// and the detector it names may be the project's own rule, which this list never holds. Reading it as a
-		// call would refuse a config that is right.
 		if len(calls) == 0 {
 			continue
 		}
@@ -113,7 +101,6 @@ func indexOf(list []detectors.Detector, rule Rule) int {
 	return -1
 }
 
-// apply calls the method a configurator names on the detector.
 func apply(detector detectors.Detector, call Call) (detectors.Detector, error) {
 	method := reflect.ValueOf(detector).MethodByName(exported(call.Method))
 
@@ -137,8 +124,6 @@ func apply(detector detectors.Detector, call Call) (detectors.Detector, error) {
 	return detector, nil
 }
 
-// arguments converts the literal arguments, in order, to the method's parameters; the last one takes the
-// rest when the method is variadic, and an array given for it is spread.
 func arguments(method reflect.Type, given []Arg) ([]reflect.Value, error) {
 	var args []reflect.Value
 
@@ -174,7 +159,6 @@ func arguments(method reflect.Type, given []Arg) ([]reflect.Value, error) {
 	return args, nil
 }
 
-// parameterAt is the type the argument at i fills, and whether it is the variadic rest.
 func parameterAt(method reflect.Type, i int) (reflect.Type, bool) {
 	last := method.NumIn() - 1
 

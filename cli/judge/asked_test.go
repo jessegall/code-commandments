@@ -11,12 +11,6 @@ import (
 	_ "github.com/jessegall/code-commandments/registry"
 )
 
-// What a run answers to the arguments it was given was proved only by the recorded parity cases, which run the
-// built binary. The command reads those arguments and writes to a console, so its answers are held here: what it
-// does with a path that is not there, with two of them, with a rule nobody has, and where it writes the checklist
-// a session works from.
-
-// judgedIn runs the command inside the project and answers its exit code and what it said.
 func judgedIn(t *testing.T, project string, args ...string) (code int, said string, warned string) {
 	t.Helper()
 	was, err := os.Getwd()
@@ -37,7 +31,6 @@ func judgedIn(t *testing.T, project string, args ...string) (code int, said stri
 	return code, out.String(), errs.String()
 }
 
-// emptyProject is a project with one source file and nothing to find in it.
 func emptyProject(t *testing.T) string {
 	t.Helper()
 	root, err := filepath.EvalSymlinks(t.TempDir())
@@ -51,8 +44,6 @@ func emptyProject(t *testing.T) string {
 	return root
 }
 
-// TestAPathThatIsNotThereSaysSoAndJudgesNothing holds the answer to a mistyped path, which otherwise reads as a
-// clean tree: a run that judged nothing and said nothing is indistinguishable from a tree with no sins.
 func TestAPathThatIsNotThereSaysSoAndJudgesNothing(t *testing.T) {
 	code, _, warned := judgedIn(t, emptyProject(t), "nope", "--no-checklist")
 
@@ -64,8 +55,6 @@ func TestAPathThatIsNotThereSaysSoAndJudgesNothing(t *testing.T) {
 	}
 }
 
-// TestASecondPathIsRefusedRatherThanDropped holds the fault this answer exists for: a run named two paths judged
-// the first and said nothing of the other, which reads as a clean answer about both.
 func TestASecondPathIsRefusedRatherThanDropped(t *testing.T) {
 	project := emptyProject(t)
 
@@ -79,8 +68,6 @@ func TestASecondPathIsRefusedRatherThanDropped(t *testing.T) {
 	}
 }
 
-// TestARuleNobodyHasIsSaidRatherThanJudgedAsClean holds --sin= and --skill= naming nothing: a run that matched no
-// rule finds nothing by definition, and printing that as a clean tree is the one answer a reader must not get.
 func TestARuleNobodyHasIsSaidRatherThanJudgedAsClean(t *testing.T) {
 	project := emptyProject(t)
 
@@ -101,8 +88,6 @@ func TestARuleNobodyHasIsSaidRatherThanJudgedAsClean(t *testing.T) {
 	}
 }
 
-// TestTheChecklistIsWrittenWhereItWasAskedFor holds the file a session works from: a run writes it where the
-// --checklist option names, and a run told to write none writes none.
 func TestTheChecklistIsWrittenWhereItWasAskedFor(t *testing.T) {
 	project := emptyProject(t)
 	elsewhere := filepath.Join("out", "list.md")
@@ -111,7 +96,6 @@ func TestTheChecklistIsWrittenWhereItWasAskedFor(t *testing.T) {
 		t.Fatalf("exits %d, saying %q and %q", code, said, warned)
 	}
 
-	// A clean run leaves no checklist behind, since the file is the list of what is left to fix.
 	if _, err := os.Stat(filepath.Join(project, elsewhere)); err == nil {
 		read, _ := os.ReadFile(filepath.Join(project, elsewhere))
 		if len(bytes.TrimSpace(read)) == 0 {
@@ -120,7 +104,6 @@ func TestTheChecklistIsWrittenWhereItWasAskedFor(t *testing.T) {
 	}
 }
 
-// TestNoChecklistWritesNone holds the flag a tool run depends on: nothing is written anywhere under the project.
 func TestNoChecklistWritesNone(t *testing.T) {
 	project := emptyProject(t)
 
@@ -133,8 +116,6 @@ func TestNoChecklistWritesNone(t *testing.T) {
 	}
 }
 
-// TestAParallelThatIsNoNumberRunsOnOneWorker holds a typo in --parallel: the run goes ahead on one worker rather
-// than refusing or, worse, running on none.
 func TestAParallelThatIsNoNumberRunsOnOneWorker(t *testing.T) {
 	project := emptyProject(t)
 

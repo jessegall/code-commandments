@@ -15,10 +15,8 @@ type HandedOutCollectionDetector struct{}
 
 func init() { detectors.Register(catalog.PHP, HandedOutCollectionDetector{}) }
 
-// Sin is the sin the detector finds.
 func (HandedOutCollectionDetector) Sin() sins.Sin { return laravelsins.HandedOutCollection{} }
 
-// Find is every method that hands its caller the class's own Collection.
 func (HandedOutCollectionDetector) Find(codebase *engine.Codebase) []engine.Match {
 	types := php.TypesOf(codebase)
 

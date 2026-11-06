@@ -9,8 +9,6 @@ import (
 	"github.com/jessegall/code-commandments/contract"
 )
 
-// roleOf is what the node is in the contract's terms. Go writes a type with the same nodes it writes an
-// expression with, so a node is a type because of where it stands, which is what inType carries down.
 func roleOf(held ast.Node, inType bool) string {
 	switch held.(type) {
 	case *ast.File:
@@ -31,18 +29,12 @@ func roleOf(held ast.Node, inType bool) string {
 	return "other"
 }
 
-// typeFields are the fields whose child is a type as written: everything below one is a type too. A Field's own
-// type covers a struct's fields, a function's parameters and its results alike, since Go writes all three as
-// field lists.
 var typeFields = map[string]bool{"type": true, "key": false, "elt": false}
 
-// isTypeField says whether a child filling this field stands where a type is written.
 func isTypeField(field string) bool {
 	return typeFields[field]
 }
 
-// neutralOf is the language-neutral questions the node answers yes to. A rule that holds for every language asks
-// these instead of the kind.
 func neutralOf(held ast.Node) []string {
 	var is []string
 	add := func(neutral string) { is = append(is, neutral) }
@@ -95,9 +87,6 @@ func neutralOf(held ast.Node) []string {
 	return is
 }
 
-// nameOf is the name the node carries as written. Go holds a name as an identifier of its own, so a declaration
-// carries the name of the identifier it declares as well, which is what every reader of a declaration asks for.
-// A declaration of several names at once (`a, b int`) carries none: naming only the first would be a lie.
 func nameOf(held ast.Node) string {
 	switch node := held.(type) {
 	case *ast.Ident:
@@ -129,7 +118,6 @@ func identName(held *ast.Ident) string {
 	return held.Name
 }
 
-// oneName is the name a declaration of exactly one carries.
 func oneName(names []*ast.Ident) string {
 	if len(names) != 1 {
 		return ""
@@ -138,7 +126,6 @@ func oneName(names []*ast.Ident) string {
 	return identName(names[0])
 }
 
-// operatorOf is the operator token the node is written with.
 func operatorOf(held ast.Node) string {
 	switch node := held.(type) {
 	case *ast.BinaryExpr:
@@ -162,7 +149,6 @@ func operatorOf(held ast.Node) string {
 	return ""
 }
 
-// channelDirection is which way a channel type may be used, written as the arrow the source writes.
 func channelDirection(held *ast.ChanType) string {
 	switch held.Dir {
 	case ast.SEND:
@@ -174,7 +160,6 @@ func channelDirection(held *ast.ChanType) string {
 	return "chan"
 }
 
-// flagsOf is the syntax facts the node carries that are not keywords.
 func flagsOf(held ast.Node) []string {
 	switch node := held.(type) {
 	case *ast.Field:
@@ -192,9 +177,6 @@ func flagsOf(held ast.Node) []string {
 	return nil
 }
 
-// literalOf is what kind of literal the node is and the value it decodes to. Go writes true, false and nil as
-// identifiers rather than literals, so they are not here: what they mean is the type checker's to say, and a
-// shadowed `nil` means something else entirely.
 func literalOf(held ast.Node) (string, *contract.Value) {
 	node, isLiteral := held.(*ast.BasicLit)
 	if !isLiteral {
@@ -216,7 +198,6 @@ func literalOf(held ast.Node) (string, *contract.Value) {
 	case token.IMAG:
 		return "float", quoted(strings.ReplaceAll(node.Value, "_", ""))
 	case token.CHAR:
-		// A rune literal is an integer in Go, and its value is the code point it stands for.
 		if runes, _, _, err := strconv.UnquoteChar(strings.Trim(node.Value, "'"), '\''); err == nil {
 			return "int", quoted(strconv.Itoa(int(runes)))
 		}

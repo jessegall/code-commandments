@@ -11,7 +11,6 @@ type DuplicateFunction struct{}
 
 func init() { sins.Register(catalog.PHP, DuplicateFunction{}) }
 
-// Definition is what the sin states about itself.
 func (DuplicateFunction) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "duplicate-function",

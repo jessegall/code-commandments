@@ -6,14 +6,12 @@ import (
 	"github.com/jessegall/code-commandments/engine"
 )
 
-// A resource is named by what it is: a class by its name, a function or a constant by a prefix.
 const (
 	functionResource = "fn:"
 	constantResource = "const:"
 )
 
-// ResourceReach is what each class and each scope reaches: the classes it names, the functions it calls and the
-// constants it reads; a scope leaves out the classes its signatures name, which describe it rather than do anything.
+// ResourceReach is what each class and each scope reaches: the classes it names, the functions it calls and the constants it reads; a scope leaves out the classes its signatures name, which describe it rather than do anything.
 type ResourceReach struct {
 	Classes  engine.ResourcePopulation
 	Scopes   engine.ResourcePopulation
@@ -55,25 +53,20 @@ var reaches = Memoised(func(codebase *engine.Codebase) *ResourceReach {
 	return &ResourceReach{Classes: engine.Counting(byClass), Scopes: engine.Counting(byScope), codebase: codebase}
 })
 
-// ReachOf is the codebase's resource reach.
 func ReachOf(codebase *engine.Codebase) *ResourceReach {
 	return reaches.Of(codebase)
 }
 
-// IsType says whether a resource is a class rather than a function call.
 func (r *ResourceReach) IsType(resource string) bool {
 	return !strings.HasPrefix(resource, functionResource)
 }
 
-// IsTerminal says whether a resource is declared outside the codebase.
 func (r *ResourceReach) IsTerminal(resource string) bool {
 	_, declared := ProgramOf(r.codebase).Declaration(resource)
 
 	return !declared
 }
 
-// ScopeOf is where a node is written, as Class::method, the class alone outside a method, (file) outside a class; an
-// anonymous class's scope is prefixed with its file.
 func ScopeOf(node engine.Match) string {
 	class := EnclosingClassName(node)
 	scope := class
@@ -90,8 +83,6 @@ func ScopeOf(node engine.Match) string {
 	return scope
 }
 
-// IsSignatureType says whether the node sits in a function's signature: a parameter, an attribute, or its return
-// type.
 func (n Node) IsSignatureType() bool {
 	function := n.EnclosingFunctionLike()
 	if !function.Exists() {

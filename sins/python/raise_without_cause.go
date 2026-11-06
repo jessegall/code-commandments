@@ -13,7 +13,6 @@ func init() {
 	sins.Register(catalog.Python, RaiseWithoutCause{})
 }
 
-// Definition is what the sin states about itself.
 func (RaiseWithoutCause) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "python-raise-without-cause",

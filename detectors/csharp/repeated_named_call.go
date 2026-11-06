@@ -18,17 +18,14 @@ func init() {
 	detectors.Register(catalog.CSharp, RepeatedNamedCallDetector{})
 }
 
-// Sin is the sin the detector finds.
 func (RepeatedNamedCallDetector) Sin() sins.Sin {
 	return cssins.RepeatedNamedCall{}
 }
 
-// Find is every place the sin is committed.
 func (d RepeatedNamedCallDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return detectors.Aggregate(d, codebase)
 }
 
-// Candidates is every call outside the tests that changes a constant, keyed by the change it makes.
 func (d RepeatedNamedCallDetector) Candidates(codebase *engine.Codebase) []detectors.Candidate {
 	copies := cs.In(codebase).
 		WhereExpression().
@@ -39,12 +36,10 @@ func (d RepeatedNamedCallDetector) Candidates(codebase *engine.Codebase) []detec
 	return keyedBy(copies, d.GroupKey)
 }
 
-// Decide is every call another makes too.
 func (RepeatedNamedCallDetector) Decide(candidates []detectors.Candidate) []int {
 	return recurringAt(candidates, 2)
 }
 
-// GroupKey is the group a `with` copy recurs in: the type it copies and the constants it changes.
 func (RepeatedNamedCallDetector) GroupKey(match engine.Match) (string, bool) {
 	copied := cs.Node{Match: match}
 	if len(copied.ConstantChanges()) == 0 {
@@ -54,6 +49,4 @@ func (RepeatedNamedCallDetector) GroupKey(match engine.Match) (string, bool) {
 	return copied.Type().Name() + "#" + strings.Join(copied.ConstantChanges(), ","), true
 }
 
-// CrossFile says the rule reads more than the file it reports in, which the fixture measures by asking it
-// of one file and of the whole tree: a scoped run reads the whole scan while it is enabled.
 func (RepeatedNamedCallDetector) CrossFile() {}

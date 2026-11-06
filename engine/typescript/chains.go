@@ -6,10 +6,8 @@ import (
 	"github.com/jessegall/code-commandments/engine"
 )
 
-// wrappers are the expressions that change how an expression is typed, never what it reads.
 var wrappers = []string{"ParenthesizedExpression", "NonNullExpression", "AsExpression", "SatisfiesExpression", "TypeAssertionExpression"}
 
-// unwrap is the expression a wrapper holds: (a.b), a.b!, (a as T).b and <T>a read as what they wrap.
 func (n Node) unwrap() Node {
 	for slices.Contains(wrappers, n.Kind()) {
 		n = Node{n.Child("expression")}
@@ -18,8 +16,6 @@ func (n Node) unwrap() Node {
 	return n
 }
 
-// Chain is a pure member chain as the names it reads, root first: ["order", "customer", "name"] for
-// order.customer.name, ["order"] for a bare name. False for anything else: a call, an index, `this`.
 func (n Node) Chain() ([]string, bool) {
 	n = n.unwrap()
 	switch n.Kind() {
@@ -37,8 +33,6 @@ func (n Node) Chain() ([]string, bool) {
 	return nil, false
 }
 
-// Chains is every member chain of two or more names the expression reads, a call's receiver and arguments
-// included, a chain's own prefixes not repeated.
 func (n Node) Chains() [][]string {
 	n = n.unwrap()
 	if n.Kind() == "CallExpression" || n.Kind() == "NewExpression" {
@@ -71,9 +65,6 @@ func (n Node) Chains() [][]string {
 	return chains
 }
 
-// MemberDepth is how many property hops past its root the deepest data reach in the expression takes:
-// 2 for order.customer.name. Accessors named in transparent, such as value or length, add no hop; an
-// assignment, a block-bodied function and a template string reach nothing.
 func (n Node) MemberDepth(transparent ...string) int {
 	n = n.unwrap()
 	child := func(field string) int { return Node{n.Child(field)}.MemberDepth(transparent...) }
@@ -123,8 +114,6 @@ func (n Node) MemberDepth(transparent ...string) int {
 	return 0
 }
 
-// Roots is every name the expression reads its data from, once, in the order it first reads them: form for
-// form.email, both a and i for a[i]; a name an arrow function binds is its own, not a root.
 func (n Node) Roots() []string {
 	n = n.unwrap()
 	var roots []string

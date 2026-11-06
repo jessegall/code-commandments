@@ -12,13 +12,11 @@ import (
 	"github.com/jessegall/code-commandments/engine/php"
 )
 
-// File edits a project's config file through its tree: a call's arguments are rewritten one per line in the
-// file's own indentation, and everything else the project wrote is left as it was.
+// File edits a project's config file through its tree: a call's arguments are rewritten one per line in the file's own indentation, and everything else the project wrote is left as it was.
 type File struct {
 	path string
 }
 
-// FileIn is the config file of the project at dir.
 func FileIn(dir string) File {
 	return File{workspace.Config(dir)}
 }
@@ -32,8 +30,6 @@ func (e *Unrecognizable) Error() string {
 	return e.Path + " does not return a `function (Config $config)` closure. Restore it, or delete the file to regenerate."
 }
 
-// Disable adds the class to the config's disable() call, scaffolding the config first when there is none;
-// false when it is already disabled.
 func (f File) Disable(class string) (bool, error) {
 	if err := f.scaffoldIfMissing(); err != nil {
 		return false, err
@@ -53,7 +49,6 @@ func (f File) Disable(class string) (bool, error) {
 	return true, f.rewrite(call, append(current, class), languagesIn(call))
 }
 
-// Enable takes the class out of the config's disable() call; false when it was not disabled.
 func (f File) Enable(class string) (bool, error) {
 	if _, err := os.Stat(f.path); err != nil {
 		return false, nil
@@ -92,7 +87,6 @@ func (f File) disableCall() (engine.Match, error) {
 	return call, err
 }
 
-// classesIn are the classes the call names with `::class`, leading backslash dropped.
 func classesIn(call engine.Match) []string {
 	var classes []string
 
@@ -107,7 +101,6 @@ func classesIn(call engine.Match) []string {
 	return classes
 }
 
-// languagesIn are the `Language::Case` arguments of the call, by case name.
 func languagesIn(call engine.Match) []string {
 	var languages []string
 
@@ -139,7 +132,6 @@ func lastSegment(class string) string {
 	return class[strings.LastIndex(class, `\`)+1:]
 }
 
-// rewrite writes the call's arguments one per line, languages first, in the indentation of its closing line.
 func (f File) rewrite(call engine.Match, classes, languages []string) error {
 	var args []string
 
@@ -179,15 +171,12 @@ func (f File) rewrite(call engine.Match, classes, languages []string) error {
 	return os.WriteFile(f.path, []byte(source[:from]+text+source[to:]), 0o644)
 }
 
-// lineBreak is any line ending, as PHP's \R reads one.
 var lineBreak = regexp.MustCompile(`\r\n|[\n\r\x0B\f]`)
 
-// lineStartAt is where the line holding position begins.
 func lineStartAt(source string, position int) int {
 	return strings.LastIndex(source[:position], "\n") + 1
 }
 
-// indentAt is the whitespace the line holding position opens with, up to the position.
 func indentAt(source string, position int) string {
 	prefix := source[lineStartAt(source, position):position]
 
@@ -200,7 +189,6 @@ type Layer struct {
 	MayUse    []string
 }
 
-// Layers are the layers the config's ->layer(...) chain declares, in the order it is written.
 func (f File) Layers() ([]Layer, error) {
 	calls, err := f.layerCalls()
 	if err != nil {
@@ -223,8 +211,6 @@ func (f File) Layers() ([]Layer, error) {
 	return layers, nil
 }
 
-// RewriteLayers writes the layers in place of the config's ->layer(...) chain, in its own indentation;
-// false when the config declares no layers to rewrite.
 func (f File) RewriteLayers(layers []Layer) (bool, error) {
 	calls, err := f.layerCalls()
 	if err != nil || len(calls) == 0 {
@@ -244,7 +230,6 @@ func (f File) RewriteLayers(layers []Layer) (bool, error) {
 	return true, os.WriteFile(f.path, []byte(source[:from]+chain+source[to:]), 0o644)
 }
 
-// RenderChain is the layers as ->layer(...) links, one a line.
 func RenderChain(layers []Layer, indent string) string {
 	var chain strings.Builder
 
@@ -267,7 +252,6 @@ func RenderChain(layers []Layer, indent string) string {
 	return chain.String()
 }
 
-// layerCalls are the config's ->layer(...) calls, the last link written first.
 func (f File) layerCalls() ([]engine.Match, error) {
 	if _, err := os.Stat(f.path); err != nil {
 		return nil, nil
@@ -289,7 +273,6 @@ func (f File) layerCalls() ([]engine.Match, error) {
 	return calls, nil
 }
 
-// mayUseOf are the strings of the first array argument.
 func mayUseOf(args []engine.Match) []string {
 	for _, arg := range args {
 		value := arg.Child("value")
@@ -312,7 +295,6 @@ func mayUseOf(args []engine.Match) []string {
 	return nil
 }
 
-// indentOfChain is the indentation of the first line after the chain's receiver that holds anything.
 func indentOfChain(rest string) string {
 	for _, line := range lineBreak.Split(rest, -1) {
 		if strings.Trim(line, " \t\n\r\x00\x0B") != "" {
@@ -327,8 +309,6 @@ func quote(namespace string) string {
 	return "'" + strings.ReplaceAll(namespace, `\`, `\\`) + "'"
 }
 
-// RegisterDetector adds the project's own detector to the config's detector() call, or appends one after
-// the config's last statement; false when it is already registered.
 func (f File) RegisterDetector(class string) (bool, error) {
 	if err := f.scaffoldIfMissing(); err != nil {
 		return false, err
@@ -352,7 +332,6 @@ func (f File) RegisterDetector(class string) (bool, error) {
 	return true, f.appendStatement(`$config->detector(\` + class + `::class);`)
 }
 
-// appendStatement writes the statement after the config's last statement, in its indentation.
 func (f File) appendStatement(statement string) error {
 	anchor, found, err := f.lastStatement()
 	if err != nil {
@@ -376,7 +355,6 @@ func (f File) appendStatement(statement string) error {
 	return os.WriteFile(f.path, []byte(source[:at]+"\n\n"+indent+statement+source[at:]), 0o644)
 }
 
-// lastStatement is the last expression statement that is a method call, by where it starts.
 func (f File) lastStatement() (engine.Match, bool, error) {
 	stream, err := php.Here().Stream(f.path)
 	if err != nil {

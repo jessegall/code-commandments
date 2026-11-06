@@ -11,7 +11,6 @@ type DanglingRouteName struct{}
 
 func init() { sins.Register(catalog.PHP, DanglingRouteName{}) }
 
-// Definition is what the sin states about itself.
 func (DanglingRouteName) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "dangling-route-name",

@@ -11,7 +11,6 @@ type DataCollectionType struct{}
 
 func init() { sins.Register(catalog.PHP, DataCollectionType{}) }
 
-// Definition is what the sin states about itself.
 func (DataCollectionType) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "data-collection-type",

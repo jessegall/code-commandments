@@ -13,9 +13,6 @@ import (
 	"github.com/jessegall/code-commandments/cli/scan"
 )
 
-// TestWarmingReadsWhatAJudgeWouldAsk holds the warm-up to the scope a run of the tool reads: the folders the
-// project declares, less the ones it leaves out, and only the languages the bridge being warmed reads. A warm-up
-// over the whole tree would load files no rule will ever be asked about, and pay for them at every session start.
 func TestWarmingReadsWhatAJudgeWouldAsk(t *testing.T) {
 	root := project(t, map[string]string{
 		".commandments/config.json": `{"paths": ["src"], "exclude": ["src/generated"]}`,
@@ -32,8 +29,6 @@ func TestWarmingReadsWhatAJudgeWouldAsk(t *testing.T) {
 	}
 }
 
-// TestAWarmedBridgeHoldsTheProject holds the warm-up to its purpose: once it has run, the bridge answers the
-// project's files, which is what the first run of the tool asks it for.
 func TestAWarmedBridgeHoldsTheProject(t *testing.T) {
 	root := project(t, map[string]string{
 		".commandments/config.json": `{"paths": ["src"]}`,
@@ -65,8 +60,6 @@ func TestAWarmedBridgeHoldsTheProject(t *testing.T) {
 	}
 }
 
-// TestAWarmUpThatCannotRunLeavesTheServiceServing holds a failed warm-up to a warning: a bridge that cannot read
-// the project now may still answer the one file a hook asks about, so the service must not go down with it.
 func TestAWarmUpThatCannotRunLeavesTheServiceServing(t *testing.T) {
 	root := project(t, map[string]string{
 		".commandments/config.json": `{"paths": ["src"]}`,
@@ -87,7 +80,6 @@ func TestAWarmUpThatCannotRunLeavesTheServiceServing(t *testing.T) {
 	}
 }
 
-// project writes the files under a fresh folder and answers its resolved path.
 func project(t *testing.T, files map[string]string) string {
 	t.Helper()
 
@@ -109,7 +101,6 @@ func project(t *testing.T, files map[string]string) string {
 	return root
 }
 
-// bridgeNamed is the bridge of the kind, which cli/scan declares.
 func bridgeNamed(t *testing.T, kind string) Bridge {
 	t.Helper()
 

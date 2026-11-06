@@ -6,8 +6,7 @@ import (
 	"strings"
 )
 
-// journalFinding is one finding as a journal check's report lists it: the sin, where it is, and the skill it
-// is grouped under.
+// journalFinding is one finding as a journal check's report lists it: the sin, where it is, and the skill it is grouped under.
 type journalFinding struct {
 	Name  string `json:"name"`
 	File  string `json:"file"`
@@ -24,8 +23,6 @@ type journalReport struct {
 	Findings []journalFinding `json:"findings"`
 }
 
-// Journal is the run's findings as the journal's check report: a summary, and each finding with its file, its
-// line and the skill that fixes it as its group.
 func (r Report) Journal() []byte {
 	findings := []journalFinding{}
 	for _, slug := range r.skills {
@@ -40,7 +37,6 @@ func (r Report) Journal() []byte {
 	return written
 }
 
-// splitLocation is a finding's file and line, from its path:line; a location with no line is the file alone.
 func splitLocation(location string) (string, int) {
 	at := strings.LastIndex(location, ":")
 	if at < 0 {

@@ -110,8 +110,6 @@ func TestTheSchemaAloneRefusesWhatDecodingWouldAccept(t *testing.T) {
 	}
 }
 
-// TestATypeSaidOnceIsPutBackOnEveryNodeThatNamesIt holds the reader to a file's type table: each node naming a type
-// by resolvedType resolves to it as if written inline, and an index past the table is refused.
 func TestATypeSaidOnceIsPutBackOnEveryNodeThatNamesIt(t *testing.T) {
 	file := `{"file": {"path": "/abs/src/cart.ts", "language": "typescript", "errors": 0, "root": {"id": 0, "kind": "SourceFile", "role": "other", "span": [0, 30, 1], "children": [` +
 		`{"id": 1, "kind": "Identifier", "role": "expression", "span": [0, 4, 1], "field": "statements", "resolvedType": 0},` +

@@ -3,7 +3,5 @@ package stubs
 
 import "embed"
 
-// Files are the stubs, by the path a sin's scaffold names.
-//
 //go:embed *.stub vue
 var Files embed.FS

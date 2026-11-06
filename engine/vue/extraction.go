@@ -9,27 +9,22 @@ import (
 	"github.com/jessegall/code-commandments/engine/typescript"
 )
 
-// A subtree is worth a component of its own when it holds this many elements, this many levels deep.
 const (
 	minComponentElements = 6
 	minComponentDepth    = 3
 )
 
-// tableBoundTags are the tags only their table can hold.
 var tableBoundTags = []string{"td", "th", "tr", "tbody", "thead", "tfoot", "caption", "colgroup"}
 
-// headings are the tags a subtree's title stands in.
 var headings = []string{"h1", "h2", "h3", "h4", "h5", "h6"}
 
-// jsGlobals are the names a template reads that no parent passes down.
 var jsGlobals = []string{
 	"Object", "Array", "Math", "JSON", "Number", "String", "Boolean", "Date", "RegExp", "Map", "Set",
 	"Symbol", "Promise", "console", "window", "document", "globalThis", "NaN", "Infinity", "undefined",
 	"parseInt", "parseFloat", "isNaN", "isFinite", "encodeURIComponent", "decodeURIComponent",
 }
 
-// Extraction is a subtree of a component and what lifting it into a component of its own takes: the props it reads,
-// the models it writes, the emits it forwards, and its markup as the new component writes it.
+// Extraction is a subtree of a component and what lifting it into a component of its own takes: the props it reads, the models it writes, the emits it forwards, and its markup as the new component writes it.
 type Extraction struct {
 	Element   Element
 	Component Component
@@ -50,23 +45,18 @@ type splice struct {
 	text       string
 }
 
-// ExtractionAt is the extraction of the subtree an element heads.
 func ExtractionAt(element Element) *Extraction {
 	return &Extraction{Element: element, Component: ComponentOf(element.Match)}
 }
 
-// Path is the component file the subtree stands in.
 func (x *Extraction) Path() string {
 	return x.Element.File()
 }
 
-// Script is the component's script, read.
 func (x *Extraction) Script() typescript.Module {
 	return x.Component.Module()
 }
 
-// Name is what the new component is called, from what the subtree shows: a list item, a list, the object it reads
-// most, its heading, its class, or its tag.
 func (x *Extraction) Name() string {
 	if item, ok := x.Element.LoopVar(); ok {
 		return upperFirst(item) + "ListItem"
@@ -122,7 +112,6 @@ func (x *Extraction) semanticName() (string, bool) {
 	return name, name != ""
 }
 
-// firstToken is the text's first run of non-spaces, as strtok cuts it on spaces.
 func firstToken(text string) string {
 	trimmed := strings.TrimLeft(text, " ")
 	if end := strings.IndexByte(trimmed, ' '); end >= 0 {
@@ -132,7 +121,6 @@ func firstToken(text string) string {
 	return trimmed
 }
 
-// pascalWords is the text's alphanumeric words that start with a letter, each capitalised and joined.
 func pascalWords(text string) string {
 	var name strings.Builder
 	for _, word := range alnumWords(text) {
@@ -172,13 +160,11 @@ func upperFirst(text string) string {
 	return string(text[0]-'a'+'A') + text[1:]
 }
 
-// DominantObject is the prop the subtree reads most, the first of them on a tie.
 func (x *Extraction) DominantObject() (string, bool) {
 	props := x.Props()
 	if len(props) == 0 {
 		return "", false
 	}
-	// How often each prop is the root of something the markup reads, which is what makes one of them dominant.
 	counts := map[string]int{}
 	for _, element := range x.elements() {
 		for _, read := range element.Reads() {
@@ -200,8 +186,6 @@ func (x *Extraction) DominantObject() (string, bool) {
 	return best, true
 }
 
-// Props is every name the subtree reads that a parent must pass down: not a name it binds, calls, imports or a JS
-// global; the props variable's members stand in for the variable itself.
 func (x *Extraction) Props() []string {
 	var reads, bound, called []string
 	for _, element := range x.elements() {
@@ -239,7 +223,6 @@ func (x *Extraction) unwrapPropsVariable(props []string) []string {
 	return unwrapped
 }
 
-// PropsVariable is the name the component's script holds its props under.
 func (x *Extraction) PropsVariable() (string, bool) {
 	return x.Script().VariableNamedFrom(func(call typescript.Call) bool {
 		if call.Callee == "defineProps" {
@@ -254,12 +237,10 @@ func (x *Extraction) PropsVariable() (string, bool) {
 	})
 }
 
-// EmitName is the name the component's script holds its emit under.
 func (x *Extraction) EmitName() (string, bool) {
 	return x.Script().VariableNamedFrom(func(call typescript.Call) bool { return call.Callee == "defineEmits" })
 }
 
-// PropsVariableMembers is every member of the props variable the subtree reads.
 func (x *Extraction) PropsVariableMembers() []string {
 	variable, ok := x.PropsVariable()
 	if !ok {
@@ -277,7 +258,6 @@ func (x *Extraction) PropsVariableMembers() []string {
 	return members
 }
 
-// CallSiteExpression is what the call site binds a prop to: through the props variable for one of its members.
 func (x *Extraction) CallSiteExpression(prop string) string {
 	if slices.Contains(x.PropsVariableMembers(), prop) {
 		variable, _ := x.PropsVariable()
@@ -297,12 +277,10 @@ func (x *Extraction) importedNames() []string {
 	return names
 }
 
-// HasSlots says whether the subtree renders a `<slot>`.
 func (x *Extraction) HasSlots() bool {
 	return slices.ContainsFunc(x.elements(), func(element Element) bool { return element.Tag() == "slot" })
 }
 
-// Models is every name the subtree writes: through a v-model, or a handler assigning it.
 func (x *Extraction) Models() []string {
 	var models []string
 	add := func(names []string) {
@@ -328,8 +306,6 @@ func (x *Extraction) Models() []string {
 	return models
 }
 
-// ContentSpan is the source the new component takes: the subtree, or a `<template>`'s content, its directives riding
-// out to the call site.
 func (x *Extraction) ContentSpan() engine.Span {
 	span, _ := x.Element.Span()
 	children := x.Element.Elements()
@@ -343,8 +319,6 @@ func (x *Extraction) ContentSpan() engine.Span {
 	return span
 }
 
-// Markup is the subtree as the new component writes it: its handler calls forwarded as emits, its carried directives
-// cut out, laid out from the left.
 func (x *Extraction) Markup() string {
 	span := x.ContentSpan()
 	var splices []splice
@@ -354,7 +328,6 @@ func (x *Extraction) Markup() string {
 		}
 	}
 	source := string(span.Source)
-	// Only what the element carries INSIDE the span is cut out of it; a binding outside it belongs to another.
 	for _, carried := range x.Carried() {
 		if carried.Start < span.Start || carried.End > span.End {
 			continue
@@ -366,7 +339,6 @@ func (x *Extraction) Markup() string {
 	return engine.Reindent(spliceSource(source, span.Start, span.End, splices), span.Column(), "    ")
 }
 
-// spliceSource is the source's slice [from, to) with the splices made, right to left.
 func spliceSource(source string, from, to int, splices []splice) string {
 	ordered := slices.Clone(splices)
 	sort.SliceStable(ordered, func(a, b int) bool { return ordered[a].start > ordered[b].start })
@@ -378,12 +350,10 @@ func spliceSource(source string, from, to int, splices []splice) string {
 	return text
 }
 
-// Extractable says whether every read the subtree makes of a parent function is a handler it can forward as an emit.
 func (x *Extraction) Extractable() bool {
 	return x.forwarded().safe
 }
 
-// EmitEvents is each event the new component emits and the most arguments any handler passes it, in order.
 func (x *Extraction) EmitEvents() ([]string, map[string]int) {
 	forwarded := x.forwarded()
 
@@ -417,8 +387,6 @@ func (x *Extraction) forwarded() *forwardedEmits {
 				continue
 			}
 			forwarded.splices = append(forwarded.splices, splice{start: span.Start, end: span.End, text: directive.Match.Name() + `="$emit('` + call.Name + `'` + call.TrailingArguments() + `)"`})
-			// An event is listed the first time it is met, and its arity is the widest any call gives it,
-			// since the component has to declare the one that carries every call.
 			arity, seen := forwarded.arity[call.Name]
 			if !seen {
 				forwarded.events = append(forwarded.events, call.Name)
@@ -435,7 +403,6 @@ func (x *Extraction) forwarded() *forwardedEmits {
 	return forwarded
 }
 
-// Carried is the directives the call site carries in the subtree's place.
 func (x *Extraction) Carried() []WrittenAttribute {
 	if x.Element.IsContextBound() {
 		return nil
@@ -444,17 +411,14 @@ func (x *Extraction) Carried() []WrittenAttribute {
 	return x.Element.CarriedDirectives()
 }
 
-// HasCarriedLoop says whether the call site carries the subtree's v-for.
 func (x *Extraction) HasCarriedLoop() bool {
 	return slices.ContainsFunc(x.Carried(), func(carried WrittenAttribute) bool { return carried.Name == "v-for" })
 }
 
-// OwnLoopVars is the names the subtree's own v-for binds.
 func (x *Extraction) OwnLoopVars() []string {
 	return x.Element.LoopVars()
 }
 
-// IterableOf is what the loop binding the variable iterates.
 func (x *Extraction) IterableOf(variable string) (typescript.Node, bool) {
 	for _, element := range x.elements() {
 		if alias, ok := element.LoopVar(); ok && alias == variable {
@@ -491,12 +455,10 @@ func (x *Extraction) ancestorLoopVar() (string, bool) {
 	return "", false
 }
 
-// elements is every element of the subtree, its head first, in pre-order.
 func (x *Extraction) elements() []Element {
 	return append([]Element{x.Element}, x.Element.DescendantElements()...)
 }
 
-// Valid says whether the subtree could stand as a component: a substantial element that no table alone must hold.
 func (x *Extraction) Valid() bool {
 	if !x.Element.Exists() || x.Element.Size() < minComponentElements || x.Element.Height() < minComponentDepth {
 		return false

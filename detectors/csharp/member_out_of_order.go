@@ -16,12 +16,10 @@ func init() {
 	detectors.Register(catalog.CSharp, MemberOutOfOrderDetector{})
 }
 
-// Sin is the sin the detector finds.
 func (MemberOutOfOrderDetector) Sin() sins.Sin {
 	return cssins.MemberOutOfOrder{}
 }
 
-// Find is every place the sin is committed.
 func (MemberOutOfOrderDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return cs.In(codebase).
 		Where(engine.As(cs.Node.IsConstantMember)).

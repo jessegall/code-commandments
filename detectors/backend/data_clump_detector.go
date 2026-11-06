@@ -11,26 +11,21 @@ import (
 	backendsins "github.com/jessegall/code-commandments/sins/backend"
 )
 
-// DataClumpDetector finds three or more scalar parameters that travel together through methods of different
-// classes: a value object waiting to be named.
+// DataClumpDetector finds three or more scalar parameters that travel together through methods of different classes: a value object waiting to be named.
 type DataClumpDetector struct {
 	minClasses int
 }
 
 func init() { detectors.Register(catalog.PHP, DataClumpDetector{minClasses: 2}) }
 
-// Sin is the sin the detector finds.
 func (DataClumpDetector) Sin() sins.Sin { return backendsins.DataClump{} }
 
-// MinClasses is the detector set to flag a clump once it spans this many classes.
 func (d DataClumpDetector) MinClasses(classes int) DataClumpDetector {
 	d.minClasses = classes
 
 	return d
 }
 
-// Find is every method, constructors, named constructors and inherited ones aside, whose scalar signature recurs
-// across enough classes.
 func (d DataClumpDetector) Find(codebase *engine.Codebase) []engine.Match {
 	byClump := map[string][]engine.Match{}
 	var clumps []string
@@ -56,7 +51,6 @@ func (d DataClumpDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return findings
 }
 
-// distinctClasses counts the classes the methods sit in, a method outside any class counting by its file.
 func distinctClasses(methods []engine.Match) int {
 	classes := map[string]bool{}
 	for _, method := range methods {
@@ -70,6 +64,4 @@ func distinctClasses(methods []engine.Match) int {
 	return len(classes)
 }
 
-// CrossFile says the rule reads more than the file it reports in, which the fixture measures by asking it
-// of one file and of the whole tree: a scoped run reads the whole scan while it is enabled.
 func (DataClumpDetector) CrossFile() {}

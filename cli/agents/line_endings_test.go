@@ -7,13 +7,6 @@ import (
 	"testing"
 )
 
-// TestAnInstructionsFileKeepsItsOwnLineEndings holds the one rule about a file the user owns: whatever its line
-// endings are, they are still its own afterwards. A project written on Windows keeps CRLF, a project written
-// anywhere else keeps LF, and neither ends up with a mixture, which is what writing our block in our own endings
-// would make of it.
-//
-// The PHP tool flattened a project's CRLF to LF, which is why the parity recording of sync holds that file all in
-// LF. This test is the right answer, so the behaviour cannot drift back to it.
 func TestAnInstructionsFileKeepsItsOwnLineEndings(t *testing.T) {
 	for _, held := range []struct {
 		name     string
@@ -66,8 +59,6 @@ func TestAnInstructionsFileKeepsItsOwnLineEndings(t *testing.T) {
 	}
 }
 
-// TestABlockAlreadyThereIsReplacedInTheFilesOwnEndings holds the same rule on the other path: a document that
-// already carries the block has it REPLACED rather than appended, and the endings still survive.
 func TestABlockAlreadyThereIsReplacedInTheFilesOwnEndings(t *testing.T) {
 	root := t.TempDir()
 	path := filepath.Join(root, "AGENTS.md")

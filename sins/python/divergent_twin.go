@@ -13,7 +13,6 @@ func init() {
 	sins.Register(catalog.Python, DivergentTwin{})
 }
 
-// Definition is what the sin states about itself.
 func (DivergentTwin) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "python-divergent-twin",

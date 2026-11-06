@@ -6,7 +6,6 @@ type Binding struct {
 	Matcher string
 }
 
-// Label is the binding as a person names it: Stop, or PreToolUse/Bash.
 func (b Binding) Label() string {
 	if b.Matcher == "" {
 		return b.Event
@@ -17,25 +16,19 @@ func (b Binding) Label() string {
 
 // Hook is one handler of the suite.
 type Hook interface {
-	// Class is the hook's name as a config turns it off by, and as `hook <Class>` runs it.
 	Class() string
-	// Bindings are the moments it listens for.
 	Bindings() []Binding
-	// Summary is what it does, in a line, for its help.
 	Summary() string
-	// Handle answers one moment it listens for.
 	Handle(event Event) Response
 }
 
-// Discipline is a hook that speaks to subagents too: the disciplines hold inside a worker as they hold in
-// the session that spawned it.
+// Discipline is a hook that speaks to subagents too: the disciplines hold inside a worker as they hold in the session that spawned it.
 type Discipline interface {
 	Hook
 	SpeaksToSubagents()
 }
 
-// Gate is a hook that decides whether a call may run at all: under the agent journal it answers at once,
-// before any advice is worked out.
+// Gate is a hook that decides whether a call may run at all: under the agent journal it answers at once, before any advice is worked out.
 type Gate interface {
 	Hook
 	Gate()
@@ -47,9 +40,6 @@ type QuietWhileWorkPends interface {
 	QuietWhileWorkPends()
 }
 
-// Answer is the hook's response to the event, once the moment is one it speaks at: a subagent hears only a
-// Discipline, a hook bound to tools hears only those, and a stop in plan mode, or while background work a
-// hook waits on is running, hears nothing.
 func Answer(hook Hook, event Event) Response {
 	if _, speaks := hook.(Discipline); event.IsSubagent() && !speaks {
 		return Silent()

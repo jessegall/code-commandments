@@ -1,5 +1,4 @@
-// Package dashboard is what the agent journal's plugin page shows of the tool: the findings of the last
-// judge runs, kept file by file, and the Sins dashboard drawn from them.
+// Package dashboard is what the agent journal's plugin page shows of the tool: the findings of the last judge runs, kept file by file, and the Sins dashboard drawn from them.
 package dashboard
 
 import (
@@ -21,10 +20,8 @@ import (
 )
 
 const (
-	// Name is the dashboard's id in the plugin's manifest.
 	Name = "sins"
 
-	// File is where the dashboard is written, under the state folder.
 	File = "dashboards/" + Name + ".json"
 
 	findingsFile = "dashboards/findings.json"
@@ -41,13 +38,6 @@ type Stored struct {
 	Scope string `json:"scope"`
 }
 
-// kept says whether a finding in the file is this project's to show: inside the project, outside any worktree
-// checked out within it, and outside the samples a project's own rules are proven on.
-//
-// A judge of another tree is a real judgement of that tree, and this project will never judge it again, so a
-// finding it leaves here could never be cleared. A worktree inside the project is a helper's, judged for the agent
-// editing it. The samples hold the sins a rule is proven on, by design, and a dashboard that shows them tells the
-// reader a rule's own example is a fault in their code.
 func kept(root, path string) bool {
 	if !source.InTree(root, path) || source.InWorktree(root, path) {
 		return false
@@ -56,7 +46,6 @@ func kept(root, path string) bool {
 	return !strings.HasPrefix(path, filepath.Clean(workspace.SamplesDir(root))+string(filepath.Separator))
 }
 
-// StoredOf is a finding as the store keeps it, its file relative to the project root.
 func StoredOf(finding engine.Finding, root string) Stored {
 	path := finding.File
 
@@ -72,10 +61,6 @@ func StoredOf(finding engine.Finding, root string) Stored {
 	return Stored{finding.Sin, finding.Skill, path, file, line, finding.Scope}
 }
 
-// Record keeps the run's findings: every finding in a file this run judged is replaced, the rest kept while their
-// file is still there, and the dashboard is drawn again. judged is each file the run judged, by its absolute real
-// path; nil replaces everything. A finding in a git worktree checked out inside the project is a helper's, judged
-// for the agent editing it, and is never the project's to keep.
 func Record(space workspace.Workspace, findings []engine.Finding, judged map[string]bool) error {
 	var all []Stored
 
@@ -114,7 +99,6 @@ func Record(space workspace.Workspace, findings []engine.Finding, judged map[str
 	return atomic.Write(space.Cache(File), dashboard)
 }
 
-// exists says whether the file a stored finding is in is still there.
 func exists(path string) bool {
 	_, err := os.Stat(path)
 
@@ -133,7 +117,6 @@ func storedIn(space workspace.Workspace) []Stored {
 	return stored
 }
 
-// Opening is the dashboard page that opens on a stored finding.
 func Opening(finding Stored) string {
 	return Name + "/" + fileOf(finding.Sin, finding.File)
 }
@@ -155,8 +138,6 @@ func (g group) count() int {
 	return count
 }
 
-// Render draws the dashboard: an overview of the most common sins, a page per sin, and a page per sin in
-// each file.
 func Render(findings []Stored, root string) *jsonfile.Object {
 	tool := binary.Invocation(root)
 
@@ -221,8 +202,6 @@ func overview(findings []Stored, groups []group, filed []reported.Row) *jsonfile
 		jsonfile.NewObject("type", "stat", "label", "Skills", "value", strconv.Itoa(distinct(findings, func(s Stored) string { return s.Skill })), "note", "the skills that teach the fixes"),
 	}
 
-	// A project that has reported nothing is told nothing about reports: the tile is the only way to the page, so
-	// nobody lands on a list of none.
 	if len(filed) > 0 {
 		stats = append(stats, jsonfile.NewObject("type", "stat", "label", "Reported", "value", strconv.Itoa(len(filed)),
 			"tone", "note", "note", "judged as reported, not as sins", "open", reportsPage))

@@ -1,6 +1,4 @@
-// Command refresh projects the commands' help into the documents that describe them: the README's command
-// table and every `commands:` block a skill embeds. Run it from the repository root:
-// `go run ./cli/doc/refresh`.
+// Command refresh projects the commands' help into the documents that describe them: the README's command table and every `commands:` block a skill embeds.
 package main
 
 import (

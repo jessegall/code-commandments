@@ -15,7 +15,6 @@ import (
 	"github.com/jessegall/code-commandments/skill"
 )
 
-// controller is PHP holding one of every sin a template flags.
 const controller = `<?php
 
 namespace App\Http;
@@ -41,7 +40,6 @@ class OrdersController extends Controller
 }
 `
 
-// ready is the rule a template makes for the engine.
 func ready(t *testing.T, template Template, engine Engine) rule.Rule {
 	t.Helper()
 

@@ -11,7 +11,6 @@ type ContainerReach struct{}
 
 func init() { sins.Register(catalog.PHP, ContainerReach{}) }
 
-// Definition is what the sin states about itself.
 func (ContainerReach) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "container-reach",

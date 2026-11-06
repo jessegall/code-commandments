@@ -11,7 +11,6 @@ type BlankStringOnTheWire struct{}
 
 func init() { sins.Register(catalog.PHP, BlankStringOnTheWire{}) }
 
-// Definition is what the sin states about itself.
 func (BlankStringOnTheWire) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "blank-string-on-the-wire",

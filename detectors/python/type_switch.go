@@ -17,12 +17,10 @@ func init() {
 	detectors.Register(catalog.Python, TypeSwitchDetector{})
 }
 
-// Sin is the sin the detector finds.
 func (TypeSwitchDetector) Sin() sins.Sin {
 	return pysins.TypeSwitch{}
 }
 
-// Find is every place the sin is committed.
 func (TypeSwitchDetector) Find(codebase *engine.Codebase) []engine.Match {
 	program := py.In(codebase).Program
 

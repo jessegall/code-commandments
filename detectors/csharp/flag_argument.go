@@ -16,12 +16,10 @@ func init() {
 	detectors.Register(catalog.CSharp, FlagArgumentDetector{})
 }
 
-// Sin is the sin the detector finds.
 func (FlagArgumentDetector) Sin() sins.Sin {
 	return cssins.FlagArgument{}
 }
 
-// Find is every place the sin is committed.
 func (FlagArgumentDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return cs.In(codebase).
 		WhereKind("MethodDeclaration", "LocalFunctionStatement").

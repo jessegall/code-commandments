@@ -2,8 +2,6 @@ package detectors
 
 import "github.com/jessegall/code-commandments/engine"
 
-// Recurring is each group of candidates that share a key, two or more to a group, in the order each group
-// first appears; a candidate whose key is empty belongs to none.
 func Recurring(candidates []engine.Match, key func(engine.Match) string) [][]engine.Match {
 	groups := map[string][]engine.Match{}
 	var order []string
@@ -27,9 +25,6 @@ func Recurring(candidates []engine.Match, key func(engine.Match) string) [][]eng
 	return recurring
 }
 
-// NearCopies is the members of the candidates' recurring groups that have no exact twin among them: the
-// near copies. A member with an exact twin is the exact-duplicate rule's finding, so the two never report
-// the same line.
 func NearCopies(candidates []engine.Match, near, exact func(engine.Match) string) []engine.Match {
 	copies := map[string]int{}
 	for _, candidate := range candidates {

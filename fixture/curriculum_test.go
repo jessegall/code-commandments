@@ -9,8 +9,6 @@ import (
 	_ "github.com/jessegall/code-commandments/registry"
 )
 
-// TestAMissingBridgeStopsTheCurriculumNamingIt holds the curriculum to failing where the C# bridge is missing, naming
-// how to build its image, before any fixture is read: examples carved without an engine are not ones to publish.
 func TestAMissingBridgeStopsTheCurriculumNamingIt(t *testing.T) {
 	t.Setenv("PATH", t.TempDir())
 	t.Setenv("COMMANDMENTS_ROSLYN", "docker")

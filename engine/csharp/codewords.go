@@ -7,7 +7,6 @@ import (
 	"github.com/jessegall/code-commandments/prose"
 )
 
-// constructs is the construct each C# statement or expression is, and the keywords C# spells it with.
 var constructs = map[string]prose.Spelled{
 	"ForEachStatement":                 {Construct: prose.Loop, Keywords: []string{"foreach"}},
 	"ForStatement":                     {Construct: prose.Loop, Keywords: []string{"for"}},
@@ -36,8 +35,6 @@ var constructs = map[string]prose.Spelled{
 	"UsingStatement":                   {Construct: prose.Scope, Keywords: []string{"using"}},
 }
 
-// CodeWords is the words the statement's own head spells, as prose content words: the construct it is and its
-// keywords, then the names and literal text in its head, the statements and members it holds aside.
 func (n Node) CodeWords() []string {
 	var words []string
 	for _, word := range prose.Words(strings.Join(n.spelled(), " ")) {
@@ -49,7 +46,6 @@ func (n Node) CodeWords() []string {
 	return words
 }
 
-// spelled is what the node and its head spell, depth first.
 func (n Node) spelled() []string {
 	var spelled []string
 	if construct, ok := constructs[n.Kind()]; ok {
@@ -69,8 +65,6 @@ func (n Node) spelled() []string {
 	return spelled
 }
 
-// hierarchyRole is the part the node plays as Roslyn's own class hierarchy says it: a namespace is a member, a
-// local function a statement, and an accessor or a pattern neither.
 func (n Node) hierarchyRole() string {
 	switch {
 	case n.Is("NamespaceDeclaration", "FileScopedNamespaceDeclaration"):

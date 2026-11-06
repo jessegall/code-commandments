@@ -1,5 +1,4 @@
-// Package judge is the `judge` command: it scans a tree, runs every enabled detector over it, and reports
-// the sins grouped by the skill that fixes each, into the console and a checklist.
+// Package judge is the `judge` command: it scans a tree, runs every enabled detector over it, and reports the sins grouped by the skill that fixes each, into the console and a checklist.
 package judge
 
 import (
@@ -29,9 +28,6 @@ type Task struct {
 	Codebase *engine.Codebase
 }
 
-// Run runs every task across up to parallel workers, capped at the machine's cores and the number of
-// tasks. A detector that panics is skipped and named, and every other one still runs; the findings come
-// back in task order whatever order the workers finished in.
 func Run(tasks []Task, parallel int, progress *cli.Progress, warn io.Writer) Judgement {
 	results := make([]attempt, len(tasks))
 	workers := max(1, min(parallel, runtime.NumCPU(), len(tasks)))
@@ -105,7 +101,6 @@ func try(task Task, warn io.Writer) (result attempt) {
 	return attempt{findings: findings(task.Detector, task.Detector.Find(task.Codebase))}
 }
 
-// findings are the matches as findings, each naming the other members of its recurring group.
 func findings(detector detectors.Detector, matches []engine.Match) []engine.Finding {
 	sin := detector.Sin().Definition()
 	groups := groupsOf(detector, matches)
@@ -145,8 +140,6 @@ func findings(detector detectors.Detector, matches []engine.Match) []engine.Find
 	return found
 }
 
-// Twinned is the findings, each naming as its twins every other finding of its rule in its group: across the parts
-// of a program judged a part at a time, which each named only the twins in its own part.
 func Twinned(findings []engine.Finding) []engine.Finding {
 	type group struct{ detector, key string }
 	members := map[group][]string{}
@@ -170,7 +163,6 @@ func Twinned(findings []engine.Finding) []engine.Finding {
 	return findings
 }
 
-// groupsOf is, for each match, the locations of every match sharing its group key, itself included.
 func groupsOf(detector detectors.Detector, matches []engine.Match) [][]string {
 	grouped, isGrouped := detector.(detectors.Grouped)
 	groups := make([][]string, len(matches))

@@ -1,6 +1,4 @@
-// Package custom reads a project's own commandments from .commandments/custom/: its skills, each a folder
-// holding a SKILL.md, and its detectors, each a rule file. They are the same Skill and Detector the tool
-// ships, named as the project's own wherever they appear.
+// Package custom reads a project's own commandments from .commandments/custom/: its skills, each a folder holding a SKILL.md, and its detectors, each a rule file.
 package custom
 
 import (
@@ -20,10 +18,8 @@ import (
 	"github.com/jessegall/code-commandments/skill"
 )
 
-// SkillsFolder holds the project's own skills, a folder each.
 const SkillsFolder = "skills"
 
-// order places a project's own skills after every shipped one in a briefing.
 const order = 1_000_000
 
 // Skill is one of the project's own skills: a folder holding its SKILL.md, whose front matter names it.
@@ -32,39 +28,23 @@ type Skill struct {
 	definition skill.Definition
 }
 
-// Definition is what the skill says about itself.
 func (s Skill) Definition() skill.Definition {
 	return s.definition
 }
 
 // Project is what a project keeps in its custom folder.
 type Project struct {
-	Skills []Skill
-	Rules  []rule.Rule
-	// Unreadable are the rule files the tool cannot run, each with the reason.
+	Skills     []Skill
+	Rules      []rule.Rule
 	Unreadable []string
-	// Refused are the rules whose file was found and could not be read, by name. A configured rule among them is
-	// not missing: its own reason is already said, and telling the reader to check it is present sends them
-	// looking for a file that is there.
-	Refused []string
-	// Classes are PHP classes left from the PHP tool, which the binary cannot run, under the project.
-	Classes []string
+	Refused    []string
+	Classes    []string
 }
 
-// InForce reads the project's own commandments as a RUN is judged by them: from the tree the settings come
-// from, which for a worktree is the main checkout.
-//
-// The rules a run judges by and the config that turns them on have to be one tree's. Read apart, a worktree cut
-// before a rule was committed is told that a configured detector is "declared nowhere" — and, far worse than the
-// warning, that rule judges nothing there while every other rule still fires, so the run reads as a pass.
-//
-// A command that works ON a rule — scaffolding one, trying one, migrating the files — reads with Load instead,
-// since the rule it is working on is the one in the folder it was run in.
 func InForce(dir string) Project {
 	return Load(workspace.SettingsRoot(dir))
 }
 
-// Load reads the custom folder of the project at root, exactly as given.
 func Load(root string) Project {
 	dir := workspace.CustomDir(root)
 	var project Project
@@ -93,9 +73,6 @@ func Load(root string) Project {
 			continue
 		}
 
-		// A rule is named by its FILE, whatever folder holds it, so moving one into a folder leaves every
-		// mention of it in the config standing. Two files of one name would then be one rule with two bodies,
-		// and which of them judged would depend on the order a folder is read in, so neither is read.
 		name := strings.TrimSuffix(filepath.Base(path), ".json")
 		if where, taken := named[name]; taken {
 			project.Unreadable = append(project.Unreadable, fmt.Sprintf("%s: a rule named %s is read from %s as well, and a rule's name is its file's; rename one of the two",
@@ -143,12 +120,6 @@ func Load(root string) Project {
 	return project
 }
 
-// jsonUnder are the JSON files of the custom folder: the rules, at any depth, and the lists files beside them.
-//
-// A rule is read wherever it sits, since a project with rules for several parts of its code groups them by what
-// they protect — `core/` for its domain, `viewer/` for its interface — and one flat folder of twenty rules shows
-// nothing about which part each one guards. The skills folder is left out: a skill is a folder holding a SKILL.md
-// and whatever JSON it keeps beside it is its own business, not a rule.
 func jsonUnder(dir string) (rules, lists []string) {
 	filepath.WalkDir(dir, func(path string, entry os.DirEntry, err error) error {
 		if err != nil {
@@ -179,7 +150,6 @@ func jsonUnder(dir string) (rules, lists []string) {
 	return rules, lists
 }
 
-// skill is the skill a slug names: the project's own first, then a shipped one.
 func (p Project) skill(slug string) (skill.Skill, bool) {
 	for _, own := range p.Skills {
 		if own.definition.Slug == slug {
@@ -190,8 +160,6 @@ func (p Project) skill(slug string) (skill.Skill, bool) {
 	return skill.Slugged(slug)
 }
 
-// Named is the project's rule the name means, leniently: its own name, or that name less its Detector suffix,
-// in any case.
 func (p Project) Named(name string) (rule.Rule, bool) {
 	wanted := catalog.Normalise(strings.TrimSuffix(name, "Detector"))
 	for _, own := range p.Rules {
@@ -203,7 +171,6 @@ func (p Project) Named(name string) (rule.Rule, bool) {
 	return rule.Rule{}, false
 }
 
-// Read reads the rule file at the path, finding its sin's skill among the project's own and the shipped ones.
 func (p Project) Read(path string) (rule.Rule, error) {
 	text, err := os.ReadFile(path)
 	if err != nil {
@@ -218,7 +185,6 @@ func (p Project) Read(path string) (rule.Rule, error) {
 	return rule.ComposedWith(read, p.Rules)
 }
 
-// Enabled are the project's rules its config turns on, less any it disables.
 func (p Project) Enabled(project config.Config) []detectors.Detector {
 	var enabled []detectors.Detector
 
@@ -231,8 +197,6 @@ func (p Project) Enabled(project config.Config) []detectors.Detector {
 	return enabled
 }
 
-// Warnings are what a run says about the custom folder before it judges: rules the config turns on that are
-// not there or cannot run, rules a skill says fire that are declared nowhere, and PHP classes the binary skips.
 func (p Project) Warnings(project config.Config) []string {
 	var missing []string
 
@@ -261,8 +225,6 @@ func (p Project) Warnings(project config.Config) []string {
 	return append(warnings, p.ClassWarnings()...)
 }
 
-// ClassWarnings name each PHP class the PHP tool left in the custom folder — a detector, sin, skill or agent — which the
-// binary skips.
 func (p Project) ClassWarnings() []string {
 	var warnings []string
 
@@ -275,15 +237,12 @@ func (p Project) ClassWarnings() []string {
 	return warnings
 }
 
-// Owns says whether the detector is one of the project's own.
 func Owns(detector detectors.Detector) bool {
 	_, own := detector.(rule.Rule)
 
 	return own
 }
 
-// readSkill reads a skill's front matter: name, description, summary, tier and the languages it teaches, by
-// default every one.
 func readSkill(path string) (Skill, bool) {
 	text, err := os.ReadFile(path)
 	if err != nil {
@@ -326,7 +285,6 @@ func readSkill(path string) (Skill, bool) {
 	}}, true
 }
 
-// frontMatter are the `key: value` lines between a document's opening `---` lines.
 func frontMatter(text string) map[string]string {
 	fields := map[string]string{}
 	lines := strings.Split(strings.ReplaceAll(text, "\r\n", "\n"), "\n")

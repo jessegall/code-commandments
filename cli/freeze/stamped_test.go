@@ -11,12 +11,6 @@ import (
 	"github.com/jessegall/code-commandments/engine"
 )
 
-// Freezing writes into the reader's own file, and the eleven recorded parity cases ran the built binary to see what
-// it wrote. cli/freeze had no test of its own, so the one thing it must never get wrong — WHERE the stamp goes —
-// was proved nowhere cheap: a stamp written above a PHP opening tag or above a shebang breaks the file it was meant
-// to protect.
-
-// ran is what the verb answered for the file, and the file as it stands afterwards.
 func ran(t *testing.T, verb, path string) (code int, said string, after string) {
 	t.Helper()
 	var out, errs bytes.Buffer
@@ -32,7 +26,6 @@ func ran(t *testing.T, verb, path string) (code int, said string, after string) 
 	return code, out.String() + errs.String(), string(written)
 }
 
-// aFile writes the content to a file of that name in a folder of its own.
 func aFile(t *testing.T, name, content string) string {
 	t.Helper()
 	root, err := filepath.EvalSymlinks(t.TempDir())
@@ -47,9 +40,6 @@ func aFile(t *testing.T, name, content string) string {
 	return path
 }
 
-// TestTheStampGoesWhereItCannotBreakTheFile holds the one thing freezing must never get wrong. A PHP file opens
-// with its tag and a script with its shebang, and a comment written above either breaks the file: PHP would print
-// the comment as output, and the kernel would no longer see the interpreter to run it with.
 func TestTheStampGoesWhereItCannotBreakTheFile(t *testing.T) {
 	for name, file := range map[string]struct{ name, content, first string }{
 		"a PHP file": {"Order.php", "<?php\n\nfinal class Order {}\n", "<?php"},
@@ -75,7 +65,6 @@ func TestTheStampGoesWhereItCannotBreakTheFile(t *testing.T) {
 	}
 }
 
-// TestAnOrdinaryFileIsStampedOnItsFirstLine holds where the stamp goes when nothing has to come first.
 func TestAnOrdinaryFileIsStampedOnItsFirstLine(t *testing.T) {
 	path := aFile(t, "cart.py", "def total():\n    return 0\n")
 
@@ -89,8 +78,6 @@ func TestAnOrdinaryFileIsStampedOnItsFirstLine(t *testing.T) {
 	}
 }
 
-// TestTheSourceSurvivesBeingFrozenAndThawed holds the pair: what the file said before is what it says after, to the
-// byte, since a freeze that rewrote anything else would be a change nobody asked for.
 func TestTheSourceSurvivesBeingFrozenAndThawed(t *testing.T) {
 	const source = "<?php\n\nfinal class Order\n{\n    public function total(): int\n    {\n        return 0;\n    }\n}\n"
 	path := aFile(t, "Order.php", source)
@@ -108,7 +95,6 @@ func TestTheSourceSurvivesBeingFrozenAndThawed(t *testing.T) {
 	}
 }
 
-// TestFreezingTwiceSaysSoAndWritesNothingMore holds the second run: one stamp, not two.
 func TestFreezingTwiceSaysSoAndWritesNothingMore(t *testing.T) {
 	path := aFile(t, "cart.ts", "export const total = 0;\n")
 
@@ -133,8 +119,6 @@ func TestFreezingTwiceSaysSoAndWritesNothingMore(t *testing.T) {
 	}
 }
 
-// TestThawingWhatWasNeverFrozenSaysSo holds the other direction, which is how a reader learns the file they meant
-// to protect was never stamped.
 func TestThawingWhatWasNeverFrozenSaysSo(t *testing.T) {
 	path := aFile(t, "cart.ts", "export const total = 0;\n")
 
@@ -151,8 +135,6 @@ func TestThawingWhatWasNeverFrozenSaysSo(t *testing.T) {
 	}
 }
 
-// TestAFileThatIsNotThereIsSaidRatherThanWritten holds the mistyped path: nothing is created where the reader
-// pointed, and they are told.
 func TestAFileThatIsNotThereIsSaidRatherThanWritten(t *testing.T) {
 	missing := filepath.Join(t.TempDir(), "nope.php")
 
@@ -169,7 +151,6 @@ func TestAFileThatIsNotThereIsSaidRatherThanWritten(t *testing.T) {
 	}
 }
 
-// TestAVerbGivenNoFileSaysWhatToType holds the usage path for both verbs.
 func TestAVerbGivenNoFileSaysWhatToType(t *testing.T) {
 	for _, verb := range []string{"freeze", "unfreeze"} {
 		var out, errs bytes.Buffer

@@ -1,6 +1,4 @@
-// Package session is what the tool knows about the agent sessions working in a project: their
-// transcripts, the folders they keep state in, and the `session` command that names, lists and adopts
-// those folders.
+// Package session is what the tool knows about the agent sessions working in a project: their transcripts, the folders they keep state in, and the `session` command that names, lists and adopts those folders.
 package session
 
 import (
@@ -18,7 +16,6 @@ import (
 	"github.com/jessegall/code-commandments/cli/workspace"
 )
 
-// transcripts is where Claude Code keeps a project's transcripts, under the home folder.
 const transcripts = "/.claude/projects/"
 
 // Session is one transcript: its id, where it lives, when it last changed, and what it is called.
@@ -29,12 +26,10 @@ type Session struct {
 	Name string
 }
 
-// Key is the session's folder name when it has no name of its own.
 func (s Session) Key() string {
 	return workspace.KeyFor(s.ID)
 }
 
-// Sessions are the transcripts of the project at root, newest first.
 func Sessions(root string) []Session {
 	home := os.Getenv("HOME")
 	if home == "" {
@@ -63,7 +58,6 @@ func Sessions(root string) []Session {
 // Category is what kind of line a transcript record is.
 type Category string
 
-// The categories a record falls in.
 const (
 	Prompt      Category = "prompt"
 	Reply       Category = "reply"
@@ -74,7 +68,6 @@ const (
 	Bookkeeping Category = "bookkeeping"
 )
 
-// IsSpeech says whether a person or the agent said it.
 func (c Category) IsSpeech() bool {
 	return c == Prompt || c == Reply
 }
@@ -92,7 +85,6 @@ const boundary = "compact_boundary"
 // Transcript is a session's transcript file, one JSON record per line.
 type Transcript string
 
-// Records are the lines that decode to a JSON object or array, in order.
 func (t Transcript) Records(each func(Record) bool) {
 	file, err := os.Open(string(t))
 	if err != nil {
@@ -116,8 +108,6 @@ func (t Transcript) Records(each func(Record) bool) {
 	}
 }
 
-// Name is what the session is called: its generated title, else the first thing the person typed, read
-// from at most within records.
 func (t Transcript) Name(within int) string {
 	spoken, name, read := "", "", 0
 
@@ -176,7 +166,6 @@ type Record struct {
 	fields map[string]any
 }
 
-// Decode reads one line; false when it is no JSON object or array.
 func Decode(line string) (Record, bool) {
 	var value any
 
@@ -194,12 +183,10 @@ func Decode(line string) (Record, bool) {
 	}
 }
 
-// Text is a scalar field as text, empty when absent or not scalar.
 func (r Record) Text(field string) string {
 	return scalar(r.fields[field])
 }
 
-// Said is the text the record carries, its text parts joined.
 func (r Record) Said() string {
 	content, found := r.content()
 	if !found {
@@ -244,7 +231,6 @@ func (r Record) flag(field string) bool {
 	return r.fields[field] == true
 }
 
-// scalar is a JSON scalar as PHP casts it to text: true is "1", false is empty.
 func scalar(value any) string {
 	switch value := value.(type) {
 	case string:

@@ -21,7 +21,6 @@ func init() {
 	skill.Register(catalog.CSharp, RepeatedCallHelper{})
 }
 
-// Definition is what the skill states about itself.
 func (RepeatedCallHelper) Definition() skill.Definition {
 	return skill.Definition{
 		Slug:      "csharp/repeated-call-helper",

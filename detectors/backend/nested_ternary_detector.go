@@ -14,15 +14,12 @@ type NestedTernaryDetector struct{}
 
 func init() { detectors.Register(catalog.PHP, NestedTernaryDetector{}) }
 
-// Sin is the sin the detector finds.
 func (NestedTernaryDetector) Sin() sins.Sin { return backendsins.NestedTernary{} }
 
-// Find is every outermost ternary with a ternary in a branch.
 func (NestedTernaryDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return php.In(codebase).
 		Where(engine.As(php.Node.IsOutermostNestedTernary)).
 		Get()
 }
 
-// Repentable says a scribe rewrites the sin away.
 func (NestedTernaryDetector) Repentable() {}

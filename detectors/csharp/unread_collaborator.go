@@ -16,12 +16,10 @@ func init() {
 	detectors.Register(catalog.CSharp, UnreadCollaboratorDetector{})
 }
 
-// Sin is the sin the detector finds.
 func (UnreadCollaboratorDetector) Sin() sins.Sin {
 	return cssins.UnreadCollaborator{}
 }
 
-// Find is every collaborator a type takes and never reads.
 func (UnreadCollaboratorDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return cs.In(codebase).
 		Where(engine.As(cs.Node.IsUnreadCollaborator)).

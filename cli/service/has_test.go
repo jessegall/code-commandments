@@ -11,8 +11,6 @@ import (
 	"github.com/jessegall/code-commandments/cli"
 )
 
-// TestHasCSharpAnswersWhatTheProjectHolds holds the verb the journal asks before it starts the roslyn service: 0 for
-// a project with C#, 1 for one with none, saying which either way.
 func TestHasCSharpAnswersWhatTheProjectHolds(t *testing.T) {
 	for file, want := range map[string]int{"src/Cart.cs": 0, "src/cart.py": cli.Refused} {
 		project := t.TempDir()
@@ -37,8 +35,6 @@ func TestHasCSharpAnswersWhatTheProjectHolds(t *testing.T) {
 	}
 }
 
-// TestHasCSharpAnswersForTheProjectTheJournalNames holds it to the project the journal runs it for: the journal asks
-// from the plugin's own folder, a checkout with C# of its own, and names the project by its .journal folder.
 func TestHasCSharpAnswersForTheProjectTheJournalNames(t *testing.T) {
 	plugin, project := t.TempDir(), t.TempDir()
 	for path, text := range map[string]string{filepath.Join(plugin, "bridge", "Bridge.cs"): "x", filepath.Join(project, "src", "cart.py"): "x"} {

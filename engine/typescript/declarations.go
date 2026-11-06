@@ -6,8 +6,6 @@ import (
 	"github.com/jessegall/code-commandments/engine"
 )
 
-// Binds is the declaration in this top-level statement that binds the name: a variable of a const/let/var
-// statement, a function or class of that name, or an import binding; no node when it binds no such name.
 func (n Node) Binds(name string) Node {
 	switch n.Kind() {
 	case "VariableStatement":
@@ -31,8 +29,6 @@ func (n Node) Binds(name string) Node {
 	return Node{}
 }
 
-// Members is what a written type declares as members: a type literal's own, or those of the interface or
-// type alias a type reference names, followed to its declaration anywhere in the codebase.
 func (n Node) Members(codebase *engine.Codebase) []Node {
 	return n.members(codebase, 0)
 }
@@ -66,8 +62,6 @@ func (n Node) members(codebase *engine.Codebase, depth int) []Node {
 	return nil
 }
 
-// DeclaredNames is every name a top-level statement declares: each variable, destructured ones included,
-// and a function's or class's own name.
 func (n Node) DeclaredNames() []string {
 	switch n.Kind() {
 	case "VariableStatement":
@@ -86,7 +80,6 @@ func (n Node) DeclaredNames() []string {
 	return nil
 }
 
-// boundNames is every name a binding pattern binds: x, or a and b in { a, b: [b] }.
 func (n Node) boundNames() []string {
 	if n.Kind() == "Identifier" {
 		return []string{n.Name()}
@@ -101,14 +94,10 @@ func (n Node) boundNames() []string {
 	return names
 }
 
-// IsObjectType says whether the node declares an object's shape: an interface, or a type alias of a literal
-// object type.
 func (n Node) IsObjectType() bool {
 	return n.Kind() == "InterfaceDeclaration" || (n.Kind() == "TypeAliasDeclaration" && n.Child("type").Kind() == "TypeLiteral")
 }
 
-// Namespace is the dotted name of the namespaces the declaration sits in, outermost first: App.Data for a type inside
-// `declare namespace App.Data { … }`; empty outside any.
 func (n Node) Namespace() string {
 	var names []string
 	for at := n.Parent(); at.Exists(); at = at.Parent() {
@@ -120,7 +109,6 @@ func (n Node) Namespace() string {
 	return strings.Join(names, ".")
 }
 
-// FieldNames is the names of the members an object type declares itself, in order.
 func (n Node) FieldNames() []string {
 	members := n.ChildrenIn("members")
 	if n.Kind() == "TypeAliasDeclaration" {

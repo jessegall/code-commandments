@@ -13,7 +13,6 @@ func init() {
 	sins.Register(catalog.CSharp, PositionalTupleReturn{})
 }
 
-// Definition is what the sin states about itself.
 func (PositionalTupleReturn) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "csharp-positional-tuple-return",

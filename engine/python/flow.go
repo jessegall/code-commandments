@@ -8,16 +8,13 @@ import (
 	"github.com/jessegall/code-commandments/engine"
 )
 
-// attributeFlow is every attribute read of the program, tallied once: by the class whose method reads its own
-// `self.x`, and by the name of the class mypy types a receiver as.
+// attributeFlow is every attribute read of the program, tallied once: by the class whose method reads its own `self.x`, and by the name of the class mypy types a receiver as.
 type attributeFlow struct {
 	once  sync.Once
 	own   map[Node]map[string]engine.FlowVerdict
 	typed map[string]map[string]engine.FlowVerdict
 }
 
-// AttributeFlow is how the program reads the class's attribute: how many reads dereference it unguarded, and how
-// many admit it may be missing — `self.x` in one of the class's methods, or `obj.x` where mypy typed `obj` as it.
 func (p *Program) AttributeFlow(class Node, attribute string) engine.FlowVerdict {
 	p.flow.once.Do(p.tallyReads)
 	own, typed := p.flow.own[class][attribute], p.flow.typed[class.Name()][attribute]
@@ -25,8 +22,6 @@ func (p *Program) AttributeFlow(class Node, attribute string) engine.FlowVerdict
 	return engine.FlowVerdict{Assume: own.Assume + typed.Assume, Guard: own.Guard + typed.Guard}
 }
 
-// tallyReads reads every evaluated attribute access of the code once. A test's reads are left out: a test indexes the
-// field of an object it built itself, which says nothing of whether the code assumes the field set.
 func (p *Program) tallyReads() {
 	p.flow.own, p.flow.typed = map[Node]map[string]engine.FlowVerdict{}, map[string]map[string]engine.FlowVerdict{}
 	for _, module := range p.modules {
@@ -54,8 +49,6 @@ func (p *Program) tallyReads() {
 	}
 }
 
-// tallyFor is the tally the read counts towards: its own class's for `self.x` in a method, the typed class's for
-// a receiver mypy typed as a class.
 func (p *Program) tallyFor(read Node) map[string]engine.FlowVerdict {
 	if read.IsOwnAttributeRead() {
 		class := read.EnclosingFunction().Parent()
@@ -80,12 +73,10 @@ func (p *Program) tallyFor(read Node) map[string]engine.FlowVerdict {
 	return p.flow.typed[name]
 }
 
-// IsOwnAttributeRead says whether the expression reads an attribute of `self`.
 func (n Node) IsOwnAttributeRead() bool {
 	return n.Kind() == "Attribute" && n.Child("value").DottedName() == "self"
 }
 
-// SelfAttribute is the attribute of `self` the expression reads; empty for any other expression.
 func (n Node) SelfAttribute() string {
 	if !n.IsOwnAttributeRead() {
 		return ""
@@ -94,7 +85,6 @@ func (n Node) SelfAttribute() string {
 	return n.Name()
 }
 
-// wrapper is the expression the expression sits directly in; no node for one a statement holds itself.
 func (n Node) wrapper() Node {
 	parent := n.Parent()
 	if parent.IsStatement() || parent.Node() == nil || parent.Node().Role == "type" {
@@ -104,15 +94,12 @@ func (n Node) wrapper() Node {
 	return parent
 }
 
-// isTested says whether the expression stands as the condition of an if, a while or a conditional expression.
 func (n Node) isTested() bool {
 	parent := n.Parent()
 
 	return slices.Contains([]string{"If", "While", "IfExp"}, parent.Kind()) && parent.Child("test") == n
 }
 
-// dereferences says whether the expression reaches through the inner one: calls it, reads an attribute of it, or
-// indexes it.
 func (n Node) dereferences(inner Node) bool {
 	switch n.Kind() {
 	case "Call":
@@ -124,8 +111,6 @@ func (n Node) dereferences(inner Node) bool {
 	return false
 }
 
-// acknowledgesAbsenceOf says whether the expression admits the inner one may be missing: compares it to None with
-// `is` or `is not`, negates it, or short-circuits on it.
 func (n Node) acknowledgesAbsenceOf(inner Node) bool {
 	if operand, ok := n.NoneTestedOperand(); ok && operand == inner {
 		return true
@@ -134,7 +119,6 @@ func (n Node) acknowledgesAbsenceOf(inner Node) bool {
 	return n.IsNegation() || n.IsShortCircuit()
 }
 
-// NoneTestedOperand is what an `is None` or `is not None` comparison tests.
 func (n Node) NoneTestedOperand() (Node, bool) {
 	comparators := n.ChildrenIn("comparators")
 	if n.Kind() != "Compare" || (n.Node().Operator != "is" && n.Node().Operator != "is not") || len(comparators) != 1 {
@@ -148,18 +132,14 @@ func (n Node) NoneTestedOperand() (Node, bool) {
 	return right, left.IsNone()
 }
 
-// IsNegation says whether the expression is a `not`.
 func (n Node) IsNegation() bool {
 	return n.Kind() == "UnaryOp" && n.Node().Operator == "not"
 }
 
-// IsShortCircuit says whether the expression is an `and` or an `or`.
 func (n Node) IsShortCircuit() bool {
 	return n.Kind() == "BoolOp"
 }
 
-// FieldNames is the instance's fields, in the order first written: the names the class body annotates, a ClassVar
-// aside, then the attributes its __init__ sets on `self`.
 func (n Node) FieldNames() []string {
 	var names []string
 	add := func(name string) {
@@ -183,7 +163,6 @@ func (n Node) FieldNames() []string {
 	return names
 }
 
-// IsClassVarType says whether the annotation is a ClassVar, bare or subscripted.
 func (n Node) IsClassVarType() bool {
 	named := n
 	if n.Kind() == "Subscript" {

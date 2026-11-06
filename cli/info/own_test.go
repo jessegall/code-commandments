@@ -10,10 +10,6 @@ import (
 	"github.com/jessegall/code-commandments/cli/info"
 )
 
-// TestAProjectsOwnRuleIsExplained holds `info` to what its own help promises: "a rule this project wrote into
-// .commandments/custom/ is explained beside the shipped ones". It was not. The lookup read the shipped registry
-// alone, so the rules a reader is LEAST likely to recognise — which the help says in those words — were the only
-// ones it could not explain, while a finding named one in every report.
 func TestAProjectsOwnRuleIsExplained(t *testing.T) {
 	root := project(t, map[string]string{
 		".commandments/custom/naming_PoeticVariableNameDetector.json": `{
@@ -26,7 +22,6 @@ func TestAProjectsOwnRuleIsExplained(t *testing.T) {
 			},
 			"find": {"select": "identifier", "where": [{"nameMatches": "^(dream|whisper)"}]}
 		}`,
-		// A rule the config does not turn on: a reader deciding whether to turn it on wants it explained first.
 		".commandments/custom/naming_SleepyNameDetector.json": `{
 			"engine": "python",
 			"sin": {"name": "sleepy-name", "description": "x", "rule": "x", "skill": "python/absence"},
@@ -38,12 +33,9 @@ func TestAProjectsOwnRuleIsExplained(t *testing.T) {
 	chdir(t, root)
 
 	for _, query := range []string{
-		// The name a finding prints, which is the one a reader copies.
 		"naming_PoeticVariableNameDetector",
-		// The sin's own name, and the lenient spellings of it.
 		"poetic-variable-name",
 		"PoeticVariableName",
-		// And the rule the config leaves off.
 		"naming_SleepyNameDetector",
 	} {
 		found := info.Detectors(query)
@@ -59,8 +51,6 @@ func TestAProjectsOwnRuleIsExplained(t *testing.T) {
 	}
 }
 
-// TestAShippedRuleIsStillExplainedFromAProjectWithOwnRules holds the shipped ones to answering as they did, since
-// a project's own rules are searched after them and must not shadow them.
 func TestAShippedRuleIsStillExplainedFromAProjectWithOwnRules(t *testing.T) {
 	chdir(t, project(t, map[string]string{
 		".commandments/custom/Whatever.json": `{
@@ -75,7 +65,6 @@ func TestAShippedRuleIsStillExplainedFromAProjectWithOwnRules(t *testing.T) {
 	}
 }
 
-// project is a project holding the files, by their path under its root.
 func project(t *testing.T, files map[string]string) string {
 	t.Helper()
 
@@ -97,8 +86,6 @@ func project(t *testing.T, files map[string]string) string {
 	return root
 }
 
-// chdir puts the test in the folder and puts the working folder back when it ends, which the go this module
-// declares has no t.Chdir for.
 func chdir(t *testing.T, folder string) {
 	t.Helper()
 

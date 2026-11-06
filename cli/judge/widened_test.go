@@ -43,9 +43,6 @@ func TestOnlyTheRulesThatReadAcrossFilesAreNamed(t *testing.T) {
 	}
 }
 
-// TestAWidenedReadSaysWhatWidenedIt holds the sentence a consumer needed and did not have: watching
-// "reading 107/5323" for thirteen changed files, they reported --changes as broken. The count alone cannot tell
-// a correct whole-tree read from an ignored scope, so the run says what made it read the whole path.
 func TestAWidenedReadSaysWhatWidenedIt(t *testing.T) {
 	var one bytes.Buffer
 	sayWhyTheWholeTreeIsRead([]string{"DuplicateFunctionDetector"}, 4, 13, cli.Console{Out: &one, Err: &one})
@@ -57,13 +54,10 @@ func TestAWidenedReadSaysWhatWidenedIt(t *testing.T) {
 		}
 	}
 
-	// One rule is named, never counted: "1 of the 4 rules" hides the one fact a reader can act on.
 	if strings.Contains(said, "1 of the") {
 		t.Errorf("the only rule that widened the read is not named: %q", said)
 	}
 
-	// Scores of them is the usual case on a full curriculum, and then the count IS the fact: no single name is
-	// the cause, and naming one of seventy-six reads as if removing it would narrow the run.
 	var many bytes.Buffer
 	sayWhyTheWholeTreeIsRead([]string{"DuplicateFunctionDetector", "DivergentTwinsDetector", "RecurringCallDetector"}, 312, 1, cli.Console{Out: &many, Err: &many})
 

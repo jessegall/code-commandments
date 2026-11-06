@@ -7,7 +7,6 @@ import (
 	"path/filepath"
 )
 
-// Hold creates the lock file; where there is no advisory lock to take, the caller goes ahead unheld.
 func Hold(path string) func() {
 	os.MkdirAll(filepath.Dir(path), 0o777)
 

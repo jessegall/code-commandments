@@ -8,10 +8,6 @@ import (
 	"github.com/jessegall/code-commandments/cli"
 )
 
-// TestARunSaysWhereItsTimeWentOnlyWhenAsked holds the one split that has answered every question about this
-// tool's speed, and holds it to costing nothing when nobody asks. A consumer timed 3,364 edits from their own
-// side over nine hours to tell us a median of 2.8 seconds and a tail of 318, and we could not tell them which
-// part of a run those seconds were in.
 func TestARunSaysWhereItsTimeWentOnlyWhenAsked(t *testing.T) {
 	var asked bytes.Buffer
 	t.Setenv(cli.Timing, "1")

@@ -19,11 +19,8 @@ type NamespaceDependencyDetector struct {
 
 func init() { detectors.Register(catalog.PHP, NamespaceDependencyDetector{}) }
 
-// Sin is the sin the detector finds.
 func (NamespaceDependencyDetector) Sin() sins.Sin { return backendsins.NamespaceDependency{} }
 
-// Layer is the detector with the namespace declared a layer that may use the given ones, as a project's config
-// declares its stack.
 func (d NamespaceDependencyDetector) Layer(namespace string, mayUse ...string) NamespaceDependencyDetector {
 	layers := map[string][]string{strings.Trim(namespace, `\`): mayUse}
 	for layer, used := range d.layers {
@@ -36,8 +33,6 @@ func (d NamespaceDependencyDetector) Layer(namespace string, mayUse ...string) N
 	return d
 }
 
-// Find is one reference per class and class it names, imports aside, from a declared layer into a declared class of
-// a layer it may not use; nothing when no stack is declared.
 func (d NamespaceDependencyDetector) Find(codebase *engine.Codebase) []engine.Match {
 	stack := engine.Layers(d.layers, `\`, false)
 	if stack.IsEmpty() {
@@ -60,6 +55,4 @@ func (d NamespaceDependencyDetector) Find(codebase *engine.Codebase) []engine.Ma
 	return namespaces.Distinct(crossings)
 }
 
-// CrossFile says the rule reads more than the file it reports in, which the fixture measures by asking it
-// of one file and of the whole tree: a scoped run reads the whole scan while it is enabled.
 func (NamespaceDependencyDetector) CrossFile() {}

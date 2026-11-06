@@ -1,17 +1,11 @@
 package csharp
 
-// initializers are the nodes a collection written out in the source is held in, however it was built: an array's
-// braces, and the braces of a collection built through a constructor.
 var initializers = []string{"ArrayInitializerExpression", "CollectionInitializerExpression", "InitializerExpression"}
 
-// IsFieldDeclarator says whether the node declares a field of a type rather than a local of a method.
 func (n Node) IsFieldDeclarator() bool {
 	return n.Kind() == "VariableDeclarator" && !n.EnclosingFunction().Exists()
 }
 
-// declared is the collection the field is declared with, written out: the braces themselves, wherever they sit —
-// an array's, or those of a set or list built through a constructor. Every node beneath is walked through All,
-// since braces are an expression and this package's Children and Descendants keep expressions out.
 func (n Node) declared() Node {
 	for _, below := range n.All() {
 		for _, kind := range initializers {
@@ -28,8 +22,6 @@ func (n Node) declared() Node {
 	return Node{}
 }
 
-// StringMembers is every member of the declared collection when ALL of them are string literals: the shape a
-// collection of names takes. Nothing where it holds anything else.
 func (n Node) StringMembers() []string {
 	var names []string
 
@@ -44,9 +36,6 @@ func (n Node) StringMembers() []string {
 	return names
 }
 
-// InstanceNames is the name each member of the declared collection is constructed with — its first argument,
-// where that is a string literal — when every member constructs the SAME type: the shape a registry of a type's
-// instances takes. Nothing where the members are not all such constructions, or fewer than two.
 func (n Node) InstanceNames() (string, []string) {
 	members := n.declared().All()
 	if len(members) < 2 {
@@ -78,7 +67,6 @@ func (n Node) InstanceNames() (string, []string) {
 	return constructed, names
 }
 
-// typeConstructed is the name of the type a construction names.
 func (n Node) typeConstructed() string {
 	for _, child := range n.All() {
 		if child.IsTypeNode() {
@@ -89,8 +77,6 @@ func (n Node) typeConstructed() string {
 	return ""
 }
 
-// firstArgumentText is the string a construction passes first, empty where it passes none or passes something
-// that is not written out.
 func (n Node) firstArgumentText() string {
 	for _, child := range n.All() {
 		if child.Kind() != "ArgumentList" {
@@ -111,12 +97,8 @@ func (n Node) firstArgumentText() string {
 	return ""
 }
 
-// membershipQuestions are how C# asks a collection whether it holds one thing.
 var membershipQuestions = []string{"Contains", "ContainsKey"}
 
-// AsksAboutOne says whether the call asks a collection named `held` whether it holds a single thing — the
-// question a trait answers. Walking a collection is deliberately not that question: a loop that acts on each
-// member is a caller choosing what to act on, and nothing in the tree tells that from a trait.
 func (n Node) AsksAboutOne(held string) bool {
 	if n.Kind() != "InvocationExpression" {
 		return false

@@ -15,10 +15,8 @@ type OrphanedBindingDetector struct{}
 
 func init() { detectors.Register(catalog.PHP, OrphanedBindingDetector{}) }
 
-// Sin is the sin the detector finds.
 func (OrphanedBindingDetector) Sin() sins.Sin { return backendsins.OrphanedBinding{} }
 
-// Find is every binding of an abstract declared here that nothing resolves.
 func (OrphanedBindingDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return php.In(codebase).
 		Where(engine.As(func(n laravelnode.Node) bool { return n.BoundAbstract() != "" })).
@@ -31,5 +29,4 @@ func (OrphanedBindingDetector) Find(codebase *engine.Codebase) []engine.Match {
 		Get()
 }
 
-// CrossFile says the PHP tool finds it reaching beyond the file it judges, so a per-file check must not ask it.
 func (OrphanedBindingDetector) CrossFile() {}

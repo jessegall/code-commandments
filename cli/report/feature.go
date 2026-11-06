@@ -10,12 +10,10 @@ type FeatureRequest struct {
 	Version string
 }
 
-// Names are the verbs it answers to.
 func (FeatureRequest) Names() []string {
 	return []string{"feature-request"}
 }
 
-// Help documents it.
 func (FeatureRequest) Help() help.Help {
 	return help.Of("File a [feature-request] GitHub issue (via `gh`) proposing a new or changed rule.").
 		Form(`feature-request --title="…" --reason="…"`, "propose it").
@@ -23,7 +21,6 @@ func (FeatureRequest) Help() help.Help {
 		Option(`--reason="…"`, "what to add or change, and why (required)")
 }
 
-// Run files the proposal.
 func (f FeatureRequest) Run(in *cli.Input, console cli.Console) (int, error) {
 	title, titled := in.Option("title")
 	reason, reasoned := in.Option("reason")

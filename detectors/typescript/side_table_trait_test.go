@@ -16,9 +16,6 @@ export const TAGS: Tag[] = [
 ]
 `
 
-// TestASideTableOfRegisteredNamesIsFound holds the three things that together tell a side table from an ordinary
-// list of words: the names are the module's own registry's, the module reaches for the objects through them, and
-// a collection derived from the registry or naming none of its objects is left alone.
 func TestASideTableOfRegisteredNamesIsFound(t *testing.T) {
 	for name, source := range map[string]string{
 		"a set asked whether it holds one": registry + `
@@ -39,7 +36,6 @@ export function said(name: string): boolean {
 	}
 }
 
-// TestACollectionThatIsNotASideTableIsLeftAloneTS holds the negatives, each wearing the same surface shape.
 func TestACollectionThatIsNotASideTableIsLeftAloneTS(t *testing.T) {
 	for name, source := range map[string]string{
 		"ordinary vocabulary naming no object": registry + `

@@ -13,14 +13,9 @@ import (
 	"github.com/jessegall/code-commandments/cli/git"
 	"github.com/jessegall/code-commandments/cli/scan"
 	"github.com/jessegall/code-commandments/detectors"
-	// Every engine's rules are registered here, from the one place that imports them all, so a hook test can
-	// hold the enforcement of ANY language. Without it the hooks' test binary sees whichever engine another
-	// test file happened to import, which was Python alone, and a Go sin raised nothing.
 	_ "github.com/jessegall/code-commandments/registry"
 )
 
-// goProject is a Go module of two files with Go among the judged paths: the one a hook is shown, holding a loop
-// whose whole body is one condition, and a sibling holding the type it uses and a sin of its own.
 func goProject(t *testing.T) (root, edited, sibling string) {
 	t.Helper()
 	root = t.TempDir()
@@ -44,10 +39,6 @@ func goProject(t *testing.T) (root, edited, sibling string) {
 	return root, edited, sibling
 }
 
-// TestAGoFileIsJudgedAsItIsEdited holds the hooks to the enforcement this project turns on for itself: a Go file
-// a session changes raises its sin, by the Go rules and not another language's, before anything of the clean-up
-// is done. The sin is a loop whose whole body is one condition, which is structural, so nothing here depends on
-// a type the file does not declare.
 func TestAGoFileIsJudgedAsItIsEdited(t *testing.T) {
 	root, edited, _ := goProject(t)
 
@@ -62,10 +53,6 @@ func TestAGoFileIsJudgedAsItIsEdited(t *testing.T) {
 	}
 }
 
-// TestAGosSiblingsSinIsNotTheEditedFilesMark is the one thing Go breaks that no other language does. Go's types
-// come from a whole PACKAGE, so a scan shown one Go file loads its siblings too, where a scan shown one PHP or
-// Python file loads that file alone. A mark is about the file the session changed, so a sin a sibling holds is
-// the sibling's own business and must never be reported against this file.
 func TestAGosSiblingsSinIsNotTheEditedFilesMark(t *testing.T) {
 	root, edited, sibling := goProject(t)
 
@@ -76,9 +63,6 @@ func TestAGosSiblingsSinIsNotTheEditedFilesMark(t *testing.T) {
 	}
 }
 
-// TestAGoPackageIsReadWholeToJudgeOneOfItsFiles states why the test above is needed rather than assuming the
-// scan behaves as it does for every other language: one Go file is read as the package it belongs to, because
-// that is where Go's types are, and a sibling's declarations would otherwise be unknown.
 func TestAGoPackageIsReadWholeToJudgeOneOfItsFiles(t *testing.T) {
 	_, edited, _ := goProject(t)
 
@@ -91,10 +75,6 @@ func TestAGoPackageIsReadWholeToJudgeOneOfItsFiles(t *testing.T) {
 	}
 }
 
-// TestAWorkerCarryingAGoSinIsHeld holds the moment that matters most for this project judging itself: a worker
-// hands in Go of its own, and the sin is named to the WORKER, while it can still fix it, rather than reaching
-// the agent that sent it. The hold reads the worker's own branch, so the Go bridge is asked for a package
-// inside a worktree rather than the main checkout.
 func TestAWorkerCarryingAGoSinIsHeld(t *testing.T) {
 	root, _, _ := goProject(t)
 	repository(t, root)
@@ -116,15 +96,10 @@ func TestAWorkerCarryingAGoSinIsHeld(t *testing.T) {
 	}
 }
 
-// TestAChangedGoFileIsCountedInTheSessionsWorklist holds the last of the four enforcement paths: at a stop, the
-// session is reminded of the judged files it changed, and a Go file is one of them. Before this project declared
-// its Go folders a .go file was no judged file at all, so a session could rewrite the engine and be told nothing.
 func TestAChangedGoFileIsCountedInTheSessionsWorklist(t *testing.T) {
 	root, edited, _ := goProject(t)
 	repository(t, root, "-c", "user.email=a@b", "-c", "user.name=a", "commit", "-q", "--allow-empty", "-m", "a checkout")
 
-	// The project's files were there before the session, as a checkout's are, and a reminder is about what THIS
-	// session changed. So the session is opened first and the file written inside it.
 	written := map[string]any{"session_id": "writer", "tool_name": "Write",
 		"tool_input": map[string]any{"file_path": "shop/ledger.go"}}
 	JudgeReminder{}.Handle(NewEvent(with(written, "PreToolUse"), root))
@@ -139,9 +114,6 @@ func TestAChangedGoFileIsCountedInTheSessionsWorklist(t *testing.T) {
 	}
 }
 
-// repository makes the project a git repository and runs whatever else the caller needs there. A worker's hold
-// wants nothing committed, since what a worker carries is everything its branch has that the one it merges into
-// has not; a reminder wants a commit to sit on, since it counts what changed since one.
 func repository(t *testing.T, root string, then ...string) {
 	t.Helper()
 	runs := [][]string{{"init", "-q"}}
@@ -155,7 +127,6 @@ func repository(t *testing.T, root string, then ...string) {
 	}
 }
 
-// goMarks is every mark a look at the file makes, as the hooks make them.
 func goMarks(t *testing.T, root, file string) []SinMark {
 	t.Helper()
 	project, err := config.Load(root)

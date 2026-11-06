@@ -1,8 +1,4 @@
-// Command findings runs every backend detector over a PHP project, its frontend read beside it as judge reads it,
-// and prints what each finds, to hold the Go port to the PHP tool on a real codebase: go run ./engine/php/cmd/findings [--spans] [--every] [--only=NAME] <project> [path...]
-//
-// Each line is file:line, the detector and its sin, sorted. With --spans each is the file, the span and the kind of
-// the node flagged, and the detector, which is what the PHP oracle's findings question records.
+// Command findings runs every backend detector over a PHP project, its frontend read beside it as judge reads it, and prints what each finds, to hold the Go port to the PHP tool on a real codebase: go run ./engine/php/cmd/findings [--spans] [--every] [--only=NAME] <project> [path...]
 package main
 
 import (
@@ -58,8 +54,6 @@ func main() {
 	fmt.Println(strings.Join(lines, "\n"))
 }
 
-// InForce is every published backend detector whose sin's package the project installs; every includes the
-// unpublished ones, and only narrows it to one detector by name.
 func InForce(root string, every bool, only string) []detectors.Detector {
 	candidates := detectors.Of(catalog.PHP)
 	if every {

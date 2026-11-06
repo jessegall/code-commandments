@@ -6,10 +6,6 @@ import (
 	"github.com/jessegall/code-commandments/engine/csharp/csharptest"
 )
 
-// TestACollaboratorNothingReadsIsFoundAndAReadOneIsNotCS holds the rule to the fault it names: a private
-// readonly field, or a primary constructor parameter, that nothing in the type reads. A collaborator one
-// method reads, a partial type, a type holding a type of its own, and a marked-up field are all how the
-// construct earns its place and must pass.
 func TestACollaboratorNothingReadsIsFoundAndAReadOneIsNotCS(t *testing.T) {
 	for name, test := range map[string]struct {
 		source string

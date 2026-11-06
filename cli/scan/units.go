@@ -15,11 +15,7 @@ import (
 	"github.com/jessegall/code-commandments/engine"
 )
 
-// Units is a C# solution read once through its bridge and cut into one unit per project, so a solution too large
-// to hold whole is judged a project at a time. A file belongs to the deepest folder above it that holds a .csproj,
-// as the bridge's own reading of a solution owns it, and a file under none to the loose unit. The bridge compiles
-// and streams a solution project by project, so a unit is complete when the owner changes; its lines are kept
-// gzipped on disk, and each unit is read back on its own.
+// Units is a C# solution read once through its bridge and cut into one unit per project, so a solution too large to hold whole is judged a project at a time.
 type Units struct {
 	folder  string
 	header  []byte
@@ -34,9 +30,6 @@ type unit struct {
 	files int
 }
 
-// CSharpUnits reads the C# sources as units, handing each to complete, read as a codebase of its own without the
-// program line that closes the stream, as soon as the stream has passed it. None without the bridge, or with one that
-// fails.
 func (s Sources) CSharpUnits(complete func(*engine.Codebase) error) (*Units, error) {
 	roots, files := resolved(s.roots), resolved(s.byLanguage[source.CSharp])
 	if len(files) == 0 {
@@ -53,14 +46,6 @@ func (s Sources) CSharpUnits(complete func(*engine.Codebase) error) (*Units, err
 	return units, nil
 }
 
-// readCSharp reads the files as units, asking the bridge a second time when the first ask dies.
-//
-// A bridge that dies takes every C# file of the run with it, and the one we publish has been seen to die with a
-// protected-memory fault that depends on the set of files it is given and comes and goes: the same folder that
-// failed reads cleanly on the next run. A second ask, over a bridge started afresh, is what that costs — nothing
-// when the first ask answers, and the whole language back when the fault was one of the passing kind. A fault that
-// is there every time is still reported as the files left unread, since nothing here can read what the bridge
-// cannot parse.
 func readCSharp(roots, files []string, complete func(*engine.Codebase) error) (*Units, error) {
 	units, err := askCSharp(roots, files, complete)
 	if err == nil {
@@ -79,7 +64,6 @@ func readCSharp(roots, files []string, complete func(*engine.Codebase) error) (*
 	return nil, bridge.RoslynFailure(again)
 }
 
-// askCSharp asks one bridge for the files and cuts what it answers into units.
 func askCSharp(roots, files []string, complete func(*engine.Codebase) error) (*Units, error) {
 	asker, err := CSharp.Reach.Open(CSharp, roots)
 	if err != nil {
@@ -106,12 +90,10 @@ func askCSharp(roots, files []string, complete func(*engine.Codebase) error) (*U
 	return units, nil
 }
 
-// Count is how many units the solution is cut into.
 func (u *Units) Count() int {
 	return len(u.units)
 }
 
-// Load is the unit's codebase, read back from disk with the stream's program line, its sources read from disk.
 func (u *Units) Load(at int) (*engine.Codebase, error) {
 	held := u.units[at]
 	file, err := os.Open(held.path)
@@ -136,7 +118,6 @@ func (u *Units) Load(at int) (*engine.Codebase, error) {
 	return engine.Load(stream), nil
 }
 
-// Close removes the units from disk.
 func (u *Units) Close() error {
 	return os.RemoveAll(u.folder)
 }
@@ -195,7 +176,6 @@ func (c *cutter) start(owner string) error {
 	return nil
 }
 
-// close writes the open unit out and hands its codebase on.
 func (c *cutter) close() error {
 	if !c.open {
 		return nil
@@ -217,7 +197,6 @@ func (c *cutter) close() error {
 	return c.complete(engine.Load(stream))
 }
 
-// ownerOf is the deepest folder above the path that holds a .csproj; empty for a file under none.
 func (c *cutter) ownerOf(path string) string {
 	folder := filepath.Dir(path)
 	if owner, known := c.owners[folder]; known {

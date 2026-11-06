@@ -25,9 +25,6 @@ func TestAComposerPackageIsInstalledWhenComposerInstalledIt(t *testing.T) {
 	}
 }
 
-// A project composer never installed into has none of the packages: the PHP tool asks its own install, which holds
-// only what composer put there, so a project with no PHP, such as a Python one run by the binary, never runs a
-// package's rules.
 func TestAProjectComposerNeverInstalledIntoHasNoPackage(t *testing.T) {
 	if (sins.Package{Name: "spatie/laravel-data", Ecosystem: sins.Composer}).InstalledIn(t.TempDir()) {
 		t.Error("a project with no installed packages runs a package's rules")

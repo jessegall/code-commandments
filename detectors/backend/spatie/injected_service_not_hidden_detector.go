@@ -15,10 +15,8 @@ type InjectedServiceNotHiddenDetector struct{}
 
 func init() { detectors.Register(catalog.PHP, InjectedServiceNotHiddenDetector{}) }
 
-// Sin is the sin the detector finds.
 func (InjectedServiceNotHiddenDetector) Sin() sins.Sin { return backendsins.InjectedServiceNotHidden{} }
 
-// Find is every page object with an injected service not hidden.
 func (InjectedServiceNotHiddenDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return php.In(codebase).
 		WhereKind("Stmt_Class").
@@ -27,6 +25,4 @@ func (InjectedServiceNotHiddenDetector) Find(codebase *engine.Codebase) []engine
 		Get()
 }
 
-// CrossFile says the rule reads more than the file it reports in, which the fixture measures by asking it
-// of one file and of the whole tree: a scoped run reads the whole scan while it is enabled.
 func (InjectedServiceNotHiddenDetector) CrossFile() {}

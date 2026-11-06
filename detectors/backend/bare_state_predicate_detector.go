@@ -15,10 +15,8 @@ type BareStatePredicateDetector struct{}
 
 func init() { detectors.Register(catalog.PHP, BareStatePredicateDetector{}) }
 
-// Sin is the sin the detector finds.
 func (BareStatePredicateDetector) Sin() sins.Sin { return backendsins.BareStatePredicate{} }
 
-// Find is every parameterless bool method, not magic nor inherited, whose name narrates a verb rather than asks.
 func (BareStatePredicateDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return php.In(codebase).
 		WhereKind("Stmt_ClassMethod").

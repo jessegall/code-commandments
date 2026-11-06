@@ -13,7 +13,6 @@ func init() {
 	sins.Register(catalog.CSharp, DerivedArgument{})
 }
 
-// Definition is what the sin states about itself.
 func (DerivedArgument) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "csharp-derived-argument",

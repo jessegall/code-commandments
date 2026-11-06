@@ -15,7 +15,6 @@ type Reference struct {
 	End   int
 }
 
-// Label is the reference as written: path, path:line or path:start-end.
 func (r Reference) Label() string {
 	switch {
 	case r.Start == 0:
@@ -27,14 +26,10 @@ func (r Reference) Label() string {
 	}
 }
 
-// Shown is the reference as an issue names it: the file's own name and its lines, never the folders that would map
-// out the reporter's project.
 func (r Reference) Shown() string {
 	return Reference{filepath.Base(r.Path), r.Start, r.End}.Label()
 }
 
-// ParseReference reads `path`, `path:line` or `path:start-end`; a suffix that is no line keeps the whole
-// value as the path. False for a blank value.
 func ParseReference(value string) (Reference, bool) {
 	value = strings.Trim(value, " \t\n\r\x00\x0B")
 	if value == "" {
@@ -79,8 +74,6 @@ func digits(text string) (int, bool) {
 	return number, err == nil
 }
 
-// Snippet is the referenced lines alone, numbered, with every secret masked, as a fenced block: never the code
-// around them, and nothing for a reference to a whole file; false when there are no lines to show.
 func Snippet(ref Reference) (string, bool) {
 	raw, err := os.ReadFile(ref.Path)
 	if err != nil || len(raw) == 0 || ref.Start == 0 {

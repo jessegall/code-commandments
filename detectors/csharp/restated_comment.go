@@ -18,12 +18,10 @@ func init() {
 	detectors.Register(catalog.CSharp, RestatedCommentDetector{})
 }
 
-// Sin is the sin the detector finds.
 func (RestatedCommentDetector) Sin() sins.Sin {
 	return cssins.RestatedComment{}
 }
 
-// Find is every place the sin is committed.
 func (RestatedCommentDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return cs.In(codebase).
 		WhereStatement().

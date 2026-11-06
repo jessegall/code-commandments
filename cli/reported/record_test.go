@@ -11,8 +11,6 @@ import (
 	"github.com/jessegall/code-commandments/cli/reported"
 )
 
-// TestAReportIsReadBackAtTheSinItWasAbout holds the whole point of the record: the sin a report was filed about
-// reads as reported afterwards, wherever its line has moved to, and every other sin reads as active.
 func TestAReportIsReadBackAtTheSinItWasAbout(t *testing.T) {
 	root := t.TempDir()
 	file := filepath.Join(root, "src", "refund.py")
@@ -55,8 +53,6 @@ func TestAReportIsReadBackAtTheSinItWasAbout(t *testing.T) {
 	}
 }
 
-// TestTheRecordKeepsNoCodeOfTheProject holds what may be committed: the record is tracked and the issues it names
-// are public, so the flagged line is kept as a hash and nowhere as text.
 func TestTheRecordKeepsNoCodeOfTheProject(t *testing.T) {
 	root := t.TempDir()
 	file := filepath.Join(root, "src", "secrets.py")
@@ -80,8 +76,6 @@ func TestTheRecordKeepsNoCodeOfTheProject(t *testing.T) {
 	}
 }
 
-// TestASecondReportOfOneSinIsRefused holds what keeps an open issue from being forgotten: the row is not replaced,
-// and the refusal names the issue that already has it, so the person is sent to the conversation already running.
 func TestASecondReportOfOneSinIsRefused(t *testing.T) {
 	root := t.TempDir()
 	file := filepath.Join(root, "src", "refund.py")
@@ -110,8 +104,6 @@ func TestASecondReportOfOneSinIsRefused(t *testing.T) {
 	}
 }
 
-// TestAPlaceWhoseLineCannotBeReadIsRefused holds the one place a row may not be keyed on, since every such sin of
-// one rule in one file would key alike and the report would cover code nobody reported.
 func TestAPlaceWhoseLineCannotBeReadIsRefused(t *testing.T) {
 	root := t.TempDir()
 	file := filepath.Join(root, "src", "refund.py")
@@ -131,9 +123,6 @@ func TestAPlaceWhoseLineCannotBeReadIsRefused(t *testing.T) {
 	}
 }
 
-// TestARecordNobodyCanReadIsAnEmptyOneThatSaysSo holds the rule every reader of it follows: a record that is gone
-// or no longer reads as one leaves every sin active, and never stops a run. The second answer is what tells a
-// judge to warn and a hook to stay silent.
 func TestARecordNobodyCanReadIsAnEmptyOneThatSaysSo(t *testing.T) {
 	root := t.TempDir()
 
@@ -160,8 +149,6 @@ func TestARecordNobodyCanReadIsAnEmptyOneThatSaysSo(t *testing.T) {
 	}
 }
 
-// TestForgettingAReportMakesItsSinOrdinaryAgain holds the way out: once an answer has settled a report, its row
-// goes, the sin is judged as any other, and a number no row holds is refused rather than silently ignored.
 func TestForgettingAReportMakesItsSinOrdinaryAgain(t *testing.T) {
 	root := t.TempDir()
 	file := filepath.Join(root, "src", "refund.py")
@@ -186,8 +173,6 @@ func TestForgettingAReportMakesItsSinOrdinaryAgain(t *testing.T) {
 	}
 }
 
-// TestWhatWasLastSeenIsRememberedOnTheRow holds what keeps an answer from being told at every look: the state and
-// the comment count the last look found are kept on the row.
 func TestWhatWasLastSeenIsRememberedOnTheRow(t *testing.T) {
 	root := t.TempDir()
 	file := filepath.Join(root, "src", "refund.py")
@@ -207,8 +192,6 @@ func TestWhatWasLastSeenIsRememberedOnTheRow(t *testing.T) {
 	}
 }
 
-// TestTheRecordReadsAsJSONAReaderCanFollow holds the file to a shape a person or another tool can read, since it
-// is committed to the project and a reader will meet it in a diff.
 func TestTheRecordReadsAsJSONAReaderCanFollow(t *testing.T) {
 	root := t.TempDir()
 	file := filepath.Join(root, "src", "refund.py")

@@ -17,7 +17,6 @@ func init() {
 // SwitchCaseScribe rewrites a v-if chain re-testing one subject into a <SwitchCase> with a slot per case.
 type SwitchCaseScribe struct{}
 
-// Rewrite replaces each chain with its <SwitchCase>.
 func (SwitchCaseScribe) Rewrite(findings []engine.Match, _ *engine.Codebase) (scribes.Rewrites, error) {
 	draft := scribes.NewDraft()
 	for _, head := range findings {
@@ -35,8 +34,6 @@ func (SwitchCaseScribe) Rewrite(findings []engine.Match, _ *engine.Codebase) (sc
 	return draft.Rewrites(), nil
 }
 
-// switchCase is the chain as a <SwitchCase> on its subject: each branch a slot named by its key, its structural
-// directive cut out, a <template> branch becoming the slot itself.
 func switchCase(chain vue.SwitchCaseChain, span engine.Span) string {
 	indent := span.LineIndent()
 	source := string(span.Source)

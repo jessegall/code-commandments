@@ -11,7 +11,6 @@ type NestedTypeMissingTypeScript struct{}
 
 func init() { sins.Register(catalog.PHP, NestedTypeMissingTypeScript{}) }
 
-// Definition is what the sin states about itself.
 func (NestedTypeMissingTypeScript) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "nested-type-missing-typescript",

@@ -134,9 +134,6 @@ func TestAPlaceTheToolCannotReadSaysWhy(t *testing.T) {
 	}
 }
 
-// A step onto a child is the bounded sibling of one onto a descendant, and only the counting form of it existed:
-// a rule that means "its own body returns" had to accept a return at any depth, which is a different claim.
-
 const till = `<?php
 
 namespace App;
@@ -163,23 +160,15 @@ class Till
 }
 `
 
-// TestARuleStepsOntoAChildRatherThanAnyDescendant holds the pair that IS the test: the same step asked of a child
-// and of a descendant, over one function whose own body returns and one that returns only inside a branch.
 func TestARuleStepsOntoAChildRatherThanAnyDescendant(t *testing.T) {
 	built := phpCodebase(t, "Till.php", till)
 
 	for query, want := range map[string]string{
-		// settled returns at its own level; wrapped returns inside a branch and inside a loop, so only the
-		// unbounded step reaches it.
-		`{"select": "function", "where": [{"child": {"is": "return"}}]}`:      "[7]",
-		`{"select": "function", "where": [{"descendant": {"is": "return"}}]}`: "[7 14]",
-		// The field narrows which children are stepped onto, as a count's field narrows what it counts: a
-		// function's statements hold the return, and its parameters never do.
+		`{"select": "function", "where": [{"child": {"is": "return"}}]}`:                    "[7]",
+		`{"select": "function", "where": [{"descendant": {"is": "return"}}]}`:               "[7 14]",
 		`{"select": "function", "where": [{"child": {"is": "return", "field": "stmts"}}]}`:  "[7]",
 		`{"select": "function", "where": [{"child": {"is": "return", "field": "params"}}]}`: "[]",
-		// The branch's own child is the return it holds, which is how a rule says "this branch does nothing but
-		// leave" without reaching into whatever a longer body nests.
-		`{"select": "branch", "where": [{"child": {"is": "return"}}]}`: "[16]",
+		`{"select": "branch", "where": [{"child": {"is": "return"}}]}`:                      "[16]",
 	} {
 		if got := found(t, "backend", query, built); got != want {
 			t.Errorf("%s: found %s, want %s", query, got, want)
@@ -187,8 +176,6 @@ func TestARuleStepsOntoAChildRatherThanAnyDescendant(t *testing.T) {
 	}
 }
 
-// TestTheChildStepAnswersForASecondLanguage holds it where the grammar is another one's: the step reads the tree
-// the bridge wrote, so nothing about it is PHP's.
 func TestTheChildStepAnswersForASecondLanguage(t *testing.T) {
 	module := pythontest.FromSource(t, map[string]string{"till.py": `def settled(total: int) -> int:
     return total
@@ -208,9 +195,6 @@ def wrapped(lines: list) -> int:
 		}
 	}
 }
-
-// A descendant step reaches every node inside, a closure's own body included, so every rule written as "this method
-// does X" has quietly also meant "a closure it hands away does X". `within: ownBody` is the honest form of the claim.
 
 const checkout = `<?php
 
@@ -236,17 +220,14 @@ class Checkout
 }
 `
 
-// TestADescendantStepStopsAtAFunctionNestedInside holds the pair: the same step bounded to the node's own body and
-// unbounded, over a method that saves and one that only hands a closure holding the save to a queue.
 func TestADescendantStepStopsAtAFunctionNestedInside(t *testing.T) {
 	built := phpCodebase(t, "Checkout.php", checkout)
 
 	for query, want := range map[string]string{
 		`{"select": "function", "where": [{"name": "settle"}, {"descendant": {"name": "save", "within": "ownBody"}}]}`: "[11]",
 		`{"select": "function", "where": [{"name": "settle"}, {"descendant": {"name": "save"}}]}`:                      "[11]",
-		// The method hands the save away, so its own body does not do it; the unbounded step cannot tell the two apart.
-		`{"select": "function", "where": [{"name": "later"}, {"descendant": {"name": "save", "within": "ownBody"}}]}`: "[]",
-		`{"select": "function", "where": [{"name": "later"}, {"descendant": {"name": "save"}}]}`:                      "[16]",
+		`{"select": "function", "where": [{"name": "later"}, {"descendant": {"name": "save", "within": "ownBody"}}]}`:  "[]",
+		`{"select": "function", "where": [{"name": "later"}, {"descendant": {"name": "save"}}]}`:                       "[16]",
 	} {
 		if got := found(t, "backend", query, built); got != want {
 			t.Errorf("%s: found %s, want %s", query, got, want)
@@ -254,8 +235,6 @@ func TestADescendantStepStopsAtAFunctionNestedInside(t *testing.T) {
 	}
 }
 
-// TestOwnBodyAnswersForASecondLanguage holds it where the closure is a function statement rather than an expression,
-// since what stops the walk is the neutral kind and not a language's spelling of it.
 func TestOwnBodyAnswersForASecondLanguage(t *testing.T) {
 	module := pythontest.FromSource(t, map[string]string{"checkout.py": `class Checkout:
     def __init__(self, queue):
@@ -282,7 +261,6 @@ func TestOwnBodyAnswersForASecondLanguage(t *testing.T) {
 	}
 }
 
-// TestAWithinTheToolCannotReadSaysWhy holds the one value within takes, since a rule file is written by hand.
 func TestAWithinTheToolCannotReadSaysWhy(t *testing.T) {
 	query := `{"select": "function", "where": [{"descendant": {"name": "save", "within": "ownBodyOnly"}}]}`
 	written := `{"engine": "backend", "sin": {"name": "x", "skill": "php/absence"}, "find": ` + query + `}`

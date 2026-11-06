@@ -17,7 +17,6 @@ import (
 	"github.com/jessegall/code-commandments/engine/csharp"
 )
 
-// fixture is tests/Fixtures/csharp as the Go engine reads it, loaded once for every golden test.
 var fixture struct {
 	once     sync.Once
 	root     string
@@ -25,7 +24,6 @@ var fixture struct {
 	err      error
 }
 
-// shop is the C# fixture's codebase, or the test skipped when there is no Docker to run the bridge in.
 func shop(t *testing.T) *engine.Codebase {
 	t.Helper()
 	root, err := filepath.Abs("../../tests/Fixtures/csharp")
@@ -52,7 +50,6 @@ func shop(t *testing.T) *engine.Codebase {
 	return fixture.codebase
 }
 
-// golden is what the PHP engine answered for the analysis, recorded before it was removed.
 func golden(t *testing.T, analysis string, into any) {
 	t.Helper()
 	raw, err := os.ReadFile(filepath.Join("testdata", "golden", analysis+".json"))
@@ -64,12 +61,10 @@ func golden(t *testing.T, analysis string, into any) {
 	}
 }
 
-// at is where a node is, as the golden files write it: its path under the fixture, its byte offset and its kind.
 func at(node csharp.Node) string {
 	return fmt.Sprintf("%s@%d:%s", strings.TrimPrefix(node.File(), fixture.root+"/"), node.Node().Span.Start, node.Kind())
 }
 
-// nodes is every C# node of the codebase but the files' roots.
 func nodes(codebase *engine.Codebase) []csharp.Node {
 	var all []csharp.Node
 	for _, file := range csharp.In(codebase).Files() {
@@ -81,16 +76,12 @@ func nodes(codebase *engine.Codebase) []csharp.Node {
 	return all
 }
 
-// compare fails once per key whose answers differ, and for every key only one side has.
 func compare[T any](t *testing.T, what string, want, got map[string]T) {
 	t.Helper()
 	var keys []string
 	for key := range want {
 		keys = append(keys, key)
 	}
-	// A key the golden does not hold is one the PHP engine never answered for: it was removed once these were
-	// recorded, so anything the fixture gained afterwards has no recorded answer to be held to. Comparing it
-	// would read silence as a verdict. Everything it DID record still binds, so a change to code it saw fails here.
 	sort.Strings(keys)
 	for _, key := range keys {
 		wanted, wantedOk := want[key]
@@ -108,8 +99,6 @@ type goldenType struct {
 	Inner    []string `json:"inner"`
 }
 
-// admitsAbsence is the type as the tree's `nullable` reads it: a `T?` value admits absence, where the PHP engine
-// reported the compiler's annotation, which flow analysis can clear.
 func admitsAbsence(typed goldenType) goldenType {
 	if typed.Value && strings.HasSuffix(typed.Name, "?") {
 		typed.Nullable = true
@@ -140,7 +129,6 @@ type goldenTarget struct {
 	Parameters []string `json:"parameters"`
 }
 
-// withoutArguments is a type named without its generic arguments: `List<T>` and `List<String>` are one type.
 func withoutArguments(name string) string {
 	if open := strings.Index(name, "<"); open >= 0 {
 		return name[:open]
@@ -149,9 +137,6 @@ func withoutArguments(name string) string {
 	return name
 }
 
-// The PHP engine bound a call to the method as constructed (`List<String>.Add(String)`, an extension method without
-// its `this`); the tree names the original definition, so a call joins its declaration, and carries the parameter
-// types as the call binds them. The type is compared without its arguments; the parameters as they are.
 func TestEveryCallReachesTheMethodThePhpEngineBindsItTo(t *testing.T) {
 	codebase := shop(t)
 	var want map[string]goldenTarget
@@ -165,8 +150,6 @@ func TestEveryCallReachesTheMethodThePhpEngineBindsItTo(t *testing.T) {
 		wanted, recorded := want[at(node)]
 		got[at(node)] = goldenTarget{Type: withoutArguments(target.Type()), Name: target.Name(), Parameters: target.Parameters()}
 
-		// Only an answer the golden holds is read back: writing one for every node would insert an empty entry
-		// for a call the PHP engine never saw, and compare the real answer against that invented blank.
 		if recorded {
 			want[at(node)] = goldenTarget{Type: withoutArguments(wanted.Type), Name: wanted.Name, Parameters: wanted.Parameters}
 		}
@@ -248,7 +231,6 @@ type goldenDeclaration struct {
 	Cased    bool     `json:"cased"`
 }
 
-// An extension method's callers are the program's own: the PHP engine's reduced targets never joined them.
 func TestTheProgramReadsWholeAsThePhpEngineReadsIt(t *testing.T) {
 	codebase := shop(t)
 	program := csharp.Of(codebase)
@@ -268,8 +250,6 @@ func TestTheProgramReadsWholeAsThePhpEngineReadsIt(t *testing.T) {
 		method := csharp.Node{Match: match}
 		recorded, wasRecorded := want.Methods[method.Symbol()]
 		callers := recorded.Callers
-		// A method the golden never recorded is one the PHP engine never saw: the fixture gained it afterwards, so
-		// there is no caller count to be held to and an empty one is not a verdict of zero.
 		if parameters := method.Parameters(); wasRecorded && (len(parameters) == 0 || !parameters[0].HasModifier("this")) {
 			outside := 0
 			for _, caller := range callers {
@@ -285,7 +265,6 @@ func TestTheProgramReadsWholeAsThePhpEngineReadsIt(t *testing.T) {
 		}
 		methods[method.Symbol()] = goldenMethod{HandedOut: program.IsHandedOut(method.Name()), Envied: method.EnviedParameter(program), Unpacks: method.UnpacksTargetFromContainerParam(program)}
 	}
-	// The callers are held to CallsTo above; what is compared here is what else the program answers of a method.
 	for symbol, method := range want.Methods {
 		method.Callers = nil
 		want.Methods[symbol] = method

@@ -15,8 +15,6 @@ import (
 	"time"
 )
 
-// projectWithASin is a git project the hooks judge, holding one Python file that commits a sin, and the folder the
-// journal gives the plugin for its own data. It answers the file's path.
 func projectWithASin(t *testing.T) (root, file, data string) {
 	t.Helper()
 	root, err := filepath.EvalSymlinks(t.TempDir())
@@ -42,8 +40,6 @@ func projectWithASin(t *testing.T) (root, file, data string) {
 	return root, file, data
 }
 
-// projectAnotherWorktreeStandsOn is a project a second worktree stands on, and the held event that asks to rebase
-// it: what the shared-branch gate refuses, and the one thing the plugin still has to say before a tool runs.
 func projectAnotherWorktreeStandsOn(t *testing.T) (data string, line map[string]any) {
 	t.Helper()
 	root, _, data := projectWithASin(t)
@@ -64,7 +60,6 @@ func projectAnotherWorktreeStandsOn(t *testing.T) (data string, line map[string]
 	}
 }
 
-// eventOf is the line version 4 of the journal sends for a file a tool changed.
 func eventOf(event, file string) map[string]any {
 	return map[string]any{
 		"v": 1, "event": event, "session": "s1", "environment": "main",
@@ -72,10 +67,6 @@ func eventOf(event, file string) map[string]any {
 	}
 }
 
-// TestTheHeldEventIsAnsweredWithNothingWorkedOutAndSaysItToTheQueue holds the whole promise of the one event the
-// journal may hold: its answer carries NOTHING worked out, and what the handlers had to say reaches the agent by the
-// queue the journal drains at its next hook instead. A hook that worked its answer out on the path the journal waits
-// on spent that wait on a scan, which is the fault this test exists to keep from coming back.
 func TestTheHeldEventIsAnsweredWithTheGatesAloneAndTheRestGoesToTheQueue(t *testing.T) {
 	data, line := projectAnotherWorktreeStandsOn(t)
 
@@ -86,16 +77,11 @@ func TestTheHeldEventIsAnsweredWithTheGatesAloneAndTheRestGoesToTheQueue(t *test
 
 	Judge4Into(line, data)
 
-	// The gate answered on the way out, so the queue carries only what is left of that moment — nothing here, since
-	// a command about to run has no sins of its own.
 	if queued := drained(t, data); len(queued) != 0 {
 		t.Errorf("the queue holds what the answer already carried: %v", queued)
 	}
 }
 
-// TestAFileEditedIsJudgedAndItsSinsGoToTheQueue holds the other half of the contract: the journal tells us a file it
-// has already recorded an edit of, after the reply, and that is where judging happens — one event per file, nothing
-// waiting on it, each sin parked for the agent's next hook.
 func TestAFileEditedIsJudgedAndItsSinsGoToTheQueue(t *testing.T) {
 	root, _, data := projectWithASin(t)
 	t.Setenv("JOURNAL_ROOT", root)
@@ -120,8 +106,6 @@ func TestAFileEditedIsJudgedAndItsSinsGoToTheQueue(t *testing.T) {
 	}
 }
 
-// drained is the queue as the journal drains it: every file it holds, oldest name first, read whole and deleted, so
-// a second drain answers for what happened since the first.
 func drained(t *testing.T, data string) []map[string]any {
 	t.Helper()
 	queue, _ := Queue4In(data)
@@ -154,9 +138,6 @@ func drained(t *testing.T, data string) []map[string]any {
 	return read
 }
 
-// saidAfter is one event judged the way the journal has it judged: its answer went out with the gates alone, the judge
-// ran after it, and this is the one thing it wrote to the queue for the agent's next hook. An event the judge had
-// nothing to say about answers an empty line, so a test may read a card that is not there.
 func saidAfter(t *testing.T, data string, line map[string]any) map[string]any {
 	t.Helper()
 	Judge4Into(line, data)
@@ -172,7 +153,6 @@ func saidAfter(t *testing.T, data string, line map[string]any) map[string]any {
 	return said[0]
 }
 
-// cardsOf are the cards one answer carries, each as the journal reads it.
 func cardsOf(said map[string]any) []map[string]any {
 	raised, _ := said["cards"].([]any)
 
@@ -185,7 +165,6 @@ func cardsOf(said map[string]any) []map[string]any {
 	return cards
 }
 
-// settles says whether one of the cards settles the key as repented, which is how a mark turns green where it stands.
 func settles(cards []map[string]any, key string) bool {
 	for _, card := range cards {
 		if asText(card["key"]) == key && asText(card["kind"]) == "sin-resolved" {
@@ -196,9 +175,6 @@ func settles(cards []map[string]any, key string) bool {
 	return false
 }
 
-// TestTheAnswerIsTheSameHoweverManyFilesTheToolChanged holds the answer to the one thing a hook must never depend on:
-// how much the tool did. A command about to change sixty files is answered exactly as one about to change nothing,
-// because neither is judged on the way out.
 func TestTheAnswerIsTheSameHoweverManyFilesTheToolChanged(t *testing.T) {
 	root, _, _ := projectWithASin(t)
 	t.Setenv("JOURNAL_ROOT", root)
@@ -224,8 +200,6 @@ func TestTheAnswerIsTheSameHoweverManyFilesTheToolChanged(t *testing.T) {
 	}
 }
 
-// TestWithNoFolderOfItsOwnTheHookAnswersTheHeldEventInFull holds the plugin to a journal that drains no queue: with
-// nowhere to park what it has to say, even the held event is answered with it, as it was before a queue existed.
 func TestWithNoFolderOfItsOwnTheHookAnswersTheHeldEventInFull(t *testing.T) {
 	_, line := projectAnotherWorktreeStandsOn(t)
 	t.Setenv(pluginData, "")
@@ -236,12 +210,6 @@ func TestWithNoFolderOfItsOwnTheHookAnswersTheHeldEventInFull(t *testing.T) {
 	}
 }
 
-// TestAnEditIsAnsweredWithoutReadingTheFileAtAll holds the correction of a belief that cost the agent every mark it
-// works by. An edit was answered with everything the judge found, because the journal hears it AFTER its own reply
-// and nothing seemed to wait on that answer. The journal waits on every answer it asks for: on a loaded machine a
-// judge of one file took twenty seconds of wall time for a fifth of a second of work, every answer was late, and no
-// sin reached the chat at all. So an edit of a file full of sins is answered exactly as an edit of a clean one, and
-// what the judge finds goes to the queue.
 func TestAnEditIsAnsweredWithoutReadingTheFileAtAll(t *testing.T) {
 	root, _, data := projectWithASin(t)
 	t.Setenv("JOURNAL_ROOT", root)
@@ -264,9 +232,6 @@ func TestAnEditIsAnsweredWithoutReadingTheFileAtAll(t *testing.T) {
 	}
 }
 
-// TestAQueuedAnswerIsTheAnswersOwnShapeInAFileOfItsOwn holds the written shape to the contract the journal drains
-// by: one file per answer, the same shape the journal is handed on a hook with the environment it is for, named so
-// the files sort in the order they were written, and nothing left under a name a drain would read half-written.
 func TestAQueuedAnswerIsTheAnswersOwnShapeInAFileOfItsOwn(t *testing.T) {
 	data := t.TempDir()
 	queue, queued := Queue4In(data)
@@ -307,14 +272,8 @@ func TestAQueuedAnswerIsTheAnswersOwnShapeInAFileOfItsOwn(t *testing.T) {
 	}
 }
 
-// TestTheServiceAnswersTheHeldEventWithTheGatesAloneAndAdvisesAfter holds the service to the window the journal
-// waits: the line it answers carries the gates and nothing else, and the rest of the moment is handed on to be
-// worked out after the answer went back. The journal allows a few milliseconds for this, which is why nothing the
-// answer needs may be worked out on the way.
 func TestTheServiceAnswersTheHeldEventWithTheGatesAloneAndAdvisesAfter(t *testing.T) {
 	_, line := projectAnotherWorktreeStandsOn(t)
-	// A socket's path is short by the operating system's rule, which a test's own folder is not: bound under one,
-	// listening answers "invalid argument" and this test skipped itself wherever it ran.
 	short, err := os.MkdirTemp("", "s")
 	if err != nil {
 		t.Fatal(err)
@@ -368,8 +327,6 @@ func TestTheServiceAnswersTheHeldEventWithTheGatesAloneAndAdvisesAfter(t *testin
 	}
 }
 
-// TestTheWorktreesAreKeptUntilOneIsAddedOrRemoved holds the gate's own knowledge to the window: it is read from git
-// once and kept, and the folder git writes a worktree in is what says the answer has changed.
 func TestTheWorktreesAreKeptUntilOneIsAddedOrRemoved(t *testing.T) {
 	root, _, _ := projectWithASin(t)
 	for _, run := range [][]string{
@@ -403,12 +360,7 @@ func TestTheWorktreesAreKeptUntilOneIsAddedOrRemoved(t *testing.T) {
 	}
 }
 
-// TestTheEditTheJournalHandsUsDecidesWhichSinsAreFresh holds the use of an edit the journal has already worked out:
-// the lines it names are the lines the edit wrote, so a sin standing on one of them is this edit's and a sin
-// elsewhere in the file is not. Asking git for the same answer costs a process per file, which a change of sixty
-// files pays sixty times. Each half runs in a project of its own, since a sin once reported is not reported again.
 func TestTheEditTheJournalHandsUsDecidesWhichSinsAreFresh(t *testing.T) {
-	// The sin sits on the file's second line.
 	for name, test := range map[string]struct {
 		wrote int
 		said  bool
@@ -445,10 +397,6 @@ func TestTheEditTheJournalHandsUsDecidesWhichSinsAreFresh(t *testing.T) {
 	}
 }
 
-// TestASinRepentedTurnsItsCardGreenOnTheEventThatRepentsIt holds the whole life of a chat mark on the path version 4
-// takes: the edit that commits a sin raises a card under its key, and the edit that takes the sin out raises a card
-// under that SAME key, which is how the journal settles one in place. Without it a sin fixed stays orange for good,
-// which is what the journal's own project saw.
 func TestASinRepentedTurnsItsCardGreenOnTheEventThatRepentsIt(t *testing.T) {
 	root, file, data := projectWithASin(t)
 	t.Setenv("JOURNAL_ROOT", root)
@@ -473,11 +421,6 @@ func TestASinRepentedTurnsItsCardGreenOnTheEventThatRepentsIt(t *testing.T) {
 	}
 }
 
-// TestASinGoneOutsideTheEditIsStillRepented holds the rule to the shape that broke it in the journal's own project:
-// a sin was announced, something took it out that the plugin never saw, and the next edit landed twenty lines away.
-// The judge of that edit must still settle the sin it no longer finds — the comparison is every key remembered for
-// the file against every key found in it now, and never only the lines the edit touched, or a card nobody will ever
-// settle stays orange for good.
 func TestASinGoneOutsideTheEditIsStillRepented(t *testing.T) {
 	root, file, data := projectWithASin(t)
 	t.Setenv("JOURNAL_ROOT", root)
@@ -488,7 +431,6 @@ func TestASinGoneOutsideTheEditIsStillRepented(t *testing.T) {
 	}
 	key := asText(raised[0]["key"])
 
-	// The sin at the top is taken out by nobody we hear from, and the edit we DO hear about adds a line at the end.
 	repaired := "def refund(order) -> int:\n    if order.late:\n        raise ValueError(order)\n    return order.total\n\n\ndef total(order) -> int:\n    return order.total\n"
 	if err := os.WriteFile(file, []byte(repaired), 0o644); err != nil {
 		t.Fatal(err)
@@ -511,10 +453,6 @@ func TestASinGoneOutsideTheEditIsStillRepented(t *testing.T) {
 	}
 }
 
-// TestGoingIdleSettlesAMarkNothingEditedAgain holds the mark of a file the agent stops touching: a sin was
-// announced, something the plugin never saw took it out — a shell command, `repent`, a checkout, or simply the
-// agent moving on to another file — and nothing would ever judge that file again, so its mark stayed orange for
-// good. Going idle judges the files that still carry a mark, and the one that is clean turns green.
 func TestGoingIdleSettlesAMarkNothingEditedAgain(t *testing.T) {
 	root, file, data := projectWithASin(t)
 	t.Setenv("JOURNAL_ROOT", root)
@@ -537,15 +475,11 @@ func TestGoingIdleSettlesAMarkNothingEditedAgain(t *testing.T) {
 		t.Fatalf("an edit elsewhere settled another file's mark, which is not what settles it: %v", edited)
 	}
 
-	// Through the QUEUE, which is where a stop's findings go: its own answer carries the gates alone, since the
-	// journal waits on every answer it asks for and a stop that swept the tree on that path ran past the limit
-	// it allows. Settled either way, one hook later.
 	if cards := settledByTheQueue(t, data, eventOf("idle", "")); !settles(cards, "sins:src/refund.py") {
 		t.Errorf("going idle settled %v, none of it the mark of the file that is now clean", cards)
 	}
 }
 
-// settledByTheQueue is the cards a moment put in the queue, which is where what it settles reaches the agent.
 func settledByTheQueue(t *testing.T, data string, line map[string]any) []map[string]any {
 	t.Helper()
 
@@ -560,8 +494,6 @@ func settledByTheQueue(t *testing.T, data string, line map[string]any) []map[str
 	return cards
 }
 
-// TestGoingIdleRaisesNothingNew holds the sweep to settling alone: a file that still holds its sin keeps the mark
-// it has, and going idle never announces a sin as if it had just been committed.
 func TestGoingIdleRaisesNothingNew(t *testing.T) {
 	root, _, data := projectWithASin(t)
 	t.Setenv("JOURNAL_ROOT", root)
@@ -575,17 +507,10 @@ func TestGoingIdleRaisesNothingNew(t *testing.T) {
 	}
 }
 
-// TestTheServiceAnswersEveryVersion4EventInVersion4sShape holds the service to the one protocol the journal reads.
-// Its answer used to be worked out from the map of the agent's moments, so an event missing from that map, a
-// worker's merge and the plugin's own update among them, fell through to version 3's keys, which version 4 drops
-// whole: a refused merge was thrown away and a worker's branch landed unjudged.
 func TestTheServiceAnswersEveryVersion4EventInVersion4sShape(t *testing.T) {
-	// The project stands on a branch another worktree holds, which is what the shared-branch gate refuses. That
-	// refusal is what the service used to answer in version 3's keys for an event it had no moment for.
 	projectAnotherWorktreeStandsOn(t)
 
 	for at, event := range []string{mergeEvent, "worker_merge_result", "a_journal_event_we_never_mapped"} {
-		// A socket's path is short by the operating system's rule, which a test's own folder is not.
 		short, err := os.MkdirTemp("", "s")
 		if err != nil {
 			t.Fatal(err)
@@ -622,8 +547,6 @@ func TestTheServiceAnswersEveryVersion4EventInVersion4sShape(t *testing.T) {
 			t.Fatalf("%s was not answered: %v", event, err)
 		}
 
-		// An empty answer is the journal's own way of saying nothing, which it reads as allow. What it cannot
-		// read is an answer carrying keys of its own protocol's predecessor.
 		if strings.TrimSpace(answer) == "" {
 			connection.Close()
 			listener.Close()
@@ -647,19 +570,12 @@ func TestTheServiceAnswersEveryVersion4EventInVersion4sShape(t *testing.T) {
 	}
 }
 
-// TestAnEditNamesItsOwnLinesWhateverTheJournalCallsThem holds the plugin to every journal. Version 4 wrote an
-// edit's rows with a `kind`, version 5 writes the same fact as `line_type`, and the journal is dropping the word
-// kind for `type`; the lines are what tell a sin the edit just wrote from one that was already in the file.
-// Reading one spelling only left every edit of the others looking like an edit that carried nothing, which is
-// answered by asking git for a diff the journal had already worked out: right, and a process per file for nothing.
 func TestAnEditNamesItsOwnLinesWhateverTheJournalCallsThem(t *testing.T) {
 	for name, kind := range map[string]string{"version 4's kind": "kind", "version 5's line_type": "line_type", "the journal's type": "type"} {
 		t.Run(name, func(t *testing.T) {
 			root, _, data := projectWithASin(t)
 			t.Setenv("JOURNAL_ROOT", root)
 
-			// The sin stands on the file's second line, and the edit says it wrote a line elsewhere, so a plugin
-			// that reads the rows raises nothing and one that ignores them asks git and raises the sin.
 			said := saidAfter(t, data, map[string]any{
 				"v": 1, "event": "file_edited", "session": "s1", "environment": "main",
 				"data": map[string]any{
@@ -675,10 +591,6 @@ func TestAnEditNamesItsOwnLinesWhateverTheJournalCallsThem(t *testing.T) {
 	}
 }
 
-// TestTheJournalsMinuteBeatSweepsLikeGoingIdle holds version 5's `ticked`, which reaches a plugin once a minute
-// for every open agent that is no subagent. It stands for the same moment as going idle: the files that still
-// carry a mark are judged again, so one something else put right turns green within the minute instead of waiting
-// for the agent to stop working.
 func TestTheJournalsMinuteBeatSweepsLikeGoingIdle(t *testing.T) {
 	root, file, data := projectWithASin(t)
 	t.Setenv("JOURNAL_ROOT", root)
@@ -692,29 +604,17 @@ func TestTheJournalsMinuteBeatSweepsLikeGoingIdle(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// Through the QUEUE, as a stop's findings go: the beat's own answer carries the gates alone, since the
-	// journal waits on every answer and a beat that swept the tree on that path ran past the limit it allows.
 	if cards := settledByTheQueue(t, data, eventOf("ticked", "")); !settles(cards, "sins:src/refund.py") {
 		t.Errorf("the beat settled %v, none of it the mark of the file that is now clean", cards)
 	}
 }
 
-// TestAPathIsReadAgainstTheFolderTheJournalNames holds the one thing a moment's own folder is for. The journal
-// names the path of an edited file relative to the checkout the edit happened in, and says which checkout that
-// is; read against the project instead, a worker's file names a path that is not there and the moment is dropped
-// at the gate without a word.
-//
-// Reported from a consumer on v7.15.1: two workers planted sixteen files holding sins, every delivery arrived
-// within a second, and not one of them was answered. Their earlier deliveries carried absolute paths, which is
-// why this had never shown.
 func TestAPathIsReadAgainstTheFolderTheJournalNames(t *testing.T) {
 	root, _ := workerProject(t)
 	worktree := filepath.Join(root, ".journal", "worktrees", "worker-1")
 
 	t.Setenv("JOURNAL_ROOT", root)
 
-	// The delivery as a consumer's journal really sends it: the path relative to the WORKTREE, and the folder
-	// beside it.
 	moment, known := Moment4Of(map[string]any{
 		"v": 1, "event": "file_edited", "session": "s1", "environment": "main", "agent": 7,
 		"data": map[string]any{
@@ -737,13 +637,10 @@ func TestAPathIsReadAgainstTheFolderTheJournalNames(t *testing.T) {
 			*named.File, worktree, own)
 	}
 
-	// And the folder the moment carries is that worktree, so the rules' own folders join to the checkout the
-	// file lies in rather than to the project.
 	if named.Cwd != worktree {
 		t.Errorf("the moment's folder is %q, not the worktree the journal named", named.Cwd)
 	}
 
-	// An absolute path is left exactly as it came, which is how every delivery before this one arrived.
 	absolute, _ := Moment4Of(map[string]any{
 		"v": 1, "event": "file_edited", "session": "s1", "environment": "main", "agent": 7,
 		"data": map[string]any{"path": own, "kind": "edit", "cwd": worktree},
@@ -754,12 +651,6 @@ func TestAPathIsReadAgainstTheFolderTheJournalNames(t *testing.T) {
 	}
 }
 
-// TestAWorkersCheckoutIsFoundHoweverDeepTheJournalKeepsIt holds the checkout a file lies in to GIT rather than to
-// the path's own words. How deep a journal keeps its workers' trees is its own business: one keeps them at
-// .journal/worktrees/worker-1, another at .journal/worktrees/development/worker-1. Read off the path, the first
-// folder below worktrees was taken for the checkout, which in the second layout is the environment's folder and
-// no checkout at all — so every edit of every worker in it was judged against the main checkout, and a worker
-// was told nothing of its own sins.
 func TestAWorkersCheckoutIsFoundHoweverDeepTheJournalKeepsIt(t *testing.T) {
 	root := t.TempDir()
 
@@ -792,15 +683,6 @@ func TestAWorkersCheckoutIsFoundHoweverDeepTheJournalKeepsIt(t *testing.T) {
 	}
 }
 
-// TestAPathTheMomentsFolderDoesNotHoldIsReadAgainstTheProject holds the OTHER shape a relative path comes in.
-// A journal names the folder the event happened in — a worker's own worktree — while naming the path relative to
-// the PROJECT, and joining the one to the other makes a path that is nowhere. Left as it came, every question
-// after it is nonsense about a relative path: the file is resolved against the worktree, which does not hold it,
-// and the moment is dropped without a word.
-//
-// Found by the many-trees fuzz, which draws all three shapes the journal sends: every failure it reported was a
-// brand-new file in a worktree announced this way, and an edit of an already-announced one hid it, since the run
-// had been told about that path before.
 func TestAPathTheMomentsFolderDoesNotHoldIsReadAgainstTheProject(t *testing.T) {
 	root, _ := workerProject(t)
 	worktree := filepath.Join(root, ".journal", "worktrees", "worker-1")
@@ -830,27 +712,11 @@ func TestAPathTheMomentsFolderDoesNotHoldIsReadAgainstTheProject(t *testing.T) {
 			*named.File, own)
 	}
 
-	// And once the file is a real path, the checkout it lies in is the worktree, which is what the rules' own
-	// folders join to. Left relative, the moment carried the project instead and every rule asked about a
-	// worker's file read it as a file outside the folders the project judges.
 	if named.Cwd != worktree {
 		t.Errorf("the moment's folder is %q, not the worktree the file lies in", named.Cwd)
 	}
 }
 
-// TestATickIsAnsweredWithTheGatesAloneAndSettlesThroughTheQueue holds the heartbeat and the stop to the same
-// promise the edit has. The journal WAITS on every answer it asks for, inside a window, so an answer worked out
-// on that path spends the wait on a scan.
-//
-// A tick and a stop were answered IN FULL, settlement and all, while a comment three lines above the code said
-// they are nobody's wait. Measured on a consumer with three workers, a fourth, the main agent and a 233-test run
-// going at once: judged_total 27955 ms for 143 ms of its own work, and the service's last fault "its service ran
-// past 60000 ms at ticked". Past that limit the journal faulted the service, and every moment it still held went
-// with it — a worker wrote a known sin, the delivery arrived, and it was never told, learning of it 99 seconds
-// later by judging its own tree.
-//
-// So the answer carries what the gates already know, and what the moment settles reaches the agent by the queue
-// one hook later, which is where an edit's findings already go.
 func TestATickIsAnsweredWithTheGatesAloneAndSettlesThroughTheQueue(t *testing.T) {
 	root, _, data := projectWithASin(t)
 	t.Setenv("JOURNAL_ROOT", root)
@@ -858,9 +724,6 @@ func TestATickIsAnsweredWithTheGatesAloneAndSettlesThroughTheQueue(t *testing.T)
 	sinful := "class Refund:\n    def total(self):\n        if True:\n            return 1\n        else:\n            return 2\n"
 
 	for at, event := range []string{tickedEvent, idleEvent} {
-		// A sin announced to THIS agent afresh, so each event has a settlement of its own to make: each is
-		// asked the same question, and a settlement the one before it already made would leave the next with
-		// nothing to say and prove nothing.
 		agent := 7 + at
 		if err := os.WriteFile(filepath.Join(root, "src", "refund.py"), []byte(sinful), 0o644); err != nil {
 			t.Fatal(err)
@@ -875,7 +738,6 @@ func TestATickIsAnsweredWithTheGatesAloneAndSettlesThroughTheQueue(t *testing.T)
 			t.Fatalf("%s: the edit told nothing, so there is no sin for it to settle", event)
 		}
 
-		// Put right, which is what the moment below has to notice.
 		if err := os.WriteFile(filepath.Join(root, "src", "refund.py"), []byte("class Refund:\n    pass\n"), 0o644); err != nil {
 			t.Fatal(err)
 		}
@@ -885,7 +747,6 @@ func TestATickIsAnsweredWithTheGatesAloneAndSettlesThroughTheQueue(t *testing.T)
 			"data": map[string]any{},
 		}
 
-		// The answer the journal WAITS for: the gates alone, and nothing worked out.
 		answer := Answer4Now(line)
 		for _, worked := range []string{"cards", "raise", "settle"} {
 			if strings.Contains(answer, worked) {
@@ -893,7 +754,6 @@ func TestATickIsAnsweredWithTheGatesAloneAndSettlesThroughTheQueue(t *testing.T)
 			}
 		}
 
-		// And what it settles reaches the agent through the queue instead.
 		Judge4Into(line, data)
 
 		var said []string
@@ -908,11 +768,6 @@ func TestATickIsAnsweredWithTheGatesAloneAndSettlesThroughTheQueue(t *testing.T)
 	}
 }
 
-// TestAFileTheToolWroteWholeIsReadWhicheverWordTheEventUses holds the other spelling of the same fact: an event
-// says whether the tool wrote the file or edited it, under `kind` as version 4 wrote it and under `type` as the
-// journal names it now, and a created file is new to its last line, so every line of it is the edit's. Read under
-// one spelling only, a file the tool had just written looked like an edit of a file that was already there, and
-// the sins the tool wrote on the lines it did not announce went unsaid.
 func TestAFileTheToolWroteWholeIsReadWhicheverWordTheEventUses(t *testing.T) {
 	for name, word := range map[string]string{"version 4's kind": "kind", "the journal's type": "type"} {
 		t.Run(name, func(t *testing.T) {
@@ -932,10 +787,6 @@ func TestAFileTheToolWroteWholeIsReadWhicheverWordTheEventUses(t *testing.T) {
 	}
 }
 
-// TestAnAnswersCardSaysWhichCardItIsInBothWords holds the plugin's own side of the same move: the journal has
-// dropped the word kind everywhere but this protocol and reads `type` with `kind` as its fallback, so every card
-// we answer with says which of the manifest's cards it is under both words. Said under one only, a card reaches
-// one version of the journal as a card of no declared kind, and the chat shows it without its label or its tone.
 func TestAnAnswersCardSaysWhichCardItIsInBothWords(t *testing.T) {
 	answer := JournalAnswer{Raises: []Raise{{Event: "sin-found", Key: "sins:src/refund.py", Brief: "1 sin"}}}.Shape4()
 

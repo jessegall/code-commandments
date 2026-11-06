@@ -15,10 +15,8 @@ type ManualHydrationLoopDetector struct{}
 
 func init() { detectors.Register(catalog.PHP, ManualHydrationLoopDetector{}) }
 
-// Sin is the sin the detector finds.
 func (ManualHydrationLoopDetector) Sin() sins.Sin { return backendsins.ManualHydrationLoop{} }
 
-// Find is every per-item ::from() on a Data class that is not conditional, tolerant, a keyed map or an inline projection.
 func (ManualHydrationLoopDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return php.In(codebase).
 		WhereKind("Expr_StaticCall").
@@ -32,9 +30,6 @@ func (ManualHydrationLoopDetector) Find(codebase *engine.Codebase) []engine.Matc
 		Get()
 }
 
-// Repentable says a scribe rewrites the sin away.
 func (ManualHydrationLoopDetector) Repentable() {}
 
-// CrossFile says the rule reads more than the file it reports in, which the fixture measures by asking it
-// of one file and of the whole tree: a scoped run reads the whole scan while it is enabled.
 func (ManualHydrationLoopDetector) CrossFile() {}

@@ -15,10 +15,8 @@ type ArrayReturnBagDetector struct{}
 
 func init() { detectors.Register(catalog.PHP, ArrayReturnBagDetector{}) }
 
-// Sin is the sin the detector finds.
 func (ArrayReturnBagDetector) Sin() sins.Sin { return backendsins.ArrayReturnBag{} }
 
-// Exemptions excuses a class whose job is handing the framework arrays, and a method whose signature it dictates.
 func (ArrayReturnBagDetector) Exemptions() []packages.Exemption {
 	return []packages.Exemption{
 		{Tag: packages.ArrayReturning, By: []packages.By{packages.EnclosingClass}},
@@ -26,9 +24,6 @@ func (ArrayReturnBagDetector) Exemptions() []packages.Exemption {
 	}
 }
 
-// Find is every returned array literal with two or more string keys, unless it nests, spreads, is the whole answer
-// of a file that declares nothing, is a JSON schema or a lookup table, projects a type that already exists, is
-// documented as a shape, or answers to an ancestor's method.
 func (d ArrayReturnBagDetector) Find(codebase *engine.Codebase) []engine.Match {
 	program := php.ProgramOf(codebase)
 
@@ -49,6 +44,4 @@ func (d ArrayReturnBagDetector) Find(codebase *engine.Codebase) []engine.Match {
 		Get())
 }
 
-// CrossFile says the rule reads more than the file it reports in, which the fixture measures by asking it
-// of one file and of the whole tree: a scoped run reads the whole scan while it is enabled.
 func (ArrayReturnBagDetector) CrossFile() {}

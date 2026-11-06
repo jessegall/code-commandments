@@ -8,8 +8,6 @@ import (
 	"github.com/jessegall/code-commandments/cli/source"
 )
 
-// TestAFileIsJudgedAsItsFolderWouldBe holds a file's judged path to the one a scan of its folder gives it, so a rule
-// reading `**/routes/**` finds the same file whether it was tried on the file or on its folder.
 func TestAFileIsJudgedAsItsFolderWouldBe(t *testing.T) {
 	routes := filepath.Join(t.TempDir(), "routes")
 	if err := os.MkdirAll(routes, 0o755); err != nil {

@@ -14,10 +14,8 @@ type NullableCallbackDetector struct{}
 
 func init() { detectors.Register(catalog.PHP, NullableCallbackDetector{}) }
 
-// Sin is the sin the detector finds.
 func (NullableCallbackDetector) Sin() sins.Sin { return backendsins.NullableCallback{} }
 
-// Find is every method with a null-defaulted nullable callable it both null-checks and calls.
 func (NullableCallbackDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return php.In(codebase).
 		WhereKind("Stmt_ClassMethod").

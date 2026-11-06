@@ -15,10 +15,8 @@ type NullToOptionalMapDetector struct{}
 
 func init() { detectors.Register(catalog.PHP, NullToOptionalMapDetector{}) }
 
-// Sin is the sin the detector finds.
 func (NullToOptionalMapDetector) Sin() sins.Sin { return backendsins.NullToOptionalMap{} }
 
-// Find is every hand-written null-to-Optional fallback, save a shared Optional factory.
 func (NullToOptionalMapDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return php.In(codebase).
 		Where(engine.As(spatienode.Node.IsOptionalNullFallback)).

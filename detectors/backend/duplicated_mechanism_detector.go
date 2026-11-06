@@ -12,8 +12,7 @@ import (
 	backendsins "github.com/jessegall/code-commandments/sins/backend"
 )
 
-// DuplicatedMechanismDetector finds classes in different namespaces, neither knowing the other, that reach the same
-// rare outside verbs: one mechanism built twice.
+// DuplicatedMechanismDetector finds classes in different namespaces, neither knowing the other, that reach the same rare outside verbs: one mechanism built twice.
 type DuplicatedMechanismDetector struct{}
 
 func init() { detectors.Register(catalog.PHP, DuplicatedMechanismDetector{}) }
@@ -26,13 +25,10 @@ const (
 	mechanismMinWeight = 30.0
 )
 
-// Sin is the sin the detector finds.
 func (DuplicatedMechanismDetector) Sin() sins.Sin { return backendsins.DuplicatedMechanism{} }
 
-// Unpublished keeps the detector out of every catalog while it is calibrated.
 func (DuplicatedMechanismDetector) Unpublished() {}
 
-// GroupKey is the verbs the class's cluster shares.
 func (DuplicatedMechanismDetector) GroupKey(finding engine.Match) (string, bool) {
 	codebase := finding.Codebase()
 	key := mechanismsOf(codebase).keys[finding.Location()]
@@ -40,7 +36,6 @@ func (DuplicatedMechanismDetector) GroupKey(finding engine.Match) (string, bool)
 	return key, key != ""
 }
 
-// Find is every class of a cluster of peers sharing a mechanism's worth of rare outside verbs.
 func (DuplicatedMechanismDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return mechanismsOf(codebase).findings
 }
@@ -102,7 +97,6 @@ func intersect(these, those []string) []string {
 	return both
 }
 
-// mechanismPairs is every pair of peer units sharing enough verbs, most shared first.
 func mechanismPairs(codebase *engine.Codebase, units map[string]mechanismUnit, order []string) [][2]string {
 	holders := map[string][]string{}
 	var verbs []string
@@ -117,8 +111,6 @@ func mechanismPairs(codebase *engine.Codebase, units map[string]mechanismUnit, o
 	overlap := map[[2]string]int{}
 	var pairs [][2]string
 	for _, verb := range verbs {
-		// Each pair of holders is listed the first time a verb joins them, and counted every time: the
-		// count is what tells a pair sharing one verb from a pair sharing a mechanism.
 		for _, pair := range engine.PairsAmong(holders[verb]) {
 			if overlap[pair] == 0 {
 				pairs = append(pairs, pair)
@@ -134,7 +126,6 @@ func mechanismPairs(codebase *engine.Codebase, units map[string]mechanismUnit, o
 	})
 }
 
-// arePeers says whether two classes sit in different namespaces and neither names the other.
 func arePeers(codebase *engine.Codebase, one, other engine.Match) bool {
 	if (php.Node{Match: one}).NamespaceName() == (php.Node{Match: other}).NamespaceName() {
 		return false
@@ -178,7 +169,6 @@ func clustered(codebase *engine.Codebase, units map[string]mechanismUnit, order 
 	return clusters
 }
 
-// isMechanism says whether shared resources amount to a mechanism: enough of them, verbs among them, and weight.
 func isMechanism(codebase *engine.Codebase, shared []string) bool {
 	reach := php.ReachOf(codebase)
 	if len(shared) < mechanismMinShared {

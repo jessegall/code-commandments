@@ -21,7 +21,6 @@ func init() {
 	skill.Register(catalog.Python, FixAtTheSource{})
 }
 
-// Definition is what the skill states about itself.
 func (FixAtTheSource) Definition() skill.Definition {
 	return skill.Definition{
 		Slug:      "python/fix-at-the-source",

@@ -8,14 +8,9 @@ import (
 	"strings"
 )
 
-// barWidth is how many cells the bar has.
 const barWidth = 24
 
-// Progress is a carriage-return bar drawn on stderr, so it never mixes into findings or a checklist on
-// stdout. It is silent unless its stream is an interactive terminal, or a journal check reads the run: there it
-// writes a plain `reading 120/983` or `detector 37/257` line each time the share done moves, which the check reads as
-// its progress.
-// Other piped runs, hooks, CI and tests see nothing.
+// Progress is a carriage-return bar drawn on stderr, so it never mixes into findings or a checklist on stdout.
 type Progress struct {
 	stream     io.Writer
 	enabled    bool
@@ -29,39 +24,20 @@ type Progress struct {
 	planned    bool
 }
 
-// JournalReport names the variable the journal sets for a check it runs, its report's file.
 const JournalReport = "JOURNAL_REPORT"
 
-// PlainProgress names the variable that asks for the counted lines where nothing says a journal is watching: a
-// journal command run through a reader of ours reads them, and a terminal is not what it has.
 const PlainProgress = "COMMANDMENTS_PLAIN_PROGRESS"
 
-// Timing names the variable that asks a run to say where its time went, on STDERR: how long it spent reading
-// and how long judging, and whether each bridge answered from the service the session keeps up or started one of
-// its own.
-//
-// It exists because a consumer had to find that out for us. They timed 3,364 edits from their own side over nine
-// hours to tell us a median of 2.8 seconds and a tail of 318, and we could not tell them which part of a run
-// those seconds were in — it turned out to be a cold bridge every time, which one line would have said.
-//
-// A variable rather than a flag, so a hook or a service can ask for it without the command line changing, and
-// nothing is printed unless something asks.
 const Timing = "COMMANDMENTS_TIMING"
 
-// Timed says whether this run was asked where its time went.
 func Timed() bool {
 	return os.Getenv(Timing) != ""
 }
 
-// Watched says whether a journal is reading this run: a check that named its report, or a command that asked for
-// the counted lines. What it reads is a card in someone's chat rather than a terminal, so a run it watches counts
-// in plain lines and says what it found in words.
 func Watched() bool {
 	return os.Getenv(JournalReport) != "" || os.Getenv(PlainProgress) != ""
 }
 
-// NewProgress draws on stream when it is a terminal, and writes plain lines when a journal check or a journal
-// command reads it.
 func NewProgress(stream io.Writer) *Progress {
 	terminal := isTerminal(stream)
 	plain := !terminal && Watched()
@@ -69,7 +45,6 @@ func NewProgress(stream io.Writer) *Progress {
 	return &Progress{stream: stream, enabled: terminal || plain, plain: plain, total: 1, lastFilled: -1, lastShare: -1}
 }
 
-// Status shows an opaque line for a phase whose progress cannot be counted, overwritten by the next one.
 func (p *Progress) Status(message string) {
 	if !p.enabled || p.plain {
 		return
@@ -78,9 +53,6 @@ func (p *Progress) Status(message string) {
 	fmt.Fprintf(p.stream, "\r\033[2K\033[2m%s\033[0m", message)
 }
 
-// Plan adds steps to what the run has to get through: every file a phase will read and every detector it will
-// run, each counted into ONE grand total. A run judges one engine after another, so the total grows as each
-// part is reached, and the count never starts again: a bar fills once over the whole run.
 func (p *Progress) Plan(steps int) {
 	if !p.enabled {
 		return
@@ -93,14 +65,10 @@ func (p *Progress) Plan(steps int) {
 	p.total, p.active = max(1, p.total+max(0, steps)), true
 }
 
-// Start says the detectors are the part now running. What they will take was planned before the run began, so
-// this counts nothing again: it draws where the count stands, which is what moves a journal's bar off the
-// reading phase at once.
 func (p *Progress) Start() {
 	p.reach(p.current, "judging", "")
 }
 
-// Advance moves one step, labelled with what now runs.
 func (p *Progress) Advance(label string) {
 	if !p.active {
 		return
@@ -109,11 +77,6 @@ func (p *Progress) Advance(label string) {
 	p.reach(p.current+1, "judging", label)
 }
 
-// Phase is this bar as a (done, total) reporter for one named phase, for a job that should not know whether
-// anyone is watching. The job counts its own steps from zero while the bar counts the whole run, so a report is
-// read from where the count stood when the job began; a job that starts over, as the next engine's reading does,
-// carries on from there rather than dropping back. What the job will take is planned by whoever starts it, so
-// nothing is counted into the total twice.
 func (p *Progress) Phase(phase string) func(done, total int) {
 	base, last, started := 0, 0, false
 
@@ -127,7 +90,6 @@ func (p *Progress) Phase(phase string) func(done, total int) {
 	}
 }
 
-// reach moves the count to at, never backwards and never past the total, and redraws when what is drawn moves.
 func (p *Progress) reach(at int, phase, label string) {
 	if !p.enabled {
 		return
@@ -148,7 +110,6 @@ func (p *Progress) reach(at int, phase, label string) {
 	}
 }
 
-// Finish clears the bar line; safe when nothing is drawn.
 func (p *Progress) Finish() {
 	if !p.active {
 		return
@@ -191,7 +152,6 @@ func isTerminal(stream io.Writer) bool {
 	return err == nil && info.Mode()&os.ModeCharDevice != 0
 }
 
-// counting is the word a journal check's line counts in: judging is one detector a step, so it says detector.
 func counting(phase string) string {
 	if phase == "judging" {
 		return "detector"

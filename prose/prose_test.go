@@ -53,9 +53,6 @@ func TestWordsAreStemmedContentWords(t *testing.T) {
 	}
 }
 
-// TestABareVerbIsTheVerbAndNothingElse holds the line between a name that narrates an action and one that states
-// something about the thing: `holds` is the verb alone, while `requiresApproval` says what it requires, which is
-// the affirmative phrase a boolean member is asked for.
 func TestABareVerbIsTheVerbAndNothingElse(t *testing.T) {
 	for _, name := range []string{"holds", "Holds", "spins", "ships", "binds", "shows"} {
 		if !IsBareVerb(name) {

@@ -5,7 +5,6 @@ import (
 	"github.com/jessegall/code-commandments/engine/php"
 )
 
-// callSites is every named method send, static call and new of a named class: the calls a callee can be resolved for.
 func callSites(codebase *engine.Codebase) []engine.Match {
 	return php.In(codebase).Where(func(m engine.Match) bool {
 		switch m.Kind() {
@@ -19,8 +18,6 @@ func callSites(codebase *engine.Codebase) []engine.Match {
 	}).Get()
 }
 
-// recurring is every candidate whose fingerprint recurs at least minimum times, group by group, keeping the groups
-// the qualifier accepts.
 func recurring(candidates []engine.Match, fingerprint func(engine.Match) (string, bool), minimum int, qualifies func([]engine.Match) bool) []engine.Match {
 	var findings []engine.Match
 	for _, group := range engine.RecurringBuckets(candidates, fingerprint, minimum) {

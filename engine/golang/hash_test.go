@@ -7,13 +7,6 @@ import (
 	"github.com/jessegall/code-commandments/engine/golang"
 )
 
-// Every other language registers its fingerprint, so `repeated` and `duplicated` answered for five languages and
-// silently answered nothing for Go. These hold Go's: two bodies that differ only in what a local is called are
-// one body, two that differ in which datum they hold are one body normalised and two as written, and two that do
-// different things are two either way.
-
-// TestTwoBodiesThatDifferOnlyInANameAreOneNormalised holds both readings apart: the body hash keeps the names, as
-// `duplicated` reads a body, and the normalised node hash blanks them, as `repeated` reads a node.
 func TestTwoBodiesThatDifferOnlyInANameAreOneNormalised(t *testing.T) {
 	codebase := codebaseOf(t, map[string]string{
 		"go.mod": "module example.com/shop\n",
@@ -60,13 +53,10 @@ func Highest(lines []int) int {
 		t.Fatal("a Go function has no body hash, so every repeat and duplicate question answers nothing for Go")
 	}
 
-	// As written, a local's name is part of the body: `duplicated` says two functions HAVE one body, and these
-	// two do not.
 	if bodies["Settled"] == bodies["Counted"] {
 		t.Error("two bodies whose locals are named differently read as one body as written")
 	}
 
-	// Normalised, the names are blanked, which is what a rule asking for a repeat reads a node by.
 	if golang.NodeHash(functions["Settled"], true) != golang.NodeHash(functions["Counted"], true) {
 		t.Error("two functions differing only in their locals' names read as two normalised")
 	}
@@ -76,8 +66,6 @@ func Highest(lines []int) int {
 	}
 }
 
-// TestADatumIsBlankedNormalisedAndKeptAsWritten holds the other half: the normalised reading is blind to which
-// datum a literal holds, and the exact reading is not, which is what a rule about a repeated string needs.
 func TestADatumIsBlankedNormalisedAndKeptAsWritten(t *testing.T) {
 	codebase := codebaseOf(t, map[string]string{
 		"go.mod": "module example.com/shop\n",

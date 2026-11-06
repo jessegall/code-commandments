@@ -17,11 +17,8 @@ import (
 // object is a JSON Schema node, written in the order its keys are set.
 type object = map[string]any
 
-// ownRule is the name a project's own rule is given: its class's short name.
 const ownRule = `^[A-Za-z_][A-Za-z0-9_]*$`
 
-// Schema is the JSON Schema of config.json: every key described, and every shipped rule, language and
-// hook offered by name, so an editor completes a config and explains it in place of comments.
 func Schema(root string) []byte {
 	tool := binary.Invocation(root)
 	schema := object{
@@ -99,7 +96,6 @@ type named struct {
 	description string
 }
 
-// formerIDs are the rule's id under each name its engine was published under before.
 func formerIDs(id string) []string {
 	engine, name, shipped := strings.Cut(id, "/")
 	if !shipped {
@@ -116,9 +112,6 @@ func formerIDs(id string) []string {
 	return former
 }
 
-// rules offers the shipped rules by name, and any name of the project's own. A rule of an engine that was
-// published under another name is offered under that name too, so a config written then is still named by the
-// schema the editor reads and never shows as a mistake.
 func rules(shipped []named) object {
 	choices := []any{}
 

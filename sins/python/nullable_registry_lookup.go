@@ -13,7 +13,6 @@ func init() {
 	sins.Register(catalog.Python, NullableRegistryLookup{})
 }
 
-// Definition is what the sin states about itself.
 func (NullableRegistryLookup) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "python-nullable-registry-lookup",

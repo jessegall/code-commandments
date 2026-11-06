@@ -9,12 +9,6 @@ import (
 	_ "github.com/jessegall/code-commandments/registry"
 )
 
-// A report is filed through `gh`, so the recorded parity cases ran the built binary to find out what the command
-// does before it gets there. What it REFUSES never reaches GitHub at all, and those refusals are the whole point of
-// the command: each one exists because a report filed without that piece wasted the reader's time and ours.
-
-// filed is what the command answered for the arguments, without reaching GitHub: every case here is refused before
-// anything is sent.
 func filed(t *testing.T, args ...string) (code int, said string, warned string) {
 	t.Helper()
 	var out, errs bytes.Buffer
@@ -26,7 +20,6 @@ func filed(t *testing.T, args ...string) (code int, said string, warned string) 
 	return code, out.String(), errs.String()
 }
 
-// TestAReportWithoutAReasonSaysWhatIsMissing holds the one thing every report must carry: what is wrong.
 func TestAReportWithoutAReasonSaysWhatIsMissing(t *testing.T) {
 	code, _, warned := filed(t, "--ref=src/Order.php:12")
 
@@ -38,8 +31,6 @@ func TestAReportWithoutAReasonSaysWhatIsMissing(t *testing.T) {
 	}
 }
 
-// TestABugReportMustReferenceTheCodeItIsAbout holds the refusal that saves the most time on both sides: a bug with
-// no file named is a bug nobody can look at, and the message says how to name several.
 func TestABugReportMustReferenceTheCodeItIsAbout(t *testing.T) {
 	code, _, warned := filed(t, "--reason=the scribe rewrote the wrong line")
 
@@ -54,11 +45,6 @@ func TestABugReportMustReferenceTheCodeItIsAbout(t *testing.T) {
 	}
 }
 
-// A report against the project's own rule is refused too, which custom_test.go already holds with a guarded `gh`.
-
-// TestADetectorReportConfrontsTheCleanestDesignFirst holds the litmus the rules about design are reported under: a
-// report is only valid when the flagged code already IS the cleanest design its author can conceive, so the command
-// asks for that design before it will file one.
 func TestADetectorReportConfrontsTheCleanestDesignFirst(t *testing.T) {
 	const asksForADesign = "AllNullableDataDetector"
 

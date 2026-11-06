@@ -13,8 +13,6 @@ import (
 	"github.com/jessegall/code-commandments/cli/source"
 )
 
-// TestARunAsksTheBridgeTheSessionKeepsUp holds a run of the tool to the C# bridge the session keeps up for the
-// project: found at the socket named for it, and answering the whole stream of the files asked.
 func TestARunAsksTheBridgeTheSessionKeepsUp(t *testing.T) {
 	root, err := filepath.EvalSymlinks(t.TempDir())
 	if err != nil {
@@ -53,9 +51,6 @@ func TestARunAsksTheBridgeTheSessionKeepsUp(t *testing.T) {
 	}
 }
 
-// TestAPythonReadAsksTheWarmMypySession holds a read of Python to the mypy session the journal keeps up for the
-// project: with the session answering at its socket and no interpreter to start one of its own, the read is still
-// whole, so it came from the session.
 func TestAPythonReadAsksTheWarmMypySession(t *testing.T) {
 	root, err := filepath.EvalSymlinks(t.TempDir())
 	if err != nil {
@@ -91,9 +86,6 @@ func TestAPythonReadAsksTheWarmMypySession(t *testing.T) {
 	}
 }
 
-// TestAServiceOutlivesARequestItCouldNotAnswer holds the service up through a request that fails. A bridge that
-// dies under one request used to take the service with it, and the journal, writing to the socket it left behind,
-// read a broken pipe, called the plugin at fault and switched it off, which stops every discipline being enforced.
 func TestAServiceOutlivesARequestItCouldNotAnswer(t *testing.T) {
 	root, err := filepath.EvalSymlinks(t.TempDir())
 	if err != nil {
@@ -117,7 +109,6 @@ func TestAServiceOutlivesARequestItCouldNotAnswer(t *testing.T) {
 	defer listener.Close()
 	go bridge.Answer(listener, server)
 
-	// The bridge dies, so the request that follows cannot be answered at all.
 	server.Close()
 
 	service, kept := bridge.Service("roslyn", root)
@@ -131,8 +122,6 @@ func TestAServiceOutlivesARequestItCouldNotAnswer(t *testing.T) {
 
 	service.Close()
 
-	// The second request is the one that matters: a loop that ended with the first leaves a socket nothing
-	// accepts, where asking hangs instead of answering.
 	again, kept := bridge.Service("roslyn", root)
 	if !kept {
 		t.Fatal("the service went down with the request it could not answer")

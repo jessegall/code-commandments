@@ -14,10 +14,8 @@ type MemberOutOfOrderDetector struct{}
 
 func init() { detectors.Register(catalog.PHP, MemberOutOfOrderDetector{}) }
 
-// Sin is the sin the detector finds.
 func (MemberOutOfOrderDetector) Sin() sins.Sin { return backendsins.MemberOutOfOrder{} }
 
-// Find is every head member placed after a member that ranks later.
 func (MemberOutOfOrderDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return php.In(codebase).
 		WhereKind(classMembers...).
@@ -26,5 +24,4 @@ func (MemberOutOfOrderDetector) Find(codebase *engine.Codebase) []engine.Match {
 		Get()
 }
 
-// Repentable says a scribe rewrites the sin away.
 func (MemberOutOfOrderDetector) Repentable() {}

@@ -15,10 +15,8 @@ type RequestAccessorRecastDetector struct{}
 
 func init() { detectors.Register(catalog.PHP, RequestAccessorRecastDetector{}) }
 
-// Sin is the sin the detector finds.
 func (RequestAccessorRecastDetector) Sin() sins.Sin { return backendsins.RequestAccessorRecast{} }
 
-// Find is every string() sent to a request whose result is made a string again.
 func (RequestAccessorRecastDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return php.In(codebase).
 		Where(engine.As(func(n php.Node) bool { return n.MethodCallName() == "string" })).
@@ -27,6 +25,4 @@ func (RequestAccessorRecastDetector) Find(codebase *engine.Codebase) []engine.Ma
 		Get()
 }
 
-// CrossFile says the rule reads more than the file it reports in, which the fixture measures by asking it
-// of one file and of the whole tree: a scoped run reads the whole scan while it is enabled.
 func (RequestAccessorRecastDetector) CrossFile() {}

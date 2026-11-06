@@ -1,10 +1,4 @@
-// Command record asks every bridge what its parser can emit and writes each answer under contract/declares, one
-// file per language. Run it from the repository root, in the dev container: scripts/dev go run
-// ./contract/declares/record.
-//
-// It is recorded rather than asked at every use for the same reason the contract's sample streams are: the answer
-// is the same every run of a given bridge, the census that reads it runs in the pre-commit hook and must stay
-// fast, and a recorded answer is one a reader can see change in a commit.
+// Command record asks every bridge what its parser can emit and writes each answer under contract/declares, one file per language.
 package main
 
 import (
@@ -25,9 +19,7 @@ func main() {
 	}
 }
 
-// record asks each bridge and writes what it declares.
 func record() error {
-	// Go is parsed in this process, so it answers here rather than through a command of its own.
 	declared := []contract.Declaration{gotree.Declares()}
 
 	for _, asked := range []struct {
@@ -65,7 +57,6 @@ func record() error {
 	return nil
 }
 
-// php is the PHP bridge's command, its bundle written out as a run writes it.
 func php() ([]string, error) {
 	folder, err := bridge.PHP.Folder()
 	if err != nil {
@@ -75,7 +66,6 @@ func php() ([]string, error) {
 	return []string{"php", filepath.Join(folder, "bridge.php")}, nil
 }
 
-// frontend is the frontend bridge's command, its bundle written out as a run writes it.
 func frontend() ([]string, error) {
 	folder, err := bridge.Frontend.Folder()
 	if err != nil {

@@ -13,7 +13,6 @@ func init() {
 	sins.Register(catalog.Python, ConstructorSideEffect{})
 }
 
-// Definition is what the sin states about itself.
 func (ConstructorSideEffect) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "python-constructor-side-effect",

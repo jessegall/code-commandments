@@ -5,14 +5,10 @@ import (
 	"strings"
 )
 
-// stringType is the string type, by the name the compiler gives it.
 const stringType = "global::System.String"
 
-// genericExceptions are the exceptions that name no failure a caller could catch by meaning.
 var genericExceptions = []string{"global::System.Exception", "global::System.SystemException", "global::System.ApplicationException", "global::System.InvalidOperationException"}
 
-// dictionaries are the dictionary types a lookup reads, by the name the compiler gives them without their
-// arguments.
 var dictionaries = []string{
 	"global::System.Collections.Generic.Dictionary<", "global::System.Collections.Generic.IDictionary<",
 	"global::System.Collections.Generic.IReadOnlyDictionary<", "global::System.Collections.Concurrent.ConcurrentDictionary<",
@@ -20,10 +16,8 @@ var dictionaries = []string{
 	"global::System.Collections.Frozen.FrozenDictionary<",
 }
 
-// jsonObjects are the JSON object types read by a string indexer.
 var jsonObjects = []string{"global::System.Text.Json.Nodes.JsonNode", "global::System.Text.Json.Nodes.JsonObject"}
 
-// scalars are the value types a clump is made of: what a parameter holds when it carries one datum, not an object.
 var scalars = []string{
 	"global::System.String", "global::System.Int16", "global::System.Int32", "global::System.Int64", "global::System.Decimal",
 	"global::System.Double", "global::System.Single", "global::System.Boolean", "global::System.Char", "global::System.Byte",
@@ -31,19 +25,14 @@ var scalars = []string{
 	"global::System.TimeSpan", "global::System.Guid",
 }
 
-// isDictionary says whether the type is one of the dictionaries a lookup reads.
 func isDictionary(name string) bool {
 	return slices.ContainsFunc(dictionaries, func(prefix string) bool { return strings.HasPrefix(name, prefix) })
 }
 
-// IsBranchingConstruct says whether the statement opens a choice the reader holds open: an `if`, a loop, a
-// `switch`. A `try`, a `using` or a `lock` is a boundary, not a choice.
 func (n Node) IsBranchingConstruct() bool {
 	return n.Is("IfStatement", "ForStatement", "ForEachStatement", "ForEachVariableStatement", "WhileStatement", "DoStatement", "SwitchStatement")
 }
 
-// IsBroadCatch says whether the `catch` catches everything, with no type or `Exception` itself, and no `when`
-// filter saying which failure it means.
 func (n Node) IsBroadCatch() bool {
 	if !n.Is("CatchClause") || n.firstChild("CatchFilterClause").Exists() {
 		return false
@@ -53,7 +42,6 @@ func (n Node) IsBroadCatch() bool {
 	return !declaration.Exists() || declaration.Type().Name() == "global::System.Exception"
 }
 
-// firstChild is the first child of one of the kinds, expressions included; no node when none is.
 func (n Node) firstChild(kinds ...string) Node {
 	for _, child := range n.All() {
 		if child.Is(kinds...) {
@@ -64,8 +52,6 @@ func (n Node) firstChild(kinds ...string) Node {
 	return Node{}
 }
 
-// Swallows says whether the `catch` makes the failure vanish: an empty body, a `continue`, or a `return` of
-// nothing or of a value that says "nothing".
 func (n Node) Swallows() bool {
 	body := n.firstChild("Block")
 	if !body.Exists() {
@@ -86,8 +72,6 @@ func (n Node) Swallows() bool {
 	return false
 }
 
-// IsAbsenceValue says whether the value says "nothing": `null`, `default`, `false`, `""`, an empty collection
-// expression, or `Array.Empty<T>()` / `Enumerable.Empty<T>()`.
 func (n Node) IsAbsenceValue() bool {
 	switch {
 	case n.Is("NullLiteralExpression", "DefaultLiteralExpression", "DefaultExpression", "FalseLiteralExpression"):
@@ -103,8 +87,6 @@ func (n Node) IsAbsenceValue() bool {
 	return false
 }
 
-// IsGenericThrowWithMessage says whether the `throw` builds an exception that names no failure and describes
-// it in a message written at the throw. The type is the constructor the compiler resolved, never the spelling.
 func (n Node) IsGenericThrowWithMessage() bool {
 	if !n.Is("ThrowStatement", "ThrowExpression") {
 		return false
@@ -118,7 +100,6 @@ func (n Node) IsGenericThrowWithMessage() bool {
 	return slices.Contains(genericExceptions, created.Target().Type()) && len(created.firstChild("ArgumentList").All()) > 0
 }
 
-// IsEmptyScalar says whether the value says "nothing" in a slot a type demands: `""`, `string.Empty`, `0`, `false`.
 func (n Node) IsEmptyScalar() bool {
 	switch {
 	case n.Is("StringLiteralExpression"):
@@ -134,8 +115,6 @@ func (n Node) IsEmptyScalar() bool {
 	return false
 }
 
-// IsBlankStringDefault says whether the parameter or property is defaulted to a blank string: `string note = ""`,
-// `= string.Empty`.
 func (n Node) IsBlankStringDefault() bool {
 	if !n.Is("Parameter", "PropertyDeclaration") {
 		return false
@@ -146,8 +125,6 @@ func (n Node) IsBlankStringDefault() bool {
 	})
 }
 
-// TestsBlanknessOf says whether the expression asks whether the name is blank: `name == ""`,
-// `name != string.Empty`, `name is ""`, `name.Length == 0`, or `string.IsNullOrEmpty(name)` and its whitespace twin.
 func (n Node) TestsBlanknessOf(name string) bool {
 	switch {
 	case n.IsCall():
@@ -164,24 +141,19 @@ func (n Node) TestsBlanknessOf(name string) bool {
 		(left.isLengthOf(name) && right.Text() == "0") || (right.isLengthOf(name) && left.Text() == "0")
 }
 
-// IsBlankString says whether the value is the blank string: `""` or `string.Empty`.
 func (n Node) IsBlankString() bool {
 	return n.Type().Name() == stringType && n.IsEmptyScalar()
 }
 
-// names says whether the expression reads the name: the bare name, or `this.` it.
 func (n Node) names(name string) bool {
 	return (n.Is("IdentifierName") && n.Name() == name) ||
 		(n.Is("SimpleMemberAccessExpression") && n.At(0).Is("ThisExpression") && n.At(1).Name() == name)
 }
 
-// isLengthOf says whether the expression is `name.Length`.
 func (n Node) isLengthOf(name string) bool {
 	return n.Is("SimpleMemberAccessExpression") && n.At(0).names(name) && n.At(1).Name() == "Length"
 }
 
-// WithoutNullableUnwrap is the expression with any unwrapping of a nullable taken off, `start!.Value`, `start!`
-// and `start.Value` read as `start`, and parentheses with it.
 func (n Node) WithoutNullableUnwrap() Node {
 	inner := n.WithoutParentheses()
 	switch {
@@ -194,7 +166,6 @@ func (n Node) WithoutNullableUnwrap() Node {
 	return inner
 }
 
-// WithoutParentheses is the expression with any parentheses around it taken off.
 func (n Node) WithoutParentheses() Node {
 	if n.Is("ParenthesizedExpression") {
 		return n.At(0).WithoutParentheses()
@@ -203,16 +174,12 @@ func (n Node) WithoutParentheses() Node {
 	return n
 }
 
-// IsNestedConditional says whether the conditional has another conditional as one of its branches:
-// `a ? b : c ? d : e`.
 func (n Node) IsNestedConditional() bool {
 	return n.Is("ConditionalExpression") && slices.ContainsFunc(n.All()[1:], func(branch Node) bool {
 		return branch.WithoutParentheses().Is("ConditionalExpression")
 	})
 }
 
-// IsEmptyCollection says whether the value is an empty collection written out: `[]`, `Enumerable.Empty<T>()`,
-// `Array.Empty<T>()`, or a `new List<T>()` with nothing in it.
 func (n Node) IsEmptyCollection() bool {
 	switch {
 	case n.Is("CollectionExpression"):
@@ -226,8 +193,6 @@ func (n Node) IsEmptyCollection() bool {
 	return false
 }
 
-// IsSameValueAs says whether the literal is the same value as the other: the same literal written again, or two
-// spellings of one empty value, `""` and `string.Empty`.
 func (n Node) IsSameValueAs(other Node) bool {
 	if n.IsEmptyScalar() && other.IsEmptyScalar() {
 		return n.Type().Name() == other.Type().Name()
@@ -236,8 +201,6 @@ func (n Node) IsSameValueAs(other Node) bool {
 	return n.IsLiteral() && n.Kind() == other.Kind() && n.Text() == other.Text()
 }
 
-// Fallback is what the expression falls back to when its value is missing: the right side of `x ?? fallback`,
-// or the branch a null test takes on a miss; no node for anything else.
 func (n Node) Fallback() Node {
 	if n.Is("CoalesceExpression") {
 		return n.Expressions()[1]
@@ -256,8 +219,6 @@ func (n Node) Fallback() Node {
 	return Node{}
 }
 
-// IsLookup says whether the expression reads a dictionary by key, `TryGetValue`, `GetValueOrDefault` or its
-// indexer, as the compiler resolved the receiver.
 func (n Node) IsLookup() bool {
 	if n.Is("ElementAccessExpression") {
 		return isDictionary(n.At(0).Type().Name())
@@ -266,8 +227,6 @@ func (n Node) IsLookup() bool {
 	return n.IsCall() && slices.Contains([]string{"TryGetValue", "GetValueOrDefault"}, n.Target().Name()) && isDictionary(n.mapReceiverType())
 }
 
-// mapReceiverType is the type of the map a call is made on: the receiver's, since `GetValueOrDefault` is an
-// extension method whose own type is the static class declaring it; for a call on nothing named, the method's own.
 func (n Node) mapReceiverType() string {
 	if n.At(0).Is("SimpleMemberAccessExpression") {
 		return n.At(0).At(0).Type().Name()
@@ -276,7 +235,6 @@ func (n Node) mapReceiverType() string {
 	return n.Target().Type()
 }
 
-// Arguments is the argument expressions a call, object creation or indexer is handed, in order.
 func (n Node) Arguments() []Node {
 	var arguments []Node
 	for _, argument := range n.firstChild("ArgumentList", "BracketedArgumentList").All() {
@@ -288,10 +246,6 @@ func (n Node) Arguments() []Node {
 	return arguments
 }
 
-// RethrowsUnchanged says whether the catch clause's whole body throws the very failure it caught, bare or
-// naming the caught variable: the clause catches, adds nothing, and throws again, which is what writing no
-// clause at all already does. A clause another clause follows is doing real work — it keeps the broader one
-// below from catching what it names — so it is no part of this.
 func (n Node) RethrowsUnchanged() bool {
 	body := n.firstChild("Block")
 	statements := body.Children()
@@ -305,15 +259,12 @@ func (n Node) RethrowsUnchanged() bool {
 	return statements[0].throwsWhatWasCaughtBy(n)
 }
 
-// isTheLastClause says whether no other catch clause of the same try follows this one.
 func (n Node) isTheLastClause() bool {
 	clauses := n.Parent().ChildrenIn("Catches")
 
 	return len(clauses) > 0 && clauses[len(clauses)-1].Node() == n.Node()
 }
 
-// throwsWhatWasCaughtBy says whether the throw hands on the failure the clause caught, untouched: a bare throw,
-// or one naming the caught variable and nothing else.
 func (n Node) throwsWhatWasCaughtBy(clause Node) bool {
 	thrown := n.Expressions()
 	if len(thrown) == 0 {

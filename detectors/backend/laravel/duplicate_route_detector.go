@@ -18,11 +18,8 @@ type DuplicateRouteDetector struct{}
 
 func init() { detectors.Register(catalog.PHP, DuplicateRouteDetector{}) }
 
-// Sin is the sin the detector finds.
 func (DuplicateRouteDetector) Sin() sins.Sin { return backendsins.DuplicateRoute{} }
 
-// Find is every route registration of a verb and action another registration repeats, single-action controllers
-// aside.
 func (DuplicateRouteDetector) Find(codebase *engine.Codebase) []engine.Match {
 	registrations := append(
 		php.In(codebase).WhereKind("Expr_StaticCall").Where(namesARouteVerb).Get(),
@@ -56,12 +53,10 @@ func (DuplicateRouteDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return findings
 }
 
-// namesARouteVerb says whether a call names a route verb as its method.
 func namesARouteVerb(call engine.Match) bool {
 	name := call.Child("name")
 
 	return name.Kind() == "Identifier" && slices.Contains(laravelnode.RouteVerbs, name.Name())
 }
 
-// CrossFile says the PHP tool finds it reaching beyond the file it judges, so a per-file check must not ask it.
 func (DuplicateRouteDetector) CrossFile() {}

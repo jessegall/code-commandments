@@ -13,7 +13,6 @@ func init() {
 	sins.Register(catalog.Python, StringMatchMirrorsEnum{})
 }
 
-// Definition is what the sin states about itself.
 func (StringMatchMirrorsEnum) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "python-string-match-mirrors-enum",

@@ -13,8 +13,6 @@ import (
 	"github.com/jessegall/code-commandments/rule"
 )
 
-// actions is a project's action classes and their callers, as transportklok-workspace wrote them while porting its
-// own detectors to rules: a handle() on an action runs it by hand.
 const actions = `<?php
 
 namespace Sample;
@@ -68,24 +66,22 @@ final class Caller
 }
 `
 
-// TestARuleJudgesTheClassANodeIsAbout holds the class checks to the class a node names, constructs or holds a value
-// of, uses to a class's traits, members to what its parents declare, and all to one node passing every step.
 func TestARuleJudgesTheClassANodeIsAbout(t *testing.T) {
 	codebase := phpCodebase(t, "Actions.php", actions)
 	for query, want := range map[string]string{
-		`{"select": "call", "where": [{"name": "handle"}, {"uses": "AsAction", "of": "child:var"}]}`:                          "[43 44 45]",
-		`{"select": "call", "where": [{"name": "handle"}, {"implements": "Countable", "of": "child:var"}]}`:                   "[]",
-		`{"select": "construction", "where": [{"extendsAny": "Repository"}]}`:                                                 "[48]",
-		`{"select": "construction", "where": [{"extends": "Repository"}]}`:                                                    "[48]",
-		`{"select": "type-declaration", "where": [{"uses": "AsAction"}]}`:                                                     "[11]",
-		`{"select": "type-declaration", "where": [{"members": {"name": "template", "atLeast": 1}}]}`:                         "[23 30]",
-		`{"select": "type-declaration", "where": [{"members": {"all": [{"name": "template"}, {"kind": "Stmt_Property"}], "atLeast": 1}}]}`: "[23]",
+		`{"select": "call", "where": [{"name": "handle"}, {"uses": "AsAction", "of": "child:var"}]}`:                                                          "[43 44 45]",
+		`{"select": "call", "where": [{"name": "handle"}, {"implements": "Countable", "of": "child:var"}]}`:                                                   "[]",
+		`{"select": "construction", "where": [{"extendsAny": "Repository"}]}`:                                                                                 "[48]",
+		`{"select": "construction", "where": [{"extends": "Repository"}]}`:                                                                                    "[48]",
+		`{"select": "type-declaration", "where": [{"uses": "AsAction"}]}`:                                                                                     "[11]",
+		`{"select": "type-declaration", "where": [{"members": {"name": "template", "atLeast": 1}}]}`:                                                          "[23 30]",
+		`{"select": "type-declaration", "where": [{"members": {"all": [{"name": "template"}, {"kind": "Stmt_Property"}], "atLeast": 1}}]}`:                    "[23]",
 		`{"select": "type-declaration", "where": [{"members": {"all": [{"name": "template"}, {"kind": "Stmt_Property"}], "atLeast": 1, "inherited": true}}]}`: "[23 30]",
-		`{"select": "type-declaration", "where": [{"members": {"all": [{"name": "store"}, {"hasModifier": "public"}], "atLeast": 1}}]}`: "[30]",
-		`{"select": "construction", "where": [{"any": [{"extendsAny": "Repository"}, {"resolvesLike": "*PayAction"}]}]}`:        "[45 48]",
-		`{"select": "construction", "where": [{"any": [{"resolvesLike": "*Nothing"}, {"resolvesLike": "*Neither"}]}]}`:         "[]",
-		`{"select": "construction", "where": [{"not": {"extendsAny": "Repository"}}]}`:                                         "[45]",
-		`{"select": "construction", "where": [{"not": {"any": [{"extendsAny": "Repository"}, {"resolvesLike": "*PayAction"}]}}]}`: "[]",
+		`{"select": "type-declaration", "where": [{"members": {"all": [{"name": "store"}, {"hasModifier": "public"}], "atLeast": 1}}]}`:                       "[30]",
+		`{"select": "construction", "where": [{"any": [{"extendsAny": "Repository"}, {"resolvesLike": "*PayAction"}]}]}`:                                      "[45 48]",
+		`{"select": "construction", "where": [{"any": [{"resolvesLike": "*Nothing"}, {"resolvesLike": "*Neither"}]}]}`:                                        "[]",
+		`{"select": "construction", "where": [{"not": {"extendsAny": "Repository"}}]}`:                                                                        "[45]",
+		`{"select": "construction", "where": [{"not": {"any": [{"extendsAny": "Repository"}, {"resolvesLike": "*PayAction"}]}}]}`:                             "[]",
 	} {
 		written := `{"engine": "backend", "sin": {"name": "action-run-by-hand", "description": "an action's handle called by hand", "skill": "php/laravel-idioms"}, "find": ` + query + `}`
 		found, err := rule.Parse("ActionRunnerInvocationDetector", []byte(written), shipped)
@@ -98,7 +94,6 @@ func TestARuleJudgesTheClassANodeIsAbout(t *testing.T) {
 	}
 }
 
-// TestARuleReadsAnAttributeATemplateElementWrites holds hasAttribute to an attribute written plain or bound.
 func TestARuleReadsAnAttributeATemplateElementWrites(t *testing.T) {
 	codebase := frontendtest.FromSource(t, map[string]string{"src/Form.vue": "<template>\n  <form>\n    <input data-dusk=\"name\" />\n    <input :data-dusk=\"field\" />\n    <input name=\"plain\" />\n  </form>\n</template>\n\n<script setup lang=\"ts\">\nconst field = 'email'\n</script>\n"})
 	written := `{"engine": "frontend", "sin": {"name": "untested-input", "description": "an input with no dusk selector", "skill": "vue/vue-components"}, "find": {"select": "kind:Element", "where": [{"name": "input"}], "reject": [{"hasAttribute": "data-dusk"}]}}`
@@ -111,9 +106,6 @@ func TestARuleReadsAnAttributeATemplateElementWrites(t *testing.T) {
 	}
 }
 
-// TestARuleMatchesClassesByPatternAndFilesByTheirNeighbours holds the second round of transportklok's port: a
-// receiver's class by a glob or as that exact class, receivers counted once each, a file's neighbour, and globs
-// with character classes.
 func TestARuleMatchesClassesByPatternAndFilesByTheirNeighbours(t *testing.T) {
 	root := t.TempDir()
 	for path, source := range map[string]string{
@@ -157,8 +149,8 @@ final class Pages
 }
 `,
 		"migrations/v12/AddTotals.php": "<?php\n\nnamespace Migrations\\V12;\n\nfinal class AddTotals {}\n",
-		"migrations/v12/v12.php":        "<?php\n\nnamespace Migrations\\V12;\n\nfinal class Helper {}\n",
-		"migrations/vnext/Draft.php":    "<?php\n\nnamespace Migrations\\Next;\n\nfinal class Draft {}\n",
+		"migrations/v12/v12.php":       "<?php\n\nnamespace Migrations\\V12;\n\nfinal class Helper {}\n",
+		"migrations/vnext/Draft.php":   "<?php\n\nnamespace Migrations\\Next;\n\nfinal class Draft {}\n",
 	} {
 		if err := os.MkdirAll(filepath.Dir(filepath.Join(root, path)), 0o755); err != nil {
 			t.Fatal(err)
@@ -172,11 +164,11 @@ final class Pages
 		t.Fatal(err)
 	}
 	for query, want := range map[string]string{
-		`{"select": "call", "where": [{"resolvesLike": "*Service", "of": "child:var"}]}`:                                      "[27 28 35 36]",
-		`{"select": "call", "where": [{"name": "validate"}, {"resolves": "App\\RequestState", "of": "child:var"}]}`:             "[29]",
-		`{"select": "call", "where": [{"name": "validate"}, {"extendsAny": "*Request", "of": "child:var"}]}`:                    "[29]",
+		`{"select": "call", "where": [{"resolvesLike": "*Service", "of": "child:var"}]}`:                            "[27 28 35 36]",
+		`{"select": "call", "where": [{"name": "validate"}, {"resolves": "App\\RequestState", "of": "child:var"}]}`: "[29]",
+		`{"select": "call", "where": [{"name": "validate"}, {"extendsAny": "*Request", "of": "child:var"}]}`:        "[29]",
 		`{"select": "function", "where": [{"count": {"descendant": {"all": [{"is": "call"}, {"nameIn": ["create", "update"]}]}, "distinct": "child:var", "atMost": 1}}, {"count": {"descendant": {"all": [{"is": "call"}, {"nameIn": ["create", "update"]}]}, "atLeast": 1}}]}`: "[25]",
-		`{"select": "type-declaration", "where": [{"file": "**/migrations/v[0-9]*/*"}, {"sibling": "{folder}.php"}]}`:          "[5]",
+		`{"select": "type-declaration", "where": [{"file": "**/migrations/v[0-9]*/*"}, {"sibling": "{folder}.php"}]}`:                                                                                                                                                           "[5]",
 	} {
 		written := `{"engine": "backend", "sin": {"name": "ported", "description": "a ported rule", "skill": "php/laravel-idioms"}, "find": ` + query + `}`
 		found, err := rule.Parse("PortedDetector", []byte(written), shipped)
@@ -189,8 +181,6 @@ final class Pages
 	}
 }
 
-// TestARuleReadsAParentFoldersFileAndTheClassItself holds the third round of transportklok's port: a helper's
-// migration one folder up, and a class that is the type or extends it.
 func TestARuleReadsAParentFoldersFileAndTheClassItself(t *testing.T) {
 	root := t.TempDir()
 	for path, source := range map[string]string{
@@ -212,8 +202,8 @@ func TestARuleReadsAParentFoldersFileAndTheClassItself(t *testing.T) {
 	}
 	for query, want := range map[string]string{
 		`{"select": "type-declaration", "where": [{"file": "**/fresh/*/*"}, {"sibling": "../{folder}.php"}]}`: "[5]",
-		`{"select": "type-declaration", "where": [{"isA": "App\\Request"}]}`:                                   "[5 7]",
-		`{"select": "type-declaration", "where": [{"extendsAny": "App\\Request"}]}`:                            "[7]",
+		`{"select": "type-declaration", "where": [{"isA": "App\\Request"}]}`:                                  "[5 7]",
+		`{"select": "type-declaration", "where": [{"extendsAny": "App\\Request"}]}`:                           "[7]",
 	} {
 		written := `{"engine": "backend", "sin": {"name": "ported", "description": "a ported rule", "skill": "php/laravel-idioms"}, "find": ` + query + `}`
 		found, err := rule.Parse("PortedDetector", []byte(written), shipped)
@@ -230,8 +220,6 @@ func TestARuleReadsAParentFoldersFileAndTheClassItself(t *testing.T) {
 	}
 }
 
-// TestARuleReadsTheTextATemplateShows holds a template's text to the words a reader sees, its whitespace collapsed,
-// so a rule judges a paragraph or a heading as it judges an attribute's value; an interpolation stays its own node.
 func TestARuleReadsTheTextATemplateShows(t *testing.T) {
 	codebase := frontendtest.FromSource(t, map[string]string{"src/DumpStart.vue": "<template>\n  <section>\n    <h2>Start a dump</h2>\n    <p class=\"dump-context\">Mixed is fine.\n      The agent sorts it {{ later }}.</p>\n  </section>\n</template>\n\n<script setup lang=\"ts\">\nconst later = 'later'\n</script>\n"})
 	written := `{"engine": "frontend", "sin": {"name": "plain-text", "description": "viewer text", "skill": "vue/vue-components"}, "find": {"select": "kind:Text", "where": [{"textMatches": "^Mixed is fine\\. The agent sorts it$"}]}}`

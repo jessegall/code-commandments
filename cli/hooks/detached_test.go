@@ -8,9 +8,6 @@ import (
 	"time"
 )
 
-// TestADetachedRunReadsTheWholeMoment holds the hand-over the detached advice depends on: the moment is a file of its
-// own, gone from the disk, that a run started and let go of still reads in full. A pipe would need this process to
-// feed it, and this process answers and ends before the run reads.
 func TestADetachedRunReadsTheWholeMoment(t *testing.T) {
 	raw := []byte(`{"event":"hook.PostToolUse","tool":{"name":"Write","file":"src/Order.php"}}` + "\n")
 

@@ -14,14 +14,13 @@ var (
 	tellDontAskPrinciple string
 )
 
-// TellDontAsk teaches: behaviour belongs with its data (feature envy): don't exile a loop over one object's collection into a separate class — move it onto the object (`$node->edges()`, not `EdgeDetector::detect($node)`). A Strategy over flat scalar fields is the exception.
+// TellDontAsk teaches: behaviour belongs with its data (feature envy): don't exile a loop over one object's collection into a separate class — move it onto the object (`$node->edges()`, not `EdgeDetector::detect($node)`).
 type TellDontAsk struct{}
 
 func init() {
 	skill.Register(catalog.PHP, TellDontAsk{})
 }
 
-// Definition is what the skill states about itself.
 func (TellDontAsk) Definition() skill.Definition {
 	return skill.Definition{
 		Slug:      "php/tell-dont-ask",

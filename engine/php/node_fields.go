@@ -7,8 +7,6 @@ import (
 	"github.com/jessegall/code-commandments/engine"
 )
 
-// SelfPropertyGroupsAssembled is, for every new and array literal under the node, the own properties it is handed
-// directly, where there are two or more.
 func (n Node) SelfPropertyGroupsAssembled() [][]string {
 	var groups [][]string
 	for _, expression := range withDescendants(n.Match) {
@@ -29,7 +27,6 @@ func (n Node) SelfPropertyGroupsAssembled() [][]string {
 	return groups
 }
 
-// directArgumentValues is the values an array literal holds or a construction or call passes, in order.
 func directArgumentValues(node engine.Match) []engine.Match {
 	var values []engine.Match
 	switch node.Kind() {
@@ -46,8 +43,6 @@ func directArgumentValues(node engine.Match) []engine.Match {
 	return values
 }
 
-// SelfPropertiesTestedForAbsence is every own property compared identically with null under the node, or tested
-// for an instance of the optional class when one is named.
 func (n Node) SelfPropertiesTestedForAbsence(optional string) []string {
 	var tested []string
 	add := func(name string) {
@@ -76,8 +71,6 @@ func (n Node) SelfPropertiesTestedForAbsence(optional string) []string {
 	return tested
 }
 
-// SelfFieldNestedReachTriples is, for every construction, array or call under the node, each own property it uses
-// directly paired with each field it reaches through another own property: [direct, base, reached].
 func (n Node) SelfFieldNestedReachTriples() [][3]string {
 	var triples [][3]string
 	for _, expression := range withDescendants(n.Match) {
@@ -92,10 +85,6 @@ func (n Node) SelfFieldNestedReachTriples() [][3]string {
 	return triples
 }
 
-// tripledWith pairs each property the expression reads directly with each [base, field] it reaches through
-// another one: the triple a reader of the rule needs, which is the own property, the property reached through,
-// and the field taken off it. A direct read of the very property being reached through is no triple, since
-// there is nothing being reached past.
 func tripledWith(directs []string, reaches [][2]string) [][3]string {
 	var triples [][3]string
 	for _, reach := range reaches {
@@ -110,8 +99,6 @@ func tripledWith(directs []string, reaches [][2]string) [][3]string {
 	return triples
 }
 
-// directFieldsAndReaches is the own properties an expression reads, and the [base, field] pairs it reaches through
-// one of them.
 func directFieldsAndReaches(expression engine.Match) ([]string, [][2]string) {
 	var directs []string
 	var reaches [][2]string
@@ -130,8 +117,6 @@ func directFieldsAndReaches(expression engine.Match) ([]string, [][2]string) {
 	return directs, reaches
 }
 
-// RewritesSelfPropertyOutsideConstructor says whether a method of the class around the node, the constructor
-// aside, assigns the named own property.
 func (n Node) RewritesSelfPropertyOutsideConstructor(name string) bool {
 	for _, method := range Methods(n.EnclosingClassLike().Match) {
 		if method.Name() == "__construct" {
@@ -147,7 +132,6 @@ func (n Node) RewritesSelfPropertyOutsideConstructor(name string) bool {
 	return false
 }
 
-// withDescendants is the node and every node under it, in pre-order.
 func withDescendants(node engine.Match) []engine.Match {
 	if !node.Exists() {
 		return nil
@@ -156,7 +140,6 @@ func withDescendants(node engine.Match) []engine.Match {
 	return append([]engine.Match{node}, descendantsOf(node)...)
 }
 
-// PublicFieldNames is the name of every public field the node declares, when it is a class.
 func (n Node) PublicFieldNames() []string {
 	if n.Kind() != "Stmt_Class" {
 		return nil
@@ -171,10 +154,6 @@ func (n Node) PublicFieldNames() []string {
 	return names
 }
 
-// IsUnreadCollaborator says whether the node is a promoted constructor parameter the class keeps to itself,
-// takes a collaborator through, and then never reads: the class asks for something it does not use, and the
-// only way a reader learns that is to search the whole type. A class that could read a field without naming it
-// answers no, since the read may well be somewhere this cannot see.
 func (n Node) IsUnreadCollaborator() bool {
 	field, isField := AsField(n.Match)
 	class := Node{Match: n.Closest(engine.TypeDeclaration)}
@@ -194,9 +173,6 @@ func (n Node) IsUnreadCollaborator() bool {
 	return !class.NamesTheField(field.Name)
 }
 
-// constructorUsesTheArgument says whether the constructor's own body reads the promoted parameter as the plain
-// argument it also is. The field is still read nowhere, but the value is used, so the fix is to stop promoting
-// it rather than to take it away, and that is a different thing to tell someone.
 func (n Node) constructorUsesTheArgument(name string) bool {
 	constructor := n.Up()
 	for _, statement := range constructor.ChildrenIn("stmts") {
@@ -210,9 +186,6 @@ func (n Node) constructorUsesTheArgument(name string) bool {
 	return false
 }
 
-// ReadsItsFieldsWithoutNamingThem says whether the class could read a field of its own without writing its name:
-// it uses a trait, answers a read it does not declare, or hands the whole object somewhere that reads every
-// field. A field's absence from the source then says nothing about whether it is read.
 func (n Node) ReadsItsFieldsWithoutNamingThem() bool {
 	if len(traitNames(n.Match)) > 0 {
 		return true
@@ -226,8 +199,6 @@ func (n Node) ReadsItsFieldsWithoutNamingThem() bool {
 	return slices.ContainsFunc(descendantsOf(n.Match), readsTheWholeObject)
 }
 
-// readsTheWholeObject says whether the expression reads every field of the object at once: a dynamic property
-// fetch, a cast of `$this` to an array, or a call that unpacks the whole object.
 func readsTheWholeObject(node engine.Match) bool {
 	if node.Kind() == "Expr_PropertyFetch" && node.Child("name").Kind() != "Identifier" {
 		return true
@@ -239,8 +210,6 @@ func readsTheWholeObject(node engine.Match) bool {
 	return node.Kind() == "Expr_FuncCall" && slices.Contains([]string{"compact", "get_object_vars", "serialize"}, node.Child("name").Name())
 }
 
-// NamesTheField says whether anything in the class names the field, the constructor's own promotion aside: a
-// read, a write, or an interpolation of `$this->name`.
 func (n Node) NamesTheField(name string) bool {
 	return slices.ContainsFunc(descendantsOf(n.Match), func(node engine.Match) bool {
 		fetch := Node{Match: node}
@@ -249,7 +218,6 @@ func (n Node) NamesTheField(name string) bool {
 	})
 }
 
-// isSelfFieldNamed says whether the node reads or writes `$this-><name>`.
 func (n Node) isSelfFieldNamed(name string) bool {
 	if !slices.Contains([]string{"Expr_PropertyFetch", "Expr_NullsafePropertyFetch"}, n.Kind()) {
 		return false
@@ -259,9 +227,6 @@ func (n Node) isSelfFieldNamed(name string) bool {
 	return owner.Kind() == "Expr_Variable" && owner.Name() == "this" && n.Child("name").Name() == name
 }
 
-// FilledParameter is the parameter a function fills and never gives back, and whether it fills one: a parameter
-// typed as a class whose own property the body writes, in a function that returns nothing. The signature then
-// says the object goes in and says nothing about it coming out changed, so the caller has to know.
 func (n Node) FilledParameter() (string, bool) {
 	if !n.IsCommandMethod() && n.DeclaredReturnType() != "" {
 		return "", false
@@ -279,8 +244,6 @@ func (n Node) FilledParameter() (string, bool) {
 	return "", false
 }
 
-// AsParameterField is the name a parameter typed as a class goes by, and whether it is one: a promoted one is
-// the class's own field and no part of this, and a scalar or an array carries no property to write.
 func AsParameterField(parameter engine.Match) (string, bool) {
 	variable := parameter.Child("var")
 	if slices.Contains(parameter.Node().Flags, "promoted") || variable.Kind() != "Expr_Variable" || variable.Name() == "" {
@@ -290,14 +253,12 @@ func AsParameterField(parameter engine.Match) (string, bool) {
 	return variable.Name(), Written(parameter.Node().Declared).Class() != ""
 }
 
-// writesAPropertyOf says whether the function writes a property of the variable the name holds.
 func (n Node) writesAPropertyOf(name string) bool {
 	return slices.ContainsFunc(descendantsOf(n.Match), func(node engine.Match) bool {
 		return Node{Match: node}.isPropertyWriteOn(name)
 	})
 }
 
-// isPropertyWriteOn says whether the node writes a property of the variable the name holds: `$order->total = …`.
 func (n Node) isPropertyWriteOn(name string) bool {
 	target := n.Child("var")
 	if n.Kind() != "Expr_Assign" || target.Kind() != "Expr_PropertyFetch" {

@@ -6,8 +6,6 @@ import (
 	"github.com/jessegall/code-commandments/catalog"
 )
 
-// Layers are the layers the project declares for an engine: each namespace and the ones it may use, as the
-// config gives them to that engine's NamespaceDependencyDetector, a leading `\` dropped. Empty when it declares none.
 func (c Config) Layers(engine catalog.Engine) map[string][]string {
 	layers := map[string][]string{}
 

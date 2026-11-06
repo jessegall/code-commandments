@@ -11,7 +11,6 @@ type DataClump struct{}
 
 func init() { sins.Register(catalog.PHP, DataClump{}) }
 
-// Definition is what the sin states about itself.
 func (DataClump) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "data-clump",

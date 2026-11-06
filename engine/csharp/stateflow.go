@@ -5,14 +5,12 @@ import (
 	"sort"
 )
 
-// StateFlow is how a type's own state moves through its members: which members read which of it, which fields may
-// hold nothing, and every value a field is given.
+// StateFlow is how a type's own state moves through its members: which members read which of it, which fields may hold nothing, and every value a field is given.
 type StateFlow struct {
 	owner Node
 	state []string
 }
 
-// FlowOf is the state flow of the type declaration.
 func FlowOf(owner Node) StateFlow {
 	return StateFlow{owner: owner, state: owner.StateNames()}
 }
@@ -23,8 +21,6 @@ type MemberReads struct {
 	Reads  []string
 }
 
-// ReadsByMember is the state each member other than a constructor or a field reads, in the order the type declares
-// them; a member that reads none is left out.
 func (f StateFlow) ReadsByMember() []MemberReads {
 	var reads []MemberReads
 	for _, member := range f.owner.All() {
@@ -51,14 +47,10 @@ func (f StateFlow) ReadsByMember() []MemberReads {
 	return reads
 }
 
-// readsState says whether the member is one whose reads of the type's state count: any member but a constructor
-// or a field.
 func (n Node) readsState() bool {
 	return n.hierarchyRole() == "member" && !n.Is("ConstructorDeclaration", "FieldDeclaration")
 }
 
-// NullableFields is the names the type holds nullable state under: the fields and properties it declares with a
-// type that admits `null`.
 func (f StateFlow) NullableFields() []string {
 	var names []string
 	for _, member := range f.owner.All() {
@@ -70,8 +62,6 @@ func (f StateFlow) NullableFields() []string {
 	return names
 }
 
-// AssignedValues is every value the field is given: its initial value, and every plain assignment to it a member
-// makes, a local of the same name aside.
 func (f StateFlow) AssignedValues(field string) []Node {
 	var values []Node
 	for _, member := range f.owner.All() {
@@ -86,7 +76,6 @@ func (f StateFlow) AssignedValues(field string) []Node {
 	return values
 }
 
-// Reads is every read of the field in the type's members other than its constructors and fields.
 func (f StateFlow) Reads(field string) []Node {
 	var reads []Node
 	for _, member := range f.owner.All() {
@@ -103,8 +92,6 @@ func (f StateFlow) Reads(field string) []Node {
 	return reads
 }
 
-// readsIn is the references to the type's state the member reads: not its writes' targets, nor a name the member
-// declares for itself.
 func (f StateFlow) readsIn(member Node) []Node {
 	own := slices.DeleteFunc(slices.Clone(f.state), func(name string) bool { return slices.Contains(member.OwnNames(), name) })
 	var targets []Node
@@ -123,7 +110,6 @@ func (f StateFlow) readsIn(member Node) []Node {
 	return reads
 }
 
-// writes is every write the member makes.
 func (n Node) writes() []Node {
 	var writes []Node
 	for _, expression := range n.expressionParts() {

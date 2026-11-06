@@ -15,17 +15,12 @@ type ArrayBagDetector struct{}
 
 func init() { detectors.Register(catalog.PHP, ArrayBagDetector{}) }
 
-// Sin is the sin the detector finds.
 func (ArrayBagDetector) Sin() sins.Sin { return backendsins.ArrayBag{} }
 
-// Exemptions excuses a class the framework builds without the container, whose array parameter is its convention.
 func (ArrayBagDetector) Exemptions() []packages.Exemption {
 	return []packages.Exemption{{Tag: packages.NoContainer, By: []packages.By{packages.EnclosingClass}}}
 }
 
-// Find is every string-keyed read of an array parameter, outside the serialization boundary, named constructors, a
-// method whose signature an ancestor fixes, a file that only answers with an array, and test code, which reads the
-// payload production code emits: the bag is judged where it is born.
 func (d ArrayBagDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return packages.Exempt(codebase, d, codebase.
 		Where(engine.As(php.Node.ArrayKeyIsString)).
@@ -38,6 +33,4 @@ func (d ArrayBagDetector) Find(codebase *engine.Codebase) []engine.Match {
 		Get())
 }
 
-// CrossFile says the rule reads more than the file it reports in, which the fixture measures by asking it
-// of one file and of the whole tree: a scoped run reads the whole scan while it is enabled.
 func (ArrayBagDetector) CrossFile() {}

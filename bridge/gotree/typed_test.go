@@ -10,8 +10,6 @@ import (
 	"github.com/jessegall/code-commandments/contract"
 )
 
-// typedModule is a module of two packages, so what a type-check gives across packages can be read: the cart
-// knows the money package's type, and a rule reading a receiver's type needs exactly that.
 var typedModule = map[string]string{
 	"go.mod":          "module example.com/shop\n",
 	"money/money.go":  "package money\n\ntype Money struct {\n\tcents int\n}\n\nfunc Of(cents int) Money { return Money{cents: cents} }\n\nfunc (m Money) Cents() int { return m.cents }\n",
@@ -19,7 +17,6 @@ var typedModule = map[string]string{
 	"cart/outside.go": "package cart\n\nimport \"net/http\"\n\nfunc Serve(w http.ResponseWriter) { w.WriteHeader(200) }\n",
 }
 
-// typedStream writes the module's tree and reads it back through the contract's reader.
 func typedStream(t *testing.T) *contract.Stream {
 	t.Helper()
 	root, err := filepath.EvalSymlinks(t.TempDir())
@@ -48,8 +45,6 @@ func typedStream(t *testing.T) *contract.Stream {
 	return stream
 }
 
-// TestAnExpressionCarriesTheTypeTheCheckerGave holds the types to the checker's own answers, named by the
-// package that declares them, so a rule reads a type rather than the text that spelled it.
 func TestAnExpressionCarriesTheTypeTheCheckerGave(t *testing.T) {
 	file := fileNamed(t, typedStream(t), "cart.go")
 
@@ -89,8 +84,6 @@ func TestAnExpressionCarriesTheTypeTheCheckerGave(t *testing.T) {
 	}
 }
 
-// TestAPointerAdmitsAbsenceAndASliceDoesNot holds the one place the contract reads absence to Go's own
-// semantics: a nil pointer is a value that is missing, and a nil slice is an empty one.
 func TestAPointerAdmitsAbsenceAndASliceDoesNot(t *testing.T) {
 	file := fileNamed(t, typedStream(t), "cart.go")
 
@@ -106,9 +99,6 @@ func TestAPointerAdmitsAbsenceAndASliceDoesNot(t *testing.T) {
 	}
 }
 
-// TestAMapCarriesItsKeyAndItsValue holds a map to a kind of its own, with its value as its element: that is what
-// a rule about a bag of values read by keys written in the source reads, where reading `map[` off the text would
-// be parsing the type again.
 func TestAMapCarriesItsKeyAndItsValue(t *testing.T) {
 	source := "package shop" + "\n" + "\n" + "func read(row map[string]any) any { return row[" + "\"" + "total" + "\"" + "] }" + "\n"
 	root := module(t, map[string]string{
@@ -140,8 +130,6 @@ func TestAMapCarriesItsKeyAndItsValue(t *testing.T) {
 	}
 }
 
-// TestADeclarationCarriesItsOwnId holds the symbols to the way CONTRACT.md spells Go's: a package-level
-// declaration is its package's path and its name, and a method or a field is that with its type between them.
 func TestADeclarationCarriesItsOwnId(t *testing.T) {
 	file := fileNamed(t, typedStream(t), "cart.go")
 
@@ -162,8 +150,6 @@ func TestADeclarationCarriesItsOwnId(t *testing.T) {
 	}
 }
 
-// TestACallReachesTheDeclarationItCalls holds a call's target to the declaration it calls, which is what joins a
-// call site to the method it reaches, across packages as well as inside one.
 func TestACallReachesTheDeclarationItCalls(t *testing.T) {
 	file := fileNamed(t, typedStream(t), "cart.go")
 
@@ -184,8 +170,6 @@ func TestACallReachesTheDeclarationItCalls(t *testing.T) {
 	}
 }
 
-// TestANameSaysWhatItRefersTo holds a use of a name to the declaration it names, so a rule never matches a name
-// as text to find what it means.
 func TestANameSaysWhatItRefersTo(t *testing.T) {
 	file := fileNamed(t, typedStream(t), "cart.go")
 
@@ -202,9 +186,6 @@ func TestANameSaysWhatItRefersTo(t *testing.T) {
 	}
 }
 
-// TestATypeOutsideTheModuleIsUnknownRatherThanWrong holds the typing decision of doc 3 where it shows: an import
-// outside the module is read as nothing, so an expression through it carries no type at all. That is what keeps
-// a rule from reading a type the checker never gave.
 func TestATypeOutsideTheModuleIsUnknownRatherThanWrong(t *testing.T) {
 	file := fileNamed(t, typedStream(t), "outside.go")
 
@@ -221,8 +202,6 @@ func TestATypeOutsideTheModuleIsUnknownRatherThanWrong(t *testing.T) {
 	}
 }
 
-// TestAFunctionSaysWhatItReturns holds a function's result to what it writes, a tuple where it answers several,
-// which is Go's own shape and the one every (T, error) reading starts from.
 func TestAFunctionSaysWhatItReturns(t *testing.T) {
 	root := module(t, map[string]string{
 		"go.mod":  "module example.com/shop\n",
@@ -253,8 +232,6 @@ func TestAFunctionSaysWhatItReturns(t *testing.T) {
 	}
 }
 
-// typeNamed is the type of that text the file's nodes carry. The reader puts each of a file's types back on the
-// nodes that named it and clears the list, so the nodes are where a test reads them.
 func typeNamed(t *testing.T, file *contract.File, text string) *contract.Type {
 	t.Helper()
 	for _, node := range file.Nodes() {
@@ -269,7 +246,6 @@ func typeNamed(t *testing.T, file *contract.File, text string) *contract.Type {
 	return nil
 }
 
-// textsIn are the texts of every type the file's nodes carry.
 func textsIn(file *contract.File) []string {
 	var texts []string
 	seen := map[string]bool{}
@@ -286,7 +262,6 @@ func textsIn(file *contract.File) []string {
 	return texts
 }
 
-// keys are a map's keys, for a failure to read.
 func keys[V any](held map[string]V) []string {
 	var names []string
 	for name := range held {
@@ -296,12 +271,6 @@ func keys[V any](held map[string]V) []string {
 	return names
 }
 
-// TestAFileThatDoesNotTypeCheckKeepsTheFactsAroundIt holds a type error to what it costs: the line the checker
-// cannot follow, and nothing else. The file beside it is typed, and so is the rest of its own file.
-//
-// The errors are not reported, and this is where the measuring shows why: an import outside the module is
-// answered with an empty package, so every file that touches the standard library raises one. What a reader
-// needs is in the stream per file, where the resolver says whether one ran at all.
 func TestAFileThatDoesNotTypeCheckKeepsTheFactsAroundIt(t *testing.T) {
 	root := module(t, map[string]string{
 		"go.mod":  "module example.com/shop\n",
@@ -326,10 +295,6 @@ func TestAFileThatDoesNotTypeCheckKeepsTheFactsAroundIt(t *testing.T) {
 	typeNamed(t, fileNamed(t, stream, "bad.go"), "int")
 }
 
-// TestTheWholeModuleAlwaysWritesTheSameStream holds a run of several packages to one answer. The checker keeps
-// what it learned in maps, which Go walks in a different order every run, so a stream built from them in that
-// order would differ between two runs of the same unchanged tree, and the engine's own recordings and memoised
-// readings would read that as a change in the code.
 func TestTheWholeModuleAlwaysWritesTheSameStream(t *testing.T) {
 	root := module(t, typedModule)
 

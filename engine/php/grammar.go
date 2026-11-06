@@ -42,8 +42,7 @@ func init() {
 
 			return engine.Before(strings.TrimSuffix(class, "()"), `\`)
 		},
-		Continues: engine.KindIn("Stmt_ElseIf"),
-		// PHP hangs a body straight off its construct, as its statements, so there is no block to read through.
+		Continues:         engine.KindIn("Stmt_ElseIf"),
 		Body:              engine.InFields("stmts"),
 		Otherwise:         otherwise,
 		Condition:         condition,
@@ -54,13 +53,6 @@ func init() {
 
 }
 
-// declaredMembers are what a PHP class declares: the statements of its body, and the promoted parameters of its
-// constructor, each of which declares a field though it is written in a signature. A rule asking what a type
-// declares has to see both, since a promoted parameter IS the field most modern PHP classes hold, and a read of
-// `$this->held` resolves to nothing while the class claims not to declare it.
-//
-// They come after the body's own members, which is the order a reader meets them in: the constructor is a member
-// too, and its parameters are written inside it.
 func declaredMembers(declaration engine.Match) []engine.Match {
 	declared := declaration.ChildrenIn("stmts")
 	for _, parameter := range ConstructorParams(declaration) {
@@ -72,8 +64,6 @@ func declaredMembers(declaration engine.Match) []engine.Match {
 	return declared
 }
 
-// binding says whether a statement only binds a name to a value: PHP files every assignment as an expression
-// wrapped in a statement of its own.
 func binding(statement engine.Match) bool {
 	if statement.Kind() != "Stmt_Expression" {
 		return false
@@ -82,13 +72,10 @@ func binding(statement engine.Match) bool {
 	return statement.Child("expr").Is(engine.Assignment)
 }
 
-// testFile says whether a PHP file is a test's: PHPUnit's `*Test.php`, or any file under a tests folder.
 func testFile(path, _ string) bool {
 	return strings.HasSuffix(path, "Test.php") || engine.InFolderNamed(path, "tests", "test")
 }
 
-// values are the values a call's arguments hand it, named and unpacked ones alike; a first-class callable's
-// `(...)` hands none.
 func values(call engine.Match) []engine.Match {
 	var handed []engine.Match
 	for _, argument := range call.ChildrenIn("args") {
@@ -100,7 +87,6 @@ func values(call engine.Match) []engine.Match {
 	return handed
 }
 
-// constructed is the class a `new` names.
 func constructed(construction engine.Match) engine.Match {
 	if construction.Kind() != "Expr_New" {
 		return engine.Match{}
@@ -109,8 +95,6 @@ func constructed(construction engine.Match) engine.Match {
 	return construction.Child("class")
 }
 
-// callers are the calls reaching a function or a method: a method's the index finds sent to its class or a
-// subclass, static or not, and a function's the calls naming it.
 func callers(function engine.Match) []engine.Match {
 	switch function.Kind() {
 	case "Stmt_Function":
@@ -124,7 +108,6 @@ func callers(function engine.Match) []engine.Match {
 	return nil
 }
 
-// attributes are the names of the attributes a declaration carries, in every group.
 func attributes(declaration engine.Match) []engine.Match {
 	var carried []engine.Match
 	for _, group := range declaration.ChildrenIn("attrGroups") {
@@ -134,12 +117,10 @@ func attributes(declaration engine.Match) []engine.Match {
 	return carried
 }
 
-// magic says whether PHP itself calls the method: a constructor, a destructor or any other magic method.
 func magic(declaration engine.Match) bool {
 	return declaration.Kind() == "Stmt_ClassMethod" && Node{Match: declaration}.IsMagicMethod()
 }
 
-// phpDocTags are the tags of a declaration's PHPDoc comments, each by its bare name: `@param $x` is param.
 func phpDocTags(declaration engine.Match) []string {
 	var tags []string
 	for _, comment := range declaration.DocComments() {
@@ -152,9 +133,6 @@ func phpDocTags(declaration engine.Match) []string {
 	return tags
 }
 
-// otherwise are the statements a branch runs when its condition does not hold. PHP files a ladder FLAT: an `if`
-// keeps its `elseif`s in a list of its own, beside its `else`, rather than nesting each in the one before. So the
-// next rung is the next entry of that list, and the `else` is only reached once the list is spent.
 func otherwise(branch engine.Match) []engine.Match {
 	owner := branch
 	if branch.Kind() == "Stmt_ElseIf" {
@@ -180,8 +158,6 @@ func otherwise(branch engine.Match) []engine.Match {
 	return owner.Child("else").Body()
 }
 
-// condition is what a branch or a loop decides by. A `switch` holds its subject under the same name, which its
-// cases are matched against rather than decided by, and a `foreach` decides by nothing at all.
 func condition(held engine.Match) engine.Match {
 	if !slices.Contains([]string{"Stmt_If", "Stmt_ElseIf", "Stmt_While", "Stmt_Do", "Expr_Ternary"}, held.Kind()) {
 		return engine.Match{}
@@ -190,18 +166,8 @@ func condition(held engine.Match) engine.Match {
 	return held.Child("cond")
 }
 
-// constantSides are the kinds PHP writes a constant value as: a literal, a class constant or an enum case
-// (`State::Paid`), and a bare constant name. The bridge writes no `constant` fact of its own here, so the kind is
-// what says it, which is the same reading IsOperand already makes of a derivation's leaves.
 var constantSides = []string{"Scalar_String", "Scalar_Int", "Scalar_Float", "Expr_ClassConstFetch", "Expr_ConstFetch"}
 
-// comparisonSubject is what a comparison tests against a constant: the side that is no constant, when the other
-// one is. It is what tells a ladder over ONE subject — `$order->state === State::Paid` and the next arm asking the
-// same read against another case — from a chain of unrelated tests, and PHP answered it nowhere, which is why the
-// rules built on it could not be written for PHP at all.
-//
-// Nothing where neither side is a constant, since `$a === $b` tests no subject against anything, and nothing where
-// both are: a comparison of two constants decides nothing about a subject.
 func comparisonSubject(held engine.Match) engine.Match {
 	if !slices.Contains([]string{"===", "==", "!==", "!="}, held.Operator()) {
 		return engine.Match{}
@@ -220,14 +186,10 @@ func comparisonSubject(held engine.Match) engine.Match {
 	return engine.Match{}
 }
 
-// isConstantSide says whether the side of a comparison is a constant value.
 func isConstantSide(side engine.Match) bool {
 	return slices.Contains(constantSides, side.Kind())
 }
 
-// elementName is the name a foreach binds for each item: the `$line` of `foreach ($order->lines as $line)`.
-// Nothing for a `for` or a `while`, which bind no item, and nothing for a foreach that unpacks its item into
-// several names, since no one name holds it.
 func elementName(loop engine.Match) string {
 	if loop.Kind() != "Stmt_Foreach" {
 		return ""
@@ -240,8 +202,6 @@ func elementName(loop engine.Match) string {
 	return element.Name()
 }
 
-// computes says whether the expression works a value out of its parts: PHP names every binary operator, every
-// compound assignment and every unary one with a prefix of its own, so the prefix is the whole answer.
 func computes(held engine.Match) bool {
 	kind := held.Kind()
 	for _, prefix := range []string{"Expr_BinaryOp_", "Expr_AssignOp_"} {

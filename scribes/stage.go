@@ -6,13 +6,9 @@ import "slices"
 type Stage int
 
 const (
-	// Maintenance steps regenerate what the code declares about itself, and run first.
 	Maintenance Stage = iota
-	// Fixing steps rewrite a sin in place.
 	Fixing
-	// Extracting steps lift markup out into components of its own, once the in-place fixes have run.
 	Extracting
-	// Normalising steps reshape what every other step has settled, and run last.
 	Normalising
 )
 
@@ -21,7 +17,6 @@ type Staged interface {
 	Stage() Stage
 }
 
-// Default is the chain repent runs: the steps by stage, each stage in the order the steps are given.
 func Default(steps ...Step) *Chain {
 	ordered := slices.Clone(steps)
 	slices.SortStableFunc(ordered, func(a, b Step) int { return stageOf(a) - stageOf(b) })

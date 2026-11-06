@@ -7,8 +7,7 @@ import (
 	"github.com/jessegall/code-commandments/engine"
 )
 
-// Vocabulary is the named string constants a codebase spells its call slots with: which classes' constants fill
-// each argument slot of a method, and the constant each such class names a string value by.
+// Vocabulary is the named string constants a codebase spells its call slots with: which classes' constants fill each argument slot of a method, and the constant each such class names a string value by.
 type Vocabulary struct {
 	classesBySlot map[string][]string
 	namesByClass  map[string]map[string]string
@@ -52,13 +51,10 @@ var vocabularies = Memoised(func(codebase *engine.Codebase) Vocabulary {
 	return vocabulary
 })
 
-// VocabularyOf is the codebase's constant vocabulary.
 func VocabularyOf(codebase *engine.Codebase) Vocabulary {
 	return vocabularies.Of(codebase)
 }
 
-// NameFor is the Class::CONSTANT that names the string literal's value, where the slot it fills is spelled with that
-// class's constants elsewhere; empty when none does.
 func (v Vocabulary) NameFor(literal engine.Match) string {
 	value, ok := literal.Text()
 	if literal.Kind() != "Scalar_String" || !ok {
@@ -77,10 +73,6 @@ func (v Vocabulary) NameFor(literal engine.Match) string {
 	return ""
 }
 
-// slotOf is the method and argument position an expression is passed in, as Class::method#position; empty unless
-// wordsNamedBy are the words a constant statement gives a name to, each word with the name it was given. A
-// constant whose value is no written string, or is empty, or reads as a number, names no word: a vocabulary is
-// made of words, and a number is not one.
 func wordsNamedBy(member engine.Match) map[string]string {
 	named := map[string]string{}
 	for _, constant := range (Node{Match: member}).ChildrenIn("consts") {
@@ -95,7 +87,6 @@ func wordsNamedBy(member engine.Match) map[string]string {
 	return named
 }
 
-// it is an argument of a static call or of a call on $this.
 func slotOf(expression engine.Match) string {
 	argument := expression.Parent()
 	call := argument.Parent()

@@ -7,9 +7,6 @@ import (
 	"github.com/jessegall/code-commandments/engine"
 )
 
-// NullObjectFor is how a default builds the Null Object of a class, the class written as asWritten: `new X()` when
-// its constructor needs no argument, else its one public static factory returning a constant `new self(...)`,
-// inlined; nothing when the class has no expressible Null Object.
 func NullObjectFor(codebase *engine.Codebase, fqcn, asWritten string) (string, bool) {
 	class, declared := ProgramOf(codebase).Class(fqcn)
 	if declared && constructorRequiresNoArguments(class) {
@@ -34,8 +31,6 @@ func NullObjectFor(codebase *engine.Codebase, fqcn, asWritten string) (string, b
 	return printed, err == nil
 }
 
-// constructorRequiresNoArguments says whether a class can be built with no argument: no constructor, or one whose
-// every parameter has a default or is variadic.
 func constructorRequiresNoArguments(class engine.Match) bool {
 	if class.Kind() != "Stmt_Class" {
 		return false
@@ -52,8 +47,6 @@ func constructorRequiresNoArguments(class engine.Match) bool {
 	return true
 }
 
-// nullObjectReturn is what a public static factory with no required parameter returns in its one statement, when
-// that is a constant construction of its own class.
 func nullObjectReturn(method, class engine.Match) (engine.Match, bool) {
 	modifiers := method.Node().Modifiers
 	public := slices.Contains(modifiers, "public") || !slices.Contains(modifiers, "protected") && !slices.Contains(modifiers, "private")
@@ -74,12 +67,10 @@ func nullObjectReturn(method, class engine.Match) (engine.Match, bool) {
 	return returned, isSelfConstruction(returned) && isInlinableConstant(returned, class)
 }
 
-// isRequiredParam says whether a caller must pass the parameter: it has no default and is not variadic.
 func isRequiredParam(param engine.Match) bool {
 	return !param.Child("default").Exists() && !slices.Contains(param.Node().Flags, "variadic")
 }
 
-// isSelfConstruction says whether an expression is `new self(...)` or `new static(...)`.
 func isSelfConstruction(expression engine.Match) bool {
 	return expression.Kind() == "Expr_New" && isSelfName(expression.Child("class"))
 }
@@ -90,8 +81,6 @@ func isSelfName(name engine.Match) bool {
 	return isName(name) && (lower == "self" || lower == "static")
 }
 
-// isInlinableConstant says whether an expression means the same written anywhere: a literal, a constant, its
-// negation, a public constant of the class, or a construction of the class from those.
 func isInlinableConstant(expression, class engine.Match) bool {
 	switch kind := expression.Kind(); {
 	case strings.HasPrefix(kind, "Scalar_"):
@@ -117,7 +106,6 @@ func isInlinableConstant(expression, class engine.Match) bool {
 	return false
 }
 
-// declaresPublicConst says whether the class declares the constant neither private nor protected.
 func declaresPublicConst(class engine.Match, name string) bool {
 	for _, group := range class.ChildrenIn("stmts") {
 		modifiers := group.Node().Modifiers

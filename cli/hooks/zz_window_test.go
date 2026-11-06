@@ -6,11 +6,6 @@ import (
 	"time"
 )
 
-// TestADeliveryWithNoWindowIsStillJudged holds the fault that let every delivery the journal ever sent pass
-// unjudged. The journal's `worker_delivering` carries `worker`, `task`, `branch`, `worktree` and `files` — and no
-// `window_ms`, because the HOLD is ours to declare and it honoured it without repeating it. Read as zero, the
-// window fell through both depths and the answer was "clean", so a worker's work was never judged while the
-// manifest promised three minutes of judging.
 func TestADeliveryWithNoWindowIsStillJudged(t *testing.T) {
 	for _, each := range []struct {
 		why   string
@@ -27,7 +22,6 @@ func TestADeliveryWithNoWindowIsStillJudged(t *testing.T) {
 		}
 	}
 
-	// And the window it falls back to must be enough to judge in at all, or the fallback is no better than zero.
 	if DeclaredWindow < changedFilesWindow {
 		t.Errorf("the declared window of %s is below the shallow threshold of %s, so a delivery is judged at no depth", DeclaredWindow, changedFilesWindow)
 	}

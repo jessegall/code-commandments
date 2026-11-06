@@ -89,10 +89,8 @@ func (DoubledDetector) Sin() sins.Sin { return Doubled{} }
 
 func (DoubledDetector) Find(*engine.Codebase) []engine.Match { return nil }
 
-// known is the toy catalog a #[Fixed] must name.
 var known = []detectors.Detector{LoopedNewDetector{}, ShoutingDetector{}, DoubledDetector{}}
 
-// toy is the toy fixture: six PHP files emitted as one generic tree.
 func toy(t *testing.T) *engine.Codebase {
 	t.Helper()
 	file, err := os.Open("testdata/toy.jsonl")
@@ -110,7 +108,6 @@ func toy(t *testing.T) *engine.Codebase {
 	}, stream)
 }
 
-// proving is the toy fixture proving the detectors, against the toy catalog.
 func proving(t *testing.T, proven ...detectors.Detector) fixture.Fixture {
 	return fixture.Fixture{Codebase: toy(t), Detectors: proven, Known: known}
 }
@@ -257,7 +254,6 @@ func TestMarkupCommentsMarkTheElementTheyLead(t *testing.T) {
 }
 
 func TestSimilarityIsPHPsSimilarText(t *testing.T) {
-	// Each want is PHP's own answer: similar_text($a, $b, $percent).
 	for _, pair := range []struct {
 		a, b string
 		want float64
@@ -273,7 +269,6 @@ func TestSimilarityIsPHPsSimilarText(t *testing.T) {
 	}
 }
 
-// passedBut says whether the result holds nothing outside the one list named.
 func passedBut(result fixture.Result, list string) bool {
 	lists := map[string]int{"Missed": len(result.Missed), "Unexpected": len(result.Unexpected), "FlaggedRighteous": len(result.FlaggedRighteous), "FlaggedFixed": len(result.FlaggedFixed)}
 	for name, size := range lists {
@@ -285,7 +280,6 @@ func passedBut(result fixture.Result, list string) bool {
 	return true
 }
 
-// contains says whether any failure holds the text.
 func contains(failures []string, text string) bool {
 	return slices.ContainsFunc(failures, func(failure string) bool { return strings.Contains(failure, text) })
 }
@@ -302,7 +296,6 @@ func (r *recorder) Errorf(format string, args ...any) {
 	r.failures = append(r.failures, fmt.Sprintf(format, args...))
 }
 
-// prove runs Prove on a recorder and answers what it failed for.
 func prove(proving fixture.Fixture) []string {
 	proven := &recorder{}
 	fixturetest.Prove(proven, proving)

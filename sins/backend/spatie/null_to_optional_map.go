@@ -11,7 +11,6 @@ type NullToOptionalMap struct{}
 
 func init() { sins.Register(catalog.PHP, NullToOptionalMap{}) }
 
-// Definition is what the sin states about itself.
 func (NullToOptionalMap) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "null-to-optional-map",
@@ -23,7 +22,6 @@ func (NullToOptionalMap) Definition() sins.Definition {
 	}
 }
 
-// Scaffolds are the helpers the fix reaches for, which scaffold generates into the project.
 func (NullToOptionalMap) Scaffolds() []sins.Scaffold {
 	return []sins.Scaffold{
 		{Path: "Support/OptionalOrMissing.php", Stub: "OptionalOrMissing.php.stub"},

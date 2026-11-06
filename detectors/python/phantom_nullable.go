@@ -16,12 +16,10 @@ func init() {
 	detectors.Register(catalog.Python, PhantomNullableDetector{})
 }
 
-// Sin is the sin the detector finds.
 func (PhantomNullableDetector) Sin() sins.Sin {
 	return pysins.PhantomNullable{}
 }
 
-// Find is every place the sin is committed.
 func (PhantomNullableDetector) Find(codebase *engine.Codebase) []engine.Match {
 	program := py.In(codebase).Program
 	var findings []engine.Match
@@ -32,5 +30,4 @@ func (PhantomNullableDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return findings
 }
 
-// CrossFile says the PHP tool finds it reaching beyond the file it judges, so a per-file check must not ask it.
 func (PhantomNullableDetector) CrossFile() {}

@@ -8,7 +8,6 @@ type Tuning struct {
 	tune   func(Detector) (Detector, bool)
 }
 
-// Tune is a tuning of the detector type D: tune gets the detector as registered and returns it set.
 func Tune[D Detector](tune func(D) D) Tuning {
 	var target D
 
@@ -25,8 +24,6 @@ func Tune[D Detector](tune func(D) D) Tuning {
 	}
 }
 
-// Tuned is the detectors with each tuning applied to the one it targets, and the name of every detector a tuning
-// targets that is not among them.
 func Tuned(detectors []Detector, tunings ...Tuning) ([]Detector, []string) {
 	tuned := append([]Detector(nil), detectors...)
 	var unmatched []string

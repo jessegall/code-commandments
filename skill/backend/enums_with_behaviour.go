@@ -21,7 +21,6 @@ func init() {
 	skill.Register(catalog.PHP, EnumsWithBehaviour{})
 }
 
-// Definition is what the skill states about itself.
 func (EnumsWithBehaviour) Definition() skill.Definition {
 	return skill.Definition{
 		Slug:      "php/enums-with-behaviour",

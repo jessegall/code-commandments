@@ -13,7 +13,6 @@ func init() {
 	sins.Register(catalog.Python, EnumValueMatch{})
 }
 
-// Definition is what the sin states about itself.
 func (EnumValueMatch) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "python-enum-value-match",

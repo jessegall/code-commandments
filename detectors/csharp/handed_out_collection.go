@@ -16,12 +16,10 @@ func init() {
 	detectors.Register(catalog.CSharp, HandedOutCollectionDetector{})
 }
 
-// Sin is the sin the detector finds.
 func (HandedOutCollectionDetector) Sin() sins.Sin {
 	return cssins.HandedOutCollection{}
 }
 
-// Find is every getter handing out a collection of its type's own.
 func (HandedOutCollectionDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return cs.In(codebase).
 		Where(engine.As(cs.Node.HandsOutItsOwnCollection)).

@@ -14,10 +14,8 @@ type StackedDocblockDetector struct{}
 
 func init() { detectors.Register(catalog.PHP, StackedDocblockDetector{}) }
 
-// Sin is the sin the detector finds.
 func (StackedDocblockDetector) Sin() sins.Sin { return backendsins.StackedDocblock{} }
 
-// Find is every node with more than one doc comment attached.
 func (StackedDocblockDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return php.In(codebase).
 		Where(engine.As(php.Node.HasDocComment)).
@@ -25,8 +23,6 @@ func (StackedDocblockDetector) Find(codebase *engine.Codebase) []engine.Match {
 		Get()
 }
 
-// Repentable says a scribe rewrites the sin away.
 func (StackedDocblockDetector) Repentable() {}
 
-// RunsLast says its fix reshapes code after every other fix has run.
 func (StackedDocblockDetector) RunsLast() {}

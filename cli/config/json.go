@@ -12,8 +12,6 @@ import (
 	"github.com/jessegall/code-commandments/cli/source"
 )
 
-// SchemaFile is the JSON Schema a config.json names, written beside it so an editor completes and explains
-// every key.
 const SchemaFile = "config.schema.json"
 
 // document is config.json as it is written: every key optional, in the order a reader meets them.
@@ -41,8 +39,6 @@ type disabled struct {
 	Agents    []string `json:"agents,omitempty"`
 }
 
-// ReadJSON reads the config.json at path. A key the format does not have is an invalid configuration, so a
-// typo never passes as a setting nothing reads.
 func ReadJSON(path string) (Config, error) {
 	text, err := os.ReadFile(path)
 	if err != nil {
@@ -100,7 +96,6 @@ func rulesNamed(kind Kind, ids []string) []Rule {
 	return rules
 }
 
-// languagesNamed reads the languages config.json names: php, vue, typescript, python or csharp.
 func languagesNamed(names []string) ([]source.Language, error) {
 	var languages []source.Language
 
@@ -126,13 +121,10 @@ func languageNamed(name string) (source.Language, bool) {
 	return "", false
 }
 
-// LanguageName is how config.json names a language.
 func LanguageName(language source.Language) string {
 	return strings.ToLower(caseOf(language))
 }
 
-// configuratorOf reads one detector's calls: each a one-key object, the method it calls on the detector and
-// its arguments in order.
 func configuratorOf(target string, steps []map[string][]any) (Configurator, error) {
 	configurator := Configurator{Target: RuleNamed(Detector, target)}
 
@@ -160,7 +152,6 @@ func configuratorOf(target string, steps []map[string][]any) (Configurator, erro
 	return configurator, nil
 }
 
-// literal is a JSON value as a configurator argument: a string, an int, a bool, nil, or a []any of those.
 func literal(value any) (any, error) {
 	switch typed := value.(type) {
 	case json.Number:
@@ -190,7 +181,6 @@ func literal(value any) (any, error) {
 	}
 }
 
-// JSON is the config as config.json writes it, naming the schema beside it.
 func (c Config) JSON() []byte {
 	written := document{Schema: "./" + SchemaFile, Paths: c.Paths, Exclude: c.Excluded, Base: c.Base, Detectors: c.Detectors, Packages: c.Packages, Hooks: c.Hooks, Agents: c.Agents, Parallel: c.Parallel}
 

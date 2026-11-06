@@ -16,12 +16,10 @@ func init() {
 	detectors.Register(catalog.Python, ConditionalSpreadDetector{})
 }
 
-// Sin is the sin the detector finds.
 func (ConditionalSpreadDetector) Sin() sins.Sin {
 	return pysins.ConditionalSpread{}
 }
 
-// Find is every place the sin is committed.
 func (ConditionalSpreadDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return py.In(codebase).
 		Where(engine.As(py.Node.IsConditionalSpread)).

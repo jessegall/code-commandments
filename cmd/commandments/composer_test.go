@@ -10,10 +10,6 @@ import (
 	"github.com/jessegall/code-commandments/bridge/bridgetest"
 )
 
-// TestAComposerInstallJudgesAsTheCheckoutDoes installs the package the way a consumer does — composer, from a
-// repository holding only what the package ships, its script and its composer.json — into a project with no checkout
-// and no Go beside it, fetches the release binary through the shim from a local release, wires the project, and
-// judges copies of the PHP, Vue and Python fixtures exactly as a build run from the checkout judges them.
 func TestAComposerInstallJudgesAsTheCheckoutDoes(t *testing.T) {
 	for _, tool := range []string{"composer", "php", "node", "git"} {
 		if _, err := exec.LookPath(tool); err != nil {

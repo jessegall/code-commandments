@@ -1,5 +1,4 @@
-// Package sync refreshes a project's code-commandments integration: the skills published into the library
-// every agent reads, the AGENTS.md briefing, the config, and each agent's own view of them.
+// Package sync refreshes a project's code-commandments integration: the skills published into the library every agent reads, the AGENTS.md briefing, the config, and each agent's own view of them.
 package sync
 
 import (
@@ -20,24 +19,20 @@ import (
 	"github.com/jessegall/code-commandments/cli/workspace"
 )
 
-// retiredCommands are commands the tool once published into an agent's folder, removed by exact name.
 var retiredCommands = []string{"until.md", "stop-condition.md"}
 
 // Command is `sync`.
 type Command struct{}
 
-// Names are the verbs it answers to.
 func (Command) Names() []string {
 	return []string{"sync"}
 }
 
-// Help documents it.
 func (Command) Help() help.Help {
 	return help.Of("Refresh this project's code-commandments integration — publish the skills into the library every agent reads, refresh the AGENTS.md briefing and the config surface, and wire each agent's own view of them.").
 		Form("sync", "run it (idempotent; composer runs it for you on every install/update once `install` has wired it)")
 }
 
-// Run syncs the project the working folder is in.
 func (c Command) Run(in *cli.Input, console cli.Console) (int, error) {
 	cwd, err := os.Getwd()
 	if err != nil {
@@ -55,8 +50,6 @@ func (c Command) Run(in *cli.Input, console cli.Console) (int, error) {
 	return 0, Sync(root, console)
 }
 
-// Sync runs every step over the project at root, in the order that keeps a run failing halfway harmless:
-// the ignore rules before anything is generated, and the canon before anything points at it.
 func Sync(root string, console cli.Console) error {
 	project, err := config.Load(root)
 	if err != nil {
@@ -75,10 +68,6 @@ func Sync(root string, console cli.Console) error {
 
 	lib := library.At(root, project)
 
-	// Who publishes the skills depends on how the tool is installed. As the journal's plugin, the journal copies
-	// the plugin's own rendered skills into the agents' folders and takes them away when the plugin goes, so this
-	// side stands aside and withdraws what it published before: two publishers of one path would fight over it.
-	// As a plain package, which is every project without a journal, this side is the only publisher there is.
 	driven := workspace.At(root, "").IsJournalDriven()
 
 	var published []string
@@ -138,9 +127,6 @@ func Sync(root string, console cli.Console) error {
 	return nil
 }
 
-// wire points the agent at what was published: a link per skill in its own folder, the commands it no longer
-// publishes, and, for an agent that enforces, the hooks. What a project is TOLD is agents.Brief's, written for
-// every agent at once.
 func wire(root string, agent agents.Agent, lib library.Library, published []string, console cli.Console) {
 	if dir := agent.SkillsDir(); dir != "" {
 		os.RemoveAll(filepath.Join(root, dir, "commandments"))
@@ -167,8 +153,6 @@ func wire(root string, agent agents.Agent, lib library.Library, published []stri
 	}
 }
 
-// ensureConfig brings the project's config to config.json: a config.php is migrated once, a project with
-// neither starts on one, and the schema beside it is this version's.
 func ensureConfig(root string, console cli.Console) error {
 	migrated, err := config.Migrate(root)
 	if err != nil {
@@ -194,8 +178,6 @@ func warn(console cli.Console, err error) {
 	}
 }
 
-// ConsumerRoot is the project sync writes into: the nearest folder at or above cwd holding a composer.json,
-// short of the home folder, else the git repository cwd is in; empty when there is neither.
 func ConsumerRoot(cwd string) string {
 	home, _ := os.UserHomeDir()
 

@@ -8,11 +8,8 @@ import (
 	"github.com/jessegall/code-commandments/prose"
 )
 
-// constantName is how a constant's name is spelled: capitals, digits and underscores.
 var constantName = regexp.MustCompile(`^_*[A-Z][A-Z0-9_]*$`)
 
-// membersAbove is the statements of the class body written before this one; false outside a class body, or in an
-// enum's, whose members are its values.
 func (p *Program) membersAbove(n Node) ([]Node, bool) {
 	class := n.Parent()
 	if class.Kind() != "ClassDef" || n.Node().Field != "body" || p.IsEnumClass(class) {
@@ -23,8 +20,6 @@ func (p *Program) membersAbove(n Node) ([]Node, bool) {
 	return body[:slices.Index(body, n)], true
 }
 
-// IsMemberAfterMethod says whether the statement declares state in a class body below a method, and reads none of
-// the methods above it: a field or constant out of the class's order.
 func (p *Program) IsMemberAfterMethod(n Node) bool {
 	targets := n.writtenTargets()
 	if len(targets) == 0 || !slices.ContainsFunc(targets, func(target Node) bool { return !isDunderName(target.DottedName()) }) {
@@ -49,7 +44,6 @@ func isDunderName(name string) bool {
 	return strings.HasPrefix(name, "__") && strings.HasSuffix(name, "__")
 }
 
-// namesRead is every name the statement's own expressions read.
 func (n Node) namesRead() []string {
 	var read []string
 	for _, expression := range n.ownExpressions() {
@@ -59,9 +53,6 @@ func (n Node) namesRead() []string {
 	return read
 }
 
-// IsConstantBelowField says whether the statement declares a constant below a field, before any method: the
-// class's constants belong above its fields. A constant built from a field above it is not, since Python runs the
-// class body top to bottom and the field must come first.
 func (p *Program) IsConstantBelowField(n Node) bool {
 	above, ok := p.membersAbove(n)
 	if !ok || !p.declaresConstant(n) || slices.ContainsFunc(above, Node.IsFunction) {
@@ -79,8 +70,6 @@ func (p *Program) IsConstantBelowField(n Node) bool {
 	return len(fields) > 0 && !slices.ContainsFunc(n.namesRead(), func(name string) bool { return slices.Contains(fields, name) })
 }
 
-// declaresConstant says whether the class-body statement declares a constant, by its own spelling or by
-// overriding a constant a base of its class declares.
 func (p *Program) declaresConstant(n Node) bool {
 	return n.DeclaresConstant() || slices.ContainsFunc(n.writtenTargets(), func(target Node) bool {
 		_, ok := p.ConstantOf(n.Parent(), target.Name())
@@ -89,8 +78,6 @@ func (p *Program) declaresConstant(n Node) bool {
 	})
 }
 
-// DeclaresConstant says whether the statement declares a constant: a name spelled in capitals, or one annotated
-// Final or ClassVar.
 func (n Node) DeclaresConstant() bool {
 	switch n.Kind() {
 	case "Assign":
@@ -112,15 +99,11 @@ func (n Node) isStateDeclaration() bool {
 	return n.Kind() == "Assign" || n.Kind() == "AnnAssign"
 }
 
-// IsBareStatePredicate says whether the method answers bool about its own state with a name that narrates rather
-// than asks: `hides()` where `is_hidden()` is the question.
 func (p *Program) IsBareStatePredicate(n Node) bool {
 	return n.IsMethod() && len(n.Parameters()) == 1 && n.Child("returns").DottedName() == "bool" &&
 		!prose.ReadsAsQuestion(n.Name()) && prose.IsThirdPerson(n.Name()) && p.ownsItsName(n)
 }
 
-// IsNarratedCommand says whether the method is a command, returning nothing or itself, named in the third person:
-// `hides()` where `hide()` is the order.
 func (p *Program) IsNarratedCommand(n Node) bool {
 	if !n.IsMethod() || !prose.IsThirdPerson(n.Name()) {
 		return false
@@ -129,14 +112,10 @@ func (p *Program) IsNarratedCommand(n Node) bool {
 	return (n.ReturnsNothing() || n.isFluent()) && p.ownsItsName(n)
 }
 
-// ownsItsName says whether the method chose its own name: no dunder, and no contract with a base or a subclass
-// that names it.
 func (p *Program) ownsItsName(n Node) bool {
 	return !n.IsDunder() && !p.IsOverride(n) && !p.IsOverridden(n) && !p.ExtendsOutside(n)
 }
 
-// isFluent says whether the method returns its own class, as a fluent declaration does, relating its receiver
-// to nothing.
 func (n Node) isFluent() bool {
 	class := n.Parent()
 	returns := n.Child("returns").SpelledType()
@@ -145,7 +124,6 @@ func (n Node) isFluent() bool {
 		slices.Contains([]string{"Self", "typing.Self", "typing_extensions.Self", class.Name()}, returns) && !prose.IsRelationalCompound(n.Name())
 }
 
-// soleStatement is the one statement the def's body runs, a docstring aside; false for a body of any other length.
 func (n Node) soleStatement() (Node, bool) {
 	body := n.StatementsBeyondText()
 	if len(body) != 1 {
@@ -155,22 +133,18 @@ func (n Node) soleStatement() (Node, bool) {
 	return body[0], true
 }
 
-// IsSoleReturnExpression says whether the def's body is exactly `return <value>`.
 func (n Node) IsSoleReturnExpression() bool {
 	only, ok := n.soleStatement()
 
 	return ok && only.ReturnedValue().Exists()
 }
 
-// IsSoleExpressionStatement says whether the def's body is exactly one expression standing as a statement.
 func (n Node) IsSoleExpressionStatement() bool {
 	only, ok := n.soleStatement()
 
 	return ok && only.Kind() == "Expr"
 }
 
-// IsLiteralLookup says whether the def is a lookup table written as code: it calls nothing, and every value it
-// returns is a literal. Two that differ are two tables of data, not one procedure written twice.
 func (n Node) IsLiteralLookup() bool {
 	var returns []Node
 	for _, statement := range n.ChildrenIn("body") {

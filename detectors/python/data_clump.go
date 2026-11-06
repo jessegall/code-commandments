@@ -10,7 +10,6 @@ import (
 	"strings"
 )
 
-// clumpOwners is how many owners must share a signature for it to be a clump.
 const clumpOwners = 2
 
 // DataClumpDetector finds the same three or more scalar parameters taken by defs of two or more owners: values that travel together.
@@ -20,12 +19,10 @@ func init() {
 	detectors.Register(catalog.Python, DataClumpDetector{})
 }
 
-// Sin is the sin the detector finds.
 func (DataClumpDetector) Sin() sins.Sin {
 	return pysins.DataClump{}
 }
 
-// Find is every place the sin is committed.
 func (DataClumpDetector) Find(codebase *engine.Codebase) []engine.Match {
 	program := py.In(codebase).Program
 	candidates := py.In(codebase).
@@ -56,16 +53,12 @@ func (DataClumpDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return findings
 }
 
-// hasValueParamSignature says whether the def takes three or more scalar parameters.
 func hasValueParamSignature(n py.Node) bool {
 	return len(n.ValueParamSignature()) > 0
 }
 
-// GroupKey groups a finding with the defs taking the same scalar parameters.
 func (DataClumpDetector) GroupKey(match engine.Match) (string, bool) {
 	return strings.Join(py.Node{Match: match}.ValueParamSignature(), ", "), true
 }
 
-// CrossFile says the rule reads more than the file it reports in, which the fixture measures by asking it
-// of one file and of the whole tree: a scoped run reads the whole scan while it is enabled.
 func (DataClumpDetector) CrossFile() {}

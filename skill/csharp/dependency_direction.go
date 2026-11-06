@@ -21,7 +21,6 @@ func init() {
 	skill.Register(catalog.CSharp, DependencyDirection{})
 }
 
-// Definition is what the skill states about itself.
 func (DependencyDirection) Definition() skill.Definition {
 	return skill.Definition{
 		Slug:      "csharp/dependency-direction",

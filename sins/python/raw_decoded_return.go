@@ -13,7 +13,6 @@ func init() {
 	sins.Register(catalog.Python, RawDecodedReturn{})
 }
 
-// Definition is what the sin states about itself.
 func (RawDecodedReturn) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "python-raw-decoded-return",

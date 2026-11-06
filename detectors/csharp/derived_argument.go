@@ -20,26 +20,21 @@ func init() {
 	detectors.Register(catalog.CSharp, DerivedArgumentDetector{})
 }
 
-// Sin is the sin the detector finds.
 func (DerivedArgumentDetector) Sin() sins.Sin {
 	return cssins.DerivedArgument{}
 }
 
-// Find is every place the sin is committed.
 func (d DerivedArgumentDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return detectors.Aggregate(d, codebase)
 }
 
-// derivation is the record of a call handing its method pieces of an object it could take whole: the parameters it
-// fills redundantly, each with the path of the piece it reads, and the name it calls the method by.
+// derivation is the record of a call handing its method pieces of an object it could take whole: the parameters it fills redundantly, each with the path of the piece it reads, and the name it calls the method by.
 type derivation struct {
 	slots  []string
 	paths  []string
 	called string
 }
 
-// Candidates is every call to the codebase's own method that fills a parameter with a piece of an object it could
-// take whole, beside how many calls fill each parameter and the names unresolved calls spell.
 func (DerivedArgumentDetector) Candidates(codebase *engine.Codebase) []detectors.Candidate {
 	program := cs.In(codebase).Program
 	graph := cs.Namespaces(codebase)
@@ -77,8 +72,6 @@ func (DerivedArgumentDetector) Candidates(codebase *engine.Codebase) []detectors
 	return append(candidates, supplied(counts, order)...)
 }
 
-// Decide is every call filling a parameter that every call fills alike, with a piece read the same way off an
-// object of one type each could hand whole, of a method no unresolved call might also reach.
 func (DerivedArgumentDetector) Decide(candidates []detectors.Candidate) []int {
 	counts, unresolved := suppliedIn(candidates)
 	redundant := map[string][]int{}
@@ -114,14 +107,10 @@ func (DerivedArgumentDetector) Decide(candidates []detectors.Candidate) []int {
 	return findings
 }
 
-// readOff is how a piece is read: the type of the object it hangs off and the member path read off it. Pieces of
-// objects of two types leave the method no one object to take, so they are never read alike.
 func readOff(piece cs.Node) string {
 	return piece.ProjectionRoot().Type().Name() + piece.ProjectionPath()
 }
 
-// redundantPositions is the positions of the call's arguments that are pieces read off an object the call is also
-// handed whole, or three or more pieces of one object the method could take whole instead.
 func redundantPositions(call cs.Node, program *cs.Program, graph *cs.NamespaceGraph) []int {
 	if slices.Contains(call.Target().Parameters(), "global::System.Object") {
 		return nil
@@ -155,13 +144,10 @@ func redundantPositions(call cs.Node, program *cs.Program, graph *cs.NamespaceGr
 	return positions
 }
 
-// couldTakeWhole says whether the method could be handed the object the pieces come from: a type the codebase
-// declares, whose namespace it may reach without closing a cycle.
 func couldTakeWhole(call, root cs.Node, program *cs.Program, graph *cs.NamespaceGraph) bool {
 	held := strings.TrimSuffix(root.Type().Name(), "?")
 
 	return program.DeclaresType(held) && !graph.WouldCloseACycle(call.Target().Type(), held)
 }
 
-// CrossFile says the PHP tool finds it reaching beyond the file it judges, so a per-file check must not ask it.
 func (DerivedArgumentDetector) CrossFile() {}

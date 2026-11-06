@@ -16,12 +16,10 @@ func init() {
 	detectors.Register(catalog.Python, BloatedDocblockDetector{})
 }
 
-// Sin is the sin the detector finds.
 func (BloatedDocblockDetector) Sin() sins.Sin {
 	return pysins.BloatedDocblock{}
 }
 
-// Find is every place the sin is committed.
 func (BloatedDocblockDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return py.In(codebase).
 		WhereClass().

@@ -18,12 +18,10 @@ func init() {
 	detectors.Register(catalog.CSharp, TypeSwitchDetector{})
 }
 
-// Sin is the sin the detector finds.
 func (TypeSwitchDetector) Sin() sins.Sin {
 	return cssins.TypeSwitch{}
 }
 
-// Find is every place the sin is committed.
 func (TypeSwitchDetector) Find(codebase *engine.Codebase) []engine.Match {
 	program := cs.In(codebase).Program
 
@@ -40,6 +38,4 @@ func (TypeSwitchDetector) Find(codebase *engine.Codebase) []engine.Match {
 		Get()
 }
 
-// CrossFile says the rule reads more than the file it reports in, which the fixture measures by asking it
-// of one file and of the whole tree: a scoped run reads the whole scan while it is enabled.
 func (TypeSwitchDetector) CrossFile() {}

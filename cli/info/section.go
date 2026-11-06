@@ -11,8 +11,6 @@ const (
 	section      = "## "
 )
 
-// Example is the worked example a skill document gives for the sin: each `###` block whose title names it,
-// from its first code fence, prefixed with the language a title names after `— in`.
 func Example(document, sin string) string {
 	var blocks [][]string
 	var current []string

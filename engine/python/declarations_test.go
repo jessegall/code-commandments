@@ -49,5 +49,4 @@ func TestEveryClassIsDeclaredAsThePHPEngineReadsIt(t *testing.T) {
 	}
 }
 
-// unescaped decodes the escapes the PHP parser leaves raw in a string literal's value, which the bridge decodes.
 var unescaped = strings.NewReplacer(`\n`, "\n", `\t`, "\t", `\\`, `\`, `\'`, "'", `\"`, `"`)

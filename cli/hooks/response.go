@@ -7,48 +7,32 @@ import (
 	"strings"
 )
 
-// injectable are the events whose response may carry context for the agent.
 var injectable = []string{
 	"SessionStart", "Setup", "SubagentStart", "UserPromptSubmit", "UserPromptExpansion",
 	"PreToolUse", "PostToolUse", "PostToolUseFailure", "PostToolBatch", "Stop", "SubagentStop",
 }
 
-// Response is what a hook answers the harness: nothing, a refusal, context for the agent, or the raw
-// instructions a compaction reads.
+// Response is what a hook answers the harness: nothing, a refusal, context for the agent, or the raw instructions a compaction reads.
 type Response struct {
 	blockReason  *string
 	context      *string
 	quietly      bool
 	instructions *string
-	// Activity is every sin a check found in the files it read, said to the harness or not.
-	Activity []SinMark
-	// Judged is every file the check read, whether it found anything in it or not: a file whose sins are all
-	// gone yields no marks, and without naming it here nothing would ever settle them.
-	Judged []string
-	// ReadMs is how long this check spent having files parsed, in milliseconds: the share of its work that is a
-	// bridge's and not a rule's. A judging that cannot be decomposed is a judging nobody can act on, and three
-	// workers editing at once produced 1.2 to 16.1 seconds for files of the same shape with no way to say which
-	// part of it was the bridge they share.
-	ReadMs int64
+	Activity     []SinMark
+	Judged       []string
+	ReadMs       int64
 
-	// Requires are the ids of the skills the agent must read before it goes on, which only a journal enforces:
-	// naming the skill of a finding is advice an agent may read past, and a finding fixed from memory is how a
-	// sin gets silenced instead of resolved.
 	Requires []string
 }
 
-// Silent says nothing.
 func Silent() Response {
 	return Response{}
 }
 
-// Blocking refuses the moment, with the reason the agent is shown.
 func Blocking(reason string) Response {
 	return Response{blockReason: &reason}
 }
 
-// Injecting hands the agent context on the event; quietly keeps it out of what the user reads. An event
-// that carries no context gets nothing.
 func Injecting(event, context string, quietly bool) Response {
 	if !slices.Contains(injectable, event) {
 		return Silent()
@@ -57,7 +41,6 @@ func Injecting(event, context string, quietly bool) Response {
 	return Response{context: &context, quietly: quietly}
 }
 
-// Instructing is the text a compaction is told to keep; nothing when it is empty.
 func Instructing(text string) Response {
 	text = strings.TrimSpace(text)
 	if text == "" {
@@ -67,8 +50,6 @@ func Instructing(text string) Response {
 	return Response{instructions: &text}
 }
 
-// Merge is several hooks' responses as one. A refusal does not silence the rest: the context every other
-// hook had is kept beside it.
 func Merge(responses []Response) Response {
 	var reasons, contexts, instructions []string
 	var activity []SinMark
@@ -133,13 +114,10 @@ func merge(reasons, contexts, instructions []string, quietly bool) Response {
 	}
 }
 
-// IsSilent says whether the response says nothing.
 func (r Response) IsSilent() bool {
 	return r.blockReason == nil && r.context == nil && r.instructions == nil
 }
 
-// JSON is the response as the harness reads it for the event: a refusal, the raw instructions, or the
-// context under the event's name.
 func (r Response) JSON(event string) string {
 	if r.blockReason != nil {
 		return `{"decision":"block","reason":` + quote(*r.blockReason) + "}\n"
@@ -163,7 +141,6 @@ func (r Response) JSON(event string) string {
 	return injection + "}\n"
 }
 
-// quote is a string as PHP encodes it with slashes and unicode unescaped.
 func quote(text string) string {
 	var out bytes.Buffer
 

@@ -8,12 +8,8 @@ import (
 	"github.com/jessegall/code-commandments/cli/jsonfile"
 )
 
-// composerEvents are the composer scripts that call sync, so a fresh install or an update resyncs.
 var composerEvents = []string{"post-update-cmd", "post-install-cmd"}
 
-// EnsureComposerHook makes each composer event end with the call to sync, dropping any older call of ours;
-// changed is false when it already did, and wires is false where composer does not provide the tool at all, since
-// a project it does not install has no shim for a composer event to run and its next install would fail on ours.
 func EnsureComposerHook(root string) (changed, wires bool, err error) {
 	if !binary.ThroughComposer(root) {
 		return false, false, nil
@@ -55,7 +51,6 @@ func EnsureComposerHook(root string) (changed, wires bool, err error) {
 	return true, true, jsonfile.Write(path, composer)
 }
 
-// isOurs says whether a composer script is a call to sync the tool wrote.
 func isOurs(hook string) bool {
 	return strings.Contains(hook, "commandments") && strings.HasSuffix(strings.TrimRight(hook, " \t\n\r\x00\x0B"), " sync")
 }

@@ -13,7 +13,6 @@ func init() {
 	sins.Register(catalog.CSharp, WrappingWithoutCause{})
 }
 
-// Definition is what the sin states about itself.
 func (WrappingWithoutCause) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "csharp-wrapping-without-cause",

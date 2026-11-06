@@ -1,8 +1,4 @@
-// Package parity proves the Go binary answers every invocation exactly as the PHP tool does: the same
-// stdout, the same stderr, the same exit code. A case is an invocation in a prepared project; the recorder
-// runs the PHP tool over each case into a golden, and the test runs the Go binary over the same case and
-// diffs. What legitimately differs between two runs (the temporary project's path, the version) is
-// normalised here, in one place, never per case.
+// Package parity proves the Go binary answers every invocation exactly as the PHP tool does: the same stdout, the same stderr, the same exit code.
 package parity
 
 import (
@@ -22,45 +18,28 @@ import (
 	"strings"
 )
 
-// CasesDir is where the cases live, relative to the repository: one file per command family, so work on
-// two commands never edits the same file.
 const CasesDir = "cli/parity/testdata/cases"
 
-// GoldenFile is where a case's recorded result lives, relative to the repository.
 func GoldenFile(c Case) string {
 	return filepath.Join("cli", "parity", "testdata", "golden", c.Name+".golden")
 }
 
 // Case is one invocation of the tool.
 type Case struct {
-	// Name names the golden file.
 	Name string `json:"name"`
 
-	// Args are the arguments after the program name.
 	Args []string `json:"args"`
 
-	// Project is a folder, relative to the repository, copied in as the project the tool runs in; empty
-	// runs in an empty folder.
 	Project string `json:"project,omitempty"`
 
-	// Setup are shell commands run in the project before the tool, e.g. to make it a git repository;
-	// $PARITY_PACKAGE names the package's own folder, to copy what the tool sees from an install (the stub
-	// testdata/installed.json), and
-	// $PARITY_TOOL the tool under test, to leave behind what an earlier run of it would.
 	Setup []string `json:"setup,omitempty"`
 
-	// Env is added to the fixed environment every case runs under.
 	Env map[string]string `json:"env,omitempty"`
 
-	// Stdin is fed to the tool.
 	Stdin string `json:"stdin,omitempty"`
 
-	// Digest are folders, under the project, whose files a golden records by their hash rather than their
-	// contents: what a run publishes by the hundred is held just as exactly, in a golden a reviewer can read.
 	Digest []string `json:"digest,omitempty"`
 
-	// Pending names what the Go side still waits on. A pending case is skipped while it differs, and fails
-	// the moment it matches, so the mark cannot outlive the gap.
 	Pending string `json:"pending,omitempty"`
 }
 
@@ -69,12 +48,9 @@ type Result struct {
 	Exit   int
 	Stdout string
 	Stderr string
-	// Files are the project files the run created, changed or deleted, each with its contents.
-	Files string
+	Files  string
 }
 
-// Cases reads every case from every file in dir. A name two files share is refused, since both would
-// write one golden.
 func Cases(dir string) ([]Case, error) {
 	files, err := filepath.Glob(filepath.Join(dir, "*.json"))
 	if err != nil {
@@ -110,8 +86,6 @@ func Cases(dir string) ([]Case, error) {
 	return cases, nil
 }
 
-// Run prepares the case's project under scratch and runs command (the tool, then its fixed arguments)
-// there, answering what it printed with everything run-specific normalised away.
 func Run(c Case, repo, scratch string, command ...string) (Result, error) {
 	project := filepath.Join(scratch, "project")
 	home := filepath.Join(scratch, "home")
@@ -168,11 +142,8 @@ func Run(c Case, repo, scratch string, command ...string) (Result, error) {
 	return result, nil
 }
 
-// caches are files one implementation keeps for itself, meaningless to the other: PHP's record of which of
-// its own classes read beyond one file.
 var caches = []string{".commandments/cross-file.json"}
 
-// snapshot is every file under the project, less git's own and the caches, by its path under the project.
 func snapshot(project string) map[string]string {
 	files := map[string]string{}
 
@@ -197,7 +168,6 @@ func snapshot(project string) map[string]string {
 	return files
 }
 
-// digested is the snapshot with every file under a digest folder standing as its hash.
 func digested(files map[string]string, folders []string) map[string]string {
 	for path, contents := range files {
 		for _, folder := range folders {
@@ -210,10 +180,6 @@ func digested(files map[string]string, folders []string) map[string]string {
 	return files
 }
 
-// written lists what changed between two snapshots, in path order: each created or changed file with its
-// contents, each deleted file by name. A file whose only change is the moment stamped in it did not change: a run
-// in the same second as its setup rewrites the same stamp, one a second later a new one, and which it is says
-// nothing about the tool.
 func written(before, after map[string]string) string {
 	var paths []string
 
@@ -261,18 +227,12 @@ func prepare(c Case, repo, project, home string) error {
 	return os.CopyFS(project, os.DirFS(filepath.Join(repo, c.Project)))
 }
 
-// guarded stands in for a tool whose real run reaches the outside world, gh filing an issue or claude a
-// billed request, so no case can reach it; a case that needs one puts its own fake in its project's bin/,
-// which comes first.
 func guarded(tool string) string {
 	return "#!/bin/sh\necho 'parity: the real " + tool + " is out of reach' >&2\nexit 97\n"
 }
 
-// recordedZone is the zone the PHP tool's goldens were recorded in, Europe/Amsterdam, spelled as a POSIX rule
-// so a machine without zone data reads it too: a setup's `touch -t` means the same moment everywhere.
 const recordedZone = "CET-1CEST,M3.5.0,M10.5.0/3"
 
-// environment is the fixed world every case runs in, so nothing of the machine running it leaks in.
 func environment(c Case, home, path string) []string {
 	env := map[string]string{
 		"PATH":           path,
@@ -282,7 +242,6 @@ func environment(c Case, home, path string) []string {
 		"LANG":           "C.UTF-8",
 		"TZ":             recordedZone,
 		"XDG_CACHE_HOME": cache(),
-		// The PHP tool coloured its output into a pipe too, so the goldens hold colour: the Go tool is asked for it.
 		"CLICOLOR_FORCE": "1",
 	}
 
@@ -299,7 +258,6 @@ func environment(c Case, home, path string) []string {
 	return list
 }
 
-// cache is the machine's own cache folder, kept across cases so a bridge's built environment is built once.
 func cache() string {
 	if folder := os.Getenv("XDG_CACHE_HOME"); folder != "" {
 		return folder
@@ -310,23 +268,16 @@ func cache() string {
 	return filepath.Join(home, ".cache")
 }
 
-// stamp is a date and time a run writes: a task's log line, an archived checklist's name, the day a report was
-// filed. Two runs of one case are a moment apart, so the moment itself can never be compared.
 var stamp = regexp.MustCompile(`\d{4}-\d{2}-\d{2}[ _T]\d{2}:?\d{2}(:?\d{2})?Z?`)
 
 var versionLine = regexp.MustCompile(`(?m)^code-commandments \S+$`)
 
-// versionRow is the version as config's overview prints it, after the tool's bold name.
 var versionRow = regexp.MustCompile("(code-commandments\x1b\\[0m  )\\S+")
 
-// hashedIdentity is a key hashed from what includes the project's own path, such as a sin's identity.
 var hashedIdentity = regexp.MustCompile(`"[0-9a-f]{40}":`)
 
-// unixStamp is a state value that holds the moment it was written, in unix seconds.
 var unixStamp = regexp.MustCompile(`(?m)^(marked-at|started-at): \d{9,}$`)
 
-// normalise replaces what differs between two runs of the same case: where the project and the package
-// live, and the installed version.
 func normalise(text, repo, project string) string {
 	for _, path := range []string{project, repo} {
 		if real, err := filepath.EvalSymlinks(path); err == nil && real != path {
@@ -353,12 +304,10 @@ func placeholder(path, project string) string {
 	return "<package>"
 }
 
-// Golden writes a result as the text a reviewer reads in a diff.
 func Golden(result Result) string {
 	return "exit: " + strconv.Itoa(result.Exit) + "\n--- stdout\n" + result.Stdout + "\n--- stderr\n" + result.Stderr + "\n--- files\n" + result.Files
 }
 
-// ReadGolden reads a result back from its golden text.
 func ReadGolden(text string) (Result, error) {
 	head, rest, found := strings.Cut(text, "\n--- stdout\n")
 	stdout, streams, split := strings.Cut(rest, "\n--- stderr\n")

@@ -15,15 +15,12 @@ type SwallowCatchDetector struct{}
 
 func init() { detectors.Register(catalog.PHP, SwallowCatchDetector{}) }
 
-// Sin is the sin the detector finds.
 func (SwallowCatchDetector) Sin() sins.Sin { return backendsins.SwallowCatch{} }
 
-// Exemptions lets a package declare its control signals, whose silent catch is the point.
 func (SwallowCatchDetector) Exemptions() []packages.Exemption {
 	return []packages.Exemption{{Tag: packages.ControlSignal}}
 }
 
-// Find is every swallowing catch, save one that catches only control signals.
 func (SwallowCatchDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return php.In(codebase).
 		Where(engine.As(php.Node.IsSwallowedCatch)).

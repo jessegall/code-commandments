@@ -17,9 +17,7 @@ func init() {
 	detectors.Register(catalog.Vue, PropDrillingDetector{})
 }
 
-// PropDrillingDetector finds a prop a component only passes on, bare, to a child that itself only passes it
-// on: a value drilled through components that never use it. One forward is composition; it is drilling once
-// the child is a conduit for the prop too.
+// PropDrillingDetector finds a prop a component only passes on, bare, to a child that itself only passes it on: a value drilled through components that never use it.
 type PropDrillingDetector struct{}
 
 func (PropDrillingDetector) Sin() sins.Sin {
@@ -60,6 +58,4 @@ func (PropDrillingDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return findings
 }
 
-// CrossFile says the rule reads more than the file it reports in, which the fixture measures by asking it
-// of one file and of the whole tree: a scoped run reads the whole scan while it is enabled.
 func (PropDrillingDetector) CrossFile() {}

@@ -12,10 +12,8 @@ import (
 	"github.com/jessegall/code-commandments/cli/workspace"
 )
 
-// batchSeparator parts the commit a batch was reminded at from what the marker file says about itself.
 const batchSeparator = "-----"
 
-// batchExplanation is what the marker file says about itself, naming the executable the project at root runs.
 func batchExplanation(root string) string {
 	return "Batch marker for the code-commandments judge reminder (`" + binary.Invocation(root) + " judge-reminder`, wired as\n" +
 		"Stop + PreToolUse hooks). The line above the separator is the commit it last reminded at: a\n" +
@@ -24,11 +22,9 @@ func batchExplanation(root string) string {
 		"regenerates, at most costing you one extra nudge."
 }
 
-// JudgeReminderAbout is what `judge-reminder` says it is.
 const JudgeReminderAbout = "A \"did you judge?\" nudge wired to `Stop` and `PreToolUse` hooks; reminds when judged files are touched but unchecked, deduped per changed-file set."
 
-// JudgeReminder nudges the agent to judge what it changed: once per batch of work on top of a commit,
-// before it commits and when it stops, and first about any worklist judge left open.
+// JudgeReminder nudges the agent to judge what it changed: once per batch of work on top of a commit, before it commits and when it stops, and first about any worklist judge left open.
 type JudgeReminder struct{}
 
 func (JudgeReminder) Class() string { return "JudgeReminder" }
@@ -74,8 +70,6 @@ func (JudgeReminder) Handle(event Event) Response {
 	return Silent()
 }
 
-// Reminder is what the agent is reminded of, lead first, and whether it is due: the worklist judge left
-// open, else the batch of files the session changed itself, once per commit it sits on.
 func Reminder(event Event, lead string) (string, bool) {
 	root := git.Root(event.Root)
 	if root == "" {
@@ -120,7 +114,6 @@ func Reminder(event Event, lead string) (string, bool) {
 		"so and carry on.", true
 }
 
-// openWorklist is the nudge to finish the checklist judge left, once for each state of it.
 func openWorklist(space workspace.Workspace, lead string) (string, bool) {
 	list := checklist.InSession(space)
 	remaining := list.RemainingSins()
@@ -153,7 +146,6 @@ func openWorklist(space workspace.Workspace, lead string) (string, bool) {
 		"you are intentionally pausing here, just say so and carry on.", true
 }
 
-// storedHead is the commit the batch marker last reminded at.
 func storedHead(marker string) string {
 	text, err := os.ReadFile(marker)
 	if err != nil {

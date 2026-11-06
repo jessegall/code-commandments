@@ -12,9 +12,6 @@ import (
 	_ "github.com/jessegall/code-commandments/engine/golang"
 )
 
-// nested is a Go file holding the shape the rule is about and the shapes it must leave alone: a choice four deep
-// is flagged, three deep is not, an else-if continues the `if` before it rather than nesting in it, and a
-// function inside another starts the count again.
 const nested = `package shop
 
 // @sin DeepNesting
@@ -84,9 +81,6 @@ type Order struct {
 }
 `
 
-// TestTheFirstGoRuleFiresThroughTheEngineItself holds the whole way from a Go file to a finding: the scan walks
-// the tree, the funnel reaches the in-process bridge, the engine holds the codebase, and the detector reads it
-// through the same selectors, Where and Reject every other engine's detector is read through.
 func TestTheFirstGoRuleFiresThroughTheEngineItself(t *testing.T) {
 	root := goFolder(t, map[string]string{"go.mod": "module example.com/shop\n", "settle.go": nested})
 
@@ -108,9 +102,6 @@ func TestTheFirstGoRuleFiresThroughTheEngineItself(t *testing.T) {
 	}
 }
 
-// TestTheMarkerTheFixtureWritesIsReadAsAComment holds the fixture's own marker to the tree: a Go fixture marks a
-// sin with `// @sin Name`, which the harness reads from the file's comments, so no second marker syntax is needed
-// for Go.
 func TestTheMarkerTheFixtureWritesIsReadAsAComment(t *testing.T) {
 	root := goFolder(t, map[string]string{"go.mod": "module example.com/shop\n", "settle.go": nested})
 
@@ -134,7 +125,6 @@ func TestTheMarkerTheFixtureWritesIsReadAsAComment(t *testing.T) {
 	t.Error("the file's comments hold no marker, though the fixture writes one")
 }
 
-// goFolder writes the files under a fresh folder and answers its resolved path.
 func goFolder(t *testing.T, files map[string]string) string {
 	t.Helper()
 	root, err := filepath.EvalSymlinks(t.TempDir())
@@ -154,7 +144,6 @@ func goFolder(t *testing.T, files map[string]string) string {
 	return root
 }
 
-// locations are where each finding is, for a failure to read.
 func locations(found []engine.Match) []string {
 	var where []string
 	for _, held := range found {

@@ -11,9 +11,6 @@ import (
 	"github.com/jessegall/code-commandments/engine"
 )
 
-// Printed is an expression as php-parser's standard pretty printer writes it, for the constant expressions a rewrite
-// reprints: literals, constants, a negation, `self::CONST` and `new self(...)`. A name rename answers for is written
-// as it answers; any other kind of expression is refused.
 func Printed(expression engine.Match, rename func(name engine.Match) (string, bool)) (string, error) {
 	return (printer{rename: rename}).print(expression)
 }
@@ -61,7 +58,6 @@ func (p printer) print(node engine.Match) (string, error) {
 	return "", fmt.Errorf("php-parser's printer is ported for constant expressions only, not %s", kind)
 }
 
-// name is a name as written after name resolution: fully qualified with its backslash, relative with `namespace\`.
 func (p printer) name(node engine.Match) string {
 	if renamed, ok := p.rename(node); ok {
 		return renamed
@@ -76,7 +72,6 @@ func (p printer) name(node engine.Match) string {
 	return node.Name()
 }
 
-// construction is `new Class(args)`, the arguments on one line, each as `name: ...value`.
 func (p printer) construction(node engine.Match) (string, error) {
 	class, err := p.print(node.Child("class"))
 	if err != nil {
@@ -115,7 +110,6 @@ var magicConstants = map[string]string{
 	"Scalar_MagicConst_Namespace": "__NAMESPACE__", "Scalar_MagicConst_Trait": "__TRAIT__", "Scalar_MagicConst_Property": "__PROPERTY__",
 }
 
-// printedString is a string single-quoted, or double-quoted with its escapes when written so; a heredoc is refused.
 func printedString(node engine.Match) (string, error) {
 	written := sourceOf(node)
 	value, ok := literalText(node)
@@ -132,7 +126,6 @@ func printedString(node engine.Match) (string, error) {
 	return singleQuoted(value), nil
 }
 
-// singleQuoted escapes a quote, a backslash before a quote, a backslash or the end, and a backslash after one.
 func singleQuoted(value string) string {
 	var out strings.Builder
 	out.WriteByte('\'')
@@ -151,8 +144,6 @@ func singleQuoted(value string) string {
 	return out.String()
 }
 
-// escapedString is a value as a double-quoted string holds it: addcslashes of the escapable bytes, then control
-// characters and bytes outside valid UTF-8 as `\xHH`.
 func escapedString(value string) string {
 	var slashed strings.Builder
 	for i := 0; i < len(value); i++ {
@@ -204,7 +195,6 @@ func escapedString(value string) string {
 	return out.String()
 }
 
-// printedInt is an integer in the base it was written in.
 func printedInt(node engine.Match) (string, error) {
 	written := strings.ToLower(strings.ReplaceAll(sourceOf(node), "_", ""))
 	text, _ := literalText(node)
@@ -224,8 +214,6 @@ func printedInt(node engine.Match) (string, error) {
 	return value.String(), nil
 }
 
-// printedFloat is a float at the shortest of 16 or 17 significant digits that holds it, always with a point or an
-// exponent, as PHP's %G writes it.
 func printedFloat(node engine.Match) (string, error) {
 	value, err := strconv.ParseFloat(strings.ReplaceAll(sourceOf(node), "_", ""), 64)
 	if err != nil {
@@ -250,8 +238,6 @@ func printedFloat(node engine.Match) (string, error) {
 	return text, nil
 }
 
-// phpG is PHP's sprintf('%.<precision>G'): scientific when the exponent is below -4 or reaches the precision, its
-// mantissa always carrying a point, trailing zeros dropped otherwise.
 func phpG(value float64, precision int) string {
 	if value == 0 {
 		if math.Signbit(value) {
@@ -307,7 +293,6 @@ func isInteger(text string) bool {
 	return true
 }
 
-// literalText is the value a string or integer literal holds, as the tree writes it.
 func literalText(node engine.Match) (string, bool) {
 	if node.Node().Value == nil {
 		return "", false

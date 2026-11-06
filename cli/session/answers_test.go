@@ -10,11 +10,6 @@ import (
 	"github.com/jessegall/code-commandments/cli"
 )
 
-// What the session verbs answer was proved only by the recorded parity cases, which run the built binary. The
-// command reads the session's own folder and writes to a console, so its answers are held here: a verb given no
-// name, a name nobody has, a name another session already holds, and a shell that has no session of its own.
-
-// asked runs the command inside the project and answers its exit code and what it said.
 func asked(t *testing.T, project string, args ...string) (code int, said string, warned string) {
 	t.Helper()
 	was, err := os.Getwd()
@@ -35,7 +30,6 @@ func asked(t *testing.T, project string, args ...string) (code int, said string,
 	return code, out.String(), errs.String()
 }
 
-// aProject is a project with a git folder, so the session's own folder is found where a session would keep it.
 func aProject(t *testing.T) string {
 	t.Helper()
 	root, err := filepath.EvalSymlinks(t.TempDir())
@@ -49,8 +43,6 @@ func aProject(t *testing.T) string {
 	return root
 }
 
-// TestAVerbGivenNoNameSaysWhatToType holds the two verbs that take one: a reader who typed the verb alone is told
-// what the command wants, rather than left with an answer about nothing.
 func TestAVerbGivenNoNameSaysWhatToType(t *testing.T) {
 	project := aProject(t)
 
@@ -68,8 +60,6 @@ func TestAVerbGivenNoNameSaysWhatToType(t *testing.T) {
 	}
 }
 
-// TestForgettingANameNobodyHasSaysSo holds the answer to a name that was never given: silence would read as having
-// forgotten something.
 func TestForgettingANameNobodyHasSaysSo(t *testing.T) {
 	code, said, warned := asked(t, aProject(t), "forget", "zzzzz")
 
@@ -81,8 +71,6 @@ func TestForgettingANameNobodyHasSaysSo(t *testing.T) {
 	}
 }
 
-// TestNamingWithoutASessionOfItsOwnSaysSo holds the shell outside the harness: there is no session to name, and the
-// command says that rather than naming nothing.
 func TestNamingWithoutASessionOfItsOwnSaysSo(t *testing.T) {
 	t.Setenv("CLAUDE_CODE_SESSION_ID", "")
 
@@ -96,9 +84,6 @@ func TestNamingWithoutASessionOfItsOwnSaysSo(t *testing.T) {
 	}
 }
 
-// TestASessionIsNamedAndThenKnownByThatName holds the pair a reader uses: a session takes a name, and the name is
-// known afterwards, which is what lets them forget it again. The list is not where that shows, since it holds the
-// sessions that have RECORDED something and a freshly named one has recorded nothing.
 func TestASessionIsNamedAndThenKnownByThatName(t *testing.T) {
 	project := aProject(t)
 	t.Setenv("CLAUDE_CODE_SESSION_ID", "61bdc0de")
@@ -121,8 +106,6 @@ func TestASessionIsNamedAndThenKnownByThatName(t *testing.T) {
 	}
 }
 
-// TestANameAnotherSessionHoldsIsRefused holds the one answer that protects a session's own folder: two sessions
-// under one name would read each other's findings as their own.
 func TestANameAnotherSessionHoldsIsRefused(t *testing.T) {
 	project := aProject(t)
 
@@ -142,8 +125,6 @@ func TestANameAnotherSessionHoldsIsRefused(t *testing.T) {
 	}
 }
 
-// TestAdoptingASessionNobodyHasSaysSo holds the answer when the session named is not there: adopting nothing must
-// not read as having adopted its findings.
 func TestAdoptingASessionNobodyHasSaysSo(t *testing.T) {
 	code, said, warned := asked(t, aProject(t), "adopt", "zzzzz")
 

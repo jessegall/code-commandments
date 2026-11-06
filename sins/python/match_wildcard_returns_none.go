@@ -13,7 +13,6 @@ func init() {
 	sins.Register(catalog.Python, MatchWildcardReturnsNone{})
 }
 
-// Definition is what the sin states about itself.
 func (MatchWildcardReturnsNone) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "python-match-wildcard-returns-none",

@@ -1,5 +1,4 @@
-// Package laravel is what the engine knows of Laravel, stated once: its facades, routes, container, Eloquent and
-// queues, and the analyses that read them across a codebase.
+// Package laravel is what the engine knows of Laravel, stated once: its facades, routes, container, Eloquent and queues, and the analyses that read them across a codebase.
 package laravel
 
 import (
@@ -30,19 +29,12 @@ const (
 	Arrayable        = `Illuminate\Contracts\Support\Arrayable`
 )
 
-// CollectionTypes are Laravel's own collections: OBJECTS, so a class that hands one out hands out the thing
-// itself, and every caller holding it may push onto it, forget from it or sort it behind the class's back. A PHP
-// array returned from a getter is copied and shares nothing, which is why this rule is Laravel's and not the
-// language's.
 var CollectionTypes = []string{
 	`Illuminate\Support\Collection`,
 	`Illuminate\Database\Eloquent\Collection`,
 	`Illuminate\Support\LazyCollection`,
 }
 
-// HandsOutItsOwnCollection says whether the method's whole body hands back a Collection the class holds: one
-// statement, returning a property of `$this`, whose type is one of Laravel's collections. What the caller gets is
-// the class's own collection, and nothing tells the class what is done to it.
 func (n Node) HandsOutItsOwnCollection(typeOf func(engine.Match) string) bool {
 	body := n.Match.ChildrenIn("stmts")
 	if n.Match.Kind() != "Stmt_ClassMethod" || len(body) != 1 || body[0].Kind() != "Stmt_Return" {
@@ -57,8 +49,6 @@ func (n Node) HandsOutItsOwnCollection(typeOf func(engine.Match) string) bool {
 	return slices.Contains(CollectionTypes, strings.TrimLeft(typeOf(returned), "?\\"))
 }
 
-// BuilderTypes are the query builders a model hands out: a call on one goes to the database just as a call on
-// the model does.
 var BuilderTypes = []string{
 	`Illuminate\Database\Eloquent\Builder`,
 	`Illuminate\Database\Query\Builder`,
@@ -94,7 +84,6 @@ type BoundaryKind struct {
 	Base string
 }
 
-// BoundaryKinds are the entry points a class is by its ancestry, in the order asked.
 var BoundaryKinds = []BoundaryKind{{"console", ConsoleCommand}, {"mcp", McpTool}}
 
 // Node is a match read in Laravel's terms.
@@ -102,12 +91,10 @@ type Node struct {
 	engine.Match
 }
 
-// Decorate reads a match as a Node.
 func (Node) Decorate(m engine.Match) Node {
 	return Node{Match: m}
 }
 
-// RendersInertiaPage says whether the node renders an Inertia page: `Inertia::render(...)` or `inertia(...)`.
 func RendersInertiaPage(node engine.Match) bool {
 	switch node.Kind() {
 	case "Expr_StaticCall":
@@ -123,13 +110,10 @@ func RendersInertiaPage(node engine.Match) bool {
 	return false
 }
 
-// IsFacadeCall says whether the node is a static call on a Laravel facade.
 func (n Node) IsFacadeCall() bool {
 	return strings.HasPrefix(php.StaticCallClass(n.Match), FacadeNamespace)
 }
 
-// RouteNameReference is the route name a `route('name')`, `URL::route('name')` or `redirect()->route('name')` asks
-// for; empty for anything else, or a name not written as a literal.
 func (n Node) RouteNameReference() string {
 	if !n.isRouteNameLookup() {
 		return ""
@@ -159,7 +143,6 @@ func (n Node) isRouteNameLookup() bool {
 	return receiver.Kind() == "Expr_FuncCall" && isName(receiver.Child("name")) && slices.Contains(URLHelpers, receiver.Child("name").Name())
 }
 
-// ListenedEventClass is the event class an `Event::listen(X::class, …)` registers for.
 func (n Node) ListenedEventClass() string {
 	class, name := n.Child("class"), n.Child("name")
 	if n.Kind() != "Expr_StaticCall" || !isName(class) || !slices.Contains([]string{Event, "Event"}, strings.TrimLeft(class.Name(), `\`)) ||
@@ -170,12 +153,10 @@ func (n Node) ListenedEventClass() string {
 	return ClassArgument(n.Match, 0)
 }
 
-// BoundAbstract is the class a container binding (`bind`, `singleton`, …) registers.
 func (n Node) BoundAbstract() string {
 	return BoundAbstractOf(n.Match)
 }
 
-// BoundAbstractOf is the class the call binds in the container, when it is a binding.
 func BoundAbstractOf(node engine.Match) string {
 	if !slices.Contains(BindingMethods, CallName(node)) {
 		return ""
@@ -184,13 +165,10 @@ func BoundAbstractOf(node engine.Match) string {
 	return ClassArgument(node, 0)
 }
 
-// IsRouteAction says whether the method the node sits in handles a request.
 func (n Node) IsRouteAction() bool {
 	return RouteActionsOf(n.Codebase()).IsAction(php.EnclosingClassName(n.Match), php.EnclosingFunctionName(n.Match))
 }
 
-// DelegatesToRouteAction says whether the method does nothing but forward to another class's registered route
-// action.
 func (n Node) DelegatesToRouteAction() bool {
 	call, ok := n.soleDelegationCall()
 	if !ok || call.Child("name").Kind() != "Identifier" {
@@ -205,7 +183,6 @@ func (n Node) DelegatesToRouteAction() bool {
 	return RouteActionsOf(n.Codebase()).IsRegisteredAction(receiver, call.Child("name").Name())
 }
 
-// ThinDelegationTarget is the `Class::method` the method does nothing but forward to.
 func (n Node) ThinDelegationTarget() string {
 	call, ok := n.soleDelegationCall()
 	if !ok || call.Child("name").Kind() != "Identifier" {
@@ -219,7 +196,6 @@ func (n Node) ThinDelegationTarget() string {
 	return ActionKey(receiver, call.Child("name").Name())
 }
 
-// soleDelegationCall is the one method send a method's single statement returns or runs.
 func (n Node) soleDelegationCall() (engine.Match, bool) {
 	if n.Kind() != "Stmt_ClassMethod" {
 		return engine.Match{}, false
@@ -242,12 +218,10 @@ func (n Node) soleDelegationCall() (engine.Match, bool) {
 	return expression, expression.Kind() == "Expr_MethodCall"
 }
 
-// InServiceProvider says whether the node sits in a service provider.
 func (n Node) InServiceProvider() bool {
 	return php.ProgramOf(n.Codebase()).Extends(php.EnclosingClassName(n.Match), ServiceProvider)
 }
 
-// IsEloquentCast says whether the node sits in a custom Eloquent cast.
 func (n Node) IsEloquentCast() bool {
 	program := php.ProgramOf(n.Codebase())
 	for _, contract := range CastContracts {
@@ -259,20 +233,17 @@ func (n Node) IsEloquentCast() bool {
 	return false
 }
 
-// InQueuedJobHook says whether the node sits in one of a queued job's framework hooks.
 func (n Node) InQueuedJobHook() bool {
 	return php.ProgramOf(n.Codebase()).Implements(php.EnclosingClassName(n.Match), ShouldQueue) &&
 		slices.Contains(QueueHooks, php.EnclosingFunctionName(n.Match))
 }
 
-// ReceiverIsModel says whether a method send's receiver is declared an Eloquent model.
 func (n Node) ReceiverIsModel() bool {
 	receiver := php.ReceiverTypeOf(n.Match)
 
 	return receiver != "" && php.ProgramOf(n.Codebase()).Extends(receiver, Model)
 }
 
-// IsMassArrayUpdate says whether the node is `$model->update([...])` on something other than `$this`.
 func (n Node) IsMassArrayUpdate() bool {
 	if name := n.Child("name"); n.Kind() != "Expr_MethodCall" || name.Kind() != "Identifier" || name.Name() != "update" {
 		return false
@@ -285,7 +256,6 @@ func (n Node) IsMassArrayUpdate() bool {
 	return len(arguments) > 0 && arguments[0].Child("value").Kind() == "Expr_Array"
 }
 
-// StringArgument is the literal string the call passes at the position.
 func StringArgument(call engine.Match, position int) string {
 	arguments := php.Arguments(call)
 	if position >= len(arguments) {
@@ -300,7 +270,6 @@ func StringArgument(call engine.Match, position int) string {
 	return text
 }
 
-// ClassArgument is the class a call passes as `X::class` at the position.
 func ClassArgument(call engine.Match, position int) string {
 	arguments := php.Arguments(call)
 	if position >= len(arguments) {
@@ -310,7 +279,6 @@ func ClassArgument(call engine.Match, position int) string {
 	return classConstant(arguments[position].Child("value"))
 }
 
-// classConstant is the class an `X::class` names.
 func classConstant(fetch engine.Match) string {
 	class, name := fetch.Child("class"), fetch.Child("name")
 	if fetch.Kind() != "Expr_ClassConstFetch" || !isName(class) || name.Kind() != "Identifier" || name.Name() != "class" {
@@ -320,7 +288,6 @@ func classConstant(fetch engine.Match) string {
 	return strings.TrimLeft(class.Name(), `\`)
 }
 
-// CallName is the name a call is made by: a method send's, a static call's, or a named function's.
 func CallName(node engine.Match) string {
 	name := node.Child("name")
 	switch node.Kind() {
@@ -341,9 +308,6 @@ func isName(node engine.Match) bool {
 	return strings.HasPrefix(node.Kind(), "Name")
 }
 
-// QueryRunners are the Eloquent methods that go to the database when they are called. Calling one inside a
-// loop issues one query per turn of the loop, which is the N+1: the work grows with the data and nothing in
-// the code says so.
 var QueryRunners = []string{
 	"get", "first", "firstOrFail", "firstOrCreate", "firstOr", "sole", "find", "findOrFail", "findOr",
 	"findMany", "count", "exists", "doesntExist", "sum", "avg", "min", "max", "pluck", "value", "paginate",
@@ -351,9 +315,6 @@ var QueryRunners = []string{
 	"create", "updateOrCreate", "insert", "refresh",
 }
 
-// RunsAQueryInALoop says whether the node is a call that goes to the database, made inside a loop, on a
-// receiver the type engine says is an Eloquent model or one of its builders. Each turn of the loop is another
-// query, so the cost grows with the data while the code reads as if it were one call.
 func (n Node) RunsAQueryInALoop() bool {
 	name := n.Child("name")
 	if n.Kind() != "Expr_MethodCall" && n.Kind() != "Expr_StaticCall" {
@@ -366,9 +327,6 @@ func (n Node) RunsAQueryInALoop() bool {
 	if !inAForeach {
 		return false
 	}
-	// The cost of an N+1 is that it grows with the DATA, which is what a foreach's turns count. A while that
-	// polls one row until it answers turns as many times as it has to wait, and re-reading the same row is
-	// the whole point of it.
 	if walked.isChunked() {
 		return false
 	}
@@ -376,9 +334,6 @@ func (n Node) RunsAQueryInALoop() bool {
 	return n.reachesTheDatabase()
 }
 
-// foreachAround is what the foreach around the call walks, and whether the call sits in one at all. A chunked
-// subject says the loop walks batches rather than items: a chunked insert writes once per batch on purpose,
-// because one statement for everything would not fit, and the query count is the number of batches.
 func (n Node) foreachAround() (Node, bool) {
 	for held := n.Parent(); held.Exists(); held = held.Parent() {
 		if held.Kind() == "Stmt_Foreach" {
@@ -389,8 +344,6 @@ func (n Node) foreachAround() (Node, bool) {
 	return Node{}, false
 }
 
-// isChunked says whether the expression hands out batches: `array_chunk(...)`, or a `->chunk(...)` anywhere in
-// the chain that made it.
 func (n Node) isChunked() bool {
 	if n.Kind() == "Expr_FuncCall" && isName(n.Child("name")) && strings.TrimLeft(n.Child("name").Name(), `\`) == "array_chunk" {
 		return true
@@ -409,10 +362,6 @@ func (n Node) isChunked() bool {
 	return false
 }
 
-// reachesTheDatabase says whether what the call is made on is a model, or a chain that began at one. Eloquent
-// is fluent, so `Order::where(...)->orderBy(...)->count()` is the same reach as `Order::count()`: the chain's
-// root is what decides, and a project with no vendor installed still shows that root in its own source, where
-// a builder's return type would be invisible.
 func (n Node) reachesTheDatabase() bool {
 	root := n.chainRoot()
 	program := php.ProgramOf(n.Codebase())
@@ -421,8 +370,6 @@ func (n Node) reachesTheDatabase() bool {
 
 		return isName(class) && program.Extends(strings.TrimLeft(class.Name(), `\`), Model)
 	}
-	// The type engine, not the declared type alone: a model assigned from a `new` or handed back by a call is
-	// still a model, and the rule is about what the call reaches, not how the receiver was written.
 	held := strings.TrimLeft(php.TypesOf(n.Codebase()).TypeOf(root.Match), `?\`)
 	if held == "" {
 		return false
@@ -431,8 +378,6 @@ func (n Node) reachesTheDatabase() bool {
 	return program.Extends(held, Model) || slices.Contains(BuilderTypes, held)
 }
 
-// chainRoot is what a chain of sends begins at: the receiver of the outermost call, followed down through every
-// call it is made on, so a fluent builder answers with the model that opened it.
 func (n Node) chainRoot() Node {
 	held := n
 	for {

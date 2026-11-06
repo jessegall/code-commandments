@@ -16,12 +16,10 @@ func init() {
 	detectors.Register(catalog.Python, ConstantPropertyDetector{})
 }
 
-// Sin is the sin the detector finds.
 func (ConstantPropertyDetector) Sin() sins.Sin {
 	return pysins.ConstantProperty{}
 }
 
-// Find is every place the sin is committed.
 func (ConstantPropertyDetector) Find(codebase *engine.Codebase) []engine.Match {
 	program := py.In(codebase).Program
 

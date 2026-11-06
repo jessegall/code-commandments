@@ -11,7 +11,6 @@ type TernaryStatement struct{}
 
 func init() { sins.Register(catalog.PHP, TernaryStatement{}) }
 
-// Definition is what the sin states about itself.
 func (TernaryStatement) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "ternary-statement",

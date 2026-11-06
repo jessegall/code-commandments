@@ -7,8 +7,6 @@ import (
 	"testing"
 )
 
-// TestTheToolCarriesNoTestingPackage holds the shipped binary to linking none of Go's testing package: a test helper
-// belongs behind a _test.go file or a package only tests import, never in one the tool imports.
 func TestTheToolCarriesNoTestingPackage(t *testing.T) {
 	out, err := exec.Command("go", "list", "-deps", ".").Output()
 	if err != nil {

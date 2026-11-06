@@ -15,10 +15,8 @@ type DataMethodHintCollisionDetector struct{}
 
 func init() { detectors.Register(catalog.PHP, DataMethodHintCollisionDetector{}) }
 
-// Sin is the sin the detector finds.
 func (DataMethodHintCollisionDetector) Sin() sins.Sin { return backendsins.DataMethodHintCollision{} }
 
-// Find is every Data class whose @method hint redeclares a real method.
 func (DataMethodHintCollisionDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return php.In(codebase).
 		WhereKind("Stmt_Class").

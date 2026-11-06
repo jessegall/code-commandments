@@ -16,12 +16,10 @@ func init() {
 	detectors.Register(catalog.CSharp, BloatedDocblockDetector{})
 }
 
-// Sin is the sin the detector finds.
 func (BloatedDocblockDetector) Sin() sins.Sin {
 	return cssins.BloatedDocblock{}
 }
 
-// Find is every place the sin is committed.
 func (BloatedDocblockDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return cs.In(codebase).WhereComment(func(comment cs.Comment) bool {
 		return comment.IsDoc() && comment.Documented().IsTypeDeclaration() && comment.Paragraphs() >= 2

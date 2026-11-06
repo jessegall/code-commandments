@@ -16,12 +16,10 @@ func init() {
 	detectors.Register(catalog.Python, BareStatePredicateDetector{})
 }
 
-// Sin is the sin the detector finds.
 func (BareStatePredicateDetector) Sin() sins.Sin {
 	return pysins.BareStatePredicate{}
 }
 
-// Find is every place the sin is committed.
 func (BareStatePredicateDetector) Find(codebase *engine.Codebase) []engine.Match {
 	program := py.In(codebase).Program
 

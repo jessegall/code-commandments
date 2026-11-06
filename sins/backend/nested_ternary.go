@@ -11,7 +11,6 @@ type NestedTernary struct{}
 
 func init() { sins.Register(catalog.PHP, NestedTernary{}) }
 
-// Definition is what the sin states about itself.
 func (NestedTernary) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "nested-ternary",

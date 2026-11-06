@@ -16,18 +16,14 @@ func init() {
 	detectors.Register(catalog.CSharp, NearDuplicateMethodDetector{})
 }
 
-// Sin is the sin the detector finds.
 func (NearDuplicateMethodDetector) Sin() sins.Sin {
 	return cssins.NearDuplicateMethod{}
 }
 
-// Find is every place the sin is committed.
 func (d NearDuplicateMethodDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return detectors.Aggregate(d, codebase)
 }
 
-// Candidates is every function heavy enough to be worth sharing and free to change, keyed by the shape of its body
-// and by the body it runs exactly.
 func (d NearDuplicateMethodDetector) Candidates(codebase *engine.Codebase) []detectors.Candidate {
 	matches := cs.In(codebase).
 		WhereFunction().
@@ -49,7 +45,6 @@ func (d NearDuplicateMethodDetector) Candidates(codebase *engine.Codebase) []det
 	return candidates
 }
 
-// Decide is every function alike in shape to another, yet the only one running its exact body.
 func (NearDuplicateMethodDetector) Decide(candidates []detectors.Candidate) []int {
 	return engine.NearCopyPositions(len(candidates), keyOf(candidates), func(at int) (string, bool) {
 		exact := candidates[at].Record.(keyed).exact
@@ -58,13 +53,10 @@ func (NearDuplicateMethodDetector) Decide(candidates []detectors.Candidate) []in
 	})
 }
 
-// GroupKey is the group a function recurs in: the skeleton of its body, whatever its locals and constants.
 func (NearDuplicateMethodDetector) GroupKey(match engine.Match) (string, bool) {
 	hash := cs.Node{Match: match}.ShapeHash()
 
 	return hash, hash != ""
 }
 
-// CrossFile says the rule reads more than the file it reports in, which the fixture measures by asking it
-// of one file and of the whole tree: a scoped run reads the whole scan while it is enabled.
 func (NearDuplicateMethodDetector) CrossFile() {}

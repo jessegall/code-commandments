@@ -14,7 +14,6 @@ type Forward struct {
 	As      string
 }
 
-// Elements is every element of the component's template, in order.
 func (c Component) Elements() []Element {
 	var elements []Element
 	for _, node := range c.Template().Descendants() {
@@ -26,7 +25,6 @@ func (c Component) Elements() []Element {
 	return elements
 }
 
-// ModelRoots is every name a v-model in the component's template binds from: the form's own state.
 func (c Component) ModelRoots() []string {
 	var roots []string
 	for _, element := range c.Elements() {
@@ -40,9 +38,6 @@ func (c Component) ModelRoots() []string {
 	return roots
 }
 
-// PassThroughProps is each prop the component only hands on: bound bare to a child component, and read
-// nowhere else, not in another expression, not as a script local of its name, not as props.x in the script.
-// Each carries the places it is handed on.
 func (c Component) PassThroughProps(codebase *engine.Codebase) map[string][]Forward {
 	var props []string
 	for _, prop := range c.Props(codebase) {
@@ -81,7 +76,6 @@ type named struct {
 	name string
 }
 
-// bareForwards is each of the names the element, a component, binds bare to one of its props.
 func (e Element) bareForwards(names []string) []named {
 	if !e.IsComponent() {
 		return nil

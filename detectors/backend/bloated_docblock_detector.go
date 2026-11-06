@@ -14,10 +14,8 @@ type BloatedDocblockDetector struct{}
 
 func init() { detectors.Register(catalog.PHP, BloatedDocblockDetector{}) }
 
-// Sin is the sin the detector finds.
 func (BloatedDocblockDetector) Sin() sins.Sin { return backendsins.BloatedDocblock{} }
 
-// Find is every class whose doc comment holds two or more prose paragraphs.
 func (BloatedDocblockDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return php.In(codebase).
 		WhereKind("Stmt_Class").

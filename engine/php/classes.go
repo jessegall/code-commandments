@@ -6,7 +6,6 @@ import (
 	"github.com/jessegall/code-commandments/engine"
 )
 
-// traitNames are the nodes naming the traits a class-like uses directly, in source order.
 func traitNames(declaration engine.Match) []engine.Match {
 	var traits []engine.Match
 	for _, member := range declaration.ChildrenIn("stmts") {
@@ -18,10 +17,6 @@ func traitNames(declaration engine.Match) []engine.Match {
 	return traits
 }
 
-// classOf is the class a node is about: the one a name or an `X::class` names, the one a new constructs, else the
-// class an expression's value is, as the type engine reads it; empty for a value of no class.
-// typeOf is the type an expression holds, a primitive among them, where classOf answers a class alone: a rule
-// about money has to tell a numeric amount from a formatted label, and both are strings to a class reader.
 func typeOf(node engine.Match) string {
 	return strings.TrimLeft(TypesOf(node.Codebase()).TypeOf(node), `?\`)
 }
@@ -43,8 +38,6 @@ func classOf(node engine.Match) string {
 	return held
 }
 
-// propertyName is the name of the one property a property statement declares; empty for any other node, or one that
-// declares several.
 func propertyName(statement engine.Match) string {
 	properties := statement.ChildrenIn("props")
 	if statement.Kind() != "Stmt_Property" || len(properties) != 1 {

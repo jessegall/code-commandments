@@ -13,7 +13,6 @@ func init() {
 	sins.Register(catalog.Python, ConditionalSpread{})
 }
 
-// Definition is what the sin states about itself.
 func (ConditionalSpread) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "python-conditional-spread",

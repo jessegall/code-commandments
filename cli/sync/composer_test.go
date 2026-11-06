@@ -9,9 +9,6 @@ import (
 	"github.com/jessegall/code-commandments/cli/binary"
 )
 
-// TestAProjectComposerDoesNotInstallTheToolInGetsNoComposerHook holds the wiring to a binary that is really there.
-// A project the agent journal's plugin drives has a composer.json of its own and no package of ours, so the shim
-// a composer event would name is never created and the project's next `composer install` would fail on our hook.
 func TestAProjectComposerDoesNotInstallTheToolInGetsNoComposerHook(t *testing.T) {
 	driven := t.TempDir()
 	composer := filepath.Join(driven, "composer.json")
@@ -33,8 +30,6 @@ func TestAProjectComposerDoesNotInstallTheToolInGetsNoComposerHook(t *testing.T)
 	}
 }
 
-// TestAComposerProjectIsStillWiredToResync holds the wiring where composer does install the tool: its own install
-// and update are what put a new curriculum in the project, so they have to call sync.
 func TestAComposerProjectIsStillWiredToResync(t *testing.T) {
 	project := t.TempDir()
 	write(t, filepath.Join(project, "composer.json"), `{"name": "acme/app"}`)

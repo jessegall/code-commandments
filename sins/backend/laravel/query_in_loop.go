@@ -13,7 +13,6 @@ func init() {
 	sins.Register(catalog.PHP, QueryInLoop{})
 }
 
-// Definition is what the sin states about itself.
 func (QueryInLoop) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "query-in-loop",

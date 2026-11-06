@@ -13,10 +13,8 @@ import (
 	"github.com/jessegall/code-commandments/skill"
 )
 
-// MapID is the id of the skill that maps every other: the briefing, loadable like a discipline.
 const MapID = "commandments"
 
-// mapTrigger says when to load the map: the moments a reader needs every discipline rather than one.
 const mapTrigger = "The index of this project's architectural disciplines — every " +
 	"code-commandments skill, when each one fires, and the commands that find and fix sins " +
 	"(`judge`, `info`, `repent`, `report`, `make`). Load this when you start work in this " +
@@ -30,16 +28,10 @@ var briefing string
 //go:embed brief.md
 var brief string
 
-// Binary is the placeholder a rendered skill writes where the executable goes: the curriculum is rendered once,
-// into the binary, and which file an agent is told to run is answered when it is published into a project.
 const Binary = "{{binary}}"
 
-// Judging is the placeholder a rendered skill writes where the command that judges the project goes: the
-// journal's alias where the journal drives it, the binary and its verb anywhere else.
 const Judging = "{{judging}}"
 
-// Briefing is the canon every agent in the project at root is handed: how the skills are loaded, the rule
-// they all serve, and the disciplines the project can use, tier by tier, its own among them.
 func Briefing(root string, project config.Config) string {
 	own := custom.InForce(root).Skills
 
@@ -52,10 +44,6 @@ func Briefing(root string, project config.Config) string {
 	).Replace(briefing)
 }
 
-// Brief is the short block injected into the instruction files every agent reads: what judges this project, the
-// one rule every discipline defers to, how a sin is found and fixed, and where the rest is. The disciplines
-// themselves are NOT listed here — they are the map skill, loadable by the id this names, so an instruction file
-// carries a pointer rather than a catalogue it would be skimmed for being.
 func Brief(root string, project config.Config) string {
 	return strings.NewReplacer(
 		"{{library}}", Dir,
@@ -64,7 +52,6 @@ func Brief(root string, project config.Config) string {
 	).Replace(brief)
 }
 
-// Map is the SKILL.md of the map skill: the briefing under a front matter that says when to load it.
 func Map(root string, project config.Config) string {
 	var description bytes.Buffer
 
@@ -77,7 +64,6 @@ func Map(root string, project config.Config) string {
 		Briefing(root, project) + "\n"
 }
 
-// ownMark follows the bullet of a skill the project wrote itself.
 const ownMark = " _(this project's own — `.commandments/custom/`)_"
 
 func bullets(tier skill.Tier, project config.Config, own []custom.Skill) string {
@@ -96,8 +82,6 @@ func bullets(tier skill.Tier, project config.Config, own []custom.Skill) string 
 	return strings.Join(lines, "\n")
 }
 
-// Written are the skills the project can use: those teaching at least one language it writes. A discipline
-// whose every language is disabled is one the project cannot break, so it is never briefed nor published.
 func Written(skills []skill.Skill, project config.Config) []skill.Skill {
 	var kept []skill.Skill
 
@@ -114,7 +98,6 @@ func Written(skills []skill.Skill, project config.Config) []skill.Skill {
 	return kept
 }
 
-// LanguageOf reads a skill's language: its source value (`py`) or its config name (`python`).
 func LanguageOf(name string) (source.Language, bool) {
 	for _, language := range source.Languages {
 		if string(language) == name || strings.EqualFold(language.Label(), name) || config.LanguageName(language) == name {
@@ -125,8 +108,6 @@ func LanguageOf(name string) (source.Language, bool) {
 	return "", false
 }
 
-// KeepSections is a skill with every `### … — in <Language>` example dropped for a language the project
-// does not write; a `## ` section always resumes.
 func KeepSections(text string, project config.Config) string {
 	if len(project.DisabledLanguages) == 0 {
 		return text

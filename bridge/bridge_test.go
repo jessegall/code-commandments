@@ -46,7 +46,6 @@ func TestTheMypyBridgeWritesAValidTreeOfThePythonFixture(t *testing.T) {
 	}
 }
 
-// inSourceOrder holds every node of the file inside its parent, after the sibling before it.
 func inSourceOrder(t *testing.T, file *contract.File) {
 	t.Helper()
 	for _, node := range file.Nodes() {

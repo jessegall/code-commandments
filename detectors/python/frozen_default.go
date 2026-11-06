@@ -16,12 +16,10 @@ func init() {
 	detectors.Register(catalog.Python, FrozenDefaultDetector{})
 }
 
-// Sin is the sin the detector finds.
 func (FrozenDefaultDetector) Sin() sins.Sin {
 	return pysins.FrozenDefault{}
 }
 
-// Find is every parameter whose default is worked out once at definition.
 func (FrozenDefaultDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return py.In(codebase).
 		WhereKind("arg").

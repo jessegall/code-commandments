@@ -10,8 +10,7 @@ import (
 	"github.com/jessegall/code-commandments/bridge/bridgetest"
 )
 
-// consumer is a project the binary works in with no PHP anywhere on its PATH: only git, the binary itself,
-// and the Python the project's own language needs.
+// consumer is a project the binary works in with no PHP anywhere on its PATH: only git, the binary itself, and the Python the project's own language needs.
 type consumer struct {
 	t      *testing.T
 	root   string
@@ -19,8 +18,6 @@ type consumer struct {
 	env    []string
 }
 
-// newConsumer builds the binary and lays out a Python project with no composer.json and no php on the
-// PATH. The Python bridge reads through an interpreter that already has mypy, so nothing is installed.
 func newConsumer(t *testing.T) consumer {
 	t.Helper()
 
@@ -83,8 +80,6 @@ func (c consumer) read(path string) string {
 	return string(contents)
 }
 
-// run runs a program in the project, the binary when the program is commandments, and answers what it
-// printed; an exit code other than the one expected fails the test.
 func (c consumer) run(exit int, program string, args ...string) string {
 	c.t.Helper()
 
@@ -133,8 +128,6 @@ func TestAProjectWithOnlyTheBinaryIsWiredJudgedAndKeepsItsOwnRules(t *testing.T)
 		c.read(published)
 	}
 
-	// The disciplines are listed in the map skill and not in the instruction file, which carries a pointer to it:
-	// a file an agent skims for being a catalogue is one it stops reading.
 	if mapped := c.read(".agents/skills/commandments/SKILL.md"); !strings.Contains(mapped, "commandments-python-absence") {
 		t.Error("the map skill does not list the Python disciplines")
 	}
@@ -173,8 +166,6 @@ func TestAProjectWithOnlyTheBinaryIsWiredJudgedAndKeepsItsOwnRules(t *testing.T)
 		t.Errorf("judge said\n%s", judged)
 	}
 
-	// One line per file and sin, as the per-edit nudge has said it since v6.22.0: the file and the lines it
-	// stands on, the sin, and the skill that teaches the fix.
 	hooked := c.feed(0, `{"hook_event_name":"PostToolUse","session_id":"s1","tool_name":"Write","tool_input":{"file_path":"src/app.py"}}`, "commandments", "hooks")
 	for _, said := range []string{"src/app.py:2", "no-eval", "commandments-no-eval", "at its source"} {
 		if !strings.Contains(hooked, said) {
@@ -187,7 +178,6 @@ func TestAProjectWithOnlyTheBinaryIsWiredJudgedAndKeepsItsOwnRules(t *testing.T)
 		t.Errorf("the stop hook said\n%s", stopped)
 	}
 
-	// A project with no composer.json has no composer shim: everything names the binary itself.
 	for said, text := range map[string]string{
 		"AGENTS.md":                            c.read("AGENTS.md"),
 		".agents/skills/commandments/SKILL.md": c.read(".agents/skills/commandments/SKILL.md"),
@@ -205,7 +195,6 @@ func TestAProjectWithOnlyTheBinaryIsWiredJudgedAndKeepsItsOwnRules(t *testing.T)
 	}
 }
 
-// lookIn says where a program is on the environment's PATH, and whether it is there.
 func lookIn(env []string, program string) (string, bool) {
 	for _, entry := range env {
 		if path, isPath := strings.CutPrefix(entry, "PATH="); isPath {
@@ -220,8 +209,6 @@ func lookIn(env []string, program string) (string, bool) {
 	return "", false
 }
 
-// TestSyncNamesAnAgentTheToolDoesNotShip holds sync to saying that an agent a config from the PHP tool turned on is
-// skipped — a project's own agent is never dropped in silence.
 func TestSyncNamesAnAgentTheToolDoesNotShip(t *testing.T) {
 	c := newConsumer(t)
 	c.write(".commandments/config.json", `{"agents": ["CursorAgent"]}`+"\n")
@@ -231,8 +218,6 @@ func TestSyncNamesAnAgentTheToolDoesNotShip(t *testing.T) {
 	}
 }
 
-// TestSyncNamesAPhpRuleTheBinaryCannotRun holds sync to saying, as judge does, that a detector the PHP tool's make
-// scaffolded is still a PHP class the binary skips — the switch must not drop a project's own rule in silence.
 func TestSyncNamesAPhpRuleTheBinaryCannotRun(t *testing.T) {
 	c := newConsumer(t)
 	c.write(".commandments/custom/NoRawSqlDetector.php", "<?php\n\nfinal class NoRawSqlDetector {}\n")

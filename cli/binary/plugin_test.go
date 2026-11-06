@@ -6,11 +6,6 @@ import (
 	"testing"
 )
 
-// TestAJournalDrivenProjectNamesThePluginsOwnBinary holds every command the tool writes into a project to a file
-// that is really there. The agent journal's plugin fetches its release binary into its own folder and puts nothing
-// on the PATH, so a project it drives has no `commandments` to type: naming the bare binary there tells an agent to
-// run a command that answers "not installed". A project with composer still names its shim, and one with neither
-// still falls back to the PATH.
 func TestAJournalDrivenProjectNamesThePluginsOwnBinary(t *testing.T) {
 	driven := t.TempDir()
 	installed := filepath.Join(driven, ".journal", "plugins", "code-commandments")

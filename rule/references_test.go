@@ -16,7 +16,6 @@ import (
 	"github.com/jessegall/code-commandments/rule"
 )
 
-// application is a PHP project of two files, one calling into the other.
 var application = map[string]string{
 	"app/Http/Orders.php": `<?php
 
@@ -54,7 +53,6 @@ class Repo
 `,
 }
 
-// phpProject is the codebase of the PHP files, each at its path under one root.
 func phpProject(t *testing.T, files map[string]string) *engine.Codebase {
 	t.Helper()
 
@@ -77,7 +75,6 @@ func phpProject(t *testing.T, files map[string]string) *engine.Codebase {
 	return loaded
 }
 
-// foundAt runs the query and says where it matched, each as file:line, in order.
 func foundAt(t *testing.T, engineName, query string, codebase *engine.Codebase) string {
 	t.Helper()
 

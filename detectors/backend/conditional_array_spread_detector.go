@@ -14,10 +14,8 @@ type ConditionalArraySpreadDetector struct{}
 
 func init() { detectors.Register(catalog.PHP, ConditionalArraySpreadDetector{}) }
 
-// Sin is the sin the detector finds.
 func (ConditionalArraySpreadDetector) Sin() sins.Sin { return backendsins.ConditionalArraySpread{} }
 
-// Find is every ternary between an empty and a filled array that is spread or merged.
 func (ConditionalArraySpreadDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return php.In(codebase).
 		Where(engine.As(php.Node.IsConditionalArraySpread)).

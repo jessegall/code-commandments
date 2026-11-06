@@ -13,7 +13,6 @@ func init() {
 	sins.Register(catalog.Python, ConvertedArgument{})
 }
 
-// Definition is what the sin states about itself.
 func (ConvertedArgument) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "python-converted-argument",

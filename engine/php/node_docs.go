@@ -10,8 +10,6 @@ import (
 	"github.com/jessegall/code-commandments/prose"
 )
 
-// parserComments is every node's comments as php-parser attaches them: a comment belongs to the outermost node that
-// starts at the next code after it, one that trails code on its line included.
 var parserComments = Memoised(func(codebase *engine.Codebase) map[*contract.Node][]contract.Comment {
 	owned := map[*contract.Node][]contract.Comment{}
 	for _, file := range codebase.Files() {
@@ -60,7 +58,6 @@ func commentOwner(file *engine.File, comment contract.Comment, starts map[int]*c
 	return starts[next]
 }
 
-// Comments is every comment php-parser attaches to the node, in source order.
 func (n Node) Comments() []contract.Comment {
 	if !n.Exists() {
 		return nil
@@ -69,7 +66,6 @@ func (n Node) Comments() []contract.Comment {
 	return parserComments.Of(n.Codebase())[n.Node()]
 }
 
-// DocComment is the last doc comment attached to the node, as php-parser's getDocComment reads it.
 func (n Node) DocComment() (contract.Comment, bool) {
 	comments := n.Comments()
 	for at := len(comments) - 1; at >= 0; at-- {
@@ -81,14 +77,12 @@ func (n Node) DocComment() (contract.Comment, bool) {
 	return contract.Comment{}, false
 }
 
-// HasDocComment says whether a doc comment is attached to the node.
 func (n Node) HasDocComment() bool {
 	_, ok := n.DocComment()
 
 	return ok
 }
 
-// HasLineComment says whether a comment other than a doc comment is attached to the node.
 func (n Node) HasLineComment() bool {
 	for _, comment := range n.Comments() {
 		if comment.Kind != "doc" {
@@ -99,7 +93,6 @@ func (n Node) HasLineComment() bool {
 	return false
 }
 
-// HasCommentMatching says whether a comment attached to the node says what the check looks for.
 func (n Node) HasCommentMatching(says func(string) bool) bool {
 	for _, comment := range n.Comments() {
 		if says(comment.Text) {
@@ -110,7 +103,6 @@ func (n Node) HasCommentMatching(says func(string) bool) bool {
 	return false
 }
 
-// Docblocks is every doc comment attached to the node, stacked ones included.
 func (n Node) Docblocks() []contract.Comment {
 	var blocks []contract.Comment
 	for _, comment := range n.Comments() {
@@ -122,7 +114,6 @@ func (n Node) Docblocks() []contract.Comment {
 	return blocks
 }
 
-// LineComments is the text of every // or # comment attached to the node.
 func (n Node) LineComments() []contract.Comment {
 	var lines []contract.Comment
 	for _, comment := range n.Comments() {
@@ -134,27 +125,22 @@ func (n Node) LineComments() []contract.Comment {
 	return lines
 }
 
-// HasStackedDocblocks says whether more than one doc comment is attached to the node.
 func (n Node) HasStackedDocblocks() bool {
 	return len(n.Docblocks()) > 1
 }
 
-// HasInlineDocblock says whether the node's doc comment opens or closes on a content line.
 func (n Node) HasInlineDocblock() bool {
 	doc, ok := n.DocComment()
 
 	return ok && DocblockIsInline(doc.Text)
 }
 
-// HasMultiParagraphDocblock says whether the node is a class-like whose doc comment runs to two or more prose
-// paragraphs.
 func (n Node) HasMultiParagraphDocblock() bool {
 	doc, ok := n.DocComment()
 
 	return n.IsClassLike() && ok && DocParagraphs(doc.Text) >= 2
 }
 
-// DocReferences is every class the node's doc comment points at with {@see} or {@link}.
 func (n Node) DocReferences() []string {
 	doc, ok := n.DocComment()
 	if !ok {
@@ -164,7 +150,6 @@ func (n Node) DocReferences() []string {
 	return DocReferences(doc.Text)
 }
 
-// HasCommentedOutCode says whether a line comment attached to the node is code left commented out.
 func (n Node) HasCommentedOutCode() bool {
 	for _, comment := range n.LineComments() {
 		if comment.Extras != nil && comment.Extras.PHP != nil && comment.Extras.PHP.Code {
@@ -175,23 +160,18 @@ func (n Node) HasCommentedOutCode() bool {
 	return false
 }
 
-// IsClassLike says whether the node declares a class, interface, trait or enum.
 func (n Node) IsClassLike() bool {
 	return isClassLike(n.Match)
 }
 
-// IsFunctionDeclaration says whether the node declares a method or a function.
 func (n Node) IsFunctionDeclaration() bool {
 	return n.Kind() == "Stmt_ClassMethod" || n.Kind() == "Stmt_Function"
 }
 
-// IsArrayItem says whether the node is an array item or sits directly in one.
 func (n Node) IsArrayItem() bool {
 	return n.Kind() == "ArrayItem" || n.Parent().Kind() == "ArrayItem"
 }
 
-// HasCeremonyDocblock says whether the node is a function whose doc comment only restates its native types: tags
-// alone, every @param naming a typed parameter's own type with nothing to add, and at least one of them.
 func (n Node) HasCeremonyDocblock() bool {
 	doc, ok := n.DocComment()
 	if !n.IsFunctionDeclaration() || !ok {
@@ -236,13 +216,9 @@ func (n Node) HasCeremonyDocblock() bool {
 	return restatements >= 1
 }
 
-// CodeWords is every word the node's own code says, keywords of its constructs included; a nested statement's
-// words are its own.
 func (n Node) CodeWords() []string {
 	var words []string
 	seen := map[string]bool{}
-	// Each word is kept once, in the order it was first met, whether it came from what the construct is or
-	// from what the code spells.
 	keep := func(word string) {
 		if seen[word] {
 			return
@@ -272,7 +248,6 @@ func (n Node) CodeWords() []string {
 	return words
 }
 
-// spelled is the text a node writes out: a name, a variable's name, a string's value.
 func spelled(node engine.Match) string {
 	switch {
 	case node.Kind() == "Identifier" || node.Kind() == "VarLikeIdentifier" || isName(node):
@@ -297,7 +272,6 @@ func isClassLike(node engine.Match) bool {
 	return slices.Contains(classLikes, node.Kind())
 }
 
-// typeKeyOf is a declared type's comparable spelling; empty when nothing is declared.
 func typeKeyOf(declared TypeName) string {
 	rendered := declared.Render()
 	if rendered == "" {
@@ -307,8 +281,6 @@ func typeKeyOf(declared TypeName) string {
 	return typeKey(rendered)
 }
 
-// typeKey is a type's spelling as a docblock and a declaration compare equal: lower case, no leading ? or \, null
-// dropped from a union, a union's members sorted.
 func typeKey(written string) string {
 	key := strings.ToLower(strings.TrimLeft(written, `?\`))
 	key = strings.ReplaceAll(strings.ReplaceAll(key, "|null", ""), "null|", "")
@@ -326,7 +298,6 @@ func typeKey(written string) string {
 	return strings.Join(members, "|")
 }
 
-// constructs is the construct each PHP node kind is, and the keywords PHP spells it with.
 var constructs = map[string]struct {
 	construct prose.Construct
 	keywords  []string
@@ -348,7 +319,6 @@ var constructs = map[string]struct {
 	"Expr_Ternary": {prose.Condition, nil},
 }
 
-// constructWords is the keywords and meanings of the construct a node kind is, none for any other.
 func constructWords(kind string) []string {
 	known, ok := constructs[kind]
 	if !ok {

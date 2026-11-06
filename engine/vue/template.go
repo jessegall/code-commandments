@@ -9,7 +9,6 @@ import (
 	"github.com/jessegall/code-commandments/engine/typescript"
 )
 
-// LoopVars is the names the element's v-for binds, each alias's names in turn.
 func (e Element) LoopVars() []string {
 	var names []string
 	for _, alias := range e.Directive(For).Aliases() {
@@ -20,7 +19,6 @@ func (e Element) LoopVars() []string {
 	return names
 }
 
-// LoopVar is the first name the element's v-for binds.
 func (e Element) LoopVar() (string, bool) {
 	if names := e.LoopVars(); len(names) > 0 {
 		return names[0], true
@@ -35,7 +33,6 @@ type TextRun struct {
 	Static bool
 }
 
-// TextRuns is each stretch of text among the element's children, in order.
 func (e Element) TextRuns() []TextRun {
 	var runs []TextRun
 	start, end, static := -1, -1, true
@@ -64,15 +61,12 @@ func (e Element) TextRuns() []TextRun {
 	return runs
 }
 
-// StaticAttribute is the value the element's tag writes for a plain attribute, as written.
 func (e Element) StaticAttribute(name string) (string, bool) {
 	attribute, written := e.WrittenAttribute(name)
 
 	return attribute.Value, written && attribute.Valued
 }
 
-// IsContextBound says whether the element is a `<template>` that only makes sense where it stands: a v-else branch,
-// or a slot.
 func (e Element) IsContextBound() bool {
 	if !e.IsTemplate() {
 		return false
@@ -87,12 +81,10 @@ func (e Element) IsContextBound() bool {
 	return false
 }
 
-// Module is the component's script, read.
 func (c Component) Module() typescript.Module {
 	return typescript.ModuleOfNodes(c.Statements())
 }
 
-// StaticTextIn is the first stretch of plain text in an element below whose tag ends with the suffix, trimmed.
 func (e Element) StaticTextIn(suffix string) (string, bool) {
 	for _, element := range e.DescendantElements() {
 		if !strings.HasSuffix(element.Tag(), suffix) {
@@ -108,7 +100,6 @@ func (e Element) StaticTextIn(suffix string) (string, bool) {
 	return "", false
 }
 
-// Renders says whether the subtree renders the tag: the subtree's head or an element below it.
 func (x *Extraction) Renders(tag string) bool {
 	for _, element := range x.elements() {
 		if element.Tag() == tag {
@@ -119,7 +110,6 @@ func (x *Extraction) Renders(tag string) bool {
 	return false
 }
 
-// scripts is the content of each of the component's script blocks, and which is the `<script setup>` one.
 func (c Component) scripts() ([]engine.Match, int) {
 	var contents []engine.Match
 	setup := -1
@@ -136,7 +126,6 @@ func (c Component) scripts() ([]engine.Match, int) {
 	return contents, setup
 }
 
-// ScriptText is every script block's content, joined by line breaks.
 func (c Component) ScriptText() string {
 	contents, _ := c.scripts()
 	parts := make([]string, 0, len(contents))
@@ -147,7 +136,6 @@ func (c Component) ScriptText() string {
 	return strings.Join(parts, "\n")
 }
 
-// ScriptContentStart is where the `<script setup>` content starts, else the first script's.
 func (c Component) ScriptContentStart() (int, bool) {
 	contents, setup := c.scripts()
 	if len(contents) == 0 {

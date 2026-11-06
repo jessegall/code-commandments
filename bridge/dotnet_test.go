@@ -7,8 +7,6 @@ import (
 	"testing"
 )
 
-// TestTheDotnetSDKIsFoundByItsReferencePacks holds the search for the user's .NET SDK to the folder that holds the
-// framework reference packs, and a machine with none to a notice that C# is judged without them.
 func TestTheDotnetSDKIsFoundByItsReferencePacks(t *testing.T) {
 	t.Setenv("PATH", t.TempDir())
 	t.Setenv("HOME", t.TempDir())
@@ -33,8 +31,6 @@ func TestTheDotnetSDKIsFoundByItsReferencePacks(t *testing.T) {
 	}
 }
 
-// TestADevelopmentBuildFetchesNoBridge holds a build with no release to saying so, naming the variable a developer
-// sets instead.
 func TestADevelopmentBuildFetchesNoBridge(t *testing.T) {
 	released := Release
 	Release = "dev"

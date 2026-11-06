@@ -11,7 +11,6 @@ type NullableCallback struct{}
 
 func init() { sins.Register(catalog.PHP, NullableCallback{}) }
 
-// Definition is what the sin states about itself.
 func (NullableCallback) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "nullable-callback",
@@ -22,7 +21,6 @@ func (NullableCallback) Definition() sins.Definition {
 	}
 }
 
-// Scaffolds are the helpers the fix reaches for, which scaffold generates into the project.
 func (NullableCallback) Scaffolds() []sins.Scaffold {
 	return []sins.Scaffold{
 		{Path: "Support/Invokable.php", Stub: "Invokable.php.stub"},

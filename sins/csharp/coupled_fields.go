@@ -13,7 +13,6 @@ func init() {
 	sins.Register(catalog.CSharp, CoupledFields{})
 }
 
-// Definition is what the sin states about itself.
 func (CoupledFields) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "csharp-coupled-fields",

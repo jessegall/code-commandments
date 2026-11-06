@@ -13,8 +13,6 @@ import (
 	"github.com/jessegall/code-commandments/cli/config"
 )
 
-// mergingOf is the event the journal holds just before a worker's branch is taken in, as it really sends it: the
-// event's own fields under `data`, with the window it waits for the answer in.
 func mergingOf(worktree string, window int, files ...string) map[string]any {
 	named := make([]any, 0, len(files))
 	for _, file := range files {
@@ -31,15 +29,11 @@ func mergingOf(worktree string, window int, files ...string) map[string]any {
 	}
 }
 
-// generousWindow is a window that affords the whole tree, and shallowWindow one that affords the changed files
-// alone, both as the event names them in milliseconds.
 const (
 	generousWindow = 180_000
 	shallowWindow  = 10_000
 )
 
-// TestASinfulBranchHoldsItsOwnMerge holds a worker's work to the disciplines before it lands: the files it changed
-// are judged, and a sin in them refuses the merge with what it found, so the proofs and the task stay as they were.
 func TestASinfulBranchHoldsItsOwnMerge(t *testing.T) {
 	root, _, _ := projectWithASin(t)
 
@@ -67,9 +61,6 @@ func TestASinfulBranchHoldsItsOwnMerge(t *testing.T) {
 	}
 }
 
-// TestAMergeIsHeldWhereverTheEventPutsItsFields holds the reading of the event itself: the journal sends an
-// event's own fields under `data`, and a line that carries them at its top level, as a journal that knew no `data`
-// sent them, is read the same way. A hold that reads only one of the two judges nothing at all.
 func TestAMergeIsHeldWhereverTheEventPutsItsFields(t *testing.T) {
 	root, _, _ := projectWithASin(t)
 
@@ -84,8 +75,6 @@ func TestAMergeIsHeldWhereverTheEventPutsItsFields(t *testing.T) {
 	}
 }
 
-// TestACleanBranchMergesUnheld holds the gate to sins alone: a branch whose changed files are clean answers
-// nothing, which the journal reads as allow, and a file the project does not judge is not judged here either.
 func TestACleanBranchMergesUnheld(t *testing.T) {
 	root, file, _ := projectWithASin(t)
 
@@ -112,9 +101,6 @@ func TestACleanBranchMergesUnheld(t *testing.T) {
 	}
 }
 
-// TestAWindowTooSmallToJudgeInJudgesNothing holds the one thing a hold may never do: answer late. The journal cuts
-// a hold off at its window and records the fault, and a faulting plugin is switched off, so a window no judge fits
-// in is answered with nothing — the branch is still there to judge, and the plugin lives to judge it.
 func TestAWindowTooSmallToJudgeInJudgesNothing(t *testing.T) {
 	root, _, _ := projectWithASin(t)
 
@@ -127,8 +113,6 @@ func TestAWindowTooSmallToJudgeInJudgesNothing(t *testing.T) {
 	}
 }
 
-// TestAShallowWindowStillJudgesTheChangedFiles holds the middle depth: a window of seconds is too short to read a
-// whole tree, and the files the worker changed are still read on their own by the rules that need no more.
 func TestAShallowWindowStillJudgesTheChangedFiles(t *testing.T) {
 	root, _, _ := projectWithASin(t)
 
@@ -137,9 +121,6 @@ func TestAShallowWindowStillJudgesTheChangedFiles(t *testing.T) {
 	}
 }
 
-// TestAWorkerAnswersForItsOwnLinesOnly holds a worker to its own work: the whole worktree is read, so a rule that
-// spans files has its context, and a sin the branch never wrote is the project's to fix, not this merge's to hold.
-// The base is the branch the environment is on, which the main checkout answers for where the event names none.
 func TestAWorkerAnswersForItsOwnLinesOnly(t *testing.T) {
 	sinful := "def refund(order) -> int:\n    if order.late:\n        raise ValueError(order)\n    else:\n        return order.total\n"
 	worktree := workerBranchOf(t, map[string]string{
@@ -162,12 +143,6 @@ func TestAWorkerAnswersForItsOwnLinesOnly(t *testing.T) {
 	}
 }
 
-// workerBranchOf is a project whose base branch holds the first files and a worker's worktree of it, on a branch
-// of its own, that committed the second: the shape a merge is really judged in, with the main checkout left on the
-// base branch, which is what the hold falls back to when the event names no base.
-//
-// The worktree sits where the journal puts one, under the project's own `.journal/worktrees/<n>-<name>`, because
-// that is what the hold and the edit marks meet: a worker's file is inside the project it is cut from.
 func workerBranchOf(t *testing.T, base, branch map[string]string) string {
 	t.Helper()
 	root := tempFolder(t)
@@ -189,7 +164,6 @@ func workerBranchOf(t *testing.T, base, branch map[string]string) string {
 	return worktree
 }
 
-// tempFolder is a folder of this test with its symlinks resolved, as every path the scan answers with is.
 func tempFolder(t *testing.T) string {
 	t.Helper()
 	folder, err := filepath.EvalSymlinks(t.TempDir())
@@ -219,9 +193,6 @@ func wrote(t *testing.T, root string, files map[string]string) {
 	}
 }
 
-// TestTheJudgeIsGivenLessThanTheWholeWindow holds the deadline inside the window: the answer still has to be
-// written and read, so a judge given the whole of it would answer at the moment the journal stops waiting, which
-// is the fault that switches the plugin off.
 func TestTheJudgeIsGivenLessThanTheWholeWindow(t *testing.T) {
 	for window, want := range map[time.Duration]time.Duration{
 		180 * time.Second: 162 * time.Second,
@@ -238,10 +209,6 @@ func TestTheJudgeIsGivenLessThanTheWholeWindow(t *testing.T) {
 	}
 }
 
-// TestAMergeReadsTheFoldersTheProjectDeclares holds the merge hold to the same folders `judge --branch` reads. A
-// worker's worktree is where the journal links its library folders in, a .venv and a node_modules pointing at the
-// main checkout's, so a hold that walked the worktree's own root read every library the project never judges:
-// 115.6s against 17.7s on agent-journal's tree, and minutes of waiting for each merge.
 func TestAMergeReadsTheFoldersTheProjectDeclares(t *testing.T) {
 	worktree := tempFolder(t)
 	held := merging{worktree: worktree}
@@ -260,8 +227,6 @@ func TestAMergeReadsTheFoldersTheProjectDeclares(t *testing.T) {
 	}
 }
 
-// deliveringOf is the event the journal holds when a worker delivers its work, as it really sends it: the same
-// fields a merge carries, under `data`, with the window it waits for the answer in.
 func deliveringOf(worktree string, window int, files ...string) map[string]any {
 	held := mergingOf(worktree, window, files...)
 	held["event"] = "worker_delivering"
@@ -269,9 +234,6 @@ func deliveringOf(worktree string, window int, files ...string) map[string]any {
 	return held
 }
 
-// TestAWorkerIsHeldBeforeItsWorkReachesTheAgent holds the earlier of the two moments. The work is committed,
-// rebased and green by then, and has not yet reached the main agent, so a refusal here is refused to the WORKER:
-// it fixes what it wrote, runs its tests again and comes back, and only clean work reaches the agent that asked.
 func TestAWorkerIsHeldBeforeItsWorkReachesTheAgent(t *testing.T) {
 	root, _, _ := projectWithASin(t)
 
@@ -292,8 +254,6 @@ func TestAWorkerIsHeldBeforeItsWorkReachesTheAgent(t *testing.T) {
 	}
 }
 
-// TestACleanWorkerDeliversUnheld holds the other half: the hold costs a worker nothing when its own lines are
-// clean, whatever the project around it carries.
 func TestACleanWorkerDeliversUnheld(t *testing.T) {
 	worktree := workerBranchOf(t, map[string]string{
 		".commandments/config.json": `{"paths": ["src"]}`,
@@ -307,8 +267,6 @@ func TestACleanWorkerDeliversUnheld(t *testing.T) {
 	}
 }
 
-// TestBothMomentsReadTheWorkTheSameWay holds the two doors to one reading: nothing about which sins a worker
-// answers for changes with the moment it is asked, so a delivery and a merge of the same branch answer alike.
 func TestBothMomentsReadTheWorkTheSameWay(t *testing.T) {
 	root, _, _ := projectWithASin(t)
 
@@ -320,10 +278,6 @@ func TestBothMomentsReadTheWorkTheSameWay(t *testing.T) {
 	}
 }
 
-// TestAWorkersEditIsJudgedInItsOwnWorktree holds a worker's edit to the tree it sits in. A worker writes inside
-// the project's `.journal/worktrees/<n>/`, and judged against the main checkout every one of its files lies
-// outside the folders the project declares: every edit then reads as a file the project does not judge, and the
-// worker hears nothing about its own sins until somebody merges them.
 func TestAWorkersEditIsJudgedInItsOwnWorktree(t *testing.T) {
 	worktree := workerBranchOf(t, map[string]string{
 		".commandments/config.json": `{"paths": ["src"]}`,
@@ -346,22 +300,9 @@ func TestAWorkersEditIsJudgedInItsOwnWorktree(t *testing.T) {
 	}
 }
 
-// TestAGateThatRunsOutOfTimeAnswersWithWhatItDidFind holds the worst answer a hand-in gate can give. It judges
-// the worker's own changes inside the window the journal allows, and on running out of time it answered with
-// NOTHING, which is the same answer as "clean": a worker's work went through unjudged and nobody was told the
-// judging had not finished.
-//
-// Measured on a consumer: a worker delivered in 171 seconds against a budget of 162, and its own judging then
-// found four sins in the work it had just handed in. Their journal keeps no record of the step answer, so from
-// outside a gate that ran out of time and a gate that found nothing are the same thing.
-//
-// So the shallow reading is taken FIRST, which costs seconds, and the deep one only improves on it. A gate that
-// runs out of time then answers with the sins it did find rather than with silence.
 func TestAGateThatRunsOutOfTimeAnswersWithWhatItDidFind(t *testing.T) {
 	root, _, _ := projectWithASin(t)
 
-	// A window the deep reading cannot fit: it is given all but a tenth, and a whole-tree read of any size is
-	// tens of seconds. The sin is in the worker's own changed lines, which one file is enough to find.
 	held := MergeHeld(mergingOf(root, int(wholeTreeWindow/time.Millisecond)+1, "src/refund.py"))
 
 	if held == "" {
@@ -370,22 +311,9 @@ func TestAGateThatRunsOutOfTimeAnswersWithWhatItDidFind(t *testing.T) {
 	}
 }
 
-// TestAGateThatRunsOutOfTimeAnswersWithWhatItFound holds the worst answer a hand-in gate can give. It judges the
-// worker's own changes inside the window the journal allows, and on running out of time it answered with
-// NOTHING — which is the same answer as clean, so the work went through unjudged and nobody was told the judging
-// had not finished.
-//
-// Measured on a consumer: a worker delivered in 171 seconds against a budget of 162, and its own judging then
-// found four sins in the work it had just handed in. Their journal keeps no record of the step answer, so from
-// outside a gate that ran out of time and a gate that found nothing are the same thing.
-//
-// So the shallow reading is taken first and kept, and the deep one only improves on it: a gate that runs out of
-// time answers with the sins it did find.
 func TestAGateThatRunsOutOfTimeAnswersWithWhatItFound(t *testing.T) {
 	root, _, _ := projectWithASin(t)
 
-	// A window that affords the shallow reading and not a whole-tree one: the sin is in the worker's own changed
-	// lines, which one file is enough to find.
 	held := MergeHeld(mergingOf(root, int(wholeTreeWindow/time.Millisecond), "src/refund.py"))
 
 	if held == "" {
@@ -393,8 +321,6 @@ func TestAGateThatRunsOutOfTimeAnswersWithWhatItFound(t *testing.T) {
 			"clean: the worker's work goes through unjudged and nobody is told the judging did not finish")
 	}
 
-	// And a window too small even for that still answers with nothing, which is the honest answer where the
-	// journal gave no time to judge in at all.
 	if said := MergeHeld(mergingOf(root, 50, "src/refund.py")); said != "" {
 		t.Errorf("a gate given 50ms answered %q; there is no honest answer in that time", said)
 	}

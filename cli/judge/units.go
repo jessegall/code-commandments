@@ -13,17 +13,12 @@ import (
 	cs "github.com/jessegall/code-commandments/engine/csharp"
 )
 
-// weighed is a candidate an aggregating rule read in one unit: its record, and its finding when the verdict picks
-// it, made while its unit was held.
+// weighed is a candidate an aggregating rule read in one unit: its record, and its finding when the verdict picks it, made while its unit was held.
 type weighed struct {
 	record  any
 	finding engine.Finding
 }
 
-// judgeUnits judges the solution's C# a project at a time, so a solution too large to hold whole is still judged
-// whole. Every project's summary is merged as the bridge's stream is cut into units; each unit is then read back
-// alone, the merged summary its program, and judged; the rules that weigh candidates across the program decide
-// over every unit's records once the last one is read. It answers how many C# files it judged.
 func (c Command) judgeUnits(sources scan.Sources, rules []detectors.Detector, options options, progress *cli.Progress, console cli.Console) (Judgement, int, error) {
 	var merged *cs.Summary
 	units, err := sources.CSharpUnits(func(codebase *engine.Codebase) error {
@@ -99,8 +94,6 @@ func (c Command) judgeUnits(sources scan.Sources, rules []detectors.Detector, op
 	return judgement, files, nil
 }
 
-// weighedOf is the candidate as the judgement holds it: the record the rule kept, and the finding the rule
-// makes of the node it was found at, where it names one. A candidate that names no node is a record alone.
 func weighedOf(rule detectors.Detector, candidate detectors.Candidate) weighed {
 	held := weighed{record: candidate.Record}
 	if candidate.At.Exists() {
@@ -110,7 +103,6 @@ func weighedOf(rule detectors.Detector, candidate detectors.Candidate) weighed {
 	return held
 }
 
-// candidatesOf is the rule's candidates in the codebase, or what it failed with.
 func candidatesOf(rule detectors.Detector, codebase *engine.Codebase) (candidates []detectors.Candidate, failure any) {
 	defer func() {
 		if recovered := recover(); recovered != nil {
@@ -121,7 +113,6 @@ func candidatesOf(rule detectors.Detector, codebase *engine.Codebase) (candidate
 	return rule.(detectors.Aggregating).Candidates(codebase), nil
 }
 
-// joined is the names with the others added, each once.
 func joined(names []string, others ...string) []string {
 	for _, name := range others {
 		if !slices.Contains(names, name) {

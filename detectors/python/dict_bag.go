@@ -16,12 +16,10 @@ func init() {
 	detectors.Register(catalog.Python, DictBagDetector{})
 }
 
-// Sin is the sin the detector finds.
 func (DictBagDetector) Sin() sins.Sin {
 	return pysins.DictBag{}
 }
 
-// Find is every place the sin is committed.
 func (DictBagDetector) Find(codebase *engine.Codebase) []engine.Match {
 	program := py.In(codebase).Program
 	direct := py.In(codebase).

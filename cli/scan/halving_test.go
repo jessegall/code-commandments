@@ -12,14 +12,6 @@ import (
 	"github.com/jessegall/code-commandments/engine/php"
 )
 
-// A bridge that dies takes the files of its run with it, and on one reader's machine it died on two whole folders
-// every time, so no C# of that project was ever judged (#765). Nothing here can repair a fault in the runtime it
-// dies in; what it can do is make the death cost the files that cause it rather than the language. These hold the
-// halving: the set is cut in two until the dying part is small, every other file is read, and the cutting has a
-// floor so one death never becomes hundreds of bridge runs.
-
-// deadly is a bridge reader that dies on any request holding the named file and answers the rest, counting its
-// runs. The written stream it answers with holds one file, as a real one would hold what it read.
 func deadly(t *testing.T, kills string) (*Bridge, *[]([]string)) {
 	t.Helper()
 	root := t.TempDir()
@@ -49,8 +41,6 @@ func deadly(t *testing.T, kills string) (*Bridge, *[]([]string)) {
 	return &held, &asked
 }
 
-// TestADeadBridgeCostsTheFilesThatKillItAndNoMore holds the whole point: one file of eight kills the bridge, and
-// the halving reads the other seven.
 func TestADeadBridgeCostsTheFilesThatKillItAndNoMore(t *testing.T) {
 	held, asked := deadly(t, "Deadly.php")
 
@@ -68,14 +58,12 @@ func TestADeadBridgeCostsTheFilesThatKillItAndNoMore(t *testing.T) {
 		t.Fatalf("every file was given up with the one that killed the bridge: %v", stream)
 	}
 
-	// The halves that answered are what the stream holds, and the one file nobody could read is not among them.
 	for _, read := range stream.Files {
 		if strings.HasSuffix(read.Path, "Deadly.php") {
 			t.Errorf("the file that killed the bridge reads as read: %s", read.Path)
 		}
 	}
 
-	// The dying half is cut until it is one file, and every ask names the files of that part alone.
 	smallest := len(files)
 	for _, set := range *asked {
 		smallest = min(smallest, len(set))
@@ -85,8 +73,6 @@ func TestADeadBridgeCostsTheFilesThatKillItAndNoMore(t *testing.T) {
 	}
 }
 
-// TestTheCuttingHasAFloor holds what keeps a death from becoming hundreds of bridge runs: a bridge that dies
-// whatever it is asked has not died on the set, so the halving stops rather than cutting to every single file.
 func TestTheCuttingHasAFloor(t *testing.T) {
 	var asked [][]string
 	route := read
@@ -107,16 +93,11 @@ func TestTheCuttingHasAFloor(t *testing.T) {
 		t.Error("a bridge that dies whatever it is asked is reported as having answered")
 	}
 
-	// Three halvings over a set that always dies: the whole set, then two halves, then four, then eight.
 	if len(asked) > 15 {
 		t.Errorf("a bridge that dies whatever it is asked was run %d times", len(asked))
 	}
 }
 
-// TestWhatIsHalvedIsWhatTheBridgeWritesAndNotWhatItCompiles holds the one thing the halving must never do. A C#
-// bridge compiles whole roots and writes the files it is asked for, so each half is read against the WHOLE project
-// and a type that crosses the halves goes on resolving. Halving the compilation would answer too, and answer
-// differently, which is worse than a file left unread because nothing would say so.
 func TestWhatIsHalvedIsWhatTheBridgeWritesAndNotWhatItCompiles(t *testing.T) {
 	held, _ := deadly(t, "Deadly.cs")
 	held.WholeRoots = true

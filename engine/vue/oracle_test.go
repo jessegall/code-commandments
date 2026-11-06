@@ -134,8 +134,6 @@ func oracleRoot(t *testing.T) string {
 	return root
 }
 
-// components scans the components, each a script setup with the body, from src/ under a fresh root, and answers the
-// root and each component by name.
 func components(t *testing.T, bodies map[string]string) (string, map[string]vue.Component) {
 	t.Helper()
 	sources := map[string]string{}
@@ -152,7 +150,6 @@ func components(t *testing.T, bodies map[string]string) (string, map[string]vue.
 	return root, scanned
 }
 
-// componentFrom is the component of the source, scanned.
 func componentFrom(t *testing.T, source string) vue.Component {
 	t.Helper()
 	for _, file := range frontendtest.FromSource(t, map[string]string{"Probed.vue": source}).Files() {

@@ -11,7 +11,6 @@ type ManualHydrationLoop struct{}
 
 func init() { sins.Register(catalog.PHP, ManualHydrationLoop{}) }
 
-// Definition is what the sin states about itself.
 func (ManualHydrationLoop) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "manual-hydration-loop",

@@ -10,7 +10,6 @@ import (
 	_ "github.com/jessegall/code-commandments/engine/php/laravel"
 )
 
-// body is a method body long enough to be a duplicate rather than a coincidence.
 const body = `        $rows = [];
         foreach ($this->entries as $entry) {
             $value = $entry->value();
@@ -26,9 +25,6 @@ const body = `        $rows = [];
 
         return $rows;`
 
-// TestADuplicateOfAFrozenFileLeavesTheLiveSiteAlone holds a recurrence to the sites that can change. A migration is
-// frozen, so it is read but never a target; a method whose only twin lives there has nothing to be merged with, and
-// flagging the one site that can change asks for a merge that cannot happen. Two live copies are still a duplicate.
 func TestADuplicateOfAFrozenFileLeavesTheLiveSiteAlone(t *testing.T) {
 	model := "<?php\n\nfinal class Message\n{\n    private array $entries = [];\n\n    public function telemetry(): array\n    {\n" + body + "\n    }\n}\n"
 	migration := "<?php\n\nuse Illuminate\\Database\\Migrations\\Migration;\n\nreturn new class extends Migration\n{\n    private array $entries = [];\n\n    private function telemetry(): array\n    {\n" + body + "\n    }\n};\n"
@@ -49,7 +45,6 @@ func TestADuplicateOfAFrozenFileLeavesTheLiveSiteAlone(t *testing.T) {
 	})
 }
 
-// findingsIn is where DuplicateFunctionDetector fires over the written files.
 func findingsIn(t *testing.T, files map[string]string) []string {
 	t.Helper()
 	root := t.TempDir()

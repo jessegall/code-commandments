@@ -14,10 +14,8 @@ type EnumValueMatchDetector struct{}
 
 func init() { detectors.Register(catalog.PHP, EnumValueMatchDetector{}) }
 
-// Sin is the sin the detector finds.
 func (EnumValueMatchDetector) Sin() sins.Sin { return backendsins.EnumValueMatch{} }
 
-// Find is every match or switch on some ->value that does not sit in an enum.
 func (EnumValueMatchDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return php.In(codebase).
 		Where(engine.As(php.Node.IsMatchOnEnumValue)).

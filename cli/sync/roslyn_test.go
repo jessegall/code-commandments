@@ -17,8 +17,6 @@ import (
 	"github.com/jessegall/code-commandments/cli/config"
 )
 
-// fakeRelease serves a release of the version holding a C# bridge for this platform, with the sum SHA256SUMS lists
-// for it (a wrong one when told), and answers what was asked of it.
 func fakeRelease(t *testing.T, sumMatches bool) *[]string {
 	t.Helper()
 	name := "roslyn-bridge-" + runtime.GOOS + "-" + runtime.GOARCH

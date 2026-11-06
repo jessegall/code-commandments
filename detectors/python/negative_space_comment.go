@@ -17,12 +17,10 @@ func init() {
 	detectors.Register(catalog.Python, NegativeSpaceCommentDetector{})
 }
 
-// Sin is the sin the detector finds.
 func (NegativeSpaceCommentDetector) Sin() sins.Sin {
 	return pysins.NegativeSpaceComment{}
 }
 
-// Find is every place the sin is committed.
 func (NegativeSpaceCommentDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return py.In(codebase).
 		WhereStatement().

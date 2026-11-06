@@ -8,13 +8,10 @@ import (
 	"github.com/jessegall/code-commandments/engine"
 )
 
-// IsScalarLiteral says whether the node is a string, integer or float literal.
 func (n Node) IsScalarLiteral() bool {
 	return n.Kind() == "Scalar_String" || n.Kind() == "Scalar_Int" || n.Kind() == "Scalar_Float"
 }
 
-// IsDocumentLiteral says whether the node is a string holding a document: several lines, or written as a heredoc
-// or nowdoc.
 func (n Node) IsDocumentLiteral() bool {
 	text, _ := n.Text()
 	if n.Kind() != "Scalar_String" {
@@ -25,8 +22,6 @@ func (n Node) IsDocumentLiteral() bool {
 	return strings.Contains(text, "\n") || err == nil && strings.HasPrefix(span.Text(), "<<<")
 }
 
-// IsScalarConstClass says whether the node is a class of nothing but two or more constants of scalar, non-document
-// values.
 func (n Node) IsScalarConstClass() bool {
 	if n.Kind() != "Stmt_Class" {
 		return false
@@ -48,13 +43,10 @@ func (n Node) IsScalarConstClass() bool {
 	return constants >= 2
 }
 
-// ExtendsAClass says whether the node is a class that names a parent.
 func (n Node) ExtendsAClass() bool {
 	return n.Kind() == "Stmt_Class" && isName(n.Child("extends"))
 }
 
-// OrChainComparedClass is the class whose constants two or more comparisons of an outermost || chain compare
-// against; empty when there is none.
 func (n Node) OrChainComparedClass() string {
 	if n.Kind() != "Expr_BinaryOp_BooleanOr" || n.Parent().Kind() == "Expr_BinaryOp_BooleanOr" {
 		return ""
@@ -104,7 +96,6 @@ func comparedConstClass(operand engine.Match) string {
 	return ""
 }
 
-// matchSubject is what a match or a switch dispatches on; no node for any other.
 func (n Node) matchSubject() Node {
 	if n.Kind() != "Expr_Match" && n.Kind() != "Stmt_Switch" {
 		return Node{}
@@ -113,19 +104,16 @@ func (n Node) matchSubject() Node {
 	return Node{Match: n.Child("cond")}
 }
 
-// IsMatchOnEnumValue says whether the node is a match or a switch on some ->value.
 func (n Node) IsMatchOnEnumValue() bool {
 	subject := n.matchSubject()
 
 	return isPropertyRead(subject.Match) && subject.Child("name").Kind() == "Identifier" && subject.Child("name").Name() == "value"
 }
 
-// IsInEnum says whether the node sits in an enum.
 func (n Node) IsInEnum() bool {
 	return n.EnclosingClassLike().Kind() == "Stmt_Enum"
 }
 
-// scalarLiteral is a string's value or an integer's digits, when the node is one.
 func scalarLiteral(node engine.Match) (string, bool) {
 	switch node.Kind() {
 	case "Scalar_String":
@@ -139,7 +127,6 @@ func scalarLiteral(node engine.Match) (string, bool) {
 	return "", false
 }
 
-// ArgumentArrayLiterals is every string or integer the array literal passed at the position holds.
 func (n Node) ArgumentArrayLiterals(position int) []string {
 	array := n.Argument(position)
 	if array.Kind() != "Expr_Array" {
@@ -155,8 +142,6 @@ func (n Node) ArgumentArrayLiterals(position int) []string {
 	return literals
 }
 
-// scalarLiteralsOf are the strings and integers the conditions are written as, in order; a condition written as
-// anything else contributes none.
 func scalarLiteralsOf(conditions []engine.Match) []string {
 	var literals []string
 	for _, condition := range conditions {
@@ -170,7 +155,6 @@ func scalarLiteralsOf(conditions []engine.Match) []string {
 	return literals
 }
 
-// ArmConditionLiterals is every string or integer a match's arms or a switch's cases test for.
 func (n Node) ArmConditionLiterals() []string {
 	var literals []string
 	switch n.Kind() {
@@ -189,7 +173,6 @@ func (n Node) ArmConditionLiterals() []string {
 	return literals
 }
 
-// defaultArm is a match's default arm; no node when it has none.
 func (n Node) defaultArm() Node {
 	for _, arm := range n.ChildrenIn("arms") {
 		if len((Node{Match: arm}).ChildrenIn("conds")) == 0 {
@@ -200,8 +183,6 @@ func (n Node) defaultArm() Node {
 	return Node{}
 }
 
-// IsMatchWithAbsenceDefault says whether the node is a match, not on a boolean literal, whose default hands back an
-// absence value.
 func (n Node) IsMatchWithAbsenceDefault() bool {
 	subject := n.Child("cond")
 	onBoolean := subject.Kind() == "Expr_ConstFetch" &&
@@ -214,8 +195,6 @@ func (n Node) IsMatchWithAbsenceDefault() bool {
 	return arm.Exists() && Node{Match: arm.Child("body")}.IsAbsenceValue()
 }
 
-// MatchHandledArmsAdmitNull says whether a match defaulting to null, on a subject that is no enum, has a handled
-// arm calling a method declared to return null already.
 func (n Node) MatchHandledArmsAdmitNull() bool {
 	arm := n.defaultArm()
 	if n.Kind() != "Expr_Match" || !arm.Exists() || !(Node{Match: arm.Child("body")}).IsNull() || n.matchSubjectIsEnum() {
@@ -254,8 +233,6 @@ func (n Node) declaredReturnAdmitsNull(expression engine.Match) bool {
 	return false
 }
 
-// methodReturnsNullable says whether the class that declares the method, the class itself or an ancestor, declares
-// it returning a nullable.
 func methodReturnsNullable(codebase *engine.Codebase, class, method string) bool {
 	owner := TypesOf(codebase).DeclaringClassOfMethod(class, method)
 	declaration, declared := ProgramOf(codebase).Class(owner)
@@ -271,7 +248,6 @@ func methodReturnsNullable(codebase *engine.Codebase, class, method string) bool
 	return false
 }
 
-// IsThisCall says whether the node sends a method to $this.
 func (n Node) IsThisCall() bool {
 	receiver := n.Child("var")
 
@@ -302,19 +278,16 @@ var enums = Memoised(func(codebase *engine.Codebase) Enums {
 	return indexed
 })
 
-// EnumsOf is the codebase's enums.
 func EnumsOf(codebase *engine.Codebase) Enums {
 	return enums.Of(codebase)
 }
 
-// IsIndexed says whether the class is one of the enums.
 func (e Enums) IsIndexed(class string) bool {
 	_, ok := e[strings.TrimLeft(class, `\`)]
 
 	return class != "" && ok
 }
 
-// MirroredBy says whether two or more distinct non-numeric literals are all the values of one enum.
 func (e Enums) MirroredBy(literals []string) bool {
 	var distinct []string
 	for _, literal := range literals {
@@ -334,17 +307,12 @@ func (e Enums) MirroredBy(literals []string) bool {
 	return false
 }
 
-// numeric is a number as PHP's is_numeric reads one: signed, decimal or exponent, white space around it allowed.
 var numeric = regexp.MustCompile(`^[ \t\n\r\v\f]*[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?[ \t\n\r\v\f]*$`)
 
 func isNumeric(text string) bool {
 	return numeric.MatchString(text)
 }
 
-// CasesListedInAConstant is every case of the enum a class constant of it lists, and the constant's own name:
-// a trait of some cases kept beside them rather than answered by them. Nothing where the node is not an enum,
-// where no constant lists two or more of its cases, or where the constant lists them all — a list of every case
-// says nothing about any of them and is an ordering or a vocabulary, not a trait.
 func (n Node) CasesListedInAConstant() (string, []string) {
 	if n.Kind() != "Stmt_Enum" {
 		return "", nil
@@ -371,7 +339,6 @@ func (n Node) CasesListedInAConstant() (string, []string) {
 	return "", nil
 }
 
-// enumCaseNames is the name of every case the enum declares, with the backing value each case names.
 func (n Node) enumCaseNames() map[string]string {
 	cases := map[string]string{}
 
@@ -390,8 +357,6 @@ func (n Node) enumCaseNames() map[string]string {
 	return cases
 }
 
-// casesAmongst is every case of the enum the array names, by `self::Case` or by the value a case is backed with.
-// Nothing where the node is not an array written out, or where any element names no case at all.
 func (n Node) casesAmongst(cases map[string]string) []string {
 	if n.Kind() != "Expr_Array" {
 		return nil
@@ -411,8 +376,6 @@ func (n Node) casesAmongst(cases map[string]string) []string {
 	return listed
 }
 
-// caseNamed is the case an element names: the case of a `self::Case` fetch, else the case backed with the
-// literal it writes.
 func (n Node) caseNamed(cases map[string]string) string {
 	if n.Kind() == "Expr_ClassConstFetch" {
 		if name := n.Child("name").Name(); cases[name] != "" || hasCase(cases, name) {
@@ -436,24 +399,18 @@ func (n Node) caseNamed(cases map[string]string) string {
 	return ""
 }
 
-// hasCase says whether the enum declares a case of that name.
 func hasCase(cases map[string]string, name string) bool {
 	_, declared := cases[name]
 
 	return declared
 }
 
-// ListsSomeOfItsCasesInAConstant says whether the enum keeps a trait of some of its cases as a constant listing
-// them, and asks that constant about ONE case — the question a trait answers. Walking the constant is
-// deliberately not that question: a loop over it is a caller choosing which cases to act on, an ordering or a
-// printed subset, and nothing in the tree tells that from a trait.
 func (n Node) ListsSomeOfItsCasesInAConstant() bool {
 	name, listed := n.CasesListedInAConstant()
 
 	return name != "" && len(listed) > 0 && n.asksAboutOneCase(name)
 }
 
-// asksAboutOneCase says whether the enum reads the constant as a membership test: `in_array($this, self::X)`.
 func (n Node) asksAboutOneCase(constant string) bool {
 	for _, call := range n.Descendants() {
 		if call.Kind() != "Expr_FuncCall" || call.CalleeName() != "in_array" {

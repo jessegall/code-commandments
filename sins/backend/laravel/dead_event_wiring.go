@@ -11,7 +11,6 @@ type DeadEventWiring struct{}
 
 func init() { sins.Register(catalog.PHP, DeadEventWiring{}) }
 
-// Definition is what the sin states about itself.
 func (DeadEventWiring) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "dead-event-wiring",

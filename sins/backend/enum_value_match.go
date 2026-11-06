@@ -11,7 +11,6 @@ type EnumValueMatch struct{}
 
 func init() { sins.Register(catalog.PHP, EnumValueMatch{}) }
 
-// Definition is what the sin states about itself.
 func (EnumValueMatch) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "enum-value-match",

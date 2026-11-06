@@ -8,12 +8,6 @@ import (
 	"github.com/jessegall/code-commandments/cli"
 )
 
-// The tool's whole verb surface is declared in this package, and until now the only thing that read it was the
-// binary: the recorded parity cases run `<verb> --help`, an unknown verb and an unknown option against the built
-// tool, so a help declaration that had gone wrong could only be caught by a run that builds everything first. The
-// kernel answers in process, so these hold the same behaviour here, where a broken declaration is named in seconds.
-
-// ran is what the kernel answered for the arguments: its exit code, what it put on screen, and what it warned.
 func ran(args ...string) (code int, out string, warned string) {
 	var screen, errs bytes.Buffer
 	code = Kernel("1.2.3").Run(args, cli.Console{Out: &screen, Err: &errs})
@@ -21,8 +15,6 @@ func ran(args ...string) (code int, out string, warned string) {
 	return code, screen.String(), errs.String()
 }
 
-// TestEveryCommandAnswersItsOwnHelpPage holds every registered command to having a page a reader can use: the verb
-// answers, the page names the command and says what it is for, and it shows at least one form to type.
 func TestEveryCommandAnswersItsOwnHelpPage(t *testing.T) {
 	for _, command := range Kernel("1.2.3").Commands() {
 		documented, verb := command, command.Names()[0]
@@ -48,9 +40,6 @@ func TestEveryCommandAnswersItsOwnHelpPage(t *testing.T) {
 	}
 }
 
-// TestEveryOptionIsNamedAsItIsTyped holds the options a command declares to the shape a reader types and the kernel
-// reads: a long option, named, with its own description. A spec that lost its dashes is read as no option at all,
-// and the flag it stands for is then refused as unknown.
 func TestEveryOptionIsNamedAsItIsTyped(t *testing.T) {
 	for _, command := range Kernel("1.2.3").Commands() {
 		verb := command.Names()[0]
@@ -66,8 +55,6 @@ func TestEveryOptionIsNamedAsItIsTyped(t *testing.T) {
 	}
 }
 
-// TestTheOverviewHoldsEveryVerbTheToolAnswers holds the screen a reader meets first: `commandments --help` names
-// every command, so a command registered here is a command they can find.
 func TestTheOverviewHoldsEveryVerbTheToolAnswers(t *testing.T) {
 	code, overview, warned := ran("--help")
 
@@ -83,9 +70,6 @@ func TestTheOverviewHoldsEveryVerbTheToolAnswers(t *testing.T) {
 	}
 }
 
-// TestAWrongInvocationSaysWhatToTryAndExitsTwo holds the answer to a verb or an option the tool does not have. Exit
-// 2 is what a shell reads as "you typed it wrong", and the line that follows is the only thing that tells the
-// reader where to look.
 func TestAWrongInvocationSaysWhatToTryAndExitsTwo(t *testing.T) {
 	for name, args := range map[string][]string{
 		"an unknown verb":                {"tidy"},
@@ -105,8 +89,6 @@ func TestAWrongInvocationSaysWhatToTryAndExitsTwo(t *testing.T) {
 	}
 }
 
-// TestEveryVerbIsAnsweredByOneCommand holds the registry to one answer per verb: two commands claiming the same
-// name means one of them can never be reached, and only the overview would ever show it.
 func TestEveryVerbIsAnsweredByOneCommand(t *testing.T) {
 	answered := map[string]string{}
 

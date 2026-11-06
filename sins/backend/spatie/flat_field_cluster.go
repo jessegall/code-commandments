@@ -11,7 +11,6 @@ type FlatFieldCluster struct{}
 
 func init() { sins.Register(catalog.PHP, FlatFieldCluster{}) }
 
-// Definition is what the sin states about itself.
 func (FlatFieldCluster) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "flat-field-cluster",

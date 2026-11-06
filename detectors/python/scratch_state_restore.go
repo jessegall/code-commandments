@@ -16,12 +16,10 @@ func init() {
 	detectors.Register(catalog.Python, ScratchStateRestoreDetector{})
 }
 
-// Sin is the sin the detector finds.
 func (ScratchStateRestoreDetector) Sin() sins.Sin {
 	return pysins.ScratchStateRestore{}
 }
 
-// Find is every place the sin is committed.
 func (ScratchStateRestoreDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return py.In(codebase).
 		WhereFunction().

@@ -13,7 +13,6 @@ import (
 // Modules finds the script of a module file: a component's scripts, or a TypeScript file whole.
 type Modules func(path string) (typescript.Module, bool)
 
-// ModulesIn is the modules the codebase holds, and those the fallback reads for a file it does not.
 func ModulesIn(codebase *engine.Codebase, fallback Modules) Modules {
 	return func(path string) (typescript.Module, bool) {
 		for _, file := range codebase.Files() {
@@ -29,7 +28,6 @@ func ModulesIn(codebase *engine.Codebase, fallback Modules) Modules {
 	}
 }
 
-// ModuleOf is the script a file's root holds: a component's scripts, or a TypeScript file's statements.
 func ModuleOf(root engine.Match) (typescript.Module, bool) {
 	switch root.Kind() {
 	case "Component":
@@ -41,7 +39,6 @@ func ModuleOf(root engine.Match) (typescript.Module, bool) {
 	return typescript.Module{}, false
 }
 
-// PropTypes is each prop the component's defineProps declares and its type.
 func (c Component) PropTypes() typescript.Fields {
 	module := c.Module()
 	call, declares := module.Call("defineProps")
@@ -60,7 +57,6 @@ func (c Component) PropTypes() typescript.Fields {
 	return call.TypeArguments[0].FieldsWith(module.TypeFields)
 }
 
-// TemplateElements is the elements at the top of the component's template.
 func (c Component) TemplateElements() []Element {
 	var elements []Element
 	for _, child := range c.Template().Children() {
@@ -104,7 +100,6 @@ type ComponentLibrary struct {
 	components []componentPrint
 }
 
-// LibraryOf fingerprints each component.
 func LibraryOf(components []Component) *ComponentLibrary {
 	library := &ComponentLibrary{}
 	for _, component := range components {
@@ -114,18 +109,14 @@ func LibraryOf(components []Component) *ComponentLibrary {
 	return library
 }
 
-// Clone is a library holding what this one holds, that can grow without growing this one.
 func (l *ComponentLibrary) Clone() *ComponentLibrary {
 	return &ComponentLibrary{components: slices.Clone(l.components)}
 }
 
-// Register fingerprints a component so a subtree shaped like it reuses it.
 func (l *ComponentLibrary) Register(component Component) {
 	l.RegisterAt(component, component.File())
 }
 
-// RegisterAt fingerprints a component read from elsewhere as the file at the path: one drafted during the run, read
-// before it is written.
 func (l *ComponentLibrary) RegisterAt(component Component, path string) {
 	elements := component.TemplateElements()
 	if len(elements) != 1 {
@@ -145,8 +136,6 @@ func (l *ComponentLibrary) RegisterAt(component Component, path string) {
 	l.components = append(l.components, componentPrint{path: path, name: strings.TrimSuffix(filepath.Base(path), ".vue"), shape: root.ShapeHash(), fields: fields})
 }
 
-// Match is the component a subtree could be replaced by: the same shape, and a prop for each object it reads the
-// same fields off.
 func (l *ComponentLibrary) Match(x *Extraction) (ComponentReuse, bool) {
 	shape := x.Element.ShapeHash()
 	blockFields := fieldsByPrefix(ChainsIn(x.Element))
@@ -193,7 +182,6 @@ func sameSet(a, b []string) bool {
 	return slices.Equal(left, right)
 }
 
-// fieldsByPrefix is each chain's object and the fields read off it, in the order first read.
 func fieldsByPrefix(chains [][]string) []propFields {
 	var byPrefix []propFields
 	for _, chain := range chains {
@@ -219,7 +207,6 @@ func fieldsByPrefix(chains [][]string) []propFields {
 	return byPrefix
 }
 
-// ChainsIn is every chain the element and the elements below it read.
 func ChainsIn(element Element) [][]string {
 	var chains [][]string
 	for _, each := range append([]Element{element}, element.DescendantElements()...) {
@@ -240,7 +227,6 @@ type ComponentGraph struct {
 	incoming map[string][]componentUsage
 }
 
-// GraphOf reads who renders whom from the component tags each template resolves through its imports.
 func GraphOf(components []Component) *ComponentGraph {
 	graph := &ComponentGraph{incoming: map[string][]componentUsage{}}
 	for _, parent := range components {
@@ -264,12 +250,10 @@ type PropTypes struct {
 	modules Modules
 }
 
-// PropTypesOver traces through the graph, reading the modules a composable comes from.
 func PropTypesOver(graph *ComponentGraph, modules Modules) PropTypes {
 	return PropTypes{graph: graph, modules: modules}
 }
 
-// TypeOf is a component's prop's type: as it declares it, else as a parent binds it.
 func (p PropTypes) TypeOf(component Component, prop string) (typescript.TypeNode, bool) {
 	return p.typeOf(component, prop, nil)
 }
@@ -312,7 +296,6 @@ func (p PropTypes) expressionType(expression typescript.Node, scope Component, s
 	return AccessType(typed, chain[1:]), true
 }
 
-// AccessType is the type a path of fields reaches from a type: `Order['customer']`.
 func AccessType(typed typescript.TypeNode, segments []string) typescript.TypeNode {
 	for _, segment := range segments {
 		typed = typescript.IndexedAccessType{Object: typed, Index: typescript.LiteralType{Raw: "'" + segment + "'"}}
@@ -336,8 +319,6 @@ func (p PropTypes) nameType(scope Component, name string, seen []string) (typesc
 	return p.typeOf(scope, name, seen)
 }
 
-// ComposableType is the type of a name destructured from a composable's return: `const { x } = useThing()`, read
-// from the return type the composable declares, else from the locals it returns.
 func ComposableType(script typescript.Module, name string, modules Modules) (typescript.TypeNode, bool) {
 	composable, ok := script.DestructuredCall(name)
 	if !ok || modules == nil {
@@ -369,7 +350,6 @@ func ComposableType(script typescript.Module, name string, modules Modules) (typ
 	return typed.UnwrapRef(), true
 }
 
-// TypeFieldsFrom is the fields of a type a file's script names, followed through its imports and re-exports.
 func TypeFieldsFrom(typeName, file string, script typescript.Module, modules Modules) typescript.Fields {
 	return resolveTypeFields(typeName, file, script, modules, nil)
 }

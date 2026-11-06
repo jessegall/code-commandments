@@ -6,19 +6,14 @@ import (
 	"strings"
 )
 
-// comparisons are the operators whose result is a boolean.
 var comparisons = []string{"===", "!==", "==", "!=", "<", ">", "<=", ">=", "instanceof", "in"}
 
-// arithmetic are the binary operators whose result is a number.
 var arithmetic = []string{"-", "*", "/", "%", "**"}
 
-// logical are the binary operators whose result is one of their operands.
 var logical = []string{"&&", "||", "??"}
 
-// assignments are the operators that write their left operand.
 var assignments = []string{"=", "+=", "-=", "*=", "/=", "%=", "**=", "??=", "||=", "&&="}
 
-// bare is the expression parentheses hold.
 func (n Node) bare() Node {
 	for n.Kind() == "ParenthesizedExpression" {
 		n = Node{n.Child("expression")}
@@ -27,9 +22,6 @@ func (n Node) bare() Node {
 	return n
 }
 
-// InferType is the type the expression is of, where the expression alone tells it for certain, as the PHP tool
-// tells it: a literal's, an operator's result, the union of what a condition or a fallback chooses between, an
-// array of one element type.
 func (n Node) InferType() (TypeNode, bool) {
 	n = n.bare()
 	switch n.Kind() {
@@ -101,7 +93,6 @@ func arrayType(n Node) (TypeNode, bool) {
 	return ArrayType{Element: element}, true
 }
 
-// unionType is the types the expressions are of, each once, joined as the PHP tool joins them.
 func unionType(nodes ...Node) (TypeNode, bool) {
 	var types []TypeNode
 	seen := map[string]bool{}
@@ -122,7 +113,6 @@ func unionType(nodes ...Node) (TypeNode, bool) {
 	return inferredUnion{CompositeType{Operator: "|", Members: types}}, len(types) > 0
 }
 
-// isNumeric answers as PHP's is_numeric does on a literal: digits with at most one point and an optional exponent.
 func isNumeric(text string) bool {
 	trimmed := strings.TrimSpace(text)
 	if trimmed == "" || strings.ContainsAny(trimmed, "_xXbBoOiInN") {
@@ -133,7 +123,6 @@ func isNumeric(text string) bool {
 	return err == nil || strings.Contains(err.Error(), "value out of range")
 }
 
-// ReturnType is the type an arrow function's expression body is of.
 func (n Node) ReturnType() (TypeNode, bool) {
 	n = n.bare()
 	body := Node{n.Child("body")}
@@ -144,7 +133,6 @@ func (n Node) ReturnType() (TypeNode, bool) {
 	return body.InferType()
 }
 
-// CalledFunctions is each name the expression calls as a plain function, once.
 func (n Node) CalledFunctions() []string {
 	var names []string
 	for _, node := range append([]Node{n}, descendantsOf(n)...) {
@@ -167,7 +155,6 @@ func descendantsOf(n Node) []Node {
 	return nodes
 }
 
-// IsAssignment says whether the expression writes a target: `x = y`, `total += 1`.
 func (n Node) IsAssignment() bool {
 	n = n.bare()
 
@@ -180,10 +167,8 @@ type PlainCall struct {
 	Arguments []string
 }
 
-// Arity is how many arguments the call passes.
 func (c PlainCall) Arity() int { return len(c.Arguments) }
 
-// TrailingArguments is the arguments as they follow a first one: `, a, b`, or nothing.
 func (c PlainCall) TrailingArguments() string {
 	if len(c.Arguments) == 0 {
 		return ""
@@ -192,7 +177,6 @@ func (c PlainCall) TrailingArguments() string {
 	return ", " + strings.Join(c.Arguments, ", ")
 }
 
-// AsPlainCall is the expression as a call to a plain name with plainly written arguments.
 func (n Node) AsPlainCall() (PlainCall, bool) {
 	n = n.bare()
 	callee := Node{n.Child("expression")}.bare()
@@ -211,8 +195,6 @@ func (n Node) AsPlainCall() (PlainCall, bool) {
 	return PlainCall{Name: callee.Name(), Arguments: arguments}, true
 }
 
-// plainly is a name, a literal, a member or an index of them, as written again, a cast or an assertion read as what
-// it wraps; false for anything else.
 func plainly(n Node) (string, bool) {
 	n = n.unwrap()
 	switch n.Kind() {
@@ -237,7 +219,6 @@ func plainly(n Node) (string, bool) {
 	return "", false
 }
 
-// CalleeName is the name a call calls, when it calls a plain name.
 func (n Node) CalleeName() (string, bool) {
 	n = n.bare()
 	callee := Node{n.Child("expression")}.bare()

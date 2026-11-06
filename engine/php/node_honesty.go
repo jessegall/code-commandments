@@ -8,13 +8,10 @@ import (
 	"github.com/jessegall/code-commandments/engine"
 )
 
-// HasReturnType says whether the node is an arrow function that writes a return type.
 func (n Node) HasReturnType() bool {
 	return n.Kind() == "Expr_ArrowFunction" && n.Node().Returns != nil
 }
 
-// ReturnTypeRestatesItsExpression says whether an arrow function's written return type is the type its expression
-// already has; self, static and parent aside, whose meaning depends on where the closure lands.
 func (n Node) ReturnTypeRestatesItsExpression() bool {
 	if !n.HasReturnType() {
 		return false
@@ -28,8 +25,6 @@ func (n Node) ReturnTypeRestatesItsExpression() bool {
 	return yielded != "" && yielded == declared
 }
 
-// ExpressionType is the type an expression plainly has: a literal's, a new's class, or the declared type of an own
-// property, an own method's return or a static call's return; empty when it has none that plainly.
 func ExpressionType(codebase *engine.Codebase, expr engine.Match, self string) string {
 	switch expr.Kind() {
 	case "Scalar_String":
@@ -131,8 +126,6 @@ func declaredReturn(codebase *engine.Codebase, class, method, self string) strin
 	return ""
 }
 
-// HasOwnStateSaveAndRestore says whether the node declares a method, taking no callable, that saves an own property
-// into a local and later writes that local back: scratch state a type should carry instead.
 func (n Node) HasOwnStateSaveAndRestore() bool {
 	if !n.IsFunctionDeclaration() || n.hasCallableParam() {
 		return false
@@ -168,7 +161,6 @@ func (n Node) hasCallableParam() bool {
 	})
 }
 
-// typeNames is every name a written type spells, a class by its last part.
 func typeNames(written *contract.Type) []string {
 	if written == nil {
 		return nil
@@ -188,17 +180,14 @@ func typeNames(written *contract.Type) []string {
 	return []string{ShortName(written.Name)}
 }
 
-// IsAbstractHook says whether the node is a property hook with no body.
 func (n Node) IsAbstractHook() bool {
 	return n.Kind() == "PropertyHook" && !n.Child("body").Exists()
 }
 
-// HookedPropertyHasSetter says whether the property the hook belongs to also has a set hook.
 func (n Node) HookedPropertyHasSetter() bool {
 	return slices.ContainsFunc(n.Up().ChildrenIn("hooks"), func(hook engine.Match) bool { return hook.Name() == "set" })
 }
 
-// ReferencesThis says whether anything under the node reads $this or reaches self, static or parent statically.
 func (n Node) ReferencesThis() bool {
 	return slices.ContainsFunc(withDescendants(n.Match), func(node engine.Match) bool {
 		if node.Kind() == "Expr_Variable" && node.Name() == "this" {
@@ -211,7 +200,6 @@ func (n Node) ReferencesThis() bool {
 	})
 }
 
-// IsLateStaticBound says whether anything under the node names static as a class.
 func (n Node) IsLateStaticBound() bool {
 	return slices.ContainsFunc(withDescendants(n.Match), func(node engine.Match) bool {
 		switch node.Kind() {
@@ -223,8 +211,6 @@ func (n Node) IsLateStaticBound() bool {
 	})
 }
 
-// MasksOwnState says whether the node is a ?? that papers a non-null literal over a nullsafe read of a private
-// nullable property its class sets outside the constructor: transient state defended as if optional.
 func (n Node) MasksOwnState() bool {
 	if !n.IsCoalesce() || !isNonNullLiteral(n.Child("right")) {
 		return false
@@ -267,8 +253,6 @@ func isNonNullLiteral(expr engine.Match) bool {
 	return expr.Kind() == "Expr_ConstFetch" && (name == "true" || name == "false")
 }
 
-// privateNullablesOf are the names of the class's own private nullable properties. One property statement may
-// declare several, and each of them is its own property.
 func privateNullablesOf(class engine.Match) map[string]bool {
 	nullable := map[string]bool{}
 	for _, member := range (Node{Match: class}).ChildrenIn("stmts") {
@@ -286,7 +270,6 @@ func privateNullablesOf(class engine.Match) map[string]bool {
 	return nullable
 }
 
-// assignedIn are the named properties of its own the method assigns to, anywhere in its body.
 func assignedIn(method engine.Match, named map[string]bool) map[string]bool {
 	assigned := map[string]bool{}
 	for _, statement := range (Node{Match: method}).ChildrenIn("stmts") {
@@ -303,7 +286,6 @@ func assignedIn(method engine.Match, named map[string]bool) map[string]bool {
 	return assigned
 }
 
-// transientNullables is, per class, each private nullable property a method other than the constructor assigns.
 var transientNullables = Memoised(func(codebase *engine.Codebase) map[string]map[string]bool {
 	byClass := map[string]map[string]bool{}
 	for _, class := range codebase.WhereKind("Stmt_Class").Get() {
@@ -327,7 +309,6 @@ var transientNullables = Memoised(func(codebase *engine.Codebase) map[string]map
 	return byClass
 })
 
-// ParamForArgument is the parameter an argument fills: by its name when it names one, else by its position.
 func ParamForArgument(params []engine.Match, argument engine.Match, position int) engine.Match {
 	name := argument.Child("name")
 	if !name.Exists() {
@@ -346,11 +327,8 @@ func ParamForArgument(params []engine.Match, argument engine.Match, position int
 	return engine.Match{}
 }
 
-// wireTypeAttributes are the attributes that write a field's TypeScript type by hand.
 var wireTypeAttributes = []string{"LiteralTypeScriptType", "TypeScriptType"}
 
-// DeclaresNullableWireType says whether the parameter or property the node belongs to writes its TypeScript type by
-// hand as nullable: null is then part of the serialized contract.
 func (n Node) DeclaresNullableWireType() bool {
 	carrier := n
 	for carrier.Exists() && carrier.Kind() != "Param" && carrier.Kind() != "Stmt_Property" {
@@ -385,8 +363,6 @@ func typeStringIsNullable(written string) bool {
 	return slices.ContainsFunc(strings.Split(written, "|"), func(part string) bool { return strings.ToLower(strings.TrimSpace(part)) == "null" })
 }
 
-// DecidesOnBoolsAlone says whether the node declares a function, constructors aside, whose every parameter is a bool
-// it branches on.
 func (n Node) DecidesOnBoolsAlone() bool {
 	if !n.IsFunctionDeclaration() || n.IsConstructorDeclaration() {
 		return false
@@ -406,7 +382,6 @@ func (n Node) DecidesOnBoolsAlone() bool {
 	return named > 0
 }
 
-// readsAsCondition says whether the named variable decides a branch anywhere under the node.
 func (n Node) readsAsCondition(name string) bool {
 	for _, variable := range withDescendants(n.Match) {
 		if variable.Kind() != "Expr_Variable" || variable.Name() != name {
@@ -425,8 +400,6 @@ func (n Node) readsAsCondition(name string) bool {
 	return false
 }
 
-// ArgumentSubjectType is the one class every argument of the call asks something of — a method sent or a property
-// read on it; empty when an argument asks nothing, or they ask different or unknown things.
 func (n Node) ArgumentSubjectType() string {
 	arguments := Arguments(n.Match)
 	if len(arguments) == 0 || !n.EnclosingFunctionLike().Exists() {
@@ -443,7 +416,6 @@ func (n Node) ArgumentSubjectType() string {
 			asked++
 			subjects[types.TypeOf(node.Child("var"))] = true
 		}
-		// An argument that asks nothing of anybody is no projection of a subject, so there is none to name.
 		if asked == 0 {
 			return ""
 		}

@@ -5,7 +5,6 @@ import (
 	"os"
 )
 
-// MaxSweeps is how many times the chain runs before repent applies what it has, settled or not.
 const MaxSweeps = 10
 
 // Frozen says whether a file is read but never rewritten.
@@ -13,24 +12,19 @@ type Frozen interface {
 	IsFrozen(path string) bool
 }
 
-// Filed says whether a rule's finding at a place has been reported to the tool's own repository as wrong. No
-// scribe rewrites such a finding: the fix a scribe would apply may be the very thing the report disputes, and
-// rewriting the line changes its text, which orphans the report while its issue is still open.
+// Filed says whether a rule's finding at a place has been reported to the tool's own repository as wrong.
 type Filed interface {
 	IsFiled(rule, file string, line int) bool
 }
 
-// NothingFiled is the answer for a run that knows of no report, which is every run of a project that has filed
-// none.
+// NothingFiled is the answer for a run that knows of no report, which is every run of a project that has filed none.
 type NothingFiled struct{}
 
-// IsFiled says no, for every finding.
 func (NothingFiled) IsFiled(string, string, int) bool {
 	return false
 }
 
-// Converged is what a run of the chain settled on: every file's final content, the steps that broke, and whether
-// the chain settled before MaxSweeps.
+// Converged is what a run of the chain settled on: every file's final content, the steps that broke, and whether the chain settled before MaxSweeps.
 type Converged struct {
 	Files   Rewrites
 	Skipped []Skipped
@@ -43,9 +37,6 @@ type Skipped struct {
 	Err  error
 }
 
-// Converge runs the chain over the roots until a sweep changes nothing. A step that breaks is dropped and named;
-// a step's rewrite is kept only when every existing file it touches is in scope and not frozen, so a run never
-// half-applies a fix across files.
 func Converge(chain *Chain, roots []string, scope Scope, frozen Frozen, filed Filed) Converged {
 	steps := chain.Steps()
 	drafts := Rewrites{}
@@ -75,7 +66,6 @@ func Converge(chain *Chain, roots []string, scope Scope, frozen Frozen, filed Fi
 	return Converged{Files: drafts, Skipped: skipped}
 }
 
-// attempt runs one step, a panic inside it read as the step breaking.
 func attempt(step Step, pass Pass) (rewrites Rewrites, err error) {
 	defer func() {
 		if failure := recover(); failure != nil {
@@ -86,7 +76,6 @@ func attempt(step Step, pass Pass) (rewrites Rewrites, err error) {
 	return step.Run(pass)
 }
 
-// permits says whether every file the rewrites touch that exists on disk is one the run may fix.
 func permits(rewrites Rewrites, scope Scope, frozen Frozen) bool {
 	for _, path := range rewrites.paths {
 		if _, err := os.Stat(path); err != nil {

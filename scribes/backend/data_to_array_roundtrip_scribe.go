@@ -13,7 +13,6 @@ func init() {
 // DataToArrayRoundtripScribe hands a Data to a from() as itself, not flattened to an array first.
 type DataToArrayRoundtripScribe struct{}
 
-// Rewrite replaces each finding with the Data it flattens.
 func (DataToArrayRoundtripScribe) Rewrite(findings []engine.Match, _ *engine.Codebase) (scribes.Rewrites, error) {
 	return replaceEach(findings, func(finding engine.Match) (string, bool) {
 		if finding.Kind() != "Expr_MethodCall" {

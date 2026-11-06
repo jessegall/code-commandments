@@ -13,10 +13,8 @@ import (
 	"github.com/jessegall/code-commandments/skill"
 )
 
-// twinsShown is how many twins a finding names before it counts the rest.
 const twinsShown = 3
 
-// customNote tells a reader a finding came from the project's own rule.
 const customNote = "Rules marked `(custom)` are THIS project's own, from " +
 	".commandments/custom/ — a wrong one is fixed there, never reported upstream."
 
@@ -33,25 +31,18 @@ type Report struct {
 	filed        []Reported
 }
 
-// Saying gives the report the words each sin is described by, so a card can say what is wrong rather than name
-// the rule that found it.
 func (r Report) Saying(says map[string]string) Report {
 	r.says = says
 
 	return r
 }
 
-// Reporting gives the report the findings this project has already reported, which it shows and writes down but
-// never counts: they are filed, and the run is clean of them.
 func (r Report) Reporting(filed []Reported) Report {
 	r.filed = filed
 
 	return r
 }
 
-// NewReport groups the findings under their skills, each group in one total order (location, detector,
-// scope) so the report reads the same whatever order the workers finished in. fixable and scaffoldable map
-// a sin to the command that fixes it or scaffolds its helper.
 func NewReport(path string, findings []engine.Finding, fixable, scaffoldable map[string]string, skipped Skipped) Report {
 	report := Report{path: path, bySkill: map[string][]engine.Finding{}, total: len(findings), fixable: fixable, scaffoldable: scaffoldable, skipped: skipped}
 
@@ -86,7 +77,6 @@ func compare(a, b engine.Finding) int {
 	return strings.Compare(a.Scope, b.Scope)
 }
 
-// Console is the report as the terminal shows it.
 func (r Report) Console() string {
 	var lines []string
 
@@ -119,10 +109,6 @@ func (r Report) Console() string {
 		}
 	}
 
-	// The advice is about the findings above it, and the caveats about the run, so both stand before the count.
-	// The count is LAST because it is the verdict: a reader who takes in one line of a report takes in that one,
-	// and a card or a log tail that shows the final line shows the number rather than a note about reading a
-	// skill.
 	lines = append(lines,
 		"\n\033[2m↳ the rule above all: trace each sin to where the value is BORN and fix it THERE — read fix-at-the-source.\033[0m",
 		"\033[2m↳ don't recognise a rule above? `"+binary.Here()+" info <sin>` — what it flags, why it is a sin, the fix, an example.\033[0m",
@@ -141,7 +127,6 @@ func (r Report) Console() string {
 	return strings.Join(lines, "\n")
 }
 
-// Checklist is the report as the worklist an agent works down, deleting each line as it fixes the sin.
 func (r Report) Checklist() string {
 	var out strings.Builder
 
@@ -183,8 +168,6 @@ func (r Report) Checklist() string {
 	return out.String()
 }
 
-// reportedConsole names the findings the project has reported, with the issue that holds each: a reader who did
-// not file them learns where the argument is being had, and that nothing here is asking them to fix it.
 func (r Report) reportedConsole() string {
 	lines := []string{"\n\033[2m" + natural.Counted(len(r.filed), "finding") + " reported and left out of the count:\033[0m"}
 
@@ -195,9 +178,6 @@ func (r Report) reportedConsole() string {
 	return strings.Join(lines, "\n")
 }
 
-// reportedChecklist is the reported findings as the worklist shows them: a section of their own, at the end, with
-// no skill to load and nothing to do. A reader works the sections above it; this one is there so a line nobody
-// must fix is still a line nobody has forgotten.
 func (r Report) reportedChecklist() string {
 	var out strings.Builder
 
@@ -214,7 +194,6 @@ func (r Report) reportedChecklist() string {
 	return out.String()
 }
 
-// was is the verb for a count of findings, so a line reads as English either way.
 func was(count int) string {
 	if count == 1 {
 		return "was"
@@ -223,7 +202,6 @@ func was(count int) string {
 	return "were"
 }
 
-// checklistPreamble is how the checklist tells its reader to work it.
 func checklistPreamble() string {
 	return "> 🔱 **The rule above all — `fix-at-the-source`.** Every sin below is a SYMPTOM. " +
 		"Before you change a line, trace the value to where it is BORN and fix it there; " +
@@ -254,7 +232,6 @@ func checklistPreamble() string {
 		"between waves, until a run is clean and deletes this file.\n"
 }
 
-// loadInstruction tells the reader to load the skill that teaches a fix.
 func loadInstruction(slug string) string {
 	return "LOAD the skill `" + skill.IDFor(slug) + "` before fixing"
 }
@@ -276,11 +253,6 @@ func (r Report) twins(finding engine.Finding) string {
 	return listed
 }
 
-// relative is a location as the console shows it: under the judged path, without it.
-// Said is the report as a journal's card shows it: a line per finding, in the words a person would use, and a
-// closing count of the sins and the files holding them. A card is read by whoever is working, not by a terminal,
-// so it carries no colour, no node kind and no detector class — the sin says what is wrong, and the checklist
-// the run writes carries the paths and the rule names for the agent that fixes them.
 func (r Report) Said() string {
 	var lines []string
 	files := map[string]bool{}
@@ -313,7 +285,6 @@ func (r Report) Said() string {
 	return strings.Join(append(lines, "", natural.Counted(r.total, "sin")+" in "+natural.Counted(len(files), "file")), "\n")
 }
 
-// saidOf is one finding said plainly: the file and the line, what is declared there, and the sin itself.
 func (r Report) saidOf(finding engine.Finding) string {
 	said := filepath.Base(finding.File)
 	if _, at, numbered := strings.Cut(finding.Location, ":"); numbered && at != "" {
@@ -329,9 +300,6 @@ func (r Report) saidOf(finding engine.Finding) string {
 	return said + ": " + r.sinSaid(finding)
 }
 
-// sinSaid is what the sin is in a few words: the opening clause of the description its definition carries, which
-// is the symptom itself, else its own name. A definition goes on to say why it is a sin and what to do about it,
-// and that belongs in the skill the finding names, not in a line on a card.
 func (r Report) sinSaid(finding engine.Finding) string {
 	says := r.says[finding.Sin]
 	if says == "" {
@@ -347,11 +315,8 @@ func (r Report) sinSaid(finding engine.Finding) string {
 	return shortened(strings.TrimSuffix(strings.ToLower(says[:1])+says[1:], "."))
 }
 
-// saidWidth is how long a line's words may run before they are cut at a word: a card shows a line, not a
-// paragraph, and a description that goes on says the rest in the skill the finding names.
 const saidWidth = 72
 
-// shortened cuts the words at the last word inside saidWidth, saying with an ellipsis that there is more.
 func shortened(says string) string {
 	if len(says) <= saidWidth {
 		return says
@@ -365,10 +330,6 @@ func shortened(says string) string {
 	return strings.TrimRight(says[:cut], " ,;(") + "…"
 }
 
-// subjectOf is what a scope declares, less the kind of node it is: `FunctionDef oldest_line_at` is said as
-// `oldest_line_at`, because a reader acts on the name and the kind is already plain from the code. A scope that
-// is a piece of code rather than a name — the condition an unnamed-condition finding is about — says nothing a
-// line like this can carry, so it is left out and the sin speaks for itself.
 func subjectOf(scope string) string {
 	_, named, kinded := strings.Cut(scope, " ")
 	if !kinded || named == "" || strings.ContainsAny(named, " `'\"()[]{}=<>$") {
@@ -396,7 +357,6 @@ func hasCustom(findings []engine.Finding) bool {
 	return false
 }
 
-// commandsFor are the commands for the sins among the findings, one per sin, in first-seen order.
 func commandsFor(findings []engine.Finding, commands map[string]string) []string {
 	var listed []string
 	seen := map[string]bool{}
@@ -414,21 +374,13 @@ func commandsFor(findings []engine.Finding, commands map[string]string) []string
 // Skipped are the rules that broke and could not run, and the bridges that stopped before they read every file.
 type Skipped []string
 
-// skippedConsequence is what a skipped rule costs the run.
 const skippedConsequence = "This run does NOT judge what they judge — its verdict is " +
 	"incomplete until they are fixed. Their failure was printed to STDERR when it happened."
 
-// IsEmpty says whether every rule ran.
 func (s Skipped) IsEmpty() bool {
 	return len(s) == 0
 }
 
-// Verdict is the line a run with no active sin says about what it judged: a green tick when every part of the run
-// finished, and the same words with no tick, no green and a colon when one did not.
-//
-// A tick IS the verdict, and a run that never read every file has none to give. An agent's worker read
-// "No sins found in 4 changed files" as a pass although its Vue bridge had died with 661 files unread, and the
-// failure below it, printed last and in red, was read as noise after the answer.
 func (s Skipped) Verdict(judged string) string {
 	if s.IsEmpty() {
 		return "\033[32m✓ " + judged + ".\033[0m"
@@ -437,7 +389,6 @@ func (s Skipped) Verdict(judged string) string {
 	return judged + ", and that is no verdict:"
 }
 
-// Console names the skipped rules for the terminal.
 func (s Skipped) Console() string {
 	if s.IsEmpty() {
 		return ""
@@ -446,7 +397,6 @@ func (s Skipped) Console() string {
 	return "\n\033[31m✗ " + s.headline() + "\033[0m\n\033[2m  " + skippedConsequence + "\033[0m"
 }
 
-// Markdown names the skipped rules at the top of the checklist.
 func (s Skipped) Markdown() string {
 	if s.IsEmpty() {
 		return ""

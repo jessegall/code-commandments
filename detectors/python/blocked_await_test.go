@@ -7,9 +7,6 @@ import (
 	"github.com/jessegall/code-commandments/engine/python/pythontest"
 )
 
-// TestABlockingCallInACoroutineIsFoundAndAnAwaitIsNot holds the rule to the fault it names: a call that stops
-// its thread, made inside an async def, where that thread is the event loop. The asynchronous counterpart, the
-// same call handed to a thread, and the same call in a plain def are how the work is done right and must pass.
 func TestABlockingCallInACoroutineIsFoundAndAnAwaitIsNot(t *testing.T) {
 	for name, test := range map[string]struct {
 		source string

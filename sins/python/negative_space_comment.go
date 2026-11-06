@@ -13,7 +13,6 @@ func init() {
 	sins.Register(catalog.Python, NegativeSpaceComment{})
 }
 
-// Definition is what the sin states about itself.
 func (NegativeSpaceComment) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "python-negative-space-comment",

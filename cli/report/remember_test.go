@@ -10,18 +10,9 @@ import (
 	"github.com/jessegall/code-commandments/cli"
 	"github.com/jessegall/code-commandments/cli/reported"
 
-	// The record keys a report by the SIN the reported detector finds, which only the registry can answer, and
-	// the real command runs with it linked.
 	_ "github.com/jessegall/code-commandments/registry"
 )
 
-// TestADetectorReportRecordsTheSinItWasAbout holds the whole of the first phase at the one place it is used: the
-// issue is filed, and the line it was about is recorded as reported with that issue, keyed so a judge can read it
-// back.
-//
-// Four engines have a rule of the same name, so a report has to say which one fired — and it is recorded under
-// the rule's OWN name all the same, because that is the name a judge finding carries: keyed by the spelling the
-// reporter typed, the sin they just reported would be reported at them again on the next run.
 func TestADetectorReportRecordsTheSinItWasAbout(t *testing.T) {
 	root := project(t, "src/refund.py", "def refund(order):\n    return order.total or 0\n")
 	ghAnswers(t, "https://github.com/jessegall/code-commandments/issues/814\n", nil)
@@ -50,8 +41,6 @@ func TestADetectorReportRecordsTheSinItWasAbout(t *testing.T) {
 	}
 }
 
-// TestNothingIsRecordedWhereNoIssueWasFiled holds the pairing the record depends on: a row exists only where an
-// issue does, or a judge would call a sin reported with no report to show for it.
 func TestNothingIsRecordedWhereNoIssueWasFiled(t *testing.T) {
 	for name, test := range map[string]struct {
 		stdout string
@@ -74,9 +63,6 @@ func TestNothingIsRecordedWhereNoIssueWasFiled(t *testing.T) {
 	}
 }
 
-// TestASinAlreadyReportedIsSaidOutLoudAndNotForgotten holds what happens once the issue is already filed and the
-// row cannot be written: the run says the issue, says the line is not recorded, and fails, since silence would
-// invite a second issue for a maintainer to read.
 func TestASinAlreadyReportedIsSaidOutLoudAndNotForgotten(t *testing.T) {
 	root := project(t, "src/refund.py", "    return order.total or 0\n")
 	ghAnswers(t, "https://github.com/jessegall/code-commandments/issues/814\n", nil)
@@ -102,8 +88,6 @@ func TestASinAlreadyReportedIsSaidOutLoudAndNotForgotten(t *testing.T) {
 	}
 }
 
-// TestALineThatCannotBeReadIsSaidOutLoud holds the other refusal at the same place: a ref whose line is blank or
-// gone has no identity to be remembered by, and the run says so rather than keying every such sin alike.
 func TestALineThatCannotBeReadIsSaidOutLoud(t *testing.T) {
 	project(t, "src/refund.py", "def refund(order):\n\n    return order.total or 0\n")
 	ghAnswers(t, "https://github.com/jessegall/code-commandments/issues/814\n", nil)
@@ -120,8 +104,6 @@ func TestALineThatCannotBeReadIsSaidOutLoud(t *testing.T) {
 	}
 }
 
-// TestEveryReferenceOfOneReportIsRecorded holds a report that names several lines: each is reported, because each
-// is a place a judge will meet.
 func TestEveryReferenceOfOneReportIsRecorded(t *testing.T) {
 	root := project(t, "src/refund.py", "    return order.total or 0\n    return order.tax or 0\n")
 	ghAnswers(t, "https://github.com/jessegall/code-commandments/issues/814\n", nil)
@@ -135,7 +117,6 @@ func TestEveryReferenceOfOneReportIsRecorded(t *testing.T) {
 	}
 }
 
-// project is a project at a temp root holding the file, with the command run from inside it.
 func project(t *testing.T, path, text string) string {
 	t.Helper()
 	root, err := filepath.EvalSymlinks(t.TempDir())
@@ -166,7 +147,6 @@ func project(t *testing.T, path, text string) string {
 	return root
 }
 
-// ghAnswers puts a GitHub CLI of the test's own in the place of the one on the machine.
 func ghAnswers(t *testing.T, stdout string, err error) {
 	t.Helper()
 	found, ran := looking, filing
@@ -175,7 +155,6 @@ func ghAnswers(t *testing.T, stdout string, err error) {
 	t.Cleanup(func() { looking, filing = found, ran })
 }
 
-// refs are the references a report names.
 func refs(labels ...string) []Reference {
 	var named []Reference
 	for _, label := range labels {
@@ -187,7 +166,6 @@ func refs(labels ...string) []Reference {
 	return named
 }
 
-// input is a command's input naming one ref, which is all the recording reads from it.
 func input(t *testing.T, ref string) *cli.Input {
 	t.Helper()
 

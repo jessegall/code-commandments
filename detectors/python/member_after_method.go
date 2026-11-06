@@ -16,12 +16,10 @@ func init() {
 	detectors.Register(catalog.Python, MemberAfterMethodDetector{})
 }
 
-// Sin is the sin the detector finds.
 func (MemberAfterMethodDetector) Sin() sins.Sin {
 	return pysins.MemberAfterMethod{}
 }
 
-// Find is every place the sin is committed.
 func (MemberAfterMethodDetector) Find(codebase *engine.Codebase) []engine.Match {
 	program := py.In(codebase).Program
 

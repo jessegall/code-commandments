@@ -15,12 +15,10 @@ type NestedTypeMissingTypeScriptDetector struct{}
 
 func init() { detectors.Register(catalog.PHP, NestedTypeMissingTypeScriptDetector{}) }
 
-// Sin is the sin the detector finds.
 func (NestedTypeMissingTypeScriptDetector) Sin() sins.Sin {
 	return backendsins.NestedTypeMissingTypeScript{}
 }
 
-// Find is every field whose nested wire type misses #[TypeScript].
 func (NestedTypeMissingTypeScriptDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return php.In(codebase).
 		Where(engine.As(php.Node.IsField)).
@@ -28,5 +26,4 @@ func (NestedTypeMissingTypeScriptDetector) Find(codebase *engine.Codebase) []eng
 		Get()
 }
 
-// Repentable says a scribe rewrites the sin away.
 func (NestedTypeMissingTypeScriptDetector) Repentable() {}

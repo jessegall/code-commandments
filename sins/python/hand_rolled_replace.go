@@ -13,7 +13,6 @@ func init() {
 	sins.Register(catalog.Python, HandRolledReplace{})
 }
 
-// Definition is what the sin states about itself.
 func (HandRolledReplace) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "python-hand-rolled-replace",

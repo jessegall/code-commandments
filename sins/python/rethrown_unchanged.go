@@ -13,7 +13,6 @@ func init() {
 	sins.Register(catalog.Python, RethrownUnchanged{})
 }
 
-// Definition is what the sin states about itself.
 func (RethrownUnchanged) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "python-rethrown-unchanged",

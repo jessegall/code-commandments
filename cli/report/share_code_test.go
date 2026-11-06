@@ -7,8 +7,6 @@ import (
 	"testing"
 )
 
-// TestAReportPublishesCodeOnlyWhenItIsShared holds a public issue to the reporter's consent: it names the file by
-// its own name and lines, shows no code unless shared, and when shared shows the referenced lines alone.
 func TestAReportPublishesCodeOnlyWhenItIsShared(t *testing.T) {
 	file := filepath.Join(t.TempDir(), "app", "Billing", "Invoice.php")
 	if err := os.MkdirAll(filepath.Dir(file), 0o755); err != nil {

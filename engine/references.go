@@ -6,7 +6,6 @@ import (
 	"github.com/jessegall/code-commandments/contract"
 )
 
-// Constructed is the node naming the type the construction creates; no node for anything else.
 func (m Match) Constructed() Match {
 	if read := m.grammar().Constructs; read != nil && m.node != nil {
 		return read(m)
@@ -15,9 +14,6 @@ func (m Match) Constructed() Match {
 	return Match{}
 }
 
-// Referrers are the nodes referring to the declaration from outside it: every node whose name resolves to its
-// symbol or whose call reaches it, and the calls its language's call graph finds. A declaration's references
-// to itself, such as a recursive call, are no referrers; a declaration with no symbol has none.
 func (m Match) Referrers() []Match {
 	if m.node == nil || m.node.Facts == nil || m.node.Symbol == "" {
 		return nil
@@ -42,7 +38,6 @@ func (m Match) Referrers() []Match {
 	return outside
 }
 
-// isAbove says whether the node sits somewhere below this one.
 func (m Match) isAbove(below Match) bool {
 	for ancestor := below.Parent(); ancestor.Exists(); ancestor = ancestor.Parent() {
 		if ancestor.node == m.node {
@@ -53,17 +48,12 @@ func (m Match) isAbove(below Match) bool {
 	return false
 }
 
-// IsImplicit says whether the language itself calls the declaration or binds the parameter: a constructor, a magic
-// or dunder method, Python's self and cls.
 func (m Match) IsImplicit() bool {
 	read := m.grammar().Implicit
 
 	return read != nil && m.node != nil && read(m)
 }
 
-// Overrides says whether the function is a member its type owes a supertype: its language's compiler says so, or one
-// of the same name is declared by a type it extends or a contract it honours, in the scan or outside it, so a call
-// through the supertype reaches it.
 func (m Match) IsOverride() bool {
 	owner := m.Parent()
 	for !owner.Is(TypeDeclaration) && owner.Exists() && !owner.Is(Function) {
@@ -87,7 +77,6 @@ func (m Match) IsOverride() bool {
 	return false
 }
 
-// declaresMember says whether the type the symbol names declares a member of the name, in the scan or outside it.
 func (m Match) declaresMember(symbol, name string) bool {
 	for _, declaration := range m.file.Codebase().Declarations(symbol) {
 		if declaration.file.Language() != m.file.Language() {
@@ -105,13 +94,8 @@ func (m Match) declaresMember(symbol, name string) bool {
 		func(member contract.OutsideMember) bool { return member.Name == name })
 }
 
-// promotions are the modifiers that make a parameter a property as well, read through the object rather than by
-// its name: PHP's promoted constructor parameters and TypeScript's parameter properties.
 var promotions = []string{"public", "protected", "private", "readonly"}
 
-// IsUnread says whether the parameter's function never reads its name, a closure inside it included. A
-// parameter the tool cannot judge, or that the code owes someone else — of a declaration with no body, of a
-// function type, of a member a supertype dictates, bound by the language, or promoted to a property — is not unread. A name that selects a member or labels an argument (`this.name`, `name:`) is no read.
 func (m Match) IsUnread() bool {
 	function := m.DeclaringFunction()
 	if !function.Exists() || m.IsImplicit() || function.IsOverride() || slices.ContainsFunc(promotions, m.HasModifier) {
@@ -128,8 +112,6 @@ func (m Match) IsUnread() bool {
 	return true
 }
 
-// isSelector says whether the name selects or labels rather than reads: a member access's member, not its
-// receiver, or a label its language writes by a name, such as a named argument's.
 func (m Match) isSelector() bool {
 	if parent := m.Parent(); parent.Is(MemberAccess) && parent.Children()[0].node != m.node {
 		return true
@@ -140,8 +122,6 @@ func (m Match) isSelector() bool {
 	return read != nil && read(m)
 }
 
-// isShadowed says whether a function between the name and the one given declares a parameter of the name, so the
-// name reads that parameter instead.
 func (m Match) isShadowed(outer Match) bool {
 	for ancestor := m.Parent(); ancestor.Exists() && ancestor.node != outer.node; ancestor = ancestor.Parent() {
 		if ancestor.Is(Function) && slices.ContainsFunc(ancestor.Parameters(), func(parameter Match) bool { return parameter.Name() == m.Name() }) {
@@ -152,8 +132,6 @@ func (m Match) isShadowed(outer Match) bool {
 	return false
 }
 
-// referrers indexes every node of the codebase by the symbol it refers to, the declaration its call reaches, and
-// the type that declaration is a member of, as a static call names its class.
 func referrers(c *Codebase) map[string][]Match {
 	return Analysis(c, "referrers", func(c *Codebase) map[string][]Match {
 		index := map[string][]Match{}
@@ -171,8 +149,6 @@ func referrers(c *Codebase) map[string][]Match {
 					continue
 				}
 
-				// A call is listed under what it reaches and under the type it reaches it on, and never under
-				// the name it already refers to, which is the reference itself rather than a reach.
 				for _, symbol := range []string{node.Target.Symbol, node.Target.Type} {
 					if symbol == "" || symbol == node.Refers {
 						continue

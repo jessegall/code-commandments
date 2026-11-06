@@ -13,7 +13,6 @@ func init() {
 	sins.Register(catalog.Python, BlankStringDefault{})
 }
 
-// Definition is what the sin states about itself.
 func (BlankStringDefault) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "python-blank-string-default",

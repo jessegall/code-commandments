@@ -10,8 +10,7 @@ import (
 	"github.com/jessegall/code-commandments/scribes"
 )
 
-// Writer drafts rewrites of one PHP file at the level a scribe thinks in: replace a node, stamp an attribute,
-// wire an import, lift a line. The offset math is the engine's Source; a scribe never does its own.
+// Writer drafts rewrites of one PHP file at the level a scribe thinks in: replace a node, stamp an attribute, wire an import, lift a line.
 type Writer struct {
 	draft  *scribes.Draft
 	path   string
@@ -19,7 +18,6 @@ type Writer struct {
 	class  engine.Match
 }
 
-// For is the writer of the file a match sits in, drafting into draft.
 func For(draft *scribes.Draft, match engine.Match) *Writer {
 	source, _ := match.Source().Source()
 	class := match
@@ -30,36 +28,29 @@ func For(draft *scribes.Draft, match engine.Match) *Writer {
 	return &Writer{draft: draft, path: match.File(), source: source, class: class}
 }
 
-// Source is the file's text, asked for offsets.
 func (w *Writer) Source() engine.Source {
 	return engine.Source(w.source)
 }
 
-// Replace replaces a node's whole span with text.
 func (w *Writer) Replace(node engine.Match, text string) {
 	start, end := bounds(node)
 	w.edit(start, end, text)
 }
 
-// TextOf is the source a node spans, verbatim.
 func (w *Writer) TextOf(node engine.Match) string {
 	start, end := bounds(node)
 
 	return string(w.source[start:end])
 }
 
-// InsertAt inserts text at an offset, consuming nothing.
 func (w *Writer) InsertAt(offset int, text string) {
 	w.edit(offset, offset, text)
 }
 
-// Rewrite drafts one edit with no node behind it.
 func (w *Writer) Rewrite(edit scribes.Edit) {
 	w.edit(edit.Start, edit.End, edit.Text)
 }
 
-// StampAttribute writes an attribute on a line of its own directly above a property, parameter or class, beneath
-// any it already carries and at its indent, and imports the attribute when importFqcn names it.
 func (w *Writer) StampAttribute(node engine.Match, attribute, importFqcn string) {
 	insertAt, _ := bounds(node)
 	if groups := node.ChildrenIn("attrGroups"); len(groups) > 0 {
@@ -75,8 +66,6 @@ func (w *Writer) StampAttribute(node engine.Match, attribute, importFqcn string)
 	}
 }
 
-// EnsureImport writes `use fqcn;` after the file's last import, or after its namespace declaration when it has
-// none; nothing when the import is there already or the class is in no namespace.
 func (w *Writer) EnsureImport(fqcn string) {
 	namespace := w.namespace()
 	if !namespace.Exists() {
@@ -106,8 +95,6 @@ func (w *Writer) EnsureImport(fqcn string) {
 	}
 }
 
-// DropImport takes `use fqcn;` out: the whole statement when it imports only that, else the one clause of a
-// grouped import; nothing when the import is not there.
 func (w *Writer) DropImport(fqcn string) {
 	namespace := w.namespace()
 	if !namespace.Exists() {
@@ -130,7 +117,6 @@ func (w *Writer) DropImport(fqcn string) {
 	}
 }
 
-// dropClause takes one clause out of a grouped import, with the comma joining it to the list.
 func (w *Writer) dropClause(clauses []engine.Match, index int) {
 	clauseStart, clauseEnd := bounds(clauses[index])
 	start, end := clauseStart, clauseEnd
@@ -142,7 +128,6 @@ func (w *Writer) dropClause(clauses []engine.Match, index int) {
 	w.edit(start, w.Source().SkipWhitespace(end, len(w.source)), "")
 }
 
-// DropModifier takes a modifier keyword out of a typed property's or parameter's modifiers.
 func (w *Writer) DropModifier(node engine.Match, modifier string) {
 	typed := node.Child("type")
 	if !typed.Exists() {
@@ -158,7 +143,6 @@ func (w *Writer) DropModifier(node engine.Match, modifier string) {
 	w.edit(keywordStart, typeStart, strings.ReplaceAll(modifiers, modifier+" ", ""))
 }
 
-// RemoveReturnType takes a function's declared return type out with its colon; nothing when it declares none.
 func (w *Writer) RemoveReturnType(function engine.Match) {
 	returned := function.Child("returnType")
 	if !returned.Exists() {
@@ -171,14 +155,12 @@ func (w *Writer) RemoveReturnType(function engine.Match) {
 	w.edit(start, end, "")
 }
 
-// ReplaceDocblock replaces a declaration's docblock with text, the declaration untouched.
 func (w *Writer) ReplaceDocblock(node engine.Match, text string) {
 	if doc, documented := (php.Node{Match: node}).DocComment(); documented {
 		w.edit(doc.Span.Start, doc.Span.End, text)
 	}
 }
 
-// RemoveDocblock takes a declaration's docblock out, with its line when it stands alone on it.
 func (w *Writer) RemoveDocblock(node engine.Match) {
 	doc, documented := php.Node{Match: node}.DocComment()
 	if !documented {
@@ -196,7 +178,6 @@ func (w *Writer) RemoveDocblock(node engine.Match) {
 	w.edit(doc.Span.Start, after, "")
 }
 
-// ReplaceComments replaces a run of comments, the first through the last, with text.
 func (w *Writer) ReplaceComments(comments []contract.Comment, text string) {
 	if len(comments) == 0 {
 		return
@@ -204,8 +185,6 @@ func (w *Writer) ReplaceComments(comments []contract.Comment, text string) {
 	w.edit(comments[0].Span.Start, comments[len(comments)-1].Span.End, text)
 }
 
-// MoveBefore lifts declarations, in the order given, to just above anchor, each with its docblock, attributes and
-// own line, a blank line between them: the moved text is the original bytes.
 func (w *Writer) MoveBefore(nodes []engine.Match, anchor engine.Match) {
 	var blocks []string
 	for _, node := range nodes {
@@ -218,8 +197,6 @@ func (w *Writer) MoveBefore(nodes []engine.Match, anchor engine.Match) {
 	}
 }
 
-// Reorder rewrites a run of declarations into groups of the same nodes, a blank line between groups and each
-// member keeping the spacing it had inside one; one edit over the run, each declaration its original bytes.
 func (w *Writer) Reorder(nodes []engine.Match, groups [][]engine.Match) {
 	if len(nodes) == 0 {
 		return
@@ -239,7 +216,6 @@ func (w *Writer) Reorder(nodes []engine.Match, groups [][]engine.Match) {
 	w.edit(w.lineStartOf(nodes[0]), w.declarationEndOf(nodes[len(nodes)-1], nodes), strings.Join(pieces, "\n"))
 }
 
-// DeleteStatementLine takes out the whole lines a statement stands on, its indentation through its line break.
 func (w *Writer) DeleteStatementLine(statement engine.Match) {
 	start, end := bounds(statement)
 	lineStart := 0
@@ -256,8 +232,6 @@ func (w *Writer) hasBlankLineAbove(lineStart int) bool {
 	return lineStart >= 2 && w.source[lineStart-1] == '\n' && w.source[lineStart-2] == '\n'
 }
 
-// declarationBounds is where a declaration stands in the source: from the start of the line it opens on, the
-// blank lines above taken with it, through the break that ends it.
 func (w *Writer) declarationBounds(node engine.Match, run []engine.Match) (int, int) {
 	start := w.lineStartOf(node)
 	for w.hasBlankLineAbove(start) {
@@ -271,8 +245,6 @@ func (w *Writer) declarationBounds(node engine.Match, run []engine.Match) (int, 
 	return start, end
 }
 
-// declarationEndOf is where a declaration's text ends: through a comment trailing it on its line, unless another
-// declaration of the run shares that line.
 func (w *Writer) declarationEndOf(node engine.Match, run []engine.Match) int {
 	_, end := bounds(node)
 	lineEnd := w.Source().LineContentEndAt(end)
@@ -285,8 +257,6 @@ func (w *Writer) declarationEndOf(node engine.Match, run []engine.Match) int {
 	return lineEnd
 }
 
-// lineStartOf is the offset the line a declaration opens on begins at: its docblock and the comments standing on
-// their own lines above it included.
 func (w *Writer) lineStartOf(node engine.Match) int {
 	start, _ := bounds(node)
 	for _, comment := range (php.Node{Match: node}).Comments() {
@@ -301,7 +271,6 @@ func (w *Writer) lineStartOf(node engine.Match) int {
 	return 0
 }
 
-// namespace is the namespace statement the writer's class is declared in.
 func (w *Writer) namespace() engine.Match {
 	if parent := w.class.Parent(); parent.Kind() == "Stmt_Namespace" {
 		return parent
@@ -310,7 +279,6 @@ func (w *Writer) namespace() engine.Match {
 	return engine.Match{}
 }
 
-// importedName is the class a use clause imports, as written, its leading backslash dropped.
 func (w *Writer) importedName(clause engine.Match) string {
 	return strings.TrimLeft(w.TextOf(clause.Child("name")), `\`)
 }
@@ -319,7 +287,6 @@ func (w *Writer) edit(start, end int, text string) {
 	w.draft.Edit(engine.Span{Path: w.path, Source: w.source, Start: start, End: end}, text)
 }
 
-// importsIn is every use statement among a namespace's statements.
 func importsIn(namespace engine.Match) []engine.Match {
 	var uses []engine.Match
 	for _, statement := range namespace.ChildrenIn("stmts") {
@@ -331,12 +298,10 @@ func importsIn(namespace engine.Match) []engine.Match {
 	return uses
 }
 
-// bounds is a node's half-open byte range.
 func bounds(node engine.Match) (int, int) {
 	span := node.Node().Span
 
 	return span.Start, span.End
 }
 
-// phpSpace is the whitespace PHP's trim() strips.
 const phpSpace = " \t\n\r\x00\x0b"

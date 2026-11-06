@@ -14,10 +14,6 @@ import (
 	"github.com/jessegall/code-commandments/engine"
 )
 
-// TestOnlyTheRuleThatJudgesAnExcludedFolderIsReportedThere holds the point of the whitelist. A project excludes
-// its tests because the rules about naming read a test's name as a sentence, which is what a test name is, and
-// one project measured 9,773 findings in 85 files that way. One rule allowed in reports there; every other rule
-// stays silent, which is what the exclusion is for.
 func TestOnlyTheRuleThatJudgesAnExcludedFolderIsReportedThere(t *testing.T) {
 	root, judged, targets := excludingTests(t, `{
         "paths": ["src"],
@@ -43,8 +39,6 @@ func TestOnlyTheRuleThatJudgesAnExcludedFolderIsReportedThere(t *testing.T) {
 	}
 }
 
-// TestAnExcludedFolderNobodyJudgesReportsNothing holds the default, which the allowance must not weaken: with no
-// judges call anywhere, an excluded folder is as silent as it was.
 func TestAnExcludedFolderNobodyJudgesReportsNothing(t *testing.T) {
 	root, judged, targets := excludingTests(t, `{"paths": ["src"], "exclude": ["tests"]}`)
 
@@ -57,10 +51,6 @@ func TestAnExcludedFolderNobodyJudgesReportsNothing(t *testing.T) {
 	}
 }
 
-// TestARunGivenAPathReadsNoJudgedFolderOutsideIt holds the limit of the allowance, and the walk is where it
-// lives rather than the filter: a run told to judge one path roots there, so a folder a rule judges elsewhere is
-// never even read. A whitelist says which rule may look inside an excluded folder, never that a run should widen
-// past what it was asked for.
 func TestARunGivenAPathReadsNoJudgedFolderOutsideIt(t *testing.T) {
 	root, judged, _ := excludingTests(t, `{
         "paths": ["src"],
@@ -77,9 +67,6 @@ func TestARunGivenAPathReadsNoJudgedFolderOutsideIt(t *testing.T) {
 	}
 }
 
-// TestAJudgedFolderOutsideTheDeclaredPathsIsStillRead holds the other half of the same reading, and it is the
-// half the feature needs: a project names src and excludes tests, so a walk rooted at src alone would never meet
-// a test file and the rule allowed in would have nothing to read.
 func TestAJudgedFolderOutsideTheDeclaredPathsIsStillRead(t *testing.T) {
 	root, judged, _ := excludingTests(t, `{
         "paths": ["src"],
@@ -102,8 +89,6 @@ func TestAJudgedFolderOutsideTheDeclaredPathsIsStillRead(t *testing.T) {
 	}
 }
 
-// excludingTests is a project whose config is the text, with a source file and a test file, and the scope of a
-// run over the whole project.
 func excludingTests(t *testing.T, text string) (string, config.Config, scope.Scope) {
 	t.Helper()
 	root, err := filepath.EvalSymlinks(t.TempDir())
@@ -137,7 +122,6 @@ func excludingTests(t *testing.T, text string) (string, config.Config, scope.Sco
 	return root, judged, targets
 }
 
-// namesOf are the findings as a failure reads them: the rule and the file it reported.
 func namesOf(findings []engine.Finding) []string {
 	var said []string
 	for _, finding := range findings {

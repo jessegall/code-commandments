@@ -11,7 +11,6 @@ type IfElseLadder struct{}
 
 func init() { sins.Register(catalog.PHP, IfElseLadder{}) }
 
-// Definition is what the sin states about itself.
 func (IfElseLadder) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "if-else-ladder",

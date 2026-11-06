@@ -11,7 +11,6 @@ type StringMatchMirrorsEnum struct{}
 
 func init() { sins.Register(catalog.PHP, StringMatchMirrorsEnum{}) }
 
-// Definition is what the sin states about itself.
 func (StringMatchMirrorsEnum) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "string-match-mirrors-enum",

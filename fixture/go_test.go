@@ -15,13 +15,8 @@ import (
 	"github.com/jessegall/code-commandments/fixture"
 )
 
-// goFixture is where the Go fixture lives, from this package.
 const goFixture = "../tests/Fixtures/go"
 
-// TestTheGoFixtureIsAModuleOfItsOwn holds the fixture out of the tool's own build. A fixture holds code written
-// to be judged, not code written to compile cleanly: an unused import, an unused variable or a missing return is
-// a scenario here and a compile error to Go, and one of them in a package of this module would break the suite,
-// the pre-commit generators and every release until it was taken out again.
 func TestTheGoFixtureIsAModuleOfItsOwn(t *testing.T) {
 	if _, err := os.Stat(filepath.Join(goFixture, "go.mod")); err != nil {
 		t.Fatalf("the fixture declares no module of its own: %v", err)
@@ -38,9 +33,6 @@ func TestTheGoFixtureIsAModuleOfItsOwn(t *testing.T) {
 	}
 }
 
-// TestTheGoFixtureCompilesOnItsOwnTerms holds the fixture to its own module's vet: every scenario in it is code
-// Go accepts, so a reader can tell a deliberate sin from a mistake. A scenario that needs code Go refuses is
-// named in the fixture's README, and there are none today.
 func TestTheGoFixtureCompilesOnItsOwnTerms(t *testing.T) {
 	if _, err := exec.LookPath("go"); err != nil {
 		t.Skipf("no go here: %v", err)
@@ -53,9 +45,6 @@ func TestTheGoFixtureCompilesOnItsOwnTerms(t *testing.T) {
 	}
 }
 
-// TestTheGoFixtureIsFormattedAsGoWritesIt holds the markers to gofmt. gofmt reflows a doc comment and moves a
-// comment that sits where Go would not leave one, so a fixture it would rewrite is a fixture whose markers move
-// under anyone who runs it.
 func TestTheGoFixtureIsFormattedAsGoWritesIt(t *testing.T) {
 	if _, err := exec.LookPath("gofmt"); err != nil {
 		t.Skipf("no gofmt here: %v", err)
@@ -70,12 +59,6 @@ func TestTheGoFixtureIsFormattedAsGoWritesIt(t *testing.T) {
 	}
 }
 
-// TestAMarkerIsReadAndDocumentsNothing holds a Go marker to both halves of what it must be: the harness reads it,
-// and the declaration under it is not left looking documented.
-//
-// Go's own parser gives a `//` group directly above a declaration to that declaration as its documentation, and
-// the tree says so, so a marker written there would make every marked declaration read as documented. A blank
-// line between the two leaves the marker a comment of its own. Inside a body there is no documentation to be.
 func TestAMarkerIsReadAndDocumentsNothing(t *testing.T) {
 	codebase := goCodebase(t)
 
@@ -101,9 +84,6 @@ func TestAMarkerIsReadAndDocumentsNothing(t *testing.T) {
 	}
 }
 
-// TestAScenarioIsTheFunctionTheFindingSitsIn holds the harness's own scenario reading for Go. Go has no class
-// body, so a finding's scope is the function it sits in, which is the unit a reader of Go reads: two findings in
-// two functions are two scenarios, where a language with a class shell would have counted the shell as shared.
 func TestAScenarioIsTheFunctionTheFindingSitsIn(t *testing.T) {
 	codebase := goCodebase(t)
 
@@ -118,7 +98,6 @@ func TestAScenarioIsTheFunctionTheFindingSitsIn(t *testing.T) {
 	}
 }
 
-// documentedByAMarker says whether every doc comment the node carries is a marker.
 func documentedByAMarker(node engine.Match) bool {
 	for _, comment := range node.Comments() {
 		if comment.Kind != "doc" {
@@ -132,7 +111,6 @@ func documentedByAMarker(node engine.Match) bool {
 	return true
 }
 
-// goCodebase is the Go fixture as the engine holds it, read through the real bridge.
 func goCodebase(t *testing.T) *engine.Codebase {
 	t.Helper()
 	root, err := filepath.Abs(goFixture)
@@ -152,7 +130,6 @@ func goCodebase(t *testing.T) *engine.Codebase {
 	return engine.Load(stream)
 }
 
-// functionNamed is the fixture's function declaration of that name.
 func functionNamed(t *testing.T, codebase *engine.Codebase, name string) engine.Match {
 	t.Helper()
 	for _, held := range codebase.WhereFunction().Get() {

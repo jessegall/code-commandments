@@ -9,17 +9,13 @@ import (
 	"github.com/jessegall/code-commandments/engine"
 )
 
-// classLikes are the kinds that declare a type.
 var classLikes = []string{"Stmt_Class", "Stmt_Interface", "Stmt_Trait", "Stmt_Enum"}
 
-// valueScalars are the builtin types a value type may hold.
 var valueScalars = []string{"string", "int", "float", "bool", "array", "iterable"}
 
-// optionName is the short name of php-types' Option, a value whatever it wraps.
 const optionName = "Option"
 
-// Program is what the scanned PHP declares, read once per codebase: its class-likes, their parents, contracts
-// and traits. Names compare exactly, as the PHP engine's maps key them.
+// Program is what the scanned PHP declares, read once per codebase: its class-likes, their parents, contracts and traits.
 type Program struct {
 	codebase     *engine.Codebase
 	declarations map[string]engine.Match
@@ -33,7 +29,6 @@ type Program struct {
 
 var programs = Memoised(readProgram)
 
-// ProgramOf is the codebase's PHP program, read on first need and kept for the codebase's life.
 func ProgramOf(codebase *engine.Codebase) *Program {
 	return programs.Of(codebase)
 }
@@ -90,26 +85,22 @@ func (p *Program) declare(declaration engine.Match) {
 	}
 }
 
-// Declaration is the class-like the name declares: a class, interface, trait or enum.
 func (p *Program) Declaration(fqcn string) (engine.Match, bool) {
 	declaration, ok := p.declarations[strings.TrimLeft(fqcn, `\`)]
 
 	return declaration, ok
 }
 
-// Declarations is every named class-like the program declares, by name.
 func (p *Program) Declarations() map[string]engine.Match {
 	return p.declarations
 }
 
-// Class is the class the name declares; an interface, trait or enum is no class.
 func (p *Program) Class(fqcn string) (engine.Match, bool) {
 	class, ok := p.classes[strings.TrimLeft(fqcn, `\`)]
 
 	return class, ok
 }
 
-// Ancestors is the class's parent chain, nearest first, through the scan and the declarations outside it.
 func (p *Program) Ancestors(class string) []string {
 	class = strings.TrimLeft(class, `\`)
 	var chain []string
@@ -123,13 +114,10 @@ func (p *Program) Ancestors(class string) []string {
 	}
 }
 
-// Extends says whether the parent is among the class's ancestors.
 func (p *Program) Extends(class, parent string) bool {
 	return slices.Contains(p.Ancestors(class), strings.TrimLeft(parent, `\`))
 }
 
-// Implements says whether the class honours the contract: through its own, its parents', or an interface's
-// extended contracts.
 func (p *Program) Implements(class, contract string) bool {
 	contract = strings.TrimLeft(contract, `\`)
 	queue := []string{strings.TrimLeft(class, `\`)}
@@ -155,7 +143,6 @@ func (p *Program) Implements(class, contract string) bool {
 	return false
 }
 
-// parentOf is the class's parent: the one the scan declares, else the one its declaration outside the scan names.
 func (p *Program) parentOf(class string) (string, bool) {
 	if parent, ok := p.parents[class]; ok {
 		return parent, true
@@ -171,8 +158,6 @@ func (p *Program) parentOf(class string) (string, bool) {
 	return strings.TrimLeft(symbol.Extends[0], `\`), true
 }
 
-// contractsOf is the contracts the class-like names itself: the scan's, else those its declaration outside the
-// scan names — the ones an outside interface extends.
 func (p *Program) contractsOf(name string) []string {
 	if _, declared := p.Declaration(name); declared {
 		return p.contracts[name]
@@ -188,29 +173,24 @@ func (p *Program) contractsOf(name string) []string {
 	return symbol.Implements
 }
 
-// IsA says whether the class is the base, extends it, or implements it.
 func (p *Program) IsA(class, base string) bool {
 	return class != "" && (class == base || p.Extends(class, base) || p.Implements(class, base))
 }
 
-// IsEnum says whether the program declares the name an enum.
 func (p *Program) IsEnum(class string) bool {
 	return p.enums[strings.TrimLeft(class, `\`)]
 }
 
-// IsInterface says whether the program declares the name an interface.
 func (p *Program) IsInterface(class string) bool {
 	declaration, ok := p.Declaration(class)
 
 	return ok && declaration.Kind() == "Stmt_Interface"
 }
 
-// HasSubclass says whether any class, anonymous ones too, extends the class.
 func (p *Program) HasSubclass(class string) bool {
 	return p.subclassed[strings.TrimLeft(class, `\`)]
 }
 
-// Uses says whether the class, or a class it extends, uses the trait.
 func (p *Program) Uses(class, trait string) bool {
 	users := p.UsersOfTrait(trait)
 	for _, each := range append([]string{strings.TrimLeft(class, `\`)}, p.Ancestors(class)...) {
@@ -222,12 +202,10 @@ func (p *Program) Uses(class, trait string) bool {
 	return false
 }
 
-// UsersOfTrait is every class-like that uses the trait, in the order the program declares them.
 func (p *Program) UsersOfTrait(trait string) []string {
 	return p.traitUsers[strings.TrimLeft(trait, `\`)]
 }
 
-// TraitMethodsOf is every method the class's traits declare, trait by trait.
 func (p *Program) TraitMethodsOf(class string) []engine.Match {
 	declaration, ok := p.Class(class)
 	if !ok {
@@ -243,15 +221,10 @@ func (p *Program) TraitMethodsOf(class string) []engine.Match {
 	return methods
 }
 
-// IsValueType says whether a written type holds a value rather than a service: a scalar, an enum, an Option, or a
-// declared class whose every field is a value type in turn, four levels deep. A class already on the path is a
-// cycle, and no value. Null and Optional aside, a union is
-// a value only when one type is left.
 func (p *Program) IsValueType(written *contract.Type) bool {
 	return p.isValueType(Written(written), 4, map[string]bool{})
 }
 
-// ClassIsValueType says whether the class is a value type.
 func (p *Program) ClassIsValueType(fqcn string) bool {
 	return fqcn != "" && p.IsValueType(&contract.Type{Kind: "named", Name: fqcn})
 }
@@ -298,22 +271,18 @@ func (p *Program) isValueType(written TypeName, depth int, visited map[string]bo
 
 // Field is one field a class-like declares: a promoted constructor parameter, or a property.
 type Field struct {
-	Name     string
-	Type     *contract.Type
-	IsPublic bool
-	Promoted bool
-	// Node is the parameter, or the property's item that names it.
-	Node engine.Match
-	// Declaration carries the field's attributes: the parameter, or the property statement.
+	Name        string
+	Type        *contract.Type
+	IsPublic    bool
+	Promoted    bool
+	Node        engine.Match
 	Declaration engine.Match
 }
 
-// HasAttribute says whether the field carries an attribute by any of the short names.
 func (f Field) HasAttribute(shortNames ...string) bool {
 	return HasAttribute(f.Declaration, shortNames...)
 }
 
-// AsField is the field a promoted parameter or a property statement declares; a property its first.
 func AsField(node engine.Match) (Field, bool) {
 	switch node.Kind() {
 	case "Param":
@@ -331,7 +300,6 @@ func AsField(node engine.Match) (Field, bool) {
 	return Field{}, false
 }
 
-// AttributeNames is every attribute the declaration carries, by its name as resolved, in order.
 func AttributeNames(declaration engine.Match) []string {
 	var names []string
 	for _, group := range declaration.Children() {
@@ -348,7 +316,6 @@ func AttributeNames(declaration engine.Match) []string {
 	return names
 }
 
-// HasAttribute says whether the declaration carries an attribute by any of the short names.
 func HasAttribute(declaration engine.Match, shortNames ...string) bool {
 	for _, name := range AttributeNames(declaration) {
 		if slices.Contains(shortNames, ShortName(name)) {
@@ -359,12 +326,10 @@ func HasAttribute(declaration engine.Match, shortNames ...string) bool {
 	return false
 }
 
-// ShortName is a class name's last part.
 func ShortName(class string) string {
 	return lastPart(class)
 }
 
-// Fields is every field the class-like declares, its promoted constructor parameters first, then its properties.
 func Fields(declaration engine.Match) []Field {
 	var fields []Field
 	for _, param := range ConstructorParams(declaration) {
@@ -389,7 +354,6 @@ func Fields(declaration engine.Match) []Field {
 	return fields
 }
 
-// Methods is every method the class-like declares, in order.
 func Methods(declaration engine.Match) []engine.Match {
 	var methods []engine.Match
 	for _, member := range declaration.Children() {
@@ -401,7 +365,6 @@ func Methods(declaration engine.Match) []engine.Match {
 	return methods
 }
 
-// Method is the method the class-like declares by the name, compared as PHP compares method names.
 func Method(declaration engine.Match, name string) (engine.Match, bool) {
 	for _, method := range Methods(declaration) {
 		if strings.EqualFold(method.Name(), name) {
@@ -412,7 +375,6 @@ func Method(declaration engine.Match, name string) (engine.Match, bool) {
 	return engine.Match{}, false
 }
 
-// ConstructorParams is each parameter the class-like's constructor declares.
 func ConstructorParams(declaration engine.Match) []engine.Match {
 	constructor, ok := Method(declaration, "__construct")
 	if !ok {
@@ -428,7 +390,6 @@ func ConstructorParams(declaration engine.Match) []engine.Match {
 	return params
 }
 
-// IsPublic says whether a member is public: written so, or written with no visibility at all.
 func IsPublic(member *contract.Node) bool {
 	return slices.Contains(member.Modifiers, "public") ||
 		!(slices.Contains(member.Modifiers, "protected") || slices.Contains(member.Modifiers, "private"))
@@ -445,7 +406,6 @@ func traitsOf(declaration *contract.Node) []string {
 	return traits
 }
 
-// names is the name of each child the node holds in a list field.
 func names(node *contract.Node, field string) []string {
 	var names []string
 	for _, child := range node.Children {
@@ -461,8 +421,6 @@ func lastPart(name string) string {
 	return name[strings.LastIndex(name, `\`)+1:]
 }
 
-// InheritsMutableProperty says whether an ancestor of the class declares the property writable: a promoted parameter
-// or a property, neither readonly.
 func (p *Program) InheritsMutableProperty(class, property string) bool {
 	for _, ancestor := range p.Ancestors(class) {
 		declaration, ok := p.Class(ancestor)
@@ -474,8 +432,6 @@ func (p *Program) InheritsMutableProperty(class, property string) bool {
 	return false
 }
 
-// MutablePropertyNames is every property a class declares writable: its promoted parameters and its properties that
-// are not readonly, each once.
 func MutablePropertyNames(class engine.Match) []string {
 	if class.Kind() != "Stmt_Class" {
 		return nil

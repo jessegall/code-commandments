@@ -11,9 +11,6 @@ const (
 	separator = "\t"
 )
 
-// NamesLegend is what the names file says about itself. It names the `session name` command without an
-// executable in front of it: where that executable is, is cli/binary's answer, and cli/binary reads this package,
-// so a path written here would be a guess rather than the fact the rest of the tool states once.
 var NamesLegend = &state.Legend{
 	About: "The names this project has given its sessions (the `session name` command). A " +
 		"session folder is a hash by default; a named one IS the name, and this says which id " +
@@ -23,8 +20,7 @@ var NamesLegend = &state.Legend{
 	Safe: "a named session becomes findable by its hash again — nothing inside it is lost",
 }
 
-// SessionNames are the names a project gave its sessions: each name is a session's folder, and says which
-// id it belongs to.
+// SessionNames are the names a project gave its sessions: each name is a session's folder, and says which id it belongs to.
 type SessionNames struct {
 	file state.File
 }
@@ -35,12 +31,10 @@ type Pair struct {
 	ID   string
 }
 
-// NamesIn is the names kept in the shared folder dir.
 func NamesIn(dir string) SessionNames {
 	return SessionNames{state.At(dir+"/"+namesFile, NamesLegend)}
 }
 
-// NameOf is the name the session was given, and whether it has one.
 func (n SessionNames) NameOf(sessionID string) (string, bool) {
 	for _, pair := range n.All() {
 		if pair.ID == sessionID {
@@ -51,7 +45,6 @@ func (n SessionNames) NameOf(sessionID string) (string, bool) {
 	return "", false
 }
 
-// IDOf is the session a name belongs to, and whether it is taken.
 func (n SessionNames) IDOf(name string) (string, bool) {
 	for _, pair := range n.All() {
 		if pair.Name == name {
@@ -62,7 +55,6 @@ func (n SessionNames) IDOf(name string) (string, bool) {
 	return "", false
 }
 
-// Name gives the session this name, dropping any name it had; false when another session holds it.
 func (n SessionNames) Name(sessionID, name string) (bool, error) {
 	if taken, isTaken := n.IDOf(name); isTaken && taken != sessionID {
 		return false, nil
@@ -79,7 +71,6 @@ func (n SessionNames) Name(sessionID, name string) (bool, error) {
 	return true, n.save(append(kept, Pair{name, sessionID}))
 }
 
-// Forget drops a name; false when there is no such name.
 func (n SessionNames) Forget(name string) (bool, error) {
 	var kept []Pair
 	found := false
@@ -101,7 +92,6 @@ func (n SessionNames) Forget(name string) (bool, error) {
 	return true, n.save(kept)
 }
 
-// All are the named sessions, in the order they are kept; a name listed twice keeps its last id.
 func (n SessionNames) All() []Pair {
 	var pairs []Pair
 	at := map[string]int{}

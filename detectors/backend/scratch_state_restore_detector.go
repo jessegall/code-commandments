@@ -14,10 +14,8 @@ type ScratchStateRestoreDetector struct{}
 
 func init() { detectors.Register(catalog.PHP, ScratchStateRestoreDetector{}) }
 
-// Sin is the sin the detector finds.
 func (ScratchStateRestoreDetector) Sin() sins.Sin { return backendsins.ScratchStateRestore{} }
 
-// Find is every method that saves and restores an own property through a local.
 func (ScratchStateRestoreDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return php.In(codebase).
 		WhereKind("Stmt_ClassMethod").

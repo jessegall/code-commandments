@@ -15,10 +15,8 @@ type UselessPropertyHookDetector struct{}
 
 func init() { detectors.Register(catalog.PHP, UselessPropertyHookDetector{}) }
 
-// Sin is the sin the detector finds.
 func (UselessPropertyHookDetector) Sin() sins.Sin { return backendsins.UselessPropertyHook{} }
 
-// Find is every concrete get hook on a property without a setter that reaches neither $this, self, static nor parent, outside Data classes.
 func (UselessPropertyHookDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return php.In(codebase).
 		WhereKind("PropertyHook").

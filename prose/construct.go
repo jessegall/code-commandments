@@ -1,11 +1,8 @@
 package prose
 
-// Construct is a kind of code construct, and the plain-English words a reader uses for it, so "loop over the
-// orders" measures against a loop and "fail when empty" against a throw, in any language. Each engine maps its own
-// nodes onto a construct and adds the keyword its language spells it with.
+// Construct is a kind of code construct, and the plain-English words a reader uses for it, so "loop over the orders" measures against a loop and "fail when empty" against a throw, in any language.
 type Construct string
 
-// The constructs every language's nodes map onto.
 const (
 	Loop            Construct = "loop"
 	ConditionalLoop Construct = "conditional-loop"
@@ -32,7 +29,6 @@ const (
 	Scope           Construct = "scope"
 )
 
-// Words is the words a reader uses for the construct.
 func (c Construct) Words() []string {
 	return map[Construct][]string{
 		Loop:            {"loop", "iterate", "every", "each"},
@@ -67,7 +63,6 @@ type Spelled struct {
 	Keywords  []string
 }
 
-// Words is the keywords, then the words a reader uses for the construct.
 func (s Spelled) Words() []string {
 	return append(append([]string{}, s.Keywords...), s.Construct.Words()...)
 }

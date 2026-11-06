@@ -11,7 +11,6 @@ type ScratchStateRestore struct{}
 
 func init() { sins.Register(catalog.PHP, ScratchStateRestore{}) }
 
-// Definition is what the sin states about itself.
 func (ScratchStateRestore) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "scratch-state-restore",

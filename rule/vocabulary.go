@@ -14,19 +14,11 @@ import (
 	"github.com/jessegall/code-commandments/contract"
 )
 
-// VocabularyFolder is where the committed vocabularies live, one file per language.
 const VocabularyFolder = "vocabulary"
 
 //go:embed vocabulary/*.json
 var vocabularies embed.FS
 
-// VocabularySources are the recorded streams the census reads, each by its path from the repository root: the
-// streams the contract keeps as its samples, and the whole backend and frontend fixtures as the PHP and frontend
-// bridges once wrote them. The generator and the test that holds the vocabularies to them read this one list, so
-// a stream added to the census is a stream the test checks.
-// DeclarationsFolder is where the recorded declarations live, one file per language: what each bridge says its
-// parser CAN emit, which a census of recorded streams cannot say. They are recorded by
-// contract/declares/record, as the contract's sample streams are.
 const DeclarationsFolder = "contract/declares"
 
 var VocabularySources = []string{
@@ -39,87 +31,43 @@ var VocabularySources = []string{
 	"engine/php/testdata/shop-frontend.jsonl.gz",
 }
 
-// Construct is one node shape a language's bridge can emit: the kind as the bridge writes it, and every fact that
-// kind is seen carrying. It is what a rule author cannot discover today — a kind, a field, an operator, a flag or
-// a modifier is the language's own word, and a hand-written list of them goes stale without anybody noticing.
+// Construct is one node shape a language's bridge can emit: the kind as the bridge writes it, and every fact that kind is seen carrying.
 type Construct struct {
-	// Kind is the kind exactly as the bridge writes it, such as `Expr_StaticCall`.
-	Kind string `json:"kind"`
-	// Spells is the kind as a rule may write it instead: derived mechanically from the kind and never curated, so
-	// `Expr_StaticCall` is `static-call` and `InvocationExpression` is `invocation`. It is EMPTY where another
-	// kind of the same language derives the same spelling, since one word that means two constructs is no name;
-	// those kinds are named in the vocabulary's Collided and a rule writes them as the language spells them.
-	Spells string `json:"spells"`
-	// Roles are the roles it is seen in, which is more than one where a kind is written in several places: an
-	// identifier is `other` in a name and `type` inside a written type.
-	Roles []string `json:"roles"`
-	// Is are the neutral kinds it answers.
-	Is []string `json:"is,omitempty"`
-	// Fields are the slots its children fill.
-	Fields []string `json:"fields,omitempty"`
-	// Operators are the operator tokens it carries.
+	Kind      string   `json:"kind"`
+	Spells    string   `json:"spells"`
+	Roles     []string `json:"roles"`
+	Is        []string `json:"is,omitempty"`
+	Fields    []string `json:"fields,omitempty"`
 	Operators []string `json:"operators,omitempty"`
-	// Modifiers are the modifier keywords it is written with.
 	Modifiers []string `json:"modifiers,omitempty"`
-	// Flags are the syntax facts it carries that are no keyword.
-	Flags []string `json:"flags,omitempty"`
-	// Vouched says who answers for the row: `observed` means a recorded stream really carries it, and `declared`
-	// means the language's own parser says it can be emitted. A row vouched only by the parser has never been
-	// seen in a stream, so it carries no example.
-	Vouched []string `json:"vouched"`
-	// Example is where the census first met it, as the stream names the place: `path:line`. None for a row only
-	// the parser vouches for, since no stream holds it.
-	Example string `json:"example,omitempty"`
+	Flags     []string `json:"flags,omitempty"`
+	Vouched   []string `json:"vouched"`
+	Example   string   `json:"example,omitempty"`
 }
 
-// Observed says whether a recorded stream really carries the construct.
 func (c Construct) Observed() bool {
 	return slices.Contains(c.Vouched, "observed")
 }
 
-// Declared says whether the language's own parser says the construct can be emitted.
 func (c Construct) Declared() bool {
 	return slices.Contains(c.Vouched, "declared")
 }
 
-// Vocabulary is everything one language's bridge is seen emitting: the value space of the kind, field, operator,
-// flag and modifier checks for that language. It is generated, never curated, and a test holds it to the recorded
-// streams so a bridge that starts emitting something new fails the suite rather than going unlisted.
+// Vocabulary is everything one language's bridge is seen emitting: the value space of the kind, field, operator, flag and modifier checks for that language.
 type Vocabulary struct {
-	Language contract.Language `json:"language"`
-	// Bridges are the bridges the rows were read from, each by name and version, so a row can be dated.
-	Bridges []string `json:"bridges"`
-	// Sources are the recorded streams the census read, so what the rows do and do not cover is readable.
-	Sources []string `json:"sources"`
-	// Parser names what declared the language's own vocabulary, and Declares says in plain words where that
-	// declaration was READ, because a declaration is only worth its source: a parser's own node classes is one
-	// thing and a bridge's own writer tables are another. Both are empty for a language nothing declared, whose
-	// rows are then only what some fixture happened to hold.
-	Parser   string `json:"parser,omitempty"`
-	Declares string `json:"declares,omitempty"`
-	// Fields are slots a child fills that belong to no one kind, for a parser that cannot say which kind holds
-	// which: C# names a kind per syntax KIND and its fields per syntax CLASS, and one class answers many kinds.
-	DeclaredFields []string `json:"fields,omitempty"`
-	// DeclaresKeys are the KEYS the parser answered for, and they are what a refusal may be made against. A parser
-	// answers for the kinds it can emit, and most of them for the slots a child fills; none of them answers for
-	// the operators, flags or modifiers a node may carry, because nothing asked them to. For a key the parser
-	// never covered, the rows are a census again — a sample, where a value's absence means only that no fixture
-	// held it — so that key refuses nothing, however complete the kinds beside it are.
-	DeclaresKeys []string `json:"declaresKeys,omitempty"`
-	// Collided are the spellings more than one kind derives, each with the kinds that derive it. Those kinds carry
-	// no spelling at all: a rule writing one word that means two constructs could not be read back, and choosing
-	// a winner would be the curated table this is generated to avoid.
-	Collided map[string][]string `json:"collided,omitempty"`
-	// Constructs are the kinds, in the order a reader looks them up: by kind.
-	Constructs []Construct `json:"constructs"`
+	Language       contract.Language   `json:"language"`
+	Bridges        []string            `json:"bridges"`
+	Sources        []string            `json:"sources"`
+	Parser         string              `json:"parser,omitempty"`
+	Declares       string              `json:"declares,omitempty"`
+	DeclaredFields []string            `json:"fields,omitempty"`
+	DeclaresKeys   []string            `json:"declaresKeys,omitempty"`
+	Collided       map[string][]string `json:"collided,omitempty"`
+	Constructs     []Construct         `json:"constructs"`
 }
 
-// read is each language's vocabulary once it has been read, since a check asks for one per node and parsing the
-// file each time would read a hundred kilobytes of JSON for every node of a scan.
 var read sync.Map
 
-// VocabularyOf is the committed vocabulary of the language, read once; no vocabulary for one nothing was recorded
-// for.
 func VocabularyOf(language contract.Language) (Vocabulary, bool) {
 	if held, ok := read.Load(language); ok {
 		vocabulary, held := held.(Vocabulary)
@@ -139,7 +87,6 @@ func VocabularyOf(language contract.Language) (Vocabulary, bool) {
 	return Vocabulary{}, false
 }
 
-// parsed is the language's committed vocabulary, read from the embedded file.
 func parsed(language contract.Language) (Vocabulary, bool) {
 	read, err := vocabularies.ReadFile(path.Join(VocabularyFolder, string(language)+".json"))
 	if err != nil {
@@ -154,7 +101,6 @@ func parsed(language contract.Language) (Vocabulary, bool) {
 	return vocabulary, true
 }
 
-// Vocabularies are every committed vocabulary, by language.
 func Vocabularies() (map[contract.Language]Vocabulary, error) {
 	found := map[contract.Language]Vocabulary{}
 	files, err := fs.ReadDir(vocabularies, VocabularyFolder)
@@ -174,13 +120,10 @@ func Vocabularies() (map[contract.Language]Vocabulary, error) {
 	return found, nil
 }
 
-// DeclaresKey says whether the language's own parser answered for that key, so a value outside the rows is a value
-// no parser will write rather than one no fixture held.
 func (v Vocabulary) DeclaresKey(key string) bool {
 	return slices.Contains(v.DeclaresKeys, key)
 }
 
-// Kinds are every kind the language is seen emitting.
 func (v Vocabulary) Kinds() []string {
 	kinds := make([]string, 0, len(v.Constructs))
 	for _, construct := range v.Constructs {
@@ -190,8 +133,6 @@ func (v Vocabulary) Kinds() []string {
 	return kinds
 }
 
-// Fields are every slot a child fills in the language, each once: the slots the rows carry, and the ones the
-// language's parser declares without saying which kind holds them.
 func (v Vocabulary) Fields() []string {
 	fields := v.gathered(func(construct Construct) []string { return construct.Fields })
 	for _, field := range v.DeclaredFields {
@@ -204,23 +145,18 @@ func (v Vocabulary) Fields() []string {
 	return fields
 }
 
-// Operators are every operator token the language carries, each once.
 func (v Vocabulary) Operators() []string {
 	return v.gathered(func(construct Construct) []string { return construct.Operators })
 }
 
-// Modifiers are every modifier keyword the language writes, each once.
 func (v Vocabulary) Modifiers() []string {
 	return v.gathered(func(construct Construct) []string { return construct.Modifiers })
 }
 
-// Flags are every syntax flag the language carries, each once.
 func (v Vocabulary) Flags() []string {
 	return v.gathered(func(construct Construct) []string { return construct.Flags })
 }
 
-// padding is what a language pads a kind with to say what sort of thing it is, which the neutral `role` and `is`
-// already say: PHP's prefixes, and the suffix C# and TypeScript give every node of their trees.
 var padding = struct {
 	prefixes []string
 	suffixes []string
@@ -229,9 +165,6 @@ var padding = struct {
 	suffixes: []string{"Expression", "Statement", "Declaration", "Syntax"},
 }
 
-// Spelling is the kind as a rule may write it: the padding dropped and the rest kebab-cased. It is mechanical, so
-// a bridge that adds a kind gets a spelling with nobody deciding one, and two kinds that spell the same are a
-// collision the generator refuses rather than a winner it picks.
 func Spelling(kind string) string {
 	bare := kind
 	for _, prefix := range padding.prefixes {
@@ -249,8 +182,6 @@ func Spelling(kind string) string {
 	return kebab(bare)
 }
 
-// kebab is a name written as words joined by dashes: each run of capitals opens a word, and an underscore is a
-// word break the language wrote itself.
 func kebab(name string) string {
 	var written strings.Builder
 	for at, letter := range name {
@@ -270,8 +201,6 @@ func kebab(name string) string {
 	return strings.Trim(written.String(), "-")
 }
 
-// Spelled is the row whose kind the spelling names, so a rule may write either; no row for a spelling nothing
-// answers.
 func (v Vocabulary) Spelled(spelling string) (Construct, bool) {
 	for _, construct := range v.Constructs {
 		if construct.Spells == spelling {
@@ -282,7 +211,6 @@ func (v Vocabulary) Spelled(spelling string) (Construct, bool) {
 	return Construct{}, false
 }
 
-// Spellings are every spelling the language answers to, each once.
 func (v Vocabulary) Spellings() []string {
 	spellings := make([]string, 0, len(v.Constructs))
 	for _, construct := range v.Constructs {
@@ -294,8 +222,6 @@ func (v Vocabulary) Spellings() []string {
 	return spellings
 }
 
-// Collisions are the spellings more than one kind of the language derives, by spelling, read from the kinds
-// themselves rather than from what was written: it is what the generator clears the colliding spellings by.
 func (v Vocabulary) Collisions() map[string][]string {
 	spelled := map[string][]string{}
 	for _, construct := range v.Constructs {
@@ -311,7 +237,6 @@ func (v Vocabulary) Collisions() map[string][]string {
 	return spelled
 }
 
-// Construct is the row of that kind; no row for a kind nothing recorded.
 func (v Vocabulary) Construct(kind string) (Construct, bool) {
 	at, found := slices.BinarySearchFunc(v.Constructs, kind, func(construct Construct, kind string) int {
 		return cmp.Compare(construct.Kind, kind)
@@ -323,7 +248,6 @@ func (v Vocabulary) Construct(kind string) (Construct, bool) {
 	return v.Constructs[at], true
 }
 
-// gathered is one fact of every construct, sorted and said once.
 func (v Vocabulary) gathered(read func(Construct) []string) []string {
 	var gathered []string
 	for _, construct := range v.Constructs {

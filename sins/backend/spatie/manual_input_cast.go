@@ -11,7 +11,6 @@ type ManualInputCast struct{}
 
 func init() { sins.Register(catalog.PHP, ManualInputCast{}) }
 
-// Definition is what the sin states about itself.
 func (ManualInputCast) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "manual-input-cast",

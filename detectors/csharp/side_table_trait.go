@@ -18,15 +18,10 @@ func init() {
 // SideTableTraitDetector finds a trait of a type's registered instances kept in a collection of their names.
 type SideTableTraitDetector struct{}
 
-// Sin is the sin the detector finds.
 func (SideTableTraitDetector) Sin() sins.Sin {
 	return sin.SideTableTrait{}
 }
 
-// Find is every field holding a collection of names that are the names its own file's registry gives its
-// instances, and that the file then reaches for them through. The three together tell a side table from an
-// ordinary collection of words: the names are the registry's, there is more than one instance to be a type's,
-// and the file uses them as the handle rather than holding a vocabulary that happens to look alike.
 func (SideTableTraitDetector) Find(codebase *engine.Codebase) []engine.Match {
 	fields := byFile(csharp.In(codebase).
 		WhereKind("VariableDeclarator").
@@ -58,7 +53,6 @@ func (SideTableTraitDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return found
 }
 
-// byFile groups matches by the file they stand in, so a file is read against itself alone.
 func byFile(matches []engine.Match) map[string][]engine.Match {
 	grouped := map[string][]engine.Match{}
 
@@ -69,7 +63,6 @@ func byFile(matches []engine.Match) map[string][]engine.Match {
 	return grouped
 }
 
-// registeredNames is every name the file's own registries give the instances they hold.
 func registeredNames(declared []engine.Match) []string {
 	var registered []string
 
@@ -82,8 +75,6 @@ func registeredNames(declared []engine.Match) []string {
 	return registered
 }
 
-// namesInstances says whether every member of the collection names a registered instance: one stray member and
-// it is a vocabulary of its own, not a table about the type.
 func namesInstances(members, registered []string) bool {
 	for _, member := range members {
 		if !slices.Contains(registered, member) {
@@ -94,8 +85,6 @@ func namesInstances(members, registered []string) bool {
 	return true
 }
 
-// asksAboutOne says whether the file asks the collection whether it holds one instance — the question a trait
-// answers, and the only use of it that a caller's own choice of what to act on cannot also look like.
 func asksAboutOne(calls []engine.Match, field string) bool {
 	if field == "" {
 		return false

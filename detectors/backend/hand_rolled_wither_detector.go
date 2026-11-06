@@ -14,13 +14,10 @@ type HandRolledWitherDetector struct{}
 
 func init() { detectors.Register(catalog.PHP, HandRolledWitherDetector{}) }
 
-// Sin is the sin the detector finds.
 func (HandRolledWitherDetector) Sin() sins.Sin { return backendsins.HandRolledWither{} }
 
-// Repentable says a scribe rewrites the sin away.
 func (HandRolledWitherDetector) Repentable() {}
 
-// Find is every new a hand-rolled wither returns, in a project whose PHP can clone with changed properties.
 func (HandRolledWitherDetector) Find(codebase *engine.Codebase) []engine.Match {
 	if !php.SupportsCloneWith(codebase) {
 		return nil
@@ -32,5 +29,4 @@ func (HandRolledWitherDetector) Find(codebase *engine.Codebase) []engine.Match {
 		Get()
 }
 
-// CrossFile says the PHP tool finds it reaching beyond the file it judges, so a per-file check must not ask it.
 func (HandRolledWitherDetector) CrossFile() {}

@@ -14,11 +14,7 @@ func init() {
 	detectors.Register(catalog.Vue, IndexAsKeyDetector{})
 }
 
-// IndexAsKeyDetector finds a v-for keyed by its index, `:key="index"`, which shifts as items are inserted or
-// reordered. The two-alias form names an index only over an array, so it is flagged only when the iterable is
-// a name whose type is provably one; over an object its second alias is the key. A loop over strings or numbers
-// that renders no state of its own is exempt: such an item has no identity besides its place, and nothing it
-// renders can be carried to the wrong item.
+// IndexAsKeyDetector finds a v-for keyed by its index, `:key="index"`, which shifts as items are inserted or reordered.
 type IndexAsKeyDetector struct{}
 
 func (IndexAsKeyDetector) Sin() sins.Sin {
@@ -35,7 +31,6 @@ func (IndexAsKeyDetector) Find(codebase *engine.Codebase) []engine.Match {
 		Get()
 }
 
-// keyedByLastAlias says whether the element's :key is the bare name of its v-for's last alias.
 func keyedByLastAlias(element vue.Element) bool {
 	aliases := element.Directive(vue.For).Aliases()
 	key := element.Binding("key").Value()
@@ -47,8 +42,6 @@ func keyedByLastAlias(element vue.Element) bool {
 	return last.Kind() == "Identifier" && last.Name() == key.Name()
 }
 
-// aliasIsAnIndex says whether the v-for's last alias is an index: always in the three-alias form, and in the
-// two-alias form only over a name whose type is an array.
 func aliasIsAnIndex(codebase *engine.Codebase, element vue.Element) bool {
 	loop := element.Directive(vue.For)
 	if len(loop.Aliases()) >= 3 {
@@ -63,13 +56,10 @@ func aliasIsAnIndex(codebase *engine.Codebase, element vue.Element) bool {
 	return ok && typescript.IsArray(iterated)
 }
 
-// listsPlainValues says whether the v-for renders strings or numbers as markup that keeps no state, so a position is
-// all that tells its items apart.
 func listsPlainValues(codebase *engine.Codebase, element vue.Element) bool {
 	return iteratesPrimitives(codebase, element) && !element.HoldsState()
 }
 
-// iteratesPrimitives says whether the v-for runs over a name typed as an array of strings, numbers or booleans.
 func iteratesPrimitives(codebase *engine.Codebase, element vue.Element) bool {
 	iterable := element.Directive(vue.For).Iterable()
 	if iterable.Kind() != "Identifier" {

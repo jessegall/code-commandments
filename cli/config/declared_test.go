@@ -26,8 +26,6 @@ func (r packagedRule) Name() string                         { return r.name }
 func (r packagedRule) Sin() sins.Sin                        { return nil }
 func (r packagedRule) Find(*engine.Codebase) []engine.Match { return nil }
 
-// TestARulesOwnFileNamesTheFolderItJudges holds the case this was built for: a project writes the folder in the
-// rule's own file, where no install rewrites it, and nothing is written in the config at all.
 func TestARulesOwnFileNamesTheFolderItJudges(t *testing.T) {
 	project := Config{Paths: []string{"src"}, Excluded: []string{"tests"}}
 
@@ -42,7 +40,6 @@ func TestARulesOwnFileNamesTheFolderItJudges(t *testing.T) {
 	}
 }
 
-// TestAFolderNamedInBothTheRuleAndTheConfigCountsOnce holds the two sources being one answer rather than two.
 func TestAFolderNamedInBothTheRuleAndTheConfigCountsOnce(t *testing.T) {
 	project := Config{
 		Paths:    []string{"src"},
@@ -64,9 +61,6 @@ func TestAFolderNamedInBothTheRuleAndTheConfigCountsOnce(t *testing.T) {
 	}
 }
 
-// TestARuleThatNamesNoFolderChangesNothing holds that a shipped rule, which declares none, leaves the config as it
-// was: the folders a shipped rule judges are named in the config, which is the only place a consumer can change
-// them.
 func TestARuleThatNamesNoFolderChangesNothing(t *testing.T) {
 	project := Config{Paths: []string{"src"}, Excluded: []string{"tests"}}
 
@@ -80,8 +74,6 @@ func TestARuleThatNamesNoFolderChangesNothing(t *testing.T) {
 	}
 }
 
-// TestOnlyTheRuleThatNamesTheFolderMarksAFileInIt holds the narrowing the hook asks for, from the rule's own
-// declaration rather than the config's.
 func TestOnlyTheRuleThatNamesTheFolderMarksAFileInIt(t *testing.T) {
 	project := Config{Paths: []string{"src"}, Excluded: []string{"tests"}}
 	letIn := projectsRule{name: "TestsDriveTheRealPath", judges: []string{"tests"}}

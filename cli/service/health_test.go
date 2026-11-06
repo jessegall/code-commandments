@@ -15,11 +15,6 @@ import (
 	"github.com/jessegall/code-commandments/cli/scan"
 )
 
-// TestABridgeServiceSaysItIsUpWithNothingToDo holds the health answer to the one thing the journal does with it: it
-// asks every service it started, every so often, and restarts the one that goes quiet. A bridge service of a
-// project that has none of its language keeps no bridge and waits for its stop, and it is up all the while — a
-// service restarted in a loop for being idle, and a plugin marked broken after five of those, is what this keeps
-// away.
 func TestABridgeServiceSaysItIsUpWithNothingToDo(t *testing.T) {
 	project := t.TempDir()
 	os.WriteFile(project+"/cart.py", []byte("x = 1\n"), 0o644)
@@ -28,7 +23,6 @@ func TestABridgeServiceSaysItIsUpWithNothingToDo(t *testing.T) {
 	t.Cleanup(func() { os.Chdir(was) })
 	t.Setenv("CLAUDE_PROJECT_DIR", project)
 
-	// A folder of its own, since a socket's name is shorter than a path a test may be handed.
 	short, err := os.MkdirTemp("", "s")
 	if err != nil {
 		t.Fatal(err)
@@ -68,8 +62,6 @@ func TestABridgeServiceSaysItIsUpWithNothingToDo(t *testing.T) {
 	}
 }
 
-// howItIs is the journal's question put to the service, inside the window it allows; nothing when the service is
-// not there to answer.
 func howItIs(t *testing.T, socket string) map[string]any {
 	t.Helper()
 

@@ -16,12 +16,10 @@ func init() {
 	detectors.Register(catalog.Python, RethrownUnchangedDetector{})
 }
 
-// Sin is the sin the detector finds.
 func (RethrownUnchangedDetector) Sin() sins.Sin {
 	return pysins.RethrownUnchanged{}
 }
 
-// Find is every except clause that only raises what it caught.
 func (RethrownUnchangedDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return py.In(codebase).
 		WhereKind("ExceptHandler").

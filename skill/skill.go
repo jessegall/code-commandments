@@ -1,5 +1,4 @@
-// Package skill holds the teaching layer's metadata: each Skill names a discipline, and a sin
-// points at the skill that fixes it.
+// Package skill holds the teaching layer's metadata: each Skill names a discipline, and a sin points at the skill that fixes it.
 package skill
 
 import (
@@ -12,7 +11,6 @@ import (
 // Tier says how often a skill comes up: constantly in play, or on contact with its subject.
 type Tier string
 
-// The tiers, in the order the briefing lists them.
 const (
 	Mandatory  Tier = "mandatory"
 	KeepInMind Tier = "keep-in-mind"
@@ -54,27 +52,22 @@ type Relation struct {
 
 var skills catalog.Catalog[Skill]
 
-// Register enrols a skill under its engine, from the skill's own file.
 func Register(engine catalog.Engine, skill Skill) {
 	skills.Register(engine, skill)
 }
 
-// All is every published skill.
 func All() []Skill {
 	return skills.All()
 }
 
-// Every is every skill registered under one engine, unpublished ones included.
 func Every(engine catalog.Engine) []Skill {
 	return skills.Every(engine)
 }
 
-// Of is every published skill of one engine.
 func Of(engine catalog.Engine) []Skill {
 	return skills.Of(engine)
 }
 
-// InTier is every published skill of a tier, in its order.
 func InTier(tier Tier) []Skill {
 	var inTier []Skill
 	for _, skill := range Ordered() {
@@ -86,7 +79,6 @@ func InTier(tier Tier) []Skill {
 	return inTier
 }
 
-// Ordered is every published skill in the order the curriculum lists them: by order, engine by engine.
 func Ordered() []Skill {
 	ordered := slices.Clone(All())
 	slices.SortStableFunc(ordered, func(a, b Skill) int { return a.Definition().Order - b.Definition().Order })
@@ -94,8 +86,6 @@ func Ordered() []Skill {
 	return ordered
 }
 
-// Slugged is the published skill with the slug, under the engine's own name or the one it was published under
-// before: a rule or a config that names `backend/absence` still means the PHP engine's absence skill.
 func Slugged(slug string) (Skill, bool) {
 	for _, slug := range []string{slug, renamed(slug)} {
 		for _, skill := range All() {
@@ -108,7 +98,6 @@ func Slugged(slug string) (Skill, bool) {
 	return nil, false
 }
 
-// renamed is the slug with a former engine name read as the engine's own; empty when it names no former one.
 func renamed(slug string) string {
 	was, subject, prefixed := strings.Cut(slug, "/")
 	if !prefixed {
@@ -123,22 +112,18 @@ func renamed(slug string) string {
 	return string(engine) + "/" + subject
 }
 
-// IDFor is the id a skill with the slug is loaded by: commandments-php-absence.
 func IDFor(slug string) string {
 	return "commandments-" + strings.ReplaceAll(slug, "/", "-")
 }
 
-// ID is the id the skill is loaded by.
 func (d Definition) ID() string {
 	return IDFor(d.Slug)
 }
 
-// Bullet is the skill's line in a briefing list.
 func (d Definition) Bullet() string {
 	return "- **`" + d.ID() + "`** — " + d.Summary
 }
 
-// Matches says whether a query names the skill, leniently.
 func (d Definition) Matches(query string) bool {
 	return strings.Contains(catalog.Normalise(d.Slug), catalog.Normalise(query))
 }
