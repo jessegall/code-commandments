@@ -132,9 +132,7 @@ func (c Command) Run(in *cli.Input, console cli.Console) (int, error) {
 			return answer.Code, nil
 		}
 
-		if cli.Timed() {
-			fmt.Fprintln(console.Err, "· this run reads the tree itself: "+whyNotServed(answer))
-		}
+		fmt.Fprintln(console.Err, "· this run reads the whole tree itself, which is why it is slow: "+whyNotServed(answer))
 	}
 
 	if options.list {

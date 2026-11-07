@@ -484,8 +484,7 @@ func (s JournalServe) Run(in *cli.Input, console cli.Console) (int, error) {
 	defer listener.Close()
 	os.Chmod(path, 0o600)
 
-	cwd, _ := os.Getwd()
-	root := workspace.ProjectRoot(cwd)
+	root := workspace.ProjectRoot(firstText(os.Getenv(journalRoot), cwdOf()))
 	started := stamp(root)
 
 	Serves()

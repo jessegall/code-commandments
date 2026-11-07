@@ -151,7 +151,7 @@ func (SkillReminder) Handle(event Event) Response {
 
 	if len(files) == 0 && len(lost) > 0 {
 		said = append(said, Unjudged("nothing of this edit was judged: "+strings.Join(lost, ", "),
-			string(filesNotOnDisk)+", which is what a checkout cut again or removed looks like",
+			whyNoneWereJudged(lost),
 			binary.Judging(event.Root)+" --changes"))
 	}
 
@@ -247,6 +247,16 @@ func DroppedSoFar() Dropped {
 	return dropped
 }
 
+func whyNoneWereJudged(lost []string) string {
+	for _, file := range lost {
+		if why := RefusalOf(file); why != "" {
+			return why
+		}
+	}
+
+	return string(filesNotOnDisk) + ", which is what a checkout cut again or removed looks like"
+}
+
 func judgedFile(root, file string, project config.Config) string {
 	if file == "" {
 		return ""
@@ -263,7 +273,7 @@ func judgedFile(root, file string, project config.Config) string {
 
 	if checkout := checkoutOf(root, absolute); !project.IsJudged(checkout, absolute) {
 		dropped.NotJudged++
-		refused(absolute, "the project judges "+strings.Join(project.Paths, ", ")+" under "+checkout)
+		refused(file, judgedFolders(project, checkout))
 
 		return ""
 	}
@@ -275,6 +285,15 @@ func judgedFile(root, file string, project config.Config) string {
 	}
 
 	return absolute
+}
+
+func judgedFolders(project config.Config, checkout string) string {
+	if len(project.Paths) == 0 {
+		return "this project declares no folder to judge, so nothing under " + checkout + " is judged at all"
+	}
+
+	return "it lies outside the folders this project judges, which are " + strings.Join(project.Paths, ", ") +
+		" under " + checkout
 }
 
 var refusals sync.Map

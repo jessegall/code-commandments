@@ -493,3 +493,22 @@ func Mark(path string) string {
 
 	return info.ModTime().UTC().Format(time.RFC3339Nano) + "\x00" + strconv.FormatInt(info.Size(), 10)
 }
+
+func (k *Keeper) DropsEveryBranchBut(project, branch string) []string {
+	k.mu.Lock()
+	defer k.mu.Unlock()
+
+	keeping := key(project, branch)
+
+	var dropped []string
+	for held := range k.bases {
+		if held == keeping || !strings.HasPrefix(held, project+"\x00") {
+			continue
+		}
+
+		dropped = append(dropped, strings.TrimPrefix(held, project+"\x00"))
+		delete(k.bases, held)
+	}
+
+	return dropped
+}

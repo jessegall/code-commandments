@@ -59,6 +59,7 @@ const (
 	beingFilled    Narrowed = "what this checkout differs from its branch by is being read now"
 	noTreeComing   Narrowed = "no tree of this checkout is held and none is being read, so only the rules that answer from one file will ever run here"
 	filesNotOnDisk Narrowed = "what changed is not on disk"
+	noneToJudge    Narrowed = "nothing of this edit is a file this project judges"
 	tooMuchMoved   Narrowed = "more files changed than one view can carry, so the tree was let go"
 	patchFailed    Narrowed = "the held tree could not be brought up to what changed"
 	parseFailed    Narrowed = "what changed could not be parsed"
@@ -95,7 +96,7 @@ func AgainstTheProgramNarrowed(marking Marking, files []string, rulesFor func(st
 	changedFor func(string) git.ChangedLines, root string) (map[string][]SinMark, time.Duration, Narrowed) {
 
 	if len(files) == 0 {
-		return nil, 0, filesNotOnDisk
+		return nil, 0, noneToJudge
 	}
 
 	file := files[0]
@@ -643,3 +644,39 @@ func judgesIn(project, checkout string) func(string) bool {
 		return settings.IsJudged(checkout, path)
 	}
 }
+
+func WarmsWhatItServes(root string) {
+	project, err := config.Load(root)
+	if err != nil {
+		return
+	}
+
+	kept.DropsEveryBranchBut(git.ProjectRoot(root), git.CurrentBranch(root))
+
+	Warming(root, project)
+}
+
+func waitingOn(why Narrowed) bool {
+	return why == noTreeHeld || why == noTreeComing || why == beingFilled
+}
+
+func WaitsForTheTree(root, checkout string) Narrowed {
+	_, _, why := answering(root, checkout)
+	if !waitingOn(why) {
+		return why
+	}
+
+	WarmsWhatItServes(root)
+
+	for until := time.Now().Add(waitsAtMost); time.Now().Before(until); {
+		time.Sleep(50 * time.Millisecond)
+
+		if _, _, why = answering(root, checkout); !waitingOn(why) {
+			return why
+		}
+	}
+
+	return why
+}
+
+const waitsAtMost = 60 * time.Second

@@ -592,8 +592,9 @@ func TestEveryWayTheJudgingNarrowsSaysWhichItWas(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if _, _, why := AgainstTheProgramNarrowed(Marks(root), nil, nil, nil, root); why != filesNotOnDisk {
-		t.Errorf("a judging of no files at all answers %q", why)
+	if _, _, why := AgainstTheProgramNarrowed(Marks(root), nil, nil, nil, root); why != noneToJudge {
+		t.Errorf("a judging handed no file at all answers %q, where it is not that a file is missing but that "+
+			"there was nothing of this project to judge", why)
 	}
 
 	gone := []string{filepath.Join(root, "never-written.py")}

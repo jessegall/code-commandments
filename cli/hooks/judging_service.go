@@ -73,6 +73,8 @@ func judgedFor(request warm.Request, root string) warm.Answer {
 
 	declined := ""
 
+	WaitsForTheTree(root, checkoutOf(root, request.In))
+
 	code, err := (judge.Command{
 		In:      request.In,
 		Reading: heldOrDeclined(root, request.In, &declined),
@@ -120,6 +122,7 @@ func heldOrDeclined(root, in string, declined *string) func(scan.Sources) (*engi
 		checkout := checkoutOf(root, in)
 
 		named, base, why := answering(root, checkout)
+
 		if why != "" {
 			*declined = string(why)
 			if said, tried := howTheReadWent(named); tried {
