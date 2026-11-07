@@ -69,7 +69,7 @@ problem and grows the code. If the honest fix touches many call sites, touch the
 IS the bug surfacing. Load `commandments-php-fix-at-the-source` before your first edit, and
 again rather than working from memory, since a compaction drops it silently.
 
-**Finding and fixing sins.** Run `bin/commandments judge` ONCE, scoped — `--changes` for your
+**Finding and fixing sins.** Run `journal sins` ONCE, scoped — `--changes` for your
 uncommitted work, `--branch` for what differs from main, or a path to judge that tree. A full scan is
 slow, so it writes a checklist (the run prints the path) and THAT file, not repeated scans, is how
 you work: top to bottom, one line at a time — read that section's skill, fix the sin at its
@@ -80,7 +80,7 @@ nothing else: a tree you have not touched is judged only by asking.
 **Work another agent wrote is judged as it comes in, and its worker is told.** A merge is judged the
 moment it lands and the findings go to the worker that wrote them. You hear of one only when that
 worker could not be told or the merge could not be judged in full, and then it is yours: fix each at
-its source, or hand it to a worker. Where nothing told you, `bin/commandments judge --changes` says it.
+its source, or hand it to a worker. Where nothing told you, `journal sins --changes` says it.
 
 **Don't recognise a rule?** `bin/commandments info <sin>` prints what it flags, why, how it is fixed and
 a worked example — the detector name off the checklist works. Guessing at a rule you have not read
