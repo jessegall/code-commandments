@@ -111,7 +111,30 @@ func MergeLanded(line map[string]any) string {
 
 	work.keeps(said)
 
+	sending, refusal := TellsTheWorker(work.project, work.worker, said)
+	if sending == ItHasTheWords {
+		return ""
+	}
+
+	said = work.alsoToldTheAgent(said, sending, refusal)
+
 	return (JournalAnswer{Whisper: &said}).Line4()
+}
+
+func (l landed) alsoToldTheAgent(said string, sending Sending, refusal string) string {
+	if sending == Retired {
+		return said + "\n· " + l.workerNamed() + " could not be told itself, so this is yours: " + refusal
+	}
+
+	return said + "\n· " + l.workerNamed() + " should have been told this and was not, so this is yours: " + refusal
+}
+
+func (l landed) workerNamed() string {
+	if l.worker == "" {
+		return "the worker"
+	}
+
+	return "worker " + l.worker
 }
 
 func (l landed) keeps(said string) {

@@ -171,6 +171,7 @@ most:**
 - **`commandments-python-role-vocabulary`** — a keyed store / membership set / first-match dispatcher: name it `*Registry`/`*Set`/`*Resolver` and honour the contract — a registry `get` raises on a miss.
 - **`commandments-csharp-pass-the-object`** — demand the resolved object you need, not an id plus its container — the caller resolves once and passes the object (and owns the not-found failure).
 - **`commandments-csharp-role-vocabulary`** — a keyed store / membership set / first-match dispatcher: name it `*Registry`/`*Set`/`*Resolver` and honour the contract — a registry `Get` throws on a miss.
+- **`commandments-comments-only-on-types`** — Only a type carries a comment here, saying what it is for; read before writing any comment in this project. _(this project's own — `.commandments/custom/`)_
 
 **Finding and fixing sins — the checklist workflow.** Run
 `bin/commandments judge --changes` ONCE — and **pass any path** to scope the

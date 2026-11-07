@@ -26,10 +26,10 @@ source, delete the line. Re-run only when the file is empty, and keep going unti
 Where your harness raises each sin as you change a file, those marks cover what you changed and
 nothing else: a tree you have not touched is judged only by asking.
 
-**Work another agent wrote is judged as it comes in.** A worker's edits are not judged as it writes
-them; its merge is judged the moment it lands and you are told what came in, naming the worker and
-its task. Fix each finding at its source, or send it back to a worker to fix. Where nothing told
-you, `{{judging}} --changes` over what came in says it.
+**Work another agent wrote is judged as it comes in, and its worker is told.** A merge is judged the
+moment it lands and the findings go to the worker that wrote them. You hear of one only when that
+worker could not be told or the merge could not be judged in full, and then it is yours: fix each at
+its source, or hand it to a worker. Where nothing told you, `{{judging}} --changes` says it.
 
 **Don't recognise a rule?** `{{binary}} info <sin>` prints what it flags, why, how it is fixed and
 a worked example — the detector name off the checklist works. Guessing at a rule you have not read
