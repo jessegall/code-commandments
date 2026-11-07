@@ -661,7 +661,11 @@ func TheTreeIsComing(root, checkout string) (Narrowed, bool) {
 
 	WarmsWhatItServes(root)
 
-	return why, aReadIsRunning(named)
+	if !aReadIsRunning(named) {
+		return why, false
+	}
+
+	return noTreeHeld, true
 }
 
 func whatIsComing(named branchRoot) Narrowed {

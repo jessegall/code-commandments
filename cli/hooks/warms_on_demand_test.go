@@ -41,9 +41,15 @@ func TestAJudgingThatFindsNoTreeComingStartsOneRatherThanRefusingForever(t *test
 			"would prove nothing", why)
 	}
 
-	if _, coming := TheTreeIsComing(root, root); !coming {
+	why, coming := TheTreeIsComing(root, root)
+	if !coming {
 		t.Fatal("a judging found no tree coming and none was started for it, so the run reads the whole project " +
 			"itself with nothing to wait for")
+	}
+
+	if why != noTreeHeld {
+		t.Errorf("the run waits for the read this judging just started, and is told %q, which says none is "+
+			"being read", why)
 	}
 
 	for until := time.Now().Add(time.Minute); time.Now().Before(until); {
