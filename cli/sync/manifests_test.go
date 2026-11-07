@@ -297,7 +297,7 @@ func TestTheManifestDeclaresTheFolderItReads(t *testing.T) {
 	}
 }
 
-func TestNothingOfOursReachesAWorker(t *testing.T) {
+func TestNothingReachesAnAgentOtherThanTheMainOneOrAWorker(t *testing.T) {
 	text, err := os.ReadFile(filepath.Join("..", "..", "journal-plugin.json"))
 	if err != nil {
 		t.Fatal(err)
@@ -317,7 +317,16 @@ func TestNothingOfOursReachesAWorker(t *testing.T) {
 	}
 
 	for event, roles := range read.Reaches {
-		t.Errorf("%s reaches %v: an event of ours reaches an agent that is not the main one", event, roles)
+		if !slices.Contains(read.Hears, event) {
+			t.Errorf("%s reaches %v but is not heard, which a journal refuses by name", event, roles)
+		}
+
+		for _, role := range roles {
+			if role != "workers" {
+				t.Errorf("%s reaches %s: only a worker's own work is judged for it, and only when the setting "+
+					"judge_workers is on", event, role)
+			}
+		}
 	}
 
 	for _, alias := range read.Aliases {

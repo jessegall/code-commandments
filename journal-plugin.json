@@ -5,11 +5,20 @@
   "description": "The static code checker judges the codebase, its hooks run inside the journal, and every rule and language is a switch in its settings",
   "journal": "4.62.0",
   "fits": {
-    "languages": ["PHP", "Python", "TypeScript", "Vue", "C#", "Go"]
+    "languages": [
+      "PHP",
+      "Python",
+      "TypeScript",
+      "Vue",
+      "C#",
+      "Go"
+    ]
   },
   "protocol": 1,
   "program": ".journal-plugin/journal4-hook",
-  "project_reads": [".commandments"],
+  "project_reads": [
+    ".commandments"
+  ],
   "hears": [
     "command_starting",
     "file_edited",
@@ -26,6 +35,14 @@
       "window_ms": 5
     }
   ],
+  "reaches": {
+    "file_edited": [
+      "workers"
+    ],
+    "command_starting": [
+      "workers"
+    ]
+  },
   "aliases": [
     {
       "name": "sins",

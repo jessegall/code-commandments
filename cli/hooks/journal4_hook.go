@@ -20,6 +20,19 @@ const (
 
 const updatedEvent = "plugin.updated"
 
+var theSameEvent = map[string]string{
+	"plugin.update":         updatedEvent,
+	"worker_worktree.merge": landedEvent,
+}
+
+func namedAsTheKey(event string) string {
+	if same, known := theSameEvent[event]; known {
+		return same
+	}
+
+	return event
+}
+
 var hooksOf4 = map[string]string{
 	"command_starting": "PreToolUse",
 	"file_edited":      "PostToolUse",
@@ -82,7 +95,7 @@ func (Journal4Hook) Run(in *cli.Input, console cli.Console) (int, error) {
 }
 
 func Apart4(in *cli.Input, console cli.Console, line map[string]any) (string, bool, int, error) {
-	switch asText(line["event"]) {
+	switch namedAsTheKey(asText(line["event"])) {
 	case updatedEvent:
 		said, code, err := JournalConfig{}.Apply(in, console)
 

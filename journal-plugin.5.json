@@ -1,0 +1,212 @@
+{
+  "name": "code-commandments",
+  "version": "7.16.1",
+  "title": "Code Commandments",
+  "description": "The static code checker judges the codebase, its hooks run inside the journal, and every rule and language is a switch in its settings",
+  "journal": "4.62.0",
+  "fits": {
+    "languages": [
+      "PHP",
+      "Python",
+      "TypeScript",
+      "Vue",
+      "C#",
+      "Go"
+    ]
+  },
+  "protocol": 1,
+  "program": ".journal-plugin/journal4-hook",
+  "project_reads": [
+    ".commandments"
+  ],
+  "hears": [
+    "command_starting",
+    "file_edited",
+    "tool_starting",
+    "idle",
+    "session_started",
+    "ticked"
+  ],
+  "holds": [
+    {
+      "event": "command_starting",
+      "window_ms": 5
+    }
+  ],
+  "reaches": {
+    "file_edited": [
+      "workers"
+    ],
+    "command_starting": [
+      "workers"
+    ]
+  },
+  "listen": [
+    {
+      "event": "suites.coding.workers.worker_worktree.merge",
+      "commit": "service:hooks"
+    },
+    {
+      "event": "core.plugins.plugin.updated",
+      "commit": "service:hooks"
+    },
+    {
+      "event": "core.agents.agent.created",
+      "commit": "service:hooks"
+    }
+  ],
+  "aliases": [
+    {
+      "name": "sins",
+      "description": "Judge the project against its commandments and show each sin as it is found",
+      "line": "bin/commandments-release judge {args}",
+      "env": {
+        "COMMANDMENTS_PLAIN_PROGRESS": "1"
+      },
+      "args": [
+        "--changes",
+        "--branch",
+        "<path>"
+      ],
+      "reader": "judge",
+      "category": "check",
+      "background": true,
+      "workers": false
+    },
+    {
+      "name": "rules",
+      "description": "Work on a rule of the project's own: try it on a path, prove it against the samples that mark it, or read a file's tree",
+      "line": "bin/commandments-release rule {args}",
+      "args": [
+        "try <Rule> <path>",
+        "prove",
+        "explain <file>",
+        "schema"
+      ],
+      "reader": "rule",
+      "category": "check"
+    },
+    {
+      "name": "commandments",
+      "description": "Run any code-commandments verb through the binary this plugin fetched: report, info, repent, exemptions, make",
+      "line": "bin/commandments-release {args}",
+      "args": [
+        "report follow",
+        "report forget <issue>",
+        "report --detector=<rule> --reason=<why> --ref=<path:line>",
+        "info <sin>",
+        "repent --dry-run",
+        "judge --changes"
+      ]
+    }
+  ],
+  "cards": [
+    {
+      "type": "sin-found",
+      "kind": "sin-found",
+      "label": "Sins in a file",
+      "tone": "warn",
+      "icon": "warn",
+      "collapsed": true
+    },
+    {
+      "type": "sin-resolved",
+      "kind": "sin-resolved",
+      "label": "File repented",
+      "tone": "good",
+      "icon": "check",
+      "collapsed": true
+    },
+    {
+      "type": "configured",
+      "kind": "configured",
+      "label": "Settings applied",
+      "tone": "good",
+      "icon": "check",
+      "collapsed": true
+    }
+  ],
+  "requires": {
+    "curl": {
+      "check": "curl --version",
+      "hint": "curl fetches the checker's release binary into the plugin's own folder"
+    },
+    "sha256sum": {
+      "check": "command -v sha256sum || command -v shasum",
+      "hint": "sha256sum or shasum checks the fetched binary against its release's SHA256SUMS"
+    }
+  },
+  "setup": [
+    {
+      "name": "Fetch the checker's release binary, checked against its SHA256SUMS",
+      "run": "COMMANDMENTS_RELEASE=v7.16.1 sh .journal-plugin/fetch"
+    },
+    {
+      "name": "Write the chosen switches into config.json",
+      "run": "bin/commandments-release journal-config --keep-folders"
+    },
+    {
+      "name": "Check for sins, on demand",
+      "run": "journal check list | grep -q \"Check for sins\" || journal check create \"Check for sins\" --command \"$JOURNAL_PLUGIN_DIR/bin/commandments-release judge\" --every 0 --brief \"Judges the whole project against its commandments; a failure lists each sin found, grouped by the skill that fixes it\""
+    }
+  ],
+  "installed": "bin/commandments-release journal-scan --settings-only",
+  "settings": ".journal-plugin/settings.json",
+  "skills": "journal-skills/.agents/skills",
+  "health": {
+    "socket_env": "COMMANDMENTS_HEALTH_SOCKET",
+    "request": "{\"health\":1}",
+    "answer": "{\"health\":\"up\",\"service\":\"<the service's own name>\"}"
+  },
+  "services": [
+    {
+      "name": "hooks",
+      "command": [
+        ".journal-plugin/serve",
+        "journal-serve"
+      ],
+      "answers": true,
+      "restart": "always"
+    },
+    {
+      "name": "roslyn",
+      "command": [
+        ".journal-plugin/serve",
+        "roslyn-serve"
+      ],
+      "when": "\"$JOURNAL_PLUGIN_DIR/bin/commandments-release\" has-csharp",
+      "restart": "always"
+    },
+    {
+      "name": "mypy",
+      "command": [
+        ".journal-plugin/serve",
+        "mypy-serve"
+      ],
+      "when": "\"$JOURNAL_PLUGIN_DIR/bin/commandments-release\" has-python",
+      "restart": "always"
+    },
+    {
+      "name": "frontend",
+      "command": [
+        ".journal-plugin/serve",
+        "frontend-serve"
+      ],
+      "when": "\"$JOURNAL_PLUGIN_DIR/bin/commandments-release\" has-frontend",
+      "restart": "always"
+    },
+    {
+      "name": "php",
+      "command": [
+        ".journal-plugin/serve",
+        "php-serve"
+      ],
+      "when": "\"$JOURNAL_PLUGIN_DIR/bin/commandments-release\" has-php",
+      "restart": "always"
+    }
+  ],
+  "dashboard": {
+    "name": "sins",
+    "title": "Sins"
+  }
+}
