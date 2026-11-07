@@ -29,6 +29,15 @@ HOOK
     exit 0
 fi
 
+own_git="$(cd "$(git rev-parse --git-dir)" && pwd -P)"
+shared_git="$(cd "$(git rev-parse --git-common-dir)" && pwd -P)"
+if [ "$own_git" != "$shared_git" ]; then
+    # A worktree's commit is the journal's, made for a worker within its own time limit, and five container runs
+    # outlast it. The generated documents are made again by the next commit in the main checkout.
+    echo "· a worktree: the generated documents are made again by the next commit in the main checkout"
+    exit 0
+fi
+
 GENERATORS=(
     "scripts/dev env GOMEMLIMIT=3GiB GOMAXPROCS=2 go run ./rule/vocabulary/census|rule/vocabulary"
     "scripts/dev env GOMEMLIMIT=3GiB GOMAXPROCS=2 go run ./cli/doc/readme|README.md README.sins.md README.scribes.md README.skills.md .journal-plugin/plugin.json .journal-plugin/settings.json journal-plugin.json"

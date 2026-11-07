@@ -385,7 +385,7 @@ func TestEachAliasSaysWhatKindOfCommandItIs(t *testing.T) {
 	}
 }
 
-func TestOnlyTheAliasAWorkerIsToldToRunIsOpenToWorkers(t *testing.T) {
+func TestOnlyTheAliasesAWorkerIsToldToRunAreOpenToWorkers(t *testing.T) {
 	text, err := os.ReadFile(filepath.Join("..", "..", "journal-plugin.json"))
 	if err != nil {
 		t.Fatal(err)
@@ -406,17 +406,23 @@ func TestOnlyTheAliasAWorkerIsToldToRunIsOpenToWorkers(t *testing.T) {
 		mayRun[alias.Name] = alias.Workers
 	}
 
-	told := strings.TrimPrefix(binary.ChangesAlias, "journal ")
+	told := map[string]bool{
+		strings.TrimPrefix(binary.ChangesAlias, "journal "): true,
+		strings.TrimPrefix(binary.Alias, "journal "):        true,
+	}
 
 	for name, open := range mayRun {
-		if open && name != told {
-			t.Errorf("the %s alias is open to workers, and only the one our lines tell a worker to run may be", name)
+		if open && !told[name] {
+			t.Errorf("the %s alias is open to workers, and only the ones our lines and the briefing tell a worker "+
+				"to run may be", name)
 		}
 	}
 
-	if !mayRun[told] {
-		t.Errorf("the %s alias is closed to workers, and our lines tell a worker to run it, so the journal refuses "+
-			"the very command we named", told)
+	for name := range told {
+		if !mayRun[name] {
+			t.Errorf("the %s alias is closed to workers, and our lines or the briefing tell a worker to run it, so "+
+				"the journal refuses the very command we named", name)
+		}
 	}
 
 	brief, err := os.ReadFile(filepath.Join("..", "library", "brief.md"))

@@ -430,9 +430,11 @@ func checklist(id string, space workspace.Workspace) (map[string]bool, error) {
 }
 
 func changedLinesOf(root string, files map[string]bool) map[string]git.ChangedLines {
+	since := git.WorkStart(root)
+
 	lines := map[string]git.ChangedLines{}
 	for file := range files {
-		lines[file] = git.ChangedLinesOf(root, file)
+		lines[file] = git.ChangedLinesSince(root, since, file)
 	}
 
 	return lines
@@ -444,7 +446,7 @@ func workingTreeChanges(path string) (map[string]bool, error) {
 		return nil, notARepository(path)
 	}
 
-	return git.ChangedVsHead(root), nil
+	return git.ChangedSince(root, git.WorkStart(root)), nil
 }
 
 func branchChanges(base, path string) (map[string]bool, error) {

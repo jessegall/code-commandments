@@ -219,11 +219,39 @@ func ChangedVsBranch(root, base string) (changed map[string]bool, ok bool) {
 		return nil, false
 	}
 
-	tracked := run(root, "diff", "--name-only", "--diff-filter=d", mergeBase)
+	return ChangedSince(root, mergeBase), true
+}
+
+func ChangedSince(root, commit string) map[string]bool {
+	if commit == headCommit {
+		return ChangedVsHead(root)
+	}
+
+	tracked := run(root, "diff", "--name-only", "--diff-filter=d", commit)
 	untracked := run(root, "ls-files", "--others", "--exclude-standard")
 
-	return pathSet(root, tracked+"\n"+untracked), true
+	return pathSet(root, tracked+"\n"+untracked)
 }
+
+func WorkStart(root string) string {
+	project := ProjectRoot(root)
+	if project == "" || real(project) == real(root) {
+		return headCommit
+	}
+
+	branch := CurrentBranch(project)
+	if branch == "" || branch == headCommit {
+		return headCommit
+	}
+
+	if cut := MergeBase(root, branch); cut != "" {
+		return cut
+	}
+
+	return headCommit
+}
+
+const headCommit = "HEAD"
 
 func DeletedVsBranch(root, base string) (deleted []string, ok bool) {
 	mergeBase := MergeBase(root, base)
