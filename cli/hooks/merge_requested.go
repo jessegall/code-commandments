@@ -72,7 +72,7 @@ func MergeRequested(line map[string]any) string {
 	refusal := mergeReason(asked.worker, marks, asked.folder)
 
 	if got != gotWhole {
-		said := Unjudged("this is not the whole answer", string(got), binary.Judging(asked.folder)+" --changes")
+		said := Unjudged("this is not the whole answer", string(got), binary.JudgingChanges(asked.folder))
 
 		return (JournalAnswer{Refuse: &refusal, Whisper: &said}).Line4()
 	}

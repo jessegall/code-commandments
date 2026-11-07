@@ -91,12 +91,22 @@ func ThroughPlugin(root string) string {
 
 const Alias = "journal sins"
 
+const ChangesAlias = "journal commandments-judge-changes"
+
 func Judging(root string) string {
 	if ThroughPlugin(root) != "" {
 		return Alias
 	}
 
 	return Invocation(root) + " judge"
+}
+
+func JudgingChanges(root string) string {
+	if ThroughPlugin(root) != "" {
+		return ChangesAlias
+	}
+
+	return Invocation(root) + " judge --changes"
 }
 
 func Here() string {

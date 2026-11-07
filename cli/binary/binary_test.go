@@ -64,4 +64,13 @@ func TestJudgingIsTheAliasWhereTheJournalCanRunIt(t *testing.T) {
 	if got := Judging(t.TempDir()); got != Name+" judge" {
 		t.Errorf("a project of its own is told to run %q, want %q", got, Name+" judge")
 	}
+
+	if got := JudgingChanges(driven); got != ChangesAlias {
+		t.Errorf("a journal-driven project is told to run %q to judge its changes, want the alias %q, since the "+
+			"journal's lines name no command an agent has to type out", got, ChangesAlias)
+	}
+
+	if got := JudgingChanges(t.TempDir()); got != Name+" judge --changes" {
+		t.Errorf("a project of its own is told to run %q to judge its changes, want %q", got, Name+" judge --changes")
+	}
 }

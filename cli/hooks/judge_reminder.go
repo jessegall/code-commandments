@@ -108,7 +108,7 @@ func Reminder(event Event, lead string) (string, bool) {
 	}
 
 	return "Code Commandments — " + lead + ": you've changed " + strconv.Itoa(len(mine)) + " judged " + noun + " since the last commit. " +
-		"Consider running `" + binary.Invocation(root) + " judge --changes` to confirm they conform, and fix any " +
+		"Consider running `" + binary.JudgingChanges(root) + "` to confirm they conform, and fix any " +
 		"sin at its SOURCE (don't launder a finding with a default/cast/null-check). This is a one-time " +
 		"nudge for this batch — if you've already judged, or these changes aren't worth a scan, just say " +
 		"so and carry on.", true

@@ -79,6 +79,18 @@
       "workers": false
     },
     {
+      "name": "commandments-judge-changes",
+      "description": "Judge what changed since the last commit against the project's commandments and show each sin as it is found",
+      "line": "bin/commandments-release judge --changes",
+      "env": {
+        "COMMANDMENTS_PLAIN_PROGRESS": "1"
+      },
+      "reader": "judge",
+      "category": "check",
+      "background": true,
+      "workers": false
+    },
+    {
       "name": "rules",
       "description": "Work on a rule of the project's own: try it on a path, prove it against the samples that mark it, or read a file's tree",
       "line": "bin/commandments-release rule {args}",

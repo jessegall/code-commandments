@@ -324,7 +324,7 @@ func notForThisRole(moment Moment) string {
 
 	return Unjudged("a "+moment.Role+"'s own edits are not judged",
 		"the setting "+workersKey+" is off, and its work is judged when it is taken in",
-		binary.Judging(moment.Cwd)+" --changes")
+		binary.JudgingChanges(moment.Cwd))
 }
 
 func filesInOneGoChosen() int {

@@ -21,7 +21,7 @@ func mergeTold(who, about, root string, marks []SinMark) string {
 	}
 
 	if more := len(marks) - mergeSinsShown; more > 0 {
-		said = append(said, "  and "+natural.Counted(more, "sin")+" more, which `"+binary.Judging(root)+" --changes` lists")
+		said = append(said, "  and "+natural.Counted(more, "sin")+" more, which `"+binary.JudgingChanges(root)+"` lists")
 	}
 
 	return strings.Join(said, "\n")

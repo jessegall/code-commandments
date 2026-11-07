@@ -152,7 +152,7 @@ func (SkillReminder) Handle(event Event) Response {
 	if len(files) == 0 && len(lost) > 0 {
 		said = append(said, Unjudged("nothing of this edit was judged: "+strings.Join(lost, ", "),
 			whyNoneWereJudged(lost),
-			binary.Judging(event.Root)+" --changes"))
+			binary.JudgingChanges(event.Root)))
 	}
 
 	response := Silent()

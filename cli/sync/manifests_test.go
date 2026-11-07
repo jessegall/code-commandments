@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/jessegall/code-commandments/cli/binary"
 	"github.com/jessegall/code-commandments/cli/health"
 	"github.com/jessegall/code-commandments/cli/hooks"
 )
@@ -583,6 +584,36 @@ func TestNoFileTheJournalRunsIsFetchedPerRelease(t *testing.T) {
 		if !strings.HasPrefix(service.Command[0], ".journal-plugin/") {
 			t.Errorf("the service %s is started from %s, which is not one of the plugin's own stable files",
 				service.Name, service.Command[0])
+		}
+	}
+}
+
+func TestEveryAliasOurLinesNameIsDeclaredInEachManifest(t *testing.T) {
+	for _, manifest := range []string{"journal-plugin.json", "journal-plugin.5.json"} {
+		text, err := os.ReadFile(filepath.Join("..", "..", manifest))
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		var read struct {
+			Aliases []struct {
+				Name string `json:"name"`
+			} `json:"aliases"`
+		}
+		if err := json.Unmarshal(text, &read); err != nil {
+			t.Fatal(err)
+		}
+
+		declared := []string{}
+		for _, alias := range read.Aliases {
+			declared = append(declared, "journal "+alias.Name)
+		}
+
+		for _, named := range []string{binary.Alias, binary.ChangesAlias} {
+			if !slices.Contains(declared, named) {
+				t.Errorf("%s does not declare %q, which our lines tell an agent to run, so the agent is sent to a "+
+					"command the journal does not know", manifest, named)
+			}
 		}
 	}
 }
