@@ -63,6 +63,15 @@ func (l Ledger) Counts(name string, by int, where string) {
 	_ = l.file.Write(read.With(state.Int(name, read.Int(name, 0)+by)).WithItems(events))
 }
 
+func Names() []string {
+	names := make([]string, len(legend.Variables))
+	for at, variable := range legend.Variables {
+		names[at] = variable.Name
+	}
+
+	return names
+}
+
 func (l Ledger) Count(name string) int {
 	return l.file.Read().Int(name, 0)
 }

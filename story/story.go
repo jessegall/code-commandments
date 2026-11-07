@@ -6,6 +6,8 @@ import (
 	"runtime"
 	"strings"
 	"testing"
+
+	"github.com/jessegall/code-commandments/cli/ledger"
 )
 
 // Story is one story being told: the test it fails, the journal it drives, the project it runs in, the file it is written in and every step it took, so a failure can say how it got there and the run can say which stories overlap.
@@ -15,6 +17,7 @@ type Story struct {
 	project string
 	file    string
 	steps   []Step
+	began   map[string]int
 }
 
 const (
@@ -33,7 +36,7 @@ func Begin(t *testing.T) *Story {
 
 	_, file, _, _ := runtime.Caller(1)
 
-	s := &Story{t: t, journal: Reached(address), project: project, file: file}
+	s := &Story{t: t, journal: Reached(address), project: project, file: file, began: costsOf(project)}
 	t.Cleanup(func() { thisRun.Keeps(Told{Name: t.Name(), File: s.file, Steps: s.steps}) })
 
 	return s
@@ -42,9 +45,15 @@ func Begin(t *testing.T) *Story {
 func (s *Story) Asks(argv ...string) Ran {
 	s.t.Helper()
 
+	return s.AsksIn(s.project, argv...)
+}
+
+func (s *Story) AsksIn(folder string, argv ...string) Ran {
+	s.t.Helper()
+
 	s.steps = append(s.steps, journalStep(argv))
 
-	ran, err := s.journal.Runs(s.project, argv...)
+	ran, err := s.journal.Runs(folder, argv...)
 	if err != nil {
 		s.Fails(err.Error())
 	}
@@ -71,6 +80,38 @@ func (s *Story) Fails(why string) {
 	s.t.Helper()
 
 	s.t.Fatalf("%s\n\nthe story so far:\n  %s", why, strings.Join(textsOf(s.steps), "\n  "))
+}
+
+func (s *Story) GivenTheTreeIsHeldFor(folder string) {
+	s.t.Helper()
+
+	s.steps = append(s.steps, StepOf("given the tree is held for %s", folder))
+
+	warmed, err := s.journal.Runs(folder, "sins", "--changes")
+	if err != nil || warmed.Code != 0 {
+		s.Fails(fmt.Sprintf("the tree could not be warmed for %s: %v %s", folder, err, warmed.Err))
+	}
+
+	s.began = costsOf(s.project)
+}
+
+func (s *Story) TestCheckout() string {
+	return s.project + "/.journal/worktrees/story-engine"
+}
+
+func (s *Story) Cost(name string) int {
+	return costsOf(s.project)[name] - s.began[name]
+}
+
+func costsOf(project string) map[string]int {
+	costs := ledger.Of(project)
+
+	counted := map[string]int{}
+	for _, name := range ledger.Names() {
+		counted[name] = costs.Count(name)
+	}
+
+	return counted
 }
 
 func Checked(m *testing.M) int {

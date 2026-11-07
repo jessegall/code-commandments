@@ -62,3 +62,17 @@ func TestTheLedgerKeepsOnlyTheNewestEvents(t *testing.T) {
 			eventsKept+25)
 	}
 }
+
+func TestEveryCountTheServiceKeepsIsNamed(t *testing.T) {
+	named := map[string]bool{}
+	for _, name := range Names() {
+		named[name] = true
+	}
+
+	for _, name := range []string{TreeReadsStarted, TreeReadsFinished, TreeReadsFailed, FilesReadIntoTrees,
+		JudgingsFromTheTree, JudgingsToldTheTreeIsComing, JudgingsDeclined, JudgingsAnsweredSmaller} {
+		if !named[name] {
+			t.Errorf("%s is counted but not named, so a story asking what a step cost never sees it", name)
+		}
+	}
+}
