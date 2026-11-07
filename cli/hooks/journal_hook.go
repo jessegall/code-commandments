@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"github.com/jessegall/code-commandments/cli/binary"
 	"io"
 	"net"
@@ -456,7 +457,13 @@ func (JournalServe) Help() help.Help {
 }
 
 func (s JournalServe) Run(in *cli.Input, console cli.Console) (int, error) {
-	defer health.Serve(hooksService)()
+	close, unanswerable := health.ServeOn(os.Getenv(health.Socket), hooksService)
+	defer close()
+
+	if unanswerable != "" {
+		fmt.Fprintln(console.Err, unanswerable)
+		cannotBeAsked.Store(&unanswerable)
+	}
 
 	path := os.Getenv(pluginSocket)
 	if path == "" {

@@ -5,9 +5,11 @@ import (
 	"bufio"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net"
 	"os"
 	"path/filepath"
+	"strconv"
 	"time"
 )
 
@@ -15,6 +17,8 @@ const (
 	Socket   = "COMMANDMENTS_HEALTH_SOCKET"
 	Request  = `{"health":1}`
 	draining = 2 * time.Second
+
+	longestSocket = 103
 )
 
 // up is what a service says about itself.
@@ -43,12 +47,22 @@ func Asked(line map[string]any) bool {
 }
 
 func Serve(service string) func() {
-	return serveOn(os.Getenv(Socket), service)
+	close, unanswerable := ServeOn(os.Getenv(Socket), service)
+	if unanswerable != "" {
+		fmt.Fprintln(os.Stderr, unanswerable)
+	}
+
+	return close
 }
 
-func serveOn(path, service string) func() {
+func ServeOn(path, service string) (func(), string) {
 	if path == "" {
-		return func() {}
+		return func() {}, ""
+	}
+
+	if len(path) > longestSocket {
+		return func() {}, Unanswerable(path, service, errors.New("the path is "+strconv.Itoa(len(path))+
+			" characters, past the "+strconv.Itoa(longestSocket)+" this platform allows for a socket"))
 	}
 
 	os.MkdirAll(filepath.Dir(path), 0o755)
@@ -56,13 +70,18 @@ func serveOn(path, service string) func() {
 
 	listener, err := net.Listen("unix", path)
 	if err != nil {
-		return func() {}
+		return func() {}, Unanswerable(path, service, err)
 	}
 
 	os.Chmod(path, 0o600)
 	go answer(listener, Answer(service))
 
-	return func() { listener.Close() }
+	return func() { listener.Close() }, ""
+}
+
+func Unanswerable(path, service string, why error) string {
+	return "⚠ the " + service + " service cannot be asked whether it is up: " + why.Error() + " (" + path +
+		"). It is RUNNING and judging; anything that asks will read it as stopped"
 }
 
 func answer(listener net.Listener, said string) {

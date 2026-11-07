@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/jessegall/code-commandments/cli"
@@ -138,7 +139,18 @@ func lanesHeld(drop string) string {
 			" | "+lane.Filling)
 	}
 
-	return strings.Join(said, "\n") + mergesSaid()
+	return strings.Join(said, "\n") + healthSaid() + mergesSaid()
+}
+
+var cannotBeAsked atomic.Pointer[string]
+
+func healthSaid() string {
+	said := cannotBeAsked.Load()
+	if said == nil {
+		return ""
+	}
+
+	return "\n" + *said
 }
 
 func mergesSaid() string {

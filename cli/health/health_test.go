@@ -52,7 +52,7 @@ func asked(t *testing.T, path string) up {
 
 func TestAServiceSaysItIsUpAsOftenAsItIsAsked(t *testing.T) {
 	path := filepath.Join(shortFolder(t), "roslyn.sock")
-	stop := serveOn(path, "roslyn")
+	stop, _ := ServeOn(path, "roslyn")
 	defer stop()
 
 	for at := 0; at < 3; at++ {
@@ -65,7 +65,7 @@ func TestAServiceSaysItIsUpAsOftenAsItIsAsked(t *testing.T) {
 
 func TestEveryAnswerIsWellInsideTheWindowTheJournalAllows(t *testing.T) {
 	path := filepath.Join(shortFolder(t), "hooks.sock")
-	stop := serveOn(path, "hooks")
+	stop, _ := ServeOn(path, "hooks")
 	defer stop()
 
 	started := time.Now()
@@ -80,7 +80,7 @@ func TestEveryAnswerIsWellInsideTheWindowTheJournalAllows(t *testing.T) {
 
 func TestTheQuestionIsAnsweredWhileTheServiceIsBusy(t *testing.T) {
 	path := filepath.Join(shortFolder(t), "mypy.sock")
-	stop := serveOn(path, "mypy")
+	stop, _ := ServeOn(path, "mypy")
 	defer stop()
 
 	working := make(chan struct{})
@@ -112,7 +112,7 @@ func TestWithNoSocketNamedNothingIsServed(t *testing.T) {
 
 func TestTheStoppedServiceAnswersNoMore(t *testing.T) {
 	path := filepath.Join(shortFolder(t), "php.sock")
-	stop := serveOn(path, "php")
+	stop, _ := ServeOn(path, "php")
 	asked(t, path)
 	stop()
 
