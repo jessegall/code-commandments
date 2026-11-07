@@ -64,6 +64,19 @@ func TestTheFloorManifestKeepsWhatAVersionFourJournalNeeds(t *testing.T) {
 	}
 }
 
+func TestEachManifestNamesTheJournalItNeeds(t *testing.T) {
+	floor, five := manifestNamed(t, "journal-plugin.json"), manifestNamed(t, "journal-plugin.5.json")
+
+	if floor["journal"] == five["journal"] {
+		t.Errorf("both manifests need journal %v, and they are written for different ones: a journal would be "+
+			"offered a manifest it cannot read", floor["journal"])
+	}
+
+	if said, _ := five["journal"].(string); said == "" || said[0] != '5' {
+		t.Errorf("the version five manifest needs journal %q, which is not a version five", said)
+	}
+}
+
 func TestEveryListenEntryFiresAfterTheFactSoTheJournalNeverWaits(t *testing.T) {
 	five := manifestNamed(t, "journal-plugin.5.json")
 
