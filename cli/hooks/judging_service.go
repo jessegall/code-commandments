@@ -199,6 +199,10 @@ func differingFrom(base *warm.Base, named branchRoot, checkout string, asked []s
 		for _, under := range deleted {
 			differs.Gone = append(differs.Gone, filepath.Join(named.project, under))
 		}
+
+		for file := range git.AddedVsHead(named.project) {
+			differs.Gone = append(differs.Gone, file)
+		}
 	}
 
 	return differs, true

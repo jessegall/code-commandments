@@ -8,6 +8,7 @@ import (
 
 	"github.com/jessegall/code-commandments/cli/binary"
 	"github.com/jessegall/code-commandments/cli/checklist"
+	"github.com/jessegall/code-commandments/cli/git"
 	"github.com/jessegall/code-commandments/cli/natural"
 	"github.com/jessegall/code-commandments/engine"
 	"github.com/jessegall/code-commandments/skill"
@@ -29,6 +30,7 @@ type Report struct {
 	skipped      Skipped
 	says         map[string]string
 	filed        []Reported
+	mirrors      string
 }
 
 func (r Report) Saying(says map[string]string) Report {
@@ -44,7 +46,7 @@ func (r Report) Reporting(filed []Reported) Report {
 }
 
 func NewReport(path string, findings []engine.Finding, fixable, scaffoldable map[string]string, skipped Skipped) Report {
-	report := Report{path: path, bySkill: map[string][]engine.Finding{}, total: len(findings), fixable: fixable, scaffoldable: scaffoldable, skipped: skipped}
+	report := Report{path: path, bySkill: map[string][]engine.Finding{}, total: len(findings), fixable: fixable, scaffoldable: scaffoldable, skipped: skipped, mirrors: mirrored(path)}
 
 	for _, finding := range findings {
 		if _, seen := report.bySkill[finding.Skill]; !seen {
@@ -344,7 +346,28 @@ func (r Report) relative(location string) string {
 		return relative
 	}
 
+	if relative, under := strings.CutPrefix(location, r.mirrors+"/"); under {
+		return relative
+	}
+
 	return location
+}
+
+func mirrored(path string) string {
+	if path == "" {
+		return ""
+	}
+
+	project := git.ProjectRoot(path)
+	if project == "" || project == path {
+		return ""
+	}
+
+	if !git.IsAWorktree(path) {
+		return ""
+	}
+
+	return project
 }
 
 func hasCustom(findings []engine.Finding) bool {

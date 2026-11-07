@@ -8,6 +8,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/jessegall/code-commandments/cli"
@@ -222,4 +223,15 @@ func ReadingNow(project string) bool {
 	_, running := reading.Load(named.key())
 
 	return running
+}
+
+var letGo sync.Map
+
+func WhyATreeWasLetGo(project string) string {
+	why, said := letGo.Load(project)
+	if !said {
+		return ""
+	}
+
+	return string(why.(Narrowed))
 }

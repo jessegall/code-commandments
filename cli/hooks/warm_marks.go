@@ -123,6 +123,7 @@ func AgainstTheProgramNarrowed(marking Marking, files []string, rulesFor func(st
 	}
 	if len(moved) > readsInOneGo(base.Files()) {
 		kept.Drop(held.project, held.branch)
+		letGo.Store(held.project, tooMuchMoved)
 
 		return nil, 0, tooMuchMoved
 	}
@@ -132,6 +133,7 @@ func AgainstTheProgramNarrowed(marking Marking, files []string, rulesFor func(st
 		patched, took := taken(base, held, elsewhere)
 		if patched == nil {
 			kept.Drop(held.project, held.branch)
+			letGo.Store(held.project, patchFailed)
 
 			return nil, took, patchFailed
 		}

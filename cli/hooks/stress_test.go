@@ -810,6 +810,7 @@ type stressCheckout struct {
 
 	draw  *rand.Rand
 	mine  []string
+	away  []string
 	wrote int
 	at    int
 }
@@ -871,6 +872,7 @@ func (c *stressCheckout) move(t *testing.T, move int) {
 	c.at = move
 
 	branch, held := c.holding()
+	forgotten := stressForgot.Load()
 
 	switch c.draw.Intn(29) {
 	case 0, 1, 2, 3:
@@ -914,13 +916,27 @@ func (c *stressCheckout) move(t *testing.T, move int) {
 	}
 
 	if now, holds := c.holding(); held && now == branch && !holds {
-		t.Fatalf("move %d of checkout %d: writing in its own checkout cost the project its tree on branch %s, and no "+
-			"read of it is running either, so every edit behind it is judged on its own file alone until something "+
-			"reads the tree again", move, c.Named, branch)
+		if stressForgot.Load() != forgotten {
+			t.Logf("move %d of checkout %d: the tree of %s went while another checkout was deliberately forgetting "+
+				"it, which is a move of this run and not a loss", move, c.Named, branch)
+
+			return
+		}
+
+		if why := WhyATreeWasLetGo(git.ProjectRoot(c.Project)); why != "" {
+			t.Logf("move %d of checkout %d: the tree of %s was let go on purpose, because %s", move, c.Named, branch, why)
+
+			return
+		}
+
+		t.Fatalf("move %d of checkout %d: writing in its own checkout cost the project its tree on branch %s, no read "+
+			"of it is running and nothing says it was let go on purpose, so every edit behind it is judged on its own "+
+			"file alone until something reads the tree again", move, c.Named, branch)
 	}
 }
 
 func (c *stressCheckout) forgets(t *testing.T) {
+	stressForgot.Add(1)
 	kept.Drop(c.Project, git.CurrentBranch(c.Project))
 	kept.Forget(c.At)
 
@@ -973,8 +989,9 @@ func (c *stressCheckout) handsIn(t *testing.T) {
 		}
 
 		t.Fatalf("move %d of checkout %d: its served hand-in reports %s, which is not its own (it owns %q); "+
-			"inside its own checkout: %v; inside the project: %v; it IS in %v; its checkout is %s\n%s",
-			c.at, c.Named, named, c.under(), inside, inProject, elsewhere, c.At, answer.Out)
+			"inside its own checkout: %v; inside the project: %v; it IS in %v; it wrote %v; it took away %v; "+
+			"its checkout is %s\n%s",
+			c.at, c.Named, named, c.under(), inside, inProject, elsewhere, c.mine, c.away, c.At, answer.Out)
 	}
 
 	c.countsWhatReallyDiffers(t)
@@ -1035,7 +1052,7 @@ func stressHeldLanguage(base *warm.Base, file string) bool {
 
 func stressNamedIn(said string) []string {
 	var named []string
-	for _, word := range strings.Fields(said) {
+	for _, word := range strings.Fields(plainly.ReplaceAllString(said, "")) {
 		if at := strings.LastIndex(word, ".py:"); at > 0 {
 			named = append(named, word[:at+3])
 		}
@@ -1043,6 +1060,8 @@ func stressNamedIn(said string) []string {
 
 	return named
 }
+
+var plainly = regexp.MustCompile("\x1b\\[[0-9;]*m")
 
 func (c *stressCheckout) holding() (string, bool) {
 	project := git.ProjectRoot(c.Project)
@@ -1070,6 +1089,8 @@ func (c *stressCheckout) renames(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
+
+	c.tookAway(was)
 
 	if err := os.Rename(was, into); err != nil {
 		return
@@ -1168,6 +1189,10 @@ func (c *stressCheckout) recuts(t *testing.T) {
 	}
 
 	c.commits(t)
+
+	for _, file := range c.mine {
+		c.tookAway(file)
+	}
 
 	if out, err := exec.Command("git", "-C", c.Project, "worktree", "remove", "--force", c.At).CombinedOutput(); err != nil {
 		t.Logf("worktree %s was not removed: %s", c.At, out)
@@ -1295,6 +1320,8 @@ func (c *stressCheckout) deletes(t *testing.T) {
 	if !stressWasTold(stressUnder(c.Project, file), stressUnder(c.At, file)) {
 		return
 	}
+
+	c.tookAway(file)
 
 	if err := os.Remove(file); err != nil {
 		return
@@ -1613,6 +1640,8 @@ var stressSent = map[string]string{}
 
 var stressRunning = map[int]*stressCheckout{}
 
+var stressForgot atomic.Int64
+
 func stressWhose(agent int) (*stressCheckout, bool) {
 	held, known := stressRunning[agent]
 
@@ -1638,9 +1667,29 @@ func (c *stressCheckout) owns(named string) bool {
 		return true
 	}
 
-	info, err := os.Stat(filepath.Join(c.At, named))
+	if info, err := os.Stat(filepath.Join(c.At, named)); err == nil && info.Mode().IsRegular() {
+		return true
+	}
 
-	return err == nil && info.Mode().IsRegular()
+	return c.wroteItItself(named)
+}
+
+func (c *stressCheckout) wroteItItself(named string) bool {
+	for _, file := range c.mine {
+		if stressUnder(c.At, file) == named {
+			return true
+		}
+	}
+
+	return c.tookItAway(named)
+}
+
+func (c *stressCheckout) tookAway(file string) {
+	c.away = append(c.away, stressUnder(c.At, file))
+}
+
+func (c *stressCheckout) tookItAway(named string) bool {
+	return slices.Contains(c.away, named)
 }
 
 func stressSaidOf(answer map[string]any) []string {
