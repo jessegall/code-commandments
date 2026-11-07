@@ -9,11 +9,14 @@ set -euo pipefail
 root="$(git rev-parse --show-toplevel)"
 cd "$root"
 
-[ -x "$root/.journal/bin/journal" ] || { echo "stories need this project's journal at .journal/bin/journal" >&2; exit 1; }
+# A worker's worktree has no journal of its own: the journal belongs to the project, the folder above the shared .git.
+project="$(cd "$(git rev-parse --git-common-dir)/.." && pwd -P)"
+
+[ -x "$project/.journal/bin/journal" ] || { echo "stories need this project's journal at $project/.journal/bin/journal" >&2; exit 1; }
 
 scratch="$(mktemp -d)"
 port_file="$scratch/port"
-python3 -I story/relay.py "$root" "$port_file" &
+python3 -I story/relay.py "$project" "$port_file" &
 relay=$!
 trap 'kill "$relay" 2>/dev/null; wait "$relay" 2>/dev/null; rm -rf "$scratch"' EXIT
 
@@ -24,5 +27,8 @@ done
 [ -s "$port_file" ] || { echo "the story relay did not start" >&2; exit 1; }
 
 packages=("${@:-./stories/...}")
-scripts/dev env STORY_RELAY="host.docker.internal:$(cat "$port_file")" STORY_PROJECT="$root" \
+mounts=()
+[ "$project" = "$(pwd -P)" ] || mounts=(--mount "$project")
+
+scripts/dev ${mounts[@]+"${mounts[@]}"} env STORY_RELAY="host.docker.internal:$(cat "$port_file")" STORY_PROJECT="$project" \
     GOMEMLIMIT=3GiB GOMAXPROCS=2 go test -tags story -p 1 -count=1 "${packages[@]}"
