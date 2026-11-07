@@ -12,6 +12,7 @@ import (
 
 	"github.com/jessegall/code-commandments/cli/config"
 	"github.com/jessegall/code-commandments/cli/git"
+	"github.com/jessegall/code-commandments/cli/ledger"
 	"github.com/jessegall/code-commandments/cli/scan"
 	"github.com/jessegall/code-commandments/cli/source"
 	"github.com/jessegall/code-commandments/cli/warm"
@@ -500,6 +501,8 @@ func Warming(root string, project config.Config) {
 		}
 
 		began := time.Now()
+		costs := ledger.Of(named.project)
+		costs.Counts(ledger.TreeReadsStarted, 1, named.project)
 
 		sources := scan.Walk(roots, source.Under(named.project, project.Excluded)).Only(reads(named.project, project)...)
 
@@ -507,12 +510,15 @@ func Warming(root string, project config.Config) {
 
 		codebase, err := sources.Load()
 		if err != nil || codebase == nil {
+			costs.Counts(ledger.TreeReadsFailed, 1, named.project)
 			lastRead.Store(named.key(), fmt.Sprintf("the last read of it failed after %v: %v",
 				time.Since(began).Round(time.Second), err))
 
 			return
 		}
 
+		costs.Counts(ledger.TreeReadsFinished, 1, named.project)
+		costs.Counts(ledger.FilesReadIntoTrees, len(codebase.Files()), named.project)
 		lastRead.Store(named.key(), fmt.Sprintf("it was last read in %v, %d files, at %s",
 			time.Since(began).Round(time.Second), len(codebase.Files()), time.Now().Format("15:04:05")))
 

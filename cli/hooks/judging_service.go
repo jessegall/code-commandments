@@ -15,6 +15,7 @@ import (
 	"github.com/jessegall/code-commandments/cli"
 	"github.com/jessegall/code-commandments/cli/git"
 	"github.com/jessegall/code-commandments/cli/judge"
+	"github.com/jessegall/code-commandments/cli/ledger"
 	"github.com/jessegall/code-commandments/cli/scan"
 	"github.com/jessegall/code-commandments/cli/source"
 	"github.com/jessegall/code-commandments/cli/warm"
@@ -69,7 +70,11 @@ func answerJudging(connection net.Conn, root string) {
 }
 
 func judgedFor(request warm.Request, root string) warm.Answer {
+	costs := ledger.Of(root)
+
 	if why, coming := TheTreeIsComing(root, checkoutOf(root, request.In)); coming {
+		costs.Counts(ledger.JudgingsToldTheTreeIsComing, 1, request.In)
+
 		return warm.Answer{Declined: true, Coming: true, Because: string(why)}
 	}
 
@@ -88,14 +93,19 @@ func judgedFor(request warm.Request, root string) warm.Answer {
 	if declined != "" {
 		if pastWhatOneSpliceCarries(declined) {
 			if smaller, held := fromOneFileRules(request, root, declined); held {
+				costs.Counts(ledger.JudgingsAnsweredSmaller, 1, request.In)
 				smaller.Err += waited
 
 				return smaller
 			}
 		}
 
+		costs.Counts(ledger.JudgingsDeclined, 1, request.In)
+
 		return warm.Answer{Declined: true, Because: declined + waited}
 	}
+
+	costs.Counts(ledger.JudgingsFromTheTree, 1, request.In)
 
 	if err != nil {
 		return warm.Answer{Out: out.String(), Err: errs.String() + err.Error() + "\n" + waited, Code: 1}
