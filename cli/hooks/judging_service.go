@@ -86,15 +86,17 @@ func judgedFor(request warm.Request, root string) warm.Answer {
 	if declined != "" {
 		if pastWhatOneSpliceCarries(declined) {
 			if smaller, held := fromOneFileRules(request, root, declined); held {
+				smaller.Err += waited
+
 				return smaller
 			}
 		}
 
-		return warm.Answer{Declined: true, Because: declined}
+		return warm.Answer{Declined: true, Because: declined + waited}
 	}
 
 	if err != nil {
-		return warm.Answer{Out: out.String(), Err: errs.String() + err.Error() + "\n", Code: 1}
+		return warm.Answer{Out: out.String(), Err: errs.String() + err.Error() + "\n" + waited, Code: 1}
 	}
 
 	return warm.Answer{Out: out.String(), Err: errs.String() + waited, Code: code}
