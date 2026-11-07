@@ -94,13 +94,13 @@ run() {
         "$image" "$@"
 }
 
-# Go's build cache only grows, an entry for every build of every checkout and clone; once a day it is emptied
-# when it has passed its bound (in MB), and the next run builds what it needs again. The day is kept beside the
+# Go's build and module caches only grow, an entry for every build of every checkout and clone; once a day each is
+# emptied when it has passed its bound (in MB), and the next run builds or fetches what it needs again. The day is kept beside the
 # repository's own git data, so a run on any other day starts no extra container.
 cacheBound=4096
 trimmed="$common/commandments-dev-trimmed"
 if [ -z "$(find "$trimmed" -mmin -1440 2>/dev/null)" ]; then
-    run sh -c "[ \"\$(du -sm /root/go/build | cut -f1)\" -le $cacheBound ] || go clean -cache" > /dev/null 2>&1 || true
+    run sh -c "[ \"\$(du -sm /root/go/build | cut -f1)\" -le $cacheBound ] || go clean -cache; [ \"\$(du -sm /root/go/pkg/mod | cut -f1)\" -le $cacheBound ] || go clean -modcache" > /dev/null 2>&1 || true
     touch "$trimmed"
 fi
 
