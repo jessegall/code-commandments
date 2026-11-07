@@ -49,6 +49,11 @@ func Schema() []byte {
 				{"enum": engineNames()},
 				{"type": "array", "minItems": 1, "items": object{"enum": engineNames()}},
 			}},
+			"tags": object{
+				"type":        "array",
+				"items":       object{"type": "string", "minLength": 1},
+				"description": "Words that group this rule with others, such as [\"testing\"]. judge --tag testing runs only the rules carrying one of the words named.",
+			},
 			"judges": object{
 				"type":        "array",
 				"items":       object{"type": "string"},

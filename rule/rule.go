@@ -47,6 +47,7 @@ type file struct {
 	Find   find     `json:"find"`
 	Fix    *Fix     `json:"fix,omitempty"`
 	Judges []string `json:"judges,omitempty"`
+	Tags   []string `json:"tags,omitempty"`
 }
 
 type sinFile struct {
@@ -337,6 +338,7 @@ type Rule struct {
 	find    find
 	fix     *Fix
 	judges  []string
+	tags    []string
 }
 
 // engines are the engines a rule's own file names, written as one name or as a list of them.
@@ -461,7 +463,7 @@ func Parse(name string, text []byte, skills Skills) (Rule, error) {
 		Description: read.Sin.Description,
 		Rule:        read.Sin.Rule,
 		Suggestion:  read.Sin.Suggestion,
-	}}, read.Find.compiled(), read.Fix, folders(read.Judges)}, nil
+	}}, read.Find.compiled(), read.Fix, folders(read.Judges), read.Tags}, nil
 }
 
 func folders(named []string) []string {
@@ -697,6 +699,10 @@ func judgedLanguages(engines []catalog.Engine) []contract.Language {
 
 func (r Rule) Sin() sins.Sin {
 	return r.sin
+}
+
+func (r Rule) Tags() []string {
+	return r.tags
 }
 
 func (r Rule) Judges() []string {

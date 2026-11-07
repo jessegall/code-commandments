@@ -80,6 +80,7 @@ func (Command) Help() help.Help {
 		Option("--list", "list every detector grouped by the skill that fixes it, and run none of them").
 		Option("--skill=NAME", "only run detectors for one skill (group), e.g. spatie-data").
 		Option("--sin=NAME", "only run detectors for one sin (lenient name match), e.g. nullable-callback").
+		Option("--tag=TAG", "only run the project's own rules carrying one of these tags, repeated or comma-separated, e.g. --tag testing").
 		Option("--exclude=A,B", "skip findings in paths containing any fragment").
 		Option("--one-file-rules", "run only the rules that answer from one file, naming the rest as not asked; "+
 			"the running service uses it when the tree cannot answer the whole question").
@@ -177,14 +178,14 @@ func (c Command) Run(in *cli.Input, console cli.Console) (int, error) {
 	console.Warn(own.Warnings(project)...)
 	enabled = append(enabled, own.Enabled(project)...)
 
-	selected := selectFrom(enabled, options.skill, options.sin)
+	selected := selectFrom(enabled, options.skill, options.sin, options.tags)
 
 	if options.oneFileRules {
 		selected = slices.DeleteFunc(slices.Clone(selected), detectors.ReadsBeyondOneFile)
 	}
 
 	if len(selected) == 0 {
-		console.Warn("No detector matched --skill=" + options.skill + " --sin=" + options.sin)
+		console.Warn("No detector matched --skill=" + options.skill + " --sin=" + options.sin + " --tag=" + strings.Join(options.tags, ","))
 
 		return 2, nil
 	}
@@ -437,7 +438,7 @@ func (Command) run(tasks []Task, options options, progress *cli.Progress, parseS
 	return judgement
 }
 
-func selectFrom(list []detectors.Detector, skill, sin string) []detectors.Detector {
+func selectFrom(list []detectors.Detector, skill, sin string, tags []string) []detectors.Detector {
 	var kept []detectors.Detector
 
 	for _, detector := range list {
@@ -451,10 +452,38 @@ func selectFrom(list []detectors.Detector, skill, sin string) []detectors.Detect
 			continue
 		}
 
+		if len(tags) > 0 && !carriesOneOf(detector, tags) {
+			continue
+		}
+
 		kept = append(kept, detector)
 	}
 
 	return kept
+}
+
+func tagsOf(in *cli.Input) []string {
+	var tags []string
+	for _, given := range in.Repeated("tag") {
+		tags = append(tags, cli.Commas(given)...)
+	}
+
+	return tags
+}
+
+func carriesOneOf(detector detectors.Detector, tags []string) bool {
+	tagged, carries := detector.(detectors.Tagged)
+	if !carries {
+		return false
+	}
+
+	for _, tag := range tagged.Tags() {
+		if slices.Contains(tags, tag) {
+			return true
+		}
+	}
+
+	return false
 }
 
 func writtenIn(engines []catalog.Engine) []source.Language {
@@ -845,6 +874,7 @@ type options struct {
 	benchmark     bool
 	ignore        bool
 	oneFileRules  bool
+	tags          []string
 }
 
 func within(folder, path string) string {
@@ -894,6 +924,7 @@ func optionsOf(in *cli.Input, space workspace.Workspace) options {
 		benchmark:     in.HasFlag("benchmark"),
 		ignore:        in.HasFlag("ignore-package-requirements"),
 		oneFileRules:  in.HasFlag("one-file-rules"),
+		tags:          tagsOf(in),
 	}
 }
 

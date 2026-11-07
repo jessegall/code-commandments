@@ -34,6 +34,11 @@ func Of(engine catalog.Engine) []Detector {
 	return detectors.Of(engine)
 }
 
+// Tagged is a detector that carries words grouping it with others, as a project's own rule can, so judge --tag can run that group alone.
+type Tagged interface {
+	Tags() []string
+}
+
 // Engined is a detector that states its engine itself, as a project's own rule does.
 type Engined interface {
 	Engine() catalog.Engine
