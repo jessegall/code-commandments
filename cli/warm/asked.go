@@ -21,14 +21,45 @@ type Request struct {
 	In    string   `json:"in"`
 }
 
-// Answer is what the service judged: what the run prints, and the code it exits with.
+// Answer is what the service judged: what the run prints, the code it exits with, and, where it judged nothing, whether the tree it would have answered from is on its way, so the run waits for it instead of reading the whole project itself.
 type Answer struct {
 	Out      string `json:"out"`
 	Err      string `json:"err"`
 	Code     int    `json:"code"`
 	Declined bool   `json:"declined,omitempty"`
 	Because  string `json:"because,omitempty"`
+	Coming   bool   `json:"coming,omitempty"`
 }
+
+func AskedUntilTheTreeIsThere(project string, request Request, said func(string)) (Answer, bool) {
+	return waitingFor(func() (Answer, bool) { return Asked(project, request) }, said, aMomentBetweenAsks,
+		waitsForTheTree)
+}
+
+func waitingFor(ask func() (Answer, bool), said func(string), apart, atMost time.Duration) (Answer, bool) {
+	answer, served := ask()
+	if served || !answer.Coming {
+		return answer, served
+	}
+
+	said("waiting for the tree this project keeps up, because reading it again here would cost more than the wait: " +
+		answer.Because)
+
+	for until := time.Now().Add(atMost); time.Now().Before(until); {
+		time.Sleep(apart)
+
+		answer, served = ask()
+		if served || !answer.Coming {
+			return answer, served
+		}
+	}
+
+	return answer, served
+}
+
+const waitsForTheTree = 30 * time.Minute
+
+const aMomentBetweenAsks = time.Second
 
 func Asked(project string, request Request) (Answer, bool) {
 	connection, err := net.DialTimeout("unix", Socket(project), 2*time.Second)

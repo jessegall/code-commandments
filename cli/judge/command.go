@@ -122,7 +122,8 @@ func (c Command) Run(in *cli.Input, console cli.Console) (int, error) {
 			serving.Project = space.Root()
 		}
 
-		answer, asked := warm.Asked(serving.Project, warm.Request{Judge: in.Raw(), In: cwd})
+		answer, asked := warm.AskedUntilTheTreeIsThere(serving.Project, warm.Request{Judge: in.Raw(), In: cwd},
+			func(said string) { fmt.Fprintln(console.Err, "· "+said) })
 		if asked {
 			if cli.Timed() {
 				fmt.Fprintln(console.Err, "· judged against the tree this session keeps up, so this run read nothing")

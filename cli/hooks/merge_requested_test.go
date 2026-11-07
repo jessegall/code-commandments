@@ -3,6 +3,7 @@ package hooks
 import (
 	"encoding/json"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -151,4 +152,54 @@ func TestEveryKeyOfTheGuardIsTheSameEventWhicheverSpellingArrives(t *testing.T) 
 			t.Errorf("the guard's key arriving as %q reads as %q", arriving, said)
 		}
 	}
+}
+
+func TestTheWorkerIsNamedInTheRefusalSoItKnowsTheWorkIsItsOwn(t *testing.T) {
+	root, before, after := mergedProject(t)
+
+	t.Setenv(journalSettings, `{"judge_before_merge": "true"}`)
+
+	said := guardAnswer(t, MergeRequested(requestedLine(root, before, after)))
+	if said == nil {
+		t.Fatal("the guard allowed a merge that brings in a sin")
+	}
+
+	reason, _ := said["reason"].(string)
+
+	if !strings.Contains(reason, "7") {
+		t.Errorf("the refusal does not name the worker whose work it is: %q", reason)
+	}
+
+	if !strings.Contains(reason, "brought.py") {
+		t.Errorf("the refusal does not name the file the sin is in, and the worker has to find it: %q", reason)
+	}
+}
+
+func TestAMergeOfWorkWithNoSinsIsAllowedSilently(t *testing.T) {
+	root, _ := workerProject(t)
+
+	before := gitHeadOf(t, root)
+
+	wroteInto(t, filepath.Join(root, "src", "clean.py"), "def total(order) -> int:\n    return order.total\n")
+	commitIn(t, root, "work with nothing wrong in it")
+
+	after := gitHeadOf(t, root)
+
+	t.Setenv(journalSettings, `{"judge_before_merge": "true"}`)
+
+	if said := MergeRequested(requestedLine(root, before, after)); said != "" {
+		t.Errorf("a merge of clean work was answered %q: it must pass without a word, or every merge carries "+
+			"noise and the words stop meaning anything", said)
+	}
+}
+
+func gitHeadOf(t *testing.T, root string) string {
+	t.Helper()
+
+	out, err := exec.Command("git", "-C", root, "rev-parse", "HEAD").CombinedOutput()
+	if err != nil {
+		t.Fatalf("git rev-parse: %s", out)
+	}
+
+	return strings.TrimSpace(string(out))
 }

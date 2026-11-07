@@ -576,20 +576,12 @@ func answering(path, checkout string) (branchRoot, *warm.Base, Narrowed) {
 	}
 
 	if own || named.project == "" {
-		if !serving.Load() {
-			return named, nil, noTreeComing
-		}
-
-		return named, nil, noTreeHeld
+		return named, nil, whatIsComing(named)
 	}
 
 	any, holds := kept.Any(named.project)
 	if !holds {
-		if !serving.Load() {
-			return named, nil, noTreeComing
-		}
-
-		return named, nil, noTreeHeld
+		return named, nil, whatIsComing(named)
 	}
 
 	if state, _, _ := kept.Over(checkout).Filling(); state == warm.BeingFilled {
@@ -657,23 +649,39 @@ func waitingOn(why Narrowed) bool {
 	return why == noTreeHeld || why == noTreeComing || why == beingFilled
 }
 
-func WaitsForTheTree(root, checkout string) Narrowed {
-	_, _, why := answering(root, checkout)
+func TheTreeIsComing(root, checkout string) (Narrowed, bool) {
+	named, _, why := answering(root, checkout)
 	if !waitingOn(why) {
-		return why
+		return why, false
+	}
+
+	if why == beingFilled {
+		return why, true
 	}
 
 	WarmsWhatItServes(root)
 
-	for until := time.Now().Add(waitsAtMost); time.Now().Before(until); {
-		time.Sleep(50 * time.Millisecond)
-
-		if _, _, why = answering(root, checkout); !waitingOn(why) {
-			return why
-		}
-	}
-
-	return why
+	return why, aReadIsRunning(named)
 }
 
-const waitsAtMost = 60 * time.Second
+func whatIsComing(named branchRoot) Narrowed {
+	if !serving.Load() {
+		return noTreeComing
+	}
+
+	if !aReadIsRunning(named) {
+		return noTreeComing
+	}
+
+	return noTreeHeld
+}
+
+func aReadIsRunning(named branchRoot) bool {
+	if named.key() == "" {
+		return false
+	}
+
+	_, running := reading.Load(named.key())
+
+	return running
+}

@@ -5,6 +5,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/jessegall/code-commandments/cli/scan"
 	"github.com/jessegall/code-commandments/cli/source"
@@ -35,12 +36,22 @@ func TestAJudgingThatFindsNoTreeComingStartsOneRatherThanRefusingForever(t *test
 
 	nowServing(t)
 
-	if _, _, why := answering(root, root); why != noTreeHeld {
-		t.Fatalf("a serving project with no tree says %q, so this test would prove nothing", why)
+	if _, _, why := answering(root, root); !waitingOn(why) {
+		t.Fatalf("a serving project with no tree says %q, which is not a state worth waiting on, so this test "+
+			"would prove nothing", why)
 	}
 
-	if why := WaitsForTheTree(root, root); why != "" {
-		t.Fatalf("a judging a person asked for was refused rather than waiting for the tree: %s", why)
+	if _, coming := TheTreeIsComing(root, root); !coming {
+		t.Fatal("a judging found no tree coming and none was started for it, so the run reads the whole project " +
+			"itself with nothing to wait for")
+	}
+
+	for until := time.Now().Add(time.Minute); time.Now().Before(until); {
+		time.Sleep(20 * time.Millisecond)
+
+		if _, _, why := answering(root, root); !waitingOn(why) {
+			break
+		}
 	}
 
 	declined := ""

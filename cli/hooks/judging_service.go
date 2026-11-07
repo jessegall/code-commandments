@@ -69,14 +69,16 @@ func answerJudging(connection net.Conn, root string) {
 }
 
 func judgedFor(request warm.Request, root string) warm.Answer {
+	if why, coming := TheTreeIsComing(root, checkoutOf(root, request.In)); coming {
+		return warm.Answer{Declined: true, Coming: true, Because: string(why)}
+	}
+
 	waited := aSlotToJudgeIn()
 	defer freeTheSlot()
 
 	var out, errs bytes.Buffer
 
 	declined := ""
-
-	WaitsForTheTree(root, checkoutOf(root, request.In))
 
 	code, err := (judge.Command{
 		In:      request.In,
