@@ -168,6 +168,27 @@ func (k *Keeper) Drop(project, branch string) {
 	delete(k.bases, key(project, branch))
 }
 
+// Tree is one whole tree the keeper holds: the project and branch it is of, how much it covers and since when.
+type Tree struct {
+	Project string
+	Branch  string
+	Files   int
+	Nodes   int
+	Read    time.Time
+}
+
+func (k *Keeper) Trees() []Tree {
+	k.mu.Lock()
+	defer k.mu.Unlock()
+
+	var trees []Tree
+	for _, base := range k.bases {
+		trees = append(trees, Tree{Project: base.Project, Branch: base.Branch, Files: base.Files(), Nodes: base.Nodes(), Read: base.read})
+	}
+
+	return trees
+}
+
 func (k *Keeper) Held() int {
 	k.mu.Lock()
 	defer k.mu.Unlock()

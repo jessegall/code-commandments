@@ -123,9 +123,11 @@ func lanesHeld(drop string) string {
 		return "Let go of the lane of " + drop + ". The next question about it reads the checkout again."
 	}
 
+	trees := treesSaid()
+
 	lanes := kept.Lanes()
 	if len(lanes) == 0 {
-		return "The service holds no lane: every question so far was answered from what it read at the time." + mergesSaid()
+		return trees + "The service holds no lane: every question so far was answered from what it read at the time." + mergesSaid()
 	}
 
 	sort.Slice(lanes, func(one, two int) bool { return lanes[one].Checkout < lanes[two].Checkout })
@@ -139,7 +141,34 @@ func lanesHeld(drop string) string {
 			" | "+lane.Filling)
 	}
 
-	return strings.Join(said, "\n") + healthSaid() + mergesSaid()
+	return trees + strings.Join(said, "\n") + healthSaid() + mergesSaid()
+}
+
+func treesSaid() string {
+	held, running := kept.Trees(), readsRunning()
+
+	sort.Slice(held, func(one, two int) bool { return held[one].Branch < held[two].Branch })
+	sort.Slice(running, func(one, two int) bool { return running[one].branch < running[two].branch })
+
+	said := []string{strconv.Itoa(len(held)) + " tree(s) held, " + strconv.Itoa(len(running)) + " being read"}
+
+	for _, tree := range held {
+		said = append(said, "  "+tree.Branch+" | warm | "+strconv.Itoa(tree.Files)+" file(s), "+strconv.Itoa(tree.Nodes)+
+			" nodes | held since "+tree.Read.Format("15:04:05"))
+	}
+
+	for _, read := range running {
+		done, total := read.done.Load(), read.total.Load()
+		percent := int64(0)
+		if total > 0 {
+			percent = done * 100 / total
+		}
+
+		said = append(said, "  "+read.branch+" | warming "+strconv.FormatInt(percent, 10)+"% | "+
+			strconv.FormatInt(done, 10)+" of "+strconv.FormatInt(total, 10)+" file(s) read | since "+read.began.Format("15:04:05"))
+	}
+
+	return strings.Join(said, "\n") + "\n\n"
 }
 
 var cannotBeAsked atomic.Pointer[string]

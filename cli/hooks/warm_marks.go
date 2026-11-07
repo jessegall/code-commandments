@@ -488,7 +488,8 @@ func Warming(root string, project config.Config) {
 		return
 	}
 
-	if _, already := reading.LoadOrStore(named.key(), true); already {
+	progress := &treeRead{project: named.project, branch: named.branch, began: time.Now()}
+	if _, already := reading.LoadOrStore(named.key(), progress); already {
 		return
 	}
 
@@ -504,7 +505,8 @@ func Warming(root string, project config.Config) {
 		costs := ledger.Of(named.project)
 		costs.Counts(ledger.TreeReadsStarted, 1, named.project)
 
-		sources := scan.Walk(roots, source.Under(named.project, project.Excluded)).Only(reads(named.project, project)...)
+		sources := scan.Walk(roots, source.Under(named.project, project.Excluded)).Only(reads(named.project, project)...).
+			Reporting(progress.reached)
 
 		taken := warm.Taken(sources.Files(source.Languages...))
 
@@ -692,6 +694,34 @@ func aReadIsRunning(named branchRoot) bool {
 	}
 
 	_, running := reading.Load(named.key())
+
+	return running
+}
+
+// treeRead is one read of a whole tree while it runs: what it reads, since when, and how many of its files are read so far.
+type treeRead struct {
+	project string
+	branch  string
+	began   time.Time
+	done    atomic.Int64
+	total   atomic.Int64
+}
+
+func (r *treeRead) reached(done, total int) {
+	r.done.Store(int64(done))
+	r.total.Store(int64(total))
+}
+
+func readsRunning() []*treeRead {
+	var running []*treeRead
+
+	reading.Range(func(_, value any) bool {
+		if read, is := value.(*treeRead); is {
+			running = append(running, read)
+		}
+
+		return true
+	})
 
 	return running
 }
