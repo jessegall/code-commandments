@@ -123,6 +123,13 @@
             "default": "true",
             "group": "Performance"
         },
+        "judge_before_merge": {
+            "title": "Refuse a merge that would bring in sins",
+            "help": "On, a worker's merge is judged BEFORE it lands, over what its branch adds on top of the branch it merges into, and a merge that would bring in sins is refused: the work goes back to that worker with the findings and the merger is told it was not allowed. Off, a merge lands and is judged afterwards. This is the one thing the journal waits for us on, so it allows the merge and says so rather than holding it when the judging runs long.",
+            "type": "flag",
+            "default": "false",
+            "group": "Performance"
+        },
         "judge_files_at_once": {
             "title": "Files a checkout may differ by",
             "help": "How many changed files the service brings into one answer about a worktree. Past it the tree is let go and the answer says so, since reading more than this inside a wait costs more than the answer is worth. Zero works it out from the size of the project.",
@@ -181,7 +188,7 @@
         },
         "sin_csharp-blank-string-default": {
             "title": "BlankStringDefault",
-            "help": "a `string` parameter or property defaulted to `\"\"` and then checked with `== \"\"` or `string.IsNullOrEmpty` \u2014 the blank is being used to mean \"missing\"",
+            "help": "a `string` parameter or property defaulted to `\"\"` and then checked with `== \"\"` or `string.IsNullOrEmpty` — the blank is being used to mean \"missing\"",
             "type": "flag",
             "default": "true",
             "group": "csharp/absence",
@@ -194,7 +201,7 @@
         },
         "sin_csharp-cancelled-coalesce": {
             "title": "CancelledCoalesce",
-            "help": "a `??` fallback compared against the same value it falls back to \u2014 `(name ?? \"\") != \"\"` \u2014 so \"missing\" and \"empty\" end up in one branch without saying so",
+            "help": "a `??` fallback compared against the same value it falls back to — `(name ?? \"\") != \"\"` — so \"missing\" and \"empty\" end up in one branch without saying so",
             "type": "flag",
             "default": "true",
             "group": "csharp/absence",
@@ -207,7 +214,7 @@
         },
         "sin_csharp-de-nulled-finder": {
             "title": "DeNulledFinder",
-            "help": "a finder returning a nullable object whose every caller asserts it is there \u2014 `Find(id)!`, `Find(id) ?? throw \u2026` \u2014 a miss the finder should have refused itself",
+            "help": "a finder returning a nullable object whose every caller asserts it is there — `Find(id)!`, `Find(id) ?? throw …` — a miss the finder should have refused itself",
             "type": "flag",
             "default": "true",
             "group": "csharp/absence",
@@ -220,7 +227,7 @@
         },
         "sin_csharp-invented-default": {
             "title": "InventedDefault",
-            "help": "`F(x ?? \"\")` \u2014 an empty string, `0` or `false` invented to fill an argument, or answered by a lookup helper on a miss, a stand-in the callee cannot tell from real data",
+            "help": "`F(x ?? \"\")` — an empty string, `0` or `false` invented to fill an argument, or answered by a lookup helper on a miss, a stand-in the callee cannot tell from real data",
             "type": "flag",
             "default": "true",
             "group": "csharp/absence",
@@ -233,7 +240,7 @@
         },
         "sin_csharp-null-forgiven": {
             "title": "NullForgiven",
-            "help": "The null-forgiving `!` on a value declared nullable \u2014 the compiler told the caller it may be null, and `!` silences it instead of deciding",
+            "help": "The null-forgiving `!` on a value declared nullable — the compiler told the caller it may be null, and `!` silences it instead of deciding",
             "type": "flag",
             "default": "true",
             "group": "csharp/absence",
@@ -246,7 +253,7 @@
         },
         "sin_csharp-flag-argument": {
             "title": "FlagArgument",
-            "help": "a method whose whole body branches on a `bool` parameter \u2014 `if (compact) \u2026 else \u2026` \u2014 two methods sharing one name",
+            "help": "a method whose whole body branches on a `bool` parameter — `if (compact) … else …` — two methods sharing one name",
             "type": "flag",
             "default": "true",
             "group": "csharp/behaviour-per-method",
@@ -259,7 +266,7 @@
         },
         "sin_csharp-member-after-method": {
             "title": "MemberAfterMethod",
-            "help": "a field, constant or stored property declared below a constructor or a method \u2014 the type's state hidden among its behaviour",
+            "help": "a field, constant or stored property declared below a constructor or a method — the type's state hidden among its behaviour",
             "type": "flag",
             "default": "true",
             "group": "csharp/class-layout",
@@ -272,7 +279,7 @@
         },
         "sin_csharp-member-out-of-order": {
             "title": "MemberOutOfOrder",
-            "help": "a `const` or `static readonly` value declared below a field or a stored property \u2014 the top of the type read in no particular order",
+            "help": "a `const` or `static readonly` value declared below a field or a stored property — the top of the type read in no particular order",
             "type": "flag",
             "default": "true",
             "group": "csharp/class-layout",
@@ -285,7 +292,7 @@
         },
         "sin_csharp-namespace-cycle": {
             "title": "NamespaceCycle",
-            "help": "two of the project's namespaces that each use the other \u2014 a cycle that makes them one namespace split under two names",
+            "help": "two of the project's namespaces that each use the other — a cycle that makes them one namespace split under two names",
             "type": "flag",
             "default": "true",
             "group": "csharp/dependency-direction",
@@ -311,7 +318,7 @@
         },
         "sin_csharp-archaeology-comment": {
             "title": "ArchaeologyComment",
-            "help": "a comment that tells the code's past \u2014 `// formerly lived in CheckoutService`, `// refactored to use the cache` \u2014 describing a version nobody is reading",
+            "help": "a comment that tells the code's past — `// formerly lived in CheckoutService`, `// refactored to use the cache` — describing a version nobody is reading",
             "type": "flag",
             "default": "true",
             "group": "csharp/documentation",
@@ -324,7 +331,7 @@
         },
         "sin_csharp-bloated-docblock": {
             "title": "BloatedDocblock",
-            "help": "a type whose doc comment runs to two or more paragraphs \u2014 usually a sign the type does too much",
+            "help": "a type whose doc comment runs to two or more paragraphs — usually a sign the type does too much",
             "type": "flag",
             "default": "true",
             "group": "csharp/documentation",
@@ -337,7 +344,7 @@
         },
         "sin_csharp-ceremony-docblock": {
             "title": "CeremonyDocblock",
-            "help": "a doc comment whose every tag is empty or only repeats the signature \u2014 `<param name=\"order\">The order.</param>`, an empty `<returns>`",
+            "help": "a doc comment whose every tag is empty or only repeats the signature — `<param name=\"order\">The order.</param>`, an empty `<returns>`",
             "type": "flag",
             "default": "true",
             "group": "csharp/documentation",
@@ -350,7 +357,7 @@
         },
         "sin_csharp-dangling-doc-reference": {
             "title": "DanglingDocReference",
-            "help": "a `<see cref>` that resolves to nothing from where it is written \u2014 a name the project no longer declares, or one spelled so it does not reach it",
+            "help": "a `<see cref>` that resolves to nothing from where it is written — a name the project no longer declares, or one spelled so it does not reach it",
             "type": "flag",
             "default": "true",
             "group": "csharp/documentation",
@@ -363,7 +370,7 @@
         },
         "sin_csharp-negative-space-comment": {
             "title": "NegativeSpaceComment",
-            "help": "a comment defending the code against a reading nobody made \u2014 `// not magic, just a day`, `// deliberately not sorted` \u2014 saying what it is not instead of what it is",
+            "help": "a comment defending the code against a reading nobody made — `// not magic, just a day`, `// deliberately not sorted` — saying what it is not instead of what it is",
             "type": "flag",
             "default": "true",
             "group": "csharp/documentation",
@@ -376,7 +383,7 @@
         },
         "sin_csharp-restated-comment": {
             "title": "RestatedComment",
-            "help": "a comment above a statement whose every word the statement already spells \u2014 `// set the total to the order total` over `var total = order.Total;`",
+            "help": "a comment above a statement whose every word the statement already spells — `// set the total to the order total` over `var total = order.Total;`",
             "type": "flag",
             "default": "true",
             "group": "csharp/documentation",
@@ -389,7 +396,7 @@
         },
         "sin_duplicate-csharp-method": {
             "title": "DuplicateMethod",
-            "help": "Copy-pasted code \u2014 two+ C# methods, accessors or local functions with an identical body, formatting, comments and attributes aside",
+            "help": "Copy-pasted code — two+ C# methods, accessors or local functions with an identical body, formatting, comments and attributes aside",
             "type": "flag",
             "default": "true",
             "group": "csharp/duplication",
@@ -402,7 +409,7 @@
         },
         "sin_near-duplicate-csharp-method": {
             "title": "NearDuplicateMethod",
-            "help": "A near-copy \u2014 two+ C# methods, accessors or local functions with one control-flow skeleton that differ only in their local names or the literals they use (a key, a route, a message)",
+            "help": "A near-copy — two+ C# methods, accessors or local functions with one control-flow skeleton that differ only in their local names or the literals they use (a key, a route, a message)",
             "type": "flag",
             "default": "true",
             "group": "csharp/duplication",
@@ -415,7 +422,7 @@
         },
         "sin_csharp-const-class-enum": {
             "title": "ConstClassEnum",
-            "help": "a class that holds nothing but `const` strings or numbers \u2014 a closed set of values written as constants instead of an `enum`",
+            "help": "a class that holds nothing but `const` strings or numbers — a closed set of values written as constants instead of an `enum`",
             "type": "flag",
             "default": "true",
             "group": "csharp/enums",
@@ -428,7 +435,7 @@
         },
         "sin_csharp-enum-case-or-chain": {
             "title": "EnumCaseOrChain",
-            "help": "`s == Status.Paid || s == Status.Refunded` (or `s is Status.Paid or Status.Refunded`) \u2014 a group of enum cases tested by hand at the call site",
+            "help": "`s == Status.Paid || s == Status.Refunded` (or `s is Status.Paid or Status.Refunded`) — a group of enum cases tested by hand at the call site",
             "type": "flag",
             "default": "true",
             "group": "csharp/enums",
@@ -441,7 +448,7 @@
         },
         "sin_csharp-in-array-mirrors-enum": {
             "title": "InArrayMirrorsEnum",
-            "help": "`new[] { \"paid\", \"refunded\" }.Contains(status)` or `status is \"paid\" or \"refunded\"` \u2014 a list of strings that repeats the members of an enum the code already has",
+            "help": "`new[] { \"paid\", \"refunded\" }.Contains(status)` or `status is \"paid\" or \"refunded\"` — a list of strings that repeats the members of an enum the code already has",
             "type": "flag",
             "default": "true",
             "group": "csharp/enums",
@@ -454,7 +461,7 @@
         },
         "sin_csharp-match-default-returns-null": {
             "title": "MatchDefaultReturnsNull",
-            "help": "a `switch` that names every member of an enum, then answers `null`, `default` or `false` in its `_` arm \u2014 the one value that arm can see is a bug, and it is answered as if it were fine",
+            "help": "a `switch` that names every member of an enum, then answers `null`, `default` or `false` in its `_` arm — the one value that arm can see is a bug, and it is answered as if it were fine",
             "type": "flag",
             "default": "true",
             "group": "csharp/enums",
@@ -467,7 +474,7 @@
         },
         "sin_csharp-string-mirrors-enum": {
             "title": "StringMirrorsEnum",
-            "help": "A `switch` or an `if` ladder dispatching on strings that are the names of an enum the codebase already declares \u2014 the enum, written out again as text",
+            "help": "A `switch` or an `if` ladder dispatching on strings that are the names of an enum the codebase already declares — the enum, written out again as text",
             "type": "flag",
             "default": "true",
             "group": "csharp/enums",
@@ -480,7 +487,7 @@
         },
         "sin_csharp-unnamed-vocabulary-literal": {
             "title": "UnnamedVocabularyLiteral",
-            "help": "a raw string handed to a parameter the codebase elsewhere fills from a named constant \u2014 `Expect(\"{\")` beside `Expect(Token.Colon)`, where `Token.BraceOpen` already names it",
+            "help": "a raw string handed to a parameter the codebase elsewhere fills from a named constant — `Expect(\"{\")` beside `Expect(Token.Colon)`, where `Token.BraceOpen` already names it",
             "type": "flag",
             "default": "true",
             "group": "csharp/enums",
@@ -493,7 +500,7 @@
         },
         "sin_csharp-generic-throw": {
             "title": "GenericThrow",
-            "help": "`throw new Exception/InvalidOperationException(\"\u2026\")` \u2014 a failure that names nothing, described in prose at the throw site",
+            "help": "`throw new Exception/InvalidOperationException(\"…\")` — a failure that names nothing, described in prose at the throw site",
             "type": "flag",
             "default": "true",
             "group": "csharp/exceptions",
@@ -506,7 +513,7 @@
         },
         "sin_csharp-rethrown-unchanged": {
             "title": "RethrownUnchanged",
-            "help": "a `catch` whose whole body is `throw;` or `throw error;` \u2014 the clause catches the failure, adds nothing to it and hands it back on, which is what writing no clause does",
+            "help": "a `catch` whose whole body is `throw;` or `throw error;` — the clause catches the failure, adds nothing to it and hands it back on, which is what writing no clause does",
             "type": "flag",
             "default": "true",
             "group": "csharp/exceptions",
@@ -519,7 +526,7 @@
         },
         "sin_csharp-swallowed-exception": {
             "title": "SwallowedException",
-            "help": "A bare `catch` or `catch (Exception)` whose body is empty, continues, or returns nothing \u2014 every failure, expected or not, made to vanish",
+            "help": "A bare `catch` or `catch (Exception)` whose body is empty, continues, or returns nothing — every failure, expected or not, made to vanish",
             "type": "flag",
             "default": "true",
             "group": "csharp/exceptions",
@@ -545,7 +552,7 @@
         },
         "sin_csharp-blocked-await": {
             "title": "BlockedAwait",
-            "help": "`.Result`, `.Wait()` or `.GetAwaiter().GetResult()` on a task \u2014 the thread it blocks is the one the work needed back, so it deadlocks under load and nowhere else",
+            "help": "`.Result`, `.Wait()` or `.GetAwaiter().GetResult()` on a task — the thread it blocks is the one the work needed back, so it deadlocks under load and nowhere else",
             "type": "flag",
             "default": "true",
             "group": "csharp/fix-at-the-source",
@@ -558,7 +565,7 @@
         },
         "sin_csharp-constructor-side-effect": {
             "title": "ConstructorSideEffect",
-            "help": "a constructor that calls a method on something it was handed and ignores the result \u2014 just creating the object changes something outside it",
+            "help": "a constructor that calls a method on something it was handed and ignores the result — just creating the object changes something outside it",
             "type": "flag",
             "default": "true",
             "group": "csharp/fix-at-the-source",
@@ -571,7 +578,7 @@
         },
         "sin_csharp-mutable-static-state": {
             "title": "MutableStaticState",
-            "help": "a `static` field that methods write to \u2014 state no instance owns, changed by whichever code ran last",
+            "help": "a `static` field that methods write to — state no instance owns, changed by whichever code ran last",
             "type": "flag",
             "default": "true",
             "group": "csharp/fix-at-the-source",
@@ -584,7 +591,7 @@
         },
         "sin_csharp-unread-collaborator": {
             "title": "UnreadCollaborator",
-            "help": "a private readonly field, or a primary constructor parameter, that nothing in the type reads \u2014 the type asks for something it does not use",
+            "help": "a private readonly field, or a primary constructor parameter, that nothing in the type reads — the type asks for something it does not use",
             "type": "flag",
             "default": "true",
             "group": "csharp/fix-at-the-source",
@@ -597,7 +604,7 @@
         },
         "sin_csharp-coalesced-loop-subject": {
             "title": "CoalescedLoopSubject",
-            "help": "a `foreach` over `items ?? []` (or `Enumerable.Empty<T>()`, or a new empty list) \u2014 the check for a missing collection is hidden in the loop header",
+            "help": "a `foreach` over `items ?? []` (or `Enumerable.Empty<T>()`, or a new empty list) — the check for a missing collection is hidden in the loop header",
             "type": "flag",
             "default": "true",
             "group": "csharp/flow",
@@ -610,7 +617,7 @@
         },
         "sin_csharp-collection-mutated-while-iterated": {
             "title": "CollectionMutatedWhileIterated",
-            "help": "a `foreach` that adds to or removes from the very collection it walks \u2014 the enumerator reads a collection that moved under it, which throws InvalidOperationException",
+            "help": "a `foreach` that adds to or removes from the very collection it walks — the enumerator reads a collection that moved under it, which throws InvalidOperationException",
             "type": "flag",
             "default": "true",
             "group": "csharp/flow",
@@ -623,7 +630,7 @@
         },
         "sin_csharp-inline-throw": {
             "title": "InlineThrow",
-            "help": "a `?? throw` inside a call's argument or in front of a member call \u2014 the check that stops the method is hidden in the middle of the work",
+            "help": "a `?? throw` inside a call's argument or in front of a member call — the check that stops the method is hidden in the middle of the work",
             "type": "flag",
             "default": "true",
             "group": "csharp/flow",
@@ -636,7 +643,7 @@
         },
         "sin_csharp-loop-wrapped-in-if": {
             "title": "LoopWrappedInIf",
-            "help": "A `for`, `foreach` or `while` whose whole body is one `if` (no `else`) around real work \u2014 the iteration pushed a level deep behind a condition",
+            "help": "A `for`, `foreach` or `while` whose whole body is one `if` (no `else`) around real work — the iteration pushed a level deep behind a condition",
             "type": "flag",
             "default": "true",
             "group": "csharp/flow",
@@ -649,7 +656,7 @@
         },
         "sin_csharp-nested-ternary": {
             "title": "NestedTernary",
-            "help": "a `?:` with another `?:` as one of its branches \u2014 several decisions packed into one expression",
+            "help": "a `?:` with another `?:` as one of its branches — several decisions packed into one expression",
             "type": "flag",
             "default": "true",
             "group": "csharp/flow",
@@ -662,7 +669,7 @@
         },
         "sin_csharp-non-counting-for": {
             "title": "NonCountingFor",
-            "help": "a `for` loop whose step assigns the next item instead of moving a counter \u2014 a walk written as a count",
+            "help": "a `for` loop whose step assigns the next item instead of moving a counter — a walk written as a count",
             "type": "flag",
             "default": "true",
             "group": "csharp/flow",
@@ -675,7 +682,7 @@
         },
         "sin_csharp-subject-ladder": {
             "title": "SubjectLadder",
-            "help": "An `if`/`else if` chain of four or more rungs that each compare the same subject with a constant \u2014 a dispatch written as a ladder.",
+            "help": "An `if`/`else if` chain of four or more rungs that each compare the same subject with a constant — a dispatch written as a ladder.",
             "type": "flag",
             "default": "true",
             "group": "csharp/flow",
@@ -688,7 +695,7 @@
         },
         "sin_csharp-unnamed-condition": {
             "title": "UnnamedCondition",
-            "help": "`if (order.IsPaid && customer.Trusted && slot.IsOpen)` \u2014 three parts over two objects, so the reader works out what the condition MEANS instead of reading it",
+            "help": "`if (order.IsPaid && customer.Trusted && slot.IsOpen)` — three parts over two objects, so the reader works out what the condition MEANS instead of reading it",
             "type": "flag",
             "default": "true",
             "group": "csharp/flow",
@@ -701,7 +708,7 @@
         },
         "sin_deep-csharp-nesting": {
             "title": "DeepNesting",
-            "help": "An `if`, loop or `switch` opening a fourth level of choices inside one C# method \u2014 an arrow of conditions and loops",
+            "help": "An `if`, loop or `switch` opening a fourth level of choices inside one C# method — an arrow of conditions and loops",
             "type": "flag",
             "default": "true",
             "group": "csharp/flow",
@@ -714,7 +721,7 @@
         },
         "sin_redundant-csharp-else": {
             "title": "RedundantElse",
-            "help": "An `else` after an `if` branch that already left \u2014 it ends in `return`, `throw`, `continue` or `break` \u2014 indenting the rest of the method for nothing",
+            "help": "An `else` after an `if` branch that already left — it ends in `return`, `throw`, `continue` or `break` — indenting the rest of the method for nothing",
             "type": "flag",
             "default": "true",
             "group": "csharp/flow",
@@ -727,7 +734,7 @@
         },
         "sin_csharp-bare-state-predicate": {
             "title": "BareStatePredicate",
-            "help": "a `bool` about the object's own state named as a claim \u2014 `Binds()`, `Spins` \u2014 where a question belongs",
+            "help": "a `bool` about the object's own state named as a claim — `Binds()`, `Spins` — where a question belongs",
             "type": "flag",
             "default": "true",
             "group": "csharp/method-mood",
@@ -740,7 +747,7 @@
         },
         "sin_csharp-converted-argument": {
             "title": "ConvertedArgument",
-            "help": "a scalar parameter its callers keep filling with the same conversion \u2014 `ReceiptFor(order.Id.ToString())` call after call \u2014 because it asks for the converted form instead of the value",
+            "help": "a scalar parameter its callers keep filling with the same conversion — `ReceiptFor(order.Id.ToString())` call after call — because it asks for the converted form instead of the value",
             "type": "flag",
             "default": "true",
             "group": "csharp/pass-the-object",
@@ -753,7 +760,7 @@
         },
         "sin_csharp-derived-argument": {
             "title": "DerivedArgument",
-            "help": "a call that hands over an object and a projection of it \u2014 `Persist(request, request.ChannelId)` \u2014 or an object in three pieces, where the method could read them itself",
+            "help": "a call that hands over an object and a projection of it — `Persist(request, request.ChannelId)` — or an object in three pieces, where the method could read them itself",
             "type": "flag",
             "default": "true",
             "group": "csharp/pass-the-object",
@@ -766,7 +773,7 @@
         },
         "sin_csharp-param-resolved-from-param": {
             "title": "ParamResolvedFromParam",
-            "help": "a method that takes a container and a key and first resolves one against the other \u2014 `Rename(Workflow workflow, string nodeId)` doing `workflow.Graph.Node(nodeId)` \u2014 when it only wanted what the key names",
+            "help": "a method that takes a container and a key and first resolves one against the other — `Rename(Workflow workflow, string nodeId)` doing `workflow.Graph.Node(nodeId)` — when it only wanted what the key names",
             "type": "flag",
             "default": "true",
             "group": "csharp/pass-the-object",
@@ -779,7 +786,7 @@
         },
         "sin_csharp-repeated-guard": {
             "title": "RepeatedGuard",
-            "help": "the same compound condition \u2014 `order.Paid && !order.Cancelled` \u2014 written at two or more sites, a question with no name",
+            "help": "the same compound condition — `order.Paid && !order.Cancelled` — written at two or more sites, a question with no name",
             "type": "flag",
             "default": "true",
             "group": "csharp/repeated-call-helper",
@@ -792,7 +799,7 @@
         },
         "sin_csharp-repeated-named-call": {
             "title": "RepeatedNamedCall",
-            "help": "the same `with` copy \u2014 `order with { Status = OrderStatus.Shipped }` \u2014 written at two or more sites, an operation the record never named",
+            "help": "the same `with` copy — `order with { Status = OrderStatus.Shipped }` — written at two or more sites, an operation the record never named",
             "type": "flag",
             "default": "true",
             "group": "csharp/repeated-call-helper",
@@ -805,7 +812,7 @@
         },
         "sin_csharp-repeated-type-guard": {
             "title": "RepeatedTypeGuard",
-            "help": "the same chain of type checks \u2014 `node is Invocation call && call.Target is MemberAccess` \u2014 written at two or more sites, a shape with no name",
+            "help": "the same chain of type checks — `node is Invocation call && call.Target is MemberAccess` — written at two or more sites, a shape with no name",
             "type": "flag",
             "default": "true",
             "group": "csharp/repeated-call-helper",
@@ -818,7 +825,7 @@
         },
         "sin_csharp-feature-envy": {
             "title": "FeatureEnvy",
-            "help": "a method that loops another object's collection or writes its members, reaching into it more than into its own state \u2014 behaviour exiled from the object it works on",
+            "help": "a method that loops another object's collection or writes its members, reaching into it more than into its own state — behaviour exiled from the object it works on",
             "type": "flag",
             "default": "true",
             "group": "csharp/tell-dont-ask",
@@ -844,7 +851,7 @@
         },
         "sin_csharp-type-switch": {
             "title": "TypeSwitch",
-            "help": "`shape switch { Circle c => \u2026, Square s => \u2026 }` \u2014 asking which of your own types a value is, to decide what to do with it",
+            "help": "`shape switch { Circle c => …, Square s => … }` — asking which of your own types a value is, to decide what to do with it",
             "type": "flag",
             "default": "true",
             "group": "csharp/tell-dont-ask",
@@ -857,7 +864,7 @@
         },
         "sin_csharp-assembled-template": {
             "title": "AssembledTemplate",
-            "help": "`string.Join(\"\\n\", new[] { \"public class X\", \"{\", \"}\" })` or `sb.AppendLine(\"\u2026\")` line after line \u2014 a multi-line text built from line fragments, so its shape cannot be seen in the source",
+            "help": "`string.Join(\"\\n\", new[] { \"public class X\", \"{\", \"}\" })` or `sb.AppendLine(\"…\")` line after line — a multi-line text built from line fragments, so its shape cannot be seen in the source",
             "type": "flag",
             "default": "true",
             "group": "csharp/templates",
@@ -870,7 +877,7 @@
         },
         "sin_csharp-filled-parameter": {
             "title": "FilledParameter",
-            "help": "a method returning nothing that writes a property of an object it was handed, whose caller then reads what it handed over \u2014 the signature says the object goes in and nothing says it comes out changed",
+            "help": "a method returning nothing that writes a property of an object it was handed, whose caller then reads what it handed over — the signature says the object goes in and nothing says it comes out changed",
             "type": "flag",
             "default": "true",
             "group": "csharp/type-honesty",
@@ -883,7 +890,7 @@
         },
         "sin_csharp-impossible-guard": {
             "title": "ImpossibleGuard",
-            "help": "`if (order == null)` where `order` is typed `Order` and not `Order?` \u2014 one of the two is wrong, and both are worth knowing",
+            "help": "`if (order == null)` where `order` is typed `Order` and not `Order?` — one of the two is wrong, and both are worth knowing",
             "type": "flag",
             "default": "true",
             "group": "csharp/type-honesty",
@@ -896,7 +903,7 @@
         },
         "sin_csharp-placeholder-filled-data": {
             "title": "PlaceholderFilledData",
-            "help": "`new Card(title, \"\")` \u2014 a record's required `string` filled with a blank so the record can be built, hiding a missing value no type check can see",
+            "help": "`new Card(title, \"\")` — a record's required `string` filled with a blank so the record can be built, hiding a missing value no type check can see",
             "type": "flag",
             "default": "true",
             "group": "csharp/type-honesty",
@@ -909,7 +916,7 @@
         },
         "sin_csharp-array-return-bag": {
             "title": "ArrayReturnBag",
-            "help": "a method that returns `new Dictionary<string, object> { [\"sku\"] = \u2026, [\"qty\"] = \u2026 }` \u2014 a record with fixed fields, handed back as a dictionary",
+            "help": "a method that returns `new Dictionary<string, object> { [\"sku\"] = …, [\"qty\"] = … }` — a record with fixed fields, handed back as a dictionary",
             "type": "flag",
             "default": "true",
             "group": "csharp/value-objects",
@@ -922,7 +929,7 @@
         },
         "sin_csharp-coupled-fields": {
             "title": "CoupledFields",
-            "help": "a type whose own fields always travel together \u2014 assembled into one value again and again, null-checked together, or one copying what a sibling field already holds \u2014 one concept held as several fields",
+            "help": "a type whose own fields always travel together — assembled into one value again and again, null-checked together, or one copying what a sibling field already holds — one concept held as several fields",
             "type": "flag",
             "default": "true",
             "group": "csharp/value-objects",
@@ -935,7 +942,7 @@
         },
         "sin_csharp-data-clump": {
             "title": "DataClump",
-            "help": "The same three or more string, number, date or id parameters threaded through methods of two or more types \u2014 values that always travel together but have no type of their own.",
+            "help": "The same three or more string, number, date or id parameters threaded through methods of two or more types — values that always travel together but have no type of their own.",
             "type": "flag",
             "default": "true",
             "group": "csharp/value-objects",
@@ -948,7 +955,7 @@
         },
         "sin_csharp-dictionary-bag": {
             "title": "DictionaryBag",
-            "help": "A string-keyed dictionary or JSON object read by keys written in the source \u2014 `row[\"sku\"]`, `json.GetProperty(\"name\")` \u2014 a record nobody declared",
+            "help": "A string-keyed dictionary or JSON object read by keys written in the source — `row[\"sku\"]`, `json.GetProperty(\"name\")` — a record nobody declared",
             "type": "flag",
             "default": "true",
             "group": "csharp/value-objects",
@@ -961,7 +968,7 @@
         },
         "sin_csharp-handed-out-collection": {
             "title": "HandedOutCollection",
-            "help": "a property or method whose whole body returns the type's own `List`, `Dictionary` or `HashSet`, untouched \u2014 every caller holds the insides and may add to or take from them without the type knowing",
+            "help": "a property or method whose whole body returns the type's own `List`, `Dictionary` or `HashSet`, untouched — every caller holds the insides and may add to or take from them without the type knowing",
             "type": "flag",
             "default": "true",
             "group": "csharp/value-objects",
@@ -974,7 +981,7 @@
         },
         "sin_csharp-mutable-value-object": {
             "title": "MutableValueObject",
-            "help": "a record that can change after it is built \u2014 a `set` accessor, or a method that writes its own state \u2014 so two holders of the same value can end up seeing different things",
+            "help": "a record that can change after it is built — a `set` accessor, or a method that writes its own state — so two holders of the same value can end up seeing different things",
             "type": "flag",
             "default": "true",
             "group": "csharp/value-objects",
@@ -987,7 +994,7 @@
         },
         "sin_csharp-positional-tuple-return": {
             "title": "PositionalTupleReturn",
-            "help": "a method that returns `(decimal, decimal, string)` \u2014 unnamed values the caller reads by position, where two of the same type can be swapped and nothing notices",
+            "help": "a method that returns `(decimal, decimal, string)` — unnamed values the caller reads by position, where two of the same type can be swapped and nothing notices",
             "type": "flag",
             "default": "true",
             "group": "csharp/value-objects",
@@ -1000,7 +1007,7 @@
         },
         "sin_deep-go-nesting": {
             "title": "DeepNesting",
-            "help": "An `if`, `for`, `switch` or `select` opening a fourth level of choices inside one Go function \u2014 a decision buried inside a decision",
+            "help": "An `if`, `for`, `switch` or `select` opening a fourth level of choices inside one Go function — a decision buried inside a decision",
             "type": "flag",
             "default": "true",
             "group": "go/flow",
@@ -1026,7 +1033,7 @@
         },
         "sin_redundant-go-else": {
             "title": "RedundantElse",
-            "help": "An `else` after an `if` branch that already left \u2014 it ends in `return`, `break`, `continue`, `goto` or `panic` \u2014 indenting the rest of the function for nothing",
+            "help": "An `else` after an `if` branch that already left — it ends in `return`, `break`, `continue`, `goto` or `panic` — indenting the rest of the function for nothing",
             "type": "flag",
             "default": "true",
             "group": "go/flow",
@@ -1039,7 +1046,7 @@
         },
         "sin_blank-string-default": {
             "title": "BlankStringDefault",
-            "help": "`string $x = ''` standing in for absence \u2014 then asked `$x === ''`",
+            "help": "`string $x = ''` standing in for absence — then asked `$x === ''`",
             "type": "flag",
             "default": "true",
             "group": "php/absence",
@@ -1052,7 +1059,7 @@
         },
         "sin_blank-string-on-the-wire": {
             "title": "BlankStringOnTheWire",
-            "help": "A `string` field sent over the wire whose TypeScript reader has to check `=== ''` to mean \"missing\" \u2014 only that reader knows the blank stands for absence.",
+            "help": "A `string` field sent over the wire whose TypeScript reader has to check `=== ''` to mean \"missing\" — only that reader knows the blank stands for absence.",
             "type": "flag",
             "default": "true",
             "group": "php/absence",
@@ -1065,7 +1072,7 @@
         },
         "sin_cancelled-coalesce": {
             "title": "CancelledCoalesce",
-            "help": "`??` cancelled by the comparison it sits in \u2014 `($x ?? '') !== ''`",
+            "help": "`??` cancelled by the comparison it sits in — `($x ?? '') !== ''`",
             "type": "flag",
             "default": "true",
             "group": "php/absence",
@@ -1078,7 +1085,7 @@
         },
         "sin_conditional-array-spread": {
             "title": "ConditionalArraySpread",
-            "help": "An array built by spreading a conditional element \u2014 `...($x ? ['k' => $x] : [])` or `array_merge($base, $cond ? [...] : [])` \u2014 a ternary-and-empty-array trick that really just means \"include this when the value is present.\"",
+            "help": "An array built by spreading a conditional element — `...($x ? ['k' => $x] : [])` or `array_merge($base, $cond ? [...] : [])` — a ternary-and-empty-array trick that really just means \"include this when the value is present.\"",
             "type": "flag",
             "default": "true",
             "group": "php/absence",
@@ -1091,7 +1098,7 @@
         },
         "sin_de-nulled-finder": {
             "title": "DeNulledFinder",
-            "help": "A finder that returns `null` for both \"missing\" and \"broken\" instead of throwing \u2014 the kind of `?T` finder whose callers all end up de-nulling it.",
+            "help": "A finder that returns `null` for both \"missing\" and \"broken\" instead of throwing — the kind of `?T` finder whose callers all end up de-nulling it.",
             "type": "flag",
             "default": "true",
             "group": "php/absence",
@@ -1104,7 +1111,7 @@
         },
         "sin_erased-null-object": {
             "title": "ErasedNullObject",
-            "help": "A blank-rendering Null Object written into a `string` slot \u2014 coerced back to `''`",
+            "help": "A blank-rendering Null Object written into a `string` slot — coerced back to `''`",
             "type": "flag",
             "default": "true",
             "group": "php/absence",
@@ -1130,7 +1137,7 @@
         },
         "sin_option-as-nullable": {
             "title": "OptionAsNullable",
-            "help": "`Option<T>` used as if it were nullable \u2014 `?Option`, `Option | null`, `unwrapOr(null)`",
+            "help": "`Option<T>` used as if it were nullable — `?Option`, `Option | null`, `unwrapOr(null)`",
             "type": "flag",
             "default": "true",
             "group": "php/absence",
@@ -1143,7 +1150,7 @@
         },
         "sin_flag-argument": {
             "title": "FlagArgument",
-            "help": "a method whose whole body branches on a `bool` parameter \u2014 or on whether a nullable one was given \u2014 two methods sharing one name",
+            "help": "a method whose whole body branches on a `bool` parameter — or on whether a nullable one was given — two methods sharing one name",
             "type": "flag",
             "default": "true",
             "group": "php/behaviour-per-method",
@@ -1156,7 +1163,7 @@
         },
         "sin_member-after-method": {
             "title": "MemberAfterMethod",
-            "help": "A trait use, constant, property, property hook, or enum case declared below a method \u2014 so the reader only meets that state after seeing the behaviour that uses it.",
+            "help": "A trait use, constant, property, property hook, or enum case declared below a method — so the reader only meets that state after seeing the behaviour that uses it.",
             "type": "flag",
             "default": "true",
             "group": "php/class-layout",
@@ -1169,7 +1176,7 @@
         },
         "sin_member-out-of-order": {
             "title": "MemberOutOfOrder",
-            "help": "A declaration in the head of a class that arrives after something belonging below it \u2014 a constant under a property, a public field under a private one, a hook above the fields it reads",
+            "help": "A declaration in the head of a class that arrives after something belonging below it — a constant under a property, a public field under a private one, a hook above the fields it reads",
             "type": "flag",
             "default": "true",
             "group": "php/class-layout",
@@ -1195,7 +1202,7 @@
         },
         "sin_namespace-cycle": {
             "title": "NamespaceCycle",
-            "help": "two namespaces that reference each other \u2014 neither can be read, tested or moved alone",
+            "help": "two namespaces that reference each other — neither can be read, tested or moved alone",
             "type": "flag",
             "default": "true",
             "group": "php/dependency-direction",
@@ -1260,7 +1267,7 @@
         },
         "sin_dangling-doc-reference": {
             "title": "DanglingDocReference",
-            "help": "A docblock `{@see}`/`{@link}` cross-references a FIRST-PARTY class that does not exist in the codebase \u2014 documentation pointing at a name that was renamed or removed, never at what the code actually is",
+            "help": "A docblock `{@see}`/`{@link}` cross-references a FIRST-PARTY class that does not exist in the codebase — documentation pointing at a name that was renamed or removed, never at what the code actually is",
             "type": "flag",
             "default": "true",
             "group": "php/documentation",
@@ -1273,7 +1280,7 @@
         },
         "sin_inline-docblock": {
             "title": "InlineDocblock",
-            "help": "A docblock whose delimiter shares a line with its text \u2014 a one-liner, or a block that opens or closes next to content",
+            "help": "A docblock whose delimiter shares a line with its text — a one-liner, or a block that opens or closes next to content",
             "type": "flag",
             "default": "true",
             "group": "php/documentation",
@@ -1312,7 +1319,7 @@
         },
         "sin_stacked-docblock": {
             "title": "StackedDocblock",
-            "help": "Two or more docblocks stacked on one declaration \u2014 PHP reads only the last, so the ones above it are documentation nobody sees",
+            "help": "Two or more docblocks stacked on one declaration — PHP reads only the last, so the ones above it are documentation nobody sees",
             "type": "flag",
             "default": "true",
             "group": "php/documentation",
@@ -1325,7 +1332,7 @@
         },
         "sin_const-class-enum": {
             "title": "ConstClassEnum",
-            "help": "A class of 2+ scalar `const`s and nothing else \u2014 a closed set hand-rolled as constants instead of a native enum",
+            "help": "A class of 2+ scalar `const`s and nothing else — a closed set hand-rolled as constants instead of a native enum",
             "type": "flag",
             "default": "true",
             "group": "php/enums-with-behaviour",
@@ -1338,7 +1345,7 @@
         },
         "sin_enum-case-or-chain": {
             "title": "EnumCaseOrChain",
-            "help": "`$x === Enum::A || $x === Enum::B` \u2014 a hand-rolled case-group test",
+            "help": "`$x === Enum::A || $x === Enum::B` — a hand-rolled case-group test",
             "type": "flag",
             "default": "true",
             "group": "php/enums-with-behaviour",
@@ -1351,7 +1358,7 @@
         },
         "sin_enum-value-match": {
             "title": "EnumValueMatch",
-            "help": "A `match`/`switch` over an enum's `->value` at the call site \u2014 logic that belongs on the enum but lives elsewhere instead.",
+            "help": "A `match`/`switch` over an enum's `->value` at the call site — logic that belongs on the enum but lives elsewhere instead.",
             "type": "flag",
             "default": "true",
             "group": "php/enums-with-behaviour",
@@ -1416,7 +1423,7 @@
         },
         "sin_unnamed-vocabulary-literal": {
             "title": "UnnamedVocabularyLiteral",
-            "help": "A raw string in an argument the codebase elsewhere fills from a named vocabulary \u2014 `expect('{')` beside `expect(Token::COLON)`, where `Token::BRACE_OPEN` already names it",
+            "help": "A raw string in an argument the codebase elsewhere fills from a named vocabulary — `expect('{')` beside `expect(Token::COLON)`, where `Token::BRACE_OPEN` already names it",
             "type": "flag",
             "default": "true",
             "group": "php/enums-with-behaviour",
@@ -1429,7 +1436,7 @@
         },
         "sin_generic-exception": {
             "title": "GenericException",
-            "help": "`throw new <bare SPL>` (RuntimeException/LogicException/\u2026) instead of a named type",
+            "help": "`throw new <bare SPL>` (RuntimeException/LogicException/…) instead of a named type",
             "type": "flag",
             "default": "true",
             "group": "php/exceptions",
@@ -1455,7 +1462,7 @@
         },
         "sin_rethrown-unchanged": {
             "title": "RethrownUnchanged",
-            "help": "a `catch` whose whole body is `throw $e;` \u2014 the clause catches the failure, adds nothing to it and hands it back on, which is what writing no clause does",
+            "help": "a `catch` whose whole body is `throw $e;` — the clause catches the failure, adds nothing to it and hands it back on, which is what writing no clause does",
             "type": "flag",
             "default": "true",
             "group": "php/exceptions",
@@ -1507,7 +1514,7 @@
         },
         "sin_divergent-twin": {
             "title": "DivergentTwin",
-            "help": "Two functions do the same job, but one of them skips a step the other takes \u2014 usually a fix made in one copy and forgotten in the other.",
+            "help": "Two functions do the same job, but one of them skips a step the other takes — usually a fix made in one copy and forgotten in the other.",
             "type": "flag",
             "default": "true",
             "group": "php/fix-at-the-source",
@@ -1520,7 +1527,7 @@
         },
         "sin_duplicate-function": {
             "title": "DuplicateFunction",
-            "help": "Copy-pasted code \u2014 two+ functions with an identical AST (formatting/comments aside)",
+            "help": "Copy-pasted code — two+ functions with an identical AST (formatting/comments aside)",
             "type": "flag",
             "default": "true",
             "group": "php/fix-at-the-source",
@@ -1546,7 +1553,7 @@
         },
         "sin_mutable-static-state": {
             "title": "MutableStaticState",
-            "help": "A write to a static property \u2014 really a global variable with a namespace attached \u2014 where whichever write happens last wins, so the order code runs in changes the result.",
+            "help": "A write to a static property — really a global variable with a namespace attached — where whichever write happens last wins, so the order code runs in changes the result.",
             "type": "flag",
             "default": "true",
             "group": "php/fix-at-the-source",
@@ -1559,7 +1566,7 @@
         },
         "sin_near-duplicate-function": {
             "title": "NearDuplicateFunction",
-            "help": "Redundant methods \u2014 two+ functions with the same SHAPE differing only in names/literals (type-2 clone)",
+            "help": "Redundant methods — two+ functions with the same SHAPE differing only in names/literals (type-2 clone)",
             "type": "flag",
             "default": "true",
             "group": "php/fix-at-the-source",
@@ -1572,7 +1579,7 @@
         },
         "sin_unread-collaborator": {
             "title": "UnreadCollaborator",
-            "help": "a collaborator promoted into a private field by the constructor and never read anywhere in the class \u2014 the class asks for something it does not use, and only a search of the whole type says so",
+            "help": "a collaborator promoted into a private field by the constructor and never read anywhere in the class — the class asks for something it does not use, and only a search of the whole type says so",
             "type": "flag",
             "default": "true",
             "group": "php/fix-at-the-source",
@@ -1585,7 +1592,7 @@
         },
         "sin_coalesced-loop-subject": {
             "title": "CoalescedLoopSubject",
-            "help": "`foreach ($x[$k] ?? [] as \u2026)` \u2014 the absence check buried in the loop header instead of stated as a guard",
+            "help": "`foreach ($x[$k] ?? [] as …)` — the absence check buried in the loop header instead of stated as a guard",
             "type": "flag",
             "default": "true",
             "group": "php/guard-clauses-and-flow",
@@ -1598,7 +1605,7 @@
         },
         "sin_deep-nesting": {
             "title": "DeepNesting",
-            "help": "`if` nested 3-deep (a pyramid \u2014 hoist guards / extract)",
+            "help": "`if` nested 3-deep (a pyramid — hoist guards / extract)",
             "type": "flag",
             "default": "true",
             "group": "php/guard-clauses-and-flow",
@@ -1689,7 +1696,7 @@
         },
         "sin_short-circuit-statement": {
             "title": "ShortCircuitStatement",
-            "help": "a bare `$a && $b->do();` statement \u2014 a short-circuit whose result nothing reads, so the operator is an `if` in disguise",
+            "help": "a bare `$a && $b->do();` statement — a short-circuit whose result nothing reads, so the operator is an `if` in disguise",
             "type": "flag",
             "default": "true",
             "group": "php/guard-clauses-and-flow",
@@ -1702,7 +1709,7 @@
         },
         "sin_ternary-statement": {
             "title": "TernaryStatement",
-            "help": "a bare `$cond ? doThis() : doThat();` statement \u2014 a ternary whose value nothing reads, so it is choosing an ACTION, not a value",
+            "help": "a bare `$cond ? doThis() : doThat();` statement — a ternary whose value nothing reads, so it is choosing an ACTION, not a value",
             "type": "flag",
             "default": "true",
             "group": "php/guard-clauses-and-flow",
@@ -1715,7 +1722,7 @@
         },
         "sin_unnamed-condition": {
             "title": "UnnamedCondition",
-            "help": "`if ($order->isPaid() && $customer->trusted && $slot->open)` \u2014 three parts over two objects, so the reader works out what the condition MEANS instead of reading it",
+            "help": "`if ($order->isPaid() && $customer->trusted && $slot->open)` — three parts over two objects, so the reader works out what the condition MEANS instead of reading it",
             "type": "flag",
             "default": "true",
             "group": "php/guard-clauses-and-flow",
@@ -1728,7 +1735,7 @@
         },
         "sin_config-read": {
             "title": "ConfigRead",
-            "help": "`config('\u2026')` read inside a class",
+            "help": "`config('…')` read inside a class",
             "type": "flag",
             "default": "true",
             "group": "php/laravel-idioms",
@@ -1754,7 +1761,7 @@
         },
         "sin_dead-config-key": {
             "title": "DeadConfigKey",
-            "help": "A config key nothing reads \u2014 dead surface left behind by a deleted feature, which new code may wrongly adopt",
+            "help": "A config key nothing reads — dead surface left behind by a deleted feature, which new code may wrongly adopt",
             "type": "flag",
             "default": "true",
             "group": "php/laravel-idioms",
@@ -1767,7 +1774,7 @@
         },
         "sin_dead-event-wiring": {
             "title": "DeadEventWiring",
-            "help": "An `Event::listen` on an event class no live code path can fire \u2014 a listener chain that dead-ends but reads as live wiring",
+            "help": "An `Event::listen` on an event class no live code path can fire — a listener chain that dead-ends but reads as live wiring",
             "type": "flag",
             "default": "true",
             "group": "php/laravel-idioms",
@@ -1780,7 +1787,7 @@
         },
         "sin_duplicated-config-default": {
             "title": "DuplicatedConfigDefault",
-            "help": "A config key whose default is stated TWICE \u2014 once in the config file, again as the reader's inline fallback \u2014 two sources of truth that drift silently",
+            "help": "A config key whose default is stated TWICE — once in the config file, again as the reader's inline fallback — two sources of truth that drift silently",
             "type": "flag",
             "default": "true",
             "group": "php/laravel-idioms",
@@ -1793,7 +1800,7 @@
         },
         "sin_facade-call": {
             "title": "FacadeCall",
-            "help": "Laravel facade call (`Cache::`, `Log::`, `Mail::` \u2026)",
+            "help": "Laravel facade call (`Cache::`, `Log::`, `Mail::` …)",
             "type": "flag",
             "default": "true",
             "group": "php/laravel-idioms",
@@ -1806,7 +1813,7 @@
         },
         "sin_handed-out-collection": {
             "title": "HandedOutCollection",
-            "help": "a getter whose whole body returns the class's own `Collection`, untouched \u2014 a Collection is an object, so every caller holds the same one and may `push`, `forget` or `sort` it behind the class's back",
+            "help": "a getter whose whole body returns the class's own `Collection`, untouched — a Collection is an object, so every caller holds the same one and may `push`, `forget` or `sort` it behind the class's back",
             "type": "flag",
             "default": "true",
             "group": "php/laravel-idioms",
@@ -1845,7 +1852,7 @@
         },
         "sin_orphaned-binding": {
             "title": "OrphanedBinding",
-            "help": "A container binding whose abstract nothing ever resolves \u2014 dead wiring that reads as load-bearing and survives every refactor",
+            "help": "A container binding whose abstract nothing ever resolves — dead wiring that reads as load-bearing and survives every refactor",
             "type": "flag",
             "default": "true",
             "group": "php/laravel-idioms",
@@ -1858,7 +1865,7 @@
         },
         "sin_query-in-loop": {
             "title": "QueryInLoop",
-            "help": "a query run inside a loop \u2014 one query per turn, so the work grows with the data while the code reads as though it were one call",
+            "help": "a query run inside a loop — one query per turn, so the work grows with the data while the code reads as though it were one call",
             "type": "flag",
             "default": "true",
             "group": "php/laravel-idioms",
@@ -1884,7 +1891,7 @@
         },
         "sin_request-accessor-recast": {
             "title": "RequestAccessorRecast",
-            "help": "Re-coercing a typed request accessor at a call site \u2014 `$request->string('id')->toString()` or `(string) $request->string('id')` instead of a named getter on a request class",
+            "help": "Re-coercing a typed request accessor at a call site — `$request->string('id')->toString()` or `(string) $request->string('id')` instead of a named getter on a request class",
             "type": "flag",
             "default": "true",
             "group": "php/laravel-idioms",
@@ -1897,7 +1904,7 @@
         },
         "sin_bare-state-predicate": {
             "title": "BareStatePredicate",
-            "help": "A `bool` about the object's own state named as a bare verb \u2014 `binds()`, `spins()` \u2014 where a question belongs",
+            "help": "A `bool` about the object's own state named as a bare verb — `binds()`, `spins()` — where a question belongs",
             "type": "flag",
             "default": "true",
             "group": "php/method-mood",
@@ -1910,7 +1917,7 @@
         },
         "sin_narrated-command": {
             "title": "NarratedCommand",
-            "help": "A command named in the third person \u2014 `hides()`, `entersTestMode()` \u2014 where a call is an order, not a description of one",
+            "help": "A command named in the third person — `hides()`, `entersTestMode()` — where a call is an order, not a description of one",
             "type": "flag",
             "default": "true",
             "group": "php/method-mood",
@@ -1923,7 +1930,7 @@
         },
         "sin_constructor-orchestration": {
             "title": "ConstructorOrchestration",
-            "help": "A page object fills a public slot imperatively in the constructor (`$this->x = $this->projector->\u2026()`) where a `#[Computed]` property hook would describe it in place",
+            "help": "A page object fills a public slot imperatively in the constructor (`$this->x = $this->projector->…()`) where a `#[Computed]` property hook would describe it in place",
             "type": "flag",
             "default": "true",
             "group": "php/page-objects",
@@ -1936,7 +1943,7 @@
         },
         "sin_injected-service-not-hidden": {
             "title": "InjectedServiceNotHidden",
-            "help": "A page object injects a service (`#[FromContainer]`, \u2026) into a public property without `#[Hidden]` \u2014 it leaks into the generated TypeScript type",
+            "help": "A page object injects a service (`#[FromContainer]`, …) into a public property without `#[Hidden]` — it leaks into the generated TypeScript type",
             "type": "flag",
             "default": "true",
             "group": "php/page-objects",
@@ -1962,7 +1969,7 @@
         },
         "sin_page-object-missing-typescript": {
             "title": "PageObjectMissingTypeScript",
-            "help": "A page object travels back in a response but carries no `#[TypeScript]` \u2014 the `.vue` page reads it as untyped `any`, so the whole page-prop contract goes unchecked",
+            "help": "A page object travels back in a response but carries no `#[TypeScript]` — the `.vue` page reads it as untyped `any`, so the whole page-prop contract goes unchecked",
             "type": "flag",
             "default": "true",
             "group": "php/page-objects",
@@ -2014,7 +2021,7 @@
         },
         "sin_converted-argument": {
             "title": "ConvertedArgument",
-            "help": "A parameter typed as the already-converted form instead of the raw value, so every call site repeats the same conversion before calling it (e.g. `Raises::of(ClassAlias::of($interaction), \u2026)`).",
+            "help": "A parameter typed as the already-converted form instead of the raw value, so every call site repeats the same conversion before calling it (e.g. `Raises::of(ClassAlias::of($interaction), …)`).",
             "type": "flag",
             "default": "true",
             "group": "php/pass-the-object",
@@ -2027,7 +2034,7 @@
         },
         "sin_derived-argument": {
             "title": "DerivedArgument",
-            "help": "Passing the same object twice \u2014 once whole and once broken into a piece (`persist($request, $request->shopId())`), or broken into several pieces at once (`new AgentTurn($r->output(), $r->failed(), $r->errorOutput())`) \u2014 when the callee could derive each piece itself from the one object.",
+            "help": "Passing the same object twice — once whole and once broken into a piece (`persist($request, $request->shopId())`), or broken into several pieces at once (`new AgentTurn($r->output(), $r->failed(), $r->errorOutput())`) — when the callee could derive each piece itself from the one object.",
             "type": "flag",
             "default": "true",
             "group": "php/pass-the-object",
@@ -2040,7 +2047,7 @@
         },
         "sin_param-resolved-from-param": {
             "title": "ParamResolvedFromParam",
-            "help": "Unpacking the target out of a container parameter \u2014 a method takes `(Workflow $workflow, string $nodeId)` and resolves `$workflow->graph->nodeById($nodeId)` itself, when it could just receive the node directly.",
+            "help": "Unpacking the target out of a container parameter — a method takes `(Workflow $workflow, string $nodeId)` and resolves `$workflow->graph->nodeById($nodeId)` itself, when it could just receive the node directly.",
             "type": "flag",
             "default": "true",
             "group": "php/pass-the-object",
@@ -2053,7 +2060,7 @@
         },
         "sin_repeated-guard": {
             "title": "RepeatedGuard",
-            "help": "The SAME compound guard condition recurs in \u22652 places \u2014 the same check spelled differently (inline reaches vs locals) or reordered still counts, so a copied condition has no name",
+            "help": "The SAME compound guard condition recurs in ≥2 places — the same check spelled differently (inline reaches vs locals) or reordered still counts, so a copied condition has no name",
             "type": "flag",
             "default": "true",
             "group": "php/repeated-call-helper",
@@ -2079,7 +2086,7 @@
         },
         "sin_repeated-type-guard": {
             "title": "RepeatedTypeGuard",
-            "help": "The SAME multi-`instanceof` type-narrowing guard (`$x instanceof A && $x->y instanceof B`) is written verbatim in \u22652 places \u2014 a check with no name, copied instead of named",
+            "help": "The SAME multi-`instanceof` type-narrowing guard (`$x instanceof A && $x->y instanceof B`) is written verbatim in ≥2 places — a check with no name, copied instead of named",
             "type": "flag",
             "default": "true",
             "group": "php/repeated-call-helper",
@@ -2105,7 +2112,7 @@
         },
         "sin_boundary-duplicated-operation": {
             "title": "BoundaryDuplicatedOperation",
-            "help": "The same domain operation hand-rolled at two DIFFERENT entry boundaries (a console command and an MCP tool, a controller and a command) \u2014 one operation with two implementations that drift",
+            "help": "The same domain operation hand-rolled at two DIFFERENT entry boundaries (a console command and an MCP tool, a controller and a command) — one operation with two implementations that drift",
             "type": "flag",
             "default": "true",
             "group": "php/route-actions",
@@ -2118,7 +2125,7 @@
         },
         "sin_dangling-route-name": {
             "title": "DanglingRouteName",
-            "help": "A `route('x')` lookup naming a route no registration mints \u2014 a stringly cross-reference that only fails at runtime, as a 500",
+            "help": "A `route('x')` lookup naming a route no registration mints — a stringly cross-reference that only fails at runtime, as a 500",
             "type": "flag",
             "default": "true",
             "group": "php/route-actions",
@@ -2131,7 +2138,7 @@
         },
         "sin_duplicate-route": {
             "title": "DuplicateRoute",
-            "help": "Two route registrations of the same verb bind different URLs to the SAME `[Controller, method]` \u2014 two names for one handler (invokable single-action controllers, commonly aliased to several canonical URLs, are exempt)",
+            "help": "Two route registrations of the same verb bind different URLs to the SAME `[Controller, method]` — two names for one handler (invokable single-action controllers, commonly aliased to several canonical URLs, are exempt)",
             "type": "flag",
             "default": "true",
             "group": "php/route-actions",
@@ -2144,7 +2151,7 @@
         },
         "sin_duplicate-route-action": {
             "title": "DuplicateRouteAction",
-            "help": "Two route actions in different controllers thinly delegate to the SAME operation (`return $this->exporter->export(...)`) \u2014 the same entry point twice",
+            "help": "Two route actions in different controllers thinly delegate to the SAME operation (`return $this->exporter->export(...)`) — the same entry point twice",
             "type": "flag",
             "default": "true",
             "group": "php/route-actions",
@@ -2157,7 +2164,7 @@
         },
         "sin_route-delegates-to-controller": {
             "title": "RouteDelegatesToController",
-            "help": "A route action forwards to ANOTHER controller's action (`return $this->otherController->action(...)`) \u2014 a redundant entry point onto an operation that already has one",
+            "help": "A route action forwards to ANOTHER controller's action (`return $this->otherController->action(...)`) — a redundant entry point onto an operation that already has one",
             "type": "flag",
             "default": "true",
             "group": "php/route-actions",
@@ -2170,7 +2177,7 @@
         },
         "sin_all-nullable-data": {
             "title": "AllNullableData",
-            "help": "All-nullable \"god\" DTO \u2014 every field `?T`/defaulted (type doesn't tell the truth)",
+            "help": "All-nullable \"god\" DTO — every field `?T`/defaulted (type doesn't tell the truth)",
             "type": "flag",
             "default": "true",
             "group": "php/spatie-data",
@@ -2183,7 +2190,7 @@
         },
         "sin_all-optional-data": {
             "title": "AllOptionalData",
-            "help": "Every field of a `Data` object is `T|Optional` \u2014 the type promises nothing is ever present; the absence belongs on the CONTAINER field where it's used",
+            "help": "Every field of a `Data` object is `T|Optional` — the type promises nothing is ever present; the absence belongs on the CONTAINER field where it's used",
             "type": "flag",
             "default": "true",
             "group": "php/spatie-data",
@@ -2196,7 +2203,7 @@
         },
         "sin_data-collection-type": {
             "title": "DataCollectionType",
-            "help": "A `Data` property is TYPED as `DataCollection` \u2014 it should be `array` (or `Collection`) with `#[DataCollectionOf(X)]`; the `DataCollection` type emits malformed TypeScript and skips element-typed hydration",
+            "help": "A `Data` property is TYPED as `DataCollection` — it should be `array` (or `Collection`) with `#[DataCollectionOf(X)]`; the `DataCollection` type emits malformed TypeScript and skips element-typed hydration",
             "type": "flag",
             "default": "true",
             "group": "php/spatie-data",
@@ -2222,7 +2229,7 @@
         },
         "sin_hook-missing-computed": {
             "title": "HookMissingComputed",
-            "help": "A get-only property HOOK on a `Data` class lacks `#[Computed]` \u2014 Spatie reads the virtual property as a hydration INPUT, expects it in `::from()`, and crashes or silently drops it",
+            "help": "A get-only property HOOK on a `Data` class lacks `#[Computed]` — Spatie reads the virtual property as a hydration INPUT, expects it in `::from()`, and crashes or silently drops it",
             "type": "flag",
             "default": "true",
             "group": "php/spatie-data",
@@ -2261,7 +2268,7 @@
         },
         "sin_nested-type-missing-typescript": {
             "title": "NestedTypeMissingTypeScript",
-            "help": "A `#[TypeScript]` Data has a property typed as a nested `Data` class that itself lacks `#[TypeScript]` \u2014 the transformer emits it as `undefined`, a silent hole in the generated type (a nested enum is fine; the enum collector auto-generates it)",
+            "help": "A `#[TypeScript]` Data has a property typed as a nested `Data` class that itself lacks `#[TypeScript]` — the transformer emits it as `undefined`, a silent hole in the generated type (a nested enum is fine; the enum collector auto-generates it)",
             "type": "flag",
             "default": "true",
             "group": "php/spatie-data",
@@ -2300,7 +2307,7 @@
         },
         "sin_null-to-optional-map": {
             "title": "NullToOptionalMap",
-            "help": "A producer hand-maps null\u2192`new Optional` \u2014 `$x === null ? new Optional : Foo::from($x)` or `expr() ?? new Optional` \u2014 instead of one named factory (Spatie's `optional()` maps null\u2192null, the opposite of what a `T|Optional` slot needs)",
+            "help": "A producer hand-maps null→`new Optional` — `$x === null ? new Optional : Foo::from($x)` or `expr() ?? new Optional` — instead of one named factory (Spatie's `optional()` maps null→null, the opposite of what a `T|Optional` slot needs)",
             "type": "flag",
             "default": "true",
             "group": "php/spatie-data",
@@ -2313,7 +2320,7 @@
         },
         "sin_nullable-wire-object": {
             "title": "NullableWireObject",
-            "help": "A nested object on a `#[TypeScript]` Data is typed `T | null` \u2014 it ships `null` on the wire where `T | Optional` would OMIT it (what the frontend's `x?.` reads for \"absent\")",
+            "help": "A nested object on a `#[TypeScript]` Data is typed `T | null` — it ships `null` on the wire where `T | Optional` would OMIT it (what the frontend's `x?.` reads for \"absent\")",
             "type": "flag",
             "default": "true",
             "group": "php/spatie-data",
@@ -2339,7 +2346,7 @@
         },
         "sin_data-to-array-roundtrip": {
             "title": "DataToArrayRoundtrip",
-            "help": "A `X::from(...)->toArray()` sits in a `::from` slot typed `X` that re-hydrates it \u2014 build \u2192 array \u2192 build",
+            "help": "A `X::from(...)->toArray()` sits in a `::from` slot typed `X` that re-hydrates it — build → array → build",
             "type": "flag",
             "default": "true",
             "group": "php/spatie-data-hydration",
@@ -2365,7 +2372,7 @@
         },
         "sin_hand-key-remap": {
             "title": "HandKeyRemap",
-            "help": "A `::from([...])` mechanically renames `$src['snake_key']` \u2192 `camelKey` by hand, instead of a class-level `#[MapInputName]`",
+            "help": "A `::from([...])` mechanically renames `$src['snake_key']` → `camelKey` by hand, instead of a class-level `#[MapInputName]`",
             "type": "flag",
             "default": "true",
             "group": "php/spatie-data-hydration",
@@ -2378,7 +2385,7 @@
         },
         "sin_redundant-enum-unwrap": {
             "title": "RedundantEnumUnwrap",
-            "help": "An enum is unwrapped to `->value` at a hydration site (`'status' => $order->status->value`) where the property is typed as that enum \u2014 Spatie re-casts the scalar straight back to the enum",
+            "help": "An enum is unwrapped to `->value` at a hydration site (`'status' => $order->status->value`) where the property is typed as that enum — Spatie re-casts the scalar straight back to the enum",
             "type": "flag",
             "default": "true",
             "group": "php/spatie-data-hydration",
@@ -2417,7 +2424,7 @@
         },
         "sin_feature-envy": {
             "title": "FeatureEnvy",
-            "help": "Exiled behaviour / feature envy \u2014 a method operating on ONE other owned object's internals that belongs ON that object",
+            "help": "Exiled behaviour / feature envy — a method operating on ONE other owned object's internals that belongs ON that object",
             "type": "flag",
             "default": "true",
             "group": "php/tell-dont-ask",
@@ -2430,7 +2437,7 @@
         },
         "sin_keyed-lookup-envy": {
             "title": "KeyedLookupEnvy",
-            "help": "Indirect feature envy \u2014 a method that uses an owned object's IDENTITY as a key to look up a fact about it through a collaborator",
+            "help": "Indirect feature envy — a method that uses an owned object's IDENTITY as a key to look up a fact about it through a collaborator",
             "type": "flag",
             "default": "true",
             "group": "php/tell-dont-ask",
@@ -2443,7 +2450,7 @@
         },
         "sin_train-wreck": {
             "title": "TrainWreck",
-            "help": "`$order->customer()->address()->city()` \u2014 a chain crossing three of the project's own types, so a change three objects away reaches this caller",
+            "help": "`$order->customer()->address()->city()` — a chain crossing three of the project's own types, so a change three objects away reaches this caller",
             "type": "flag",
             "default": "true",
             "group": "php/tell-dont-ask",
@@ -2456,7 +2463,7 @@
         },
         "sin_type-switch": {
             "title": "TypeSwitch",
-            "help": "two or more `instanceof` tests on the same subject deciding different branches \u2014 asking a value what it IS instead of telling it what to do",
+            "help": "two or more `instanceof` tests on the same subject deciding different branches — asking a value what it IS instead of telling it what to do",
             "type": "flag",
             "default": "true",
             "group": "php/tell-dont-ask",
@@ -2469,7 +2476,7 @@
         },
         "sin_assembled-template": {
             "title": "AssembledTemplate",
-            "help": "A multi-line template assembled as an array of line fragments and joined with a newline \u2014 the output is unreadable in the source that emits it",
+            "help": "A multi-line template assembled as an array of line fragments and joined with a newline — the output is unreadable in the source that emits it",
             "type": "flag",
             "default": "true",
             "group": "php/templates",
@@ -2482,7 +2489,7 @@
         },
         "sin_filled-parameter": {
             "title": "FilledParameter",
-            "help": "a `void` method that writes a property of an object it was handed, whose caller then reads what it handed over \u2014 the signature says the object goes in and nothing says it comes out changed",
+            "help": "a `void` method that writes a property of an object it was handed, whose caller then reads what it handed over — the signature says the object goes in and nothing says it comes out changed",
             "type": "flag",
             "default": "true",
             "group": "php/type-honesty",
@@ -2495,7 +2502,7 @@
         },
         "sin_impossible-guard": {
             "title": "ImpossibleGuard",
-            "help": "`if ($order === null)` where `$order` is typed `Order`, with no `?` \u2014 one of the two is wrong, and both are worth knowing",
+            "help": "`if ($order === null)` where `$order` is typed `Order`, with no `?` — one of the two is wrong, and both are worth knowing",
             "type": "flag",
             "default": "true",
             "group": "php/type-honesty",
@@ -2508,7 +2515,7 @@
         },
         "sin_masked-invariant": {
             "title": "MaskedInvariant",
-            "help": "Masked invariant \u2014 an own field read as `?->\u2026 ?? <fake literal>`, even though the very operation sets that field first, so the fallback only ever answers an impossible \"not set yet\".",
+            "help": "Masked invariant — an own field read as `?->… ?? <fake literal>`, even though the very operation sets that field first, so the fallback only ever answers an impossible \"not set yet\".",
             "type": "flag",
             "default": "true",
             "group": "php/type-honesty",
@@ -2521,7 +2528,7 @@
         },
         "sin_phantom-nullable": {
             "title": "PhantomNullable",
-            "help": "Phantom nullable \u2014 a field typed `?T` (promoted param or declared property, any class) whose value, traced through the whole program, is always read as present and NEVER guarded, so the null never happens",
+            "help": "Phantom nullable — a field typed `?T` (promoted param or declared property, any class) whose value, traced through the whole program, is always read as present and NEVER guarded, so the null never happens",
             "type": "flag",
             "default": "true",
             "group": "php/type-honesty",
@@ -2534,7 +2541,7 @@
         },
         "sin_placeholder-filled-data": {
             "title": "PlaceholderFilledData",
-            "help": "A required non-nullable `string` slot handed `''` \u2014 the type promises a value that is always there and the caller has none",
+            "help": "A required non-nullable `string` slot handed `''` — the type promises a value that is always there and the caller has none",
             "type": "flag",
             "default": "true",
             "group": "php/type-honesty",
@@ -2547,7 +2554,7 @@
         },
         "sin_redundant-arrow-return-type": {
             "title": "RedundantArrowReturnType",
-            "help": "An arrow function whose return type only repeats what its one expression provably yields \u2014 `fn (): string => $this->name` on a `string` property",
+            "help": "An arrow function whose return type only repeats what its one expression provably yields — `fn (): string => $this->name` on a `string` property",
             "type": "flag",
             "default": "true",
             "group": "php/type-honesty",
@@ -2560,7 +2567,7 @@
         },
         "sin_scratch-state-restore": {
             "title": "ScratchStateRestore",
-            "help": "Scratch state on `$this` \u2014 a method that saves one of its own fields to a local and restores it (`$prev = $this->scope; \u2026 $this->scope = $prev`), the field really a per-call input",
+            "help": "Scratch state on `$this` — a method that saves one of its own fields to a local and restores it (`$prev = $this->scope; … $this->scope = $prev`), the field really a per-call input",
             "type": "flag",
             "default": "true",
             "group": "php/type-honesty",
@@ -2573,7 +2580,7 @@
         },
         "sin_useless-property-hook": {
             "title": "UselessPropertyHook",
-            "help": "A `get` hook that reads nothing from `$this` \u2014 a stored property wearing computed syntax",
+            "help": "A `get` hook that reads nothing from `$this` — a stored property wearing computed syntax",
             "type": "flag",
             "default": "true",
             "group": "php/type-honesty",
@@ -2586,7 +2593,7 @@
         },
         "sin_array-bag": {
             "title": "ArrayBag",
-            "help": "String-indexing (`$arr['key']`) a structured array param instead of giving it a name \u2014 the type was never defined.",
+            "help": "String-indexing (`$arr['key']`) a structured array param instead of giving it a name — the type was never defined.",
             "type": "flag",
             "default": "true",
             "group": "php/value-objects",
@@ -2612,7 +2619,7 @@
         },
         "sin_coupled-fields": {
             "title": "CoupledFields",
-            "help": "A class's own fields always change and get checked together \u2014 one concept split across several fields \u2014 and should be folded into a single value object.",
+            "help": "A class's own fields always change and get checked together — one concept split across several fields — and should be folded into a single value object.",
             "type": "flag",
             "default": "true",
             "group": "php/value-objects",
@@ -2625,7 +2632,7 @@
         },
         "sin_data-clump": {
             "title": "DataClump",
-            "help": "The same 3+ scalar params threaded through 2+ classes (a recurring data clump \u2192 one object)",
+            "help": "The same 3+ scalar params threaded through 2+ classes (a recurring data clump → one object)",
             "type": "flag",
             "default": "true",
             "group": "php/value-objects",
@@ -2664,7 +2671,7 @@
         },
         "sin_mutable-value-object": {
             "title": "MutableValueObject",
-            "help": "A value type that mutates its own field after construction, so two things holding what should be the same value can end up different \u2014 one changes without the other knowing.",
+            "help": "A value type that mutates its own field after construction, so two things holding what should be the same value can end up different — one changes without the other knowing.",
             "type": "flag",
             "default": "true",
             "group": "php/value-objects",
@@ -2677,7 +2684,7 @@
         },
         "sin_positional-tuple-return": {
             "title": "PositionalTupleReturn",
-            "help": "Returning a positional TUPLE \u2014 `return [$node, $key, $inputs, $outputs]` \u2014 bundling independent values as a keyless list the caller destructures by position",
+            "help": "Returning a positional TUPLE — `return [$node, $key, $inputs, $outputs]` — bundling independent values as a keyless list the caller destructures by position",
             "type": "flag",
             "default": "true",
             "group": "php/value-objects",
@@ -2703,7 +2710,7 @@
         },
         "sin_python-blank-string-default": {
             "title": "BlankStringDefault",
-            "help": "`x: str = \"\"` standing in for absence \u2014 then asked `x == \"\"`, `not x` or `if x:` in its own scope",
+            "help": "`x: str = \"\"` standing in for absence — then asked `x == \"\"`, `not x` or `if x:` in its own scope",
             "type": "flag",
             "default": "true",
             "group": "python/absence",
@@ -2716,7 +2723,7 @@
         },
         "sin_python-cancelled-fallback": {
             "title": "CancelledFallback",
-            "help": "`(x or \"\") != \"\"` \u2014 a value defaulted to a blank only to be compared against that same blank, so a missing value and an empty one are treated the same without saying so.",
+            "help": "`(x or \"\") != \"\"` — a value defaulted to a blank only to be compared against that same blank, so a missing value and an empty one are treated the same without saying so.",
             "type": "flag",
             "default": "true",
             "group": "python/absence",
@@ -2729,7 +2736,7 @@
         },
         "sin_python-conditional-spread": {
             "title": "ConditionalSpread",
-            "help": "`**({\"k\": v} if v else {})` / `*([x] if x else [])` \u2014 an entry is spread in only when present, using a conditional that turns absence into an empty collection.",
+            "help": "`**({\"k\": v} if v else {})` / `*([x] if x else [])` — an entry is spread in only when present, using a conditional that turns absence into an empty collection.",
             "type": "flag",
             "default": "true",
             "group": "python/absence",
@@ -2742,7 +2749,7 @@
         },
         "sin_python-de-nulled-finder": {
             "title": "DeNulledFinder",
-            "help": "a def annotated `X | None` whose every caller, two or more of them, turns the None into a failure where it stands \u2014 asserting it, raising on it, or reading straight through it",
+            "help": "a def annotated `X | None` whose every caller, two or more of them, turns the None into a failure where it stands — asserting it, raising on it, or reading straight through it",
             "type": "flag",
             "default": "true",
             "group": "python/absence",
@@ -2755,7 +2762,7 @@
         },
         "sin_python-invented-default": {
             "title": "InventedDefault",
-            "help": "`f(x or \"\")` \u2014 an empty string, `0` or `False` invented to fill an argument when the value is missing, a stand-in the callee cannot tell from real data",
+            "help": "`f(x or \"\")` — an empty string, `0` or `False` invented to fill an argument when the value is missing, a stand-in the callee cannot tell from real data",
             "type": "flag",
             "default": "true",
             "group": "python/absence",
@@ -2768,7 +2775,7 @@
         },
         "sin_python-nullable-callback": {
             "title": "NullableCallback",
-            "help": "`cb: Callable | None = None` asked `if cb is not None:` / `if cb:` / `cb or \u2026` in the body \u2014 a no-op treated as if it might be missing.",
+            "help": "`cb: Callable | None = None` asked `if cb is not None:` / `if cb:` / `cb or …` in the body — a no-op treated as if it might be missing.",
             "type": "flag",
             "default": "true",
             "group": "python/absence",
@@ -2781,7 +2788,7 @@
         },
         "sin_python-flag-argument": {
             "title": "FlagArgument",
-            "help": "a function whose whole body branches on a `bool` parameter \u2014 or on whether an optional one was given \u2014 two functions sharing one name",
+            "help": "a function whose whole body branches on a `bool` parameter — or on whether an optional one was given — two functions sharing one name",
             "type": "flag",
             "default": "true",
             "group": "python/behaviour-per-method",
@@ -2794,7 +2801,7 @@
         },
         "sin_python-member-after-method": {
             "title": "MemberAfterMethod",
-            "help": "a constant, class attribute or field declared below a method \u2014 the class's state hidden among its behaviour",
+            "help": "a constant, class attribute or field declared below a method — the class's state hidden among its behaviour",
             "type": "flag",
             "default": "true",
             "group": "python/class-layout",
@@ -2807,7 +2814,7 @@
         },
         "sin_python-member-out-of-order": {
             "title": "MemberOutOfOrder",
-            "help": "a constant declared below a field in the head of a class \u2014 the inventory read in an ad-hoc order",
+            "help": "a constant declared below a field in the head of a class — the inventory read in an ad-hoc order",
             "type": "flag",
             "default": "true",
             "group": "python/class-layout",
@@ -2820,7 +2827,7 @@
         },
         "sin_python-namespace-cycle": {
             "title": "NamespaceCycle",
-            "help": "two of the project's packages import each other \u2014 a cycle that makes them one package split under two names.",
+            "help": "two of the project's packages import each other — a cycle that makes them one package split under two names.",
             "type": "flag",
             "default": "true",
             "group": "python/dependency-direction",
@@ -2846,7 +2853,7 @@
         },
         "sin_python-archaeology-comment": {
             "title": "ArchaeologyComment",
-            "help": "a comment or docstring narrating the code's history \u2014 where it lived, what it replaced, what it no longer is",
+            "help": "a comment or docstring narrating the code's history — where it lived, what it replaced, what it no longer is",
             "type": "flag",
             "default": "true",
             "group": "python/documentation",
@@ -2859,7 +2866,7 @@
         },
         "sin_python-bloated-docblock": {
             "title": "BloatedDocblock",
-            "help": "a class docstring of two or more paragraphs of prose \u2014 an essay that says the class does too much",
+            "help": "a class docstring of two or more paragraphs of prose — an essay that says the class does too much",
             "type": "flag",
             "default": "true",
             "group": "python/documentation",
@@ -2872,7 +2879,7 @@
         },
         "sin_python-ceremony-docblock": {
             "title": "CeremonyDocblock",
-            "help": "a docstring with no summary whose every entry restates the annotated signature \u2014 `order (Order):`, `:rtype: int`",
+            "help": "a docstring with no summary whose every entry restates the annotated signature — `order (Order):`, `:rtype: int`",
             "type": "flag",
             "default": "true",
             "group": "python/documentation",
@@ -2898,7 +2905,7 @@
         },
         "sin_python-negative-space-comment": {
             "title": "NegativeSpaceComment",
-            "help": "a comment or docstring defending the code against a misunderstanding nobody actually had \u2014 what it is not, rather than what it is.",
+            "help": "a comment or docstring defending the code against a misunderstanding nobody actually had — what it is not, rather than what it is.",
             "type": "flag",
             "default": "true",
             "group": "python/documentation",
@@ -2911,7 +2918,7 @@
         },
         "sin_python-restated-comment": {
             "title": "RestatedComment",
-            "help": "a `#` comment that only narrates the statement below it \u2014 every word of it already spelled by the code",
+            "help": "a `#` comment that only narrates the statement below it — every word of it already spelled by the code",
             "type": "flag",
             "default": "true",
             "group": "python/documentation",
@@ -2924,7 +2931,7 @@
         },
         "sin_duplicate-python-function": {
             "title": "DuplicateFunction",
-            "help": "Copy-pasted code \u2014 two+ Python functions or methods with an identical body, formatting, comments and docstrings aside",
+            "help": "Copy-pasted code — two+ Python functions or methods with an identical body, formatting, comments and docstrings aside",
             "type": "flag",
             "default": "true",
             "group": "python/duplication",
@@ -2937,7 +2944,7 @@
         },
         "sin_near-duplicate-python-function": {
             "title": "NearDuplicateFunction",
-            "help": "A near-copy \u2014 two+ Python functions or methods with one control-flow skeleton that differ only in their local names or the literals they use (a path, a key, a message)",
+            "help": "A near-copy — two+ Python functions or methods with one control-flow skeleton that differ only in their local names or the literals they use (a path, a key, a message)",
             "type": "flag",
             "default": "true",
             "group": "python/duplication",
@@ -2950,7 +2957,7 @@
         },
         "sin_python-constant-class-enum": {
             "title": "ConstantClassEnum",
-            "help": "a class that is nothing but `PENDING = \"pending\"` constants \u2014 a closed set of values written out by hand instead of an `Enum`",
+            "help": "a class that is nothing but `PENDING = \"pending\"` constants — a closed set of values written out by hand instead of an `Enum`",
             "type": "flag",
             "default": "true",
             "group": "python/enums",
@@ -2963,7 +2970,7 @@
         },
         "sin_python-enum-case-or-chain": {
             "title": "EnumCaseOrChain",
-            "help": "`s == Status.PENDING or s == Status.LATE` \u2014 a group of an enum's members re-derived at the call site instead of named on the enum",
+            "help": "`s == Status.PENDING or s == Status.LATE` — a group of an enum's members re-derived at the call site instead of named on the enum",
             "type": "flag",
             "default": "true",
             "group": "python/enums",
@@ -2976,7 +2983,7 @@
         },
         "sin_python-enum-value-match": {
             "title": "EnumValueMatch",
-            "help": "`match status.value: case \"paid\": \u2026` at a call site \u2014 the enum's raw values matched again where the enum could answer",
+            "help": "`match status.value: case \"paid\": …` at a call site — the enum's raw values matched again where the enum could answer",
             "type": "flag",
             "default": "true",
             "group": "python/enums",
@@ -2989,7 +2996,7 @@
         },
         "sin_python-in-literals-mirrors-enum": {
             "title": "InLiteralsMirrorsEnum",
-            "help": "`x in (\"pending\", \"late\")` whose literals are an existing enum's values \u2014 a group of its members spelled as raw strings at the call site",
+            "help": "`x in (\"pending\", \"late\")` whose literals are an existing enum's values — a group of its members spelled as raw strings at the call site",
             "type": "flag",
             "default": "true",
             "group": "python/enums",
@@ -3002,7 +3009,7 @@
         },
         "sin_python-match-wildcard-returns-none": {
             "title": "MatchWildcardReturnsNone",
-            "help": "a `match` over an enum's members whose `case _:` returns `None` \u2014 a member nobody handled answers nothing instead of failing",
+            "help": "a `match` over an enum's members whose `case _:` returns `None` — a member nobody handled answers nothing instead of failing",
             "type": "flag",
             "default": "true",
             "group": "python/enums",
@@ -3015,7 +3022,7 @@
         },
         "sin_python-string-match-mirrors-enum": {
             "title": "StringMatchMirrorsEnum",
-            "help": "`match raw: case \"pending\": \u2026` whose cases are an existing enum's values \u2014 dispatching on loose strings the enum already seals",
+            "help": "`match raw: case \"pending\": …` whose cases are an existing enum's values — dispatching on loose strings the enum already seals",
             "type": "flag",
             "default": "true",
             "group": "python/enums",
@@ -3028,7 +3035,7 @@
         },
         "sin_python-unnamed-vocabulary-literal": {
             "title": "UnnamedVocabularyLiteral",
-            "help": "a raw string handed to a parameter the codebase elsewhere fills from a named constant \u2014 `expect(\"{\")` beside `expect(Token.COLON)`, where `Token.BRACE_OPEN` already names it",
+            "help": "a raw string handed to a parameter the codebase elsewhere fills from a named constant — `expect(\"{\")` beside `expect(Token.COLON)`, where `Token.BRACE_OPEN` already names it",
             "type": "flag",
             "default": "true",
             "group": "python/enums",
@@ -3041,7 +3048,7 @@
         },
         "sin_python-message-string-raise": {
             "title": "MessageStringRaise",
-            "help": "`raise Exception/RuntimeError(\"\u2026\")` \u2014 a failure that names nothing, described in prose at the raise site",
+            "help": "`raise Exception/RuntimeError(\"…\")` — a failure that names nothing, described in prose at the raise site",
             "type": "flag",
             "default": "true",
             "group": "python/exceptions",
@@ -3054,7 +3061,7 @@
         },
         "sin_python-raise-without-cause": {
             "title": "RaiseWithoutCause",
-            "help": "`raise Other(...)` inside an `except` block with no `from` \u2014 the failure being handled left as an implicit context, never named as the cause",
+            "help": "`raise Other(...)` inside an `except` block with no `from` — the failure being handled left as an implicit context, never named as the cause",
             "type": "flag",
             "default": "true",
             "group": "python/exceptions",
@@ -3067,7 +3074,7 @@
         },
         "sin_python-rethrown-unchanged": {
             "title": "RethrownUnchanged",
-            "help": "an `except` whose whole body is `raise` or `raise error` \u2014 the clause catches the failure, adds nothing to it and hands it back on, which is what writing no clause does",
+            "help": "an `except` whose whole body is `raise` or `raise error` — the clause catches the failure, adds nothing to it and hands it back on, which is what writing no clause does",
             "type": "flag",
             "default": "true",
             "group": "python/exceptions",
@@ -3080,7 +3087,7 @@
         },
         "sin_python-swallowed-exception": {
             "title": "SwallowedException",
-            "help": "A bare `except:` or `except Exception` whose body only passes, continues or returns nothing \u2014 every failure, expected or not, made to vanish",
+            "help": "A bare `except:` or `except Exception` whose body only passes, continues or returns nothing — every failure, expected or not, made to vanish",
             "type": "flag",
             "default": "true",
             "group": "python/exceptions",
@@ -3093,7 +3100,7 @@
         },
         "sin_python-blocked-await": {
             "title": "BlockedAwait",
-            "help": "`time.sleep`, `requests.get` or `subprocess.run` inside an `async def` \u2014 the thread it stops is the event loop, so every coroutine waiting on it stops too",
+            "help": "`time.sleep`, `requests.get` or `subprocess.run` inside an `async def` — the thread it stops is the event loop, so every coroutine waiting on it stops too",
             "type": "flag",
             "default": "true",
             "group": "python/fix-at-the-source",
@@ -3106,7 +3113,7 @@
         },
         "sin_python-constructor-side-effect": {
             "title": "ConstructorSideEffect",
-            "help": "an `__init__` that tells a collaborator to act and throws the answer away \u2014 merely building the object has an effect outside it.",
+            "help": "an `__init__` that tells a collaborator to act and throws the answer away — merely building the object has an effect outside it.",
             "type": "flag",
             "default": "true",
             "group": "python/fix-at-the-source",
@@ -3119,7 +3126,7 @@
         },
         "sin_python-divergent-twin": {
             "title": "DivergentTwin",
-            "help": "two functions do the same job, but one of them skips a step the other takes \u2014 usually a fix made in one copy and forgotten in the other.",
+            "help": "two functions do the same job, but one of them skips a step the other takes — usually a fix made in one copy and forgotten in the other.",
             "type": "flag",
             "default": "true",
             "group": "python/fix-at-the-source",
@@ -3132,7 +3139,7 @@
         },
         "sin_python-frozen-default": {
             "title": "FrozenDefault",
-            "help": "a parameter defaulted to `datetime.now()`, `uuid4()` or another call that answers differently each time \u2014 it runs once when the def is defined, so every call that omits it gets the moment the module was imported",
+            "help": "a parameter defaulted to `datetime.now()`, `uuid4()` or another call that answers differently each time — it runs once when the def is defined, so every call that omits it gets the moment the module was imported",
             "type": "flag",
             "default": "true",
             "group": "python/fix-at-the-source",
@@ -3145,7 +3152,7 @@
         },
         "sin_python-mutable-default": {
             "title": "MutableDefault",
-            "help": "a parameter defaulted to a `[]`, `{}` or `set()` \u2014 one container, made once, shared by every call that omits it",
+            "help": "a parameter defaulted to a `[]`, `{}` or `set()` — one container, made once, shared by every call that omits it",
             "type": "flag",
             "default": "true",
             "group": "python/fix-at-the-source",
@@ -3158,7 +3165,7 @@
         },
         "sin_python-mutable-static-state": {
             "title": "MutableStaticState",
-            "help": "a `global` written from a function, or a class attribute set from a method \u2014 state no instance owns, changed by whoever ran last",
+            "help": "a `global` written from a function, or a class attribute set from a method — state no instance owns, changed by whoever ran last",
             "type": "flag",
             "default": "true",
             "group": "python/fix-at-the-source",
@@ -3171,7 +3178,7 @@
         },
         "sin_python-unread-collaborator": {
             "title": "UnreadCollaborator",
-            "help": "a collaborator `__init__` keeps as an attribute of its own, `self._mailer = mailer`, that nothing anywhere reads \u2014 the class asks for something it does not use",
+            "help": "a collaborator `__init__` keeps as an attribute of its own, `self._mailer = mailer`, that nothing anywhere reads — the class asks for something it does not use",
             "type": "flag",
             "default": "true",
             "group": "python/fix-at-the-source",
@@ -3184,7 +3191,7 @@
         },
         "sin_deep-python-nesting": {
             "title": "DeepNesting",
-            "help": "An `if`, loop or `match` opening a fourth level of choices inside one Python function \u2014 an arrow of conditions and loops",
+            "help": "An `if`, loop or `match` opening a fourth level of choices inside one Python function — an arrow of conditions and loops",
             "type": "flag",
             "default": "true",
             "group": "python/flow",
@@ -3197,7 +3204,7 @@
         },
         "sin_python-coalesced-loop-subject": {
             "title": "CoalescedLoopSubject",
-            "help": "`for x in d.get(k, [])` / `for x in y or []` over a parameter \u2014 whether the caller handed anything over, decided in the loop header instead of stated as a guard",
+            "help": "`for x in d.get(k, [])` / `for x in y or []` over a parameter — whether the caller handed anything over, decided in the loop header instead of stated as a guard",
             "type": "flag",
             "default": "true",
             "group": "python/flow",
@@ -3210,7 +3217,7 @@
         },
         "sin_python-collection-mutated-while-iterated": {
             "title": "CollectionMutatedWhileIterated",
-            "help": "a loop that appends to, removes from or deletes out of the very collection it walks \u2014 the iterator reads a sequence that moved under it, so an element is skipped or it raises",
+            "help": "a loop that appends to, removes from or deletes out of the very collection it walks — the iterator reads a sequence that moved under it, so an element is skipped or it raises",
             "type": "flag",
             "default": "true",
             "group": "python/flow",
@@ -3223,7 +3230,7 @@
         },
         "sin_python-conditional-statement": {
             "title": "ConditionalStatement",
-            "help": "a bare `a() if x else b()` statement \u2014 a conditional expression whose value nothing reads, so it chooses an action, not a value.",
+            "help": "a bare `a() if x else b()` statement — a conditional expression whose value nothing reads, so it chooses an action, not a value.",
             "type": "flag",
             "default": "true",
             "group": "python/flow",
@@ -3236,7 +3243,7 @@
         },
         "sin_python-loop-wrapped-in-if": {
             "title": "LoopWrappedInIf",
-            "help": "A `for` or `while` whose whole body is one `if` (no `else`) around real work \u2014 the iteration pushed a level deep behind a condition",
+            "help": "A `for` or `while` whose whole body is one `if` (no `else`) around real work — the iteration pushed a level deep behind a condition",
             "type": "flag",
             "default": "true",
             "group": "python/flow",
@@ -3249,7 +3256,7 @@
         },
         "sin_python-nested-conditional": {
             "title": "NestedConditional",
-            "help": "`a if x else b if y else c` \u2014 a conditional expression inside another's branch, a branching decision folded into one line",
+            "help": "`a if x else b if y else c` — a conditional expression inside another's branch, a branching decision folded into one line",
             "type": "flag",
             "default": "true",
             "group": "python/flow",
@@ -3262,7 +3269,7 @@
         },
         "sin_python-short-circuit-statement": {
             "title": "ShortCircuitStatement",
-            "help": "a bare `a and b()` or `a or b()` statement \u2014 an `and`/`or` whose value nothing reads, so the operator is really acting as an `if`.",
+            "help": "a bare `a and b()` or `a or b()` statement — an `and`/`or` whose value nothing reads, so the operator is really acting as an `if`.",
             "type": "flag",
             "default": "true",
             "group": "python/flow",
@@ -3275,7 +3282,7 @@
         },
         "sin_python-subject-ladder": {
             "title": "SubjectLadder",
-            "help": "An `if`/`elif` chain of four or more rungs that each test the same subject for equality with a constant \u2014 a dispatch written as a ladder.",
+            "help": "An `if`/`elif` chain of four or more rungs that each test the same subject for equality with a constant — a dispatch written as a ladder.",
             "type": "flag",
             "default": "true",
             "group": "python/flow",
@@ -3288,7 +3295,7 @@
         },
         "sin_python-unnamed-condition": {
             "title": "UnnamedCondition",
-            "help": "`if settings.auto and not self.said and event.at > self.since:` \u2014 three parts over two objects, so the reader works out what the condition MEANS instead of reading it",
+            "help": "`if settings.auto and not self.said and event.at > self.since:` — three parts over two objects, so the reader works out what the condition MEANS instead of reading it",
             "type": "flag",
             "default": "true",
             "group": "python/flow",
@@ -3301,7 +3308,7 @@
         },
         "sin_redundant-python-else": {
             "title": "RedundantElse",
-            "help": "An `else:` after an `if` branch that already left \u2014 it ends in `return`, `raise`, `continue` or `break` \u2014 indenting the rest of the function for nothing",
+            "help": "An `else:` after an `if` branch that already left — it ends in `return`, `raise`, `continue` or `break` — indenting the rest of the function for nothing",
             "type": "flag",
             "default": "true",
             "group": "python/flow",
@@ -3314,7 +3321,7 @@
         },
         "sin_python-bare-state-predicate": {
             "title": "BareStatePredicate",
-            "help": "a `bool` about the object's own state named as a bare verb \u2014 `binds()`, `spins` \u2014 where a question belongs",
+            "help": "a `bool` about the object's own state named as a bare verb — `binds()`, `spins` — where a question belongs",
             "type": "flag",
             "default": "true",
             "group": "python/method-mood",
@@ -3327,7 +3334,7 @@
         },
         "sin_python-narrated-command": {
             "title": "NarratedCommand",
-            "help": "a command named in the third person \u2014 `hides()`, `locks_for_night()` \u2014 where a call is an order, not a description of one",
+            "help": "a command named in the third person — `hides()`, `locks_for_night()` — where a call is an order, not a description of one",
             "type": "flag",
             "default": "true",
             "group": "python/method-mood",
@@ -3340,7 +3347,7 @@
         },
         "sin_python-computed-boolean-argument": {
             "title": "ComputedBooleanArgument",
-            "help": "a method taking only bools that every caller computes from the same object \u2014 the decision re-derived at each call site",
+            "help": "a method taking only bools that every caller computes from the same object — the decision re-derived at each call site",
             "type": "flag",
             "default": "true",
             "group": "python/pass-the-object",
@@ -3353,7 +3360,7 @@
         },
         "sin_python-converted-argument": {
             "title": "ConvertedArgument",
-            "help": "a scalar parameter its callers keep filling with the same conversion \u2014 `receipt_for(str(order.id))` call after call \u2014 because it asks for the converted form instead of the value",
+            "help": "a scalar parameter its callers keep filling with the same conversion — `receipt_for(str(order.id))` call after call — because it asks for the converted form instead of the value",
             "type": "flag",
             "default": "true",
             "group": "python/pass-the-object",
@@ -3366,7 +3373,7 @@
         },
         "sin_python-derived-argument": {
             "title": "DerivedArgument",
-            "help": "a call that hands over an object and a projection of it \u2014 `persist(request, request.channel_id)` \u2014 or an object in three pieces, where the function could read them itself",
+            "help": "a call that hands over an object and a projection of it — `persist(request, request.channel_id)` — or an object in three pieces, where the function could read them itself",
             "type": "flag",
             "default": "true",
             "group": "python/pass-the-object",
@@ -3379,7 +3386,7 @@
         },
         "sin_python-param-resolved-from-param": {
             "title": "ParamResolvedFromParam",
-            "help": "a function that takes a container and a key and first resolves one against the other \u2014 `def rename(workflow, node_id)` doing `workflow.graph.node(node_id)` \u2014 when it only wanted what the key names",
+            "help": "a function that takes a container and a key and first resolves one against the other — `def rename(workflow, node_id)` doing `workflow.graph.node(node_id)` — when it only wanted what the key names",
             "type": "flag",
             "default": "true",
             "group": "python/pass-the-object",
@@ -3392,7 +3399,7 @@
         },
         "sin_python-repeated-guard": {
             "title": "RepeatedGuard",
-            "help": "the same compound `and` condition recurs in 2+ places \u2014 it still counts even when reordered, or read through a local variable \u2014 and nobody has named it.",
+            "help": "the same compound `and` condition recurs in 2+ places — it still counts even when reordered, or read through a local variable — and nobody has named it.",
             "type": "flag",
             "default": "true",
             "group": "python/repeated-call-helper",
@@ -3405,7 +3412,7 @@
         },
         "sin_python-repeated-named-call": {
             "title": "RepeatedNamedCall",
-            "help": "the same `**changes` call is built the same way with the same keyword at 2+ sites \u2014 an operation that has no name on the type it belongs to.",
+            "help": "the same `**changes` call is built the same way with the same keyword at 2+ sites — an operation that has no name on the type it belongs to.",
             "type": "flag",
             "default": "true",
             "group": "python/repeated-call-helper",
@@ -3418,7 +3425,7 @@
         },
         "sin_python-repeated-type-guard": {
             "title": "RepeatedTypeGuard",
-            "help": "the same multi-`isinstance` narrowing (`isinstance(x, A) and isinstance(x.y, B)`) is written in 2+ places \u2014 a check on a shape that nobody has named.",
+            "help": "the same multi-`isinstance` narrowing (`isinstance(x, A) and isinstance(x.y, B)`) is written in 2+ places — a check on a shape that nobody has named.",
             "type": "flag",
             "default": "true",
             "group": "python/repeated-call-helper",
@@ -3431,7 +3438,7 @@
         },
         "sin_python-nullable-registry-lookup": {
             "title": "NullableRegistryLookup",
-            "help": "a keyed store handing back `None` for a key it lacks \u2014 `return self._handlers.get(kind)` \u2014 so every caller decides what a miss means",
+            "help": "a keyed store handing back `None` for a key it lacks — `return self._handlers.get(kind)` — so every caller decides what a miss means",
             "type": "flag",
             "default": "true",
             "group": "python/role-vocabulary",
@@ -3444,7 +3451,7 @@
         },
         "sin_python-feature-envy": {
             "title": "FeatureEnvy",
-            "help": "a method that loops another object's collection or writes its fields, reaching into it more than into its own state \u2014 behaviour exiled from the object it works on",
+            "help": "a method that loops another object's collection or writes its fields, reaching into it more than into its own state — behaviour exiled from the object it works on",
             "type": "flag",
             "default": "true",
             "group": "python/tell-dont-ask",
@@ -3457,7 +3464,7 @@
         },
         "sin_python-keyed-lookup-envy": {
             "title": "KeyedLookupEnvy",
-            "help": "a method that uses an object's key to fetch a fact about it through a collaborator \u2014 `self.registry.get(node.key).reserved` \u2014 treating the object as a key into its own data",
+            "help": "a method that uses an object's key to fetch a fact about it through a collaborator — `self.registry.get(node.key).reserved` — treating the object as a key into its own data",
             "type": "flag",
             "default": "true",
             "group": "python/tell-dont-ask",
@@ -3483,7 +3490,7 @@
         },
         "sin_python-type-switch": {
             "title": "TypeSwitch",
-            "help": "an `isinstance` ladder over classes the codebase owns \u2014 the value is asked what it is so the caller can decide what to do.",
+            "help": "an `isinstance` ladder over classes the codebase owns — the value is asked what it is so the caller can decide what to do.",
             "type": "flag",
             "default": "true",
             "group": "python/tell-dont-ask",
@@ -3509,7 +3516,7 @@
         },
         "sin_python-constant-property": {
             "title": "ConstantProperty",
-            "help": "an `@property` whose body never reads `self` \u2014 `return \"box\"` \u2014 a stored value made to look like a computed one.",
+            "help": "an `@property` whose body never reads `self` — `return \"box\"` — a stored value made to look like a computed one.",
             "type": "flag",
             "default": "true",
             "group": "python/type-honesty",
@@ -3522,7 +3529,7 @@
         },
         "sin_python-filled-parameter": {
             "title": "FilledParameter",
-            "help": "a def returning `None` that writes an attribute of an object it was handed, whose caller then reads what it handed over \u2014 the signature says the object goes in and nothing says it comes out changed",
+            "help": "a def returning `None` that writes an attribute of an object it was handed, whose caller then reads what it handed over — the signature says the object goes in and nothing says it comes out changed",
             "type": "flag",
             "default": "true",
             "group": "python/type-honesty",
@@ -3535,7 +3542,7 @@
         },
         "sin_python-impossible-guard": {
             "title": "ImpossibleGuard",
-            "help": "`if order is None` where `order` is annotated as a class with no `| None` \u2014 one of the two is wrong, and both are worth knowing",
+            "help": "`if order is None` where `order` is annotated as a class with no `| None` — one of the two is wrong, and both are worth knowing",
             "type": "flag",
             "default": "true",
             "group": "python/type-honesty",
@@ -3548,7 +3555,7 @@
         },
         "sin_python-masked-invariant": {
             "title": "MaskedInvariant",
-            "help": "a literal answering for the object's own scratch state \u2014 `self.period.includes(day) if self.period else False` \u2014 where the field is only unset because an operation sets it part-way",
+            "help": "a literal answering for the object's own scratch state — `self.period.includes(day) if self.period else False` — where the field is only unset because an operation sets it part-way",
             "type": "flag",
             "default": "true",
             "group": "python/type-honesty",
@@ -3561,7 +3568,7 @@
         },
         "sin_python-phantom-nullable": {
             "title": "PhantomNullable",
-            "help": "a field annotated `X | None` that every read assumes is there and none guards \u2014 a `None` the design never has",
+            "help": "a field annotated `X | None` that every read assumes is there and none guards — a `None` the design never has",
             "type": "flag",
             "default": "true",
             "group": "python/type-honesty",
@@ -3574,7 +3581,7 @@
         },
         "sin_python-placeholder-filled-data": {
             "title": "PlaceholderFilledData",
-            "help": "`Card(title=\u2026, body=\"\")` \u2014 a dataclass field required as `str` handed the blank to satisfy the signature, a value the type cannot catch",
+            "help": "`Card(title=…, body=\"\")` — a dataclass field required as `str` handed the blank to satisfy the signature, a value the type cannot catch",
             "type": "flag",
             "default": "true",
             "group": "python/type-honesty",
@@ -3587,7 +3594,7 @@
         },
         "sin_python-scratch-state-restore": {
             "title": "ScratchStateRestore",
-            "help": "`previous = self.scope \u2026 self.scope = previous` \u2014 an attribute used as per-call scratch, saved and restored around the call",
+            "help": "`previous = self.scope … self.scope = previous` — an attribute used as per-call scratch, saved and restored around the call",
             "type": "flag",
             "default": "true",
             "group": "python/type-honesty",
@@ -3600,7 +3607,7 @@
         },
         "sin_python-coupled-fields": {
             "title": "CoupledFields",
-            "help": "a class whose own fields always travel together \u2014 assembled into one value again and again, guarded together, or one copying a sibling field's value \u2014 one concept held as several fields.",
+            "help": "a class whose own fields always travel together — assembled into one value again and again, guarded together, or one copying a sibling field's value — one concept held as several fields.",
             "type": "flag",
             "default": "true",
             "group": "python/value-objects",
@@ -3613,7 +3620,7 @@
         },
         "sin_python-data-clump": {
             "title": "DataClump",
-            "help": "The same three or more scalar parameters (`street: str, city: str, postcode: str`) threaded through functions in two or more classes or modules \u2014 one concept with no type of its own.",
+            "help": "The same three or more scalar parameters (`street: str, city: str, postcode: str`) threaded through functions in two or more classes or modules — one concept with no type of its own.",
             "type": "flag",
             "default": "true",
             "group": "python/value-objects",
@@ -3626,7 +3633,7 @@
         },
         "sin_python-dict-bag": {
             "title": "DictBag",
-            "help": "A parameter typed as a dict read by string keys \u2014 `row[\"sku\"]`, `row.get(\"quantity\")` \u2014 a record nobody declared",
+            "help": "A parameter typed as a dict read by string keys — `row[\"sku\"]`, `row.get(\"quantity\")` — a record nobody declared",
             "type": "flag",
             "default": "true",
             "group": "python/value-objects",
@@ -3639,7 +3646,7 @@
         },
         "sin_python-dict-return-bag": {
             "title": "DictReturnBag",
-            "help": "`return {\"total\": \u2026, \"tax\": \u2026}` \u2014 a record of several fields handed back as a dict its callers read by string key",
+            "help": "`return {\"total\": …, \"tax\": …}` — a record of several fields handed back as a dict its callers read by string key",
             "type": "flag",
             "default": "true",
             "group": "python/value-objects",
@@ -3652,7 +3659,7 @@
         },
         "sin_python-hand-rolled-replace": {
             "title": "HandRolledReplace",
-            "help": "`return Order(self.number, self.lines, self.note, \"paid\")` in a dataclass \u2014 every field re-listed to change one",
+            "help": "`return Order(self.number, self.lines, self.note, \"paid\")` in a dataclass — every field re-listed to change one",
             "type": "flag",
             "default": "true",
             "group": "python/value-objects",
@@ -3665,7 +3672,7 @@
         },
         "sin_python-handed-out-collection": {
             "title": "HandedOutCollection",
-            "help": "a getter whose whole body returns the class's own `list`, `dict` or `set`, untouched \u2014 every caller holds the insides and may add to or take from them without the class knowing",
+            "help": "a getter whose whole body returns the class's own `list`, `dict` or `set`, untouched — every caller holds the insides and may add to or take from them without the class knowing",
             "type": "flag",
             "default": "true",
             "group": "python/value-objects",
@@ -3678,7 +3685,7 @@
         },
         "sin_python-mutable-value-object": {
             "title": "MutableValueObject",
-            "help": "a dataclass whose own methods write the fields it was built from after construction \u2014 a value that changes under everyone holding it",
+            "help": "a dataclass whose own methods write the fields it was built from after construction — a value that changes under everyone holding it",
             "type": "flag",
             "default": "true",
             "group": "python/value-objects",
@@ -3691,7 +3698,7 @@
         },
         "sin_python-positional-tuple-return": {
             "title": "PositionalTupleReturn",
-            "help": "`return net, vat, currency` \u2014 a bundle of different things the caller must unpack by position, where a reordering breaks silently",
+            "help": "`return net, vat, currency` — a bundle of different things the caller must unpack by position, where a reordering breaks silently",
             "type": "flag",
             "default": "true",
             "group": "python/value-objects",
@@ -3704,7 +3711,7 @@
         },
         "sin_python-raw-decoded-return": {
             "title": "RawDecodedReturn",
-            "help": "`return json.loads(\u2026)` \u2014 decoded text from outside handed on as bare dicts and lists, its shape known to no type",
+            "help": "`return json.loads(…)` — decoded text from outside handed on as bare dicts and lists, its shape known to no type",
             "type": "flag",
             "default": "true",
             "group": "python/value-objects",
@@ -3717,7 +3724,7 @@
         },
         "sin_defended-certain-field": {
             "title": "DefendedCertainField",
-            "help": "An `?.` on a field the class declares as always present \u2014 a defence against a case the type says cannot happen, so the code doubts something the design already rules out.",
+            "help": "An `?.` on a field the class declares as always present — a defence against a case the type says cannot happen, so the code doubts something the design already rules out.",
             "type": "flag",
             "default": "true",
             "group": "typescript/absence",
@@ -3730,7 +3737,7 @@
         },
         "sin_falsely-optional-field": {
             "title": "FalselyOptionalField",
-            "help": "A field declared optional (`x?: T`, `T | null`) that is initialised where it is declared \u2014 it is never absent, and every `?.` and `??` downstream defends a case that cannot happen",
+            "help": "A field declared optional (`x?: T`, `T | null`) that is initialised where it is declared — it is never absent, and every `?.` and `??` downstream defends a case that cannot happen",
             "type": "flag",
             "default": "true",
             "group": "typescript/absence",
@@ -3743,7 +3750,7 @@
         },
         "sin_duplicate-typescript-function": {
             "title": "DuplicateFunction",
-            "help": "Copy-pasted code \u2014 two+ TypeScript functions (a `function`, a method, a `const` arrow; in a `.ts` module or a component's script) with an identical body, formatting and comments aside",
+            "help": "Copy-pasted code — two+ TypeScript functions (a `function`, a method, a `const` arrow; in a `.ts` module or a component's script) with an identical body, formatting and comments aside",
             "type": "flag",
             "default": "true",
             "group": "typescript/duplication",
@@ -3759,7 +3766,7 @@
         },
         "sin_near-duplicate-typescript-function": {
             "title": "NearDuplicateFunction",
-            "help": "A near-copy \u2014 two+ TypeScript functions with one control-flow skeleton that differ only in their local names or the literals they use (an endpoint, a key, a label)",
+            "help": "A near-copy — two+ TypeScript functions with one control-flow skeleton that differ only in their local names or the literals they use (an endpoint, a key, a label)",
             "type": "flag",
             "default": "true",
             "group": "typescript/duplication",
@@ -3791,7 +3798,7 @@
         },
         "sin_typescript-collection-mutated-while-iterated": {
             "title": "CollectionMutatedWhileIterated",
-            "help": "a `for\u2026of` or `forEach` that splices, shifts, sorts or pops the very array it walks \u2014 every element after the change has moved, so the walk skips one or reads one twice",
+            "help": "a `for…of` or `forEach` that splices, shifts, sorts or pops the very array it walks — every element after the change has moved, so the walk skips one or reads one twice",
             "type": "flag",
             "default": "true",
             "group": "typescript/flow",
@@ -3807,7 +3814,7 @@
         },
         "sin_mirrored-server-type": {
             "title": "MirroredServerType",
-            "help": "A hand-written TypeScript type mirrors a backend `Data` class one-to-one \u2014 two sources of truth for one contract that drift the moment the server shape changes",
+            "help": "A hand-written TypeScript type mirrors a backend `Data` class one-to-one — two sources of truth for one contract that drift the moment the server shape changes",
             "type": "flag",
             "default": "true",
             "group": "vue/mirrored-server-type",
@@ -3823,7 +3830,7 @@
         },
         "sin_compound-inline-component": {
             "title": "CompoundInlineComponent",
-            "help": "A compound primitive (`Dialog`/`Card`/`Sheet`/`Tabs`\u2026) assembled inline with a substantial body \u2014 extract it into its own named component.",
+            "help": "A compound primitive (`Dialog`/`Card`/`Sheet`/`Tabs`…) assembled inline with a substantial body — extract it into its own named component.",
             "type": "flag",
             "default": "true",
             "group": "vue/vue-components",
@@ -3836,7 +3843,7 @@
         },
         "sin_deep-data-reach": {
             "title": "DeepDataReach",
-            "help": "A group of elements in a sizeable template that all reach deep into the same nested object (\u22652 distinct fields) \u2014 extract the shared mid-object into a component that takes it as a prop.",
+            "help": "A group of elements in a sizeable template that all reach deep into the same nested object (≥2 distinct fields) — extract the shared mid-object into a component that takes it as a prop.",
             "type": "flag",
             "default": "true",
             "group": "vue/vue-components",
@@ -3849,7 +3856,7 @@
         },
         "sin_deep-nested": {
             "title": "DeepNested",
-            "help": "Template markup nested far too deep \u2014 extract a subtree as its own component",
+            "help": "Template markup nested far too deep — extract a subtree as its own component",
             "type": "flag",
             "default": "true",
             "group": "vue/vue-components",
@@ -3862,7 +3869,7 @@
         },
         "sin_duplicate-element": {
             "title": "DuplicateElement",
-            "help": "Identical markup (3+ elements) repeated 2+ times \u2014 within a template or across components \u2014 extract one component",
+            "help": "Identical markup (3+ elements) repeated 2+ times — within a template or across components — extract one component",
             "type": "flag",
             "default": "true",
             "group": "vue/vue-components",
@@ -3875,7 +3882,7 @@
         },
         "sin_inline-case-views": {
             "title": "InlineCaseViews",
-            "help": "A dispatch whose cases each render a whole view inline \u2014 one component doing a job per case",
+            "help": "A dispatch whose cases each render a whole view inline — one component doing a job per case",
             "type": "flag",
             "default": "true",
             "group": "vue/vue-components",
@@ -3888,7 +3895,7 @@
         },
         "sin_near-duplicate-element": {
             "title": "NearDuplicateElement",
-            "help": "Markup with one skeleton repeated 2+ times \u2014 the same tags, attributes and nesting binding different data \u2014 within a template, across components, or as two components' whole templates",
+            "help": "Markup with one skeleton repeated 2+ times — the same tags, attributes and nesting binding different data — within a template, across components, or as two components' whole templates",
             "type": "flag",
             "default": "true",
             "group": "vue/vue-components",
@@ -3901,7 +3908,7 @@
         },
         "sin_oversized-component": {
             "title": "OversizedComponent",
-            "help": "A component whose template renders more elements than the project's declared budget \u2014 one component doing several jobs",
+            "help": "A component whose template renders more elements than the project's declared budget — one component doing several jobs",
             "type": "flag",
             "default": "true",
             "group": "vue/vue-components",
@@ -3914,7 +3921,7 @@
         },
         "sin_prop-drilling": {
             "title": "PropDrilling",
-            "help": "A prop forwarded through a chain of 2+ components, none of which read it \u2014 passed down through components that only pass it further.",
+            "help": "A prop forwarded through a chain of 2+ components, none of which read it — passed down through components that only pass it further.",
             "type": "flag",
             "default": "true",
             "group": "vue/vue-components",
@@ -3927,7 +3934,7 @@
         },
         "sin_prop-mutation": {
             "title": "PropMutation",
-            "help": "A prop is written to \u2014 `v-model` bound to it, or `@event=\"prop = \u2026\"` \u2014 but props are read-only (a build error or a silent no-op).",
+            "help": "A prop is written to — `v-model` bound to it, or `@event=\"prop = …\"` — but props are read-only (a build error or a silent no-op).",
             "type": "flag",
             "default": "true",
             "group": "vue/vue-components",
@@ -3953,7 +3960,7 @@
         },
         "sin_index-as-key": {
             "title": "IndexAsKey",
-            "help": "`:key` bound to the `v-for` index \u2014 a positional key corrupts state when the list reorders or an item is inserted",
+            "help": "`:key` bound to the `v-for` index — a positional key corrupts state when the list reorders or an item is inserted",
             "type": "flag",
             "default": "true",
             "group": "vue/vue-control-flow",
@@ -3966,7 +3973,7 @@
         },
         "sin_loop-with-condition": {
             "title": "LoopWithCondition",
-            "help": "`v-for` and `v-if`/`v-else-if` on the same element \u2014 the condition is re-evaluated every iteration.",
+            "help": "`v-for` and `v-if`/`v-else-if` on the same element — the condition is re-evaluated every iteration.",
             "type": "flag",
             "default": "true",
             "group": "vue/vue-control-flow",

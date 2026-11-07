@@ -23,6 +23,7 @@ const updatedEvent = "plugin.updated"
 var theSameEvent = map[string]string{
 	"plugin.update":         updatedEvent,
 	"worker_worktree.merge": landedEvent,
+	"merge_request.create":  requestedEvent,
 }
 
 func namedAsTheKey(event string) string {
@@ -106,6 +107,8 @@ func Apart4(in *cli.Input, console cli.Console, line map[string]any) (string, bo
 		return MergeHeld(line), true, 0, nil
 	case landedEvent:
 		return MergeLanded(line), true, 0, nil
+	case requestedEvent:
+		return MergeRequested(line), true, 0, nil
 	}
 
 	return "", false, 0, nil

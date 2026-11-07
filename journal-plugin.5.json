@@ -53,6 +53,11 @@
     {
       "event": "core.agents.agent.created",
       "commit": "service:hooks"
+    },
+    {
+      "event": "suites.coding.workers.merge_request.created",
+      "guard": "service:hooks",
+      "window_ms": 30000
     }
   ],
   "aliases": [

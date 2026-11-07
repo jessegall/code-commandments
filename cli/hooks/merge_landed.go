@@ -157,6 +157,12 @@ func (l landed) sinsBrought(from string) ([]SinMark, Narrowed) {
 		return nil, ""
 	}
 
+	return marksBrought(l.project, changed)
+}
+
+func marksBrought(where string, changed []string) ([]SinMark, Narrowed) {
+	l := landed{project: where}
+
 	project, err := config.Load(l.project)
 	if err != nil {
 		return nil, couldNotRead

@@ -87,11 +87,21 @@ func TestEveryListenEntryFiresAfterTheFactSoTheJournalNeverWaits(t *testing.T) {
 
 	for _, each := range entries {
 		entry := each.(map[string]any)
-		for _, holding := range []string{"guard", "listen"} {
-			if _, held := entry[holding]; held {
-				t.Errorf("%s is answered on its %s form, which HOLDS the event: the journal waits for us, and it "+
-					"never may. Only commit fires after the fact", entry["event"], holding)
+
+		if _, held := entry["listen"]; held {
+			t.Errorf("%s is answered on its listen form, which HOLDS the event with no limit: the journal waits "+
+				"for us and never may. Only commit fires after the fact", entry["event"])
+		}
+
+		if _, guards := entry["guard"]; guards {
+			window, declared := entry["window_ms"].(float64)
+			if !declared || window <= 0 {
+				t.Errorf("%s guards the event without a window_ms: the journal then waits for our answer with no "+
+					"limit, so a hang of ours holds the change until a person switches the plugin off",
+					entry["event"])
 			}
+
+			continue
 		}
 
 		if _, after := entry["commit"]; !after {
