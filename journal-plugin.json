@@ -71,7 +71,7 @@
       "reader": "judge",
       "category": "check",
       "background": true,
-      "workers": false
+      "workers": true
     },
     {
       "name": "rules",
