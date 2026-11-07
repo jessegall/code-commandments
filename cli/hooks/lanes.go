@@ -138,10 +138,24 @@ func lanesHeld(drop string) string {
 			" | cut from "+orNothing(lane.Cut)+
 			" | "+strconv.Itoa(lane.Nodes)+" nodes of "+strconv.Itoa(lane.Files)+" file(s)"+
 			" | asked "+lane.Asked.Format("15:04:05")+
-			" | "+lane.Filling)
+			" | "+lane.Filling+
+			" | a judging here is "+answeredHow(lane.Checkout))
 	}
 
 	return trees + strings.Join(said, "\n") + healthSaid() + mergesSaid()
+}
+
+func answeredHow(checkout string) string {
+	_, _, why := answering(projectOf(checkout), checkout)
+
+	switch {
+	case why == "":
+		return "answered from the tree"
+	case waitingOn(why) && why != noTreeComing:
+		return "told the tree is coming"
+	}
+
+	return "answered smaller, because " + string(why)
 }
 
 func treesSaid() string {

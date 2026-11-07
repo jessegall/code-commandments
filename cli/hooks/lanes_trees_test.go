@@ -40,3 +40,28 @@ func TestLanesSaysWhichTreesAreWarmAndHowFarARunningReadHasGot(t *testing.T) {
 		}
 	}
 }
+
+func TestEachLaneSaysHowAJudgingThereWouldBeAnswered(t *testing.T) {
+	root, _ := workerProject(t)
+	worktree := filepath.Join(root, ".journal", "worktrees", "worker-1")
+
+	if said := answeredHow(worktree); !strings.HasPrefix(said, "answered smaller") {
+		t.Errorf("with no tree held, a judging of the worker's checkout is said to be %q", said)
+	}
+
+	project := git.ProjectRoot(root)
+	branch := git.CurrentBranch(project)
+
+	settings, _ := config.Load(root)
+	codebase, err := scan.Walk([]string{filepath.Join(root, "src")}, source.Under(root, settings.Excluded)).Load()
+	if err != nil || codebase == nil {
+		t.Fatalf("the python bridge cannot run here: %v", err)
+	}
+
+	kept.Hold(project, branch, []string{root}, codebase, nil)
+	t.Cleanup(func() { kept.Drop(project, branch) })
+
+	if said := answeredHow(root); said != "answered from the tree" {
+		t.Errorf("with the tree held, a judging of the project is said to be %q", said)
+	}
+}
