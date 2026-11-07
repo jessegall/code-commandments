@@ -34,6 +34,10 @@ func TheConfig(root string) Untracked {
 		return Untracked{}
 	}
 
+	if workspace.At(root, "").IsJournalDriven() {
+		return Untracked{}
+	}
+
 	under, inside := under(config, root)
 	if !inside {
 		return Untracked{}

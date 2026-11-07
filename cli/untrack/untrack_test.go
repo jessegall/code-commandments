@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/jessegall/code-commandments/cli/git"
+	"github.com/jessegall/code-commandments/cli/workspace"
 )
 
 func projectWithACommittedConfig(t *testing.T) string {
@@ -174,5 +175,34 @@ func TestAWorktreeThatAlreadyLeavesFilesOutKeepsItsConfig(t *testing.T) {
 
 	if !strings.Contains(strings.Join(said, "\n"), "somebody's choice") {
 		t.Errorf("nothing says why that worktree still has its copy: %q", said)
+	}
+}
+
+func TestAJournalProjectsMainCheckoutIndexIsNeverTouched(t *testing.T) {
+	root := projectWithACommittedConfig(t)
+	worktree := worktreeOf(t, root)
+
+	manifest := filepath.Join(root, ".journal", "plugins", workspace.JournalPlugin, ".journal-plugin", "plugin.json")
+	if err := os.MkdirAll(filepath.Dir(manifest), 0o755); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := os.WriteFile(manifest, []byte("{}"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	Everywhere(root)
+
+	if staged := gitIn(t, root, "status", "--porcelain", "--", ".commandments"); staged != "" {
+		t.Errorf("the main checkout of a project the journal drives was left with a change in its index, and the "+
+			"journal merges every worker into that checkout, so each merge is refused:\n%s", staged)
+	}
+
+	if !git.Tracks(root, ".commandments/config.json") {
+		t.Error("the config a journal project tracks on purpose is no longer tracked")
+	}
+
+	if _, err := os.Stat(filepath.Join(worktree, ".commandments", "config.json")); !os.IsNotExist(err) {
+		t.Errorf("the worktree's copy is still on its disk: %v", err)
 	}
 }
