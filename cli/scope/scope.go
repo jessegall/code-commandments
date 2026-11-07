@@ -65,8 +65,25 @@ func FromArgs(args []string, path string, space workspace.Workspace, excluded []
 		return Scope{}, err
 	}
 
-	return Scope{files: canonical(picked.files), scoped: scoped, by: picked.by, unseen: picked.unseen,
-		lines: canonicalLines(picked.lines), restrictions: always(path, excluded)}, nil
+	return Scope{files: outsideTheExcluded(canonical(picked.files), path, excluded), scoped: scoped, by: picked.by,
+		unseen: picked.unseen, lines: canonicalLines(picked.lines), restrictions: always(path, excluded)}, nil
+}
+
+func outsideTheExcluded(files map[string]bool, path string, excluded []string) map[string]bool {
+	if len(files) == 0 || path == "" || len(excluded) == 0 {
+		return files
+	}
+
+	skipped := source.Under(path, excluded)
+	kept := map[string]bool{}
+
+	for file, held := range files {
+		if held && !skipped.Covers(file) {
+			kept[file] = true
+		}
+	}
+
+	return kept
 }
 
 func (s Scope) ChosenBy() string {

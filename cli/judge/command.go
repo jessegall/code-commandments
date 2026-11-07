@@ -81,6 +81,8 @@ func (Command) Help() help.Help {
 		Option("--skill=NAME", "only run detectors for one skill (group), e.g. spatie-data").
 		Option("--sin=NAME", "only run detectors for one sin (lenient name match), e.g. nullable-callback").
 		Option("--exclude=A,B", "skip findings in paths containing any fragment").
+		Option("--one-file-rules", "run only the rules that answer from one file, naming the rest as not asked; "+
+			"the running service uses it when the tree cannot answer the whole question").
 		Adopt(scope.Options()).
 		Option("--parallel=N", "run detectors across N worker processes (default: 2, capped at cores; 1 = off)").
 		Option("--ignore-package-requirements", "keep package-gated rules even if this project lacks the package (cross-project calibration)").
@@ -176,6 +178,10 @@ func (c Command) Run(in *cli.Input, console cli.Console) (int, error) {
 
 	selected := selectFrom(enabled, options.skill, options.sin)
 
+	if options.oneFileRules {
+		selected = slices.DeleteFunc(slices.Clone(selected), detectors.ReadsBeyondOneFile)
+	}
+
 	if len(selected) == 0 {
 		console.Warn("No detector matched --skill=" + options.skill + " --sin=" + options.sin)
 
@@ -190,6 +196,10 @@ func (c Command) Run(in *cli.Input, console cli.Console) (int, error) {
 	judged = judged.Judging(selected)
 
 	targets, err := scope.FromArgs(in.Raw(), options.path, space, judged.Excluded)
+
+	if cli.Timed() {
+		fmt.Fprintf(console.Err, "· the scope was built over %s, leaving out %v\n", options.path, judged.Excluded)
+	}
 
 	if scope.IsUnavailable(err) {
 		console.Warn(err.Error())
@@ -833,6 +843,7 @@ type options struct {
 	parallelGiven bool
 	benchmark     bool
 	ignore        bool
+	oneFileRules  bool
 }
 
 func within(folder, path string) string {
@@ -881,6 +892,7 @@ func optionsOf(in *cli.Input, space workspace.Workspace) options {
 		parallelGiven: parallelGiven,
 		benchmark:     in.HasFlag("benchmark"),
 		ignore:        in.HasFlag("ignore-package-requirements"),
+		oneFileRules:  in.HasFlag("one-file-rules"),
 	}
 }
 

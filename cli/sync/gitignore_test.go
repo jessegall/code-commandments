@@ -27,7 +27,7 @@ func TestTheReportedSinsAreTrackedWhileTheGeneratedStateIsNot(t *testing.T) {
 
 	for path, tracked := range map[string]bool{
 		workspace.At(root, "").Shared(reported.Filename): true,
-		workspace.At(root, "").Shared("config.json"):     true,
+		workspace.At(root, "").Shared("config.json"):     false,
 		workspace.At(root, "").Shared("cross-file.json"): false,
 	} {
 		if err := os.WriteFile(path, []byte("{}\n"), 0o644); err != nil {

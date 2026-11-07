@@ -69,6 +69,9 @@ func answerJudging(connection net.Conn, root string) {
 }
 
 func judgedFor(request warm.Request, root string) warm.Answer {
+	waited := aSlotToJudgeIn()
+	defer freeTheSlot()
+
 	var out, errs bytes.Buffer
 
 	declined := ""
@@ -81,6 +84,12 @@ func judgedFor(request warm.Request, root string) warm.Answer {
 	}).Run(cli.InputOf("judge", request.Judge...), cli.Console{Out: &out, Err: &errs})
 
 	if declined != "" {
+		if pastWhatOneSpliceCarries(declined) {
+			if smaller, held := fromOneFileRules(request, root, declined); held {
+				return smaller
+			}
+		}
+
 		return warm.Answer{Declined: true, Because: declined}
 	}
 
@@ -88,8 +97,30 @@ func judgedFor(request warm.Request, root string) warm.Answer {
 		return warm.Answer{Out: out.String(), Err: errs.String() + err.Error() + "\n", Code: 1}
 	}
 
-	return warm.Answer{Out: out.String(), Err: errs.String(), Code: code}
+	return warm.Answer{Out: out.String(), Err: errs.String() + waited, Code: code}
 }
+
+var judgingSlots = make(chan struct{}, slotsToJudgeIn)
+
+func aSlotToJudgeIn() string {
+	select {
+	case judgingSlots <- struct{}{}:
+		return ""
+	default:
+	}
+
+	started := time.Now()
+	judgingSlots <- struct{}{}
+
+	return fmt.Sprintf("· this judging waited %s for one of the %d the service runs at a time, so a worker per core "+
+		"cannot read a project each\n", time.Since(started).Round(time.Millisecond), slotsToJudgeIn)
+}
+
+func freeTheSlot() {
+	<-judgingSlots
+}
+
+const slotsToJudgeIn = 2
 
 func holdsTheLanguageOf(base *warm.Base, file string) bool {
 	for _, held := range base.Languages() {
@@ -325,4 +356,61 @@ func viewOf(base *warm.Base, named branchRoot, checkout string, read, gone []str
 
 func noProjectAt(root string) bool {
 	return root == "" || root == "/" || git.Root(root) == ""
+}
+
+func pastWhatOneSpliceCarries(declined string) bool {
+	return strings.Contains(declined, "this service reads for one judging")
+}
+
+func fromOneFileRules(request warm.Request, root, declined string) (warm.Answer, bool) {
+	var out, errs bytes.Buffer
+
+	refused := ""
+
+	code, err := (judge.Command{
+		In:      request.In,
+		Reading: oneFileAtATime(root, request.In, &refused),
+	}).Run(cli.InputOf("judge", append(slices.Clone(request.Judge), "--one-file-rules")...),
+		cli.Console{Out: &out, Err: &errs})
+
+	if refused != "" || err != nil {
+		return warm.Answer{}, false
+	}
+
+	said := errs.String() + "· " + declined + ", so these are the rules that answer from one file alone; the " +
+		"rules that read across files were not asked\n"
+
+	return warm.Answer{Out: out.String(), Err: said, Code: code}, true
+}
+
+func oneFileAtATime(root, in string, refused *string) func(scan.Sources) (*engine.Codebase, error) {
+	return func(sources scan.Sources) (*engine.Codebase, error) {
+		asked := sources.Files(source.Languages...)
+		if len(asked) == 0 {
+			*refused = "the run reads no file of any language the tree holds"
+
+			return engine.Load(), nil
+		}
+
+		if reads := readsInOneGo(0); len(asked) > reads {
+			*refused = fmt.Sprintf("%d files were changed, past the %d even one rule at a time reads", len(asked), reads)
+
+			return engine.Load(), nil
+		}
+
+		rebuilt, err := scan.Walk(asked, source.Excluded{}).Load()
+
+		var incomplete scan.Incomplete
+		if errors.As(err, &incomplete) {
+			err = nil
+		}
+
+		if err != nil || rebuilt == nil {
+			*refused = "the files that changed could not be read"
+
+			return engine.Load(), nil
+		}
+
+		return engine.New(nil, rebuilt.Streams()...), nil
+	}
 }

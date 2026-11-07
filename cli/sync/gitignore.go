@@ -20,6 +20,7 @@ var retiredCommandsIgnored = []string{
 
 var staleRules = append([]string{
 	".commandments/", ".commandments/*", "!.commandments/config.php", "!.commandments/repent.php",
+	"!.commandments/config.json",
 	".claude/skills/commandments/", ".claude/skills/commandments-*/",
 }, retiredCommandsIgnored...)
 
@@ -68,8 +69,6 @@ func commandmentsLines() []string {
 		"# Add your own exceptions underneath — they are preserved across a sync.",
 		"*",
 		"!.gitignore",
-		"!config.php",
-		"!config.json",
 		"!" + reported.Filename,
 		"!" + workspace.Custom + "/",
 		"!" + workspace.Custom + "/**",
