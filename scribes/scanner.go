@@ -39,6 +39,10 @@ func Over(server *bridge.Server, read Reader) *Scanner {
 }
 
 func (s *Scanner) Scan(pass Pass) (*engine.Codebase, error) {
+	if s == nil {
+		return engine.Load(), nil
+	}
+
 	if s.codebase != nil && slices.Equal(s.roots, pass.Roots) && s.drafts.Equal(pass.Drafts) {
 		return s.codebase, nil
 	}

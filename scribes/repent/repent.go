@@ -53,16 +53,10 @@ func served(command func() ([]string, error), read scribes.Reader) (*scribes.Sca
 
 func Chain(backend, vue *scribes.Scanner, given []detectors.Detector) *scribes.Chain {
 	var steps []scribes.Step
-
-	if backend != nil {
-		steps = append(steps, scribes.MaintenanceSteps(catalog.PHP, backend)...)
-		steps = append(steps, scribes.Steps(catalog.PHP, backend, given)...)
-	}
-
-	if vue != nil {
-		steps = append(steps, scribes.Steps(catalog.Vue, vue, given)...)
-		steps = append(steps, scribes.Steps(catalog.TypeScript, vue, given)...)
-	}
+	steps = append(steps, scribes.MaintenanceSteps(catalog.PHP, backend)...)
+	steps = append(steps, scribes.Steps(catalog.PHP, backend, given)...)
+	steps = append(steps, scribes.Steps(catalog.Vue, vue, given)...)
+	steps = append(steps, scribes.Steps(catalog.TypeScript, vue, given)...)
 
 	return scribes.Default(steps...)
 }
