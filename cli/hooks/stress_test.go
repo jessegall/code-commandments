@@ -958,10 +958,23 @@ func (c *stressCheckout) handsIn(t *testing.T) {
 	}
 
 	for _, named := range stressNamedIn(answer.Out) {
-		if !c.owns(named) {
-			t.Fatalf("move %d of checkout %d: its served hand-in reports %s, which is not its own (it owns %q)\n%s",
-				c.at, c.Named, named, c.under(), answer.Out)
+		if c.owns(named) {
+			continue
 		}
+
+		_, inside := os.Stat(filepath.Join(c.At, named))
+		_, inProject := os.Stat(filepath.Join(c.Project, named))
+
+		var elsewhere []string
+		for _, other := range stressRunning {
+			if _, there := os.Stat(filepath.Join(other.At, named)); there == nil {
+				elsewhere = append(elsewhere, other.At)
+			}
+		}
+
+		t.Fatalf("move %d of checkout %d: its served hand-in reports %s, which is not its own (it owns %q); "+
+			"inside its own checkout: %v; inside the project: %v; it IS in %v; its checkout is %s\n%s",
+			c.at, c.Named, named, c.under(), inside, inProject, elsewhere, c.At, answer.Out)
 	}
 
 	c.countsWhatReallyDiffers(t)

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/jessegall/code-commandments/cli/custom"
 	"io"
+	"os"
 	"runtime"
 	"runtime/debug"
 	"slices"
@@ -107,6 +108,10 @@ func findings(detector detectors.Detector, matches []engine.Match) []engine.Find
 	found := make([]engine.Finding, 0, len(matches))
 
 	for i, match := range matches {
+		if !onDisk(match.File()) {
+			continue
+		}
+
 		location := match.Location()
 		var twins []string
 
@@ -190,4 +195,14 @@ func groupsOf(detector detectors.Detector, matches []engine.Match) [][]string {
 	}
 
 	return groups
+}
+
+func onDisk(path string) bool {
+	if path == "" {
+		return true
+	}
+
+	info, err := os.Stat(path)
+
+	return err == nil && info.Mode().IsRegular()
 }
