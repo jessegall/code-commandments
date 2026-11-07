@@ -8,7 +8,7 @@ Usage:
                                     propose only the bottom — what others depend on and that
                                     depends on nothing
   commandments layers [path] --write
-                                    add the proposal to .commandments/config.php
+                                    add the proposal to .commandments/config.json
   commandments layers add <Namespace> [--may-use=A,B]
                                     declare a new layer, or widen a declared one, in place
   commandments layers allow <Layer> <Target>
@@ -16,7 +16,7 @@ Usage:
 
 Options:
   --floor        propose only the bottom layer
-  --write        write the proposal into .commandments/config.php
+  --write        write the proposal into .commandments/config.json
   --refresh      with --write, regenerate a block that is already declared
   --may-use=A,B  with `add`, the namespaces the new layer may depend on
 

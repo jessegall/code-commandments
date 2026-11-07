@@ -207,7 +207,7 @@ func TestThePluginNeedsOnlyTheBinaryItFetches(t *testing.T) {
 			t.Errorf("the plugin requires %s", tool)
 		}
 	}
-	runsTheBinary := regexp.MustCompile(`^(bin/commandments-release |sh \.journal-plugin/fetch$|journal check create .*\.journal/plugins/code-commandments/bin/commandments-release )`)
+	runsTheBinary := regexp.MustCompile(`^(bin/commandments-release |\.journal-plugin/serve |sh \.journal-plugin/fetch$|journal check create .*\.journal/plugins/code-commandments/bin/commandments-release )`)
 	forbidden := regexp.MustCompile(`(^|[;&|(]\s*)(composer|php|go|docker)(\s|$)|scripts/(build|dev)|bin/commandments( |$)|\.exe\b`)
 	for _, command := range plugin.commands() {
 		if !runsTheBinary.MatchString(command) || forbidden.MatchString(command) {

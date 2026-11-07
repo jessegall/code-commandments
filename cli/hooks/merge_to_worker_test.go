@@ -62,7 +62,7 @@ func TestAMergesFindingsGoToTheWorkerThatWroteThem(t *testing.T) {
 }
 
 func TestARetiredWorkersFindingsFallBackToTheMainAgent(t *testing.T) {
-	journalThatSays(t, 1, "worker 6 has no worktree")
+	journalThatSays(t, 5, "worker 6 is retired")
 
 	sending, refusal := TellsTheWorker(t.TempDir(), "6", "4 sins across 3 skills")
 	if sending != Retired {
@@ -70,7 +70,7 @@ func TestARetiredWorkersFindingsFallBackToTheMainAgent(t *testing.T) {
 			"back to the main agent", sending)
 	}
 
-	if !strings.Contains(refusal, "no worktree") {
+	if !strings.Contains(refusal, "retired") {
 		t.Errorf("the refusal is not carried to the agent: %q", refusal)
 	}
 }

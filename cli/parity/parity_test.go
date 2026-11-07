@@ -28,6 +28,10 @@ func TestTheGoBinaryAnswersEveryCaseAsThePhpToolDid(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	if len(cases) == 0 {
+		t.Fatal("no parity case was read, so this test would pass by comparing nothing")
+	}
+
 	for _, c := range cases {
 		t.Run(c.Name, func(t *testing.T) {
 			t.Parallel()

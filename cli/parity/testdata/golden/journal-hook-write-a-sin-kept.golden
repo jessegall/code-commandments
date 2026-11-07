@@ -1,20 +1,12 @@
 exit: 0
 --- stdout
-{"whisper":"Code Commandments — 2 new sins:\n  • array-bag at src/Order.php:13 — load `commandments-php-value-objects`, run `commandments judge src/Order.php --sin=array-bag`\n  • narrated-command at src/Order.php:7 — load `commandments-php-method-mood`, run `commandments judge src/Order.php --sin=narrated-command`","raise":[{"event":"sin-found","brief":"2 sins in src/Order.php","open":"sins/sin/array-bag/src/Order.php","key":"sins:src/Order.php"}]}
+{"whisper":"Code Commandments — src/Order.php:7 narrated-command (hides) — load `commandments-php-method-mood`, then fix it at its source.\n\nCode Commandments: judged by the 167 rules that answer from one file, and the 80 that read across files were not asked, because no tree of this checkout is held and none is being read, so only the rules that answer from one file will ever run here, so this is not a clean answer, it is a smaller one. Run `commandments judge --changes` for the whole answer. (src/Order.php)","raise":[{"event":"sin-found","brief":"1 sin in src/Order.php","open":"sins/sin/narrated-command/src/Order.php","key":"sins:src/Order.php"}]}
 
 --- stderr
 
 --- files
 === created .commandments/dashboards/findings.json
 [
-    {
-        "sin": "array-bag",
-        "skill": "php/value-objects",
-        "path": "<project>/src/Order.php",
-        "file": "src/Order.php",
-        "line": 13,
-        "scope": "App\\Order::total"
-    },
     {
         "sin": "narrated-command",
         "skill": "php/method-mood",
@@ -42,9 +34,9 @@ exit: 0
                             {
                                 "type": "stat",
                                 "label": "Sins",
-                                "value": "2",
+                                "value": "1",
                                 "tone": "danger",
-                                "note": "2 different rules"
+                                "note": "1 different rules"
                             },
                             {
                                 "type": "stat",
@@ -55,7 +47,7 @@ exit: 0
                             {
                                 "type": "stat",
                                 "label": "Skills",
-                                "value": "2",
+                                "value": "1",
                                 "note": "the skills that teach the fixes"
                             }
                         ]
@@ -66,13 +58,6 @@ exit: 0
                         "unit": "sins",
                         "items": [
                             {
-                                "label": "array-bag",
-                                "value": 1,
-                                "note": "1 file",
-                                "tone": "danger",
-                                "open": "sin/array-bag"
-                            },
-                            {
                                 "label": "narrated-command",
                                 "value": 1,
                                 "note": "1 file",
@@ -80,112 +65,6 @@ exit: 0
                                 "open": "sin/narrated-command"
                             }
                         ]
-                    }
-                ]
-            }
-        },
-        "sin/array-bag": {
-            "title": "array-bag",
-            "view": {
-                "type": "stack",
-                "gap": 16,
-                "children": [
-                    {
-                        "type": "heading",
-                        "text": "array-bag",
-                        "level": 1
-                    },
-                    {
-                        "type": "card",
-                        "title": "About this rule",
-                        "children": [
-                            {
-                                "type": "fact",
-                                "label": "What it is",
-                                "body": "String-indexing (`$arr['key']`) a structured array param instead of giving it a name — the type was never defined."
-                            },
-                            {
-                                "type": "fact",
-                                "label": "The rule",
-                                "body": "Give a structured array a typed value object — never read a named field by string key off an `array` param."
-                            },
-                            {
-                                "type": "fact",
-                                "label": "How to fix it",
-                                "body": "A Spatie `Data` object built via `::from($array)`."
-                            }
-                        ]
-                    },
-                    {
-                        "type": "code",
-                        "text": "commandments info array-bag"
-                    },
-                    {
-                        "type": "table",
-                        "columns": [
-                            "File",
-                            "Sins"
-                        ],
-                        "rows": [
-                            {
-                                "cells": [
-                                    "src/Order.php",
-                                    "1"
-                                ],
-                                "open": "sin/array-bag/src/Order.php"
-                            }
-                        ]
-                    }
-                ]
-            }
-        },
-        "sin/array-bag/src/Order.php": {
-            "title": "array-bag in Order.php",
-            "view": {
-                "type": "stack",
-                "gap": 16,
-                "children": [
-                    {
-                        "type": "heading",
-                        "text": "array-bag in src/Order.php",
-                        "level": 1
-                    },
-                    {
-                        "type": "card",
-                        "title": "Where",
-                        "children": [
-                            {
-                                "type": "file",
-                                "path": "src/Order.php",
-                                "line": 13,
-                                "label": "line 13 — App\\Order::total"
-                            }
-                        ]
-                    },
-                    {
-                        "type": "card",
-                        "title": "About this rule",
-                        "children": [
-                            {
-                                "type": "fact",
-                                "label": "What it is",
-                                "body": "String-indexing (`$arr['key']`) a structured array param instead of giving it a name — the type was never defined."
-                            },
-                            {
-                                "type": "fact",
-                                "label": "The rule",
-                                "body": "Give a structured array a typed value object — never read a named field by string key off an `array` param."
-                            },
-                            {
-                                "type": "fact",
-                                "label": "How to fix it",
-                                "body": "A Spatie `Data` object built via `::from($array)`."
-                            }
-                        ]
-                    },
-                    {
-                        "type": "code",
-                        "text": "commandments info array-bag"
                     }
                 ]
             }
@@ -310,7 +189,6 @@ Safe to delete — the reminder stays silent until the session changes a judged 
 
 === created .commandments/sessions/640d8/.reported-findings
 -----
-<project>/src/Order.php	array-bag at <project>/src/Order.php:13
 <project>/src/Order.php	narrated-command at <project>/src/Order.php:7
 -----
 Code-commandments — the findings the per-edit check has already named this session, so each is said once.
@@ -318,6 +196,16 @@ Code-commandments — the findings the per-edit check has already named this ses
 Between the dividers is the list: one finding per line: the file, a tab, then the finding as it was named
 
 Safe to delete — the findings still standing are named once more.
+
+=== created .commandments/sessions/640d8/.said-shortfalls
+-----
+src/Order.php	no tree of this checkout is held and none is being read, so only the rules that answer from one file will ever run here
+-----
+Code-commandments — which shortfall each file's reader was last told about, so the same words are not said on every edit.
+
+Between the dividers is the list: one file per line: the file, a tab, then the reason its reader was last told about
+
+Safe to delete — the next edit of each file says once more what was not asked about it.
 
 === created .commandments/sessions/640d8/.touched-sources
 marked-at: <time>
@@ -329,5 +217,8 @@ The block above the first divider is this file's state, one `name: value` per li
 
 Safe to delete — it regenerates.
 
+=== created plugin-data/judgings.log
+<time> | PostToolUse | project=<project> | branch=master | tree=declined | overlay=0 | parsed=1 in <took> | rules=167 of 168 in <took> | sins=1 | heap=<held> resident=<held> withBridges=<held> | because no tree of this checkout is held and none is being read, so only the rules that answer from one file will ever run here
+
 === created plugin-data/sins.json
-{"src/Order.php":{"<id>":"array-bag at src/Order.php:13","<id>":"narrated-command at src/Order.php:7"}}
+{"src/Order.php":{"<id>":{"shown":"narrated-command at src/Order.php:7","key":"sin:42ae5ad618c26f32175fe2a53a4bd5f6379545a6","sin":"narrated-command"}}}

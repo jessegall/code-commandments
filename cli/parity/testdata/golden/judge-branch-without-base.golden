@@ -2,6 +2,6 @@ exit: 2
 --- stdout
 
 --- stderr
-Base ref 'nope' not found: .
+Base ref 'nope' not found: <project>
 
 --- files

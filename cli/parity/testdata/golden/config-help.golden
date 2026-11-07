@@ -1,6 +1,6 @@
 exit: 0
 --- stdout
-commandments config — Inspect and manage .commandments/config.php — what is configured, and what is actually running.
+commandments config — Inspect and manage .commandments/config.json — what is configured, and what is actually running.
 
 Usage:
   commandments config          the effective configuration: source roots, detectors running vs

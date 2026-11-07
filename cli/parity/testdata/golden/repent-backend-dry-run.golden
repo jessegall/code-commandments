@@ -856,7 +856,7 @@ exit: 0
 [2m↳ Judge THIS diff on its own. The auto-fixers change every release, so never skip a repent from a
   past result or a remembered "this fix is broken" — and don't record one as permanently broken;
   re-run `--dry-run` and read the CURRENT output. If a fix is genuinely broken, incomplete, or wrong,
-  file it (don't just discard it): `commandments report --reason="…" --ref=path:line` (source AND bad output).[0m
+  file it (don't just discard it): `vendor/bin/commandments report --reason="…" --ref=path:line` (source AND bad output).[0m
 
 --- stderr
 

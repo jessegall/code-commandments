@@ -18,7 +18,7 @@ const (
 	Failed
 )
 
-const noWorkerLeft = 0
+const noWorkerLeft = 5
 
 func TellsTheWorker(project, worker, said string) (Sending, string) {
 	if worker == "" || said == "" {
@@ -44,11 +44,7 @@ func TellsTheWorker(project, worker, said string) (Sending, string) {
 		refusal = err.Error()
 	}
 
-	if exitOf(err) == noWorkerLeft && noWorkerLeft != 0 {
-		return Retired, refusal
-	}
-
-	if retiredByItsWords(refusal) {
+	if exitOf(err) == noWorkerLeft {
 		return Retired, refusal
 	}
 
@@ -62,12 +58,6 @@ func exitOf(err error) int {
 	}
 
 	return -1
-}
-
-func retiredByItsWords(refusal string) bool {
-	said := strings.ToLower(refusal)
-
-	return strings.Contains(said, "has no worktree") || strings.Contains(said, "retired")
 }
 
 func journalBinary() string {

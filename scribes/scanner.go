@@ -81,7 +81,7 @@ func (s *Scanner) IsFrozen(path string) bool {
 }
 
 func (s *Scanner) Close() error {
-	if !s.owned {
+	if s == nil || !s.owned {
 		return nil
 	}
 

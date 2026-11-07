@@ -2,6 +2,7 @@ package scribes
 
 import (
 	"fmt"
+	"github.com/jessegall/code-commandments/bridge"
 	"os"
 )
 
@@ -26,9 +27,10 @@ func (NothingFiled) IsFiled(string, string, int) bool {
 
 // Converged is what a run of the chain settled on: every file's final content, the steps that broke, and whether the chain settled before MaxSweeps.
 type Converged struct {
-	Files   Rewrites
-	Skipped []Skipped
-	Settled bool
+	Files       Rewrites
+	Skipped     []Skipped
+	Settled     bool
+	Unavailable []bridge.Unavailable
 }
 
 // Skipped is a step that broke and was dropped, and why.

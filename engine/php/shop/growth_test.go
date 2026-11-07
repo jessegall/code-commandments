@@ -15,7 +15,7 @@ import (
 )
 
 func TestNoRuleCostsMoreThanTheTreeItReadsGrewBy(t *testing.T) {
-	small := shop.Project(t)
+	small := shop.Fresh(t)
 	large := shop.Doubled(t)
 
 	var rules []detectors.Detector
@@ -64,7 +64,7 @@ func (everyFileAgainstEveryOther) Find(codebase *engine.Codebase) []engine.Match
 }
 
 func TestTheGateCatchesARuleThatGrowsFasterThanTheTree(t *testing.T) {
-	grown := fixture.Grown(shop.Project(t), shop.Doubled(t), []detectors.Detector{everyFileAgainstEveryOther{}})
+	grown := fixture.Grown(shop.Fresh(t), shop.Doubled(t), []detectors.Detector{everyFileAgainstEveryOther{}})
 
 	if len(grown) != 1 {
 		t.Fatalf("the gate measured %d rules of 1", len(grown))

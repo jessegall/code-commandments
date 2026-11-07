@@ -49,6 +49,7 @@ exit: 1
 [1m12 sins[0m across 7 skills.
 
 --- stderr
+· reading the whole path, not only the 3 files judged: 76 of the 248 rules read across files, so the scope chose what is reported, not what is read
 ⚠ no class of a package is read: composer.json declares dependencies but vendor/autoload.php is not there: run composer install
   ↳ a method a package's interface fixes reads as the class's own, so a rule that would excuse it cannot
 

@@ -278,6 +278,10 @@ var hashedIdentity = regexp.MustCompile(`"[0-9a-f]{40}":`)
 
 var unixStamp = regexp.MustCompile(`(?m)^(marked-at|started-at): \d{9,}$`)
 
+var tookLong = regexp.MustCompile(`\b\d+(\.\d+)?(ms|s|µs)\b`)
+
+var heldBytes = regexp.MustCompile(`\b(heap|resident|withBridges)=\d+MB`)
+
 func normalise(text, repo, project string) string {
 	for _, path := range []string{project, repo} {
 		if real, err := filepath.EvalSymlinks(path); err == nil && real != path {
@@ -292,6 +296,8 @@ func normalise(text, repo, project string) string {
 
 	text = unixStamp.ReplaceAllString(text, "$1: <time>")
 	text = hashedIdentity.ReplaceAllString(text, `"<id>":`)
+	text = tookLong.ReplaceAllString(text, "<took>")
+	text = heldBytes.ReplaceAllString(text, "${1}=<held>")
 
 	return stamp.ReplaceAllString(text, "<time>")
 }

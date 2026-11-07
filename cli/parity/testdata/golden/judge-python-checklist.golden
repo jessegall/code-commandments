@@ -50,7 +50,7 @@ exit: 1
   [36mshop/wallet_balances.py:7[0m  ClassDef Balance  [2m[MutableValueObjectDetector][0m
 
 [2m↳ the rule above all: trace each sin to where the value is BORN and fix it THERE — read fix-at-the-source.[0m
-[2m↳ don't recognise a rule above? `vendor/bin/commandments info <sin>` — what it flags, why it is a sin, the fix, an example.[0m
+[2m↳ don't recognise a rule above? `commandments info <sin>` — what it flags, why it is a sin, the fix, an example.[0m
 
 [1m40 sins[0m across 1 skill.
 [2m↳ checklist written to <project>/.commandments/sessions/61bdc/sins/sins.md — fix each item, then delete its line[0m
@@ -80,7 +80,7 @@ writes it again.
 **This file is your worklist. Work it straight down, deleting as you go — do NOT stop to re-check.** For each line, top to bottom, do exactly this:
 
 1. **LOAD the skill named in the section header.** It teaches the fix; do NOT fix from memory. Even if you believe you already loaded it, treat it as NOT loaded (a context compaction may have silently dropped its instructions while leaving you the impression they're still there) and load it again before touching the section. Once per section is enough.
-   _Don't recognise the rule, or about to argue with it? Run `vendor/bin/commandments info <sin>` first — it prints what the rule flags, WHY it is a sin, how it is fixed, and a worked example. The detector name from the line works as the argument. Guessing at a rule you have not read is how a finding gets silenced instead of fixed._
+   _Don't recognise the rule, or about to argue with it? Run `commandments info <sin>` first — it prints what the rule flags, WHY it is a sin, how it is fixed, and a worked example. The detector name from the line works as the argument. Guessing at a rule you have not read is how a finding gets silenced instead of fixed._
 2. Open the `file:line` and fix the sin at its source.
 3. **Delete that line from this file.** Nothing else — no tick, no mark, no strike-through. The deleted line IS the record that it's fixed.
 
@@ -92,44 +92,44 @@ Work **wave by wave.** ONLY when this list is EMPTY, run `commandments judge` ag
 
 > ▶ **LOAD the skill `commandments-python-value-objects` before fixing.** It teaches every fix below. Don't work from memory, and don't assume it's still loaded from earlier — a compaction can drop it silently — load it again if in any doubt.
 
-- `./shop/aisle_counts.py:24`  FunctionDef counted  [HandedOutCollectionDetector]
-- `./shop/barcode_parsing.py:13`  tuple  [PositionalTupleReturnDetector]
-- `./shop/carrier_rates.py:14`  call  [RawDecodedReturnDetector]
-- `./shop/cart_totals.py:9`  dict  [DictReturnBagDetector]
-- `./shop/customer_profiles.py:22`  call  [HandRolledReplaceDetector]
-- `./shop/customers.py:6`  FunctionDef subscribe  [DataClumpDetector] — same shape as shop/customers.py:12
-- `./shop/customers.py:12`  FunctionDef enrol  [DataClumpDetector] — same shape as shop/customers.py:6
-- `./shop/damage_reports.py:31`  FunctionDef aisles  [HandedOutCollectionDetector]
-- `./shop/delivery.py:8`  FunctionDef book_delivery  [DataClumpDetector] — same shape as shop/quotes.py:5
-- `./shop/delivery_addresses.py:7`  ClassDef DeliveryAddress  [MutableValueObjectDetector]
-- `./shop/discounts.py:7`  call  [DictBagDetector]
-- `./shop/discounts.py:9`  call  [DictBagDetector]
-- `./shop/discounts.py:11`  call  [DictBagDetector]
-- `./shop/exports.py:7`  call  [DictBagDetector]
-- `./shop/exports.py:7`  subscript  [DictBagDetector]
-- `./shop/exports.py:7`  subscript  [DictBagDetector]
-- `./shop/frozen_prices.py:7`  ClassDef ShelfPrice  [MutableValueObjectDetector]
-- `./shop/import_progress.py:12`  dict  [DictReturnBagDetector]
-- `./shop/invoice_split.py:8`  tuple  [PositionalTupleReturnDetector]
-- `./shop/note_boards.py:14`  FunctionDef notes  [HandedOutCollectionDetector]
-- `./shop/opening_hours.py:16`  ClassDef Weekday  [CoupledFieldsDetector]
-- `./shop/parcel_routes.py:13`  ClassDef ParcelBooking  [CoupledFieldsDetector]
-- `./shop/payload_fields.py:16`  call  [DictBagDetector]
-- `./shop/payload_fields.py:16`  call  [DictBagDetector]
-- `./shop/price_quotes.py:8`  dict  [DictReturnBagDetector]
-- `./shop/price_rules.py:22`  call  [HandRolledReplaceDetector]
-- `./shop/quotes.py:5`  FunctionDef quote  [DataClumpDetector] — same shape as shop/delivery.py:8
-- `./shop/shelf_audits.py:11`  ClassDef ShelfAudit  [CoupledFieldsDetector]
-- `./shop/shipment_records.py:21`  call  [HandRolledReplaceDetector]
-- `./shop/shipping_labels.py:10`  subscript  [DictBagDetector]
-- `./shop/shipping_labels.py:10`  subscript  [DictBagDetector]
-- `./shop/shipping_labels.py:10`  subscript  [DictBagDetector]
-- `./shop/shipping_labels.py:10`  subscript  [DictBagDetector]
-- `./shop/stock_counts.py:8`  tuple  [PositionalTupleReturnDetector]
-- `./shop/stock_report.py:8`  subscript  [DictBagDetector]
-- `./shop/stock_report.py:10`  subscript  [DictBagDetector]
-- `./shop/stock_report.py:10`  subscript  [DictBagDetector]
-- `./shop/store_settings.py:15`  call  [RawDecodedReturnDetector]
-- `./shop/supplier_feed.py:9`  call  [RawDecodedReturnDetector]
-- `./shop/wallet_balances.py:7`  ClassDef Balance  [MutableValueObjectDetector]
+- `<project>/shop/aisle_counts.py:24`  FunctionDef counted  [HandedOutCollectionDetector]
+- `<project>/shop/barcode_parsing.py:13`  tuple  [PositionalTupleReturnDetector]
+- `<project>/shop/carrier_rates.py:14`  call  [RawDecodedReturnDetector]
+- `<project>/shop/cart_totals.py:9`  dict  [DictReturnBagDetector]
+- `<project>/shop/customer_profiles.py:22`  call  [HandRolledReplaceDetector]
+- `<project>/shop/customers.py:6`  FunctionDef subscribe  [DataClumpDetector] — same shape as shop/customers.py:12
+- `<project>/shop/customers.py:12`  FunctionDef enrol  [DataClumpDetector] — same shape as shop/customers.py:6
+- `<project>/shop/damage_reports.py:31`  FunctionDef aisles  [HandedOutCollectionDetector]
+- `<project>/shop/delivery.py:8`  FunctionDef book_delivery  [DataClumpDetector] — same shape as shop/quotes.py:5
+- `<project>/shop/delivery_addresses.py:7`  ClassDef DeliveryAddress  [MutableValueObjectDetector]
+- `<project>/shop/discounts.py:7`  call  [DictBagDetector]
+- `<project>/shop/discounts.py:9`  call  [DictBagDetector]
+- `<project>/shop/discounts.py:11`  call  [DictBagDetector]
+- `<project>/shop/exports.py:7`  call  [DictBagDetector]
+- `<project>/shop/exports.py:7`  subscript  [DictBagDetector]
+- `<project>/shop/exports.py:7`  subscript  [DictBagDetector]
+- `<project>/shop/frozen_prices.py:7`  ClassDef ShelfPrice  [MutableValueObjectDetector]
+- `<project>/shop/import_progress.py:12`  dict  [DictReturnBagDetector]
+- `<project>/shop/invoice_split.py:8`  tuple  [PositionalTupleReturnDetector]
+- `<project>/shop/note_boards.py:14`  FunctionDef notes  [HandedOutCollectionDetector]
+- `<project>/shop/opening_hours.py:16`  ClassDef Weekday  [CoupledFieldsDetector]
+- `<project>/shop/parcel_routes.py:13`  ClassDef ParcelBooking  [CoupledFieldsDetector]
+- `<project>/shop/payload_fields.py:16`  call  [DictBagDetector]
+- `<project>/shop/payload_fields.py:16`  call  [DictBagDetector]
+- `<project>/shop/price_quotes.py:8`  dict  [DictReturnBagDetector]
+- `<project>/shop/price_rules.py:22`  call  [HandRolledReplaceDetector]
+- `<project>/shop/quotes.py:5`  FunctionDef quote  [DataClumpDetector] — same shape as shop/delivery.py:8
+- `<project>/shop/shelf_audits.py:11`  ClassDef ShelfAudit  [CoupledFieldsDetector]
+- `<project>/shop/shipment_records.py:21`  call  [HandRolledReplaceDetector]
+- `<project>/shop/shipping_labels.py:10`  subscript  [DictBagDetector]
+- `<project>/shop/shipping_labels.py:10`  subscript  [DictBagDetector]
+- `<project>/shop/shipping_labels.py:10`  subscript  [DictBagDetector]
+- `<project>/shop/shipping_labels.py:10`  subscript  [DictBagDetector]
+- `<project>/shop/stock_counts.py:8`  tuple  [PositionalTupleReturnDetector]
+- `<project>/shop/stock_report.py:8`  subscript  [DictBagDetector]
+- `<project>/shop/stock_report.py:10`  subscript  [DictBagDetector]
+- `<project>/shop/stock_report.py:10`  subscript  [DictBagDetector]
+- `<project>/shop/store_settings.py:15`  call  [RawDecodedReturnDetector]
+- `<project>/shop/supplier_feed.py:9`  call  [RawDecodedReturnDetector]
+- `<project>/shop/wallet_balances.py:7`  ClassDef Balance  [MutableValueObjectDetector]
 

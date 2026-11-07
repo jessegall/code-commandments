@@ -417,8 +417,13 @@ func TestNoAliasOfOursIsOpenToAWorker(t *testing.T) {
 		t.Error("the briefing does not say that work another agent wrote is judged as it comes in")
 	}
 
-	if !strings.Contains(string(brief), "its merge is judged the moment it lands") {
+	if !strings.Contains(string(brief), "merge is judged the\nmoment it lands") {
 		t.Error("the briefing does not say that the merge itself is judged, so an agent would still think it must remember to")
+	}
+
+	if !strings.Contains(string(brief), "findings go to the worker that wrote them") {
+		t.Error("the briefing does not say the worker is told, so an agent expecting a merge report and getting none " +
+			"would conclude nothing was judged")
 	}
 }
 

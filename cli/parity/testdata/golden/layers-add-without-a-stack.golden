@@ -2,6 +2,6 @@ exit: 2
 --- stdout
 
 --- stderr
-[31m✗ .commandments/config.php declares no layers yet — run `commandments layers --write` to propose the stack first.[0m
+[31m✗ .commandments/config.json declares no layers yet — run `commandments layers --write` to propose the stack first.[0m
 
 --- files

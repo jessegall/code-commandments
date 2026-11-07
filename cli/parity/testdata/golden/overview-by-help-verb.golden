@@ -65,9 +65,9 @@ Hooks (wired automatically — you rarely run these by hand):
   journal-hook    The agent journal's entry point — reads one journal hook payload from stdin,
                   runs every registered handler, and answers in the journal's shape.
   journal4-hook   Version 4 of the agent journal's entry point — reads one event line from stdin
-                  and answers it: the held event (a command about to run) with the gates alone, from
-                  what they already know, and every other with what its handlers found, since the
-                  journal hears those after its own reply.
+                  and answers it: a command about to run and a file just changed with the gates
+                  alone, from what they already know, and every other event with what its handlers
+                  found.
   journal-serve   Answer the agent journal's hooks from one running process, over the socket the
                   journal names in $JOURNAL_PLUGIN_SOCKET.
   roslyn-serve    Keep the C# bridge running for this project, answering each run of the tool over a
@@ -85,6 +85,12 @@ Hooks (wired automatically — you rarely run these by hand):
                   when it has none.
   has-php         Say whether this project has PHP to judge: exit 0 when it has, 1 when it has none.
   has-go          Say whether this project has Go to judge: exit 0 when it has, 1 when it has none.
+  why             Say what the last judging of a file was: the checkout it was judged in, whether a
+                  tree was held, which rules were asked, and what was found.
+  lanes           Say what the running service holds: a lane per checkout with the commit it was cut
+                  from, how much of it is held and when it last answered, the trees held for the
+                  project, the ceiling over them all, and what the last merges and hand-ins brought
+                  in.
   hook            Run ONE hook directly, by name — the form every wired hook is written as.
 
 Global options:

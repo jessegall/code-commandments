@@ -2,6 +2,9 @@
 package repent
 
 import (
+	"errors"
+
+	"github.com/jessegall/code-commandments/bridge"
 	"github.com/jessegall/code-commandments/catalog"
 	"github.com/jessegall/code-commandments/detectors"
 	"github.com/jessegall/code-commandments/engine/frontend"
@@ -12,31 +15,54 @@ import (
 )
 
 func Run(roots []string, scope scribes.Scope, filed scribes.Filed, given []detectors.Detector, only string) (scribes.Converged, error) {
-	backend, err := serve(php.Here().Cached().Command, php.Over)
+	backend, unavailable, err := served(php.Here().Cached().Command, php.Over)
 	if err != nil {
 		return scribes.Converged{}, err
 	}
 	defer backend.Close()
-	vue, err := serve(frontend.Here().Cached().Command, frontend.Over)
+
+	vue, vueUnavailable, err := served(frontend.Here().Cached().Command, frontend.Over)
 	if err != nil {
 		return scribes.Converged{}, err
 	}
 	defer vue.Close()
+
+	unavailable = append(unavailable, vueUnavailable...)
 
 	chain := Chain(backend, vue, given)
 	if only != "" {
 		chain.Matching(only)
 	}
 
-	return scribes.Converge(chain, roots, scope, scribes.Frozens{backend, vue}, filed), nil
+	converged := scribes.Converge(chain, roots, scope, scribes.Frozens{backend, vue}, filed)
+	converged.Unavailable = unavailable
+
+	return converged, nil
+}
+
+func served(command func() ([]string, error), read scribes.Reader) (*scribes.Scanner, []bridge.Unavailable, error) {
+	scanner, err := serve(command, read)
+
+	var missing bridge.Unavailable
+	if errors.As(err, &missing) {
+		return nil, []bridge.Unavailable{missing}, nil
+	}
+
+	return scanner, nil, err
 }
 
 func Chain(backend, vue *scribes.Scanner, given []detectors.Detector) *scribes.Chain {
 	var steps []scribes.Step
-	steps = append(steps, scribes.MaintenanceSteps(catalog.PHP, backend)...)
-	steps = append(steps, scribes.Steps(catalog.PHP, backend, given)...)
-	steps = append(steps, scribes.Steps(catalog.Vue, vue, given)...)
-	steps = append(steps, scribes.Steps(catalog.TypeScript, vue, given)...)
+
+	if backend != nil {
+		steps = append(steps, scribes.MaintenanceSteps(catalog.PHP, backend)...)
+		steps = append(steps, scribes.Steps(catalog.PHP, backend, given)...)
+	}
+
+	if vue != nil {
+		steps = append(steps, scribes.Steps(catalog.Vue, vue, given)...)
+		steps = append(steps, scribes.Steps(catalog.TypeScript, vue, given)...)
+	}
 
 	return scribes.Default(steps...)
 }

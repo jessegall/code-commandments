@@ -37,8 +37,9 @@ Options:
   — auto-detected on first run from your composer.json PSR-4 map (plus app/src), so scaffolding
   like database/, storage/ and config/ is not judged. Run `commandments config reindex` to re-detect
   them, or pass an explicit [path] to scan it directly. Add a path under "exclude" to subtract it
-  from ANY run — the tree is still parsed (so cross-file rules stay correct) but nothing in it is
-  ever reported or rewritten.
+  from ANY run: that tree is not read at all, so nothing in it is ever reported or rewritten. One
+  rule may be let in anyway with a "judges" call under it in "configure" — `{"configure":
+  {"NoRawSqlDetector": [{"judges": ["tests"]}]}}` reads tests/ for that rule and no other.
 
   A rule that BREAKS is skipped so the rest of the run survives — but the run is not green: it
   names the rules that could not run and exits 3 (rather than 0) when nothing else was found,

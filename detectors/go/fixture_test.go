@@ -10,19 +10,12 @@ import (
 	"github.com/jessegall/code-commandments/catalog"
 	"github.com/jessegall/code-commandments/contract"
 	"github.com/jessegall/code-commandments/detectors"
-	godetectors "github.com/jessegall/code-commandments/detectors/go"
 	"github.com/jessegall/code-commandments/engine"
 	_ "github.com/jessegall/code-commandments/engine/golang"
 	"github.com/jessegall/code-commandments/fixture"
 	"github.com/jessegall/code-commandments/fixture/fixturetest"
 	_ "github.com/jessegall/code-commandments/registry"
 )
-
-var calibrating = []detectors.Detector{
-	godetectors.DeepNestingDetector{},
-	godetectors.RedundantElseDetector{},
-	godetectors.LoopWrappedInIfDetector{},
-}
 
 func shop(t *testing.T) *engine.Codebase {
 	t.Helper()
@@ -44,14 +37,14 @@ func shop(t *testing.T) *engine.Codebase {
 }
 
 func TestEveryGoDetectorFlagsExactlyWhatTheFixtureMarks(t *testing.T) {
-	known := append(slices.Clone(detectors.Of(catalog.Go)), calibrating...)
+	known := detectors.Of(catalog.Go)
 
 	fixturetest.Prove(t, fixture.Fixture{Codebase: shop(t), Detectors: known, Known: known})
 }
 
 func TestEverySinTheGoFixtureMarksHasADetector(t *testing.T) {
 	codebase := shop(t)
-	known := append(slices.Clone(detectors.Of(catalog.Go)), calibrating...)
+	known := detectors.Of(catalog.Go)
 
 	var unknown []string
 	for _, marker := range fixture.Markers(codebase) {

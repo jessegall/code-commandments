@@ -22,7 +22,7 @@ exit: 0
       Shop\Models  ->  Shop\Fulfillment
       Shop\Telemetry  ->  Shop\Diagnostics
       Shop\Warranty  ->  Shop\Claims
-    [2mrun `commandments judge --sin=namespace-cycle` for the exact arrows to cut[0m
+    [2mrun `vendor/bin/commandments judge --sin=namespace-cycle` for the exact arrows to cut[0m
 
   Proposed declaration — today's shape, held (63 namespaces):
 

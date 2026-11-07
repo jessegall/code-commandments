@@ -29,7 +29,7 @@ func TestAJudgedMergeReachesTheWorkerAndNotTheAgent(t *testing.T) {
 
 func TestAJudgedMergeFallsBackToTheAgentWhenTheWorkerIsGone(t *testing.T) {
 	root, before, after := mergedProject(t)
-	journalThatSays(t, 1, "worker worker-7 has no worktree")
+	journalThatSays(t, 5, "worker worker-7 is retired")
 
 	said := MergeLanded(mergeLine(root, "main", before, after))
 
@@ -37,7 +37,7 @@ func TestAJudgedMergeFallsBackToTheAgentWhenTheWorkerIsGone(t *testing.T) {
 		t.Fatal("the worker could not be told and nobody else was either, so the findings of a merge are lost")
 	}
 
-	if !strings.Contains(said, "no worktree") {
+	if !strings.Contains(said, "retired") {
 		t.Errorf("the agent is not told why it is hearing this: %s", said)
 	}
 

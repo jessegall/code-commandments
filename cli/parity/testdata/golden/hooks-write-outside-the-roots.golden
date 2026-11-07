@@ -1,5 +1,6 @@
 exit: 0
 --- stdout
+{"hookSpecificOutput":{"hookEventName":"PostToolUse","additionalContext":"Code Commandments: nothing of this edit was judged: lib/Order.php, because what changed is not on disk, which is what a checkout cut again or removed looks like, so this is not a clean answer, it is a smaller one. Run `commandments judge --changes` for the whole answer."}}
 
 --- stderr
 

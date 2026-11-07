@@ -61,5 +61,9 @@ Between the dividers is the list: one finding per line: the file, a tab, then th
 
 Safe to delete — the findings still standing are named once more.
 
+=== changed plugin-data/judgings.log
+<time> | PostToolUse | project=<project> | branch=master | tree=declined | overlay=0 | parsed=1 in <took> | rules=167 of 168 in <took> | sins=1 | heap=<held> resident=<held> withBridges=<held> | because no tree of this checkout is held and none is being read, so only the rules that answer from one file will ever run here
+<time> | PostToolUse | project=<project> | branch=master | tree=declined | overlay=0 | parsed=1 in <took> | rules=167 of 168 in <took> | sins=0 | heap=<held> resident=<held> withBridges=<held> | because no tree of this checkout is held and none is being read, so only the rules that answer from one file will ever run here
+
 === changed plugin-data/sins.json
 []

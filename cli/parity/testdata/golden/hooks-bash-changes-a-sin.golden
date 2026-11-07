@@ -1,6 +1,6 @@
 exit: 0
 --- stdout
-{"hookSpecificOutput":{"hookEventName":"PostToolUse","additionalContext":"Code Commandments — 2 new sins:\n  • array-bag at src/Order.php:13 — load `commandments-php-value-objects`, run `commandments judge src/Order.php --sin=array-bag`\n  • narrated-command at src/Order.php:7 — load `commandments-php-method-mood`, run `commandments judge src/Order.php --sin=narrated-command`"}}
+{"hookSpecificOutput":{"hookEventName":"PostToolUse","additionalContext":"Code Commandments — src/Order.php:7 narrated-command (hides) — load `commandments-php-method-mood`, then fix it at its source.\n\nCode Commandments: judged by the 167 rules that answer from one file, and the 80 that read across files were not asked, because no tree of this checkout is held and none is being read, so only the rules that answer from one file will ever run here, so this is not a clean answer, it is a smaller one. Run `commandments judge --changes` for the whole answer. (src/Order.php)"}}
 
 --- stderr
 
@@ -18,7 +18,6 @@ Safe to delete — the reminder stays silent until the session changes a judged 
 
 === changed .commandments/sessions/640d8/.reported-findings
 -----
-<project>/src/Order.php	array-bag at <project>/src/Order.php:13
 <project>/src/Order.php	narrated-command at <project>/src/Order.php:7
 -----
 Code-commandments — the findings the per-edit check has already named this session, so each is said once.
@@ -26,4 +25,15 @@ Code-commandments — the findings the per-edit check has already named this ses
 Between the dividers is the list: one finding per line: the file, a tab, then the finding as it was named
 
 Safe to delete — the findings still standing are named once more.
+
+=== changed .commandments/sessions/640d8/.said-shortfalls
+-----
+src/Clean.php	no tree of this checkout is held and none is being read, so only the rules that answer from one file will ever run here
+src/Order.php	no tree of this checkout is held and none is being read, so only the rules that answer from one file will ever run here
+-----
+Code-commandments — which shortfall each file's reader was last told about, so the same words are not said on every edit.
+
+Between the dividers is the list: one file per line: the file, a tab, then the reason its reader was last told about
+
+Safe to delete — the next edit of each file says once more what was not asked about it.
 

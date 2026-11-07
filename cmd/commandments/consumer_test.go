@@ -236,7 +236,7 @@ func TestAProjectWithNoJournalIsUntouchedByTheWorkerJudging(t *testing.T) {
 
 	judged := c.run(1, "commandments", "judge", "--no-checklist", "--parallel=2")
 
-	for _, named := range []string{"redundant-python-else", "src/order.py"} {
+	for _, named := range []string{"RedundantElseDetector", "src/order.py"} {
 		if !strings.Contains(judged, named) {
 			t.Errorf("a project with no journal does not have its sins named: %s is missing from\n%s", named, judged)
 		}

@@ -152,6 +152,10 @@ func (c Command) Run(in *cli.Input, console cli.Console) (int, error) {
 		base = source.Real(path)
 	}
 
+	for _, missing := range converged.Unavailable {
+		console.Warn(missing.Error())
+	}
+
 	console.Write(leftAlone(project, targets))
 
 	if in.HasFlag("dry-run") {

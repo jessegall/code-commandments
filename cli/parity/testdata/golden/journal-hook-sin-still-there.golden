@@ -5,3 +5,7 @@ exit: 0
 --- stderr
 
 --- files
+=== changed plugin-data/judgings.log
+<time> | PostToolUse | project=<project> | branch=master | tree=declined | overlay=0 | parsed=1 in <took> | rules=167 of 168 in <took> | sins=1 | heap=<held> resident=<held> withBridges=<held> | because no tree of this checkout is held and none is being read, so only the rules that answer from one file will ever run here
+<time> | PostToolUse | project=<project> | branch=master | tree=declined | overlay=0 | parsed=1 in <took> | rules=167 of 168 in <took> | sins=1 | heap=<held> resident=<held> withBridges=<held> | because no tree of this checkout is held and none is being read, so only the rules that answer from one file will ever run here
+

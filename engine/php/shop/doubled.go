@@ -7,20 +7,37 @@ import (
 	"github.com/jessegall/code-commandments/engine"
 )
 
+func Fresh(t testing.TB) *engine.Codebase {
+	t.Helper()
+
+	return engine.New(readFixture, streamsOf(t)...)
+}
+
 func Doubled(t testing.TB) *engine.Codebase {
 	t.Helper()
 
-	backend, err := readStream("shop.jsonl.gz")
-	if err != nil {
-		t.Fatalf("the committed shop streams do not load (run go generate ./engine/php): %v", err)
+	var doubled []*contract.Stream
+	for _, stream := range streamsOf(t) {
+		doubled = append(doubled, twiceOver(stream))
 	}
 
-	frontend, err := readStream("shop-frontend.jsonl.gz")
-	if err != nil {
-		t.Fatalf("the committed shop streams do not load (run go generate ./engine/php): %v", err)
+	return engine.New(readFixture, doubled...)
+}
+
+func streamsOf(t testing.TB) []*contract.Stream {
+	t.Helper()
+
+	var streams []*contract.Stream
+	for _, name := range []string{"shop.jsonl.gz", "shop-frontend.jsonl.gz"} {
+		stream, err := readStream(name)
+		if err != nil {
+			t.Fatalf("the committed shop streams do not load (run go generate ./engine/php): %v", err)
+		}
+
+		streams = append(streams, stream)
 	}
 
-	return engine.New(readFixture, twiceOver(backend), twiceOver(frontend))
+	return streams
 }
 
 func twiceOver(stream *contract.Stream) *contract.Stream {

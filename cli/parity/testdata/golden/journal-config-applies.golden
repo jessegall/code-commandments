@@ -1,48 +1,30 @@
 exit: 0
 --- stdout
-{"notify":"config.php follows the plugin's switches: 2 changed"}
+{"notify":"config.json follows the plugin's switches: 2 changed"}
 
 --- stderr
 
 --- files
-=== created .commandments/config.php
-<?php
+=== created .commandments/config.json
+{
+    "$schema": "./config.schema.json",
+    "paths": [
+        "src",
+        "lib"
+    ],
+    "exclude": [
+        "src/Generated"
+    ],
+    "disable": {
+        "languages": [
+            "python"
+        ],
+        "sins": [
+            "php/ArrayBag"
+        ]
+    }
+}
 
-declare(strict_types=1);
-
-use JesseGall\CodeCommandments\Config;
-
-/*
- | code-commandments configuration.
- |
- | paths()   — the source roots judge and repent scan (auto-detected on first run; edit to
- |             adjust scope, or run `commandments config reindex`).
- | exclude() — subtract explicit paths ON TOP of paths(): a dir or file listed here is never a
- |             target (never reported, never rewritten), e.g. $config->exclude('app/Generated').
- | disable() — silence a rule by its Sin, Detector, or whole Skill class, or a Claude Code
- |             hook by its class (or use `commandments disable/enable <sin>`). The
- |             $disabledSkills / $disabledSins / $disabledHooks menus below list every one.
- |
- | Extend it inside the closure:
- |   $config->detector(\App\Commandments\NoRawSqlDetector::class);        — add your own finder
- |   $config->package(\App\Commandments\MyFrameworkPackage::class);       — register its exemptions
- |   $config->configure(fn (DeepNestedDetector $d) => $d->maxDepth(10));  — tune a threshold
- */
-
-return function (Config $config): void {
-    $config->paths(
-        'src',
-        'lib',
-    );
-
-    $config->disable(
-        // \JesseGall\CodeCommandments\Sins\Backend\SwallowCatch::class,
-        \JesseGall\CodeCommandments\Language::Python,
-        \JesseGall\CodeCommandments\Sins\Backend\ArrayBag::class,
-    );
-
-    $config->exclude('src/Generated');
-};
 === created AGENTS.md
 # AGENTS
 
@@ -74,6 +56,11 @@ you work: top to bottom, one line at a time — read that section's skill, fix t
 source, delete the line. Re-run only when the file is empty, and keep going until a run is clean.
 Where your harness raises each sin as you change a file, those marks cover what you changed and
 nothing else: a tree you have not touched is judged only by asking.
+
+**Work another agent wrote is judged as it comes in, and its worker is told.** A merge is judged the
+moment it lands and the findings go to the worker that wrote them. You hear of one only when that
+worker could not be told or the merge could not be judged in full, and then it is yours: fix each at
+its source, or hand it to a worker. Where nothing told you, `commandments judge --changes` says it.
 
 **Don't recognise a rule?** `commandments info <sin>` prints what it flags, why, how it is fixed and
 a worked example — the detector name off the checklist works. Guessing at a rule you have not read
