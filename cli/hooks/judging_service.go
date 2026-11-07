@@ -117,6 +117,20 @@ func readsInOneGo(files int) int {
 	return min(mostReadInOneGo, max(leastReadInOneGo, files/partOfTheTree))
 }
 
+func notThisCheckouts(walked, checkout, project string) string {
+	if checkout == "" || checkout == "/" {
+		return "which checkout " + walked + " belongs to could not be worked out, so no tree of ours can answer " +
+			"about it: it is in no git repository this service holds"
+	}
+
+	if project != "" && !strings.HasPrefix(walked, strings.TrimRight(project, "/")) {
+		return walked + " belongs to another project than the one this service holds (" + project +
+			"), so this tree says nothing about it"
+	}
+
+	return walked + " lies outside " + checkout + ", so this tree says nothing about it"
+}
+
 func heldOrDeclined(root, in string, declined *string) func(scan.Sources) (*engine.Codebase, error) {
 	return func(sources scan.Sources) (*engine.Codebase, error) {
 		checkout := checkoutOf(root, in)
@@ -141,7 +155,7 @@ func heldOrDeclined(root, in string, declined *string) func(scan.Sources) (*engi
 
 		for _, walked := range sources.Roots() {
 			if _, inside := warm.Under(checkout, walked); !inside {
-				*declined = walked + " lies outside " + checkout + ", so this tree says nothing about it"
+				*declined = notThisCheckouts(walked, checkout, named.project)
 
 				return engine.Load(), nil
 			}
@@ -307,4 +321,8 @@ func viewOf(base *warm.Base, named branchRoot, checkout string, read, gone []str
 	}
 
 	return base.ViewFrom(checkout, rebuilt.Streams(), named.project, gone), nil
+}
+
+func noProjectAt(root string) bool {
+	return root == "" || root == "/" || git.Root(root) == ""
 }

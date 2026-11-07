@@ -485,6 +485,12 @@ func (s JournalServe) Run(in *cli.Input, console cli.Console) (int, error) {
 	os.Chmod(path, 0o600)
 
 	root := workspace.ProjectRoot(firstText(os.Getenv(journalRoot), cwdOf()))
+	if noProjectAt(root) {
+		return help.Usage(console.Err, s, "This service holds one project's tree, and "+orNothing(root)+
+			" is no project: name the project in $"+journalRoot+". Serving it would answer every question about "+
+			"every path on this machine."), nil
+	}
+
 	started := stamp(root)
 
 	Serves()
