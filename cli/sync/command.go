@@ -101,6 +101,10 @@ func Sync(root string, console cli.Console) error {
 		return err
 	}
 
+	if untracked := UntrackTheConfig(root); untracked.Said != "" {
+		console.Say(untracked.Said)
+	}
+
 	removeLegacyArtifacts(root)
 	removeHostRoslynBuilds(console)
 	console.Warn(custom.InForce(root).ClassWarnings()...)
