@@ -132,7 +132,28 @@ function released(string $version): string
     chmod($draft, 0755);
     rename($draft, $binary);
 
+    forgetOtherVersions($version);
+
     return $binary;
+}
+
+/**
+ * Removes the binaries of every other version once a new one is fetched, keeping any fetched in the last day, so the
+ * cache holds what runs and not one binary per release ever installed; a version removed is fetched again if it runs.
+ */
+function forgetOtherVersions(string $kept): void
+{
+    foreach (glob(cacheFolder() . '/v*', GLOB_ONLYDIR) ?: [] as $folder) {
+        if (basename($folder) === $kept || time() - (int) @filemtime($folder) < 86400) {
+            continue;
+        }
+
+        foreach (glob($folder . '/*') ?: [] as $file) {
+            @unlink($file);
+        }
+
+        @rmdir($folder);
+    }
 }
 
 /**
