@@ -21,7 +21,7 @@ func TestAFolderLeftOutOfAWorktreeIsStillCommittedWhole(t *testing.T) {
 		t.Fatalf("the worktree never carried the folder, so this proves nothing: %v", err)
 	}
 
-	if err := LeaveOutOfCheckout(worktree, ".commandments"); err != nil {
+	if err := LeaveOutOfCheckout(worktree, ".commandments/"); err != nil {
 		t.Fatal(err)
 	}
 
@@ -55,7 +55,7 @@ func TestACheckoutThatAlreadyLeavesFilesOutIsLeftAlone(t *testing.T) {
 	gitIn(t, root, "worktree", "add", "-q", "-b", "a-worker", worktree)
 	gitIn(t, worktree, "sparse-checkout", "set", "--no-cone", "/src/")
 
-	if err := LeaveOutOfCheckout(worktree, ".commandments"); err == nil {
+	if err := LeaveOutOfCheckout(worktree, ".commandments/"); err == nil {
 		t.Error("a checkout that already leaves files out was written over without a word")
 	}
 
@@ -67,7 +67,7 @@ func TestACheckoutThatAlreadyLeavesFilesOutIsLeftAlone(t *testing.T) {
 func TestTheMainCheckoutIsNeverLeftOut(t *testing.T) {
 	root := aRepositoryWith(t, map[string]string{".commandments/config.json": `{"paths": ["src"]}`})
 
-	if err := LeaveOutOfCheckout(root, ".commandments"); err == nil {
+	if err := LeaveOutOfCheckout(root, ".commandments/"); err == nil {
 		t.Fatal("the main checkout had its own rules left out of it")
 	}
 

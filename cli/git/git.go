@@ -446,3 +446,11 @@ func leadingInt(text string) int {
 
 	return number
 }
+
+func Tracks(root, path string) bool {
+	return ask(root, "ls-files", "--", path) != ""
+}
+
+func StopTracking(root, path string) (string, error) {
+	return wrote(root, "rm", "--cached", "-q", "--", path)
+}

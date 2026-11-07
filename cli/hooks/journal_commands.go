@@ -16,6 +16,7 @@ import (
 	"github.com/jessegall/code-commandments/cli/help"
 	"github.com/jessegall/code-commandments/cli/library"
 	"github.com/jessegall/code-commandments/cli/source"
+	"github.com/jessegall/code-commandments/cli/untrack"
 	"github.com/jessegall/code-commandments/cli/workspace"
 	"github.com/jessegall/code-commandments/sins"
 )
@@ -292,6 +293,7 @@ func (JournalConfig) Apply(in *cli.Input, console cli.Console) ([]string, int, e
 		said = append(said, editor.Name()[len(".commandments/"):]+" follows the plugin's switches: "+strconv.Itoa(changed)+" changed")
 	}
 
+	said = append(said, untrack.Everywhere(root)...)
 	said = append(said, brief(root)...)
 
 	return said, 0, nil

@@ -16,6 +16,7 @@ import (
 	"github.com/jessegall/code-commandments/cli/git"
 	"github.com/jessegall/code-commandments/cli/help"
 	"github.com/jessegall/code-commandments/cli/library"
+	"github.com/jessegall/code-commandments/cli/untrack"
 	"github.com/jessegall/code-commandments/cli/workspace"
 )
 
@@ -101,8 +102,8 @@ func Sync(root string, console cli.Console) error {
 		return err
 	}
 
-	if untracked := UntrackTheConfig(root); untracked.Said != "" {
-		console.Say(untracked.Said)
+	for _, said := range untrack.Everywhere(root) {
+		console.Say(said)
 	}
 
 	removeLegacyArtifacts(root)
