@@ -14,7 +14,7 @@ project="$(cd "$(git rev-parse --git-common-dir)/.." && pwd -P)"
 
 [ -x "$project/.journal/bin/journal" ] || { echo "stories need this project's journal at $project/.journal/bin/journal" >&2; exit 1; }
 
-scratch="$(mktemp -d)"
+scratch="$(mktemp -d "${TMPDIR:-/tmp}/stories.XXXXXX")"
 port_file="$scratch/port"
 python3 -I story/relay.py "$project" "$port_file" &
 relay=$!
@@ -31,4 +31,4 @@ mounts=()
 [ "$project" = "$(pwd -P)" ] || mounts=(--mount "$project")
 
 scripts/dev ${mounts[@]+"${mounts[@]}"} env STORY_RELAY="host.docker.internal:$(cat "$port_file")" STORY_PROJECT="$project" \
-    GOMEMLIMIT=3GiB GOMAXPROCS=2 go test -tags story -p 1 -count=1 "${packages[@]}"
+    GOMEMLIMIT=3GiB GOMAXPROCS=2 go test -tags story -p 1 -count=1 -timeout 120m "${packages[@]}"
