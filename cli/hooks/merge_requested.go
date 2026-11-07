@@ -134,3 +134,16 @@ func mergesJudgedBeforeTheyLand() bool {
 }
 
 const beforeMergeKey = "judge_before_merge"
+
+func handInsJudged() bool {
+	chosen, given := chosenSettings()
+	if !given {
+		return true
+	}
+
+	said, named := chosen[handInsKey]
+
+	return !named || asText(said) != "false"
+}
+
+const handInsKey = "judge_hand_ins"

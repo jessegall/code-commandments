@@ -123,6 +123,13 @@
             "default": "true",
             "group": "Performance"
         },
+        "judge_hand_ins": {
+            "title": "Hold a worker's hand-in until it is judged",
+            "help": "On, a worker's hand-in waits while the plugin judges the files it changed since its worktree was cut, answered from the tree the service already holds, and a sin sends the work back to that worker naming the file, the line and the skill. When no tree is held or the time the journal allows runs out, the hand-in goes on and says what was not judged; the project is never read whole for it. Off, hand-ins are not held and a merge is judged after it lands.",
+            "type": "flag",
+            "default": "true",
+            "group": "Performance"
+        },
         "judge_before_merge": {
             "title": "Refuse a merge that would bring in sins",
             "help": "On, a worker's merge is judged BEFORE it lands, over what its branch adds on top of the branch it merges into, and a merge that would bring in sins is refused: the work goes back to that worker with the findings and the merger is told it was not allowed. Off, a merge lands and is judged afterwards. This is the one thing the journal waits for us on, so it allows the merge and says so rather than holding it when the judging runs long.",

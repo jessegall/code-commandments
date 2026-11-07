@@ -156,6 +156,17 @@ func (p *parsing) fill(group []string) {
 		return
 	}
 
+	p.holdsEach(streams, marks)
+}
+
+func (p *parsing) keeps(streams []*contract.Stream, marks map[string]string) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
+	p.holdsEach(streams, marks)
+}
+
+func (p *parsing) holdsEach(streams []*contract.Stream, marks map[string]string) {
 	for _, stream := range streams {
 		for _, file := range stream.Files {
 			alone := *stream

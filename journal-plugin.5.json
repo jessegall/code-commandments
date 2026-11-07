@@ -58,6 +58,11 @@
       "event": "suites.coding.workers.merge_request.created",
       "guard": "service:hooks",
       "window_ms": 30000
+    },
+    {
+      "event": "worker_delivering",
+      "guard": "service:hooks",
+      "window_ms": 60000
     }
   ],
   "aliases": [

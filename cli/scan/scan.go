@@ -185,6 +185,7 @@ func (s Sources) Load() (*engine.Codebase, error) {
 	}
 
 	codebase := engine.Load(streams...)
+	engine.CountedParsed(len(codebase.Files()))
 	codebase.Scanned(s.roots...)
 	codebase.Rooted(s.project())
 	sayUnreadable(streams)

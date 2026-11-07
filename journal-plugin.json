@@ -33,6 +33,10 @@
     {
       "event": "command_starting",
       "window_ms": 5
+    },
+    {
+      "event": "worker_delivering",
+      "window_ms": 60000
     }
   ],
   "reaches": {

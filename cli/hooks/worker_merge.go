@@ -17,6 +17,7 @@ import (
 	"github.com/jessegall/code-commandments/cli/scan"
 	"github.com/jessegall/code-commandments/cli/scope"
 	"github.com/jessegall/code-commandments/cli/source"
+	"github.com/jessegall/code-commandments/cli/warm"
 	"github.com/jessegall/code-commandments/cli/workspace"
 	"github.com/jessegall/code-commandments/detectors"
 	"github.com/jessegall/code-commandments/engine"
@@ -39,7 +40,11 @@ func MergeHeld(line map[string]any) string {
 }
 
 func DeliveryHeld(line map[string]any) string {
-	return workHeld(line)
+	if !handInsJudged() {
+		return ""
+	}
+
+	return mergeOf(line).answered()
 }
 
 func workHeld(line map[string]any) string {
@@ -83,26 +88,27 @@ func (work merging) keeps(said string) {
 func (work merging) answered() string {
 	found := work.sinsWithin()
 
-	if found.got != gotWhole {
-		said := Unjudged(work.worker+"'s hand-in was not judged in full", string(found.got),
-			binary.Judging(work.worktree)+" --changes")
-
-		if len(found.marks) > 0 {
-			said = mergeTold(work.worker, "", work.worktree, found.marks) + "\n\n" + said
-		}
-
-		work.keeps(said)
-
-		return (JournalAnswer{Whisper: &said}).Line4()
+	if found.got == gotWhole && len(found.marks) == 0 {
+		return ""
 	}
 
+	if found.got == gotWhole {
+		refusal := mergeReason(work.worker, found.marks, work.worktree)
+
+		return (JournalAnswer{Refuse: &refusal}).Line4()
+	}
+
+	said := Unjudged(work.worker+"'s hand-in was not judged in full", string(found.got),
+		binary.Judging(work.worktree)+" --changes")
+	work.keeps(said)
+
 	if len(found.marks) == 0 {
-		return ""
+		return (JournalAnswer{Whisper: &said}).Line4()
 	}
 
 	refusal := mergeReason(work.worker, found.marks, work.worktree)
 
-	return (JournalAnswer{Refuse: &refusal}).Line4()
+	return (JournalAnswer{Refuse: &refusal, Whisper: &said}).Line4()
 }
 
 // handIn is what a hand-in's judging came to: the marks it found, and how far it got, which a slice of marks alone cannot say.
@@ -117,6 +123,8 @@ const (
 	gotNowhere gotTo = "nothing of this hand-in was judged: the time the journal allows ran out before even the files it changed could be read"
 	gotPartly  gotTo = "only the files this hand-in changed were judged, and the rules that read across files were not asked, because the time the journal allows ran out"
 	gotWhole   gotTo = ""
+
+	withoutTheTree gotTo = "only the rules that answer from one file were asked about the files this hand-in changed, because no tree of this project is held to answer the rest from, and the project is never read whole to make up for it"
 )
 
 func (m merging) sinsWithin() handIn {
@@ -136,14 +144,16 @@ func (m merging) sinsWithin() handIn {
 		return handIn{got: gotNowhere}
 	}
 
-	answered := make(chan []SinMark, 1)
+	answered := make(chan handIn, 1)
 	go func() { answered <- m.sins() }()
 
 	select {
-	case marks := <-answered:
-		return handIn{marks: marks, got: gotWhole}
+	case found := <-answered:
+		return found
 	case <-within:
-		go m.tellsLater(answered)
+		later := make(chan []SinMark, 1)
+		go func() { later <- (<-answered).marks }()
+		go m.tellsLater(later)
 
 		return handIn{marks: held, got: gotPartly}
 	}
@@ -314,53 +324,52 @@ func namedFiles(named any) []string {
 	return files
 }
 
-func (m merging) sins() []SinMark {
+func (m merging) sins() handIn {
 	if m.worktree == "" {
-		return nil
+		return handIn{got: gotWhole}
 	}
 
 	project, err := config.Load(m.worktree)
 	if err != nil {
-		return nil
+		return handIn{got: gotWhole}
 	}
 
 	rules, err := project.Enabled(config.InstalledIn(m.worktree))
 	if err != nil {
-		return nil
+		return handIn{got: gotWhole}
 	}
 	rules = append(rules, custom.InForce(m.worktree).Enabled(project)...)
 	project = project.Judging(rules)
 
-	switch {
-	case m.unlimited, m.window >= wholeTreeWindow:
-		return m.deep(project, rules)
-	case m.window >= changedFilesWindow:
-		return m.shallow(project, rules)
+	if !m.unlimited && m.window < changedFilesWindow {
+		return handIn{got: gotWhole}
 	}
 
-	return nil
+	return m.deep(project, rules)
 }
 
-func (m merging) deep(project config.Config, rules []detectors.Detector) []SinMark {
+func (m merging) deep(project config.Config, rules []detectors.Detector) handIn {
 	changed := m.changed(project)
 	if len(changed) == 0 {
-		return nil
+		return handIn{got: gotWhole}
 	}
 
-	codebase, err := scan.Walk(m.roots(project), source.Under(m.worktree, project.Excluded)).Load()
-	if err != nil {
-		return m.shallow(project, rules)
+	since := git.MergeBase(m.worktree, m.cutFrom())
+	root := projectOf(m.worktree)
+
+	found, _, why := AgainstTheProgramNarrowed(Marks(root).CutFrom(since), slices.Sorted(maps.Keys(changed)),
+		func(string) []detectors.Detector { return rules },
+		func(file string) git.ChangedLines { return git.ChangedLinesSince(m.worktree, since, file) }, root)
+	if why != "" {
+		return handIn{marks: m.shallow(project, rules), got: withoutTheTree}
 	}
 
-	return m.marks(codebase, rules, changed)
-}
-
-func (m merging) roots(project config.Config) []string {
-	if len(project.Paths) == 0 {
-		return []string{m.worktree}
+	var marks []SinMark
+	for _, file := range slices.Sorted(maps.Keys(found)) {
+		marks = append(marks, found[file]...)
 	}
 
-	return config.Absolute(m.worktree, project.Paths)
+	return handIn{marks: marks, got: gotWhole}
 }
 
 func (m merging) shallow(project config.Config, rules []detectors.Detector) []SinMark {
@@ -369,10 +378,19 @@ func (m merging) shallow(project config.Config, rules []detectors.Detector) []Si
 		return nil
 	}
 
-	codebase, err := scan.Walk(slices.Sorted(maps.Keys(changed)), source.Excluded{}).Load()
+	files := slices.Sorted(maps.Keys(changed))
+
+	marks := map[string]string{}
+	for _, file := range files {
+		marks[file] = warm.Mark(file)
+	}
+
+	codebase, err := scan.Walk(files, source.Excluded{}).Load()
 	if err != nil {
 		return nil
 	}
+
+	parsed.keeps(codebase.Streams(), marks)
 
 	return m.marks(codebase, slices.DeleteFunc(rules, detectors.ReadsBeyondOneFile), changed)
 }

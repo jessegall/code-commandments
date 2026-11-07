@@ -5,12 +5,9 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"slices"
 	"strings"
 	"testing"
 	"time"
-
-	"github.com/jessegall/code-commandments/cli/config"
 )
 
 func mergingOf(worktree string, window int, files ...string) map[string]any {
@@ -83,7 +80,7 @@ func TestACleanBranchMergesUnheld(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if held := MergeHeld(mergingOf(root, generousWindow, "src/refund.py")); held != "" {
+	if held := MergeHeld(mergingOf(root, generousWindow, "src/refund.py")); refusedBy(held) {
 		t.Errorf("a clean branch was held with %q", held)
 	}
 
@@ -140,7 +137,7 @@ func TestAWorkerAnswersForItsOwnLinesOnly(t *testing.T) {
 		"src/ship.py": "def ship(order) -> str:\n    return order.carrier\n",
 	})
 
-	if held := MergeHeld(mergingOf(worktree, generousWindow)); held != "" {
+	if held := MergeHeld(mergingOf(worktree, generousWindow)); refusedBy(held) {
 		t.Errorf("a worker was held for a sin its branch never wrote: %q", held)
 	}
 
@@ -219,24 +216,6 @@ func TestTheJudgeIsGivenLessThanTheWholeWindow(t *testing.T) {
 	}
 }
 
-func TestAMergeReadsTheFoldersTheProjectDeclares(t *testing.T) {
-	worktree := tempFolder(t)
-	held := merging{worktree: worktree}
-
-	declared := held.roots(config.Config{Paths: []string{"src", "bridge/php/src"}})
-	want := []string{filepath.Join(worktree, "src"), filepath.Join(worktree, "bridge/php/src")}
-	if !slices.Equal(declared, want) {
-		t.Errorf("the hold reads %v, not the folders the project declares", declared)
-	}
-	if slices.Contains(declared, worktree) {
-		t.Error("the hold reads the worktree's own root, where the libraries are linked in")
-	}
-
-	if whole := held.roots(config.Config{}); !slices.Equal(whole, []string{worktree}) {
-		t.Errorf("a project declaring no folder is read as %v, not as the worktree itself", whole)
-	}
-}
-
 func deliveringOf(worktree string, window int, files ...string) map[string]any {
 	held := mergingOf(worktree, window, files...)
 	held["event"] = "worker_delivering"
@@ -272,7 +251,7 @@ func TestACleanWorkerDeliversUnheld(t *testing.T) {
 		"src/ship.py": "def ship(order) -> str:\n    return order.carrier\n",
 	})
 
-	if held := DeliveryHeld(deliveringOf(worktree, generousWindow)); held != "" {
+	if held := DeliveryHeld(deliveringOf(worktree, generousWindow)); refusedBy(held) {
 		t.Errorf("a worker was held on delivery for a sin its branch never wrote: %q", held)
 	}
 }
@@ -345,4 +324,13 @@ func TestAGateThatRunsOutOfTimeAnswersWithWhatItFound(t *testing.T) {
 	if strings.Contains(said, `"refuse"`) {
 		t.Errorf("a gate given 50ms refused the hand-in, and a refusal from this form is a fault: %s", said)
 	}
+}
+
+func refusedBy(held string) bool {
+	var answer map[string]any
+	if json.Unmarshal([]byte(held), &answer) != nil {
+		return false
+	}
+
+	return answer["answer"] == "refuse"
 }

@@ -48,6 +48,14 @@
         "help": "On, a worker's merge is judged by the plugin itself the moment it lands, over the commits it brought in, and the main agent is told what came in without having to remember. Off, nothing is judged at a merge and what came in is judged whenever somebody next judges those files."
     },
     {
+        "key": "judge_hand_ins",
+        "title": "Hold a worker's hand-in until it is judged",
+        "type": "flag",
+        "kind": "flag",
+        "default": true,
+        "help": "On, a worker's hand-in waits while the plugin judges the files it changed since its worktree was cut, answered from the tree the service already holds, and a sin sends the work back to that worker naming the file, the line and the skill. When no tree is held or the time the journal allows runs out, the hand-in goes on and says what was not judged; the project is never read whole for it. Off, hand-ins are not held and a merge is judged after it lands."
+    },
+    {
         "key": "judge_before_merge",
         "title": "Refuse a merge that would bring in sins",
         "type": "flag",
