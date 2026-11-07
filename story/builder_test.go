@@ -111,10 +111,14 @@ func TestAMainAgentIsStartedInTheTestEnvironmentWithTheRelaysProcess(t *testing.
 
 	s.Main("Ada")
 
-	sent := (*asked)[0]
+	if first := (*asked)[0]; first.Kind != "pid" || first.Action != "start" {
+		t.Errorf("the relay was first asked %+v, where the agent is first given a process of its own", first)
+	}
+
+	sent := (*asked)[1]
 	if strings.Join(sent.Argv[:2], " ") != "agent start" || sent.Argv[3] != "claude" || sent.Argv[4] != "main" ||
-		!strings.Contains(strings.Join(sent.Argv, " "), "--environment story-engine --pid {relay-pid}") {
-		t.Errorf("the relay was asked %v, where a main agent is registered in story-engine with no program", sent.Argv)
+		!strings.Contains(strings.Join(sent.Argv, " "), "--environment story-engine --pid created: agent:41") {
+		t.Errorf("the relay was asked %v, where a main agent is registered in story-engine with the process it was handed", sent.Argv)
 	}
 }
 
@@ -129,19 +133,23 @@ func TestAWorkerGetsAWorktreeCutAndIsStartedInIt(t *testing.T) {
 		worker = s.Worker("Grace Hopper")
 	})
 
-	if kinds := strings.Join(kindsOf(asked), " "); kinds != "worktree command command worktree" {
-		t.Fatalf("the relay was asked %q, where the worktree is cut, the agent started, and at the end ended and the worktree dropped", kinds)
+	if kinds := strings.Join(kindsOf(asked), " "); kinds != "worktree pid command command pid worktree" {
+		t.Fatalf("the relay was asked %q, where the worktree is cut, a process handed out, the agent started, and at the end the agent ended, its process ended and the worktree dropped", kinds)
 	}
 
-	if (*asked)[0].Name != "story-engine-grace-hopper" || (*asked)[0].Action != "cut" || (*asked)[3].Action != "drop" {
-		t.Errorf("the worktree was asked for as %+v and %+v", (*asked)[0], (*asked)[3])
+	if (*asked)[0].Name != "story-engine-grace-hopper" || (*asked)[0].Action != "cut" || (*asked)[5].Action != "drop" {
+		t.Errorf("the worktree was asked for as %+v and %+v", (*asked)[0], (*asked)[5])
+	}
+
+	if (*asked)[4].Action != "end" || (*asked)[4].Pid != "created: agent:42" {
+		t.Errorf("the process was ended with %+v, where the one handed out is the one ended", (*asked)[4])
 	}
 
 	if !strings.HasSuffix(worker.Folder(), "/.journal/worktrees/story-engine-grace-hopper") {
 		t.Errorf("the worker works in %q, where it works in its own worktree beside the test checkout", worker.Folder())
 	}
 
-	if end := (*asked)[2].Argv; strings.Join(end, " ") != "agent end 42" {
+	if end := (*asked)[3].Argv; strings.Join(end, " ") != "agent end 42" {
 		t.Errorf("the agent was ended with %v", end)
 	}
 }

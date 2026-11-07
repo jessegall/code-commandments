@@ -191,6 +191,10 @@ func TestAnEndedAgentIsEndedByItsRow(t *testing.T) {
 	if ended := argvOf((*asked)[0]); ended != "agent end 41" {
 		t.Errorf("the journal was asked %q", ended)
 	}
+
+	if process := (*asked)[1]; process.Kind != "pid" || process.Action != "end" {
+		t.Errorf("the relay was asked %+v, where the agent's process is ended with it", process)
+	}
 }
 
 func TestALeavingWorkerIsEndedAndItsWorktreeRemoved(t *testing.T) {
@@ -198,12 +202,12 @@ func TestALeavingWorkerIsEndedAndItsWorktreeRemoved(t *testing.T) {
 
 	agentOf(s).Leaves()
 
-	if kinds := strings.Join(kindsOf(asked), " "); kinds != "command worktree" {
-		t.Fatalf("the relay was asked %q, where the agent is ended and then its worktree removed", kinds)
+	if kinds := strings.Join(kindsOf(asked), " "); kinds != "command pid worktree" {
+		t.Fatalf("the relay was asked %q, where the agent is ended, then its process, then its worktree removed", kinds)
 	}
 
-	if (*asked)[1].Name != "story-engine-ada" || (*asked)[1].Action != "drop" {
-		t.Errorf("the worktree was asked for as %+v", (*asked)[1])
+	if (*asked)[2].Name != "story-engine-ada" || (*asked)[2].Action != "drop" {
+		t.Errorf("the worktree was asked for as %+v", (*asked)[2])
 	}
 }
 

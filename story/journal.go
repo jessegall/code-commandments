@@ -34,6 +34,7 @@ type request struct {
 	Action string   `json:"action,omitempty"`
 	Name   string   `json:"name,omitempty"`
 	Many   int      `json:"many,omitempty"`
+	Pid    string   `json:"pid,omitempty"`
 }
 
 const stepTakesAtMost = 11 * time.Minute
@@ -64,6 +65,14 @@ func (j Journal) Rebases(worktree string) (Ran, error) {
 
 func (j Journal) Moves(action string) (Ran, error) {
 	return j.ask(request{Kind: "checkout", Action: action})
+}
+
+func (j Journal) StartsProcess() (Ran, error) {
+	return j.ask(request{Kind: "pid", Action: "start"})
+}
+
+func (j Journal) EndsProcess(pid string) (Ran, error) {
+	return j.ask(request{Kind: "pid", Action: "end", Pid: pid})
 }
 
 func (j Journal) Removes(path string) (Ran, error) {

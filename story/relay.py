@@ -1,9 +1,11 @@
 import json
 import os
 import shutil
+import signal
 import socketserver
 import subprocess
 import sys
+import threading
 
 NOUNS = frozenset({
     "agent",
@@ -29,7 +31,7 @@ WORKTREES = os.path.join(".journal", "worktrees")
 TEST_CHECKOUT = os.path.join(WORKTREES, "story-engine")
 SCRATCH_PREFIX = "story_scratch"
 WORKTREE_PREFIX = "story-engine-"
-RELAY_PID = "{relay-pid}"
+SLEEPER = ["sleep", "86400"]
 BRANCH_PREFIX = "story-engine/story-"
 
 
@@ -64,6 +66,8 @@ class Relay(socketserver.ThreadingTCPServer):
         super().__init__(("127.0.0.1", 0), Step)
         self.project = project
         self.home = ""
+        self.sleepers: dict[int, subprocess.Popen] = {}
+        self.holding = threading.Lock()
         self.journal = os.path.join(project, ".journal", "bin", "journal")
         self.hook = os.path.join(project, ".journal", "bin", "journal-hook")
 
@@ -74,12 +78,38 @@ class Relay(socketserver.ThreadingTCPServer):
             return self.worktree_step(asked)
         if asked["kind"] == "checkout":
             return self.checkout_step(asked)
+        if asked["kind"] == "pid":
+            return self.pid_step(asked)
         argv, stdin, folder = self.command_of(asked), asked.get("stdin", ""), self.folder_of(asked)
         try:
             done = subprocess.run(argv, input=stdin, capture_output=True, text=True, cwd=folder, timeout=STEP_SECONDS)
         except subprocess.TimeoutExpired:
             return {"code": 124, "out": "", "err": f"the step ran past {STEP_SECONDS} seconds and was stopped\n"}
         return {"code": done.returncode, "out": done.stdout, "err": done.stderr}
+
+    def pid_step(self, asked: dict) -> dict:
+        """Hand out a process of its own, in a session of its own, for a fake agent to be registered with, or end one."""
+        with self.holding:
+            if asked.get("action") == "end":
+                self.end_sleeper(int(asked["pid"]))
+                return {"code": 0, "out": "", "err": ""}
+            sleeper = subprocess.Popen(SLEEPER, start_new_session=True, stdin=subprocess.DEVNULL,
+                                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            self.sleepers[sleeper.pid] = sleeper
+            return {"code": 0, "out": str(sleeper.pid), "err": ""}
+
+    def end_sleeper(self, pid: int) -> None:
+        sleeper = self.sleepers.pop(pid, None)
+        if sleeper is None:
+            return
+        sleeper.terminate()
+        sleeper.wait()
+
+    def server_close(self) -> None:
+        with self.holding:
+            for pid in list(self.sleepers):
+                self.end_sleeper(pid)
+        super().server_close()
 
     def file_step(self, asked: dict) -> dict:
         """Write or remove one file under a scratch folder of the test checkout, the only place a story may change."""
@@ -151,7 +181,7 @@ class Relay(socketserver.ThreadingTCPServer):
         argv = asked["argv"]
         if not argv or argv[0] not in NOUNS:
             raise Refused(f"'{argv[0] if argv else ''}' is not one of the journal nouns a story may run")
-        return [self.journal, *[str(os.getpid()) if word == RELAY_PID else word for word in argv]]
+        return [self.journal, *argv]
 
     def folder_of(self, asked: dict) -> str:
         folder = os.path.realpath(asked.get("in") or self.project)
@@ -165,7 +195,11 @@ def main() -> None:
     relay = Relay(project)
     with open(port_file, "w") as written:
         written.write(str(relay.server_address[1]))
-    relay.serve_forever()
+    signal.signal(signal.SIGTERM, lambda number, frame: sys.exit(0))
+    try:
+        relay.serve_forever()
+    finally:
+        relay.server_close()
 
 
 if __name__ == "__main__":

@@ -26,6 +26,7 @@ type Agent struct {
 	session string
 	folder  string
 	row     string
+	pid     string
 }
 
 func (s *Story) Main(name string) *Agent {
@@ -58,7 +59,16 @@ func (s *Story) registers(name, role, folder string) *Agent {
 
 	s.steps = append(s.steps, StepOf("starts a "+role+" agent named %s", s.own(name)))
 
-	started, err := s.journal.Runs(folder, "agent", "start", session, "claude", role, "--environment", testEnvironment, "--pid", "{relay-pid}")
+	process, err := s.journal.StartsProcess()
+	if err != nil || process.Code != 0 {
+		s.Fails("the " + role + " " + name + " could not be given a process of its own: " + failure(process, err))
+	}
+
+	pid := strings.TrimSpace(process.Out)
+
+	s.t.Cleanup(func() { _, _ = s.journal.EndsProcess(pid) })
+
+	started, err := s.journal.Runs(folder, "agent", "start", session, "claude", role, "--environment", testEnvironment, "--pid", pid)
 	if err != nil || started.Code != 0 {
 		s.Fails("the " + role + " " + name + " could not be started: " + failure(started, err))
 	}
@@ -70,7 +80,7 @@ func (s *Story) registers(name, role, folder string) *Agent {
 		s.t.Cleanup(func() { _, _ = s.journal.Runs(folder, "agent", "end", found[1]) })
 	}
 
-	return &Agent{s: s, name: name, session: session, folder: folder, row: row}
+	return &Agent{s: s, name: name, session: session, folder: folder, row: row, pid: pid}
 }
 
 func (a *Agent) Folder() string {
@@ -177,6 +187,8 @@ func (a *Agent) Ends() {
 	if ran, err := a.s.journal.Runs(a.folder, "agent", "end", a.row); err != nil || ran.Code != 0 {
 		a.s.Fails("the agent could not be ended: " + failure(ran, err))
 	}
+
+	_, _ = a.s.journal.EndsProcess(a.pid)
 }
 
 func (a *Agent) Leaves() {
@@ -185,6 +197,7 @@ func (a *Agent) Leaves() {
 	a.s.steps = append(a.s.steps, StepOf("a worker leaves and its worktree is removed"))
 
 	_, _ = a.s.journal.Runs(a.folder, "agent", "end", a.row)
+	_, _ = a.s.journal.EndsProcess(a.pid)
 
 	if ran, err := a.s.journal.Drops(filepath.Base(a.folder)); err != nil || ran.Code != 0 {
 		a.s.Fails("the worktree could not be removed: " + failure(ran, err))
