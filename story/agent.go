@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"path/filepath"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -20,6 +21,10 @@ const (
 
 var agentRow = regexp.MustCompile(`agent:(\d+)`)
 
+var taskRow = regexp.MustCompile(`task:(\d+)`)
+
+var proofRow = regexp.MustCompile(`proof:(\d+)`)
+
 // Agent is a session the journal knows in the test environment, with no program behind it: the story sends the hooks Claude Code would send for it and makes the file changes it would make.
 type Agent struct {
 	s       *Story
@@ -31,6 +36,9 @@ type Agent struct {
 	role    string
 	edited  bool
 	told    string
+	task    string
+	proof   string
+	merged  bool
 }
 
 func (s *Story) Agent(name string) *Agent {
@@ -64,6 +72,80 @@ func (s *Story) Worker(name string) *Agent {
 	}
 
 	return worker
+}
+
+func (s *Story) DispatchedWorker(name string, by *Agent) *Agent {
+	s.t.Helper()
+
+	if s.rehearsal {
+		return s.Worker(name)
+	}
+
+	s.steps = append(s.steps, StepOf("dispatches a worker with no program named %s", s.own(name)))
+
+	found := taskRow.FindStringSubmatch(by.Asks("task", "make", "story work of "+name, "--brief", "the work of a story's worker").Text())
+	if found == nil {
+		s.Fails("the worker " + name + " was given no task to work on")
+
+		return nil
+	}
+
+	session := fmt.Sprintf("story-%s-%d", notALetter.ReplaceAllString(strings.ToLower(name), "-"), time.Now().UnixNano())
+
+	dispatched := s.AsksIn(s.TestCheckout(), "worker", "dispatch", found[1], "--no-program", "--program", "claude", "--session", session,
+		"--environment", testEnvironment, "--fresh", "a story's worker", "--json")
+
+	var launch struct{ ID int }
+
+	if err := json.Unmarshal([]byte(dispatched.Out), &launch); err != nil || launch.ID == 0 {
+		s.Fails("the worker " + name + " could not be dispatched: " + dispatched.Text())
+
+		return nil
+	}
+
+	row := strconv.Itoa(launch.ID)
+	folder := filepath.Join(s.TestCheckout(), ".journal", "worktrees", testEnvironment, "worker-"+row)
+
+	s.keepsTheBranchWhereItIs()
+
+	worker := &Agent{s: s, name: name, session: session, folder: folder, row: row, role: "worker", task: found[1]}
+	worker.settlesIn()
+
+	return worker
+}
+
+func (s *Story) keepsTheBranchWhereItIs() {
+	s.t.Helper()
+
+	if s.keepsBranch {
+		return
+	}
+
+	s.keepsBranch = true
+
+	tip := s.branchTip()
+
+	s.putsTheBranchBackOn(tip)
+	s.t.Cleanup(func() { s.putsTheBranchBackOn(tip) })
+}
+
+func (s *Story) putsTheBranchBackOn(tip string) {
+	s.t.Helper()
+
+	if reset, err := s.journal.ResetsTheBranch(tip); err != nil || reset.Code != 0 {
+		s.t.Errorf("the story branch could not be put back: %s", failure(reset, err))
+	}
+}
+
+func (s *Story) branchTip() string {
+	s.t.Helper()
+
+	tip, err := s.journal.Moves("tip")
+	if err != nil || tip.Code != 0 {
+		s.Fails("the story branch could not be read: " + failure(tip, err))
+	}
+
+	return strings.TrimSpace(tip.Out)
 }
 
 func (s *Story) registers(name, role, folder string) *Agent {
@@ -190,7 +272,14 @@ func (a *Agent) Rebases() {
 func (a *Agent) HandsIn() Ran {
 	a.s.t.Helper()
 
-	return a.s.AsksIn(a.folder, "worker", "next", "--differences", "none")
+	if found := proofRow.FindStringSubmatch(a.Asks("proof", "make", "1", "--task", a.task, "a story's hand-in").Text()); found != nil {
+		a.proof = found[1]
+	}
+
+	handedIn := a.Asks("worker", "deliver", "--differences", "none")
+	a.s.Exits(handedIn, 0)
+
+	return handedIn
 }
 
 func (a *Agent) Ends() {
@@ -249,10 +338,25 @@ func (a *Agent) Moves() Ran {
 }
 
 func (a *Agent) moves() Ran {
+	if a.merged {
+		return a.linesHeldForIt()
+	}
+
 	return a.sends("PreToolUse", map[string]any{
 		"tool_name":  "Read",
 		"tool_input": map[string]any{"file_path": filepath.Join(a.folder, "README.md")},
 	})
+}
+
+func (a *Agent) linesHeldForIt() Ran {
+	a.s.t.Helper()
+
+	held, err := a.s.journal.LinesHeldFor(a.row)
+	if err != nil {
+		a.s.Fails(err.Error())
+	}
+
+	return held
 }
 
 func (a *Agent) Asks(argv ...string) Ran {
@@ -260,7 +364,7 @@ func (a *Agent) Asks(argv ...string) Ran {
 
 	a.s.steps = append(a.s.steps, journalStep(argv))
 
-	ran, err := a.s.journal.RunsAs(a.folder, a.row, a.role, argv...)
+	ran, err := a.s.journal.RunsAs(a.folder, a.session, a.row, a.role, argv...)
 	if err != nil {
 		a.s.Fails(err.Error())
 	}

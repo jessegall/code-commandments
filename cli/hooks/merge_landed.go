@@ -190,7 +190,7 @@ func marksBrought(where string, changed []string) ([]SinMark, Narrowed) {
 
 	var marks []SinMark
 	for _, file := range files {
-		if found, held := together[file]; held {
+		if found, held := together[file]; held || why == "" {
 			marks = append(marks, found...)
 
 			continue

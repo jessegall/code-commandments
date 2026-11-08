@@ -35,6 +35,7 @@ type request struct {
 	Name   string   `json:"name,omitempty"`
 	Many   int      `json:"many,omitempty"`
 	Pid    string   `json:"pid,omitempty"`
+	Session string  `json:"session,omitempty"`
 	Actor  string   `json:"actor,omitempty"`
 	Role   string   `json:"role,omitempty"`
 }
@@ -49,8 +50,8 @@ func (j Journal) Runs(in string, argv ...string) (Ran, error) {
 	return j.ask(request{Kind: "command", Argv: argv, In: in})
 }
 
-func (j Journal) RunsAs(in, actor, role string, argv ...string) (Ran, error) {
-	return j.ask(request{Kind: "command", Argv: argv, In: in, Actor: actor, Role: role})
+func (j Journal) RunsAs(in, session, actor, role string, argv ...string) (Ran, error) {
+	return j.ask(request{Kind: "command", Argv: argv, In: in, Session: session, Actor: actor, Role: role})
 }
 
 func (j Journal) Hooks(in, body, actor, role string) (Ran, error) {
@@ -71,6 +72,14 @@ func (j Journal) WritesMany(path, text string, many int) (Ran, error) {
 
 func (j Journal) Rebases(worktree string) (Ran, error) {
 	return j.ask(request{Kind: "worktree", Action: "rebase", Name: worktree})
+}
+
+func (j Journal) ResetsTheBranch(tip string) (Ran, error) {
+	return j.ask(request{Kind: "checkout", Action: "reset", Name: tip})
+}
+
+func (j Journal) LinesHeldFor(row string) (Ran, error) {
+	return j.ask(request{Kind: "told", Actor: row})
 }
 
 func (j Journal) Moves(action string) (Ran, error) {

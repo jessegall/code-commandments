@@ -20,8 +20,9 @@ type Story struct {
 	steps   []Step
 	began   map[string]int
 
-	scratches map[string]bool
-	rehearsal bool
+	scratches   map[string]bool
+	rehearsal   bool
+	keepsBranch bool
 }
 
 var rehearsing = flag.Bool("story.rehearse", false, "tell every story against no journal at all, only to check that no two of them take the same steps")

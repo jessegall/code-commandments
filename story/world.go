@@ -107,5 +107,46 @@ func (s *Story) moves(action, step string) {
 func (s *Story) Merges(worker *Agent) Ran {
 	s.t.Helper()
 
-	return s.AsksIn(s.project, "worker", "merge", strings.TrimSpace(worker.row))
+	s.Exits(s.AsksIn(s.TestCheckout(), "proof", "check", worker.proof, "--environment", testEnvironment), 0)
+	row := strings.TrimSpace(worker.row)
+
+	s.Exits(s.asksPast("has delivered nothing", "worker", "logs", row, "--environment", testEnvironment), 0)
+
+	tip := s.branchTip()
+	merged := s.asksPast("has a command running", "worker", "merge", row, "--environment", testEnvironment)
+
+	s.landsPast(tip)
+
+	worker.folder = s.TestCheckout()
+	worker.merged = true
+
+	return merged
+}
+
+func (s *Story) landsPast(tip string) {
+	s.t.Helper()
+
+	if s.rehearsal {
+		return
+	}
+
+	for until := time.Now().Add(hearsWithin); time.Now().Before(until); time.Sleep(betweenMoments) {
+		if s.branchTip() != tip {
+			return
+		}
+	}
+
+	s.Fails("the merge never landed on the story branch")
+}
+
+func (s *Story) asksPast(holding string, argv ...string) Ran {
+	s.t.Helper()
+
+	answer := s.AsksIn(s.TestCheckout(), argv...)
+	for until := time.Now().Add(hearsWithin); strings.Contains(answer.Text(), holding) && time.Now().Before(until); {
+		time.Sleep(betweenMoments)
+		answer = s.AsksIn(s.TestCheckout(), argv...)
+	}
+
+	return answer
 }

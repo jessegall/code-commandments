@@ -8,6 +8,7 @@ import socketserver
 import subprocess
 import sys
 import threading
+import sqlite3
 
 NOUNS = frozenset({
     "agent",
@@ -19,6 +20,7 @@ NOUNS = frozenset({
     "file-edit",
     "output",
     "plugin",
+    "proof",
     "rules",
     "sins",
     "task",
@@ -36,6 +38,8 @@ WORKTREE_PREFIX = "story-engine-"
 SLEEPER = ["sleep", "86400"]
 BRANCH_PREFIX = "story-engine/story-"
 STORY_ENVIRONMENT = "story-engine"
+JOURNAL_STORE = os.path.join(".journal", "version-5.db")
+MERGES_JUDGED = os.path.join(".journal", "plugin-data", "code-commandments", ".merged-judged")
 NO_AGENT = "story-engine-no-agent"
 LAUNCH_VARIABLES = ("HOME", "PATH", "USER", "LOGNAME", "SHELL", "LANG", "LC_ALL", "TMPDIR", "TERM")
 AGENT_LINES = re.compile(r"agent-lines?[: ]\s*(\d+(?:(?:,\s*|\s+and\s+)\d+)*)")
@@ -88,6 +92,8 @@ class Relay(socketserver.ThreadingTCPServer):
             return self.pid_step(asked)
         if asked["kind"] == "look":
             return self.look_step(asked)
+        if asked["kind"] == "told":
+            return self.told_step(asked)
         argv, stdin, folder = self.command_of(asked), asked.get("stdin", ""), self.folder_of(asked)
         environment = self.environment_of(asked)
         try:
@@ -167,6 +173,10 @@ class Relay(socketserver.ThreadingTCPServer):
     def a_story_checkout(self, name: str) -> bool:
         return name == os.path.basename(TEST_CHECKOUT) or name.startswith(WORKTREE_PREFIX)
 
+    def a_dispatched_worker(self, folder: str) -> bool:
+        cut_in = os.path.realpath(os.path.join(self.project, TEST_CHECKOUT, WORKTREES, STORY_ENVIRONMENT))
+        return os.path.dirname(folder) == cut_in and os.path.basename(folder).startswith("worker-")
+
     def worktree_step(self, asked: dict) -> dict:
         """Cut or remove a worktree of the test checkout for a fake worker, named story-engine-*, beside the others."""
         folder = os.path.join(self.project, WORKTREES, asked["name"])
@@ -191,6 +201,17 @@ class Relay(socketserver.ThreadingTCPServer):
             subprocess.run(["git", "-C", checkout, "branch", "-D", asked["name"]], capture_output=True, text=True)
         return {"code": done.returncode, "out": done.stdout, "err": done.stderr}
 
+    def told_step(self, asked: dict) -> dict:
+        """The lines the journal holds for a story's worker, which can no longer ask for them itself once its merge ended it."""
+        if not re.fullmatch(r"[0-9]+", asked.get("actor") or ""):
+            return {"code": 126, "out": "", "err": "the story relay refuses this: a worker is named by its row\n"}
+        store = sqlite3.connect(f"file:{os.path.join(self.project, JOURNAL_STORE)}?mode=ro", uri=True)
+        try:
+            lines = store.execute("SELECT text FROM agent_lines WHERE session_agent_id = ? ORDER BY id", [int(asked["actor"])]).fetchall()
+        finally:
+            store.close()
+        return {"code": 0, "out": "".join(line[0] + "\n" for line in lines), "err": ""}
+
     def look_step(self, asked: dict) -> dict:
         """Let the journal's file scan take its look at a story checkout under a session no agent has: it records
         what the checkout holds now and hands nothing to anyone, so only what a story's agent writes afterwards is
@@ -198,7 +219,8 @@ class Relay(socketserver.ThreadingTCPServer):
         folder = os.path.realpath(asked["in"])
         worktrees = os.path.realpath(os.path.join(self.project, WORKTREES))
         checkout, _, _ = os.path.relpath(folder, worktrees).partition(os.sep)
-        if not self.a_story_checkout(checkout) or os.path.dirname(folder) != worktrees:
+        beside_the_others = self.a_story_checkout(checkout) and os.path.dirname(folder) == worktrees
+        if not beside_the_others and not self.a_dispatched_worker(folder):
             raise Refused(f"{asked['in']} is neither the test checkout nor a story worktree")
         done = subprocess.run([self.hook, "--file-scan", os.path.join(self.project, ".journal"), "--session", NO_AGENT, folder],
                               capture_output=True, text=True, cwd=folder, timeout=STEP_SECONDS)
@@ -218,6 +240,14 @@ class Relay(socketserver.ThreadingTCPServer):
     def checkout_step(self, asked: dict) -> dict:
         """Move the test checkout off its branch, onto another branch or a detached head, and back to where it was."""
         checkout = os.path.join(self.project, TEST_CHECKOUT)
+        if asked["action"] in ("tip", "reset"):
+            if asked["action"] == "reset" and not re.fullmatch(r"[0-9a-f]{40}", asked.get("name") or ""):
+                return {"code": 126, "out": "", "err": "the story relay refuses this: a reset names a whole commit\n"}
+            argv = ["git", "-C", checkout, "rev-parse", "HEAD"] if asked["action"] == "tip" else ["git", "-C", checkout, "reset", "-q", "--hard", asked["name"]]
+            done = subprocess.run(argv, capture_output=True, text=True, timeout=STEP_SECONDS)
+            if asked["action"] == "reset" and done.returncode == 0:
+                self.forgets_the_merges_judged_on(checkout)
+            return {"code": done.returncode, "out": done.stdout, "err": done.stderr}
         if asked["action"] == "back":
             argv = ["git", "-C", checkout, "switch", "-q", self.home] if self.home else ["true"]
         elif self.home:
@@ -231,6 +261,17 @@ class Relay(socketserver.ThreadingTCPServer):
             subprocess.run(["git", "-C", checkout, "branch", "-D", BRANCH_PREFIX + "other"], capture_output=True, text=True)
         return {"code": done.returncode, "out": done.stdout, "err": done.stderr}
 
+    def forgets_the_merges_judged_on(self, checkout: str) -> None:
+        """A branch put back leaves the plugin's mark on a commit it no longer holds, which the next merge would rightly report."""
+        mark = os.path.join(self.project, MERGES_JUDGED)
+        if not os.path.exists(mark):
+            return
+        branch = subprocess.run(["git", "-C", checkout, "rev-parse", "--abbrev-ref", "HEAD"], capture_output=True, text=True).stdout.strip()
+        with open(mark) as read:
+            kept = [line for line in read if not line.startswith(branch + "\t")]
+        with open(mark, "w") as written:
+            written.writelines(kept)
+
     def environment_of(self, asked: dict) -> dict:
         """What a step runs with. A hook or command sent for a story's agent runs with the variables a fresh launch of that agent
         has, and none of the session that started the relay, whose own variables would make the journal take the step
@@ -241,6 +282,8 @@ class Relay(socketserver.ThreadingTCPServer):
         role = asked.get("role") or "worker"
         environment.update({"AGENT_JOURNAL_ACTIVE": "1", "JOURNAL_ACTOR": f"{role}:{asked['actor']}",
                             "JOURNAL_ENV": STORY_ENVIRONMENT, "JOURNAL_ROLE": role})
+        if asked.get("session"):
+            environment["JOURNAL_AGENT_SESSION"] = asked["session"]
         return environment
 
     def command_of(self, asked: dict) -> list[str]:

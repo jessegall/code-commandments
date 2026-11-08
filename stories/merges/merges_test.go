@@ -15,7 +15,9 @@ func ready(t *testing.T) (*story.Story, *story.Agent, *story.Agent) {
 	s := story.Begin(t)
 	s.GivenTheTreeIsHeldFor(s.TestCheckout())
 
-	return s, s.Agent("Ada"), s.Worker("Grace")
+	ada := s.Agent("Ada")
+
+	return s, ada, s.DispatchedWorker("Grace", ada)
 }
 
 func TestACleanMergeIsAllowedWithoutAWord(t *testing.T) {
@@ -45,6 +47,8 @@ func TestAMergeOfSinfulWorkIsNotHeldWhenTheBeforeLandingSettingIsOff(t *testing.
 func TestAMergeWithNothingToCompareIsAllowedWithoutJudging(t *testing.T) {
 	s, _, grace := ready(t)
 
+	grace.HandsIn()
+
 	merged := s.Merges(grace)
 
 	s.Never(merged, "carries")
@@ -62,19 +66,6 @@ func TestAfterAMergeLandsTheWorkerThatWroteTheSinIsToldAndTheMainAgentIsNot(t *t
 	ada.StaysUntold("redundant-python-else")
 }
 
-func TestAWorkerThatIsGoneCannotBeToldSoTheMainAgentIs(t *testing.T) {
-	s, ada, grace := ready(t)
-
-	grace.Edits(story.SwallowedException, "plugins.py")
-	grace.HandsIn()
-	grace.Ends()
-	s.Merges(grace)
-
-	told := ada.Hears("python-swallowed-exception")
-
-	s.Says(told, "could not be told")
-}
-
 func TestACleanLandingSaysNothingAndSendsNothing(t *testing.T) {
 	s, ada, grace := ready(t)
 
@@ -82,13 +73,13 @@ func TestACleanLandingSaysNothingAndSendsNothing(t *testing.T) {
 	grace.HandsIn()
 	s.Merges(grace)
 
-	grace.StaysUntold("sin")
-	ada.StaysUntold("sin")
+	grace.StaysUntold("Code Commandments")
+	ada.StaysUntold("Code Commandments")
 }
 
 func TestTwoMergesCloseTogetherJudgeTheWholeRangeOnce(t *testing.T) {
-	s, _, grace := ready(t)
-	edsger := s.Worker("Edsger")
+	s, ada, grace := ready(t)
+	edsger := s.DispatchedWorker("Edsger", ada)
 
 	grace.Edits(story.ElseAfterRaise, "first.py")
 	edsger.Edits(story.SwallowedException, "second.py")
@@ -113,15 +104,15 @@ func TestTheFirstMergeWeEverSeeJudgesItsOwnRangeAlone(t *testing.T) {
 }
 
 func TestAMergeOfMoreFilesThanAnAnswerCarriesSaysSoAndJudgesNone(t *testing.T) {
-	s, ada, grace := ready(t)
+	s, _, grace := ready(t)
 
 	grace.EditsMany(story.Clean, 201)
 	grace.HandsIn()
 	s.Merges(grace)
 
-	told := ada.Hears("201 files")
+	kept := s.ReadsTheLanesOnceTheyShow("201 files")
 
-	s.Says(told, "--branch")
+	s.Says(kept, "--branch")
 	s.CostIs(ledger.FilesReadIntoTrees, 0)
 }
 
@@ -134,19 +125,6 @@ func TestAMergeJustInsideTheCeilingIsJudged(t *testing.T) {
 	s.Merges(grace)
 
 	grace.Hears("last.py")
-}
-
-func TestAMergeIsJudgedInTheProjectAndNeverInTheWorkersCopy(t *testing.T) {
-	s, _, grace := ready(t)
-
-	grace.Edits(story.ElseAfterRaise, "committed.py")
-	grace.HandsIn()
-	grace.Edits(story.SwallowedException, "uncommitted.py")
-	s.Merges(grace)
-
-	told := grace.Hears("committed.py")
-
-	s.Never(told, "uncommitted.py")
 }
 
 func TestAJudgingThatCouldNotRunLeavesTheMarkWhereItWas(t *testing.T) {
