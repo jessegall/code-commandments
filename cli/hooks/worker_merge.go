@@ -398,7 +398,7 @@ func (m merging) deep(project config.Config, rules []detectors.Detector) handIn 
 
 	var marks []SinMark
 	for _, file := range slices.Sorted(maps.Keys(found)) {
-		marks = append(marks, found[file]...)
+		marks = append(marks, slices.DeleteFunc(found[file], func(mark SinMark) bool { return !mark.Touched || mark.IsFiled() })...)
 	}
 
 	return handIn{marks: marks, got: gotWhole}

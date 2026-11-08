@@ -2,10 +2,13 @@ package hooks
 
 import (
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/jessegall/code-commandments/cli/config"
 )
 
 func handInLog(t *testing.T, data string) string {
@@ -62,6 +65,41 @@ func TestAHandInJudgedInFullIsRecorded(t *testing.T) {
 		if !strings.Contains(said, named) {
 			t.Errorf("the log does not say %q: %s", named, said)
 		}
+	}
+}
+
+func TestAHandInOnAHeldTreeReportsOnlyTheLinesItChanged(t *testing.T) {
+	root, _ := workerProject(t)
+
+	older := "def total(order):\n    \"\"\"Says the total.\"\"\"\n    return 0\n\n\nLIMIT = 1\n"
+	wroteInto(t, filepath.Join(root, "src", "older.py"), older)
+
+	for _, command := range [][]string{{"add", "-A"}, {"-c", "user.email=t@t", "-c", "user.name=t", "commit", "-qm", "an older sin"}} {
+		if out, err := exec.Command("git", append([]string{"-C", root}, command...)...).CombinedOutput(); err != nil {
+			t.Fatalf("git %v: %s", command, out)
+		}
+	}
+
+	worktree := stressWorktreeIn(root, 11)
+	cutInto(t, root, worktree, "feature/held-hand-in")
+
+	wroteInto(t, filepath.Join(worktree, "src", "older.py"), strings.Replace(older, "LIMIT = 1", "LIMIT = 2", 1)+
+		"\n\ndef weight(order):\n    \"\"\"Says the weight.\"\"\"\n    return 0\n")
+
+	settings, err := config.Load(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	warmFor(t, root, settings)
+
+	found := merging{worker: "worker 7", worktree: worktree, base: "main", files: []string{"src/older.py"}, window: DeclaredWindow}.sinsWithin()
+
+	if found.got != gotWhole {
+		t.Fatalf("the hand-in was not answered from the held tree: %s", found.reason())
+	}
+	if len(found.marks) != 1 || found.marks[0].Match.Line() != 9 {
+		t.Errorf("a hand-in that added one sin at line 9 and left the older one at line 1 reports %d mark(s): %v", len(found.marks), found.marks)
 	}
 }
 
