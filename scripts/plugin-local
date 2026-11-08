@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+# Stages this checkout as a plugin that installs from a binary built here, so a change can be tried on the journal
+# with no release. The copy's setup step fetches from a local folder, checked against SHA256SUMS like a real release.
+# journal plugin upgrade --from takes the copy once; the plugin keeps GitHub as its source, so the next plain upgrade
+# puts a released version back.
+set -euo pipefail
+
+root="$(cd "$(dirname "$0")/.." && pwd -P)"
+cd "$root"
+
+scripts/build
+
+os="$(uname -s | tr '[:upper:]' '[:lower:]')"
+case "$(uname -m)" in
+    x86_64|amd64) arch=amd64 ;;
+    arm64|aarch64) arch=arm64 ;;
+    *) echo "scripts/plugin-local: no build for $(uname -m)" >&2; exit 1 ;;
+esac
+
+version="$(grep -o 'COMMANDMENTS_RELEASE=v[0-9.]*' journal-plugin.5.json | head -n 1 | cut -d= -f2)"
+stage="$root/bin/plugin-local"
+releases="$stage/releases"
+plugin="$stage/plugin"
+name="commandments-$os-$arch"
+
+rm -rf "$stage"
+mkdir -p "$releases/$version" "$plugin"
+cp bin/commandments-go "$releases/$version/$name"
+(cd "$releases/$version" && shasum -a 256 "$name" > SHA256SUMS)
+
+git ls-files -z --cached --others --exclude-standard |
+    while IFS= read -r -d '' file; do
+        if [ -e "$file" ] || [ -L "$file" ]; then printf '%s\0' "$file"; fi
+    done |
+    tar -cf - --null -T - | tar -xf - -C "$plugin"
+
+sed -i '' "s#COMMANDMENTS_RELEASE=$version#COMMANDMENTS_RELEASES=file://$releases COMMANDMENTS_RELEASE=$version#g" \
+    "$plugin/journal-plugin.json" "$plugin/journal-plugin.5.json"
+
+echo "staged $version: journal plugin upgrade code-commandments --from $plugin --yes"

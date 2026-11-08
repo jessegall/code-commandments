@@ -79,6 +79,8 @@ __pycache__/
 /bin/.binary
 # The release binary the journal plugin's .journal-plugin/fetch writes.
 /bin/commandments-release
+# The local build and plugin copy scripts/plugin-local stages.
+/bin/plugin-local/
 
 # What scripts/memory/judge.sh keeps while it runs, inside the checkout the dev container sees.
 /.memory-scratch/
