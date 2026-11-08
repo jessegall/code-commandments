@@ -82,8 +82,10 @@ func TestThePluginOffersTheJournalTheBriefingItWouldOtherwiseWrite(t *testing.T)
 		t.Fatal(err)
 	}
 
-	if strings.Contains(string(forWorkers), "journal sins") || strings.Contains(string(forWorkers), "journal commandments") {
-		t.Errorf("the briefing for a worker tells it to run the judge:\n%s", forWorkers)
+	for _, named := range []string{"journal sins", "journal commandments", "and the rest of", "the commands", "`judge`"} {
+		if strings.Contains(string(forWorkers), named) {
+			t.Errorf("the briefing for a worker names %q, where it names no command:\n%s", named, forWorkers)
+		}
 	}
 
 	briefing, err := os.ReadFile(filepath.Join(root, doc.JournalBriefing))

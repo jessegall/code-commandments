@@ -26,12 +26,15 @@ const generated = "commandments"
 
 const manifest = "published-skills"
 
+const commandsHeading = "## Commands"
+
 // Library is a project's skill library.
 type Library struct {
-	root     string
-	judged   string
-	project  config.Config
-	previous []string
+	root            string
+	judged          string
+	project         config.Config
+	previous        []string
+	withoutCommands bool
 }
 
 func At(root string, project config.Config) Library {
@@ -39,7 +42,13 @@ func At(root string, project config.Config) Library {
 }
 
 func For(root, judged string, project config.Config) Library {
-	return Library{root, judged, project, readManifest(root)}
+	return Library{root, judged, project, readManifest(root), false}
+}
+
+func (l Library) WithoutCommands() Library {
+	l.withoutCommands = true
+
+	return l
 }
 
 func (l Library) Dir() string {
@@ -53,7 +62,7 @@ func (l Library) Path(id string) string {
 func (l Library) Publish() ([]string, error) {
 	var ids []string
 
-	if written(atomic.Write(filepath.Join(l.Path(MapID), "SKILL.md"), Map(l.judged, l.project))) {
+	if written(atomic.Write(filepath.Join(l.Path(MapID), "SKILL.md"), l.index())) {
 		ids = append(ids, MapID)
 	}
 
@@ -133,8 +142,45 @@ func standalone() []string {
 	return slugs
 }
 
+func (l Library) index() string {
+	if l.withoutCommands {
+		return MapWithoutCommands(l.judged, l.project)
+	}
+
+	return Map(l.judged, l.project)
+}
+
 func (l Library) copied(from, to string) bool {
-	return copiedFrom(skills.Files, from, to, l.naming)
+	return copiedFrom(skills.Files, from, to, l.shipped)
+}
+
+func (l Library) shipped(text []byte) []byte {
+	named := l.naming(text)
+	if !l.withoutCommands {
+		return named
+	}
+
+	return []byte(withoutCommandsSection(string(named)))
+}
+
+func withoutCommandsSection(text string) string {
+	var kept []string
+	dropping := false
+
+	for _, line := range strings.Split(text, "\n") {
+		switch {
+		case line == commandsHeading:
+			dropping = true
+		case strings.HasPrefix(line, "## "):
+			dropping = false
+		}
+
+		if !dropping {
+			kept = append(kept, line)
+		}
+	}
+
+	return strings.Join(kept, "\n")
 }
 
 func (l Library) naming(text []byte) []byte {

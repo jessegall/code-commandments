@@ -6,8 +6,7 @@ This project's architecture is judged by code-commandments: each discipline is a
 names a way — a tool, a `/`-command, or reading the file. Read the discipline that covers what
 you are about to write.
 
-**Load `commandments` for the index** — every discipline, when each one fires, and the rest of
-the commands. It is the whole canon, loadable, so it is not copied here. A `judge` finding names
+**Load `commandments` for the index** — every discipline, when each one fires. It is the whole canon, loadable, so it is not copied here. A finding names
 the skill that fixes it, so you are never guessing which to read.
 
 **⚠️ THE ONE RULE EVERY OTHER DEFERS TO — TRACE TO THE SOURCE.** Every sin has an origin; fix it

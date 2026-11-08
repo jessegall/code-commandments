@@ -144,7 +144,12 @@ func renderSkills() (int, error) {
 		return 0, err
 	}
 
-	published, err := library.For(filepath.Join(pluginRoot(), skillsFolder), journalProjectRoot(), project).Publish()
+	shared := library.For(filepath.Join(pluginRoot(), skillsFolder), journalProjectRoot(), project)
+	if !workersChosenToRunTheCLI() {
+		shared = shared.WithoutCommands()
+	}
+
+	published, err := shared.Publish()
 
 	return len(published), err
 }
