@@ -1,5 +1,6 @@
 import hashlib
 import json
+import re
 import os
 import shutil
 import signal
@@ -35,7 +36,8 @@ WORKTREE_PREFIX = "story-engine-"
 SLEEPER = ["sleep", "86400"]
 BRANCH_PREFIX = "story-engine/story-"
 STORY_ENVIRONMENT = "story-engine"
-JOURNAL_VARIABLES = ("JOURNAL_", "AGENT_JOURNAL_")
+LAUNCH_VARIABLES = ("HOME", "PATH", "USER", "LOGNAME", "SHELL", "LANG", "LC_ALL", "TMPDIR", "TERM")
+AGENT_LINE = re.compile(r"agent-line:(\d+)")
 
 
 class Refused(Exception):
@@ -84,12 +86,27 @@ class Relay(socketserver.ThreadingTCPServer):
         if asked["kind"] == "pid":
             return self.pid_step(asked)
         argv, stdin, folder = self.command_of(asked), asked.get("stdin", ""), self.folder_of(asked)
+        environment = self.environment_of(asked)
         try:
             done = subprocess.run(argv, input=stdin, capture_output=True, text=True, cwd=folder, timeout=STEP_SECONDS,
-                                  env=self.environment_of(asked))
+                                  env=environment)
         except subprocess.TimeoutExpired:
             return {"code": 124, "out": "", "err": f"the step ran past {STEP_SECONDS} seconds and was stopped\n"}
-        return {"code": done.returncode, "out": done.stdout, "err": done.stderr}
+        out = done.stdout
+        if asked["kind"] == "hook":
+            out += self.lines_named_in(done.stdout, environment)
+        return {"code": done.returncode, "out": out, "err": done.stderr}
+
+    def lines_named_in(self, answered: str, environment: dict) -> str:
+        """A hook's answer names each line the journal has for the agent by its number, and a real agent's terminal
+        shows the line itself; so the relay reads each named line as that agent, from the test checkout, whose folder
+        is the one the journal knows as the test environment's, and hands its text back with it."""
+        read = ""
+        for number in AGENT_LINE.findall(answered):
+            shown = subprocess.run([self.journal, "agent-line", "show", number], capture_output=True, text=True,
+                                   cwd=os.path.join(self.project, TEST_CHECKOUT), timeout=STEP_SECONDS, env=environment)
+            read += shown.stdout + shown.stderr
+        return read
 
     def pid_step(self, asked: dict) -> dict:
         """Hand out a process of its own, in a session of its own, for a fake agent to be registered with, or end one."""
@@ -191,11 +208,12 @@ class Relay(socketserver.ThreadingTCPServer):
         return {"code": done.returncode, "out": done.stdout, "err": done.stderr}
 
     def environment_of(self, asked: dict) -> dict:
-        """What a step runs with. A hook sent for a story's agent runs with the variables a real launch gives that
-        agent, and none of the session that started the relay, so the journal takes it as that agent's own."""
+        """What a step runs with. A hook sent for a story's agent runs with the variables a fresh launch of that agent
+        has, and none of the session that started the relay, whose own variables would make the journal take the step
+        as that session's."""
         if asked["kind"] != "hook" or not asked.get("actor"):
             return dict(os.environ)
-        environment = {name: value for name, value in os.environ.items() if not name.startswith(JOURNAL_VARIABLES)}
+        environment = {name: os.environ[name] for name in LAUNCH_VARIABLES if name in os.environ}
         role = asked.get("role") or "worker"
         environment.update({"AGENT_JOURNAL_ACTIVE": "1", "JOURNAL_ACTOR": f"{role}:{asked['actor']}",
                             "JOURNAL_ENV": STORY_ENVIRONMENT, "JOURNAL_ROLE": role})

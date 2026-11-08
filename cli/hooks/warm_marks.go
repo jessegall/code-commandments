@@ -200,6 +200,8 @@ func AgainstTheProgramNarrowed(marking Marking, files []string, rulesFor func(st
 		return nil, read, notInTheTree
 	}
 
+	ledger.Of(held.project).Counts(ledger.JudgingsFromTheTree, 1, checkout)
+
 	if len(judged) != len(files) {
 		return marksOverTogether(view, marking, judged, rulesFor, changedFor), read, notInTheTree
 	}

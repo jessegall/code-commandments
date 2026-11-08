@@ -53,6 +53,16 @@ class RelayTest(unittest.TestCase):
         said = self.ask({"kind": "hook", "stdin": "{}", "actor": "41", "role": "worker"})["out"].splitlines()
         self.assertEqual(said, ["AGENT_JOURNAL_ACTIVE=1", "JOURNAL_ACTOR=worker:41", "JOURNAL_ENV=story-engine", "JOURNAL_ROLE=worker"])
 
+    def test_a_line_a_hook_names_is_read_as_its_agent_and_handed_back(self) -> None:
+        self.scratch()
+        bin = os.path.join(self.project, ".journal", "bin")
+        with open(os.path.join(bin, "journal-hook"), "w") as program:
+            program.write("#!/bin/sh\necho '{\"additionalContext\":\"agent-line:7\"}'\n")
+        with open(os.path.join(bin, "journal"), "w") as program:
+            program.write("#!/bin/sh\necho \"text: the sin for $JOURNAL_ACTOR, asked as $*\"\n")
+        said = self.ask({"kind": "hook", "stdin": "{}", "actor": "41", "role": "worker"})["out"]
+        self.assertIn("text: the sin for worker:41, asked as agent-line show 7", said)
+
     def test_a_hook_reaches_the_journals_hook_entry_with_its_body(self) -> None:
         ran = self.ask({"kind": "hook", "stdin": '{"hook_event_name": "Stop"}'})
         self.assertEqual(ran["out"], f'hook claude {self.project}\n{{"hook_event_name": "Stop"}}')

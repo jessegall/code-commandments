@@ -12,6 +12,7 @@ import (
 
 	"github.com/jessegall/code-commandments/cli/config"
 	"github.com/jessegall/code-commandments/cli/git"
+	"github.com/jessegall/code-commandments/cli/ledger"
 	"github.com/jessegall/code-commandments/cli/scan"
 	"github.com/jessegall/code-commandments/cli/source"
 	"github.com/jessegall/code-commandments/cli/warm"
@@ -472,10 +473,16 @@ func TestAWorkersEditIsJudgedAgainstItsOwnAgentsTree(t *testing.T) {
 			git.CurrentBranch(project))
 	}
 
+	before := ledger.Of(project).Count(ledger.JudgingsFromTheTree)
+
 	_, _, whole := AgainstTheProgram(Marks(root), edited, allRules(t, root, settings), git.Everywhere(), worktree)
 	if !whole {
 		t.Error("a worker's edit is judged on its own file alone after the main checkout moved off the branch it " +
 			"was cut from, so every rule that reads more than one file is dropped and nothing says so")
+	}
+
+	if counted := ledger.Of(project).Count(ledger.JudgingsFromTheTree) - before; counted != 1 {
+		t.Errorf("the ledger counted %d judgings from the tree for one edit judged against it", counted)
 	}
 }
 

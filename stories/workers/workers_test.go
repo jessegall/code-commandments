@@ -62,7 +62,7 @@ func TestAWorkersEditIsJudgedAgainstItsOwnWorktreeWithoutReadingTheProject(t *te
 	grace.Edits(story.ElseAfterRaise, "order.py")
 	told := grace.Hears("redundant-python-else")
 
-	s.Says(told, grace.Folder(), "order.py", "commandments-python-flow")
+	s.Says(told, "order.py", "commandments-python-flow")
 	s.CostIs(ledger.TreeReadsStarted, 0)
 	s.CostAtLeast(ledger.JudgingsFromTheTree, 1)
 }
@@ -187,7 +187,7 @@ func TestAWorktreeCutBesideTheProjectIsStillItsOwnCheckout(t *testing.T) {
 
 	told := grace.Hears("redundant-python-else")
 
-	s.Says(told, grace.Folder())
+	s.Says(told, "order.py")
 }
 
 func TestARemovedWorktreeClosesItsLaneWhileTheOthersStay(t *testing.T) {
