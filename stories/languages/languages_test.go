@@ -175,8 +175,8 @@ func TestEveryEngineARuleJudgesIsAskedAboutAnEditedFile(t *testing.T) {
 }
 
 func TestAMergeRangeWithSinsInTwoLanguagesNamesBoth(t *testing.T) {
-	s, _ := served(t)
-	grace := s.Worker("Grace")
+	s, ada := served(t)
+	grace := s.DispatchedWorker("Grace", ada)
 
 	grace.Edits(typedElseAfterRaise, "orders.py")
 	grace.Edits(goFlow, "refund.go")
