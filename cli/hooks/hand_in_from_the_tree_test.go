@@ -98,3 +98,29 @@ func TestAHandInIsNotHeldWithTheSettingOff(t *testing.T) {
 		t.Errorf("with hand-ins switched off, the hand-in was answered %q", held)
 	}
 }
+
+func TestAHandInObeysTheSettingOnItsOwnLineOverTheProjects(t *testing.T) {
+	root, _, _ := projectWithASin(t)
+
+	t.Setenv(journalSettings, `{"judge_hand_ins": "true"}`)
+
+	line := deliveringOf(root, generousWindow, "src/refund.py")
+	line["settings"] = map[string]any{"judge_hand_ins": false}
+
+	if held := DeliveryHeld(line); held != "" {
+		t.Errorf("with hand-ins switched off on the line, the hand-in was answered %q", held)
+	}
+}
+
+func TestAHandInIsHeldWhenItsOwnLineSwitchesTheSettingOn(t *testing.T) {
+	root, _, _ := projectWithASin(t)
+
+	t.Setenv(journalSettings, `{"judge_hand_ins": "false"}`)
+
+	line := deliveringOf(root, generousWindow, "src/refund.py")
+	line["settings"] = map[string]any{"judge_hand_ins": true}
+
+	if held := DeliveryHeld(line); held == "" {
+		t.Error("with hand-ins switched on on the line, the hand-in passed unjudged")
+	}
+}

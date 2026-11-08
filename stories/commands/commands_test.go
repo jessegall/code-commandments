@@ -228,6 +228,7 @@ func TestRulesWorksOnAProjectsOwnRules(t *testing.T) {
 
 func TestAWorkersOwnJudgeNamesTheNewFilesItCommitted(t *testing.T) {
 	s := held(t)
+	s.GivenHandInsAreNotJudged()
 	grace := s.DispatchedWorker("Grace", s.Agent("Ada"))
 
 	grace.Edits(story.ElseAfterRaise, "order.py")

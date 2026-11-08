@@ -25,6 +25,8 @@ var theSameEvent = map[string]string{
 	"plugin.update":         updatedEvent,
 	"worker_worktree.merge": landedEvent,
 	"merge_request.create":  requestedEvent,
+
+	"suites.coding.workers.worker_delivering": deliveringEvent,
 }
 
 func namedAsTheKey(event string) string {

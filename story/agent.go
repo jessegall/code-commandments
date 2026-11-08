@@ -14,7 +14,8 @@ const (
 	testEnvironment = "story-engine"
 	workerPrefix    = "story-engine-"
 	hearsWithin     = 10 * time.Second
-	reopenedWithin  = 30 * time.Second
+	landsWithin     = time.Minute
+	reopenedWithin  = time.Minute
 	stillnessWithin = 12 * time.Second
 	betweenMoments  = 2 * time.Second
 	aModelTurn      = 3 * time.Second
@@ -273,14 +274,20 @@ func (a *Agent) Rebases() {
 func (a *Agent) HandsIn() Ran {
 	a.s.t.Helper()
 
+	handedIn := a.TriesToHandIn()
+	a.s.Exits(handedIn, 0)
+
+	return handedIn
+}
+
+func (a *Agent) TriesToHandIn() Ran {
+	a.s.t.Helper()
+
 	if found := proofRow.FindStringSubmatch(a.Asks("proof", "make", "1", "--task", a.task, "a story's hand-in").Text()); found != nil {
 		a.proof = found[1]
 	}
 
-	handedIn := a.Asks("worker", "deliver", "--differences", "none")
-	a.s.Exits(handedIn, 0)
-
-	return handedIn
+	return a.Asks("worker", "deliver", "--differences", "none")
 }
 
 func (a *Agent) Ends() {

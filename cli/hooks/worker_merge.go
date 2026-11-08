@@ -39,7 +39,7 @@ func MergeHeld(line map[string]any) string {
 }
 
 func DeliveryHeld(line map[string]any) string {
-	if !handInsJudged() {
+	if !handInsJudged(line) {
 		return ""
 	}
 

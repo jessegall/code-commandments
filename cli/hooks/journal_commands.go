@@ -334,11 +334,25 @@ func chosenSettings() (map[string]any, bool) {
 		}
 	}
 
-	for key, value := range chosen {
-		chosen[key] = settingText(value)
+	return settingsAsText(chosen), true
+}
+
+func chosenOn(line map[string]any) (map[string]any, bool) {
+	settings := settingsOn(line)
+	if settings == nil {
+		return chosenSettings()
 	}
 
-	return chosen, true
+	return settingsAsText(settings), true
+}
+
+func settingsAsText(chosen map[string]any) map[string]any {
+	texts := make(map[string]any, len(chosen))
+	for key, value := range chosen {
+		texts[key] = settingText(value)
+	}
+
+	return texts
 }
 
 func settingText(value any) any {

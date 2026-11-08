@@ -117,6 +117,7 @@ func TestOneWorkersTwoSimultaneousEditsFillItsLaneOnce(t *testing.T) {
 
 func TestTwoLandingsAtTheSameMomentAreJudgedOneAtATime(t *testing.T) {
 	s := busy(t)
+	s.GivenHandInsAreNotJudged()
 	ada := s.Agent("Ada")
 	grace, edsger := s.DispatchedWorker("Grace", ada), s.DispatchedWorker("Edsger", ada)
 
@@ -132,6 +133,7 @@ func TestTwoLandingsAtTheSameMomentAreJudgedOneAtATime(t *testing.T) {
 
 func TestALandingDoesNotDisturbAWorkersNextLane(t *testing.T) {
 	s := busy(t)
+	s.GivenHandInsAreNotJudged()
 	grace, edsger := s.Worker("Grace"), s.DispatchedWorker("Edsger", s.Agent("Ada"))
 
 	grace.Edits(story.ElseAfterRaise, "first.py")
@@ -147,6 +149,7 @@ func TestALandingDoesNotDisturbAWorkersNextLane(t *testing.T) {
 
 func TestALandingWhileTheMainAgentEditsAnswersBothCorrectly(t *testing.T) {
 	s := busy(t)
+	s.GivenHandInsAreNotJudged()
 	ada := s.Agent("Ada")
 	grace := s.DispatchedWorker("Grace", ada)
 

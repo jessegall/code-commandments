@@ -18,8 +18,8 @@ func TestAHandInNobodyCouldJudgeSaysSo(t *testing.T) {
 		{
 			"a hand-in whose time ran out before anything was read",
 			merging{worker: "worker 7", worktree: root, window: time.Nanosecond},
-			[]string{"was not judged in full", "nothing of this hand-in was judged", "--changes"},
-			nil,
+			[]string{"was not judged in full", "nothing of this hand-in was judged"},
+			[]string{"--changes"},
 		},
 	} {
 		said := told.work.answered()
@@ -27,6 +27,12 @@ func TestAHandInNobodyCouldJudgeSaysSo(t *testing.T) {
 		for _, names := range told.words {
 			if !strings.Contains(said, names) {
 				t.Errorf("%s does not say %q: %s", told.what, names, said)
+			}
+		}
+
+		for _, never := range told.absent {
+			if strings.Contains(said, never) {
+				t.Errorf("%s says %q, and a worker does not run the judge: %s", told.what, never, said)
 			}
 		}
 

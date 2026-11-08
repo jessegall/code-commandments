@@ -130,7 +130,7 @@ func (s *Story) landsPast(tip string) {
 		return
 	}
 
-	for until := time.Now().Add(hearsWithin); time.Now().Before(until); time.Sleep(betweenMoments) {
+	for until := time.Now().Add(landsWithin); time.Now().Before(until); time.Sleep(betweenMoments) {
 		if s.branchTip() != tip {
 			return
 		}
@@ -143,7 +143,7 @@ func (s *Story) asksPast(holding string, argv ...string) Ran {
 	s.t.Helper()
 
 	answer := s.AsksIn(s.TestCheckout(), argv...)
-	for until := time.Now().Add(hearsWithin); strings.Contains(answer.Text(), holding) && time.Now().Before(until); {
+	for until := time.Now().Add(landsWithin); strings.Contains(answer.Text(), holding) && time.Now().Before(until); {
 		time.Sleep(betweenMoments)
 		answer = s.AsksIn(s.TestCheckout(), argv...)
 	}

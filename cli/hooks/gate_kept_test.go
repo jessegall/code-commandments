@@ -33,8 +33,8 @@ func TestAGateWithNoAgentToTellKeepsItsWordsWhereAPersonReadsThem(t *testing.T) 
 		t.Errorf("what is kept does not say the hand-in was not judged: %s", last)
 	}
 
-	if !strings.Contains(last, "Run `") {
-		t.Errorf("what is kept does not say how to judge it properly: %s", last)
+	if strings.Contains(last, "--changes") {
+		t.Errorf("what is kept tells a worker to run the judge, and only the journal judges a worker's work: %s", last)
 	}
 }
 

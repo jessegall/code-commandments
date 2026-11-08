@@ -33,10 +33,10 @@ type Answer struct {
 
 func AskedUntilTheTreeIsThere(project string, request Request, said func(string)) (Answer, bool) {
 	return waitingFor(func() (Answer, bool) { return Asked(project, request) }, said, aMomentBetweenAsks,
-		waitsForTheTree)
+		waitsForTheTree, waitsForTheServiceToReturn)
 }
 
-func waitingFor(ask func() (Answer, bool), said func(string), apart, atMost time.Duration) (Answer, bool) {
+func waitingFor(ask func() (Answer, bool), said func(string), apart, atMost, silence time.Duration) (Answer, bool) {
 	answer, served := ask()
 	if served || !answer.Coming {
 		return answer, served
@@ -45,10 +45,22 @@ func waitingFor(ask func() (Answer, bool), said func(string), apart, atMost time
 	said("waiting for the tree this project keeps up, because reading it again here would cost more than the wait: " +
 		answer.Because)
 
+	heard := time.Now()
+
 	for until := time.Now().Add(atMost); time.Now().Before(until); {
 		time.Sleep(apart)
 
 		answer, served = ask()
+		if !served && !answer.Declined {
+			if time.Since(heard) >= silence {
+				return answer, served
+			}
+
+			continue
+		}
+
+		heard = time.Now()
+
 		if served || !answer.Coming {
 			return answer, served
 		}
@@ -58,6 +70,8 @@ func waitingFor(ask func() (Answer, bool), said func(string), apart, atMost time
 }
 
 const waitsForTheTree = 30 * time.Minute
+
+const waitsForTheServiceToReturn = 5 * time.Minute
 
 const aMomentBetweenAsks = time.Second
 

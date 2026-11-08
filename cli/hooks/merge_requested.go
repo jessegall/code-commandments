@@ -54,7 +54,7 @@ func requestedOf(line map[string]any) requested {
 func MergeRequested(line map[string]any) string {
 	asked := requestedOf(line)
 
-	if !mergesJudgedBeforeTheyLand() || !asked.readable() {
+	if !mergesJudgedBeforeTheyLand(line) || !asked.readable() {
 		return ""
 	}
 
@@ -122,8 +122,8 @@ func (r requested) deadline() time.Duration {
 
 const mostAGuardTakes = 20 * time.Second
 
-func mergesJudgedBeforeTheyLand() bool {
-	chosen, given := chosenSettings()
+func mergesJudgedBeforeTheyLand(line map[string]any) bool {
+	chosen, given := chosenOn(line)
 	if !given {
 		return false
 	}
@@ -135,8 +135,8 @@ func mergesJudgedBeforeTheyLand() bool {
 
 const beforeMergeKey = "judge_before_merge"
 
-func handInsJudged() bool {
-	chosen, given := chosenSettings()
+func handInsJudged(line map[string]any) bool {
+	chosen, given := chosenOn(line)
 	if !given {
 		return true
 	}

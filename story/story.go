@@ -78,8 +78,14 @@ func (s *Story) AsksIn(folder string, argv ...string) Ran {
 func (s *Story) SwitchesThePluginSetting(key, value, afterwards string) {
 	s.t.Helper()
 
-	s.Asks("plugin", "configure", "code-commandments", key, value)
-	s.t.Cleanup(func() { s.Asks("plugin", "configure", "code-commandments", key, afterwards) })
+	s.Asks("plugin", "configure", "code-commandments", key, value, "--environment", testEnvironment)
+	s.t.Cleanup(func() { s.Asks("plugin", "configure", "code-commandments", key, afterwards, "--environment", testEnvironment) })
+}
+
+func (s *Story) GivenHandInsAreNotJudged() {
+	s.t.Helper()
+
+	s.SwitchesThePluginSetting("judge_hand_ins", "false", "true")
 }
 
 func journalStep(argv []string) Step {

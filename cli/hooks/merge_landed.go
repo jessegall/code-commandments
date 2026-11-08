@@ -65,7 +65,7 @@ func firstText(said ...string) string {
 
 func MergeLanded(line map[string]any) string {
 	work := landedOf(line)
-	if !mergesJudged() || work.project == "" || work.after == "" {
+	if !mergesJudged(line) || work.project == "" || work.after == "" {
 		return ""
 	}
 
@@ -241,8 +241,8 @@ func (l landed) saidAbout(marks []SinMark, why Narrowed) string {
 	return said
 }
 
-func mergesJudged() bool {
-	chosen, given := chosenSettings()
+func mergesJudged(line map[string]any) bool {
+	chosen, given := chosenOn(line)
 	if !given {
 		return true
 	}

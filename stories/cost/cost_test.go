@@ -197,6 +197,7 @@ func TestAWorkersLaneIsFilledOnceAndThenCostsOnlyTheFile(t *testing.T) {
 
 func TestAMergeReadsOnlyTheFilesOfItsRange(t *testing.T) {
 	s := held(t)
+	s.GivenHandInsAreNotJudged()
 	grace := s.DispatchedWorker("Grace", s.Agent("Ada"))
 
 	grace.Edits(story.Clean, "one.py")

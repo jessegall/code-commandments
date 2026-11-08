@@ -34,6 +34,7 @@ func TestACleanMergeIsAllowedWithoutAWord(t *testing.T) {
 
 func TestAMergeOfSinfulWorkIsNotHeldWhenTheBeforeLandingSettingIsOff(t *testing.T) {
 	s, _, grace := ready(t)
+	s.GivenHandInsAreNotJudged()
 
 	grace.Edits(story.ElseAfterRaise, "order.py")
 	grace.HandsIn()
@@ -57,6 +58,7 @@ func TestAMergeWithNothingToCompareIsAllowedWithoutJudging(t *testing.T) {
 
 func TestAfterAMergeLandsTheWorkerThatWroteTheSinIsToldAndTheMainAgentIsNot(t *testing.T) {
 	s, ada, grace := ready(t)
+	s.GivenHandInsAreNotJudged()
 
 	grace.Edits(story.ElseAfterRaise, "order.py")
 	grace.HandsIn()
@@ -68,6 +70,7 @@ func TestAfterAMergeLandsTheWorkerThatWroteTheSinIsToldAndTheMainAgentIsNot(t *t
 
 func TestAMergeNamesNoSinInAFolderTheProjectExcludes(t *testing.T) {
 	s, _, grace := ready(t)
+	s.GivenHandInsAreNotJudged()
 
 	grace.Edits(story.ElseAfterRaise, "dist/bundle.py")
 	grace.Edits(story.ElseAfterRaise, "order.py")
@@ -99,6 +102,17 @@ func TestJudgingAWorktreesChangesNeverReadsAFolderTheProjectExcludes(t *testing.
 	s.Never(judged, "bundle.py")
 }
 
+func TestAHandInOfSinfulWorkIsRefusedNamingTheSin(t *testing.T) {
+	s, _, grace := ready(t)
+
+	grace.Edits(story.ElseAfterRaise, "refund.py")
+
+	refused := grace.TriesToHandIn()
+
+	s.Refuses(refused)
+	s.Says(refused, "refund.py")
+}
+
 func TestACleanLandingSaysNothingAndSendsNothing(t *testing.T) {
 	s, ada, grace := ready(t)
 
@@ -112,6 +126,7 @@ func TestACleanLandingSaysNothingAndSendsNothing(t *testing.T) {
 
 func TestTwoMergesCloseTogetherJudgeTheWholeRangeOnce(t *testing.T) {
 	s, ada, grace := ready(t)
+	s.GivenHandInsAreNotJudged()
 	edsger := s.DispatchedWorker("Edsger", ada)
 
 	grace.Edits(story.ElseAfterRaise, "first.py")
@@ -127,6 +142,7 @@ func TestTwoMergesCloseTogetherJudgeTheWholeRangeOnce(t *testing.T) {
 
 func TestTheFirstMergeWeEverSeeJudgesItsOwnRangeAlone(t *testing.T) {
 	s, _, grace := ready(t)
+	s.GivenHandInsAreNotJudged()
 
 	grace.Edits(story.ElseAfterRaise, "first.py")
 	grace.HandsIn()
@@ -151,6 +167,7 @@ func TestAMergeOfMoreFilesThanAnAnswerCarriesSaysSoAndJudgesNone(t *testing.T) {
 
 func TestAMergeJustInsideTheCeilingIsJudged(t *testing.T) {
 	s, _, grace := ready(t)
+	s.GivenHandInsAreNotJudged()
 
 	grace.EditsMany(story.Clean, 199)
 	grace.Edits(story.ElseAfterRaise, "last.py")
@@ -162,6 +179,7 @@ func TestAMergeJustInsideTheCeilingIsJudged(t *testing.T) {
 
 func TestAJudgingThatCouldNotRunLeavesTheMarkWhereItWas(t *testing.T) {
 	s, _, grace := ready(t)
+	s.GivenHandInsAreNotJudged()
 
 	grace.Edits(story.BrokenSyntax, "broken.py")
 	grace.HandsIn()
@@ -172,6 +190,7 @@ func TestAJudgingThatCouldNotRunLeavesTheMarkWhereItWas(t *testing.T) {
 
 func TestWhatMergesBroughtInIsKeptWhereAPersonReadsItTwentyAtMost(t *testing.T) {
 	s, _, grace := ready(t)
+	s.GivenHandInsAreNotJudged()
 
 	grace.Edits(story.MutableDefault, "kept.py")
 	grace.HandsIn()
