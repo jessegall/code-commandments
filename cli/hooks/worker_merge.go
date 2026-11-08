@@ -75,17 +75,34 @@ func (work merging) keeps(said string) {
 	}
 
 	_ = dashboard.KeepsUnjudgeable(space, append(held, said))
+}
 
-	if recorded(project) {
-		Record(bookkeepingIn(project), Judged{
-			At: time.Now(), Event: deliveringEvent, Kind: "worktree", Checkout: work.worktree,
-			Why: Narrowed(string(gotNowhere)), Said: "the hand-in",
-		})
+func (work merging) records(why Narrowed, sins int, waited string) {
+	project := projectOf(work.worktree)
+	if project == "" || !recorded(project) {
+		return
 	}
+
+	Record(bookkeepingIn(project), Judged{
+		At: time.Now(), Event: deliveringEvent, Kind: "worktree", Checkout: work.worktree,
+		Held: why == "", Why: why, Sins: sins, Waited: waited, Said: "the hand-in",
+	})
+}
+
+func (work merging) waited(since time.Time) string {
+	limit := "no limit"
+	if !work.unlimited {
+		limit = "a window of " + strconv.FormatInt(work.window.Milliseconds(), 10) + "ms"
+	}
+
+	return "waited " + strconv.FormatInt(time.Since(since).Milliseconds(), 10) + "ms of " + limit
 }
 
 func (work merging) answered() string {
+	began := time.Now()
 	found := work.sinsWithin()
+
+	work.records(found.reason(), len(found.marks), work.waited(began))
 
 	if found.got == gotWhole && len(found.marks) == 0 {
 		return ""
@@ -113,6 +130,15 @@ func (work merging) answered() string {
 type handIn struct {
 	marks []SinMark
 	got   gotTo
+	why   Narrowed
+}
+
+func (h handIn) reason() Narrowed {
+	if h.why == "" {
+		return Narrowed(h.got)
+	}
+
+	return Narrowed(string(h.got) + ": " + string(h.why))
 }
 
 type gotTo string
@@ -124,6 +150,8 @@ const (
 
 	withoutTheTree gotTo = "only the rules that answer from one file were asked about the files this hand-in changed, because no tree of this project is held to answer the rest from, and the project is never read whole to make up for it"
 )
+
+const judgedLate Narrowed = "judged after the journal stopped waiting"
 
 func (m merging) sinsWithin() handIn {
 	within := time.After(m.deadline())
@@ -159,7 +187,13 @@ func (m merging) sinsWithin() handIn {
 
 func (m merging) tellsLater(answered chan []SinMark) {
 	marks, came := <-answered
-	if !came || len(marks) == 0 {
+	if !came {
+		return
+	}
+
+	m.records(judgedLate, len(marks), "")
+
+	if len(marks) == 0 {
 		return
 	}
 
@@ -359,7 +393,7 @@ func (m merging) deep(project config.Config, rules []detectors.Detector) handIn 
 		func(string) []detectors.Detector { return rules },
 		func(file string) git.ChangedLines { return git.ChangedLinesSince(m.worktree, since, file) }, root)
 	if why != "" {
-		return handIn{marks: m.shallow(project, rules), got: withoutTheTree}
+		return handIn{marks: m.shallow(project, rules), got: withoutTheTree, why: why}
 	}
 
 	var marks []SinMark

@@ -27,6 +27,7 @@ type Judged struct {
 	Memory    Memory
 	Abandoned string
 	Said      string
+	Waited    string
 	Files     []string
 }
 
@@ -63,6 +64,10 @@ func (j Judged) Line() string {
 
 	if j.Said != "" {
 		said = append(said, "checkout from "+j.Said)
+	}
+
+	if j.Waited != "" {
+		said = append(said, j.Waited)
 	}
 
 	if j.Abandoned != "" {
