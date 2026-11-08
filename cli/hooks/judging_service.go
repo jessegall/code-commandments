@@ -93,14 +93,14 @@ func judgedFor(request warm.Request, root string) warm.Answer {
 	if declined != "" {
 		if pastWhatOneSpliceCarries(declined) {
 			if smaller, held := fromOneFileRules(request, root, declined); held {
-				costs.Counts(ledger.JudgingsAnsweredSmaller, 1, request.In)
+				costs.Counts(ledger.JudgingsAnsweredSmaller, 1, request.In+" because "+declined)
 				smaller.Err += waited
 
 				return smaller
 			}
 		}
 
-		costs.Counts(ledger.JudgingsDeclined, 1, request.In)
+		costs.Counts(ledger.JudgingsDeclined, 1, request.In+" because "+declined)
 
 		return warm.Answer{Declined: true, Because: declined + waited}
 	}
