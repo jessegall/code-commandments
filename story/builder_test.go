@@ -44,11 +44,11 @@ func TestASampleIsWrittenUnderTheScratchFolderOfItsStoryAndRemovedAtTheEnd(t *te
 	})
 
 	kinds := kindsOf(asked)
-	if strings.Join(kinds, " ") != "write remove" {
-		t.Fatalf("the relay was asked %v, where the file is written and then its folder removed when the story ends", kinds)
+	if strings.Join(kinds, " ") != "write look remove" {
+		t.Fatalf("the relay was asked %v, where the file is written, the journal looks at the checkout and then the folder is removed when the story ends", kinds)
 	}
 
-	if (*asked)[0].Stdin != "x = 1\n" || (*asked)[1].Path != s.ScratchIn(s.TestCheckout(), "bridge/mypy") {
+	if (*asked)[0].Stdin != "x = 1\n" || (*asked)[1].In != s.TestCheckout() || (*asked)[2].Path != s.ScratchIn(s.TestCheckout(), "bridge/mypy") {
 		t.Errorf("the relay was asked %+v, where the text and the scratch folder to remove must both arrive", *asked)
 	}
 }
@@ -64,7 +64,7 @@ func TestTwoFilesInOneScratchFolderAreRemovedOnce(t *testing.T) {
 		s.Writes(Python("a second sample", "b = 1\n"), "b.py")
 	})
 
-	if kinds := strings.Join(kindsOf(asked), " "); kinds != "write write remove" {
+	if kinds := strings.Join(kindsOf(asked), " "); kinds != "write look write look remove" {
 		t.Errorf("the relay was asked %q, where one scratch folder is removed once however many files sit in it", kinds)
 	}
 }
@@ -133,23 +133,27 @@ func TestAWorkerGetsAWorktreeCutAndIsStartedInIt(t *testing.T) {
 		worker = s.Worker("Grace Hopper")
 	})
 
-	if kinds := strings.Join(kindsOf(asked), " "); kinds != "worktree pid command command pid worktree" {
-		t.Fatalf("the relay was asked %q, where the worktree is cut, a process handed out, the agent started, and at the end the agent ended, its process ended and the worktree dropped", kinds)
+	if kinds := strings.Join(kindsOf(asked), " "); kinds != "worktree pid command look command pid worktree" {
+		t.Fatalf("the relay was asked %q, where the worktree is cut, a process handed out, the agent started, the journal looks at its worktree, and at the end the agent ended, its process ended and the worktree dropped", kinds)
 	}
 
-	if (*asked)[0].Name != "story-engine-grace-hopper" || (*asked)[0].Action != "cut" || (*asked)[5].Action != "drop" {
-		t.Errorf("the worktree was asked for as %+v and %+v", (*asked)[0], (*asked)[5])
+	if (*asked)[0].Name != "story-engine-grace-hopper" || (*asked)[0].Action != "cut" || (*asked)[6].Action != "drop" {
+		t.Errorf("the worktree was asked for as %+v and %+v", (*asked)[0], (*asked)[6])
 	}
 
-	if (*asked)[4].Action != "end" || (*asked)[4].Pid != "created: agent:42" {
-		t.Errorf("the process was ended with %+v, where the one handed out is the one ended", (*asked)[4])
+	if (*asked)[5].Action != "end" || (*asked)[5].Pid != "created: agent:42" {
+		t.Errorf("the process was ended with %+v, where the one handed out is the one ended", (*asked)[5])
+	}
+
+	if (*asked)[3].In != worker.Folder() {
+		t.Errorf("the journal looked at %q, where it takes its first look at the worker's own worktree", (*asked)[3].In)
 	}
 
 	if !strings.HasSuffix(worker.Folder(), "/.journal/worktrees/story-engine-grace-hopper") {
 		t.Errorf("the worker works in %q, where it works in its own worktree beside the test checkout", worker.Folder())
 	}
 
-	if end := (*asked)[3].Argv; strings.Join(end, " ") != "agent end 42" {
+	if end := (*asked)[4].Argv; strings.Join(end, " ") != "agent end 42" {
 		t.Errorf("the agent was ended with %v", end)
 	}
 }
@@ -287,7 +291,7 @@ func TestDroppingALaneAndReadingTheLanesAskTheCommandmentsVerb(t *testing.T) {
 	s.DropsTheLane("/checkout")
 	s.ReadsTheLanes()
 
-	if first := strings.Join((*asked)[0].Argv, " "); first != "commandments lanes --drop /checkout" {
+	if first := strings.Join((*asked)[0].Argv, " "); first != "commandments lanes --drop=/checkout" {
 		t.Errorf("dropping a lane asked %q", first)
 	}
 
