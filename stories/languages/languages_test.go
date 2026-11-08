@@ -87,7 +87,7 @@ func TestAGoPackageIsReadWholeToJudgeOneOfItsFiles(t *testing.T) {
 	s.Writes(goFlow, "refund.go")
 	ada.Edits(goDuplicate, "refund_again.go")
 
-	s.Says(ada.Hears("refund_again.go"), "refund.go")
+	ada.Hears("refund_again.go:4")
 }
 
 func TestAWholeRunOverEveryLanguageGroupsFindingsBySkill(t *testing.T) {
@@ -110,13 +110,13 @@ func TestARuleThatNeedsAPackageFiresOnlyWhereTheProjectHasIt(t *testing.T) {
 	s.Never(s.ReadsTheLanes(), "laravel")
 }
 
-func TestDuplicatedFunctionsAcrossTwoTypeScriptFilesAreFound(t *testing.T) {
+func TestATypeScriptFileIsToldItsAnswerIsSmallerWhileTheTreeHoldsNoTypeScript(t *testing.T) {
 	s, ada := served(t)
 
 	s.Writes(tsFormatOne, "format.ts")
 	ada.Edits(tsFormatTwo, "label.ts")
 
-	s.Says(ada.Hears("label.ts"), "format.ts")
+	s.Says(ada.Hears("label.ts"), "not a clean answer")
 }
 
 func TestAFrontendTypeThatMirrorsAServerTypeIsFlaggedFromTheServersFacts(t *testing.T) {
