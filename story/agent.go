@@ -1,8 +1,11 @@
 package story
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -50,7 +53,12 @@ func (s *Story) Worker(name string) *Agent {
 
 	s.t.Cleanup(func() { _, _ = s.journal.Drops(worktree) })
 
-	return s.registers(name, "worker", folder)
+	worker := s.registers(name, "worker", folder)
+	if !s.rehearsal {
+		worker.settlesIn()
+	}
+
+	return worker
 }
 
 func (s *Story) registers(name, role, folder string) *Agent {
@@ -213,9 +221,33 @@ func (a *Agent) writes(sample Sample, file string, named func(string) string) Ra
 	return a.sends("PostToolUse", map[string]any{
 		"tool_name":     "Write",
 		"tool_input":    map[string]any{"file_path": named(path), "content": sample.Text},
-		"tool_response": map[string]any{"filePath": named(path), "success": true},
+		"tool_response": map[string]any{"type": "create", "filePath": named(path), "content": sample.Text,
+			"structuredPatch": []any{}, "originalFile": nil},
 	})
 }
+
+var firstLook = Python("a file a worker writes before its work, so the journal has seen its checkout once", "SETTLED = True\n")
+
+func (a *Agent) settlesIn() {
+	a.s.t.Helper()
+
+	a.writes(firstLook, "settled.py", func(path string) string { return path })
+
+	sum := sha256.Sum256([]byte(a.folder))
+	state := filepath.Join(a.s.project, ".journal", "runtime", "file-scan", hex.EncodeToString(sum[:8]))
+
+	for until := time.Now().Add(firstLookTakesAtMost); time.Now().Before(until); time.Sleep(100 * time.Millisecond) {
+		_, scanned := os.Stat(filepath.Join(state, "fingerprints.json"))
+		_, scanning := os.Stat(filepath.Join(state, "lock"))
+		if scanned == nil && scanning != nil {
+			return
+		}
+	}
+
+	a.s.Fails("the journal never took its first look at " + a.folder + ", so it would report none of this worker's edits")
+}
+
+const firstLookTakesAtMost = 30 * time.Second
 
 func (a *Agent) Moves() Ran {
 	a.s.t.Helper()
