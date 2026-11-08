@@ -387,7 +387,7 @@ func marksIn(marking Marking, file string, rules []detectors.Detector, changed g
 	var marks []SinMark
 
 	for _, rule := range rules {
-		if !detectors.Judges(rule, language.Engine()) {
+		if !detectors.JudgesAny(rule, language.Engines()) {
 			continue
 		}
 

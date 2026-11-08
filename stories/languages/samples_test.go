@@ -38,11 +38,11 @@ final class Checkout
 }
 `)
 
-	tsCoalesced = story.Sample{Under: "bridge/mypy", Label: "a typescript module with a coalesced default and an optional field", Text: `export interface Order {
-  note?: string
+	tsMutatedLoop = story.Sample{Under: "bridge/mypy", Label: "a typescript loop that shortens the list it walks", Text: `export function drain(items: string[]): void {
+  for (const item of items) {
+    items.shift()
+  }
 }
-
-export const noteOf = (order: Order) => order.note ?? ''
 `}
 
 	vueChain = story.Sample{Under: "bridge/mypy", Label: "a vue component with an if chain on one subject", Text: `<template>
@@ -135,6 +135,6 @@ func RefundAgain(order *Order) error {
 			text += "import { a } from './a'\n"
 		}
 
-		return text + "export const noteOf = (note?: string) => note ?? ''\n"
+		return text + "export function drain(items: string[]): void { for (const item of items) { items.shift() } }\n"
 	}()}
 )

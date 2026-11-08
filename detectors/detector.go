@@ -82,6 +82,10 @@ func Judges(detector Detector, engine catalog.Engine) bool {
 	return slices.Contains(EnginesOf(detector), engine)
 }
 
+func JudgesAny(detector Detector, engines []catalog.Engine) bool {
+	return slices.ContainsFunc(engines, func(engine catalog.Engine) bool { return Judges(detector, engine) })
+}
+
 func Named(name string) (Detector, bool) {
 	return NamedIn(All(), name)
 }

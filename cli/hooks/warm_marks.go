@@ -431,7 +431,7 @@ func marksOverTogether(codebase *engine.Codebase, marking Marking, files []strin
 		before := engine.Counted()
 		judges := map[string]bool{}
 		for _, file := range asksFor[detectors.IdentityOf(rule)] {
-			if detectors.Judges(rule, source.OfFile(file).Engine()) {
+			if detectors.JudgesAny(rule, source.OfFile(file).Engines()) {
 				judges[file] = true
 			}
 		}
@@ -466,7 +466,7 @@ func marksOver(codebase *engine.Codebase, marking Marking, file string, rules []
 	var marks []SinMark
 
 	for _, rule := range rules {
-		if !detectors.Judges(rule, language.Engine()) {
+		if !detectors.JudgesAny(rule, language.Engines()) {
 			continue
 		}
 

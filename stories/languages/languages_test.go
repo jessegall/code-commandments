@@ -34,11 +34,11 @@ func TestAPHPEditIsJudged(t *testing.T) {
 }
 
 func TestATypeScriptEditIsJudged(t *testing.T) {
-	s, ada := served(t)
+	_, ada := served(t)
 
-	ada.Edits(tsCoalesced, "order.ts")
+	ada.Edits(tsMutatedLoop, "order.ts")
 
-	s.Says(ada.Hears("order.ts"), "order.ts")
+	ada.Hears("typescript-collection-mutated-while-iterated")
 }
 
 func TestAVueEditIsJudgedInItsTemplateAndItsScript(t *testing.T) {
@@ -187,9 +187,9 @@ func TestAMergeRangeWithSinsInTwoLanguagesNamesBoth(t *testing.T) {
 }
 
 func TestASinInATypeScriptFileIsToldAtTheLineTheEditorShows(t *testing.T) {
-	s, ada := served(t)
+	_, ada := served(t)
 
 	ada.Edits(tsAfterImports, "late.ts")
 
-	s.Says(ada.Hears("late.ts"), "late.ts:41")
+	ada.Hears("late.ts:41")
 }

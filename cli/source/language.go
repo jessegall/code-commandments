@@ -133,18 +133,18 @@ func Judges(path string) bool {
 	return named
 }
 
-func (l Language) Engine() catalog.Engine {
+func (l Language) Engines() []catalog.Engine {
 	switch l {
 	case Vue, TypeScript:
-		return catalog.Vue
+		return []catalog.Engine{catalog.Vue, catalog.TypeScript}
 	case Python:
-		return catalog.Python
+		return []catalog.Engine{catalog.Python}
 	case CSharp:
-		return catalog.CSharp
+		return []catalog.Engine{catalog.CSharp}
 	case Go:
-		return catalog.Go
+		return []catalog.Engine{catalog.Go}
 	default:
-		return catalog.PHP
+		return []catalog.Engine{catalog.PHP}
 	}
 }
 

@@ -431,6 +431,6 @@ func oneFileAtATime(root, in string, refused *string) func(scan.Sources) (*engin
 			return engine.Load(), nil
 		}
 
-		return engine.New(nil, rebuilt.Streams()...), nil
+		return rebuilt, nil
 	}
 }
