@@ -23,5 +23,5 @@ def total(items):
 
 	inVendor = story.Sample{Under: "vendor", Label: "an else after a raise in a skipped folder", Text: story.ElseAfterRaise.Text}
 
-	inScripts = story.Sample{Under: "scripts", Label: "an else after a raise outside the judged folders", Text: story.ElseAfterRaise.Text}
+	inScripts = story.Sample{Under: "docker", Label: "an else after a raise outside the judged folders", Text: story.ElseAfterRaise.Text}
 )

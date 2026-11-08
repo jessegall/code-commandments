@@ -16,6 +16,7 @@ import (
 	"github.com/jessegall/code-commandments/cli/git"
 	"github.com/jessegall/code-commandments/cli/scan"
 	"github.com/jessegall/code-commandments/cli/source"
+	"github.com/jessegall/code-commandments/contract"
 	"github.com/jessegall/code-commandments/detectors"
 	"github.com/jessegall/code-commandments/engine"
 	"github.com/jessegall/code-commandments/skill"
@@ -181,20 +182,22 @@ func edited(event Event, project config.Config) ([]string, []string) {
 	case len(batchedIn(event.payload)) > 0:
 		for _, named := range batchedIn(event.payload) {
 			file := judgedFile(event.Root, named, project)
-			if file == "" {
-				lost = append(lost, named)
+			if file != "" {
+				files = append(files, file)
 
 				continue
 			}
 
-			files = append(files, file)
+			if isSource(named) {
+				lost = append(lost, named)
+			}
 		}
 
 		touched.MarkSeen()
 	default:
 		if file := judgedFile(event.Root, event.FilePath(), project); file != "" {
 			files = []string{file}
-		} else if event.FilePath() != "" {
+		} else if event.FilePath() != "" && isSource(event.FilePath()) {
 			lost = append(lost, event.FilePath())
 		}
 
@@ -206,7 +209,7 @@ func edited(event Event, project config.Config) ([]string, []string) {
 
 	for _, file := range files {
 		info, err := os.Stat(file)
-		if err != nil {
+		if err != nil || scan.IsFrozen(file) {
 			continue
 		}
 		if info.Size() > int64(budget) {
@@ -230,6 +233,12 @@ func edited(event Event, project config.Config) ([]string, []string) {
 	}
 
 	return affordable, lost
+}
+
+func isSource(file string) bool {
+	_, named := contract.LanguageOfPath(file)
+
+	return named
 }
 
 // Dropped are the files an edit named and the judging never looked at, by the reason it did not: the counters a

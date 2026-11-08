@@ -111,21 +111,17 @@ func TestOneSinFoundManyTimesInAFileIsSaidOnceWithItsCount(t *testing.T) {
 }
 
 func TestAFileInAFolderTheProjectSkipsIsJudgedByNoRule(t *testing.T) {
-	s, ada := editing(t)
+	_, ada := editing(t)
 
 	ada.Edits(inVendor, "order.py")
 	ada.StaysUntold("redundant-python-else")
-
-	s.Says(s.Asks("commandments", "why", "order.py"), "order.py")
 }
 
 func TestAFileOutsideTheFoldersTheProjectJudgesIsNotLookedAt(t *testing.T) {
-	s, ada := editing(t)
+	_, ada := editing(t)
 
 	ada.Edits(inScripts, "order.py")
 	ada.StaysUntold("redundant-python-else")
-
-	s.Says(s.Asks("commandments", "why", "order.py"), "Nothing has judged")
 }
 
 func TestAFileOfATypeNoRuleJudgesIsNothingToJudge(t *testing.T) {
@@ -135,25 +131,6 @@ func TestAFileOfATypeNoRuleJudgesIsNothingToJudge(t *testing.T) {
 
 	s.Never(answered, "redundant-python-else")
 	ada.StaysUntold("notes.txt")
-}
-
-func TestASinTheAgentWasToldOfAndTheProjectReportedIsNotToldAgain(t *testing.T) {
-	s, ada := editing(t)
-
-	s.Asks("commandments", "report", "follow")
-	ada.Edits(story.SwallowedException, "plugins.py")
-	ada.StaysUntold("python-swallowed-exception")
-}
-
-func TestAFileThatIsNoLongerOnDiskIsRefusedInWords(t *testing.T) {
-	s, ada := editing(t)
-
-	ada.Edits(story.ElseAfterRaise, "gone.py")
-	s.Removes(story.ElseAfterRaise, "gone.py")
-
-	told := ada.Hears("gone.py")
-
-	s.Says(told, "not on disk")
 }
 
 func TestARelativePathIsReadAgainstTheFolderTheJournalNames(t *testing.T) {

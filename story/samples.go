@@ -49,7 +49,7 @@ def refund(order, today) -> int:
         else:
             return order.total()
     except Exception:
-        return 0
+        pass
 `)
 
 	SixElses = Python("six elses after a raise", `def one(a):
