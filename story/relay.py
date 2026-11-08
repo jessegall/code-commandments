@@ -177,6 +177,7 @@ class Relay(socketserver.ThreadingTCPServer):
         if asked["action"] == "cut":
             shutil.rmtree(self.scan_state_of(folder), ignore_errors=True)
             subprocess.run(["git", "-C", checkout, "worktree", "remove", "--force", folder], capture_output=True, text=True)
+            shutil.rmtree(folder, ignore_errors=True)
             subprocess.run(["git", "-C", checkout, "worktree", "prune"], capture_output=True, text=True)
             argv = ["git", "-C", checkout, "worktree", "add", "-q", "-B", asked["name"], folder, "HEAD"]
         else:

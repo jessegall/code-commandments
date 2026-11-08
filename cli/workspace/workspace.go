@@ -183,14 +183,26 @@ func (w Workspace) Dir() string {
 }
 
 func (w Workspace) IsJournalDriven() bool {
-	info, err := os.Stat(w.root + "/.journal/plugins/" + JournalPlugin + "/.journal-plugin/plugin.json")
+	return w.journalRoot() != ""
+}
 
-	return err == nil && info.Mode().IsRegular()
+func (w Workspace) journalRoot() string {
+	for _, root := range []string{w.root, git.ProjectRoot(w.root)} {
+		if root == "" {
+			continue
+		}
+
+		if info, err := os.Stat(root + "/.journal/plugins/" + JournalPlugin + "/.journal-plugin/plugin.json"); err == nil && info.Mode().IsRegular() {
+			return root
+		}
+	}
+
+	return ""
 }
 
 func (w Workspace) StateDir() string {
-	if w.IsJournalDriven() {
-		return w.root + "/.journal/plugin-data/" + JournalPlugin
+	if root := w.journalRoot(); root != "" {
+		return root + "/.journal/plugin-data/" + JournalPlugin
 	}
 
 	return w.Dir()

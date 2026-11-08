@@ -5,7 +5,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/jessegall/code-commandments/cli/git"
 	"github.com/jessegall/code-commandments/cli/warm"
 	"github.com/jessegall/code-commandments/cli/workspace"
 )
@@ -31,7 +30,7 @@ func aJournalNear(folder string, space workspace.Workspace) (string, bool) {
 		}
 	}
 
-	if space.IsJournalDriven() || workspace.At(git.ProjectRoot(folder), "").IsJournalDriven() {
+	if space.IsJournalDriven() {
 		return "this project's journal runs the code-commandments plugin", true
 	}
 
