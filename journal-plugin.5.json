@@ -16,6 +16,7 @@
   },
   "protocol": 1,
   "program": ".journal-plugin/journal4-hook",
+  "hook_stamp": "@code-commandments-managed",
   "project_reads": [
     ".commandments"
   ],
