@@ -5,5 +5,4 @@ class Refused(Exception):
 def total(order):
     if order is None:
         raise Refused()
-    else:
-        return order.total
+    return order.total
