@@ -1,0 +1,4 @@
+{
+  "paths": ["src", "bridge/mypy", "bridge/php/src", "bridge/roslyn"],
+  "parallel": 2
+}

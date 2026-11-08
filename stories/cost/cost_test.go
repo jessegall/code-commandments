@@ -91,6 +91,16 @@ func TestOnlyTheFoldersTheProjectJudgesAreRead(t *testing.T) {
 	s.CostIs(ledger.FilesReadIntoTrees, 0)
 }
 
+func TestAnEditOfAFileTheProjectDoesNotJudgeIsNotAnAnswerMadeSmaller(t *testing.T) {
+	s := held(t)
+	ada := s.Agent("Ada")
+
+	ada.Edits(story.Sample{Under: "bridge/mypy", Label: "a note that is no source", Text: "a note\n"}, "notes.txt")
+	ada.Stops()
+
+	s.CostIs(ledger.JudgingsAnsweredSmaller, 0)
+}
+
 func TestAQuietMinuteCostsNothing(t *testing.T) {
 	s := held(t)
 	ada := s.Agent("Ada")

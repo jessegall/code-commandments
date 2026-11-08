@@ -4,6 +4,7 @@
 #
 #   scripts/stories                 every story
 #   scripts/stories ./stories/workers/ -run TestAFreshWorktree
+#   scripts/stories --tiny ./stories/edits/ -run TestAnEdit     on the tiny project scripts/story-lab builds
 set -euo pipefail
 
 root="$(git rev-parse --show-toplevel)"
@@ -12,7 +13,12 @@ cd "$root"
 # A worker's worktree has no journal of its own: the journal belongs to the project, the folder above the shared .git.
 project="$(cd "$(git rev-parse --git-common-dir)/.." && pwd -P)"
 
-[ -x "$project/.journal/bin/journal" ] || { echo "stories need this project's journal at $project/.journal/bin/journal" >&2; exit 1; }
+if [ "${1:-}" = --tiny ]; then
+    shift
+    project="$root/bin/story-lab"
+fi
+
+[ -x "$project/.journal/bin/journal" ] || { echo "stories need a journal at $project/.journal/bin/journal; for --tiny, run scripts/story-lab" >&2; exit 1; }
 
 scratch="$(mktemp -d "${TMPDIR:-/tmp}/stories.XXXXXX")"
 port_file="$scratch/port"
@@ -28,7 +34,10 @@ done
 
 packages=("${@:-./stories/...}")
 mounts=()
-[ "$project" = "$(pwd -P)" ] || mounts=(--mount "$project")
+case "$project/" in
+    "$root"/*) ;;
+    *) mounts=(--mount "$project") ;;
+esac
 
 chosen=.
 previous=

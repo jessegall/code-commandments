@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+# Builds the tiny project a story can be debugged on: a few files under a journal of their own with this checkout's
+# plugin, so a run waits on milliseconds of judging and not on this repository's tree. Run it again to refresh the plugin.
+#
+#   scripts/story-lab
+#   scripts/stories --tiny ./stories/edits/ -run TestAnEdit
+set -euo pipefail
+
+root="$(git rev-parse --show-toplevel)"
+lab="$root/bin/story-lab"
+journal_source="${JOURNAL_SOURCE:-$(cd "$root/.." && pwd -P)/agent-journal}"
+
+[ -f "$journal_source/install.sh" ] || { echo "no journal source at $journal_source: set JOURNAL_SOURCE" >&2; exit 1; }
+
+if [ ! -d "$lab/.git" ]; then
+    mkdir -p "$lab"
+    cp -R "$root/stories/tiny/." "$lab/"
+    git -C "$lab" init -q -b main
+    git -C "$lab" add -A
+    git -C "$lab" -c user.name=stories -c user.email=stories@localhost commit -q -m "The tiny project"
+fi
+
+if [ ! -x "$lab/.journal/bin/journal" ]; then
+    (cd "$lab" && sh "$journal_source/install.sh")
+fi
+
+bash "$root/scripts/plugin-local"
+plugin="$root/bin/plugin-local/plugin"
+journal="$lab/.journal/bin/journal"
+
+if (cd "$lab" && "$journal" plugin list) | grep -q code-commandments; then
+    (cd "$lab" && "$journal" plugin upgrade code-commandments --from "$plugin" --yes --reason "the tiny project follows this checkout")
+else
+    (cd "$lab" && "$journal" plugin install "$plugin" --yes --reason "the tiny project runs this checkout's plugin")
+fi
+
+echo "ready: scripts/stories --tiny ./stories/<category>/ -run TestName"

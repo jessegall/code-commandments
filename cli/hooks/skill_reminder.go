@@ -85,7 +85,7 @@ func (SkillReminder) Handle(event Event) Response {
 
 	spentReading += spent
 
-	if why != "" {
+	if why != "" && why != noneToJudge {
 		Warming(event.Root, project)
 		ledger.Of(event.Root).Counts(ledger.JudgingsAnsweredSmaller, 1, event.Root+" because "+string(why))
 	}
