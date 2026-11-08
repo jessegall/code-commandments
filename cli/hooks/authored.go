@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/jessegall/code-commandments/cli/atomic"
 	"github.com/jessegall/code-commandments/cli/git"
 	"github.com/jessegall/code-commandments/cli/state"
 	"github.com/jessegall/code-commandments/cli/workspace"
@@ -90,6 +91,8 @@ func (a Authored) Clear() {
 }
 
 func (a Authored) add(files []string) {
+	defer atomic.Hold(a.file.Path() + ".lock")()
+
 	kept := a.file.Read().Items()
 	grown := len(kept)
 

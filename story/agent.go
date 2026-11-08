@@ -12,9 +12,10 @@ import (
 const (
 	testEnvironment = "story-engine"
 	workerPrefix    = "story-engine-"
-	hearsWithin     = 45 * time.Second
+	hearsWithin     = 10 * time.Second
 	stillnessWithin = 12 * time.Second
 	betweenMoments  = 2 * time.Second
+	aModelTurn      = 3 * time.Second
 )
 
 var agentRow = regexp.MustCompile(`agent:(\d+)`)
@@ -28,6 +29,7 @@ type Agent struct {
 	row     string
 	pid     string
 	role    string
+	edited  bool
 }
 
 func (s *Story) Agent(name string) *Agent {
@@ -219,6 +221,7 @@ func (a *Agent) writes(sample Sample, file string, named func(string) string) Ra
 	a.s.t.Helper()
 
 	path := a.s.writesQuietly(a.folder, sample, file)
+	a.edited = true
 
 	return a.sends("PostToolUse", map[string]any{
 		"tool_name":     "Write",
@@ -266,8 +269,17 @@ func (a *Agent) Stops() Ran {
 	a.s.t.Helper()
 
 	a.s.steps = append(a.s.steps, StepOf("an agent stops"))
+	a.takesAModelTurn()
 
 	return a.sends("Stop", map[string]any{})
+}
+
+func (a *Agent) takesAModelTurn() {
+	if a.edited && !a.s.rehearsal {
+		time.Sleep(aModelTurn)
+	}
+
+	a.edited = false
 }
 
 func (a *Agent) Hears(text string) Ran {

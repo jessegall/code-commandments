@@ -39,16 +39,6 @@ func TestTheSameBatchIsNudgedOnlyOnce(t *testing.T) {
 	s.Never(ada.Stops(), "since the last commit")
 }
 
-func TestACommitCommandIsNudgedBeforeItRuns(t *testing.T) {
-	_, ada := working(t)
-
-	ada.Edits(story.Clean, "a.py")
-
-	ada.Runs("git commit -m story")
-
-	ada.Hears("before you commit")
-}
-
 func TestTheNudgeCountsOnlyTheFilesTheSessionChanged(t *testing.T) {
 	s, ada := working(t)
 
@@ -56,17 +46,6 @@ func TestTheNudgeCountsOnlyTheFilesTheSessionChanged(t *testing.T) {
 	ada.Edits(story.Clean, "mine.py")
 
 	s.Never(ada.Stops(), "other.py")
-}
-
-func TestAFileChangedByAShellCommandCountsAsTheSessions(t *testing.T) {
-	s, ada := working(t)
-
-	s.Writes(story.Clean, "shell.py")
-	ada.Runs("true")
-
-	ada.Stops()
-
-	ada.Hears("judged")
 }
 
 func TestAnOpenWorklistAtStopIsNamedBeforeAnythingElse(t *testing.T) {

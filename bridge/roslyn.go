@@ -100,7 +100,7 @@ func fetchChecked(name, destination string) error {
 		base = strings.TrimRight(named, "/")
 	}
 	base += "/" + url.PathEscape(Release)
-	sums, err := fetch(base + "/SHA256SUMS")
+	sums, err := fetch(base, "SHA256SUMS")
 	if err != nil {
 		return err
 	}
@@ -108,7 +108,7 @@ func fetchChecked(name, destination string) error {
 	if !listed {
 		return fmt.Errorf("the %s release lists no %s", Release, name)
 	}
-	content, err := fetch(base + "/" + name)
+	content, err := fetch(base, name)
 	if err != nil {
 		return err
 	}
@@ -137,7 +137,31 @@ func sumOf(sums, name string) (string, bool) {
 	return "", false
 }
 
-func fetch(address string) ([]byte, error) {
+func fetch(base, name string) ([]byte, error) {
+	body, err := curled(base + "/" + name)
+	if err == nil || os.Getenv("COMMANDMENTS_RELEASES") != "" {
+		return body, err
+	}
+
+	if asset, downloaded := fromTheGitHubCLI(name); downloaded {
+		return asset, nil
+	}
+
+	return nil, err
+}
+
+func fromTheGitHubCLI(name string) ([]byte, bool) {
+	gh, err := exec.LookPath("gh")
+	if err != nil {
+		return nil, false
+	}
+
+	body, err := exec.Command(gh, "release", "download", Release, "--repo", "jessegall/code-commandments", "--pattern", name, "--output", "-").Output()
+
+	return body, err == nil
+}
+
+func curled(address string) ([]byte, error) {
 	curl, err := exec.LookPath("curl")
 	if err != nil {
 		return nil, fmt.Errorf("fetching it needs curl on the PATH")
