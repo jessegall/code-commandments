@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+	"time"
 )
 
 // Sending is what became of telling a worker its merge was judged: told when the worker has the words, Retired
@@ -18,7 +19,12 @@ const (
 	Failed
 )
 
-const noWorkerLeft = 5
+const (
+	noWorkerLeft    = 5
+	workerStillBusy = "has a command running"
+	mergeEndsWithin = 30 * time.Second
+	betweenSends    = time.Second
+)
 
 func TellsTheWorker(project, worker, said string) (Sending, string) {
 	if worker == "" || said == "" {
@@ -30,11 +36,7 @@ func TellsTheWorker(project, worker, said string) (Sending, string) {
 		return Failed, "the journal's own command is not on the path, so the worker could not be told"
 	}
 
-	send := exec.Command(journal, "worker", "send", worker, said)
-	send.Dir = project
-	send.Env = os.Environ()
-
-	out, err := send.CombinedOutput()
+	out, err := sendsPastTheMerge(project, journal, worker, said)
 	if err == nil {
 		return ItHasTheWords, ""
 	}
@@ -49,6 +51,19 @@ func TellsTheWorker(project, worker, said string) (Sending, string) {
 	}
 
 	return Failed, refusal
+}
+
+func sendsPastTheMerge(project, journal, worker, said string) ([]byte, error) {
+	for until := time.Now().Add(mergeEndsWithin); ; time.Sleep(betweenSends) {
+		send := exec.Command(journal, "worker", "send", worker, said)
+		send.Dir = project
+		send.Env = os.Environ()
+
+		out, err := send.CombinedOutput()
+		if err == nil || !strings.Contains(string(out), workerStillBusy) || time.Now().After(until) {
+			return out, err
+		}
+	}
 }
 
 func exitOf(err error) int {

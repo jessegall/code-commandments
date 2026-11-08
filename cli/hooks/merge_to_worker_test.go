@@ -61,6 +61,26 @@ func TestAMergesFindingsGoToTheWorkerThatWroteThem(t *testing.T) {
 	}
 }
 
+func TestAWorkerStillInsideItsMergeIsToldOnceTheMergeEnds(t *testing.T) {
+	folder := t.TempDir()
+	asked := filepath.Join(folder, "asked")
+	path := filepath.Join(folder, "journal")
+
+	script := "#!/bin/sh\nif [ -e \"" + asked + "\" ]; then echo sent; exit 0; fi\ntouch \"" + asked + "\"\n" +
+		"echo 'worker 6 has a command running in output 12'\nexit 1\n"
+
+	if err := os.WriteFile(path, []byte(script), 0o755); err != nil {
+		t.Fatal(err)
+	}
+
+	t.Setenv("JOURNAL_BIN", path)
+
+	sending, refusal := TellsTheWorker(t.TempDir(), "6", "1 sin")
+	if sending != ItHasTheWords {
+		t.Fatalf("a send made while the merge was still ending gave up: %v, %s", sending, refusal)
+	}
+}
+
 func TestARetiredWorkersFindingsFallBackToTheMainAgent(t *testing.T) {
 	journalThatSays(t, 5, "worker 6 is retired")
 

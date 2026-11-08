@@ -14,6 +14,7 @@ const (
 	testEnvironment = "story-engine"
 	workerPrefix    = "story-engine-"
 	hearsWithin     = 10 * time.Second
+	reopenedWithin  = 30 * time.Second
 	stillnessWithin = 12 * time.Second
 	betweenMoments  = 2 * time.Second
 	aModelTurn      = 3 * time.Second
@@ -415,7 +416,7 @@ func (a *Agent) Hears(text string) Ran {
 
 	var last Ran
 
-	for until := time.Now().Add(hearsWithin); time.Now().Before(until); time.Sleep(betweenMoments) {
+	for until := time.Now().Add(a.hearingWindow()); time.Now().Before(until); time.Sleep(betweenMoments) {
 		last = a.moves()
 		if strings.Contains(last.Text(), text) {
 			return last
@@ -425,6 +426,14 @@ func (a *Agent) Hears(text string) Ran {
 	a.s.Fails(fmt.Sprintf("%s was never told %q; the last moment answered %q", a.name, text, last.Text()))
 
 	return last
+}
+
+func (a *Agent) hearingWindow() time.Duration {
+	if a.merged {
+		return reopenedWithin
+	}
+
+	return hearsWithin
 }
 
 func (a *Agent) StaysUntold(text string) {
