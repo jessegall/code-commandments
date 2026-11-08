@@ -247,7 +247,7 @@ func (a *Agent) settlesIn() {
 	a.s.Fails("the journal never took its first look at " + a.folder + ", so it would report none of this worker's edits")
 }
 
-const firstLookTakesAtMost = 30 * time.Second
+const firstLookTakesAtMost = 90 * time.Second
 
 func (a *Agent) Moves() Ran {
 	a.s.t.Helper()

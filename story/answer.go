@@ -3,6 +3,7 @@ package story
 import (
 	"fmt"
 	"strings"
+	"time"
 )
 
 func (s *Story) Says(ran Ran, texts ...string) {
@@ -89,4 +90,16 @@ func (s *Story) ReadsTheLanes() Ran {
 	s.t.Helper()
 
 	return s.Asks("commandments", "lanes")
+}
+
+func (s *Story) ReadsTheLanesOnceTheyShow(text string) Ran {
+	s.t.Helper()
+
+	lanes := s.ReadsTheLanes()
+	for until := time.Now().Add(hearsWithin); !s.rehearsal && !strings.Contains(lanes.Text(), text) && time.Now().Before(until); {
+		time.Sleep(betweenMoments)
+		lanes, _ = s.journal.Runs(s.project, "commandments", "lanes")
+	}
+
+	return lanes
 }

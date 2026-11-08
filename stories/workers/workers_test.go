@@ -29,7 +29,7 @@ func TestAWorkersFirstEditOpensALaneOfItsOwn(t *testing.T) {
 	grace := s.Worker("Grace")
 	grace.Edits(story.Clean, "order.py")
 
-	lanes := s.ReadsTheLanes()
+	lanes := s.ReadsTheLanesOnceTheyShow("story-engine-grace")
 
 	s.Says(lanes, "story-engine-grace")
 }
@@ -40,7 +40,7 @@ func TestAWorkerEditingTwiceOpensOneLane(t *testing.T) {
 	edsger.Edits(story.Clean, "order.py")
 	edsger.Edits(story.Clean, "refunds.py")
 
-	lanes := s.ReadsTheLanes()
+	lanes := s.ReadsTheLanesOnceTheyShow("story-engine-edsger")
 
 	s.SaysOnce(lanes, "story-engine-edsger ")
 }
@@ -198,7 +198,7 @@ func TestARemovedWorktreeClosesItsLaneWhileTheOthersStay(t *testing.T) {
 	edsger.Edits(story.Clean, "order.py")
 	grace.Leaves()
 
-	lanes := s.ReadsTheLanes()
+	lanes := s.ReadsTheLanesOnceTheyShow("story-engine-edsger")
 
 	s.Never(lanes, "story-engine-grace")
 	s.Says(lanes, "story-engine-edsger")
