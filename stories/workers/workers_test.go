@@ -24,19 +24,21 @@ func held(t *testing.T) *story.Story {
 	return s
 }
 
-func TestACutWorktreeOpensALaneOfItsOwn(t *testing.T) {
+func TestAWorkersFirstEditOpensALaneOfItsOwn(t *testing.T) {
 	s := held(t)
-	s.Worker("Grace")
+	grace := s.Worker("Grace")
+	grace.Edits(story.Clean, "order.py")
 
 	lanes := s.ReadsTheLanes()
 
 	s.Says(lanes, "story-engine-grace")
 }
 
-func TestACutDeliveredTwiceOpensOneLane(t *testing.T) {
+func TestAWorkerEditingTwiceOpensOneLane(t *testing.T) {
 	s := held(t)
-	s.Worker("Edsger")
-	s.Worker("Edsger Again")
+	edsger := s.Worker("Edsger")
+	edsger.Edits(story.Clean, "order.py")
+	edsger.Edits(story.Clean, "refunds.py")
 
 	lanes := s.ReadsTheLanes()
 
@@ -191,7 +193,9 @@ func TestAWorktreeCutBesideTheProjectIsStillItsOwnCheckout(t *testing.T) {
 func TestARemovedWorktreeClosesItsLaneWhileTheOthersStay(t *testing.T) {
 	s := held(t)
 	grace := s.Worker("Grace")
-	s.Worker("Edsger")
+	edsger := s.Worker("Edsger")
+	grace.Edits(story.Clean, "order.py")
+	edsger.Edits(story.Clean, "order.py")
 	grace.Leaves()
 
 	lanes := s.ReadsTheLanes()
