@@ -238,25 +238,37 @@ func TestAnAgentsEditsAreWorkedOutBeforeItsStop(t *testing.T) {
 	var worked sync.Mutex
 	var order []string
 
+	busy := make(chan struct{})
+	release := make(chan struct{})
+
 	advice := startAdvisers(func(moment asked) {
+		if asText(moment.given["named"]) == "its earlier edit" {
+			close(busy)
+			<-release
+		}
+
 		worked.Lock()
 		order = append(order, asText(moment.given["named"]))
 		worked.Unlock()
 	})
 
+	advice.add(asked{map[string]any{"named": "its earlier edit", "agent": map[string]any{"id": 7}}, true, true})
+	<-busy
+
 	advice.add(asked{map[string]any{"named": "its stop", "agent": map[string]any{"id": 7}}, true, false})
 	advice.add(asked{map[string]any{"named": "its edit", "agent": map[string]any{"id": 7}}, true, true})
+	close(release)
 
 	advice.drained(10 * time.Second)
 
 	worked.Lock()
 	defer worked.Unlock()
 
-	if len(order) != 2 {
-		t.Fatalf("the agent's 2 moments were worked out as %v", order)
+	if len(order) != 3 {
+		t.Fatalf("the agent's 3 moments were worked out as %v", order)
 	}
 
-	if order[0] != "its edit" {
+	if order[1] != "its edit" {
 		t.Errorf("the agent's moments were worked out as %v; its own edit comes before its own stop, since what "+
 			"is unjudged when it stops reaches nobody", order)
 	}
