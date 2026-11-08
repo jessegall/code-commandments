@@ -181,6 +181,9 @@ class Relay(socketserver.ThreadingTCPServer):
         argv = asked["argv"]
         if not argv or argv[0] not in NOUNS:
             raise Refused(f"'{argv[0] if argv else ''}' is not one of the journal nouns a story may run")
+        if argv[:2] == ["agent", "start"] and "main" in argv[2:5]:
+            raise Refused("a story never starts a main agent: the journal can place it in the person's own "
+                          "environment, where a new main agent ends the real one and its terminal")
         return [self.journal, *argv]
 
     def folder_of(self, asked: dict) -> str:

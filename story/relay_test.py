@@ -95,6 +95,16 @@ class RelayTest(unittest.TestCase):
         self.assertIn("is not one of the journal nouns", ran["err"])
         self.assertEqual(ran["out"], "")
 
+    def test_a_main_agent_is_never_started_for_a_story(self) -> None:
+        ran = self.ask({"kind": "command", "argv": ["agent", "start", "story-ada-1", "claude", "main", "--environment", "story-engine"]})
+        self.assertEqual(ran["code"], 126)
+        self.assertIn("never starts a main agent", ran["err"])
+        self.assertEqual(ran["out"], "")
+
+    def test_a_worker_agent_may_still_be_started(self) -> None:
+        ran = self.ask({"kind": "command", "argv": ["agent", "start", "story-grace-1", "claude", "worker", "--environment", "story-engine"]})
+        self.assertEqual(ran["code"], 0)
+
     def test_a_folder_outside_the_project_is_refused(self) -> None:
         ran = self.ask({"kind": "command", "argv": ["environment", "list"], "in": "/"})
         self.assertEqual(ran["code"], 126)
