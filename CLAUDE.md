@@ -314,3 +314,5 @@ is mounted at its own path and the host's docker socket beside it, so the Roslyn
 bridge a test starts still runs in its own capped container. A folder outside the
 checkout is visible only through `--mount` (read-only). Without docker it fails; there
 is no host fallback. Anything in `scripts/` or a hook that runs Go calls `scripts/dev`.
+
+@JOURNAL.md

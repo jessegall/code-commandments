@@ -43,6 +43,27 @@ func TestAMergeOfManyFilesIsOneThingToReadNamingEverySin(t *testing.T) {
 	}
 }
 
+func TestAMergeNamesNoSinInAFileTheProjectExcludes(t *testing.T) {
+	root, before, _ := mergedProject(t)
+
+	wroteInto(t, filepath.Join(root, ".commandments", "config.json"), `{"paths": ["src"], "exclude": ["**/dist", "src/generated"], "detectors": ["DocumentedAnywhereDetector"]}`)
+	wroteInto(t, filepath.Join(root, "src", "web", "dist", "bundle.py"), olderSin)
+	wroteInto(t, filepath.Join(root, "src", "generated", "made.py"), olderSin)
+	commitIn(t, root, "a merge carrying built and generated files")
+
+	said := MergeLanded(mergeLine(root, "main", before, git.Head(root)))
+
+	if !strings.Contains(said, "src/brought.py") {
+		t.Errorf("the sin in the merged source was not named:\n%s", said)
+	}
+
+	for _, never := range []string{"bundle.py", "made.py"} {
+		if strings.Contains(said, never) {
+			t.Errorf("the merge named a sin in %s, which the project excludes:\n%s", never, said)
+		}
+	}
+}
+
 func TestTheMergeAndTheHandInUseTheSameWords(t *testing.T) {
 	root, _ := workerProject(t)
 

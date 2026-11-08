@@ -16,9 +16,12 @@ project="$(cd "$(git rev-parse --git-common-dir)/.." && pwd -P)"
 if [ "${1:-}" = --tiny ]; then
     shift
     project="$root/bin/story-lab"
+    unset JOURNAL_ENV AGENT_JOURNAL_ACTIVE JOURNAL_AGENT_SESSION JOURNAL_LAUNCH JOURNAL_PROCESS JOURNAL_RUNNER_PROCESS
 fi
 
 [ -x "$project/.journal/bin/journal" ] || { echo "stories need a journal at $project/.journal/bin/journal; for --tiny, run scripts/story-lab" >&2; exit 1; }
+
+export JOURNAL_HOME="$project/.journal"
 
 scratch="$(mktemp -d "${TMPDIR:-/tmp}/stories.XXXXXX")"
 port_file="$scratch/port"

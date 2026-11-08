@@ -10,6 +10,9 @@ root="$(git rev-parse --show-toplevel)"
 lab="$root/bin/story-lab"
 journal_source="${JOURNAL_SOURCE:-$(cd "$root/.." && pwd -P)/agent-journal}"
 
+export JOURNAL_HOME="$lab/.journal"
+unset JOURNAL_ENV AGENT_JOURNAL_ACTIVE JOURNAL_AGENT_SESSION JOURNAL_LAUNCH JOURNAL_PROCESS JOURNAL_RUNNER_PROCESS
+
 [ -f "$journal_source/install.sh" ] || { echo "no journal source at $journal_source: set JOURNAL_SOURCE" >&2; exit 1; }
 
 if [ ! -d "$lab/.git" ]; then
@@ -32,6 +35,13 @@ if (cd "$lab" && "$journal" plugin list) | grep -q code-commandments; then
     (cd "$lab" && "$journal" plugin upgrade code-commandments --from "$plugin" --yes --reason "the tiny project follows this checkout")
 else
     (cd "$lab" && "$journal" plugin install "$plugin" --yes --reason "the tiny project runs this checkout's plugin")
+fi
+
+checkout="$lab/.journal/worktrees/story-engine"
+[ -d "$checkout" ] || git -C "$lab" worktree add -q -b story-engine/spike "$checkout"
+
+if ! (cd "$lab" && "$journal" environment list) | grep -q story-engine; then
+    (cd "$lab" && "$journal" environment make story-engine "$checkout" --branch story-engine/spike --test --reason "the stories run in an environment of their own")
 fi
 
 echo "ready: scripts/stories --tiny ./stories/<category>/ -run TestName"

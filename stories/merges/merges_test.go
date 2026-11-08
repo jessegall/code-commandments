@@ -66,6 +66,27 @@ func TestAfterAMergeLandsTheWorkerThatWroteTheSinIsToldAndTheMainAgentIsNot(t *t
 	ada.StaysUntold("redundant-python-else")
 }
 
+func TestAMergeNamesNoSinInAFolderTheProjectExcludes(t *testing.T) {
+	s, _, grace := ready(t)
+
+	grace.Edits(story.ElseAfterRaise, "dist/bundle.py")
+	grace.Edits(story.ElseAfterRaise, "order.py")
+	grace.HandsIn()
+	s.Merges(grace)
+
+	s.Never(grace.Hears("redundant-python-else"), "bundle.py")
+}
+
+func TestAWorkerEditingAFolderTheProjectExcludesIsToldNothingAboutIt(t *testing.T) {
+	_, _, grace := ready(t)
+
+	grace.Edits(story.ElseAfterRaise, "order.py")
+	grace.Edits(story.ElseAfterRaise, "dist/bundle.py")
+
+	grace.Hears("order.py")
+	grace.StaysUntold("bundle.py")
+}
+
 func TestACleanLandingSaysNothingAndSendsNothing(t *testing.T) {
 	s, ada, grace := ready(t)
 

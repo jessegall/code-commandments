@@ -36,6 +36,52 @@ func TestAWorktreeIsJudgedByTheProjectsConfig(t *testing.T) {
 	}
 }
 
+func TestAFileTheProjectExcludesIsNotJudgedInACheckoutOrAWorktree(t *testing.T) {
+	project := config.Config{
+		Paths:    []string{"src", "tools/hook"},
+		Excluded: []string{"**/dist", "**/vendor", "src/viewer/tests/sample-window", "tests", "tools/hook/testdata"},
+	}
+
+	for _, root := range []string{
+		"/project",
+		"/project/.journal/worktrees/worker-1",
+		"/elsewhere/worker-1",
+		"/home/dist/vendor/tests/project",
+	} {
+		for file, judged := range map[string]bool{
+			"src/core/modules/viewer/web/dist/assets/index-7UEM03nZ.js": false,
+			"src/dist/index.js":                     false,
+			"src/core/vendor/lib/a.php":             false,
+			"src/viewer/tests/sample-window/a.ts":   false,
+			"tools/hook/testdata/a.go":              false,
+			"tests/test_order.py":                   false,
+			"src/core/order.py":                     true,
+			"src/distant/order.py":                  true,
+			"src/viewer/tests/other-window/a.ts":    true,
+			"tools/hook/main.go":                    true,
+		} {
+			if got := project.IsJudged(root, root+"/"+file); got != judged {
+				t.Errorf("under %s, %s is judged=%v, want %v", root, file, got, judged)
+			}
+		}
+	}
+}
+
+func TestAFolderARuleJudgesStaysJudgedDespiteItsExclusion(t *testing.T) {
+	project := config.Config{
+		Paths:    []string{"src"},
+		Excluded: []string{"tests"},
+		Configurators: []config.Configurator{{
+			Target: config.RuleNamed(config.Detector, "AnyDetector"),
+			Calls:  []config.Call{{Method: config.Judges, Args: []config.Arg{{Value: []any{"tests"}}}}},
+		}},
+	}
+
+	if !project.IsJudged("/project", "/project/tests/test_order.py") {
+		t.Error("a folder a rule of the project judges is left out by the exclusion that rule is written to pass")
+	}
+}
+
 func TestAProjectOutsideGitIsItsOwnSettingsRoot(t *testing.T) {
 	root := t.TempDir()
 	write(t, filepath.Join(root, ".commandments", "config.json"), `{"paths": ["src"], "exclude": ["dist"]}`)

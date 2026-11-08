@@ -178,6 +178,10 @@ func (c Config) IsJudged(root, file string) bool {
 		return false
 	}
 
+	if c.Exclusions(home).Covers(absolute) {
+		return false
+	}
+
 	for _, relative := range append(slices.Clone(c.Paths), c.JudgedDespiteExclusion()...) {
 		dir := home + "/" + strings.Trim(relative, "/")
 		if relative == "." {
