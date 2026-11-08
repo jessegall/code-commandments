@@ -5,27 +5,46 @@ by its span. tree.py writes them into the generic tree.
 
 from __future__ import annotations
 
+import hashlib
 import os
+import tempfile
 from dataclasses import dataclass
 
 from mypy import build
 from mypy.find_sources import InvalidSourceList, create_source_list
 from mypy.modulefinder import BuildSource
-from mypy.build import State
+from mypy.build import BuildResult, State
 from mypy.errors import CompileError
 from mypy.nodes import Expression
 from mypy.options import Options
 from mypy.server.subexpr import get_subexpressions
-from mypy.server.update import FineGrainedBuildManager
 from mypy.types import AnyType, FunctionLike, Instance, NoneType, ProperType, Type, UnionType, get_proper_type
+from mypy.util import decode_python_encoding
 
-def options(python: str | None) -> Options:
-    """How mypy reads a consumer's project: every body checked, imports it cannot find left untyped, and the
-    whole graph kept in memory so a later request re-checks only what changed."""
+
+def checkout_of(paths: list[str]) -> str:
+    """The checkout $paths lie in: the nearest folder holding a `.git`, or the first path's own folder."""
+    start = os.path.realpath(paths[0]) if paths else os.getcwd()
+    folder = start if os.path.isdir(start) else os.path.dirname(start)
+    while os.path.dirname(folder) != folder:
+        if os.path.exists(os.path.join(folder, ".git")):
+            return folder
+        folder = os.path.dirname(folder)
+    return start
+
+
+def cache_folder(paths: list[str]) -> str:
+    """Where mypy keeps what it checked for the checkout of $paths: under the plugin's data, never in the checkout."""
+    base = os.environ.get("JOURNAL_PLUGIN_DATA") or tempfile.gettempdir()
+    return os.path.join(base, "mypy-cache", hashlib.sha256(checkout_of(paths).encode()).hexdigest()[:16])
+
+
+def options(python: str | None, cache: str) -> Options:
+    """How mypy reads a consumer's project: every body checked, imports it cannot find left untyped, and what it
+    checked kept in $cache so a later request compiles only the files it names."""
     chosen = Options()
     chosen.incremental = True
-    chosen.fine_grained_incremental = True
-    chosen.cache_dir = os.devnull
+    chosen.cache_dir = cache
     chosen.preserve_asts = True
     chosen.export_types = True
     chosen.check_untyped_defs = True
@@ -44,41 +63,32 @@ def sources(paths: list[str], chosen: Options) -> list[BuildSource]:
         return []
 
 
-def stamp(path: str) -> tuple[float, int] | None:
-    """What the file was when it was read, and None for a file that is no longer there: a file deleted between
-    mypy's listing of the folder and this read, a worktree removed under the run, is no part of the project this
-    request asks about, and asking the filesystem about it used to end the stream in the middle."""
-    try:
-        status = os.stat(path)
-    except OSError:
-        return None
-    return status.st_mtime, status.st_size
-
-
-def present(found: list[BuildSource]) -> tuple[list[BuildSource], dict[str, tuple[float, int]]]:
-    """The sources whose files are still there, and what each was when it was read. A module with no file of its
-    own is kept as it is; one whose file is gone is left out of both, so nothing asks mypy to build it."""
+def read_afresh(found: list[BuildSource]) -> list[BuildSource]:
+    """The sources with their text in hand, which makes mypy compile each whatever its cache holds, so each has
+    the tree and the types the writer reads. A file deleted between mypy's listing of the folder and this read, a
+    worktree removed under the run, is no part of the project this request asks about and is left out; a module
+    with no file of its own is kept as it is."""
     kept: list[BuildSource] = []
-    stamps: dict[str, tuple[float, int]] = {}
     for source in found:
         if not source.path:
             kept.append(source)
             continue
-        held = stamp(source.path)
-        if held is None:
+        try:
+            with open(source.path, "rb") as file:
+                source.text = decode_python_encoding(file.read())
+        except (OSError, UnicodeDecodeError):
             continue
-        stamps[source.path] = held
         kept.append(source)
-    return kept, stamps
+    return kept
 
 
-def built(found: list[BuildSource], chosen: Options) -> FineGrainedBuildManager | None:
-    """A build of $found held for updates. A module mypy refuses to build at all — one that shadows a
-    standard-library module, like a top-level `logging.py` — is left out and so untyped, rather than taking
-    every other module's types down with it; none when nothing is left to build."""
+def built(found: list[BuildSource], chosen: Options) -> BuildResult | None:
+    """A build of $found. A module mypy refuses to build at all — one that shadows a standard-library module, like
+    a top-level `logging.py` — is left out and so untyped, rather than taking every other module's types down with
+    it; none when nothing is left to build."""
     while found:
         try:
-            return FineGrainedBuildManager(build.build(found, chosen))
+            return build.build(found, chosen)
         except CompileError as refused:
             blamed = {os.path.realpath(message.split(":", 1)[0]) for message in refused.messages if ": error:" in message}
             kept = [source for source in found if not (source.path and os.path.realpath(source.path) in blamed)]
@@ -98,34 +108,15 @@ class CheckedProject:
 
 
 class Session:
-    """One project held checked in memory: built whole on the first request, then updated by the modules
-    whose files changed since the last."""
-
-    def __init__(self) -> None:
-        self.key: tuple[tuple[str, ...], str | None] | None = None
-        self.manager: FineGrainedBuildManager | None = None
-        self.stamps: dict[str, tuple[float, int]] = {}
-
-    def holds(self, key: tuple[tuple[str, ...], str | None], stamps: dict[str, tuple[float, int]]) -> bool:
-        """Whether this session already holds a build of that same project, which is what can be updated rather
-        than built again: the same paths and interpreter, and the same files. A file added or removed changes what
-        the build is OF, and an update can only say that a file it already knows has changed."""
-        return self.manager is not None and key == self.key and stamps.keys() == self.stamps.keys()
+    """The files a request names, compiled afresh, with everything they import read from mypy's cache."""
 
     def checked(self, paths: list[str], python: str | None) -> CheckedProject:
-        chosen = options(python)
-        found, stamps = present(sources(paths, chosen))
-        key = (tuple(sorted(paths)), python)
-        if self.holds(key, stamps):
-            changed = [(s.module, s.path) for s in found if s.path and stamps[s.path] != self.stamps[s.path] and s.module in self.manager.graph]
-            if changed:
-                self.manager.update(changed, [])
-        else:
-            self.manager = built(found, chosen)
-        self.key, self.stamps = key, stamps
-        if self.manager is None:
+        chosen = options(python, cache_folder(paths))
+        found = read_afresh(sources(paths, chosen))
+        result = built(found, chosen)
+        if result is None:
             return CheckedProject(found, {}, {})
-        return CheckedProject(found, self.manager.manager.all_types, self.manager.graph)
+        return CheckedProject(found, result.types, result.graph)
 
 
 def line_starts(text: bytes) -> list[int]:
