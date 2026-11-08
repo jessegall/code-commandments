@@ -20,7 +20,7 @@ func served(t *testing.T) (*story.Story, *story.Agent) {
 func TestAPythonEditIsJudgedWithTheTypesThePythonServiceHolds(t *testing.T) {
 	s, ada := served(t)
 
-	ada.Edits(notFoundAsNone, "orders.py")
+	ada.Edits(typedElseAfterRaise, "orders.py")
 
 	s.Says(ada.Hears("orders.py"), "orders.py")
 }
@@ -28,7 +28,7 @@ func TestAPythonEditIsJudgedWithTheTypesThePythonServiceHolds(t *testing.T) {
 func TestAPHPEditIsJudged(t *testing.T) {
 	s, ada := served(t)
 
-	ada.Edits(phpCoalesced, "Checkout.php")
+	ada.Edits(phpDeepNesting, "Checkout.php")
 
 	s.Says(ada.Hears("Checkout.php"), "Checkout.php")
 }
@@ -93,7 +93,7 @@ func TestAGoPackageIsReadWholeToJudgeOneOfItsFiles(t *testing.T) {
 func TestAWholeRunOverEveryLanguageGroupsFindingsBySkill(t *testing.T) {
 	s, _ := served(t)
 
-	s.Writes(notFoundAsNone, "orders.py")
+	s.Writes(typedElseAfterRaise, "orders.py")
 	s.Writes(goFlow, "refund.go")
 
 	judged := s.AsksIn(s.TestCheckout(), "sins", "--changes")
@@ -104,7 +104,7 @@ func TestAWholeRunOverEveryLanguageGroupsFindingsBySkill(t *testing.T) {
 func TestARuleThatNeedsAPackageFiresOnlyWhereTheProjectHasIt(t *testing.T) {
 	s, ada := served(t)
 
-	ada.Edits(phpCoalesced, "Controller.php")
+	ada.Edits(phpDeepNesting, "Controller.php")
 	ada.StaysUntold("laravel")
 
 	s.Never(s.ReadsTheLanes(), "laravel")
@@ -168,8 +168,8 @@ func TestAProjectRuleThatFollowsAChainOfParentsIsNotAskedAboutOneFile(t *testing
 func TestEveryEngineARuleJudgesIsAskedAboutAnEditedFile(t *testing.T) {
 	s, ada := served(t)
 
-	ada.Edits(phpCoalesced, "A.php")
-	ada.Edits(notFoundAsNone, "b.py")
+	ada.Edits(phpDeepNesting, "A.php")
+	ada.Edits(typedElseAfterRaise, "b.py")
 
 	s.Says(ada.Hears("b.py"), "b.py")
 }
@@ -178,7 +178,7 @@ func TestAMergeRangeWithSinsInTwoLanguagesNamesBoth(t *testing.T) {
 	s, _ := served(t)
 	grace := s.Worker("Grace")
 
-	grace.Edits(notFoundAsNone, "orders.py")
+	grace.Edits(typedElseAfterRaise, "orders.py")
 	grace.Edits(goFlow, "refund.go")
 	grace.HandsIn()
 	s.Merges(grace)

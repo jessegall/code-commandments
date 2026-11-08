@@ -5,6 +5,8 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/jessegall/code-commandments/cli/workspace"
 )
 
 func forgetBookkeeping(t *testing.T) {
@@ -19,6 +21,29 @@ func forgetBookkeeping(t *testing.T) {
 		bookkeeping.decided, bookkeeping.folder, bookkeeping.instead = false, "", ""
 		bookkeeping.Unlock()
 	})
+}
+
+func TestACommandRunOutsideThePluginReadsTheBookkeepingOfTheJournal(t *testing.T) {
+	forgetBookkeeping(t)
+
+	root, err := filepath.EvalSymlinks(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	manifest := filepath.Join(root, ".journal", "plugins", workspace.JournalPlugin, ".journal-plugin", "plugin.json")
+	if err := os.MkdirAll(filepath.Dir(manifest), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(manifest, []byte("{}\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	t.Setenv(pluginData, "")
+
+	if folder, want := bookkeepingIn(root), filepath.Join(root, ".journal", "plugin-data", workspace.JournalPlugin); folder != want {
+		t.Errorf("a command with no plugin folder looks in %s, and the journal's judgings are recorded in %s", folder, want)
+	}
 }
 
 func TestTheBookkeepingGoesWhereTheJournalSaidWhenItCanBeWritten(t *testing.T) {

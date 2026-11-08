@@ -31,7 +31,11 @@ func bookkeepingIn(root string) string {
 	}
 
 	given := bookkeeping.folder
-	bookkeeping.folder = workspace.At(workspace.ProjectRoot(root), "").SessionDir()
+	space := workspace.At(workspace.ProjectRoot(root), "")
+	bookkeeping.folder = space.SessionDir()
+	if space.IsJournalDriven() {
+		bookkeeping.folder = space.StateDir()
+	}
 	bookkeeping.instead = given
 
 	return bookkeeping.folder

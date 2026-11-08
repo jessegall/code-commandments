@@ -190,13 +190,13 @@ func TestAChangeTheSizeOfAMergeIsTakenIntoTheTreeInsteadOfGivenUp(t *testing.T) 
 	s.CostIs(ledger.TreeReadsStarted, 0)
 }
 
-func TestPastAQuarterOfTheTreeAJudgeIsDeclinedAndAnsweredSmaller(t *testing.T) {
+func TestPastAQuarterOfTheTreeAJudgeIsDeclinedAndRefusesAColdRead(t *testing.T) {
 	s := held(t)
 
 	s.WritesMany(story.Clean, 1200)
 	judged := s.AsksIn(s.TestCheckout(), "sins", "--changes")
 
-	s.Says(judged, "rules that answer from one file alone")
+	s.Says(judged, "refuses to read the whole tree itself")
 	s.CostAtLeast(ledger.JudgingsDeclined, 1)
 }
 

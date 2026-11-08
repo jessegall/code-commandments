@@ -5,7 +5,7 @@ package languages
 import "github.com/jessegall/code-commandments/story"
 
 var (
-	notFoundAsNone = story.Python("a function that returns none for not found typed as optional", `from typing import Optional
+	typedElseAfterRaise = story.Python("a typed lookup with an else after a raise", `from typing import Optional
 
 
 class Order:
@@ -13,18 +13,27 @@ class Order:
 
 
 def find(orders: dict, number: int) -> Optional[Order]:
-    if number in orders:
+    if number not in orders:
+        raise KeyError(number)
+    else:
         return orders[number]
-    return None
 `)
 
-	phpCoalesced = story.PHP("a nullable return with a coalesced default at the call site", `<?php
+	phpDeepNesting = story.PHP("an if nested two ifs deep", `<?php
 
 final class Checkout
 {
-    public function total(Orders $orders, int $id): int
+    public function total(array $orders, int $id): int
     {
-        return $orders->find($id)?->total() ?? 0;
+        if ($id > 0) {
+            if (isset($orders[$id])) {
+                if ($orders[$id] > 0) {
+                    return $orders[$id];
+                }
+            }
+        }
+
+        return 0;
     }
 }
 `)

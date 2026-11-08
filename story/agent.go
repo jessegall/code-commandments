@@ -30,6 +30,7 @@ type Agent struct {
 	pid     string
 	role    string
 	edited  bool
+	told    string
 }
 
 func (s *Story) Agent(name string) *Agent {
@@ -291,6 +292,10 @@ func (a *Agent) Hears(text string) Ran {
 		return Ran{}
 	}
 
+	if strings.Contains(a.told, text) {
+		return Ran{Out: a.told}
+	}
+
 	var last Ran
 
 	for until := time.Now().Add(hearsWithin); time.Now().Before(until); time.Sleep(betweenMoments) {
@@ -338,6 +343,8 @@ func (a *Agent) sends(event string, fields map[string]any) Ran {
 	if err != nil {
 		a.s.Fails(err.Error())
 	}
+
+	a.told += ran.Text()
 
 	return ran
 }

@@ -63,6 +63,17 @@ class RelayTest(unittest.TestCase):
         said = self.ask({"kind": "hook", "stdin": "{}", "actor": "41", "role": "worker"})["out"]
         self.assertIn("text: the sin for worker:41, asked as agent-line show 7", said)
 
+    def test_every_line_a_hook_names_at_once_is_read(self) -> None:
+        self.scratch()
+        bin = os.path.join(self.project, ".journal", "bin")
+        with open(os.path.join(bin, "journal-hook"), "w") as program:
+            program.write("#!/bin/sh\necho '{\"additionalContext\":\"agent-lines 7, 8\"}'\n")
+        with open(os.path.join(bin, "journal"), "w") as program:
+            program.write("#!/bin/sh\necho \"text: asked as $*\"\n")
+        said = self.ask({"kind": "hook", "stdin": "{}", "actor": "41", "role": "worker"})["out"]
+        self.assertIn("text: asked as agent-line show 7", said)
+        self.assertIn("text: asked as agent-line show 8", said)
+
     def test_a_hook_reaches_the_journals_hook_entry_with_its_body(self) -> None:
         ran = self.ask({"kind": "hook", "stdin": '{"hook_event_name": "Stop"}'})
         self.assertEqual(ran["out"], f'hook claude {self.project}\n{{"hook_event_name": "Stop"}}')
@@ -193,12 +204,14 @@ class RelayTest(unittest.TestCase):
         for line in (["init", "-q"], ["-c", "user.email=t@t", "-c", "user.name=t", "commit", "-q", "--allow-empty", "-m", "one"]):
             subprocess.run(["git", "-C", checkout, *line], check=True, capture_output=True)
         folder = os.path.join(self.project, ".journal", "worktrees", "story-engine-ada")
-        state = self.relay.scan_state_of(folder)
-        os.makedirs(state)
-        with open(os.path.join(state, "lock"), "w"):
-            pass
+        state, worklist = self.relay.scan_state_of(folder), self.relay.worklist_of(folder)
+        for kept in (state, worklist):
+            os.makedirs(kept)
+            with open(os.path.join(kept, "lock"), "w"):
+                pass
         self.assertEqual(self.ask({"kind": "worktree", "action": "cut", "name": "story-engine-ada"})["code"], 0)
         self.assertFalse(os.path.exists(state))
+        self.assertFalse(os.path.exists(worklist))
 
     def test_a_look_runs_the_journals_file_scan_under_no_agents_session(self) -> None:
         checkout = self.scratch()

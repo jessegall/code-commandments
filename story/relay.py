@@ -38,7 +38,7 @@ BRANCH_PREFIX = "story-engine/story-"
 STORY_ENVIRONMENT = "story-engine"
 NO_AGENT = "story-engine-no-agent"
 LAUNCH_VARIABLES = ("HOME", "PATH", "USER", "LOGNAME", "SHELL", "LANG", "LC_ALL", "TMPDIR", "TERM")
-AGENT_LINE = re.compile(r"agent-line:(\d+)")
+AGENT_LINES = re.compile(r"agent-lines?[: ]\s*(\d+(?:(?:,\s*|\s+and\s+)\d+)*)")
 
 
 class Refused(Exception):
@@ -105,7 +105,7 @@ class Relay(socketserver.ThreadingTCPServer):
         shows the line itself; so the relay reads each named line as that agent, from the test checkout, whose folder
         is the one the journal knows as the test environment's, and hands its text back with it."""
         read = ""
-        for number in AGENT_LINE.findall(answered):
+        for number in re.findall(r"\d+", ",".join(AGENT_LINES.findall(answered))):
             shown = subprocess.run([self.journal, "agent-line", "show", number], capture_output=True, text=True,
                                    cwd=os.path.join(self.project, TEST_CHECKOUT), timeout=STEP_SECONDS, env=environment)
             read += shown.stdout + shown.stderr
@@ -179,6 +179,7 @@ class Relay(socketserver.ThreadingTCPServer):
             return {"code": done.returncode, "out": done.stdout, "err": done.stderr}
         if asked["action"] == "cut":
             shutil.rmtree(self.scan_state_of(folder), ignore_errors=True)
+            shutil.rmtree(self.worklist_of(folder), ignore_errors=True)
             subprocess.run(["git", "-C", checkout, "worktree", "remove", "--force", folder], capture_output=True, text=True)
             shutil.rmtree(folder, ignore_errors=True)
             subprocess.run(["git", "-C", checkout, "worktree", "prune"], capture_output=True, text=True)
@@ -207,6 +208,12 @@ class Relay(socketserver.ThreadingTCPServer):
         """What the journal's file scan kept of a checkout at this folder: a story's worktree is new each time, so
         what a stopped run left here would hide its first edits."""
         return os.path.join(self.project, ".journal", "runtime", "file-scan", hashlib.sha256(folder.encode()).hexdigest()[:16])
+
+    def worklist_of(self, folder: str) -> str:
+        """The worklist the plugin keeps for a checkout at this folder: a story's worktree is new each time, so what
+        a story before it left open here is not this one's."""
+        key = hashlib.sha1(f"checkout:{folder}".encode()).hexdigest()[:5]
+        return os.path.join(self.project, ".journal", "plugin-data", "code-commandments", "sessions", key, "sins")
 
     def checkout_step(self, asked: dict) -> dict:
         """Move the test checkout off its branch, onto another branch or a detached head, and back to where it was."""

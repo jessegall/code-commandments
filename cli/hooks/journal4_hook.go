@@ -331,7 +331,7 @@ func (a JournalAnswer) Line4() string {
 func (a JournalAnswer) Shape4() map[string]any {
 	answer := map[string]any{"v": protocol4}
 	switch {
-	case a.Refuse != nil && a.Whisper != nil:
+	case a.Refuse != nil && a.Whisper != nil && *a.Refuse != *a.Whisper:
 		answer["answer"], answer["reason"] = "refuse", *a.Refuse+"\n\n"+*a.Whisper
 	case a.Refuse != nil:
 		answer["answer"], answer["reason"] = "refuse", *a.Refuse

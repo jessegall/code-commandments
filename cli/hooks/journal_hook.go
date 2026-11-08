@@ -517,6 +517,8 @@ func (s JournalServe) Run(in *cli.Input, console cli.Console) (int, error) {
 
 	Serves()
 
+	go WarmsWhatItServes(root)
+
 	if judging, listening := Judging(root); listening {
 		defer judging.Close()
 

@@ -62,7 +62,7 @@ func told(answer JournalAnswer) JournalAnswer {
 	}
 
 	words := *answer.Refuse
-	if answer.Whisper != nil {
+	if answer.Whisper != nil && *answer.Whisper != words {
 		words += "\n\n" + *answer.Whisper
 	}
 
