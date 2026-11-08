@@ -147,6 +147,32 @@ func DeclaredRoots(root string) ([]string, error) {
 	return Absolute(root, detected), err
 }
 
+func (c Config) WalkedRoots(root string) ([]string, error) {
+	roots, err := DeclaredRoots(root)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, folder := range c.JudgedDespiteExclusion() {
+		full := strings.TrimRight(root, "/") + "/" + folder
+		if !slices.ContainsFunc(roots, func(declared string) bool { return isWithin(full, declared) }) {
+			roots = append(roots, full)
+		}
+	}
+
+	return roots, nil
+}
+
+func (c Config) Exclusions(root string) source.Excluded {
+	return source.Under(root, c.Excluded).Judging(c.JudgedDespiteExclusion())
+}
+
+func isWithin(folder, root string) bool {
+	root = strings.TrimRight(root, "/")
+
+	return folder == root || strings.HasPrefix(folder, root+"/")
+}
+
 func isDir(path string) bool {
 	info, err := os.Stat(path)
 

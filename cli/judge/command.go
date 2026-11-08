@@ -246,7 +246,7 @@ func (c Command) judge(options options, selected []detectors.Detector, judged co
 	progress.Status("parsing")
 	parsing := time.Now()
 
-	sources := scan.Walk(roots, source.Under(options.path, judged.Excluded).Judging(judged.JudgedDespiteExclusion())).Only(languages...)
+	sources := scan.Walk(roots, judged.Exclusions(options.path)).Only(languages...)
 
 	if len(targets.Files()) > 0 {
 		if across := readAcrossFiles(selected); len(across) > 0 {
@@ -679,25 +679,7 @@ func sourceRoots(options options, judged config.Config) ([]string, error) {
 		return []string{strings.TrimRight(options.path, "/")}, nil
 	}
 
-	roots, err := config.DeclaredRoots(options.path)
-	if err != nil {
-		return nil, err
-	}
-
-	for _, folder := range judged.JudgedDespiteExclusion() {
-		full := strings.TrimRight(options.path, "/") + "/" + folder
-		if !slices.ContainsFunc(roots, func(root string) bool { return under(full, root) }) {
-			roots = append(roots, full)
-		}
-	}
-
-	return roots, nil
-}
-
-func under(folder, root string) bool {
-	root = strings.TrimRight(root, "/")
-
-	return folder == root || strings.HasPrefix(folder, root+"/")
+	return judged.WalkedRoots(options.path)
 }
 
 func judgedPaths(targets scope.Scope, sources scan.Sources) map[string]bool {

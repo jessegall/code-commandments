@@ -6,7 +6,6 @@ import (
 	"github.com/jessegall/code-commandments/cli/config"
 	"github.com/jessegall/code-commandments/cli/natural"
 	"github.com/jessegall/code-commandments/cli/scan"
-	"github.com/jessegall/code-commandments/cli/source"
 )
 
 func warm(held Bridge, project string, bridged bridge.Asker, console cli.Console) {
@@ -30,10 +29,10 @@ func filesOf(held Bridge, project string) []string {
 		return nil
 	}
 
-	roots, err := config.DeclaredRoots(project)
+	roots, err := settings.WalkedRoots(project)
 	if err != nil {
 		return nil
 	}
 
-	return scan.Walk(roots, source.Under(project, settings.Excluded)).Files(held.Languages...)
+	return scan.Walk(roots, settings.Exclusions(project)).Files(held.Languages...)
 }

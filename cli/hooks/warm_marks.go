@@ -496,7 +496,7 @@ func Warming(root string, project config.Config) {
 	go func() {
 		defer reading.Delete(named.key())
 
-		roots, err := config.DeclaredRoots(named.project)
+		roots, err := project.WalkedRoots(named.project)
 		if err != nil || len(roots) == 0 {
 			roots = []string{named.project}
 		}
@@ -505,7 +505,7 @@ func Warming(root string, project config.Config) {
 		costs := ledger.Of(named.project)
 		costs.Counts(ledger.TreeReadsStarted, 1, named.project)
 
-		sources := scan.Walk(roots, source.Under(named.project, project.Excluded)).Only(reads(named.project, project)...).
+		sources := scan.Walk(roots, project.Exclusions(named.project)).Only(reads(named.project, project)...).
 			Reporting(progress.reached)
 
 		taken := warm.Taken(sources.Files(source.Languages...))
