@@ -7,8 +7,11 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 	"strings"
+	"syscall"
 	"testing"
+	"time"
 )
 
 const limit = 3 << 30
@@ -42,6 +45,49 @@ func TestARunPastTheCapIsKilledByTheMachine(t *testing.T) {
 	if exit.ExitCode() != killed {
 		t.Fatalf("a run past the cap ended with %v, not the kernel's SIGKILL\n%s", err, out)
 	}
+}
+
+func TestAStoppedRunLeavesNoContainerWorking(t *testing.T) {
+	if err := exec.Command("docker", "info").Run(); err != nil {
+		t.Skip("docker is not reachable: scripts/dev cannot start a container")
+	}
+
+	marker := strconv.Itoa(100000 + os.Getpid())
+	client := exec.Command(filepath.Join("..", "..", "scripts", "dev"), "sleep", marker)
+	if err := client.Start(); err != nil {
+		t.Fatal(err)
+	}
+
+	if !eventually(60*time.Second, func() bool { return containerRuns(marker) }) {
+		_ = client.Process.Kill()
+		t.Fatal("the run's container never started")
+	}
+
+	if err := client.Process.Signal(syscall.SIGTERM); err != nil {
+		t.Fatal(err)
+	}
+
+	_ = client.Wait()
+
+	if !eventually(30*time.Second, func() bool { return !containerRuns(marker) }) {
+		t.Fatalf("the container of a stopped run is still working on sleep %s", marker)
+	}
+}
+
+func containerRuns(marker string) bool {
+	out, err := exec.Command("docker", "ps", "--no-trunc", "--filter", "label=code-commandments.dev=run", "--format", "{{.Command}}").Output()
+
+	return err == nil && strings.Contains(string(out), marker)
+}
+
+func eventually(within time.Duration, holds func() bool) bool {
+	for until := time.Now().Add(within); time.Now().Before(until); time.Sleep(500 * time.Millisecond) {
+		if holds() {
+			return true
+		}
+	}
+
+	return false
 }
 
 func hog() {

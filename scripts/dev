@@ -66,7 +66,18 @@ esac
 # A temp folder the host sees at the same path: a test hands its temp files to the Roslyn bridge, whose
 # container the host's docker mounts them into.
 scratch=$(cd "$(mktemp -d "${TMPDIR:-/tmp}/commandments-dev.XXXXXX")" && pwd -P)
-trap 'rm -rf "$scratch"' EXIT
+running=""
+
+# A stopped client leaves its container working, so whatever ends this script removes the container it started.
+leave() {
+    [ -z "$running" ] || docker rm -f "$running" > /dev/null 2>&1 || true
+    rm -rf "$scratch"
+}
+
+trap leave EXIT
+trap 'exit 129' HUP
+trap 'exit 130' INT
+trap 'exit 143' TERM
 mounts+=(-v "$scratch:$scratch")
 
 # The host's zone file, so a time a test sets and prints reads as it does on the host, even where a test
@@ -79,19 +90,34 @@ run() {
     local terminal=-i
     [ -t 0 ] && [ -t 1 ] && terminal=-it
 
-    docker run --rm "$terminal" --init \
-        --memory="$memory" --memory-swap="$memory" --cpus="$cpus" \
-        --label code-commandments.dev=run \
-        "${mounts[@]}" \
-        -v code-commandments-gomod:/root/go/pkg/mod \
-        -v code-commandments-gobuild:/root/go/build \
-        -v "code-commandments-cache-$tag:/root/.cache" \
-        -e GOCACHE=/root/go/build \
-        -e GOMEMLIMIT=1200MiB -e GOMAXPROCS=2 -e GOFLAGS="-p=2 -parallel=2" \
-        -e TMPDIR="$scratch" \
-        -e COMMANDMENTS_ROSLYN=docker \
-        -w "$cwd" \
-        "$image" "$@"
+    running="commandments-dev-$$-$RANDOM"
+
+    local started=(docker run --rm "$terminal" --init --name "$running"
+        --memory="$memory" --memory-swap="$memory" --cpus="$cpus"
+        --label code-commandments.dev=run
+        "${mounts[@]}"
+        -v code-commandments-gomod:/root/go/pkg/mod
+        -v code-commandments-gobuild:/root/go/build
+        -v "code-commandments-cache-$tag:/root/.cache"
+        -e GOCACHE=/root/go/build
+        -e GOMEMLIMIT=1200MiB -e GOMAXPROCS=2 -e GOFLAGS="-p=2 -parallel=2"
+        -e TMPDIR="$scratch"
+        -e COMMANDMENTS_ROSLYN=docker
+        -w "$cwd"
+        "$image" "$@")
+
+    # A shell runs its traps only between commands, so a run with no terminal is waited for, where a signal lands at once.
+    local status=0
+    if [ "$terminal" = -it ]; then
+        "${started[@]}" || status=$?
+    else
+        "${started[@]}" <&0 &
+        wait "$!" || status=$?
+    fi
+
+    running=""
+
+    return "$status"
 }
 
 # Go's build and module caches only grow, an entry for every build of every checkout and clone; once a day each is
