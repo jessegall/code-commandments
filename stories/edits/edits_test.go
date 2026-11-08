@@ -61,7 +61,7 @@ func TestASinFixedByAShellCommandIsSettledAtTheNextShellMoment(t *testing.T) {
 func TestARuleThatReadsAcrossFilesIsAnsweredFromTheWholeTree(t *testing.T) {
 	s, ada := editing(t)
 
-	s.Writes(story.SettleOriginal, "payments.py")
+	ada.Edits(story.SettleOriginal, "payments.py")
 	ada.Edits(story.SettleCopy, "refunds.py")
 
 	told := ada.Hears("duplicate-python-function")
