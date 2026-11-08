@@ -10,6 +10,32 @@ import (
 	"github.com/jessegall/code-commandments/cli/workspace"
 )
 
+func TestEveryFileOfABatchedEditIsCounted(t *testing.T) {
+	root, err := filepath.EvalSymlinks(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	first, second := filepath.Join(root, "a.py"), filepath.Join(root, "b.py")
+	for _, file := range []string{first, second} {
+		if err := os.WriteFile(file, nil, 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	event := NewEvent(map[string]any{
+		"hook_event_name": "PostToolUse", "tool_name": "Write", "session_id": "s1",
+		"tool_input": map[string]any{"file_path": first},
+		batchedKey:   []any{first, second},
+	}, root)
+
+	JudgeReminder{}.Handle(event)
+
+	if counted := len(AuthoredIn(event.Workspace()).Among(map[string]bool{first: true, second: true})); counted != 2 {
+		t.Errorf("a batch of 2 files was edited and %d are counted", counted)
+	}
+}
+
 func TestEditsJudgedAtTheSameMomentAreAllCounted(t *testing.T) {
 	root, err := filepath.EvalSymlinks(t.TempDir())
 	if err != nil {

@@ -196,6 +196,18 @@ func (e Event) FilePath() string {
 	return e.input("file_path")
 }
 
+func (e Event) WrittenFiles() []string {
+	if batch := batchedIn(e.payload); len(batch) > 0 {
+		return batch
+	}
+
+	if file := e.FilePath(); file != "" {
+		return []string{file}
+	}
+
+	return nil
+}
+
 func (e Event) ChangedLines(file string) git.ChangedLines {
 	if lines, batched := batchedLinesOf(e.payload, file); batched {
 		return lines

@@ -9,7 +9,7 @@ func TestAStopIsAnsweredInTheCheckoutTheLineNames(t *testing.T) {
 	moment, known := Moment4Of(map[string]any{
 		"v": 5, "event": "idle", "agent": 1,
 		"checkout": map[string]any{"root": "/project/worktree", "project_root": "/project", "base_commit": "aaaaaaa", "exists": true},
-		"data":     map[string]any{"cwd": "/project"},
+		"data":     map[string]any{"cwd": "/project/worktree"},
 	})
 
 	if !known {
@@ -24,6 +24,25 @@ func TestAStopIsAnsweredInTheCheckoutTheLineNames(t *testing.T) {
 
 	if held.Cut != "aaaaaaa" {
 		t.Errorf("the commit the checkout was cut from reads as %q", held.Cut)
+	}
+}
+
+func TestARelativeFileIsJoinedOnTheFolderTheAgentWorksIn(t *testing.T) {
+	worktree := t.TempDir()
+	wroteInto(t, filepath.Join(worktree, "a.py"), olderSin)
+
+	moment, known := Moment4Of(map[string]any{
+		"v": 5, "event": "file_edited", "agent": 1,
+		"checkout": map[string]any{"root": t.TempDir(), "project_root": "/project", "exists": true},
+		"data":     map[string]any{"cwd": worktree, "kind": "edit", "path": "a.py"},
+	})
+
+	if !known {
+		t.Fatal("the line is not a moment at all")
+	}
+
+	if held := MomentOf(Stamped(moment)); held.File == nil || *held.File != filepath.Join(worktree, "a.py") {
+		t.Errorf("the file was not found in the folder the agent works in, %s", worktree)
 	}
 }
 

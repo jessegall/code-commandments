@@ -54,8 +54,10 @@ func (JudgeReminder) Handle(event Event) Response {
 
 		if event.IsTool("Bash") {
 			authored.After(git.Root(event.Root))
-		} else if event.FilePath() != "" {
-			authored.Wrote(event.Root, event.FilePath())
+		}
+
+		for _, file := range event.WrittenFiles() {
+			authored.Wrote(event.Root, file)
 		}
 
 		return Silent()

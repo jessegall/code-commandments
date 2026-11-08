@@ -145,7 +145,7 @@ func TestInAWorktreeTheNudgeNamesTheCommandForThatWorktree(t *testing.T) {
 
 	grace.Stops()
 
-	s.Says(grace.Hears("judged files since the last commit"), grace.Folder())
+	s.Says(grace.Hears("judged file since the last commit"), grace.Folder())
 }
 
 func TestASubagentsStopIsSilentAboutJudging(t *testing.T) {
