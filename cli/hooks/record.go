@@ -27,6 +27,7 @@ type Judged struct {
 	Memory    Memory
 	Abandoned string
 	Said      string
+	Files     []string
 }
 
 func (j Judged) Line() string {
@@ -45,6 +46,10 @@ func (j Judged) Line() string {
 		fmt.Sprintf("parsed=%d in %dms", j.Parsed, j.ReadMs),
 		fmt.Sprintf("rules=%d of %d in %dms", j.Asked, j.Asked+j.NotAsked, j.RuleMs),
 		fmt.Sprintf("sins=%d", j.Sins),
+	}
+
+	if len(j.Files) > 0 {
+		said = append(said, "files="+strings.Join(j.Files, " "))
 	}
 
 	if j.Dropped != (Dropped{}) {

@@ -10,12 +10,14 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/jessegall/code-commandments/bridge"
 	"github.com/jessegall/code-commandments/cli/config"
 	"github.com/jessegall/code-commandments/cli/git"
 	"github.com/jessegall/code-commandments/cli/ledger"
 	"github.com/jessegall/code-commandments/cli/scan"
 	"github.com/jessegall/code-commandments/cli/source"
 	"github.com/jessegall/code-commandments/cli/warm"
+	"github.com/jessegall/code-commandments/cli/workspace"
 	"github.com/jessegall/code-commandments/contract"
 	"github.com/jessegall/code-commandments/detectors"
 	"github.com/jessegall/code-commandments/engine"
@@ -505,12 +507,21 @@ func Warming(root string, project config.Config) {
 
 		began := time.Now()
 		costs := ledger.Of(named.project)
-		costs.Counts(ledger.TreeReadsStarted, 1, named.project)
+		folder := savedTreeFolder(named)
 
 		sources := scan.Walk(roots, project.Exclusions(named.project)).Only(reads(named.project, project)...).
 			Reporting(progress.reached)
 
-		taken := warm.Taken(sources.Files(source.Languages...))
+		files := sources.Files(source.Languages...)
+
+		saved, refused := warm.LoadSaved(folder, bridge.Release, roots)
+		if refused == nil && broughtBackFromDisk(named, roots, files, saved, folder, began) {
+			return
+		}
+
+		costs.Counts(ledger.TreeReadsStarted, 1, named.project)
+
+		taken := warm.Taken(files)
 
 		codebase, err := sources.Load()
 		if err != nil || codebase == nil {
@@ -523,11 +534,66 @@ func Warming(root string, project config.Config) {
 
 		costs.Counts(ledger.TreeReadsFinished, 1, named.project)
 		costs.Counts(ledger.FilesReadIntoTrees, len(codebase.Files()), named.project)
-		lastRead.Store(named.key(), fmt.Sprintf("it was last read in %v, %d files, at %s",
-			time.Since(began).Round(time.Second), len(codebase.Files()), time.Now().Format("15:04:05")))
+		lastRead.Store(named.key(), fmt.Sprintf("it was last read in %v, %d files, at %s (the saved tree was not used: %v)",
+			time.Since(began).Round(time.Second), len(codebase.Files()), time.Now().Format("15:04:05"), refused))
 
-		kept.Hold(named.project, named.branch, roots, codebase, taken)
+		_ = kept.Hold(named.project, named.branch, roots, codebase, taken).Save(folder, bridge.Release)
 	}()
+}
+
+func broughtBackFromDisk(named branchRoot, roots, files []string, saved warm.Saved, folder string, began time.Time) bool {
+	codebase := engine.Load(saved.Streams...)
+	codebase.Scanned(roots...)
+	codebase.Rooted(named.project)
+
+	moved := movedSince(saved.Marks, files)
+	if len(moved) > readsInOneGo(len(codebase.Files())) {
+		return false
+	}
+
+	base := kept.Hold(named.project, named.branch, roots, codebase, saved.Marks)
+
+	if len(moved) > 0 {
+		patched, _ := taken(base, named, moved)
+		if patched == nil {
+			kept.Drop(named.project, named.branch)
+
+			return false
+		}
+
+		_ = patched.Save(folder, bridge.Release)
+	}
+
+	ledger.Of(named.project).Counts(ledger.TreesLoadedFromDisk, 1, named.project)
+	lastRead.Store(named.key(), fmt.Sprintf("it was loaded from disk in %v, %d files, %d of them caught up, at %s",
+		time.Since(began).Round(time.Millisecond), len(codebase.Files()), len(moved), time.Now().Format("15:04:05")))
+
+	return true
+}
+
+func movedSince(marks map[string]warm.Known, files []string) []string {
+	var moved []string
+	here := make(map[string]bool, len(files))
+
+	for _, file := range files {
+		here[file] = true
+
+		if known, held := marks[file]; !held || !known.Stands(file) {
+			moved = append(moved, file)
+		}
+	}
+
+	for file := range marks {
+		if !here[file] {
+			moved = append(moved, file)
+		}
+	}
+
+	return moved
+}
+
+func savedTreeFolder(named branchRoot) string {
+	return filepath.Join(workspace.At(named.project, "").StateDir(), "saved-trees", workspace.KeyFor(named.key()))
 }
 
 func reads(root string, project config.Config) []source.Language {

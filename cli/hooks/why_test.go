@@ -60,6 +60,22 @@ func TestWhyAboutAFileNobodyJudgedSaysThatItIsNotClean(t *testing.T) {
 	}
 }
 
+func TestWhyFindsAFileByTheNameItsJudgingRecorded(t *testing.T) {
+	forgetBookkeeping(t)
+
+	folder := t.TempDir()
+	t.Setenv(pluginData, folder)
+
+	Record(folder, Judged{At: time.Now(), Event: "PostToolUse", Checkout: "/project", Kind: "project", Branch: "main", Held: true, Files: []string{"src/order.py"}})
+
+	said := &strings.Builder{}
+	(Why{}).Run(cli.InputOf("why", "order.py"), cli.Console{Out: said, Err: said})
+
+	if !strings.Contains(said.String(), "tree=held") {
+		t.Errorf("the judging of order.py was not found:\n%s", said)
+	}
+}
+
 func TestWhyWithNoRecordSaysWhereItLooked(t *testing.T) {
 	forgetBookkeeping(t)
 

@@ -15,6 +15,7 @@ var legend = &state.Legend{
 		{Name: TreeReadsStarted, Meaning: "how many times the service began reading a whole tree"},
 		{Name: TreeReadsFinished, Meaning: "how many of those reads finished and were kept"},
 		{Name: TreeReadsFailed, Meaning: "how many of those reads failed"},
+		{Name: TreesLoadedFromDisk, Meaning: "how many times a tree saved by this same binary was loaded instead of read"},
 		{Name: FilesReadIntoTrees, Meaning: "the files all finished reads parsed between them"},
 		{Name: JudgingsFromTheTree, Meaning: "judgings the service answered from a tree it held"},
 		{Name: JudgingsToldTheTreeIsComing, Meaning: "judgings told to ask again because a read of the tree was running"},
@@ -29,6 +30,7 @@ const (
 	TreeReadsStarted            = "tree_reads_started"
 	TreeReadsFinished           = "tree_reads_finished"
 	TreeReadsFailed             = "tree_reads_failed"
+	TreesLoadedFromDisk         = "trees_loaded_from_disk"
 	FilesReadIntoTrees          = "files_read_into_trees"
 	JudgingsFromTheTree         = "judgings_from_the_tree"
 	JudgingsToldTheTreeIsComing = "judgings_told_the_tree_is_coming"

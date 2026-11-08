@@ -42,6 +42,32 @@ func (n *Node) carries(fact string) bool {
 	return false
 }
 
+func (n *Node) forgets(facts []string) {
+	if !slices.ContainsFunc(facts, n.carries) {
+		return
+	}
+
+	own := *n.Facts
+	n.Facts = &own
+
+	for _, fact := range facts {
+		switch fact {
+		case "resolved":
+			n.Resolved = nil
+		case "target":
+			n.Target = nil
+		case "resolves":
+			n.Resolves = ""
+		case "constant":
+			n.Constant = false
+		case "inherited":
+			n.Inherited = false
+		case "refers":
+			n.Refers = ""
+		}
+	}
+}
+
 func (r Ref) isResolved() bool {
 	return r.Symbol != "" || r.Owner != "" || r.OwnedHere != nil || r.Blind
 }

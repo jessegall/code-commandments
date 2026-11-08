@@ -40,7 +40,13 @@ func (s *Story) WritesIn(checkout string, sample Sample, file string) string {
 
 	s.steps = append(s.steps, StepOf("writes "+shapeOf(sample.Label)+" as %s", s.own(file)))
 
-	return s.writesQuietly(checkout, sample, file)
+	path := s.writesQuietly(checkout, sample, file)
+
+	if ran, err := s.journal.LooksAt(checkout); !s.rehearsal && (err != nil || ran.Code != 0) {
+		s.Fails("the journal could not look at " + checkout + ": " + failure(ran, err))
+	}
+
+	return path
 }
 
 func (s *Story) writesQuietly(checkout string, sample Sample, file string) string {
