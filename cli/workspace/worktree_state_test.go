@@ -41,4 +41,12 @@ func TestAWorktreeOfAJournalProjectKeepsItsStateInTheProjectsPluginData(t *testi
 	if want := filepath.Join(project, ".journal", "plugin-data", JournalPlugin); space.StateDir() != want {
 		t.Errorf("the worktree keeps its state in %s, not the project's plugin data %s", space.StateDir(), want)
 	}
+
+	if At(worktree, "agent-7").Checklist() != At(worktree, "a-claude-session").Checklist() {
+		t.Error("the agent's stop and its judge look for the worktree's worklist in different places")
+	}
+
+	if At(worktree, "s").Checklist() == At(project, "s").Checklist() {
+		t.Error("a worktree and its project share one worklist")
+	}
 }

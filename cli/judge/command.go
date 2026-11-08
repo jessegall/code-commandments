@@ -17,6 +17,7 @@ import (
 	"github.com/jessegall/code-commandments/cli/config"
 	"github.com/jessegall/code-commandments/cli/custom"
 	"github.com/jessegall/code-commandments/cli/dashboard"
+	"github.com/jessegall/code-commandments/cli/git"
 	"github.com/jessegall/code-commandments/cli/help"
 	"github.com/jessegall/code-commandments/cli/natural"
 	"github.com/jessegall/code-commandments/cli/reported"
@@ -121,7 +122,8 @@ func (c Command) Run(in *cli.Input, console cli.Console) (int, error) {
 	}
 
 	space := workspace.At(workspace.ProjectRoot(cwd), "")
-	options := optionsOf(in, space)
+	worklist := worklistSpace(space, cwd)
+	options := optionsOf(in, worklist)
 
 	options.path = within(cwd, options.path)
 
@@ -215,7 +217,7 @@ func (c Command) Run(in *cli.Input, console cli.Console) (int, error) {
 
 	judged = judged.Judging(selected)
 
-	targets, err := scope.FromArgs(in.Raw(), options.path, space, judged.Excluded)
+	targets, err := scope.FromArgs(in.Raw(), options.path, worklist, judged.Excluded)
 
 	if cli.Timed() {
 		fmt.Fprintf(console.Err, "· the scope was built over %s, leaving out %v\n", options.path, judged.Excluded)
@@ -883,6 +885,15 @@ func within(folder, path string) string {
 	}
 
 	return filepath.Clean(filepath.Join(folder, path))
+}
+
+func worklistSpace(space workspace.Workspace, cwd string) workspace.Workspace {
+	checkout := git.Root(cwd)
+	if checkout == "" || !space.IsJournalDriven() {
+		return space
+	}
+
+	return workspace.At(checkout, "")
 }
 
 func optionsOf(in *cli.Input, space workspace.Workspace) options {

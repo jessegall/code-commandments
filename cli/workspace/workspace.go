@@ -256,7 +256,15 @@ func (w Workspace) AgentPath(agent, file string) string {
 }
 
 func (w Workspace) ChecklistDir() string {
-	return w.Path(Sins)
+	return w.ofTheWorklist().Path(Sins)
+}
+
+func (w Workspace) ofTheWorklist() Workspace {
+	if !w.IsJournalDriven() {
+		return w
+	}
+
+	return At(w.root, "checkout:"+w.root)
 }
 
 func (w Workspace) Checklist() string {
@@ -268,7 +276,7 @@ func (w Workspace) ChecklistArchive(stamp string) string {
 }
 
 func (w Workspace) ChecklistRelative() string {
-	return w.Relative(Sins + "/sins.md")
+	return w.ofTheWorklist().Relative(Sins + "/sins.md")
 }
 
 func (w Workspace) Shared(file string) string {
