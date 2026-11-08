@@ -147,7 +147,8 @@ func (c Command) Run(in *cli.Input, console cli.Console) (int, error) {
 		if journal, near := aJournalNear(cwd, space); near && !in.HasFlag(allowColdRead) {
 			fmt.Fprintln(console.Err, "· this run refuses to read the whole tree itself: "+whyNotServed(answer)+
 				", yet "+journal+", so a judging service should answer. "+
-				"Start it with `journal services start code-commandments.hooks`, or run again with --"+allowColdRead+
+				"The journal keeps that service up and starts it again by itself; `journal plugin services` says whether it "+
+				"runs. Wait for it, or run again with --"+allowColdRead+
 				" to read the whole tree here anyway")
 
 			return coldReadRefused, nil

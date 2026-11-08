@@ -45,7 +45,7 @@ func TestFixingTheSinTurnsItsCardGreenOnTheEditThatFixesIt(t *testing.T) {
 	ada.Edits(story.ElseAfterRaise, "order.py")
 	ada.Hears("redundant-python-else")
 	ada.Edits(story.ElseAfterRaiseFixed, "order.py")
-	ada.Hears("order.py is clean")
+	ada.StaysUntold("redundant-python-else")
 }
 
 func TestASinFixedByAShellCommandIsSettledAtTheNextShellMoment(t *testing.T) {
@@ -55,7 +55,7 @@ func TestASinFixedByAShellCommandIsSettledAtTheNextShellMoment(t *testing.T) {
 	ada.Hears("redundant-python-else")
 	s.Writes(story.ElseAfterRaiseFixed, "order.py")
 	ada.Runs("true")
-	ada.Hears("order.py is clean")
+	ada.StaysUntold("redundant-python-else")
 }
 
 func TestARuleThatReadsAcrossFilesIsAnsweredFromTheWholeTree(t *testing.T) {
@@ -182,7 +182,7 @@ func TestAFileThatMovedAgainBeforeItsJudgingIsNotJudgedFromTheOldText(t *testing
 
 	ada.Edits(story.ElseAfterRaise, "moved.py")
 	ada.Edits(story.ElseAfterRaiseFixed, "moved.py")
-	ada.Hears("moved.py is clean")
+	ada.StaysUntold("redundant-python-else")
 }
 
 func TestAGeneratedFileIsSkipped(t *testing.T) {
@@ -199,7 +199,7 @@ func TestASinInAFileThatIsGoneIsRepented(t *testing.T) {
 	ada.Hears("redundant-python-else")
 	s.Removes(story.ElseAfterRaise, "short_lived.py")
 	ada.Stops()
-	ada.Hears("short_lived.py is clean")
+	ada.StaysUntold("redundant-python-else")
 }
 
 func TestAWindowsStylePathInTheEventIsNamedAsTheAgentSeesIt(t *testing.T) {

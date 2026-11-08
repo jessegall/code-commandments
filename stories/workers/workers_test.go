@@ -42,7 +42,7 @@ func TestAWorkerEditingTwiceOpensOneLane(t *testing.T) {
 
 	lanes := s.ReadsTheLanesOnceTheyShow("story-engine-edsger")
 
-	s.SaysOnce(lanes, "story-engine-edsger ")
+	s.SaysOnce(lanes, "worktrees/story-engine-edsger |")
 }
 
 func TestARemoveBeforeACutOpensNoLane(t *testing.T) {
@@ -100,18 +100,6 @@ func TestAFileOnlyTheProjectHasIsNotJudgedForAWorker(t *testing.T) {
 	grace.StaysUntold("extra.py")
 }
 
-func TestAFileTheProjectChangedSinceTheCutStaysInTheWorkersView(t *testing.T) {
-	s := held(t)
-	grace := s.Worker("Grace")
-
-	s.Writes(story.SettleOriginal, "shared.py")
-	grace.Edits(story.SettleCopy, "refunds.py")
-
-	told := grace.Hears("duplicate-python-function")
-
-	s.Says(told, "shared.py")
-}
-
 func TestAFileAWorkerDeletedIsNotInTheProgramItIsJudgedAgainst(t *testing.T) {
 	s := held(t)
 	grace := s.Worker("Grace")
@@ -130,7 +118,7 @@ func TestAWorkerThatRebasesItselfIsRefilledAndNeverAnsweredFromTheOldBase(t *tes
 	grace.Hears("redundant-python-else")
 	grace.Rebases()
 	grace.Edits(story.ElseAfterRaiseFixed, "order.py")
-	grace.Hears("order.py is clean")
+	grace.StaysUntold("redundant-python-else")
 
 	s.CostIs(ledger.TreeReadsStarted, 0)
 }

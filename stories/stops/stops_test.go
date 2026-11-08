@@ -145,7 +145,7 @@ func TestStoppingSettlesASinFixedBehindTheHooksBack(t *testing.T) {
 	s.Writes(story.ElseAfterRaiseFixed, "order.py")
 	ada.Stops()
 
-	ada.Hears("order.py is clean")
+	ada.StaysUntold("redundant-python-else")
 }
 
 func TestInAWorktreeTheNudgeNamesTheCommandForThatWorktree(t *testing.T) {

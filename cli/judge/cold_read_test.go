@@ -32,7 +32,7 @@ func refusedIn(t *testing.T, project, signal string) {
 	if code != coldReadRefused {
 		t.Fatalf("with only %s to say a journal is there, the run exits %d, want %d: %s", signal, code, coldReadRefused, warned)
 	}
-	if !strings.Contains(warned, "--allow-cold-read") || !strings.Contains(warned, "journal services start") {
+	if !strings.Contains(warned, "--allow-cold-read") || !strings.Contains(warned, "journal plugin services") {
 		t.Errorf("it says %q, which names neither how to start the service nor how to read anyway", warned)
 	}
 	if said != "" {
