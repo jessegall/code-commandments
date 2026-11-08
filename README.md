@@ -138,7 +138,7 @@ Exit code is non-zero when sins are found.
 <!-- BEGIN: commands-table (auto-generated, run `composer readme`) -->
 | Command | Purpose |
 |---|---|
-| `commandments judge [path]` | Scan a codebase and report its sins, grouped by the skill that fixes each. Exit code 1 when sins are found, 3 when a rule could not run. |
+| `commandments judge [path]` | Scan a codebase and report its sins, grouped by the skill that fixes each. Exit code 1 when sins are found, 3 when a rule could not run, 4 when it refused to read the whole tree itself. |
 | `commandments make <Name>` | Scaffold a commandment of your own — a rule naming its sin, and the skill that teaches the fix, in `.commandments/custom/`, turned on in your config, with the rest of the process printed for you. |
 | `commandments hints [path]` | Auto-fix the Spatie Data magic surface — rename non-`from…` object factories to `from<Type>`, rewrite their call sites to `::from(...)`, and regenerate the `@method from(...)`/`collect(...)` docblock hints. |
 | `commandments repent [path]` | Auto-fix sins — run every Scribe: the maintenance rewriters (Spatie Data hints) and each Repentable detector's own fix, PHP, Vue and TypeScript, and the fix a project's own rule declares. |
