@@ -167,6 +167,7 @@ func (SkillReminder) Handle(event Event) Response {
 	response.Activity = activity
 	response.Judged = files
 	response.Asked = asked
+	response.NotAsked = notAsked
 	response.Narrowed = narrowed
 	response.Requires = owed(fresh)
 	response.ReadMs = spentReading.Milliseconds()

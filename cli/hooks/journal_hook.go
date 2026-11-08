@@ -286,7 +286,7 @@ func recordJudging(moment Moment, event Event, merged Response, answer JournalAn
 	asked, notAsked := 0, 0
 	for file, sins := range merged.Asked {
 		asked = len(sins)
-		notAsked = len(merged.Narrowed)
+		notAsked = merged.NotAsked[file]
 		why = merged.Narrowed[file]
 	}
 

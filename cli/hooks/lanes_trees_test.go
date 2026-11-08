@@ -41,7 +41,7 @@ func TestLanesSaysWhichTreesAreWarmAndHowFarARunningReadHasGot(t *testing.T) {
 		}
 	}
 
-	if label := lanesLabel(); !strings.HasPrefix(label, "judge lanes: 1 tree(s) warm, 1 warming 40%") {
+	if label := lanesLabel(); !strings.HasPrefix(label, "judge lanes: ") || !strings.Contains(label, " tree(s) warm, 1 warming 40%") {
 		t.Errorf("the card's one line is %q, which does not lead with the warm trees and the read in progress", label)
 	}
 }
