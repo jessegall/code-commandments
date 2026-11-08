@@ -1,6 +1,7 @@
 package hooks
 
 import (
+	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -38,6 +39,32 @@ func TestLanesSaysWhichTreesAreWarmAndHowFarARunningReadHasGot(t *testing.T) {
 		if !strings.Contains(said, want) {
 			t.Errorf("lanes does not say %q, so nobody can tell a warm tree from one still being read:\n%s", want, said)
 		}
+	}
+
+	if label := lanesLabel(); !strings.HasPrefix(label, "judge lanes: 1 tree(s) warm, 1 warming 40%") {
+		t.Errorf("the card's one line is %q, which does not lead with the warm trees and the read in progress", label)
+	}
+}
+
+func TestLanesUnderTheJournalShowsWhatItSaysAsACardInTheChat(t *testing.T) {
+	folder := t.TempDir()
+	asked := filepath.Join(folder, "asked")
+	journal := filepath.Join(folder, "journal")
+	if err := os.WriteFile(journal, []byte("#!/bin/sh\nprintf '%s\\n' \"$@\" > "+asked+"\n"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("JOURNAL_BIN", journal)
+
+	lanesAnswer{tell: "1 tree(s) held, 0 being read", label: "judge lanes: 1 tree(s) warm, 0 lane(s)"}.shownInTheChat()
+
+	said, err := os.ReadFile(asked)
+	if err != nil {
+		t.Fatalf("lanes under the journal posted no card: %v", err)
+	}
+
+	want := "plugin\ncard\ncode-commandments\n--label\njudge lanes: 1 tree(s) warm, 0 lane(s)\n--detail\n1 tree(s) held, 0 being read\n--tone\nnote\n"
+	if string(said) != want {
+		t.Errorf("the card was asked for as:\n%s\nwant:\n%s", said, want)
 	}
 }
 

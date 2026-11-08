@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"encoding/json"
 	"net"
+	"os/exec"
 	"os"
 	"sort"
 	"strconv"
@@ -61,45 +62,75 @@ func (Lanes) Run(in *cli.Input, console cli.Console) (int, error) {
 		return 2, nil
 	}
 
-	console.Say(said)
+	console.Say(said.tell)
+	said.shownInTheChat()
 
 	return 0, nil
 }
 
-func askTheService(asked map[string]any) (string, error) {
+// lanesAnswer is what the service says about what it holds: the whole of it, and the one line a chat card leads with.
+type lanesAnswer struct {
+	tell  string
+	label string
+}
+
+func (a lanesAnswer) shownInTheChat() {
+	journal := journalBinary()
+	if journal == "" || a.label == "" {
+		return
+	}
+
+	card := exec.Command(journal, "plugin", "card", workspace.JournalPlugin, "--label", a.label, "--detail", a.tell,
+		"--tone", "note")
+	card.Env = os.Environ()
+	_ = card.Run()
+}
+
+func askTheService(asked map[string]any) (lanesAnswer, error) {
 	path := os.Getenv(pluginSocket)
 	if path == "" {
-		return "", os.ErrNotExist
+		return lanesAnswer{}, os.ErrNotExist
 	}
 
 	connection, err := net.Dial("unix", path)
 	if err != nil {
-		return "", err
+		return lanesAnswer{}, err
 	}
 	defer connection.Close()
 
 	line, err := json.Marshal(asked)
 	if err != nil {
-		return "", err
+		return lanesAnswer{}, err
 	}
 
 	if _, err := connection.Write(append(line, '\n')); err != nil {
-		return "", err
+		return lanesAnswer{}, err
 	}
 
 	connection.SetDeadline(time.Now().Add(5 * time.Second))
 
 	read, err := bufio.NewReader(connection).ReadString('\n')
 	if err != nil && read == "" {
-		return "", err
+		return lanesAnswer{}, err
 	}
 
 	var answer map[string]any
 	if json.Unmarshal([]byte(strings.TrimSpace(read)), &answer) != nil {
-		return strings.TrimSpace(read), nil
+		return lanesAnswer{tell: strings.TrimSpace(read)}, nil
 	}
 
-	return asText(answer["tell"]), nil
+	return lanesAnswer{tell: asText(answer["tell"]), label: asText(answer["label"])}, nil
+}
+
+func lanesLabel() string {
+	held, running := kept.Trees(), readsRunning()
+
+	said := "judge lanes: " + strconv.Itoa(len(held)) + " tree(s) warm"
+	for _, read := range running {
+		said += ", 1 warming " + strconv.FormatInt(read.percent(), 10) + "%"
+	}
+
+	return said + ", " + strconv.Itoa(len(kept.Lanes())) + " lane(s)"
 }
 
 func lanesAsked(line map[string]any) (string, bool) {
@@ -172,14 +203,9 @@ func treesSaid() string {
 	}
 
 	for _, read := range running {
-		done, total := read.done.Load(), read.total.Load()
-		percent := int64(0)
-		if total > 0 {
-			percent = done * 100 / total
-		}
-
-		said = append(said, "  "+read.branch+" | warming "+strconv.FormatInt(percent, 10)+"% | "+
-			strconv.FormatInt(done, 10)+" of "+strconv.FormatInt(total, 10)+" file(s) read | since "+read.began.Format("15:04:05"))
+		said = append(said, "  "+read.branch+" | warming "+strconv.FormatInt(read.percent(), 10)+"% | "+
+			strconv.FormatInt(read.done.Load(), 10)+" of "+strconv.FormatInt(read.total.Load(), 10)+" file(s) read | since "+
+			read.began.Format("15:04:05"))
 	}
 
 	return strings.Join(said, "\n") + "\n\n"

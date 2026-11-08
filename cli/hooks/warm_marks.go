@@ -712,6 +712,15 @@ func (r *treeRead) reached(done, total int) {
 	r.total.Store(int64(total))
 }
 
+func (r *treeRead) percent() int64 {
+	total := r.total.Load()
+	if total == 0 {
+		return 0
+	}
+
+	return r.done.Load() * 100 / total
+}
+
 func readsRunning() []*treeRead {
 	var running []*treeRead
 

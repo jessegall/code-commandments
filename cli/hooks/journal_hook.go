@@ -540,7 +540,7 @@ func serve(listener net.Listener, current func() bool, advice *advisers) {
 			read := payloadOf([]byte(line))
 
 			if drop, asked := lanesAsked(read); asked {
-				said, _ := json.Marshal(map[string]any{"v": protocol4, "answer": "tell", "tell": lanesHeld(drop)})
+				said, _ := json.Marshal(map[string]any{"v": protocol4, "answer": "tell", "tell": lanesHeld(drop), "label": lanesLabel()})
 				connection.Write(append(said, '\n'))
 				connection.Close()
 
