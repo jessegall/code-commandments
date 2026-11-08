@@ -63,10 +63,10 @@ func TestACommandReachesTheRelayWithItsWordsAndItsFolder(t *testing.T) {
 	}
 }
 
-func TestAHookCarriesItsBodyToTheRelay(t *testing.T) {
+func TestAHookCarriesItsBodyAndItsAgentToTheRelay(t *testing.T) {
 	address, asked := relayAnswering(t, func(request) Ran { return Ran{Code: 2, Err: "refused"} })
 
-	ran, err := Reached(address).Hooks("/project", `{"hook_event_name":"Stop"}`)
+	ran, err := Reached(address).Hooks("/project", `{"hook_event_name":"Stop"}`, "41", "worker")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -75,8 +75,8 @@ func TestAHookCarriesItsBodyToTheRelay(t *testing.T) {
 		t.Errorf("the hook's answer came back as %+v, so a story could not see a refusal", ran)
 	}
 
-	if sent := (*asked)[0]; sent.Kind != "hook" || sent.Stdin != `{"hook_event_name":"Stop"}` {
-		t.Errorf("the relay was asked %+v, where a hook's body is what the journal reads", sent)
+	if sent := (*asked)[0]; sent.Kind != "hook" || sent.Stdin != `{"hook_event_name":"Stop"}` || sent.Actor != "41" || sent.Role != "worker" {
+		t.Errorf("the relay was asked %+v, where a hook's body, and the agent the journal is to take it as, must arrive", sent)
 	}
 }
 

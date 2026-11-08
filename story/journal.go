@@ -35,6 +35,8 @@ type request struct {
 	Name   string   `json:"name,omitempty"`
 	Many   int      `json:"many,omitempty"`
 	Pid    string   `json:"pid,omitempty"`
+	Actor  string   `json:"actor,omitempty"`
+	Role   string   `json:"role,omitempty"`
 }
 
 const stepTakesAtMost = 11 * time.Minute
@@ -47,8 +49,8 @@ func (j Journal) Runs(in string, argv ...string) (Ran, error) {
 	return j.ask(request{Kind: "command", Argv: argv, In: in})
 }
 
-func (j Journal) Hooks(in, body string) (Ran, error) {
-	return j.ask(request{Kind: "hook", Stdin: body, In: in})
+func (j Journal) Hooks(in, body, actor, role string) (Ran, error) {
+	return j.ask(request{Kind: "hook", Stdin: body, In: in, Actor: actor, Role: role})
 }
 
 func (j Journal) Writes(path, text string) (Ran, error) {

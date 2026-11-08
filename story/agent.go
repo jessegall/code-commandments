@@ -27,6 +27,7 @@ type Agent struct {
 	folder  string
 	row     string
 	pid     string
+	role    string
 }
 
 func (s *Story) Agent(name string) *Agent {
@@ -80,7 +81,7 @@ func (s *Story) registers(name, role, folder string) *Agent {
 		s.t.Cleanup(func() { _, _ = s.journal.Runs(folder, "agent", "end", found[1]) })
 	}
 
-	return &Agent{s: s, name: name, session: session, folder: folder, row: row, pid: pid}
+	return &Agent{s: s, name: name, session: session, folder: folder, row: row, pid: pid, role: role}
 }
 
 func (a *Agent) Folder() string {
@@ -302,7 +303,7 @@ func (a *Agent) sends(event string, fields map[string]any) Ran {
 		a.s.Fails(err.Error())
 	}
 
-	ran, err := a.s.journal.Hooks(a.folder, string(text))
+	ran, err := a.s.journal.Hooks(a.folder, string(text), a.row, a.role)
 	if err != nil {
 		a.s.Fails(err.Error())
 	}

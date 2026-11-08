@@ -33,6 +33,8 @@ SCRATCH_PREFIX = "story_scratch"
 WORKTREE_PREFIX = "story-engine-"
 SLEEPER = ["sleep", "86400"]
 BRANCH_PREFIX = "story-engine/story-"
+STORY_ENVIRONMENT = "story-engine"
+JOURNAL_VARIABLES = ("JOURNAL_", "AGENT_JOURNAL_")
 
 
 class Refused(Exception):
@@ -82,7 +84,8 @@ class Relay(socketserver.ThreadingTCPServer):
             return self.pid_step(asked)
         argv, stdin, folder = self.command_of(asked), asked.get("stdin", ""), self.folder_of(asked)
         try:
-            done = subprocess.run(argv, input=stdin, capture_output=True, text=True, cwd=folder, timeout=STEP_SECONDS)
+            done = subprocess.run(argv, input=stdin, capture_output=True, text=True, cwd=folder, timeout=STEP_SECONDS,
+                                  env=self.environment_of(asked))
         except subprocess.TimeoutExpired:
             return {"code": 124, "out": "", "err": f"the step ran past {STEP_SECONDS} seconds and was stopped\n"}
         return {"code": done.returncode, "out": done.stdout, "err": done.stderr}
@@ -179,6 +182,17 @@ class Relay(socketserver.ThreadingTCPServer):
             self.home = ""
             subprocess.run(["git", "-C", checkout, "branch", "-D", BRANCH_PREFIX + "other"], capture_output=True, text=True)
         return {"code": done.returncode, "out": done.stdout, "err": done.stderr}
+
+    def environment_of(self, asked: dict) -> dict:
+        """What a step runs with. A hook sent for a story's agent runs with the variables a real launch gives that
+        agent, and none of the session that started the relay, so the journal takes it as that agent's own."""
+        if asked["kind"] != "hook" or not asked.get("actor"):
+            return dict(os.environ)
+        environment = {name: value for name, value in os.environ.items() if not name.startswith(JOURNAL_VARIABLES)}
+        role = asked.get("role") or "worker"
+        environment.update({"AGENT_JOURNAL_ACTIVE": "1", "JOURNAL_ACTOR": f"{role}:{asked['actor']}",
+                            "JOURNAL_ENV": STORY_ENVIRONMENT, "JOURNAL_ROLE": role})
+        return environment
 
     def command_of(self, asked: dict) -> list[str]:
         if asked["kind"] == "hook":

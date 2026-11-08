@@ -45,6 +45,12 @@
     ],
     "command_starting": [
       "workers"
+    ],
+    "tool_starting": [
+      "workers"
+    ],
+    "idle": [
+      "workers"
     ]
   },
   "aliases": [

@@ -44,6 +44,15 @@ class RelayTest(unittest.TestCase):
         self.assertEqual(ran["out"], "journal environment list\n")
         self.assertEqual(ran["err"].strip(), worktree)
 
+    def test_a_hook_for_a_storys_agent_runs_as_that_agent_and_not_as_the_relays_session(self) -> None:
+        os.environ["JOURNAL_AGENT_SESSION"] = "the-session-that-started-the-relay"
+        self.addCleanup(os.environ.pop, "JOURNAL_AGENT_SESSION", None)
+        hook = os.path.join(self.project, ".journal", "bin", "journal-hook")
+        with open(hook, "w") as program:
+            program.write("#!/bin/sh\nenv | grep -E '^(AGENT_JOURNAL_ACTIVE|JOURNAL_)' | sort\n")
+        said = self.ask({"kind": "hook", "stdin": "{}", "actor": "41", "role": "worker"})["out"].splitlines()
+        self.assertEqual(said, ["AGENT_JOURNAL_ACTIVE=1", "JOURNAL_ACTOR=worker:41", "JOURNAL_ENV=story-engine", "JOURNAL_ROLE=worker"])
+
     def test_a_hook_reaches_the_journals_hook_entry_with_its_body(self) -> None:
         ran = self.ask({"kind": "hook", "stdin": '{"hook_event_name": "Stop"}'})
         self.assertEqual(ran["out"], f'hook claude {self.project}\n{{"hook_event_name": "Stop"}}')
