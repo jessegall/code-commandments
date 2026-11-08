@@ -24,6 +24,7 @@ This is the rule the detectors exist to serve. Honour it on EVERY fix:
 - Ask "where does this value/shape come from?" and walk back until you reach the
   birthplace. Fix is at the birthplace. If the honest fix touches many call sites,
   touch them — that breadth IS the bug surfacing, not a reason to wrap it.
+<!-- commands -->
 - If a finding is a genuine false positive, say so and why — and **report it** so
   it gets fixed upstream instead of silently ignored, ALWAYS referencing the code:
   `{{binary}} report --detector=NAME --reason="…" --ref=PATH:LINE`
@@ -44,7 +45,9 @@ This is the rule the detectors exist to serve. Honour it on EVERY fix:
   your report would contain "the honest fix is real, but…" — stop: everything
   after "but" is scope you own. Cost, timing, "needs its own change", or "risks
   breaking existing data" are never grounds for a report; they are the work.
+<!-- /commands -->
 
+<!-- commands -->
 **You are ENCOURAGED to make the tool better — not just when a finding is clearly
 wrong.** Surface every improvement idea: a rule that's missing or should catch more,
 a false positive, OR a `repent` auto-fix that did the wrong thing or left a rough
@@ -74,6 +77,7 @@ dropped whole, never half-applied). Lift it with
 immutable — never to silence a sin you could fix.** A real finding you disagree
 with is a `report`; a rule you want off is `disable`; freezing is for files that
 by their nature cannot move.
+<!-- /commands -->
 
 When in doubt, load `commandments-php-fix-at-the-source` and re-read it. It is the parent move
 behind every other skill.
@@ -86,7 +90,7 @@ rule above. Every finding on code you come across is yours to resolve.
 reach for it — the syntax you are about to write, the decision you are about to make. Load
 one when its subject comes up, and load it again rather than working from memory: a
 compaction drops instructions silently while leaving you the impression they are still
-there. A `judge` finding names the skill that fixes it, so you are never guessing.
+there. {{finding}} names the skill that fixes it, so you are never guessing.
 
 Load **`commandments-php-fix-at-the-source`** before your first edit whatever else you
 do — every other discipline defers to it. And **`commandments`** is this whole list as a
@@ -101,6 +105,7 @@ most:**
 
 {{keepInMind}}
 
+<!-- commands -->
 **Finding and fixing sins — the checklist workflow.** Run
 `{{judging}} --changes` ONCE — and **pass any path** to scope the
 scan: judge runs EVERY engine over whatever you point it at, so a path holding

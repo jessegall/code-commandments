@@ -31,12 +31,16 @@ func workersRunTheCLI(moment Moment) bool {
 		return switchedOn(said)
 	}
 
+	return workersChosenToRunTheCLI()
+}
+
+func workersChosenToRunTheCLI() bool {
 	chosen, given := chosenSettings()
 	if !given {
 		return false
 	}
 
-	said, named = chosen[workerCLIKey]
+	said, named := chosen[workerCLIKey]
 
 	return named && switchedOn(said)
 }
