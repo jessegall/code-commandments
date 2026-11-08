@@ -117,20 +117,22 @@ func TestOneWorkersTwoSimultaneousEditsFillItsLaneOnce(t *testing.T) {
 
 func TestTwoLandingsAtTheSameMomentAreJudgedOneAtATime(t *testing.T) {
 	s := busy(t)
-	grace, edsger := s.Worker("Grace"), s.Worker("Edsger")
+	ada := s.Agent("Ada")
+	grace, edsger := s.DispatchedWorker("Grace", ada), s.DispatchedWorker("Edsger", ada)
 
 	grace.Edits(story.ElseAfterRaise, "first.py")
 	edsger.Edits(story.SwallowedException, "second.py")
 	grace.HandsIn()
 	edsger.HandsIn()
-	s.AsksTogether(s.TestCheckout(), []string{"worker", "merge", "1"}, []string{"worker", "merge", "2"})
+	s.Merges(grace)
+	s.Merges(edsger)
 
 	s.Never(grace.Hears("first.py"), "second.py")
 }
 
 func TestALandingDoesNotDisturbAWorkersNextLane(t *testing.T) {
 	s := busy(t)
-	grace, edsger := s.Worker("Grace"), s.Worker("Edsger")
+	grace, edsger := s.Worker("Grace"), s.DispatchedWorker("Edsger", s.Agent("Ada"))
 
 	grace.Edits(story.ElseAfterRaise, "first.py")
 	grace.Hears("first.py")
@@ -145,7 +147,8 @@ func TestALandingDoesNotDisturbAWorkersNextLane(t *testing.T) {
 
 func TestALandingWhileTheMainAgentEditsAnswersBothCorrectly(t *testing.T) {
 	s := busy(t)
-	ada, grace := s.Agent("Ada"), s.Worker("Grace")
+	ada := s.Agent("Ada")
+	grace := s.DispatchedWorker("Grace", ada)
 
 	grace.Edits(story.SwallowedException, "plugins.py")
 	grace.HandsIn()
