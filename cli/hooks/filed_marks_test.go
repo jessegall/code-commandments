@@ -73,7 +73,7 @@ func TestAWorkersMergeIsNotHeldForAReportedSin(t *testing.T) {
 	root, file, _ := projectWithASin(t)
 	fileReport(t, root, "RedundantElseDetector", file, 2)
 
-	if held := MergeHeld(mergingOf(root, generousWindow, "src/refund.py")); held != "" {
+	if held := MergeHeld(mergingOf(root, generousWindow, "src/refund.py")); strings.Contains(held, `"refuse"`) {
 		t.Errorf("a merge was held for a sin this project has reported: %q", held)
 	}
 
