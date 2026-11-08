@@ -61,6 +61,12 @@ func answerJudging(connection net.Conn, root string) {
 		return
 	}
 
+	if drop, lanes := lanesAsked(payloadOf(line)); lanes {
+		connection.Write(lanesAnswered(drop))
+
+		return
+	}
+
 	request, asked := warm.RequestOf(line)
 	if !asked {
 		return

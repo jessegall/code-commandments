@@ -14,7 +14,9 @@ import (
 	"time"
 
 	"github.com/jessegall/code-commandments/cli"
+	"github.com/jessegall/code-commandments/cli/git"
 	"github.com/jessegall/code-commandments/cli/help"
+	"github.com/jessegall/code-commandments/cli/warm"
 	"github.com/jessegall/code-commandments/cli/workspace"
 )
 
@@ -86,11 +88,22 @@ func (a lanesAnswer) shownInTheChat() {
 	_ = card.Run()
 }
 
-func askTheService(asked map[string]any) (lanesAnswer, error) {
-	path := os.Getenv(pluginSocket)
-	if path == "" {
-		return lanesAnswer{}, os.ErrNotExist
+func lanesAnswered(drop string) []byte {
+	said, _ := json.Marshal(map[string]any{"v": protocol4, "answer": "tell", "tell": lanesHeld(drop), "label": lanesLabel()})
+
+	return append(said, '\n')
+}
+
+func theServicesSocket() string {
+	if path := os.Getenv(pluginSocket); path != "" {
+		return path
 	}
+
+	return warm.Socket(git.ProjectRoot(cwdOf()))
+}
+
+func askTheService(asked map[string]any) (lanesAnswer, error) {
+	path := theServicesSocket()
 
 	connection, err := net.Dial("unix", path)
 	if err != nil {
