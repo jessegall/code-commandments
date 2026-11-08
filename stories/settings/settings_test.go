@@ -18,6 +18,33 @@ func TestThePluginsOwnSwitchesAreNotProjectConfig(t *testing.T) {
 	s.Never(schema, "judge_workers", "judge_merges", "judge_nodes_held", "judge_files_at_once")
 }
 
+func TestAWorkerRunsTheCommandmentsCliWhileTheSettingAllowsIt(t *testing.T) {
+	s := story.Begin(t)
+
+	ran := s.Worker("Grace").Runs("bin/commandments info redundant-else")
+
+	s.Never(ran, "workers_cli")
+}
+
+func TestAWorkerIsRefusedTheCommandmentsCliWhenTheSettingDeniesIt(t *testing.T) {
+	s := story.Begin(t)
+	s.SwitchesThePluginSetting("workers_cli", "false", "true")
+
+	ran := s.Worker("Grace").Runs("bin/commandments info redundant-else")
+
+	s.Refuses(ran)
+	s.Says(ran, "workers_cli")
+}
+
+func TestTheMainAgentRunsTheCommandmentsCliWhenTheSettingDeniesWorkers(t *testing.T) {
+	s := story.Begin(t)
+	s.SwitchesThePluginSetting("workers_cli", "false", "true")
+
+	ran := s.Agent("Ada").Runs("bin/commandments info redundant-else")
+
+	s.Never(ran, "workers_cli")
+}
+
 func TestAFolderInTheProjectsExclusionsIsNotReadAtAll(t *testing.T) {
 	s := story.Begin(t)
 	s.GivenTheTreeIsHeldFor(s.TestCheckout())

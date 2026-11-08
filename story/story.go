@@ -75,6 +75,13 @@ func (s *Story) AsksIn(folder string, argv ...string) Ran {
 	return ran
 }
 
+func (s *Story) SwitchesThePluginSetting(key, value, afterwards string) {
+	s.t.Helper()
+
+	s.Asks("plugin", "configure", "code-commandments", key, value)
+	s.t.Cleanup(func() { s.Asks("plugin", "configure", "code-commandments", key, afterwards) })
+}
+
 func journalStep(argv []string) Step {
 	named := min(2, len(argv))
 

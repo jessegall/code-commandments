@@ -222,6 +222,10 @@ func answerWith(given map[string]any, runs func(Hook) bool, reportsSins bool) Jo
 		cwd, _ = os.Getwd()
 	}
 
+	if refusal := cliRefusedTo(moment); refusal != "" && runs(SharedBranchGate{}) {
+		return JournalAnswer{Refuse: &refusal}
+	}
+
 	if why := notForThisRole(moment); why != "" {
 		return JournalAnswer{Whisper: &why}
 	}

@@ -80,6 +80,14 @@
         "help": "A ceiling, counted in parsed nodes, over everything the service keeps in memory for this project. Past it no new checkout is held and the answer says so instead of the service growing. Zero holds nothing back."
     },
     {
+        "key": "workers_cli",
+        "title": "Workers may run the commandments CLI",
+        "type": "flag",
+        "kind": "flag",
+        "default": true,
+        "help": "On, a worker or helper may run the commandments program itself. Off, such a command is refused with a line saying so; `journal sins` stays open to them and the main agent is not affected."
+    },
+    {
         "key": "language_php",
         "title": "PHP",
         "type": "flag",

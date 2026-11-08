@@ -151,6 +151,13 @@
             "default": "0",
             "group": "Performance"
         },
+        "workers_cli": {
+            "title": "Workers may run the commandments CLI",
+            "help": "On, a worker or helper may run the commandments program itself. Off, such a command is refused with a line saying so; `journal sins` stays open to them and the main agent is not affected.",
+            "type": "flag",
+            "default": "true",
+            "group": "Workers"
+        },
         "language_php": {
             "title": "PHP",
             "help": "Enables PHP sin detection",
