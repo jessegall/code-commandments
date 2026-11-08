@@ -29,10 +29,10 @@ type Agent struct {
 	pid     string
 }
 
-func (s *Story) Main(name string) *Agent {
+func (s *Story) Agent(name string) *Agent {
 	s.t.Helper()
 
-	return s.registers(name, "main", s.TestCheckout())
+	return s.registers(name, "worker", s.TestCheckout())
 }
 
 func (s *Story) Worker(name string) *Agent {

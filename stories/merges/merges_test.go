@@ -15,7 +15,7 @@ func ready(t *testing.T) (*story.Story, *story.Agent, *story.Agent) {
 	s := story.Begin(t)
 	s.GivenTheTreeIsHeldFor(s.TestCheckout())
 
-	return s, s.Main("Ada"), s.Worker("Grace")
+	return s, s.Agent("Ada"), s.Worker("Grace")
 }
 
 func TestACleanMergeIsAllowedWithoutAWord(t *testing.T) {

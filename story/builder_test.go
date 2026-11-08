@@ -106,17 +106,17 @@ func TestEachBridgeHasItsOwnJudgedFolder(t *testing.T) {
 	}
 }
 
-func TestAMainAgentIsStartedInTheTestEnvironmentWithTheRelaysProcess(t *testing.T) {
+func TestAnAgentInTheTestCheckoutIsStartedAsAWorkerInTheTestEnvironmentWithTheRelaysProcess(t *testing.T) {
 	s, asked := storyOver(t, func(request) Ran { return Ran{Out: "created: agent:41\n"} })
 
-	s.Main("Ada")
+	s.Agent("Ada")
 
 	if first := (*asked)[0]; first.Kind != "pid" || first.Action != "start" {
 		t.Errorf("the relay was first asked %+v, where the agent is first given a process of its own", first)
 	}
 
 	sent := (*asked)[1]
-	if strings.Join(sent.Argv[:2], " ") != "agent start" || sent.Argv[3] != "claude" || sent.Argv[4] != "main" ||
+	if strings.Join(sent.Argv[:2], " ") != "agent start" || sent.Argv[3] != "claude" || sent.Argv[4] != "worker" ||
 		!strings.Contains(strings.Join(sent.Argv, " "), "--environment story-engine --pid created: agent:41") {
 		t.Errorf("the relay was asked %v, where a main agent is registered in story-engine with the process it was handed", sent.Argv)
 	}

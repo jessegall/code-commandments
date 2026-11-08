@@ -35,7 +35,7 @@ func TestTwoWorkersEditingAtOnceAreEachToldOnlyTheirOwnSins(t *testing.T) {
 
 func TestTwoAgentsInOneCheckoutEditingOneFileNeverHaveItCheckedAtOnce(t *testing.T) {
 	s := busy(t)
-	ada, barbara := s.Main("Ada"), s.Main("Barbara")
+	ada, barbara := s.Agent("Ada"), s.Agent("Barbara")
 
 	ada.Edits(story.ElseAfterRaise, "shared.py")
 	barbara.Edits(story.SwallowedException, "shared.py")
@@ -145,7 +145,7 @@ func TestALandingDoesNotDisturbAWorkersNextLane(t *testing.T) {
 
 func TestALandingWhileTheMainAgentEditsAnswersBothCorrectly(t *testing.T) {
 	s := busy(t)
-	ada, grace := s.Main("Ada"), s.Worker("Grace")
+	ada, grace := s.Agent("Ada"), s.Worker("Grace")
 
 	grace.Edits(story.SwallowedException, "plugins.py")
 	grace.HandsIn()
@@ -157,7 +157,7 @@ func TestALandingWhileTheMainAgentEditsAnswersBothCorrectly(t *testing.T) {
 
 func TestTheMainAgentsFindingIsNeverToldToAWorkerEditingTheSamePath(t *testing.T) {
 	s := busy(t)
-	ada, grace := s.Main("Ada"), s.Worker("Grace")
+	ada, grace := s.Agent("Ada"), s.Worker("Grace")
 
 	ada.Edits(story.ElseAfterRaise, "order.py")
 	grace.Edits(story.Clean, "order.py")
@@ -216,7 +216,7 @@ func TestAWorkerThatRebasesLeavesAnotherWorkersAnswersUnchanged(t *testing.T) {
 
 func TestABurstOfTenAgentsMomentsMakesNobodysAnswerWaitOnAnothers(t *testing.T) {
 	s := busy(t)
-	agents := []*story.Agent{s.Main("Ada")}
+	agents := []*story.Agent{s.Agent("Ada")}
 
 	for number := range 9 {
 		agents = append(agents, s.Worker(fmt.Sprintf("Worker %d", number)))
@@ -233,7 +233,7 @@ func TestABurstOfTenAgentsMomentsMakesNobodysAnswerWaitOnAnothers(t *testing.T) 
 
 func TestFourAgentsStoppingTogetherSettleOnlyTheirOwnMarks(t *testing.T) {
 	s := busy(t)
-	ada, grace, edsger, barbara := s.Main("Ada"), s.Worker("Grace"), s.Worker("Edsger"), s.Worker("Barbara")
+	ada, grace, edsger, barbara := s.Agent("Ada"), s.Worker("Grace"), s.Worker("Edsger"), s.Worker("Barbara")
 
 	for number, agent := range []*story.Agent{ada, grace, edsger, barbara} {
 		agent.Edits(story.ElseAfterRaise, fmt.Sprintf("own_%d.py", number))

@@ -92,7 +92,7 @@ func TestOnlyTheFoldersTheProjectJudgesAreRead(t *testing.T) {
 
 func TestAQuietMinuteCostsNothing(t *testing.T) {
 	s := held(t)
-	ada := s.Main("Ada")
+	ada := s.Agent("Ada")
 
 	ada.Moves()
 	ada.Stops()
@@ -104,7 +104,7 @@ func TestAQuietMinuteCostsNothing(t *testing.T) {
 
 func TestAnEditCostsTheFileAndNothingOfTheRest(t *testing.T) {
 	s := held(t)
-	ada := s.Main("Ada")
+	ada := s.Agent("Ada")
 
 	ada.Edits(story.ElseAfterRaise, "order.py")
 	ada.Hears("order.py")
@@ -115,7 +115,7 @@ func TestAnEditCostsTheFileAndNothingOfTheRest(t *testing.T) {
 
 func TestACrossFileQuestionReadsOnlyTheEditedFile(t *testing.T) {
 	s := held(t)
-	ada := s.Main("Ada")
+	ada := s.Agent("Ada")
 
 	s.Writes(story.SettleOriginal, "payments.py")
 	s.LetsTheSweepFall()
@@ -127,7 +127,7 @@ func TestACrossFileQuestionReadsOnlyTheEditedFile(t *testing.T) {
 
 func TestAFileAlreadyReadIsNotReadAgainForTheNextJudging(t *testing.T) {
 	s := held(t)
-	ada := s.Main("Ada")
+	ada := s.Agent("Ada")
 
 	ada.Edits(story.SwallowedException, "plugins.py")
 	ada.Hears("plugins.py")
@@ -138,7 +138,7 @@ func TestAFileAlreadyReadIsNotReadAgainForTheNextJudging(t *testing.T) {
 
 func TestASweepOfUntouchedFilesReadsNoneOfThem(t *testing.T) {
 	s := held(t)
-	ada := s.Main("Ada")
+	ada := s.Agent("Ada")
 
 	s.LetsTheSweepFall()
 	ada.Edits(story.Clean, "total.py")
@@ -149,7 +149,7 @@ func TestASweepOfUntouchedFilesReadsNoneOfThem(t *testing.T) {
 
 func TestAHeldEventIsAnsweredWithinItsWindowWhileAJudgingIsRunning(t *testing.T) {
 	s := held(t)
-	ada := s.Main("Ada")
+	ada := s.Agent("Ada")
 
 	ada.Edits(story.SixElses, "many.py")
 	began := time.Now()
@@ -162,7 +162,7 @@ func TestAHeldEventIsAnsweredWithinItsWindowWhileAJudgingIsRunning(t *testing.T)
 
 func TestAFileEditIsAnsweredAtOnceHoweverLongTheJudgingAfterItTakes(t *testing.T) {
 	s := held(t)
-	ada := s.Main("Ada")
+	ada := s.Agent("Ada")
 
 	began := time.Now()
 	ada.Edits(story.MutableDefault, "marks.py")
@@ -200,7 +200,7 @@ func TestAMergeReadsOnlyTheFilesOfItsRange(t *testing.T) {
 
 func TestEveryJudgingWritesOneLineAPersonCanRead(t *testing.T) {
 	s := held(t)
-	ada := s.Main("Ada")
+	ada := s.Agent("Ada")
 
 	ada.Edits(story.ElseAfterRaise, "order.py")
 	ada.Hears("order.py")
@@ -210,7 +210,7 @@ func TestEveryJudgingWritesOneLineAPersonCanRead(t *testing.T) {
 
 func TestAJudgingThatWasDeclinedSaysWhyInItsLine(t *testing.T) {
 	s := held(t)
-	ada := s.Main("Ada")
+	ada := s.Agent("Ada")
 	s.DropsTheLane(s.TestCheckout())
 
 	ada.Edits(story.ElseAfterRaise, "declined.py")
@@ -221,7 +221,7 @@ func TestAJudgingThatWasDeclinedSaysWhyInItsLine(t *testing.T) {
 
 func TestTheAnswerSaysHowLongThePluginTook(t *testing.T) {
 	s := held(t)
-	ada := s.Main("Ada")
+	ada := s.Agent("Ada")
 
 	ada.Edits(story.MutableDefault, "timed.py")
 

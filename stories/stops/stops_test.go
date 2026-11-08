@@ -16,7 +16,7 @@ func working(t *testing.T) (*story.Story, *story.Agent) {
 	s := story.Begin(t)
 	s.GivenTheTreeIsHeldFor(s.TestCheckout())
 
-	return s, s.Main("Ada")
+	return s, s.Agent("Ada")
 }
 
 func TestStoppingWithUnjudgedChangesNudgesOnceNamingTheCountAndTheCommand(t *testing.T) {

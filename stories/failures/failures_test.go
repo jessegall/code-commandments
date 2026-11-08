@@ -40,7 +40,7 @@ func TestARunThatReadsNoFileOfAnyHeldLanguageSaysSo(t *testing.T) {
 
 func TestAPartialJudgingNeverCallsAFileClean(t *testing.T) {
 	s := held(t)
-	ada := s.Main("Ada")
+	ada := s.Agent("Ada")
 	s.DropsTheLane(s.TestCheckout())
 
 	ada.Edits(story.Clean, "total.py")
@@ -52,7 +52,7 @@ func TestAPartialJudgingNeverCallsAFileClean(t *testing.T) {
 
 func TestAnEventTheServiceHasNoHandlerForIsAnsweredCleanly(t *testing.T) {
 	s := held(t)
-	ada := s.Main("Ada")
+	ada := s.Agent("Ada")
 
 	answered := ada.SendsAnEventNobodyKnows()
 
@@ -62,7 +62,7 @@ func TestAnEventTheServiceHasNoHandlerForIsAnsweredCleanly(t *testing.T) {
 
 func TestAnEditNamingNoFileStillGetsAnAnswer(t *testing.T) {
 	s := held(t)
-	ada := s.Main("Ada")
+	ada := s.Agent("Ada")
 
 	answered := ada.SendsAnEditNamingNoFile()
 

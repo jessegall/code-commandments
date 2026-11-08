@@ -74,7 +74,7 @@ func TestAJudgeFromAWorktreeWhoseLaneIsBeingFilledIsToldSoAndWaits(t *testing.T)
 
 func TestAnEditDuringTheColdStartGetsASmallerAnswerAndTheReasonIsToldOnce(t *testing.T) {
 	s := held(t)
-	ada := s.Main("Ada")
+	ada := s.Agent("Ada")
 	s.DropsTheLane(s.TestCheckout())
 
 	ada.Edits(story.ElseAfterRaise, "first.py")
@@ -89,7 +89,7 @@ func TestAnEditDuringTheColdStartGetsASmallerAnswerAndTheReasonIsToldOnce(t *tes
 
 func TestTheSameEditOnceTheTreeHasArrivedGetsTheWholeAnswer(t *testing.T) {
 	s := held(t)
-	ada := s.Main("Ada")
+	ada := s.Agent("Ada")
 
 	s.Writes(story.SettleOriginal, "payments.py")
 	ada.Edits(story.SettleCopy, "refunds.py")
@@ -101,7 +101,7 @@ func TestTheSameEditOnceTheTreeHasArrivedGetsTheWholeAnswer(t *testing.T) {
 
 func TestGoingIdleKeepsTheTreeWarm(t *testing.T) {
 	s := held(t)
-	ada := s.Main("Ada")
+	ada := s.Agent("Ada")
 	s.DropsTheLane(s.TestCheckout())
 
 	ada.Stops()
@@ -111,7 +111,7 @@ func TestGoingIdleKeepsTheTreeWarm(t *testing.T) {
 
 func TestSwitchingBranchInTheTestCheckoutDropsTheOldTreeAndReadsTheNewOne(t *testing.T) {
 	s := held(t)
-	ada := s.Main("Ada")
+	ada := s.Agent("Ada")
 	s.SwitchesToAnotherBranch()
 
 	ada.Stops()
@@ -123,7 +123,7 @@ func TestSwitchingBranchInTheTestCheckoutDropsTheOldTreeAndReadsTheNewOne(t *tes
 
 func TestADetachedHeadHasNoTreeAndSaysSo(t *testing.T) {
 	s := held(t)
-	ada := s.Main("Ada")
+	ada := s.Agent("Ada")
 	s.DetachesTheHead()
 
 	ada.Stops()
@@ -137,7 +137,7 @@ func TestADetachedHeadHasNoTreeAndSaysSo(t *testing.T) {
 
 func TestAFileWhoseBytesMovedUnannouncedIsFoundBySweepAndReadAgain(t *testing.T) {
 	s := held(t)
-	ada := s.Main("Ada")
+	ada := s.Agent("Ada")
 
 	s.Writes(story.ElseAfterRaise, "moved.py")
 	s.LetsTheSweepFall()
@@ -157,7 +157,7 @@ func TestAChangeNobodyAnnouncedIsStillJudged(t *testing.T) {
 
 func TestAFileTouchedWithTheSameBytesIsNotReadAgain(t *testing.T) {
 	s := held(t)
-	ada := s.Main("Ada")
+	ada := s.Agent("Ada")
 
 	s.Writes(story.Clean, "touched.py")
 	s.LetsTheSweepFall()
@@ -169,7 +169,7 @@ func TestAFileTouchedWithTheSameBytesIsNotReadAgain(t *testing.T) {
 
 func TestMoreFilesMovedThanOneViewCarriesLetsTheTreeGoAndItIsReadAgain(t *testing.T) {
 	s := held(t)
-	ada := s.Main("Ada")
+	ada := s.Agent("Ada")
 
 	s.WritesMany(story.Clean, 1500)
 	s.LetsTheSweepFall()
@@ -181,7 +181,7 @@ func TestMoreFilesMovedThanOneViewCarriesLetsTheTreeGoAndItIsReadAgain(t *testin
 
 func TestAChangeTheSizeOfAMergeIsTakenIntoTheTreeInsteadOfGivenUp(t *testing.T) {
 	s := held(t)
-	ada := s.Main("Ada")
+	ada := s.Agent("Ada")
 
 	s.WritesMany(story.Clean, 150)
 	s.LetsTheSweepFall()
@@ -210,7 +210,7 @@ func TestWithNoCeilingSetTheLanesAnswerSaysThereIsNone(t *testing.T) {
 
 func TestALanguageTheHeldTreeHasNoStreamForIsRefusedInWordsThatNameIt(t *testing.T) {
 	s := held(t)
-	ada := s.Main("Ada")
+	ada := s.Agent("Ada")
 
 	ada.Edits(typescript, "total.ts")
 
@@ -221,7 +221,7 @@ func TestALanguageTheHeldTreeHasNoStreamForIsRefusedInWordsThatNameIt(t *testing
 
 func TestAFileThatCannotBeParsedNarrowsTheAnswerInWordsAndKeepsTheTree(t *testing.T) {
 	s := held(t)
-	ada := s.Main("Ada")
+	ada := s.Agent("Ada")
 
 	ada.Edits(story.BrokenSyntax, "broken.py")
 
@@ -233,7 +233,7 @@ func TestAFileThatCannotBeParsedNarrowsTheAnswerInWordsAndKeepsTheTree(t *testin
 
 func TestAFileDeletedFromTheProjectLeavesTheHeldView(t *testing.T) {
 	s := held(t)
-	ada := s.Main("Ada")
+	ada := s.Agent("Ada")
 
 	s.Writes(story.SettleOriginal, "payments.py")
 	s.LetsTheSweepFall()

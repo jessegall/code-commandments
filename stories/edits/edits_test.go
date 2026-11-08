@@ -15,7 +15,7 @@ func editing(t *testing.T) (*story.Story, *story.Agent) {
 	s := story.Begin(t)
 	s.GivenTheTreeIsHeldFor(s.TestCheckout())
 
-	return s, s.Main("Ada")
+	return s, s.Agent("Ada")
 }
 
 func TestAnEditIsAnsweredAtOnceAndItsSinsArriveAtTheAgentsNextMoment(t *testing.T) {
@@ -200,16 +200,6 @@ func TestASinInAFileThatIsGoneIsRepented(t *testing.T) {
 	s.Removes(story.ElseAfterRaise, "short_lived.py")
 	ada.Stops()
 	ada.Hears("short_lived.py is clean")
-}
-
-func TestTheMainAgentsEditIsJudgedWhateverTheWorkersSettingSays(t *testing.T) {
-	s, ada := editing(t)
-
-	ada.Edits(story.SwallowedException, "plugins.py")
-
-	told := ada.Hears("python-swallowed-exception")
-
-	s.Says(told, "plugins.py")
 }
 
 func TestAWindowsStylePathInTheEventIsNamedAsTheAgentSeesIt(t *testing.T) {
