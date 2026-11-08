@@ -44,6 +44,15 @@ type Command struct {
 	In string
 
 	Reading func(sources scan.Sources) (*engine.Codebase, error)
+
+	Spending func(Spent)
+}
+
+// Spent is where the time of one judging went: reading the sources and running the rules over them.
+type Spent struct {
+	ReadMs int64
+	RuleMs int64
+	Rules  int
 }
 
 const (
@@ -446,12 +455,16 @@ func saying(selected []detectors.Detector) map[string]string {
 	return says
 }
 
-func (Command) run(tasks []Task, options options, progress *cli.Progress, parseSeconds float64, console cli.Console) Judgement {
+func (c Command) run(tasks []Task, options options, progress *cli.Progress, parseSeconds float64, console cli.Console) Judgement {
 	if !options.benchmark {
 		judging := time.Now()
 		judgement := Run(tasks, options.parallel, progress, console.Err)
 		progress.Finish()
 		sayWhereTheTimeWent(parseSeconds, time.Since(judging).Seconds(), len(tasks), console)
+
+		if c.Spending != nil {
+			c.Spending(Spent{ReadMs: int64(parseSeconds * 1000), RuleMs: time.Since(judging).Milliseconds(), Rules: len(tasks)})
+		}
 
 		return judgement
 	}

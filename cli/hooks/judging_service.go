@@ -90,11 +90,16 @@ func judgedFor(request warm.Request, root string) warm.Answer {
 	var out, errs bytes.Buffer
 
 	declined := ""
+	overlay := 0
+	spent := judge.Spent{}
 
 	code, err := (judge.Command{
-		In:      request.In,
-		Reading: heldOrDeclined(root, request.In, &declined),
+		In:       request.In,
+		Reading:  heldOrDeclined(root, request.In, &declined, &overlay),
+		Spending: func(done judge.Spent) { spent = done },
 	}).Run(cli.InputOf("judge", request.Judge...), cli.Console{Out: &out, Err: &errs})
+
+	recordServed(root, request.In, declined, overlay, spent)
 
 	if declined != "" {
 		if pastWhatOneSpliceCarries(declined) {
@@ -118,6 +123,24 @@ func judgedFor(request warm.Request, root string) warm.Answer {
 	}
 
 	return warm.Answer{Out: out.String(), Err: errs.String() + waited, Code: code}
+}
+
+func recordServed(root, in, declined string, overlay int, spent judge.Spent) {
+	if !recorded(root) {
+		return
+	}
+
+	checkout := checkoutOf(root, in)
+	kind := "project"
+	if checkout != strings.TrimRight(git.ProjectRoot(root), "/") {
+		kind = "worktree"
+	}
+
+	Record(bookkeepingIn(root), Judged{
+		At: time.Now(), Event: "judge", Checkout: checkout, Kind: kind, Branch: git.CurrentBranch(checkout),
+		Held: declined == "", Why: Narrowed(declined), Overlay: overlay, Parsed: overlay,
+		ReadMs: spent.ReadMs, RuleMs: spent.RuleMs, Asked: spent.Rules, Memory: MemoryNow(),
+	})
 }
 
 var judgingSlots = make(chan struct{}, slotsToJudgeIn)
@@ -182,7 +205,7 @@ func notThisCheckouts(walked, checkout, project string) string {
 	return walked + " lies outside " + checkout + ", so this tree says nothing about it"
 }
 
-func heldOrDeclined(root, in string, declined *string) func(scan.Sources) (*engine.Codebase, error) {
+func heldOrDeclined(root, in string, declined *string, overlay *int) func(scan.Sources) (*engine.Codebase, error) {
 	return func(sources scan.Sources) (*engine.Codebase, error) {
 		checkout := checkoutOf(root, in)
 
@@ -227,6 +250,8 @@ func heldOrDeclined(root, in string, declined *string) func(scan.Sources) (*engi
 			return engine.Load(), nil
 		}
 
+		*overlay = len(read)
+
 		return viewOf(base, named, checkout, read, gone, declined)
 	}
 }
@@ -259,8 +284,10 @@ func differingFrom(base *warm.Base, named branchRoot, checkout string, asked []s
 			return Differs{}, false
 		}
 
-		for file := range changed {
-			differs.Own = append(differs.Own, file)
+		for _, file := range asked {
+			if changed[file] {
+				differs.Own = append(differs.Own, file)
+			}
 		}
 
 		deleted, _ := git.DeletedVsBranch(checkout, named.branch)

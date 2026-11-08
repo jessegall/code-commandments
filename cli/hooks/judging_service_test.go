@@ -270,6 +270,56 @@ func judgingOf(t *testing.T, root string) string {
 	return answer.Out + answer.Err
 }
 
+func TestAServedJudgingIsRecordedWithWhereItsTimeWent(t *testing.T) {
+	root, data := workerProject(t)
+	forgetBookkeeping(t)
+	heldBaseOf(t, root)
+
+	worktree := filepath.Join(root, ".journal", "worktrees", "worker-1")
+	wroteInto(t, filepath.Join(worktree, "src", "order.py"), olderSin)
+
+	judgedFor(warm.Request{Judge: []string{"--no-checklist", "--parallel=1"}, In: worktree}, root)
+
+	said, err := os.ReadFile(filepath.Join(data, "judgings.log"))
+	if err != nil {
+		t.Fatalf("a judging answered by the service left no line in the log: %v", err)
+	}
+
+	for _, part := range []string{"| judge | worktree=" + worktree, "tree=held", "overlay=1", "parsed=1 in", "rules="} {
+		if !strings.Contains(string(said), part) {
+			t.Errorf("the line does not say %q:\n%s", part, said)
+		}
+	}
+}
+
+func TestAWorktreesChangedFileInAnExcludedFolderIsNotInItsProgram(t *testing.T) {
+	root, _ := workerProject(t)
+	heldBaseOf(t, root)
+
+	worktree := filepath.Join(root, ".journal", "worktrees", "worker-1")
+	own := filepath.Join(worktree, "src", "order.py")
+	excluded := filepath.Join(worktree, "src", "web", "dist", "bundle.py")
+
+	wroteInto(t, own, olderSin)
+	wroteInto(t, excluded, olderSin)
+
+	declined := ""
+
+	codebase, err := heldOrDeclined(root, worktree, &declined, new(int))(
+		scan.Walk([]string{filepath.Join(worktree, "src")}, source.Under(worktree, []string{"**/dist"})))
+	if err != nil || declined != "" {
+		t.Fatalf("the judging was not answered from the tree: %v, %s", err, declined)
+	}
+
+	if !holds(codebase, own) {
+		t.Errorf("the program does not hold the worktree's own changed source %s", own)
+	}
+
+	if holds(codebase, excluded) {
+		t.Errorf("the program holds %s, which the project excludes", excluded)
+	}
+}
+
 func TestAFileAWorkerDeletedIsNotInItsProgram(t *testing.T) {
 	root, _ := workerProject(t)
 	heldBaseOf(t, root)
@@ -278,7 +328,7 @@ func TestAFileAWorkerDeletedIsNotInItsProgram(t *testing.T) {
 	own := filepath.Join(worktree, "src", "order.py")
 	stands := filepath.Join(root, "src", "order.py")
 
-	reading := heldOrDeclined(root, worktree, new(string))
+	reading := heldOrDeclined(root, worktree, new(string), new(int))
 
 	codebase, err := reading(scan.Walk([]string{filepath.Join(worktree, "src")}, source.Excluded{}))
 	if err != nil || codebase == nil {
@@ -698,7 +748,7 @@ func TestEveryReasonAJudgingDeclinesForReadsAsASentence(t *testing.T) {
 		"a folder outside the project": t.TempDir(),
 	} {
 		declined := ""
-		if _, err := heldOrDeclined(root, in, &declined)(sources); err != nil {
+		if _, err := heldOrDeclined(root, in, &declined, new(int))(sources); err != nil {
 			t.Fatalf("%s: %v", why, err)
 		}
 

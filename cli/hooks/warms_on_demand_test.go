@@ -62,7 +62,7 @@ func TestAJudgingThatFindsNoTreeComingStartsOneRatherThanRefusingForever(t *test
 
 	declined := ""
 
-	codebase, err := heldOrDeclined(root, root, &declined)(scan.Walk([]string{filepath.Join(root, "src")}, source.Excluded{}))
+	codebase, err := heldOrDeclined(root, root, &declined, new(int))(scan.Walk([]string{filepath.Join(root, "src")}, source.Excluded{}))
 	if err != nil {
 		t.Fatal(err)
 	}

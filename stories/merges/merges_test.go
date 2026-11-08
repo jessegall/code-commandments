@@ -87,6 +87,18 @@ func TestAWorkerEditingAFolderTheProjectExcludesIsToldNothingAboutIt(t *testing.
 	grace.StaysUntold("bundle.py")
 }
 
+func TestJudgingAWorktreesChangesNeverReadsAFolderTheProjectExcludes(t *testing.T) {
+	s, _, grace := ready(t)
+
+	grace.Edits(story.ElseAfterRaise, "total.py")
+	grace.Edits(story.ElseAfterRaise, "dist/bundle.py")
+
+	judged := s.AsksIn(grace.Folder(), "sins", "--changes", "--no-checklist")
+
+	s.Says(judged, "total.py")
+	s.Never(judged, "bundle.py")
+}
+
 func TestACleanLandingSaysNothingAndSendsNothing(t *testing.T) {
 	s, ada, grace := ready(t)
 
