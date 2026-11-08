@@ -20,6 +20,42 @@ func (e *Malformed) Error() string {
 
 func Replace(document, name, content string) (string, bool, error) {
 	lines := strings.Split(document, "\n")
+
+	begin, end, found, err := bounds(lines, name)
+	if err != nil {
+		return "", false, err
+	}
+
+	if !found {
+		return document, false, nil
+	}
+
+	if !strings.HasSuffix(content, "\n") {
+		content += "\n"
+	}
+
+	return strings.Join(lines[:begin+1], "\n") + content + strings.Join(lines[end:], "\n"), true, nil
+}
+
+func Remove(document, name string) (string, bool, error) {
+	lines := strings.Split(document, "\n")
+
+	begin, end, found, err := bounds(lines, name)
+	if err != nil {
+		return "", false, err
+	}
+
+	if !found {
+		return document, false, nil
+	}
+
+	above := strings.TrimRight(strings.Join(lines[:begin], "\n"), "\n")
+	below := strings.TrimLeft(strings.Join(lines[end+1:], "\n"), "\n")
+
+	return strings.Trim(above+"\n\n"+below, "\n") + "\n", true, nil
+}
+
+func bounds(lines []string, name string) (int, int, bool, error) {
 	begins := linesMatching(lines, func(line string) bool {
 		return strings.HasPrefix(line, open+name+" ") && strings.HasSuffix(line, "-->")
 	})
@@ -27,22 +63,18 @@ func Replace(document, name, content string) (string, bool, error) {
 
 	switch {
 	case len(begins) == 0 && len(ends) == 0:
-		return document, false, nil
+		return 0, 0, false, nil
 	case len(begins) > 1 || len(ends) > 1:
-		return "", false, &Malformed{name, "the document carries more than one of them"}
+		return 0, 0, false, &Malformed{name, "the document carries more than one of them"}
 	case len(begins) == 0:
-		return "", false, &Malformed{name, "it has an END marker with no BEGIN"}
+		return 0, 0, false, &Malformed{name, "it has an END marker with no BEGIN"}
 	case len(ends) == 0:
-		return "", false, &Malformed{name, "it has a BEGIN marker with no END"}
+		return 0, 0, false, &Malformed{name, "it has a BEGIN marker with no END"}
 	case ends[0] < begins[0]:
-		return "", false, &Malformed{name, "its END marker stands above its BEGIN"}
+		return 0, 0, false, &Malformed{name, "its END marker stands above its BEGIN"}
 	}
 
-	if !strings.HasSuffix(content, "\n") {
-		content += "\n"
-	}
-
-	return strings.Join(lines[:begins[0]+1], "\n") + content + strings.Join(lines[ends[0]:], "\n"), true, nil
+	return begins[0], ends[0], true, nil
 }
 
 func Begin(name, command string) string {

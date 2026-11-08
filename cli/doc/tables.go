@@ -284,6 +284,8 @@ const PluginSchema = ".journal-plugin/settings.json"
 
 const Journal4Plugin = "journal-plugin.json"
 
+const JournalBriefing = "instructions/briefing.md"
+
 var pinned = regexp.MustCompile(`COMMANDMENTS_RELEASE(?:=|": ")v([0-9]+\.[0-9]+\.[0-9]+)`)
 
 func released(path string) (string, error) {
@@ -398,6 +400,7 @@ func Generated(root string) (map[string]string, error) {
 		return nil, err
 	}
 	documents[PluginSchema] = schema + "\n"
+	documents[JournalBriefing] = library.BriefForJournal()
 
 	return documents, nil
 }

@@ -1,21 +1,38 @@
 package agents
 
 import (
+	"os"
 	"path/filepath"
 
 	"github.com/jessegall/code-commandments/cli/config"
 	"github.com/jessegall/code-commandments/cli/library"
+	"github.com/jessegall/code-commandments/cli/workspace"
 )
 
 const BriefingBlock = "code-commandments briefing"
 
+const journalInstructions = "JOURNAL.md"
+
 func Brief(root string, project config.Config) []error {
 	var refused []error
 
-	canon := InstructionsAt(filepath.Join(root, "AGENTS.md"), root)
-	if err := canon.Inject(BriefingBlock, library.Brief(root, project)); err != nil {
-		refused = append(refused, err)
+	briefedByTheJournal := journalBriefs(root)
+
+	place := func(file Instructions, name, body string) {
+		var err error
+		if briefedByTheJournal {
+			err = file.Withdraw(name)
+		} else {
+			err = file.Inject(name, body)
+		}
+
+		if err != nil {
+			refused = append(refused, err)
+		}
 	}
+
+	canon := InstructionsAt(filepath.Join(root, "AGENTS.md"), root)
+	place(canon, BriefingBlock, library.Brief(root, project))
 
 	for _, agent := range ForProject(project) {
 		file := agent.InstructionsFile()
@@ -28,10 +45,18 @@ func Brief(root string, project config.Config) []error {
 			continue
 		}
 
-		if err := instructions.Inject(agent.BlockName(), agent.Instructions(root)); err != nil {
-			refused = append(refused, err)
-		}
+		place(instructions, agent.BlockName(), agent.Instructions(root))
 	}
 
 	return refused
+}
+
+func journalBriefs(root string) bool {
+	if !workspace.At(root, "").IsJournalDriven() {
+		return false
+	}
+
+	_, err := os.Stat(filepath.Join(root, journalInstructions))
+
+	return err == nil
 }

@@ -89,6 +89,8 @@ func ThroughPlugin(root string) string {
 	return relative
 }
 
+const PluginAlias = "journal commandments"
+
 const Alias = "journal sins"
 
 const ChangesAlias = "journal commandments-judge-changes"

@@ -42,21 +42,43 @@ func (i Instructions) Inject(name, body string) error {
 		return i.save(nil, "# "+strings.TrimSuffix(filepath.Base(i.path), ".md")+"\n\n"+wrapped+"\n")
 	}
 
+	return i.rewritten(original, func(normalised string) (string, error) {
+		updated, found, err := block.Replace(normalised, name, "\n"+strings.TrimSpace(body)+"\n")
+		if err == nil && !found {
+			updated = strings.TrimRight(normalised, "\n") + "\n\n" + wrapped + "\n"
+		}
+
+		return updated, err
+	})
+}
+
+func (i Instructions) Withdraw(name string) error {
+	if !i.insideTheProject() {
+		return &Refused{i.path + " resolves outside this project — left alone."}
+	}
+
+	original, err := os.ReadFile(i.path)
+	if errors.Is(err, os.ErrNotExist) {
+		return nil
+	}
+
+	return i.rewritten(original, func(normalised string) (string, error) {
+		updated, _, err := block.Remove(normalised, name)
+
+		return updated, err
+	})
+}
+
+func (i Instructions) rewritten(original []byte, change func(string) (string, error)) error {
 	document := strings.TrimPrefix(string(original), bom)
 	eol := "\n"
 	if strings.Contains(document, "\r\n") {
 		eol = "\r\n"
 	}
 
-	normalised := strings.ReplaceAll(document, "\r\n", "\n")
-
-	updated, found, err := block.Replace(normalised, name, "\n"+strings.TrimSpace(body)+"\n")
+	updated, err := change(strings.ReplaceAll(document, "\r\n", "\n"))
 	if err != nil {
 		return &Refused{i.path + ": " + err.Error()}
-	}
-
-	if !found {
-		updated = strings.TrimRight(normalised, "\n") + "\n\n" + wrapped + "\n"
 	}
 
 	if eol != "\n" {

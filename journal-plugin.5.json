@@ -20,6 +20,17 @@
   "project_reads": [
     ".commandments"
   ],
+  "injected_instructions": [
+    "instructions/briefing.md"
+  ],
+  "instruction_blocks": [
+    {
+      "key": "briefing",
+      "title": "Code Commandments briefing",
+      "file": "instructions/briefing.md",
+      "default": true
+    }
+  ],
   "config": {
     "file": ".commandments/config.json",
     "schema": ".commandments/config.schema.json"

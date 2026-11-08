@@ -45,10 +45,18 @@ func Briefing(root string, project config.Config) string {
 }
 
 func Brief(root string, project config.Config) string {
+	return renderedBrief(binary.Invocation(root), binary.Judging(root))
+}
+
+func BriefForJournal() string {
+	return renderedBrief(binary.PluginAlias, binary.Alias)
+}
+
+func renderedBrief(invocation, judging string) string {
 	return strings.NewReplacer(
 		"{{library}}", Dir,
-		Binary, binary.Invocation(root),
-		Judging, binary.Judging(root),
+		Binary, invocation,
+		Judging, judging,
 	).Replace(brief)
 }
 

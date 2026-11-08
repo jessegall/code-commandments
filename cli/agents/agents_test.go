@@ -134,6 +134,59 @@ func must(t *testing.T, err error) {
 	}
 }
 
+func TestTheBriefingIsWrittenByTheJournalOnlyOnceTheJournalWritesIt(t *testing.T) {
+	block := "<!-- BEGIN: code-commandments briefing (auto-generated, run `composer update`) -->\nold\n<!-- END: code-commandments briefing -->"
+	claude := "<!-- BEGIN: code-commandments skills (auto-generated, run `composer update`) -->\n@AGENTS.md\n<!-- END: code-commandments skills -->"
+
+	for name, project := range map[string]struct {
+		plugin, journalFile, withdrawn bool
+	}{
+		"the journal writes it":               {plugin: true, journalFile: true, withdrawn: true},
+		"a journal too old to write it":       {plugin: true},
+		"the journal runs without the plugin": {journalFile: true},
+		"no journal":                          {},
+	} {
+		t.Run(name, func(t *testing.T) {
+			root := t.TempDir()
+			must(t, os.WriteFile(filepath.Join(root, "AGENTS.md"), []byte("# Mine\n\n"+block+"\n\nAfter.\n"), 0o644))
+			must(t, os.WriteFile(filepath.Join(root, "CLAUDE.md"), []byte(claude+"\n\nMy own words.\n"), 0o644))
+
+			if project.plugin {
+				manifest := filepath.Join(root, ".journal", "plugins", "code-commandments", ".journal-plugin", "plugin.json")
+				must(t, os.MkdirAll(filepath.Dir(manifest), 0o755))
+				must(t, os.WriteFile(manifest, []byte("{}"), 0o644))
+			}
+
+			if project.journalFile {
+				must(t, os.WriteFile(filepath.Join(root, "JOURNAL.md"), []byte("the journal's text\n"), 0o644))
+			}
+
+			if refused := Brief(root, config.Config{}); len(refused) > 0 {
+				t.Fatalf("the briefing was refused: %v", refused)
+			}
+
+			agents, _ := os.ReadFile(filepath.Join(root, "AGENTS.md"))
+			instructions, _ := os.ReadFile(filepath.Join(root, "CLAUDE.md"))
+
+			if !project.withdrawn {
+				if !strings.Contains(string(agents), "Finding and fixing sins") {
+					t.Errorf("the project's own briefing was not written:\n%s", agents)
+				}
+
+				return
+			}
+
+			if string(agents) != "# Mine\n\nAfter.\n" {
+				t.Errorf("AGENTS.md should keep only the owner's text once the journal writes the briefing:\n%q", agents)
+			}
+
+			if string(instructions) != "My own words.\n" {
+				t.Errorf("CLAUDE.md should keep only the owner's text once the journal writes the briefing:\n%q", instructions)
+			}
+		})
+	}
+}
+
 func TestClaudesBlockNamesWhatEnforcesTheDisciplines(t *testing.T) {
 	plain, driven := t.TempDir(), t.TempDir()
 	manifest := filepath.Join(driven, ".journal", "plugins", "code-commandments", ".journal-plugin", "plugin.json")

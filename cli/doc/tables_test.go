@@ -1,6 +1,7 @@
 package doc_test
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -45,6 +46,44 @@ func TestThePreCommitHookNamesEveryGeneratedDocument(t *testing.T) {
 		if !strings.Contains(string(generators[1]), path) {
 			t.Errorf("the pre-commit hook re-stages no %s, so a commit carries it stale", path)
 		}
+	}
+}
+
+func TestThePluginOffersTheJournalTheBriefingItWouldOtherwiseWrite(t *testing.T) {
+	root := filepath.Join("..", "..")
+
+	manifest, err := os.ReadFile(filepath.Join(root, "journal-plugin.5.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var declared struct {
+		Injected []string `json:"injected_instructions"`
+		Blocks   []struct {
+			Key  string `json:"key"`
+			File string `json:"file"`
+		} `json:"instruction_blocks"`
+	}
+
+	if err := json.Unmarshal(manifest, &declared); err != nil {
+		t.Fatal(err)
+	}
+
+	if len(declared.Injected) != 1 || declared.Injected[0] != doc.JournalBriefing {
+		t.Errorf("the plugin injects %v, not the briefing at %s", declared.Injected, doc.JournalBriefing)
+	}
+
+	if len(declared.Blocks) != 1 || declared.Blocks[0].Key != "briefing" || declared.Blocks[0].File != doc.JournalBriefing {
+		t.Errorf("a worker's profile is offered %+v, not the briefing at %s", declared.Blocks, doc.JournalBriefing)
+	}
+
+	briefing, err := os.ReadFile(filepath.Join(root, doc.JournalBriefing))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if strings.Contains(string(briefing), "{{") || !strings.Contains(string(briefing), "journal sins") {
+		t.Errorf("the briefing the journal carries is not rendered for a journal project:\n%s", briefing)
 	}
 }
 
