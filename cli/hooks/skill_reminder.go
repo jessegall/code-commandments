@@ -58,6 +58,7 @@ func (SkillReminder) Handle(event Event) Response {
 
 	project = project.Judging(enabled)
 	files, lost := edited(event, project)
+	lost = slices.DeleteFunc(lost, event.OnlyRemovedLinesOf)
 
 	single := slices.DeleteFunc(slices.Clone(enabled), detectors.ReadsBeyondOneFile)
 

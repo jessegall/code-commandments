@@ -42,3 +42,19 @@ func TestAnEditWhoseFileIsNotOnDiskIsRefusedInWords(t *testing.T) {
 		t.Errorf("the refusal does not say why: %s", context)
 	}
 }
+
+func TestADeletedFileSaysNothingOfBeingNotJudged(t *testing.T) {
+	root, _ := workerProject(t)
+
+	event := NewEvent(map[string]any{
+		"hook_event_name": "PostToolUse",
+		"tool_name":       "Write",
+		"cwd":             root,
+		"tool_input":      map[string]any{"file_path": filepath.Join("src", "deleted.py")},
+		changedKey:        map[string]any{"lines": []any{}},
+	}, root)
+
+	if said := (SkillReminder{}).Handle(event); said.context != nil && strings.Contains(*said.context, "not on disk") {
+		t.Errorf("a deleted file was told it was not judged: %s", *said.context)
+	}
+}

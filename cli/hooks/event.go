@@ -208,6 +208,15 @@ func (e Event) WrittenFiles() []string {
 	return nil
 }
 
+func (e Event) OnlyRemovedLinesOf(file string) bool {
+	lines, carried := batchedLinesOf(e.payload, file)
+	if !carried {
+		lines, carried = ChangedIn(e.payload)
+	}
+
+	return carried && lines.None()
+}
+
 func (e Event) ChangedLines(file string) git.ChangedLines {
 	if lines, batched := batchedLinesOf(e.payload, file); batched {
 		return lines

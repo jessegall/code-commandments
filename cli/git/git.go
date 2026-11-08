@@ -419,6 +419,10 @@ func AtLines(lines []int) ChangedLines {
 	return ChangedLines{ranges: ranges}
 }
 
+func (c ChangedLines) None() bool {
+	return !c.whole && len(c.ranges) == 0
+}
+
 func (c ChangedLines) Covers(line int) bool {
 	if c.whole {
 		return true
