@@ -200,6 +200,18 @@ class RelayTest(unittest.TestCase):
         self.assertEqual(self.ask({"kind": "worktree", "action": "cut", "name": "story-engine-ada"})["code"], 0)
         self.assertFalse(os.path.exists(state))
 
+    def test_a_look_runs_the_journals_file_scan_under_no_agents_session(self) -> None:
+        checkout = self.scratch()
+        hook = os.path.join(self.project, ".journal", "bin", "journal-hook")
+        with open(hook, "w") as program:
+            program.write("#!/bin/sh\necho \"$*\"\n")
+        ran = self.ask({"kind": "look", "in": checkout})
+        self.assertEqual(ran["code"], 0)
+        self.assertEqual(ran["out"].strip(), f"--file-scan {self.project}/.journal --session story-engine-no-agent {checkout}")
+
+    def test_a_look_outside_the_story_checkouts_is_refused(self) -> None:
+        self.assertEqual(self.ask({"kind": "look", "in": self.project})["code"], 126)
+
     def test_a_request_that_is_not_json_is_answered_not_dropped(self) -> None:
         with socket.create_connection(self.relay.server_address) as connection:
             connection.sendall(b"not json\n")

@@ -71,9 +71,11 @@ func TestARuleThatReadsAcrossFilesIsAnsweredFromTheWholeTree(t *testing.T) {
 }
 
 func TestASinInAFileTheAgentDidNotTouchIsNotTheEditsMark(t *testing.T) {
-	s, ada := editing(t)
-
+	s := story.Begin(t)
+	s.GivenTheTreeIsHeldFor(s.TestCheckout())
 	s.Writes(story.ElseAfterRaise, "legacy.py")
+
+	ada := s.Agent("Ada")
 	ada.Edits(story.Clean, "order.py")
 	ada.StaysUntold("legacy.py")
 }

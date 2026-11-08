@@ -1,11 +1,8 @@
 package story
 
 import (
-	"crypto/sha256"
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -36,7 +33,12 @@ type Agent struct {
 func (s *Story) Agent(name string) *Agent {
 	s.t.Helper()
 
-	return s.registers(name, "worker", s.TestCheckout())
+	agent := s.registers(name, "worker", s.TestCheckout())
+	if !s.rehearsal {
+		agent.settlesIn()
+	}
+
+	return agent
 }
 
 func (s *Story) Worker(name string) *Agent {
@@ -226,28 +228,13 @@ func (a *Agent) writes(sample Sample, file string, named func(string) string) Ra
 	})
 }
 
-var firstLook = Python("a file a worker writes before its work, so the journal has seen its checkout once", "SETTLED = True\n")
-
 func (a *Agent) settlesIn() {
 	a.s.t.Helper()
 
-	a.writes(firstLook, "settled.py", func(path string) string { return path })
-
-	sum := sha256.Sum256([]byte(a.folder))
-	state := filepath.Join(a.s.project, ".journal", "runtime", "file-scan", hex.EncodeToString(sum[:8]))
-
-	for until := time.Now().Add(firstLookTakesAtMost); time.Now().Before(until); time.Sleep(100 * time.Millisecond) {
-		_, scanned := os.Stat(filepath.Join(state, "fingerprints.json"))
-		_, scanning := os.Stat(filepath.Join(state, "lock"))
-		if scanned == nil && scanning != nil {
-			return
-		}
+	if looked, err := a.s.journal.LooksAt(a.folder); err != nil || looked.Code != 0 {
+		a.s.Fails("the journal could not take its first look at " + a.folder + ": " + failure(looked, err))
 	}
-
-	a.s.Fails("the journal never took its first look at " + a.folder + ", so it would report none of this worker's edits")
 }
-
-const firstLookTakesAtMost = 90 * time.Second
 
 func (a *Agent) Moves() Ran {
 	a.s.t.Helper()

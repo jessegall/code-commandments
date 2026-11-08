@@ -53,6 +53,10 @@ func (j Journal) Hooks(in, body, actor, role string) (Ran, error) {
 	return j.ask(request{Kind: "hook", Stdin: body, In: in, Actor: actor, Role: role})
 }
 
+func (j Journal) LooksAt(checkout string) (Ran, error) {
+	return j.ask(request{Kind: "look", In: checkout})
+}
+
 func (j Journal) Writes(path, text string) (Ran, error) {
 	return j.ask(request{Kind: "write", Path: path, Stdin: text})
 }

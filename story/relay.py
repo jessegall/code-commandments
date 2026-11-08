@@ -36,6 +36,7 @@ WORKTREE_PREFIX = "story-engine-"
 SLEEPER = ["sleep", "86400"]
 BRANCH_PREFIX = "story-engine/story-"
 STORY_ENVIRONMENT = "story-engine"
+NO_AGENT = "story-engine-no-agent"
 LAUNCH_VARIABLES = ("HOME", "PATH", "USER", "LOGNAME", "SHELL", "LANG", "LC_ALL", "TMPDIR", "TERM")
 AGENT_LINE = re.compile(r"agent-line:(\d+)")
 
@@ -85,6 +86,8 @@ class Relay(socketserver.ThreadingTCPServer):
             return self.checkout_step(asked)
         if asked["kind"] == "pid":
             return self.pid_step(asked)
+        if asked["kind"] == "look":
+            return self.look_step(asked)
         argv, stdin, folder = self.command_of(asked), asked.get("stdin", ""), self.folder_of(asked)
         environment = self.environment_of(asked)
         try:
@@ -185,6 +188,19 @@ class Relay(socketserver.ThreadingTCPServer):
         done = subprocess.run(argv, capture_output=True, text=True, timeout=STEP_SECONDS)
         if asked["action"] != "cut" and done.returncode == 0:
             subprocess.run(["git", "-C", checkout, "branch", "-D", asked["name"]], capture_output=True, text=True)
+        return {"code": done.returncode, "out": done.stdout, "err": done.stderr}
+
+    def look_step(self, asked: dict) -> dict:
+        """Let the journal's file scan take its look at a story checkout under a session no agent has: it records
+        what the checkout holds now and hands nothing to anyone, so only what a story's agent writes afterwards is
+        that agent's edit."""
+        folder = os.path.realpath(asked["in"])
+        worktrees = os.path.realpath(os.path.join(self.project, WORKTREES))
+        checkout, _, _ = os.path.relpath(folder, worktrees).partition(os.sep)
+        if not self.a_story_checkout(checkout) or os.path.dirname(folder) != worktrees:
+            raise Refused(f"{asked['in']} is neither the test checkout nor a story worktree")
+        done = subprocess.run([self.hook, "--file-scan", os.path.join(self.project, ".journal"), "--session", NO_AGENT, folder],
+                              capture_output=True, text=True, cwd=folder, timeout=STEP_SECONDS)
         return {"code": done.returncode, "out": done.stdout, "err": done.stderr}
 
     def scan_state_of(self, folder: str) -> str:

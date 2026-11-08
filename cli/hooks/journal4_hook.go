@@ -1,6 +1,7 @@
 package hooks
 
 import (
+	"strconv"
 	"bytes"
 	"encoding/json"
 	"io"
@@ -256,7 +257,7 @@ func Moment4Of(line map[string]any) (map[string]any, bool) {
 		tool["name"] = "Write"
 	}
 
-	agent := map[string]any{"session": line["session"], "id": line["agent"], "role": firstOf(line["role"], data["role"])}
+	agent := map[string]any{"session": sessionOf(line), "id": line["agent"], "role": firstOf(line["role"], data["role"])}
 	if project, named := os.LookupEnv(journalRoot); named {
 		agent["cwd"] = project
 	}
@@ -269,6 +270,18 @@ func Moment4Of(line map[string]any) (map[string]any, bool) {
 
 	return map[string]any{"event": "hook." + hook, "agent": agent, "tool": tool, "env": line["environment"], "data": data,
 		"settings": line["settings"]}, true
+}
+
+func sessionOf(line map[string]any) string {
+	if session := asText(line["session"]); session != "" {
+		return session
+	}
+
+	if agent := asAgent(line["agent"]); agent != 0 {
+		return "agent-" + strconv.Itoa(agent)
+	}
+
+	return ""
 }
 
 func within(folder, project, file string) string {
