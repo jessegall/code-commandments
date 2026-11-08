@@ -255,6 +255,19 @@ func (a *Agent) moves() Ran {
 	})
 }
 
+func (a *Agent) Asks(argv ...string) Ran {
+	a.s.t.Helper()
+
+	a.s.steps = append(a.s.steps, journalStep(argv))
+
+	ran, err := a.s.journal.RunsAs(a.folder, a.row, a.role, argv...)
+	if err != nil {
+		a.s.Fails(err.Error())
+	}
+
+	return ran
+}
+
 func (a *Agent) Runs(command string) Ran {
 	a.s.t.Helper()
 

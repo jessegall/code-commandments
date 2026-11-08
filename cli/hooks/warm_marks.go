@@ -179,6 +179,10 @@ func AgainstTheProgramNarrowed(marking Marking, files []string, rulesFor func(st
 
 		read = time.Since(reading)
 
+		if nothingCameOutOf(streams) {
+			return nil, read, parseFailed
+		}
+
 		if why := languageInTheTree(base, file); why != "" {
 			return nil, read, why
 		}
@@ -209,6 +213,18 @@ func AgainstTheProgramNarrowed(marking Marking, files []string, rulesFor func(st
 	}
 
 	return marksOverTogether(view, marking, judged, rulesFor, changedFor), read, ""
+}
+
+func nothingCameOutOf(streams []*contract.Stream) bool {
+	for _, stream := range streams {
+		for _, file := range stream.Files {
+			if file.Errors > 0 && len(file.Root.Children) == 0 {
+				return true
+			}
+		}
+	}
+
+	return false
 }
 
 func overlaid(over *warm.Overlay, base *warm.Base, held branchRoot, files []string, streams []*contract.Stream, marks map[string]warm.Known, now time.Time) (*engine.Codebase, Narrowed) {
@@ -537,7 +553,7 @@ func Warming(root string, project config.Config) {
 		lastRead.Store(named.key(), fmt.Sprintf("it was last read in %v, %d files, at %s (the saved tree was not used: %v)",
 			time.Since(began).Round(time.Second), len(codebase.Files()), time.Now().Format("15:04:05"), refused))
 
-		_ = kept.Hold(named.project, named.branch, roots, codebase, taken).Save(folder, bridge.Release)
+		savesWhileHeld(kept.Hold(named.project, named.branch, roots, codebase, taken), named, folder)
 	}()
 }
 
@@ -561,7 +577,7 @@ func broughtBackFromDisk(named branchRoot, roots, files []string, saved warm.Sav
 			return false
 		}
 
-		_ = patched.Save(folder, bridge.Release)
+		savesWhileHeld(patched, named, folder)
 	}
 
 	ledger.Of(named.project).Counts(ledger.TreesLoadedFromDisk, 1, named.project)
@@ -569,6 +585,14 @@ func broughtBackFromDisk(named branchRoot, roots, files []string, saved warm.Sav
 		time.Since(began).Round(time.Millisecond), len(codebase.Files()), len(moved), time.Now().Format("15:04:05")))
 
 	return true
+}
+
+func savesWhileHeld(base *warm.Base, named branchRoot, folder string) {
+	_ = base.Save(folder, bridge.Release)
+
+	if _, held := kept.Holds(named.project, named.branch); !held {
+		os.RemoveAll(folder)
+	}
 }
 
 func movedSince(marks map[string]warm.Known, files []string) []string {

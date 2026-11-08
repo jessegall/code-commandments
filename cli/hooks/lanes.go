@@ -25,6 +25,8 @@ const lanesEvent = "commandments.lanes"
 // Lanes is `lanes`: what the running service holds, and the way to drop a lane so the next question reads it again.
 type Lanes struct{}
 
+const droppingTheTree = "tree:"
+
 func (Lanes) Names() []string {
 	return []string{"lanes"}
 }
@@ -32,10 +34,12 @@ func (Lanes) Names() []string {
 func (Lanes) Help() help.Help {
 	return help.Of("Say what the running service holds: a lane per checkout with the commit it was cut from, how much of it is held and when it last answered, the trees held for the project, the ceiling over them all, and what the last merges and hand-ins brought in.").
 		Form("lanes", "what the service holds now").
-		Form("lanes --drop <checkout>", "let that lane go, so the next question about it reads the checkout again").
+		Form("lanes --drop=<checkout>", "let that lane go, so the next question about it reads the checkout again").
 		Form("lanes --drop-all", "let every lane go").
-		Option("--drop", "the checkout whose lane to let go").
+		Form("lanes --drop-tree=<checkout>", "let the tree of that checkout go with its saved copy, so the next question reads the whole tree again").
+		Option("--drop=<checkout>", "the checkout whose lane to let go").
 		Option("--drop-all", "let every lane go").
+		Option("--drop-tree=<checkout>", "the checkout whose tree to let go, with its saved copy").
 		Note("It asks the running service, since what is held lives in that process and nowhere else. With no service " +
 			"running there is nothing to say, and a judging then reads what it needs each time. Dropping a lane is how " +
 			"a stale answer is told from a wrong rule: drop it, ask again, and compare. What the last merges and " +
@@ -48,10 +52,13 @@ func (Lanes) Run(in *cli.Input, console cli.Console) (int, error) {
 	asked := map[string]any{"event": lanesEvent}
 
 	dropped, named := in.Option("drop")
+	tree, namedTree := in.Option("drop-tree")
 
 	switch {
 	case in.HasFlag("drop-all"):
 		asked["drop"] = "*"
+	case namedTree && tree != "":
+		asked["drop"] = droppingTheTree + tree
 	case named && dropped != "":
 		asked["drop"] = dropped
 	}
@@ -146,6 +153,22 @@ func lanesLabel() string {
 	return said + ", " + strconv.Itoa(len(kept.Lanes())) + " lane(s)"
 }
 
+func treeDropped(checkout string) string {
+	named, ok := rootOf(checkout)
+	if !ok {
+		return checkout + " is not on a branch of a project, so it has no tree to let go."
+	}
+
+	kept.Drop(named.project, named.branch)
+	lastRead.Delete(named.key())
+
+	if err := os.RemoveAll(savedTreeFolder(named)); err != nil {
+		return "Let go of the tree of " + named.project + ", but its saved copy stays: " + err.Error()
+	}
+
+	return "Let go of the tree of " + named.project + " on " + named.branch + " and its saved copy. The next question about it reads the whole tree again."
+}
+
 func lanesAsked(line map[string]any) (string, bool) {
 	if asText(line["event"]) != lanesEvent {
 		return "", false
@@ -157,6 +180,10 @@ func lanesAsked(line map[string]any) (string, bool) {
 func lanesHeld(drop string) string {
 	if drop == "*" {
 		return "Let go of " + strconv.Itoa(kept.DropsEveryLane()) + " lane(s). The next question about each reads its checkout again."
+	}
+
+	if checkout, tree := strings.CutPrefix(drop, droppingTheTree); tree {
+		return treeDropped(checkout)
 	}
 
 	if drop != "" {

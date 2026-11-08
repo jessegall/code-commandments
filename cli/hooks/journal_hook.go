@@ -596,6 +596,10 @@ func serve(listener net.Listener, current func() bool, advice *advisers) {
 				expecting(given)
 				advice.add(asked{given, judgedAfter(asText(read["event"])), awaited(asText(read["event"]))})
 
+				if keepsTheTreeWarm(asText(read["event"])) {
+					WarmsWhatItServes(firstText(os.Getenv(journalRoot), cwdOf()))
+				}
+
 				return
 			}
 

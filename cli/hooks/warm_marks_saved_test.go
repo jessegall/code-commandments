@@ -1,12 +1,14 @@
 package hooks
 
 import (
+	"bytes"
 	"os"
 	"path/filepath"
 	"slices"
 	"testing"
 
 	"github.com/jessegall/code-commandments/cli/warm"
+	"github.com/jessegall/code-commandments/contract"
 )
 
 func TestASavedTreeCatchesUpOnWhatChangedAppearedOrWasDeleted(t *testing.T) {
@@ -37,5 +39,19 @@ func TestASavedTreeCatchesUpOnWhatChangedAppearedOrWasDeleted(t *testing.T) {
 
 	if want := []string{path("changed.py"), path("deleted.py"), path("new.py")}; !slices.Equal(moved, want) {
 		t.Errorf("moved since the save: %v, want %v", moved, want)
+	}
+}
+
+func TestAFileTheParserGotNothingOutOfIsToldAsNotParsed(t *testing.T) {
+	stream, err := contract.ReadAll(bytes.NewBufferString(`{"header":{"contract":"tree","version":4,"language":"python","bridge":{"name":"t","version":"1"},"roots":["/p"]}}
+{"file":{"path":"/p/a.py","language":"python","errors":1,"comments":[],"root":{"id":0,"kind":"Module","role":"other","span":[0,1,1]}}}
+{"trailer":{"files":1}}
+`))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if !nothingCameOutOf([]*contract.Stream{stream}) {
+		t.Error("a file with an error and no tree was taken for a clean one")
 	}
 }

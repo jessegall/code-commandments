@@ -41,7 +41,7 @@ func TestARunThatReadsNoFileOfAnyHeldLanguageSaysSo(t *testing.T) {
 func TestAPartialJudgingNeverCallsAFileClean(t *testing.T) {
 	s := held(t)
 	ada := s.Agent("Ada")
-	s.DropsTheLane(s.TestCheckout())
+	s.DropsTheTree(s.TestCheckout())
 
 	ada.Edits(story.Clean, "total.py")
 

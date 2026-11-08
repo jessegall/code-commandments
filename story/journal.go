@@ -49,6 +49,10 @@ func (j Journal) Runs(in string, argv ...string) (Ran, error) {
 	return j.ask(request{Kind: "command", Argv: argv, In: in})
 }
 
+func (j Journal) RunsAs(in, actor, role string, argv ...string) (Ran, error) {
+	return j.ask(request{Kind: "command", Argv: argv, In: in, Actor: actor, Role: role})
+}
+
 func (j Journal) Hooks(in, body, actor, role string) (Ran, error) {
 	return j.ask(request{Kind: "hook", Stdin: body, In: in, Actor: actor, Role: role})
 }

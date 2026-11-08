@@ -232,10 +232,10 @@ class Relay(socketserver.ThreadingTCPServer):
         return {"code": done.returncode, "out": done.stdout, "err": done.stderr}
 
     def environment_of(self, asked: dict) -> dict:
-        """What a step runs with. A hook sent for a story's agent runs with the variables a fresh launch of that agent
+        """What a step runs with. A hook or command sent for a story's agent runs with the variables a fresh launch of that agent
         has, and none of the session that started the relay, whose own variables would make the journal take the step
         as that session's."""
-        if asked["kind"] != "hook" or not asked.get("actor"):
+        if asked["kind"] not in ("hook", "command") or not asked.get("actor"):
             return dict(os.environ)
         environment = {name: os.environ[name] for name in LAUNCH_VARIABLES if name in os.environ}
         role = asked.get("role") or "worker"

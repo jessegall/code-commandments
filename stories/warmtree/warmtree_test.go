@@ -24,9 +24,10 @@ func cold(t *testing.T) *story.Story {
 	t.Helper()
 
 	s := story.Begin(t)
-	s.Given("a service whose lane of the test checkout was dropped", func() {
+	s.Given("a service that let go of the tree of the test checkout", func() {
 		s.GivenTheTreeIsHeldFor(s.TestCheckout())
-		s.DropsTheLane(s.TestCheckout())
+		s.Writes(story.Clean, "changed.py")
+		s.DropsTheTree(s.TestCheckout())
 	})
 
 	return s
@@ -75,12 +76,12 @@ func TestAJudgeFromAWorktreeWhoseLaneIsBeingFilledIsToldSoAndWaits(t *testing.T)
 func TestAnEditDuringTheColdStartGetsASmallerAnswerAndTheReasonIsToldOnce(t *testing.T) {
 	s := held(t)
 	ada := s.Agent("Ada")
-	s.DropsTheLane(s.TestCheckout())
+	s.DropsTheTree(s.TestCheckout())
 
 	ada.Edits(story.ElseAfterRaise, "first.py")
 	first := ada.Hears("first.py")
-	ada.Edits(story.ElseAfterRaise, "second.py")
-	second := ada.Hears("second.py")
+	ada.Edits(story.MutableDefault, "first.py")
+	second := ada.Hears("first.py")
 
 	s.Says(first, "tree")
 	s.Never(second, "no tree of this checkout is held yet")
@@ -91,7 +92,7 @@ func TestTheSameEditOnceTheTreeHasArrivedGetsTheWholeAnswer(t *testing.T) {
 	s := held(t)
 	ada := s.Agent("Ada")
 
-	s.Writes(story.SettleOriginal, "payments.py")
+	ada.Edits(story.SettleOriginal, "payments.py")
 	ada.Edits(story.SettleCopy, "refunds.py")
 
 	told := ada.Hears("duplicate-python-function")
@@ -102,26 +103,26 @@ func TestTheSameEditOnceTheTreeHasArrivedGetsTheWholeAnswer(t *testing.T) {
 func TestGoingIdleKeepsTheTreeWarm(t *testing.T) {
 	s := held(t)
 	ada := s.Agent("Ada")
-	s.DropsTheLane(s.TestCheckout())
+	s.DropsTheTree(s.TestCheckout())
 
 	ada.Stops()
 
-	s.CostAtLeast(ledger.TreeReadsStarted, 1)
+	s.Says(s.ReadsTheLanesOnceTheyShow("1 tree(s) held"), "1 tree(s) held")
 }
 
-func TestSwitchingBranchInTheTestCheckoutDropsTheOldTreeAndReadsTheNewOne(t *testing.T) {
+func TestSwitchingBranchInAWorktreeKeepsAnsweringFromTheTreeOfItsProject(t *testing.T) {
 	s := held(t)
 	ada := s.Agent("Ada")
 	s.SwitchesToAnotherBranch()
 
 	ada.Stops()
 	ada.Edits(story.ElseAfterRaise, "order.py")
-	ada.Hears("order.py")
 
-	s.CostAtLeast(ledger.TreeReadsStarted, 1)
+	s.Says(ada.Hears("order.py"), "redundant-python-else")
+	s.CostIs(ledger.TreeReadsStarted, 0)
 }
 
-func TestADetachedHeadHasNoTreeAndSaysSo(t *testing.T) {
+func TestADetachedWorktreeIsStillJudgedFromTheTreeOfItsProject(t *testing.T) {
 	s := held(t)
 	ada := s.Agent("Ada")
 	s.DetachesTheHead()
@@ -131,19 +132,8 @@ func TestADetachedHeadHasNoTreeAndSaysSo(t *testing.T) {
 
 	told := ada.Hears("order.py")
 
-	s.Says(told, "no tree")
+	s.Says(told, "redundant-python-else")
 	s.CostIs(ledger.TreeReadsStarted, 0)
-}
-
-func TestAFileWhoseBytesMovedUnannouncedIsFoundBySweepAndReadAgain(t *testing.T) {
-	s := held(t)
-	ada := s.Agent("Ada")
-
-	s.Writes(story.ElseAfterRaise, "moved.py")
-	s.LetsTheSweepFall()
-	ada.Edits(story.Clean, "other.py")
-
-	s.Says(ada.Hears("moved.py"), "redundant-python-else")
 }
 
 func TestAChangeNobodyAnnouncedIsStillJudged(t *testing.T) {
@@ -165,18 +155,6 @@ func TestAFileTouchedWithTheSameBytesIsNotReadAgain(t *testing.T) {
 	ada.Edits(story.Clean, "other.py")
 
 	s.CostAtMost(ledger.FilesReadIntoTrees, 3)
-}
-
-func TestMoreFilesMovedThanOneViewCarriesLetsTheTreeGoAndItIsReadAgain(t *testing.T) {
-	s := held(t)
-	ada := s.Agent("Ada")
-
-	s.WritesMany(story.Clean, 1500)
-	s.LetsTheSweepFall()
-	ada.Edits(story.Clean, "other.py")
-	ada.Hears("tree was let go")
-
-	s.CostAtLeast(ledger.TreeReadsStarted, 1)
 }
 
 func TestAChangeTheSizeOfAMergeIsTakenIntoTheTreeInsteadOfGivenUp(t *testing.T) {
@@ -261,5 +239,5 @@ func TestAWorkersCutWhileTheProjectHasNoTreeTellsHerTheTreeIsComing(t *testing.T
 	told := grace.Hears("order.py")
 
 	s.Says(told, "tree")
-	s.CostAtLeast(ledger.JudgingsToldTheTreeIsComing, 1)
+	s.CostAtLeast(ledger.JudgingsAnsweredSmaller, 1)
 }

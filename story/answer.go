@@ -80,10 +80,26 @@ func (s *Story) CostAtLeast(name string, least int) {
 	}
 }
 
+func (s *Story) CostReaches(name string, least int) {
+	s.t.Helper()
+
+	for until := time.Now().Add(hearsWithin); !s.rehearsal && s.Cost(name) < least && time.Now().Before(until); {
+		time.Sleep(betweenMoments)
+	}
+
+	s.CostAtLeast(name, least)
+}
+
 func (s *Story) DropsTheLane(checkout string) Ran {
 	s.t.Helper()
 
-	return s.Asks("commandments", "lanes", "--drop", checkout)
+	return s.Asks("commandments", "lanes", "--drop="+checkout)
+}
+
+func (s *Story) DropsTheTree(checkout string) {
+	s.t.Helper()
+
+	s.Says(s.Asks("commandments", "lanes", "--drop-tree="+checkout), "Let go of the tree")
 }
 
 func (s *Story) ReadsTheLanes() Ran {

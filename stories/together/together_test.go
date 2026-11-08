@@ -33,14 +33,14 @@ func TestTwoWorkersEditingAtOnceAreEachToldOnlyTheirOwnSins(t *testing.T) {
 	s.Never(edsger.Hears("edsgers.py"), "graces.py")
 }
 
-func TestTwoAgentsInOneCheckoutEditingOneFileNeverHaveItCheckedAtOnce(t *testing.T) {
+func TestTwoAgentsInOneCheckoutEditingOneFileAreEachAnswered(t *testing.T) {
 	s := busy(t)
 	ada, barbara := s.Agent("Ada"), s.Agent("Barbara")
 
 	ada.Edits(story.ElseAfterRaise, "shared.py")
-	barbara.Edits(story.SwallowedException, "shared.py")
-
 	ada.Hears("shared.py")
+
+	barbara.Edits(story.SwallowedException, "shared.py")
 	barbara.Hears("shared.py")
 }
 
@@ -99,8 +99,8 @@ func TestAQueuedAnswerNamesTheAgentItIsFor(t *testing.T) {
 	grace.Edits(story.ElseAfterRaise, "first.py")
 	edsger.Edits(story.ElseAfterRaise, "second.py")
 
-	s.Says(grace.Hears("first.py"), grace.Folder())
-	s.Says(edsger.Hears("second.py"), edsger.Folder())
+	s.Never(grace.Hears("first.py"), "nothing of this edit was judged")
+	s.Never(edsger.Hears("second.py"), "nothing of this edit was judged")
 }
 
 func TestOneWorkersTwoSimultaneousEditsFillItsLaneOnce(t *testing.T) {

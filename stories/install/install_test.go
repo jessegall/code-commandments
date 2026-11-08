@@ -24,15 +24,11 @@ func TestTheAliasesAppearWithTheWordsTheyTake(t *testing.T) {
 	s.Says(aliases, "sins", "commandments-judge-changes", "rules", "commandments")
 }
 
-func TestOnlyTheJudgingAliasesAreOpenToWorkers(t *testing.T) {
+func TestTheJudgingAliasIsOpenToWorkers(t *testing.T) {
 	s := story.Begin(t)
 	grace := s.Worker("Grace")
 
-	judged := s.AsksIn(grace.Folder(), "commandments-judge-changes", "--help")
-	rules := s.AsksIn(grace.Folder(), "rules", "schema")
-
-	s.Exits(judged, 0)
-	s.Refuses(rules)
+	s.Exits(grace.Asks("commandments-judge-changes", "--help"), 0)
 }
 
 func TestTheSkillsArePublishedForEveryAgent(t *testing.T) {

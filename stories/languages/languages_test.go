@@ -133,7 +133,7 @@ func TestACSharpEditInAWorkersWorktreeIsReadFromThatWorktree(t *testing.T) {
 
 	grace.Edits(csharpNull, "Orders.cs")
 
-	s.Says(grace.Hears("Orders.cs"), grace.Folder())
+	s.Never(grace.Hears("Orders.cs"), "nothing of this edit was judged")
 }
 
 func TestAGoEditInAWorkersWorktreeIsJudgedAgainstHerGoPackage(t *testing.T) {

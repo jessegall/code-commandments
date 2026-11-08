@@ -31,9 +31,10 @@ func cold(t *testing.T) *story.Story {
 	t.Helper()
 
 	s := story.Begin(t)
-	s.Given("a service whose lane of the test checkout was dropped", func() {
+	s.Given("a service that let go of the tree of the test checkout", func() {
 		s.GivenTheTreeIsHeldFor(s.TestCheckout())
-		s.DropsTheLane(s.TestCheckout())
+		s.Writes(story.Clean, "changed.py")
+		s.DropsTheTree(s.TestCheckout())
 	})
 
 	return s
@@ -45,7 +46,7 @@ func TestTheOneReadOfAColdTreeIsCountedWithItsFilesAndItsTime(t *testing.T) {
 	judged := s.AsksIn(s.TestCheckout(), "sins", "--changes")
 
 	s.Never(judged, "reads the whole tree itself")
-	s.CostAtLeast(ledger.TreeReadsFinished, 1)
+	s.CostReaches(ledger.TreeReadsFinished, 1)
 	s.CostAtLeast(ledger.FilesReadIntoTrees, 1)
 }
 
@@ -225,9 +226,9 @@ func TestTheAnswerSaysHowLongThePluginTook(t *testing.T) {
 
 	ada.Edits(story.MutableDefault, "timed.py")
 
-	told := ada.Hears("timed.py")
+	ada.Hears("timed.py")
 
-	s.Says(told, "ms")
+	s.Says(s.Asks("commandments", "why", "timed.py"), "ms")
 }
 
 func TestAJudgingForALaneThatClosedIsAbandonedAndQueuedForNobody(t *testing.T) {

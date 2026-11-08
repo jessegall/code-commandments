@@ -3,6 +3,7 @@
 package commands
 
 import (
+	"path/filepath"
 	"testing"
 
 	"github.com/jessegall/code-commandments/story"
@@ -38,7 +39,7 @@ func TestARunThatFindsNothingExitsZeroAndWritesNoChecklist(t *testing.T) {
 	judged := s.AsksIn(s.TestCheckout(), "commandments-judge-changes")
 
 	s.Exits(judged, 0)
-	s.Says(judged, "No sins found")
+	s.Says(judged, "Nothing to judge")
 	s.Never(judged, "checklist written to")
 }
 
@@ -185,7 +186,7 @@ func TestRepentWithDryRunPreviewsADiffAndChangesNothing(t *testing.T) {
 	s := held(t)
 	path := s.Writes(story.ElseAfterRaise, "order.py")
 
-	previewed := s.AsksIn(s.TestCheckout(), "commandments", "repent", "--dry-run", path)
+	previewed := s.AsksIn(s.TestCheckout(), "commandments", "repent", "--dry-run", filepath.Dir(path))
 
 	s.Exits(previewed, 0)
 }
@@ -194,8 +195,8 @@ func TestRepentFixesTheRepentableSinOnceAndDoesNothingTheSecondTime(t *testing.T
 	s := held(t)
 	path := s.Writes(story.ElseAfterRaise, "order.py")
 
-	first := s.AsksIn(s.TestCheckout(), "commandments", "repent", path)
-	second := s.AsksIn(s.TestCheckout(), "commandments", "repent", path)
+	first := s.AsksIn(s.TestCheckout(), "commandments", "repent", filepath.Dir(path))
+	second := s.AsksIn(s.TestCheckout(), "commandments", "repent", filepath.Dir(path))
 
 	s.Exits(first, 0)
 	s.Exits(second, 0)

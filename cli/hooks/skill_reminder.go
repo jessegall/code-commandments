@@ -14,6 +14,7 @@ import (
 	"github.com/jessegall/code-commandments/cli/config"
 	"github.com/jessegall/code-commandments/cli/custom"
 	"github.com/jessegall/code-commandments/cli/git"
+	"github.com/jessegall/code-commandments/cli/ledger"
 	"github.com/jessegall/code-commandments/cli/scan"
 	"github.com/jessegall/code-commandments/cli/source"
 	"github.com/jessegall/code-commandments/contract"
@@ -85,6 +86,7 @@ func (SkillReminder) Handle(event Event) Response {
 
 	if why != "" {
 		Warming(event.Root, project)
+		ledger.Of(event.Root).Counts(ledger.JudgingsAnsweredSmaller, 1, event.Root+" because "+string(why))
 	}
 
 	asked := Asked{}
