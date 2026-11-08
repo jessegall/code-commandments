@@ -262,7 +262,7 @@ func Moment4Of(line map[string]any) (map[string]any, bool) {
 	}
 
 	if file := asText(tool["file"]); file != "" {
-		where, said := told.rootOrDerived(checkoutOf(asText(agent["cwd"]), file))
+		where, said := told.rootOrDerived(checkoutOf(asText(agent["cwd"]), file), file)
 		agent["cwd"] = where
 		agent["checkout_said"] = said
 	}

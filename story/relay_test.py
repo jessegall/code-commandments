@@ -178,6 +178,18 @@ class RelayTest(unittest.TestCase):
         again = self.ask({"kind": "worktree", "action": "cut", "name": "story-engine-grace"})
         self.assertEqual(again["code"], 0, again["err"])
 
+    def test_a_story_worktree_is_cut_with_no_scan_state_of_a_run_before(self) -> None:
+        checkout = self.scratch()
+        for line in (["init", "-q"], ["-c", "user.email=t@t", "-c", "user.name=t", "commit", "-q", "--allow-empty", "-m", "one"]):
+            subprocess.run(["git", "-C", checkout, *line], check=True, capture_output=True)
+        folder = os.path.join(self.project, ".journal", "worktrees", "story-engine-ada")
+        state = self.relay.scan_state_of(folder)
+        os.makedirs(state)
+        with open(os.path.join(state, "lock"), "w"):
+            pass
+        self.assertEqual(self.ask({"kind": "worktree", "action": "cut", "name": "story-engine-ada"})["code"], 0)
+        self.assertFalse(os.path.exists(state))
+
     def test_a_request_that_is_not_json_is_answered_not_dropped(self) -> None:
         with socket.create_connection(self.relay.server_address) as connection:
             connection.sendall(b"not json\n")

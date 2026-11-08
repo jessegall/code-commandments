@@ -1,3 +1,4 @@
+import hashlib
 import json
 import os
 import shutil
@@ -157,6 +158,7 @@ class Relay(socketserver.ThreadingTCPServer):
             done = subprocess.run(["git", "-C", folder, "rebase", branch], capture_output=True, text=True, timeout=STEP_SECONDS)
             return {"code": done.returncode, "out": done.stdout, "err": done.stderr}
         if asked["action"] == "cut":
+            shutil.rmtree(self.scan_state_of(folder), ignore_errors=True)
             subprocess.run(["git", "-C", checkout, "worktree", "remove", "--force", folder], capture_output=True, text=True)
             subprocess.run(["git", "-C", checkout, "worktree", "prune"], capture_output=True, text=True)
             argv = ["git", "-C", checkout, "worktree", "add", "-q", "-B", asked["name"], folder, "HEAD"]
@@ -166,6 +168,11 @@ class Relay(socketserver.ThreadingTCPServer):
         if asked["action"] != "cut" and done.returncode == 0:
             subprocess.run(["git", "-C", checkout, "branch", "-D", asked["name"]], capture_output=True, text=True)
         return {"code": done.returncode, "out": done.stdout, "err": done.stderr}
+
+    def scan_state_of(self, folder: str) -> str:
+        """What the journal's file scan kept of a checkout at this folder: a story's worktree is new each time, so
+        what a stopped run left here would hide its first edits."""
+        return os.path.join(self.project, ".journal", "runtime", "file-scan", hashlib.sha256(folder.encode()).hexdigest()[:16])
 
     def checkout_step(self, asked: dict) -> dict:
         """Move the test checkout off its branch, onto another branch or a detached head, and back to where it was."""

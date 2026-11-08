@@ -418,6 +418,10 @@ func (b *Base) ViewFrom(checkout string, rebuilt []*contract.Stream, project str
 	return view
 }
 
+func Same(one, two string) bool {
+	return real(one) == real(two)
+}
+
 func Under(folder, path string) (string, bool) {
 	under, err := filepath.Rel(real(folder), real(path))
 	if err != nil || strings.HasPrefix(under, "..") {
