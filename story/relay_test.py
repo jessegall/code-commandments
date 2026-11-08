@@ -141,6 +141,16 @@ class RelayTest(unittest.TestCase):
         self.assertEqual(ran["code"], 126)
         self.assertFalse(os.path.exists(path))
 
+    def test_a_file_inside_a_scratch_folder_of_a_story_worktree_is_written(self) -> None:
+        path = os.path.join(self.project, ".journal", "worktrees", "story-engine-grace", "bridge", "mypy", "story_scratch_a", "order.py")
+        self.assertEqual(self.ask({"kind": "write", "path": path, "stdin": "x = 1\n"})["code"], 0)
+        self.assertTrue(os.path.exists(path))
+
+    def test_a_file_in_a_worktree_not_named_for_the_stories_is_refused(self) -> None:
+        path = os.path.join(self.project, ".journal", "worktrees", "worker-707", "story_scratch_a", "order.py")
+        self.assertEqual(self.ask({"kind": "write", "path": path, "stdin": ""})["code"], 126)
+        self.assertFalse(os.path.exists(path))
+
     def test_a_file_outside_the_test_checkout_is_refused(self) -> None:
         path = os.path.join(self.project, "story_scratch_a", "order.py")
         self.assertEqual(self.ask({"kind": "write", "path": path, "stdin": ""})["code"], 126)

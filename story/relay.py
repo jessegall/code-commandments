@@ -134,11 +134,14 @@ class Relay(socketserver.ThreadingTCPServer):
 
     def scratch_path(self, named: str) -> str:
         path = os.path.realpath(named)
-        checkout = os.path.realpath(os.path.join(self.project, TEST_CHECKOUT))
-        under = os.path.relpath(path, checkout)
-        if under.startswith("..") or not any(part.startswith(SCRATCH_PREFIX) for part in under.split(os.sep)):
-            raise Refused(f"{named} is not inside a {SCRATCH_PREFIX}* folder of the test checkout")
+        worktrees = os.path.realpath(os.path.join(self.project, WORKTREES))
+        checkout, _, under = os.path.relpath(path, worktrees).partition(os.sep)
+        if not self.a_story_checkout(checkout) or not any(part.startswith(SCRATCH_PREFIX) for part in under.split(os.sep)):
+            raise Refused(f"{named} is not inside a {SCRATCH_PREFIX}* folder of the test checkout or a story worktree")
         return path
+
+    def a_story_checkout(self, name: str) -> bool:
+        return name == os.path.basename(TEST_CHECKOUT) or name.startswith(WORKTREE_PREFIX)
 
     def worktree_step(self, asked: dict) -> dict:
         """Cut or remove a worktree of the test checkout for a fake worker, named story-engine-*, beside the others."""
