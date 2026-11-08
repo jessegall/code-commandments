@@ -12,6 +12,14 @@ type Told struct {
 	Given   bool
 }
 
+func toldOn(line, data map[string]any) Told {
+	if _, named := line["checkout"].(map[string]any); named {
+		return toldIn(line)
+	}
+
+	return toldIn(data)
+}
+
 func toldIn(data map[string]any) Told {
 	block, named := data["checkout"].(map[string]any)
 	if !named {

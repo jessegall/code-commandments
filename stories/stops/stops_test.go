@@ -25,7 +25,9 @@ func TestStoppingWithUnjudgedChangesNudgesOnceNamingTheCountAndTheCommand(t *tes
 	ada.Edits(story.Clean, "a.py")
 	ada.Edits(story.Clean, "b.py")
 
-	s.Says(ada.Stops(), "judged files since the last commit", "judge")
+	ada.Stops()
+
+	s.Says(ada.Hears("judged files since the last commit"), "judge")
 }
 
 func TestTheSameBatchIsNudgedOnlyOnce(t *testing.T) {
@@ -38,11 +40,13 @@ func TestTheSameBatchIsNudgedOnlyOnce(t *testing.T) {
 }
 
 func TestACommitCommandIsNudgedBeforeItRuns(t *testing.T) {
-	s, ada := working(t)
+	_, ada := working(t)
 
 	ada.Edits(story.Clean, "a.py")
 
-	s.Says(ada.Runs("git commit -m story"), "before you commit")
+	ada.Runs("git commit -m story")
+
+	ada.Hears("before you commit")
 }
 
 func TestTheNudgeCountsOnlyTheFilesTheSessionChanged(t *testing.T) {
@@ -60,7 +64,9 @@ func TestAFileChangedByAShellCommandCountsAsTheSessions(t *testing.T) {
 	s.Writes(story.Clean, "shell.py")
 	ada.Runs("true")
 
-	s.Says(ada.Stops(), "judged")
+	ada.Stops()
+
+	ada.Hears("judged")
 }
 
 func TestAnOpenWorklistAtStopIsNamedBeforeAnythingElse(t *testing.T) {
@@ -69,7 +75,9 @@ func TestAnOpenWorklistAtStopIsNamedBeforeAnythingElse(t *testing.T) {
 	s.Writes(story.ElseAfterRaise, "order.py")
 	s.AsksIn(s.TestCheckout(), "sins", "--changes")
 
-	s.Says(ada.Stops(), "OPEN worklist")
+	ada.Stops()
+
+	ada.Hears("OPEN worklist")
 }
 
 func TestTheWorklistNudgeRepeatsOnlyWhenTheListChanged(t *testing.T) {
@@ -115,11 +123,13 @@ func TestACleanRerunDeletesTheChecklist(t *testing.T) {
 }
 
 func TestAChangedGoFileCountsInTheSessionsWorklist(t *testing.T) {
-	s, ada := working(t)
+	_, ada := working(t)
 
 	ada.Edits(goChanged, "total.go")
 
-	s.Says(ada.Stops(), "judged")
+	ada.Stops()
+
+	ada.Hears("judged")
 }
 
 func TestAStopWithNothingChangedAndNoWorklistIsSilent(t *testing.T) {
@@ -154,7 +164,9 @@ func TestInAWorktreeTheNudgeNamesTheCommandForThatWorktree(t *testing.T) {
 
 	grace.Edits(story.Clean, "a.py")
 
-	s.Says(grace.Stops(), grace.Folder())
+	grace.Stops()
+
+	s.Says(grace.Hears("judged files since the last commit"), grace.Folder())
 }
 
 func TestASubagentsStopIsSilentAboutJudging(t *testing.T) {
@@ -188,5 +200,5 @@ func TestTheSkillOfASinIsOwedNotMerelyNamed(t *testing.T) {
 
 	ada.Edits(story.ElseAfterRaise, "order.py")
 
-	s.Says(ada.Hears("commandments-python-flow"), "LOAD the skill")
+	s.Says(ada.Hears("commandments-python-flow"), "load `commandments-python-flow`")
 }

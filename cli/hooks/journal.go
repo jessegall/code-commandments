@@ -87,15 +87,11 @@ func MomentOf(given map[string]any) Moment {
 		ChangedWhole: asText(firstOf(data["type"], data["kind"])) == "create",
 		Batched:      batchedFilesIn(given),
 		BatchedLines: batchedLinesIn(given),
-		Cut:          cutIn(data),
+		Cut:          toldOn(given, data).Base,
 		CheckoutSaid: asText(agent["checkout_said"]),
 		Role:         roleIn(map[string]any{"role": firstOf(agent["role"], given["role"])}),
 		Settings:     settingsOn(given),
 	}
-}
-
-func cutIn(data map[string]any) string {
-	return toldIn(data).Base
 }
 
 func batchedFilesIn(given map[string]any) []any {

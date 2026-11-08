@@ -244,7 +244,7 @@ func Moment4Of(line map[string]any) (map[string]any, bool) {
 		tool["command"] = command
 	}
 
-	told := toldIn(data)
+	told := toldOn(line, data)
 
 	if file := asText(firstOf(input["file_path"], input["path"], input["notebook_path"], data["path"])); file != "" {
 		tool["file"] = within(firstText(told.Root, asText(data["cwd"]), asText(line["cwd"])), os.Getenv(journalRoot), file)
@@ -266,9 +266,12 @@ func Moment4Of(line map[string]any) (map[string]any, bool) {
 		where, said := told.rootOrDerived(checkoutOf(asText(agent["cwd"]), file), file)
 		agent["cwd"] = where
 		agent["checkout_said"] = said
+	} else if told.Root != "" {
+		agent["cwd"] = told.Root
+		agent["checkout_said"] = "the line"
 	}
 
-	return map[string]any{"event": "hook." + hook, "agent": agent, "tool": tool, "env": line["environment"], "data": data,
+	return map[string]any{"event": "hook." + hook, "agent": agent, "tool": tool, "env": line["environment"], "checkout": line["checkout"], "data": data,
 		"settings": line["settings"]}, true
 }
 

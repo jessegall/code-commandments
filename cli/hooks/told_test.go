@@ -5,6 +5,28 @@ import (
 	"testing"
 )
 
+func TestAStopIsAnsweredInTheCheckoutTheLineNames(t *testing.T) {
+	moment, known := Moment4Of(map[string]any{
+		"v": 5, "event": "idle", "agent": 1,
+		"checkout": map[string]any{"root": "/project/worktree", "project_root": "/project", "base_commit": "aaaaaaa", "exists": true},
+		"data":     map[string]any{"cwd": "/project"},
+	})
+
+	if !known {
+		t.Fatal("the line is not a moment at all")
+	}
+
+	held := MomentOf(Stamped(moment))
+
+	if held.Cwd != "/project/worktree" {
+		t.Errorf("the stop is answered in %s, and the line named /project/worktree", held.Cwd)
+	}
+
+	if held.Cut != "aaaaaaa" {
+		t.Errorf("the commit the checkout was cut from reads as %q", held.Cut)
+	}
+}
+
 func TestTheCheckoutIsTakenFromTheLineWhereTheLineSaysIt(t *testing.T) {
 	root, _ := workerProject(t)
 	worktree := stressWorktreeIn(root, 17)
