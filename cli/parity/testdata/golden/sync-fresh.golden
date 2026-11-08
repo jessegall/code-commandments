@@ -533,8 +533,6 @@ sha256 d3f8198fa20d0c0ab5c59d91033dbac55574230059a4ecefc870d55144eca79b
 # Add your own exceptions underneath — they are preserved across a sync.
 *
 !.gitignore
-!config.php
-!config.json
 !reports.json
 !custom/
 !custom/**

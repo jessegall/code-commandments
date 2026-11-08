@@ -1,6 +1,7 @@
 package hooks
 
 import (
+	"slices"
 	"strconv"
 	"strings"
 
@@ -23,6 +24,10 @@ func (m SinMark) IsFiled() bool {
 	return m.Filed.Issue > 0
 }
 
+func touchedAndUnfiled(marks []SinMark) []SinMark {
+	return slices.DeleteFunc(marks, func(mark SinMark) bool { return !mark.Touched || mark.IsFiled() })
+}
+
 // Marking makes the marks of one look, holding what this project has reported so the record is read once for the whole look rather than once for every finding.
 type Marking struct {
 	root   string
@@ -34,6 +39,12 @@ func Marks(root string) Marking {
 	record, _ := reported.Of(root)
 
 	return Marking{root: root, record: record}
+}
+
+func (m Marking) In(checkout string) Marking {
+	m.root = checkout
+
+	return m
 }
 
 func (m Marking) CutFrom(cut string) Marking {

@@ -351,6 +351,10 @@ func ChangedLinesSince(root, commit, file string) ChangedLines {
 	return FromDiff(run(root, "diff", "-U0", commit, "--", file))
 }
 
+func ChangedLinesBetween(root, before, after, file string) ChangedLines {
+	return FromDiff(run(root, "diff", "-U0", before, after, "--", file))
+}
+
 var anyLineBreak = regexp.MustCompile(`\r\n|[\n\r\x0B\f]`)
 
 func pathSet(root, lines string) map[string]bool {
@@ -404,7 +408,7 @@ func FromDiff(diff string) ChangedLines {
 			count = leadingInt(added[1])
 		}
 
-		ranges = append(ranges, [2]int{start, start + count})
+		ranges = append(ranges, [2]int{start, start + count - 1})
 	}
 
 	return ChangedLines{ranges: ranges}

@@ -227,7 +227,7 @@ func (e Event) ChangedLines(file string) git.ChangedLines {
 		return changed
 	}
 
-	return git.ChangedLinesOf(e.Root, file)
+	return git.ChangedLinesOf(checkoutOf(e.Root, file), file)
 }
 
 func writtenSince(payload map[string]any) bool {

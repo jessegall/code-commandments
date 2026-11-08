@@ -35,14 +35,14 @@ exit: 1
 [1;33mcsharp/class-layout[0m  (8)
   [1;36m↳ LOAD the skill `commandments-csharp-class-layout` before fixing[0m
     [2mDon't fix from memory. If you think it's already loaded, assume it is NOT — a compaction may have dropped it — and load it again to be sure.[0m
-  [36mShop/Notifications/Throttles.cs:9[0m  FieldDeclaration  [2m[MemberOutOfOrderDetector][0m
-  [36mShop/Orders/InvoiceNumbers.cs:12[0m  FieldDeclaration  [2m[MemberAfterMethodDetector][0m
-  [36mShop/Orders/InvoiceNumbers.cs:12[0m  FieldDeclaration  [2m[MemberOutOfOrderDetector][0m
-  [36mShop/Pricing/ExchangeRates.cs:9[0m  FieldDeclaration  [2m[MemberOutOfOrderDetector][0m
+  [36mShop/Notifications/Throttles.cs:9[0m  FieldDeclaration Window  [2m[MemberOutOfOrderDetector][0m
+  [36mShop/Orders/InvoiceNumbers.cs:12[0m  FieldDeclaration Prefix  [2m[MemberAfterMethodDetector][0m
+  [36mShop/Orders/InvoiceNumbers.cs:12[0m  FieldDeclaration Prefix  [2m[MemberOutOfOrderDetector][0m
+  [36mShop/Pricing/ExchangeRates.cs:9[0m  FieldDeclaration Base  [2m[MemberOutOfOrderDetector][0m
   [36mShop/Reports/ExportJobs.cs:9[0m  PropertyDeclaration Format  [2m[MemberAfterMethodDetector][0m
   [36mShop/Shipping/CourierAccounts.cs:13[0m  PropertyDeclaration Courier  [2m[MemberAfterMethodDetector][0m
   [36mShop/Shipping/CourierAccounts.cs:16[0m  PropertyDeclaration CreditCents  [2m[MemberAfterMethodDetector][0m
-  [36mShop/Stock/Reorders.cs:16[0m  FieldDeclaration  [2m[MemberOutOfOrderDetector][0m
+  [36mShop/Stock/Reorders.cs:16[0m  FieldDeclaration SafetyDays  [2m[MemberOutOfOrderDetector][0m
 
 [1;33mcsharp/dependency-direction[0m  (7)
   [1;36m↳ LOAD the skill `commandments-csharp-dependency-direction` before fixing[0m
@@ -350,5 +350,6 @@ exit: 1
 [1m240 sins[0m across 17 skills.
 
 --- stderr
+· this run reads the whole tree itself, which is why it is slow: no service answered, so there is none up for this project
 
 --- files

@@ -3,5 +3,6 @@ exit: 0
 [32m✓ Nothing to judge: no source file under the path is among the lines changed in the working tree.[0m
 
 --- stderr
+· this run reads the whole tree itself, which is why it is slow: no service answered, so there is none up for this project
 
 --- files

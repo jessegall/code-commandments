@@ -5,6 +5,29 @@ exit: 0
 --- stderr
 
 --- files
+=== changed .commandments/.ledger
+judgings-answered-smaller: 2
+-----
+<time>	judgings_answered_smaller	<project> because no tree of this checkout is held and none is being read, so only the rules that answer from one file will ever run here
+<time>	judgings_answered_smaller	<project> because no tree of this checkout is held and none is being read, so only the rules that answer from one file will ever run here
+-----
+Code-commandments — what the judging service has cost this project: every read of a whole tree and every judging it answered, counted, so a test or a person can see whether a run read the tree or waited for it.
+
+The block above the first divider is this file's state, one `name: value` per line:
+  tree-reads-started                how many times the service began reading a whole tree
+  tree-reads-finished               how many of those reads finished and were kept
+  tree-reads-failed                 how many of those reads failed
+  trees-loaded-from-disk            how many times a tree saved by this same binary was loaded instead of read
+  files-read-into-trees             the files all finished reads parsed between them
+  judgings-from-the-tree            judgings the service answered from a tree it held
+  judgings-told-the-tree-is-coming  judgings told to ask again because a read of the tree was running
+  judgings-declined                 judgings the service declined, so the run read the files itself
+  judgings-answered-smaller         judgings answered by the rules that read one file only, because the tree could not carry them
+
+Between the dividers is the list: one event per line: the unix time in milliseconds, a tab, what happened, a tab, the checkout or project it was for
+
+Safe to delete — the counts start again from nothing; nothing reads them but tests and a person.
+
 === changed .commandments/dashboards/findings.json
 []
 === changed .commandments/dashboards/sins.json
@@ -62,8 +85,8 @@ Between the dividers is the list: one finding per line: the file, a tab, then th
 Safe to delete — the findings still standing are named once more.
 
 === changed plugin-data/judgings.log
-<time> | PostToolUse | project=<project> | branch=master | tree=declined | overlay=0 | parsed=1 in <took> | rules=167 of 168 in <took> | sins=1 | heap=<held> resident=<held> withBridges=<held> | because no tree of this checkout is held and none is being read, so only the rules that answer from one file will ever run here
-<time> | PostToolUse | project=<project> | branch=master | tree=declined | overlay=0 | parsed=1 in <took> | rules=167 of 168 in <took> | sins=0 | heap=<held> resident=<held> withBridges=<held> | because no tree of this checkout is held and none is being read, so only the rules that answer from one file will ever run here
+<time> | PostToolUse | project=<project> | branch=master | tree=declined | overlay=0 | parsed=1 in <took> | rules=167 of 247 in <took> | sins=1 | files=<project>/src/Order.php | heap=<held> resident=<held> withBridges=<held> | because no tree of this checkout is held and none is being read, so only the rules that answer from one file will ever run here
+<time> | PostToolUse | project=<project> | branch=master | tree=declined | overlay=0 | parsed=1 in <took> | rules=167 of 247 in <took> | sins=0 | files=<project>/src/Order.php | heap=<held> resident=<held> withBridges=<held> | because no tree of this checkout is held and none is being read, so only the rules that answer from one file will ever run here
 
 === changed plugin-data/sins.json
 []

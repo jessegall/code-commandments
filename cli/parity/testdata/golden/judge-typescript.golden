@@ -63,7 +63,6 @@ exit: 1
 [1m29 sins[0m across 3 skills.
 
 --- stderr
-⚠ no class of a package is read: composer.json declares dependencies but vendor/autoload.php is not there: run composer install
-  ↳ a method a package's interface fixes reads as the class's own, so a rule that would excuse it cannot
+· this run reads the whole tree itself, which is why it is slow: no service answered, so there is none up for this project
 
 --- files

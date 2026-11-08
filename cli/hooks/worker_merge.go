@@ -389,7 +389,7 @@ func (m merging) deep(project config.Config, rules []detectors.Detector) handIn 
 	since := git.MergeBase(m.worktree, m.cutFrom())
 	root := projectOf(m.worktree)
 
-	found, _, why := AgainstTheProgramNarrowed(Marks(root).CutFrom(since), slices.Sorted(maps.Keys(changed)),
+	found, _, why := AgainstTheProgramNarrowed(Marks(root).In(m.worktree).CutFrom(since), slices.Sorted(maps.Keys(changed)),
 		func(string) []detectors.Detector { return rules },
 		func(file string) git.ChangedLines { return git.ChangedLinesSince(m.worktree, since, file) }, root)
 	if why != "" {
@@ -398,7 +398,7 @@ func (m merging) deep(project config.Config, rules []detectors.Detector) handIn 
 
 	var marks []SinMark
 	for _, file := range slices.Sorted(maps.Keys(found)) {
-		marks = append(marks, slices.DeleteFunc(found[file], func(mark SinMark) bool { return !mark.Touched || mark.IsFiled() })...)
+		marks = append(marks, touchedAndUnfiled(found[file])...)
 	}
 
 	return handIn{marks: marks, got: gotWhole}
@@ -456,7 +456,7 @@ func (m merging) cutFrom() string {
 
 func (m merging) marks(codebase *engine.Codebase, rules []detectors.Detector, changed map[string]bool) []SinMark {
 	since := git.MergeBase(m.worktree, m.cutFrom())
-	marking := Marks(m.worktree)
+	marking := Marks(projectOf(m.worktree)).In(m.worktree)
 	lines := map[string]git.ChangedLines{}
 	var marks []SinMark
 

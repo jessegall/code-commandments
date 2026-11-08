@@ -3,6 +3,7 @@ exit: 0
 [32m✓ No sins found in 1 file.[0m
 
 --- stderr
+· this run reads the whole tree itself, which is why it is slow: no service answered, so there is none up for this project
 
 --- files
 === changed .commandments/config.php

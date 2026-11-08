@@ -278,6 +278,8 @@ var hashedIdentity = regexp.MustCompile(`"[0-9a-f]{40}":`)
 
 var unixStamp = regexp.MustCompile(`(?m)^(marked-at|started-at): \d{9,}$`)
 
+var listedUnixStamp = regexp.MustCompile(`(?m)^\d{13}\t`)
+
 var tookLong = regexp.MustCompile(`\b\d+(\.\d+)?(ms|s|µs)\b`)
 
 var heldBytes = regexp.MustCompile(`\b(heap|resident|withBridges)=\d+MB`)
@@ -295,6 +297,7 @@ func normalise(text, repo, project string) string {
 	text = versionRow.ReplaceAllString(text, "${1}<version>")
 
 	text = unixStamp.ReplaceAllString(text, "$1: <time>")
+	text = listedUnixStamp.ReplaceAllString(text, "<time>\t")
 	text = hashedIdentity.ReplaceAllString(text, `"<id>":`)
 	text = tookLong.ReplaceAllString(text, "<took>")
 	text = heldBytes.ReplaceAllString(text, "${1}=<held>")

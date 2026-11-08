@@ -1,6 +1,6 @@
 exit: 0
 --- stdout
-{"hookSpecificOutput":{"hookEventName":"PostToolUse","additionalContext":"Code Commandments: nothing of this edit was judged: lib/Order.php, because what changed is not on disk, which is what a checkout cut again or removed looks like, so this is not a clean answer, it is a smaller one. Run `commandments judge --changes` for the whole answer."}}
+{"hookSpecificOutput":{"hookEventName":"PostToolUse","additionalContext":"Code Commandments: nothing of this edit was judged: lib/Order.php, because it lies outside the folders this project judges, which are src under <project>, so this is not a clean answer, it is a smaller one. Run `commandments judge --changes` for the whole answer."}}
 
 --- stderr
 
@@ -14,6 +14,8 @@ Code-commandments — the judged files this session changed, so the judge remind
 Between the dividers is the list: one absolute file path per line
 
 Safe to delete — the reminder stays silent until the session changes a judged file again.
+
+=== created .commandments/sessions/640d8/.authored-files.lock
 
 === created .commandments/sessions/640d8/.touched-sources
 marked-at: <time>

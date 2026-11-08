@@ -3,6 +3,7 @@ exit: 0
 [32m✓ No sins found in 1 file, the lines changed in the working tree, of 302 read.[0m
 
 --- stderr
+· this run reads the whole tree itself, which is why it is slow: no service answered, so there is none up for this project
 · reading the whole path, not only the 1 file judged: 76 of the 247 rules read across files, so the scope chose what is reported, not what is read
 
 --- files

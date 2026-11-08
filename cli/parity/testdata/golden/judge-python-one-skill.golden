@@ -31,5 +31,6 @@ exit: 1
 [1m20 sins[0m across 1 skill.
 
 --- stderr
+· this run reads the whole tree itself, which is why it is slow: no service answered, so there is none up for this project
 
 --- files

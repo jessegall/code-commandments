@@ -63,7 +63,7 @@ func (SkillReminder) Handle(event Event) Response {
 	single := slices.DeleteFunc(slices.Clone(enabled), detectors.ReadsBeyondOneFile)
 
 	reported := ReportedIn(event.Workspace())
-	marking := Marks(event.Root).CutFrom(cutOf(event))
+	marking := Marks(projectOf(event.Root)).In(event.Root).CutFrom(cutOf(event))
 	var activity []SinMark
 	var fresh []SinMark
 	var unreadable []string

@@ -157,10 +157,10 @@ func (l landed) sinsBrought(from string) ([]SinMark, Narrowed) {
 		return nil, ""
 	}
 
-	return marksBrought(l.project, changed)
+	return marksBrought(l.project, changed, from, l.after)
 }
 
-func marksBrought(where string, changed []string) ([]SinMark, Narrowed) {
+func marksBrought(where string, changed []string, before, after string) ([]SinMark, Narrowed) {
 	l := landed{project: where}
 
 	project, err := config.Load(l.project)
@@ -182,9 +182,12 @@ func marksBrought(where string, changed []string) ([]SinMark, Narrowed) {
 		return nil, ""
 	}
 
-	together, _, why := AgainstTheProgramNarrowed(Marks(l.project), files,
+	marking := Marks(projectOf(l.project)).In(l.project)
+	brought := func(file string) git.ChangedLines { return git.ChangedLinesBetween(l.project, before, after, file) }
+
+	together, _, why := AgainstTheProgramNarrowed(marking, files,
 		func(file string) []detectors.Detector { return project.RulesFor(l.project, file, rules) },
-		func(string) git.ChangedLines { return git.Everywhere() }, l.project)
+		brought, l.project)
 
 	single := slices.DeleteFunc(slices.Clone(rules), detectors.ReadsBeyondOneFile)
 
@@ -196,11 +199,11 @@ func marksBrought(where string, changed []string) ([]SinMark, Narrowed) {
 			continue
 		}
 
-		found, _, _ := marksIn(Marks(l.project), file, project.RulesFor(l.project, file, single), git.Everywhere())
+		found, _, _ := marksIn(marking, file, project.RulesFor(l.project, file, single), brought(file))
 		marks = append(marks, found...)
 	}
 
-	return marks, why
+	return touchedAndUnfiled(marks), why
 }
 
 func enabledIn(project config.Config, root string) []detectors.Detector {

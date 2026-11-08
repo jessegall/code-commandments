@@ -100,7 +100,7 @@ func (r requested) sinsItWouldBringIn() ([]SinMark, gotTo) {
 	found := make(chan []SinMark, 1)
 
 	go func() {
-		marks, _ := marksBrought(r.folder, changed)
+		marks, _ := marksBrought(r.folder, changed, r.onto, r.tip)
 		found <- marks
 	}()
 
