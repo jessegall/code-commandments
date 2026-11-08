@@ -58,17 +58,29 @@ class RelayTest(unittest.TestCase):
     def test_a_fake_agent_is_handed_a_process_of_its_own_in_a_session_of_its_own(self) -> None:
         ran = self.ask({"kind": "pid"})
         pid = int(ran["out"])
-        self.addCleanup(self.ask, {"kind": "pid", "action": "end", "pid": pid})
-        self.assertEqual(ran["code"], 0)
-        self.assertNotEqual(pid, os.getpid())
-        self.assertNotEqual(os.getsid(pid), os.getsid(0))
+        try:
+            self.assertEqual(ran["code"], 0)
+            self.assertNotEqual(pid, os.getpid())
+            self.assertNotEqual(os.getsid(pid), os.getsid(0))
+        finally:
+            self.ask({"kind": "pid", "action": "end", "pid": pid})
 
     def test_the_process_handed_out_holds_neither_claude_nor_codex_in_its_command_line(self) -> None:
         pid = int(self.ask({"kind": "pid"})["out"])
-        self.addCleanup(self.ask, {"kind": "pid", "action": "end", "pid": pid})
-        command = subprocess.run(["ps", "-o", "command=", "-p", str(pid)], capture_output=True, text=True).stdout
-        self.assertNotIn("claude", command)
-        self.assertNotIn("codex", command)
+        try:
+            command = self.command_line_of(pid)
+            self.assertIn("sleep", command)
+            self.assertNotIn("claude", command)
+            self.assertNotIn("codex", command)
+        finally:
+            self.ask({"kind": "pid", "action": "end", "pid": pid})
+
+    def command_line_of(self, pid: int) -> str:
+        proc = f"/proc/{pid}/cmdline"
+        if os.path.exists(proc):
+            with open(proc, "rb") as read:
+                return read.read().replace(b"\0", b" ").decode()
+        return subprocess.run(["ps", "-o", "command=", "-p", str(pid)], capture_output=True, text=True).stdout
 
     def test_a_process_is_ended_when_its_agent_ends(self) -> None:
         pid = int(self.ask({"kind": "pid"})["out"])
