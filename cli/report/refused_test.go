@@ -45,6 +45,19 @@ func TestABugReportMustReferenceTheCodeItIsAbout(t *testing.T) {
 	}
 }
 
+func TestAReportAgainstARuleThatDoesNotExistIsRefusedBeforeGitHub(t *testing.T) {
+	t.Setenv("PATH", t.TempDir())
+
+	code, _, warned := filed(t, "--detector=NoSuchRule", "--reason=it fires on correct code", "--ref=src/Order.php:12")
+
+	if code != 2 {
+		t.Errorf("exits %d, want 2", code)
+	}
+	if !strings.Contains(warned, "no rule is named NoSuchRule") {
+		t.Errorf("it says %q, which does not say the rule does not exist", warned)
+	}
+}
+
 func TestADetectorReportConfrontsTheCleanestDesignFirst(t *testing.T) {
 	const asksForADesign = "AllNullableDataDetector"
 

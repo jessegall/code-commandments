@@ -116,6 +116,12 @@ func detectorReport(in *cli.Input, detector, reason string, refs []Reference, ve
 		return 2
 	}
 
+	if _, known := detectors.Named(detector); !known && len(sharedByEngines(detector)) == 0 {
+		console.Warn("✋ no rule is named " + detector + ", so there is nothing to report and no issue was filed.")
+
+		return 2
+	}
+
 	if shared := sharedByEngines(detector); len(shared) > 1 {
 		console.Warn("✋ "+detector+" is the name of "+strconv.Itoa(len(shared))+" rules, one per engine, and a report has to name",
 			"  the one that fired. Say which engine it was:",
