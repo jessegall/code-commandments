@@ -154,7 +154,9 @@ class Relay(socketserver.ThreadingTCPServer):
             done = subprocess.run(["git", "-C", folder, "rebase", branch], capture_output=True, text=True, timeout=STEP_SECONDS)
             return {"code": done.returncode, "out": done.stdout, "err": done.stderr}
         if asked["action"] == "cut":
-            argv = ["git", "-C", checkout, "worktree", "add", "-q", "-b", asked["name"], folder, "HEAD"]
+            subprocess.run(["git", "-C", checkout, "worktree", "remove", "--force", folder], capture_output=True, text=True)
+            subprocess.run(["git", "-C", checkout, "worktree", "prune"], capture_output=True, text=True)
+            argv = ["git", "-C", checkout, "worktree", "add", "-q", "-B", asked["name"], folder, "HEAD"]
         else:
             argv = ["git", "-C", checkout, "worktree", "remove", "--force", folder]
         done = subprocess.run(argv, capture_output=True, text=True, timeout=STEP_SECONDS)

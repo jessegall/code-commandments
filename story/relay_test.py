@@ -161,6 +161,14 @@ class RelayTest(unittest.TestCase):
         self.assertEqual(ran["code"], 126)
         self.assertIn("worktrees are named", ran["err"])
 
+    def test_a_worktree_a_stopped_story_left_behind_is_cut_again(self) -> None:
+        checkout = self.scratch()
+        for line in (["init", "-q"], ["-c", "user.email=t@t", "-c", "user.name=t", "commit", "-q", "--allow-empty", "-m", "one"]):
+            subprocess.run(["git", "-C", checkout, *line], check=True, capture_output=True)
+        self.assertEqual(self.ask({"kind": "worktree", "action": "cut", "name": "story-engine-grace"})["code"], 0)
+        again = self.ask({"kind": "worktree", "action": "cut", "name": "story-engine-grace"})
+        self.assertEqual(again["code"], 0, again["err"])
+
     def test_a_request_that_is_not_json_is_answered_not_dropped(self) -> None:
         with socket.create_connection(self.relay.server_address) as connection:
             connection.sendall(b"not json\n")

@@ -30,5 +30,18 @@ packages=("${@:-./stories/...}")
 mounts=()
 [ "$project" = "$(pwd -P)" ] || mounts=(--mount "$project")
 
+chosen=.
+previous=
+for argument in "${packages[@]}"; do
+    case "$argument" in -run=*) chosen=${argument#-run=} ;; esac
+    [ "$previous" = -run ] && chosen=$argument
+    previous=$argument
+done
+
+total=$(scripts/dev ${mounts[@]+"${mounts[@]}"} go test -tags story -list "$chosen" "${packages[@]}" | grep -c '^Test')
+echo "running $total stories"
+
 scripts/dev ${mounts[@]+"${mounts[@]}"} env STORY_RELAY="host.docker.internal:$(cat "$port_file")" STORY_PROJECT="$project" \
-    GOMEMLIMIT=3GiB GOMAXPROCS=2 go test -v -tags story -p 1 -count=1 -timeout 120m "${packages[@]}"
+    GOMEMLIMIT=3GiB GOMAXPROCS=2 go test -v -tags story -p 1 -count=1 -timeout 120m "${packages[@]}" |
+    awk -v total="$total" '{ print; fflush() } /^--- (PASS|FAIL|SKIP): Test/ { done++; printf "story %d/%d\n", done, total; fflush() }'
+exit "${PIPESTATUS[0]}"
