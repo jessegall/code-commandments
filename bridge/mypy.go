@@ -6,6 +6,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"strings"
 
 	"github.com/jessegall/code-commandments/bridge/bundle"
 )
@@ -14,6 +15,12 @@ import (
 var mypy embed.FS
 
 var mypyTree = bundle.Embedded("mypy-tree", mypy, "mypy")
+
+const mypyNeeds = "3.10 or newer"
+
+const mypyPythonCheck = "import sys; print(\"%s %s\" % (sys.version.split()[0], sys.version_info >= (3, 10)))"
+
+var mypyPythons = []string{"python3.14", "python3.13", "python3.12", "python3.11", "python3.10", "python3", "python"}
 
 func Mypy() ([]string, error) {
 	folder, err := mypyTree.Folder()
@@ -35,13 +42,49 @@ func Mypy() ([]string, error) {
 	return []string{python, tree}, buildMypy(folder)
 }
 
-func buildMypy(folder string) error {
-	python, err := exec.LookPath("python3")
-	if err != nil {
-		python, err = exec.LookPath("python")
+func pythonFolders() []string {
+	return append(filepath.SplitList(os.Getenv("PATH")), "/opt/homebrew/bin", "/usr/local/bin")
+}
+
+func pythonsIn(folders []string) []string {
+	var found []string
+	for _, name := range mypyPythons {
+		for _, folder := range folders {
+			if python, err := exec.LookPath(filepath.Join(folder, name)); err == nil {
+				found = append(found, python)
+			}
+		}
 	}
+
+	return found
+}
+
+func mypyPython(folders []string) (string, error) {
+	var tooOld []string
+	for _, python := range pythonsIn(folders) {
+		out, err := exec.Command(python, "-c", mypyPythonCheck).Output()
+		if err != nil {
+			continue
+		}
+		version, enough, _ := strings.Cut(strings.TrimSpace(string(out)), " ")
+		if enough == "True" {
+			return python, nil
+		}
+		tooOld = append(tooOld, python+" "+version)
+	}
+
+	need := "Python " + mypyNeeds
+	if len(tooOld) > 0 {
+		need += " (found " + strings.Join(tooOld, ", ") + ")"
+	}
+
+	return "", ToolchainMissing{Language: "Python", Need: need}
+}
+
+func buildMypy(folder string) error {
+	python, err := mypyPython(pythonFolders())
 	if err != nil {
-		return ToolchainMissing{Language: "Python", Need: "python3 on the PATH"}
+		return err
 	}
 	venv := filepath.Join(folder, "venv")
 	pip := filepath.Join(venv, "bin", "pip")
@@ -49,7 +92,7 @@ func buildMypy(folder string) error {
 		pip = filepath.Join(venv, "Scripts", "pip.exe")
 	}
 	steps := [][]string{
-		{python, "-m", "venv", venv},
+		{python, "-m", "venv", "--clear", venv},
 		{pip, "install", "-q", "-r", filepath.Join(folder, "requirements.txt")},
 	}
 	for _, step := range steps {
