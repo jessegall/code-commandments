@@ -67,6 +67,10 @@ func BelongsTo(root, project string) bool {
 }
 
 func ProjectRoot(path string) string {
+	if said, told := journalSaysOf(path); told {
+		return said.project
+	}
+
 	top := Root(path)
 
 	if top == "" {
@@ -234,6 +238,16 @@ func ChangedSince(root, commit string) map[string]bool {
 }
 
 func WorkStart(root string) string {
+	if said, told := journalSaysOf(root); told {
+		if said.isTheProject() {
+			return headCommit
+		}
+
+		if said.base != "" {
+			return said.base
+		}
+	}
+
 	project := ProjectRoot(root)
 	if project == "" || real(project) == real(root) {
 		return headCommit
