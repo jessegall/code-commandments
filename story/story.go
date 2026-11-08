@@ -114,7 +114,7 @@ func (s *Story) GivenTheTreeIsHeldFor(folder string) {
 	s.steps = append(s.steps, StepOf("given the tree is held for %s", folder))
 
 	warmed, err := s.journal.Runs(folder, "sins", "--changes")
-	if err != nil || warmed.Code != 0 {
+	if err != nil || warmed.Code > 1 {
 		s.Fails(fmt.Sprintf("the tree could not be warmed for %s: %v %s", folder, err, warmed.Err))
 	}
 

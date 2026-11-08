@@ -31,4 +31,4 @@ mounts=()
 [ "$project" = "$(pwd -P)" ] || mounts=(--mount "$project")
 
 scripts/dev ${mounts[@]+"${mounts[@]}"} env STORY_RELAY="host.docker.internal:$(cat "$port_file")" STORY_PROJECT="$project" \
-    GOMEMLIMIT=3GiB GOMAXPROCS=2 go test -tags story -p 1 -count=1 -timeout 120m "${packages[@]}"
+    GOMEMLIMIT=3GiB GOMAXPROCS=2 go test -v -tags story -p 1 -count=1 -timeout 120m "${packages[@]}"
