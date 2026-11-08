@@ -91,3 +91,6 @@ __pycache__/
 # has moved. It is derived from this machine's own build, so it belongs to the checkout and not to the history.
 /skills/commandments/.written-from
 /.claude/settings.local.json
+
+# replay recordings are taken from private projects and stay on this machine
+stories/replay/recordings/

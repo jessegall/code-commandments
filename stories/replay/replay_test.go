@@ -3,6 +3,7 @@
 package replay
 
 import (
+	"errors"
 	"os"
 	"testing"
 
@@ -13,7 +14,11 @@ import (
 func recorded(t *testing.T, name string) story.Recording {
 	t.Helper()
 
-	journaled, err := os.ReadFile("testdata/" + name + ".tsv")
+	journaled, err := os.ReadFile("recordings/" + name + ".tsv")
+	if errors.Is(err, os.ErrNotExist) {
+		t.Skip("the recording " + name + " is taken from a private project and kept only on the machine that took it")
+	}
+
 	if err != nil {
 		t.Fatal(err)
 	}
