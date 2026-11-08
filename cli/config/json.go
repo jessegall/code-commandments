@@ -45,6 +45,10 @@ func ReadJSON(path string) (Config, error) {
 		return Config{}, err
 	}
 
+	return ParsedJSON(text)
+}
+
+func ParsedJSON(text []byte) (Config, error) {
 	decoder := json.NewDecoder(bytes.NewReader(text))
 	decoder.DisallowUnknownFields()
 	decoder.UseNumber()

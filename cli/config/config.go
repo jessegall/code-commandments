@@ -30,6 +30,10 @@ type Config struct {
 func Load(dir string) (Config, error) {
 	settings := workspace.SettingsRoot(dir)
 
+	if served, held := journalCopy.of(settings); held {
+		return served, nil
+	}
+
 	if _, err := os.Stat(workspace.JSONConfig(settings)); !errors.Is(err, os.ErrNotExist) {
 		return ReadJSON(workspace.JSONConfig(settings))
 	}

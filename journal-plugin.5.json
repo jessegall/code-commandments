@@ -19,6 +19,10 @@
   "project_reads": [
     ".commandments"
   ],
+  "config": {
+    "file": ".commandments/config.json",
+    "schema": ".commandments/config.schema.json"
+  },
   "hears": [
     "command_starting",
     "file_edited",
@@ -63,6 +67,10 @@
       "event": "worker_delivering",
       "guard": "service:hooks",
       "window_ms": 60000
+    },
+    {
+      "event": "core.plugins.plugin.config_changed",
+      "commit": "service:hooks"
     }
   ],
   "aliases": [
