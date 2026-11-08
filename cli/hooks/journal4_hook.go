@@ -267,7 +267,8 @@ func Moment4Of(line map[string]any) (map[string]any, bool) {
 		agent["checkout_said"] = said
 	}
 
-	return map[string]any{"event": "hook." + hook, "agent": agent, "tool": tool, "env": line["environment"], "data": data}, true
+	return map[string]any{"event": "hook." + hook, "agent": agent, "tool": tool, "env": line["environment"], "data": data,
+		"settings": line["settings"]}, true
 }
 
 func within(folder, project, file string) string {

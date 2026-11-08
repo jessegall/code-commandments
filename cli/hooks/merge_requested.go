@@ -130,7 +130,7 @@ func mergesJudgedBeforeTheyLand() bool {
 
 	said, named := chosen[beforeMergeKey]
 
-	return named && asText(said) == "true"
+	return named && switchedOn(said)
 }
 
 const beforeMergeKey = "judge_before_merge"
@@ -143,7 +143,7 @@ func handInsJudged() bool {
 
 	said, named := chosen[handInsKey]
 
-	return !named || asText(said) != "false"
+	return !named || switchedOn(said)
 }
 
 const handInsKey = "judge_hand_ins"

@@ -33,6 +33,7 @@ type Moment struct {
 	Cut                          string
 	CheckoutSaid                 string
 	Role                         string
+	Settings                     map[string]any
 }
 
 const changedKey = "commandments_changed"
@@ -89,6 +90,7 @@ func MomentOf(given map[string]any) Moment {
 		Cut:          cutIn(data),
 		CheckoutSaid: asText(agent["checkout_said"]),
 		Role:         roleIn(map[string]any{"role": firstOf(agent["role"], given["role"])}),
+		Settings:     settingsOn(given),
 	}
 }
 

@@ -318,7 +318,7 @@ func ceilingChosen() int {
 }
 
 func notForThisRole(moment Moment) string {
-	if moment.Role == "" || !workerRoles[moment.Role] || workersJudged() {
+	if moment.Role == "" || !workerRoles[moment.Role] || workersJudgedAt(moment) {
 		return ""
 	}
 
@@ -354,7 +354,29 @@ func workersJudged() bool {
 
 	said, named := chosen[workersKey]
 
-	return named && asText(said) == "true"
+	return named && switchedOn(said)
+}
+
+func workersJudgedAt(moment Moment) bool {
+	if said, named := moment.Settings[workersKey]; named {
+		return switchedOn(said)
+	}
+
+	return workersJudged()
+}
+
+func switchedOn(value any) bool {
+	if on, isFlag := value.(bool); isFlag {
+		return on
+	}
+
+	return asText(value) == "true"
+}
+
+func settingsOn(given map[string]any) map[string]any {
+	settings, _ := given["settings"].(map[string]any)
+
+	return settings
 }
 
 func recorded(string) bool {
