@@ -118,8 +118,7 @@ func TestACrossFileQuestionReadsOnlyTheEditedFile(t *testing.T) {
 	s := held(t)
 	ada := s.Agent("Ada")
 
-	s.Writes(story.SettleOriginal, "payments.py")
-	s.LetsTheSweepFall()
+	ada.Edits(story.SettleOriginal, "payments.py")
 	ada.Edits(story.SettleCopy, "refunds.py")
 	ada.Hears("duplicate-python-function")
 
