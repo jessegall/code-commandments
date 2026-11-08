@@ -3,14 +3,11 @@ package story
 import (
 	"path/filepath"
 	"slices"
-	"strconv"
 	"strings"
 	"time"
-
-	"github.com/jessegall/code-commandments/cli/ledger"
 )
 
-// Recording is a stretch of a real project's work as our plugin saw it: what each of its workers edited and when each asked for a judging, in the order it happened, read from that project's ledger and from its workers' commits.
+// Recording is a stretch of a real project's work as its journal recorded it: what each of its workers edited and when each ran a judging, in the order it happened. Nothing our plugin answered is in it, so a replay judges our plugin rather than repeating it.
 type Recording struct {
 	Project string `json:"project"`
 	Moves   []Move `json:"moves"`
@@ -24,96 +21,38 @@ type Move struct {
 	Judges bool      `json:"judges,omitempty"`
 }
 
-const aNewAsk = 5 * time.Second
+const (
+	anEdit   = "edit"
+	aJudging = "sins"
+)
 
-var answers = []string{ledger.JudgingsAnsweredSmaller, ledger.JudgingsDeclined, ledger.JudgingsFromTheTree}
+func Recorded(project, journaled string) Recording {
+	var moves []Move
 
-func Recorded(project, events string, commits map[string]string) Recording {
-	judged := judgingsIn(events)
-	if len(judged) == 0 {
-		return Recording{Project: project}
-	}
+	for _, line := range strings.Split(journaled, "\n") {
+		fields := strings.SplitN(strings.TrimRight(line, "\r"), "\t", 4)
+		if len(fields) != 4 {
+			continue
+		}
 
-	began, ended := judged[0].At, judged[len(judged)-1].At
+		at, err := time.Parse(time.RFC3339Nano, fields[0])
+		if err != nil {
+			continue
+		}
 
-	moves := judged
-	for worker, log := range commits {
-		for _, edit := range editsIn(worker, log) {
-			if edit.At.Before(began) || edit.At.After(ended) {
-				continue
-			}
+		worker := "worker-" + fields[1]
 
-			moves = append(moves, edit)
+		switch fields[2] {
+		case anEdit:
+			moves = append(moves, Move{At: at.UTC(), Worker: worker, Edits: fields[3]})
+		case aJudging:
+			moves = append(moves, Move{At: at.UTC(), Worker: worker, Judges: true})
 		}
 	}
 
 	slices.SortStableFunc(moves, func(a, b Move) int { return a.At.Compare(b.At) })
 
 	return Recording{Project: project, Moves: moves}
-}
-
-func judgingsIn(events string) []Move {
-	var moves []Move
-
-	last := map[string]time.Time{}
-	answered := map[string]bool{}
-
-	for _, line := range strings.Split(events, "\n") {
-		fields := strings.SplitN(line, "\t", 3)
-		if len(fields) != 3 {
-			continue
-		}
-
-		millis, err := strconv.ParseInt(fields[0], 10, 64)
-		if err != nil {
-			continue
-		}
-
-		named := fields[1]
-		if named != ledger.JudgingsToldTheTreeIsComing && !slices.Contains(answers, named) {
-			continue
-		}
-
-		at := time.UnixMilli(millis).UTC()
-		where, _, _ := strings.Cut(fields[2], " because ")
-		worker := filepath.Base(where)
-
-		if answered[worker] || at.Sub(last[worker]) > aNewAsk {
-			moves = append(moves, Move{At: at, Worker: worker, Judges: true})
-		}
-
-		last[worker] = at
-		answered[worker] = slices.Contains(answers, named)
-	}
-
-	return moves
-}
-
-func editsIn(worker, log string) []Move {
-	var moves []Move
-
-	var at time.Time
-
-	for _, line := range strings.Split(log, "\n") {
-		line = strings.TrimSpace(line)
-
-		if stamp, isCommit := strings.CutPrefix(line, "@"); isCommit {
-			seconds, err := strconv.ParseInt(stamp, 10, 64)
-			if err == nil {
-				at = time.Unix(seconds, 0).UTC()
-			}
-
-			continue
-		}
-
-		if line == "" || at.IsZero() {
-			continue
-		}
-
-		moves = append(moves, Move{At: at, Worker: worker, Edits: line})
-	}
-
-	return moves
 }
 
 var replayed = Python("a file a worker of a real project edited", "RECORDED = True\n")

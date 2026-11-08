@@ -3,64 +3,36 @@ package story
 import (
 	"slices"
 	"testing"
-	"time"
 )
 
-const ledgerEvents = `1000000000000	tree_reads_started	/p
-1000000001000	judgings_told_the_tree_is_coming	/p/.journal/worktrees/development/worker-1
-1000000002000	judgings_told_the_tree_is_coming	/p/.journal/worktrees/development/worker-1
-1000000003000	judgings_answered_smaller	/p/.journal/worktrees/development/worker-1 because 1800 files differ
-1000000004000	judgings_from_the_tree	/p/.journal/worktrees/development/worker-2
-1000000060000	judgings_told_the_tree_is_coming	/p/.journal/worktrees/development/worker-1
-1000000120000	judgings_told_the_tree_is_coming	/p/.journal/worktrees/development/worker-1
-1000000121000	judgings_declined	/p/.journal/worktrees/development/worker-1 because no tree`
+const journaled = `2026-11-07T23:23:14.178916+00:00	699	edit	src/core/base/registry/setting_entry.py
+2026-11-07T23:23:10.000000+00:00	699	edit	src/core/base/registry/setting_tree.py
+2026-11-07T23:24:00.000000+00:00	707	sins	journal sins --changes
+2026-11-07T23:25:00.000000+00:00	699	read	README.md
+not a line of the journal
+2026-11-07T23:26:00+00:00	707	edit	src/viewer/src/Cart.vue`
 
-func TestARecordingCountsOneJudgingPerAskNotPerPoll(t *testing.T) {
-	recorded := Recorded("/p", ledgerEvents, nil)
-
-	var asks []string
-	for _, move := range recorded.Moves {
-		asks = append(asks, move.Worker+"@"+move.At.Format("05"))
+func TestARecordingHoldsEachWorkersEditsAndJudgingsInTheOrderTheJournalSawThem(t *testing.T) {
+	var moves []string
+	for _, move := range Recorded("/p", journaled).Moves {
+		moves = append(moves, move.Worker+" "+move.Edits+map[bool]string{true: "judges"}[move.Judges])
 	}
 
-	want := []string{"worker-1@41", "worker-2@44", "worker-1@40", "worker-1@40"}
-	if !slices.Equal(asks, want) {
-		t.Fatalf("the ledger held four asks (a polled one answered smaller, one from the tree, and two a minute apart), "+
-			"but the recording holds %v", asks)
-	}
-}
-
-func TestARecordingPlacesEachWorkersEditsAmongItsJudgingsAndLeavesOutWhatFellOutsideTheStretch(t *testing.T) {
-	commits := map[string]string{
-		"worker-1": "@1000000002\nsrc/order.py\n\nsrc/viewer/Cart.vue\n@999999000\nsrc/before.py\n@1000999999\nsrc/after.py\n",
+	want := []string{
+		"worker-699 src/core/base/registry/setting_tree.py",
+		"worker-699 src/core/base/registry/setting_entry.py",
+		"worker-707 judges",
+		"worker-707 src/viewer/src/Cart.vue",
 	}
 
-	recorded := Recorded("/p", ledgerEvents, commits)
-
-	var edits []string
-	for _, move := range recorded.Moves {
-		if move.Edits != "" {
-			edits = append(edits, move.Edits)
-		}
-	}
-
-	if len(edits) != 2 || edits[0] != "src/order.py" || edits[1] != "src/viewer/Cart.vue" {
-		t.Fatalf("the recording should hold the two files edited inside the stretch, and nothing from before or after it: %v", edits)
-	}
-
-	for at, move := range recorded.Moves[1:] {
-		if move.At.Before(recorded.Moves[at].At) {
-			t.Fatalf("the moves are out of order at %d: %v", at+1, recorded.Moves)
-		}
-	}
-
-	if !recorded.Moves[1].At.Equal(time.Unix(1000000002, 0).UTC()) || recorded.Moves[1].Edits == "" {
-		t.Errorf("the edit at second 2 should come after worker-1's first ask at second 1: %v", recorded.Moves)
+	if !slices.Equal(moves, want) {
+		t.Errorf("the recording should hold the edits and the judging in time order, and nothing else the journal "+
+			"saw:\n got %v\nwant %v", moves, want)
 	}
 }
 
-func TestAnEmptyLedgerRecordsNothing(t *testing.T) {
-	if moves := Recorded("/p", "", map[string]string{"worker-1": "@1\na.py\n"}).Moves; len(moves) != 0 {
-		t.Errorf("with no judging to frame the stretch, nothing is recorded: %v", moves)
+func TestAnEmptyRecordHoldsNoMove(t *testing.T) {
+	if moves := Recorded("/p", "").Moves; len(moves) != 0 {
+		t.Errorf("an empty record holds no move: %v", moves)
 	}
 }
