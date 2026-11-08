@@ -1,6 +1,7 @@
 package story
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 	"time"
@@ -88,23 +89,53 @@ func TestMovingTheTestCheckoutIsUndoneAtTheEnd(t *testing.T) {
 	}
 }
 
-func TestMergingAWorkerAsksTheJournalToMergeItsRow(t *testing.T) {
-	s, asked := storyOver(t, quiet)
+func TestMergingAWorkerChecksItsProofAndItsLogsThenAsksTheJournalToMergeItsRow(t *testing.T) {
+	tips := 0
+	s, asked := storyOver(t, func(sent request) Ran {
+		if sent.Kind != "checkout" || sent.Action != "tip" {
+			return Ran{}
+		}
 
-	s.Merges(agentOf(s))
+		tips++
 
-	if merge := argvOf((*asked)[0]); merge != "worker merge 41" {
-		t.Errorf("the journal was asked %q, where the worker's row is merged", merge)
+		return Ran{Out: fmt.Sprintf("tip-%d\n", tips)}
+	})
+	worker := agentOf(s)
+	worker.proof = "7"
+
+	s.Merges(worker)
+
+	var commands []string
+	for _, sent := range *asked {
+		if sent.Kind == "command" {
+			commands = append(commands, argvOf(sent))
+		}
+	}
+
+	want := "proof check 7 --environment story-engine|worker logs 41 --environment story-engine|worker merge 41 --environment story-engine"
+	if got := strings.Join(commands, "|"); got != want {
+		t.Errorf("the journal was asked %q, where the proof and the logs are checked and then the worker's row is merged", got)
+	}
+
+	if tips != 2 || !worker.merged || worker.folder != s.TestCheckout() {
+		t.Errorf("the branch tip was read %d times and the worker was left in %q, where the tip is read before the merge and once after it has landed, and the worker moves to the test checkout", tips, worker.folder)
 	}
 }
 
-func TestAWorkersHandInAsksForTheNextTaskFromItsWorktree(t *testing.T) {
+func TestAWorkersHandInProvesItsTaskThenDeliversFromItsWorktree(t *testing.T) {
 	s, asked := storyOver(t, quiet)
+	worker := agentOf(s)
+	worker.task = "5"
 
-	agentOf(s).HandsIn()
+	worker.HandsIn()
 
-	if sent := (*asked)[0]; argvOf(sent) != "worker next --differences none" || sent.In != "/project/.journal/worktrees/story-engine-ada" {
-		t.Errorf("the journal was asked %+v, where the hand-in is made from the worker's own worktree", sent)
+	proves, delivers := (*asked)[0], (*asked)[1]
+	if argvOf(proves) != "proof make 1 --task 5 a story's hand-in" || argvOf(delivers) != "worker deliver --differences none" {
+		t.Errorf("the journal was asked %q and then %q, where the task is proven and then delivered", argvOf(proves), argvOf(delivers))
+	}
+
+	if proves.In != "/project/.journal/worktrees/story-engine-ada" || delivers.In != proves.In {
+		t.Errorf("the journal was asked in %q and %q, where the hand-in is made from the worker's own worktree", proves.In, delivers.In)
 	}
 }
 
@@ -162,8 +193,8 @@ func TestARehearsalTellsAStoryWithNoJournalAndNoWaiting(t *testing.T) {
 	s.Says(Ran{}, "something that was never said")
 	s.CostIs("tree_reads_started", 5)
 
-	if len(s.steps) != 5 {
-		t.Errorf("the rehearsal recorded %d steps, where each of the five steps it took is recorded", len(s.steps))
+	if len(s.steps) != 4 {
+		t.Errorf("the rehearsal recorded %d steps, where each of the four steps it took is recorded and checking an answer or a cost is no step", len(s.steps))
 	}
 }
 
