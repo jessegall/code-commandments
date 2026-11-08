@@ -210,7 +210,12 @@ func (c Command) Run(in *cli.Input, console cli.Console) (int, error) {
 		return 2, nil
 	}
 
-	judged, err := config.Load(options.path)
+	configuredAt := options.path
+	if c.In != "" {
+		configuredAt = git.ProjectRoot(c.In)
+	}
+
+	judged, err := config.Load(configuredAt)
 	if err != nil {
 		return 0, err
 	}

@@ -5,6 +5,7 @@ import (
 	_ "embed"
 	"encoding/json"
 	"github.com/jessegall/code-commandments/cli/binary"
+	"slices"
 	"strings"
 
 	"github.com/jessegall/code-commandments/cli/config"
@@ -50,6 +51,14 @@ func Brief(root string, project config.Config) string {
 
 func BriefForJournal() string {
 	return renderedBrief(binary.PluginAlias, binary.Alias)
+}
+
+func BriefForWorkers() string {
+	paragraphs := strings.Split(BriefForJournal(), "\n\n")
+
+	return strings.Join(slices.DeleteFunc(paragraphs, func(paragraph string) bool {
+		return strings.Contains(paragraph, binary.Alias) || strings.Contains(paragraph, binary.PluginAlias)
+	}), "\n\n")
 }
 
 func renderedBrief(invocation, judging string) string {

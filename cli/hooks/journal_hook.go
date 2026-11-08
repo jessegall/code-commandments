@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/jessegall/code-commandments/cli/binary"
 	"io"
 	"net"
 	"os"
@@ -327,8 +326,7 @@ func notForThisRole(moment Moment) string {
 	}
 
 	return Unjudged("a "+moment.Role+"'s own edits are not judged",
-		"the setting "+workersKey+" is off, and its work is judged when it is taken in",
-		binary.JudgingChanges(moment.Cwd))
+		"the setting "+workersKey+" is off, and its work is judged when it is taken in", "")
 }
 
 func filesInOneGoChosen() int {

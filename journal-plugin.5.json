@@ -1,6 +1,6 @@
 {
   "name": "code-commandments",
-  "version": "7.18.27",
+  "version": "7.18.28",
   "title": "Code Commandments",
   "description": "The static code checker judges the codebase, its hooks run inside the journal, and every rule and language is a switch in its settings",
   "journal": "5.0.0",
@@ -27,7 +27,7 @@
     {
       "key": "briefing",
       "title": "Code Commandments briefing",
-      "file": "instructions/briefing.md",
+      "file": "instructions/worker-briefing.md",
       "default": true
     }
   ],
@@ -187,7 +187,7 @@
   "setup": [
     {
       "name": "Fetch the checker's release binary, checked against its SHA256SUMS",
-      "run": "COMMANDMENTS_RELEASE=v7.18.27 sh .journal-plugin/fetch"
+      "run": "COMMANDMENTS_RELEASE=v7.18.28 sh .journal-plugin/fetch"
     },
     {
       "name": "Write the chosen switches into config.json",

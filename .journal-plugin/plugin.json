@@ -1,6 +1,6 @@
 {
     "name": "code-commandments",
-    "version": "7.18.27",
+    "version": "7.18.28",
     "title": "Code Commandments",
     "description": "The static code checker judges the codebase, its hooks run inside the journal, and every rule and language is a switch in its settings",
     "journal": "2.267.16",
@@ -47,7 +47,7 @@
     },
     "env": {
         "CLAUDE_PROJECT_DIR": "{project}",
-        "COMMANDMENTS_RELEASE": "v7.18.27"
+        "COMMANDMENTS_RELEASE": "v7.18.28"
     },
     "setup": [
         {
@@ -153,9 +153,9 @@
         },
         "workers_cli": {
             "title": "Workers may run the commandments CLI",
-            "help": "On, a worker or helper may run the commandments program itself. Off, such a command is refused with a line saying so; `journal sins` stays open to them and the main agent is not affected.",
+            "help": "On, a worker or helper may run the commandments program and `journal sins`. Off, such a command is refused with a line saying so. Their work is still judged when it is handed in and merged, and the main agent is not affected.",
             "type": "flag",
-            "default": "true",
+            "default": "false",
             "group": "Workers"
         },
         "language_php": {

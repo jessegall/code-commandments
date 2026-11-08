@@ -12,6 +12,8 @@ const workerCLIKey = "workers_cli"
 
 var cliPrograms = []string{"commandments", "commandments-go", filepath.Base(binary.Release)}
 
+var cliAliases = []string{binary.PluginAlias, binary.Alias, binary.ChangesAlias}
+
 var commandSeparators = strings.NewReplacer("&&", "\n", "||", "\n", ";", "\n", "|", "\n")
 
 func cliRefusedTo(moment Moment) string {
@@ -19,8 +21,8 @@ func cliRefusedTo(moment Moment) string {
 		return ""
 	}
 
-	return "Code Commandments — a " + moment.Role + " may not run the commandments CLI here: the setting " + workerCLIKey +
-		" is off. Use `" + binary.Alias + " --changes` to judge your own work."
+	return "Code Commandments — a " + moment.Role + " may not run the commandments CLI or the judge here: the setting " + workerCLIKey +
+		" is off. Your work is judged when it is handed in and when it is merged."
 }
 
 func workersRunTheCLI(moment Moment) bool {
@@ -31,12 +33,12 @@ func workersRunTheCLI(moment Moment) bool {
 
 	chosen, given := chosenSettings()
 	if !given {
-		return true
+		return false
 	}
 
 	said, named = chosen[workerCLIKey]
 
-	return !named || switchedOn(said)
+	return named && switchedOn(said)
 }
 
 func runsTheCLI(command string) bool {
@@ -51,7 +53,7 @@ func runsTheCLI(command string) bool {
 			continue
 		}
 
-		if slices.Contains(cliPrograms, filepath.Base(words[0])) || strings.Join(words[:min(2, len(words))], " ") == binary.PluginAlias {
+		if slices.Contains(cliPrograms, filepath.Base(words[0])) || slices.Contains(cliAliases, strings.Join(words[:min(2, len(words))], " ")) {
 			return true
 		}
 	}

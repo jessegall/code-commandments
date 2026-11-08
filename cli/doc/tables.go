@@ -245,7 +245,7 @@ func PluginSettings() *jsonfile.Object {
 		"judge_before_merge", setting("Refuse a merge that would bring in sins", "On, a worker's merge is judged BEFORE it lands, over what its branch adds on top of the branch it merges into, and a merge that would bring in sins is refused: the work goes back to that worker with the findings and the merger is told it was not allowed. Off, a merge lands and is judged afterwards. This is the one thing the journal waits for us on, so it allows the merge and says so rather than holding it when the judging runs long.", "flag", "false", "Performance"),
 		"judge_files_at_once", setting("Files a checkout may differ by", "How many changed files the service brings into one answer about a worktree. Past it the tree is let go and the answer says so, since reading more than this inside a wait costs more than the answer is worth. Zero works it out from the size of the project.", "number", "0", "Performance"),
 		"judge_nodes_held", setting("Most of the project the service holds", "A ceiling, counted in parsed nodes, over everything the service keeps in memory for this project. Past it no new checkout is held and the answer says so instead of the service growing. Zero holds nothing back.", "number", "0", "Performance"),
-		"workers_cli", setting("Workers may run the commandments CLI", "On, a worker or helper may run the commandments program itself. Off, such a command is refused with a line saying so; `journal sins` stays open to them and the main agent is not affected.", "flag", "true", "Workers"),
+		"workers_cli", setting("Workers may run the commandments CLI", "On, a worker or helper may run the commandments program and `journal sins`. Off, such a command is refused with a line saying so. Their work is still judged when it is handed in and merged, and the main agent is not affected.", "flag", "false", "Workers"),
 	)
 	for _, language := range source.Languages {
 		settings.Set("language_"+string(language), setting(language.Label(), "Enables "+language.Label()+" sin detection", "flag", "true", "Languages"))
@@ -286,6 +286,8 @@ const PluginSchema = ".journal-plugin/settings.json"
 const Journal4Plugin = "journal-plugin.json"
 
 const JournalBriefing = "instructions/briefing.md"
+
+const WorkerBriefing = "instructions/worker-briefing.md"
 
 var pinned = regexp.MustCompile(`COMMANDMENTS_RELEASE(?:=|": ")v([0-9]+\.[0-9]+\.[0-9]+)`)
 
@@ -402,6 +404,7 @@ func Generated(root string) (map[string]string, error) {
 	}
 	documents[PluginSchema] = schema + "\n"
 	documents[JournalBriefing] = library.BriefForJournal()
+	documents[WorkerBriefing] = library.BriefForWorkers()
 
 	return documents, nil
 }

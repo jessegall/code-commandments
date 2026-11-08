@@ -84,8 +84,8 @@
         "title": "Workers may run the commandments CLI",
         "type": "flag",
         "kind": "flag",
-        "default": true,
-        "help": "On, a worker or helper may run the commandments program itself. Off, such a command is refused with a line saying so; `journal sins` stays open to them and the main agent is not affected."
+        "default": false,
+        "help": "On, a worker or helper may run the commandments program and `journal sins`. Off, such a command is refused with a line saying so. Their work is still judged when it is handed in and merged, and the main agent is not affected."
     },
     {
         "key": "language_php",

@@ -73,7 +73,7 @@ func Asked(project string, request Request) (Answer, bool) {
 		return Answer{}, false
 	}
 
-	if err := connection.SetDeadline(time.Now().Add(5 * time.Minute)); err != nil {
+	if err := connection.SetDeadline(time.Now().Add(waitsForTheTree)); err != nil {
 		return Answer{}, false
 	}
 

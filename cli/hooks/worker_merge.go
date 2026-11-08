@@ -9,7 +9,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/jessegall/code-commandments/cli/binary"
 	"github.com/jessegall/code-commandments/cli/config"
 	"github.com/jessegall/code-commandments/cli/custom"
 	"github.com/jessegall/code-commandments/cli/dashboard"
@@ -98,8 +97,7 @@ func (work merging) answered() string {
 		return (JournalAnswer{Refuse: &refusal}).Line4()
 	}
 
-	said := Unjudged(work.worker+"'s hand-in was not judged in full", string(found.got),
-		binary.Judging(work.worktree)+" --changes")
+	said := Unjudged(work.worker+"'s hand-in was not judged in full", string(found.got), "")
 	work.keeps(said)
 
 	if len(found.marks) == 0 {

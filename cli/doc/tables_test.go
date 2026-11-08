@@ -73,8 +73,17 @@ func TestThePluginOffersTheJournalTheBriefingItWouldOtherwiseWrite(t *testing.T)
 		t.Errorf("the plugin injects %v, not the briefing at %s", declared.Injected, doc.JournalBriefing)
 	}
 
-	if len(declared.Blocks) != 1 || declared.Blocks[0].Key != "briefing" || declared.Blocks[0].File != doc.JournalBriefing {
-		t.Errorf("a worker's profile is offered %+v, not the briefing at %s", declared.Blocks, doc.JournalBriefing)
+	if len(declared.Blocks) != 1 || declared.Blocks[0].Key != "briefing" || declared.Blocks[0].File != doc.WorkerBriefing {
+		t.Errorf("a worker's profile is offered %+v, not the briefing at %s", declared.Blocks, doc.WorkerBriefing)
+	}
+
+	forWorkers, err := os.ReadFile(filepath.Join(root, doc.WorkerBriefing))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if strings.Contains(string(forWorkers), "journal sins") || strings.Contains(string(forWorkers), "journal commandments") {
+		t.Errorf("the briefing for a worker tells it to run the judge:\n%s", forWorkers)
 	}
 
 	briefing, err := os.ReadFile(filepath.Join(root, doc.JournalBriefing))

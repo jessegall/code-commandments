@@ -288,15 +288,18 @@ func (n Node) isCallableType() bool {
 }
 
 func (p *Program) IsConstantProperty(n Node) bool {
-	if !n.IsPropertyGetter() || len(n.Parameters()) == 0 || n.IsStub() || p.IsOverride(n) || p.IsOverridden(n) || p.ExtendsOutside(n) {
+	if !n.IsPropertyGetter() || len(n.Parameters()) == 0 || n.IsStub() {
+		return false
+	}
+	body := n.StatementsBeyondText()
+	if len(body) != 1 || !body[0].ReturnedValue().Exists() || len(body[0].ReturnedValue().DataNames()) != 0 {
 		return false
 	}
 	if class := n.Parent(); class.Kind() == "ClassDef" && slices.ContainsFunc(class.Methods(), func(member Node) bool { return member.IsPropertyAccessorOf(n.Name()) }) {
 		return false
 	}
-	body := n.StatementsBeyondText()
 
-	return len(body) == 1 && body[0].ReturnedValue().Exists() && len(body[0].ReturnedValue().DataNames()) == 0
+	return !p.IsOverride(n) && !p.IsOverridden(n) && !p.ExtendsOutside(n)
 }
 
 func (n Node) IsPropertyAccessorOf(name string) bool {

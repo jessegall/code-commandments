@@ -10,7 +10,7 @@ import (
 	"github.com/jessegall/code-commandments/cli/git"
 )
 
-func TestAMergeOfManyFilesIsOneThingToReadWithACount(t *testing.T) {
+func TestAMergeOfManyFilesIsOneThingToReadNamingEverySin(t *testing.T) {
 	root, before, _ := mergedProject(t)
 
 	for each := 0; each < 12; each++ {
@@ -38,21 +38,8 @@ func TestAMergeOfManyFilesIsOneThingToReadWithACount(t *testing.T) {
 
 	named := strings.Count(tell, " at src/")
 
-	if named > mergeSinsShown {
-		t.Errorf("the merge named %d sins by file and line, and it shows %d with a count of the rest:\n%s",
-			named, mergeSinsShown, tell)
-	}
-
-	if named == 0 {
-		t.Errorf("the merge named no sin at all, so it is one thing to read and says nothing:\n%s", tell)
-	}
-
-	if !strings.Contains(tell, "more") {
-		t.Errorf("the merge does not count the sins it did not list:\n%s", tell)
-	}
-
-	if !strings.Contains(tell, "--changes") {
-		t.Errorf("the merge does not say how to read the rest:\n%s", tell)
+	if named < 12 {
+		t.Errorf("the merge named %d sins by file and line of twelve sinful files, and a worker cannot run the judge to read the rest:\n%s", named, tell)
 	}
 }
 

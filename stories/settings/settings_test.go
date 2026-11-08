@@ -18,27 +18,26 @@ func TestThePluginsOwnSwitchesAreNotProjectConfig(t *testing.T) {
 	s.Never(schema, "judge_workers", "judge_merges", "judge_nodes_held", "judge_files_at_once")
 }
 
-func TestAWorkerRunsTheCommandmentsCliWhileTheSettingAllowsIt(t *testing.T) {
+func TestAWorkerRunsTheCommandmentsCliWhenTheSettingAllowsIt(t *testing.T) {
 	s := story.Begin(t)
+	s.SwitchesThePluginSetting("workers_cli", "true", "false")
 
 	ran := s.Worker("Grace").Runs("bin/commandments info redundant-else")
 
 	s.Never(ran, "workers_cli")
 }
 
-func TestAWorkerIsRefusedTheCommandmentsCliWhenTheSettingDeniesIt(t *testing.T) {
+func TestAWorkerIsRefusedTheJudgeByDefault(t *testing.T) {
 	s := story.Begin(t)
-	s.SwitchesThePluginSetting("workers_cli", "false", "true")
 
-	ran := s.Worker("Grace").Runs("bin/commandments info redundant-else")
+	ran := s.Worker("Grace").Runs("journal sins --changes")
 
 	s.Refuses(ran)
 	s.Says(ran, "workers_cli")
 }
 
-func TestTheMainAgentRunsTheCommandmentsCliWhenTheSettingDeniesWorkers(t *testing.T) {
+func TestTheMainAgentRunsTheCommandmentsCliWhenWorkersAreDenied(t *testing.T) {
 	s := story.Begin(t)
-	s.SwitchesThePluginSetting("workers_cli", "false", "true")
 
 	ran := s.Agent("Ada").Runs("bin/commandments info redundant-else")
 
