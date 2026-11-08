@@ -203,7 +203,7 @@ func TestAWorktreesOwnNewFileIsAmongItsChangedLines(t *testing.T) {
 	var out, errs bytes.Buffer
 
 	code, err := (Command{}).Run(
-		cli.InputOf("judge", "--changes", "--no-checklist", "--parallel=1"),
+		cli.InputOf("judge", "--changes", "--no-checklist", "--parallel=1", "--allow-cold-read"),
 		cli.Console{Out: &out, Err: &errs},
 	)
 	if err != nil {

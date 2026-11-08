@@ -2,13 +2,68 @@ package judge
 
 import (
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/jessegall/code-commandments/cli/warm"
 )
 
-func journalDriven(t *testing.T) string {
+func noJournalVariables(t *testing.T) {
 	t.Helper()
+
+	for _, variable := range os.Environ() {
+		named, value, _ := strings.Cut(variable, "=")
+		if !strings.HasPrefix(named, journalVariables) {
+			continue
+		}
+
+		os.Unsetenv(named)
+		t.Cleanup(func() { os.Setenv(named, value) })
+	}
+}
+
+func refusedIn(t *testing.T, project, signal string) {
+	t.Helper()
+
+	code, said, warned := judgedIn(t, project, ".", "--no-checklist")
+
+	if code != coldReadRefused {
+		t.Fatalf("with only %s to say a journal is there, the run exits %d, want %d: %s", signal, code, coldReadRefused, warned)
+	}
+	if !strings.Contains(warned, "--allow-cold-read") || !strings.Contains(warned, "journal services start") {
+		t.Errorf("it says %q, which names neither how to start the service nor how to read anyway", warned)
+	}
+	if said != "" {
+		t.Errorf("it judged although it refused: %q", said)
+	}
+}
+
+func TestAJournalVariableAloneRefusesAColdRead(t *testing.T) {
+	noJournalVariables(t)
+	t.Setenv("JOURNAL_PROJECT_ROOT", "/somewhere")
+
+	refusedIn(t, emptyProject(t), "a JOURNAL_ variable")
+}
+
+func TestAJournalFolderAboveTheRunAloneRefusesAColdRead(t *testing.T) {
+	noJournalVariables(t)
+
+	project := emptyProject(t)
+	worktree := filepath.Join(project, ".journal", "worktrees", "development", "worker-1")
+	if err := os.MkdirAll(worktree, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(worktree, "cart.php"), []byte("<?php\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	refusedIn(t, worktree, "a .journal folder above the run")
+}
+
+func TestThePluginAtTheProjectRootAloneRefusesAColdRead(t *testing.T) {
+	noJournalVariables(t)
 
 	project := emptyProject(t)
 	manifest := filepath.Join(project, ".journal", "plugins", "code-commandments", ".journal-plugin", "plugin.json")
@@ -19,25 +74,47 @@ func journalDriven(t *testing.T) string {
 		t.Fatal(err)
 	}
 
-	return project
+	for _, command := range [][]string{
+		{"init", "-q", "-b", "main"},
+		{"-c", "user.email=t@t", "-c", "user.name=t", "add", "cart.php"},
+		{"-c", "user.email=t@t", "-c", "user.name=t", "commit", "-qm", "the project"},
+	} {
+		if out, err := exec.Command("git", append([]string{"-C", project}, command...)...).CombinedOutput(); err != nil {
+			t.Fatalf("git %v: %s", command, out)
+		}
+	}
+
+	beside, err := filepath.EvalSymlinks(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	worktree := filepath.Join(beside, "worker-1")
+	if out, err := exec.Command("git", "-C", project, "worktree", "add", "-q", "-b", "a-worker", worktree).CombinedOutput(); err != nil {
+		t.Fatalf("git worktree add: %s", out)
+	}
+
+	refusedIn(t, worktree, "the plugin at the root git names")
 }
 
-func TestARunWhoseJournalRunsThePluginRefusesToReadTheTreeWhenNoServiceAnswers(t *testing.T) {
-	code, said, warned := judgedIn(t, journalDriven(t), ".", "--no-checklist")
+func TestAProjectAServiceOnceServedAloneRefusesAColdRead(t *testing.T) {
+	noJournalVariables(t)
+	t.Setenv("XDG_CACHE_HOME", t.TempDir())
 
-	if code != coldReadRefused {
-		t.Errorf("exits %d, want %d", code, coldReadRefused)
+	project := emptyProject(t)
+	stop, err := warm.Register(project)
+	if err != nil {
+		t.Fatal(err)
 	}
-	if !strings.Contains(warned, "--allow-cold-read") || !strings.Contains(warned, "journal services start") {
-		t.Errorf("it says %q, which names neither how to start the service nor how to read anyway", warned)
-	}
-	if said != "" {
-		t.Errorf("it judged although it refused: %q", said)
-	}
+	stop()
+
+	refusedIn(t, project, "a service that served it once")
 }
 
-func TestARunAllowedToReadColdReadsTheTreeEvenWhereTheJournalRunsThePlugin(t *testing.T) {
-	code, _, warned := judgedIn(t, journalDriven(t), ".", "--no-checklist", "--allow-cold-read")
+func TestARunAllowedToReadColdReadsTheTreeEvenWhereAJournalIs(t *testing.T) {
+	noJournalVariables(t)
+	t.Setenv("JOURNAL_PROJECT_ROOT", "/somewhere")
+
+	code, _, warned := judgedIn(t, emptyProject(t), ".", "--no-checklist", "--allow-cold-read")
 
 	if code == coldReadRefused {
 		t.Errorf("a run given --allow-cold-read refused: %s", warned)
@@ -47,7 +124,9 @@ func TestARunAllowedToReadColdReadsTheTreeEvenWhereTheJournalRunsThePlugin(t *te
 	}
 }
 
-func TestARunInAProjectWithNoJournalReadsTheTreeAsBefore(t *testing.T) {
+func TestARunWithNoSignOfAJournalReadsTheTreeAsBefore(t *testing.T) {
+	noJournalVariables(t)
+
 	code, _, warned := judgedIn(t, emptyProject(t), ".", "--no-checklist")
 
 	if code == coldReadRefused {

@@ -144,9 +144,9 @@ func (c Command) Run(in *cli.Input, console cli.Console) (int, error) {
 			return answer.Code, nil
 		}
 
-		if space.IsJournalDriven() && !in.HasFlag(allowColdRead) {
+		if journal, near := aJournalNear(cwd, space); near && !in.HasFlag(allowColdRead) {
 			fmt.Fprintln(console.Err, "· this run refuses to read the whole tree itself: "+whyNotServed(answer)+
-				", yet this project's journal runs the code-commandments plugin, so its service should answer. "+
+				", yet "+journal+", so a judging service should answer. "+
 				"Start it with `journal services start code-commandments.hooks`, or run again with --"+allowColdRead+
 				" to read the whole tree here anyway")
 
