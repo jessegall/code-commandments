@@ -1,7 +1,7 @@
 #!/bin/sh
 # Fetches the release binary the plugin pins in COMMANDMENTS_RELEASE into bin/commandments-release, checked against
 # the release's SHA256SUMS before it is written; any failure writes nothing and never builds. Needs only sh, curl and
-# sha256sum or shasum. COMMANDMENTS_RELEASES names another place to fetch releases from. On Windows the journal runs
+# sha256sum or shasum, and falls back to the GitHub CLI where curl is refused. COMMANDMENTS_RELEASES names another place to fetch releases from. On Windows the journal runs
 # under WSL, which is Linux here, or MSYS2, which takes the Windows binary as bin/commandments-release.exe, the file
 # MSYS2 runs for bin/commandments-release.
 set -eu
@@ -54,11 +54,18 @@ target="$root/bin/commandments-release$suffix"
 draft="$target.$$"
 trap 'rm -f "$draft"' EXIT
 
-sums="$(curl -fsSL "$base/SHA256SUMS")" || refuse "could not fetch $base/SHA256SUMS"
+fetched() {
+    curl -fsSL --connect-timeout 20 -o "$2" "$base/$1" && return 0
+    [ -z "${COMMANDMENTS_RELEASES:-}" ] && command -v gh >/dev/null 2>&1 &&
+        gh release download "$version" --repo jessegall/code-commandments --pattern "$1" --output "$2" --clobber
+}
+
+fetched SHA256SUMS "$draft" || refuse "could not fetch $base/SHA256SUMS"
+sums="$(cat "$draft")"
 wanted="$(printf '%s\n' "$sums" | awk -v name="$name" '$2 == name || $2 == "*" name { print $1; exit }')"
 [ -n "$wanted" ] || refuse "the $version release lists no $name"
 
-curl -fsSL -o "$draft" "$base/$name" || refuse "could not fetch $base/$name"
+fetched "$name" "$draft" || refuse "could not fetch $base/$name"
 [ "$(digest "$draft" | awk '{ print $1 }')" = "$wanted" ] ||
     refuse "the $name fetched for $version does not match its SHA256SUMS, so it is not installed"
 
