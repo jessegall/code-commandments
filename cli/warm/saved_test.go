@@ -240,7 +240,7 @@ func TestACorruptSavedTreeIsAnErrorOtherThanNoneSaved(t *testing.T) {
 	}
 }
 
-func codebaseOver(t *testing.T, paths ...string) *engine.Codebase {
+func streamOver(t *testing.T, paths ...string) *contract.Stream {
 	t.Helper()
 
 	var text bytes.Buffer
@@ -257,5 +257,29 @@ func codebaseOver(t *testing.T, paths ...string) *engine.Codebase {
 		t.Fatal(err)
 	}
 
-	return engine.Load(stream)
+	return stream
+}
+
+func codebaseOver(t *testing.T, paths ...string) *engine.Codebase {
+	t.Helper()
+
+	return engine.Load(streamOver(t, paths...))
+}
+
+func TestAFileTheTreeNeverHeldIsAddedOnceWhateverNumberOfStreamsOfItsLanguageTheTreeHolds(t *testing.T) {
+	held := engine.Load(streamOver(t, "/p/a.py"), streamOver(t, "/p/b.py"))
+	base := warm.Keep().Hold("/p", "main", []string{"/p"}, held, nil)
+
+	view := base.ViewFrom("/p", []*contract.Stream{streamOver(t, "/p/new.py")}, "/p", nil)
+
+	seen := 0
+	for _, file := range view.Files() {
+		if file.File.Path == "/p/new.py" {
+			seen++
+		}
+	}
+
+	if seen != 1 {
+		t.Errorf("a new file stands %d times in a view over a tree of two python streams, so a duplicate finder would pair it with itself", seen)
+	}
 }

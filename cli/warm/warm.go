@@ -400,6 +400,7 @@ func (b *Base) ViewFrom(checkout string, rebuilt []*contract.Stream, project str
 	}
 
 	var spliced []*contract.Stream
+	placed := map[contract.Language]bool{}
 	for _, stream := range b.streams {
 		part := *stream
 		part.Files = nil
@@ -415,7 +416,11 @@ func (b *Base) ViewFrom(checkout string, rebuilt []*contract.Stream, project str
 			}
 		}
 
-		part.Files = append(part.Files, added[stream.Header.Language]...)
+		if !placed[stream.Header.Language] {
+			part.Files = append(part.Files, added[stream.Header.Language]...)
+			placed[stream.Header.Language] = true
+		}
+
 		spliced = append(spliced, &part)
 	}
 
