@@ -32,6 +32,7 @@ type Base struct {
 	codebase  *engine.Codebase
 	read      time.Time
 	lastAsked time.Time
+	stamp     uint64
 
 	mu    sync.Mutex
 	swept time.Time
@@ -44,6 +45,7 @@ type Keeper struct {
 	overlays map[string]*Overlay
 	cutting  map[string]string
 	ceiling  int
+	stamps   uint64
 	leaving  []func(checkout string)
 	now      func() time.Time
 }
@@ -119,6 +121,8 @@ func (k *Keeper) Hold(project, branch string, roots []string, codebase *engine.C
 	k.mu.Lock()
 	defer k.mu.Unlock()
 
+	k.stamps++
+	base.stamp = k.stamps
 	k.bases[key(project, branch)] = base
 
 	return base
@@ -149,6 +153,8 @@ func (k *Keeper) Patched(was *Base, view *engine.Codebase, read map[string]Known
 	k.mu.Lock()
 	defer k.mu.Unlock()
 
+	k.stamps++
+	base.stamp = k.stamps
 	k.bases[key(was.Project, was.Branch)] = base
 
 	return base

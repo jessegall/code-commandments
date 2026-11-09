@@ -294,6 +294,7 @@ func TestAServedJudgingIsRecordedWithWhereItsTimeWent(t *testing.T) {
 
 func TestAWorktreesChangedFileInAnExcludedFolderIsNotInItsProgram(t *testing.T) {
 	root, _ := workerProject(t)
+	wroteInto(t, filepath.Join(root, ".commandments", "config.json"), `{"paths": ["src"], "exclude": ["**/dist"], "detectors": ["DocumentedAnywhereDetector"]}`)
 	heldBaseOf(t, root)
 
 	worktree := filepath.Join(root, ".journal", "worktrees", "worker-1")

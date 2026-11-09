@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"net"
 	"os"
-	"path/filepath"
 	"slices"
 	"strings"
 	"time"
@@ -259,10 +258,6 @@ func heldOrDeclined(root, in string, declined *string, overlay *int) func(scan.S
 func differingFrom(base *warm.Base, named branchRoot, checkout string, asked []string) (Differs, bool) {
 	differs := Differs{Gone: base.Gone()}
 
-	differs.Moved = slices.DeleteFunc(base.Moved(), func(file string) bool {
-		return slices.Contains(differs.Gone, file)
-	})
-
 	differs.Asked = map[string]string{}
 	differs.Tree = fmt.Sprintf("the tree holds %d files of %v, read over %v", base.Files(), base.Languages(), base.Roots())
 
@@ -278,27 +273,21 @@ func differingFrom(base *warm.Base, named branchRoot, checkout string, asked []s
 		}
 	}
 
-	if checkout != named.project {
-		changed, told := git.ChangedVsBranch(checkout, named.branch)
-		if !told {
-			return Differs{}, false
-		}
+	if checkout == named.project {
+		differs.Moved = slices.DeleteFunc(base.Moved(), func(file string) bool {
+			return slices.Contains(differs.Gone, file)
+		})
 
-		for _, file := range asked {
-			if changed[file] {
-				differs.Own = append(differs.Own, file)
-			}
-		}
-
-		deleted, _ := git.DeletedVsBranch(checkout, named.branch)
-		for _, under := range deleted {
-			differs.Gone = append(differs.Gone, filepath.Join(named.project, under))
-		}
-
-		for file := range git.AddedVsHead(named.project) {
-			differs.Gone = append(differs.Gone, file)
-		}
+		return differs, true
 	}
+
+	own, gone, told := differsFromTheBase(base, named, checkout)
+	if !told {
+		return Differs{}, false
+	}
+
+	differs.Own = own
+	differs.Gone = append(differs.Gone, gone...)
 
 	return differs, true
 }

@@ -273,7 +273,13 @@ func DeletedVsBranch(root, base string) (deleted []string, ok bool) {
 		return nil, false
 	}
 
-	for _, relative := range anyLineBreak.Split(run(root, "diff", "--name-only", "--diff-filter=D", mergeBase), -1) {
+	return deletedSince(root, mergeBase), true
+}
+
+func deletedSince(root, commit string) []string {
+	var deleted []string
+
+	for _, relative := range anyLineBreak.Split(run(root, "diff", "--name-only", "--diff-filter=D", commit), -1) {
 		relative = trim(relative)
 
 		if relative == "" || !source.Judges(relative) {
@@ -283,7 +289,15 @@ func DeletedVsBranch(root, base string) (deleted []string, ok bool) {
 		deleted = append(deleted, relative)
 	}
 
-	return deleted, true
+	return deleted
+}
+
+func DiffersFromTip(root, branch string) (changed map[string]bool, deleted []string, ok bool) {
+	if MergeBase(root, branch) == "" {
+		return nil, nil, false
+	}
+
+	return ChangedSince(root, branch), deletedSince(root, branch), true
 }
 
 func ChangedOn(root, base, head string) (changed map[string]bool, ok bool) {

@@ -35,6 +35,7 @@ type Overlay struct {
 	why     string
 	cut     string
 	head    string
+	base    uint64
 }
 
 func (k *Keeper) CutAt(checkout, cut string) {
@@ -278,6 +279,20 @@ func (o *Overlay) FilledAt(head string) bool {
 	}
 
 	return o.head == head
+}
+
+func (o *Overlay) LaidOver(base *Base) {
+	o.mu.Lock()
+	defer o.mu.Unlock()
+
+	o.base = base.stamp
+}
+
+func (o *Overlay) IsLaidOver(base *Base) bool {
+	o.mu.Lock()
+	defer o.mu.Unlock()
+
+	return o.base == base.stamp
 }
 
 func (o *Overlay) Empties() {

@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/jessegall/code-commandments/engine"
 	"github.com/jessegall/code-commandments/cli/config"
 	"github.com/jessegall/code-commandments/cli/git"
 	"github.com/jessegall/code-commandments/cli/ledger"
@@ -621,8 +622,11 @@ func TestAWorktreeIsJudgedAgainstItsOwnCopyOfWhatTheProjectHasUncommitted(t *tes
 		t.Fatal(err)
 	}
 
+	base := kept.Hold(named.project, named.branch, []string{root}, engine.Load(), nil)
+	t.Cleanup(func() { kept.Drop(named.project, named.branch) })
+
 	over := kept.Over(worker)
-	if why := fill(over, named, nil...); why != "" {
+	if why := fill(over, base, named, nil...); why != "" {
 		t.Fatalf("the worktree's overlay could not be filled: %s", why)
 	}
 

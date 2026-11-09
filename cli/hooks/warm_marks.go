@@ -238,14 +238,10 @@ func overlaid(over *warm.Overlay, base *warm.Base, held branchRoot, files []stri
 		}
 	}
 
-	if state, _, _ := over.Filling(); state != warm.Filled {
-		if why := fill(over, held, files...); why != "" {
+	if state, _, _ := over.Filling(); state != warm.Filled || !over.IsLaidOver(base) || over.SweepDue(now) {
+		if why := fill(over, base, held, files...); why != "" {
 			return nil, why
 		}
-	}
-
-	if over.SweepDue(now) {
-		over.Removed(removedIn(held, over.Checkout))
 	}
 
 	over.Patch(streams, marks)
@@ -253,36 +249,26 @@ func overlaid(over *warm.Overlay, base *warm.Base, held branchRoot, files []stri
 	return base.ViewFrom(over.Checkout, over.Streams(), held.project, over.Gone()), ""
 }
 
-func fill(over *warm.Overlay, held branchRoot, files ...string) Narrowed {
+func fill(over *warm.Overlay, base *warm.Base, held branchRoot, files ...string) Narrowed {
 	if !over.BeginsFilling() {
 		return beingFilled
 	}
 
-	changed, told := git.ChangedVsBranch(over.Checkout, held.branch)
+	differing, gone, told := differsFromTheBase(base, held, over.Checkout)
 	if !told {
 		over.CouldNotFill(string(cannotList))
 
 		return cannotList
 	}
 
-	judged := judgesIn(held.project, over.Checkout)
+	over.Removed(gone)
+	over.LaidOver(base)
 
-	var reading []string
-	for path := range changed {
-		if slices.Contains(files, path) {
-			continue
-		}
+	reading := slices.DeleteFunc(differing, func(path string) bool {
+		unchanged, _ := over.Holds(path)
 
-		if !judged(path) {
-			continue
-		}
-
-		reading = append(reading, path)
-	}
-
-	for _, path := range alsoDirtyInTheProject(over.Checkout, held, files, reading) {
-		reading = append(reading, path)
-	}
+		return unchanged || slices.Contains(files, path)
+	})
 
 	if len(reading) == 0 {
 		over.Fills(time.Now(), git.Head(over.Checkout))
@@ -305,46 +291,41 @@ func fill(over *warm.Overlay, held branchRoot, files ...string) Narrowed {
 	return ""
 }
 
-func alsoDirtyInTheProject(checkout string, held branchRoot, files, reading []string) []string {
-	var also []string
+func differsFromTheBase(base *warm.Base, held branchRoot, checkout string) (read, gone []string, told bool) {
+	changed, deleted, told := git.DiffersFromTip(checkout, held.branch)
+	if !told {
+		return nil, nil, false
+	}
 
-	for file := range git.ChangedVsHead(held.project) {
+	for _, under := range deleted {
+		gone = append(gone, filepath.Join(held.project, under))
+	}
+
+	for path := range changed {
+		read = append(read, path)
+	}
+
+	for _, file := range slices.Concat(base.Moved(), unannouncedIn(held.project)) {
 		under, inside := warm.Under(held.project, file)
 		if !inside {
 			continue
 		}
 
 		stands := filepath.Join(checkout, under)
-		if stands == file {
+		if warm.Mark(stands) == "" {
+			gone = append(gone, file)
+
 			continue
 		}
 
-		if slices.Contains(files, stands) || slices.Contains(reading, stands) || slices.Contains(also, stands) {
-			continue
-		}
-
-		if info, err := os.Stat(stands); err != nil || info.IsDir() {
-			continue
-		}
-
-		also = append(also, stands)
+		read = append(read, stands)
 	}
 
-	return also
-}
+	judged := judgesIn(held.project, checkout)
+	read = slices.DeleteFunc(read, func(path string) bool { return !judged(path) })
+	slices.Sort(read)
 
-func removedIn(held branchRoot, checkout string) []string {
-	deleted, told := git.DeletedVsBranch(checkout, held.branch)
-	if !told {
-		return nil
-	}
-
-	var gone []string
-	for _, under := range deleted {
-		gone = append(gone, filepath.Join(held.project, under))
-	}
-
-	return gone
+	return slices.Compact(read), gone, true
 }
 
 func unannouncedIn(project string) []string {
@@ -725,8 +706,14 @@ func languageInTheTree(base *warm.Base, file string) Narrowed {
 
 func judgesIn(project, checkout string) func(string) bool {
 	settings, err := config.Load(projectOf(project))
-	if err != nil || len(settings.Paths) == 0 {
+	if err != nil {
 		return func(string) bool { return true }
+	}
+
+	if len(settings.Paths) == 0 {
+		excluded := settings.Exclusions(checkout)
+
+		return func(path string) bool { return !excluded.Covers(path) }
 	}
 
 	return func(path string) bool {
