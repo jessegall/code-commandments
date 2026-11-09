@@ -112,6 +112,8 @@ func Apart4(in *cli.Input, console cli.Console, line map[string]any) (string, bo
 		return MergeLanded(line), true, 0, nil
 	case requestedEvent:
 		return MergeRequested(line), true, 0, nil
+	case editedEvent:
+		keepEditOf(line)
 	}
 
 	return "", false, 0, nil

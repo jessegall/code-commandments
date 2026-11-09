@@ -221,7 +221,6 @@ func MergeBase(root, base string) string {
 		func() string { return ask(root, "merge-base", base, "HEAD") })
 }
 
-// beingMergedIn names the commit a merge still in progress is bringing in: until the merge commits, HEAD and the merge base stand where they were, and everything the merge brought would count as this checkout's own work.
 func beingMergedIn(root string) string {
 	own := filepath.Join(root, ".git")
 	if gitdir := gitDirOf(root); gitdir != "" {

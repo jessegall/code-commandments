@@ -250,6 +250,7 @@ type merging struct {
 	role      string
 	env       string
 	agent     int
+	editor    int
 }
 
 func mergeOf(line map[string]any) merging {
@@ -266,6 +267,7 @@ func mergeOf(line map[string]any) merging {
 		role:      roleIn(fields),
 		env:       asText(firstOf(line["environment"], fields["environment"])),
 		agent:     asAgent(firstOf(line["agent"], fields["agent"])),
+		editor:    asAgent(fields["worker"]),
 	}
 }
 
@@ -401,6 +403,10 @@ func (m merging) deep(project config.Config, rules []detectors.Detector) handIn 
 		marks = append(marks, touchedAndUnfiled(found[file])...)
 	}
 
+	if len(marks) == 0 && m.tracksEdits() {
+		WorkerEditsIn(os.Getenv(pluginData)).Clear(m.editor)
+	}
+
 	return handIn{marks: marks, got: gotWhole}
 }
 
@@ -427,11 +433,26 @@ func (m merging) shallow(project config.Config, rules []detectors.Detector) []Si
 	return m.marks(codebase, slices.DeleteFunc(rules, detectors.ReadsBeyondOneFile), changed)
 }
 
-func (m merging) changed(project config.Config) map[string]bool {
-	listed := git.Listed(m.worktree, m.files)
-	if len(m.files) == 0 {
-		listed, _ = git.ChangedVsBranch(m.worktree, m.cutFrom())
+func (m merging) tracksEdits() bool {
+	return m.editor != 0 && os.Getenv(pluginData) != ""
+}
+
+func (m merging) named() map[string]bool {
+	if m.tracksEdits() {
+		return git.Listed(m.worktree, WorkerEditsIn(os.Getenv(pluginData)).Of(m.editor))
 	}
+
+	if len(m.files) > 0 {
+		return git.Listed(m.worktree, m.files)
+	}
+
+	listed, _ := git.ChangedVsBranch(m.worktree, m.cutFrom())
+
+	return listed
+}
+
+func (m merging) changed(project config.Config) map[string]bool {
+	listed := m.named()
 
 	for file := range listed {
 		if !project.IsJudged(m.worktree, file) {
