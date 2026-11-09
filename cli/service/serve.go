@@ -4,6 +4,7 @@ import (
 	"errors"
 	"net"
 	"os"
+	"time"
 
 	"github.com/jessegall/code-commandments/bridge"
 	"github.com/jessegall/code-commandments/cli"
@@ -15,6 +16,7 @@ import (
 const (
 	pluginData         = "JOURNAL_PLUGIN_DATA"
 	journalEnvironment = "JOURNAL_ENV"
+	stoppingWithin     = 3 * time.Second
 )
 
 // Serve is `roslyn-serve`, `mypy-serve`: the bridge kept up for the project.
@@ -47,6 +49,14 @@ func tell(unavailable bridge.Unavailable, console cli.Console) {
 	if err := queue.Tell(hooks.JournalAnswer{Whisper: &words}, os.Getenv(journalEnvironment), 0); err != nil {
 		console.Warn("what the bridge cannot do could not be told to the journal: " + err.Error())
 	}
+}
+
+func stopOn(stopped <-chan os.Signal, listener net.Listener) {
+	<-stopped
+	listener.Close()
+	bridge.StopEveryBridge()
+	time.Sleep(stoppingWithin)
+	os.Exit(0)
 }
 
 func (s Serve) Run(in *cli.Input, console cli.Console) (int, error) {
@@ -102,6 +112,7 @@ func (s Serve) Run(in *cli.Input, console cli.Console) (int, error) {
 	defer listener.Close()
 	os.Chmod(path, 0o600)
 
+	go stopOn(cli.StopSignals(), listener)
 	go warm(s.Bridge, project, bridged, console)
 
 	if err := bridge.Answer(listener, bridged); err != nil {
