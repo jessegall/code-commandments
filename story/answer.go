@@ -155,6 +155,10 @@ var progressLine = regexp.MustCompile(`(?m)^(reading|detector) (\d+)/(\d+)$`)
 
 var namedAt = regexp.MustCompile(`([^\s:"'()]+\.[A-Za-z0-9]+):(\d+)`)
 
+func (l ProgressLine) String() string {
+	return fmt.Sprintf("%s %d/%d", l.Phase, l.Done, l.Of)
+}
+
 func (s *Story) ProgressOf(ran Ran) []ProgressLine {
 	var lines []ProgressLine
 
