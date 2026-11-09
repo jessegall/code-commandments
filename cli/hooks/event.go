@@ -20,8 +20,17 @@ var settledStatuses = []string{"completed", "done", "failed", "cancelled", "canc
 
 // Event is one moment the harness reports: its payload, and the project it happened in.
 type Event struct {
-	payload map[string]any
-	Root    string
+	payload    map[string]any
+	Root       string
+	WithoutCLI bool
+}
+
+func (e Event) wholeAnswerBy(command func(root string) string) string {
+	if e.WithoutCLI {
+		return ""
+	}
+
+	return command(e.Root)
 }
 
 const receivedKey = "commandments_received"
@@ -83,7 +92,7 @@ func NewEvent(payload map[string]any, root string) Event {
 		payload = map[string]any{}
 	}
 
-	return Event{payload, root}
+	return Event{payload: payload, Root: root}
 }
 
 func ReadPayload(in *os.File) map[string]any {

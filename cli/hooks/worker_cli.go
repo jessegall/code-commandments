@@ -12,7 +12,7 @@ const workerCLIKey = "workers_cli"
 
 var cliPrograms = []string{"commandments", "commandments-go", filepath.Base(binary.Release)}
 
-var cliAliases = []string{binary.PluginAlias, binary.Alias, binary.ChangesAlias}
+var cliAliases = []string{binary.PluginAlias, binary.Alias, binary.ChangesAlias, "journal rules"}
 
 var commandSeparators = strings.NewReplacer("&&", "\n", "||", "\n", ";", "\n", "|", "\n")
 

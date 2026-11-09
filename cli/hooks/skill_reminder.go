@@ -144,7 +144,7 @@ func (SkillReminder) Handle(event Event) Response {
 		said = append(said, nudge(event, fresh))
 	}
 
-	if short := Shortfalls(SaidIn(event.Workspace()).Fresh(narrowed), askedCount, notAsked, binary.Judging(event.Root)); short != "" {
+	if short := Shortfalls(SaidIn(event.Workspace()).Fresh(narrowed), askedCount, notAsked, event.wholeAnswerBy(binary.Judging)); short != "" {
 		said = append(said, short)
 	}
 
@@ -156,7 +156,7 @@ func (SkillReminder) Handle(event Event) Response {
 	if len(files) == 0 && len(lost) > 0 {
 		said = append(said, Unjudged("nothing of this edit was judged: "+strings.Join(lost, ", "),
 			whyNoneWereJudged(lost),
-			binary.JudgingChanges(event.Root)))
+			event.wholeAnswerBy(binary.JudgingChanges)))
 	}
 
 	response := Silent()

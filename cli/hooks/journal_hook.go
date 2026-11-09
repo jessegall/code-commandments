@@ -230,6 +230,7 @@ func answerWith(given map[string]any, runs func(Hook) bool, reportsSins bool) Jo
 	}
 
 	event := NewEvent(moment.HookPayload(), workspace.ProjectRoot(cwd))
+	event.WithoutCLI = workerRoles[moment.Role] && !workersRunTheCLI(moment)
 	workspace.At(event.Root, "").RelocateSessions()
 	quiet := quieted()
 

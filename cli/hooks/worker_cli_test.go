@@ -22,6 +22,7 @@ func TestAWorkerIsRefusedTheCLIOnlyWhenTheSettingDeniesIt(t *testing.T) {
 		"judging through the journal":      {role: "worker", command: "journal sins --changes", settings: map[string]any{workerCLIKey: false}, refused: true},
 		"after an environment and a chain": {role: "worker", command: "cd x && FOO=1 .journal/plugins/code-commandments/bin/commandments-release judge", settings: map[string]any{workerCLIKey: false}, refused: true},
 		"through the journal's alias":      {role: "worker", command: "journal commandments info x", settings: map[string]any{workerCLIKey: false}, refused: true},
+		"a project's own rules":            {role: "worker", command: "journal rules try x", settings: map[string]any{workerCLIKey: false}, refused: true},
 		"only named in an argument":        {role: "worker", command: "grep commandments README.md", settings: map[string]any{workerCLIKey: false}},
 	} {
 		t.Run(name, func(t *testing.T) {
@@ -36,5 +37,23 @@ func TestAWorkerIsRefusedTheCLIOnlyWhenTheSettingDeniesIt(t *testing.T) {
 				t.Errorf("the refusal does not name the setting that made it: %q", refusal)
 			}
 		})
+	}
+}
+
+func TestAWorkerDeniedTheCLIIsNeverToldToRunIt(t *testing.T) {
+	denied := Event{Root: t.TempDir(), WithoutCLI: true}
+
+	if said := denied.wholeAnswerBy(func(string) string { return "journal sins" }); said != "" {
+		t.Errorf("a worker denied the CLI is told to run %q", said)
+	}
+
+	if said, due := Reminder(denied, "before you wrap up"); due {
+		t.Errorf("a worker denied the CLI is reminded to judge: %q", said)
+	}
+
+	allowed := Event{Root: t.TempDir()}
+
+	if said := allowed.wholeAnswerBy(func(string) string { return "journal sins" }); said != "journal sins" {
+		t.Errorf("an agent allowed the CLI is told to run %q", said)
 	}
 }

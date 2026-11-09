@@ -74,7 +74,7 @@ func (JudgeReminder) Handle(event Event) Response {
 
 func Reminder(event Event, lead string) (string, bool) {
 	root := git.Root(event.Root)
-	if root == "" {
+	if root == "" || event.WithoutCLI {
 		return "", false
 	}
 
