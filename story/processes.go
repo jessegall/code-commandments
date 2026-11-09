@@ -221,6 +221,95 @@ func (s *Service) IsListedUnderItsParent() {
 	}
 }
 
+func (s *Service) Bridge(within time.Duration) Process {
+	s.story.t.Helper()
+
+	s.story.steps = append(s.story.steps, StepOf("finds the bridge the throwaway service started"))
+
+	if s.story.rehearsal {
+		return Process{Pid: "2", Parent: "3"}
+	}
+
+	for until := time.Now().Add(within); time.Now().Before(until); time.Sleep(betweenMoments) {
+		processes := s.story.processesNow()
+
+		if at := slices.IndexFunc(processes, func(each Process) bool { return each.Parent == fmt.Sprint(s.Pid) }); at >= 0 {
+			return processes[at]
+		}
+	}
+
+	s.story.Fails(fmt.Sprintf("the service %d started no bridge within %v; it wrote:\n%s", s.Pid, within, s.written()))
+
+	return Process{}
+}
+
+func (s *Service) IsGone(within time.Duration) {
+	s.story.t.Helper()
+
+	s.story.steps = append(s.story.steps, StepOf("sees the throwaway service gone"))
+
+	if s.story.rehearsal {
+		return
+	}
+
+	for until := time.Now().Add(within); time.Now().Before(until); time.Sleep(betweenMoments) {
+		if !holdsPid(s.story.processesNow(), fmt.Sprint(s.Pid)) {
+			return
+		}
+	}
+
+	s.story.Fails(fmt.Sprintf("the service %d was still there after %v; it wrote:\n%s", s.Pid, within, s.written()))
+}
+
+func (s *Service) Freezes(bridge Process) {
+	s.story.t.Helper()
+
+	s.story.steps = append(s.story.steps, StepOf("freezes the bridge"))
+
+	if ran, err := s.story.journal.FreezesAThrowawayChild(bridge.Pid); err != nil || ran.Code != 0 {
+		s.story.Fails("the bridge could not be frozen: " + failure(ran, err))
+	}
+}
+
+func (s *Service) Answers() {
+	s.story.t.Helper()
+
+	s.story.steps = append(s.story.steps, StepOf("hears the throwaway service answer"))
+
+	if ran, err := s.story.journal.AsksAThrowawayService(s.Socket); err != nil || ran.Code != 0 {
+		s.story.Fails("the service did not answer: " + failure(ran, err))
+	}
+}
+
+func (s *Service) StopsAnswering() {
+	s.story.t.Helper()
+
+	s.story.steps = append(s.story.steps, StepOf("hears nothing from the throwaway service"))
+
+	if ran, err := s.story.journal.AsksAThrowawayService(s.Socket); err != nil || ran.Code == 0 && !s.story.rehearsal {
+		s.story.Fails("the service still answered: " + ran.Out + failure(ran, err))
+	}
+}
+
+func (s *Service) Wrote(text string) {
+	s.story.t.Helper()
+
+	s.story.steps = append(s.story.steps, StepOf("reads why the throwaway service stopped"))
+
+	if written := s.written(); !s.story.rehearsal && !strings.Contains(written, text) {
+		s.story.Fails(fmt.Sprintf("the service never wrote %q; it wrote:\n%s", text, written))
+	}
+}
+
+func (s *Service) written() string {
+	ran, err := s.story.journal.ReadsAThrowawayLog(fmt.Sprint(s.Parent))
+	if err != nil {
+		return err.Error()
+	}
+
+	return ran.Out
+}
+
 func (s *Service) EndsItsParent() {
 	s.story.t.Helper()
 

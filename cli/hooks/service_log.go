@@ -38,6 +38,10 @@ func logServiceStart(root string) {
 		os.Getpid(), root, bridge.Release, debug.SetMemoryLimit(-1)>>20))
 }
 
+func logServiceStopped(why string) {
+	logFromTheService(fmt.Sprintf("%s | stopped | hooks service | %s", time.Now().Format(time.DateTime), why))
+}
+
 func logRuleFailure(rule string, failure any) {
 	logFromTheService(fmt.Sprintf("%s | rule failed | rule=%s | %v\n%s", time.Now().Format(time.DateTime), rule, failure, debug.Stack()))
 }

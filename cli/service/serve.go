@@ -2,6 +2,7 @@ package service
 
 import (
 	"errors"
+	"fmt"
 	"net"
 	"os"
 	"path/filepath"
@@ -55,6 +56,7 @@ func tell(unavailable bridge.Unavailable, console cli.Console) {
 
 func stopOn(stopped <-chan os.Signal, listener net.Listener) {
 	<-stopped
+	fmt.Fprintln(os.Stderr, "this service stopped by a signal")
 	listener.Close()
 	bridge.StopEveryBridge()
 	time.Sleep(stoppingWithin)

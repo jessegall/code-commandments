@@ -2,6 +2,7 @@ package bridge
 
 import (
 	"context"
+	"syscall"
 	"testing"
 	"time"
 )
@@ -38,6 +39,33 @@ func TestStoppingEveryBridgeEndsOneBusyWithARequest(t *testing.T) {
 		}
 	case <-time.After(5 * time.Second):
 		t.Fatal("the bridge kept working on its request after it was stopped")
+	}
+}
+
+func TestAFrozenBridgeIsKilledInsideTheTimeAServiceTakesToLeave(t *testing.T) {
+	stoppableOnItsOwn(t)
+
+	process, stop := launch([]string{"sh", "-c", "exec sleep 60"})
+	defer stop()
+
+	if err := process.Start(); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := process.Process.Signal(syscall.SIGSTOP); err != nil {
+		t.Fatal(err)
+	}
+
+	StopEveryBridge()
+
+	ended := make(chan error, 1)
+	go func() { ended <- process.Wait() }()
+
+	select {
+	case <-ended:
+	case <-time.After(3 * time.Second):
+		process.Process.Kill()
+		t.Fatal("a frozen bridge was still there when the service would have left")
 	}
 }
 

@@ -118,6 +118,18 @@ func (j Journal) EndsAThrowawayParent(pid string) (Ran, error) {
 	return j.ask(request{Kind: "throwaway", Action: "end", Pid: pid})
 }
 
+func (j Journal) FreezesAThrowawayChild(pid string) (Ran, error) {
+	return j.ask(request{Kind: "throwaway", Action: "freeze", Pid: pid})
+}
+
+func (j Journal) AsksAThrowawayService(socket string) (Ran, error) {
+	return j.ask(request{Kind: "throwaway", Action: "ask", Path: socket})
+}
+
+func (j Journal) ReadsAThrowawayLog(parent string) (Ran, error) {
+	return j.ask(request{Kind: "throwaway", Action: "log", Pid: parent})
+}
+
 func (j Journal) TearsDownThrowawayServices() (Ran, error) {
 	return j.ask(request{Kind: "throwaway", Action: "teardown"})
 }

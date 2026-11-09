@@ -51,6 +51,18 @@ func (s *Story) LetsTheSweepFall() {
 	time.Sleep(sweepFalls)
 }
 
+func (s *Story) LetsTimePass(while time.Duration) {
+	s.t.Helper()
+
+	s.steps = append(s.steps, StepOf("lets %s pass", while.String()))
+
+	if s.rehearsal {
+		return
+	}
+
+	time.Sleep(while)
+}
+
 func (s *Story) AsksTogether(folder string, asked ...[]string) []Ran {
 	s.t.Helper()
 

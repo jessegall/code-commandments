@@ -43,7 +43,21 @@ func TestAServiceKeepsRunningWhileItsParentStays(t *testing.T) {
 	}
 }
 
-func TestAServiceStartedWithoutAParentIsLeftAlone(t *testing.T) {
+func TestAServiceStartedAfterItsParentDiedHasNoParent(t *testing.T) {
+	if !hasNoParent(1, false) {
+		t.Error("a service whose parent was already gone at its start is taken to have one")
+	}
+
+	if hasNoParent(4242, false) {
+		t.Error("a service with a parent is taken to have none")
+	}
+
+	if hasNoParent(1, true) {
+		t.Error("in a container, where the first process may be the journal itself, a service is taken to have no parent")
+	}
+}
+
+func TestAParentThatWasAlreadyInitIsNoChangeOfParent(t *testing.T) {
 	stopped := make(chan struct{})
 	go untilOrphaned(func() int { return 1 }, time.Millisecond, func() { close(stopped) })
 

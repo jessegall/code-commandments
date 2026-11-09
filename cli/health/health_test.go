@@ -14,7 +14,7 @@ const window = 200 * time.Millisecond
 
 func shortFolder(t *testing.T) string {
 	t.Helper()
-	folder, err := os.MkdirTemp("", "s")
+	folder, err := os.MkdirTemp("/tmp", "s")
 	if err != nil {
 		t.Fatal(err)
 	}

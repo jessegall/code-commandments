@@ -5,6 +5,7 @@ import re
 import os
 import shutil
 import signal
+import socket
 import socketserver
 import sqlite3
 import subprocess
@@ -52,7 +53,13 @@ STOPPING_SIGNALS = {"SIGTERM": signal.SIGTERM, "SIGKILL": signal.SIGKILL}
 BETWEEN_LOOKS_SECONDS = 0.5
 PLUGIN_BINARY = os.path.join(".journal", "plugins", "code-commandments", "bin", "commandments-release")
 SERVICE_VERBS = {"hooks": "journal-serve", "mypy": "mypy-serve", "frontend": "frontend-serve", "php": "php-serve", "roslyn": "roslyn-serve"}
-UNDER_A_PARENT = '"$@" >/dev/null 2>&1 & echo $!; wait'
+UNDER_A_PARENT = '"$@" >../service.log 2>&1 & echo $!; wait'
+LANGUAGE_SAMPLES = {
+    "mypy": ("order.py", "def total() -> int:\n    return 1\n"),
+    "frontend": ("order.ts", "export const total = 1;\n"),
+    "php": ("order.php", "<?php\n\nfunction total(): int\n{\n    return 1;\n}\n"),
+    "roslyn": ("Order.cs", "class Order { }\n"),
+}
 TORN_DOWN_WITHIN_SECONDS = 3
 DETECTOR_MEMORY = os.path.join(".journal", "plugin-data", "code-commandments", "detector-memories.json")
 AGENT_LINES = re.compile(r"agent-lines?[: ]\s*(\d+(?:(?:,\s*|\s+and\s+)\d+)*)")
@@ -154,6 +161,7 @@ class Relay(socketserver.ThreadingTCPServer):
         self.home = ""
         self.sleepers: dict[int, subprocess.Popen] = {}
         self.throwaways: dict[int, Throwaway] = {}
+        self.frozen: set[int] = set()
         self.holding = threading.Lock()
         self.journal = os.path.join(project, ".journal", "bin", "journal")
         self.hook = os.path.join(project, ".journal", "bin", "journal-hook")
@@ -265,6 +273,12 @@ class Relay(socketserver.ThreadingTCPServer):
                 return self.end_throwaway_parent(int(asked.pid))
             if asked.action == "teardown":
                 return self.tear_down_throwaways()
+            if asked.action == "freeze":
+                return self.freeze_throwaway_child(int(asked.pid))
+            if asked.action == "ask":
+                return self.ask_throwaway(asked.path)
+            if asked.action == "log":
+                return self.log_of_throwaway(int(asked.pid))
         raise Refused(f"'{asked.action}' is not something a throwaway service does")
 
     def start_throwaway(self, kind: str) -> Answer:
@@ -274,8 +288,12 @@ class Relay(socketserver.ThreadingTCPServer):
         project, data, health = os.path.join(folder, "project"), os.path.join(folder, "data"), os.path.join(folder, "health.sock")
         os.makedirs(project)
         os.makedirs(data)
+        if kind in LANGUAGE_SAMPLES:
+            name, source = LANGUAGE_SAMPLES[kind]
+            written_whole(os.path.join(project, name), source)
+        subprocess.run(["git", "init", "--quiet"], cwd=project, check=True)
         environment = {name: os.environ[name] for name in LAUNCH_VARIABLES if name in os.environ}
-        environment.update({"COMMANDMENTS_HEALTH_SOCKET": health, "JOURNAL_PLUGIN_DATA": data, "JOURNAL_ENV": STORY_ENVIRONMENT, "JOURNAL_ROOT": project})
+        environment.update({"COMMANDMENTS_HEALTH_SOCKET": health, "JOURNAL_PLUGIN_DATA": data, "JOURNAL_ENV": STORY_ENVIRONMENT, "JOURNAL_ROOT": project, "JOURNAL_PLUGIN_SOCKET": os.path.join(folder, "plugin.sock")})
         binary = os.path.join(self.project, PLUGIN_BINARY)
         parent = subprocess.Popen(["sh", "-c", UNDER_A_PARENT, "sh", binary, SERVICE_VERBS[kind]], stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
                                   stderr=subprocess.DEVNULL, text=True, cwd=project, env=environment, start_new_session=True)
@@ -283,6 +301,35 @@ class Relay(socketserver.ThreadingTCPServer):
         parent.stdout.close()
         self.throwaways[parent.pid] = Throwaway(parent, service, folder)
         return Answer(0, json.dumps({"pid": service, "parent": parent.pid, "socket": health, "data": data}))
+
+    def freeze_throwaway_child(self, pid: int) -> Answer:
+        """Stop a process a throwaway service started dead in its tracks, as a bridge that hangs is, until the teardown kills it."""
+        services = {each.service for each in self.throwaways.values()}
+        if pid in services or pid not in descendants_of(services, running_processes()):
+            raise Refused(f"{pid} is not a process a throwaway service started")
+        os.kill(pid, signal.SIGSTOP)
+        self.frozen.add(pid)
+        return Answer(0)
+
+    def ask_throwaway(self, socket_path: str) -> Answer:
+        """Ask a throwaway service whether it is up, over the health socket the journal would use."""
+        if socket_path not in {os.path.join(each.folder, "health.sock") for each in self.throwaways.values()}:
+            raise Refused(f"{socket_path} is no socket of a throwaway service")
+        try:
+            with socket.socket(socket.AF_UNIX) as connection:
+                connection.settimeout(BETWEEN_LOOKS_SECONDS * 10)
+                connection.connect(socket_path)
+                return Answer(0, connection.recv(4096).decode())
+        except OSError as unreachable:
+            return Answer(1, "", f"the service did not answer: {unreachable}\n")
+
+    def log_of_throwaway(self, parent: int) -> Answer:
+        """Answer with everything a throwaway service wrote while it ran."""
+        kept = self.throwaways.get(parent)
+        if kept is None:
+            raise Refused(f"{parent} is not a parent this relay started")
+        with open(os.path.join(kept.folder, "service.log")) as written:
+            return Answer(0, written.read())
 
     def end_throwaway_parent(self, pid: int) -> Answer:
         kept = self.throwaways.get(pid)
@@ -295,7 +342,7 @@ class Relay(socketserver.ThreadingTCPServer):
     def tear_down_throwaways(self) -> Answer:
         """Kill every throwaway parent and service and all they started, and answer with any that would not go."""
         started = {pid for each in self.throwaways.values() for pid in (each.parent.pid, each.service)}
-        targets = descendants_of(started, running_processes())
+        targets = descendants_of(started, running_processes()) | self.frozen
         for pid in targets:
             try:
                 os.kill(pid, signal.SIGKILL)
@@ -305,6 +352,7 @@ class Relay(socketserver.ThreadingTCPServer):
             each.parent.wait()
             shutil.rmtree(each.folder, ignore_errors=True)
         self.throwaways.clear()
+        self.frozen.clear()
         deadline = time.monotonic() + TORN_DOWN_WITHIN_SECONDS
         while True:
             left = sorted(targets & {each.pid for each in running_processes()})

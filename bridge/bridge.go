@@ -263,6 +263,8 @@ const quiet = 5 * time.Minute
 
 const grace = 10 * time.Second
 
+const stopsWithin = 2 * time.Second
+
 func quietLimit() (time.Duration, error) {
 	named := os.Getenv(quietVariable)
 	if named == "" {
@@ -289,7 +291,7 @@ func launch(command []string, arguments ...string) (*exec.Cmd, context.CancelFun
 	process.Cancel = func() error {
 		return process.Process.Signal(syscall.SIGTERM)
 	}
-	process.WaitDelay = grace
+	process.WaitDelay = stopsWithin
 
 	return process, stop
 }

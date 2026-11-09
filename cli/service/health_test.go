@@ -23,7 +23,7 @@ func TestABridgeServiceSaysItIsUpWithNothingToDo(t *testing.T) {
 	t.Cleanup(func() { os.Chdir(was) })
 	t.Setenv("CLAUDE_PROJECT_DIR", project)
 
-	short, err := os.MkdirTemp("", "s")
+	short, err := os.MkdirTemp("/tmp", "s")
 	if err != nil {
 		t.Fatal(err)
 	}
