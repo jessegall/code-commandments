@@ -39,6 +39,12 @@ else
     (cd "$lab" && "$journal" plugin install "$plugin" --yes --reason "the tiny project runs this checkout's plugin")
 fi
 
+(cd "$lab" && "$journal" plugin configure code-commandments judge_workers true --reason "the stories of workers, hand-ins and merges need workers judged, and a fresh install judges none")
+
+(cd "$lab" && "$journal" plugin configure code-commandments judge_hand_ins true --reason "the stories of hand-ins read what a hand-in is told")
+
+(cd "$lab" && "$journal" plugin configure code-commandments judge_merges true --reason "the stories of merges read what a merge brings in")
+
 (cd "$lab" && "$journal" plugin configure code-commandments judge_worker_edits true --reason "a story's agents are workers, and the stories read what they are told")
 
 (cd "$lab" && "$journal" plugin configure code-commandments judge_edit_window 1 --reason "a story waits on what it is told, so the window for gathering edits stays short")

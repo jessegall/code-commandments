@@ -113,7 +113,7 @@
             "title": "Judge workers",
             "help": "The switch over everything below. Off, a worker triggers nothing of ours at all: no judging of its edits, its hand-in or its merge, and no process started for it. On, the choices below say when a worker is judged.",
             "type": "flag",
-            "default": "true",
+            "default": "false",
             "group": "Workers"
         },
         "judge_worker_edits": {
@@ -127,14 +127,14 @@
             "title": "Judge before a hand-in goes through",
             "help": "Only with Judge workers on. On, a worker's hand-in waits while the plugin judges the files it changed since its worktree was cut, answered from the tree the service already holds, and a sin sends the work back to that worker naming the file, the line and the skill. When no tree is held or the time the journal allows runs out, the hand-in goes on and says what was not judged; the project is never read whole for it. Off, hand-ins are not held.",
             "type": "flag",
-            "default": "true",
+            "default": "false",
             "group": "Workers"
         },
         "judge_merges": {
             "title": "Judge what a merge brings in",
             "help": "Only with Judge workers on. On, a worker's merge is judged by the plugin itself the moment it lands, over the commits it brought in, and the main agent is told what came in without having to remember. Off, nothing is judged at a merge and what came in is judged whenever somebody next judges those files.",
             "type": "flag",
-            "default": "true",
+            "default": "false",
             "group": "Workers"
         },
         "judge_before_merge": {
