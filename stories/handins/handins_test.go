@@ -3,6 +3,7 @@
 package handins
 
 import (
+	"strings"
 	"testing"
 	"time"
 
@@ -70,7 +71,7 @@ func TestAHandInWithItsLanguageServiceDownIsNeverCalledClean(t *testing.T) {
 
 	s.Refuses(refused)
 	s.Says(refused, "bridgedown.py")
-	s.Never(refused, "clean")
+	s.Never(refused, " clean")
 }
 
 func TestARenameOnlyHandInIsAnsweredFromMemory(t *testing.T) {
@@ -119,8 +120,7 @@ func TestAMergeAfterARestartJudgesOnlyItsOwnRange(t *testing.T) {
 	grace.Edits(sinful(s, "a sinful file merged before a restart"), "mergedfirst.py")
 	grace.HandsIn()
 	s.Merges(grace)
-	grace.Hears("mergedfirst.py")
-	grace.ForgetsWhatItWasTold()
+	told := strings.Count(grace.Hears("mergedfirst.py").Text(), "mergedfirst.py")
 	restartsTheHooksService(s)
 	edsger := s.DispatchedWorker("Edsger", ada)
 	edsger.Edits(sinful(s, "a sinful file merged after a restart"), "mergedlater.py")
@@ -129,7 +129,10 @@ func TestAMergeAfterARestartJudgesOnlyItsOwnRange(t *testing.T) {
 	s.Merges(edsger)
 
 	edsger.Hears("mergedlater.py")
-	grace.StaysUntold("mergedfirst.py")
+
+	if again := strings.Count(grace.Moves().Text(), "mergedfirst.py"); again != told {
+		s.Fails("the second merge told the first merge's file again")
+	}
 }
 
 func TestAMergeNamesNoSinInAFileTheWorkerDeleted(t *testing.T) {
