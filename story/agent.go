@@ -92,6 +92,8 @@ func (s *Story) DispatchedWorker(name string, by *Agent) *Agent {
 		return nil
 	}
 
+	s.grantsDispatchTo(by)
+
 	session := fmt.Sprintf("story-%s-%d", notALetter.ReplaceAllString(strings.ToLower(name), "-"), time.Now().UnixNano())
 
 	dispatched := s.AsksIn(s.TestCheckout(), "worker", "dispatch", found[1], "--no-program", "--program", "claude", "--session", session,
@@ -114,6 +116,41 @@ func (s *Story) DispatchedWorker(name string, by *Agent) *Agent {
 	worker.settlesIn()
 
 	return worker
+}
+
+func (s *Story) grantsDispatchTo(by *Agent) {
+	s.t.Helper()
+
+	listed := s.Asks("environment", "list", "--json")
+
+	var environments struct {
+		Rows []struct {
+			ID   int
+			Name string
+		}
+	}
+
+	if err := json.Unmarshal([]byte(listed.Out), &environments); err != nil {
+		s.Fails("the environments could not be read to grant a dispatch: " + listed.Text())
+
+		return
+	}
+
+	for _, environment := range environments.Rows {
+		if environment.Name != testEnvironment {
+			continue
+		}
+
+		granted := s.Asks("environment", "edit", strconv.Itoa(environment.ID), "--test", "--test-agent-id", by.row,
+			"--reason", "a story's agent dispatches a worker, which the journal allows a person or the test environment's named agent")
+		if granted.Code != 0 {
+			s.Fails("the test environment could not name " + by.name + " as the agent that dispatches: " + granted.Text())
+		}
+
+		return
+	}
+
+	s.Fails("the journal lists no environment named " + testEnvironment + " to grant a dispatch in: " + listed.Text())
 }
 
 func (s *Story) keepsTheBranchWhereItIs() {
