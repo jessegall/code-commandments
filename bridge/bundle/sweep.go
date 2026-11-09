@@ -66,7 +66,6 @@ func sweepKeeping(folder string, now time.Time, atMost int64) {
 	}
 }
 
-// ForgetUnused removes each folder under parent that nothing has used for twelve hours before now, a use being a touch of the folder.
 func ForgetUnused(parent string, now time.Time) {
 	entries, err := os.ReadDir(parent)
 	if err != nil {

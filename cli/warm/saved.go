@@ -99,7 +99,6 @@ func LoadSaved(folder, binary string, roots []string, now time.Time) (Saved, err
 	return saved, nil
 }
 
-// Renew counts a saved tree as used at now, which starts its twelve hours again.
 func Renew(folder string, now time.Time) error {
 	head, err := readSavedHead(folder)
 	if err != nil {
@@ -116,7 +115,6 @@ func Renew(folder string, now time.Time) error {
 	return atomic.Write(filepath.Join(folder, savedHead), string(raw))
 }
 
-// SweepSaved removes every saved tree under parent last used more than twelve hours before now, and any whose head cannot be read.
 func SweepSaved(parent string, now time.Time) {
 	entries, err := os.ReadDir(parent)
 	if err != nil {
