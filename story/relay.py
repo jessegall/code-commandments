@@ -559,10 +559,14 @@ class Relay(socketserver.ThreadingTCPServer):
         argv = asked.argv
         if not argv or argv[0] not in NOUNS:
             raise Refused(f"'{argv[0] if argv else ''}' is not one of the journal nouns a story may run")
-        if argv[:2] == ["agent", "start"] and "main" in argv[2:5]:
-            raise Refused("a story never starts a main agent: the journal can place it in the person's own "
-                          "environment, where a new main agent ends the real one and its terminal")
+        if argv[:2] == ["agent", "start"] and "main" in argv[2:5] and not self.names_the_story_environment(argv):
+            raise Refused("a story starts a main agent only in the test environment, named: anywhere else the journal "
+                          "can place it in the person's own environment, where a new main agent ends the real one and "
+                          "its terminal")
         return [self.journal, *argv]
+
+    def names_the_story_environment(self, argv: list[str]) -> bool:
+        return "--environment" in argv and argv[argv.index("--environment") + 1:][:1] == [STORY_ENVIRONMENT]
 
     def folder_of(self, asked: Asked) -> str:
         folder = os.path.realpath(self.project if asked.folder is None else asked.folder)

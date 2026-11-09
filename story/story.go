@@ -24,6 +24,7 @@ type Story struct {
 	tearsDown   bool
 	rehearsal   bool
 	keepsBranch bool
+	dispatches  *Agent
 }
 
 var rehearsing = flag.Bool("story.rehearse", false, "tell every story against no journal at all, only to check that no two of them take the same steps")
