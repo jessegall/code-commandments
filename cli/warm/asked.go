@@ -17,8 +17,14 @@ func Socket(project string) string {
 
 // Request is a judging a run asks the service to do for it: the folder the run was started in, which is what the project, the config and the scope are read from, and the arguments as they were typed.
 type Request struct {
-	Judge []string `json:"judge"`
-	In    string   `json:"in"`
+	Judge    []string `json:"judge"`
+	In       string   `json:"in"`
+	Progress bool     `json:"progress,omitempty"`
+}
+
+// Progress is one line of how far a judging has got, sent ahead of its answer to a run that asked for it.
+type Progress struct {
+	Line string `json:"progress"`
 }
 
 // Answer is what the service judged: what the run prints, the code it exits with, and, where it judged nothing, whether the tree it would have answered from is on its way, so the run waits for it instead of reading the whole project itself.
@@ -31,8 +37,8 @@ type Answer struct {
 	Coming   bool   `json:"coming,omitempty"`
 }
 
-func AskedUntilTheTreeIsThere(project string, request Request, said func(string)) (Answer, bool) {
-	return waitingFor(func() (Answer, bool) { return Asked(project, request) }, said, aMomentBetweenAsks,
+func AskedUntilTheTreeIsThere(project string, request Request, said, progressed func(string)) (Answer, bool) {
+	return waitingFor(func() (Answer, bool) { return Asked(project, request, progressed) }, said, aMomentBetweenAsks,
 		waitsForTheTree, waitsForTheServiceToReturn)
 }
 
@@ -75,7 +81,7 @@ const waitsForTheServiceToReturn = 5 * time.Minute
 
 const aMomentBetweenAsks = time.Second
 
-func Asked(project string, request Request) (Answer, bool) {
+func Asked(project string, request Request, progressed func(string)) (Answer, bool) {
 	connection, err := net.DialTimeout("unix", Socket(project), 2*time.Second)
 	if err != nil {
 		return Answer{}, false
@@ -95,7 +101,12 @@ func Asked(project string, request Request) (Answer, bool) {
 		return Answer{}, false
 	}
 
-	line, err := bufio.NewReader(connection).ReadBytes('\n')
+	reader := bufio.NewReader(connection)
+
+	line, err := reader.ReadBytes('\n')
+	for ; progressedBy(line, progressed); line, err = reader.ReadBytes('\n') {
+	}
+
 	if err != nil && len(line) == 0 {
 		return Answer{}, false
 	}
@@ -112,6 +123,17 @@ func Asked(project string, request Request) (Answer, bool) {
 	return answer, true
 }
 
+func progressedBy(line []byte, progressed func(string)) bool {
+	var progress Progress
+	if err := json.Unmarshal(line, &progress); err != nil || progress.Line == "" {
+		return false
+	}
+
+	progressed(progress.Line)
+
+	return true
+}
+
 func RequestOf(line []byte) (Request, bool) {
 	var request Request
 	if err := json.Unmarshal(line, &request); err != nil || request.Judge == nil {
@@ -119,6 +141,15 @@ func RequestOf(line []byte) (Request, bool) {
 	}
 
 	return request, true
+}
+
+func Progressed(line string) []byte {
+	said, err := json.Marshal(Progress{Line: line})
+	if err != nil {
+		return nil
+	}
+
+	return append(said, '\n')
 }
 
 func Answered(answer Answer) []byte {

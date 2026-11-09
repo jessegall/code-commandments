@@ -449,7 +449,7 @@ func stressServed(t *testing.T, root, in string, worker int) {
 	answer, asked := warm.Asked(root, warm.Request{
 		Judge: []string{"--changes", "--no-checklist", "--parallel=2"},
 		In:    in,
-	})
+	}, func(string) {})
 
 	if !asked {
 		t.Errorf("worker %d's hand-in was DECLINED, so it reads the whole tree in its own process: %s",
@@ -966,7 +966,7 @@ func (c *stressCheckout) handsIn(t *testing.T) {
 	answer, asked := warm.Asked(c.Project, warm.Request{
 		Judge: []string{"--changes", "--no-checklist", "--parallel=2"},
 		In:    c.Told,
-	})
+	}, func(string) {})
 
 	if !asked {
 		t.Fatalf("move %d of checkout %d: its hand-in judging was DECLINED, so it reads the whole tree in its "+

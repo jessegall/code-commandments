@@ -42,7 +42,7 @@ class InvoiceKind(RebuildKind):
 			"was judged on its own file alone:\n%s", told)
 	}
 
-	answer, served := warm.Asked(root, warm.Request{Judge: []string{"--no-checklist"}, In: first})
+	answer, served := warm.Asked(root, warm.Request{Judge: []string{"--no-checklist"}, In: first}, func(string) {})
 	if !served {
 		t.Fatalf("FIVE: the first worker's hand-in was DECLINED, so it reads the whole tree in its own process: %s",
 			answer.Because)
@@ -66,7 +66,7 @@ class RefundKind(RebuildKind):
 			"which is nothing to do with that worker:\n%s", told)
 	}
 
-	answer, served = warm.Asked(root, warm.Request{Judge: []string{"--no-checklist"}, In: second})
+	answer, served = warm.Asked(root, warm.Request{Judge: []string{"--no-checklist"}, In: second}, func(string) {})
 	if !served {
 		t.Fatalf("SEVEN: the second worker's hand-in was declined after the main checkout moved: %s", answer.Because)
 	}
@@ -87,7 +87,7 @@ class RefundKind(RebuildKind):
 
 	storyOn(t, root, "checkout", "-q", "development")
 
-	answer, served = warm.Asked(root, warm.Request{Judge: []string{"--no-checklist"}, In: root})
+	answer, served = warm.Asked(root, warm.Request{Judge: []string{"--no-checklist"}, In: root}, func(string) {})
 	if !served {
 		t.Fatalf("NINE: the project's own judging was declined back on its own branch: %s", answer.Because)
 	}

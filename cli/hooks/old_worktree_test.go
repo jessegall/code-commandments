@@ -46,7 +46,7 @@ func TestAWorkerCutLongAgoIsStillJudgedFromTheTree(t *testing.T) {
 
 	nowServing(t)
 
-	answer := judgedFor(warm.Request{Judge: []string{"--changes", "--no-checklist"}, In: worktree}, root)
+	answer := judgedFor(warm.Request{Judge: []string{"--changes", "--no-checklist"}, In: worktree}, root, func(string) {})
 
 	if answer.Declined {
 		t.Fatalf("a worker cut before its branch moved on by 400 files was declined: %s", answer.Because)

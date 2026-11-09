@@ -38,7 +38,25 @@ func Watched() bool {
 	return os.Getenv(JournalReport) != "" || os.Getenv(PlainProgress) != ""
 }
 
+// ProgressRelay is the error stream of a judging done for another run: what the judging says goes to the stream it holds, and its progress lines go to that run as they are made.
+type ProgressRelay struct {
+	io.Writer
+	Send func(string)
+}
+
+type progressLines func(string)
+
+func (send progressLines) Write(line []byte) (int, error) {
+	send(strings.TrimRight(string(line), "\n"))
+
+	return len(line), nil
+}
+
 func NewProgress(stream io.Writer) *Progress {
+	if relay, relayed := stream.(ProgressRelay); relayed {
+		return &Progress{stream: progressLines(relay.Send), enabled: true, plain: true, total: 1, lastFilled: -1, lastShare: -1}
+	}
+
 	terminal := isTerminal(stream)
 	plain := !terminal && Watched()
 

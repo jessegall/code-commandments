@@ -43,7 +43,7 @@ func TestAJudgingAskedForOnTheSocketIsAnsweredFromTheTreeTheServiceHolds(t *test
 	answer, asked := warm.Asked(root, warm.Request{
 		Judge: []string{root, "--no-checklist", "--sin=migration-by-its-parents"},
 		In:    root,
-	})
+	}, func(string) {})
 	if !asked {
 		t.Fatal("the run found no service on the socket named from the project")
 	}
@@ -62,7 +62,7 @@ func TestAJudgingAskedForOnTheSocketIsAnsweredFromTheTreeTheServiceHolds(t *test
 func TestARunFindsNoServiceWhereNoneListens(t *testing.T) {
 	root, _ := migrationProject(t)
 
-	if _, asked := warm.Asked(root, warm.Request{Judge: []string{root}, In: root}); asked {
+	if _, asked := warm.Asked(root, warm.Request{Judge: []string{root}, In: root}, func(string) {}); asked {
 		t.Error("a run was answered by a service nobody started")
 	}
 }
@@ -132,7 +132,7 @@ func TestAJudgingTheBaseCannotCoverIsDeclined(t *testing.T) {
 
 	go serveJudging(listener, root)
 
-	if answer, asked := warm.Asked(root, warm.Request{Judge: []string{root, "--no-checklist"}, In: root}); asked {
+	if answer, asked := warm.Asked(root, warm.Request{Judge: []string{root, "--no-checklist"}, In: root}, func(string) {}); asked {
 		t.Errorf("with no base held the service judged it anyway: exit %d\n%s", answer.Code, answer.Out)
 	}
 }
@@ -162,7 +162,7 @@ func TestAWorkersHandInJudgingIsAnsweredFromTheBase(t *testing.T) {
 
 	worktree := filepath.Join(root, ".journal", "worktrees", "worker-1")
 
-	answer, asked := warm.Asked(root, warm.Request{Judge: []string{"--no-checklist"}, In: worktree})
+	answer, asked := warm.Asked(root, warm.Request{Judge: []string{"--no-checklist"}, In: worktree}, func(string) {})
 	if !asked {
 		t.Fatal("a worker's hand-in judging was declined, so it reads the whole tree in its own process")
 	}
@@ -262,7 +262,7 @@ func judgingOf(t *testing.T, root string) string {
 	answer, asked := warm.Asked(root, warm.Request{
 		Judge: []string{root, "--no-checklist", "--sin=migration-by-its-parents"},
 		In:    root,
-	})
+	}, func(string) {})
 	if !asked {
 		t.Fatal("the judging was declined, so it says nothing about the tree the service holds")
 	}
@@ -278,7 +278,7 @@ func TestAServedJudgingIsRecordedWithWhereItsTimeWent(t *testing.T) {
 	worktree := filepath.Join(root, ".journal", "worktrees", "worker-1")
 	wroteInto(t, filepath.Join(worktree, "src", "order.py"), olderSin)
 
-	judgedFor(warm.Request{Judge: []string{"--no-checklist", "--parallel=1"}, In: worktree}, root)
+	judgedFor(warm.Request{Judge: []string{"--no-checklist", "--parallel=1"}, In: worktree}, root, func(string) {})
 
 	said, err := os.ReadFile(filepath.Join(data, "judgings.log"))
 	if err != nil {
@@ -443,7 +443,7 @@ func TestAWorkersChangesAreJudgedWhereTheServiceAnswersIt(t *testing.T) {
 		}
 	}
 
-	answer, asked := warm.Asked(root, warm.Request{Judge: []string{"--changes", "--no-checklist"}, In: worktree})
+	answer, asked := warm.Asked(root, warm.Request{Judge: []string{"--changes", "--no-checklist"}, In: worktree}, func(string) {})
 	if !asked {
 		t.Fatalf("the service declined a worker's judging of %d files, inside the %d it reads for one: %s",
 			leastReadInOneGo-50, leastReadInOneGo, answer.Because)
@@ -485,7 +485,7 @@ func TestAPathInsideAWorktreeIsTheOnlyThingJudged(t *testing.T) {
 
 	named := filepath.Join(worktree, "src")
 
-	answer, asked := warm.Asked(root, warm.Request{Judge: []string{named, "--no-checklist"}, In: worktree})
+	answer, asked := warm.Asked(root, warm.Request{Judge: []string{named, "--no-checklist"}, In: worktree}, func(string) {})
 	if !asked {
 		t.Skipf("the service declined this judging, so what it would have judged was never asked: %s", answer.Because)
 	}
@@ -506,7 +506,7 @@ func TestAPathInsideAWorktreeIsTheOnlyThingJudged(t *testing.T) {
 
 	one := filepath.Join(worktree, "src", "order.py")
 
-	answer, asked = warm.Asked(root, warm.Request{Judge: []string{one, "--no-checklist"}, In: worktree})
+	answer, asked = warm.Asked(root, warm.Request{Judge: []string{one, "--no-checklist"}, In: worktree}, func(string) {})
 	if !asked {
 		t.Skipf("the service declined the one-file judging: %s", answer.Because)
 	}
@@ -670,7 +670,7 @@ func TestAWorkerIsServedInTheShapeTheJournalReallyLaysOut(t *testing.T) {
 		}
 	}
 
-	answer, asking := warm.Asked(root, warm.Request{Judge: []string{"--no-checklist"}, In: worktree})
+	answer, asking := warm.Asked(root, warm.Request{Judge: []string{"--no-checklist"}, In: worktree}, func(string) {})
 	if !asking {
 		t.Fatalf("a worker's hand-in was declined: %s", answer.Because)
 	}
@@ -725,7 +725,7 @@ func TestAWorkerIsServedFromTheTreeOfTheBranchItWasCutFrom(t *testing.T) {
 
 	worktree := filepath.Join(root, ".journal", "worktrees", "worker-1")
 
-	answer, asked := warm.Asked(root, warm.Request{Judge: []string{"--no-checklist"}, In: worktree})
+	answer, asked := warm.Asked(root, warm.Request{Judge: []string{"--no-checklist"}, In: worktree}, func(string) {})
 	if !asked {
 		t.Fatalf("a worker's judging was declined after the main checkout moved off the branch it was cut from: %s",
 			answer.Because)

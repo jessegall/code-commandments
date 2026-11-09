@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"io"
 	"net"
 	"os"
 	"slices"
@@ -71,10 +72,10 @@ func answerJudging(connection net.Conn, root string) {
 		return
 	}
 
-	connection.Write(warm.Answered(judgedFor(request, root)))
+	connection.Write(warm.Answered(judgedFor(request, root, func(line string) { connection.Write(warm.Progressed(line)) })))
 }
 
-func judgedFor(request warm.Request, root string) warm.Answer {
+func judgedFor(request warm.Request, root string, progressed func(string)) warm.Answer {
 	costs := ledger.Of(root)
 
 	if why, coming := TheTreeIsComing(root, checkoutOf(root, request.In)); coming {
@@ -88,6 +89,11 @@ func judgedFor(request warm.Request, root string) warm.Answer {
 
 	var out, errs bytes.Buffer
 
+	var saying io.Writer = &errs
+	if request.Progress {
+		saying = cli.ProgressRelay{Writer: &errs, Send: progressed}
+	}
+
 	declined := ""
 	overlay := 0
 	spent := judge.Spent{}
@@ -96,7 +102,7 @@ func judgedFor(request warm.Request, root string) warm.Answer {
 		In:       request.In,
 		Reading:  heldOrDeclined(root, request.In, &declined, &overlay),
 		Spending: func(done judge.Spent) { spent = done },
-	}).Run(cli.InputOf("judge", request.Judge...), cli.Console{Out: &out, Err: &errs})
+	}).Run(cli.InputOf("judge", request.Judge...), cli.Console{Out: &out, Err: saying})
 
 	recordServed(root, request.In, declined, overlay, spent)
 
