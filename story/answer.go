@@ -2,6 +2,10 @@ package story
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
+	"regexp"
+	"strconv"
 	"strings"
 	"time"
 
@@ -126,4 +130,89 @@ func (s *Story) ReadsTheLanesOnceTheyShow(text string) Ran {
 	}
 
 	return lanes
+}
+
+func (s *Story) Judged(files int) {
+	s.t.Helper()
+
+	s.CostIs(ledger.DetectorFilesJudged, files)
+}
+
+func (s *Story) Remembered(files int) {
+	s.t.Helper()
+
+	s.CostIs(ledger.DetectorFilesRemembered, files)
+}
+
+// ProgressLine is one line of progress an answer carried, read from the error text the sins alias shows by setting COMMANDMENTS_PLAIN_PROGRESS: the phase counting ("reading" or "detector"), how far it had got and out of how many.
+type ProgressLine struct {
+	Phase string
+	Done  int
+	Of    int
+}
+
+var progressLine = regexp.MustCompile(`(?m)^(reading|detector) (\d+)/(\d+)$`)
+
+var namedAt = regexp.MustCompile(`([^\s:"'()]+\.[A-Za-z0-9]+):(\d+)`)
+
+func (s *Story) ProgressOf(ran Ran) []ProgressLine {
+	var lines []ProgressLine
+
+	for _, found := range progressLine.FindAllStringSubmatch(ran.Err, -1) {
+		done, _ := strconv.Atoi(found[2])
+		of, _ := strconv.Atoi(found[3])
+		lines = append(lines, ProgressLine{Phase: found[1], Done: done, Of: of})
+	}
+
+	return lines
+}
+
+func (s *Story) ReadsCounted(ran Ran) int {
+	return s.countedIn(ran, "reading")
+}
+
+func (s *Story) DetectorsCounted(ran Ran) int {
+	return s.countedIn(ran, "detector")
+}
+
+func (s *Story) countedIn(ran Ran, phase string) int {
+	counted := 0
+
+	for _, line := range s.ProgressOf(ran) {
+		if line.Phase == phase {
+			counted = line.Of
+		}
+	}
+
+	return counted
+}
+
+func (s *Story) NamesOnlyWholePaths(ran Ran, folder string) {
+	s.t.Helper()
+
+	if len(namedAt.FindAllString(ran.Text(), -1)) == 0 {
+		s.Fails("the answer names no path:line at all; it says:\n" + ran.Text())
+
+		return
+	}
+
+	if lost, missing := pathNotThere(ran.Text(), folder); missing {
+		s.Fails(fmt.Sprintf("the answer names %s, which is no file in %s (a path that lost its first slash reads like this); it says:\n%s",
+			lost, folder, ran.Text()))
+	}
+}
+
+func pathNotThere(text, folder string) (string, bool) {
+	for _, found := range namedAt.FindAllStringSubmatch(text, -1) {
+		path := found[1]
+		if !filepath.IsAbs(path) {
+			path = filepath.Join(folder, path)
+		}
+
+		if _, err := os.Stat(path); err != nil {
+			return found[0], true
+		}
+	}
+
+	return "", false
 }
