@@ -3,8 +3,10 @@ package hooks
 import (
 	"os"
 	"slices"
+	"sync"
 
 	"github.com/jessegall/code-commandments/cli/config"
+	"github.com/jessegall/code-commandments/cli/workspace"
 )
 
 func heldTheConfigOf(line map[string]any) {
@@ -21,13 +23,68 @@ func heldTheConfigOf(line map[string]any) {
 		return
 	}
 
+	letGoOfTheTreesOf(project)
+	Warming(project, now)
+}
+
+// walkedUnder is the config file a project's tree was last read under and when that file was written.
+type walkedUnder struct {
+	mu     sync.Mutex
+	stamps map[string]int64
+	each   map[string]config.Config
+}
+
+var walked = walkedUnder{stamps: map[string]int64{}, each: map[string]config.Config{}}
+
+func configFilesStamp(project string) int64 {
+	return max(modified(workspace.Config(project)), modified(workspace.JSONConfig(project)))
+}
+
+func walkedTheTreeUnder(project string) {
+	now, err := config.Load(project)
+	if err != nil {
+		return
+	}
+
+	walked.mu.Lock()
+	defer walked.mu.Unlock()
+
+	walked.stamps[project], walked.each[project] = configFilesStamp(project), now
+}
+
+// heldTheConfigFileOf reads the project's config file again once it was written, and lets go of the trees held when the paths they were read under changed. Rules and the rest of the config are read on each request, so nothing else needs the service to restart.
+func heldTheConfigFileOf(project string) {
+	written := configFilesStamp(project)
+
+	walked.mu.Lock()
+	defer walked.mu.Unlock()
+
+	if written == walked.stamps[project] {
+		return
+	}
+
+	now, err := config.Load(project)
+	if err != nil {
+		return
+	}
+
+	was := walked.each[project]
+	walked.stamps[project], walked.each[project] = written, now
+
+	if walksTheSame(was, now) {
+		return
+	}
+
+	letGoOfTheTreesOf(project)
+	Warming(project, now)
+}
+
+func letGoOfTheTreesOf(project string) {
 	for _, tree := range kept.Trees() {
 		if tree.Project == project {
 			kept.Drop(tree.Project, tree.Branch)
 		}
 	}
-
-	Warming(project, now)
 }
 
 func walksTheSame(was, now config.Config) bool {
