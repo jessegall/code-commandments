@@ -382,7 +382,7 @@ func viewOf(base *warm.Base, named branchRoot, checkout string, read, gone []str
 		return base.ViewFrom(checkout, nil, named.project, gone), nil
 	}
 
-	rebuilt, err := scan.Walk(read, source.Excluded{}).Load()
+	rebuilt, err := loadCounted(named.project, scan.Walk(read, source.Excluded{}))
 
 	var incomplete scan.Incomplete
 	if errors.As(err, &incomplete) {
@@ -442,7 +442,7 @@ func oneFileAtATime(root, in string, refused *string) func(scan.Sources) (*engin
 			return engine.Load(), nil
 		}
 
-		rebuilt, err := scan.Walk(asked, source.Excluded{}).Load()
+		rebuilt, err := loadCounted(root, scan.Walk(asked, source.Excluded{}))
 
 		var incomplete scan.Incomplete
 		if errors.As(err, &incomplete) {

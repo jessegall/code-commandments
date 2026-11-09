@@ -305,3 +305,15 @@ func TestARanAnswersWithBothItsStreamsInOrder(t *testing.T) {
 		t.Errorf("the text of a run is %q", text)
 	}
 }
+
+func TestParsedIsTheFilesBridgesParsedSinceTheStoryBegan(t *testing.T) {
+	s, _ := storyOver(t, quiet)
+	costs := ledger.Of(s.project)
+
+	costs.Counts(ledger.FilesParsedByBridges, 5, s.project)
+	s.began = costsOf(s.project)
+
+	costs.Counts(ledger.FilesParsedByBridges, 3, s.project)
+
+	s.Parsed(3)
+}

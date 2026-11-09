@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"strings"
 	"time"
+
+	"github.com/jessegall/code-commandments/cli/ledger"
 )
 
 func (s *Story) Says(ran Ran, texts ...string) {
@@ -62,6 +64,12 @@ func (s *Story) CostIs(name string, counted int) {
 	if got := s.Cost(name); got != counted {
 		s.Fails(fmt.Sprintf("%s counted %d since the story began, where %d was meant", name, got, counted))
 	}
+}
+
+func (s *Story) Parsed(files int) {
+	s.t.Helper()
+
+	s.CostIs(ledger.FilesParsedByBridges, files)
 }
 
 func (s *Story) CostAtMost(name string, most int) {
