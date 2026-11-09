@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-func TestASweepLetsGoOfTreesNotWrittenForThreeDays(t *testing.T) {
+func TestASweepLetsGoOfTreesNotUsedForTwelveHours(t *testing.T) {
 	folder := t.TempDir()
 	now := time.Now()
 	stale, fresh := filepath.Join(folder, "stale.tree"), filepath.Join(folder, "fresh.tree")
@@ -16,14 +16,14 @@ func TestASweepLetsGoOfTreesNotWrittenForThreeDays(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	old := now.Add(-4 * 24 * time.Hour)
+	old := now.Add(-13 * time.Hour)
 	if err := os.Chtimes(stale, old, old); err != nil {
 		t.Fatal(err)
 	}
 
 	sweep(folder, now)
 	if _, err := os.Stat(stale); !os.IsNotExist(err) {
-		t.Error("a tree unwritten for four days was kept")
+		t.Error("a tree unused for thirteen hours was kept")
 	}
 	if _, err := os.Stat(fresh); err != nil {
 		t.Errorf("a fresh tree was swept: %v", err)
@@ -69,5 +69,40 @@ func TestASweepKeepsTheCacheUnderItsSizeByLettingTheOldestTreesGo(t *testing.T) 
 			t.Errorf("after a sweep holding 300 bytes against a limit of 250, %s kept is %v, want %v: the "+
 				"oldest trees go first until the cache fits", name, err == nil, kept)
 		}
+	}
+}
+
+func TestAFolderNotTouchedForTwelveHoursIsForgottenAndATouchedOneKept(t *testing.T) {
+	parent := t.TempDir()
+	now := time.Now()
+	idle, used := filepath.Join(parent, "idle"), filepath.Join(parent, "used")
+
+	for _, folder := range []string{idle, used} {
+		if err := os.MkdirAll(folder, 0o755); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	old := now.Add(-13 * time.Hour)
+	if err := os.Chtimes(idle, old, old); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := os.Chtimes(used, old, old); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := os.Chtimes(used, now, now); err != nil {
+		t.Fatal(err)
+	}
+
+	ForgetUnused(parent, now)
+
+	if _, err := os.Stat(idle); !os.IsNotExist(err) {
+		t.Error("a folder untouched for thirteen hours was kept")
+	}
+
+	if _, err := os.Stat(used); err != nil {
+		t.Errorf("a folder touched just now was forgotten: %v", err)
 	}
 }

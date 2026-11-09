@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-const keptFor = 3 * 24 * time.Hour
+const keptFor = 12 * time.Hour
 
 const sweptEvery = time.Hour
 
@@ -63,6 +63,21 @@ func sweepKeeping(folder string, now time.Time, atMost int64) {
 	if os.MkdirAll(folder, 0o755) == nil {
 		os.WriteFile(mark, nil, 0o644)
 		os.Chtimes(mark, now, now)
+	}
+}
+
+// ForgetUnused removes each folder under parent that nothing has used for twelve hours before now, a use being a touch of the folder.
+func ForgetUnused(parent string, now time.Time) {
+	entries, err := os.ReadDir(parent)
+	if err != nil {
+		return
+	}
+
+	for _, entry := range entries {
+		info, err := entry.Info()
+		if err == nil && entry.IsDir() && now.Sub(info.ModTime()) > keptFor {
+			os.RemoveAll(filepath.Join(parent, entry.Name()))
+		}
 	}
 }
 

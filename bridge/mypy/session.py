@@ -36,7 +36,10 @@ def checkout_of(paths: list[str]) -> str:
 def cache_folder(paths: list[str]) -> str:
     """Where mypy keeps what it checked for the checkout of $paths: under the plugin's data, never in the checkout."""
     base = os.environ.get("JOURNAL_PLUGIN_DATA") or tempfile.gettempdir()
-    return os.path.join(base, "mypy-cache", hashlib.sha256(checkout_of(paths).encode()).hexdigest()[:16])
+    folder = os.path.join(base, "mypy-cache", hashlib.sha256(checkout_of(paths).encode()).hexdigest()[:16])
+    os.makedirs(folder, exist_ok=True)
+    os.utime(folder)
+    return folder
 
 
 def options(python: str | None, cache: str) -> Options:
