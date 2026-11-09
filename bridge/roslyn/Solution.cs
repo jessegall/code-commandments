@@ -49,7 +49,7 @@ public sealed class Solution
     private static IEnumerable<string> Found(string root)
     {
         var below = Directory.Exists(root)
-            ? Directory.EnumerateFiles(root, "*.csproj", SearchOption.AllDirectories).Where(Sources.IsSource).ToList()
+            ? Directory.EnumerateFiles(root, "*.csproj", SearchOption.AllDirectories).Where(file => Sources.IsSource(root, file)).ToList()
             : [];
 
         return below.Count > 0 ? below : Enclosing(root);

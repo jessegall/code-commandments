@@ -78,7 +78,7 @@ func (c Command) folder() (string, error) {
 }
 
 func (c Command) read(sources scan.Sources) (*engine.Codebase, error) {
-	if c.Reading != nil {
+	if c.Reading != nil && sources.Count(source.Languages...) > 0 {
 		return c.Reading(sources)
 	}
 

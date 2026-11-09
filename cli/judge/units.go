@@ -8,6 +8,7 @@ import (
 	"github.com/jessegall/code-commandments/catalog"
 	"github.com/jessegall/code-commandments/cli"
 	"github.com/jessegall/code-commandments/cli/scan"
+	"github.com/jessegall/code-commandments/cli/source"
 	"github.com/jessegall/code-commandments/detectors"
 	"github.com/jessegall/code-commandments/engine"
 	cs "github.com/jessegall/code-commandments/engine/csharp"
@@ -30,8 +31,11 @@ func (c Command) judgeUnits(sources scan.Sources, rules []detectors.Detector, op
 
 		return nil
 	})
-	if err != nil || units == nil {
+	if err != nil {
 		return Judgement{}, 0, err
+	}
+	if units == nil {
+		return Judgement{Skipped: unreadCSharp(sources)}, 0, nil
 	}
 	defer units.Close()
 
@@ -90,8 +94,19 @@ func (c Command) judgeUnits(sources scan.Sources, rules []detectors.Detector, op
 		}
 	}
 	judgement.Findings = Twinned(judgement.Findings)
+	if files == 0 {
+		judgement.Skipped = joined(judgement.Skipped, unreadCSharp(sources)...)
+	}
 
 	return judgement, files, nil
+}
+
+func unreadCSharp(sources scan.Sources) []string {
+	if sources.Count(source.CSharp) == 0 {
+		return nil
+	}
+
+	return []string{"the " + scan.CSharp.Label + " bridge"}
 }
 
 func weighedOf(rule detectors.Detector, candidate detectors.Candidate) weighed {
