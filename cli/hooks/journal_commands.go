@@ -31,6 +31,7 @@ const (
 	recordKey        = "judge_record"
 	ceilingKey       = "judge_nodes_held"
 	workersKey       = "judge_workers"
+	workerEditsKey   = "judge_worker_edits"
 	mergesKey        = "judge_merges"
 	filesInOneGoKey  = "judge_files_at_once"
 	skillsFolder     = "journal-skills"

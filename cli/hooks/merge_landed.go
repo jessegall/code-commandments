@@ -252,7 +252,7 @@ func mergesJudged(line map[string]any) bool {
 
 	said, named := chosen[mergesKey]
 
-	return !named || asText(said) != "false"
+	return workersOn(chosen) && (!named || asText(said) != "false")
 }
 
 const mostFilesAMergeBringsIn = 200

@@ -5,7 +5,7 @@ import "testing"
 func TestAWorkersEditIsJudgedByTheSettingItsOwnLineCarries(t *testing.T) {
 	moment, read := Moment4Of(map[string]any{
 		"v": float64(1), "event": "file_edited", "role": "worker", "environment": "story-engine",
-		"settings": map[string]any{workersKey: true},
+		"settings": map[string]any{workersKey: true, workerEditsKey: true},
 		"data":     map[string]any{"path": "/nowhere/order.py"},
 	})
 	if !read {

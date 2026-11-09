@@ -12,7 +12,7 @@ var workerMarkForm = regexp.MustCompile(`Code Commandments — ([\w./-]+\.py):(\
 func TestAWorkerIsToldAFileAndLineInItsOwnWorktreeWithTheSkill(t *testing.T) {
 	root, data := workerProject(t)
 	t.Setenv(pluginData, data)
-	settingsOf(t, map[string]any{workersKey: "true"})
+	settingsOf(t, map[string]any{workersKey: "true", workerEditsKey: "true"})
 
 	worktree := stressWorktreeIn(root, 25)
 	cutInto(t, root, worktree, "feature/told-a-mark")
@@ -69,7 +69,7 @@ func TestAWorkerIsToldAFileAndLineInItsOwnWorktreeWithTheSkill(t *testing.T) {
 func TestTheWorkersAnswerSaysWhichRulesWereAsked(t *testing.T) {
 	root, data := workerProject(t)
 	t.Setenv(pluginData, data)
-	settingsOf(t, map[string]any{workersKey: "true"})
+	settingsOf(t, map[string]any{workersKey: "true", workerEditsKey: "true"})
 
 	worktree := stressWorktreeIn(root, 26)
 	cutInto(t, root, worktree, "feature/told-what-was-asked")

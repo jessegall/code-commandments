@@ -322,12 +322,12 @@ func ceilingChosen() int {
 }
 
 func notForThisRole(moment Moment) string {
-	if moment.Role == "" || !workerRoles[moment.Role] || workersJudgedAt(moment) {
+	if moment.Role == "" || !workerRoles[moment.Role] || workerEditsJudgedAt(moment) {
 		return ""
 	}
 
 	return Unjudged("a "+moment.Role+"'s own edits are not judged",
-		"the setting "+workersKey+" is off, and its work is judged when it is taken in", "")
+		"the setting "+workerEditsKey+" or "+workersKey+" is off", "")
 }
 
 func filesInOneGoChosen() int {
@@ -349,23 +349,29 @@ func filesInOneGoChosen() int {
 	return files
 }
 
-func workersJudged() bool {
+func workersOn(chosen map[string]any) bool {
+	said, named := chosen[workersKey]
+
+	return !named || switchedOn(said)
+}
+
+func workerEditsJudged() bool {
 	chosen, given := chosenSettings()
 	if !given {
 		return false
 	}
 
-	said, named := chosen[workersKey]
+	said, named := chosen[workerEditsKey]
 
-	return named && switchedOn(said)
+	return workersOn(chosen) && named && switchedOn(said)
 }
 
-func workersJudgedAt(moment Moment) bool {
-	if said, named := moment.Settings[workersKey]; named {
-		return switchedOn(said)
+func workerEditsJudgedAt(moment Moment) bool {
+	if said, named := moment.Settings[workerEditsKey]; named {
+		return workersOn(moment.Settings) && switchedOn(said)
 	}
 
-	return workersJudged()
+	return workerEditsJudged()
 }
 
 func switchedOn(value any) bool {

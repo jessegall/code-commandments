@@ -34,7 +34,8 @@ func settingsFile(t *testing.T) []declared {
 
 func TestEverySettingThisPlanAddsSaysWhatItIsAndWhatItDefaultsTo(t *testing.T) {
 	want := map[string]any{
-		"judge_workers":       false,
+		"judge_workers":       true,
+		"judge_worker_edits":  false,
 		"judge_merges":        true,
 		"judge_nodes_held":    float64(0),
 		"judge_files_at_once": float64(0),

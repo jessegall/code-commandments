@@ -1,6 +1,6 @@
 {
     "name": "code-commandments",
-    "version": "7.18.53",
+    "version": "7.18.54",
     "title": "Code Commandments",
     "description": "The static code checker judges the codebase, its hooks run inside the journal, and every rule and language is a switch in its settings",
     "journal": "2.267.16",
@@ -47,7 +47,7 @@
     },
     "env": {
         "CLAUDE_PROJECT_DIR": "{project}",
-        "COMMANDMENTS_RELEASE": "v7.18.53"
+        "COMMANDMENTS_RELEASE": "v7.18.54"
     },
     "setup": [
         {
@@ -110,32 +110,39 @@
             "group": "Performance"
         },
         "judge_workers": {
-            "title": "Judge a worker's own edits",
-            "help": "Off, a worker's edits are not judged as it writes, and its work is judged when it is taken in, which is what the main agent is asked to do after a merge. On, every worker is judged as it writes, which costs a lane of memory per worker.",
+            "title": "Judge workers",
+            "help": "The switch over everything below. Off, a worker triggers nothing of ours at all: no judging of its edits, its hand-in or its merge, and no process started for it. On, the choices below say when a worker is judged.",
+            "type": "flag",
+            "default": "true",
+            "group": "Workers"
+        },
+        "judge_worker_edits": {
+            "title": "Judge a worker's live edits",
+            "help": "Only with Judge workers on. On, every worker is judged as it writes, which costs a lane of memory per worker. Off, its edits are not judged as it writes.",
             "type": "flag",
             "default": "false",
-            "group": "Performance"
+            "group": "Workers"
+        },
+        "judge_hand_ins": {
+            "title": "Judge before a hand-in goes through",
+            "help": "Only with Judge workers on. On, a worker's hand-in waits while the plugin judges the files it changed since its worktree was cut, answered from the tree the service already holds, and a sin sends the work back to that worker naming the file, the line and the skill. When no tree is held or the time the journal allows runs out, the hand-in goes on and says what was not judged; the project is never read whole for it. Off, hand-ins are not held.",
+            "type": "flag",
+            "default": "true",
+            "group": "Workers"
         },
         "judge_merges": {
             "title": "Judge what a merge brings in",
-            "help": "On, a worker's merge is judged by the plugin itself the moment it lands, over the commits it brought in, and the main agent is told what came in without having to remember. Off, nothing is judged at a merge and what came in is judged whenever somebody next judges those files.",
+            "help": "Only with Judge workers on. On, a worker's merge is judged by the plugin itself the moment it lands, over the commits it brought in, and the main agent is told what came in without having to remember. Off, nothing is judged at a merge and what came in is judged whenever somebody next judges those files.",
             "type": "flag",
             "default": "true",
-            "group": "Performance"
-        },
-        "judge_hand_ins": {
-            "title": "Hold a worker's hand-in until it is judged",
-            "help": "On, a worker's hand-in waits while the plugin judges the files it changed since its worktree was cut, answered from the tree the service already holds, and a sin sends the work back to that worker naming the file, the line and the skill. When no tree is held or the time the journal allows runs out, the hand-in goes on and says what was not judged; the project is never read whole for it. Off, hand-ins are not held and a merge is judged after it lands.",
-            "type": "flag",
-            "default": "true",
-            "group": "Performance"
+            "group": "Workers"
         },
         "judge_before_merge": {
             "title": "Refuse a merge that would bring in sins",
-            "help": "On, a worker's merge is judged BEFORE it lands, over what its branch adds on top of the branch it merges into, and a merge that would bring in sins is refused: the work goes back to that worker with the findings and the merger is told it was not allowed. Off, a merge lands and is judged afterwards. This is the one thing the journal waits for us on, so it allows the merge and says so rather than holding it when the judging runs long.",
+            "help": "Only with Judge workers on. On, a worker's merge is judged BEFORE it lands, over what its branch adds on top of the branch it merges into, and a merge that would bring in sins is refused: the work goes back to that worker with the findings and the merger is told it was not allowed. Off, a merge lands and is judged afterwards. This is the one thing the journal waits for us on, so it allows the merge and says so rather than holding it when the judging runs long.",
             "type": "flag",
             "default": "false",
-            "group": "Performance"
+            "group": "Workers"
         },
         "judge_files_at_once": {
             "title": "Files a checkout may differ by",

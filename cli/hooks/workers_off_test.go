@@ -40,9 +40,6 @@ func TestAWorkersEditIsNotJudgedAndTheAnswerNamesTheSetting(t *testing.T) {
 		t.Errorf("a worker's edit was judged although the setting is off: %s", said)
 	}
 
-	if !strings.Contains(said, "judged when it is taken in") {
-		t.Errorf("the answer does not say when the work IS judged: %s", said)
-	}
 }
 
 func TestAMainAgentsEditIsJudgedWhateverTheWorkersSettingSays(t *testing.T) {
@@ -67,7 +64,7 @@ func TestAMainAgentsEditIsJudgedWhateverTheWorkersSettingSays(t *testing.T) {
 func TestAWorkerIsJudgedWhenTheSettingIsOn(t *testing.T) {
 	root, data := workerProject(t)
 	t.Setenv(pluginData, data)
-	settingsOf(t, map[string]any{workersKey: "true"})
+	settingsOf(t, map[string]any{workersKey: "true", workerEditsKey: "true"})
 
 	under := filepath.Join("src", "made.py")
 	wroteInto(t, filepath.Join(root, under), olderSin)
