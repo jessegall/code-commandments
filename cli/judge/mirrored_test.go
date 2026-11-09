@@ -72,3 +72,19 @@ func TestTheProjectsOwnReportMirrorsNothing(t *testing.T) {
 		t.Errorf("the project's own checkout says it mirrors %q, so its own paths would be rewritten", said)
 	}
 }
+
+func TestAWorktreeReportGivenAFolderNamesWhatLiesOutsideItWhole(t *testing.T) {
+	report := Report{path: "/project/.journal/worktrees/one/src/given", mirrors: "/project", worktree: "/project/.journal/worktrees/one"}
+
+	for location, said := range map[string]string{
+		"/project/.journal/worktrees/one/src/given/a.py": "a.py",
+		"/project/src/given/a.py":                        "a.py",
+		"/project/.journal/worktrees/one/src/other/b.py": "/project/.journal/worktrees/one/src/other/b.py",
+		"/project/src/other/b.py":                        "/project/.journal/worktrees/one/src/other/b.py",
+		"/elsewhere/c.py":                                "/elsewhere/c.py",
+	} {
+		if got := report.relative(location); got != said {
+			t.Errorf("%s is named %s, want %s", location, got, said)
+		}
+	}
+}

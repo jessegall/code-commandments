@@ -31,6 +31,7 @@ type Report struct {
 	says         map[string]string
 	filed        []Reported
 	mirrors      string
+	worktree     string
 }
 
 func (r Report) Saying(says map[string]string) Report {
@@ -46,7 +47,7 @@ func (r Report) Reporting(filed []Reported) Report {
 }
 
 func NewReport(path string, findings []engine.Finding, fixable, scaffoldable map[string]string, skipped Skipped) Report {
-	report := Report{path: path, bySkill: map[string][]engine.Finding{}, total: len(findings), fixable: fixable, scaffoldable: scaffoldable, skipped: skipped, mirrors: mirrored(path)}
+	report := Report{path: path, bySkill: map[string][]engine.Finding{}, total: len(findings), fixable: fixable, scaffoldable: scaffoldable, skipped: skipped, mirrors: mirrored(path), worktree: git.Root(path)}
 
 	for _, finding := range findings {
 		if _, seen := report.bySkill[finding.Skill]; !seen {
@@ -350,11 +351,21 @@ func (r Report) relative(location string) string {
 		return location
 	}
 
-	if relative, under := strings.CutPrefix(location, r.mirrors+"/"); under {
+	if strings.HasPrefix(location, r.worktree+"/") {
+		return location
+	}
+
+	inProject, under := strings.CutPrefix(location, r.mirrors+"/")
+	if !under {
+		return location
+	}
+
+	whole := filepath.Join(r.worktree, inProject)
+	if relative, under := strings.CutPrefix(whole, r.path+"/"); under {
 		return relative
 	}
 
-	return location
+	return whole
 }
 
 func mirrored(path string) string {
