@@ -5,10 +5,19 @@ import (
 	"os"
 	"os/exec"
 	"runtime"
+	"runtime/debug"
 	"strconv"
 	"strings"
 	"sync"
 )
+
+const serviceMemoryLimit = 3 << 30
+
+func limitServiceMemory() {
+	if os.Getenv("GOMEMLIMIT") == "" {
+		debug.SetMemoryLimit(serviceMemoryLimit)
+	}
+}
 
 // Memory is what a memory figure of this plugin means, taken three ways because the three differ by gigabytes: the
 // Go heap this process has, this process's own resident size, and the resident size of this process with every

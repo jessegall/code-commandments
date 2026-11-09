@@ -425,8 +425,9 @@ func bySkill(marks []SinMark) (map[string][]string, []string) {
 
 func safely(rule detectors.Detector, codebase *engine.Codebase) (matches []engine.Match) {
 	defer func() {
-		if recover() != nil {
+		if failure := recover(); failure != nil {
 			matches = nil
+			logRuleFailure(detectors.IdentityOf(rule), failure)
 		}
 	}()
 

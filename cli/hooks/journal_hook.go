@@ -481,6 +481,8 @@ func (JournalServe) Help() help.Help {
 }
 
 func (s JournalServe) Run(in *cli.Input, console cli.Console) (int, error) {
+	limitServiceMemory()
+
 	close, unanswerable := health.ServeOn(os.Getenv(health.Socket), hooksService)
 	defer close()
 

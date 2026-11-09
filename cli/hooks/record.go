@@ -82,6 +82,8 @@ func (j Judged) Line() string {
 }
 
 func Record(folder string, judged Judged) {
+	logFromTheService(judged.Line())
+
 	if folder == "" {
 		return
 	}
