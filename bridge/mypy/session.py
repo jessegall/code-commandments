@@ -33,10 +33,27 @@ def checkout_of(paths: list[str]) -> str:
     return start
 
 
+def project_of(checkout: str) -> str:
+    """The project $checkout belongs to: itself, or for a git worktree the checkout it was cut from."""
+    marker = os.path.join(checkout, ".git")
+    if not os.path.isfile(marker):
+        return checkout
+    with open(marker, encoding="utf-8") as file:
+        written = file.read().strip()
+    if not written.startswith("gitdir:"):
+        return checkout
+    git_folder = os.path.realpath(os.path.join(checkout, written.removeprefix("gitdir:").strip()))
+    if os.path.basename(os.path.dirname(git_folder)) != "worktrees":
+        return checkout
+    return os.path.dirname(os.path.dirname(os.path.dirname(git_folder)))
+
+
 def cache_folder(paths: list[str]) -> str:
-    """Where mypy keeps what it checked for the checkout of $paths: under the plugin's data, never in the checkout."""
+    """Where mypy keeps what it checked for the project of $paths, under the plugin's data and never in a checkout:
+    one folder for all its worktrees, because mypy accepts a cached module whose path differs when its contents hash
+    the same."""
     base = os.environ.get("JOURNAL_PLUGIN_DATA") or tempfile.gettempdir()
-    folder = os.path.join(base, "mypy-cache", hashlib.sha256(checkout_of(paths).encode()).hexdigest()[:16])
+    folder = os.path.join(base, "mypy-cache", hashlib.sha256(project_of(checkout_of(paths)).encode()).hexdigest()[:16])
     os.makedirs(folder, exist_ok=True)
     os.utime(folder)
     return folder

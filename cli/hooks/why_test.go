@@ -19,7 +19,7 @@ func TestWhyReadsTheRecordOfTheLastJudgings(t *testing.T) {
 	Record(folder, Judged{At: time.Now(), Event: "file_edited", Checkout: "/project", Kind: "project",
 		Branch: "main", Held: true, Parsed: 1, ReadMs: 400, RuleMs: 290, Asked: 247, Sins: 0})
 	Record(folder, Judged{At: time.Now(), Event: "file_edited", Checkout: "/project/.journal/worktrees/main/worker-2",
-		Kind: "worktree", Branch: "a-worker", Held: false, Why: noTreeHeld, Overlay: 3, Parsed: 1,
+		Kind: "worktree", Branch: "a-worker", Held: false, Why: noTreeHeld, Parsed: 1,
 		ReadMs: 412, RuleMs: 290, Asked: 167, NotAsked: 80, Sins: 2})
 
 	said := &strings.Builder{}

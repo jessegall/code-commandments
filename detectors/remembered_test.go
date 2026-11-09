@@ -39,15 +39,21 @@ func TestADetectorThatReadsOneFileRemembers(t *testing.T) {
 	}
 }
 
-func TestADetectorThatReadsBeyondOneFileNeverRemembers(t *testing.T) {
-	if remembers(wholeTreeDetector{}) {
-		t.Error("one file's contents cannot say a whole-tree answer still holds")
+func TestADetectorThatReadsBeyondOneFileRemembersAcrossTheTree(t *testing.T) {
+	if !remembers(wholeTreeDetector{}) || !readsAcross(wholeTreeDetector{}) {
+		t.Error("a whole-tree answer holds as long as the tree's contents do")
 	}
 }
 
-func TestADetectorThatWeighsItsCandidatesNeverRemembers(t *testing.T) {
-	if remembers(weighingDetector{}) {
-		t.Error("whether one file's candidate is a finding depends on the other files' candidates")
+func TestADetectorThatWeighsItsCandidatesRemembersAcrossTheTree(t *testing.T) {
+	if !remembers(weighingDetector{}) || !readsAcross(weighingDetector{}) {
+		t.Error("a weighed answer holds as long as the tree's contents do")
+	}
+}
+
+func TestADetectorThatReadsOneFileDoesNotWaitOnTheWholeTree(t *testing.T) {
+	if readsAcross(plainDetector{}) {
+		t.Error("a one-file answer depends on that file alone")
 	}
 }
 
@@ -58,13 +64,13 @@ func TestADetectorHoldingSettingsItDoesNotFingerprintNeverRemembers(t *testing.T
 }
 
 func TestAChangedDefinitionStartsAFreshMemory(t *testing.T) {
-	before := memoryOf(changingDetector{definition: "one"})
+	before := EveryMemory().Of(identified(changingDetector{definition: "one"}))
 
-	if memoryOf(changingDetector{definition: "one"}) != before {
+	if EveryMemory().Of(identified(changingDetector{definition: "one"})) != before {
 		t.Error("the same definition should find the same memory")
 	}
 
-	if memoryOf(changingDetector{definition: "two"}) == before {
+	if EveryMemory().Of(identified(changingDetector{definition: "two"})) == before {
 		t.Error("a changed definition must not reach the old memory")
 	}
 }

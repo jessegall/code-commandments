@@ -938,7 +938,6 @@ func (c *stressCheckout) move(t *testing.T, move int) {
 func (c *stressCheckout) forgets(t *testing.T) {
 	stressForgot.Add(1)
 	kept.Drop(c.Project, git.CurrentBranch(c.Project))
-	kept.Forget(c.At)
 
 	c.wrote++
 	file := filepath.Join(c.At, "shop", "goods", fmt.Sprintf("forgot%d_%d.py", c.Named, c.wrote))
@@ -1602,7 +1601,7 @@ func stressMemorySaid(checkouts int) string {
 	return fmt.Sprintf("the most memory this run held, over %d checkouts at once: %s. It stands at %s now. "+
 		"The service holds %d node(s) in %d lane(s) and %d base(s). A watermark is a count of bytes, not a clock, "+
 		"so it is read as a figure of THIS machine and this tree rather than asserted.",
-		checkouts, highest.Line(), now.Line(), kept.NodesHeld(), len(kept.Lanes()), kept.Held())
+		checkouts, highest.Line(), now.Line(), kept.NodesHeld(), kept.Contents().Count(), kept.Held())
 }
 
 var answers struct {

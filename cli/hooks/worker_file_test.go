@@ -187,7 +187,6 @@ func TestAWorkersEarlierWorkIsInTheProgramItsNextEditIsJudgedAgainst(t *testing.
 
 	kept.Hold(project, branch, []string{root}, codebase, nil)
 	t.Cleanup(func() { kept.Drop(project, branch) })
-	t.Cleanup(func() { kept.Forget(worktree) })
 
 	earlier := filepath.Join(worktree, "src", "invoice.py")
 	if err := os.WriteFile(earlier, []byte("class Invoice:\n    pass\n"), 0o644); err != nil {
@@ -214,8 +213,7 @@ func TestAWorkersEarlierWorkIsInTheProgramItsNextEditIsJudgedAgainst(t *testing.
 		t.Errorf("the worker's own file carries %d marks, want the one its sin is", len(marks))
 	}
 
-	over := kept.Over(worktree)
-	if _, known := over.Holds(earlier); !known {
+	if !kept.Contents().Knows(earlier) {
 		t.Errorf("the worker's earlier %s is not in the program its next edit is judged against", earlier)
 	}
 }

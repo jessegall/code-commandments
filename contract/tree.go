@@ -73,6 +73,44 @@ func (f *File) Reaches() int {
 	return f.reaches
 }
 
+func (f *File) CopiedTo(path string, moved func(string) string) *File {
+	copied := *f
+	copied.Path = path
+	copied.nodes = make([]*Node, 0, len(f.nodes))
+
+	var walk func(node, parent *Node) *Node
+	walk = func(node, parent *Node) *Node {
+		own := *node
+		own.parent = parent
+
+		if node.Facts != none {
+			facts := *node.Facts
+			if facts.Resolves != "" {
+				facts.Resolves = moved(facts.Resolves)
+			}
+
+			own.Facts = &facts
+		}
+
+		copied.nodes = append(copied.nodes, &own)
+
+		if len(node.Children) > 0 {
+			own.Children = make([]*Node, len(node.Children))
+			for at, child := range node.Children {
+				own.Children[at] = walk(child, &own)
+			}
+		}
+
+		return &own
+	}
+
+	if f.Root != nil {
+		copied.Root = walk(f.Root, nil)
+	}
+
+	return &copied
+}
+
 // Span is a byte range into the file and the line it starts on.
 type Span struct {
 	Start int

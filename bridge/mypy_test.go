@@ -95,3 +95,66 @@ func TestABuildReplacesThePythonAFailedBuildLeftBehind(t *testing.T) {
 		t.Errorf("a finished build is not ready: %v", err)
 	}
 }
+
+func mypyCacheFolderOf(t *testing.T, python, data, path string) string {
+	t.Helper()
+
+	read := exec.Command(python, "-c", "import sys; sys.path.insert(0, 'mypy'); import session; print(session.cache_folder([sys.argv[1]]))", path)
+	read.Env = append(os.Environ(), "JOURNAL_PLUGIN_DATA="+data)
+
+	out, err := read.CombinedOutput()
+	if err != nil {
+		t.Fatalf("%v: %s", err, out)
+	}
+
+	return strings.TrimSpace(string(out))
+}
+
+func gitIn(t *testing.T, folder string, arguments ...string) {
+	t.Helper()
+
+	run := exec.Command("git", arguments...)
+	run.Dir = folder
+
+	if out, err := run.CombinedOutput(); err != nil {
+		t.Fatalf("git %v: %v: %s", arguments, err, out)
+	}
+}
+
+func TestAWorktreeSharesItsProjectsMypyCache(t *testing.T) {
+	python := os.Getenv("COMMANDMENTS_MYPY_PYTHON")
+	if python == "" {
+		t.Skip("no python with mypy is named here")
+	}
+
+	root, err := filepath.EvalSymlinks(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	project, worktree, data := filepath.Join(root, "project"), filepath.Join(root, "worktree"), filepath.Join(root, "data")
+	if err := os.Mkdir(project, 0o755); err != nil {
+		t.Fatal(err)
+	}
+
+	gitIn(t, project, "init", "-q")
+	gitIn(t, project, "-c", "user.name=a", "-c", "user.email=a@b", "commit", "-q", "--allow-empty", "-m", "first")
+	gitIn(t, project, "worktree", "add", "-q", worktree)
+
+	if here, there := mypyCacheFolderOf(t, python, data, project), mypyCacheFolderOf(t, python, data, worktree); here != there {
+		t.Errorf("the project caches in %s and its worktree in %s, so every new worktree starts cold", here, there)
+	}
+}
+
+func TestTwoProjectsKeepTheirOwnMypyCache(t *testing.T) {
+	python := os.Getenv("COMMANDMENTS_MYPY_PYTHON")
+	if python == "" {
+		t.Skip("no python with mypy is named here")
+	}
+
+	one, other, data := t.TempDir(), t.TempDir(), t.TempDir()
+
+	if mypyCacheFolderOf(t, python, data, one) == mypyCacheFolderOf(t, python, data, other) {
+		t.Error("two projects write into one mypy cache")
+	}
+}

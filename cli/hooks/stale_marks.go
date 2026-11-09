@@ -68,9 +68,7 @@ func stillToRead(root string, files []string) []string {
 
 func stands(named branchRoot, base *warm.Base, root, file string) bool {
 	if checkout := checkoutOf(root, file); checkout != named.project {
-		unchanged, known := kept.Over(checkout).Holds(file)
-
-		return known && unchanged
+		return kept.Contents().Knows(file)
 	}
 
 	unchanged, known := base.Holds(file)

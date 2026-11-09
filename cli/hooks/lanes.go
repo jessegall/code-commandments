@@ -32,16 +32,12 @@ func (Lanes) Names() []string {
 }
 
 func (Lanes) Help() help.Help {
-	return help.Of("Say what the running service holds: a lane per checkout with the commit it was cut from, how much of it is held and when it last answered, the trees held for the project, the ceiling over them all, and what the last merges and hand-ins brought in.").
+	return help.Of("Say what the running service holds: the trees held for the project, the files it knows by their contents, the ceiling over them all, and what the last merges and hand-ins brought in.").
 		Form("lanes", "what the service holds now").
-		Form("lanes --drop=<checkout>", "let that lane go, so the next question about it reads the checkout again").
-		Form("lanes --drop-all", "let every lane go").
 		Form("lanes --drop-tree=<checkout>", "let the tree of that checkout go with its saved copy, so the next question reads the whole tree again").
-		Option("--drop=<checkout>", "the checkout whose lane to let go").
-		Option("--drop-all", "let every lane go").
 		Option("--drop-tree=<checkout>", "the checkout whose tree to let go, with its saved copy").
 		Note("It asks the running service, since what is held lives in that process and nowhere else. With no service " +
-			"running there is nothing to say, and a judging then reads what it needs each time. Dropping a lane is how " +
+			"running there is nothing to say, and a judging then reads what it needs each time. Dropping a tree is how " +
 			"a stale answer is told from a wrong rule: drop it, ask again, and compare. What the last merges and " +
 			"hand-ins brought in is read from the project's own state, so it is there whether a service is running or " +
 			"not: the journal drops a line it has no agent to tell, and a merge run at a terminal has nobody.").
@@ -51,16 +47,8 @@ func (Lanes) Help() help.Help {
 func (Lanes) Run(in *cli.Input, console cli.Console) (int, error) {
 	asked := map[string]any{"event": lanesEvent}
 
-	dropped, named := in.Option("drop")
-	tree, namedTree := in.Option("drop-tree")
-
-	switch {
-	case in.HasFlag("drop-all"):
-		asked["drop"] = "*"
-	case namedTree && tree != "":
+	if tree, named := in.Option("drop-tree"); named && tree != "" {
 		asked["drop"] = droppingTheTree + tree
-	case named && dropped != "":
-		asked["drop"] = dropped
 	}
 
 	said, err := askTheService(asked)
@@ -153,7 +141,7 @@ func lanesLabel() string {
 		said += ", 1 warming " + strconv.FormatInt(read.percent(), 10) + "%"
 	}
 
-	return said + ", " + strconv.Itoa(len(kept.Lanes())) + " lane(s)"
+	return said + ", " + strconv.Itoa(kept.Contents().Count()) + " file(s) known by contents"
 }
 
 func treeDropped(checkout string) string {
@@ -181,55 +169,13 @@ func lanesAsked(line map[string]any) (string, bool) {
 }
 
 func lanesHeld(drop string) string {
-	if drop == "*" {
-		return "Let go of " + strconv.Itoa(kept.DropsEveryLane()) + " lane(s). The next question about each reads its checkout again."
-	}
-
 	if checkout, tree := strings.CutPrefix(drop, droppingTheTree); tree {
 		return treeDropped(checkout)
 	}
 
-	if drop != "" {
-		if !kept.DropsLane(drop) {
-			return "No lane of " + drop + " was held, so there was nothing to let go."
-		}
+	said := strconv.Itoa(kept.Contents().Count()) + " file(s) known by their contents, " + strconv.Itoa(kept.NodesHeld()) + " nodes held in all" + ceilingSaid()
 
-		return "Let go of the lane of " + drop + ". The next question about it reads the checkout again."
-	}
-
-	trees := treesSaid()
-
-	lanes := kept.Lanes()
-	if len(lanes) == 0 {
-		return trees + "The service holds no lane: every question so far was answered from what it read at the time." + mergesSaid()
-	}
-
-	sort.Slice(lanes, func(one, two int) bool { return lanes[one].Checkout < lanes[two].Checkout })
-
-	said := []string{strconv.Itoa(len(lanes)) + " lane(s) held, " + strconv.Itoa(kept.NodesHeld()) + " nodes in all" + ceilingSaid()}
-	for _, lane := range lanes {
-		said = append(said, "  "+lane.Checkout+
-			" | cut from "+orNothing(lane.Cut)+
-			" | "+strconv.Itoa(lane.Nodes)+" nodes of "+strconv.Itoa(lane.Files)+" file(s)"+
-			" | asked "+lane.Asked.Format("15:04:05")+
-			" | "+lane.Filling+
-			" | a judging here is "+answeredHow(lane.Checkout))
-	}
-
-	return trees + strings.Join(said, "\n") + healthSaid() + mergesSaid()
-}
-
-func answeredHow(checkout string) string {
-	_, _, why := answering(projectOf(checkout), checkout)
-
-	switch {
-	case why == "":
-		return "answered from the tree"
-	case waitingOn(why) && why != noTreeComing:
-		return "told the tree is coming"
-	}
-
-	return "answered smaller, because " + string(why)
+	return treesSaid() + said + healthSaid() + mergesSaid()
 }
 
 func treesSaid() string {
@@ -309,10 +255,6 @@ func orNothing(said string) string {
 
 func NodesHeld() int {
 	return kept.NodesHeld()
-}
-
-func LanesHeld() int {
-	return len(kept.Lanes())
 }
 
 func Holding(project string) (int, bool) {

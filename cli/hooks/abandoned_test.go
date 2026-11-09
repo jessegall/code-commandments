@@ -43,9 +43,7 @@ func TestAJudgingForAClosedLaneIsAbandonedAndQueuedForNobody(t *testing.T) {
 	lane := checkoutOf(root, file)
 
 	kept.CutAt(lane, "aaaaaaa")
-	kept.Over(lane)
 	kept.CutAt(lane, "bbbbbbb")
-	kept.Over(lane)
 
 	if cut := kept.CutOf(lane); cut != "bbbbbbb" {
 		t.Fatalf("the lane says it was cut from %q, so there is no closed lane to abandon a judging for", cut)

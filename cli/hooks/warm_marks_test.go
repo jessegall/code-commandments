@@ -630,28 +630,13 @@ func TestAWorktreeIsJudgedAgainstItsOwnCopyOfWhatTheProjectHasUncommitted(t *tes
 	base := kept.Hold(named.project, named.branch, []string{root}, engine.Load(), nil)
 	t.Cleanup(func() { kept.Drop(named.project, named.branch) })
 
-	over := kept.Over(worker)
-	if why := fill(over, base, named, nil...); why != "" {
-		t.Fatalf("the worktree's overlay could not be filled: %s", why)
+	view, why := overTheCheckout(base, named, worker, nil, nil)
+	if why != "" {
+		t.Fatalf("the worktree's view could not be made: %s", why)
 	}
 
-	if state, _, _ := over.Filling(); state != warm.Filled {
-		t.Fatalf("a filled overlay answers %v", state)
-	}
-
-	stands := filepath.Join(worker, "src", "order.py")
-
-	held := false
-	for _, stream := range over.Streams() {
-		for _, file := range stream.Files {
-			if file.Path == stands {
-				held = true
-			}
-		}
-	}
-
-	if !held {
-		t.Errorf("the worktree's own copy of %s is not in its overlay, so it would be judged against the project's uncommitted text", stands)
+	if stands := filepath.Join(worker, "src", "order.py"); !holds(view, stands) {
+		t.Errorf("the worktree's own copy of %s is not in its view, so it would be judged against the project's uncommitted text", stands)
 	}
 }
 
@@ -661,7 +646,6 @@ func TestBothDoorsRefuseTheSameWorktreeForTheSameReason(t *testing.T) {
 	project := git.ProjectRoot(root)
 
 	kept.Drop(project, git.CurrentBranch(project))
-	kept.Forget(worker)
 
 	named, base, why := answering(root, worker)
 	if why == "" || base != nil {
@@ -683,7 +667,6 @@ func TestTheThreeCheckoutsAJudgingCannotAnswerAreToldApart(t *testing.T) {
 	project := git.ProjectRoot(root)
 
 	kept.Drop(project, git.CurrentBranch(project))
-	kept.Forget(worker)
 
 	if _, _, why := answering(root, filepath.Join(root, ".journal", "worktrees", "worker-404")); why != checkoutGone {
 		t.Errorf("a checkout that is not on disk answers %q", why)
@@ -691,12 +674,6 @@ func TestTheThreeCheckoutsAJudgingCannotAnswerAreToldApart(t *testing.T) {
 
 	if _, _, why := answering(root, worker); why == "" || why == checkoutGone {
 		t.Errorf("a checkout nobody holds a tree for answers %q", why)
-	}
-
-	over := kept.Over(worker)
-	over.CouldNotFill("git could not list it")
-	if state, _, why := over.Filling(); state != warm.FillingFailed || why == "" {
-		t.Errorf("a reading that failed answers %v because %q", state, why)
 	}
 }
 

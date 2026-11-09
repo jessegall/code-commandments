@@ -2,6 +2,7 @@ package detectors
 
 import (
 	"reflect"
+	"strings"
 	"sync"
 	"time"
 
@@ -29,39 +30,53 @@ func EveryMemory() *Memories {
 	return memories
 }
 
+const acrossTheTree = "\x00across"
+
+const mostRememberedAcross = 20_000
+
 func FindRemembering(detector Detector, codebase *engine.Codebase) []engine.Match {
 	if !remembers(detector) {
 		return detector.Find(codebase)
 	}
 
-	return memoryOf(detector).Find(codebase, detector.Find)
+	if readsAcross(detector) {
+		return memories.Of(identified(detector)+acrossTheTree).FindAcross(codebase, detector.Find)
+	}
+
+	return memories.Of(identified(detector)).Find(codebase, detector.Find)
+}
+
+func readsAcross(detector Detector) bool {
+	_, weighs := detector.(Aggregating)
+
+	return weighs || ReadsBeyondOneFile(detector)
 }
 
 func remembers(detector Detector) bool {
-	if ReadsBeyondOneFile(detector) {
-		return false
-	}
-
-	if _, weighs := detector.(Aggregating); weighs {
-		return false
-	}
-
 	if _, fingerprinted := detector.(Fingerprinted); fingerprinted {
 		return true
 	}
 
 	kind := reflect.TypeOf(detector)
 
-	return kind.Kind() == reflect.Struct && kind.NumField() == 0
+	return kind.Kind() == reflect.Struct && kind.Size() == 0
 }
 
-func memoryOf(detector Detector) *engine.Remembered {
+func identified(detector Detector) string {
 	identity := IdentityOf(detector)
 	if fingerprinted, is := detector.(Fingerprinted); is {
 		identity += "\x00" + fingerprinted.Fingerprint()
 	}
 
-	return memories.Of(identity)
+	return identity
+}
+
+func boundedFor(identity string, memory *engine.Remembered) *engine.Remembered {
+	if strings.HasSuffix(identity, acrossTheTree) {
+		return memory.AtMost(mostRememberedAcross)
+	}
+
+	return memory
 }
 
 func (m *Memories) Of(identity string) *engine.Remembered {
@@ -69,14 +84,14 @@ func (m *Memories) Of(identity string) *engine.Remembered {
 		return memory.(*engine.Remembered)
 	}
 
-	memory, _ := m.held.LoadOrStore(identity, engine.Remembering(m.now))
+	memory, _ := m.held.LoadOrStore(identity, boundedFor(identity, engine.Remembering(m.now)))
 
 	return memory.(*engine.Remembered)
 }
 
 func (m *Memories) Restore(verdicts map[string][]engine.Verdict) {
 	for identity, kept := range verdicts {
-		m.held.Store(identity, engine.RememberingFrom(m.now, kept))
+		m.held.Store(identity, boundedFor(identity, engine.RememberingFrom(m.now, kept)))
 	}
 }
 

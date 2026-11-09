@@ -43,7 +43,7 @@ type Base struct {
 type Keeper struct {
 	mu       sync.Mutex
 	bases    map[string]*Base
-	overlays map[string]*Overlay
+	parses   *Parses
 	cutting  map[string]string
 	ceiling  int
 	stamps   uint64
@@ -52,7 +52,7 @@ type Keeper struct {
 }
 
 func Keep() *Keeper {
-	return &Keeper{bases: map[string]*Base{}, overlays: map[string]*Overlay{}, cutting: map[string]string{}, now: time.Now}
+	return &Keeper{bases: map[string]*Base{}, parses: Parsing(time.Now), cutting: map[string]string{}, now: time.Now}
 }
 
 func (k *Keeper) Clocked(now func() time.Time) *Keeper {
@@ -60,8 +60,71 @@ func (k *Keeper) Clocked(now func() time.Time) *Keeper {
 	defer k.mu.Unlock()
 
 	k.now = now
+	k.parses.now = now
 
 	return k
+}
+
+func (k *Keeper) Contents() *Parses {
+	return k.parses
+}
+
+func (k *Keeper) CutAt(checkout, cut string) {
+	if cut == "" {
+		return
+	}
+
+	k.mu.Lock()
+	defer k.mu.Unlock()
+
+	if was, held := k.cutting[checkout]; held && was != cut {
+		k.left(checkout)
+	}
+
+	k.cutting[checkout] = cut
+}
+
+func (k *Keeper) CutOf(checkout string) string {
+	k.mu.Lock()
+	defer k.mu.Unlock()
+
+	return k.cutting[checkout]
+}
+
+func (k *Keeper) NodesHeld() int {
+	k.mu.Lock()
+	defer k.mu.Unlock()
+
+	return k.nodesHeld()
+}
+
+func (k *Keeper) nodesHeld() int {
+	held := k.parses.Nodes()
+	for _, base := range k.bases {
+		held += base.Nodes()
+	}
+
+	return held
+}
+
+func (k *Keeper) Ceiling(nodes int) {
+	k.mu.Lock()
+	defer k.mu.Unlock()
+
+	k.ceiling = nodes
+}
+
+func (k *Keeper) PastItsCeiling() (int, int, bool) {
+	k.mu.Lock()
+	defer k.mu.Unlock()
+
+	if k.ceiling <= 0 {
+		return 0, 0, false
+	}
+
+	held := k.nodesHeld()
+
+	return held, k.ceiling, held > k.ceiling
 }
 
 func (k *Keeper) Holds(project, branch string) (*Base, bool) {
@@ -130,6 +193,8 @@ func (k *Keeper) Hold(project, branch string, roots []string, codebase *engine.C
 }
 
 func (k *Keeper) Patched(was *Base, view *engine.Codebase, read map[string]Known) *Base {
+	k.keepsWhatIsReplaced(was, read)
+
 	marks := map[string]Known{}
 	for path, mark := range was.marks {
 		marks[path] = mark
@@ -159,6 +224,15 @@ func (k *Keeper) Patched(was *Base, view *engine.Codebase, read map[string]Known
 	k.bases[key(was.Project, was.Branch)] = base
 
 	return base
+}
+
+func (k *Keeper) keepsWhatIsReplaced(was *Base, read map[string]Known) {
+	digests := map[string]string{}
+	for path := range read {
+		digests[path] = was.marks[path].Digest
+	}
+
+	k.parses.keepsAsTheyWere(was.streams, digests, was.Project)
 }
 
 func (b *Base) sweptAt() time.Time {
@@ -225,12 +299,12 @@ func (k *Keeper) sweep() {
 		}
 	}
 
-	for checkout, over := range k.overlays {
-		if k.now().Sub(over.asked) < Idle && !k.gone(checkout) {
+	for checkout := range k.cutting {
+		if !k.gone(checkout) {
 			continue
 		}
 
-		delete(k.overlays, checkout)
+		delete(k.cutting, checkout)
 		k.left(checkout)
 	}
 }
@@ -430,10 +504,7 @@ func (b *Base) ViewFrom(checkout string, rebuilt []*contract.Stream, project str
 		}
 	}
 
-	var changed []string
-	for path := range fresh {
-		changed = append(changed, path)
-	}
+	changed := slices.Collect(maps.Keys(fresh))
 
 	view := engine.Filling(changed, spliced...)
 	view.Scanned(append(slices.Clone(b.roots), checkout)...)

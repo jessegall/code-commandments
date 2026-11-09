@@ -96,17 +96,17 @@ func judgedFor(request warm.Request, root string, progressed func(string)) warm.
 
 	declined := ""
 	left := ""
-	overlay := 0
+	parsedFiles := 0
 	spent := judge.Spent{}
 	before := engine.Counted()
 
 	code, err := (judge.Command{
 		In:       request.In,
-		Reading:  heldOrDeclined(root, request.In, &declined, &overlay, &left),
+		Reading:  heldOrDeclined(root, request.In, &declined, &parsedFiles, &left),
 		Spending: func(done judge.Spent) { spent = done },
 	}).Run(cli.InputOf("judge", request.Judge...), cli.Console{Out: &out, Err: saying})
 
-	recordServed(root, request.In, declined, overlay, spent)
+	recordServed(root, request.In, declined, parsedFiles, spent)
 
 	if declined != "" {
 		if pastWhatOneSpliceCarries(declined) {
@@ -133,7 +133,7 @@ func judgedFor(request warm.Request, root string, progressed func(string)) warm.
 	return warm.Answer{Out: out.String(), Err: errs.String() + left + waited, Code: code}
 }
 
-func recordServed(root, in, declined string, overlay int, spent judge.Spent) {
+func recordServed(root, in, declined string, parsedFiles int, spent judge.Spent) {
 	if !recorded(root) {
 		return
 	}
@@ -146,7 +146,7 @@ func recordServed(root, in, declined string, overlay int, spent judge.Spent) {
 
 	Record(bookkeepingIn(root), Judged{
 		At: time.Now(), Event: "judge", Checkout: checkout, Kind: kind, Branch: git.CurrentBranch(checkout),
-		Held: declined == "", Why: Narrowed(declined), Overlay: overlay, Parsed: overlay,
+		Held: declined == "", Why: Narrowed(declined), Parsed: parsedFiles,
 		ReadMs: spent.ReadMs, RuleMs: spent.RuleMs, Asked: spent.Rules, Memory: MemoryNow(),
 	})
 }
@@ -213,7 +213,7 @@ func notThisCheckouts(walked, checkout, project string) string {
 	return walked + " lies outside " + checkout + ", so this tree says nothing about it"
 }
 
-func heldOrDeclined(root, in string, declined *string, overlay *int, left *string) func(scan.Sources) (*engine.Codebase, error) {
+func heldOrDeclined(root, in string, declined *string, parsedFiles *int, left *string) func(scan.Sources) (*engine.Codebase, error) {
 	return func(sources scan.Sources) (*engine.Codebase, error) {
 		checkout := checkoutOf(root, in)
 
@@ -260,9 +260,7 @@ func heldOrDeclined(root, in string, declined *string, overlay *int, left *strin
 			return engine.Load(), nil
 		}
 
-		*overlay = len(read)
-
-		return viewOf(base, named, checkout, read, gone, declined)
+		return viewOf(base, named, checkout, read, gone, declined, parsedFiles)
 	}
 }
 
@@ -392,7 +390,7 @@ func firstFew(files []string, asked map[string]string) string {
 	return "they are " + strings.Join(said, ", ") + more
 }
 
-func viewOf(base *warm.Base, named branchRoot, checkout string, read, gone []string, declined *string) (*engine.Codebase, error) {
+func viewOf(base *warm.Base, named branchRoot, checkout string, read, gone []string, declined *string, parsedFiles *int) (*engine.Codebase, error) {
 
 	if len(read) == 0 && len(gone) == 0 {
 		return base.Codebase(), nil
@@ -402,20 +400,21 @@ func viewOf(base *warm.Base, named branchRoot, checkout string, read, gone []str
 		return base.ViewFrom(checkout, nil, named.project, gone), nil
 	}
 
-	rebuilt, err := loadCounted(named.project, scan.Walk(read, source.Excluded{}))
+	streams, parsed, err := treesOf(named.project, checkout, read)
+	*parsedFiles = parsed
 
 	var incomplete scan.Incomplete
 	if errors.As(err, &incomplete) {
 		err = nil
 	}
 
-	if err != nil || rebuilt == nil {
+	if err != nil || streams == nil {
 		*declined = fmt.Sprintf("the %d files that differ could not be read: %v", len(read), err)
 
 		return engine.Load(), nil
 	}
 
-	return base.ViewFrom(checkout, rebuilt.Streams(), named.project, gone), nil
+	return base.ViewFrom(checkout, streams, named.project, gone), nil
 }
 
 func noProjectAt(root string) bool {

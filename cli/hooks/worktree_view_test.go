@@ -4,7 +4,6 @@ import (
 	"path/filepath"
 	"slices"
 	"testing"
-	"time"
 
 	"github.com/jessegall/code-commandments/cli/config"
 	"github.com/jessegall/code-commandments/cli/warm"
@@ -40,7 +39,7 @@ func worktreeOverAHeldTree(t *testing.T) (root, worktree string, named branchRoo
 func viewOverlaid(t *testing.T, worktree string, base *warm.Base, named branchRoot) func(string) bool {
 	t.Helper()
 
-	view, why := overlaid(kept.Over(worktree), base, named, nil, nil, nil, time.Now())
+	view, why := overTheCheckout(base, named, worktree, nil, nil)
 	if why != "" {
 		t.Fatalf("the worktree's view could not be laid: %s", why)
 	}
@@ -84,10 +83,6 @@ func TestAWorktreeDoesNotTakeAnEditTheProjectMadeAfterItsViewWasLaid(t *testing.
 
 	own := filepath.Join(worktree, "src", "shared.py")
 	viewOverlaid(t, worktree, base, named)
-
-	if over := kept.Over(worktree); !over.Empty() {
-		t.Fatalf("a worktree identical to its branch holds %d files of its own, so this test would prove nothing", over.Count())
-	}
 
 	shared, onlyHere := filepath.Join(root, "src", "shared.py"), filepath.Join(root, "src", "only_in_the_project.py")
 	wroteInto(t, shared, "VERSION = 3\n")

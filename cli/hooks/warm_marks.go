@@ -60,7 +60,6 @@ const (
 	cannotList     Narrowed = "git could not say what this checkout differs from its branch by"
 	fillingFailed  Narrowed = "what this checkout differs from its branch by could not be read"
 	checkoutGone   Narrowed = "this checkout is no longer on disk"
-	beingFilled    Narrowed = "what this checkout differs from its branch by is being read now"
 	noTreeComing   Narrowed = "no tree of this checkout is held and none is being read, so only the rules that answer from one file will ever run here"
 	filesNotOnDisk Narrowed = "what changed is not on disk"
 	noneToJudge    Narrowed = "nothing of this edit is a file this project judges"
@@ -170,12 +169,12 @@ func AgainstTheProgramNarrowed(marking Marking, files []string, rulesFor func(st
 		}
 
 		if len(toRead) > 0 {
-			rebuilt, err := loadCounted(held.project, scan.Walk(toRead, source.Excluded{}))
-			if err != nil || rebuilt == nil {
+			trees, _, err := treesOf(held.project, checkout, toRead)
+			if err != nil || trees == nil {
 				return nil, time.Since(reading), parseFailed
 			}
 
-			streams = append(streams, rebuilt.Streams()...)
+			streams = append(streams, trees...)
 		}
 
 		read = time.Since(reading)
@@ -193,12 +192,12 @@ func AgainstTheProgramNarrowed(marking Marking, files []string, rulesFor func(st
 
 			kept.Patched(base, view, marks)
 		} else {
-			overlaid, why := overlaid(kept.Over(checkout), base, held, fresh, streams, marks, time.Now())
+			over, why := overTheCheckout(base, held, checkout, fresh, streams)
 			if why != "" {
 				return nil, read, why
 			}
 
-			view = overlaid
+			view = over
 		}
 	}
 
@@ -239,68 +238,26 @@ func nothingCameOutOf(streams []*contract.Stream) bool {
 	return false
 }
 
-func overlaid(over *warm.Overlay, base *warm.Base, held branchRoot, files []string, streams []*contract.Stream, marks map[string]warm.Known, now time.Time) (*engine.Codebase, Narrowed) {
-	if !over.FilledAt(git.Head(over.Checkout)) {
-		over.Empties()
+func overTheCheckout(base *warm.Base, held branchRoot, checkout string, files []string, streams []*contract.Stream) (*engine.Codebase, Narrowed) {
+	if _, _, past := kept.PastItsCeiling(); past {
+		return nil, pastTheCeiling
 	}
 
-	if state, _, _ := over.Filling(); state != warm.Filled {
-		if _, _, past := kept.PastItsCeiling(); past {
-			return nil, pastTheCeiling
-		}
-	}
-
-	if state, _, _ := over.Filling(); state != warm.Filled || !over.IsLaidOver(base) || over.SweepDue(now) {
-		if why := fill(over, base, held, files...); why != "" {
-			return nil, why
-		}
-	}
-
-	over.Patch(streams, marks)
-
-	return base.ViewFrom(over.Checkout, over.Streams(), held.project, over.Gone()), ""
-}
-
-func fill(over *warm.Overlay, base *warm.Base, held branchRoot, files ...string) Narrowed {
-	if !over.BeginsFilling() {
-		return beingFilled
-	}
-
-	differing, gone, told := differsFromTheBase(base, held, over.Checkout)
+	differing, gone, told := differsFromTheBase(base, held, checkout)
 	if !told {
-		over.CouldNotFill(string(cannotList))
-
-		return cannotList
+		return nil, cannotList
 	}
 
-	over.Removed(gone)
-	over.LaidOver(base)
+	others := slices.DeleteFunc(differing, func(path string) bool { return slices.Contains(files, path) })
 
-	reading := slices.DeleteFunc(differing, func(path string) bool {
-		unchanged, _ := over.Holds(path)
+	known, _, err := treesOf(held.project, checkout, others)
 
-		return unchanged || slices.Contains(files, path)
-	})
-
-	if len(reading) == 0 {
-		over.Fills(time.Now(), git.Head(over.Checkout))
-
-		return ""
+	var incomplete scan.Incomplete
+	if err != nil && !errors.As(err, &incomplete) {
+		return nil, fillingFailed
 	}
 
-	taken := warm.Taken(reading)
-
-	rebuilt, err := loadCounted(held.project, scan.Walk(reading, source.Excluded{}))
-	if err != nil || rebuilt == nil {
-		over.CouldNotFill(string(fillingFailed))
-
-		return fillingFailed
-	}
-
-	over.Patch(rebuilt.Streams(), taken)
-	over.Fills(time.Now(), git.Head(over.Checkout))
-
-	return ""
+	return base.ViewFrom(checkout, slices.Concat(streams, known), held.project, gone), ""
 }
 
 func differsFromTheBase(base *warm.Base, held branchRoot, checkout string) (read, gone []string, told bool) {
@@ -687,10 +644,6 @@ func answering(path, checkout string) (branchRoot, *warm.Base, Narrowed) {
 		return named, nil, whatIsComing(named)
 	}
 
-	if state, _, _ := kept.Over(checkout).Filling(); state == warm.BeingFilled {
-		return named, nil, beingFilled
-	}
-
 	return branchRoot{project: named.project, branch: any.Branch}, any, ""
 }
 
@@ -755,17 +708,13 @@ func WarmsWhatItServes(root string) {
 }
 
 func waitingOn(why Narrowed) bool {
-	return why == noTreeHeld || why == noTreeComing || why == beingFilled
+	return why == noTreeHeld || why == noTreeComing
 }
 
 func TheTreeIsComing(root, checkout string) (Narrowed, bool) {
 	named, _, why := answering(root, checkout)
 	if !waitingOn(why) {
 		return why, false
-	}
-
-	if why == beingFilled {
-		return why, true
 	}
 
 	WarmsWhatItServes(root)

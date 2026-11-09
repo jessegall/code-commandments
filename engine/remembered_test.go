@@ -382,3 +382,71 @@ func TestOnlyTheFilesItDoesNotKnowAreAsked(t *testing.T) {
 		t.Errorf("asked %d times and found %d, over one known file and one new", detector.asked, len(both))
 	}
 }
+
+func TestARuleReadingAcrossFilesIsAnsweredFromTheCombinedPrint(t *testing.T) {
+	memory := engine.Remembering(time.Now)
+	detector := &asking{finds: true}
+	codebase, _ := treeHolding(t, "<?php one", "<?php two")
+
+	first := memory.FindAcross(codebase, detector.find)
+	asked := detector.asked
+
+	if again := memory.FindAcross(codebase, detector.find); len(again) != len(first) {
+		t.Errorf("the second answer has %d findings and the first %d", len(again), len(first))
+	}
+
+	if detector.asked != asked {
+		t.Errorf("an unchanged tree asked the rule again: %d files after %d", detector.asked, asked)
+	}
+}
+
+func TestARuleReadingAcrossFilesIsAskedAgainWhenAnyFileMoves(t *testing.T) {
+	memory := engine.Remembering(time.Now)
+	detector := &asking{}
+	before, _ := treeHolding(t, "<?php one", "<?php two")
+	after, _ := treeHolding(t, "<?php one", "<?php a different two")
+
+	memory.FindAcross(before, detector.find)
+	asked := detector.asked
+
+	memory.FindAcross(after, detector.find)
+
+	if detector.asked != asked*2 {
+		t.Errorf("a tree with one file moved asked %d files after %d, and every file's answer may have moved", detector.asked, asked)
+	}
+}
+
+func TestTheSameTreeInAnotherCheckoutSharesTheCombinedPrint(t *testing.T) {
+	memory := engine.Remembering(time.Now)
+	detector := &asking{}
+	here, _ := treeHolding(t, "<?php one", "<?php two")
+	there, _ := treeHolding(t, "<?php one", "<?php two")
+
+	memory.FindAcross(here, detector.find)
+	asked := detector.asked
+
+	memory.FindAcross(there, detector.find)
+
+	if detector.asked != asked {
+		t.Errorf("a tree of the same contents asked the rule again: %d files after %d", detector.asked, asked)
+	}
+}
+
+func TestAMemoryAtItsBoundForgetsTheOldest(t *testing.T) {
+	at := time.Unix(1000, 0)
+	memory := engine.Remembering(func() time.Time { return at }).AtMost(1)
+	detector := &asking{}
+	codebase, paths := treeHolding(t, "<?php one", "<?php two")
+
+	memory.Find(codebase.Reporting(paths[0]), detector.find)
+	at = at.Add(time.Minute)
+	memory.Find(codebase.Reporting(paths[1]), detector.find)
+	asked := detector.asked
+	at = at.Add(time.Minute)
+
+	memory.Find(codebase.Reporting(paths[0]), detector.find)
+
+	if detector.asked != asked+1 {
+		t.Errorf("the oldest file was not forgotten: asked %d after %d", detector.asked, asked)
+	}
+}

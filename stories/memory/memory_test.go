@@ -224,35 +224,115 @@ func TestASinIsNeverForgotten(t *testing.T) {
 	s.SaysTheSameSinsAs(first, again)
 }
 
-func TestARuleReadingAcrossFilesIsNeverRemembered(t *testing.T) {
+func writesTwelveSinfulFilesIn(s *story.Story, folder string, samples []story.Sample) {
+	for at, sample := range samples {
+		s.WritesIn(folder, sample, fmt.Sprintf("known%d.py", at))
+	}
+}
+
+func judgesTheWorktree(s *story.Story, worker *story.Agent) story.Ran {
+	return s.AsksIn(worker.Folder(), "sins", "--changes", "--sin="+elseRule)
+}
+
+func aWorkerJudgedTwelveNewFiles(t *testing.T) (*story.Story, *story.Agent, []story.Sample) {
+	t.Helper()
+
+	s := story.Begin(t)
+
+	var grace *story.Agent
+	var samples []story.Sample
+
+	s.Given("the tree is held and a worker wrote and judged twelve new sinful files", func() {
+		s.GivenTheTreeIsHeldFor(s.TestCheckout())
+		grace = s.Worker("Grace")
+
+		for one := range 12 {
+			samples = append(samples, sinful(s, fmt.Sprintf("sinful file %d of twelve new ones", one)))
+		}
+
+		writesTwelveSinfulFilesIn(s, grace.Folder(), samples)
+		s.Exits(judgesTheWorktree(s, grace), 1)
+	})
+
+	return s, grace, samples
+}
+
+func TestASecondWorktreeWithTheSameNewFilesParsesAndJudgesNothing(t *testing.T) {
+	s, _, samples := aWorkerJudgedTwelveNewFiles(t)
+	alan := s.Worker("Alan")
+	writesTwelveSinfulFilesIn(s, alan.Folder(), samples)
+	s.CountsFromHere()
+
+	judged := judgesTheWorktree(s, alan)
+
+	s.Exits(judged, 1)
+	s.Says(judged, "12 sins", "known0.py")
+	s.Parsed(0)
+	s.Judged(0)
+	s.CostAtLeast(ledger.FilesKnownByContents, 12)
+}
+
+func TestAWorktreeJudgedAgainParsesNothing(t *testing.T) {
+	s, grace, _ := aWorkerJudgedTwelveNewFiles(t)
+	s.CountsFromHere()
+
+	s.Exits(judgesTheWorktree(s, grace), 1)
+
+	s.Parsed(0)
+	s.Judged(0)
+}
+
+func TestAFileChangedInAWorktreeIsTheOnlyOneParsedOrJudged(t *testing.T) {
+	s, grace, _ := aWorkerJudgedTwelveNewFiles(t)
+	s.WritesIn(grace.Folder(), sinful(s, "one of the twelve written anew"), "known3.py")
+	s.CountsFromHere()
+
+	s.Exits(judgesTheWorktree(s, grace), 1)
+
+	s.Parsed(1)
+	s.Judged(1)
+}
+
+func TestARuleReadingAcrossFilesIsRememberedUntilAFileMoves(t *testing.T) {
 	s := held(t)
 	s.Writes(s.FreshPython("a function with a copy beside it", story.SettleOriginal.Text), "payments.py")
 	s.Writes(s.FreshPython("the copy of it", story.SettleCopy.Text), "refunds.py")
-	s.Says(judges(s, duplicateRule), "payments.py", "refunds.py")
+	first := judges(s, duplicateRule)
+	s.Says(first, "payments.py", "refunds.py")
+	s.CountsFromHere()
+
+	again := judges(s, duplicateRule)
+
+	s.SaysTheSameSinsAs(first, again)
+	s.Judged(0)
+	s.CostAtLeast(ledger.DetectorFilesRemembered, 1)
 
 	s.Writes(s.FreshPython("the copy written away", story.Clean.Text), "refunds.py")
 	judged := judges(s, duplicateRule)
 
 	s.Exits(judged, 0)
 	s.Never(judged, "payments.py")
-	s.Judged(0)
-	s.Remembered(0)
+	s.CostAtLeast(ledger.DetectorFilesJudged, 1)
 }
 
-func TestAWeighingRuleIsNeverRemembered(t *testing.T) {
+func TestAWeighingRuleIsRememberedUntilAFileMoves(t *testing.T) {
 	s := held(t)
 	copied := story.CSharp("a c# method with a copy beside it", fmt.Sprintf(repeatedMethod, "Payments"))
 	s.Writes(copied, "Payments.cs")
 	s.Writes(story.CSharp("the copy of the method", fmt.Sprintf(repeatedMethod, "Refunds")), "Refunds.cs")
-	s.Says(judges(s, weighingRule), "Payments.cs", "Refunds.cs")
+	first := judges(s, weighingRule)
+	s.Says(first, "Payments.cs", "Refunds.cs")
+	s.CountsFromHere()
+
+	s.SaysTheSameSinsAs(first, judges(s, weighingRule))
+	s.Judged(0)
 
 	s.Writes(story.NullReturn, "Refunds.cs")
 	judged := judges(s, weighingRule)
 
 	s.Exits(judged, 0)
 	s.Never(judged, "Payments.cs")
-	s.Judged(0)
-	s.Remembered(0)
+	s.CostAtLeast(ledger.DetectorFilesJudged, 1)
 }
 
 func TestARuleChangedInItsDefinitionStartsOver(t *testing.T) {

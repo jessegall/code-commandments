@@ -296,7 +296,7 @@ func recordJudging(moment Moment, event Event, merged Response, answer JournalAn
 
 	Record(folder, Judged{
 		At: time.Now(), Event: moment.Event, Checkout: checkout, Kind: kind, Branch: named.branch,
-		Held: held, Why: why, Overlay: kept.Over(checkout).Count(), Parsed: len(merged.Judged),
+		Held: held, Why: why, Parsed: len(merged.Judged),
 		ReadMs: merged.ReadMs, RuleMs: milliseconds(spent) - merged.ReadMs, Asked: asked, NotAsked: notAsked,
 		Sins: len(merged.Activity), Dropped: DroppedSoFar(), Memory: MemoryNow(), Said: moment.CheckoutSaid, Files: merged.Judged,
 	})

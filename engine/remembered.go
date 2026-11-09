@@ -1,12 +1,15 @@
 package engine
 
 import (
+	"cmp"
 	"crypto/sha256"
 	"encoding/binary"
 	"maps"
 	"slices"
 	"sync"
 	"time"
+
+	"github.com/jessegall/code-commandments/contract"
 )
 
 const RememberedFor = 12 * time.Hour
@@ -28,6 +31,7 @@ type Remembered struct {
 	found   map[uint64][]int
 	swept   time.Time
 	changed bool
+	most    int
 }
 
 // unjudged is a file the detector has to be asked about, and the fingerprint its answer is remembered under.
@@ -61,9 +65,31 @@ func RememberingFrom(now func() time.Time, verdicts []Verdict) *Remembered {
 	return remembered
 }
 
+func (r *Remembered) AtMost(entries int) *Remembered {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	r.most = entries
+
+	return r
+}
+
 func (r *Remembered) Find(codebase *Codebase, find func(*Codebase) []Match) []Match {
+	return r.finding(codebase, find, (*File).fingerprint)
+}
+
+func (r *Remembered) FindAcross(codebase *Codebase, find func(*Codebase) []Match) []Match {
+	across := Analysis(codebase, printsAcrossKey{}, printsAcrossOf)
+	if !across.whole {
+		return find(codebase)
+	}
+
+	return r.finding(codebase, find, across.of)
+}
+
+func (r *Remembered) finding(codebase *Codebase, find func(*Codebase) []Match, printOf func(*File) (uint64, bool)) []Match {
 	opened := codebase.opened()
-	answered, asked, twins := r.recalled(opened)
+	answered, asked, twins := r.recalled(opened, printOf)
 	CountedJudged(len(asked))
 	CountedRemembered(len(opened) - len(asked) - len(twins))
 
@@ -79,10 +105,10 @@ func (r *Remembered) Find(codebase *Codebase, find func(*Codebase) []Match) []Ma
 		return answered
 	}
 
-	return append(answered, r.Find(codebase.Reporting(twins...), find)...)
+	return append(answered, r.finding(codebase.Reporting(twins...), find, printOf)...)
 }
 
-func (r *Remembered) recalled(files []*File) ([]Match, map[string]unjudged, []string) {
+func (r *Remembered) recalled(files []*File, printOf func(*File) (uint64, bool)) ([]Match, map[string]unjudged, []string) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
@@ -95,7 +121,7 @@ func (r *Remembered) recalled(files []*File) ([]Match, map[string]unjudged, []st
 	beingAsked := map[uint64]bool{}
 
 	for _, file := range files {
-		fingerprint, printed := file.fingerprint()
+		fingerprint, printed := printOf(file)
 
 		if printed && r.knows(fingerprint, now) && file.holdsNodes(r.found[fingerprint]) {
 			r.judged[fingerprint] = now.UnixNano()
@@ -210,6 +236,23 @@ func (r *Remembered) remember(asked map[string]unjudged, matches []Match) {
 			delete(r.found, one.fingerprint)
 		}
 	}
+
+	r.forgetTheOldest()
+}
+
+func (r *Remembered) forgetTheOldest() {
+	if r.most <= 0 || len(r.judged) <= r.most {
+		return
+	}
+
+	fingerprints := slices.SortedFunc(maps.Keys(r.judged), func(one, other uint64) int {
+		return cmp.Compare(r.judged[one], r.judged[other])
+	})
+
+	for _, fingerprint := range fingerprints[:len(fingerprints)-r.most*3/4] {
+		delete(r.judged, fingerprint)
+		delete(r.found, fingerprint)
+	}
 }
 
 func (f *File) holdsNodes(ids []int) bool {
@@ -235,4 +278,84 @@ func (f *File) fingerprint() (uint64, bool) {
 	})
 
 	return f.contents, f.printed
+}
+
+type printsAcrossKey struct{}
+
+// printsAcross is what a rule that reads across files remembers a file under: the file's own print combined with the print of every file in the tree, and with its place among files of the same bytes, whose answers can differ.
+type printsAcross struct {
+	whole bool
+	own   map[*contract.File]uint64
+	mixed map[*contract.File]uint64
+}
+
+func (p printsAcross) of(file *File) (uint64, bool) {
+	print, known := p.mixed[file.File]
+
+	return print, known
+}
+
+func printsAcrossOf(c *Codebase) printsAcross {
+	own, whole := c.ownPrints()
+	if !whole {
+		return printsAcross{}
+	}
+
+	tree := combined(slices.Sorted(maps.Values(own))...)
+	mixed := make(map[*contract.File]uint64, len(c.files))
+	met := map[uint64]uint64{}
+
+	for _, file := range c.files {
+		print := own[file.File]
+		mixed[file.File] = combined(tree, print, met[print])
+		met[print]++
+	}
+
+	return printsAcross{whole, own, mixed}
+}
+
+func (c *Codebase) ownPrints() (map[*contract.File]uint64, bool) {
+	known := c.printsOfTheTreeBelow()
+	own := make(map[*contract.File]uint64, len(c.files))
+
+	for _, file := range c.files {
+		if print, carried := known[file.File]; carried {
+			own[file.File] = print
+
+			continue
+		}
+
+		print, printed := file.fingerprint()
+		if !printed {
+			return nil, false
+		}
+
+		own[file.File] = print
+	}
+
+	return own, true
+}
+
+func (c *Codebase) printsOfTheTreeBelow() map[*contract.File]uint64 {
+	if c.over == nil {
+		return nil
+	}
+
+	held, built := c.over.analyses.Load(printsAcrossKey{})
+	if !built {
+		return nil
+	}
+
+	return held.(printsAcross).own
+}
+
+func combined(prints ...uint64) uint64 {
+	written := make([]byte, 0, 8*len(prints))
+	for _, print := range prints {
+		written = binary.LittleEndian.AppendUint64(written, print)
+	}
+
+	sum := sha256.Sum256(written)
+
+	return binary.LittleEndian.Uint64(sum[:8])
 }

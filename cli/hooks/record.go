@@ -16,7 +16,6 @@ type Judged struct {
 	Branch    string
 	Held      bool
 	Why       Narrowed
-	Overlay   int
 	Parsed    int
 	ReadMs    int64
 	RuleMs    int64
@@ -43,7 +42,6 @@ func (j Judged) Line() string {
 		j.Kind + "=" + j.Checkout,
 		"branch=" + j.Branch,
 		"tree=" + held,
-		fmt.Sprintf("overlay=%d", j.Overlay),
 		fmt.Sprintf("parsed=%d in %dms", j.Parsed, j.ReadMs),
 		fmt.Sprintf("rules=%d of %d in %dms", j.Asked, j.Asked+j.NotAsked, j.RuleMs),
 		fmt.Sprintf("sins=%d", j.Sins),

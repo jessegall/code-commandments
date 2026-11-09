@@ -285,7 +285,7 @@ func TestAServedJudgingIsRecordedWithWhereItsTimeWent(t *testing.T) {
 		t.Fatalf("a judging answered by the service left no line in the log: %v", err)
 	}
 
-	for _, part := range []string{"| judge | worktree=" + worktree, "tree=held", "overlay=1", "parsed=1 in", "rules="} {
+	for _, part := range []string{"| judge | worktree=" + worktree, "tree=held", "parsed=1 in", "rules="} {
 		if !strings.Contains(string(said), part) {
 			t.Errorf("the line does not say %q:\n%s", part, said)
 		}
