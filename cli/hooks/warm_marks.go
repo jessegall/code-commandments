@@ -12,7 +12,6 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/jessegall/code-commandments/bridge"
 	"github.com/jessegall/code-commandments/cli/config"
 	"github.com/jessegall/code-commandments/cli/git"
 	"github.com/jessegall/code-commandments/cli/ledger"
