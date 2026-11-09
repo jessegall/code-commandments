@@ -164,16 +164,28 @@ func (s *Story) StartsAPlainProcess() string {
 	return pid
 }
 
+func (s *Story) StartsABareServiceUnderAParent(kind string) *Service {
+	s.t.Helper()
+
+	return s.startsAThrowaway(kind, kind+":bare", "starts a throwaway "+kind+" service over a project with nothing of its language")
+}
+
 func (s *Story) StartsAServiceUnderAParent(kind string) *Service {
 	s.t.Helper()
 
-	s.steps = append(s.steps, StepOf("starts a throwaway "+kind+" service under a parent of its own"))
+	return s.startsAThrowaway(kind, kind, "starts a throwaway "+kind+" service under a parent of its own")
+}
+
+func (s *Story) startsAThrowaway(kind, asked, step string) *Service {
+	s.t.Helper()
+
+	s.steps = append(s.steps, StepOf(step))
 
 	if s.rehearsal {
 		return &Service{story: s}
 	}
 
-	ran, err := s.journal.StartsAThrowawayService(kind)
+	ran, err := s.journal.StartsAThrowawayService(asked)
 	if err != nil || ran.Code != 0 {
 		s.Fails("the throwaway service could not start: " + failure(ran, err))
 	}
@@ -221,6 +233,63 @@ func (s *Service) IsListedUnderItsParent() {
 	}
 }
 
+func childrenOf(processes []Process, pid string) []Process {
+	return slices.DeleteFunc(slices.Clone(processes), func(each Process) bool { return each.Parent != pid })
+}
+
+func (s *Story) TheBridgeOf(verb string) Process {
+	s.t.Helper()
+
+	s.steps = append(s.steps, StepOf("finds the bridge of %s", verb))
+
+	if s.rehearsal {
+		return Process{Pid: "2", Parent: "3"}
+	}
+
+	bridge, found := s.bridgeOfNow(verb, "")
+	if !found {
+		s.Fails("the service " + verb + " holds no bridge")
+	}
+
+	return bridge
+}
+
+func (s *Story) ABridgeOfComesBack(verb, killed string, within time.Duration) {
+	s.t.Helper()
+
+	s.steps = append(s.steps, StepOf("sees a new bridge of %s", verb))
+
+	if s.rehearsal {
+		return
+	}
+
+	for until := time.Now().Add(within); time.Now().Before(until); time.Sleep(betweenMoments) {
+		if _, found := s.bridgeOfNow(verb, killed); found {
+			return
+		}
+	}
+
+	s.Fails(fmt.Sprintf("no new bridge of %s appeared within %v", verb, within))
+}
+
+func (s *Story) bridgeOfNow(verb, not string) (Process, bool) {
+	processes := s.processesNow()
+
+	for _, service := range processes {
+		if !strings.Contains(service.Command, verb) {
+			continue
+		}
+
+		for _, bridge := range childrenOf(processes, service.Pid) {
+			if bridge.Pid != not {
+				return bridge, true
+			}
+		}
+	}
+
+	return Process{}, false
+}
+
 func (s *Service) Bridge(within time.Duration) Process {
 	s.story.t.Helper()
 
@@ -241,6 +310,22 @@ func (s *Service) Bridge(within time.Duration) Process {
 	s.story.Fails(fmt.Sprintf("the service %d started no bridge within %v; it wrote:\n%s", s.Pid, within, s.written()))
 
 	return Process{}
+}
+
+func (s *Service) KeepsNoBridge(while time.Duration) {
+	s.story.t.Helper()
+
+	s.story.steps = append(s.story.steps, StepOf("sees the throwaway service start no bridge"))
+
+	if s.story.rehearsal {
+		return
+	}
+
+	for until := time.Now().Add(while); time.Now().Before(until); time.Sleep(betweenMoments) {
+		if children := childrenOf(s.story.processesNow(), fmt.Sprint(s.Pid)); len(children) > 0 {
+			s.story.Fails(fmt.Sprintf("the service started %v with nothing of its language to judge", children))
+		}
+	}
 }
 
 func (s *Service) IsGone(within time.Duration) {

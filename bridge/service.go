@@ -61,7 +61,11 @@ func Answer(listener net.Listener, asked Asker) error {
 			continue
 		}
 
-		if err := answer(connection, asked); err != nil {
+		err = answer(connection, asked)
+		if failed := (*BridgeFailed)(nil); errors.As(err, &failed) {
+			return err
+		}
+		if err != nil {
 			fmt.Fprintln(os.Stderr, "a request was not answered: "+err.Error())
 		}
 	}

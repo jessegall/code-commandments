@@ -282,13 +282,14 @@ class Relay(socketserver.ThreadingTCPServer):
         raise Refused(f"'{asked.action}' is not something a throwaway service does")
 
     def start_throwaway(self, kind: str) -> Answer:
+        kind, _, bare = kind.partition(":")
         if kind not in SERVICE_VERBS:
             raise Refused(f"'{kind}' is none of {sorted(SERVICE_VERBS)}")
         folder = tempfile.mkdtemp(prefix="story-", dir="/tmp")
         project, data, health = os.path.join(folder, "project"), os.path.join(folder, "data"), os.path.join(folder, "health.sock")
         os.makedirs(project)
         os.makedirs(data)
-        if kind in LANGUAGE_SAMPLES:
+        if kind in LANGUAGE_SAMPLES and not bare:
             name, source = LANGUAGE_SAMPLES[kind]
             written_whole(os.path.join(project, name), source)
         subprocess.run(["git", "init", "--quiet"], cwd=project, check=True)
@@ -562,9 +563,9 @@ class Relay(socketserver.ThreadingTCPServer):
 
 
 def running_processes() -> list[Process]:
-    listed = subprocess.run(["ps", "-axo", "pid=,ppid=,command="], capture_output=True, text=True, timeout=STEP_SECONDS).stdout
-    fields = (line.split(None, 2) for line in listed.splitlines())
-    return [Process(int(each[0]), int(each[1]), each[2]) for each in fields if len(each) == 3]
+    listed = subprocess.run(["ps", "-axo", "pid=,ppid=,stat=,command="], capture_output=True, text=True, timeout=STEP_SECONDS).stdout
+    fields = (line.split(None, 3) for line in listed.splitlines())
+    return [Process(int(each[0]), int(each[1]), each[3]) for each in fields if len(each) == 4 and "Z" not in each[2]]
 
 
 def verdicts_of(saved: dict) -> list[dict]:

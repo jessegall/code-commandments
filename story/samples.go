@@ -128,6 +128,43 @@ final class Orders
 }
 `)
 
+	PHPDeepNesting = PHP("an if nested two ifs deep", `<?php
+
+final class Checkout
+{
+    public function total(array $orders, int $id): int
+    {
+        if ($id > 0) {
+            if (isset($orders[$id])) {
+                if ($orders[$id] > 0) {
+                    return $orders[$id];
+                }
+            }
+        }
+
+        return 0;
+    }
+}
+`)
+
+	TSMutatedLoop = Sample{Under: "bridge/mypy", Label: "a typescript loop that shortens the list it walks", Text: `export function drain(items: string[]): void {
+  for (const item of items) {
+    items.shift()
+  }
+}
+`}
+
+	VueChain = Sample{Under: "bridge/mypy", Label: "a vue component with an if chain on one subject", Text: `<template>
+  <p v-if="state === 'a'">a</p>
+  <p v-else-if="state === 'b'">b</p>
+  <p v-else-if="state === 'c'">c</p>
+</template>
+
+<script setup lang="ts">
+defineProps<{ state: string }>()
+</script>
+`}
+
 	NullReturn = CSharp("a null return for not found", `namespace Shop;
 
 public class Orders

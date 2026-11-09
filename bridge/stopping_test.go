@@ -2,9 +2,15 @@ package bridge
 
 import (
 	"context"
+	"errors"
+	"net"
+	"os"
+	"path/filepath"
 	"syscall"
 	"testing"
 	"time"
+
+	"github.com/jessegall/code-commandments/contract"
 )
 
 func stoppableOnItsOwn(t *testing.T) {
@@ -75,5 +81,54 @@ func TestNoBridgeStartsAfterEveryBridgeWasStopped(t *testing.T) {
 
 	if _, err := Serve([]string{"sh", "-c", "exec sleep 60"}); err == nil {
 		t.Fatal("a bridge started after every bridge was stopped")
+	}
+}
+
+// deadBridge is a bridge whose process has gone, so every question fails.
+type deadBridge struct{}
+
+func (deadBridge) AskTallied(Request, func()) (*contract.Stream, error) {
+	return nil, Failed([]string{"a bridge"}, errors.New("it is gone"), "")
+}
+
+func (deadBridge) AskEach(Request, func(contract.Line, []byte) error) error {
+	return Failed([]string{"a bridge"}, errors.New("it is gone"), "")
+}
+
+func (deadBridge) Close() error {
+	return nil
+}
+
+func TestAServiceEndsWhenItsBridgeHasDied(t *testing.T) {
+	folder, err := os.MkdirTemp("/tmp", "s")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { os.RemoveAll(folder) })
+
+	listener, err := net.Listen("unix", filepath.Join(folder, "a.sock"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer listener.Close()
+
+	ended := make(chan error, 1)
+	go func() { ended <- Answer(listener, deadBridge{}) }()
+
+	connection, err := net.Dial("unix", listener.Addr().String())
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer connection.Close()
+
+	connection.Write([]byte("{}\n"))
+
+	select {
+	case err := <-ended:
+		if err == nil {
+			t.Error("a service whose bridge died ended as though nothing was wrong")
+		}
+	case <-time.After(2 * time.Second):
+		t.Fatal("a service whose bridge died went on answering")
 	}
 }
