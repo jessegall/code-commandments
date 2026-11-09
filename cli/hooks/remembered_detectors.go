@@ -44,6 +44,8 @@ func thisBuild() string {
 }
 
 func remembersAcrossRestarts(console cli.Console) (saved func()) {
+	remembersTreesAcrossRestarts()
+
 	file, keeps := rememberedDetectorsIn(os.Getenv(pluginData), console.Warn)
 	if !keeps {
 		return func() {}
@@ -60,6 +62,7 @@ func remembersAcrossRestarts(console cli.Console) (saved func()) {
 	go func() {
 		<-cli.StopSignals()
 		file.Save()
+		treeSaves.save(time.Now())
 		os.Exit(0)
 	}()
 

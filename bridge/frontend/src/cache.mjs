@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto'
-import { closeSync, existsSync, mkdirSync, openSync, readFileSync, readSync, renameSync, writeFileSync } from 'node:fs'
+import { closeSync, existsSync, mkdirSync, openSync, readFileSync, readSync, renameSync, utimesSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import ts from 'typescript'
@@ -63,8 +63,11 @@ export class TreeCache {
         const first = this.read.get(path)
         if (first === undefined) return undefined
         const meta = JSON.parse(first)
+        if (meta.key !== this.keys.get(path)) return undefined
+        const used = new Date()
+        utimesSync(this.entryOf(path), used, used)
 
-        return meta.key === this.keys.get(path) ? meta : undefined
+        return meta
     }
 
     /** The first line of the entry kept for `path`, read on its own; none when no entry is kept or it holds no line. */

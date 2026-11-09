@@ -52,6 +52,7 @@ final readonly class TreeCache
         if (! is_array($meta) || ($meta['key'] ?? null) !== $this->keyOf($path, $code)) {
             return null;
         }
+        @touch($this->entryOf($path));
 
         return ['line' => substr($stored, $split + 1), 'at' => $meta['at'], 'referenced' => $meta['referenced'], 'declared' => $meta['declared']];
     }
@@ -78,8 +79,12 @@ final readonly class TreeCache
     public function program(string $key): ?string
     {
         $stored = @file_get_contents($this->programOf($key));
+        if ($stored === false) {
+            return null;
+        }
+        @touch($this->programOf($key));
 
-        return $stored === false ? null : $stored;
+        return $stored;
     }
 
     /**

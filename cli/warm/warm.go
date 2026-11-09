@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"io"
+	"maps"
 	"os"
 	"path/filepath"
 	"slices"
@@ -193,6 +194,19 @@ func (k *Keeper) Trees() []Tree {
 	}
 
 	return trees
+}
+
+func (k *Keeper) Bases() []*Base {
+	k.mu.Lock()
+	defer k.mu.Unlock()
+
+	k.sweep()
+
+	return slices.Collect(maps.Values(k.bases))
+}
+
+func (b *Base) Stamp() uint64 {
+	return b.stamp
 }
 
 func (k *Keeper) Held() int {

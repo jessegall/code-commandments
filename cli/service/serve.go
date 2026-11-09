@@ -4,9 +4,11 @@ import (
 	"errors"
 	"net"
 	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/jessegall/code-commandments/bridge"
+	"github.com/jessegall/code-commandments/bridge/bundle"
 	"github.com/jessegall/code-commandments/cli"
 	"github.com/jessegall/code-commandments/cli/health"
 	"github.com/jessegall/code-commandments/cli/help"
@@ -72,6 +74,10 @@ func (s Serve) Run(in *cli.Input, console cli.Console) (int, error) {
 		<-stopped
 
 		return 0, nil
+	}
+
+	if data := os.Getenv(pluginData); data != "" {
+		bundle.ForgetUnused(filepath.Join(data, s.Kind+"-cache"), time.Now())
 	}
 
 	bridged, needed, err := s.Reach.Own(s.Bridge, []string{project})

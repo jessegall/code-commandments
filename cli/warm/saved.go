@@ -8,11 +8,15 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
+	"time"
 
+	"github.com/jessegall/code-commandments/cli/atomic"
 	"github.com/jessegall/code-commandments/contract"
 )
 
 const savedHead = "head.json"
+
+const SavedLife = 12 * time.Hour
 
 // Saved is a held tree read back from disk, with what each file was when the tree read it.
 type Saved struct {
@@ -25,9 +29,10 @@ type savedDescription struct {
 	Roots   []string
 	Marks   map[string]Known
 	Streams int
+	Used    time.Time
 }
 
-func (b *Base) Save(folder, binary string) error {
+func (b *Base) Save(folder, binary string, now time.Time) error {
 	draft := folder + ".draft"
 	os.RemoveAll(draft)
 
@@ -46,7 +51,7 @@ func (b *Base) Save(folder, binary string) error {
 	standing := maps.Clone(b.marks)
 	maps.DeleteFunc(standing, func(_ string, known Known) bool { return known.Mark == "" })
 
-	head, err := json.Marshal(savedDescription{Binary: binary, Roots: b.roots, Marks: standing, Streams: len(b.streams)})
+	head, err := json.Marshal(savedDescription{Binary: binary, Roots: b.roots, Marks: standing, Streams: len(b.streams), Used: now})
 	if err != nil {
 		return err
 	}
@@ -60,15 +65,14 @@ func (b *Base) Save(folder, binary string) error {
 	return os.Rename(draft, folder)
 }
 
-func LoadSaved(folder, binary string, roots []string) (Saved, error) {
-	raw, err := os.ReadFile(filepath.Join(folder, savedHead))
+func LoadSaved(folder, binary string, roots []string, now time.Time) (Saved, error) {
+	head, err := readSavedHead(folder)
 	if err != nil {
 		return Saved{}, err
 	}
 
-	var head savedDescription
-	if err := json.Unmarshal(raw, &head); err != nil {
-		return Saved{}, err
+	if now.Sub(head.Used) > SavedLife {
+		return Saved{}, fmt.Errorf("it was last used %v ago", now.Sub(head.Used).Round(time.Minute))
 	}
 
 	if head.Binary != binary {
@@ -90,8 +94,56 @@ func LoadSaved(folder, binary string, roots []string) (Saved, error) {
 		saved.Streams = append(saved.Streams, stream)
 	}
 
+	_ = Renew(folder, now)
+
 	return saved, nil
 }
+
+func Renew(folder string, now time.Time) error {
+	head, err := readSavedHead(folder)
+	if err != nil {
+		return err
+	}
+
+	head.Used = now
+
+	raw, err := json.Marshal(head)
+	if err != nil {
+		return err
+	}
+
+	return atomic.Write(filepath.Join(folder, savedHead), string(raw))
+}
+
+func SweepSaved(parent string, now time.Time) {
+	entries, err := os.ReadDir(parent)
+	if err != nil {
+		return
+	}
+
+	for _, entry := range entries {
+		folder := filepath.Join(parent, entry.Name())
+
+		if head, err := readSavedHead(folder); err != nil || now.Sub(head.Used) > SavedLife {
+			os.RemoveAll(folder)
+		}
+	}
+}
+
+func readSavedHead(folder string) (savedDescription, error) {
+	raw, err := os.ReadFile(filepath.Join(folder, savedHead))
+	if err != nil {
+		return savedDescription{}, err
+	}
+
+	var head savedDescription
+	if err := json.Unmarshal(raw, &head); err != nil {
+		return savedDescription{}, err
+	}
+
+	return head, nil
+}
+
 
 func savedStreamPath(folder string, index int) string {
 	return filepath.Join(folder, fmt.Sprintf("stream-%d.ndjson.gz", index))

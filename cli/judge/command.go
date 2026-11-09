@@ -465,9 +465,10 @@ func saying(selected []detectors.Detector) map[string]string {
 func (c Command) run(tasks []Task, options options, progress *cli.Progress, parseSeconds float64, console cli.Console) Judgement {
 	if !options.benchmark {
 		judging := time.Now()
+		before := engine.Counted()
 		judgement := Run(tasks, options.parallel, progress, console.Err)
 		progress.Finish()
-		sayWhereTheTimeWent(parseSeconds, time.Since(judging).Seconds(), len(tasks), console)
+		sayWhereTheTimeWent(parseSeconds, time.Since(judging).Seconds(), len(tasks), engine.Since(before), console)
 
 		if c.Spending != nil {
 			c.Spending(Spent{ReadMs: int64(parseSeconds * 1000), RuleMs: time.Since(judging).Milliseconds(), Rules: len(tasks)})
@@ -973,10 +974,11 @@ func optionsOf(in *cli.Input, space workspace.Workspace) options {
 	}
 }
 
-func sayWhereTheTimeWent(reading, judging float64, rules int, console cli.Console) {
+func sayWhereTheTimeWent(reading, judging float64, rules int, work engine.Work, console cli.Console) {
 	if !cli.Timed() {
 		return
 	}
 
 	fmt.Fprintf(console.Err, "· read in %.2fs, judged in %.2fs by %s\n", reading, judging, natural.Counted(rules, "rule"))
+	cli.SayWork(console, work)
 }

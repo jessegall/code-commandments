@@ -29,6 +29,10 @@ func logStarted(what string) {
 	logFromTheService(fmt.Sprintf("%s | started | %s", time.Now().Format(time.DateTime), what))
 }
 
+func logWarned(what string) {
+	logFromTheService(fmt.Sprintf("%s | warning | %s", time.Now().Format(time.DateTime), what))
+}
+
 func logServiceStart(root string) {
 	logStarted(fmt.Sprintf("hooks service | pid=%d | project=%s | release=%s | memory limit=%d MiB",
 		os.Getpid(), root, bridge.Release, debug.SetMemoryLimit(-1)>>20))

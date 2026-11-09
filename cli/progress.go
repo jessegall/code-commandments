@@ -6,6 +6,8 @@ import (
 	"math"
 	"os"
 	"strings"
+
+	"github.com/jessegall/code-commandments/engine"
 )
 
 const barWidth = 24
@@ -32,6 +34,14 @@ const Timing = "COMMANDMENTS_TIMING"
 
 func Timed() bool {
 	return os.Getenv(Timing) != ""
+}
+
+func SayWork(console Console, work engine.Work) {
+	if !Timed() {
+		return
+	}
+
+	fmt.Fprintf(console.Err, "· work: %d nodes, %d checks, %d analyses\n", work.Nodes, work.Checks, work.Analyses)
 }
 
 func Watched() bool {

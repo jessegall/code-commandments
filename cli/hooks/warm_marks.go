@@ -1,7 +1,9 @@
 package hooks
 
 import (
+	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"slices"
@@ -10,7 +12,6 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/jessegall/code-commandments/bridge"
 	"github.com/jessegall/code-commandments/cli/config"
 	"github.com/jessegall/code-commandments/cli/git"
 	"github.com/jessegall/code-commandments/cli/ledger"
@@ -524,9 +525,15 @@ func Warming(root string, project config.Config) {
 
 		logStarted(fmt.Sprintf("tree load | project=%s | branch=%s | files=%d", named.project, named.branch, len(files)))
 
-		saved, refused := warm.LoadSaved(folder, bridge.Release, roots)
+		warm.SweepSaved(filepath.Dir(folder), time.Now())
+
+		saved, refused := warm.LoadSaved(folder, thisBuild(), roots, time.Now())
 		if refused == nil && broughtBackFromDisk(named, roots, files, saved, folder, began) {
 			return
+		}
+
+		if refused != nil && !errors.Is(refused, fs.ErrNotExist) {
+			logWarned(fmt.Sprintf("the saved tree at %s is not used, so the tree starts empty | %v", folder, refused))
 		}
 
 		costs.Counts(ledger.TreeReadsStarted, 1, named.project)
@@ -582,7 +589,9 @@ func broughtBackFromDisk(named branchRoot, roots, files []string, saved warm.Sav
 }
 
 func savesWhileHeld(base *warm.Base, named branchRoot, folder string) {
-	_ = base.Save(folder, bridge.Release)
+	if base.Save(folder, thisBuild(), time.Now()) == nil {
+		treeSaves.wrote(base)
+	}
 
 	if _, held := kept.Holds(named.project, named.branch); !held {
 		os.RemoveAll(folder)

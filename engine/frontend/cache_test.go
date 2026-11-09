@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 )
 
 func written(t *testing.T, bridge Bridge, arguments ...string) string {
@@ -84,6 +85,37 @@ func TestABridgeWhoseCacheCannotBeWrittenRunsWithNoCache(t *testing.T) {
 	for _, argument := range command {
 		if strings.HasPrefix(argument, "--cache=") {
 			t.Errorf("the bridge is told %s although nothing may be kept there", argument)
+		}
+	}
+}
+
+func TestAKeptTreeTheBridgeUsesAgainIsRenewedAndOneItDoesNotUseIsNot(t *testing.T) {
+	root, err := filepath.EvalSymlinks(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	for name, source := range map[string]string{"price.ts": "export const price = 12\n", "tax.ts": "export const tax = 2\n"} {
+		if err := os.WriteFile(filepath.Join(root, name), []byte(source), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	kept := Here()
+	kept.Trees = t.TempDir()
+	written(t, kept, root)
+
+	old := time.Now().Add(-13 * time.Hour)
+	trees, _ := filepath.Glob(filepath.Join(kept.Trees, "*.tree"))
+	for _, tree := range trees {
+		if err := os.Chtimes(tree, old, old); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	written(t, kept, root)
+
+	for _, tree := range trees {
+		if info, err := os.Stat(tree); err != nil || time.Since(info.ModTime()) > time.Hour {
+			t.Errorf("%s was used again and not renewed: %v", filepath.Base(tree), err)
 		}
 	}
 }
