@@ -172,7 +172,7 @@ func (l ProgressLine) String() string {
 func (s *Story) ProgressOf(ran Ran) []ProgressLine {
 	var lines []ProgressLine
 
-	for _, found := range progressLine.FindAllStringSubmatch(ran.Err, -1) {
+	for _, found := range progressLine.FindAllStringSubmatch(ran.Text(), -1) {
 		done, _ := strconv.Atoi(found[2])
 		of, _ := strconv.Atoi(found[3])
 		lines = append(lines, ProgressLine{Phase: found[1], Done: done, Of: of})

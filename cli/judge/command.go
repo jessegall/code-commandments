@@ -207,6 +207,7 @@ func (c Command) Run(in *cli.Input, console cli.Console) (int, error) {
 	own := custom.InForce(cwd)
 	console.Warn(own.Warnings(project)...)
 	enabled = append(enabled, own.Enabled(project)...)
+	options.unreadableRules = own.Unreadable
 
 	selected := selectFrom(enabled, options.skill, options.sin, options.tags)
 
@@ -350,7 +351,7 @@ func (c Command) judge(options options, selected []detectors.Detector, judged co
 	}
 	judgement.Findings = active
 
-	skipped := Skipped(judgement.Skipped)
+	skipped := Skipped(joined(judgement.Skipped, options.unreadableRules...))
 
 	if len(judgement.Findings) == 0 {
 		if len(filed) == 0 {
@@ -902,19 +903,20 @@ func languagesRead(root string, project config.Config) []string {
 
 // options are what the arguments ask of a run.
 type options struct {
-	path          string
-	pathGiven     bool
-	skill         string
-	sin           string
-	list          bool
-	exclude       []string
-	checklist     []string
-	parallel      int
-	parallelGiven bool
-	benchmark     bool
-	ignore        bool
-	oneFileRules  bool
-	tags          []string
+	unreadableRules []string
+	path            string
+	pathGiven       bool
+	skill           string
+	sin             string
+	list            bool
+	exclude         []string
+	checklist       []string
+	parallel        int
+	parallelGiven   bool
+	benchmark       bool
+	ignore          bool
+	oneFileRules    bool
+	tags            []string
 }
 
 func within(folder, path string) string {

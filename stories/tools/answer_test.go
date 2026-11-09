@@ -27,7 +27,7 @@ func TestAnAnswerNamesWholePathsAndItsProgressIsRead(t *testing.T) {
 func TestTheMemoryCountersMoveWithAJudging(t *testing.T) {
 	s := story.Begin(t)
 	s.GivenTheTreeIsHeldFor(s.TestCheckout())
-	s.Writes(story.ElseAfterRaise, "twice.py")
+	s.Writes(s.FreshPython("a sinful file the memory has not met", story.ElseAfterRaise.Text), "twice.py")
 
 	s.Exits(s.AsksIn(s.TestCheckout(), "sins", "--changes", "--sin=redundant-python-else"), 1)
 	s.CostAtLeast(ledger.DetectorFilesJudged, 1)

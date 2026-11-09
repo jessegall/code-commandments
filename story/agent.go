@@ -235,6 +235,19 @@ func (a *Agent) SendsAnEventNobodyKnows() Ran {
 	return a.sends("SomethingElse", map[string]any{})
 }
 
+func (a *Agent) SendsARawBody(label, body string) Ran {
+	a.s.t.Helper()
+
+	a.s.steps = append(a.s.steps, StepOf("an agent sends "+label))
+
+	ran, err := a.s.journal.Hooks(a.folder, body, a.row, a.role)
+	if err != nil {
+		a.s.Fails(err.Error())
+	}
+
+	return ran
+}
+
 func (a *Agent) SendsAnEditNamingNoFile() Ran {
 	a.s.t.Helper()
 
@@ -322,8 +335,8 @@ func (a *Agent) writes(sample Sample, file string, named func(string) string) Ra
 	a.edited = true
 
 	return a.sends("PostToolUse", map[string]any{
-		"tool_name":     "Write",
-		"tool_input":    map[string]any{"file_path": named(path), "content": sample.Text},
+		"tool_name":  "Write",
+		"tool_input": map[string]any{"file_path": named(path), "content": sample.Text},
 		"tool_response": map[string]any{"type": "create", "filePath": named(path), "content": sample.Text,
 			"structuredPatch": []any{}, "originalFile": nil},
 	})

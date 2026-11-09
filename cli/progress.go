@@ -37,7 +37,11 @@ func Timed() bool {
 }
 
 func SayWork(console Console, work engine.Work) {
-	if !Timed() {
+	SayWorkWhen(false, console, work)
+}
+
+func SayWorkWhen(asked bool, console Console, work engine.Work) {
+	if !asked && !Timed() {
 		return
 	}
 

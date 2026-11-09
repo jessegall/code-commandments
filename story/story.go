@@ -80,7 +80,9 @@ func (s *Story) SwitchesThePluginSetting(key, value, afterwards string) {
 	s.t.Helper()
 
 	s.Asks("plugin", "configure", "code-commandments", key, value, "--environment", testEnvironment)
-	s.t.Cleanup(func() { s.Asks("plugin", "configure", "code-commandments", key, afterwards, "--environment", testEnvironment) })
+	s.t.Cleanup(func() {
+		s.Asks("plugin", "configure", "code-commandments", key, afterwards, "--environment", testEnvironment)
+	})
 }
 
 func (s *Story) GivenHandInsAreNotJudged() {
