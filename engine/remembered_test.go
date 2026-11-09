@@ -160,11 +160,34 @@ func TestAFingerprintIsForgottenAfterTwelveHours(t *testing.T) {
 		t.Fatalf("the detector was asked %d times inside the twelve hours", detector.asked)
 	}
 
-	now = now.Add(2 * time.Minute)
+	now = now.Add(engine.RememberedFor + time.Minute)
 	judge()
 
 	if detector.asked != 2 {
 		t.Errorf("the detector was asked %d times, and the fingerprint had expired", detector.asked)
+	}
+}
+
+func TestARestoredFindingWhoseNodeIsGoneIsJudgedAgain(t *testing.T) {
+	memory := engine.Remembering(time.Now)
+	detector := &asking{finds: true}
+
+	tree, _ := treeHolding(t, "kept")
+	memory.Find(tree, detector.find)
+
+	verdicts := memory.Verdicts()
+	verdicts[0].Found = []int{1 << 30}
+	restored := engine.RememberingFrom(time.Now, verdicts)
+
+	tree, paths := treeHolding(t, "kept")
+	again := restored.Find(tree, detector.find)
+
+	if detector.asked != 2 {
+		t.Errorf("the detector was asked %d times, and the remembered node is not in the tree", detector.asked)
+	}
+
+	if len(again) != 1 || again[0].File() != paths[0] {
+		t.Errorf("the finding after judging again is %v", again)
 	}
 }
 

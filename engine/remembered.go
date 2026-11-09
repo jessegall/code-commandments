@@ -86,7 +86,7 @@ func (r *Remembered) recalled(files []*File) ([]Match, map[string]unjudged) {
 	for _, file := range files {
 		fingerprint, printed := file.fingerprint()
 
-		if !printed || !r.knows(fingerprint, now) {
+		if !printed || !r.knows(fingerprint, now) || !file.holdsNodes(r.found[fingerprint]) {
 			asked[file.Path] = unjudged{file, fingerprint, printed}
 
 			continue
@@ -192,6 +192,14 @@ func (r *Remembered) remember(asked map[string]unjudged, matches []Match) {
 			delete(r.found, one.fingerprint)
 		}
 	}
+}
+
+func (f *File) holdsNodes(ids []int) bool {
+	return !slices.ContainsFunc(ids, func(id int) bool {
+		_, held := f.Node(id)
+
+		return !held
+	})
 }
 
 func (f *File) fingerprint() (uint64, bool) {
