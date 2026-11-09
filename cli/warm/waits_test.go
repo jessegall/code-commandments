@@ -138,3 +138,15 @@ func TestARunStopsWaitingOnceItHasWaitedFarTooLong(t *testing.T) {
 			"died", waited.Round(time.Millisecond))
 	}
 }
+
+func TestARunWaitingForTheTreeKeepsSayingSo(t *testing.T) {
+	told := 0
+
+	waitingFor(func() (Answer, bool) {
+		return Answer{Declined: true, Coming: true, Because: "a read runs"}, false
+	}, func(string) { told++ }, time.Millisecond, 120*time.Millisecond, time.Hour)
+
+	if told < 3 {
+		t.Errorf("the run said it was waiting %d times in the whole wait", told)
+	}
+}

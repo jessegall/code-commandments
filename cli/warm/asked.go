@@ -51,10 +51,15 @@ func waitingFor(ask func() (Answer, bool), said func(string), apart, atMost, sil
 	said("waiting for the tree this project keeps up, because reading it again here would cost more than the wait: " +
 		answer.Because)
 
-	heard := time.Now()
+	heard, told := time.Now(), time.Now()
 
 	for until := time.Now().Add(atMost); time.Now().Before(until); {
 		time.Sleep(apart)
+
+		if time.Since(told) >= atMost/timesToldWhileWaiting {
+			said("still waiting for the tree: " + answer.Because)
+			told = time.Now()
+		}
 
 		answer, served = ask()
 		if !served && !answer.Declined {
@@ -80,6 +85,8 @@ const waitsForTheTree = 30 * time.Minute
 const waitsForTheServiceToReturn = 5 * time.Minute
 
 const aMomentBetweenAsks = time.Second
+
+const timesToldWhileWaiting = 60
 
 func Asked(project string, request Request, progressed func(string)) (Answer, bool) {
 	connection, err := net.DialTimeout("unix", Socket(project), 2*time.Second)
