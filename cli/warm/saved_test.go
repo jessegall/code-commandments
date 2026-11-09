@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"slices"
 	"strconv"
+	"sync"
 	"testing"
 	"time"
 
@@ -51,6 +52,73 @@ func TestATreeSavedByThisBinaryLoadsWithItsMarks(t *testing.T) {
 
 	if saved.Marks["/p/a.py"].Digest != "d" {
 		t.Errorf("the loaded marks are %+v", saved.Marks)
+	}
+}
+
+func TestTwoSavesOfOneTreeBesideASweepLeaveAWholeSavedTree(t *testing.T) {
+	parent := t.TempDir()
+	folder := filepath.Join(parent, "tree")
+	roots := []string{"/p"}
+	base := warm.Keep().Hold("/p", "main", roots, savedCodebase(t), map[string]warm.Known{"/p/a.py": {Mark: "m", Digest: "d"}})
+
+	for range 25 {
+		var saves sync.WaitGroup
+		failed := make(chan error, 2)
+
+		for range 2 {
+			saves.Add(1)
+
+			go func() {
+				defer saves.Done()
+
+				if err := base.Save(folder, "binary-1", time.Now()); err != nil {
+					failed <- err
+				}
+			}()
+		}
+
+		saves.Add(1)
+
+		go func() {
+			defer saves.Done()
+			warm.SweepSaved(parent, time.Now())
+		}()
+
+		saves.Wait()
+		close(failed)
+
+		for err := range failed {
+			t.Fatalf("a save beside another save and a sweep failed: %v", err)
+		}
+
+		if _, err := warm.LoadSaved(folder, "binary-1", roots, time.Now()); err != nil {
+			t.Fatalf("the saved tree is not whole: %v", err)
+		}
+	}
+}
+
+func TestASweepLetsGoOfADraftLeftBehindAnHourAgoAndNotOfOneBeingWritten(t *testing.T) {
+	parent := t.TempDir()
+	left, writing := filepath.Join(parent, "tree.draft1"), filepath.Join(parent, "tree.draft2")
+
+	for _, draft := range []string{left, writing} {
+		if err := os.MkdirAll(draft, 0o755); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	longAgo := time.Now().Add(-2 * time.Hour)
+	if err := os.Chtimes(left, longAgo, longAgo); err != nil {
+		t.Fatal(err)
+	}
+
+	warm.SweepSaved(parent, time.Now())
+
+	if _, err := os.Stat(left); !errors.Is(err, fs.ErrNotExist) {
+		t.Errorf("a draft a crash left behind stayed: %v", err)
+	}
+	if _, err := os.Stat(writing); err != nil {
+		t.Errorf("a draft still being written was swept: %v", err)
 	}
 }
 
