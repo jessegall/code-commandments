@@ -97,6 +97,51 @@ func TestTwoEditsInOneWindowAreJudgedOnceAsAGroup(t *testing.T) {
 	s.CostIs(ledger.JudgingsFromTheTree, 1)
 }
 
+func TestTwoAgentsEditsAreNeverGatheredTogether(t *testing.T) {
+	s, ada := editing(t)
+
+	var grace *story.Agent
+
+	s.Given("a worker edits beside the agent", func() {
+		grace = s.Worker("Grace")
+		s.GivenTheTreeIsHeldFor(grace.Folder())
+	})
+	s.CountsFromHere()
+
+	ada.Edits(sinful(s, "the agent's own edit"), "ada.py")
+	grace.Edits(sinful(s, "the worker's own edit"), "grace.py")
+
+	s.Never(ada.Hears("ada.py"), "grace.py")
+	s.Never(grace.Hears("grace.py"), "ada.py")
+	s.CostIs(ledger.JudgingsFromTheTree, 2)
+}
+
+func TestAWorkerWithJudgingOffIsToldNothingAndCostsNothing(t *testing.T) {
+	s := story.Begin(t)
+
+	var grace *story.Agent
+
+	switched := func(value string) {
+		s.AsksIn(s.TestCheckout(), "plugin", "configure", "code-commandments", "judge_workers", value, "--reason", "a story of the switch over workers")
+	}
+
+	s.Given("a worker works with judging switched off", func() {
+		s.GivenTheTreeIsHeldFor(s.TestCheckout())
+		grace = s.Worker("Grace")
+		s.GivenTheTreeIsHeldFor(grace.Folder())
+		switched("false")
+	})
+	t.Cleanup(func() { switched("true") })
+	s.CountsFromHere()
+
+	grace.Edits(sinful(s, "a sinful edit nobody judges"), "quiet.py")
+	grace.StaysUntold(elseRule)
+
+	s.Parsed(0)
+	s.Judged(0)
+	s.CostIs(ledger.JudgingsFromTheTree, 0)
+}
+
 func TestARealEditCostsOnlyItsFile(t *testing.T) {
 	s, ada := editing(t)
 	s.Given("twelve different sinful files, judged", func() {
