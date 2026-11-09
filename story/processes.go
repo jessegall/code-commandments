@@ -12,6 +12,8 @@ const Terminates, Kills = "SIGTERM", "SIGKILL"
 
 const noParentLeft = "1"
 
+const serviceReturnsWithin = 60 * time.Second
+
 // Process is one of the plugin's processes on the host, as the relay read it.
 type Process struct {
 	Pid     string
@@ -68,14 +70,18 @@ func (s *Story) TheService(verb string) Process {
 		return Process{Pid: "2", Parent: "3", Command: verb}
 	}
 
-	processes := s.processesNow()
+	for until := time.Now().Add(serviceReturnsWithin); ; time.Sleep(betweenMoments) {
+		processes := s.processesNow()
 
-	at := slices.IndexFunc(processes, func(each Process) bool { return strings.Contains(each.Command, verb) })
-	if at < 0 {
-		s.Fails(fmt.Sprintf("no process of the plugin runs %s; the plugin's processes are:\n%v", verb, processes))
+		at := slices.IndexFunc(processes, func(each Process) bool { return strings.Contains(each.Command, verb) })
+		if at >= 0 {
+			return processes[at]
+		}
+
+		if time.Now().After(until) {
+			s.Fails(fmt.Sprintf("no process of the plugin runs %s; the plugin's processes are:\n%v", verb, processes))
+		}
 	}
-
-	return processes[at]
 }
 
 func (s *Story) NoOrphans() {
