@@ -12,14 +12,15 @@ import (
 
 // weighing is what one aggregating rule found over a whole set of C# files, and the folder those findings' paths start with.
 type weighing struct {
-	print    uint64
-	folder   string
-	findings []engine.Finding
+	Print    uint64
+	Folder   string
+	Findings []engine.Finding
 }
 
 var (
-	weighings     = map[string]weighing{}
-	weighingsHeld sync.Mutex
+	weighings        = map[string]weighing{}
+	weighingsChanged bool
+	weighingsHeld    sync.Mutex
 )
 
 // csharpSet is the C# files of one judging, known by a print of their contents: what an aggregating rule found over the same contents is answered again, whichever folder held them.
@@ -51,7 +52,7 @@ func (s *csharpSet) recall(rule detectors.Detector) ([]engine.Finding, bool) {
 	kept, known := weighings[catalog.Name(rule)]
 	weighingsHeld.Unlock()
 
-	if !known || kept.print != engine.PrintOfAll(s.prints) {
+	if !known || kept.Print != engine.PrintOfAll(s.prints) {
 		return nil, false
 	}
 
@@ -76,16 +77,17 @@ func (s *csharpSet) keep(rule detectors.Detector, findings []engine.Finding) {
 	defer weighingsHeld.Unlock()
 
 	weighings[catalog.Name(rule)] = weighing{engine.PrintOfAll(s.prints), s.folder, slices.Clone(findings)}
+	weighingsChanged = true
 }
 
 func (w weighing) movedTo(folder string) ([]engine.Finding, bool) {
-	moved := slices.Clone(w.findings)
-	if folder == w.folder {
+	moved := slices.Clone(w.Findings)
+	if folder == w.Folder {
 		return moved, true
 	}
 
 	for at, finding := range moved {
-		if !strings.HasPrefix(finding.File, w.folder) {
+		if !strings.HasPrefix(finding.File, w.Folder) {
 			return nil, false
 		}
 
@@ -104,9 +106,9 @@ func (w weighing) movedTo(folder string) ([]engine.Finding, bool) {
 }
 
 func (w weighing) under(folder, path string) string {
-	if !strings.HasPrefix(path, w.folder) {
+	if !strings.HasPrefix(path, w.Folder) {
 		return path
 	}
 
-	return folder + strings.TrimPrefix(path, w.folder)
+	return folder + strings.TrimPrefix(path, w.Folder)
 }
