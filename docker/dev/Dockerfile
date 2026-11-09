@@ -7,7 +7,7 @@ FROM php:8.5-cli-bookworm
 ARG MYPY
 
 RUN apt-get update \
- && apt-get install -y --no-install-recommends git unzip \
+ && apt-get install -y --no-install-recommends git unzip procps \
  && rm -rf /var/lib/apt/lists/* \
  && curl -LsSf https://astral.sh/uv/install.sh | env UV_INSTALL_DIR=/usr/local/bin UV_NO_MODIFY_PATH=1 sh \
  && UV_PYTHON_INSTALL_DIR=/opt/python uv python install 3.14 \

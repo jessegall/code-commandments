@@ -9,7 +9,9 @@ import socketserver
 import sqlite3
 import subprocess
 import sys
+import tempfile
 import threading
+import time
 
 NOUNS = frozenset({
     "agent",
@@ -44,6 +46,15 @@ MERGES_JUDGED = os.path.join(".journal", "plugin-data", "code-commandments", ".m
 NO_AGENT = "story-engine-no-agent"
 LAUNCH_VARIABLES = ("HOME", "PATH", "USER", "LOGNAME", "SHELL", "LANG", "LC_ALL", "TMPDIR", "TERM")
 WIRE_NAMES = {"in": "folder"}
+PLUGINS = os.path.join(".journal", "plugins") + os.sep
+BRIDGE_CACHE = os.path.join(".cache", "code-commandments") + os.sep
+STOPPING_SIGNALS = {"SIGTERM": signal.SIGTERM, "SIGKILL": signal.SIGKILL}
+BETWEEN_LOOKS_SECONDS = 0.5
+PLUGIN_BINARY = os.path.join(".journal", "plugins", "code-commandments", "bin", "commandments-release")
+SERVICE_VERBS = {"hooks": "journal-serve", "mypy": "mypy-serve", "frontend": "frontend-serve", "php": "php-serve", "roslyn": "roslyn-serve"}
+UNDER_A_PARENT = '"$@" >/dev/null 2>&1 & echo $!; wait'
+TORN_DOWN_WITHIN_SECONDS = 3
+DETECTOR_MEMORY = os.path.join(".journal", "plugin-data", "code-commandments", "detector-memories.json")
 AGENT_LINES = re.compile(r"agent-lines?[: ]\s*(\d+(?:(?:,\s*|\s+and\s+)\d+)*)")
 
 
@@ -90,6 +101,31 @@ class Answer:
         return cls(done.returncode, done.stdout, done.stderr)
 
 
+@dataclass(frozen=True)
+class Process:
+    """One process of this machine as ps lists it."""
+
+    pid: int
+    parent: int
+    command: str
+
+    @property
+    def is_orphaned_bridge(self) -> bool:
+        return self.parent == 1 and BRIDGE_CACHE in self.command and "--serve" in self.command
+
+    def line(self) -> str:
+        return f"{self.pid}\t{self.parent}\t{self.command}\n"
+
+
+@dataclass(frozen=True)
+class Throwaway:
+    """A service a story started under a parent of its own, in a folder of its own, so the project's real one is never touched."""
+
+    parent: subprocess.Popen
+    service: int
+    folder: str
+
+
 class Step(socketserver.StreamRequestHandler):
     """One request: a journal command or a hook, run on this machine, answered with its output and exit code."""
 
@@ -117,6 +153,7 @@ class Relay(socketserver.ThreadingTCPServer):
         self.project = project
         self.home = ""
         self.sleepers: dict[int, subprocess.Popen] = {}
+        self.throwaways: dict[int, Throwaway] = {}
         self.holding = threading.Lock()
         self.journal = os.path.join(project, ".journal", "bin", "journal")
         self.hook = os.path.join(project, ".journal", "bin", "journal-hook")
@@ -134,6 +171,16 @@ class Relay(socketserver.ThreadingTCPServer):
             return self.look_step(asked)
         if asked.kind == "told":
             return self.told_step(asked)
+        if asked.kind == "processes":
+            return self.processes_step()
+        if asked.kind == "stop-service":
+            return self.stop_service_step(asked)
+        if asked.kind == "wait-service":
+            return self.wait_service_step(asked)
+        if asked.kind == "throwaway":
+            return self.throwaway_step(asked)
+        if asked.kind == "memory-file":
+            return self.memory_file_step(asked)
         argv, stdin, folder = self.command_of(asked), asked.stdin, self.folder_of(asked)
         environment = self.environment_of(asked)
         try:
@@ -175,10 +222,129 @@ class Relay(socketserver.ThreadingTCPServer):
         sleeper.terminate()
         sleeper.wait()
 
+    def processes_step(self) -> Answer:
+        """The plugin's own processes and every bridge left behind by a service that is gone."""
+        running = running_processes()
+        return Answer(0, "".join(process.line() for process in self.plugin_processes(running) + [each for each in running if each.is_orphaned_bridge]))
+
+    def plugin_processes(self, running: list[Process]) -> list[Process]:
+        """Every process started from this project's plugin folder and all it started in turn: a bridge names only the
+        shared cache, so its parent is what makes it this project's."""
+        folders = {os.path.join(self.project, PLUGINS), os.path.join(os.path.realpath(self.project), PLUGINS)}
+        found = descendants_of({each.pid for each in running if any(folder in each.command for folder in folders)}, running)
+        return [each for each in running if each.pid in found]
+
+    def stop_service_step(self, asked: Asked) -> Answer:
+        """Send a stopping signal to one of the plugin's processes, the list read again right before it, and to no other."""
+        if asked.action not in STOPPING_SIGNALS:
+            raise Refused(f"a service is stopped with one of {sorted(STOPPING_SIGNALS)}")
+        pid = int(asked.pid)
+        if pid not in {each.pid for each in self.plugin_processes(running_processes())}:
+            raise Refused(f"{pid} is not a process of the plugin")
+        os.kill(pid, STOPPING_SIGNALS[asked.action])
+        return Answer(0)
+
+    def wait_service_step(self, asked: Asked) -> Answer:
+        """Wait until the journal says the named service runs, for `many` seconds at most, and answer with what it last said."""
+        deadline = time.monotonic() + asked.many
+        while True:
+            done = subprocess.run([self.journal, "plugin", "services", "--json"], capture_output=True, text=True, cwd=self.project, timeout=STEP_SECONDS)
+            rows = [row for row in json.loads(done.stdout or '{"rows": []}')["rows"] if row["service"] == asked.name]
+            if rows and rows[0]["running"]:
+                return Answer(0, json.dumps(rows[0]))
+            if time.monotonic() >= deadline:
+                return Answer(124, json.dumps(rows), f"the service {asked.name} was not running after {asked.many} seconds\n")
+            time.sleep(BETWEEN_LOOKS_SECONDS)
+
+    def throwaway_step(self, asked: Asked) -> Answer:
+        """Start a throwaway service under a parent of its own, end such a parent, or tear every one of them down."""
+        with self.holding:
+            if asked.action == "start":
+                return self.start_throwaway(asked.name)
+            if asked.action == "end":
+                return self.end_throwaway_parent(int(asked.pid))
+            if asked.action == "teardown":
+                return self.tear_down_throwaways()
+        raise Refused(f"'{asked.action}' is not something a throwaway service does")
+
+    def start_throwaway(self, kind: str) -> Answer:
+        if kind not in SERVICE_VERBS:
+            raise Refused(f"'{kind}' is none of {sorted(SERVICE_VERBS)}")
+        folder = tempfile.mkdtemp(prefix="story-", dir="/tmp")
+        project, data, health = os.path.join(folder, "project"), os.path.join(folder, "data"), os.path.join(folder, "health.sock")
+        os.makedirs(project)
+        os.makedirs(data)
+        environment = {name: os.environ[name] for name in LAUNCH_VARIABLES if name in os.environ}
+        environment.update({"COMMANDMENTS_HEALTH_SOCKET": health, "JOURNAL_PLUGIN_DATA": data, "JOURNAL_ENV": STORY_ENVIRONMENT, "JOURNAL_ROOT": project})
+        binary = os.path.join(self.project, PLUGIN_BINARY)
+        parent = subprocess.Popen(["sh", "-c", UNDER_A_PARENT, "sh", binary, SERVICE_VERBS[kind]], stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
+                                  stderr=subprocess.DEVNULL, text=True, cwd=project, env=environment, start_new_session=True)
+        service = int(parent.stdout.readline())
+        parent.stdout.close()
+        self.throwaways[parent.pid] = Throwaway(parent, service, folder)
+        return Answer(0, json.dumps({"pid": service, "parent": parent.pid, "socket": health, "data": data}))
+
+    def end_throwaway_parent(self, pid: int) -> Answer:
+        kept = self.throwaways.get(pid)
+        if kept is None:
+            raise Refused(f"{pid} is not a parent this relay started")
+        kept.parent.kill()
+        kept.parent.wait()
+        return Answer(0)
+
+    def tear_down_throwaways(self) -> Answer:
+        """Kill every throwaway parent and service and all they started, and answer with any that would not go."""
+        started = {pid for each in self.throwaways.values() for pid in (each.parent.pid, each.service)}
+        targets = descendants_of(started, running_processes())
+        for pid in targets:
+            try:
+                os.kill(pid, signal.SIGKILL)
+            except ProcessLookupError:
+                pass
+        for each in self.throwaways.values():
+            each.parent.wait()
+            shutil.rmtree(each.folder, ignore_errors=True)
+        self.throwaways.clear()
+        deadline = time.monotonic() + TORN_DOWN_WITHIN_SECONDS
+        while True:
+            left = sorted(targets & {each.pid for each in running_processes()})
+            if not left or time.monotonic() >= deadline:
+                break
+            time.sleep(BETWEEN_LOOKS_SECONDS)
+        if left:
+            return Answer(1, "", f"these throwaway processes outlived their teardown: {left}\n")
+        return Answer(0)
+
+    def memory_file_step(self, asked: Asked) -> Answer:
+        """Read, age, stamp, replace or remove the project's saved detector memory, the one file this step can reach.
+        A story ages it while the service is stopped, as it stops a service for a restart, so nothing writes it at once."""
+        path = os.path.join(self.project, DETECTOR_MEMORY)
+        if asked.action == "read":
+            return Answer(0, json.dumps(reading_of(path)))
+        if asked.action == "remove":
+            if os.path.exists(path):
+                os.remove(path)
+            return Answer(0)
+        if asked.action == "replace":
+            written_whole(path, asked.stdin)
+            return Answer(0)
+        with open(path) as read:
+            saved = json.load(read)
+        if asked.action == "age":
+            for verdict in verdicts_of(saved):
+                verdict["Used"] -= asked.many
+        elif asked.action == "stamp":
+            saved["Build"] = asked.name
+        else:
+            raise Refused(f"'{asked.action}' is not something the memory file does")
+        written_whole(path, json.dumps(saved))
+        return Answer(0)
+
     def server_close(self) -> None:
         with self.holding:
             for pid in list(self.sleepers):
                 self.end_sleeper(pid)
+            self.tear_down_throwaways()
         super().server_close()
 
     def file_step(self, asked: Asked) -> Answer:
@@ -341,6 +507,46 @@ class Relay(socketserver.ThreadingTCPServer):
         if os.path.commonpath([folder, os.path.realpath(self.project)]) != os.path.realpath(self.project):
             raise Refused(f"{folder} is outside the project")
         return folder
+
+
+def running_processes() -> list[Process]:
+    listed = subprocess.run(["ps", "-axo", "pid=,ppid=,command="], capture_output=True, text=True, timeout=STEP_SECONDS).stdout
+    fields = (line.split(None, 2) for line in listed.splitlines())
+    return [Process(int(each[0]), int(each[1]), each[2]) for each in fields if len(each) == 3]
+
+
+def verdicts_of(saved: dict) -> list[dict]:
+    return [verdict for verdicts in (saved["Detectors"] or {}).values() for verdict in verdicts]
+
+
+def reading_of(path: str) -> dict:
+    """What the saved detector memory holds now, in the shape cli/hooks/remembered_detectors.go writes it."""
+    if not os.path.exists(path):
+        return {"present": False}
+    size = os.path.getsize(path)
+    try:
+        with open(path) as read:
+            saved = json.load(read)
+        verdicts = verdicts_of(saved)
+    except (ValueError, KeyError, TypeError, AttributeError):
+        return {"present": True, "readable": False, "size": size}
+    used = [verdict["Used"] for verdict in verdicts]
+    return {"present": True, "readable": True, "size": size, "entries": len(verdicts), "build": saved["Build"],
+            "oldest": min(used, default=0), "newest": max(used, default=0)}
+
+
+def written_whole(path: str, text: str) -> None:
+    draft = f"{path}.{os.getpid()}"
+    with open(draft, "w") as written:
+        written.write(text)
+    os.replace(draft, path)
+
+
+def descendants_of(roots: set[int], running: list[Process]) -> set[int]:
+    found = set(roots)
+    while children := {each.pid for each in running if each.parent in found} - found:
+        found |= children
+    return found
 
 
 def main() -> None:

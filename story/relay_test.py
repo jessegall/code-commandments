@@ -1,13 +1,15 @@
 import json
 import os
+import signal
 import socket
 import stat
 import subprocess
 import tempfile
 import threading
+import time
 import unittest
 
-from relay import Relay
+from relay import Process, Relay
 
 
 class RelayTest(unittest.TestCase):
@@ -35,6 +37,184 @@ class RelayTest(unittest.TestCase):
         with socket.create_connection(self.relay.server_address) as connection:
             connection.sendall((json.dumps(asked) + "\n").encode())
             return json.loads(connection.makefile().readline())
+
+    def plugin_service(self) -> subprocess.Popen:
+        folder = os.path.join(self.project, ".journal", "plugins", "code-commandments")
+        os.makedirs(folder, exist_ok=True)
+        path = os.path.join(folder, "serve")
+        with open(path, "w") as program:
+            program.write("#!/bin/sh\nsleep 86400\nexit 0\n")
+        os.chmod(path, os.stat(path).st_mode | stat.S_IEXEC)
+        service = subprocess.Popen([path], start_new_session=True)
+        self.addCleanup(self.ends_the_group_of, service)
+        self.waits_until(lambda: len(self.listed()) == 2)
+        return service
+
+    def ends_the_group_of(self, service: subprocess.Popen) -> None:
+        try:
+            os.killpg(service.pid, signal.SIGKILL)
+        except ProcessLookupError:
+            pass
+        service.wait()
+
+    def sleeper(self) -> subprocess.Popen:
+        sleeper = subprocess.Popen(["sleep", "86400"])
+        self.addCleanup(sleeper.wait)
+        self.addCleanup(sleeper.kill)
+        return sleeper
+
+    def listed(self) -> list[list[str]]:
+        return [line.split("\t") for line in self.ask({"kind": "processes"})["out"].splitlines()]
+
+    def waits_until(self, holds) -> None:
+        deadline = time.monotonic() + 5
+        while not holds() and time.monotonic() < deadline:
+            time.sleep(0.05)
+        self.assertTrue(holds())
+
+    def services_say(self, running: str) -> None:
+        with open(os.path.join(self.project, ".journal", "bin", "journal"), "w") as program:
+            program.write("#!/bin/sh\necho '{\"rows\": [{\"service\": \"hooks\", \"running\": " + running + "}]}'\n")
+
+    def test_the_processes_step_lists_the_plugins_process_and_its_child_and_nothing_else(self) -> None:
+        service = self.plugin_service()
+        sleeper = self.sleeper()
+        listed = self.listed()
+        pids = [int(each[0]) for each in listed]
+        self.assertIn(service.pid, pids)
+        self.assertNotIn(sleeper.pid, pids)
+        child = next(each for each in listed if int(each[0]) != service.pid)
+        self.assertEqual(int(child[1]), service.pid)
+
+    def test_a_bridge_whose_parent_is_gone_counts_as_an_orphan_and_one_with_a_parent_does_not(self) -> None:
+        command = "/home/x/.cache/code-commandments/frontend/abc/bridge.mjs --serve"
+        self.assertTrue(Process(10, 1, command).is_orphaned_bridge)
+        self.assertFalse(Process(10, 77, command).is_orphaned_bridge)
+        self.assertFalse(Process(10, 1, "/usr/sbin/cron").is_orphaned_bridge)
+
+    def test_a_listed_process_is_stopped(self) -> None:
+        service = self.plugin_service()
+        answer = self.ask({"kind": "stop-service", "pid": str(service.pid), "action": "SIGTERM"})
+        self.assertEqual(answer["code"], 0, answer["err"])
+        service.wait(timeout=5)
+
+    def test_a_process_that_is_not_the_plugins_is_refused_and_lives_on(self) -> None:
+        sleeper = self.sleeper()
+        answer = self.ask({"kind": "stop-service", "pid": str(sleeper.pid), "action": "SIGKILL"})
+        self.assertEqual(answer["code"], 126)
+        self.assertIsNone(sleeper.poll())
+
+    def test_a_signal_that_does_not_stop_is_refused(self) -> None:
+        service = self.plugin_service()
+        answer = self.ask({"kind": "stop-service", "pid": str(service.pid), "action": "SIGHUP"})
+        self.assertEqual(answer["code"], 126)
+        self.assertIsNone(service.poll())
+
+    def test_waiting_for_a_running_service_answers_at_once(self) -> None:
+        self.services_say("true")
+        answer = self.ask({"kind": "wait-service", "name": "hooks", "many": 5})
+        self.assertEqual(answer["code"], 0, answer["err"])
+        self.assertIn('"running": true', answer["out"])
+
+    def test_waiting_for_a_service_that_never_runs_stops_at_the_deadline(self) -> None:
+        self.services_say("false")
+        answer = self.ask({"kind": "wait-service", "name": "hooks", "many": 1})
+        self.assertEqual(answer["code"], 124)
+        self.assertIn("hooks", answer["err"])
+
+    def throwaway(self) -> dict:
+        path = os.path.join(self.project, ".journal", "plugins", "code-commandments", "bin", "commandments-release")
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with open(path, "w") as program:
+            program.write("#!/bin/sh\nsleep 86400\nexit 0\n")
+        os.chmod(path, os.stat(path).st_mode | stat.S_IEXEC)
+        answer = self.ask({"kind": "throwaway", "action": "start", "name": "hooks"})
+        self.assertEqual(answer["code"], 0, answer["err"])
+        return json.loads(answer["out"])
+
+    def alive(self, pid: int) -> bool:
+        return any(int(each[0]) == pid for each in self.listed())
+
+    def test_a_throwaway_service_is_listed_under_its_own_parent_in_its_own_folder(self) -> None:
+        started = self.throwaway()
+        self.waits_until(lambda: self.alive(started["pid"]))
+        service = next(each for each in self.listed() if int(each[0]) == started["pid"])
+        self.assertEqual(int(service[1]), started["parent"])
+        self.assertTrue(started["socket"].startswith("/tmp/story-"))
+        self.assertLess(len(started["socket"]), 104)
+        self.assertEqual(self.ask({"kind": "throwaway", "action": "teardown"})["code"], 0)
+
+    def test_ending_a_throwaway_parent_leaves_the_service_to_notice_for_itself(self) -> None:
+        started = self.throwaway()
+        self.waits_until(lambda: self.alive(started["pid"]))
+        self.assertEqual(self.ask({"kind": "throwaway", "action": "end", "pid": str(started["parent"])})["code"], 0)
+        self.assertTrue(self.alive(started["pid"]))
+        self.assertEqual(self.ask({"kind": "throwaway", "action": "teardown"})["code"], 0)
+
+    def test_a_parent_the_relay_did_not_start_is_refused_and_lives_on(self) -> None:
+        sleeper = self.sleeper()
+        answer = self.ask({"kind": "throwaway", "action": "end", "pid": str(sleeper.pid)})
+        self.assertEqual(answer["code"], 126)
+        self.assertIsNone(sleeper.poll())
+
+    def test_a_teardown_leaves_no_throwaway_process_or_folder_behind(self) -> None:
+        started = self.throwaway()
+        self.waits_until(lambda: self.alive(started["pid"]))
+        self.assertEqual(self.ask({"kind": "throwaway", "action": "teardown"})["code"], 0)
+        self.waits_until(lambda: not self.alive(started["pid"]))
+        self.assertFalse(os.path.exists(os.path.dirname(started["socket"])))
+
+    def test_a_kind_of_service_that_does_not_exist_is_refused(self) -> None:
+        self.assertEqual(self.ask({"kind": "throwaway", "action": "start", "name": "nginx"})["code"], 126)
+
+    def saved_memory(self) -> str:
+        path = os.path.join(self.project, ".journal", "plugin-data", "code-commandments", "detector-memories.json")
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with open(path, "w") as written:
+            json.dump({"Build": "build-1", "Detectors": {
+                "First": [{"Fingerprint": 18446744073709551615, "Used": 1000, "Found": [4]}],
+                "Second": [{"Fingerprint": 2, "Used": 3000, "Found": None}],
+            }}, written)
+        return path
+
+    def memory(self) -> dict:
+        return json.loads(self.ask({"kind": "memory-file", "action": "read"})["out"])
+
+    def test_the_memory_file_is_read_in_the_shape_the_service_writes(self) -> None:
+        self.saved_memory()
+        reading = self.memory()
+        self.assertEqual((reading["entries"], reading["build"], reading["oldest"], reading["newest"]), (2, "build-1", 1000, 3000))
+
+    def test_ageing_the_memory_file_moves_every_used_and_nothing_else(self) -> None:
+        path = self.saved_memory()
+        self.assertEqual(self.ask({"kind": "memory-file", "action": "age", "many": 28800})["code"], 0)
+        with open(path) as read:
+            saved = json.load(read)
+        self.assertEqual(saved, {"Build": "build-1", "Detectors": {
+            "First": [{"Fingerprint": 18446744073709551615, "Used": 1000 - 28800, "Found": [4]}],
+            "Second": [{"Fingerprint": 2, "Used": 3000 - 28800, "Found": None}],
+        }})
+
+    def test_a_stamped_memory_file_holds_the_new_build(self) -> None:
+        self.saved_memory()
+        self.ask({"kind": "memory-file", "action": "stamp", "name": "build-2"})
+        self.assertEqual(self.memory()["build"], "build-2")
+
+    def test_a_memory_file_replaced_with_garbage_reads_as_unreadable(self) -> None:
+        self.saved_memory()
+        self.ask({"kind": "memory-file", "action": "replace", "stdin": "{not json"})
+        reading = self.memory()
+        self.assertTrue(reading["present"])
+        self.assertFalse(reading["readable"])
+
+    def test_a_removed_memory_file_reads_as_not_there(self) -> None:
+        self.saved_memory()
+        self.ask({"kind": "memory-file", "action": "remove"})
+        self.assertFalse(self.memory()["present"])
+
+    def test_an_action_the_memory_file_does_not_have_is_refused(self) -> None:
+        self.saved_memory()
+        self.assertEqual(self.ask({"kind": "memory-file", "action": "burn"})["code"], 126)
 
     def test_a_command_runs_in_the_folder_the_story_names(self) -> None:
         worktree = os.path.join(self.project, "worktree")

@@ -21,6 +21,7 @@ type Story struct {
 	began   map[string]int
 
 	scratches   map[string]bool
+	tearsDown   bool
 	rehearsal   bool
 	keepsBranch bool
 }

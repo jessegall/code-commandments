@@ -94,6 +94,34 @@ func (j Journal) EndsProcess(pid string) (Ran, error) {
 	return j.ask(request{Kind: "pid", Action: "end", Pid: pid})
 }
 
+func (j Journal) ListsProcesses() (Ran, error) {
+	return j.ask(request{Kind: "processes"})
+}
+
+func (j Journal) StopsAService(pid, signal string) (Ran, error) {
+	return j.ask(request{Kind: "stop-service", Pid: pid, Action: signal})
+}
+
+func (j Journal) WaitsForTheService(name string, seconds int) (Ran, error) {
+	return j.ask(request{Kind: "wait-service", Name: name, Many: seconds})
+}
+
+func (j Journal) StartsAThrowawayService(kind string) (Ran, error) {
+	return j.ask(request{Kind: "throwaway", Action: "start", Name: kind})
+}
+
+func (j Journal) EndsAThrowawayParent(pid string) (Ran, error) {
+	return j.ask(request{Kind: "throwaway", Action: "end", Pid: pid})
+}
+
+func (j Journal) TearsDownThrowawayServices() (Ran, error) {
+	return j.ask(request{Kind: "throwaway", Action: "teardown"})
+}
+
+func (j Journal) ChangesTheMemoryFile(action, build, text string, seconds int) (Ran, error) {
+	return j.ask(request{Kind: "memory-file", Action: action, Name: build, Stdin: text, Many: seconds})
+}
+
 func (j Journal) Removes(path string) (Ran, error) {
 	return j.ask(request{Kind: "remove", Path: path})
 }
