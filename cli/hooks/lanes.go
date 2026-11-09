@@ -92,6 +92,9 @@ func (a lanesAnswer) shownInTheChat() {
 	card := exec.Command(journal, "plugin", "card", workspace.JournalPlugin, "--label", a.label, "--detail", a.tell,
 		"--tone", "note")
 	card.Env = os.Environ()
+
+	logStarted("journal plugin card | label=" + a.label)
+
 	_ = card.Run()
 }
 

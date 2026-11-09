@@ -59,6 +59,8 @@ func sendsPastTheMerge(project, journal, worker, said string) ([]byte, error) {
 		send.Dir = project
 		send.Env = os.Environ()
 
+		logStarted("journal worker send | worker=" + worker)
+
 		out, err := send.CombinedOutput()
 		if err == nil || !strings.Contains(string(out), workerStillBusy) || time.Now().After(until) {
 			return out, err

@@ -520,6 +520,7 @@ func (s JournalServe) Run(in *cli.Input, console cli.Console) (int, error) {
 	started := stamp(root)
 
 	Serves()
+	logServiceStart(root)
 
 	go WarmsWhatItServes(root)
 

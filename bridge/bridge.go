@@ -276,7 +276,12 @@ func quietLimit() (time.Duration, error) {
 	return limit, nil
 }
 
+// Launching hears of every bridge process just before it starts.
+var Launching = func(command []string, arguments int) {}
+
 func launch(command []string, arguments ...string) (*exec.Cmd, context.CancelFunc) {
+	Launching(command, len(arguments))
+
 	running, stop := context.WithCancel(context.Background())
 	process := exec.CommandContext(running, command[0], append(command[1:], arguments...)...)
 	process.Cancel = func() error {

@@ -511,6 +511,8 @@ func Warming(root string, project config.Config) {
 
 		files := sources.Files(source.Languages...)
 
+		logStarted(fmt.Sprintf("tree load | project=%s | branch=%s | files=%d", named.project, named.branch, len(files)))
+
 		saved, refused := warm.LoadSaved(folder, bridge.Release, roots)
 		if refused == nil && broughtBackFromDisk(named, roots, files, saved, folder, began) {
 			return

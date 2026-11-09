@@ -5,6 +5,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/jessegall/code-commandments/bridge"
 )
 
 func capturedServiceLog(t *testing.T, served bool) *bytes.Buffer {
@@ -30,6 +32,19 @@ func TestAJudgingIsWrittenToTheServiceLog(t *testing.T) {
 
 	if said := captured.String(); !strings.Contains(said, "file_edited") || !strings.Contains(said, "sins=3") {
 		t.Errorf("the service log says: %q", said)
+	}
+}
+
+func TestABridgeTheServiceStartsIsWrittenToTheServiceLog(t *testing.T) {
+	captured := capturedServiceLog(t, true)
+
+	bridge.Run([]string{"true"}, "one", "two")
+
+	said := captured.String()
+	for _, named := range []string{"started", "bridge", "true", "arguments=2"} {
+		if !strings.Contains(said, named) {
+			t.Errorf("the service log does not say %q: %s", named, said)
+		}
 	}
 }
 
