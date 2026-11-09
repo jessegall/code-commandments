@@ -126,15 +126,15 @@ func TestTheDetectorCountIsTheNumberTheListNames(t *testing.T) {
 	s.Writes(story.ElseAfterRaise, "listed.py")
 
 	listing := s.AsksIn(s.TestCheckout(), "commandments", "judge", "--list")
-	listed := listedUnder(listing.Text(), "python/flow")
+	listed := listedUnder(listing.Text(), "python/value-objects")
 	if listed == 0 {
-		s.Fails("the list names no detector under python/flow:\n" + listing.Text())
+		s.Fails("the list names no detector under python/value-objects:\n" + listing.Text())
 	}
 
-	ran := s.AsksIn(s.TestCheckout(), "sins", "--changes", "--skill=python/flow")
+	ran := s.AsksIn(s.TestCheckout(), "sins", "--changes", "--skill=python/value-objects")
 
 	if counted := s.DetectorsCounted(ran); counted != listed {
-		s.Fails(fmt.Sprintf("the list names %d detectors under python/flow and the judging counts %d:\n%s", listed, counted, ran.Err))
+		s.Fails(fmt.Sprintf("the list names %d detectors under python/value-objects and the judging counts %d:\n%s", listed, counted, ran.Err))
 	}
 }
 
