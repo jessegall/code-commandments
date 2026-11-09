@@ -39,6 +39,8 @@ else
     (cd "$lab" && "$journal" plugin install "$plugin" --yes --reason "the tiny project runs this checkout's plugin")
 fi
 
+(cd "$lab" && "$journal" plugin configure code-commandments judge_workers true --reason "a story's agents are workers, and the stories read what they are told")
+
 checkout="$lab/.journal/worktrees/story-engine"
 [ -d "$checkout" ] || git -C "$lab" worktree add -q -b story-engine/spike "$checkout"
 

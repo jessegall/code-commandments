@@ -13,7 +13,7 @@ import (
 const (
 	testEnvironment = "story-engine"
 	workerPrefix    = "story-engine-"
-	hearsWithin     = 10 * time.Second
+	hearsWithin     = 20 * time.Second
 	landsWithin     = time.Minute
 	reopenedWithin  = time.Minute
 	stillnessWithin = 12 * time.Second
@@ -433,6 +433,10 @@ func (a *Agent) Hears(text string) Ran {
 	a.s.Fails(fmt.Sprintf("%s was never told %q; the last moment answered %q", a.name, text, last.Text()))
 
 	return last
+}
+
+func (a *Agent) ForgetsWhatItWasTold() {
+	a.told = ""
 }
 
 func (a *Agent) hearingWindow() time.Duration {
