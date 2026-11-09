@@ -96,7 +96,7 @@ func (s *Story) DispatchedWorker(name string, by *Agent) *Agent {
 
 	session := fmt.Sprintf("story-%s-%d", notALetter.ReplaceAllString(strings.ToLower(name), "-"), time.Now().UnixNano())
 
-	dispatched := s.AsksIn(s.TestCheckout(), "worker", "dispatch", found[1], "--no-program", "--program", "claude", "--session", session,
+	dispatched := by.Asks("worker", "dispatch", found[1], "--no-program", "--program", "claude", "--session", session,
 		"--environment", testEnvironment, "--fresh", "a story's worker", "--json")
 
 	var launch struct{ ID int }
@@ -121,7 +121,7 @@ func (s *Story) DispatchedWorker(name string, by *Agent) *Agent {
 func (s *Story) grantsDispatchTo(by *Agent) {
 	s.t.Helper()
 
-	listed := s.Asks("environment", "list", "--json")
+	listed := s.Asks("environment", "list", "--all", "--json")
 
 	grant, err := dispatchGrantOf(listed, by)
 	if err != nil {

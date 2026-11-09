@@ -34,7 +34,7 @@ func TestAListWithoutTheStoryEnvironmentIsNamedInTheFailure(t *testing.T) {
 
 func TestAStoryListsTheEnvironmentsThenEditsTheStoryOneToNameTheAgent(t *testing.T) {
 	address, asked := relayAnswering(t, func(sent request) Ran {
-		if strings.Join(sent.Argv, " ") == "environment list --json" {
+		if strings.Join(sent.Argv, " ") == "environment list --all --json" {
 			return Ran{Out: labEnvironments}
 		}
 

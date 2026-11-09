@@ -82,14 +82,16 @@ func TestAHeldTreeComesBackFromDiskAfterARestart(t *testing.T) {
 
 func TestARestartedBridgeParsesOnlyTheEditedFile(t *testing.T) {
 	s, _, _ := settled(t)
+	s.Writes(sinful(s, "a sinful file that gets its bridge asked"), "asked.py")
+	judges(s)
 	bridge := s.TheBridgeOf("mypy-serve")
 	s.StopsAService(bridge.Pid, story.Kills)
-	s.ABridgeOfComesBack("mypy-serve", bridge.Pid, bridgeComesBack)
 	s.CountsFromHere()
-	s.Writes(sinful(s, "a sinful file edited after its bridge came back"), "edited.py")
+	s.Writes(sinful(s, "a sinful file edited after its bridge was killed"), "edited.py")
 
 	s.Exits(judges(s), 1)
 
+	s.ABridgeOfComesBack("mypy-serve", bridge.Pid, bridgeComesBack)
 	s.CostIs(ledger.FilesParsedByBridges, 1)
 }
 
