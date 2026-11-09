@@ -168,6 +168,28 @@ func TestAFingerprintIsForgottenAfterTwelveHours(t *testing.T) {
 	}
 }
 
+func TestAFileIsCountedOnceJudgedAndThenOnceRemembered(t *testing.T) {
+	memory := engine.Remembering(time.Now)
+	detector := &asking{}
+	before := engine.Counted()
+
+	tree, _ := treeHolding(t, "kept")
+	memory.Find(tree, detector.find)
+	tree, _ = treeHolding(t, "kept")
+	memory.Find(tree, detector.find)
+
+	if did := engine.Since(before); did.Judged != 1 || did.Remembered != 1 {
+		t.Errorf("one file judged and then known counted %d judged and %d remembered", did.Judged, did.Remembered)
+	}
+
+	tree, _ = treeHolding(t, "changed")
+	memory.Find(tree, detector.find)
+
+	if did := engine.Since(before); did.Judged != 2 || did.Remembered != 1 {
+		t.Errorf("a changed file left %d judged and %d remembered", did.Judged, did.Remembered)
+	}
+}
+
 func TestARestoredFindingWhoseNodeIsGoneIsJudgedAgain(t *testing.T) {
 	memory := engine.Remembering(time.Now)
 	detector := &asking{finds: true}

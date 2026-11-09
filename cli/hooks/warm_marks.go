@@ -206,13 +206,24 @@ func AgainstTheProgramNarrowed(marking Marking, files []string, rulesFor func(st
 		return nil, read, notInTheTree
 	}
 
-	ledger.Of(held.project).Counts(ledger.JudgingsFromTheTree, 1, checkout)
+	costs := ledger.Of(held.project)
+	costs.Counts(ledger.JudgingsFromTheTree, 1, checkout)
+
+	before := engine.Counted()
+	found := marksOverTogether(view, marking, judged, rulesFor, changedFor)
+	countDetectorFiles(costs, before, checkout)
 
 	if len(judged) != len(files) {
-		return marksOverTogether(view, marking, judged, rulesFor, changedFor), read, notInTheTree
+		return found, read, notInTheTree
 	}
 
-	return marksOverTogether(view, marking, judged, rulesFor, changedFor), read, ""
+	return found, read, ""
+}
+
+func countDetectorFiles(costs ledger.Ledger, before engine.Work, checkout string) {
+	did := engine.Since(before)
+	costs.Counts(ledger.DetectorFilesJudged, int(did.Judged), checkout)
+	costs.Counts(ledger.DetectorFilesRemembered, int(did.Remembered), checkout)
 }
 
 func nothingCameOutOf(streams []*contract.Stream) bool {

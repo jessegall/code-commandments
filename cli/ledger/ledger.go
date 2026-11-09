@@ -21,6 +21,8 @@ var legend = &state.Legend{
 		{Name: JudgingsToldTheTreeIsComing, Meaning: "judgings told to ask again because a read of the tree was running"},
 		{Name: JudgingsDeclined, Meaning: "judgings the service declined, so the run read the files itself"},
 		{Name: JudgingsAnsweredSmaller, Meaning: "judgings answered by the rules that read one file only, because the tree could not carry them"},
+		{Name: DetectorFilesJudged, Meaning: "per detector, the files a served judging really judged"},
+		{Name: DetectorFilesRemembered, Meaning: "per detector, the files a served judging answered from what it remembered of their contents"},
 	},
 	List: "one event per line: the unix time in milliseconds, a tab, what happened, a tab, the checkout or project it was for",
 	Safe: "the counts start again from nothing; nothing reads them but tests and a person",
@@ -36,6 +38,8 @@ const (
 	JudgingsToldTheTreeIsComing = "judgings_told_the_tree_is_coming"
 	JudgingsDeclined            = "judgings_declined"
 	JudgingsAnsweredSmaller     = "judgings_answered_smaller"
+	DetectorFilesJudged         = "detector_files_judged"
+	DetectorFilesRemembered     = "detector_files_remembered"
 )
 
 const eventsKept = 500

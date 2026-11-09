@@ -70,7 +70,8 @@ func TestEveryCountTheServiceKeepsIsNamed(t *testing.T) {
 	}
 
 	for _, name := range []string{TreeReadsStarted, TreeReadsFinished, TreeReadsFailed, FilesReadIntoTrees,
-		JudgingsFromTheTree, JudgingsToldTheTreeIsComing, JudgingsDeclined, JudgingsAnsweredSmaller} {
+		JudgingsFromTheTree, JudgingsToldTheTreeIsComing, JudgingsDeclined, JudgingsAnsweredSmaller,
+		DetectorFilesJudged, DetectorFilesRemembered} {
 		if !named[name] {
 			t.Errorf("%s is counted but not named, so a story asking what a step cost never sees it", name)
 		}

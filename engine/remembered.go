@@ -62,7 +62,11 @@ func RememberingFrom(now func() time.Time, verdicts []Verdict) *Remembered {
 }
 
 func (r *Remembered) Find(codebase *Codebase, find func(*Codebase) []Match) []Match {
-	answered, asked := r.recalled(codebase.opened())
+	opened := codebase.opened()
+	answered, asked := r.recalled(opened)
+	CountedJudged(len(asked))
+	CountedRemembered(len(opened) - len(asked))
+
 	if len(asked) == 0 {
 		return answered
 	}

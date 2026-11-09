@@ -16,15 +16,19 @@ type Work struct {
 	Resolved int64
 	Files    int64
 	Parsed   int64
+
+	Judged     int64
+	Remembered int64
 }
 
-var nodes, checks, queries, analyses, parts, visited, resolved, files, parsed atomic.Int64
+var nodes, checks, queries, analyses, parts, visited, resolved, files, parsed, judged, remembered atomic.Int64
 
 func Counted() Work {
 	return Work{
 		Nodes: nodes.Load(), Checks: checks.Load(), Queries: queries.Load(),
 		Analyses: analyses.Load(), Parts: parts.Load(), Visited: visited.Load(),
 		Resolved: resolved.Load(), Files: files.Load(), Parsed: parsed.Load(),
+		Judged: judged.Load(), Remembered: remembered.Load(),
 	}
 }
 
@@ -37,6 +41,7 @@ func Since(before Work) Work {
 		Visited:  now.Visited - before.Visited,
 		Resolved: now.Resolved - before.Resolved, Files: now.Files - before.Files,
 		Parsed: now.Parsed - before.Parsed,
+		Judged: now.Judged - before.Judged, Remembered: now.Remembered - before.Remembered,
 	}
 }
 
@@ -58,6 +63,14 @@ func CountedResolve() {
 
 func CountedParsed(count int) {
 	parsed.Add(int64(count))
+}
+
+func CountedJudged(count int) {
+	judged.Add(int64(count))
+}
+
+func CountedRemembered(count int) {
+	remembered.Add(int64(count))
 }
 
 func CountedFile() {

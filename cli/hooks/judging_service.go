@@ -97,6 +97,7 @@ func judgedFor(request warm.Request, root string, progressed func(string)) warm.
 	declined := ""
 	overlay := 0
 	spent := judge.Spent{}
+	before := engine.Counted()
 
 	code, err := (judge.Command{
 		In:       request.In,
@@ -122,6 +123,7 @@ func judgedFor(request warm.Request, root string, progressed func(string)) warm.
 	}
 
 	costs.Counts(ledger.JudgingsFromTheTree, 1, request.In)
+	countDetectorFiles(costs, before, request.In)
 
 	if err != nil {
 		return warm.Answer{Out: out.String(), Err: errs.String() + err.Error() + "\n" + waited, Code: 1}

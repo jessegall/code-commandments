@@ -475,6 +475,7 @@ func TestAWorkersEditIsJudgedAgainstItsOwnAgentsTree(t *testing.T) {
 	}
 
 	before := ledger.Of(project).Count(ledger.JudgingsFromTheTree)
+	filesBefore := ledger.Of(project).Count(ledger.DetectorFilesJudged) + ledger.Of(project).Count(ledger.DetectorFilesRemembered)
 
 	_, _, whole := AgainstTheProgram(Marks(root), edited, allRules(t, root, settings), git.Everywhere(), worktree)
 	if !whole {
@@ -484,6 +485,10 @@ func TestAWorkersEditIsJudgedAgainstItsOwnAgentsTree(t *testing.T) {
 
 	if counted := ledger.Of(project).Count(ledger.JudgingsFromTheTree) - before; counted != 1 {
 		t.Errorf("the ledger counted %d judgings from the tree for one edit judged against it", counted)
+	}
+
+	if files := ledger.Of(project).Count(ledger.DetectorFilesJudged) + ledger.Of(project).Count(ledger.DetectorFilesRemembered); files <= filesBefore {
+		t.Error("a served judging added nothing to the files judged or remembered, so no story can see the cache work")
 	}
 }
 
