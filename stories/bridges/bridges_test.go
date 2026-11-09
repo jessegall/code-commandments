@@ -21,6 +21,24 @@ const (
 	notAWholeAnswer = "not a clean answer"
 )
 
+var csharpElseAfterReturn = story.CSharp("an else after a return", `namespace Shop;
+
+public class Orders
+{
+    public int Find(int id)
+    {
+        if (id > 0)
+        {
+            return id;
+        }
+        else
+        {
+            return 0;
+        }
+    }
+}
+`)
+
 func aKilledBridgeComesBackAndItsFilesNeverReadClean(t *testing.T, verb string, sample story.Sample, file string, other story.Sample, otherFile string) {
 	s := story.Begin(t)
 	s.GivenTheTreeIsHeldFor(s.TestCheckout())
@@ -35,7 +53,8 @@ func aKilledBridgeComesBackAndItsFilesNeverReadClean(t *testing.T, verb string, 
 
 	s.Says(judged, otherFile)
 	if !strings.Contains(judged.Text(), file) && !strings.Contains(judged.Text(), notAWholeAnswer) {
-		s.Fails(fmt.Sprintf("with its bridge killed, %s is neither judged nor said to be missing:\n%s", file, judged.Text()))
+		s.Fails(fmt.Sprintf("with its bridge killed, %s is neither judged nor said to be missing:\n%s\nthe hooks service wrote:\n%s",
+			file, judged.Text(), s.Asks("plugin", "service-log", "code-commandments", "hooks").Text()))
 	}
 
 	s.ABridgeOfComesBack(verb, bridge.Pid, bridgeComesBack)
@@ -70,6 +89,21 @@ func TestAProjectWithoutALanguageKeepsNoBridgeOfIt(t *testing.T) {
 	service.Wrote("no C# to judge")
 }
 
+func TestACSharpFileIsJudgedWithAHealthyBridge(t *testing.T) {
+	s := story.Begin(t)
+	s.GivenTheTreeIsHeldFor(s.TestCheckout())
+	written := s.Writes(csharpElseAfterReturn, "Healthy.cs")
+
+	s.Says(s.AsksIn(s.TestCheckout(), "sins", filepath.Dir(written)), "Healthy.cs")
+}
+
+func TestACSharpFileIsJudgedByAColdRead(t *testing.T) {
+	s := story.Begin(t)
+	project := s.ScratchProject("a sinful C# class", story.PlainFile{Path: "src/Orders.cs", Text: csharpElseAfterReturn.Text})
+
+	s.Says(project.Judges("src", "--no-checklist"), "Orders.cs")
+}
+
 func TestAKilledCSharpBridgeComesBack(t *testing.T) {
-	aKilledBridgeComesBackAndItsFilesNeverReadClean(t, "roslyn-serve", story.NullReturn, "Orders.cs", story.ElseAfterRaise, "refund.py")
+	aKilledBridgeComesBackAndItsFilesNeverReadClean(t, "roslyn-serve", csharpElseAfterReturn, "Orders.cs", story.ElseAfterRaise, "refund.py")
 }
