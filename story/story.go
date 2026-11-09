@@ -89,9 +89,10 @@ func (s *Story) GivenHandInsAreNotJudged() {
 }
 
 func journalStep(argv []string) Step {
-	named := min(2, len(argv))
+	return stepOfWords("asks the journal", min(2, len(argv)), argv)
+}
 
-	shape := "asks the journal"
+func stepOfWords(shape string, named int, argv []string) Step {
 	for _, word := range argv[:named] {
 		shape += " " + strings.ReplaceAll(word, "%", "%%")
 	}

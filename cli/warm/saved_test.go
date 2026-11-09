@@ -165,11 +165,13 @@ func TestARestartedServiceFindsAnUnchangedFileStandingAndAChangedOneMoved(t *tes
 }
 
 func TestATreeLastUsedMoreThanTwelveHoursAgoIsNotLoaded(t *testing.T) {
-	folder, roots, _ := savedAt(t, map[string]string{"a.py": "a = 1\n"})
+	recent, recentRoots, _ := savedAt(t, map[string]string{"a.py": "a = 1\n"})
 
-	if _, err := warm.LoadSaved(folder, "binary-1", roots, then.Add(warm.SavedLife-time.Minute)); err != nil {
+	if _, err := warm.LoadSaved(recent, "binary-1", recentRoots, then.Add(warm.SavedLife-time.Minute)); err != nil {
 		t.Fatalf("a tree used 11 hours 59 minutes ago was refused: %v", err)
 	}
+
+	folder, roots, _ := savedAt(t, map[string]string{"a.py": "a = 1\n"})
 
 	if _, err := warm.LoadSaved(folder, "binary-1", roots, then.Add(warm.SavedLife+time.Minute)); err == nil {
 		t.Error("a tree last used more than twelve hours ago was loaded")

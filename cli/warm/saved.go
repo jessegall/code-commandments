@@ -144,7 +144,6 @@ func readSavedHead(folder string) (savedDescription, error) {
 	return head, nil
 }
 
-
 func savedStreamPath(folder string, index int) string {
 	return filepath.Join(folder, fmt.Sprintf("stream-%d.ndjson.gz", index))
 }
