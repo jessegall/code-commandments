@@ -7,7 +7,7 @@ import (
 )
 
 func TestAWeighingMovedToAnotherFolderReportsThatFolder(t *testing.T) {
-	kept := weighing{folder: "/one", findings: []engine.Finding{
+	kept := weighing{Folder: "/one", Findings: []engine.Finding{
 		{File: "/one/a.cs", Location: "/one/a.cs:3", Twins: []string{"/one/b.cs:9"}},
 	}}
 
@@ -22,13 +22,13 @@ func TestAWeighingMovedToAnotherFolderReportsThatFolder(t *testing.T) {
 		t.Fatalf("the finding still names the old folder: %+v", found)
 	}
 
-	if kept.findings[0].Twins[0] != "/one/b.cs:9" {
-		t.Fatalf("moving the findings changed what is kept: %+v", kept.findings[0])
+	if kept.Findings[0].Twins[0] != "/one/b.cs:9" {
+		t.Fatalf("moving the findings changed what is kept: %+v", kept.Findings[0])
 	}
 }
 
 func TestAWeighingOutsideItsFolderIsNotMoved(t *testing.T) {
-	kept := weighing{folder: "/one", findings: []engine.Finding{{File: "/elsewhere/a.cs"}}}
+	kept := weighing{Folder: "/one", Findings: []engine.Finding{{File: "/elsewhere/a.cs"}}}
 
 	if _, ok := kept.movedTo("/two"); ok {
 		t.Fatal("a finding outside its folder was answered from another folder")
@@ -36,7 +36,7 @@ func TestAWeighingOutsideItsFolderIsNotMoved(t *testing.T) {
 }
 
 func TestAWeighingInItsOwnFolderIsAnsweredAsItIs(t *testing.T) {
-	kept := weighing{folder: "/one", findings: []engine.Finding{{File: "/elsewhere/a.cs"}}}
+	kept := weighing{Folder: "/one", Findings: []engine.Finding{{File: "/elsewhere/a.cs"}}}
 
 	moved, ok := kept.movedTo("/one")
 
