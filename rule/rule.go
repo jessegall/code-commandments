@@ -339,6 +339,8 @@ type Rule struct {
 	fix     *Fix
 	judges  []string
 	tags    []string
+	written []byte
+	layers  string
 }
 
 // engines are the engines a rule's own file names, written as one name or as a list of them.
@@ -463,7 +465,7 @@ func Parse(name string, text []byte, skills Skills) (Rule, error) {
 		Description: read.Sin.Description,
 		Rule:        read.Sin.Rule,
 		Suggestion:  read.Sin.Suggestion,
-	}}, read.Find.compiled(), read.Fix, folders(read.Judges), read.Tags}, nil
+	}}, read.Find.compiled(), read.Fix, folders(read.Judges), read.Tags, text, ""}, nil
 }
 
 func folders(named []string) []string {
@@ -484,6 +486,7 @@ func (r Rule) WithLayers(declared map[string][]string) Rule {
 	}
 
 	stack := engine.Layers(declared, spelling.separator, spelling.caseSensitive)
+	r.layers = fmt.Sprint(declared)
 
 	return r.withLayers(&stack)
 }

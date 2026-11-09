@@ -83,6 +83,15 @@ func (p *Progress) Plan(steps int) {
 	p.total, p.active = max(1, p.total+max(0, steps)), true
 }
 
+func (p *Progress) Restart(steps int) {
+	if !p.enabled {
+		return
+	}
+
+	p.total, p.current, p.planned, p.active = max(1, steps), 0, steps > 0, true
+	p.lastFilled, p.lastShare = -1, -1
+}
+
 func (p *Progress) Start() {
 	p.reach(p.current, "judging", "")
 }

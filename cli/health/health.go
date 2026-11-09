@@ -56,6 +56,8 @@ func Serve(service string) func() {
 }
 
 func ServeOn(path, service string) (func(), string) {
+	watchTheParent()
+
 	if path == "" {
 		return func() {}, ""
 	}

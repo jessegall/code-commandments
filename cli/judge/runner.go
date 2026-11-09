@@ -99,7 +99,7 @@ func try(task Task, warn io.Writer) (result attempt) {
 		result = attempt{skipped: name}
 	}()
 
-	return attempt{findings: findings(task.Detector, task.Detector.Find(task.Codebase))}
+	return attempt{findings: findings(task.Detector, detectors.FindRemembering(task.Detector, task.Codebase))}
 }
 
 func findings(detector detectors.Detector, matches []engine.Match) []engine.Finding {

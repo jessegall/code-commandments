@@ -294,7 +294,7 @@ func (c Command) judge(options options, selected []detectors.Detector, judged co
 	whole, byProject := wholeAndByProject(selected)
 
 	read := sources.Only(slices.DeleteFunc(slices.Clone(languages), func(language source.Language) bool { return language == source.CSharp })...)
-	progress.Plan(read.Bridged() + len(whole))
+	progress.Plan(read.Bridged())
 	codebase, err := c.read(read.Reporting(progress.Phase("reading")))
 	parseSeconds := time.Since(parsing).Seconds()
 	var incomplete scan.Incomplete
@@ -306,6 +306,8 @@ func (c Command) judge(options options, selected []detectors.Detector, judged co
 
 		return 0, err
 	}
+
+	progress.Restart(len(whole))
 
 	tasks := make([]Task, len(whole))
 

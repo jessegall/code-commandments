@@ -431,7 +431,7 @@ func safely(rule detectors.Detector, codebase *engine.Codebase) (matches []engin
 		}
 	}()
 
-	return rule.Find(codebase)
+	return detectors.FindRemembering(rule, codebase)
 }
 
 func owed(marks []SinMark) []string {

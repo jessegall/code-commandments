@@ -1,7 +1,7 @@
 ---
 plugin: code-commandments
 name: commandments
-description: "The index of this project's architectural disciplines — every code-commandments skill, when each one fires, and the commands that find and fix sins (`judge`, `info`, `repent`, `report`, `make`). Load this when you start work in this codebase, when you need to know WHICH discipline covers a subject you are about to write, when a `judge` finding names a rule you do not recognise, or when a context compaction may have dropped the disciplines you loaded earlier."
+description: "The index of this project's architectural disciplines — every code-commandments skill and when each one fires. Load this when you start work in this codebase, when you need to know WHICH discipline covers a subject you are about to write, or when a context compaction may have dropped the disciplines you loaded earlier."
 ---
 
 # Code Commandments — the disciplines in force here
@@ -32,56 +32,6 @@ This is the rule the detectors exist to serve. Honour it on EVERY fix:
 - Ask "where does this value/shape come from?" and walk back until you reach the
   birthplace. Fix is at the birthplace. If the honest fix touches many call sites,
   touch them — that breadth IS the bug surfacing, not a reason to wrap it.
-- If a finding is a genuine false positive, say so and why — and **report it** so
-  it gets fixed upstream instead of silently ignored, ALWAYS referencing the code:
-  `bin/commandments report --detector=NAME --reason="…" --ref=PATH:LINE`
-  (repeat `--ref` for EVERY file involved — a bug spanning files references each).
-  The issue is public and names only each file and its lines; add `--share-code`
-  (the referenced lines alone, secrets masked) ONLY when the project's owner has
-  agreed its code may be published. Describe the shape in `--reason` instead.
-  Design-smell detectors REQUIRE a `--best-design="…"`: the cleanest design you can
-  conceive for this code. It is the litmus — a report is valid ONLY if the flagged
-  code already IS that design; if you can name anything cleaner, that design is the
-  owed fix, so implement it and do not file. The reason may not hedge; a "correct,
-  but…" is rejected. Never rationalise a real finding as "pre-existing baseline."
-- **A report is NOT a deferral.** A detector-report claims ONE thing: the flagged
-  code is CORRECT under the architecture and the detector is wrong. If the finding
-  is right and an honest fix exists, you MUST implement it — however far it
-  cascades: many call sites, a data migration, a refactor that ripples. That
-  breadth IS the point; it is the debt surfacing, not a reason to file. The moment
-  your report would contain "the honest fix is real, but…" — stop: everything
-  after "but" is scope you own. Cost, timing, "needs its own change", or "risks
-  breaking existing data" are never grounds for a report; they are the work.
-
-**You are ENCOURAGED to make the tool better — not just when a finding is clearly
-wrong.** Surface every improvement idea: a rule that's missing or should catch more,
-a false positive, OR a `repent` auto-fix that did the wrong thing or left a rough
-edge. Two channels, and using them is expected, not exceptional:
-
-- `bin/commandments report --reason="…" --ref=PATH:LINE [--ref=…]` — a bug or
-  false positive (a wrong finding, or a broken/incorrect `repent` result). A broken
-  auto-fix is itself a bug: report it, referencing both the source and the bad output.
-- `bin/commandments feature-request --title="…" --reason="…"` — a new or
-  changed rule.
-
-Reporting false positives, flagging bad auto-fixes, and requesting rules is how the
-disciplines get sharper — do it whenever something is wrong or could be better, don't
-just work around it.
-
-**Frozen files — a file that is deliberately immutable.** A few files must not
-change even though they carry sins: a frozen graph migration whose body mirrors
-its siblings on purpose, a snapshot committed for the record, generated code
-checked into the tree. Mark such a file frozen:
-`bin/commandments freeze <path>` (or add `#[Frozen]` / an `@frozen`
-docblock tag by hand). A frozen file is still **scanned** — the call graph,
-provenance and type resolution read it, so cross-file findings elsewhere stay
-correct — but it is never a **target**: it is never flagged, and a repenter
-never rewrites it (a cross-file fix whose edits would touch a frozen file is
-dropped whole, never half-applied). Lift it with
-`bin/commandments unfreeze <path>`. **Freeze only what is genuinely
-immutable — never to silence a sin you could fix.** A real finding you disagree
-with is a `report`; a rule you want off is `disable`; freezing is for files that
-by their nature cannot move.
 
 When in doubt, load `commandments-php-fix-at-the-source` and re-read it. It is the parent move
 behind every other skill.
@@ -94,7 +44,7 @@ rule above. Every finding on code you come across is yours to resolve.
 reach for it — the syntax you are about to write, the decision you are about to make. Load
 one when its subject comes up, and load it again rather than working from memory: a
 compaction drops instructions silently while leaving you the impression they are still
-there. A `judge` finding names the skill that fixes it, so you are never guessing.
+there. A finding names the skill that fixes it, so you are never guessing.
 
 Load **`commandments-php-fix-at-the-source`** before your first edit whatever else you
 do — every other discipline defers to it. And **`commandments`** is this whole list as a
@@ -173,67 +123,3 @@ most:**
 - **`commandments-csharp-pass-the-object`** — demand the resolved object you need, not an id plus its container — the caller resolves once and passes the object (and owns the not-found failure).
 - **`commandments-csharp-role-vocabulary`** — a keyed store / membership set / first-match dispatcher: name it `*Registry`/`*Set`/`*Resolver` and honour the contract — a registry `Get` throws on a miss.
 - **`commandments-comments-only-on-types`** — Only a type carries a comment here, saying what it is for; read before writing any comment in this project. _(this project's own — `.commandments/custom/`)_
-
-**Finding and fixing sins — the checklist workflow.** Run
-`journal sins --changes` ONCE — and **pass any path** to scope the
-scan: judge runs EVERY engine over whatever you point it at, so a path holding
-frontend sources (`judge resources/js`) is judged as the frontend
-— **Vue components and plain TypeScript alike** — a path holding Python is judged as
-Python, one holding C# as C#, and any subdirectory of your
-own tree scopes to that subtree. (Also `--skill=NAME` to scope to one group; `--branch`
-for files new/changed vs `main`; `--changes` for uncommitted changes.) A full scan
-is slow, so it writes the findings to a checklist — your session's `sins/sins.md`,
-under `.commandments/sessions/<id>/`, or under the journal plugin's data folder
-when the agent journal runs the hooks (the run prints the exact path) — and that
-file, not repeated scans, is how you work:
-
-1. Open the checklist judge wrote. Each line is one sin: `file:line`, the scope, and
-   the detector, grouped under the skill that teaches the fix.
-2. Go top to bottom, ONE line at a time: read that section's skill, fix the sin at
-   the source, then **delete that line from the file.** Do not re-run judge, re-scan,
-   or re-verify between fixes — the open checklist is your only source of truth.
-3. Work **wave by wave.** When the file is EMPTY, run judge again. If your fixes
-   rippled into other files it writes a fresh worklist — a new wave; work it the same
-   way. Repeat, judging ONLY between waves, until a run is clean and deletes the file.
-
-**Don't know what a finding MEANS? Ask.** A checklist line names its detector and
-nothing else, so when you do not recognise a rule — or are about to argue with one —
-run `bin/commandments info <sin>` before you touch the code. It prints what
-the rule flags, WHY it is a sin in the skill's own words, how it is fixed, a worked
-example, and the exact commands that act on it (fix it, find it, turn it off, report
-it). The name is matched leniently, so the detector name straight off the checklist
-works: `info ArrayBagDetector`, `info array-bag`, `info ArrayBag`. Add `--full` for
-the skill's whole principle. Guessing at a rule you have not read is how a finding
-gets "fixed" by silencing it.
-
-**Auto-fixable sins.** Some sins have a scribe that fixes them. The report
-advertises the command — typically `bin/commandments repent --repent=latest`
-(optionally `--sin=NAME` to fix just one). `--repent=latest` scopes repent to the
-last judge run's checklist, so it fixes exactly what was reported; review the diff
-with `--dry-run` first.
-
-**Write commandments of your OWN.** The shipped rules are not the ceiling. When
-this project has a discipline of its own — a convention you keep restating in
-review, a mistake that keeps coming back, anything the shipped set doesn't
-catch — it can become a rule that judges every file from then on. Scaffold it:
-
-`bin/commandments make <Name>` (add `--engine=frontend` for a rule over
-your frontend sources — a Vue component or a TypeScript module)
-
-That writes the rule a commandment is — `<Name>Detector.json`, naming the sin
-and the query that finds it — into `.commandments/custom/`, with the skill that
-teaches the fix (`skills/<slug>/SKILL.md`) when no existing one does, turns the
-rule on in this project's config, and prints the rest of the process. The
-folder is committed like any other source: these are the project's rules.
-**Load the `commandments-writing-detectors`
-skill before you write one** — it lists the engine predicates that already
-exist (hand-rolling one that does is the usual first mistake) and teaches the
-probe-then-calibrate discipline that proves a detector fires on what you meant.
-Reach for this whenever the user asks for a new rule, check, or detector.
-
-**Scaffoldable sins.** A few sins are fixed by reaching for a generic helper the
-project may not have yet (e.g. a no-op invokable for a nullable callback). For
-those the report advertises `bin/commandments scaffold --sin=NAME`, which
-generates the helper into your source root with its namespace set. Scaffold the
-construct, then write the fix that uses it (`scaffold` creates the helper; `repent`
-fixes call sites).

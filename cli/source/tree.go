@@ -11,13 +11,13 @@ import (
 )
 
 var (
-	skippedFolders = []string{"vendor", "node_modules", "site-packages", "__pycache__", "testdata"}
+	skippedFolders = []string{"vendor", "dist", "node_modules", "site-packages", "__pycache__", "testdata"}
 
 	skippedSuffixes = []string{".egg-info"}
 
 	buildOutputs = map[string][]string{
 		"*.csproj":     {"bin", "obj"},
-		"package.json": {"dist", "build"},
+		"package.json": {"build"},
 		"artisan":      {"public"},
 	}
 )
@@ -56,7 +56,7 @@ func walk(root string, excluded Excluded, wanted func(string) bool) []string {
 func descend(dir string, excluded Excluded, wanted func(string) bool, files []string) []string {
 	for _, name := range listing.Of(dir) {
 		path := dir + "/" + name
-		info, err := os.Stat(path)
+		info, err := os.Lstat(path)
 
 		switch {
 		case err != nil:
@@ -95,6 +95,10 @@ func Repositories(path string, excluded Excluded) []string {
 }
 
 func Reaches(root, file string, excluded Excluded) bool {
+	if !strings.HasPrefix(filepath.ToSlash(file), filepath.ToSlash(root)+"/") {
+		return false
+	}
+
 	for directory := filepath.Dir(file); strings.HasPrefix(directory, root+"/"); directory = filepath.Dir(directory) {
 		if !descends(directory, excluded) {
 			return false

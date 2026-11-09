@@ -2,6 +2,7 @@
 package git
 
 import (
+	"io/fs"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -401,6 +402,10 @@ func pathSet(root, lines string) map[string]bool {
 		relative = trim(relative)
 
 		if relative == "" || !source.Judges(relative) {
+			continue
+		}
+
+		if info, err := os.Lstat(filepath.Join(root, relative)); err != nil || info.Mode()&fs.ModeSymlink != 0 {
 			continue
 		}
 

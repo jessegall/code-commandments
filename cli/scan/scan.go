@@ -179,6 +179,7 @@ func (s Sources) Load() (*engine.Codebase, error) {
 		}
 
 		if !read.InOwnOrder {
+			stayedWithin(stream, files, read.Label)
 			bridge.InWalkOrder(stream, s.Files(read.Languages...))
 		}
 		streams = append(streams, stream)
@@ -195,6 +196,12 @@ func (s Sources) Load() (*engine.Codebase, error) {
 	}
 
 	return codebase, nil
+}
+
+func stayedWithin(stream *contract.Stream, given int, label string) {
+	if len(stream.Files) > given {
+		panic(fmt.Sprintf("the %s bridge answered with %d files and was given %d: the scan left the folders it was given", label, len(stream.Files), given))
+	}
 }
 
 func (s Sources) bridge() map[int]bridged {

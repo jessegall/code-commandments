@@ -63,8 +63,12 @@ func (e Excluded) Covers(given string) bool {
 	}
 
 	for _, judged := range e.judged {
-		if resolved == judged || strings.HasPrefix(resolved, judged+"/") {
+		if resolved == judged {
 			return false
+		}
+
+		if strings.HasPrefix(resolved, judged+"/") {
+			return e.matchedByGlob(resolved, judged)
 		}
 	}
 
@@ -74,17 +78,17 @@ func (e Excluded) Covers(given string) bool {
 		}
 	}
 
-	return e.matchedByGlob(resolved)
+	return e.matchedByGlob(resolved, "")
 }
 
-func (e Excluded) matchedByGlob(resolved string) bool {
+func (e Excluded) matchedByGlob(resolved, stoppingAt string) bool {
 	candidate, under := strings.CutPrefix(resolved, e.root+"/")
 
 	if len(e.patterns) == 0 || !under {
 		return false
 	}
 
-	for candidate != "" && candidate != "." && candidate != "/" {
+	for candidate != "" && candidate != "." && candidate != "/" && e.root+"/"+candidate != stoppingAt {
 		for _, pattern := range e.patterns {
 			if fnmatch(pattern, candidate, !strings.Contains(pattern, "**")) {
 				return true

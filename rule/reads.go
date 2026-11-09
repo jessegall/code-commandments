@@ -74,6 +74,34 @@ func (s Step) readsAcrossFiles() bool {
 	return slices.ContainsFunc(s.nested(), func(nested *Step) bool { return nested.readsAcrossFiles() })
 }
 
+func (r Rule) Fingerprint() string {
+	parts := []string{string(r.written), r.layers}
+
+	if r.find.inner != nil {
+		parts = append(parts, r.find.inner.Fingerprint())
+	}
+
+	for _, step := range slices.Concat(r.find.Where, r.find.Reject) {
+		parts = append(parts, step.composedOf()...)
+	}
+
+	return strings.Join(parts, "\x00")
+}
+
+func (s Step) composedOf() []string {
+	var parts []string
+
+	if s.named != nil {
+		parts = append(parts, s.named.Fingerprint())
+	}
+
+	for _, nested := range s.nested() {
+		parts = append(parts, nested.composedOf()...)
+	}
+
+	return parts
+}
+
 func (s Step) written() []string {
 	var keys []string
 

@@ -102,6 +102,9 @@ type File struct {
 	own      map[int]contract.Comment
 	attached sync.Once
 	byNode   map[int][]contract.Comment
+	printing sync.Once
+	contents uint64
+	printed  bool
 }
 
 func Load(streams ...*contract.Stream) *Codebase {
