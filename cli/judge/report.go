@@ -346,6 +346,10 @@ func (r Report) relative(location string) string {
 		return relative
 	}
 
+	if r.mirrors == "" {
+		return location
+	}
+
 	if relative, under := strings.CutPrefix(location, r.mirrors+"/"); under {
 		return relative
 	}

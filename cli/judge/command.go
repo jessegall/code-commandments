@@ -248,6 +248,10 @@ func (c Command) Run(in *cli.Input, console cli.Console) (int, error) {
 		targets = targets.NarrowedTo(file)
 	}
 
+	if options.pathGiven {
+		targets = targets.And(givenFolder(options.path))
+	}
+
 	return c.judge(options, selected, judged, targets, space, console)
 }
 
@@ -713,6 +717,15 @@ func wholeAndByProject(rules []detectors.Detector) (whole, byProject []detectors
 	}
 
 	return whole, byProject
+}
+
+func givenFolder(path string) scope.Within {
+	project := mirrored(path)
+	if project == "" {
+		return scope.Within{Folders: []string{path}}
+	}
+
+	return scope.Within{Folders: []string{path, warm.Counterpart(git.Root(path), project, path)}}
 }
 
 func sourceRoots(options options, judged config.Config) ([]string, error) {

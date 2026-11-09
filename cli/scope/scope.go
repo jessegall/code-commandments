@@ -357,6 +357,27 @@ func (s Scope) Files() map[string]bool {
 	return s.files
 }
 
+// Within is the folder a run was given, under each name it stands by: a file outside them is left out, whichever tree answered the run.
+type Within struct {
+	Folders []string
+}
+
+func (w Within) Includes(file string) bool {
+	real, err := resolve(file)
+	if err != nil {
+		real = file
+	}
+
+	return slices.ContainsFunc(w.Folders, func(given string) bool {
+		folder, err := resolve(given)
+		if err != nil {
+			folder = given
+		}
+
+		return real == folder || strings.HasPrefix(real, strings.TrimRight(folder, "/")+"/")
+	})
+}
+
 func always(root string, excluded []string) []FileScope {
 	restrictions := []FileScope{&Frozen{}}
 
