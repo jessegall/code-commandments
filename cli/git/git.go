@@ -211,10 +211,33 @@ func field(entry string, count, at int) string {
 }
 
 func MergeBase(root, base string) string {
+	if incoming := beingMergedIn(root); incoming != "" {
+		return incoming
+	}
+
 	project := ProjectRoot(root)
 
 	return recalling("merge-base\x00"+root+"\x00"+base, func() string { return headState(root) + "\x00" + headState(project) },
 		func() string { return ask(root, "merge-base", base, "HEAD") })
+}
+
+// beingMergedIn names the commit a merge still in progress is bringing in: until the merge commits, HEAD and the merge base stand where they were, and everything the merge brought would count as this checkout's own work.
+func beingMergedIn(root string) string {
+	own := filepath.Join(root, ".git")
+	if gitdir := gitDirOf(root); gitdir != "" {
+		own = gitdir
+	}
+
+	raw, err := os.ReadFile(filepath.Join(own, "MERGE_HEAD"))
+	if err != nil {
+		return ""
+	}
+
+	if fields := strings.Fields(string(raw)); len(fields) > 0 {
+		return fields[0]
+	}
+
+	return ""
 }
 
 func ChangedVsBranch(root, base string) (changed map[string]bool, ok bool) {
