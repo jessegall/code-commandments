@@ -13,7 +13,21 @@ type Fingerprinted interface {
 	Fingerprint() string
 }
 
-var memories sync.Map
+// Memories is what every detector remembers, each under its identity and any fingerprint of its definition.
+type Memories struct {
+	now  func() time.Time
+	held sync.Map
+}
+
+var memories = NewMemories(time.Now)
+
+func NewMemories(now func() time.Time) *Memories {
+	return &Memories{now: now}
+}
+
+func EveryMemory() *Memories {
+	return memories
+}
 
 func FindRemembering(detector Detector, codebase *engine.Codebase) []engine.Match {
 	if !remembers(detector) {
@@ -47,11 +61,45 @@ func memoryOf(detector Detector) *engine.Remembered {
 		identity += "\x00" + fingerprinted.Fingerprint()
 	}
 
-	if memory, known := memories.Load(identity); known {
+	return memories.Of(identity)
+}
+
+func (m *Memories) Of(identity string) *engine.Remembered {
+	if memory, known := m.held.Load(identity); known {
 		return memory.(*engine.Remembered)
 	}
 
-	memory, _ := memories.LoadOrStore(identity, engine.Remembering(time.Now))
+	memory, _ := m.held.LoadOrStore(identity, engine.Remembering(m.now))
 
 	return memory.(*engine.Remembered)
+}
+
+func (m *Memories) Restore(verdicts map[string][]engine.Verdict) {
+	for identity, kept := range verdicts {
+		m.held.Store(identity, engine.RememberingFrom(m.now, kept))
+	}
+}
+
+func (m *Memories) Changed() bool {
+	changed := false
+
+	m.held.Range(func(_, memory any) bool {
+		changed = memory.(*engine.Remembered).Changed() || changed
+
+		return true
+	})
+
+	return changed
+}
+
+func (m *Memories) Verdicts() map[string][]engine.Verdict {
+	verdicts := map[string][]engine.Verdict{}
+
+	m.held.Range(func(identity, memory any) bool {
+		verdicts[identity.(string)] = memory.(*engine.Remembered).Verdicts()
+
+		return true
+	})
+
+	return verdicts
 }
