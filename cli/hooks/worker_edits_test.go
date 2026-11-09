@@ -29,7 +29,7 @@ func TestAnEditIsKeptForTheAgentThatMadeItByItsPathFromItsOwnRoot(t *testing.T) 
 	}
 }
 
-func handInWithAnEditAndAMergedFile(t *testing.T) (merging, string) {
+func handInWithAnEditAndAMergedFile(t *testing.T, named ...string) (merging, string) {
 	t.Helper()
 
 	root, data := workerProject(t)
@@ -51,7 +51,7 @@ func handInWithAnEditAndAMergedFile(t *testing.T) (merging, string) {
 
 	return merging{
 		worker: "worker 730", editor: 730, worktree: worktree, base: "main",
-		files: []string{"src/mine.py", "src/merged_in.py"}, window: DeclaredWindow,
+		files: named, window: DeclaredWindow,
 	}, data
 }
 
@@ -68,6 +68,19 @@ func TestAHandInAnswersOnlyForTheFilesItsOwnEditsNamed(t *testing.T) {
 	}
 	if said := WorkerEditsIn(data).Of(730); len(said) != 1 {
 		t.Errorf("a refused hand-in lost the worker's edits: %v", said)
+	}
+}
+
+func TestAHandInJudgesTheFilesItNamesBeforeTheEditsItTracked(t *testing.T) {
+	work, _ := handInWithAnEditAndAMergedFile(t, "src/merged_in.py")
+
+	found := work.sinsWithin()
+
+	if found.got != gotWhole {
+		t.Fatalf("the hand-in was not answered from the held tree: %s", found.reason())
+	}
+	if len(found.marks) != 1 || filepath.Base(found.marks[0].Match.File()) != "merged_in.py" {
+		t.Errorf("the event named only merged_in.py, yet the hand-in reports %v", found.marks)
 	}
 }
 
