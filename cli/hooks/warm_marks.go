@@ -170,7 +170,7 @@ func AgainstTheProgramNarrowed(marking Marking, files []string, rulesFor func(st
 		}
 
 		if len(toRead) > 0 {
-			rebuilt, err := scan.Walk(toRead, source.Excluded{}).Load()
+			rebuilt, err := loadCounted(held.project, scan.Walk(toRead, source.Excluded{}))
 			if err != nil || rebuilt == nil {
 				return nil, time.Since(reading), parseFailed
 			}
@@ -290,7 +290,7 @@ func fill(over *warm.Overlay, base *warm.Base, held branchRoot, files ...string)
 
 	taken := warm.Taken(reading)
 
-	rebuilt, err := scan.Walk(reading, source.Excluded{}).Load()
+	rebuilt, err := loadCounted(held.project, scan.Walk(reading, source.Excluded{}))
 	if err != nil || rebuilt == nil {
 		over.CouldNotFill(string(fillingFailed))
 
@@ -372,7 +372,7 @@ func taken(base *warm.Base, held branchRoot, files []string) (*warm.Base, time.D
 
 	streams := []*contract.Stream(nil)
 	if len(reading_) > 0 {
-		rebuilt, err := scan.Walk(reading_, source.Excluded{}).Load()
+		rebuilt, err := loadCounted(held.project, scan.Walk(reading_, source.Excluded{}))
 		if err != nil || rebuilt == nil {
 			return nil, time.Since(reading)
 		}
@@ -540,7 +540,7 @@ func Warming(root string, project config.Config) {
 
 		taken := warm.Taken(files)
 
-		codebase, err := sources.Load()
+		codebase, err := loadCounted(named.project, sources)
 		if err != nil || codebase == nil {
 			costs.Counts(ledger.TreeReadsFailed, 1, named.project)
 			lastRead.Store(named.key(), fmt.Sprintf("the last read of it failed after %v: %v",
