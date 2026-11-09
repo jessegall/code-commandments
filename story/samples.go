@@ -110,6 +110,14 @@ def six(a):
 
 	BrokenSyntax = Python("a file that does not parse", "def broken(:\n    return\n")
 
+	BrokenTypeScript = Sample{Under: "bridge/mypy", Label: "a typescript file that does not parse", Text: "export function broken(: void {\n"}
+
+	BrokenVue = Sample{Under: "bridge/mypy", Label: "a vue component that does not parse", Text: "<template>\n  <p>{{ </template>\n\n<script setup lang=\"ts\">\nconst broken = (\n</script>\n"}
+
+	BrokenPHP = PHP("a php file that does not parse", "<?php\n\nfinal class Broken\n{\n    public function (\n}\n")
+
+	BrokenCSharp = CSharp("a c# file that does not parse", "namespace Shop;\n\npublic class Broken\n{\n    public void (\n}\n")
+
 	GeneratedFile = Python("a generated file", "# @code-commandments-generated\n"+`def refund(order, today) -> int:
     if (today - order.delivered).days > 30:
         raise ValueError(order.number)
