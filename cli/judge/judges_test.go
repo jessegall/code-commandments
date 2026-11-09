@@ -39,6 +39,23 @@ func TestOnlyTheRuleThatJudgesAnExcludedFolderIsReportedThere(t *testing.T) {
 	}
 }
 
+func TestAShippedRuleNamedWithItsEngineReportsInTheFolderItJudges(t *testing.T) {
+	root, judged, targets := excludingTests(t, `{
+        "paths": ["src"],
+        "exclude": ["tests"],
+        "configure": {"python/RedundantElseDetector": [{"judges": ["tests"]}]}
+    }`)
+
+	kept := keep([]engine.Finding{
+		{Detector: "RedundantElseDetector", Engine: "python", File: filepath.Join(root, "tests/cart_test.php"), Line: 4},
+		{Detector: "RedundantElseDetector", Engine: "go", File: filepath.Join(root, "tests/cart_test.php"), Line: 9},
+	}, nil, targets, judged)
+
+	if len(kept) != 1 || kept[0].Engine != "python" {
+		t.Errorf("the findings kept are %v, want only the python rule's", namesOf(kept))
+	}
+}
+
 func TestAnExcludedFolderNobodyJudgesReportsNothing(t *testing.T) {
 	root, judged, targets := excludingTests(t, `{"paths": ["src"], "exclude": ["tests"]}`)
 

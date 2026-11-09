@@ -64,7 +64,7 @@ func descend(dir string, excluded Excluded, wanted func(string) bool, files []st
 			if descends(path, excluded) {
 				files = descend(path, excluded, wanted, files)
 			}
-		case info.Mode().IsRegular() && wanted(path):
+		case info.Mode().IsRegular() && wanted(path) && !excluded.Covers(path):
 			files = append(files, path)
 		}
 	}
@@ -95,7 +95,7 @@ func Repositories(path string, excluded Excluded) []string {
 }
 
 func Reaches(root, file string, excluded Excluded) bool {
-	if !strings.HasPrefix(filepath.ToSlash(file), filepath.ToSlash(root)+"/") {
+	if !strings.HasPrefix(filepath.ToSlash(file), filepath.ToSlash(root)+"/") || excluded.Covers(file) {
 		return false
 	}
 

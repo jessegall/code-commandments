@@ -70,6 +70,10 @@ func (j Journal) WritesMany(path, text string, many int) (Ran, error) {
 	return j.ask(request{Kind: "write", Path: path, Stdin: text, Many: many})
 }
 
+func (j Journal) Links(path, target string) (Ran, error) {
+	return j.ask(request{Kind: "link", Path: path, Stdin: target})
+}
+
 func (j Journal) Rebases(worktree string) (Ran, error) {
 	return j.ask(request{Kind: "worktree", Action: "rebase", Name: worktree})
 }

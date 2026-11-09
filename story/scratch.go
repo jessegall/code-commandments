@@ -42,11 +42,36 @@ func (s *Story) WritesIn(checkout string, sample Sample, file string) string {
 
 	path := s.writesQuietly(checkout, sample, file)
 
+	s.looksAt(checkout)
+
+	return path
+}
+
+func (s *Story) Links(sample Sample, file, target string) string {
+	s.t.Helper()
+
+	s.steps = append(s.steps, StepOf("links %s to %s", s.own(file), target))
+
+	folder := s.Scratch(sample.Under)
+	path := filepath.Join(folder, file)
+
+	s.removesAtTheEnd(folder)
+
+	if ran, err := s.journal.Links(path, target); err != nil || ran.Code != 0 {
+		s.Fails("the link " + path + " could not be made: " + failure(ran, err))
+	}
+
+	s.looksAt(s.TestCheckout())
+
+	return path
+}
+
+func (s *Story) looksAt(checkout string) {
+	s.t.Helper()
+
 	if ran, err := s.journal.LooksAt(checkout); !s.rehearsal && (err != nil || ran.Code != 0) {
 		s.Fails("the journal could not look at " + checkout + ": " + failure(ran, err))
 	}
-
-	return path
 }
 
 func (s *Story) writesQuietly(checkout string, sample Sample, file string) string {

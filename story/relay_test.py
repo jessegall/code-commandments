@@ -337,6 +337,15 @@ class RelayTest(unittest.TestCase):
         os.makedirs(checkout, exist_ok=True)
         return os.path.join(checkout, *parts)
 
+    def test_a_link_stays_inside_the_scratch_folder(self) -> None:
+        folder = self.scratch("bridge", "mypy", "story_scratch_link")
+        link = os.path.join(folder, "start/other")
+
+        self.assertEqual(self.ask({"kind": "link", "path": link, "stdin": ".."})["code"], 0)
+        self.assertEqual(os.readlink(link), "..")
+        self.assertNotEqual(self.ask({"kind": "link", "path": os.path.join(folder, "out"), "stdin": "../../.."})["code"], 0)
+        self.assertFalse(os.path.lexists(os.path.join(folder, "out")))
+
     def test_a_file_is_written_and_removed_inside_a_scratch_folder(self) -> None:
         path = self.scratch("bridge", "mypy", "story_scratch_a", "order.py")
         self.assertEqual(self.ask({"kind": "write", "path": path, "stdin": "x = 1\n"})["code"], 0)

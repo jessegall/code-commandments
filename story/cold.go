@@ -21,10 +21,11 @@ type PlainProject struct {
 	folder string
 }
 
-// PlainFile is one file a plain project holds, at its path inside the project.
+// PlainFile is one file a plain project holds, at its path inside the project, or a link to what Link names.
 type PlainFile struct {
 	Path string
 	Text string
+	Link string
 }
 
 func buildsTheBinary() (string, error) {
@@ -131,9 +132,17 @@ func (p *PlainProject) holds(file PlainFile) {
 		p.story.Fails(err.Error())
 	}
 
-	if err := os.WriteFile(path, []byte(file.Text), 0o644); err != nil {
+	if err := placed(path, file); err != nil {
 		p.story.Fails(err.Error())
 	}
+}
+
+func placed(path string, file PlainFile) error {
+	if file.Link != "" {
+		return os.Symlink(file.Link, path)
+	}
+
+	return os.WriteFile(path, []byte(file.Text), 0o644)
 }
 
 func (p *PlainProject) git(args ...string) {

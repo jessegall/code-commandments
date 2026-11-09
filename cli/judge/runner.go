@@ -104,6 +104,7 @@ func try(task Task, warn io.Writer) (result attempt) {
 
 func findings(detector detectors.Detector, matches []engine.Match) []engine.Finding {
 	sin := detector.Sin().Definition()
+	language, _ := detectors.EngineOf(detector)
 	groups := groupsOf(detector, matches)
 	found := make([]engine.Finding, 0, len(matches))
 
@@ -131,6 +132,7 @@ func findings(detector detectors.Detector, matches []engine.Match) []engine.Find
 		found = append(found, engine.Finding{
 			Group:    group,
 			Detector: catalog.Name(detector),
+			Engine:   string(language),
 			Skill:    sin.Slug(),
 			Sin:      sin.Name,
 			File:     match.File(),

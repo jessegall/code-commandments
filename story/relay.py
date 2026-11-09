@@ -33,7 +33,7 @@ NOUNS = frozenset({
 
 STEP_SECONDS = 600
 
-FILE_KINDS = frozenset({"write", "remove"})
+FILE_KINDS = frozenset({"write", "link", "remove"})
 WORKTREES = os.path.join(".journal", "worktrees")
 TEST_CHECKOUT = os.path.join(WORKTREES, "story-engine")
 SCRATCH_PREFIX = "story_scratch"
@@ -348,7 +348,7 @@ class Relay(socketserver.ThreadingTCPServer):
         super().server_close()
 
     def file_step(self, asked: Asked) -> Answer:
-        """Write or remove one file under a scratch folder of the test checkout, the only place a story may change."""
+        """Write, link or remove one file under a scratch folder of the test checkout, the only place a story may change."""
         try:
             path = self.scratch_path(asked.path)
             if asked.kind == "write":
@@ -358,6 +358,10 @@ class Relay(socketserver.ThreadingTCPServer):
                 for number in range(many) if many else [None]:
                     with open(path if number is None else f"{stem}_{number:04d}{extension}", "w") as written:
                         written.write(asked.stdin)
+            elif asked.kind == "link":
+                self.scratch_path(os.path.join(os.path.dirname(path), asked.stdin))
+                os.makedirs(os.path.dirname(path), exist_ok=True)
+                os.symlink(asked.stdin, path)
             elif os.path.isdir(path):
                 shutil.rmtree(path)
             elif os.path.exists(path):

@@ -95,6 +95,21 @@ func TestAWildcardThatMatchesTheNamedFolderItselfDoesNotEmptyIt(t *testing.T) {
 	}
 }
 
+func TestAWildcardOverAFileKeepsItOutOfTheWalkAndTheTree(t *testing.T) {
+	root := t.TempDir()
+	placed(t, root, "tests/a.py", "tests/a_generated.py")
+
+	excluded := Under(root, []string{"tests", "**/*_generated.py"}).Judging([]string{"tests"})
+
+	if found := Sources(root, excluded); len(found) != 1 || filepath.Base(found[0]) != "a.py" {
+		t.Errorf("the walk found %v, where only a.py is left", found)
+	}
+
+	if Reaches(root, filepath.Join(root, "tests/a_generated.py"), excluded) {
+		t.Error("a file a wildcard leaves out was reached")
+	}
+}
+
 func TestAFileOutsideTheRootIsNeverReached(t *testing.T) {
 	if Reaches("/project/src", "/project/other/a.py", Excluded{}) {
 		t.Error("a file above the root was reached")

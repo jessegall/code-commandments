@@ -3,6 +3,7 @@ package engine
 // Finding is one sin found at one place, named by the detector that found it and the skill that fixes it.
 type Finding struct {
 	Detector string
+	Engine   string
 	Skill    string
 	Sin      string
 	File     string
