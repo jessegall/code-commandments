@@ -1,8 +1,7 @@
 package detectors
 
 import (
-	"bytes"
-	"encoding/gob"
+	"encoding/json"
 	"errors"
 	"os"
 
@@ -37,7 +36,7 @@ func (f MemoryFile) Load() {
 	}
 
 	var saved savedMemories
-	if err := gob.NewDecoder(bytes.NewReader(raw)).Decode(&saved); err != nil {
+	if err := json.Unmarshal(raw, &saved); err != nil {
 		f.Warn("The detectors' saved memories at " + f.Path + " are unreadable, so they start empty: " + err.Error())
 
 		return
@@ -55,14 +54,14 @@ func (f MemoryFile) Save() {
 		return
 	}
 
-	var encoded bytes.Buffer
-	if err := gob.NewEncoder(&encoded).Encode(savedMemories{f.Build, f.Memories.Verdicts()}); err != nil {
+	encoded, err := json.Marshal(savedMemories{f.Build, f.Memories.Verdicts()})
+	if err != nil {
 		f.Warn("The detectors' memories could not be encoded: " + err.Error())
 
 		return
 	}
 
-	if err := atomic.Write(f.Path, encoded.String()); err != nil {
+	if err := atomic.Write(f.Path, string(encoded)); err != nil {
 		f.Warn("The detectors' memories could not be saved: " + err.Error())
 	}
 }

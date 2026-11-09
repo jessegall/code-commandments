@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	rememberedDetectorsFile = "detector-memories.gob"
+	rememberedDetectorsFile = "detector-memories.json"
 	rememberedSavedEvery    = time.Minute
 )
 
