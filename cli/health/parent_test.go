@@ -1,6 +1,7 @@
 package health
 
 import (
+	"os"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -29,6 +30,36 @@ func TestAServiceStopsWhenItsParentIsGone(t *testing.T) {
 	case <-stopped:
 	case <-time.After(2 * time.Second):
 		t.Fatal("the service kept running after its parent was gone")
+	}
+}
+
+func TestAServiceStopsWhenItsPluginFolderIsGone(t *testing.T) {
+	folder := t.TempDir()
+	stopped := make(chan struct{})
+	go untilRemoved(folder, time.Millisecond, func() { close(stopped) })
+
+	select {
+	case <-stopped:
+		t.Fatal("the service stopped with its plugin folder still there")
+	case <-time.After(50 * time.Millisecond):
+	}
+
+	if err := os.RemoveAll(folder); err != nil {
+		t.Fatal(err)
+	}
+
+	select {
+	case <-stopped:
+	case <-time.After(2 * time.Second):
+		t.Fatal("the service kept running after its plugin folder was gone")
+	}
+}
+
+func TestThePluginFolderIsTheOneTheJournalNames(t *testing.T) {
+	t.Setenv(pluginDir, "/plugins/commandments")
+
+	if got := pluginFolder(); got != "/plugins/commandments" {
+		t.Errorf("the plugin folder is %q, not the one $%s names", got, pluginDir)
 	}
 }
 
