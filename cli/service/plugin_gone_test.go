@@ -19,15 +19,15 @@ import (
 
 const servingHelper = "COMMANDMENTS_TEST_SERVING_HELPER"
 
-// sleeping is a reach whose bridge is a process that writes its own number to $BRIDGE_PID and then waits.
-type sleeping struct{}
+// listening is a reach whose bridge is a process that writes its own number to $BRIDGE_PID and then reads its input until that closes, as a bridge does.
+type listening struct{}
 
-func (sleeping) Open(scan.Bridge, []string) (bridge.Asker, error) {
-	return bridge.Serve([]string{"sh", "-c", `echo $$ > "$BRIDGE_PID"; exec sleep 60`})
+func (listening) Open(scan.Bridge, []string) (bridge.Asker, error) {
+	return bridge.Serve([]string{"sh", "-c", `echo $$ > "$BRIDGE_PID"; exec cat > /dev/null`})
 }
 
-func (sleeping) Own(scan.Bridge, []string) (bridge.Asker, bool, error) {
-	asker, err := sleeping{}.Open(scan.Bridge{}, nil)
+func (listening) Own(scan.Bridge, []string) (bridge.Asker, bool, error) {
+	asker, err := listening{}.Open(scan.Bridge{}, nil)
 
 	return asker, true, err
 }
@@ -42,7 +42,7 @@ func TestAServingHelper(t *testing.T) {
 		Word:      "php",
 		Languages: []source.Language{source.PHP},
 		Label:     "PHP",
-		Reach:     sleeping{},
+		Reach:     listening{},
 	}}
 	code, _ := serve.Run(&cli.Input{}, cli.Console{Out: os.Stdout, Err: os.Stderr})
 	os.Exit(code)
@@ -99,10 +99,24 @@ func TestAServiceEndsWithItsBridgeWhenItsPluginFolderIsGone(t *testing.T) {
 	}
 
 	waited = time.Now()
-	for syscall.Kill(bridged, 0) == nil {
+	for running(bridged) {
 		if time.Since(waited) > 10*time.Second {
 			t.Fatal("the bridge outlived the service whose plugin folder was removed")
 		}
 		time.Sleep(10 * time.Millisecond)
 	}
+}
+
+func running(pid int) bool {
+	if syscall.Kill(pid, 0) != nil {
+		return false
+	}
+
+	raw, err := os.ReadFile("/proc/" + strconv.Itoa(pid) + "/stat")
+	if err != nil {
+		return true
+	}
+	_, after, _ := strings.Cut(string(raw), ") ")
+
+	return !strings.HasPrefix(after, "Z")
 }
