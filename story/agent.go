@@ -48,7 +48,7 @@ func (s *Story) Agent(name string) *Agent {
 
 	agent := s.registers(name, "worker", s.TestCheckout())
 	if !s.rehearsal {
-		agent.settlesIn()
+		agent.SettlesIn()
 	}
 
 	return agent
@@ -70,7 +70,7 @@ func (s *Story) Worker(name string) *Agent {
 
 	worker := s.registers(name, "worker", folder)
 	if !s.rehearsal {
-		worker.settlesIn()
+		worker.SettlesIn()
 	}
 
 	return worker
@@ -113,7 +113,7 @@ func (s *Story) DispatchedWorker(name string, by *Agent) *Agent {
 	s.keepsTheBranchWhereItIs()
 
 	worker := &Agent{s: s, name: name, session: session, folder: folder, row: row, role: "worker", task: found[1]}
-	worker.settlesIn()
+	worker.SettlesIn()
 
 	return worker
 }
@@ -383,7 +383,7 @@ func (a *Agent) writes(sample Sample, file string, named func(string) string) Ra
 	})
 }
 
-func (a *Agent) settlesIn() {
+func (a *Agent) SettlesIn() {
 	a.s.t.Helper()
 
 	if looked, err := a.s.journal.LooksAt(a.folder); err != nil || looked.Code != 0 {

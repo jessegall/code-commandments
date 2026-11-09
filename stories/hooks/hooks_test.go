@@ -145,6 +145,7 @@ func TestADisabledPluginIsSilentAndLeavesNothingRunning(t *testing.T) {
 	s.WaitsForTheService("hooks", serviceComesUp)
 	s.GivenTheTreeIsHeldFor(s.TestCheckout())
 	ada.ForgetsWhatItWasTold()
+	ada.SettlesIn()
 	ada.Edits(sinful(s, "a sinful file edited with the plugin on again"), "onagain.py")
 
 	s.Names(ada.Hears(elseRule), "onagain.py", elseRule)

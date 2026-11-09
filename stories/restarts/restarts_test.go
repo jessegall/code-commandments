@@ -95,7 +95,7 @@ func TestARestartedBridgeParsesOnlyTheEditedFile(t *testing.T) {
 
 func TestAFileChangedWhileTheServiceWasDownIsTheOnlyOneJudged(t *testing.T) {
 	s, memory, rest := settled(t)
-	memory.StopsTheService()
+	s.Given("the service is down before a file changes", memory.StopsTheService)
 	s.Writes(sinful(s, "a sinful file written while the service was down"), "whiledown.py")
 
 	comesBack(s)
