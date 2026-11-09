@@ -100,11 +100,18 @@ func judgedFor(request warm.Request, root string, progressed func(string)) warm.
 	spent := judge.Spent{}
 	before := engine.Counted()
 
+	edits := editsAsked(request, root)
+
 	code, err := (judge.Command{
 		In:       request.In,
 		Reading:  heldOrDeclined(root, request.In, &declined, &parsedFiles, &left),
 		Spending: func(done judge.Spent) { spent = done },
+		Edited:   edits.scope(),
 	}).Run(cli.InputOf("judge", request.Judge...), cli.Console{Out: &out, Err: saying})
+
+	if code == 0 && err == nil && declined == "" {
+		edits.approve()
+	}
 
 	recordServed(root, request.In, declined, parsedFiles, spent)
 

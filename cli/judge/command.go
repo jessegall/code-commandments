@@ -33,6 +33,8 @@ import (
 
 const defaultParallel = 2
 
+const agentSession = "JOURNAL_AGENT_SESSION"
+
 const aRuleCouldNotRun = 3
 
 // Command is `judge`: scan a codebase and report its sins, grouped by the skill that fixes each.
@@ -46,6 +48,8 @@ type Command struct {
 	Reading func(sources scan.Sources) (*engine.Codebase, error)
 
 	Spending func(Spent)
+
+	Edited scope.Edits
 }
 
 // Spent is where the time of one judging went: reading the sources and running the rules over them.
@@ -142,7 +146,7 @@ func (c Command) Run(in *cli.Input, console cli.Console) (int, error) {
 			serving.Project = space.Root()
 		}
 
-		answer, asked := warm.AskedUntilTheTreeIsThere(serving.Project, warm.Request{Judge: in.Raw(), In: cwd, Progress: cli.Watched()},
+		answer, asked := warm.AskedUntilTheTreeIsThere(serving.Project, warm.Request{Judge: in.Raw(), In: cwd, Progress: cli.Watched(), Agent: os.Getenv(agentSession) != ""},
 			func(said string) { fmt.Fprintln(console.Err, "· "+said) },
 			func(line string) { fmt.Fprintln(console.Err, line) })
 		if asked {
@@ -233,7 +237,7 @@ func (c Command) Run(in *cli.Input, console cli.Console) (int, error) {
 
 	judged = judged.Judging(selected)
 
-	targets, err := scope.FromArgs(in.Raw(), options.path, worklist, judged.Excluded)
+	targets, err := c.Edited.Scope(in.Raw(), options.path, worklist, judged.Excluded)
 
 	if cli.Timed() {
 		fmt.Fprintf(console.Err, "· the scope was built over %s, leaving out %v\n", options.path, judged.Excluded)

@@ -6,9 +6,15 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+
+	"github.com/jessegall/code-commandments/cli/scope"
+	"github.com/jessegall/code-commandments/cli/warm"
 )
 
-const workerEditsFolder = "worker-edits"
+const (
+	workerEditsFolder = "worker-edits"
+	editedInSuffix    = ".checkout"
+)
 
 // WorkerEdits are the files each agent's own file_edited events named, by their path from that agent's own root: whose work a file is, which a merge, a rebase or a reset onto a newer base cannot change, because none of them is an edit.
 type WorkerEdits struct {
@@ -49,6 +55,44 @@ func (e WorkerEdits) Clear(agent int) {
 	_ = os.Remove(e.fileOf(agent))
 }
 
+func (e WorkerEdits) KeepIn(agent int, checkout, relative string) {
+	e.Keep(agent, relative)
+
+	if checkout != "" {
+		_ = os.WriteFile(e.fileOf(agent)+editedInSuffix, []byte(checkout), 0o644)
+	}
+}
+
+func (e WorkerEdits) EditorsIn(checkout string) []int {
+	marks, _ := filepath.Glob(filepath.Join(e.folder, "*"+editedInSuffix))
+
+	var editors []int
+
+	for _, mark := range marks {
+		raw, err := os.ReadFile(mark)
+		if err != nil || string(raw) != checkout {
+			continue
+		}
+
+		if agent, err := strconv.Atoi(strings.TrimSuffix(filepath.Base(mark), editedInSuffix)); err == nil {
+			editors = append(editors, agent)
+		}
+	}
+
+	return editors
+}
+
+func (e WorkerEdits) Approve(agent int, approved []string) {
+	kept := slices.DeleteFunc(e.Of(agent), func(named string) bool { return slices.Contains(approved, named) })
+	if len(kept) == 0 {
+		e.Clear(agent)
+
+		return
+	}
+
+	_ = os.WriteFile(e.fileOf(agent), []byte(strings.Join(kept, "\n")+"\n"), 0o644)
+}
+
 func (e WorkerEdits) fileOf(agent int) string {
 	return filepath.Join(e.folder, strconv.Itoa(agent))
 }
@@ -62,7 +106,58 @@ func keepEditOf(line map[string]any) {
 		return
 	}
 
-	WorkerEditsIn(data).Keep(agent, relative)
+	WorkerEditsIn(data).KeepIn(agent, checkoutRootOf(line), relative)
+}
+
+func checkoutRootOf(line map[string]any) string {
+	checkout, _ := line["checkout"].(map[string]any)
+
+	return asText(checkout["root"])
+}
+
+// EditsAsked are the files the agents of one checkout edited, for a run an agent asked for its changes.
+type EditsAsked struct {
+	store    WorkerEdits
+	editors  []int
+	checkout string
+}
+
+func editsAsked(request warm.Request, root string) EditsAsked {
+	data := os.Getenv(pluginData)
+	if data == "" || !request.Agent || !slices.Contains(request.Judge, "--changes") {
+		return EditsAsked{}
+	}
+
+	checkout := absolutely(root, checkoutOf(root, request.In))
+	store := WorkerEditsIn(data)
+
+	return EditsAsked{store: store, editors: store.EditorsIn(checkout), checkout: checkout}
+}
+
+func (a EditsAsked) scope() scope.Edits {
+	edits := scope.Edits{Held: len(a.editors) > 0}
+
+	for _, agent := range a.editors {
+		for _, relative := range a.store.Of(agent) {
+			if file := filepath.Join(a.checkout, relative); isAFile(file) {
+				edits.Files = append(edits.Files, file)
+			}
+		}
+	}
+
+	return edits
+}
+
+func (a EditsAsked) approve() {
+	for _, agent := range a.editors {
+		a.store.Approve(agent, a.store.Of(agent))
+	}
+}
+
+func isAFile(path string) bool {
+	info, err := os.Stat(path)
+
+	return err == nil && !info.IsDir()
 }
 
 func relativeOfEdit(line map[string]any) string {

@@ -97,6 +97,18 @@ func TestTwoEditsInOneWindowAreJudgedOnceAsAGroup(t *testing.T) {
 	s.CostIs(ledger.JudgingsFromTheTree, 1)
 }
 
+func TestAnAgentsChangesAreTheFilesItsEditEventsNamed(t *testing.T) {
+	s, ada := editing(t)
+	ada.Edits(sinful(s, "a file an agent edits and asks about"), "edited.py")
+	ada.Hears("edited.py")
+	s.Writes(sinful(s, "a file no edit event named"), "written.py")
+
+	asked := ada.Asks("sins", "--changes", "--no-checklist")
+
+	s.Says(asked, "edited.py:6", "1 file judged")
+	s.Never(asked, "written.py:6")
+}
+
 func TestTwoAgentsEditsAreNeverGatheredTogether(t *testing.T) {
 	s, ada := editing(t)
 

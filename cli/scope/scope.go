@@ -69,6 +69,26 @@ func FromArgs(args []string, path string, space workspace.Workspace, excluded []
 		unseen: picked.unseen, lines: canonicalLines(picked.lines), restrictions: always(path, excluded)}, nil
 }
 
+// Edits are the files the agents of a checkout edited, for a run that asks for its changes when any were recorded.
+type Edits struct {
+	Files []string
+	Held  bool
+}
+
+func (e Edits) Scope(args []string, path string, space workspace.Workspace, excluded []string) (Scope, error) {
+	if !e.Held || !slices.Contains(args, "--changes") {
+		return FromArgs(args, path, space, excluded)
+	}
+
+	files := map[string]bool{}
+	for _, file := range e.Files {
+		files[file] = true
+	}
+
+	return Scope{files: outsideTheExcluded(canonical(files), path, excluded), scoped: true, by: "the files edited since they were last approved",
+		restrictions: always(path, excluded)}, nil
+}
+
 func outsideTheExcluded(files map[string]bool, path string, excluded []string) map[string]bool {
 	if len(files) == 0 || path == "" || len(excluded) == 0 {
 		return files
