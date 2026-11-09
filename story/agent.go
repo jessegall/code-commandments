@@ -123,6 +123,19 @@ func (s *Story) grantsDispatchTo(by *Agent) {
 
 	listed := s.Asks("environment", "list", "--json")
 
+	grant, err := dispatchGrantOf(listed, by)
+	if err != nil {
+		s.Fails(err.Error())
+
+		return
+	}
+
+	if granted := s.Asks(grant...); granted.Code != 0 {
+		s.Fails("the test environment could not name " + by.name + " as the agent that dispatches: " + granted.Text())
+	}
+}
+
+func dispatchGrantOf(listed Ran, by *Agent) ([]string, error) {
 	var environments struct {
 		Rows []struct {
 			ID   int
@@ -131,26 +144,17 @@ func (s *Story) grantsDispatchTo(by *Agent) {
 	}
 
 	if err := json.Unmarshal([]byte(listed.Out), &environments); err != nil {
-		s.Fails("the environments could not be read to grant a dispatch: " + listed.Text())
-
-		return
+		return nil, fmt.Errorf("the environments could not be read to grant a dispatch: %s", listed.Text())
 	}
 
 	for _, environment := range environments.Rows {
-		if environment.Name != testEnvironment {
-			continue
+		if environment.Name == testEnvironment {
+			return []string{"environment", "edit", strconv.Itoa(environment.ID), "--test", "--test-agent-id", by.row,
+				"--reason", "a story's agent dispatches a worker, which the journal allows a person or the test environment's named agent"}, nil
 		}
-
-		granted := s.Asks("environment", "edit", strconv.Itoa(environment.ID), "--test", "--test-agent-id", by.row,
-			"--reason", "a story's agent dispatches a worker, which the journal allows a person or the test environment's named agent")
-		if granted.Code != 0 {
-			s.Fails("the test environment could not name " + by.name + " as the agent that dispatches: " + granted.Text())
-		}
-
-		return
 	}
 
-	s.Fails("the journal lists no environment named " + testEnvironment + " to grant a dispatch in: " + listed.Text())
+	return nil, fmt.Errorf("the journal lists no environment named %s to grant a dispatch in: %s", testEnvironment, listed.Text())
 }
 
 func (s *Story) keepsTheBranchWhereItIs() {
