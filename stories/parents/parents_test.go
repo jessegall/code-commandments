@@ -64,6 +64,26 @@ func aServiceAndItsBridge(t *testing.T, kind string) (*story.Story, *story.Servi
 	return s, service, bridge
 }
 
+func aServiceAndItsFrozenBridge(t *testing.T) (*story.Story, *story.Service, story.Process) {
+	t.Helper()
+
+	s := story.Begin(t)
+
+	var (
+		service *story.Service
+		bridge  story.Process
+	)
+
+	s.Given("a throwaway mypy service and its frozen bridge", func() {
+		s.WaitsForTheService("hooks", serviceComesUp)
+		service = s.StartsAServiceUnderAParent("mypy")
+		bridge = service.Bridge(bridgeStarts)
+		service.Freezes(bridge)
+	})
+
+	return s, service, bridge
+}
+
 func aServiceAndItsBridgeGoWithTheirParent(t *testing.T, kind string) {
 	s, service, bridge := aServiceAndItsBridge(t, kind)
 
@@ -109,8 +129,7 @@ func TestACSharpServiceAndItsBridgeGoWithTheirParent(t *testing.T) {
 }
 
 func TestAFrozenBridgeGoesWithItsService(t *testing.T) {
-	s, service, bridge := aServiceAndItsBridge(t, "mypy")
-	service.Freezes(bridge)
+	s, service, bridge := aServiceAndItsFrozenBridge(t)
 
 	service.EndsItsParent()
 
@@ -137,6 +156,16 @@ func TestAServiceStoppedByASignalTakesItsBridgeAlongAndSaysWhy(t *testing.T) {
 	service.IsGone(goneAfterSignal)
 	service.StopsAnswering()
 	service.Wrote("by a signal")
+	s.NoOrphans()
+}
+
+func TestAServiceStoppedByASignalTakesAFrozenBridgeAlong(t *testing.T) {
+	s, service, bridge := aServiceAndItsFrozenBridge(t)
+
+	s.StopsAService(fmt.Sprint(service.Pid), story.Terminates)
+
+	s.EventuallyGone(bridge.Pid, goneAfterSignal)
+	service.IsGone(goneAfterSignal)
 	s.NoOrphans()
 }
 
