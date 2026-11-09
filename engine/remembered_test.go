@@ -1,6 +1,8 @@
 package engine_test
 
 import (
+	"crypto/sha256"
+	"encoding/binary"
 	"os"
 	"slices"
 	"strings"
@@ -163,6 +165,143 @@ func TestAFingerprintIsForgottenAfterTwelveHours(t *testing.T) {
 
 	if detector.asked != 2 {
 		t.Errorf("the detector was asked %d times, and the fingerprint had expired", detector.asked)
+	}
+}
+
+func TestARestoredMemoryAnswersAKnownFileWithoutTheDetector(t *testing.T) {
+	memory := engine.Remembering(time.Now)
+	detector := &asking{finds: true}
+
+	tree, paths := treeHolding(t, "kept")
+	memory.Find(tree, detector.find)
+
+	restored := engine.RememberingFrom(time.Now, memory.Verdicts())
+
+	tree, _ = treeHolding(t, "kept")
+	again := restored.Find(tree, detector.find)
+
+	if detector.asked != 1 {
+		t.Errorf("the detector was asked %d times, and the restored memory knew the file", detector.asked)
+	}
+
+	if len(again) != 1 || again[0].File() != paths[0] {
+		t.Errorf("the restored finding is %v", again)
+	}
+}
+
+func TestAFingerprintIsTheSameInEveryProcess(t *testing.T) {
+	memory := engine.Remembering(time.Now)
+
+	tree, _ := treeHolding(t, "stable")
+	memory.Find(tree, (&asking{}).find)
+
+	sum := sha256.Sum256([]byte("stable" + strings.Repeat(" ", 1<<20)))
+	want := binary.LittleEndian.Uint64(sum[:8])
+
+	if verdicts := memory.Verdicts(); len(verdicts) != 1 || verdicts[0].Fingerprint != want {
+		t.Errorf("the fingerprint is %v and contents alone make %d", verdicts, want)
+	}
+}
+
+func TestAHitRenewsAnEntry(t *testing.T) {
+	now := time.Now()
+	memory := engine.Remembering(func() time.Time { return now })
+	detector := &asking{}
+
+	judge := func() {
+		tree, _ := treeHolding(t, "used")
+		memory.Find(tree, detector.find)
+	}
+
+	judge()
+	now = now.Add(engine.RememberedFor - time.Hour)
+	judge()
+	now = now.Add(engine.RememberedFor - time.Hour)
+	judge()
+
+	if detector.asked != 1 {
+		t.Errorf("the detector was asked %d times, and each hit renewed the entry", detector.asked)
+	}
+
+	if verdicts := memory.Verdicts(); len(verdicts) != 1 || verdicts[0].Used != now.UnixNano() {
+		t.Errorf("the verdict after the hit is %v, used at %d", verdicts, now.UnixNano())
+	}
+}
+
+func TestAHitAndAJudgingMarkTheMemoryChanged(t *testing.T) {
+	memory := engine.Remembering(time.Now)
+	detector := &asking{}
+
+	if memory.Changed() {
+		t.Error("a memory that was never used has nothing to save")
+	}
+
+	tree, _ := treeHolding(t, "changing")
+	memory.Find(tree, detector.find)
+
+	if !memory.Changed() {
+		t.Error("a judging is something to save")
+	}
+
+	memory.Verdicts()
+
+	if memory.Changed() {
+		t.Error("what was just taken for saving has not changed since")
+	}
+
+	tree, _ = treeHolding(t, "changing")
+	memory.Find(tree, detector.find)
+
+	if !memory.Changed() {
+		t.Error("a hit renews its entry, and that is something to save")
+	}
+}
+
+func TestARestoredEntryPastTwelveHoursIsGone(t *testing.T) {
+	now := time.Now()
+	clock := func() time.Time { return now }
+	memory := engine.Remembering(clock)
+	detector := &asking{}
+
+	tree, _ := treeHolding(t, "aged")
+	memory.Find(tree, detector.find)
+
+	saved := memory.Verdicts()
+	now = now.Add(engine.RememberedFor + time.Minute)
+	restored := engine.RememberingFrom(clock, saved)
+
+	if !restored.Changed() {
+		t.Error("an expired entry dropped on load has to leave the file too")
+	}
+
+	if verdicts := restored.Verdicts(); len(verdicts) != 0 {
+		t.Errorf("the expired entry was restored: %v", verdicts)
+	}
+
+	tree, _ = treeHolding(t, "aged")
+	restored.Find(tree, detector.find)
+
+	if detector.asked != 2 {
+		t.Errorf("the detector was asked %d times, and the entry had expired", detector.asked)
+	}
+}
+
+func TestAnExpiredEntryLeavesTheVerdictsWithoutAHit(t *testing.T) {
+	now := time.Now()
+	memory := engine.Remembering(func() time.Time { return now })
+
+	tree, _ := treeHolding(t, "unused")
+	memory.Find(tree, (&asking{}).find)
+	memory.Verdicts()
+
+	now = now.Add(engine.RememberedFor + time.Minute)
+
+	if !memory.Changed() {
+		t.Error("an expired entry has to be deleted from the file, with no hit to prompt it")
+	}
+
+	if verdicts := memory.Verdicts(); len(verdicts) != 0 {
+		t.Errorf("the expired entry is still kept: %v", verdicts)
 	}
 }
 

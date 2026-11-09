@@ -522,6 +522,8 @@ func (s JournalServe) Run(in *cli.Input, console cli.Console) (int, error) {
 	Serves()
 	logServiceStart(root)
 
+	defer remembersAcrossRestarts(console)()
+
 	go WarmsWhatItServes(root)
 
 	if judging, listening := Judging(root); listening {
