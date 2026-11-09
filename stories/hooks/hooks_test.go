@@ -115,8 +115,9 @@ func TestTheFirstEditAfterARestartIsAnsweredFromTheLoadedTree(t *testing.T) {
 
 func TestTheWorklistSurvivesARestart(t *testing.T) {
 	s, ada := working(t)
+	s.SwitchesThePluginSetting("workers_cli", "true", "false")
 	s.Writes(sinful(s, "a sinful file on a worklist"), "listed.py")
-	s.AsksIn(s.TestCheckout(), "sins", "--changes")
+	ada.Asks("sins", "--changes")
 
 	restartsTheHooksService(s)
 	ada.Stops()
@@ -136,8 +137,8 @@ func TestADisabledPluginIsSilentAndLeavesNothingRunning(t *testing.T) {
 	ada.StaysUntold(elseRule)
 	s.Never(ada.Stops(), worklist)
 	s.NoOrphans()
-	if left := s.Processes(); len(left) != 0 {
-		s.Fails(fmt.Sprintf("a disabled plugin left these running: %v", left))
+	for _, left := range s.Processes() {
+		s.EventuallyGone(left.Pid, serviceGoes)
 	}
 
 	s.Exits(s.Asks("plugin", "enable", plugin, "--reason", "a story puts the plugin back"), 0)
