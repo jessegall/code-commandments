@@ -97,6 +97,10 @@ func (s Sources) Roots() []string {
 	return s.roots
 }
 
+func (s Sources) Checkout() string {
+	return s.project()
+}
+
 func (s Sources) Count(languages ...source.Language) int {
 	count := 0
 

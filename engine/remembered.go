@@ -349,6 +349,19 @@ func (c *Codebase) printsOfTheTreeBelow() map[*contract.File]uint64 {
 	return held.(printsAcross).own
 }
 
+func (c *Codebase) Print() (uint64, bool) {
+	own, whole := c.ownPrints()
+	if !whole {
+		return 0, false
+	}
+
+	return PrintOfAll(slices.Collect(maps.Values(own))), true
+}
+
+func PrintOfAll(prints []uint64) uint64 {
+	return combined(slices.Sorted(slices.Values(prints))...)
+}
+
 func combined(prints ...uint64) uint64 {
 	written := make([]byte, 0, 8*len(prints))
 	for _, print := range prints {

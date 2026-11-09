@@ -22,7 +22,10 @@ type weighed struct {
 
 func (c Command) judgeUnits(sources scan.Sources, rules []detectors.Detector, options options, progress *cli.Progress, console cli.Console) (Judgement, int, error) {
 	var merged *cs.Summary
+	set := newCSharpSet(sources.Checkout())
 	units, err := sources.CSharpUnits(func(codebase *engine.Codebase) error {
+		set.add(codebase)
+
 		if summary := cs.Summarize(codebase); merged == nil {
 			merged = summary
 		} else {
@@ -41,15 +44,23 @@ func (c Command) judgeUnits(sources scan.Sources, rules []detectors.Detector, op
 
 	var ordinary []detectors.Detector
 	var aggregating []detectors.Detector
+	var judgement Judgement
 	for _, rule := range rules {
-		if _, weighs := rule.(detectors.Aggregating); weighs {
-			aggregating = append(aggregating, rule)
-		} else {
+		if _, weighs := rule.(detectors.Aggregating); !weighs {
 			ordinary = append(ordinary, rule)
+
+			continue
 		}
+
+		if found, remembered := set.recall(rule); remembered {
+			judgement.Findings = append(judgement.Findings, found...)
+
+			continue
+		}
+
+		aggregating = append(aggregating, rule)
 	}
 	read := make([][]weighed, len(aggregating))
-	var judgement Judgement
 	files := 0
 	for at := range units.Count() {
 		codebase, err := units.Load(at)
@@ -89,9 +100,12 @@ func (c Command) judgeUnits(sources scan.Sources, rules []detectors.Detector, op
 		for at, held := range read[i] {
 			records[at] = detectors.Candidate{Record: held.record}
 		}
+		var found []engine.Finding
 		for _, chosen := range rule.(detectors.Aggregating).Decide(records) {
-			judgement.Findings = append(judgement.Findings, read[i][chosen].finding)
+			found = append(found, read[i][chosen].finding)
 		}
+		set.keep(rule, found)
+		judgement.Findings = append(judgement.Findings, found...)
 	}
 	judgement.Findings = Twinned(judgement.Findings)
 	if files == 0 {
