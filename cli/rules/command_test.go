@@ -178,3 +178,17 @@ func TestASampleIsNoLeftoverClass(t *testing.T) {
 		t.Errorf("samples read as the PHP tool's leftover classes: %v", classes)
 	}
 }
+
+func TestTryPrintsTheWorkItDidOnlyWhenTimingIsOn(t *testing.T) {
+	root := project(t)
+
+	t.Setenv(cli.Timing, "1")
+	if said, _ := run(t, root, "try", "NoDump", ".commandments/custom/samples"); !strings.Contains(said, "· work: ") || !strings.Contains(said, " nodes, ") || !strings.Contains(said, " checks, ") || !strings.Contains(said, " analyses") {
+		t.Errorf("a timed try printed no work line:\n%s", said)
+	}
+
+	t.Setenv(cli.Timing, "")
+	if said, _ := run(t, root, "try", "NoDump", ".commandments/custom/samples"); strings.Contains(said, "work:") {
+		t.Errorf("a try nobody timed printed a work line:\n%s", said)
+	}
+}

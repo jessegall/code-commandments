@@ -133,12 +133,15 @@ func (c Command) try(in *cli.Input, root string, console cli.Console) (int, erro
 		return 0, err
 	}
 
+	before := engine.Counted()
 	found := tried.Find(codebase)
+	work := engine.Since(before)
 	for _, match := range found {
 		console.Write(fmt.Sprintf("%s:%d  %s\n", match.Judged(), match.Line(), sourceLine(match)))
 	}
 
 	console.Write(fmt.Sprintf("%d match(es) of %s in %s\n", len(found), tried.Name(), strings.Join(paths, ", ")))
+	cli.SayWork(console, work)
 
 	return 0, nil
 }
