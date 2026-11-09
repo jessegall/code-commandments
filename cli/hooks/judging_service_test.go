@@ -306,7 +306,7 @@ func TestAWorktreesChangedFileInAnExcludedFolderIsNotInItsProgram(t *testing.T) 
 
 	declined := ""
 
-	codebase, err := heldOrDeclined(root, worktree, &declined, new(int))(
+	codebase, err := heldOrDeclined(root, worktree, &declined, new(int), new(string))(
 		scan.Walk([]string{filepath.Join(worktree, "src")}, source.Under(worktree, []string{"**/dist"})))
 	if err != nil || declined != "" {
 		t.Fatalf("the judging was not answered from the tree: %v, %s", err, declined)
@@ -329,7 +329,7 @@ func TestAFileAWorkerDeletedIsNotInItsProgram(t *testing.T) {
 	own := filepath.Join(worktree, "src", "order.py")
 	stands := filepath.Join(root, "src", "order.py")
 
-	reading := heldOrDeclined(root, worktree, new(string), new(int))
+	reading := heldOrDeclined(root, worktree, new(string), new(int), new(string))
 
 	codebase, err := reading(scan.Walk([]string{filepath.Join(worktree, "src")}, source.Excluded{}))
 	if err != nil || codebase == nil {
@@ -749,7 +749,7 @@ func TestEveryReasonAJudgingDeclinesForReadsAsASentence(t *testing.T) {
 		"a folder outside the project": t.TempDir(),
 	} {
 		declined := ""
-		if _, err := heldOrDeclined(root, in, &declined, new(int))(sources); err != nil {
+		if _, err := heldOrDeclined(root, in, &declined, new(int), new(string))(sources); err != nil {
 			t.Fatalf("%s: %v", why, err)
 		}
 

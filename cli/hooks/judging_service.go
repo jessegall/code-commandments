@@ -95,13 +95,14 @@ func judgedFor(request warm.Request, root string, progressed func(string)) warm.
 	}
 
 	declined := ""
+	left := ""
 	overlay := 0
 	spent := judge.Spent{}
 	before := engine.Counted()
 
 	code, err := (judge.Command{
 		In:       request.In,
-		Reading:  heldOrDeclined(root, request.In, &declined, &overlay),
+		Reading:  heldOrDeclined(root, request.In, &declined, &overlay, &left),
 		Spending: func(done judge.Spent) { spent = done },
 	}).Run(cli.InputOf("judge", request.Judge...), cli.Console{Out: &out, Err: saying})
 
@@ -129,7 +130,7 @@ func judgedFor(request warm.Request, root string, progressed func(string)) warm.
 		return warm.Answer{Out: out.String(), Err: errs.String() + err.Error() + "\n" + waited, Code: 1}
 	}
 
-	return warm.Answer{Out: out.String(), Err: errs.String() + waited, Code: code}
+	return warm.Answer{Out: out.String(), Err: errs.String() + left + waited, Code: code}
 }
 
 func recordServed(root, in, declined string, overlay int, spent judge.Spent) {
@@ -212,7 +213,7 @@ func notThisCheckouts(walked, checkout, project string) string {
 	return walked + " lies outside " + checkout + ", so this tree says nothing about it"
 }
 
-func heldOrDeclined(root, in string, declined *string, overlay *int) func(scan.Sources) (*engine.Codebase, error) {
+func heldOrDeclined(root, in string, declined *string, overlay *int, left *string) func(scan.Sources) (*engine.Codebase, error) {
 	return func(sources scan.Sources) (*engine.Codebase, error) {
 		checkout := checkoutOf(root, in)
 
@@ -242,6 +243,8 @@ func heldOrDeclined(root, in string, declined *string, overlay *int) func(scan.S
 			}
 		}
 
+		*left = notHeldBy(base, asked)
+
 		differs, covered := differingFrom(base, named, checkout, asked)
 		if !covered {
 			*declined = checkout + " shares no history with the branch the tree was read at, " + named.branch
@@ -261,6 +264,23 @@ func heldOrDeclined(root, in string, declined *string, overlay *int) func(scan.S
 
 		return viewOf(base, named, checkout, read, gone, declined)
 	}
+}
+
+func notHeldBy(base *warm.Base, asked []string) string {
+	var said []string
+
+	for _, file := range asked {
+		line := string(noStreamOf(source.OfFile(file)))
+		if !holdsTheLanguageOf(base, file) && !slices.Contains(said, line) {
+			said = append(said, line)
+		}
+	}
+
+	if len(said) == 0 {
+		return ""
+	}
+
+	return "· this is not a clean answer: " + strings.Join(said, "; ") + "\n"
 }
 
 func differingFrom(base *warm.Base, named branchRoot, checkout string, asked []string) (Differs, bool) {
