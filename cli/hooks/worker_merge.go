@@ -438,12 +438,12 @@ func (m merging) tracksEdits() bool {
 }
 
 func (m merging) named() map[string]bool {
-	if m.tracksEdits() {
-		return git.Listed(m.worktree, WorkerEditsIn(os.Getenv(pluginData)).Of(m.editor))
-	}
-
 	if len(m.files) > 0 {
 		return git.Listed(m.worktree, m.files)
+	}
+
+	if m.tracksEdits() {
+		return git.Listed(m.worktree, WorkerEditsIn(os.Getenv(pluginData)).Of(m.editor))
 	}
 
 	listed, _ := git.ChangedVsBranch(m.worktree, m.cutFrom())
