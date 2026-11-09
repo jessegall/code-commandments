@@ -5,6 +5,7 @@ package bridges
 import (
 	"encoding/json"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"testing"
 
@@ -51,6 +52,10 @@ func TestAPHPFileThatDoesNotParseIsSaidSoAndTheTreeIsKept(t *testing.T) {
 }
 
 func TestACSharpFileThatDoesNotParseIsSaidSoAndTheTreeIsKept(t *testing.T) {
+	if out, err := exec.Command("docker", "info").CombinedOutput(); err != nil {
+		t.Skip("C# is read by the Roslyn bridge in its docker image, and docker is not reachable from this run: " + err.Error() + " " + string(out))
+	}
+
 	aFileThatDoesNotParseIsSaidSoAndTheRestIsStillJudged(t, story.BrokenCSharp, "Broken.cs")
 }
 
