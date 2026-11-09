@@ -39,15 +39,17 @@ final readonly class Stream
         ]]);
         $referenced = [];
         $declared = [];
-        $kept = $this->request->cache === null ? null : new TreeCache($this->request->cache, $this->request);
+        $kept = $this->request->cache === null ? null : new TreeCache($this->request->cache);
         $parser = null;
         foreach ($files as $path) {
             $code = $this->request->contents[$path] ?? file_get_contents($path);
             $context = ! $this->request->judges($path);
-            $earlier = $kept?->kept($path, $code);
+            $earlier = $kept?->kept($code);
             if ($earlier !== null) {
-                $line = $earlier['line'];
-                fwrite($out, ($context ? substr($line, 0, $earlier['at']) . self::CONTEXT . substr($line, $earlier['at']) : $line) . "\n");
+                $opening = $this->opening($this->request->shown($path));
+                $line = $opening . $earlier['line'];
+                $at = strlen($opening) + $earlier['at'];
+                fwrite($out, ($context ? substr($line, 0, $at) . self::CONTEXT . substr($line, $at) : $line) . "\n");
                 $referenced += $earlier['referenced'];
                 $declared += $earlier['declared'];
 
@@ -62,11 +64,20 @@ final readonly class Stream
             if ($kept !== null) {
                 $at = strlen($this->encoded(['file' => ['path' => $file->path, 'language' => 'php', 'errors' => $file->errors]])) - 2;
                 $own = $context ? substr($line, 0, $at) . substr($line, $at + strlen(self::CONTEXT)) : $line;
-                $kept->keep($path, $code, $own, $at, $file->writer->referenced, $file->writer->declared);
+                $opening = strlen($this->opening($file->path));
+                $kept->keep($code, substr($own, $opening), $at - $opening, $file->writer->referenced, $file->writer->declared);
             }
         }
         $this->writeProgram($out, $kept, $declared, $referenced);
         $this->line($out, ['trailer' => ['files' => count($files)]]);
+    }
+
+    /**
+     * How a file's line opens, up to the end of its path: all of the line that names where the file is.
+     */
+    private function opening(string $shown): string
+    {
+        return substr($this->encoded(['file' => ['path' => $shown]]), 0, -2);
     }
 
     private function parsed(string $path, string $code, Parser $parser): ParsedFile
@@ -201,7 +212,7 @@ final readonly class Stream
                 'loader' => $this->loaderReason($autoload, $failure, $outside),
             ]);
             $line = $program === [] ? '' : $this->encoded(['program' => $program]);
-            if ($key !== null && ($loads || $autoload === null)) {
+            if ($key !== null && $failure === '') {
                 $kept->keepProgram($key, $line);
             }
         }

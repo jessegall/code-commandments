@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace CodeCommandments\PhpBridge;
 
 /**
- * A file's line as an earlier run wrote it, kept under a key of everything the line was made from: the bridge, the
- * renames, and the file's path and text, for a PHP file's tree is its own text's alone. The run's last line, the
- * symbols it reaches outside the scan, is kept under the PHP, the autoloader, the lockfile and every name the files
- * reference and declare, in order.
+ * A file's line as an earlier run wrote it, its path left out, kept under a key of what the line was made from: the
+ * bridge and the file's text, for a PHP file's tree is its own text's alone, so every checkout holding that text shares
+ * the entry. The run's last line, the symbols it reaches outside the scan, is kept under the PHP, what the autoloader
+ * installs, the lockfile and every name the files reference and declare, in order.
  */
 final readonly class TreeCache
 {
@@ -19,12 +19,12 @@ final readonly class TreeCache
 
     private string $identity;
 
-    public function __construct(private string $folder, Request $request)
+    public function __construct(private string $folder)
     {
         if (! is_dir($folder)) {
             @mkdir($folder, 0o755, true);
         }
-        $parts = [PHP_VERSION, realpath(__DIR__ . '/..') ?: __DIR__, json_encode($request->renames)];
+        $parts = [PHP_VERSION];
         foreach (glob(__DIR__ . '/*.php') ?: [] as $source) {
             $parts[] = hash_file('sha256', $source);
         }
@@ -36,41 +36,42 @@ final readonly class TreeCache
     }
 
     /**
-     * The line kept for `$path` with `$code` as its text, where a file's context mark goes, and the names it
+     * The line kept for `$code`, its path left out, where a file's context mark goes in it, and the names it
      * references and declares; null when none is kept for this text.
      *
      * @return array{line: string, at: int, referenced: array<string, mixed>, declared: array<string, mixed>}|null
      */
-    public function kept(string $path, string $code): ?array
+    public function kept(string $code): ?array
     {
-        $stored = @file_get_contents($this->entryOf($path));
+        $entry = $this->entryOf($code);
+        $stored = @file_get_contents($entry);
         if ($stored === false) {
             return null;
         }
         $split = strpos($stored, "\n");
         $meta = $split === false ? null : json_decode(substr($stored, 0, $split), true);
-        if (! is_array($meta) || ($meta['key'] ?? null) !== $this->keyOf($path, $code)) {
+        if (! is_array($meta)) {
             return null;
         }
-        @touch($this->entryOf($path));
+        @touch($entry);
 
         return ['line' => substr($stored, $split + 1), 'at' => $meta['at'], 'referenced' => $meta['referenced'], 'declared' => $meta['declared']];
     }
 
     /**
-     * Keeps `$line` for `$path`, its context mark left out, with where the mark goes and the names it references and
-     * declares, unless the line is too large.
+     * Keeps `$line` for `$code`, its path and context mark left out, with where the mark goes and the names it
+     * references and declares, unless the line is too large.
      *
      * @param array<string, mixed> $referenced
      * @param array<string, mixed> $declared
      */
-    public function keep(string $path, string $code, string $line, int $at, array $referenced, array $declared): void
+    public function keep(string $code, string $line, int $at, array $referenced, array $declared): void
     {
         if (strlen($line) > self::KEPT) {
             return;
         }
-        $meta = ['key' => $this->keyOf($path, $code), 'at' => $at, 'referenced' => (object) $referenced, 'declared' => (object) $declared];
-        $this->written($this->entryOf($path), json_encode($meta, JSON_THROW_ON_ERROR) . "\n" . $line);
+        $meta = ['at' => $at, 'referenced' => (object) $referenced, 'declared' => (object) $declared];
+        $this->written($this->entryOf($code), json_encode($meta, JSON_THROW_ON_ERROR) . "\n" . $line);
     }
 
     /**
@@ -96,28 +97,23 @@ final readonly class TreeCache
     }
 
     /**
-     * The key of the outside symbols a run reaches: the PHP and the autoloader with its lockfile, and the names in
-     * the order the run met them.
+     * The key of the outside symbols a run reaches: the PHP, what the autoloader installs with its lockfile, and the
+     * names in the order the run met them.
      *
      * @param array<string, mixed> $declared
      * @param array<string, mixed> $referenced
      */
     public function programKey(?string $autoload, array $declared, array $referenced): string
     {
-        $lockfile = $autoload === null ? null : dirname($autoload, 2) . '/composer.lock';
-        $locked = $lockfile !== null && is_file($lockfile) ? hash_file('sha256', $lockfile) : '';
+        $installed = $autoload === null ? [] : [dirname($autoload, 2) . '/composer.lock', dirname($autoload) . '/composer/installed.json'];
+        $hashes = array_map(static fn (string $file): string => is_file($file) ? hash_file('sha256', $file) : '', $installed);
 
-        return hash('sha256', implode("\0", [$this->identity, (string) $autoload, $locked, json_encode(array_keys($declared)), json_encode(array_keys($referenced))]));
+        return hash('sha256', implode("\0", [$this->identity, ...$hashes, json_encode(array_keys($declared)), json_encode(array_keys($referenced))]));
     }
 
-    private function keyOf(string $path, string $code): string
+    private function entryOf(string $code): string
     {
-        return hash('sha256', $this->identity . "\0" . $path . "\0" . $code);
-    }
-
-    private function entryOf(string $path): string
-    {
-        return $this->folder . '/' . hash('sha256', $path) . '.tree';
+        return $this->folder . '/' . hash('sha256', $this->identity . "\0" . $code) . '.tree';
     }
 
     private function programOf(string $key): string

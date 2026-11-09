@@ -92,3 +92,33 @@ func TestAKeptTreeTheBridgeUsesAgainIsRenewedAndOneItDoesNotUseIsNot(t *testing.
 		t.Errorf("%d of the 2 kept trees were renewed by a run that read one file, want 1: a use renews an entry and nothing else does", renewed)
 	}
 }
+
+func TestTwoCheckoutsHoldingTheSameFileShareOneKeptTree(t *testing.T) {
+	needsPHP(t)
+	parent, err := filepath.EvalSymlinks(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	checkouts := []string{filepath.Join(parent, "main"), filepath.Join(parent, "worktree")}
+	for _, checkout := range checkouts {
+		if err := os.MkdirAll(checkout, 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(filepath.Join(checkout, "Money.php"), []byte("<?php\n\nnamespace Shop;\n\nfinal class Money {}\n"), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	fresh := Here()
+	kept := Here()
+	kept.Trees = t.TempDir()
+
+	streamed(t, kept, checkouts[0])
+	got := streamed(t, kept, "--write="+filepath.Join(checkouts[1], "Money.php"), checkouts[1])
+
+	if trees, _ := filepath.Glob(filepath.Join(kept.Trees, "*.tree")); len(trees) != 1 {
+		t.Errorf("two checkouts holding one file keep %d trees, where they share one", len(trees))
+	}
+	if want := streamed(t, fresh, "--write="+filepath.Join(checkouts[1], "Money.php"), checkouts[1]); got != want {
+		t.Errorf("the second checkout read the shared tree as another stream than its own:\n%s\nwant:\n%s", got, want)
+	}
+}

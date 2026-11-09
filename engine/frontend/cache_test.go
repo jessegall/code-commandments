@@ -119,3 +119,61 @@ func TestAKeptTreeTheBridgeUsesAgainIsRenewedAndOneItDoesNotUseIsNot(t *testing.
 		}
 	}
 }
+
+func TestTwoCheckoutsHoldingTheSameFilesShareTheirKeptTrees(t *testing.T) {
+	parent, err := filepath.EvalSymlinks(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	checkouts := []string{filepath.Join(parent, "main"), filepath.Join(parent, "worktree")}
+	for _, checkout := range checkouts {
+		if err := os.MkdirAll(checkout, 0o755); err != nil {
+			t.Fatal(err)
+		}
+		for name, source := range map[string]string{"price.ts": "export const price = 12\n", "total.ts": "import { price } from './price'\nexport const total = price * 2\n"} {
+			if err := os.WriteFile(filepath.Join(checkout, name), []byte(source), 0o644); err != nil {
+				t.Fatal(err)
+			}
+		}
+	}
+	fresh := Here()
+	kept := Here()
+	kept.Trees = t.TempDir()
+
+	written(t, kept, checkouts[0])
+	got := written(t, kept, checkouts[1])
+
+	if trees, _ := filepath.Glob(filepath.Join(kept.Trees, "*.tree")); len(trees) != 2 {
+		t.Errorf("two checkouts holding two files keep %d trees, where they share two", len(trees))
+	}
+	if want := written(t, fresh, checkouts[1]); got != want {
+		t.Errorf("the second checkout read the shared trees as another stream than its own:\n%s\nwant:\n%s", got, want)
+	}
+}
+
+func TestTheSameFileBesideOtherImportsNamesItsOwnImports(t *testing.T) {
+	root, err := filepath.EvalSymlinks(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, folder := range []string{"first", "second"} {
+		if err := os.MkdirAll(filepath.Join(root, folder), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		for name, source := range map[string]string{"price.ts": "export const price = 12\n", "total.ts": "import { price } from './price'\nexport const total = price * 2\n"} {
+			if err := os.WriteFile(filepath.Join(root, folder, name), []byte(source), 0o644); err != nil {
+				t.Fatal(err)
+			}
+		}
+	}
+	fresh := Here()
+	kept := Here()
+	kept.Trees = t.TempDir()
+	want := written(t, fresh, root)
+
+	for _, run := range []string{"first", "again"} {
+		if got := written(t, kept, root); got != want {
+			t.Errorf("the %s cached run names another file's import than an uncached run:\n%s\nwant:\n%s", run, got, want)
+		}
+	}
+}

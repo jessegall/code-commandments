@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto'
 import { closeSync, existsSync, mkdirSync, openSync, readFileSync, readSync, renameSync, utimesSync, writeFileSync } from 'node:fs'
-import { join } from 'node:path'
+import { join, relative } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import ts from 'typescript'
 
@@ -10,14 +10,21 @@ const LOCKFILES = ['package-lock.json', 'yarn.lock', 'pnpm-lock.yaml', 'bun.lock
 /** How large a file's line may be and still be kept: a generated file's tree is not worth the disk. */
 const KEPT = 16 << 20
 
-/** How far into an entry its own first line is read, to answer whether the tree below it is still the file's. */
+/** How far into an entry its own first line is read. */
 const META = 1 << 12
 
+/** What a stored line says in place of the file's own path: a control character, which no JSON text holds raw. */
+const OWN_PATH = '\u0001'
+
+/** What a stored line says in place of the project's root and the slash after it. */
+const PROJECT_ROOT = '\u0002'
+
 /**
- * A file's line as an earlier run wrote it, kept under a key of everything the line was made from: the bridge itself,
- * the compiler options, the renames, the lockfile, every declaration that reaches all files, and the file's own text
- * with the text of every file it imports, however far. A file whose key is unchanged is written from what was kept,
- * and the program is built over the files that are not.
+ * A file's line as an earlier run wrote it, with the file's own path and the project's root left out, kept under a key
+ * of everything the line was made from: the bridge itself, the compiler options, the lockfile, every declaration that
+ * reaches all files, and the file's own text with the text and place in the project of every file it imports, however
+ * far. The file's own path is in no key, so every checkout holding the same files shares the entry. A file whose key is
+ * unchanged is written from what was kept, and the program is built over the files that are not.
  *
  * What the key leaves out is which other files the run scanned. A file's tree is made from its own text, what it
  * imports and what reaches every file, and nothing else — which is only true because a tree no longer answers for
@@ -28,6 +35,7 @@ export class TreeCache {
     /** `folder` holds the lines; `program` reads the options and resolves imports; `texts` maps each path to its text. */
     constructor(folder, program, texts, scripts) {
         this.folder = folder
+        this.program = program
         mkdirSync(folder, { recursive: true })
         this.keys = keysOf(program, texts, scripts, contextOf(program, texts))
         this.read = new Map()
@@ -53,21 +61,20 @@ export class TreeCache {
         const meta = this.metaOf(path)
         if (!meta) return undefined
         const stored = readFileSync(this.entryOf(path), 'utf8')
+        const line = stored.slice(stored.indexOf('\n') + 1)
 
-        return { line: stored.slice(stored.indexOf('\n') + 1), at: meta.at, totals: meta.totals }
+        return { line: this.restored(path, line), at: this.restored(path, line.slice(0, meta.at)).length, totals: meta.totals }
     }
 
-    /** The entry's own first line, read without its tree, when it was written under the key `path` has now. */
+    /** The entry's own first line, read without its tree, when an entry is kept under the key `path` has now. */
     metaOf(path) {
         if (!this.read.has(path)) this.read.set(path, this.firstLineOf(path))
         const first = this.read.get(path)
         if (first === undefined) return undefined
-        const meta = JSON.parse(first)
-        if (meta.key !== this.keys.get(path)) return undefined
         const used = new Date()
         utimesSync(this.entryOf(path), used, used)
 
-        return meta
+        return JSON.parse(first)
     }
 
     /** The first line of the entry kept for `path`, read on its own; none when no entry is kept or it holds no line. */
@@ -92,24 +99,39 @@ export class TreeCache {
         this.read.delete(path)
         const entry = this.entryOf(path)
         const draft = `${entry}.${process.pid}`
-        writeFileSync(draft, JSON.stringify({ key: this.keys.get(path), at, totals }) + '\n' + line)
+        writeFileSync(draft, JSON.stringify({ at: this.placeless(path, line.slice(0, at)).length, totals }) + '\n' + this.placeless(path, line))
         renameSync(draft, entry)
     }
 
+    /** The entry `path` has now: its name is its key. */
     entryOf(path) {
-        return join(this.folder, hashed(path) + '.tree')
+        return join(this.folder, this.keys.get(path) + '.tree')
+    }
+
+    /** `line` with the file's own path and the project's root taken out. */
+    placeless(path, line) {
+        return line.replaceAll(inJson(this.program.shown(path)), OWN_PATH).replaceAll(this.rootInJson(), PROJECT_ROOT)
+    }
+
+    /** A kept `line` with this checkout's own path for the file and its project's root put back. */
+    restored(path, line) {
+        return line.replaceAll(OWN_PATH, inJson(this.program.shown(path))).replaceAll(PROJECT_ROOT, this.rootInJson())
+    }
+
+    rootInJson() {
+        return inJson(this.program.shown(this.program.root)) + '/'
     }
 }
 
 /** What every file's line is made from beside its own imports: the bridge, the options, the dependencies. */
 function contextOf(program, texts) {
-    const parts = [hashed(readFileSync(fileURLToPath(import.meta.url))), JSON.stringify(program.options), JSON.stringify(program.renames)]
+    const parts = [hashed(readFileSync(fileURLToPath(import.meta.url))), JSON.stringify(program.options).replaceAll(inJson(program.root), PROJECT_ROOT)]
     for (const name of LOCKFILES) {
         const lockfile = join(program.root, name)
         if (existsSync(lockfile)) parts.push(name, hashed(readFileSync(lockfile)))
     }
     for (const [path, text] of [...texts].sort(([a], [b]) => (a < b ? -1 : 1))) {
-        if (reachesEveryFile(path, text)) parts.push(path, hashed(text))
+        if (reachesEveryFile(path, text)) parts.push(relative(program.root, path), hashed(text))
     }
 
     return hashed(parts.join('\0'))
@@ -123,22 +145,28 @@ function reachesEveryFile(path, text) {
     return path.endsWith('.d.ts') || text.includes('declare global') || text.includes('declare module')
 }
 
-/** Each file's key: the context, and the hash of the component of the import graph it sits in, with all it reaches. */
+/**
+ * Each file's key: the context, and the hash of the component of the import graph it sits in, with all it reaches.
+ * A file counts by its text and where in the project its imports are, because its line names them, and never by where it is itself.
+ */
 function keysOf(program, texts, scripts, context) {
     const edges = new Map()
     const own = new Map()
     for (const [path, text] of texts) {
         const imported = ts.preProcessFile(scripts.get(path) ?? text, true, true).importedFiles.map((each) => each.fileName)
         const reached = []
+        const places = []
         const outside = []
         for (const specifier of imported) {
             const resolved = program.resolveAbsolute(specifier, path)
             if (!resolved) continue
-            if (texts.has(resolved)) reached.push(resolved)
-            else if (!resolved.includes('/node_modules/')) outside.push(resolved, existsSync(resolved) ? hashed(readFileSync(resolved)) : '')
+            if (texts.has(resolved)) {
+                reached.push(resolved)
+                places.push(relative(program.root, resolved))
+            } else if (!resolved.includes('/node_modules/')) outside.push(relative(program.root, resolved), existsSync(resolved) ? hashed(readFileSync(resolved)) : '')
         }
         edges.set(path, [...new Set(reached)].sort())
-        own.set(path, hashed([path, text, ...outside].join('\0')))
+        own.set(path, hashed([text, ...places.sort(), ...outside].join('\0')))
     }
     const deep = componentHashes(edges, own)
 
@@ -203,6 +231,11 @@ function componentHashes(edges, own) {
     }
 
     return new Map([...edges.keys()].map((path) => [path, hashOf.get(component.get(path))]))
+}
+
+/** `text` as it reads inside a JSON string. */
+function inJson(text) {
+    return JSON.stringify(text).slice(1, -1)
 }
 
 function hashed(text) {
