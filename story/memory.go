@@ -6,7 +6,11 @@ import (
 	"time"
 )
 
-const notAMemoryFile = "{not json"
+const (
+	notAMemoryFile        = "{not json"
+	serviceStopsWithin    = 20 * time.Second
+	serviceRestartsWithin = 90 * time.Second
+)
 
 // MemoryFile is the project's saved detector memory, read and changed by the relay one step at a time.
 type MemoryFile struct {
@@ -83,6 +87,24 @@ func (m *MemoryFile) Ages(by time.Duration) {
 
 	m.story.steps = append(m.story.steps, StepOf("ages the memory file by %s", by.String()))
 	m.changes("age", "", "", int(by.Seconds()))
+}
+
+func (m *MemoryFile) AgesAcrossARestart(by time.Duration) {
+	m.story.t.Helper()
+
+	m.StopsTheService()
+	m.Ages(by)
+	m.story.WaitsForTheService("hooks", serviceRestartsWithin)
+}
+
+func (m *MemoryFile) StopsTheService() {
+	m.story.t.Helper()
+
+	service := m.story.TheService("journal-serve")
+
+	m.story.Exits(m.story.StopsAService(service.Pid, Terminates), 0)
+	m.story.EventuallyGone(service.Pid, serviceStopsWithin)
+	m.EventuallyHoldsEntries(serviceStopsWithin)
 }
 
 func (m *MemoryFile) Stamp(build string) {

@@ -143,6 +143,12 @@ func (s *Story) TestCheckout() string {
 	return s.project + "/.journal/worktrees/story-engine"
 }
 
+func (s *Story) CountsFromHere() {
+	if !s.rehearsal {
+		s.began = costsOf(s.project)
+	}
+}
+
 func (s *Story) Cost(name string) int {
 	if s.rehearsal {
 		return 0

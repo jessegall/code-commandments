@@ -62,6 +62,8 @@ LANGUAGE_SAMPLES = {
 }
 TORN_DOWN_WITHIN_SECONDS = 3
 DETECTOR_MEMORY = os.path.join(".journal", "plugin-data", "code-commandments", "detector-memories.json")
+NANOSECONDS = 1_000_000_000
+STORY_RULE = os.path.join(".commandments", "custom", "StoryCallDetector.json")
 AGENT_LINES = re.compile(r"agent-lines?[: ]\s*(\d+(?:(?:,\s*|\s+and\s+)\d+)*)")
 
 
@@ -189,6 +191,8 @@ class Relay(socketserver.ThreadingTCPServer):
             return self.throwaway_step(asked)
         if asked.kind == "memory-file":
             return self.memory_file_step(asked)
+        if asked.kind == "story-rule":
+            return self.story_rule_step(asked)
         argv, stdin, folder = self.command_of(asked), asked.stdin, self.folder_of(asked)
         environment = self.environment_of(asked)
         try:
@@ -364,6 +368,11 @@ class Relay(socketserver.ThreadingTCPServer):
             return Answer(1, "", f"these throwaway processes outlived their teardown: {left}\n")
         return Answer(0)
 
+    def story_rule_step(self, asked: Asked) -> Answer:
+        """Rewrite the one project rule the tiny project keeps for stories, the only file of its settings a story may change."""
+        written_whole(os.path.join(self.project, STORY_RULE), asked.stdin)
+        return Answer(0)
+
     def memory_file_step(self, asked: Asked) -> Answer:
         """Read, age, stamp, replace or remove the project's saved detector memory, the one file this step can reach.
         A story ages it while the service is stopped, as it stops a service for a restart, so nothing writes it at once."""
@@ -381,7 +390,7 @@ class Relay(socketserver.ThreadingTCPServer):
             saved = json.load(read)
         if asked.action == "age":
             for verdict in verdicts_of(saved):
-                verdict["Used"] -= asked.many
+                verdict["Used"] -= asked.many * NANOSECONDS
         elif asked.action == "stamp":
             saved["Build"] = asked.name
         else:

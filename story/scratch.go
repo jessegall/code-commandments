@@ -66,6 +66,18 @@ func (s *Story) Links(sample Sample, file, target string) string {
 	return path
 }
 
+func (s *Story) RewritesTheStoryRule(from, to string) {
+	s.t.Helper()
+
+	s.steps = append(s.steps, StepOf("rewrites the project's own rule"))
+
+	s.t.Cleanup(func() { _, _ = s.journal.RewritesTheStoryRule(from) })
+
+	if ran, err := s.journal.RewritesTheStoryRule(to); err != nil || ran.Code != 0 {
+		s.Fails("the project's own rule could not be rewritten: " + failure(ran, err))
+	}
+}
+
 func (s *Story) looksAt(checkout string) {
 	s.t.Helper()
 

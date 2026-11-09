@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -142,6 +143,15 @@ func (s *Story) Remembered(files int) {
 	s.t.Helper()
 
 	s.CostIs(ledger.DetectorFilesRemembered, files)
+}
+
+func (s *Story) SaysTheSameSinsAs(first, again Ran) {
+	s.t.Helper()
+
+	was, is := namedAt.FindAllString(first.Text(), -1), namedAt.FindAllString(again.Text(), -1)
+	if len(was) == 0 || !slices.Equal(was, is) {
+		s.Fails(fmt.Sprintf("the first answer named %v and the next named %v; the next says:\n%s", was, is, again.Text()))
+	}
 }
 
 // ProgressLine is one line of progress an answer carried, read from the error text the sins alias shows by setting COMMANDMENTS_PLAIN_PROGRESS: the phase counting ("reading" or "detector"), how far it had got and out of how many.

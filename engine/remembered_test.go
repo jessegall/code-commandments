@@ -142,6 +142,26 @@ func TestTheSameContentsAtAnotherPathAreTheSameFile(t *testing.T) {
 	}
 }
 
+func TestTwoFilesOfTheSameContentsInOneJudgingAreAskedOnce(t *testing.T) {
+	memory := engine.Remembering(time.Now)
+	detector := &asking{finds: true}
+
+	tree, paths := treeHolding(t, "twin", "twin")
+	found := memory.Find(tree, detector.find)
+
+	if detector.asked != 1 {
+		t.Errorf("the detector was asked %d times about one file's contents", detector.asked)
+	}
+
+	files := []string{found[0].File(), found[1].File()}
+	slices.Sort(files)
+	slices.Sort(paths)
+
+	if len(found) != 2 || !slices.Equal(files, paths) {
+		t.Errorf("each twin should be answered under its own path, and the answers are %v", found)
+	}
+}
+
 func TestAFingerprintIsForgottenAfterTwelveHours(t *testing.T) {
 	now := time.Now()
 	memory := engine.Remembering(func() time.Time { return now })

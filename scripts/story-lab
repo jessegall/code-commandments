@@ -23,6 +23,8 @@ if [ ! -d "$lab/.git" ]; then
     git -C "$lab" -c user.name=stories -c user.email=stories@localhost commit -q -m "The tiny project"
 fi
 
+cp -R "$root/stories/tiny/.commandments/." "$lab/.commandments/"
+
 if [ ! -x "$lab/.journal/bin/journal" ]; then
     (cd "$lab" && sh "$journal_source/install.sh")
 fi

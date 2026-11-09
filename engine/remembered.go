@@ -63,9 +63,9 @@ func RememberingFrom(now func() time.Time, verdicts []Verdict) *Remembered {
 
 func (r *Remembered) Find(codebase *Codebase, find func(*Codebase) []Match) []Match {
 	opened := codebase.opened()
-	answered, asked := r.recalled(opened)
+	answered, asked, twins := r.recalled(opened)
 	CountedJudged(len(asked))
-	CountedRemembered(len(opened) - len(asked))
+	CountedRemembered(len(opened) - len(asked) - len(twins))
 
 	if len(asked) == 0 {
 		return answered
@@ -73,11 +73,16 @@ func (r *Remembered) Find(codebase *Codebase, find func(*Codebase) []Match) []Ma
 
 	matches := find(codebase.Reporting(slices.Collect(maps.Keys(asked))...))
 	r.remember(asked, matches)
+	answered = append(answered, matches...)
 
-	return append(answered, matches...)
+	if len(twins) == 0 {
+		return answered
+	}
+
+	return append(answered, r.Find(codebase.Reporting(twins...), find)...)
 }
 
-func (r *Remembered) recalled(files []*File) ([]Match, map[string]unjudged) {
+func (r *Remembered) recalled(files []*File) ([]Match, map[string]unjudged, []string) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
@@ -85,26 +90,35 @@ func (r *Remembered) recalled(files []*File) ([]Match, map[string]unjudged) {
 	r.sweep(now)
 
 	var answered []Match
+	var twins []string
 	asked := map[string]unjudged{}
+	beingAsked := map[uint64]bool{}
 
 	for _, file := range files {
 		fingerprint, printed := file.fingerprint()
 
-		if !printed || !r.knows(fingerprint, now) || !file.holdsNodes(r.found[fingerprint]) {
-			asked[file.Path] = unjudged{file, fingerprint, printed}
+		if printed && r.knows(fingerprint, now) && file.holdsNodes(r.found[fingerprint]) {
+			r.judged[fingerprint] = now.UnixNano()
+			r.changed = true
+
+			for _, id := range r.found[fingerprint] {
+				answered = append(answered, file.Match(id))
+			}
 
 			continue
 		}
 
-		r.judged[fingerprint] = now.UnixNano()
-		r.changed = true
+		if printed && beingAsked[fingerprint] {
+			twins = append(twins, file.Path)
 
-		for _, id := range r.found[fingerprint] {
-			answered = append(answered, file.Match(id))
+			continue
 		}
+
+		beingAsked[fingerprint] = printed
+		asked[file.Path] = unjudged{file, fingerprint, printed}
 	}
 
-	return answered, asked
+	return answered, asked, twins
 }
 
 func (r *Remembered) knows(fingerprint uint64, now time.Time) bool {

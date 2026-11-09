@@ -138,6 +138,10 @@ func (j Journal) ChangesTheMemoryFile(action, build, text string, seconds int) (
 	return j.ask(request{Kind: "memory-file", Action: action, Name: build, Stdin: text, Many: seconds})
 }
 
+func (j Journal) RewritesTheStoryRule(text string) (Ran, error) {
+	return j.ask(request{Kind: "story-rule", Stdin: text})
+}
+
 func (j Journal) Removes(path string) (Ran, error) {
 	return j.ask(request{Kind: "remove", Path: path})
 }

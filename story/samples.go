@@ -1,5 +1,14 @@
 package story
 
+import (
+	"fmt"
+	"time"
+)
+
+func (s *Story) FreshPython(label, text string) Sample {
+	return Python(label, fmt.Sprintf("%s\n# %s %d\n", text, s.t.Name(), time.Now().UnixNano()))
+}
+
 var (
 	Clean = Python("a clean function", "def total(items):\n    return sum(items)\n")
 

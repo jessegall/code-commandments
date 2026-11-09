@@ -5,6 +5,7 @@ package tools
 import (
 	"testing"
 
+	"github.com/jessegall/code-commandments/cli/ledger"
 	"github.com/jessegall/code-commandments/story"
 )
 
@@ -28,9 +29,9 @@ func TestTheMemoryCountersMoveWithAJudging(t *testing.T) {
 	s.GivenTheTreeIsHeldFor(s.TestCheckout())
 	s.Writes(story.ElseAfterRaise, "twice.py")
 
-	s.Exits(s.AsksIn(s.TestCheckout(), "sins", "--changes", "--sin", "redundant-python-else"), 1)
-	s.Judged(1)
+	s.Exits(s.AsksIn(s.TestCheckout(), "sins", "--changes", "--sin=redundant-python-else"), 1)
+	s.CostAtLeast(ledger.DetectorFilesJudged, 1)
 
-	s.Exits(s.AsksIn(s.TestCheckout(), "sins", "--changes", "--sin", "redundant-python-else"), 1)
-	s.Remembered(1)
+	s.Exits(s.AsksIn(s.TestCheckout(), "sins", "--changes", "--sin=redundant-python-else"), 1)
+	s.CostAtLeast(ledger.DetectorFilesRemembered, 1)
 }

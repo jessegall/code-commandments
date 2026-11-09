@@ -28,7 +28,7 @@ func TestTheMemoryFileIsReadAndAgedByTheRelay(t *testing.T) {
 		s.Fails("ageing changed how many entries the file holds")
 	}
 
-	if before.Oldest-after.Oldest != int64((13*time.Hour).Seconds()) {
+	if before.Oldest-after.Oldest != int64(13*time.Hour) {
 		s.Fails("the oldest entry did not move by thirteen hours")
 	}
 }
