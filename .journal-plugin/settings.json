@@ -45,7 +45,7 @@
         "type": "flag",
         "kind": "flag",
         "default": false,
-        "help": "Only with Judge workers on. On, every worker is judged as it writes, which costs a lane of memory per worker. Off, its edits are not judged as it writes."
+        "help": "Only with Judge workers on. On, every worker is judged as it writes. Off, its edits are not judged as it writes."
     },
     {
         "key": "judge_hand_ins",
@@ -70,6 +70,14 @@
         "kind": "flag",
         "default": false,
         "help": "Only with Judge workers on. On, a worker's merge is judged BEFORE it lands, over what its branch adds on top of the branch it merges into, and a merge that would bring in sins is refused: the work goes back to that worker with the findings and the merger is told it was not allowed. Off, a merge lands and is judged afterwards. This is the one thing the journal waits for us on, so it allows the merge and says so rather than holding it when the judging runs long."
+    },
+    {
+        "key": "judge_edit_window",
+        "title": "Seconds to gather live edits",
+        "type": "number",
+        "kind": "number",
+        "default": 5,
+        "help": "How long one agent's live edits are gathered before they are judged together as a group. An edit alone in that time is judged by itself. Zero judges each edit as it comes."
     },
     {
         "key": "judge_files_at_once",

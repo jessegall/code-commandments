@@ -39,6 +39,7 @@ func TestEverySettingThisPlanAddsSaysWhatItIsAndWhatItDefaultsTo(t *testing.T) {
 		"judge_merges":        true,
 		"judge_nodes_held":    float64(0),
 		"judge_files_at_once": float64(0),
+		"judge_edit_window":   float64(5),
 	}
 
 	found := map[string]declared{}

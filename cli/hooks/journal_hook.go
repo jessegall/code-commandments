@@ -225,8 +225,8 @@ func answerWith(given map[string]any, runs func(Hook) bool, reportsSins bool) Jo
 		return JournalAnswer{Refuse: &refusal}
 	}
 
-	if why := notForThisRole(moment); why != "" {
-		return JournalAnswer{Whisper: &why}
+	if notForThisRole(moment) != "" {
+		return JournalAnswer{}
 	}
 
 	event := NewEvent(moment.HookPayload(), workspace.ProjectRoot(cwd))
@@ -746,7 +746,7 @@ func (s *advisers) drained(within time.Duration) {
 }
 
 const (
-	batchedWithin = 2 * time.Second
+	batchedWithin = 5 * time.Second
 	batchedFiles  = 100
 
 	gatheringPause = 100 * time.Millisecond
@@ -940,7 +940,16 @@ func (a *adviser) gathering(now time.Time) bool {
 		return false
 	}
 
-	return now.Sub(time.Unix(0, stamped)) < batchedWithin
+	return now.Sub(time.Unix(0, stamped)) < gatheredFor(a.pending[0].given)
+}
+
+func gatheredFor(given map[string]any) time.Duration {
+	seconds, chosen := MomentOf(given).Settings[editWindowKey].(float64)
+	if !chosen || seconds < 0 {
+		return batchedWithin
+	}
+
+	return time.Duration(seconds * float64(time.Second))
 }
 
 func stamp(root string) int64 {

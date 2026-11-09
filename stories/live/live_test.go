@@ -85,6 +85,18 @@ func TestAnEditBackToAJudgedTextIsToldFromMemory(t *testing.T) {
 	s.CostAtLeast(ledger.DetectorFilesRemembered, 1)
 }
 
+func TestTwoEditsInOneWindowAreJudgedOnceAsAGroup(t *testing.T) {
+	s, ada := editing(t)
+	s.CountsFromHere()
+
+	ada.Edits(sinful(s, "the first of two edits"), "first.py")
+	ada.Edits(sinful(s, "the second of two edits"), "second.py")
+	told := ada.Hears("first.py")
+
+	s.Says(told, "second.py")
+	s.CostIs(ledger.JudgingsFromTheTree, 1)
+}
+
 func TestARealEditCostsOnlyItsFile(t *testing.T) {
 	s, ada := editing(t)
 	s.Given("twelve different sinful files, judged", func() {

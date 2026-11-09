@@ -1,6 +1,6 @@
 {
     "name": "code-commandments",
-    "version": "7.18.55",
+    "version": "7.18.56",
     "title": "Code Commandments",
     "description": "The static code checker judges the codebase, its hooks run inside the journal, and every rule and language is a switch in its settings",
     "journal": "2.267.16",
@@ -47,7 +47,7 @@
     },
     "env": {
         "CLAUDE_PROJECT_DIR": "{project}",
-        "COMMANDMENTS_RELEASE": "v7.18.55"
+        "COMMANDMENTS_RELEASE": "v7.18.56"
     },
     "setup": [
         {
@@ -118,7 +118,7 @@
         },
         "judge_worker_edits": {
             "title": "Judge a worker's live edits",
-            "help": "Only with Judge workers on. On, every worker is judged as it writes, which costs a lane of memory per worker. Off, its edits are not judged as it writes.",
+            "help": "Only with Judge workers on. On, every worker is judged as it writes. Off, its edits are not judged as it writes.",
             "type": "flag",
             "default": "false",
             "group": "Workers"
@@ -143,6 +143,13 @@
             "type": "flag",
             "default": "false",
             "group": "Workers"
+        },
+        "judge_edit_window": {
+            "title": "Seconds to gather live edits",
+            "help": "How long one agent's live edits are gathered before they are judged together as a group. An edit alone in that time is judged by itself. Zero judges each edit as it comes.",
+            "type": "number",
+            "default": "5",
+            "group": "Performance"
         },
         "judge_files_at_once": {
             "title": "Files a checkout may differ by",

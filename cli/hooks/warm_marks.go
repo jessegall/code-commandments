@@ -113,7 +113,7 @@ func AgainstTheProgramNarrowed(marking Marking, files []string, rulesFor func(st
 		return nil, 0, why
 	}
 
-	here := slices.DeleteFunc(slices.Clone(files), func(path string) bool { return warm.Mark(path) == "" })
+	here := slices.DeleteFunc(slices.Compact(slices.Sorted(slices.Values(files))), func(path string) bool { return warm.Mark(path) == "" })
 	if len(here) == 0 {
 		return nil, 0, filesNotOnDisk
 	}

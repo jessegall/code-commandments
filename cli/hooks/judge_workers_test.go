@@ -1,6 +1,9 @@
 package hooks
 
-import "testing"
+import (
+	"testing"
+	"time"
+)
 
 func TestWithJudgeWorkersOffNothingOfAWorkerIsJudged(t *testing.T) {
 	everythingElseOn := map[string]any{"judge_workers": false, "judge_worker_edits": true, "judge_hand_ins": true, "judge_merges": true, "judge_before_merge": true}
@@ -54,5 +57,36 @@ func TestAWorkerGetsNoJudgingWhenItsEditsAreNotChosen(t *testing.T) {
 
 	if notForThisRole(moment) == "" {
 		t.Error("a worker's edit went on to be judged with live edits off")
+	}
+}
+
+func TestAnAgentsLiveEditsAreGatheredForFiveSecondsByDefault(t *testing.T) {
+	if got := gatheredFor(map[string]any{"settings": map[string]any{}}); got != 5*time.Second {
+		t.Errorf("edits are gathered for %v", got)
+	}
+}
+
+func TestTheWindowForLiveEditsIsASetting(t *testing.T) {
+	chosen := map[string]any{"settings": map[string]any{"judge_edit_window": float64(2)}}
+
+	if got := gatheredFor(chosen); got != 2*time.Second {
+		t.Errorf("a window of 2 seconds gathers for %v", got)
+	}
+
+	alone := map[string]any{"settings": map[string]any{"judge_edit_window": float64(0)}}
+
+	if got := gatheredFor(alone); got != 0 {
+		t.Errorf("a window of 0 gathers for %v", got)
+	}
+}
+
+func TestAWorkerWithItsJudgingOffHearsNothingAtAll(t *testing.T) {
+	root := t.TempDir()
+	given := map[string]any{"event": "PostToolUse", "cwd": root, "role": "worker", "settings": map[string]any{"judge_workers": false}}
+
+	answer := answerWith(given, every, true)
+
+	if answer.Whisper != nil || answer.Refuse != nil {
+		t.Errorf("a worker with judging off was told something: %+v", answer)
 	}
 }
