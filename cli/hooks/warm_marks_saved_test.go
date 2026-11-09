@@ -51,7 +51,35 @@ func TestAFileTheParserGotNothingOutOfIsToldAsNotParsed(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if !nothingCameOutOf([]*contract.Stream{stream}) {
+	if !someFileDoesNotParse([]*contract.Stream{stream}) {
 		t.Error("a file with an error and no tree was taken for a clean one")
+	}
+}
+
+func TestAFileTheParserGotPartOfIsToldAsNotParsed(t *testing.T) {
+	stream, err := contract.ReadAll(bytes.NewBufferString(`{"header":{"contract":"tree","version":4,"language":"typescript","bridge":{"name":"t","version":"1"},"roots":["/p"]}}
+{"file":{"path":"/p/a.ts","language":"typescript","errors":2,"comments":[],"root":{"id":0,"kind":"SourceFile","role":"other","span":[0,9,1],"children":[{"id":1,"kind":"Identifier","role":"expression","span":[0,1,1],"field":"statements"}]}}}
+{"trailer":{"files":1}}
+`))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if !someFileDoesNotParse([]*contract.Stream{stream}) {
+		t.Error("a file with errors and part of a tree was taken for a clean one")
+	}
+}
+
+func TestAFileWithoutErrorsIsNotToldAsNotParsed(t *testing.T) {
+	stream, err := contract.ReadAll(bytes.NewBufferString(`{"header":{"contract":"tree","version":4,"language":"python","bridge":{"name":"t","version":"1"},"roots":["/p"]}}
+{"file":{"path":"/p/a.py","language":"python","errors":0,"comments":[],"root":{"id":0,"kind":"Module","role":"other","span":[0,1,1]}}}
+{"trailer":{"files":1}}
+`))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if someFileDoesNotParse([]*contract.Stream{stream}) {
+		t.Error("a file without errors was told as not parsed")
 	}
 }

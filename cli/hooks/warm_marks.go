@@ -179,7 +179,7 @@ func AgainstTheProgramNarrowed(marking Marking, files []string, rulesFor func(st
 
 		read = time.Since(reading)
 
-		if nothingCameOutOf(streams) {
+		if someFileDoesNotParse(streams) {
 			return nil, read, parseFailed
 		}
 
@@ -226,10 +226,10 @@ func countDetectorFiles(costs ledger.Ledger, before engine.Work, checkout string
 	costs.Counts(ledger.DetectorFilesRemembered, int(did.Remembered), checkout)
 }
 
-func nothingCameOutOf(streams []*contract.Stream) bool {
+func someFileDoesNotParse(streams []*contract.Stream) bool {
 	for _, stream := range streams {
 		for _, file := range stream.Files {
-			if file.Errors > 0 && len(file.Root.Children) == 0 {
+			if file.Errors > 0 {
 				return true
 			}
 		}
