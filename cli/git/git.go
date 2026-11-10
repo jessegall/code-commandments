@@ -2,6 +2,7 @@
 package git
 
 import (
+	"errors"
 	"io/fs"
 	"os"
 	"os/exec"
@@ -394,7 +395,7 @@ func ChangedLinesOf(root, file string) ChangedLines {
 }
 
 func ChangedLinesSince(root, commit, file string) ChangedLines {
-	if ask(root, "ls-files", "--", file) == "" {
+	if tracked, known := tracking(root, file); known && !tracked {
 		return Everywhere()
 	}
 
@@ -552,7 +553,22 @@ func leadingInt(text string) int {
 }
 
 func Tracks(root, path string) bool {
-	return ask(root, "ls-files", "--", path) != ""
+	tracked, _ := tracking(root, path)
+
+	return tracked
+}
+
+func tracking(root, path string) (tracked, known bool) {
+	counted()
+
+	err := exec.Command("git", "--no-optional-locks", "-C", root, "ls-files", "--error-unmatch", "--", path).Run()
+
+	var untracked *exec.ExitError
+	if errors.As(err, &untracked) && untracked.ExitCode() == 1 {
+		return false, true
+	}
+
+	return err == nil, err == nil
 }
 
 func StopTracking(root, path string) (string, error) {

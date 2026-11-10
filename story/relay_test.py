@@ -9,7 +9,7 @@ import threading
 import time
 import unittest
 
-from relay import Process, Relay
+from relay import Answer, MemoryReading, Process, Relay, Started
 
 
 class RelayTest(unittest.TestCase):
@@ -33,10 +33,10 @@ class RelayTest(unittest.TestCase):
         self.relay.server_close()
         self.folder.cleanup()
 
-    def ask(self, asked: dict) -> dict:
+    def ask(self, asked: dict) -> Answer:
         with socket.create_connection(self.relay.server_address) as connection:
             connection.sendall((json.dumps(asked) + "\n").encode())
-            return json.loads(connection.makefile().readline())
+            return Answer(**json.loads(connection.makefile().readline()))
 
     def plugin_service(self) -> subprocess.Popen:
         folder = os.path.join(self.project, ".journal", "plugins", "code-commandments")
@@ -64,7 +64,7 @@ class RelayTest(unittest.TestCase):
         return sleeper
 
     def listed(self) -> list[list[str]]:
-        return [line.split("\t") for line in self.ask({"kind": "processes"})["out"].splitlines()]
+        return [line.split("\t") for line in self.ask({"kind": "processes"}).out.splitlines()]
 
     def waits_until(self, holds) -> None:
         deadline = time.monotonic() + 5
@@ -95,77 +95,77 @@ class RelayTest(unittest.TestCase):
     def test_a_listed_process_is_stopped(self) -> None:
         service = self.plugin_service()
         answer = self.ask({"kind": "stop-service", "pid": str(service.pid), "action": "SIGTERM"})
-        self.assertEqual(answer["code"], 0, answer["err"])
+        self.assertEqual(answer.code, 0, answer.err)
         service.wait(timeout=5)
 
     def test_a_process_that_is_not_the_plugins_is_refused_and_lives_on(self) -> None:
         sleeper = self.sleeper()
         answer = self.ask({"kind": "stop-service", "pid": str(sleeper.pid), "action": "SIGKILL"})
-        self.assertEqual(answer["code"], 126)
+        self.assertEqual(answer.code, 126)
         self.assertIsNone(sleeper.poll())
 
     def test_a_signal_that_does_not_stop_is_refused(self) -> None:
         service = self.plugin_service()
         answer = self.ask({"kind": "stop-service", "pid": str(service.pid), "action": "SIGHUP"})
-        self.assertEqual(answer["code"], 126)
+        self.assertEqual(answer.code, 126)
         self.assertIsNone(service.poll())
 
     def test_waiting_for_a_running_service_answers_at_once(self) -> None:
         self.services_say("true")
         answer = self.ask({"kind": "wait-service", "name": "hooks", "many": 5})
-        self.assertEqual(answer["code"], 0, answer["err"])
-        self.assertIn('"running": true', answer["out"])
+        self.assertEqual(answer.code, 0, answer.err)
+        self.assertIn('"running": true', answer.out)
 
     def test_waiting_for_a_service_that_never_runs_stops_at_the_deadline(self) -> None:
         self.services_say("false")
         answer = self.ask({"kind": "wait-service", "name": "hooks", "many": 1})
-        self.assertEqual(answer["code"], 124)
-        self.assertIn("hooks", answer["err"])
+        self.assertEqual(answer.code, 124)
+        self.assertIn("hooks", answer.err)
 
-    def throwaway(self) -> dict:
+    def throwaway(self) -> Started:
         path = os.path.join(self.project, ".journal", "plugins", "code-commandments", "bin", "commandments-release")
         os.makedirs(os.path.dirname(path), exist_ok=True)
         with open(path, "w") as program:
             program.write("#!/bin/sh\nsleep 86400\nexit 0\n")
         os.chmod(path, os.stat(path).st_mode | stat.S_IEXEC)
         answer = self.ask({"kind": "throwaway", "action": "start", "name": "hooks"})
-        self.assertEqual(answer["code"], 0, answer["err"])
-        return json.loads(answer["out"])
+        self.assertEqual(answer.code, 0, answer.err)
+        return Started(**json.loads(answer.out))
 
     def alive(self, pid: int) -> bool:
         return any(int(each[0]) == pid for each in self.listed())
 
     def test_a_throwaway_service_is_listed_under_its_own_parent_in_its_own_folder(self) -> None:
         started = self.throwaway()
-        self.waits_until(lambda: self.alive(started["pid"]))
-        service = next(each for each in self.listed() if int(each[0]) == started["pid"])
-        self.assertEqual(int(service[1]), started["parent"])
-        self.assertTrue(started["socket"].startswith("/tmp/story-"))
-        self.assertLess(len(started["socket"]), 104)
-        self.assertEqual(self.ask({"kind": "throwaway", "action": "teardown"})["code"], 0)
+        self.waits_until(lambda: self.alive(started.pid))
+        service = next(each for each in self.listed() if int(each[0]) == started.pid)
+        self.assertEqual(int(service[1]), started.parent)
+        self.assertTrue(started.socket.startswith("/tmp/story-"))
+        self.assertLess(len(started.socket), 104)
+        self.assertEqual(self.ask({"kind": "throwaway", "action": "teardown"}).code, 0)
 
     def test_ending_a_throwaway_parent_leaves_the_service_to_notice_for_itself(self) -> None:
         started = self.throwaway()
-        self.waits_until(lambda: self.alive(started["pid"]))
-        self.assertEqual(self.ask({"kind": "throwaway", "action": "end", "pid": str(started["parent"])})["code"], 0)
-        self.assertTrue(self.alive(started["pid"]))
-        self.assertEqual(self.ask({"kind": "throwaway", "action": "teardown"})["code"], 0)
+        self.waits_until(lambda: self.alive(started.pid))
+        self.assertEqual(self.ask({"kind": "throwaway", "action": "end", "pid": str(started.parent)}).code, 0)
+        self.assertTrue(self.alive(started.pid))
+        self.assertEqual(self.ask({"kind": "throwaway", "action": "teardown"}).code, 0)
 
     def test_a_parent_the_relay_did_not_start_is_refused_and_lives_on(self) -> None:
         sleeper = self.sleeper()
         answer = self.ask({"kind": "throwaway", "action": "end", "pid": str(sleeper.pid)})
-        self.assertEqual(answer["code"], 126)
+        self.assertEqual(answer.code, 126)
         self.assertIsNone(sleeper.poll())
 
     def test_a_teardown_leaves_no_throwaway_process_or_folder_behind(self) -> None:
         started = self.throwaway()
-        self.waits_until(lambda: self.alive(started["pid"]))
-        self.assertEqual(self.ask({"kind": "throwaway", "action": "teardown"})["code"], 0)
-        self.waits_until(lambda: not self.alive(started["pid"]))
-        self.assertFalse(os.path.exists(os.path.dirname(started["socket"])))
+        self.waits_until(lambda: self.alive(started.pid))
+        self.assertEqual(self.ask({"kind": "throwaway", "action": "teardown"}).code, 0)
+        self.waits_until(lambda: not self.alive(started.pid))
+        self.assertFalse(os.path.exists(os.path.dirname(started.socket)))
 
     def test_a_kind_of_service_that_does_not_exist_is_refused(self) -> None:
-        self.assertEqual(self.ask({"kind": "throwaway", "action": "start", "name": "nginx"})["code"], 126)
+        self.assertEqual(self.ask({"kind": "throwaway", "action": "start", "name": "nginx"}).code, 126)
 
     def saved_memory(self) -> str:
         path = os.path.join(self.project, ".journal", "plugin-data", "code-commandments", "detector-memories.json")
@@ -176,17 +176,17 @@ class RelayTest(unittest.TestCase):
                        "Across": [{"Fingerprint": 2, "Used": 3000, "Judged": [2]}]}, written)
         return path
 
-    def memory(self) -> dict:
-        return json.loads(self.ask({"kind": "memory-file", "action": "read"})["out"])
+    def memory(self) -> MemoryReading:
+        return MemoryReading(**json.loads(self.ask({"kind": "memory-file", "action": "read"}).out))
 
     def test_the_memory_file_is_read_in_the_shape_the_service_writes(self) -> None:
         self.saved_memory()
         reading = self.memory()
-        self.assertEqual((reading["entries"], reading["build"], reading["oldest"], reading["newest"]), (2, "build-1", 1000, 3000))
+        self.assertEqual((reading.entries, reading.build, reading.oldest, reading.newest), (2, "build-1", 1000, 3000))
 
     def test_ageing_the_memory_file_moves_every_used_and_nothing_else(self) -> None:
         path = self.saved_memory()
-        self.assertEqual(self.ask({"kind": "memory-file", "action": "age", "many": 28800})["code"], 0)
+        self.assertEqual(self.ask({"kind": "memory-file", "action": "age", "many": 28800}).code, 0)
         with open(path) as read:
             saved = json.load(read)
         self.assertEqual(saved, {"Build": "build-1", "Rules": ["First", "Second"],
@@ -196,31 +196,31 @@ class RelayTest(unittest.TestCase):
     def test_a_stamped_memory_file_holds_the_new_build(self) -> None:
         self.saved_memory()
         self.ask({"kind": "memory-file", "action": "stamp", "name": "build-2"})
-        self.assertEqual(self.memory()["build"], "build-2")
+        self.assertEqual(self.memory().build, "build-2")
 
     def test_a_memory_file_replaced_with_garbage_reads_as_unreadable(self) -> None:
         self.saved_memory()
         self.ask({"kind": "memory-file", "action": "replace", "stdin": "{not json"})
         reading = self.memory()
-        self.assertTrue(reading["present"])
-        self.assertFalse(reading["readable"])
+        self.assertTrue(reading.present)
+        self.assertFalse(reading.readable)
 
     def test_a_removed_memory_file_reads_as_not_there(self) -> None:
         self.saved_memory()
         self.ask({"kind": "memory-file", "action": "remove"})
-        self.assertFalse(self.memory()["present"])
+        self.assertFalse(self.memory().present)
 
     def test_an_action_the_memory_file_does_not_have_is_refused(self) -> None:
         self.saved_memory()
-        self.assertEqual(self.ask({"kind": "memory-file", "action": "burn"})["code"], 126)
+        self.assertEqual(self.ask({"kind": "memory-file", "action": "burn"}).code, 126)
 
     def test_a_command_runs_in_the_folder_the_story_names(self) -> None:
         worktree = os.path.join(self.project, "worktree")
         os.makedirs(worktree)
         ran = self.ask({"kind": "command", "argv": ["environment", "list"], "in": worktree})
-        self.assertEqual(ran["code"], 0)
-        self.assertEqual(ran["out"], "journal environment list\n")
-        self.assertEqual(ran["err"].strip(), worktree)
+        self.assertEqual(ran.code, 0)
+        self.assertEqual(ran.out, "journal environment list\n")
+        self.assertEqual(ran.err.strip(), worktree)
 
     def test_a_hook_for_a_storys_agent_runs_as_that_agent_and_not_as_the_relays_session(self) -> None:
         os.environ["JOURNAL_AGENT_SESSION"] = "the-session-that-started-the-relay"
@@ -228,7 +228,7 @@ class RelayTest(unittest.TestCase):
         hook = os.path.join(self.project, ".journal", "bin", "journal-hook")
         with open(hook, "w") as program:
             program.write("#!/bin/sh\nenv | grep -E '^(AGENT_JOURNAL_ACTIVE|JOURNAL_)' | sort\n")
-        said = self.ask({"kind": "hook", "stdin": "{}", "actor": "41", "role": "worker"})["out"].splitlines()
+        said = self.ask({"kind": "hook", "stdin": "{}", "actor": "41", "role": "worker"}).out.splitlines()
         self.assertEqual(said, ["AGENT_JOURNAL_ACTIVE=1", "JOURNAL_ACTOR=worker:41", "JOURNAL_ENV=story-engine", "JOURNAL_ROLE=worker"])
 
     def test_a_line_a_hook_names_is_read_as_its_agent_and_handed_back(self) -> None:
@@ -238,7 +238,7 @@ class RelayTest(unittest.TestCase):
             program.write("#!/bin/sh\necho '{\"additionalContext\":\"agent-line:7\"}'\n")
         with open(os.path.join(bin, "journal"), "w") as program:
             program.write("#!/bin/sh\necho \"text: the sin for $JOURNAL_ACTOR, asked as $*\"\n")
-        said = self.ask({"kind": "hook", "stdin": "{}", "actor": "41", "role": "worker"})["out"]
+        said = self.ask({"kind": "hook", "stdin": "{}", "actor": "41", "role": "worker"}).out
         self.assertIn("text: the sin for worker:41, asked as agent-line show 7", said)
 
     def test_every_line_a_hook_names_at_once_is_read(self) -> None:
@@ -248,13 +248,13 @@ class RelayTest(unittest.TestCase):
             program.write("#!/bin/sh\necho '{\"additionalContext\":\"agent-lines 7, 8\"}'\n")
         with open(os.path.join(bin, "journal"), "w") as program:
             program.write("#!/bin/sh\necho \"text: asked as $*\"\n")
-        said = self.ask({"kind": "hook", "stdin": "{}", "actor": "41", "role": "worker"})["out"]
+        said = self.ask({"kind": "hook", "stdin": "{}", "actor": "41", "role": "worker"}).out
         self.assertIn("text: asked as agent-line show 7", said)
         self.assertIn("text: asked as agent-line show 8", said)
 
     def test_a_hook_reaches_the_journals_hook_entry_with_its_body(self) -> None:
         ran = self.ask({"kind": "hook", "stdin": '{"hook_event_name": "Stop"}'})
-        self.assertEqual(ran["out"], f'hook claude {self.project}\n{{"hook_event_name": "Stop"}}')
+        self.assertEqual(ran.out, f'hook claude {self.project}\n{{"hook_event_name": "Stop"}}')
 
     def alive(self, pid: int) -> bool:
         try:
@@ -265,16 +265,16 @@ class RelayTest(unittest.TestCase):
 
     def test_a_fake_agent_is_handed_a_process_of_its_own_in_a_session_of_its_own(self) -> None:
         ran = self.ask({"kind": "pid"})
-        pid = int(ran["out"])
+        pid = int(ran.out)
         try:
-            self.assertEqual(ran["code"], 0)
+            self.assertEqual(ran.code, 0)
             self.assertNotEqual(pid, os.getpid())
             self.assertNotEqual(os.getsid(pid), os.getsid(0))
         finally:
             self.ask({"kind": "pid", "action": "end", "pid": pid})
 
     def test_the_process_handed_out_holds_neither_claude_nor_codex_in_its_command_line(self) -> None:
-        pid = int(self.ask({"kind": "pid"})["out"])
+        pid = int(self.ask({"kind": "pid"}).out)
         try:
             command = self.command_line_of(pid)
             self.assertIn("sleep", command)
@@ -291,13 +291,13 @@ class RelayTest(unittest.TestCase):
         return subprocess.run(["ps", "-o", "command=", "-p", str(pid)], capture_output=True, text=True).stdout
 
     def test_a_process_is_ended_when_its_agent_ends(self) -> None:
-        pid = int(self.ask({"kind": "pid"})["out"])
+        pid = int(self.ask({"kind": "pid"}).out)
         self.assertTrue(self.alive(pid))
-        self.assertEqual(self.ask({"kind": "pid", "action": "end", "pid": pid})["code"], 0)
+        self.assertEqual(self.ask({"kind": "pid", "action": "end", "pid": pid}).code, 0)
         self.assertFalse(self.alive(pid))
 
     def test_every_process_still_handed_out_is_ended_when_the_relay_stops(self) -> None:
-        pids = [int(self.ask({"kind": "pid"})["out"]) for _ in range(3)]
+        pids = [int(self.ask({"kind": "pid"}).out) for _ in range(3)]
         self.relay.shutdown()
         self.relay.server_close()
         self.assertEqual([self.alive(pid) for pid in pids], [False, False, False])
@@ -311,27 +311,27 @@ class RelayTest(unittest.TestCase):
 
     def test_a_noun_outside_the_list_is_refused_and_never_run(self) -> None:
         ran = self.ask({"kind": "command", "argv": ["rule", "make", "anything"]})
-        self.assertEqual(ran["code"], 126)
-        self.assertIn("is not one of the journal nouns", ran["err"])
-        self.assertEqual(ran["out"], "")
+        self.assertEqual(ran.code, 126)
+        self.assertIn("is not one of the journal nouns", ran.err)
+        self.assertEqual(ran.out, "")
 
     def test_a_main_agent_is_started_only_in_the_story_environment(self) -> None:
         start = ["agent", "start", "story-ada-1", "claude", "main"]
         for elsewhere in ([], ["--environment", "development"]):
             ran = self.ask({"kind": "command", "argv": start + elsewhere})
-            self.assertEqual(ran["code"], 126)
-            self.assertIn("only in the test environment", ran["err"])
-        self.assertEqual(self.ask({"kind": "command", "argv": start + ["--environment", "story-engine"]})["code"], 0)
-        self.assertEqual(ran["out"], "")
+            self.assertEqual(ran.code, 126)
+            self.assertIn("only in the test environment", ran.err)
+        self.assertEqual(self.ask({"kind": "command", "argv": start + ["--environment", "story-engine"]}).code, 0)
+        self.assertEqual(ran.out, "")
 
     def test_a_worker_agent_may_still_be_started(self) -> None:
         ran = self.ask({"kind": "command", "argv": ["agent", "start", "story-grace-1", "claude", "worker", "--environment", "story-engine"]})
-        self.assertEqual(ran["code"], 0)
+        self.assertEqual(ran.code, 0)
 
     def test_a_folder_outside_the_project_is_refused(self) -> None:
         ran = self.ask({"kind": "command", "argv": ["environment", "list"], "in": "/"})
-        self.assertEqual(ran["code"], 126)
-        self.assertIn("outside the project", ran["err"])
+        self.assertEqual(ran.code, 126)
+        self.assertIn("outside the project", ran.err)
 
     def scratch(self, *parts: str) -> str:
         checkout = os.path.join(self.project, ".journal", "worktrees", "story-engine")
@@ -342,52 +342,52 @@ class RelayTest(unittest.TestCase):
         folder = self.scratch("bridge", "mypy", "story_scratch_link")
         link = os.path.join(folder, "start/other")
 
-        self.assertEqual(self.ask({"kind": "link", "path": link, "stdin": ".."})["code"], 0)
+        self.assertEqual(self.ask({"kind": "link", "path": link, "stdin": ".."}).code, 0)
         self.assertEqual(os.readlink(link), "..")
-        self.assertNotEqual(self.ask({"kind": "link", "path": os.path.join(folder, "out"), "stdin": "../../.."})["code"], 0)
+        self.assertNotEqual(self.ask({"kind": "link", "path": os.path.join(folder, "out"), "stdin": "../../.."}).code, 0)
         self.assertFalse(os.path.lexists(os.path.join(folder, "out")))
 
     def test_a_file_is_written_and_removed_inside_a_scratch_folder(self) -> None:
         path = self.scratch("bridge", "mypy", "story_scratch_a", "order.py")
-        self.assertEqual(self.ask({"kind": "write", "path": path, "stdin": "x = 1\n"})["code"], 0)
+        self.assertEqual(self.ask({"kind": "write", "path": path, "stdin": "x = 1\n"}).code, 0)
         with open(path) as written:
             self.assertEqual(written.read(), "x = 1\n")
-        self.assertEqual(self.ask({"kind": "remove", "path": os.path.dirname(path)})["code"], 0)
+        self.assertEqual(self.ask({"kind": "remove", "path": os.path.dirname(path)}).code, 0)
         self.assertFalse(os.path.exists(os.path.dirname(path)))
 
     def test_a_file_outside_a_scratch_folder_is_refused_and_not_written(self) -> None:
         path = self.scratch("bridge", "mypy", "session.py")
         ran = self.ask({"kind": "write", "path": path, "stdin": "x = 1\n"})
-        self.assertEqual(ran["code"], 126)
+        self.assertEqual(ran.code, 126)
         self.assertFalse(os.path.exists(path))
 
     def test_a_file_inside_a_scratch_folder_of_a_story_worktree_is_written(self) -> None:
         path = os.path.join(self.project, ".journal", "worktrees", "story-engine-grace", "bridge", "mypy", "story_scratch_a", "order.py")
-        self.assertEqual(self.ask({"kind": "write", "path": path, "stdin": "x = 1\n"})["code"], 0)
+        self.assertEqual(self.ask({"kind": "write", "path": path, "stdin": "x = 1\n"}).code, 0)
         self.assertTrue(os.path.exists(path))
 
     def test_a_file_in_a_worktree_not_named_for_the_stories_is_refused(self) -> None:
         path = os.path.join(self.project, ".journal", "worktrees", "worker-707", "story_scratch_a", "order.py")
-        self.assertEqual(self.ask({"kind": "write", "path": path, "stdin": ""})["code"], 126)
+        self.assertEqual(self.ask({"kind": "write", "path": path, "stdin": ""}).code, 126)
         self.assertFalse(os.path.exists(path))
 
     def test_a_file_outside_the_test_checkout_is_refused(self) -> None:
         path = os.path.join(self.project, "story_scratch_a", "order.py")
-        self.assertEqual(self.ask({"kind": "write", "path": path, "stdin": ""})["code"], 126)
+        self.assertEqual(self.ask({"kind": "write", "path": path, "stdin": ""}).code, 126)
         self.assertFalse(os.path.exists(path))
 
     def test_a_worktree_not_named_for_the_stories_is_refused(self) -> None:
         ran = self.ask({"kind": "worktree", "action": "cut", "name": "main"})
-        self.assertEqual(ran["code"], 126)
-        self.assertIn("worktrees are named", ran["err"])
+        self.assertEqual(ran.code, 126)
+        self.assertIn("worktrees are named", ran.err)
 
     def test_a_worktree_a_stopped_story_left_behind_is_cut_again(self) -> None:
         checkout = self.scratch()
         for line in (["init", "-q"], ["-c", "user.email=t@t", "-c", "user.name=t", "commit", "-q", "--allow-empty", "-m", "one"]):
             subprocess.run(["git", "-C", checkout, *line], check=True, capture_output=True)
-        self.assertEqual(self.ask({"kind": "worktree", "action": "cut", "name": "story-engine-grace"})["code"], 0)
+        self.assertEqual(self.ask({"kind": "worktree", "action": "cut", "name": "story-engine-grace"}).code, 0)
         again = self.ask({"kind": "worktree", "action": "cut", "name": "story-engine-grace"})
-        self.assertEqual(again["code"], 0, again["err"])
+        self.assertEqual(again.code, 0, again.err)
 
     def test_a_story_worktree_is_cut_with_no_scan_state_of_a_run_before(self) -> None:
         checkout = self.scratch()
@@ -399,7 +399,7 @@ class RelayTest(unittest.TestCase):
             os.makedirs(kept)
             with open(os.path.join(kept, "lock"), "w"):
                 pass
-        self.assertEqual(self.ask({"kind": "worktree", "action": "cut", "name": "story-engine-ada"})["code"], 0)
+        self.assertEqual(self.ask({"kind": "worktree", "action": "cut", "name": "story-engine-ada"}).code, 0)
         self.assertFalse(os.path.exists(state))
         self.assertFalse(os.path.exists(worklist))
 
@@ -409,17 +409,17 @@ class RelayTest(unittest.TestCase):
         with open(hook, "w") as program:
             program.write("#!/bin/sh\necho \"$*\"\n")
         ran = self.ask({"kind": "look", "in": checkout})
-        self.assertEqual(ran["code"], 0)
-        self.assertEqual(ran["out"].strip(), f"--file-scan {self.project}/.journal --session story-engine-no-agent {checkout}")
+        self.assertEqual(ran.code, 0)
+        self.assertEqual(ran.out.strip(), f"--file-scan {self.project}/.journal --session story-engine-no-agent {checkout}")
 
     def test_a_look_outside_the_story_checkouts_is_refused(self) -> None:
-        self.assertEqual(self.ask({"kind": "look", "in": self.project})["code"], 126)
+        self.assertEqual(self.ask({"kind": "look", "in": self.project}).code, 126)
 
     def test_a_request_that_is_not_json_is_answered_not_dropped(self) -> None:
         with socket.create_connection(self.relay.server_address) as connection:
             connection.sendall(b"not json\n")
-            ran = json.loads(connection.makefile().readline())
-        self.assertEqual(ran["code"], 126)
+            ran = Answer(**json.loads(connection.makefile().readline()))
+        self.assertEqual(ran.code, 126)
 
 
 if __name__ == "__main__":
