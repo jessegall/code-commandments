@@ -379,13 +379,22 @@ func (m Match) Child(field string) Match {
 }
 
 func (m Match) Descendants() []Match {
-	var below []Match
-	for _, child := range m.Children() {
-		below = append(below, child)
-		below = append(below, child.Descendants()...)
+	if m.node == nil {
+		return nil
 	}
 
-	return below
+	return m.below(nil)
+}
+
+func (m Match) below(found []Match) []Match {
+	CountedVisit()
+
+	for _, child := range m.node.Children {
+		under := Match{node: child, file: m.file}
+		found = under.below(append(found, under))
+	}
+
+	return found
 }
 
 func (m Match) ChildrenIn(field string) []Match {

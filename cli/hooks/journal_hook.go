@@ -233,6 +233,9 @@ func answerWith(given map[string]any, runs func(Hook) bool, reportsSins bool) Jo
 	event.WithoutCLI = workerRoles[moment.Role] && !workersRunTheCLI(moment)
 	workspace.At(event.Root, "").RelocateSessions()
 	quiet := quieted()
+	if !liveEditsJudgedAt(moment) {
+		quiet = append(quiet, SkillReminder{}.Class())
+	}
 
 	var responses []Response
 
@@ -372,6 +375,17 @@ func workerEditsJudgedAt(moment Moment) bool {
 	}
 
 	return workerEditsJudged()
+}
+
+func liveEditsJudgedAt(moment Moment) bool {
+	if said, named := moment.Settings[liveEditsKey]; named {
+		return switchedOn(said)
+	}
+
+	chosen, _ := chosenSettings()
+	said, named := chosen[liveEditsKey]
+
+	return !named || switchedOn(said)
 }
 
 func switchedOn(value any) bool {

@@ -105,6 +105,8 @@ type File struct {
 	printing sync.Once
 	contents uint64
 	printed  bool
+	freezing sync.Once
+	frozen   bool
 }
 
 func Load(streams ...*contract.Stream) *Codebase {

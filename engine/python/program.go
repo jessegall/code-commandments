@@ -37,6 +37,8 @@ type Module struct {
 	binds   map[string]bool
 	bound   sync.Once
 	imports *bindings
+	walked  sync.Once
+	nodes   []Node
 }
 
 // bindings are the names a module's imports bind: those bound to a module, and those bound to a function or class another module declares.
@@ -131,9 +133,12 @@ func (m *Module) Root() Node {
 }
 
 func (m *Module) Nodes() []Node {
-	root := m.Root()
+	m.walked.Do(func() {
+		root := m.Root()
+		m.nodes = append([]Node{root}, root.Descendants()...)
+	})
 
-	return append([]Node{root}, root.Descendants()...)
+	return m.nodes
 }
 
 func (m *Module) Declared(name string) (Node, bool) {

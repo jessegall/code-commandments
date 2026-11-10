@@ -11,6 +11,7 @@ import (
 	"net"
 	"os"
 	"os/exec"
+	"strconv"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -87,6 +88,8 @@ type Server struct {
 	errs       *stderr
 	connection net.Conn
 	stop       func()
+	quiet      time.Duration
+	heaviest   int
 	mu         sync.Mutex
 }
 
@@ -95,31 +98,89 @@ func Serve(command []string) (*Server, error) {
 	if err != nil {
 		return nil, err
 	}
-	process, cancel := launch(command, "--serve")
-	input, err := process.StdinPipe()
+	heaviest, err := memoryLimit()
 	if err != nil {
 		return nil, err
+	}
+
+	server := &Server{command: command, quiet: limit, heaviest: heaviest}
+	if err := server.start(); err != nil {
+		return nil, err
+	}
+
+	return server, nil
+}
+
+func (s *Server) start() error {
+	process, cancel := launch(s.command, "--serve")
+	input, err := process.StdinPipe()
+	if err != nil {
+		return err
 	}
 	output, err := process.StdoutPipe()
 	if err != nil {
-		return nil, err
+		return err
 	}
 	pipe, err := process.StderrPipe()
 	if err != nil {
-		return nil, err
+		return err
 	}
 	if err := process.Start(); err != nil {
 		cancel()
 
-		return nil, Failed(command, err, "")
+		return Failed(s.command, err, "")
 	}
-	errs := readStderr(pipe)
 	stop := func() {
 		cancel()
 		output.Close()
 	}
 
-	return &Server{command: command, process: process, input: input, output: contract.NewReader(watch(output, limit, stop)), errs: errs, stop: stop}, nil
+	s.process, s.input, s.errs, s.stop = process, input, readStderr(pipe), stop
+	s.output = contract.NewReader(watch(output, s.quiet, stop))
+
+	return nil
+}
+
+func (s *Server) ended() error {
+	s.input.(io.Closer).Close()
+	lingering := time.AfterFunc(grace, s.stop)
+	defer lingering.Stop()
+
+	return s.process.Wait()
+}
+
+func (s *Server) pid() int {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	return s.process.Process.Pid
+}
+
+func (s *Server) released() {
+	if s.process == nil || s.heaviest == 0 {
+		s.mu.Unlock()
+
+		return
+	}
+
+	go func() {
+		defer s.mu.Unlock()
+		s.renewedWhenHeavy()
+	}()
+}
+
+func (s *Server) renewedWhenHeavy() {
+	held := footprintOf(s.process.Process.Pid)
+	if held <= s.heaviest {
+		return
+	}
+
+	fmt.Fprintf(os.Stderr, "the bridge %s held %d MB, past its limit of %d MB, so it is stopped and a new one answers the next request\n", s.command[0], held, s.heaviest)
+	s.ended()
+
+	if err := s.start(); err != nil {
+		fmt.Fprintln(os.Stderr, "the new bridge did not start: "+err.Error())
+	}
 }
 
 func (s *Server) Ask(request Request) (*contract.Stream, error) {
@@ -128,7 +189,7 @@ func (s *Server) Ask(request Request) (*contract.Stream, error) {
 
 func (s *Server) AskTallied(request Request, tally func()) (*contract.Stream, error) {
 	s.mu.Lock()
-	defer s.mu.Unlock()
+	defer s.released()
 	line, err := json.Marshal(request)
 	if err != nil {
 		return nil, err
@@ -146,7 +207,7 @@ func (s *Server) AskTallied(request Request, tally func()) (*contract.Stream, er
 
 func (s *Server) AskEach(request Request, each func(line contract.Line, raw []byte) error) error {
 	s.mu.Lock()
-	defer s.mu.Unlock()
+	defer s.released()
 	line, err := json.Marshal(request)
 	if err != nil {
 		return err
@@ -174,11 +235,11 @@ func (s *Server) Close() error {
 	if s.connection != nil {
 		return s.connection.Close()
 	}
-	s.input.(io.Closer).Close()
-	lingering := time.AfterFunc(grace, s.stop)
-	defer lingering.Stop()
 
-	return s.process.Wait()
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	return s.ended()
 }
 
 func (s *Server) stderr() string {
@@ -273,6 +334,23 @@ func quietLimit() (time.Duration, error) {
 	limit, err := time.ParseDuration(named)
 	if err != nil || limit < 0 {
 		return 0, fmt.Errorf("$%s is %q, not a duration such as 10m (0 waits for ever)", quietVariable, named)
+	}
+
+	return limit, nil
+}
+
+const memoryVariable = "COMMANDMENTS_BRIDGE_MEMORY"
+
+const memory = 2048
+
+func memoryLimit() (int, error) {
+	named := os.Getenv(memoryVariable)
+	if named == "" {
+		return memory, nil
+	}
+	limit, err := strconv.Atoi(named)
+	if err != nil || limit < 0 {
+		return 0, fmt.Errorf("$%s is %q, not a number of megabytes such as 2048 (0 sets no limit)", memoryVariable, named)
 	}
 
 	return limit, nil

@@ -272,6 +272,21 @@ type Type struct {
 	Origin     string      `json:"origin"`
 }
 
+func (t Type) MarshalJSON() ([]byte, error) {
+	type plain Type
+
+	written := struct {
+		plain
+		Members *[]*Type `json:"members,omitempty"`
+	}{plain: plain(t)}
+
+	if t.Members != nil {
+		written.Members = &t.Members
+	}
+
+	return json.Marshal(written)
+}
+
 var Roles = []string{"statement", "expression", "member", "type", "pattern", "markup", "other"}
 
 var TypeShapes = []string{"named", "keyword", "parameter", "union", "intersection", "array", "tuple", "object",

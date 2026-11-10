@@ -71,7 +71,7 @@ func expecting(given map[string]any) {
 	}
 
 	moment := MomentOf(given)
-	if moment.File == nil {
+	if moment.File == nil || !liveEditsJudgedAt(moment) {
 		return
 	}
 

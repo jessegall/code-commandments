@@ -32,6 +32,7 @@ const (
 	ceilingKey       = "judge_nodes_held"
 	workersKey       = "judge_workers"
 	workerEditsKey   = "judge_worker_edits"
+	liveEditsKey     = "judge_edits"
 	mergesKey        = "judge_merges"
 	filesInOneGoKey  = "judge_files_at_once"
 	editWindowKey    = "judge_edit_window"

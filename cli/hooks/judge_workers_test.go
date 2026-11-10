@@ -90,3 +90,19 @@ func TestAWorkerWithItsJudgingOffHearsNothingAtAll(t *testing.T) {
 		t.Errorf("a worker with judging off was told something: %+v", answer)
 	}
 }
+
+func TestLiveEditsAreJudgedUnlessTheSettingSwitchesThemOff(t *testing.T) {
+	t.Setenv(journalSettings, "")
+
+	if !liveEditsJudgedAt(Moment{Settings: map[string]any{}}) {
+		t.Error("with nothing chosen, an edit was left unjudged")
+	}
+
+	if liveEditsJudgedAt(Moment{Settings: map[string]any{"judge_edits": false}}) {
+		t.Error("the main agent's edit went on to be judged with live edits off")
+	}
+
+	if !liveEditsJudgedAt(Moment{Settings: map[string]any{"judge_edits": "true"}}) {
+		t.Error("an edit was left unjudged with live edits on")
+	}
+}

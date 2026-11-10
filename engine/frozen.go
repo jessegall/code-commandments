@@ -30,6 +30,14 @@ func Freezes(language contract.Language, freezer Freezer, hint func(path string,
 }
 
 func (f *File) IsFrozen() bool {
+	f.freezing.Do(func() {
+		f.frozen = f.declaresItselfFrozen()
+	})
+
+	return f.frozen
+}
+
+func (f *File) declaresItselfFrozen() bool {
 	source, err := f.Source()
 	if err != nil {
 		return false
