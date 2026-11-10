@@ -5,6 +5,7 @@ by its span. tree.py writes them into the generic tree.
 
 from __future__ import annotations
 
+import gc
 import hashlib
 import os
 import tempfile
@@ -19,6 +20,7 @@ from mypy.nodes import Expression
 from mypy.options import Options
 from mypy.server.subexpr import get_subexpressions
 from mypy.types import AnyType, FunctionLike, Instance, NoneType, ProperType, Type, UnionType, get_proper_type
+from mypy.typestate import reset_global_state
 from mypy.util import decode_python_encoding
 
 
@@ -137,6 +139,14 @@ class Session:
         if result is None:
             return CheckedProject(found, {}, {})
         return CheckedProject(found, result.types, result.graph)
+
+    def forget(self) -> None:
+        """Lets go of what the last request built. mypy is written for one build to a process: it keeps its subtype
+        and protocol caches for the life of the process, each holding the classes of the build that filled it, and it
+        sets the collector to all but never run a full pass, so a build's modules, which all refer to one another,
+        are never freed. A bridge that serves answers one build per request, and each one stayed in memory whole."""
+        reset_global_state()
+        gc.collect()
 
 
 def line_starts(text: bytes) -> list[int]:

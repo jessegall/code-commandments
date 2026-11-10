@@ -746,6 +746,15 @@ def declared() -> Declaration:
     )
 
 
+def answered(session: Session, request: str) -> None:
+    """One request of a serving bridge, answered, and its build let go of."""
+    asked = json.loads(request)
+    try:
+        emit(stream(session, asked.get("paths", []), asked.get("write", []), asked.get("python")))
+    finally:
+        session.forget()
+
+
 def main(argv: list[str]) -> int:
     if "--declares" in argv:
         sys.stdout.write(json.dumps(declared().to_json(), ensure_ascii=False) + "\n")
@@ -753,8 +762,7 @@ def main(argv: list[str]) -> int:
     session = Session()
     if "--serve" in argv:
         for request in sys.stdin:
-            asked = json.loads(request)
-            emit(stream(session, asked.get("paths", []), asked.get("write", []), asked.get("python")))
+            answered(session, request)
         return 0
     emit(stream(session, [arg for arg in argv if not arg.startswith("--")], [], None))
     return 0

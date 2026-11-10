@@ -34,10 +34,12 @@ func treeHolding(t *testing.T, contents ...string) (*engine.Codebase, []string) 
 
 	var paths []string
 	for _, match := range codebase.WhereFunction().Get() {
-		if len(paths) < len(contents) && !slices.Contains(paths, match.File()) {
-			holds[match.File()] = contents[len(paths)]
-			paths = append(paths, match.File())
+		if len(paths) >= len(contents) || slices.Contains(paths, match.File()) {
+			continue
 		}
+
+		holds[match.File()] = contents[len(paths)]
+		paths = append(paths, match.File())
 	}
 
 	return codebase.Reporting(paths...), paths

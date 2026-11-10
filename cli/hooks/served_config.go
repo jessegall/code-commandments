@@ -52,7 +52,6 @@ func walkedTheTreeUnder(project string) {
 	walked.stamps[project], walked.each[project] = configFilesStamp(project), now
 }
 
-// heldTheConfigFileOf reads the project's config file again once it was written, and lets go of the trees held when the paths they were read under changed. Rules and the rest of the config are read on each request, so nothing else needs the service to restart.
 func heldTheConfigFileOf(project string) {
 	written := configFilesStamp(project)
 
