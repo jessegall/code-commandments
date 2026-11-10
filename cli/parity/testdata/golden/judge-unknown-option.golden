@@ -2,6 +2,6 @@ exit: 2
 --- stdout
 
 --- stderr
-Unknown option --nope for `judge`. Try: commandments judge --help
+✗ Unknown option --nope for `judge`. Try: commandments judge --help
 
 --- files

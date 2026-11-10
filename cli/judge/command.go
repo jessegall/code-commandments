@@ -162,7 +162,7 @@ func (c Command) Run(in *cli.Input, console cli.Console) (int, error) {
 		}
 
 		if journal, near := aJournalNear(cwd, space); near && !in.HasFlag(allowColdRead) {
-			fmt.Fprintln(console.Err, "· this run refuses to read the whole tree itself: "+whyNotServed(answer)+
+			fmt.Fprintln(console.Err, "✗ this run refuses to read the whole tree itself: "+whyNotServed(answer)+
 				", yet "+journal+", so a judging service should answer. "+
 				"The journal keeps that service up and starts it again by itself; `journal plugin services` says whether it "+
 				"runs. Wait for it, or run again with --"+allowColdRead+
@@ -184,7 +184,7 @@ func (c Command) Run(in *cli.Input, console cli.Console) (int, error) {
 
 	info, err := os.Stat(options.path)
 	if err != nil {
-		console.Warn("Nothing to judge at " + options.path)
+		console.Warn("✗ Nothing to judge at " + options.path)
 
 		return 2, nil
 	}
@@ -221,7 +221,7 @@ func (c Command) Run(in *cli.Input, console cli.Console) (int, error) {
 	}
 
 	if len(selected) == 0 {
-		console.Warn("No detector matched --skill=" + options.skill + " --sin=" + options.sin + " --tag=" + strings.Join(options.tags, ","))
+		console.Warn("✗ No detector matched --skill=" + options.skill + " --sin=" + options.sin + " --tag=" + strings.Join(options.tags, ","))
 
 		return 2, nil
 	}
