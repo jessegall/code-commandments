@@ -171,10 +171,9 @@ class RelayTest(unittest.TestCase):
         path = os.path.join(self.project, ".journal", "plugin-data", "code-commandments", "detector-memories.json")
         os.makedirs(os.path.dirname(path), exist_ok=True)
         with open(path, "w") as written:
-            json.dump({"Build": "build-1", "Detectors": {
-                "First": [{"Fingerprint": 18446744073709551615, "Used": 1000, "Found": [4]}],
-                "Second": [{"Fingerprint": 2, "Used": 3000, "Found": None}],
-            }}, written)
+            json.dump({"Build": "build-1", "Rules": ["First", "Second"],
+                       "Own": [{"Fingerprint": 18446744073709551615, "Used": 1000, "Judged": [1], "Found": {"0": [4]}}],
+                       "Across": [{"Fingerprint": 2, "Used": 3000, "Judged": [2]}]}, written)
         return path
 
     def memory(self) -> dict:
@@ -190,10 +189,9 @@ class RelayTest(unittest.TestCase):
         self.assertEqual(self.ask({"kind": "memory-file", "action": "age", "many": 28800})["code"], 0)
         with open(path) as read:
             saved = json.load(read)
-        self.assertEqual(saved, {"Build": "build-1", "Detectors": {
-            "First": [{"Fingerprint": 18446744073709551615, "Used": 1000 - 28800, "Found": [4]}],
-            "Second": [{"Fingerprint": 2, "Used": 3000 - 28800, "Found": None}],
-        }})
+        self.assertEqual(saved, {"Build": "build-1", "Rules": ["First", "Second"],
+                                 "Own": [{"Fingerprint": 18446744073709551615, "Used": 1000 - 28800 * 10**9, "Judged": [1], "Found": {"0": [4]}}],
+                                 "Across": [{"Fingerprint": 2, "Used": 3000 - 28800 * 10**9, "Judged": [2]}]})
 
     def test_a_stamped_memory_file_holds_the_new_build(self) -> None:
         self.saved_memory()

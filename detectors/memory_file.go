@@ -6,7 +6,6 @@ import (
 	"os"
 
 	"github.com/jessegall/code-commandments/cli/atomic"
-	"github.com/jessegall/code-commandments/engine"
 )
 
 // MemoryFile is the file one project keeps its detectors' memories in between runs of its service, good only for the build that wrote it.
@@ -19,8 +18,8 @@ type MemoryFile struct {
 
 // savedMemories is the contents of a MemoryFile, stamped with the build whose node ids it holds.
 type savedMemories struct {
-	Build     string
-	Detectors map[string][]engine.Verdict
+	Build string
+	Kept
 }
 
 func (f MemoryFile) Load() {
@@ -46,7 +45,7 @@ func (f MemoryFile) Load() {
 		return
 	}
 
-	f.Memories.Restore(saved.Detectors)
+	f.Memories.Restore(saved.Kept)
 }
 
 func (f MemoryFile) Save() {
@@ -54,7 +53,7 @@ func (f MemoryFile) Save() {
 		return
 	}
 
-	encoded, err := json.Marshal(savedMemories{f.Build, f.Memories.Verdicts()})
+	encoded, err := json.Marshal(savedMemories{f.Build, f.Memories.Kept()})
 	if err != nil {
 		f.Warn("The detectors' memories could not be encoded: " + err.Error())
 

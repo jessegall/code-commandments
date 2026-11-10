@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/jessegall/code-commandments/cli/git"
 	"github.com/jessegall/code-commandments/cli/scope"
 	"github.com/jessegall/code-commandments/cli/warm"
 )
@@ -26,7 +27,7 @@ func WorkerEditsIn(data string) WorkerEdits {
 }
 
 func (e WorkerEdits) Keep(agent int, relative string) {
-	if os.MkdirAll(e.folder, 0o755) != nil {
+	if slices.Contains(e.Of(agent), relative) || os.MkdirAll(e.folder, 0o755) != nil {
 		return
 	}
 
@@ -115,11 +116,12 @@ func checkoutRootOf(line map[string]any) string {
 	return asText(checkout["root"])
 }
 
-// EditsAsked are the files the agents of one checkout edited, for a run an agent asked for its changes.
+// EditsAsked are the files the agents of one checkout edited, for a run an agent asked for its changes. In the project's own checkout a file is a change only until a commit or a change of branch takes it in, so it leaves the list then; a worker's worktree keeps every file until its work is handed in.
 type EditsAsked struct {
 	store    WorkerEdits
 	editors  []int
 	checkout string
+	shared   bool
 }
 
 func editsAsked(request warm.Request, root string) EditsAsked {
@@ -131,14 +133,15 @@ func editsAsked(request warm.Request, root string) EditsAsked {
 	checkout := absolutely(root, checkoutOf(root, request.In))
 	store := WorkerEditsIn(data)
 
-	return EditsAsked{store: store, editors: store.EditorsIn(checkout), checkout: checkout}
+	return EditsAsked{store: store, editors: store.EditorsIn(checkout), checkout: checkout,
+		shared: strings.TrimRight(git.ProjectRoot(checkout), "/") == checkout}
 }
 
 func (a EditsAsked) scope() scope.Edits {
 	edits := scope.Edits{Held: len(a.editors) > 0}
 
 	for _, agent := range a.editors {
-		for _, relative := range a.store.Of(agent) {
+		for _, relative := range a.standing(agent) {
 			if file := filepath.Join(a.checkout, relative); isAFile(file) {
 				edits.Files = append(edits.Files, file)
 			}
@@ -146,6 +149,31 @@ func (a EditsAsked) scope() scope.Edits {
 	}
 
 	return edits
+}
+
+func (a EditsAsked) standing(agent int) []string {
+	named := a.store.Of(agent)
+	if !a.shared {
+		return named
+	}
+
+	changed := git.StillChanged(a.checkout, named)
+	a.store.Approve(agent, slices.DeleteFunc(named, func(relative string) bool { return slices.Contains(changed, relative) }))
+
+	return changed
+}
+
+func (a EditsAsked) clearedByAPanic() {
+	failure := recover()
+	if failure == nil {
+		return
+	}
+
+	for _, agent := range a.editors {
+		a.store.Clear(agent)
+	}
+
+	panic(failure)
 }
 
 func (a EditsAsked) approve() {

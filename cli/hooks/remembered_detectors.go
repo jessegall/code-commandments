@@ -81,7 +81,6 @@ func remembersAcrossRestarts(console cli.Console) (saved func()) {
 		<-cli.StopSignals()
 		logServiceStopped("by a signal")
 		save()
-		treeSaves.save(time.Now())
 		os.Exit(0)
 	}()
 

@@ -7,6 +7,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -374,6 +375,18 @@ func ChangedBetween(root, before, after string) []string {
 
 func Listed(root string, relative []string) map[string]bool {
 	return pathSet(root, strings.Join(relative, "\n"))
+}
+
+func StillChanged(root string, relative []string) []string {
+	changed := ChangedVsHead(root)
+
+	return slices.DeleteFunc(slices.Clone(relative), func(one string) bool {
+		for path := range Listed(root, []string{one}) {
+			return !changed[path]
+		}
+
+		return true
+	})
 }
 
 func ChangedLinesOf(root, file string) ChangedLines {

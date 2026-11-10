@@ -582,7 +582,7 @@ def running_processes() -> list[Process]:
 
 
 def verdicts_of(saved: dict) -> list[dict]:
-    return [verdict for verdicts in (saved["Detectors"] or {}).values() for verdict in verdicts]
+    return (saved["Own"] or []) + (saved["Across"] or [])
 
 
 def reading_of(path: str) -> dict:

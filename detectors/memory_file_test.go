@@ -166,7 +166,7 @@ func TestAnEntryPastTwelveHoursIsGoneFromTheFile(t *testing.T) {
 	again := under.of("one")
 	again.Load()
 
-	if verdicts := again.Memories.Verdicts()[savedDetector]; len(verdicts) != 0 {
+	if verdicts := again.Memories.Kept().Own; len(verdicts) != 0 {
 		t.Errorf("the expired entry is still in the file of %d bytes: %v", len(raw), verdicts)
 	}
 

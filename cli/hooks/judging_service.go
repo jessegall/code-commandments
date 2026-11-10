@@ -101,6 +101,7 @@ func judgedFor(request warm.Request, root string, progressed func(string)) warm.
 	before := engine.Counted()
 
 	edits := editsAsked(request, root)
+	defer edits.clearedByAPanic()
 
 	code, err := (judge.Command{
 		In:       request.In,
