@@ -212,11 +212,7 @@ func Dotnet() (string, bool) {
 	if root := os.Getenv("DOTNET_ROOT"); root != "" {
 		candidates = append(candidates, root)
 	}
-	if dotnet, err := exec.LookPath("dotnet"); err == nil {
-		if real, err := filepath.EvalSymlinks(dotnet); err == nil {
-			candidates = append(candidates, filepath.Dir(real))
-		}
-	}
+	candidates = append(candidates, listedDotnetRoots()...)
 	candidates = append(candidates, dotnetFolders()...)
 	for _, root := range candidates {
 		if info, err := os.Stat(filepath.Join(root, "packs", "Microsoft.NETCore.App.Ref")); err == nil && info.IsDir() {
@@ -225,6 +221,27 @@ func Dotnet() (string, bool) {
 	}
 
 	return "", false
+}
+
+func listedDotnetRoots() []string {
+	dotnet, err := exec.LookPath("dotnet")
+	if err != nil {
+		return nil
+	}
+	listing, err := exec.Command(dotnet, "--list-sdks").Output()
+	if err != nil {
+		return nil
+	}
+	var roots []string
+	for _, line := range strings.Split(string(listing), "\n") {
+		opening, closing := strings.LastIndex(line, "["), strings.LastIndex(line, "]")
+		if opening < 0 || closing < opening {
+			continue
+		}
+		roots = append(roots, filepath.Dir(line[opening+1:closing]))
+	}
+
+	return roots
 }
 
 func dotnetFolders() []string {

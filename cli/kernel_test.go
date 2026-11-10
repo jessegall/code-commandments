@@ -45,7 +45,7 @@ func TestNoVerbRunsJudge(t *testing.T) {
 func TestAnUndeclaredFlagIsRefusedNamingTheVerb(t *testing.T) {
 	code, _, err := run(NewKernel("dev", &toy{names: []string{"make"}}), "make", "--bogus")
 
-	if code != 2 || err != "Unknown option --bogus for `make`. Try: commandments make --help\n" {
+	if code != 2 || err != "✗ Unknown option --bogus for `make`. Try: commandments make --help\n" {
 		t.Errorf("exit %d, err %q", code, err)
 	}
 }

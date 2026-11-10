@@ -25,9 +25,12 @@ Reported by a consumer whose workers were held that way.
 - **Counts** `parsing`, `reading` and `detector` steps. Those are the words the counted form prints;
   `judging` never appears, because a judging step is one detector and the line says so.
 - **Settles** on the count and the checklist path, so a finished run's card says what it found and
-  where the work is rather than whichever finding came last. A run that could not read everything
-  settles on the line saying so.
-- **Summarises** with the verdict itself, the count of sins or the clean line. The lines a run settles
+  where the work is rather than whichever finding came last. Only a `✗` line fails a run: every way
+  the judge ends early (nothing at the path, no rule matched, an unknown option, a refused cold read)
+  says so on one `✗` line. A `⚠` line is a warning the card shows, never a failure, so a run that
+  warns and ends on `✓` reads as passed.
+- **Summarises** with the verdict itself, the count of sins, the clean line or the `✗` line an early end
+  prints. The lines a run settles
   on end with the checklist's path, which says where the work is but not what was found, so a card
   closed without a summary showed nothing of the answer.
 - The output a journal command reads is not a terminal, so it carries no colour and the patterns need

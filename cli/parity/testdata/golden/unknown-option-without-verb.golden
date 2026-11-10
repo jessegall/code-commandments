@@ -2,6 +2,6 @@ exit: 2
 --- stdout
 
 --- stderr
-Unknown option --bogus. Try: commandments --help
+✗ Unknown option --bogus. Try: commandments --help
 
 --- files
