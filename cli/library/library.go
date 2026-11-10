@@ -120,8 +120,10 @@ func (l Library) Reconcile(dir string, current []string) {
 	}
 }
 
-func (l Library) Withdraw() {
+func (l Library) Withdraw() error {
 	l.Reconcile(l.Dir(), nil)
+
+	return writeManifest(l.root, nil)
 }
 
 func standalone() []string {

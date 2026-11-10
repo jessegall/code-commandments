@@ -73,11 +73,13 @@ func Sync(root string, console cli.Console) error {
 
 	var published []string
 	if driven {
-		lib.Withdraw()
+		err = lib.Withdraw()
 	} else {
-		if published, err = lib.Publish(); err != nil {
-			return err
-		}
+		published, err = lib.Publish()
+	}
+
+	if err != nil {
+		return err
 	}
 
 	for _, refusal := range agents.Brief(root, project) {
