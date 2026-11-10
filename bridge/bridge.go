@@ -90,6 +90,8 @@ type Server struct {
 	stop       func()
 	quiet      time.Duration
 	heaviest   int
+	closed     bool
+	failed     bool
 	mu         sync.Mutex
 }
 
@@ -138,7 +140,33 @@ func (s *Server) start() error {
 	s.process, s.input, s.errs, s.stop = process, input, readStderr(pipe), stop
 	s.output = contract.NewReader(watch(output, s.quiet, stop))
 
+	go s.renewedWhenGone(process, s.errs)
+
 	return nil
+}
+
+func (s *Server) failedARequest(why error) error {
+	s.failed = true
+
+	return Failed(s.command, why, s.stderr())
+}
+
+func (s *Server) renewedWhenGone(process *exec.Cmd, errs *stderr) {
+	<-errs.done
+
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	if s.closed || s.failed || s.process != process {
+		return
+	}
+
+	fmt.Fprintf(os.Stderr, "the bridge %s is gone, so a new one is started before the next request\n", s.command[0])
+	s.ended()
+
+	if err := s.start(); err != nil {
+		fmt.Fprintln(os.Stderr, "the new bridge did not start: "+err.Error())
+	}
 }
 
 func (s *Server) ended() error {
@@ -195,11 +223,11 @@ func (s *Server) AskTallied(request Request, tally func()) (*contract.Stream, er
 		return nil, err
 	}
 	if _, err := s.input.Write(append(line, '\n')); err != nil {
-		return nil, Failed(s.command, err, s.stderr())
+		return nil, s.failedARequest(err)
 	}
 	stream, err := s.output.Tallied(tally)
 	if err != nil {
-		return nil, Failed(s.command, err, s.stderr())
+		return nil, s.failedARequest(err)
 	}
 
 	return stream, nil
@@ -213,7 +241,7 @@ func (s *Server) AskEach(request Request, each func(line contract.Line, raw []by
 		return err
 	}
 	if _, err := s.input.Write(append(line, '\n')); err != nil {
-		return Failed(s.command, err, s.stderr())
+		return s.failedARequest(err)
 	}
 	var refused error
 	read := s.output.Each(func(line contract.Line, raw []byte) error {
@@ -225,7 +253,7 @@ func (s *Server) AskEach(request Request, each func(line contract.Line, raw []by
 		return refused
 	}
 	if read != nil {
-		return Failed(s.command, read, s.stderr())
+		return s.failedARequest(read)
 	}
 
 	return nil
@@ -238,6 +266,8 @@ func (s *Server) Close() error {
 
 	s.mu.Lock()
 	defer s.mu.Unlock()
+
+	s.closed = true
 
 	return s.ended()
 }
