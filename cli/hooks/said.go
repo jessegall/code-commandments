@@ -1,6 +1,8 @@
 package hooks
 
 import (
+	"maps"
+	"slices"
 	"strings"
 
 	"github.com/jessegall/code-commandments/cli/state"
@@ -52,8 +54,8 @@ func (s Said) Fresh(narrowed map[string]Narrowed) map[string]Narrowed {
 	}
 
 	var items []string
-	for file, why := range before {
-		items = append(items, file+"\t"+why)
+	for _, file := range slices.Sorted(maps.Keys(before)) {
+		items = append(items, file+"\t"+before[file])
 	}
 
 	if err := s.file.Write(read.WithItems(items)); err != nil {

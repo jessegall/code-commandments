@@ -37,6 +37,8 @@ Options:
                                  .commandments/sessions/<id>/ or the journal plugin's data folder)
   --no-checklist                 print only, don't write the checklist file
   --benchmark                    time each detector and print the slowest
+  --profile=FILE                 with --benchmark, write a CPU profile of the detectors to FILE,
+                                 read with `go tool pprof`
   --allow-cold-read              read the whole tree in this run when the project's journal runs the
                                  plugin but no judging service answers; without it such a run
                                  refuses, since the service being down is the fault to fix
