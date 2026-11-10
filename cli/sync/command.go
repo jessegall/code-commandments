@@ -136,7 +136,9 @@ func Sync(root string, console cli.Console) error {
 
 func wire(root string, agent agents.Agent, lib library.Library, published []string, console cli.Console) {
 	if dir := agent.SkillsDir(); dir != "" {
-		os.RemoveAll(filepath.Join(root, dir, "commandments"))
+		if len(published) > 0 {
+			os.RemoveAll(filepath.Join(root, dir, "commandments"))
+		}
 
 		for _, id := range published {
 			agents.Point(filepath.Join(root, dir, id), lib.Path(id))

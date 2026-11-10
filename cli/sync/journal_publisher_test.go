@@ -63,18 +63,24 @@ func TestSyncLeavesWhatTheJournalPublishedSinceItStoodAside(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	for _, folder := range []string{library.Dir, ".claude/skills"} {
-		skill := filepath.Join(root, folder, "commandments-php-absence")
+	index := filepath.Join(root, ".claude/skills", "commandments", "SKILL.md")
+
+	for _, skill := range []string{filepath.Join(root, library.Dir, "commandments-php-absence"),
+		filepath.Join(root, ".claude/skills", "commandments-php-absence"), filepath.Dir(index)} {
 		if err := os.MkdirAll(skill, 0o755); err != nil {
 			t.Fatal(err)
 		}
-		if err := os.WriteFile(filepath.Join(skill, "SKILL.md"), []byte("---\nname: commandments-php-absence\n---\n"), 0o644); err != nil {
+		if err := os.WriteFile(filepath.Join(skill, "SKILL.md"), []byte("---\nname: "+filepath.Base(skill)+"\n---\n"), 0o644); err != nil {
 			t.Fatal(err)
 		}
 	}
 
 	if err := Sync(root, quiet()); err != nil {
 		t.Fatal(err)
+	}
+
+	if _, err := os.Stat(index); err != nil {
+		t.Errorf("a later sync took away the index the journal published for Claude Code: %v", err)
 	}
 
 	for _, folder := range []string{library.Dir, ".claude/skills"} {
