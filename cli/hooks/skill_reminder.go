@@ -155,7 +155,7 @@ func (SkillReminder) Handle(event Event) Response {
 
 	if len(files) == 0 && len(lost) > 0 {
 		said = append(said, Unjudged("nothing of this edit was judged: "+strings.Join(lost, ", "),
-			whyNoneWereJudged(lost),
+			string(filesNotOnDisk)+", which is what a checkout cut again or removed looks like",
 			event.wholeAnswerBy(binary.JudgingChanges)))
 	}
 
@@ -192,7 +192,7 @@ func edited(event Event, project config.Config) ([]string, []string) {
 				continue
 			}
 
-			if isSource(named) {
+			if isSource(named) && inTheJudgedFolders(event.Root, named, project) {
 				lost = append(lost, named)
 			}
 		}
@@ -201,7 +201,7 @@ func edited(event Event, project config.Config) ([]string, []string) {
 	default:
 		if file := judgedFile(event.Root, event.FilePath(), project); file != "" {
 			files = []string{file}
-		} else if event.FilePath() != "" && isSource(event.FilePath()) {
+		} else if event.FilePath() != "" && isSource(event.FilePath()) && inTheJudgedFolders(event.Root, event.FilePath(), project) {
 			lost = append(lost, event.FilePath())
 		}
 
@@ -260,29 +260,12 @@ func DroppedSoFar() Dropped {
 	return dropped
 }
 
-func whyNoneWereJudged(lost []string) string {
-	for _, file := range lost {
-		if why := RefusalOf(file); why != "" {
-			return why
-		}
-	}
-
-	return string(filesNotOnDisk) + ", which is what a checkout cut again or removed looks like"
-}
-
 func judgedFile(root, file string, project config.Config) string {
 	if file == "" {
 		return ""
 	}
 
-	absolute := file
-	if !strings.HasPrefix(file, "/") {
-		absolute = strings.TrimRight(root, "/") + "/" + strings.TrimLeft(file, "/")
-	}
-
-	if resolved, err := filepath.EvalSymlinks(absolute); err == nil {
-		absolute = resolved
-	}
+	absolute := absoluteOf(root, file)
 
 	if checkout := checkoutOf(root, absolute); !project.IsJudged(checkout, absolute) {
 		dropped.NotJudged++
@@ -298,6 +281,25 @@ func judgedFile(root, file string, project config.Config) string {
 	}
 
 	return absolute
+}
+
+func absoluteOf(root, file string) string {
+	absolute := file
+	if !strings.HasPrefix(file, "/") {
+		absolute = strings.TrimRight(root, "/") + "/" + strings.TrimLeft(file, "/")
+	}
+
+	if resolved, err := filepath.EvalSymlinks(absolute); err == nil {
+		absolute = resolved
+	}
+
+	return absolute
+}
+
+func inTheJudgedFolders(root, file string, project config.Config) bool {
+	absolute := absoluteOf(root, file)
+
+	return project.IsJudged(checkoutOf(root, absolute), absolute)
 }
 
 func judgedFolders(project config.Config, checkout string) string {
