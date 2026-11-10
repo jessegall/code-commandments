@@ -9,6 +9,7 @@ import (
 	"github.com/jessegall/code-commandments/engine/php"
 	"github.com/jessegall/code-commandments/engine/php/shop"
 	"github.com/jessegall/code-commandments/fixture"
+	"github.com/jessegall/code-commandments/fixture/fixturetest"
 	_ "github.com/jessegall/code-commandments/registry"
 	"github.com/jessegall/code-commandments/sins"
 	backendsins "github.com/jessegall/code-commandments/sins/backend"
@@ -23,24 +24,7 @@ func TestNoRuleCostsMoreThanTheTreeItReadsGrewBy(t *testing.T) {
 		rules = append(rules, rule)
 	}
 
-	if len(rules) == 0 {
-		t.Fatal("no PHP rule was registered, so this test would pass by looking at nothing")
-	}
-
-	grown := fixture.Grown(small, large, rules)
-
-	for _, each := range grown[:min(5, len(grown))] {
-		t.Logf("%s cost %d points over the fixture and %d over the same fixture twice, %.1f times",
-			each.Detector, each.Small, each.Large, each.Times)
-	}
-
-	for _, each := range grown {
-		if each.Times > 3 {
-			t.Errorf("%s cost %d points over the fixture and %d over the same fixture twice, %.1f times, where "+
-				"twice the tree may cost about twice the compute: a rule that grows faster than the project is one "+
-				"a consumer cannot escape", each.Detector, each.Small, each.Large, each.Times)
-		}
-	}
+	fixturetest.NoRuleOutgrowsItsTree(t, small, large, rules)
 }
 
 // everyFileAgainstEveryOther is a rule written the way the gate exists to catch: for each class it walks the whole

@@ -5,6 +5,7 @@ import (
 
 	"github.com/jessegall/code-commandments/contract"
 	"github.com/jessegall/code-commandments/engine"
+	"github.com/jessegall/code-commandments/fixture"
 )
 
 func Fresh(t testing.TB) *engine.Codebase {
@@ -18,7 +19,7 @@ func Doubled(t testing.TB) *engine.Codebase {
 
 	var doubled []*contract.Stream
 	for _, stream := range streamsOf(t) {
-		doubled = append(doubled, twiceOver(stream))
+		doubled = append(doubled, fixture.TwiceOver(stream))
 	}
 
 	return engine.New(readFixture, doubled...)
@@ -38,21 +39,4 @@ func streamsOf(t testing.TB) []*contract.Stream {
 	}
 
 	return streams
-}
-
-func twiceOver(stream *contract.Stream) *contract.Stream {
-	doubled := *stream
-	doubled.Files = make([]*contract.File, 0, len(stream.Files)*2)
-
-	for _, file := range stream.Files {
-		doubled.Files = append(doubled.Files, file)
-	}
-
-	for _, file := range stream.Files {
-		again := *file
-		again.Path = file.Path + ".twin.php"
-		doubled.Files = append(doubled.Files, &again)
-	}
-
-	return &doubled
 }

@@ -110,6 +110,7 @@ func (Command) Help() help.Help {
 		Option("--checklist=FILE", "write the checklist here (default: your session's sins/sins.md, in .commandments/sessions/<id>/ or the journal plugin's data folder)").
 		Option("--no-checklist", "print only, don't write the checklist file").
 		Option("--benchmark", "time each detector and print the slowest").
+		Option("--profile=FILE", "with --benchmark, write a CPU profile of the detectors to FILE, read with `go tool pprof`").
 		Option("--"+allowColdRead, "read the whole tree in this run when the project's journal runs the plugin but no "+
 			"judging service answers; without it such a run refuses, since the service being down is the fault to fix").
 		Note("With no [path], judge scans the source roots declared under \"paths\" in " +
@@ -482,7 +483,9 @@ func (c Command) run(tasks []Task, options options, progress *cli.Progress, pars
 		return judgement
 	}
 
+	stop := profiled(options.profile, console)
 	judgement, profiles := Benchmark(tasks, console.Err)
+	stop()
 	progress.Finish()
 	fmt.Fprint(console.Err, Profiles(profiles, parseSeconds))
 
@@ -918,6 +921,7 @@ type options struct {
 	parallel        int
 	parallelGiven   bool
 	benchmark       bool
+	profile         string
 	ignore          bool
 	oneFileRules    bool
 	tags            []string
@@ -977,6 +981,7 @@ func optionsOf(in *cli.Input, space workspace.Workspace) options {
 		parallel:      max(1, parallel),
 		parallelGiven: parallelGiven,
 		benchmark:     in.HasFlag("benchmark"),
+		profile:       profileOf(in),
 		ignore:        in.HasFlag("ignore-package-requirements"),
 		oneFileRules:  in.HasFlag("one-file-rules"),
 		tags:          tagsOf(in),

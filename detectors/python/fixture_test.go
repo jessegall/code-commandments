@@ -8,6 +8,7 @@ import (
 	"github.com/jessegall/code-commandments/bridge"
 	"github.com/jessegall/code-commandments/bridge/bridgetest"
 	"github.com/jessegall/code-commandments/catalog"
+	"github.com/jessegall/code-commandments/contract"
 	"github.com/jessegall/code-commandments/detectors"
 	pydetectors "github.com/jessegall/code-commandments/detectors/python"
 	"github.com/jessegall/code-commandments/engine"
@@ -18,6 +19,12 @@ import (
 
 func shop(t *testing.T) *engine.Codebase {
 	t.Helper()
+
+	return engine.Load(parsed(t))
+}
+
+func parsed(t *testing.T) *contract.Stream {
+	t.Helper()
 	root, err := filepath.Abs("../../tests/Fixtures/python")
 	if err != nil {
 		t.Fatal(err)
@@ -27,7 +34,13 @@ func shop(t *testing.T) *engine.Codebase {
 		t.Fatal(err)
 	}
 
-	return engine.Load(stream)
+	return stream
+}
+
+func TestNoPythonRuleCostsMoreThanTheTreeItReadsGrewBy(t *testing.T) {
+	stream := parsed(t)
+
+	fixturetest.NoRuleOutgrowsItsTree(t, engine.Load(stream), engine.Load(fixture.TwiceOver(stream)), configured())
 }
 
 func configured() []detectors.Detector {

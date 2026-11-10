@@ -403,7 +403,7 @@ func (c *Codebase) printsOfTheTreeBelow() map[*contract.File]uint64 {
 		return nil
 	}
 
-	held, built := c.over.analyses.Load(printsAcrossKey{})
+	held, built := c.over.kept(printsAcrossKey{})
 	if !built {
 		return nil
 	}

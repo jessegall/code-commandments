@@ -36,6 +36,22 @@ func TestTheFrontendFixtureProvesEveryDetector(t *testing.T) {
 
 const fixtureBudget = 30
 
+func TestNoFrontendRuleCostsMoreThanTheTreeItReadsGrewBy(t *testing.T) {
+	frontend, err := bridge.Here().Stream(shop)
+	if err != nil {
+		t.Fatal(err)
+	}
+	server, err := php.Here().Stream(shop)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	small := engine.Load(frontend, server)
+	large := engine.Load(fixture.TwiceOver(frontend), fixture.TwiceOver(server))
+
+	fixturetest.NoRuleOutgrowsItsTree(t, small, large, configured())
+}
+
 func configured() []detectors.Detector {
 	var configured []detectors.Detector
 	for _, detector := range append(detectors.Of(catalog.Vue), detectors.Of(catalog.TypeScript)...) {
