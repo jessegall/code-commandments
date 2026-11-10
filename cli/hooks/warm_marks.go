@@ -24,6 +24,11 @@ import (
 	"github.com/jessegall/code-commandments/engine"
 )
 
+const (
+	longestTreeRead  = 10 * time.Minute
+	treeReadLookedAt = 250 * time.Millisecond
+)
+
 var kept = keeping()
 
 func keeping() *warm.Keeper {
@@ -68,6 +73,7 @@ const (
 	parseFailed    Narrowed = "what changed could not be parsed"
 	notInTheTree   Narrowed = "what changed is not in the tree that is held"
 	pastTheCeiling Narrowed = "the service already holds as much of this project as it is allowed to"
+	judgedAlone    Narrowed = "an edit is judged on its own, and the whole tree is read only to judge the changes together"
 )
 
 func noStreamOf(language source.Language) Narrowed {
@@ -93,6 +99,29 @@ func AgainstTheProgramTogether(marking Marking, files []string, rulesFor func(st
 	together, read, why := AgainstTheProgramNarrowed(marking, files, rulesFor, changedFor, root)
 
 	return together, read, why == ""
+}
+
+func AgainstTheProgramOnceRead(marking Marking, files []string, rulesFor func(string) []detectors.Detector,
+	changedFor func(string) git.ChangedLines, root string) (map[string][]SinMark, time.Duration, Narrowed) {
+	together, read, why := AgainstTheProgramNarrowed(marking, files, rulesFor, changedFor, root)
+	if !waitingOn(why) || !theTreeWasRead(root, checkoutOf(root, files[0])) {
+		return together, read, why
+	}
+
+	return AgainstTheProgramNarrowed(marking, files, rulesFor, changedFor, root)
+}
+
+func theTreeWasRead(root, checkout string) bool {
+	if _, coming := TheTreeIsComing(root, checkout); !coming {
+		return false
+	}
+
+	named, _ := rootOf(root)
+	for until := time.Now().Add(longestTreeRead); aReadIsRunning(named) && time.Now().Before(until); {
+		time.Sleep(treeReadLookedAt)
+	}
+
+	return !aReadIsRunning(named)
 }
 
 func AgainstTheProgramNarrowed(marking Marking, files []string, rulesFor func(string) []detectors.Detector,

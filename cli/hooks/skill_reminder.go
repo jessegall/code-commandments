@@ -14,7 +14,6 @@ import (
 	"github.com/jessegall/code-commandments/cli/config"
 	"github.com/jessegall/code-commandments/cli/custom"
 	"github.com/jessegall/code-commandments/cli/git"
-	"github.com/jessegall/code-commandments/cli/ledger"
 	"github.com/jessegall/code-commandments/cli/scan"
 	"github.com/jessegall/code-commandments/cli/source"
 	"github.com/jessegall/code-commandments/contract"
@@ -77,47 +76,25 @@ func (SkillReminder) Handle(event Event) Response {
 		tookIn(file)
 	}
 
-	together, spent, why := AgainstTheProgramNarrowed(marking, judged,
-		func(file string) []detectors.Detector {
-			return project.RulesFor(checkoutOf(event.Root, file), file, enabled)
-		},
-		func(file string) git.ChangedLines { return event.ChangedLines(file) }, event.Root)
-
-	spentReading += spent
-
-	if why != "" && why != noneToJudge {
-		Warming(event.Root, project)
-		ledger.Of(event.Root).Counts(ledger.JudgingsAnsweredSmaller, 1, event.Root+" because "+string(why))
-	}
-
 	asked := Asked{}
 	narrowed := map[string]Narrowed{}
 	askedCount := map[string]int{}
 	notAsked := map[string]int{}
 
-	for _, file := range files {
-		if !project.Writes(source.OfFile(file)) {
-			continue
-		}
+	for _, file := range judged {
+		narrow := project.RulesFor(checkoutOf(event.Root, file), file, single)
+		whole := project.RulesFor(checkoutOf(event.Root, file), file, enabled)
+		relative := source.Relative(event.Root, file)
+		asked[relative] = sinsOf(narrow)
+		narrowed[relative] = judgedAlone
+		askedCount[relative] = len(narrow)
+		notAsked[relative] = len(whole) - len(narrow)
 
-		marks, against := together[file]
-		if !against {
-			narrow := project.RulesFor(checkoutOf(event.Root, file), file, single)
-			whole := project.RulesFor(checkoutOf(event.Root, file), file, enabled)
-			named := source.Relative(event.Root, file)
-			asked[named] = sinsOf(narrow)
-			narrowed[named] = why
-			askedCount[named] = len(narrow)
-			notAsked[named] = len(whole) - len(narrow)
-			var unread error
-			var read time.Duration
-			marks, read, unread = marksIn(marking, file,
-				project.RulesFor(checkoutOf(event.Root, file), file, single), event.ChangedLines(file))
-			spentReading += read
+		marks, read, unread := marksIn(marking, file, narrow, event.ChangedLines(file))
+		spentReading += read
 
-			if unread != nil {
-				unreadable = append(unreadable, filepath.Base(file)+": "+unread.Error())
-			}
+		if unread != nil {
+			unreadable = append(unreadable, filepath.Base(file)+": "+unread.Error())
 		}
 
 		activity = append(activity, marks...)

@@ -87,9 +87,6 @@ func (Journal4Hook) Run(in *cli.Input, console cli.Console) (int, error) {
 	}
 
 	console.Write(Answer4Now(line) + "\n")
-	if keepsTheTreeWarm(asText(line["event"])) {
-		WarmsWhatItServes(firstText(os.Getenv(journalRoot), cwdOf()))
-	}
 
 	if judgedAfter(asText(line["event"])) {
 		judge4Detached(raw, line)
@@ -124,17 +121,12 @@ const heldEvent = "command_starting"
 const editedEvent = "file_edited"
 
 const (
-	tickedEvent  = "ticked"
-	idleEvent    = "idle"
-	startedEvent = "session_started"
+	tickedEvent = "ticked"
+	idleEvent   = "idle"
 )
 
 func awaited(event string) bool {
 	return event == heldEvent || event == editedEvent
-}
-
-func keepsTheTreeWarm(event string) bool {
-	return event == tickedEvent || event == idleEvent || event == startedEvent
 }
 
 func judgedAfter(event string) bool {

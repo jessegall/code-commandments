@@ -401,7 +401,7 @@ func (m merging) deep(project config.Config, rules []detectors.Detector) handIn 
 
 	root := projectOf(m.worktree)
 
-	found, _, why := AgainstTheProgramNarrowed(Marks(root).In(m.worktree).CutFrom(m.since), slices.Sorted(maps.Keys(changed)),
+	found, _, why := AgainstTheProgramOnceRead(Marks(root).In(m.worktree).CutFrom(m.since), slices.Sorted(maps.Keys(changed)),
 		func(string) []detectors.Detector { return rules },
 		func(file string) git.ChangedLines { return git.ChangedLinesSince(m.worktree, m.since, file) }, root)
 	if why != "" {

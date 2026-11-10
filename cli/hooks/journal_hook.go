@@ -546,7 +546,7 @@ func (s JournalServe) Run(in *cli.Input, console cli.Console) (int, error) {
 
 	defer remembersAcrossRestarts(console)()
 
-	go WarmsWhatItServes(root)
+	givesBackTheTreesItLetGo()
 
 	if judging, listening := Judging(root); listening {
 		defer judging.Close()
@@ -626,10 +626,6 @@ func serve(listener net.Listener, current func() bool, advice *advisers) {
 
 				expecting(given)
 				advice.add(asked{given, judgedAfter(asText(read["event"])), awaited(asText(read["event"]))})
-
-				if keepsTheTreeWarm(asText(read["event"])) {
-					WarmsWhatItServes(firstText(os.Getenv(journalRoot), cwdOf()))
-				}
 
 				return
 			}

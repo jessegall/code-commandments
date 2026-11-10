@@ -185,7 +185,7 @@ func marksBrought(where string, changed []string, before, after string) ([]SinMa
 	marking := Marks(projectOf(l.project)).In(l.project)
 	brought := func(file string) git.ChangedLines { return git.ChangedLinesBetween(l.project, before, after, file) }
 
-	together, _, why := AgainstTheProgramNarrowed(marking, files,
+	together, _, why := AgainstTheProgramOnceRead(marking, files,
 		func(file string) []detectors.Detector { return project.RulesFor(l.project, file, rules) },
 		brought, l.project)
 

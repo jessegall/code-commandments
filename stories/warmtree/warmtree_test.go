@@ -73,7 +73,7 @@ func TestAJudgeFromAWorktreeWhoseLaneIsBeingFilledIsToldSoAndWaits(t *testing.T)
 	s.CostIs(ledger.TreeReadsStarted, 0)
 }
 
-func TestAnEditDuringTheColdStartGetsASmallerAnswerAndTheReasonIsToldOnce(t *testing.T) {
+func TestAnEditIsJudgedOnItsOwnAndTheReasonIsToldOnce(t *testing.T) {
 	s := held(t)
 	ada := s.Agent("Ada")
 	s.DropsTheTree(s.TestCheckout())
@@ -83,31 +83,33 @@ func TestAnEditDuringTheColdStartGetsASmallerAnswerAndTheReasonIsToldOnce(t *tes
 	ada.Edits(story.MutableDefault, "first.py")
 	second := ada.Hears("first.py")
 
-	s.Says(first, "tree")
-	s.Never(second, "no tree of this checkout is held yet")
-	s.CostAtLeast(ledger.JudgingsAnsweredSmaller, 1)
+	s.Says(first, "judged on its own")
+	s.Never(second, "judged on its own")
+	s.CostIs(ledger.TreeReadsStarted, 0)
 }
 
-func TestTheSameEditOnceTheTreeHasArrivedGetsTheWholeAnswer(t *testing.T) {
+func TestADuplicateAcrossTwoEditsIsFoundWhenTheChangesAreJudgedTogether(t *testing.T) {
 	s := held(t)
 	ada := s.Agent("Ada")
 
 	ada.Edits(story.SettleOriginal, "payments.py")
 	ada.Edits(story.SettleCopy, "refunds.py")
+	ada.StaysUntold("duplicate-python-function")
 
-	told := ada.Hears("duplicate-python-function")
+	judged := s.AsksIn(s.TestCheckout(), "sins", "--changes")
 
-	s.Never(told, "no tree")
+	s.Says(judged, "duplicate-python-function")
 }
 
-func TestGoingIdleKeepsTheTreeWarm(t *testing.T) {
+func TestGoingIdleReadsNoTree(t *testing.T) {
 	s := held(t)
 	ada := s.Agent("Ada")
 	s.DropsTheTree(s.TestCheckout())
 
 	ada.Stops()
 
-	s.Says(s.ReadsTheLanesOnceTheyShow("1 tree(s) held"), "1 tree(s) held")
+	s.Says(s.ReadsTheLanes(), "0 tree(s) held")
+	s.CostIs(ledger.TreeReadsStarted, 0)
 }
 
 func TestSwitchingBranchInAWorktreeKeepsAnsweringFromTheTreeOfItsProject(t *testing.T) {
@@ -147,23 +149,21 @@ func TestAChangeNobodyAnnouncedIsStillJudged(t *testing.T) {
 
 func TestAFileTouchedWithTheSameBytesIsNotReadAgain(t *testing.T) {
 	s := held(t)
-	ada := s.Agent("Ada")
 
 	s.Writes(story.Clean, "touched.py")
 	s.LetsTheSweepFall()
 	s.Writes(story.Clean, "touched.py")
-	ada.Edits(story.Clean, "other.py")
+	s.AsksIn(s.TestCheckout(), "sins", "--changes")
 
 	s.CostAtMost(ledger.FilesReadIntoTrees, 3)
 }
 
 func TestAChangeTheSizeOfAMergeIsTakenIntoTheTreeInsteadOfGivenUp(t *testing.T) {
 	s := held(t)
-	ada := s.Agent("Ada")
 
 	s.WritesMany(story.Clean, 150)
 	s.LetsTheSweepFall()
-	ada.Edits(story.Clean, "other.py")
+	s.AsksIn(s.TestCheckout(), "sins", "--changes")
 
 	s.CostIs(ledger.TreeReadsStarted, 0)
 }
@@ -217,7 +217,8 @@ func TestAFileDeletedFromTheProjectLeavesTheHeldView(t *testing.T) {
 	s.LetsTheSweepFall()
 	s.Removes(story.SettleOriginal, "payments.py")
 	ada.Edits(story.SettleCopy, "refunds.py")
-	ada.StaysUntold("duplicate-python-function")
+
+	s.Never(s.AsksIn(s.TestCheckout(), "sins", "--changes"), "duplicate-python-function")
 }
 
 func TestAWorkerIsServedFromTheTreeOfTheBranchItWasCutFrom(t *testing.T) {
@@ -231,13 +232,13 @@ func TestAWorkerIsServedFromTheTreeOfTheBranchItWasCutFrom(t *testing.T) {
 	s.CostIs(ledger.TreeReadsStarted, 0)
 }
 
-func TestAWorkersCutWhileTheProjectHasNoTreeTellsHerTheTreeIsComing(t *testing.T) {
+func TestAWorkersEditWhileTheProjectHasNoTreeIsJudgedOnItsOwn(t *testing.T) {
 	s := cold(t)
 	grace := s.Worker("Grace")
 
 	grace.Edits(story.ElseAfterRaise, "order.py")
 	told := grace.Hears("order.py")
 
-	s.Says(told, "tree")
-	s.CostAtLeast(ledger.JudgingsAnsweredSmaller, 1)
+	s.Says(told, "redundant-python-else")
+	s.CostIs(ledger.TreeReadsStarted, 0)
 }

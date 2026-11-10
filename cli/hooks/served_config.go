@@ -24,7 +24,6 @@ func heldTheConfigOf(line map[string]any) {
 	}
 
 	letGoOfTheTreesOf(project)
-	Warming(project, now)
 }
 
 // walkedUnder is the config file a project's tree was last read under and when that file was written.
@@ -75,7 +74,6 @@ func heldTheConfigFileOf(project string) {
 	}
 
 	letGoOfTheTreesOf(project)
-	Warming(project, now)
 }
 
 func letGoOfTheTreesOf(project string) {
