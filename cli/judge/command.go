@@ -162,6 +162,11 @@ func (c Command) Run(in *cli.Input, console cli.Console) (int, error) {
 		return list(cwd, console)
 	}
 
+	if remembered, keeps := RememberedFor(space.Root(), console.Warn); keeps && c.Reading == nil {
+		remembered.Load()
+		defer remembered.Save()
+	}
+
 	if extra, named := in.Argument(1); named {
 		return help.Usage(console.Err, c, "judge takes one path; "+extra+" would never be judged. Name a folder that holds both, or run judge once for each."), nil
 	}

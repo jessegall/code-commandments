@@ -259,6 +259,40 @@ func (m *Memory) Verdicts() []Verdict {
 	return verdicts
 }
 
+func MergedVerdicts(older, newer []Verdict, renumbered []int, now time.Time) []Verdict {
+	merged := make([]Verdict, 0, len(older)+len(newer))
+	at := make(map[uint64]int, len(older)+len(newer))
+
+	for _, verdict := range older {
+		if expired(verdict.Used, now) {
+			continue
+		}
+
+		at[verdict.Fingerprint] = len(merged)
+		merged = append(merged, Verdict{verdict.Fingerprint, verdict.Used, slices.Clone(verdict.Judged), maps.Clone(verdict.Found)})
+	}
+
+	for _, verdict := range newer {
+		place, held := at[verdict.Fingerprint]
+		if !held {
+			place = len(merged)
+			at[verdict.Fingerprint] = place
+			merged = append(merged, Verdict{Fingerprint: verdict.Fingerprint})
+		}
+
+		into := &merged[place]
+		into.Used = max(into.Used, verdict.Used)
+
+		for rule, number := range renumbered {
+			if verdict.judgedBy(rule) {
+				into.judged(number, verdict.Found[rule])
+			}
+		}
+	}
+
+	return merged
+}
+
 func (r *Remembered) remember(asked map[string]unjudged, matches []Match) {
 	found := map[string][]int{}
 	unanswerable := map[string]bool{}

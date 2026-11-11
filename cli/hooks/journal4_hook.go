@@ -73,6 +73,10 @@ func (PluginHook) Run(in *cli.Input, console cli.Console) (int, error) {
 		return 0, nil
 	}
 
+	if os.Getenv(judging) != "" {
+		defer rememberedAround(servedRoot(), console.Warn)()
+	}
+
 	if os.Getenv(judging) != "" && namedAsTheKey(asText(line["event"])) == deliveringEvent {
 		mergeOf(line).judgesAfterwards()
 

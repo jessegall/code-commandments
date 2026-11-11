@@ -8,7 +8,7 @@ import (
 	"github.com/jessegall/code-commandments/cli/atomic"
 )
 
-// MemoryFile is the file one project keeps its detectors' memories in between runs of its service, good only for the build that wrote it.
+// MemoryFile is the file one project keeps its detectors' memories in between runs, good only for the build that wrote it. Runs save it one at a time, each laying what it learned over what the file already holds, so two runs at once never lose each other's answers.
 type MemoryFile struct {
 	Memories *Memories
 	Path     string
@@ -23,29 +23,35 @@ type savedMemories struct {
 }
 
 func (f MemoryFile) Load() {
+	if saved, read := f.saved(); read {
+		f.Memories.Restore(saved)
+	}
+}
+
+func (f MemoryFile) saved() (Kept, bool) {
 	raw, err := os.ReadFile(f.Path)
 	if errors.Is(err, os.ErrNotExist) {
-		return
+		return Kept{}, false
 	}
 
 	if err != nil {
 		f.Warn("The detectors' saved memories could not be read, so they start empty: " + err.Error())
 
-		return
+		return Kept{}, false
 	}
 
 	var saved savedMemories
 	if err := json.Unmarshal(raw, &saved); err != nil {
 		f.Warn("The detectors' saved memories at " + f.Path + " are unreadable, so they start empty: " + err.Error())
 
-		return
+		return Kept{}, false
 	}
 
 	if saved.Build != f.Build {
-		return
+		return Kept{}, false
 	}
 
-	f.Memories.Restore(saved.Kept)
+	return saved.Kept, true
 }
 
 func (f MemoryFile) Save() {
@@ -53,7 +59,13 @@ func (f MemoryFile) Save() {
 		return
 	}
 
-	encoded, err := json.Marshal(savedMemories{f.Build, f.Memories.Kept()})
+	release := atomic.Hold(f.Path + ".lock")
+	defer release()
+
+	saved, _ := f.saved()
+	kept := f.Memories.Over(saved)
+
+	encoded, err := json.Marshal(savedMemories{f.Build, kept})
 	if err != nil {
 		f.Warn("The detectors' memories could not be encoded: " + err.Error())
 

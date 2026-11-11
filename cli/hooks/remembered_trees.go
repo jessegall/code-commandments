@@ -5,6 +5,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/jessegall/code-commandments/cli/judge"
 	"github.com/jessegall/code-commandments/cli/warm"
 )
 
@@ -32,7 +33,7 @@ func (s *treeSaver) save(now time.Time) {
 			continue
 		}
 
-		if err := base.Save(folder, thisBuild(), now); err != nil {
+		if err := base.Save(folder, judge.Build(), now); err != nil {
 			logWarned(fmt.Sprintf("the tree of %s on %s could not be saved | %v", named.project, named.branch, err))
 
 			continue

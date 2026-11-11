@@ -18,13 +18,14 @@ type Fingerprinted interface {
 // Memories is what every detector remembers, each under its identity and any fingerprint of its definition: one memory of the files judged alone and one of the files judged across the tree, where a detector's number is its bit in every file's entry.
 type Memories struct {
 	mu     sync.Mutex
+	now    func() time.Time
 	rules  []string
 	held   map[string]*engine.Remembered
 	own    *engine.Memory
 	across *engine.Memory
 }
 
-// Kept is every detector's memory as it is saved: the detectors by number, and the files each of the two memories holds.
+// Kept is every detector's memory as it is saved: the detectors by number, and the files each of the two memories holds. Laid over an older Kept, a detector the older did not know takes the next number, a file both judged keeps every detector either judged it with, the newer findings winning, and an older entry left unused too long is dropped.
 type Kept struct {
 	Rules  []string
 	Own    []engine.Verdict
@@ -37,7 +38,7 @@ func NewMemories(now func() time.Time) *Memories {
 	across := engine.NewMemory(now)
 	across.AtMost(mostRememberedAcross)
 
-	return &Memories{held: map[string]*engine.Remembered{}, own: engine.NewMemory(now), across: across}
+	return &Memories{now: now, held: map[string]*engine.Remembered{}, own: engine.NewMemory(now), across: across}
 }
 
 func EveryMemory() *Memories {
@@ -135,4 +136,25 @@ func (m *Memories) Kept() Kept {
 	defer m.mu.Unlock()
 
 	return Kept{slices.Clone(m.rules), m.own.Verdicts(), m.across.Verdicts()}
+}
+
+func (m *Memories) Over(saved Kept) Kept {
+	return saved.with(m.Kept(), m.now())
+}
+
+func (k Kept) with(newer Kept, now time.Time) Kept {
+	rules := slices.Clone(k.Rules)
+	renumbered := make([]int, len(newer.Rules))
+
+	for at, identity := range newer.Rules {
+		number := slices.Index(rules, identity)
+		if number < 0 {
+			rules = append(rules, identity)
+			number = len(rules) - 1
+		}
+
+		renumbered[at] = number
+	}
+
+	return Kept{rules, engine.MergedVerdicts(k.Own, newer.Own, renumbered, now), engine.MergedVerdicts(k.Across, newer.Across, renumbered, now)}
 }

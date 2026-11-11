@@ -248,6 +248,71 @@ func TestNothingChangedWritesNothing(t *testing.T) {
 	}
 }
 
+func TestTwoRunsSavingOneAfterTheOtherBothKeepWhatTheyLearned(t *testing.T) {
+	under := aFileUnderTest(t)
+	other := "go\x00OtherRule"
+
+	first, second := under.of("one"), under.of("one")
+	first.Load()
+	second.Load()
+
+	firstTree, _ := aTreeHolding(t, "first")
+	first.Memories.Of(savedDetector).Find(firstTree, (&countedDetector{}).find)
+
+	secondTree, _ := aTreeHolding(t, "second")
+	second.Memories.Of(other).Find(secondTree, (&countedDetector{}).find)
+	second.Memories.Of(savedDetector).Find(secondTree, (&countedDetector{}).find)
+
+	first.Save()
+	second.Save()
+
+	loaded := under.of("one")
+	loaded.Load()
+
+	for _, each := range []struct {
+		identity, content string
+	}{{savedDetector, "first"}, {savedDetector, "second"}, {other, "second"}} {
+		detector := &countedDetector{}
+		tree, _ := aTreeHolding(t, each.content)
+		loaded.Memories.Of(each.identity).Find(tree, detector.find)
+
+		if detector.asked != 0 {
+			t.Errorf("%q on %q was asked again: one run's save lost what the other learned", each.identity, each.content)
+		}
+	}
+}
+
+func TestTwoRunsSavingAtOnceNeverLeaveAHalfFile(t *testing.T) {
+	under := aFileUnderTest(t)
+
+	saved := make(chan struct{})
+	for _, content := range []string{"one", "two", "three", "four"} {
+		file := under.of("one")
+		tree, _ := aTreeHolding(t, content)
+		file.Memories.Of(savedDetector).Find(tree, (&countedDetector{}).find)
+
+		go func() {
+			file.Save()
+			saved <- struct{}{}
+		}()
+	}
+
+	for range 4 {
+		<-saved
+	}
+
+	loaded := under.of("one")
+	loaded.Load()
+
+	if len(under.warnings) != 0 {
+		t.Fatalf("saves at once left a file that cannot be read: %v", under.warnings)
+	}
+
+	if own := loaded.Memories.Kept().Own; len(own) != 4 {
+		t.Errorf("four runs saved at once and the file holds %d of their files", len(own))
+	}
+}
+
 func TestTheFileHoldsNoPath(t *testing.T) {
 	under := aFileUnderTest(t)
 

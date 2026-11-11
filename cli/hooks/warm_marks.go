@@ -14,6 +14,7 @@ import (
 
 	"github.com/jessegall/code-commandments/cli/config"
 	"github.com/jessegall/code-commandments/cli/git"
+	"github.com/jessegall/code-commandments/cli/judge"
 	"github.com/jessegall/code-commandments/cli/ledger"
 	"github.com/jessegall/code-commandments/cli/scan"
 	"github.com/jessegall/code-commandments/cli/source"
@@ -513,7 +514,7 @@ func Warming(root string, project config.Config) {
 
 		warm.SweepSaved(filepath.Dir(folder), time.Now())
 
-		saved, refused := warm.LoadSaved(folder, thisBuild(), roots, time.Now())
+		saved, refused := warm.LoadSaved(folder, judge.Build(), roots, time.Now())
 		if refused == nil && broughtBackFromDisk(named, roots, files, saved, folder, began) {
 			return
 		}
@@ -575,7 +576,7 @@ func broughtBackFromDisk(named branchRoot, roots, files []string, saved warm.Sav
 }
 
 func savesWhileHeld(base *warm.Base, named branchRoot, folder string) {
-	if base.Save(folder, thisBuild(), time.Now()) == nil {
+	if base.Save(folder, judge.Build(), time.Now()) == nil {
 		treeSaves.wrote(base)
 	}
 
