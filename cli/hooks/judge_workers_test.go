@@ -1,6 +1,8 @@
 package hooks
 
 import (
+	"os"
+	"path/filepath"
 	"testing"
 	"time"
 )
@@ -77,6 +79,22 @@ func TestTheWindowForLiveEditsIsASetting(t *testing.T) {
 
 	if got := gatheredFor(alone); got != 0 {
 		t.Errorf("a window of 0 gathers for %v", got)
+	}
+}
+
+func TestOnVersion4TheWindowForLiveEditsIsReadFromTheSettingsFile(t *testing.T) {
+	file := filepath.Join(t.TempDir(), "settings.json")
+	if err := os.WriteFile(file, []byte(`{"judge_edit_window": 2, "judge_workers": false, "judge_worker_edits": true}`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv(journalSettings, file)
+
+	if got := gatheredFor(map[string]any{"event": "file_edited"}); got != 2*time.Second {
+		t.Errorf("a version 4 line, which carries no settings, gathers edits for %v instead of the 2 seconds chosen", got)
+	}
+
+	if workerEditsJudgedAt(Moment{Role: "worker"}) {
+		t.Error("with workers switched off in the settings file, a version 4 worker's edit is still judged")
 	}
 }
 

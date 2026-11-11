@@ -957,8 +957,9 @@ func (a *adviser) gathering(now time.Time) bool {
 }
 
 func gatheredFor(given map[string]any) time.Duration {
-	seconds, chosen := MomentOf(given).Settings[editWindowKey].(float64)
-	if !chosen || seconds < 0 {
+	chosen, _ := chosenOn(given)
+	seconds, err := strconv.ParseFloat(asText(chosen[editWindowKey]), 64)
+	if err != nil || seconds < 0 {
 		return batchedWithin
 	}
 

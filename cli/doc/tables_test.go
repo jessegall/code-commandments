@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"strings"
 	"testing"
 
@@ -124,7 +125,7 @@ func TestEachPluginManifestNamesTheReleaseItPins(t *testing.T) {
 	}
 }
 
-func TestEverySettingAndCardSaysItsKindInBothWords(t *testing.T) {
+func TestEverySettingSaysItsKindInBothWords(t *testing.T) {
 	for _, setting := range doc.SettingsSchema() {
 		entry := setting.(*jsonfile.Object)
 		key, _ := entry.Get("key")
@@ -135,25 +136,71 @@ func TestEverySettingAndCardSaysItsKindInBothWords(t *testing.T) {
 			t.Errorf("the setting %v says kind %v and type %v, not one type under both words", key, kind, written)
 		}
 	}
+}
 
+var journal4Knows = map[string][]string{
+	"manifest": {"name", "version", "title", "description", "journal", "protocol", "program", "hears", "holds", "reaches",
+		"aliases", "cards", "requires", "setup", "installed", "settings", "skills", "health", "services", "dashboard", "ignored"},
+	"card":  {"kind", "label", "icon", "tone", "collapsed"},
+	"alias":   {"name", "line", "env", "variables", "args", "reader", "description", "background", "workers"},
+	"setting": {"text", "number", "flag", "choice", "list", "secret"},
+}
+
+func TestVersion4IsOfferedEverySettingVersion5Is(t *testing.T) {
+	var named []string
+	for _, manifest := range []string{doc.Journal4Plugin, "journal-plugin.5.json"} {
+		read, readable := jsonfile.Read(filepath.Join("..", "..", manifest))
+		if !readable {
+			t.Fatalf("%s is not a JSON object", manifest)
+		}
+
+		file, _ := read.Get("settings")
+		named = append(named, fmt.Sprint(file))
+	}
+
+	if named[0] != doc.PluginSchema || named[1] != doc.PluginSchema {
+		t.Errorf("version 4 reads its settings from %s and version 5 from %s, not both from %s", named[0], named[1], doc.PluginSchema)
+	}
+
+	for _, setting := range doc.SettingsSchema() {
+		entry := setting.(*jsonfile.Object)
+		key, _ := entry.Get("key")
+		kind, _ := entry.Get("kind")
+
+		if !slices.Contains(journal4Knows["setting"], fmt.Sprint(kind)) {
+			t.Errorf("the setting %v is of the kind %v, which version 4 of the journal does not know", key, kind)
+		}
+	}
+}
+
+func TestTheVersion4ManifestHoldsOnlyWhatVersion4Reads(t *testing.T) {
 	manifest, read := jsonfile.Read(filepath.Join("..", "..", doc.Journal4Plugin))
 	if !read {
 		t.Fatalf("%s is not a JSON object", doc.Journal4Plugin)
 	}
 
-	cards, _ := manifest.Get("cards")
-	declared, _ := cards.([]any)
-	if len(declared) == 0 {
-		t.Fatalf("%s declares no cards, so nothing is asked", doc.Journal4Plugin)
+	unknownIn(t, "the manifest", manifest, journal4Knows["manifest"])
+
+	for _, group := range []struct{ field, part string }{{"cards", "card"}, {"aliases", "alias"}} {
+		listed, _ := manifest.Get(group.field)
+		entries, _ := listed.([]any)
+		if len(entries) == 0 {
+			t.Errorf("%s declares no %s, so nothing of them is asked", doc.Journal4Plugin, group.field)
+		}
+
+		for _, each := range entries {
+			entry, _ := each.(*jsonfile.Object)
+			unknownIn(t, "a "+group.part, entry, journal4Knows[group.part])
+		}
 	}
+}
 
-	for _, each := range declared {
-		card, _ := each.(*jsonfile.Object)
-		kind, _ := card.Get("kind")
-		written, _ := card.Get("type")
+func unknownIn(t *testing.T, what string, entry *jsonfile.Object, known []string) {
+	t.Helper()
 
-		if kind == nil || written == nil || fmt.Sprint(kind) != fmt.Sprint(written) {
-			t.Errorf("the card %v says kind %v and type %v, not one card under both words", kind, kind, written)
+	for _, key := range entry.Keys() {
+		if !slices.Contains(known, key) {
+			t.Errorf("%s of %s holds %q, which version 4 of the journal refuses: it installs nothing then", what, doc.Journal4Plugin, key)
 		}
 	}
 }
