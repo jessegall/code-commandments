@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/jessegall/code-commandments/cli/binary"
-	"github.com/jessegall/code-commandments/cli/health"
 	"github.com/jessegall/code-commandments/cli/hooks"
 )
 
@@ -22,11 +21,10 @@ type pins struct {
 	Setup   []struct{ Run string } `json:"setup"`
 }
 
-// offered is what version 4's manifest declares about the events it answers: version 3's file writes its own services as an object, so only this one is read for them.
+// offered is what version 4's manifest declares about the events it answers.
 type offered struct {
-	Hears    []string  `json:"hears"`
-	Holds    []hold    `json:"holds"`
-	Services []service `json:"services"`
+	Hears []string `json:"hears"`
+	Holds []hold   `json:"holds"`
 }
 
 // hold is one event the journal asks the plugin before the tool runs, and the window it allows for the answer.
@@ -35,88 +33,22 @@ type hold struct {
 	WindowMs int    `json:"window_ms"`
 }
 
-// service is one program the journal keeps running for the plugin, and whether it answers the journal's events.
-type service struct {
-	Name    string   `json:"name"`
-	Answers bool     `json:"answers"`
-	Command []string `json:"command"`
-	Run     string   `json:"run"`
-	When    string   `json:"when"`
-	Restart string   `json:"restart"`
-}
-
-func (s service) line() string {
-	if s.Run != "" {
-		return s.Run
-	}
-
-	return strings.Join(s.Command, " ")
-}
-
-// kept is what each manifest says the journal keeps running, by name.
-type kept map[string]service
-
-func keptBy(t *testing.T, name ...string) kept {
-	t.Helper()
-	content, err := os.ReadFile(filepath.Join(append([]string{"..", ".."}, name...)...))
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	var listed struct {
-		Services json.RawMessage `json:"services"`
-	}
-	if err := json.Unmarshal(content, &listed); err != nil {
-		t.Fatal(err)
-	}
-
-	var asList []service
-	if json.Unmarshal(listed.Services, &asList) == nil {
-		held := kept{}
-		for _, one := range asList {
-			held[one.Name] = one
+func TestNoManifestKeepsAServiceRunning(t *testing.T) {
+	for _, name := range []string{"journal-plugin.json", "journal-plugin.5.json", filepath.Join(".journal-plugin", "plugin.json")} {
+		content, err := os.ReadFile(filepath.Join("..", "..", name))
+		if err != nil {
+			t.Fatal(err)
 		}
 
-		return held
-	}
-
-	var asObject map[string]service
-	if err := json.Unmarshal(listed.Services, &asObject); err != nil {
-		t.Fatal(err)
-	}
-	held := kept{}
-	for name, one := range asObject {
-		one.Name = name
-		held[name] = one
-	}
-
-	return held
-}
-
-func TestBothPluginManifestsKeepTheSameServices(t *testing.T) {
-	held, offered := keptBy(t, ".journal-plugin", "plugin.json"), keptBy(t, "journal-plugin.json")
-
-	for name, one := range offered {
-		same, declared := held[name]
-		if !declared {
-			t.Errorf("journal-plugin.json keeps the %s service and .journal-plugin/plugin.json keeps none", name)
-
-			continue
+		var manifest map[string]json.RawMessage
+		if err := json.Unmarshal(content, &manifest); err != nil {
+			t.Fatal(err)
 		}
-		if same.line() != one.line() {
-			t.Errorf("the %s service runs %q in one manifest and %q in the other", name, same.line(), one.line())
-		}
-		if same.When != one.When {
-			t.Errorf("the %s service is started when %q in one manifest and when %q in the other", name, same.When, one.When)
-		}
-		if same.Restart != one.Restart {
-			t.Errorf("the %s service restarts %q in one manifest and %q in the other", name, same.Restart, one.Restart)
-		}
-	}
 
-	for name := range held {
-		if _, declared := offered[name]; !declared {
-			t.Errorf(".journal-plugin/plugin.json keeps the %s service and journal-plugin.json keeps none", name)
+		for _, key := range []string{"services", "health", "refuse_socket"} {
+			if _, declared := manifest[key]; declared {
+				t.Errorf("%s declares %s: nothing of ours runs between events, each event and each judge starts what it needs and stops it", name, key)
+			}
 		}
 	}
 }
@@ -148,7 +80,9 @@ func TestBothPluginManifestsPinTheSameRelease(t *testing.T) {
 	}
 }
 
-const windowMs = 10
+const startedWithinMs = 500
+
+const quickMs = 1_000
 
 const decidedMs = 180_000
 
@@ -165,18 +99,14 @@ func TestEveryHoldIsAnsweredFromWhatIsAlreadyKnown(t *testing.T) {
 	}
 
 	for _, held := range manifest.Holds {
-		longest := windowMs
+		longest := quickMs
 		if slices.Contains(decided, held.Event) {
 			longest = decidedMs
 		}
 
-		if held.WindowMs <= 0 || held.WindowMs > longest {
-			t.Errorf("%s is held for %dms: a hold of ours declares a window of at most %dms, so nothing can be worked out inside it", held.Event, held.WindowMs, longest)
+		if held.WindowMs < startedWithinMs || held.WindowMs > longest {
+			t.Errorf("%s is held for %dms: a hold of ours is answered by a process started for it, so its window is %dms to %dms", held.Event, held.WindowMs, startedWithinMs, longest)
 		}
-	}
-
-	if len(manifest.Holds) > 0 && !slices.ContainsFunc(manifest.Services, func(kept service) bool { return kept.Answers }) {
-		t.Error("the plugin holds an event and no service of its own answers: a window of milliseconds cannot start a process")
 	}
 
 	for _, event := range []string{"command_starting", "file_edited"} {
@@ -189,61 +119,6 @@ func TestEveryHoldIsAnsweredFromWhatIsAlreadyKnown(t *testing.T) {
 		if held.Event == "file_edited" {
 			t.Error("file_edited is held: an edit would wait on the judge of it, which is the fault all of this answers")
 		}
-	}
-}
-
-// declaredHealth is what a manifest says about the question the journal asks each service about itself: the variable it names the socket in, the line it writes, and the answer it reads back.
-type declaredHealth struct {
-	SocketEnv string `json:"socket_env"`
-	Request   string `json:"request"`
-	Answer    string `json:"answer"`
-}
-
-func healthOf(t *testing.T, name ...string) declaredHealth {
-	t.Helper()
-	content, err := os.ReadFile(filepath.Join(append([]string{"..", ".."}, name...)...))
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	var manifest struct {
-		Health declaredHealth `json:"health"`
-	}
-	if err := json.Unmarshal(content, &manifest); err != nil {
-		t.Fatal(err)
-	}
-
-	return manifest.Health
-}
-
-func TestBothManifestsDeclareTheHealthTheServicesReallyAnswer(t *testing.T) {
-	held, offered := healthOf(t, ".journal-plugin", "plugin.json"), healthOf(t, "journal-plugin.json")
-
-	if held != offered {
-		t.Errorf(".journal-plugin/plugin.json declares the health %+v and journal-plugin.json %+v", held, offered)
-	}
-
-	if offered.SocketEnv != health.Socket {
-		t.Errorf("the manifest names the socket in $%s and the service listens on $%s", offered.SocketEnv, health.Socket)
-	}
-	if offered.Request != health.Request {
-		t.Errorf("the manifest writes %q and the service answers %q", offered.Request, health.Request)
-	}
-
-	anything := regexp.MustCompile(`<[^>]*>`)
-
-	for _, service := range []string{"hooks", "roslyn", "mypy", "frontend", "php"} {
-		if said, declared := health.Answer(service), anything.ReplaceAllString(offered.Answer, service); said != declared {
-			t.Errorf("the %s service answers %s and the manifest declares %s", service, said, declared)
-		}
-	}
-
-	declared := map[string]any{}
-	if err := json.Unmarshal([]byte(offered.Answer), &declared); err != nil {
-		t.Fatalf("the answer the manifest declares is no JSON: %v", err)
-	}
-	if declared["health"] != "up" {
-		t.Errorf("the manifest says a service answers %v, and up is what it says", declared["health"])
 	}
 }
 
@@ -509,46 +384,33 @@ func TestOnlyTheVersionFourManifestCanCarryTheWorktreeKeys(t *testing.T) {
 		t.Error("the version four manifest no longer hears file_edited, and their journal keeps sending it with no date for its removal, so an edit would be heard by nobody")
 	}
 
-	for _, entry := range fourth.Listen {
-		for _, form := range []string{"guard", "listen", "commit"} {
-			named, held := entry[form].(string)
-			if !held {
-				continue
-			}
-
-			if !strings.HasPrefix(named, "service:") {
-				t.Errorf("the listen entry for %v names %s as its %s form, and only service:<name> reaches our running service; a script would start a new process per event", entry["event"], named, form)
-			}
-		}
-	}
 }
 
-func TestThisPlanAddsNoServiceOfItsOwn(t *testing.T) {
-	text, err := os.ReadFile(filepath.Join("..", "..", "journal-plugin.json"))
+func TestEveryEventTheJournalSendsRunsThePluginsOwnProgram(t *testing.T) {
+	text, err := os.ReadFile(filepath.Join("..", "..", "journal-plugin.5.json"))
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	var read struct {
-		Services []struct {
-			Name string `json:"name"`
-		} `json:"services"`
+	var fifth struct {
+		Program string           `json:"program"`
+		Listen  []map[string]any `json:"listen"`
 	}
-	if err := json.Unmarshal(text, &read); err != nil {
+	if err := json.Unmarshal(text, &fifth); err != nil {
 		t.Fatal(err)
 	}
 
-	named := map[string]bool{"hooks": true, "roslyn": true, "mypy": true, "frontend": true, "php": true}
-
-	for _, service := range read.Services {
-		if !named[service.Name] {
-			t.Errorf("the manifest declares the service %q, and this plan adds none: a bridge per worker was refused, "+
-				"and a service a consumer cannot switch off is a service they cannot escape", service.Name)
-		}
+	if len(fifth.Listen) == 0 {
+		t.Fatal("the version 5 manifest listens to nothing, so no merge or hand-in reaches the plugin")
 	}
 
-	if len(read.Services) != len(named) {
-		t.Errorf("the manifest declares %d services and there are %d we know of", len(read.Services), len(named))
+	for _, entry := range fifth.Listen {
+		for _, form := range []string{"guard", "listen", "commit"} {
+			named, held := entry[form].(string)
+			if held && named != fifth.Program {
+				t.Errorf("the listen entry for %v names %s as its %s form, and only the plugin's program %s answers an event, started for it", entry["event"], named, form, fifth.Program)
+			}
+		}
 	}
 }
 
@@ -559,11 +421,7 @@ func TestNoFileTheJournalRunsIsFetchedPerRelease(t *testing.T) {
 	}
 
 	var read struct {
-		Program  string `json:"program"`
-		Services []struct {
-			Name    string   `json:"name"`
-			Command []string `json:"command"`
-		} `json:"services"`
+		Program string `json:"program"`
 	}
 	if err := json.Unmarshal(text, &read); err != nil {
 		t.Fatal(err)
@@ -576,23 +434,6 @@ func TestNoFileTheJournalRunsIsFetchedPerRelease(t *testing.T) {
 			"the journal digests the files a plugin runs, so each release would move that digest (%s)", read.Program)
 	}
 
-	for _, service := range read.Services {
-		if len(service.Command) == 0 {
-			t.Errorf("the service %s names no command", service.Name)
-
-			continue
-		}
-
-		if service.Command[0] == fetched {
-			t.Errorf("the service %s is started from the fetched binary, which every release replaces, so every "+
-				"release of ours would move the digest of a file the journal runs", service.Name)
-		}
-
-		if !strings.HasPrefix(service.Command[0], ".journal-plugin/") {
-			t.Errorf("the service %s is started from %s, which is not one of the plugin's own stable files",
-				service.Name, service.Command[0])
-		}
-	}
 }
 
 func TestEveryAliasOurLinesNameIsDeclaredInEachManifest(t *testing.T) {

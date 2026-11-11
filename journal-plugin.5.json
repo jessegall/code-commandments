@@ -1,6 +1,6 @@
 {
   "name": "code-commandments",
-  "version": "7.18.73",
+  "version": "7.18.74",
   "title": "Code Commandments",
   "description": "The static code checker judges the codebase, its hooks run inside the journal, and every rule and language is a switch in its settings",
   "journal": "5.0.0",
@@ -46,7 +46,7 @@
   "holds": [
     {
       "event": "command_starting",
-      "window_ms": 5
+      "window_ms": 1000
     }
   ],
   "reaches": {
@@ -66,29 +66,29 @@
   "listen": [
     {
       "event": "suites.coding.workers.worker_worktree.merge",
-      "commit": "service:hooks"
+      "commit": ".journal-plugin/journal4-hook"
     },
     {
       "event": "core.plugins.plugin.updated",
-      "commit": "service:hooks"
+      "commit": ".journal-plugin/journal4-hook"
     },
     {
       "event": "core.agents.agent.created",
-      "commit": "service:hooks"
+      "commit": ".journal-plugin/journal4-hook"
     },
     {
       "event": "suites.coding.workers.merge_request.created",
-      "guard": "service:hooks",
+      "guard": ".journal-plugin/journal4-hook",
       "window_ms": 30000
     },
     {
       "event": "suites.coding.workers.worker_delivering",
-      "guard": "service:hooks",
-      "window_ms": 60000
+      "guard": ".journal-plugin/journal4-hook",
+      "window_ms": 180000
     },
     {
       "event": "core.plugins.plugin.config_changed",
-      "commit": "service:hooks"
+      "commit": ".journal-plugin/journal4-hook"
     }
   ],
   "aliases": [
@@ -187,7 +187,7 @@
   "setup": [
     {
       "name": "Fetch the checker's release binary, checked against its SHA256SUMS",
-      "run": "COMMANDMENTS_RELEASE=v7.18.73 sh .journal-plugin/fetch"
+      "run": "COMMANDMENTS_RELEASE=v7.18.74 sh .journal-plugin/fetch"
     },
     {
       "name": "Write the chosen switches into config.json",
@@ -201,58 +201,6 @@
   "installed": "bin/commandments-release journal-scan --settings-only",
   "settings": ".journal-plugin/settings.json",
   "skills": "journal-skills/.agents/skills",
-  "health": {
-    "socket_env": "COMMANDMENTS_HEALTH_SOCKET",
-    "request": "{\"health\":1}",
-    "answer": "{\"health\":\"up\",\"service\":\"<the service's own name>\"}"
-  },
-  "services": [
-    {
-      "name": "hooks",
-      "command": [
-        ".journal-plugin/serve",
-        "journal-serve"
-      ],
-      "answers": true,
-      "restart": "always"
-    },
-    {
-      "name": "roslyn",
-      "command": [
-        ".journal-plugin/serve",
-        "roslyn-serve"
-      ],
-      "when": "\"$JOURNAL_PLUGIN_DIR/bin/commandments-release\" has-csharp",
-      "restart": "always"
-    },
-    {
-      "name": "mypy",
-      "command": [
-        ".journal-plugin/serve",
-        "mypy-serve"
-      ],
-      "when": "\"$JOURNAL_PLUGIN_DIR/bin/commandments-release\" has-python",
-      "restart": "always"
-    },
-    {
-      "name": "frontend",
-      "command": [
-        ".journal-plugin/serve",
-        "frontend-serve"
-      ],
-      "when": "\"$JOURNAL_PLUGIN_DIR/bin/commandments-release\" has-frontend",
-      "restart": "always"
-    },
-    {
-      "name": "php",
-      "command": [
-        ".journal-plugin/serve",
-        "php-serve"
-      ],
-      "when": "\"$JOURNAL_PLUGIN_DIR/bin/commandments-release\" has-php",
-      "restart": "always"
-    }
-  ],
   "dashboard": {
     "name": "sins",
     "title": "Sins"

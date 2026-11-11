@@ -1,6 +1,6 @@
 {
     "name": "code-commandments",
-    "version": "7.18.73",
+    "version": "7.18.74",
     "title": "Code Commandments",
     "description": "The static code checker judges the codebase, its hooks run inside the journal, and every rule and language is a switch in its settings",
     "journal": "2.267.16",
@@ -47,7 +47,7 @@
     },
     "env": {
         "CLAUDE_PROJECT_DIR": "{project}",
-        "COMMANDMENTS_RELEASE": "v7.18.73"
+        "COMMANDMENTS_RELEASE": "v7.18.74"
     },
     "setup": [
         {
@@ -64,7 +64,6 @@
         }
     ],
     "refuse": "bin/commandments-release journal-hook",
-    "refuse_socket": "hooks",
     "reads": true,
     "refuse_seconds": 20,
     "hooks": {
@@ -4042,37 +4041,6 @@
     },
     "skills": "journal-skills/.agents/skills",
     "installed": "bin/commandments-release journal-scan",
-    "health": {
-        "socket_env": "COMMANDMENTS_HEALTH_SOCKET",
-        "request": "{\"health\":1}",
-        "answer": "{\"health\":\"up\",\"service\":\"<the service's own name>\"}"
-    },
-    "services": {
-        "hooks": {
-            "run": ".journal-plugin/serve journal-serve",
-            "restart": "always"
-        },
-        "roslyn": {
-            "run": ".journal-plugin/serve roslyn-serve",
-            "when": "\"$JOURNAL_PLUGIN_DIR/bin/commandments-release\" has-csharp",
-            "restart": "always"
-        },
-        "mypy": {
-            "run": ".journal-plugin/serve mypy-serve",
-            "when": "\"$JOURNAL_PLUGIN_DIR/bin/commandments-release\" has-python",
-            "restart": "always"
-        },
-        "frontend": {
-            "run": ".journal-plugin/serve frontend-serve",
-            "when": "\"$JOURNAL_PLUGIN_DIR/bin/commandments-release\" has-frontend",
-            "restart": "always"
-        },
-        "php": {
-            "run": ".journal-plugin/serve php-serve",
-            "when": "\"$JOURNAL_PLUGIN_DIR/bin/commandments-release\" has-php",
-            "restart": "always"
-        }
-    },
     "dashboards": [
         {
             "name": "sins",

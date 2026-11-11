@@ -425,12 +425,9 @@ where it stands and which turns green when the file holds none; thirty sins in a
 this whole path exists to prevent. A change to the settings arrives as `plugin.updated` and is written by
 `journal-config`, as before.
 
-Every service the journal keeps up for the plugin says how it is, so one that has died is restarted rather than
-quietly leaving its discipline unenforced. The manifest's `health` block names the variable the journal puts a
-socket path in for each service it starts, `COMMANDMENTS_HEALTH_SOCKET`, and the line it writes there; the service
-answers `{"health":"up","service":"<its name>"}` at once, from the fact that it is running, on a listener of its
-own — never behind the work it is doing, since a bridge halfway through parsing a project is up and must not be
-restarted for being busy. The `hooks` service answers the same question on the socket it already answers events on.
+The plugin keeps nothing running between events. The journal runs the plugin's program once for each event it
+hears or holds, and a judge starts the language bridges it needs, reads what their caches already hold, and stops
+them when it ends. A project with live edits off therefore runs no process of ours while nobody judges.
 
 While the plugin is installed, `install` and `sync` wire **no** Claude Code hooks of their own: the
 journal calls them. Take the plugin away and the next `composer update` wires them back.

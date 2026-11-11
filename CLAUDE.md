@@ -178,7 +178,7 @@ README's command table is projected from the same help. The ones you use while w
 | `bin/commandments report --reason=… --ref=PATH:LINE` / `feature-request` | File a bug, a false positive, or a rule request through `gh`. |
 | `bin/commandments make <Name>` | Scaffold a consumer's own commandment in `.commandments/custom/`. |
 | `bin/commandments sync` | Publish the curriculum and the briefing, wire the hooks, migrate old state. Composer runs it after install and update. |
-| `bin/commandments roslyn-serve` / `journal-serve` | The services the agent journal keeps up: the C# bridge, kept warm; the hooks, answered from one process. |
+| `bin/commandments roslyn-serve` / `journal-serve` | The C# bridge kept warm, and the hooks answered from one process, for a session that starts them by hand. The plugin keeps none of them running: each event runs its program once, and each judge starts the bridges it needs and stops them. |
 | `scripts/dev [--mount PATH]… <command>` | Run any Go build/test/vet/run/generate in the capped dev container (3 GB, no swap, 2 CPUs) — never Go on the host. See below. |
 | `scripts/dev go test ./the/packages/you/touched` | The suite, scoped while iterating (rule 1). |
 
