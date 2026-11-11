@@ -17,7 +17,7 @@ public static class Sources
             }
             else if (Directory.Exists(path))
             {
-                foreach (var file in Directory.EnumerateFiles(path, "*.cs", SearchOption.AllDirectories).Where(IsSource))
+                foreach (var file in Directory.EnumerateFiles(path, "*.cs", SearchOption.AllDirectories).Where(file => IsSource(path, file)))
                 {
                     files.Add(file);
                 }
@@ -27,6 +27,6 @@ public static class Sources
         return files.ToList();
     }
 
-    public static bool IsSource(string file) =>
-        !file.Split(Path.DirectorySeparatorChar).Any(part => Skipped.Contains(part));
+    public static bool IsSource(string root, string file) =>
+        !Path.GetRelativePath(root, file).Split(Path.DirectorySeparatorChar).Any(part => Skipped.Contains(part));
 }

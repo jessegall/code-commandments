@@ -18,7 +18,7 @@ func settingsOf(t *testing.T, chosen map[string]any) {
 	t.Setenv(journalSettings, string(said))
 }
 
-func TestAWorkersEditIsNotJudgedAndTheAnswerNamesTheSetting(t *testing.T) {
+func TestAWorkersEditIsNotJudgedAndTheWorkerHearsNothing(t *testing.T) {
 	root, data := workerProject(t)
 	t.Setenv(pluginData, data)
 	settingsOf(t, map[string]any{workersKey: "false"})
@@ -32,8 +32,8 @@ func TestAWorkersEditIsNotJudgedAndTheAnswerNamesTheSetting(t *testing.T) {
 		"data": map[string]any{"cwd": root, "kind": "create", "path": under},
 	})
 
-	if !strings.Contains(said, workersKey) {
-		t.Fatalf("a worker's edit was answered without naming the setting that turned it off: %s", said)
+	if strings.Contains(said, workersKey) {
+		t.Fatalf("a worker with its judging off was told about it: %s", said)
 	}
 
 	if strings.Contains(said, "deep-python-nesting") || strings.Contains(said, "redundant-python-else") {

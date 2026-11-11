@@ -33,6 +33,8 @@ import (
 
 const defaultParallel = 2
 
+const agentSession = "JOURNAL_AGENT_SESSION"
+
 const aRuleCouldNotRun = 3
 
 // Command is `judge`: scan a codebase and report its sins, grouped by the skill that fixes each.
@@ -46,6 +48,8 @@ type Command struct {
 	Reading func(sources scan.Sources) (*engine.Codebase, error)
 
 	Spending func(Spent)
+
+	Edited scope.Edits
 }
 
 // Spent is where the time of one judging went: reading the sources and running the rules over them.
@@ -78,7 +82,7 @@ func (c Command) folder() (string, error) {
 }
 
 func (c Command) read(sources scan.Sources) (*engine.Codebase, error) {
-	if c.Reading != nil {
+	if c.Reading != nil && sources.Count(source.Languages...) > 0 {
 		return c.Reading(sources)
 	}
 
@@ -106,6 +110,7 @@ func (Command) Help() help.Help {
 		Option("--checklist=FILE", "write the checklist here (default: your session's sins/sins.md, in .commandments/sessions/<id>/ or the journal plugin's data folder)").
 		Option("--no-checklist", "print only, don't write the checklist file").
 		Option("--benchmark", "time each detector and print the slowest").
+		Option("--profile=FILE", "with --benchmark, write a CPU profile of the detectors to FILE, read with `go tool pprof`").
 		Option("--"+allowColdRead, "read the whole tree in this run when the project's journal runs the plugin but no "+
 			"judging service answers; without it such a run refuses, since the service being down is the fault to fix").
 		Note("With no [path], judge scans the source roots declared under \"paths\" in " +
@@ -142,7 +147,7 @@ func (c Command) Run(in *cli.Input, console cli.Console) (int, error) {
 			serving.Project = space.Root()
 		}
 
-		answer, asked := warm.AskedUntilTheTreeIsThere(serving.Project, warm.Request{Judge: in.Raw(), In: cwd, Progress: cli.Watched()},
+		answer, asked := warm.AskedUntilTheTreeIsThere(serving.Project, warm.Request{Judge: in.Raw(), In: cwd, Progress: cli.Watched(), Agent: os.Getenv(agentSession) != ""},
 			func(said string) { fmt.Fprintln(console.Err, "· "+said) },
 			func(line string) { fmt.Fprintln(console.Err, line) })
 		if asked {
@@ -157,7 +162,7 @@ func (c Command) Run(in *cli.Input, console cli.Console) (int, error) {
 		}
 
 		if journal, near := aJournalNear(cwd, space); near && !in.HasFlag(allowColdRead) {
-			fmt.Fprintln(console.Err, "· this run refuses to read the whole tree itself: "+whyNotServed(answer)+
+			fmt.Fprintln(console.Err, "✗ this run refuses to read the whole tree itself: "+whyNotServed(answer)+
 				", yet "+journal+", so a judging service should answer. "+
 				"The journal keeps that service up and starts it again by itself; `journal plugin services` says whether it "+
 				"runs. Wait for it, or run again with --"+allowColdRead+
@@ -179,7 +184,7 @@ func (c Command) Run(in *cli.Input, console cli.Console) (int, error) {
 
 	info, err := os.Stat(options.path)
 	if err != nil {
-		console.Warn("Nothing to judge at " + options.path)
+		console.Warn("✗ Nothing to judge at " + options.path)
 
 		return 2, nil
 	}
@@ -207,6 +212,7 @@ func (c Command) Run(in *cli.Input, console cli.Console) (int, error) {
 	own := custom.InForce(cwd)
 	console.Warn(own.Warnings(project)...)
 	enabled = append(enabled, own.Enabled(project)...)
+	options.unreadableRules = own.Unreadable
 
 	selected := selectFrom(enabled, options.skill, options.sin, options.tags)
 
@@ -215,7 +221,7 @@ func (c Command) Run(in *cli.Input, console cli.Console) (int, error) {
 	}
 
 	if len(selected) == 0 {
-		console.Warn("No detector matched --skill=" + options.skill + " --sin=" + options.sin + " --tag=" + strings.Join(options.tags, ","))
+		console.Warn("✗ No detector matched --skill=" + options.skill + " --sin=" + options.sin + " --tag=" + strings.Join(options.tags, ","))
 
 		return 2, nil
 	}
@@ -232,7 +238,7 @@ func (c Command) Run(in *cli.Input, console cli.Console) (int, error) {
 
 	judged = judged.Judging(selected)
 
-	targets, err := scope.FromArgs(in.Raw(), options.path, worklist, judged.Excluded)
+	targets, err := c.Edited.Scope(in.Raw(), options.path, worklist, judged.Excluded)
 
 	if cli.Timed() {
 		fmt.Fprintf(console.Err, "· the scope was built over %s, leaving out %v\n", options.path, judged.Excluded)
@@ -350,7 +356,7 @@ func (c Command) judge(options options, selected []detectors.Detector, judged co
 	}
 	judgement.Findings = active
 
-	skipped := Skipped(judgement.Skipped)
+	skipped := Skipped(joined(judgement.Skipped, options.unreadableRules...))
 
 	if len(judgement.Findings) == 0 {
 		if len(filed) == 0 {
@@ -477,7 +483,9 @@ func (c Command) run(tasks []Task, options options, progress *cli.Progress, pars
 		return judgement
 	}
 
+	stop := profiled(options.profile, console)
 	judgement, profiles := Benchmark(tasks, console.Err)
+	stop()
 	progress.Finish()
 	fmt.Fprint(console.Err, Profiles(profiles, parseSeconds))
 
@@ -902,19 +910,21 @@ func languagesRead(root string, project config.Config) []string {
 
 // options are what the arguments ask of a run.
 type options struct {
-	path          string
-	pathGiven     bool
-	skill         string
-	sin           string
-	list          bool
-	exclude       []string
-	checklist     []string
-	parallel      int
-	parallelGiven bool
-	benchmark     bool
-	ignore        bool
-	oneFileRules  bool
-	tags          []string
+	unreadableRules []string
+	path            string
+	pathGiven       bool
+	skill           string
+	sin             string
+	list            bool
+	exclude         []string
+	checklist       []string
+	parallel        int
+	parallelGiven   bool
+	benchmark       bool
+	profile         string
+	ignore          bool
+	oneFileRules    bool
+	tags            []string
 }
 
 func within(folder, path string) string {
@@ -971,6 +981,7 @@ func optionsOf(in *cli.Input, space workspace.Workspace) options {
 		parallel:      max(1, parallel),
 		parallelGiven: parallelGiven,
 		benchmark:     in.HasFlag("benchmark"),
+		profile:       profileOf(in),
 		ignore:        in.HasFlag("ignore-package-requirements"),
 		oneFileRules:  in.HasFlag("one-file-rules"),
 		tags:          tagsOf(in),

@@ -119,7 +119,7 @@ func (s *Story) moves(action, step string) {
 func (s *Story) Merges(worker *Agent) Ran {
 	s.t.Helper()
 
-	s.Exits(s.AsksIn(s.TestCheckout(), "proof", "check", worker.proof, "--environment", testEnvironment), 0)
+	s.Exits(s.dispatcher().Asks("proof", "check", worker.proof, "--environment", testEnvironment), 0)
 	row := strings.TrimSpace(worker.row)
 
 	s.Exits(s.asksPast("has delivered nothing", "worker", "logs", row, "--environment", testEnvironment), 0)
@@ -154,10 +154,10 @@ func (s *Story) landsPast(tip string) {
 func (s *Story) asksPast(holding string, argv ...string) Ran {
 	s.t.Helper()
 
-	answer := s.AsksIn(s.TestCheckout(), argv...)
+	answer := s.dispatcher().Asks(argv...)
 	for until := time.Now().Add(landsWithin); strings.Contains(answer.Text(), holding) && time.Now().Before(until); {
 		time.Sleep(betweenMoments)
-		answer = s.AsksIn(s.TestCheckout(), argv...)
+		answer = s.dispatcher().Asks(argv...)
 	}
 
 	return answer

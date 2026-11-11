@@ -24,6 +24,7 @@ type Story struct {
 	tearsDown   bool
 	rehearsal   bool
 	keepsBranch bool
+	dispatches  *Agent
 }
 
 var rehearsing = flag.Bool("story.rehearse", false, "tell every story against no journal at all, only to check that no two of them take the same steps")
@@ -80,7 +81,9 @@ func (s *Story) SwitchesThePluginSetting(key, value, afterwards string) {
 	s.t.Helper()
 
 	s.Asks("plugin", "configure", "code-commandments", key, value, "--environment", testEnvironment)
-	s.t.Cleanup(func() { s.Asks("plugin", "configure", "code-commandments", key, afterwards, "--environment", testEnvironment) })
+	s.t.Cleanup(func() {
+		s.Asks("plugin", "configure", "code-commandments", key, afterwards, "--environment", testEnvironment)
+	})
 }
 
 func (s *Story) GivenHandInsAreNotJudged() {

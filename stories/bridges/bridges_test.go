@@ -97,6 +97,15 @@ func TestACSharpFileIsJudgedWithAHealthyBridge(t *testing.T) {
 	s.Says(s.AsksIn(s.TestCheckout(), "sins", filepath.Dir(written)), "Healthy.cs")
 }
 
+func TestACSharpFileBesideAPythonFileIsJudgedWithIt(t *testing.T) {
+	s := story.Begin(t)
+	s.GivenTheTreeIsHeldFor(s.TestCheckout())
+	written := s.Writes(csharpElseAfterReturn, "Beside.cs")
+	s.Writes(story.Sample{Under: csharpElseAfterReturn.Under, Label: story.ElseAfterRaise.Label, Text: story.ElseAfterRaise.Text}, "beside.py")
+
+	s.Says(s.AsksIn(s.TestCheckout(), "sins", filepath.Dir(written)), "Beside.cs", "beside.py")
+}
+
 func TestACSharpFileIsJudgedByAColdRead(t *testing.T) {
 	s := story.Begin(t)
 	project := s.ScratchProject("a sinful C# class", story.PlainFile{Path: "src/Orders.cs", Text: csharpElseAfterReturn.Text})

@@ -20,6 +20,7 @@ type Request struct {
 	Judge    []string `json:"judge"`
 	In       string   `json:"in"`
 	Progress bool     `json:"progress,omitempty"`
+	Agent    bool     `json:"agent,omitempty"`
 }
 
 // Progress is one line of how far a judging has got, sent ahead of its answer to a run that asked for it.

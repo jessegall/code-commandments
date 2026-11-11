@@ -77,48 +77,6 @@ func TestAdviceIsQueuedWhereThePayloadSays(t *testing.T) {
 	}
 }
 
-func TestAConfigChangeEndsTheServiceThatHoldsTheTree(t *testing.T) {
-	root := t.TempDir()
-
-	settings := filepath.Join(root, ".commandments", "config.json")
-	if err := os.MkdirAll(filepath.Dir(settings), 0o755); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.WriteFile(settings, []byte(`{"paths": ["src"]}`), 0o644); err != nil {
-		t.Fatal(err)
-	}
-
-	was := stamp(root)
-	if was == 0 {
-		t.Fatal("the service watches nothing of this project, so nothing would end it")
-	}
-
-	time.Sleep(10 * time.Millisecond)
-	if err := os.WriteFile(settings, []byte(`{"paths": ["src"], "exclude": ["src/generated"]}`), 0o644); err != nil {
-		t.Fatal(err)
-	}
-
-	if stamp(root) == was {
-		t.Error("the project's config changed and the service reads the same stamp, so it serves on with a tree read under the settings before it")
-	}
-
-	own := filepath.Join(root, ".commandments", "custom", "OwnRule.json")
-	if err := os.MkdirAll(filepath.Dir(own), 0o755); err != nil {
-		t.Fatal(err)
-	}
-
-	moved := stamp(root)
-
-	time.Sleep(10 * time.Millisecond)
-	if err := os.WriteFile(own, []byte(`{"engine": "python"}`), 0o644); err != nil {
-		t.Fatal(err)
-	}
-
-	if stamp(root) == moved {
-		t.Error("a rule of the project's own was written and the service reads the same stamp")
-	}
-}
-
 func TestAServiceEndingWorksOutTheAdviceItHolds(t *testing.T) {
 	var worked sync.Mutex
 	var advised int

@@ -2,6 +2,7 @@ package detectors
 
 import (
 	"reflect"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -14,16 +15,29 @@ type Fingerprinted interface {
 	Fingerprint() string
 }
 
-// Memories is what every detector remembers, each under its identity and any fingerprint of its definition.
+// Memories is what every detector remembers, each under its identity and any fingerprint of its definition: one memory of the files judged alone and one of the files judged across the tree, where a detector's number is its bit in every file's entry.
 type Memories struct {
-	now  func() time.Time
-	held sync.Map
+	mu     sync.Mutex
+	rules  []string
+	held   map[string]*engine.Remembered
+	own    *engine.Memory
+	across *engine.Memory
+}
+
+// Kept is every detector's memory as it is saved: the detectors by number, and the files each of the two memories holds.
+type Kept struct {
+	Rules  []string
+	Own    []engine.Verdict
+	Across []engine.Verdict
 }
 
 var memories = NewMemories(time.Now)
 
 func NewMemories(now func() time.Time) *Memories {
-	return &Memories{now: now}
+	across := engine.NewMemory(now)
+	across.AtMost(mostRememberedAcross)
+
+	return &Memories{held: map[string]*engine.Remembered{}, own: engine.NewMemory(now), across: across}
 }
 
 func EveryMemory() *Memories {
@@ -71,50 +85,54 @@ func identified(detector Detector) string {
 	return identity
 }
 
-func boundedFor(identity string, memory *engine.Remembered) *engine.Remembered {
-	if strings.HasSuffix(identity, acrossTheTree) {
-		return memory.AtMost(mostRememberedAcross)
+func (m *Memories) Of(identity string) *engine.Remembered {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if memory, known := m.held[identity]; known {
+		return memory
 	}
+
+	m.rules = append(m.rules, identity)
+
+	return m.numbered(len(m.rules)-1, identity)
+}
+
+func (m *Memories) numbered(number int, identity string) *engine.Remembered {
+	memory := m.own.Rule(number)
+	if strings.HasSuffix(identity, acrossTheTree) {
+		memory = m.across.Rule(number)
+	}
+
+	m.held[identity] = memory
 
 	return memory
 }
 
-func (m *Memories) Of(identity string) *engine.Remembered {
-	if memory, known := m.held.Load(identity); known {
-		return memory.(*engine.Remembered)
+func (m *Memories) Restore(kept Kept) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if len(m.rules) > 0 {
+		return
 	}
 
-	memory, _ := m.held.LoadOrStore(identity, boundedFor(identity, engine.Remembering(m.now)))
-
-	return memory.(*engine.Remembered)
-}
-
-func (m *Memories) Restore(verdicts map[string][]engine.Verdict) {
-	for identity, kept := range verdicts {
-		m.held.Store(identity, boundedFor(identity, engine.RememberingFrom(m.now, kept)))
+	m.rules = kept.Rules
+	for number, identity := range kept.Rules {
+		m.numbered(number, identity)
 	}
+
+	m.own.Restore(kept.Own)
+	m.across.Restore(kept.Across)
 }
 
 func (m *Memories) Changed() bool {
-	changed := false
-
-	m.held.Range(func(_, memory any) bool {
-		changed = memory.(*engine.Remembered).Changed() || changed
-
-		return true
-	})
-
-	return changed
+	return m.own.Changed() || m.across.Changed()
 }
 
-func (m *Memories) Verdicts() map[string][]engine.Verdict {
-	verdicts := map[string][]engine.Verdict{}
+func (m *Memories) Kept() Kept {
+	m.mu.Lock()
+	defer m.mu.Unlock()
 
-	m.held.Range(func(identity, memory any) bool {
-		verdicts[identity.(string)] = memory.(*engine.Remembered).Verdicts()
-
-		return true
-	})
-
-	return verdicts
+	return Kept{slices.Clone(m.rules), m.own.Verdicts(), m.across.Verdicts()}
 }

@@ -146,6 +146,49 @@ func TestAWorktreeSharesItsProjectsMypyCache(t *testing.T) {
 	}
 }
 
+const modulesHeldAfterEachRequest = `
+import gc, os, sys
+sys.path.insert(0, 'mypy')
+import tree
+from mypy.nodes import MypyFile
+
+said, sys.stdout = sys.stdout, open(os.devnull, 'w')
+session, held = tree.Session(), []
+for _ in range(4):
+    tree.answered(session, '{"paths": ["%s"], "write": ["%s"]}' % (sys.argv[1], sys.argv[1]))
+    held.append(sum(1 for each in gc.get_objects() if isinstance(each, MypyFile)))
+print(' '.join(str(count) for count in held), file=said)
+`
+
+func TestAServingMypyBridgeHoldsNoMoreAfterItsFourthRequestThanItsFirst(t *testing.T) {
+	python := os.Getenv("COMMANDMENTS_MYPY_PYTHON")
+	if python == "" {
+		t.Skip("no python with mypy is named here")
+	}
+
+	project := t.TempDir()
+	if err := os.WriteFile(filepath.Join(project, "shop.py"), []byte("def price(count: int) -> int:\n    return count * 2\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	read := exec.Command(python, "-c", modulesHeldAfterEachRequest, project)
+	read.Env = append(os.Environ(), "JOURNAL_PLUGIN_DATA="+t.TempDir())
+
+	out, err := read.CombinedOutput()
+	if err != nil {
+		t.Fatalf("%v: %s", err, out)
+	}
+
+	held := strings.Fields(string(out))
+	if len(held) != 4 {
+		t.Fatalf("four requests left %d counts: %s", len(held), out)
+	}
+
+	if held[3] != held[0] {
+		t.Errorf("the modules mypy still holds after each of four requests are %s, so every request leaves its whole build behind", strings.Join(held, ", "))
+	}
+}
+
 func TestTwoProjectsKeepTheirOwnMypyCache(t *testing.T) {
 	python := os.Getenv("COMMANDMENTS_MYPY_PYTHON")
 	if python == "" {

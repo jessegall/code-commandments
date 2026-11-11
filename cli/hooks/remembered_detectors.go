@@ -8,11 +8,13 @@ import (
 
 	"github.com/jessegall/code-commandments/bridge"
 	"github.com/jessegall/code-commandments/cli"
+	"github.com/jessegall/code-commandments/cli/judge"
 	"github.com/jessegall/code-commandments/detectors"
 )
 
 const (
 	rememberedDetectorsFile = "detector-memories.json"
+	rememberedWeighingsFile = "csharp-weighings.json"
 	rememberedSavedEvery    = time.Minute
 )
 
@@ -27,6 +29,14 @@ func rememberedDetectorsIn(folder string, warn func(...string)) (detectors.Memor
 		Build:    thisBuild(),
 		Warn:     warn,
 	}, true
+}
+
+func rememberedWeighingsIn(folder string, warn func(...string)) judge.WeighingsFile {
+	return judge.WeighingsFile{
+		Path:  filepath.Join(folder, rememberedWeighingsFile),
+		Build: thisBuild(),
+		Warn:  warn,
+	}
 }
 
 func thisBuild() string {
@@ -53,19 +63,26 @@ func remembersAcrossRestarts(console cli.Console) (saved func()) {
 
 	file.Load()
 
+	weighings := rememberedWeighingsIn(os.Getenv(pluginData), console.Warn)
+	weighings.Load()
+
+	save := func() {
+		file.Save()
+		weighings.Save()
+	}
+
 	go func() {
 		for range time.Tick(rememberedSavedEvery) {
-			file.Save()
+			save()
 		}
 	}()
 
 	go func() {
 		<-cli.StopSignals()
 		logServiceStopped("by a signal")
-		file.Save()
-		treeSaves.save(time.Now())
+		save()
 		os.Exit(0)
 	}()
 
-	return file.Save
+	return save
 }

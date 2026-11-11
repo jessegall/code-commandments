@@ -14,7 +14,6 @@ import (
 	"github.com/jessegall/code-commandments/cli/config"
 	"github.com/jessegall/code-commandments/cli/custom"
 	"github.com/jessegall/code-commandments/cli/git"
-	"github.com/jessegall/code-commandments/cli/ledger"
 	"github.com/jessegall/code-commandments/cli/scan"
 	"github.com/jessegall/code-commandments/cli/source"
 	"github.com/jessegall/code-commandments/contract"
@@ -77,47 +76,25 @@ func (SkillReminder) Handle(event Event) Response {
 		tookIn(file)
 	}
 
-	together, spent, why := AgainstTheProgramNarrowed(marking, judged,
-		func(file string) []detectors.Detector {
-			return project.RulesFor(checkoutOf(event.Root, file), file, enabled)
-		},
-		func(file string) git.ChangedLines { return event.ChangedLines(file) }, event.Root)
-
-	spentReading += spent
-
-	if why != "" && why != noneToJudge {
-		Warming(event.Root, project)
-		ledger.Of(event.Root).Counts(ledger.JudgingsAnsweredSmaller, 1, event.Root+" because "+string(why))
-	}
-
 	asked := Asked{}
 	narrowed := map[string]Narrowed{}
 	askedCount := map[string]int{}
 	notAsked := map[string]int{}
 
-	for _, file := range files {
-		if !project.Writes(source.OfFile(file)) {
-			continue
-		}
+	for _, file := range judged {
+		narrow := project.RulesFor(checkoutOf(event.Root, file), file, single)
+		whole := project.RulesFor(checkoutOf(event.Root, file), file, enabled)
+		relative := source.Relative(event.Root, file)
+		asked[relative] = sinsOf(narrow)
+		narrowed[relative] = judgedAlone
+		askedCount[relative] = len(narrow)
+		notAsked[relative] = len(whole) - len(narrow)
 
-		marks, against := together[file]
-		if !against {
-			narrow := project.RulesFor(checkoutOf(event.Root, file), file, single)
-			whole := project.RulesFor(checkoutOf(event.Root, file), file, enabled)
-			named := source.Relative(event.Root, file)
-			asked[named] = sinsOf(narrow)
-			narrowed[named] = why
-			askedCount[named] = len(narrow)
-			notAsked[named] = len(whole) - len(narrow)
-			var unread error
-			var read time.Duration
-			marks, read, unread = marksIn(marking, file,
-				project.RulesFor(checkoutOf(event.Root, file), file, single), event.ChangedLines(file))
-			spentReading += read
+		marks, read, unread := marksIn(marking, file, narrow, event.ChangedLines(file))
+		spentReading += read
 
-			if unread != nil {
-				unreadable = append(unreadable, filepath.Base(file)+": "+unread.Error())
-			}
+		if unread != nil {
+			unreadable = append(unreadable, filepath.Base(file)+": "+unread.Error())
 		}
 
 		activity = append(activity, marks...)
@@ -155,7 +132,7 @@ func (SkillReminder) Handle(event Event) Response {
 
 	if len(files) == 0 && len(lost) > 0 {
 		said = append(said, Unjudged("nothing of this edit was judged: "+strings.Join(lost, ", "),
-			whyNoneWereJudged(lost),
+			string(filesNotOnDisk)+", which is what a checkout cut again or removed looks like",
 			event.wholeAnswerBy(binary.JudgingChanges)))
 	}
 
@@ -192,7 +169,7 @@ func edited(event Event, project config.Config) ([]string, []string) {
 				continue
 			}
 
-			if isSource(named) {
+			if isSource(named) && inTheJudgedFolders(event.Root, named, project) {
 				lost = append(lost, named)
 			}
 		}
@@ -201,7 +178,7 @@ func edited(event Event, project config.Config) ([]string, []string) {
 	default:
 		if file := judgedFile(event.Root, event.FilePath(), project); file != "" {
 			files = []string{file}
-		} else if event.FilePath() != "" && isSource(event.FilePath()) {
+		} else if event.FilePath() != "" && isSource(event.FilePath()) && inTheJudgedFolders(event.Root, event.FilePath(), project) {
 			lost = append(lost, event.FilePath())
 		}
 
@@ -260,29 +237,12 @@ func DroppedSoFar() Dropped {
 	return dropped
 }
 
-func whyNoneWereJudged(lost []string) string {
-	for _, file := range lost {
-		if why := RefusalOf(file); why != "" {
-			return why
-		}
-	}
-
-	return string(filesNotOnDisk) + ", which is what a checkout cut again or removed looks like"
-}
-
 func judgedFile(root, file string, project config.Config) string {
 	if file == "" {
 		return ""
 	}
 
-	absolute := file
-	if !strings.HasPrefix(file, "/") {
-		absolute = strings.TrimRight(root, "/") + "/" + strings.TrimLeft(file, "/")
-	}
-
-	if resolved, err := filepath.EvalSymlinks(absolute); err == nil {
-		absolute = resolved
-	}
+	absolute := absoluteOf(root, file)
 
 	if checkout := checkoutOf(root, absolute); !project.IsJudged(checkout, absolute) {
 		dropped.NotJudged++
@@ -298,6 +258,25 @@ func judgedFile(root, file string, project config.Config) string {
 	}
 
 	return absolute
+}
+
+func absoluteOf(root, file string) string {
+	absolute := file
+	if !strings.HasPrefix(file, "/") {
+		absolute = strings.TrimRight(root, "/") + "/" + strings.TrimLeft(file, "/")
+	}
+
+	if resolved, err := filepath.EvalSymlinks(absolute); err == nil {
+		absolute = resolved
+	}
+
+	return absolute
+}
+
+func inTheJudgedFolders(root, file string, project config.Config) bool {
+	absolute := absoluteOf(root, file)
+
+	return project.IsJudged(checkoutOf(root, absolute), absolute)
 }
 
 func judgedFolders(project config.Config, checkout string) string {

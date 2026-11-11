@@ -24,6 +24,11 @@ import (
 	"github.com/jessegall/code-commandments/engine"
 )
 
+const (
+	longestTreeRead  = 10 * time.Minute
+	treeReadLookedAt = 250 * time.Millisecond
+)
+
 var kept = keeping()
 
 func keeping() *warm.Keeper {
@@ -68,6 +73,7 @@ const (
 	parseFailed    Narrowed = "what changed could not be parsed"
 	notInTheTree   Narrowed = "what changed is not in the tree that is held"
 	pastTheCeiling Narrowed = "the service already holds as much of this project as it is allowed to"
+	judgedAlone    Narrowed = "an edit is judged on its own, and the whole tree is read only to judge the changes together"
 )
 
 func noStreamOf(language source.Language) Narrowed {
@@ -95,6 +101,29 @@ func AgainstTheProgramTogether(marking Marking, files []string, rulesFor func(st
 	return together, read, why == ""
 }
 
+func AgainstTheProgramOnceRead(marking Marking, files []string, rulesFor func(string) []detectors.Detector,
+	changedFor func(string) git.ChangedLines, root string) (map[string][]SinMark, time.Duration, Narrowed) {
+	together, read, why := AgainstTheProgramNarrowed(marking, files, rulesFor, changedFor, root)
+	if !waitingOn(why) || !theTreeWasRead(root, checkoutOf(root, files[0])) {
+		return together, read, why
+	}
+
+	return AgainstTheProgramNarrowed(marking, files, rulesFor, changedFor, root)
+}
+
+func theTreeWasRead(root, checkout string) bool {
+	if _, coming := TheTreeIsComing(root, checkout); !coming {
+		return false
+	}
+
+	named, _ := rootOf(root)
+	for until := time.Now().Add(longestTreeRead); aReadIsRunning(named) && time.Now().Before(until); {
+		time.Sleep(treeReadLookedAt)
+	}
+
+	return !aReadIsRunning(named)
+}
+
 func AgainstTheProgramNarrowed(marking Marking, files []string, rulesFor func(string) []detectors.Detector,
 	changedFor func(string) git.ChangedLines, root string) (map[string][]SinMark, time.Duration, Narrowed) {
 
@@ -113,7 +142,7 @@ func AgainstTheProgramNarrowed(marking Marking, files []string, rulesFor func(st
 		return nil, 0, why
 	}
 
-	here := slices.DeleteFunc(slices.Clone(files), func(path string) bool { return warm.Mark(path) == "" })
+	here := slices.DeleteFunc(slices.Compact(slices.Sorted(slices.Values(files))), func(path string) bool { return warm.Mark(path) == "" })
 	if len(here) == 0 {
 		return nil, 0, filesNotOnDisk
 	}
@@ -179,7 +208,7 @@ func AgainstTheProgramNarrowed(marking Marking, files []string, rulesFor func(st
 
 		read = time.Since(reading)
 
-		if nothingCameOutOf(streams) {
+		if someFileDoesNotParse(streams) {
 			return nil, read, parseFailed
 		}
 
@@ -226,10 +255,10 @@ func countDetectorFiles(costs ledger.Ledger, before engine.Work, checkout string
 	costs.Counts(ledger.DetectorFilesRemembered, int(did.Remembered), checkout)
 }
 
-func nothingCameOutOf(streams []*contract.Stream) bool {
+func someFileDoesNotParse(streams []*contract.Stream) bool {
 	for _, stream := range streams {
 		for _, file := range stream.Files {
-			if file.Errors > 0 && len(file.Root.Children) == 0 {
+			if file.Errors > 0 {
 				return true
 			}
 		}

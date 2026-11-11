@@ -34,10 +34,12 @@ func treeHolding(t *testing.T, contents ...string) (*engine.Codebase, []string) 
 
 	var paths []string
 	for _, match := range codebase.WhereFunction().Get() {
-		if len(paths) < len(contents) && !slices.Contains(paths, match.File()) {
-			holds[match.File()] = contents[len(paths)]
-			paths = append(paths, match.File())
+		if len(paths) >= len(contents) || slices.Contains(paths, match.File()) {
+			continue
 		}
+
+		holds[match.File()] = contents[len(paths)]
+		paths = append(paths, match.File())
 	}
 
 	return codebase.Reporting(paths...), paths
@@ -218,7 +220,7 @@ func TestARestoredFindingWhoseNodeIsGoneIsJudgedAgain(t *testing.T) {
 	memory.Find(tree, detector.find)
 
 	verdicts := memory.Verdicts()
-	verdicts[0].Found = []int{1 << 30}
+	verdicts[0].Found = map[int][]int{0: {1 << 30}}
 	restored := engine.RememberingFrom(time.Now, verdicts)
 
 	tree, paths := treeHolding(t, "kept")
@@ -434,7 +436,8 @@ func TestTheSameTreeInAnotherCheckoutSharesTheCombinedPrint(t *testing.T) {
 
 func TestAMemoryAtItsBoundForgetsTheOldest(t *testing.T) {
 	at := time.Unix(1000, 0)
-	memory := engine.Remembering(func() time.Time { return at }).AtMost(1)
+	memory := engine.Remembering(func() time.Time { return at })
+	memory.AtMost(1)
 	detector := &asking{}
 	codebase, paths := treeHolding(t, "<?php one", "<?php two")
 
@@ -448,5 +451,48 @@ func TestAMemoryAtItsBoundForgetsTheOldest(t *testing.T) {
 
 	if detector.asked != asked+1 {
 		t.Errorf("the oldest file was not forgotten: asked %d after %d", detector.asked, asked)
+	}
+}
+
+func TestTwoRulesOfOneMemoryShareOneEntryPerFile(t *testing.T) {
+	memory := engine.NewMemory(time.Now)
+	finds, clean := &asking{finds: true}, &asking{}
+
+	for range 2 {
+		tree, _ := treeHolding(t, "shared by two rules")
+
+		if found := memory.Rule(0).Find(tree, finds.find); len(found) != 1 {
+			t.Errorf("the rule that finds answered %v", found)
+		}
+
+		if found := memory.Rule(70).Find(tree, clean.find); len(found) != 0 {
+			t.Errorf("the clean rule answered with the other rule's finding: %v", found)
+		}
+	}
+
+	if finds.asked != 1 || clean.asked != 1 {
+		t.Errorf("each rule is asked once about the file, and they were asked %d and %d times", finds.asked, clean.asked)
+	}
+
+	if verdicts := memory.Verdicts(); len(verdicts) != 1 {
+		t.Errorf("one file judged by two rules is one entry, and the memory holds %d", len(verdicts))
+	}
+}
+
+func TestARuleIsAskedAboutAFileOnlyAnotherRuleJudged(t *testing.T) {
+	memory := engine.NewMemory(time.Now)
+	first, second := &asking{}, &asking{finds: true}
+
+	tree, paths := treeHolding(t, "judged by one rule")
+	memory.Rule(0).Find(tree, first.find)
+
+	restored := engine.NewMemory(time.Now)
+	restored.Restore(memory.Verdicts())
+
+	tree, _ = treeHolding(t, "judged by one rule")
+	found := restored.Rule(1).Find(tree, second.find)
+
+	if second.asked != 1 || len(found) != 1 || found[0].File() != paths[0] {
+		t.Errorf("a rule that never judged the file was asked %d times and answered %v", second.asked, found)
 	}
 }

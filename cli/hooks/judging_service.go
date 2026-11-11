@@ -100,11 +100,19 @@ func judgedFor(request warm.Request, root string, progressed func(string)) warm.
 	spent := judge.Spent{}
 	before := engine.Counted()
 
+	edits := editsAsked(request, root)
+	defer edits.clearedByAPanic()
+
 	code, err := (judge.Command{
 		In:       request.In,
 		Reading:  heldOrDeclined(root, request.In, &declined, &parsedFiles, &left),
 		Spending: func(done judge.Spent) { spent = done },
+		Edited:   edits.scope(),
 	}).Run(cli.InputOf("judge", request.Judge...), cli.Console{Out: &out, Err: saying})
+
+	if code == 0 && err == nil && declined == "" {
+		edits.approve()
+	}
 
 	recordServed(root, request.In, declined, parsedFiles, spent)
 
@@ -229,11 +237,6 @@ func heldOrDeclined(root, in string, declined *string, parsedFiles *int, left *s
 		}
 
 		asked := sources.Files(source.Languages...)
-		if len(asked) == 0 {
-			*declined = "the run reads no file of any language the tree holds"
-
-			return engine.Load(), nil
-		}
 
 		for _, walked := range sources.Roots() {
 			if _, inside := warm.Under(checkout, walked); !inside {
@@ -449,11 +452,6 @@ func fromOneFileRules(request warm.Request, root, declined string) (warm.Answer,
 func oneFileAtATime(root, in string, refused *string) func(scan.Sources) (*engine.Codebase, error) {
 	return func(sources scan.Sources) (*engine.Codebase, error) {
 		asked := sources.Files(source.Languages...)
-		if len(asked) == 0 {
-			*refused = "the run reads no file of any language the tree holds"
-
-			return engine.Load(), nil
-		}
 
 		if reads := readsInOneGo(0); len(asked) > reads {
 			*refused = fmt.Sprintf("%d files were changed, past the %d even one rule at a time reads", len(asked), reads)

@@ -55,7 +55,7 @@ func (k *Kernel) Run(args []string, console Console) int {
 	handler, known := k.registry[verb]
 
 	if !known {
-		console.Warn(fmt.Sprintf("Unknown command '%s'. Try: commandments --help", verb))
+		console.Warn(fmt.Sprintf("✗ Unknown command '%s'. Try: commandments --help", verb))
 
 		return 2
 	}
@@ -85,12 +85,12 @@ func (k *Kernel) Run(args []string, console Console) int {
 
 func (k *Kernel) refuseOption(unknown, named string, console Console) int {
 	if named == "" {
-		console.Warn(fmt.Sprintf("Unknown option --%s. Try: commandments --help", unknown))
+		console.Warn(fmt.Sprintf("✗ Unknown option --%s. Try: commandments --help", unknown))
 
 		return 2
 	}
 
-	console.Warn(fmt.Sprintf("Unknown option --%s for `%s`. Try: commandments %s --help", unknown, named, named))
+	console.Warn(fmt.Sprintf("✗ Unknown option --%s for `%s`. Try: commandments %s --help", unknown, named, named))
 
 	return 2
 }

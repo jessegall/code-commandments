@@ -2,11 +2,13 @@
 package git
 
 import (
+	"errors"
 	"io/fs"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -376,12 +378,24 @@ func Listed(root string, relative []string) map[string]bool {
 	return pathSet(root, strings.Join(relative, "\n"))
 }
 
+func StillChanged(root string, relative []string) []string {
+	changed := ChangedVsHead(root)
+
+	return slices.DeleteFunc(slices.Clone(relative), func(one string) bool {
+		for path := range Listed(root, []string{one}) {
+			return !changed[path]
+		}
+
+		return true
+	})
+}
+
 func ChangedLinesOf(root, file string) ChangedLines {
 	return ChangedLinesSince(root, "HEAD", file)
 }
 
 func ChangedLinesSince(root, commit, file string) ChangedLines {
-	if ask(root, "ls-files", "--", file) == "" {
+	if tracked, known := tracking(root, file); known && !tracked {
 		return Everywhere()
 	}
 
@@ -539,7 +553,22 @@ func leadingInt(text string) int {
 }
 
 func Tracks(root, path string) bool {
-	return ask(root, "ls-files", "--", path) != ""
+	tracked, _ := tracking(root, path)
+
+	return tracked
+}
+
+func tracking(root, path string) (tracked, known bool) {
+	counted()
+
+	err := exec.Command("git", "--no-optional-locks", "-C", root, "ls-files", "--error-unmatch", "--", path).Run()
+
+	var untracked *exec.ExitError
+	if errors.As(err, &untracked) && untracked.ExitCode() == 1 {
+		return false, true
+	}
+
+	return err == nil, err == nil
 }
 
 func StopTracking(root, path string) (string, error) {

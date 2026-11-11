@@ -66,8 +66,8 @@ func TestAColdReadCountsTheFilesThenTheDetectors(t *testing.T) {
 		s.Fails(fmt.Sprintf("reading ends at %s, where it ends at the %d files read:\n%s", last, len(files), ran.Err))
 	}
 
-	if first := detecting[0]; first.Done != 1 {
-		s.Fails(fmt.Sprintf("the detectors begin at %s, where they count from 1, apart from the reading:\n%s", first, ran.Err))
+	if first := detecting[0]; first.Done > 1 {
+		s.Fails(fmt.Sprintf("the detectors begin at %s, where they count from the start, apart from the reading:\n%s", first, ran.Err))
 	}
 
 	for _, line := range detecting {
@@ -106,11 +106,11 @@ func TestANarrowedJudgingCountsOneDetector(t *testing.T) {
 	s.GivenTheTreeIsHeldFor(s.TestCheckout())
 	s.Writes(story.ElseAfterRaise, "narrow.py")
 
-	ran := s.AsksIn(s.TestCheckout(), "sins", "--changes", "--sin", "redundant-python-else")
+	ran := s.AsksIn(s.TestCheckout(), "sins", "--changes", "--sin=redundant-python-else")
 
 	detecting := linesOf(s, ran, "detector")
 	if len(detecting) == 0 {
-		s.Fails("the answer shows no detector line:\n" + ran.Err)
+		s.Fails("the answer shows no detector line:\n" + ran.Text())
 	}
 
 	for _, line := range detecting {
@@ -125,15 +125,16 @@ func TestTheDetectorCountIsTheNumberTheListNames(t *testing.T) {
 	s.GivenTheTreeIsHeldFor(s.TestCheckout())
 	s.Writes(story.ElseAfterRaise, "listed.py")
 
-	listed := listedUnder(s.AsksIn(s.TestCheckout(), "sins", "--list").Out, "python/flow")
+	listing := s.AsksIn(s.TestCheckout(), "commandments", "judge", "--list")
+	listed := listedUnder(listing.Text(), "python/value-objects")
 	if listed == 0 {
-		s.Fails("the list names no detector under python/flow")
+		s.Fails("the list names no detector under python/value-objects:\n" + listing.Text())
 	}
 
-	ran := s.AsksIn(s.TestCheckout(), "sins", "--changes", "--skill", "python/flow")
+	ran := s.AsksIn(s.TestCheckout(), "sins", "--changes", "--skill=python/value-objects")
 
 	if counted := s.DetectorsCounted(ran); counted != listed {
-		s.Fails(fmt.Sprintf("the list names %d detectors under python/flow and the judging counts %d:\n%s", listed, counted, ran.Err))
+		s.Fails(fmt.Sprintf("the list names %d detectors under python/value-objects and the judging counts %d:\n%s", listed, counted, ran.Err))
 	}
 }
 

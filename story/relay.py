@@ -135,6 +135,89 @@ class Throwaway:
     folder: str
 
 
+@dataclass(frozen=True)
+class Started:
+    """A throwaway service as its start answers it: the service, the parent it runs under, its health socket and its data folder."""
+
+    pid: int
+    parent: int
+    socket: str
+    data: str
+
+
+@dataclass
+class Verdict:
+    """One file's remembered answers as the service saves them: its fingerprint, when it was last used, the rules that judged it and what each found."""
+
+    fingerprint: int
+    used: int
+    judged: list[int] = field(default_factory=list)
+    found: dict[str, list[int]] | None = None
+
+    @classmethod
+    def read(cls, **wire: object) -> "Verdict":
+        return cls(**{name.lower(): value for name, value in wire.items()})
+
+    def written(self) -> dict[str, object]:
+        return {name.capitalize(): value for name, value in asdict(self).items() if value is not None}
+
+
+@dataclass
+class SavedMemory:
+    """The project's saved detector memory, in the shape detectors/memory_file.go writes it."""
+
+    build: str
+    rules: list[str]
+    own: list[Verdict]
+    across: list[Verdict]
+
+    @classmethod
+    def read(cls, Build: str, Rules: list[str] | None, Own: list[dict] | None, Across: list[dict] | None) -> "SavedMemory":
+        return cls(Build, Rules or [], [Verdict.read(**each) for each in Own or []], [Verdict.read(**each) for each in Across or []])
+
+    @classmethod
+    def at(cls, path: str) -> "SavedMemory":
+        with open(path) as read:
+            return cls.read(**json.load(read))
+
+    @property
+    def verdicts(self) -> list[Verdict]:
+        return self.own + self.across
+
+    def aged(self, seconds: int) -> None:
+        for verdict in self.verdicts:
+            verdict.used -= seconds * NANOSECONDS
+
+    def text(self) -> str:
+        return json.dumps({"Build": self.build, "Rules": self.rules, "Own": [each.written() for each in self.own],
+                           "Across": [each.written() for each in self.across]})
+
+
+@dataclass(frozen=True)
+class MemoryReading:
+    """What the saved detector memory holds now, as story/memory.go reads it."""
+
+    present: bool
+    readable: bool = False
+    size: int = 0
+    entries: int = 0
+    build: str = ""
+    oldest: int = 0
+    newest: int = 0
+
+    @classmethod
+    def of(cls, path: str) -> "MemoryReading":
+        if not os.path.exists(path):
+            return cls(False)
+        size = os.path.getsize(path)
+        try:
+            saved = SavedMemory.at(path)
+        except (ValueError, KeyError, TypeError, AttributeError):
+            return cls(True, False, size)
+        used = [verdict.used for verdict in saved.verdicts]
+        return cls(True, True, size, len(used), saved.build, min(used, default=0), max(used, default=0))
+
+
 class Step(socketserver.StreamRequestHandler):
     """One request: a journal command or a hook, run on this machine, answered with its output and exit code."""
 
@@ -305,7 +388,7 @@ class Relay(socketserver.ThreadingTCPServer):
         service = int(parent.stdout.readline())
         parent.stdout.close()
         self.throwaways[parent.pid] = Throwaway(parent, service, folder)
-        return Answer(0, json.dumps({"pid": service, "parent": parent.pid, "socket": health, "data": data}))
+        return Answer(0, json.dumps(asdict(Started(service, parent.pid, health, data))))
 
     def freeze_throwaway_child(self, pid: int) -> Answer:
         """Stop a process a throwaway service started dead in its tracks, as a bridge that hangs is, until the teardown kills it."""
@@ -378,7 +461,7 @@ class Relay(socketserver.ThreadingTCPServer):
         A story ages it while the service is stopped, as it stops a service for a restart, so nothing writes it at once."""
         path = os.path.join(self.project, DETECTOR_MEMORY)
         if asked.action == "read":
-            return Answer(0, json.dumps(reading_of(path)))
+            return Answer(0, json.dumps(asdict(MemoryReading.of(path))))
         if asked.action == "remove":
             if os.path.exists(path):
                 os.remove(path)
@@ -386,16 +469,14 @@ class Relay(socketserver.ThreadingTCPServer):
         if asked.action == "replace":
             written_whole(path, asked.stdin)
             return Answer(0)
-        with open(path) as read:
-            saved = json.load(read)
+        saved = SavedMemory.at(path)
         if asked.action == "age":
-            for verdict in verdicts_of(saved):
-                verdict["Used"] -= asked.many * NANOSECONDS
+            saved.aged(asked.many)
         elif asked.action == "stamp":
-            saved["Build"] = asked.name
+            saved.build = asked.name
         else:
             raise Refused(f"'{asked.action}' is not something the memory file does")
-        written_whole(path, json.dumps(saved))
+        written_whole(path, saved.text())
         return Answer(0)
 
     def server_close(self) -> None:
@@ -559,10 +640,14 @@ class Relay(socketserver.ThreadingTCPServer):
         argv = asked.argv
         if not argv or argv[0] not in NOUNS:
             raise Refused(f"'{argv[0] if argv else ''}' is not one of the journal nouns a story may run")
-        if argv[:2] == ["agent", "start"] and "main" in argv[2:5]:
-            raise Refused("a story never starts a main agent: the journal can place it in the person's own "
-                          "environment, where a new main agent ends the real one and its terminal")
+        if argv[:2] == ["agent", "start"] and "main" in argv[2:5] and not self.names_the_story_environment(argv):
+            raise Refused("a story starts a main agent only in the test environment, named: anywhere else the journal "
+                          "can place it in the person's own environment, where a new main agent ends the real one and "
+                          "its terminal")
         return [self.journal, *argv]
+
+    def names_the_story_environment(self, argv: list[str]) -> bool:
+        return "--environment" in argv and argv[argv.index("--environment") + 1:][:1] == [STORY_ENVIRONMENT]
 
     def folder_of(self, asked: Asked) -> str:
         folder = os.path.realpath(self.project if asked.folder is None else asked.folder)
@@ -575,26 +660,6 @@ def running_processes() -> list[Process]:
     listed = subprocess.run(["ps", "-axo", "pid=,ppid=,stat=,command="], capture_output=True, text=True, timeout=STEP_SECONDS).stdout
     fields = (line.split(None, 3) for line in listed.splitlines())
     return [Process(int(each[0]), int(each[1]), each[3]) for each in fields if len(each) == 4 and "Z" not in each[2]]
-
-
-def verdicts_of(saved: dict) -> list[dict]:
-    return [verdict for verdicts in (saved["Detectors"] or {}).values() for verdict in verdicts]
-
-
-def reading_of(path: str) -> dict:
-    """What the saved detector memory holds now, in the shape cli/hooks/remembered_detectors.go writes it."""
-    if not os.path.exists(path):
-        return {"present": False}
-    size = os.path.getsize(path)
-    try:
-        with open(path) as read:
-            saved = json.load(read)
-        verdicts = verdicts_of(saved)
-    except (ValueError, KeyError, TypeError, AttributeError):
-        return {"present": True, "readable": False, "size": size}
-    used = [verdict["Used"] for verdict in verdicts]
-    return {"present": True, "readable": True, "size": size, "entries": len(verdicts), "build": saved["Build"],
-            "oldest": min(used, default=0), "newest": max(used, default=0)}
 
 
 def written_whole(path: str, text: str) -> None:

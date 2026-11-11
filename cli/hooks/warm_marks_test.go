@@ -20,7 +20,7 @@ import (
 	"github.com/jessegall/code-commandments/detectors"
 )
 
-func TestAnEditIsJudgedAgainstTheProgramWhereItsBranchHasABase(t *testing.T) {
+func TestAnEditIsJudgedOnItsOwnEvenWhereItsBranchHasABase(t *testing.T) {
 	root, data := migrationProject(t)
 
 	project := git.ProjectRoot(root)
@@ -29,7 +29,16 @@ func TestAnEditIsJudgedAgainstTheProgramWhereItsBranchHasABase(t *testing.T) {
 		t.Fatalf("the project is %q at branch %q", project, branch)
 	}
 
-	edit := map[string]any{
+	settings, _ := config.Load(root)
+	codebase, err := scan.Walk([]string{root}, source.Under(root, settings.Excluded)).Load()
+	if err != nil || codebase == nil {
+		t.Fatalf("the python bridge cannot run here: %v", err)
+	}
+
+	base := kept.Hold(project, branch, []string{root}, codebase, nil)
+	t.Cleanup(func() { kept.Drop(project, branch) })
+
+	Judge4Into(map[string]any{
 		"v": 1, "event": "file_edited", "session": "s1", "environment": "main", "agent": 78,
 		"data": map[string]any{
 			"path": "shop/migrations/m004_drop_fades.py", "kind": "edit", "added": 2, "removed": 0, "tool_use": 41,
@@ -38,31 +47,14 @@ func TestAnEditIsJudgedAgainstTheProgramWhereItsBranchHasABase(t *testing.T) {
 				map[string]any{"line_type": "add", "line": 5, "text": "    number = 4"},
 			},
 		},
-	}
-
-	kept.Drop(project, branch)
-	Judge4Into(edit, data)
+	}, data)
 
 	if told := tells(t, data); strings.Contains(told, "migration-by-its-parents") {
-		t.Errorf("with no base held the mark names a sin the file alone cannot find:\n%s", told)
+		t.Errorf("an edit was judged against the held tree, by a rule that reads across files:\n%s", told)
 	}
 
-	settings, _ := config.Load(root)
-	codebase, err := scan.Walk([]string{root}, source.Under(root, settings.Excluded)).Load()
-	if err != nil || codebase == nil {
-		t.Fatalf("the python bridge cannot run here: %v", err)
-	}
-
-	kept.Hold(project, branch, []string{root}, codebase, nil)
-	t.Cleanup(func() { kept.Drop(project, branch) })
-
-	fresh := t.TempDir()
-	t.Setenv(pluginData, fresh)
-	Judge4Into(edit, fresh)
-
-	told := tells(t, fresh)
-	if !strings.Contains(told, "migration-by-its-parents") {
-		t.Errorf("judged against the base, the mark does not name the sin:\n%s", told)
+	if held, _ := kept.Holds(project, branch); held != base {
+		t.Error("an edit patched the held tree, so the tree is kept up by edits it is not judged against")
 	}
 }
 
@@ -714,5 +706,31 @@ func TestManyWarmingsAtOnceReadTheTreeOnce(t *testing.T) {
 
 	if warming(t) {
 		t.Error("a read of the tree is still running a minute later, and the project it reads is about to be removed")
+	}
+}
+
+func TestAJudgingThatNeedsTheTreeReadsItFirst(t *testing.T) {
+	root, _ := migrationProject(t)
+	settings, _ := config.Load(root)
+
+	project := git.ProjectRoot(root)
+	branch := git.CurrentBranch(project)
+	kept.Drop(project, branch)
+
+	Serves()
+	t.Cleanup(func() { serving.Store(false); kept.Drop(project, branch) })
+
+	edited := filepath.Join(root, "shop", "migrations", "m004_drop_fades.py")
+	rules := allRules(t, root, settings)
+
+	together, _, why := AgainstTheProgramOnceRead(Marks(root), []string{edited},
+		func(string) []detectors.Detector { return rules },
+		func(string) git.ChangedLines { return git.Everywhere() }, root)
+	if why != "" {
+		t.Fatalf("with no tree held, the judging was narrowed instead of reading it: %s", why)
+	}
+
+	if len(together[edited]) == 0 {
+		t.Error("the sin whose chain of parents crosses three files is not found, so the tree was not read for it")
 	}
 }

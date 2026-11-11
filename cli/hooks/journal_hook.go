@@ -225,14 +225,17 @@ func answerWith(given map[string]any, runs func(Hook) bool, reportsSins bool) Jo
 		return JournalAnswer{Refuse: &refusal}
 	}
 
-	if why := notForThisRole(moment); why != "" {
-		return JournalAnswer{Whisper: &why}
+	if notForThisRole(moment) != "" {
+		return JournalAnswer{}
 	}
 
 	event := NewEvent(moment.HookPayload(), workspace.ProjectRoot(cwd))
 	event.WithoutCLI = workerRoles[moment.Role] && !workersRunTheCLI(moment)
 	workspace.At(event.Root, "").RelocateSessions()
 	quiet := quieted()
+	if !liveEditsJudgedAt(moment) {
+		quiet = append(quiet, SkillReminder{}.Class())
+	}
 
 	var responses []Response
 
@@ -372,6 +375,17 @@ func workerEditsJudgedAt(moment Moment) bool {
 	}
 
 	return workerEditsJudged()
+}
+
+func liveEditsJudgedAt(moment Moment) bool {
+	if said, named := moment.Settings[liveEditsKey]; named {
+		return switchedOn(said)
+	}
+
+	chosen, _ := chosenSettings()
+	said, named := chosen[liveEditsKey]
+
+	return !named || switchedOn(said)
 }
 
 func switchedOn(value any) bool {
@@ -517,21 +531,22 @@ func (s JournalServe) Run(in *cli.Input, console cli.Console) (int, error) {
 	defer listener.Close()
 	os.Chmod(path, 0o600)
 
-	root := workspace.ProjectRoot(firstText(os.Getenv(journalRoot), cwdOf()))
+	root := servedRoot()
 	if noProjectAt(root) {
 		return help.Usage(console.Err, s, "This service holds one project's tree, and "+orNothing(root)+
 			" is no project: name the project in $"+journalRoot+". Serving it would answer every question about "+
 			"every path on this machine."), nil
 	}
 
-	started := stamp(root)
+	started := stamp()
 
 	Serves()
+	walkedTheTreeUnder(root)
 	logServiceStart(root)
 
 	defer remembersAcrossRestarts(console)()
 
-	go WarmsWhatItServes(root)
+	givesBackTheTreesItLetGo()
 
 	if judging, listening := Judging(root); listening {
 		defer judging.Close()
@@ -543,7 +558,7 @@ func (s JournalServe) Run(in *cli.Input, console cli.Console) (int, error) {
 	}
 
 	advice := startAdvisers(adviseAsked)
-	serve(listener, func() bool { return stamp(root) == started }, advice)
+	serve(listener, func() bool { return stamp() == started }, advice)
 
 	advice.drained(drainedWithin)
 
@@ -569,6 +584,7 @@ func serve(listener net.Listener, current func() bool, advice *advisers) {
 
 		if !current() {
 			connection.Close()
+			logServiceStopped("the binary changed; the next hook starts a new service")
 
 			return
 		}
@@ -578,6 +594,7 @@ func serve(listener net.Listener, current func() bool, advice *advisers) {
 			read := payloadOf([]byte(line))
 
 			go heldTheConfigOf(read)
+			go heldTheConfigFileOf(servedRoot())
 
 			if drop, asked := lanesAsked(read); asked {
 				connection.Write(lanesAnswered(drop))
@@ -609,10 +626,6 @@ func serve(listener net.Listener, current func() bool, advice *advisers) {
 
 				expecting(given)
 				advice.add(asked{given, judgedAfter(asText(read["event"])), awaited(asText(read["event"]))})
-
-				if keepsTheTreeWarm(asText(read["event"])) {
-					WarmsWhatItServes(firstText(os.Getenv(journalRoot), cwdOf()))
-				}
 
 				return
 			}
@@ -746,7 +759,7 @@ func (s *advisers) drained(within time.Duration) {
 }
 
 const (
-	batchedWithin = 2 * time.Second
+	batchedWithin = 5 * time.Second
 	batchedFiles  = 100
 
 	gatheringPause = 100 * time.Millisecond
@@ -940,31 +953,25 @@ func (a *adviser) gathering(now time.Time) bool {
 		return false
 	}
 
-	return now.Sub(time.Unix(0, stamped)) < batchedWithin
+	return now.Sub(time.Unix(0, stamped)) < gatheredFor(a.pending[0].given)
 }
 
-func stamp(root string) int64 {
-	watched := []string{workspace.Config(root), workspace.JSONConfig(root)}
-
-	if self, err := os.Executable(); err == nil {
-		watched = append(watched, self)
+func gatheredFor(given map[string]any) time.Duration {
+	chosen, _ := chosenOn(given)
+	seconds, err := strconv.ParseFloat(asText(chosen[editWindowKey]), 64)
+	if err != nil || seconds < 0 {
+		return batchedWithin
 	}
 
-	filepath.WalkDir(workspace.CustomDir(root), func(path string, entry os.DirEntry, err error) error {
-		if err == nil && !entry.IsDir() {
-			watched = append(watched, path)
-		}
+	return time.Duration(seconds * float64(time.Second))
+}
 
-		return nil
-	})
+func stamp() int64 {
+	self, _ := os.Executable()
 
-	var latest int64
+	return modified(self)
+}
 
-	for _, file := range watched {
-		if info, err := os.Stat(file); err == nil && info.ModTime().UnixNano() > latest {
-			latest = info.ModTime().UnixNano()
-		}
-	}
-
-	return latest
+func servedRoot() string {
+	return workspace.ProjectRoot(firstText(os.Getenv(journalRoot), cwdOf()))
 }

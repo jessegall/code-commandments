@@ -59,3 +59,24 @@ func TestAStreamWrittenBackLeavesOutWhatTheEngineFills(t *testing.T) {
 		t.Error("writing a stream changed the tree still being held")
 	}
 }
+
+func TestATupleWithNoMembersWrittenBackStillReads(t *testing.T) {
+	written := `{"header":{"contract":"tree","version":4,"language":"typescript","bridge":{"name":"t","version":"1"},"roots":["/p"]}}
+{"file":{"path":"/p/a.ts","language":"typescript","errors":0,"comments":[],"types":[{"text":"[]","kind":"tuple","members":[],"origin":"compiler"}],"root":{"id":0,"kind":"SourceFile","role":"other","span":[0,1,1],"children":[{"id":1,"kind":"Identifier","role":"expression","span":[0,1,1],"field":"a","resolvedType":0}]}}}
+{"trailer":{"files":1}}
+`
+
+	read, err := ReadAll(bytes.NewBufferString(written))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var again bytes.Buffer
+	if err := Write(&again, read); err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := ReadAll(&again); err != nil {
+		t.Errorf("a tuple of no members was written back as something that does not read: %v", err)
+	}
+}

@@ -1,32 +1,10 @@
 exit: 0
 --- stdout
-{"hookSpecificOutput":{"hookEventName":"PostToolUse","additionalContext":"Code Commandments — src/Order.php:7 narrated-command (hides) — load `commandments-php-method-mood`, then fix it at its source.\n\nCode Commandments: judged by the 167 rules that answer from one file, and the 80 that read across files were not asked, because no tree of this checkout is held and none is being read, so only the rules that answer from one file will ever run here, so this is not a clean answer, it is a smaller one. Run `commandments judge --changes` for the whole answer. (src/Order.php)"}}
+{"hookSpecificOutput":{"hookEventName":"PostToolUse","additionalContext":"Code Commandments — src/Order.php:7 narrated-command (hides) — load `commandments-php-method-mood`, then fix it at its source.\n\nCode Commandments: judged by the 167 rules that answer from one file, and the 80 that read across files were not asked, because an edit is judged on its own, and the whole tree is read only to judge the changes together, so this is not a clean answer, it is a smaller one. Run `commandments judge --changes` for the whole answer. (src/Order.php)"}}
 
 --- stderr
 
 --- files
-=== created .commandments/.ledger
-judgings-answered-smaller: 1
------
-<time>	judgings_answered_smaller	<project> because no tree of this checkout is held and none is being read, so only the rules that answer from one file will ever run here
------
-Code-commandments — what the judging service has cost this project: every read of a whole tree and every judging it answered, counted, so a test or a person can see whether a run read the tree or waited for it.
-
-The block above the first divider is this file's state, one `name: value` per line:
-  tree-reads-started                how many times the service began reading a whole tree
-  tree-reads-finished               how many of those reads finished and were kept
-  tree-reads-failed                 how many of those reads failed
-  trees-loaded-from-disk            how many times a tree saved by this same binary was loaded instead of read
-  files-read-into-trees             the files all finished reads parsed between them
-  judgings-from-the-tree            judgings the service answered from a tree it held
-  judgings-told-the-tree-is-coming  judgings told to ask again because a read of the tree was running
-  judgings-declined                 judgings the service declined, so the run read the files itself
-  judgings-answered-smaller         judgings answered by the rules that read one file only, because the tree could not carry them
-
-Between the dividers is the list: one event per line: the unix time in milliseconds, a tab, what happened, a tab, the checkout or project it was for
-
-Safe to delete — the counts start again from nothing; nothing reads them but tests and a person.
-
 === created .commandments/sessions/640d8/.authored-files
 -----
 <project>/src/Order.php
@@ -51,7 +29,7 @@ Safe to delete — the findings still standing are named once more.
 
 === created .commandments/sessions/640d8/.said-shortfalls
 -----
-src/Order.php	no tree of this checkout is held and none is being read, so only the rules that answer from one file will ever run here
+src/Order.php	an edit is judged on its own, and the whole tree is read only to judge the changes together
 -----
 Code-commandments — which shortfall each file's reader was last told about, so the same words are not said on every edit.
 

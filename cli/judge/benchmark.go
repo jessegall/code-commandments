@@ -9,13 +9,15 @@ import (
 	"time"
 
 	"github.com/jessegall/code-commandments/catalog"
+	"github.com/jessegall/code-commandments/engine"
 )
 
-// profile is one detector's run: how long it took, what it found, and the memory it grew by.
+// profile is one detector's run: how long it took, what it found, how many times it went over every file of the tree, and the memory it grew by.
 type profile struct {
 	name    string
 	seconds float64
 	matches int
+	passes  int64
 	bytes   int64
 }
 
@@ -26,9 +28,11 @@ func Benchmark(tasks []Task, warn io.Writer) (Judgement, []profile) {
 	for _, task := range tasks {
 		var before, after runtime.MemStats
 		runtime.ReadMemStats(&before)
+		counted := engine.Counted()
 		start := time.Now()
 		result := try(task, warn)
 		seconds := time.Since(start).Seconds()
+		passes := engine.Since(counted).Walked / int64(max(1, len(task.Codebase.Files())))
 		runtime.ReadMemStats(&after)
 
 		for i := range result.findings {
@@ -41,7 +45,7 @@ func Benchmark(tasks []Task, warn io.Writer) (Judgement, []profile) {
 			judgement.Skipped = append(judgement.Skipped, result.skipped)
 		}
 
-		profiles = append(profiles, profile{catalog.Name(task.Detector), seconds, len(result.findings), int64(after.HeapAlloc) - int64(before.HeapAlloc)})
+		profiles = append(profiles, profile{catalog.Name(task.Detector), seconds, len(result.findings), passes, int64(after.HeapAlloc) - int64(before.HeapAlloc)})
 	}
 
 	return judgement, profiles
@@ -61,7 +65,7 @@ func Profiles(profiles []profile, parseSeconds float64) string {
 	lines := []string{
 		"",
 		fmt.Sprintf("  parse: %6.2fs   detect: %6.2fs   (sequential, profiling)", parseSeconds, total),
-		fmt.Sprintf("  %-42s %9s %6s %7s %8s", "detector", "time", "%", "matches", "shards"),
+		fmt.Sprintf("  %-42s %9s %6s %7s %8s", "detector", "time", "%", "matches", "passes"),
 		"  " + strings.Repeat("─", 76),
 	}
 
@@ -71,7 +75,7 @@ func Profiles(profiles []profile, parseSeconds float64) string {
 			share = each.seconds / total * 100
 		}
 
-		lines = append(lines, fmt.Sprintf("  %-42s %8.3fs %5.1f %7d %8s   %s", each.name, each.seconds, share, each.matches, "·", megabytes(each.bytes)))
+		lines = append(lines, fmt.Sprintf("  %-42s %8.3fs %5.1f %7d %8d   %s", each.name, each.seconds, share, each.matches, each.passes, megabytes(each.bytes)))
 	}
 
 	return strings.Join(lines, "\n") + "\n"

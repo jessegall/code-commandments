@@ -22,8 +22,8 @@ func TestEachPieceCanBeSwitchedOffByItself(t *testing.T) {
 			"data": map[string]any{"cwd": root, "kind": "create", "path": under},
 		})
 
-		if !strings.Contains(worker, workersKey) {
-			t.Errorf("a worker was not turned away by its own switch: %s", worker)
+		if strings.Contains(worker, workersKey) || strings.Contains(worker, "made.py") {
+			t.Errorf("a worker with its judging off was told something: %s", worker)
 		}
 
 		main := Answer4Of(map[string]any{

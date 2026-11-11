@@ -58,3 +58,26 @@ func TestADeletedFileSaysNothingOfBeingNotJudged(t *testing.T) {
 		t.Errorf("a deleted file was told it was not judged: %s", *said.context)
 	}
 }
+
+func TestAnEditOutsideTheJudgedFoldersSaysNothing(t *testing.T) {
+	root, _ := workerProject(t)
+
+	outside := filepath.Join("scripts", "survey.py")
+	if err := os.MkdirAll(filepath.Join(root, "scripts"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(root, outside), []byte("print('survey')\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	event := NewEvent(map[string]any{
+		"hook_event_name": "PostToolUse",
+		"tool_name":       "Write",
+		"cwd":             root,
+		"tool_input":      map[string]any{"file_path": outside},
+	}, root)
+
+	if said := (SkillReminder{}).Handle(event); said.context != nil {
+		t.Errorf("an edit outside the folders the project judges was told: %s", *said.context)
+	}
+}

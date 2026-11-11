@@ -22,6 +22,18 @@ func busy(t *testing.T) *story.Story {
 	return s
 }
 
+func landing(t *testing.T) *story.Story {
+	t.Helper()
+
+	s := story.Begin(t)
+	s.Given("a held tree whose hand-ins are not judged", func() {
+		s.GivenTheTreeIsHeldFor(s.TestCheckout())
+		s.GivenHandInsAreNotJudged()
+	})
+
+	return s
+}
+
 func TestTwoWorkersEditingAtOnceAreEachToldOnlyTheirOwnSins(t *testing.T) {
 	s := busy(t)
 	grace, edsger := s.Worker("Grace"), s.Worker("Edsger")
@@ -116,8 +128,7 @@ func TestOneWorkersTwoSimultaneousEditsFillItsLaneOnce(t *testing.T) {
 }
 
 func TestTwoLandingsAtTheSameMomentAreJudgedOneAtATime(t *testing.T) {
-	s := busy(t)
-	s.GivenHandInsAreNotJudged()
+	s := landing(t)
 	ada := s.Agent("Ada")
 	grace, edsger := s.DispatchedWorker("Grace", ada), s.DispatchedWorker("Edsger", ada)
 
@@ -132,8 +143,7 @@ func TestTwoLandingsAtTheSameMomentAreJudgedOneAtATime(t *testing.T) {
 }
 
 func TestALandingDoesNotDisturbAWorkersNextLane(t *testing.T) {
-	s := busy(t)
-	s.GivenHandInsAreNotJudged()
+	s := landing(t)
 	grace, edsger := s.Worker("Grace"), s.DispatchedWorker("Edsger", s.Agent("Ada"))
 
 	grace.Edits(story.ElseAfterRaise, "first.py")
@@ -148,8 +158,7 @@ func TestALandingDoesNotDisturbAWorkersNextLane(t *testing.T) {
 }
 
 func TestALandingWhileTheMainAgentEditsAnswersBothCorrectly(t *testing.T) {
-	s := busy(t)
-	s.GivenHandInsAreNotJudged()
+	s := landing(t)
 	ada := s.Agent("Ada")
 	grace := s.DispatchedWorker("Grace", ada)
 

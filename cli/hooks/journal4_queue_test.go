@@ -323,7 +323,7 @@ func TestTheServiceAnswersTheHeldEventWithTheGatesAloneAndAdvisesAfter(t *testin
 		if !moment.queued {
 			t.Error("the moment was handed on as version 3's")
 		}
-	case <-time.After(5 * time.Second):
+	case <-time.After(3 * batchedWithin):
 		t.Error("the moment was never handed on to be worked out")
 	}
 }

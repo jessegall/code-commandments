@@ -8,6 +8,7 @@ import (
 	"slices"
 	"strings"
 	"sync"
+	"sync/atomic"
 
 	"github.com/jessegall/code-commandments/contract"
 )
@@ -46,39 +47,74 @@ func Untouched() {
 	}
 }
 
+// derived is one thing a codebase derived from its files, built once however many readers ask for it at the same moment.
+type derived struct {
+	building sync.Mutex
+	held     atomic.Pointer[any]
+}
+
+func (c *Codebase) derivedUnder(key any) *derived {
+	if slot, known := c.analyses.Load(key); known {
+		return slot.(*derived)
+	}
+
+	slot, _ := c.analyses.LoadOrStore(key, &derived{})
+
+	return slot.(*derived)
+}
+
+func (c *Codebase) kept(key any) (any, bool) {
+	slot, known := c.analyses.Load(key)
+	if !known {
+		return nil, false
+	}
+
+	held := slot.(*derived).held.Load()
+	if held == nil {
+		return nil, false
+	}
+
+	return *held, true
+}
+
 func Keep[T any](c *Codebase, key any, value T) {
-	c.analyses.Store(key, value)
+	slot := c.derivedUnder(key)
+	slot.building.Lock()
+	defer slot.building.Unlock()
+
+	var held any = value
+	slot.held.Store(&held)
 }
 
 func Analysis[T any](c *Codebase, key any, build func(*Codebase) T) T {
-	if held, ok := c.analyses.Load(key); ok {
-		return held.(T)
+	slot := c.derivedUnder(key)
+	if held := slot.held.Load(); held != nil {
+		return (*held).(T)
 	}
 
-	if over := c.carriedFrom(key); over != nil {
-		held, _ := c.analyses.LoadOrStore(key, over)
+	slot.building.Lock()
+	defer slot.building.Unlock()
 
-		return held.(T)
+	if held := slot.held.Load(); held != nil {
+		return (*held).(T)
 	}
 
-	CountedAnalysis()
-
-	held, _ := c.analyses.LoadOrStore(key, build(c))
+	held, carried := c.carriedFrom(key)
+	if !carried {
+		CountedAnalysis()
+		held = build(c)
+	}
+	slot.held.Store(&held)
 
 	return held.(T)
 }
 
-func (c *Codebase) carriedFrom(key any) any {
+func (c *Codebase) carriedFrom(key any) (any, bool) {
 	if c.over == nil || !c.carries[key] {
-		return nil
+		return nil, false
 	}
 
-	held, ok := c.over.analyses.Load(key)
-	if !ok {
-		return nil
-	}
-
-	return held
+	return c.over.kept(key)
 }
 
 func (c *Codebase) Carries(over *Codebase, keys ...any) {
@@ -105,6 +141,8 @@ type File struct {
 	printing sync.Once
 	contents uint64
 	printed  bool
+	freezing sync.Once
+	frozen   bool
 }
 
 func Load(streams ...*contract.Stream) *Codebase {
@@ -185,8 +223,35 @@ func (c *Codebase) Streams() []*contract.Stream {
 	return c.streams
 }
 
+// partOf is the key a codebase keeps one language's part of itself under, so every reader of that part shares its files and its analyses.
+type partOf string
+
 func (c *Codebase) Of(languages ...contract.Language) *Codebase {
-	part := &Codebase{read: c.read, analyses: &sync.Map{}, reporting: c.reporting}
+	whole := Analysis(c, partNamed(languages), func(c *Codebase) *Codebase { return c.narrowedTo(languages) })
+
+	part := *whole
+	part.reporting = c.reporting
+
+	return &part
+}
+
+func partNamed(languages []contract.Language) partOf {
+	if len(languages) == 1 {
+		return partOf(languages[0])
+	}
+
+	named := ""
+	for _, language := range languages {
+		named += string(language) + " "
+	}
+
+	return partOf(named)
+}
+
+func (c *Codebase) narrowedTo(languages []contract.Language) *Codebase {
+	CountedWalk(len(c.files))
+
+	part := &Codebase{read: c.read, analyses: &sync.Map{}}
 	for _, stream := range c.streams {
 		if slices.Contains(languages, stream.Header.Language) {
 			part.streams = append(part.streams, stream)
@@ -214,6 +279,8 @@ func (c *Codebase) Reporting(paths ...string) *Codebase {
 }
 
 func (c *Codebase) opened() []*File {
+	CountedWalk(len(c.files))
+
 	if len(c.reporting) == 0 {
 		return c.files
 	}

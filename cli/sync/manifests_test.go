@@ -249,7 +249,7 @@ func TestBothManifestsDeclareTheHealthTheServicesReallyAnswer(t *testing.T) {
 
 func TestBothManifestsFitTheSameLanguages(t *testing.T) {
 	var fits []string
-	for _, name := range [][]string{{".journal-plugin", "plugin.json"}, {"journal-plugin.json"}} {
+	for _, name := range [][]string{{".journal-plugin", "plugin.json"}, {"journal-plugin.5.json"}} {
 		text, err := os.ReadFile(filepath.Join(append([]string{"..", ".."}, name...)...))
 		if err != nil {
 			t.Fatal(err)
@@ -281,7 +281,7 @@ func TestBothManifestsFitTheSameLanguages(t *testing.T) {
 }
 
 func TestTheManifestDeclaresTheFolderItReads(t *testing.T) {
-	text, err := os.ReadFile(filepath.Join("..", "..", "journal-plugin.json"))
+	text, err := os.ReadFile(filepath.Join("..", "..", "journal-plugin.5.json"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -348,7 +348,7 @@ func TestNothingReachesAnAgentOtherThanTheMainOneOrAWorker(t *testing.T) {
 }
 
 func TestEachAliasSaysWhatKindOfCommandItIs(t *testing.T) {
-	text, err := os.ReadFile(filepath.Join("..", "..", "journal-plugin.json"))
+	text, err := os.ReadFile(filepath.Join("..", "..", "journal-plugin.5.json"))
 	if err != nil {
 		t.Fatal(err)
 	}

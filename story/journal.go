@@ -26,18 +26,18 @@ func (r Ran) Text() string {
 }
 
 type request struct {
-	Kind   string   `json:"kind"`
-	Argv   []string `json:"argv,omitempty"`
-	Stdin  string   `json:"stdin,omitempty"`
-	In     string   `json:"in,omitempty"`
-	Path   string   `json:"path,omitempty"`
-	Action string   `json:"action,omitempty"`
-	Name   string   `json:"name,omitempty"`
-	Many   int      `json:"many,omitempty"`
-	Pid    string   `json:"pid,omitempty"`
-	Session string  `json:"session,omitempty"`
-	Actor  string   `json:"actor,omitempty"`
-	Role   string   `json:"role,omitempty"`
+	Kind    string   `json:"kind"`
+	Argv    []string `json:"argv,omitempty"`
+	Stdin   string   `json:"stdin,omitempty"`
+	In      string   `json:"in,omitempty"`
+	Path    string   `json:"path,omitempty"`
+	Action  string   `json:"action,omitempty"`
+	Name    string   `json:"name,omitempty"`
+	Many    int      `json:"many,omitempty"`
+	Pid     string   `json:"pid,omitempty"`
+	Session string   `json:"session,omitempty"`
+	Actor   string   `json:"actor,omitempty"`
+	Role    string   `json:"role,omitempty"`
 }
 
 const stepTakesAtMost = 11 * time.Minute

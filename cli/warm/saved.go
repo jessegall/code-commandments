@@ -8,6 +8,8 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
+	"strings"
+	"sync"
 	"time"
 
 	"github.com/jessegall/code-commandments/cli/atomic"
@@ -17,6 +19,14 @@ import (
 const savedHead = "head.json"
 
 const SavedLife = 12 * time.Hour
+
+const (
+	savedDraft = ".draft"
+
+	draftLife = time.Hour
+)
+
+var swappingSaved sync.Mutex
 
 // Saved is a held tree read back from disk, with what each file was when the tree read it.
 type Saved struct {
@@ -33,17 +43,18 @@ type savedDescription struct {
 }
 
 func (b *Base) Save(folder, binary string, now time.Time) error {
-	draft := folder + ".draft"
-	os.RemoveAll(draft)
-
-	if err := os.MkdirAll(draft, 0o755); err != nil {
+	if err := os.MkdirAll(filepath.Dir(folder), 0o755); err != nil {
 		return err
 	}
 
+	draft, err := os.MkdirTemp(filepath.Dir(folder), filepath.Base(folder)+savedDraft)
+	if err != nil {
+		return err
+	}
+	defer os.RemoveAll(draft)
+
 	for index, stream := range b.streams {
 		if err := writeSavedStream(savedStreamPath(draft, index), stream); err != nil {
-			os.RemoveAll(draft)
-
 			return err
 		}
 	}
@@ -59,6 +70,9 @@ func (b *Base) Save(folder, binary string, now time.Time) error {
 	if err := os.WriteFile(filepath.Join(draft, savedHead), head, 0o644); err != nil {
 		return err
 	}
+
+	swappingSaved.Lock()
+	defer swappingSaved.Unlock()
 
 	os.RemoveAll(folder)
 
@@ -122,12 +136,26 @@ func SweepSaved(parent string, now time.Time) {
 	}
 
 	for _, entry := range entries {
+		if draftStillBeingWritten(entry, now) {
+			continue
+		}
+
 		folder := filepath.Join(parent, entry.Name())
 
 		if head, err := readSavedHead(folder); err != nil || now.Sub(head.Used) > SavedLife {
 			os.RemoveAll(folder)
 		}
 	}
+}
+
+func draftStillBeingWritten(entry os.DirEntry, now time.Time) bool {
+	if !strings.Contains(entry.Name(), savedDraft) {
+		return false
+	}
+
+	info, err := entry.Info()
+
+	return err == nil && now.Sub(info.ModTime()) < draftLife
 }
 
 func readSavedHead(folder string) (savedDescription, error) {

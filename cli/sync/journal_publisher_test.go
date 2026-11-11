@@ -50,6 +50,46 @@ func TestSyncStandsAsideWhereTheJournalPublishes(t *testing.T) {
 	}
 }
 
+func TestSyncLeavesWhatTheJournalPublishedSinceItStoodAside(t *testing.T) {
+	root := phpProject(t)
+
+	if err := Sync(root, quiet()); err != nil {
+		t.Fatal(err)
+	}
+
+	installPlugin(t, root)
+
+	if err := Sync(root, quiet()); err != nil {
+		t.Fatal(err)
+	}
+
+	index := filepath.Join(root, ".claude/skills", "commandments", "SKILL.md")
+
+	for _, skill := range []string{filepath.Join(root, library.Dir, "commandments-php-absence"),
+		filepath.Join(root, ".claude/skills", "commandments-php-absence"), filepath.Dir(index)} {
+		if err := os.MkdirAll(skill, 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(filepath.Join(skill, "SKILL.md"), []byte("---\nname: "+filepath.Base(skill)+"\n---\n"), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	if err := Sync(root, quiet()); err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := os.Stat(index); err != nil {
+		t.Errorf("a later sync took away the index the journal published for Claude Code: %v", err)
+	}
+
+	for _, folder := range []string{library.Dir, ".claude/skills"} {
+		if left := publishedIn(t, filepath.Join(root, folder)); left != 1 {
+			t.Errorf("a later sync left %d of the one skill the journal published into %s", left, folder)
+		}
+	}
+}
+
 func TestASkillTheProjectPlacedItselfSurvivesStandingAside(t *testing.T) {
 	root := phpProject(t)
 

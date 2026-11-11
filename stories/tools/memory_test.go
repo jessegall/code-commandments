@@ -9,8 +9,6 @@ import (
 	"github.com/jessegall/code-commandments/story"
 )
 
-const savedWithin = 20 * time.Second
-
 func TestTheMemoryFileIsReadAndAgedByTheRelay(t *testing.T) {
 	s := story.Begin(t)
 	t.Cleanup(func() { s.WaitsForTheService("hooks", serviceReturnsWithin) })
@@ -18,8 +16,8 @@ func TestTheMemoryFileIsReadAndAgedByTheRelay(t *testing.T) {
 	s.GivenTheTreeIsHeldFor(s.TestCheckout())
 	s.Writes(story.ElseAfterRaise, "aged.py")
 	s.Exits(s.AsksIn(s.TestCheckout(), "sins", "--changes"), 1)
-	s.Exits(s.StopsAService(s.TheService("journal-serve").Pid, story.Terminates), 0)
-	before := memory.EventuallyHoldsEntries(savedWithin)
+	memory.StopsTheService()
+	before := memory.Reads()
 
 	memory.Ages(13 * time.Hour)
 

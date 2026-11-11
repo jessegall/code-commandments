@@ -48,7 +48,7 @@ func (s *Story) Agent(name string) *Agent {
 
 	agent := s.registers(name, "worker", s.TestCheckout())
 	if !s.rehearsal {
-		agent.settlesIn()
+		agent.SettlesIn()
 	}
 
 	return agent
@@ -70,7 +70,7 @@ func (s *Story) Worker(name string) *Agent {
 
 	worker := s.registers(name, "worker", folder)
 	if !s.rehearsal {
-		worker.settlesIn()
+		worker.SettlesIn()
 	}
 
 	return worker
@@ -92,9 +92,12 @@ func (s *Story) DispatchedWorker(name string, by *Agent) *Agent {
 		return nil
 	}
 
+	dispatcher := s.dispatcher()
+	s.grantsDispatchTo(dispatcher)
+
 	session := fmt.Sprintf("story-%s-%d", notALetter.ReplaceAllString(strings.ToLower(name), "-"), time.Now().UnixNano())
 
-	dispatched := s.AsksIn(s.TestCheckout(), "worker", "dispatch", found[1], "--no-program", "--program", "claude", "--session", session,
+	dispatched := dispatcher.Asks("worker", "dispatch", found[1], "--no-program", "--program", "claude", "--session", session,
 		"--environment", testEnvironment, "--fresh", "a story's worker", "--json")
 
 	var launch struct{ ID int }
@@ -111,9 +114,58 @@ func (s *Story) DispatchedWorker(name string, by *Agent) *Agent {
 	s.keepsTheBranchWhereItIs()
 
 	worker := &Agent{s: s, name: name, session: session, folder: folder, row: row, role: "worker", task: found[1]}
-	worker.settlesIn()
+	worker.SettlesIn()
 
 	return worker
+}
+
+func (s *Story) dispatcher() *Agent {
+	s.t.Helper()
+
+	if s.dispatches == nil {
+		s.dispatches = s.registers("Dispatcher", "main", s.TestCheckout())
+	}
+
+	return s.dispatches
+}
+
+func (s *Story) grantsDispatchTo(by *Agent) {
+	s.t.Helper()
+
+	listed := s.Asks("environment", "list", "--all", "--json")
+
+	grant, err := dispatchGrantOf(listed, by)
+	if err != nil {
+		s.Fails(err.Error())
+
+		return
+	}
+
+	if granted := s.Asks(grant...); granted.Code != 0 {
+		s.Fails("the test environment could not name " + by.name + " as the agent that dispatches: " + granted.Text())
+	}
+}
+
+func dispatchGrantOf(listed Ran, by *Agent) ([]string, error) {
+	var environments struct {
+		Rows []struct {
+			ID   int
+			Name string
+		}
+	}
+
+	if err := json.Unmarshal([]byte(listed.Out), &environments); err != nil {
+		return nil, fmt.Errorf("the environments could not be read to grant a dispatch: %s", listed.Text())
+	}
+
+	for _, environment := range environments.Rows {
+		if environment.Name == testEnvironment {
+			return []string{"environment", "edit", strconv.Itoa(environment.ID), "--test", "--test-agent-id", by.row,
+				"--reason", "a story's agent dispatches a worker, which the journal allows a person or the test environment's named agent"}, nil
+		}
+	}
+
+	return nil, fmt.Errorf("the journal lists no environment named %s to grant a dispatch in: %s", testEnvironment, listed.Text())
 }
 
 func (s *Story) keepsTheBranchWhereItIs() {
@@ -235,6 +287,19 @@ func (a *Agent) SendsAnEventNobodyKnows() Ran {
 	return a.sends("SomethingElse", map[string]any{})
 }
 
+func (a *Agent) SendsARawBody(label, body string) Ran {
+	a.s.t.Helper()
+
+	a.s.steps = append(a.s.steps, StepOf("an agent sends "+label))
+
+	ran, err := a.s.journal.Hooks(a.folder, body, a.row, a.role)
+	if err != nil {
+		a.s.Fails(err.Error())
+	}
+
+	return ran
+}
+
 func (a *Agent) SendsAnEditNamingNoFile() Ran {
 	a.s.t.Helper()
 
@@ -322,14 +387,14 @@ func (a *Agent) writes(sample Sample, file string, named func(string) string) Ra
 	a.edited = true
 
 	return a.sends("PostToolUse", map[string]any{
-		"tool_name":     "Write",
-		"tool_input":    map[string]any{"file_path": named(path), "content": sample.Text},
+		"tool_name":  "Write",
+		"tool_input": map[string]any{"file_path": named(path), "content": sample.Text},
 		"tool_response": map[string]any{"type": "create", "filePath": named(path), "content": sample.Text,
 			"structuredPatch": []any{}, "originalFile": nil},
 	})
 }
 
-func (a *Agent) settlesIn() {
+func (a *Agent) SettlesIn() {
 	a.s.t.Helper()
 
 	if looked, err := a.s.journal.LooksAt(a.folder); err != nil || looked.Code != 0 {

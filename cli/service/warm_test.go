@@ -2,6 +2,7 @@ package service
 
 import (
 	"bytes"
+	"fmt"
 	"os"
 	"path/filepath"
 	"slices"
@@ -11,6 +12,7 @@ import (
 	"github.com/jessegall/code-commandments/bridge/bridgetest"
 	"github.com/jessegall/code-commandments/cli"
 	"github.com/jessegall/code-commandments/cli/scan"
+	"github.com/jessegall/code-commandments/contract"
 )
 
 func TestWarmingReadsWhatAJudgeWouldAsk(t *testing.T) {
@@ -77,6 +79,52 @@ func TestAWarmUpThatCannotRunLeavesTheServiceServing(t *testing.T) {
 
 	if errs.Len() == 0 {
 		t.Error("a warm-up that could not read the project said nothing")
+	}
+}
+
+// counting is a bridge that answers nothing and keeps how many files each request named.
+type counting struct {
+	asked []int
+}
+
+func (c *counting) AskTallied(request bridge.Request, tally func()) (*contract.Stream, error) {
+	c.asked = append(c.asked, len(request.Write))
+
+	return &contract.Stream{}, nil
+}
+
+func (c *counting) AskEach(bridge.Request, func(contract.Line, []byte) error) error {
+	return nil
+}
+
+func (c *counting) Close() error {
+	return nil
+}
+
+func manyPythonFiles(count int) map[string]string {
+	files := map[string]string{".commandments/config.json": `{"paths": ["src"]}`}
+	for at := range count {
+		files[fmt.Sprintf("src/module_%03d.py", at)] = "held = 1\n"
+	}
+
+	return files
+}
+
+func TestAWarmUpAsksABridgeForItsFilesInGroups(t *testing.T) {
+	root := project(t, manyPythonFiles(warmedAtOnce*2+1))
+	asked := &counting{}
+
+	var out, errs bytes.Buffer
+	warm(bridgeNamed(t, "mypy"), root, asked, cli.Console{Out: &out, Err: &errs})
+
+	if want := []int{warmedAtOnce, warmedAtOnce, 1}; !slices.Equal(asked.asked, want) {
+		t.Errorf("the warm-up asked for %v files a request, want %v", asked.asked, want)
+	}
+}
+
+func TestAWarmUpAsksABridgeThatReadsWholeRootsOnce(t *testing.T) {
+	if got := warmedTogether(bridgeNamed(t, "roslyn"), 5000); got != 5000 {
+		t.Errorf("a bridge that reads whole roots is warmed %d files at a time, not all 5000 at once", got)
 	}
 }
 

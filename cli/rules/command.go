@@ -38,6 +38,7 @@ func (Command) Help() help.Help {
 		Form("rule migrate [--dry-run]", "bring your own rules up to this release: merge the copies that differ only in the engine they judge into one rule naming them all, and name every rule this release no longer reads, with the reason").
 		Option("--line=N", "with `explain`, only the nodes that start on line N, each with what it holds").
 		Option("--dry-run", "with `migrate`, say what would change and change nothing").
+		Option("--work", "with `try`, print how many nodes, checks and analyses the rule cost").
 		Note("`rule migrate` never stops at the first rule it cannot settle: it reads every one, merges every set of copies it can, and ends by naming what is left. A rule naming a construct no parser writes is named rather than repaired, since the nearest real word is a guess and a guess written into your own file is worse than a message.").
 		Note("<Rule> is a rule of `.commandments/custom/` by its name — `NoRawSql` or `NoRawSqlDetector` — or the path of a rule file anywhere.").
 		Note("A sample marks the code a rule must flag with a comment above it — `// @sin NoRawSqlDetector`, `# @sin …` in Python, `<!-- @sin … -->` in a Vue template — the code it must leave alone with `@righteous NoRawSqlDetector`, and its fix with `@fixed NoRawSqlDetector`. `rule prove` reads `.commandments/custom/samples/` unless given a path, and fails when a rule misses a mark, flags anything unmarked, has no `@sin` mark at all, or cannot be read, and when a mark names no rule of the project.")
@@ -141,7 +142,7 @@ func (c Command) try(in *cli.Input, root string, console cli.Console) (int, erro
 	}
 
 	console.Write(fmt.Sprintf("%d match(es) of %s in %s\n", len(found), tried.Name(), strings.Join(paths, ", ")))
-	cli.SayWork(console, work)
+	cli.SayWorkWhen(in.HasFlag("work"), console, work)
 
 	return 0, nil
 }

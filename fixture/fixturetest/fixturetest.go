@@ -7,6 +7,7 @@ import (
 
 	"github.com/jessegall/code-commandments/catalog"
 	"github.com/jessegall/code-commandments/detectors"
+	"github.com/jessegall/code-commandments/engine"
 	"github.com/jessegall/code-commandments/fixture"
 )
 
@@ -87,5 +88,30 @@ func proveDiversity(t testing.TB, f fixture.Fixture, detector detectors.Detector
 	if largest := fixture.LargestDiverseGroup(scenarios); largest < fixture.MinScenarios {
 		t.Errorf("%s: needs ≥%d mutually-DIVERSE scenarios (different files, <%.0f%% overlap) but the largest diverse group of its %d finding(s) is %d. Add genuinely different cases, not copies.",
 			catalog.Name(detector), fixture.MinScenarios, fixture.MaxSimilarity, len(scenarios), largest)
+	}
+}
+
+const mostARuleMayGrow = 3
+
+func NoRuleOutgrowsItsTree(t testing.TB, small, large *engine.Codebase, rules []detectors.Detector) {
+	t.Helper()
+
+	if len(rules) == 0 {
+		t.Fatal("no rule was handed in, so this test would pass by looking at nothing")
+	}
+
+	grown := fixture.Grown(small, large, rules)
+
+	for _, each := range grown[:min(5, len(grown))] {
+		t.Logf("%s cost %d points over the fixture and %d over the same fixture twice, %.1f times",
+			each.Detector, each.Small, each.Large, each.Times)
+	}
+
+	for _, each := range grown {
+		if each.Times > mostARuleMayGrow {
+			t.Errorf("%s cost %d points over the fixture and %d over the same fixture twice, %.1f times, where "+
+				"twice the tree may cost about twice the compute: a rule that grows faster than the project is one "+
+				"a consumer cannot escape", each.Detector, each.Small, each.Large, each.Times)
+		}
 	}
 }

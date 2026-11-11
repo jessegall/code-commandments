@@ -45,9 +45,10 @@ func TestAMergeOfSinfulWorkIsNotHeldWhenTheBeforeLandingSettingIsOff(t *testing.
 	s.Never(merged, "carries")
 }
 
-func TestAMergeWithNothingToCompareIsAllowedWithoutJudging(t *testing.T) {
+func TestAMergeOfOnlyExcludedFilesIsAllowedWithoutJudging(t *testing.T) {
 	s, _, grace := ready(t)
 
+	grace.Edits(story.ElseAfterRaise, "dist/bundle.py")
 	grace.HandsIn()
 
 	merged := s.Merges(grace)

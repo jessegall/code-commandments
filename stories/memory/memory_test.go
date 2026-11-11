@@ -335,6 +335,21 @@ func TestAWeighingRuleIsRememberedUntilAFileMoves(t *testing.T) {
 	s.CostAtLeast(ledger.DetectorFilesJudged, 1)
 }
 
+func TestAWeighingRuleIsRememberedAcrossARestart(t *testing.T) {
+	s, memory, _ := settledAcrossRestarts(t)
+	s.Writes(story.CSharp("a c# method with a copy beside it", fmt.Sprintf(repeatedMethod, "Payments")), "Payments.cs")
+	s.Writes(story.CSharp("the copy of the method", fmt.Sprintf(repeatedMethod, "Refunds")), "Refunds.cs")
+	first := judges(s, weighingRule)
+	s.Says(first, "Payments.cs", "Refunds.cs")
+
+	memory.StopsTheService()
+	s.WaitsForTheService("hooks", serviceComesUp)
+	s.CountsFromHere()
+
+	s.SaysTheSameSinsAs(first, judges(s, weighingRule))
+	s.Judged(0)
+}
+
 func TestARuleChangedInItsDefinitionStartsOver(t *testing.T) {
 	s, rest := settled(t, projectRule)
 	s.Writes(s.FreshPython("a file with two calls a rule may look for", callsBoth), "calls.py")

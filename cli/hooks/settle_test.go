@@ -245,3 +245,38 @@ func TestAPartialJudgingNeverCallsAFileClean(t *testing.T) {
 		t.Errorf("a judging that asked about the sin and found it gone settles %v, want %v", repented.Settles(), raised[0].Key)
 	}
 }
+
+func TestAWriteIsNotJudgedWithLiveEditsSwitchedOff(t *testing.T) {
+	root, err := filepath.EvalSymlinks(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv(pluginData, t.TempDir())
+	file := filepath.Join(root, "src", "probe.py")
+	sinful := "def refund(order) -> int:\n    if order.late:\n        raise ValueError(order)\n    else:\n        return order.total\n"
+	for path, text := range map[string]string{".commandments/config.json": `{"paths": ["src"]}`, "src/probe.py": sinful} {
+		if err := os.MkdirAll(filepath.Dir(filepath.Join(root, path)), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(filepath.Join(root, path), []byte(text), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if out, err := exec.Command("git", "-C", root, "init", "-q").CombinedOutput(); err != nil {
+		t.Fatalf("%s", out)
+	}
+
+	written := func(judged bool) JournalAnswer {
+		return answerWith(map[string]any{"event": "hook.PostToolUse", "project": root, "env": "main",
+			"settings": map[string]any{"judge_edits": judged},
+			"tool":     map[string]any{"name": "Write", "file": file}}, every, true)
+	}
+
+	if off := written(false); len(off.Raises) != 0 || off.Whisper != nil {
+		t.Errorf("with live edits off the main agent's write was judged: %+v", off)
+	}
+
+	if on := written(true); len(on.Raises) != 1 {
+		t.Errorf("with live edits on the sinful write raised %+v", on.Raises)
+	}
+}

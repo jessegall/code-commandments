@@ -16,22 +16,28 @@ const RememberedFor = 12 * time.Hour
 
 const sweptEvery = time.Hour
 
-// Verdict is one file's remembered answer as it is kept outside memory: the fingerprint of its contents, when it was last used and the nodes found in it.
+// Verdict is one file's remembered answers, in memory and as they are kept outside it: the fingerprint of its contents, when it was last used, the rules that judged it as one bit per rule number, and the nodes each of those rules found in it.
 type Verdict struct {
 	Fingerprint uint64
 	Used        int64
-	Found       []int
+	Judged      []uint64
+	Found       map[int][]int `json:",omitempty"`
 }
 
-// Remembered is what one detector knows of the files it has judged, by a fingerprint of their contents and nothing else: a known file is answered with the findings it had until the fingerprint expires.
-type Remembered struct {
+// Memory is what a set of rules knows of the files it has judged, by a fingerprint of their contents and nothing else: one entry per file however many rules judged it, kept until the fingerprint expires.
+type Memory struct {
 	now     func() time.Time
 	mu      sync.Mutex
-	judged  map[uint64]int64
-	found   map[uint64][]int
+	files   map[uint64]*Verdict
 	swept   time.Time
 	changed bool
 	most    int
+}
+
+// Remembered is one rule's place in a memory: a file the rule has judged is answered with the findings the rule had in it.
+type Remembered struct {
+	*Memory
+	rule int
 }
 
 // unjudged is a file the detector has to be asked about, and the fingerprint its answer is remembered under.
@@ -41,37 +47,72 @@ type unjudged struct {
 	printed     bool
 }
 
+func NewMemory(now func() time.Time) *Memory {
+	return &Memory{now: now, files: map[uint64]*Verdict{}, swept: now()}
+}
+
 func Remembering(now func() time.Time) *Remembered {
-	return &Remembered{now: now, judged: map[uint64]int64{}, found: map[uint64][]int{}, swept: now()}
+	return NewMemory(now).Rule(0)
 }
 
 func RememberingFrom(now func() time.Time, verdicts []Verdict) *Remembered {
-	remembered := Remembering(now)
+	memory := NewMemory(now)
+	memory.Restore(verdicts)
+
+	return memory.Rule(0)
+}
+
+func (m *Memory) Rule(number int) *Remembered {
+	return &Remembered{m, number}
+}
+
+func (m *Memory) Restore(verdicts []Verdict) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	now := m.now()
+	m.files = make(map[uint64]*Verdict, len(verdicts))
 
 	for _, verdict := range verdicts {
-		if expired(verdict.Used, now()) {
-			remembered.changed = true
+		if expired(verdict.Used, now) {
+			m.changed = true
 
 			continue
 		}
 
-		remembered.judged[verdict.Fingerprint] = verdict.Used
-
-		if len(verdict.Found) > 0 {
-			remembered.found[verdict.Fingerprint] = verdict.Found
-		}
+		m.files[verdict.Fingerprint] = &verdict
 	}
-
-	return remembered
 }
 
-func (r *Remembered) AtMost(entries int) *Remembered {
-	r.mu.Lock()
-	defer r.mu.Unlock()
+func (m *Memory) AtMost(files int) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
 
-	r.most = entries
+	m.most = files
+}
 
-	return r
+func (v *Verdict) judgedBy(rule int) bool {
+	return rule/64 < len(v.Judged) && v.Judged[rule/64]&(1<<(rule%64)) != 0
+}
+
+func (v *Verdict) judged(rule int, found []int) {
+	for len(v.Judged) <= rule/64 {
+		v.Judged = append(v.Judged, 0)
+	}
+
+	v.Judged[rule/64] |= 1 << (rule % 64)
+
+	if len(found) == 0 {
+		delete(v.Found, rule)
+
+		return
+	}
+
+	if v.Found == nil {
+		v.Found = map[int][]int{}
+	}
+
+	v.Found[rule] = found
 }
 
 func (r *Remembered) Find(codebase *Codebase, find func(*Codebase) []Match) []Match {
@@ -89,7 +130,7 @@ func (r *Remembered) FindAcross(codebase *Codebase, find func(*Codebase) []Match
 
 func (r *Remembered) finding(codebase *Codebase, find func(*Codebase) []Match, printOf func(*File) (uint64, bool)) []Match {
 	opened := codebase.opened()
-	answered, asked, twins := r.recalled(opened, printOf)
+	answered, asked, twins := r.recalled(printsOf(opened, printOf))
 	CountedJudged(len(asked))
 	CountedRemembered(len(opened) - len(asked) - len(twins))
 
@@ -108,7 +149,18 @@ func (r *Remembered) finding(codebase *Codebase, find func(*Codebase) []Match, p
 	return append(answered, r.finding(codebase.Reporting(twins...), find, printOf)...)
 }
 
-func (r *Remembered) recalled(files []*File, printOf func(*File) (uint64, bool)) ([]Match, map[string]unjudged, []string) {
+func printsOf(files []*File, printOf func(*File) (uint64, bool)) []unjudged {
+	prints := make([]unjudged, len(files))
+
+	for at, file := range files {
+		fingerprint, printed := printOf(file)
+		prints[at] = unjudged{file, fingerprint, printed}
+	}
+
+	return prints
+}
+
+func (r *Remembered) recalled(files []unjudged) ([]Match, map[string]unjudged, []string) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
@@ -120,83 +172,88 @@ func (r *Remembered) recalled(files []*File, printOf func(*File) (uint64, bool))
 	asked := map[string]unjudged{}
 	beingAsked := map[uint64]bool{}
 
-	for _, file := range files {
-		fingerprint, printed := printOf(file)
-
-		if printed && r.knows(fingerprint, now) && file.holdsNodes(r.found[fingerprint]) {
-			r.judged[fingerprint] = now.UnixNano()
-			r.changed = true
-
-			for _, id := range r.found[fingerprint] {
-				answered = append(answered, file.Match(id))
+	for _, one := range files {
+		if found, known := r.known(one, now); known {
+			for _, id := range found {
+				answered = append(answered, one.file.Match(id))
 			}
 
 			continue
 		}
 
-		if printed && beingAsked[fingerprint] {
-			twins = append(twins, file.Path)
+		if one.printed && beingAsked[one.fingerprint] {
+			twins = append(twins, one.file.Path)
 
 			continue
 		}
 
-		beingAsked[fingerprint] = printed
-		asked[file.Path] = unjudged{file, fingerprint, printed}
+		beingAsked[one.fingerprint] = one.printed
+		asked[one.file.Path] = one
 	}
 
 	return answered, asked, twins
 }
 
-func (r *Remembered) knows(fingerprint uint64, now time.Time) bool {
-	at, known := r.judged[fingerprint]
+func (r *Remembered) known(one unjudged, now time.Time) ([]int, bool) {
+	verdict, held := r.files[one.fingerprint]
+	if !one.printed || !held || expired(verdict.Used, now) || !verdict.judgedBy(r.rule) {
+		return nil, false
+	}
 
-	return known && !expired(at, now)
+	found := verdict.Found[r.rule]
+	if !one.file.holdsNodes(found) {
+		return nil, false
+	}
+
+	verdict.Used = now.UnixNano()
+	r.changed = true
+
+	return found, true
 }
 
 func expired(at int64, now time.Time) bool {
 	return now.Sub(time.Unix(0, at)) >= RememberedFor
 }
 
-func (r *Remembered) sweep(now time.Time) {
-	if now.Sub(r.swept) < sweptEvery {
+func (m *Memory) sweep(now time.Time) {
+	if now.Sub(m.swept) < sweptEvery {
 		return
 	}
 
-	r.swept = now
-	r.forgetExpired(now)
+	m.swept = now
+	m.forgetExpired(now)
 }
 
-func (r *Remembered) forgetExpired(now time.Time) {
-	for fingerprint, at := range r.judged {
-		if !expired(at, now) {
+func (m *Memory) forgetExpired(now time.Time) {
+	for fingerprint, verdict := range m.files {
+		if !expired(verdict.Used, now) {
 			continue
 		}
 
-		delete(r.judged, fingerprint)
-		delete(r.found, fingerprint)
-		r.changed = true
+		delete(m.files, fingerprint)
+		m.changed = true
 	}
 }
 
-func (r *Remembered) Changed() bool {
-	r.mu.Lock()
-	defer r.mu.Unlock()
+func (m *Memory) Changed() bool {
+	m.mu.Lock()
+	defer m.mu.Unlock()
 
-	r.sweep(r.now())
+	m.sweep(m.now())
 
-	return r.changed
+	return m.changed
 }
 
-func (r *Remembered) Verdicts() []Verdict {
-	r.mu.Lock()
-	defer r.mu.Unlock()
+func (m *Memory) Verdicts() []Verdict {
+	m.mu.Lock()
+	defer m.mu.Unlock()
 
-	r.forgetExpired(r.now())
-	r.changed = false
+	m.forgetExpired(m.now())
+	m.changed = false
 
-	verdicts := make([]Verdict, 0, len(r.judged))
-	for fingerprint, used := range r.judged {
-		verdicts = append(verdicts, Verdict{fingerprint, used, r.found[fingerprint]})
+	verdicts := make([]Verdict, 0, len(m.files))
+	for _, verdict := range m.files {
+		verdicts = append(verdicts, Verdict{verdict.Fingerprint, verdict.Used, slices.Clone(verdict.Judged), maps.Clone(verdict.Found)})
 	}
 
 	return verdicts
@@ -220,38 +277,43 @@ func (r *Remembered) remember(asked map[string]unjudged, matches []Match) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	at := r.now().UnixNano()
+	now := r.now()
 
 	for path, one := range asked {
 		if !one.printed || unanswerable[path] {
 			continue
 		}
 
-		r.judged[one.fingerprint] = at
+		r.fresh(one.fingerprint, now).judged(r.rule, found[path])
 		r.changed = true
-
-		if ids, has := found[path]; has {
-			r.found[one.fingerprint] = ids
-		} else {
-			delete(r.found, one.fingerprint)
-		}
 	}
 
 	r.forgetTheOldest()
 }
 
-func (r *Remembered) forgetTheOldest() {
-	if r.most <= 0 || len(r.judged) <= r.most {
+func (m *Memory) fresh(fingerprint uint64, now time.Time) *Verdict {
+	verdict, held := m.files[fingerprint]
+	if !held || expired(verdict.Used, now) {
+		verdict = &Verdict{Fingerprint: fingerprint}
+		m.files[fingerprint] = verdict
+	}
+
+	verdict.Used = now.UnixNano()
+
+	return verdict
+}
+
+func (m *Memory) forgetTheOldest() {
+	if m.most <= 0 || len(m.files) <= m.most {
 		return
 	}
 
-	fingerprints := slices.SortedFunc(maps.Keys(r.judged), func(one, other uint64) int {
-		return cmp.Compare(r.judged[one], r.judged[other])
+	fingerprints := slices.SortedFunc(maps.Keys(m.files), func(one, other uint64) int {
+		return cmp.Compare(m.files[one].Used, m.files[other].Used)
 	})
 
-	for _, fingerprint := range fingerprints[:len(fingerprints)-r.most*3/4] {
-		delete(r.judged, fingerprint)
-		delete(r.found, fingerprint)
+	for _, fingerprint := range fingerprints[:len(fingerprints)-m.most*3/4] {
+		delete(m.files, fingerprint)
 	}
 }
 
@@ -341,12 +403,25 @@ func (c *Codebase) printsOfTheTreeBelow() map[*contract.File]uint64 {
 		return nil
 	}
 
-	held, built := c.over.analyses.Load(printsAcrossKey{})
+	held, built := c.over.kept(printsAcrossKey{})
 	if !built {
 		return nil
 	}
 
 	return held.(printsAcross).own
+}
+
+func (c *Codebase) Print() (uint64, bool) {
+	own, whole := c.ownPrints()
+	if !whole {
+		return 0, false
+	}
+
+	return PrintOfAll(slices.Collect(maps.Values(own))), true
+}
+
+func PrintOfAll(prints []uint64) uint64 {
+	return combined(slices.Sorted(slices.Values(prints))...)
 }
 
 func combined(prints ...uint64) uint64 {

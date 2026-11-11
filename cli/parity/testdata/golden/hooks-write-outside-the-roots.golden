@@ -1,6 +1,5 @@
 exit: 0
 --- stdout
-{"hookSpecificOutput":{"hookEventName":"PostToolUse","additionalContext":"Code Commandments: nothing of this edit was judged: lib/Order.php, because it lies outside the folders this project judges, which are src under <project>, so this is not a clean answer, it is a smaller one. Run `commandments judge --changes` for the whole answer."}}
 
 --- stderr
 

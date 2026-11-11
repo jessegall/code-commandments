@@ -107,7 +107,7 @@ func TestMergingAWorkerChecksItsProofAndItsLogsThenAsksTheJournalToMergeItsRow(t
 
 	var commands []string
 	for _, sent := range *asked {
-		if sent.Kind == "command" {
+		if sent.Kind == "command" && !strings.HasPrefix(argvOf(sent), "agent start") {
 			commands = append(commands, argvOf(sent))
 		}
 	}

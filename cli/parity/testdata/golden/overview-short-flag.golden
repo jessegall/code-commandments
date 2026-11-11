@@ -88,10 +88,9 @@ Hooks (wired automatically — you rarely run these by hand):
   has-go          Say whether this project has Go to judge: exit 0 when it has, 1 when it has none.
   why             Say what the last judging of a file was: the checkout it was judged in, whether a
                   tree was held, which rules were asked, and what was found.
-  lanes           Say what the running service holds: a lane per checkout with the commit it was cut
-                  from, how much of it is held and when it last answered, the trees held for the
-                  project, the ceiling over them all, and what the last merges and hand-ins brought
-                  in.
+  lanes           Say what the running service holds: the trees held for the project, the files it
+                  knows by their contents, the ceiling over them all, and what the last merges and
+                  hand-ins brought in.
   hook            Run ONE hook directly, by name — the form every wired hook is written as.
 
 Global options:

@@ -106,13 +106,12 @@ func (s Serve) Run(in *cli.Input, console cli.Console) (int, error) {
 	if notice := s.Notice(); notice != "" {
 		console.Warn(notice)
 	}
-	defer bridged.Close()
-
 	path := bridge.ServiceSocket(s.Kind, project)
 	os.Remove(path)
 
 	listener, err := net.Listen("unix", path)
 	if err != nil {
+		bridged.Close()
 		console.Warn("Cannot listen on " + path + ": " + err.Error())
 
 		return 1, nil
@@ -121,13 +120,28 @@ func (s Serve) Run(in *cli.Input, console cli.Console) (int, error) {
 	os.Chmod(path, 0o600)
 
 	go stopOn(cli.StopSignals(), listener)
-	go warm(s.Bridge, project, bridged, console)
 
-	if err := bridge.Answer(listener, bridged); err != nil {
-		console.Warn(err.Error())
+	return s.answering(listener, project, bridged, console), nil
+}
 
-		return 1, nil
+func (s Serve) answering(listener net.Listener, project string, bridged bridge.Asker, console cli.Console) int {
+	for {
+		go warm(s.Bridge, project, bridged, console)
+
+		gone := bridge.Answer(listener, bridged)
+		bridged.Close()
+
+		if gone == nil {
+			return 0
+		}
+
+		console.Warn("The " + s.Label + " bridge is gone, so this service starts a new one: " + gone.Error())
+
+		var err error
+		if bridged, _, err = s.Reach.Own(s.Bridge, []string{project}); err != nil {
+			console.Warn(err.Error())
+
+			return 1
+		}
 	}
-
-	return 0, nil
 }
