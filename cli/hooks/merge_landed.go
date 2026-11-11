@@ -245,14 +245,9 @@ func (l landed) saidAbout(marks []SinMark, why Narrowed) string {
 }
 
 func mergesJudged(line map[string]any) bool {
-	chosen, given := chosenOn(line)
-	if !given {
-		return true
-	}
+	chosen, _ := chosenOn(line)
 
-	said, named := chosen[mergesKey]
-
-	return workersOn(chosen) && (!named || asText(said) != "false")
+	return workersChose(chosen, mergesKey)
 }
 
 const mostFilesAMergeBringsIn = 200

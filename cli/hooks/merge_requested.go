@@ -123,27 +123,17 @@ func (r requested) deadline() time.Duration {
 const mostAGuardTakes = 20 * time.Second
 
 func mergesJudgedBeforeTheyLand(line map[string]any) bool {
-	chosen, given := chosenOn(line)
-	if !given {
-		return false
-	}
+	chosen, _ := chosenOn(line)
 
-	said, named := chosen[beforeMergeKey]
-
-	return workersOn(chosen) && named && switchedOn(said)
+	return workersChose(chosen, beforeMergeKey)
 }
 
 const beforeMergeKey = "judge_before_merge"
 
 func handInsJudged(line map[string]any) bool {
-	chosen, given := chosenOn(line)
-	if !given {
-		return true
-	}
+	chosen, _ := chosenOn(line)
 
-	said, named := chosen[handInsKey]
-
-	return workersOn(chosen) && (!named || switchedOn(said))
+	return workersChose(chosen, handInsKey)
 }
 
 const handInsKey = "judge_hand_ins"

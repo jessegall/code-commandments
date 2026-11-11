@@ -109,12 +109,41 @@ func TestAWorkerWithItsJudgingOffHearsNothingAtAll(t *testing.T) {
 	}
 }
 
-func TestLiveEditsAreJudgedUnlessTheSettingSwitchesThemOff(t *testing.T) {
+func TestNothingIsJudgedOnItsOwnUntilASettingTurnsItOn(t *testing.T) {
 	t.Setenv(journalSettings, "")
+	nothingChosen := map[string]any{"settings": map[string]any{}}
 
-	if !liveEditsJudgedAt(Moment{Settings: map[string]any{}}) {
-		t.Error("with nothing chosen, an edit was left unjudged")
+	if liveEditsJudgedAt(Moment{Settings: map[string]any{}}) {
+		t.Error("with nothing chosen, the main agent's edit was judged")
 	}
+
+	if workerEditsJudgedAt(Moment{Role: "worker", Settings: map[string]any{}}) {
+		t.Error("with nothing chosen, a worker's edit was judged")
+	}
+
+	if handInsJudged(nothingChosen) || handInsJudged(map[string]any{}) {
+		t.Error("with nothing chosen, a hand-in was judged")
+	}
+
+	if mergesJudged(nothingChosen) || mergesJudged(map[string]any{}) {
+		t.Error("with nothing chosen, a merge was judged")
+	}
+
+	if mergesJudgedBeforeTheyLand(nothingChosen) {
+		t.Error("with nothing chosen, a merge was judged before it landed")
+	}
+
+	if workersRunTheCLI(Moment{Role: "worker", Settings: map[string]any{}}) {
+		t.Error("with nothing chosen, a worker may run the judge")
+	}
+
+	if handInsJudged(map[string]any{"settings": map[string]any{"judge_hand_ins": true}}) {
+		t.Error("a hand-in was judged with only its own choice on, while workers are not judged")
+	}
+}
+
+func TestLiveEditsAreJudgedOnlyWhenTheSettingSwitchesThemOn(t *testing.T) {
+	t.Setenv(journalSettings, "")
 
 	if liveEditsJudgedAt(Moment{Settings: map[string]any{"judge_edits": false}}) {
 		t.Error("the main agent's edit went on to be judged with live edits off")

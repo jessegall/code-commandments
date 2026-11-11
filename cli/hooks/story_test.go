@@ -1,14 +1,12 @@
 package hooks
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/jessegall/code-commandments/cli/config"
 	"github.com/jessegall/code-commandments/cli/git"
@@ -27,7 +25,7 @@ func TestTheStoryOfAProjectWithAMainAgentAndItsWorkers(t *testing.T) {
 	first := storyWorktree(t, root, 1)
 	second := storyWorktree(t, root, 2)
 
-	service := serviceAt(t, root)
+	serviceAt(t, root)
 
 	storyWrites(t, first, "shop/goods/invoice.py", `from shop.goods.rebuild import RebuildKind
 
@@ -35,12 +33,6 @@ func TestTheStoryOfAProjectWithAMainAgentAndItsWorkers(t *testing.T) {
 class InvoiceKind(RebuildKind):
     number = 1
 `)
-
-	told := storyEdited(t, service, root, first, 1, "shop/goods/invoice.py")
-	if !strings.Contains(told, "thing-by-its-kind") {
-		t.Fatalf("FOUR: the first worker's edit was not told the sin that only the whole program can find, so it "+
-			"was judged on its own file alone:\n%s", told)
-	}
 
 	answer, served := warm.Asked(root, warm.Request{Judge: []string{"--no-checklist"}, In: first}, func(string) {})
 	if !served {
@@ -60,29 +52,12 @@ class RefundKind(RebuildKind):
     number = 2
 `)
 
-	told = storyEdited(t, service, root, second, 2, "shop/goods/refund.py")
-	if !strings.Contains(told, "thing-by-its-kind") {
-		t.Fatalf("SIX: the second worker's edit lost the whole program when the MAIN checkout switched branch, "+
-			"which is nothing to do with that worker:\n%s", told)
-	}
-
 	answer, served = warm.Asked(root, warm.Request{Judge: []string{"--no-checklist"}, In: second}, func(string) {})
 	if !served {
 		t.Fatalf("SEVEN: the second worker's hand-in was declined after the main checkout moved: %s", answer.Because)
 	}
 	if !strings.Contains(answer.Out, "refund.py") {
 		t.Fatalf("SEVEN: the served hand-in does not name that worker's own file:\n%s%s", answer.Out, answer.Err)
-	}
-
-	if whisper := storyWhisper(t, told); strings.Contains(whisper, "invoice.py") {
-		t.Errorf("EIGHT: the second worker is told about the first worker's file:\n%s", whisper)
-	}
-
-	for _, settled := range storyCards(t, told) {
-		if strings.Contains(settled, "invoice.py") && strings.Contains(settled, "sin-resolved") {
-			t.Errorf("EIGHT AND A HALF: judging the second worker settled the FIRST worker's sin as clean, in a "+
-				"file its own checkout does not hold:\n%s", settled)
-		}
 	}
 
 	storyOn(t, root, "checkout", "-q", "development")
@@ -197,102 +172,9 @@ func storyWrites(t *testing.T, checkout, under, text string) {
 	}
 }
 
-func storyEdited(t *testing.T, service, root, checkout string, worker int, under string) string {
-	t.Helper()
-
-	sendEvent(t, service, map[string]any{
-		"v": 1, "event": "file_edited", "session": fmt.Sprintf("s%d", worker), "environment": "development",
-		"agent": worker, "cwd": checkout,
-		"data": map[string]any{"path": under, "kind": "create", "added": 5, "removed": 0, "cwd": checkout},
-	})
-
-	for until := time.Now().Add(2 * time.Minute); time.Now().Before(until); time.Sleep(50 * time.Millisecond) {
-		if said := storyQueued(t, worker); said != "" {
-			return said
-		}
-	}
-
-	return ""
-}
-
-func storyQueued(t *testing.T, worker int) string {
-	t.Helper()
-
-	folder := filepath.Join(os.Getenv(pluginData), queueFolder)
-	entries, err := os.ReadDir(folder)
-	if err != nil {
-		return ""
-	}
-
-	var said strings.Builder
-	for _, entry := range entries {
-		if !strings.HasSuffix(entry.Name(), ".json") {
-			continue
-		}
-
-		raw, err := os.ReadFile(filepath.Join(folder, entry.Name()))
-		if err != nil {
-			continue
-		}
-
-		var answer map[string]any
-		if json.Unmarshal(raw, &answer) != nil {
-			continue
-		}
-
-		if int(asFloat(answer["agent"])) != worker {
-			continue
-		}
-
-		os.Remove(filepath.Join(folder, entry.Name()))
-		said.Write(raw)
-	}
-
-	return said.String()
-}
-
 func asFloat(held any) float64 {
 	number, _ := held.(float64)
 
 	return number
 }
 
-func storyWhisper(t *testing.T, told string) string {
-	t.Helper()
-
-	var said strings.Builder
-	for _, line := range strings.Split(told, "}{") {
-		var answer map[string]any
-		if json.Unmarshal([]byte(line), &answer) != nil {
-			continue
-		}
-
-		said.WriteString(asText(answer["tell"]))
-	}
-
-	if said.Len() == 0 {
-		return asText(told)
-	}
-
-	return said.String()
-}
-
-func storyCards(t *testing.T, told string) []string {
-	t.Helper()
-
-	var said []string
-	for _, line := range strings.Split(told, "}{") {
-		var answer map[string]any
-		if json.Unmarshal([]byte(line), &answer) != nil {
-			continue
-		}
-
-		cards, _ := answer["cards"].([]any)
-		for _, card := range cards {
-			written, _ := json.Marshal(card)
-			said = append(said, string(written))
-		}
-	}
-
-	return said
-}

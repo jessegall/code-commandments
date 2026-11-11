@@ -118,7 +118,7 @@ func TestAHandInIsHeldWhenItsOwnLineSwitchesTheSettingOn(t *testing.T) {
 	t.Setenv(journalSettings, `{"judge_hand_ins": "false"}`)
 
 	line := deliveringOf(root, generousWindow, "src/refund.py")
-	line["settings"] = map[string]any{"judge_hand_ins": true}
+	line["settings"] = map[string]any{"judge_workers": true, "judge_hand_ins": true}
 
 	if held := DeliveryHeld(line); held == "" {
 		t.Error("with hand-ins switched on on the line, the hand-in passed unjudged")

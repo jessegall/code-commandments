@@ -40,7 +40,7 @@ func guardAnswer(t *testing.T, said string) map[string]any {
 func TestAMergeThatWouldBringInASinIsRefusedBeforeItLands(t *testing.T) {
 	root, before, after := mergedProject(t)
 
-	t.Setenv(journalSettings, `{"judge_before_merge": "true"}`)
+	t.Setenv(journalSettings, `{"judge_workers": "true", "judge_before_merge": "true"}`)
 
 	said := guardAnswer(t, MergeRequested(requestedLine(root, before, after)))
 
@@ -82,7 +82,7 @@ func TestWithNoSettingsAtAllAMergeIsNeverHeld(t *testing.T) {
 func TestAMergeWithNoRangeToJudgeIsAllowed(t *testing.T) {
 	root, before, _ := mergedProject(t)
 
-	t.Setenv(journalSettings, `{"judge_before_merge": "true"}`)
+	t.Setenv(journalSettings, `{"judge_workers": "true", "judge_before_merge": "true"}`)
 
 	if said := MergeRequested(requestedLine(root, before, before)); said != "" {
 		t.Errorf("a merge whose two ends are the same commit was answered %q, where there is nothing to judge", said)
@@ -92,7 +92,7 @@ func TestAMergeWithNoRangeToJudgeIsAllowed(t *testing.T) {
 func TestAGuardRunningOutOfTimeAllowsTheMergeAndSaysSo(t *testing.T) {
 	root, before, after := mergedProject(t)
 
-	t.Setenv(journalSettings, `{"judge_before_merge": "true"}`)
+	t.Setenv(journalSettings, `{"judge_workers": "true", "judge_before_merge": "true"}`)
 
 	asked := requestedOf(requestedLine(root, before, after))
 	asked.window = 1
@@ -157,7 +157,7 @@ func TestEveryKeyOfTheGuardIsTheSameEventWhicheverSpellingArrives(t *testing.T) 
 func TestTheWorkerIsNamedInTheRefusalSoItKnowsTheWorkIsItsOwn(t *testing.T) {
 	root, before, after := mergedProject(t)
 
-	t.Setenv(journalSettings, `{"judge_before_merge": "true"}`)
+	t.Setenv(journalSettings, `{"judge_workers": "true", "judge_before_merge": "true"}`)
 
 	said := guardAnswer(t, MergeRequested(requestedLine(root, before, after)))
 	if said == nil {
@@ -185,7 +185,7 @@ func TestAMergeOfWorkWithNoSinsIsAllowedSilently(t *testing.T) {
 
 	after := gitHeadOf(t, root)
 
-	t.Setenv(journalSettings, `{"judge_before_merge": "true"}`)
+	t.Setenv(journalSettings, `{"judge_workers": "true", "judge_before_merge": "true"}`)
 
 	if said := MergeRequested(requestedLine(root, before, after)); said != "" {
 		t.Errorf("a merge of clean work was answered %q: it must pass without a word, or every merge carries "+

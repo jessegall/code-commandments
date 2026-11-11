@@ -36,7 +36,7 @@
         "title": "Judge live edits",
         "type": "flag",
         "kind": "flag",
-        "default": true,
+        "default": false,
         "help": "On, the files an agent edits are judged as it writes, a few seconds after each edit, and the agent is told what it brought in. Off, no agent's edits are judged as it writes, the main agent's included, and nothing is parsed ahead for them. A check somebody asks for, a hand-in and a merge are judged either way."
     },
     {

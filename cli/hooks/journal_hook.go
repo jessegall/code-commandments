@@ -352,40 +352,26 @@ func filesInOneGoChosen() int {
 	return files
 }
 
-func workersOn(chosen map[string]any) bool {
-	said, named := chosen[workersKey]
-
-	return !named || switchedOn(said)
-}
-
-func workerEditsJudged() bool {
-	chosen, given := chosenSettings()
-	if !given {
-		return false
-	}
-
-	said, named := chosen[workerEditsKey]
-
-	return workersOn(chosen) && named && switchedOn(said)
+func workersChose(chosen map[string]any, key string) bool {
+	return switchedOn(chosen[workersKey]) && switchedOn(chosen[key])
 }
 
 func workerEditsJudgedAt(moment Moment) bool {
-	if said, named := moment.Settings[workerEditsKey]; named {
-		return workersOn(moment.Settings) && switchedOn(said)
-	}
-
-	return workerEditsJudged()
+	return workersChose(chosenAt(moment, workerEditsKey), workerEditsKey)
 }
 
 func liveEditsJudgedAt(moment Moment) bool {
-	if said, named := moment.Settings[liveEditsKey]; named {
-		return switchedOn(said)
+	return switchedOn(chosenAt(moment, liveEditsKey)[liveEditsKey])
+}
+
+func chosenAt(moment Moment, key string) map[string]any {
+	if _, named := moment.Settings[key]; named {
+		return moment.Settings
 	}
 
 	chosen, _ := chosenSettings()
-	said, named := chosen[liveEditsKey]
 
-	return !named || switchedOn(said)
+	return chosen
 }
 
 func switchedOn(value any) bool {

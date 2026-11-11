@@ -12,7 +12,7 @@ func TestEachPieceCanBeSwitchedOffByItself(t *testing.T) {
 	t.Run("a worker's own judging off leaves the main agent's judging alone", func(t *testing.T) {
 		root, data := workerProject(t)
 		t.Setenv(pluginData, data)
-		settingsOf(t, map[string]any{workersKey: "false"})
+		settingsOf(t, map[string]any{liveEditsKey: "true", workersKey: "false"})
 
 		under := filepath.Join("src", "made.py")
 		wroteInto(t, filepath.Join(root, under), olderSin)

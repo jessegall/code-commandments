@@ -1,6 +1,6 @@
 {
     "name": "code-commandments",
-    "version": "7.18.70",
+    "version": "7.18.71",
     "title": "Code Commandments",
     "description": "The static code checker judges the codebase, its hooks run inside the journal, and every rule and language is a switch in its settings",
     "journal": "2.267.16",
@@ -47,7 +47,7 @@
     },
     "env": {
         "CLAUDE_PROJECT_DIR": "{project}",
-        "COMMANDMENTS_RELEASE": "v7.18.70"
+        "COMMANDMENTS_RELEASE": "v7.18.71"
     },
     "setup": [
         {
@@ -113,7 +113,7 @@
             "title": "Judge live edits",
             "help": "On, the files an agent edits are judged as it writes, a few seconds after each edit, and the agent is told what it brought in. Off, no agent's edits are judged as it writes, the main agent's included, and nothing is parsed ahead for them. A check somebody asks for, a hand-in and a merge are judged either way.",
             "type": "flag",
-            "default": "true",
+            "default": "false",
             "group": "Performance"
         },
         "judge_workers": {

@@ -82,7 +82,7 @@
    "mkdir -p .commandments && printf '%s\\n' '<?php' 'return function ($config): void {' '    $config->paths(\"src\");' '};' > .commandments/config.php",
    "mkdir -p src && printf '%s\\n' '<?php' '' 'namespace App;' '' 'final class Order' '{' '    public function hides(): void' '    {' '    }' '' '    public function total(array $data): int' '    {' '        return $data[\"total\"] ?? 0;' '    }' '}' > src/Order.php"
   ],
-  "stdin": "{\"event\":\"hook.PostToolUse\",\"agent\":{\"session\":\"s1\"},\"tool\":{\"name\":\"Write\",\"file\":\"src/Order.php\"}}",
+  "stdin": "{\"event\":\"hook.PostToolUse\",\"agent\":{\"session\":\"s1\"},\"tool\":{\"name\":\"Write\",\"file\":\"src/Order.php\"},\"settings\":{\"judge_edits\":true}}",
   "env": {
    "GIT_AUTHOR_DATE": "2026-01-01T00:00:00Z",
    "GIT_COMMITTER_DATE": "2026-01-01T00:00:00Z"
@@ -99,7 +99,7 @@
    "mkdir -p src && printf '%s\\n' '<?php' '' 'namespace App;' '' 'final class Order' '{' '    public function hides(): void' '    {' '    }' '' '    public function total(array $data): int' '    {' '        return $data[\"total\"] ?? 0;' '    }' '}' > src/Order.php",
    "mkdir -p plugin-data"
   ],
-  "stdin": "{\"event\":\"hook.PostToolUse\",\"agent\":{\"session\":\"s1\"},\"tool\":{\"name\":\"Write\",\"file\":\"src/Order.php\"}}",
+  "stdin": "{\"event\":\"hook.PostToolUse\",\"agent\":{\"session\":\"s1\"},\"tool\":{\"name\":\"Write\",\"file\":\"src/Order.php\"},\"settings\":{\"judge_edits\":true}}",
   "env": {
    "GIT_AUTHOR_DATE": "2026-01-01T00:00:00Z",
    "GIT_COMMITTER_DATE": "2026-01-01T00:00:00Z",
@@ -116,10 +116,10 @@
    "mkdir -p .commandments && printf '%s\\n' '<?php' 'return function ($config): void {' '    $config->paths(\"src\");' '};' > .commandments/config.php",
    "mkdir -p src && printf '%s\\n' '<?php' '' 'namespace App;' '' 'final class Order' '{' '    public function hides(): void' '    {' '    }' '' '    public function total(array $data): int' '    {' '        return $data[\"total\"] ?? 0;' '    }' '}' > src/Order.php",
    "mkdir -p plugin-data",
-   "echo '{\"event\":\"hook.PostToolUse\",\"agent\":{\"session\":\"s1\"},\"tool\":{\"name\":\"Write\",\"file\":\"src/Order.php\"}}' | JOURNAL_PLUGIN_DATA=plugin-data \"$PARITY_TOOL\" journal-hook > /dev/null",
+   "echo '{\"event\":\"hook.PostToolUse\",\"agent\":{\"session\":\"s1\"},\"tool\":{\"name\":\"Write\",\"file\":\"src/Order.php\"},\"settings\":{\"judge_edits\":true}}' | JOURNAL_PLUGIN_DATA=plugin-data \"$PARITY_TOOL\" journal-hook > /dev/null",
    "printf '%s\\n' '<?php' '' 'namespace App;' '' 'final class Order' '{' '}' > src/Order.php"
   ],
-  "stdin": "{\"event\":\"hook.PostToolUse\",\"agent\":{\"session\":\"s1\"},\"tool\":{\"name\":\"Write\",\"file\":\"src/Order.php\"}}",
+  "stdin": "{\"event\":\"hook.PostToolUse\",\"agent\":{\"session\":\"s1\"},\"tool\":{\"name\":\"Write\",\"file\":\"src/Order.php\"},\"settings\":{\"judge_edits\":true}}",
   "env": {
    "GIT_AUTHOR_DATE": "2026-01-01T00:00:00Z",
    "GIT_COMMITTER_DATE": "2026-01-01T00:00:00Z",
@@ -189,9 +189,9 @@
    "mkdir -p .commandments && printf '%s\\n' '<?php' 'return function ($config): void {' '    $config->paths(\"src\");' '};' > .commandments/config.php",
    "mkdir -p src && printf '%s\\n' '<?php' '' 'namespace App;' '' 'final class Order' '{' '    public function hides(): void' '    {' '    }' '' '    public function total(array $data): int' '    {' '        return $data[\"total\"] ?? 0;' '    }' '}' > src/Order.php",
    "mkdir -p plugin-data",
-   "echo '{\"event\":\"hook.PostToolUse\",\"agent\":{\"session\":\"s1\"},\"tool\":{\"name\":\"Write\",\"file\":\"src/Order.php\"}}' | JOURNAL_PLUGIN_DATA=plugin-data \"$PARITY_TOOL\" journal-hook > /dev/null"
+   "echo '{\"event\":\"hook.PostToolUse\",\"agent\":{\"session\":\"s1\"},\"tool\":{\"name\":\"Write\",\"file\":\"src/Order.php\"},\"settings\":{\"judge_edits\":true}}' | JOURNAL_PLUGIN_DATA=plugin-data \"$PARITY_TOOL\" journal-hook > /dev/null"
   ],
-  "stdin": "{\"event\":\"hook.PostToolUse\",\"agent\":{\"session\":\"s1\"},\"tool\":{\"name\":\"Write\",\"file\":\"src/Order.php\"}}",
+  "stdin": "{\"event\":\"hook.PostToolUse\",\"agent\":{\"session\":\"s1\"},\"tool\":{\"name\":\"Write\",\"file\":\"src/Order.php\"},\"settings\":{\"judge_edits\":true}}",
   "env": {
    "GIT_AUTHOR_DATE": "2026-01-01T00:00:00Z",
    "GIT_COMMITTER_DATE": "2026-01-01T00:00:00Z",
