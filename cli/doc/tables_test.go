@@ -195,6 +195,34 @@ func TestTheVersion4ManifestHoldsOnlyWhatVersion4Reads(t *testing.T) {
 	}
 }
 
+func TestTheVersion4ManifestHearsEveryEventItHoldsOrReaches(t *testing.T) {
+	manifest, read := jsonfile.Read(filepath.Join("..", "..", doc.Journal4Plugin))
+	if !read {
+		t.Fatalf("%s is not a JSON object", doc.Journal4Plugin)
+	}
+
+	listed, _ := manifest.Get("hears")
+	var heard []string
+	for _, event := range listed.([]any) {
+		heard = append(heard, fmt.Sprint(event))
+	}
+
+	held, _ := manifest.Get("holds")
+	for _, each := range held.([]any) {
+		event, _ := each.(*jsonfile.Object).Get("event")
+		if !slices.Contains(heard, fmt.Sprint(event)) {
+			t.Errorf("%s holds %v but does not hear it, so version 4 of the journal refuses to install it", doc.Journal4Plugin, event)
+		}
+	}
+
+	reached, _ := manifest.Get("reaches")
+	for _, event := range reached.(*jsonfile.Object).Keys() {
+		if !slices.Contains(heard, event) {
+			t.Errorf("%s says who %s reaches but does not hear it, so version 4 of the journal refuses to install it", doc.Journal4Plugin, event)
+		}
+	}
+}
+
 func unknownIn(t *testing.T, what string, entry *jsonfile.Object, known []string) {
 	t.Helper()
 
