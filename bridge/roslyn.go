@@ -11,6 +11,8 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+
+	"github.com/jessegall/code-commandments/bridge/bundle"
 )
 
 var Release = "dev"
@@ -53,9 +55,23 @@ func (e RoslynFailed) Error() string {
 func (RoslynFailed) unavailable() {}
 
 func Roslyn(roots ...string) ([]string, error) {
+	trees, err := bundle.TreesFolder("csharp")
+	if err != nil {
+		return roslynFor(roots)
+	}
+
+	command, err := roslynFor(roots, trees)
+	if err != nil {
+		return nil, err
+	}
+
+	return append(command, "--cache="+trees), nil
+}
+
+func roslynFor(roots []string, written ...string) ([]string, error) {
 	switch named := os.Getenv(roslynVariable); named {
 	case "docker":
-		return RoslynInDocker(roots)
+		return RoslynInDocker(roots, written...)
 	case "":
 		executable, _, err := RoslynExecutable()
 		if err != nil {

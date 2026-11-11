@@ -40,10 +40,12 @@ static int Run(string[] args, Workspace workspace)
         return 0;
     }
 
+    var cached = args.FirstOrDefault(arg => arg.StartsWith("--cache=", StringComparison.Ordinal))?["--cache=".Length..];
+
     if (args.Contains("--serve"))
     {
         using var output = Console.OpenStandardOutput();
-        Serve(Console.In, output, workspace);
+        Serve(Console.In, output, workspace, cached);
 
         return 0;
     }
@@ -58,7 +60,7 @@ static int Run(string[] args, Workspace workspace)
             using var client = listener.AcceptTcpClient();
             using var stream = client.GetStream();
             using var reader = new StreamReader(stream);
-            Serve(reader, stream, workspace);
+            Serve(reader, stream, workspace, cached);
         }
     }
 
@@ -85,21 +87,39 @@ static int Run(string[] args, Workspace workspace)
 
     using (var tree = Console.OpenStandardOutput())
     {
-        new ContractWriter(roots).Write(tree, workspace);
+        new ContractWriter(roots, null, Checkout.Cache(cached, roots)).Write(tree, workspace);
     }
 
     return 0;
 }
 
 // Answers every request line from input with its lines on output, until input ends.
-static void Serve(TextReader input, Stream output, Workspace workspace)
+static void Serve(TextReader input, Stream output, Workspace workspace, string? cached)
 {
     while (input.ReadLine() is { } line)
     {
         var request = Request.Of(line);
-        new ContractWriter(request.Paths, request.Written).Write(output, workspace);
+        new ContractWriter(request.Paths, request.Written, Checkout.Cache(cached, request.Paths)).Write(output, workspace);
         output.Flush();
     }
+}
+
+// The checkout a run reads: the folder holding the repository of its first path, which every kept line is relative to.
+internal static class Checkout
+{
+    public static TreeCache? Cache(string? folder, IReadOnlyList<string> roots) =>
+        folder is { Length: > 0 } && roots.Count > 0 ? new TreeCache(folder, Of(roots[0])) : null;
+
+    private static string Of(string path)
+    {
+        var full = new FileInfo(Path.GetFullPath(path));
+        var start = Directory.Exists(full.FullName) ? new DirectoryInfo(full.FullName) : full.Directory!;
+
+        return RepositoryAround(start)?.FullName ?? start.FullName;
+    }
+
+    private static DirectoryInfo? RepositoryAround(DirectoryInfo? folder) =>
+        folder is null || Path.Exists(Path.Combine(folder.FullName, ".git")) ? folder : RepositoryAround(folder.Parent);
 }
 
 // A request line: the paths to compile, and the files among them to write.

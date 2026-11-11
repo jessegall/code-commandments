@@ -64,7 +64,7 @@ public sealed class Workspace
     /// let go once no project still to be written reaches it. An assembly is loaded once for the workspace and shared
     /// by every project and every run that reaches it. Files outside every project come last, compiled alone.
     /// </summary>
-    public void Stream(IReadOnlyList<string> paths, Action<Project> write)
+    public void Stream(IReadOnlyList<string> paths, Action<Asked> write, Func<string, string> relative)
     {
         var roots = paths.Select(Path.GetFullPath).ToList();
         var asked = Sources.Under(roots).ToHashSet(StringComparer.Ordinal);
@@ -94,17 +94,26 @@ public sealed class Workspace
         }
 
         var readers = order.SelectMany(csproj => reach[csproj]).GroupBy(other => other).ToDictionary(group => group.Key, group => group.Count());
-        var compilations = new Dictionary<string, CSharpCompilation>(StringComparer.Ordinal);
+        var compilations = new Dictionary<string, Lazy<(List<SyntaxTree> Sources, CSharpCompilation Compilation)>>(StringComparer.Ordinal);
+        var keys = new Dictionary<string, string>(StringComparer.Ordinal);
 
         foreach (var csproj in order)
         {
-            var sources = (owned.GetValueOrDefault(csproj) ?? []).Select(Parse).ToList();
-            var usings = CSharpSyntaxTree.ParseText(GlobalUsings.Of(csproj), Options);
-            var projects = reach[csproj].Where(compilations.ContainsKey).Select(other => compilations[other].ToMetadataReference());
-            var assemblies = References.Load(References.Of(csproj), reach[csproj].Select(References.Of), loaded);
-            var compilation = CSharpCompilation.Create(Path.GetFileNameWithoutExtension(csproj), [..sources, usings], [..assemblies, ..projects], Compiled);
-            compilations[csproj] = compilation;
-            WriteAsked(sources, compilation, asked, solution.Projects[csproj].IsTestProject(), write);
+            var files = owned.GetValueOrDefault(csproj) ?? [];
+            var usings = GlobalUsings.Of(csproj);
+            var own = References.Of(csproj);
+            var reached = reach[csproj].Where(compilations.ContainsKey).ToList();
+            keys[csproj] = KeyOf(csproj, files, usings, own, reach[csproj].Select(other => keys.GetValueOrDefault(other) ?? other), relative);
+            compilations[csproj] = new(() =>
+            {
+                var sources = files.Select(Parse).ToList();
+                var projects = reached.Select(other => compilations[other].Value.Compilation.ToMetadataReference());
+                var assemblies = References.Load(own, reach[csproj].Select(References.Of), loaded);
+
+                return (sources, CSharpCompilation.Create(Path.GetFileNameWithoutExtension(csproj), [..sources, CSharpSyntaxTree.ParseText(usings, Options)], [..assemblies, ..projects], Compiled));
+            });
+            var compiled = compilations[csproj];
+            WriteAsked(keys[csproj], files, () => compiled.Value, asked, solution.Projects[csproj].IsTestProject(), write);
 
             foreach (var other in reach[csproj].Where(readers.ContainsKey))
             {
@@ -122,22 +131,54 @@ public sealed class Workspace
 
         if (loose.Count > 0)
         {
-            var sources = loose.Select(Parse).ToList();
-            WriteAsked(sources, CSharpCompilation.Create("loose", sources, References.Loose(loaded), Compiled), asked, false, write);
+            var compiled = new Lazy<(List<SyntaxTree>, CSharpCompilation)>(() =>
+            {
+                var sources = loose.Select(Parse).ToList();
+
+                return (sources, CSharpCompilation.Create("loose", sources, References.Loose(loaded), Compiled));
+            });
+            WriteAsked(KeyOf("loose", loose, "", null, [], relative), loose, () => compiled.Value, asked, false, write);
         }
     }
 
-    /// <summary>Hands the asked files among <paramref name="sources"/> to <paramref name="write"/>, as one project read in <paramref name="compilation"/>.</summary>
-    private static void WriteAsked(List<SyntaxTree> sources, CSharpCompilation compilation, HashSet<string> asked, bool test, Action<Project> write)
+    /// <summary>Hands the asked files among <paramref name="files"/> to <paramref name="write"/> under the project's key, the project compiled only when the writer asks for it.</summary>
+    private static void WriteAsked(string key, List<string> files, Func<(List<SyntaxTree> Sources, CSharpCompilation Compilation)> compiled, HashSet<string> asked, bool test, Action<Asked> write)
     {
-        var trees = sources.Where(tree => asked.Contains(tree.FilePath)).ToList();
+        var wanted = files.Where(asked.Contains).ToList();
 
-        if (trees.Count == 0)
+        if (wanted.Count == 0)
         {
             return;
         }
 
-        write(new Project(trees, trees.ToDictionary(tree => tree, _ => compilation), test ? trees.ToHashSet() : []));
+        write(new Asked(key, wanted, () =>
+        {
+            var (sources, compilation) = compiled();
+            var trees = sources.Where(tree => asked.Contains(tree.FilePath)).ToList();
+
+            return new Project(trees, trees.ToDictionary(tree => tree, _ => compilation), test ? trees.ToHashSet() : []);
+        }));
+    }
+
+    /// <summary>The key of a project: its project file, every source by where it lies in the checkout and what it says, its global usings, what it references, and the keys of the projects it reaches.</summary>
+    private static string KeyOf(string csproj, List<string> files, string usings, Reach? own, IEnumerable<string> reached, Func<string, string> relative)
+    {
+        var parts = new List<string> { relative(csproj), File.Exists(csproj) ? File.ReadAllText(csproj) : csproj, usings };
+
+        if (own is not null)
+        {
+            parts.AddRange([own.Tfm, ..own.Frameworks, ..own.Packages]);
+        }
+
+        parts.AddRange(reached);
+
+        foreach (var file in files.Order(StringComparer.Ordinal))
+        {
+            parts.Add(relative(file));
+            parts.Add(File.ReadAllText(file));
+        }
+
+        return TreeCache.KeyOf(parts);
     }
 
     /// <summary>Puts <paramref name="csproj"/> in <paramref name="order"/> after every project it reaches, and keeps what it reaches in <paramref name="reach"/>.</summary>

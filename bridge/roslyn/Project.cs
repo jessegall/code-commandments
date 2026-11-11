@@ -20,3 +20,9 @@ public sealed class Project(IReadOnlyList<SyntaxTree> trees, IReadOnlyDictionary
     /// <summary>Every compilation's diagnostics, each reported once.</summary>
     public IEnumerable<Diagnostic> Diagnostics() => compilations.Values.Distinct().SelectMany(compilation => compilation.GetDiagnostics());
 }
+
+/// <summary>
+/// The asked files of one project, under the key that stands for everything their lines are made from, and the project
+/// read only when a writer asks for it: a run whose files are all kept never compiles it.
+/// </summary>
+public sealed record Asked(string Key, IReadOnlyList<string> Files, Func<Project> Read);
