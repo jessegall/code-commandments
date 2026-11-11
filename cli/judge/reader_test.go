@@ -58,7 +58,6 @@ func TestAWarningOnARunThatEndsCleanReadsAsPassed(t *testing.T) {
 }
 
 func TestEveryEarlyEndOfTheJudgeIsAFailureTheReaderSummarises(t *testing.T) {
-	noJournalVariables(t)
 	project := emptyProject(t)
 
 	ends := map[string]string{}
@@ -66,8 +65,6 @@ func TestEveryEarlyEndOfTheJudgeIsAFailureTheReaderSummarises(t *testing.T) {
 	_, _, ends["no rule matched"] = judgedIn(t, project, "--sin=zzz-matches-nothing")
 	ends["an unknown option"] = kernelWarns([]string{"judge", "--nope"})
 	ends["an unknown command"] = kernelWarns([]string{"nope"})
-	t.Setenv("JOURNAL_PROJECT_ROOT", "/somewhere")
-	_, _, ends["a refused cold read"] = judgedIn(t, project, ".", "--no-checklist")
 
 	reader := shippedJudgeReader(t)
 	for end, warned := range ends {

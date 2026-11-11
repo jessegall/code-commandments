@@ -7,8 +7,7 @@ Usage:
 
 Commands:
   judge            Scan a codebase and report its sins, grouped by the skill that fixes each. Exit
-                   code 1 when sins are found, 3 when a rule could not run, 4 when it refused to
-                   read the whole tree itself.
+                   code 1 when sins are found, 3 when a rule could not run.
   make             Scaffold a commandment of your own — a rule naming its sin, and the skill that
                    teaches the fix, in `.commandments/custom/`, turned on in your config, with the
                    rest of the process printed for you.

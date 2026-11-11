@@ -45,33 +45,6 @@ func Register(project string) (func(), error) {
 	return func() { os.Remove(path) }, nil
 }
 
-func EverServed(folder string) bool {
-	served, err := servedRecords()
-	if err != nil {
-		return false
-	}
-
-	entries, err := os.ReadDir(served)
-	if err != nil {
-		return false
-	}
-
-	resolved := real(folder)
-	for _, entry := range entries {
-		content, err := os.ReadFile(filepath.Join(served, entry.Name()))
-		if err != nil {
-			continue
-		}
-
-		var serving Serving
-		if json.Unmarshal(content, &serving) == nil && serving.Project != "" && within(real(serving.Project), resolved) {
-			return true
-		}
-	}
-
-	return false
-}
-
 func servedRecords() (string, error) {
 	folder, err := records()
 	if err != nil {

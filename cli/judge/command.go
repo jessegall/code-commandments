@@ -59,12 +59,6 @@ type Spent struct {
 	Rules  int
 }
 
-const (
-	allowColdRead = "allow-cold-read"
-
-	coldReadRefused = 4
-)
-
 func whyNotServed(answer warm.Answer) string {
 	if answer.Because != "" {
 		return answer.Because
@@ -94,7 +88,7 @@ func (Command) Names() []string {
 }
 
 func (Command) Help() help.Help {
-	return help.Of("Scan a codebase and report its sins, grouped by the skill that fixes each. Exit code 1 when sins are found, 3 when a rule could not run, 4 when it refused to read the whole tree itself.").
+	return help.Of("Scan a codebase and report its sins, grouped by the skill that fixes each. Exit code 1 when sins are found, 3 when a rule could not run.").
 		Form("judge [path]", "scan a folder, or one file read with the folder it sits in — or, with none, the source roots declared in .commandments/config.json").
 		Form("judge --list", "list every detector, grouped by skill").
 		Option("--list", "list every detector grouped by the skill that fixes it, and run none of them").
@@ -111,8 +105,6 @@ func (Command) Help() help.Help {
 		Option("--no-checklist", "print only, don't write the checklist file").
 		Option("--benchmark", "time each detector and print the slowest").
 		Option("--profile=FILE", "with --benchmark, write a CPU profile of the detectors to FILE, read with `go tool pprof`").
-		Option("--"+allowColdRead, "read the whole tree in this run when the project's journal runs the plugin but no "+
-			"judging service answers; without it such a run refuses, since the service being down is the fault to fix").
 		Note("With no [path], judge scans the source roots declared under \"paths\" in " +
 			".commandments/config.json — auto-detected on first run from your composer.json PSR-4 map (plus " +
 			"app/src), so scaffolding like database/, storage/ and config/ is not judged. Run `commandments config " +
@@ -161,17 +153,9 @@ func (c Command) Run(in *cli.Input, console cli.Console) (int, error) {
 			return answer.Code, nil
 		}
 
-		if journal, near := aJournalNear(cwd, space); near && !in.HasFlag(allowColdRead) {
-			fmt.Fprintln(console.Err, "✗ this run refuses to read the whole tree itself: "+whyNotServed(answer)+
-				", yet "+journal+", so a judging service should answer. "+
-				"The journal keeps that service up and starts it again by itself; `journal plugin services` says whether it "+
-				"runs. Wait for it, or run again with --"+allowColdRead+
-				" to read the whole tree here anyway")
-
-			return coldReadRefused, nil
+		if cli.Timed() {
+			fmt.Fprintln(console.Err, "· this run reads the tree itself: "+whyNotServed(answer))
 		}
-
-		fmt.Fprintln(console.Err, "· this run reads the whole tree itself, which is why it is slow: "+whyNotServed(answer))
 	}
 
 	if options.list {

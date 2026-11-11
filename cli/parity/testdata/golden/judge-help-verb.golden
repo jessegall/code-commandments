@@ -1,6 +1,6 @@
 exit: 0
 --- stdout
-commandments judge — Scan a codebase and report its sins, grouped by the skill that fixes each. Exit code 1 when sins are found, 3 when a rule could not run, 4 when it refused to read the whole tree itself.
+commandments judge — Scan a codebase and report its sins, grouped by the skill that fixes each. Exit code 1 when sins are found, 3 when a rule could not run.
 
 Usage:
   commandments judge [path]  scan a folder, or one file read with the folder it sits in — or, with
@@ -39,9 +39,6 @@ Options:
   --benchmark                    time each detector and print the slowest
   --profile=FILE                 with --benchmark, write a CPU profile of the detectors to FILE,
                                  read with `go tool pprof`
-  --allow-cold-read              read the whole tree in this run when the project's journal runs the
-                                 plugin but no judging service answers; without it such a run
-                                 refuses, since the service being down is the fault to fix
 
   With no [path], judge scans the source roots declared under "paths" in .commandments/config.json
   — auto-detected on first run from your composer.json PSR-4 map (plus app/src), so scaffolding

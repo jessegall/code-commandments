@@ -6,7 +6,6 @@ No sins found in 0 files, and that is no verdict:
 [2m  This run does NOT judge what they judge — its verdict is incomplete until they are fixed. Their failure was printed to STDERR when it happened.[0m
 
 --- stderr
-· this run reads the whole tree itself, which is why it is slow: no service answered, so there is none up for this project
 ⚠ 229 file(s) left unread — the C# bridge is not available (a development build has no release to fetch it from; name one in $COMMANDMENTS_ROSLYN), so C# is not judged; everything else is
 
 --- files
