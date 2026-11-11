@@ -58,21 +58,6 @@
   }
  },
  {
-  "name": "journal-hook-gate-refuses",
-  "args": [
-   "journal-hook"
-  ],
-  "setup": [
-   "git init -q && git -c user.email=a@b -c user.name=a commit -q --allow-empty -m init",
-   "git worktree add -q .wt/other 2>/dev/null"
-  ],
-  "stdin": "{\"event\":\"hook.PreToolUse\",\"agent\":{\"session\":\"s1\"},\"tool\":{\"name\":\"Bash\",\"command\":\"git pull --rebase\"}}",
-  "env": {
-   "GIT_AUTHOR_DATE": "2026-01-01T00:00:00Z",
-   "GIT_COMMITTER_DATE": "2026-01-01T00:00:00Z"
-  }
- },
- {
   "name": "journal-hook-write-a-sin",
   "args": [
    "journal-hook"

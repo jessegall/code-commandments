@@ -72,23 +72,23 @@ func (JournalHook) Run(in *cli.Input, console cli.Console) (int, error) {
 
 func AnswerNow(given map[string]any) JournalAnswer {
 	if _, queued := QueueFromEnvironment(); queued {
-		return answerWith(given, isGate, false)
+		return JournalAnswer{}
 	}
 
-	return answerWith(given, every, true)
+	return answerWith(given)
 }
 
 func answer4On(given map[string]any, event string) string {
 	if judgedAfter(event) {
-		return answerWith(given, isGate, false).Line4()
+		return JournalAnswer{}.Line4()
 	}
 
-	return answerWith(given, every, true).Line4()
+	return answerWith(given).Line4()
 }
 
 func adviseNow(given map[string]any) {
 	if queue, queued := QueueFromEnvironment(); queued {
-		queue.Tell(answerWith(given, not(isGate), true), MomentOf(given))
+		queue.Tell(answerWith(given), MomentOf(given))
 	}
 }
 
@@ -117,7 +117,7 @@ func adviseAsked(moment asked) {
 		return
 	}
 
-	answer := answerWith(moment.given, not(isGate), true)
+	answer := answerWith(moment.given)
 
 	if why := abandoned(moment.given); why != "" {
 		abandonedJudgings.Add(1)
@@ -198,31 +198,19 @@ func momentFile(raw []byte) (*os.File, error) {
 	return file, nil
 }
 
-func every(Hook) bool { return true }
-
-func isGate(hook Hook) bool {
-	_, gate := hook.(Gate)
-
-	return gate
-}
-
-func not(keep func(Hook) bool) func(Hook) bool {
-	return func(hook Hook) bool { return !keep(hook) }
-}
-
-func answerWith(given map[string]any, runs func(Hook) bool, reportsSins bool) JournalAnswer {
+func answerWith(given map[string]any) JournalAnswer {
 	moment := MomentOf(given)
 	if moment.Event == "" {
+		return JournalAnswer{}
+	}
+
+	if judgedLive(moment) && !liveEditsJudgedAt(moment) {
 		return JournalAnswer{}
 	}
 
 	cwd := moment.Cwd
 	if info, err := os.Stat(cwd); err != nil || !info.IsDir() {
 		cwd, _ = os.Getwd()
-	}
-
-	if refusal := cliRefusedTo(moment); refusal != "" && runs(SharedBranchGate{}) {
-		return JournalAnswer{Refuse: &refusal}
 	}
 
 	if notForThisRole(moment) != "" {
@@ -233,16 +221,13 @@ func answerWith(given map[string]any, runs func(Hook) bool, reportsSins bool) Jo
 	event.WithoutCLI = workerRoles[moment.Role] && !workersRunTheCLI(moment)
 	workspace.At(event.Root, "").RelocateSessions()
 	quiet := quieted()
-	if !liveEditsJudgedAt(moment) {
-		quiet = append(quiet, SkillReminder{}.Class())
-	}
 
 	var responses []Response
 
 	judging := time.Now()
 
 	for _, hook := range ForProject(event.Root) {
-		if runs(hook) && !slices.Contains(quiet, hook.Class()) {
+		if !slices.Contains(quiet, hook.Class()) {
 			responses = append(responses, Answer(hook, event))
 		}
 	}
@@ -257,7 +242,7 @@ func answerWith(given map[string]any, runs func(Hook) bool, reportsSins bool) Jo
 	answer.JudgedTotalMs = heldFor(given, answer.JudgedMs)
 	answer.ReadMs = merged.ReadMs
 
-	if !reportsSins || !moment.IsPostToolUse() && !moment.IsStop() {
+	if !moment.IsPostToolUse() && !moment.IsStop() {
 		return answer
 	}
 
@@ -357,15 +342,19 @@ func workersChose(chosen map[string]any, key string) bool {
 }
 
 func workerEditsJudgedAt(moment Moment) bool {
-	return workersChose(chosenAt(moment, workerEditsKey), workerEditsKey)
+	return workersChose(chosenAt(moment), workerEditsKey)
+}
+
+func judgedLive(moment Moment) bool {
+	return moment.IsPostToolUse() || moment.IsStop()
 }
 
 func liveEditsJudgedAt(moment Moment) bool {
-	return switchedOn(chosenAt(moment, liveEditsKey)[liveEditsKey])
+	return switchedOn(chosenAt(moment)[liveEditsKey])
 }
 
-func chosenAt(moment Moment, key string) map[string]any {
-	if _, named := moment.Settings[key]; named {
+func chosenAt(moment Moment) map[string]any {
+	if len(moment.Settings) > 0 {
 		return moment.Settings
 	}
 

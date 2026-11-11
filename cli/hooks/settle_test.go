@@ -79,7 +79,7 @@ func TestAWriteThatRepentsASinSettlesItThroughTheHook(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		return answerWith(map[string]any{"event": "hook.PostToolUse", "project": root, "env": "main", "tool": map[string]any{"name": "Write", "file": file}}, every, true)
+		return answerWith(map[string]any{"event": "hook.PostToolUse", "project": root, "env": "main", "tool": map[string]any{"name": "Write", "file": file}})
 	}
 
 	sinful := write("def refund(order) -> int:\n    if order.late:\n        raise ValueError(order)\n    else:\n        return order.total\n")
@@ -269,7 +269,7 @@ func TestAWriteIsNotJudgedWithLiveEditsSwitchedOff(t *testing.T) {
 	written := func(judged bool) JournalAnswer {
 		return answerWith(map[string]any{"event": "hook.PostToolUse", "project": root, "env": "main",
 			"settings": map[string]any{"judge_edits": judged},
-			"tool":     map[string]any{"name": "Write", "file": file}}, every, true)
+			"tool":     map[string]any{"name": "Write", "file": file}})
 	}
 
 	if off := written(false); len(off.Raises) != 0 || off.Whisper != nil {

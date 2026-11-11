@@ -71,12 +71,12 @@ func answeredBy(t *testing.T, line map[string]any) (string, int) {
 		fed.Close()
 	}()
 
-	in := cli.InputOf("journal4-hook")
+	in := cli.InputOf("plugin-hook")
 
 	out := &strings.Builder{}
 	errs := &strings.Builder{}
 
-	code, err := (Journal4Hook{}).Run(in, cli.Console{Out: out, Err: errs})
+	code, err := (PluginHook{}).Run(in, cli.Console{Out: out, Err: errs})
 	if err != nil {
 		t.Errorf("the key %q answered with an error: %v", line["event"], err)
 	}

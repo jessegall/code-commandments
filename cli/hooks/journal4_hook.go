@@ -9,6 +9,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/jessegall/code-commandments/cli"
 	"github.com/jessegall/code-commandments/cli/help"
@@ -49,21 +50,21 @@ var hooksOf4 = map[string]string{
 	"ticked":           "Stop",
 }
 
-// Journal4Hook is `journal4-hook`: the entry point version 4 of the agent journal runs for every event the plugin hears, one JSON line in and one out.
-type Journal4Hook struct{}
+// PluginHook is `plugin-hook`: the program the agent journal's plugin runs for every event it hears, one JSON line in and one out. It was named `journal4-hook`, after version 4 of the journal, and still answers to that name.
+type PluginHook struct{}
 
-func (Journal4Hook) Names() []string {
-	return []string{"journal4-hook"}
+func (PluginHook) Names() []string {
+	return []string{"plugin-hook", "journal4-hook"}
 }
 
-func (Journal4Hook) Help() help.Help {
-	return help.Of("Version 4 of the agent journal's entry point — reads one event line from stdin and answers it: a command about to run and a file just changed with the gates alone, from what they already know, and every other event with what its handlers found.").
-		Form("journal4-hook", "answer the event line on stdin (run by the journal plugin; you rarely run this by hand)").
-		Note("Judging happens on `file_edited`, one event per file a tool changed, and never on the way out: the journal waits on every answer it asks for, and a judge on a loaded machine is slower than the window it allows. What the judge finds is written to the queue the journal drains at the agent's next hook. A journal that gives the plugin no folder of its own drains no queue, and then every event is answered in full, as before a queue existed.").
+func (PluginHook) Help() help.Help {
+	return help.Of("The agent journal plugin's program — reads one event line from stdin and answers it at once: an edit, a command and a stop with nothing, and every other event with what its handlers found.").
+		Form("plugin-hook", "answer the event line on stdin (run by the journal plugin; you rarely run this by hand)").
+		Note("Nothing is judged on the way out, and nothing is refused. With `judge_edits` off an edit and a stop are left alone entirely. With it on, an agent's edits are gathered for `judge_edit_window` seconds, the first one starting a background run that judges them together and writes what it finds to the queue the journal drains at the agent's next hook. A journal that gives the plugin no folder of its own drains no queue, and then every event is answered in full, as before a queue existed.").
 		In(help.Hooks)
 }
 
-func (Journal4Hook) Run(in *cli.Input, console cli.Console) (int, error) {
+func (PluginHook) Run(in *cli.Input, console cli.Console) (int, error) {
 	raw, _ := io.ReadAll(os.Stdin)
 	var line map[string]any
 	if json.Unmarshal(bytes.TrimSpace(raw), &line) != nil || line == nil {
@@ -145,8 +146,7 @@ func judgedAfter(event string) bool {
 }
 
 func Answer4Now(line map[string]any) string {
-	moment, known := Moment4Of(line)
-	if !known {
+	if _, known := Moment4Of(line); !known {
 		return ""
 	}
 	if _, queued := Queue4In(os.Getenv(pluginData)); !queued {
@@ -156,7 +156,7 @@ func Answer4Now(line map[string]any) string {
 		return Answer4Of(line)
 	}
 
-	return answerWith(Stamped(moment), isGate, false).Line4()
+	return JournalAnswer{}.Line4()
 }
 
 func Judge4Into(line map[string]any, folder string) {
@@ -171,7 +171,11 @@ func Judge4Into(line map[string]any, folder string) {
 	}
 
 	given := Stamped(moment)
-	answer := answerWith(given, not(isGate), true)
+	if asText(line["event"]) == editedEvent {
+		given = gatheredIn(EditWindowIn(folder, MomentOf(given).Agent), given)
+	}
+
+	answer := answerWith(given)
 
 	data, _ := line["data"].(map[string]any)
 	if gone(asText(firstOf(data["cwd"], line["cwd"]))) {
@@ -192,11 +196,51 @@ func gone(cwd string) bool {
 }
 
 func judge4Detached(raw []byte, line map[string]any) {
-	if _, known := Moment4Of(line); !known {
+	if _, queued := Queue4In(os.Getenv(pluginData)); !queued {
+		return
+	}
+
+	moment, known := Moment4Of(line)
+	if !known {
+		return
+	}
+
+	held := MomentOf(moment)
+	if judgedLive(held) && !liveEditsJudgedAt(held) {
+		return
+	}
+
+	if asText(line["event"]) == editedEvent && !EditWindowIn(os.Getenv(pluginData), held.Agent).Gather(raw) {
 		return
 	}
 
 	judgeDetached(raw)
+}
+
+func gatheredIn(window EditWindow, given map[string]any) map[string]any {
+	if !window.IsOpen() {
+		return given
+	}
+
+	time.Sleep(gatheredFor(given))
+
+	var batch []asked
+	for _, edit := range window.Close() {
+		var line map[string]any
+		if json.Unmarshal(edit, &line) != nil {
+			continue
+		}
+
+		if moment, known := Moment4Of(line); known {
+			batch = append(batch, asked{given: Stamped(moment), queued: true, first: true})
+		}
+	}
+
+	if len(batch) == 0 {
+		return given
+	}
+
+	return batched(batch).given
 }
 
 func judgeDetached(raw []byte) {
@@ -215,7 +259,7 @@ func judgeDetached(raw []byte) {
 	}
 	defer event.Close()
 
-	run := exec.Command(self, "journal4-hook")
+	run := exec.Command(self, "plugin-hook")
 	run.Stdin = event
 	run.Env = append(os.Environ(), judging+"=1")
 	detach(run)
@@ -231,7 +275,7 @@ func Answer4Of(line map[string]any) string {
 		return ""
 	}
 
-	return answerWith(Stamped(moment), every, true).Line4()
+	return answerWith(Stamped(moment)).Line4()
 }
 
 func Moment4Of(line map[string]any) (map[string]any, bool) {

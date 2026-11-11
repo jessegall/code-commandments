@@ -29,7 +29,7 @@ fi
 
 # The process is matched by the plugin's own folder and the binary alone, never by the verb or the exact path it
 # was launched with: the journal launches it from .journal-plugin/../bin and the verb is the protocol's own
-# (journal4-hook today, journal-serve before it), so naming either made this check report a fault that was not
+# (plugin-hook today, journal4-hook before it, journal-serve before it), so naming either made this check report a fault that was not
 # there while the service judged every edit.
 # Looked for twice, because the journal restarts its plugins' services and a look that lands in the gap is no
 # fault: a single absence used to report a dead service while the next second had it serving again.

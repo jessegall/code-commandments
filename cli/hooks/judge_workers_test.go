@@ -102,7 +102,7 @@ func TestAWorkerWithItsJudgingOffHearsNothingAtAll(t *testing.T) {
 	root := t.TempDir()
 	given := map[string]any{"event": "PostToolUse", "cwd": root, "role": "worker", "settings": map[string]any{"judge_workers": false}}
 
-	answer := answerWith(given, every, true)
+	answer := answerWith(given)
 
 	if answer.Whisper != nil || answer.Refuse != nil {
 		t.Errorf("a worker with judging off was told something: %+v", answer)

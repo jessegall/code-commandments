@@ -153,7 +153,7 @@ Exit code is non-zero when sins are found.
 | `commandments task` | The work in front of this session — numbered tasks, one markdown file each, moved between queue, active and history. |
 | `commandments hooks` | The wired hook entry point — reads one hook payload from stdin, runs every registered handler, and merges their responses into one. |
 | `commandments journal-hook` | The agent journal's entry point — reads one journal hook payload from stdin, runs every registered handler, and answers in the journal's shape. |
-| `commandments journal4-hook` | Version 4 of the agent journal's entry point — reads one event line from stdin and answers it: a command about to run and a file just changed with the gates alone, from what they already know, and every other event with what its handlers found. |
+| `commandments plugin-hook` | The agent journal plugin's program — reads one event line from stdin and answers it at once: an edit, a command and a stop with nothing, and every other event with what its handlers found. |
 | `commandments journal-serve` | Answer the agent journal's hooks from one running process, over the socket the journal names in $JOURNAL_PLUGIN_SOCKET. |
 | `commandments roslyn-serve` | Keep the C# bridge running for this project, answering each run of the tool over a socket named for the project. |
 | `commandments mypy-serve` | Keep the Python bridge running for this project, answering each run of the tool over a socket named for the project. |
@@ -369,7 +369,6 @@ The wired hooks — one dispatcher entry per Claude Code event, each fanning out
 | Hook | Events | What it does |
 |---|---|---|
 | `JudgeReminder` | `Stop, PreToolUse/Bash, PostToolUse/Bash, PostToolUse/Edit, PostToolUse/Write, PostToolUse/MultiEdit` | Nudges you to `judge` what you changed — before a risky Bash command, and on stop. |
-| `SharedBranchGate` | `PreToolUse/Bash` | Refuses `git pull --rebase` while other worktrees stand on the branch — it rewrites the commits they are built on. |
 | `ModelChoiceReminder` | `PreToolUse/Agent` | Asks for an explicit model when an agent is dispatched without one, since an unnamed model inherits the dispatcher's. |
 | `SessionReset` | `SessionStart` | On a fresh session (startup/clear) wipes lingering hook counters and prunes stale session folders. |
 | `SourceReminder` | `PreToolUse/Edit, PreToolUse/Write, PreToolUse/MultiEdit` | When you edit a test/stub/fixture (which `judge` never scans), nudges you to check the real fix belongs at the SOURCE. |

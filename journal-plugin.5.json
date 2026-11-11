@@ -1,6 +1,6 @@
 {
   "name": "code-commandments",
-  "version": "7.18.75",
+  "version": "7.18.76",
   "title": "Code Commandments",
   "description": "The static code checker judges the codebase, its hooks run inside the journal, and every rule and language is a switch in its settings",
   "journal": "5.0.0",
@@ -15,7 +15,7 @@
     ]
   },
   "protocol": 1,
-  "program": ".journal-plugin/journal4-hook",
+  "program": ".journal-plugin/hook",
   "hook_stamp": "@code-commandments-managed",
   "project_reads": [
     ".commandments"
@@ -43,12 +43,6 @@
     "session_started",
     "ticked"
   ],
-  "holds": [
-    {
-      "event": "command_starting",
-      "window_ms": 1000
-    }
-  ],
   "reaches": {
     "file_edited": [
       "workers"
@@ -66,29 +60,29 @@
   "listen": [
     {
       "event": "suites.coding.workers.worker_worktree.merge",
-      "commit": ".journal-plugin/journal4-hook"
+      "commit": ".journal-plugin/hook"
     },
     {
       "event": "core.plugins.plugin.updated",
-      "commit": ".journal-plugin/journal4-hook"
+      "commit": ".journal-plugin/hook"
     },
     {
       "event": "core.agents.agent.created",
-      "commit": ".journal-plugin/journal4-hook"
+      "commit": ".journal-plugin/hook"
     },
     {
       "event": "suites.coding.workers.merge_request.created",
-      "guard": ".journal-plugin/journal4-hook",
+      "guard": ".journal-plugin/hook",
       "window_ms": 30000
     },
     {
       "event": "suites.coding.workers.worker_delivering",
-      "guard": ".journal-plugin/journal4-hook",
+      "guard": ".journal-plugin/hook",
       "window_ms": 180000
     },
     {
       "event": "core.plugins.plugin.config_changed",
-      "commit": ".journal-plugin/journal4-hook"
+      "commit": ".journal-plugin/hook"
     }
   ],
   "aliases": [
@@ -187,7 +181,7 @@
   "setup": [
     {
       "name": "Fetch the checker's release binary, checked against its SHA256SUMS",
-      "run": "COMMANDMENTS_RELEASE=v7.18.75 sh .journal-plugin/fetch"
+      "run": "COMMANDMENTS_RELEASE=v7.18.76 sh .journal-plugin/fetch"
     },
     {
       "name": "Write the chosen switches into config.json",

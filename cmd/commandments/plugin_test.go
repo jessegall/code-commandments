@@ -172,7 +172,7 @@ type manifest struct {
 }
 
 func (m manifest) commands() []string {
-	commands := []string{m.Refuse, m.Install}
+	commands := []string{m.Install}
 	for _, step := range m.Setup {
 		commands = append(commands, step.Run)
 	}
@@ -198,6 +198,9 @@ func TestThePluginNeedsOnlyTheBinaryItFetches(t *testing.T) {
 
 	if pinned := plugin.Env["COMMANDMENTS_RELEASE"]; !regexp.MustCompile(`^v\d+\.\d+\.\d+$`).MatchString(pinned) {
 		t.Errorf("the plugin pins %q, no release", pinned)
+	}
+	if plugin.Refuse != "" {
+		t.Errorf("the plugin asks to refuse calls through %q; it judges sins and refuses nothing", plugin.Refuse)
 	}
 	if _, ok := plugin.Requires["curl"]; !ok {
 		t.Error("the plugin does not require the curl its fetch runs")

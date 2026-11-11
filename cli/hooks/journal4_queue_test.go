@@ -68,18 +68,19 @@ func eventOf(event, file string) map[string]any {
 	}
 }
 
-func TestTheHeldEventIsAnsweredWithTheGatesAloneAndTheRestGoesToTheQueue(t *testing.T) {
+func TestACommandIsAnsweredWithNothingAndNeverRefused(t *testing.T) {
 	data, line := projectAnotherWorktreeStandsOn(t)
 
-	answer := Answer4Now(line)
-	if !strings.Contains(answer, `"refuse"`) || !strings.Contains(answer, "worktree") {
-		t.Fatalf("the held event's answer does not refuse the rebase: %s", answer)
+	if answer := Answer4Now(line); answer != `{"v":1}` {
+		t.Fatalf("a command about to run is answered %s; the plugin judges sins and refuses nothing", answer)
 	}
 
 	Judge4Into(line, data)
 
-	if queued := drained(t, data); len(queued) != 0 {
-		t.Errorf("the queue holds what the answer already carried: %v", queued)
+	for _, queued := range drained(t, data) {
+		if strings.Contains(asText(queued["tell"]), "worktree") {
+			t.Errorf("the queue still argues against the command: %v", queued)
+		}
 	}
 }
 
@@ -201,16 +202,6 @@ func TestTheAnswerIsTheSameHoweverManyFilesTheToolChanged(t *testing.T) {
 	}
 }
 
-func TestWithNoFolderOfItsOwnTheHookAnswersTheHeldEventInFull(t *testing.T) {
-	_, line := projectAnotherWorktreeStandsOn(t)
-	t.Setenv(pluginData, "")
-
-	answer := Answer4Now(line)
-	if !strings.Contains(answer, "worktree") {
-		t.Errorf("without a queue the held event's answer says nothing: %s", answer)
-	}
-}
-
 func TestAnEditIsAnsweredWithoutReadingTheFileAtAll(t *testing.T) {
 	root, _, data := projectWithASin(t)
 	t.Setenv("JOURNAL_ROOT", root)
@@ -273,7 +264,7 @@ func TestAQueuedAnswerIsTheAnswersOwnShapeInAFileOfItsOwn(t *testing.T) {
 	}
 }
 
-func TestTheServiceAnswersTheHeldEventWithTheGatesAloneAndAdvisesAfter(t *testing.T) {
+func TestTheServiceAnswersACommandWithNothingAndAdvisesAfter(t *testing.T) {
 	_, line := projectAnotherWorktreeStandsOn(t)
 	short, err := os.MkdirTemp("", "s")
 	if err != nil {
@@ -314,8 +305,8 @@ func TestTheServiceAnswersTheHeldEventWithTheGatesAloneAndAdvisesAfter(t *testin
 	if err := json.Unmarshal([]byte(answer), &read); err != nil {
 		t.Fatalf("the journal cannot read %q: %v", answer, err)
 	}
-	if read["answer"] != "refuse" || !strings.Contains(asText(read["reason"]), "worktree") {
-		t.Errorf("the service answered %v", read)
+	if len(read) != 1 {
+		t.Errorf("the service answered %v; a command is answered with nothing", read)
 	}
 
 	select {
@@ -325,39 +316,6 @@ func TestTheServiceAnswersTheHeldEventWithTheGatesAloneAndAdvisesAfter(t *testin
 		}
 	case <-time.After(3 * batchedWithin):
 		t.Error("the moment was never handed on to be worked out")
-	}
-}
-
-func TestTheWorktreesAreKeptUntilOneIsAddedOrRemoved(t *testing.T) {
-	root, _, _ := projectWithASin(t)
-	for _, run := range [][]string{
-		{"git", "-C", root, "add", "-A"},
-		{"git", "-C", root, "-c", "user.email=t@t", "-c", "user.name=T", "commit", "-qm", "first"},
-	} {
-		if out, err := exec.Command(run[0], run[1:]...).CombinedOutput(); err != nil {
-			t.Fatalf("%v: %s", run, out)
-		}
-	}
-
-	if standing := otherWorktrees(root); len(standing) != 0 {
-		t.Fatalf("a lone checkout lists %v", standing)
-	}
-
-	added := filepath.Join(t.TempDir(), "other")
-	if out, err := exec.Command("git", "-C", root, "worktree", "add", "-q", added, "-b", "other").CombinedOutput(); err != nil {
-		t.Fatalf("%s", out)
-	}
-
-	if standing := otherWorktrees(root); len(standing) != 1 {
-		t.Errorf("after one was added the gate lists %v", standing)
-	}
-
-	if out, err := exec.Command("git", "-C", root, "worktree", "remove", added).CombinedOutput(); err != nil {
-		t.Fatalf("%s", out)
-	}
-
-	if standing := otherWorktrees(root); len(standing) != 0 {
-		t.Errorf("after it was removed the gate lists %v", standing)
 	}
 }
 

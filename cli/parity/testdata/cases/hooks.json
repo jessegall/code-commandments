@@ -147,21 +147,6 @@
   }
  },
  {
-  "name": "hooks-rebase-beside-a-worktree",
-  "args": [
-   "hooks"
-  ],
-  "setup": [
-   "git init -q && git -c user.email=a@b -c user.name=a commit -q --allow-empty -m init",
-   "git worktree add -q .wt/other 2>/dev/null"
-  ],
-  "stdin": "{\"hook_event_name\":\"PreToolUse\",\"session_id\":\"s1\",\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"git fetch && git pull --rebase\"}}",
-  "env": {
-   "GIT_AUTHOR_DATE": "2026-01-01T00:00:00Z",
-   "GIT_COMMITTER_DATE": "2026-01-01T00:00:00Z"
-  }
- },
- {
   "name": "hooks-edit-a-test",
   "args": [
    "hooks"

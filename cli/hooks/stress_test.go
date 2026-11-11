@@ -164,7 +164,7 @@ func stressStop(t *testing.T, root, data string) {
 	t.Logf("the settlement took %v, the sweep inside it, and settles %d", time.Since(settling).Round(time.Millisecond), len(settlement.Settles()))
 
 	whole := time.Now()
-	answerWith(Stamped(line), every, true)
+	answerWith(Stamped(line))
 	t.Logf("the whole answer to a stop took %v", time.Since(whole).Round(time.Millisecond))
 }
 

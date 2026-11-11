@@ -21,7 +21,7 @@ const Stamp = "# @code-commandments-managed"
 var legacySubcommands = []string{"remind", "judge-reminder", "plan-reminder"}
 
 func Builtins() []Hook {
-	return []Hook{JudgeReminder{}, SharedBranchGate{}, ModelChoiceReminder{}, SessionReset{}, SourceReminder{}, SkillReminder{}}
+	return []Hook{JudgeReminder{}, ModelChoiceReminder{}, SessionReset{}, SourceReminder{}, SkillReminder{}}
 }
 
 func ForProject(root string) []Hook {
