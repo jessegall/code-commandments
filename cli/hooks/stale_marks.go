@@ -47,12 +47,10 @@ func sweptMarks(record Announced, root string) (marks []SinMark, read []string) 
 }
 
 func stillToRead(root string, files []string) []string {
-	_, base, held := baseFor(root)
+	named, base, held := seenFor(root)
 	if !held {
 		return files
 	}
-
-	named, _, _ := baseFor(root)
 
 	var moved []string
 	for _, file := range files {

@@ -677,12 +677,20 @@ func answering(path, checkout string) (branchRoot, *warm.Base, Narrowed) {
 }
 
 func baseFor(path string) (branchRoot, *warm.Base, bool) {
+	return lookedUp(path, kept.Holds)
+}
+
+func seenFor(path string) (branchRoot, *warm.Base, bool) {
+	return lookedUp(path, kept.Sees)
+}
+
+func lookedUp(path string, look func(project, branch string) (*warm.Base, bool)) (branchRoot, *warm.Base, bool) {
 	named, ok := rootOf(path)
 	if !ok {
 		return branchRoot{}, nil, false
 	}
 
-	base, held := kept.Holds(named.project, named.branch)
+	base, held := look(named.project, named.branch)
 
 	return named, base, held
 }

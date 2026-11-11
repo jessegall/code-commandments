@@ -54,6 +54,28 @@ func TestABaseNobodyAsksAboutIsDropped(t *testing.T) {
 	}
 }
 
+func TestABaseOnlyLookedAtIsStillDropped(t *testing.T) {
+	keeper := warm.Keep()
+	root, codebase := project(t, map[string]string{"shop/order.py": "class Order:\n    pass\n"})
+	read := time.Now()
+
+	keeper.Hold(root, "main", []string{root}, codebase, nil)
+
+	for _, later := range []time.Duration{warm.Idle / 2, warm.Idle - time.Second} {
+		keeper.Clocked(func() time.Time { return read.Add(later) })
+
+		if _, held := keeper.Sees(root, "main"); !held {
+			t.Fatalf("the base is gone %v after it was read, before the idle time", later)
+		}
+	}
+
+	keeper.Clocked(func() time.Time { return read.Add(warm.Idle + time.Second) })
+
+	if _, held := keeper.Sees(root, "main"); held {
+		t.Error("a base only looked at, and asked for by nobody for the idle time, is still held")
+	}
+}
+
 func TestTheBaseSaysWhichFilesHaveMovedSinceItWasRead(t *testing.T) {
 	root, codebase := project(t, map[string]string{
 		"shop/order.py":   "class Order:\n    pass\n",

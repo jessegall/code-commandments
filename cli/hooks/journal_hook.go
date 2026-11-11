@@ -287,7 +287,7 @@ func recordJudging(moment Moment, event Event, merged Response, answer JournalAn
 	}
 
 	named, _ := rootOf(event.Root)
-	_, _, held := baseFor(event.Root)
+	_, _, held := seenFor(event.Root)
 
 	why := Narrowed("")
 	asked, notAsked := 0, 0

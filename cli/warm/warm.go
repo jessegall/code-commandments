@@ -131,9 +131,7 @@ func (k *Keeper) Holds(project, branch string) (*Base, bool) {
 	k.mu.Lock()
 	defer k.mu.Unlock()
 
-	k.sweep()
-
-	base, held := k.bases[key(project, branch)]
+	base, held := k.held(project, branch)
 	if !held {
 		return nil, false
 	}
@@ -141,6 +139,21 @@ func (k *Keeper) Holds(project, branch string) (*Base, bool) {
 	base.lastAsked = k.now()
 
 	return base, true
+}
+
+func (k *Keeper) Sees(project, branch string) (*Base, bool) {
+	k.mu.Lock()
+	defer k.mu.Unlock()
+
+	return k.held(project, branch)
+}
+
+func (k *Keeper) held(project, branch string) (*Base, bool) {
+	k.sweep()
+
+	base, held := k.bases[key(project, branch)]
+
+	return base, held
 }
 
 func (k *Keeper) Any(project string) (*Base, bool) {
