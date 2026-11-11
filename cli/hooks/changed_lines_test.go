@@ -150,6 +150,7 @@ func TestTheJudgeOfChangedLinesAgreesWithTheEditCheck(t *testing.T) {
 
 func TestAMomentsLinesAreDroppedWhereItsFileMovedAgain(t *testing.T) {
 	root := t.TempDir()
+	repository(t, root)
 
 	file := filepath.Join(root, "order.py")
 	if err := os.WriteFile(file, []byte("x = 1\n"), 0o644); err != nil {
@@ -181,6 +182,7 @@ func TestAMomentsLinesAreDroppedWhereItsFileMovedAgain(t *testing.T) {
 
 func TestAMomentsLinesStandWhenOnlyTheClocksDisagree(t *testing.T) {
 	root := t.TempDir()
+	repository(t, root)
 
 	file := filepath.Join(root, "order.py")
 	if err := os.WriteFile(file, []byte("x = 1\n"), 0o644); err != nil {
