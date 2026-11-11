@@ -137,3 +137,11 @@ func handInsJudged(line map[string]any) bool {
 }
 
 const handInsKey = "judge_hand_ins"
+
+func handInsJudgedAfter(line map[string]any) bool {
+	chosen, _ := chosenOn(line)
+
+	return workersChose(chosen, handInsAfterKey) && !workersChose(chosen, handInsKey)
+}
+
+const handInsAfterKey = "judge_hand_ins_after"

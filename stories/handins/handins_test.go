@@ -150,3 +150,14 @@ func TestAMergeNamesNoSinInAFileTheWorkerDeleted(t *testing.T) {
 	s.Never(merged, "deletedfile.py")
 	grace.StaysUntold("deletedfile.py")
 }
+
+func TestAHandInJudgedAfterGoesThroughUnheldAndTheWorkerHearsItsSinAfterwards(t *testing.T) {
+	s, _, grace := ready(t, "a worker ready to hand in with judging after it chosen")
+	s.GivenHandInsAreNotJudged()
+	s.SwitchesThePluginSetting("judge_hand_ins_after", "true", "false")
+	grace.Edits(sinful(s, "a sinful file handed in and judged afterwards"), "judgedafter.py")
+
+	grace.HandsIn()
+
+	grace.Hears("judgedafter.py")
+}

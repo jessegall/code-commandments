@@ -39,11 +39,29 @@ func MergeHeld(line map[string]any) string {
 }
 
 func DeliveryHeld(line map[string]any) string {
+	if handInsJudgedAfter(line) {
+		judgedAfterTheHandIn(line)
+
+		return ""
+	}
+
 	if !handInsJudged(line) {
 		return ""
 	}
 
 	return mergeOf(line).answered()
+}
+
+func judgedAfterTheHandIn(line map[string]any) {
+	if serving.Load() {
+		go mergeOf(line).judgesAfterwards()
+
+		return
+	}
+
+	if raw, err := json.Marshal(line); err == nil {
+		judgeDetached(raw)
+	}
 }
 
 func workHeld(line map[string]any) string {
@@ -151,7 +169,10 @@ const (
 	withoutTheTree gotTo = "only the rules that answer from one file were asked about the files this hand-in changed, because no tree of this project is held to answer the rest from, and the project is never read whole to make up for it"
 )
 
-const judgedLate Narrowed = "judged after the journal stopped waiting"
+const (
+	judgedLate        Narrowed = "judged after the journal stopped waiting"
+	judgedAfterHandIn Narrowed = "judged after the hand-in went through"
+)
 
 func (m merging) sinsWithin() handIn {
 	within := time.After(m.deadline())
@@ -191,13 +212,23 @@ func (m merging) tellsLater(answered chan []SinMark) {
 		return
 	}
 
-	m.records(judgedLate, len(marks), "")
+	m.tells(marks, judgedLate, " (judged after the journal stopped waiting)")
+}
+
+func (m merging) judgesAfterwards() {
+	m.unlimited = true
+
+	m.tells(m.sins().marks, judgedAfterHandIn, " (judged after the hand-in went through)")
+}
+
+func (m merging) tells(marks []SinMark, why Narrowed, about string) {
+	m.records(why, len(marks), "")
 
 	if len(marks) == 0 {
 		return
 	}
 
-	said := mergeTold(m.worker, " (judged after the journal stopped waiting)", m.worktree, marks)
+	said := mergeTold(m.worker, about, m.worktree, marks)
 
 	m.keeps(said)
 

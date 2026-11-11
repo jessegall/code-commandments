@@ -72,6 +72,12 @@ func (Journal4Hook) Run(in *cli.Input, console cli.Console) (int, error) {
 		return 0, nil
 	}
 
+	if os.Getenv(judging) != "" && namedAsTheKey(asText(line["event"])) == deliveringEvent {
+		mergeOf(line).judgesAfterwards()
+
+		return 0, nil
+	}
+
 	if text, apart, code, err := Apart4(in, console, line); apart {
 		if err == nil && code == 0 {
 			console.Write(text + "\n")
@@ -189,6 +195,11 @@ func judge4Detached(raw []byte, line map[string]any) {
 	if _, known := Moment4Of(line); !known {
 		return
 	}
+
+	judgeDetached(raw)
+}
+
+func judgeDetached(raw []byte) {
 	if _, queued := Queue4In(os.Getenv(pluginData)); !queued {
 		return
 	}

@@ -1,6 +1,6 @@
 {
     "name": "code-commandments",
-    "version": "7.18.71",
+    "version": "7.18.72",
     "title": "Code Commandments",
     "description": "The static code checker judges the codebase, its hooks run inside the journal, and every rule and language is a switch in its settings",
     "journal": "2.267.16",
@@ -47,7 +47,7 @@
     },
     "env": {
         "CLAUDE_PROJECT_DIR": "{project}",
-        "COMMANDMENTS_RELEASE": "v7.18.71"
+        "COMMANDMENTS_RELEASE": "v7.18.72"
     },
     "setup": [
         {
@@ -133,6 +133,13 @@
         "judge_hand_ins": {
             "title": "Judge before a hand-in goes through",
             "help": "Only with Judge workers on. On, a worker's hand-in waits while the plugin judges the files it changed since its worktree was cut, answered from the tree the service already holds, and a sin sends the work back to that worker naming the file, the line and the skill. When no tree is held or the time the journal allows runs out, the hand-in goes on and says what was not judged; the project is never read whole for it. Off, hand-ins are not held.",
+            "type": "flag",
+            "default": "false",
+            "group": "Workers"
+        },
+        "judge_hand_ins_after": {
+            "title": "Judge after a hand-in goes through",
+            "help": "Only with Judge workers on and Judge before a hand-in goes through off. On, a worker's hand-in goes through at once, unheld, and the plugin judges the files it changed afterwards with no time limit, then tells that worker each sin it finds, naming the file, the line and the skill. Off, a hand-in is not judged afterwards.",
             "type": "flag",
             "default": "false",
             "group": "Workers"

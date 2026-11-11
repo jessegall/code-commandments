@@ -34,15 +34,16 @@ func settingsFile(t *testing.T) []declared {
 
 func TestEverySettingThisPlanAddsSaysWhatItIsAndWhatItDefaultsTo(t *testing.T) {
 	want := map[string]any{
-		"judge_workers":       false,
-		"judge_worker_edits":  false,
-		"judge_merges":        false,
-		"judge_hand_ins":      false,
-		"judge_before_merge":  false,
-		"workers_cli":         false,
-		"judge_nodes_held":    float64(0),
-		"judge_files_at_once": float64(0),
-		"judge_edit_window":   float64(5),
+		"judge_workers":        false,
+		"judge_worker_edits":   false,
+		"judge_merges":         false,
+		"judge_hand_ins":       false,
+		"judge_hand_ins_after": false,
+		"judge_before_merge":   false,
+		"workers_cli":          false,
+		"judge_nodes_held":     float64(0),
+		"judge_files_at_once":  float64(0),
+		"judge_edit_window":    float64(5),
 	}
 
 	found := map[string]declared{}
