@@ -20,9 +20,17 @@ func Hold(path string) func() {
 	syscall.Flock(int(file.Fd()), syscall.LOCK_EX)
 
 	return func() {
-		syscall.Flock(int(file.Fd()), syscall.LOCK_UN)
+		unlock(file)
 		file.Close()
 	}
+}
+
+func tryLock(file *os.File) bool {
+	return syscall.Flock(int(file.Fd()), syscall.LOCK_EX|syscall.LOCK_NB) == nil
+}
+
+func unlock(file *os.File) {
+	syscall.Flock(int(file.Fd()), syscall.LOCK_UN)
 }
 
 const turnPolled = 250 * time.Millisecond
@@ -35,10 +43,9 @@ func HoldInTurn(path string, waiting func(), patience time.Duration) func() {
 		return func() {}
 	}
 
-	taken := func() bool { return syscall.Flock(int(file.Fd()), syscall.LOCK_EX|syscall.LOCK_NB) == nil }
-	if !taken() {
+	if !tryLock(file) {
 		waiting()
-		for until := time.Now().Add(patience); !taken(); time.Sleep(turnPolled) {
+		for until := time.Now().Add(patience); !tryLock(file); time.Sleep(turnPolled) {
 			if time.Now().After(until) {
 				file.Close()
 
@@ -48,7 +55,7 @@ func HoldInTurn(path string, waiting func(), patience time.Duration) func() {
 	}
 
 	return func() {
-		syscall.Flock(int(file.Fd()), syscall.LOCK_UN)
+		unlock(file)
 		file.Close()
 	}
 }

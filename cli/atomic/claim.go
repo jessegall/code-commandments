@@ -3,7 +3,6 @@ package atomic
 import (
 	"os"
 	"path/filepath"
-	"syscall"
 )
 
 // Claim is a lock one run takes on a file for as long as it works, so a second run sees the first is busy and steps aside rather than waits. The system lets go of it the moment the run ends, however it ends: a run stopped with ^C, killed or crashed blocks nobody, not even for a moment.
@@ -23,14 +22,14 @@ func (c Claim) Take() (release func(), taken bool) {
 		return func() {}, false
 	}
 
-	if err := syscall.Flock(int(file.Fd()), syscall.LOCK_EX|syscall.LOCK_NB); err != nil {
+	if !tryLock(file) {
 		file.Close()
 
 		return func() {}, false
 	}
 
 	return func() {
-		syscall.Flock(int(file.Fd()), syscall.LOCK_UN)
+		unlock(file)
 		file.Close()
 	}, true
 }

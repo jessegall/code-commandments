@@ -94,7 +94,7 @@ journal plugin install https://github.com/jessegall/code-commandments
 
 The two ways share everything but the install: the same rules, the same skills, the same
 commands. See [Under the agent journal](#under-the-agent-journal) for what the plugin
-takes over. It runs on macOS, Linux and Windows; the
+takes over. It runs on macOS and Linux; the
 [platforms](docs/requirements.md#platforms) say what each way of installing it needs.
 
 ## Usage
@@ -391,9 +391,8 @@ setup runs `.journal-plugin/fetch`, which fetches the release binary the manifes
 `bin/commandments-release`; every hook, service and check runs that binary. A sum that does not match, or a
 release that cannot be fetched, fails the install, and nothing is ever built.
 
-It installs wherever the journal runs: macOS and Linux, and Windows under WSL, where it is Linux, or under
-MSYS2, where it fetches the Windows binary as `bin/commandments-release.exe`. Cygwin is refused, and
-[docs/requirements.md](docs/requirements.md#platforms) says why and what each platform needs.
+It installs wherever the journal runs on macOS and Linux, and [docs/requirements.md](docs/requirements.md#platforms)
+says what each platform needs.
 
 The plugin declares `.journal-plugin/plugin.json`. On install it files `commandments judge` as a
 journal **check**, so a failing judge files a notification and is told to the agent, and the next

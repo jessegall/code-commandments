@@ -21,3 +21,10 @@ func Hold(path string) func() {
 func HoldInTurn(path string, waiting func(), patience time.Duration) func() {
 	return Hold(path)
 }
+
+// shortcut: no system lock here, so a claim is always taken, as Hold always holds; give it LockFileEx when Windows ships.
+func tryLock(*os.File) bool {
+	return true
+}
+
+func unlock(*os.File) {}
