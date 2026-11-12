@@ -141,6 +141,7 @@ func (r *Remembered) finding(codebase *Codebase, find func(*Codebase) []Match, p
 		return answered
 	}
 
+	codebase.Filled()
 	matches := find(codebase.Reporting(slices.Collect(maps.Keys(asked))...))
 	r.remember(asked, matches)
 	answered = append(answered, matches...)
@@ -220,7 +221,6 @@ func expired(at int64, now time.Time) bool {
 	return now.Sub(time.Unix(0, at)) >= cache.KeptFor()
 }
 
-// stale says a remembered answer has gone unused long enough that using it should renew its time to live: past a tenth of the time a cache is kept, so a run that only reads what it remembers writes nothing.
 func stale(at int64, now time.Time) bool {
 	return now.Sub(time.Unix(0, at)) >= cache.KeptFor()/renewedAfter
 }

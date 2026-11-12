@@ -24,6 +24,13 @@ type Codebase struct {
 	scanned   []string
 	project   string
 	reporting map[string]bool
+	fills     *deferredFill
+}
+
+// deferredFill is the filling a codebase read for judging puts off until a rule is really asked: a run whose every answer is remembered never fills at all.
+type deferredFill struct {
+	once sync.Once
+	root *Codebase
 }
 
 // Filler fills the facts the engine owns for one language, once every file of the codebase has been read.
@@ -166,6 +173,21 @@ func New(read func(path string) ([]byte, error), streams ...*contract.Stream) *C
 	return codebase
 }
 
+func Unfilled(read func(path string) ([]byte, error), streams ...*contract.Stream) *Codebase {
+	codebase := built(read, streams...)
+	codebase.fills = &deferredFill{root: codebase}
+
+	return codebase
+}
+
+func (c *Codebase) Filled() {
+	if c.fills == nil {
+		return
+	}
+
+	c.fills.once.Do(func() { c.fills.root.fill(nil) })
+}
+
 func built(read func(path string) ([]byte, error), streams ...*contract.Stream) *Codebase {
 	codebase := &Codebase{streams: streams, read: read, analyses: &sync.Map{}}
 	for _, stream := range streams {
@@ -251,7 +273,7 @@ func partNamed(languages []contract.Language) partOf {
 func (c *Codebase) narrowedTo(languages []contract.Language) *Codebase {
 	CountedWalk(len(c.files))
 
-	part := &Codebase{read: c.read, analyses: &sync.Map{}}
+	part := &Codebase{read: c.read, analyses: &sync.Map{}, fills: c.fills}
 	for _, stream := range c.streams {
 		if slices.Contains(languages, stream.Header.Language) {
 			part.streams = append(part.streams, stream)

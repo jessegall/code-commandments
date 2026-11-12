@@ -51,7 +51,6 @@ func Mypy() ([]string, error) {
 	return append([]string{python}, tree...), buildMypy(folder)
 }
 
-// mypyCaches is the one folder mypy keeps what it checked in, under the user's cache: every run shares it, the plugin's, a queued run's with a temporary folder of its own and one started by hand alike.
 func mypyCaches() (string, error) {
 	cache, err := bundle.CacheFolder()
 	if err != nil {

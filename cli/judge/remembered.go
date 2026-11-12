@@ -74,7 +74,6 @@ func (r Remembered) Save() {
 	r.Weighings.Save()
 }
 
-// Build is what the remembered answers were made by: the release and the fingerprint of the executable's own bytes, so a copy of the same binary remembers what the original did and a rebuilt one starts over.
 func Build() string {
 	path, err := os.Executable()
 	if err != nil {

@@ -110,7 +110,6 @@ func (k *keptLines) text(path string) ([]byte, error) {
 	return source, err
 }
 
-// closureOf is the fingerprint of the shape of a package's files and of every package of its module it imports, each package walked once per run.
 func (k *keptLines) closureOf(folder string, files []string) string {
 	var parts, imported []string
 	for _, path := range files {
@@ -257,7 +256,6 @@ func stored(folder, entry string, written []byte) {
 	os.Rename(draft.Name(), entry)
 }
 
-// shaped is a file's shape read from its text: its skeleton and its imports.
 func shaped(path string, source []byte) shape {
 	fset := token.NewFileSet()
 	parsed, _ := parser.ParseFile(fset, path, source, parser.SkipObjectResolution)

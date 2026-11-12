@@ -51,6 +51,8 @@ const mostRememberedAcross = 20_000
 
 func FindRemembering(detector Detector, codebase *engine.Codebase) []engine.Match {
 	if !remembers(detector) {
+		codebase.Filled()
+
 		return detector.Find(codebase)
 	}
 
