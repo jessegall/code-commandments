@@ -34,8 +34,6 @@ import (
 
 const defaultParallel = 2
 
-const agentSession = "JOURNAL_AGENT_SESSION"
-
 const aRuleCouldNotRun = 3
 
 const readingElsewhere = 4
@@ -60,14 +58,6 @@ type Spent struct {
 	ReadMs int64
 	RuleMs int64
 	Rules  int
-}
-
-func whyNotServed(answer warm.Answer) string {
-	if answer.Because != "" {
-		return answer.Because
-	}
-
-	return "no service answered, so there is none up for this project"
 }
 
 func (c Command) folder() (string, error) {
@@ -135,31 +125,6 @@ func (c Command) Run(in *cli.Input, console cli.Console) (int, error) {
 	options := optionsOf(in, worklist)
 
 	options.path = within(cwd, options.path)
-
-	if c.Reading == nil && !options.list {
-		serving, said := warm.ServingFor(cwd)
-		if !said {
-			serving.Project = space.Root()
-		}
-
-		answer, asked := warm.AskedUntilTheTreeIsThere(serving.Project, warm.Request{Judge: in.Raw(), In: cwd, Progress: cli.Watched(), Agent: os.Getenv(agentSession) != ""},
-			func(said string) { fmt.Fprintln(console.Err, "· "+said) },
-			func(line string) { fmt.Fprintln(console.Err, line) })
-		if asked {
-			if cli.Timed() {
-				fmt.Fprintln(console.Err, "· judged against the tree this session keeps up, so this run read nothing")
-			}
-
-			fmt.Fprint(console.Out, answer.Out)
-			fmt.Fprint(console.Err, answer.Err)
-
-			return answer.Code, nil
-		}
-
-		if cli.Timed() {
-			fmt.Fprintln(console.Err, "· this run reads the tree itself: "+whyNotServed(answer))
-		}
-	}
 
 	if options.list {
 		return list(cwd, console)
