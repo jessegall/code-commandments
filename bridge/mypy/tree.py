@@ -680,7 +680,7 @@ def unparsed(source: bytes) -> Node:
     return Node(0, "Module", "other", Span(0, len(source), 1))
 
 
-def stream(session: Session, paths: list[str], write: list[str], python: str | None, kept: Kept | None = None) -> Iterator[dict]:
+def stream(session: Session, paths: list[str], write: list[str], python: str | None, kept: Kept | None = None) -> Iterator[dict | str]:
     """The contract's lines for the modules under $paths: the header, one file line each, the program, the trailer.
     With $kept, a module whose line still holds is written from there at once, and mypy checks only the modules that
     changed and those a changed interface reaches (kept_lines). Each line written is kept for the next run."""
@@ -714,24 +714,19 @@ def kept_lines(session: Session, kept: Kept, paths: list[str], found: list[str],
     modules = {path: module_name(path) for path in found}
     pins = kept.pins(checkout_of(paths))
     shas = {path: hashlib.sha256(texts[path]).digest() for path in found}
-    names = {path: kept.record_of(modules[path], shas[path], pins) for path in found}
-    records = {path: kept.recorded(names[path]) for path in found}
-    todo = {path for path, record in records.items() if record is None or not kept.has(record["key"])}
-    interfaces = {modules[path]: record["interface"] for path, record in records.items() if path not in todo}
+    held = {path: kept.recorded(kept.record_of(modules[path], shas[path], pins)) for path in found}
+    records = {path: one[0] if one is not None else None for path, one in held.items()}
+    lines = {path: one[1] for path, one in held.items() if one is not None}
+    todo = {path for path, record in records.items() if record is None}
+    interfaces = {modules[path]: record["interface"] for path, record in records.items() if record is not None}
     present = set(modules.values())
     todo |= {path for path in found if path not in todo and stale(records[path], interfaces, present)}
 
     affected = reached_from(todo, modules, records)
     for path in found:
         if path not in affected:
-            line = kept.read(records[path]["key"])
-            if line is None:
-                affected.add(path)
-                todo.add(path)
-                continue
-            yield path, line
+            yield path, lines[path]
 
-    lines: dict[str, KeptLine] = {}
     for _ in range(ROUNDS_AT_MOST):
         if not todo:
             break
@@ -739,15 +734,10 @@ def kept_lines(session: Session, kept: Kept, paths: list[str], found: list[str],
             records[path] = record
             interfaces[modules[path]] = record["interface"]
             lines[path] = line
-        todo = {path for path in affected if records[path] is not None and stale(records[path], interfaces, present)}
-
-    lost = [path for path in found if path in affected and path not in lines and kept.read(records[path]["key"]) is None]
-    if lost:
-        for path, line, _ in rechecked(session, kept, python, lost, texts, modules, shas, pins):
-            lines[path] = line
+        todo = {path for path in affected if stale(records[path], interfaces, present)}
     for path in found:
         if path in affected:
-            yield path, lines.get(path) or kept.read(records[path]["key"])
+            yield path, lines[path]
 
 
 def stale(record: dict | None, interfaces: dict[str, str], present: set[str]) -> bool:
@@ -792,10 +782,8 @@ def rechecked(session: Session, kept: Kept, python: str | None, asked: list[str]
         state = checked.get(path)
         line = line_of(texts[path], named.get(path) or modules[path], state, project.types, path)
         imports, outside = dependencies(state, project.graph, modules)
-        key = line_key(kept, modules[path], shas[path], pins, imports, outside)
-        kept.write(key, line)
-        record = {"key": key, "imports": imports, "outside": outside, "interface": interface_of(state)}
-        kept.record(kept.record_of(modules[path], shas[path], pins), record)
+        record = {"imports": imports, "outside": outside, "interface": interface_of(state)}
+        kept.record(kept.record_of(modules[path], shas[path], pins), record, line)
         yield path, line, record
 
 
@@ -820,22 +808,13 @@ def interface_of(state: State | None) -> str:
     return interface.hex() if isinstance(interface, bytes) else str(interface or "")
 
 
-def line_key(kept: Kept, module: str, sha: bytes, pins: str, imports: dict[str, str], outside: dict[str, str]) -> str:
-    """The key of a module's line: the bridge, the module, its contents, the pins and the interface of everything it
-    depends on."""
-    digest = hashlib.sha256(f"{kept.version}\0{module}\0{pins}\0".encode() + sha)
-    for name, interface in [*sorted(imports.items()), *sorted(outside.items())]:
-        digest.update(f"\0{name}\0{interface}".encode())
-    return digest.hexdigest()
-
-
-def file_lines(lines: Iterable[tuple[str, KeptLine]], write: list[str], judged: set[str]) -> Iterator[dict]:
+def file_lines(lines: Iterable[tuple[str, KeptLine]], write: list[str], judged: set[str]) -> Iterator[dict | str]:
     """The file lines as each is ready, then the program and the trailer."""
     seen = resolved = unjoined = files = 0
     folders: dict[str, None] = {}
     for path, line in lines:
         seen, resolved, unjoined = seen + line.expressions, resolved + line.typed, unjoined + line.unjoined
-        yield {"file": placed(line, path, bool(write) and path not in judged)}
+        yield placed(line, path, bool(write) and path not in judged)
         files += 1
         folders.update(dict.fromkeys(packages(path)))
     yield {"program": {"packages": sorted(folders)}}
@@ -853,12 +832,15 @@ def line_of(text: bytes, module: str, state: State | None, types: dict, path: st
     comments = tuple(writer.comments()) if not errors else ()
     ran = state is not None and state.tree is not None
     unjoined = sum(1 for span in typed.by_span if span not in writer.joined)
-    return KeptLine(ModuleLine(errors, module, ran, root, comments).to_json(), typed.expressions, len(typed.by_span), unjoined)
+    members = json.dumps(ModuleLine(errors, module, ran, root, comments), ensure_ascii=False, separators=(",", ":"), default=to_json)[1:-1]
+    return KeptLine(members, typed.expressions, len(typed.by_span), unjoined)
 
 
-def placed(kept: KeptLine, path: str, context: bool) -> dict[str, object]:
-    """A kept line as the file at $path writes it, marked as context when the request did not ask for it."""
-    return written((("path", path), ("context", True if context else ABSENT), *kept.line.items()))
+def placed(kept: KeptLine, path: str, context: bool) -> str:
+    """A kept line as the file at $path writes it, marked as context when the request did not ask for it, put
+    together as text: the line is never decoded to be written again."""
+    marked = ',"context":true' if context else ""
+    return '{"file":{"path":' + json.dumps(path, ensure_ascii=False) + marked + "," + kept.members + "}}"
 
 
 def emit(lines: Iterator[dict]) -> None:
@@ -867,7 +849,7 @@ def emit(lines: Iterator[dict]) -> None:
     # a character of text and every other is still read.
     sys.stdout.reconfigure(errors="replace")
     for line in lines:
-        sys.stdout.write(json.dumps(line, ensure_ascii=False, separators=(",", ":"), default=to_json) + "\n")
+        sys.stdout.write((line if isinstance(line, str) else json.dumps(line, ensure_ascii=False, separators=(",", ":"), default=to_json)) + "\n")
     sys.stdout.flush()
 
 

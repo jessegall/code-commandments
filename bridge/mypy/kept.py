@@ -8,6 +8,7 @@ import json
 import os
 import sys
 import tempfile
+import time
 import zlib
 from dataclasses import dataclass
 
@@ -27,11 +28,16 @@ def bridge_version() -> str:
     return digest.hexdigest()
 
 
+RENEWED_AFTER = float(os.environ.get("COMMANDMENTS_CACHE_HOURS") or 12) * 3600 / 10
+"""How long a record goes untouched before reading it renews its time to live: a tenth of the hours a cache is kept."""
+
+
 @dataclass(frozen=True)
 class KeptLine:
-    """A module's file line without its path or context, and the counts its trailer adds up."""
+    """A module's file line as it is written, without its path or context: the members of its object as JSON text,
+    ready to be put after them, and the counts its trailer adds up."""
 
-    line: dict[str, object]
+    members: str
     expressions: int
     typed: int
     unjoined: int
@@ -62,41 +68,31 @@ class Kept:
         path."""
         return "record-" + hashlib.sha256(f"{self.version}\0{module}\0{pins}\0".encode() + sha).hexdigest()
 
-    def recorded(self, record: str) -> dict | None:
-        """A module's record: its line key, the interface each module it depends on showed when the line was kept,
-        and the interface it showed itself."""
+    def recorded(self, record: str) -> tuple[dict, KeptLine] | None:
+        """A module's record and its line, in one read: the interface each module it depends on showed when the
+        line was made, and the interface it showed itself."""
+        path = self.path(record)
         try:
-            with open(self.path(record), "rb") as file:
-                held = json.loads(zlib.decompress(file.read()))
-            os.utime(self.path(record))
+            with open(path, "rb") as file:
+                written = zlib.decompress(file.read()).decode("utf-8")
+                if time.time() - os.fstat(file.fileno()).st_mtime > RENEWED_AFTER:
+                    os.utime(path)
+            meta, members = written.split("\n", 1)
+            held = json.loads(meta)
         except (OSError, ValueError, zlib.error):
             return None
-        return held if isinstance(held, dict) and {"key", "imports", "outside", "interface"} <= held.keys() else None
+        if not isinstance(held, dict) or not {"imports", "outside", "interface", "counts"} <= held.keys():
+            return None
+        return held, KeptLine(members, *held["counts"])
 
-    def record(self, record: str, held: dict) -> None:
-        """Keeps a module's record the moment its line is kept, so a run stopped part way keeps what it did."""
-        self.stored(record, zlib.compress(json.dumps(held).encode(), 3))
+    def record(self, record: str, held: dict, line: KeptLine) -> None:
+        """Keeps a module's record with its line the moment the line is made, so a run stopped part way keeps what
+        it did."""
+        meta = json.dumps({**held, "counts": [line.expressions, line.typed, line.unjoined]})
+        self.stored(record, zlib.compress((meta + "\n" + line.members).encode("utf-8", errors="replace"), 3))
 
     def path(self, key: str) -> str:
         return os.path.join(self.folder, key[:2], key[2:])
-
-    def has(self, key: str) -> bool:
-        return os.path.exists(self.path(key))
-
-    def read(self, key: str) -> KeptLine | None:
-        path = self.path(key)
-        try:
-            with open(path, "rb") as file:
-                held = json.loads(zlib.decompress(file.read()))
-            os.utime(path)
-        except (OSError, ValueError, zlib.error):
-            return None
-        return KeptLine(held["line"], held["expressions"], held["typed"], held["unjoined"])
-
-    def write(self, key: str, kept: KeptLine) -> None:
-        self.stored(key, zlib.compress(json.dumps({"line": kept.line, "expressions": kept.expressions, "typed": kept.typed,
-                                                   "unjoined": kept.unjoined}, ensure_ascii=False, separators=(",", ":")).encode(
-            "utf-8", errors="replace"), 3))
 
     def stored(self, key: str, body: bytes) -> None:
         path = self.path(key)

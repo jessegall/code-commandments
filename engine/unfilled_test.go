@@ -12,10 +12,16 @@ import (
 
 const fillCounted contract.Language = "fillCounted-fill"
 
-var fills int
+var (
+	fills  int
+	filled [][]string
+)
 
 func init() {
-	engine.Fills(fillCounted, func(*engine.Codebase, []string) { fills++ })
+	engine.Fills(fillCounted, func(_ *engine.Codebase, changed []string) {
+		fills++
+		filled = append(filled, changed)
+	})
 }
 
 func countedStream(t *testing.T) *contract.Stream {
@@ -72,5 +78,24 @@ func TestAnUnfilledCodebaseIsFilledOnceHoweverManyPartsAsk(t *testing.T) {
 
 	if fills != 1 {
 		t.Errorf("the codebase and two of its parts asked for its facts and it was filled %d times", fills)
+	}
+}
+
+func TestARuleAskingAboutOneFileFillsThatFileAlone(t *testing.T) {
+	codebase := engine.Unfilled(padded, countedStream(t))
+	one := codebase.Files()[0].Path
+	fills, filled = 0, nil
+
+	codebase.FilledFor([]string{one})
+	codebase.FilledFor([]string{one})
+
+	if fills != 1 || len(filled[0]) != 1 || filled[0][0] != one {
+		t.Fatalf("asking about %s twice filled %d times, with %v", one, fills, filled)
+	}
+
+	codebase.Filled()
+
+	if fills != 2 || len(filled[1]) != len(codebase.Files())-1 {
+		t.Errorf("filling the rest after one file filled %d times, the last with %d of %d files", fills, len(filled[len(filled)-1]), len(codebase.Files()))
 	}
 }

@@ -175,7 +175,7 @@ func countingBuilds(t *testing.T, script string, args ...string) string {
 }
 
 const countedBuilds = `
-import os, sys
+import json, os, sys
 sys.path.insert(0, 'mypy')
 import tree, session
 from kept import Kept
@@ -191,7 +191,7 @@ for name in ("checked", "compiled"):
     setattr(session.Session, name, counted)
 
 def run(root, kept):
-    return list(tree.stream(tree.Session(), [root], [], None, Kept(kept)))
+    return [json.loads(line) if isinstance(line, str) else line for line in tree.stream(tree.Session(), [root], [], None, Kept(kept))]
 
 def said(lines):
     print(" ".join(builds) or "none", sum(1 for line in lines if "file" in line))
@@ -337,5 +337,26 @@ print(" ".join(builds) or "none", sum(1 for line in lines if "file" in line), un
 	}
 	if took := time.Since(started); took > 50*time.Second {
 		t.Errorf("the runs over a chain of 600 modules took %v", took)
+	}
+}
+
+func TestAnUnchangedProjectOfThreeThousandModulesIsServedInSeconds(t *testing.T) {
+	files := map[string]string{}
+	for at := 0; at < 3000; at++ {
+		files[fmt.Sprintf("m%d.py", at)] = fmt.Sprintf("class C%d:\n    def total(self, count: int) -> int:\n        return count * %d\n", at, at)
+	}
+
+	said := countingBuilds(t, `
+import time
+run(sys.argv[1], sys.argv[2])
+counting[0] = True
+began = time.time()
+lines = [line for line in tree.stream(tree.Session(), [sys.argv[1]], [], None, Kept(sys.argv[2]))]
+took = time.time() - began
+print(" ".join(builds) or "none", sum(1 for line in lines if "file" in line), took < 3, round(took, 1))
+`, checkoutHolding(t, files), t.TempDir())
+
+	if !strings.HasPrefix(said, "none 3000 True") {
+		t.Errorf("a second run over 3,000 unchanged modules made the builds, lines, whether it took under 3 s, and its seconds %q", said)
 	}
 }

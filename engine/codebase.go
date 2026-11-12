@@ -29,8 +29,53 @@ type Codebase struct {
 
 // deferredFill is the filling a codebase read for judging puts off until a rule is really asked: a run whose every answer is remembered never fills at all.
 type deferredFill struct {
-	once sync.Once
-	root *Codebase
+	mu     sync.Mutex
+	root   *Codebase
+	whole  bool
+	filled map[string]bool
+}
+
+func (d *deferredFill) fillAll() {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+
+	if d.whole {
+		return
+	}
+	d.whole = true
+
+	if len(d.filled) == 0 {
+		d.root.fill(nil)
+
+		return
+	}
+
+	every := make([]string, 0, len(d.root.files))
+	for _, file := range d.root.files {
+		every = append(every, file.Path)
+	}
+	d.fill(every)
+}
+
+func (d *deferredFill) fillFor(paths []string) {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+
+	if !d.whole {
+		d.fill(paths)
+	}
+}
+
+func (d *deferredFill) fill(paths []string) {
+	left := slices.DeleteFunc(slices.Clone(paths), func(path string) bool { return d.filled[path] })
+	if len(left) == 0 {
+		return
+	}
+
+	for _, path := range left {
+		d.filled[path] = true
+	}
+	d.root.fill(left)
 }
 
 // Filler fills the facts the engine owns for one language, once every file of the codebase has been read.
@@ -175,17 +220,21 @@ func New(read func(path string) ([]byte, error), streams ...*contract.Stream) *C
 
 func Unfilled(read func(path string) ([]byte, error), streams ...*contract.Stream) *Codebase {
 	codebase := built(read, streams...)
-	codebase.fills = &deferredFill{root: codebase}
+	codebase.fills = &deferredFill{root: codebase, filled: map[string]bool{}}
 
 	return codebase
 }
 
 func (c *Codebase) Filled() {
-	if c.fills == nil {
-		return
+	if c.fills != nil {
+		c.fills.fillAll()
 	}
+}
 
-	c.fills.once.Do(func() { c.fills.root.fill(nil) })
+func (c *Codebase) FilledFor(paths []string) {
+	if c.fills != nil {
+		c.fills.fillFor(paths)
+	}
 }
 
 func built(read func(path string) ([]byte, error), streams ...*contract.Stream) *Codebase {

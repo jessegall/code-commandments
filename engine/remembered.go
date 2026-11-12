@@ -141,7 +141,7 @@ func (r *Remembered) finding(codebase *Codebase, find func(*Codebase) []Match, p
 		return answered
 	}
 
-	codebase.Filled()
+	codebase.FilledFor(slices.Collect(maps.Keys(asked)))
 	matches := find(codebase.Reporting(slices.Collect(maps.Keys(asked))...))
 	r.remember(asked, matches)
 	answered = append(answered, matches...)
