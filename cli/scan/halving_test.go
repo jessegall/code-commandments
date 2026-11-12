@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/jessegall/code-commandments/bridge"
 	"github.com/jessegall/code-commandments/contract"
 	"github.com/jessegall/code-commandments/engine/php"
 )
@@ -122,5 +123,30 @@ func TestWhatIsHalvedIsWhatTheBridgeWritesAndNotWhatItCompiles(t *testing.T) {
 		if !slices.Equal(paths, roots) {
 			t.Errorf("a half was compiled over %v rather than over the whole project %v", paths, roots)
 		}
+	}
+}
+
+func TestABridgeThatCannotRunIsAskedOnceAndNeverHalved(t *testing.T) {
+	var asked int
+	route := read
+	read = func(Bridge, []string, []string, func()) (*contract.Stream, error) {
+		asked++
+
+		return nil, bridge.ToolchainMissing{Language: "Python", Need: "python3.10 or newer on the PATH"}
+	}
+	t.Cleanup(func() { read = route })
+
+	held := Bridge{Kind: "mypy", Word: "python", Label: "Python"}
+	var files []string
+	for at := range 64 {
+		files = append(files, filepath.Join("src", string(rune('a'+at%26))+string(rune('a'+at/26))+".py"))
+	}
+
+	if _, err := held.readHalving([]string{"src"}, files, func() {}, halvingsAtMost); !isUnavailable(err) {
+		t.Errorf("a bridge with no toolchain was reported as %v", err)
+	}
+
+	if asked != 1 {
+		t.Errorf("a bridge with no toolchain was started %d times; it can never run, so once is enough", asked)
 	}
 }

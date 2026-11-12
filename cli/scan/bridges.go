@@ -385,7 +385,7 @@ const halvingsAtMost = 8
 
 func (b Bridge) readHalving(roots, files []string, tally func(), halvings int) (*contract.Stream, error) {
 	stream, err := read(b, roots, files, tally)
-	if err == nil || halvings <= 0 || len(files) < 2 {
+	if err == nil || halvings <= 0 || len(files) < 2 || isUnavailable(err) {
 		return stream, err
 	}
 
