@@ -12,6 +12,7 @@ import (
 	"github.com/jessegall/code-commandments/cli/warm"
 	"github.com/jessegall/code-commandments/contract"
 	"github.com/jessegall/code-commandments/engine"
+	"github.com/jessegall/code-commandments/walk"
 )
 
 func TestABaseAnswersForTheBranchItWasReadAt(t *testing.T) {
@@ -493,19 +494,19 @@ func TestACheckoutsFileStandsInForTheProjectsOwnOnItsRealPath(t *testing.T) {
 	worktree := filepath.Join(root, ".journal", "worktrees", "worker-1")
 	own := filepath.Join(worktree, "src", "order.py")
 
-	stands := warm.Counterpart(worktree, linked, own)
+	stands := walk.Counterpart(worktree, linked, own)
 
 	if _, known := base.Holds(stands); !known {
 		t.Errorf("a worker's file stands in for %q, which the tree does not hold; it holds the project's copy at %q",
 			stands, filepath.Join(root, "src", "order.py"))
 	}
 
-	if stands := warm.Counterpart(root, linked, filepath.Join(root, "src", "invoice.py")); stands != filepath.Join(root, "src", "invoice.py") {
+	if stands := walk.Counterpart(root, linked, filepath.Join(root, "src", "invoice.py")); stands != filepath.Join(root, "src", "invoice.py") {
 		t.Errorf("a file of the project's own checkout stands in for %q rather than itself", stands)
 	}
 
 	elsewhere := filepath.Join(t.TempDir(), "other", "thing.py")
-	if stands := warm.Counterpart(worktree, linked, elsewhere); stands != elsewhere {
+	if stands := walk.Counterpart(worktree, linked, elsewhere); stands != elsewhere {
 		t.Errorf("a file outside the checkout stands in for %q", stands)
 	}
 }

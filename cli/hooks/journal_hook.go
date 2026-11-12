@@ -21,7 +21,6 @@ import (
 	"github.com/jessegall/code-commandments/cli/git"
 	"github.com/jessegall/code-commandments/cli/health"
 	"github.com/jessegall/code-commandments/cli/help"
-	"github.com/jessegall/code-commandments/cli/warm"
 	"github.com/jessegall/code-commandments/cli/workspace"
 	"github.com/jessegall/code-commandments/engine"
 )
@@ -435,7 +434,6 @@ func (s JournalServe) Run(in *cli.Input, console cli.Console) (int, error) {
 
 	if unanswerable != "" {
 		fmt.Fprintln(console.Err, unanswerable)
-		cannotBeAsked.Store(&unanswerable)
 	}
 
 	path := os.Getenv(pluginSocket)
@@ -473,15 +471,6 @@ func (s JournalServe) Run(in *cli.Input, console cli.Console) (int, error) {
 	defer remembersAcrossRestarts(console)()
 
 	givesBackTheTreesItLetGo()
-
-	if judging, listening := Judging(root); listening {
-		defer judging.Close()
-
-		forget, _ := warm.Register(root)
-		defer forget()
-
-		go serveJudging(judging, root)
-	}
 
 	advice := startAdvisers(adviseAsked)
 	serve(listener, func() bool { return stamp() == started }, advice)
@@ -521,13 +510,6 @@ func serve(listener net.Listener, current func() bool, advice *advisers) {
 
 			go heldTheConfigOf(read)
 			go heldTheConfigFileOf(servedRoot())
-
-			if drop, asked := lanesAsked(read); asked {
-				connection.Write(lanesAnswered(drop))
-				connection.Close()
-
-				return
-			}
 
 			if health.Asked(read) {
 				connection.Write([]byte(health.Answer(hooksService) + "\n"))
@@ -900,4 +882,8 @@ func stamp() int64 {
 
 func servedRoot() string {
 	return workspace.ProjectRoot(firstText(os.Getenv(journalRoot), cwdOf()))
+}
+
+func noProjectAt(root string) bool {
+	return root == "" || root == "/" || git.Root(root) == ""
 }

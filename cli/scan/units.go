@@ -96,6 +96,10 @@ func (u *Units) Count() int {
 	return len(u.units)
 }
 
+func (u *Units) Files(at int) int {
+	return u.units[at].files
+}
+
 func (u *Units) Load(at int) (*engine.Codebase, error) {
 	held := u.units[at]
 	file, err := os.Open(held.path)

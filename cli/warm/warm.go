@@ -7,15 +7,14 @@ import (
 	"io"
 	"maps"
 	"os"
-	"path/filepath"
 	"slices"
-	"strconv"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/jessegall/code-commandments/contract"
 	"github.com/jessegall/code-commandments/engine"
+	"github.com/jessegall/code-commandments/walk"
 )
 
 const Sweep = 30 * time.Second
@@ -41,14 +40,14 @@ type Base struct {
 
 // Keeper holds the bases, one per project and branch, and hands out the one a question is about.
 type Keeper struct {
-	mu       sync.Mutex
-	bases    map[string]*Base
-	parses   *Parses
-	cutting  map[string]string
-	ceiling  int
-	stamps   uint64
-	leaving  []func(checkout string)
-	now      func() time.Time
+	mu      sync.Mutex
+	bases   map[string]*Base
+	parses  *Parses
+	cutting map[string]string
+	ceiling int
+	stamps  uint64
+	leaving []func(checkout string)
+	now     func() time.Time
 }
 
 func Keep() *Keeper {
@@ -391,7 +390,7 @@ func (b *Base) Languages() []contract.Language {
 func (b *Base) Gone() []string {
 	var gone []string
 	for path := range b.marks {
-		if Mark(path) == "" {
+		if walk.Mark(path) == "" {
 			gone = append(gone, path)
 		}
 	}
@@ -465,7 +464,7 @@ func (b *Base) ViewFrom(checkout string, rebuilt []*contract.Stream, project str
 
 	standsFor := map[string]bool{}
 	for path := range fresh {
-		if stands := Counterpart(checkout, project, path); stands != path {
+		if stands := walk.Counterpart(checkout, project, path); stands != path {
 			standsFor[stands] = true
 		}
 	}
@@ -527,32 +526,6 @@ func (b *Base) ViewFrom(checkout string, rebuilt []*contract.Stream, project str
 	return view
 }
 
-func Same(one, two string) bool {
-	return real(one) == real(two)
-}
-
-func Under(folder, path string) (string, bool) {
-	under, err := filepath.Rel(real(folder), real(path))
-	if err != nil || strings.HasPrefix(under, "..") {
-		return "", false
-	}
-
-	return under, true
-}
-
-func Counterpart(checkout, project, file string) string {
-	if real(checkout) == real(project) {
-		return file
-	}
-
-	under, inside := Under(checkout, file)
-	if !inside {
-		return file
-	}
-
-	return filepath.Join(real(project), under)
-}
-
 func marksOf(codebase *engine.Codebase, taken map[string]Known) map[string]Known {
 	marks := map[string]Known{}
 	for _, file := range codebase.Files() {
@@ -584,7 +557,7 @@ type Known struct {
 }
 
 func Now(path string) Known {
-	return Known{Mark: Mark(path), Digest: Digest(path)}
+	return Known{Mark: walk.Mark(path), Digest: Digest(path)}
 }
 
 func (k Known) Stands(path string) bool {
@@ -592,7 +565,7 @@ func (k Known) Stands(path string) bool {
 		return false
 	}
 
-	now := Mark(path)
+	now := walk.Mark(path)
 	if now == k.Mark {
 		return true
 	}
@@ -617,15 +590,6 @@ func Digest(path string) string {
 	}
 
 	return hex.EncodeToString(sum.Sum(nil))
-}
-
-func Mark(path string) string {
-	info, err := os.Stat(path)
-	if err != nil {
-		return ""
-	}
-
-	return info.ModTime().UTC().Format(time.RFC3339Nano) + "\x00" + strconv.FormatInt(info.Size(), 10)
 }
 
 func (k *Keeper) DropsEveryBranchBut(project, branch string) []string {

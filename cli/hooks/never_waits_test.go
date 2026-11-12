@@ -61,3 +61,11 @@ func TestAHookIsAnsweredAtOnceEvenWithNoTreeToAnswerFrom(t *testing.T) {
 			filepath.Join(root, "src", "order.py"), said)
 	}
 }
+
+func nowServing(t *testing.T) {
+	t.Helper()
+
+	was := serving.Load()
+	Serves()
+	t.Cleanup(func() { serving.Store(was) })
+}

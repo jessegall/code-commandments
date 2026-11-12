@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"io/fs"
 	"math/rand"
 	"net"
 	"os"
@@ -28,6 +27,7 @@ import (
 	"github.com/jessegall/code-commandments/cli/scan"
 	"github.com/jessegall/code-commandments/cli/source"
 	"github.com/jessegall/code-commandments/cli/warm"
+	"github.com/jessegall/code-commandments/walk"
 )
 
 var (
@@ -363,7 +363,7 @@ func stressMoment(worker int, event string) map[string]any {
 func stressEvent(root string, worker, edit int, added []any) map[string]any {
 	file := filepath.Join(stressWorktreeIn(root, worker), "shop", "goods", fmt.Sprintf("thing%d.py", edit))
 	named := file
-	if under, inside := warm.Under(root, file); inside {
+	if under, inside := walk.Inside(root, file); inside {
 		named = under
 	}
 
@@ -422,8 +422,6 @@ func stressHandInBy(t *testing.T, root string, worker int) {
 
 	worktree := stressWorktreeIn(root, worker)
 
-	stressServed(t, root, worktree, worker)
-
 	began := time.Now()
 
 	var out, errs bytes.Buffer
@@ -439,28 +437,6 @@ func stressHandInBy(t *testing.T, root string, worker int) {
 	for _, sin := range []string{"DeepNestingDetector", "ThingByItsKindDetector"} {
 		if !strings.Contains(out.String(), sin) {
 			t.Errorf("worker %d's hand-in names no %s:\n%s%s", worker, sin, out.String(), errs.String())
-		}
-	}
-}
-
-func stressServed(t *testing.T, root, in string, worker int) {
-	t.Helper()
-
-	answer, asked := warm.Asked(root, warm.Request{
-		Judge: []string{"--changes", "--no-checklist", "--parallel=2"},
-		In:    in,
-	}, func(string) {})
-
-	if !asked {
-		t.Errorf("worker %d's hand-in was DECLINED, so it reads the whole tree in its own process: %s",
-			worker, answer.Because)
-
-		return
-	}
-
-	for _, sin := range []string{"DeepNestingDetector", "ThingByItsKindDetector"} {
-		if !strings.Contains(answer.Out, sin) {
-			t.Errorf("worker %d's served hand-in names no %s:\n%s%s", worker, sin, answer.Out, answer.Err)
 		}
 	}
 }
@@ -895,10 +871,6 @@ func (c *stressCheckout) move(t *testing.T, move int) {
 		return
 	case 26:
 		c.abandons(t)
-	case 27:
-		c.handsIn(t)
-
-		return
 	case 20, 21, 22, 23, 24, 25:
 		c.raises(t)
 	case 16, 17:
@@ -949,94 +921,6 @@ func (c *stressCheckout) forgets(t *testing.T) {
 
 	c.mine = append(c.mine, file)
 	c.tells(t, file, 1, lines(written), true)
-}
-
-func (c *stressCheckout) handsIn(t *testing.T) {
-	c.own.Lock()
-	defer c.own.Unlock()
-	defer flying()()
-
-	stressHeld(t, c, c.at, c.Project, "", false, stressTakeFor(t, c.Named))
-
-	if _, held := c.holding(); !held {
-		return
-	}
-
-	answer, asked := warm.Asked(c.Project, warm.Request{
-		Judge: []string{"--changes", "--no-checklist", "--parallel=2"},
-		In:    c.Told,
-	}, func(string) {})
-
-	if !asked {
-		t.Fatalf("move %d of checkout %d: its hand-in judging was DECLINED, so it reads the whole tree in its "+
-			"own process: %s", c.at, c.Named, answer.Because)
-	}
-
-	for _, named := range stressNamedIn(answer.Out) {
-		if c.owns(named) {
-			continue
-		}
-
-		_, inside := os.Stat(filepath.Join(c.At, named))
-		_, inProject := os.Stat(filepath.Join(c.Project, named))
-
-		var elsewhere []string
-		for _, other := range stressRunning {
-			if _, there := os.Stat(filepath.Join(other.At, named)); there == nil {
-				elsewhere = append(elsewhere, other.At)
-			}
-		}
-
-		t.Fatalf("move %d of checkout %d: its served hand-in reports %s, which is not its own (it owns %q); "+
-			"inside its own checkout: %v; inside the project: %v; it IS in %v; it wrote %v; it took away %v; "+
-			"its checkout is %s\n%s",
-			c.at, c.Named, named, c.under(), inside, inProject, elsewhere, c.mine, c.away, c.At, answer.Out)
-	}
-
-	c.countsWhatReallyDiffers(t)
-}
-
-func (c *stressCheckout) countsWhatReallyDiffers(t *testing.T) {
-	named, base, held := baseFor(c.Project)
-	if !held {
-		return
-	}
-
-	checkout := checkoutOf(named.project, c.At)
-
-	var asked []string
-	filepath.WalkDir(c.At, func(path string, entry fs.DirEntry, err error) error {
-		if err != nil || entry.IsDir() || strings.Contains(path, "/.git/") {
-			return nil
-		}
-		if source.Judges(path) {
-			asked = append(asked, path)
-		}
-
-		return nil
-	})
-
-	differs, covered := differingFrom(base, named, checkout, asked)
-	if !covered {
-		return
-	}
-
-	for _, file := range differs.Unread {
-		own := file
-		if under, inside := strings.CutPrefix(file, c.At+"/"); inside {
-			own = filepath.Join(c.Project, under)
-		}
-
-		if _, known := base.Holds(own); known {
-			t.Fatalf("move %d of checkout %d: its judging counts %s as a file the tree never read, while the tree "+
-				"holds the project's own copy of it", c.at, c.Named, file)
-		}
-
-		if !stressHeldLanguage(base, file) {
-			t.Fatalf("move %d of checkout %d: its judging counts %s as a file the tree never read, and the tree "+
-				"holds no file of that language at all, so that count can never be settled", c.at, c.Named, file)
-		}
-	}
 }
 
 func stressHeldLanguage(base *warm.Base, file string) bool {
@@ -1798,4 +1682,9 @@ func stressWorstWait(answers []map[string]any) time.Duration {
 	}
 
 	return worst
+}
+func asFloat(held any) float64 {
+	number, _ := held.(float64)
+
+	return number
 }

@@ -23,6 +23,7 @@ import (
 	"github.com/jessegall/code-commandments/contract"
 	"github.com/jessegall/code-commandments/detectors"
 	"github.com/jessegall/code-commandments/engine"
+	"github.com/jessegall/code-commandments/walk"
 )
 
 const (
@@ -143,7 +144,7 @@ func AgainstTheProgramNarrowed(marking Marking, files []string, rulesFor func(st
 		return nil, 0, why
 	}
 
-	here := slices.DeleteFunc(slices.Compact(slices.Sorted(slices.Values(files))), func(path string) bool { return warm.Mark(path) == "" })
+	here := slices.DeleteFunc(slices.Compact(slices.Sorted(slices.Values(files))), func(path string) bool { return walk.Mark(path) == "" })
 	if len(here) == 0 {
 		return nil, 0, filesNotOnDisk
 	}
@@ -303,13 +304,13 @@ func differsFromTheBase(base *warm.Base, held branchRoot, checkout string) (read
 	}
 
 	for _, file := range slices.Concat(base.Moved(), unannouncedIn(held.project)) {
-		under, inside := warm.Under(held.project, file)
+		under, inside := walk.Inside(held.project, file)
 		if !inside {
 			continue
 		}
 
 		stands := filepath.Join(checkout, under)
-		if warm.Mark(stands) == "" {
+		if walk.Mark(stands) == "" {
 			gone = append(gone, file)
 
 			continue
@@ -346,7 +347,7 @@ func taken(base *warm.Base, held branchRoot, files []string) (*warm.Base, time.D
 	var gone []string
 
 	for _, file := range files {
-		if warm.Mark(file) == "" {
+		if walk.Mark(file) == "" {
 			gone = append(gone, file)
 
 			continue
@@ -817,6 +818,48 @@ func readsRunning() []*treeRead {
 
 		return true
 	})
+
+	return running
+}
+
+const (
+	leastReadInOneGo = 200
+
+	mostReadInOneGo = 1000
+
+	partOfTheTree = 4
+)
+
+func readsInOneGo(files int) int {
+	if chosen := filesInOneGoChosen(); chosen > 0 {
+		return chosen
+	}
+
+	return min(mostReadInOneGo, max(leastReadInOneGo, files/partOfTheTree))
+}
+
+var letGo sync.Map
+
+func WhyATreeWasLetGo(project string) string {
+	why, said := letGo.Load(project)
+	if !said {
+		return ""
+	}
+
+	return string(why.(Narrowed))
+}
+
+func NodesHeld() int {
+	return kept.NodesHeld()
+}
+
+func ReadingNow(project string) bool {
+	named, ok := rootOf(project)
+	if !ok {
+		return false
+	}
+
+	_, running := reading.Load(named.key())
 
 	return running
 }

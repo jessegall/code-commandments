@@ -8,7 +8,6 @@ import (
 
 	"github.com/jessegall/code-commandments/cli/config"
 	"github.com/jessegall/code-commandments/cli/git"
-	"github.com/jessegall/code-commandments/cli/warm"
 )
 
 func TestAMachineWeCannotWriteOutsideOurOwnFolderStillAnswers(t *testing.T) {
@@ -53,27 +52,6 @@ func TestAMachineWithNoGitRefusesInWordsRatherThanGuessing(t *testing.T) {
 
 	if named := git.ChangedBetween(root, "aaaaaaa", "bbbbbbb"); len(named) != 0 {
 		t.Errorf("with no git a commit range names %d file(s)", len(named))
-	}
-}
-
-func TestWithNoSocketNamedLanesAsksTheJudgingServiceOfItsOwnProject(t *testing.T) {
-	root, _ := workerProject(t)
-	t.Setenv(pluginSocket, "")
-	was, err := os.Getwd()
-	if err != nil {
-		t.Fatal(err)
-	}
-	if err := os.Chdir(root); err != nil {
-		t.Fatal(err)
-	}
-	t.Cleanup(func() { os.Chdir(was) })
-
-	if path := theServicesSocket(); path != warm.Socket(git.ProjectRoot(root)) {
-		t.Errorf("with no socket named, lanes asks %s, not the judging service of the project it runs in", path)
-	}
-
-	if _, err := askTheService(map[string]any{"event": lanesEvent}); err == nil {
-		t.Error("with no service running for the project, the lanes verb still reached something")
 	}
 }
 

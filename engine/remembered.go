@@ -140,6 +140,38 @@ func (r *Remembered) FindForward(codebase *Codebase, find func(*Codebase) []Matc
 	return r.finding(codebase, find, forward.of)
 }
 
+func (r *Remembered) KnownClean(codebase *Codebase) bool {
+	return r.knownCleanUnder(codebase, (*File).fingerprint)
+}
+
+func (r *Remembered) KnownCleanAcross(codebase *Codebase) bool {
+	across := Analysis(codebase, printsAcrossKey{}, printsAcrossOf)
+
+	return across.whole && r.knownCleanUnder(codebase, across.of)
+}
+
+func (r *Remembered) KnownCleanForward(codebase *Codebase) bool {
+	forward := Analysis(codebase, printsForwardKey{}, printsForwardOf)
+
+	return forward.whole && r.knownCleanUnder(codebase, forward.of)
+}
+
+func (r *Remembered) knownCleanUnder(codebase *Codebase, printOf func(*File) (uint64, bool)) bool {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	now := r.now()
+	for _, file := range codebase.opened() {
+		print, printed := printOf(file)
+		verdict, held := r.files[print]
+		if !printed || !held || expired(verdict.Used, now) || !verdict.judgedBy(r.rule) || len(verdict.Found[r.rule]) > 0 {
+			return false
+		}
+	}
+
+	return true
+}
+
 func (r *Remembered) finding(codebase *Codebase, find func(*Codebase) []Match, printOf func(*File) (uint64, bool)) []Match {
 	opened := codebase.opened()
 	answered, asked, twins := r.recalled(printsOf(opened, printOf))

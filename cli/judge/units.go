@@ -22,9 +22,15 @@ type weighed struct {
 
 func (c Command) judgeUnits(sources scan.Sources, rules []detectors.Detector, options options, progress *cli.Progress, console cli.Console) (Judgement, int, error) {
 	var merged *cs.Summary
+	var clean []bool
 	set := newCSharpSet(sources.Checkout())
 	units, err := sources.CSharpUnits(func(codebase *engine.Codebase) error {
 		set.add(codebase)
+		clean = append(clean, !slices.ContainsFunc(rules, func(rule detectors.Detector) bool {
+			_, weighs := rule.(detectors.Aggregating)
+
+			return !weighs && !detectors.KnownClean(rule, codebase)
+		}))
 
 		if summary := cs.Summarize(codebase); merged == nil {
 			merged = summary
@@ -63,6 +69,13 @@ func (c Command) judgeUnits(sources scan.Sources, rules []detectors.Detector, op
 	read := make([][]weighed, len(aggregating))
 	files := 0
 	for at := range units.Count() {
+		if len(aggregating) == 0 && at < len(clean) && clean[at] {
+			files += units.Files(at)
+			engine.CountedRemembered(units.Files(at) * len(ordinary))
+
+			continue
+		}
+
 		codebase, err := units.Load(at)
 		if err != nil {
 			return Judgement{}, 0, err

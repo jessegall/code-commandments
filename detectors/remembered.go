@@ -70,6 +70,19 @@ func FindRemembering(detector Detector, codebase *engine.Codebase) []engine.Matc
 	return memories.Of(identified(detector)).Find(codebase, detector.Find)
 }
 
+func KnownClean(detector Detector, codebase *engine.Codebase) bool {
+	switch {
+	case !remembers(detector):
+		return false
+	case readsAcross(detector) && catalog.IsForward(detector):
+		return memories.Of(identified(detector) + forwardOverTheTree + acrossTheTree).KnownCleanForward(codebase)
+	case readsAcross(detector):
+		return memories.Of(identified(detector) + acrossTheTree).KnownCleanAcross(codebase)
+	}
+
+	return memories.Of(identified(detector)).KnownClean(codebase)
+}
+
 func readsAcross(detector Detector) bool {
 	_, weighs := detector.(Aggregating)
 

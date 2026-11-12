@@ -145,3 +145,11 @@ func handInsJudgedAfter(line map[string]any) bool {
 }
 
 const handInsAfterKey = "judge_hand_ins_after"
+
+func orNothing(said string) string {
+	if said == "" {
+		return "no commit the journal named"
+	}
+
+	return said
+}

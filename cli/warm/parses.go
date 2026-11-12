@@ -7,8 +7,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/jessegall/code-commandments/contract"
 	"github.com/jessegall/code-commandments/cache"
+	"github.com/jessegall/code-commandments/contract"
 )
 
 const mostNodesKept = 1_000_000
