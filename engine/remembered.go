@@ -27,7 +27,7 @@ type Verdict struct {
 	Found       map[int][]int `json:",omitempty"`
 }
 
-// Memory is what a set of rules knows of the files it has judged, by a fingerprint of their contents and nothing else: one entry per file however many rules judged it, kept until the fingerprint expires.
+// Memory is what a set of rules knows of the files it has judged, by a fingerprint of their contents and whether the file is a test, the one fact of its path a rule reads: one entry per file however many rules judged it, kept until the fingerprint expires.
 type Memory struct {
 	now     func() time.Time
 	mu      sync.Mutex
@@ -378,8 +378,12 @@ func (f *File) fingerprint() (uint64, bool) {
 			return
 		}
 
-		sum := sha256.Sum256(source)
-		f.contents = binary.LittleEndian.Uint64(sum[:8])
+		digest := sha256.New()
+		digest.Write(source)
+		if f.isTest() {
+			digest.Write([]byte("\x00test"))
+		}
+		f.contents = binary.LittleEndian.Uint64(digest.Sum(nil)[:8])
 		f.printed = true
 	})
 

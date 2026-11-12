@@ -58,15 +58,15 @@ func bodies(c *Codebase) map[string]int {
 }
 
 func (m Match) IsTest() bool {
-	if m.file == nil {
-		return false
-	}
+	return m.file != nil && m.file.isTest()
+}
 
-	if m.file.Test {
+func (f *File) isTest() bool {
+	if f.Test {
 		return true
 	}
 
-	read := m.grammar().TestFile
+	grammar, listed := grammars.Load(f.Language())
 
-	return read != nil && read(m.file.Judged(), m.file.Path)
+	return listed && grammar.(Grammar).TestFile != nil && grammar.(Grammar).TestFile(f.Judged(), f.Path)
 }
