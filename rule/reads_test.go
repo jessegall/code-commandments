@@ -64,39 +64,32 @@ func TestARuleSaysWhetherItReadsBeyondTheFileItReportsIn(t *testing.T) {
 	}
 }
 
-func TestAChainOfParentsIsAnsweredWrongWhenTheFileIsReadAlone(t *testing.T) {
+func TestACallFromAnotherFileIsAnsweredWrongWhenTheFileIsReadAlone(t *testing.T) {
 	codebase := pythontest.FromSource(t, map[string]string{
 		"shop/__init__.py": "",
-		"shop/migration.py": `class Migration:
-    number = 0
+		"shop/pricing.py": `def total(prices: list[int]) -> int:
+    return sum(prices)
 `,
-		"shop/rebuild_migration.py": `from shop.migration import Migration
+		"shop/checkout.py": `from shop.pricing import total
 
 
-class RebuildMigration(Migration):
-    statements: list[str] = []
-`,
-		"shop/migrations/__init__.py": "",
-		"shop/migrations/m004_drop_fades.py": `from shop.rebuild_migration import RebuildMigration
-
-
-class DropFadesMigration(RebuildMigration):
-    number = 4
+def pay(prices: list[int]) -> int:
+    return total(prices)
 `,
 	})
 
-	rule, err := Parse("HelperInAKindFolderDetector", []byte(`{"engine": "python", "sin": {"name": "helper-in-a-kind-folder", "description": "A class sits among the classes of a kind folder it is not", "skill": "python/absence"}, "find": {"select": "type-declaration", "where": [{"fileMatches": "/migrations/[^/]+\\.py$"}, {"not": {"extendsAny": "Migration"}}]}}`), skill.Slugged)
+	rule, err := Parse("UncalledFunctionDetector", []byte(`{"engine": "python", "sin": {"name": "uncalled-function", "description": "A function nothing calls", "skill": "python/absence"}, "find": {"select": "function", "where": [{"fileMatches": "pricing\\.py$"}, {"unused": true}]}}`), skill.Slugged)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	if found := rule.Find(codebase); len(found) > 0 {
-		t.Fatalf("given every file, the rule reports %v; the class extends Migration through RebuildMigration", locations(found))
+		t.Fatalf("given every file, the rule reports %v; checkout.py calls total", locations(found))
 	}
 
-	alone, found := fileNamed(codebase, "m004_drop_fades.py")
+	alone, found := fileNamed(codebase, "pricing.py")
 	if !found {
-		t.Fatal("the scan read no m004_drop_fades.py")
+		t.Fatal("the scan read no pricing.py")
 	}
 
 	if found := rule.Find(alone); len(found) == 0 {
