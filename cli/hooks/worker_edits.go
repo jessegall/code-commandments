@@ -113,7 +113,7 @@ func keepEditOf(line map[string]any) {
 func editsKeptFor(line map[string]any) bool {
 	moment, known := Moment4Of(line)
 
-	return known && liveEditsJudgedAt(MomentOf(moment))
+	return known && liveEditsJudgedAt(MomentOf(moment)) && notForThisRole(MomentOf(moment)) == ""
 }
 
 func checkoutRootOf(line map[string]any) string {

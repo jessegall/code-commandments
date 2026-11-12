@@ -211,7 +211,7 @@ func judge4Detached(raw []byte, line map[string]any) {
 	}
 
 	held := MomentOf(moment)
-	if !liveEditsJudgedAt(held) {
+	if !liveEditsJudgedAt(held) || notForThisRole(held) != "" {
 		return
 	}
 

@@ -195,3 +195,31 @@ func TestWithLiveJudgingOffNoEventStartsAnything(t *testing.T) {
 		}
 	}
 }
+
+func TestAWorkersEventStartsNothingWithWorkerJudgingOff(t *testing.T) {
+	root := t.TempDir()
+	data := t.TempDir()
+	t.Setenv(pluginData, data)
+	t.Setenv("PATH", t.TempDir())
+	t.Setenv(journalRoot, t.TempDir())
+
+	for _, chosen := range []map[string]any{
+		{liveEditsKey: true, workersKey: false, workerEditsKey: true},
+		{liveEditsKey: true, workersKey: true, workerEditsKey: false},
+	} {
+		for _, event := range []string{"file_edited", "command_starting", "idle"} {
+			line := map[string]any{"v": 1, "event": event, "session": "s1", "environment": "main", "agent": 9, "role": "worker",
+				"cwd": root, "settings": chosen, "data": map[string]any{"cwd": root, "text": "git status", "path": "order.py"}}
+			raw, _ := json.Marshal(line)
+
+			judge4Detached(raw, line)
+			keepEditOf(line)
+
+			for _, folder := range []string{eventsFolder, windowsFolder, "worker-edits"} {
+				if kept, _ := os.ReadDir(filepath.Join(data, folder)); len(kept) != 0 {
+					t.Errorf("a worker's %s with %v left %s in %s", event, chosen, kept, folder)
+				}
+			}
+		}
+	}
+}
