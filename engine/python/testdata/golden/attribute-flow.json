@@ -1159,8 +1159,8 @@
             0
         ],
         "promotion": [
-            0,
-            0
+            2,
+            2
         ]
     },
     "shop.printer_commands.LabelJob@shop/printer_commands.py:5": {
