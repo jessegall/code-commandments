@@ -16,7 +16,6 @@ arch="${platform#*/}"
 case "$os" in
     linux) rid=linux ;;
     darwin) rid=osx ;;
-    windows) rid=win ;;
     *) echo "scripts/release/roslyn: no bridge for $os" >&2; exit 1 ;;
 esac
 case "$arch" in
@@ -37,7 +36,6 @@ DOTNET_CLI_TELEMETRY_OPTOUT=1 DOTNET_NOLOGO=1 DOTNET_PROCESSOR_COUNT=2 dotnet pu
 
 name="roslyn-bridge-$os-$arch"
 suffix=""
-[ "$os" = windows ] && suffix=".exe"
 cp "$work/roslyn-bridge$suffix" "$out/$name$suffix"
 chmod 755 "$out/$name$suffix"
 echo "published $name$suffix"

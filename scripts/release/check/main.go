@@ -102,9 +102,6 @@ func missing(dir string, budgets Budgets, toolOnly bool) []string {
 			}
 			name = key
 		}
-		if strings.Contains(key, "windows-") {
-			name += ".exe"
-		}
 		if _, err := os.Stat(filepath.Join(dir, name)); err != nil {
 			problems = append(problems, name+" is budgeted but missing from the release")
 		}
@@ -126,7 +123,7 @@ func overBudget(platform string, size int64, budgets Budgets, budgetPath string)
 }
 
 func platformOf(binary string) string {
-	return strings.TrimSuffix(strings.TrimPrefix(filepath.Base(binary), "commandments-"), ".exe")
+	return strings.TrimPrefix(filepath.Base(binary), "commandments-")
 }
 
 func dynamicallyLinked(binary string) string {

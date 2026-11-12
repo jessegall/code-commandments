@@ -8,11 +8,7 @@
         "roslyn-bridge-darwin-amd64": 46137344,
         "roslyn-bridge-darwin-arm64": 44040192,
         "roslyn-bridge-linux-amd64": 46137344,
-        "roslyn-bridge-linux-arm64": 44040192,
-        "roslyn-bridge-windows-amd64": 45088768,
-        "roslyn-bridge-windows-arm64": 44040192,
-        "windows-amd64": 23592960,
-        "windows-arm64": 22544384
+        "roslyn-bridge-linux-arm64": 44040192
     },
     "measured": {
         "darwin-amd64": 21054176,
@@ -22,10 +18,6 @@
         "roslyn-bridge-darwin-amd64": 41602414,
         "roslyn-bridge-darwin-arm64": 39920222,
         "roslyn-bridge-linux-amd64": 41530101,
-        "roslyn-bridge-linux-arm64": 39934354,
-        "roslyn-bridge-windows-amd64": 40553462,
-        "roslyn-bridge-windows-arm64": 39883938,
-        "windows-amd64": 21233152,
-        "windows-arm64": 19513856
+        "roslyn-bridge-linux-arm64": 39934354
     }
 }

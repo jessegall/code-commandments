@@ -26,18 +26,22 @@ function refuse(string $why): never
 }
 
 /**
- * The platform's release name: darwin-arm64, linux-amd64, windows-amd64.exe.
+ * The platform's release name: darwin-arm64, linux-amd64. No release is built for Windows.
  */
 function platform(): string
 {
-    $os = ['Darwin' => 'darwin', 'Linux' => 'linux', 'Windows' => 'windows'][PHP_OS_FAMILY] ?? null;
+    if (PHP_OS_FAMILY === 'Windows') {
+        refuse('Windows is not supported; run it under WSL, which is Linux');
+    }
+
+    $os = ['Darwin' => 'darwin', 'Linux' => 'linux'][PHP_OS_FAMILY] ?? null;
     $arch = ['x86_64' => 'amd64', 'amd64' => 'amd64', 'AMD64' => 'amd64', 'arm64' => 'arm64', 'aarch64' => 'arm64', 'ARM64' => 'arm64'][php_uname('m')] ?? null;
 
     if ($os === null || $arch === null) {
         refuse('no release is built for ' . PHP_OS_FAMILY . ' on ' . php_uname('m') . '; build one with scripts/release/build, and name it in COMMANDMENTS_GO_BINARY');
     }
 
-    return "{$os}-{$arch}" . ($os === 'windows' ? '.exe' : '');
+    return "{$os}-{$arch}";
 }
 
 /**

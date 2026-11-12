@@ -97,54 +97,19 @@ func TestThePluginRefusesAPinThatIsNoRelease(t *testing.T) {
 	}
 }
 
-func TestThePluginFetchesTheWindowsBinaryUnderMSYS2(t *testing.T) {
-	for _, host := range []struct {
-		system string
-		env    []string
-		name   string
-	}{
-		{"MINGW64_NT-10.0-19045", []string{"PROCESSOR_ARCHITECTURE=AMD64", "PROCESSOR_ARCHITEW6432="}, "commandments-windows-amd64.exe"},
-		{"MSYS_NT-10.0-22631", []string{"PROCESSOR_ARCHITECTURE=AMD64", "PROCESSOR_ARCHITEW6432=ARM64"}, "commandments-windows-arm64.exe"},
-		{"MINGW64_NT-10.0-26100", []string{"PROCESSOR_ARCHITECTURE=ARM64", "PROCESSOR_ARCHITEW6432="}, "commandments-windows-arm64.exe"},
-	} {
-		t.Run(host.system, func(t *testing.T) {
+func TestThePluginRefusesWindows(t *testing.T) {
+	for _, system := range []string{"MINGW64_NT-10.0-19045", "MSYS_NT-10.0-22631", "CYGWIN_NT-10.0-22631"} {
+		t.Run(system, func(t *testing.T) {
 			root := pluginFolder(t)
-			server := releaseOf(t, "v9.9.9", host.name, fakeBinary, sumOf(fakeBinary))
-			if out, err := fetchRun(t, root, "v9.9.9", server.URL, append(host.env, posing(t, host.system, "x86_64"))...); err != nil {
-				t.Fatalf("the fetch said %q (%v)", out, err)
+			server := releaseOf(t, "v9.9.9", "commandments-linux-amd64", fakeBinary, sumOf(fakeBinary))
+			out, err := fetchRun(t, root, "v9.9.9", server.URL, posing(t, system, "x86_64"))
+			if err == nil || !strings.Contains(out, "Windows is not supported") {
+				t.Errorf("the fetch said %q (%v)", out, err)
 			}
-			binary := filepath.Join(root, "bin", "commandments-release.exe")
-			if files := fetched(t, root); len(files) != 1 || files[0] != binary {
-				t.Fatalf("the fetch left %v, not %s", files, binary)
-			}
-			if content, _ := os.ReadFile(binary); string(content) != fakeBinary {
-				t.Errorf("the fetched binary is %q", content)
+			if files := fetched(t, root); len(files) > 0 {
+				t.Errorf("a binary was written: %v", files)
 			}
 		})
-	}
-}
-
-func TestThePluginRefusesAWindowsBinaryWhoseSumDiffers(t *testing.T) {
-	root := pluginFolder(t)
-	server := releaseOf(t, "v9.9.9", "commandments-windows-amd64.exe", fakeBinary, sumOf("another binary"))
-	out, err := fetchRun(t, root, "v9.9.9", server.URL, "PROCESSOR_ARCHITECTURE=AMD64", "PROCESSOR_ARCHITEW6432=", posing(t, "MINGW64_NT-10.0-19045", "x86_64"))
-	if err == nil || !strings.Contains(out, "does not match its SHA256SUMS") {
-		t.Errorf("the fetch said %q (%v)", out, err)
-	}
-	if files := fetched(t, root); len(files) > 0 {
-		t.Errorf("the refused binary was kept: %v", files)
-	}
-}
-
-func TestThePluginRefusesCygwin(t *testing.T) {
-	root := pluginFolder(t)
-	server := releaseOf(t, "v9.9.9", "commandments-windows-amd64.exe", fakeBinary, sumOf(fakeBinary))
-	out, err := fetchRun(t, root, "v9.9.9", server.URL, "PROCESSOR_ARCHITECTURE=AMD64", posing(t, "CYGWIN_NT-10.0-22631", "x86_64"))
-	if err == nil || !strings.Contains(out, "run the journal under WSL or MSYS2") {
-		t.Errorf("the fetch said %q (%v)", out, err)
-	}
-	if files := fetched(t, root); len(files) > 0 {
-		t.Errorf("a binary was written: %v", files)
 	}
 }
 
