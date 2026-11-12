@@ -14,16 +14,20 @@ export class Sfc {
 
     /** The text TypeScript checks: the file with everything outside its script blocks blanked, newlines kept. */
     checkedText() {
-        const text = this.source.text
-        let out = ''
-        let at = 0
-        for (const [start, end] of this.scripts) {
-            out += blank(text.slice(at, start)) + text.slice(start, end)
-            at = end
-        }
-
-        return out + blank(text.slice(at))
+        return checkedTextOf(this.source.text, this.scripts)
     }
+}
+
+/** `text` with everything outside the `[start, end)` script ranges blanked, newlines kept: what TypeScript checks of a Vue file. */
+export function checkedTextOf(text, scripts) {
+    let out = ''
+    let at = 0
+    for (const [start, end] of scripts) {
+        out += blank(text.slice(at, start)) + text.slice(start, end)
+        at = end
+    }
+
+    return out + blank(text.slice(at))
 }
 
 /** Writes a Vue file as the contract's Component, its scripts as TypeScript from the whole program. */

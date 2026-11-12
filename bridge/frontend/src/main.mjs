@@ -7,10 +7,10 @@ import { Source } from './source.mjs'
 import { Program } from './program.mjs'
 import { Tree } from './tree.mjs'
 import { TypeScriptWriter } from './typescript.mjs'
-import { Sfc, VueWriter, scriptComments } from './vue.mjs'
+import { Sfc, VueWriter, checkedTextOf, scriptComments } from './vue.mjs'
 import { once } from 'node:events'
 import { lineOf } from './json.mjs'
-import { TreeCache } from './cache.mjs'
+import { Memo, TreeCache } from './cache.mjs'
 
 const NAME = 'bridge/frontend'
 const VERSION = '1'
@@ -20,6 +20,16 @@ const LANGUAGES = { '.vue': 'vue', ...Object.fromEntries(['.ts', '.tsx', '.mts',
 const CONTEXT = ',"context":true'
 /** How large a line is gathered to be kept. */
 const GATHERED = 16 << 20
+
+/** The text TypeScript checks of a Vue file: from the script ranges kept for its text, so the Vue parser reads only a file it has not met. */
+function checkedScriptOf(source, memo, sfcOf) {
+    const ranges = memo?.get('scripts', source.text)
+    if (ranges) return checkedTextOf(source.text, ranges)
+    const sfc = sfcOf(source.path)
+    memo?.put('scripts', source.text, sfc.scripts)
+
+    return sfc.checkedText()
+}
 
 /** Whether $path is one of the judged paths or lies in a judged folder: the path and each folder above it looked up once. */
 function judges(judged, path) {
@@ -39,15 +49,21 @@ export async function stream({ paths, write = [], renames = [], contents = {}, c
     const drafted = Object.keys(contents).filter((path) => languageOf(path) && !existsSync(path) && roots.some((root) => path.startsWith(root + '/')))
     const files = [...new Set([...roots.flatMap(filesIn), ...drafted])].sort()
     const sources = new Map(files.map((path) => [path, Object.hasOwn(contents, path) ? new Source(path, contents[path]) : Source.read(path)]))
-    const sfcs = new Map(files.filter((path) => path.endsWith('.vue')).map((path) => [path, new Sfc(sources.get(path))]))
-    const scripts = new Map([...sfcs].map(([path, sfc]) => [path, sfc.checkedText()]))
+    const memo = cache ? new Memo(cache) : undefined
+    const sfcs = new Map()
+    const sfcOf = (path) => {
+        if (!sfcs.has(path)) sfcs.set(path, new Sfc(sources.get(path)))
+
+        return sfcs.get(path)
+    }
+    const scripts = new Map(files.filter((path) => path.endsWith('.vue')).map((path) => [path, checkedScriptOf(sources.get(path), memo, sfcOf)]))
     const whole = new Program(sources, scripts, renames)
-    const kept = cache ? new TreeCache(cache, whole, new Map([...sources].map(([path, source]) => [path, source.text])), scripts) : undefined
+    const kept = cache ? new TreeCache(cache, whole, new Map([...sources].map(([path, source]) => [path, source.text])), scripts, memo) : undefined
     const parsed = kept ? files.filter((path) => !kept.fresh(path) || kept.reaches(path)) : files
     // The cache answers which files need a program, and it reads their imports through one, so the program over
     // every file is built first and stands when every file needs it; a run needing fewer gets one over those alone.
     const program = parsed.length === files.length ? whole : new Program(sources, scripts, renames, parsed)
-    const language = sfcs.size ? 'vue' : 'typescript'
+    const language = scripts.size ? 'vue' : 'typescript'
     const totals = { expressions: 0, typed: 0, calls: 0, resolved: 0 }
     await emit({ header: { contract: 'tree', version: 1, language, bridge: { name: NAME, version: VERSION }, roots: roots.map((root) => program.shown(root)) } })
     for (const path of files) {
@@ -59,7 +75,7 @@ export async function stream({ paths, write = [], renames = [], contents = {}, c
             continue
         }
         const tree = new Tree(sources.get(path))
-        const { root, found, errors } = sfcs.has(path) ? vueFile(tree, sfcs.get(path), program) : typeScriptFile(tree, program)
+        const { root, found, errors } = scripts.has(path) ? vueFile(tree, sfcOf(path), program) : typeScriptFile(tree, program)
         const file = { path: program.shown(path), language: languageOf(path), errors }
         const at = JSON.stringify({ file }).length - 2
         if (context) file.context = true

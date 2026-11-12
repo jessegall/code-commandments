@@ -33,11 +33,11 @@ const PROJECT_ROOT = '\u0002'
  */
 export class TreeCache {
     /** `folder` holds the lines; `program` reads the options and resolves imports; `texts` maps each path to its text. */
-    constructor(folder, program, texts, scripts) {
+    constructor(folder, program, texts, scripts, memo = new Memo(folder)) {
         this.folder = folder
         this.program = program
         mkdirSync(folder, { recursive: true })
-        this.keys = keysOf(program, texts, scripts, contextOf(program, texts))
+        this.keys = keysOf(program, texts, scripts, contextOf(program, texts), memo)
         this.read = new Map()
         this.reaching = new Set([...texts].filter(([path, text]) => reachesEveryFile(path, text)).map(([path]) => path))
     }
@@ -149,11 +149,11 @@ function reachesEveryFile(path, text) {
  * Each file's key: the context, and the hash of the component of the import graph it sits in, with all it reaches.
  * A file counts by its text and where in the project its imports are, because its line names them, and never by where it is itself.
  */
-function keysOf(program, texts, scripts, context) {
+function keysOf(program, texts, scripts, context, memo) {
     const edges = new Map()
     const own = new Map()
     for (const [path, text] of texts) {
-        const imported = ts.preProcessFile(scripts.get(path) ?? text, true, true).importedFiles.map((each) => each.fileName)
+        const imported = importsOf(scripts.get(path) ?? text, memo)
         const reached = []
         const places = []
         const outside = []
@@ -171,6 +171,46 @@ function keysOf(program, texts, scripts, context) {
     const deep = componentHashes(edges, own)
 
     return new Map([...texts.keys()].map((path) => [path, hashed(context + '\0' + deep.get(path))]))
+}
+
+/** The specifiers a text imports, kept under the fingerprint of the text so a file met before is never lexed again. */
+function importsOf(text, memo) {
+    const kept = memo.get('imports', text)
+    if (kept) return kept
+    const imported = ts.preProcessFile(text, true, true).importedFiles.map((each) => each.fileName)
+    memo.put('imports', text, imported)
+
+    return imported
+}
+
+/**
+ * What a text is found to hold, kept on disk under the fingerprint of the text and the kind of finding: the same text
+ * always yields the same finding, so a file met in any checkout before is never read for it again.
+ */
+export class Memo {
+    constructor(folder) {
+        this.folder = join(folder, 'memo')
+        mkdirSync(this.folder, { recursive: true })
+    }
+
+    get(kind, text) {
+        try {
+            return JSON.parse(readFileSync(this.entryOf(kind, text), 'utf8'))
+        } catch {
+            return undefined
+        }
+    }
+
+    put(kind, text, value) {
+        const entry = this.entryOf(kind, text)
+        const draft = `${entry}.${process.pid}`
+        writeFileSync(draft, JSON.stringify(value))
+        renameSync(draft, entry)
+    }
+
+    entryOf(kind, text) {
+        return join(this.folder, `${kind}-${hashed(kind + '\0' + text)}`)
+    }
 }
 
 /**

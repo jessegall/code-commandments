@@ -177,3 +177,32 @@ func TestTheSameFileBesideOtherImportsNamesItsOwnImports(t *testing.T) {
 		}
 	}
 }
+
+func TestAVueFileMetBeforeIsNotParsedToFindItsScripts(t *testing.T) {
+	root, err := filepath.EvalSymlinks(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(root, "Label.vue"), []byte("<script setup lang=\"ts\">\nconst shown: number = 1\n</script>\n\n<template>\n    <span>{{ shown }}</span>\n</template>\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	kept := Here()
+	kept.Trees = t.TempDir()
+	first := written(t, kept, root)
+
+	planted, _ := filepath.Glob(filepath.Join(kept.Trees, "memo", "scripts-*"))
+	if len(planted) != 1 {
+		t.Fatalf("the first run kept %d script ranges for one Vue file", len(planted))
+	}
+	if err := os.WriteFile(planted[0], []byte("[]"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	trees, _ := filepath.Glob(filepath.Join(kept.Trees, "*.tree"))
+	for _, tree := range trees {
+		os.Remove(tree)
+	}
+
+	if again := written(t, kept, root); again == first {
+		t.Error("a Vue file whose script ranges were kept was parsed again for them: the planted ranges changed nothing")
+	}
+}

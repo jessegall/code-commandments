@@ -5,19 +5,38 @@ export class Source {
     constructor(path, text) {
         this.path = path
         this.text = text
-        this.bytes = new Uint32Array(text.length + 1)
-        this.lines = new Uint32Array(text.length + 1)
+    }
+
+    /** The UTF-8 byte offset of every UTF-16 index, counted the first time a span is asked for: a file whose line is kept never pays for it. */
+    get bytes() {
+        this.counted()
+
+        return this.offsets
+    }
+
+    /** The line of every UTF-16 index, counted with the byte offsets. */
+    get lines() {
+        this.counted()
+
+        return this.lineOf
+    }
+
+    counted() {
+        if (this.offsets) return
+        const text = this.text
+        this.offsets = new Uint32Array(text.length + 1)
+        this.lineOf = new Uint32Array(text.length + 1)
         let mark = 0
         let line = 1
         for (let index = 0; index < text.length; index++) {
-            this.bytes[index] = mark
-            this.lines[index] = line
+            this.offsets[index] = mark
+            this.lineOf[index] = line
             const code = text.charCodeAt(index)
             mark += code < 0x80 ? 1 : code < 0x800 ? 2 : code >= 0xd800 && code <= 0xdfff ? 2 : 3
             if (code === 0x0a) line++
         }
-        this.bytes[text.length] = mark
-        this.lines[text.length] = line
+        this.offsets[text.length] = mark
+        this.lineOf[text.length] = line
     }
 
     static read(path) {
