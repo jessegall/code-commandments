@@ -23,11 +23,17 @@ def on_event(self, event) -> None:
 
 ----------[ Good ]----------
 
-def __init__(self, source, started: float, label: str) -> None:
-    self._source = source
-    self._started = started
-    self._label = label
-    self._closed = False
+# in layout.py
+def describe_lines(lines: list[Line]) -> list[str]:
+    return [f"{line.quantity} x {line.sku}: {line.total() / 100:.2f}" for line in lines if line.quantity > 0]
+
+# in layout.py
+def rows(self, lines: list[Line]) -> list[str]:
+    return describe_lines(lines)
+
+# in layout.py
+def line_items(self, lines: list[Line]) -> list[str]:
+    return describe_lines(lines)
 ```
 
 ### near-duplicate-python-function

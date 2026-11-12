@@ -9,6 +9,7 @@ written with `context: true`. Types come from session.py's mypy session, joined 
 from __future__ import annotations
 
 import ast
+import hashlib
 import io
 import json
 import os
@@ -690,10 +691,9 @@ def stream(session: Session, paths: list[str], write: list[str], python: str | N
     found = python_files(paths)
     texts = {path: open(path, "rb").read() for path in found}
     judged = {os.path.realpath(p) for p in write}
-    base = base_of(paths)
     early = {path: module_name(path) for path in found}
-    whole = kept.whole(base, found, texts, early) if kept is not None else ""
-    unchanged = lines_unchanged(kept, whole, early, found) if kept is not None else None
+    pins = kept.pins(base_of(paths)) if kept is not None else ""
+    unchanged = lines_unchanged(kept, pins, early, texts, found) if kept is not None else None
     if unchanged is not None:
         yield from file_lines(unchanged, found, write, judged)
         return
@@ -701,6 +701,7 @@ def stream(session: Session, paths: list[str], write: list[str], python: str | N
     named = {os.path.realpath(s.path): s.module for s in project.sources if s.path}
     modules = {path: named.get(path) or module_name(path) for path in found}
     checked = states(project.graph, set(named))
+    project_graph = project.graph
     keys = {path: kept.key(modules[path], checked.get(path), project.graph, texts[path], texts) for path in found} if kept else {}
     held = {path: kept.read(key) for path, key in keys.items()} if kept else {}
     missing = {path for path in found if held.get(path) is None and taken_from_mypys_cache(checked.get(path))}
@@ -713,11 +714,12 @@ def stream(session: Session, paths: list[str], write: list[str], python: str | N
             line = line_of(texts[path], modules[path], rechecked.get(path), again.types, path)
         if line is None:
             line = line_of(texts[path], modules[path], checked.get(path), project.types, path)
-        if kept is not None and held.get(path) is None:
-            kept.write(keys[path], line)
+        if kept is not None:
+            if held.get(path) is None:
+                kept.write(keys[path], line)
+            against, _ = kept.reached(checked.get(path), project_graph, texts)
+            kept.record(kept.record_of(early[path], texts[path], pins), keys[path], against)
         lines[path] = line
-    if kept is not None:
-        kept.remember(whole, {early[path]: key for path, key in keys.items()})
     yield from file_lines(lines, found, write, judged)
 
 
@@ -727,16 +729,17 @@ def base_of(paths: list[str]) -> str:
     return first if os.path.isdir(first) else os.path.dirname(first)
 
 
-def lines_unchanged(kept: Kept, whole: str, modules: dict[str, str], found: list[str]) -> dict[str, KeptLine] | None:
-    """Every file's line from disk when no file changed since the run that kept them, so mypy is not started at all;
-    none when a file changed or a line is gone."""
-    keys = kept.remembered(whole)
-    if keys is None:
-        return None
+def lines_unchanged(kept: Kept, pins: str, modules: dict[str, str], texts: dict[str, bytes], found: list[str]) -> dict[str, KeptLine] | None:
+    """Every file's line from disk when each file's record still holds: its own contents unchanged and every project
+    module its line was made against unchanged too. Then mypy is not started at all; none when any record is missing
+    or no longer holds."""
+    current = {modules[path]: hashlib.sha256(texts[path]).hexdigest() for path in found}
     lines: dict[str, KeptLine] = {}
     for path in found:
-        key = keys.get(modules[path])
-        line = kept.read(key) if key is not None else None
+        record = kept.recorded(kept.record_of(modules[path], texts[path], pins))
+        if record is None or any(current.get(module) != sha for module, sha in record["reached"].items()):
+            return None
+        line = kept.read(record["key"])
         if line is None:
             return None
         lines[path] = line

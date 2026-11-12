@@ -17,7 +17,7 @@ const (
 	windowLeftOpenAfter = 2 * time.Minute
 )
 
-// EditWindow is one agent's live edits, gathered on disk while its window is open: the first edit opens it and starts the one background run that judges them, every later edit only joins it, and that run closes it when it takes them. A window whose run died without closing it counts as closed once it has stood open far longer than any window lasts, and what an agent left behind is swept once nothing has touched it for the hours the project keeps an unused cache.
+// EditWindow is one agent's live edits, gathered on disk while its window is open: the first edit opens it and starts the one background run that judges them, every later edit only joins it, and that run closes it when it takes them. A window whose run died without closing it counts as closed once it has stood open far longer than any window lasts, and what an agent left behind is swept once nothing has touched it for the hours the project keeps an unused cache. A run that finds the project being read by another puts the edits it took back, closed, so the agent's next edit opens a window that takes them too: nothing is dropped.
 type EditWindow struct {
 	folder string
 	agent  int
@@ -74,6 +74,25 @@ func (w EditWindow) Close() [][]byte {
 	}
 
 	return edits
+}
+
+func (w EditWindow) PutBack(edits [][]byte) {
+	if len(edits) == 0 {
+		return
+	}
+
+	release := atomic.Hold(w.path(".lock"))
+	defer release()
+
+	file, err := os.OpenFile(w.path(".edits"), os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0o644)
+	if err != nil {
+		return
+	}
+	defer file.Close()
+
+	for _, edit := range edits {
+		file.Write(append(bytes.TrimSpace(edit), '\n'))
+	}
 }
 
 func (w EditWindow) path(suffix string) string {

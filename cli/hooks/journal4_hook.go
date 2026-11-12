@@ -170,12 +170,16 @@ func Judge4Into(line map[string]any, folder string) {
 	}
 
 	given := Stamped(moment)
+	window := EditWindowIn(folder, MomentOf(given).Agent)
+	var edits [][]byte
 	if asText(line["event"]) == editedEvent {
-		given = gatheredIn(EditWindowIn(folder, MomentOf(given).Agent), given)
+		given, edits = gatheredIn(window, given)
 	}
 
 	save, alone := rememberedAround(servedRoot(), func(...string) {})
 	if !alone {
+		window.PutBack(edits)
+
 		return
 	}
 	defer save()
@@ -222,15 +226,16 @@ func judge4Detached(raw []byte, line map[string]any) {
 	judgeDetached(raw)
 }
 
-func gatheredIn(window EditWindow, given map[string]any) map[string]any {
+func gatheredIn(window EditWindow, given map[string]any) (map[string]any, [][]byte) {
 	if !window.IsOpen() {
-		return given
+		return given, nil
 	}
 
 	time.Sleep(gatheredFor(given))
 
+	edits := window.Close()
 	var batch []asked
-	for _, edit := range window.Close() {
+	for _, edit := range edits {
 		var line map[string]any
 		if json.Unmarshal(edit, &line) != nil {
 			continue
@@ -242,10 +247,10 @@ func gatheredIn(window EditWindow, given map[string]any) map[string]any {
 	}
 
 	if len(batch) == 0 {
-		return given
+		return given, edits
 	}
 
-	return batched(batch).given
+	return batched(batch).given, edits
 }
 
 func judgeDetached(raw []byte) {

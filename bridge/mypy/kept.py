@@ -50,11 +50,23 @@ class Kept:
         """The module's name and own text, and everything it reaches: a module of the project by its text, however
         deep, and a module from outside by the interface mypy saw. mypy's interface of a project module carries its
         path, so it would differ in every checkout; its text does not."""
+        project, outside = self.reached(state, graph, texts)
         digest = hashlib.sha256(self.version.encode())
         digest.update(hashlib.sha256(text).digest())
         digest.update(b"\0" + module.encode() + b"\0")
+        for name, sha in sorted(project.items()):
+            digest.update(b"\0" + name.encode() + b"\0" + sha.encode())
+        for name, interface in sorted(outside.items()):
+            digest.update(b"\0" + name.encode() + b"\0" + interface)
+        return digest.hexdigest()
+
+    def reached(self, state: State | None, graph: dict[str, State], texts: dict[str, bytes]) -> tuple[dict[str, str], dict[str, bytes]]:
+        """Every module $state reaches, however deep: a module of the project by the fingerprint of its text, one
+        from outside by the interface mypy saw."""
+        project: dict[str, str] = {}
+        outside: dict[str, bytes] = {}
         if state is None:
-            return digest.hexdigest()
+            return project, outside
         pending, seen = sorted(set(state.dependencies)), {state.id}
         while pending:
             dependency = pending.pop()
@@ -62,21 +74,18 @@ class Kept:
                 continue
             seen.add(dependency)
             held = graph.get(dependency)
-            digest.update(b"\0" + dependency.encode() + b"\0")
             own = texts.get(os.path.realpath(held.path)) if held is not None and held.path else None
             if own is None:
-                digest.update(held.interface_hash if held is not None and held.interface_hash else b"")
+                outside[dependency] = held.interface_hash if held is not None and held.interface_hash else b""
                 continue
-            digest.update(hashlib.sha256(own).digest())
+            project[dependency] = hashlib.sha256(own).hexdigest()
             pending += sorted(set(held.dependencies))
-        return digest.hexdigest()
+        return project, outside
 
-    def whole(self, base: str, found: list[str], texts: dict[str, bytes], modules: dict[str, str]) -> str:
-        """The fingerprint of everything a run reads: this bridge, every file by the module it is and what it says, never
-        where it lies, and the files that pin what is installed. Equal to an earlier run's, no file changed since."""
-        digest = hashlib.sha256(self.version.encode())
-        for module, text in sorted((modules[path], hashlib.sha256(texts[path]).digest()) for path in found):
-            digest.update(module.encode() + b"\0" + text)
+    def pins(self, base: str) -> str:
+        """The fingerprint of the files that pin what is installed, so an installed package that changed starts
+        every record over."""
+        digest = hashlib.sha256()
         for pinned in ("pyproject.toml", "requirements.txt", "poetry.lock", "uv.lock", "Pipfile.lock"):
             try:
                 with open(os.path.join(base, pinned), "rb") as file:
@@ -85,18 +94,23 @@ class Kept:
                 continue
         return digest.hexdigest()
 
-    def remembered(self, whole: str) -> dict[str, str] | None:
-        """The key of each file's line, by the module it is, as the run with this fingerprint kept them."""
+    def record_of(self, module: str, text: bytes, pins: str) -> str:
+        """Where a module's record is kept: by the module, its contents and the pins, never its path."""
+        return "record-" + hashlib.sha256(f"{self.version}\0{module}\0{pins}\0".encode() + hashlib.sha256(text).digest()).hexdigest()
+
+    def recorded(self, record: str) -> dict | None:
+        """The line key a module's record holds and the contents of every project module its line was made against."""
         try:
-            with open(self.path("whole-" + whole), "rb") as file:
+            with open(self.path(record), "rb") as file:
                 held = json.loads(zlib.decompress(file.read()))
-            os.utime(self.path("whole-" + whole))
+            os.utime(self.path(record))
         except (OSError, ValueError, zlib.error):
             return None
-        return held if isinstance(held, dict) else None
+        return held if isinstance(held, dict) and "key" in held and "reached" in held else None
 
-    def remember(self, whole: str, keys: dict[str, str]) -> None:
-        self.stored("whole-" + whole, zlib.compress(json.dumps(keys).encode(), 3))
+    def record(self, record: str, key: str, reached: dict[str, str]) -> None:
+        """Keeps a module's record the moment its line is kept, so a run stopped part way keeps what it did."""
+        self.stored(record, zlib.compress(json.dumps({"key": key, "reached": reached}).encode(), 3))
 
     def path(self, key: str) -> str:
         return os.path.join(self.folder, key[:2], key[2:])

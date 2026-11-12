@@ -158,23 +158,21 @@ An `else:` after an `if` branch that already left — it ends in `return`, `rais
 ```py
 ----------[ Bad ]----------
 
-def refund(order, today) -> int:
-    if (today - order.delivered).days > 30:
-        raise RefundRefused(order.number)
+def price(line: Line) -> int:
+    if line.promotion is not None:
+        return line.promotion.apply(line.unit_price) * line.quantity
     else:
-        amount = order.total()
-        order.mark_refunded(amount)
-        return amount
+        subtotal = line.unit_price * line.quantity
+        return subtotal - subtotal // 100 if line.quantity >= 100 else subtotal
 
 ----------[ Good ]----------
 
-def first_in_stock(skus, levels):
-    for sku in skus:
-        if levels.get(sku, 0) > 0:
-            break
-    else:
-        return None
-    return sku
+def price_of(line: Line) -> int:
+    if line.promotion is not None:
+        return line.promotion.apply(line.unit_price) * line.quantity
+
+    subtotal = line.unit_price * line.quantity
+    return subtotal - subtotal // 100 if line.quantity >= 100 else subtotal
 ```
 
 ### python-short-circuit-statement

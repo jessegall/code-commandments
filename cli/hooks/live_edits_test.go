@@ -104,7 +104,7 @@ func TestTheRunThatClosesAWindowJudgesEveryEditInItAsOneBatch(t *testing.T) {
 	}
 
 	moment, _ := Moment4Of(editedLine(root, "order.py", settings))
-	given := gatheredIn(window, Stamped(moment))
+	given, _ := gatheredIn(window, Stamped(moment))
 
 	if files := batchedIn(given); len(files) != 2 {
 		t.Errorf("the window's run judges %v, want both files edited in it", files)
