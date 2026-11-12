@@ -5,9 +5,9 @@ import (
 	"slices"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 
+	"github.com/jessegall/code-commandments/cli/atomic"
 	"github.com/jessegall/code-commandments/cli/binary"
 	"github.com/jessegall/code-commandments/cli/config"
 	"github.com/jessegall/code-commandments/cli/custom"
@@ -69,10 +69,11 @@ func MergeLanded(line map[string]any) string {
 		return ""
 	}
 
-	oneMergeAtATime.Lock()
-	defer oneMergeAtATime.Unlock()
+	space := workspace.At(work.project, "")
+	release := atomic.Hold(space.Path(mergeJudgingLock))
+	defer release()
 
-	mark := MergedIn(workspace.At(work.project, ""))
+	mark := MergedIn(space)
 
 	upto, why := mark.UptoUsable(work.project, work.branch, work.after)
 
@@ -263,7 +264,7 @@ func (l landed) tooManyFiles(from string) string {
 		binary.Judging(l.project)+" --branch")
 }
 
-var oneMergeAtATime sync.Mutex
+const mergeJudgingLock = ".merge-judging.lock"
 
 const couldNotRead Narrowed = "the project's own config could not be read, so nothing of this merge was judged"
 
