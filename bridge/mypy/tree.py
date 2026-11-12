@@ -701,8 +701,10 @@ def stream(session: Session, paths: list[str], write: list[str], python: str | N
     named = {os.path.realpath(s.path): s.module for s in project.sources if s.path}
     modules = {path: named.get(path) or module_name(path) for path in found}
     checked = states(project.graph, set(named))
-    project_graph = project.graph
-    keys = {path: kept.key(modules[path], checked.get(path), project.graph, texts[path], texts) for path in found} if kept else {}
+    shas = {path: hashlib.sha256(texts[path]).hexdigest() for path in found}
+    graph_of = imported(found, named, early, checked, project.graph) if kept is not None else {}
+    closures = kept.closures({early[path]: (shas[path], *graph_of[path]) for path in found}) if kept is not None else {}
+    keys = {path: line_key(closures[early[path]], early[path]) for path in found} if kept is not None else {}
     held = {path: kept.read(key) for path, key in keys.items()} if kept else {}
     missing = {path for path in found if held.get(path) is None and taken_from_mypys_cache(checked.get(path))}
     again = session.compiled(paths, python, missing) if kept is not None and missing else None
@@ -717,8 +719,7 @@ def stream(session: Session, paths: list[str], write: list[str], python: str | N
         if kept is not None:
             if held.get(path) is None:
                 kept.write(keys[path], line)
-            against, _ = kept.reached(checked.get(path), project_graph, texts)
-            kept.record(kept.record_of(early[path], texts[path], pins), keys[path], against)
+            kept.record(kept.record_of(early[path], texts[path], pins), keys[path], *graph_of[path], closures[early[path]])
         lines[path] = line
     yield from file_lines(lines, found, write, judged)
 
@@ -729,15 +730,46 @@ def base_of(paths: list[str]) -> str:
     return first if os.path.isdir(first) else os.path.dirname(first)
 
 
+def imported(found: list[str], named: dict[str, str], early: dict[str, str], checked: dict, graph: dict) -> dict[str, tuple[list[str], dict[str, str]]]:
+    """Each file's direct imports of the project, by the module each is, and the interface it sees of each module from
+    outside, as mypy's build of this run read them."""
+    by_id = {module: path for path, module in named.items() if path in early}
+    imports: dict[str, tuple[list[str], dict[str, str]]] = {}
+    for path in found:
+        state = checked.get(path)
+        project: list[str] = []
+        outside: dict[str, str] = {}
+        for dependency in sorted(set(state.dependencies)) if state is not None else []:
+            if dependency in by_id:
+                project.append(early[by_id[dependency]])
+                continue
+            held = graph.get(dependency)
+            interface = held.interface_hash if held is not None and held.interface_hash else ""
+            outside[dependency] = interface.hex() if isinstance(interface, bytes) else str(interface)
+        imports[path] = (project, outside)
+    return imports
+
+
+def line_key(closure: str, module: str) -> str:
+    """The key of a module's line: the key of everything it reaches, and which module of its group it is."""
+    return hashlib.sha256(f"{closure}\0{module}".encode()).hexdigest()
+
+
 def lines_unchanged(kept: Kept, pins: str, modules: dict[str, str], texts: dict[str, bytes], found: list[str]) -> dict[str, KeptLine] | None:
-    """Every file's line from disk when each file's record still holds: its own contents unchanged and every project
-    module its line was made against unchanged too. Then mypy is not started at all; none when any record is missing
-    or no longer holds."""
-    current = {modules[path]: hashlib.sha256(texts[path]).hexdigest() for path in found}
-    lines: dict[str, KeptLine] = {}
+    """Every file's line from disk when each file's record still holds: its own contents unchanged and the key of
+    everything it reaches, rebuilt from the records and today's contents in one pass, the same as when its line was
+    kept. Then mypy is not started at all; none when any record is missing or no longer holds."""
+    records = {}
     for path in found:
         record = kept.recorded(kept.record_of(modules[path], texts[path], pins))
-        if record is None or any(current.get(module) != sha for module, sha in record["reached"].items()):
+        if record is None:
+            return None
+        records[path] = record
+    closures = kept.closures({modules[path]: (hashlib.sha256(texts[path]).hexdigest(), record["imports"], record["outside"])
+                              for path, record in records.items()})
+    lines: dict[str, KeptLine] = {}
+    for path, record in records.items():
+        if closures.get(modules[path]) != record["closure"]:
             return None
         line = kept.read(record["key"])
         if line is None:

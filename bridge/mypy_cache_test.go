@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"compress/zlib"
 	"encoding/json"
+	"fmt"
 	"io"
 	"io/fs"
 	"os"
@@ -11,6 +12,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/jessegall/code-commandments/bridge"
 	"github.com/jessegall/code-commandments/bridge/bridgetest"
@@ -335,5 +337,33 @@ func TestTwoRunsBuildingTheMypyBridgeAtOnceBuildItOnce(t *testing.T) {
 		if err := <-done; err != nil {
 			t.Errorf("a run building the bridge beside another failed: %v", err)
 		}
+	}
+}
+
+func TestALongChainOfPythonModulesIsKeyedInOnePass(t *testing.T) {
+	python := os.Getenv("COMMANDMENTS_MYPY_PYTHON")
+	if python == "" {
+		t.Skip("no python with mypy is named here")
+	}
+
+	files := map[string]string{"m0.py": "class C0:\n    pass\n"}
+	for at := 1; at < 600; at++ {
+		files[fmt.Sprintf("m%d.py", at)] = fmt.Sprintf("from m%d import C%d\n\n\nclass C%d(C%d):\n    pass\n", at-1, at-1, at, at-1)
+	}
+
+	read := exec.Command(python, "-c", noBuildWhenNothingChanged, checkoutHolding(t, files), t.TempDir())
+	read.Env = append(os.Environ(), "JOURNAL_PLUGIN_DATA="+t.TempDir())
+
+	started := time.Now()
+	out, err := read.CombinedOutput()
+	if err != nil {
+		t.Fatalf("%v: %s", err, out)
+	}
+
+	if said := strings.TrimSpace(string(out)); said != "none 600" {
+		t.Errorf("a second run over an unchanged chain of 600 modules made the builds and lines %q", said)
+	}
+	if took := time.Since(started); took > 90*time.Second {
+		t.Errorf("two runs over a chain of 600 modules took %v: what each module reaches is walked again per module", took)
 	}
 }
