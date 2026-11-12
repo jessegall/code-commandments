@@ -56,10 +56,22 @@ func Stream(paths, write []string) (*contract.Stream, error) {
 	fset := token.NewFileSet()
 	packages := PackagesOf(found)
 	checked := newChecker(fset, packages)
+	kept, keeps := keptLinesFor(found, packages)
 	written := map[string]bool{}
 	var files []*contract.File
 
 	for _, one := range packages {
+		if keeps {
+			if held, all := kept.allOf(one, context); all {
+				for _, file := range held {
+					written[file.Path] = true
+				}
+				files = append(files, held...)
+
+				continue
+			}
+		}
+
 		_, facts := checked.check(one)
 		for _, parsed := range checked.filesOf(one) {
 			path := fset.Position(parsed.Pos()).Filename
@@ -67,9 +79,23 @@ func Stream(paths, write []string) (*contract.Stream, error) {
 				continue
 			}
 			written[path] = true
+
+			key := ""
+			if keeps {
+				key = kept.keyOf(path, one.Path)
+				if held, read := kept.read(key, path, context(path)); read {
+					files = append(files, held)
+
+					continue
+				}
+			}
+
 			file, err := fileLine(fset, parsed, path, one.Path, facts, context(path))
 			if err != nil {
 				return nil, err
+			}
+			if key != "" {
+				kept.keep(key, file)
 			}
 			files = append(files, file)
 		}
