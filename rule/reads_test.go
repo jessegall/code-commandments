@@ -123,7 +123,8 @@ func locations(found []engine.Match) []string {
 func TestARuleSaysWhetherItReadsOnlyForward(t *testing.T) {
 	for written, forward := range map[string]bool{
 		`{"select": "type-declaration", "where": [{"extendsAny": "Migration"}]}`:                                    true,
-		`{"select": "call", "where": [{"targets": "os.ReadDir"}]}`:                                                  true,
+		`{"select": "call", "where": [{"targets": "os.ReadDir"}]}`:                                                  false,
+		`{"select": "call", "where": [{"typeLike": "Money*"}]}`:                                                     false,
 		`{"select": "function", "where": [{"unused": true}]}`:                                                       false,
 		`{"select": "function", "where": [{"not": {"callers": {"atLeast": 2}}}]}`:                                   false,
 		`{"select": "type-declaration", "where": [{"extendsAny": "Model"}, {"referredFrom": {"is": "parameter"}}]}`: false,

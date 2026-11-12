@@ -43,10 +43,9 @@ var readAcrossFiles = []string{
 
 var targetsAnotherFile = []string{"declaration", "declaredBy"}
 
-var readsBackward = []string{
-	"unused", "callers", "duplicated", "repeated", "referredFrom", "calledFrom", "sibling",
-
-	"php", "python", "csharp", "typescript", "vue",
+var readsOnlyDeclarations = []string{
+	"resolves", "resolvesLike", "docReference", "constructs", "extendsAny", "implements", "uses", "isA", "ancestors",
+	"overrides",
 }
 
 func (r Rule) ReadsForward() bool {
@@ -58,7 +57,13 @@ func (r Rule) ReadsForward() bool {
 }
 
 func (s Step) readsBackward() bool {
-	if slices.ContainsFunc(s.written(), func(key string) bool { return slices.Contains(readsBackward, key) }) {
+	if slices.ContainsFunc(s.written(), func(key string) bool {
+		return slices.Contains(readAcrossFiles, key) && !slices.Contains(readsOnlyDeclarations, key)
+	}) {
+		return true
+	}
+
+	if slices.Contains(targetsAnotherFile, s.Of) || s.Members != nil && s.Members.Inherited {
 		return true
 	}
 
