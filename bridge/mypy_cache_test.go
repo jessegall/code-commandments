@@ -189,3 +189,43 @@ func TestAColdPythonCacheIsFilledByOneBuild(t *testing.T) {
 		t.Errorf("a cold run made the builds and lines %q; one build writes both files", said)
 	}
 }
+
+const noBuildWhenNothingChanged = `
+import os, sys
+sys.path.insert(0, 'mypy')
+import tree, session
+from kept import Kept
+
+list(tree.stream(tree.Session(), [sys.argv[1]], [], None, Kept(sys.argv[2])))
+
+builds = []
+for name in ("checked", "from_cache", "compiled"):
+    real = getattr(session.Session, name)
+    def counted(self, *args, _real=real, _name=name):
+        builds.append(_name)
+        return _real(self, *args)
+    setattr(session.Session, name, counted)
+
+lines = list(tree.stream(tree.Session(), [sys.argv[1]], [], None, Kept(sys.argv[2])))
+print(" ".join(builds) or "none", sum(1 for line in lines if "file" in line))
+`
+
+func TestAnUnchangedPythonProjectStartsNoMypyBuild(t *testing.T) {
+	python := os.Getenv("COMMANDMENTS_MYPY_PYTHON")
+	if python == "" {
+		t.Skip("no python with mypy is named here")
+	}
+
+	root := checkoutHolding(t, pythonShop)
+	read := exec.Command(python, "-c", noBuildWhenNothingChanged, root, t.TempDir())
+	read.Env = append(os.Environ(), "JOURNAL_PLUGIN_DATA="+t.TempDir())
+
+	out, err := read.CombinedOutput()
+	if err != nil {
+		t.Fatalf("%v: %s", err, out)
+	}
+
+	if said := strings.TrimSpace(string(out)); said != "none 2" {
+		t.Errorf("a second run over an unchanged project made the builds and lines %q; it writes both from disk with no build", said)
+	}
+}

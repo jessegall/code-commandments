@@ -689,6 +689,13 @@ def stream(session: Session, paths: list[str], write: list[str], python: str | N
                       "bridge": {"name": "mypy-bridge", "version": MYPY_VERSION}, "roots": [os.path.realpath(p) for p in paths]}}
     found = python_files(paths)
     texts = {path: open(path, "rb").read() for path in found}
+    judged = {os.path.realpath(p) for p in write}
+    base = base_of(paths)
+    whole = kept.whole(base, found, texts) if kept is not None else ""
+    unchanged = lines_unchanged(kept, whole, base, found) if kept is not None else None
+    if unchanged is not None:
+        yield from file_lines(unchanged, found, write, judged)
+        return
     project = session.checked(paths, python) if kept is None else session.from_cache(paths, python)
     named = {os.path.realpath(s.path): s.module for s in project.sources if s.path}
     modules = {path: named.get(path) or module_name(path) for path in found}
@@ -698,17 +705,49 @@ def stream(session: Session, paths: list[str], write: list[str], python: str | N
     missing = {path for path in found if held.get(path) is None and taken_from_mypys_cache(checked.get(path))}
     again = session.compiled(paths, python, missing) if kept is not None and missing else None
     rechecked = states(again.graph, set(named)) if again is not None else {}
-    judged = {os.path.realpath(p) for p in write}
-    seen = resolved = unjoined = files = 0
-    folders: list[str] = []
+    lines: dict[str, KeptLine] = {}
     for path in found:
         line = held.get(path)
         if line is None and again is not None and path in missing:
             line = line_of(texts[path], modules[path], rechecked.get(path), again.types, path)
         if line is None:
             line = line_of(texts[path], modules[path], checked.get(path), project.types, path)
-            if kept is not None:
-                kept.write(keys[path], line)
+        if kept is not None and held.get(path) is None:
+            kept.write(keys[path], line)
+        lines[path] = line
+    if kept is not None:
+        kept.remember(whole, {os.path.relpath(path, base): key for path, key in keys.items()})
+    yield from file_lines(lines, found, write, judged)
+
+
+def base_of(paths: list[str]) -> str:
+    """The folder a run's files are named under when it is remembered: its first path, or the folder holding it."""
+    first = os.path.realpath(paths[0]) if paths else os.getcwd()
+    return first if os.path.isdir(first) else os.path.dirname(first)
+
+
+def lines_unchanged(kept: Kept, whole: str, base: str, found: list[str]) -> dict[str, KeptLine] | None:
+    """Every file's line from disk when no file changed since the run that kept them, so mypy is not started at all;
+    none when a file changed or a line is gone."""
+    keys = kept.remembered(whole)
+    if keys is None:
+        return None
+    lines: dict[str, KeptLine] = {}
+    for path in found:
+        key = keys.get(os.path.relpath(path, base))
+        line = kept.read(key) if key is not None else None
+        if line is None:
+            return None
+        lines[path] = line
+    return lines
+
+
+def file_lines(lines: dict[str, KeptLine], found: list[str], write: list[str], judged: set[str]) -> Iterator[dict]:
+    """The file lines, the program and the trailer, from each file's line."""
+    seen = resolved = unjoined = files = 0
+    folders: list[str] = []
+    for path in found:
+        line = lines[path]
         seen, resolved, unjoined = seen + line.expressions, resolved + line.typed, unjoined + line.unjoined
         yield {"file": placed(line, path, bool(write) and path not in judged)}
         files += 1

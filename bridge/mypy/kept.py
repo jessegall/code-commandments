@@ -71,6 +71,33 @@ class Kept:
             pending += sorted(set(held.dependencies))
         return digest.hexdigest()
 
+    def whole(self, base: str, found: list[str], texts: dict[str, bytes]) -> str:
+        """The fingerprint of everything a run reads: this bridge, every file by where it lies under $base and what it
+        says, and the files that pin what is installed. Equal to an earlier run's, no file changed since."""
+        digest = hashlib.sha256(self.version.encode())
+        for path in sorted(found):
+            digest.update(os.path.relpath(path, base).encode() + b"\0" + hashlib.sha256(texts[path]).digest())
+        for pinned in ("pyproject.toml", "requirements.txt", "poetry.lock", "uv.lock", "Pipfile.lock"):
+            try:
+                with open(os.path.join(base, pinned), "rb") as file:
+                    digest.update(pinned.encode() + b"\0" + file.read())
+            except OSError:
+                continue
+        return digest.hexdigest()
+
+    def remembered(self, whole: str) -> dict[str, str] | None:
+        """The key of each file's line, by where it lies, as the run with this fingerprint kept them."""
+        try:
+            with open(self.path("whole-" + whole), "rb") as file:
+                held = json.loads(zlib.decompress(file.read()))
+            os.utime(self.path("whole-" + whole))
+        except (OSError, ValueError, zlib.error):
+            return None
+        return held if isinstance(held, dict) else None
+
+    def remember(self, whole: str, keys: dict[str, str]) -> None:
+        self.stored("whole-" + whole, zlib.compress(json.dumps(keys).encode(), 3))
+
     def path(self, key: str) -> str:
         return os.path.join(self.folder, key[:2], key[2:])
 
@@ -88,11 +115,13 @@ class Kept:
         return KeptLine(held["line"], held["expressions"], held["typed"], held["unjoined"])
 
     def write(self, key: str, kept: KeptLine) -> None:
+        self.stored(key, zlib.compress(json.dumps({"line": kept.line, "expressions": kept.expressions, "typed": kept.typed,
+                                                   "unjoined": kept.unjoined}, ensure_ascii=False, separators=(",", ":")).encode(
+            "utf-8", errors="replace"), 3))
+
+    def stored(self, key: str, body: bytes) -> None:
         path = self.path(key)
         os.makedirs(os.path.dirname(path), exist_ok=True)
-        body = zlib.compress(json.dumps({"line": kept.line, "expressions": kept.expressions, "typed": kept.typed,
-                                         "unjoined": kept.unjoined}, ensure_ascii=False, separators=(",", ":")).encode(
-            "utf-8", errors="replace"), 3)
         handle, draft = tempfile.mkstemp(dir=os.path.dirname(path), prefix=".writing-")
         try:
             with os.fdopen(handle, "wb") as file:
