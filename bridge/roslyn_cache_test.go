@@ -168,3 +168,44 @@ func TestTheSameCSharpContentsUnderAnotherFileNameShareTheKeptLine(t *testing.T)
 		t.Error("the kept line does not name the file it was read for")
 	}
 }
+
+func TestAFileReadAsContextSharesTheLineItWasKeptUnderWhenJudged(t *testing.T) {
+	trees := t.TempDir()
+	root := checkoutHolding(t, shop)
+
+	cachedRun(t, trees, root)
+	if tamperedKept(t, trees, `"Price"`, `"KeptPrice"`) == 0 {
+		t.Fatal("the first run kept no line for Price.cs")
+	}
+
+	command, err := bridge.RoslynInDocker([]string{root}, trees)
+	if err != nil {
+		t.Fatal(err)
+	}
+	server, err := bridge.Serve(append(command, "--cache="+trees))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer server.Close()
+
+	stream, err := server.Ask(bridge.Request{Paths: []string{root}, Write: []string{filepath.Join(root, "Basket.cs")}})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	for _, file := range stream.Files {
+		if filepath.Base(file.Path) != "Price.cs" {
+			continue
+		}
+		written, _ := json.Marshal(file)
+		if !strings.Contains(string(written), "KeptPrice") {
+			t.Error("Price.cs read as context was compiled again, though its line was kept when it was judged")
+		}
+		if !file.Context {
+			t.Error("Price.cs read as context was written without its context mark")
+		}
+
+		return
+	}
+	t.Fatal("the answer held no line for Price.cs")
+}

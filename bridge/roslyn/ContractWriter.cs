@@ -103,7 +103,7 @@ public sealed class ContractWriter(IReadOnlyList<string> roots, IReadOnlySet<str
         {
             if (line is not null)
             {
-                output.Write(Encoding.UTF8.GetBytes(line));
+                output.Write(Encoding.UTF8.GetBytes(IsContext(file) ? Marked(line) : line));
                 files++;
 
                 continue;
@@ -120,13 +120,14 @@ public sealed class ContractWriter(IReadOnlyList<string> roots, IReadOnlySet<str
 
             using (var buffer = new MemoryStream())
             {
-                Line(buffer, json => writer.Write(json, IsContext(file)));
-                buffer.WriteTo(output);
+                Line(buffer, json => writer.Write(json, false));
+                var written = Encoding.UTF8.GetString(buffer.ToArray());
+                output.Write(Encoding.UTF8.GetBytes(IsContext(file) ? Marked(written) : written));
                 files++;
 
                 if (cache is not null)
                 {
-                    cache.Keep(KeyOf(asked, file), Meta(calls - callsBefore, resolved - resolvedBefore), Encoding.UTF8.GetString(buffer.ToArray()), Real(file));
+                    cache.Keep(KeyOf(asked, file), Meta(calls - callsBefore, resolved - resolvedBefore), written, Real(file));
                 }
             }
 
@@ -136,7 +137,21 @@ public sealed class ContractWriter(IReadOnlyList<string> roots, IReadOnlySet<str
 
     private bool IsContext(string file) => written is { Count: > 0 } && !written.Contains(file);
 
-    private string KeyOf(Asked asked, string file) => TreeCache.KeyOf(asked.Key, TreeCache.KeyOf(File.ReadAllText(file)), IsContext(file) ? "context" : "");
+    private string KeyOf(Asked asked, string file) => TreeCache.KeyOf(asked.Key, TreeCache.KeyOf(File.ReadAllText(file)));
+
+    /// <summary>A file line written as judged, marked as context: the mark goes right after its error count, where a line written as context holds it.</summary>
+    private static string Marked(string line)
+    {
+        var errors = line.IndexOf(",\"errors\":", StringComparison.Ordinal);
+        if (errors < 0)
+        {
+            return line;
+        }
+
+        var end = line.IndexOfAny([',', '}'], errors + ",\"errors\":".Length);
+
+        return end < 0 ? line : line.Insert(end, ",\"context\":true");
+    }
 
     /// <summary>The line kept for <paramref name="file"/>, its outside declarations and counts taken into this run; null when none is kept or it cannot be read.</summary>
     private string? KeptLine(Asked asked, string file)

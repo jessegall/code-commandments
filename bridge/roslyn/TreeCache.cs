@@ -99,17 +99,13 @@ public sealed class TreeCache(string folder, string root)
     {
         yield return ContractWriter.Version.ToString();
 
-        if (Environment.ProcessPath is { } path && new FileInfo(path) is { Exists: true } info)
+        if (typeof(TreeCache).Assembly.Location is { Length: > 0 } assembly && File.Exists(assembly))
         {
-            yield return path;
-            yield return info.Length.ToString();
-            yield return info.LastWriteTimeUtc.Ticks.ToString();
+            yield return Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(File.ReadAllBytes(assembly)));
         }
-
-        if (typeof(TreeCache).Assembly.Location is { Length: > 0 } assembly && new FileInfo(assembly) is { Exists: true } built)
+        else if (Environment.ProcessPath is { } path && File.Exists(path))
         {
-            yield return built.Length.ToString();
-            yield return built.LastWriteTimeUtc.Ticks.ToString();
+            yield return Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(File.ReadAllBytes(path)));
         }
     }
 }
