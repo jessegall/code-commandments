@@ -36,6 +36,7 @@ const (
 	mergesKey        = "judge_merges"
 	filesInOneGoKey  = "judge_files_at_once"
 	editWindowKey    = "judge_edit_window"
+	cacheHoursKey    = "cache_hours"
 	skillsFolder     = "journal-skills"
 )
 
@@ -285,6 +286,14 @@ func (JournalConfig) Apply(in *cli.Input, console cli.Console) ([]string, int, e
 
 	if parallel, err := strconv.Atoi(strings.TrimSpace(fmt.Sprint(chosen[parallelKey]))); err == nil && parallel >= 1 {
 		if did, err := editor.RunWith(parallel); err != nil {
+			return nil, 0, err
+		} else if did {
+			changed++
+		}
+	}
+
+	if hours, err := strconv.ParseFloat(strings.TrimSpace(fmt.Sprint(chosen[cacheHoursKey])), 64); err == nil && hours > 0 {
+		if did, err := editor.KeepCachesFor(hours); err != nil {
 			return nil, 0, err
 		} else if did {
 			changed++

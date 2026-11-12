@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/jessegall/code-commandments/bridge/bundle"
 	"github.com/jessegall/code-commandments/cli/atomic"
 )
 
@@ -16,14 +17,17 @@ const (
 	windowLeftOpenAfter = 2 * time.Minute
 )
 
-// EditWindow is one agent's live edits, gathered on disk while its window is open: the first edit opens it and starts the one background run that judges them, every later edit only joins it, and that run closes it when it takes them. A window whose run died without closing it counts as closed once it has stood open far longer than any window lasts.
+// EditWindow is one agent's live edits, gathered on disk while its window is open: the first edit opens it and starts the one background run that judges them, every later edit only joins it, and that run closes it when it takes them. A window whose run died without closing it counts as closed once it has stood open far longer than any window lasts, and what an agent left behind is swept once nothing has touched it for the hours the project keeps an unused cache.
 type EditWindow struct {
 	folder string
 	agent  int
 }
 
 func EditWindowIn(data string, agent int) EditWindow {
-	return EditWindow{folder: filepath.Join(data, windowsFolder), agent: agent}
+	folder := filepath.Join(data, windowsFolder)
+	bundle.Sweep(folder, time.Now())
+
+	return EditWindow{folder: folder, agent: agent}
 }
 
 func (w EditWindow) Gather(edit []byte) bool {

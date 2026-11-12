@@ -73,12 +73,11 @@ func (PluginHook) Run(in *cli.Input, console cli.Console) (int, error) {
 		return 0, nil
 	}
 
-	if os.Getenv(judging) != "" {
-		defer rememberedAround(servedRoot(), console.Warn)()
-	}
-
 	if os.Getenv(judging) != "" && namedAsTheKey(asText(line["event"])) == deliveringEvent {
-		mergeOf(line).judgesAfterwards()
+		if save, alone := rememberedAround(servedRoot(), console.Warn); alone {
+			defer save()
+			mergeOf(line).judgesAfterwards()
+		}
 
 		return 0, nil
 	}
@@ -178,6 +177,12 @@ func Judge4Into(line map[string]any, folder string) {
 	if asText(line["event"]) == editedEvent {
 		given = gatheredIn(EditWindowIn(folder, MomentOf(given).Agent), given)
 	}
+
+	save, alone := rememberedAround(servedRoot(), func(...string) {})
+	if !alone {
+		return
+	}
+	defer save()
 
 	answer := answerWith(given)
 

@@ -11,6 +11,7 @@ import (
 	"github.com/jessegall/code-commandments/contract"
 	"github.com/jessegall/code-commandments/detectors"
 	"github.com/jessegall/code-commandments/engine"
+	"github.com/jessegall/code-commandments/cache"
 )
 
 const savedDetector = "php\x00SomeRule\x00definition"
@@ -125,7 +126,7 @@ func TestAHitRenewsTheEntryInTheFile(t *testing.T) {
 	detector := &countedDetector{}
 
 	under.judgedAndSaved(t, detector, "renewed")
-	under.now = under.now.Add(engine.RememberedFor - time.Hour)
+	under.now = under.now.Add(cache.KeptFor() - time.Hour)
 
 	hit := under.of("one")
 	hit.Load()
@@ -134,7 +135,7 @@ func TestAHitRenewsTheEntryInTheFile(t *testing.T) {
 	hit.Memories.Of(savedDetector).Find(tree, detector.find)
 	hit.Save()
 
-	under.now = under.now.Add(engine.RememberedFor - time.Hour)
+	under.now = under.now.Add(cache.KeptFor() - time.Hour)
 
 	loaded := under.of("one")
 	loaded.Load()
@@ -152,7 +153,7 @@ func TestAnEntryPastTwelveHoursIsGoneFromTheFile(t *testing.T) {
 	detector := &countedDetector{}
 
 	under.judgedAndSaved(t, detector, "expired")
-	under.now = under.now.Add(engine.RememberedFor + time.Minute)
+	under.now = under.now.Add(cache.KeptFor() + time.Minute)
 
 	loaded := under.of("one")
 	loaded.Load()
@@ -327,5 +328,25 @@ func TestTheFileHoldsNoPath(t *testing.T) {
 
 	if strings.Contains(string(raw), path) {
 		t.Errorf("the file names the path %s", path)
+	}
+}
+
+func TestAnEntryIsKeptAsLongAsTheProjectChose(t *testing.T) {
+	t.Setenv(cache.Variable, "1")
+
+	under := aFileUnderTest(t)
+	detector := &countedDetector{}
+
+	under.judgedAndSaved(t, detector, "chosen")
+	under.now = under.now.Add(2 * time.Hour)
+
+	loaded := under.of("one")
+	loaded.Load()
+
+	tree, _ := aTreeHolding(t, "chosen")
+	loaded.Memories.Of(savedDetector).Find(tree, detector.find)
+
+	if detector.asked != 2 {
+		t.Errorf("the detector was asked %d times, and the entry sat unused past the one hour the project chose", detector.asked)
 	}
 }

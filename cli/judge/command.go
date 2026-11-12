@@ -37,6 +37,8 @@ const agentSession = "JOURNAL_AGENT_SESSION"
 
 const aRuleCouldNotRun = 3
 
+const readingElsewhere = 4
+
 // Command is `judge`: scan a codebase and report its sins, grouped by the skill that fixes each.
 type Command struct {
 	Fixable map[string]string
@@ -88,7 +90,7 @@ func (Command) Names() []string {
 }
 
 func (Command) Help() help.Help {
-	return help.Of("Scan a codebase and report its sins, grouped by the skill that fixes each. Exit code 1 when sins are found, 3 when a rule could not run.").
+	return help.Of("Scan a codebase and report its sins, grouped by the skill that fixes each. Exit code 1 when sins are found, 3 when a rule could not run, 4 when another run was already reading the project.").
 		Form("judge [path]", "scan a folder, or one file read with the folder it sits in — or, with none, the source roots declared in .commandments/config.json").
 		Form("judge --list", "list every detector, grouped by skill").
 		Option("--list", "list every detector grouped by the skill that fixes it, and run none of them").
@@ -163,6 +165,14 @@ func (c Command) Run(in *cli.Input, console cli.Console) (int, error) {
 	}
 
 	if remembered, keeps := RememberedFor(space.Root(), console.Warn); keeps && c.Reading == nil {
+		release, alone := remembered.ReadAlone()
+		if !alone {
+			console.Warn("✗ another run is reading this project right now, so this one stops here; run it again once that one ends")
+
+			return readingElsewhere, nil
+		}
+
+		defer release()
 		remembered.Load()
 		defer remembered.Save()
 	}

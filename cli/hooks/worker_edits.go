@@ -103,11 +103,17 @@ func keepEditOf(line map[string]any) {
 	agent := asAgent(line["agent"])
 	relative := relativeOfEdit(line)
 
-	if data == "" || agent == 0 || relative == "" {
+	if data == "" || agent == 0 || relative == "" || !editsKeptFor(line) {
 		return
 	}
 
 	WorkerEditsIn(data).KeepIn(agent, checkoutRootOf(line), relative)
+}
+
+func editsKeptFor(line map[string]any) bool {
+	moment, known := Moment4Of(line)
+
+	return known && liveEditsJudgedAt(MomentOf(moment))
 }
 
 func checkoutRootOf(line map[string]any) string {

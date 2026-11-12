@@ -6,9 +6,8 @@ import (
 	"path/filepath"
 	"sort"
 	"time"
+	"github.com/jessegall/code-commandments/cache"
 )
-
-const keptFor = 12 * time.Hour
 
 const sweptEvery = time.Hour
 
@@ -23,7 +22,7 @@ type cachedTree struct {
 	size    int64
 }
 
-func sweep(folder string, now time.Time) {
+func Sweep(folder string, now time.Time) {
 	sweepKeeping(folder, now, heldAtMost)
 }
 
@@ -46,7 +45,7 @@ func sweepKeeping(folder string, now time.Time, atMost int64) {
 			return nil
 		}
 
-		if now.Sub(info.ModTime()) > keptFor {
+		if now.Sub(info.ModTime()) > cache.KeptFor() {
 			os.Remove(path)
 
 			return nil
@@ -74,7 +73,7 @@ func ForgetUnused(parent string, now time.Time) {
 
 	for _, entry := range entries {
 		info, err := entry.Info()
-		if err == nil && entry.IsDir() && now.Sub(info.ModTime()) > keptFor {
+		if err == nil && entry.IsDir() && now.Sub(info.ModTime()) > cache.KeptFor() {
 			os.RemoveAll(filepath.Join(parent, entry.Name()))
 		}
 	}

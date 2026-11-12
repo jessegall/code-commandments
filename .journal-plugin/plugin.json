@@ -162,6 +162,13 @@
             "default": "5",
             "group": "Performance"
         },
+        "cache_hours": {
+            "title": "Hours an unused cache is kept",
+            "help": "How long anything kept between runs stays once nothing uses it: the parsed trees of every language, what each rule answered per file, mypy's cache and the edit windows. Every use resets the clock, so only what went untouched for the whole time is removed.",
+            "type": "number",
+            "default": "12",
+            "group": "Performance"
+        },
         "judge_files_at_once": {
             "title": "Files a checkout may differ by",
             "help": "How many changed files the service brings into one answer about a worktree. Past it the tree is let go and the answer says so, since reading more than this inside a wait costs more than the answer is worth. Zero works it out from the size of the project.",

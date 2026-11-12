@@ -320,6 +320,7 @@ type Switches interface {
 	JudgeFolders(folders []string) error
 	SkipFolders(folders []string) error
 	RunWith(parallel int) (bool, error)
+	KeepCachesFor(hours float64) (bool, error)
 }
 
 func (j jsonConfig) DisableLanguage(language source.Language) (bool, error) {
@@ -368,6 +369,19 @@ func (j jsonConfig) RunWith(parallel int) (bool, error) {
 	return j.edit(func(config *Config) bool {
 		changed := config.Parallel != parallel
 		config.Parallel = parallel
+
+		return changed
+	})
+}
+
+func (j jsonConfig) KeepCachesFor(hours float64) (bool, error) {
+	if _, err := j.Scaffold(DetectRoots(j.root())); err != nil {
+		return false, err
+	}
+
+	return j.edit(func(config *Config) bool {
+		changed := config.CacheHours != hours
+		config.CacheHours = hours
 
 		return changed
 	})

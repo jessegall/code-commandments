@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/jessegall/code-commandments/contract"
-	"github.com/jessegall/code-commandments/engine"
+	"github.com/jessegall/code-commandments/cache"
 )
 
 const mostNodesKept = 1_000_000
@@ -145,7 +145,7 @@ func (p *Parses) keep(digest string, file *contract.File, language contract.Lang
 
 func (p *Parses) forgetExpired(now time.Time) {
 	for digest, kept := range p.held {
-		if now.Sub(kept.used) >= engine.RememberedFor {
+		if now.Sub(kept.used) >= cache.KeptFor() {
 			p.forget(digest)
 		}
 	}

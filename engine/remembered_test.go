@@ -11,6 +11,7 @@ import (
 
 	"github.com/jessegall/code-commandments/contract"
 	"github.com/jessegall/code-commandments/engine"
+	"github.com/jessegall/code-commandments/cache"
 )
 
 func treeHolding(t *testing.T, contents ...string) (*engine.Codebase, []string) {
@@ -175,14 +176,14 @@ func TestAFingerprintIsForgottenAfterTwelveHours(t *testing.T) {
 	}
 
 	judge()
-	now = now.Add(engine.RememberedFor - time.Minute)
+	now = now.Add(cache.KeptFor() - time.Minute)
 	judge()
 
 	if detector.asked != 1 {
 		t.Fatalf("the detector was asked %d times inside the twelve hours", detector.asked)
 	}
 
-	now = now.Add(engine.RememberedFor + time.Minute)
+	now = now.Add(cache.KeptFor() + time.Minute)
 	judge()
 
 	if detector.asked != 2 {
@@ -281,9 +282,9 @@ func TestAHitRenewsAnEntry(t *testing.T) {
 	}
 
 	judge()
-	now = now.Add(engine.RememberedFor - time.Hour)
+	now = now.Add(cache.KeptFor() - time.Hour)
 	judge()
-	now = now.Add(engine.RememberedFor - time.Hour)
+	now = now.Add(cache.KeptFor() - time.Hour)
 	judge()
 
 	if detector.asked != 1 {
@@ -334,7 +335,7 @@ func TestARestoredEntryPastTwelveHoursIsGone(t *testing.T) {
 	memory.Find(tree, detector.find)
 
 	saved := memory.Verdicts()
-	now = now.Add(engine.RememberedFor + time.Minute)
+	now = now.Add(cache.KeptFor() + time.Minute)
 	restored := engine.RememberingFrom(clock, saved)
 
 	if !restored.Changed() {
@@ -361,7 +362,7 @@ func TestAnExpiredEntryLeavesTheVerdictsWithoutAHit(t *testing.T) {
 	memory.Find(tree, (&asking{}).find)
 	memory.Verdicts()
 
-	now = now.Add(engine.RememberedFor + time.Minute)
+	now = now.Add(cache.KeptFor() + time.Minute)
 
 	if !memory.Changed() {
 		t.Error("an expired entry has to be deleted from the file, with no hit to prompt it")

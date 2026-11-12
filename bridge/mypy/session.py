@@ -85,14 +85,14 @@ def sources(paths: list[str], chosen: Options) -> list[BuildSource]:
         return []
 
 
-def read_afresh(found: list[BuildSource]) -> list[BuildSource]:
+def read_afresh(found: list[BuildSource], only: set[str] | None = None) -> list[BuildSource]:
     """The sources with their text in hand, which makes mypy compile each whatever its cache holds, so each has
     the tree and the types the writer reads. A file deleted between mypy's listing of the folder and this read, a
     worktree removed under the run, is no part of the project this request asks about and is left out; a module
     with no file of its own is kept as it is."""
     kept: list[BuildSource] = []
     for source in found:
-        if not source.path:
+        if not source.path or (only is not None and os.path.realpath(source.path) not in only):
             kept.append(source)
             continue
         try:
@@ -135,6 +135,25 @@ class Session:
     def checked(self, paths: list[str], python: str | None) -> CheckedProject:
         chosen = options(python, cache_folder(paths))
         found = read_afresh(sources(paths, chosen))
+        result = built(found, chosen)
+        if result is None:
+            return CheckedProject(found, {}, {})
+        return CheckedProject(found, result.types, result.graph)
+
+    def from_cache(self, paths: list[str], python: str | None) -> CheckedProject:
+        """The project built over mypy's cache, which compiles only the modules that changed: an unchanged module
+        comes back with no tree."""
+        chosen = options(python, cache_folder(paths))
+        found = sources(paths, chosen)
+        result = built(found, chosen)
+        if result is None:
+            return CheckedProject(found, {}, {})
+        return CheckedProject(found, result.types, result.graph)
+
+    def compiled(self, paths: list[str], python: str | None, only: set[str]) -> CheckedProject:
+        """The project built over mypy's cache with the files $only names compiled afresh."""
+        chosen = options(python, cache_folder(paths))
+        found = read_afresh(sources(paths, chosen), only)
         result = built(found, chosen)
         if result is None:
             return CheckedProject(found, {}, {})

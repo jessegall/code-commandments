@@ -124,3 +124,17 @@ func TestThePluginRefusesNothing(t *testing.T) {
 		}
 	}
 }
+
+func TestWithLiveJudgingOffAnEditIsNotEvenRecorded(t *testing.T) {
+	root := t.TempDir()
+	data := t.TempDir()
+	t.Setenv(pluginData, data)
+
+	os.WriteFile(filepath.Join(root, "order.py"), []byte(olderSin), 0o644)
+
+	keepEditOf(editedLine(root, "order.py", map[string]any{liveEditsKey: false}))
+
+	if kept, _ := os.ReadDir(filepath.Join(data, "worker-edits")); len(kept) != 0 {
+		t.Errorf("an edit with live judging off was recorded: %v", kept)
+	}
+}

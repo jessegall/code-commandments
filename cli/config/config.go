@@ -24,6 +24,7 @@ type Config struct {
 	Hooks             []string
 	Agents            []string
 	Parallel          int
+	CacheHours        float64
 	Configurators     []Configurator
 }
 

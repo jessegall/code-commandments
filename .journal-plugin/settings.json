@@ -96,6 +96,14 @@
         "help": "How long one agent's live edits are gathered before they are judged together as a group. An edit alone in that time is judged by itself. Zero judges each edit as it comes."
     },
     {
+        "key": "cache_hours",
+        "title": "Hours an unused cache is kept",
+        "type": "number",
+        "kind": "number",
+        "default": 12,
+        "help": "How long anything kept between runs stays once nothing uses it: the parsed trees of every language, what each rule answered per file, mypy's cache and the edit windows. Every use resets the clock, so only what went untouched for the whole time is removed."
+    },
+    {
         "key": "judge_files_at_once",
         "title": "Files a checkout may differ by",
         "type": "number",

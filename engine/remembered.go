@@ -10,9 +10,8 @@ import (
 	"time"
 
 	"github.com/jessegall/code-commandments/contract"
+	"github.com/jessegall/code-commandments/cache"
 )
-
-const RememberedFor = 12 * time.Hour
 
 const sweptEvery = time.Hour
 
@@ -212,7 +211,7 @@ func (r *Remembered) known(one unjudged, now time.Time) ([]int, bool) {
 }
 
 func expired(at int64, now time.Time) bool {
-	return now.Sub(time.Unix(0, at)) >= RememberedFor
+	return now.Sub(time.Unix(0, at)) >= cache.KeptFor()
 }
 
 func (m *Memory) sweep(now time.Time) {

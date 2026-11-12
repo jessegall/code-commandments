@@ -162,7 +162,7 @@ func TreesFolder(language string) (string, error) {
 	if err := writable(folder); err != nil {
 		return "", err
 	}
-	sweep(folder, time.Now())
+	Sweep(folder, time.Now())
 
 	return folder, nil
 }

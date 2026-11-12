@@ -5,6 +5,8 @@ import (
 	"path/filepath"
 	"testing"
 	"time"
+
+	"github.com/jessegall/code-commandments/cache"
 )
 
 func TestASweepLetsGoOfTreesNotUsedForTwelveHours(t *testing.T) {
@@ -21,7 +23,7 @@ func TestASweepLetsGoOfTreesNotUsedForTwelveHours(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	sweep(folder, now)
+	Sweep(folder, now)
 	if _, err := os.Stat(stale); !os.IsNotExist(err) {
 		t.Error("a tree unused for thirteen hours was kept")
 	}
@@ -35,11 +37,11 @@ func TestASweepLetsGoOfTreesNotUsedForTwelveHours(t *testing.T) {
 	if err := os.Chtimes(stale, old, old); err != nil {
 		t.Fatal(err)
 	}
-	sweep(folder, now.Add(30*time.Minute))
+	Sweep(folder, now.Add(30*time.Minute))
 	if _, err := os.Stat(stale); err != nil {
 		t.Error("a folder swept within the hour was walked again")
 	}
-	sweep(folder, now.Add(61*time.Minute))
+	Sweep(folder, now.Add(61*time.Minute))
 	if _, err := os.Stat(stale); !os.IsNotExist(err) {
 		t.Error("the next hour's sweep kept a stale tree")
 	}
@@ -104,5 +106,42 @@ func TestAFolderNotTouchedForTwelveHoursIsForgottenAndATouchedOneKept(t *testing
 
 	if _, err := os.Stat(used); err != nil {
 		t.Errorf("a folder touched just now was forgotten: %v", err)
+	}
+}
+
+func TestASweepAndAForgettingKeepAsLongAsTheProjectChose(t *testing.T) {
+	t.Setenv(cache.Variable, "2")
+
+	folder, parent := t.TempDir(), t.TempDir()
+	now := time.Now()
+	stale, fresh := filepath.Join(folder, "stale.tree"), filepath.Join(folder, "fresh.tree")
+	idle, used := filepath.Join(parent, "idle"), filepath.Join(parent, "used")
+
+	for _, tree := range []string{stale, fresh} {
+		if err := os.WriteFile(tree, []byte("{}\n"), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	for _, each := range []string{idle, used} {
+		if err := os.MkdirAll(each, 0o755); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	threeHours, oneHour := now.Add(-3*time.Hour), now.Add(-time.Hour)
+	for path, at := range map[string]time.Time{stale: threeHours, fresh: oneHour, idle: threeHours, used: oneHour} {
+		if err := os.Chtimes(path, at, at); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	Sweep(folder, now)
+	ForgetUnused(parent, now)
+
+	for path, kept := range map[string]bool{stale: false, fresh: true, idle: false, used: true} {
+		if _, err := os.Stat(path); (err == nil) != kept {
+			t.Errorf("with two hours chosen, %s kept is %v, want %v", filepath.Base(path), err == nil, kept)
+		}
 	}
 }

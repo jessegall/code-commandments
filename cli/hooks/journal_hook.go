@@ -54,8 +54,10 @@ func (JournalHook) Run(in *cli.Input, console cli.Console) (int, error) {
 	given := payloadOf(raw)
 
 	if os.Getenv(advising) != "" {
-		defer rememberedAround(servedRoot(), console.Warn)()
-		adviseNow(given)
+		if save, alone := rememberedAround(servedRoot(), console.Warn); alone {
+			defer save()
+			adviseNow(given)
+		}
 
 		return 0, nil
 	}

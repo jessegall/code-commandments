@@ -17,7 +17,10 @@ import tokenize
 from dataclasses import dataclass
 from typing import Iterator
 
+from mypy.build import State
 from mypy.version import __version__ as MYPY_VERSION
+
+from kept import Kept, KeptLine
 
 from session import ResolvedType, Session, TypedModule, spans, states
 
@@ -209,12 +212,11 @@ class Comment:
 
 
 @dataclass(frozen=True)
-class FileLine:
-    """One module as the stream's file line writes it."""
+class ModuleLine:
+    """One module as the stream's file line writes it, its path and whether it is context left to the file holding
+    it, so the same line is kept for every checkout that holds the same module."""
 
-    path: str
     errors: int
-    context: bool
     module: str
     resolved: bool
     root: Node
@@ -222,10 +224,8 @@ class FileLine:
 
     def to_json(self) -> dict[str, object]:
         return written((
-            ("path", self.path),
             ("language", "python"),
             ("errors", self.errors),
-            ("context", True if self.context else ABSENT),
             ("module", self.module),
             ("resolver", {"tool": "mypy", "ran": self.resolved}),
             ("root", self.root.to_json()),
@@ -677,36 +677,58 @@ def unparsed(source: bytes) -> Node:
     return Node(0, "Module", "other", Span(0, len(source), 1))
 
 
-def stream(session: Session, paths: list[str], write: list[str], python: str | None) -> Iterator[dict]:
-    """The contract's lines for the modules under $paths: the header, one file line each, the program, the trailer."""
+def stream(session: Session, paths: list[str], write: list[str], python: str | None, kept: Kept | None = None) -> Iterator[dict]:
+    """The contract's lines for the modules under $paths: the header, one file line each, the program, the trailer.
+    With $kept, a module whose line is kept under the key of what made it is written from there, and mypy compiles
+    afresh only the modules that are not; each line it then writes is kept for the next run."""
     yield {"header": {"contract": "tree", "version": 2, "language": "python",
                       "bridge": {"name": "mypy-bridge", "version": MYPY_VERSION}, "roots": [os.path.realpath(p) for p in paths]}}
-    project = session.checked(paths, python)
-    found, types, graph = project.sources, project.types, project.graph
+    found = python_files(paths)
+    texts = {path: open(path, "rb").read() for path in found}
+    project = session.checked(paths, python) if kept is None else session.from_cache(paths, python)
+    named = {os.path.realpath(s.path): s.module for s in project.sources if s.path}
+    modules = {path: named.get(path) or module_name(path) for path in found}
+    checked = states(project.graph, set(named))
+    keys = {path: kept.key(modules[path], checked.get(path), project.graph, texts[path], texts) for path in found} if kept else {}
+    held = {path: kept.read(key) for path, key in keys.items()} if kept else {}
+    missing = {path for path in found if held.get(path) is None}
+    if kept is not None and missing:
+        project = session.compiled(paths, python, missing)
+        checked = states(project.graph, set(named))
     judged = {os.path.realpath(p) for p in write}
-    named = {os.path.realpath(s.path): s.module for s in found if s.path}
-    checked = states(graph, set(named))
     seen = resolved = unjoined = files = 0
     folders: list[str] = []
-    for path in python_files(paths):
-        text = open(path, "rb").read()
-        state = checked.get(path)
-        typed = spans(path, state, types) if state is not None else TypedModule(0, {})
-        seen, resolved = seen + typed.expressions, resolved + len(typed.by_span)
-        module = named.get(path) or module_name(path)
-        writer = TreeWriter(text, module, typed.by_span)
-        try:
-            root, errors = writer.node(ast.parse(text), None, []), 0
-        except SyntaxError:
-            root, errors = unparsed(text), 1
-        comments = tuple(writer.comments()) if not errors else ()
-        ran = state is not None and state.tree is not None
-        yield {"file": FileLine(path, errors, bool(write) and path not in judged, module, ran, root, comments)}
+    for path in found:
+        line = held.get(path)
+        if line is None:
+            line = line_of(texts[path], modules[path], checked.get(path), project.types, path)
+            if kept is not None:
+                kept.write(keys[path], line)
+        seen, resolved, unjoined = seen + line.expressions, resolved + line.typed, unjoined + line.unjoined
+        yield {"file": placed(line, path, bool(write) and path not in judged)}
         files += 1
-        unjoined += sum(1 for span in typed.by_span if span not in writer.joined)
         folders += [folder for folder in packages(path) if folder not in folders]
     yield {"program": {"packages": sorted(folders)}}
     yield {"trailer": {"files": files, "resolution": {"expressions": seen, "typed": resolved, "unjoined": unjoined}}}
+
+
+def line_of(text: bytes, module: str, state: State | None, types: dict, path: str) -> KeptLine:
+    """A module's file line with its path and context left out, and the counts the trailer adds up for it."""
+    typed = spans(path, state, types) if state is not None else TypedModule(0, {})
+    writer = TreeWriter(text, module, typed.by_span)
+    try:
+        root, errors = writer.node(ast.parse(text), None, []), 0
+    except SyntaxError:
+        root, errors = unparsed(text), 1
+    comments = tuple(writer.comments()) if not errors else ()
+    ran = state is not None and state.tree is not None
+    unjoined = sum(1 for span in typed.by_span if span not in writer.joined)
+    return KeptLine(ModuleLine(errors, module, ran, root, comments).to_json(), typed.expressions, len(typed.by_span), unjoined)
+
+
+def placed(kept: KeptLine, path: str, context: bool) -> dict[str, object]:
+    """A kept line as the file at $path writes it, marked as context when the request did not ask for it."""
+    return written((("path", path), ("context", True if context else ABSENT), *kept.line.items()))
 
 
 def emit(lines: Iterator[dict]) -> None:
@@ -719,7 +741,7 @@ def emit(lines: Iterator[dict]) -> None:
     sys.stdout.flush()
 
 
-def to_json(record: FileLine) -> dict[str, object]:
+def to_json(record: ModuleLine) -> dict[str, object]:
     """A line's record as the contract writes it."""
     return record.to_json()
 
@@ -746,13 +768,21 @@ def declared() -> Declaration:
     )
 
 
-def answered(session: Session, request: str) -> None:
+def answered(session: Session, request: str, kept: Kept | None = None) -> None:
     """One request of a serving bridge, answered, and its build let go of."""
     asked = json.loads(request)
     try:
-        emit(stream(session, asked.get("paths", []), asked.get("write", []), asked.get("python")))
+        emit(stream(session, asked.get("paths", []), asked.get("write", []), asked.get("python"), kept))
     finally:
         session.forget()
+
+
+def kept_in(argv: list[str]) -> Kept | None:
+    """The folder `--cache=` names for the lines this bridge keeps between runs; none when it names none."""
+    for arg in argv:
+        if arg.startswith("--cache=") and arg[len("--cache="):]:
+            return Kept(arg[len("--cache="):])
+    return None
 
 
 def main(argv: list[str]) -> int:
@@ -760,11 +790,12 @@ def main(argv: list[str]) -> int:
         sys.stdout.write(json.dumps(declared().to_json(), ensure_ascii=False) + "\n")
         return 0
     session = Session()
+    kept = kept_in(argv)
     if "--serve" in argv:
         for request in sys.stdin:
-            answered(session, request)
+            answered(session, request, kept)
         return 0
-    emit(stream(session, [arg for arg in argv if not arg.startswith("--")], [], None))
+    emit(stream(session, [arg for arg in argv if not arg.startswith("--")], [], None, kept))
     return 0
 
 

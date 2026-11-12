@@ -33,6 +33,7 @@ func Schema(root string) []byte {
 			"exclude":  list("Paths judge does not read at all, so nothing in them is reported on or rewritten. A path is read against the project; a pattern holding `*` or `?` matches as fnmatch does, and one opening with `**/` names that folder wherever it lies, at the top of the project included, so `**/dist` covers every module's own. One rule may be let in anyway with a `judges` call under it in `configure`.", object{"type": "string"}),
 			"base":     object{"type": "string", "minLength": 1, "description": "The branch `--branch` compares against when it names none: this project's trunk. Left out, it is main. A branch named on the command line always wins."},
 			"parallel": object{"type": "integer", "minimum": 1, "description": "How many detectors judge runs at once when no --parallel says; more use more cores and memory. Left out, judge runs 2."},
+			"cache_hours": object{"type": "number", "exclusiveMinimum": 0, "description": "How many hours anything kept between runs stays once nothing uses it: parsed trees, the rules' answers per file, mypy's cache and the edit windows. Every use resets the clock. Left out, 12."},
 			"disable": object{
 				"description":          "Rules and languages turned off. A detector is off when it, its sin or its skill is named here.",
 				"type":                 "object",
