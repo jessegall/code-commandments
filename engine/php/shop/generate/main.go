@@ -9,6 +9,8 @@ import (
 	"os/exec"
 	"path/filepath"
 
+	"github.com/jessegall/code-commandments/bridge"
+	"github.com/jessegall/code-commandments/contract"
 	"github.com/jessegall/code-commandments/engine/php/shop"
 )
 
@@ -39,14 +41,14 @@ func generate() error {
 }
 
 func streams(fixture, folder string) error {
-	backend, err := run("php", filepath.Join(shop.Repository(), "bridge", "php", "bridge.php"), "--rename="+fixture+"="+shop.Root, fixture)
+	backend, err := run("php", filepath.Join(shop.Repository(), "bridge", "php", "bridge.php"), "--rename="+fixture+"="+shop.Root, filesOf(fixture, contract.PHP))
 	if err != nil {
 		return err
 	}
 	if err := zipped(filepath.Join(folder, "shop.jsonl.gz"), backend); err != nil {
 		return err
 	}
-	frontend, err := run("node", filepath.Join(shop.Repository(), "bridge", "frontend", "dist", "bridge.mjs"), "--rename="+fixture+"="+shop.Root, fixture)
+	frontend, err := run("node", filepath.Join(shop.Repository(), "bridge", "frontend", "dist", "bridge.mjs"), "--rename="+fixture+"="+shop.Root, filesOf(fixture, contract.Vue, contract.TypeScript))
 	if err != nil {
 		return err
 	}
@@ -54,8 +56,20 @@ func streams(fixture, folder string) error {
 	return zipped(filepath.Join(folder, "shop-frontend.jsonl.gz"), frontend)
 }
 
-func run(name string, arguments ...string) ([]byte, error) {
+func filesOf(fixture string, languages ...contract.Language) []string {
+	var files []string
+	for _, language := range languages {
+		for _, extension := range contract.ExtensionsOf(language) {
+			files = append(files, bridge.ListedAs("."+extension, fixture)...)
+		}
+	}
+
+	return files
+}
+
+func run(name, program, rename string, files []string) ([]byte, error) {
 	var out, failure bytes.Buffer
+	arguments := append([]string{program, rename}, files...)
 	command := exec.Command(name, arguments...)
 	command.Stdout = &out
 	command.Stderr = &failure

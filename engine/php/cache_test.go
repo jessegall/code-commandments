@@ -6,15 +6,17 @@ import (
 	"path/filepath"
 	"testing"
 	"time"
+
+	"github.com/jessegall/code-commandments/bridge"
 )
 
-func streamed(t *testing.T, bridge Bridge, arguments ...string) string {
+func streamed(t *testing.T, program Bridge, arguments ...string) string {
 	t.Helper()
-	command, err := bridge.Command()
+	command, err := program.Command()
 	if err != nil {
 		t.Fatal(err)
 	}
-	out, err := exec.Command(command[0], append(command[1:], arguments...)...).Output()
+	out, err := exec.Command(command[0], append(command[1:], bridge.ListedArguments(arguments...)...)...).Output()
 	if err != nil {
 		t.Fatalf("%v: %v", command, err)
 	}

@@ -21,7 +21,7 @@ func TestCallsReachWhatPhpSaysTheyReach(t *testing.T) {
 		switch ask {
 		case "call":
 			var callee any
-			if target := node.Node().Target; target != nil {
+			if target := node.Node().Target; target != nil && target.Type != "" {
 				callee = []string{target.Type, target.Name}
 			}
 

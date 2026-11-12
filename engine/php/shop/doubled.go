@@ -5,7 +5,6 @@ import (
 
 	"github.com/jessegall/code-commandments/contract"
 	"github.com/jessegall/code-commandments/engine"
-	"github.com/jessegall/code-commandments/fixture"
 )
 
 func Fresh(t testing.TB) *engine.Codebase {
@@ -19,7 +18,7 @@ func Doubled(t testing.TB) *engine.Codebase {
 
 	var doubled []*contract.Stream
 	for _, stream := range streamsOf(t) {
-		doubled = append(doubled, fixture.TwiceOver(stream))
+		doubled = append(doubled, stream.TwiceOver())
 	}
 
 	return engine.New(readFixture, doubled...)

@@ -47,7 +47,7 @@ func TestNoFrontendRuleCostsMoreThanTheTreeItReadsGrewBy(t *testing.T) {
 	}
 
 	small := engine.Load(frontend, server)
-	large := engine.Load(fixture.TwiceOver(frontend), fixture.TwiceOver(server))
+	large := engine.Load(frontend.TwiceOver(), server.TwiceOver())
 
 	fixturetest.NoRuleOutgrowsItsTree(t, small, large, configured())
 }

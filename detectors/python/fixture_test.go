@@ -40,7 +40,7 @@ func parsed(t *testing.T) *contract.Stream {
 func TestNoPythonRuleCostsMoreThanTheTreeItReadsGrewBy(t *testing.T) {
 	stream := parsed(t)
 
-	fixturetest.NoRuleOutgrowsItsTree(t, engine.Load(stream), engine.Load(fixture.TwiceOver(stream)), configured())
+	fixturetest.NoRuleOutgrowsItsTree(t, engine.Load(stream), engine.Load(stream.TwiceOver()), configured())
 }
 
 func configured() []detectors.Detector {

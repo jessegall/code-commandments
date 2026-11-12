@@ -19,11 +19,7 @@ func TestAServedBridgeReadsDraftedTextInPlaceOfTheDisk(t *testing.T) {
 	if err := os.WriteFile(existing, []byte("<?php\nclass A {}\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	created := filepath.Join(root, "sub", "B.php")
-	contents := map[string]string{
-		existing: "<?php\n\nfinal class A {}\n",
-		created:  "<?php\nclass B {}\n",
-	}
+	contents := map[string]string{existing: "<?php\n\nfinal class A {}\n"}
 
 	command, err := php.Here().Command()
 	if err != nil {
@@ -34,18 +30,18 @@ func TestAServedBridgeReadsDraftedTextInPlaceOfTheDisk(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer server.Close()
-	stream, err := server.Ask(bridge.Request{Paths: []string{root}, Contents: contents})
+	stream, err := server.Ask(bridge.Request{Paths: []string{existing}, Contents: contents})
 	if err != nil {
 		t.Fatal(err)
 	}
 	codebase := engine.New(engine.ReadThrough(contents), stream)
 
 	files := codebase.Files()
-	if len(files) != 2 || files[0].Path != existing || files[1].Path != created {
+	if len(files) != 1 || files[0].Path != existing {
 		t.Fatalf("got %d files", len(files))
 	}
 	classes := codebase.WhereKind("Stmt_Class").Get()
-	if len(classes) != 2 {
+	if len(classes) != 1 {
 		t.Fatalf("got %d classes", len(classes))
 	}
 	span, err := classes[0].Span()

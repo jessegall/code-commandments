@@ -274,7 +274,7 @@ func TestServingAnswersEveryRequestWithAWholeStream(t *testing.T) {
 		t.Fatal(err)
 	}
 	command := exec.Command(bridge[0], append(bridge[1:], "--serve")...)
-	command.Stdin = strings.NewReader(`{"paths": ["` + a + `"]}` + "\n" + `{"paths": ["` + folder + `"], "write": ["` + b + `"]}` + "\n")
+	command.Stdin = strings.NewReader(`{"paths": ["` + a + `"]}` + "\n" + `{"paths": ["` + a + `", "` + b + `"], "write": ["` + b + `"]}` + "\n")
 	out, err := command.Output()
 	if err != nil {
 		t.Fatal(err)
