@@ -135,3 +135,36 @@ func TestAWorktreeHoldingTheSameSourcesSharesTheKeptLines(t *testing.T) {
 		t.Errorf("the worktree's kept lines name the checkout they were first written in, not its own")
 	}
 }
+
+func TestAChangeInsideABodyKeepsEveryOtherCSharpFilesLine(t *testing.T) {
+	trees := t.TempDir()
+	root := checkoutHolding(t, shop)
+
+	cachedRun(t, trees, root)
+	tamperedKept(t, trees, `"Price"`, `"KeptPrice"`)
+
+	if err := os.WriteFile(filepath.Join(root, "Basket.cs"), []byte("namespace Shop;\n\npublic sealed class Basket\n{\n    public Price Total() => new(42);\n}\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	if again := cachedRun(t, trees, root); !strings.Contains(again, "KeptPrice") {
+		t.Error("a change inside a body of Basket.cs made Price.cs, whose declarations it does not touch, be read again")
+	}
+}
+
+func TestTheSameCSharpContentsUnderAnotherFileNameShareTheKeptLine(t *testing.T) {
+	trees := t.TempDir()
+
+	cachedRun(t, trees, checkoutHolding(t, shop))
+	tamperedKept(t, trees, `"Basket"`, `"KeptBasket"`)
+
+	renamed := checkoutHolding(t, map[string]string{"Money.cs": shop["Price.cs"], "Cart.cs": shop["Basket.cs"]})
+	again := cachedRun(t, trees, renamed)
+
+	if !strings.Contains(again, "KeptBasket") {
+		t.Error("the same contents under another file name were read again: a path is part of the key")
+	}
+	if !strings.Contains(again, filepath.Join(renamed, "Cart.cs")) {
+		t.Error("the kept line does not name the file it was read for")
+	}
+}

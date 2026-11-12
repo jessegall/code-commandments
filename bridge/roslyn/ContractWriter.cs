@@ -61,7 +61,7 @@ public sealed class ContractWriter(IReadOnlyList<string> roots, IReadOnlySet<str
             json.WriteEndObject();
         });
 
-        workspace.Stream(roots, asked => WriteProject(output, asked), path => cache?.Relative(path) ?? path);
+        workspace.Stream(roots, asked => WriteProject(output, asked));
 
         Line(output, json =>
         {
@@ -126,7 +126,7 @@ public sealed class ContractWriter(IReadOnlyList<string> roots, IReadOnlySet<str
 
                 if (cache is not null)
                 {
-                    cache.Keep(KeyOf(asked, file), Meta(calls - callsBefore, resolved - resolvedBefore), Encoding.UTF8.GetString(buffer.ToArray()));
+                    cache.Keep(KeyOf(asked, file), Meta(calls - callsBefore, resolved - resolvedBefore), Encoding.UTF8.GetString(buffer.ToArray()), Real(file));
                 }
             }
 
@@ -136,12 +136,12 @@ public sealed class ContractWriter(IReadOnlyList<string> roots, IReadOnlySet<str
 
     private bool IsContext(string file) => written is { Count: > 0 } && !written.Contains(file);
 
-    private string KeyOf(Asked asked, string file) => TreeCache.KeyOf(asked.Key, cache?.Relative(file) ?? file, IsContext(file) ? "context" : "");
+    private string KeyOf(Asked asked, string file) => TreeCache.KeyOf(asked.Key, TreeCache.KeyOf(File.ReadAllText(file)), IsContext(file) ? "context" : "");
 
     /// <summary>The line kept for <paramref name="file"/>, its outside declarations and counts taken into this run; null when none is kept or it cannot be read.</summary>
     private string? KeptLine(Asked asked, string file)
     {
-        if (cache?.Read(KeyOf(asked, file)) is not { } entry)
+        if (cache?.Read(KeyOf(asked, file), Real(file)) is not { } entry)
         {
             return null;
         }

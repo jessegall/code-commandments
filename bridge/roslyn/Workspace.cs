@@ -1,5 +1,6 @@
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace CodeCommandments.Bridge;
 
@@ -64,7 +65,7 @@ public sealed class Workspace
     /// let go once no project still to be written reaches it. An assembly is loaded once for the workspace and shared
     /// by every project and every run that reaches it. Files outside every project come last, compiled alone.
     /// </summary>
-    public void Stream(IReadOnlyList<string> paths, Action<Asked> write, Func<string, string> relative)
+    public void Stream(IReadOnlyList<string> paths, Action<Asked> write)
     {
         var roots = paths.Select(Path.GetFullPath).ToList();
         var asked = Sources.Under(roots).ToHashSet(StringComparer.Ordinal);
@@ -103,7 +104,7 @@ public sealed class Workspace
             var usings = GlobalUsings.Of(csproj);
             var own = References.Of(csproj);
             var reached = reach[csproj].Where(compilations.ContainsKey).ToList();
-            keys[csproj] = KeyOf(csproj, files, usings, own, reach[csproj].Select(other => keys.GetValueOrDefault(other) ?? other), relative);
+            keys[csproj] = KeyOf(csproj, files, usings, own, reach[csproj].Select(other => keys.GetValueOrDefault(other) ?? ""));
             compilations[csproj] = new(() =>
             {
                 var sources = files.Select(Parse).ToList();
@@ -137,7 +138,7 @@ public sealed class Workspace
 
                 return (sources, CSharpCompilation.Create("loose", sources, References.Loose(loaded), Compiled));
             });
-            WriteAsked(KeyOf("loose", loose, "", null, [], relative), loose, () => compiled.Value, asked, false, write);
+            WriteAsked(KeyOf("", loose, "", null, []), loose, () => compiled.Value, asked, false, write);
         }
     }
 
@@ -160,10 +161,15 @@ public sealed class Workspace
         }));
     }
 
-    /// <summary>The key of a project: its project file, every source by where it lies in the checkout and what it says, its global usings, what it references, and the keys of the projects it reaches.</summary>
-    private static string KeyOf(string csproj, List<string> files, string usings, Reach? own, IEnumerable<string> reached, Func<string, string> relative)
+    /// <summary>
+    /// The key of a project as one file's semantic facts see it, made of contents alone and never a path: its project
+    /// file, its global usings, what it references, the keys of the projects it reaches, and every source's
+    /// declarations with the bodies of its members cut out. A change inside a body keeps every other file's line; a
+    /// changed declaration starts them over.
+    /// </summary>
+    private static string KeyOf(string csproj, List<string> files, string usings, Reach? own, IEnumerable<string> reached)
     {
-        var parts = new List<string> { relative(csproj), File.Exists(csproj) ? File.ReadAllText(csproj) : csproj, usings };
+        var parts = new List<string> { File.Exists(csproj) ? File.ReadAllText(csproj) : "", usings };
 
         if (own is not null)
         {
@@ -171,14 +177,37 @@ public sealed class Workspace
         }
 
         parts.AddRange(reached);
-
-        foreach (var file in files.Order(StringComparer.Ordinal))
-        {
-            parts.Add(relative(file));
-            parts.Add(File.ReadAllText(file));
-        }
+        parts.AddRange(files.Select(Declarations).Order(StringComparer.Ordinal));
 
         return TreeCache.KeyOf(parts);
+    }
+
+    /// <summary>What <paramref name="file"/> declares, as its text with every member body cut out: all one file's types can see of another.</summary>
+    private static string Declarations(string file)
+    {
+        var text = File.ReadAllText(file);
+        var bodies = CSharpSyntaxTree.ParseText(text, Options).GetRoot().DescendantNodes()
+            .Select(node => node switch
+            {
+                BaseMethodDeclarationSyntax method => (SyntaxNode?)method.Body ?? method.ExpressionBody,
+                AccessorDeclarationSyntax accessor => (SyntaxNode?)accessor.Body ?? accessor.ExpressionBody,
+                _ => null,
+            })
+            .OfType<SyntaxNode>()
+            .Select(body => body.Span)
+            .OrderBy(span => span.Start)
+            .ToList();
+
+        var kept = new System.Text.StringBuilder();
+        var from = 0;
+
+        foreach (var span in bodies.Where(span => span.Start >= from))
+        {
+            kept.Append(text, from, span.Start - from);
+            from = span.End;
+        }
+
+        return TreeCache.KeyOf(kept.Append(text, from, text.Length - from).ToString());
     }
 
     /// <summary>Puts <paramref name="csproj"/> in <paramref name="order"/> after every project it reaches, and keeps what it reaches in <paramref name="reach"/>.</summary>

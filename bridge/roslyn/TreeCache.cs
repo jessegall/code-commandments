@@ -15,6 +15,9 @@ public sealed class TreeCache(string folder, string root)
     /// <summary>What a kept line says in place of the checkout's root and the slash after it: a control character, which no JSON text holds raw.</summary>
     private const string Root = "\u0002";
 
+    /// <summary>What a kept line says in place of its own file's path, so the same contents anywhere share the entry.</summary>
+    private const string Own = "\u0001";
+
     /// <summary>How large a line may be and still be kept: a generated file's tree is not worth the disk.</summary>
     private const int Kept = 16 << 20;
 
@@ -37,9 +40,7 @@ public sealed class TreeCache(string folder, string root)
         return Convert.ToHexString(hash.GetHashAndReset()).ToLowerInvariant();
     }
 
-    public string Relative(string path) => path.StartsWith(rooted, StringComparison.Ordinal) ? path[rooted.Length..] : path;
-
-    public (string Meta, string Line)? Read(string key)
+    public (string Meta, string Line)? Read(string key, string own)
     {
         var entry = EntryOf(key);
 
@@ -55,7 +56,7 @@ public sealed class TreeCache(string folder, string root)
 
             File.SetLastWriteTimeUtc(entry, DateTime.UtcNow);
 
-            return (stored[..split], stored[(split + 1)..].Replace(Root, rooted, StringComparison.Ordinal));
+            return (stored[..split], stored[(split + 1)..].Replace(Own, own, StringComparison.Ordinal).Replace(Root, rooted, StringComparison.Ordinal));
         }
         catch (IOException)
         {
@@ -67,7 +68,7 @@ public sealed class TreeCache(string folder, string root)
         }
     }
 
-    public void Keep(string key, string meta, string line)
+    public void Keep(string key, string meta, string line, string own)
     {
         if (line.Length > Kept)
         {
@@ -80,7 +81,7 @@ public sealed class TreeCache(string folder, string root)
         try
         {
             Directory.CreateDirectory(folder);
-            File.WriteAllText(draft, meta + "\n" + line.Replace(rooted, Root, StringComparison.Ordinal));
+            File.WriteAllText(draft, meta + "\n" + line.Replace(own, Own, StringComparison.Ordinal).Replace(rooted, Root, StringComparison.Ordinal));
             File.Move(draft, entry, true);
         }
         catch (IOException)
