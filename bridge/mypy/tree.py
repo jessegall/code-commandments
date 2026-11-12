@@ -1,7 +1,7 @@
 """A Python project as one generic tree stream (contract/CONTRACT.md), typed by mypy.
 
 `python tree.py <path>...` writes the stream for every module under the paths. `python tree.py --serve` answers one
-JSON request per stdin line ({"paths", "write", "python"}) with a full stream, header to
+JSON request per stdin line ({"paths", "write"}) with a full stream, header to
 trailer, holding the checked project in memory between requests. A module outside `write` informs the types and is
 written with `context: true`. Types come from session.py's mypy session, joined to nodes by exact span.
 """
@@ -671,7 +671,7 @@ def unparsed(source: bytes) -> Node:
     return Node(0, "Module", "other", Span(0, len(source), 1))
 
 
-def stream(session: Session, paths: list[str], write: list[str], python: str | None, kept: Kept | None = None) -> Iterator[dict | str]:
+def stream(session: Session, paths: list[str], write: list[str], kept: Kept | None = None) -> Iterator[dict | str]:
     """The contract's lines for the modules under $paths: the header, one file line each, the program, the trailer.
     With $kept, a module whose line still holds is written from there at once, and mypy checks only the modules that
     changed and those a changed interface reaches (kept_lines). Each line written is kept for the next run."""
@@ -680,13 +680,13 @@ def stream(session: Session, paths: list[str], write: list[str], python: str | N
     found = python_files(paths)
     texts = {path: open(path, "rb").read() for path in found}
     judged = {os.path.realpath(p) for p in write}
-    lines = kept_lines(session, kept, paths, found, texts, python) if kept is not None else checked_lines(session, paths, found, texts, python)
+    lines = kept_lines(session, kept, paths, found, texts) if kept is not None else checked_lines(session, paths, found, texts)
     yield from file_lines(lines, write, judged)
 
 
-def checked_lines(session: Session, paths: list[str], found: list[str], texts: dict[str, bytes], python: str | None) -> Iterator[tuple[str, KeptLine]]:
+def checked_lines(session: Session, paths: list[str], found: list[str], texts: dict[str, bytes]) -> Iterator[tuple[str, KeptLine]]:
     """Every module's line from one build of the whole request, with nothing kept."""
-    project = session.checked(paths, python)
+    project = session.checked(paths)
     named = {os.path.realpath(s.path): s.module for s in project.sources if s.path}
     checked = states(project.graph, set(named))
     for path in found:
@@ -696,7 +696,7 @@ def checked_lines(session: Session, paths: list[str], found: list[str], texts: d
 ROUNDS_AT_MOST = 20
 
 
-def kept_lines(session: Session, kept: Kept, paths: list[str], found: list[str], texts: dict[str, bytes], python: str | None) -> Iterator[tuple[str, KeptLine]]:
+def kept_lines(session: Session, kept: Kept, paths: list[str], found: list[str], texts: dict[str, bytes]) -> Iterator[tuple[str, KeptLine]]:
     """Each module's line, from what was kept wherever it still holds, the way mypy itself decides a module is still
     good: its own text is unchanged and every module it depends on shows the interface it showed then. A module
     whose text changed has no record and is checked; once its new interface is known, a module that saw the old one
@@ -721,7 +721,7 @@ def kept_lines(session: Session, kept: Kept, paths: list[str], found: list[str],
     for _ in range(ROUNDS_AT_MOST):
         if not todo:
             break
-        for path, line, record in rechecked(session, kept, python, sorted(todo), texts, modules, shas, pins):
+        for path, line, record in rechecked(session, kept, sorted(todo), texts, modules, shas, pins):
             records[path] = record
             interfaces[modules[path]] = record["interface"]
             lines[path] = line
@@ -762,11 +762,11 @@ def reached_from(todo: set[str], modules: dict[str, str], records: dict[str, dic
     return reached
 
 
-def rechecked(session: Session, kept: Kept, python: str | None, asked: list[str], texts: dict[str, bytes], modules: dict[str, str],
+def rechecked(session: Session, kept: Kept, asked: list[str], texts: dict[str, bytes], modules: dict[str, str],
               shas: dict[str, bytes], pins: str) -> Iterator[tuple[str, KeptLine, dict]]:
     """The modules $asked compiled afresh over mypy's cache, each with its line and the record it is kept under, which
     is written the moment its line is, so a run stopped part way keeps what it did."""
-    project = session.compiled(asked, python, set(asked))
+    project = session.compiled(asked, set(asked))
     named = {os.path.realpath(s.path): s.module for s in project.sources if s.path}
     checked = states(project.graph, set(named))
     for path in asked:
@@ -875,7 +875,7 @@ def answered(session: Session, request: str, kept: Kept | None = None) -> None:
     """One request of a serving bridge, answered, and its build let go of."""
     asked = json.loads(request)
     try:
-        emit(stream(session, asked.get("paths", []), asked.get("write", []), asked.get("python"), kept))
+        emit(stream(session, asked.get("paths", []), asked.get("write", []), kept))
     finally:
         session.forget()
 
@@ -919,7 +919,7 @@ def main(argv: list[str]) -> int:
         for request in sys.stdin:
             answered(session, request, kept)
         return 0
-    emit(stream(session, [arg for arg in argv if not arg.startswith("--")], [], None, kept))
+    emit(stream(session, [arg for arg in argv if not arg.startswith("--")], [], kept))
     return 0
 
 

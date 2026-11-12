@@ -60,7 +60,7 @@ def cache_folder(paths: list[str], base: str | None) -> str:
     return folder
 
 
-def options(python: str | None, cache: str) -> Options:
+def options(cache: str) -> Options:
     """How mypy reads a consumer's project: every body checked, imports it cannot find left untyped, and what it
     checked kept in $cache so a later request compiles only the files it names."""
     chosen = Options()
@@ -71,8 +71,6 @@ def options(python: str | None, cache: str) -> Options:
     chosen.check_untyped_defs = True
     chosen.follow_imports = "silent"
     chosen.ignore_missing_imports = True
-    if python:
-        chosen.python_executable = python
     return chosen
 
 
@@ -135,17 +133,17 @@ class Session:
     def __init__(self, base: str | None = None) -> None:
         self.base = base
 
-    def checked(self, paths: list[str], python: str | None) -> CheckedProject:
-        chosen = options(python, cache_folder(paths, self.base))
+    def checked(self, paths: list[str]) -> CheckedProject:
+        chosen = options(cache_folder(paths, self.base))
         found = read_afresh(sources(paths, chosen))
         result = built(found, chosen)
         if result is None:
             return CheckedProject(found, {}, {})
         return CheckedProject(found, result.types, result.graph)
 
-    def compiled(self, paths: list[str], python: str | None, only: set[str]) -> CheckedProject:
+    def compiled(self, paths: list[str], only: set[str]) -> CheckedProject:
         """The project built over mypy's cache with the files $only names compiled afresh."""
-        chosen = options(python, cache_folder(paths, self.base))
+        chosen = options(cache_folder(paths, self.base))
         found = read_afresh(sources(paths, chosen), only)
         result = built(found, chosen)
         if result is None:

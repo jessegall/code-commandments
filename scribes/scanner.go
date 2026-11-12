@@ -1,12 +1,14 @@
 package scribes
 
 import (
+	"maps"
 	"os"
 	"path/filepath"
 	"slices"
 
 	"github.com/jessegall/code-commandments/bridge"
 	"github.com/jessegall/code-commandments/engine"
+	"github.com/jessegall/code-commandments/walk"
 )
 
 // Reader is how one engine reads the codebase a served bridge answers a request with.
@@ -46,7 +48,8 @@ func (s *Scanner) Scan(pass Pass) (*engine.Codebase, error) {
 	if s.codebase != nil && slices.Equal(s.roots, pass.Roots) && s.drafts.Equal(pass.Drafts) {
 		return s.codebase, nil
 	}
-	codebase, err := s.read(s.server, bridge.Request{Paths: pass.Roots, Contents: pass.Drafts.Contents()})
+	contents := pass.Drafts.Contents()
+	codebase, err := s.read(s.server, bridge.Request{Paths: filesUnder(pass.Roots, contents), Contents: contents})
 	if err != nil {
 		return nil, err
 	}
@@ -73,7 +76,19 @@ func (s *Scanner) Parse(sources map[string]string) (*engine.Codebase, error) {
 		contents[folder+"/"+name] = source
 	}
 
-	return s.read(s.server, bridge.Request{Paths: []string{folder}, Contents: contents})
+	return s.read(s.server, bridge.Request{Paths: slices.Sorted(maps.Keys(contents)), Contents: contents})
+}
+
+func filesUnder(roots []string, contents map[string]string) []string {
+	files := bridge.Listed(roots...)
+	for path := range contents {
+		if !slices.Contains(files, path) && slices.ContainsFunc(roots, func(root string) bool { return walk.InTree(root, path) }) {
+			files = append(files, path)
+		}
+	}
+	slices.Sort(files)
+
+	return files
 }
 
 func (s *Scanner) ReadFile(path string) (*engine.Codebase, error) {

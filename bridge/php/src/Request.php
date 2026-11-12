@@ -74,13 +74,16 @@ final readonly class Request
             throw BadRequest::forNoPaths();
         }
 
+        $contents = $request['contents'] ?? [];
+        $drafted = static fn (string $path): string => array_key_exists($path, $contents) ? $path : self::absolute($path);
+
         return new self(
-            array_map(self::absolute(...), $request['paths'] ?? []),
-            array_map(self::absolute(...), $request['write'] ?? []),
+            array_map($drafted, $request['paths'] ?? []),
+            array_map($drafted, $request['write'] ?? []),
             $this->autoload,
             $this->renames,
             false,
-            $request['contents'] ?? [],
+            $contents,
             $this->cache,
         );
     }
