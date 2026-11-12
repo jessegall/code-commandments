@@ -71,12 +71,12 @@ class Kept:
             pending += sorted(set(held.dependencies))
         return digest.hexdigest()
 
-    def whole(self, base: str, found: list[str], texts: dict[str, bytes]) -> str:
-        """The fingerprint of everything a run reads: this bridge, every file by where it lies under $base and what it
-        says, and the files that pin what is installed. Equal to an earlier run's, no file changed since."""
+    def whole(self, base: str, found: list[str], texts: dict[str, bytes], modules: dict[str, str]) -> str:
+        """The fingerprint of everything a run reads: this bridge, every file by the module it is and what it says, never
+        where it lies, and the files that pin what is installed. Equal to an earlier run's, no file changed since."""
         digest = hashlib.sha256(self.version.encode())
-        for path in sorted(found):
-            digest.update(os.path.relpath(path, base).encode() + b"\0" + hashlib.sha256(texts[path]).digest())
+        for module, text in sorted((modules[path], hashlib.sha256(texts[path]).digest()) for path in found):
+            digest.update(module.encode() + b"\0" + text)
         for pinned in ("pyproject.toml", "requirements.txt", "poetry.lock", "uv.lock", "Pipfile.lock"):
             try:
                 with open(os.path.join(base, pinned), "rb") as file:
@@ -86,7 +86,7 @@ class Kept:
         return digest.hexdigest()
 
     def remembered(self, whole: str) -> dict[str, str] | None:
-        """The key of each file's line, by where it lies, as the run with this fingerprint kept them."""
+        """The key of each file's line, by the module it is, as the run with this fingerprint kept them."""
         try:
             with open(self.path("whole-" + whole), "rb") as file:
                 held = json.loads(zlib.decompress(file.read()))

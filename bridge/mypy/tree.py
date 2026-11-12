@@ -691,8 +691,9 @@ def stream(session: Session, paths: list[str], write: list[str], python: str | N
     texts = {path: open(path, "rb").read() for path in found}
     judged = {os.path.realpath(p) for p in write}
     base = base_of(paths)
-    whole = kept.whole(base, found, texts) if kept is not None else ""
-    unchanged = lines_unchanged(kept, whole, base, found) if kept is not None else None
+    early = {path: module_name(path) for path in found}
+    whole = kept.whole(base, found, texts, early) if kept is not None else ""
+    unchanged = lines_unchanged(kept, whole, early, found) if kept is not None else None
     if unchanged is not None:
         yield from file_lines(unchanged, found, write, judged)
         return
@@ -716,7 +717,7 @@ def stream(session: Session, paths: list[str], write: list[str], python: str | N
             kept.write(keys[path], line)
         lines[path] = line
     if kept is not None:
-        kept.remember(whole, {os.path.relpath(path, base): key for path, key in keys.items()})
+        kept.remember(whole, {early[path]: key for path, key in keys.items()})
     yield from file_lines(lines, found, write, judged)
 
 
@@ -726,7 +727,7 @@ def base_of(paths: list[str]) -> str:
     return first if os.path.isdir(first) else os.path.dirname(first)
 
 
-def lines_unchanged(kept: Kept, whole: str, base: str, found: list[str]) -> dict[str, KeptLine] | None:
+def lines_unchanged(kept: Kept, whole: str, modules: dict[str, str], found: list[str]) -> dict[str, KeptLine] | None:
     """Every file's line from disk when no file changed since the run that kept them, so mypy is not started at all;
     none when a file changed or a line is gone."""
     keys = kept.remembered(whole)
@@ -734,7 +735,7 @@ def lines_unchanged(kept: Kept, whole: str, base: str, found: list[str]) -> dict
         return None
     lines: dict[str, KeptLine] = {}
     for path in found:
-        key = keys.get(os.path.relpath(path, base))
+        key = keys.get(modules[path])
         line = kept.read(key) if key is not None else None
         if line is None:
             return None
