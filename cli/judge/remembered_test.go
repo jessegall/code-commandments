@@ -10,16 +10,19 @@ import (
 
 	"github.com/jessegall/code-commandments/cache"
 	"github.com/jessegall/code-commandments/cli"
-	"github.com/jessegall/code-commandments/cli/atomic"
 )
 
-func TestARunRemembersInThePluginFolderWhenThereIsOne(t *testing.T) {
-	folder := t.TempDir()
-	t.Setenv(pluginData, folder)
+func TestAPluginRunAndARunByHandRememberInOnePlace(t *testing.T) {
+	t.Setenv("XDG_CACHE_HOME", t.TempDir())
 
-	remembered, keeps := RememberedFor("/a/project", func(...string) {})
-	if !keeps || filepath.Dir(remembered.Memories.Path) != folder || filepath.Dir(remembered.Weighings.Path) != folder {
-		t.Errorf("the memories are kept at %q and %q, and the plugin's folder is %q", remembered.Memories.Path, remembered.Weighings.Path, folder)
+	t.Setenv(pluginData, t.TempDir())
+	plugin, _ := RememberedFor("/a/project", func(...string) {})
+
+	t.Setenv(pluginData, "")
+	byHand, _ := RememberedFor("/a/project", func(...string) {})
+
+	if plugin.Memories.Path != byHand.Memories.Path {
+		t.Errorf("the plugin's run remembers at %q and a run by hand at %q, so neither sees the other reading the project", plugin.Memories.Path, byHand.Memories.Path)
 	}
 }
 
@@ -80,7 +83,9 @@ func TestAJudgeStopsAtOnceWhileAnotherRunReadsTheProject(t *testing.T) {
 	}
 	t.Chdir(root)
 
-	release, taken := atomic.ClaimAt(filepath.Join(folder, readingFile), readingClaimedFor).Take()
+	t.Setenv("XDG_CACHE_HOME", t.TempDir())
+	remembered, _ := RememberedFor(root, func(...string) {})
+	release, taken := remembered.ReadAlone()
 	if !taken {
 		t.Fatal("the test could not claim the project for the run it stands in for")
 	}

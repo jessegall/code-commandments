@@ -13,7 +13,11 @@ import (
 	"github.com/jessegall/code-commandments/cache"
 )
 
-const sweptEvery = time.Hour
+const (
+	sweptEvery = time.Hour
+
+	renewedAfter = 10
+)
 
 // Verdict is one file's remembered answers, in memory and as they are kept outside it: the fingerprint of its contents, when it was last used, the rules that judged it as one bit per rule number, and the nodes each of those rules found in it.
 type Verdict struct {
@@ -204,14 +208,21 @@ func (r *Remembered) known(one unjudged, now time.Time) ([]int, bool) {
 		return nil, false
 	}
 
-	verdict.Used = now.UnixNano()
-	r.changed = true
+	if stale(verdict.Used, now) {
+		verdict.Used = now.UnixNano()
+		r.changed = true
+	}
 
 	return found, true
 }
 
 func expired(at int64, now time.Time) bool {
 	return now.Sub(time.Unix(0, at)) >= cache.KeptFor()
+}
+
+// stale says a remembered answer has gone unused long enough that using it should renew its time to live: past a tenth of the time a cache is kept, so a run that only reads what it remembers writes nothing.
+func stale(at int64, now time.Time) bool {
+	return now.Sub(time.Unix(0, at)) >= cache.KeptFor()/renewedAfter
 }
 
 func (m *Memory) sweep(now time.Time) {

@@ -25,8 +25,6 @@ const mypyPythonCheck = "import sys; print(\"%s %s\" % (sys.version.split()[0], 
 var mypyPythons = []string{"python3.14", "python3.13", "python3.12", "python3.11", "python3.10", "python3", "python"}
 
 func Mypy() ([]string, error) {
-	bundle.ForgetUnused(mypyCaches(), time.Now())
-
 	folder, err := mypyTree.Folder()
 	if err != nil {
 		return nil, err
@@ -34,6 +32,10 @@ func Mypy() ([]string, error) {
 	tree := []string{filepath.Join(folder, "tree.py")}
 	if lines, err := bundle.TreesFolder("python"); err == nil {
 		tree = append(tree, "--cache="+lines)
+	}
+	if caches, err := mypyCaches(); err == nil {
+		bundle.ForgetUnused(caches, time.Now())
+		tree = append(tree, "--mypy-cache="+caches)
 	}
 	if python := os.Getenv("COMMANDMENTS_MYPY_PYTHON"); python != "" {
 		return append([]string{python}, tree...), nil
@@ -49,13 +51,14 @@ func Mypy() ([]string, error) {
 	return append([]string{python}, tree...), buildMypy(folder)
 }
 
-func mypyCaches() string {
-	base := os.Getenv("JOURNAL_PLUGIN_DATA")
-	if base == "" {
-		base = os.TempDir()
+// mypyCaches is the one folder mypy keeps what it checked in, under the user's cache: every run shares it, the plugin's, a queued run's with a temporary folder of its own and one started by hand alike.
+func mypyCaches() (string, error) {
+	cache, err := bundle.CacheFolder()
+	if err != nil {
+		return "", err
 	}
 
-	return filepath.Join(base, "mypy-cache")
+	return filepath.Join(cache, "code-commandments", "mypy-cache"), nil
 }
 
 func pythonFolders() []string {

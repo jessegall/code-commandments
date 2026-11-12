@@ -18,14 +18,14 @@ import threading
 import time
 import tokenize
 from dataclasses import dataclass
-from typing import Iterator
+from typing import Iterable, Iterator
 
 from mypy.build import State
 from mypy.version import __version__ as MYPY_VERSION
 
 from kept import Kept, KeptLine
 
-from session import ResolvedType, Session, TypedModule, spans, states
+from session import ResolvedType, Session, TypedModule, checkout_of, spans, states
 
 OPERATORS = {
     ast.Add: "+", ast.Sub: "-", ast.Mult: "*", ast.Div: "/", ast.FloorDiv: "//", ast.Mod: "%", ast.Pow: "**",
@@ -682,120 +682,164 @@ def unparsed(source: bytes) -> Node:
 
 def stream(session: Session, paths: list[str], write: list[str], python: str | None, kept: Kept | None = None) -> Iterator[dict]:
     """The contract's lines for the modules under $paths: the header, one file line each, the program, the trailer.
-    With $kept, a module whose line is kept under the key of what made it is written from there. The one build that
-    finds what changed compiles every module mypy has no cache for, and their lines are written from it; a second
-    build happens only for a module mypy took from its own cache whose line is no longer kept. Each line written is
-    kept for the next run."""
+    With $kept, a module whose line still holds is written from there at once, and mypy checks only the modules that
+    changed and those a changed interface reaches (kept_lines). Each line written is kept for the next run."""
     yield {"header": {"contract": "tree", "version": 2, "language": "python",
                       "bridge": {"name": "mypy-bridge", "version": MYPY_VERSION}, "roots": [os.path.realpath(p) for p in paths]}}
     found = python_files(paths)
     texts = {path: open(path, "rb").read() for path in found}
     judged = {os.path.realpath(p) for p in write}
-    early = {path: module_name(path) for path in found}
-    pins = kept.pins(base_of(paths)) if kept is not None else ""
-    unchanged = lines_unchanged(kept, pins, early, texts, found) if kept is not None else None
-    if unchanged is not None:
-        yield from file_lines(unchanged, found, write, judged)
-        return
-    project = session.checked(paths, python) if kept is None else session.from_cache(paths, python)
+    lines = kept_lines(session, kept, paths, found, texts, python) if kept is not None else checked_lines(session, paths, found, texts, python)
+    yield from file_lines(lines, write, judged)
+
+
+def checked_lines(session: Session, paths: list[str], found: list[str], texts: dict[str, bytes], python: str | None) -> Iterator[tuple[str, KeptLine]]:
+    """Every module's line from one build of the whole request, with nothing kept."""
+    project = session.checked(paths, python)
     named = {os.path.realpath(s.path): s.module for s in project.sources if s.path}
-    modules = {path: named.get(path) or module_name(path) for path in found}
     checked = states(project.graph, set(named))
-    shas = {path: hashlib.sha256(texts[path]).hexdigest() for path in found}
-    graph_of = imported(found, named, early, checked, project.graph) if kept is not None else {}
-    closures = kept.closures({early[path]: (shas[path], *graph_of[path]) for path in found}) if kept is not None else {}
-    keys = {path: line_key(closures[early[path]], early[path]) for path in found} if kept is not None else {}
-    held = {path: kept.read(key) for path, key in keys.items()} if kept else {}
-    missing = {path for path in found if held.get(path) is None and taken_from_mypys_cache(checked.get(path))}
-    again = session.compiled(paths, python, missing) if kept is not None and missing else None
-    rechecked = states(again.graph, set(named)) if again is not None else {}
-    lines: dict[str, KeptLine] = {}
     for path in found:
-        line = held.get(path)
-        if line is None and again is not None and path in missing:
-            line = line_of(texts[path], modules[path], rechecked.get(path), again.types, path)
-        if line is None:
-            line = line_of(texts[path], modules[path], checked.get(path), project.types, path)
-        if kept is not None:
-            if held.get(path) is None:
-                kept.write(keys[path], line)
-            kept.record(kept.record_of(early[path], texts[path], pins), keys[path], *graph_of[path], closures[early[path]])
-        lines[path] = line
-    yield from file_lines(lines, found, write, judged)
+        yield path, line_of(texts[path], named.get(path) or module_name(path), checked.get(path), project.types, path)
 
 
-def base_of(paths: list[str]) -> str:
-    """The folder a run's files are named under when it is remembered: its first path, or the folder holding it."""
-    first = os.path.realpath(paths[0]) if paths else os.getcwd()
-    return first if os.path.isdir(first) else os.path.dirname(first)
+ROUNDS_AT_MOST = 20
 
 
-def imported(found: list[str], named: dict[str, str], early: dict[str, str], checked: dict, graph: dict) -> dict[str, tuple[list[str], dict[str, str]]]:
-    """Each file's direct imports of the project, by the module each is, and the interface it sees of each module from
-    outside, as mypy's build of this run read them."""
-    by_id = {module: path for path, module in named.items() if path in early}
-    imports: dict[str, tuple[list[str], dict[str, str]]] = {}
+def kept_lines(session: Session, kept: Kept, paths: list[str], found: list[str], texts: dict[str, bytes], python: str | None) -> Iterator[tuple[str, KeptLine]]:
+    """Each module's line, from what was kept wherever it still holds, the way mypy itself decides a module is still
+    good: its own text is unchanged and every module it depends on shows the interface it showed then. A module
+    whose text changed has no record and is checked; once its new interface is known, a module that saw the old one
+    is checked too, round after round until nothing more is reached. A module that reaches nothing checked is
+    written straight away, before mypy starts, so the run moves while mypy works."""
+    modules = {path: module_name(path) for path in found}
+    pins = kept.pins(checkout_of(paths))
+    shas = {path: hashlib.sha256(texts[path]).digest() for path in found}
+    names = {path: kept.record_of(modules[path], shas[path], pins) for path in found}
+    records = {path: kept.recorded(names[path]) for path in found}
+    todo = {path for path, record in records.items() if record is None or not kept.has(record["key"])}
+    interfaces = {modules[path]: record["interface"] for path, record in records.items() if path not in todo}
+    present = set(modules.values())
+    todo |= {path for path in found if path not in todo and stale(records[path], interfaces, present)}
+
+    affected = reached_from(todo, modules, records)
     for path in found:
-        state = checked.get(path)
-        project: list[str] = []
-        outside: dict[str, str] = {}
-        for dependency in sorted(set(state.dependencies)) if state is not None else []:
-            if dependency in by_id:
-                project.append(early[by_id[dependency]])
+        if path not in affected:
+            line = kept.read(records[path]["key"])
+            if line is None:
+                affected.add(path)
+                todo.add(path)
                 continue
-            held = graph.get(dependency)
-            interface = held.interface_hash if held is not None and held.interface_hash else ""
-            outside[dependency] = interface.hex() if isinstance(interface, bytes) else str(interface)
-        imports[path] = (project, outside)
-    return imports
+            yield path, line
 
-
-def line_key(closure: str, module: str) -> str:
-    """The key of a module's line: the key of everything it reaches, and which module of its group it is."""
-    return hashlib.sha256(f"{closure}\0{module}".encode()).hexdigest()
-
-
-def lines_unchanged(kept: Kept, pins: str, modules: dict[str, str], texts: dict[str, bytes], found: list[str]) -> dict[str, KeptLine] | None:
-    """Every file's line from disk when each file's record still holds: its own contents unchanged and the key of
-    everything it reaches, rebuilt from the records and today's contents in one pass, the same as when its line was
-    kept. Then mypy is not started at all; none when any record is missing or no longer holds."""
-    records = {}
-    for path in found:
-        record = kept.recorded(kept.record_of(modules[path], texts[path], pins))
-        if record is None:
-            return None
-        records[path] = record
-    closures = kept.closures({modules[path]: (hashlib.sha256(texts[path]).hexdigest(), record["imports"], record["outside"])
-                              for path, record in records.items()})
     lines: dict[str, KeptLine] = {}
-    for path, record in records.items():
-        if closures.get(modules[path]) != record["closure"]:
-            return None
-        line = kept.read(record["key"])
-        if line is None:
-            return None
-        lines[path] = line
-    return lines
+    for _ in range(ROUNDS_AT_MOST):
+        if not todo:
+            break
+        for path, line, record in rechecked(session, kept, python, sorted(todo), texts, modules, shas, pins):
+            records[path] = record
+            interfaces[modules[path]] = record["interface"]
+            lines[path] = line
+        todo = {path for path in affected if records[path] is not None and stale(records[path], interfaces, present)}
 
-
-def file_lines(lines: dict[str, KeptLine], found: list[str], write: list[str], judged: set[str]) -> Iterator[dict]:
-    """The file lines, the program and the trailer, from each file's line."""
-    seen = resolved = unjoined = files = 0
-    folders: list[str] = []
+    lost = [path for path in found if path in affected and path not in lines and kept.read(records[path]["key"]) is None]
+    if lost:
+        for path, line, _ in rechecked(session, kept, python, lost, texts, modules, shas, pins):
+            lines[path] = line
     for path in found:
-        line = lines[path]
+        if path in affected:
+            yield path, lines.get(path) or kept.read(records[path]["key"])
+
+
+def stale(record: dict | None, interfaces: dict[str, str], present: set[str]) -> bool:
+    """Whether a module's kept line was made over an interface that is no longer so: a module of the project it
+    depends on is gone, or shows another interface now. A dependency whose interface is not known yet does not make
+    it stale until it is."""
+    if record is None:
+        return True
+    for module, interface in record["imports"].items():
+        if module not in present:
+            return True
+        if module in interfaces and interfaces[module] != interface:
+            return True
+    return False
+
+
+def reached_from(todo: set[str], modules: dict[str, str], records: dict[str, dict | None]) -> set[str]:
+    """The modules to check and every module that depends on one of them, through the imports each record holds."""
+    by_module = {module: path for path, module in modules.items()}
+    importers: dict[str, list[str]] = {}
+    for path, record in records.items():
+        for module in record["imports"] if record is not None else ():
+            if module in by_module:
+                importers.setdefault(by_module[module], []).append(path)
+    reached, frontier = set(todo), list(todo)
+    while frontier:
+        for importer in importers.get(frontier.pop(), ()):
+            if importer not in reached:
+                reached.add(importer)
+                frontier.append(importer)
+    return reached
+
+
+def rechecked(session: Session, kept: Kept, python: str | None, asked: list[str], texts: dict[str, bytes], modules: dict[str, str],
+              shas: dict[str, bytes], pins: str) -> Iterator[tuple[str, KeptLine, dict]]:
+    """The modules $asked compiled afresh over mypy's cache, each with its line and the record it is kept under, which
+    is written the moment its line is, so a run stopped part way keeps what it did."""
+    project = session.compiled(asked, python, set(asked))
+    named = {os.path.realpath(s.path): s.module for s in project.sources if s.path}
+    checked = states(project.graph, set(named))
+    for path in asked:
+        state = checked.get(path)
+        line = line_of(texts[path], named.get(path) or modules[path], state, project.types, path)
+        imports, outside = dependencies(state, project.graph, modules)
+        key = line_key(kept, modules[path], shas[path], pins, imports, outside)
+        kept.write(key, line)
+        record = {"key": key, "imports": imports, "outside": outside, "interface": interface_of(state)}
+        kept.record(kept.record_of(modules[path], shas[path], pins), record)
+        yield path, line, record
+
+
+def dependencies(state: State | None, graph: dict[str, State], modules: dict[str, str]) -> tuple[dict[str, str], dict[str, str]]:
+    """What a module depends on as mypy read it, each with the interface it showed: the modules of the project by
+    the name the bridge gives them, and the rest by mypy's own name."""
+    imports: dict[str, str] = {}
+    outside: dict[str, str] = {}
+    for dependency in sorted(set(state.dependencies)) if state is not None else []:
+        held = graph.get(dependency)
+        path = os.path.realpath(held.path) if held is not None and held.path else None
+        if path in modules:
+            imports[modules[path]] = interface_of(held)
+        else:
+            outside[dependency] = interface_of(held)
+    return imports, outside
+
+
+def interface_of(state: State | None) -> str:
+    """The hash of what a module shows the modules that import it, as mypy computed it."""
+    interface = state.interface_hash if state is not None else ""
+    return interface.hex() if isinstance(interface, bytes) else str(interface or "")
+
+
+def line_key(kept: Kept, module: str, sha: bytes, pins: str, imports: dict[str, str], outside: dict[str, str]) -> str:
+    """The key of a module's line: the bridge, the module, its contents, the pins and the interface of everything it
+    depends on."""
+    digest = hashlib.sha256(f"{kept.version}\0{module}\0{pins}\0".encode() + sha)
+    for name, interface in [*sorted(imports.items()), *sorted(outside.items())]:
+        digest.update(f"\0{name}\0{interface}".encode())
+    return digest.hexdigest()
+
+
+def file_lines(lines: Iterable[tuple[str, KeptLine]], write: list[str], judged: set[str]) -> Iterator[dict]:
+    """The file lines as each is ready, then the program and the trailer."""
+    seen = resolved = unjoined = files = 0
+    folders: dict[str, None] = {}
+    for path, line in lines:
         seen, resolved, unjoined = seen + line.expressions, resolved + line.typed, unjoined + line.unjoined
         yield {"file": placed(line, path, bool(write) and path not in judged)}
         files += 1
-        folders += [folder for folder in packages(path) if folder not in folders]
+        folders.update(dict.fromkeys(packages(path)))
     yield {"program": {"packages": sorted(folders)}}
     yield {"trailer": {"files": files, "resolution": {"expressions": seen, "typed": resolved, "unjoined": unjoined}}}
-
-
-def taken_from_mypys_cache(state: State | None) -> bool:
-    """Whether mypy took the module from its own cache in this build, so it has no tree to write a line from: a module
-    it compiled has one already, and a cold run compiles every module once."""
-    return state is not None and state.tree is None
 
 
 def line_of(text: bytes, module: str, state: State | None, types: dict, path: str) -> KeptLine:
@@ -879,9 +923,15 @@ def leaves_with_its_parent() -> None:
 
 def kept_in(argv: list[str]) -> Kept | None:
     """The folder `--cache=` names for the lines this bridge keeps between runs; none when it names none."""
+    folder = option(argv, "--cache=")
+    return Kept(folder) if folder else None
+
+
+def option(argv: list[str], name: str) -> str | None:
+    """The value of the option $name, written `name=value`; none when it is not given."""
     for arg in argv:
-        if arg.startswith("--cache=") and arg[len("--cache="):]:
-            return Kept(arg[len("--cache="):])
+        if arg.startswith(name) and arg[len(name):]:
+            return arg[len(name):]
     return None
 
 
@@ -889,7 +939,7 @@ def main(argv: list[str]) -> int:
     if "--declares" in argv:
         sys.stdout.write(json.dumps(declared().to_json(), ensure_ascii=False) + "\n")
         return 0
-    session = Session()
+    session = Session(option(argv, "--mypy-cache="))
     kept = kept_in(argv)
     if "--serve" in argv:
         leaves_with_its_parent()

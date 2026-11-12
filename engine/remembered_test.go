@@ -296,8 +296,9 @@ func TestAHitRenewsAnEntry(t *testing.T) {
 	}
 }
 
-func TestAHitAndAJudgingMarkTheMemoryChanged(t *testing.T) {
-	memory := engine.Remembering(time.Now)
+func TestAJudgingAndAHitLongAfterMarkTheMemoryChangedAndAHitSoonAfterDoesNot(t *testing.T) {
+	now := time.Now()
+	memory := engine.Remembering(func() time.Time { return now })
 	detector := &asking{}
 
 	if memory.Changed() {
@@ -320,8 +321,16 @@ func TestAHitAndAJudgingMarkTheMemoryChanged(t *testing.T) {
 	tree, _ = treeHolding(t, "changing")
 	memory.Find(tree, detector.find)
 
+	if memory.Changed() {
+		t.Error("a hit moments after the judging renewed its entry, so a run that only remembers writes its memory again")
+	}
+
+	now = now.Add(2 * time.Hour)
+	tree, _ = treeHolding(t, "changing")
+	memory.Find(tree, detector.find)
+
 	if !memory.Changed() {
-		t.Error("a hit renews its entry, and that is something to save")
+		t.Error("a hit past a tenth of the time a cache is kept renews its entry, and that is something to save")
 	}
 }
 

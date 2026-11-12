@@ -50,12 +50,11 @@ def project_of(checkout: str) -> str:
     return os.path.dirname(os.path.dirname(os.path.dirname(git_folder)))
 
 
-def cache_folder(paths: list[str]) -> str:
-    """Where mypy keeps what it checked for the project of $paths, under the plugin's data and never in a checkout:
-    one folder for all its worktrees, because mypy accepts a cached module whose path differs when its contents hash
-    the same."""
-    base = os.environ.get("JOURNAL_PLUGIN_DATA") or tempfile.gettempdir()
-    folder = os.path.join(base, "mypy-cache", hashlib.sha256(project_of(checkout_of(paths)).encode()).hexdigest()[:16])
+def cache_folder(paths: list[str], base: str | None) -> str:
+    """Where mypy keeps what it checked for the project of $paths: under $base, the one folder every run shares
+    (the plugin's, a queued run's and one started by hand alike), else the system's temporary folder; one folder for
+    all its worktrees, because mypy accepts a cached module whose path differs when its contents hash the same."""
+    folder = os.path.join(base or tempfile.gettempdir(), hashlib.sha256(project_of(checkout_of(paths)).encode()).hexdigest()[:16])
     os.makedirs(folder, exist_ok=True)
     os.utime(folder)
     return folder
@@ -130,21 +129,15 @@ class CheckedProject:
 
 
 class Session:
-    """The files a request names, compiled afresh, with everything they import read from mypy's cache."""
+    """The files a request names, compiled afresh, with everything they import read from mypy's cache, which is
+    kept under $base."""
+
+    def __init__(self, base: str | None = None) -> None:
+        self.base = base
 
     def checked(self, paths: list[str], python: str | None) -> CheckedProject:
-        chosen = options(python, cache_folder(paths))
+        chosen = options(python, cache_folder(paths, self.base))
         found = read_afresh(sources(paths, chosen))
-        result = built(found, chosen)
-        if result is None:
-            return CheckedProject(found, {}, {})
-        return CheckedProject(found, result.types, result.graph)
-
-    def from_cache(self, paths: list[str], python: str | None) -> CheckedProject:
-        """The project built over mypy's cache, which compiles only the modules that changed: an unchanged module
-        comes back with no tree."""
-        chosen = options(python, cache_folder(paths))
-        found = sources(paths, chosen)
         result = built(found, chosen)
         if result is None:
             return CheckedProject(found, {}, {})
@@ -152,7 +145,7 @@ class Session:
 
     def compiled(self, paths: list[str], python: str | None, only: set[str]) -> CheckedProject:
         """The project built over mypy's cache with the files $only names compiled afresh."""
-        chosen = options(python, cache_folder(paths))
+        chosen = options(python, cache_folder(paths, self.base))
         found = read_afresh(sources(paths, chosen), only)
         result = built(found, chosen)
         if result is None:

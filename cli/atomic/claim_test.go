@@ -2,13 +2,14 @@ package atomic
 
 import (
 	"os"
+	"os/exec"
 	"path/filepath"
 	"testing"
 	"time"
 )
 
 func TestASecondRunStepsAsideWhileTheFirstHoldsTheClaim(t *testing.T) {
-	claim := ClaimAt(filepath.Join(t.TempDir(), "reading"), 5*time.Minute)
+	claim := ClaimAt(filepath.Join(t.TempDir(), "reading"))
 
 	release, taken := claim.Take()
 	if !taken {
@@ -31,54 +32,51 @@ func TestASecondRunStepsAsideWhileTheFirstHoldsTheClaim(t *testing.T) {
 	}
 }
 
-func TestAClaimOlderThanItsExpiryCountsAsGone(t *testing.T) {
+const claimHolder = "COMMANDMENTS_TEST_CLAIM_HOLDER"
+
+func TestHoldTheClaimUntilKilled(t *testing.T) {
+	path := os.Getenv(claimHolder)
+	if path == "" {
+		t.Skip("only run as the process another test kills")
+	}
+
+	if _, taken := ClaimAt(path).Take(); !taken {
+		os.Exit(3)
+	}
+	os.WriteFile(path+".held", nil, 0o644)
+
+	time.Sleep(time.Minute)
+}
+
+func TestARunKilledWhileItHoldsTheClaimBlocksNobody(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "reading")
-	claim := ClaimAt(path, 5*time.Minute)
 
-	claim.Take()
-
-	crashed := time.Now().Add(-6 * time.Minute)
-	if err := os.Chtimes(path, crashed, crashed); err != nil {
+	holder := exec.Command(os.Args[0], "-test.run=^TestHoldTheClaimUntilKilled$")
+	holder.Env = append(os.Environ(), claimHolder+"="+path)
+	if err := holder.Start(); err != nil {
 		t.Fatal(err)
 	}
 
-	if _, taken := claim.Take(); !taken {
-		t.Error("a claim left six minutes ago by a run that crashed still blocks the project")
+	for deadline := time.Now().Add(10 * time.Second); ; time.Sleep(10 * time.Millisecond) {
+		if _, err := os.Stat(path + ".held"); err == nil {
+			break
+		}
+		if time.Now().After(deadline) {
+			holder.Process.Kill()
+			t.Fatal("the run that should hold the claim never took it")
+		}
 	}
-}
 
-func TestOnlyTheRunThatMadeAClaimRemovesIt(t *testing.T) {
-	path := filepath.Join(t.TempDir(), "reading")
-	claim := ClaimAt(path, 5*time.Minute)
+	if _, taken := ClaimAt(path).Take(); taken {
+		t.Error("the project was claimed while another live run held it")
+	}
 
-	first, _ := claim.Take()
-	crashed := time.Now().Add(-6 * time.Minute)
-	os.Chtimes(path, crashed, crashed)
+	holder.Process.Kill()
+	holder.Wait()
 
-	second, taken := claim.Take()
+	release, taken := ClaimAt(path).Take()
 	if !taken {
-		t.Fatal("a claim left untouched past its expiry still blocks")
+		t.Error("a run that was killed while it held the claim still blocks the next run")
 	}
-
-	first()
-
-	if _, again := claim.Take(); again {
-		t.Error("the first run let go of the second run's claim")
-	}
-
-	second()
-}
-
-func TestAHeldClaimIsKeptAlivePastItsExpiry(t *testing.T) {
-	path := filepath.Join(t.TempDir(), "reading")
-	claim := ClaimAt(path, 300*time.Millisecond)
-
-	release, _ := claim.Take()
-	defer release()
-
-	time.Sleep(time.Second)
-
-	if _, taken := claim.Take(); taken {
-		t.Error("a claim its run still holds was taken over once its expiry passed")
-	}
+	release()
 }
