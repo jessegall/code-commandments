@@ -83,8 +83,9 @@ func (p *Projects) Around(paths []string) []string {
 	}
 
 	var pending []string
+	listed := map[string][]string{}
 	for _, path := range paths {
-		pending = append(pending, p.enclosing(path)...)
+		pending = append(pending, p.enclosing(path, listed)...)
 	}
 
 	var closure []string
@@ -110,16 +111,21 @@ func (p *Projects) Folders(paths []string) []string {
 	return folders
 }
 
-func (p *Projects) enclosing(path string) []string {
+func (p *Projects) enclosing(path string, listed map[string][]string) []string {
 	if below := walk.Files(path, walk.Excluded{}, hasSuffix(p.Marker)); isFolder(path) && len(below) > 0 {
 		return below
 	}
 
 	for above := filepath.Dir(path); ; above = filepath.Dir(above) {
-		if marked := slices.DeleteFunc(walk.Entries(above), lacksSuffix(p.Marker)); len(marked) > 0 {
+		marked, seen := listed[above]
+		if !seen {
+			marked = slices.DeleteFunc(walk.Entries(above), lacksSuffix(p.Marker))
+			listed[above] = marked
+		}
+		if len(marked) > 0 {
 			return marked
 		}
-		if filepath.Dir(above) == above {
+		if walk.IsRepository(above) || filepath.Dir(above) == above {
 			return nil
 		}
 	}

@@ -108,7 +108,7 @@ func Repositories(path string, excluded Excluded) []string {
 			if info, err := os.Lstat(child); err != nil || !info.IsDir() || !Descends(child, excluded) {
 				continue
 			}
-			if holds(child, ".git") {
+			if IsRepository(child) {
 				found = append(found, child)
 			}
 			look(child)
@@ -226,6 +226,10 @@ func holds(directory, entry string) bool {
 	_, err := os.Lstat(filepath.Join(directory, entry))
 
 	return err == nil
+}
+
+func IsRepository(directory string) bool {
+	return holds(directory, ".git")
 }
 
 func IsWorktree(directory string) bool {
