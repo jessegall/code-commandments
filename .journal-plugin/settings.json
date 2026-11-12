@@ -133,7 +133,7 @@
         "type": "flag",
         "kind": "flag",
         "default": false,
-        "help": "On, a worker or helper is pointed at the commandments program and `journal sins`. Off, it is never told to run them; nothing it runs is refused. Their work is still judged when it is handed in and merged, and the main agent is not affected."
+        "help": "On, a worker or helper may run the commandments program and `journal sins`. Off, such a command is refused at once with a line saying so. Their work is still judged when it is handed in and merged, and the main agent is not affected."
     },
     {
         "key": "language_php",

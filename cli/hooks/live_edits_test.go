@@ -223,3 +223,17 @@ func TestAWorkersEventStartsNothingWithWorkerJudgingOff(t *testing.T) {
 		}
 	}
 }
+
+func TestAWorkerRunningTheCLIIsRefusedAtOnceWhenTheSettingDeniesIt(t *testing.T) {
+	t.Setenv(pluginData, t.TempDir())
+
+	for role, refused := range map[string]bool{"worker": true, "main": false} {
+		line := map[string]any{"v": 1, "event": "command_starting", "session": "s1", "environment": "main", "agent": 9, "role": role,
+			"settings": map[string]any{workerCLIKey: false}, "data": map[string]any{"text": ".journal/plugins/code-commandments/bin/commandments-release rule try x"}}
+
+		said := Answer4Now(line)
+		if refused != strings.Contains(said, `"refuse"`) {
+			t.Errorf("a %s running the CLI with %s off was answered %s", role, workerCLIKey, said)
+		}
+	}
+}

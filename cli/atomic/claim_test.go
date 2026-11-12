@@ -46,3 +46,39 @@ func TestAClaimOlderThanItsExpiryCountsAsGone(t *testing.T) {
 		t.Error("a claim left six minutes ago by a run that crashed still blocks the project")
 	}
 }
+
+func TestOnlyTheRunThatMadeAClaimRemovesIt(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "reading")
+	claim := ClaimAt(path, 5*time.Minute)
+
+	first, _ := claim.Take()
+	crashed := time.Now().Add(-6 * time.Minute)
+	os.Chtimes(path, crashed, crashed)
+
+	second, taken := claim.Take()
+	if !taken {
+		t.Fatal("a claim left untouched past its expiry still blocks")
+	}
+
+	first()
+
+	if _, again := claim.Take(); again {
+		t.Error("the first run let go of the second run's claim")
+	}
+
+	second()
+}
+
+func TestAHeldClaimIsKeptAlivePastItsExpiry(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "reading")
+	claim := ClaimAt(path, 300*time.Millisecond)
+
+	release, _ := claim.Take()
+	defer release()
+
+	time.Sleep(time.Second)
+
+	if _, taken := claim.Take(); taken {
+		t.Error("a claim its run still holds was taken over once its expiry passed")
+	}
+}
