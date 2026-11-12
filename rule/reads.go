@@ -43,6 +43,32 @@ var readAcrossFiles = []string{
 
 var targetsAnotherFile = []string{"declaration", "declaredBy"}
 
+var readsBackward = []string{
+	"unused", "callers", "duplicated", "repeated", "referredFrom", "calledFrom", "sibling",
+
+	"php", "python", "csharp", "typescript", "vue",
+}
+
+func (r Rule) ReadsForward() bool {
+	if r.find.inner != nil && !r.find.inner.ReadsForward() {
+		return false
+	}
+
+	return !slices.ContainsFunc(r.find.Where, Step.readsBackward) && !slices.ContainsFunc(r.find.Reject, Step.readsBackward)
+}
+
+func (s Step) readsBackward() bool {
+	if slices.ContainsFunc(s.written(), func(key string) bool { return slices.Contains(readsBackward, key) }) {
+		return true
+	}
+
+	if s.named != nil && !s.named.ReadsForward() {
+		return true
+	}
+
+	return slices.ContainsFunc(s.nested(), func(nested *Step) bool { return nested.readsBackward() })
+}
+
 func (r Rule) ReadsAcrossFiles() bool {
 	if r.find.inner != nil && r.find.inner.ReadsAcrossFiles() {
 		return true

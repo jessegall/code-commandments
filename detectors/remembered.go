@@ -7,6 +7,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/jessegall/code-commandments/catalog"
 	"github.com/jessegall/code-commandments/engine"
 )
 
@@ -47,6 +48,8 @@ func EveryMemory() *Memories {
 
 const acrossTheTree = "\x00across"
 
+const forwardOverTheTree = "\x00forward"
+
 const mostRememberedAcross = 20_000
 
 func FindRemembering(detector Detector, codebase *engine.Codebase) []engine.Match {
@@ -54,6 +57,10 @@ func FindRemembering(detector Detector, codebase *engine.Codebase) []engine.Matc
 		codebase.Filled()
 
 		return detector.Find(codebase)
+	}
+
+	if readsAcross(detector) && catalog.IsForward(detector) {
+		return memories.Of(identified(detector)+forwardOverTheTree+acrossTheTree).FindForward(codebase, detector.Find)
 	}
 
 	if readsAcross(detector) {

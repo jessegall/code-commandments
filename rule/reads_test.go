@@ -119,3 +119,21 @@ func locations(found []engine.Match) []string {
 
 	return places
 }
+
+func TestARuleSaysWhetherItReadsOnlyForward(t *testing.T) {
+	for written, forward := range map[string]bool{
+		`{"select": "type-declaration", "where": [{"extendsAny": "Migration"}]}`:                                    true,
+		`{"select": "call", "where": [{"targets": "os.ReadDir"}]}`:                                                  true,
+		`{"select": "function", "where": [{"unused": true}]}`:                                                       false,
+		`{"select": "function", "where": [{"not": {"callers": {"atLeast": 2}}}]}`:                                   false,
+		`{"select": "type-declaration", "where": [{"extendsAny": "Model"}, {"referredFrom": {"is": "parameter"}}]}`: false,
+	} {
+		rule, err := Parse("ProbeDetector", []byte(`{"engine": "python", "sin": {"name": "probe", "description": "probe", "skill": "python/absence"}, "find": `+written+`}`), skill.Slugged)
+		if err != nil {
+			t.Fatalf("%s: %v", written, err)
+		}
+		if rule.ReadsForward() != forward {
+			t.Errorf("%s reads forward: %v, want %v", written, rule.ReadsForward(), forward)
+		}
+	}
+}

@@ -9,8 +9,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/jessegall/code-commandments/contract"
 	"github.com/jessegall/code-commandments/cache"
+	"github.com/jessegall/code-commandments/contract"
 )
 
 const (
@@ -129,6 +129,15 @@ func (r *Remembered) FindAcross(codebase *Codebase, find func(*Codebase) []Match
 	}
 
 	return r.finding(codebase, find, across.of)
+}
+
+func (r *Remembered) FindForward(codebase *Codebase, find func(*Codebase) []Match) []Match {
+	forward := Analysis(codebase, printsForwardKey{}, printsForwardOf)
+	if !forward.whole {
+		return find(codebase)
+	}
+
+	return r.finding(codebase, find, forward.of)
 }
 
 func (r *Remembered) finding(codebase *Codebase, find func(*Codebase) []Match, printOf func(*File) (uint64, bool)) []Match {
@@ -411,7 +420,27 @@ func printsAcrossOf(c *Codebase) printsAcross {
 		return printsAcross{}
 	}
 
-	tree := combined(slices.Sorted(maps.Values(own))...)
+	return c.mixedUnder(combined(slices.Sorted(maps.Values(own))...), own)
+}
+
+type printsForwardKey struct{}
+
+func printsForwardOf(c *Codebase) printsAcross {
+	own, whole := c.ownPrints()
+	if !whole {
+		return printsAcross{}
+	}
+
+	outlines := make([]uint64, 0, len(c.files))
+	for _, file := range c.files {
+		outlines = append(outlines, file.outlined())
+	}
+	slices.Sort(outlines)
+
+	return c.mixedUnder(combined(outlines...), own)
+}
+
+func (c *Codebase) mixedUnder(tree uint64, own map[*contract.File]uint64) printsAcross {
 	mixed := make(map[*contract.File]uint64, len(c.files))
 	met := map[uint64]uint64{}
 
@@ -421,7 +450,41 @@ func printsAcrossOf(c *Codebase) printsAcross {
 		met[print]++
 	}
 
-	return printsAcross{whole, own, mixed}
+	return printsAcross{true, own, mixed}
+}
+
+func (f *File) outlined() uint64 {
+	f.outlining.Do(func() {
+		digest := sha256.New()
+		var outline func(node Match)
+		outline = func(node Match) {
+			facts := node.Node()
+			digest.Write([]byte(facts.Kind + "\x00" + facts.Name + "\x00"))
+			if facts.Facts != nil {
+				digest.Write([]byte(facts.Symbol + "\x00" + facts.Refers + "\x00" + typeText(facts.Declared) + "\x00" + typeText(facts.Returns) + "\x00"))
+			}
+			for _, child := range node.Children() {
+				if child.Is(Block) && node.Is(Function) {
+					continue
+				}
+				outline(child)
+			}
+		}
+		if root := f.Match(0); root.Exists() {
+			outline(root)
+		}
+		f.outline = binary.LittleEndian.Uint64(digest.Sum(nil)[:8])
+	})
+
+	return f.outline
+}
+
+func typeText(written *contract.Type) string {
+	if written == nil {
+		return ""
+	}
+
+	return written.Text
 }
 
 func (c *Codebase) ownPrints() (map[*contract.File]uint64, bool) {

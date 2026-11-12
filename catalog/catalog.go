@@ -26,6 +26,19 @@ type ReadsAcrossFiles interface {
 	ReadsAcrossFiles() bool
 }
 
+// ReadsForward is a cross-file rule whose answer for a file rests on that file and on what the others declare, never on
+// what the others do inside their bodies: what a file names resolves, its types, its parents. A rule that reads what
+// refers TO a file, its callers, its twins or a recurrence, is not one.
+type ReadsForward interface {
+	ReadsForward() bool
+}
+
+func IsForward(rule any) bool {
+	answers, states := rule.(ReadsForward)
+
+	return states && answers.ReadsForward()
+}
+
 func IsCrossFile(rule any) bool {
 	if answers, states := rule.(ReadsAcrossFiles); states {
 		return answers.ReadsAcrossFiles()
