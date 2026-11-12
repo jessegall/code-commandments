@@ -32,7 +32,7 @@ func DetectRoots(root string) []string {
 	}
 
 	for _, convention := range conventions {
-		if isDir(root + "/" + convention) {
+		if walk.IsFolder(root + "/" + convention) {
 			found[convention] = true
 		}
 	}
@@ -42,7 +42,7 @@ func DetectRoots(root string) []string {
 	for _, manifest := range manifests {
 		app := filepath.Base(filepath.Dir(manifest))
 
-		if isDir(root+"/"+app+"/src") && !slices.Contains(built, app) {
+		if walk.IsFolder(root+"/"+app+"/src") && !slices.Contains(built, app) {
 			found[app+"/src"] = true
 		}
 	}
@@ -50,7 +50,7 @@ func DetectRoots(root string) []string {
 	var roots []string
 
 	for dir := range found {
-		if isDir(root + "/" + dir) {
+		if walk.IsFolder(root + "/" + dir) {
 			roots = append(roots, dir)
 		}
 	}
@@ -174,12 +174,6 @@ func isWithin(folder, root string) bool {
 	return folder == root || strings.HasPrefix(folder, root+"/")
 }
 
-func isDir(path string) bool {
-	info, err := os.Stat(path)
-
-	return err == nil && info.IsDir()
-}
-
 func ToParse(project, path string) ([]string, error) {
 	target := strings.TrimRight(realOr(path), "/")
 	home := strings.TrimRight(realOr(project), "/")
@@ -234,7 +228,7 @@ func kindsUnder(root string) map[string]bool {
 
 	walk.Folders(root, walk.Under(root, built), func(dir string) {
 		for _, kind := range built {
-			if isDir(dir + "/" + kind) {
+			if walk.IsFolder(dir + "/" + kind) {
 				kinds[kind] = true
 			}
 		}

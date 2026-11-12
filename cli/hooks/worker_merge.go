@@ -16,10 +16,10 @@ import (
 	"github.com/jessegall/code-commandments/cli/scan"
 	"github.com/jessegall/code-commandments/cli/scope"
 	"github.com/jessegall/code-commandments/cli/source"
-	"github.com/jessegall/code-commandments/cli/warm"
 	"github.com/jessegall/code-commandments/cli/workspace"
 	"github.com/jessegall/code-commandments/detectors"
 	"github.com/jessegall/code-commandments/engine"
+	"github.com/jessegall/code-commandments/walk"
 )
 
 const (
@@ -455,7 +455,7 @@ func (m merging) shallow(project config.Config, rules []detectors.Detector) []Si
 
 	marks := map[string]string{}
 	for _, file := range files {
-		marks[file] = warm.Mark(file)
+		marks[file] = walk.Mark(file)
 	}
 
 	codebase, err := scan.Walk(files, source.Excluded{}).Load()

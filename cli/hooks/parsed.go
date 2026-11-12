@@ -10,9 +10,9 @@ import (
 	"github.com/jessegall/code-commandments/cli/git"
 	"github.com/jessegall/code-commandments/cli/scan"
 	"github.com/jessegall/code-commandments/cli/source"
-	"github.com/jessegall/code-commandments/cli/warm"
 	"github.com/jessegall/code-commandments/cli/workspace"
 	"github.com/jessegall/code-commandments/contract"
+	"github.com/jessegall/code-commandments/walk"
 )
 
 var parsed = keepParsing()
@@ -143,7 +143,7 @@ func (p *parsing) take() []string {
 func (p *parsing) fill(group []string) {
 	marks := map[string]string{}
 	for _, file := range group {
-		marks[file] = warm.Mark(file)
+		marks[file] = walk.Mark(file)
 	}
 
 	streams, err := p.reading(group)
@@ -197,13 +197,13 @@ func (p *parsing) leaves(checkout string) {
 	defer p.mu.Unlock()
 
 	for file := range p.held {
-		if under, inside := warm.Under(checkout, file); inside && under != "" {
+		if under, inside := walk.Inside(checkout, file); inside && under != "" {
 			delete(p.held, file)
 		}
 	}
 
 	p.waiting = slices.DeleteFunc(p.waiting, func(file string) bool {
-		under, inside := warm.Under(checkout, file)
+		under, inside := walk.Inside(checkout, file)
 
 		return inside && under != ""
 	})
@@ -219,7 +219,7 @@ func (p *parsing) streamsOf(file string) ([]*contract.Stream, bool) {
 			delete(p.held, file)
 			p.mu.Unlock()
 
-			if held.mark != warm.Mark(file) {
+			if held.mark != walk.Mark(file) {
 				return nil, false
 			}
 

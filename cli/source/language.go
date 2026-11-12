@@ -104,16 +104,10 @@ func declaredAbove(root string, named []string) bool {
 func declaredUnder(root string, named []string) bool {
 	found := false
 	walk.Folders(root, Excluded{}, func(dir string) {
-		found = found || slices.ContainsFunc(named, func(name string) bool { return isFile(filepath.Join(dir, name)) })
+		found = found || slices.ContainsFunc(named, func(name string) bool { return walk.IsFile(filepath.Join(dir, name)) })
 	})
 
 	return found
-}
-
-func isFile(path string) bool {
-	info, err := os.Lstat(path)
-
-	return err == nil && info.Mode().IsRegular()
 }
 
 func Judges(path string) bool {

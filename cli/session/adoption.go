@@ -4,6 +4,7 @@ import (
 	"os"
 
 	"github.com/jessegall/code-commandments/cli/folder"
+	"github.com/jessegall/code-commandments/walk"
 )
 
 // Adoption is a stranded folder taken into a session's own: everything that fits is moved, nothing is overwritten, and the stranded folder is deleted only when nothing was left behind.
@@ -63,7 +64,7 @@ func (a *Adoption) adopt(entry, target string) {
 		return
 	}
 
-	if isDir(entry) && isDir(target) {
+	if walk.IsFolder(entry) && walk.IsFolder(target) {
 		a.absorb(entry, target)
 
 		return
@@ -91,15 +92,9 @@ func move(from, to string) bool {
 		return true
 	}
 
-	if isDir(from) {
+	if walk.IsFolder(from) {
 		return folder.Copy(from, to) && folder.Delete(from)
 	}
 
 	return folder.CopyFile(from, to) && os.Remove(from) == nil
-}
-
-func isDir(path string) bool {
-	info, err := os.Stat(path)
-
-	return err == nil && info.IsDir()
 }

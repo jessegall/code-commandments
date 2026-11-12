@@ -12,8 +12,8 @@ import (
 	"time"
 
 	"github.com/jessegall/code-commandments/cli/git"
-	"github.com/jessegall/code-commandments/cli/warm"
 	"github.com/jessegall/code-commandments/cli/workspace"
+	"github.com/jessegall/code-commandments/walk"
 )
 
 var settledStatuses = []string{"completed", "done", "failed", "cancelled", "canceled", "error"}
@@ -40,7 +40,7 @@ const markedKey = "commandments_file_mark"
 func Stamped(payload map[string]any) map[string]any {
 	payload[receivedKey] = strconv.FormatInt(time.Now().UnixNano(), 10)
 
-	if mark := warm.Mark(fileNamedIn(payload)); mark != "" {
+	if mark := walk.Mark(fileNamedIn(payload)); mark != "" {
 		payload[markedKey] = mark
 	}
 
@@ -245,7 +245,7 @@ func writtenSince(payload map[string]any) bool {
 		return false
 	}
 
-	return warm.Mark(fileNamedIn(payload)) != was
+	return walk.Mark(fileNamedIn(payload)) != was
 }
 
 func (e Event) AgentTypeRequested() string {

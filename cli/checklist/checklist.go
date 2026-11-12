@@ -14,6 +14,7 @@ import (
 	"github.com/jessegall/code-commandments/cli/atomic"
 	"github.com/jessegall/code-commandments/cli/folder"
 	"github.com/jessegall/code-commandments/cli/workspace"
+	"github.com/jessegall/code-commandments/walk"
 )
 
 const (
@@ -114,7 +115,7 @@ func (c Checklist) Archive() {
 	written := info.ModTime().UTC().Format(stamp)
 	archive := c.sibling(written)
 
-	for n := 2; exists(archive); n++ {
+	for n := 2; walk.IsFile(archive); n++ {
 		archive = c.sibling(written + "-" + strconv.Itoa(n))
 	}
 
@@ -148,7 +149,7 @@ func (c Checklist) ClearAll() {
 }
 
 func (c Checklist) Delete() {
-	if exists(c.path) {
+	if walk.IsFile(c.path) {
 		os.Remove(c.path)
 	}
 }
@@ -169,10 +170,4 @@ func (c Checklist) stem() string {
 
 func (c Checklist) suffix() string {
 	return filepath.Ext(c.path)
-}
-
-func exists(path string) bool {
-	info, err := os.Stat(path)
-
-	return err == nil && info.Mode().IsRegular()
 }

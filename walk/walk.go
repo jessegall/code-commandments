@@ -38,7 +38,7 @@ const (
 )
 
 func Files(root string, excluded Excluded, wanted func(string) bool) []string {
-	if isLink(root) && !isFolder(root) {
+	if isLink(root) && !IsFolder(root) {
 		return nil
 	}
 
@@ -183,7 +183,7 @@ func Entries(dir string) []string {
 }
 
 func Generated(dir, name string) []string {
-	if isLink(dir) || !isFolder(dir) {
+	if isLink(dir) || !IsFolder(dir) {
 		return nil
 	}
 
@@ -204,10 +204,16 @@ func Generated(dir, name string) []string {
 	return found
 }
 
-func isFolder(path string) bool {
+func IsFolder(path string) bool {
 	info, err := os.Stat(path)
 
 	return err == nil && info.IsDir()
+}
+
+func IsFile(path string) bool {
+	info, err := os.Lstat(path)
+
+	return err == nil && info.Mode().IsRegular()
 }
 
 func isLink(path string) bool {

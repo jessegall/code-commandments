@@ -25,11 +25,11 @@ import (
 	"github.com/jessegall/code-commandments/cli/scan"
 	"github.com/jessegall/code-commandments/cli/scope"
 	"github.com/jessegall/code-commandments/cli/source"
-	"github.com/jessegall/code-commandments/cli/warm"
 	"github.com/jessegall/code-commandments/cli/workspace"
 	"github.com/jessegall/code-commandments/contract"
 	"github.com/jessegall/code-commandments/detectors"
 	"github.com/jessegall/code-commandments/engine"
+	"github.com/jessegall/code-commandments/walk"
 )
 
 const defaultParallel = 2
@@ -700,7 +700,7 @@ func givenFolder(path string) scope.Within {
 		return scope.Within{Folders: []string{path}}
 	}
 
-	return scope.Within{Folders: []string{path, warm.Counterpart(git.Root(path), project, path)}}
+	return scope.Within{Folders: []string{path, walk.Counterpart(git.Root(path), project, path)}}
 }
 
 func sourceRoots(options options, judged config.Config) ([]string, error) {

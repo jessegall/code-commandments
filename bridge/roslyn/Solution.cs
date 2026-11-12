@@ -1,10 +1,10 @@
 namespace CodeCommandments.Bridge;
 
 /// <summary>
-/// The projects a request reaches, from the support it names: every project file listed, and every project those
-/// reference, however deep. Each file belongs to the project whose folder holds it most closely, so a nested
-/// project's files are its own. The bridge walks no folder: the Go side lists every project file, source and
-/// generated usings file through its one funnel.
+/// The projects a request reaches: every project file its support names, which the Go side lists with every project
+/// those reference, however deep. Each file belongs to the project whose folder holds it most closely, so a nested
+/// project's files are its own. The bridge walks no folder and follows no reference: the Go side lists every
+/// project file, source and generated usings file through its one funnel.
 /// </summary>
 public sealed class Solution
 {
@@ -15,21 +15,10 @@ public sealed class Solution
     private Solution(IReadOnlyList<string> support)
     {
         this.support = support.Select(Path.GetFullPath).ToList();
-        var pending = new Queue<string>(this.support.Where(path => path.EndsWith(".csproj", StringComparison.Ordinal)));
 
-        while (pending.TryDequeue(out var csproj))
+        foreach (var csproj in this.support.Where(path => path.EndsWith(".csproj", StringComparison.Ordinal) && File.Exists(path)))
         {
-            if (projects.ContainsKey(csproj) || !File.Exists(csproj))
-            {
-                continue;
-            }
-
             projects[csproj] = ProjectFile.Read(csproj);
-
-            foreach (var referenced in projects[csproj].ProjectReferences())
-            {
-                pending.Enqueue(referenced);
-            }
         }
     }
 

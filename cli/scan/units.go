@@ -204,12 +204,7 @@ func (c *cutter) ownerOf(path string) string {
 	if owner, known := c.owners[folder]; known {
 		return owner
 	}
-	owner := ""
-	if projects, _ := filepath.Glob(filepath.Join(folder, "*.csproj")); len(projects) > 0 {
-		owner = folder
-	} else if parent := filepath.Dir(folder); parent != folder {
-		owner = c.ownerOf(filepath.Join(parent, "file"))
-	}
+	owner := bridge.CSharpProjects.Owner(path)
 	c.owners[folder] = owner
 
 	return owner

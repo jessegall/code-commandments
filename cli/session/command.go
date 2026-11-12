@@ -2,6 +2,7 @@ package session
 
 import (
 	"github.com/jessegall/code-commandments/cli/binary"
+	"github.com/jessegall/code-commandments/walk"
 	"math"
 	"os"
 	"path/filepath"
@@ -137,11 +138,11 @@ func follow(was []checkout, id string) {
 	for _, each := range was {
 		to := workspace.At(each.root, id).SessionDir()
 
-		if each.folder == to || !isDir(each.folder) {
+		if each.folder == to || !walk.IsFolder(each.folder) {
 			continue
 		}
 
-		if isDir(to) {
+		if walk.IsFolder(to) {
 			Take(each.folder, to)
 
 			continue
@@ -159,7 +160,7 @@ func (c Command) adopt(project, name, into string, console cli.Console) int {
 	space := workspace.At(project, "")
 	from := space.SessionDirNamed(name)
 
-	if !isDir(from) {
+	if !walk.IsFolder(from) {
 		return console.Refuse("No folder called `"+name+"` here.", "  `session list` names every folder, and marks the orphans.")
 	}
 
@@ -223,7 +224,7 @@ func (Command) show(root string, in *cli.Input, console cli.Console) int {
 
 	console.Say(dir, "")
 
-	if !isDir(dir) {
+	if !walk.IsFolder(dir) {
 		return console.Say("  (nothing written yet — it appears the first time something records state)")
 	}
 
@@ -269,7 +270,7 @@ func folders(root string, named map[string]Session, names []workspace.Pair) []st
 	var lines []string
 
 	for _, dir := range folder.NewestFirst(workspace.At(root, "").SessionsDir()) {
-		if !isDir(dir) {
+		if !walk.IsFolder(dir) {
 			continue
 		}
 

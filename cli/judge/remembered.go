@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"sync"
 	"time"
 
 	"github.com/jessegall/code-commandments/bridge"
@@ -118,7 +119,7 @@ func (r Remembered) Save() {
 	r.Weighings.Save()
 }
 
-func Build() string {
+var Build = sync.OnceValue(func() string {
 	path, err := os.Executable()
 	if err != nil {
 		return bridge.Release
@@ -136,4 +137,4 @@ func Build() string {
 	}
 
 	return bridge.Release + "-" + hex.EncodeToString(digest.Sum(nil)[:12])
-}
+})

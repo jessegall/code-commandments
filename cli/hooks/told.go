@@ -1,6 +1,6 @@
 package hooks
 
-import "github.com/jessegall/code-commandments/cli/warm"
+import "github.com/jessegall/code-commandments/walk"
 
 // Told is the checkout the journal names on its own line, which a plugin is never to work out for itself: where it is, the project it belongs to, the branch it is on, the commit it was cut from, and whether it is still there.
 type Told struct {
@@ -43,7 +43,7 @@ func (t Told) rootOrDerived(derived, file string) (string, string) {
 		return derived, "git"
 	}
 
-	if _, ownsTheFile := warm.Under(derived, file); ownsTheFile && derived != "" && !warm.Same(derived, t.Root) {
+	if _, ownsTheFile := walk.Inside(derived, file); ownsTheFile && derived != "" && !walk.Same(derived, t.Root) {
 		return derived, "git, since the file lies in a checkout of its own, not the one the line names"
 	}
 

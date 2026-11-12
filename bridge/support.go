@@ -92,7 +92,7 @@ func (p *Projects) Around(paths []string) []string {
 	for len(pending) > 0 {
 		project := pending[0]
 		pending = pending[1:]
-		if slices.Contains(closure, project) || !isRegularFile(project) {
+		if slices.Contains(closure, project) || !walk.IsFile(project) {
 			continue
 		}
 		closure = append(closure, project)
@@ -100,6 +100,15 @@ func (p *Projects) Around(paths []string) []string {
 	}
 
 	return closure
+}
+
+func (p *Projects) Owner(path string) string {
+	marked := p.enclosing(path, map[string][]string{})
+	if len(marked) == 0 {
+		return ""
+	}
+
+	return filepath.Dir(marked[0])
 }
 
 func (p *Projects) Folders(paths []string) []string {
@@ -112,7 +121,7 @@ func (p *Projects) Folders(paths []string) []string {
 }
 
 func (p *Projects) enclosing(path string, listed map[string][]string) []string {
-	if below := walk.Files(path, walk.Excluded{}, hasSuffix(p.Marker)); isFolder(path) && len(below) > 0 {
+	if below := walk.Files(path, walk.Excluded{}, hasSuffix(p.Marker)); walk.IsFolder(path) && len(below) > 0 {
 		return below
 	}
 
@@ -179,16 +188,4 @@ func hasSuffix(suffix string) func(path string) bool {
 
 func lacksSuffix(suffix string) func(path string) bool {
 	return func(path string) bool { return !strings.HasSuffix(path, suffix) }
-}
-
-func isRegularFile(path string) bool {
-	info, err := os.Lstat(path)
-
-	return err == nil && info.Mode().IsRegular()
-}
-
-func isFolder(path string) bool {
-	info, err := os.Stat(path)
-
-	return err == nil && info.IsDir()
 }
