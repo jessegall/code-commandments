@@ -153,7 +153,7 @@ func TestAMergeIsBlamedOnlyForTheLinesItBroughtIn(t *testing.T) {
 	}
 }
 
-const reportedSinOnLineOne ="def total(order):\n    \"\"\"Says the total.\"\"\"\n    return 0\n"
+const reportedSinOnLineOne = "def total(order):\n    \"\"\"Says the total.\"\"\"\n    return 0\n"
 
 func worktreeWithASinTheProjectReported(t *testing.T) (root, worktree string) {
 	t.Helper()

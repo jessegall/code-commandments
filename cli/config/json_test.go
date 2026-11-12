@@ -95,8 +95,8 @@ func TestConfigJSONIsReadBeforeConfigPHP(t *testing.T) {
 
 func TestAConfigJSONTheToolCannotReadIsAnInvalidConfiguration(t *testing.T) {
 	for text, reason := range map[string]string{
-		`{"path": ["src"]}`:                                  `config.json: json: unknown field "path"`,
-		`{"disable": {"languages": ["cobol"]}}`:              `config.json: disable.languages names "cobol", which is not a language the tool reads.`,
+		`{"path": ["src"]}`:                              `config.json: json: unknown field "path"`,
+		`{"disable": {"languages": ["cobol"]}}`:          `config.json: disable.languages names "cobol", which is not a language the tool reads.`,
 		`{"configure": {"php/X": [{"a": [], "b": []}]}}`: `config.json: configure.php/X holds a step naming 2 methods; each step names one, as {"layer": [...]}.`,
 		`{"configure": {"php/X": [{"a": [1.5]}]}}`:       `config.json: configure.php/X.a: 1.5 is not a whole number`,
 	} {

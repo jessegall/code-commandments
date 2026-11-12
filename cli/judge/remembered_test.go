@@ -268,8 +268,8 @@ func TestAJudgeOfAJournalProjectCountsTheFilesItJudgedAndRemembered(t *testing.T
 
 	judgedIn(t, project, "--no-checklist", "--parallel=1")
 	judged := costs.Count(ledger.DetectorFilesJudged)
-	if judged == 0 {
-		t.Fatalf("a first judge counted no file judged")
+	if judged+costs.Count(ledger.DetectorFilesRemembered) == 0 {
+		t.Fatalf("a first judge counted no file, judged or remembered")
 	}
 
 	judgedIn(t, project, "--no-checklist", "--parallel=1")

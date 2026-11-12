@@ -34,7 +34,7 @@ func TestAServedBridgeReadsDraftedTextInPlaceOfTheDisk(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer server.Close()
-	stream, err := server.Ask(bridge.Request{Paths: []string{root}, Contents: contents})
+	stream, err := server.Ask(bridge.Request{Paths: append(bridge.Listed(root), created), Contents: contents})
 	if err != nil {
 		t.Fatal(err)
 	}

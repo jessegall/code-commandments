@@ -1,32 +1,13 @@
 namespace CodeCommandments.Bridge;
 
-/// <summary>The C# files a run reads: every .cs under the given roots, build output left out.</summary>
+/// <summary>
+/// The C# files a run reads: the .cs files it names, each once. The bridge walks no folder: the Go side lists every
+/// file through its one funnel, so a folder is never handed here.
+/// </summary>
 public static class Sources
 {
-    private static readonly string[] Skipped = ["bin", "obj", ".git", "node_modules"];
+    public static IReadOnlyList<string> Under(IEnumerable<string> paths) =>
+        new SortedSet<string>(paths.Select(Path.GetFullPath).Where(IsSource), StringComparer.Ordinal).ToList();
 
-    public static IReadOnlyList<string> Under(IEnumerable<string> paths)
-    {
-        var files = new SortedSet<string>(StringComparer.Ordinal);
-
-        foreach (var path in paths.Select(Path.GetFullPath))
-        {
-            if (File.Exists(path) && path.EndsWith(".cs", StringComparison.Ordinal))
-            {
-                files.Add(path);
-            }
-            else if (Directory.Exists(path))
-            {
-                foreach (var file in Directory.EnumerateFiles(path, "*.cs", SearchOption.AllDirectories).Where(file => IsSource(path, file)))
-                {
-                    files.Add(file);
-                }
-            }
-        }
-
-        return files.ToList();
-    }
-
-    public static bool IsSource(string root, string file) =>
-        !Path.GetRelativePath(root, file).Split(Path.DirectorySeparatorChar).Any(part => Skipped.Contains(part));
+    public static bool IsSource(string path) => path.EndsWith(".cs", StringComparison.Ordinal) && File.Exists(path);
 }

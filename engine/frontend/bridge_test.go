@@ -3,6 +3,7 @@ package frontend
 import (
 	"bufio"
 	"encoding/json"
+	"github.com/jessegall/code-commandments/bridge"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -116,11 +117,11 @@ func TestServeAnswersEachRequestWithAWholeStream(t *testing.T) {
 	if _, err := exec.LookPath("node"); err != nil {
 		t.Skip("node is not on PATH")
 	}
-	bridge, err := Here().Command()
+	program, err := Here().Command()
 	if err != nil {
 		t.Fatal(err)
 	}
-	command := exec.Command(bridge[0], append(bridge[1:], "--serve")...)
+	command := exec.Command(program[0], append(program[1:], "--serve")...)
 	in, _ := command.StdinPipe()
 	out, _ := command.StdoutPipe()
 	if err := command.Start(); err != nil {
@@ -130,7 +131,7 @@ func TestServeAnswersEachRequestWithAWholeStream(t *testing.T) {
 	lines := bufio.NewScanner(out)
 	lines.Buffer(nil, 64<<20)
 	for _, folder := range []string{"client", "types"} {
-		request, _ := json.Marshal(map[string][]string{"paths": {filepath.Join(fixture, folder)}})
+		request, _ := json.Marshal(map[string][]string{"paths": bridge.ListedArguments(filepath.Join(fixture, folder))})
 		in.Write(append(request, '\n'))
 		var stream strings.Builder
 		for lines.Scan() {

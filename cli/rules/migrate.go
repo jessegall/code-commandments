@@ -6,7 +6,6 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
-	"sort"
 	"strings"
 
 	"github.com/jessegall/code-commandments/cli"
@@ -22,10 +21,7 @@ func (c Command) migrate(in *cli.Input, root string, console cli.Console) (int, 
 	}
 
 	preview := in.HasFlag("dry-run")
-	files, err := ruleFiles(dir)
-	if err != nil {
-		return 0, err
-	}
+	files := custom.RuleFiles(dir)
 
 	merged, failures := mergeByEngine(root, files, preview)
 	for _, said := range merged {
@@ -49,25 +45,6 @@ func (c Command) migrate(in *cli.Input, root string, console cli.Console) (int, 
 	console.Warn("✗ " + plural(len(failures), "rule", "rules") + " could not be settled here, each named above. A rule naming a construct no parser writes is a rule that found nothing before this release said so: fix the word, or name the engine that writes it.")
 
 	return cli.Refused, nil
-}
-
-func ruleFiles(dir string) ([]string, error) {
-	var found []string
-	err := filepath.WalkDir(dir, func(path string, entry os.DirEntry, err error) error {
-		if err != nil || entry.IsDir() || filepath.Ext(path) != ".json" {
-			return nil
-		}
-		if filepath.Base(path) == "lists.json" || strings.Contains(path, string(filepath.Separator)+custom.SkillsFolder+string(filepath.Separator)) {
-			return nil
-		}
-
-		found = append(found, path)
-
-		return nil
-	})
-	sort.Strings(found)
-
-	return found, err
 }
 
 func mergeByEngine(root string, files []string, preview bool) (said []string, failures []string) {

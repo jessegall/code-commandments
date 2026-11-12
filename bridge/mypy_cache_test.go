@@ -31,7 +31,7 @@ func pythonRun(t *testing.T, root string) string {
 		t.Fatal(err)
 	}
 
-	stream, err := bridge.Once(command, root)
+	stream, err := bridge.Once(command, bridge.Listed(root)...)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -175,7 +175,7 @@ func countingBuilds(t *testing.T, script string, args ...string) string {
 }
 
 const countedBuilds = `
-import json, os, sys
+import glob, json, os, sys
 sys.path.insert(0, 'mypy')
 import tree, session
 from kept import Kept
@@ -190,8 +190,11 @@ for name in ("checked", "compiled"):
         return _real(self, paths, *args)
     setattr(session.Session, name, counted)
 
+def files_of(root):
+    return sorted(glob.glob(os.path.join(root, "**", "*.py"), recursive=True))
+
 def run(root, kept):
-    return [json.loads(line) if isinstance(line, str) else line for line in tree.stream(tree.Session(), [root], [], None, Kept(kept))]
+    return [json.loads(line) if isinstance(line, str) else line for line in tree.stream(tree.Session(), files_of(root), [], None, Kept(kept))]
 
 def said(lines):
     print(" ".join(builds) or "none", sum(1 for line in lines if "file" in line))
@@ -271,7 +274,7 @@ print(" ".join(builds) or "none", all(path.startswith(os.path.realpath(sys.argv[
 func TestARunStoppedPartWayLeavesWhatTheNextRunNeedsToSkipMypy(t *testing.T) {
 	said := countingBuilds(t, `
 # The run is stopped while it hands its lines back: everything was kept, its last lines were read by no one.
-stream = tree.stream(tree.Session(), [sys.argv[1]], [], None, Kept(sys.argv[2]))
+stream = tree.stream(tree.Session(), files_of(sys.argv[1]), [], None, Kept(sys.argv[2]))
 next(stream)
 next(stream)
 stream.close()
@@ -351,7 +354,7 @@ import time
 run(sys.argv[1], sys.argv[2])
 counting[0] = True
 began = time.time()
-lines = [line for line in tree.stream(tree.Session(), [sys.argv[1]], [], None, Kept(sys.argv[2]))]
+lines = [line for line in tree.stream(tree.Session(), files_of(sys.argv[1]), [], None, Kept(sys.argv[2]))]
 took = time.time() - began
 print(" ".join(builds) or "none", sum(1 for line in lines if "file" in line), took < 3, round(took, 1))
 `, checkoutHolding(t, files), t.TempDir())

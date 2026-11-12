@@ -29,7 +29,7 @@ func parsed(t *testing.T) *contract.Stream {
 	if err != nil {
 		t.Fatal(err)
 	}
-	stream, err := bridge.Once(bridgetest.Mypy(t), root)
+	stream, err := bridge.Once(bridgetest.Mypy(t), bridge.Listed(root)...)
 	if err != nil {
 		t.Fatal(err)
 	}

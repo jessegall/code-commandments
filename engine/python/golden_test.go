@@ -26,7 +26,7 @@ func shopFixture(t *testing.T) *python.Codebase {
 	command := bridgetest.Mypy(t)
 	fixture.once.Do(func() {
 		fixture.root, fixture.err = filepath.Abs("../../tests/Fixtures/python")
-		stream, err := bridge.Once(command, fixture.root)
+		stream, err := bridge.Once(command, bridge.Listed(fixture.root)...)
 		if err != nil {
 			fixture.err = err
 			return

@@ -28,7 +28,7 @@ func FromSource(t testing.TB, sources map[string]string) *engine.Codebase {
 			t.Fatal(err)
 		}
 	}
-	stream, err := bridge.Once(bridgetest.Mypy(t), root)
+	stream, err := bridge.Once(bridgetest.Mypy(t), bridge.Listed(root)...)
 	if err != nil {
 		t.Fatal(err)
 	}

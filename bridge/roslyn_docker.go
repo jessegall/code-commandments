@@ -4,8 +4,6 @@ import (
 	"crypto/sha1"
 	"embed"
 	"encoding/hex"
-	"encoding/xml"
-	"io/fs"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -85,7 +83,7 @@ func readOnly(roots []string) []string {
 			folder = filepath.Dir(folder)
 		}
 		folders = append(folders, folder)
-		folders = append(folders, referencedFolders(folder)...)
+		folders = append(folders, CSharpProjects.Folders([]string{folder})...)
 	}
 	var mounts []string
 	for _, folder := range folders {
@@ -95,73 +93,6 @@ func readOnly(roots []string) []string {
 	}
 
 	return mounts
-}
-
-func referencedFolders(root string) []string {
-	pending := projectsAt(root)
-	seen := map[string]bool{}
-	var folders []string
-	for len(pending) > 0 {
-		project := pending[0]
-		pending = pending[1:]
-		if seen[project] {
-			continue
-		}
-		seen[project] = true
-		folders = append(folders, filepath.Dir(project))
-		pending = append(pending, projectReferences(project)...)
-	}
-
-	return folders
-}
-
-func projectsAt(folder string) []string {
-	var projects []string
-	filepath.WalkDir(folder, func(path string, entry fs.DirEntry, err error) error {
-		if err != nil {
-			return nil
-		}
-		if name := entry.Name(); entry.IsDir() && path != folder && (strings.HasPrefix(name, ".") || name == "bin" || name == "obj" || name == "node_modules") {
-			return filepath.SkipDir
-		}
-		if !entry.IsDir() && strings.HasSuffix(path, ".csproj") {
-			projects = append(projects, path)
-		}
-
-		return nil
-	})
-	above := folder
-	for len(projects) == 0 && filepath.Dir(above) != above {
-		above = filepath.Dir(above)
-		projects, _ = filepath.Glob(filepath.Join(above, "*.csproj"))
-	}
-
-	return projects
-}
-
-func projectReferences(project string) []string {
-	file, err := os.Open(project)
-	if err != nil {
-		return nil
-	}
-	defer file.Close()
-	var referenced []string
-	decoder := xml.NewDecoder(file)
-	for {
-		token, err := decoder.Token()
-		if err != nil {
-			return referenced
-		}
-		element, starts := token.(xml.StartElement)
-		if !starts || element.Name.Local != "ProjectReference" {
-			continue
-		}
-		for _, attribute := range element.Attr {
-			if attribute.Name.Local == "Include" {
-				referenced = append(referenced, filepath.Clean(filepath.Join(filepath.Dir(project), strings.ReplaceAll(attribute.Value, `\`, "/"))))
-			}
-		}
-	}
 }
 
 var roslynLauncher = bundle.Embedded("roslyn", roslyn, "roslyn")

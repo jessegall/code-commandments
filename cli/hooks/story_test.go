@@ -177,4 +177,3 @@ func asFloat(held any) float64 {
 
 	return number
 }
-

@@ -2,7 +2,6 @@
 package source
 
 import (
-	"io/fs"
 	"os"
 	"path/filepath"
 	"slices"
@@ -10,6 +9,7 @@ import (
 
 	"github.com/jessegall/code-commandments/catalog"
 	"github.com/jessegall/code-commandments/contract"
+	"github.com/jessegall/code-commandments/walk"
 )
 
 // Language is a language the tool reads, named by its file extension.
@@ -103,28 +103,17 @@ func declaredAbove(root string, named []string) bool {
 
 func declaredUnder(root string, named []string) bool {
 	found := false
-	filepath.WalkDir(root, func(path string, entry fs.DirEntry, err error) error {
-		switch {
-		case err != nil:
-			return nil
-		case found:
-			return fs.SkipAll
-		case entry.IsDir():
-			if path != root && !descends(path, Excluded{}) {
-				return fs.SkipDir
-			}
-
-			return nil
-		case slices.Contains(named, entry.Name()):
-			found = true
-
-			return fs.SkipAll
-		}
-
-		return nil
+	walk.Folders(root, Excluded{}, func(dir string) {
+		found = found || slices.ContainsFunc(named, func(name string) bool { return isFile(filepath.Join(dir, name)) })
 	})
 
 	return found
+}
+
+func isFile(path string) bool {
+	info, err := os.Lstat(path)
+
+	return err == nil && info.Mode().IsRegular()
 }
 
 func Judges(path string) bool {

@@ -4,43 +4,29 @@ declare(strict_types=1);
 
 namespace CodeCommandments\PhpBridge;
 
-use RecursiveDirectoryIterator;
-use RecursiveIteratorIterator;
-use RecursiveCallbackFilterIterator;
-use SplFileInfo;
-
 /**
- * The .php files a set of paths holds, sorted, each once; vendor and dot folders are not the project's own.
+ * The .php files a request names, sorted, each once. The bridge walks no folder: the Go side lists every file through
+ * its one funnel, so a folder named here is refused, and a link, which the funnel never hands on, is left out.
  */
 final class Sources
 {
     /**
      * @param  list<string>  $paths
-     * @param  array<string, string>  $contents  a file here that is under a folder and not on disk is read too
+     * @param  array<string, string>  $contents  a named file here that is not on disk is read from its text
      * @return list<string>
      */
     public static function in(array $paths, array $contents = []): array
     {
         $files = [];
         foreach ($paths as $path) {
-            if (is_file($path)) {
-                $files[$path] = true;
+            if (is_link($path)) {
                 continue;
             }
-            $folders = new RecursiveCallbackFilterIterator(
-                new RecursiveDirectoryIterator($path, RecursiveDirectoryIterator::SKIP_DOTS),
-                static fn (SplFileInfo $entry): bool => ! $entry->isDir()
-                    || ($entry->getFilename() !== 'vendor' && ! str_starts_with($entry->getFilename(), '.')),
-            );
-            foreach (new RecursiveIteratorIterator($folders) as $entry) {
-                if ($entry->isFile() && $entry->getExtension() === 'php') {
-                    $files[realpath($entry->getPathname())] = true;
-                }
+            if (is_dir($path)) {
+                throw BadRequest::forFolder($path);
             }
-            foreach (array_keys($contents) as $file) {
-                if (str_ends_with($file, '.php') && str_starts_with($file, rtrim($path, '/') . '/') && ! is_file($file)) {
-                    $files[$file] = true;
-                }
+            if (str_ends_with($path, '.php') && (is_file($path) || array_key_exists($path, $contents))) {
+                $files[$path] = true;
             }
         }
         $files = array_keys($files);

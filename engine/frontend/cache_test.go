@@ -1,6 +1,7 @@
 package frontend
 
 import (
+	"github.com/jessegall/code-commandments/bridge"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -9,13 +10,13 @@ import (
 	"time"
 )
 
-func written(t *testing.T, bridge Bridge, arguments ...string) string {
+func written(t *testing.T, held Bridge, arguments ...string) string {
 	t.Helper()
-	command, err := bridge.Command()
+	command, err := held.Command()
 	if err != nil {
 		t.Skip(err)
 	}
-	out, err := exec.Command(command[0], append(command[1:], arguments...)...).Output()
+	out, err := exec.Command(command[0], append(command[1:], bridge.ListedArguments(arguments...)...)...).Output()
 	if err != nil {
 		t.Fatalf("%v: %v", command, err)
 	}

@@ -18,7 +18,7 @@ func TestTheRoslynBridgeWritesAValidTreeOfTheCSharpFixture(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	stream, err := bridge.Once(bridgetest.Roslyn(t, root), root)
+	stream, err := bridge.Once(bridgetest.Roslyn(t, root), bridge.CSharpProjects.Under(root).Arguments()...)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -56,7 +56,7 @@ func TestAServedRoslynBridgeMarksTheFilesItWasNotAskedToWriteAsContext(t *testin
 	}
 	defer server.Close()
 	written := filepath.Join(root, "Shop/Orders/GiftWrapping.cs")
-	stream, err := server.Ask(bridge.Request{Paths: []string{root}, Write: []string{written}})
+	stream, err := server.Ask(bridge.AskedOf(bridge.CSharpProjects, bridge.ListedAs(".cs", root), []string{written}).Request())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -77,7 +77,7 @@ func TestTheRoslynBridgeWritesAnExpressionNestedDeeperThanTheSerializersDefault(
 	if err := os.WriteFile(filepath.Join(root, "Banner.cs"), []byte(source), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	stream, err := bridge.Once(bridgetest.Roslyn(t, root), root)
+	stream, err := bridge.Once(bridgetest.Roslyn(t, root), bridge.CSharpProjects.Under(root).Arguments()...)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -92,7 +92,7 @@ func TestTheRoslynBridgeWritesATypeItCouldNotResolveInsideAnotherAsOpaque(t *tes
 	if err := os.WriteFile(filepath.Join(root, "Shelf.cs"), []byte(source), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := bridge.Once(bridgetest.Roslyn(t, root), root); err != nil {
+	if _, err := bridge.Once(bridgetest.Roslyn(t, root), bridge.CSharpProjects.Under(root).Arguments()...); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -138,12 +138,12 @@ func TestAServedRoslynBridgeAskedForAPathItCannotSeeSaysSoAndExitsWithinSeconds(
 	gone := filepath.Join(root, "gone")
 	start := time.Now()
 	asked, closed, _ := bounded(t, time.Minute, func() (string, bool) {
-		_, asked := server.Ask(bridge.Request{Paths: []string{gone}})
+		_, asked := server.Ask(bridge.Request{Paths: []string{gone + ".cs"}})
 		closed := server.Close()
 
 		return fmt.Sprint(asked), closed == nil
 	})
-	if !strings.Contains(asked, "roslyn-bridge: there is no file or folder at "+gone+" to read") {
+	if !strings.Contains(asked, "roslyn-bridge: there is no file or folder at "+gone+".cs to read") {
 		t.Errorf("the served bridge answered %q, not why it failed", asked)
 	}
 	if closed {

@@ -1,5 +1,5 @@
-import { existsSync, lstatSync, readdirSync, realpathSync } from 'node:fs'
-import { dirname, join, resolve } from 'node:path'
+import { existsSync, lstatSync, realpathSync } from 'node:fs'
+import { basename, dirname, join, resolve } from 'node:path'
 import { createInterface } from 'node:readline'
 import ts from 'typescript'
 import { declarations } from './declares.mjs'
@@ -14,7 +14,6 @@ import { Memo, TreeCache } from './cache.mjs'
 
 const NAME = 'bridge/frontend'
 const VERSION = '1'
-const SKIPPED_FOLDERS = new Set(['vendor', 'node_modules', 'site-packages', '__pycache__'])
 const LANGUAGES = { '.vue': 'vue', ...Object.fromEntries(['.ts', '.tsx', '.mts', '.cts', '.js', '.jsx', '.mjs', '.cjs'].map((extension) => [extension, 'typescript'])) }
 /** The mark a file read only for context carries, where its record puts it. */
 const CONTEXT = ',"context":true'
@@ -44,9 +43,9 @@ function judges(judged, path) {
  * and `contents` is the text drafted for a file, read in place of the disk's; a drafted file under a folder is read too.
  */
 export async function stream({ paths, write = [], renames = [], contents = {}, cache }, emit) {
-    const roots = paths.map((path) => realpathSync(resolve(path)))
+    const roots = paths.map(named)
     const judged = new Set(write.map((path) => realpathSync(resolve(path))))
-    const drafted = Object.keys(contents).filter((path) => languageOf(path) && !existsSync(path) && roots.some((root) => path.startsWith(root + '/')))
+    const drafted = Object.keys(contents).filter((path) => languageOf(path) && !existsSync(path) && roots.includes(path))
     const files = [...new Set([...roots.flatMap(filesIn), ...drafted])].sort()
     const sources = new Map(files.map((path) => [path, Object.hasOwn(contents, path) ? new Source(path, contents[path]) : Source.read(path)]))
     const memo = cache ? new Memo(cache) : undefined
@@ -113,18 +112,21 @@ function vueFile(tree, sfc, program) {
     return { root, found, errors: writer.errors }
 }
 
-/** Every file under `path` the bridge reads: `.vue` and `.ts`, skipping links, dot folders and dependency folders. */
+/** The file `path` names, when it is one the bridge reads: `.vue` or `.ts`, and not a link. The bridge walks no
+ * folder: the Go side lists every file through its one funnel, so a folder named here is refused. */
 function filesIn(path) {
-    const stat = lstatSync(path)
-    if (stat.isFile()) return languageOf(path) ? [path] : []
-    if (!stat.isDirectory()) return []
+    const stat = lstatSync(path, { throwIfNoEntry: false })
+    if (stat?.isDirectory()) throw new Error(`the frontend bridge reads only the files it is handed; ${path} is a folder`)
 
-    return readdirSync(path, { withFileTypes: true }).flatMap((entry) => {
-        const child = join(path, entry.name)
-        if (entry.isDirectory()) return entry.name.startsWith('.') || SKIPPED_FOLDERS.has(entry.name) || entry.name.endsWith('.egg-info') ? [] : filesIn(child)
+    return stat?.isFile() && languageOf(path) ? [path] : []
+}
 
-        return entry.isFile() && languageOf(child) ? [child] : []
-    })
+/** The path itself, made absolute with its folder resolved: a link it names stays a link, so `filesIn` sees it. */
+function named(path) {
+    const absolute = resolve(path)
+    const folder = dirname(absolute)
+
+    return existsSync(folder) ? join(realpathSync(folder), basename(absolute)) : absolute
 }
 
 function languageOf(path) {

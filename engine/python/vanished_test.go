@@ -22,7 +22,7 @@ func TestAFileThatIsGoneLeavesTheRestRead(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	stream, err := bridge.Once(bridgetest.Mypy(t), root)
+	stream, err := bridge.Once(bridgetest.Mypy(t), bridge.Listed(root)...)
 	if err != nil {
 		t.Fatalf("a file that is gone took the whole read with it: %v", err)
 	}

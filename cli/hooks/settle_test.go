@@ -121,7 +121,7 @@ func TestASinEditedInPlaceKeepsTheFilesOneMark(t *testing.T) {
 	}
 
 	write("def refund(order) -> int:\n    if order.late:  # past due\n        raise ValueError(order)\n    else:\n        return order.total\n")
-	stream, err := bridge.Once(bridgetest.Mypy(t), root)
+	stream, err := bridge.Once(bridgetest.Mypy(t), bridge.Listed(root)...)
 	if err != nil {
 		t.Fatal(err)
 	}

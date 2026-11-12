@@ -211,7 +211,16 @@ function parsed(path) {
     const read = ts.readConfigFile(path, ts.sys.readFile)
     if (read.error) return {}
 
-    return ts.parseJsonConfigFileContent(read.config, ts.sys, dirname(path), undefined, path).options
+    return ts.parseJsonConfigFileContent(read.config, CONFIG_HOST, dirname(path), undefined, path).options
+}
+
+/** How a tsconfig is read for its options alone: its files and folders, `include` and `exclude`, are never listed, so
+ * reading a config walks no folder; the Go side hands the bridge every file it reads. */
+const CONFIG_HOST = {
+    useCaseSensitiveFileNames: ts.sys.useCaseSensitiveFileNames,
+    fileExists: ts.sys.fileExists,
+    readFile: ts.sys.readFile,
+    readDirectory: () => [],
 }
 
 function commonRoot(paths) {

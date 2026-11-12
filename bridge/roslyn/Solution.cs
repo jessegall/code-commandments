@@ -1,17 +1,21 @@
 namespace CodeCommandments.Bridge;
 
 /// <summary>
-/// The projects a request reaches, found as MSBuild would: every project under the roots, the project a
-/// root sits inside, and every project those reference, however deep. Each file belongs to the project
-/// whose folder holds it most closely — a nested project's files are its own.
+/// The projects a request reaches, from the support it names: every project file listed, and every project those
+/// reference, however deep. Each file belongs to the project whose folder holds it most closely, so a nested
+/// project's files are its own. The bridge walks no folder: the Go side lists every project file, source and
+/// generated usings file through its one funnel.
 /// </summary>
 public sealed class Solution
 {
     private readonly Dictionary<string, ProjectFile> projects = new(StringComparer.Ordinal);
 
-    private Solution(IReadOnlyList<string> roots)
+    private readonly IReadOnlyList<string> support;
+
+    private Solution(IReadOnlyList<string> support)
     {
-        var pending = new Queue<string>(roots.SelectMany(Found).Distinct());
+        this.support = support.Select(Path.GetFullPath).ToList();
+        var pending = new Queue<string>(this.support.Where(path => path.EndsWith(".csproj", StringComparison.Ordinal)));
 
         while (pending.TryDequeue(out var csproj))
         {
@@ -29,7 +33,7 @@ public sealed class Solution
         }
     }
 
-    public static Solution Around(IReadOnlyList<string> roots) => new(roots);
+    public static Solution Of(IReadOnlyList<string> support) => new(support);
 
     /// <summary>Every project found, by the full path of its project file.</summary>
     public IReadOnlyDictionary<string, ProjectFile> Projects => projects;
@@ -43,33 +47,16 @@ public sealed class Solution
             .FirstOrDefault();
 
     /// <summary>The source files of every project found — what compiles, though only the asked files are written.</summary>
-    public IReadOnlyList<string> Files() => Sources.Under(projects.Values.Select(project => project.Folder));
+    public IReadOnlyList<string> Files() => Sources.Under(support.Where(path => !path.EndsWith(".GlobalUsings.g.cs", StringComparison.Ordinal)));
 
-    /// <summary>The projects under <paramref name="root"/>, or the one it sits inside.</summary>
-    private static IEnumerable<string> Found(string root)
+    /// <summary>The global usings file the SDK generated for <paramref name="csproj"/>, the newest when there are several.</summary>
+    public string? GeneratedUsingsOf(string csproj)
     {
-        var below = Directory.Exists(root)
-            ? Directory.EnumerateFiles(root, "*.csproj", SearchOption.AllDirectories).Where(file => Sources.IsSource(root, file)).ToList()
-            : [];
+        var name = Path.GetFileNameWithoutExtension(csproj) + ".GlobalUsings.g.cs";
 
-        return below.Count > 0 ? below : Enclosing(root);
-    }
-
-    /// <summary>The project file in the nearest folder above <paramref name="path"/> that holds one.</summary>
-    private static IEnumerable<string> Enclosing(string path)
-    {
-        var directory = Directory.Exists(path) ? path : Path.GetDirectoryName(path);
-
-        while (directory is not null)
-        {
-            if (Directory.EnumerateFiles(directory, "*.csproj").FirstOrDefault() is { } csproj)
-            {
-                return [csproj];
-            }
-
-            directory = Path.GetDirectoryName(directory);
-        }
-
-        return [];
+        return support
+            .Where(path => Path.GetFileName(path) == name && File.Exists(path))
+            .OrderByDescending(File.GetLastWriteTimeUtc)
+            .FirstOrDefault();
     }
 }

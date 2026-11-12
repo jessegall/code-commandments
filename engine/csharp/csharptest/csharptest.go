@@ -28,7 +28,7 @@ func FromSource(t testing.TB, sources map[string]string) *engine.Codebase {
 			t.Fatal(err)
 		}
 	}
-	stream, err := bridge.Once(bridgetest.Roslyn(t, root), root)
+	stream, err := bridge.Once(bridgetest.Roslyn(t, root), bridge.CSharpProjects.Under(root).Arguments()...)
 	if err != nil {
 		t.Fatal(err)
 	}

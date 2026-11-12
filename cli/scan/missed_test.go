@@ -41,7 +41,7 @@ func TestARunSaysWhenTheWarmBridgeCouldNotAnswer(t *testing.T) {
 	}
 
 	for range 2 {
-		held.AskTallied(bridge.Request{Paths: []string{project}}, func() {})
+		held.AskTallied(bridge.Request{Paths: bridge.Listed(project)}, func() {})
 	}
 
 	words := said()
@@ -66,7 +66,7 @@ func TestARunSaysNothingWhenNoServiceIsKeptUp(t *testing.T) {
 		reach: Process{Command: func([]string) ([]string, error) { return nil, errors.New("no bridge of its own in this test") }},
 		roots: []string{project},
 	}
-	held.AskTallied(bridge.Request{Paths: []string{project}}, func() {})
+	held.AskTallied(bridge.Request{Paths: bridge.Listed(project)}, func() {})
 
 	if words := said(); bytes.Contains([]byte(words), []byte("could not answer")) {
 		t.Errorf("a run with no service to miss says one was missed: %q", words)

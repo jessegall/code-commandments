@@ -40,7 +40,7 @@ func cachedRun(t *testing.T, trees, root string) string {
 		t.Fatal(err)
 	}
 
-	stream, err := bridge.Once(append(command, "--cache="+trees), root)
+	stream, err := bridge.Once(append(command, "--cache="+trees), bridge.CSharpProjects.Under(root).Arguments()...)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -188,7 +188,7 @@ func TestAFileReadAsContextSharesTheLineItWasKeptUnderWhenJudged(t *testing.T) {
 	}
 	defer server.Close()
 
-	stream, err := server.Ask(bridge.Request{Paths: []string{root}, Write: []string{filepath.Join(root, "Basket.cs")}})
+	stream, err := server.Ask(bridge.AskedOf(bridge.CSharpProjects, bridge.ListedAs(".cs", root), []string{filepath.Join(root, "Basket.cs")}).Request())
 	if err != nil {
 		t.Fatal(err)
 	}

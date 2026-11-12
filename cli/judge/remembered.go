@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/jessegall/code-commandments/bridge"
 	"github.com/jessegall/code-commandments/bridge/bundle"
@@ -25,9 +26,10 @@ const (
 	readingFile             = "reading"
 	rememberedFolderName    = "remembered"
 	turnFile                = "judging.lock"
+	turnWaitedAtMost        = 2 * time.Minute
 )
 
-// Remembered is what one run keeps for the next in its project's own folder, good only for the build that wrote it: what every detector answered for each file's contents, and what the aggregating C# rules found. It lives at the journal of the project root when the journal drives the project, and under the user's cache otherwise: one folder per project that all its worktrees share, so the plugin's runs, queued runs and runs started by hand remember together and claim the same project. Finding it also hands on the hours the project keeps an unused cache, so the run and every bridge it starts prune by them. Judges take turns across the whole machine, so two never run at once and eat its memory: a run waits for the one before it to end, then claims its project while it reads; the system lets go of both the moment a run ends, so a run stopped with ^C or killed blocks nobody.
+// Remembered is what one run keeps for the next in its project's own folder, good only for the build that wrote it: what every detector answered for each file's contents, and what the aggregating C# rules found. It lives at the journal of the project root when the journal drives the project, and under the user's cache otherwise: one folder per project that all its worktrees share, so the plugin's runs, queued runs and runs started by hand remember together and claim the same project. Finding it also hands on the hours the project keeps an unused cache, so the run and every bridge it starts prune by them. Judges take turns across the whole machine, so two never run at once and eat its memory: a run waits for the one before it to end, two minutes at most so one stuck judge cannot hold every other, then claims its project while it reads; the system lets go of both the moment a run ends, so a run stopped with ^C or killed blocks nobody.
 type Remembered struct {
 	Memories  detectors.MemoryFile
 	Weighings WeighingsFile
@@ -76,7 +78,7 @@ func rememberedFolder(project string) string {
 }
 
 func (r Remembered) ReadAlone() (release func(), alone bool) {
-	turn := atomic.HoldInTurn(judgingTurn(), r.waiting)
+	turn := atomic.HoldInTurn(judgingTurn(), r.waiting, turnWaitedAtMost)
 
 	claimed, alone := atomic.ClaimAt(filepath.Join(filepath.Dir(r.Memories.Path), readingFile)).Take()
 	if !alone {
@@ -93,7 +95,7 @@ func (r Remembered) ReadAlone() (release func(), alone bool) {
 
 func (r Remembered) waiting() {
 	if r.Memories.Warn != nil {
-		r.Memories.Warn("· another judge is running on this machine, so this one waits its turn")
+		r.Memories.Warn("· another judge is running on this machine, so this one waits its turn, two minutes at most")
 	}
 }
 

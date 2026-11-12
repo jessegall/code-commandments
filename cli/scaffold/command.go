@@ -13,9 +13,9 @@ import (
 	"github.com/jessegall/code-commandments/cli"
 	"github.com/jessegall/code-commandments/cli/config"
 	"github.com/jessegall/code-commandments/cli/help"
-	"github.com/jessegall/code-commandments/listing"
 	"github.com/jessegall/code-commandments/sins"
 	"github.com/jessegall/code-commandments/stubs"
+	"github.com/jessegall/code-commandments/walk"
 )
 
 const frontendRoot = "resources/js"
@@ -155,22 +155,12 @@ func existingOf(cwd, target string, helper sins.Scaffold) (string, bool) {
 }
 
 func find(dir, name string) (string, bool) {
-	for _, entry := range listing.Of(dir) {
-		path := dir + "/" + entry
-		info, err := os.Stat(path)
-
-		switch {
-		case err != nil:
-		case info.IsDir():
-			if found, exists := find(path, name); exists {
-				return found, true
-			}
-		case entry == name:
-			return path, true
-		}
+	found := walk.Files(dir, walk.Excluded{}, func(path string) bool { return filepath.Base(path) == name })
+	if len(found) == 0 {
+		return "", false
 	}
 
-	return "", false
+	return found[0], true
 }
 
 func render(helper sins.Scaffold, namespace string) string {

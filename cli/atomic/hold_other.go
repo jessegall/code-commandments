@@ -5,6 +5,7 @@ package atomic
 import (
 	"os"
 	"path/filepath"
+	"time"
 )
 
 func Hold(path string) func() {
@@ -17,6 +18,6 @@ func Hold(path string) func() {
 	return func() {}
 }
 
-func HoldInTurn(path string, waiting func()) func() {
+func HoldInTurn(path string, waiting func(), patience time.Duration) func() {
 	return Hold(path)
 }

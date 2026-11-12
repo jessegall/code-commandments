@@ -1,11 +1,11 @@
 package gotree
 
 import (
-	"testing"
-	"testing/fstest"
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"testing"
+	"testing/fstest"
 )
 
 func TestAChangedBridgeIsAnotherIdentityAndATestFileIsNot(t *testing.T) {

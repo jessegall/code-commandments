@@ -16,18 +16,18 @@ const SchemaFile = "config.schema.json"
 
 // document is config.json as it is written: every key optional, in the order a reader meets them.
 type document struct {
-	Schema    string                        `json:"$schema,omitempty"`
-	Paths     []string                      `json:"paths,omitempty"`
-	Exclude   []string                      `json:"exclude,omitempty"`
-	Base      string                        `json:"base,omitempty"`
-	Disable   *disabled                     `json:"disable,omitempty"`
-	Detectors []string                      `json:"detectors,omitempty"`
-	Packages  []string                      `json:"packages,omitempty"`
-	Hooks     []string                      `json:"hooks,omitempty"`
-	Agents    []string                      `json:"agents,omitempty"`
-	Parallel  int                           `json:"parallel,omitempty"`
-	CacheHours float64                      `json:"cache_hours,omitempty"`
-	Configure map[string][]map[string][]any `json:"configure,omitempty"`
+	Schema     string                        `json:"$schema,omitempty"`
+	Paths      []string                      `json:"paths,omitempty"`
+	Exclude    []string                      `json:"exclude,omitempty"`
+	Base       string                        `json:"base,omitempty"`
+	Disable    *disabled                     `json:"disable,omitempty"`
+	Detectors  []string                      `json:"detectors,omitempty"`
+	Packages   []string                      `json:"packages,omitempty"`
+	Hooks      []string                      `json:"hooks,omitempty"`
+	Agents     []string                      `json:"agents,omitempty"`
+	Parallel   int                           `json:"parallel,omitempty"`
+	CacheHours float64                       `json:"cache_hours,omitempty"`
+	Configure  map[string][]map[string][]any `json:"configure,omitempty"`
 }
 
 // disabled is what config.json turns off, by kind.

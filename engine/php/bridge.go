@@ -61,7 +61,7 @@ func (b Bridge) StreamTallied(tally func(), arguments ...string) (*contract.Stre
 	if err != nil {
 		return nil, err
 	}
-	stream, failure, ran, err := bridge.RunTallied(command, tally, arguments...)
+	stream, failure, ran, err := bridge.RunTallied(command, tally, bridge.ListedArguments(arguments...)...)
 	if !ran {
 		return stream, errors.Join(fmt.Errorf("the PHP bridge failed: %w", err), errors.New(failure))
 	}

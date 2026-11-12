@@ -618,26 +618,23 @@ def one_statement_whole(body: list[ast.stmt], text: str) -> bool:
     return body[0].end_lineno == len(lines) and body[0].end_col_offset == len(lines[-1].encode())
 
 
-SKIPPED_FOLDERS = {"vendor", "node_modules", "site-packages", "__pycache__"}
-
-
 def python_files(paths: list[str]) -> list[str]:
-    """Every `.py` file under the paths that is there to be read, resolved, in walk order: a folder that is a link,
-    hidden, a dependency store, bytecode, an `.egg-info` or a virtual environment is not walked. A module a package
-    shadows is still one, so it is written even where mypy leaves it out.
+    """Every `.py` file named in the paths that is there to be read, resolved and sorted, so the order a request names
+    them in never changes what the bridge writes. The bridge walks no
+    folder: the Go side lists every file through its one funnel, so a folder named here is refused, and a link, which
+    the funnel never hands on, is left out.
 
-    A name the walk met whose file cannot be opened is left out: a link to a file that is gone, a file deleted
-    under the run, a worktree removed while it was judged. Each used to end the stream in the middle, with every
-    other file of the request lost with it."""
+    A file named whose file cannot be opened is left out: a file deleted under the run, a worktree removed while it
+    was judged. Each used to end the stream in the middle, with every other file of the request lost with it."""
     found: list[str] = []
-    for root in paths:
-        if os.path.isfile(root):
-            found.append(os.path.realpath(root))
+    for path in paths:
+        if os.path.islink(path):
             continue
-        for folder, subfolders, names in os.walk(root):
-            subfolders[:] = sorted(sub for sub in subfolders if walks(os.path.join(folder, sub)))
-            found += [os.path.realpath(os.path.join(folder, name)) for name in sorted(names) if name.endswith(".py")]
-    return [path for path in dict.fromkeys(found) if readable(path)]
+        if os.path.isdir(path):
+            raise SystemExit(f"the Python bridge reads only the files it is handed; {path} is a folder")
+        if path.endswith(".py"):
+            found.append(os.path.realpath(path))
+    return [path for path in sorted(set(found)) if readable(path)]
 
 
 def readable(path: str) -> bool:
@@ -647,12 +644,6 @@ def readable(path: str) -> bool:
             return True
     except OSError:
         return False
-
-
-def walks(folder: str) -> bool:
-    name = os.path.basename(folder)
-    return not (os.path.islink(folder) or name.startswith(".") or name in SKIPPED_FOLDERS or name.endswith(".egg-info")
-                or os.path.isfile(os.path.join(folder, "pyvenv.cfg")))
 
 
 def module_name(path: str) -> str:

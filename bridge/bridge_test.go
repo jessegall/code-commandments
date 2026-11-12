@@ -19,7 +19,7 @@ func fixture(t *testing.T, path string) string {
 }
 
 func TestTheMypyBridgeWritesAValidTreeOfThePythonFixture(t *testing.T) {
-	stream, err := bridge.Once(bridgetest.Mypy(t), fixture(t, ""))
+	stream, err := bridge.Once(bridgetest.Mypy(t), bridge.Listed(fixture(t, ""))...)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -68,7 +68,7 @@ func TestAServedBridgeAnswersEachRequestWithAWholeStream(t *testing.T) {
 	}
 	defer server.Close()
 	cli := fixture(t, "shop/cli.py")
-	first, err := server.Ask(bridge.Request{Paths: []string{fixture(t, "")}, Write: []string{cli}})
+	first, err := server.Ask(bridge.Request{Paths: bridge.Listed(fixture(t, "")), Write: []string{cli}})
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -3,17 +3,18 @@ package gotree
 import (
 	"crypto/sha256"
 	"embed"
-	"io/fs"
-	"strings"
 	"encoding/hex"
 	"encoding/json"
+	"github.com/jessegall/code-commandments/walk"
 	"go/ast"
 	"go/parser"
 	"go/token"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"sort"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/jessegall/code-commandments/bridge/bundle"
@@ -146,12 +147,11 @@ func (k *keptLines) closureOfImport(module Module, path string) string {
 	k.closures[path] = ""
 
 	folder := filepath.Join(module.Root, filepath.FromSlash(strings.TrimPrefix(strings.TrimPrefix(path, module.Path), "/")))
-	entries, _ := os.ReadDir(folder)
 	var files []string
-	for _, entry := range entries {
-		name := entry.Name()
-		if !entry.IsDir() && strings.HasSuffix(name, ".go") && !strings.HasSuffix(name, "_test.go") && builds(folder, name) {
-			files = append(files, filepath.Join(folder, name))
+	for _, path := range walk.Entries(folder) {
+		name := filepath.Base(path)
+		if strings.HasSuffix(name, ".go") && !strings.HasSuffix(name, "_test.go") && builds(folder, name) {
+			files = append(files, path)
 		}
 	}
 

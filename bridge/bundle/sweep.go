@@ -1,12 +1,12 @@
 package bundle
 
 import (
+	"github.com/jessegall/code-commandments/cache"
 	"io/fs"
 	"os"
 	"path/filepath"
 	"sort"
 	"time"
-	"github.com/jessegall/code-commandments/cache"
 )
 
 const sweptEvery = time.Hour

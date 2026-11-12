@@ -1,4 +1,4 @@
-package source
+package walk
 
 import "testing"
 
@@ -14,21 +14,21 @@ func TestAnExclusionIsAppliedInsideTheRootItIsShiftedTo(t *testing.T) {
 		excluded := Under(root, given)
 
 		for file, covered := range map[string]bool{
-			"dist/index.js":                          true,
-			"src/core/web/dist/assets/index-abc.js":  true,
-			"src/lib/vendor/a/b/c.php":               true,
-			"legacy/old.php":                         true,
-			"generated/made.py":                      true,
-			"generated/deep/down/made.py":            true,
-			"src/viewer/tests/sample-window/a.ts":    true,
-			"tests/test_order.py":                    true,
-			"src/order.py":                           false,
-			"src/distant/order.py":                   false,
-			"src/vendored/order.py":                  false,
-			"src/generated/order.py":                 false,
-			"src/tests/order.py":                     false,
-			"src/viewer/tests/other-window/a.ts":     false,
-			"legacy/deep/old.php":                    true,
+			"dist/index.js":                         true,
+			"src/core/web/dist/assets/index-abc.js": true,
+			"src/lib/vendor/a/b/c.php":              true,
+			"legacy/old.php":                        true,
+			"generated/made.py":                     true,
+			"generated/deep/down/made.py":           true,
+			"src/viewer/tests/sample-window/a.ts":   true,
+			"tests/test_order.py":                   true,
+			"src/order.py":                          false,
+			"src/distant/order.py":                  false,
+			"src/vendored/order.py":                 false,
+			"src/generated/order.py":                false,
+			"src/tests/order.py":                    false,
+			"src/viewer/tests/other-window/a.ts":    false,
+			"legacy/deep/old.php":                   true,
 		} {
 			if got := excluded.Covers(root + "/" + file); got != covered {
 				t.Errorf("under %s, %s is left out=%v, want %v", root, file, got, covered)

@@ -83,10 +83,10 @@ func TestJudgingAfterAHandInNeedsTheMasterOnAndJudgingBeforeOff(t *testing.T) {
 	root, _, _ := projectWithASin(t)
 
 	for name, settings := range map[string]map[string]any{
-		"the choice is off":              {"judge_workers": true, "judge_hand_ins": false, "judge_hand_ins_after": false},
-		"the choice is not named":        {"judge_workers": true, "judge_hand_ins": false},
-		"the master is off":              {"judge_workers": false, "judge_hand_ins": false, "judge_hand_ins_after": true},
-		"the hand-in is judged before":   {"judge_workers": true, "judge_hand_ins": true, "judge_hand_ins_after": true},
+		"the choice is off":            {"judge_workers": true, "judge_hand_ins": false, "judge_hand_ins_after": false},
+		"the choice is not named":      {"judge_workers": true, "judge_hand_ins": false},
+		"the master is off":            {"judge_workers": false, "judge_hand_ins": false, "judge_hand_ins_after": true},
+		"the hand-in is judged before": {"judge_workers": true, "judge_hand_ins": true, "judge_hand_ins_after": true},
 	} {
 		if handInsJudgedAfter(afterHandInLine(root, settings)) {
 			t.Errorf("a hand-in is judged after it went through when %s", name)

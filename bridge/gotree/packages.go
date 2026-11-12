@@ -1,6 +1,7 @@
 package gotree
 
 import (
+	"github.com/jessegall/code-commandments/walk"
 	"go/build"
 	"go/parser"
 	"go/token"
@@ -66,22 +67,17 @@ func PackagesOf(files []string) []Package {
 }
 
 func siblingsOf(one Package) []string {
-	entries, err := os.ReadDir(one.Folder)
-	if err != nil {
-		return nil
-	}
 	held := map[string]bool{}
 	for _, path := range one.Files {
 		held[filepath.Base(path)] = true
 	}
 
 	var siblings []string
-	for _, entry := range entries {
-		name := entry.Name()
-		if entry.IsDir() || held[name] || !strings.HasSuffix(name, ".go") || !builds(one.Folder, name) {
+	for _, path := range walk.Entries(one.Folder) {
+		name := filepath.Base(path)
+		if held[name] || !strings.HasSuffix(name, ".go") || !builds(one.Folder, name) {
 			continue
 		}
-		path := filepath.Join(one.Folder, name)
 		if packageClause(path) == one.Name {
 			siblings = append(siblings, path)
 		}

@@ -31,6 +31,11 @@ final class BadRequest extends InvalidArgumentException
         return new self("no such path {$path}");
     }
 
+    public static function forFolder(string $path): self
+    {
+        return new self("the PHP bridge reads only the files it is handed; {$path} is a folder");
+    }
+
     public static function forRename(string $pair): self
     {
         return new self("--rename takes FROM=TO, not {$pair}");

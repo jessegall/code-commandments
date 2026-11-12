@@ -19,13 +19,13 @@ import (
 	"github.com/jessegall/code-commandments/cli/dashboard"
 	"github.com/jessegall/code-commandments/cli/git"
 	"github.com/jessegall/code-commandments/cli/help"
+	"github.com/jessegall/code-commandments/cli/ledger"
 	"github.com/jessegall/code-commandments/cli/natural"
 	"github.com/jessegall/code-commandments/cli/reported"
 	"github.com/jessegall/code-commandments/cli/scan"
 	"github.com/jessegall/code-commandments/cli/scope"
 	"github.com/jessegall/code-commandments/cli/source"
 	"github.com/jessegall/code-commandments/cli/warm"
-	"github.com/jessegall/code-commandments/cli/ledger"
 	"github.com/jessegall/code-commandments/cli/workspace"
 	"github.com/jessegall/code-commandments/contract"
 	"github.com/jessegall/code-commandments/detectors"
@@ -997,7 +997,6 @@ func sayWhereTheTimeWent(reading, judging float64, rules int, work engine.Work, 
 	fmt.Fprintf(console.Err, "· read in %.2fs, judged in %.2fs by %s\n", reading, judging, natural.Counted(rules, "rule"))
 	cli.SayWork(console, work)
 }
-
 
 func countedTheWork(path string, did engine.Work) {
 	if workspace.At(path, "").IsJournalDriven() {

@@ -11,17 +11,12 @@ public static class GlobalUsings
 
     private static readonly string[] Web = ["System.Net.Http.Json", "Microsoft.AspNetCore.Builder", "Microsoft.AspNetCore.Hosting", "Microsoft.AspNetCore.Http", "Microsoft.AspNetCore.Routing", "Microsoft.Extensions.Configuration", "Microsoft.Extensions.DependencyInjection", "Microsoft.Extensions.Hosting", "Microsoft.Extensions.Logging"];
 
-    /// <summary>The global using directives the project <paramref name="csproj"/> compiles with, as source.</summary>
-    public static string Of(string csproj)
-    {
-        var name = Path.GetFileNameWithoutExtension(csproj);
-        var obj = ProjectFile.Read(csproj).Intermediate();
-        var generated = Directory.Exists(obj)
-            ? Directory.EnumerateFiles(obj, $"{name}.GlobalUsings.g.cs", SearchOption.AllDirectories).OrderByDescending(File.GetLastWriteTimeUtc).FirstOrDefault()
-            : null;
-
-        return generated is not null ? File.ReadAllText(generated) : Derived(csproj);
-    }
+    /// <summary>
+    /// The global using directives the project <paramref name="csproj"/> compiles with, as source: the file the SDK
+    /// <paramref name="generated"/>, which the Go side names, or else derived from the project file.
+    /// </summary>
+    public static string Of(string csproj, string? generated) =>
+        generated is not null ? File.ReadAllText(generated) : Derived(csproj);
 
     private static string Derived(string csproj)
     {

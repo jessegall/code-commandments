@@ -1,11 +1,11 @@
 package gotree
 
 import (
+	"github.com/jessegall/code-commandments/walk"
 	"go/ast"
 	"go/parser"
 	"go/token"
 	"go/types"
-	"os"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -76,17 +76,14 @@ func (c *checker) packageAt(path string) (Package, bool) {
 			continue
 		}
 		folder := filepath.Join(root, filepath.FromSlash(strings.TrimPrefix(strings.TrimPrefix(path, module), "/")))
-		entries, err := os.ReadDir(folder)
-		if err != nil {
-			continue
-		}
 		var files []string
-		for _, entry := range entries {
-			if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".go") || strings.HasSuffix(entry.Name(), "_test.go") {
+		for _, path := range walk.Entries(folder) {
+			name := filepath.Base(path)
+			if !strings.HasSuffix(name, ".go") || strings.HasSuffix(name, "_test.go") {
 				continue
 			}
-			if builds(folder, entry.Name()) {
-				files = append(files, filepath.Join(folder, entry.Name()))
+			if builds(folder, name) {
+				files = append(files, path)
 			}
 		}
 		if len(files) == 0 {

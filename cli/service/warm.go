@@ -19,7 +19,7 @@ func warm(held Bridge, project string, bridged bridge.Asker, console cli.Console
 	}
 
 	for group := range slices.Chunk(files, warmedTogether(held, len(files))) {
-		if _, err := bridged.AskTallied(held.Request([]string{project}, group), func() {}); err != nil {
+		if _, err := bridged.AskTallied(held.Request(group), func() {}); err != nil {
 			console.Warn("The " + held.Label + " bridge could not be read into warm, so the first run pays for it: " + err.Error())
 
 			return
@@ -30,7 +30,7 @@ func warm(held Bridge, project string, bridged bridge.Asker, console cli.Console
 }
 
 func warmedTogether(held Bridge, files int) int {
-	if held.WholeRoots {
+	if held.Projects != nil {
 		return files
 	}
 

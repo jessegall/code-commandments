@@ -22,7 +22,7 @@ type Bridge struct {
 	Word       string
 	Languages  []source.Language
 	Label      string
-	WholeRoots bool
+	Projects   *bridge.Projects
 	InOwnOrder bool
 	Reach      Reach
 	Notice     func() string
@@ -336,7 +336,7 @@ var Frontend = Bridge{Kind: "frontend", Word: "frontend", Languages: []source.La
 }
 
 var CSharp = Bridge{Kind: "roslyn", Word: "csharp", Languages: []source.Language{source.CSharp}, Label: "C#",
-	WholeRoots: true,
+	Projects:   bridge.CSharpProjects,
 	InOwnOrder: true,
 	Reach:      Process{Command: func(roots []string) ([]string, error) { return bridge.Roslyn(roots...) }, Named: bridge.RoslynFailure},
 	Notice:     bridge.RoslynNotice,
@@ -407,7 +407,7 @@ func (b Bridge) ask(roots, files []string, tally func()) (*contract.Stream, erro
 	}
 	defer asker.Close()
 
-	return asker.AskTallied(b.Request(roots, files), tally)
+	return asker.AskTallied(b.Request(files), tally)
 }
 
 func joined(read, rest *contract.Stream) *contract.Stream {
@@ -424,10 +424,6 @@ func joined(read, rest *contract.Stream) *contract.Stream {
 	return read
 }
 
-func (b Bridge) Request(roots, files []string) bridge.Request {
-	if b.WholeRoots {
-		return bridge.Request{Paths: roots, Write: files}
-	}
-
-	return bridge.Request{Paths: files, Write: files}
+func (b Bridge) Request(files []string) bridge.Request {
+	return bridge.AskedOf(b.Projects, files, files).Request()
 }

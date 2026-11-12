@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/jessegall/code-commandments/cli/source"
+	"github.com/jessegall/code-commandments/walk"
 )
 
 var (
@@ -231,52 +232,22 @@ func BuiltFolders(root string) []string {
 func kindsUnder(root string) map[string]bool {
 	kinds := map[string]bool{}
 
-	var look func(dir string)
-	look = func(dir string) {
-		entries, err := os.ReadDir(dir)
-		if err != nil {
-			return
-		}
-
+	walk.Folders(root, walk.Under(root, built), func(dir string) {
 		for _, kind := range built {
 			if isDir(dir + "/" + kind) {
 				kinds[kind] = true
 			}
 		}
-
-		for _, entry := range entries {
-			if !entry.IsDir() || strings.HasPrefix(entry.Name(), ".") {
-				continue
-			}
-			if slices.Contains(built, entry.Name()) || source.IsWorktree(dir+"/"+entry.Name()) {
-				continue
-			}
-
-			look(dir + "/" + entry.Name())
-		}
-	}
-
-	look(root)
+	})
 
 	return kinds
 }
 
 func WritesLanguage(root string, language source.Language) bool {
 	for _, dir := range DetectRoots(root) {
-		found := false
-
-		filepath.WalkDir(root+"/"+dir, func(path string, entry os.DirEntry, err error) error {
-			switch {
-			case err != nil || found:
-				return filepath.SkipDir
-			case entry.IsDir() && slices.Contains(built, entry.Name()):
-				return filepath.SkipDir
-			case !entry.IsDir() && strings.TrimPrefix(filepath.Ext(path), ".") == string(language):
-				found = true
-			}
-
-			return nil
-		})
+		found := len(walk.Files(root+"/"+dir, walk.Excluded{}, func(path string) bool {
+			return strings.TrimPrefix(filepath.Ext(path), ".") == string(language)
+		})) > 0
 
 		if found {
 			return true

@@ -36,7 +36,7 @@ func shop(t *testing.T) *engine.Codebase {
 		if fixture.err != nil {
 			return
 		}
-		stream, err := bridge.Once(command, fixture.root)
+		stream, err := bridge.Once(command, bridge.CSharpProjects.Under(fixture.root).Arguments()...)
 		if err != nil {
 			fixture.err = err
 			return

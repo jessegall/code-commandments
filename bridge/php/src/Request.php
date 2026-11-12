@@ -93,10 +93,12 @@ final readonly class Request
         if ($this->judged === []) {
             return true;
         }
-        for ($held = $file; ! isset($this->judged[$held]); $held = dirname($held)) {
+        $held = $file;
+        while (! isset($this->judged[$held])) {
             if (dirname($held) === $held) {
                 return false;
             }
+            $held = dirname($held);
         }
 
         return true;
@@ -118,12 +120,12 @@ final readonly class Request
 
     private static function absolute(string $path): string
     {
-        $real = realpath($path);
-        if ($real === false) {
+        $folder = realpath(dirname($path));
+        if ($folder === false || (! file_exists($path) && ! is_link($path))) {
             throw BadRequest::forMissingPath($path);
         }
 
-        return $real;
+        return $folder . '/' . basename($path);
     }
 
     /**

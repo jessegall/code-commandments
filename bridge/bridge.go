@@ -25,6 +25,7 @@ import (
 type Request struct {
 	Paths    []string          `json:"paths"`
 	Write    []string          `json:"write,omitempty"`
+	Support  []string          `json:"support,omitempty"`
 	Python   string            `json:"python,omitempty"`
 	Contents map[string]string `json:"contents,omitempty"`
 }

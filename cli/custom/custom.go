@@ -3,6 +3,7 @@ package custom
 
 import (
 	"fmt"
+	"github.com/jessegall/code-commandments/walk"
 	"os"
 	"path/filepath"
 	"slices"
@@ -121,33 +122,28 @@ func Load(root string) Project {
 }
 
 func jsonUnder(dir string) (rules, lists []string) {
-	filepath.WalkDir(dir, func(path string, entry os.DirEntry, err error) error {
-		if err != nil {
-			return nil
-		}
+	for _, path := range walk.Files(dir, walk.Excluded{}, func(path string) bool {
+		inside, _ := filepath.Rel(dir, path)
 
-		if entry.IsDir() {
-			if path != dir && filepath.Base(path) == SkillsFolder {
-				return filepath.SkipDir
-			}
-
-			return nil
-		}
-
-		switch {
-		case filepath.Base(path) == ListsFile:
+		return strings.HasSuffix(path, ".json") && !slices.Contains(strings.Split(filepath.ToSlash(inside), "/"), SkillsFolder)
+	}) {
+		if filepath.Base(path) == ListsFile {
 			lists = append(lists, path)
-		case strings.HasSuffix(path, ".json"):
+		} else {
 			rules = append(rules, path)
 		}
-
-		return nil
-	})
+	}
 
 	sort.Strings(rules)
 	sort.Strings(lists)
 
 	return rules, lists
+}
+
+func RuleFiles(dir string) []string {
+	rules, _ := jsonUnder(dir)
+
+	return rules
 }
 
 func (p Project) skill(slug string) (skill.Skill, bool) {

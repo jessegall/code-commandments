@@ -10,7 +10,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jessegall/code-commandments/engine"
 	"github.com/jessegall/code-commandments/cli/config"
 	"github.com/jessegall/code-commandments/cli/git"
 	"github.com/jessegall/code-commandments/cli/ledger"
@@ -18,6 +17,7 @@ import (
 	"github.com/jessegall/code-commandments/cli/source"
 	"github.com/jessegall/code-commandments/cli/warm"
 	"github.com/jessegall/code-commandments/detectors"
+	"github.com/jessegall/code-commandments/engine"
 )
 
 func TestAnEditIsJudgedOnItsOwnEvenWhereItsBranchHasABase(t *testing.T) {

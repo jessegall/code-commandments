@@ -23,11 +23,10 @@ public sealed class Workspace
     /// <summary>Every assembly a streamed run has loaded, by its path, shared by every later run of this workspace.</summary>
     private readonly Dictionary<string, MetadataReference> loaded = new(StringComparer.Ordinal);
 
-    public Project Read(IReadOnlyList<string> paths)
+    public Project Read(IReadOnlyList<string> paths, IReadOnlyList<string> support)
     {
-        var roots = paths.Select(Path.GetFullPath).ToList();
-        var asked = Sources.Under(roots);
-        var solution = Solution.Around(roots);
+        var asked = Sources.Under(paths);
+        var solution = Solution.Of(support);
         var owned = solution.Files().Concat(asked).Distinct().GroupBy(file => solution.Owner(file) ?? "").ToDictionary(group => group.Key, group => group.Select(Tree).ToList());
         var compilations = new Dictionary<string, CSharpCompilation>(StringComparer.Ordinal);
 
@@ -65,11 +64,10 @@ public sealed class Workspace
     /// let go once no project still to be written reaches it. An assembly is loaded once for the workspace and shared
     /// by every project and every run that reaches it. Files outside every project come last, compiled alone.
     /// </summary>
-    public void Stream(IReadOnlyList<string> paths, Action<Asked> write)
+    public void Stream(IReadOnlyList<string> paths, IReadOnlyList<string> support, Action<Asked> write)
     {
-        var roots = paths.Select(Path.GetFullPath).ToList();
-        var asked = Sources.Under(roots).ToHashSet(StringComparer.Ordinal);
-        var solution = Solution.Around(roots);
+        var asked = Sources.Under(paths).ToHashSet(StringComparer.Ordinal);
+        var solution = Solution.Of(support);
         var owned = new Dictionary<string, List<string>>(StringComparer.Ordinal);
         var loose = new List<string>();
 
@@ -101,7 +99,7 @@ public sealed class Workspace
         foreach (var csproj in order)
         {
             var files = owned.GetValueOrDefault(csproj) ?? [];
-            var usings = GlobalUsings.Of(csproj);
+            var usings = GlobalUsings.Of(csproj, solution.GeneratedUsingsOf(csproj));
             var own = References.Of(csproj);
             var reached = reach[csproj].Where(compilations.ContainsKey).ToList();
             keys[csproj] = KeyOf(csproj, files, usings, own, reach[csproj].Select(other => keys.GetValueOrDefault(other) ?? ""));
@@ -252,7 +250,7 @@ public sealed class Workspace
         var projects = reached.Select(other => Compile(other, solution, owned, compilations, compiling).ToMetadataReference());
         var assemblies = References.Load(ReachOf(csproj), reached.Select(ReachOf));
         var sources = owned.GetValueOrDefault(csproj) ?? [];
-        var usings = CSharpSyntaxTree.ParseText(GlobalUsings.Of(csproj), Options);
+        var usings = CSharpSyntaxTree.ParseText(GlobalUsings.Of(csproj, solution.GeneratedUsingsOf(csproj)), Options);
 
         compiling.Remove(csproj);
 

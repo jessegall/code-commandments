@@ -76,7 +76,7 @@ func askCSharp(roots, files []string, complete func(*engine.Codebase) error) (*U
 	}
 	units := &Units{folder: folder}
 	cutter := &cutter{units: units, owners: map[string]string{}, complete: complete}
-	if err := asker.AskEach(CSharp.Request(roots, files), cutter.take); err != nil {
+	if err := asker.AskEach(CSharp.Request(files), cutter.take); err != nil {
 		units.Close()
 
 		return nil, err

@@ -41,7 +41,7 @@ func TestARunAsksTheBridgeTheSessionKeepsUp(t *testing.T) {
 		t.Fatal("the service kept up for the project does not answer")
 	}
 	defer service.Close()
-	stream, err := service.Ask(bridge.Request{Paths: []string{root}})
+	stream, err := service.Ask(bridge.Request{Paths: bridge.Listed(root)})
 	if err != nil {
 		t.Fatal(err)
 	}

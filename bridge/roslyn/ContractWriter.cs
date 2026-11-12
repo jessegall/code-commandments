@@ -16,12 +16,12 @@ namespace CodeCommandments.Bridge;
 /// It streams: one project at a time, each node written straight through as it is read, nothing of a project kept
 /// once its files are written but the plain text of the outside declarations it reached.
 /// </summary>
-public sealed class ContractWriter(IReadOnlyList<string> roots, IReadOnlySet<string>? written = null, TreeCache? cache = null)
+public sealed class ContractWriter(IReadOnlyList<string> roots, IReadOnlySet<string>? written = null, TreeCache? cache = null, IReadOnlyList<string>? support = null)
 {
     public const int Version = 3;
 
     /// <summary>The bridge's own version, which the header names beside the contract's.</summary>
-    private const string BridgeVersion = "8";
+    private const string BridgeVersion = "9";
 
     /// <summary>How a line is written: deep enough for a long chain of expressions, which nests past 64.</summary>
     private static readonly JsonWriterOptions Json = new() { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, MaxDepth = 1000 };
@@ -61,7 +61,7 @@ public sealed class ContractWriter(IReadOnlyList<string> roots, IReadOnlySet<str
             json.WriteEndObject();
         });
 
-        workspace.Stream(roots, asked => WriteProject(output, asked));
+        workspace.Stream(roots, support ?? [], asked => WriteProject(output, asked));
 
         Line(output, json =>
         {

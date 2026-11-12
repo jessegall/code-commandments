@@ -32,7 +32,7 @@ func TestAPHPFileIsJudgedWhenItOrAFolderAboveItIsWrittenAndContextOtherwise(t *t
 	}
 	defer server.Close()
 
-	stream, err := server.Ask(bridge.Request{Paths: []string{root}, Write: []string{filepath.Join(root, "a.php"), filepath.Join(root, "sub")}})
+	stream, err := server.Ask(bridge.Request{Paths: bridge.Listed(root), Write: []string{filepath.Join(root, "a.php"), filepath.Join(root, "sub")}})
 	if err != nil {
 		t.Fatal(err)
 	}

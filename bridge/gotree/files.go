@@ -1,47 +1,22 @@
 package gotree
 
 import (
-	"io/fs"
+	"github.com/jessegall/code-commandments/walk"
 	"os"
 	"path/filepath"
-	"sort"
+	"slices"
 	"strings"
 )
-
-var skippedFolders = map[string]bool{
-	"vendor": true, "testdata": true, "node_modules": true, "site-packages": true, "__pycache__": true,
-}
 
 func GoFiles(paths []string) []string {
 	var found []string
 	seen := map[string]bool{}
-	keep := func(path string) {
-		real := resolve(path)
-		if seen[real] || !strings.HasSuffix(real, ".go") {
-			return
-		}
-		opened, err := os.Open(real)
-		if err != nil {
-			return
-		}
-		opened.Close()
-		seen[real] = true
-		found = append(found, real)
-	}
 
 	for _, root := range paths {
-		info, err := os.Stat(root)
-		if err != nil {
-			continue
-		}
-		if !info.IsDir() {
-			keep(root)
-
-			continue
-		}
-		for _, folder := range foldersUnder(root) {
-			for _, file := range filesIn(folder) {
-				keep(file)
+		for _, file := range walk.Files(root, walk.Excluded{}, isGoSourceUnder(root)) {
+			if real := resolve(file); !seen[real] {
+				seen[real] = true
+				found = append(found, real)
 			}
 		}
 	}
@@ -49,42 +24,16 @@ func GoFiles(paths []string) []string {
 	return found
 }
 
-func foldersUnder(root string) []string {
-	var folders []string
-	filepath.WalkDir(root, func(path string, entry fs.DirEntry, err error) error {
-		if err != nil || !entry.IsDir() {
-			return nil
-		}
-		if path != root && !walks(entry.Name()) {
-			return fs.SkipDir
-		}
-		folders = append(folders, path)
+func isGoSourceUnder(root string) func(path string) bool {
+	return func(path string) bool {
+		inside, _ := filepath.Rel(root, path)
 
-		return nil
-	})
-	sort.Strings(folders)
-
-	return folders
+		return strings.HasSuffix(path, ".go") && !slices.ContainsFunc(strings.Split(filepath.ToSlash(inside), "/"), isIgnoredByGo)
+	}
 }
 
-func filesIn(folder string) []string {
-	entries, err := os.ReadDir(folder)
-	if err != nil {
-		return nil
-	}
-	var files []string
-	for _, entry := range entries {
-		if entry.IsDir() {
-			continue
-		}
-		files = append(files, filepath.Join(folder, entry.Name()))
-	}
-
-	return files
-}
-
-func walks(name string) bool {
-	return !strings.HasPrefix(name, ".") && !strings.HasPrefix(name, "_") && !skippedFolders[name]
+func isIgnoredByGo(segment string) bool {
+	return strings.HasPrefix(segment, "_")
 }
 
 func read(path string) ([]byte, error) {

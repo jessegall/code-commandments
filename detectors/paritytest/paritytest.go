@@ -128,7 +128,7 @@ func (e explanations) unused() []string {
 
 func goFindings(t *testing.T, rules []catalog.Engine, server *bridge.Server, root, part string) []string {
 	t.Helper()
-	stream, err := server.Ask(bridge.Request{Paths: []string{part}})
+	stream, err := server.Ask(bridge.Request{Paths: bridge.Listed(part)})
 	if err != nil {
 		t.Fatal(err)
 	}

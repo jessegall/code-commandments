@@ -51,15 +51,15 @@ func TestAFileTheProjectExcludesIsNotJudgedInACheckoutOrAWorktree(t *testing.T) 
 	} {
 		for file, judged := range map[string]bool{
 			"src/core/modules/viewer/web/dist/assets/index-7UEM03nZ.js": false,
-			"src/dist/index.js":                     false,
-			"src/core/vendor/lib/a.php":             false,
-			"src/viewer/tests/sample-window/a.ts":   false,
-			"tools/hook/testdata/a.go":              false,
-			"tests/test_order.py":                   false,
-			"src/core/order.py":                     true,
-			"src/distant/order.py":                  true,
-			"src/viewer/tests/other-window/a.ts":    true,
-			"tools/hook/main.go":                    true,
+			"src/dist/index.js":                   false,
+			"src/core/vendor/lib/a.php":           false,
+			"src/viewer/tests/sample-window/a.ts": false,
+			"tools/hook/testdata/a.go":            false,
+			"tests/test_order.py":                 false,
+			"src/core/order.py":                   true,
+			"src/distant/order.py":                true,
+			"src/viewer/tests/other-window/a.ts":  true,
+			"tools/hook/main.go":                  true,
 		} {
 			if got := project.IsJudged(root, root+"/"+file); got != judged {
 				t.Errorf("under %s, %s is judged=%v, want %v", root, file, got, judged)

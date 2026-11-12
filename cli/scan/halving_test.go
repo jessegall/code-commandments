@@ -101,13 +101,24 @@ func TestTheCuttingHasAFloor(t *testing.T) {
 
 func TestWhatIsHalvedIsWhatTheBridgeWritesAndNotWhatItCompiles(t *testing.T) {
 	held, _ := deadly(t, "Deadly.cs")
-	held.WholeRoots = true
+	held.Projects = bridge.CSharpProjects
+
+	root, err := filepath.EvalSymlinks(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	project := filepath.Join(root, "App.csproj")
+	files := []string{filepath.Join(root, "A.cs"), filepath.Join(root, "Deadly.cs")}
+	for _, path := range append([]string{project}, files...) {
+		if err := os.WriteFile(path, []byte("<Project />\n"), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
 
 	var compiled [][]string
 	route := read
 	read = func(b Bridge, roots []string, files []string, _ func()) (*contract.Stream, error) {
-		request := b.Request(roots, files)
-		compiled = append(compiled, request.Paths)
+		compiled = append(compiled, b.Request(files).Support)
 		if slices.ContainsFunc(files, func(file string) bool { return strings.HasSuffix(file, "Deadly.cs") }) {
 			return nil, errors.New("signal: killed")
 		}
@@ -116,12 +127,11 @@ func TestWhatIsHalvedIsWhatTheBridgeWritesAndNotWhatItCompiles(t *testing.T) {
 	}
 	t.Cleanup(func() { read = route })
 
-	roots := []string{"src"}
-	held.readHalving(roots, []string{"src/A.cs", "src/Deadly.cs"}, func() {}, halvingsAtMost)
+	held.readHalving([]string{root}, files, func() {}, halvingsAtMost)
 
-	for _, paths := range compiled {
-		if !slices.Equal(paths, roots) {
-			t.Errorf("a half was compiled over %v rather than over the whole project %v", paths, roots)
+	for _, support := range compiled {
+		if !slices.Contains(support, project) || !slices.Contains(support, files[0]) || !slices.Contains(support, files[1]) {
+			t.Errorf("a half was compiled beside %v rather than beside the whole project", support)
 		}
 	}
 }

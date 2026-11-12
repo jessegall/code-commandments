@@ -19,7 +19,7 @@ func (Bridge) Stream(paths ...string) (*contract.Stream, error) {
 		return nil, err
 	}
 
-	return bridge.Once(command, paths...)
+	return bridge.Once(command, bridge.CSharpProjects.Under(paths...).Arguments()...)
 }
 
 func (b Bridge) Scan(paths ...string) (*engine.Codebase, error) {

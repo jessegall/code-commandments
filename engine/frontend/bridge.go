@@ -64,7 +64,7 @@ func (b Bridge) StreamTallied(tally func(), arguments ...string) (*contract.Stre
 		return nil, err
 	}
 
-	return bridge.OnceTallied(command, tally, arguments...)
+	return bridge.OnceTallied(command, tally, bridge.ListedArguments(arguments...)...)
 }
 
 func (b Bridge) Scan(paths ...string) (*engine.Codebase, error) {

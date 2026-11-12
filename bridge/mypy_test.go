@@ -99,8 +99,7 @@ func TestABuildReplacesThePythonAFailedBuildLeftBehind(t *testing.T) {
 func mypyCacheFolderOf(t *testing.T, python, data, path string) string {
 	t.Helper()
 
-	read := exec.Command(python, "-c", "import sys; sys.path.insert(0, 'mypy'); import session; print(session.cache_folder([sys.argv[1]]))", path)
-	read.Env = append(os.Environ(), "JOURNAL_PLUGIN_DATA="+data)
+	read := exec.Command(python, "-c", "import sys; sys.path.insert(0, 'mypy'); import session; print(session.cache_folder([sys.argv[1]], sys.argv[2]))", path, data)
 
 	out, err := read.CombinedOutput()
 	if err != nil {
@@ -155,7 +154,8 @@ from mypy.nodes import MypyFile
 said, sys.stdout = sys.stdout, open(os.devnull, 'w')
 session, held = tree.Session(), []
 for _ in range(4):
-    tree.answered(session, '{"paths": ["%s"], "write": ["%s"]}' % (sys.argv[1], sys.argv[1]))
+    shop = os.path.join(sys.argv[1], 'shop.py')
+    tree.answered(session, '{"paths": ["%s"], "write": ["%s"]}' % (shop, shop))
     held.append(sum(1 for each in gc.get_objects() if isinstance(each, MypyFile)))
 print(' '.join(str(count) for count in held), file=said)
 `

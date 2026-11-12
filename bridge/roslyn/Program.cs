@@ -66,6 +66,7 @@ static int Run(string[] args, Workspace workspace)
     }
 
     var roots = args.Where(arg => !arg.StartsWith("--")).Select(Root.Of).ToList();
+    var support = args.Where(arg => arg.StartsWith("--support=", StringComparison.Ordinal)).Select(arg => arg["--support=".Length..]).ToList();
 
     if (roots.Count == 0)
     {
@@ -76,7 +77,7 @@ static int Run(string[] args, Workspace workspace)
 
     if (args.Contains("--diagnose"))
     {
-        foreach (var group in workspace.Read(roots).Diagnostics()
+        foreach (var group in workspace.Read(roots, support).Diagnostics()
                      .Where(diagnostic => diagnostic.Severity == Microsoft.CodeAnalysis.DiagnosticSeverity.Error)
                      .GroupBy(diagnostic => diagnostic.Id + " " + diagnostic.GetMessage())
                      .OrderByDescending(group => group.Count())
@@ -88,7 +89,7 @@ static int Run(string[] args, Workspace workspace)
 
     using (var tree = Console.OpenStandardOutput())
     {
-        new ContractWriter(roots, null, Checkout.Cache(cached, roots)).Write(tree, workspace);
+        new ContractWriter(roots, null, Checkout.Cache(cached, roots), support).Write(tree, workspace);
     }
 
     return 0;
@@ -100,7 +101,7 @@ static void Serve(TextReader input, Stream output, Workspace workspace, string? 
     while (input.ReadLine() is { } line)
     {
         var request = Request.Of(line);
-        new ContractWriter(request.Paths, request.Written, Checkout.Cache(cached, request.Paths)).Write(output, workspace);
+        new ContractWriter(request.Paths, request.Written, Checkout.Cache(cached, request.Paths), request.Support).Write(output, workspace);
         output.Flush();
     }
 }
@@ -151,8 +152,8 @@ internal static class Checkout
         folder is null || Path.Exists(Path.Combine(folder.FullName, ".git")) ? folder : RepositoryAround(folder.Parent);
 }
 
-// A request line: the paths to compile, and the files among them to write.
-internal sealed record Request(List<string> Paths, HashSet<string> Written)
+// A request line: the files to compile, the files among them to write, and the files read beside them.
+internal sealed record Request(List<string> Paths, HashSet<string> Written, List<string> Support)
 {
     public static Request Of(string line)
     {
@@ -162,18 +163,28 @@ internal sealed record Request(List<string> Paths, HashSet<string> Written)
             ? write.EnumerateArray().Select(path => Path.GetFullPath(PathOf(path))).ToHashSet()
             : [];
 
-        return new Request(paths, written);
+        var support = request.TryGetProperty("support", out var beside)
+            ? beside.EnumerateArray().Select(PathOf).ToList()
+            : [];
+
+        return new Request(paths, written, support);
     }
 
     private static string PathOf(JsonElement path) => path.GetString() ?? throw MalformedRequest.ForPath(path);
 }
 
-// A path a run reads from: a file or a folder that is there, so nothing is written for a run that cannot be read.
+// A file a run reads, there to be read, so nothing is written for a run that cannot be read. The bridge walks no
+// folder: the Go side lists every file through its one funnel, so a folder named here is refused.
 internal static class Root
 {
     public static string Of(string path)
     {
-        if (!File.Exists(path) && !Directory.Exists(path))
+        if (Directory.Exists(path))
+        {
+            throw new ArgumentException($"the C# bridge reads only the files it is handed; {path} is a folder");
+        }
+
+        if (!File.Exists(path))
         {
             throw MissingRoot.At(path);
         }
