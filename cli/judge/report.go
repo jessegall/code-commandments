@@ -295,12 +295,18 @@ func (r Report) saidOf(finding engine.Finding) string {
 	}
 
 	if subject := subjectOf(finding.Scope); subject != "" {
-		said += ": " + subject + ", " + r.sinSaid(finding)
-
-		return said
+		return said + ": " + subject + ", " + r.sinSaid(finding) + r.ruleTagOf(finding)
 	}
 
-	return said + ": " + r.sinSaid(finding)
+	return said + ": " + r.sinSaid(finding) + r.ruleTagOf(finding)
+}
+
+func (r Report) ruleTagOf(finding engine.Finding) string {
+	if r.says[finding.Sin] == "" {
+		return ""
+	}
+
+	return " [" + finding.Sin + "]"
 }
 
 func (r Report) sinSaid(finding engine.Finding) string {

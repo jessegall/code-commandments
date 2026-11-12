@@ -52,12 +52,12 @@ func Mypy() ([]string, error) {
 }
 
 func mypyCaches() (string, error) {
-	cache, err := bundle.CacheFolder()
+	kept, err := bundle.KeptFolder()
 	if err != nil {
 		return "", err
 	}
 
-	return filepath.Join(cache, "code-commandments", "mypy-cache"), nil
+	return filepath.Join(kept, "mypy-cache"), nil
 }
 
 func pythonFolders() []string {

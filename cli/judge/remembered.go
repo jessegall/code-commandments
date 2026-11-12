@@ -43,6 +43,10 @@ func RememberedFor(project string, warn func(...string)) (Remembered, bool) {
 		return Remembered{}, false
 	}
 
+	if space := workspace.At(project, ""); space.IsJournalDriven() {
+		cache.KeepIn(folder)
+	}
+
 	return Remembered{
 		Memories:  detectors.MemoryFile{Memories: detectors.EveryMemory(), Path: filepath.Join(folder, rememberedDetectorsFile), Build: Build(), Warn: warn},
 		Weighings: WeighingsFile{Path: filepath.Join(folder, rememberedWeighingsFile), Build: Build(), Warn: warn},

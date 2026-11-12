@@ -15,6 +15,8 @@ import (
 	"path/filepath"
 	"sort"
 	"time"
+
+	"github.com/jessegall/code-commandments/cache"
 )
 
 // Bundle is a folder of sources the binary carries.
@@ -153,12 +155,12 @@ func heal(folder string, files map[string][]byte) error {
 }
 
 func TreesFolder(language string) (string, error) {
-	cache, err := CacheFolder()
+	kept, err := KeptFolder()
 	if err != nil {
 		return "", err
 	}
 
-	folder := filepath.Join(cache, "code-commandments", "trees", language)
+	folder := filepath.Join(kept, "trees", language)
 	if err := writable(folder); err != nil {
 		return "", err
 	}
@@ -183,6 +185,19 @@ func writable(folder string) error {
 	}
 
 	return os.Remove(name)
+}
+
+func KeptFolder() (string, error) {
+	if folder := cache.KeptIn(); folder != "" {
+		return folder, nil
+	}
+
+	user, err := CacheFolder()
+	if err != nil {
+		return "", err
+	}
+
+	return filepath.Join(user, "code-commandments"), nil
 }
 
 func CacheFolder() (string, error) {

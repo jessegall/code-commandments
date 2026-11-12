@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/jessegall/code-commandments/bridge/bundle"
 	"github.com/jessegall/code-commandments/cache"
 	"github.com/jessegall/code-commandments/cli"
 )
@@ -118,6 +119,7 @@ func TestAJudgeWaitsWhileAnotherRunReadsTheProjectThenRuns(t *testing.T) {
 func TestAJournalProjectAndItsWorktreesRememberAtTheJournal(t *testing.T) {
 	t.Setenv("XDG_CACHE_HOME", t.TempDir())
 	t.Setenv(pluginData, "")
+	t.Setenv(cache.Folder, "")
 
 	project, err := filepath.EvalSymlinks(t.TempDir())
 	if err != nil {
@@ -196,5 +198,50 @@ func TestASecondJudgeWaitsItsTurnInsteadOfRunningBesideTheFirst(t *testing.T) {
 		}
 	case <-time.After(5 * time.Second):
 		t.Fatal("the second judge never got its turn after the first ended")
+	}
+}
+
+func TestAJournalProjectAndItsWorktreesKeepTheirParsedTreesAtTheJournal(t *testing.T) {
+	t.Setenv("XDG_CACHE_HOME", t.TempDir())
+	t.Setenv(pluginData, "")
+	t.Setenv(cache.Folder, "")
+
+	project, err := filepath.EvalSymlinks(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	manifest := filepath.Join(project, ".journal", "plugins", "code-commandments", ".journal-plugin", "plugin.json")
+	if err := os.MkdirAll(filepath.Dir(manifest), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(manifest, []byte("{}"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	worktree := filepath.Join(project, ".journal", "worktrees", "worker-1")
+	for _, line := range [][]string{
+		{"init", "-q", "-b", "main"},
+		{"-c", "user.email=t@t", "-c", "user.name=t", "commit", "-q", "--allow-empty", "-m", "the project"},
+		{"worktree", "add", "-q", "-b", "a-worker", worktree},
+	} {
+		if out, err := exec.Command("git", append([]string{"-C", project}, line...)...).CombinedOutput(); err != nil {
+			t.Fatalf("git %v: %s", line, out)
+		}
+	}
+
+	journal := filepath.Join(project, ".journal", "plugin-data", "code-commandments")
+
+	for _, root := range []string{project, worktree} {
+		RememberedFor(root, func(...string) {})
+
+		trees, err := bundle.TreesFolder("python")
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if !strings.HasPrefix(trees, journal+"/") {
+			t.Errorf("a judge in %s keeps its parsed trees at %s, not at the project's journal", root, trees)
+		}
 	}
 }

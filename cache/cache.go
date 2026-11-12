@@ -13,6 +13,8 @@ import (
 const (
 	Variable = "COMMANDMENTS_CACHE_HOURS"
 
+	Folder = "COMMANDMENTS_CACHE_FOLDER"
+
 	Default = 12 * time.Hour
 )
 
@@ -29,4 +31,14 @@ func KeepFor(hours float64) {
 	if hours > 0 {
 		os.Setenv(Variable, strconv.FormatFloat(hours, 'f', -1, 64))
 	}
+}
+
+func KeepIn(folder string) {
+	if folder != "" {
+		os.Setenv(Folder, folder)
+	}
+}
+
+func KeptIn() string {
+	return os.Getenv(Folder)
 }

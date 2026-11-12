@@ -7,7 +7,7 @@ import (
 	"github.com/jessegall/code-commandments/engine"
 )
 
-func TestAWatchedRunSaysWhatItFound(t *testing.T) {
+func TestAWatchedRunSaysWhatItFoundAndWhichRuleFoundIt(t *testing.T) {
 	findings := []engine.Finding{
 		{Detector: "SentenceMethodNameDetector", Skill: "python/method-mood", Sin: "sentence-method-name",
 			File: "/project/src/support/typed_lines.py", Location: "/project/src/support/typed_lines.py:52", Scope: "FunctionDef oldest_line_at"},
@@ -27,9 +27,9 @@ func TestAWatchedRunSaysWhatItFound(t *testing.T) {
 
 	lines := strings.Split(said, "\n")
 	want := []string{
-		"part.py, line 130: three parts over two objects",
-		"typed_lines.py, line 52: oldest_line_at, a sentence used as a method name",
-		"labels.py, line 10: label, a parameter typed as a dict read by string keys, which is a record… ×2",
+		"part.py, line 130: three parts over two objects [unnamed-condition]",
+		"typed_lines.py, line 52: oldest_line_at, a sentence used as a method name [sentence-method-name]",
+		"labels.py, line 10: label, a parameter typed as a dict read by string keys, which is a record… [dict-bag] ×2",
 		"",
 		"4 sins in 3 files",
 	}
