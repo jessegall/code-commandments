@@ -2,6 +2,9 @@ package gotree
 
 import (
 	"crypto/sha256"
+	"embed"
+	"io/fs"
+	"strings"
 	"encoding/hex"
 	"encoding/json"
 	"go/ast"
@@ -15,6 +18,29 @@ import (
 	"github.com/jessegall/code-commandments/bridge/bundle"
 	"github.com/jessegall/code-commandments/contract"
 )
+
+//go:embed *.go
+var ownSources embed.FS
+
+var bridgeIdentity = identityOf(ownSources)
+
+func identityOf(sources fs.FS) string {
+	names, _ := fs.Glob(sources, "*.go")
+	sort.Strings(names)
+
+	digest := sha256.New()
+	for _, name := range names {
+		if strings.HasSuffix(name, "_test.go") {
+			continue
+		}
+		text, _ := fs.ReadFile(sources, name)
+		digest.Write([]byte(name))
+		digest.Write([]byte{0})
+		digest.Write(text)
+	}
+
+	return hex.EncodeToString(digest.Sum(nil))
+}
 
 // keptLines are the Go file lines an earlier run wrote, kept on disk with their path left out under a key of the file's own text and the skeleton of every Go file the run reads: each file with its function bodies cut out, which is all one file's types can see of another. A change inside a body keeps every other file's line; a changed declaration anywhere starts them over. A line is touched when read, so pruning by age spares what is used.
 type keptLines struct {
@@ -59,7 +85,7 @@ func (k keptLines) keyOf(path, module string) string {
 	}
 
 	digest := sha256.New()
-	for _, part := range []string{Version(), module, k.skeleton} {
+	for _, part := range []string{Version(), bridgeIdentity, module, k.skeleton} {
 		digest.Write([]byte(part))
 		digest.Write([]byte{0})
 	}
