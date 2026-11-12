@@ -90,6 +90,7 @@ type Server struct {
 	stop       func()
 	quiet      time.Duration
 	heaviest   int
+	answered   int
 	closed     bool
 	failed     bool
 	mu         sync.Mutex
@@ -185,7 +186,8 @@ func (s *Server) pid() int {
 }
 
 func (s *Server) released() {
-	if s.process == nil || s.heaviest == 0 {
+	s.answered++
+	if s.process == nil || s.heaviest == 0 || s.answered%weighedEvery != 0 {
 		s.mu.Unlock()
 
 		return
@@ -351,6 +353,8 @@ func (e *BridgeFailed) Reason() string {
 const quietVariable = "COMMANDMENTS_BRIDGE_QUIET"
 
 const quiet = 5 * time.Minute
+
+const weighedEvery = 10
 
 const grace = 10 * time.Second
 

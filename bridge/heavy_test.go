@@ -56,15 +56,22 @@ func TestAServedBridgePastItsMemoryLimitIsReplacedBeforeItsNextRequest(t *testin
 		return 5
 	})
 
-	pids := pidAfterEachOf(t, server, 3)
+	pids := pidAfterEachOf(t, server, weighedEvery+2)
 
-	if len(pids) != 3 {
-		t.Fatalf("three requests were answered %d times", len(pids))
+	if len(pids) != weighedEvery+2 {
+		t.Fatalf("%d requests were answered %d times", weighedEvery+2, len(pids))
 	}
-	if pids[0] == grown {
-		t.Errorf("the bridge that grew past its limit, process %d, is still the one answering", grown)
+	for _, pid := range pids[:weighedEvery-1] {
+		if pid != grown {
+			t.Errorf("the bridge was weighed before its %dth request, which costs a process start each time: processes %v", weighedEvery, pids)
+
+			break
+		}
 	}
-	if pids[1] != pids[0] || pids[2] != pids[0] {
+	if pids[weighedEvery] == grown {
+		t.Errorf("the bridge that grew past its limit, process %d, is still the one answering after it was weighed", grown)
+	}
+	if pids[weighedEvery+1] != pids[weighedEvery] {
 		t.Errorf("a bridge under its limit was replaced: processes %v", pids)
 	}
 }

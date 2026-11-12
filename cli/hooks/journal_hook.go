@@ -237,8 +237,6 @@ func answerWith(given map[string]any) JournalAnswer {
 
 	spent := time.Since(judging)
 
-	MemoryNow()
-
 	merged := Merge(responses)
 	answer := answerOf(merged)
 	answer.JudgedMs = milliseconds(spent)
