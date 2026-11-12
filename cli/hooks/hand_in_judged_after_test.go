@@ -1,9 +1,14 @@
 package hooks
 
 import (
+	"io"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/jessegall/code-commandments/cli"
 )
 
 func afterHandInLine(root string, settings map[string]any) map[string]any {
@@ -24,17 +29,26 @@ func TestAHandInJudgedAfterGoesThroughUnheldAndTheWorkerIsToldItsSinAfterwards(t
 		t.Fatal("judging after a hand-in is chosen and the hand-in is not judged after")
 	}
 
-	serving.Store(true)
-	t.Cleanup(func() { serving.Store(false) })
+	journal := filepath.Join(t.TempDir(), "journal")
+	if err := os.WriteFile(journal, []byte("#!/bin/sh\nexit 0\n"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("JOURNAL_BIN", journal)
 
 	if held := DeliveryHeld(line); held != "" {
 		t.Fatalf("the hand-in was held though judging after it was chosen: %q", held)
 	}
 
-	var queued []map[string]any
-	for until := time.Now().Add(time.Minute); len(queued) == 0 && time.Now().Before(until); time.Sleep(50 * time.Millisecond) {
-		queued = append(queued, drained(t, data)...)
+	var kept []string
+	for until := time.Now().Add(10 * time.Second); len(kept) == 0 && time.Now().Before(until); time.Sleep(50 * time.Millisecond) {
+		kept, _ = filepath.Glob(filepath.Join(data, eventsFolder, "event-*.json"))
 	}
+	if len(kept) != 1 {
+		t.Fatalf("the hand-in was not handed to the journal's queue to judge: %v", kept)
+	}
+
+	judgeTheEventIn(kept[0], cli.Console{Out: io.Discard, Err: io.Discard})
+	queued := drained(t, data)
 
 	if len(queued) != 1 {
 		t.Fatalf("the worker was told %d times after its hand-in, want once: %v", len(queued), queued)

@@ -53,12 +53,6 @@ func DeliveryHeld(line map[string]any) string {
 }
 
 func judgedAfterTheHandIn(line map[string]any) {
-	if serving.Load() {
-		go mergeOf(line).judgesAfterwards()
-
-		return
-	}
-
 	if raw, err := json.Marshal(line); err == nil {
 		judgeDetached(raw)
 	}

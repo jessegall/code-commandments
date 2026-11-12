@@ -8,7 +8,6 @@ import (
 	"io"
 	"net"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"slices"
 	"strconv"
@@ -64,11 +63,6 @@ func (JournalHook) Run(in *cli.Input, console cli.Console) (int, error) {
 
 	given = Stamped(given)
 	console.Write(AnswerNow(given).JSON() + "\n")
-
-	if _, queued := QueueFromEnvironment(); queued {
-		stamped, _ := json.Marshal(given)
-		adviseDetached(stamped)
-	}
 
 	return 0, nil
 }
@@ -155,50 +149,6 @@ func abandoned(given map[string]any) string {
 	}
 
 	return ""
-}
-
-func adviseDetached(raw []byte) {
-	self, err := os.Executable()
-	if err != nil {
-		return
-	}
-
-	moment, err := momentFile(raw)
-	if err != nil {
-		return
-	}
-	defer moment.Close()
-
-	run := exec.Command(self, "journal-hook")
-	run.Stdin = moment
-	run.Env = append(os.Environ(), advising+"=1")
-	detach(run)
-
-	if run.Start() == nil {
-		run.Process.Release()
-	}
-}
-
-func momentFile(raw []byte) (*os.File, error) {
-	file, err := os.CreateTemp("", "commandments-moment-*")
-	if err != nil {
-		return nil, err
-	}
-	defer os.Remove(file.Name())
-
-	if _, err := file.Write(raw); err != nil {
-		file.Close()
-
-		return nil, err
-	}
-
-	if _, err := file.Seek(0, io.SeekStart); err != nil {
-		file.Close()
-
-		return nil, err
-	}
-
-	return file, nil
 }
 
 func answerWith(given map[string]any) JournalAnswer {
