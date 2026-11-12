@@ -1,21 +1,28 @@
 package judge
 
 import (
+	"cmp"
+	"maps"
 	"slices"
+	"strconv"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/jessegall/code-commandments/catalog"
 	"github.com/jessegall/code-commandments/detectors"
 	"github.com/jessegall/code-commandments/engine"
 )
 
-// weighing is what one aggregating rule found over a whole set of C# files, and the folder those findings' paths start with.
+// weighing is what one aggregating rule found over a whole set of C# files, the folder those findings' paths start with, and when it was last answered from.
 type weighing struct {
 	Print    uint64
 	Folder   string
 	Findings []engine.Finding
+	Used     int64
 }
+
+const weighingsKeptPerRule = 8
 
 var (
 	weighings        = map[string]weighing{}
@@ -48,11 +55,18 @@ func (s *csharpSet) recall(rule detectors.Detector) ([]engine.Finding, bool) {
 		return nil, false
 	}
 
+	key := weighingKey(rule, engine.PrintOfAll(s.prints))
+
 	weighingsHeld.Lock()
-	kept, known := weighings[catalog.Name(rule)]
+	kept, known := weighings[key]
+	if known {
+		kept.Used = time.Now().UnixNano()
+		weighings[key] = kept
+		weighingsChanged = true
+	}
 	weighingsHeld.Unlock()
 
-	if !known || kept.Print != engine.PrintOfAll(s.prints) {
+	if !known {
 		return nil, false
 	}
 
@@ -76,8 +90,33 @@ func (s *csharpSet) keep(rule detectors.Detector, findings []engine.Finding) {
 	weighingsHeld.Lock()
 	defer weighingsHeld.Unlock()
 
-	weighings[catalog.Name(rule)] = weighing{engine.PrintOfAll(s.prints), s.folder, slices.Clone(findings)}
+	print := engine.PrintOfAll(s.prints)
+	weighings[weighingKey(rule, print)] = weighing{print, s.folder, slices.Clone(findings), time.Now().UnixNano()}
 	weighingsChanged = true
+	newestPerRule(weighings)
+}
+
+func weighingKey(rule detectors.Detector, print uint64) string {
+	return catalog.Name(rule) + "\x00" + strconv.FormatUint(print, 16)
+}
+
+func newestPerRule(held map[string]weighing) {
+	byRule := map[string][]string{}
+	for key := range held {
+		rule, _, _ := strings.Cut(key, "\x00")
+		byRule[rule] = append(byRule[rule], key)
+	}
+
+	for _, keys := range byRule {
+		slices.SortFunc(keys, func(one, other string) int { return cmp.Compare(held[other].Used, held[one].Used) })
+		for _, dropped := range keys[min(len(keys), weighingsKeptPerRule):] {
+			delete(held, dropped)
+		}
+	}
+}
+
+func heldWeighings() map[string]weighing {
+	return maps.Clone(weighings)
 }
 
 func (w weighing) movedTo(folder string) ([]engine.Finding, bool) {

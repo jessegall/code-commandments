@@ -25,7 +25,7 @@ func weighingsWith(t *testing.T, kept map[string]weighing, changed bool) {
 }
 
 func savedAfterOneJudging() map[string]weighing {
-	return map[string]weighing{"duplicate-csharp-method": {
+	return map[string]weighing{"duplicate-csharp-method\x00ffffffffffffffff": {
 		Print:  18446744073709551615,
 		Folder: "/one",
 		Findings: []engine.Finding{
@@ -87,5 +87,40 @@ func TestAFileThatCannotBeReadIsToldAndStartsEmpty(t *testing.T) {
 
 	if len(told) != 1 || len(weighings) != 0 {
 		t.Fatalf("an unreadable file was told as %v and left %+v", told, weighings)
+	}
+}
+
+func TestTwoCheckoutsWithDifferentCSharpKeepBothWeighings(t *testing.T) {
+	file := WeighingsFile{Path: filepath.Join(t.TempDir(), "csharp-weighings.json"), Build: "v1", Warn: func(...string) {}}
+	one := weighing{Print: 1, Folder: "/one", Used: 1}
+	other := weighing{Print: 2, Folder: "/other", Used: 2}
+
+	weighingsWith(t, map[string]weighing{"duplicate-csharp-method\x001": one}, true)
+	file.Save()
+
+	weighingsWith(t, map[string]weighing{"duplicate-csharp-method\x002": other}, true)
+	file.Save()
+
+	weighingsWith(t, map[string]weighing{}, false)
+	file.Load()
+
+	if want := map[string]weighing{"duplicate-csharp-method\x001": one, "duplicate-csharp-method\x002": other}; !reflect.DeepEqual(weighings, want) {
+		t.Fatalf("the file holds %+v, where both checkouts' weighings %+v belong", weighings, want)
+	}
+}
+
+func TestOnlyTheNewestWeighingsOfARuleAreKept(t *testing.T) {
+	held := map[string]weighing{}
+	for print := range weighingsKeptPerRule + 2 {
+		held["duplicate-csharp-method\x00"+string(rune('a'+print))] = weighing{Used: int64(print)}
+	}
+
+	newestPerRule(held)
+
+	if len(held) != weighingsKeptPerRule {
+		t.Fatalf("a rule keeps %d weighings, want %d", len(held), weighingsKeptPerRule)
+	}
+	if _, oldest := held["duplicate-csharp-method\x00a"]; oldest {
+		t.Error("the weighing used longest ago was kept")
 	}
 }
