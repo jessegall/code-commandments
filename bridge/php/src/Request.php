@@ -11,6 +11,13 @@ namespace CodeCommandments\PhpBridge;
 final readonly class Request
 {
     /**
+     * Each path of $write, as a set to look a file and its folders up in.
+     *
+     * @var array<string, true>
+     */
+    private array $judged;
+
+    /**
      * @param  list<string>  $paths
      * @param  list<string>  $write
      * @param  array<string, string>  $renames
@@ -25,7 +32,9 @@ final readonly class Request
         public bool $serve,
         public array $contents = [],
         public ?string $cache = null,
-    ) {}
+    ) {
+        $this->judged = array_fill_keys(array_map(static fn (string $path): string => rtrim($path, '/'), $write), true);
+    }
 
     /**
      * @param  list<string>  $arguments
@@ -81,16 +90,16 @@ final readonly class Request
      */
     public function judges(string $file): bool
     {
-        if ($this->write === []) {
+        if ($this->judged === []) {
             return true;
         }
-        foreach ($this->write as $path) {
-            if ($file === $path || str_starts_with($file, rtrim($path, '/') . '/')) {
-                return true;
+        for ($held = $file; ! isset($this->judged[$held]); $held = dirname($held)) {
+            if (dirname($held) === $held) {
+                return false;
             }
         }
 
-        return false;
+        return true;
     }
 
     /**

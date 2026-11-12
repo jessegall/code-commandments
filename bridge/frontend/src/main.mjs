@@ -1,5 +1,5 @@
 import { existsSync, lstatSync, readdirSync, realpathSync } from 'node:fs'
-import { join, resolve } from 'node:path'
+import { dirname, join, resolve } from 'node:path'
 import { createInterface } from 'node:readline'
 import ts from 'typescript'
 import { declarations } from './declares.mjs'
@@ -21,13 +21,21 @@ const CONTEXT = ',"context":true'
 /** How large a line is gathered to be kept. */
 const GATHERED = 16 << 20
 
+/** Whether $path is one of the judged paths or lies in a judged folder: the path and each folder above it looked up once. */
+function judges(judged, path) {
+    for (let held = path; ; held = dirname(held)) {
+        if (judged.has(held)) return true
+        if (dirname(held) === held) return false
+    }
+}
+
 /**
  * The stream for one request: `paths` are scanned, `write` are judged (every other file is context), `renames` rewrite paths,
  * and `contents` is the text drafted for a file, read in place of the disk's; a drafted file under a folder is read too.
  */
 export async function stream({ paths, write = [], renames = [], contents = {}, cache }, emit) {
     const roots = paths.map((path) => realpathSync(resolve(path)))
-    const judged = write.map((path) => realpathSync(resolve(path)))
+    const judged = new Set(write.map((path) => realpathSync(resolve(path))))
     const drafted = Object.keys(contents).filter((path) => languageOf(path) && !existsSync(path) && roots.some((root) => path.startsWith(root + '/')))
     const files = [...new Set([...roots.flatMap(filesIn), ...drafted])].sort()
     const sources = new Map(files.map((path) => [path, Object.hasOwn(contents, path) ? new Source(path, contents[path]) : Source.read(path)]))
@@ -43,7 +51,7 @@ export async function stream({ paths, write = [], renames = [], contents = {}, c
     const totals = { expressions: 0, typed: 0, calls: 0, resolved: 0 }
     await emit({ header: { contract: 'tree', version: 1, language, bridge: { name: NAME, version: VERSION }, roots: roots.map((root) => program.shown(root)) } })
     for (const path of files) {
-        const context = judged.length > 0 && !judged.some((each) => path === each || path.startsWith(each + '/'))
+        const context = judged.size > 0 && !judges(judged, path)
         const earlier = kept?.kept(path)
         if (earlier) {
             await emit(earlier.line.slice(0, earlier.at) + (context ? CONTEXT : '') + earlier.line.slice(earlier.at))

@@ -16,8 +16,13 @@ func InWalkOrder(stream *contract.Stream, paths []string) {
 		walk(path, at)
 	}
 
+	ranks := make(map[*contract.File]int, len(stream.Files))
+	for _, file := range stream.Files {
+		ranks[file] = rank(at, file.Path)
+	}
+
 	slices.SortStableFunc(stream.Files, func(a, b *contract.File) int {
-		return rank(at, a.Path) - rank(at, b.Path)
+		return ranks[a] - ranks[b]
 	})
 }
 
