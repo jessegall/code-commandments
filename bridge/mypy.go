@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/jessegall/code-commandments/bridge/bundle"
+	"github.com/jessegall/code-commandments/cli/atomic"
 )
 
 //go:embed mypy/tree.py mypy/session.py mypy/kept.py mypy/requirements.txt
@@ -97,6 +98,13 @@ func mypyPython(folders []string) (string, error) {
 }
 
 func buildMypy(folder string) error {
+	release := atomic.Hold(filepath.Join(folder, ".building"))
+	defer release()
+
+	if _, err := os.Stat(filepath.Join(folder, "ready")); err == nil {
+		return nil
+	}
+
 	python, err := mypyPython(pythonFolders())
 	if err != nil {
 		return err

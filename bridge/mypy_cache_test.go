@@ -312,3 +312,28 @@ func TestARunStoppedPartWayLeavesWhatTheNextRunNeedsToSkipMypy(t *testing.T) {
 		t.Errorf("after a run stopped while handing its lines back, the next run made the builds and lines %q; it should start no build", said)
 	}
 }
+
+func TestTwoRunsBuildingTheMypyBridgeAtOnceBuildItOnce(t *testing.T) {
+	python := os.Getenv("COMMANDMENTS_MYPY_PYTHON")
+	if python == "" {
+		t.Skip("no python with mypy is named here")
+	}
+
+	t.Setenv("XDG_CACHE_HOME", t.TempDir())
+	t.Setenv("COMMANDMENTS_MYPY_PYTHON", "")
+	t.Setenv("PATH", filepath.Dir(python)+string(os.PathListSeparator)+os.Getenv("PATH"))
+
+	done := make(chan error, 2)
+	for range 2 {
+		go func() {
+			_, err := bridge.Mypy()
+			done <- err
+		}()
+	}
+
+	for range 2 {
+		if err := <-done; err != nil {
+			t.Errorf("a run building the bridge beside another failed: %v", err)
+		}
+	}
+}
