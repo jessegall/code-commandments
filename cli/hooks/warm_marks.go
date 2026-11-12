@@ -251,9 +251,7 @@ func AgainstTheProgramNarrowed(marking Marking, files []string, rulesFor func(st
 }
 
 func countDetectorFiles(costs ledger.Ledger, before engine.Work, checkout string) {
-	did := engine.Since(before)
-	costs.Counts(ledger.DetectorFilesJudged, int(did.Judged), checkout)
-	costs.Counts(ledger.DetectorFilesRemembered, int(did.Remembered), checkout)
+	costs.CountsTheWork(engine.Since(before), checkout)
 }
 
 func someFileDoesNotParse(streams []*contract.Stream) bool {

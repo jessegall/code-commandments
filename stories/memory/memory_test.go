@@ -102,7 +102,7 @@ func sinful(s *story.Story, label string) story.Sample {
 }
 
 func TestAFileAlreadyJudgedIsNotJudgedAgain(t *testing.T) {
-	s, rest := settled(t, elseRule)
+	s, _ := settled(t, elseRule)
 	s.Writes(sinful(s, "a sinful file judged twice"), "twice.py")
 	first := judges(s, elseRule)
 	s.Exits(first, 1)
@@ -112,12 +112,12 @@ func TestAFileAlreadyJudgedIsNotJudgedAgain(t *testing.T) {
 
 	s.Exits(again, 1)
 	s.Judged(1)
-	s.Remembered(1 + 2*rest)
+	s.Remembered(1)
 	s.SaysTheSameSinsAs(first, again)
 }
 
 func TestATouchedFileWithTheSameBytesIsRemembered(t *testing.T) {
-	s, rest := settled(t, elseRule)
+	s, _ := settled(t, elseRule)
 	touched := sinful(s, "a sinful file touched")
 	s.Writes(touched, "touched.py")
 	s.Exits(judges(s, elseRule), 1)
@@ -126,11 +126,11 @@ func TestATouchedFileWithTheSameBytesIsRemembered(t *testing.T) {
 
 	s.Exits(judges(s, elseRule), 1)
 	s.Judged(1)
-	s.Remembered(1 + 2*rest)
+	s.Remembered(1)
 }
 
 func TestAMovedFileIsNotJudgedAgainAndNamedAtItsNewPath(t *testing.T) {
-	s, rest := settled(t, elseRule)
+	s, _ := settled(t, elseRule)
 	moved := sinful(s, "a sinful file moved")
 	s.Writes(moved, "before.py")
 	s.Exits(judges(s, elseRule), 1)
@@ -140,13 +140,13 @@ func TestAMovedFileIsNotJudgedAgainAndNamedAtItsNewPath(t *testing.T) {
 	judged := judges(s, elseRule)
 
 	s.Judged(1)
-	s.Remembered(1 + 2*rest)
+	s.Remembered(1)
 	s.Says(judged, "after.py")
 	s.Never(judged, "before.py")
 }
 
 func TestTwoFilesOfTheSameBytesAreJudgedOnceAndBothNamed(t *testing.T) {
-	s, rest := settled(t, elseRule)
+	s, _ := settled(t, elseRule)
 	twin := sinful(s, "a sinful file written twice")
 	s.Writes(twin, "first.py")
 	s.Writes(twin, "second.py")
@@ -154,12 +154,12 @@ func TestTwoFilesOfTheSameBytesAreJudgedOnceAndBothNamed(t *testing.T) {
 	judged := judges(s, elseRule)
 
 	s.Judged(1)
-	s.Remembered(1 + rest)
+	s.Remembered(1)
 	s.Says(judged, "first.py", "second.py")
 }
 
 func TestAWorktreeHoldingTheSameBytesIsAnsweredFromMemory(t *testing.T) {
-	s, rest := settled(t, elseRule)
+	s, _ := settled(t, elseRule)
 	worker := s.Worker("Grace")
 	s.GivenTheTreeIsHeldFor(worker.Folder())
 	shared := sinful(s, "a sinful file in a project and a worktree")
@@ -172,13 +172,13 @@ func TestAWorktreeHoldingTheSameBytesIsAnsweredFromMemory(t *testing.T) {
 
 	s.Exits(judged, 1)
 	s.Judged(1)
-	s.Remembered(1 + 2*rest)
+	s.Remembered(1)
 	s.Says(judged, filepath.Base(filepath.Dir(written)), "shared.py")
 	s.NamesOnlyWholePaths(judged, worker.Folder())
 }
 
 func TestAnEditBackToAnEarlierStateIsRemembered(t *testing.T) {
-	s, rest := settled(t, elseRule)
+	s, _ := settled(t, elseRule)
 	earlier := sinful(s, "a sinful file edited and edited back")
 	s.Writes(earlier, "back.py")
 	s.Exits(judges(s, elseRule), 1)
@@ -189,11 +189,11 @@ func TestAnEditBackToAnEarlierStateIsRemembered(t *testing.T) {
 
 	s.Exits(judges(s, elseRule), 1)
 	s.Judged(2)
-	s.Remembered(1 + 3*rest)
+	s.Remembered(1)
 }
 
 func TestARealChangeIsJudgedOnceAndTheRestRemembered(t *testing.T) {
-	s, rest := settled(t, elseRule)
+	s, _ := settled(t, elseRule)
 	s.Given("twelve different sinful files, judged", func() {
 		for one := 1; one <= 12; one++ {
 			s.Writes(sinful(s, fmt.Sprintf("sinful file %d of twelve", one)), fmt.Sprintf("file%d.py", one))
@@ -207,11 +207,11 @@ func TestARealChangeIsJudgedOnceAndTheRestRemembered(t *testing.T) {
 
 	s.Exits(judges(s, elseRule), 1)
 	s.Judged(13)
-	s.Remembered(11 + 2*rest)
+	s.Remembered(11)
 }
 
 func TestASinIsNeverForgotten(t *testing.T) {
-	s, rest := settled(t, elseRule)
+	s, _ := settled(t, elseRule)
 	s.Writes(s.FreshPython("six elses to remember", story.SixElses.Text), "six.py")
 	first := judges(s, elseRule)
 	s.Says(first, "6 sins")
@@ -219,7 +219,7 @@ func TestASinIsNeverForgotten(t *testing.T) {
 	again := judges(s, elseRule)
 
 	s.Exits(again, 1)
-	s.Remembered(1 + 2*rest)
+	s.Remembered(1)
 	s.Says(again, "6 sins")
 	s.SaysTheSameSinsAs(first, again)
 }
@@ -419,18 +419,18 @@ func TestAnExpiredMemoryIsDeletedFromTheFile(t *testing.T) {
 }
 
 func TestRulesDoNotShareAMemory(t *testing.T) {
-	s, rest := settled(t, elseRule, swallowRule)
+	s, _ := settled(t, elseRule, swallowRule)
 	s.Writes(s.FreshPython("a file two rules both look at", story.TwoSinsInOneFile.Text), "both.py")
 
 	s.Exits(judges(s, elseRule), 1)
 	s.Exits(judges(s, swallowRule), 1)
 
 	s.Judged(2)
-	s.Remembered(2 * rest)
+	s.Remembered(0)
 
 	s.Exits(judges(s, elseRule), 1)
 	s.Exits(judges(s, swallowRule), 1)
 
 	s.Judged(2)
-	s.Remembered(2 + 4*rest)
+	s.Remembered(2)
 }

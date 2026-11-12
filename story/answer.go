@@ -148,7 +148,7 @@ func (s *Story) Remembered(files int) {
 func (s *Story) SaysTheSameSinsAs(first, again Ran) {
 	s.t.Helper()
 
-	was, is := namedAt.FindAllString(first.Text(), -1), namedAt.FindAllString(again.Text(), -1)
+	was, is := placesNamedIn(first.Text()), placesNamedIn(again.Text())
 	if len(was) == 0 || !slices.Equal(was, is) {
 		s.Fails(fmt.Sprintf("the first answer named %v and the next named %v; the next says:\n%s", was, is, again.Text()))
 	}
@@ -163,7 +163,16 @@ type ProgressLine struct {
 
 var progressLine = regexp.MustCompile(`(?m)^(reading|detector) (\d+)/(\d+)$`)
 
-var namedAt = regexp.MustCompile(`([^\s:"'()]+\.[A-Za-z0-9]+):(\d+)`)
+var namedAt = regexp.MustCompile(`([^\s:"'(),]+\.[A-Za-z0-9]+)(?::|, line )(\d+)`)
+
+func placesNamedIn(text string) []string {
+	var places []string
+	for _, named := range namedAt.FindAllStringSubmatch(text, -1) {
+		places = append(places, named[1]+":"+named[2])
+	}
+
+	return places
+}
 
 func (l ProgressLine) String() string {
 	return fmt.Sprintf("%s %d/%d", l.Phase, l.Done, l.Of)

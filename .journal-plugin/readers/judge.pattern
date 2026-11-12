@@ -1,8 +1,8 @@
 # a sin said plainly, the count a run ends on, where its checklist is, a warning, and a run that ended early
-^(?:\S+, line \d+:|\d+ sins? across \d+ skills?\.$|[✓✗⚠] |↳ checklist written to )
+^(?:\S+, line \d+:|\d+ sins? across \d+ skills?\.$|\d+ sins? in \d+ files?$|[✓✗⚠] |↳ checklist written to )
 progress: ^(?:parsing|reading|detector) (\d+)/(\d+)$
 label: Judging the project against its commandments
 commands: commandments(-release|-go)? judge
-finished: ^(?:\d+ sins? across \d+ skills?\.$|✓ |↳ checklist written to )
+finished: ^(?:\d+ sins? across \d+ skills?\.$|\d+ sins? in \d+ files?$|✓ |↳ checklist written to )
 failed: ^(?:✗ )
-summary: ^(\d+ sins? across \d+ skills?\.|✓ .+|✗ .+)$
+summary: ^(\d+ sins? across \d+ skills?\.|\d+ sins? in \d+ files?|✓ .+|✗ .+)$

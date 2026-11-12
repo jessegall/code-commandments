@@ -11,6 +11,7 @@ import (
 	"github.com/jessegall/code-commandments/bridge/bundle"
 	"github.com/jessegall/code-commandments/cache"
 	"github.com/jessegall/code-commandments/cli"
+	"github.com/jessegall/code-commandments/cli/ledger"
 )
 
 func TestAPluginRunAndARunByHandRememberInOnePlace(t *testing.T) {
@@ -243,5 +244,39 @@ func TestAJournalProjectAndItsWorktreesKeepTheirParsedTreesAtTheJournal(t *testi
 		if !strings.HasPrefix(trees, journal+"/") {
 			t.Errorf("a judge in %s keeps its parsed trees at %s, not at the project's journal", root, trees)
 		}
+	}
+}
+
+func TestAJudgeOfAJournalProjectCountsTheFilesItJudgedAndRemembered(t *testing.T) {
+	t.Setenv("XDG_CACHE_HOME", t.TempDir())
+	t.Setenv(pluginData, "")
+	t.Setenv(cache.Folder, "")
+
+	project := sinfulProject(t)
+	manifest := filepath.Join(project, ".journal", "plugins", "code-commandments", ".journal-plugin", "plugin.json")
+	if err := os.MkdirAll(filepath.Dir(manifest), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(manifest, []byte("{}"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if out, err := exec.Command("git", "-C", project, "init", "-q").CombinedOutput(); err != nil {
+		t.Fatalf("%s", out)
+	}
+
+	costs := ledger.Of(project)
+
+	judgedIn(t, project, "--no-checklist", "--parallel=1")
+	judged := costs.Count(ledger.DetectorFilesJudged)
+	if judged == 0 {
+		t.Fatalf("a first judge counted no file judged")
+	}
+
+	judgedIn(t, project, "--no-checklist", "--parallel=1")
+	if again := costs.Count(ledger.DetectorFilesJudged); again != judged {
+		t.Errorf("a second judge of the same files counted %d more judged", again-judged)
+	}
+	if costs.Count(ledger.DetectorFilesRemembered) == 0 {
+		t.Error("a second judge of the same files counted none remembered")
 	}
 }

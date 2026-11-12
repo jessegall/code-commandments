@@ -7,6 +7,7 @@ import (
 
 	"github.com/jessegall/code-commandments/cli/state"
 	"github.com/jessegall/code-commandments/cli/workspace"
+	"github.com/jessegall/code-commandments/engine"
 )
 
 var legend = &state.Legend{
@@ -23,7 +24,7 @@ var legend = &state.Legend{
 		{Name: JudgingsToldTheTreeIsComing, Meaning: "judgings told to ask again because a read of the tree was running"},
 		{Name: JudgingsDeclined, Meaning: "judgings the service declined, so the run read the files itself"},
 		{Name: JudgingsAnsweredSmaller, Meaning: "judgings answered by the rules that read one file only, because the tree could not carry them"},
-		{Name: DetectorFilesJudged, Meaning: "per detector, the files a served judging really judged"},
+		{Name: DetectorFilesJudged, Meaning: "per detector, the files a judging really judged"},
 		{Name: DetectorFilesRemembered, Meaning: "per detector, the files a served judging answered from what it remembered of their contents"},
 	},
 	List: "one event per line: the unix time in milliseconds, a tab, what happened, a tab, the checkout or project it was for",
@@ -71,6 +72,11 @@ func (l Ledger) Counts(name string, by int, where string) {
 	}
 
 	_ = l.file.Write(read.With(state.Int(name, read.Int(name, 0)+by)).WithItems(events))
+}
+
+func (l Ledger) CountsTheWork(did engine.Work, where string) {
+	l.Counts(DetectorFilesJudged, int(did.Judged), where)
+	l.Counts(DetectorFilesRemembered, int(did.Remembered), where)
 }
 
 func Names() []string {

@@ -27,9 +27,9 @@ func TestAWatchedRunSaysWhatItFoundAndWhichRuleFoundIt(t *testing.T) {
 
 	lines := strings.Split(said, "\n")
 	want := []string{
-		"part.py, line 130: three parts over two objects [unnamed-condition]",
-		"typed_lines.py, line 52: oldest_line_at, a sentence used as a method name [sentence-method-name]",
-		"labels.py, line 10: label, a parameter typed as a dict read by string keys, which is a record… [dict-bag] ×2",
+		"src/part.py, line 130: three parts over two objects [unnamed-condition]",
+		"src/support/typed_lines.py, line 52: oldest_line_at, a sentence used as a method name [sentence-method-name]",
+		"src/labels.py, line 10: label, a parameter typed as a dict read by string keys, which is a record… [dict-bag] ×2",
 		"",
 		"4 sins in 3 files",
 	}

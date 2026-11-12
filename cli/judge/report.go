@@ -289,7 +289,7 @@ func (r Report) Said() string {
 }
 
 func (r Report) saidOf(finding engine.Finding) string {
-	said := filepath.Base(finding.File)
+	said := r.relative(finding.File)
 	if _, at, numbered := strings.Cut(finding.Location, ":"); numbered && at != "" {
 		said += ", line " + at
 	}
