@@ -3,104 +3,170 @@ package untrack
 import (
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 
 	"github.com/jessegall/code-commandments/cli/git"
 	"github.com/jessegall/code-commandments/cli/workspace"
 )
 
+const (
+	folder = ".commandments"
+
+	kept = ".gitignore"
+
+	untrackedMessage = "Stop tracking code-commandments state: the journal serves the config from the project root"
+)
+
+var leftOutByAnOldRelease = folder + "/config.json"
+
 func Everywhere(root string) []string {
 	var said []string
 
-	if untracked := TheConfig(root); untracked.Said != "" {
+	if untracked := TheState(root); untracked.Said != "" {
 		said = append(said, untracked.Said)
 	}
 
-	return append(said, OutOfEveryWorktree(root)...)
+	return append(said, EveryWorktree(root)...)
 }
 
-// Untracked is what became of a config a project had committed: the file stays on disk with the project's own
-// settings in it, and git is told to stop following it, so no checkout of that project carries a copy its
-// worktrees can read instead of the journal's own settings.
+// Untracked is what became of the state a project had committed in its .commandments folder: the files stay on the main checkout's disk, and git stops following them, so no checkout carries a copy of the config the journal serves from the project root. Only the detectors in custom/ stay tracked.
 type Untracked struct {
 	Said string
 	Done bool
 }
 
-func TheConfig(root string) Untracked {
-	config := workspace.JSONConfig(workspace.SettingsRoot(root))
-
+func TheState(root string) Untracked {
 	if git.Root(root) == "" {
 		return Untracked{}
 	}
 
 	if workspace.At(root, "").IsJournalDriven() {
+		return committed(root, stateIn(git.CommittedIn(root, folder)))
+	}
+
+	tracked := stateIn(git.TrackedIn(root, folder))
+	if len(tracked) == 0 {
 		return Untracked{}
 	}
 
-	under, inside := under(config, root)
-	if !inside {
-		return Untracked{}
-	}
-
-	if !git.Tracks(root, under) {
-		return Untracked{}
-	}
-
-	out, err := git.StopTracking(root, under)
-	if err != nil {
+	if out, err := git.StopTracking(root, tracked); err != nil {
 		return Untracked{Said: "the config could not be untracked (" + out +
 			"), so a worktree of this project still carries a copy of it"}
 	}
 
 	return Untracked{
-		Said: "⇡ " + under + " is no longer tracked: its settings come from the journal, and a committed copy " +
-			"travels into every worktree where it is read instead of them. The file itself is untouched.",
+		Said: "⇡ " + strings.Join(tracked, ", ") + " no longer tracked: its settings come from the project root, and " +
+			"a committed copy travels into every worktree. The files themselves are untouched.",
 		Done: true,
 	}
 }
 
-func under(path, root string) (string, bool) {
-	relative, err := filepath.Rel(strings.TrimRight(root, "/"), path)
-	if err != nil || strings.HasPrefix(relative, "..") {
-		return "", false
+func committed(root string, tracked []string) Untracked {
+	done, err := git.CommitStoppedTracking(root, untrackedMessage, tracked)
+	if err != nil {
+		return Untracked{Said: "the state in " + folder + " could not be untracked: " + err.Error()}
 	}
 
-	return filepath.ToSlash(relative), true
+	if !done {
+		return Untracked{}
+	}
+
+	return Untracked{
+		Said: "⇡ committed: " + strings.Join(tracked, ", ") + " no longer tracked, since the journal serves the " +
+			"config from the project root. The files are still on the main checkout's disk.",
+		Done: true,
+	}
 }
 
-func OutOfEveryWorktree(root string) []string {
-	if git.Root(root) == "" {
+func EveryWorktree(root string) []string {
+	main := git.ProjectRoot(root)
+	if main == "" {
 		return nil
 	}
 
-	under, inside := under(workspace.JSONConfig(workspace.SettingsRoot(root)), root)
-	if !inside {
-		return nil
-	}
+	cleans := workspace.At(main, "").IsJournalDriven()
 
 	var said []string
 
-	for _, worktree := range git.Worktrees(root) {
-		if !git.IsAWorktree(worktree) || !git.Tracks(worktree, under) || !onDisk(worktree, under) {
+	for _, worktree := range git.Worktrees(main) {
+		if !git.IsAWorktree(worktree) {
 			continue
 		}
 
-		if err := git.LeaveOutOfCheckout(worktree, under); err != nil {
-			said = append(said, "the config is still on the disk of a worktree: "+err.Error())
+		if undone, err := git.UndoLeavingOut(worktree, leftOutByAnOldRelease); err != nil {
+			said = append(said, err.Error())
+		} else if undone {
+			said = append(said, "⇡ "+worktree+" no longer leaves "+leftOutByAnOldRelease+" out of its checkout")
+		}
 
+		if !cleans {
 			continue
 		}
 
-		said = append(said, "⇡ "+under+" is off the disk of "+worktree+", so it reads the journal's settings; "+
-			"git sees no deletion, so nothing handed in from it takes the config with it.")
+		if cleaned, err := Clean(worktree); err != nil {
+			said = append(said, err.Error())
+		} else if cleaned {
+			said = append(said, "⇡ "+worktree+" holds only the detectors in "+folder+"; it reads the config "+
+				"and the cache at the project root")
+		}
 	}
 
 	return said
 }
 
-func onDisk(checkout, under string) bool {
-	_, err := os.Stat(filepath.Join(checkout, filepath.FromSlash(under)))
+func Clean(worktree string) (bool, error) {
+	if !git.IsAWorktree(worktree) {
+		return false, nil
+	}
 
-	return err == nil
+	held := filepath.Join(worktree, folder)
+	if info, err := os.Lstat(held); err != nil || !info.IsDir() {
+		return false, nil
+	}
+
+	entries, err := os.ReadDir(held)
+	if err != nil {
+		return false, nil
+	}
+
+	var leftover []string
+	for _, entry := range entries {
+		if !isKept(entry.Name()) {
+			leftover = append(leftover, entry.Name())
+		}
+	}
+
+	if len(leftover) == 0 {
+		return false, nil
+	}
+
+	if err := git.KeepOffDisk(worktree, folder, isKeptPath); err != nil {
+		return false, err
+	}
+
+	for _, name := range leftover {
+		if err := os.RemoveAll(filepath.Join(held, name)); err != nil {
+			return false, err
+		}
+	}
+
+	return true, nil
+}
+
+func stateIn(tracked []string) []string {
+	return slices.DeleteFunc(tracked, isKeptPath)
+}
+
+func isKeptPath(path string) bool {
+	inside, under := strings.CutPrefix(path, folder+"/")
+	if !under {
+		return true
+	}
+
+	return isKept(strings.SplitN(inside, "/", 2)[0])
+}
+
+func isKept(name string) bool {
+	return name == kept || name == workspace.Custom
 }

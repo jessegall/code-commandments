@@ -57,8 +57,8 @@ func (Command) Help() help.Help {
 		Note("Only rules the PACKAGE ships can be reported here. A finding printed as `[Name (custom)]` " +
 			"comes from a detector this project wrote into .commandments/custom/ — fix it there; a report " +
 			"against it is refused.").
-		Note("Filing a detector-report RECORDS the sin it was about in .commandments/reports.json, which is " +
-			"tracked: a judge of that line then reads it as reported, with its issue, rather than as a sin to fix, " +
+		Note("Filing a detector-report RECORDS the sin it was about in .commandments/reports.json at the project root, which every " +
+			"worktree reads: a judge of that line then reads it as reported, with its issue, rather than as a sin to fix, " +
 			"and `report follow` says when the report has been answered. The line's own text is kept as a hash, " +
 			"never as text, and a second report of a sin already recorded is refused.").
 		Note("A report is NOT a deferral. A correct finding must be FIXED, however big the fix — a detector-report " +

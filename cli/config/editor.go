@@ -28,6 +28,8 @@ type Editor interface {
 }
 
 func EditorIn(dir string) Editor {
+	dir = workspace.SettingsRoot(dir)
+
 	_, noJSON := os.Stat(workspace.JSONConfig(dir))
 	_, noPHP := os.Stat(workspace.Config(dir))
 

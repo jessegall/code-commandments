@@ -8,7 +8,6 @@ import (
 	"github.com/jessegall/code-commandments/cli/agents"
 	"github.com/jessegall/code-commandments/cli/atomic"
 	"github.com/jessegall/code-commandments/cli/library"
-	"github.com/jessegall/code-commandments/cli/reported"
 	"github.com/jessegall/code-commandments/cli/workspace"
 )
 
@@ -61,30 +60,42 @@ var retiredLines = []string{
 	"!sessions/*/plan/**",
 	"!orchestrator/",
 	"!orchestrator/**",
+	"!reports.json",
+	"# A session's TASKS are tracked; everything else in its folder is this run's own state.",
+	"# Un-ignoring something nested takes a line per level, so these four are one rule.",
+	"!sessions/",
+	"!sessions/*/",
+	"!sessions/*/tasks/",
+	"!sessions/*/tasks/**",
+	"!config.php",
+	"!config.json",
 }
 
 func commandmentsLines() []string {
 	return []string{
-		"# code-commandments generated state; the lines below stay tracked.",
+		"# code-commandments generated state; only the detectors in custom/ stay tracked.",
+		"# The config and the cache are read at the project root; no checkout carries a copy.",
 		"# Add your own exceptions underneath — they are preserved across a sync.",
 		"*",
 		"!.gitignore",
-		"!" + reported.Filename,
 		"!" + workspace.Custom + "/",
 		"!" + workspace.Custom + "/**",
+	}
+}
+
+func detectorsStayTracked() []string {
+	return []string{
 		"",
-		"# A session's TASKS are tracked; everything else in its folder is this run's own state.",
-		"# Un-ignoring something nested takes a line per level, so these four are one rule.",
-		"!" + workspace.Sessions + "/",
-		"!" + workspace.Sessions + "/*/",
-		"!" + workspace.Sessions + "/*/tasks/",
-		"!" + workspace.Sessions + "/*/tasks/**",
+		"# code-commandments: the detectors in custom/ stay tracked whatever the lines above say.",
+		"!" + workspace.Custom + "/",
+		"!" + workspace.Custom + "/**",
 	}
 }
 
 func ensureCommandmentsGitignore(root string) error {
 	path := workspace.At(root, "").Shared(".gitignore")
-	content := strings.Join(append(commandmentsLines(), linesTheProjectAdded(path)...), "\n") + "\n"
+	lines := append(append(commandmentsLines(), linesTheProjectAdded(path)...), detectorsStayTracked()...)
+	content := strings.Join(lines, "\n") + "\n"
 
 	if current, err := os.ReadFile(path); err == nil && string(current) == content {
 		return nil

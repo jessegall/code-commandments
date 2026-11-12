@@ -46,7 +46,7 @@ type Seen struct {
 }
 
 func Path(root string) string {
-	return workspace.At(root, "").Shared(Filename)
+	return workspace.At(workspace.SettingsRoot(root), "").Shared(Filename)
 }
 
 func Of(root string) (held Record, read bool) {
@@ -105,7 +105,7 @@ func (r Record) Rows() []Row {
 }
 
 func lock(root string) func() {
-	return atomic.Hold(workspace.At(root, "").Shared(".reports.lock"))
+	return atomic.Hold(workspace.At(workspace.SettingsRoot(root), "").Shared(".reports.lock"))
 }
 
 func Add(root string, row Row) (Row, error) {

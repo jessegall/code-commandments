@@ -85,6 +85,10 @@
       "commit": ".journal-plugin/hook"
     },
     {
+      "event": "suites.coding.workers.worker_worktree.cut",
+      "commit": ".journal-plugin/hook"
+    },
+    {
       "event": "suites.coding.workers.merge_request.created",
       "guard": ".journal-plugin/hook",
       "window_ms": 30000

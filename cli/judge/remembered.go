@@ -13,6 +13,7 @@ import (
 	"github.com/jessegall/code-commandments/cli/atomic"
 	"github.com/jessegall/code-commandments/cli/config"
 	"github.com/jessegall/code-commandments/cli/git"
+	"github.com/jessegall/code-commandments/cli/workspace"
 	"github.com/jessegall/code-commandments/detectors"
 )
 
@@ -22,9 +23,10 @@ const (
 	rememberedDetectorsFile = "detector-memories.json"
 	rememberedWeighingsFile = "csharp-weighings.json"
 	readingFile             = "reading"
+	rememberedFolderName    = "remembered"
 )
 
-// Remembered is what one run keeps for the next in its project's own folder, good only for the build that wrote it: what every detector answered for each file's contents, and what the aggregating C# rules found. It lives under the user's cache, one folder per project that all its worktrees share, so the plugin's runs, queued runs and runs started by hand remember together and claim the same project. Finding it also hands on the hours the project keeps an unused cache, so the run and every bridge it starts prune by them. Only one run reads a project at a time: a run claims the project while it reads, and a second run that finds it claimed stops at once rather than waiting; the system lets go of the claim the moment its run ends, so a run stopped with ^C or killed blocks nobody.
+// Remembered is what one run keeps for the next in its project's own folder, good only for the build that wrote it: what every detector answered for each file's contents, and what the aggregating C# rules found. It lives at the journal of the project root when the journal drives the project, and under the user's cache otherwise: one folder per project that all its worktrees share, so the plugin's runs, queued runs and runs started by hand remember together and claim the same project. Finding it also hands on the hours the project keeps an unused cache, so the run and every bridge it starts prune by them. Only one run reads a project at a time: a run claims the project while it reads, and a second run that finds it claimed stops at once rather than waiting; the system lets go of the claim the moment its run ends, so a run stopped with ^C or killed blocks nobody.
 type Remembered struct {
 	Memories  detectors.MemoryFile
 	Weighings WeighingsFile
@@ -47,17 +49,25 @@ func RememberedFor(project string, warn func(...string)) (Remembered, bool) {
 }
 
 func rememberedFolder(project string) string {
-	cache, err := bundle.CacheFolder()
-	if err != nil || project == "" {
+	if project == "" {
 		return ""
 	}
 
 	if main := git.ProjectRoot(project); main != "" {
 		project = main
 	}
+
+	if space := workspace.At(project, ""); space.IsJournalDriven() {
+		return space.Cache(rememberedFolderName)
+	}
+
+	cache, err := bundle.CacheFolder()
+	if err != nil {
+		return ""
+	}
 	named := sha256.Sum256([]byte(project))
 
-	return filepath.Join(cache, "code-commandments", "remembered", hex.EncodeToString(named[:8]))
+	return filepath.Join(cache, "code-commandments", rememberedFolderName, hex.EncodeToString(named[:8]))
 }
 
 func (r Remembered) ReadAlone() (release func(), alone bool) {

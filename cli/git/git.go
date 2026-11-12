@@ -570,7 +570,3 @@ func tracking(root, path string) (tracked, known bool) {
 
 	return err == nil, err == nil
 }
-
-func StopTracking(root, path string) (string, error) {
-	return wrote(root, "rm", "--cached", "-q", "--", path)
-}

@@ -107,3 +107,43 @@ func TestAJudgeStopsAtOnceWhileAnotherRunReadsTheProject(t *testing.T) {
 		t.Error("a judge after the other run ended still found the project being read")
 	}
 }
+
+func TestAJournalProjectAndItsWorktreesRememberAtTheJournal(t *testing.T) {
+	t.Setenv("XDG_CACHE_HOME", t.TempDir())
+	t.Setenv(pluginData, "")
+
+	project, err := filepath.EvalSymlinks(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	manifest := filepath.Join(project, ".journal", "plugins", "code-commandments", ".journal-plugin", "plugin.json")
+	if err := os.MkdirAll(filepath.Dir(manifest), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(manifest, []byte("{}"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	worktree := filepath.Join(project, ".journal", "worktrees", "worker-1")
+	for _, line := range [][]string{
+		{"init", "-q", "-b", "main"},
+		{"-c", "user.email=t@t", "-c", "user.name=t", "commit", "-q", "--allow-empty", "-m", "the project"},
+		{"worktree", "add", "-q", "-b", "a-worker", worktree},
+	} {
+		if out, err := exec.Command("git", append([]string{"-C", project}, line...)...).CombinedOutput(); err != nil {
+			t.Fatalf("git %v: %s", line, out)
+		}
+	}
+
+	atTheRoot, _ := RememberedFor(project, func(...string) {})
+	inTheWorktree, _ := RememberedFor(worktree, func(...string) {})
+
+	if atTheRoot.Memories.Path != inTheWorktree.Memories.Path {
+		t.Errorf("the project remembers at %q and its worktree at %q", atTheRoot.Memories.Path, inTheWorktree.Memories.Path)
+	}
+
+	if !strings.HasPrefix(atTheRoot.Memories.Path, filepath.Join(project, ".journal", "plugin-data")) {
+		t.Errorf("a journal project remembers at %q, not at its journal", atTheRoot.Memories.Path)
+	}
+}

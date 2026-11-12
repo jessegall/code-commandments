@@ -11,6 +11,7 @@ import (
 const Backup = "config.php.bak"
 
 func Migrate(dir string) (bool, error) {
+	dir = workspace.SettingsRoot(dir)
 	php, json := workspace.Config(dir), workspace.JSONConfig(dir)
 
 	if _, err := os.Stat(json); !errors.Is(err, os.ErrNotExist) {

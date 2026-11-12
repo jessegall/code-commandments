@@ -529,20 +529,17 @@ sha256 d3f8198fa20d0c0ab5c59d91033dbac55574230059a4ecefc870d55144eca79b
 }
 
 === created .commandments/.gitignore
-# code-commandments generated state; the lines below stay tracked.
+# code-commandments generated state; only the detectors in custom/ stay tracked.
+# The config and the cache are read at the project root; no checkout carries a copy.
 # Add your own exceptions underneath — they are preserved across a sync.
 *
 !.gitignore
-!reports.json
 !custom/
 !custom/**
 
-# A session's TASKS are tracked; everything else in its folder is this run's own state.
-# Un-ignoring something nested takes a line per level, so these four are one rule.
-!sessions/
-!sessions/*/
-!sessions/*/tasks/
-!sessions/*/tasks/**
+# code-commandments: the detectors in custom/ stay tracked whatever the lines above say.
+!custom/
+!custom/**
 
 === created .commandments/.state-format
 format: 5
@@ -607,6 +604,11 @@ Safe to delete — the conversion simply runs again on the next `composer update
             "description": "The branch `--branch` compares against when it names none: this project's trunk. Left out, it is main. A branch named on the command line always wins.",
             "minLength": 1,
             "type": "string"
+        },
+        "cache_hours": {
+            "description": "How many hours anything kept between runs stays once nothing uses it: parsed trees, the rules' answers per file, mypy's cache and the edit windows. Every use resets the clock. Left out, 12.",
+            "exclusiveMinimum": 0,
+            "type": "number"
         },
         "configure": {
             "additionalProperties": {

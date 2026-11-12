@@ -5,6 +5,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"slices"
+	"strings"
 	"testing"
 
 	"github.com/jessegall/code-commandments/cli/config"
@@ -132,5 +133,30 @@ func write(t *testing.T, path, contents string) {
 	}
 	if err := os.WriteFile(path, []byte(contents), 0o644); err != nil {
 		t.Fatal(err)
+	}
+}
+
+func TestAConfigWrittenFromAWorktreeLandsAtTheProjectRoot(t *testing.T) {
+	project := repository(t)
+	write(t, filepath.Join(project, ".commandments", "config.json"), `{"paths": ["src"]}`)
+
+	worktree := filepath.Join(t.TempDir(), "work")
+	run(t, project, "worktree", "add", "-b", "a-worker", worktree)
+
+	if _, err := config.EditorIn(worktree).RegisterDetector("App\\Rules\\PaidOrders"); err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := os.Stat(filepath.Join(worktree, ".commandments", "config.json")); !os.IsNotExist(err) {
+		t.Errorf("the worktree got a config of its own, which nothing reads and the next clean deletes: %v", err)
+	}
+
+	read, err := os.ReadFile(filepath.Join(project, ".commandments", "config.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if !strings.Contains(string(read), "PaidOrders") {
+		t.Errorf("the detector registered from a worktree never reached the project's config:\n%s", read)
 	}
 }

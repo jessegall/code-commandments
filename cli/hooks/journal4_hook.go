@@ -115,6 +115,10 @@ func Apart4(in *cli.Input, console cli.Console, line map[string]any) (string, bo
 		return MergeLanded(line), true, 0, nil
 	case requestedEvent:
 		return MergeRequested(line), true, 0, nil
+	case cutEvent:
+		return WorktreeCut(line), true, 0, nil
+	case tickedEvent:
+		cleanEveryWorktree()
 	case editedEvent:
 		keepEditOf(line)
 	}

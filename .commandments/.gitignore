@@ -2,8 +2,6 @@
 # Add your own exceptions underneath — they are preserved across a sync.
 *
 !.gitignore
-!config.php
-!config.json
 !reports.json
 !custom/
 !custom/**
@@ -14,3 +12,5 @@
 !sessions/*/
 !sessions/*/tasks/
 !sessions/*/tasks/**
+!config.php
+!config.json
