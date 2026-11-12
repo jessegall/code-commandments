@@ -133,7 +133,7 @@ func TestNothingIsJudgedOnItsOwnUntilASettingTurnsItOn(t *testing.T) {
 		t.Error("with nothing chosen, a merge was judged before it landed")
 	}
 
-	if workersRunTheCLI(Moment{Role: "worker", Settings: map[string]any{}}) {
+	if helpersRunTheCLI(Moment{Role: "worker", Settings: map[string]any{}}) {
 		t.Error("with nothing chosen, a worker may run the judge")
 	}
 

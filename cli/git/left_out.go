@@ -3,7 +3,6 @@ package git
 import (
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"slices"
 	"strings"
@@ -116,8 +115,13 @@ func CommitStoppedTracking(root, message string, committed []string) (bool, erro
 	return true, nil
 }
 
-func IsAWorktree(checkout string) bool {
-	gitdir := gitDirOf(checkout)
+func IsAWorktree(path string) bool {
+	top := Root(path)
+	if top == "" {
+		return false
+	}
+
+	gitdir := gitDirOf(top)
 
 	return gitdir != "" && filepath.Base(filepath.Dir(gitdir)) == worktrees
 }
@@ -137,20 +141,6 @@ func isBusy(root string) bool {
 
 func untracking(root string, env, paths []string) (string, error) {
 	return literally(root, env, paths, "rm", "--cached", "-q", "-r", "--ignore-unmatch", "--pathspec-from-file=-", "--pathspec-file-nul")
-}
-
-func literally(dir string, env, paths []string, args ...string) (string, error) {
-	counted()
-
-	command := exec.Command("git", append([]string{"-C", dir}, args...)...)
-	command.Env = append(append(os.Environ(), "GIT_LITERAL_PATHSPECS=1"), env...)
-	if paths != nil {
-		command.Stdin = strings.NewReader(strings.Join(paths, "\x00") + "\x00")
-	}
-
-	out, err := command.CombinedOutput()
-
-	return strings.TrimSpace(string(out)), err
 }
 
 func nulSeparated(listed string) []string {

@@ -570,3 +570,17 @@ func tracking(root, path string) (tracked, known bool) {
 
 	return err == nil, err == nil
 }
+
+func literally(dir string, env, paths []string, args ...string) (string, error) {
+	counted()
+
+	command := exec.Command("git", append([]string{"-C", dir}, args...)...)
+	command.Env = append(append(os.Environ(), "GIT_LITERAL_PATHSPECS=1"), env...)
+	if paths != nil {
+		command.Stdin = strings.NewReader(strings.Join(paths, "\x00") + "\x00")
+	}
+
+	out, err := command.CombinedOutput()
+
+	return strings.TrimSpace(string(out)), err
+}

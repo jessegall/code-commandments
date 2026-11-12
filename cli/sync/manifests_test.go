@@ -198,9 +198,14 @@ func TestNothingReachesAnAgentOtherThanTheMainOneOrAWorker(t *testing.T) {
 		}
 
 		for _, role := range roles {
+			if role == "helpers" && event == "command_starting" {
+				continue
+			}
+
 			if role != "workers" {
 				t.Errorf("%s reaches %s: only a worker's own work is judged for it, and only when the setting "+
-					"judge_workers is on", event, role)
+					"judge_workers is on; a helper is reached only at command_starting, where the setting "+
+					"workers_cli refuses its commandments commands", event, role)
 			}
 		}
 	}

@@ -67,7 +67,7 @@ func TestARunHandsOnTheHoursItsProjectKeepsACache(t *testing.T) {
 	}
 }
 
-func TestAJudgeStopsAtOnceWhileAnotherRunReadsTheProject(t *testing.T) {
+func TestAJudgeWaitsWhileAnotherRunReadsTheProjectThenRuns(t *testing.T) {
 	root := t.TempDir()
 	folder := t.TempDir()
 	t.Setenv(pluginData, folder)
@@ -91,20 +91,27 @@ func TestAJudgeStopsAtOnceWhileAnotherRunReadsTheProject(t *testing.T) {
 	}
 
 	var out, errs strings.Builder
-	started := time.Now()
-	code, _ := (Command{}).Run(cli.InputOf("judge", "--no-checklist"), cli.Console{Out: &out, Err: &errs})
+	ended := make(chan int, 1)
+	go func() {
+		code, _ := (Command{}).Run(cli.InputOf("judge", "--no-checklist"), cli.Console{Out: &out, Err: &errs})
+		ended <- code
+	}()
 
-	if code != readingElsewhere || !strings.Contains(errs.String(), "another run is reading") {
-		t.Errorf("a judge while another run reads the project ended %d saying %q", code, errs.String())
-	}
-	if waited := time.Since(started); waited > 5*time.Second {
-		t.Errorf("the judge waited %v for the other run instead of stopping at once", waited)
+	select {
+	case code := <-ended:
+		t.Fatalf("a judge ran beside another run of the project, ending %d", code)
+	case <-time.After(300 * time.Millisecond):
 	}
 
 	release()
 
-	if code, _ := (Command{}).Run(cli.InputOf("judge", "--no-checklist"), cli.Console{Out: &out, Err: &errs}); code == readingElsewhere {
-		t.Error("a judge after the other run ended still found the project being read")
+	select {
+	case code := <-ended:
+		if code == readingElsewhere {
+			t.Error("a judge after the other run ended still found the project being read")
+		}
+	case <-time.After(40 * time.Second):
+		t.Fatal("the judge never got its turn after the other run ended")
 	}
 }
 
@@ -145,5 +152,49 @@ func TestAJournalProjectAndItsWorktreesRememberAtTheJournal(t *testing.T) {
 
 	if !strings.HasPrefix(atTheRoot.Memories.Path, filepath.Join(project, ".journal", "plugin-data")) {
 		t.Errorf("a journal project remembers at %q, not at its journal", atTheRoot.Memories.Path)
+	}
+}
+
+func TestASecondJudgeWaitsItsTurnInsteadOfRunningBesideTheFirst(t *testing.T) {
+	t.Setenv("XDG_CACHE_HOME", t.TempDir())
+	t.Setenv(pluginData, "")
+
+	waited := make(chan bool, 1)
+	first, _ := RememberedFor("/a/project", func(...string) {})
+	second, _ := RememberedFor("/another/project", func(...string) { waited <- true })
+
+	release, alone := first.ReadAlone()
+	if !alone {
+		t.Fatal("the first judge did not get its turn")
+	}
+
+	ran := make(chan bool, 1)
+	go func() {
+		done, alone := second.ReadAlone()
+		ran <- alone
+		done()
+	}()
+
+	select {
+	case <-waited:
+	case <-time.After(5 * time.Second):
+		t.Fatal("the second judge was never told it waits")
+	}
+
+	select {
+	case <-ran:
+		t.Fatal("the second judge ran beside the first")
+	case <-time.After(200 * time.Millisecond):
+	}
+
+	release()
+
+	select {
+	case alone := <-ran:
+		if !alone {
+			t.Error("the second judge stopped instead of taking its turn")
+		}
+	case <-time.After(5 * time.Second):
+		t.Fatal("the second judge never got its turn after the first ended")
 	}
 }

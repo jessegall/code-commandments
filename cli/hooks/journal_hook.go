@@ -171,7 +171,7 @@ func answerWith(given map[string]any) JournalAnswer {
 	}
 
 	event := NewEvent(moment.HookPayload(), workspace.ProjectRoot(cwd))
-	event.WithoutCLI = workerRoles[moment.Role] && !workersRunTheCLI(moment)
+	event.WithoutCLI = workerRoles[moment.Role] && !helpersRunTheCLI(moment)
 	workspace.At(event.Root, "").RelocateSessions()
 	quiet := quieted()
 

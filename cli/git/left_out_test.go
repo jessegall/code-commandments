@@ -227,3 +227,21 @@ func TestTheBranchAndTheMergeBaseAreAskedOnceUntilAHeadMoves(t *testing.T) {
 			"the two still last met", said, mergeBase)
 	}
 }
+
+func TestAFolderInsideAWorktreeIsInAWorktreeAndOneInTheMainCheckoutIsNot(t *testing.T) {
+	root := aRepositoryWith(t, map[string]string{"src/given/order.py": "class Order:\n    pass\n"})
+
+	worktree := filepath.Join(root, ".journal", "worktrees", "worker-1")
+	gitIn(t, root, "worktree", "add", "-q", "-b", "a-worker", worktree)
+
+	for path, inside := range map[string]bool{
+		worktree:                                true,
+		filepath.Join(worktree, "src", "given"): true,
+		root:                                    false,
+		filepath.Join(root, "src", "given"):     false,
+	} {
+		if IsAWorktree(path) != inside {
+			t.Errorf("%s is in a worktree: %v, want %v", path, !inside, inside)
+		}
+	}
+}

@@ -121,7 +121,7 @@ func TestThePluginRefusesNothing(t *testing.T) {
 	for _, command := range []string{"bin/commandments judge", "journal sins --changes", "git pull --rebase"} {
 		given := map[string]any{"event": "hook.PreToolUse", "env": "main",
 			"agent": map[string]any{"cwd": root, "role": "worker"}, "tool": map[string]any{"name": "Bash", "command": command},
-			"settings": map[string]any{workerCLIKey: false}}
+			"settings": map[string]any{helpersCLIKey: false}}
 
 		if answer := answerWith(given); answer.Refuse != nil {
 			t.Errorf("%q was refused: %s", command, *answer.Refuse)
@@ -229,11 +229,11 @@ func TestAWorkerRunningTheCLIIsRefusedAtOnceWhenTheSettingDeniesIt(t *testing.T)
 
 	for role, refused := range map[string]bool{"worker": true, "main": false} {
 		line := map[string]any{"v": 1, "event": "command_starting", "session": "s1", "environment": "main", "agent": 9, "role": role,
-			"settings": map[string]any{workerCLIKey: false}, "data": map[string]any{"text": ".journal/plugins/code-commandments/bin/commandments-release rule try x"}}
+			"settings": map[string]any{helpersCLIKey: false}, "data": map[string]any{"text": ".journal/plugins/code-commandments/bin/commandments-release rule try x"}}
 
 		said := Answer4Now(line)
 		if refused != strings.Contains(said, `"refuse"`) {
-			t.Errorf("a %s running the CLI with %s off was answered %s", role, workerCLIKey, said)
+			t.Errorf("a %s running the CLI with %s off was answered %s", role, helpersCLIKey, said)
 		}
 	}
 }

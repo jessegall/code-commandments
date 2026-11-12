@@ -16,3 +16,7 @@ func Hold(path string) func() {
 
 	return func() {}
 }
+
+func HoldInTurn(path string, waiting func()) func() {
+	return Hold(path)
+}

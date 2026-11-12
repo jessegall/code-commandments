@@ -149,7 +149,7 @@ func renderSkills() (int, error) {
 	}
 
 	shared := library.For(filepath.Join(pluginRoot(), skillsFolder), journalProjectRoot(), project)
-	if !workersChosenToRunTheCLI() {
+	if !helpersChosenToRunTheCLI() {
 		shared = shared.WithoutCommands()
 	}
 

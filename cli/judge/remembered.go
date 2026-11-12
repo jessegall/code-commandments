@@ -24,9 +24,10 @@ const (
 	rememberedWeighingsFile = "csharp-weighings.json"
 	readingFile             = "reading"
 	rememberedFolderName    = "remembered"
+	turnFile                = "judging.lock"
 )
 
-// Remembered is what one run keeps for the next in its project's own folder, good only for the build that wrote it: what every detector answered for each file's contents, and what the aggregating C# rules found. It lives at the journal of the project root when the journal drives the project, and under the user's cache otherwise: one folder per project that all its worktrees share, so the plugin's runs, queued runs and runs started by hand remember together and claim the same project. Finding it also hands on the hours the project keeps an unused cache, so the run and every bridge it starts prune by them. Only one run reads a project at a time: a run claims the project while it reads, and a second run that finds it claimed stops at once rather than waiting; the system lets go of the claim the moment its run ends, so a run stopped with ^C or killed blocks nobody.
+// Remembered is what one run keeps for the next in its project's own folder, good only for the build that wrote it: what every detector answered for each file's contents, and what the aggregating C# rules found. It lives at the journal of the project root when the journal drives the project, and under the user's cache otherwise: one folder per project that all its worktrees share, so the plugin's runs, queued runs and runs started by hand remember together and claim the same project. Finding it also hands on the hours the project keeps an unused cache, so the run and every bridge it starts prune by them. Judges take turns across the whole machine, so two never run at once and eat its memory: a run waits for the one before it to end, then claims its project while it reads; the system lets go of both the moment a run ends, so a run stopped with ^C or killed blocks nobody.
 type Remembered struct {
 	Memories  detectors.MemoryFile
 	Weighings WeighingsFile
@@ -71,7 +72,34 @@ func rememberedFolder(project string) string {
 }
 
 func (r Remembered) ReadAlone() (release func(), alone bool) {
-	return atomic.ClaimAt(filepath.Join(filepath.Dir(r.Memories.Path), readingFile)).Take()
+	turn := atomic.HoldInTurn(judgingTurn(), r.waiting)
+
+	claimed, alone := atomic.ClaimAt(filepath.Join(filepath.Dir(r.Memories.Path), readingFile)).Take()
+	if !alone {
+		turn()
+
+		return func() {}, false
+	}
+
+	return func() {
+		claimed()
+		turn()
+	}, true
+}
+
+func (r Remembered) waiting() {
+	if r.Memories.Warn != nil {
+		r.Memories.Warn("· another judge is running on this machine, so this one waits its turn")
+	}
+}
+
+func judgingTurn() string {
+	cache, err := bundle.CacheFolder()
+	if err != nil {
+		return filepath.Join(os.TempDir(), "code-commandments-"+turnFile)
+	}
+
+	return filepath.Join(cache, "code-commandments", turnFile)
 }
 
 func (r Remembered) Load() {
