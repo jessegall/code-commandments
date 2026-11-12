@@ -20,7 +20,12 @@ func journalSaysOf(path string) (journaled, bool) {
 		return journaled{}, false
 	}
 
-	if top := Root(path); top == "" || real(top) != real(said.checkout) {
+	top := Root(path)
+	if top == "" && within(real(path), real(said.checkout)) {
+		return said, true
+	}
+
+	if top == "" || real(top) != real(said.checkout) {
 		return journaled{}, false
 	}
 

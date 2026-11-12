@@ -160,3 +160,26 @@ func TestAConfigWrittenFromAWorktreeLandsAtTheProjectRoot(t *testing.T) {
 		t.Errorf("the detector registered from a worktree never reached the project's config:\n%s", read)
 	}
 }
+
+func TestAFolderTheJournalNamesAsAnAgentsRootReadsItsProjectsConfigWithoutGit(t *testing.T) {
+	project := repository(t)
+	write(t, filepath.Join(project, ".commandments", "config.json"), `{"paths": ["src"], "exclude": ["vendor"]}`)
+
+	copied, err := filepath.EvalSymlinks(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	write(t, filepath.Join(copied, "src", "a.txt"), "a\n")
+
+	t.Setenv("JOURNAL_CHECKOUT_ROOT", copied)
+	t.Setenv("JOURNAL_PROJECT_ROOT", project)
+
+	read, err := config.Load(filepath.Join(copied, "src"))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if !slices.Contains(read.Excluded, "vendor") {
+		t.Errorf("a folder the journal names as an agent's own root, outside git, does not read its project's config: %v", read.Excluded)
+	}
+}

@@ -59,7 +59,7 @@ func rememberedFolder(project string) string {
 	}
 
 	if space := workspace.At(project, ""); space.IsJournalDriven() {
-		return space.Cache(rememberedFolderName)
+		return space.StateDir()
 	}
 
 	cache, err := bundle.CacheFolder()
