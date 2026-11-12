@@ -13,6 +13,8 @@ import io
 import json
 import os
 import sys
+import threading
+import time
 import tokenize
 from dataclasses import dataclass
 from typing import Iterator
@@ -777,6 +779,20 @@ def answered(session: Session, request: str, kept: Kept | None = None) -> None:
         session.forget()
 
 
+def leaves_with_its_parent() -> None:
+    """Ends this bridge once the run that started it is gone. A run killed outright does not always close our input
+    (another process may still hold it, or a request is being compiled), and a bridge left like that compiles on for
+    no one: it is taken in by the system's first process, which is how its parent being gone is seen."""
+    parent = os.getppid()
+
+    def watch() -> None:
+        while os.getppid() == parent:
+            time.sleep(1)
+        os._exit(0)
+
+    threading.Thread(target=watch, daemon=True).start()
+
+
 def kept_in(argv: list[str]) -> Kept | None:
     """The folder `--cache=` names for the lines this bridge keeps between runs; none when it names none."""
     for arg in argv:
@@ -792,6 +808,7 @@ def main(argv: list[str]) -> int:
     session = Session()
     kept = kept_in(argv)
     if "--serve" in argv:
+        leaves_with_its_parent()
         for request in sys.stdin:
             answered(session, request, kept)
         return 0
