@@ -30,7 +30,7 @@ var answeredFromTheFile = []string{
 }
 
 var readAcrossFiles = []string{
-	"resolves", "resolvesLike", "declaredBy", "answeredBy", "declaredElsewhere", "docReference", "constructs",
+	"resolves", "resolvesLike", "targets", "declaredBy", "answeredBy", "declaredElsewhere", "docReference", "constructs",
 
 	"type", "typeLike", "typeShape", "typeOrigin", "elementType", "nullable",
 

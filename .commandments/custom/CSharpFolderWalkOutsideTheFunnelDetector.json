@@ -1,0 +1,37 @@
+{
+  "engine": "csharp",
+  "sin": {
+    "name": "folder-walk-outside-the-funnel",
+    "description": "A call that lists a folder or walks it anywhere but the one funnel, package walk.",
+    "skill": "one-folder-funnel"
+  },
+  "find": {
+    "select": "call",
+    "where": [
+      {
+        "any": [
+          {
+            "targets": "global::System.IO.Directory.Enumerate*"
+          },
+          {
+            "targets": "global::System.IO.Directory.Get*s(*"
+          },
+          {
+            "targets": "global::System.IO.DirectoryInfo.Enumerate*"
+          },
+          {
+            "targets": "global::System.IO.DirectoryInfo.Get*s(*"
+          }
+        ]
+      }
+    ],
+    "reject": [
+      {
+        "testCode": true
+      },
+      {
+        "file": "bridge/roslyn/References.cs"
+      }
+    ]
+  }
+}

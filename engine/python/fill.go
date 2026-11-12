@@ -20,6 +20,8 @@ func fill(codebase *engine.Codebase, changed []string) {
 			facts := node.Node()
 			if target, ok := program.Callee(node); ok {
 				facts.Own().Target = targetOf(target)
+			} else if outside, ok := module.outsideTarget(node); ok {
+				facts.Own().Target = outside
 			}
 			if refers, ok := program.refersTo(node, module); ok {
 				facts.Own().Refers = refers
@@ -99,6 +101,22 @@ func resolvedImport(module *Module, node Node) (string, bool) {
 	}
 
 	return reached.File.Path, true
+}
+
+func (m *Module) outsideTarget(call Node) (*contract.Target, bool) {
+	if call.Kind() != "Call" {
+		return nil, false
+	}
+	id, imported := m.importedName(call.Child("func").DottedName())
+	at := strings.LastIndex(id, ".")
+	if !imported || at < 0 {
+		return nil, false
+	}
+	if _, inside := m.program.ModuleCalled(id[:at]); inside {
+		return nil, false
+	}
+
+	return &contract.Target{Symbol: id, Name: id[at+1:]}, true
 }
 
 func targetOf(def Node) *contract.Target {

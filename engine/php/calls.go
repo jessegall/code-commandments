@@ -132,6 +132,22 @@ func (t *Types) fillTarget(call engine.Match) {
 	if owner, method := t.Callee(call); owner != "" {
 		call.Node().Own().Target = &contract.Target{Symbol: owner + "::" + method + "()", Type: owner, Name: method}
 	}
+	if function := functionCalled(call); function != "" {
+		call.Node().Own().Target = &contract.Target{Symbol: function + "()", Name: function[strings.LastIndex(function, `\`)+1:]}
+	}
+}
+
+func functionCalled(call engine.Match) string {
+	name := call.Child("name")
+	if call.Kind() != "Expr_FuncCall" || !isName(name) {
+		return ""
+	}
+	function := name.Name()
+	if name.Kind() == "Name" && call.Namespace() != "" && (strings.Contains(function, `\`) || declaresFunction(call, function)) {
+		return call.Namespace() + `\` + function
+	}
+
+	return function
 }
 
 func EnclosingClass(node engine.Match) engine.Match {

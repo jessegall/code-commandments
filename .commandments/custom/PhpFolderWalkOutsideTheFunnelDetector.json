@@ -1,0 +1,37 @@
+{
+  "engine": "php",
+  "sin": {
+    "name": "folder-walk-outside-the-funnel",
+    "description": "A call that lists a folder or walks it anywhere but the one funnel, package walk.",
+    "skill": "one-folder-funnel"
+  },
+  "find": {
+    "select": "call",
+    "where": [
+      {
+        "any": [
+          {
+            "targets": "scandir()"
+          },
+          {
+            "targets": "glob()"
+          },
+          {
+            "targets": "opendir()"
+          },
+          {
+            "targets": "readdir()"
+          }
+        ]
+      }
+    ],
+    "reject": [
+      {
+        "testCode": true
+      },
+      {
+        "file": "bridge/php/src/TreeCache.php"
+      }
+    ]
+  }
+}

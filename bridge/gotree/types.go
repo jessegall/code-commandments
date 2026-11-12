@@ -176,6 +176,14 @@ func stub(path string) *types.Package {
 	return empty
 }
 
+func listedTypeOf(held types.Type, origin string) *contract.Type {
+	if listed := typeOf(held, origin); listed != nil {
+		return listed
+	}
+
+	return &contract.Type{Kind: "opaque", Text: types.TypeString(held, qualify), Origin: origin}
+}
+
 func typeOf(held types.Type, origin string) *contract.Type {
 	if held == nil || held == types.Typ[types.Invalid] {
 		return nil
@@ -193,7 +201,7 @@ func typeOf(held types.Type, origin string) *contract.Type {
 		line.ValueType = isValueType(shape.Underlying())
 		line.Nullable = admitsNil(shape.Underlying())
 		for i := range shape.TypeArgs().Len() {
-			line.Args = append(line.Args, typeOf(shape.TypeArgs().At(i), origin))
+			line.Args = append(line.Args, listedTypeOf(shape.TypeArgs().At(i), origin))
 		}
 		line.Element = elementOf(shape.Underlying(), origin)
 	case *types.Pointer:
@@ -203,7 +211,7 @@ func typeOf(held types.Type, origin string) *contract.Type {
 	case *types.Array:
 		line.Kind, line.Args, line.Element, line.ValueType = "array", []*contract.Type{typeOf(shape.Elem(), origin)}, typeOf(shape.Elem(), origin), true
 	case *types.Map:
-		line.Kind, line.Args = "map", []*contract.Type{typeOf(shape.Key(), origin), typeOf(shape.Elem(), origin)}
+		line.Kind, line.Args = "map", []*contract.Type{listedTypeOf(shape.Key(), origin), listedTypeOf(shape.Elem(), origin)}
 		line.Element = typeOf(shape.Elem(), origin)
 	case *types.Chan:
 		line.Kind = "opaque"
@@ -218,20 +226,20 @@ func typeOf(held types.Type, origin string) *contract.Type {
 	case *types.Signature:
 		line.Kind = "function"
 		for i := range shape.Params().Len() {
-			line.Parameters = append(line.Parameters, typeOf(shape.Params().At(i).Type(), origin))
+			line.Parameters = append(line.Parameters, listedTypeOf(shape.Params().At(i).Type(), origin))
 		}
 		line.Returns = resultOf(shape.Results(), origin)
 	case *types.Tuple:
 		line.Kind = "tuple"
 		for i := range shape.Len() {
-			line.Members = append(line.Members, typeOf(shape.At(i).Type(), origin))
+			line.Members = append(line.Members, listedTypeOf(shape.At(i).Type(), origin))
 		}
 	case *types.TypeParam:
 		line.Kind, line.Name = "parameter", shape.Obj().Name()
 	case *types.Union:
 		line.Kind = "union"
 		for i := range shape.Len() {
-			line.Members = append(line.Members, typeOf(shape.Term(i).Type(), origin))
+			line.Members = append(line.Members, listedTypeOf(shape.Term(i).Type(), origin))
 		}
 	default:
 		line.Kind = "opaque"

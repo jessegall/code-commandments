@@ -272,6 +272,14 @@ func (m Match) Resolves() string {
 	return m.node.Resolves
 }
 
+func (m Match) TargetSymbol() string {
+	if m.node == nil || m.node.Target == nil {
+		return ""
+	}
+
+	return m.node.Target.Symbol
+}
+
 func (m Match) HasFlag(flag string) bool {
 	return m.node != nil && slices.Contains(m.node.Flags, flag)
 }

@@ -1,0 +1,46 @@
+{
+  "engine": "python",
+  "sin": {
+    "name": "folder-walk-outside-the-funnel",
+    "description": "A call that lists a folder or walks it anywhere but the one funnel, package walk.",
+    "skill": "one-folder-funnel"
+  },
+  "find": {
+    "select": "call",
+    "where": [
+      {
+        "any": [
+          {
+            "targets": "os.walk"
+          },
+          {
+            "targets": "os.fwalk"
+          },
+          {
+            "targets": "os.listdir"
+          },
+          {
+            "targets": "os.scandir"
+          },
+          {
+            "targets": "glob.glob"
+          },
+          {
+            "targets": "glob.iglob"
+          },
+          {
+            "targets": "shutil.copytree"
+          }
+        ]
+      }
+    ],
+    "reject": [
+      {
+        "testCode": true
+      },
+      {
+        "file": "bridge/mypy/kept.py"
+      }
+    ]
+  }
+}

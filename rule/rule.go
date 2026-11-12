@@ -82,6 +82,7 @@ type Step struct {
 	TextMatches       string          `json:"textMatches,omitempty"`
 	Resolves          string          `json:"resolves,omitempty"`
 	ResolvesLike      string          `json:"resolvesLike,omitempty"`
+	Targets           string          `json:"targets,omitempty"`
 	NamespaceLike     string          `json:"namespaceLike,omitempty"`
 	Layer             string          `json:"layer,omitempty"`
 	HasModifier       string          `json:"hasModifier,omitempty"`
@@ -879,7 +880,7 @@ func (s Step) checks() int {
 
 	for _, set := range []bool{s.Is != "", s.Kind != "", s.Name != "", s.NameIn != nil, s.NameLike != "",
 		s.NameMatches != "", s.NameCase != "", s.NameMood != "", s.Text != nil, s.TextLike != "", s.TextMatches != "", s.Resolves != "",
-		s.ResolvesLike != "", s.NamespaceLike != "", s.Layer != "", s.HasModifier != "", s.HasFlag != "", s.WithinLoop != nil,
+		s.ResolvesLike != "", s.Targets != "", s.NamespaceLike != "", s.Layer != "", s.HasModifier != "", s.HasFlag != "", s.WithinLoop != nil,
 		s.Operator != "", len(s.OperatorIn) > 0, s.Type != "", s.TypeLike != "",
 		len(s.Value) > 0, s.Documented != nil, s.File != "", s.FileMatches != "", s.Position != "", s.Field != "", s.Role != "", s.TopLevel != nil, s.Descendant != nil, s.Child != nil, s.Body != nil, s.Inside != nil,
 		s.Documents != nil, s.Next != nil, s.Previous != nil, s.NestedAtLeast != nil, s.Counts != nil, s.Parameters != nil, s.Arguments != nil,
@@ -907,6 +908,8 @@ func (s *Step) prepare() error {
 		s.pattern = glob(s.TextLike)
 	case s.ResolvesLike != "":
 		s.pattern = glob(strings.TrimPrefix(s.ResolvesLike, `\`))
+	case s.Targets != "":
+		s.pattern = glob(s.Targets)
 	case s.TypeLike != "":
 		s.pattern = glob(strings.TrimPrefix(s.TypeLike, `\`))
 	case s.ElementType != "":
@@ -1186,6 +1189,10 @@ func (s Step) check(match engine.Match) bool {
 		refers := resolved(subject)
 
 		return refers != "" && s.pattern.MatchString(strings.TrimPrefix(refers, `\`))
+	case s.Targets != "":
+		target := subject.TargetSymbol()
+
+		return target != "" && s.pattern.MatchString(target)
 	case s.NamespaceLike != "":
 		namespace := subject.Namespace()
 
@@ -1364,7 +1371,11 @@ func (s Step) check(match engine.Match) bool {
 }
 
 func (s Step) constructs(subject engine.Match) bool {
-	for _, below := range append([]engine.Match{subject}, subject.OwnDescendants()...) {
+	inside := []engine.Match{subject}
+	if !subject.Is(engine.Construction) {
+		inside = append(inside, subject.OwnDescendants()...)
+	}
+	for _, below := range inside {
 		if created := below.Constructed(); created.Exists() && s.namesPattern(created) {
 			return true
 		}

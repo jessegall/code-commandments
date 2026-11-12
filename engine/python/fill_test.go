@@ -101,10 +101,11 @@ func TestACallIsTargetedAtTheDefItReaches(t *testing.T) {
 	if target := callTo(t, checkout, "self.cart.add").Target; target.Type != "shop.pricing.Cart" || target.Name != "add" {
 		t.Errorf("a method's target names %+v", target)
 	}
-	for _, unresolved := range []string{"unknown", "Decimal"} {
-		if target := callTo(t, checkout, unresolved).Target; target != nil {
-			t.Errorf("%s targets %+v", unresolved, target)
-		}
+	if target := callTo(t, checkout, "unknown").Target; target != nil {
+		t.Errorf("unknown targets %+v", target)
+	}
+	if target := callTo(t, checkout, "Decimal").Target; target == nil || target.Symbol != "decimal.Decimal" || target.Name != "Decimal" {
+		t.Errorf("a call into a module outside the codebase is named by its import, not %+v", target)
 	}
 }
 

@@ -21,8 +21,10 @@ func TestASolutionIsCutIntoOneUnitPerProject(t *testing.T) {
 	sources := scan.Walk([]string{root}, source.Excluded{}).Only(source.CSharp)
 
 	var completed [][]string
+	var judged []string
 	units, err := sources.CSharpUnits(func(codebase *engine.Codebase) error {
 		completed = append(completed, pathsOf(codebase))
+		judged = append(judged, judgedOf(codebase)...)
 
 		return nil
 	})
@@ -48,6 +50,7 @@ func TestASolutionIsCutIntoOneUnitPerProject(t *testing.T) {
 			t.Errorf("unit %d spans the projects %v", at, owners)
 		}
 		every = append(every, loaded...)
+		judged = append(judged, judgedOf(codebase)...)
 	}
 
 	whole, err := sources.Load()
@@ -58,6 +61,20 @@ func TestASolutionIsCutIntoOneUnitPerProject(t *testing.T) {
 	if want := pathsOf(whole); !slices.Equal(every, want) {
 		t.Errorf("the units hold %v, the whole solution %v", every, want)
 	}
+	for _, path := range judged {
+		if !slices.Contains(judgedOf(whole), path) {
+			t.Errorf("a unit reads a file as %s, which the whole solution does not: %v", path, judgedOf(whole))
+		}
+	}
+}
+
+func judgedOf(codebase *engine.Codebase) []string {
+	var paths []string
+	for _, file := range codebase.Files() {
+		paths = append(paths, file.FromProject())
+	}
+
+	return paths
 }
 
 func pathsOf(codebase *engine.Codebase) []string {

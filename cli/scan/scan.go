@@ -198,10 +198,8 @@ func (s Sources) Unfilled() (*engine.Codebase, error) {
 		streams = append(streams, stream)
 	}
 
-	codebase := engine.Unfilled(os.ReadFile, streams...)
+	codebase := s.rooted(engine.Unfilled(os.ReadFile, streams...))
 	engine.CountedParsed(len(codebase.Files()))
-	codebase.Scanned(s.roots...)
-	codebase.Rooted(s.project())
 	sayUnreadable(streams)
 
 	if len(incomplete.Bridges) > 0 {
@@ -277,6 +275,13 @@ func (s Sources) tally() func() {
 		done++
 		s.read(min(done, total), total)
 	}
+}
+
+func (s Sources) rooted(codebase *engine.Codebase) *engine.Codebase {
+	codebase.Scanned(s.roots...)
+	codebase.Rooted(s.project())
+
+	return codebase
 }
 
 func (s Sources) project() string {

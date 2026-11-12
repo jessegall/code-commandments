@@ -1,0 +1,88 @@
+{
+  "engine": "go",
+  "sin": {
+    "name": "folder-walk-outside-the-funnel",
+    "description": "A call that lists a folder or walks it anywhere but the one funnel, package walk.",
+    "skill": "one-folder-funnel"
+  },
+  "find": {
+    "select": "call",
+    "where": [
+      {
+        "any": [
+          {
+            "targets": "path/filepath.Walk*"
+          },
+          {
+            "targets": "io/fs.WalkDir"
+          },
+          {
+            "targets": "io/fs.ReadDir"
+          },
+          {
+            "targets": "os.ReadDir"
+          },
+          {
+            "targets": "github.com/jessegall/code-commandments/listing.Of"
+          }
+        ]
+      }
+    ],
+    "reject": [
+      {
+        "file": "walk/**"
+      },
+      {
+        "file": "listing/**"
+      },
+      {
+        "file": "**/*_test.go"
+      },
+      {
+        "file": "bridge/bundle/**"
+      },
+      {
+        "file": "cli/warm/**"
+      },
+      {
+        "file": "cli/agents/**"
+      },
+      {
+        "file": "cli/library/**"
+      },
+      {
+        "file": "cli/doc/**"
+      },
+      {
+        "file": "cli/folder/**"
+      },
+      {
+        "file": "cli/untrack/**"
+      },
+      {
+        "file": "cli/parity/**"
+      },
+      {
+        "file": "catalog/**"
+      },
+      {
+        "file": "skill/**"
+      },
+      {
+        "file": "scripts/**"
+      },
+      {
+        "file": "story/**"
+      },
+      {
+        "file": "detectors/paritytest/**"
+      },
+      {
+        "file": "fixture/**"
+      },
+      {
+        "file": "rule/vocabulary.go"
+      }
+    ]
+  }
+}

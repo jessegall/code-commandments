@@ -21,6 +21,7 @@ type Units struct {
 	header  []byte
 	program []byte
 	units   []unit
+	rooted  func(*engine.Codebase) *engine.Codebase
 }
 
 // unit is one project's lines on disk.
@@ -35,13 +36,14 @@ func (s Sources) CSharpUnits(complete func(*engine.Codebase) error) (*Units, err
 	if len(files) == 0 {
 		return nil, nil
 	}
-	units, err := readCSharp(roots, files, complete)
+	units, err := readCSharp(roots, files, func(codebase *engine.Codebase) error { return complete(s.rooted(codebase)) })
 	if leftUnread(err, len(files)) {
 		return nil, nil
 	}
 	if err != nil {
 		return nil, err
 	}
+	units.rooted = s.rooted
 
 	return units, nil
 }
@@ -115,7 +117,7 @@ func (u *Units) Load(at int) (*engine.Codebase, error) {
 		return nil, fmt.Errorf("unit %s: %w", held.owner, err)
 	}
 
-	return engine.Load(stream), nil
+	return u.rooted(engine.Load(stream)), nil
 }
 
 func (u *Units) Close() error {

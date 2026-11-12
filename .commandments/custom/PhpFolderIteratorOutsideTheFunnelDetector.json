@@ -1,0 +1,34 @@
+{
+  "engine": "php",
+  "sin": {
+    "name": "folder-walk-outside-the-funnel",
+    "description": "A call that lists a folder or walks it anywhere but the one funnel, package walk.",
+    "skill": "one-folder-funnel"
+  },
+  "find": {
+    "select": "construction",
+    "where": [
+      {
+        "any": [
+          {
+            "constructs": "*DirectoryIterator"
+          },
+          {
+            "constructs": "FilesystemIterator"
+          },
+          {
+            "constructs": "GlobIterator"
+          }
+        ]
+      }
+    ],
+    "reject": [
+      {
+        "testCode": true
+      },
+      {
+        "file": "bridge/php/src/Declaration.php"
+      }
+    ]
+  }
+}

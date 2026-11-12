@@ -120,7 +120,7 @@ func (w *writer) target(call *ast.CallExpr) *contract.Target {
 	}
 	object, used := w.facts.Uses[named]
 	if !used {
-		return nil
+		return w.importedTarget(call)
 	}
 	function, isFunction := object.(*types.Func)
 	if !isFunction {
@@ -139,6 +139,23 @@ func (w *writer) target(call *ast.CallExpr) *contract.Target {
 	}
 
 	return reached
+}
+
+func (w *writer) importedTarget(call *ast.CallExpr) *contract.Target {
+	selector, selects := call.Fun.(*ast.SelectorExpr)
+	if !selects {
+		return nil
+	}
+	qualifier, named := selector.X.(*ast.Ident)
+	if !named {
+		return nil
+	}
+	imported, isPackage := w.facts.Uses[qualifier].(*types.PkgName)
+	if !isPackage {
+		return nil
+	}
+
+	return &contract.Target{Symbol: imported.Imported().Path() + "." + selector.Sel.Name, Name: selector.Sel.Name}
 }
 
 func calleeIdent(callee ast.Expr) *ast.Ident {
