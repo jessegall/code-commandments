@@ -3,6 +3,9 @@ package gotree
 import (
 	"testing"
 	"testing/fstest"
+	"encoding/json"
+	"os"
+	"path/filepath"
 )
 
 func TestAChangedBridgeIsAnotherIdentityAndATestFileIsNot(t *testing.T) {
@@ -18,5 +21,24 @@ func TestAChangedBridgeIsAnotherIdentityAndATestFileIsNot(t *testing.T) {
 	}
 	if bridgeIdentity == "" {
 		t.Error("the bridge has no identity of its own code")
+	}
+}
+
+func TestAKeptShapeIsReadInPlaceOfParsingTheFile(t *testing.T) {
+	t.Setenv("XDG_CACHE_HOME", t.TempDir())
+	path := filepath.Join(t.TempDir(), "a.go")
+	source := []byte("package a\n\nfunc A() {}\n")
+	if err := os.WriteFile(path, source, 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	kept, _ := keptLinesFor()
+	planted, _ := json.Marshal(shape{Skeleton: "planted"})
+	if err := os.WriteFile(filepath.Join(kept.folder, "shape-"+fingerprint(source)), planted, 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	if held := kept.shapeOf(path); held.Skeleton != "planted" {
+		t.Errorf("the shape of a file whose shape is kept was %q: it was parsed again", held.Skeleton)
 	}
 }

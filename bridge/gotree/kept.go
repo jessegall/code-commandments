@@ -13,6 +13,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strconv"
 	"time"
 
 	"github.com/jessegall/code-commandments/bridge/bundle"
@@ -42,33 +43,35 @@ func identityOf(sources fs.FS) string {
 	return hex.EncodeToString(digest.Sum(nil))
 }
 
-// keptLines are the Go file lines an earlier run wrote, kept on disk with their path left out under a key of the file's own text and the skeleton of every Go file the run reads: each file with its function bodies cut out, which is all one file's types can see of another. A change inside a body keeps every other file's line; a changed declaration anywhere starts them over. A line is touched when read, so pruning by age spares what is used.
+// keptLines are the Go file lines an earlier run wrote, kept on disk with their path left out under a key of the file's own text, its package's import path and the shape of everything its types can see: the skeleton of each file of its package and of every package of its module it imports, near or far, each file with its function bodies cut out. A change inside a body keeps every line; a changed declaration renews the lines of its own package and of the packages that import it, and no other. A file's shape is itself kept under the fingerprint of its text, so a file that did not change is never parsed to key it. A line is touched when read, so pruning by age spares what is used.
 type keptLines struct {
 	folder   string
-	skeleton string
+	texts    map[string][]byte
+	shapes   map[string]shape
+	closures map[string]string
+	modules  map[string]Module
+	pins     map[string]string
 }
 
-func keptLinesFor(found []string, packages []Package) (keptLines, bool) {
+// shape is what a file shows the files that import its package: the fingerprint of its text with the function bodies cut out, and the packages it imports.
+type shape struct {
+	Skeleton string   `json:"skeleton"`
+	Imports  []string `json:"imports"`
+}
+
+func keptLinesFor() (*keptLines, bool) {
 	folder, err := bundle.TreesFolder("go")
 	if err != nil {
-		return keptLines{}, false
+		return nil, false
 	}
 
-	modules := map[string]Module{}
-	roots := map[string]bool{}
-	for _, one := range packages {
-		if module, found := moduleOf(one.Folder, modules); found {
-			roots[module.Root] = true
-		}
-	}
-
-	return keptLines{folder: folder, skeleton: skeletonOf(found, roots)}, true
+	return &keptLines{folder: folder, texts: map[string][]byte{}, shapes: map[string]shape{}, closures: map[string]string{}, modules: map[string]Module{}, pins: map[string]string{}}, true
 }
 
-func (k keptLines) allOf(one Package, context func(string) bool) ([]*contract.File, bool) {
+func (k *keptLines) allOf(one Package, context func(string) bool) ([]*contract.File, bool) {
 	var files []*contract.File
 	for _, path := range one.Files {
-		file, held := k.read(k.keyOf(path, one.Path), path, context(path))
+		file, held := k.read(k.keyOf(path, one), path, context(path))
 		if !held {
 			return nil, false
 		}
@@ -78,14 +81,14 @@ func (k keptLines) allOf(one Package, context func(string) bool) ([]*contract.Fi
 	return files, len(files) > 0
 }
 
-func (k keptLines) keyOf(path, module string) string {
-	source, err := read(path)
+func (k *keptLines) keyOf(path string, one Package) string {
+	source, err := k.text(path)
 	if err != nil {
 		return ""
 	}
 
 	digest := sha256.New()
-	for _, part := range []string{Version(), bridgeIdentity, module, k.skeleton} {
+	for _, part := range []string{Version(), bridgeIdentity, one.Path, k.closureOf(one.Folder, one.Files), k.pinsOf(one.Folder)} {
 		digest.Write([]byte(part))
 		digest.Write([]byte{0})
 	}
@@ -94,7 +97,119 @@ func (k keptLines) keyOf(path, module string) string {
 	return hex.EncodeToString(digest.Sum(nil))
 }
 
-func (k keptLines) read(key, path string, context bool) (*contract.File, bool) {
+func (k *keptLines) text(path string) ([]byte, error) {
+	if held, read := k.texts[path]; read {
+		return held, nil
+	}
+
+	source, err := read(path)
+	if err == nil {
+		k.texts[path] = source
+	}
+
+	return source, err
+}
+
+// closureOf is the fingerprint of the shape of a package's files and of every package of its module it imports, each package walked once per run.
+func (k *keptLines) closureOf(folder string, files []string) string {
+	var parts, imported []string
+	for _, path := range files {
+		held := k.shapeOf(path)
+		parts = append(parts, held.Skeleton)
+		imported = append(imported, held.Imports...)
+	}
+	sort.Strings(parts)
+
+	module, inModule := moduleOf(folder, k.modules)
+	sort.Strings(imported)
+	for at, path := range imported {
+		if !inModule || (at > 0 && imported[at-1] == path) {
+			continue
+		}
+		if path == module.Path || strings.HasPrefix(path, module.Path+"/") {
+			parts = append(parts, path+"="+k.closureOfImport(module, path))
+		}
+	}
+
+	digest := sha256.New()
+	for _, part := range parts {
+		digest.Write([]byte(part))
+		digest.Write([]byte{0})
+	}
+
+	return hex.EncodeToString(digest.Sum(nil))
+}
+
+func (k *keptLines) closureOfImport(module Module, path string) string {
+	if held, walked := k.closures[path]; walked {
+		return held
+	}
+	k.closures[path] = ""
+
+	folder := filepath.Join(module.Root, filepath.FromSlash(strings.TrimPrefix(strings.TrimPrefix(path, module.Path), "/")))
+	entries, _ := os.ReadDir(folder)
+	var files []string
+	for _, entry := range entries {
+		name := entry.Name()
+		if !entry.IsDir() && strings.HasSuffix(name, ".go") && !strings.HasSuffix(name, "_test.go") && builds(folder, name) {
+			files = append(files, filepath.Join(folder, name))
+		}
+	}
+
+	closure := k.closureOf(folder, files)
+	k.closures[path] = closure
+
+	return closure
+}
+
+func (k *keptLines) shapeOf(path string) shape {
+	source, err := k.text(path)
+	if err != nil {
+		return shape{}
+	}
+	print := fingerprint(source)
+	if held, read := k.shapes[print]; read {
+		return held
+	}
+
+	entry := filepath.Join(k.folder, "shape-"+print)
+	var held shape
+	if stored, err := os.ReadFile(entry); err == nil && json.Unmarshal(stored, &held) == nil {
+		k.shapes[print] = held
+
+		return held
+	}
+
+	held = shaped(path, source)
+	k.shapes[print] = held
+	if written, err := json.Marshal(held); err == nil {
+		stored(k.folder, entry, written)
+	}
+
+	return held
+}
+
+func (k *keptLines) pinsOf(folder string) string {
+	module, found := moduleOf(folder, k.modules)
+	if !found {
+		return ""
+	}
+	if held, read := k.pins[module.Root]; read {
+		return held
+	}
+
+	digest := sha256.New()
+	for _, file := range []string{"go.mod", "go.sum"} {
+		if text, err := os.ReadFile(filepath.Join(module.Root, file)); err == nil {
+			digest.Write([]byte(fingerprint(text)))
+		}
+	}
+	k.pins[module.Root] = hex.EncodeToString(digest.Sum(nil))
+
+	return k.pins[module.Root]
+}
+
+func (k *keptLines) read(key, path string, context bool) (*contract.File, bool) {
 	entry := filepath.Join(k.folder, key+".line")
 
 	stored, err := os.ReadFile(entry)
@@ -114,7 +229,7 @@ func (k keptLines) read(key, path string, context bool) (*contract.File, bool) {
 	return &file, true
 }
 
-func (k keptLines) keep(key string, file *contract.File) {
+func (k *keptLines) keep(key string, file *contract.File) {
 	pathless := *file
 	pathless.Path, pathless.Context = "", false
 
@@ -123,7 +238,11 @@ func (k keptLines) keep(key string, file *contract.File) {
 		return
 	}
 
-	draft, err := os.CreateTemp(k.folder, ".writing-")
+	stored(k.folder, filepath.Join(k.folder, key+".line"), written)
+}
+
+func stored(folder, entry string, written []byte) {
+	draft, err := os.CreateTemp(folder, ".writing-")
 	if err != nil {
 		return
 	}
@@ -135,33 +254,25 @@ func (k keptLines) keep(key string, file *contract.File) {
 		return
 	}
 	draft.Close()
-	os.Rename(draft.Name(), filepath.Join(k.folder, key+".line"))
+	os.Rename(draft.Name(), entry)
 }
 
-func skeletonOf(found []string, roots map[string]bool) string {
-	var parts []string
-	for root := range roots {
-		for _, file := range []string{"go.mod", "go.sum"} {
-			if text, err := os.ReadFile(filepath.Join(root, file)); err == nil {
-				parts = append(parts, fingerprint(text))
-			}
-		}
-	}
-
+// shaped is a file's shape read from its text: its skeleton and its imports.
+func shaped(path string, source []byte) shape {
 	fset := token.NewFileSet()
-	for _, path := range found {
-		if source, err := read(path); err == nil {
-			parts = append(parts, fingerprint(withoutBodies(fset, path, source)))
+	parsed, _ := parser.ParseFile(fset, path, source, parser.SkipObjectResolution)
+	if parsed == nil {
+		return shape{Skeleton: fingerprint(source)}
+	}
+
+	held := shape{Skeleton: fingerprint(withoutBodies(fset, parsed, source))}
+	for _, spec := range parsed.Imports {
+		if imported, err := strconv.Unquote(spec.Path.Value); err == nil {
+			held.Imports = append(held.Imports, imported)
 		}
 	}
 
-	sort.Strings(parts)
-	digest := sha256.New()
-	for _, part := range parts {
-		digest.Write([]byte(part))
-	}
-
-	return hex.EncodeToString(digest.Sum(nil))
+	return held
 }
 
 func fingerprint(text []byte) string {
@@ -170,12 +281,7 @@ func fingerprint(text []byte) string {
 	return hex.EncodeToString(sum[:])
 }
 
-func withoutBodies(fset *token.FileSet, path string, source []byte) []byte {
-	parsed, _ := parser.ParseFile(fset, path, source, parser.SkipObjectResolution)
-	if parsed == nil {
-		return source
-	}
-
+func withoutBodies(fset *token.FileSet, parsed *ast.File, source []byte) []byte {
 	var kept []byte
 	from := 0
 	for _, declared := range parsed.Decls {

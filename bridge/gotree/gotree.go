@@ -56,7 +56,7 @@ func Stream(paths, write []string) (*contract.Stream, error) {
 	fset := token.NewFileSet()
 	packages := PackagesOf(found)
 	checked := newChecker(fset, packages)
-	kept, keeps := keptLinesFor(found, packages)
+	kept, keeps := keptLinesFor()
 	written := map[string]bool{}
 	var files []*contract.File
 
@@ -82,7 +82,7 @@ func Stream(paths, write []string) (*contract.Stream, error) {
 
 			key := ""
 			if keeps {
-				key = kept.keyOf(path, one.Path)
+				key = kept.keyOf(path, one)
 				if held, read := kept.read(key, path, context(path)); read {
 					files = append(files, held)
 

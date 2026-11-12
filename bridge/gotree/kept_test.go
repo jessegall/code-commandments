@@ -24,6 +24,7 @@ func checkoutOf(t *testing.T, files map[string]string) string {
 		t.Fatal(err)
 	}
 	for name, source := range files {
+		os.MkdirAll(filepath.Dir(filepath.Join(root, name)), 0o755)
 		if err := os.WriteFile(filepath.Join(root, name), []byte(source), 0o644); err != nil {
 			t.Fatal(err)
 		}
@@ -114,5 +115,77 @@ func TestAnotherWorktreeOfTheSameGoSharesTheKeptLinesUnderItsOwnPaths(t *testing
 	}
 	if strings.Contains(again, first) || !strings.Contains(again, second) {
 		t.Error("the worktree's kept lines name the checkout they were first written in, not its own")
+	}
+}
+
+var store = map[string]string{
+	"go.mod":         "module example.com/store\n\ngo 1.22\n",
+	"money/money.go": "package money\n\ntype Money struct{ Cents int }\n",
+	"cart/cart.go":   "package cart\n\nimport \"example.com/store/money\"\n\ntype Cart struct{ Total money.Money }\n",
+	"other/other.go": "package other\n\ntype Other struct{}\n",
+}
+
+func TestAChangedDeclarationRenewsOnlyThePackagesThatImportIt(t *testing.T) {
+	cache := t.TempDir()
+	t.Setenv("XDG_CACHE_HOME", cache)
+	root := checkoutOf(t, store)
+
+	streamed(t, root)
+	tampered(t, cache, `"Cart"`, `"KeptCart"`)
+	tampered(t, cache, `"Other"`, `"KeptOther"`)
+
+	if err := os.WriteFile(filepath.Join(root, "money", "money.go"), []byte("package money\n\ntype Money struct {\n\tCents    int\n\tCurrency string\n}\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	again := streamed(t, root)
+	if strings.Contains(again, "KeptCart") {
+		t.Error("Money gained a field, yet cart.go, which imports it, was written from its kept line")
+	}
+	if !strings.Contains(again, "KeptOther") {
+		t.Error("Money gained a field, and other.go, which imports nothing of it, was parsed again")
+	}
+}
+
+func TestAOneFileRunAndAWholeRunShareTheirKeptLines(t *testing.T) {
+	cache := t.TempDir()
+	t.Setenv("XDG_CACHE_HOME", cache)
+	root := checkoutOf(t, store)
+
+	streamed(t, root)
+	tampered(t, cache, `"Cart"`, `"KeptCart"`)
+
+	stream, err := gotree.Stream([]string{filepath.Join(root, "cart", "cart.go")}, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	written, _ := json.Marshal(stream.Files)
+
+	if !strings.Contains(string(written), "KeptCart") {
+		t.Error("a run over cart.go alone parsed it again, though the whole run before kept its line")
+	}
+}
+
+func TestAOneFileRunSeesAChangeInAPackageItImportsThatTheRunDoesNotRead(t *testing.T) {
+	cache := t.TempDir()
+	t.Setenv("XDG_CACHE_HOME", cache)
+	root := checkoutOf(t, store)
+	cart := filepath.Join(root, "cart", "cart.go")
+
+	gotree.Stream([]string{cart}, nil)
+	tampered(t, cache, `"Cart"`, `"KeptCart"`)
+
+	if err := os.WriteFile(filepath.Join(root, "money", "money.go"), []byte("package money\n\ntype Money struct{ Euros int }\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	stream, err := gotree.Stream([]string{cart}, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	written, _ := json.Marshal(stream.Files)
+
+	if strings.Contains(string(written), "KeptCart") {
+		t.Error("money.go changed its declaration, yet a run over cart.go alone wrote its stale kept line")
 	}
 }

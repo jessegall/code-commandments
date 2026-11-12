@@ -20,9 +20,11 @@ func GoFiles(paths []string) []string {
 		if seen[real] || !strings.HasSuffix(real, ".go") {
 			return
 		}
-		if _, err := os.ReadFile(real); err != nil {
+		opened, err := os.Open(real)
+		if err != nil {
 			return
 		}
+		opened.Close()
 		seen[real] = true
 		found = append(found, real)
 	}
