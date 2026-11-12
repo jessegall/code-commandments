@@ -14,7 +14,7 @@ import (
 const (
 	windowsFolder = "windows"
 
-	windowLeftOpenAfter = 2 * time.Minute
+	windowLeftOpenAfter = 15 * time.Minute
 )
 
 // EditWindow is one agent's live edits, gathered on disk while its window is open: the first edit opens it and starts the one background run that judges them, every later edit only joins it, and that run closes it when it takes them. A window whose run died without closing it counts as closed once it has stood open far longer than any window lasts, and what an agent left behind is swept once nothing has touched it for the hours the project keeps an unused cache. A run that finds the project being read by another puts the edits it took back, closed, so the agent's next edit opens a window that takes them too: nothing is dropped.
@@ -74,6 +74,13 @@ func (w EditWindow) Close() [][]byte {
 	}
 
 	return edits
+}
+
+func (w EditWindow) Reopen() {
+	release := atomic.Hold(w.path(".lock"))
+	defer release()
+
+	os.Remove(w.path(".open"))
 }
 
 func (w EditWindow) PutBack(edits [][]byte) {

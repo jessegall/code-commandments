@@ -223,11 +223,14 @@ func judge4Detached(raw []byte, line map[string]any) {
 		return
 	}
 
-	if asText(line["event"]) == editedEvent && !EditWindowIn(os.Getenv(pluginData), held.Agent).Gather(raw) {
+	window := EditWindowIn(os.Getenv(pluginData), held.Agent)
+	if asText(line["event"]) == editedEvent && !window.Gather(raw) {
 		return
 	}
 
-	judgeDetached(raw)
+	if !judgeDetached(raw) {
+		window.Reopen()
+	}
 }
 
 func gatheredIn(window EditWindow, given map[string]any) (map[string]any, [][]byte) {
@@ -257,28 +260,34 @@ func gatheredIn(window EditWindow, given map[string]any) (map[string]any, [][]by
 	return batched(batch).given, edits
 }
 
-func judgeDetached(raw []byte) {
+func judgeDetached(raw []byte) bool {
 	data := os.Getenv(pluginData)
-	if data == "" {
-		return
+	journal := journalBinary()
+	if data == "" || journal == "" {
+		return false
 	}
 
 	self, err := os.Executable()
 	if err != nil {
-		return
+		return false
 	}
 
 	event, err := keptEventIn(data, raw)
 	if err != nil {
-		return
+		return false
 	}
 
-	run := exec.Command(journalProgram(), judgingThrough(self, event, agentOfEvent(raw))...)
+	run := exec.Command(journal, judgingThrough(self, event, agentOfEvent(raw))...)
 	detach(run)
 
-	if run.Start() == nil {
-		run.Process.Release()
+	if run.Start() != nil {
+		os.Remove(event)
+
+		return false
 	}
+	run.Process.Release()
+
+	return true
 }
 
 func judgingThrough(self, event string, agent int) []string {
@@ -315,14 +324,6 @@ func agentOfEvent(raw []byte) int {
 	}
 
 	return asAgent(line["agent"])
-}
-
-func journalProgram() string {
-	if found, err := exec.LookPath("journal"); err == nil {
-		return found
-	}
-
-	return filepath.Join(os.Getenv(journalRoot), ".journal", "bin", "journal")
 }
 
 func judgeTheEventIn(path string, console cli.Console) {

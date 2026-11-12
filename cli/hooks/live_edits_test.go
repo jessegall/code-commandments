@@ -237,3 +237,27 @@ func TestAWorkerRunningTheCLIIsRefusedAtOnceWhenTheSettingDeniesIt(t *testing.T)
 		}
 	}
 }
+
+func TestAnEditWhoseJudgingCannotStartLeavesNoWindowOpen(t *testing.T) {
+	root := t.TempDir()
+	data := t.TempDir()
+	t.Setenv(pluginData, data)
+	t.Setenv("PATH", t.TempDir())
+	t.Setenv("JOURNAL_BIN", "")
+	t.Setenv(journalRoot, t.TempDir())
+
+	line := editedLine(root, "order.py", map[string]any{liveEditsKey: true})
+	raw, _ := json.Marshal(line)
+	judge4Detached(raw, line)
+
+	window := EditWindowIn(data, 7)
+	if window.IsOpen() {
+		t.Error("an edit whose judging could not start left its window open, so the agent's next edits start nothing")
+	}
+	if !window.Gather([]byte(`{"n":2}`)) {
+		t.Error("the next edit did not open a window of its own")
+	}
+	if kept, _ := os.ReadDir(filepath.Join(data, eventsFolder)); len(kept) != 0 {
+		t.Errorf("an event file was left for a run that never started: %v", kept)
+	}
+}

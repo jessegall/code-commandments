@@ -4,6 +4,7 @@ import (
 	"errors"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 	"time"
 )
@@ -82,10 +83,14 @@ func journalBinary() string {
 		return named
 	}
 
-	found, err := exec.LookPath("journal")
-	if err != nil {
-		return ""
+	if found, err := exec.LookPath("journal"); err == nil {
+		return found
 	}
 
-	return found
+	beside := filepath.Join(os.Getenv(journalRoot), ".journal", "bin", "journal")
+	if info, err := os.Stat(beside); err == nil && !info.IsDir() {
+		return beside
+	}
+
+	return ""
 }
