@@ -2,10 +2,14 @@ package hooks
 
 import (
 	"encoding/json"
+	"io"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
+
+	"github.com/jessegall/code-commandments/cli"
 )
 
 func editedLine(root, file string, settings map[string]any) map[string]any {
@@ -136,5 +140,37 @@ func TestWithLiveJudgingOffAnEditIsNotEvenRecorded(t *testing.T) {
 
 	if kept, _ := os.ReadDir(filepath.Join(data, "worker-edits")); len(kept) != 0 {
 		t.Errorf("an edit with live judging off was recorded: %v", kept)
+	}
+}
+
+func TestABackgroundJudgingIsStartedThroughTheJournalsQueue(t *testing.T) {
+	said := strings.Join(judgingThrough("/plugin/bin/commandments-release", "/data/events/event-1.json", 7), " ")
+
+	if want := "plugin run --kind judge --agent 7 -- /plugin/bin/commandments-release plugin-hook --judge-event=/data/events/event-1.json"; said != want {
+		t.Errorf("the plugin starts its judging as %q, want %q", said, want)
+	}
+
+	if said := strings.Join(judgingThrough("/bin/c", "/e.json", 0), " "); strings.Contains(said, "--agent") {
+		t.Errorf("an event of no agent names one: %q", said)
+	}
+}
+
+func TestTheEventABackgroundJudgingReadsIsKeptInAFileAndRemovedOnceRead(t *testing.T) {
+	data := t.TempDir()
+	t.Setenv(pluginData, data)
+
+	event, err := keptEventIn(data, []byte(`{"v":1,"event":"idle","agent":7}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if filepath.Dir(event) != filepath.Join(data, eventsFolder) {
+		t.Errorf("the event is kept at %s, outside the plugin's events folder", event)
+	}
+
+	judgeTheEventIn(event, cli.Console{Out: io.Discard, Err: io.Discard})
+
+	if _, err := os.Stat(event); !os.IsNotExist(err) {
+		t.Error("the event file is still there after its judging read it")
 	}
 }

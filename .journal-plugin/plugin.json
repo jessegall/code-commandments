@@ -162,6 +162,13 @@
             "default": "5",
             "group": "Performance"
         },
+        "judge_at_once": {
+            "title": "Judging runs at once",
+            "help": "How many judging runs the plugin starts may run side by side. Each one the plugin starts goes through the journal's process queue, which holds the next back until fewer than this many run.",
+            "type": "number",
+            "default": "1",
+            "group": "Performance"
+        },
         "cache_hours": {
             "title": "Hours an unused cache is kept",
             "help": "How long anything kept between runs stays once nothing uses it: the parsed trees of every language, what each rule answered per file, mypy's cache and the edit windows. Every use resets the clock, so only what went untouched for the whole time is removed.",

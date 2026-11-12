@@ -11,13 +11,17 @@ import (
 	"strings"
 	"time"
 
+	"github.com/jessegall/code-commandments/bridge/bundle"
 	"github.com/jessegall/code-commandments/cli"
 	"github.com/jessegall/code-commandments/cli/help"
 )
 
 const (
 	protocol4 = 1
-	judging   = "COMMANDMENTS_JUDGING"
+
+	judgeKind        = "judge"
+	judgeEventOption = "judge-event"
+	eventsFolder     = "events"
 )
 
 const updatedEvent = "plugin.updated"
@@ -60,24 +64,22 @@ func (PluginHook) Names() []string {
 func (PluginHook) Help() help.Help {
 	return help.Of("The agent journal plugin's program — reads one event line from stdin and answers it at once: an edit, a command and a stop with nothing, and every other event with what its handlers found.").
 		Form("plugin-hook", "answer the event line on stdin (run by the journal plugin; you rarely run this by hand)").
+		Option("--"+judgeEventOption+"=FILE", "judge the event kept in FILE, then remove it: the background run the plugin starts through `journal plugin run --kind judge`").
 		Note("Nothing is judged on the way out, and nothing is refused. With `judge_edits` off an edit and a stop are left alone entirely. With it on, an agent's edits are gathered for `judge_edit_window` seconds, the first one starting a background run that judges them together and writes what it finds to the queue the journal drains at the agent's next hook. A journal that gives the plugin no folder of its own drains no queue, and then every event is answered in full, as before a queue existed.").
 		In(help.Hooks)
 }
 
 func (PluginHook) Run(in *cli.Input, console cli.Console) (int, error) {
-	raw, _ := io.ReadAll(os.Stdin)
-	var line map[string]any
-	if json.Unmarshal(bytes.TrimSpace(raw), &line) != nil || line == nil {
-		console.Write("\n")
+	if event, judges := in.Option(judgeEventOption); judges {
+		judgeTheEventIn(event, console)
 
 		return 0, nil
 	}
 
-	if os.Getenv(judging) != "" && namedAsTheKey(asText(line["event"])) == deliveringEvent {
-		if save, alone := rememberedAround(servedRoot(), console.Warn); alone {
-			defer save()
-			mergeOf(line).judgesAfterwards()
-		}
+	raw, _ := io.ReadAll(os.Stdin)
+	var line map[string]any
+	if json.Unmarshal(bytes.TrimSpace(raw), &line) != nil || line == nil {
+		console.Write("\n")
 
 		return 0, nil
 	}
@@ -88,12 +90,6 @@ func (PluginHook) Run(in *cli.Input, console cli.Console) (int, error) {
 		}
 
 		return code, err
-	}
-
-	if os.Getenv(judging) != "" {
-		Judge4Into(line, os.Getenv(pluginData))
-
-		return 0, nil
 	}
 
 	console.Write(Answer4Now(line) + "\n")
@@ -253,7 +249,8 @@ func gatheredIn(window EditWindow, given map[string]any) map[string]any {
 }
 
 func judgeDetached(raw []byte) {
-	if _, queued := Queue4In(os.Getenv(pluginData)); !queued {
+	data := os.Getenv(pluginData)
+	if data == "" {
 		return
 	}
 
@@ -262,19 +259,81 @@ func judgeDetached(raw []byte) {
 		return
 	}
 
-	event, err := momentFile(raw)
+	event, err := keptEventIn(data, raw)
 	if err != nil {
 		return
 	}
-	defer event.Close()
 
-	run := exec.Command(self, "plugin-hook")
-	run.Stdin = event
-	run.Env = append(os.Environ(), judging+"=1")
+	run := exec.Command(journalProgram(), judgingThrough(self, event, agentOfEvent(raw))...)
 	detach(run)
 
 	if run.Start() == nil {
 		run.Process.Release()
+	}
+}
+
+func judgingThrough(self, event string, agent int) []string {
+	arguments := []string{"plugin", "run", "--kind", judgeKind}
+	if agent != 0 {
+		arguments = append(arguments, "--agent", strconv.Itoa(agent))
+	}
+
+	return append(arguments, "--", self, "plugin-hook", "--"+judgeEventOption+"="+event)
+}
+
+func keptEventIn(data string, raw []byte) (string, error) {
+	folder := filepath.Join(data, eventsFolder)
+	bundle.Sweep(folder, time.Now())
+	if err := os.MkdirAll(folder, 0o755); err != nil {
+		return "", err
+	}
+
+	file, err := os.CreateTemp(folder, "event-*.json")
+	if err != nil {
+		return "", err
+	}
+	defer file.Close()
+
+	_, err = file.Write(raw)
+
+	return file.Name(), err
+}
+
+func agentOfEvent(raw []byte) int {
+	var line map[string]any
+	if json.Unmarshal(bytes.TrimSpace(raw), &line) != nil {
+		return 0
+	}
+
+	return asAgent(line["agent"])
+}
+
+func journalProgram() string {
+	if found, err := exec.LookPath("journal"); err == nil {
+		return found
+	}
+
+	return filepath.Join(os.Getenv(journalRoot), ".journal", "bin", "journal")
+}
+
+func judgeTheEventIn(path string, console cli.Console) {
+	raw, err := os.ReadFile(path)
+	os.Remove(path)
+
+	var line map[string]any
+	if err != nil || json.Unmarshal(bytes.TrimSpace(raw), &line) != nil || line == nil {
+		return
+	}
+
+	if namedAsTheKey(asText(line["event"])) != deliveringEvent {
+		Judge4Into(line, os.Getenv(pluginData))
+
+		return
+	}
+
+	if save, alone := rememberedAround(servedRoot(), console.Warn); alone {
+		defer save()
+		mergeOf(line).judgesAfterwards()
 	}
 }
 

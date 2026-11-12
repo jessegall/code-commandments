@@ -7,13 +7,9 @@ import (
 	"io"
 	"io/fs"
 	"os"
-	"os/exec"
 	"path/filepath"
-	"strconv"
 	"strings"
-	"syscall"
 	"testing"
-	"time"
 
 	"github.com/jessegall/code-commandments/bridge"
 	"github.com/jessegall/code-commandments/bridge/bridgetest"
@@ -152,55 +148,5 @@ func TestAServedPythonBridgeEndsOnceTheRunThatStartedItIsKilled(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	pidFile := filepath.Join(t.TempDir(), "bridge.pid")
-	quoted := make([]string, len(command))
-	for at, word := range command {
-		quoted[at] = "'" + word + "'"
-	}
-
-	run := exec.Command("sh", "-c", "sleep 600 | "+strings.Join(quoted, " ")+" --serve & echo $! > "+pidFile+"; wait")
-	if err := run.Start(); err != nil {
-		t.Fatal(err)
-	}
-
-	var bridgePid int
-	for deadline := time.Now().Add(10 * time.Second); time.Now().Before(deadline); time.Sleep(100 * time.Millisecond) {
-		if written, err := os.ReadFile(pidFile); err == nil {
-			if pid, err := strconv.Atoi(strings.TrimSpace(string(written))); err == nil {
-				bridgePid = pid
-				break
-			}
-		}
-	}
-	if bridgePid == 0 {
-		t.Fatal("the bridge never started")
-	}
-	t.Cleanup(func() { syscall.Kill(bridgePid, syscall.SIGKILL) })
-
-	time.Sleep(2 * time.Second)
-	run.Process.Signal(syscall.SIGKILL)
-	run.Wait()
-
-	for deadline := time.Now().Add(10 * time.Second); time.Now().Before(deadline); time.Sleep(200 * time.Millisecond) {
-		if !running(bridgePid) {
-			return
-		}
-	}
-
-	t.Error("the served bridge kept running after the run that started it was killed, its input still open")
-}
-
-func running(pid int) bool {
-	if syscall.Kill(pid, 0) != nil {
-		return false
-	}
-
-	stat, err := os.ReadFile(filepath.Join("/proc", strconv.Itoa(pid), "stat"))
-	if err != nil {
-		return true
-	}
-
-	fields := strings.Fields(string(stat[bytes.LastIndexByte(stat, ')')+1:]))
-
-	return len(fields) == 0 || fields[0] != "Z"
+	bridgetest.EndsWithItsRun(t, command)
 }

@@ -44,6 +44,7 @@ static int Run(string[] args, Workspace workspace)
 
     if (args.Contains("--serve"))
     {
+        Parent.LeaveWithIt();
         using var output = Console.OpenStandardOutput();
         Serve(Console.In, output, workspace, cached);
 
@@ -102,6 +103,34 @@ static void Serve(TextReader input, Stream output, Workspace workspace, string? 
         new ContractWriter(request.Paths, request.Written, Checkout.Cache(cached, request.Paths)).Write(output, workspace);
         output.Flush();
     }
+}
+
+// The run that started a serving bridge: a run killed outright does not always close the bridge's input, and a bridge
+// left like that would compile for no one, so it looks once a second whether it was taken in by the system's first
+// process, which is how its parent being gone is seen, and ends then.
+internal static class Parent
+{
+    public static void LeaveWithIt()
+    {
+        if (OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        var parent = getppid();
+        new Thread(() =>
+        {
+            while (getppid() == parent)
+            {
+                Thread.Sleep(1000);
+            }
+
+            Environment.Exit(0);
+        }) { IsBackground = true }.Start();
+    }
+
+    [System.Runtime.InteropServices.DllImport("libc")]
+    private static extern int getppid();
 }
 
 // The checkout a run reads: the folder holding the repository of its first path, which every kept line is relative to.

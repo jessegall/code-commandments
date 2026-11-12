@@ -145,6 +145,7 @@ async function main() {
         await stream(request, write)
         return
     }
+    leavesWithItsParent()
     const lines = createInterface({ input: process.stdin })
     let answering = Promise.resolve()
     lines.on('line', (line) => {
@@ -152,6 +153,22 @@ async function main() {
         const asked = JSON.parse(line)
         answering = answering.then(() => stream({ paths: asked.paths ?? [], write: asked.write ?? [], renames: request.renames, contents: asked.contents ?? {}, cache: request.cache }, write)).catch(fail)
     })
+}
+
+/**
+ * Ends this bridge once the run that started it is gone. A run killed outright does not always close our input, and a
+ * bridge left like that would answer no one: once a second it asks whether the process that started it still exists
+ * (node reads its parent's id once, at start), and ends when it does not.
+ */
+function leavesWithItsParent() {
+    const parent = process.ppid
+    setInterval(() => {
+        try {
+            process.kill(parent, 0)
+        } catch {
+            process.exit(0)
+        }
+    }, 1000).unref()
 }
 
 /** Adds `piece` to what is gathered of a line to be kept, giving up on a line too large to keep. */

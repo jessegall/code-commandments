@@ -42,7 +42,22 @@ try {
         (new Stream($request))->write(STDOUT);
         exit(0);
     }
-    while (($line = fgets(STDIN)) !== false) {
+    // A run killed outright does not always close our input, and a bridge left like that would answer no one: while
+    // it waits for a request, once a second it looks whether it was taken in by the system's first process, which is
+    // how its parent being gone is seen, and ends then.
+    $parent = function_exists('posix_getppid') ? posix_getppid() : null;
+    while (true) {
+        $waiting = [STDIN];
+        $none = null;
+        if (stream_select($waiting, $none, $none, 1) === 0) {
+            if ($parent !== null && posix_getppid() !== $parent) {
+                exit(0);
+            }
+            continue;
+        }
+        if (($line = fgets(STDIN)) === false) {
+            break;
+        }
         if (trim($line) === '') {
             continue;
         }

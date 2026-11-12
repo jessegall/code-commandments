@@ -96,6 +96,14 @@
         "help": "How long one agent's live edits are gathered before they are judged together as a group. An edit alone in that time is judged by itself. Zero judges each edit as it comes."
     },
     {
+        "key": "judge_at_once",
+        "title": "Judging runs at once",
+        "type": "number",
+        "kind": "number",
+        "default": 1,
+        "help": "How many judging runs the plugin starts may run side by side. Each one the plugin starts goes through the journal's process queue, which holds the next back until fewer than this many run."
+    },
+    {
         "key": "cache_hours",
         "title": "Hours an unused cache is kept",
         "type": "number",

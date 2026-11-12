@@ -43,6 +43,14 @@
     "session_started",
     "ticked"
   ],
+  "processes": [
+    {
+      "kind": "judge",
+      "title": "Judging the project against its commandments",
+      "category": "check",
+      "at_once": "judge_at_once"
+    }
+  ],
   "reaches": {
     "file_edited": [
       "workers"
