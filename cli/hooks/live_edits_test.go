@@ -174,3 +174,24 @@ func TestTheEventABackgroundJudgingReadsIsKeptInAFileAndRemovedOnceRead(t *testi
 		t.Error("the event file is still there after its judging read it")
 	}
 }
+
+func TestWithLiveJudgingOffNoEventStartsAnything(t *testing.T) {
+	root := t.TempDir()
+	data := t.TempDir()
+	t.Setenv(pluginData, data)
+	t.Setenv("PATH", t.TempDir())
+	t.Setenv(journalRoot, t.TempDir())
+
+	off := map[string]any{liveEditsKey: false}
+	for _, event := range []string{"command_starting", "tool_starting", "file_edited", "idle", "ticked"} {
+		line := map[string]any{"v": 1, "event": event, "session": "s1", "environment": "main", "agent": 7, "cwd": root,
+			"settings": off, "data": map[string]any{"cwd": root, "text": "git status", "path": "order.py"}}
+		raw, _ := json.Marshal(line)
+
+		judge4Detached(raw, line)
+
+		if kept, _ := os.ReadDir(filepath.Join(data, eventsFolder)); len(kept) != 0 {
+			t.Errorf("%s with live judging off kept an event to judge: %v", event, kept)
+		}
+	}
+}

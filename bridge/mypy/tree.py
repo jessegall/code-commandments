@@ -681,8 +681,10 @@ def unparsed(source: bytes) -> Node:
 
 def stream(session: Session, paths: list[str], write: list[str], python: str | None, kept: Kept | None = None) -> Iterator[dict]:
     """The contract's lines for the modules under $paths: the header, one file line each, the program, the trailer.
-    With $kept, a module whose line is kept under the key of what made it is written from there, and mypy compiles
-    afresh only the modules that are not; each line it then writes is kept for the next run."""
+    With $kept, a module whose line is kept under the key of what made it is written from there. The one build that
+    finds what changed compiles every module mypy has no cache for, and their lines are written from it; a second
+    build happens only for a module mypy took from its own cache whose line is no longer kept. Each line written is
+    kept for the next run."""
     yield {"header": {"contract": "tree", "version": 2, "language": "python",
                       "bridge": {"name": "mypy-bridge", "version": MYPY_VERSION}, "roots": [os.path.realpath(p) for p in paths]}}
     found = python_files(paths)
@@ -693,15 +695,16 @@ def stream(session: Session, paths: list[str], write: list[str], python: str | N
     checked = states(project.graph, set(named))
     keys = {path: kept.key(modules[path], checked.get(path), project.graph, texts[path], texts) for path in found} if kept else {}
     held = {path: kept.read(key) for path, key in keys.items()} if kept else {}
-    missing = {path for path in found if held.get(path) is None}
-    if kept is not None and missing:
-        project = session.compiled(paths, python, missing)
-        checked = states(project.graph, set(named))
+    missing = {path for path in found if held.get(path) is None and taken_from_mypys_cache(checked.get(path))}
+    again = session.compiled(paths, python, missing) if kept is not None and missing else None
+    rechecked = states(again.graph, set(named)) if again is not None else {}
     judged = {os.path.realpath(p) for p in write}
     seen = resolved = unjoined = files = 0
     folders: list[str] = []
     for path in found:
         line = held.get(path)
+        if line is None and again is not None and path in missing:
+            line = line_of(texts[path], modules[path], rechecked.get(path), again.types, path)
         if line is None:
             line = line_of(texts[path], modules[path], checked.get(path), project.types, path)
             if kept is not None:
@@ -712,6 +715,12 @@ def stream(session: Session, paths: list[str], write: list[str], python: str | N
         folders += [folder for folder in packages(path) if folder not in folders]
     yield {"program": {"packages": sorted(folders)}}
     yield {"trailer": {"files": files, "resolution": {"expressions": seen, "typed": resolved, "unjoined": unjoined}}}
+
+
+def taken_from_mypys_cache(state: State | None) -> bool:
+    """Whether mypy took the module from its own cache in this build, so it has no tree to write a line from: a module
+    it compiled has one already, and a cold run compiles every module once."""
+    return state is not None and state.tree is None
 
 
 def line_of(text: bytes, module: str, state: State | None, types: dict, path: str) -> KeptLine:
