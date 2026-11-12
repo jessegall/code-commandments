@@ -4,7 +4,7 @@
         "darwin-amd64": 23068672,
         "darwin-arm64": 22020096,
         "linux-amd64": 23068672,
-        "linux-arm64": 21495808,
+        "linux-arm64": 22544384,
         "roslyn-bridge-darwin-amd64": 46137344,
         "roslyn-bridge-darwin-arm64": 44040192,
         "roslyn-bridge-linux-amd64": 46137344,
@@ -12,7 +12,7 @@
         "roslyn-bridge-windows-amd64": 45088768,
         "roslyn-bridge-windows-arm64": 44040192,
         "windows-amd64": 23592960,
-        "windows-arm64": 21495808
+        "windows-arm64": 22544384
     },
     "measured": {
         "darwin-amd64": 21054176,
