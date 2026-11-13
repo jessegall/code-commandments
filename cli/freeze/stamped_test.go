@@ -43,7 +43,7 @@ func aFile(t *testing.T, name, content string) string {
 func TestTheStampGoesWhereItCannotBreakTheFile(t *testing.T) {
 	for name, file := range map[string]struct{ name, content, first string }{
 		"a PHP file": {"Order.php", "<?php\n\nfinal class Order {}\n", "<?php"},
-		"a script":   {"deploy", "#!/bin/sh\necho shipping\n", "#!/bin/sh"},
+		"a script":   {"deploy.py", "#!/usr/bin/env python3\nprint('shipping')\n", "#!/usr/bin/env python3"},
 	} {
 		t.Run(name, func(t *testing.T) {
 			path := aFile(t, file.name, file.content)

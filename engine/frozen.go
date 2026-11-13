@@ -79,11 +79,9 @@ func FreezeReadsATree(path string) bool {
 	return declared
 }
 
+// languageOfPath is the file's language by its extension; none for a file of no language the tool reads.
 func languageOfPath(path string) contract.Language {
-	language, named := contract.LanguageOfPath(path)
-	if !named {
-		return contract.PHP
-	}
+	language, _ := contract.LanguageOfPath(path)
 
 	return language
 }

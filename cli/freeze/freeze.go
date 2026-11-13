@@ -40,6 +40,12 @@ func (c Command) Run(in *cli.Input, console cli.Console) (int, error) {
 		return 2, nil
 	}
 
+	if !source.Judges(path) {
+		console.Warn("Not a file of a language the tool judges, so there is nothing to freeze: " + path)
+
+		return 2, nil
+	}
+
 	if in.Command() == "unfreeze" {
 		return unfreeze(path, string(raw), console)
 	}

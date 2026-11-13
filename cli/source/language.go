@@ -61,11 +61,9 @@ func (l Language) Extensions() []string {
 	return contract.ExtensionsOf(l.Written())
 }
 
+// OfFile is the language of the file by its extension; none for a file of no language the tool reads.
 func OfFile(path string) Language {
-	stream, known := contract.LanguageOfPath(path)
-	if !known {
-		return PHP
-	}
+	stream, _ := contract.LanguageOfPath(path)
 	named, _ := Of(stream)
 
 	return named

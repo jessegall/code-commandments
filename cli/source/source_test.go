@@ -39,7 +39,7 @@ func TestTheWalkSkipsWhatIsNeverSourceAndWhatTheProjectExcluded(t *testing.T) {
 
 func TestAFileIsReadByItsExtension(t *testing.T) {
 	switch {
-	case OfFile("a/B.vue") != Vue || OfFile("x.unknown") != PHP:
+	case OfFile("a/B.vue") != Vue || OfFile("x.unknown") != "":
 		t.Error("OfFile")
 	case !Judges("a.ts") || Judges("a.md"):
 		t.Error("Judges")
