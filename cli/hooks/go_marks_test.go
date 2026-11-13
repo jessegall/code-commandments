@@ -18,7 +18,10 @@ import (
 
 func goProject(t *testing.T) (root, edited, sibling string) {
 	t.Helper()
-	root = t.TempDir()
+	root, err := filepath.EvalSymlinks(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
 	write := func(name, text string) string {
 		path := filepath.Join(root, name)
 		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
