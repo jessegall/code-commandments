@@ -101,7 +101,7 @@ class AHandInJudgedAfterGoesThroughAtOnce(unittest.TestCase):
     def test_it_is_answered_with_nothing_and_its_judging_is_queued_for_the_worker(self) -> None:
         with tempfile.TemporaryDirectory() as folder:
             data, asked = Path(folder) / "data", Path(folder) / "asked"
-            journal = stand_in(Path(folder), f'echo "$@" >> {asked}')
+            journal = stand_in(Path(folder), f'echo "$@" >> {asked}; sleep 3')
             line = json.dumps({"event": "worker_delivering", "agent": 7, "settings": {"judge_workers": True, "judge_hand_ins_after": True}})
             program = subprocess.run([sys.executable, str(PLUGIN / "hook.py")], input=line.encode(), stdout=subprocess.PIPE,
                                      env={**os.environ, "JOURNAL_PLUGIN_DATA": str(data), "JOURNAL_BIN": str(journal)})
@@ -154,7 +154,7 @@ class AJudgingIsQueuedThroughTheJournal(unittest.TestCase):
     def test_an_edit_keeps_its_event_and_starts_one_run(self) -> None:
         with tempfile.TemporaryDirectory() as folder:
             data, asked = Path(folder) / "data", Path(folder) / "asked"
-            journal = stand_in(Path(folder), f'echo "$@" >> {asked}')
+            journal = stand_in(Path(folder), f'echo "$@" >> {asked}; sleep 3')
             line = json.dumps(edited(judge_edits=True)).encode()
             with patched_environment(JOURNAL_PLUGIN_DATA=str(data), JOURNAL_BIN=str(journal)):
                 hook.judge_later(line)
@@ -418,7 +418,7 @@ class EveryJudgingOfAnAgentWaitsInOneRun(unittest.TestCase):
     def test_every_kind_for_one_agent_queues_one_run_holding_them_all(self) -> None:
         with tempfile.TemporaryDirectory() as folder:
             data, asked = Path(folder) / "data", Path(folder) / "asked"
-            journal = stand_in(Path(folder), f'echo "$@" >> {asked}')
+            journal = stand_in(Path(folder), f'echo "$@" >> {asked}; sleep 3')
             with patched_environment(JOURNAL_PLUGIN_DATA=str(data), JOURNAL_BIN=str(journal), JOURNAL_SETTINGS=""):
                 queue_every_kind(7)
             runs = self.runs(asked)
@@ -429,7 +429,7 @@ class EveryJudgingOfAnAgentWaitsInOneRun(unittest.TestCase):
     def test_two_agents_each_queue_one_run(self) -> None:
         with tempfile.TemporaryDirectory() as folder:
             data, asked = Path(folder) / "data", Path(folder) / "asked"
-            journal = stand_in(Path(folder), f'echo "$@" >> {asked}')
+            journal = stand_in(Path(folder), f'echo "$@" >> {asked}; sleep 3')
             with patched_environment(JOURNAL_PLUGIN_DATA=str(data), JOURNAL_BIN=str(journal), JOURNAL_SETTINGS=""):
                 queue_every_kind(7)
                 queue_every_kind(8)
@@ -458,7 +458,7 @@ class EveryJudgingOfAnAgentWaitsInOneRun(unittest.TestCase):
     def test_an_event_after_the_run_took_the_others_queues_exactly_one_new_run(self) -> None:
         with tempfile.TemporaryDirectory() as folder:
             data, asked = Path(folder) / "data", Path(folder) / "asked"
-            journal = stand_in(Path(folder), f'echo "$@" >> {asked}')
+            journal = stand_in(Path(folder), f'echo "$@" >> {asked}; sleep 3')
             with patched_environment(JOURNAL_PLUGIN_DATA=str(data), JOURNAL_BIN=str(journal), JOURNAL_SETTINGS=""):
                 queue_every_kind(7)
                 self.assertEqual(len(hook.EditWindow(data, 7).take()), len(every_kind(7)))
