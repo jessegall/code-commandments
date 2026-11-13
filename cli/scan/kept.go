@@ -70,6 +70,7 @@ func (k *keptLines) split(files []string) (hits []*contract.File, header *contra
 	}
 
 	found := make([]*contract.File, len(files))
+	readsOf := make([][]string, len(files))
 	next := make(chan int)
 	var reading sync.WaitGroup
 	for range runtime.GOMAXPROCS(0) {
@@ -78,7 +79,7 @@ func (k *keptLines) split(files []string) (hits []*contract.File, header *contra
 			defer reading.Done()
 			reader := contract.KeptUnder(*header)
 			for at := range next {
-				found[at] = k.line(reader, files[at])
+				found[at], readsOf[at] = k.line(reader, files[at])
 			}
 		}()
 	}
@@ -87,9 +88,10 @@ func (k *keptLines) split(files []string) (hits []*contract.File, header *contra
 	}
 	close(next)
 	reading.Wait()
+	standing := k.standingOnWhatTheyRead(files, readsOf, func(at int) bool { return found[at] != nil })
 
 	for at, file := range files {
-		if found[at] != nil {
+		if standing[at] {
 			hits = append(hits, found[at])
 			continue
 		}
@@ -107,9 +109,15 @@ func (k *keptLines) standingRecords(files []string) (records map[string]string, 
 	if header == nil {
 		return records, nil, files
 	}
-	for _, file := range files {
-		if record := k.standingRecord(file); record != "" {
-			records[file] = record
+	found := make([]string, len(files))
+	readsOf := make([][]string, len(files))
+	for at, file := range files {
+		found[at], readsOf[at] = k.standingRecord(file)
+	}
+	standing := k.standingOnWhatTheyRead(files, readsOf, func(at int) bool { return found[at] != "" })
+	for at, file := range files {
+		if standing[at] {
+			records[file] = found[at]
 
 			continue
 		}
@@ -119,28 +127,52 @@ func (k *keptLines) standingRecords(files []string) (records map[string]string, 
 	return records, header, misses
 }
 
-func (k *keptLines) standingRecord(file string) string {
+func (k *keptLines) standingRecord(file string) (string, []string) {
 	for _, reads := range k.variants(file) {
 		if record := k.recordOf(file, reads); walk.IsFile(record) {
-			return record
+			return record, reads
 		}
 	}
 
-	return ""
+	return "", nil
 }
 
-func (k *keptLines) line(reader *contract.Kept, file string) *contract.File {
+func (k *keptLines) line(reader *contract.Kept, file string) (*contract.File, []string) {
 	for _, reads := range k.variants(file) {
 		raw, err := used(k.recordOf(file, reads))
 		if err != nil {
 			continue
 		}
 		if found, err := reader.File(k.unmarked(raw)); err == nil {
-			return found
+			return found, reads
 		}
 	}
 
-	return nil
+	return nil, nil
+}
+
+// standingOnWhatTheyRead answers which files' kept lines stand: each found one whose reads among the files all stand
+// too. A file that must be read again may declare something new, and the outline its readers' keys hold of it is the
+// one it had before, so its readers are read after it, however far up the imports they lie.
+func (k *keptLines) standingOnWhatTheyRead(files []string, readsOf [][]string, found func(int) bool) []bool {
+	standing := make([]bool, len(files))
+	missed := map[string]bool{}
+	for at, file := range files {
+		standing[at] = found(at)
+		if !standing[at] {
+			missed[k.marked(file)] = true
+		}
+	}
+	for changed := true; changed; {
+		changed = false
+		for at, file := range files {
+			if standing[at] && slices.ContainsFunc(readsOf[at], func(read string) bool { return missed[read] }) {
+				standing[at], missed[k.marked(file)], changed = false, true, true
+			}
+		}
+	}
+
+	return standing
 }
 
 // keep takes a file line a bridge just wrote: its outline is kept at once, and the line is staged until settle files it

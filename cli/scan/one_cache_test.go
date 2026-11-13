@@ -69,6 +69,32 @@ func TestEveryCheckoutReadsThroughOneCacheKeyedOnContents(t *testing.T) {
 	}
 }
 
+// A file stands only on files that stand themselves: a change to what prices.py declares reads cart.py again, and
+// checkout.py, which reads cart.py, with it, though its own key named cart.py's outline from before.
+func TestAChangeTwoImportsAwayReadsTheTopFileAgain(t *testing.T) {
+	if _, err := bridge.Mypy(); err != nil {
+		t.Skipf("no Python bridge here: %v", err)
+	}
+	project := repository(t)
+	journalDriven(t, project)
+	written(t, project, "src/shop/__init__.py", "")
+	written(t, project, "src/shop/prices.py", "def price() -> int:\n    return 3\n")
+	written(t, project, "src/shop/cart.py", "from shop.prices import price\n\n\ndef total() -> int:\n    return price() * 2\n")
+	written(t, project, "src/shop/checkout.py", "from shop.cart import total\n\n\ndef pay() -> int:\n    return total()\n")
+
+	held := cache.KeptIn()
+	cache.KeepIn(t.TempDir())
+	t.Cleanup(func() { cache.KeepIn(held) })
+
+	chain := append(slices.Clone(theShop), "src/shop/checkout.py")
+	askedOfABridge(t, project, chain...)
+	written(t, project, "src/shop/prices.py", "def price() -> str:\n    return 'three'\n")
+	asked := askedOfABridge(t, project, chain...)
+	if !slices.Contains(asked, filepath.Join(project, "src/shop/checkout.py")) {
+		t.Errorf("a change to what prices.py declares asked the bridge for %v, leaving checkout.py, two imports up, as it was", asked)
+	}
+}
+
 var theShop = []string{"src/shop/__init__.py", "src/shop/cart.py", "src/shop/prices.py"}
 
 // askedOfABridge reads the checkout's Python files named through the funnel and answers which files a bridge was asked to
