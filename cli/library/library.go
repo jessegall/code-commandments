@@ -35,6 +35,9 @@ type Library struct {
 	project         config.Config
 	previous        []string
 	withoutCommands bool
+	// names puts the executable's invocation into a published skill, worked out once a publish: working it out asks git
+	// where the project is.
+	names *strings.Replacer
 }
 
 func At(root string, project config.Config) Library {
@@ -42,7 +45,7 @@ func At(root string, project config.Config) Library {
 }
 
 func For(root, judged string, project config.Config) Library {
-	return Library{root, judged, project, readManifest(root), false}
+	return Library{root: root, judged: judged, project: project, previous: readManifest(root)}
 }
 
 func (l Library) WithoutCommands() Library {
@@ -61,6 +64,7 @@ func (l Library) Path(id string) string {
 
 func (l Library) Publish() ([]string, error) {
 	var ids []string
+	l.names = strings.NewReplacer(Binary, binary.Invocation(l.judged), Judging, binary.Judging(l.judged))
 
 	if written(atomic.Write(filepath.Join(l.Path(MapID), "SKILL.md"), l.index())) {
 		ids = append(ids, MapID)
@@ -186,10 +190,7 @@ func withoutCommandsSection(text string) string {
 }
 
 func (l Library) naming(text []byte) []byte {
-	return []byte(strings.NewReplacer(
-		Binary, binary.Invocation(l.judged),
-		Judging, binary.Judging(l.judged),
-	).Replace(string(text)))
+	return []byte(l.names.Replace(string(text)))
 }
 
 func copiedFrom(files fs.FS, from, to string, naming func([]byte) []byte) bool {
