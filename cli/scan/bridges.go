@@ -399,6 +399,7 @@ var GoBridge = Bridge{Kind: "go", Word: "go", Languages: []source.Language{sourc
 	InOwnOrder: true,
 	Reach:      InProcess{Stream: gotree.Stream},
 	Notice:     nothingToSay,
+	Identity:   gotree.Identity,
 }
 
 var Python = Bridge{Kind: "mypy", Word: "python", Languages: []source.Language{source.Python}, Label: "Python",

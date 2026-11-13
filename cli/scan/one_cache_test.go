@@ -319,3 +319,26 @@ func TestTheGoBridgeKeepsTheLinesItReads(t *testing.T) {
 		t.Errorf("a second run of unchanged files asked the Go bridge for %v again: its lines were never kept", asked)
 	}
 }
+
+// A release that leaves the Go bridge alone keeps every Go line: they are keyed on the bridge's own code, never the
+// whole binary.
+func TestAReleaseThatLeavesTheGoBridgeAloneKeepsItsLines(t *testing.T) {
+	project := repository(t)
+	journalDriven(t, project)
+	written(t, project, "src/go.mod", "module shop\n\ngo 1.22\n")
+	written(t, project, "src/prices.go", "package shop\n\nfunc price() int { return 3 }\n")
+	inRepository(t, project, "add", "-A")
+	inRepository(t, project, "commit", "-m", "the shop")
+
+	held := cache.KeptIn()
+	cache.KeepIn(t.TempDir())
+	t.Cleanup(func() { cache.KeepIn(held) })
+
+	askedOf(t, GoBridge, project, "src/prices.go")
+	build := bridge.Build
+	bridge.Build = func() string { return "a release that changed no bridge" }
+	t.Cleanup(func() { bridge.Build = build })
+	if asked, _ := askedOf(t, GoBridge, project, "src/prices.go"); len(asked) != 0 {
+		t.Errorf("a release that left the Go bridge alone asked it for %v again", asked)
+	}
+}
