@@ -26,7 +26,7 @@ import (
 )
 
 func Kernel(version string) *cli.Kernel {
-	return cli.NewKernel(version,
+	commands := []cli.Command{
 		judge.Command{Fixable: repent.Fixable("latest"), Scaffoldable: scaffold.Scaffoldable()},
 		makecommand.Command{},
 		hints.Command{},
@@ -42,15 +42,9 @@ func Kernel(version string) *cli.Kernel {
 		task.Command{},
 		hooks.Dispatch{},
 		hooks.PluginHook{},
-		service.Serve{Bridge: scan.CSharp},
-		service.Serve{Bridge: scan.Python},
-		service.Serve{Bridge: scan.Frontend},
-		service.Serve{Bridge: scan.PHPBridge},
-		service.Has{Bridge: scan.CSharp},
-		service.Has{Bridge: scan.Python},
-		service.Has{Bridge: scan.Frontend},
-		service.Has{Bridge: scan.PHPBridge},
-		service.Has{Bridge: scan.GoBridge},
+	}
+	commands = append(commands, bridgeServices()...)
+	commands = append(commands,
 		hooks.Lanes{},
 		hooks.Why{},
 		hooks.JournalConfig{},
@@ -65,4 +59,20 @@ func Kernel(version string) *cli.Kernel {
 		info.Command{Scaffoldable: scaffold.Scaffoldable()},
 		triggers.Command{},
 	)
+
+	return cli.NewKernel(version, commands...)
+}
+
+// bridgeServices are a serve verb for every bridge that runs as a process of its own, and a has verb for every
+// bridge, so a bridge added to scan.Bridges gets its verbs with no edit here.
+func bridgeServices() []cli.Command {
+	var serves, has []cli.Command
+	for _, held := range scan.Bridges {
+		if held.RunsAsAProcess() {
+			serves = append(serves, service.Serve{Bridge: held})
+		}
+		has = append(has, service.Has{Bridge: held})
+	}
+
+	return append(serves, has...)
 }

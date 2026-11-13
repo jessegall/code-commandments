@@ -35,6 +35,14 @@ type Bridge struct {
 	Prepare func() (string, error)
 }
 
+// RunsAsAProcess says whether the bridge is a program of its own, which a service can keep up; one the binary carries
+// answers from this very process.
+func (b Bridge) RunsAsAProcess() bool {
+	_, process := b.Reach.(Process)
+
+	return process
+}
+
 // HeldIn says whether a project holds any language this bridge reads.
 func (b Bridge) HeldIn(holds func(source.Language) bool) bool {
 	return slices.ContainsFunc(b.Languages, holds)

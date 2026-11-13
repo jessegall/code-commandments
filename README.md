@@ -153,14 +153,14 @@ Exit code is non-zero when sins are found.
 | `commandments task` | The work in front of this session — numbered tasks, one markdown file each, moved between queue, active and history. |
 | `commandments hooks` | The wired hook entry point — reads one hook payload from stdin, runs every registered handler, and merges their responses into one. |
 | `commandments plugin-hook` | The agent journal plugin's program — reads one event line from stdin and answers it at once: an edit, a command and a stop with nothing, and every other event with what its handlers found. |
+| `commandments php-serve` | Keep the PHP bridge running for this project, answering each run of the tool over a socket named for the project. |
+| `commandments frontend-serve` | Keep the Vue and TypeScript bridge running for this project, answering each run of the tool over a socket named for the project. |
 | `commandments roslyn-serve` | Keep the C# bridge running for this project, answering each run of the tool over a socket named for the project. |
 | `commandments mypy-serve` | Keep the Python bridge running for this project, answering each run of the tool over a socket named for the project. |
-| `commandments frontend-serve` | Keep the Vue and TypeScript bridge running for this project, answering each run of the tool over a socket named for the project. |
-| `commandments php-serve` | Keep the PHP bridge running for this project, answering each run of the tool over a socket named for the project. |
+| `commandments has-php` | Say whether this project has PHP to judge: exit 0 when it has, 1 when it has none. |
+| `commandments has-frontend` | Say whether this project has Vue and TypeScript to judge: exit 0 when it has, 1 when it has none. |
 | `commandments has-csharp` | Say whether this project has C# to judge: exit 0 when it has, 1 when it has none. |
 | `commandments has-python` | Say whether this project has Python to judge: exit 0 when it has, 1 when it has none. |
-| `commandments has-frontend` | Say whether this project has Vue and TypeScript to judge: exit 0 when it has, 1 when it has none. |
-| `commandments has-php` | Say whether this project has PHP to judge: exit 0 when it has, 1 when it has none. |
 | `commandments has-go` | Say whether this project has Go to judge: exit 0 when it has, 1 when it has none. |
 | `commandments lanes` | Say what the last merges and hand-ins brought in, as the project keeps it. |
 | `commandments why <file>` | Say what the last judging of a file was: the checkout it was judged in, whether a tree was held, which rules were asked, and what was found. |
