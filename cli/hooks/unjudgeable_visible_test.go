@@ -1,12 +1,15 @@
 package hooks
 
 import (
+	"errors"
 	"path/filepath"
 	"strings"
 	"testing"
 
+	"github.com/jessegall/code-commandments/cli/config"
 	"github.com/jessegall/code-commandments/cli/dashboard"
 	"github.com/jessegall/code-commandments/cli/workspace"
+	"github.com/jessegall/code-commandments/engine"
 )
 
 func TestAHandInNobodyCouldJudgeIsVisibleAfterwards(t *testing.T) {
@@ -16,6 +19,9 @@ func TestAHandInNobodyCouldJudgeIsVisibleAfterwards(t *testing.T) {
 	t.Setenv(pluginData, data)
 
 	wroteInto(t, filepath.Join(root, "src", "slow.py"), olderSin)
+	reading := readWhole
+	readWhole = func(string, config.Config) (*engine.Codebase, error) { return nil, errors.New("no bridge answered") }
+	t.Cleanup(func() { readWhole = reading })
 
 	said := heldAnswer(map[string]any{
 		"event": deliveringEvent, "environment": "main", "agent": 7,

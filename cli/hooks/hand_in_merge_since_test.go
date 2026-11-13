@@ -38,12 +38,12 @@ func TestAHandInMeasuredFromBeforeAMergeCountsTheMergesLinesAndFromTheMergeDoesN
 	work := merging{worker: "worker 12", worktree: worktree, base: "trunk", files: []string{"src/merged.py"}}
 
 	work.since = before
-	if stale := work.shallow(settings, rules); len(stale) == 0 {
+	if stale := work.deep(settings, rules).marks; len(stale) == 0 {
 		t.Fatal("measured from before the merge, the merged sin was not counted: the test proves nothing")
 	}
 
 	work.since = git.MergeBase(worktree, "trunk")
-	if now := work.shallow(settings, rules); len(now) != 0 {
+	if now := work.deep(settings, rules).marks; len(now) != 0 {
 		t.Errorf("measured from the merge being made, the worker was held for %d sins the merge brought in", len(now))
 	}
 }

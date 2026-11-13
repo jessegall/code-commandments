@@ -2,7 +2,6 @@ package hooks
 
 import (
 	"os"
-	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -98,7 +97,7 @@ func landedSaid(line map[string]any) string {
 	}
 
 	marks, narrowed := work.sinsBrought(from)
-	if narrowed == couldNotRead {
+	if narrowed == couldNotRead || narrowed == treeNotRead {
 		return ""
 	}
 
@@ -187,25 +186,13 @@ func marksBrought(where string, changed []string, before, after string) ([]SinMa
 	marking := Marks(projectOf(l.project)).In(l.project)
 	brought := func(file string) git.ChangedLines { return git.ChangedLinesBetween(l.project, before, after, file) }
 
-	together, _, why := AgainstTheProgramOnceRead(marking, files,
-		func(file string) []detectors.Detector { return project.RulesFor(l.project, file, rules) },
-		brought, l.project)
-
-	single := slices.DeleteFunc(slices.Clone(rules), detectors.ReadsBeyondOneFile)
-
-	var marks []SinMark
-	for _, file := range files {
-		if found, held := together[file]; held || why == "" {
-			marks = append(marks, found...)
-
-			continue
-		}
-
-		found, _, _ := marksIn(marking, file, project.RulesFor(l.project, file, single), brought(file))
-		marks = append(marks, found...)
+	marks, read := judgedWhole(l.project, project, rules, func(file string) []detectors.Detector { return project.RulesFor(l.project, file, rules) },
+		files, brought, marking)
+	if !read {
+		return nil, treeNotRead
 	}
 
-	return touchedAndUnfiled(marks), why
+	return marks, ""
 }
 
 func enabledIn(project config.Config, root string) []detectors.Detector {
@@ -262,6 +249,8 @@ func (l landed) tooManyFiles(from string) string {
 const mergeJudgingLock = ".merge-judging.lock"
 
 const couldNotRead Narrowed = "the project's own config could not be read, so nothing of this merge was judged"
+
+const treeNotRead Narrowed = "the project could not be read, so nothing of this merge was judged"
 
 func firstNarrowed(said ...Narrowed) Narrowed {
 	for _, each := range said {

@@ -66,28 +66,23 @@ func TestAHandInIsJudgedFromTheHeldTreeAndReadsNoTree(t *testing.T) {
 	}
 }
 
-func TestAHandInWithNoTreeHeldIsNeverReadWholeAndSaysWhatWasNotAsked(t *testing.T) {
+// A hand-in is judged whole, every rule asked, with no tree held: the checkout is read through the one cache.
+func TestAHandInIsJudgedWholeWithNoTreeHeld(t *testing.T) {
 	root, _, _ := projectWithASin(t)
 
 	held := DeliveryHeld(deliveringOf(root, "src/refund.py"))
 
-	var fields map[string]any
-	if err := json.Unmarshal([]byte(held), &fields); err != nil {
+	var answer map[string]any
+	if err := json.Unmarshal([]byte(held), &answer); err != nil {
 		t.Fatalf("the hand-in was answered %q: %v", held, err)
 	}
-	answer := fields
 
 	if answer["refuse"] == nil {
-		t.Errorf("a sin found by the rules that read one file was answered %v; it is a real sin and the work "+
-			"goes back for it", answer)
+		t.Errorf("a hand-in carrying a sin was answered %v; the work goes back for it", answer)
 	}
 
-	if note := asText(answer["whisper"]); !strings.Contains(note, "not judged in full") {
-		t.Errorf("the refusal does not say the rest was not asked, so the worker reads a partial answer as whole: %q", note)
-	}
-
-	if started := ledger.Of(root).Count(ledger.TreeReadsStarted); started != 0 {
-		t.Errorf("with no tree held, the hand-in started %d reads of the whole project to make up for it", started)
+	if note := asText(answer["whisper"]); strings.Contains(note, "not judged in full") {
+		t.Errorf("a hand-in judged whole says it was judged in part: %q", note)
 	}
 }
 

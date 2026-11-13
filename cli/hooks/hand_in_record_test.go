@@ -21,20 +21,6 @@ func handInLog(t *testing.T, data string) string {
 	return string(said)
 }
 
-func TestAHandInJudgedInPartIsNotRecordedAsNothingJudged(t *testing.T) {
-	root, data := workerProject(t)
-	forgetBookkeeping(t)
-
-	merging{worker: "worker 7", worktree: root}.records(handIn{got: withoutTheTree, why: "no tree is held here"}.reason(), 2, "waited 3ms of no limit")
-
-	said := handInLog(t, data)
-	for _, named := range []string{string(withoutTheTree), "no tree is held here", "sins=2", "waited 3ms of no limit"} {
-		if !strings.Contains(said, named) {
-			t.Errorf("the log does not say %q: %s", named, said)
-		}
-	}
-}
-
 func TestAHandInJudgedInFullIsRecorded(t *testing.T) {
 	root, data := workerProject(t)
 	forgetBookkeeping(t)

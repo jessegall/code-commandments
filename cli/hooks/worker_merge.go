@@ -12,13 +12,10 @@ import (
 	"github.com/jessegall/code-commandments/cli/custom"
 	"github.com/jessegall/code-commandments/cli/dashboard"
 	"github.com/jessegall/code-commandments/cli/git"
-	"github.com/jessegall/code-commandments/cli/scan"
 	"github.com/jessegall/code-commandments/cli/scope"
-	"github.com/jessegall/code-commandments/cli/source"
 	"github.com/jessegall/code-commandments/cli/workspace"
 	"github.com/jessegall/code-commandments/detectors"
 	"github.com/jessegall/code-commandments/engine"
-	"github.com/jessegall/code-commandments/walk"
 )
 
 const (
@@ -117,7 +114,7 @@ type gotTo string
 const (
 	gotWhole gotTo = ""
 
-	withoutTheTree gotTo = "only the rules that answer from one file were asked about the files this hand-in changed, because no tree of this project is held to answer the rest from, and the project is never read whole to make up for it"
+	checkoutNotRead gotTo = "the worktree could not be read, so no rule was asked about the files this hand-in changed"
 )
 
 const judgedAfterHandIn Narrowed = "judged after the hand-in went through"
@@ -242,18 +239,11 @@ func (m merging) deep(project config.Config, rules []detectors.Detector) handIn 
 		return handIn{got: gotWhole}
 	}
 
-	root := projectOf(m.worktree)
-
-	found, _, why := AgainstTheProgramOnceRead(Marks(root).In(m.worktree).CutFrom(m.since), slices.Sorted(maps.Keys(changed)),
-		func(string) []detectors.Detector { return rules },
-		func(file string) git.ChangedLines { return git.ChangedLinesSince(m.worktree, m.since, file) }, root)
-	if why != "" {
-		return handIn{marks: m.shallow(project, rules), got: withoutTheTree, why: why}
-	}
-
-	var marks []SinMark
-	for _, file := range slices.Sorted(maps.Keys(found)) {
-		marks = append(marks, touchedAndUnfiled(found[file])...)
+	marks, read := judgedWhole(m.worktree, project, rules, func(string) []detectors.Detector { return rules }, slices.Sorted(maps.Keys(changed)),
+		func(file string) git.ChangedLines { return git.ChangedLinesSince(m.worktree, m.since, file) },
+		Marks(projectOf(m.worktree)).In(m.worktree).CutFrom(m.since))
+	if !read {
+		return handIn{got: checkoutNotRead}
 	}
 
 	if len(marks) == 0 && m.tracksEdits() {
@@ -261,29 +251,6 @@ func (m merging) deep(project config.Config, rules []detectors.Detector) handIn 
 	}
 
 	return handIn{marks: marks, got: gotWhole}
-}
-
-func (m merging) shallow(project config.Config, rules []detectors.Detector) []SinMark {
-	changed := m.changed(project)
-	if len(changed) == 0 {
-		return nil
-	}
-
-	files := slices.Sorted(maps.Keys(changed))
-
-	marks := map[string]string{}
-	for _, file := range files {
-		marks[file] = walk.Mark(file)
-	}
-
-	codebase, err := scan.Walk(files, source.Excluded{}).Load()
-	if err != nil {
-		return nil
-	}
-
-	parsed.keeps(codebase.Streams(), marks)
-
-	return m.marks(codebase, slices.DeleteFunc(slices.Clone(rules), detectors.ReadsBeyondOneFile), changed)
 }
 
 func (m merging) tracksEdits() bool {
