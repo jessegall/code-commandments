@@ -1,6 +1,6 @@
 """The plugin's answer to every event the agent journal hands it: one JSON line in, one out. The pinned release binary
-answers the event; this script decides which events are judged later and queues that judging in the journal, so a
-change to it ships without a build."""
+judges; this script decides which events are judged later, queues that judging in the journal, and shapes every answer
+the binary gives into the journal's words, so a change to any of it ships without a build."""
 
 import fcntl
 import json
@@ -20,7 +20,9 @@ EDITED = "file_edited"
 WORKER_ROLES = {"worker", "helper", "medior", "senior", "builder"}
 
 LIVE_EDITS, WORKERS, WORKER_EDITS = "judge_edits", "judge_worker_edits", "judge_workers"
-EVENTS, WINDOWS = "events", "windows"
+EVENTS, WINDOWS, TOLD, QUEUE = "events", "windows", "told", "queue"
+JUDGE_EVENT = "--judge-event="
+NEW_CARD_EACH_TIME = {"sin-found", "sin-resolved"}
 WINDOW_LEFT_OPEN_AFTER = 15 * 60
 QUEUED_AT_MOST = 60 * 60
 EVENT_KEPT_AT_MOST = 24 * 60 * 60
@@ -28,7 +30,91 @@ EVENT_KEPT_AT_MOST = 24 * 60 * 60
 
 def answered(line: bytes, binary: Path = BINARY) -> tuple[bytes, int]:
     run = subprocess.run([str(binary), "plugin-hook"], input=line, stdout=subprocess.PIPE)
-    return run.stdout, run.returncode
+    return (json.dumps(shaped(fields_of(run.stdout)), ensure_ascii=False) + "\n").encode(), run.returncode
+
+
+def fields_of(output: bytes) -> dict:
+    lines = [line for line in output.decode(errors="replace").splitlines() if line.strip()]
+    try:
+        fields = json.loads(lines[-1]) if lines else {}
+    except ValueError:
+        return {}
+    return fields if isinstance(fields, dict) else {}
+
+
+_cards_shaped = 0
+
+
+def card(raised: dict) -> dict:
+    """A card the journal shows: a found sin and a clean file are each a new card, keyed so none replaces an earlier
+    one and the chat keeps them in the order they came; any other card is kept up to date under its own key."""
+    global _cards_shaped
+    key = str(raised.get("key", ""))
+    if raised.get("event") in NEW_CARD_EACH_TIME:
+        _cards_shaped += 1
+        key += f"@{time.time_ns():x}{_cards_shaped:x}"
+    shown = {"type": raised.get("event"), "kind": raised.get("event"), "key": key, "label": raised.get("brief", "")}
+    if raised.get("detail"):
+        shown["detail"] = raised["detail"]
+    return shown
+
+
+def shaped(fields: dict) -> dict:
+    """The binary's answer in the journal's words: refuse with a reason, or tell, with cards, required skills and how
+    long the judging took."""
+    answer: dict = {"v": 1}
+    refuse, whisper = fields.get("refuse"), fields.get("whisper")
+    if refuse is not None and whisper is not None and refuse != whisper:
+        answer["answer"], answer["reason"] = "refuse", f"{refuse}\n\n{whisper}"
+    elif refuse is not None:
+        answer["answer"], answer["reason"] = "refuse", refuse
+    elif whisper is not None:
+        answer["answer"], answer["tell"] = "tell", whisper
+    cards = [card(raised) for raised in fields.get("raises") or [] if isinstance(raised, dict) and raised.get("key")]
+    if cards:
+        answer["cards"] = cards
+    if fields.get("requires"):
+        answer["require_skills"] = fields["requires"]
+    if len(answer) > 1 and fields.get("judged_ms"):
+        answer["judged_ms"], answer["read_ms"] = fields["judged_ms"], fields.get("read_ms", 0)
+        if fields.get("judged_total_ms"):
+            answer["judged_total_ms"] = fields["judged_total_ms"]
+    return answer
+
+
+def delivered(data: Path) -> None:
+    """Moves every answer a judging told after its event into the journal's queue, in the journal's words. A file is
+    taken by renaming it first, so two scripts never deliver one answer twice."""
+    told, queue = data / TOLD, data / QUEUE
+    for waiting in sorted(told.glob("*.json")) if told.is_dir() else []:
+        taken = waiting.with_suffix(".taking")
+        try:
+            waiting.rename(taken)
+        except OSError:
+            continue
+        try:
+            fields = json.loads(taken.read_text())
+        except ValueError:
+            taken.unlink(missing_ok=True)
+            continue
+        answer = shaped(fields)
+        for routing in ("env", "agent"):
+            if routing in fields:
+                answer[routing] = fields[routing]
+        queue.mkdir(parents=True, exist_ok=True)
+        written = queue / (waiting.stem + ".tmp")
+        written.write_text(json.dumps(answer, ensure_ascii=False) + "\n")
+        written.rename(queue / waiting.name)
+        taken.unlink(missing_ok=True)
+
+
+def judged(event: str, binary: Path = BINARY) -> int:
+    """The queued run that judges a kept event: the binary judges and tells, and its answers go to the journal."""
+    code = subprocess.run([str(binary), "plugin-hook", f"{JUDGE_EVENT}{event}"]).returncode
+    data = os.environ.get("JOURNAL_PLUGIN_DATA", "")
+    if data:
+        delivered(Path(data))
+    return code
 
 
 def switched_on(value: object) -> bool:
@@ -128,19 +214,19 @@ def journal_program() -> str:
     return str(beside) if beside.is_file() else ""
 
 
-def judging_line(journal: str, event: Path, agent: int, binary: Path = BINARY) -> list[str]:
+def judging_line(journal: str, event: Path, agent: int, program: Path = PLUGIN / ".journal-plugin" / "hook") -> list[str]:
     agent_named = ["--agent", str(agent)] if agent else []
-    return [journal, "plugin", "run", "--kind", "judge", *agent_named, "--", str(binary), "plugin-hook", f"--judge-event={event}"]
+    return [journal, "plugin", "run", "--kind", "judge", *agent_named, "--", str(program), f"{JUDGE_EVENT}{event}"]
 
 
-def queued(line: bytes, agent: int, binary: Path = BINARY) -> Path | None:
+def queued(line: bytes, agent: int) -> Path | None:
     """Keeps the event and starts the journal's run that judges it, detached, so the event's answer never waits."""
     data, journal = os.environ.get("JOURNAL_PLUGIN_DATA", ""), journal_program()
     if not data or not journal:
         return None
     event = kept_event(Path(data), line)
     try:
-        subprocess.Popen(judging_line(journal, event, agent, binary), stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
+        subprocess.Popen(judging_line(journal, event, agent), stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
                          stderr=subprocess.DEVNULL, start_new_session=True)
     except OSError:
         event.unlink(missing_ok=True)
@@ -148,7 +234,7 @@ def queued(line: bytes, agent: int, binary: Path = BINARY) -> Path | None:
     return event
 
 
-def judge_later(line: bytes, binary: Path = BINARY) -> None:
+def judge_later(line: bytes) -> None:
     try:
         event = json.loads(line)
     except ValueError:
@@ -161,7 +247,7 @@ def judge_later(line: bytes, binary: Path = BINARY) -> None:
     event_name = event.get("event")
     if event_name == EDITED and not window.gather(line):
         return
-    event = queued(line, agent, binary)
+    event = queued(line, agent)
     if event is None:
         window.reopen()
     elif event_name == EDITED:
@@ -169,11 +255,17 @@ def judge_later(line: bytes, binary: Path = BINARY) -> None:
 
 
 def main() -> int:
+    judging = [argument[len(JUDGE_EVENT):] for argument in sys.argv[1:] if argument.startswith(JUDGE_EVENT)]
+    if judging:
+        return judged(judging[0])
     line = sys.stdin.buffer.read()
     answer, code = answered(line)
     sys.stdout.buffer.write(answer)
     sys.stdout.buffer.flush()
     judge_later(line)
+    data = os.environ.get("JOURNAL_PLUGIN_DATA", "")
+    if data:
+        delivered(Path(data))
     return code
 
 

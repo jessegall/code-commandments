@@ -41,10 +41,11 @@ func TestAHandInIsJudgedFromTheHeldTreeAndReadsNoTree(t *testing.T) {
 			"file the worker did not change", parsed)
 	}
 
-	var answer map[string]any
-	if err := json.Unmarshal([]byte(held), &answer); err != nil {
+	var fields map[string]any
+	if err := json.Unmarshal([]byte(held), &fields); err != nil {
 		t.Fatalf("the hand-in was answered %q: %v", held, err)
 	}
+	answer := asTheJournalSees(fields)
 
 	if answer["answer"] != "refuse" {
 		t.Errorf("a hand-in carrying a sin was answered %v, where it must go back to the worker", answer["answer"])
@@ -70,10 +71,11 @@ func TestAHandInWithNoTreeHeldIsNeverReadWholeAndSaysWhatWasNotAsked(t *testing.
 
 	held := DeliveryHeld(deliveringOf(root, generousWindow, "src/refund.py"))
 
-	var answer map[string]any
-	if err := json.Unmarshal([]byte(held), &answer); err != nil {
+	var fields map[string]any
+	if err := json.Unmarshal([]byte(held), &fields); err != nil {
 		t.Fatalf("the hand-in was answered %q: %v", held, err)
 	}
+	answer := asTheJournalSees(fields)
 
 	if answer["answer"] != "refuse" {
 		t.Errorf("a sin found by the rules that read one file was answered %v; it is a real sin and the work "+

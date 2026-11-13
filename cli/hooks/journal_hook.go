@@ -74,10 +74,10 @@ func AnswerNow(given map[string]any) JournalAnswer {
 
 func answer4On(given map[string]any, event string) string {
 	if judgedAfter(event) {
-		return JournalAnswer{}.Line4()
+		return JournalAnswer{}.Line()
 	}
 
-	return answerWith(given).Line4()
+	return answerWith(given).Line()
 }
 
 func adviseNow(given map[string]any) {

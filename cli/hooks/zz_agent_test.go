@@ -32,7 +32,7 @@ func TestAQueuedAnswerNamesTheAgentItIsFor(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		files, _ := filepath.Glob(filepath.Join(folder, "queue", "*.json"))
+		files, _ := filepath.Glob(filepath.Join(folder, toldFolder, "*.json"))
 		if len(files) != 1 {
 			t.Fatalf("%s: %d files queued", each.why, len(files))
 		}

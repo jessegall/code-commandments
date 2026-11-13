@@ -43,6 +43,7 @@ func TestASinfulBranchHoldsItsOwnMerge(t *testing.T) {
 	if err := json.Unmarshal([]byte(held), &answer); err != nil {
 		t.Fatalf("the hold answered %q: %v", held, err)
 	}
+	answer = asTheJournalSees(answer)
 
 	if answer["answer"] != "refuse" {
 		t.Errorf("the hold answered %v, want a refusal", answer["answer"])
@@ -235,6 +236,7 @@ func TestAWorkerIsHeldBeforeItsWorkReachesTheAgent(t *testing.T) {
 	if err := json.Unmarshal([]byte(held), &answer); err != nil {
 		t.Fatalf("the hold answered %q: %v", held, err)
 	}
+	answer = asTheJournalSees(answer)
 	if answer["answer"] != "refuse" {
 		t.Errorf("the hold answered %v, want a refusal", answer["answer"])
 	}
@@ -332,5 +334,5 @@ func refusedBy(held string) bool {
 		return false
 	}
 
-	return answer["answer"] == "refuse"
+	return asTheJournalSees(answer)["answer"] == "refuse"
 }

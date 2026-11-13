@@ -32,7 +32,7 @@ func TestWithLiveJudgingOffAnEditIsLeftAloneEntirely(t *testing.T) {
 	off := map[string]any{liveEditsKey: false}
 	line := editedLine(root, "order.py", off)
 
-	if said := Answer4Now(line); said != `{"v":1}` {
+	if said := Answer4Now(line); said != `{}` {
 		t.Errorf("an edit with live judging off was answered with %s; it is answered with nothing", said)
 	}
 
@@ -103,9 +103,9 @@ func TestWithLiveJudgingOffAnEditIsNotEvenRecorded(t *testing.T) {
 }
 
 func TestABackgroundJudgingIsStartedThroughTheJournalsQueue(t *testing.T) {
-	said := strings.Join(judgingThrough("/plugin/bin/commandments-release", "/data/events/event-1.json", 7), " ")
+	said := strings.Join(judgingThrough(pluginScriptBeside("/plugin/bin/commandments-release"), "/data/events/event-1.json", 7), " ")
 
-	if want := "plugin run --kind judge --agent 7 -- /plugin/bin/commandments-release plugin-hook --judge-event=/data/events/event-1.json"; said != want {
+	if want := "plugin run --kind judge --agent 7 -- /plugin/.journal-plugin/hook --judge-event=/data/events/event-1.json"; said != want {
 		t.Errorf("the plugin starts its judging as %q, want %q", said, want)
 	}
 

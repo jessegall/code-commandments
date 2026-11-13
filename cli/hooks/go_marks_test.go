@@ -91,6 +91,7 @@ func TestAWorkerCarryingAGoSinIsHeld(t *testing.T) {
 	if err := json.Unmarshal([]byte(held), &answer); err != nil {
 		t.Fatalf("the hold answered %q: %v", held, err)
 	}
+	answer = asTheJournalSees(answer)
 	if answer["answer"] != "refuse" {
 		t.Errorf("the hold answered %v, want a refusal", answer["answer"])
 	}

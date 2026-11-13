@@ -123,19 +123,19 @@ func (work merging) answered() string {
 	if found.got == gotWhole {
 		refusal := mergeReason(work.worker, found.marks, work.worktree)
 
-		return (JournalAnswer{Refuse: &refusal}).Line4()
+		return (JournalAnswer{Refuse: &refusal}).Line()
 	}
 
 	said := Unjudged(work.worker+"'s hand-in was not judged in full", string(found.got), "")
 	work.keeps(said)
 
 	if len(found.marks) == 0 {
-		return (JournalAnswer{Whisper: &said}).Line4()
+		return (JournalAnswer{Whisper: &said}).Line()
 	}
 
 	refusal := mergeReason(work.worker, found.marks, work.worktree)
 
-	return (JournalAnswer{Refuse: &refusal, Whisper: &said}).Line4()
+	return (JournalAnswer{Refuse: &refusal, Whisper: &said}).Line()
 }
 
 // handIn is what a hand-in's judging came to: the marks it found, and how far it got, which a slice of marks alone cannot say.

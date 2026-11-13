@@ -19,8 +19,8 @@ func TestAQueuedRefusalSaysItsWordsOnce(t *testing.T) {
 		t.Errorf("the queued words are %v, and the reason was given once", told.Whisper)
 	}
 
-	if shape := (JournalAnswer{Refuse: &reason, Whisper: &reason}).Shape4(); shape["reason"] != reason {
-		t.Errorf("the refusal says %q, and the reason was given once", shape["reason"])
+	if fields := (JournalAnswer{Refuse: &reason, Whisper: &reason}).Fields(); fields["refuse"] != reason || fields["whisper"] != reason {
+		t.Errorf("the answer reads %v, not the one reason the script says once", fields)
 	}
 }
 

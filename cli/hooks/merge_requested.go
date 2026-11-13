@@ -74,10 +74,10 @@ func MergeRequested(line map[string]any) string {
 	if got != gotWhole {
 		said := Unjudged("this is not the whole answer", string(got), binary.JudgingChanges(asked.folder))
 
-		return (JournalAnswer{Refuse: &refusal, Whisper: &said}).Line4()
+		return (JournalAnswer{Refuse: &refusal, Whisper: &said}).Line()
 	}
 
-	return (JournalAnswer{Refuse: &refusal}).Line4()
+	return (JournalAnswer{Refuse: &refusal}).Line()
 }
 
 func (r requested) readable() bool {
@@ -88,7 +88,7 @@ func (r requested) allowedBecause(why string) string {
 	said := Unjudged("the merge of "+orNothing(r.branch)+" into "+orNothing(r.target)+" was allowed unjudged",
 		why, binary.Judging(r.project)+" --branch="+r.target)
 
-	return (JournalAnswer{Whisper: &said}).Line4()
+	return (JournalAnswer{Whisper: &said}).Line()
 }
 
 func (r requested) sinsItWouldBringIn() ([]SinMark, gotTo) {

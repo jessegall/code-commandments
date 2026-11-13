@@ -71,7 +71,7 @@ func eventOf(event, file string) map[string]any {
 func TestACommandIsAnsweredWithNothingAndNeverRefused(t *testing.T) {
 	data, line := projectAnotherWorktreeStandsOn(t)
 
-	if answer := Answer4Now(line); answer != `{"v":1}` {
+	if answer := Answer4Now(line); answer != `{}` {
 		t.Fatalf("a command about to run is answered %s; the plugin judges sins and refuses nothing", answer)
 	}
 
@@ -127,7 +127,7 @@ func drained(t *testing.T, data string) []map[string]any {
 		if err := json.Unmarshal(content, &said); err != nil {
 			t.Fatalf("the journal cannot read %s: %v", file, err)
 		}
-		read = append(read, said)
+		read = append(read, asTheJournalSees(said))
 		if err := os.Remove(file); err != nil {
 			t.Fatal(err)
 		}
@@ -138,6 +138,46 @@ func drained(t *testing.T, data string) []map[string]any {
 	}
 
 	return read
+}
+
+// asTheJournalSees is a told answer as the plugin's script hands it to the journal (.journal-plugin/hook.py shaped,
+// whose own tests hold the shape), so these tests read what an agent is told.
+func asTheJournalSees(fields map[string]any) map[string]any {
+	seen := map[string]any{"v": float64(1)}
+	for _, routing := range []string{"env", "agent"} {
+		if value, named := fields[routing]; named {
+			seen[routing] = value
+		}
+	}
+
+	switch refuse, whisper := fields["refuse"], fields["whisper"]; {
+	case refuse != nil && whisper != nil && refuse != whisper:
+		seen["answer"], seen["reason"] = "refuse", asText(refuse)+"\n\n"+asText(whisper)
+	case refuse != nil:
+		seen["answer"], seen["reason"] = "refuse", refuse
+	case whisper != nil:
+		seen["answer"], seen["tell"] = "tell", whisper
+	}
+
+	var cards []any
+	raised, _ := fields["raises"].([]any)
+	for _, each := range raised {
+		entry, _ := each.(map[string]any)
+		card := map[string]any{"type": entry["event"], "kind": entry["event"], "key": entry["key"], "label": entry["brief"]}
+		if detail, named := entry["detail"]; named {
+			card["detail"] = detail
+		}
+		cards = append(cards, card)
+	}
+	if len(cards) > 0 {
+		seen["cards"] = cards
+	}
+
+	if required, named := fields["requires"]; named {
+		seen["require_skills"] = required
+	}
+
+	return seen
 }
 
 func saidAfter(t *testing.T, data string, line map[string]any) map[string]any {
@@ -169,7 +209,7 @@ func cardsOf(said map[string]any) []map[string]any {
 
 func settles(cards []map[string]any, key string) bool {
 	for _, card := range cards {
-		if strings.HasPrefix(asText(card["key"]), key+"@") && asText(card["kind"]) == "sin-resolved" {
+		if asText(card["key"]) == key && asText(card["kind"]) == "sin-resolved" {
 			return true
 		}
 	}
@@ -247,7 +287,7 @@ func TestAQueuedAnswerIsTheAnswersOwnShapeInAFileOfItsOwn(t *testing.T) {
 		t.Fatalf("the queue holds %d file(s): an answer with nothing to say writes none", len(said))
 	}
 
-	if said[0]["tell"] != advice || said[0]["answer"] != "tell" || said[0]["v"] != float64(protocol4) {
+	if said[0]["tell"] != advice || said[0]["answer"] != "tell" || said[0]["v"] != float64(1) {
 		t.Errorf("the first answer reads %v", said[0])
 	}
 
@@ -305,7 +345,7 @@ func TestTheServiceAnswersACommandWithNothingAndAdvisesAfter(t *testing.T) {
 	if err := json.Unmarshal([]byte(answer), &read); err != nil {
 		t.Fatalf("the journal cannot read %q: %v", answer, err)
 	}
-	if len(read) != 1 {
+	if len(read) != 0 {
 		t.Errorf("the service answered %v; a command is answered with nothing", read)
 	}
 
@@ -364,8 +404,7 @@ func TestASinRepentedRaisesACleanCardOfItsOwnOnTheEventThatRepentsIt(t *testing.
 	if len(raised) != 1 {
 		t.Fatalf("the sinful edit raised %v", raised)
 	}
-	found := asText(raised[0]["key"])
-	if found == "" {
+	if asText(raised[0]["key"]) == "" {
 		t.Fatal("the card raised carries no key, so nothing can settle it")
 	}
 	key := fileKey("src/refund.py")
@@ -378,11 +417,6 @@ func TestASinRepentedRaisesACleanCardOfItsOwnOnTheEventThatRepentsIt(t *testing.
 	settled := cardsOf(saidAfter(t, data, eventOf("file_edited", "src/refund.py")))
 	if !settles(settled, key) {
 		t.Errorf("the repenting edit raised %v, none of it settling %s", settled, key)
-	}
-	for _, card := range settled {
-		if asText(card["key"]) == found {
-			t.Errorf("the clean card reuses the found card's key %s, so it replaces that card instead of following it", found)
-		}
 	}
 }
 
@@ -523,6 +557,7 @@ func TestTheServiceAnswersEveryVersion4EventInVersion4sShape(t *testing.T) {
 		if err := json.Unmarshal([]byte(answer), &read); err != nil {
 			t.Fatalf("the journal cannot read %s's answer %q: %v", event, answer, err)
 		}
+		read = asTheJournalSees(read)
 
 		for key := range read {
 			if !slices.Contains([]string{"v", "answer", "reason", "message", "tell", "cards", "commands"}, key) {
@@ -749,21 +784,6 @@ func TestAFileTheToolWroteWholeIsReadWhicheverWordTheEventUses(t *testing.T) {
 				t.Errorf("the payload says %v, not that the whole file is the edit's", said.HookPayload()[changedKey])
 			}
 		})
-	}
-}
-
-func TestAnAnswersCardSaysWhichCardItIsInBothWords(t *testing.T) {
-	answer := JournalAnswer{Raises: []Raise{{Event: "sin-found", Key: "sins:src/refund.py", Brief: "1 sin"}}}.Shape4()
-
-	cards, _ := answer["cards"].([]map[string]any)
-	if len(cards) != 1 {
-		t.Fatalf("the answer carries %v, not the one card raised", answer["cards"])
-	}
-
-	for _, word := range []string{"type", "kind"} {
-		if cards[0][word] != "sin-found" {
-			t.Errorf("the card says %q as %v, not the card it is", word, cards[0][word])
-		}
 	}
 }
 

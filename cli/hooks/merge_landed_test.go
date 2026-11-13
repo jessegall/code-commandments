@@ -156,7 +156,7 @@ func TestTheMergeKeyNeverRefuses(t *testing.T) {
 				told.what, said)
 		}
 
-		if said != "" && !strings.Contains(said, `"tell"`) {
+		if said != "" && !strings.Contains(said, `"whisper"`) {
 			t.Errorf("%s was answered with something that is not a tell: %s", told.what, said)
 		}
 	}

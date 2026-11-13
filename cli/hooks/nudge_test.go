@@ -54,7 +54,10 @@ func Voided(entries []Entry) int {
 
 func marksOfThreeSins(t *testing.T) (root string, marks []SinMark) {
 	t.Helper()
-	root = t.TempDir()
+	root, err := filepath.EvalSymlinks(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	for name, text := range map[string]string{
 		".commandments/config.json": `{"paths": ["shop"]}`,

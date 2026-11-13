@@ -57,11 +57,11 @@ func TestTheJournalsLineCarriesTheOwedSkills(t *testing.T) {
 	} {
 		t.Run(name, func(t *testing.T) {
 			var line map[string]any
-			if err := json.Unmarshal([]byte(held.answer.Line4()), &line); err != nil {
+			if err := json.Unmarshal([]byte(held.answer.Line()), &line); err != nil {
 				t.Fatalf("the answer is no JSON: %v", err)
 			}
 
-			required, named := line["require_skills"]
+			required, named := line["requires"]
 			if held.want == nil {
 				if named {
 					t.Errorf("an answer owing nothing still writes require_skills as %v", required)

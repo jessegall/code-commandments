@@ -22,12 +22,12 @@ def stand_in(folder: Path, script: str) -> Path:
 
 
 class TheHookHandsEveryEventToTheBinary(unittest.TestCase):
-    def test_the_binarys_answer_and_exit_code_are_the_hooks(self) -> None:
+    def test_the_binarys_answer_is_said_in_the_journals_words_with_its_exit_code(self) -> None:
         with tempfile.TemporaryDirectory() as folder:
-            binary = stand_in(Path(folder), 'read line; [ "$1" = plugin-hook ] && echo "{\\"v\\":1,\\"tell\\":\\"$line\\"}"; exit 3')
-            answer, code = hook.answered(b'{"event":"idle"}\n', binary)
+            binary = stand_in(Path(folder), 'read line; [ "$1" = plugin-hook ] && echo "{\\"whisper\\":\\"heard $line\\"}"; exit 3')
+            answer, code = hook.answered(b'idle\n', binary)
 
-        self.assertEqual(answer, b'{"v":1,"tell":"{"event":"idle"}"}\n')
+        self.assertEqual(json.loads(answer), {"v": 1, "answer": "tell", "tell": "heard idle"})
         self.assertEqual(code, 3)
 
     def test_the_program_runs_the_script_under_the_python_the_journal_names(self) -> None:
@@ -120,9 +120,9 @@ class AnAgentHasAtMostOneLiveEditJudgingWaiting(unittest.TestCase):
 
 class AJudgingIsQueuedThroughTheJournal(unittest.TestCase):
     def test_the_line_runs_the_binary_on_the_kept_event_in_the_agents_checkout(self) -> None:
-        line = hook.judging_line("/bin/journal", Path("/data/events/event-1.json"), 7, Path("/plugin/bin/commandments-release"))
+        line = hook.judging_line("/bin/journal", Path("/data/events/event-1.json"), 7, Path("/plugin/.journal-plugin/hook"))
         self.assertEqual(line, ["/bin/journal", "plugin", "run", "--kind", "judge", "--agent", "7", "--",
-                                "/plugin/bin/commandments-release", "plugin-hook", "--judge-event=/data/events/event-1.json"])
+                                "/plugin/.journal-plugin/hook", "--judge-event=/data/events/event-1.json"])
         self.assertNotIn("--agent", hook.judging_line("/bin/journal", Path("/e.json"), 0))
 
     def test_an_edit_keeps_its_event_and_starts_one_run(self) -> None:
@@ -156,6 +156,54 @@ class AJudgingIsQueuedThroughTheJournal(unittest.TestCase):
             with patched_environment(JOURNAL_PLUGIN_DATA=folder):
                 hook.judge_later(json.dumps(edited(judge_edits=False)).encode())
             self.assertEqual(list(Path(folder).iterdir()), [])
+
+
+class TheBinarysAnswerIsShapedForTheJournal(unittest.TestCase):
+    def test_each_answer_reads_as_the_journal_reads_it(self) -> None:
+        refused, advice = "the shared branch takes no edits", "Code Commandments — a sin"
+        for fields, want in (
+            ({}, {"v": 1}),
+            ({"refuse": refused}, {"v": 1, "answer": "refuse", "reason": refused}),
+            ({"refuse": refused, "whisper": advice}, {"v": 1, "answer": "refuse", "reason": f"{refused}\n\n{advice}"}),
+            ({"whisper": advice}, {"v": 1, "answer": "tell", "tell": advice}),
+            ({"requires": ["commandments-python-absence"], "judged_ms": 9, "read_ms": 4},
+             {"v": 1, "require_skills": ["commandments-python-absence"], "judged_ms": 9, "read_ms": 4}),
+            ({"judged_ms": 9}, {"v": 1}),
+        ):
+            self.assertEqual(hook.shaped(fields), want)
+
+    def test_a_card_says_which_card_it_is_in_both_words(self) -> None:
+        card = hook.shaped({"raises": [{"event": "configured", "key": "settings", "brief": "applied", "detail": "x"}]})["cards"][0]
+        self.assertEqual(card, {"type": "configured", "kind": "configured", "key": "settings", "label": "applied", "detail": "x"})
+
+    def test_every_found_and_clean_card_is_a_new_one(self) -> None:
+        raised = [{"event": "sin-found", "key": "sins:src/A.py", "brief": "1 sin"}, {"event": "sin-resolved", "key": "sins:src/A.py", "brief": "clean"}]
+        keys = [card["key"] for _ in range(3) for card in hook.shaped({"raises": raised})["cards"]]
+        self.assertEqual(len(set(keys)), 6, "a card reused an earlier card's key, so it would replace it in place")
+        self.assertTrue(all(key.startswith("sins:src/A.py@") for key in keys))
+
+
+class WhatAJudgingToldReachesTheJournalsQueue(unittest.TestCase):
+    def test_a_told_answer_is_moved_into_the_queue_in_the_journals_words(self) -> None:
+        with tempfile.TemporaryDirectory() as folder:
+            data = Path(folder)
+            (data / "told").mkdir()
+            (data / "told" / "1-1.json").write_text(json.dumps({"whisper": "1 sin", "env": "main", "agent": 7}))
+            hook.delivered(data)
+
+            self.assertEqual(list((data / "told").iterdir()), [])
+            queued = json.loads((data / "queue" / "1-1.json").read_text())
+            self.assertEqual(queued, {"v": 1, "answer": "tell", "tell": "1 sin", "env": "main", "agent": 7})
+
+    def test_the_queued_run_judges_through_the_binary_then_delivers(self) -> None:
+        with tempfile.TemporaryDirectory() as folder:
+            data = Path(folder) / "data"
+            binary = stand_in(Path(folder), f'mkdir -p {data}/told; echo "{{\\"whisper\\":\\"$2\\"}}" > {data}/told/1-1.json; exit 0')
+            with patched_environment(JOURNAL_PLUGIN_DATA=str(data)):
+                code = hook.judged("/data/events/event-1.json", binary)
+
+            self.assertEqual(code, 0)
+            self.assertEqual(json.loads((data / "queue" / "1-1.json").read_text())["tell"], "--judge-event=/data/events/event-1.json")
 
 
 class patched_environment:

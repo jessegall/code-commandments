@@ -17,8 +17,6 @@ import (
 )
 
 const (
-	protocol4 = 1
-
 	judgeKind        = "judge"
 	judgeEventOption = "judge-event"
 	eventsFolder     = "events"
@@ -150,7 +148,7 @@ func Answer4Now(line map[string]any) string {
 		return ""
 	}
 	if refusal := cliRefusedTo(MomentOf(moment)); refusal != "" {
-		return JournalAnswer{Refuse: &refusal}.Line4()
+		return JournalAnswer{Refuse: &refusal}.Line()
 	}
 	if _, queued := Queue4In(os.Getenv(pluginData)); !queued {
 		return Answer4Of(line)
@@ -159,7 +157,7 @@ func Answer4Now(line map[string]any) string {
 		return Answer4Of(line)
 	}
 
-	return JournalAnswer{}.Line4()
+	return JournalAnswer{}.Line()
 }
 
 func Judge4Into(line map[string]any, folder string) {
@@ -245,7 +243,7 @@ func judgeDetached(raw []byte) bool {
 		return false
 	}
 
-	run := exec.Command(journal, judgingThrough(self, event, agentOfEvent(raw))...)
+	run := exec.Command(journal, judgingThrough(pluginScriptBeside(self), event, agentOfEvent(raw))...)
 	detach(run)
 
 	if run.Start() != nil {
@@ -258,13 +256,20 @@ func judgeDetached(raw []byte) bool {
 	return true
 }
 
-func judgingThrough(self, event string, agent int) []string {
+// judgingThrough is the journal command that queues the judging of a kept event, run by the plugin's script, which
+// hands it to this binary and shapes what the judging tells.
+func judgingThrough(script, event string, agent int) []string {
 	arguments := []string{"plugin", "run", "--kind", judgeKind}
 	if agent != 0 {
 		arguments = append(arguments, "--agent", strconv.Itoa(agent))
 	}
 
-	return append(arguments, "--", self, "plugin-hook", "--"+judgeEventOption+"="+event)
+	return append(arguments, "--", script, "--"+judgeEventOption+"="+event)
+}
+
+// pluginScriptBeside is the plugin's program in the plugin folder the release binary was fetched into.
+func pluginScriptBeside(binary string) string {
+	return filepath.Join(filepath.Dir(filepath.Dir(binary)), ".journal-plugin", "hook")
 }
 
 func keptEventIn(data string, raw []byte) (string, error) {
@@ -319,7 +324,7 @@ func Answer4Of(line map[string]any) string {
 		return ""
 	}
 
-	return answerWith(Stamped(moment)).Line4()
+	return answerWith(Stamped(moment)).Line()
 }
 
 func Moment4Of(line map[string]any) (map[string]any, bool) {
@@ -414,72 +419,63 @@ func withoutLinks(folder string) string {
 	return real
 }
 
-func (a JournalAnswer) Line4() string {
+func (a JournalAnswer) Line() string {
 	var out bytes.Buffer
 	encoder := json.NewEncoder(&out)
 	encoder.SetEscapeHTML(false)
-	_ = encoder.Encode(a.Shape4())
+	_ = encoder.Encode(a.Fields())
 
 	return string(bytes.TrimSuffix(out.Bytes(), []byte("\n")))
 }
 
-func (a JournalAnswer) Shape4() map[string]any {
-	answer := map[string]any{"v": protocol4}
-	switch {
-	case a.Refuse != nil && a.Whisper != nil && *a.Refuse != *a.Whisper:
-		answer["answer"], answer["reason"] = "refuse", *a.Refuse+"\n\n"+*a.Whisper
-	case a.Refuse != nil:
-		answer["answer"], answer["reason"] = "refuse", *a.Refuse
-	case a.Whisper != nil:
-		answer["answer"], answer["tell"] = "tell", *a.Whisper
+// Fields is the answer as the plugin's script reads it: what to refuse, what to tell, the cards to raise, the skills to
+// require and how long the judging took. The script shapes it into the journal's answer, so nothing here knows the
+// journal's words for one.
+func (a JournalAnswer) Fields() map[string]any {
+	fields := map[string]any{}
+	if a.Refuse != nil {
+		fields["refuse"] = *a.Refuse
 	}
 
-	var cards []map[string]any
+	if a.Whisper != nil {
+		fields["whisper"] = *a.Whisper
+	}
+
+	var raised []map[string]any
 	for _, raise := range a.Raises {
 		if raise.Key == "" {
 			continue
 		}
-		card := card4(raise.Event, raise.Key, raise.Brief)
+
+		entry := map[string]any{"event": raise.Event, "key": raise.Key, "brief": raise.Brief}
 		if raise.Detail != "" {
-			card["detail"] = raise.Detail
+			entry["detail"] = raise.Detail
 		}
-		cards = append(cards, card)
+		raised = append(raised, entry)
 	}
 
-	if len(cards) > 0 {
-		answer["cards"] = cards
+	if len(raised) > 0 {
+		fields["raises"] = raised
 	}
 
 	if len(a.Requires) > 0 {
-		answer["require_skills"] = a.Requires
+		fields["requires"] = a.Requires
 	}
 
-	if len(answer) > 1 && a.JudgedMs > 0 {
-		answer["judged_ms"] = a.JudgedMs
+	if len(fields) > 0 && a.JudgedMs > 0 {
+		fields["judged_ms"], fields["read_ms"] = a.JudgedMs, a.ReadMs
+		if a.JudgedTotalMs > 0 {
+			fields["judged_total_ms"] = a.JudgedTotalMs
+		}
 	}
 
-	if len(answer) > 1 && a.JudgedTotalMs > 0 {
-		answer["judged_total_ms"] = a.JudgedTotalMs
-	}
-
-	if _, timed := answer["judged_ms"]; timed {
-		answer["read_ms"] = a.ReadMs
-	}
-
-	return answer
-}
-
-func card4(kind, key, label string) map[string]any {
-	return map[string]any{"type": kind, "kind": kind, "key": key, "label": label}
+	return fields
 }
 
 func Configured4(said []string) string {
-	answer := map[string]any{"v": protocol4}
-	if len(said) > 0 {
-		answer["cards"] = []map[string]any{card4("configured", "settings", strings.Join(said, "; "))}
+	if len(said) == 0 {
+		return JournalAnswer{}.Line()
 	}
 
-	text, _ := json.Marshal(answer)
-
-	return string(text)
+	return JournalAnswer{Raises: []Raise{{Event: "configured", Key: "settings", Brief: strings.Join(said, "; ")}}}.Line()
 }

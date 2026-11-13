@@ -44,28 +44,28 @@ func TestEachVersion4EventIsReadAsTheMomentItStandsFor(t *testing.T) {
 	}
 }
 
-func TestTheAnswerIsSaidAsVersion4ReadsIt(t *testing.T) {
+func TestTheAnswerIsSaidInTheFieldsThePluginsScriptShapes(t *testing.T) {
 	refused, advice := "the shared branch takes no edits", "Code Commandments — a sin"
 	cases := []struct {
 		answer JournalAnswer
 		want   string
 	}{
-		{JournalAnswer{}, `{"v":1}`},
-		{JournalAnswer{Refuse: &refused}, `{"answer":"refuse","reason":"the shared branch takes no edits","v":1}`},
-		{JournalAnswer{Refuse: &refused, Whisper: &advice}, `{"answer":"refuse","reason":"the shared branch takes no edits\n\nCode Commandments — a sin","v":1}`},
-		{JournalAnswer{Whisper: &advice}, `{"answer":"tell","tell":"Code Commandments — a sin","v":1}`},
+		{JournalAnswer{}, `{}`},
+		{JournalAnswer{Refuse: &refused}, `{"refuse":"the shared branch takes no edits"}`},
+		{JournalAnswer{Refuse: &refused, Whisper: &advice}, `{"refuse":"the shared branch takes no edits","whisper":"Code Commandments — a sin"}`},
+		{JournalAnswer{Whisper: &advice}, `{"whisper":"Code Commandments — a sin"}`},
 		{
 			JournalAnswer{
 				Raises:   []Raise{{Event: "sin-found", Brief: "2 sins in src/A.php", Key: "sins:src/A.php", Detail: "array-bag at src/A.php:3\ndata-clump at src/A.php:9"}, {Event: "sin-resolved", Brief: "src/B.php is clean", Key: "sins:src/B.php"}, {Event: "sin-found", Brief: "unkeyed"}},
 				Settles:  []string{"sins:src/B.php"},
 				Repented: []Repented{{Key: "sin:b2", Shown: "data-clump at src/B.php:9"}},
 			},
-			`{"cards":[{"detail":"array-bag at src/A.php:3\ndata-clump at src/A.php:9","key":"sins:src/A.php","kind":"sin-found","label":"2 sins in src/A.php","type":"sin-found"},{"key":"sins:src/B.php","kind":"sin-resolved","label":"src/B.php is clean","type":"sin-resolved"}],"v":1}`,
+			`{"raises":[{"brief":"2 sins in src/A.php","detail":"array-bag at src/A.php:3\ndata-clump at src/A.php:9","event":"sin-found","key":"sins:src/A.php"},{"brief":"src/B.php is clean","event":"sin-resolved","key":"sins:src/B.php"}]}`,
 		},
 	}
 
 	for _, c := range cases {
-		if got := c.answer.Line4(); got != c.want {
+		if got := c.answer.Line(); got != c.want {
 			t.Errorf("said\n%s\nwant\n%s", got, c.want)
 		}
 	}
@@ -117,12 +117,12 @@ func TestTheScanAnswersSettingsInVersion4sTypes(t *testing.T) {
 	}
 }
 
-func TestAppliedSettingsAreACardInVersion4(t *testing.T) {
-	if got := Configured4([]string{"config.json follows the plugin's switches: 2 changed"}); got != `{"cards":[{"key":"settings","kind":"configured","label":"config.json follows the plugin's switches: 2 changed","type":"configured"}],"v":1}` {
+func TestAppliedSettingsAreACard(t *testing.T) {
+	if got := Configured4([]string{"config.json follows the plugin's switches: 2 changed"}); got != `{"raises":[{"brief":"config.json follows the plugin's switches: 2 changed","event":"configured","key":"settings"}]}` {
 		t.Errorf("said %s", got)
 	}
 
-	if got := Configured4(nil); got != `{"v":1}` {
+	if got := Configured4(nil); got != `{}` {
 		t.Errorf("said %s with nothing changed", got)
 	}
 }

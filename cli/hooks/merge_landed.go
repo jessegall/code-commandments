@@ -93,7 +93,7 @@ func MergeLanded(line map[string]any) string {
 
 		work.keeps(tooMany)
 
-		return (JournalAnswer{Whisper: &tooMany}).Line4()
+		return (JournalAnswer{Whisper: &tooMany}).Line()
 	}
 
 	marks, narrowed := work.sinsBrought(from)
@@ -119,7 +119,7 @@ func MergeLanded(line map[string]any) string {
 
 	said = work.alsoToldTheAgent(said, sending, refusal)
 
-	return (JournalAnswer{Whisper: &said}).Line4()
+	return (JournalAnswer{Whisper: &said}).Line()
 }
 
 func (l landed) alsoToldTheAgent(said string, sending Sending, refusal string) string {

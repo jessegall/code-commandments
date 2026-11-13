@@ -7,7 +7,6 @@ import (
 	"slices"
 	"strconv"
 	"strings"
-	"time"
 	"unicode/utf8"
 
 	"github.com/jessegall/code-commandments/cli/dashboard"
@@ -617,7 +616,7 @@ func (s Settlement) Raises(root string) []Raise {
 
 	for _, file := range s.Files {
 		if len(file.Sins) == 0 {
-			raised = append(raised, Raise{Event: "sin-resolved", Brief: file.Path + " is clean", Key: cardKey(file.Path)})
+			raised = append(raised, Raise{Event: "sin-resolved", Brief: file.Path + " is clean", Key: fileKey(file.Path)})
 
 			continue
 		}
@@ -626,7 +625,7 @@ func (s Settlement) Raises(root string) []Raise {
 			Event:  "sin-found",
 			Brief:  file.counted(),
 			Open:   dashboard.Opening(dashboard.StoredOf(file.Sins[0].Finding(), root)),
-			Key:    cardKey(file.Path),
+			Key:    fileKey(file.Path),
 			Detail: strings.Join(file.named(), "\n"),
 		})
 	}
@@ -737,11 +736,6 @@ func markKey(id string) string {
 
 func fileKey(path string) string {
 	return "sins:" + path
-}
-
-// cardKey is a file's key made one card's own, so every found and every clean card is a new one in the chat, in the order they came, and none replaces an earlier card of the file.
-func cardKey(path string) string {
-	return fileKey(path) + "@" + strconv.FormatInt(time.Now().UnixNano(), 36)
 }
 
 func firstOf(values ...any) any {

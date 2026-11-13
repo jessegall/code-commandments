@@ -9,11 +9,13 @@ import (
 	"time"
 )
 
-const queueFolder = "queue"
+// toldFolder holds the answers a judging gives after its event, in the binary's own fields; the plugin's script shapes
+// each into the journal's queue, which the journal drains at the agent's next hook.
+const toldFolder = "told"
 
 var written atomic.Uint64
 
-// Queue4 is that queue.
+// Queue4 is where the answers a judging gives after its event wait for the plugin's script.
 type Queue4 struct{ path string }
 
 func Queue4In(folder string) (Queue4, bool) {
@@ -21,7 +23,7 @@ func Queue4In(folder string) (Queue4, bool) {
 		return Queue4{}, false
 	}
 
-	return Queue4{filepath.Join(folder, queueFolder)}, true
+	return Queue4{filepath.Join(folder, toldFolder)}, true
 }
 
 func (q Queue4) Path() string {
@@ -29,8 +31,8 @@ func (q Queue4) Path() string {
 }
 
 func (q Queue4) Tell(answer JournalAnswer, env string, agent int) error {
-	shape := told(answer).Shape4()
-	if len(shape) <= 1 {
+	shape := told(answer).Fields()
+	if len(shape) == 0 {
 		return nil
 	}
 	if env != "" {

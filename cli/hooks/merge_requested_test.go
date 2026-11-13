@@ -33,6 +33,7 @@ func guardAnswer(t *testing.T, said string) map[string]any {
 	if err := json.Unmarshal([]byte(said), &held); err != nil {
 		t.Fatalf("the guard answered %q, which is not a line the journal can read: %v", said, err)
 	}
+	held = asTheJournalSees(held)
 
 	return held
 }
