@@ -1,3 +1,5 @@
 #!/bin/sh
-# The agent journal runs this for every event the plugin hears; the release binary the manifest pins answers it.
-exec "$(dirname "$0")/../bin/commandments-release" plugin-hook
+# The agent journal runs this for every event the plugin hears; hook.py answers it, under the journal's own Python
+# when the journal names it and python3 on the PATH otherwise.
+python="${JOURNAL_PYTHON:-python3}"
+exec "$python" "$(dirname "$0")/hook.py"
