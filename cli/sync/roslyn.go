@@ -3,10 +3,12 @@ package sync
 import (
 	"os"
 	"path/filepath"
+	"slices"
 
 	"github.com/jessegall/code-commandments/bridge"
 	"github.com/jessegall/code-commandments/cli"
 	"github.com/jessegall/code-commandments/cli/config"
+	"github.com/jessegall/code-commandments/cli/scan"
 	"github.com/jessegall/code-commandments/cli/source"
 )
 
@@ -30,7 +32,8 @@ func removeHostRoslynBuilds(console cli.Console) {
 }
 
 func fetchRoslyn(root string, project config.Config, console cli.Console) {
-	if !project.Holds(root, source.CSharp) || os.Getenv("COMMANDMENTS_ROSLYN") != "" {
+	if !slices.ContainsFunc(scan.CSharp.Languages, func(language source.Language) bool { return project.Holds(root, language) }) ||
+		os.Getenv("COMMANDMENTS_ROSLYN") != "" {
 		return
 	}
 	executable, fetched, err := bridge.RoslynExecutable()

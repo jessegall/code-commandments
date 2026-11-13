@@ -49,7 +49,7 @@ func TestABridgeThatDiesIsAskedOnceMore(t *testing.T) {
 	command, runs := bridgeDyingOnce(t, header)
 	t.Setenv("COMMANDMENTS_ROSLYN", command)
 
-	units, err := readCSharp([]string{project}, []string{source}, func(*engine.Codebase) error { return nil })
+	units, err := readUnits(CSharp, []string{project}, []string{source}, func(*engine.Codebase) error { return nil })
 	if err != nil {
 		t.Fatalf("the bridge died once and the read gave up: %v", err)
 	}

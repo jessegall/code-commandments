@@ -10,7 +10,6 @@ import (
 	"path/filepath"
 
 	"github.com/jessegall/code-commandments/bridge"
-	"github.com/jessegall/code-commandments/cli/source"
 	"github.com/jessegall/code-commandments/contract"
 	"github.com/jessegall/code-commandments/engine"
 )
@@ -31,12 +30,27 @@ type unit struct {
 	files int
 }
 
-func (s Sources) CSharpUnits(complete func(*engine.Codebase) error) (*Units, error) {
-	roots, files := resolved(s.roots), resolved(s.byLanguage[source.CSharp])
+// Units reads the files of the bridge that reads in units, cut a project at a time.
+func (s Sources) Units(complete func(*engine.Codebase) error) (*Units, error) {
+	for _, held := range Bridges {
+		if held.InUnits {
+			return s.unitsOf(held, complete)
+		}
+	}
+
+	return nil, nil
+}
+
+func (s Sources) unitsOf(held Bridge, complete func(*engine.Codebase) error) (*Units, error) {
+	var files []string
+	for _, language := range held.Languages {
+		files = append(files, resolved(s.byLanguage[language])...)
+	}
+	roots := resolved(s.roots)
 	if len(files) == 0 {
 		return nil, nil
 	}
-	units, err := readCSharp(roots, files, func(codebase *engine.Codebase) error { return complete(s.rooted(codebase)) })
+	units, err := readUnits(held, roots, files, func(codebase *engine.Codebase) error { return complete(s.rooted(codebase)) })
 	if leftUnread(err, len(files)) {
 		return nil, nil
 	}
@@ -48,26 +62,19 @@ func (s Sources) CSharpUnits(complete func(*engine.Codebase) error) (*Units, err
 	return units, nil
 }
 
-func readCSharp(roots, files []string, complete func(*engine.Codebase) error) (*Units, error) {
-	units, err := askCSharp(roots, files, complete)
-	if err == nil {
-		return units, nil
+// readUnits asks the bridge once more when it was unavailable, as a bridge still starting its service is; its reach
+// names the failure.
+func readUnits(held Bridge, roots, files []string, complete func(*engine.Codebase) error) (*Units, error) {
+	units, err := askUnits(held, roots, files, complete)
+	if err == nil || !isUnavailable(err) {
+		return units, err
 	}
 
-	if failed := bridge.RoslynFailure(err); !isUnavailable(failed) {
-		return nil, err
-	}
-
-	units, again := askCSharp(roots, files, complete)
-	if again == nil {
-		return units, nil
-	}
-
-	return nil, bridge.RoslynFailure(again)
+	return askUnits(held, roots, files, complete)
 }
 
-func askCSharp(roots, files []string, complete func(*engine.Codebase) error) (*Units, error) {
-	asker, err := CSharp.Reach.Open(CSharp, roots)
+func askUnits(held Bridge, roots, files []string, complete func(*engine.Codebase) error) (*Units, error) {
+	asker, err := held.Reach.Open(held, roots)
 	if err != nil {
 		return nil, err
 	}
@@ -77,8 +84,8 @@ func askCSharp(roots, files []string, complete func(*engine.Codebase) error) (*U
 		return nil, err
 	}
 	units := &Units{folder: folder}
-	cutter := &cutter{units: units, owners: map[string]string{}, complete: complete}
-	if err := asker.AskEach(CSharp.Request(files), cutter.take); err != nil {
+	cutter := &cutter{units: units, projects: held.Projects, owners: map[string]string{}, complete: complete}
+	if err := asker.AskEach(held.Request(files), cutter.take); err != nil {
 		units.Close()
 
 		return nil, err
@@ -131,6 +138,7 @@ func (u *Units) Close() error {
 // cutter cuts a stream into units as it is read.
 type cutter struct {
 	units    *Units
+	projects *bridge.Projects
 	owners   map[string]string
 	complete func(*engine.Codebase) error
 	header   contract.Header
@@ -208,7 +216,7 @@ func (c *cutter) ownerOf(path string) string {
 	if owner, known := c.owners[folder]; known {
 		return owner
 	}
-	owner := bridge.CSharpProjects.Owner(path)
+	owner := c.projects.Owner(path)
 	c.owners[folder] = owner
 
 	return owner

@@ -128,7 +128,7 @@ func languageNamed(name string) (source.Language, bool) {
 }
 
 func LanguageName(language source.Language) string {
-	return strings.ToLower(caseOf(language))
+	return strings.ToLower(language.LegacyCase())
 }
 
 func configuratorOf(target string, steps []map[string][]any) (Configurator, error) {

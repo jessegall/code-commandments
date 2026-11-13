@@ -9,9 +9,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/jessegall/code-commandments/cache"
 	"github.com/jessegall/code-commandments/contract"
 	"github.com/jessegall/code-commandments/engine"
-	"github.com/jessegall/code-commandments/cache"
 )
 
 func treeHolding(t *testing.T, contents ...string) (*engine.Codebase, []string) {

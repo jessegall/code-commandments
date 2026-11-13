@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"slices"
 	"sync"
 
 	"github.com/jessegall/code-commandments/bridge"
@@ -25,8 +26,17 @@ type Bridge struct {
 	Label      string
 	Projects   *bridge.Projects
 	InOwnOrder bool
-	Reach      Reach
-	Notice     func() string
+	// InUnits says the bridge reads a whole solution and is judged a project at a time, never file by file.
+	InUnits bool
+	Reach   Reach
+	Notice  func() string
+}
+
+// ReadInUnits says whether a language's bridge reads it a project at a time rather than file by file.
+func ReadInUnits(language source.Language) bool {
+	return slices.ContainsFunc(Bridges, func(held Bridge) bool {
+		return held.InUnits && slices.Contains(held.Languages, language)
+	})
 }
 
 // Reach is how a bridge is reached.
@@ -339,6 +349,7 @@ var Frontend = Bridge{Kind: "frontend", Word: "frontend", Languages: []source.La
 var CSharp = Bridge{Kind: "roslyn", Word: "csharp", Languages: []source.Language{source.CSharp}, Label: "C#",
 	Projects:   bridge.CSharpProjects,
 	InOwnOrder: true,
+	InUnits:    true,
 	Reach:      Process{Command: func(roots []string) ([]string, error) { return bridge.Roslyn(roots...) }, Named: bridge.RoslynFailure},
 	Notice:     bridge.RoslynNotice,
 }

@@ -268,7 +268,7 @@ func (c Command) judge(options options, selected []detectors.Detector, judged co
 
 	whole, byProject := wholeAndByProject(selected)
 
-	read := sources.Only(slices.DeleteFunc(slices.Clone(languages), func(language source.Language) bool { return language == source.CSharp })...)
+	read := sources.Only(slices.DeleteFunc(slices.Clone(languages), scan.ReadInUnits)...)
 	progress.Plan(read.Bridged())
 	codebase, err := c.read(read.Reporting(progress.Phase("reading")))
 	parseSeconds := time.Since(parsing).Seconds()
@@ -630,7 +630,7 @@ func judgedFiles(sources scan.Sources, csharpFiles int, languages []source.Langu
 	judged := 0
 
 	for _, language := range languages {
-		if language == source.CSharp {
+		if scan.ReadInUnits(language) {
 			judged += csharpFiles
 
 			continue
@@ -644,7 +644,7 @@ func judgedFiles(sources scan.Sources, csharpFiles int, languages []source.Langu
 func readNothing(sources scan.Sources, codebase *engine.Codebase) []string {
 	var silent []string
 	for _, bridge := range scan.Bridges {
-		if slices.Contains(bridge.Languages, source.CSharp) {
+		if bridge.InUnits {
 			continue
 		}
 

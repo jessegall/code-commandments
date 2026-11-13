@@ -22,7 +22,7 @@ func TestASolutionIsCutIntoOneUnitPerProject(t *testing.T) {
 
 	var completed [][]string
 	var judged []string
-	units, err := sources.CSharpUnits(func(codebase *engine.Codebase) error {
+	units, err := sources.Units(func(codebase *engine.Codebase) error {
 		completed = append(completed, pathsOf(codebase))
 		judged = append(judged, judgedOf(codebase)...)
 

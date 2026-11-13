@@ -8,7 +8,6 @@ import (
 	"github.com/jessegall/code-commandments/catalog"
 	"github.com/jessegall/code-commandments/cli"
 	"github.com/jessegall/code-commandments/cli/scan"
-	"github.com/jessegall/code-commandments/cli/source"
 	"github.com/jessegall/code-commandments/detectors"
 	"github.com/jessegall/code-commandments/engine"
 	cs "github.com/jessegall/code-commandments/engine/csharp"
@@ -24,7 +23,7 @@ func (c Command) judgeUnits(sources scan.Sources, rules []detectors.Detector, op
 	var merged *cs.Summary
 	var clean []bool
 	set := newCSharpSet(sources.Checkout())
-	units, err := sources.CSharpUnits(func(codebase *engine.Codebase) error {
+	units, err := sources.Units(func(codebase *engine.Codebase) error {
 		set.add(codebase)
 		clean = append(clean, !slices.ContainsFunc(rules, func(rule detectors.Detector) bool {
 			_, weighs := rule.(detectors.Aggregating)
@@ -44,7 +43,7 @@ func (c Command) judgeUnits(sources scan.Sources, rules []detectors.Detector, op
 		return Judgement{}, 0, err
 	}
 	if units == nil {
-		return Judgement{Skipped: unreadCSharp(sources)}, 0, nil
+		return Judgement{Skipped: unreadUnits(sources)}, 0, nil
 	}
 	defer units.Close()
 
@@ -122,18 +121,22 @@ func (c Command) judgeUnits(sources scan.Sources, rules []detectors.Detector, op
 	}
 	judgement.Findings = Twinned(judgement.Findings)
 	if files == 0 {
-		judgement.Skipped = joined(judgement.Skipped, unreadCSharp(sources)...)
+		judgement.Skipped = joined(judgement.Skipped, unreadUnits(sources)...)
 	}
 
 	return judgement, files, nil
 }
 
-func unreadCSharp(sources scan.Sources) []string {
-	if sources.Count(source.CSharp) == 0 {
-		return nil
+// unreadUnits names each bridge that reads in units and had files to read but read none.
+func unreadUnits(sources scan.Sources) []string {
+	var unread []string
+	for _, held := range scan.Bridges {
+		if held.InUnits && sources.Count(held.Languages...) > 0 {
+			unread = append(unread, "the "+held.Label+" bridge")
+		}
 	}
 
-	return []string{"the " + scan.CSharp.Label + " bridge"}
+	return unread
 }
 
 func weighedOf(rule detectors.Detector, candidate detectors.Candidate) weighed {

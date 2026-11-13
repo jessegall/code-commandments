@@ -152,23 +152,12 @@ func languageCase(value engine.Match) (source.Language, bool) {
 	}
 
 	for _, language := range source.Languages {
-		if strings.EqualFold(caseOf(language), value.Child("name").Name()) {
+		if strings.EqualFold(language.LegacyCase(), value.Child("name").Name()) {
 			return language, true
 		}
 	}
 
 	return "", false
-}
-
-func caseOf(language source.Language) string {
-	switch language {
-	case source.TypeScript:
-		return "TypeScript"
-	case source.CSharp:
-		return "CSharp"
-	default:
-		return language.Label()
-	}
 }
 
 func (c *Config) configure(args []engine.Match) error {

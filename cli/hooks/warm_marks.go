@@ -81,8 +81,8 @@ const (
 func noStreamOf(language source.Language) Narrowed {
 	said := "the tree held for this project has no " + language.Label() + " in it, so only the rules that answer from one file can run here"
 
-	if language == source.CSharp {
-		said += ", and C# is read per checkout rather than per file, so its project's own types are not in that answer"
+	if scan.ReadInUnits(language) {
+		said += ", and " + language.Label() + " is read per checkout rather than per file, so its project's own types are not in that answer"
 	}
 
 	return Narrowed(said)
@@ -612,7 +612,7 @@ func savedTreeFolder(named branchRoot) string {
 func reads(root string, project config.Config) []source.Language {
 	var languages []source.Language
 	for _, language := range source.Languages {
-		if language != source.CSharp && project.Reads(root, language) {
+		if !scan.ReadInUnits(language) && project.Reads(root, language) {
 			languages = append(languages, language)
 		}
 	}

@@ -28,20 +28,22 @@ var Languages = []Language{PHP, Vue, TypeScript, Python, CSharp, Go}
 
 // facts is what the CLI knows of a language beyond the contract's own facts of it: the name its stream writes, the
 // engines that judge it, the files that declare a project of it where only such a project is read, and the languages
-// read alongside it because they publish facts its rules use (a server type a frontend mirrors, and back).
+// read alongside it because they publish facts its rules use (a server type a frontend mirrors, and back), and the case
+// the PHP tool's Language enum named it by where that is not its label.
 type facts struct {
-	written   contract.Language
-	engines   []catalog.Engine
-	manifests []string
-	alongside []Language
+	written    contract.Language
+	engines    []catalog.Engine
+	manifests  []string
+	alongside  []Language
+	legacyCase string
 }
 
 var described = map[Language]facts{
 	PHP:        {written: contract.PHP, engines: []catalog.Engine{catalog.PHP}, alongside: []Language{Vue, TypeScript}},
 	Vue:        {written: contract.Vue, engines: []catalog.Engine{catalog.Vue, catalog.TypeScript}, alongside: []Language{PHP}},
-	TypeScript: {written: contract.TypeScript, engines: []catalog.Engine{catalog.Vue, catalog.TypeScript}, alongside: []Language{PHP}},
+	TypeScript: {written: contract.TypeScript, engines: []catalog.Engine{catalog.Vue, catalog.TypeScript}, alongside: []Language{PHP}, legacyCase: "TypeScript"},
 	Python:     {written: contract.Python, engines: []catalog.Engine{catalog.Python}},
-	CSharp:     {written: contract.CSharp, engines: []catalog.Engine{catalog.CSharp}},
+	CSharp:     {written: contract.CSharp, engines: []catalog.Engine{catalog.CSharp}, legacyCase: "CSharp"},
 	Go:         {written: contract.Go, engines: []catalog.Engine{catalog.Go}, manifests: []string{"go.mod"}},
 }
 
@@ -130,6 +132,15 @@ func (l Language) Comment(text string) string {
 // ReadAlongside are the languages read with this one because they publish facts its rules use.
 func (l Language) ReadAlongside() []Language {
 	return described[l].alongside
+}
+
+// LegacyCase is the case of the PHP tool's Language enum that named this language in an old configuration.
+func (l Language) LegacyCase() string {
+	if named := described[l].legacyCase; named != "" {
+		return named
+	}
+
+	return l.Label()
 }
 
 func (l Language) Label() string {
