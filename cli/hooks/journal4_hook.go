@@ -8,7 +8,6 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/jessegall/code-commandments/cli"
 	"github.com/jessegall/code-commandments/cli/help"
@@ -145,32 +144,52 @@ func Answer4Now(line map[string]any) string {
 }
 
 func Judge4Into(line map[string]any, folder string) {
+	judgedInto([]map[string]any{line}, folder)
+}
+
+// judgedInto judges the events one queued run was handed, an agent's edits gathered by the plugin's script as one
+// batch, and leaves the answer where the script delivers it.
+func judgedInto(lines []map[string]any, folder string) {
 	queue, queued := Queue4In(folder)
 	if !queued {
 		return
 	}
 
-	moment, known := Moment4Of(line)
+	given, known := givenOf(lines)
 	if !known {
 		return
-	}
-
-	given := Stamped(moment)
-	window := EditWindowIn(folder, MomentOf(given).Agent)
-	if asText(line["event"]) == editedEvent {
-		given, _ = gatheredIn(window, given)
 	}
 
 	defer rememberedAround(servedRoot(), func(...string) {})()
 
 	answer := answerWith(given)
 
+	line := lines[len(lines)-1]
 	data, _ := line["data"].(map[string]any)
 	if gone(asText(firstOf(data["cwd"], line["cwd"]))) {
 		return
 	}
 
 	_ = queue.Tell(answer, asText(line["environment"]), MomentOf(given).Agent)
+}
+
+// givenOf is the moment one run judges: the event it was handed, or an agent's events gathered into one batch.
+func givenOf(lines []map[string]any) (map[string]any, bool) {
+	var batch []asked
+	for _, line := range lines {
+		if moment, known := Moment4Of(line); known {
+			batch = append(batch, asked{given: Stamped(moment)})
+		}
+	}
+
+	switch len(batch) {
+	case 0:
+		return nil, false
+	case 1:
+		return batch[0].given, true
+	}
+
+	return batched(batch).given, true
 }
 
 func gone(cwd string) bool {
@@ -183,50 +202,29 @@ func gone(cwd string) bool {
 	return err != nil || !info.IsDir()
 }
 
-func gatheredIn(window EditWindow, given map[string]any) (map[string]any, [][]byte) {
-	if !window.IsOpen() {
-		return given, nil
-	}
-
-	time.Sleep(gatheredFor(given))
-
-	edits := window.Close()
-	var batch []asked
-	for _, edit := range edits {
-		var line map[string]any
-		if json.Unmarshal(edit, &line) != nil {
-			continue
-		}
-
-		if moment, known := Moment4Of(line); known {
-			batch = append(batch, asked{given: Stamped(moment)})
-		}
-	}
-
-	if len(batch) == 0 {
-		return given, edits
-	}
-
-	return batched(batch).given, edits
-}
-
 func judgeTheEventIn(path string, console cli.Console) {
 	raw, err := os.ReadFile(path)
 	os.Remove(path)
 
-	var line map[string]any
-	if err != nil || json.Unmarshal(bytes.TrimSpace(raw), &line) != nil || line == nil {
+	var lines []map[string]any
+	for _, each := range bytes.Split(raw, []byte("\n")) {
+		var line map[string]any
+		if err == nil && json.Unmarshal(bytes.TrimSpace(each), &line) == nil && line != nil {
+			lines = append(lines, line)
+		}
+	}
+	if len(lines) == 0 {
 		return
 	}
 
-	switch namedAsTheKey(asText(line["event"])) {
+	switch line := lines[0]; namedAsTheKey(asText(line["event"])) {
 	case landedEvent:
 		tellsOfTheMerge(line)
 	case deliveringEvent:
 		defer rememberedAround(servedRoot(), console.Warn)()
 		mergeOf(line).judgesAfterwards()
 	default:
-		Judge4Into(line, os.Getenv(pluginData))
+		judgedInto(lines, os.Getenv(pluginData))
 	}
 }
 

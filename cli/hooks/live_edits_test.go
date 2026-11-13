@@ -1,7 +1,6 @@
 package hooks
 
 import (
-	"encoding/json"
 	"io"
 	"os"
 	"path/filepath"
@@ -46,30 +45,17 @@ func TestWithLiveJudgingOffAnEditIsLeftAloneEntirely(t *testing.T) {
 	}
 }
 
-func TestTheRunThatClosesAWindowJudgesEveryEditInItAsOneBatch(t *testing.T) {
+func TestTheRunOfAnAgentsGatheredEditsJudgesThemAsOneBatch(t *testing.T) {
 	root := t.TempDir()
-	data := t.TempDir()
-	settings := map[string]any{liveEditsKey: true, editWindowKey: 0}
+	settings := map[string]any{liveEditsKey: true}
 
-	window := EditWindowIn(data, 7)
-	var edits []byte
-	for _, file := range []string{"order.py", "refund.py"} {
-		raw, _ := json.Marshal(editedLine(root, file, settings))
-		edits = append(append(edits, raw...), '\n')
+	given, known := givenOf([]map[string]any{editedLine(root, "order.py", settings), editedLine(root, "refund.py", settings)})
+	if !known {
+		t.Fatal("two gathered edits were read as no moment at all")
 	}
-	os.MkdirAll(window.folder, 0o755)
-	os.WriteFile(window.path(".edits"), edits, 0o644)
-	os.WriteFile(window.path(".open"), nil, 0o644)
-
-	moment, _ := Moment4Of(editedLine(root, "order.py", settings))
-	given, _ := gatheredIn(window, Stamped(moment))
 
 	if files := batchedIn(given); len(files) != 2 {
-		t.Errorf("the window's run judges %v, want both files edited in it", files)
-	}
-
-	if window.IsOpen() {
-		t.Error("the run took the edits but left the window open")
+		t.Errorf("the run judges %v, want both files edited", files)
 	}
 }
 

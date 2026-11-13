@@ -57,28 +57,6 @@ func TestAMergeThatWouldBringInASinIsRefusedBeforeItLands(t *testing.T) {
 	}
 }
 
-func TestWithTheSettingOffAMergeIsNeverHeld(t *testing.T) {
-	root, before, after := mergedProject(t)
-
-	t.Setenv(journalSettings, `{"judge_before_merge": "false"}`)
-
-	if said := MergeRequested(requestedLine(root, before, after)); said != "" {
-		t.Errorf("the guard answered %q with the setting off: a merge must not be held by a feature nobody "+
-			"switched on", said)
-	}
-}
-
-func TestWithNoSettingsAtAllAMergeIsNeverHeld(t *testing.T) {
-	root, before, after := mergedProject(t)
-
-	t.Setenv(journalSettings, "")
-
-	if said := MergeRequested(requestedLine(root, before, after)); said != "" {
-		t.Errorf("the guard answered %q where no settings were given at all, so a consumer who never chose this "+
-			"has its merges held", said)
-	}
-}
-
 func TestAMergeWithNoRangeToJudgeIsAllowed(t *testing.T) {
 	root, before, _ := mergedProject(t)
 

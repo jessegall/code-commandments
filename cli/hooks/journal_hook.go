@@ -344,16 +344,6 @@ func batchedLinesOf(payload map[string]any, file string) (git.ChangedLines, bool
 	return git.ChangedLines{}, false
 }
 
-func gatheredFor(given map[string]any) time.Duration {
-	chosen, _ := chosenOn(given)
-	seconds, err := strconv.ParseFloat(asText(chosen[editWindowKey]), 64)
-	if err != nil || seconds < 0 {
-		return batchedWithin
-	}
-
-	return time.Duration(seconds * float64(time.Second))
-}
-
 func servedRoot() string {
 	return workspace.ProjectRoot(firstText(os.Getenv(journalRoot), cwdOf()))
 }

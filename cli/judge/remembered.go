@@ -1,12 +1,7 @@
 package judge
 
 import (
-	"crypto/sha256"
-	"encoding/hex"
-	"io"
-	"os"
 	"path/filepath"
-	"sync"
 
 	"github.com/jessegall/code-commandments/bridge"
 	"github.com/jessegall/code-commandments/cache"
@@ -43,8 +38,8 @@ func RememberedFor(project string, warn func(...string)) (Remembered, bool) {
 	}
 
 	return Remembered{
-		Memories:  detectors.MemoryFile{Memories: detectors.EveryMemory(), Path: filepath.Join(folder, rememberedDetectorsFile), Build: Build(), Warn: warn},
-		Weighings: WeighingsFile{Path: filepath.Join(folder, rememberedWeighingsFile), Build: Build(), Warn: warn},
+		Memories:  detectors.MemoryFile{Memories: detectors.EveryMemory(), Path: filepath.Join(folder, rememberedDetectorsFile), Build: bridge.Build(), Warn: warn},
+		Weighings: WeighingsFile{Path: filepath.Join(folder, rememberedWeighingsFile), Build: bridge.Build(), Warn: warn},
 	}, true
 }
 
@@ -61,23 +56,3 @@ func (r Remembered) Save() {
 	r.Memories.Save()
 	r.Weighings.Save()
 }
-
-var Build = sync.OnceValue(func() string {
-	path, err := os.Executable()
-	if err != nil {
-		return bridge.Release
-	}
-
-	file, err := os.Open(path)
-	if err != nil {
-		return bridge.Release
-	}
-	defer file.Close()
-
-	digest := sha256.New()
-	if _, err := io.Copy(digest, file); err != nil {
-		return bridge.Release
-	}
-
-	return bridge.Release + "-" + hex.EncodeToString(digest.Sum(nil)[:12])
-})

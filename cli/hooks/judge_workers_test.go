@@ -1,10 +1,7 @@
 package hooks
 
 import (
-	"os"
-	"path/filepath"
 	"testing"
-	"time"
 )
 
 func TestAWorkerGetsNoJudgingWhenItsEditsAreNotChosen(t *testing.T) {
@@ -12,42 +9,6 @@ func TestAWorkerGetsNoJudgingWhenItsEditsAreNotChosen(t *testing.T) {
 
 	if notForThisRole(moment) == "" {
 		t.Error("a worker's edit went on to be judged with live edits off")
-	}
-}
-
-func TestAnAgentsLiveEditsAreGatheredForFiveSecondsByDefault(t *testing.T) {
-	if got := gatheredFor(map[string]any{"settings": map[string]any{}}); got != 5*time.Second {
-		t.Errorf("edits are gathered for %v", got)
-	}
-}
-
-func TestTheWindowForLiveEditsIsASetting(t *testing.T) {
-	chosen := map[string]any{"settings": map[string]any{"judge_edit_window": float64(2)}}
-
-	if got := gatheredFor(chosen); got != 2*time.Second {
-		t.Errorf("a window of 2 seconds gathers for %v", got)
-	}
-
-	alone := map[string]any{"settings": map[string]any{"judge_edit_window": float64(0)}}
-
-	if got := gatheredFor(alone); got != 0 {
-		t.Errorf("a window of 0 gathers for %v", got)
-	}
-}
-
-func TestOnVersion4TheWindowForLiveEditsIsReadFromTheSettingsFile(t *testing.T) {
-	file := filepath.Join(t.TempDir(), "settings.json")
-	if err := os.WriteFile(file, []byte(`{"judge_edit_window": 2, "judge_workers": false, "judge_worker_edits": true}`), 0o644); err != nil {
-		t.Fatal(err)
-	}
-	t.Setenv(journalSettings, file)
-
-	if got := gatheredFor(map[string]any{"event": "file_edited"}); got != 2*time.Second {
-		t.Errorf("a version 4 line, which carries no settings, gathers edits for %v instead of the 2 seconds chosen", got)
-	}
-
-	if workerEditsJudgedAt(Moment{Role: "worker"}) {
-		t.Error("with workers switched off in the settings file, a version 4 worker's edit is still judged")
 	}
 }
 

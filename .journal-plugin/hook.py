@@ -29,12 +29,12 @@ HAND_INS, HAND_INS_AFTER = "judge_hand_ins", "judge_hand_ins_after"
 GUARDED = {"worker_delivering": HAND_INS, "suites.coding.workers.worker_delivering": HAND_INS,
            "suites.coding.workers.merge_request.created": "judge_before_merge"}
 EVENTS, WINDOWS, TOLD, QUEUE = "events", "windows", "told", "queue"
-JUDGE_EVENT, JUDGE_GUARD = "--judge-event=", "--judge-guard="
+JUDGE_EVENT, JUDGE_GUARD, JUDGE_AGENT = "--judge-event=", "--judge-guard=", "--judge-agent="
+EDIT_WINDOW, DEFAULT_EDIT_WINDOW = "judge_edit_window", 5.0
 FAULTS = "hook-faults.log"
 TAKING_AT_MOST = 60
 NEW_CARD_EACH_TIME = {"sin-found", "sin-resolved"}
-WINDOW_LEFT_OPEN_AFTER = 15 * 60
-QUEUED_AT_MOST = 60 * 60
+UNNAMED_WINDOW_STANDS = 30
 EVENT_KEPT_AT_MOST = 24 * 60 * 60
 
 
@@ -274,11 +274,11 @@ def cli_refused(event: dict) -> str:
 
 
 class EditWindow:
-    """One agent's live edits gathered on disk while its window is open: the first edit opens it and queues the one
-    run that judges them, every later edit only joins it, and that run (the binary's) closes it when it starts and
-    takes them all. So an agent has at most one live-edit judging waiting in the queue, however long it waits: the
-    window names that run's kept event, which the run removes as it starts. A window whose run never started counts as
-    closed after an hour, and one whose run died after starting once it has stood open far longer than any window."""
+    """One agent's events waiting to be judged, of every kind: the first opens the window and queues the one run that
+    judges them, every later one only joins it, and that run takes them all when it starts. So an agent has at most one
+    judging waiting in the queue, however long it waits. The window names the process that holds it, the journal's
+    run that waits in the queue and then judges, and stands exactly as long as that process lives: a run that ends,
+    crashes, is cancelled or is killed frees it at once. A window not yet named stands for a few seconds only."""
 
     def __init__(self, data: Path, agent: int) -> None:
         self.folder, self.agent = data / WINDOWS, agent
@@ -290,8 +290,8 @@ class EditWindow:
         self.folder.mkdir(parents=True, exist_ok=True)
         with open(self.path(".lock"), "a") as lock:
             fcntl.flock(lock, fcntl.LOCK_EX)
-            with open(self.path(".edits"), "ab") as edits:
-                edits.write(edit.strip() + b"\n")
+            with open(self.path(".events"), "ab") as events:
+                events.write(edit.strip() + b"\n")
             if self.waiting():
                 return False
             self.path(".open").write_text("")
@@ -299,27 +299,41 @@ class EditWindow:
 
     def waiting(self) -> bool:
         opened = self.path(".open")
-        if not opened.exists():
-            return False
         try:
-            named = Path(opened.read_text().strip() or "/nonexistent")
-            if named.is_file():
-                return time.time() - named.stat().st_mtime < QUEUED_AT_MOST
-            return time.time() - opened.stat().st_mtime < WINDOW_LEFT_OPEN_AFTER
+            named = opened.read_text().split()
+            if named and named[0].isdigit():
+                return alive(int(named[0]))
+            return time.time() - opened.stat().st_mtime < UNNAMED_WINDOW_STANDS
         except OSError:
             return False
 
-    def names(self, event: Path) -> None:
+    def names(self, holder: int, marker: Path) -> None:
         with open(self.path(".lock"), "a") as lock:
             fcntl.flock(lock, fcntl.LOCK_EX)
             opened = self.path(".open")
             if opened.exists():
-                opened.write_text(str(event))
+                opened.write_text(f"{holder} {marker}")
 
     def reopen(self) -> None:
         with open(self.path(".lock"), "a") as lock:
             fcntl.flock(lock, fcntl.LOCK_EX)
             self.path(".open").unlink(missing_ok=True)
+
+    def pending(self) -> list[bytes]:
+        try:
+            return [line for line in self.path(".events").read_bytes().splitlines() if line.strip()]
+        except OSError:
+            return []
+
+    def take(self) -> list[bytes]:
+        """Every event gathered so far, and the window closed, so the next event queues a run of its own."""
+        self.folder.mkdir(parents=True, exist_ok=True)
+        with open(self.path(".lock"), "a") as lock:
+            fcntl.flock(lock, fcntl.LOCK_EX)
+            taken = self.pending()
+            self.path(".events").unlink(missing_ok=True)
+            self.path(".open").unlink(missing_ok=True)
+            return taken
 
 
 def guard_queued(event: dict, line: bytes) -> dict | None:
@@ -377,24 +391,60 @@ def journal_program() -> str:
     return str(beside) if beside.is_file() else ""
 
 
-def judging_line(journal: str, event: Path, agent: int, program: Path = PLUGIN / ".journal-plugin" / "hook") -> list[str]:
+def judging_line(journal: str, marker: Path, agent: int, program: Path = PLUGIN / ".journal-plugin" / "hook") -> list[str]:
     agent_named = ["--agent", str(agent)] if agent else []
-    return [journal, "plugin", "run", "--kind", "judge", *agent_named, "--", str(program), f"{JUDGE_EVENT}{event}"]
+    return [journal, "plugin", "run", "--kind", "judge", *agent_named, "--", str(program), f"{JUDGE_AGENT}{marker}"]
 
 
-def queued(line: bytes, agent: int) -> Path | None:
-    """Keeps the event and starts the journal's run that judges it, detached, so the event's answer never waits."""
+def queued(agent: int) -> tuple[int, Path] | None:
+    """Starts the journal's run that judges an agent's waiting events, detached, so the event's answer never waits.
+    The journal's process lives while the run waits in the queue and while it judges, so its pid is what holds the
+    agent's window; the run's marker names the agent and is removed when the run starts."""
     data, journal = os.environ.get("JOURNAL_PLUGIN_DATA", ""), journal_program()
     if not data or not journal:
         return None
-    event = kept_event(Path(data), line)
+    marker = kept_event(Path(data), json.dumps({"agent": agent}).encode())
     try:
-        subprocess.Popen(judging_line(journal, event, agent), stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
-                         stderr=subprocess.DEVNULL, start_new_session=True)
+        run = subprocess.Popen(judging_line(journal, marker, agent), stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
+                               stderr=subprocess.DEVNULL, start_new_session=True)
     except OSError:
-        event.unlink(missing_ok=True)
+        marker.unlink(missing_ok=True)
         return None
-    return event
+    return run.pid, marker
+
+
+def alive(pid: int) -> bool:
+    try:
+        os.kill(pid, 0)
+    except ProcessLookupError:
+        return False
+    except PermissionError:
+        return True
+    return True
+
+
+def agent_of(event: dict) -> int:
+    return event["agent"] if isinstance(event.get("agent"), int) else 0
+
+
+def judged_for_the_agent(line: bytes, agent: int) -> None:
+    """Every judging the plugin queues goes through here: the event joins the agent's waiting run, or opens the
+    agent's window and queues that one run."""
+    data = os.environ.get("JOURNAL_PLUGIN_DATA", "")
+    if not data:
+        return
+    window = EditWindow(Path(data), agent)
+    if not window.gather(line):
+        return
+    try:
+        run = queued(agent)
+        if run is not None:
+            window.names(*run)
+    except Exception:
+        window.reopen()
+        raise
+    if run is None:
+        window.reopen()
 
 
 def judge_later(line: bytes) -> None:
@@ -402,23 +452,53 @@ def judge_later(line: bytes) -> None:
         event = json.loads(line)
     except ValueError:
         return
+    if isinstance(event, dict) and judged_later(event):
+        judged_for_the_agent(line, agent_of(event))
+
+
+def edit_window_of(lines: list[bytes]) -> float:
+    """How long an agent's edits are gathered before they are judged together: the setting the last edit carried."""
+    for line in reversed(lines):
+        try:
+            event = json.loads(line)
+        except ValueError:
+            continue
+        if isinstance(event, dict) and event.get("event") == EDITED:
+            try:
+                return max(0.0, float(settings_of(event).get(EDIT_WINDOW, DEFAULT_EDIT_WINDOW)))
+            except (TypeError, ValueError):
+                return DEFAULT_EDIT_WINDOW
+    return 0.0
+
+
+def judged_agent(marker: str, binary: Path = BINARY) -> int:
+    """The one queued run of an agent: it waits out the edit window, takes every event the agent gathered, and judges
+    the edits as one batch and every other event on its own."""
     data = os.environ.get("JOURNAL_PLUGIN_DATA", "")
-    if not data or not isinstance(event, dict) or not judged_later(event):
-        return
-    agent = event.get("agent") if isinstance(event.get("agent"), int) else 0
-    window = EditWindow(Path(data), agent)
-    event_name = event.get("event")
-    if event_name == EDITED and not window.gather(line):
-        return
     try:
-        event = queued(line, agent)
-        if event is not None and event_name == EDITED:
-            window.names(event)
-    except Exception:
-        window.reopen()
-        raise
-    if event is None:
-        window.reopen()
+        agent = int(json.loads(Path(marker).read_text())["agent"])
+    except (OSError, ValueError, KeyError, TypeError):
+        agent = 0
+    Path(marker).unlink(missing_ok=True)
+    if not data:
+        return 0
+    window = EditWindow(Path(data), agent)
+    time.sleep(edit_window_of(window.pending()))
+    taken = window.take()
+    edits = [line for line in taken if edited(line)]
+    batches = ([edits] if edits else []) + [[line] for line in taken if not edited(line)]
+    code = 0
+    for batch in batches:
+        code = judged(str(kept_event(Path(data), b"\n".join(batch))), binary) or code
+    return code
+
+
+def edited(line: bytes) -> bool:
+    try:
+        event = json.loads(line)
+    except ValueError:
+        return False
+    return isinstance(event, dict) and event.get("event") == EDITED
 
 
 def main() -> int:
@@ -428,6 +508,9 @@ def main() -> int:
     guarding = [argument[len(JUDGE_GUARD):] for argument in sys.argv[1:] if argument.startswith(JUDGE_GUARD)]
     if guarding:
         return guard_judged(guarding[0])
+    agents = [argument[len(JUDGE_AGENT):] for argument in sys.argv[1:] if argument.startswith(JUDGE_AGENT)]
+    if agents:
+        return judged_agent(agents[0])
     line = sys.stdin.buffer.read()
     try:
         event = json.loads(line)
@@ -450,7 +533,7 @@ def main() -> int:
         return 0
     if isinstance(event, dict) and (judged_after_the_hand_in(event) or judged_after_the_merge(event)):
         sys.stdout.write(json.dumps(shaped({})) + "\n")
-        queued(line, event.get("agent") if isinstance(event.get("agent"), int) else 0)
+        afterwards(lambda: judged_for_the_agent(line, agent_of(event)))
         return 0
     if isinstance(event, dict) and (event.get("event") in GUARDED or event.get("event") in MERGED):
         sys.stdout.write(json.dumps(shaped({})) + "\n")

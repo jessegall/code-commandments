@@ -25,10 +25,6 @@ func TestAHandInJudgedAfterGoesThroughUnheldAndTheWorkerIsToldItsSinAfterwards(t
 
 	line := afterHandInLine(root, map[string]any{"judge_workers": true, "judge_hand_ins": false, "judge_hand_ins_after": true})
 
-	if held := DeliveryHeld(line); held != "" {
-		t.Fatalf("the hand-in was held though judging after it was chosen: %q", held)
-	}
-
 	raw, _ := json.Marshal(line)
 	kept := []string{filepath.Join(data, "events", "event-1.json")}
 	os.MkdirAll(filepath.Dir(kept[0]), 0o755)

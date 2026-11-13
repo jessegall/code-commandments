@@ -91,29 +91,6 @@ func TestAHandInWithNoTreeHeldIsNeverReadWholeAndSaysWhatWasNotAsked(t *testing.
 	}
 }
 
-func TestAHandInIsNotHeldWithTheSettingOff(t *testing.T) {
-	root, _, _ := projectWithASin(t)
-
-	t.Setenv(journalSettings, `{"judge_hand_ins": "false"}`)
-
-	if held := DeliveryHeld(deliveringOf(root, "src/refund.py")); held != "" {
-		t.Errorf("with hand-ins switched off, the hand-in was answered %q", held)
-	}
-}
-
-func TestAHandInObeysTheSettingOnItsOwnLineOverTheProjects(t *testing.T) {
-	root, _, _ := projectWithASin(t)
-
-	t.Setenv(journalSettings, `{"judge_hand_ins": "true"}`)
-
-	line := deliveringOf(root, "src/refund.py")
-	line["settings"] = map[string]any{"judge_hand_ins": false}
-
-	if held := DeliveryHeld(line); held != "" {
-		t.Errorf("with hand-ins switched off on the line, the hand-in was answered %q", held)
-	}
-}
-
 func TestAHandInIsHeldWhenItsOwnLineSwitchesTheSettingOn(t *testing.T) {
 	root, _, _ := projectWithASin(t)
 

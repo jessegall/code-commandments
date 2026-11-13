@@ -36,12 +36,15 @@ type Bridge struct {
 
 // File is one source file's tree and comments.
 type File struct {
-	Path     string    `json:"path"`
-	Language Language  `json:"language"`
-	Errors   int       `json:"errors"`
-	Context  bool      `json:"context,omitempty"`
-	Test     bool      `json:"test,omitempty"`
-	Module   string    `json:"module,omitempty"`
+	Path     string   `json:"path"`
+	Language Language `json:"language"`
+	Errors   int      `json:"errors"`
+	Context  bool     `json:"context,omitempty"`
+	Test     bool     `json:"test,omitempty"`
+	Module   string   `json:"module,omitempty"`
+	// Reads are the other files whose contents shaped this tree, configuration and lockfiles included: a tree kept
+	// between runs stands while its own file and every one of these are unchanged.
+	Reads    []string  `json:"reads,omitempty"`
 	Resolver *Resolver `json:"resolver,omitempty"`
 	Root     *Node     `json:"root"`
 	Comments []Comment `json:"comments"`
