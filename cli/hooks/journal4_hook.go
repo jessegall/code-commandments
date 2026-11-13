@@ -179,18 +179,11 @@ func Judge4Into(line map[string]any, folder string) {
 
 	given := Stamped(moment)
 	window := EditWindowIn(folder, MomentOf(given).Agent)
-	var edits [][]byte
 	if asText(line["event"]) == editedEvent {
-		given, edits = gatheredIn(window, given)
+		given, _ = gatheredIn(window, given)
 	}
 
-	save, alone := rememberedAround(servedRoot(), func(...string) {})
-	if !alone {
-		window.PutBack(edits)
-
-		return
-	}
-	defer save()
+	defer rememberedAround(servedRoot(), func(...string) {})()
 
 	answer := answerWith(given)
 
@@ -345,10 +338,8 @@ func judgeTheEventIn(path string, console cli.Console) {
 		return
 	}
 
-	if save, alone := rememberedAround(servedRoot(), console.Warn); alone {
-		defer save()
-		mergeOf(line).judgesAfterwards()
-	}
+	defer rememberedAround(servedRoot(), console.Warn)()
+	mergeOf(line).judgesAfterwards()
 }
 
 func Answer4Of(line map[string]any) string {

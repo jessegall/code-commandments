@@ -36,8 +36,6 @@ const defaultParallel = 2
 
 const aRuleCouldNotRun = 3
 
-const readingElsewhere = 4
-
 // Command is `judge`: scan a codebase and report its sins, grouped by the skill that fixes each.
 type Command struct {
 	Fixable map[string]string
@@ -131,14 +129,7 @@ func (c Command) Run(in *cli.Input, console cli.Console) (int, error) {
 	}
 
 	if remembered, keeps := RememberedFor(space.Root(), console.Warn); keeps && c.Reading == nil {
-		release, alone := remembered.ReadAlone()
-		if !alone {
-			console.Warn("✗ another run is reading this project right now, so this one stops here; run it again once that one ends")
-
-			return readingElsewhere, nil
-		}
-
-		defer release()
+		defer remembered.TakeTurn()()
 		remembered.Load()
 		defer remembered.Save()
 	}

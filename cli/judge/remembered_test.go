@@ -87,10 +87,7 @@ func TestAJudgeWaitsWhileAnotherRunReadsTheProjectThenRuns(t *testing.T) {
 
 	t.Setenv("XDG_CACHE_HOME", t.TempDir())
 	remembered, _ := RememberedFor(root, func(...string) {})
-	release, taken := remembered.ReadAlone()
-	if !taken {
-		t.Fatal("the test could not claim the project for the run it stands in for")
-	}
+	release := remembered.TakeTurn()
 
 	var out, errs strings.Builder
 	ended := make(chan int, 1)
@@ -108,10 +105,7 @@ func TestAJudgeWaitsWhileAnotherRunReadsTheProjectThenRuns(t *testing.T) {
 	release()
 
 	select {
-	case code := <-ended:
-		if code == readingElsewhere {
-			t.Error("a judge after the other run ended still found the project being read")
-		}
+	case <-ended:
 	case <-time.After(40 * time.Second):
 		t.Fatal("the judge never got its turn after the other run ended")
 	}
@@ -166,16 +160,12 @@ func TestASecondJudgeWaitsItsTurnInsteadOfRunningBesideTheFirst(t *testing.T) {
 	first, _ := RememberedFor("/a/project", func(...string) {})
 	second, _ := RememberedFor("/another/project", func(...string) { waited <- true })
 
-	release, alone := first.ReadAlone()
-	if !alone {
-		t.Fatal("the first judge did not get its turn")
-	}
+	release := first.TakeTurn()
 
 	ran := make(chan bool, 1)
 	go func() {
-		done, alone := second.ReadAlone()
-		ran <- alone
-		done()
+		second.TakeTurn()()
+		ran <- true
 	}()
 
 	select {
@@ -193,10 +183,7 @@ func TestASecondJudgeWaitsItsTurnInsteadOfRunningBesideTheFirst(t *testing.T) {
 	release()
 
 	select {
-	case alone := <-ran:
-		if !alone {
-			t.Error("the second judge stopped instead of taking its turn")
-		}
+	case <-ran:
 	case <-time.After(5 * time.Second):
 		t.Fatal("the second judge never got its turn after the first ended")
 	}

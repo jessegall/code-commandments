@@ -83,25 +83,6 @@ func (w EditWindow) Reopen() {
 	os.Remove(w.path(".open"))
 }
 
-func (w EditWindow) PutBack(edits [][]byte) {
-	if len(edits) == 0 {
-		return
-	}
-
-	release := atomic.Hold(w.path(".lock"))
-	defer release()
-
-	file, err := os.OpenFile(w.path(".edits"), os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0o644)
-	if err != nil {
-		return
-	}
-	defer file.Close()
-
-	for _, edit := range edits {
-		file.Write(append(bytes.TrimSpace(edit), '\n'))
-	}
-}
-
 func (w EditWindow) path(suffix string) string {
 	return filepath.Join(w.folder, strconv.Itoa(w.agent)+suffix)
 }

@@ -10,23 +10,19 @@ import (
 
 const rememberedSavedEvery = time.Minute
 
-func rememberedAround(root string, warn func(...string)) (saved func(), alone bool) {
+func rememberedAround(root string, warn func(...string)) (saved func()) {
 	remembered, keeps := judge.RememberedFor(root, warn)
 	if !keeps {
-		return func() {}, true
+		return func() {}
 	}
 
-	release, alone := remembered.ReadAlone()
-	if !alone {
-		return func() {}, false
-	}
-
+	release := remembered.TakeTurn()
 	remembered.Load()
 
 	return func() {
 		remembered.Save()
 		release()
-	}, true
+	}
 }
 
 func remembersAcrossRestarts(console cli.Console) (saved func()) {

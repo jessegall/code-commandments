@@ -24,7 +24,6 @@ const (
 
 	rememberedDetectorsFile = "detector-memories.json"
 	rememberedWeighingsFile = "csharp-weighings.json"
-	readingFile             = "reading"
 	rememberedFolderName    = "remembered"
 	turnFile                = "judging.lock"
 	turnWaitedAtMost        = 2 * time.Minute
@@ -78,20 +77,8 @@ func rememberedFolder(project string) string {
 	return filepath.Join(cache, "code-commandments", rememberedFolderName, hex.EncodeToString(named[:8]))
 }
 
-func (r Remembered) ReadAlone() (release func(), alone bool) {
-	turn := atomic.HoldInTurn(judgingTurn(), r.waiting, turnWaitedAtMost)
-
-	claimed, alone := atomic.ClaimAt(filepath.Join(filepath.Dir(r.Memories.Path), readingFile)).Take()
-	if !alone {
-		turn()
-
-		return func() {}, false
-	}
-
-	return func() {
-		claimed()
-		turn()
-	}, true
+func (r Remembered) TakeTurn() (release func()) {
+	return atomic.HoldInTurn(judgingTurn(), r.waiting, turnWaitedAtMost)
 }
 
 func (r Remembered) waiting() {
