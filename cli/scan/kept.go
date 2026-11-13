@@ -59,7 +59,44 @@ func linesKeptFor(b Bridge, roots []string) *keptLines {
 		return &keptLines{}
 	}
 
-	return &keptLines{folder: filepath.Join(shared, "lines", b.Kind), root: root, identity: b.identity()}
+	identity := b.identity()
+	kind := filepath.Join(shared, "lines", b.Kind)
+	folder := filepath.Join(kind, named(identity)[:16])
+	if !thisBuildsFolder(kind, folder) {
+		return &keptLines{}
+	}
+	go removeOtherBuilds(kind)
+
+	return &keptLines{folder: folder, root: root, identity: identity}
+}
+
+// thisBuildsFolder makes the folder the lines of this bridge's build are kept in. A bridge's lines are keyed on its
+// code, so the lines of any other build can never stand again: the first run of a new build moves them all aside at
+// once, for removeOtherBuilds to delete.
+func thisBuildsFolder(kind, folder string) bool {
+	if walk.IsFolder(folder) {
+		return true
+	}
+	defer atomic.Hold(kind + ".lock")()
+	if walk.IsFolder(folder) {
+		return true
+	}
+	if walk.IsFolder(kind) {
+		_ = os.Rename(kind, kind+otherBuilds+strconv.FormatInt(time.Now().UnixNano(), 10))
+	}
+
+	return os.MkdirAll(folder, 0o755) == nil
+}
+
+// otherBuilds marks a folder of lines another build of the bridge kept, moved aside to be deleted.
+const otherBuilds = ".other-build-"
+
+// removeOtherBuilds deletes the lines of other builds moved aside, as far as the run gets; the next run goes on.
+func removeOtherBuilds(kind string) {
+	aside, _ := filepath.Glob(kind + otherBuilds + "*")
+	for _, folder := range aside {
+		_ = os.RemoveAll(folder)
+	}
 }
 
 // split hands back the files whose kept line still stands, read, and the files a bridge must read.
