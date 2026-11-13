@@ -50,7 +50,7 @@ func (work merging) keeps(said string) {
 	_ = dashboard.KeepsUnjudgeable(space, append(held, said))
 }
 
-func (work merging) records(why Narrowed, sins int, waited string) {
+func (work merging) records(why Narrowed, sins int, waited string, times judgedTimes) {
 	project := projectOf(work.worktree)
 	if project == "" || !recorded(project) {
 		return
@@ -59,6 +59,7 @@ func (work merging) records(why Narrowed, sins int, waited string) {
 	Record(bookkeepingIn(project), Judged{
 		At: time.Now(), Event: deliveringEvent, Kind: "worktree", Checkout: work.worktree,
 		Held: why == "", Why: why, Sins: sins, Waited: waited, Said: "the hand-in",
+		Parsed: times.files, ReadMs: times.read.Milliseconds(), RuleMs: times.rules.Milliseconds(),
 	})
 }
 
@@ -70,7 +71,7 @@ func (work merging) answered() string {
 	began := time.Now()
 	found := work.sins()
 
-	work.records(found.reason(), len(found.marks), work.waited(began))
+	work.records(found.reason(), len(found.marks), work.waited(began), found.times)
 
 	if found.got == gotWhole && len(found.marks) == 0 {
 		return ""
@@ -100,6 +101,7 @@ type handIn struct {
 	marks []SinMark
 	got   gotTo
 	why   Narrowed
+	times judgedTimes
 }
 
 func (h handIn) reason() Narrowed {
@@ -121,11 +123,12 @@ const (
 const judgedAfterHandIn Narrowed = "judged after the hand-in went through"
 
 func (m merging) judgesAfterwards() {
-	m.tells(m.sins().marks, judgedAfterHandIn, " (judged after the hand-in went through)")
+	found := m.sins()
+	m.tells(found.marks, judgedAfterHandIn, " (judged after the hand-in went through)", found.times)
 }
 
-func (m merging) tells(marks []SinMark, why Narrowed, about string) {
-	m.records(why, len(marks), "")
+func (m merging) tells(marks []SinMark, why Narrowed, about string, times judgedTimes) {
+	m.records(why, len(marks), "", times)
 
 	if len(marks) == 0 {
 		return
@@ -240,18 +243,18 @@ func (m merging) deep(project config.Config, rules []detectors.Detector) handIn 
 		return handIn{got: gotWhole}
 	}
 
-	marks, read := judgedWhole(m.worktree, project, rules, func(string) []detectors.Detector { return rules }, slices.Sorted(maps.Keys(changed)),
+	marks, times, read := judgedWhole(m.worktree, project, rules, func(string) []detectors.Detector { return rules }, slices.Sorted(maps.Keys(changed)),
 		func(file string) git.ChangedLines { return git.ChangedLinesSince(m.worktree, m.since, file) },
 		Marks(projectOf(m.worktree)).In(m.worktree).CutFrom(m.since))
 	if !read {
-		return handIn{got: checkoutNotRead}
+		return handIn{got: checkoutNotRead, times: times}
 	}
 
 	if len(marks) == 0 && m.tracksEdits() {
 		WorkerEditsIn(os.Getenv(pluginData)).Clear(m.editor)
 	}
 
-	return handIn{marks: marks, got: gotWhole}
+	return handIn{marks: marks, got: gotWhole, times: times}
 }
 
 func (m merging) tracksEdits() bool {

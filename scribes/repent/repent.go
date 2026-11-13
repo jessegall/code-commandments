@@ -15,7 +15,7 @@ import (
 )
 
 func Run(roots []string, scope scribes.Scope, filed scribes.Filed, given []detectors.Detector, only string) (scribes.Converged, error) {
-	backend, unavailable, err := served(php.Here().Cached().Command, php.Over)
+	backend, unavailable, err := served(php.Here().Command, php.Over)
 	if err != nil {
 		return scribes.Converged{}, err
 	}

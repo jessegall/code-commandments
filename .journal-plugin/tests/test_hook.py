@@ -449,7 +449,7 @@ class EveryJudgingOfAnAgentWaitsInOneRun(unittest.TestCase):
             self.assertFalse(hook.EditWindow(data, 7).path(".open").exists(), "the run left the agent's window open")
             self.assertEqual(hook.EditWindow(data, 7).pending(), [])
 
-    def test_an_event_after_the_run_took_the_others_queues_exactly_one_new_run(self) -> None:
+    def test_an_event_while_the_run_judges_joins_it_and_queues_no_second_run(self) -> None:
         with tempfile.TemporaryDirectory() as folder:
             data, asked = Path(folder) / "data", Path(folder) / "asked"
             journal = stand_in(Path(folder), f'echo "$@" >> {asked}; sleep 3')
@@ -457,7 +457,39 @@ class EveryJudgingOfAnAgentWaitsInOneRun(unittest.TestCase):
                 queue_every_kind(7)
                 self.assertEqual(len(hook.lines_of(hook.EditWindow(data, 7).take())), len(every_kind(7)))
                 queue_every_kind(7)
-            self.assertEqual(len(self.runs(asked)), 2)
+            self.assertEqual(len(self.runs(asked)), 1, "an agent got a second run beside the one judging its events")
+            self.assertEqual(hook.EditWindow(data, 7).pending(), every_kind(7))
+
+    def test_the_run_judges_what_came_while_it_judged_before_it_ends(self) -> None:
+        with tempfile.TemporaryDirectory() as folder:
+            data, calls = Path(folder) / "data", Path(folder) / "calls"
+            journal = stand_in(Path(folder), "true")
+            late = json.dumps({"event": "agent.idle", "agent": 7, "n": 9})
+            binary = Path(folder) / "binary"
+            binary.write_text(f'#!/bin/sh\necho judged >> {calls}\n'
+                              f'[ -e {folder}/came ] || {{ touch {folder}/came; echo \'{late}\' >> {data}/windows/7.events; }}\n')
+            binary.chmod(0o755)
+            with patched_environment(JOURNAL_PLUGIN_DATA=str(data), JOURNAL_BIN=str(journal), JOURNAL_SETTINGS=""):
+                queue_every_kind(7)
+                hook.judged_agent("7", binary)
+            self.assertEqual(hook.EditWindow(data, 7).pending(), [], "an event that came while the run judged was left waiting")
+            self.assertFalse(hook.EditWindow(data, 7).path(".open").exists(), "the run left the agent's window open")
+            self.assertGreater(len(calls.read_text().splitlines()), len(hook.batches_of(every_kind(7))))
+
+    def test_a_hand_in_takes_over_the_agents_waiting_run(self) -> None:
+        with tempfile.TemporaryDirectory() as data:
+            window = hook.EditWindow(Path(data), 7)
+            self.assertTrue(window.gather(b'{"n":1}'))
+            holder = subprocess.Popen(["sleep", "30"], start_new_session=True)
+            try:
+                window.names(holder.pid)
+                window.superseded()
+                holder.wait(timeout=5)
+            finally:
+                if holder.poll() is None:
+                    holder.kill()
+            self.assertEqual(window.pending(), [], "the hand-in left the agent's edits waiting for a second run")
+            self.assertTrue(window.gather(b'{"n":2}'), "the agent's window stayed held by the run the hand-in took over")
 
     def test_the_edit_window_is_the_setting_the_last_edit_carried(self) -> None:
         line = lambda event, seconds: json.dumps({"event": event, "settings": {"judge_edit_window": seconds}}).encode()

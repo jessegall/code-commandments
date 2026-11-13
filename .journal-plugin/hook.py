@@ -8,6 +8,7 @@ import fcntl
 import json
 import os
 import shutil
+import signal
 import subprocess
 import sys
 import tempfile
@@ -284,8 +285,9 @@ def cli_refused(event: dict) -> str:
 
 class EditWindow:
     """One agent's events waiting to be judged, of every kind: the first opens the window and queues the one run that
-    judges them, every later one only joins it, and that run takes them all when it starts. So an agent has at most one
-    judging waiting in the queue, however long it waits. The window names the process that holds it: the journal's
+    judges them, every later one only joins it, and that run takes them when it starts and again whatever came while it
+    judged, closing the window only when nothing is left. So an agent has one judging in the queue, waiting or running,
+    however many runs the queue lets go side by side. The window names the process that holds it: the journal's
     `plugin run`, which waits on its runner through the queue and the run and ends only when the command ends, is
     stopped from the queue or reaches its limit. The window stands while that process lives and for two hours at most,
     the journal's queue wait plus its run limit, so a run that crashes, is cancelled or is killed frees it at once and a
@@ -337,19 +339,48 @@ class EditWindow:
         return lines_of(self.path(".events"))
 
     def take(self) -> Path | None:
-        """The events gathered so far, moved aside for this run, and the window closed, so the next event queues a run
-        of its own; the run removes the file once it has judged them."""
+        """The events gathered so far, moved aside for this run, the window still held by it so a later event joins
+        it; the run removes the file once it has judged them."""
         self.folder.mkdir(parents=True, exist_ok=True)
         with open(self.path(".lock"), "a") as lock:
             fcntl.flock(lock, fcntl.LOCK_EX)
             self.restore_abandoned()
             taking = self.path(f".taking.{os.getpid()}")
-            self.path(".open").unlink(missing_ok=True)
             try:
                 self.path(".events").rename(taking)
             except OSError:
                 return None
             return taking
+
+    def closed_when_empty(self) -> bool:
+        """Closes the window when no event came while the run judged, so the next event queues a run of its own."""
+        with open(self.path(".lock"), "a") as lock:
+            fcntl.flock(lock, fcntl.LOCK_EX)
+            if self.pending():
+                return False
+            self.path(".open").unlink(missing_ok=True)
+            return True
+
+    def superseded(self) -> None:
+        """Drops the events still waiting for a run that has not started, and that run: a hand-in judges the agent's
+        whole work, those edits with it. A run already judging is left to finish."""
+        self.folder.mkdir(parents=True, exist_ok=True)
+        with open(self.path(".lock"), "a") as lock:
+            fcntl.flock(lock, fcntl.LOCK_EX)
+            if any(self.folder.glob(f"{self.agent}.taking.*")):
+                return
+            self.path(".events").unlink(missing_ok=True)
+            opened = self.path(".open")
+            try:
+                holder = opened.read_text().strip()
+            except OSError:
+                return
+            opened.unlink(missing_ok=True)
+            if holder.isdigit() and alive(int(holder)):
+                try:
+                    os.killpg(int(holder), signal.SIGTERM)
+                except OSError:
+                    pass
 
     def restore_abandoned(self) -> None:
         """Events a run took and died before judging go back to wait for the next run."""
@@ -387,6 +418,8 @@ def guard_queued(event: dict, line: bytes) -> dict | None:
     if not key or not data or not workers_chose(settings_of(event), key):
         return None
     kept = kept_event(Path(data), line)
+    if event.get("event") in HANDED_IN:
+        EditWindow(Path(data), agent_of(event)).superseded()
     return {"v": 1, "answer": "queue", "run": {"kind": "judge", "command": [str(PLUGIN / ".journal-plugin" / "hook"), f"{JUDGE_GUARD}{kept}"]}}
 
 
@@ -518,15 +551,16 @@ def judged_agent(agent_named: str, binary: Path = BINARY) -> int:
     if not data:
         return 0
     window = EditWindow(Path(data), int(agent_named) if agent_named.isdigit() else 0)
-    time.sleep(edit_window_of(window.pending()))
-    taking = window.take()
-    if taking is None:
-        return 0
     code = 0
-    for batch in batches_of(lines_of(taking)):
-        code = judged(str(kept_event(Path(data), b"\n".join(batch))), binary) or code
-    taking.unlink(missing_ok=True)
-    return code
+    while True:
+        time.sleep(edit_window_of(window.pending()))
+        taking = window.take()
+        if taking is not None:
+            for batch in batches_of(lines_of(taking)):
+                code = judged(str(kept_event(Path(data), b"\n".join(batch))), binary) or code
+            taking.unlink(missing_ok=True)
+        if window.closed_when_empty():
+            return code
 
 
 def batches_of(lines: list[bytes]) -> list[list[bytes]]:

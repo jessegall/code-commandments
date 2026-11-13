@@ -18,7 +18,6 @@ final readonly class ParsedFile implements JsonSerializable
     public function __construct(
         public string $path,
         public int $errors,
-        public bool $context,
         public array $root,
         public array $comments,
         public TreeWriter $writer,
@@ -26,11 +25,6 @@ final readonly class ParsedFile implements JsonSerializable
 
     public function jsonSerialize(): array
     {
-        $written = ['path' => $this->path, 'language' => 'php', 'errors' => $this->errors];
-        if ($this->context) {
-            $written['context'] = true;
-        }
-
-        return $written + ['root' => $this->root, 'comments' => $this->comments];
+        return ['path' => $this->path, 'language' => 'php', 'errors' => $this->errors, 'root' => $this->root, 'comments' => $this->comments];
     }
 }

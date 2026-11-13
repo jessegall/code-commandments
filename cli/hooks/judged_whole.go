@@ -3,6 +3,7 @@ package hooks
 import (
 	"errors"
 	"slices"
+	"time"
 
 	"github.com/jessegall/code-commandments/cli/config"
 	"github.com/jessegall/code-commandments/cli/git"
@@ -18,15 +19,18 @@ import (
 // reads across files sees the whole tree, and an unchanged file costs a cache read.
 // It says false when the checkout could not be read, so nothing was asked.
 func judgedWhole(checkout string, project config.Config, rules []detectors.Detector, rulesFor func(string) []detectors.Detector,
-	files []string, linesOf func(string) git.ChangedLines, marking Marking) ([]SinMark, bool) {
+	files []string, linesOf func(string) git.ChangedLines, marking Marking) ([]SinMark, judgedTimes, bool) {
 	if len(files) == 0 {
-		return nil, true
+		return nil, judgedTimes{}, true
 	}
+	reading := time.Now()
 	codebase, err := readWhole(checkout, project, files)
 	var incomplete scan.Incomplete
 	if codebase == nil || (err != nil && !errors.As(err, &incomplete)) {
-		return nil, false
+		return nil, judgedTimes{read: time.Since(reading)}, false
 	}
+	times := judgedTimes{files: len(codebase.Files()), read: time.Since(reading)}
+	judging := time.Now()
 
 	held := map[string]string{}
 	for _, file := range files {
@@ -56,7 +60,16 @@ func judgedWhole(checkout string, project config.Config, rules []detectors.Detec
 		}
 	}
 
-	return marks, true
+	times.rules = time.Since(judging)
+
+	return marks, times, true
+}
+
+// judgedTimes is what a whole judging spent: the files it read, the time reading them and the time its rules took.
+type judgedTimes struct {
+	files int
+	read  time.Duration
+	rules time.Duration
 }
 
 // readWhole reads a checkout as judge reads it: its configured roots, without what it excludes, in the languages it

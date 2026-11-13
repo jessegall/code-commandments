@@ -367,7 +367,7 @@ func (p *process) Close() error {
 var Bridges = []Bridge{PHPBridge, Frontend, CSharp, Python, GoBridge}
 
 var PHPBridge = Bridge{Kind: "php", Word: "php", Languages: []source.Language{source.PHP}, Label: "PHP",
-	Reach:    Process{Command: func([]string) ([]string, error) { return php.Here().Cached().Command() }},
+	Reach:    Process{Command: func([]string) ([]string, error) { return php.Here().Command() }},
 	Notice:   nothingToSay,
 	Identity: bridge.PHPIdentity,
 }
@@ -453,19 +453,53 @@ func (b Bridge) ReadShared(roots, files []string, tally func(), processes int) (
 		}
 	}
 	if len(misses) == 0 {
-		return &contract.Stream{Header: kept.standing(*header, resolved(roots)), Files: hits, Program: kept.program(nil),
+		return &contract.Stream{Header: kept.standing(*header, resolved(roots)), Files: hits, Program: outsideOnly(kept.program(nil), hits),
 			Trailer: contract.Trailer{Files: len(hits)}}, nil
 	}
 
-	stream, err := b.readMisses(roots, files, misses, tally, processes)
+	first, later := kept.deferred(misses)
+	stream, err := b.readMisses(roots, files, first, tally, processes)
+	if len(later) > 0 && stream != nil {
+		standing, _, still := kept.split(later)
+		for range standing {
+			tally()
+		}
+		engine.CountedKept(len(standing))
+		hits = append(hits, standing...)
+		if len(still) > 0 {
+			rest, restErr := b.readMisses(roots, files, still, tally, processes)
+			stream, err = joined(stream, rest), errors.Join(err, restErr)
+		}
+	}
 	if stream == nil || len(hits) == 0 {
 		return stream, err
 	}
 	stream.Files = append(hits, stream.Files...)
 	stream.Trailer.Files = len(stream.Files)
-	stream.Program = kept.program(stream.Program)
+	stream.Program = outsideOnly(kept.program(stream.Program), stream.Files)
 
 	return stream, err
+}
+
+// outsideOnly is the program line without what a file of the stream declares: a program symbol is a declaration
+// outside the scan, and a bridge asked to write only some files names what the others declare as outside them.
+func outsideOnly(program *contract.Program, files []*contract.File) *contract.Program {
+	if program == nil {
+		return nil
+	}
+	declared := map[string]bool{}
+	for _, file := range files {
+		for _, node := range file.Nodes() {
+			if node.Facts != nil && node.Symbol != "" {
+				declared[node.Symbol] = true
+			}
+		}
+	}
+	outside := *program
+	outside.Symbols = slices.DeleteFunc(slices.Clone(program.Symbols), func(symbol contract.OutsideSymbol) bool { return declared[symbol.Symbol] })
+	outside.Unreadable = slices.DeleteFunc(slices.Clone(program.Unreadable), func(symbol contract.UnreadableSymbol) bool { return declared[symbol.Symbol] })
+
+	return &outside
 }
 
 func (b Bridge) readMisses(roots, files, misses []string, tally func(), processes int) (*contract.Stream, error) {
@@ -547,6 +581,7 @@ func (b Bridge) ask(roots, files, written []string, tally func()) (*contract.Str
 	defer asker.Close()
 
 	kept := linesKeptFor(b, roots)
+	defer kept.settle()
 	stream := &contract.Stream{}
 	err = asker.AskEach(bridge.AskedOf(b.Projects, files, written).Request(), func(line contract.Line, raw []byte) error {
 		switch {

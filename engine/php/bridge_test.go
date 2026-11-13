@@ -292,7 +292,7 @@ func TestServingAnswersEveryRequestWithAWholeStream(t *testing.T) {
 			answer.Reset()
 		}
 	}
-	if len(streams) != 2 || len(streams[0].Files) != 1 || len(streams[1].Files) != 2 || !streams[1].Files[0].Context {
+	if len(streams) != 2 || len(streams[0].Files) != 1 || len(streams[1].Files) != 1 || filepath.Base(streams[1].Files[0].Path) != "B.php" {
 		t.Fatalf("two requests answered with %d streams:\n%s", len(streams), out)
 	}
 }

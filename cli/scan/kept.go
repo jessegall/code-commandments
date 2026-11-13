@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"slices"
+	"strconv"
 	"strings"
 	"sync"
 
@@ -20,14 +21,25 @@ import (
 )
 
 // keptLines is the one cache of every bridge's file lines, shared by every checkout of a project and keyed on contents
-// alone: a line stands while its own file and every file its tree read hold the contents they held when it was
-// written, wherever the checkout lies. A bridge whose header does not say it names what each tree read keeps nothing.
+// alone: a line stands while its own file holds the contents it held when it was written and every file its tree read
+// holds the same outline, wherever the checkout lies, so an edit inside a function body re-reads that file alone. A
+// bridge whose header does not say it names what each tree read keeps nothing.
 type keptLines struct {
 	folder string
 	root   string
 	// identity is the code of the bridge that wrote the lines, so a release that leaves the bridge alone keeps them.
 	identity string
 	prints   sync.Map
+	outlines sync.Map
+	// staged are the lines a read wrote, held on disk until its stream ends and every outline they stand on is known.
+	staged  []stagedLine
+	staging sync.Mutex
+}
+
+type stagedLine struct {
+	path  string
+	reads []string
+	held  string
 }
 
 // checkoutMark stands for the checkout's own folder inside a kept line, so a line written in one checkout reads in any.
@@ -96,12 +108,14 @@ func (k *keptLines) line(reader *contract.Kept, file string) *contract.File {
 	return nil
 }
 
-// keep writes a file line a bridge just wrote, under the contents of its file and of every file its tree read.
+// keep takes a file line a bridge just wrote: its outline is kept at once, and the line is staged until settle files it
+// under its contents and the outlines of every file its tree read, which a line later in the stream may bring.
 func (k *keptLines) keep(header contract.Header, file *contract.File, raw []byte) {
 	if k.folder == "" || !header.Bridge.Reads || file.Context {
 		return
 	}
 	k.keepHeader(header)
+	k.keepOutline(file)
 
 	reads := make([]string, 0, len(file.Reads))
 	for _, read := range file.Reads {
@@ -110,10 +124,92 @@ func (k *keptLines) keep(header contract.Header, file *contract.File, raw []byte
 	slices.Sort(reads)
 	reads = slices.Compact(reads)
 
-	if !slices.ContainsFunc(k.variants(file.Path), func(known []string) bool { return slices.Equal(known, reads) }) {
-		k.addVariant(file.Path, reads)
+	staged, err := os.CreateTemp(k.folder, "staged-*")
+	if err != nil {
+		return
 	}
-	_ = atomic.Write(k.recordOf(file.Path, reads), k.marked(string(raw)))
+	_, err = staged.WriteString(k.marked(string(raw)))
+	if staged.Close() != nil || err != nil {
+		_ = os.Remove(staged.Name())
+
+		return
+	}
+	k.staging.Lock()
+	k.staged = append(k.staged, stagedLine{file.Path, reads, staged.Name()})
+	k.staging.Unlock()
+}
+
+// settle files every staged line under its key, now that the stream that wrote them has ended.
+func (k *keptLines) settle() {
+	k.staging.Lock()
+	staged := k.staged
+	k.staged = nil
+	k.staging.Unlock()
+
+	for _, line := range staged {
+		if !slices.ContainsFunc(k.variants(line.path), func(known []string) bool { return slices.Equal(known, line.reads) }) {
+			k.addVariant(line.path, line.reads)
+		}
+		if os.Rename(line.held, k.recordOf(line.path, line.reads)) != nil {
+			_ = os.Remove(line.held)
+		}
+	}
+}
+
+// keepOutline keeps what a file declares for the files that read it, under its contents.
+func (k *keptLines) keepOutline(file *contract.File) {
+	print := k.print(file.Path)
+	if print == "" {
+		return
+	}
+	outline := strconv.FormatUint(file.Outline(k.marked), 16)
+	k.outlines.Store(file.Path, outline)
+	_ = atomic.Write(k.outlinePath(file.Path, print), outline)
+}
+
+// outlineOf is what a key holds for a file a tree read: the outline kept for its contents, else the contents
+// themselves, so a file whose outline was never kept stands by its every byte.
+func (k *keptLines) outlineOf(file string) string {
+	if held, ok := k.outlines.Load(file); ok {
+		return held.(string)
+	}
+	print := k.print(file)
+	kept, err := os.ReadFile(k.outlinePath(file, print))
+	if err != nil || print == "" {
+		return "contents " + print
+	}
+	k.outlines.Store(file, string(kept))
+
+	return string(kept)
+}
+
+func (k *keptLines) outlinePath(file, print string) string {
+	return filepath.Join(k.folder, named(k.identity, k.marked(file), print)+".outline")
+}
+
+// deferred splits the files a bridge must read into those to read first and those that read one of them: an edit
+// inside a body leaves its outline as it was, so once the first are read the others may stand from the cache.
+func (k *keptLines) deferred(misses []string) (first, later []string) {
+	missed := map[string]bool{}
+	for _, miss := range misses {
+		missed[k.marked(miss)] = true
+	}
+	for _, miss := range misses {
+		readsAMiss := slices.ContainsFunc(k.variants(miss), func(reads []string) bool {
+			return slices.ContainsFunc(reads, func(read string) bool { return missed[read] })
+		})
+		if readsAMiss {
+			later = append(later, miss)
+
+			continue
+		}
+		first = append(first, miss)
+	}
+	if len(first) == 0 {
+		return later, nil
+	}
+
+	return first, later
 }
 
 // variants are the sets of files the trees kept for this file's contents read, one per line of its index: a file
@@ -150,9 +246,9 @@ func (k *keptLines) indexOf(file string) string {
 }
 
 func (k *keptLines) recordOf(file string, reads []string) string {
-	parts := []string{k.identity, k.marked(file), k.print(file)}
+	parts := []string{k.identity, "outlined", k.marked(file), k.print(file)}
 	for _, read := range reads {
-		parts = append(parts, read, k.print(k.unmarkedPath(read)))
+		parts = append(parts, read, k.outlineOf(k.unmarkedPath(read)))
 	}
 
 	return filepath.Join(k.folder, named(parts...)+".line")

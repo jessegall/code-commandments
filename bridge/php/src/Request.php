@@ -21,7 +21,6 @@ final readonly class Request
      * @param  list<string>  $paths
      * @param  list<string>  $write
      * @param  array<string, string>  $contents  absolute path => the text to read in place of the disk's
-     * @param  ?string  $cache  the folder each file's line is kept in between runs; none when null
      */
     public function __construct(
         public array $paths,
@@ -29,7 +28,6 @@ final readonly class Request
         public ?string $autoload,
         public bool $serve,
         public array $contents = [],
-        public ?string $cache = null,
     ) {
         $this->judged = array_fill_keys(array_map(static fn (string $path): string => rtrim($path, '/'), $write), true);
     }
@@ -43,13 +41,11 @@ final readonly class Request
         $write = [];
         $autoload = null;
         $serve = false;
-        $cache = null;
         foreach ($arguments as $argument) {
             match (true) {
                 $argument === '--serve' => $serve = true,
                 str_starts_with($argument, '--write=') => $write[] = self::absolute(substr($argument, 8)),
                 str_starts_with($argument, '--autoload=') => $autoload = self::absolute(substr($argument, 11)),
-                str_starts_with($argument, '--cache=') => $cache = substr($argument, 8),
                 str_starts_with($argument, '--') => throw BadRequest::forFlag($argument),
                 default => $paths[] = self::absolute($argument),
             };
@@ -58,7 +54,7 @@ final readonly class Request
             throw BadRequest::forNothingToRead();
         }
 
-        return new self($paths, $write, $autoload, $serve, cache: $cache);
+        return new self($paths, $write, $autoload, $serve);
     }
 
     /**
@@ -79,7 +75,6 @@ final readonly class Request
             $this->autoload,
             false,
             $contents,
-            $this->cache,
         );
     }
 

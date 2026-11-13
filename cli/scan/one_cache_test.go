@@ -47,6 +47,11 @@ func TestEveryCheckoutReadsThroughOneCacheKeyedOnContents(t *testing.T) {
 	if asked := askedOfABridge(t, worktree, theShop...); len(asked) != 0 {
 		t.Errorf("the worktree's second run asked the bridge for %v, which its first run had just read", asked)
 	}
+
+	written(t, worktree, "src/shop/prices.py", "def price() -> str:\n    return 'four'\n")
+	if asked := askedOfABridge(t, worktree, theShop...); !slices.Equal(asked, []string{filepath.Join(worktree, "src/shop/prices.py")}) {
+		t.Errorf("an edit inside price's body asked the bridge for %v, not prices.py alone: cart.py reads only what price declares", asked)
+	}
 	if asked := askedOfABridge(t, project, theShop...); len(asked) != 0 {
 		t.Errorf("the worktree's change evicted the main checkout's lines: the main checkout asked the bridge for %v again", asked)
 	}

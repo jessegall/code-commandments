@@ -17,11 +17,6 @@ final readonly class Stream
 {
     public const string VERSION = '1';
 
-    /**
-     * The mark a file read only for context carries, where its record puts it.
-     */
-    private const string CONTEXT = ',"context":true';
-
     public function __construct(private Request $request) {}
 
     /**
@@ -34,50 +29,26 @@ final readonly class Stream
             'contract' => 'tree',
             'version' => 1,
             'language' => 'php',
-            'bridge' => ['name' => 'php-bridge', 'version' => self::VERSION],
+            'bridge' => ['name' => 'php-bridge', 'version' => self::VERSION, 'reads' => true],
             'roots' => $this->request->paths,
         ]]);
         $referenced = [];
         $declared = [];
-        $kept = $this->request->cache === null ? null : new TreeCache($this->request->cache);
         $parser = null;
+        $written = 0;
         foreach ($files as $path) {
-            $code = $this->request->contents[$path] ?? file_get_contents($path);
-            $context = ! $this->request->judges($path);
-            $earlier = $kept?->kept($code);
-            if ($earlier !== null) {
-                $opening = $this->opening($path);
-                $line = $opening . $earlier['line'];
-                $at = strlen($opening) + $earlier['at'];
-                fwrite($out, ($context ? substr($line, 0, $at) . self::CONTEXT . substr($line, $at) : $line) . "\n");
-                $referenced += $earlier['referenced'];
-                $declared += $earlier['declared'];
-
+            if (! $this->request->judges($path)) {
                 continue;
             }
             $parser ??= (new ParserFactory())->createForNewestSupportedVersion();
-            $file = $this->parsed($path, $code, $parser);
-            $line = $this->encoded(['file' => $file]);
-            fwrite($out, $line . "\n");
+            $file = $this->parsed($path, $this->request->contents[$path] ?? (string) file_get_contents($path), $parser);
+            $this->line($out, ['file' => $file]);
             $referenced += $file->writer->referenced;
             $declared += $file->writer->declared;
-            if ($kept !== null) {
-                $at = strlen($this->encoded(['file' => ['path' => $file->path, 'language' => 'php', 'errors' => $file->errors]])) - 2;
-                $own = $context ? substr($line, 0, $at) . substr($line, $at + strlen(self::CONTEXT)) : $line;
-                $opening = strlen($this->opening($file->path));
-                $kept->keep($code, substr($own, $opening), $at - $opening, $file->writer->referenced, $file->writer->declared);
-            }
+            $written++;
         }
-        $this->writeProgram($out, $kept, $declared, $referenced);
-        $this->line($out, ['trailer' => ['files' => count($files)]]);
-    }
-
-    /**
-     * How a file's line opens, up to the end of its path: all of the line that names where the file is.
-     */
-    private function opening(string $shown): string
-    {
-        return substr($this->encoded(['file' => ['path' => $shown]]), 0, -2);
+        $this->writeProgram($out, $declared, $referenced);
+        $this->line($out, ['trailer' => ['files' => $written]]);
     }
 
     private function parsed(string $path, string $code, Parser $parser): ParsedFile
@@ -91,7 +62,6 @@ final readonly class Stream
         return new ParsedFile(
             $path,
             count($errors->getErrors()),
-            ! $this->request->judges($path),
             $root,
             $writer->comments($parser->getTokens()),
             $writer,
@@ -191,33 +161,25 @@ final readonly class Stream
     }
 
     /**
-     * The line naming the symbols the files reach outside the scan, as kept for the same names when it was, written
-     * after the files; no line when they reach none.
+     * The line naming the symbols the written files reach outside them, written after the files; no line when they
+     * reach none. A symbol another file of the scan declares is named too, and the reader drops it.
      *
      * @param  resource  $out
      * @param  array<string, mixed>  $declared
      * @param  array<string, mixed>  $referenced
      */
-    private function writeProgram($out, ?TreeCache $kept, array $declared, array $referenced): void
+    private function writeProgram($out, array $declared, array $referenced): void
     {
         $autoload = $this->autoload();
-        $key = $kept?->programKey($autoload, $declared, $referenced);
-        $line = $key === null ? null : $kept->program($key);
-        if ($line === null) {
-            $failure = $autoload === null ? '' : $this->loadFailure($autoload);
-            $outside = new OutsideSymbols($autoload !== null && $failure === '' ? $autoload : null, $declared, $referenced);
-            $program = array_filter([
-                'symbols' => $outside->all(),
-                'unreadable' => $outside->unreadable(),
-                'loader' => $this->loaderReason($autoload, $failure, $outside),
-            ]);
-            $line = $program === [] ? '' : $this->encoded(['program' => $program]);
-            if ($key !== null && $failure === '') {
-                $kept->keepProgram($key, $line);
-            }
-        }
-        if ($line !== '') {
-            fwrite($out, $line . "\n");
+        $failure = $autoload === null ? '' : $this->loadFailure($autoload);
+        $outside = new OutsideSymbols($autoload !== null && $failure === '' ? $autoload : null, $declared, $referenced);
+        $program = array_filter([
+            'symbols' => $outside->all(),
+            'unreadable' => $outside->unreadable(),
+            'loader' => $this->loaderReason($autoload, $failure, $outside),
+        ]);
+        if ($program !== []) {
+            $this->line($out, ['program' => $program]);
         }
     }
 

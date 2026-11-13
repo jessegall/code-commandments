@@ -547,26 +547,7 @@ func (s standingOn) outsidePrint(file *File, path string) uint64 {
 
 func (f *File) outlined() uint64 {
 	f.outlining.Do(func() {
-		digest, unrooted := sha256.New(), f.unrooted()
-		var outline func(node Match)
-		outline = func(node Match) {
-			facts := node.Node()
-			digest.Write([]byte(facts.Kind + "\x00" + facts.Name + "\x00"))
-			if facts.Facts != nil {
-				named := facts.Symbol + "\x00" + facts.Refers + "\x00" + typeText(facts.Declared) + "\x00" + typeText(facts.Returns) + "\x00"
-				digest.Write([]byte(unrooted.Replace(named)))
-			}
-			for _, child := range node.Children() {
-				if child.Is(Block) && node.Is(Function) {
-					continue
-				}
-				outline(child)
-			}
-		}
-		if root := f.Match(0); root.Exists() {
-			outline(root)
-		}
-		f.outline = binary.LittleEndian.Uint64(digest.Sum(nil)[:8])
+		f.outline = f.File.Outline(f.unrooted().Replace)
 	})
 
 	return f.outline
@@ -592,14 +573,6 @@ func (f *File) unrooted() *strings.Replacer {
 	}
 
 	return strings.NewReplacer(pairs...)
-}
-
-func typeText(written *contract.Type) string {
-	if written == nil {
-		return ""
-	}
-
-	return written.Text
 }
 
 func (c *Codebase) ownPrints() (map[*contract.File]uint64, bool) {

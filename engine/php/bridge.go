@@ -13,11 +13,10 @@ import (
 	"github.com/jessegall/code-commandments/engine"
 )
 
-// Bridge is bridge/php: its sources, the PHP that runs them, and the folder it keeps each file's tree in.
+// Bridge is bridge/php: its sources and the PHP that runs them.
 type Bridge struct {
 	Sources bundle.Bundle
 	PHP     string
-	Trees   string
 }
 
 func Here() Bridge {
@@ -36,20 +35,7 @@ func (b Bridge) Command() ([]string, error) {
 		return nil, err
 	}
 
-	command := append(append([]string{php}, quiet...), filepath.Join(folder, "bridge.php"))
-	if b.Trees != "" {
-		command = append(command, "--cache="+b.Trees)
-	}
-
-	return command, nil
-}
-
-func (b Bridge) Cached() Bridge {
-	if trees, err := bundle.TreesFolder("php"); err == nil {
-		b.Trees = trees
-	}
-
-	return b
+	return append(append([]string{php}, quiet...), filepath.Join(folder, "bridge.php")), nil
 }
 
 func (b Bridge) Stream(arguments ...string) (*contract.Stream, error) {
