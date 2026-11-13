@@ -6,6 +6,7 @@ import (
 	"math"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/jessegall/code-commandments/engine"
 )
@@ -34,6 +35,13 @@ const Timing = "COMMANDMENTS_TIMING"
 
 func Timed() bool {
 	return os.Getenv(Timing) != ""
+}
+
+// SayJudged is the line every judging ends on, whatever started it: how many files it read and how many of them the
+// cache served, how long reading and judging took, how many rule answers came from memory, and how many sins it found.
+func SayJudged(w io.Writer, reading, judging time.Duration, sins int, work engine.Work) {
+	fmt.Fprintf(w, "· read %d files in %.1fs (%d from the cache, %d by the bridges), judged in %.1fs (%d rule answers from memory, %d asked): %d sins\n",
+		work.Parsed, reading.Seconds(), work.Kept, work.Parsed-work.Kept, judging.Seconds(), work.Remembered, work.Judged, sins)
 }
 
 func SayWork(console Console, work engine.Work) {

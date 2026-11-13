@@ -12,6 +12,7 @@ import (
 	"github.com/jessegall/code-commandments/cli"
 	"github.com/jessegall/code-commandments/cli/source"
 	"github.com/jessegall/code-commandments/contract"
+	"github.com/jessegall/code-commandments/engine"
 	"github.com/jessegall/code-commandments/engine/frontend"
 	"github.com/jessegall/code-commandments/engine/php"
 )
@@ -385,6 +386,7 @@ func (b Bridge) ReadShared(roots, files []string, tally func(), processes int) (
 	for range hits {
 		tally()
 	}
+	engine.CountedKept(len(hits))
 	if cli.Timed() {
 		fmt.Fprintf(os.Stderr, "· %s: %d files from the cache, %d for the bridge to read\n", b.Kind, len(hits), len(misses))
 		for _, miss := range misses[:min(len(misses), 5)] {

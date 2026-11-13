@@ -254,7 +254,7 @@ func (c Command) judge(options options, selected []detectors.Detector, judged co
 
 	progress := cli.NewProgress(console.Err)
 	progress.Status("parsing")
-	parsing := time.Now()
+	parsing, counted := time.Now(), engine.Counted()
 
 	sources := scan.Walk(roots, judged.Exclusions(options.path)).Only(languages...).ReadingAtOnce(judged.ReadAtOnce)
 
@@ -290,7 +290,9 @@ func (c Command) judge(options options, selected []detectors.Detector, judged co
 		tasks[i] = Task{detector, codebase}
 	}
 
+	judging := time.Now()
 	judgement := c.run(tasks, options, progress, parseSeconds, console)
+	cli.SayJudged(console.Err, judging.Sub(parsing), time.Since(judging), len(judgement.Findings), engine.Since(counted))
 	judgement.Skipped = joined(judgement.Skipped, incomplete.Bridges...)
 	judgement.Skipped = joined(judgement.Skipped, readNothing(read, codebase)...)
 	csharpFiles := 0
@@ -439,7 +441,7 @@ func (c Command) run(tasks []Task, options options, progress *cli.Progress, pars
 		before := engine.Counted()
 		judgement := Run(tasks, options.parallel, progress, console.Err)
 		progress.Finish()
-		sayWhereTheTimeWent(parseSeconds, time.Since(judging).Seconds(), len(tasks), engine.Since(before), console)
+		cli.SayWork(console, engine.Since(before))
 		countedTheWork(options.path, engine.Since(before))
 
 		if c.Spending != nil {
@@ -935,15 +937,6 @@ func optionsOf(in *cli.Input, space workspace.Workspace) options {
 		oneFileRules:  in.HasFlag("one-file-rules"),
 		tags:          tagsOf(in),
 	}
-}
-
-func sayWhereTheTimeWent(reading, judging float64, rules int, work engine.Work, console cli.Console) {
-	if !cli.Timed() {
-		return
-	}
-
-	fmt.Fprintf(console.Err, "· read in %.2fs, judged in %.2fs by %s\n", reading, judging, natural.Counted(rules, "rule"))
-	cli.SayWork(console, work)
 }
 
 func countedTheWork(path string, did engine.Work) {

@@ -21,16 +21,18 @@ type Work struct {
 
 	Judged     int64
 	Remembered int64
+	// Kept is every file the one cache served, so its bridge did not read it: Parsed less Kept is what bridges read.
+	Kept int64
 }
 
-var nodes, checks, queries, analyses, parts, visited, resolved, walked, files, parsed, judged, remembered atomic.Int64
+var nodes, checks, queries, analyses, parts, visited, resolved, walked, files, parsed, judged, remembered, kept atomic.Int64
 
 func Counted() Work {
 	return Work{
 		Nodes: nodes.Load(), Checks: checks.Load(), Queries: queries.Load(),
 		Analyses: analyses.Load(), Parts: parts.Load(), Visited: visited.Load(),
 		Resolved: resolved.Load(), Walked: walked.Load(), Files: files.Load(), Parsed: parsed.Load(),
-		Judged: judged.Load(), Remembered: remembered.Load(),
+		Judged: judged.Load(), Remembered: remembered.Load(), Kept: kept.Load(),
 	}
 }
 
@@ -43,7 +45,7 @@ func Since(before Work) Work {
 		Visited:  now.Visited - before.Visited,
 		Resolved: now.Resolved - before.Resolved, Walked: now.Walked - before.Walked, Files: now.Files - before.Files,
 		Parsed: now.Parsed - before.Parsed,
-		Judged: now.Judged - before.Judged, Remembered: now.Remembered - before.Remembered,
+		Judged: now.Judged - before.Judged, Remembered: now.Remembered - before.Remembered, Kept: now.Kept - before.Kept,
 	}
 }
 
@@ -77,6 +79,10 @@ func CountedJudged(count int) {
 
 func CountedRemembered(count int) {
 	remembered.Add(int64(count))
+}
+
+func CountedKept(count int) {
+	kept.Add(int64(count))
 }
 
 func CountedFile() {

@@ -3,14 +3,17 @@ package hooks
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/jessegall/code-commandments/cli"
 	"github.com/jessegall/code-commandments/cli/help"
+	"github.com/jessegall/code-commandments/engine"
 )
 
 const (
@@ -161,7 +164,12 @@ func judgedInto(lines []map[string]any, folder string) int {
 
 	defer rememberedAround(servedRoot(), func(...string) {})()
 
+	moment := MomentOf(given)
+	fmt.Fprintf(os.Stderr, "· judging %s of agent %d: %d events\n", moment.Event, moment.Agent, max(1, len(moment.Batched)))
+	counted := engine.Counted()
 	answer := answerWith(given)
+	read := time.Duration(answer.ReadMs) * time.Millisecond
+	cli.SayJudged(os.Stderr, read, time.Duration(answer.JudgedMs)*time.Millisecond-read, len(answer.Raises), engine.Since(counted))
 
 	line := lines[len(lines)-1]
 	data, _ := line["data"].(map[string]any)
@@ -169,7 +177,7 @@ func judgedInto(lines []map[string]any, folder string) int {
 		return 0
 	}
 
-	_ = queue.Tell(answer, asText(line["environment"]), MomentOf(given).Agent)
+	_ = queue.Tell(answer, asText(line["environment"]), moment.Agent)
 	if len(answer.Raises) > 0 {
 		return 1
 	}
