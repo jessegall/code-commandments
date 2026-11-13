@@ -11,6 +11,7 @@ import (
 
 	"github.com/jessegall/code-commandments/bridge"
 	"github.com/jessegall/code-commandments/cli"
+	"github.com/jessegall/code-commandments/cli/hooks"
 	"github.com/jessegall/code-commandments/cli/scan"
 	"github.com/jessegall/code-commandments/cli/service"
 	"github.com/jessegall/code-commandments/cli/source"
@@ -107,7 +108,8 @@ func TestAServiceWhoseToolIsNotInstalledTellsTheJournal(t *testing.T) {
 		answered <- code
 	}()
 
-	queued := filepath.Join(data, "queue")
+	queue, _ := hooks.Queue4In(data)
+	queued := queue.Path()
 	waited := time.Now()
 	var told []byte
 	for told == nil {

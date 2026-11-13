@@ -64,6 +64,7 @@ func stopOn(stopped <-chan os.Signal, listener net.Listener) {
 }
 
 func (s Serve) Run(in *cli.Input, console cli.Console) (int, error) {
+	stopped := cli.StopSignals()
 	defer health.Serve(s.Kind)()
 
 	project, holds, err := here(s.Bridge)
@@ -71,7 +72,6 @@ func (s Serve) Run(in *cli.Input, console cli.Console) (int, error) {
 		return 0, err
 	}
 	if !holds {
-		stopped := cli.StopSignals()
 		console.Say(project + " has no " + s.Label + " to judge, so no " + s.Label + " bridge is kept up for it.")
 		<-stopped
 
@@ -84,7 +84,6 @@ func (s Serve) Run(in *cli.Input, console cli.Console) (int, error) {
 
 	bridged, needed, err := s.Reach.Own(s.Bridge, []string{project})
 	if unavailable := bridge.Unavailable(nil); errors.As(err, &unavailable) {
-		stopped := cli.StopSignals()
 		console.Warn(unavailable.Error())
 		tell(unavailable, console)
 		<-stopped
@@ -97,7 +96,6 @@ func (s Serve) Run(in *cli.Input, console cli.Console) (int, error) {
 		return 1, nil
 	}
 	if !needed {
-		stopped := cli.StopSignals()
 		console.Say(s.Label + " needs no bridge of its own, so none is kept up for " + project + ".")
 		<-stopped
 
@@ -119,7 +117,7 @@ func (s Serve) Run(in *cli.Input, console cli.Console) (int, error) {
 	defer listener.Close()
 	os.Chmod(path, 0o600)
 
-	go stopOn(cli.StopSignals(), listener)
+	go stopOn(stopped, listener)
 
 	return s.answering(listener, project, bridged, console), nil
 }
