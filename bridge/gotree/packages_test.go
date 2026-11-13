@@ -3,6 +3,7 @@ package gotree_test
 import (
 	"os"
 	"path/filepath"
+	"slices"
 	"testing"
 
 	"github.com/jessegall/code-commandments/bridge/gotree"
@@ -147,5 +148,32 @@ func TestOneFileIsTypedAgainstItsWholePackage(t *testing.T) {
 		if filepath.Base(held) == "note.go" {
 			t.Error("a file of another package in the same folder was taken into this one")
 		}
+	}
+}
+
+// A Go file's line names every file whose contents shaped its types: its own package's other files, the files of the
+// project's packages it imports, however deep, and its module's go.mod; a package nothing imports is not one of them.
+func TestAGoFileNamesTheFilesItsTypesWereReadFrom(t *testing.T) {
+	root := module(t, map[string]string{
+		"go.mod":            "module example.com/shop\n",
+		"cart/cart.go":      "package cart\n\nimport \"example.com/shop/prices\"\n\nfunc Total() int { return prices.Price() }\n",
+		"cart/line.go":      "package cart\n\ntype Line struct{}\n",
+		"prices/prices.go":  "package prices\n\nimport \"example.com/shop/money\"\n\nfunc Price() int { return int(money.Cents(3)) }\n",
+		"money/money.go":    "package money\n\ntype Cents int\n",
+		"unrelated/else.go": "package unrelated\n\nfunc Else() {}\n",
+	})
+	cart := filepath.Join(root, "cart/cart.go")
+
+	stream, err := gotree.Stream([]string{root}, []string{cart})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !stream.Header.Bridge.Reads || len(stream.Files) != 1 {
+		t.Fatalf("the stream says reads %v and holds %d files, where only cart.go was asked", stream.Header.Bridge.Reads, len(stream.Files))
+	}
+
+	want := []string{filepath.Join(root, "cart/line.go"), filepath.Join(root, "go.mod"), filepath.Join(root, "money/money.go"), filepath.Join(root, "prices/prices.go")}
+	if got := stream.Files[0].Reads; !slices.Equal(got, want) {
+		t.Errorf("cart.go names %v as read, want %v", got, want)
 	}
 }

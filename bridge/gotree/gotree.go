@@ -11,6 +11,7 @@ import (
 	"io"
 	"reflect"
 	"runtime"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -51,58 +52,43 @@ func Stream(paths, write []string) (*contract.Stream, error) {
 	for _, path := range resolved(write) {
 		judged[path] = true
 	}
-	context := func(path string) bool { return len(judged) > 0 && !judged[path] }
+	asked := func(path string) bool { return len(judged) == 0 || judged[path] }
 
 	fset := token.NewFileSet()
 	packages := PackagesOf(found)
 	checked := newChecker(fset, packages)
-	kept, keeps := keptLinesFor()
 	written := map[string]bool{}
 	var files []*contract.File
 
 	for _, one := range packages {
-		if keeps {
-			if held, all := kept.allOf(one, context); all {
-				for _, file := range held {
-					written[file.Path] = true
-				}
-				files = append(files, held...)
-
-				continue
+		if !slices.ContainsFunc(one.Files, asked) {
+			for _, path := range one.Files {
+				written[path] = true
 			}
+			continue
 		}
 
-		_, facts := checked.check(one)
+		held, facts := checked.check(one)
+		reads := checked.readBy(one, held)
 		for _, parsed := range checked.filesOf(one) {
 			path := fset.Position(parsed.Pos()).Filename
-			if written[path] {
+			if written[path] || !asked(path) {
+				written[path] = true
 				continue
 			}
 			written[path] = true
 
-			key := ""
-			if keeps {
-				key = kept.keyOf(path, one)
-				if held, read := kept.read(key, path, context(path)); read {
-					files = append(files, held)
-
-					continue
-				}
-			}
-
-			file, err := fileLine(fset, parsed, path, one.Path, facts, context(path))
+			file, err := fileLine(fset, parsed, path, one.Path, facts, false)
 			if err != nil {
 				return nil, err
 			}
-			if key != "" {
-				kept.keep(key, file)
-			}
+			file.Reads = slices.DeleteFunc(slices.Clone(reads), func(read string) bool { return read == path })
 			files = append(files, file)
 		}
 	}
 
 	for _, path := range found {
-		if written[path] {
+		if written[path] || !asked(path) {
 			continue
 		}
 		source, err := read(path)
@@ -113,7 +99,7 @@ func Stream(paths, write []string) (*contract.Stream, error) {
 		if parsed == nil {
 			return nil, fmt.Errorf("%s: %w", path, parseErr)
 		}
-		file, err := fileLine(fset, parsed, path, "", nil, context(path))
+		file, err := fileLine(fset, parsed, path, "", nil, false)
 		if err != nil {
 			return nil, err
 		}
@@ -124,7 +110,7 @@ func Stream(paths, write []string) (*contract.Stream, error) {
 		Contract: "tree",
 		Version:  contractVersion,
 		Language: contract.Go,
-		Bridge:   contract.Bridge{Name: Name, Version: Version()},
+		Bridge:   contract.Bridge{Name: Name, Version: Version(), Reads: true},
 		Roots:    resolved(paths),
 	}
 

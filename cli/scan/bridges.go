@@ -377,13 +377,36 @@ func (b Bridge) Read(roots, files []string, tally func()) (*contract.Stream, err
 
 const halvingsAtMost = 8
 
-// ReadShared reads the files in as many shares as processes, each by a bridge process of its own side by side, and
-// joins what they write in the files' order; one process, or a single file, is one read.
+// ReadShared serves every file whose kept line still stands from the one cache every checkout shares, and has the
+// bridge read the rest, in as many shares as processes side by side; one process, or a single file, is one read.
 func (b Bridge) ReadShared(roots, files []string, tally func(), processes int) (*contract.Stream, error) {
-	if processes <= 1 || len(files) < 2 {
-		return b.Read(roots, files, tally)
+	kept := linesKeptFor(b, resolved(roots))
+	hits, header, misses := kept.split(resolved(files))
+	for range hits {
+		tally()
+	}
+	if len(misses) == 0 {
+		return &contract.Stream{Header: kept.standing(*header, resolved(roots)), Files: hits, Program: kept.program(nil),
+			Trailer: contract.Trailer{Files: len(hits)}}, nil
 	}
 
+	stream, err := b.readMisses(roots, files, misses, tally, processes)
+	if stream == nil || len(hits) == 0 {
+		return stream, err
+	}
+	stream.Files = append(hits, stream.Files...)
+	stream.Trailer.Files = len(stream.Files)
+	stream.Program = kept.program(stream.Program)
+
+	return stream, err
+}
+
+func (b Bridge) readMisses(roots, files, misses []string, tally func(), processes int) (*contract.Stream, error) {
+	if processes <= 1 || len(misses) < 2 {
+		return b.readHalving(roots, files, misses, tally, halvingsAtMost)
+	}
+
+	files = misses
 	shares := min(processes, len(files))
 	streams := make([]*contract.Stream, shares)
 	failures := make([]error, shares)
@@ -456,7 +479,31 @@ func (b Bridge) ask(roots, files, written []string, tally func()) (*contract.Str
 	}
 	defer asker.Close()
 
-	return asker.AskTallied(bridge.AskedOf(b.Projects, files, written).Request(), tally)
+	kept := linesKeptFor(b, roots)
+	stream := &contract.Stream{}
+	err = asker.AskEach(bridge.AskedOf(b.Projects, files, written).Request(), func(line contract.Line, raw []byte) error {
+		switch {
+		case line.Header != nil:
+			stream.Header = *line.Header
+		case line.File != nil:
+			stream.Files = append(stream.Files, line.File)
+			kept.keep(stream.Header, line.File, raw)
+			if !line.File.Context {
+				tally()
+			}
+		case line.Program != nil:
+			stream.Program = kept.program(line.Program)
+		case line.Trailer != nil:
+			stream.Trailer = *line.Trailer
+		}
+
+		return nil
+	})
+	if err != nil && stream.Header.Contract == "" {
+		return nil, err
+	}
+
+	return stream, err
 }
 
 func joined(read, rest *contract.Stream) *contract.Stream {

@@ -8,6 +8,7 @@ from __future__ import annotations
 import gc
 import hashlib
 import os
+import shutil
 import tempfile
 from dataclasses import dataclass
 
@@ -51,13 +52,44 @@ def project_of(checkout: str) -> str:
 
 
 def cache_folder(paths: list[str], base: str | None) -> str:
-    """Where mypy keeps what it checked for the project of $paths: under $base, the one folder every run shares
-    (the plugin's, a queued run's and one started by hand alike), else the system's temporary folder; one folder for
-    all its worktrees, because mypy accepts a cached module whose path differs when its contents hash the same."""
-    folder = os.path.join(base or tempfile.gettempdir(), hashlib.sha256(project_of(checkout_of(paths)).encode()).hexdigest()[:16])
+    """Where mypy keeps what it checked for the checkout of $paths, under $base (else the system's temporary folder).
+    mypy keys what it keeps by module name, so two checkouts holding different versions of one module would overwrite
+    each other's and recheck it on every run: each checkout keeps its own, a worktree's starting from a copy of what
+    its project's checkout holds."""
+    root = base or tempfile.gettempdir()
+    checkout = checkout_of(paths)
+    folder = os.path.join(root, folder_name(checkout))
+    if not os.path.isdir(folder):
+        copied_from(os.path.join(root, folder_name(project_of(checkout))), folder)
     os.makedirs(folder, exist_ok=True)
     os.utime(folder)
     return folder
+
+
+def folder_name(checkout: str) -> str:
+    return hashlib.sha256(checkout.encode()).hexdigest()[:16]
+
+
+def copied_from(project: str, folder: str) -> None:
+    """$folder as a copy of $project's, made aside and moved in whole, so a run beside it never sees half of it."""
+    if project == folder or not os.path.isdir(project):
+        return
+    aside = tempfile.mkdtemp(dir=os.path.dirname(folder))
+    try:
+        shutil.copytree(project, aside, dirs_exist_ok=True)
+        os.rename(aside, folder)
+    except OSError:
+        shutil.rmtree(aside, ignore_errors=True)
+
+
+def base_folders(found: list[str]) -> list[str]:
+    """The folders the project's modules are imported from: above each file's outermost package."""
+    bases: set[str] = set()
+    for folder in {os.path.dirname(path) for path in found}:
+        while os.path.isfile(os.path.join(folder, "__init__.py")):
+            folder = os.path.dirname(folder)
+        bases.add(folder)
+    return sorted(bases)
 
 
 def options(cache: str) -> Options:
@@ -135,22 +167,16 @@ class Session:
     def __init__(self, base: str | None = None) -> None:
         self.base = base
 
-    def checked(self, paths: list[str]) -> CheckedProject:
-        chosen = options(cache_folder(paths, self.base))
-        found = read_afresh(sources(paths, chosen))
-        result = built(found, chosen)
+    def compiled(self, asked: list[str], found: list[str]) -> CheckedProject:
+        """The modules $asked compiled afresh, everything they import read from mypy's cache or checked once, the
+        project's other modules ($found) there to be imported."""
+        chosen = options(cache_folder(found or asked, self.base))
+        chosen.mypy_path = base_folders(found)
+        sources_asked = read_afresh(sources(asked, chosen))
+        result = built(sources_asked, chosen)
         if result is None:
-            return CheckedProject(found, {}, {})
-        return CheckedProject(found, result.types, result.graph)
-
-    def compiled(self, paths: list[str], only: set[str]) -> CheckedProject:
-        """The project built over mypy's cache with the files $only names compiled afresh."""
-        chosen = options(cache_folder(paths, self.base))
-        found = read_afresh(sources(paths, chosen), only)
-        result = built(found, chosen)
-        if result is None:
-            return CheckedProject(found, {}, {})
-        return CheckedProject(found, result.types, result.graph)
+            return CheckedProject(sources_asked, {}, {})
+        return CheckedProject(sources_asked, result.types, result.graph)
 
     def forget(self) -> None:
         """Lets go of what the last request built. mypy is written for one build to a process: it keeps its subtype

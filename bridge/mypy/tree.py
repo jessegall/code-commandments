@@ -1,15 +1,15 @@
 """A Python project as one generic tree stream (contract/CONTRACT.md), typed by mypy.
 
 `python tree.py <path>...` writes the stream for every module under the paths. `python tree.py --serve` answers one
-JSON request per stdin line ({"paths", "write"}) with a full stream, header to
-trailer, holding the checked project in memory between requests. A module outside `write` informs the types and is
-written with `context: true`. Types come from session.py's mypy session, joined to nodes by exact span.
+JSON request per stdin line ({"paths", "write"}) with a full stream, header to trailer: a line for each module
+`write` names, every module of `paths` there to import from. Each line names the files its tree read, so the reader
+keeps it between runs; this bridge keeps nothing. Types come from session.py's mypy session, joined to nodes by
+exact span.
 """
 
 from __future__ import annotations
 
 import ast
-import hashlib
 import io
 import json
 import os
@@ -18,12 +18,10 @@ import threading
 import time
 import tokenize
 from dataclasses import dataclass
-from typing import Iterable, Iterator
+from typing import Iterator
 
 from mypy.build import State
 from mypy.version import __version__ as MYPY_VERSION
-
-from kept import Kept, KeptLine
 
 from session import ResolvedType, Session, TypedModule, checkout_of, spans, states
 
@@ -671,148 +669,71 @@ def unparsed(source: bytes) -> Node:
     return Node(0, "Module", "other", Span(0, len(source), 1))
 
 
-def stream(session: Session, paths: list[str], write: list[str], kept: Kept | None = None) -> Iterator[dict | str]:
-    """The contract's lines for the modules under $paths: the header, one file line each, the program, the trailer.
-    With $kept, a module whose line still holds is written from there at once, and mypy checks only the modules that
-    changed and those a changed interface reaches (kept_lines). Each line written is kept for the next run."""
+def stream(session: Session, paths: list[str], write: list[str]) -> Iterator[dict | str]:
+    """The contract's lines for the modules $write names under $paths (every one when it names none): the header, one
+    file line each with the files its tree read, the program, the trailer."""
     yield {"header": {"contract": "tree", "version": 2, "language": "python",
-                      "bridge": {"name": "mypy-bridge", "version": MYPY_VERSION}, "roots": [os.path.realpath(p) for p in paths]}}
+                      "bridge": {"name": "mypy-bridge", "version": MYPY_VERSION, "reads": True},
+                      "roots": [os.path.realpath(p) for p in paths]}}
     found = python_files(paths)
-    texts = {path: open(path, "rb").read() for path in found}
     judged = {os.path.realpath(p) for p in write}
-    lines = kept_lines(session, kept, paths, found, texts) if kept is not None else checked_lines(session, paths, found, texts)
-    yield from file_lines(lines, write, judged)
-
-
-def checked_lines(session: Session, paths: list[str], found: list[str], texts: dict[str, bytes]) -> Iterator[tuple[str, KeptLine]]:
-    """Every module's line from one build of the whole request, with nothing kept."""
-    project = session.checked(paths)
+    asked = [path for path in found if path in judged] if write else found
+    project = session.compiled(asked, found)
     named = {os.path.realpath(s.path): s.module for s in project.sources if s.path}
     checked = states(project.graph, set(named))
-    for path in found:
-        yield path, line_of(texts[path], named.get(path) or module_name(path), checked.get(path), project.types, path)
-
-
-ROUNDS_AT_MOST = 20
-
-
-def kept_lines(session: Session, kept: Kept, paths: list[str], found: list[str], texts: dict[str, bytes]) -> Iterator[tuple[str, KeptLine]]:
-    """Each module's line, from what was kept wherever it still holds, the way mypy itself decides a module is still
-    good: its own text is unchanged and every module it depends on shows the interface it showed then. A module
-    whose text changed has no record and is checked; once its new interface is known, a module that saw the old one
-    is checked too, round after round until nothing more is reached. A module that reaches nothing checked is
-    written straight away, before mypy starts, so the run moves while mypy works."""
-    modules = {path: module_name(path) for path in found}
-    pins = kept.pins(checkout_of(paths))
-    shas = {path: hashlib.sha256(texts[path]).digest() for path in found}
-    held = {path: kept.recorded(kept.record_of(modules[path], shas[path], pins)) for path in found}
-    records = {path: one[0] if one is not None else None for path, one in held.items()}
-    lines = {path: one[1] for path, one in held.items() if one is not None}
-    todo = {path for path, record in records.items() if record is None}
-    interfaces = {modules[path]: record["interface"] for path, record in records.items() if record is not None}
-    present = set(modules.values())
-    todo |= {path for path in found if path not in todo and stale(records[path], interfaces, present)}
-
-    affected = reached_from(todo, modules, records)
-    for path in found:
-        if path not in affected:
-            yield path, lines[path]
-
-    for _ in range(ROUNDS_AT_MOST):
-        if not todo:
-            break
-        for path, line, record in rechecked(session, kept, sorted(todo), texts, modules, shas, pins):
-            records[path] = record
-            interfaces[modules[path]] = record["interface"]
-            lines[path] = line
-        todo = {path for path in affected if stale(records[path], interfaces, present)}
-    for path in found:
-        if path in affected:
-            yield path, lines[path]
-
-
-def stale(record: dict | None, interfaces: dict[str, str], present: set[str]) -> bool:
-    """Whether a module's kept line was made over an interface that is no longer so: a module of the project it
-    depends on is gone, or shows another interface now. A dependency whose interface is not known yet does not make
-    it stale until it is."""
-    if record is None:
-        return True
-    for module, interface in record["imports"].items():
-        if module not in present:
-            return True
-        if module in interfaces and interfaces[module] != interface:
-            return True
-    return False
-
-
-def reached_from(todo: set[str], modules: dict[str, str], records: dict[str, dict | None]) -> set[str]:
-    """The modules to check and every module that depends on one of them, through the imports each record holds."""
-    by_module = {module: path for path, module in modules.items()}
-    importers: dict[str, list[str]] = {}
-    for path, record in records.items():
-        for module in record["imports"] if record is not None else ():
-            if module in by_module:
-                importers.setdefault(by_module[module], []).append(path)
-    reached, frontier = set(todo), list(todo)
-    while frontier:
-        for importer in importers.get(frontier.pop(), ()):
-            if importer not in reached:
-                reached.add(importer)
-                frontier.append(importer)
-    return reached
-
-
-def rechecked(session: Session, kept: Kept, asked: list[str], texts: dict[str, bytes], modules: dict[str, str],
-              shas: dict[str, bytes], pins: str) -> Iterator[tuple[str, KeptLine, dict]]:
-    """The modules $asked compiled afresh over mypy's cache, each with its line and the record it is kept under, which
-    is written the moment its line is, so a run stopped part way keeps what it did."""
-    project = session.compiled(asked, set(asked))
-    named = {os.path.realpath(s.path): s.module for s in project.sources if s.path}
-    checked = states(project.graph, set(named))
-    for path in asked:
-        state = checked.get(path)
-        line = line_of(texts[path], named.get(path) or modules[path], state, project.types, path)
-        imports, outside = dependencies(state, project.graph, modules)
-        record = {"imports": imports, "outside": outside, "interface": interface_of(state)}
-        kept.record(kept.record_of(modules[path], shas[path], pins), record, line)
-        yield path, line, record
-
-
-def dependencies(state: State | None, graph: dict[str, State], modules: dict[str, str]) -> tuple[dict[str, str], dict[str, str]]:
-    """What a module depends on as mypy read it, each with the interface it showed: the modules of the project by
-    the name the bridge gives them, and the rest by mypy's own name."""
-    imports: dict[str, str] = {}
-    outside: dict[str, str] = {}
-    for dependency in sorted(set(state.dependencies)) if state is not None else []:
-        held = graph.get(dependency)
-        path = os.path.realpath(held.path) if held is not None and held.path else None
-        if path in modules:
-            imports[modules[path]] = interface_of(held)
-        else:
-            outside[dependency] = interface_of(held)
-    return imports, outside
-
-
-def interface_of(state: State | None) -> str:
-    """The hash of what a module shows the modules that import it, as mypy computed it."""
-    interface = state.interface_hash if state is not None else ""
-    return interface.hex() if isinstance(interface, bytes) else str(interface or "")
-
-
-def file_lines(lines: Iterable[tuple[str, KeptLine]], write: list[str], judged: set[str]) -> Iterator[dict | str]:
-    """The file lines as each is ready, then the program and the trailer."""
+    checkout = checkout_of(paths)
+    pins = pinned(checkout)
     seen = resolved = unjoined = files = 0
-    folders: dict[str, None] = {}
-    for path, line in lines:
+    for path in asked:
+        try:
+            with open(path, "rb") as file:
+                text = file.read()
+        except OSError:
+            continue
+        state = checked.get(path)
+        line = line_of(text, named.get(path) or module_name(path), state, project.types, path)
         seen, resolved, unjoined = seen + line.expressions, resolved + line.typed, unjoined + line.unjoined
-        yield placed(line, path, bool(write) and path not in judged)
         files += 1
+        yield placed(line, path, reads_of(state, project.graph, checkout, path) + pins)
+    folders: dict[str, None] = {}
+    for path in found:
         folders.update(dict.fromkeys(packages(path)))
     yield {"program": {"packages": sorted(folders)}}
     yield {"trailer": {"files": files, "resolution": {"expressions": seen, "typed": resolved, "unjoined": unjoined}}}
 
 
-def line_of(text: bytes, module: str, state: State | None, types: dict, path: str) -> KeptLine:
+PINS = ("pyproject.toml", "requirements.txt", "poetry.lock", "uv.lock", "Pipfile.lock", "setup.cfg", "mypy.ini")
+
+
+def pinned(checkout: str) -> list[str]:
+    """The files of the checkout that pin what is installed and how mypy reads it: a change to one changes every tree."""
+    return [path for path in (os.path.join(checkout, name) for name in PINS) if os.path.isfile(path)]
+
+
+def reads_of(state: State | None, graph: dict[str, State], checkout: str, path: str) -> list[str]:
+    """The files of the checkout the module's tree read: each module of it the module depends on, as mypy read it,
+    whether or not the request named it."""
+    reads: list[str] = []
+    for dependency in sorted(set(state.dependencies)) if state is not None else []:
+        held = graph.get(dependency)
+        read = os.path.realpath(held.path) if held is not None and held.path else None
+        if read is not None and read != path and read.startswith(checkout + os.sep):
+            reads.append(read)
+    return reads
+
+
+@dataclass(frozen=True)
+class WrittenLine:
+    """A module's file line without its path or reads: the members of its object as JSON text, ready to be put after
+    them, and the counts its trailer adds up."""
+
+    members: str
+    expressions: int
+    typed: int
+    unjoined: int
+
+
+def line_of(text: bytes, module: str, state: State | None, types: dict, path: str) -> WrittenLine:
     """A module's file line with its path and context left out, and the counts the trailer adds up for it."""
     typed = spans(path, state, types) if state is not None else TypedModule(0, {})
     writer = TreeWriter(text, module, typed.by_span)
@@ -824,14 +745,13 @@ def line_of(text: bytes, module: str, state: State | None, types: dict, path: st
     ran = state is not None and state.tree is not None
     unjoined = sum(1 for span in typed.by_span if span not in writer.joined)
     members = json.dumps(ModuleLine(errors, module, ran, root, comments), ensure_ascii=False, separators=(",", ":"), default=to_json)[1:-1]
-    return KeptLine(members, typed.expressions, len(typed.by_span), unjoined)
+    return WrittenLine(members, typed.expressions, len(typed.by_span), unjoined)
 
 
-def placed(kept: KeptLine, path: str, context: bool) -> str:
-    """A kept line as the file at $path writes it, marked as context when the request did not ask for it, put
-    together as text: the line is never decoded to be written again."""
-    marked = ',"context":true' if context else ""
-    return '{"file":{"path":' + json.dumps(path, ensure_ascii=False) + marked + "," + kept.members + "}}"
+def placed(line: WrittenLine, path: str, reads: list[str]) -> str:
+    """The file line of the module at $path, with the files its tree read, put together as text."""
+    return ('{"file":{"path":' + json.dumps(path, ensure_ascii=False) + ',"reads":' + json.dumps(reads, ensure_ascii=False)
+            + "," + line.members + "}}")
 
 
 def emit(lines: Iterator[dict]) -> None:
@@ -871,11 +791,11 @@ def declared() -> Declaration:
     )
 
 
-def answered(session: Session, request: str, kept: Kept | None = None) -> None:
+def answered(session: Session, request: str) -> None:
     """One request of a serving bridge, answered, and its build let go of."""
     asked = json.loads(request)
     try:
-        emit(stream(session, asked.get("paths", []), asked.get("write", []), kept))
+        emit(stream(session, asked.get("paths", []), asked.get("write", [])))
     finally:
         session.forget()
 
@@ -894,12 +814,6 @@ def leaves_with_its_parent() -> None:
     threading.Thread(target=watch, daemon=True).start()
 
 
-def kept_in(argv: list[str]) -> Kept | None:
-    """The folder `--cache=` names for the lines this bridge keeps between runs; none when it names none."""
-    folder = option(argv, "--cache=")
-    return Kept(folder) if folder else None
-
-
 def option(argv: list[str], name: str) -> str | None:
     """The value of the option $name, written `name=value`; none when it is not given."""
     for arg in argv:
@@ -913,13 +827,12 @@ def main(argv: list[str]) -> int:
         sys.stdout.write(json.dumps(declared().to_json(), ensure_ascii=False) + "\n")
         return 0
     session = Session(option(argv, "--mypy-cache="))
-    kept = kept_in(argv)
     if "--serve" in argv:
         leaves_with_its_parent()
         for request in sys.stdin:
-            answered(session, request, kept)
+            answered(session, request)
         return 0
-    emit(stream(session, [arg for arg in argv if not arg.startswith("--")], [], kept))
+    emit(stream(session, [arg for arg in argv if not arg.startswith("--")], []))
     return 0
 
 

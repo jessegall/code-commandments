@@ -7,6 +7,7 @@ import (
 	"go/token"
 	"go/types"
 	"path/filepath"
+	"slices"
 	"sort"
 	"strings"
 
@@ -357,4 +358,33 @@ func receiverName(held types.Type) string {
 	}
 
 	return ""
+}
+
+// readBy is every file whose contents shaped the types of the package: its own files and those of every package of
+// the project it imports, however deep, with the go.mod of its module.
+func (c *checker) readBy(one Package, held *types.Package) []string {
+	reads := slices.Clone(one.Files)
+	seen := map[string]bool{}
+	var visit func(*types.Package)
+	visit = func(imported *types.Package) {
+		for _, next := range imported.Imports() {
+			if seen[next.Path()] {
+				continue
+			}
+			seen[next.Path()] = true
+			if mine, ok := c.packages[next.Path()]; ok {
+				reads = append(reads, mine.Files...)
+				visit(next)
+			}
+		}
+	}
+	if held != nil {
+		visit(held)
+	}
+	if _, root := moduleRootOf(one); root != "" {
+		reads = append(reads, filepath.Join(root, "go.mod"))
+	}
+	slices.Sort(reads)
+
+	return slices.Compact(reads)
 }

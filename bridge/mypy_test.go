@@ -120,7 +120,9 @@ func gitIn(t *testing.T, folder string, arguments ...string) {
 	}
 }
 
-func TestAWorktreeSharesItsProjectsMypyCache(t *testing.T) {
+// mypy keys what it keeps by module name, so a worktree holding other versions of a module keeps its own folder,
+// started from a copy of its project's so it starts warm, and never overwrites what the project's checkout keeps.
+func TestAWorktreeStartsFromACopyOfItsProjectsMypyCache(t *testing.T) {
 	python := os.Getenv("COMMANDMENTS_MYPY_PYTHON")
 	if python == "" {
 		t.Skip("no python with mypy is named here")
@@ -140,8 +142,16 @@ func TestAWorktreeSharesItsProjectsMypyCache(t *testing.T) {
 	gitIn(t, project, "-c", "user.name=a", "-c", "user.email=a@b", "commit", "-q", "--allow-empty", "-m", "first")
 	gitIn(t, project, "worktree", "add", "-q", worktree)
 
-	if here, there := mypyCacheFolderOf(t, python, data, project), mypyCacheFolderOf(t, python, data, worktree); here != there {
-		t.Errorf("the project caches in %s and its worktree in %s, so every new worktree starts cold", here, there)
+	here := mypyCacheFolderOf(t, python, data, project)
+	if err := os.WriteFile(filepath.Join(here, "checked.meta.ff"), []byte("kept"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	there := mypyCacheFolderOf(t, python, data, worktree)
+	if here == there {
+		t.Fatalf("the worktree caches in the project's own folder %s, so the two overwrite each other's modules", here)
+	}
+	if copied, err := os.ReadFile(filepath.Join(there, "checked.meta.ff")); err != nil || string(copied) != "kept" {
+		t.Errorf("the worktree's mypy cache did not start from the project's, so every new worktree starts cold: %v", err)
 	}
 }
 

@@ -32,6 +32,8 @@ type Header struct {
 type Bridge struct {
 	Name    string `json:"name"`
 	Version string `json:"version"`
+	// Reads says every file line names the files its tree read, which is what lets a run keep the line between runs.
+	Reads bool `json:"reads,omitempty"`
 }
 
 // File is one source file's tree and comments.

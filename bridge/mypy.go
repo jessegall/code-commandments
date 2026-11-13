@@ -13,7 +13,7 @@ import (
 	"github.com/jessegall/code-commandments/cli/atomic"
 )
 
-//go:embed mypy/tree.py mypy/session.py mypy/kept.py mypy/requirements.txt
+//go:embed mypy/tree.py mypy/session.py mypy/requirements.txt
 var mypy embed.FS
 
 var mypyTree = bundle.Embedded("mypy-tree", mypy, "mypy")
@@ -30,9 +30,6 @@ func Mypy() ([]string, error) {
 		return nil, err
 	}
 	tree := []string{filepath.Join(folder, "tree.py")}
-	if lines, err := bundle.TreesFolder("python"); err == nil {
-		tree = append(tree, "--cache="+lines)
-	}
 	if caches, err := mypyCaches(); err == nil {
 		bundle.ForgetUnused(caches, time.Now())
 		tree = append(tree, "--mypy-cache="+caches)

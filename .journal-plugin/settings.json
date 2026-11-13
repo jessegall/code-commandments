@@ -101,7 +101,7 @@
         "type": "number",
         "kind": "number",
         "default": 5,
-        "help": "How long one agent's live edits are gathered before they are judged together as a group. An edit alone in that time is judged by itself. Zero judges each edit as it comes."
+        "help": "How long one agent's live edits are gathered before they are judged together as a group. An edit alone in that time is judged by itself. Zero judges each edit as it comes; more than 60 counts as 60."
     },
     {
         "key": "judge_at_once",

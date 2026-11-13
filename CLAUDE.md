@@ -44,6 +44,16 @@ twice for two engines** — lift it into `engine/` or a shared package, paramete
 one hook that genuinely differs. A thing belongs in the engine folder of its concern:
 `engine/<lang>`, `detectors/<lang>`, `sins/<lang>`, `skill/<lang>`, `scribes/<lang>`.
 
+### 🔒 One cache for every checkout, keyed on contents — locked by a test
+
+Every checkout of a project, the main one and every worker's worktree, reads through ONE cache keyed
+on a file's contents, never its location. A file any checkout already read is served from that cache
+in every other checkout, and a worktree's own changes never evict what the main checkout keeps (a
+cache a parser keys by module name, like mypy's, is held per checkout so versions never overwrite
+each other). A test that fails when a worktree run re-reads a file the main checkout already read
+must exist and pass before ANY change to the reading path ships. Breaking this has made single-file
+edits take 40-60 s instead of seconds, more than once.
+
 ### 🚫 NO regex for structure — build an engine tool instead
 
 Reaching for a regex to read code structure (a member chain, a method call, a binding, an

@@ -28,7 +28,9 @@ time however large the project. Each line has exactly one key, and that key says
 1. **`header`**, always first. `contract` is always `"tree"`. `version` is the contract version. A reader
    names the versions it reads and refuses any other, so every change to this document raises it.
    `language` is the bridge's language (see *Languages*); a Vue bridge writes `vue`, with its script
-   blocks' TypeScript trees inside each file. `bridge` names the program that wrote the stream.
+   blocks' TypeScript trees inside each file. `bridge` names the program that wrote the stream;
+   `"reads": true` there says every file line names in `reads` the files its tree read, which lets the
+   reader keep each line between runs and ask the bridge only for the files whose contents changed.
    `roots` are the paths it was asked for, absolute and with symbolic links resolved.
 2. **`file`**, one per source file, in any order.
 3. **`program`**, at most one, after every `file`: the facts about the whole program that no file
@@ -94,6 +96,7 @@ such fact.
 | `errors` | always | syntax errors in the file: `0` for a file parsed whole |
 | `context` | the file informs but is not judged | `true`: a file outside `write` that the engine still needs to resolve types, targets and ancestry into. It is never reported on |
 | `test` | the bridge knows it | `true` for a file of a test project |
+| `reads` | the header's bridge says `"reads": true` | the absolute paths of the other files of the project whose contents shaped this tree: what it imports, and the files that pin what is installed. The line stands while its file and these hold the same contents |
 | `module` | the language names modules | the dotted module the file is (Python `shop.cart`) |
 | `resolver` | a bridge resolver exists for the language | `{"tool", "ran"}`: the resolver (`roslyn`, `mypy`, `tsc`, `go/types`) and whether it ran on this file |
 | `root` | always | the file's root node |
