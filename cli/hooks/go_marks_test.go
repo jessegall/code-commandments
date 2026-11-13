@@ -66,15 +66,22 @@ func TestAGosSiblingsSinIsNotTheEditedFilesMark(t *testing.T) {
 	}
 }
 
+// One Go file is read with its whole package checked: the bridge writes only the file asked, as every bridge does, and
+// names the package's other files among what its tree read, so a sibling's types are known to it and an edit to the
+// sibling reads it again.
 func TestAGoPackageIsReadWholeToJudgeOneOfItsFiles(t *testing.T) {
-	_, edited, _ := goProject(t)
+	_, edited, sibling := goProject(t)
 
 	codebase, err := scan.OneFile(edited).Load()
 	if err != nil {
 		t.Fatalf("one Go file does not load: %v", err)
 	}
-	if len(codebase.Files()) < 2 {
-		t.Errorf("a Go file is read as %d file(s), so a sibling's types are unknown to it", len(codebase.Files()))
+	files := codebase.Files()
+	if len(files) != 1 || files[0].Path != edited {
+		t.Fatalf("one Go file read as %d files", len(files))
+	}
+	if !slices.Contains(files[0].Reads, sibling) {
+		t.Errorf("the Go file's tree names %v as read, not its sibling %s whose types it uses", files[0].Reads, sibling)
 	}
 }
 
