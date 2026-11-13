@@ -154,7 +154,6 @@ Exit code is non-zero when sins are found.
 | `commandments hooks` | The wired hook entry point — reads one hook payload from stdin, runs every registered handler, and merges their responses into one. |
 | `commandments journal-hook` | The agent journal's entry point — reads one journal hook payload from stdin, runs every registered handler, and answers in the journal's shape. |
 | `commandments plugin-hook` | The agent journal plugin's program — reads one event line from stdin and answers it at once: an edit, a command and a stop with nothing, and every other event with what its handlers found. |
-| `commandments journal-serve` | Answer the agent journal's hooks from one running process, over the socket the journal names in $JOURNAL_PLUGIN_SOCKET. |
 | `commandments roslyn-serve` | Keep the C# bridge running for this project, answering each run of the tool over a socket named for the project. |
 | `commandments mypy-serve` | Keep the Python bridge running for this project, answering each run of the tool over a socket named for the project. |
 | `commandments frontend-serve` | Keep the Vue and TypeScript bridge running for this project, answering each run of the tool over a socket named for the project. |
@@ -406,22 +405,18 @@ from the registry by `composer readme`, so they never drift. Flipping one writes
 `.commandments/config.json` through `commandments journal-config`, the same `disable` entry you
 would write by hand; the rest of the file is kept.
 
-Version 4 of the journal reads `journal-plugin.json` at the package's root instead, and its settings from
-`.journal-plugin/settings.json`, generated beside the others. It runs `.journal-plugin/journal4-hook` for every
-event it hears, one JSON line in and one out, and **nothing the journal waits for is worked out**. The plugin holds
-one event, `command_starting` — one per command of a shell line, as the journal cuts the chain — inside a window of
-five milliseconds, which only a warm process can answer: the `hooks` service (`commandments journal-serve`) answers
-it on the socket the journal names, with the gates alone and from facts it already keeps, such as the worktrees a
-branch is shared with, re-read only when git writes one. Judging happens on `file_edited`, one event per file a tool
-changed, with the edit already recorded; that event is answered the same way, with the gates alone, and judged in a
-run of its own, because the journal waits on every answer it asks for and a judge of one file on a loaded machine
-takes longer than any window it allows. What it finds goes to the queue the journal drains at the agent's next hook — a folder of one file per answer, each
-the shape of an answer with the environment it is for, renamed into place so a drain never reads a half-written one.
-The chat gets **one mark per file**, keyed by the file and listing the sins it holds, which a later judging rewrites
-where it stands and which turns green when the file holds none; thirty sins in a file are one card, not thirty.
-`file_edited` is heard and never held: holding it would block the tool's result on a judge, which is the one thing
-this whole path exists to prevent. A change to the settings arrives as `plugin.updated` and is written by
-`journal-config`, as before.
+Journals from version 5 read `journal-plugin.5.json`; older journals read `journal-plugin.json`, which is frozen
+on release 7.18.115 and its script in `.journal-plugin/v4`, so a journal before version 5 keeps working as it did
+and takes no newer release. For every event it hears, the journal runs `.journal-plugin/hook`, a Python script
+(3.9 or newer) that decides what happens and leaves only the judging to the release binary. It answers each event
+at once, through the binary's answer in the journal's words, and **nothing the journal waits for is worked out**:
+with live judging on, an edit joins its agent's edit window, at most one judge run waits in the journal's queue per
+agent, and that run, started through `journal plugin run --kind judge`, takes every edit gathered when it starts.
+What a run finds goes to the queue the journal drains at the agent's next hook, one file per answer, renamed into
+place so a drain never reads a half-written one. Every sin found and every file made clean is a card of its own,
+in the order they came. A change to the settings arrives as `plugin.updated` and is written by `journal-config`.
+Because the script ships with the plugin's files, a change to how events are handled is released without building
+a binary.
 
 The plugin keeps nothing running between events. The journal runs the plugin's program once for each event it
 hears or holds, and a judge starts the language bridges it needs, reads what their caches already hold, and stops

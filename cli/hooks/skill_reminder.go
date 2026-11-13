@@ -72,10 +72,6 @@ func (SkillReminder) Handle(event Event) Response {
 		return !project.Writes(source.OfFile(file))
 	})
 
-	for _, file := range judged {
-		tookIn(file)
-	}
-
 	asked := Asked{}
 	narrowed := map[string]Narrowed{}
 	askedCount := map[string]int{}

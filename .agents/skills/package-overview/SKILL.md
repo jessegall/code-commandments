@@ -50,7 +50,7 @@ twin analyses, the syntax hash). Never write the same machinery twice.
 
 `commandments --help` lists every verb, grouped; `commandments <verb> --help` is its page. The ones in daily
 use: `judge`, `repent`, `hints`, `info`, `make`, `sync`, `disable`/`enable`, `report`, `feature-request`,
-`layers`, and the services `journal-serve` and `roslyn-serve`.
+`layers`, and the service `roslyn-serve`.
 
 ## Read next
 

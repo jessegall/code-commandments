@@ -1,19 +1,14 @@
 package hooks
 
 import (
-	"bufio"
 	"encoding/json"
 	"github.com/jessegall/code-commandments/cli/git"
-	"net"
 	"os"
 	"os/exec"
 	"path/filepath"
-	"slices"
 	"sort"
-	"strconv"
 	"strings"
 	"testing"
-	"time"
 )
 
 func projectWithASin(t *testing.T) (root, file, data string) {
@@ -304,61 +299,6 @@ func TestAQueuedAnswerIsTheAnswersOwnShapeInAFileOfItsOwn(t *testing.T) {
 	}
 }
 
-func TestTheServiceAnswersACommandWithNothingAndAdvisesAfter(t *testing.T) {
-	_, line := projectAnotherWorktreeStandsOn(t)
-	short, err := os.MkdirTemp("", "s")
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer os.RemoveAll(short)
-
-	socket := filepath.Join(short, "serve.sock")
-	listener, err := net.Listen("unix", socket)
-	if err != nil {
-		t.Fatalf("no socket to listen on: %v", err)
-	}
-	defer listener.Close()
-
-	advised := make(chan asked, 1)
-	go serve(listener, func() bool { return true }, startAdvisers(func(moment asked) { advised <- moment }))
-
-	connection, err := net.Dial("unix", socket)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer connection.Close()
-
-	said, err := json.Marshal(line)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if _, err := connection.Write(append(said, '\n')); err != nil {
-		t.Fatal(err)
-	}
-
-	answer, err := bufio.NewReader(connection).ReadString('\n')
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	var read map[string]any
-	if err := json.Unmarshal([]byte(answer), &read); err != nil {
-		t.Fatalf("the journal cannot read %q: %v", answer, err)
-	}
-	if len(read) != 0 {
-		t.Errorf("the service answered %v; a command is answered with nothing", read)
-	}
-
-	select {
-	case moment := <-advised:
-		if !moment.queued {
-			t.Error("the moment was handed on as version 3's")
-		}
-	case <-time.After(3 * batchedWithin):
-		t.Error("the moment was never handed on to be worked out")
-	}
-}
-
 func TestTheEditTheJournalHandsUsDecidesWhichSinsAreFresh(t *testing.T) {
 	for name, test := range map[string]struct {
 		wrote int
@@ -503,70 +443,6 @@ func TestGoingIdleRaisesNothingNew(t *testing.T) {
 
 	if idle := Answer4Now(eventOf("idle", "")); strings.Contains(idle, "sin-found") || strings.Contains(idle, "sin-resolved") {
 		t.Errorf("going idle with the sin still there answered %q", idle)
-	}
-}
-
-func TestTheServiceAnswersEveryVersion4EventInVersion4sShape(t *testing.T) {
-	projectAnotherWorktreeStandsOn(t)
-
-	for at, event := range []string{mergeEvent, "worker_merge_result", "a_journal_event_we_never_mapped"} {
-		short, err := os.MkdirTemp("", "s")
-		if err != nil {
-			t.Fatal(err)
-		}
-		defer os.RemoveAll(short)
-
-		socket := filepath.Join(short, strconv.Itoa(at)+".sock")
-		listener, err := net.Listen("unix", socket)
-		if err != nil {
-			t.Fatalf("no socket to listen on: %v", err)
-		}
-
-		go serve(listener, func() bool { return true }, startAdvisers(func(asked) {}))
-
-		connection, err := net.Dial("unix", socket)
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		said, err := json.Marshal(map[string]any{
-			"v": 1, "event": event, "session": "s1", "environment": "main",
-			"data": map[string]any{"text": "git pull --rebase", "writes": false, "position": 1, "parts": 1},
-		})
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		if _, err := connection.Write(append(said, '\n')); err != nil {
-			t.Fatal(err)
-		}
-
-		answer, err := bufio.NewReader(connection).ReadString('\n')
-		if err != nil {
-			t.Fatalf("%s was not answered: %v", event, err)
-		}
-
-		if strings.TrimSpace(answer) == "" {
-			connection.Close()
-			listener.Close()
-
-			continue
-		}
-
-		var read map[string]any
-		if err := json.Unmarshal([]byte(answer), &read); err != nil {
-			t.Fatalf("the journal cannot read %s's answer %q: %v", event, answer, err)
-		}
-		read = asTheJournalSees(read)
-
-		for key := range read {
-			if !slices.Contains([]string{"v", "answer", "reason", "message", "tell", "cards", "commands"}, key) {
-				t.Errorf("%s was answered with %q, a key the journal's protocol does not know", event, key)
-			}
-		}
-
-		connection.Close()
-		listener.Close()
 	}
 }
 

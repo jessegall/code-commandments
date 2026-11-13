@@ -21,7 +21,6 @@ import (
 
 	"github.com/jessegall/code-commandments/bridge"
 	"github.com/jessegall/code-commandments/cli"
-	"github.com/jessegall/code-commandments/cli/config"
 	"github.com/jessegall/code-commandments/cli/git"
 	"github.com/jessegall/code-commandments/cli/judge"
 	"github.com/jessegall/code-commandments/cli/scan"
@@ -43,109 +42,6 @@ var (
 	stressAhead   = flag.Bool("stress.ahead", true, "parse each edited file when its event arrives, together with every file waiting then")
 	stressApart   = flag.Duration("stress.apart", 0, "how long a worker waits between its edits; a real agent edits seconds apart, not all at once")
 )
-
-func TestTheStress(t *testing.T) {
-	if !*stress {
-		t.Skip("the stress harness runs on request: -args -stress")
-	}
-
-	parsed.ahead = *stressAhead
-	t.Cleanup(func() { parsed.ahead = true })
-
-	root, data := stressProject(t, *stressFiles, *stressWorkers)
-	service := serviceAt(t, root)
-	stressBridge(t, git.ProjectRoot(root))
-
-	settings, err := config.Load(root)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	project := git.ProjectRoot(root)
-	branch := git.CurrentBranch(project)
-
-	warming := time.Now()
-	Warming(root, settings)
-
-	if !heldWithin(project, branch, 15*time.Minute) {
-		t.Fatalf("no base was held after %v", time.Since(warming).Round(time.Second))
-	}
-	t.Cleanup(func() { kept.Drop(project, branch) })
-
-	read := time.Since(warming)
-	t.Logf("the base of %d files was read in %v", *stressFiles, read.Round(time.Millisecond))
-
-	drained(t, data)
-
-	fired := time.Now()
-
-	var work sync.WaitGroup
-	var last struct {
-		sync.Mutex
-		at          time.Time
-		edit, other time.Duration
-	}
-
-	for worker := 1; worker <= *stressWorkers; worker++ {
-		work.Add(1)
-
-		go func(worker int) {
-			defer work.Done()
-
-			for edit := 0; edit < *stressEdits; edit++ {
-				if edit > 0 {
-					time.Sleep(*stressApart)
-				}
-
-				took := sendEvent(t, service, stressEvent(root, worker, edit, stressEdit(t, root, worker, edit)))
-
-				last.Lock()
-				last.at = time.Now()
-				if took > last.edit {
-					last.edit = took
-				}
-				last.Unlock()
-
-			}
-
-			for _, event := range []string{"ticked", "idle"} {
-				waited := sendEvent(t, service, stressMoment(worker, event))
-
-				last.Lock()
-				if waited > last.other {
-					last.other = waited
-				}
-				last.Unlock()
-			}
-
-			if *stressHandIn {
-				stressHandInBy(t, root, worker)
-			}
-		}(worker)
-	}
-
-	work.Wait()
-
-	answers, landed := stressAnswers(t, data, stressEditedFiles(), *stressWithin)
-
-	if waited := stressWorstWait(edits(answers)); waited > *stressWithin {
-		t.Errorf("an edit waited %v from the journal handing it over to its answer, past the %v an agent may wait "+
-			"to hear about the file it just wrote", waited.Round(time.Millisecond), *stressWithin)
-	}
-
-	_ = landed
-
-	t.Logf("the journal waited %v for an edit's answer at worst, and %v for a ticked or idle one",
-		last.edit.Round(time.Millisecond), last.other.Round(time.Millisecond))
-
-	t.Logf("%d edits %v apart and %d hand-ins were sent in %v; the last answer landed %v after the last edit",
-		*stressWorkers**stressEdits, *stressApart, stressHandIns(), time.Since(fired).Round(time.Millisecond),
-		landed.Sub(last.at).Round(time.Millisecond))
-
-	stressReport(t, edits(answers))
-	stressTold(t, edits(answers))
-	stressStop(t, root, data)
-}
 
 func stressStop(t *testing.T, root, data string) {
 	t.Helper()
@@ -290,39 +186,6 @@ func stressBridgeUp(t *testing.T, project string) func() {
 	t.Cleanup(stop)
 
 	return stop
-}
-
-func serviceAt(t *testing.T, root string) string {
-	t.Helper()
-
-	socket := fmt.Sprintf("/tmp/cc-stress-%d.sock", os.Getpid())
-	t.Setenv(pluginSocket, socket)
-	t.Cleanup(func() { os.Remove(socket) })
-
-	was, err := os.Getwd()
-	if err != nil {
-		t.Fatal(err)
-	}
-	if err := os.Chdir(root); err != nil {
-		t.Fatal(err)
-	}
-	t.Cleanup(func() { os.Chdir(was) })
-
-	t.Cleanup(func() { serving.Store(false) })
-
-	go func() { JournalServe{}.Run(cli.InputOf("journal-serve"), quiet()) }()
-
-	for until := time.Now().Add(30 * time.Second); time.Now().Before(until); time.Sleep(50 * time.Millisecond) {
-		if connection, err := net.Dial("unix", socket); err == nil {
-			connection.Close()
-
-			return socket
-		}
-	}
-
-	t.Fatalf("the service never listened on %s", socket)
-
-	return ""
 }
 
 func sendEvent(t *testing.T, socket string, event map[string]any) time.Duration {
@@ -636,38 +499,6 @@ class Thing%d(Base):
 `, imports, at, uses)
 }
 
-func TestWhatAnAskCostsByItsFiles(t *testing.T) {
-	if !*stress || !*stressAsks {
-		t.Skip("the ask measurement runs on request: -args -stress -stress.asks")
-	}
-
-	root, _ := stressProject(t, *stressFiles, 1)
-	project := git.ProjectRoot(root)
-	stressBridge(t, project)
-
-	if _, err := scan.Walk(filesOf(t, root, 1), source.Excluded{}).Load(); err != nil {
-		t.Fatalf("the python bridge cannot answer here: %v", err)
-	}
-
-	for _, many := range []int{1, 2, 3, 5, 9, 25, 50, 100, 200, 400, 800, 1} {
-		asked := filesOf(t, root, many)
-
-		for _, file := range asked {
-			stressTouch(t, file)
-		}
-
-		began := time.Now()
-		codebase, err := scan.Walk(asked, source.Excluded{}).Load()
-		took := time.Since(began)
-
-		if err != nil || codebase == nil {
-			t.Fatalf("an ask of %d files: %v", many, err)
-		}
-
-		t.Logf("%d file(s) in one ask: %v, %v each", many, took.Round(time.Millisecond), (took / time.Duration(many)).Round(time.Millisecond))
-	}
-}
-
 func filesOf(t *testing.T, root string, many int) []string {
 	t.Helper()
 
@@ -704,63 +535,6 @@ var (
 	stressSeed         = flag.Int64("stress.seed", 0, "the seed the moves are drawn from; 0 draws one and prints it")
 )
 
-func TestManyTreesAtOnce(t *testing.T) {
-	if !*stress || !*stressMany {
-		t.Skip("the many-trees run goes on request: -args -stress -stress.many")
-	}
-
-	seed := *stressSeed
-	if seed == 0 {
-		seed = time.Now().UnixNano()
-	}
-	t.Logf("the moves are drawn from seed %d; pass -stress.seed=%d to make this run again", seed, seed)
-
-	data := t.TempDir()
-	t.Setenv(pluginData, data)
-
-	Serves()
-	t.Cleanup(func() { serving.Store(false) })
-
-	checkouts := stressCheckouts(t, seed)
-	t.Logf("%d checkouts of one project, each making %d moves", len(checkouts), *stressMoves)
-
-	var work sync.WaitGroup
-	for _, checkout := range checkouts {
-		work.Add(1)
-
-		go func(checkout *stressCheckout) {
-			defer work.Done()
-
-			for move := 0; move < *stressMoves; move++ {
-				checkout.move(t, move)
-			}
-		}(checkout)
-	}
-
-	work.Wait()
-
-	if answered.Load() == 0 {
-		t.Fatal("not one answer came back from the whole run, and every move was held to nothing")
-	}
-
-	t.Logf("%d answers were held to the invariants as they came, %d checkouts at once at the most", answered.Load(), atOnce.Load())
-	t.Log(stressAnsweringSaid())
-	t.Log(stressMemorySaid(len(checkouts)))
-
-	if *stressTimings {
-		if said := TimedRules(); said != "" {
-			t.Logf("what the rules cost over this run:\n%s", said)
-		} else {
-			t.Log("no rule was timed: the run needs COMMANDMENTS_TIME_RULES set in the service's own environment")
-		}
-	}
-
-	if *stressWorktrees > 1 && atOnce.Load() < 2 {
-		t.Errorf("no two checkouts were ever in the service at the same moment, so nothing this run claims about "+
-			"several at once was really tried: %d at the most", atOnce.Load())
-	}
-}
-
 var answered atomic.Int64
 
 var inFlight, atOnce atomic.Int64
@@ -789,138 +563,6 @@ type stressCheckout struct {
 	away  []string
 	wrote int
 	at    int
-}
-
-func stressCheckouts(t *testing.T, seed int64) []*stressCheckout {
-	t.Helper()
-
-	workers := *stressRoots * *stressWorktrees
-	built := stressTreeAt(t, 40, workers)
-
-	linked := filepath.Join(t.TempDir(), "project")
-	if err := os.Symlink(built, linked); err != nil {
-		t.Logf("this filesystem has no links, so the run is made on the resolved path: %v", err)
-
-		linked = built
-	}
-
-	project := built
-	t.Setenv("JOURNAL_ROOT", linked)
-
-	settings, err := config.Load(project)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	service := serviceAt(t, project)
-
-	Warming(project, settings)
-
-	folders := []string{project}
-	for worker := 1; worker <= workers; worker++ {
-		folders = append(folders, stressWorktreeIn(project, worker))
-	}
-
-	var checkouts []*stressCheckout
-	for named, folder := range folders {
-		checkout := &stressCheckout{
-			At:      folder,
-			Project: project,
-			Told:    stressTellsOf(folder, project, linked),
-			Service: service,
-			Named:   named + 1,
-			draw:    rand.New(rand.NewSource(seed + int64(named))),
-			mine:    []string{filepath.Join(folder, "shop", "goods", "thing0.py")},
-		}
-
-		stressRunning[checkout.Named] = checkout
-		checkouts = append(checkouts, checkout)
-	}
-
-	if !heldWithin(git.ProjectRoot(project), git.CurrentBranch(project), 5*time.Minute) {
-		t.Fatalf("no tree was held for %s", project)
-	}
-
-	return checkouts
-}
-
-func (c *stressCheckout) move(t *testing.T, move int) {
-	c.at = move
-
-	branch, held := c.holding()
-	forgotten := stressForgot.Load()
-
-	switch c.draw.Intn(29) {
-	case 0, 1, 2, 3:
-		c.writes(t, 1)
-	case 4:
-		c.writes(t, 3)
-	case 5, 6, 7, 8, 9:
-		c.edits(t)
-	case 10, 11:
-		c.cuts(t)
-	case 12, 13:
-		c.deletes(t)
-	case 14:
-		c.renames(t)
-	case 19:
-		c.writesOddly(t)
-	case 15:
-		c.forgets(t)
-
-		return
-	case 26:
-		c.abandons(t)
-	case 20, 21, 22, 23, 24, 25:
-		c.raises(t)
-	case 16, 17:
-		c.commits(t)
-
-		return
-	case 18:
-		c.switches(t)
-
-		return
-	default:
-		c.recuts(t)
-
-		return
-	}
-
-	if now, holds := c.holding(); held && now == branch && !holds {
-		if stressForgot.Load() != forgotten {
-			t.Logf("move %d of checkout %d: the tree of %s went while another checkout was deliberately forgetting "+
-				"it, which is a move of this run and not a loss", move, c.Named, branch)
-
-			return
-		}
-
-		if why := WhyATreeWasLetGo(git.ProjectRoot(c.Project)); why != "" {
-			t.Logf("move %d of checkout %d: the tree of %s was let go on purpose, because %s", move, c.Named, branch, why)
-
-			return
-		}
-
-		t.Fatalf("move %d of checkout %d: writing in its own checkout cost the project its tree on branch %s, no read "+
-			"of it is running and nothing says it was let go on purpose, so every edit behind it is judged on its own "+
-			"file alone until something reads the tree again", move, c.Named, branch)
-	}
-}
-
-func (c *stressCheckout) forgets(t *testing.T) {
-	stressForgot.Add(1)
-	kept.Drop(c.Project, git.CurrentBranch(c.Project))
-
-	c.wrote++
-	file := filepath.Join(c.At, "shop", "goods", fmt.Sprintf("forgot%d_%d.py", c.Named, c.wrote))
-
-	written := stressMine(c.Named)
-	if err := os.WriteFile(file, []byte(written), 0o644); err != nil {
-		t.Fatal(err)
-	}
-
-	c.mine = append(c.mine, file)
-	c.tells(t, file, 1, lines(written), true)
 }
 
 func stressHeldLanguage(base *warm.Base, file string) bool {
@@ -957,111 +599,9 @@ func (c *stressCheckout) holding() (string, bool) {
 	return branch, ReadingNow(project)
 }
 
-func (c *stressCheckout) renames(t *testing.T) {
-	was := c.one()
-	if was == "" {
-		return
-	}
-
-	c.wrote++
-	into := filepath.Join(c.At, "shop", "goods", fmt.Sprintf("moved%d_%d.py", c.Named, c.wrote))
-
-	if c.draw.Intn(2) == 0 {
-		into = filepath.Join(c.At, "shop", "goods", fmt.Sprintf("part%d", c.Named), fmt.Sprintf("moved%d.py", c.wrote))
-		if err := os.MkdirAll(filepath.Dir(into), 0o755); err != nil {
-			t.Fatal(err)
-		}
-	}
-
-	c.tookAway(was)
-
-	if err := os.Rename(was, into); err != nil {
-		return
-	}
-
-	c.mine = slices.DeleteFunc(c.mine, func(path string) bool { return path == was })
-	c.mine = append(c.mine, into)
-
-	c.tells(t, into, 1, lines(stressMine(c.Named)), false)
-}
-
-func (c *stressCheckout) writesOddly(t *testing.T) {
-	c.wrote++
-
-	switch c.draw.Intn(4) {
-	case 0:
-		big := filepath.Join(c.At, "shop", "goods", fmt.Sprintf("big%d_%d.py", c.Named, c.wrote))
-		if err := os.WriteFile(big, []byte(strings.Repeat("x = 1\n", 40000)), 0o644); err != nil {
-			t.Fatal(err)
-		}
-
-		c.tells(t, big, 1, 40000, false)
-	case 1:
-		shut := filepath.Join(c.At, "shop", "goods", fmt.Sprintf("shut%d_%d.py", c.Named, c.wrote))
-		if err := os.WriteFile(shut, []byte(stressMine(c.Named)), 0o000); err != nil {
-			t.Fatal(err)
-		}
-
-		c.tells(t, shut, 1, 10, false)
-	case 2:
-		aside := filepath.Join(c.At, "aside", fmt.Sprintf("aside%d_%d.py", c.Named, c.wrote))
-		if err := os.MkdirAll(filepath.Dir(aside), 0o755); err != nil {
-			t.Fatal(err)
-		}
-		if err := os.WriteFile(aside, []byte(stressMine(c.Named)), 0o644); err != nil {
-			t.Fatal(err)
-		}
-
-		c.tells(t, aside, 1, 10, false)
-	default:
-		for named, text := range map[string]string{
-			fmt.Sprintf("shop/other%d_%d.go", c.Named, c.wrote):  "package shop\n\nfunc Other() int { return 0 }\n",
-			fmt.Sprintf("shop/notes%d_%d.md", c.Named, c.wrote):  "# notes\n",
-			fmt.Sprintf("shop/data%d_%d.json", c.Named, c.wrote): "{}\n",
-		} {
-			file := filepath.Join(c.At, named)
-			if err := os.WriteFile(file, []byte(text), 0o644); err != nil {
-				t.Fatal(err)
-			}
-
-			c.tells(t, file, 1, 3, false)
-		}
-	}
-}
-
-func (c *stressCheckout) raises(t *testing.T) {
-	events := []string{"ticked", "idle", "command_starting", "session_started", "tool_starting", "subagent_started", "plugin.updated", "worker_delivering"}
-	event := events[c.draw.Intn(len(events))]
-
-	c.own.Lock()
-	defer c.own.Unlock()
-	defer flying()()
-
-	stressHeld(t, c, c.at, c.Project, "", false, stressTakeFor(t, c.Named))
-
-	sendEvent(t, c.Service, map[string]any{
-		"v": 1, "event": event, "session": fmt.Sprintf("s%d", c.Named), "environment": "main",
-		"agent": c.Named, "cwd": c.Told,
-		"data": map[string]any{"command": "git status", "tool": "Bash"},
-	})
-
-	stressHeld(t, c, c.at, c.Project, "", false, c.awaited(t, "", false))
-}
-
 func (c *stressCheckout) commits(t *testing.T) {
 	c.runs(t, []string{"-c", "user.email=t@t", "-c", "user.name=t", "add", "-A"})
 	c.runs(t, []string{"-c", "user.email=t@t", "-c", "user.name=t", "commit", "-q", "--allow-empty", "-m", "work"})
-}
-
-func (c *stressCheckout) switches(t *testing.T) {
-	if c.At != c.Project {
-		c.edits(t)
-
-		return
-	}
-
-	c.commits(t)
-	c.runs(t, []string{"checkout", "-q", "-B", fmt.Sprintf("main-%d", c.draw.Intn(3))})
 }
 
 func (c *stressCheckout) recuts(t *testing.T) {
@@ -1091,107 +631,10 @@ func (c *stressCheckout) recuts(t *testing.T) {
 	c.mine = []string{filepath.Join(c.At, "shop", "goods", "thing0.py")}
 }
 
-func (c *stressCheckout) abandons(t *testing.T) {
-	if c.At == c.Project || len(c.mine) == 0 {
-		c.commits(t)
-
-		return
-	}
-
-	c.commits(t)
-
-	if out, err := exec.Command("git", "-C", c.Project, "worktree", "remove", "--force", c.At).CombinedOutput(); err != nil {
-		t.Logf("worktree %s was not removed: %s", c.At, out)
-
-		return
-	}
-
-	gone := c.mine[0]
-	c.mine = nil
-	c.tells(t, gone, 1, 3, false)
-
-	if err := os.RemoveAll(c.At); err != nil {
-		t.Fatal(err)
-	}
-
-	if out, err := exec.Command("git", "-C", c.Project, "worktree", "prune").CombinedOutput(); err != nil {
-		t.Logf("worktrees were not pruned: %s", out)
-	}
-
-	cut := []string{"worktree", "add", "-q", "-b", fmt.Sprintf("worker-%d-again-%d-%d", c.Named, c.at, c.wrote), c.At}
-	if out, err := exec.Command("git", append([]string{"-C", c.Project}, cut...)...).CombinedOutput(); err != nil {
-		t.Fatalf("the worktree %s could not be cut again: %s", c.At, out)
-	}
-
-	c.mine = []string{filepath.Join(c.At, "shop", "goods", "thing0.py")}
-}
-
 func (c *stressCheckout) runs(t *testing.T, args []string) {
 	if out, err := exec.Command("git", append([]string{"-C", c.At}, args...)...).CombinedOutput(); err != nil {
 		t.Logf("git %v in %s: %s", args, filepath.Base(c.At), out)
 	}
-}
-
-func (c *stressCheckout) writes(t *testing.T, many int) {
-	for at := 0; at < many; at++ {
-		c.wrote++
-		file := filepath.Join(c.At, "shop", "goods", fmt.Sprintf("made%d_%d.py", c.Named, c.wrote))
-
-		written := stressMine(c.Named)
-		if err := os.WriteFile(file, []byte(written), 0o644); err != nil {
-			t.Fatal(err)
-		}
-
-		c.mine = append(c.mine, file)
-		c.tells(t, file, 1, lines(written), true)
-	}
-}
-
-func (c *stressCheckout) edits(t *testing.T) {
-	file := c.one()
-	if file == "" {
-		c.writes(t, 1)
-
-		return
-	}
-
-	was, err := os.ReadFile(file)
-	if err != nil {
-		c.writes(t, 1)
-
-		return
-	}
-
-	appended := stressMine(c.Named)
-	if err := os.WriteFile(file, append(was, []byte(appended)...), 0o644); err != nil {
-		t.Fatal(err)
-	}
-
-	c.tells(t, file, lines(string(was)), lines(string(was))+lines(appended), false)
-}
-
-func (c *stressCheckout) cuts(t *testing.T) {
-	file := c.one()
-	if file == "" {
-		return
-	}
-
-	was, err := os.ReadFile(file)
-	if err != nil {
-		return
-	}
-
-	held := strings.Split(string(was), "\n")
-	if len(held) < 4 {
-		return
-	}
-
-	kept := held[:len(held)/2]
-	if err := os.WriteFile(file, []byte(strings.Join(kept, "\n")+"\n"), 0o644); err != nil {
-		t.Fatal(err)
-	}
-
-	c.tells(t, file, 0, 0, false)
 }
 
 func (c *stressCheckout) deletes(t *testing.T) {
@@ -1232,59 +675,6 @@ func (c *stressCheckout) one() string {
 	}
 
 	return c.mine[c.draw.Intn(len(c.mine))]
-}
-
-func (c *stressCheckout) tells(t *testing.T, file string, from, to int, owed bool) {
-	var added []any
-	for line := from; line <= to; line++ {
-		added = append(added, map[string]any{"line_type": "add", "line": line, "text": "class Mine:"})
-	}
-
-	data := map[string]any{"kind": "edit", "added": len(added), "removed": 0, "tool_use": c.wrote + 1, "lines": added}
-	against := c.Project
-
-	if from == 1 && owed {
-		data["kind"] = "create"
-		delete(data, "lines")
-	}
-
-	switch c.draw.Intn(3) {
-	case 0:
-		under, err := filepath.Rel(c.Project, file)
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		data["path"] = under
-	case 1:
-		data["input"] = map[string]any{"file_path": file}
-		against = c.At
-	default:
-		under, err := filepath.Rel(c.At, file)
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		data["path"] = under
-		data["cwd"] = c.Told
-		against = c.At
-	}
-
-	c.own.Lock()
-	defer c.own.Unlock()
-	defer flying()()
-
-	stressHeld(t, c, c.at, against, "", false, stressTakeFor(t, c.Named))
-
-	stressAnswering(sendEvent(t, c.Service, map[string]any{
-		"v": 1, "event": "file_edited", "session": fmt.Sprintf("s%d", c.Named), "environment": "main",
-		"agent": c.Named, "cwd": c.Told,
-		"data": data,
-	}))
-
-	stressSent[file] = fmt.Sprintf("cwd %s, data %v", c.Told, data)
-
-	stressHeld(t, c, c.at, against, file, owed, c.awaited(t, file, owed))
 }
 
 func (c *stressCheckout) awaited(t *testing.T, file string, owed bool) []map[string]any {
@@ -1410,74 +800,6 @@ var toldPaths = regexp.MustCompile(`(?:^|\s)([\w./-]+\.py):(\d+)`)
 
 var cardPaths = regexp.MustCompile(`([\w./-]+\.py)`)
 
-func stressHeld(t *testing.T, mine *stressCheckout, move int, against, file string, owed bool, answers []map[string]any) {
-	t.Helper()
-
-	told := false
-
-	for _, answer := range answers {
-		whose, known := stressWhose(asAgent(answer["agent"]))
-		if !known {
-			t.Fatalf("move %d of checkout %d: an answer came back for agent %d, which is no checkout of this run\n%s",
-				move, mine.Named, asAgent(answer["agent"]), asText(answer["tell"]))
-		}
-
-		for _, named := range stressReported(answer) {
-			answered.Add(1)
-
-			if !stressStands(whose, named) {
-				t.Fatalf("move %d of checkout %d: an answer to checkout %d reports a sin in %s, which is a file "+
-					"in neither its project nor its own checkout\n%v", move, mine.Named, whose.Named, named, answer)
-			}
-		}
-
-		for _, named := range stressRefusedIn(answer) {
-			if named == stressUnder(against, file) || named == stressUnder(mine.Project, file) || named == stressUnder(mine.At, file) {
-				told = true
-			}
-		}
-
-		for _, named := range stressSaidOf(answer) {
-			if named == stressUnder(against, file) || named == stressUnder(mine.Project, file) || named == stressUnder(mine.At, file) {
-				told = true
-			}
-
-			if !whose.owns(named) {
-				t.Fatalf("move %d of checkout %d: checkout %d is told about %s, which is not its own (it owns "+
-					"%q)\n%v", move, mine.Named, whose.Named, named, whose.under(), answer)
-			}
-		}
-	}
-
-	if !told && stressWasTold(stressUnder(against, file), stressUnder(mine.Project, file), stressUnder(mine.At, file)) {
-		told = true
-	}
-
-	stressOracled(t, mine, move, file, answers)
-
-	if owed && !told {
-		settings, _ := config.Load(mine.Project)
-		found, _, unread := marksIn(Marks(mine.Project), file, allRules(t, mine.Project, settings), git.Everywhere())
-
-		var names []string
-		for _, mark := range found {
-			names = append(names, strings.TrimSpace(mark.Found()))
-		}
-
-		inFlight, done := JudgingNow()
-		left := DroppedSoFar()
-
-		t.Fatalf("move %d of checkout %d: it wrote a sin in %s and was told nothing about it; %d answers came "+
-			"back, and the service had %d judging(s) in flight with %d finished, so it %s. It %s the file into a "+
-			"judging at all. It had dropped %+v. "+
-			"A judging of that file alone finds %d sins %v (unread %v)\n%v\nthe event it was sent as: %s",
-			move, mine.Named, stressUnder(against, file), len(answers), inFlight, done,
-			map[bool]string{true: "had not answered YET", false: "was never going to answer"}[inFlight > 0],
-			map[bool]string{true: "DID take", false: "never took"}[TookIntoAJudging(file)],
-			left, len(found), names, unread, answers, stressSent[file]+"\nwhat happened to it: "+NotesOn(file)+"\nby name: "+NotesLike(filepath.Base(file))+", refused because "+map[bool]string{true: RefusalOf(file), false: "nothing refused it"}[RefusalOf(file) != ""])
-	}
-}
-
 func stressMemorySaid(checkouts int) string {
 	highest := MemoryHighest()
 	now := MemoryNow()
@@ -1584,28 +906,6 @@ func stressSaidOf(answer map[string]any) []string {
 	return named
 }
 
-func stressOracled(t *testing.T, mine *stressCheckout, move int, file string, answers []map[string]any) {
-	t.Helper()
-
-	if *stressOracle <= 0 || file == "" || mine.draw.Intn(*stressOracle) != 0 {
-		return
-	}
-
-	settings, _ := config.Load(mine.Project)
-
-	fresh := oracleOver(t, mine.At, file, settings)
-	told := stressLinesOf(answers, stressUnder(mine.At, file))
-
-	for _, said := range fresh {
-		line := said[strings.LastIndex(said, ":")+1:]
-		if !slices.Contains(told, line) {
-			t.Fatalf("move %d of checkout %d: a fresh read of the whole worktree finds %s in %s, and the answer "+
-				"the worker was given names lines %v, so the answer is WRONG and not merely smaller\nfresh: %v",
-				move, mine.Named, said, stressUnder(mine.At, file), told, fresh)
-		}
-	}
-}
-
 func stressLinesOf(answers []map[string]any, named string) []string {
 	var lines []string
 	for _, answer := range answers {
@@ -1687,4 +987,15 @@ func asFloat(held any) float64 {
 	number, _ := held.(float64)
 
 	return number
+}
+
+func recordedLines(t *testing.T, data string) string {
+	t.Helper()
+
+	said, err := os.ReadFile(filepath.Join(data, "judgings.log"))
+	if err != nil {
+		return ""
+	}
+
+	return string(said)
 }

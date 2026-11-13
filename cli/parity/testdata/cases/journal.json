@@ -7,13 +7,6 @@
   ]
  },
  {
-  "name": "journal-serve-help",
-  "args": [
-   "journal-serve",
-   "--help"
-  ]
- },
- {
   "name": "journal-config-help",
   "args": [
    "journal-config",
@@ -138,12 +131,6 @@
    "printf '<?php\\n' > src/Domain/A.php",
    "printf 'x' > resources/js/app.ts",
    "printf '{\"autoload\": {\"psr-4\": {\"App\\\\\\\\\": \"src/\"}}}' > composer.json"
-  ]
- },
- {
-  "name": "journal-serve-without-a-socket",
-  "args": [
-   "journal-serve"
   ]
  },
  {

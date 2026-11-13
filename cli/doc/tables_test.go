@@ -170,7 +170,7 @@ func TestEverySettingSaysItsKindInBothWords(t *testing.T) {
 var journal4Knows = map[string][]string{
 	"manifest": {"name", "version", "title", "description", "journal", "protocol", "program", "hears", "holds", "reaches",
 		"aliases", "cards", "requires", "setup", "installed", "settings", "skills", "health", "services", "dashboard", "ignored"},
-	"card":  {"kind", "label", "icon", "tone", "collapsed"},
+	"card":    {"kind", "label", "icon", "tone", "collapsed"},
 	"alias":   {"name", "line", "env", "variables", "args", "reader", "description", "background", "workers"},
 	"setting": {"text", "number", "flag", "choice", "list", "secret"},
 }

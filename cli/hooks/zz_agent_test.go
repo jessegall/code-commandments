@@ -1,12 +1,9 @@
 package hooks
 
 import (
-	"bufio"
 	"encoding/json"
-	"net"
 	"os"
 	"path/filepath"
-	"strings"
 	"testing"
 	"time"
 )
@@ -97,59 +94,6 @@ func TestTheMomentCarriesTheAgentTheEventNamed(t *testing.T) {
 		if got := MomentOf(Stamped(moment)).Agent; got != each.want {
 			t.Errorf("%s: the moment reads as agent %d, want %d", each.why, got, each.want)
 		}
-	}
-}
-
-func TestAnEditJudgedOnTheServicesPathIsQueuedForTheAgentThatMadeIt(t *testing.T) {
-	root, _, data := projectWithASin(t)
-	t.Setenv("JOURNAL_ROOT", root)
-
-	short, err := os.MkdirTemp("", "s")
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer os.RemoveAll(short)
-
-	socket := filepath.Join(short, "serve.sock")
-	listener, err := net.Listen("unix", socket)
-	if err != nil {
-		t.Fatalf("no socket to listen on: %v", err)
-	}
-	defer listener.Close()
-
-	go serve(listener, func() bool { return true }, startAdvisers(adviseAsked))
-
-	connection, err := net.Dial("unix", socket)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer connection.Close()
-
-	said, err := json.Marshal(map[string]any{
-		"v": 1, "event": "file_edited", "session": "s1", "environment": "main", "agent": 78,
-		"data": map[string]any{"path": "src/refund.py", "kind": "edit", "added": 1, "removed": 0, "tool_use": 41},
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if _, err := connection.Write(append(said, '\n')); err != nil {
-		t.Fatal(err)
-	}
-	if _, err := bufio.NewReader(connection).ReadString('\n'); err != nil {
-		t.Fatal(err)
-	}
-
-	queued := queuedWithin(t, data, time.Minute)
-	if len(queued) != 1 {
-		t.Fatalf("the service left %d answer(s) in the queue", len(queued))
-	}
-
-	if asAgent(queued[0]["agent"]) != 78 {
-		t.Errorf("the answer is for agent %v, so the journal hands it to whoever drains the queue first: %v", queued[0]["agent"], queued[0])
-	}
-
-	if !strings.Contains(asText(queued[0]["tell"]), "redundant-python-else") {
-		t.Errorf("the answer names no sin, so it proves nothing about whose it is: %v", queued[0])
 	}
 }
 

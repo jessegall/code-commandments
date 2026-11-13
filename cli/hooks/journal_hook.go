@@ -1,37 +1,29 @@
 package hooks
 
 import (
-	"bufio"
 	"encoding/json"
-	"errors"
-	"fmt"
 	"io"
-	"net"
 	"os"
 	"path/filepath"
 	"slices"
 	"strconv"
 	"strings"
-	"sync"
 	"sync/atomic"
 	"time"
 
 	"github.com/jessegall/code-commandments/cli"
 	"github.com/jessegall/code-commandments/cli/dashboard"
 	"github.com/jessegall/code-commandments/cli/git"
-	"github.com/jessegall/code-commandments/cli/health"
 	"github.com/jessegall/code-commandments/cli/help"
 	"github.com/jessegall/code-commandments/cli/workspace"
 	"github.com/jessegall/code-commandments/engine"
 )
 
 const (
-	quietHooks   = "COMMANDMENTS_QUIET_HOOKS"
-	pluginData   = "JOURNAL_PLUGIN_DATA"
-	advising     = "COMMANDMENTS_ADVISING"
-	pluginSocket = "JOURNAL_PLUGIN_SOCKET"
-	journalRoot  = "JOURNAL_ROOT"
-	hooksService = "hooks"
+	quietHooks  = "COMMANDMENTS_QUIET_HOOKS"
+	pluginData  = "JOURNAL_PLUGIN_DATA"
+	advising    = "COMMANDMENTS_ADVISING"
+	journalRoot = "JOURNAL_ROOT"
 )
 
 // JournalHook is `journal-hook`: the entry point the agent journal's plugin calls for every moment.
@@ -72,81 +64,13 @@ func AnswerNow(given map[string]any) JournalAnswer {
 	return answerWith(given)
 }
 
-func answer4On(given map[string]any, event string) string {
-	if judgedAfter(event) {
-		return JournalAnswer{}.Line()
-	}
-
-	return answerWith(given).Line()
-}
-
 func adviseNow(given map[string]any) {
 	if queue, queued := QueueFromEnvironment(); queued {
 		queue.Tell(answerWith(given), MomentOf(given))
 	}
 }
 
-func adviseAsked(moment asked) {
-	if !moment.queued {
-		adviseNow(moment.given)
-
-		return
-	}
-
-	queue, queued := Queue4In(os.Getenv(pluginData))
-	if !queued {
-		return
-	}
-
-	if why := abandoned(moment.given); why != "" {
-		abandonedJudgings.Add(1)
-		held := MomentOf(moment.given)
-
-		if recorded(held.Cwd) {
-			Record(bookkeepingIn(held.Cwd), Judged{
-				At: time.Now(), Event: held.Event, Kind: "checkout", Checkout: held.Cwd, Abandoned: why,
-			})
-		}
-
-		return
-	}
-
-	answer := answerWith(moment.given)
-
-	if why := abandoned(moment.given); why != "" {
-		abandonedJudgings.Add(1)
-
-		return
-	}
-
-	_ = queue.Tell(answer, asText(moment.given["env"]), MomentOf(moment.given).Agent)
-}
-
 var abandonedJudgings atomic.Int64
-
-func AbandonedJudgings() int64 { return abandonedJudgings.Load() }
-
-func abandoned(given map[string]any) string {
-	held := MomentOf(given)
-	if held.File == nil {
-		return ""
-	}
-
-	checkout := checkoutOf(workspace.ProjectRoot(held.Cwd), *held.File)
-	if gone(checkout) {
-		return string(checkoutGone)
-	}
-
-	if held.Cut == "" {
-		return ""
-	}
-
-	if cut := kept.CutOf(checkout); cut != "" && cut != held.Cut {
-		return "this checkout was cut again, from " + cut
-	}
-
-	return ""
-}
 
 func answerWith(given map[string]any) JournalAnswer {
 	moment := MomentOf(given)
@@ -411,257 +335,11 @@ func payloadOf(raw []byte) map[string]any {
 	return given
 }
 
-// JournalServe is `journal-serve`: the journal hook kept running, answering over the socket the journal names.
-type JournalServe struct{}
-
-func (JournalServe) Names() []string {
-	return []string{"journal-serve"}
-}
-
-func (JournalServe) Help() help.Help {
-	return help.Of("Answer the agent journal's hooks from one running process, over the socket the journal names in $JOURNAL_PLUGIN_SOCKET.").
-		Form("journal-serve", "serve until the code it runs changes (started by the journal as a plugin service)").
-		In(help.Hooks)
-}
-
-func (s JournalServe) Run(in *cli.Input, console cli.Console) (int, error) {
-	limitServiceMemory()
-
-	close, unanswerable := health.ServeOn(os.Getenv(health.Socket), hooksService)
-	defer close()
-
-	if unanswerable != "" {
-		fmt.Fprintln(console.Err, unanswerable)
-	}
-
-	path := os.Getenv(pluginSocket)
-	if path == "" {
-		return help.Usage(console.Err, s, "The journal names the socket in $"+pluginSocket+"; there is none to listen on."), nil
-	}
-
-	os.Remove(path)
-
-	listener, err := net.Listen("unix", path)
-	if err != nil {
-		stopped := cli.StopSignals()
-		console.Warn("Cannot listen on " + path + ": " + err.Error() + "; the journal runs each hook as a process of its own until this service is stopped.")
-		<-stopped
-
-		return 0, nil
-	}
-
-	defer listener.Close()
-	os.Chmod(path, 0o600)
-
-	root := servedRoot()
-	if noProjectAt(root) {
-		return help.Usage(console.Err, s, "This service holds one project's tree, and "+orNothing(root)+
-			" is no project: name the project in $"+journalRoot+". Serving it would answer every question about "+
-			"every path on this machine."), nil
-	}
-
-	started := stamp()
-
-	Serves()
-	walkedTheTreeUnder(root)
-	logServiceStart(root)
-
-	defer remembersAcrossRestarts(console)()
-
-	givesBackTheTreesItLetGo()
-
-	advice := startAdvisers(adviseAsked)
-	serve(listener, func() bool { return stamp() == started }, advice)
-
-	advice.drained(drainedWithin)
-
-	return 0, nil
-}
-
-const drainedWithin = 30 * time.Second
-
-func quiet() cli.Console {
-	return cli.Console{Out: io.Discard, Err: io.Discard}
-}
-
-func serve(listener net.Listener, current func() bool, advice *advisers) {
-	for {
-		connection, err := listener.Accept()
-		if err != nil {
-			if errors.Is(err, net.ErrClosed) {
-				return
-			}
-
-			continue
-		}
-
-		if !current() {
-			connection.Close()
-			logServiceStopped("the binary changed; the next hook starts a new service")
-
-			return
-		}
-
-		go func() {
-			line, _ := bufio.NewReader(connection).ReadString('\n')
-			read := payloadOf([]byte(line))
-
-			go heldTheConfigOf(read)
-			go heldTheConfigFileOf(servedRoot())
-
-			if health.Asked(read) {
-				connection.Write([]byte(health.Answer(hooksService) + "\n"))
-				connection.Close()
-
-				return
-			}
-
-			if text, apart, _, err := Apart4(cli.InputOf("journal-serve"), quiet(), read); apart {
-				if err == nil {
-					connection.Write([]byte(text + "\n"))
-				}
-				connection.Close()
-
-				return
-			}
-
-			if moment, four := Moment4Of(read); four {
-				given := Stamped(moment)
-				connection.Write([]byte(answer4On(given, asText(read["event"])) + "\n"))
-				connection.Close()
-
-				expecting(given)
-				advice.add(asked{given, judgedAfter(asText(read["event"])), awaited(asText(read["event"]))})
-
-				return
-			}
-
-			if _, four := read["v"]; four {
-				connection.Write([]byte("\n"))
-				connection.Close()
-
-				return
-			}
-
-			given := Stamped(read)
-			connection.Write([]byte(AnswerNow(given).JSON() + "\n"))
-			connection.Close()
-
-			expecting(given)
-			advice.add(asked{given, false, true})
-		}()
-	}
-}
-
-var working, advised atomic.Int64
-
-var notes sync.Map
-
-func noted(file *string, what string) {
-	if file == nil {
-		return
-	}
-
-	was, _ := notes.Load(*file)
-	had, _ := was.(string)
-	notes.Store(*file, had+what+"; ")
-}
-
-func NotesLike(name string) string {
-	var said []string
-	notes.Range(func(key, what any) bool {
-		if strings.HasSuffix(key.(string), name) {
-			said = append(said, key.(string)+" -> "+what.(string))
-		}
-
-		return true
-	})
-
-	if len(said) == 0 {
-		return "no file of that name was noted at all"
-	}
-
-	return strings.Join(said, " | ")
-}
-
-func NotesOn(file string) string {
-	what, found := notes.Load(file)
-	if !found {
-		return "nothing happened to it"
-	}
-
-	return what.(string)
-}
-
-var takenIn sync.Map
-
-func JudgingNow() (int64, int64) {
-	return working.Load(), advised.Load()
-}
-
-func tookIn(file string) {
-	takenIn.Store(file, true)
-}
-
-func TookIntoAJudging(file string) bool {
-	_, took := takenIn.Load(file)
-
-	return took
-}
-
-// asked is one moment the service answered, and where its advice belongs: an event version 4 answered with the gates alone is judged after, into the queue that journal drains, and anything else version 3 asked goes to the queue it hands the service.
+// asked is one moment to judge after its event, as a batch of an agent's edits gathers it.
 type asked struct {
 	given  map[string]any
 	queued bool
 	first  bool
-}
-
-// adviser works out ONE AGENT's moments on a goroutine of its own, in the order they came: the service keeps answering while it works, and two checks of one file never run at once, a file belonging to one agent's checkout.
-type adviser struct {
-	mu      sync.Mutex
-	pending []asked
-	later   []asked
-	wake    chan struct{}
-	advise  func(asked)
-	working bool
-}
-
-// advisers are one adviser per AGENT, which is what keeps one agent's work off another's back.
-type advisers struct {
-	mu     sync.Mutex
-	each   map[int]*adviser
-	advise func(asked)
-}
-
-func startAdvisers(advise func(asked)) *advisers {
-	return &advisers{each: map[int]*adviser{}, advise: advise}
-}
-
-func (s *advisers) add(given asked) {
-	s.mu.Lock()
-	whose := MomentOf(given.given).Agent
-	held, known := s.each[whose]
-	if !known {
-		held = startAdviser(s.advise)
-		s.each[whose] = held
-	}
-	s.mu.Unlock()
-
-	held.add(given)
-}
-
-func (s *advisers) drained(within time.Duration) {
-	s.mu.Lock()
-	held := make([]*adviser, 0, len(s.each))
-	for _, each := range s.each {
-		held = append(held, each)
-	}
-	s.mu.Unlock()
-
-	until := time.Now().Add(within)
-	for _, each := range held {
-		each.drained(time.Until(until))
-	}
 }
 
 const (
@@ -750,116 +428,6 @@ func batchedLinesOf(payload map[string]any, file string) (git.ChangedLines, bool
 	}
 
 	return git.ChangedLines{}, false
-}
-
-func startAdviser(advise func(asked)) *adviser {
-	a := &adviser{wake: make(chan struct{}, 1), advise: advise}
-	go a.work()
-
-	return a
-}
-
-func (a *adviser) add(given asked) {
-	noted(MomentOf(given.given).File, "the adviser took it in")
-
-	a.mu.Lock()
-	if given.first {
-		a.pending = append(a.pending, given)
-	} else {
-		a.later = append(a.later, given)
-	}
-	a.mu.Unlock()
-
-	select {
-	case a.wake <- struct{}{}:
-	default:
-	}
-}
-
-func (a *adviser) work() {
-	for range a.wake {
-		for {
-			a.mu.Lock()
-			gathering := a.gathering(time.Now())
-			a.mu.Unlock()
-
-			if gathering {
-				time.Sleep(gatheringPause)
-
-				continue
-			}
-
-			a.mu.Lock()
-			batch, held := a.next()
-			a.mu.Unlock()
-
-			if !held {
-				break
-			}
-
-			working.Add(1)
-			for _, one := range batch {
-				noted(MomentOf(one.given).File, "the adviser advised it")
-			}
-			a.advise(batched(batch))
-			working.Add(-1)
-			advised.Add(1)
-
-			a.mu.Lock()
-			a.working = false
-			a.mu.Unlock()
-		}
-	}
-}
-
-func (a *adviser) drained(within time.Duration) {
-	for until := time.Now().Add(within); time.Now().Before(until); time.Sleep(20 * time.Millisecond) {
-		a.mu.Lock()
-		left := len(a.pending) + len(a.later)
-		working := a.working
-		a.mu.Unlock()
-
-		if left == 0 && !working {
-			return
-		}
-	}
-}
-
-func (a *adviser) next() ([]asked, bool) {
-	if len(a.pending) > 0 {
-		batch := a.pending
-		if len(batch) > batchedFiles {
-			batch = batch[:batchedFiles]
-		}
-
-		a.pending = a.pending[len(batch):]
-		a.working = true
-
-		return batch, true
-	}
-
-	if len(a.later) > 0 {
-		next := a.later[0]
-		a.later = a.later[1:]
-		a.working = true
-
-		return []asked{next}, true
-	}
-
-	return nil, false
-}
-
-func (a *adviser) gathering(now time.Time) bool {
-	if len(a.pending) == 0 || len(a.pending) >= batchedFiles {
-		return false
-	}
-
-	stamped := stampOf(a.pending[0].given)
-	if stamped == 0 {
-		return false
-	}
-
-	return now.Sub(time.Unix(0, stamped)) < gatheredFor(a.pending[0].given)
 }
 
 func gatheredFor(given map[string]any) time.Duration {

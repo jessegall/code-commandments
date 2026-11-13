@@ -67,4 +67,3 @@ func TestAHandInJudgedAfterTellsNothingWhenItIsClean(t *testing.T) {
 		t.Errorf("a hand-in with no sin told its worker anyway: %v", queued)
 	}
 }
-

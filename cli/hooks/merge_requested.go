@@ -138,8 +138,6 @@ func handInsJudged(line map[string]any) bool {
 
 const handInsKey = "judge_hand_ins"
 
-
-
 func orNothing(said string) string {
 	if said == "" {
 		return "no commit the journal named"
