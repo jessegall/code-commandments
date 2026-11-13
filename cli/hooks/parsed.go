@@ -2,7 +2,6 @@ package hooks
 
 import (
 	"errors"
-	"slices"
 	"sync"
 	"time"
 
@@ -153,23 +152,6 @@ func (p *parsing) landed(group []string) {
 	p.mu.Unlock()
 
 	close(woken)
-}
-
-func (p *parsing) leaves(checkout string) {
-	p.mu.Lock()
-	defer p.mu.Unlock()
-
-	for file := range p.held {
-		if under, inside := walk.Inside(checkout, file); inside && under != "" {
-			delete(p.held, file)
-		}
-	}
-
-	p.waiting = slices.DeleteFunc(p.waiting, func(file string) bool {
-		under, inside := walk.Inside(checkout, file)
-
-		return inside && under != ""
-	})
 }
 
 const Coming = time.Minute

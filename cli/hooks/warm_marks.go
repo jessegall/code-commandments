@@ -9,7 +9,6 @@ import (
 	"github.com/jessegall/code-commandments/cli/git"
 	"github.com/jessegall/code-commandments/cli/scan"
 	"github.com/jessegall/code-commandments/cli/source"
-	"github.com/jessegall/code-commandments/cli/warm"
 	"github.com/jessegall/code-commandments/detectors"
 	"github.com/jessegall/code-commandments/engine"
 )
@@ -18,15 +17,6 @@ const (
 	longestTreeRead  = 10 * time.Minute
 	treeReadLookedAt = 250 * time.Millisecond
 )
-
-var kept = keeping()
-
-func keeping() *warm.Keeper {
-	held := warm.Keep()
-	held.Leaving(func(checkout string) { parsed.leaves(checkout) })
-
-	return held
-}
 
 var reading sync.Map
 
@@ -116,21 +106,6 @@ func rootOf(path string) (branchRoot, bool) {
 	}
 
 	return branchRoot{project: project, branch: branch}, true
-}
-
-func seenFor(path string) (branchRoot, *warm.Base, bool) {
-	return lookedUp(path, kept.Sees)
-}
-
-func lookedUp(path string, look func(project, branch string) (*warm.Base, bool)) (branchRoot, *warm.Base, bool) {
-	named, ok := rootOf(path)
-	if !ok {
-		return branchRoot{}, nil, false
-	}
-
-	base, held := look(named.project, named.branch)
-
-	return named, base, held
 }
 
 func cutOf(event Event) string {

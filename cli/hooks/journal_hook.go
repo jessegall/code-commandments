@@ -93,7 +93,6 @@ func recordJudging(moment Moment, event Event, merged Response, answer JournalAn
 	}
 
 	named, _ := rootOf(event.Root)
-	_, _, held := seenFor(event.Root)
 
 	why := Narrowed("")
 	asked, notAsked := 0, 0
@@ -105,7 +104,7 @@ func recordJudging(moment Moment, event Event, merged Response, answer JournalAn
 
 	Record(folder, Judged{
 		At: time.Now(), Event: moment.Event, Checkout: checkout, Kind: kind, Branch: named.branch,
-		Held: held, Why: why, Parsed: len(merged.Judged),
+		Why: why, Parsed: len(merged.Judged),
 		ReadMs: merged.ReadMs, RuleMs: milliseconds(spent) - merged.ReadMs, Asked: asked, NotAsked: notAsked,
 		Sins: len(merged.Activity), Dropped: DroppedSoFar(), Memory: MemoryNow(), Said: moment.CheckoutSaid, Files: merged.Judged,
 	})

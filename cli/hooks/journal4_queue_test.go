@@ -8,8 +8,6 @@ import (
 	"sort"
 	"strings"
 	"testing"
-
-	"github.com/jessegall/code-commandments/cli/git"
 )
 
 func projectWithASin(t *testing.T) (root, file, data string) {
@@ -645,9 +643,6 @@ func TestAFileTheToolWroteWholeIsReadWhicheverWordTheEventUses(t *testing.T) {
 func TestWhatWasNotAskedTravelsTheQueueToTheAgent(t *testing.T) {
 	root, _, data := projectWithASin(t)
 	t.Setenv("JOURNAL_ROOT", root)
-
-	project := git.ProjectRoot(root)
-	kept.Drop(project, git.CurrentBranch(project))
 
 	line := map[string]any{
 		"v": 1, "event": "file_edited", "session": "s1", "environment": "main",

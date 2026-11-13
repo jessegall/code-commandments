@@ -23,8 +23,6 @@ import (
 	"github.com/jessegall/code-commandments/cli"
 	"github.com/jessegall/code-commandments/cli/judge"
 	"github.com/jessegall/code-commandments/cli/scan"
-	"github.com/jessegall/code-commandments/cli/source"
-	"github.com/jessegall/code-commandments/cli/warm"
 	"github.com/jessegall/code-commandments/walk"
 )
 
@@ -303,16 +301,6 @@ func stressHandInBy(t *testing.T, root string, worker int) {
 	}
 }
 
-func heldWithin(project, branch string, within time.Duration) bool {
-	for until := time.Now().Add(within); time.Now().Before(until); time.Sleep(200 * time.Millisecond) {
-		if _, held := kept.Holds(project, branch); held {
-			return true
-		}
-	}
-
-	return false
-}
-
 func stressAnswers(t *testing.T, data string, wanted []string, within time.Duration) ([]map[string]any, time.Time) {
 	t.Helper()
 
@@ -562,16 +550,6 @@ type stressCheckout struct {
 	away  []string
 	wrote int
 	at    int
-}
-
-func stressHeldLanguage(base *warm.Base, file string) bool {
-	for _, held := range base.Languages() {
-		if named, known := source.Of(held); known && source.OfFile(file) == named {
-			return true
-		}
-	}
-
-	return false
 }
 
 func stressNamedIn(said string) []string {

@@ -9,7 +9,6 @@ import (
 	"github.com/jessegall/code-commandments/cli/git"
 	"github.com/jessegall/code-commandments/cli/scan"
 	"github.com/jessegall/code-commandments/cli/source"
-	"github.com/jessegall/code-commandments/cli/warm"
 	"github.com/jessegall/code-commandments/detectors"
 )
 
@@ -19,7 +18,7 @@ func sweptMarks(record Announced, root string) (marks []SinMark, read []string) 
 		return nil, nil
 	}
 
-	files := stillToRead(root, marked(record, root, project))
+	files := marked(record, root, project)
 	if len(files) == 0 {
 		return nil, nil
 	}
@@ -44,34 +43,6 @@ func sweptMarks(record Announced, root string) (marks []SinMark, read []string) 
 	}
 
 	return marks, files
-}
-
-func stillToRead(root string, files []string) []string {
-	named, base, held := seenFor(root)
-	if !held {
-		return files
-	}
-
-	var moved []string
-	for _, file := range files {
-		if stands(named, base, root, file) {
-			continue
-		}
-
-		moved = append(moved, file)
-	}
-
-	return moved
-}
-
-func stands(named branchRoot, base *warm.Base, root, file string) bool {
-	if checkout := checkoutOf(root, file); checkout != named.project {
-		return kept.Contents().Knows(file)
-	}
-
-	unchanged, known := base.Holds(file)
-
-	return known && unchanged
 }
 
 func marked(record Announced, root string, project config.Config) []string {

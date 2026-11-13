@@ -7,49 +7,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/jessegall/code-commandments/cli/config"
 	"github.com/jessegall/code-commandments/cli/git"
-	"github.com/jessegall/code-commandments/cli/scan"
-	"github.com/jessegall/code-commandments/cli/source"
 )
-
-func TestAnEditIsJudgedOnItsOwnEvenWhereItsBranchHasABase(t *testing.T) {
-	root, data := migrationProject(t)
-
-	project := git.ProjectRoot(root)
-	branch := git.CurrentBranch(project)
-	if project == "" || branch == "" {
-		t.Fatalf("the project is %q at branch %q", project, branch)
-	}
-
-	settings, _ := config.Load(root)
-	codebase, err := scan.Walk([]string{root}, source.Under(root, settings.Excluded)).Load()
-	if err != nil || codebase == nil {
-		t.Fatalf("the python bridge cannot run here: %v", err)
-	}
-
-	base := kept.Hold(project, branch, []string{root}, codebase, nil)
-	t.Cleanup(func() { kept.Drop(project, branch) })
-
-	Judge4Into(map[string]any{
-		"v": 1, "event": "file_edited", "session": "s1", "environment": "main", "agent": 78,
-		"data": map[string]any{
-			"path": "shop/migrations/m004_drop_fades.py", "kind": "edit", "added": 2, "removed": 0, "tool_use": 41,
-			"lines": []any{
-				map[string]any{"line_type": "add", "line": 4, "text": "class DropFadesMigration(RebuildMigration):"},
-				map[string]any{"line_type": "add", "line": 5, "text": "    number = 4"},
-			},
-		},
-	}, data)
-
-	if told := tells(t, data); strings.Contains(told, "migration-by-its-parents") {
-		t.Errorf("an edit was judged against the held tree, by a rule that reads across files:\n%s", told)
-	}
-
-	if held, _ := kept.Holds(project, branch); held != base {
-		t.Error("an edit patched the held tree, so the tree is kept up by edits it is not judged against")
-	}
-}
 
 func migrationProject(t *testing.T) (root, data string) {
 	t.Helper()
