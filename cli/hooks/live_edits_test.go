@@ -105,7 +105,7 @@ func TestTheEventABackgroundJudgingReadsIsKeptInAFileAndRemovedOnceRead(t *testi
 	data := t.TempDir()
 	t.Setenv(pluginData, data)
 
-	event := filepath.Join(data, eventsFolder, "event-1.json")
+	event := filepath.Join(data, "events", "event-1.json")
 	os.MkdirAll(filepath.Dir(event), 0o755)
 	if err := os.WriteFile(event, []byte(`{"v":1,"event":"idle","agent":7}`), 0o644); err != nil {
 		t.Fatal(err)

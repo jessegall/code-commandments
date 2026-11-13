@@ -16,7 +16,6 @@ import (
 
 const (
 	judgeEventOption = "judge-event"
-	eventsFolder     = "events"
 )
 
 const updatedEvent = "plugin.updated"
@@ -49,11 +48,11 @@ var hooksOf4 = map[string]string{
 	"ticked":           "Stop",
 }
 
-// PluginHook is `plugin-hook`: the program the agent journal's plugin runs for every event it hears, one JSON line in and one out. It was named `journal4-hook`, after version 4 of the journal, and still answers to that name.
+// PluginHook is `plugin-hook`: the program the agent journal's plugin runs for every event it hears, one JSON line in and one out.
 type PluginHook struct{}
 
 func (PluginHook) Names() []string {
-	return []string{"plugin-hook", "journal4-hook"}
+	return []string{"plugin-hook"}
 }
 
 func (PluginHook) Help() help.Help {
@@ -100,10 +99,6 @@ func Apart4(in *cli.Input, console cli.Console, line map[string]any) (string, bo
 		return Configured4(said), true, code, err
 	case deliveringEvent:
 		return DeliveryHeld(line), true, 0, nil
-	case mergeEvent:
-		return MergeHeld(line), true, 0, nil
-	case landedEvent:
-		return MergeLanded(line), true, 0, nil
 	case requestedEvent:
 		return MergeRequested(line), true, 0, nil
 	case cutEvent:
@@ -125,10 +120,6 @@ const (
 	tickedEvent = "ticked"
 	idleEvent   = "idle"
 )
-
-func awaited(event string) bool {
-	return event == heldEvent || event == editedEvent
-}
 
 func judgedAfter(event string) bool {
 	switch event {
@@ -208,7 +199,7 @@ func gatheredIn(window EditWindow, given map[string]any) (map[string]any, [][]by
 		}
 
 		if moment, known := Moment4Of(line); known {
-			batch = append(batch, asked{given: Stamped(moment), queued: true, first: true})
+			batch = append(batch, asked{given: Stamped(moment)})
 		}
 	}
 

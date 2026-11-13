@@ -30,7 +30,7 @@ func TestAHandInJudgedAfterGoesThroughUnheldAndTheWorkerIsToldItsSinAfterwards(t
 	}
 
 	raw, _ := json.Marshal(line)
-	kept := []string{filepath.Join(data, eventsFolder, "event-1.json")}
+	kept := []string{filepath.Join(data, "events", "event-1.json")}
 	os.MkdirAll(filepath.Dir(kept[0]), 0o755)
 	if err := os.WriteFile(kept[0], raw, 0o644); err != nil {
 		t.Fatal(err)

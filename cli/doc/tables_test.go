@@ -16,6 +16,10 @@ import (
 	_ "github.com/jessegall/code-commandments/scribes/backend"
 )
 
+// frozenForJournal4 is the release every journal before version 5 runs: journal-plugin.json pins it for good, with the
+// script frozen beside it in .journal-plugin/v4, and only journal-plugin.5.json follows newer releases.
+const frozenForJournal4 = "v7.18.115"
+
 func TestTheGeneratedDocumentsAreCurrent(t *testing.T) {
 	root := filepath.Join("..", "..")
 	documents, err := doc.Generated(root)
@@ -122,8 +126,8 @@ func TestEveryPluginManifestNamesOneVersionAndFetchesOneRelease(t *testing.T) {
 
 		version, _ := manifest.Get("version")
 		if frozen {
-			if "v"+pinned[1] != doc.FrozenForJournal4 {
-				t.Errorf("%s fetches v%s, but journals before version 5 stay on %s for good", name, pinned[1], doc.FrozenForJournal4)
+			if "v"+pinned[1] != frozenForJournal4 {
+				t.Errorf("%s fetches v%s, but journals before version 5 stay on %s for good", name, pinned[1], frozenForJournal4)
 			}
 			versions[fmt.Sprint(version)] = true
 

@@ -73,7 +73,7 @@ func TestAWorkersMergeIsNotHeldForAReportedSin(t *testing.T) {
 	root, file, _ := projectWithASin(t)
 	fileReport(t, root, "RedundantElseDetector", file, 2)
 
-	if held := MergeHeld(mergingOf(root, "src/refund.py")); strings.Contains(held, `"refuse"`) {
+	if held := heldAnswer(mergingOf(root, "src/refund.py")); strings.Contains(held, `"refuse"`) {
 		t.Errorf("a merge was held for a sin this project has reported: %q", held)
 	}
 
@@ -81,7 +81,7 @@ func TestAWorkersMergeIsNotHeldForAReportedSin(t *testing.T) {
 		t.Fatalf("forgetting the report answered %v, %v", dropped, err)
 	}
 
-	if held := MergeHeld(mergingOf(root, "src/refund.py")); held == "" {
+	if held := heldAnswer(mergingOf(root, "src/refund.py")); held == "" {
 		t.Error("the merge is let through once the report is forgotten, and the sin is the project's again")
 	}
 }
@@ -143,11 +143,11 @@ func TestAMergeJudgesOnlyTheFoldersTheProjectDeclares(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if held := MergeHeld(mergingOf(root, "tests/test_refund.py")); held != "" {
+	if held := heldAnswer(mergingOf(root, "tests/test_refund.py")); held != "" {
 		t.Errorf("a merge was held over a file outside the folders this project declares: %q", held)
 	}
 
-	if held := MergeHeld(mergingOf(root, "src/refund.py")); held == "" {
+	if held := heldAnswer(mergingOf(root, "src/refund.py")); held == "" {
 		t.Error("a merge was let through for a sin inside the folders this project declares")
 	}
 }

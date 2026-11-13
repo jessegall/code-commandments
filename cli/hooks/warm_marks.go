@@ -808,20 +808,6 @@ func (r *treeRead) percent() int64 {
 	return r.done.Load() * 100 / total
 }
 
-func readsRunning() []*treeRead {
-	var running []*treeRead
-
-	reading.Range(func(_, value any) bool {
-		if read, is := value.(*treeRead); is {
-			running = append(running, read)
-		}
-
-		return true
-	})
-
-	return running
-}
-
 const (
 	leastReadInOneGo = 200
 
@@ -835,19 +821,6 @@ func readsInOneGo(files int) int {
 }
 
 var letGo sync.Map
-
-func WhyATreeWasLetGo(project string) string {
-	why, said := letGo.Load(project)
-	if !said {
-		return ""
-	}
-
-	return string(why.(Narrowed))
-}
-
-func NodesHeld() int {
-	return kept.NodesHeld()
-}
 
 func ReadingNow(project string) bool {
 	named, ok := rootOf(project)

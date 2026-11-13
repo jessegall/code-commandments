@@ -293,10 +293,6 @@ const Journal4Plugin = "journal-plugin.json"
 
 const Journal5Plugin = "journal-plugin.5.json"
 
-// FrozenForJournal4 is the release every journal before version 5 runs: journal-plugin.json pins it for good, with the
-// script frozen beside it in .journal-plugin/v4, and only journal-plugin.5.json follows newer releases.
-const FrozenForJournal4 = "v7.18.115"
-
 const JournalBriefing = "instructions/briefing.md"
 
 const WorkerBriefing = "instructions/worker-briefing.md"

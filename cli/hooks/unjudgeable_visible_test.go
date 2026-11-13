@@ -17,7 +17,7 @@ func TestAHandInNobodyCouldJudgeIsVisibleAfterwards(t *testing.T) {
 
 	wroteInto(t, filepath.Join(root, "src", "slow.py"), olderSin)
 
-	said := workHeld(map[string]any{
+	said := heldAnswer(map[string]any{
 		"event": deliveringEvent, "environment": "main", "agent": 7,
 		"data": map[string]any{
 			"worktree": root, "name": "worker 7",

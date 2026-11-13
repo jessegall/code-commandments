@@ -1,13 +1,11 @@
 package hooks
 
 import (
-	"encoding/json"
 	"os"
 	"path/filepath"
 	"slices"
 	"strconv"
 	"strings"
-	"sync/atomic"
 	"time"
 
 	"github.com/jessegall/code-commandments/cli/dashboard"
@@ -22,8 +20,6 @@ const (
 	advising    = "COMMANDMENTS_ADVISING"
 	journalRoot = "JOURNAL_ROOT"
 )
-
-var abandonedJudgings atomic.Int64
 
 func answerWith(given map[string]any) JournalAnswer {
 	moment := MomentOf(given)
@@ -260,28 +256,12 @@ func quieted() []string {
 	return quiet
 }
 
-func payloadOf(raw []byte) map[string]any {
-	var given map[string]any
-	if json.Unmarshal(raw, &given) != nil || given == nil {
-		return map[string]any{}
-	}
-
-	return given
-}
-
 // asked is one moment to judge after its event, as a batch of an agent's edits gathers it.
 type asked struct {
-	given  map[string]any
-	queued bool
-	first  bool
+	given map[string]any
 }
 
-const (
-	batchedWithin = 5 * time.Second
-	batchedFiles  = 100
-
-	gatheringPause = 100 * time.Millisecond
-)
+const batchedWithin = 5 * time.Second
 
 const (
 	batchedKey      = "commandments_batched"
@@ -374,16 +354,6 @@ func gatheredFor(given map[string]any) time.Duration {
 	return time.Duration(seconds * float64(time.Second))
 }
 
-func stamp() int64 {
-	self, _ := os.Executable()
-
-	return modified(self)
-}
-
 func servedRoot() string {
 	return workspace.ProjectRoot(firstText(os.Getenv(journalRoot), cwdOf()))
-}
-
-func noProjectAt(root string) bool {
-	return root == "" || root == "/" || git.Root(root) == ""
 }

@@ -10,7 +10,7 @@ import (
 func TestAGateWithNoAgentToTellKeepsItsWordsWhereAPersonReadsThem(t *testing.T) {
 	root, _, _ := projectWithASin(t)
 
-	said := workHeld(map[string]any{
+	said := heldAnswer(map[string]any{
 		"event": deliveringEvent,
 		"data":  map[string]any{"worktree": root, "name": "worker 7", "files": []any{"src/refund.py"}},
 	})

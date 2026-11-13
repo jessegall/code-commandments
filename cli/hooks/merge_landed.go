@@ -63,15 +63,6 @@ func firstText(said ...string) string {
 	return ""
 }
 
-func MergeLanded(line map[string]any) string {
-	said := landedSaid(line)
-	if said == "" {
-		return ""
-	}
-
-	return (JournalAnswer{Whisper: &said}).Line()
-}
-
 // landedSaid judges what a merge brought in and is what the main agent is told of it, nothing when there is nothing to tell.
 func landedSaid(line map[string]any) string {
 	work := landedOf(line)

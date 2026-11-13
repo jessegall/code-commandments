@@ -23,13 +23,7 @@ import (
 
 const (
 	deliveringEvent = "worker_delivering"
-	mergeEvent      = "worker_merging"
-	mergedEvent     = "worker_merge_result"
 )
-
-func MergeHeld(line map[string]any) string {
-	return workHeld(line)
-}
 
 // DeliveryHeld judges a hand-in before it goes through, when that is chosen. A hand-in judged after it is answered
 // and queued by the plugin's script, and reaches this binary only as the kept event of that run.
@@ -39,15 +33,6 @@ func DeliveryHeld(line map[string]any) string {
 	}
 
 	return mergeOf(line).answered()
-}
-
-func workHeld(line map[string]any) string {
-	work := mergeOf(line)
-	if !work.judgedByRole() {
-		return ""
-	}
-
-	return work.answered()
 }
 
 func (work merging) keeps(said string) {
@@ -164,13 +149,12 @@ func (m merging) tells(marks []SinMark, why Narrowed, about string) {
 	_ = queue.Tell(JournalAnswer{Whisper: &said}, m.env, m.agent)
 }
 
-// merging is a worker's merge as the event describes it: who it is, where its work stands, what its branch was cut from, the files it names, and how long the journal waits for this answer.
+// merging is a worker's merge as the event describes it: who it is, where its work stands, what its branch was cut from, and the files it names.
 type merging struct {
 	worker   string
 	worktree string
 	base     string
 	files    []string
-	role     string
 	env      string
 	agent    int
 	editor   int
@@ -184,19 +168,10 @@ func mergeOf(line map[string]any) merging {
 		worktree: asText(fields["worktree"]),
 		base:     asText(fields["base"]),
 		files:    namedFiles(fields["files"]),
-		role:     roleIn(fields),
 		env:      asText(firstOf(line["environment"], fields["environment"])),
 		agent:    asAgent(firstOf(line["agent"], fields["agent"])),
 		editor:   asAgent(fields["worker"]),
 	}
-}
-
-func (m merging) judgedByRole() bool {
-	if m.role == "" {
-		return true
-	}
-
-	return !workerRoles[m.role]
 }
 
 var workerRoles = map[string]bool{

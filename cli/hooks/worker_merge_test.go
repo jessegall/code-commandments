@@ -9,6 +9,20 @@ import (
 	"testing"
 )
 
+// MergeLanded is a landed merge's answer as a queued run tells it.
+func MergeLanded(line map[string]any) string {
+	said := landedSaid(line)
+	if said == "" {
+		return ""
+	}
+
+	return (JournalAnswer{Whisper: &said}).Line()
+}
+
+func heldAnswer(line map[string]any) string {
+	return mergeOf(line).answered()
+}
+
 func mergingOf(worktree string, files ...string) map[string]any {
 	named := make([]any, 0, len(files))
 	for _, file := range files {
@@ -27,7 +41,7 @@ func mergingOf(worktree string, files ...string) map[string]any {
 func TestASinfulBranchHoldsItsOwnMerge(t *testing.T) {
 	root, _, _ := projectWithASin(t)
 
-	held := MergeHeld(mergingOf(root, "src/refund.py"))
+	held := heldAnswer(mergingOf(root, "src/refund.py"))
 	if held == "" {
 		t.Fatal("a branch carrying a sin was let through")
 	}
@@ -59,7 +73,7 @@ func TestAMergeIsHeldWhereverTheEventPutsItsFields(t *testing.T) {
 		"branch": "worker/12-Lady-Lovelace", "worktree": root, "files": []any{"src/refund.py"},
 	}
 
-	if MergeHeld(flat) == "" {
+	if heldAnswer(flat) == "" {
 		t.Error("an event carrying its fields at its top level was not judged")
 	}
 }
@@ -72,7 +86,7 @@ func TestACleanBranchMergesUnheld(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if held := MergeHeld(mergingOf(root, "src/refund.py")); refusedBy(held) {
+	if held := heldAnswer(mergingOf(root, "src/refund.py")); refusedBy(held) {
 		t.Errorf("a clean branch was held with %q", held)
 	}
 
@@ -81,11 +95,11 @@ func TestACleanBranchMergesUnheld(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if held := MergeHeld(mergingOf(root, "NOTES.md")); held != "" {
+	if held := heldAnswer(mergingOf(root, "NOTES.md")); held != "" {
 		t.Errorf("a branch of files the project does not judge was held with %q", held)
 	}
 
-	if held := MergeHeld(mergingOf("", "src/refund.py")); held != "" {
+	if held := heldAnswer(mergingOf("", "src/refund.py")); held != "" {
 		t.Errorf("an event naming no worktree was answered with %q, and there is nothing it could have judged", held)
 	}
 }
@@ -93,7 +107,7 @@ func TestACleanBranchMergesUnheld(t *testing.T) {
 func TestAShallowWindowStillJudgesTheChangedFiles(t *testing.T) {
 	root, _, _ := projectWithASin(t)
 
-	if held := MergeHeld(mergingOf(root, "src/refund.py")); held == "" {
+	if held := heldAnswer(mergingOf(root, "src/refund.py")); held == "" {
 		t.Error("a branch carrying a sin was let through on a window that affords its changed files")
 	}
 }
@@ -107,7 +121,7 @@ func TestAWorkerAnswersForItsOwnLinesOnly(t *testing.T) {
 		"src/ship.py": "def ship(order) -> str:\n    return order.carrier\n",
 	})
 
-	if held := MergeHeld(mergingOf(worktree)); refusedBy(held) {
+	if held := heldAnswer(mergingOf(worktree)); refusedBy(held) {
 		t.Errorf("a worker was held for a sin its branch never wrote: %q", held)
 	}
 
@@ -115,7 +129,7 @@ func TestAWorkerAnswersForItsOwnLinesOnly(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if held := MergeHeld(mergingOf(worktree)); held == "" {
+	if held := heldAnswer(mergingOf(worktree)); held == "" {
 		t.Error("a sin the worker's own branch wrote was let through")
 	}
 }
@@ -215,7 +229,7 @@ func TestBothMomentsReadTheWorkTheSameWay(t *testing.T) {
 	root, _, _ := projectWithASin(t)
 
 	delivery := DeliveryHeld(deliveringOf(root, "src/refund.py"))
-	merge := MergeHeld(mergingOf(root, "src/refund.py"))
+	merge := heldAnswer(mergingOf(root, "src/refund.py"))
 
 	if delivery != merge {
 		t.Errorf("the delivery answered %q and the merge %q", delivery, merge)

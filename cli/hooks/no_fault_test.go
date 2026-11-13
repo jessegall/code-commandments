@@ -31,13 +31,13 @@ func TestNothingTheCommitFormsAnswerIsAFault(t *testing.T) {
 		{"a merge with nothing in its range", MergeLanded(mergeLine(root, "main", git.Head(root), git.Head(root)))},
 		{"a merge of a branch nobody knows", MergeLanded(mergeLine(root, "feature/nobody", before, git.Head(root)))},
 		{"a merge with no project at all", MergeLanded(map[string]any{"v": 1, "event": landedEvent, "data": map[string]any{}})},
-		{"a hand-in whose time ran out", workHeld(map[string]any{"event": deliveringEvent, "data": map[string]any{
+		{"a hand-in whose time ran out", heldAnswer(map[string]any{"event": deliveringEvent, "data": map[string]any{
 			"worktree": root, "name": "worker 7",
 		}})},
-		{"a hand-in with no worktree", workHeld(map[string]any{"event": deliveringEvent, "data": map[string]any{
+		{"a hand-in with no worktree", heldAnswer(map[string]any{"event": deliveringEvent, "data": map[string]any{
 			"name": "worker 7",
 		}})},
-		{"a hand-in of a worker whose role is not judged", workHeld(map[string]any{"event": deliveringEvent, "data": map[string]any{
+		{"a hand-in of a worker whose role is not judged", heldAnswer(map[string]any{"event": deliveringEvent, "data": map[string]any{
 			"worktree": root, "name": "worker 7", "role": "worker",
 		}})},
 		{"an unknown key", Answer4Now(map[string]any{"v": 1, "event": "something.nobody.wrote", "agent": 1, "cwd": root})},
