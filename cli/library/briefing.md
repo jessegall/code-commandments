@@ -88,9 +88,7 @@ rule above. Every finding on code you come across is yours to resolve.
 
 **The disciplines.** Each one is a skill, and each says in its own description WHEN to
 reach for it — the syntax you are about to write, the decision you are about to make. Load
-one when its subject comes up, and load it again rather than working from memory: a
-compaction drops instructions silently while leaving you the impression they are still
-there. {{finding}} names the skill that fixes it, so you are never guessing.
+one when its subject comes up. {{finding}} names the skill that fixes it, so you are never guessing.
 
 Load **`commandments-php-fix-at-the-source`** before your first edit whatever else you
 do — every other discipline defers to it. And **`commandments`** is this whole list as a

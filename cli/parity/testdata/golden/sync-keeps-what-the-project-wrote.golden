@@ -477,11 +477,11 @@ sha256 cf8762933d2c807c4872e1558093d0f5797dca893320011a92d4210efc8aa656
 === created .agents/skills/commandments-vue-vue-control-flow/reference/examples.md
 sha256 a3ab3bdd6342f9a4088b064c2a5a97451264f8785bdf101fa1c8c5ec73619b8e
 === created .agents/skills/commandments-writing-detectors/SKILL.md
-sha256 b9070899d87ca9eabc5a8de1310f232d1bfb4ba7516944157a4a77ebde7c4df4
+sha256 ebff81239687a5b3308a811490017c1af7a17bc7e315b639e60aa048866a8d06
 === created .agents/skills/commandments-writing-detectors/reference/examples.md
 sha256 7ad4892a4d2564f8c19c4efb6062ed62a10b0b3321d619d0382fb6881cef4596
 === created .agents/skills/commandments/SKILL.md
-sha256 d3f8198fa20d0c0ab5c59d91033dbac55574230059a4ecefc870d55144eca79b
+sha256 8cff41f56e043d5424538fb057080067bdbe05fd98cd89bb24325d6b72cb4a7a
 === changed .agents/skills/mine/SKILL.md
 sha256 3fd30542fe3f61b14bd4a4b2dc0b6fb30fa6f63ebce52dd1778aaa8c4dc02cff
 === created .claude/settings.json
@@ -6347,6 +6347,11 @@ Safe to delete — the conversion simply runs again on the next `composer update
             },
             "type": "array",
             "uniqueItems": true
+        },
+        "read_at_once": {
+            "description": "How many bridge processes read one language's files side by side, each a share of the files the cache does not already hold; more read sooner but use more cores and memory. Left out, 1.",
+            "minimum": 1,
+            "type": "integer"
         }
     },
     "title": "code-commandments project config",
@@ -6457,8 +6462,7 @@ THERE, never where it surfaces. A finding is a symptom, so before you change a l
 where the bad value, missing type or wrong shape is BORN. Do NOT silence it: a `?? default`, a
 cast, a null-check, a wrapper, a try/catch, or dropping a type to satisfy a detector launders the
 problem and grows the code. If the honest fix touches many call sites, touch them — that breadth
-IS the bug surfacing. Load `commandments-php-fix-at-the-source` before your first edit, and
-again rather than working from memory, since a compaction drops it silently.
+IS the bug surfacing. Load `commandments-php-fix-at-the-source` before your first edit.
 
 **Finding and fixing sins.** Run `vendor/bin/commandments judge` ONCE, scoped — `--changes` for your
 uncommitted work, `--branch` for what differs from main, or a path to judge that tree. A full scan is

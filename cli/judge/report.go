@@ -88,7 +88,6 @@ func (r Report) Console() string {
 		lines = append(lines,
 			"\n\033[1;33m"+slug+"\033[0m  ("+strconv.Itoa(len(findings))+")",
 			"  \033[1;36m↳ "+loadInstruction(slug)+"\033[0m",
-			"    \033[2mDon't fix from memory. If you think it's already loaded, assume it is NOT — a compaction may have dropped it — and load it again to be sure.\033[0m",
 		)
 
 		if hasCustom(findings) {
@@ -138,8 +137,7 @@ func (r Report) Checklist() string {
 	for _, slug := range r.skills {
 		findings := r.bySkill[slug]
 		out.WriteString("\n## " + slug + "\n\n> ▶ **" + loadInstruction(slug) + ".** " +
-			"It teaches every fix below. Don't work from memory, and don't assume it's still loaded " +
-			"from earlier — a compaction can drop it silently — load it again if in any doubt.\n\n")
+			"It teaches every fix below.\n\n")
 
 		for _, command := range commandsFor(findings, r.fixable) {
 			out.WriteString("> ✎ Auto-fixable — run `" + command + "` to repent these for you.\n\n")
@@ -213,10 +211,7 @@ func checklistPreamble() string {
 		"**This file is your worklist. Work it straight down, deleting as you go — do NOT " +
 		"stop to re-check.** For each line, top to bottom, do exactly this:\n\n" +
 		"1. **LOAD the skill named in the section header.** It " +
-		"teaches the fix; do NOT fix from memory. Even if you believe you already loaded it, treat " +
-		"it as NOT loaded (a context compaction may have silently dropped its instructions while " +
-		"leaving you the impression they're still there) and load it again before touching the " +
-		"section. Once per section is enough.\n" +
+		"teaches the fix; do NOT fix from memory.\n" +
 		"   _Don't recognise the rule, or about to argue with it? Run " +
 		"`" + binary.Here() + " info <sin>` first — it prints what the rule flags, WHY it is a " +
 		"sin, how it is fixed, and a worked example. The detector name from the line works as the " +

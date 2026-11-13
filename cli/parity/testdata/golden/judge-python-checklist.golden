@@ -3,7 +3,6 @@ exit: 1
 
 [1;33mpython/value-objects[0m  (40)
   [1;36m↳ LOAD the skill `commandments-python-value-objects` before fixing[0m
-    [2mDon't fix from memory. If you think it's already loaded, assume it is NOT — a compaction may have dropped it — and load it again to be sure.[0m
   [36mshop/aisle_counts.py:24[0m  FunctionDef counted  [2m[HandedOutCollectionDetector][0m
   [36mshop/barcode_parsing.py:13[0m  tuple  [2m[PositionalTupleReturnDetector][0m
   [36mshop/carrier_rates.py:14[0m  call  [2m[RawDecodedReturnDetector][0m
@@ -79,7 +78,7 @@ writes it again.
 
 **This file is your worklist. Work it straight down, deleting as you go — do NOT stop to re-check.** For each line, top to bottom, do exactly this:
 
-1. **LOAD the skill named in the section header.** It teaches the fix; do NOT fix from memory. Even if you believe you already loaded it, treat it as NOT loaded (a context compaction may have silently dropped its instructions while leaving you the impression they're still there) and load it again before touching the section. Once per section is enough.
+1. **LOAD the skill named in the section header.** It teaches the fix; do NOT fix from memory.
    _Don't recognise the rule, or about to argue with it? Run `commandments info <sin>` first — it prints what the rule flags, WHY it is a sin, how it is fixed, and a worked example. The detector name from the line works as the argument. Guessing at a rule you have not read is how a finding gets silenced instead of fixed._
 2. Open the `file:line` and fix the sin at its source.
 3. **Delete that line from this file.** Nothing else — no tick, no mark, no strike-through. The deleted line IS the record that it's fixed.
@@ -90,7 +89,7 @@ Work **wave by wave.** ONLY when this list is EMPTY, run `commandments judge` ag
 
 ## python/value-objects
 
-> ▶ **LOAD the skill `commandments-python-value-objects` before fixing.** It teaches every fix below. Don't work from memory, and don't assume it's still loaded from earlier — a compaction can drop it silently — load it again if in any doubt.
+> ▶ **LOAD the skill `commandments-python-value-objects` before fixing.** It teaches every fix below.
 
 - `<project>/shop/aisle_counts.py:24`  FunctionDef counted  [HandedOutCollectionDetector]
 - `<project>/shop/barcode_parsing.py:13`  tuple  [PositionalTupleReturnDetector]

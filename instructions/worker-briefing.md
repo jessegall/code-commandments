@@ -14,8 +14,7 @@ THERE, never where it surfaces. A finding is a symptom, so before you change a l
 where the bad value, missing type or wrong shape is BORN. Do NOT silence it: a `?? default`, a
 cast, a null-check, a wrapper, a try/catch, or dropping a type to satisfy a detector launders the
 problem and grows the code. If the honest fix touches many call sites, touch them — that breadth
-IS the bug surfacing. Load `commandments-php-fix-at-the-source` before your first edit, and
-again rather than working from memory, since a compaction drops it silently.
+IS the bug surfacing. Load `commandments-php-fix-at-the-source` before your first edit.
 
 **Leave it cleaner than you found it.** A finding on code you touch, or read past while working, is
 yours to resolve at its source.

@@ -3,7 +3,6 @@ exit: 1
 
 [1;33mtypescript/absence[0m  (8)
   [1;36m↳ LOAD the skill `commandments-typescript-absence` before fixing[0m
-    [2mDon't fix from memory. If you think it's already loaded, assume it is NOT — a compaction may have dropped it — and load it again to be sure.[0m
   [36mclient/cart-session.ts:15[0m  FieldDecl items  [2m[FalselyOptionalFieldDetector][0m
   [36mclient/cart-session.ts:18[0m  FieldDecl currency  [2m[FalselyOptionalFieldDetector][0m
   [36mclient/label-printer.ts:10[0m  FieldDecl queue  [2m[FalselyOptionalFieldDetector][0m
@@ -15,7 +14,6 @@ exit: 1
 
 [1;33mtypescript/duplication[0m  (18)
   [1;36m↳ LOAD the skill `commandments-typescript-duplication` before fixing[0m
-    [2mDon't fix from memory. If you think it's already loaded, assume it is NOT — a compaction may have dropped it — and load it again to be sure.[0m
   [36mclient/carrier-rates.ts:11[0m  MethodDecl quote  [2m[NearDuplicateFunctionDetector][0m
     [2m↳ same shape as: client/carrier-rates.ts:25[0m
   [36mclient/carrier-rates.ts:25[0m  MethodDecl quote  [2m[NearDuplicateFunctionDetector][0m
@@ -52,7 +50,6 @@ exit: 1
 
 [1;33mtypescript/flow[0m  (3)
   [1;36m↳ LOAD the skill `commandments-typescript-flow` before fixing[0m
-    [2mDon't fix from memory. If you think it's already loaded, assume it is NOT — a compaction may have dropped it — and load it again to be sure.[0m
   [36mclient/label-queue.ts:8[0m  CallExpr  [2m[CollectionMutatedWhileIteratedDetector][0m
   [36mclient/line-pruning.ts:8[0m  CallExpr  [2m[CollectionMutatedWhileIteratedDetector][0m
   [36mclient/shelf-tags.ts:7[0m  CallExpr  [2m[CollectionMutatedWhileIteratedDetector][0m
@@ -63,5 +60,7 @@ exit: 1
 [1m29 sins[0m across 3 skills.
 
 --- stderr
+⚠ no class of a package is read: composer.json declares dependencies but vendor/autoload.php is not there: run composer install
+  ↳ a method a package's interface fixes reads as the class's own, so a rule that would excuse it cannot
 
 --- files

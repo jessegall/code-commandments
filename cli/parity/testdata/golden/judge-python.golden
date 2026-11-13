@@ -3,7 +3,6 @@ exit: 1
 
 [1;33mpython/absence[0m  (20)
   [1;36m↳ LOAD the skill `commandments-python-absence` before fixing[0m
-    [2mDon't fix from memory. If you think it's already loaded, assume it is NOT — a compaction may have dropped it — and load it again to be sure.[0m
   [36mshop/basket_codes.py:8[0m  conditional  [2m[CancelledFallbackDetector][0m
   [36mshop/bay_roster.py:23[0m  FunctionDef numbered  [2m[DeNulledFinderDetector][0m
   [36mshop/charges.py:6[0m  binary  [2m[InventedDefaultDetector][0m
@@ -27,14 +26,12 @@ exit: 1
 
 [1;33mpython/behaviour-per-method[0m  (3)
   [1;36m↳ LOAD the skill `commandments-python-behaviour-per-method` before fixing[0m
-    [2mDon't fix from memory. If you think it's already loaded, assume it is NOT — a compaction may have dropped it — and load it again to be sure.[0m
   [36mshop/invoice_render.py:11[0m  FunctionDef render  [2m[FlagArgumentDetector][0m
   [36mshop/parcel_labels.py:5[0m  FunctionDef label_for  [2m[FlagArgumentDetector][0m
   [36mshop/stock_queries.py:12[0m  FunctionDef units_in_stock  [2m[FlagArgumentDetector][0m
 
 [1;33mpython/class-layout[0m  (6)
   [1;36m↳ LOAD the skill `commandments-python-class-layout` before fixing[0m
-    [2mDon't fix from memory. If you think it's already loaded, assume it is NOT — a compaction may have dropped it — and load it again to be sure.[0m
   [36mshop/basket_limits.py:12[0m  AnnAssign  [2m[MemberOutOfOrderDetector][0m
   [36mshop/carrier_profiles.py:11[0m  AnnAssign  [2m[MemberOutOfOrderDetector][0m
   [36mshop/checkout_settings.py:8[0m  Assign  [2m[MemberOutOfOrderDetector][0m
@@ -44,7 +41,6 @@ exit: 1
 
 [1;33mpython/dependency-direction[0m  (6)
   [1;36m↳ LOAD the skill `commandments-python-dependency-direction` before fixing[0m
-    [2mDon't fix from memory. If you think it's already loaded, assume it is NOT — a compaction may have dropped it — and load it again to be sure.[0m
   [36mshop/couriers/dispatch.py:5[0m  Import shop  [2m[NamespaceCycleDetector][0m
   [36mshop/layout/grid.py:4[0m  Import Card  [2m[NamespaceDependencyDetector][0m
   [36mshop/layout/theme.py:3[0m  Import shop  [2m[NamespaceDependencyDetector][0m
@@ -54,7 +50,6 @@ exit: 1
 
 [1;33mpython/documentation[0m  (18)
   [1;36m↳ LOAD the skill `commandments-python-documentation` before fixing[0m
-    [2mDon't fix from memory. If you think it's already loaded, assume it is NOT — a compaction may have dropped it — and load it again to be sure.[0m
   [36mshop/basket_totals.py:9[0m  FunctionDef total  [2m[CeremonyDocblockDetector][0m
   [36mshop/courier_manifests.py:6[0m  FunctionDef manifest  [2m[DanglingDocReferenceDetector][0m
   [36mshop/currency_rounding.py:5[0m  ClassDef CurrencyRounder  [2m[NegativeSpaceCommentDetector][0m
@@ -76,7 +71,6 @@ exit: 1
 
 [1;33mpython/duplication[0m  (12)
   [1;36m↳ LOAD the skill `commandments-python-duplication` before fixing[0m
-    [2mDon't fix from memory. If you think it's already loaded, assume it is NOT — a compaction may have dropped it — and load it again to be sure.[0m
   [36mshop/alerts.py:5[0m  FunctionDef register  [2m[NearDuplicateFunctionDetector][0m
     [2m↳ same shape as: shop/digests.py:6[0m
   [36mshop/cli.py:11[0m  FunctionDef load_config  [2m[DuplicateFunctionDetector][0m
@@ -104,7 +98,6 @@ exit: 1
 
 [1;33mpython/enums[0m  (21)
   [1;36m↳ LOAD the skill `commandments-python-enums` before fixing[0m
-    [2mDon't fix from memory. If you think it's already loaded, assume it is NOT — a compaction may have dropped it — and load it again to be sure.[0m
   [36mshop/badge_colours.py:23[0m  MatchStmt  [2m[EnumValueMatchDetector][0m
   [36mshop/box_sizes.py:22[0m  MatchStmt  [2m[EnumValueMatchDetector][0m
   [36mshop/carrier_codes.py:7[0m  ClassDef Carrier  [2m[ConstantClassEnumDetector][0m
@@ -129,7 +122,6 @@ exit: 1
 
 [1;33mpython/exceptions[0m  (12)
   [1;36m↳ LOAD the skill `commandments-python-exceptions` before fixing[0m
-    [2mDon't fix from memory. If you think it's already loaded, assume it is NOT — a compaction may have dropped it — and load it again to be sure.[0m
   [36mshop/catalog_file.py:27[0m  ExceptHandler  [2m[SwallowedExceptionDetector][0m
   [36mshop/count_sheets.py:14[0m  ExceptHandler  [2m[RethrownUnchangedDetector][0m
   [36mshop/feed_reader.py:18[0m  Raise  [2m[RaiseWithoutCauseDetector][0m
@@ -145,7 +137,6 @@ exit: 1
 
 [1;33mpython/fix-at-the-source[0m  (26)
   [1;36m↳ LOAD the skill `commandments-python-fix-at-the-source` before fixing[0m
-    [2mDon't fix from memory. If you think it's already loaded, assume it is NOT — a compaction may have dropped it — and load it again to be sure.[0m
   [36mshop/courier_booking.py:16[0m  call  [2m[BlockedAwaitDetector][0m
   [36mshop/damage_marks.py:7[0m  Param seen  [2m[MutableDefaultDetector][0m
   [36mshop/damage_marks.py:14[0m  Param blocked  [2m[MutableDefaultDetector][0m
@@ -181,7 +172,6 @@ exit: 1
 
 [1;33mpython/flow[0m  (33)
   [1;36m↳ LOAD the skill `commandments-python-flow` before fixing[0m
-    [2mDon't fix from memory. If you think it's already loaded, assume it is NOT — a compaction may have dropped it — and load it again to be sure.[0m
   [36mshop/aisle_marks.py:10[0m  call  [2m[CollectionMutatedWhileIteratedDetector][0m
   [36mshop/aisle_marks.py:24[0m  call  [2m[CollectionMutatedWhileIteratedDetector][0m
   [36mshop/attachments.py:12[0m  binary  [2m[CoalescedLoopSubjectDetector][0m
@@ -218,7 +208,6 @@ exit: 1
 
 [1;33mpython/method-mood[0m  (6)
   [1;36m↳ LOAD the skill `commandments-python-method-mood` before fixing[0m
-    [2mDon't fix from memory. If you think it's already loaded, assume it is NOT — a compaction may have dropped it — and load it again to be sure.[0m
   [36mshop/courier_slots.py:11[0m  FunctionDef ships  [2m[BareStatePredicateDetector][0m
   [36mshop/parcel_locks.py:11[0m  FunctionDef locks  [2m[BareStatePredicateDetector][0m
   [36mshop/picking_queue.py:12[0m  FunctionDef sorts  [2m[NarratedCommandDetector][0m
@@ -228,7 +217,6 @@ exit: 1
 
 [1;33mpython/pass-the-object[0m  (16)
   [1;36m↳ LOAD the skill `commandments-python-pass-the-object` before fixing[0m
-    [2mDon't fix from memory. If you think it's already loaded, assume it is NOT — a compaction may have dropped it — and load it again to be sure.[0m
   [36mshop/courier_picks.py:14[0m  FunctionDef pick  [2m[ComputedBooleanArgumentDetector][0m
   [36mshop/floor_plans.py:20[0m  FunctionDef relabel  [2m[ParamResolvedFromParamDetector][0m
   [36mshop/kiosk_receipts.py:25[0m  call  [2m[DerivedArgumentDetector][0m
@@ -254,7 +242,6 @@ exit: 1
 
 [1;33mpython/repeated-call-helper[0m  (16)
   [1;36m↳ LOAD the skill `commandments-python-repeated-call-helper` before fixing[0m
-    [2mDon't fix from memory. If you think it's already loaded, assume it is NOT — a compaction may have dropped it — and load it again to be sure.[0m
   [36mshop/cart_lines.py:15[0m  call  [2m[RepeatedNamedCallDetector][0m
     [2m↳ same shape as: shop/cart_lines.py:20[0m
   [36mshop/cart_lines.py:20[0m  call  [2m[RepeatedNamedCallDetector][0m
@@ -290,7 +277,6 @@ exit: 1
 
 [1;33mpython/role-vocabulary[0m  (4)
   [1;36m↳ LOAD the skill `commandments-python-role-vocabulary` before fixing[0m
-    [2mDon't fix from memory. If you think it's already loaded, assume it is NOT — a compaction may have dropped it — and load it again to be sure.[0m
   [36mshop/crate_registry.py:35[0m  call  [2m[NullableRegistryLookupDetector][0m
   [36mshop/printer_pool.py:24[0m  call  [2m[NullableRegistryLookupDetector][0m
   [36mshop/tax_bands.py:17[0m  call  [2m[NullableRegistryLookupDetector][0m
@@ -298,7 +284,6 @@ exit: 1
 
 [1;33mpython/tell-dont-ask[0m  (18)
   [1;36m↳ LOAD the skill `commandments-python-tell-dont-ask` before fixing[0m
-    [2mDon't fix from memory. If you think it's already loaded, assume it is NOT — a compaction may have dropped it — and load it again to be sure.[0m
   [36mshop/aisle_signs.py:35[0m  FunctionDef heading  [2m[KeyedLookupEnvyDetector][0m
   [36mshop/allergen_labels.py:26[0m  FunctionDef allergens_of  [2m[KeyedLookupEnvyDetector][0m
   [36mshop/courier_surcharges.py:19[0m  Assign  [2m[SideTableTraitDetector][0m
@@ -320,14 +305,12 @@ exit: 1
 
 [1;33mpython/templates[0m  (3)
   [1;36m↳ LOAD the skill `commandments-python-templates` before fixing[0m
-    [2mDon't fix from memory. If you think it's already loaded, assume it is NOT — a compaction may have dropped it — and load it again to be sure.[0m
   [36mshop/order_emails.py:11[0m  call  [2m[AssembledTemplateDetector][0m
   [36mshop/packing_slips.py:8[0m  call  [2m[AssembledTemplateDetector][0m
   [36mshop/receipt_banner.py:7[0m  call  [2m[AssembledTemplateDetector][0m
 
 [1;33mpython/type-honesty[0m  (23)
   [1;36m↳ LOAD the skill `commandments-python-type-honesty` before fixing[0m
-    [2mDon't fix from memory. If you think it's already loaded, assume it is NOT — a compaction may have dropped it — and load it again to be sure.[0m
   [36mshop/carrier_quotes.py:26[0m  compare  [2m[ImpossibleGuardDetector][0m
   [36mshop/category_walker.py:11[0m  FunctionDef visit  [2m[ScratchStateRestoreDetector][0m
   [36mshop/dealer_facts.py:27[0m  FunctionDef apply_plan  [2m[FilledParameterDetector][0m
@@ -354,7 +337,6 @@ exit: 1
 
 [1;33mpython/value-objects[0m  (40)
   [1;36m↳ LOAD the skill `commandments-python-value-objects` before fixing[0m
-    [2mDon't fix from memory. If you think it's already loaded, assume it is NOT — a compaction may have dropped it — and load it again to be sure.[0m
   [36mshop/aisle_counts.py:24[0m  FunctionDef counted  [2m[HandedOutCollectionDetector][0m
   [36mshop/barcode_parsing.py:13[0m  tuple  [2m[PositionalTupleReturnDetector][0m
   [36mshop/carrier_rates.py:14[0m  call  [2m[RawDecodedReturnDetector][0m

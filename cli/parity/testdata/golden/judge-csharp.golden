@@ -3,7 +3,6 @@ exit: 1
 
 [1;33mcsharp/absence[0m  (20)
   [1;36m↳ LOAD the skill `commandments-csharp-absence` before fixing[0m
-    [2mDon't fix from memory. If you think it's already loaded, assume it is NOT — a compaction may have dropped it — and load it again to be sure.[0m
   [36mShop/Addresses/PostcodeChecks.cs:7[0m  CoalesceExpression  [2m[CancelledCoalesceDetector][0m
   [36mShop/Documents/Headings.cs:7[0m  Parameter strapline  [2m[BlankStringDefaultDetector][0m
   [36mShop/Documents/LabelTemplates.cs:10[0m  MethodDeclaration Named  [2m[DeNulledFinderDetector][0m
@@ -27,14 +26,12 @@ exit: 1
 
 [1;33mcsharp/behaviour-per-method[0m  (3)
   [1;36m↳ LOAD the skill `commandments-csharp-behaviour-per-method` before fixing[0m
-    [2mDon't fix from memory. If you think it's already loaded, assume it is NOT — a compaction may have dropped it — and load it again to be sure.[0m
   [36mShop/Documents/Summaries.cs:7[0m  MethodDeclaration Line  [2m[FlagArgumentDetector][0m
   [36mShop/Shipping/Manifests.cs:7[0m  MethodDeclaration Covers  [2m[FlagArgumentDetector][0m
   [36mShop/Stock/Counters.cs:7[0m  MethodDeclaration Count  [2m[FlagArgumentDetector][0m
 
 [1;33mcsharp/class-layout[0m  (8)
   [1;36m↳ LOAD the skill `commandments-csharp-class-layout` before fixing[0m
-    [2mDon't fix from memory. If you think it's already loaded, assume it is NOT — a compaction may have dropped it — and load it again to be sure.[0m
   [36mShop/Notifications/Throttles.cs:9[0m  FieldDeclaration Window  [2m[MemberOutOfOrderDetector][0m
   [36mShop/Orders/InvoiceNumbers.cs:12[0m  FieldDeclaration Prefix  [2m[MemberAfterMethodDetector][0m
   [36mShop/Orders/InvoiceNumbers.cs:12[0m  FieldDeclaration Prefix  [2m[MemberOutOfOrderDetector][0m
@@ -46,7 +43,6 @@ exit: 1
 
 [1;33mcsharp/dependency-direction[0m  (7)
   [1;36m↳ LOAD the skill `commandments-csharp-dependency-direction` before fixing[0m
-    [2mDon't fix from memory. If you think it's already loaded, assume it is NOT — a compaction may have dropped it — and load it again to be sure.[0m
   [36mShop/Catalog/Products.cs:8[0m  Parameter cart  [2m[NamespaceDependencyDetector][0m
   [36mShop/Checkout/Carts.cs:16[0m  Parameter page  [2m[NamespaceDependencyDetector][0m
   [36mShop/Orders/Discounting.cs:9[0m  Parameter promotion  [2m[NamespaceCycleDetector][0m
@@ -57,7 +53,6 @@ exit: 1
 
 [1;33mcsharp/documentation[0m  (18)
   [1;36m↳ LOAD the skill `commandments-csharp-documentation` before fixing[0m
-    [2mDon't fix from memory. If you think it's already loaded, assume it is NOT — a compaction may have dropped it — and load it again to be sure.[0m
   [36mShop/Documents/Reprints.cs:14[0m  Documentation comment  [2m[CeremonyDocblockDetector][0m
   [36mShop/Notifications/Broadcasts.cs:10[0m  Documentation comment  [2m[CeremonyDocblockDetector][0m
   [36mShop/Orders/Checkouts.cs:10[0m  Documentation comment  [2m[BloatedDocblockDetector][0m
@@ -79,7 +74,6 @@ exit: 1
 
 [1;33mcsharp/duplication[0m  (12)
   [1;36m↳ LOAD the skill `commandments-csharp-duplication` before fixing[0m
-    [2mDon't fix from memory. If you think it's already loaded, assume it is NOT — a compaction may have dropped it — and load it again to be sure.[0m
   [36mShop/Documents/Invoice.cs:12[0m  MethodDeclaration Lines  [2m[DuplicateMethodDetector][0m
     [2m↳ same shape as: Shop/Documents/PackingSlip.cs:10[0m
   [36mShop/Documents/PackingSlip.cs:10[0m  MethodDeclaration Rows  [2m[DuplicateMethodDetector][0m
@@ -107,7 +101,6 @@ exit: 1
 
 [1;33mcsharp/enums[0m  (19)
   [1;36m↳ LOAD the skill `commandments-csharp-enums` before fixing[0m
-    [2mDon't fix from memory. If you think it's already loaded, assume it is NOT — a compaction may have dropped it — and load it again to be sure.[0m
   [36mShop/Notifications/ChannelNames.cs:22[0m  StringLiteralExpression  [2m[UnnamedVocabularyLiteralDetector][0m
   [36mShop/Notifications/Channels.cs:5[0m  ClassDeclaration ContactChannel  [2m[ConstClassEnumDetector][0m
   [36mShop/Notifications/Quiet.cs:15[0m  OrPattern  [2m[EnumCaseOrChainDetector][0m
@@ -130,7 +123,6 @@ exit: 1
 
 [1;33mcsharp/exceptions[0m  (12)
   [1;36m↳ LOAD the skill `commandments-csharp-exceptions` before fixing[0m
-    [2mDon't fix from memory. If you think it's already loaded, assume it is NOT — a compaction may have dropped it — and load it again to be sure.[0m
   [36mShop/Documents/InvoiceArchive.cs:15[0m  ThrowStatement  [2m[WrappingWithoutCauseDetector][0m
   [36mShop/Documents/InvoiceArchive.cs:26[0m  CatchClause  [2m[RethrownUnchangedDetector][0m
   [36mShop/Notifications/Outbox.cs:19[0m  CatchClause  [2m[SwallowedExceptionDetector][0m
@@ -146,7 +138,6 @@ exit: 1
 
 [1;33mcsharp/fix-at-the-source[0m  (15)
   [1;36m↳ LOAD the skill `commandments-csharp-fix-at-the-source` before fixing[0m
-    [2mDon't fix from memory. If you think it's already loaded, assume it is NOT — a compaction may have dropped it — and load it again to be sure.[0m
   [36mShop/Feeds/CourierFeeds.cs:15[0m  InvocationExpression  [2m[BlockedAwaitDetector][0m
   [36mShop/Feeds/CourierFeeds.cs:24[0m  SimpleMemberAccessExpression  [2m[BlockedAwaitDetector][0m
   [36mShop/Feeds/PriceFeeds.cs:11[0m  SimpleMemberAccessExpression  [2m[BlockedAwaitDetector][0m
@@ -165,7 +156,6 @@ exit: 1
 
 [1;33mcsharp/flow[0m  (35)
   [1;36m↳ LOAD the skill `commandments-csharp-flow` before fixing[0m
-    [2mDon't fix from memory. If you think it's already loaded, assume it is NOT — a compaction may have dropped it — and load it again to be sure.[0m
   [36mShop/Addresses/CountryCodes.cs:9[0m  CoalesceExpression  [2m[InlineThrowDetector][0m
   [36mShop/Addresses/Quotes.cs:8[0m  ConditionalExpression  [2m[NestedTernaryDetector][0m
   [36mShop/Documents/LabelTemplates.cs:19[0m  CoalesceExpression  [2m[InlineThrowDetector][0m
@@ -204,14 +194,12 @@ exit: 1
 
 [1;33mcsharp/method-mood[0m  (3)
   [1;36m↳ LOAD the skill `commandments-csharp-method-mood` before fixing[0m
-    [2mDon't fix from memory. If you think it's already loaded, assume it is NOT — a compaction may have dropped it — and load it again to be sure.[0m
   [36mShop/Orders/Returns.cs:7[0m  PropertyDeclaration Closes  [2m[BareStatePredicateDetector][0m
   [36mShop/Pricing/PromotionRules.cs:7[0m  PropertyDeclaration Publishes  [2m[BareStatePredicateDetector][0m
   [36mShop/Shipping/Lockers.cs:7[0m  MethodDeclaration Accepts  [2m[BareStatePredicateDetector][0m
 
 [1;33mcsharp/pass-the-object[0m  (16)
   [1;36m↳ LOAD the skill `commandments-csharp-pass-the-object` before fixing[0m
-    [2mDon't fix from memory. If you think it's already loaded, assume it is NOT — a compaction may have dropped it — and load it again to be sure.[0m
   [36mShop/Documents/Barcodes.cs:13[0m  InvocationExpression  [2m[ConvertedArgumentDetector][0m
     [2m↳ same shape as: Shop/Documents/Barcodes.cs:17[0m
   [36mShop/Documents/Barcodes.cs:17[0m  InvocationExpression  [2m[ConvertedArgumentDetector][0m
@@ -238,7 +226,6 @@ exit: 1
 
 [1;33mcsharp/repeated-call-helper[0m  (10)
   [1;36m↳ LOAD the skill `commandments-csharp-repeated-call-helper` before fixing[0m
-    [2mDon't fix from memory. If you think it's already loaded, assume it is NOT — a compaction may have dropped it — and load it again to be sure.[0m
   [36mShop/Documents/LabelFooters.cs:9[0m  LogicalAndExpression  [2m[RepeatedGuardDetector][0m
     [2m↳ same shape as: Shop/Shipping/TrackingLinks.cs:9[0m
   [36mShop/Notifications/Promises.cs:9[0m  LogicalAndExpression  [2m[RepeatedGuardDetector][0m
@@ -262,7 +249,6 @@ exit: 1
 
 [1;33mcsharp/tell-dont-ask[0m  (22)
   [1;36m↳ LOAD the skill `commandments-csharp-tell-dont-ask` before fixing[0m
-    [2mDon't fix from memory. If you think it's already loaded, assume it is NOT — a compaction may have dropped it — and load it again to be sure.[0m
   [36mShop/Checkout/SourceOwners.cs:19[0m  SwitchExpression  [2m[TypeSwitchDetector][0m
   [36mShop/Loyalty/PunchCards.cs:15[0m  MethodDeclaration Redeem  [2m[FeatureEnvyDetector][0m
   [36mShop/Orders/Approvals.cs:40[0m  MethodDeclaration Signed  [2m[FeatureEnvyDetector][0m
@@ -288,14 +274,12 @@ exit: 1
 
 [1;33mcsharp/templates[0m  (3)
   [1;36m↳ LOAD the skill `commandments-csharp-templates` before fixing[0m
-    [2mDon't fix from memory. If you think it's already loaded, assume it is NOT — a compaction may have dropped it — and load it again to be sure.[0m
   [36mShop/Documents/Emails.cs:13[0m  ExpressionStatement  [2m[AssembledTemplateDetector][0m
   [36mShop/Reports/DailySummary.cs:7[0m  InvocationExpression  [2m[AssembledTemplateDetector][0m
   [36mShop/Shipping/CarrierConfig.cs:7[0m  InvocationExpression  [2m[AssembledTemplateDetector][0m
 
 [1;33mcsharp/type-honesty[0m  (12)
   [1;36m↳ LOAD the skill `commandments-csharp-type-honesty` before fixing[0m
-    [2mDon't fix from memory. If you think it's already loaded, assume it is NOT — a compaction may have dropped it — and load it again to be sure.[0m
   [36mShop/Boards/KioskScreens.cs:13[0m  EqualsExpression  [2m[ImpossibleGuardDetector][0m
   [36mShop/Boards/LanguageTexts.cs:12[0m  EqualsExpression  [2m[ImpossibleGuardDetector][0m
   [36mShop/Boards/QuoteSpeech.cs:11[0m  NotEqualsExpression  [2m[ImpossibleGuardDetector][0m
@@ -311,7 +295,6 @@ exit: 1
 
 [1;33mcsharp/value-objects[0m  (25)
   [1;36m↳ LOAD the skill `commandments-csharp-value-objects` before fixing[0m
-    [2mDon't fix from memory. If you think it's already loaded, assume it is NOT — a compaction may have dropped it — and load it again to be sure.[0m
   [36mShop/Addresses/LabelPrinter.cs:8[0m  MethodDeclaration Print  [2m[DataClumpDetector][0m
     [2m↳ same shape as: Shop/Addresses/Quotes.cs:6[0m
   [36mShop/Addresses/Quotes.cs:6[0m  MethodDeclaration Price  [2m[DataClumpDetector][0m

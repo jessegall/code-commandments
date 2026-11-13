@@ -3,7 +3,6 @@ exit: 1
 
 [1;33mpython/templates[0m  (3)
   [1;36m↳ LOAD the skill `commandments-python-templates` before fixing[0m
-    [2mDon't fix from memory. If you think it's already loaded, assume it is NOT — a compaction may have dropped it — and load it again to be sure.[0m
   [36mshop/order_emails.py:11[0m  call  [2m[AssembledTemplateDetector][0m
   [36mshop/packing_slips.py:8[0m  call  [2m[AssembledTemplateDetector][0m
   [36mshop/receipt_banner.py:7[0m  call  [2m[AssembledTemplateDetector][0m
@@ -24,7 +23,7 @@ exit: 1
 
 **This file is your worklist. Work it straight down, deleting as you go — do NOT stop to re-check.** For each line, top to bottom, do exactly this:
 
-1. **LOAD the skill named in the section header.** It teaches the fix; do NOT fix from memory. Even if you believe you already loaded it, treat it as NOT loaded (a context compaction may have silently dropped its instructions while leaving you the impression they're still there) and load it again before touching the section. Once per section is enough.
+1. **LOAD the skill named in the section header.** It teaches the fix; do NOT fix from memory.
    _Don't recognise the rule, or about to argue with it? Run `commandments info <sin>` first — it prints what the rule flags, WHY it is a sin, how it is fixed, and a worked example. The detector name from the line works as the argument. Guessing at a rule you have not read is how a finding gets silenced instead of fixed._
 2. Open the `file:line` and fix the sin at its source.
 3. **Delete that line from this file.** Nothing else — no tick, no mark, no strike-through. The deleted line IS the record that it's fixed.
@@ -35,7 +34,7 @@ Work **wave by wave.** ONLY when this list is EMPTY, run `commandments judge` ag
 
 ## python/templates
 
-> ▶ **LOAD the skill `commandments-python-templates` before fixing.** It teaches every fix below. Don't work from memory, and don't assume it's still loaded from earlier — a compaction can drop it silently — load it again if in any doubt.
+> ▶ **LOAD the skill `commandments-python-templates` before fixing.** It teaches every fix below.
 
 - `<project>/shop/order_emails.py:11`  call  [AssembledTemplateDetector]
 - `<project>/shop/packing_slips.py:8`  call  [AssembledTemplateDetector]

@@ -3,7 +3,6 @@ exit: 1
 
 [1;33mpython/value-objects[0m  (15)
   [1;36m↳ LOAD the skill `commandments-python-value-objects` before fixing[0m
-    [2mDon't fix from memory. If you think it's already loaded, assume it is NOT — a compaction may have dropped it — and load it again to be sure.[0m
   [36mdiscounts.py:7[0m  call  [2m[DictBagDetector][0m
   [36mdiscounts.py:9[0m  call  [2m[DictBagDetector][0m
   [36mdiscounts.py:11[0m  call  [2m[DictBagDetector][0m
