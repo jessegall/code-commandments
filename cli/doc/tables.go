@@ -307,7 +307,7 @@ func released(path string) (string, error) {
 
 	release := pinned.FindStringSubmatch(string(text))
 	if release == nil {
-		return "", fmt.Errorf("no COMMANDMENTS_RELEASE is pinned, so the manifest cannot name its version")
+		return "", fmt.Errorf("no COMMANDMENTS_RELEASE is pinned, so no manifest can name the binary it fetches")
 	}
 
 	return release[2], nil
@@ -394,7 +394,11 @@ func Generated(root string) (map[string]string, error) {
 		return nil, fmt.Errorf("%s: %w", Plugin, err)
 	}
 
-	manifest.Set("version", release)
+	named, _ := manifest.Get("version")
+	version, _ := named.(string)
+	if version == "" {
+		return nil, fmt.Errorf("%s names no version of the plugin", Plugin)
+	}
 	documents[Plugin] = jsonfile.Text(manifest)
 
 	for _, journal := range []string{Journal4Plugin, Journal5Plugin} {
@@ -403,7 +407,7 @@ func Generated(root string) (map[string]string, error) {
 			return nil, err
 		}
 
-		if documents[journal], err = renamedVersion(repinned(string(text), release), release); err != nil {
+		if documents[journal], err = renamedVersion(repinned(string(text), release), version); err != nil {
 			return nil, fmt.Errorf("%s: %w", journal, err)
 		}
 	}

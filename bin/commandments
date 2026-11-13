@@ -6,8 +6,8 @@ declare(strict_types=1);
 /*
  | The tool is one Go binary per platform; this script only finds it and hands it the run — its arguments, its
  | streams and its exit code. $COMMANDMENTS_GO_BINARY names one to run. In the package's own checkout it is the one
- | the capped dev container built beside this script. Installed with composer, it is the release binary of the
- | installed version, or of the release $COMMANDMENTS_RELEASE pins, fetched once into the cache folder and checked
+ | the capped dev container built beside this script. Installed with composer, it is the release binary the package's
+ | plugin manifest pins (or the installed version's), or of the release $COMMANDMENTS_RELEASE pins, fetched once into the cache folder and checked
  | against the release's SHA256SUMS before it ever runs; $COMMANDMENTS_RELEASES names another place to fetch
  | releases from.
  */
@@ -183,7 +183,19 @@ function binary(): string
         return $built;
     }
 
-    return released(installedVersion());
+    return released(packagePin() ?? installedVersion());
+}
+
+/**
+ * The release the package's plugin manifest fetches: the binary this version runs, built by its own tag or, when the
+ * tag changed only the plugin's files, by the earlier one it pins.
+ */
+function packagePin(): ?string
+{
+    $manifest = json_decode((string) @file_get_contents(dirname(__DIR__) . '/.journal-plugin/plugin.json'), true);
+    $pinned = $manifest['env']['COMMANDMENTS_RELEASE'] ?? null;
+
+    return is_string($pinned) ? tagged($pinned, 'pin a tagged version such as v5.0.0 in .journal-plugin/plugin.json') : null;
 }
 
 /**

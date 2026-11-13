@@ -25,13 +25,22 @@ and who makes one.
 
 ## What a release is
 
-A `v*` tag runs `.github/workflows/release.yml`: it publishes the C# bridge for every
-platform (`scripts/release/roslyn`; the macOS ones on macOS, which signs them), cross-compiles the tool's static
-binary for every platform (`scripts/release/build`), holds each binary to its budget in
-`scripts/release/size-budget.json` and writes `SHA256SUMS` over them all (`scripts/release/check`), and creates
-the GitHub release. Composer's shim fetches the tool for the installed version from it, and the tool fetches the
-C# bridge beside itself, each checked against `SHA256SUMS`. A budget is raised only by hand, with the reason in
-the commit.
+A `v*` tag is a version of the plugin: `.journal-plugin/plugin.json` names it in `version`, and the binary every
+manifest fetches in `env.COMMANDMENTS_RELEASE`. The generator (`composer sins`, the pre-commit hook) writes both into
+`journal-plugin.json` and `journal-plugin.5.json`. There are two kinds:
+
+- **A release that builds**: the tag pins itself (`version` and `COMMANDMENTS_RELEASE` are both the tag). Any change
+  outside the plugin's own files needs one. `.github/workflows/release.yml` publishes the C# bridge for every platform
+  (`scripts/release/roslyn`, reused from the last release when the bridge did not change), cross-compiles the tool's
+  static binary for every platform (`scripts/release/build`), holds each binary to its budget in
+  `scripts/release/size-budget.json`, writes `SHA256SUMS` (`scripts/release/check`) and creates the GitHub release.
+- **A plugin-only release**: the tag bumps only `version` and keeps pinning the last release that built. The workflow
+  checks that nothing but `.journal-plugin/` and the `journal-plugin*.json` manifests changed since that release, and
+  builds and publishes nothing: the journal reads plugin versions from tags, and the plugin fetches the pinned binary.
+  It is done in seconds, so a change to how the plugin handles events never waits for a build.
+
+Composer's shim fetches the binary the package's manifest pins, and the tool fetches the C# bridge beside itself, each
+checked against `SHA256SUMS`. A budget is raised only by hand, with the reason in the commit.
 
 ## What to read when
 

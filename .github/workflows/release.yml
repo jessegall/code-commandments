@@ -11,11 +11,14 @@ permissions:
   contents: write
 
 jobs:
-  # The journal plugin fetches the release its manifest pins, for version 3 of the journal and for version 4, so a tag
-  # whose checkout pins another would install a binary that is not its own.
+  # A tag is a version of the plugin. Its manifests fetch the binary COMMANDMENTS_RELEASE pins: a tag that pins itself
+  # builds that binary here; a tag that pins an earlier release changed only the plugin's own files, runs the binary
+  # that release built, and publishes nothing, so a change to how the plugin handles events ships in seconds.
   pin:
     runs-on: ubuntu-latest
     outputs:
+      # Whether this tag builds its binary: false when it runs an earlier release's.
+      builds: ${{ steps.pin.outputs.builds }}
       # The release the C# bridges can be taken from, empty when they must be built. A bridge is a self-contained
       # runtime per platform, five of the six minutes a release takes and two of them on a macOS runner, and for a
       # release that did not touch the bridge the six assets are byte for byte the last release's.
@@ -24,23 +27,51 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: The journal plugin pins this release
+      - name: The plugin is this version, and fetches a binary built here or already released
+        id: pin
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
-          pinned="$(jq -r .env.COMMANDMENTS_RELEASE .journal-plugin/plugin.json)"
-          if [ "$pinned" != "$GITHUB_REF_NAME" ]; then
-            echo ".journal-plugin/plugin.json pins $pinned in COMMANDMENTS_RELEASE, not $GITHUB_REF_NAME" >&2
+          version="v$(jq -r .version .journal-plugin/plugin.json)"
+          if [ "$version" != "$GITHUB_REF_NAME" ]; then
+            echo ".journal-plugin/plugin.json says version $version, not $GITHUB_REF_NAME" >&2
             exit 1
           fi
+
+          pinned="$(jq -r .env.COMMANDMENTS_RELEASE .journal-plugin/plugin.json)"
           for manifest in journal-plugin*.json; do
             fetched="$(jq -r '.setup[] | .run' "$manifest" | sed -n 's/^COMMANDMENTS_RELEASE=\([^ ]*\) .*/\1/p' | head -1)"
-            if [ "$fetched" != "$GITHUB_REF_NAME" ]; then
-              echo "$manifest fetches $fetched, not $GITHUB_REF_NAME" >&2
+            if [ "$fetched" != "$pinned" ]; then
+              echo "$manifest fetches $fetched, not $pinned" >&2
               exit 1
             fi
           done
 
+          if [ "$pinned" = "$GITHUB_REF_NAME" ]; then
+            echo "builds=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # Only the plugin's own files may differ from the release whose binary this tag runs; anything else is
+          # what the binary is built from, and then the tag must pin itself so it is built.
+          built_from="$(git diff --name-only "$pinned" "$GITHUB_REF_NAME" | grep -v -E '^(\.journal-plugin/|journal-plugin(\.[0-9]+)*\.json$)' || true)"
+          if [ -n "$built_from" ]; then
+            echo "$GITHUB_REF_NAME runs the binary of $pinned, but these files it is built from changed since; pin $GITHUB_REF_NAME so it is built:" >&2
+            echo "$built_from" >&2
+            exit 1
+          fi
+
+          held="$(gh release view "$pinned" --json assets -q '.assets | length' 2>/dev/null || echo 0)"
+          if [ "$held" = "0" ]; then
+            echo "$GITHUB_REF_NAME runs the binary of $pinned, which holds no assets to fetch" >&2
+            exit 1
+          fi
+
+          echo "builds=false" >> "$GITHUB_OUTPUT"
+          echo "$GITHUB_REF_NAME changes only the plugin's files and runs the binary of $pinned, so nothing is built" >&2
       - name: Take the C# bridges from the last release where nothing of them changed
         id: bridges
+        if: steps.pin.outputs.builds == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -66,7 +97,7 @@ jobs:
 
   bridges:
     needs: pin
-    if: needs.pin.outputs.bridges-from == ''
+    if: needs.pin.outputs.builds == 'true' && needs.pin.outputs.bridges-from == ''
     strategy:
       matrix:
         include:
@@ -91,7 +122,7 @@ jobs:
   binaries:
     needs: [pin, bridges]
     # The bridges job is skipped where they are taken from the last release, and a skipped job must not skip this one.
-    if: always() && needs.pin.result == 'success' && (needs.bridges.result == 'success' || needs.bridges.result == 'skipped')
+    if: always() && needs.pin.result == 'success' && needs.pin.outputs.builds == 'true' && (needs.bridges.result == 'success' || needs.bridges.result == 'skipped')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

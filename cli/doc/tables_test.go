@@ -99,10 +99,10 @@ func TestThePluginOffersTheJournalTheBriefingItWouldOtherwiseWrite(t *testing.T)
 	}
 }
 
-func TestEachPluginManifestNamesTheReleaseItPins(t *testing.T) {
+func TestEveryPluginManifestNamesOneVersionAndFetchesOneRelease(t *testing.T) {
 	root := filepath.Join("..", "..")
 
-	releases := map[string]bool{}
+	versions, releases := map[string]bool{}, map[string]bool{}
 	for _, name := range []string{doc.Plugin, doc.Journal4Plugin, doc.Journal5Plugin} {
 		text, err := os.ReadFile(filepath.Join(root, name))
 		if err != nil {
@@ -120,15 +120,29 @@ func TestEachPluginManifestNamesTheReleaseItPins(t *testing.T) {
 		}
 
 		version, _ := manifest.Get("version")
-		if fmt.Sprint(version) != pinned[1] {
-			t.Errorf("%s says version %v and fetches v%s: run composer sins", name, version, pinned[1])
+		if newer(pinned[1], fmt.Sprint(version)) {
+			t.Errorf("%s says version %v and fetches the later v%s, a binary no tag of this version can have built", name, version, pinned[1])
 		}
-		releases[pinned[1]] = true
+		versions[fmt.Sprint(version)], releases[pinned[1]] = true, true
 	}
 
-	if len(releases) > 1 {
-		t.Errorf("the plugin manifests pin different releases %v, so a journal that reads one of them fetches an old binary: run composer sins", releases)
+	if len(versions) > 1 || len(releases) > 1 {
+		t.Errorf("the plugin manifests say versions %v and fetch releases %v, so a journal reading one of them runs another plugin: run composer sins", versions, releases)
 	}
+}
+
+func newer(a, b string) bool {
+	var left, right [3]int
+	fmt.Sscanf(a, "%d.%d.%d", &left[0], &left[1], &left[2])
+	fmt.Sscanf(b, "%d.%d.%d", &right[0], &right[1], &right[2])
+
+	for i := range left {
+		if left[i] != right[i] {
+			return left[i] > right[i]
+		}
+	}
+
+	return false
 }
 
 func TestEverySettingSaysItsKindInBothWords(t *testing.T) {
