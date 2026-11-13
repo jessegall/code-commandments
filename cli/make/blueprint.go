@@ -2,6 +2,7 @@
 package make
 
 import (
+	"github.com/jessegall/code-commandments/contract"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -27,21 +28,10 @@ func ProbeRoot(e Engine) string {
 	return "src"
 }
 
+// ProbeExtension is the extension a probe file of the engine is written with: the first of its own language's, each
+// engine being named after the language it judges first.
 func ProbeExtension(e Engine) string {
-	switch e {
-	case catalog.Vue:
-		return "vue"
-	case catalog.TypeScript:
-		return "ts"
-	case catalog.Python:
-		return "py"
-	case catalog.CSharp:
-		return "cs"
-	case catalog.Go:
-		return "go"
-	default:
-		return "php"
-	}
+	return contract.ExtensionsOf(contract.Language(e))[0]
 }
 
 // Blueprint is a commandment named and placed: its sin, the engine its rule judges, and the skill that teaches the fix, written anew when no existing one was named.
