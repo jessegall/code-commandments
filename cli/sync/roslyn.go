@@ -4,6 +4,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/jessegall/code-commandments/cache"
 	"github.com/jessegall/code-commandments/cli"
 	"github.com/jessegall/code-commandments/cli/config"
 	"github.com/jessegall/code-commandments/cli/scan"
@@ -11,9 +12,9 @@ import (
 )
 
 func hostRoslynBuilds() string {
-	home, _ := os.UserHomeDir()
+	ours, _ := cache.Ours()
 
-	return filepath.Join(home, ".cache", "code-commandments", "roslyn-bridge")
+	return filepath.Join(ours, "roslyn-bridge")
 }
 
 func removeHostRoslynBuilds(console cli.Console) {

@@ -17,6 +17,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/jessegall/code-commandments/cache"
 	"github.com/jessegall/code-commandments/walk"
 )
 
@@ -243,7 +244,7 @@ func environment(c Case, home, path string) []string {
 		"TERM":           "dumb",
 		"LANG":           "C.UTF-8",
 		"TZ":             recordedZone,
-		"XDG_CACHE_HOME": cache(),
+		"XDG_CACHE_HOME": userCache(),
 		"CLICOLOR_FORCE": "1",
 	}
 
@@ -260,14 +261,10 @@ func environment(c Case, home, path string) []string {
 	return list
 }
 
-func cache() string {
-	if folder := os.Getenv("XDG_CACHE_HOME"); folder != "" {
-		return folder
-	}
+func userCache() string {
+	folder, _ := cache.UserFolder()
 
-	home, _ := os.UserHomeDir()
-
-	return filepath.Join(home, ".cache")
+	return folder
 }
 
 var stamp = regexp.MustCompile(`\d{4}-\d{2}-\d{2}[ _T]\d{2}:?\d{2}(:?\d{2})?Z?`)

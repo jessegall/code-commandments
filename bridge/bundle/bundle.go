@@ -77,11 +77,11 @@ func (b Bundle) Folder() (string, error) {
 		return "", err
 	}
 	sum := sha1.Sum(key)
-	cache, err := CacheFolder()
+	ours, err := cache.Ours()
 	if err != nil {
 		return "", err
 	}
-	folder := filepath.Join(cache, "code-commandments", b.name, hex.EncodeToString(sum[:])[:16])
+	folder := filepath.Join(ours, b.name, hex.EncodeToString(sum[:])[:16])
 	if _, err := os.Stat(filepath.Join(folder, wholeMark)); err == nil {
 		return folder, nil
 	}
@@ -188,24 +188,7 @@ func KeptFolder() (string, error) {
 		return folder, nil
 	}
 
-	user, err := CacheFolder()
-	if err != nil {
-		return "", err
-	}
-
-	return filepath.Join(user, "code-commandments"), nil
-}
-
-func CacheFolder() (string, error) {
-	if cache := os.Getenv("XDG_CACHE_HOME"); cache != "" {
-		return cache, nil
-	}
-	home, err := os.UserHomeDir()
-	if err != nil {
-		return "", err
-	}
-
-	return filepath.Join(home, ".cache"), nil
+	return cache.Ours()
 }
 
 func Files(sources fs.FS, root string) (map[string][]byte, error) {

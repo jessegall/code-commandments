@@ -12,6 +12,8 @@ import (
 	"runtime"
 	"strings"
 	"sync"
+
+	"github.com/jessegall/code-commandments/cache"
 )
 
 var Release = "dev"
@@ -208,19 +210,9 @@ func curled(address string) ([]byte, error) {
 }
 
 func binaryCache() (string, error) {
-	cache := os.Getenv("XDG_CACHE_HOME")
-	if cache == "" && runtime.GOOS == "windows" {
-		cache = os.Getenv("LOCALAPPDATA")
-	}
-	if cache == "" {
-		home, err := os.UserHomeDir()
-		if err != nil {
-			return "", err
-		}
-		cache = filepath.Join(home, ".cache")
-	}
+	ours, err := cache.Ours()
 
-	return filepath.Join(cache, "code-commandments", "bin"), nil
+	return filepath.Join(ours, "bin"), err
 }
 
 func RoslynNotice() string {

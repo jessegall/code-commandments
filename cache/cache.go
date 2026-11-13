@@ -6,6 +6,8 @@ package cache
 
 import (
 	"os"
+	"path/filepath"
+	"runtime"
 	"strconv"
 	"time"
 )
@@ -43,4 +45,30 @@ func KeepIn(folder string) {
 
 func KeptIn() string {
 	return os.Getenv(Folder)
+}
+
+// UserFolder is the user's cache folder: $XDG_CACHE_HOME, else %LOCALAPPDATA% on Windows, else ~/.cache.
+func UserFolder() (string, error) {
+	if folder := os.Getenv("XDG_CACHE_HOME"); folder != "" {
+		return folder, nil
+	}
+	if folder := os.Getenv("LOCALAPPDATA"); folder != "" && runtime.GOOS == "windows" {
+		return folder, nil
+	}
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return "", err
+	}
+
+	return filepath.Join(home, ".cache"), nil
+}
+
+// Ours is the folder in the user's cache where the tool keeps what it fetches, unpacks and builds.
+func Ours() (string, error) {
+	user, err := UserFolder()
+	if err != nil {
+		return "", err
+	}
+
+	return filepath.Join(user, "code-commandments"), nil
 }
