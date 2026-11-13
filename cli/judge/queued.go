@@ -7,8 +7,11 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"os/signal"
 	"strings"
 	"sync"
+	"sync/atomic"
+	"syscall"
 	"time"
 
 	"github.com/jessegall/code-commandments/cli"
@@ -54,6 +57,8 @@ func throughTheQueue(space workspace.Workspace, cwd string, in *cli.Input, conso
 		return 0, false
 	}
 
+	stopped, done := passedOn(run.Process)
+	defer done()
 	printed := relayed(output, console)
 
 	err = run.Wait()
@@ -61,13 +66,31 @@ func throughTheQueue(space workspace.Workspace, cwd string, in *cli.Input, conso
 	switch {
 	case err == nil:
 		return 0, true
-	case errors.As(err, &ended) && printed:
+	case errors.As(err, &ended) && (printed || stopped.Load()):
 		return ended.ExitCode(), true
 	}
 
 	console.Warn("· the journal did not queue this judge, so it runs here")
 
 	return 0, false
+}
+
+// passedOn hands Ctrl+C, a kill and a closed terminal to the journal's client until done, so the journal stops the queued or running judge instead of leaving it behind; it says whether one came.
+func passedOn(client *os.Process) (*atomic.Bool, func()) {
+	stopped := &atomic.Bool{}
+	signals := make(chan os.Signal, 1)
+	signal.Notify(signals, os.Interrupt, syscall.SIGTERM, syscall.SIGHUP)
+	go func() {
+		for sig := range signals {
+			stopped.Store(true)
+			_ = client.Signal(sig)
+		}
+	}()
+
+	return stopped, func() {
+		signal.Stop(signals)
+		close(signals)
+	}
 }
 
 const queuedAhead = "waiting: "
