@@ -206,7 +206,7 @@ func (s Sources) Unfilled() (*engine.Codebase, error) {
 		streams = append(streams, stream)
 	}
 
-	codebase := s.rooted(engine.Unfilled(os.ReadFile, streams...))
+	codebase := s.rooted(engine.UnfilledOnDisk(streams...))
 	engine.CountedParsed(len(codebase.Files()))
 	sayUnreadable(streams)
 

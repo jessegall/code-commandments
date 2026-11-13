@@ -35,7 +35,6 @@ type keptLines struct {
 	root   string
 	// identity is the code of the bridge that wrote the lines, so a release that leaves the bridge alone keeps them.
 	identity string
-	prints   sync.Map
 	outlines sync.Map
 	// staged are the lines a read wrote, held on disk until its stream ends and every outline they stand on is known.
 	staged  []stagedLine
@@ -229,7 +228,7 @@ func (k *keptLines) printedFirst(files []string) {
 // changedSince says whether a file's contents differ from the print this run took of it, read once into now.
 func (k *keptLines) changedSince(file string, now map[string]string) bool {
 	if _, known := now[file]; !known {
-		now[file] = printOf(file)
+		now[file] = printed(walk.PrintNow(file))
 	}
 
 	return now[file] != k.print(file)
@@ -388,26 +387,18 @@ func (k *keptLines) recordOf(file string, reads []string) string {
 	return filepath.Join(k.folder, named(parts...)+".line")
 }
 
-// print is the fingerprint of a file's contents, read once a run; a file that cannot be read prints empty, so a line
-// that read it never stands for one that is there.
+// print is the fingerprint of a file's contents, read once a process; a file that cannot be read prints empty, so a
+// line that read it never stands for one that is there.
 func (k *keptLines) print(file string) string {
-	if held, ok := k.prints.Load(file); ok {
-		return held.(string)
-	}
-	printed := printOf(file)
-	k.prints.Store(file, printed)
-
-	return printed
+	return printed(walk.Print(file))
 }
 
-func printOf(file string) string {
-	text, err := os.ReadFile(file)
+func printed(print [32]byte, err error) string {
 	if err != nil {
 		return ""
 	}
-	sum := sha256.Sum256(text)
 
-	return hex.EncodeToString(sum[:])
+	return hex.EncodeToString(print[:])
 }
 
 func (k *keptLines) header() *contract.Header {

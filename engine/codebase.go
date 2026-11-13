@@ -3,6 +3,7 @@ package engine
 
 import (
 	"bytes"
+	"crypto/sha256"
 	"fmt"
 	"os"
 	"slices"
@@ -11,6 +12,7 @@ import (
 	"sync/atomic"
 
 	"github.com/jessegall/code-commandments/contract"
+	"github.com/jessegall/code-commandments/walk"
 )
 
 // Codebase is every file the bridges wrote, each language's stream side by side.
@@ -18,6 +20,7 @@ type Codebase struct {
 	streams   []*contract.Stream
 	files     []*File
 	read      func(path string) ([]byte, error)
+	print     func(path string) ([32]byte, error)
 	analyses  *sync.Map
 	over      *Codebase
 	carries   map[any]bool
@@ -201,7 +204,37 @@ type File struct {
 }
 
 func Load(streams ...*contract.Stream) *Codebase {
-	return New(os.ReadFile, streams...)
+	codebase := onDisk(built(os.ReadFile, streams...))
+	codebase.fill(nil)
+
+	return codebase
+}
+
+// UnfilledOnDisk is a codebase of files read from disk, filled when a rule first asks.
+func UnfilledOnDisk(streams ...*contract.Stream) *Codebase {
+	codebase := onDisk(built(os.ReadFile, streams...))
+	codebase.fills = &deferredFill{root: codebase, filled: map[string]bool{}}
+
+	return codebase
+}
+
+// onDisk takes each file's print from the walker, which read it once for every part of the run that asks.
+func onDisk(codebase *Codebase) *Codebase {
+	codebase.print = walk.Print
+
+	return codebase
+}
+
+// printedThrough is the print of what the reader answers for a path.
+func printedThrough(read func(path string) ([]byte, error)) func(path string) ([32]byte, error) {
+	return func(path string) ([32]byte, error) {
+		source, err := read(path)
+		if err != nil {
+			return [32]byte{}, err
+		}
+
+		return sha256.Sum256(source), nil
+	}
 }
 
 func ReadThrough(contents map[string]string) func(path string) ([]byte, error) {
@@ -241,7 +274,7 @@ func (c *Codebase) FilledFor(paths []string) {
 }
 
 func built(read func(path string) ([]byte, error), streams ...*contract.Stream) *Codebase {
-	codebase := &Codebase{streams: streams, read: read, analyses: &sync.Map{}}
+	codebase := &Codebase{streams: streams, read: read, print: printedThrough(read), analyses: &sync.Map{}}
 	for _, stream := range streams {
 		for _, file := range stream.Files {
 			_ = file.Linked()
@@ -253,7 +286,7 @@ func built(read func(path string) ([]byte, error), streams ...*contract.Stream) 
 }
 
 func Filling(changed []string, streams ...*contract.Stream) *Codebase {
-	codebase := built(os.ReadFile, streams...)
+	codebase := onDisk(built(os.ReadFile, streams...))
 	codebase.fill(changed)
 
 	return codebase
@@ -326,7 +359,7 @@ func partNamed(languages []contract.Language) partOf {
 func (c *Codebase) narrowedTo(languages []contract.Language) *Codebase {
 	CountedWalk(len(c.files))
 
-	part := &Codebase{read: c.read, analyses: &sync.Map{}, fills: c.fills}
+	part := &Codebase{read: c.read, print: c.print, analyses: &sync.Map{}, fills: c.fills}
 	for _, stream := range c.streams {
 		if slices.Contains(languages, stream.Header.Language) {
 			part.streams = append(part.streams, stream)
@@ -419,7 +452,7 @@ func (f *File) Source() ([]byte, error) {
 func (f *File) Alone() *Codebase {
 	stream := &contract.Stream{Header: f.stream.Header, Files: []*contract.File{f.File}, Program: f.stream.Program}
 	alone := New(f.read, stream)
-	alone.scanned, alone.project = f.codebase.scanned, f.codebase.project
+	alone.scanned, alone.project, alone.print = f.codebase.scanned, f.codebase.project, f.codebase.print
 
 	return alone
 }

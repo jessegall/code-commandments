@@ -422,17 +422,14 @@ func (f *File) fingerprint() (uint64, bool) {
 	f.printing.Do(func() {
 		CountedFile()
 
-		source, err := f.read(f.Path)
-		if err != nil || len(source) < f.File.Reaches() {
+		print, err := f.codebase.print(f.Path)
+		if err != nil {
 			return
 		}
-
-		digest := sha256.New()
-		digest.Write(source)
 		if f.isTest() {
-			digest.Write([]byte("\x00test"))
+			print = sha256.Sum256(append(print[:], "\x00test"...))
 		}
-		f.contents = binary.LittleEndian.Uint64(digest.Sum(nil)[:8])
+		f.contents = binary.LittleEndian.Uint64(print[:8])
 		f.printed = true
 	})
 
@@ -534,10 +531,8 @@ func (s standingOn) outsidePrint(file *File, path string) uint64 {
 	if print, held := s.outside[path]; held {
 		return print
 	}
-	source, err := file.read(path)
 	print := uint64(0)
-	if err == nil {
-		sum := sha256.Sum256(source)
+	if sum, err := file.codebase.print(path); err == nil {
 		print = binary.LittleEndian.Uint64(sum[:8])
 	}
 	s.outside[path] = print
