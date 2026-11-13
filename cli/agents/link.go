@@ -2,13 +2,13 @@ package agents
 
 import (
 	"crypto/md5"
-	"io/fs"
 	"maps"
 	"os"
 	"path/filepath"
 	"runtime"
 	"strings"
 
+	"github.com/jessegall/code-commandments/cli/folder"
 	"github.com/jessegall/code-commandments/walk"
 )
 
@@ -31,7 +31,7 @@ func Point(link, target string) bool {
 		return true
 	}
 
-	return copyTree(target, link)
+	return folder.Copy(target, link)
 }
 
 func alreadyPoints(link, target string) bool {
@@ -53,15 +53,11 @@ func alreadyPoints(link, target string) bool {
 func digests(dir string) map[string][16]byte {
 	found := map[string][16]byte{}
 
-	filepath.WalkDir(dir, func(path string, entry fs.DirEntry, err error) error {
-		if err == nil && !entry.IsDir() {
-			contents, _ := os.ReadFile(path)
-			relative, _ := filepath.Rel(dir, path)
-			found[relative] = md5.Sum(contents)
-		}
-
-		return nil
-	})
+	for _, path := range walk.AllFiles(dir) {
+		contents, _ := os.ReadFile(path)
+		relative, _ := filepath.Rel(dir, path)
+		found[relative] = md5.Sum(contents)
+	}
 
 	return found
 }
@@ -88,30 +84,4 @@ func slicesOf(value string, count int) []string {
 	}
 
 	return values
-}
-
-func copyTree(from, to string) bool {
-	all := true
-
-	err := filepath.WalkDir(from, func(path string, entry fs.DirEntry, err error) error {
-		if err != nil {
-			return err
-		}
-
-		relative, _ := filepath.Rel(from, path)
-		target := filepath.Join(to, relative)
-
-		if entry.IsDir() {
-			return os.MkdirAll(target, 0o775)
-		}
-
-		contents, err := os.ReadFile(path)
-		if err != nil || os.WriteFile(target, contents, 0o644) != nil {
-			all = false
-		}
-
-		return nil
-	})
-
-	return err == nil && all
 }

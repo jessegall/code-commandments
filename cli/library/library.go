@@ -18,6 +18,7 @@ import (
 	"github.com/jessegall/code-commandments/cli/workspace"
 	"github.com/jessegall/code-commandments/skill"
 	"github.com/jessegall/code-commandments/skills"
+	"github.com/jessegall/code-commandments/walk"
 )
 
 const Dir = ".agents/skills"
@@ -225,13 +226,11 @@ func copiedFrom(files fs.FS, from, to string, naming func([]byte) []byte) bool {
 		return false
 	}
 
-	filepath.WalkDir(to, func(path string, entry fs.DirEntry, err error) error {
-		if err == nil && !entry.IsDir() && !published[path] {
+	for _, path := range walk.AllFiles(to) {
+		if !published[path] {
 			os.Remove(path)
 		}
-
-		return nil
-	})
+	}
 
 	return all
 }

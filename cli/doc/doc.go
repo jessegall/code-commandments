@@ -2,15 +2,14 @@
 package doc
 
 import (
-	"io/fs"
-	"os"
+	"fmt"
 	"path/filepath"
-	"slices"
 	"strings"
 
 	"github.com/jessegall/code-commandments/cli"
 	"github.com/jessegall/code-commandments/cli/block"
 	"github.com/jessegall/code-commandments/rule"
+	"github.com/jessegall/code-commandments/walk"
 )
 
 const (
@@ -70,21 +69,16 @@ func commandNamed(kernel *cli.Kernel, verb string) (cli.Command, bool) {
 func DocumentsIn(directory string) ([]string, error) {
 	var documents []string
 
-	err := filepath.WalkDir(directory, func(path string, entry fs.DirEntry, err error) error {
-		if err != nil {
-			return err
-		}
-
-		if info, err := os.Stat(path); err == nil && info.Mode().IsRegular() && filepath.Ext(path) == ".md" {
+	if !walk.IsFolder(directory) {
+		return nil, fmt.Errorf("no folder of documents at %s", directory)
+	}
+	for _, path := range walk.AllFiles(directory) {
+		if walk.IsFile(path) && filepath.Ext(path) == ".md" {
 			documents = append(documents, path)
 		}
+	}
 
-		return nil
-	})
-
-	slices.Sort(documents)
-
-	return documents, err
+	return documents, nil
 }
 
 func Refresh(document string, kernel *cli.Kernel) (string, error) {

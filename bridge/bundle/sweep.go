@@ -1,12 +1,12 @@
 package bundle
 
 import (
-	"io/fs"
 	"os"
 	"path/filepath"
 	"time"
 
 	"github.com/jessegall/code-commandments/cache"
+	"github.com/jessegall/code-commandments/walk"
 )
 
 const sweptEvery = time.Hour
@@ -20,16 +20,11 @@ func Sweep(folder string, now time.Time) {
 		return
 	}
 
-	filepath.WalkDir(folder, func(path string, entry fs.DirEntry, err error) error {
-		if err != nil || entry.IsDir() || entry.Name() == sweptMark {
-			return nil
-		}
-		if info, err := entry.Info(); err == nil && now.Sub(info.ModTime()) > cache.KeptFor() {
+	for _, path := range walk.AllFiles(folder) {
+		if info, err := os.Lstat(path); err == nil && path != mark && now.Sub(info.ModTime()) > cache.KeptFor() {
 			os.Remove(path)
 		}
-
-		return nil
-	})
+	}
 
 	if os.MkdirAll(folder, 0o755) == nil {
 		os.WriteFile(mark, nil, 0o644)

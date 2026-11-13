@@ -166,6 +166,21 @@ func Verdict(directory string, excluded Excluded) Reason {
 	return ""
 }
 
+// AllFiles is every entry under a folder of the tool's own that is not a folder, hidden ones included, in name order;
+// a linked folder is listed, never gone into. A project's tree is walked by Files, which skips what is never source.
+func AllFiles(dir string) []string {
+	var files []string
+	filepath.WalkDir(dir, func(path string, entry fs.DirEntry, err error) error {
+		if err == nil && !entry.IsDir() {
+			files = append(files, path)
+		}
+
+		return nil
+	})
+
+	return files
+}
+
 func Entries(dir string) []string {
 	if isLink(dir) {
 		return nil
