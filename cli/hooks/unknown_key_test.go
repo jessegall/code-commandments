@@ -36,9 +36,8 @@ func TestAKeyWeHaveNoHandlerForIsAnsweredCleanlyAndNeverAsAFault(t *testing.T) {
 
 			continue
 		}
-		answer = asTheJournalSees(answer)
 
-		if asText(answer["answer"]) == "refuse" {
+		if answer["refuse"] != nil {
 			t.Errorf("the key %q was refused, and a key we do not know must never hold anything up: %s", line["event"], said)
 		}
 	}

@@ -119,7 +119,7 @@ func tells(t *testing.T, data string) string {
 
 	var said []string
 	for _, answer := range drained(t, data) {
-		said = append(said, asText(answer["tell"]))
+		said = append(said, asText(answer["whisper"]))
 	}
 
 	return strings.Join(said, "\n")

@@ -68,7 +68,7 @@ class DropFadesMigration(RebuildMigration):
 		t.Fatalf("the judge left %d answer(s): %v", len(queued), queued)
 	}
 
-	told := asText(queued[0]["tell"])
+	told := asText(queued[0]["whisper"])
 
 	if strings.Contains(told, "helper-in-a-kind-folder") {
 		t.Errorf("the mark names a sin the file alone cannot answer for:\n%s", told)

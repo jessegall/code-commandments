@@ -43,7 +43,7 @@ func TestAHandInJudgedAfterGoesThroughUnheldAndTheWorkerIsToldItsSinAfterwards(t
 		t.Fatalf("the worker was told %d times after its hand-in, want once: %v", len(queued), queued)
 	}
 
-	told := asText(queued[0]["tell"])
+	told := asText(queued[0]["whisper"])
 	for _, want := range []string{"1 sin", "src/refund.py", "judged after the hand-in went through"} {
 		if !strings.Contains(told, want) {
 			t.Errorf("the worker was told %q, which lacks %q", told, want)

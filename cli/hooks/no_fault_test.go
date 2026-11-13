@@ -53,14 +53,9 @@ func TestNothingTheCommitFormsAnswerIsAFault(t *testing.T) {
 
 			continue
 		}
-		answer = asTheJournalSees(answer)
 
-		if asText(answer["answer"]) == "refuse" {
+		if answer["refuse"] != nil {
 			t.Errorf("%s was refused, and a refusal from a commit or listen script is a fault: %s", told.what, told.said)
-		}
-
-		if _, held := answer["reason"]; held {
-			t.Errorf("%s carries a reason, which is read only with a refusal: %s", told.what, told.said)
 		}
 
 		if strings.Contains(told.said, "\n") {

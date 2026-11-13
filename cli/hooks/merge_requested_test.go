@@ -33,7 +33,6 @@ func guardAnswer(t *testing.T, said string) map[string]any {
 	if err := json.Unmarshal([]byte(said), &held); err != nil {
 		t.Fatalf("the guard answered %q, which is not a line the journal can read: %v", said, err)
 	}
-	held = asTheJournalSees(held)
 
 	return held
 }
@@ -49,11 +48,11 @@ func TestAMergeThatWouldBringInASinIsRefusedBeforeItLands(t *testing.T) {
 		t.Fatal("the guard allowed a merge that brings in a sin, so nothing of this feature works")
 	}
 
-	if said["answer"] != "refuse" {
-		t.Errorf("the guard answered %v where it must refuse, since allowing is what lets the sin land", said["answer"])
+	if said["refuse"] == nil {
+		t.Errorf("the guard answered %v where it must refuse, since allowing is what lets the sin land", said)
 	}
 
-	if reason, _ := said["reason"].(string); !strings.Contains(reason, ":") {
+	if reason, _ := said["refuse"].(string); !strings.Contains(reason, ":") {
 		t.Errorf("the refusal names no file and line, and the worker gets this as its whole job: %q", reason)
 	}
 }
@@ -106,13 +105,13 @@ func TestAGuardRunningOutOfTimeAllowsTheMergeAndSaysSo(t *testing.T) {
 
 	said := guardAnswer(t, asked.allowedBecause(string(got)))
 
-	if said["answer"] != "tell" {
+	if said["whisper"] == nil {
 		t.Errorf("a guard out of time answered %v, where it must TELL and allow: a refusal would stop a merge it "+
 			"never judged, and being killed at the window is recorded as our plugin's fault, five of which switch "+
-			"it off", said["answer"])
+			"it off", said)
 	}
 
-	if told, _ := said["tell"].(string); !strings.Contains(told, "unjudged") {
+	if told, _ := said["whisper"].(string); !strings.Contains(told, "unjudged") {
 		t.Errorf("the allowance does not say the merge went unjudged: %q", told)
 	}
 }
@@ -165,7 +164,7 @@ func TestTheWorkerIsNamedInTheRefusalSoItKnowsTheWorkIsItsOwn(t *testing.T) {
 		t.Fatal("the guard allowed a merge that brings in a sin")
 	}
 
-	reason, _ := said["reason"].(string)
+	reason, _ := said["refuse"].(string)
 
 	if !strings.Contains(reason, "7") {
 		t.Errorf("the refusal does not name the worker whose work it is: %q", reason)

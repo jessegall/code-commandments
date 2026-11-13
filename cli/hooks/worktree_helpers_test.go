@@ -67,7 +67,7 @@ func stressStop(t *testing.T, root, data string) {
 func edits(answers []map[string]any) []map[string]any {
 	var mine []map[string]any
 	for _, answer := range answers {
-		if strings.Contains(asText(answer["tell"]), "thing") {
+		if strings.Contains(asText(answer["whisper"]), "thing") {
 			mine = append(mine, answer)
 		}
 	}
@@ -80,7 +80,7 @@ func stressTold(t *testing.T, answers []map[string]any) {
 
 	var said strings.Builder
 	for _, answer := range answers {
-		said.WriteString(asText(answer["tell"]))
+		said.WriteString(asText(answer["whisper"]))
 		said.WriteString("\n")
 	}
 
@@ -899,7 +899,7 @@ func (c *stressCheckout) tookItAway(named string) bool {
 
 func stressSaidOf(answer map[string]any) []string {
 	var named []string
-	for _, found := range toldPaths.FindAllStringSubmatch(asText(answer["tell"]), -1) {
+	for _, found := range toldPaths.FindAllStringSubmatch(asText(answer["whisper"]), -1) {
 		named = append(named, found[1])
 	}
 
@@ -909,7 +909,7 @@ func stressSaidOf(answer map[string]any) []string {
 func stressLinesOf(answers []map[string]any, named string) []string {
 	var lines []string
 	for _, answer := range answers {
-		for _, found := range toldPaths.FindAllStringSubmatch(asText(answer["tell"]), -1) {
+		for _, found := range toldPaths.FindAllStringSubmatch(asText(answer["whisper"]), -1) {
 			if found[1] == named {
 				lines = append(lines, found[2])
 			}
@@ -920,7 +920,7 @@ func stressLinesOf(answers []map[string]any, named string) []string {
 }
 
 func stressRefusedIn(answer map[string]any) []string {
-	tell := asText(answer["tell"])
+	tell := asText(answer["whisper"])
 	if !strings.Contains(tell, "nothing of this edit was judged") {
 		return nil
 	}
@@ -936,11 +936,11 @@ func stressRefusedIn(answer map[string]any) []string {
 func stressReported(answer map[string]any) []string {
 	named := stressSaidOf(answer)
 
-	cards, _ := answer["cards"].([]any)
+	cards, _ := answer["raises"].([]any)
 	for _, card := range cards {
 		said, _ := card.(map[string]any)
 
-		label := asText(said["label"]) + " " + asText(said["brief"])
+		label := asText(said["brief"])
 		if strings.Contains(label, "is clean") {
 			continue
 		}

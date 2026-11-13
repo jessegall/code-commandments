@@ -45,19 +45,19 @@ func TestAHandInIsJudgedFromTheHeldTreeAndReadsNoTree(t *testing.T) {
 	if err := json.Unmarshal([]byte(held), &fields); err != nil {
 		t.Fatalf("the hand-in was answered %q: %v", held, err)
 	}
-	answer := asTheJournalSees(fields)
+	answer := fields
 
-	if answer["answer"] != "refuse" {
-		t.Errorf("a hand-in carrying a sin was answered %v, where it must go back to the worker", answer["answer"])
+	if answer["refuse"] == nil {
+		t.Errorf("a hand-in carrying a sin was answered %v, where it must go back to the worker", answer)
 	}
 
-	reason := asText(answer["reason"])
+	reason := asText(answer["refuse"])
 	if !strings.Contains(reason, "documented-anywhere") || !strings.Contains(reason, "order.py") {
 		t.Errorf("the refusal reads %q, naming neither the sin nor the file the worker wrote it in", reason)
 	}
 
-	if strings.Contains(reason, "not judged in full") {
-		t.Errorf("with the tree held, the hand-in still says it was not judged in full: %q", reason)
+	if note := asText(answer["whisper"]); strings.Contains(note, "not judged in full") {
+		t.Errorf("with the tree held, the hand-in still says it was not judged in full: %q", note)
 	}
 
 	if reads := costs.Count(ledger.TreeReadsStarted) - readsBefore; reads != 0 {
@@ -75,15 +75,15 @@ func TestAHandInWithNoTreeHeldIsNeverReadWholeAndSaysWhatWasNotAsked(t *testing.
 	if err := json.Unmarshal([]byte(held), &fields); err != nil {
 		t.Fatalf("the hand-in was answered %q: %v", held, err)
 	}
-	answer := asTheJournalSees(fields)
+	answer := fields
 
-	if answer["answer"] != "refuse" {
+	if answer["refuse"] == nil {
 		t.Errorf("a sin found by the rules that read one file was answered %v; it is a real sin and the work "+
-			"goes back for it", answer["answer"])
+			"goes back for it", answer)
 	}
 
-	if reason := asText(answer["reason"]); !strings.Contains(reason, "not judged in full") {
-		t.Errorf("the refusal does not say the rest was not asked, so the worker reads a partial answer as whole: %q", reason)
+	if note := asText(answer["whisper"]); !strings.Contains(note, "not judged in full") {
+		t.Errorf("the refusal does not say the rest was not asked, so the worker reads a partial answer as whole: %q", note)
 	}
 
 	if started := ledger.Of(root).Count(ledger.TreeReadsStarted); started != 0 {

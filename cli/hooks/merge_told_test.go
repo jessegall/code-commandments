@@ -29,13 +29,12 @@ func TestAMergeOfManyFilesIsOneThingToReadNamingEverySin(t *testing.T) {
 	if err := json.Unmarshal([]byte(said), &answer); err != nil {
 		t.Fatalf("the merge was answered with something that is not a line of JSON: %v", err)
 	}
-	answer = asTheJournalSees(answer)
 
-	if cards, held := answer["cards"].([]any); held && len(cards) > 1 {
+	if cards, held := answer["raises"].([]any); held && len(cards) > 1 {
 		t.Errorf("the merge raised %d cards, and it must be one thing to read", len(cards))
 	}
 
-	tell := asText(answer["tell"])
+	tell := asText(answer["whisper"])
 
 	named := strings.Count(tell, " at src/")
 

@@ -73,7 +73,7 @@ func TestACommandIsAnsweredWithNothingAndNeverRefused(t *testing.T) {
 	Judge4Into(line, data)
 
 	for _, queued := range drained(t, data) {
-		if strings.Contains(asText(queued["tell"]), "worktree") {
+		if strings.Contains(asText(queued["whisper"]), "worktree") {
 			t.Errorf("the queue still argues against the command: %v", queued)
 		}
 	}
@@ -94,7 +94,7 @@ func TestAFileEditedIsJudgedAndItsSinsGoToTheQueue(t *testing.T) {
 		t.Fatalf("the judge left %d file(s) in the queue", len(queued))
 	}
 
-	if !strings.Contains(asText(queued[0]["tell"]), "redundant-python-else") {
+	if !strings.Contains(asText(queued[0]["whisper"]), "redundant-python-else") {
 		t.Errorf("the queue names no sin: %v", queued[0])
 	}
 
@@ -122,7 +122,7 @@ func drained(t *testing.T, data string) []map[string]any {
 		if err := json.Unmarshal(content, &said); err != nil {
 			t.Fatalf("the journal cannot read %s: %v", file, err)
 		}
-		read = append(read, asTheJournalSees(said))
+		read = append(read, said)
 		if err := os.Remove(file); err != nil {
 			t.Fatal(err)
 		}
@@ -133,46 +133,6 @@ func drained(t *testing.T, data string) []map[string]any {
 	}
 
 	return read
-}
-
-// asTheJournalSees is a told answer as the plugin's script hands it to the journal (.journal-plugin/hook.py shaped,
-// whose own tests hold the shape), so these tests read what an agent is told.
-func asTheJournalSees(fields map[string]any) map[string]any {
-	seen := map[string]any{"v": float64(1)}
-	for _, routing := range []string{"env", "agent"} {
-		if value, named := fields[routing]; named {
-			seen[routing] = value
-		}
-	}
-
-	switch refuse, whisper := fields["refuse"], fields["whisper"]; {
-	case refuse != nil && whisper != nil && refuse != whisper:
-		seen["answer"], seen["reason"] = "refuse", asText(refuse)+"\n\n"+asText(whisper)
-	case refuse != nil:
-		seen["answer"], seen["reason"] = "refuse", refuse
-	case whisper != nil:
-		seen["answer"], seen["tell"] = "tell", whisper
-	}
-
-	var cards []any
-	raised, _ := fields["raises"].([]any)
-	for _, each := range raised {
-		entry, _ := each.(map[string]any)
-		card := map[string]any{"type": entry["event"], "kind": entry["event"], "key": entry["key"], "label": entry["brief"]}
-		if detail, named := entry["detail"]; named {
-			card["detail"] = detail
-		}
-		cards = append(cards, card)
-	}
-	if len(cards) > 0 {
-		seen["cards"] = cards
-	}
-
-	if required, named := fields["requires"]; named {
-		seen["require_skills"] = required
-	}
-
-	return seen
 }
 
 func saidAfter(t *testing.T, data string, line map[string]any) map[string]any {
@@ -191,7 +151,7 @@ func saidAfter(t *testing.T, data string, line map[string]any) map[string]any {
 }
 
 func cardsOf(said map[string]any) []map[string]any {
-	raised, _ := said["cards"].([]any)
+	raised, _ := said["raises"].([]any)
 
 	var cards []map[string]any
 	for _, each := range raised {
@@ -204,7 +164,7 @@ func cardsOf(said map[string]any) []map[string]any {
 
 func settles(cards []map[string]any, key string) bool {
 	for _, card := range cards {
-		if asText(card["key"]) == key && asText(card["kind"]) == "sin-resolved" {
+		if asText(card["key"]) == key && asText(card["event"]) == "sin-resolved" {
 			return true
 		}
 	}
@@ -254,7 +214,7 @@ func TestAnEditIsAnsweredWithoutReadingTheFileAtAll(t *testing.T) {
 		t.Errorf("the edit's own answer carries what the judge found: %s", sinful)
 	}
 
-	if said := saidAfter(t, data, eventOf("file_edited", "src/refund.py")); !strings.Contains(asText(said["tell"]), "redundant-python-else") {
+	if said := saidAfter(t, data, eventOf("file_edited", "src/refund.py")); !strings.Contains(asText(said["whisper"]), "redundant-python-else") {
 		t.Errorf("the queue the agent reads names no sin: %v", said)
 	}
 }
@@ -282,19 +242,19 @@ func TestAQueuedAnswerIsTheAnswersOwnShapeInAFileOfItsOwn(t *testing.T) {
 		t.Fatalf("the queue holds %d file(s): an answer with nothing to say writes none", len(said))
 	}
 
-	if said[0]["tell"] != advice || said[0]["answer"] != "tell" || said[0]["v"] != float64(1) {
+	if said[0]["whisper"] != advice {
 		t.Errorf("the first answer reads %v", said[0])
 	}
 
-	first, _ := said[0]["cards"].([]any)
-	second, _ := said[1]["cards"].([]any)
+	first, _ := said[0]["raises"].([]any)
+	second, _ := said[1]["raises"].([]any)
 	if len(first) != 1 || len(second) != 1 {
-		t.Fatalf("the cards read %v and %v", said[0]["cards"], said[1]["cards"])
+		t.Fatalf("the cards read %v and %v", said[0]["raises"], said[1]["raises"])
 	}
 
 	raised, _ := first[0].(map[string]any)
 	settled, _ := second[0].(map[string]any)
-	if raised["key"] != "sins:src/A.php" || raised["kind"] != "sin-found" || settled["key"] != raised["key"] || settled["kind"] != "sin-resolved" {
+	if raised["key"] != "sins:src/A.php" || raised["event"] != "sin-found" || settled["key"] != raised["key"] || settled["event"] != "sin-resolved" {
 		t.Errorf("the file's mark was raised as %v and settled as %v", raised, settled)
 	}
 }
@@ -328,7 +288,7 @@ func TestTheEditTheJournalHandsUsDecidesWhichSinsAreFresh(t *testing.T) {
 			}, data)
 
 			queued := drained(t, data)
-			said := len(queued) == 1 && strings.Contains(asText(queued[0]["tell"]), "redundant-python-else")
+			said := len(queued) == 1 && strings.Contains(asText(queued[0]["whisper"]), "redundant-python-else")
 			if said != test.said {
 				t.Errorf("the sin was said: %v, want %v (%v)", said, test.said, queued)
 			}
@@ -410,7 +370,7 @@ func TestGoingIdleSettlesAMarkNothingEditedAgain(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if edited := saidAfter(t, data, eventOf("file_edited", "src/orders.py")); strings.Contains(asText(edited["tell"]), "sins:src/refund.py") || settles(cardsOf(edited), "sins:src/refund.py") {
+	if edited := saidAfter(t, data, eventOf("file_edited", "src/orders.py")); strings.Contains(asText(edited["whisper"]), "sins:src/refund.py") || settles(cardsOf(edited), "sins:src/refund.py") {
 		t.Fatalf("an edit elsewhere settled another file's mark, which is not what settles it: %v", edited)
 	}
 
@@ -460,7 +420,7 @@ func TestAnEditNamesItsOwnLinesWhateverTheJournalCallsThem(t *testing.T) {
 				},
 			})
 
-			if strings.Contains(asText(said["tell"]), "redundant-python-else") {
+			if strings.Contains(asText(said["whisper"]), "redundant-python-else") {
 				t.Errorf("the edit's own rows were not read, so a sin away from the edit was raised: %v", said)
 			}
 		})
@@ -682,7 +642,7 @@ func TestWhatWasNotAskedTravelsTheQueueToTheAgent(t *testing.T) {
 		t.Fatalf("the judge left %d file(s) in the queue", len(queued))
 	}
 
-	said := asText(queued[0]["tell"])
+	said := asText(queued[0]["whisper"])
 	for _, want := range []string{"read across files were not asked", "not a clean answer"} {
 		if !strings.Contains(said, want) {
 			t.Errorf("the queued answer does not say %q:\n%s", want, said)

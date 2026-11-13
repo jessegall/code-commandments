@@ -57,7 +57,7 @@ func TestTwoSinsOnOneLineAreBothTold(t *testing.T) {
 		t.Fatalf("the judge left %d answer(s): %v", len(queued), queued)
 	}
 
-	told := asText(queued[0]["tell"])
+	told := asText(queued[0]["whisper"])
 
 	for _, sin := range []string{"docstring-in-method", "poetic-method-name"} {
 		if !strings.Contains(told, sin) {

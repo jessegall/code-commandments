@@ -37,11 +37,11 @@ func TestOneEditArrivingByBothRoutesIsAnsweredOnce(t *testing.T) {
 	second := drained(t, data)
 
 	for _, answer := range second {
-		if strings.Contains(asText(answer["tell"]), under) {
+		if strings.Contains(asText(answer["whisper"]), under) {
 			t.Fatalf("the same edit named %s a second time, so the agent is marked twice for one edit:\n%v", under, answer)
 		}
 
-		if cards, held := answer["cards"].([]any); held && len(cards) > 0 {
+		if cards, held := answer["raises"].([]any); held && len(cards) > 0 {
 			t.Fatalf("the same edit raised %d card(s) a second time:\n%v", len(cards), answer)
 		}
 	}

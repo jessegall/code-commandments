@@ -43,13 +43,12 @@ func TestASinfulBranchHoldsItsOwnMerge(t *testing.T) {
 	if err := json.Unmarshal([]byte(held), &answer); err != nil {
 		t.Fatalf("the hold answered %q: %v", held, err)
 	}
-	answer = asTheJournalSees(answer)
 
-	if answer["answer"] != "refuse" {
-		t.Errorf("the hold answered %v, want a refusal", answer["answer"])
+	if answer["refuse"] == nil {
+		t.Errorf("the hold answered %v, want a refusal", answer)
 	}
 
-	reason := asText(answer["reason"])
+	reason := asText(answer["refuse"])
 	if !strings.Contains(reason, "Lady Lovelace") || !strings.Contains(reason, "1 sin") {
 		t.Errorf("the reason reads %q, naming neither the worker nor what it carries", reason)
 	}
@@ -236,11 +235,11 @@ func TestAWorkerIsHeldBeforeItsWorkReachesTheAgent(t *testing.T) {
 	if err := json.Unmarshal([]byte(held), &answer); err != nil {
 		t.Fatalf("the hold answered %q: %v", held, err)
 	}
-	answer = asTheJournalSees(answer)
-	if answer["answer"] != "refuse" {
-		t.Errorf("the hold answered %v, want a refusal", answer["answer"])
+
+	if answer["refuse"] == nil {
+		t.Errorf("the hold answered %v, want a refusal", answer)
 	}
-	if reason := asText(answer["reason"]); !strings.Contains(reason, "Lady Lovelace") || !strings.Contains(reason, "1 sin") {
+	if reason := asText(answer["refuse"]); !strings.Contains(reason, "Lady Lovelace") || !strings.Contains(reason, "1 sin") {
 		t.Errorf("the reason reads %q, naming neither the worker nor what it carries", reason)
 	}
 }
@@ -334,5 +333,5 @@ func refusedBy(held string) bool {
 		return false
 	}
 
-	return asTheJournalSees(answer)["answer"] == "refuse"
+	return answer["refuse"] != nil
 }
