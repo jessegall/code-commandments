@@ -611,7 +611,7 @@ func ofNoLanguage(targets scope.Scope, languages []source.Language) bool {
 }
 
 func scannedLanguages(selected []detectors.Detector) []source.Language {
-	languages := []source.Language{source.PHP}
+	var languages []source.Language
 
 	for _, detector := range selected {
 		for _, language := range writtenIn(detectors.EnginesOf(detector)) {
