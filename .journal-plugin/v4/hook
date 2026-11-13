@@ -1,0 +1,5 @@
+#!/bin/sh
+# Frozen with v4/hook.py for journals before version 5. The agent journal runs this for every event the plugin hears; hook.py answers it, under the journal's own Python
+# when the journal names it and python3 on the PATH otherwise.
+python="${JOURNAL_PYTHON:-python3}"
+exec "$python" "$(dirname "$0")/hook.py" "$@"

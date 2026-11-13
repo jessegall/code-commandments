@@ -46,7 +46,8 @@ jobs:
           fi
 
           pinned="$(jq -r .env.COMMANDMENTS_RELEASE .journal-plugin/plugin.json)"
-          for manifest in journal-plugin*.json; do
+          # journal-plugin.json is frozen for journals before version 5 and fetches its own release for good.
+          for manifest in journal-plugin.*.json; do
             fetched="$(jq -r '.setup[] | .run' "$manifest" | sed -n 's/^COMMANDMENTS_RELEASE=\([^ ]*\) .*/\1/p' | head -1)"
             if [ "$fetched" != "$pinned" ]; then
               echo "$manifest fetches $fetched, not $pinned" >&2
@@ -166,7 +167,10 @@ jobs:
         # 63.6 GB. The tags and the notes stay, so the history reads as it did; only a version older than the
         # twenty newest can no longer be installed, which a consumer answers by moving to one that is.
         run: |
-          gh api repos/${{ github.repository }}/releases --paginate -q '.[].id' | tail -n +21 | while read -r release; do
+          # The release journal-plugin.json pins for journals before version 5 keeps its assets for good.
+          frozen="$(jq -r '.setup[] | .run' journal-plugin.json | sed -n 's/^COMMANDMENTS_RELEASE=\([^ ]*\) .*/\1/p' | head -1)"
+          gh api repos/${{ github.repository }}/releases --paginate -q '.[] | "\(.id) \(.tag_name)"' | tail -n +21 | while read -r release tag; do
+            [ "$tag" = "$frozen" ] && continue
             assets="$(gh api "repos/${{ github.repository }}/releases/$release/assets" --paginate -q '.[].id')"
 
             # Every release older than the first one with nothing left was pruned by an earlier run, so the walk
