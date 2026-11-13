@@ -80,6 +80,44 @@ class OneAgentsEditsGatherInOneWindow(unittest.TestCase):
             self.assertTrue(window.gather(b'{"n":2}'))
 
 
+class AnAgentHasAtMostOneLiveEditJudgingWaiting(unittest.TestCase):
+    def test_a_window_whose_run_still_waits_takes_every_edit_however_long_it_waits(self) -> None:
+        with tempfile.TemporaryDirectory() as data:
+            window = hook.EditWindow(Path(data), 7)
+            self.assertTrue(window.gather(b'{"n":1}'))
+            event = Path(data) / "event-1.json"
+            event.write_text("{}")
+            window.names(event)
+            long_ago = time.time() - 2 * hook.WINDOW_LEFT_OPEN_AFTER
+            os.utime(window.path(".open"), (long_ago, long_ago))
+
+            self.assertFalse(window.gather(b'{"n":2}'), "a second judging was queued beside one still waiting")
+
+            event.unlink()
+            self.assertTrue(window.gather(b'{"n":3}'), "a window whose run started and died was never opened again")
+
+    def test_a_run_that_never_started_frees_the_window_after_an_hour(self) -> None:
+        with tempfile.TemporaryDirectory() as data:
+            window = hook.EditWindow(Path(data), 7)
+            window.gather(b'{"n":1}')
+            event = Path(data) / "event-1.json"
+            event.write_text("{}")
+            window.names(event)
+            long_ago = time.time() - 2 * hook.QUEUED_AT_MOST
+            os.utime(event, (long_ago, long_ago))
+
+            self.assertTrue(window.gather(b'{"n":2}'))
+
+    def test_a_window_the_run_already_closed_is_not_opened_again_by_naming_it(self) -> None:
+        with tempfile.TemporaryDirectory() as data:
+            window = hook.EditWindow(Path(data), 7)
+            window.gather(b'{"n":1}')
+            window.path(".open").unlink()
+            window.names(Path(data) / "event-1.json")
+
+            self.assertFalse(window.path(".open").exists())
+
+
 class AJudgingIsQueuedThroughTheJournal(unittest.TestCase):
     def test_the_line_runs_the_binary_on_the_kept_event_in_the_agents_checkout(self) -> None:
         line = hook.judging_line("/bin/journal", Path("/data/events/event-1.json"), 7, Path("/plugin/bin/commandments-release"))

@@ -22,6 +22,7 @@ WORKER_ROLES = {"worker", "helper", "medior", "senior", "builder"}
 LIVE_EDITS, WORKERS, WORKER_EDITS = "judge_edits", "judge_worker_edits", "judge_workers"
 EVENTS, WINDOWS = "events", "windows"
 WINDOW_LEFT_OPEN_AFTER = 15 * 60
+QUEUED_AT_MOST = 60 * 60
 EVENT_KEPT_AT_MOST = 24 * 60 * 60
 
 
@@ -62,8 +63,10 @@ def judged_later(event: dict) -> bool:
 
 class EditWindow:
     """One agent's live edits gathered on disk while its window is open: the first edit opens it and queues the one
-    run that judges them, every later edit only joins it, and that run (the binary's) closes it when it takes them. A
-    window whose run died counts as closed once it has stood open far longer than any window lasts."""
+    run that judges them, every later edit only joins it, and that run (the binary's) closes it when it starts and
+    takes them all. So an agent has at most one live-edit judging waiting in the queue, however long it waits: the
+    window names that run's kept event, which the run removes as it starts. A window whose run never started counts as
+    closed after an hour, and one whose run died after starting once it has stood open far longer than any window."""
 
     def __init__(self, data: Path, agent: int) -> None:
         self.folder, self.agent = data / WINDOWS, agent
@@ -77,11 +80,26 @@ class EditWindow:
             fcntl.flock(lock, fcntl.LOCK_EX)
             with open(self.path(".edits"), "ab") as edits:
                 edits.write(edit.strip() + b"\n")
-            opened = self.path(".open")
-            if opened.exists() and time.time() - opened.stat().st_mtime < WINDOW_LEFT_OPEN_AFTER:
+            if self.waiting():
                 return False
-            opened.touch()
+            self.path(".open").write_text("")
             return True
+
+    def waiting(self) -> bool:
+        opened = self.path(".open")
+        if not opened.exists():
+            return False
+        named = Path(opened.read_text().strip() or "/nonexistent")
+        if named.is_file():
+            return time.time() - named.stat().st_mtime < QUEUED_AT_MOST
+        return time.time() - opened.stat().st_mtime < WINDOW_LEFT_OPEN_AFTER
+
+    def names(self, event: Path) -> None:
+        with open(self.path(".lock"), "a") as lock:
+            fcntl.flock(lock, fcntl.LOCK_EX)
+            opened = self.path(".open")
+            if opened.exists():
+                opened.write_text(str(event))
 
     def reopen(self) -> None:
         with open(self.path(".lock"), "a") as lock:
@@ -115,19 +133,19 @@ def judging_line(journal: str, event: Path, agent: int, binary: Path = BINARY) -
     return [journal, "plugin", "run", "--kind", "judge", *agent_named, "--", str(binary), "plugin-hook", f"--judge-event={event}"]
 
 
-def queued(line: bytes, agent: int, binary: Path = BINARY) -> bool:
+def queued(line: bytes, agent: int, binary: Path = BINARY) -> Path | None:
     """Keeps the event and starts the journal's run that judges it, detached, so the event's answer never waits."""
     data, journal = os.environ.get("JOURNAL_PLUGIN_DATA", ""), journal_program()
     if not data or not journal:
-        return False
+        return None
     event = kept_event(Path(data), line)
     try:
         subprocess.Popen(judging_line(journal, event, agent, binary), stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
                          stderr=subprocess.DEVNULL, start_new_session=True)
     except OSError:
         event.unlink(missing_ok=True)
-        return False
-    return True
+        return None
+    return event
 
 
 def judge_later(line: bytes, binary: Path = BINARY) -> None:
@@ -140,10 +158,14 @@ def judge_later(line: bytes, binary: Path = BINARY) -> None:
         return
     agent = event.get("agent") if isinstance(event.get("agent"), int) else 0
     window = EditWindow(Path(data), agent)
-    if event.get("event") == EDITED and not window.gather(line):
+    event_name = event.get("event")
+    if event_name == EDITED and not window.gather(line):
         return
-    if not queued(line, agent, binary):
+    event = queued(line, agent, binary)
+    if event is None:
         window.reopen()
+    elif event_name == EDITED:
+        window.names(event)
 
 
 def main() -> int:
