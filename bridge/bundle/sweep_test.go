@@ -118,3 +118,32 @@ func TestASweepAndAForgettingKeepAsLongAsTheProjectChose(t *testing.T) {
 		}
 	}
 }
+
+// A folder in use is marked used, and the folders beside it that no run used for the time the cache keeps are let go
+// of, at most once an hour: the bridge unpacked for an older release, an older release's binary.
+func TestUsingAFolderLetsGoOfTheUnusedFoldersBesideIt(t *testing.T) {
+	parent := t.TempDir()
+	used, old, recent := filepath.Join(parent, "v2"), filepath.Join(parent, "v1"), filepath.Join(parent, "v1b")
+	for _, folder := range []string{used, old, recent} {
+		if err := os.Mkdir(folder, 0o755); err != nil {
+			t.Fatal(err)
+		}
+	}
+	long := time.Now().Add(-cache.KeptFor() - time.Hour)
+	for _, folder := range []string{used, old} {
+		if err := os.Chtimes(folder, long, long); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	Used(used)
+
+	if _, err := os.Stat(old); err == nil {
+		t.Error("a folder no run used for the time the cache keeps is still there")
+	}
+	for _, kept := range []string{used, recent} {
+		if _, err := os.Stat(kept); err != nil {
+			t.Errorf("%s was let go of, though in use or used lately", filepath.Base(kept))
+		}
+	}
+}

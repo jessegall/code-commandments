@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/jessegall/code-commandments/bridge/bundle"
 	"github.com/jessegall/code-commandments/cache"
 	"github.com/jessegall/code-commandments/cli/git"
 	"github.com/jessegall/code-commandments/walk"
@@ -32,7 +33,10 @@ func SharedFolder(project string) string {
 	}
 	named := sha256.Sum256([]byte(project))
 
-	return filepath.Join(ours, "remembered", hex.EncodeToString(named[:8]))
+	folder := filepath.Join(ours, "remembered", hex.EncodeToString(named[:8]))
+	bundle.Used(folder)
+
+	return folder
 }
 
 // ConsumerRoot is the project a command run in cwd works on: the nearest folder above it holding a composer.json, short

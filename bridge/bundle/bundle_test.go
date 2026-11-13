@@ -5,6 +5,7 @@ import (
 	"maps"
 	"os"
 	"path/filepath"
+	"slices"
 	"runtime"
 	"testing"
 	"testing/fstest"
@@ -61,7 +62,9 @@ func TestAnArchivedBundleIsWrittenOutOnceWhole(t *testing.T) {
 	if kept, _ := os.ReadFile(filepath.Join(folder, "bridge.php")); string(kept) != "changed" {
 		t.Error("the second use wrote the bundle out again")
 	}
-	if siblings, _ := os.ReadDir(filepath.Dir(folder)); len(siblings) != 1 {
+	siblings, _ := os.ReadDir(filepath.Dir(folder))
+	siblings = slices.DeleteFunc(siblings, func(entry os.DirEntry) bool { return entry.Name() == sweptMark })
+	if len(siblings) != 1 {
 		t.Errorf("the cache holds %d entries beside the bundle's folder", len(siblings)-1)
 	}
 }

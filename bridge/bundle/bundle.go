@@ -82,6 +82,7 @@ func (b Bundle) Folder() (string, error) {
 		return "", err
 	}
 	folder := filepath.Join(ours, b.name, hex.EncodeToString(sum[:])[:16])
+	defer Used(folder)
 	if _, err := os.Stat(filepath.Join(folder, wholeMark)); err == nil {
 		return folder, nil
 	}
