@@ -26,42 +26,21 @@ from mypy.typestate import reset_global_state
 from mypy.util import decode_python_encoding
 
 
-def checkout_of(paths: list[str]) -> str:
-    """The checkout $paths lie in: the nearest folder holding a `.git`, or the first path's own folder."""
+def folder_of(paths: list[str]) -> str:
+    """The folder the first of $paths lies in: the checkout of a run that was not told one."""
     start = os.path.realpath(paths[0]) if paths else os.getcwd()
-    folder = start if os.path.isdir(start) else os.path.dirname(start)
-    while os.path.dirname(folder) != folder:
-        if os.path.exists(os.path.join(folder, ".git")):
-            return folder
-        folder = os.path.dirname(folder)
-    return start
+    return start if os.path.isdir(start) else os.path.dirname(start)
 
 
-def project_of(checkout: str) -> str:
-    """The project $checkout belongs to: itself, or for a git worktree the checkout it was cut from."""
-    marker = os.path.join(checkout, ".git")
-    if not os.path.isfile(marker):
-        return checkout
-    with open(marker, encoding="utf-8") as file:
-        written = file.read().strip()
-    if not written.startswith("gitdir:"):
-        return checkout
-    git_folder = os.path.realpath(os.path.join(checkout, written.removeprefix("gitdir:").strip()))
-    if os.path.basename(os.path.dirname(git_folder)) != "worktrees":
-        return checkout
-    return os.path.dirname(os.path.dirname(os.path.dirname(git_folder)))
-
-
-def cache_folder(paths: list[str], base: str | None) -> str:
-    """Where mypy keeps what it checked for the checkout of $paths, under $base (else the system's temporary folder).
-    mypy keys what it keeps by module name, so two checkouts holding different versions of one module would overwrite
-    each other's and recheck it on every run: each checkout keeps its own, a worktree's starting from a copy of what
-    its project's checkout holds."""
+def cache_folder(checkout: str, project: str | None, base: str | None) -> str:
+    """Where mypy keeps what it checked for $checkout, under $base (else the system's temporary folder). mypy keys what
+    it keeps by module name, so two checkouts holding different versions of one module would overwrite each other's and
+    recheck it on every run: each checkout keeps its own, a worktree's starting from a copy of what its $project's
+    checkout holds. Git's answer for both is the caller's: the bridge is told them."""
     root = base or tempfile.gettempdir()
-    checkout = checkout_of(paths)
     folder = os.path.join(root, folder_name(checkout))
-    if not os.path.isdir(folder):
-        copied_from(os.path.join(root, folder_name(project_of(checkout))), folder)
+    if not os.path.isdir(folder) and project:
+        copied_from(os.path.join(root, folder_name(project)), folder)
     os.makedirs(folder, exist_ok=True)
     os.utime(folder)
     return folder
@@ -168,15 +147,19 @@ class CheckedProject:
 
 class Session:
     """The files a request names, compiled afresh, with everything they import read from mypy's cache, which is
-    kept under $base."""
+    kept under $base for the $checkout the files lie in, cut from $project."""
 
-    def __init__(self, base: str | None = None) -> None:
-        self.base = base
+    def __init__(self, base: str | None = None, checkout: str | None = None, project: str | None = None) -> None:
+        self.base, self.checkout, self.project = base, checkout, project
+
+    def checkout_of(self, paths: list[str]) -> str:
+        """The checkout the run was told, else the folder $paths lie in."""
+        return self.checkout or folder_of(paths)
 
     def compiled(self, asked: list[str], found: list[str]) -> CheckedProject:
         """The modules $asked compiled afresh, everything they import read from mypy's cache or checked once, the
         project's other modules ($found) there to be imported."""
-        chosen = options(cache_folder(found or asked, self.base))
+        chosen = options(cache_folder(self.checkout_of(found or asked), self.project, self.base))
         chosen.mypy_path = base_folders(found)
         sources_asked = read_afresh(sources(asked, chosen))
         result = built(sources_asked, chosen)

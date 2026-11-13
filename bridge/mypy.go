@@ -29,12 +29,13 @@ const mypyPythonCheck = "import sys; print(\"%s %s\" % (sys.version.split()[0], 
 var mypyPythons = []string{"python3.14", "python3.13", "python3.12", "python3.11", "python3.10", "python3", "python"}
 
 func Mypy() ([]string, error) {
-	return MypyCachedIn("")
+	return MypyCachedIn("", "", "")
 }
 
 // MypyCachedIn is the Python bridge keeping mypy's cache under caches, one folder per checkout, or under the user's
-// cache when caches is empty.
-func MypyCachedIn(caches string) ([]string, error) {
+// cache when caches is empty. It is told the checkout its files lie in and the project that checkout was cut from, as
+// git answers them, so a worktree starts from a copy of its project's cache.
+func MypyCachedIn(caches, checkout, project string) ([]string, error) {
 	folder, err := mypyTree.Folder()
 	if err != nil {
 		return nil, err
@@ -46,6 +47,9 @@ func MypyCachedIn(caches string) ([]string, error) {
 	if caches != "" {
 		bundle.ForgetUnused(caches, time.Now())
 		tree = append(tree, "--mypy-cache="+caches)
+	}
+	if checkout != "" {
+		tree = append(tree, "--checkout="+checkout, "--project="+project)
 	}
 	if python := os.Getenv("COMMANDMENTS_MYPY_PYTHON"); python != "" {
 		return append([]string{python}, tree...), nil

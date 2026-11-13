@@ -96,10 +96,10 @@ func TestABuildReplacesThePythonAFailedBuildLeftBehind(t *testing.T) {
 	}
 }
 
-func mypyCacheFolderOf(t *testing.T, python, data, path string) string {
+func mypyCacheFolderOf(t *testing.T, python, data, checkout, project string) string {
 	t.Helper()
 
-	read := exec.Command(python, "-c", "import sys; sys.path.insert(0, 'mypy'); import session; print(session.cache_folder([sys.argv[1]], sys.argv[2]))", path, data)
+	read := exec.Command(python, "-c", "import sys; sys.path.insert(0, 'mypy'); import session; print(session.cache_folder(sys.argv[1], sys.argv[2], sys.argv[3]))", checkout, project, data)
 
 	out, err := read.CombinedOutput()
 	if err != nil {
@@ -142,11 +142,11 @@ func TestAWorktreeStartsFromACopyOfItsProjectsMypyCache(t *testing.T) {
 	gitIn(t, project, "-c", "user.name=a", "-c", "user.email=a@b", "commit", "-q", "--allow-empty", "-m", "first")
 	gitIn(t, project, "worktree", "add", "-q", worktree)
 
-	here := mypyCacheFolderOf(t, python, data, project)
+	here := mypyCacheFolderOf(t, python, data, project, project)
 	if err := os.WriteFile(filepath.Join(here, "checked.meta.ff"), []byte("kept"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	there := mypyCacheFolderOf(t, python, data, worktree)
+	there := mypyCacheFolderOf(t, python, data, worktree, project)
 	if here == there {
 		t.Fatalf("the worktree caches in the project's own folder %s, so the two overwrite each other's modules", here)
 	}
@@ -207,7 +207,7 @@ func TestTwoProjectsKeepTheirOwnMypyCache(t *testing.T) {
 
 	one, other, data := t.TempDir(), t.TempDir(), t.TempDir()
 
-	if mypyCacheFolderOf(t, python, data, one) == mypyCacheFolderOf(t, python, data, other) {
+	if mypyCacheFolderOf(t, python, data, one, one) == mypyCacheFolderOf(t, python, data, other, other) {
 		t.Error("two projects write into one mypy cache")
 	}
 }

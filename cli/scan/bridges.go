@@ -12,6 +12,7 @@ import (
 	"github.com/jessegall/code-commandments/bridge"
 	"github.com/jessegall/code-commandments/bridge/gotree"
 	"github.com/jessegall/code-commandments/cli"
+	"github.com/jessegall/code-commandments/cli/git"
 	"github.com/jessegall/code-commandments/cli/source"
 	"github.com/jessegall/code-commandments/cli/workspace"
 	"github.com/jessegall/code-commandments/contract"
@@ -396,9 +397,18 @@ var GoBridge = Bridge{Kind: "go", Word: "go", Languages: []source.Language{sourc
 }
 
 var Python = Bridge{Kind: "mypy", Word: "python", Languages: []source.Language{source.Python}, Label: "Python",
-	Reach:    Process{Command: func(roots []string) ([]string, error) { return bridge.MypyCachedIn(mypyCacheOf(roots)) }},
+	Reach:    Process{Command: mypyFor},
 	Notice:   nothingToSay,
 	Identity: bridge.MypyIdentity,
+}
+
+// mypyFor is the Python bridge for the roots, told the checkout they lie in and its project as git answers them.
+func mypyFor(roots []string) ([]string, error) {
+	if len(roots) == 0 {
+		return bridge.Mypy()
+	}
+
+	return bridge.MypyCachedIn(mypyCacheOf(roots), git.Root(roots[0]), git.ProjectRoot(roots[0]))
 }
 
 // mypyCacheOf is where mypy keeps what it checked for the project the roots lie in: beside the project's other kept

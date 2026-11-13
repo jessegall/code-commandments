@@ -29,7 +29,7 @@ func (c Install) Run(in *cli.Input, console cli.Console) (int, error) {
 		return 0, err
 	}
 
-	root := ConsumerRoot(cwd)
+	root := workspace.ConsumerRoot(cwd)
 	if root == "" {
 		return help.Usage(console.Err, c, "no composer.json or git repository at or above "+cwd+" — there is no project here to wire."), nil
 	}

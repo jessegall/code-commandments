@@ -4,7 +4,6 @@ import (
 	"github.com/jessegall/code-commandments/cli/binary"
 	"io/fs"
 	"os"
-	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -19,7 +18,6 @@ import (
 	"github.com/jessegall/code-commandments/engine/php/packages"
 	"github.com/jessegall/code-commandments/skill"
 	"github.com/jessegall/code-commandments/skills"
-	"github.com/jessegall/code-commandments/walk"
 )
 
 const width = 88
@@ -165,7 +163,7 @@ func reportedHere(rule string) []reported.Row {
 
 func published(teaching skill.Definition) string {
 	cwd, _ := os.Getwd()
-	library := os.DirFS(workspace.At(consumerRoot(cwd), "").LibraryDir() + "/" + teaching.ID())
+	library := os.DirFS(workspace.At(workspace.ConsumerRoot(cwd), "").LibraryDir() + "/" + teaching.ID())
 	carried, _ := fs.Sub(skills.Files, "commandments/"+teaching.Slug)
 
 	for _, relative := range []string{"reference/examples.md", "SKILL.md"} {
@@ -177,28 +175,6 @@ func published(teaching skill.Definition) string {
 	}
 
 	return ""
-}
-
-func consumerRoot(cwd string) string {
-	home := resolve(os.Getenv("HOME"))
-
-	for dir := resolve(cwd); dir != "" && dir != filepath.Dir(dir); dir = resolve(filepath.Dir(dir)) {
-		if dir == home {
-			return "."
-		}
-
-		if info, err := os.Stat(dir + "/composer.json"); err == nil && info.Mode().IsRegular() {
-			return dir
-		}
-	}
-
-	return "."
-}
-
-func resolve(path string) string {
-	absolute, _ := walk.Resolved(path)
-
-	return absolute
 }
 
 func heading(console cli.Console, title string) {

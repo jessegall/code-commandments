@@ -23,7 +23,7 @@ from typing import Iterator
 from mypy.build import State
 from mypy.version import __version__ as MYPY_VERSION
 
-from session import ResolvedType, Session, TypedModule, checkout_of, real_path, spans, states
+from session import ResolvedType, Session, TypedModule, real_path, spans, states
 
 OPERATORS = {
     ast.Add: "+", ast.Sub: "-", ast.Mult: "*", ast.Div: "/", ast.FloorDiv: "//", ast.Mod: "%", ast.Pow: "**",
@@ -694,7 +694,7 @@ def stream(session: Session, paths: list[str], write: list[str]) -> Iterator[dic
     project = session.compiled(asked, found)
     named = {real_path(s.path): s.module for s in project.sources if s.path}
     checked = states(project.graph, set(named))
-    checkout = checkout_of(paths)
+    checkout = session.checkout_of(paths)
     pins = pinned(checkout)
     seen = resolved = unjoined = files = 0
     for path in asked:
@@ -839,7 +839,7 @@ def main(argv: list[str]) -> int:
     if "--declares" in argv:
         sys.stdout.write(json.dumps(declared().to_json(), ensure_ascii=False) + "\n")
         return 0
-    session = Session(option(argv, "--mypy-cache="))
+    session = Session(option(argv, "--mypy-cache="), option(argv, "--checkout="), option(argv, "--project="))
     if "--serve" in argv:
         leaves_with_its_parent()
         for request in sys.stdin:

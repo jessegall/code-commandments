@@ -13,12 +13,10 @@ import (
 	"github.com/jessegall/code-commandments/cli/atomic"
 	"github.com/jessegall/code-commandments/cli/config"
 	"github.com/jessegall/code-commandments/cli/custom"
-	"github.com/jessegall/code-commandments/cli/git"
 	"github.com/jessegall/code-commandments/cli/help"
 	"github.com/jessegall/code-commandments/cli/library"
 	"github.com/jessegall/code-commandments/cli/untrack"
 	"github.com/jessegall/code-commandments/cli/workspace"
-	"github.com/jessegall/code-commandments/walk"
 )
 
 var retiredCommands = []string{"until.md", "stop-condition.md"}
@@ -41,7 +39,7 @@ func (c Command) Run(in *cli.Input, console cli.Console) (int, error) {
 		return 0, err
 	}
 
-	root := ConsumerRoot(cwd)
+	root := workspace.ConsumerRoot(cwd)
 	if root == "" {
 		return help.Usage(console.Err, c, "no composer.json or git repository at or above "+cwd+" — sync publishes into a project, and would otherwise write into whatever directory you happen to be standing in."), nil
 	}
@@ -186,20 +184,4 @@ func warn(console cli.Console, err error) {
 	if err != nil {
 		console.Warn("⚠ " + err.Error())
 	}
-}
-
-func ConsumerRoot(cwd string) string {
-	home, _ := os.UserHomeDir()
-
-	if real, err := walk.Resolved(cwd); err == nil {
-		cwd = real
-	}
-
-	for dir := cwd; dir != filepath.Dir(dir) && dir != home; dir = filepath.Dir(dir) {
-		if info, err := os.Stat(filepath.Join(dir, "composer.json")); err == nil && info.Mode().IsRegular() {
-			return dir
-		}
-	}
-
-	return git.Root(cwd)
 }
