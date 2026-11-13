@@ -13,6 +13,7 @@ import (
 
 	"github.com/jessegall/code-commandments/catalog"
 	"github.com/jessegall/code-commandments/cli"
+	"github.com/jessegall/code-commandments/cli/sidebyside"
 	"github.com/jessegall/code-commandments/detectors"
 	"github.com/jessegall/code-commandments/engine"
 )
@@ -31,36 +32,17 @@ type Task struct {
 
 func Run(tasks []Task, parallel int, progress *cli.Progress, warn io.Writer) Judgement {
 	results := make([]attempt, len(tasks))
-	workers := max(1, min(parallel, runtime.NumCPU(), len(tasks)))
-	next := make(chan int)
-
-	var wait sync.WaitGroup
 	var drawing sync.Mutex
 
 	progress.Start()
 
-	for range workers {
-		wait.Add(1)
+	sidebyside.Each(len(tasks), min(parallel, runtime.NumCPU()), func(index int) {
+		results[index] = try(tasks[index], warn)
 
-		go func() {
-			defer wait.Done()
-
-			for index := range next {
-				results[index] = try(tasks[index], warn)
-
-				drawing.Lock()
-				progress.Advance("")
-				drawing.Unlock()
-			}
-		}()
-	}
-
-	for index := range tasks {
-		next <- index
-	}
-
-	close(next)
-	wait.Wait()
+		drawing.Lock()
+		progress.Advance("")
+		drawing.Unlock()
+	})
 
 	var judgement Judgement
 

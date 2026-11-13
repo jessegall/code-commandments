@@ -8,6 +8,7 @@ import (
 	"github.com/jessegall/code-commandments/cli/config"
 	"github.com/jessegall/code-commandments/cli/git"
 	"github.com/jessegall/code-commandments/cli/scan"
+	"github.com/jessegall/code-commandments/cli/sidebyside"
 	"github.com/jessegall/code-commandments/cli/source"
 	"github.com/jessegall/code-commandments/detectors"
 	"github.com/jessegall/code-commandments/engine"
@@ -42,9 +43,11 @@ func judgedWhole(checkout string, project config.Config, rules []detectors.Detec
 	asked := map[string]map[string]bool{}
 	lines := map[string]git.ChangedLines{}
 	reported := codebase.Reporting(files...)
+	found := make([][]engine.Match, len(rules))
+	sidebyside.Each(len(rules), project.Parallel, func(at int) { found[at] = safely(rules[at], reported) })
 	var marks []SinMark
-	for _, rule := range rules {
-		for _, match := range safely(rule, reported) {
+	for at, rule := range rules {
+		for _, match := range found[at] {
 			file := match.File()
 			if !slices.Contains(files, file) || !askedOf(asked, rulesFor, file)[detectors.IdentityOf(rule)] {
 				continue
@@ -85,7 +88,8 @@ var readWhole = func(checkout string, project config.Config, changed []string) (
 		roots = []string{checkout}
 	}
 
-	return scan.Walk(roots, project.Exclusions(checkout)).Only(source.Reaching(changed, reads(checkout, project))...).Load()
+	return scan.Walk(roots, project.Exclusions(checkout)).Only(source.Reaching(changed, reads(checkout, project))...).
+		ReadingAtOnce(project.ReadAtOnce).Load()
 }
 
 // askedOf is the rules a file is judged by, by identity, worked out once a file.

@@ -102,6 +102,18 @@
     {
       "event": "core.plugins.plugin.config_changed",
       "commit": ".journal-plugin/hook"
+    },
+    {
+      "event": "core.plugins.plugin_setting.created",
+      "commit": ".journal-plugin/hook"
+    },
+    {
+      "event": "core.plugins.plugin_setting.updated",
+      "commit": ".journal-plugin/hook"
+    },
+    {
+      "event": "core.plugins.plugin_setting.deleted",
+      "commit": ".journal-plugin/hook"
     }
   ],
   "aliases": [

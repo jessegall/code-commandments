@@ -34,7 +34,7 @@ var EventKinds = []EventKind{
 	{Key: "subagent_started", Names: []string{"subagent_started"}, Hook: "SubagentStart"},
 	{Key: "prompt_submitted", Names: []string{"prompt_submitted"}, Hook: "UserPromptSubmit"},
 	{Key: "compacting", Names: []string{"compacting"}, Hook: "PreCompact"},
-	{Key: updatedEvent, Names: []string{updatedEvent, "plugin.update"}},
+	{Key: updatedEvent, Names: []string{updatedEvent, "plugin.update", "core.plugins.plugin_setting.created", "core.plugins.plugin_setting.updated", "core.plugins.plugin_setting.deleted", "plugin_setting.created", "plugin_setting.updated", "plugin_setting.deleted", "plugin_setting.create", "plugin_setting.update", "plugin_setting.delete"}},
 	{Key: deliveringEvent, Names: []string{deliveringEvent, "suites.coding.workers.worker_delivering"}, GuardedBy: handInsKey, HandedIn: true},
 	{Key: landedEvent, Names: []string{landedEvent, "worker_worktree.merge"}, Merged: true},
 	{Key: requestedEvent, Names: []string{requestedEvent, "merge_request.create"}, GuardedBy: "judge_before_merge"},

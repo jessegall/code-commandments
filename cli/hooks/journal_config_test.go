@@ -201,3 +201,27 @@ func TestAFileTheUpgradeCannotTrustIsSaidAndNotWritten(t *testing.T) {
 		t.Errorf("the refusal cost the project the switches the upgrade had already applied: %d", judged.Parallel)
 	}
 }
+
+// A setting changed in the journal reaches the config at once: the journal tells the plugin of each setting it saves,
+// and the plugin writes the chosen values into config.json, as an upgrade does.
+func TestASavedSettingIsWrittenIntoTheConfigAtOnce(t *testing.T) {
+	for _, event := range []string{"core.plugins.plugin_setting.updated", "plugin_setting.updated", "core.plugins.plugin_setting.created"} {
+		project := t.TempDir()
+		t.Setenv(journalProject, project)
+		t.Setenv(journalPluginDir, t.TempDir())
+		t.Setenv(journalSettings, `{"judge_parallel": 4, "judge_read_at_once": 3}`)
+
+		var errs bytes.Buffer
+		if _, apart, _, err := Apart4(&cli.Input{}, cli.Console{Out: &bytes.Buffer{}, Err: &errs}, map[string]any{"event": event}); err != nil || !apart {
+			t.Fatalf("%s was not answered by writing the config: %v %s", event, err, errs.String())
+		}
+
+		judged, err := config.Load(project)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if judged.Parallel != 4 || judged.ReadAtOnce != 3 {
+			t.Errorf("after %s the config judges %d rules and reads %d files at once, not 4 and 3", event, judged.Parallel, judged.ReadAtOnce)
+		}
+	}
+}
