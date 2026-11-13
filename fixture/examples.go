@@ -11,6 +11,7 @@ import (
 
 	"github.com/jessegall/code-commandments/catalog"
 	"github.com/jessegall/code-commandments/cli/source"
+	"github.com/jessegall/code-commandments/contract"
 	"github.com/jessegall/code-commandments/detectors"
 	"github.com/jessegall/code-commandments/engine"
 	"github.com/jessegall/code-commandments/skill/render"
@@ -403,7 +404,7 @@ func innermost(spans [][2]int, start, end int) ([2]int, bool) {
 
 func commentsAbove(lines []string, at int, language source.Language) []string {
 	var comments []string
-	for n := at - 1; n >= 1 && strings.TrimSpace(lines[n-1]) != "" && language.IsCommentLine(lines[n-1]); n-- {
+	for n := at - 1; n >= 1 && strings.TrimSpace(lines[n-1]) != "" && contract.IsCommentLine(language.Written(), lines[n-1]); n-- {
 		comments = append([]string{lines[n-1]}, comments...)
 	}
 
@@ -418,7 +419,7 @@ func markersAbove(lines []string, at int, tag Tag, language source.Language) []s
 			continue
 		}
 		found := markerWord.FindStringSubmatch(text)
-		if found == nil && language.IsCommentLine(lines[n-1]) {
+		if found == nil && contract.IsCommentLine(language.Written(), lines[n-1]) {
 			continue
 		}
 		if found == nil {
@@ -433,7 +434,7 @@ func markersAbove(lines []string, at int, tag Tag, language source.Language) []s
 }
 
 func isMarkerLine(line string, language source.Language) bool {
-	return language.IsCommentLine(line) && markerWord.MatchString(strings.TrimSpace(line))
+	return contract.IsCommentLine(language.Written(), line) && markerWord.MatchString(strings.TrimSpace(line))
 }
 
 func forKeys(marked sources, keys []string) []Marked {
@@ -696,7 +697,7 @@ func exampleFiles(root string) examples {
 		language := source.OfFile(file)
 		lines := strings.Split(string(raw), "\n")
 		for _, line := range lines {
-			if !language.IsCommentLine(line) {
+			if !contract.IsCommentLine(language.Written(), line) {
 				continue
 			}
 			marker := exampleMarker.FindStringSubmatch(words(line))
@@ -792,7 +793,7 @@ func isCeremony(line string, language source.Language) bool {
 		return true
 	}
 	for _, any := range source.Languages {
-		if any.IsCommentLine(line) && markerOnly.MatchString(strings.TrimSpace(words(line))) {
+		if contract.IsCommentLine(any.Written(), line) && markerOnly.MatchString(strings.TrimSpace(words(line))) {
 			return true
 		}
 	}
