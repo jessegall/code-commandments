@@ -6,7 +6,7 @@ import (
 )
 
 func Coloured(stream io.Writer) io.Writer {
-	if os.Getenv("NO_COLOR") == "" && (isTerminal(stream) || os.Getenv("CLICOLOR_FORCE") != "" && os.Getenv("CLICOLOR_FORCE") != "0") {
+	if os.Getenv("NO_COLOR") == "" && (isTerminal(stream) || IsRelayed() || os.Getenv("CLICOLOR_FORCE") != "" && os.Getenv("CLICOLOR_FORCE") != "0") {
 		return stream
 	}
 

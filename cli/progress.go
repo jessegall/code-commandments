@@ -52,6 +52,14 @@ func Watched() bool {
 	return os.Getenv(JournalReport) != "" || os.Getenv(PlainProgress) != ""
 }
 
+// Relayed names a run whose lines a judge in a terminal passes on: its progress comes as plain lines that judge draws
+// as a bar, and everything else as a terminal shows it, colour and layout included.
+const Relayed = "COMMANDMENTS_RELAYED"
+
+func IsRelayed() bool {
+	return os.Getenv(Relayed) != ""
+}
+
 // ProgressRelay is the error stream of a judging done for another run: what the judging says goes to the stream it holds, and its progress lines go to that run as they are made.
 type ProgressRelay struct {
 	io.Writer
@@ -72,7 +80,7 @@ func NewProgress(stream io.Writer) *Progress {
 	}
 
 	terminal := isTerminal(stream)
-	plain := !terminal && Watched()
+	plain := !terminal && (Watched() || IsRelayed())
 
 	return &Progress{stream: stream, enabled: terminal || plain, plain: plain, total: 1, lastFilled: -1, lastShare: -1}
 }

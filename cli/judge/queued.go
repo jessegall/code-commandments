@@ -41,7 +41,12 @@ func throughTheQueue(space workspace.Workspace, cwd string, in *cli.Input, conso
 		return 0, false
 	}
 
-	line := append([]string{"plugin", "queue", workspace.JournalPlugin, "--kind", judgeKind, "--checkout", cwd, "--", "env", queuedMark + "=1", cli.PlainProgress + "=1", self, judgeKind}, in.Raw()...)
+	shown := cli.PlainProgress
+	if cli.NewProgress(console.Err).Live() {
+		shown = cli.Relayed
+	}
+
+	line := append([]string{"plugin", "queue", workspace.JournalPlugin, "--kind", judgeKind, "--checkout", cwd, "--", "env", queuedMark + "=1", shown + "=1", self, judgeKind}, in.Raw()...)
 	run := exec.Command(journal, line...)
 	run.Dir, run.Stdin, run.Stderr = cwd, os.Stdin, console.Err
 	output, err := run.StdoutPipe()

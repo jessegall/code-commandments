@@ -109,3 +109,26 @@ func TestAPlainProgressLineReadsBackAsTheBarItCounts(t *testing.T) {
 		}
 	}
 }
+
+func TestARelayedRunWritesItsProgressAsLinesAndKeepsItsColour(t *testing.T) {
+	t.Setenv(cli.PlainProgress, "")
+	t.Setenv(cli.JournalReport, "")
+	t.Setenv("NO_COLOR", "")
+	t.Setenv(cli.Relayed, "1")
+
+	written := &strings.Builder{}
+	cli.NewProgress(written).At("reading", 3, 12)
+	if written.String() != "reading 3/12\n" {
+		t.Errorf("a relayed run's progress reads %q, not a line its terminal judge can redraw", written.String())
+	}
+
+	coloured := &strings.Builder{}
+	fmt.Fprint(cli.Coloured(coloured), "\033[1msin\033[0m")
+	if coloured.String() != "\033[1msin\033[0m" {
+		t.Errorf("a relayed run writes %q, its colour stripped", coloured.String())
+	}
+
+	if cli.Watched() {
+		t.Error("a relayed run counts as watched by the journal, so it prints the journal's report instead of the terminal's")
+	}
+}
