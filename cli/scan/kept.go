@@ -516,7 +516,7 @@ func languageOf(header contract.Header, files []*contract.File) contract.Languag
 }
 
 func (k *keptLines) keepHeader(header contract.Header) {
-	if _, err := os.Stat(k.headerPath()); err == nil {
+	if walk.Exists(k.headerPath()) {
 		return
 	}
 	header.Roots = nil

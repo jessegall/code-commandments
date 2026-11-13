@@ -16,6 +16,8 @@ import (
 	"sort"
 
 	"github.com/jessegall/code-commandments/cache"
+	"github.com/jessegall/code-commandments/cli/atomic"
+	"github.com/jessegall/code-commandments/walk"
 )
 
 // Bundle is a folder of sources the binary carries.
@@ -83,7 +85,7 @@ func (b Bundle) Folder() (string, error) {
 	}
 	folder := filepath.Join(ours, b.name, hex.EncodeToString(sum[:])[:16])
 	defer cache.Used(folder)
-	if _, err := os.Stat(filepath.Join(folder, wholeMark)); err == nil {
+	if walk.Exists(filepath.Join(folder, wholeMark)) {
 		return folder, nil
 	}
 	files, err := b.files()
@@ -93,8 +95,8 @@ func (b Bundle) Folder() (string, error) {
 	if err := os.MkdirAll(filepath.Dir(folder), 0o755); err != nil {
 		return "", err
 	}
-	if _, err := os.Stat(folder); err == nil {
-		return folder, heal(folder, files)
+	if walk.Exists(folder) {
+		return folder, write(folder, files)
 	}
 	draft, err := os.MkdirTemp(filepath.Dir(folder), ".unpacking-")
 	if err != nil {
@@ -109,61 +111,22 @@ func (b Bundle) Folder() (string, error) {
 			return "", err
 		}
 		if _, held := os.Stat(filepath.Join(folder, wholeMark)); held != nil {
-			return folder, heal(folder, files)
+			return folder, write(folder, files)
 		}
 	}
 
 	return folder, nil
 }
 
+// write writes every file of the bundle whole, then the mark that says the folder is whole.
 func write(folder string, files map[string][]byte) error {
 	for name, content := range files {
-		target := filepath.Join(folder, filepath.FromSlash(name))
-		if err := os.MkdirAll(filepath.Dir(target), 0o755); err != nil {
-			return err
-		}
-		if err := os.WriteFile(target, content, 0o644); err != nil {
+		if err := atomic.Write(filepath.Join(folder, filepath.FromSlash(name)), string(content)); err != nil {
 			return err
 		}
 	}
 
-	return os.WriteFile(filepath.Join(folder, wholeMark), nil, 0o644)
-}
-
-func heal(folder string, files map[string][]byte) error {
-	for name, content := range files {
-		target := filepath.Join(folder, filepath.FromSlash(name))
-		if err := os.MkdirAll(filepath.Dir(target), 0o755); err != nil {
-			return err
-		}
-		draft, err := os.CreateTemp(filepath.Dir(target), ".writing-")
-		if err != nil {
-			return err
-		}
-		if _, err := draft.Write(content); err != nil {
-			draft.Close()
-			os.Remove(draft.Name())
-
-			return err
-		}
-		if err := draft.Close(); err != nil {
-			os.Remove(draft.Name())
-
-			return err
-		}
-		if err := os.Chmod(draft.Name(), 0o644); err != nil {
-			os.Remove(draft.Name())
-
-			return err
-		}
-		if err := os.Rename(draft.Name(), target); err != nil {
-			os.Remove(draft.Name())
-
-			return err
-		}
-	}
-
-	return os.WriteFile(filepath.Join(folder, wholeMark), nil, 0o644)
+	return atomic.Write(filepath.Join(folder, wholeMark), "")
 }
 
 func writable(folder string) error {

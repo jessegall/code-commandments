@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/jessegall/code-commandments/cli/atomic"
 	"github.com/jessegall/code-commandments/walk"
 )
 
@@ -42,7 +43,7 @@ func dueForSweep(folder string, now time.Time) bool {
 	if info, err := os.Stat(mark); err == nil && now.Sub(info.ModTime()) < sweptEvery {
 		return false
 	}
-	if os.MkdirAll(folder, 0o755) == nil && os.WriteFile(mark, nil, 0o644) == nil {
+	if atomic.Write(mark, "") == nil {
 		os.Chtimes(mark, now, now)
 	}
 

@@ -13,6 +13,7 @@ import (
 	"github.com/jessegall/code-commandments/bridge/bundle"
 	"github.com/jessegall/code-commandments/cache"
 	"github.com/jessegall/code-commandments/cli/atomic"
+	"github.com/jessegall/code-commandments/walk"
 )
 
 //go:embed mypy/tree.py mypy/session.py mypy/requirements.txt
@@ -59,7 +60,7 @@ func MypyCachedIn(caches, checkout, project string) ([]string, error) {
 	if runtime.GOOS == "windows" {
 		python = filepath.Join(folder, "venv", "Scripts", "python.exe")
 	}
-	if _, err := os.Stat(filepath.Join(folder, "ready")); err == nil {
+	if walk.Exists(filepath.Join(folder, "ready")) {
 		return append([]string{python}, tree...), nil
 	}
 
@@ -118,7 +119,7 @@ func buildMypy(folder string) error {
 	release := atomic.Hold(filepath.Join(folder, ".building"))
 	defer release()
 
-	if _, err := os.Stat(filepath.Join(folder, "ready")); err == nil {
+	if walk.Exists(filepath.Join(folder, "ready")) {
 		return nil
 	}
 
@@ -141,5 +142,5 @@ func buildMypy(folder string) error {
 		}
 	}
 
-	return os.WriteFile(filepath.Join(folder, "ready"), nil, 0o644)
+	return atomic.Write(filepath.Join(folder, "ready"), "")
 }

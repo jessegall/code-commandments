@@ -8,10 +8,12 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/jessegall/code-commandments/cli/atomic"
 	"github.com/jessegall/code-commandments/cli/dashboard"
 	"github.com/jessegall/code-commandments/cli/git"
 	"github.com/jessegall/code-commandments/cli/jsonfile"
 	"github.com/jessegall/code-commandments/cli/source"
+	"github.com/jessegall/code-commandments/walk"
 )
 
 // Moment is one moment the agent journal hands its plugin: which hook fired, for which session and tool.
@@ -356,7 +358,7 @@ func (a Announced) SettleAsked(root string, read []string, marks []SinMark, aske
 			continue
 		}
 
-		if _, err := os.Stat(filepath.Join(root, file)); os.IsNotExist(err) {
+		if !walk.Exists(filepath.Join(root, file)) {
 			gone[file] = true
 			files = append(files, file)
 		}
@@ -501,7 +503,7 @@ func (a Announced) keep() {
 	}
 
 	if err == nil {
-		os.WriteFile(a.path, []byte(text), 0o666)
+		atomic.Write(a.path, text)
 	}
 }
 

@@ -9,6 +9,7 @@ import (
 	"github.com/jessegall/code-commandments/cli/hooks"
 	"github.com/jessegall/code-commandments/cli/jsonfile"
 	"github.com/jessegall/code-commandments/cli/workspace"
+	"github.com/jessegall/code-commandments/walk"
 )
 
 // Install is `install`: wire a project up once, then sync it.
@@ -34,7 +35,7 @@ func (c Install) Run(in *cli.Input, console cli.Console) (int, error) {
 		return help.Usage(console.Err, c, "no composer.json or git repository at or above "+cwd+" — there is no project here to wire."), nil
 	}
 
-	if composer := root + "/composer.json"; fileExists(composer) {
+	if composer := root + "/composer.json"; walk.IsFile(composer) {
 		if _, read := jsonfile.Read(composer); !read {
 			return help.Usage(console.Err, c, composer+" is not readable JSON — fix it first; rewriting it from here would throw away everything it declares."), nil
 		}
@@ -67,10 +68,4 @@ func (c Install) Run(in *cli.Input, console cli.Console) (int, error) {
 	defer release()
 
 	return 0, Sync(root, console)
-}
-
-func fileExists(path string) bool {
-	info, err := os.Stat(path)
-
-	return err == nil && info.Mode().IsRegular()
 }

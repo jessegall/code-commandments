@@ -7,6 +7,8 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+
+	"github.com/jessegall/code-commandments/cli/atomic"
 )
 
 const binaryVariable = "STORY_BINARY"
@@ -142,7 +144,7 @@ func placed(path string, file PlainFile) error {
 		return os.Symlink(file.Link, path)
 	}
 
-	return os.WriteFile(path, []byte(file.Text), 0o644)
+	return atomic.Write(path, file.Text)
 }
 
 func (p *PlainProject) git(args ...string) {

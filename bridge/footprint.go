@@ -5,6 +5,8 @@ import (
 	"os/exec"
 	"strconv"
 	"strings"
+
+	"github.com/jessegall/code-commandments/walk"
 )
 
 var footprintOf = func(pid int) int {
@@ -16,7 +18,7 @@ func Footprint(pids ...int) int {
 		return 0
 	}
 
-	if _, err := os.Stat("/proc/self/status"); err == nil {
+	if walk.Exists("/proc/self/status") {
 		return footprintFromProc(pids)
 	}
 

@@ -29,7 +29,7 @@ const (
 func Root(path string) string {
 	dir := path
 
-	if info, err := os.Stat(path); err != nil || !info.IsDir() {
+	if !walk.IsFolder(path) {
 		dir = filepath.Dir(path)
 	}
 
@@ -91,7 +91,7 @@ func ProjectRoot(path string) string {
 }
 
 func mainWorktreeOf(top string) string {
-	if info, err := os.Stat(filepath.Join(top, ".git")); err == nil && info.IsDir() {
+	if walk.IsFolder(filepath.Join(top, ".git")) {
 		return top
 	}
 

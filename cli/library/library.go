@@ -216,7 +216,7 @@ func copiedFrom(files fs.FS, from, to string, naming func([]byte) []byte) bool {
 
 		published[target] = true
 		contents, err := fs.ReadFile(files, name)
-		if err != nil || os.WriteFile(target, naming(contents), 0o644) != nil {
+		if err != nil || atomic.Write(target, string(naming(contents))) != nil {
 			all = false
 		}
 

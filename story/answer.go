@@ -2,7 +2,6 @@ package story
 
 import (
 	"fmt"
-	"os"
 	"path/filepath"
 	"regexp"
 	"slices"
@@ -11,6 +10,7 @@ import (
 	"time"
 
 	"github.com/jessegall/code-commandments/cli/ledger"
+	"github.com/jessegall/code-commandments/walk"
 )
 
 func (s *Story) Says(ran Ran, texts ...string) {
@@ -232,7 +232,7 @@ func pathNotThere(text, folder string) (string, bool) {
 			path = filepath.Join(folder, path)
 		}
 
-		if _, err := os.Stat(path); err != nil {
+		if !walk.Exists(path) {
 			return found[0], true
 		}
 	}

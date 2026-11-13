@@ -307,7 +307,7 @@ func within(folder, project, file string) string {
 		}
 
 		joined := filepath.Join(under, file)
-		if info, err := os.Stat(joined); err == nil && info.Mode().IsRegular() {
+		if walk.IsFile(joined) {
 			return joined
 		}
 	}

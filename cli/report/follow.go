@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/jessegall/code-commandments/cli"
+	"github.com/jessegall/code-commandments/cli/atomic"
 	"github.com/jessegall/code-commandments/cli/binary"
 	"github.com/jessegall/code-commandments/cli/dashboard"
 	"github.com/jessegall/code-commandments/cli/natural"
@@ -359,7 +360,7 @@ func writeReport(findings []finding, asked int, console cli.Console) {
 		return
 	}
 
-	if err := os.WriteFile(path, content, 0o644); err != nil {
+	if err := atomic.Write(path, string(content)); err != nil {
 		console.Warn("The check's report could not be written: " + err.Error())
 	}
 }

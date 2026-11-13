@@ -8,6 +8,7 @@ import (
 	"slices"
 
 	"github.com/jessegall/code-commandments/cli"
+	"github.com/jessegall/code-commandments/cli/atomic"
 )
 
 func RenameRule(path, from, to string) (renamed bool, clash string, err error) {
@@ -57,7 +58,7 @@ func RenameRule(path, from, to string) (renamed bool, clash string, err error) {
 		return false, clash, err
 	}
 
-	return true, clash, os.WriteFile(path, append(written, '\n'), 0o644)
+	return true, clash, atomic.Write(path, string(append(written, '\n')))
 }
 
 func replaceName(list *[]string, from, to string) bool {

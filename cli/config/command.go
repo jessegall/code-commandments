@@ -13,6 +13,7 @@ import (
 	"github.com/jessegall/code-commandments/detectors"
 	"github.com/jessegall/code-commandments/engine/php/packages"
 	"github.com/jessegall/code-commandments/skill"
+	"github.com/jessegall/code-commandments/walk"
 )
 
 // Command is `config`: what the project configures, what actually runs, and re-detecting its roots.
@@ -63,7 +64,7 @@ func (c Command) about(root string, console cli.Console) (int, error) {
 	}
 
 	file := EditorIn(root).Name()
-	if _, err := os.Stat(filepath.Join(root, file)); err != nil {
+	if !walk.Exists(filepath.Join(root, file)) {
 		file += " (not yet written)"
 	}
 

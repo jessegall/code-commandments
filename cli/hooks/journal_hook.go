@@ -32,7 +32,7 @@ func answerWith(given map[string]any) JournalAnswer {
 	}
 
 	cwd := moment.Cwd
-	if info, err := os.Stat(cwd); err != nil || !info.IsDir() {
+	if !walk.IsFolder(cwd) {
 		cwd, _ = os.Getwd()
 	}
 

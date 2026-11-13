@@ -1,11 +1,11 @@
 package parity
 
 import (
-	"os"
 	"path/filepath"
 	"reflect"
 	"strings"
 
+	"github.com/jessegall/code-commandments/cli/atomic"
 	"github.com/jessegall/code-commandments/cli/config"
 )
 
@@ -76,7 +76,7 @@ func entry(files, path string) (fileEntry, bool) {
 func sameSettings(php, json, scratch string) bool {
 	phpPath, jsonPath := filepath.Join(scratch, "config.php"), filepath.Join(scratch, "config.json")
 
-	if os.WriteFile(phpPath, []byte(php), 0o644) != nil || os.WriteFile(jsonPath, []byte(json), 0o644) != nil {
+	if atomic.Write(phpPath, php) != nil || atomic.Write(jsonPath, json) != nil {
 		return false
 	}
 

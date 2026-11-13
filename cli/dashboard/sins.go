@@ -62,7 +62,7 @@ func Record(space workspace.Workspace, findings []engine.Finding, judged map[str
 
 	if judged != nil {
 		for _, stored := range storedIn(space) {
-			if !judged[stored.Path] && exists(stored.Path) && kept(space.Root(), stored.Path) {
+			if !judged[stored.Path] && walk.Exists(stored.Path) && kept(space.Root(), stored.Path) {
 				all = append(all, stored)
 			}
 		}
@@ -93,12 +93,6 @@ func Record(space workspace.Workspace, findings []engine.Finding, judged map[str
 	}
 
 	return atomic.Write(space.Cache(File), dashboard)
-}
-
-func exists(path string) bool {
-	_, err := os.Stat(path)
-
-	return err == nil
 }
 
 func storedIn(space workspace.Workspace) []Stored {

@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/jessegall/code-commandments/cli"
+	"github.com/jessegall/code-commandments/cli/atomic"
 	"github.com/jessegall/code-commandments/cli/config"
 	"github.com/jessegall/code-commandments/cli/help"
 	"github.com/jessegall/code-commandments/cli/scan"
@@ -43,7 +44,7 @@ func (Command) Run(in *cli.Input, console cli.Console) (int, error) {
 		path = "."
 	}
 
-	if info, err := os.Stat(path); err != nil || !info.IsDir() {
+	if !walk.IsFolder(path) {
 		console.Warn("Not a directory: " + path)
 
 		return 2, nil
@@ -117,7 +118,7 @@ func preview(rewrites scribes.Rewrites, base, file string, console cli.Console) 
 		return 0, nil
 	}
 
-	if err := os.WriteFile(file, []byte(diff), 0o644); err != nil {
+	if err := atomic.Write(file, diff); err != nil {
 		return 0, err
 	}
 

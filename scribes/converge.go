@@ -3,7 +3,7 @@ package scribes
 import (
 	"fmt"
 	"github.com/jessegall/code-commandments/bridge"
-	"os"
+	"github.com/jessegall/code-commandments/walk"
 )
 
 const MaxSweeps = 10
@@ -80,7 +80,7 @@ func attempt(step Step, pass Pass) (rewrites Rewrites, err error) {
 
 func permits(rewrites Rewrites, scope Scope, frozen Frozen) bool {
 	for _, path := range rewrites.paths {
-		if _, err := os.Stat(path); err != nil {
+		if !walk.Exists(path) {
 			continue
 		}
 		if !scope.Includes(path) || frozen.IsFrozen(path) {

@@ -9,6 +9,7 @@ import (
 	"github.com/jessegall/code-commandments/cli/config"
 	"github.com/jessegall/code-commandments/cli/scan"
 	"github.com/jessegall/code-commandments/cli/source"
+	"github.com/jessegall/code-commandments/walk"
 )
 
 func hostRoslynBuilds() string {
@@ -19,7 +20,7 @@ func hostRoslynBuilds() string {
 
 func removeHostRoslynBuilds(console cli.Console) {
 	builds := hostRoslynBuilds()
-	if _, err := os.Stat(builds); err != nil {
+	if !walk.Exists(builds) {
 		return
 	}
 	if err := os.RemoveAll(builds); err != nil {

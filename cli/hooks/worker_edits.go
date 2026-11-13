@@ -6,6 +6,8 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+
+	"github.com/jessegall/code-commandments/cli/atomic"
 )
 
 const (
@@ -56,7 +58,7 @@ func (e WorkerEdits) KeepIn(agent int, checkout, relative string) {
 	e.Keep(agent, relative)
 
 	if checkout != "" {
-		_ = os.WriteFile(e.fileOf(agent)+editedInSuffix, []byte(checkout), 0o644)
+		_ = atomic.Write(e.fileOf(agent)+editedInSuffix, checkout)
 	}
 }
 

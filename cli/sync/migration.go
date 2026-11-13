@@ -7,6 +7,7 @@ import (
 
 	"github.com/jessegall/code-commandments/cli/state"
 	"github.com/jessegall/code-commandments/cli/workspace"
+	"github.com/jessegall/code-commandments/walk"
 )
 
 const format = 5
@@ -38,7 +39,7 @@ func Migrate(space workspace.Workspace) []string {
 	sessions, _ := filepath.Glob(filepath.Join(space.SessionsDir(), "*"))
 
 	for _, dir := range sessions {
-		if info, err := os.Stat(dir); err == nil && info.IsDir() {
+		if walk.IsFolder(dir) {
 			done = append(done, session(dir)...)
 		}
 	}
@@ -110,7 +111,7 @@ func moveChecklists(dir string) string {
 	for _, stray := range strays {
 		target := filepath.Join(folder, filepath.Base(stray))
 
-		if _, err := os.Stat(target); err != nil && os.Rename(stray, target) == nil {
+		if !walk.Exists(target) && os.Rename(stray, target) == nil {
 			moved++
 		}
 	}

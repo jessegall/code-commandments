@@ -10,6 +10,8 @@ import (
 	"slices"
 	"sort"
 	"strconv"
+
+	"github.com/jessegall/code-commandments/cli/atomic"
 )
 
 const mark = published + "/.written-from"
@@ -94,7 +96,7 @@ func alreadyWrittenFrom(key string) bool {
 
 func rememberWrittenFrom(key string) {
 	if err := os.MkdirAll(filepath.Dir(mark), 0o755); err == nil {
-		os.WriteFile(mark, []byte(key), 0o644)
+		atomic.Write(mark, key)
 	}
 }
 

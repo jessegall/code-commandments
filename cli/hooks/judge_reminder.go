@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/jessegall/code-commandments/cli/atomic"
 	"github.com/jessegall/code-commandments/cli/binary"
 
 	"github.com/jessegall/code-commandments/cli/checklist"
@@ -103,7 +104,7 @@ func Reminder(event Event, lead string) (string, bool) {
 	}
 
 	os.MkdirAll(filepath.Dir(marker), 0o777)
-	os.WriteFile(marker, []byte(tree.Head+"\n"+batchSeparator+"\n"+batchExplanation(event.Root)+"\n"), 0o666)
+	atomic.Write(marker, tree.Head+"\n"+batchSeparator+"\n"+batchExplanation(event.Root)+"\n")
 
 	noun := "files"
 	if len(mine) == 1 {
@@ -135,7 +136,7 @@ func openWorklist(space workspace.Workspace, lead string) (string, bool) {
 	}
 
 	os.MkdirAll(filepath.Dir(marker), 0o777)
-	os.WriteFile(marker, []byte(fingerprint), 0o666)
+	atomic.Write(marker, fingerprint)
 
 	noun := "sins"
 	if remaining == 1 {

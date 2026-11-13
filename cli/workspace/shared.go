@@ -48,7 +48,7 @@ func ConsumerRoot(cwd string) string {
 	}
 
 	for dir := cwd; dir != filepath.Dir(dir) && dir != home; dir = filepath.Dir(dir) {
-		if info, err := os.Stat(filepath.Join(dir, "composer.json")); err == nil && info.Mode().IsRegular() {
+		if walk.IsFile(filepath.Join(dir, "composer.json")) {
 			return dir
 		}
 	}

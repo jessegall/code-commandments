@@ -202,7 +202,7 @@ func nestedBranchChanges(name, spec, path string) (picked, error) {
 
 func nestedRepository(name, path string) (string, error) {
 	repository := filepath.Join(path, name)
-	if _, err := os.Stat(filepath.Join(repository, ".git")); err != nil {
+	if !walk.Exists(filepath.Join(repository, ".git")) {
 		return "", &Unavailable{"No repository " + name + " under " + path + ": name a folder there that holds a .git of its own."}
 	}
 
@@ -359,7 +359,7 @@ func canonicalLines(lines map[string]git.ChangedLines) map[string]git.ChangedLin
 
 func (s Scope) Permits(files []string) bool {
 	for _, file := range files {
-		if _, err := os.Stat(file); err == nil && !s.Includes(file) {
+		if walk.Exists(file) && !s.Includes(file) {
 			return false
 		}
 	}

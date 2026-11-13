@@ -3,6 +3,7 @@ package repent
 
 import (
 	"fmt"
+	"github.com/jessegall/code-commandments/cli/atomic"
 	"github.com/jessegall/code-commandments/cli/binary"
 	"os"
 	"path/filepath"
@@ -93,7 +94,7 @@ func (c Command) Run(in *cli.Input, console cli.Console) (int, error) {
 		only, _ = in.Option("sin")
 	}
 
-	if info, err := os.Stat(path); err != nil || !info.IsDir() {
+	if !walk.IsFolder(path) {
 		console.Warn("Not a directory: " + path)
 
 		return 2, nil
@@ -259,7 +260,7 @@ func preview(path string, converged scribes.Converged, file string, console cli.
 	}
 
 	if file != "" {
-		if err := os.WriteFile(file, []byte(diff), 0o644); err != nil {
+		if err := atomic.Write(file, diff); err != nil {
 			return 0, err
 		}
 

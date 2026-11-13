@@ -14,6 +14,7 @@ import (
 
 	"github.com/jessegall/code-commandments/catalog"
 	"github.com/jessegall/code-commandments/cli"
+	"github.com/jessegall/code-commandments/cli/atomic"
 	"github.com/jessegall/code-commandments/cli/checklist"
 	"github.com/jessegall/code-commandments/cli/config"
 	"github.com/jessegall/code-commandments/cli/custom"
@@ -366,7 +367,7 @@ func (c Command) judge(options options, selected []detectors.Detector, judged co
 	}
 
 	if journal := os.Getenv(cli.JournalReport); journal != "" {
-		if err := os.WriteFile(journal, report.Journal(), 0o644); err != nil {
+		if err := atomic.Write(journal, string(report.Journal())); err != nil {
 			console.Warn("✗ The journal's report could not be written: " + err.Error())
 		}
 	}
@@ -760,7 +761,7 @@ func write(target, contents string, space workspace.Workspace, console cli.Conso
 
 	checklist.At(target).Archive()
 
-	if os.WriteFile(target, []byte(contents), 0o644) != nil {
+	if atomic.Write(target, contents) != nil {
 		console.Warn("Could not write the checklist to " + target + " — the findings above are all there is.")
 
 		return

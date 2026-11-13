@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/jessegall/code-commandments/engine"
+	"github.com/jessegall/code-commandments/walk"
 )
 
 const probeMarker = "__CcNo_"
@@ -55,7 +56,7 @@ func NewVueTscOracle(root string, runner ProcessRunner) *VueTscOracle {
 
 func LocateVueTsc(path string, runner ProcessRunner) (*VueTscOracle, bool) {
 	from := filepath.Dir(path)
-	if info, err := os.Stat(path); err == nil && info.IsDir() {
+	if walk.IsFolder(path) {
 		from = strings.TrimRight(path, "/")
 	}
 	for dir := from; ; dir = filepath.Dir(dir) {

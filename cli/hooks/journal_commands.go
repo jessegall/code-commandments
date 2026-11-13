@@ -169,7 +169,7 @@ func pluginRoot() string {
 	self, _ = walk.Resolved(self)
 
 	for dir := filepath.Dir(self); dir != filepath.Dir(dir); dir = filepath.Dir(dir) {
-		if _, err := os.Stat(filepath.Join(dir, ".journal-plugin", "plugin.json")); err == nil {
+		if walk.Exists(filepath.Join(dir, ".journal-plugin", "plugin.json")) {
 			return dir
 		}
 	}

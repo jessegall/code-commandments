@@ -9,14 +9,16 @@ import (
 	"strings"
 
 	"github.com/jessegall/code-commandments/cli"
+	"github.com/jessegall/code-commandments/cli/atomic"
 	"github.com/jessegall/code-commandments/cli/config"
 	"github.com/jessegall/code-commandments/cli/custom"
 	"github.com/jessegall/code-commandments/cli/workspace"
+	"github.com/jessegall/code-commandments/walk"
 )
 
 func (c Command) migrate(in *cli.Input, root string, console cli.Console) (int, error) {
 	dir := workspace.CustomDir(root)
-	if _, err := os.Stat(dir); err != nil {
+	if !walk.Exists(dir) {
 		return console.Say("No rules of your own: " + shortPath(root, dir) + " holds none, so there is nothing to migrate."), nil
 	}
 
@@ -189,7 +191,7 @@ func merge(group []string, preview bool) (into string, engines []string, err err
 		return "", nil, err
 	}
 
-	if err := os.WriteFile(into, append(written, '\n'), 0o644); err != nil {
+	if err := atomic.Write(into, string(append(written, '\n'))); err != nil {
 		return "", nil, err
 	}
 

@@ -1,11 +1,12 @@
 package config
 
 import (
-	"errors"
 	"os"
 	"path/filepath"
 
+	"github.com/jessegall/code-commandments/cli/atomic"
 	"github.com/jessegall/code-commandments/cli/workspace"
+	"github.com/jessegall/code-commandments/walk"
 )
 
 const Backup = "config.php.bak"
@@ -14,11 +15,11 @@ func Migrate(dir string) (bool, error) {
 	dir = workspace.SettingsRoot(dir)
 	php, json := workspace.Config(dir), workspace.JSONConfig(dir)
 
-	if _, err := os.Stat(json); !errors.Is(err, os.ErrNotExist) {
+	if walk.Exists(json) {
 		return false, nil
 	}
 
-	if _, err := os.Stat(php); err != nil {
+	if !walk.Exists(php) {
 		return false, nil
 	}
 
@@ -46,5 +47,5 @@ func WriteSchema(dir string) (bool, error) {
 		return false, err
 	}
 
-	return true, os.WriteFile(path, schema, 0o644)
+	return true, atomic.Write(path, string(schema))
 }

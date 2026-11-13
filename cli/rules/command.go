@@ -20,6 +20,7 @@ import (
 	"github.com/jessegall/code-commandments/engine"
 	"github.com/jessegall/code-commandments/fixture"
 	"github.com/jessegall/code-commandments/rule"
+	"github.com/jessegall/code-commandments/walk"
 )
 
 // Command is `rule`.
@@ -162,7 +163,7 @@ func (c Command) prove(in *cli.Input, root string, console cli.Console) (int, er
 		return console.Refuse("No rules in .commandments/custom/ to prove — scaffold one with `" + binary.Here() + " make <Name>`."), nil
 	}
 
-	if _, err := os.Stat(path); err != nil {
+	if !walk.Exists(path) {
 		return console.Refuse("No samples at " + path + " — write files there that mark what each rule must flag with `@sin <Rule>`."), nil
 	}
 

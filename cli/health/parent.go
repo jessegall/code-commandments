@@ -7,6 +7,8 @@ import (
 	"sync"
 	"syscall"
 	"time"
+
+	"github.com/jessegall/code-commandments/walk"
 )
 
 const (
@@ -38,7 +40,7 @@ func watchTheParent() {
 
 func untilRemoved(folder string, every time.Duration, stop func()) {
 	for {
-		if _, err := os.Stat(folder); os.IsNotExist(err) {
+		if !walk.Exists(folder) {
 			break
 		}
 
@@ -59,7 +61,7 @@ func pluginFolder() string {
 	}
 
 	folder := filepath.Dir(filepath.Dir(self))
-	if _, err := os.Stat(filepath.Join(folder, pluginMark)); err != nil {
+	if !walk.Exists(filepath.Join(folder, pluginMark)) {
 		return ""
 	}
 
@@ -81,9 +83,7 @@ func hasNoParent(parent int, contained bool) bool {
 }
 
 func inAContainer() bool {
-	_, err := os.Stat(containerMark)
-
-	return err == nil
+	return walk.Exists(containerMark)
 }
 
 func stopThisProcess() {

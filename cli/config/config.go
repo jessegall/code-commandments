@@ -2,8 +2,6 @@
 package config
 
 import (
-	"errors"
-	"os"
 	"slices"
 	"strings"
 
@@ -37,7 +35,7 @@ func Load(dir string) (Config, error) {
 		return served, nil
 	}
 
-	if _, err := os.Stat(workspace.JSONConfig(settings)); !errors.Is(err, os.ErrNotExist) {
+	if walk.Exists(workspace.JSONConfig(settings)) {
 		return ReadJSON(workspace.JSONConfig(settings))
 	}
 

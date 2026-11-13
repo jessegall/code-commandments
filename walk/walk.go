@@ -219,14 +219,22 @@ func Generated(dir, name string) []string {
 	return found
 }
 
+// Exists says whether anything is at the path, a link counted by what it points at.
+func Exists(path string) bool {
+	_, err := os.Stat(path)
+
+	return err == nil
+}
+
 func IsFolder(path string) bool {
 	info, err := os.Stat(path)
 
 	return err == nil && info.IsDir()
 }
 
+// IsFile says whether a regular file is at the path, a link counted by what it points at, as IsFolder counts it.
 func IsFile(path string) bool {
-	info, err := os.Lstat(path)
+	info, err := os.Stat(path)
 
 	return err == nil && info.Mode().IsRegular()
 }

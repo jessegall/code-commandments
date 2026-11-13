@@ -2,7 +2,6 @@ package catalog
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"go/ast"
 	"go/format"
@@ -13,6 +12,8 @@ import (
 	"path/filepath"
 	"slices"
 	"strings"
+
+	"github.com/jessegall/code-commandments/walk"
 )
 
 const Module = "github.com/jessegall/code-commandments"
@@ -45,7 +46,7 @@ func Enrolment(root string) ([]byte, error) {
 func rulePackages(root, rules string) ([]string, error) {
 	var packages []string
 	base := filepath.Join(root, rules)
-	if _, err := os.Stat(base); errors.Is(err, fs.ErrNotExist) {
+	if !walk.Exists(base) {
 		return nil, nil
 	}
 	err := filepath.WalkDir(base, func(path string, entry fs.DirEntry, err error) error {

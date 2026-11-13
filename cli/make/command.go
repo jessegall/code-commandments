@@ -1,6 +1,7 @@
 package make
 
 import (
+	"github.com/jessegall/code-commandments/cli/atomic"
 	"github.com/jessegall/code-commandments/cli/binary"
 	"os"
 	"path/filepath"
@@ -160,12 +161,12 @@ func write(blueprint Blueprint, root string) error {
 			return err
 		}
 
-		if err := os.WriteFile(blueprint.SkillFile(), []byte(SkillStub(blueprint)), 0o644); err != nil {
+		if err := atomic.Write(blueprint.SkillFile(), SkillStub(blueprint)); err != nil {
 			return err
 		}
 	}
 
-	if err := os.WriteFile(blueprint.RuleFile(), []byte(RuleStub(blueprint)), 0o644); err != nil {
+	if err := atomic.Write(blueprint.RuleFile(), RuleStub(blueprint)); err != nil {
 		return err
 	}
 

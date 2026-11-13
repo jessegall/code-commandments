@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/jessegall/code-commandments/cli/binary"
-	"os"
 	"slices"
 	"strconv"
 	"strings"
@@ -14,6 +13,7 @@ import (
 	"github.com/jessegall/code-commandments/cli/source"
 	"github.com/jessegall/code-commandments/engine"
 	"github.com/jessegall/code-commandments/engine/php"
+	"github.com/jessegall/code-commandments/walk"
 )
 
 const root = `JesseGall\CodeCommandments\`
@@ -21,7 +21,7 @@ const root = `JesseGall\CodeCommandments\`
 const languageEnum = root + "Language"
 
 func ReadPHP(path string) (Config, error) {
-	if _, err := os.Stat(path); err != nil {
+	if !walk.Exists(path) {
 		return Config{}, nil
 	}
 

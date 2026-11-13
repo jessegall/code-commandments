@@ -12,6 +12,8 @@ import (
 	"path/filepath"
 	"slices"
 	"strings"
+
+	"github.com/jessegall/code-commandments/walk"
 )
 
 const budgetFile = "scripts/release/size-budget.json"
@@ -102,7 +104,7 @@ func missing(dir string, budgets Budgets, toolOnly bool) []string {
 			}
 			name = key
 		}
-		if _, err := os.Stat(filepath.Join(dir, name)); err != nil {
+		if !walk.Exists(filepath.Join(dir, name)) {
 			problems = append(problems, name+" is budgeted but missing from the release")
 		}
 	}

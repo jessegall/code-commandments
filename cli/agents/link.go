@@ -13,7 +13,7 @@ import (
 )
 
 func Point(link, target string) bool {
-	if _, err := os.Stat(target); err != nil {
+	if !walk.Exists(target) {
 		return false
 	}
 

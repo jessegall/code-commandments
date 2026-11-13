@@ -19,6 +19,7 @@ import (
 	"testing"
 
 	"github.com/jessegall/code-commandments/bridge/bundle"
+	"github.com/jessegall/code-commandments/cli/atomic"
 	"github.com/jessegall/code-commandments/cli/git"
 	"github.com/jessegall/code-commandments/contract"
 	"github.com/jessegall/code-commandments/engine"
@@ -310,7 +311,7 @@ func amend(t *testing.T, question string, answers []Answer) {
 	if err := zipped.Close(); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(filepath.Join(Oracle(), "answers", question+".jsonl.gz"), written.Bytes(), 0o644); err != nil {
+	if err := atomic.Write(filepath.Join(Oracle(), "answers", question+".jsonl.gz"), written.String()); err != nil {
 		t.Fatal(err)
 	}
 }

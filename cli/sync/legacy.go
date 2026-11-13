@@ -3,6 +3,8 @@ package sync
 import (
 	"os"
 	"path/filepath"
+
+	"github.com/jessegall/code-commandments/walk"
 )
 
 var legacy = []string{
@@ -15,7 +17,7 @@ var legacy = []string{
 
 func removeLegacyArtifacts(root string) {
 	for _, file := range legacy {
-		if info, err := os.Stat(filepath.Join(root, file)); err == nil && info.Mode().IsRegular() {
+		if walk.IsFile(filepath.Join(root, file)) {
 			os.Remove(filepath.Join(root, file))
 		}
 	}

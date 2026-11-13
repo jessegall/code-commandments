@@ -65,7 +65,7 @@ func Prepare(target string, space workspace.Workspace) bool {
 }
 
 func explain(dir string) {
-	if _, err := os.Stat(dir + "/" + notes); err == nil {
+	if walk.Exists(dir + "/" + notes) {
 		return
 	}
 

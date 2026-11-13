@@ -4,8 +4,10 @@ import (
 	"bytes"
 	"os"
 
+	"github.com/jessegall/code-commandments/cli/atomic"
 	"github.com/jessegall/code-commandments/cli/workspace"
 	"github.com/jessegall/code-commandments/rule"
+	"github.com/jessegall/code-commandments/walk"
 )
 
 const SchemaReference = "../" + rule.SchemaFile
@@ -15,7 +17,7 @@ func SchemaPath(root string) string {
 }
 
 func WriteSchema(root string) error {
-	if _, err := os.Stat(workspace.CustomDir(root)); err != nil {
+	if !walk.Exists(workspace.CustomDir(root)) {
 		return nil
 	}
 
@@ -24,5 +26,5 @@ func WriteSchema(root string) error {
 		return nil
 	}
 
-	return os.WriteFile(SchemaPath(root), schema, 0o644)
+	return atomic.Write(SchemaPath(root), string(schema))
 }

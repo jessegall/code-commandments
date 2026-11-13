@@ -1,11 +1,11 @@
 package spatie
 
 import (
-	"os"
 	"path/filepath"
 
 	"github.com/jessegall/code-commandments/contract"
 	"github.com/jessegall/code-commandments/engine"
+	"github.com/jessegall/code-commandments/walk"
 )
 
 const TransformerManifest = "typescript-transformer-manifest.json"
@@ -22,7 +22,7 @@ func TransformerOutputsBeside(codebase *engine.Codebase) []string {
 		for folder := filepath.Dir(file.Path); !seen[folder]; folder = filepath.Dir(folder) {
 			seen[folder] = true
 
-			if _, err := os.Stat(filepath.Join(folder, TransformerManifest)); err == nil {
+			if walk.Exists(filepath.Join(folder, TransformerManifest)) {
 				outputs = append(outputs, folder)
 
 				break

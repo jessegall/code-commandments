@@ -1,6 +1,7 @@
 package config
 
 import (
+	"github.com/jessegall/code-commandments/cli/atomic"
 	"github.com/jessegall/code-commandments/cli/binary"
 	"os"
 	"path/filepath"
@@ -9,6 +10,7 @@ import (
 	"github.com/jessegall/code-commandments/cli/workspace"
 	"github.com/jessegall/code-commandments/engine"
 	"github.com/jessegall/code-commandments/engine/php"
+	"github.com/jessegall/code-commandments/walk"
 )
 
 const template = "<?php\n\ndeclare(strict_types=1);\n\nuse JesseGall\\CodeCommandments\\Config;\n\n/*\n" +
@@ -54,7 +56,7 @@ func Render(root string, roots []string) string {
 }
 
 func (s Scribe) Scaffold(roots []string) (bool, error) {
-	if _, err := os.Stat(s.path); err == nil {
+	if walk.Exists(s.path) {
 		return false, nil
 	}
 
@@ -62,7 +64,7 @@ func (s Scribe) Scaffold(roots []string) (bool, error) {
 		return false, err
 	}
 
-	return true, os.WriteFile(s.path, []byte(Render(s.Root(), roots)), 0o644)
+	return true, atomic.Write(s.path, Render(s.Root(), roots))
 }
 
 func (s Scribe) EnsurePaths(roots []string) error {
@@ -75,7 +77,7 @@ func (s Scribe) EnsurePaths(roots []string) error {
 }
 
 func (s Scribe) RewritePaths(roots []string) error {
-	if _, err := os.Stat(s.path); err != nil {
+	if !walk.Exists(s.path) {
 		_, err := s.Scaffold(roots)
 
 		return err
@@ -102,7 +104,7 @@ func (s Scribe) splice(call engine.Match, roots []string) error {
 		from, to = args[0].Child("value").Node().Span.Start, args[len(args)-1].Child("value").Node().Span.End
 	}
 
-	return os.WriteFile(s.path, []byte(string(source[:from])+renderRoots(roots)+string(source[to:])), 0o644)
+	return atomic.Write(s.path, string(source[:from])+renderRoots(roots)+string(source[to:]))
 }
 
 func (s Scribe) first(method string) (engine.Match, bool, error) {
@@ -135,7 +137,7 @@ func addSlashes(text string) string {
 }
 
 func (s Scribe) EnsureLayers(declaration string) (bool, error) {
-	if _, err := os.Stat(s.path); err != nil {
+	if !walk.Exists(s.path) {
 		return false, nil
 	}
 
@@ -161,7 +163,7 @@ func (s Scribe) EnsureLayers(declaration string) (bool, error) {
 	at := anchor.Node().Span.Start
 	source = source[:at] + strings.TrimLeft(declaration, " \t\n\r\x00\x0B") + "\n\n    " + source[at:]
 
-	return true, os.WriteFile(s.path, []byte(importDetector(source)), 0o644)
+	return true, atomic.Write(s.path, importDetector(source))
 }
 
 func importDetector(source string) string {

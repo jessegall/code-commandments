@@ -1,12 +1,12 @@
 package agents
 
 import (
-	"os"
 	"path/filepath"
 
 	"github.com/jessegall/code-commandments/cli/config"
 	"github.com/jessegall/code-commandments/cli/library"
 	"github.com/jessegall/code-commandments/cli/workspace"
+	"github.com/jessegall/code-commandments/walk"
 )
 
 const BriefingBlock = "code-commandments briefing"
@@ -56,7 +56,5 @@ func journalBriefs(root string) bool {
 		return false
 	}
 
-	_, err := os.Stat(filepath.Join(root, journalInstructions))
-
-	return err == nil
+	return walk.Exists(filepath.Join(root, journalInstructions))
 }

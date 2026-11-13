@@ -13,6 +13,7 @@ import (
 
 	"github.com/jessegall/code-commandments/cli/git"
 	"github.com/jessegall/code-commandments/cli/source"
+	"github.com/jessegall/code-commandments/walk"
 )
 
 const (
@@ -191,7 +192,7 @@ func (w Workspace) journalRoot() string {
 			continue
 		}
 
-		if info, err := os.Stat(root + "/.journal/plugins/" + JournalPlugin + "/.journal-plugin/plugin.json"); err == nil && info.Mode().IsRegular() {
+		if walk.IsFile(root + "/.journal/plugins/" + JournalPlugin + "/.journal-plugin/plugin.json") {
 			return root
 		}
 	}
@@ -313,7 +314,7 @@ func folders(parent string) []string {
 	var found []string
 
 	for _, match := range matches {
-		if info, err := os.Stat(match); err == nil && info.IsDir() {
+		if walk.IsFolder(match) {
 			found = append(found, match)
 		}
 	}

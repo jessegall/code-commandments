@@ -2,10 +2,12 @@
 package folder
 
 import (
-	"io"
 	"os"
 	"path/filepath"
 	"sort"
+
+	"github.com/jessegall/code-commandments/cli/atomic"
+	"github.com/jessegall/code-commandments/walk"
 )
 
 func Entries(dir string) []string {
@@ -64,7 +66,7 @@ func Delete(path string) bool {
 }
 
 func Copy(from, to string) bool {
-	if info, err := os.Stat(from); err != nil || !info.IsDir() {
+	if !walk.IsFolder(from) {
 		return false
 	}
 
@@ -91,19 +93,7 @@ func Copy(from, to string) bool {
 }
 
 func CopyFile(from, to string) bool {
-	source, err := os.Open(from)
-	if err != nil {
-		return false
-	}
+	contents, err := os.ReadFile(from)
 
-	defer source.Close()
-
-	target, err := os.Create(to)
-	if err != nil {
-		return false
-	}
-
-	_, err = io.Copy(target, source)
-
-	return target.Close() == nil && err == nil
+	return err == nil && atomic.Write(to, string(contents)) == nil
 }

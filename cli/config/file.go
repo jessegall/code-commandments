@@ -7,9 +7,11 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/jessegall/code-commandments/cli/atomic"
 	"github.com/jessegall/code-commandments/cli/workspace"
 	"github.com/jessegall/code-commandments/engine"
 	"github.com/jessegall/code-commandments/engine/php"
+	"github.com/jessegall/code-commandments/walk"
 )
 
 // File edits a project's config file through its tree: a call's arguments are rewritten one per line in the file's own indentation, and everything else the project wrote is left as it was.
@@ -50,7 +52,7 @@ func (f File) Disable(class string) (bool, error) {
 }
 
 func (f File) Enable(class string) (bool, error) {
-	if _, err := os.Stat(f.path); err != nil {
+	if !walk.Exists(f.path) {
 		return false, nil
 	}
 
@@ -168,7 +170,7 @@ func (f File) rewrite(call engine.Match, classes, languages []string) error {
 		from, to, text = first, closing, "\n"+rendered.String()+indent
 	}
 
-	return os.WriteFile(f.path, []byte(source[:from]+text+source[to:]), 0o644)
+	return atomic.Write(f.path, source[:from]+text+source[to:])
 }
 
 var lineBreak = regexp.MustCompile(`\r\n|[\n\r\x0B\f]`)
@@ -227,7 +229,7 @@ func (f File) RewriteLayers(layers []Layer) (bool, error) {
 	to := calls[0].Node().Span.End
 	chain := RenderChain(layers, indentOfChain(source[from:]))
 
-	return true, os.WriteFile(f.path, []byte(source[:from]+chain+source[to:]), 0o644)
+	return true, atomic.Write(f.path, source[:from]+chain+source[to:])
 }
 
 func RenderChain(layers []Layer, indent string) string {
@@ -253,7 +255,7 @@ func RenderChain(layers []Layer, indent string) string {
 }
 
 func (f File) layerCalls() ([]engine.Match, error) {
-	if _, err := os.Stat(f.path); err != nil {
+	if !walk.Exists(f.path) {
 		return nil, nil
 	}
 
@@ -352,7 +354,7 @@ func (f File) appendStatement(statement string) error {
 	start := anchor.Node().Span.Start
 	indent := source[lineStartAt(source, start):start]
 
-	return os.WriteFile(f.path, []byte(source[:at]+"\n\n"+indent+statement+source[at:]), 0o644)
+	return atomic.Write(f.path, source[:at]+"\n\n"+indent+statement+source[at:])
 }
 
 func (f File) lastStatement() (engine.Match, bool, error) {

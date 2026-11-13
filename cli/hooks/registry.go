@@ -2,7 +2,6 @@ package hooks
 
 import (
 	"fmt"
-	"os"
 	"path/filepath"
 	"runtime"
 	"slices"
@@ -12,6 +11,7 @@ import (
 	"github.com/jessegall/code-commandments/cli/config"
 	"github.com/jessegall/code-commandments/cli/jsonfile"
 	"github.com/jessegall/code-commandments/cli/workspace"
+	"github.com/jessegall/code-commandments/walk"
 )
 
 const settings = ".claude/settings.json"
@@ -51,7 +51,7 @@ func Wire(root string) (bool, error) {
 
 	file, read := jsonfile.Read(path)
 	if !read {
-		if _, err := os.Stat(path); err == nil {
+		if walk.Exists(path) {
 			return false, fmt.Errorf("⚠ %s is not readable JSON — hooks left unwired rather than overwrite it.", path)
 		}
 

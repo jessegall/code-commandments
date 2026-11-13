@@ -1,8 +1,9 @@
 package scribes
 
 import (
-	"os"
 	"slices"
+
+	"github.com/jessegall/code-commandments/cli/atomic"
 )
 
 // Rewrites maps each path a rewrite touches to its new content, in the order the paths were first set.
@@ -41,7 +42,7 @@ func (r Rewrites) Len() int {
 
 func (r Rewrites) Apply() ([]string, error) {
 	for _, path := range r.paths {
-		if err := os.WriteFile(path, []byte(r.content[path]), 0o666); err != nil {
+		if err := atomic.Write(path, r.content[path]); err != nil {
 			return nil, err
 		}
 	}

@@ -248,7 +248,7 @@ func judgedFile(root, file string, project config.Config) string {
 		return ""
 	}
 
-	if info, err := os.Stat(absolute); err != nil || !info.Mode().IsRegular() {
+	if !walk.IsFile(absolute) {
 		dropped.NotAFile++
 
 		return ""

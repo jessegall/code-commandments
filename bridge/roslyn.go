@@ -14,6 +14,8 @@ import (
 	"sync"
 
 	"github.com/jessegall/code-commandments/cache"
+	"github.com/jessegall/code-commandments/cli/atomic"
+	"github.com/jessegall/code-commandments/walk"
 )
 
 var Release = "dev"
@@ -117,7 +119,7 @@ func RoslynExecutable() (executable string, fetched bool, err error) {
 	}
 	executable = filepath.Join(binaries, Release, name)
 	defer cache.Used(filepath.Dir(executable))
-	if _, err := os.Stat(executable); err == nil {
+	if walk.Exists(executable) {
 		return executable, false, nil
 	}
 	if err := fetchChecked(name, executable); err != nil {
@@ -148,15 +150,8 @@ func fetchChecked(name, destination string) error {
 	if sum := sha256.Sum256(content); hex.EncodeToString(sum[:]) != want {
 		return fmt.Errorf("the %s fetched for %s does not match its SHA256SUMS, so it is not run", name, Release)
 	}
-	if err := os.MkdirAll(filepath.Dir(destination), 0o755); err != nil {
-		return err
-	}
-	draft := fmt.Sprintf("%s.%d", destination, os.Getpid())
-	if err := os.WriteFile(draft, content, 0o755); err != nil {
-		return err
-	}
 
-	return os.Rename(draft, destination)
+	return atomic.WriteExecutable(destination, content)
 }
 
 func sumOf(sums, name string) (string, bool) {
@@ -238,7 +233,7 @@ func Dotnet() (string, bool) {
 	candidates = append(candidates, listedDotnetRoots()...)
 	candidates = append(candidates, dotnetFolders()...)
 	for _, root := range candidates {
-		if info, err := os.Stat(filepath.Join(root, "packs", "Microsoft.NETCore.App.Ref")); err == nil && info.IsDir() {
+		if walk.IsFolder(filepath.Join(root, "packs", "Microsoft.NETCore.App.Ref")) {
 			return root, true
 		}
 	}

@@ -38,7 +38,7 @@ func (a *Adoption) Kept() []string {
 }
 
 func (a *Adoption) absorb(from, into string) {
-	if info, err := os.Stat(from); err != nil || !info.IsDir() {
+	if !walk.IsFolder(from) {
 		return
 	}
 
@@ -58,7 +58,7 @@ func (a *Adoption) adopt(entry, target string) {
 		return
 	}
 
-	if _, err := os.Stat(target); err != nil {
+	if !walk.Exists(target) {
 		a.record(entry, move(entry, target))
 
 		return

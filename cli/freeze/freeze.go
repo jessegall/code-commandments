@@ -2,6 +2,7 @@
 package freeze
 
 import (
+	"github.com/jessegall/code-commandments/cli/atomic"
 	"github.com/jessegall/code-commandments/cli/binary"
 	"github.com/jessegall/code-commandments/contract"
 	"os"
@@ -58,7 +59,7 @@ func freeze(path, contents string, console cli.Console) (int, error) {
 		return console.Say("\033[2mAlready frozen: " + path + "\033[0m"), nil
 	}
 
-	if err := os.WriteFile(path, []byte(stamped(contents, source.OfFile(path))), 0o644); err != nil {
+	if err := atomic.Write(path, stamped(contents, source.OfFile(path))); err != nil {
 		return 0, err
 	}
 
@@ -78,7 +79,7 @@ func unfreeze(path, contents string, console cli.Console) (int, error) {
 		}
 	}
 
-	if err := os.WriteFile(path, []byte(strings.Join(kept, "\n")), 0o644); err != nil {
+	if err := atomic.Write(path, strings.Join(kept, "\n")); err != nil {
 		return 0, err
 	}
 

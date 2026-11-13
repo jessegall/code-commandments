@@ -18,6 +18,7 @@ import (
 	"strings"
 
 	"github.com/jessegall/code-commandments/cache"
+	"github.com/jessegall/code-commandments/cli/atomic"
 	"github.com/jessegall/code-commandments/walk"
 )
 
@@ -103,7 +104,7 @@ func Run(c Case, repo, scratch string, command ...string) (Result, error) {
 	}
 
 	for _, tool := range []string{"gh", "claude"} {
-		if err := os.WriteFile(filepath.Join(guard, tool), []byte(guarded(tool)), 0o755); err != nil {
+		if err := atomic.WriteExecutable(filepath.Join(guard, tool), []byte(guarded(tool))); err != nil {
 			return Result{}, err
 		}
 	}

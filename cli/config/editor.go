@@ -8,8 +8,10 @@ import (
 	"strings"
 
 	"github.com/jessegall/code-commandments/catalog"
+	"github.com/jessegall/code-commandments/cli/atomic"
 	"github.com/jessegall/code-commandments/cli/source"
 	"github.com/jessegall/code-commandments/cli/workspace"
+	"github.com/jessegall/code-commandments/walk"
 )
 
 // Editor changes a project's config in whichever format the project keeps it: config.json, or the config.php sync has not migrated yet.
@@ -218,13 +220,11 @@ func (j jsonConfig) write(config Config) error {
 		return err
 	}
 
-	return os.WriteFile(j.path, config.JSON(), 0o644)
+	return atomic.Write(j.path, string(config.JSON()))
 }
 
 func (j jsonConfig) exists() bool {
-	_, err := os.Stat(j.path)
-
-	return err == nil
+	return walk.Exists(j.path)
 }
 
 func (j jsonConfig) root() string {

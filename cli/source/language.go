@@ -2,7 +2,6 @@
 package source
 
 import (
-	"os"
 	"path/filepath"
 	"slices"
 	"strings"
@@ -84,7 +83,7 @@ func (l Language) DeclaredIn(root string) bool {
 
 func declaredAt(folder string, named []string) bool {
 	for _, name := range named {
-		if _, err := os.Stat(filepath.Join(folder, name)); err == nil {
+		if walk.Exists(filepath.Join(folder, name)) {
 			return true
 		}
 	}

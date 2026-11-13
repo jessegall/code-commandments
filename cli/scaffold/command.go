@@ -4,6 +4,7 @@ package scaffold
 import (
 	"bytes"
 	"encoding/json"
+	"github.com/jessegall/code-commandments/cli/atomic"
 	"github.com/jessegall/code-commandments/cli/binary"
 	"os"
 	"path/filepath"
@@ -97,7 +98,7 @@ func (Command) Run(in *cli.Input, console cli.Console) (int, error) {
 				return 0, err
 			}
 
-			if err := os.WriteFile(target, []byte(code), 0o644); err != nil {
+			if err := atomic.Write(target, code); err != nil {
 				return 0, err
 			}
 
@@ -143,7 +144,7 @@ func report(created, skipped []string, query string, filtered, dryRun bool, cons
 }
 
 func existingOf(cwd, target string, helper sins.Scaffold) (string, bool) {
-	if info, err := os.Stat(target); err == nil && info.Mode().IsRegular() {
+	if walk.IsFile(target) {
 		return target, true
 	}
 
