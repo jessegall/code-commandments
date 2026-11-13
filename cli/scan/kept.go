@@ -20,6 +20,7 @@ import (
 	"github.com/jessegall/code-commandments/cache"
 	"github.com/jessegall/code-commandments/cli/atomic"
 	"github.com/jessegall/code-commandments/cli/git"
+	"github.com/jessegall/code-commandments/cli/sidebyside"
 	"github.com/jessegall/code-commandments/cli/workspace"
 	"github.com/jessegall/code-commandments/contract"
 	"github.com/jessegall/code-commandments/walk"
@@ -71,23 +72,9 @@ func (k *keptLines) split(files []string) (hits []*contract.File, header *contra
 
 	found := make([]*contract.File, len(files))
 	readsOf := make([][]string, len(files))
-	next := make(chan int)
-	var reading sync.WaitGroup
-	for range runtime.GOMAXPROCS(0) {
-		reading.Add(1)
-		go func() {
-			defer reading.Done()
-			reader := contract.KeptUnder(*header)
-			for at := range next {
-				found[at], readsOf[at] = k.line(reader, files[at])
-			}
-		}()
-	}
-	for at := range files {
-		next <- at
-	}
-	close(next)
-	reading.Wait()
+	sidebyside.Each(len(files), runtime.GOMAXPROCS(0), func(at int) {
+		found[at], readsOf[at] = k.line(contract.KeptUnder(*header), files[at])
+	})
 	standing := k.standingOnWhatTheyRead(files, readsOf, func(at int) bool { return found[at] != nil })
 
 	for at, file := range files {
@@ -238,22 +225,7 @@ func (k *keptLines) printedFirst(files []string) {
 	if k.folder == "" {
 		return
 	}
-	next := make(chan string)
-	var printing sync.WaitGroup
-	for range runtime.GOMAXPROCS(0) {
-		printing.Add(1)
-		go func() {
-			defer printing.Done()
-			for file := range next {
-				k.print(file)
-			}
-		}()
-	}
-	for _, file := range files {
-		next <- file
-	}
-	close(next)
-	printing.Wait()
+	sidebyside.Each(len(files), runtime.GOMAXPROCS(0), func(at int) { k.print(files[at]) })
 }
 
 // changedSince says whether a file's contents differ from the print this run took of it, read once into now.
@@ -302,6 +274,14 @@ func (k *keptLines) outlineOf(file string) string {
 	}
 
 	return outline
+}
+
+// forget drops the outlines this run took of files a bridge has just read again: their new outlines were kept by the
+// read, and a key built after it names them.
+func (k *keptLines) forget(files []string) {
+	for _, file := range files {
+		k.outlines.Delete(file)
+	}
 }
 
 // ownOutline is the outline kept for a file's contents, contested, or its contents when none was kept.

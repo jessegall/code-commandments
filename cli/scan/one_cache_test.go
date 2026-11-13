@@ -70,8 +70,9 @@ func TestEveryCheckoutReadsThroughOneCacheKeyedOnContents(t *testing.T) {
 	}
 }
 
-// A file stands only on files that stand themselves: a change to what prices.py declares reads cart.py again, and
-// checkout.py, which reads cart.py, with it, though its own key named cart.py's outline from before.
+// A file stands only on files that stand themselves: a change to what prices.py declares reads cart.py again, and when
+// that changes what cart.py declares, checkout.py, which reads cart.py, with it, though its own key named cart.py's
+// outline from before.
 func TestAChangeTwoImportsAwayReadsTheTopFileAgain(t *testing.T) {
 	if _, err := bridge.Mypy(); err != nil {
 		t.Skipf("no Python bridge here: %v", err)
@@ -80,8 +81,8 @@ func TestAChangeTwoImportsAwayReadsTheTopFileAgain(t *testing.T) {
 	journalDriven(t, project)
 	written(t, project, "src/shop/__init__.py", "")
 	written(t, project, "src/shop/prices.py", "def price() -> int:\n    return 3\n")
-	written(t, project, "src/shop/cart.py", "from shop.prices import price\n\n\ndef total() -> int:\n    return price() * 2\n")
-	written(t, project, "src/shop/checkout.py", "from shop.cart import total\n\n\ndef pay() -> int:\n    return total()\n")
+	written(t, project, "src/shop/cart.py", "from shop.prices import price\n\ndoubled = price() * 2\n")
+	written(t, project, "src/shop/checkout.py", "from shop.cart import doubled\n\n\ndef pay() -> None:\n    print(doubled)\n")
 
 	held := cache.KeptIn()
 	cache.KeepIn(t.TempDir())
@@ -93,6 +94,33 @@ func TestAChangeTwoImportsAwayReadsTheTopFileAgain(t *testing.T) {
 	asked := askedOfABridge(t, project, chain...)
 	if !slices.Contains(asked, filepath.Join(project, "src/shop/checkout.py")) {
 		t.Errorf("a change to what prices.py declares asked the bridge for %v, leaving checkout.py, two imports up, as it was", asked)
+	}
+}
+
+// Misses are read in waves: a change to what prices.py declares reads cart.py, which imports it, again, and checkout.py,
+// which imports cart.py, stands from the cache when cart.py still declares what it did.
+func TestAChangeStopsSpreadingWhereAnOutlineStaysTheSame(t *testing.T) {
+	if _, err := bridge.Mypy(); err != nil {
+		t.Skipf("no Python bridge here: %v", err)
+	}
+	project := repository(t)
+	journalDriven(t, project)
+	written(t, project, "src/shop/__init__.py", "")
+	written(t, project, "src/shop/prices.py", "def price() -> int:\n    return 3\n")
+	written(t, project, "src/shop/cart.py", "import shop.prices\n\n\ndef total() -> int:\n    return len(str(shop.prices.price()))\n")
+	written(t, project, "src/shop/checkout.py", "from shop.cart import total\n\n\ndef pay() -> int:\n    return total()\n")
+
+	held := cache.KeptIn()
+	cache.KeepIn(t.TempDir())
+	t.Cleanup(func() { cache.KeepIn(held) })
+
+	chain := append(slices.Clone(theShop), "src/shop/checkout.py")
+	askedOfABridge(t, project, chain...)
+	written(t, project, "src/shop/prices.py", "def price() -> str:\n    return 'three'\n")
+	asked := askedOfABridge(t, project, chain...)
+	if !slices.Equal(asked, []string{filepath.Join(project, "src/shop/cart.py"), filepath.Join(project, "src/shop/prices.py")}) {
+		t.Errorf("a change to what prices.py declares asked the bridge for %v, not prices.py and cart.py: checkout.py reads "+
+			"only cart.py, whose outline stayed as it was", asked)
 	}
 }
 

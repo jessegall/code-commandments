@@ -438,6 +438,11 @@ func (b Bridge) Read(roots, files []string, tally func()) (*contract.Stream, err
 
 const halvingsAtMost = 8
 
+// wavesAtMost is how many times a read starts the bridge for its misses: each wave reads the misses that import no
+// other miss, and the next takes what still misses once those stand, so a change spreads only as far as an outline
+// changed. The last wave reads whatever is left.
+const wavesAtMost = 6
+
 // ReadShared serves every file whose kept line still stands from the one cache every checkout shares, and has the
 // bridge read the rest, in as many shares as processes side by side; one process, or a single file, is one read.
 func (b Bridge) ReadShared(roots, files []string, tally func(), processes int) (*contract.Stream, error) {
@@ -460,17 +465,24 @@ func (b Bridge) ReadShared(roots, files []string, tally func(), processes int) (
 
 	first, later := kept.deferred(misses)
 	stream, err := b.readMisses(roots, files, first, tally, processes)
-	if len(later) > 0 && stream != nil {
+	kept.forget(first)
+	for wave := 2; len(later) > 0 && stream != nil; wave++ {
 		standing, _, still := kept.split(later)
 		for range standing {
 			tally()
 		}
 		engine.CountedKept(len(standing))
 		hits = append(hits, standing...)
-		if len(still) > 0 {
-			rest, restErr := b.readMisses(roots, files, still, tally, processes)
-			stream, err = joined(stream, rest), errors.Join(err, restErr)
+		next, rest := kept.deferred(still)
+		if wave == wavesAtMost {
+			next, rest = still, nil
 		}
+		if len(next) > 0 {
+			read, readErr := b.readMisses(roots, files, next, tally, processes)
+			stream, err = joined(stream, read), errors.Join(err, readErr)
+			kept.forget(next)
+		}
+		later = rest
 	}
 	if stream == nil {
 		return stream, err

@@ -81,10 +81,15 @@ func readUnits(held Bridge, roots, files []string, complete func(*engine.Codebas
 func askUnits(held Bridge, roots, files []string, complete func(*engine.Codebase) error) (*Units, error) {
 	kept := linesKeptFor(held, roots)
 	records, header, misses := kept.standingRecords(files)
-	if first, later := kept.deferred(misses); len(later) > 0 {
+	for wave := 1; wave < wavesAtMost; wave++ {
+		first, later := kept.deferred(misses)
+		if len(later) == 0 {
+			break
+		}
 		if _, err := held.ask(roots, files, first, func() {}); err != nil {
 			return nil, err
 		}
+		kept.forget(first)
 		records, header, misses = kept.standingRecords(files)
 	}
 
