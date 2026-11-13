@@ -26,6 +26,7 @@ LIVE_EDITS, WORKERS, WORKER_EDITS = "judge_edits", "judge_workers", "judge_worke
 HAND_INS, HAND_INS_AFTER = "judge_hand_ins", "judge_hand_ins_after"
 EVENTS, WINDOWS, TOLD, QUEUE = "events", "windows", "told", "queue"
 JUDGE_EVENT = "--judge-event="
+FAULTS = "hook-faults.log"
 NEW_CARD_EACH_TIME = {"sin-found", "sin-resolved"}
 WINDOW_LEFT_OPEN_AFTER = 15 * 60
 QUEUED_AT_MOST = 60 * 60
@@ -99,6 +100,8 @@ def delivered(data: Path) -> None:
         try:
             fields = json.loads(taken.read_text())
         except ValueError:
+            fields = None
+        if not isinstance(fields, dict):
             taken.unlink(missing_ok=True)
             continue
         answer = shaped(fields)
@@ -129,15 +132,13 @@ def settings_of(event: dict) -> dict:
     given = event.get("settings")
     if isinstance(given, dict) and given:
         return given
-    named = os.environ.get("JOURNAL_SETTINGS", "")
-    for text in (named, Path(named).read_text() if named and Path(named).is_file() else ""):
-        try:
-            chosen = json.loads(text)
-        except ValueError:
-            continue
-        if isinstance(chosen, dict):
-            return chosen
-    return {}
+    named = os.environ.get("JOURNAL_SETTINGS", "").strip()
+    try:
+        text = named if named.startswith("{") else (Path(named).read_text() if named else "")
+        chosen = json.loads(text) if text else {}
+    except (OSError, ValueError):
+        return {}
+    return chosen if isinstance(chosen, dict) else {}
 
 
 def judged_later(event: dict) -> bool:
@@ -190,10 +191,13 @@ class EditWindow:
         opened = self.path(".open")
         if not opened.exists():
             return False
-        named = Path(opened.read_text().strip() or "/nonexistent")
-        if named.is_file():
-            return time.time() - named.stat().st_mtime < QUEUED_AT_MOST
-        return time.time() - opened.stat().st_mtime < WINDOW_LEFT_OPEN_AFTER
+        try:
+            named = Path(opened.read_text().strip() or "/nonexistent")
+            if named.is_file():
+                return time.time() - named.stat().st_mtime < QUEUED_AT_MOST
+            return time.time() - opened.stat().st_mtime < WINDOW_LEFT_OPEN_AFTER
+        except OSError:
+            return False
 
     def names(self, event: Path) -> None:
         with open(self.path(".lock"), "a") as lock:
@@ -213,8 +217,11 @@ def kept_event(data: Path, line: bytes) -> Path:
     folder.mkdir(parents=True, exist_ok=True)
     # shortcut: a kept event no run read is dropped after a day; upgrade to the project's cache_hours if that matters
     for old in folder.glob("event-*.json"):
-        if time.time() - old.stat().st_mtime > EVENT_KEPT_AT_MOST:
-            old.unlink(missing_ok=True)
+        try:
+            if time.time() - old.stat().st_mtime > EVENT_KEPT_AT_MOST:
+                old.unlink(missing_ok=True)
+        except OSError:
+            continue
     handle, name = tempfile.mkstemp(prefix="event-", suffix=".json", dir=folder)
     with os.fdopen(handle, "wb") as kept:
         kept.write(line)
@@ -262,11 +269,15 @@ def judge_later(line: bytes) -> None:
     event_name = event.get("event")
     if event_name == EDITED and not window.gather(line):
         return
-    event = queued(line, agent)
+    try:
+        event = queued(line, agent)
+        if event is not None and event_name == EDITED:
+            window.names(event)
+    except Exception:
+        window.reopen()
+        raise
     if event is None:
         window.reopen()
-    elif event_name == EDITED:
-        window.names(event)
 
 
 def main() -> int:
@@ -285,11 +296,26 @@ def main() -> int:
     answer, code = answered(line)
     sys.stdout.buffer.write(answer)
     sys.stdout.buffer.flush()
-    judge_later(line)
+    afterwards(lambda: judge_later(line))
     data = os.environ.get("JOURNAL_PLUGIN_DATA", "")
     if data:
-        delivered(Path(data))
+        afterwards(lambda: delivered(Path(data)))
     return code
+
+
+def afterwards(work) -> None:
+    """Work done after the event is answered: a fault there is written to the plugin's fault log, never raised, so
+    no event fails for what comes after its answer."""
+    try:
+        work()
+    except Exception as fault:
+        data = os.environ.get("JOURNAL_PLUGIN_DATA", "")
+        if data:
+            try:
+                with open(Path(data) / FAULTS, "a") as log:
+                    log.write(f"{time.strftime('%Y-%m-%d %H:%M:%S')} {type(fault).__name__}: {fault}\n")
+            except OSError:
+                pass
 
 
 if __name__ == "__main__":

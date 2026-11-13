@@ -234,6 +234,44 @@ class WhatAJudgingToldReachesTheJournalsQueue(unittest.TestCase):
             self.assertEqual(json.loads((data / "queue" / "1-1.json").read_text())["tell"], "--judge-event=/data/events/event-1.json")
 
 
+class NothingAfterTheAnswerStopsAnEvent(unittest.TestCase):
+    def test_settings_given_as_json_text_are_read_and_never_taken_for_a_path(self) -> None:
+        chosen = {"judge_edits": True, **{f"key_{n}": "x" * 50 for n in range(40)}}
+        with patched_environment(JOURNAL_SETTINGS=json.dumps(chosen)):
+            self.assertEqual(hook.settings_of({}), chosen)
+
+    def test_a_fault_after_the_answer_is_logged_not_raised(self) -> None:
+        def broken() -> None:
+            raise OSError("the event file was removed under us")
+
+        with tempfile.TemporaryDirectory() as data:
+            with patched_environment(JOURNAL_PLUGIN_DATA=data):
+                hook.afterwards(broken)
+            self.assertIn("the event file was removed under us", (Path(data) / hook.FAULTS).read_text())
+
+    def test_a_told_file_that_is_not_an_object_is_dropped(self) -> None:
+        with tempfile.TemporaryDirectory() as folder:
+            data = Path(folder)
+            (data / "told").mkdir()
+            (data / "told" / "1-1.json").write_text("[1, 2]")
+            hook.delivered(data)
+            self.assertEqual(list((data / "told").iterdir()), [])
+
+    def test_a_failure_between_gathering_and_naming_reopens_the_window(self) -> None:
+        def failing(line: bytes, agent: int) -> Path:
+            raise OSError("no room for the event")
+
+        with tempfile.TemporaryDirectory() as data:
+            kept, hook.queued = hook.queued, failing
+            try:
+                with patched_environment(JOURNAL_PLUGIN_DATA=data):
+                    with self.assertRaises(OSError):
+                        hook.judge_later(json.dumps(edited(judge_edits=True)).encode())
+            finally:
+                hook.queued = kept
+            self.assertFalse(hook.EditWindow(Path(data), 7).path(".open").exists())
+
+
 class patched_environment:
     def __init__(self, **named: str) -> None:
         self.named, self.kept = named, {}

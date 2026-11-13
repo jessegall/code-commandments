@@ -40,6 +40,10 @@
             "check": "curl --version",
             "hint": "curl fetches the checker's release binary into the plugin's own folder"
         },
+        "python3": {
+          "check": "python3 -c 'import sys; sys.exit(sys.version_info < (3, 9))'",
+          "hint": "python3, 3.9 or newer, runs the plugin's script for every event the journal hands it"
+        },
         "sha256sum": {
             "check": "command -v sha256sum || command -v shasum",
             "hint": "sha256sum or shasum checks the fetched binary against its release's SHA256SUMS"
