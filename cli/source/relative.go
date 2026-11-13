@@ -1,17 +1,18 @@
 package source
 
 import (
-	"path/filepath"
 	"strings"
+
+	"github.com/jessegall/code-commandments/walk"
 )
 
 func Relative(root, path string) string {
-	if real, err := filepath.EvalSymlinks(root); err == nil {
+	if real, err := walk.Resolved(root); err == nil {
 		root = real
 	}
 
 	file, line, located := strings.Cut(path, ":")
-	if real, err := filepath.EvalSymlinks(file); err == nil {
+	if real, err := walk.Resolved(file); err == nil {
 		file = real
 	}
 

@@ -245,24 +245,11 @@ func IsWorktree(directory string) bool {
 }
 
 func InTree(root, file string) bool {
-	if real, err := filepath.EvalSymlinks(root); err == nil {
-		root = real
-	}
-	if real, err := filepath.EvalSymlinks(file); err == nil {
-		file = real
-	}
-
-	return strings.HasPrefix(filepath.Clean(file), filepath.Clean(root)+string(filepath.Separator))
+	return strings.HasPrefix(filepath.Clean(Real(file)), filepath.Clean(Real(root))+string(filepath.Separator))
 }
 
 func InWorktree(root, file string) bool {
-	if real, err := filepath.EvalSymlinks(root); err == nil {
-		root = real
-	}
-	if real, err := filepath.EvalSymlinks(file); err == nil {
-		file = real
-	}
-	root = filepath.Clean(root)
+	root, file = filepath.Clean(Real(root)), Real(file)
 	for folder := filepath.Dir(filepath.Clean(file)); folder != root && strings.HasPrefix(folder, root+string(filepath.Separator)); folder = filepath.Dir(folder) {
 		if IsWorktree(folder) {
 			return true

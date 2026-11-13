@@ -44,7 +44,7 @@ func TestEveryBridgeWritesOnlyTheFilesItWasAskedToAsJudged(t *testing.T) {
 			written(t, project, "one"+extension, texts[0])
 			written(t, project, "two"+extension, texts[1])
 
-			stream, err := read(held, []string{project}, []string{one, two}, []string{two}, func() {})
+			stream, err := read(held, &keptLines{}, []string{project}, []string{one, two}, []string{two}, func() {})
 			if err != nil {
 				t.Skipf("the %s bridge could not be reached here: %v", held.Label, err)
 			}

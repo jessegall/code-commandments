@@ -10,9 +10,9 @@ import (
 	"github.com/jessegall/code-commandments/cli/checklist"
 	"github.com/jessegall/code-commandments/cli/git"
 	"github.com/jessegall/code-commandments/cli/natural"
-	"github.com/jessegall/code-commandments/cli/source"
 	"github.com/jessegall/code-commandments/engine"
 	"github.com/jessegall/code-commandments/skill"
+	"github.com/jessegall/code-commandments/walk"
 )
 
 const twinsShown = 3
@@ -49,7 +49,7 @@ func (r Report) Reporting(filed []Reported) Report {
 
 func NewReport(path string, findings []engine.Finding, fixable, scaffoldable map[string]string, skipped Skipped) Report {
 	// A finding names its file by its real path, as the bridges read it, so the path it is told against is real too.
-	path = source.Real(path)
+	path = walk.Real(path)
 	report := Report{path: path, bySkill: map[string][]engine.Finding{}, total: len(findings), fixable: fixable, scaffoldable: scaffoldable, skipped: skipped, mirrors: mirrored(path), worktree: git.Root(path)}
 
 	for _, finding := range findings {

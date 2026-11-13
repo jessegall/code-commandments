@@ -178,19 +178,6 @@ func NamedIn(text string) (Language, bool) {
 	return "", false
 }
 
-func Real(path string) string {
-	resolved, err := filepath.EvalSymlinks(path)
-	if err != nil {
-		return path
-	}
-
-	if absolute, err := filepath.Abs(resolved); err == nil {
-		return absolute
-	}
-
-	return resolved
-}
-
 func OfEngine(engine catalog.Engine) []Language {
 	var read []Language
 	for _, language := range catalog.LanguagesOf(engine) {

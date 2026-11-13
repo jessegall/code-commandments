@@ -86,7 +86,9 @@ func askUnits(held Bridge, roots, files []string, complete func(*engine.Codebase
 		if len(later) == 0 {
 			break
 		}
-		if _, err := held.ask(roots, files, first, func() {}); err != nil {
+		_, err := held.ask(kept, roots, files, first, func() {})
+		kept.settle()
+		if err != nil {
 			return nil, err
 		}
 		kept.forget(first)

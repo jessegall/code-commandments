@@ -12,6 +12,7 @@ import (
 	"github.com/jessegall/code-commandments/cli/git"
 	"github.com/jessegall/code-commandments/cli/state"
 	"github.com/jessegall/code-commandments/cli/workspace"
+	"github.com/jessegall/code-commandments/walk"
 )
 
 var authoredLegend = &state.Legend{
@@ -45,7 +46,7 @@ func (a Authored) Wrote(root, file string) {
 		file = filepath.Join(root, file)
 	}
 
-	if resolved, err := filepath.EvalSymlinks(file); err == nil {
+	if resolved, err := walk.Resolved(file); err == nil {
 		a.add([]string{resolved})
 	}
 }

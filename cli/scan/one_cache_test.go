@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 	"slices"
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/jessegall/code-commandments/bridge"
@@ -124,6 +125,55 @@ func TestAChangeStopsSpreadingWhereAnOutlineStaysTheSame(t *testing.T) {
 	}
 }
 
+// Files read side by side stand on the outlines each other's share kept: cart.py, written by one share, reads prices.py,
+// written by another that ends after it, and the next run still serves cart.py from the cache.
+func TestLinesReadSideBySideStandOnTheOutlinesEachOtherKept(t *testing.T) {
+	if _, err := bridge.Mypy(); err != nil {
+		t.Skipf("no Python bridge here: %v", err)
+	}
+	project := repository(t)
+	journalDriven(t, project)
+	written(t, project, "src/shop/__init__.py", "")
+	written(t, project, "src/shop/prices.py", "def price() -> int:\n    return 3\n")
+	written(t, project, "src/shop/cart.py", "from shop.prices import price\n\n\ndef total() -> int:\n    return price() * 2\n")
+
+	held := cache.KeptIn()
+	cache.KeepIn(t.TempDir())
+	t.Cleanup(func() { cache.KeepIn(held) })
+
+	route := read
+	cartRead, readOnce := make(chan struct{}), sync.Once{}
+	writes := func(written []string, name string) bool {
+		return slices.ContainsFunc(written, func(file string) bool { return filepath.Base(file) == name })
+	}
+	read = func(b Bridge, kept *keptLines, roots, files, written []string, tally func()) (*contract.Stream, error) {
+		if writes(written, "prices.py") {
+			<-cartRead
+		}
+		defer func() {
+			if writes(written, "cart.py") {
+				readOnce.Do(func() { close(cartRead) })
+			}
+		}()
+
+		return route(b, kept, roots, files, written, tally)
+	}
+	var files []string
+	for _, file := range theShop {
+		files = append(files, filepath.Join(project, file))
+	}
+	_, err := Python.ReadShared([]string{filepath.Join(project, "src")}, files, func() {}, len(files))
+	read = route
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if asked := askedOfABridge(t, project, theShop...); len(asked) != 0 {
+		t.Errorf("a run after a read side by side asked the bridge for %v again: a share keyed its line before another kept "+
+			"the outline of a file it read", asked)
+	}
+}
+
 // A file whose contents outline differently in two checkouts, because what it imports differs, never hands one
 // checkout's reader the other's tree: cart.py's limit is an int in the project and a str in the worktree, and
 // checkout.py, alike in both, is served the tree that knows its own checkout's limit.
@@ -207,10 +257,10 @@ func askedOf(t *testing.T, b Bridge, checkout string, relative ...string) ([]str
 
 	route := read
 	var asked []string
-	read = func(b Bridge, roots, files, written []string, tally func()) (*contract.Stream, error) {
+	read = func(b Bridge, kept *keptLines, roots, files, written []string, tally func()) (*contract.Stream, error) {
 		asked = append(asked, written...)
 
-		return route(b, roots, files, written, tally)
+		return route(b, kept, roots, files, written, tally)
 	}
 	defer func() { read = route }()
 

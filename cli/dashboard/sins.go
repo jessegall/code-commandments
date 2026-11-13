@@ -17,6 +17,7 @@ import (
 	"github.com/jessegall/code-commandments/cli/workspace"
 	"github.com/jessegall/code-commandments/engine"
 	"github.com/jessegall/code-commandments/sins"
+	"github.com/jessegall/code-commandments/walk"
 )
 
 const (
@@ -48,13 +49,7 @@ func kept(root, path string) bool {
 }
 
 func StoredOf(finding engine.Finding, root string) Stored {
-	path := finding.File
-
-	if real, err := filepath.EvalSymlinks(finding.File); err == nil {
-		if absolute, err := filepath.Abs(real); err == nil {
-			path = absolute
-		}
-	}
+	path := walk.Real(finding.File)
 
 	file := strings.TrimPrefix(path, strings.TrimRight(root, "/")+"/")
 	line, _ := strconv.Atoi(finding.Location[strings.LastIndex(finding.Location, ":")+1:])

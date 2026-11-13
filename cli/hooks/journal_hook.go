@@ -11,6 +11,7 @@ import (
 	"github.com/jessegall/code-commandments/cli/git"
 	"github.com/jessegall/code-commandments/cli/workspace"
 	"github.com/jessegall/code-commandments/engine"
+	"github.com/jessegall/code-commandments/walk"
 )
 
 const (
@@ -216,7 +217,7 @@ func resolved(folder, file string) string {
 		absolute = filepath.Join(folder, file)
 	}
 
-	if real, err := filepath.EvalSymlinks(absolute); err == nil {
+	if real, err := walk.Resolved(absolute); err == nil {
 		return real
 	}
 

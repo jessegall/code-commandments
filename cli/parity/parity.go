@@ -16,6 +16,8 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+
+	"github.com/jessegall/code-commandments/walk"
 )
 
 const CasesDir = "cli/parity/testdata/cases"
@@ -286,7 +288,7 @@ var heldBytes = regexp.MustCompile(`\b(heap|resident|withBridges)=\d+MB`)
 
 func normalise(text, repo, project string) string {
 	for _, path := range []string{project, repo} {
-		if real, err := filepath.EvalSymlinks(path); err == nil && real != path {
+		if real, err := walk.Resolved(path); err == nil && real != path {
 			text = strings.ReplaceAll(text, real, placeholder(path, project))
 		}
 

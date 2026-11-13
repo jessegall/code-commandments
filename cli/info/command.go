@@ -19,6 +19,7 @@ import (
 	"github.com/jessegall/code-commandments/engine/php/packages"
 	"github.com/jessegall/code-commandments/skill"
 	"github.com/jessegall/code-commandments/skills"
+	"github.com/jessegall/code-commandments/walk"
 )
 
 const width = 88
@@ -195,12 +196,7 @@ func consumerRoot(cwd string) string {
 }
 
 func resolve(path string) string {
-	real, err := filepath.EvalSymlinks(path)
-	if err != nil {
-		return ""
-	}
-
-	absolute, _ := filepath.Abs(real)
+	absolute, _ := walk.Resolved(path)
 
 	return absolute
 }

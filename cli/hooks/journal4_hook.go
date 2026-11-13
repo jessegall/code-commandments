@@ -14,6 +14,7 @@ import (
 	"github.com/jessegall/code-commandments/cli"
 	"github.com/jessegall/code-commandments/cli/help"
 	"github.com/jessegall/code-commandments/engine"
+	"github.com/jessegall/code-commandments/walk"
 )
 
 const (
@@ -319,7 +320,7 @@ func withoutLinks(folder string) string {
 		return ""
 	}
 
-	real, err := filepath.EvalSymlinks(folder)
+	real, err := walk.Resolved(folder)
 	if err != nil || real == folder {
 		return ""
 	}

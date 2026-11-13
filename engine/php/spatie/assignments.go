@@ -11,6 +11,7 @@ import (
 	"github.com/jessegall/code-commandments/contract"
 	"github.com/jessegall/code-commandments/engine"
 	"github.com/jessegall/code-commandments/engine/php"
+	"github.com/jessegall/code-commandments/walk"
 )
 
 func (n Node) AssignedPropertyName() string {
@@ -392,7 +393,7 @@ func namesKey(item engine.Match, key string) bool {
 func TransformerOutputIn(codebase *engine.Codebase) string {
 	for _, file := range codebase.Of(contract.PHP).Files() {
 		path := file.Path
-		if real, err := filepath.EvalSymlinks(path); err == nil {
+		if real, err := walk.Resolved(path); err == nil {
 			path = real
 		}
 		nodes := allOf(file)

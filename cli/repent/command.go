@@ -26,6 +26,7 @@ import (
 	"github.com/jessegall/code-commandments/scribes"
 	run "github.com/jessegall/code-commandments/scribes/repent"
 	"github.com/jessegall/code-commandments/sins"
+	"github.com/jessegall/code-commandments/walk"
 )
 
 const (
@@ -149,7 +150,7 @@ func (c Command) Run(in *cli.Input, console cli.Console) (int, error) {
 
 	base := path
 	if !named {
-		base = source.Real(path)
+		base = walk.Real(path)
 	}
 
 	for _, missing := range converged.Unavailable {

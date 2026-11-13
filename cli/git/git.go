@@ -14,6 +14,7 @@ import (
 	"strings"
 
 	"github.com/jessegall/code-commandments/cli/source"
+	"github.com/jessegall/code-commandments/walk"
 )
 
 const (
@@ -38,7 +39,7 @@ func Root(path string) string {
 }
 
 func walkUp(dir string) string {
-	dir = real(dir)
+	dir = walk.Real(dir)
 
 	for {
 		if _, err := os.Lstat(filepath.Join(dir, ".git")); err == nil {
@@ -55,7 +56,7 @@ func walkUp(dir string) string {
 }
 
 func BelongsTo(root, project string) bool {
-	root, project = real(root), real(project)
+	root, project = walk.Real(root), walk.Real(project)
 
 	if root == project {
 		return true
@@ -118,7 +119,7 @@ func gitDirOf(root string) string {
 		gitdir = root + "/" + gitdir
 	}
 
-	return real(gitdir)
+	return walk.Real(gitdir)
 }
 
 func askProjectRoot(path string) string {
@@ -140,7 +141,7 @@ func Worktrees(root string) []string {
 	for _, line := range strings.Split(run(root, "worktree", "list", "--porcelain"), "\n") {
 		path, isWorktree := strings.CutPrefix(line, "worktree ")
 
-		if isWorktree && real(path) != real(root) {
+		if isWorktree && walk.Real(path) != walk.Real(root) {
 			found = append(found, path)
 		}
 	}
@@ -274,7 +275,7 @@ func WorkStart(root string) string {
 	}
 
 	project := ProjectRoot(root)
-	if project == "" || real(project) == real(root) {
+	if project == "" || walk.Real(project) == walk.Real(root) {
 		return headCommit
 	}
 
@@ -409,7 +410,7 @@ func ChangedLinesBetween(root, before, after, file string) ChangedLines {
 var anyLineBreak = regexp.MustCompile(`\r\n|[\n\r\x0B\f]`)
 
 func pathSet(root, lines string) map[string]bool {
-	top := real(root)
+	top := walk.Real(root)
 	set := map[string]bool{}
 
 	for _, relative := range anyLineBreak.Split(lines, -1) {
@@ -423,12 +424,12 @@ func pathSet(root, lines string) map[string]bool {
 			continue
 		}
 
-		absolute, err := filepath.EvalSymlinks(filepath.Join(root, relative))
+		absolute, err := walk.Resolved(filepath.Join(root, relative))
 		if err != nil {
 			continue
 		}
 
-		if absolute, _ = filepath.Abs(absolute); source.Reaches(top, absolute, source.Excluded{}) {
+		if source.Reaches(top, absolute, source.Excluded{}) {
 			set[absolute] = true
 		}
 	}
@@ -521,19 +522,6 @@ func run(dir string, args ...string) string {
 	}
 
 	return string(out)
-}
-
-func real(path string) string {
-	resolved, err := filepath.EvalSymlinks(path)
-	if err != nil {
-		return path
-	}
-
-	if absolute, err := filepath.Abs(resolved); err == nil {
-		return absolute
-	}
-
-	return resolved
 }
 
 func trim(text string) string {

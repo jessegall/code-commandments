@@ -23,6 +23,7 @@ import (
 	"github.com/jessegall/code-commandments/contract"
 	"github.com/jessegall/code-commandments/engine"
 	_ "github.com/jessegall/code-commandments/engine/php"
+	"github.com/jessegall/code-commandments/walk"
 )
 
 // Sources are a tree's source files, by language, and the roots they were walked from.
@@ -63,15 +64,9 @@ func (s Sources) GivenOf() Given {
 
 	for _, files := range s.byLanguage {
 		for _, file := range files {
-			real, err := filepath.EvalSymlinks(file)
-			if err != nil {
-				continue
+			if real, err := walk.Resolved(file); err == nil {
+				given[real] = file
 			}
-			absolute, err := filepath.Abs(real)
-			if err != nil {
-				continue
-			}
-			given[absolute] = file
 		}
 	}
 
@@ -496,13 +491,7 @@ func resolved(paths []string) []string {
 	var real []string
 
 	for _, path := range paths {
-		if linked, err := filepath.EvalSymlinks(path); err == nil {
-			path = linked
-		}
-		if absolute, err := filepath.Abs(path); err == nil {
-			path = absolute
-		}
-		real = append(real, path)
+		real = append(real, walk.Real(path))
 	}
 
 	return real

@@ -18,6 +18,7 @@ import (
 	"github.com/jessegall/code-commandments/cli/library"
 	"github.com/jessegall/code-commandments/cli/untrack"
 	"github.com/jessegall/code-commandments/cli/workspace"
+	"github.com/jessegall/code-commandments/walk"
 )
 
 var retiredCommands = []string{"until.md", "stop-condition.md"}
@@ -190,7 +191,7 @@ func warn(console cli.Console, err error) {
 func ConsumerRoot(cwd string) string {
 	home, _ := os.UserHomeDir()
 
-	if real, err := filepath.EvalSymlinks(cwd); err == nil {
+	if real, err := walk.Resolved(cwd); err == nil {
 		cwd = real
 	}
 

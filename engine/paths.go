@@ -4,6 +4,8 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+
+	"github.com/jessegall/code-commandments/walk"
 )
 
 func (c *Codebase) Scanned(roots ...string) {
@@ -57,10 +59,8 @@ func spellingsOf(root string) []string {
 		spelt = append(spelt, absolute)
 	}
 
-	if resolved, err := filepath.EvalSymlinks(root); err == nil {
-		if absolute, err := filepath.Abs(resolved); err == nil {
-			spelt = append(spelt, absolute)
-		}
+	if resolved, err := walk.Resolved(root); err == nil {
+		spelt = append(spelt, resolved)
 	}
 
 	return spelt

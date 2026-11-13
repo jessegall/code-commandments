@@ -428,12 +428,15 @@ func Named(kind string) (Bridge, bool) {
 	return Bridge{}, false
 }
 
-var read = func(b Bridge, roots, files, written []string, tally func()) (*contract.Stream, error) {
-	return b.ask(resolved(roots), resolved(files), resolved(written), tally)
+var read = func(b Bridge, kept *keptLines, roots, files, written []string, tally func()) (*contract.Stream, error) {
+	return b.ask(kept, resolved(roots), resolved(files), resolved(written), tally)
 }
 
 func (b Bridge) Read(roots, files []string, tally func()) (*contract.Stream, error) {
-	return b.readHalving(roots, files, files, tally, halvingsAtMost)
+	kept := linesKeptFor(b, resolved(roots))
+	defer kept.settle()
+
+	return b.readHalving(kept, roots, files, files, tally, halvingsAtMost)
 }
 
 const halvingsAtMost = 8
@@ -464,7 +467,8 @@ func (b Bridge) ReadShared(roots, files []string, tally func(), processes int) (
 	}
 
 	first, later := kept.deferred(misses)
-	stream, err := b.readMisses(roots, files, first, tally, processes)
+	stream, err := b.readMisses(kept, roots, files, first, tally, processes)
+	kept.settle()
 	kept.forget(first)
 	for wave := 2; len(later) > 0 && stream != nil; wave++ {
 		standing, _, still := kept.split(later)
@@ -478,8 +482,9 @@ func (b Bridge) ReadShared(roots, files []string, tally func(), processes int) (
 			next, rest = still, nil
 		}
 		if len(next) > 0 {
-			read, readErr := b.readMisses(roots, files, next, tally, processes)
+			read, readErr := b.readMisses(kept, roots, files, next, tally, processes)
 			stream, err = joined(stream, read), errors.Join(err, readErr)
+			kept.settle()
 			kept.forget(next)
 		}
 		later = rest
@@ -516,9 +521,11 @@ func outsideOnly(program *contract.Program, files []*contract.File) *contract.Pr
 	return &outside
 }
 
-func (b Bridge) readMisses(roots, files, misses []string, tally func(), processes int) (*contract.Stream, error) {
+// readMisses has the bridge write the misses, in shares side by side. The caller settles the lines once every share has
+// ended, so a line is keyed on the outline another share kept of a file it read.
+func (b Bridge) readMisses(kept *keptLines, roots, files, misses []string, tally func(), processes int) (*contract.Stream, error) {
 	if processes <= 1 || len(misses) < 2 {
-		return b.readHalving(roots, files, misses, tally, halvingsAtMost)
+		return b.readHalving(kept, roots, files, misses, tally, halvingsAtMost)
 	}
 
 	files = misses
@@ -531,7 +538,7 @@ func (b Bridge) readMisses(roots, files, misses []string, tally func(), processe
 		go func() {
 			defer reading.Done()
 			from, to := share*len(files)/shares, (share+1)*len(files)/shares
-			streams[share], failures[share] = b.readHalving(roots, files, files[from:to], tally, halvingsAtMost)
+			streams[share], failures[share] = b.readHalving(kept, roots, files, files[from:to], tally, halvingsAtMost)
 		}()
 	}
 	reading.Wait()
@@ -570,15 +577,15 @@ func onceEach(stream *contract.Stream) *contract.Stream {
 
 // readHalving reads the files and writes those asked; when that fails it retries each half of what it writes, read
 // on its own, so one file the bridge cannot read costs only itself.
-func (b Bridge) readHalving(roots, files, written []string, tally func(), halvings int) (*contract.Stream, error) {
-	stream, err := read(b, roots, files, written, tally)
+func (b Bridge) readHalving(kept *keptLines, roots, files, written []string, tally func(), halvings int) (*contract.Stream, error) {
+	stream, err := read(b, kept, roots, files, written, tally)
 	if err == nil || halvings <= 0 || len(written) < 2 || isUnavailable(err) {
 		return stream, err
 	}
 
 	first, second := written[:len(written)/2], written[len(written)/2:]
-	read, firstErr := b.readHalving(roots, first, first, tally, halvings-1)
-	rest, secondErr := b.readHalving(roots, second, second, tally, halvings-1)
+	read, firstErr := b.readHalving(kept, roots, first, first, tally, halvings-1)
+	rest, secondErr := b.readHalving(kept, roots, second, second, tally, halvings-1)
 
 	if firstErr != nil && secondErr != nil {
 		return stream, err
@@ -587,16 +594,16 @@ func (b Bridge) readHalving(roots, files, written []string, tally func(), halvin
 	return joined(read, rest), errors.Join(firstErr, secondErr)
 }
 
-func (b Bridge) ask(roots, files, written []string, tally func()) (*contract.Stream, error) {
+// ask has the bridge write the files and stages each line it writes in the cache, for the caller to settle.
+func (b Bridge) ask(kept *keptLines, roots, files, written []string, tally func()) (*contract.Stream, error) {
 	asker, err := b.Reach.Open(b, roots)
 	if err != nil {
 		return nil, err
 	}
 	defer asker.Close()
 
-	kept := linesKeptFor(b, roots)
 	kept.printedFirst(files)
-	defer kept.settle()
+
 	stream := &contract.Stream{}
 	err = asker.AskEach(bridge.AskedOf(b.Projects, files, written).Request(), func(line contract.Line, raw []byte) error {
 		switch {

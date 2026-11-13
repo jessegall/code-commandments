@@ -18,6 +18,7 @@ import (
 	"github.com/jessegall/code-commandments/cli/scan"
 	"github.com/jessegall/code-commandments/cli/source"
 	"github.com/jessegall/code-commandments/cli/workspace"
+	"github.com/jessegall/code-commandments/walk"
 )
 
 const Latest = "latest"
@@ -271,7 +272,7 @@ func RestrictedTo(files []string) Scope {
 }
 
 func (s Scope) NarrowedTo(file string) Scope {
-	real, err := resolve(file)
+	real, err := walk.Resolved(file)
 	if err != nil {
 		real = file
 	}
@@ -304,7 +305,7 @@ func (s Scope) Includes(file string) bool {
 		return true
 	}
 
-	real, err := resolve(file)
+	real, err := walk.Resolved(file)
 
 	return err == nil && s.files[real]
 }
@@ -316,7 +317,7 @@ func (s Scope) Covers(file string, line int) bool {
 	if len(s.lines) == 0 {
 		return true
 	}
-	real, err := resolve(file)
+	real, err := walk.Resolved(file)
 	if err != nil {
 		real = file
 	}
@@ -345,7 +346,7 @@ func canonicalLines(lines map[string]git.ChangedLines) map[string]git.ChangedLin
 	}
 	canonical := map[string]git.ChangedLines{}
 	for file, changed := range lines {
-		real, err := resolve(file)
+		real, err := walk.Resolved(file)
 		if err != nil {
 			real = file
 		}
@@ -383,13 +384,13 @@ type Within struct {
 }
 
 func (w Within) Includes(file string) bool {
-	real, err := resolve(file)
+	real, err := walk.Resolved(file)
 	if err != nil {
 		real = file
 	}
 
 	return slices.ContainsFunc(w.Folders, func(given string) bool {
-		folder, err := resolve(given)
+		folder, err := walk.Resolved(given)
 		if err != nil {
 			folder = given
 		}
@@ -416,7 +417,7 @@ func canonical(files map[string]bool) map[string]bool {
 	set := map[string]bool{}
 
 	for file := range files {
-		if real, err := resolve(file); err == nil {
+		if real, err := walk.Resolved(file); err == nil {
 			set[real] = true
 		} else {
 			set[file] = true
@@ -529,7 +530,7 @@ type Path struct {
 }
 
 func Under(root string) Path {
-	real, err := resolve(root)
+	real, err := walk.Resolved(root)
 	if err != nil {
 		real = root
 	}
@@ -538,7 +539,7 @@ func Under(root string) Path {
 }
 
 func (p Path) Includes(file string) bool {
-	real, err := resolve(file)
+	real, err := walk.Resolved(file)
 	if err != nil {
 		real = file
 	}
@@ -561,7 +562,7 @@ type Frozen struct {
 }
 
 func (f *Frozen) Includes(file string) bool {
-	real, err := resolve(file)
+	real, err := walk.Resolved(file)
 	if err != nil {
 		return true
 	}
@@ -574,13 +575,4 @@ func (f *Frozen) Includes(file string) bool {
 	f.seen.Store(real, frozen)
 
 	return !frozen
-}
-
-func resolve(file string) (string, error) {
-	real, err := filepath.EvalSymlinks(file)
-	if err != nil {
-		return "", err
-	}
-
-	return filepath.Abs(real)
 }

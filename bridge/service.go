@@ -14,25 +14,17 @@ import (
 	"time"
 
 	"github.com/jessegall/code-commandments/contract"
+	"github.com/jessegall/code-commandments/walk"
 )
 
 func ServiceSocket(kind, project string) string {
-	sum := sha1.Sum([]byte(canonical(project)))
+	sum := sha1.Sum([]byte(filepath.Clean(walk.Real(project))))
 	folder := "/tmp"
 	if runtime.GOOS == "windows" {
 		folder = os.TempDir()
 	}
 
 	return filepath.Join(folder, "code-commandments-"+kind+"-"+hex.EncodeToString(sum[:])[:12]+".sock")
-}
-
-func canonical(project string) string {
-	resolved, err := filepath.EvalSymlinks(project)
-	if err != nil {
-		return filepath.Clean(project)
-	}
-
-	return filepath.Clean(resolved)
 }
 
 func Service(kind, project string) (*Server, bool) {

@@ -15,6 +15,7 @@ import (
 	"github.com/jessegall/code-commandments/cli/workspace"
 	"github.com/jessegall/code-commandments/scribes"
 	"github.com/jessegall/code-commandments/scribes/backend"
+	"github.com/jessegall/code-commandments/walk"
 )
 
 // Command is `hints`.
@@ -98,14 +99,14 @@ func (Command) Run(in *cli.Input, console cli.Console) (int, error) {
 	console.Say("\033[32m✓ Rewrote " + strconv.Itoa(len(written)) + " " + files + ".\033[0m")
 
 	for _, file := range written {
-		console.Say("  " + strings.TrimPrefix(file, source.Real(path)+"/"))
+		console.Say("  " + strings.TrimPrefix(file, walk.Real(path)+"/"))
 	}
 
 	return 0, nil
 }
 
 func preview(rewrites scribes.Rewrites, base, file string, console cli.Console) (int, error) {
-	diff, err := scribes.UnifiedDiff(rewrites, source.Real(base))
+	diff, err := scribes.UnifiedDiff(rewrites, walk.Real(base))
 	if err != nil {
 		return 0, err
 	}

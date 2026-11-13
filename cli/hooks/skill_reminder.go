@@ -20,6 +20,7 @@ import (
 	"github.com/jessegall/code-commandments/detectors"
 	"github.com/jessegall/code-commandments/engine"
 	"github.com/jessegall/code-commandments/skill"
+	"github.com/jessegall/code-commandments/walk"
 )
 
 const (
@@ -262,7 +263,7 @@ func absoluteOf(root, file string) string {
 		absolute = strings.TrimRight(root, "/") + "/" + strings.TrimLeft(file, "/")
 	}
 
-	if resolved, err := filepath.EvalSymlinks(absolute); err == nil {
+	if resolved, err := walk.Resolved(absolute); err == nil {
 		absolute = resolved
 	}
 
@@ -328,7 +329,7 @@ func absolutely(root, file string) string {
 		absolute = filepath.Join(strings.TrimRight(root, "/"), file)
 	}
 
-	if real, err := filepath.EvalSymlinks(absolute); err == nil {
+	if real, err := walk.Resolved(absolute); err == nil {
 		return real
 	}
 

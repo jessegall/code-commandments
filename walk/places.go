@@ -9,11 +9,11 @@ import (
 )
 
 func Same(one, two string) bool {
-	return real(one) == real(two)
+	return Real(one) == Real(two)
 }
 
 func Inside(folder, path string) (string, bool) {
-	under, err := filepath.Rel(real(folder), real(path))
+	under, err := filepath.Rel(Real(folder), Real(path))
 	if err != nil || strings.HasPrefix(under, "..") {
 		return "", false
 	}
@@ -22,7 +22,7 @@ func Inside(folder, path string) (string, bool) {
 }
 
 func Counterpart(checkout, project, file string) string {
-	if real(checkout) == real(project) {
+	if Real(checkout) == Real(project) {
 		return file
 	}
 
@@ -31,7 +31,7 @@ func Counterpart(checkout, project, file string) string {
 		return file
 	}
 
-	return filepath.Join(real(project), under)
+	return filepath.Join(Real(project), under)
 }
 
 func Mark(path string) string {
@@ -41,12 +41,4 @@ func Mark(path string) string {
 	}
 
 	return info.ModTime().UTC().Format(time.RFC3339Nano) + "\x00" + strconv.FormatInt(info.Size(), 10)
-}
-
-func real(path string) string {
-	if resolved, err := filepath.EvalSymlinks(path); err == nil {
-		return resolved
-	}
-
-	return path
 }

@@ -1,7 +1,6 @@
 package bridge
 
 import (
-	"path/filepath"
 	"slices"
 
 	"github.com/jessegall/code-commandments/contract"
@@ -13,7 +12,7 @@ func InWalkOrder(stream *contract.Stream, paths []string) {
 
 	for _, path := range paths {
 		for _, file := range walk.Files(path, walk.Excluded{}, func(string) bool { return true }) {
-			if real := resolved(file); real != "" {
+			if real := walk.Real(file); real != "" {
 				if _, seen := at[real]; !seen {
 					at[real] = len(at)
 				}
@@ -32,23 +31,9 @@ func InWalkOrder(stream *contract.Stream, paths []string) {
 }
 
 func rank(at map[string]int, path string) int {
-	if i, met := at[resolved(path)]; met {
+	if i, met := at[walk.Real(path)]; met {
 		return i
 	}
 
 	return len(at)
-}
-
-func resolved(path string) string {
-	real, err := filepath.EvalSymlinks(path)
-	if err != nil {
-		return path
-	}
-
-	absolute, err := filepath.Abs(real)
-	if err != nil {
-		return real
-	}
-
-	return absolute
 }

@@ -2,9 +2,9 @@ package walk
 
 import (
 	"path"
-	"path/filepath"
 	"regexp"
 	"strings"
+	"sync"
 )
 
 // Excluded is the paths a project told the tool to leave alone: plain folders, matched as prefixes, and globs, matched against the path relative to the project and every folder above it.
@@ -16,7 +16,7 @@ type Excluded struct {
 }
 
 func Under(root string, relative []string) Excluded {
-	root = strings.TrimRight(realOr(root), "/")
+	root = strings.TrimRight(Real(root), "/")
 	excluded := Excluded{root: root}
 
 	for _, given := range relative {
@@ -27,7 +27,7 @@ func Under(root string, relative []string) Excluded {
 		case strings.Contains(given, "*"):
 			excluded.patterns = append(excluded.patterns, given)
 		default:
-			excluded.prefixes = append(excluded.prefixes, realOr(root+"/"+given))
+			excluded.prefixes = append(excluded.prefixes, Real(root+"/"+given))
 		}
 	}
 
@@ -38,7 +38,7 @@ func (e Excluded) Judging(folders []string) Excluded {
 	judged := e.judged
 	for _, given := range folders {
 		if given = strings.Trim(given, "/"); given != "" {
-			judged = append(judged, realOr(e.root+"/"+given))
+			judged = append(judged, Real(e.root+"/"+given))
 		}
 	}
 	e.judged = judged
@@ -55,11 +55,9 @@ func (e Excluded) Covers(given string) bool {
 		return false
 	}
 
-	resolved, err := filepath.EvalSymlinks(given)
+	resolved, err := Resolved(given)
 	if err != nil {
 		resolved = strings.TrimRight(given, "/")
-	} else if absolute, err := filepath.Abs(resolved); err == nil {
-		resolved = absolute
 	}
 
 	for _, judged := range e.judged {
@@ -149,21 +147,24 @@ func fnmatch(pattern, name string, pathname bool) bool {
 		}
 	}
 
-	matcher, err := regexp.Compile(expression.String() + "$")
+	matcher, err := compiled(expression.String() + "$")
 
 	return err == nil && matcher.MatchString(name)
 }
 
-func realOr(given string) string {
-	resolved, err := filepath.EvalSymlinks(given)
-	if err != nil {
-		return given
-	}
+// patterns holds each exclusion pattern compiled once a process: the walker matches every pattern against every folder
+// above every file it meets.
+var patterns sync.Map
 
-	absolute, err := filepath.Abs(resolved)
-	if err != nil {
-		return resolved
+func compiled(expression string) (*regexp.Regexp, error) {
+	if held, ok := patterns.Load(expression); ok {
+		return held.(*regexp.Regexp), nil
 	}
+	matcher, err := regexp.Compile(expression)
+	if err != nil {
+		return nil, err
+	}
+	patterns.Store(expression, matcher)
 
-	return absolute
+	return matcher, nil
 }

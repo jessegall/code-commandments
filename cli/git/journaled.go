@@ -1,6 +1,10 @@
 package git
 
-import "os"
+import (
+	"os"
+
+	"github.com/jessegall/code-commandments/walk"
+)
 
 // journaled is what the journal says about the checkout a run was started in, from the variables it hands every alias run: the checkout, the project it belongs to, and the commit it was cut from.
 type journaled struct {
@@ -21,11 +25,11 @@ func journalSaysOf(path string) (journaled, bool) {
 	}
 
 	top := Root(path)
-	if top == "" && within(real(path), real(said.checkout)) {
+	if top == "" && within(walk.Real(path), walk.Real(said.checkout)) {
 		return said, true
 	}
 
-	if top == "" || real(top) != real(said.checkout) {
+	if top == "" || walk.Real(top) != walk.Real(said.checkout) {
 		return journaled{}, false
 	}
 
@@ -33,5 +37,5 @@ func journalSaysOf(path string) (journaled, bool) {
 }
 
 func (j journaled) isTheProject() bool {
-	return real(j.checkout) == real(j.project)
+	return walk.Real(j.checkout) == walk.Real(j.project)
 }

@@ -43,7 +43,7 @@ func TestTheBridgesRunTwoAtATime(t *testing.T) {
 		{Kind: "mypy", Word: "python", Label: "Python", Languages: []source.Language{source.Python}},
 		{Kind: "roslyn", Word: "csharp", Label: "C#", Languages: []source.Language{source.CSharp}},
 	}
-	read = func(_ Bridge, roots, files, _ []string, tally func()) (*contract.Stream, error) {
+	read = func(_ Bridge, _ *keptLines, roots, files, _ []string, tally func()) (*contract.Stream, error) {
 		return bridge(roots, files, tally)
 	}
 	t.Cleanup(func() { Bridges, read = whole, route })

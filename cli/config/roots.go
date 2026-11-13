@@ -175,8 +175,8 @@ func isWithin(folder, root string) bool {
 }
 
 func ToParse(project, path string) ([]string, error) {
-	target := strings.TrimRight(realOr(path), "/")
-	home := strings.TrimRight(realOr(project), "/")
+	target := strings.TrimRight(walk.Real(path), "/")
+	home := strings.TrimRight(walk.Real(project), "/")
 
 	if target != home && !strings.HasPrefix(target, home+"/") {
 		return []string{target}, nil
@@ -188,7 +188,7 @@ func ToParse(project, path string) ([]string, error) {
 	}
 
 	for _, root := range roots {
-		real := strings.TrimRight(realOr(root), "/")
+		real := strings.TrimRight(walk.Real(root), "/")
 
 		if target == real || strings.HasPrefix(target, real+"/") {
 			return roots, nil
@@ -196,19 +196,6 @@ func ToParse(project, path string) ([]string, error) {
 	}
 
 	return append(roots, target), nil
-}
-
-func realOr(path string) string {
-	resolved, err := filepath.EvalSymlinks(path)
-	if err != nil {
-		return path
-	}
-
-	if absolute, err := filepath.Abs(resolved); err == nil {
-		return absolute
-	}
-
-	return resolved
 }
 
 func BuiltFolders(root string) []string {

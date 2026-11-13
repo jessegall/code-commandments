@@ -14,7 +14,7 @@ func GoFiles(paths []string) []string {
 
 	for _, root := range paths {
 		for _, file := range walk.Files(root, walk.Excluded{}, isGoSourceUnder(root)) {
-			if real := resolve(file); !seen[real] {
+			if real := walk.Real(file); !seen[real] {
 				seen[real] = true
 				found = append(found, real)
 			}
@@ -43,19 +43,8 @@ func read(path string) ([]byte, error) {
 func resolved(paths []string) []string {
 	real := make([]string, 0, len(paths))
 	for _, path := range paths {
-		real = append(real, resolve(path))
+		real = append(real, walk.Real(path))
 	}
 
 	return real
-}
-
-func resolve(path string) string {
-	if real, err := filepath.EvalSymlinks(path); err == nil {
-		path = real
-	}
-	if absolute, err := filepath.Abs(path); err == nil {
-		return absolute
-	}
-
-	return path
 }

@@ -3,7 +3,6 @@ package scribes
 import (
 	"maps"
 	"os"
-	"path/filepath"
 	"slices"
 
 	"github.com/jessegall/code-commandments/bridge"
@@ -67,7 +66,7 @@ func (s *Scanner) Parse(sources map[string]string) (*engine.Codebase, error) {
 		return nil, err
 	}
 	defer os.RemoveAll(made)
-	folder, err := filepath.EvalSymlinks(made)
+	folder, err := walk.Resolved(made)
 	if err != nil {
 		return nil, err
 	}

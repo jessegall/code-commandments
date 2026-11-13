@@ -8,6 +8,8 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+
+	"github.com/jessegall/code-commandments/walk"
 )
 
 func Point(link, target string) bool {
@@ -39,8 +41,8 @@ func alreadyPoints(link, target string) bool {
 	}
 
 	if info.Mode()&os.ModeSymlink != 0 {
-		resolved, err := filepath.EvalSymlinks(link)
-		real, realErr := filepath.EvalSymlinks(target)
+		resolved, err := walk.Resolved(link)
+		real, realErr := walk.Resolved(target)
 
 		return err == nil && realErr == nil && resolved == real
 	}

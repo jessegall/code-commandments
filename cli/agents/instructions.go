@@ -8,6 +8,7 @@ import (
 
 	"github.com/jessegall/code-commandments/cli/atomic"
 	"github.com/jessegall/code-commandments/cli/block"
+	"github.com/jessegall/code-commandments/walk"
 )
 
 const bom = "\xEF\xBB\xBF"
@@ -104,14 +105,14 @@ func (i Instructions) SameFileAs(other Instructions) bool {
 }
 
 func (i Instructions) insideTheProject() bool {
-	root, err := filepath.EvalSymlinks(i.root)
+	root, err := walk.Resolved(i.root)
 	if err != nil {
 		return false
 	}
 
-	resolved, err := filepath.EvalSymlinks(i.path)
+	resolved, err := walk.Resolved(i.path)
 	if err != nil {
-		resolved, err = filepath.EvalSymlinks(filepath.Dir(i.path))
+		resolved, err = walk.Resolved(filepath.Dir(i.path))
 	}
 
 	return err == nil && (resolved == root || strings.HasPrefix(resolved, root+string(filepath.Separator)))

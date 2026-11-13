@@ -192,7 +192,7 @@ func TestAJournalProjectAndItsWorktreesKeepTheirParsedTreesAtTheJournal(t *testi
 			t.Fatal(err)
 		}
 
-		if !strings.HasPrefix(trees, journal+"/") {
+		if trees != journal && !strings.HasPrefix(trees, journal+"/") {
 			t.Errorf("a judge in %s keeps its parsed trees at %s, not at the project's journal", root, trees)
 		}
 	}

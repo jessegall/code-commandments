@@ -28,7 +28,7 @@ func deadly(t *testing.T, kills string) (*Bridge, *[]([]string)) {
 	var asked [][]string
 	held := Bridge{Kind: "php", Word: "php", Label: "PHP"}
 	route := read
-	read = func(_ Bridge, _, _, files []string, _ func()) (*contract.Stream, error) {
+	read = func(_ Bridge, _ *keptLines, _, _, files []string, _ func()) (*contract.Stream, error) {
 		asked = append(asked, files)
 		if slices.ContainsFunc(files, func(file string) bool { return strings.HasSuffix(file, kills) }) {
 			return nil, errors.New("signal: killed")
@@ -50,7 +50,7 @@ func TestADeadBridgeCostsTheFilesThatKillItAndNoMore(t *testing.T) {
 		files = append(files, filepath.Join("src", name+".php"))
 	}
 
-	stream, err := held.readHalving([]string{"src"}, files, files, func() {}, halvingsAtMost)
+	stream, err := held.readHalving(&keptLines{}, []string{"src"}, files, files, func() {}, halvingsAtMost)
 
 	if err == nil {
 		t.Error("the run says nothing of the file it could not read")
@@ -77,7 +77,7 @@ func TestADeadBridgeCostsTheFilesThatKillItAndNoMore(t *testing.T) {
 func TestTheCuttingHasAFloor(t *testing.T) {
 	var asked [][]string
 	route := read
-	read = func(_ Bridge, _, _, files []string, _ func()) (*contract.Stream, error) {
+	read = func(_ Bridge, _ *keptLines, _, _, files []string, _ func()) (*contract.Stream, error) {
 		asked = append(asked, files)
 
 		return nil, errors.New("signal: killed")
@@ -90,7 +90,7 @@ func TestTheCuttingHasAFloor(t *testing.T) {
 		files = append(files, filepath.Join("src", string(rune('a'+at%26))+string(rune('a'+at/26))+".php"))
 	}
 
-	if _, err := held.readHalving([]string{"src"}, files, files, func() {}, 3); err == nil {
+	if _, err := held.readHalving(&keptLines{}, []string{"src"}, files, files, func() {}, 3); err == nil {
 		t.Error("a bridge that dies whatever it is asked is reported as having answered")
 	}
 
@@ -117,7 +117,7 @@ func TestWhatIsHalvedIsWhatTheBridgeWritesAndNotWhatItCompiles(t *testing.T) {
 
 	var compiled [][]string
 	route := read
-	read = func(b Bridge, roots, _, files []string, _ func()) (*contract.Stream, error) {
+	read = func(b Bridge, kept *keptLines, roots, _, files []string, _ func()) (*contract.Stream, error) {
 		compiled = append(compiled, b.Request(files).Support)
 		if slices.ContainsFunc(files, func(file string) bool { return strings.HasSuffix(file, "Deadly.cs") }) {
 			return nil, errors.New("signal: killed")
@@ -127,7 +127,7 @@ func TestWhatIsHalvedIsWhatTheBridgeWritesAndNotWhatItCompiles(t *testing.T) {
 	}
 	t.Cleanup(func() { read = route })
 
-	held.readHalving([]string{root}, files, files, func() {}, halvingsAtMost)
+	held.readHalving(&keptLines{}, []string{root}, files, files, func() {}, halvingsAtMost)
 
 	for _, support := range compiled {
 		if !slices.Contains(support, project) || !slices.Contains(support, files[0]) || !slices.Contains(support, files[1]) {
@@ -139,7 +139,7 @@ func TestWhatIsHalvedIsWhatTheBridgeWritesAndNotWhatItCompiles(t *testing.T) {
 func TestABridgeThatCannotRunIsAskedOnceAndNeverHalved(t *testing.T) {
 	var asked int
 	route := read
-	read = func(Bridge, []string, []string, []string, func()) (*contract.Stream, error) {
+	read = func(Bridge, *keptLines, []string, []string, []string, func()) (*contract.Stream, error) {
 		asked++
 
 		return nil, bridge.ToolchainMissing{Language: "Python", Need: "python3.10 or newer on the PATH"}
@@ -152,7 +152,7 @@ func TestABridgeThatCannotRunIsAskedOnceAndNeverHalved(t *testing.T) {
 		files = append(files, filepath.Join("src", string(rune('a'+at%26))+string(rune('a'+at/26))+".py"))
 	}
 
-	if _, err := held.readHalving([]string{"src"}, files, files, func() {}, halvingsAtMost); !isUnavailable(err) {
+	if _, err := held.readHalving(&keptLines{}, []string{"src"}, files, files, func() {}, halvingsAtMost); !isUnavailable(err) {
 		t.Errorf("a bridge with no toolchain was reported as %v", err)
 	}
 
