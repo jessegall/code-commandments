@@ -7,11 +7,13 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/jessegall/code-commandments/cli/source"
 	"github.com/jessegall/code-commandments/engine"
 )
 
 func TestATwinInAnotherCheckoutIsToldWhereThisOneHasIt(t *testing.T) {
-	project := filepath.Join(t.TempDir(), "project")
+	// The bridges name every file by its real path, so the test does too: on macOS the temporary folder is a link.
+	project := filepath.Join(source.Real(t.TempDir()), "project")
 	if err := os.MkdirAll(filepath.Join(project, "src"), 0o755); err != nil {
 		t.Fatal(err)
 	}
