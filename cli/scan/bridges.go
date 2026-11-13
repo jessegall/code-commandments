@@ -514,6 +514,7 @@ func (b Bridge) ask(roots, files, written []string, tally func()) (*contract.Str
 		case line.Header != nil:
 			stream.Header = *line.Header
 		case line.File != nil:
+			line.File.Context = line.File.Context || !contract.AskedToWrite(line.File.Path, written)
 			stream.Files = append(stream.Files, line.File)
 			kept.keep(stream.Header, line.File, raw)
 			if !line.File.Context {

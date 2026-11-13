@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
+	"strings"
 )
 
 // Language is the language a stream or a file is written in.
@@ -34,6 +35,22 @@ type Bridge struct {
 	Version string `json:"version"`
 	// Reads says every file line names the files its tree read, which is what lets a run keep the line between runs.
 	Reads bool `json:"reads,omitempty"`
+}
+
+// AskedToWrite is the one rule of which lines a bridge writes as judged: a file asked to be written, or under a
+// folder asked to be, or every file when nothing was named. Any other file a bridge writes is context, read only to
+// resolve into, whatever the bridge marked it.
+func AskedToWrite(path string, written []string) bool {
+	if len(written) == 0 {
+		return true
+	}
+	for _, asked := range written {
+		if path == asked || strings.HasPrefix(path, strings.TrimSuffix(asked, "/")+"/") {
+			return true
+		}
+	}
+
+	return false
 }
 
 // File is one source file's tree and comments.
