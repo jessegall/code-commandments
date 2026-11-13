@@ -129,6 +129,27 @@ func (l Language) Comment(text string) string {
 	return contract.CommentOf(l.Written(), text)
 }
 
+// Reaching is the languages a judging of the changed files reads: each language a changed file is written in, and each
+// that publishes facts one of those reads alongside. A language none of whose files changed is neither read nor judged.
+// With nothing changed named, every language is read.
+func Reaching(changed []string, languages []Language) []Language {
+	if len(changed) == 0 {
+		return languages
+	}
+	var written []Language
+	for _, path := range changed {
+		if language := OfFile(path); !slices.Contains(written, language) {
+			written = append(written, language)
+		}
+	}
+
+	return slices.DeleteFunc(slices.Clone(languages), func(language Language) bool {
+		return !slices.Contains(written, language) && !slices.ContainsFunc(written, func(reads Language) bool {
+			return slices.Contains(reads.ReadAlongside(), language)
+		})
+	})
+}
+
 // ReadAlongside are the languages read with this one because they publish facts its rules use.
 func (l Language) ReadAlongside() []Language {
 	return described[l].alongside

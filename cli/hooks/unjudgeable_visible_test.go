@@ -20,7 +20,7 @@ func TestAHandInNobodyCouldJudgeIsVisibleAfterwards(t *testing.T) {
 
 	wroteInto(t, filepath.Join(root, "src", "slow.py"), olderSin)
 	reading := readWhole
-	readWhole = func(string, config.Config) (*engine.Codebase, error) { return nil, errors.New("no bridge answered") }
+	readWhole = func(string, config.Config, []string) (*engine.Codebase, error) { return nil, errors.New("no bridge answered") }
 	t.Cleanup(func() { readWhole = reading })
 
 	said := heldAnswer(map[string]any{

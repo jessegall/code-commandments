@@ -3,6 +3,7 @@ package judge
 import (
 	"errors"
 	"fmt"
+	"maps"
 	"os"
 	"path/filepath"
 	"slices"
@@ -250,7 +251,7 @@ func (c Command) judge(options options, selected []detectors.Detector, judged co
 		return choseNone(targets, console), nil
 	}
 
-	languages = reaching(targets, languages)
+	languages = source.Reaching(slices.Collect(maps.Keys(targets.Files())), languages)
 
 	progress := cli.NewProgress(console.Err)
 	progress.Status("parsing")
@@ -567,34 +568,6 @@ func sayWhyTheWholeTreeIsRead(across []string, selected, judged int, console cli
 
 	fmt.Fprintf(console.Err, "· reading the whole path, not only the %d %s judged: %s, so the scope chose what is reported, not what is read\n",
 		judged, plural(judged, "file", "files"), reason)
-}
-
-func reaching(targets scope.Scope, languages []source.Language) []source.Language {
-	files := targets.Files()
-	if len(files) == 0 {
-		return languages
-	}
-
-	var changed []source.Language
-	for path := range files {
-		if language := source.OfFile(path); !slices.Contains(changed, language) {
-			changed = append(changed, language)
-		}
-	}
-
-	var reads []source.Language
-	for _, language := range languages {
-		if slices.Contains(changed, language) || publishesFor(language, changed) {
-			reads = append(reads, language)
-		}
-	}
-
-	return reads
-}
-
-// publishesFor says whether a changed language reads this one alongside it, for the facts it publishes.
-func publishesFor(language source.Language, changed []source.Language) bool {
-	return slices.ContainsFunc(changed, func(reads source.Language) bool { return slices.Contains(reads.ReadAlongside(), language) })
 }
 
 func ofNoLanguage(targets scope.Scope, languages []source.Language) bool {

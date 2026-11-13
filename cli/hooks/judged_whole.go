@@ -7,6 +7,7 @@ import (
 	"github.com/jessegall/code-commandments/cli/config"
 	"github.com/jessegall/code-commandments/cli/git"
 	"github.com/jessegall/code-commandments/cli/scan"
+	"github.com/jessegall/code-commandments/cli/source"
 	"github.com/jessegall/code-commandments/detectors"
 	"github.com/jessegall/code-commandments/engine"
 	"github.com/jessegall/code-commandments/walk"
@@ -18,7 +19,10 @@ import (
 // It says false when the checkout could not be read, so nothing was asked.
 func judgedWhole(checkout string, project config.Config, rules []detectors.Detector, rulesFor func(string) []detectors.Detector,
 	files []string, linesOf func(string) git.ChangedLines, marking Marking) ([]SinMark, bool) {
-	codebase, err := readWhole(checkout, project)
+	if len(files) == 0 {
+		return nil, true
+	}
+	codebase, err := readWhole(checkout, project, files)
 	var incomplete scan.Incomplete
 	if codebase == nil || (err != nil && !errors.As(err, &incomplete)) {
 		return nil, false
@@ -56,14 +60,14 @@ func judgedWhole(checkout string, project config.Config, rules []detectors.Detec
 }
 
 // readWhole reads a checkout as judge reads it: its configured roots, without what it excludes, in the languages it
-// reads. A test replaces it to make the read fail.
-var readWhole = func(checkout string, project config.Config) (*engine.Codebase, error) {
+// reads that the changed files reach. A test replaces it to make the read fail.
+var readWhole = func(checkout string, project config.Config, changed []string) (*engine.Codebase, error) {
 	roots, err := project.WalkedRoots(checkout)
 	if err != nil || len(roots) == 0 {
 		roots = []string{checkout}
 	}
 
-	return scan.Walk(roots, project.Exclusions(checkout)).Only(reads(checkout, project)...).Load()
+	return scan.Walk(roots, project.Exclusions(checkout)).Only(source.Reaching(changed, reads(checkout, project))...).Load()
 }
 
 // askedOf is the rules a file is judged by, by identity, worked out once a file.
