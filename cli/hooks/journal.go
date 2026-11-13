@@ -7,16 +7,12 @@ import (
 	"slices"
 	"strconv"
 	"strings"
-	"unicode/utf8"
 
 	"github.com/jessegall/code-commandments/cli/dashboard"
 	"github.com/jessegall/code-commandments/cli/git"
 	"github.com/jessegall/code-commandments/cli/jsonfile"
 	"github.com/jessegall/code-commandments/cli/source"
-	"github.com/jessegall/code-commandments/cli/workspace"
 )
-
-const settledAs = "fixed"
 
 // Moment is one moment the agent journal hands its plugin: which hook fired, for which session and tool.
 type Moment struct {
@@ -265,102 +261,6 @@ func answerOf(merged Response) JournalAnswer {
 	}
 
 	return JournalAnswer{Requires: merged.Requires}
-}
-
-// Queue is the file the journal hands its plugin for commands it runs later, one per line: how advice worked out after the answer reaches the agent.
-type Queue struct {
-	path string
-}
-
-func QueueFromEnvironment() (Queue, bool) {
-	path := os.Getenv("JOURNAL_QUEUE")
-
-	return Queue{path}, path != ""
-}
-
-func (q Queue) For(moment Moment) Queue {
-	if moment.Queue != "" {
-		return Queue{moment.Queue}
-	}
-
-	env, named := moment.Environment()
-	if !named {
-		return q
-	}
-
-	return Queue{filepath.Join(filepath.Dir(q.path), workspace.JournalPlugin+"."+env+".queue")}
-}
-
-func (q Queue) Tell(advice JournalAnswer, moment Moment) error {
-	var commands []string
-
-	for _, said := range advice.said() {
-		commands = append(commands, "nudge create "+shellQuote(title(said))+" --brief "+shellQuote(oneLine(said)))
-	}
-
-	for _, raise := range advice.Raises {
-		command := "plugin raise " + workspace.JournalPlugin + " " + shellQuote(raise.Event) + " " + shellQuote(oneLine(raise.Brief))
-		if raise.Open != "" {
-			command += " --open " + shellQuote(raise.Open)
-		}
-
-		if raise.Key != "" {
-			command += " --key " + shellQuote(raise.Key)
-		}
-
-		commands = append(commands, command)
-	}
-
-	for _, key := range advice.Settles {
-		commands = append(commands, "plugin settle "+workspace.JournalPlugin+" "+shellQuote(key)+" --how "+shellQuote(settledAs))
-	}
-
-	if len(commands) == 0 {
-		return nil
-	}
-
-	file, err := os.OpenFile(q.For(moment).path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o666)
-	if err != nil {
-		return err
-	}
-
-	defer file.Close()
-
-	var text strings.Builder
-	for _, command := range commands {
-		text.WriteString(command + "\n")
-	}
-
-	_, err = file.WriteString(text.String())
-
-	return err
-}
-
-func title(text string) string {
-	first, _, _ := strings.Cut(strings.TrimLeft(text, "\n"), "\n")
-	first = strings.TrimSpace(strings.ReplaceAll(first, ":", " —"))
-
-	if utf8.RuneCountInString(first) <= 80 {
-		return first
-	}
-
-	return strings.TrimRight(string([]rune(first)[:79]), " \t\n\r\x00\x0B") + "…"
-}
-
-func oneLine(text string) string {
-	var lines []string
-
-	for _, line := range strings.Split(text, "\n") {
-		if trimmed := strings.TrimSpace(line); trimmed != "" {
-			lines = append(lines, trimmed)
-		}
-	}
-
-	return strings.Join(lines, " · ")
-}
-
-func shellQuote(text string) string {
-	return "'" + strings.ReplaceAll(text, "'", `'\''`) + "'"
 }
 
 // Announced are the sins the plugin has announced, per file and by each sin's identity, so a sin is found once and repented once.

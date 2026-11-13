@@ -2,7 +2,6 @@ package hooks
 
 import (
 	"encoding/json"
-	"io"
 	"os"
 	"path/filepath"
 	"slices"
@@ -11,10 +10,8 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/jessegall/code-commandments/cli"
 	"github.com/jessegall/code-commandments/cli/dashboard"
 	"github.com/jessegall/code-commandments/cli/git"
-	"github.com/jessegall/code-commandments/cli/help"
 	"github.com/jessegall/code-commandments/cli/workspace"
 	"github.com/jessegall/code-commandments/engine"
 )
@@ -25,50 +22,6 @@ const (
 	advising    = "COMMANDMENTS_ADVISING"
 	journalRoot = "JOURNAL_ROOT"
 )
-
-// JournalHook is `journal-hook`: the entry point the agent journal's plugin calls for every moment.
-type JournalHook struct{}
-
-func (JournalHook) Names() []string {
-	return []string{"journal-hook"}
-}
-
-func (JournalHook) Help() help.Help {
-	return help.Of("The agent journal's entry point — reads one journal hook payload from stdin, runs every registered handler, and answers in the journal's shape.").
-		Form("journal-hook", "answer the moment on stdin (wired by the journal plugin; you rarely run this by hand)").
-		In(help.Hooks)
-}
-
-func (JournalHook) Run(in *cli.Input, console cli.Console) (int, error) {
-	raw, _ := io.ReadAll(os.Stdin)
-	given := payloadOf(raw)
-
-	if os.Getenv(advising) != "" {
-		defer rememberedAround(servedRoot(), console.Warn)()
-		adviseNow(given)
-
-		return 0, nil
-	}
-
-	given = Stamped(given)
-	console.Write(AnswerNow(given).JSON() + "\n")
-
-	return 0, nil
-}
-
-func AnswerNow(given map[string]any) JournalAnswer {
-	if _, queued := QueueFromEnvironment(); queued {
-		return JournalAnswer{}
-	}
-
-	return answerWith(given)
-}
-
-func adviseNow(given map[string]any) {
-	if queue, queued := QueueFromEnvironment(); queued {
-		queue.Tell(answerWith(given), MomentOf(given))
-	}
-}
 
 var abandonedJudgings atomic.Int64
 

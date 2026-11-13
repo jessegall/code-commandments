@@ -41,7 +41,6 @@ func Kernel(version string) *cli.Kernel {
 		session.Command{},
 		task.Command{},
 		hooks.Dispatch{},
-		hooks.JournalHook{},
 		hooks.PluginHook{},
 		service.Serve{Bridge: scan.CSharp},
 		service.Serve{Bridge: scan.Python},

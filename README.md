@@ -152,7 +152,6 @@ Exit code is non-zero when sins are found.
 | `commandments session` | Where this session keeps its state — the folder holding its checklist and hook counters. |
 | `commandments task` | The work in front of this session — numbered tasks, one markdown file each, moved between queue, active and history. |
 | `commandments hooks` | The wired hook entry point — reads one hook payload from stdin, runs every registered handler, and merges their responses into one. |
-| `commandments journal-hook` | The agent journal's entry point — reads one journal hook payload from stdin, runs every registered handler, and answers in the journal's shape. |
 | `commandments plugin-hook` | The agent journal plugin's program — reads one event line from stdin and answers it at once: an edit, a command and a stop with nothing, and every other event with what its handlers found. |
 | `commandments roslyn-serve` | Keep the C# bridge running for this project, answering each run of the tool over a socket named for the project. |
 | `commandments mypy-serve` | Keep the Python bridge running for this project, answering each run of the tool over a socket named for the project. |
@@ -384,20 +383,19 @@ package as a journal plugin and the two share one chain instead of wiring two:
 journal plugin install <path-or-url-to-this-package>
 ```
 
-The install needs only `sh`, `curl` and `sha256sum` or `shasum`: no PHP, no composer, no Go and no Docker. Its
+The install needs only `sh`, `curl`, `sha256sum` or `shasum`, and `python3` 3.9 or newer: no PHP, no composer, no Go and no Docker. Its
 setup runs `.journal-plugin/fetch`, which fetches the release binary the manifest pins in
 `COMMANDMENTS_RELEASE`, checks it against the release's `SHA256SUMS` and writes it to
-`bin/commandments-release`; every hook, service and check runs that binary. A sum that does not match, or a
+`bin/commandments-release`; the plugin's script and every check run that binary. A sum that does not match, or a
 release that cannot be fetched, fails the install, and nothing is ever built.
 
 It installs wherever the journal runs on macOS and Linux, and [docs/requirements.md](docs/requirements.md#platforms)
 says what each platform needs.
 
-The plugin declares `.journal-plugin/plugin.json`. On install it files `commandments judge` as a
+The plugin declares itself in `journal-plugin.5.json`, generated from `.journal-plugin/plugin.json`. On install it files `commandments judge` as a
 journal **check**, so a failing judge files a notification and is told to the agent, and the next
-clean pass clears it. Every moment the journal sees is handed to `commandments journal-hook`, which
-runs the same handlers as `commandments hooks`: a nudge comes back as a journal line to the agent
-alone, and a refusal — the shared-branch gate, for one — stops the tool call with its own reason.
+clean pass clears it. Every event the journal hears is handed to the plugin's script, as the next paragraphs
+tell.
 
 Its settings, in the journal's Plugins page, are a switch for every sin — named, with what it
 flags, grouped under the skill that teaches its fix — and a switch per language. They are generated

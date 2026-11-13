@@ -63,8 +63,6 @@ Hooks (wired automatically — you rarely run these by hand):
                   judged files are touched but unchecked, deduped per changed-file set.
   hooks           The wired hook entry point — reads one hook payload from stdin, runs every
                   registered handler, and merges their responses into one.
-  journal-hook    The agent journal's entry point — reads one journal hook payload from stdin,
-                  runs every registered handler, and answers in the journal's shape.
   plugin-hook     The agent journal plugin's program — reads one event line from stdin and answers
                   it at once: an edit, a command and a stop with nothing, and every other event with
                   what its handlers found.
