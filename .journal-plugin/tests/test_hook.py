@@ -276,6 +276,26 @@ class NothingAfterTheAnswerStopsAnEvent(unittest.TestCase):
             self.assertFalse(hook.EditWindow(Path(data), 7).path(".open").exists())
 
 
+class NoToldAnswerIsLost(unittest.TestCase):
+    def test_an_answer_a_killed_delivery_left_taken_is_delivered_later(self) -> None:
+        with tempfile.TemporaryDirectory() as folder:
+            data = Path(folder)
+            (data / "told").mkdir()
+            stranded = data / "told" / "1-9-1.taking"
+            stranded.write_text(json.dumps({"whisper": "1 sin"}))
+            long_ago = time.time() - 2 * hook.TAKING_AT_MOST
+            os.utime(stranded, (long_ago, long_ago))
+            hook.delivered(data)
+            self.assertEqual(json.loads((data / "queue" / "1-9-1.json").read_text())["tell"], "1 sin")
+
+    def test_a_judging_whose_binary_cannot_start_removes_its_event_so_the_window_opens_again(self) -> None:
+        with tempfile.TemporaryDirectory() as folder:
+            event = Path(folder) / "event-1.json"
+            event.write_text("{}")
+            self.assertEqual(hook.judged(str(event), Path(folder) / "no-binary"), 1)
+            self.assertFalse(event.exists())
+
+
 class patched_environment:
     def __init__(self, **named: str) -> None:
         self.named, self.kept = named, {}

@@ -50,7 +50,7 @@ func (q Queue4) Tell(answer JournalAnswer, env string, agent int) error {
 		return err
 	}
 
-	name := filepath.Join(q.path, strconv.FormatInt(time.Now().UnixMilli(), 10)+"-"+strconv.FormatUint(written.Add(1), 10))
+	name := filepath.Join(q.path, strconv.FormatInt(time.Now().UnixMilli(), 10)+"-"+strconv.Itoa(os.Getpid())+"-"+strconv.FormatUint(written.Add(1), 10))
 	if err := os.WriteFile(name+".tmp", append(said, '\n'), 0o644); err != nil {
 		return err
 	}

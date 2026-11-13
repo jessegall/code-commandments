@@ -27,6 +27,7 @@ HAND_INS, HAND_INS_AFTER = "judge_hand_ins", "judge_hand_ins_after"
 EVENTS, WINDOWS, TOLD, QUEUE = "events", "windows", "told", "queue"
 JUDGE_EVENT = "--judge-event="
 FAULTS = "hook-faults.log"
+TAKING_AT_MOST = 60
 NEW_CARD_EACH_TIME = {"sin-found", "sin-resolved"}
 WINDOW_LEFT_OPEN_AFTER = 15 * 60
 QUEUED_AT_MOST = 60 * 60
@@ -94,6 +95,12 @@ def delivered(data: Path) -> None:
     """Moves every answer a judging told after its event into the journal's queue, in the journal's words. A file is
     taken by renaming it first, so two scripts never deliver one answer twice."""
     told, queue = data / TOLD, data / QUEUE
+    for stranded in told.glob("*.taking") if told.is_dir() else []:
+        try:
+            if time.time() - stranded.stat().st_mtime > TAKING_AT_MOST:
+                stranded.rename(stranded.with_suffix(".json"))
+        except OSError:
+            continue
     for waiting in sorted(told.glob("*.json")) if told.is_dir() else []:
         taken = waiting.with_suffix(".taking")
         try:
@@ -120,7 +127,11 @@ def delivered(data: Path) -> None:
 
 def judged(event: str, binary: Path = BINARY) -> int:
     """The queued run that judges a kept event: the binary judges and tells, and its answers go to the journal."""
-    code = subprocess.run([str(binary), "plugin-hook", f"{JUDGE_EVENT}{event}"]).returncode
+    try:
+        code = subprocess.run([str(binary), "plugin-hook", f"{JUDGE_EVENT}{event}"]).returncode
+    except OSError:
+        Path(event).unlink(missing_ok=True)
+        return 1
     data = os.environ.get("JOURNAL_PLUGIN_DATA", "")
     if data:
         delivered(Path(data))
