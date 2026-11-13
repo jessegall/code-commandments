@@ -30,7 +30,7 @@ func PackagesOf(files []string) []Package {
 	held := map[string]*Package{}
 	var order []string
 
-	for _, path := range resolved(files) {
+	for _, path := range walk.RealEach(files) {
 		folder, name := filepath.Split(path)
 		folder = strings.TrimRight(folder, string(filepath.Separator))
 		if !builds(folder, name) {

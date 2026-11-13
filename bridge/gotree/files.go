@@ -39,12 +39,3 @@ func isIgnoredByGo(segment string) bool {
 func read(path string) ([]byte, error) {
 	return os.ReadFile(path)
 }
-
-func resolved(paths []string) []string {
-	real := make([]string, 0, len(paths))
-	for _, path := range paths {
-		real = append(real, walk.Real(path))
-	}
-
-	return real
-}

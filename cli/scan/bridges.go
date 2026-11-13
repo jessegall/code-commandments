@@ -18,6 +18,7 @@ import (
 	"github.com/jessegall/code-commandments/engine"
 	"github.com/jessegall/code-commandments/engine/frontend"
 	"github.com/jessegall/code-commandments/engine/php"
+	"github.com/jessegall/code-commandments/walk"
 )
 
 // Bridge is one language's bridge: the name its socket and its service carry, the word its has- verb uses, the languages it reads, the name a reader of a report sees, how it is reached, whether its files may be read in shares, and what it must be told once where reaching it says something a person should know.
@@ -429,11 +430,11 @@ func Named(kind string) (Bridge, bool) {
 }
 
 var read = func(b Bridge, kept *keptLines, roots, files, written []string, tally func()) (*contract.Stream, error) {
-	return b.ask(kept, resolved(roots), resolved(files), resolved(written), tally)
+	return b.ask(kept, walk.RealEach(roots), walk.RealEach(files), walk.RealEach(written), tally)
 }
 
 func (b Bridge) Read(roots, files []string, tally func()) (*contract.Stream, error) {
-	kept := linesKeptFor(b, resolved(roots))
+	kept := linesKeptFor(b, walk.RealEach(roots))
 	defer kept.settle()
 
 	return b.readHalving(kept, roots, files, files, tally, halvingsAtMost)
@@ -449,8 +450,8 @@ const wavesAtMost = 6
 // ReadShared serves every file whose kept line still stands from the one cache every checkout shares, and has the
 // bridge read the rest, in as many shares as processes side by side; one process, or a single file, is one read.
 func (b Bridge) ReadShared(roots, files []string, tally func(), processes int) (*contract.Stream, error) {
-	kept := linesKeptFor(b, resolved(roots))
-	hits, header, misses := kept.split(resolved(files))
+	kept := linesKeptFor(b, walk.RealEach(roots))
+	hits, header, misses := kept.split(walk.RealEach(files))
 	for range hits {
 		tally()
 	}
@@ -462,7 +463,7 @@ func (b Bridge) ReadShared(roots, files []string, tally func(), processes int) (
 		}
 	}
 	if len(misses) == 0 {
-		return &contract.Stream{Header: kept.standing(*header, resolved(roots), hits), Files: hits, Program: outsideOnly(kept.program(nil), hits),
+		return &contract.Stream{Header: kept.standing(*header, walk.RealEach(roots), hits), Files: hits, Program: outsideOnly(kept.program(nil), hits),
 			Trailer: contract.Trailer{Files: len(hits)}}, nil
 	}
 

@@ -506,13 +506,3 @@ func within(project string, roots []string) bool {
 
 	return project != ""
 }
-
-func resolved(paths []string) []string {
-	var real []string
-
-	for _, path := range paths {
-		real = append(real, walk.Real(path))
-	}
-
-	return real
-}

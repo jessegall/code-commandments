@@ -17,6 +17,7 @@ import (
 	"strings"
 
 	"github.com/jessegall/code-commandments/contract"
+	"github.com/jessegall/code-commandments/walk"
 )
 
 const Name = "go-bridge"
@@ -49,7 +50,7 @@ func Write(out io.Writer, paths, write []string) error {
 func Stream(paths, write []string) (*contract.Stream, error) {
 	found := GoFiles(paths)
 	judged := map[string]bool{}
-	for _, path := range resolved(write) {
+	for _, path := range walk.RealEach(write) {
 		judged[path] = true
 	}
 	asked := func(path string) bool { return len(judged) == 0 || judged[path] }
@@ -111,7 +112,7 @@ func Stream(paths, write []string) (*contract.Stream, error) {
 		Version:  contractVersion,
 		Language: contract.Go,
 		Bridge:   contract.Bridge{Name: Name, Version: Version(), Reads: true},
-		Roots:    resolved(paths),
+		Roots:    walk.RealEach(paths),
 	}
 
 	return contract.Accept(header, files, nil, contract.Trailer{Files: len(files)})

@@ -21,6 +21,16 @@ func Real(path string) string {
 	return resolved
 }
 
+// RealEach is each path as Real answers it.
+func RealEach(paths []string) []string {
+	real := make([]string, 0, len(paths))
+	for _, path := range paths {
+		real = append(real, Real(path))
+	}
+
+	return real
+}
+
 // Resolved is the path with every link resolved, made absolute. A path is resolved from its folder's resolved path, so a
 // file the walker meets costs one look at the file itself; a path that is not there yet is asked again next time.
 func Resolved(path string) (string, error) {

@@ -15,6 +15,7 @@ import (
 	"github.com/jessegall/code-commandments/bridge"
 	"github.com/jessegall/code-commandments/contract"
 	"github.com/jessegall/code-commandments/engine"
+	"github.com/jessegall/code-commandments/walk"
 )
 
 // Units is a C# solution read once through its bridge and cut into one unit per project, so a solution too large to hold whole is judged a project at a time.
@@ -47,9 +48,9 @@ func (s Sources) Units(complete func(*engine.Codebase) error) (*Units, error) {
 func (s Sources) unitsOf(held Bridge, complete func(*engine.Codebase) error) (*Units, error) {
 	var files []string
 	for _, language := range held.Languages {
-		files = append(files, resolved(s.byLanguage[language])...)
+		files = append(files, walk.RealEach(s.byLanguage[language])...)
 	}
-	roots := resolved(s.roots)
+	roots := walk.RealEach(s.roots)
 	if len(files) == 0 {
 		return nil, nil
 	}
