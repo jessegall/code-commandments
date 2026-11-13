@@ -11,7 +11,7 @@ import (
 // A language's files read in shares, each by a bridge process of its own, write what one process reading them all
 // writes: a file's tree must not depend on which other files were asked beside it.
 func TestFilesReadInSharesWriteWhatOneReadWrites(t *testing.T) {
-	for _, fixture := range []string{"go"} { // the fixture of every bridge whose ReadsInShares is set
+	for _, fixture := range []string{"go", "frontend"} { // the fixture of every bridge whose ReadsInShares is set
 		t.Run(fixture, func(t *testing.T) {
 			root, err := filepath.Abs(filepath.Join("..", "..", "tests", "Fixtures", fixture))
 			if err != nil {

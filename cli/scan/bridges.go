@@ -334,8 +334,9 @@ var PHPBridge = Bridge{Kind: "php", Word: "php", Languages: []source.Language{so
 }
 
 var Frontend = Bridge{Kind: "frontend", Word: "frontend", Languages: []source.Language{source.Vue, source.TypeScript}, Label: "Vue and TypeScript",
-	Reach:  Process{Command: func([]string) ([]string, error) { return frontend.Here().Cached().Command() }},
-	Notice: nothingToSay,
+	ReadsInShares: true,
+	Reach:         Process{Command: func([]string) ([]string, error) { return frontend.Here().Cached().Command() }},
+	Notice:        nothingToSay,
 }
 
 var CSharp = Bridge{Kind: "roslyn", Word: "csharp", Languages: []source.Language{source.CSharp}, Label: "C#",

@@ -1,5 +1,5 @@
 import ts from 'typescript'
-import { existsSync } from 'node:fs'
+import { existsSync, realpathSync } from 'node:fs'
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { aliasesOf, projectRoot } from './aliases.mjs'
@@ -40,7 +40,7 @@ export class Program {
      */
     constructor(sources, scripts, renames, parsed = [...sources.keys()]) {
         this.sources = sources
-        this.renames = renames
+        this.renames = existsSync(SHIPPED) ? [...renames, [realpathSync(resolve(SHIPPED, 'node_modules')), 'node_modules']] : renames
         this.virtual = new Map([...scripts].map(([path, text]) => [path + VIRTUAL, text]))
         const root = projectRoot(commonRoot([...sources.keys()]))
         this.root = root
