@@ -244,6 +244,7 @@ func built(read func(path string) ([]byte, error), streams ...*contract.Stream) 
 	codebase := &Codebase{streams: streams, read: read, analyses: &sync.Map{}}
 	for _, stream := range streams {
 		for _, file := range stream.Files {
+			_ = file.Linked()
 			codebase.files = append(codebase.files, &File{File: file, codebase: codebase, stream: stream, read: read})
 		}
 	}

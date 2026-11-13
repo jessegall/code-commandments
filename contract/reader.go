@@ -237,6 +237,16 @@ func resolveTypes(file *File) error {
 	return err
 }
 
+// Linked links a file built in code rather than read, as the reader links every file it reads: each node knows its
+// parent and its number, and a node with no facts holds the shared empty ones. A file already linked is left alone.
+func (f *File) Linked() error {
+	if len(f.nodes) > 0 || f.Root == nil {
+		return nil
+	}
+
+	return link(f)
+}
+
 func link(file *File) error {
 	file.nodes, file.reaches = nil, 0
 	var walk func(node, parent *Node) error
