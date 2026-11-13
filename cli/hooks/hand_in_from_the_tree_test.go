@@ -34,7 +34,7 @@ func TestAHandInIsJudgedFromTheHeldTreeAndReadsNoTree(t *testing.T) {
 	readsBefore := costs.Count(ledger.TreeReadsStarted)
 	workBefore := engine.Counted()
 
-	held := DeliveryHeld(deliveringOf(worktree, generousWindow, "src/order.py"))
+	held := DeliveryHeld(deliveringOf(worktree, "src/order.py"))
 
 	if parsed := engine.Since(workBefore).Parsed; parsed > 1 {
 		t.Errorf("judging a hand-in of one changed file parsed %d files, where the held tree answers for every "+
@@ -69,7 +69,7 @@ func TestAHandInIsJudgedFromTheHeldTreeAndReadsNoTree(t *testing.T) {
 func TestAHandInWithNoTreeHeldIsNeverReadWholeAndSaysWhatWasNotAsked(t *testing.T) {
 	root, _, _ := projectWithASin(t)
 
-	held := DeliveryHeld(deliveringOf(root, generousWindow, "src/refund.py"))
+	held := DeliveryHeld(deliveringOf(root, "src/refund.py"))
 
 	var fields map[string]any
 	if err := json.Unmarshal([]byte(held), &fields); err != nil {
@@ -96,7 +96,7 @@ func TestAHandInIsNotHeldWithTheSettingOff(t *testing.T) {
 
 	t.Setenv(journalSettings, `{"judge_hand_ins": "false"}`)
 
-	if held := DeliveryHeld(deliveringOf(root, generousWindow, "src/refund.py")); held != "" {
+	if held := DeliveryHeld(deliveringOf(root, "src/refund.py")); held != "" {
 		t.Errorf("with hand-ins switched off, the hand-in was answered %q", held)
 	}
 }
@@ -106,7 +106,7 @@ func TestAHandInObeysTheSettingOnItsOwnLineOverTheProjects(t *testing.T) {
 
 	t.Setenv(journalSettings, `{"judge_hand_ins": "true"}`)
 
-	line := deliveringOf(root, generousWindow, "src/refund.py")
+	line := deliveringOf(root, "src/refund.py")
 	line["settings"] = map[string]any{"judge_hand_ins": false}
 
 	if held := DeliveryHeld(line); held != "" {
@@ -119,7 +119,7 @@ func TestAHandInIsHeldWhenItsOwnLineSwitchesTheSettingOn(t *testing.T) {
 
 	t.Setenv(journalSettings, `{"judge_hand_ins": "false"}`)
 
-	line := deliveringOf(root, generousWindow, "src/refund.py")
+	line := deliveringOf(root, "src/refund.py")
 	line["settings"] = map[string]any{"judge_workers": true, "judge_hand_ins": true}
 
 	if held := DeliveryHeld(line); held == "" {

@@ -4,7 +4,6 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/jessegall/code-commandments/cli/dashboard"
 	"github.com/jessegall/code-commandments/cli/workspace"
@@ -21,7 +20,7 @@ func TestAHandInNobodyCouldJudgeIsVisibleAfterwards(t *testing.T) {
 	said := workHeld(map[string]any{
 		"event": deliveringEvent, "environment": "main", "agent": 7,
 		"data": map[string]any{
-			"worktree": root, "name": "worker 7", "window_ms": float64(time.Nanosecond / time.Millisecond),
+			"worktree": root, "name": "worker 7",
 		},
 	})
 

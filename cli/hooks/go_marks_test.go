@@ -82,7 +82,7 @@ func TestAWorkerCarryingAGoSinIsHeld(t *testing.T) {
 	root, _, _ := goProject(t)
 	repository(t, root)
 
-	held := DeliveryHeld(deliveringOf(root, generousWindow, "shop/ledger.go"))
+	held := DeliveryHeld(deliveringOf(root, "shop/ledger.go"))
 	if held == "" {
 		t.Fatal("a worker carrying a Go sin delivered its work unheld")
 	}

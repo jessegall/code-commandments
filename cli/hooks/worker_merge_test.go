@@ -9,7 +9,7 @@ import (
 	"testing"
 )
 
-func mergingOf(worktree string, window int, files ...string) map[string]any {
+func mergingOf(worktree string, files ...string) map[string]any {
 	named := make([]any, 0, len(files))
 	for _, file := range files {
 		named = append(named, file)
@@ -20,20 +20,14 @@ func mergingOf(worktree string, window int, files ...string) map[string]any {
 		"data": map[string]any{
 			"worker": "12", "name": "Lady Lovelace", "task": "46",
 			"branch": "worker/12-Lady-Lovelace", "worktree": worktree, "files": named,
-			"window_ms": float64(window),
 		},
 	}
 }
 
-const (
-	generousWindow = 180_000
-	shallowWindow  = 10_000
-)
-
 func TestASinfulBranchHoldsItsOwnMerge(t *testing.T) {
 	root, _, _ := projectWithASin(t)
 
-	held := MergeHeld(mergingOf(root, generousWindow, "src/refund.py"))
+	held := MergeHeld(mergingOf(root, "src/refund.py"))
 	if held == "" {
 		t.Fatal("a branch carrying a sin was let through")
 	}
@@ -63,7 +57,6 @@ func TestAMergeIsHeldWhereverTheEventPutsItsFields(t *testing.T) {
 	flat := map[string]any{
 		"event": "worker_merging", "worker": "12", "name": "Lady Lovelace", "task": "46",
 		"branch": "worker/12-Lady-Lovelace", "worktree": root, "files": []any{"src/refund.py"},
-		"window_ms": float64(generousWindow),
 	}
 
 	if MergeHeld(flat) == "" {
@@ -79,7 +72,7 @@ func TestACleanBranchMergesUnheld(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if held := MergeHeld(mergingOf(root, generousWindow, "src/refund.py")); refusedBy(held) {
+	if held := MergeHeld(mergingOf(root, "src/refund.py")); refusedBy(held) {
 		t.Errorf("a clean branch was held with %q", held)
 	}
 
@@ -88,11 +81,11 @@ func TestACleanBranchMergesUnheld(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if held := MergeHeld(mergingOf(root, generousWindow, "NOTES.md")); held != "" {
+	if held := MergeHeld(mergingOf(root, "NOTES.md")); held != "" {
 		t.Errorf("a branch of files the project does not judge was held with %q", held)
 	}
 
-	if held := MergeHeld(mergingOf("", generousWindow, "src/refund.py")); held != "" {
+	if held := MergeHeld(mergingOf("", "src/refund.py")); held != "" {
 		t.Errorf("an event naming no worktree was answered with %q, and there is nothing it could have judged", held)
 	}
 }
@@ -100,7 +93,7 @@ func TestACleanBranchMergesUnheld(t *testing.T) {
 func TestAShallowWindowStillJudgesTheChangedFiles(t *testing.T) {
 	root, _, _ := projectWithASin(t)
 
-	if held := MergeHeld(mergingOf(root, shallowWindow, "src/refund.py")); held == "" {
+	if held := MergeHeld(mergingOf(root, "src/refund.py")); held == "" {
 		t.Error("a branch carrying a sin was let through on a window that affords its changed files")
 	}
 }
@@ -114,7 +107,7 @@ func TestAWorkerAnswersForItsOwnLinesOnly(t *testing.T) {
 		"src/ship.py": "def ship(order) -> str:\n    return order.carrier\n",
 	})
 
-	if held := MergeHeld(mergingOf(worktree, generousWindow)); refusedBy(held) {
+	if held := MergeHeld(mergingOf(worktree)); refusedBy(held) {
 		t.Errorf("a worker was held for a sin its branch never wrote: %q", held)
 	}
 
@@ -122,7 +115,7 @@ func TestAWorkerAnswersForItsOwnLinesOnly(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if held := MergeHeld(mergingOf(worktree, generousWindow)); held == "" {
+	if held := MergeHeld(mergingOf(worktree)); held == "" {
 		t.Error("a sin the worker's own branch wrote was let through")
 	}
 }
@@ -177,8 +170,8 @@ func wrote(t *testing.T, root string, files map[string]string) {
 	}
 }
 
-func deliveringOf(worktree string, window int, files ...string) map[string]any {
-	held := mergingOf(worktree, window, files...)
+func deliveringOf(worktree string, files ...string) map[string]any {
+	held := mergingOf(worktree, files...)
 	held["event"] = "worker_delivering"
 
 	return held
@@ -187,7 +180,7 @@ func deliveringOf(worktree string, window int, files ...string) map[string]any {
 func TestAWorkerIsHeldBeforeItsWorkReachesTheAgent(t *testing.T) {
 	root, _, _ := projectWithASin(t)
 
-	held := DeliveryHeld(deliveringOf(root, generousWindow, "src/refund.py"))
+	held := DeliveryHeld(deliveringOf(root, "src/refund.py"))
 	if held == "" {
 		t.Fatal("a worker carrying a sin delivered its work unheld")
 	}
@@ -213,7 +206,7 @@ func TestACleanWorkerDeliversUnheld(t *testing.T) {
 		"src/ship.py": "def ship(order) -> str:\n    return order.carrier\n",
 	})
 
-	if held := DeliveryHeld(deliveringOf(worktree, generousWindow)); refusedBy(held) {
+	if held := DeliveryHeld(deliveringOf(worktree)); refusedBy(held) {
 		t.Errorf("a worker was held on delivery for a sin its branch never wrote: %q", held)
 	}
 }
@@ -221,8 +214,8 @@ func TestACleanWorkerDeliversUnheld(t *testing.T) {
 func TestBothMomentsReadTheWorkTheSameWay(t *testing.T) {
 	root, _, _ := projectWithASin(t)
 
-	delivery := DeliveryHeld(deliveringOf(root, generousWindow, "src/refund.py"))
-	merge := MergeHeld(mergingOf(root, generousWindow, "src/refund.py"))
+	delivery := DeliveryHeld(deliveringOf(root, "src/refund.py"))
+	merge := MergeHeld(mergingOf(root, "src/refund.py"))
 
 	if delivery != merge {
 		t.Errorf("the delivery answered %q and the merge %q", delivery, merge)

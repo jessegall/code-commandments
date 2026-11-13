@@ -11,7 +11,7 @@ import (
 
 func requestedLine(root, onto, tip string) map[string]any {
 	return map[string]any{
-		"v": 1, "event": requestedEvent, "agent": 1, "cwd": root, "window_ms": 60000,
+		"v": 1, "event": requestedEvent, "agent": 1, "cwd": root,
 		"data": map[string]any{
 			"checkout": map[string]any{"project_root": root, "branch": "main"},
 			"row": map[string]any{

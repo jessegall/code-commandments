@@ -346,7 +346,7 @@ class ACommandAndAStopAreAnsweredWithoutTheBinary(unittest.TestCase):
 
 
 class AGuardHoldsItsStepOnAQueuedJudging(unittest.TestCase):
-    def test_a_chosen_guard_is_answered_with_a_run_and_keeps_its_event_without_a_window(self) -> None:
+    def test_a_chosen_guard_is_answered_with_a_run_and_keeps_its_event(self) -> None:
         with tempfile.TemporaryDirectory() as folder, patched_environment(JOURNAL_PLUGIN_DATA=folder, JOURNAL_SETTINGS=""):
             for name, key in (("suites.coding.workers.worker_delivering", "judge_hand_ins"),
                               ("suites.coding.workers.merge_request.created", "judge_before_merge")):
@@ -355,7 +355,7 @@ class AGuardHoldsItsStepOnAQueuedJudging(unittest.TestCase):
                 self.assertEqual(said["answer"], "queue", name)
                 self.assertEqual(said["run"]["kind"], "judge", name)
                 kept = Path(said["run"]["command"][1][len(hook.JUDGE_GUARD):])
-                self.assertIsNone(json.loads(kept.read_text())["window_ms"], name)
+                self.assertEqual(json.loads(kept.read_text()), event, name)
                 self.assertIsNone(hook.guard_queued({**event, "settings": {"judge_workers": True}}, b"{}"), name)
 
     def test_the_run_passes_on_nothing_found_and_refuses_with_the_reason(self) -> None:

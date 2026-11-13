@@ -32,7 +32,7 @@ func TestNothingTheCommitFormsAnswerIsAFault(t *testing.T) {
 		{"a merge of a branch nobody knows", MergeLanded(mergeLine(root, "feature/nobody", before, git.Head(root)))},
 		{"a merge with no project at all", MergeLanded(map[string]any{"v": 1, "event": landedEvent, "data": map[string]any{}})},
 		{"a hand-in whose time ran out", workHeld(map[string]any{"event": deliveringEvent, "data": map[string]any{
-			"worktree": root, "name": "worker 7", "window_ms": float64(0),
+			"worktree": root, "name": "worker 7",
 		}})},
 		{"a hand-in with no worktree", workHeld(map[string]any{"event": deliveringEvent, "data": map[string]any{
 			"name": "worker 7",

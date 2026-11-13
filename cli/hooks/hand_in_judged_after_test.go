@@ -12,7 +12,7 @@ import (
 )
 
 func afterHandInLine(root string, settings map[string]any) map[string]any {
-	line := deliveringOf(root, generousWindow, "src/refund.py")
+	line := deliveringOf(root, "src/refund.py")
 	line["environment"] = "main"
 	line["agent"] = float64(7)
 	line["settings"] = settings

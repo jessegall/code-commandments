@@ -308,7 +308,7 @@ def guard_queued(event: dict, line: bytes) -> dict | None:
     key, data = GUARDED.get(event.get("event")), os.environ.get("JOURNAL_PLUGIN_DATA", "")
     if not key or not data or not workers_chose(settings_of(event), key):
         return None
-    kept = kept_event(Path(data), json.dumps({**json.loads(line), "window_ms": None}).encode())
+    kept = kept_event(Path(data), line)
     return {"v": 1, "answer": "queue", "run": {"kind": "judge", "command": [str(PLUGIN / ".journal-plugin" / "hook"), f"{JUDGE_GUARD}{kept}"]}}
 
 

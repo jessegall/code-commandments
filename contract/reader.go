@@ -97,7 +97,9 @@ func (r *Reader) Tallied(tally func()) (*Stream, error) {
 			stream.Header = *line.Header
 		case line.File != nil:
 			stream.Files = append(stream.Files, line.File)
-			tally()
+			if !line.File.Context {
+				tally()
+			}
 		case line.Program != nil:
 			stream.Program = line.Program
 		case line.Trailer != nil:

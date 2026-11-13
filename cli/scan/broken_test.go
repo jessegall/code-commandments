@@ -25,7 +25,7 @@ func TestABridgeThatStopsPartwayLeavesWhatItReadToBeJudged(t *testing.T) {
 	}
 	whole, route := Bridges, read
 	Bridges = []Bridge{{Kind: "php", Word: "php", Label: "PHP", Languages: []source.Language{source.PHP}}}
-	read = func(Bridge, []string, []string, func()) (*contract.Stream, error) {
+	read = func(Bridge, []string, []string, []string, func()) (*contract.Stream, error) {
 		return written, errors.New("signal: killed")
 	}
 	t.Cleanup(func() { Bridges, read = whole, route })

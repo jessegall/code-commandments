@@ -92,7 +92,7 @@
         },
         "judge_read_at_once": {
             "title": "Files read at once",
-            "help": "How many processes read one language's files side by side, each a share of the files the cache does not already hold. More read a large tree sooner but use more cores and memory while it reads.",
+            "help": "How many processes read one language's files side by side, each writing a share of the files the cache does not already hold while reading them all, so every tree resolves as in one read. It pays where writing the trees is the cost: Python read a third faster at 3. Where reading is the cost it does not: PHP and Vue/TypeScript read slower at 3. Each extra process uses its own core and memory.",
             "type": "number",
             "default": "1",
             "group": "Performance"

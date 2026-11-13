@@ -367,18 +367,12 @@ func Named(kind string) (Bridge, bool) {
 	return Bridge{}, false
 }
 
-var read = func(b Bridge, roots, files []string, tally func()) (*contract.Stream, error) {
-	return b.read(roots, files, tally)
+var read = func(b Bridge, roots, files, written []string, tally func()) (*contract.Stream, error) {
+	return b.ask(resolved(roots), resolved(files), resolved(written), tally)
 }
 
 func (b Bridge) Read(roots, files []string, tally func()) (*contract.Stream, error) {
-	return b.readHalving(roots, files, tally, halvingsAtMost)
-}
-
-func (b Bridge) read(roots, files []string, tally func()) (*contract.Stream, error) {
-	roots, files = resolved(roots), resolved(files)
-
-	return b.ask(roots, files, tally)
+	return b.readHalving(roots, files, files, tally, halvingsAtMost)
 }
 
 const halvingsAtMost = 8
@@ -399,7 +393,7 @@ func (b Bridge) ReadShared(roots, files []string, tally func(), processes int) (
 		go func() {
 			defer reading.Done()
 			from, to := share*len(files)/shares, (share+1)*len(files)/shares
-			streams[share], failures[share] = b.readShare(roots, files, files[from:to], tally)
+			streams[share], failures[share] = b.readHalving(roots, files, files[from:to], tally, halvingsAtMost)
 		}()
 	}
 	reading.Wait()
@@ -410,18 +404,6 @@ func (b Bridge) ReadShared(roots, files []string, tally func(), processes int) (
 	}
 
 	return onceEach(whole), errors.Join(failures...)
-}
-
-// readShare asks one bridge process to read every file, so each tree resolves as in one read, and to write only its share.
-func (b Bridge) readShare(roots, files, share []string, tally func()) (*contract.Stream, error) {
-	roots, files, share = resolved(roots), resolved(files), resolved(share)
-	asker, err := b.Reach.Open(b, roots)
-	if err != nil {
-		return nil, err
-	}
-	defer asker.Close()
-
-	return asker.AskTallied(bridge.AskedOf(b.Projects, files, share).Request(), tally)
 }
 
 // onceEach keeps one line per file: a share writes the files it was asked for and reads others beside them as
@@ -448,15 +430,17 @@ func onceEach(stream *contract.Stream) *contract.Stream {
 	return stream
 }
 
-func (b Bridge) readHalving(roots, files []string, tally func(), halvings int) (*contract.Stream, error) {
-	stream, err := read(b, roots, files, tally)
-	if err == nil || halvings <= 0 || len(files) < 2 || isUnavailable(err) {
+// readHalving reads the files and writes those asked; when that fails it retries each half of what it writes, read
+// on its own, so one file the bridge cannot read costs only itself.
+func (b Bridge) readHalving(roots, files, written []string, tally func(), halvings int) (*contract.Stream, error) {
+	stream, err := read(b, roots, files, written, tally)
+	if err == nil || halvings <= 0 || len(written) < 2 || isUnavailable(err) {
 		return stream, err
 	}
 
-	first, second := files[:len(files)/2], files[len(files)/2:]
-	read, firstErr := b.readHalving(roots, first, tally, halvings-1)
-	rest, secondErr := b.readHalving(roots, second, tally, halvings-1)
+	first, second := written[:len(written)/2], written[len(written)/2:]
+	read, firstErr := b.readHalving(roots, first, first, tally, halvings-1)
+	rest, secondErr := b.readHalving(roots, second, second, tally, halvings-1)
 
 	if firstErr != nil && secondErr != nil {
 		return stream, err
@@ -465,14 +449,14 @@ func (b Bridge) readHalving(roots, files []string, tally func(), halvings int) (
 	return joined(read, rest), errors.Join(firstErr, secondErr)
 }
 
-func (b Bridge) ask(roots, files []string, tally func()) (*contract.Stream, error) {
+func (b Bridge) ask(roots, files, written []string, tally func()) (*contract.Stream, error) {
 	asker, err := b.Reach.Open(b, roots)
 	if err != nil {
 		return nil, err
 	}
 	defer asker.Close()
 
-	return asker.AskTallied(b.Request(files), tally)
+	return asker.AskTallied(bridge.AskedOf(b.Projects, files, written).Request(), tally)
 }
 
 func joined(read, rest *contract.Stream) *contract.Stream {
