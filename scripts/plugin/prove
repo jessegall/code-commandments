@@ -10,7 +10,7 @@ set -euo pipefail
 root="$(cd "$(dirname "$0")/../.." && pwd -P)"
 cd "$root"
 work="$root/.plugin-proof"
-version="$(sed -n 's/.*"COMMANDMENTS_RELEASE": "\([^"]*\)".*/\1/p' .journal-plugin/plugin.json)"
+version="$(scripts/release/pin)"
 case "$(docker info --format '{{.Architecture}}')" in
     x86_64|amd64) arch=amd64 ;;
     aarch64|arm64) arch=arm64 ;;

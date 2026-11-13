@@ -45,7 +45,7 @@ jobs:
             exit 1
           fi
 
-          pinned="$(jq -r .env.COMMANDMENTS_RELEASE .journal-plugin/plugin.json)"
+          pinned="$(scripts/release/pin)"
           # journal-plugin.json is frozen for journals before version 5 and fetches its own release for good.
           for manifest in journal-plugin.*.json; do
             fetched="$(jq -r '.setup[] | .run' "$manifest" | sed -n 's/^COMMANDMENTS_RELEASE=\([^ ]*\) .*/\1/p' | head -1)"

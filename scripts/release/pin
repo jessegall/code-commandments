@@ -1,0 +1,11 @@
+#!/bin/sh
+# Prints the release whose binary the plugin runs: the COMMANDMENTS_RELEASE .journal-plugin/plugin.json pins, which
+# cli/doc copies into every generated manifest. Every script and the release workflow read the pin here.
+set -eu
+root="$(cd "$(dirname "$0")/../.." && pwd -P)"
+pinned="$(sed -n 's/.*"COMMANDMENTS_RELEASE": "\([^"]*\)".*/\1/p' "$root/.journal-plugin/plugin.json" | head -n 1)"
+if [ -z "$pinned" ]; then
+    echo "scripts/release/pin: .journal-plugin/plugin.json pins no COMMANDMENTS_RELEASE" >&2
+    exit 1
+fi
+echo "$pinned"

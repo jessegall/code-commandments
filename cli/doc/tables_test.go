@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"regexp"
 	"slices"
@@ -263,5 +264,28 @@ func unknownIn(t *testing.T, what string, entry *jsonfile.Object, known []string
 		if !slices.Contains(known, key) {
 			t.Errorf("%s of %s holds %q, which version 4 of the journal refuses: it installs nothing then", what, doc.Journal4Plugin, key)
 		}
+	}
+}
+
+// Every script and the release workflow read the release the plugin runs through scripts/release/pin; it must say
+// what the plugin's manifest pins.
+func TestThePinScriptSaysTheReleaseTheManifestPins(t *testing.T) {
+	root := filepath.Join("..", "..")
+	raw, err := os.ReadFile(filepath.Join(root, doc.Plugin))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var manifest struct {
+		Env map[string]string `json:"env"`
+	}
+	if err := json.Unmarshal(raw, &manifest); err != nil {
+		t.Fatal(err)
+	}
+	said, err := exec.Command(filepath.Join(root, "scripts", "release", "pin")).Output()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if pinned := manifest.Env["COMMANDMENTS_RELEASE"]; strings.TrimSpace(string(said)) != pinned || pinned == "" {
+		t.Errorf("scripts/release/pin says %q, the manifest pins %q", strings.TrimSpace(string(said)), pinned)
 	}
 }
