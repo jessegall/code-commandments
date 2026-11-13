@@ -7,7 +7,6 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/jessegall/code-commandments/cli"
 )
@@ -37,13 +36,6 @@ func TestWithLiveJudgingOffAnEditIsLeftAloneEntirely(t *testing.T) {
 		t.Errorf("an edit with live judging off was answered with %s; it is answered with nothing", said)
 	}
 
-	raw, _ := json.Marshal(line)
-	judge4Detached(raw, line)
-
-	if _, err := os.Stat(filepath.Join(data, windowsFolder)); err == nil {
-		t.Errorf("an edit with live judging off opened a window to judge it in")
-	}
-
 	moment, _ := Moment4Of(line)
 	if answer := answerWith(Stamped(moment)); answer.Whisper != nil || len(answer.Raises) > 0 || answer.JudgedMs != 0 {
 		t.Errorf("an edit with live judging off was judged anyway: %+v", answer)
@@ -55,53 +47,20 @@ func TestWithLiveJudgingOffAnEditIsLeftAloneEntirely(t *testing.T) {
 	}
 }
 
-func TestOneAgentsEditsGatherInOneWindowAndTheNextEditOpensANewOne(t *testing.T) {
-	data := t.TempDir()
-	window := EditWindowIn(data, 7)
-
-	if !window.Gather([]byte(`{"n":1}`)) {
-		t.Fatal("the first edit did not open the window")
-	}
-
-	if window.Gather([]byte(`{"n":2}`)) {
-		t.Fatal("a second edit opened a window while one was open, so it would start a second judging run")
-	}
-
-	if !EditWindowIn(data, 8).Gather([]byte(`{"n":3}`)) {
-		t.Fatal("another agent's edit joined this agent's window")
-	}
-
-	if took := window.Close(); len(took) != 2 {
-		t.Fatalf("closing the window took %d edits, want the 2 made in it", len(took))
-	}
-
-	if !window.Gather([]byte(`{"n":4}`)) {
-		t.Fatal("the first edit after the window closed did not open a new one")
-	}
-}
-
-func TestAWindowWhoseRunDiedIsOpenedAgain(t *testing.T) {
-	window := EditWindowIn(t.TempDir(), 7)
-	window.Gather([]byte(`{"n":1}`))
-
-	long := time.Now().Add(-2 * windowLeftOpenAfter)
-	os.Chtimes(window.path(".open"), long, long)
-
-	if !window.Gather([]byte(`{"n":2}`)) {
-		t.Fatal("a window left open by a run that died is never opened again, so no edit is judged after it")
-	}
-}
-
 func TestTheRunThatClosesAWindowJudgesEveryEditInItAsOneBatch(t *testing.T) {
 	root := t.TempDir()
 	data := t.TempDir()
 	settings := map[string]any{liveEditsKey: true, editWindowKey: 0}
 
 	window := EditWindowIn(data, 7)
+	var edits []byte
 	for _, file := range []string{"order.py", "refund.py"} {
 		raw, _ := json.Marshal(editedLine(root, file, settings))
-		window.Gather(raw)
+		edits = append(append(edits, raw...), '\n')
 	}
+	os.MkdirAll(window.folder, 0o755)
+	os.WriteFile(window.path(".edits"), edits, 0o644)
+	os.WriteFile(window.path(".open"), nil, 0o644)
 
 	moment, _ := Moment4Of(editedLine(root, "order.py", settings))
 	given, _ := gatheredIn(window, Stamped(moment))
@@ -110,7 +69,7 @@ func TestTheRunThatClosesAWindowJudgesEveryEditInItAsOneBatch(t *testing.T) {
 		t.Errorf("the window's run judges %v, want both files edited in it", files)
 	}
 
-	if window.Gather([]byte(`{"n":1}`)) == false {
+	if window.IsOpen() {
 		t.Error("the run took the edits but left the window open")
 	}
 }
@@ -175,27 +134,6 @@ func TestTheEventABackgroundJudgingReadsIsKeptInAFileAndRemovedOnceRead(t *testi
 	}
 }
 
-func TestWithLiveJudgingOffNoEventStartsAnything(t *testing.T) {
-	root := t.TempDir()
-	data := t.TempDir()
-	t.Setenv(pluginData, data)
-	t.Setenv("PATH", t.TempDir())
-	t.Setenv(journalRoot, t.TempDir())
-
-	off := map[string]any{liveEditsKey: false}
-	for _, event := range []string{"command_starting", "tool_starting", "file_edited", "idle", "ticked"} {
-		line := map[string]any{"v": 1, "event": event, "session": "s1", "environment": "main", "agent": 7, "cwd": root,
-			"settings": off, "data": map[string]any{"cwd": root, "text": "git status", "path": "order.py"}}
-		raw, _ := json.Marshal(line)
-
-		judge4Detached(raw, line)
-
-		if kept, _ := os.ReadDir(filepath.Join(data, eventsFolder)); len(kept) != 0 {
-			t.Errorf("%s with live judging off kept an event to judge: %v", event, kept)
-		}
-	}
-}
-
 func TestAWorkersEventStartsNothingWithWorkerJudgingOff(t *testing.T) {
 	root := t.TempDir()
 	data := t.TempDir()
@@ -210,12 +148,9 @@ func TestAWorkersEventStartsNothingWithWorkerJudgingOff(t *testing.T) {
 		for _, event := range []string{"file_edited", "command_starting", "idle"} {
 			line := map[string]any{"v": 1, "event": event, "session": "s1", "environment": "main", "agent": 9, "role": "worker",
 				"cwd": root, "settings": chosen, "data": map[string]any{"cwd": root, "text": "git status", "path": "order.py"}}
-			raw, _ := json.Marshal(line)
-
-			judge4Detached(raw, line)
 			keepEditOf(line)
 
-			for _, folder := range []string{eventsFolder, windowsFolder, "worker-edits"} {
+			for _, folder := range []string{"worker-edits"} {
 				if kept, _ := os.ReadDir(filepath.Join(data, folder)); len(kept) != 0 {
 					t.Errorf("a worker's %s with %v left %s in %s", event, chosen, kept, folder)
 				}
@@ -235,29 +170,5 @@ func TestAWorkerRunningTheCLIIsRefusedAtOnceWhenTheSettingDeniesIt(t *testing.T)
 		if refused != strings.Contains(said, `"refuse"`) {
 			t.Errorf("a %s running the CLI with %s off was answered %s", role, helpersCLIKey, said)
 		}
-	}
-}
-
-func TestAnEditWhoseJudgingCannotStartLeavesNoWindowOpen(t *testing.T) {
-	root := t.TempDir()
-	data := t.TempDir()
-	t.Setenv(pluginData, data)
-	t.Setenv("PATH", t.TempDir())
-	t.Setenv("JOURNAL_BIN", "")
-	t.Setenv(journalRoot, t.TempDir())
-
-	line := editedLine(root, "order.py", map[string]any{liveEditsKey: true})
-	raw, _ := json.Marshal(line)
-	judge4Detached(raw, line)
-
-	window := EditWindowIn(data, 7)
-	if window.IsOpen() {
-		t.Error("an edit whose judging could not start left its window open, so the agent's next edits start nothing")
-	}
-	if !window.Gather([]byte(`{"n":2}`)) {
-		t.Error("the next edit did not open a window of its own")
-	}
-	if kept, _ := os.ReadDir(filepath.Join(data, eventsFolder)); len(kept) != 0 {
-		t.Errorf("an event file was left for a run that never started: %v", kept)
 	}
 }

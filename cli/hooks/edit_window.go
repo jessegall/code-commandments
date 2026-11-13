@@ -11,13 +11,9 @@ import (
 	"github.com/jessegall/code-commandments/cli/atomic"
 )
 
-const (
-	windowsFolder = "windows"
+const windowsFolder = "windows"
 
-	windowLeftOpenAfter = 15 * time.Minute
-)
-
-// EditWindow is one agent's live edits, gathered on disk while its window is open: the first edit opens it and starts the one background run that judges them, every later edit only joins it, and that run closes it when it takes them. A window whose run died without closing it counts as closed once it has stood open far longer than any window lasts, and what an agent left behind is swept once nothing has touched it for the hours the project keeps an unused cache. A run that finds the project being read by another puts the edits it took back, closed, so the agent's next edit opens a window that takes them too: nothing is dropped.
+// EditWindow is one agent's live edits, gathered on disk while its window is open: the plugin's script (.journal-plugin/hook.py) opens it with the first edit and queues the one run that judges them, every later edit only joins it, and that run closes it here when it takes them. What an agent left behind is swept once nothing has touched it for the hours the project keeps an unused cache.
 type EditWindow struct {
 	folder string
 	agent  int
@@ -28,28 +24,6 @@ func EditWindowIn(data string, agent int) EditWindow {
 	bundle.Sweep(folder, time.Now())
 
 	return EditWindow{folder: folder, agent: agent}
-}
-
-func (w EditWindow) Gather(edit []byte) bool {
-	release := atomic.Hold(w.path(".lock"))
-	defer release()
-
-	file, err := os.OpenFile(w.path(".edits"), os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0o644)
-	if err != nil {
-		return false
-	}
-	_, err = file.Write(append(bytes.TrimSpace(edit), '\n'))
-	file.Close()
-
-	if err != nil {
-		return false
-	}
-
-	if opened, err := os.Stat(w.path(".open")); err == nil && time.Since(opened.ModTime()) < windowLeftOpenAfter {
-		return false
-	}
-
-	return os.WriteFile(w.path(".open"), nil, 0o644) == nil
 }
 
 func (w EditWindow) IsOpen() bool {
@@ -74,13 +48,6 @@ func (w EditWindow) Close() [][]byte {
 	}
 
 	return edits
-}
-
-func (w EditWindow) Reopen() {
-	release := atomic.Hold(w.path(".lock"))
-	defer release()
-
-	os.Remove(w.path(".open"))
 }
 
 func (w EditWindow) path(suffix string) string {

@@ -94,10 +94,6 @@ func (PluginHook) Run(in *cli.Input, console cli.Console) (int, error) {
 
 	console.Write(Answer4Now(line) + "\n")
 
-	if judgedAfter(asText(line["event"])) {
-		judge4Detached(raw, line)
-	}
-
 	return 0, nil
 }
 
@@ -203,31 +199,6 @@ func gone(cwd string) bool {
 	info, err := os.Stat(cwd)
 
 	return err != nil || !info.IsDir()
-}
-
-func judge4Detached(raw []byte, line map[string]any) {
-	if _, queued := Queue4In(os.Getenv(pluginData)); !queued {
-		return
-	}
-
-	moment, known := Moment4Of(line)
-	if !known {
-		return
-	}
-
-	held := MomentOf(moment)
-	if !liveEditsJudgedAt(held) || notForThisRole(held) != "" {
-		return
-	}
-
-	window := EditWindowIn(os.Getenv(pluginData), held.Agent)
-	if asText(line["event"]) == editedEvent && !window.Gather(raw) {
-		return
-	}
-
-	if !judgeDetached(raw) {
-		window.Reopen()
-	}
 }
 
 func gatheredIn(window EditWindow, given map[string]any) (map[string]any, [][]byte) {
