@@ -192,7 +192,7 @@ func TestTwoFilesOfTheSameContentsInOneJudgingAreAskedOnce(t *testing.T) {
 	}
 }
 
-func TestAFingerprintIsForgottenAfterTwelveHours(t *testing.T) {
+func TestAFingerprintIsForgottenOnceUnusedForTheTimeACacheIsKept(t *testing.T) {
 	now := time.Now()
 	memory := engine.Remembering(func() time.Time { return now })
 	detector := &asking{}
@@ -352,7 +352,7 @@ func TestAJudgingAndAHitLongAfterMarkTheMemoryChangedAndAHitSoonAfterDoesNot(t *
 		t.Error("a hit moments after the judging renewed its entry, so a run that only remembers writes its memory again")
 	}
 
-	now = now.Add(2 * time.Hour)
+	now = now.Add(cache.KeptFor()/10 + time.Minute)
 	tree, _ = treeHolding(t, "changing")
 	memory.Find(tree, detector.find)
 
@@ -361,7 +361,7 @@ func TestAJudgingAndAHitLongAfterMarkTheMemoryChangedAndAHitSoonAfterDoesNot(t *
 	}
 }
 
-func TestARestoredEntryPastTwelveHoursIsGone(t *testing.T) {
+func TestARestoredEntryPastTheTimeACacheIsKeptIsGone(t *testing.T) {
 	now := time.Now()
 	clock := func() time.Time { return now }
 	memory := engine.Remembering(clock)

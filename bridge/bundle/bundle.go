@@ -60,6 +60,18 @@ func Archived(name string, archive []byte) Bundle {
 
 const wholeMark = ".whole"
 
+// Identity names the bundle by its own bytes alone: two binaries carrying the same bundle name it the same, so what
+// the bundle wrote under one is read under the other.
+func (b Bundle) Identity() string {
+	key, err := b.key()
+	if err != nil {
+		return ""
+	}
+	sum := sha1.Sum(key)
+
+	return b.name + "-" + hex.EncodeToString(sum[:])[:16]
+}
+
 func (b Bundle) Folder() (string, error) {
 	key, err := b.key()
 	if err != nil {

@@ -5,7 +5,9 @@ import (
 	"crypto/sha256"
 	"encoding/binary"
 	"maps"
+	"path/filepath"
 	"slices"
+	"strings"
 	"sync"
 	"time"
 
@@ -167,6 +169,7 @@ func (r *Remembered) knownCleanUnder(codebase *Codebase, printOf func(*File) (ui
 		if !printed || !held || expired(verdict.Used, now) || !verdict.judgedBy(r.rule) || len(verdict.Found[r.rule]) > 0 {
 			return false
 		}
+		r.renew(verdict, now)
 	}
 
 	return true
@@ -250,12 +253,17 @@ func (r *Remembered) known(one unjudged, now time.Time) ([]int, bool) {
 		return nil, false
 	}
 
-	if stale(verdict.Used, now) {
-		verdict.Used = now.UnixNano()
-		r.changed = true
-	}
+	r.renew(verdict, now)
 
 	return found, true
+}
+
+// renew restarts the clock of an answer just used, so an answer in use is never pruned.
+func (m *Memory) renew(verdict *Verdict, now time.Time) {
+	if stale(verdict.Used, now) {
+		verdict.Used = now.UnixNano()
+		m.changed = true
+	}
 }
 
 func expired(at int64, now time.Time) bool {
@@ -539,13 +547,14 @@ func (s standingOn) outsidePrint(file *File, path string) uint64 {
 
 func (f *File) outlined() uint64 {
 	f.outlining.Do(func() {
-		digest := sha256.New()
+		digest, unrooted := sha256.New(), f.unrooted()
 		var outline func(node Match)
 		outline = func(node Match) {
 			facts := node.Node()
 			digest.Write([]byte(facts.Kind + "\x00" + facts.Name + "\x00"))
 			if facts.Facts != nil {
-				digest.Write([]byte(facts.Symbol + "\x00" + facts.Refers + "\x00" + typeText(facts.Declared) + "\x00" + typeText(facts.Returns) + "\x00"))
+				named := facts.Symbol + "\x00" + facts.Refers + "\x00" + typeText(facts.Declared) + "\x00" + typeText(facts.Returns) + "\x00"
+				digest.Write([]byte(unrooted.Replace(named)))
 			}
 			for _, child := range node.Children() {
 				if child.Is(Block) && node.Is(Function) {
@@ -561,6 +570,28 @@ func (f *File) outlined() uint64 {
 	})
 
 	return f.outline
+}
+
+// unrooted takes the checkout out of a name: a TypeScript symbol is named by the absolute path of its module, so the
+// same outline in another checkout prints the same.
+func (f *File) unrooted() *strings.Replacer {
+	roots := f.codebase.scanned
+	if len(roots) == 0 {
+		roots = f.stream.Header.Roots
+	}
+	var spelt []string
+	for _, root := range roots {
+		for _, spelling := range spellings(root) {
+			spelt = append(spelt, strings.TrimSuffix(filepath.ToSlash(spelling), "/"))
+		}
+	}
+	slices.SortFunc(spelt, func(a, b string) int { return len(b) - len(a) })
+	pairs := make([]string, 0, 2*len(spelt))
+	for _, spelling := range spelt {
+		pairs = append(pairs, spelling, "@root@")
+	}
+
+	return strings.NewReplacer(pairs...)
 }
 
 func typeText(written *contract.Type) string {

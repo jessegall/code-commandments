@@ -3,8 +3,10 @@ package config
 import (
 	"bytes"
 	"encoding/json"
+	"strconv"
 	"strings"
 
+	"github.com/jessegall/code-commandments/cache"
 	"github.com/jessegall/code-commandments/cli/binary"
 
 	"github.com/jessegall/code-commandments/catalog"
@@ -34,7 +36,7 @@ func Schema(root string) []byte {
 			"base":         object{"type": "string", "minLength": 1, "description": "The branch `--branch` compares against when it names none: this project's trunk. Left out, it is main. A branch named on the command line always wins."},
 			"parallel":     object{"type": "integer", "minimum": 1, "description": "How many detectors judge runs at once when no --parallel says; more use more cores and memory. Left out, judge runs 2."},
 			"read_at_once": object{"type": "integer", "minimum": 1, "description": "How many bridge processes read one language's files side by side, each a share of the files the cache does not already hold; more read sooner but use more cores and memory. Left out, 1."},
-			"cache_hours":  object{"type": "number", "exclusiveMinimum": 0, "description": "How many hours anything kept between runs stays once nothing uses it: parsed trees, the rules' answers per file, and mypy's cache. Every use resets the clock. Left out, 12."},
+			"cache_hours":  object{"type": "number", "exclusiveMinimum": 0, "description": "How many hours anything kept between runs stays once nothing uses it: parsed trees, the rules' answers per file, and mypy's cache. Every use resets the clock. Left out, " + strconv.Itoa(cache.DefaultHours) + ", a week."},
 			"disable": object{
 				"description":          "Rules and languages turned off. A detector is off when it, its sin or its skill is named here.",
 				"type":                 "object",

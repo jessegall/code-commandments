@@ -9,7 +9,7 @@ import (
 	"github.com/jessegall/code-commandments/cache"
 )
 
-func TestASweepLetsGoOfTreesNotUsedForTwelveHours(t *testing.T) {
+func TestASweepLetsGoOfTreesNotUsedForTheTimeACacheIsKept(t *testing.T) {
 	folder := t.TempDir()
 	now := time.Now()
 	stale, fresh := filepath.Join(folder, "stale.tree"), filepath.Join(folder, "fresh.tree")
@@ -18,14 +18,14 @@ func TestASweepLetsGoOfTreesNotUsedForTwelveHours(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	old := now.Add(-13 * time.Hour)
+	old := now.Add(-cache.KeptFor() - time.Hour)
 	if err := os.Chtimes(stale, old, old); err != nil {
 		t.Fatal(err)
 	}
 
 	Sweep(folder, now)
 	if _, err := os.Stat(stale); !os.IsNotExist(err) {
-		t.Error("a tree unused for thirteen hours was kept")
+		t.Error("a tree unused past the time a cache is kept was kept")
 	}
 	if _, err := os.Stat(fresh); err != nil {
 		t.Errorf("a fresh tree was swept: %v", err)
@@ -74,7 +74,7 @@ func TestASweepKeepsTheCacheUnderItsSizeByLettingTheOldestTreesGo(t *testing.T) 
 	}
 }
 
-func TestAFolderNotTouchedForTwelveHoursIsForgottenAndATouchedOneKept(t *testing.T) {
+func TestAFolderNotTouchedForTheTimeACacheIsKeptIsForgottenAndATouchedOneKept(t *testing.T) {
 	parent := t.TempDir()
 	now := time.Now()
 	idle, used := filepath.Join(parent, "idle"), filepath.Join(parent, "used")
@@ -85,7 +85,7 @@ func TestAFolderNotTouchedForTwelveHoursIsForgottenAndATouchedOneKept(t *testing
 		}
 	}
 
-	old := now.Add(-13 * time.Hour)
+	old := now.Add(-cache.KeptFor() - time.Hour)
 	if err := os.Chtimes(idle, old, old); err != nil {
 		t.Fatal(err)
 	}
@@ -101,7 +101,7 @@ func TestAFolderNotTouchedForTwelveHoursIsForgottenAndATouchedOneKept(t *testing
 	ForgetUnused(parent, now)
 
 	if _, err := os.Stat(idle); !os.IsNotExist(err) {
-		t.Error("a folder untouched for thirteen hours was kept")
+		t.Error("a folder untouched past the time a cache is kept was kept")
 	}
 
 	if _, err := os.Stat(used); err != nil {

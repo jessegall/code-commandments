@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/jessegall/code-commandments/cache"
 	"github.com/jessegall/code-commandments/contract"
 )
 
@@ -73,25 +74,25 @@ func TestAKnownFileIsGivenAsACopyOfItsOwn(t *testing.T) {
 	}
 }
 
-func TestAKnownFileExpiresAfterItsTwelveHoursAndEachUseRenewsThem(t *testing.T) {
+func TestAKnownFileExpiresOnceUnusedForTheTimeACacheIsKeptAndEachUseRenewsIt(t *testing.T) {
 	at := time.Unix(1000, 0)
 	parses, here := Parsing(func() time.Time { return at }), t.TempDir()
 	keptIn(t, parses, here, "order.py", "ORDER = 1\n")
 	path := filepath.Join(here, "order.py")
 
-	at = at.Add(11 * time.Hour)
+	at = at.Add(cache.KeptFor() - time.Hour)
 	if _, unknown, _ := parses.Find([]string{path}, here); len(unknown) != 0 {
-		t.Fatal("a file used within twelve hours was forgotten")
+		t.Fatal("a file used within the time a cache is kept was forgotten")
 	}
 
-	at = at.Add(11 * time.Hour)
+	at = at.Add(cache.KeptFor() - time.Hour)
 	if _, unknown, _ := parses.Find([]string{path}, here); len(unknown) != 0 {
-		t.Fatal("a use did not renew the twelve hours")
+		t.Fatal("a use did not renew the time a cache is kept")
 	}
 
-	at = at.Add(12 * time.Hour)
+	at = at.Add(cache.KeptFor())
 	if _, unknown, _ := parses.Find([]string{path}, here); len(unknown) != 1 {
-		t.Error("a file unused for twelve hours is still held")
+		t.Error("a file unused for the time a cache is kept is still held")
 	}
 }
 

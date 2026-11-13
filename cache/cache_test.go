@@ -9,12 +9,12 @@ import (
 
 func TestAnUnusedCacheIsKeptTwelveHoursUnlessTheProjectSaysOtherwise(t *testing.T) {
 	for said, want := range map[string]time.Duration{
-		"":       12 * time.Hour,
+		"":       cache.Default,
 		"3":      3 * time.Hour,
 		"0.5":    30 * time.Minute,
-		"0":      12 * time.Hour,
-		"-4":     12 * time.Hour,
-		"twelve": 12 * time.Hour,
+		"0":      cache.Default,
+		"-4":     cache.Default,
+		"twelve": cache.Default,
 	} {
 		t.Setenv(cache.Variable, said)
 

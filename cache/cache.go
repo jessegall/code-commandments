@@ -15,7 +15,10 @@ const (
 
 	Folder = "COMMANDMENTS_CACHE_FOLDER"
 
-	Default = 12 * time.Hour
+	// DefaultHours is a week: every entry is keyed on contents, so it is never wrong, and only an untouched one is pruned.
+	DefaultHours = 7 * 24
+
+	Default = DefaultHours * time.Hour
 )
 
 func KeptFor() time.Duration {

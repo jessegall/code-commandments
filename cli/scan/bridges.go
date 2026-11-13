@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path/filepath"
 	"slices"
 	"sync"
 
@@ -12,6 +13,7 @@ import (
 	"github.com/jessegall/code-commandments/bridge/gotree"
 	"github.com/jessegall/code-commandments/cli"
 	"github.com/jessegall/code-commandments/cli/source"
+	"github.com/jessegall/code-commandments/cli/workspace"
 	"github.com/jessegall/code-commandments/contract"
 	"github.com/jessegall/code-commandments/engine"
 	"github.com/jessegall/code-commandments/engine/frontend"
@@ -33,6 +35,18 @@ type Bridge struct {
 	// Prepare readies the bridge on this machine, as fetching the one a release ships, and says what it did; nil
 	// when the binary carries everything the bridge needs.
 	Prepare func() (string, error)
+	// Identity names the code that writes the bridge's lines, so lines it kept stand across releases that leave it
+	// alone; nil when only the whole binary can say.
+	Identity func() string
+}
+
+// identity is what the bridge's kept lines are keyed on: its own code where it can name it, else the whole binary.
+func (b Bridge) identity() string {
+	if b.Identity == nil {
+		return bridge.Build()
+	}
+
+	return b.Identity()
 }
 
 // RunsAsAProcess says whether the bridge is a program of its own, which a service can keep up; one the binary carries
@@ -353,13 +367,15 @@ func (p *process) Close() error {
 var Bridges = []Bridge{PHPBridge, Frontend, CSharp, Python, GoBridge}
 
 var PHPBridge = Bridge{Kind: "php", Word: "php", Languages: []source.Language{source.PHP}, Label: "PHP",
-	Reach:  Process{Command: func([]string) ([]string, error) { return php.Here().Cached().Command() }},
-	Notice: nothingToSay,
+	Reach:    Process{Command: func([]string) ([]string, error) { return php.Here().Cached().Command() }},
+	Notice:   nothingToSay,
+	Identity: bridge.PHPIdentity,
 }
 
 var Frontend = Bridge{Kind: "frontend", Word: "frontend", Languages: []source.Language{source.Vue, source.TypeScript}, Label: "Vue and TypeScript",
-	Reach:  Process{Command: func([]string) ([]string, error) { return frontend.Here().Command() }},
-	Notice: nothingToSay,
+	Reach:    Process{Command: func([]string) ([]string, error) { return frontend.Here().Command() }},
+	Notice:   nothingToSay,
+	Identity: bridge.FrontendIdentity,
 }
 
 var CSharp = Bridge{Kind: "roslyn", Word: "csharp", Languages: []source.Language{source.CSharp}, Label: "C#",
@@ -378,8 +394,23 @@ var GoBridge = Bridge{Kind: "go", Word: "go", Languages: []source.Language{sourc
 }
 
 var Python = Bridge{Kind: "mypy", Word: "python", Languages: []source.Language{source.Python}, Label: "Python",
-	Reach:  Process{Command: func([]string) ([]string, error) { return bridge.Mypy() }},
-	Notice: nothingToSay,
+	Reach:    Process{Command: func(roots []string) ([]string, error) { return bridge.MypyCachedIn(mypyCacheOf(roots)) }},
+	Notice:   nothingToSay,
+	Identity: bridge.MypyIdentity,
+}
+
+// mypyCacheOf is where mypy keeps what it checked for the project the roots lie in: beside the project's other kept
+// reads, so every run of it, whatever started it, shares one, and a sandboxed run writes only inside the project.
+func mypyCacheOf(roots []string) string {
+	if len(roots) == 0 {
+		return ""
+	}
+	shared := workspace.SharedFolder(roots[0])
+	if shared == "" {
+		return ""
+	}
+
+	return filepath.Join(shared, "mypy-cache")
 }
 
 func nothingToSay() string {

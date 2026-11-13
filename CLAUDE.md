@@ -50,7 +50,10 @@ Every checkout of a project, the main one and every worker's worktree, reads thr
 on a file's contents, never its location. A file any checkout already read is served from that cache
 in every other checkout, and a worktree's own changes never evict what the main checkout keeps (a
 cache a parser keys by module name, like mypy's, is held per checkout so versions never overwrite
-each other). Judging is keyed the same way: a rule's answer for a file stands on the file's contents and the
+each other, under the project's shared folder whatever run starts the bridge). A kept line is keyed on the
+bridge's own code, never the whole binary, so a release that changes no bridge keeps every line
+(`TestEveryCheckoutReadsThroughOneCacheKeyedOnContents`). Each checkout takes its own reading turn, so a
+worktree never waits on the main checkout's read. Judging is keyed the same way: a rule's answer for a file stands on the file's contents and the
 contents of the files its bridge read, so an edit re-judges only that file and the files that import it
 (`engine/remembered.go`, locked by `TestARuleReadingAcrossFilesIsAskedAgainOnlyForTheChangedFileAndItsReaders`).
 A test that fails when a worktree run re-reads a file the main checkout already read

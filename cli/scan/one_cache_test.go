@@ -55,6 +55,13 @@ func TestEveryCheckoutReadsThroughOneCacheKeyedOnContents(t *testing.T) {
 	if asked := askedOfABridge(t, project, "src/shop/cart.py"); !slices.Equal(asked, []string{filepath.Join(project, "src/shop/cart.py")}) {
 		t.Errorf("a run given only cart.py, after prices.py which it imports changed, asked the bridge for %v instead of reading cart.py again", asked)
 	}
+
+	build := bridge.Build
+	bridge.Build = func() string { return "a release that changed no bridge" }
+	t.Cleanup(func() { bridge.Build = build })
+	if asked := askedOfABridge(t, project, "src/shop/cart.py"); len(asked) != 0 {
+		t.Errorf("a release that changed no bridge asked the bridge for %v again, which the release before had read", asked)
+	}
 }
 
 var theShop = []string{"src/shop/__init__.py", "src/shop/cart.py", "src/shop/prices.py"}

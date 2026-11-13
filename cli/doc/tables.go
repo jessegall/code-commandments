@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/jessegall/code-commandments/cache"
 	"github.com/jessegall/code-commandments/catalog"
 	"github.com/jessegall/code-commandments/cli/agents"
 	"github.com/jessegall/code-commandments/cli/block"
@@ -249,7 +250,7 @@ func PluginSettings() *jsonfile.Object {
 		"judge_before_merge", setting("Refuse a merge that would bring in sins", "Only with Judge workers on. On, a worker's merge is judged BEFORE it lands, over what its branch adds on top of the branch it merges into, and a merge that would bring in sins is refused: the work goes back to that worker with the findings and the merger is told it was not allowed. Off, a merge lands and is judged afterwards. The merge waits, with no time limit, on a judging run the journal queues.", "flag", "false", "Workers"),
 		"judge_edit_window", setting("Seconds to gather live edits", "How long one agent's live edits are gathered before they are judged together as a group. An edit alone in that time is judged by itself. Zero judges each edit as it comes; more than 60 counts as 60.", "number", "5", "Performance"),
 		"judge_at_once", setting("Judging runs at once", "How many judging runs the plugin starts may run side by side. Each one the plugin starts goes through the journal's process queue, which holds the next back until fewer than this many run.", "number", "1", "Performance"),
-		"cache_hours", setting("Hours an unused cache is kept", "How long anything kept between runs stays once nothing uses it: the parsed trees of every language, what each rule answered per file and mypy's cache. Every use resets the clock, so only what went untouched for the whole time is removed.", "number", "12", "Performance"),
+		"cache_hours", setting("Hours an unused cache is kept", "How long anything kept between runs stays once nothing uses it: the parsed trees of every language, what each rule answered per file and mypy's cache. Every use resets the clock, so only what went untouched for the whole time is removed.", "number", strconv.Itoa(cache.DefaultHours), "Performance"),
 		"judge_nodes_held", setting("Most of the project the service holds", "A ceiling, counted in parsed nodes, over everything the service keeps in memory for this project. Past it no new checkout is held and the answer says so instead of the service growing. Zero holds nothing back.", "number", "0", "Performance"),
 		"workers_cli", setting("Helpers may run the commandments CLI", "On, any helper (a worker, a reviewer, a researcher, the merger) may run the commandments program, `journal sins` and the plugin's other aliases. Off, such a command is refused at once with a line saying so, however it is written: through a variable, in a subshell or behind env, nice or timeout. Their work is still judged when it is handed in and merged, and the main agent is not affected.", "flag", "false", "Workers"),
 	)

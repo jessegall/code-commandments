@@ -2,6 +2,7 @@ package bridge
 
 import (
 	_ "embed"
+	"sync"
 
 	"github.com/jessegall/code-commandments/bridge/bundle"
 )
@@ -19,3 +20,9 @@ var frontendArchive []byte
 var PHP = bundle.Archived("php", phpArchive)
 
 var Frontend = bundle.Archived("frontend", frontendArchive)
+
+// PHPIdentity and FrontendIdentity name each bridge by the bundle it runs, so a release that changes neither keeps
+// what they read.
+var PHPIdentity = sync.OnceValue(PHP.Identity)
+
+var FrontendIdentity = sync.OnceValue(Frontend.Identity)

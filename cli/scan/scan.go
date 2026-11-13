@@ -3,6 +3,8 @@ package scan
 
 import (
 	"bufio"
+	"crypto/sha256"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"os"
@@ -344,33 +346,40 @@ func keptFor(kind string, roots []string) (*bridge.Server, bool) {
 }
 
 func (s Sources) readingTurn() (release func()) {
-	project, found := projectOf(s.roots)
-	turn := ReadingTurn(project)
-	if !found || turn == "" {
+	if _, found := projectOf(s.roots); !found || len(s.roots) == 0 {
+		return func() {}
+	}
+	turn := ReadingTurn(s.roots[0])
+	if turn == "" {
 		return func() {}
 	}
 
-	return atomic.HoldInTurn(turn, sayWaitingToRead, readingWaitedAtMost)
-}
-
-// ReadingTurn is the file a project's runs take turns on while they read it, the same for every worktree of it.
-func ReadingTurn(project string) string {
-	folder := workspace.SharedFolder(project)
-	if folder == "" {
-		return ""
+	began, waited := time.Now(), false
+	release = atomic.HoldInTurn(turn, func() {
+		waited = true
+		fmt.Fprintln(os.Stderr, "· another run is reading this checkout, so this one waits for it and then reads from the cache")
+	}, readingWaitedAtMost)
+	if waited {
+		fmt.Fprintf(os.Stderr, "· waited %s for the other run's read\n", time.Since(began).Round(time.Second))
 	}
 
-	return filepath.Join(folder, readingTurnFile)
+	return release
 }
 
-const (
-	readingTurnFile     = "reading.lock"
-	readingWaitedAtMost = 10 * time.Minute
-)
+// ReadingTurn is the file the runs of one checkout take turns on while they read it, so the second finds the first's
+// reads in the cache. Another checkout of the project has a turn of its own and reads beside them: it shares the cache
+// of what was read, and holds its own mypy cache.
+func ReadingTurn(checkout string) string {
+	folder, root := workspace.SharedFolder(checkout), git.Root(checkout)
+	if folder == "" || root == "" {
+		return ""
+	}
+	sum := sha256.Sum256([]byte(root))
 
-func sayWaitingToRead() {
-	fmt.Fprintln(os.Stderr, "· another run is reading this project, so this one waits for it and then reads from its cache")
+	return filepath.Join(folder, "reading", hex.EncodeToString(sum[:8])+".lock")
 }
+
+const readingWaitedAtMost = 10 * time.Minute
 
 func projectOf(roots []string) (string, bool) {
 	cwd, _ := os.Getwd()

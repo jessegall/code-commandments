@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/jessegall/code-commandments/bridge/bundle"
@@ -18,6 +19,9 @@ var mypy embed.FS
 
 var mypyTree = bundle.Embedded("mypy-tree", mypy, "mypy")
 
+// MypyIdentity names the Python bridge by its sources and the mypy it installs.
+var MypyIdentity = sync.OnceValue(mypyTree.Identity)
+
 const mypyNeeds = "3.10 or newer"
 
 const mypyPythonCheck = "import sys; print(\"%s %s\" % (sys.version.split()[0], sys.version_info >= (3, 10)))"
@@ -25,12 +29,21 @@ const mypyPythonCheck = "import sys; print(\"%s %s\" % (sys.version.split()[0], 
 var mypyPythons = []string{"python3.14", "python3.13", "python3.12", "python3.11", "python3.10", "python3", "python"}
 
 func Mypy() ([]string, error) {
+	return MypyCachedIn("")
+}
+
+// MypyCachedIn is the Python bridge keeping mypy's cache under caches, one folder per checkout, or under the user's
+// cache when caches is empty.
+func MypyCachedIn(caches string) ([]string, error) {
 	folder, err := mypyTree.Folder()
 	if err != nil {
 		return nil, err
 	}
 	tree := []string{filepath.Join(folder, "tree.py")}
-	if caches, err := mypyCaches(); err == nil {
+	if caches == "" {
+		caches, _ = mypyCaches()
+	}
+	if caches != "" {
 		bundle.ForgetUnused(caches, time.Now())
 		tree = append(tree, "--mypy-cache="+caches)
 	}

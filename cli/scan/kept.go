@@ -13,7 +13,6 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/jessegall/code-commandments/bridge"
 	"github.com/jessegall/code-commandments/cli/atomic"
 	"github.com/jessegall/code-commandments/cli/git"
 	"github.com/jessegall/code-commandments/cli/workspace"
@@ -26,7 +25,9 @@ import (
 type keptLines struct {
 	folder string
 	root   string
-	prints sync.Map
+	// identity is the code of the bridge that wrote the lines, so a release that leaves the bridge alone keeps them.
+	identity string
+	prints   sync.Map
 }
 
 // checkoutMark stands for the checkout's own folder inside a kept line, so a line written in one checkout reads in any.
@@ -41,7 +42,7 @@ func linesKeptFor(b Bridge, roots []string) *keptLines {
 		return &keptLines{}
 	}
 
-	return &keptLines{folder: filepath.Join(shared, "lines", b.Kind), root: root}
+	return &keptLines{folder: filepath.Join(shared, "lines", b.Kind), root: root, identity: b.identity()}
 }
 
 // split hands back the files whose kept line still stands, read, and the files a bridge must read.
@@ -138,17 +139,18 @@ func (k *keptLines) variants(file string) [][]string {
 }
 
 func (k *keptLines) addVariant(file string, reads []string) {
+	defer atomic.Hold(filepath.Join(k.folder, "index.lock"))()
 	line, _ := json.Marshal(reads)
 	known, _ := os.ReadFile(k.indexOf(file))
 	_ = atomic.Write(k.indexOf(file), string(known)+string(line)+"\n")
 }
 
 func (k *keptLines) indexOf(file string) string {
-	return filepath.Join(k.folder, named(bridge.Build(), k.marked(file), k.print(file))+".reads")
+	return filepath.Join(k.folder, named(k.identity, k.marked(file), k.print(file))+".reads")
 }
 
 func (k *keptLines) recordOf(file string, reads []string) string {
-	parts := []string{bridge.Build(), k.marked(file), k.print(file)}
+	parts := []string{k.identity, k.marked(file), k.print(file)}
 	for _, read := range reads {
 		parts = append(parts, read, k.print(k.unmarkedPath(read)))
 	}
@@ -206,7 +208,7 @@ func (k *keptLines) keepHeader(header contract.Header) {
 }
 
 func (k *keptLines) headerPath() string {
-	return filepath.Join(k.folder, named(bridge.Build())+".header")
+	return filepath.Join(k.folder, named(k.identity)+".header")
 }
 
 // program is the program line every kept run of this bridge wrote, joined: a run that reads only the files that
@@ -215,6 +217,7 @@ func (k *keptLines) program(fresh *contract.Program) *contract.Program {
 	if k.folder == "" {
 		return fresh
 	}
+	defer atomic.Hold(k.programPath() + ".lock")()
 	var kept contract.Program
 	if raw, err := os.ReadFile(k.programPath()); err == nil {
 		_ = json.Unmarshal(k.unmarked(raw), &kept)
@@ -229,7 +232,7 @@ func (k *keptLines) program(fresh *contract.Program) *contract.Program {
 }
 
 func (k *keptLines) programPath() string {
-	return filepath.Join(k.folder, named(bridge.Build())+".program")
+	return filepath.Join(k.folder, named(k.identity)+".program")
 }
 
 func joinedPrograms(kept contract.Program, fresh *contract.Program) contract.Program {
