@@ -3,13 +3,16 @@ package frontend_test
 import (
 	"os"
 	"path/filepath"
+	"slices"
 	"testing"
 
 	"github.com/jessegall/code-commandments/bridge"
 	"github.com/jessegall/code-commandments/engine/frontend"
 )
 
-func TestAFileIsJudgedWhenItOrAFolderAboveItIsWrittenAndContextOtherwise(t *testing.T) {
+// The bridge writes a file only when it or a folder above it is asked for, each line naming what it read; the rest are
+// there to import from and are not written, since the reader keeps every line between runs.
+func TestAFileIsWrittenWhenItOrAFolderAboveItIsAskedFor(t *testing.T) {
 	root, err := filepath.EvalSymlinks(t.TempDir())
 	if err != nil {
 		t.Fatal(err)
@@ -37,14 +40,17 @@ func TestAFileIsJudgedWhenItOrAFolderAboveItIsWrittenAndContextOtherwise(t *test
 		t.Fatal(err)
 	}
 
-	context := map[string]bool{}
+	var written []string
 	for _, file := range stream.Files {
-		context[file.Path] = file.Context
-	}
-	want := map[string]bool{filepath.Join(root, "a.ts"): false, filepath.Join(root, "sub/deep/b.ts"): false, filepath.Join(root, "subway/c.ts"): true}
-	for path, is := range want {
-		if was, held := context[path]; !held || was != is {
-			t.Errorf("%s: context is %v, held %v; want %v", path, was, held, is)
+		written = append(written, file.Path)
+		if file.Context {
+			t.Errorf("%s is written as context, where only asked files are written", file.Path)
 		}
+	}
+	if want := []string{filepath.Join(root, "a.ts"), filepath.Join(root, "sub/deep/b.ts")}; !slices.Equal(written, want) {
+		t.Errorf("the bridge wrote %v, want %v: subway/c.ts lies beside sub, not under it", written, want)
+	}
+	if !stream.Header.Bridge.Reads {
+		t.Error("the header does not say each line names what it read, so the reader keeps none of them")
 	}
 }

@@ -21,7 +21,7 @@ func Run(roots []string, scope scribes.Scope, filed scribes.Filed, given []detec
 	}
 	defer backend.Close()
 
-	vue, vueUnavailable, err := served(frontend.Here().Cached().Command, frontend.Over)
+	vue, vueUnavailable, err := served(frontend.Here().Command, frontend.Over)
 	if err != nil {
 		return scribes.Converged{}, err
 	}

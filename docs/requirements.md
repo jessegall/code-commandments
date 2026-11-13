@@ -64,3 +64,23 @@ ever.
 In a session where the agent journal runs the tool as a plugin, `commandments roslyn-serve` keeps the C# bridge running
 for the project, so each judge of C# compiles against references already loaded; a run finds it at a socket named for
 the project, and starts a bridge of its own when there is none.
+
+## One cache for every checkout
+
+Every checkout of a project, the main one and every worktree an agent works in, reads through one cache, kept in the
+journal's folder for the plugin (`$JOURNAL_PLUGIN_DATA`, else a folder under the user's cache found from the git
+project). The cache is one piece of Go every language passes through (`cli/scan/kept.go`); a bridge only parses. Each
+file's line is kept under the file's contents and the contents of every file its tree read (what it imports, and the
+files that pin what is installed), never under where the checkout lies, so:
+
+- a file any checkout already read is served from the cache in every other checkout, without starting a bridge;
+- a change in one worktree reads again only the files it changed and the files that read them, and never evicts what
+  the main checkout or another worktree keeps;
+- a parser cache that is keyed by module name rather than contents, like mypy's, is held per checkout, a new worktree
+  starting from a copy of the main checkout's.
+
+A single-file edit is judged in about a second in any checkout once the project has been read once (measured on
+agent-journal: 0.6-1.2 s in a worktree, 0.2 s for a file another checkout already read; the first whole read of a
+project is the one slow run). `cli/scan/one_cache_test.go` fails when a worktree run reads a file the main checkout
+already read, or a worktree's change evicts the main checkout's lines; no change to the reading path ships without
+it passing. Python, Go, Vue and TypeScript read through the cache; PHP and C# are being moved onto it.

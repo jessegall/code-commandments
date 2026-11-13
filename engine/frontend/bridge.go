@@ -12,11 +12,10 @@ import (
 	"github.com/jessegall/code-commandments/engine"
 )
 
-// Bridge is bridge/frontend: its built script, the node that runs it, and the folder it keeps each file's tree in.
+// Bridge is bridge/frontend: its built script and the node that runs it.
 type Bridge struct {
 	Sources bundle.Bundle
 	Node    string
-	Trees   string
 }
 
 func Here() Bridge {
@@ -39,19 +38,7 @@ func (b Bridge) Command() ([]string, error) {
 	}
 	command = append(command, filepath.Join(folder, "bridge.mjs"))
 
-	if b.Trees != "" {
-		command = append(command, "--cache="+b.Trees)
-	}
-
 	return command, nil
-}
-
-func (b Bridge) Cached() Bridge {
-	if trees, err := bundle.TreesFolder("frontend"); err == nil {
-		b.Trees = trees
-	}
-
-	return b
 }
 
 func (b Bridge) Stream(arguments ...string) (*contract.Stream, error) {

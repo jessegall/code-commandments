@@ -2,10 +2,28 @@ package frontend
 
 import (
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/jessegall/code-commandments/bridge"
 )
+
+// written is the stream the bridge writes for the arguments, as text.
+func written(t *testing.T, held Bridge, arguments ...string) string {
+	t.Helper()
+	command, err := held.Command()
+	if err != nil {
+		t.Skip(err)
+	}
+	out, err := exec.Command(command[0], append(command[1:], bridge.ListedArguments(arguments...)...)...).Output()
+	if err != nil {
+		t.Fatalf("%v: %v", command, err)
+	}
+
+	return string(out)
+}
 
 func TestAFilesTreeDoesNotAnswerForTheWholeProgram(t *testing.T) {
 	root, err := filepath.EvalSymlinks(t.TempDir())
