@@ -3,12 +3,11 @@ package hooks
 import (
 	"os"
 	"path/filepath"
-	"slices"
 	"strings"
 	"testing"
 )
 
-func TestASinOfAFileThatIsGoneIsRepented(t *testing.T) {
+func TestTheSinsOfAFileThatIsGoneLeaveTheRecordWithoutCountingAsRepented(t *testing.T) {
 	root, data := t.TempDir(), t.TempDir()
 	if err := os.MkdirAll(filepath.Join(root, "src"), 0o755); err != nil {
 		t.Fatal(err)
@@ -23,12 +22,12 @@ func TestASinOfAFileThatIsGoneIsRepented(t *testing.T) {
 	}
 
 	settlement := AnnouncedIn(data, Moment{}).Settle(root, nil, nil)
-	if len(settlement.Found) != 0 || !slices.Equal(settlement.Repented, []Repented{{"sin:a1", "array-bag at src/Gone.php:3"}}) {
-		t.Errorf("found %v, repented %v", settlement.Found, settlement.Repented)
+	if len(settlement.Found) != 0 || len(settlement.Repented) != 0 {
+		t.Errorf("a removed file's sins were found %v or repented %v, and removing a file fixes nothing", settlement.Found, settlement.Repented)
 	}
 
-	if !slices.Equal(settlement.Settles(), []string{"sins:src/Gone.php"}) {
-		t.Errorf("settles %v", settlement.Settles())
+	if raised := settlement.Raises(root); len(settlement.Settles()) != 0 || len(raised) != 0 {
+		t.Errorf("a removed file settles %v and raises %v, a clean mark for a file that was only deleted", settlement.Settles(), raised)
 	}
 
 	kept, _ := os.ReadFile(filepath.Join(data, "sins.json"))
@@ -49,7 +48,8 @@ func TestAnotherEnvironmentNeverRepentsTheSinsAnnouncedInThisOne(t *testing.T) {
 		t.Errorf("the helper's moment settled %v", settlement.Settles())
 	}
 
-	if settlement := AnnouncedIn(data, Moment{Env: &own}).Settle(main, nil, nil); !slices.Equal(settlement.Settles(), []string{"sins:src/probe.py"}) {
-		t.Errorf("main's own moment settled %v", settlement.Settles())
+	AnnouncedIn(data, Moment{Env: &own}).Settle(main, nil, nil)
+	if kept, _ := os.ReadFile(filepath.Join(data, "sins.main.json")); strings.Contains(string(kept), "probe.py") {
+		t.Errorf("main's own moment kept the sins of a file it no longer holds: %s", kept)
 	}
 }

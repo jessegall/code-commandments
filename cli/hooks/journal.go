@@ -468,6 +468,13 @@ func (a Announced) SettleAsked(root string, read []string, marks []SinMark, aske
 	resolved := map[string]announcement{}
 
 	for _, file := range files {
+		if gone[file] {
+			// A removed file's sins leave the record, but removing a file fixes none of them: no clean mark, no repentance.
+			a.files.Set(file, jsonfile.NewObject())
+
+			continue
+		}
+
 		before := jsonfile.NewObject()
 		if value, has := a.files.Get(file); has {
 			before = value.(*jsonfile.Object)
