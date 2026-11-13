@@ -5,8 +5,8 @@ version 1, for TypeScript and Vue. This document says only what is particular to
 fills, and what it leaves to the engine.
 
 ```
-node bridge/frontend/dist/bridge.mjs [--write=PATH]... [--rename=FROM=TO]... PATH...
-node bridge/frontend/dist/bridge.mjs --serve [--rename=FROM=TO]...
+node bridge/frontend/dist/bridge.mjs [--write=PATH]... PATH...
+node bridge/frontend/dist/bridge.mjs --serve
 ```
 
 `dist/bridge.mjs` is one bundled file, with TypeScript's standard library (`lib.*.d.ts`) beside it, so it needs
@@ -16,7 +16,6 @@ only `node`. It is built from `src/` by `npm run build` (or `go generate ./engin
 |---|---|
 | `PATH` | a file, or a folder read for every `*.vue` and `*.ts` under it; links, dot folders, `node_modules`, `vendor`, `site-packages` and `__pycache__` are skipped. Files are written sorted, each once |
 | `--write=PATH` | a file or folder that is judged. When any is given, every other file is written with `"context": true` |
-| `--rename=FROM=TO` | writes paths under `FROM` as under `TO`, so a committed stream names no machine's own folders |
 | `--serve` | answers each stdin line `{"paths": [...], "write": [...], "contents": {...}}` with a whole stream, header to trailer. `contents` maps absolute paths to the text a rewrite has drafted for them, read in place of the disk; a `*.vue` or `*.ts` path in it under a requested folder that is not on disk is read too |
 
 ## One stream, one program
@@ -51,5 +50,5 @@ statically and added to them.
 ## Regenerating the committed streams
 
 ```
-node bridge/frontend/dist/bridge.mjs --rename=tests/Fixtures=/fixtures <the files> > contract/samples/vue.jsonl
+node bridge/frontend/dist/bridge.mjs <the files> | sed "s|$(pwd -P)/tests/Fixtures|/fixtures|g" > contract/samples/vue.jsonl
 ```

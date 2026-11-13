@@ -20,7 +20,6 @@ final readonly class Request
     /**
      * @param  list<string>  $paths
      * @param  list<string>  $write
-     * @param  array<string, string>  $renames
      * @param  array<string, string>  $contents  absolute path => the text to read in place of the disk's
      * @param  ?string  $cache  the folder each file's line is kept in between runs; none when null
      */
@@ -28,7 +27,6 @@ final readonly class Request
         public array $paths,
         public array $write,
         public ?string $autoload,
-        public array $renames,
         public bool $serve,
         public array $contents = [],
         public ?string $cache = null,
@@ -44,7 +42,6 @@ final readonly class Request
         $paths = [];
         $write = [];
         $autoload = null;
-        $renames = [];
         $serve = false;
         $cache = null;
         foreach ($arguments as $argument) {
@@ -52,7 +49,6 @@ final readonly class Request
                 $argument === '--serve' => $serve = true,
                 str_starts_with($argument, '--write=') => $write[] = self::absolute(substr($argument, 8)),
                 str_starts_with($argument, '--autoload=') => $autoload = self::absolute(substr($argument, 11)),
-                str_starts_with($argument, '--rename=') => $renames += self::rename(substr($argument, 9)),
                 str_starts_with($argument, '--cache=') => $cache = substr($argument, 8),
                 str_starts_with($argument, '--') => throw BadRequest::forFlag($argument),
                 default => $paths[] = self::absolute($argument),
@@ -62,7 +58,7 @@ final readonly class Request
             throw BadRequest::forNothingToRead();
         }
 
-        return new self($paths, $write, $autoload, $renames, $serve, cache: $cache);
+        return new self($paths, $write, $autoload, $serve, cache: $cache);
     }
 
     /**
@@ -81,7 +77,6 @@ final readonly class Request
             array_map($drafted, $request['paths'] ?? []),
             array_map($drafted, $request['write'] ?? []),
             $this->autoload,
-            $this->renames,
             false,
             $contents,
             $this->cache,
@@ -107,20 +102,6 @@ final readonly class Request
         return true;
     }
 
-    /**
-     * $path as the stream names it.
-     */
-    public function shown(string $path): string
-    {
-        foreach ($this->renames as $from => $to) {
-            if (str_starts_with($path . '/', $from)) {
-                return rtrim($to . substr($path . '/', strlen($from)), '/');
-            }
-        }
-
-        return $path;
-    }
-
     private static function absolute(string $path): string
     {
         $folder = realpath(dirname($path));
@@ -129,18 +110,5 @@ final readonly class Request
         }
 
         return $folder . '/' . basename($path);
-    }
-
-    /**
-     * @return array<string, string>
-     */
-    private static function rename(string $pair): array
-    {
-        $parts = explode('=', $pair, 2);
-        if (count($parts) !== 2) {
-            throw BadRequest::forRename($pair);
-        }
-
-        return [self::absolute($parts[0]) . '/' => rtrim($parts[1], '/') . '/'];
     }
 }

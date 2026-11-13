@@ -52,6 +52,6 @@ resolves no expressions.
 ## Regenerating the committed streams
 
 ```
-php bridge/php/bridge.php --rename=tests/Fixtures=/fixtures <the files> > contract/samples/php.jsonl
+php bridge/php/bridge.php <the files> | sed "s|$(pwd -P)/tests/Fixtures|/fixtures|g" > contract/samples/php.jsonl
 cd fixture && go generate ./
 ```

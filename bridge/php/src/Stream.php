@@ -35,7 +35,7 @@ final readonly class Stream
             'version' => 1,
             'language' => 'php',
             'bridge' => ['name' => 'php-bridge', 'version' => self::VERSION],
-            'roots' => array_map($this->request->shown(...), $this->request->paths),
+            'roots' => $this->request->paths,
         ]]);
         $referenced = [];
         $declared = [];
@@ -46,7 +46,7 @@ final readonly class Stream
             $context = ! $this->request->judges($path);
             $earlier = $kept?->kept($code);
             if ($earlier !== null) {
-                $opening = $this->opening($this->request->shown($path));
+                $opening = $this->opening($path);
                 $line = $opening . $earlier['line'];
                 $at = strlen($opening) + $earlier['at'];
                 fwrite($out, ($context ? substr($line, 0, $at) . self::CONTEXT . substr($line, $at) : $line) . "\n");
@@ -89,7 +89,7 @@ final readonly class Stream
         $root = $writer->root($statements);
 
         return new ParsedFile(
-            $this->request->shown($path),
+            $path,
             count($errors->getErrors()),
             ! $this->request->judges($path),
             $root,

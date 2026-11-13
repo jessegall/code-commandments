@@ -18,7 +18,7 @@ final class BadRequest extends InvalidArgumentException
 
     public static function forNothingToRead(): self
     {
-        return new self('usage: bridge.php [--write=PATH]... [--autoload=FILE] [--rename=FROM=TO]... [--serve] PATH...');
+        return new self('usage: bridge.php [--write=PATH]... [--autoload=FILE] [--serve] PATH...');
     }
 
     public static function forNoPaths(): self
@@ -34,10 +34,5 @@ final class BadRequest extends InvalidArgumentException
     public static function forFolder(string $path): self
     {
         return new self("the PHP bridge reads only the files it is handed; {$path} is a folder");
-    }
-
-    public static function forRename(string $pair): self
-    {
-        return new self("--rename takes FROM=TO, not {$pair}");
     }
 }

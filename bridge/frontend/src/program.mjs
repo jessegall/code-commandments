@@ -38,9 +38,10 @@ export class Program {
      * one. A file left out is still read, and still resolved to as an import, so a run that needs a few files does
      * not pay for a program over the rest.
      */
-    constructor(sources, scripts, renames, parsed = [...sources.keys()]) {
+    constructor(sources, scripts, parsed = [...sources.keys()]) {
         this.sources = sources
-        this.renames = existsSync(SHIPPED) ? [...renames, [realpathSync(resolve(SHIPPED, 'node_modules')), 'node_modules']] : renames
+        // The type libraries this bridge ships are named under node_modules, never the folder it is installed in.
+        this.renames = existsSync(SHIPPED) ? [[realpathSync(resolve(SHIPPED, 'node_modules')), 'node_modules']] : []
         this.virtual = new Map([...scripts].map(([path, text]) => [path + VIRTUAL, text]))
         const root = projectRoot(commonRoot([...sources.keys()]))
         this.root = root

@@ -27,10 +27,10 @@ function judges(judged, path) {
 
 /**
  * The stream for one request: `paths` are scanned, `write` are written (every scanned file when it names none), each
- * line naming the files its tree read; `renames` rewrite paths, and `contents` is the text drafted for a file, read in
+ * line naming the files its tree read, and `contents` is the text drafted for a file, read in
  * place of the disk's; a drafted file under a folder is read too. The bridge keeps nothing between requests.
  */
-export async function stream({ paths, write = [], renames = [], contents = {} }, emit) {
+export async function stream({ paths, write = [], contents = {} }, emit) {
     const roots = paths.map(named)
     const judged = new Set(write.map((path) => realpathSync(resolve(path))))
     const drafted = Object.keys(contents).filter((path) => languageOf(path) && !existsSync(path) && roots.includes(path))
@@ -45,7 +45,7 @@ export async function stream({ paths, write = [], renames = [], contents = {} },
     const scripts = new Map(files.filter((path) => path.endsWith('.vue')).map((path) => [path, sfcOf(path).checkedText()]))
     const asked = judged.size ? files.filter((path) => judges(judged, path)) : files
     const everywhere = files.filter((path) => reachesEveryFile(path, sources.get(path).text))
-    const program = new Program(sources, scripts, renames, [...new Set([...asked, ...everywhere])])
+    const program = new Program(sources, scripts, [...new Set([...asked, ...everywhere])])
     const readBy = readsOf(program, sources, scripts, everywhere)
     const language = scripts.size ? 'vue' : 'typescript'
     const totals = { expressions: 0, typed: 0, calls: 0, resolved: 0 }
@@ -154,14 +154,11 @@ function languageOf(path) {
 }
 
 function parse(argv) {
-    const request = { paths: [], write: [], renames: [], serve: false }
+    const request = { paths: [], write: [], serve: false }
     for (const argument of argv) {
         if (argument === '--serve') request.serve = true
         else if (argument.startsWith('--write=')) request.write.push(argument.slice('--write='.length))
-        else if (argument.startsWith('--rename=')) {
-            const [from, to] = argument.slice('--rename='.length).split('=')
-            request.renames.push([realpathSync(resolve(from)), to])
-        } else if (argument.startsWith('--')) throw new Error(`unknown flag ${argument}`)
+        else if (argument.startsWith('--')) throw new Error(`unknown flag ${argument}`)
         else request.paths.push(argument)
     }
 
@@ -183,7 +180,7 @@ async function main() {
         }
     }
     if (!request.serve) {
-        if (!request.paths.length) throw new Error(`usage: node ${NAME} [--write=PATH]... [--rename=FROM=TO]... PATH...`)
+        if (!request.paths.length) throw new Error(`usage: node ${NAME} [--write=PATH]... PATH...`)
         await stream(request, write)
         return
     }
@@ -193,7 +190,7 @@ async function main() {
     lines.on('line', (line) => {
         if (!line.trim()) return
         const asked = JSON.parse(line)
-        answering = answering.then(() => stream({ paths: asked.paths ?? [], write: asked.write ?? [], renames: request.renames, contents: asked.contents ?? {} }, write)).catch(fail)
+        answering = answering.then(() => stream({ paths: asked.paths ?? [], write: asked.write ?? [], contents: asked.contents ?? {} }, write)).catch(fail)
     })
 }
 
