@@ -73,7 +73,16 @@
     "key": "plugin.updated",
     "names": [
       "plugin.updated",
-      "plugin.update"
+      "plugin.update",
+      "core.plugins.plugin_setting.created",
+      "core.plugins.plugin_setting.updated",
+      "core.plugins.plugin_setting.deleted",
+      "plugin_setting.created",
+      "plugin_setting.updated",
+      "plugin_setting.deleted",
+      "plugin_setting.create",
+      "plugin_setting.update",
+      "plugin_setting.delete"
     ]
   },
   {
