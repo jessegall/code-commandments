@@ -116,6 +116,10 @@ func (n Node) acknowledgesAbsenceOf(inner Node) bool {
 		return true
 	}
 
+	if arguments := n.Arguments(); n.IsInstanceCheck() && len(arguments) > 0 && arguments[0] == inner {
+		return true
+	}
+
 	return n.IsNegation() || n.IsShortCircuit()
 }
 

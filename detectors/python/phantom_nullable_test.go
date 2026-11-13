@@ -54,3 +54,35 @@ def row(task: Task) -> dict:
 		t.Errorf("a field the class clears through its own mover is reported as phantom at %s", found.Location())
 	}
 }
+
+func TestAFieldReadOnlyBehindAnIsinstanceCheckIsNotPhantom(t *testing.T) {
+	codebase := pythontest.FromSource(t, map[string]string{
+		"rows/__init__.py": "",
+		"rows/cached.py": `from dataclasses import dataclass
+
+
+class Model:
+    version: int = 0
+
+
+@dataclass(frozen=True)
+class CachedRow:
+    row: Model | None
+    generation: int
+
+    @property
+    def version(self) -> int | None:
+        return self.row.version if isinstance(self.row, Model) else None
+`,
+		"rows/cache.py": `from rows.cached import CachedRow, Model
+
+
+def cached(rows: dict[int, Model], row_id: int) -> CachedRow:
+    return CachedRow(rows.get(row_id), 1)
+`,
+	})
+
+	for _, found := range (pydetectors.PhantomNullableDetector{}).Find(codebase) {
+		t.Errorf("a field every read guards with isinstance is reported as phantom at %s", found.Location())
+	}
+}
