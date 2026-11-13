@@ -146,7 +146,7 @@ function reachesEveryFile(path, text) {
 }
 
 /**
- * Each file's key: the context, and the hash of the component of the import graph it sits in, with all it reaches.
+ * Each file's key: the context, the file's own hash, and the hash of the component of the import graph it sits in, with all it reaches.
  * A file counts by its text and where in the project its imports are, because its line names them, and never by where it is itself.
  */
 function keysOf(program, texts, scripts, context, memo) {
@@ -170,7 +170,8 @@ function keysOf(program, texts, scripts, context, memo) {
     }
     const deep = componentHashes(edges, own)
 
-    return new Map([...texts.keys()].map((path) => [path, hashed(context + '\0' + deep.get(path))]))
+    // The component's hash is shared by every file in an import cycle; the file's own hash keeps each its own entry.
+    return new Map([...texts.keys()].map((path) => [path, hashed(context + '\0' + own.get(path) + '\0' + deep.get(path))]))
 }
 
 /** The specifiers a text imports, kept under the fingerprint of the text so a file met before is never lexed again. */

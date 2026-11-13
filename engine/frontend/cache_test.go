@@ -207,3 +207,30 @@ func TestAVueFileMetBeforeIsNotParsedToFindItsScripts(t *testing.T) {
 		t.Error("a Vue file whose script ranges were kept was parsed again for them: the planted ranges changed nothing")
 	}
 }
+
+func TestComponentsThatImportEachOtherKeepATreeEach(t *testing.T) {
+	root, err := filepath.EvalSymlinks(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	put := func(path, source string) {
+		if err := os.WriteFile(filepath.Join(root, path), []byte(source), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	put("Node.vue", "<script setup>\nimport Card from './Card.vue'\n</script>\n\n<template>\n    <section><Card /></section>\n</template>\n")
+	put("Card.vue", "<script setup>\nimport Node from './Node.vue'\n</script>\n\n<template>\n    <article><h2>card</h2><Node /></article>\n</template>\n")
+	fresh := Here()
+	kept := Here()
+	kept.Trees = t.TempDir()
+
+	want := written(t, fresh, root)
+	for _, run := range []string{"first", "again"} {
+		if got := written(t, kept, root); got != want {
+			t.Errorf("the %s cached run serves one component's tree for the other, which imports it back", run)
+		}
+	}
+	if trees, _ := filepath.Glob(filepath.Join(kept.Trees, "*.tree")); len(trees) != 2 {
+		t.Errorf("two components in one import cycle keep %d trees, want one each", len(trees))
+	}
+}
