@@ -1,26 +1,25 @@
-package bundle
+package cache
 
 import (
 	"os"
 	"path/filepath"
 	"time"
 
-	"github.com/jessegall/code-commandments/cache"
 	"github.com/jessegall/code-commandments/walk"
 )
 
 const sweptEvery = time.Hour
 
-const sweptMark = ".swept"
+const SweptMark = ".swept"
 
 // Sweep removes what no run used for the hours the cache keeps, at most once an hour.
 func Sweep(folder string, now time.Time) {
 	if !dueForSweep(folder, now) {
 		return
 	}
-	mark := filepath.Join(folder, sweptMark)
+	mark := filepath.Join(folder, SweptMark)
 	for _, path := range walk.AllFiles(folder) {
-		if info, err := os.Lstat(path); err == nil && path != mark && now.Sub(info.ModTime()) > cache.KeptFor() {
+		if info, err := os.Lstat(path); err == nil && path != mark && now.Sub(info.ModTime()) > KeptFor() {
 			os.Remove(path)
 		}
 	}
@@ -39,7 +38,7 @@ func Used(folder string) {
 
 // dueForSweep says whether the folder was last swept an hour ago or more, and marks it swept now when it was.
 func dueForSweep(folder string, now time.Time) bool {
-	mark := filepath.Join(folder, sweptMark)
+	mark := filepath.Join(folder, SweptMark)
 	if info, err := os.Stat(mark); err == nil && now.Sub(info.ModTime()) < sweptEvery {
 		return false
 	}
@@ -58,8 +57,28 @@ func ForgetUnused(parent string, now time.Time) {
 
 	for _, entry := range entries {
 		info, err := entry.Info()
-		if err == nil && entry.IsDir() && now.Sub(info.ModTime()) > cache.KeptFor() {
+		if err == nil && entry.IsDir() && now.Sub(info.ModTime()) > KeptFor() {
 			os.RemoveAll(filepath.Join(parent, entry.Name()))
 		}
 	}
+}
+
+// Scratch is a new folder for one run's passing work, in the tool's own cache rather than the system's temporary
+// folder, so one a crashed run left behind is let go of like any folder no run used.
+func Scratch(prefix string) (string, error) {
+	ours, err := Ours()
+	if err != nil {
+		return "", err
+	}
+	parent := filepath.Join(ours, "scratch")
+	if err := os.MkdirAll(parent, 0o755); err != nil {
+		return "", err
+	}
+	folder, err := os.MkdirTemp(parent, prefix)
+	if err != nil {
+		return "", err
+	}
+	Used(folder)
+
+	return folder, nil
 }

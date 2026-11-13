@@ -1,12 +1,10 @@
-package bundle
+package cache
 
 import (
 	"os"
 	"path/filepath"
 	"testing"
 	"time"
-
-	"github.com/jessegall/code-commandments/cache"
 )
 
 func TestASweepLetsGoOfTreesNotUsedForTheTimeACacheIsKept(t *testing.T) {
@@ -18,7 +16,7 @@ func TestASweepLetsGoOfTreesNotUsedForTheTimeACacheIsKept(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	old := now.Add(-cache.KeptFor() - time.Hour)
+	old := now.Add(-KeptFor() - time.Hour)
 	if err := os.Chtimes(stale, old, old); err != nil {
 		t.Fatal(err)
 	}
@@ -58,7 +56,7 @@ func TestAFolderNotTouchedForTheTimeACacheIsKeptIsForgottenAndATouchedOneKept(t 
 		}
 	}
 
-	old := now.Add(-cache.KeptFor() - time.Hour)
+	old := now.Add(-KeptFor() - time.Hour)
 	if err := os.Chtimes(idle, old, old); err != nil {
 		t.Fatal(err)
 	}
@@ -83,7 +81,7 @@ func TestAFolderNotTouchedForTheTimeACacheIsKeptIsForgottenAndATouchedOneKept(t 
 }
 
 func TestASweepAndAForgettingKeepAsLongAsTheProjectChose(t *testing.T) {
-	t.Setenv(cache.Variable, "2")
+	t.Setenv(Variable, "2")
 
 	folder, parent := t.TempDir(), t.TempDir()
 	now := time.Now()
@@ -129,7 +127,7 @@ func TestUsingAFolderLetsGoOfTheUnusedFoldersBesideIt(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	long := time.Now().Add(-cache.KeptFor() - time.Hour)
+	long := time.Now().Add(-KeptFor() - time.Hour)
 	for _, folder := range []string{used, old} {
 		if err := os.Chtimes(folder, long, long); err != nil {
 			t.Fatal(err)

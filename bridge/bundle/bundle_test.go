@@ -5,10 +5,12 @@ import (
 	"maps"
 	"os"
 	"path/filepath"
-	"slices"
 	"runtime"
+	"slices"
 	"testing"
 	"testing/fstest"
+
+	"github.com/jessegall/code-commandments/cache"
 )
 
 var files = map[string][]byte{"bridge.php": []byte("<?php\n"), "src/Stream.php": []byte("<?php // stream\n")}
@@ -63,7 +65,7 @@ func TestAnArchivedBundleIsWrittenOutOnceWhole(t *testing.T) {
 		t.Error("the second use wrote the bundle out again")
 	}
 	siblings, _ := os.ReadDir(filepath.Dir(folder))
-	siblings = slices.DeleteFunc(siblings, func(entry os.DirEntry) bool { return entry.Name() == sweptMark })
+	siblings = slices.DeleteFunc(siblings, func(entry os.DirEntry) bool { return entry.Name() == cache.SweptMark })
 	if len(siblings) != 1 {
 		t.Errorf("the cache holds %d entries beside the bundle's folder", len(siblings)-1)
 	}

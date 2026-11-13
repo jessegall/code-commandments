@@ -10,7 +10,6 @@ import (
 	"sort"
 	"strings"
 	"sync"
-	"time"
 
 	"github.com/jessegall/code-commandments/cli/git"
 	"github.com/jessegall/code-commandments/cli/source"
@@ -34,7 +33,6 @@ const (
 	DefaultSession = "default"
 
 	keyLength = 5
-	pruneDays = 7
 )
 
 var repositories sync.Map
@@ -308,24 +306,6 @@ func (w Workspace) Shared(file string) string {
 
 func (w Workspace) Relative(file string) string {
 	return w.Path(file)[len(strings.TrimRight(w.root, "/"))+1:]
-}
-
-func (w Workspace) Prune(days int) {
-	if days == 0 {
-		days = pruneDays
-	}
-
-	cutoff := time.Now().Add(-time.Duration(days) * 24 * time.Hour)
-
-	for _, folder := range folders(w.SessionsDir()) {
-		if folder == w.SessionDir() {
-			continue
-		}
-
-		if info, err := os.Stat(folder); err != nil || info.ModTime().Before(cutoff) {
-			os.RemoveAll(folder)
-		}
-	}
 }
 
 func folders(parent string) []string {

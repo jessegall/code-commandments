@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/jessegall/code-commandments/bridge/bundle"
+	"github.com/jessegall/code-commandments/cache"
 	"github.com/jessegall/code-commandments/cli/atomic"
 )
 
@@ -45,7 +46,7 @@ func MypyCachedIn(caches, checkout, project string) ([]string, error) {
 		caches, _ = mypyCaches()
 	}
 	if caches != "" {
-		bundle.ForgetUnused(caches, time.Now())
+		cache.ForgetUnused(caches, time.Now())
 		tree = append(tree, "--mypy-cache="+caches)
 	}
 	if checkout != "" {

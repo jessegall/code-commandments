@@ -13,7 +13,6 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/jessegall/code-commandments/bridge/bundle"
 	"github.com/jessegall/code-commandments/cache"
 )
 
@@ -112,12 +111,12 @@ func RoslynExecutable() (executable string, fetched bool, err error) {
 	if runtime.GOOS == "windows" {
 		name += ".exe"
 	}
-	cache, err := binaryCache()
+	binaries, err := binaryCache()
 	if err != nil {
 		return "", false, RoslynUnavailable{err.Error()}
 	}
-	executable = filepath.Join(cache, Release, name)
-	defer bundle.Used(filepath.Dir(executable))
+	executable = filepath.Join(binaries, Release, name)
+	defer cache.Used(filepath.Dir(executable))
 	if _, err := os.Stat(executable); err == nil {
 		return executable, false, nil
 	}

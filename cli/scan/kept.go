@@ -16,7 +16,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/jessegall/code-commandments/bridge/bundle"
 	"github.com/jessegall/code-commandments/cache"
 	"github.com/jessegall/code-commandments/cli/atomic"
 	"github.com/jessegall/code-commandments/cli/git"
@@ -250,7 +249,7 @@ func (k *keptLines) settle() {
 		}
 	}
 	if k.folder != "" {
-		bundle.Sweep(k.folder, time.Now())
+		cache.Sweep(k.folder, time.Now())
 	}
 }
 

@@ -6,6 +6,8 @@ import (
 	"path/filepath"
 	"slices"
 	"strings"
+
+	"github.com/jessegall/code-commandments/cache"
 )
 
 var inProgress = []string{"index.lock", "MERGE_HEAD", "CHERRY_PICK_HEAD", "REVERT_HEAD", "rebase-merge", "rebase-apply", "BISECT_LOG"}
@@ -78,7 +80,7 @@ func CommitStoppedTracking(root, message string, committed []string) (bool, erro
 		return false, nil
 	}
 
-	folder, err := os.MkdirTemp("", "commandments-untrack-")
+	folder, err := cache.Scratch("untrack-")
 	if err != nil {
 		return false, err
 	}

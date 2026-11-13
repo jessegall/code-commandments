@@ -6,7 +6,6 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/jessegall/code-commandments/bridge/bundle"
 	"github.com/jessegall/code-commandments/cache"
 	"github.com/jessegall/code-commandments/cli/git"
 	"github.com/jessegall/code-commandments/walk"
@@ -34,7 +33,7 @@ func SharedFolder(project string) string {
 	named := sha256.Sum256([]byte(project))
 
 	folder := filepath.Join(ours, "remembered", hex.EncodeToString(named[:8]))
-	bundle.Used(folder)
+	cache.Used(folder)
 
 	return folder
 }

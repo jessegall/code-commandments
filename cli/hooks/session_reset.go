@@ -4,11 +4,13 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
+
+	"github.com/jessegall/code-commandments/cache"
 )
 
 var freshSources = []string{"startup", "clear"}
 
-// SessionReset clears the hook counters and prunes long-abandoned session folders when a session starts fresh.
+// SessionReset clears the hook counters and lets go of the session folders no session used for the hours the cache keeps when a session starts fresh.
 type SessionReset struct{}
 
 func (SessionReset) Class() string { return "SessionReset" }
@@ -29,7 +31,7 @@ func (SessionReset) Handle(event Event) Response {
 		os.Remove(counter)
 	}
 
-	space.Prune(0)
+	cache.Used(space.SessionDir())
 
 	return Silent()
 }

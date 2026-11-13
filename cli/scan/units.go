@@ -13,6 +13,7 @@ import (
 	"slices"
 
 	"github.com/jessegall/code-commandments/bridge"
+	"github.com/jessegall/code-commandments/cache"
 	"github.com/jessegall/code-commandments/contract"
 	"github.com/jessegall/code-commandments/engine"
 	"github.com/jessegall/code-commandments/walk"
@@ -96,7 +97,7 @@ func askUnits(held Bridge, roots, files []string, complete func(*engine.Codebase
 		records, header, misses = kept.standingRecords(files)
 	}
 
-	folder, err := os.MkdirTemp("", "commandments-units-")
+	folder, err := cache.Scratch("units-")
 	if err != nil {
 		return nil, err
 	}
