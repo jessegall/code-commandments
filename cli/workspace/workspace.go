@@ -5,6 +5,7 @@ import (
 	"crypto/sha1"
 	"encoding/hex"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -198,6 +199,28 @@ func (w Workspace) journalRoot() string {
 	}
 
 	return ""
+}
+
+// Journal is the journal program of the project's journal: the one named in JOURNAL_BIN, the one on the PATH, or the one the journal keeps in its own folder; empty without one.
+func Journal(journalRoot string) string {
+	if named := os.Getenv("JOURNAL_BIN"); named != "" {
+		return named
+	}
+
+	if found, err := exec.LookPath("journal"); err == nil {
+		return found
+	}
+
+	beside := filepath.Join(journalRoot, ".journal", "bin", "journal")
+	if info, err := os.Stat(beside); err == nil && !info.IsDir() {
+		return beside
+	}
+
+	return ""
+}
+
+func (w Workspace) Journal() string {
+	return Journal(w.journalRoot())
 }
 
 func (w Workspace) StateDir() string {

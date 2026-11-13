@@ -108,6 +108,10 @@ func (Command) Help() help.Help {
 			"names the rules that could not run and exits 3 (rather than 0) when nothing else was found, " +
 			"because a run missing a rule has not judged what that rule judges. A bridge that stops partway " +
 			"is treated the same: the files it read and every other language are judged, and the run names it.").
+		Note("In a project whose agent journal has this plugin installed, a judge typed in a terminal runs in the " +
+			"journal's queue (`journal plugin queue code-commandments --kind judge`) and prints the queued run's " +
+			"output as it comes, ending with its exit code. A judge the journal itself started runs at once, and " +
+			"one the journal will not queue runs here.").
 		Note("Judge writes a Markdown checklist into your session folder (the run prints the exact path). " +
 			"A full scan is slow, so judge ONCE and work that file line-by-line, deleting each line as you fix its sin; re-run judge at the end to confirm. Files marked @code-commandments-generated are skipped — they are regenerated, not hand-authored.")
 }
@@ -126,6 +130,12 @@ func (c Command) Run(in *cli.Input, console cli.Console) (int, error) {
 
 	if options.list {
 		return list(cwd, console)
+	}
+
+	if c.Reading == nil && space.IsJournalDriven() && !insideTheJournal() {
+		if code, taken := throughTheQueue(space, cwd, in, console); taken {
+			return code, nil
+		}
 	}
 
 	if remembered, keeps := RememberedFor(space.Root(), console.Warn); keeps && c.Reading == nil {

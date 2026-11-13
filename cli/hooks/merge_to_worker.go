@@ -4,9 +4,10 @@ import (
 	"errors"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"strings"
 	"time"
+
+	"github.com/jessegall/code-commandments/cli/workspace"
 )
 
 // Sending is what became of telling a worker its merge was judged: told when the worker has the words, Retired
@@ -79,18 +80,5 @@ func exitOf(err error) int {
 }
 
 func journalBinary() string {
-	if named := os.Getenv("JOURNAL_BIN"); named != "" {
-		return named
-	}
-
-	if found, err := exec.LookPath("journal"); err == nil {
-		return found
-	}
-
-	beside := filepath.Join(os.Getenv(journalRoot), ".journal", "bin", "journal")
-	if info, err := os.Stat(beside); err == nil && !info.IsDir() {
-		return beside
-	}
-
-	return ""
+	return workspace.Journal(os.Getenv(journalRoot))
 }
