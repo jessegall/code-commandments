@@ -15,7 +15,6 @@ import (
 )
 
 const (
-	judgeKind        = "judge"
 	judgeEventOption = "judge-event"
 	eventsFolder     = "events"
 )
@@ -60,8 +59,8 @@ func (PluginHook) Names() []string {
 func (PluginHook) Help() help.Help {
 	return help.Of("The agent journal plugin's program — reads one event line from stdin and answers it at once: an edit, a command and a stop with nothing, and every other event with what its handlers found.").
 		Form("plugin-hook", "answer the event line on stdin (run by the journal plugin; you rarely run this by hand)").
-		Option("--"+judgeEventOption+"=FILE", "judge the event kept in FILE, then remove it: the background run the plugin starts through `journal plugin run --kind judge`").
-		Note("Nothing is judged on the way out, and nothing is refused. With `judge_edits` off an edit and a stop are left alone entirely. With it on, an agent's edits are gathered for `judge_edit_window` seconds, the first one starting a background run that judges them together and writes what it finds to the queue the journal drains at the agent's next hook. A journal that gives the plugin no folder of its own drains no queue, and then every event is answered in full, as before a queue existed.").
+		Option("--"+judgeEventOption+"=FILE", "judge the event kept in FILE, then remove it: the run the plugin's script (.journal-plugin/hook.py) queues through `journal plugin run --kind judge`").
+		Note("Nothing is judged on the way out, and nothing is refused. The plugin's script (.journal-plugin/hook.py) decides which events are judged later, gathers an agent's edits and queues the run that judges them; this program answers each event in its own fields, which the script puts in the journal's words, and leaves what a later judging finds in the plugin's told folder for the script to queue. A journal that gives the plugin no folder of its own drains no queue, and then every event is answered in full.").
 		In(help.Hooks)
 }
 

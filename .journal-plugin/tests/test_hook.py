@@ -55,6 +55,11 @@ class TheHookJudgesLaterOnlyWhatTheSettingsAsk(unittest.TestCase):
             self.assertTrue(hook.judged_later({**edited(judge_edits=True), "event": event}), event)
         self.assertFalse(hook.judged_later({**edited(judge_edits=True), "event": "session_started"}))
 
+    def test_the_role_is_read_as_the_binary_reads_it(self) -> None:
+        for event in ({"role": " Worker "}, {"data": {"role": "worker"}}, {"role": "", "data": {"role": "HELPER"}}):
+            self.assertIn(hook.role_of(event), hook.WORKER_ROLES, event)
+        self.assertEqual(hook.role_of({}), "")
+
     def test_a_workers_edits_need_worker_judging_too(self) -> None:
         for chosen in ({"judge_edits": True, "judge_workers": False, "judge_worker_edits": True},
                        {"judge_edits": True, "judge_workers": True, "judge_worker_edits": False}):

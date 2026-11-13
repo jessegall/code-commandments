@@ -163,7 +163,13 @@ def judged_later(event: dict) -> bool:
     chosen = settings_of(event)
     if not switched_on(chosen.get(LIVE_EDITS)):
         return False
-    return event.get("role") not in WORKER_ROLES or workers_chose(chosen, WORKER_EDITS)
+    return role_of(event) not in WORKER_ROLES or workers_chose(chosen, WORKER_EDITS)
+
+
+def role_of(event: dict) -> str:
+    """The agent's role as the binary reads it: the event's own, else its data's, trimmed and in lower case."""
+    data = event.get("data") if isinstance(event.get("data"), dict) else {}
+    return str(event.get("role") or data.get("role") or "").strip().lower()
 
 
 def workers_chose(chosen: dict, key: str) -> bool:
