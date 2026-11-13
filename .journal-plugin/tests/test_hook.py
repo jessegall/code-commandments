@@ -200,6 +200,10 @@ class TheBinarysAnswerIsShapedForTheJournal(unittest.TestCase):
         ):
             self.assertEqual(hook.shaped(fields), want)
 
+    def test_an_answer_an_older_binary_already_shaped_passes_as_it_is(self) -> None:
+        older = {"v": 1, "answer": "refuse", "reason": "the shared branch takes no edits", "cards": [{"key": "sins:a.py", "kind": "sin-found"}]}
+        self.assertEqual(hook.shaped(older), older)
+
     def test_a_card_says_which_card_it_is_in_both_words(self) -> None:
         card = hook.shaped({"raises": [{"event": "configured", "key": "settings", "brief": "applied", "detail": "x"}]})["cards"][0]
         self.assertEqual(card, {"type": "configured", "kind": "configured", "key": "settings", "label": "applied", "detail": "x"})

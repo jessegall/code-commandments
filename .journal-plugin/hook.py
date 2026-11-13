@@ -66,7 +66,10 @@ def card(raised: dict) -> dict:
 
 def shaped(fields: dict) -> dict:
     """The binary's answer in the journal's words: refuse with a reason, or tell, with cards, required skills and how
-    long the judging took."""
+    long the judging took. An answer already in the journal's words comes from a binary older than this script, the
+    one a failed fetch left behind, and passes as it is."""
+    if "v" in fields:
+        return fields
     answer: dict = {"v": 1}
     refuse, whisper = fields.get("refuse"), fields.get("whisper")
     if refuse is not None and whisper is not None and refuse != whisper:
