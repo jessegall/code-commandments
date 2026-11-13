@@ -19,13 +19,17 @@ BINARY = PLUGIN / "bin" / "commandments-release"
 
 JUDGED_LATER = {"command_starting", "file_edited", "ticked", "idle"}
 HANDED_IN = {"worker_delivering", "suites.coding.workers.worker_delivering"}
+MERGED = {"worker_worktree.merge", "suites.coding.workers.worker_worktree.merge"}
 EDITED = "file_edited"
 WORKER_ROLES = {"worker", "helper", "medior", "senior", "builder"}
 
 LIVE_EDITS, WORKERS, WORKER_EDITS = "judge_edits", "judge_workers", "judge_worker_edits"
 HAND_INS, HAND_INS_AFTER = "judge_hand_ins", "judge_hand_ins_after"
+# The guards that hold a step on a judging, each with the setting that asks for it.
+GUARDED = {"worker_delivering": HAND_INS, "suites.coding.workers.worker_delivering": HAND_INS,
+           "suites.coding.workers.merge_request.created": "judge_before_merge"}
 EVENTS, WINDOWS, TOLD, QUEUE = "events", "windows", "told", "queue"
-JUDGE_EVENT = "--judge-event="
+JUDGE_EVENT, JUDGE_GUARD = "--judge-event=", "--judge-guard="
 FAULTS = "hook-faults.log"
 TAKING_AT_MOST = 60
 NEW_CARD_EACH_TIME = {"sin-found", "sin-resolved"}
@@ -183,6 +187,11 @@ def judged_after_the_hand_in(event: dict) -> bool:
     return event.get("event") in HANDED_IN and workers_chose(chosen, HAND_INS_AFTER) and not workers_chose(chosen, HAND_INS)
 
 
+def judged_after_the_merge(event: dict) -> bool:
+    """A worker's merge that landed, judged after with merge judging chosen: what it brought in is told later."""
+    return event.get("event") in MERGED and workers_chose(settings_of(event), "judge_merges")
+
+
 HELPERS_CLI, HELPERS_CLI_TITLE = "workers_cli", "Helpers may run the commandments CLI"
 CLI_PROGRAMS = {"commandments", "commandments-go", "commandments-release"}
 CLI_ALIASES = {"journal commandments", "journal sins", "journal commandments-judge-changes", "journal rules"}
@@ -293,6 +302,37 @@ class EditWindow:
             self.path(".open").unlink(missing_ok=True)
 
 
+def guard_queued(event: dict, line: bytes) -> dict | None:
+    """A guard's answer when its judging is chosen: the journal queues the run that judges the step and holds the step
+    on it, with no time limit, so the judging is never cut short."""
+    key, data = GUARDED.get(event.get("event")), os.environ.get("JOURNAL_PLUGIN_DATA", "")
+    if not key or not data or not workers_chose(settings_of(event), key):
+        return None
+    kept = kept_event(Path(data), json.dumps({**json.loads(line), "window_ms": None}).encode())
+    return {"v": 1, "answer": "queue", "run": {"kind": "judge", "command": [str(PLUGIN / ".journal-plugin" / "hook"), f"{JUDGE_GUARD}{kept}"]}}
+
+
+def guard_judged(event: str, binary: Path = BINARY) -> int:
+    """The queued run a guard holds its step on: it passes with nothing found, and refuses with the reason printed."""
+    kept = Path(event)
+    try:
+        line = kept.read_bytes()
+    except OSError:
+        return 0
+    kept.unlink(missing_ok=True)
+    try:
+        said = json.loads(answered(line, binary)[0])
+    except OSError:
+        print("Code Commandments could not start its checker, so this step was not judged.")
+        return 0
+    if said.get("answer") == "refuse":
+        print(said.get("reason", ""))
+        return 1
+    if said.get("tell"):
+        print(said["tell"])
+    return 0
+
+
 def kept_event(data: Path, line: bytes) -> Path:
     folder = data / EVENTS
     folder.mkdir(parents=True, exist_ok=True)
@@ -365,6 +405,9 @@ def main() -> int:
     judging = [argument[len(JUDGE_EVENT):] for argument in sys.argv[1:] if argument.startswith(JUDGE_EVENT)]
     if judging:
         return judged(judging[0])
+    guarding = [argument[len(JUDGE_GUARD):] for argument in sys.argv[1:] if argument.startswith(JUDGE_GUARD)]
+    if guarding:
+        return guard_judged(guarding[0])
     line = sys.stdin.buffer.read()
     try:
         event = json.loads(line)
@@ -381,7 +424,11 @@ def main() -> int:
         afterwards(lambda: judge_later(line))
         afterwards(lambda: delivered(Path(data)))
         return 0
-    if isinstance(event, dict) and judged_after_the_hand_in(event):
+    guard = guard_queued(event, line) if isinstance(event, dict) else None
+    if guard:
+        sys.stdout.write(json.dumps(guard) + "\n")
+        return 0
+    if isinstance(event, dict) and (judged_after_the_hand_in(event) or judged_after_the_merge(event)):
         sys.stdout.write(json.dumps(shaped({})) + "\n")
         queued(line, event.get("agent") if isinstance(event.get("agent"), int) else 0)
         return 0

@@ -228,14 +228,25 @@ func judgeTheEventIn(path string, console cli.Console) {
 		return
 	}
 
-	if namedAsTheKey(asText(line["event"])) != deliveringEvent {
+	switch namedAsTheKey(asText(line["event"])) {
+	case landedEvent:
+		tellsOfTheMerge(line)
+	case deliveringEvent:
+		defer rememberedAround(servedRoot(), console.Warn)()
+		mergeOf(line).judgesAfterwards()
+	default:
 		Judge4Into(line, os.Getenv(pluginData))
+	}
+}
 
+func tellsOfTheMerge(line map[string]any) {
+	said := landedSaid(line)
+	queue, queued := Queue4In(os.Getenv(pluginData))
+	if said == "" || !queued {
 		return
 	}
 
-	defer rememberedAround(servedRoot(), console.Warn)()
-	mergeOf(line).judgesAfterwards()
+	_ = queue.Tell(JournalAnswer{Whisper: &said}, asText(line["environment"]), asAgent(line["agent"]))
 }
 
 func Answer4Of(line map[string]any) string {

@@ -3,19 +3,16 @@ package hooks
 import (
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/jessegall/code-commandments/cli/workspace"
 )
 
 func TestAGateWithNoAgentToTellKeepsItsWordsWhereAPersonReadsThem(t *testing.T) {
-	root, _ := workerProject(t)
+	root, _, _ := projectWithASin(t)
 
 	said := workHeld(map[string]any{
 		"event": deliveringEvent,
-		"data": map[string]any{
-			"worktree": root, "name": "worker 7", "window_ms": float64(time.Nanosecond / time.Millisecond),
-		},
+		"data":  map[string]any{"worktree": root, "name": "worker 7", "files": []any{"src/refund.py"}},
 	})
 
 	if said == "" {

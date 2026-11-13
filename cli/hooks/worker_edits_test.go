@@ -51,14 +51,14 @@ func handInWithAnEditAndAMergedFile(t *testing.T, named ...string) (merging, str
 
 	return merging{
 		worker: "worker 730", editor: 730, worktree: worktree, base: "main",
-		files: named, window: DeclaredWindow,
+		files: named,
 	}, data
 }
 
 func TestAHandInAnswersOnlyForTheFilesItsOwnEditsNamed(t *testing.T) {
 	work, data := handInWithAnEditAndAMergedFile(t)
 
-	found := work.sinsWithin()
+	found := work.sins()
 
 	if found.got != gotWhole {
 		t.Fatalf("the hand-in was not answered from the held tree: %s", found.reason())
@@ -74,7 +74,7 @@ func TestAHandInAnswersOnlyForTheFilesItsOwnEditsNamed(t *testing.T) {
 func TestAHandInJudgesTheFilesItNamesBeforeTheEditsItTracked(t *testing.T) {
 	work, _ := handInWithAnEditAndAMergedFile(t, "src/merged_in.py")
 
-	found := work.sinsWithin()
+	found := work.sins()
 
 	if found.got != gotWhole {
 		t.Fatalf("the hand-in was not answered from the held tree: %s", found.reason())
@@ -89,7 +89,7 @@ func TestAHandInThatPassesClearsTheWorkersEdits(t *testing.T) {
 
 	wroteInto(t, filepath.Join(work.worktree, "src", "mine.py"), "LIMIT = 2\n")
 
-	if found := work.sinsWithin(); len(found.marks) != 0 {
+	if found := work.sins(); len(found.marks) != 0 {
 		t.Fatalf("a clean edit is reported: %v", found.marks)
 	}
 	if said := WorkerEditsIn(data).Of(730); len(said) != 0 {

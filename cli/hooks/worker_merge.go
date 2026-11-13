@@ -1,7 +1,6 @@
 package hooks
 
 import (
-	"encoding/json"
 	"maps"
 	"os"
 	"slices"
@@ -26,12 +25,6 @@ const (
 	deliveringEvent = "worker_delivering"
 	mergeEvent      = "worker_merging"
 	mergedEvent     = "worker_merge_result"
-)
-
-const (
-	wholeTreeWindow    = time.Minute
-	changedFilesWindow = 5 * time.Second
-	DeclaredWindow     = 180 * time.Second
 )
 
 func MergeHeld(line map[string]any) string {
@@ -92,17 +85,12 @@ func (work merging) records(why Narrowed, sins int, waited string) {
 }
 
 func (work merging) waited(since time.Time) string {
-	limit := "no limit"
-	if !work.unlimited {
-		limit = "a window of " + strconv.FormatInt(work.window.Milliseconds(), 10) + "ms"
-	}
-
-	return "waited " + strconv.FormatInt(time.Since(since).Milliseconds(), 10) + "ms of " + limit
+	return "waited " + strconv.FormatInt(time.Since(since).Milliseconds(), 10) + "ms"
 }
 
 func (work merging) answered() string {
 	began := time.Now()
-	found := work.sinsWithin()
+	found := work.sins()
 
 	work.records(found.reason(), len(found.marks), work.waited(began))
 
@@ -146,62 +134,14 @@ func (h handIn) reason() Narrowed {
 type gotTo string
 
 const (
-	gotNowhere gotTo = "nothing of this hand-in was judged: the time the journal allows ran out before even the files it changed could be read"
-	gotPartly  gotTo = "only the files this hand-in changed were judged, and the rules that read across files were not asked, because the time the journal allows ran out"
-	gotWhole   gotTo = ""
+	gotWhole gotTo = ""
 
 	withoutTheTree gotTo = "only the rules that answer from one file were asked about the files this hand-in changed, because no tree of this project is held to answer the rest from, and the project is never read whole to make up for it"
 )
 
-const (
-	judgedLate        Narrowed = "judged after the journal stopped waiting"
-	judgedAfterHandIn Narrowed = "judged after the hand-in went through"
-)
-
-func (m merging) sinsWithin() handIn {
-	within := time.After(m.deadline())
-
-	shallow := make(chan []SinMark, 1)
-	go func() { shallow <- m.shallowly() }()
-
-	var held []SinMark
-
-	select {
-	case marks := <-shallow:
-		held = marks
-	case <-within:
-		go m.tellsLater(shallow)
-
-		return handIn{got: gotNowhere}
-	}
-
-	answered := make(chan handIn, 1)
-	go func() { answered <- m.sins() }()
-
-	select {
-	case found := <-answered:
-		return found
-	case <-within:
-		later := make(chan []SinMark, 1)
-		go func() { later <- (<-answered).marks }()
-		go m.tellsLater(later)
-
-		return handIn{marks: held, got: gotPartly}
-	}
-}
-
-func (m merging) tellsLater(answered chan []SinMark) {
-	marks, came := <-answered
-	if !came {
-		return
-	}
-
-	m.tells(marks, judgedLate, " (judged after the journal stopped waiting)")
-}
+const judgedAfterHandIn Narrowed = "judged after the hand-in went through"
 
 func (m merging) judgesAfterwards() {
-	m.unlimited = true
-
 	m.tells(m.sins().marks, judgedAfterHandIn, " (judged after the hand-in went through)")
 }
 
@@ -224,67 +164,30 @@ func (m merging) tells(marks []SinMark, why Narrowed, about string) {
 	_ = queue.Tell(JournalAnswer{Whisper: &said}, m.env, m.agent)
 }
 
-func (m merging) shallowly() []SinMark {
-	if m.worktree == "" {
-		return nil
-	}
-
-	project, err := config.Load(m.worktree)
-	if err != nil {
-		return nil
-	}
-
-	rules, err := project.Enabled(config.InstalledIn(m.worktree))
-	if err != nil {
-		return nil
-	}
-
-	rules = append(rules, custom.InForce(m.worktree).Enabled(project)...)
-	m.since = git.MergeBase(m.worktree, m.cutFrom())
-
-	return m.shallow(project.Judging(rules), rules)
-}
-
-func (m merging) deadline() time.Duration {
-	if m.unlimited {
-		return noDeadline
-	}
-
-	return m.window - max(m.window/10, 200*time.Millisecond)
-}
-
-const noDeadline = time.Hour
-
 // merging is a worker's merge as the event describes it: who it is, where its work stands, what its branch was cut from, the files it names, and how long the journal waits for this answer.
 type merging struct {
-	worker    string
-	worktree  string
-	base      string
-	files     []string
-	window    time.Duration
-	unlimited bool
-	role      string
-	env       string
-	agent     int
-	editor    int
-	since     string
+	worker   string
+	worktree string
+	base     string
+	files    []string
+	role     string
+	env      string
+	agent    int
+	editor   int
+	since    string
 }
 
 func mergeOf(line map[string]any) merging {
 	fields := eventFields(line)
-	window, limited := windowIn(fields)
-
 	return merging{
-		worker:    worker4Of(fields),
-		worktree:  asText(fields["worktree"]),
-		base:      asText(fields["base"]),
-		files:     namedFiles(fields["files"]),
-		window:    window,
-		unlimited: !limited,
-		role:      roleIn(fields),
-		env:       asText(firstOf(line["environment"], fields["environment"])),
-		agent:     asAgent(firstOf(line["agent"], fields["agent"])),
-		editor:    asAgent(fields["worker"]),
+		worker:   worker4Of(fields),
+		worktree: asText(fields["worktree"]),
+		base:     asText(fields["base"]),
+		files:    namedFiles(fields["files"]),
+		role:     roleIn(fields),
+		env:      asText(firstOf(line["environment"], fields["environment"])),
+		agent:    asAgent(firstOf(line["agent"], fields["agent"])),
+		editor:   asAgent(fields["worker"]),
 	}
 }
 
@@ -306,42 +209,6 @@ var workerRoles = map[string]bool{
 
 func roleIn(fields map[string]any) string {
 	return strings.ToLower(strings.TrimSpace(asText(firstOf(fields["role"], fields["agent_role"]))))
-}
-
-func windowIn(fields map[string]any) (time.Duration, bool) {
-	named, given := fields["window_ms"]
-	if !given {
-		return DeclaredWindow, true
-	}
-
-	if named == nil {
-		return 0, false
-	}
-
-	if window, read := milliseconds4Of(named); read {
-		return window, true
-	}
-
-	return DeclaredWindow, true
-}
-
-func milliseconds4Of(named any) (time.Duration, bool) {
-	switch window := named.(type) {
-	case float64:
-		return time.Duration(window) * time.Millisecond, true
-	case int:
-		return time.Duration(window) * time.Millisecond, true
-	case json.Number:
-		if read, err := window.Int64(); err == nil {
-			return time.Duration(read) * time.Millisecond, true
-		}
-	case string:
-		if read, err := strconv.ParseInt(strings.TrimSpace(window), 10, 64); err == nil {
-			return time.Duration(read) * time.Millisecond, true
-		}
-	}
-
-	return 0, false
 }
 
 func eventFields(line map[string]any) map[string]any {
@@ -391,10 +258,6 @@ func (m merging) sins() handIn {
 	}
 	rules = append(rules, custom.InForce(m.worktree).Enabled(project)...)
 	project = project.Judging(rules)
-
-	if !m.unlimited && m.window < changedFilesWindow {
-		return handIn{got: gotWhole}
-	}
 
 	m.since = git.MergeBase(m.worktree, m.cutFrom())
 	judged := m.deep(project, rules)

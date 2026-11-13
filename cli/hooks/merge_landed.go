@@ -64,6 +64,16 @@ func firstText(said ...string) string {
 }
 
 func MergeLanded(line map[string]any) string {
+	said := landedSaid(line)
+	if said == "" {
+		return ""
+	}
+
+	return (JournalAnswer{Whisper: &said}).Line()
+}
+
+// landedSaid judges what a merge brought in and is what the main agent is told of it, nothing when there is nothing to tell.
+func landedSaid(line map[string]any) string {
 	work := landedOf(line)
 	if !mergesJudged(line) || work.project == "" || work.after == "" {
 		return ""
@@ -93,7 +103,7 @@ func MergeLanded(line map[string]any) string {
 
 		work.keeps(tooMany)
 
-		return (JournalAnswer{Whisper: &tooMany}).Line()
+		return tooMany
 	}
 
 	marks, narrowed := work.sinsBrought(from)
@@ -119,7 +129,7 @@ func MergeLanded(line map[string]any) string {
 
 	said = work.alsoToldTheAgent(said, sending, refusal)
 
-	return (JournalAnswer{Whisper: &said}).Line()
+	return said
 }
 
 func (l landed) alsoToldTheAgent(said string, sending Sending, refusal string) string {

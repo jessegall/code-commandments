@@ -8,10 +8,8 @@ import (
 	"slices"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/jessegall/code-commandments/cli/binary"
-	"github.com/jessegall/code-commandments/cli/hooks"
 )
 
 // pins is the little of a plugin manifest this gate reads: the version it declares and the release its first setup step fetches.
@@ -215,10 +213,6 @@ func TestNothingReachesAnAgentOtherThanTheMainOneOrAWorker(t *testing.T) {
 		for _, held := range read.Holds {
 			if held.Event != "worker_delivering" {
 				continue
-			}
-
-			if asked := time.Duration(held.WindowMs) * time.Millisecond; asked != hooks.DeclaredWindow {
-				t.Errorf("the manifest asks the journal to hold a delivery for %s and the code judges in %s", asked, hooks.DeclaredWindow)
 			}
 
 			return

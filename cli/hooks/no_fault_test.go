@@ -5,7 +5,6 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/jessegall/code-commandments/cli/git"
 )
@@ -60,22 +59,6 @@ func TestNothingTheCommitFormsAnswerIsAFault(t *testing.T) {
 
 		if strings.Contains(told.said, "\n") {
 			t.Errorf("%s answered with more than one line, and a script prints one: %q", told.what, told.said)
-		}
-	}
-}
-
-func TestTheGateAnswersWithinItsWindowHoweverItEnds(t *testing.T) {
-	root, _ := workerProject(t)
-
-	for _, window := range []time.Duration{time.Nanosecond, time.Millisecond, 50 * time.Millisecond} {
-		found := merging{worker: "worker 7", worktree: root, window: window}.sinsWithin()
-
-		if found.got == gotWhole && len(found.marks) == 0 {
-			continue
-		}
-
-		if found.got != gotWhole && found.got != gotNowhere && found.got != gotPartly {
-			t.Errorf("a window of %s ended as %q, which is none of the three endings", window, found.got)
 		}
 	}
 }

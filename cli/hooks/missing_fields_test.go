@@ -102,10 +102,6 @@ func TestAMergeWhoseCommitsAreEmptyIsAnsweredWithoutJudgingNothing(t *testing.T)
 		t.Errorf("a merge that names no files reads %d of them", len(work.files))
 	}
 
-	if window, limited := windowIn(map[string]any{"window_ms": nil}); limited || window != 0 {
-		t.Errorf("a null window reads as %s limited=%v", window, limited)
-	}
-
 	if said := workHeld(map[string]any{"event": "worker_merging", "data": map[string]any{
 		"worktree": root, "role": "main", "commit_before_merge": "", "commit_after_merge": "",
 	}}); strings.Contains(said, "refuse") {

@@ -7,7 +7,6 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
-	"time"
 )
 
 func mergingOf(worktree string, window int, files ...string) map[string]any {
@@ -98,28 +97,6 @@ func TestACleanBranchMergesUnheld(t *testing.T) {
 	}
 }
 
-func TestAWindowTooSmallToJudgeInJudgesNothingAndSaysSo(t *testing.T) {
-	root, _, _ := projectWithASin(t)
-
-	for name, window := range map[string]int{"a window the journal does not name": 0, "the 50 ms a journal holds by default": 50} {
-		t.Run(name, func(t *testing.T) {
-			held := MergeHeld(mergingOf(root, window, "src/refund.py"))
-
-			if held == "" {
-				t.Error("a merge the journal gave no time to judge was answered with silence, which it reads as no objection")
-			}
-
-			if strings.Contains(held, "src/refund.py") {
-				t.Errorf("a merge the journal gave no time to judge named a sin anyway, so something was judged in no time at all: %s", held)
-			}
-
-			if !strings.Contains(held, "was not judged in full") {
-				t.Errorf("it does not say that nothing was judged: %s", held)
-			}
-		})
-	}
-}
-
 func TestAShallowWindowStillJudgesTheChangedFiles(t *testing.T) {
 	root, _, _ := projectWithASin(t)
 
@@ -200,22 +177,6 @@ func wrote(t *testing.T, root string, files map[string]string) {
 	}
 }
 
-func TestTheJudgeIsGivenLessThanTheWholeWindow(t *testing.T) {
-	for window, want := range map[time.Duration]time.Duration{
-		180 * time.Second: 162 * time.Second,
-		10 * time.Second:  9 * time.Second,
-		time.Second:       800 * time.Millisecond,
-	} {
-		if given := (merging{window: window}).deadline(); given != want {
-			t.Errorf("a window of %s gives the judge %s, want %s", window, given, want)
-		}
-	}
-
-	if given := (merging{}).deadline(); given > 0 {
-		t.Errorf("a window the journal never named gives the judge %s, and there is nothing to judge in it", given)
-	}
-}
-
 func deliveringOf(worktree string, window int, files ...string) map[string]any {
 	held := mergingOf(worktree, window, files...)
 	held["event"] = "worker_delivering"
@@ -287,43 +248,6 @@ func TestAWorkersEditIsJudgedInItsOwnWorktree(t *testing.T) {
 	agent, _ := moment["agent"].(map[string]any)
 	if asText(agent["cwd"]) != worktree {
 		t.Errorf("the edit is judged in %q, not in the worktree the file sits in", asText(agent["cwd"]))
-	}
-}
-
-func TestAGateThatRunsOutOfTimeAnswersWithWhatItDidFind(t *testing.T) {
-	root, _, _ := projectWithASin(t)
-
-	held := MergeHeld(mergingOf(root, int(wholeTreeWindow/time.Millisecond)+1, "src/refund.py"))
-
-	if held == "" {
-		t.Error("a gate whose deep judging cannot fit its window answered with nothing, which reads exactly as " +
-			"clean: the worker's work goes through unjudged and nobody is told the judging did not finish")
-	}
-}
-
-func TestAGateThatRunsOutOfTimeAnswersWithWhatItFound(t *testing.T) {
-	root, _, _ := projectWithASin(t)
-
-	held := MergeHeld(mergingOf(root, int(wholeTreeWindow/time.Millisecond), "src/refund.py"))
-
-	if held == "" {
-		t.Error("a gate whose deep judging cannot fit its window answered with nothing, which reads exactly as " +
-			"clean: the worker's work goes through unjudged and nobody is told the judging did not finish")
-	}
-
-	said := MergeHeld(mergingOf(root, 50, "src/refund.py"))
-
-	if said == "" {
-		t.Error("a gate given 50ms answered with nothing, and silence is what the journal reads as no objection: " +
-			"there is no honest judging in that time, so the honest answer is to say so")
-	}
-
-	if !strings.Contains(said, "was not judged in full") {
-		t.Errorf("a gate given 50ms does not say that it could not judge: %s", said)
-	}
-
-	if strings.Contains(said, `"refuse"`) {
-		t.Errorf("a gate given 50ms refused the hand-in, and a refusal from this form is a fault: %s", said)
 	}
 }
 

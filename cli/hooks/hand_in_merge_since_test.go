@@ -35,7 +35,7 @@ func TestAHandInMeasuredFromBeforeAMergeCountsTheMergesLinesAndFromTheMergeDoesN
 	}
 	settings = settings.Judging(rules)
 
-	work := merging{worker: "worker 12", worktree: worktree, base: "trunk", files: []string{"src/merged.py"}, unlimited: true}
+	work := merging{worker: "worker 12", worktree: worktree, base: "trunk", files: []string{"src/merged.py"}}
 
 	work.since = before
 	if stale := work.shallow(settings, rules); len(stale) == 0 {

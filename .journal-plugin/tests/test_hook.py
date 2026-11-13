@@ -345,6 +345,37 @@ class ACommandAndAStopAreAnsweredWithoutTheBinary(unittest.TestCase):
                 self.assertEqual(json.loads(said.getvalue()), {"v": 1}, event)
 
 
+class AGuardHoldsItsStepOnAQueuedJudging(unittest.TestCase):
+    def test_a_chosen_guard_is_answered_with_a_run_and_keeps_its_event_without_a_window(self) -> None:
+        with tempfile.TemporaryDirectory() as folder, patched_environment(JOURNAL_PLUGIN_DATA=folder, JOURNAL_SETTINGS=""):
+            for name, key in (("suites.coding.workers.worker_delivering", "judge_hand_ins"),
+                              ("suites.coding.workers.merge_request.created", "judge_before_merge")):
+                event = {"event": name, "agent": 7, "window_ms": 30000, "settings": {"judge_workers": True, key: True}}
+                said = hook.guard_queued(event, json.dumps(event).encode())
+                self.assertEqual(said["answer"], "queue", name)
+                self.assertEqual(said["run"]["kind"], "judge", name)
+                kept = Path(said["run"]["command"][1][len(hook.JUDGE_GUARD):])
+                self.assertIsNone(json.loads(kept.read_text())["window_ms"], name)
+                self.assertIsNone(hook.guard_queued({**event, "settings": {"judge_workers": True}}, b"{}"), name)
+
+    def test_the_run_passes_on_nothing_found_and_refuses_with_the_reason(self) -> None:
+        with tempfile.TemporaryDirectory() as folder:
+            for printed, code in (("{}", 0), ('{\\"whisper\\":\\"allowed unjudged\\"}', 0), ('{\\"refuse\\":\\"one sin\\"}', 1)):
+                binary = stand_in(Path(folder), f'cat > /dev/null; echo "{printed}"')
+                kept = Path(folder) / "event.json"
+                kept.write_text("{}")
+                self.assertEqual(hook.guard_judged(str(kept), binary), code, printed)
+                self.assertFalse(kept.exists())
+
+
+class ALandedMergeIsJudgedAfter(unittest.TestCase):
+    def test_only_with_merge_judging_chosen(self) -> None:
+        merged = {"event": "suites.coding.workers.worker_worktree.merge"}
+        self.assertTrue(hook.judged_after_the_merge({**merged, "settings": {"judge_workers": True, "judge_merges": True}}))
+        self.assertFalse(hook.judged_after_the_merge({**merged, "settings": {"judge_workers": True}}))
+        self.assertFalse(hook.judged_after_the_merge({"event": "file_edited", "settings": {"judge_workers": True, "judge_merges": True}}))
+
+
 class patched_environment:
     def __init__(self, **named: str) -> None:
         self.named, self.kept = named, {}

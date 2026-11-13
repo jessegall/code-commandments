@@ -2,9 +2,7 @@ package hooks
 
 import (
 	"os"
-	"time"
 
-	"github.com/jessegall/code-commandments/cli/binary"
 	"github.com/jessegall/code-commandments/cli/git"
 )
 
@@ -21,7 +19,6 @@ type requested struct {
 	onto    string
 	folder  string
 	project string
-	window  time.Duration
 }
 
 func requestedOf(line map[string]any) requested {
@@ -37,8 +34,6 @@ func requestedOf(line map[string]any) requested {
 		project = os.Getenv(journalRoot)
 	}
 
-	window, _ := windowIn(fields)
-
 	return requested{
 		worker:  asText(firstOf(row["worker_id"], row["session_agent_id"])),
 		branch:  asText(row["branch"]),
@@ -47,7 +42,6 @@ func requestedOf(line map[string]any) requested {
 		onto:    asText(row["target_commit"]),
 		folder:  asText(row["folder"]),
 		project: project,
-		window:  window,
 	}
 }
 
@@ -58,24 +52,12 @@ func MergeRequested(line map[string]any) string {
 		return ""
 	}
 
-	marks, got := asked.sinsItWouldBringIn()
-
-	switch {
-	case got == gotNowhere:
-		return asked.allowedBecause("its range could not be read, so nothing of it was judged")
-	case len(marks) == 0 && got == gotWhole:
+	marks := asked.sinsItWouldBringIn()
+	if len(marks) == 0 {
 		return ""
-	case len(marks) == 0:
-		return asked.allowedBecause(string(got))
 	}
 
 	refusal := mergeReason(asked.worker, marks, asked.folder)
-
-	if got != gotWhole {
-		said := Unjudged("this is not the whole answer", string(got), binary.JudgingChanges(asked.folder))
-
-		return (JournalAnswer{Refuse: &refusal, Whisper: &said}).Line()
-	}
 
 	return (JournalAnswer{Refuse: &refusal}).Line()
 }
@@ -84,43 +66,16 @@ func (r requested) readable() bool {
 	return r.folder != "" && r.onto != "" && r.tip != "" && r.onto != r.tip
 }
 
-func (r requested) allowedBecause(why string) string {
-	said := Unjudged("the merge of "+orNothing(r.branch)+" into "+orNothing(r.target)+" was allowed unjudged",
-		why, binary.Judging(r.project)+" --branch="+r.target)
-
-	return (JournalAnswer{Whisper: &said}).Line()
-}
-
-func (r requested) sinsItWouldBringIn() ([]SinMark, gotTo) {
+func (r requested) sinsItWouldBringIn() []SinMark {
 	changed := git.ChangedBetween(r.folder, r.onto, r.tip)
 	if len(changed) == 0 {
-		return nil, gotWhole
+		return nil
 	}
 
-	found := make(chan []SinMark, 1)
+	marks, _ := marksBrought(r.folder, changed, r.onto, r.tip)
 
-	go func() {
-		marks, _ := marksBrought(r.folder, changed, r.onto, r.tip)
-		found <- marks
-	}()
-
-	select {
-	case marks := <-found:
-		return marks, gotWhole
-	case <-time.After(r.deadline()):
-		return nil, gotPartly
-	}
+	return marks
 }
-
-func (r requested) deadline() time.Duration {
-	if r.window <= 0 {
-		return mostAGuardTakes
-	}
-
-	return min(r.window-r.window/5, mostAGuardTakes)
-}
-
-const mostAGuardTakes = 20 * time.Second
 
 func mergesJudgedBeforeTheyLand(line map[string]any) bool {
 	chosen, _ := chosenOn(line)

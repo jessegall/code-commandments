@@ -89,33 +89,6 @@ func TestAMergeWithNoRangeToJudgeIsAllowed(t *testing.T) {
 	}
 }
 
-func TestAGuardRunningOutOfTimeAllowsTheMergeAndSaysSo(t *testing.T) {
-	root, before, after := mergedProject(t)
-
-	t.Setenv(journalSettings, `{"judge_workers": "true", "judge_before_merge": "true"}`)
-
-	asked := requestedOf(requestedLine(root, before, after))
-	asked.window = 1
-
-	marks, got := asked.sinsItWouldBringIn()
-
-	if got == gotWhole && len(marks) > 0 {
-		t.Skip("the judging finished inside a millisecond, so there is no running out of time to see")
-	}
-
-	said := guardAnswer(t, asked.allowedBecause(string(got)))
-
-	if said["whisper"] == nil {
-		t.Errorf("a guard out of time answered %v, where it must TELL and allow: a refusal would stop a merge it "+
-			"never judged, and being killed at the window is recorded as our plugin's fault, five of which switch "+
-			"it off", said)
-	}
-
-	if told, _ := said["whisper"].(string); !strings.Contains(told, "unjudged") {
-		t.Errorf("the allowance does not say the merge went unjudged: %q", told)
-	}
-}
-
 func TestTheGuardReadsBothEndsOfTheRangeAndTheWorktree(t *testing.T) {
 	root := t.TempDir()
 

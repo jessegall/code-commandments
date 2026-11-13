@@ -6,7 +6,6 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/jessegall/code-commandments/cli/config"
 )
@@ -22,21 +21,6 @@ func handInLog(t *testing.T, data string) string {
 	return string(said)
 }
 
-func TestAHandInWhoseTimeRanOutIsRecordedWithHowLongItWaited(t *testing.T) {
-	root, data := workerProject(t)
-	forgetBookkeeping(t)
-
-	work := merging{worker: "worker 7", worktree: root, window: time.Minute}
-	work.records(handIn{got: gotNowhere}.reason(), 0, work.waited(time.Now()))
-
-	said := handInLog(t, data)
-	for _, named := range []string{string(gotNowhere), "waited ", "a window of 60000ms"} {
-		if !strings.Contains(said, named) {
-			t.Errorf("the log does not say %q: %s", named, said)
-		}
-	}
-}
-
 func TestAHandInJudgedInPartIsNotRecordedAsNothingJudged(t *testing.T) {
 	root, data := workerProject(t)
 	forgetBookkeeping(t)
@@ -49,16 +33,13 @@ func TestAHandInJudgedInPartIsNotRecordedAsNothingJudged(t *testing.T) {
 			t.Errorf("the log does not say %q: %s", named, said)
 		}
 	}
-	if strings.Contains(said, string(gotNowhere)) {
-		t.Errorf("a hand-in judged in part is logged as judged not at all: %s", said)
-	}
 }
 
 func TestAHandInJudgedInFullIsRecorded(t *testing.T) {
 	root, data := workerProject(t)
 	forgetBookkeeping(t)
 
-	merging{worker: "worker 7", worktree: root, window: DeclaredWindow}.answered()
+	merging{worker: "worker 7", worktree: root}.answered()
 
 	said := handInLog(t, data)
 	for _, named := range []string{deliveringEvent, "tree=held", "waited "} {
@@ -93,7 +74,7 @@ func TestAHandInOnAHeldTreeReportsOnlyTheLinesItChanged(t *testing.T) {
 
 	warmFor(t, root, settings)
 
-	found := merging{worker: "worker 7", worktree: worktree, base: "main", files: []string{"src/older.py"}, window: DeclaredWindow}.sinsWithin()
+	found := merging{worker: "worker 7", worktree: worktree, base: "main", files: []string{"src/older.py"}}.sins()
 
 	if found.got != gotWhole {
 		t.Fatalf("the hand-in was not answered from the held tree: %s", found.reason())
@@ -180,7 +161,7 @@ func TestAHandInFromAHeldTreeLeavesOutASinTheProjectReported(t *testing.T) {
 
 	warmFor(t, root, settings)
 
-	found := merging{worker: "worker 7", worktree: worktree, base: "main", files: []string{"src/filed.py"}, window: DeclaredWindow}.sinsWithin()
+	found := merging{worker: "worker 7", worktree: worktree, base: "main", files: []string{"src/filed.py"}}.sins()
 
 	if found.got != gotWhole {
 		t.Fatalf("the hand-in was not answered from the held tree: %s", found.reason())
@@ -193,24 +174,9 @@ func TestAHandInFromAHeldTreeLeavesOutASinTheProjectReported(t *testing.T) {
 func TestAHandInWithNoTreeLeavesOutASinTheProjectReported(t *testing.T) {
 	_, worktree := worktreeWithASinTheProjectReported(t)
 
-	found := merging{worker: "worker 7", worktree: worktree, base: "main", files: []string{"src/filed.py"}, window: DeclaredWindow}.sinsWithin()
+	found := merging{worker: "worker 7", worktree: worktree, base: "main", files: []string{"src/filed.py"}}.sins()
 
 	if len(found.marks) != 0 {
 		t.Errorf("a sin the project has reported came back at the worker: %d mark(s), %s", len(found.marks), found.reason())
-	}
-}
-
-func TestALateJudgingIsRecordedEvenWhenItFoundNothing(t *testing.T) {
-	root, data := workerProject(t)
-	forgetBookkeeping(t)
-
-	answered := make(chan []SinMark, 1)
-	answered <- []SinMark{}
-	close(answered)
-
-	merging{worker: "worker 7", worktree: root, env: "main", agent: 7}.tellsLater(answered)
-
-	if said := handInLog(t, data); !strings.Contains(said, string(judgedLate)) {
-		t.Errorf("the late judging left no line: %s", said)
 	}
 }
