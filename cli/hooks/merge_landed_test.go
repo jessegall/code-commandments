@@ -216,3 +216,14 @@ func resetTo(t *testing.T, root, commit string) {
 		t.Fatalf("git reset: %s", out)
 	}
 }
+
+const sinOnLineFive = `def total(order) -> int:
+    return order.total
+
+
+def refund(order) -> int:
+    if order.late:
+        raise ValueError(order)
+    else:
+        return order.total
+`

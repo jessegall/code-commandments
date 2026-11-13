@@ -4,8 +4,6 @@ import (
 	"path/filepath"
 	"slices"
 	"testing"
-
-	"github.com/jessegall/code-commandments/cli/config"
 )
 
 const documentedMethod = "def total(order):\n    \"\"\"Says the total.\"\"\"\n    return 0\n"
@@ -39,13 +37,6 @@ func handInWithAnEditAndAMergedFile(t *testing.T, named ...string) (merging, str
 
 	wroteInto(t, filepath.Join(worktree, "src", "mine.py"), documentedMethod)
 	wroteInto(t, filepath.Join(worktree, "src", "merged_in.py"), documentedMethod)
-
-	settings, err := config.Load(root)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	warmFor(t, root, settings)
 
 	keepEditOf(workerEditEvent(730, "src/mine.py"))
 

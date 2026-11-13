@@ -78,6 +78,7 @@ func (work merging) answered() string {
 
 	if found.got == gotWhole {
 		refusal := mergeReason(work.worker, found.marks, work.worktree)
+		work.keeps(refusal)
 
 		return (JournalAnswer{Refuse: &refusal}).Line()
 	}

@@ -2,69 +2,9 @@ package hooks
 
 import (
 	"encoding/json"
-	"path/filepath"
 	"strings"
 	"testing"
-
-	"github.com/jessegall/code-commandments/cli/config"
-	"github.com/jessegall/code-commandments/cli/git"
-	"github.com/jessegall/code-commandments/cli/ledger"
-	"github.com/jessegall/code-commandments/cli/scan"
-	"github.com/jessegall/code-commandments/cli/source"
-	"github.com/jessegall/code-commandments/engine"
 )
-
-func TestAHandInIsJudgedFromTheHeldTreeAndReadsNoTree(t *testing.T) {
-	root, _ := workerProject(t)
-	worktree := filepath.Join(root, ".journal", "worktrees", "worker-1")
-
-	project := git.ProjectRoot(root)
-	branch := git.CurrentBranch(project)
-
-	settings, _ := config.Load(root)
-	codebase, err := scan.Walk([]string{filepath.Join(root, "src")}, source.Under(root, settings.Excluded)).Load()
-	if err != nil || codebase == nil {
-		t.Fatalf("the python bridge cannot run here: %v", err)
-	}
-
-	kept.Hold(project, branch, []string{root}, codebase, nil)
-	t.Cleanup(func() { kept.Drop(project, branch) })
-
-	costs := ledger.Of(project)
-	readsBefore := costs.Count(ledger.TreeReadsStarted)
-	workBefore := engine.Counted()
-
-	held := DeliveryHeld(deliveringOf(worktree, "src/order.py"))
-
-	if parsed := engine.Since(workBefore).Parsed; parsed > 1 {
-		t.Errorf("judging a hand-in of one changed file parsed %d files, where the held tree answers for every "+
-			"file the worker did not change", parsed)
-	}
-
-	var fields map[string]any
-	if err := json.Unmarshal([]byte(held), &fields); err != nil {
-		t.Fatalf("the hand-in was answered %q: %v", held, err)
-	}
-	answer := fields
-
-	if answer["refuse"] == nil {
-		t.Errorf("a hand-in carrying a sin was answered %v, where it must go back to the worker", answer)
-	}
-
-	reason := asText(answer["refuse"])
-	if !strings.Contains(reason, "documented-anywhere") || !strings.Contains(reason, "order.py") {
-		t.Errorf("the refusal reads %q, naming neither the sin nor the file the worker wrote it in", reason)
-	}
-
-	if note := asText(answer["whisper"]); strings.Contains(note, "not judged in full") {
-		t.Errorf("with the tree held, the hand-in still says it was not judged in full: %q", note)
-	}
-
-	if reads := costs.Count(ledger.TreeReadsStarted) - readsBefore; reads != 0 {
-		t.Errorf("judging a hand-in started %d reads of the whole tree, where the tree already held answers it; "+
-			"that read is what made the old hand-in gate take minutes", reads)
-	}
-}
 
 // A hand-in is judged whole, every rule asked, with no tree held: the checkout is read through the one cache.
 func TestAHandInIsJudgedWholeWithNoTreeHeld(t *testing.T) {

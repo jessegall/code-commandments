@@ -21,7 +21,6 @@ import (
 
 	"github.com/jessegall/code-commandments/bridge"
 	"github.com/jessegall/code-commandments/cli"
-	"github.com/jessegall/code-commandments/cli/git"
 	"github.com/jessegall/code-commandments/cli/judge"
 	"github.com/jessegall/code-commandments/cli/scan"
 	"github.com/jessegall/code-commandments/cli/source"
@@ -588,17 +587,6 @@ func stressNamedIn(said string) []string {
 
 var plainly = regexp.MustCompile("\x1b\\[[0-9;]*m")
 
-func (c *stressCheckout) holding() (string, bool) {
-	project := git.ProjectRoot(c.Project)
-	branch := git.CurrentBranch(project)
-
-	if _, held := kept.Holds(project, branch); held {
-		return branch, true
-	}
-
-	return branch, ReadingNow(project)
-}
-
 func (c *stressCheckout) commits(t *testing.T) {
 	c.runs(t, []string{"-c", "user.email=t@t", "-c", "user.name=t", "add", "-A"})
 	c.runs(t, []string{"-c", "user.email=t@t", "-c", "user.name=t", "commit", "-q", "--allow-empty", "-m", "work"})
@@ -799,16 +787,6 @@ class Mine%dAt%d(RebuildKind):
 var toldPaths = regexp.MustCompile(`(?:^|\s)([\w./-]+\.py):(\d+)`)
 
 var cardPaths = regexp.MustCompile(`([\w./-]+\.py)`)
-
-func stressMemorySaid(checkouts int) string {
-	highest := MemoryHighest()
-	now := MemoryNow()
-
-	return fmt.Sprintf("the most memory this run held, over %d checkouts at once: %s. It stands at %s now. "+
-		"The service holds %d node(s) in %d lane(s) and %d base(s). A watermark is a count of bytes, not a clock, "+
-		"so it is read as a figure of THIS machine and this tree rather than asserted.",
-		checkouts, highest.Line(), now.Line(), kept.NodesHeld(), kept.Contents().Count(), kept.Held())
-}
 
 var answers struct {
 	sync.Mutex

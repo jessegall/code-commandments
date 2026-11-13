@@ -6,8 +6,6 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
-
-	"github.com/jessegall/code-commandments/cli/config"
 )
 
 func handInLog(t *testing.T, data string) string {
@@ -52,13 +50,6 @@ func TestAHandInOnAHeldTreeReportsOnlyTheLinesItChanged(t *testing.T) {
 
 	wroteInto(t, filepath.Join(worktree, "src", "older.py"), strings.Replace(older, "LIMIT = 1", "LIMIT = 2", 1)+
 		"\n\ndef weight(order):\n    \"\"\"Says the weight.\"\"\"\n    return 0\n")
-
-	settings, err := config.Load(root)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	warmFor(t, root, settings)
 
 	found := merging{worker: "worker 7", worktree: worktree, base: "main", files: []string{"src/older.py"}}.sins()
 
@@ -137,15 +128,8 @@ func worktreeWithASinTheProjectReported(t *testing.T) (root, worktree string) {
 	return root, worktree
 }
 
-func TestAHandInFromAHeldTreeLeavesOutASinTheProjectReported(t *testing.T) {
-	root, worktree := worktreeWithASinTheProjectReported(t)
-
-	settings, err := config.Load(root)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	warmFor(t, root, settings)
+func TestAHandInJudgedWholeLeavesOutASinTheProjectReported(t *testing.T) {
+	_, worktree := worktreeWithASinTheProjectReported(t)
 
 	found := merging{worker: "worker 7", worktree: worktree, base: "main", files: []string{"src/filed.py"}}.sins()
 

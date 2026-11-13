@@ -1,11 +1,12 @@
 package hooks
 
 import (
-	"github.com/jessegall/code-commandments/cli/binary"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
+
+	"github.com/jessegall/code-commandments/cli/binary"
 
 	"github.com/jessegall/code-commandments/cli/checklist"
 	"github.com/jessegall/code-commandments/cli/git"

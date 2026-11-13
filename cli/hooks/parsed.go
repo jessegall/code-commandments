@@ -6,11 +6,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/jessegall/code-commandments/cli/config"
 	"github.com/jessegall/code-commandments/cli/git"
 	"github.com/jessegall/code-commandments/cli/scan"
 	"github.com/jessegall/code-commandments/cli/source"
-	"github.com/jessegall/code-commandments/cli/workspace"
 	"github.com/jessegall/code-commandments/contract"
 	"github.com/jessegall/code-commandments/walk"
 )
@@ -63,41 +61,6 @@ func readTogether(files []string) ([]*contract.Stream, error) {
 	}
 
 	return codebase.Streams(), nil
-}
-
-func expecting(given map[string]any) {
-	if !serving.Load() || !parsed.ahead {
-		return
-	}
-
-	moment := MomentOf(given)
-	if moment.File == nil || !liveEditsJudgedAt(moment) {
-		return
-	}
-
-	root := workspace.ProjectRoot(moment.Cwd)
-
-	project, err := config.Load(projectOf(root))
-	if err != nil {
-		return
-	}
-
-	if file := judgedFile(root, *moment.File, project); file != "" {
-		parsed.expect(file)
-	}
-}
-
-func (p *parsing) expect(file string) {
-	p.mu.Lock()
-	if !slices.Contains(p.waiting, file) {
-		p.waiting = append(p.waiting, file)
-	}
-	p.mu.Unlock()
-
-	select {
-	case p.wake <- struct{}{}:
-	default:
-	}
 }
 
 func (p *parsing) work() {
@@ -210,33 +173,3 @@ func (p *parsing) leaves(checkout string) {
 }
 
 const Coming = time.Minute
-
-func (p *parsing) streamsOf(file string) ([]*contract.Stream, bool) {
-	for until := time.Now().Add(Coming); ; {
-		p.mu.Lock()
-
-		if held, known := p.held[file]; known {
-			delete(p.held, file)
-			p.mu.Unlock()
-
-			if held.mark != walk.Mark(file) {
-				return nil, false
-			}
-
-			return []*contract.Stream{held.stream}, true
-		}
-
-		coming := p.asking[file] || slices.Contains(p.waiting, file)
-		filled := p.filled
-		p.mu.Unlock()
-
-		if !coming || !time.Now().Before(until) {
-			return nil, false
-		}
-
-		select {
-		case <-filled:
-		case <-time.After(time.Until(until)):
-		}
-	}
-}

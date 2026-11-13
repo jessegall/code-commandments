@@ -6,7 +6,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/jessegall/code-commandments/cli/config"
 	"github.com/jessegall/code-commandments/cli/git"
 )
 
@@ -33,13 +32,6 @@ func crossFileProject(t *testing.T) (root, before string) {
 	}
 
 	commitIn(t, root, "a project with a rule that reads across files")
-
-	settings, err := config.Load(root)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	warmFor(t, root, settings)
 
 	return root, git.Head(root)
 }

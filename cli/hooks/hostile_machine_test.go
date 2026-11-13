@@ -6,7 +6,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/jessegall/code-commandments/cli/config"
 	"github.com/jessegall/code-commandments/cli/git"
 )
 
@@ -52,20 +51,5 @@ func TestAMachineWithNoGitRefusesInWordsRatherThanGuessing(t *testing.T) {
 
 	if named := git.ChangedBetween(root, "aaaaaaa", "bbbbbbb"); len(named) != 0 {
 		t.Errorf("with no git a commit range names %d file(s)", len(named))
-	}
-}
-
-func TestNoDockerIsNeededByAnyOfThis(t *testing.T) {
-	root, _ := workerProject(t)
-
-	t.Setenv("PATH", filepath.Join(t.TempDir(), "empty"))
-
-	under := filepath.Join("src", "made.py")
-	wroteInto(t, filepath.Join(root, under), olderSin)
-
-	settings, _ := config.Load(root)
-
-	if said := linesToldFor(t, root, filepath.Join(root, under), settings); said == "" {
-		t.Error("with nothing at all on the PATH the judging answered nothing, and a consumer's machine has no docker")
 	}
 }

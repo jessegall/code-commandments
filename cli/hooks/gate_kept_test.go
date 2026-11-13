@@ -16,7 +16,7 @@ func TestAGateWithNoAgentToTellKeepsItsWordsWhereAPersonReadsThem(t *testing.T) 
 	})
 
 	if said == "" {
-		t.Fatal("a hand-in nobody could judge was answered with silence")
+		t.Fatal("a hand-in carrying a sin was answered with silence")
 	}
 
 	found := MergesIn(workspace.At(root, "")).Found()
@@ -26,8 +26,8 @@ func TestAGateWithNoAgentToTellKeepsItsWordsWhereAPersonReadsThem(t *testing.T) 
 
 	last := found[len(found)-1]
 
-	if !strings.Contains(last, "was not judged in full") {
-		t.Errorf("what is kept does not say the hand-in was not judged: %s", last)
+	if !strings.Contains(last, "redundant-python-else") {
+		t.Errorf("what is kept does not name the sin the hand-in carries: %s", last)
 	}
 
 	if strings.Contains(last, "--changes") {

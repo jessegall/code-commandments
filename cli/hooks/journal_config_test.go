@@ -3,12 +3,13 @@ package hooks
 import (
 	"bytes"
 	"encoding/json"
-	"github.com/jessegall/code-commandments/cli/agents"
 	"os"
 	"path/filepath"
 	"slices"
 	"strings"
 	"testing"
+
+	"github.com/jessegall/code-commandments/cli/agents"
 
 	"github.com/jessegall/code-commandments/cli"
 	"github.com/jessegall/code-commandments/cli/config"

@@ -2,13 +2,14 @@ package hooks
 
 import (
 	"encoding/json"
-	"github.com/jessegall/code-commandments/cli/git"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"sort"
 	"strings"
 	"testing"
+
+	"github.com/jessegall/code-commandments/cli/git"
 )
 
 func projectWithASin(t *testing.T) (root, file, data string) {

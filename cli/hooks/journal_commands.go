@@ -3,12 +3,13 @@ package hooks
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/jessegall/code-commandments/cli/agents"
-	"github.com/jessegall/code-commandments/cli/jsonfile"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
+
+	"github.com/jessegall/code-commandments/cli/agents"
+	"github.com/jessegall/code-commandments/cli/jsonfile"
 
 	"github.com/jessegall/code-commandments/catalog"
 	"github.com/jessegall/code-commandments/cli"

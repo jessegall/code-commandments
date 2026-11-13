@@ -4,79 +4,9 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
-	"time"
 
 	"github.com/jessegall/code-commandments/contract"
 )
-
-func TestEveryFileWaitingGoesOverInOneAsk(t *testing.T) {
-	asked := make(chan []string, 8)
-	parser := parsingFor(t, asked, nil)
-
-	folder := t.TempDir()
-
-	var files []string
-	for _, named := range []string{"one.py", "two.py", "three.py"} {
-		file := filepath.Join(folder, named)
-		if err := os.WriteFile(file, []byte("x = 1\n"), 0o644); err != nil {
-			t.Fatal(err)
-		}
-
-		files = append(files, file)
-		parser.expect(file)
-	}
-
-	go parser.work()
-
-	var groups [][]string
-	for parsed := 0; parsed < len(files); {
-		select {
-		case group := <-asked:
-			groups = append(groups, group)
-			parsed += len(group)
-		case <-time.After(10 * time.Second):
-			t.Fatalf("only %d of %d files were parsed", parsed, len(files))
-		}
-	}
-
-	if len(groups) != 1 {
-		t.Errorf("three files waiting went over in %d asks, want 1: %v", len(groups), groups)
-	}
-
-	for _, file := range files {
-		if _, already := parser.streamsOf(file); !already {
-			t.Errorf("%s was parsed ahead and is not held, so its judging parses it again", filepath.Base(file))
-		}
-	}
-}
-
-func TestAParseIsNotUsedForAFileThatMovedAgain(t *testing.T) {
-	asked := make(chan []string, 8)
-	parser := parsingFor(t, asked, nil)
-
-	file := filepath.Join(t.TempDir(), "order.py")
-	if err := os.WriteFile(file, []byte("x = 1\n"), 0o644); err != nil {
-		t.Fatal(err)
-	}
-
-	go parser.work()
-	parser.expect(file)
-
-	select {
-	case <-asked:
-	case <-time.After(10 * time.Second):
-		t.Fatal("the file was never parsed")
-	}
-
-	time.Sleep(10 * time.Millisecond)
-	if err := os.WriteFile(file, []byte("x = 1\ny = 2\n"), 0o644); err != nil {
-		t.Fatal(err)
-	}
-
-	if _, already := parser.streamsOf(file); already {
-		t.Error("a parse of the file as it was is being handed to the judging of the file as it is")
-	}
-}
 
 func parsingFor(t *testing.T, asked chan []string, hold chan struct{}) *parsing {
 	t.Helper()
@@ -111,53 +41,6 @@ func parsedFiles(files []string) []*contract.File {
 	}
 
 	return written
-}
-
-func TestAJudgingWaitsForAnAskAlreadyInFlight(t *testing.T) {
-	asked := make(chan []string, 8)
-	hold := make(chan struct{})
-	parser := parsingFor(t, asked, hold)
-
-	file := filepath.Join(t.TempDir(), "order.py")
-	if err := os.WriteFile(file, []byte("x = 1\n"), 0o644); err != nil {
-		t.Fatal(err)
-	}
-
-	go parser.work()
-	parser.expect(file)
-
-	select {
-	case <-asked:
-	case <-time.After(10 * time.Second):
-		t.Fatal("the file was never asked about")
-	}
-
-	answered := make(chan bool, 1)
-	go func() {
-		_, already := parser.streamsOf(file)
-		answered <- already
-	}()
-
-	select {
-	case <-answered:
-		t.Fatal("the judging answered while the ask for its own file was still in flight, so it parsed it again")
-	case <-time.After(100 * time.Millisecond):
-	}
-
-	close(hold)
-
-	select {
-	case already := <-answered:
-		if !already {
-			t.Error("the judging waited for the ask and was not given its parse")
-		}
-	case <-time.After(10 * time.Second):
-		t.Fatal("the judging never stopped waiting")
-	}
-
-	if waiting := len(asked); waiting != 0 {
-		t.Errorf("%d further ask(s) were made for a file already being asked about", waiting)
-	}
 }
 
 func TestAHalfWrittenFileDoesNotLoseTheGroupsParse(t *testing.T) {

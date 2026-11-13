@@ -5,14 +5,10 @@ import (
 	"os/exec"
 	"path/filepath"
 	"slices"
-	"strings"
 	"testing"
 
 	"github.com/jessegall/code-commandments/cli/config"
 	"github.com/jessegall/code-commandments/cli/custom"
-	"github.com/jessegall/code-commandments/cli/git"
-	"github.com/jessegall/code-commandments/cli/scan"
-	"github.com/jessegall/code-commandments/cli/source"
 	"github.com/jessegall/code-commandments/detectors"
 )
 
@@ -115,107 +111,6 @@ func workerProject(t *testing.T) (root, data string) {
 	}
 
 	return root, data
-}
-
-func TestAWorkersOwnFileIsMarkedWhereItIsJudgedAlone(t *testing.T) {
-	root, data := workerProject(t)
-
-	project := git.ProjectRoot(root)
-	branch := git.CurrentBranch(project)
-
-	settings, _ := config.Load(root)
-
-	codebase, err := scan.Walk([]string{filepath.Join(root, "src")}, source.Under(root, settings.Excluded)).Load()
-	if err != nil || codebase == nil {
-		t.Fatalf("the python bridge cannot run here: %v", err)
-	}
-
-	kept.Hold(project, branch, []string{root}, codebase, nil)
-	t.Cleanup(func() { kept.Drop(project, branch) })
-
-	Judge4Into(map[string]any{
-		"v": 1, "event": "file_edited", "session": "s1", "environment": "main", "agent": 545,
-		"data": map[string]any{
-			"path": ".journal/worktrees/worker-1/src/order.py", "kind": "edit", "added": 3, "removed": 0, "tool_use": 41,
-			"lines": []any{
-				map[string]any{"line_type": "add", "line": 2, "text": "    def total(self):"},
-				map[string]any{"line_type": "add", "line": 3, "text": `        """Says the total."""`},
-			},
-		},
-	}, data)
-
-	worker := filepath.Join(root, ".journal", "worktrees", "worker-1", "src", "order.py")
-
-	if judged := judgedFile(root, worker, settings); judged != worker {
-		t.Fatalf("the worker's file is judged as %q", judged)
-	}
-
-	rules := settings.RulesFor(checkoutOf(root, worker), worker, allRules(t, root, settings))
-	marks, _, _ := marksIn(Marks(root), worker, rules, git.ChangedLines{})
-
-	if len(marks) != 1 {
-		t.Fatalf("the project's rules find %d sins in the worker's own file", len(marks))
-	}
-
-	if named := marks[0].Found(); !strings.Contains(named, "documented-anywhere") {
-		t.Errorf("the mark names %q", named)
-	}
-
-	against, _, whole := AgainstTheProgram(Marks(root), worker, rules, git.ChangedLines{}, root)
-	if !whole {
-		t.Fatal("a worker's edit is not judged against the project's tree at all")
-	}
-
-	if len(against) != 1 {
-		t.Errorf("judged against the tree, the worker's file carries %d marks, want the one its sin is", len(against))
-	}
-}
-
-func TestAWorkersEarlierWorkIsInTheProgramItsNextEditIsJudgedAgainst(t *testing.T) {
-	root, _ := workerProject(t)
-	worktree := filepath.Join(root, ".journal", "worktrees", "worker-1")
-
-	settings, _ := config.Load(root)
-
-	project := git.ProjectRoot(root)
-	branch := git.CurrentBranch(project)
-
-	codebase, err := scan.Walk([]string{filepath.Join(root, "src")}, source.Under(root, settings.Excluded)).Load()
-	if err != nil || codebase == nil {
-		t.Fatalf("the python bridge cannot run here: %v", err)
-	}
-
-	kept.Hold(project, branch, []string{root}, codebase, nil)
-	t.Cleanup(func() { kept.Drop(project, branch) })
-
-	earlier := filepath.Join(worktree, "src", "invoice.py")
-	if err := os.WriteFile(earlier, []byte("class Invoice:\n    pass\n"), 0o644); err != nil {
-		t.Fatal(err)
-	}
-
-	own := filepath.Join(worktree, "src", "order.py")
-	if err := os.WriteFile(own, []byte(`class Order:
-    def total(self):
-        """Says the total."""
-        return 0
-`), 0o644); err != nil {
-		t.Fatal(err)
-	}
-
-	rules := settings.RulesFor(checkoutOf(root, own), own, allRules(t, root, settings))
-
-	marks, _, whole := AgainstTheProgram(Marks(root), own, rules, git.ChangedLines{}, root)
-	if !whole {
-		t.Fatal("the worker's edit is not judged against the program at all")
-	}
-
-	if len(marks) != 1 {
-		t.Errorf("the worker's own file carries %d marks, want the one its sin is", len(marks))
-	}
-
-	if !kept.Contents().Knows(earlier) {
-		t.Errorf("the worker's earlier %s is not in the program its next edit is judged against", earlier)
-	}
 }
 
 func TestAWorktreesOwnConfigIsNeverRead(t *testing.T) {

@@ -5,36 +5,12 @@ import (
 	"os"
 	"os/exec"
 	"runtime"
-	"runtime/debug"
 	"strconv"
 	"strings"
 	"sync"
-	"time"
-
-	"github.com/jessegall/code-commandments/cli/warm"
 )
 
 const serviceMemoryLimit = 3 << 30
-
-func limitServiceMemory() {
-	if os.Getenv("GOMEMLIMIT") == "" {
-		debug.SetMemoryLimit(serviceMemoryLimit)
-	}
-}
-
-func givesBackTheTreesItLetGo() {
-	go func() {
-		held := kept.Held()
-		for range time.Tick(warm.Sweep) {
-			now := kept.Held()
-			if now < held {
-				debug.FreeOSMemory()
-			}
-
-			held = now
-		}
-	}()
-}
 
 // Memory is what a memory figure of this plugin means, taken three ways because the three differ by gigabytes: the
 // Go heap this process has, this process's own resident size, and the resident size of this process with every
@@ -49,13 +25,6 @@ type Memory struct {
 var highest struct {
 	sync.Mutex
 	held Memory
-}
-
-func MemoryHighest() Memory {
-	highest.Lock()
-	defer highest.Unlock()
-
-	return highest.held
 }
 
 func memoryNoted(held Memory) {
