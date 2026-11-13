@@ -17,6 +17,14 @@ import (
 func treeHolding(t *testing.T, contents ...string) (*engine.Codebase, []string) {
 	t.Helper()
 
+	return treeReading(t, nil, contents...)
+}
+
+// treeReading is a tree of the given contents whose bridge names what each file read: reads maps a file's place to the
+// places of the files it read. With no reads the bridge names none.
+func treeReading(t *testing.T, reads map[int][]int, contents ...string) (*engine.Codebase, []string) {
+	t.Helper()
+
 	sampled, err := os.Open("../contract/samples/php.jsonl")
 	if err != nil {
 		t.Fatal(err)
@@ -27,6 +35,7 @@ func treeHolding(t *testing.T, contents ...string) (*engine.Codebase, []string) 
 	if err != nil {
 		t.Fatal(err)
 	}
+	stream.Header.Bridge.Reads = reads != nil
 
 	holds := map[string]string{}
 	codebase := engine.New(func(path string) ([]byte, error) {
@@ -42,8 +51,26 @@ func treeHolding(t *testing.T, contents ...string) (*engine.Codebase, []string) 
 		holds[match.File()] = contents[len(paths)]
 		paths = append(paths, match.File())
 	}
+	for _, file := range stream.Files {
+		file.Reads = []string{}
+	}
+	for reader, read := range reads {
+		for _, place := range read {
+			fileAt(stream, paths[reader]).Reads = append(fileAt(stream, paths[reader]).Reads, paths[place])
+		}
+	}
 
 	return codebase.Reporting(paths...), paths
+}
+
+func fileAt(stream *contract.Stream, path string) *contract.File {
+	for _, file := range stream.Files {
+		if file.Path == path {
+			return file
+		}
+	}
+
+	return nil
 }
 
 // asking is a detector's whole verdict, counting the files it was really asked about.
@@ -425,6 +452,38 @@ func TestARuleReadingAcrossFilesIsAskedAgainWhenAnyFileMoves(t *testing.T) {
 
 	if detector.asked != asked*2 {
 		t.Errorf("a tree with one file moved asked %d files after %d, and every file's answer may have moved", detector.asked, asked)
+	}
+}
+
+// A rule reading across files keeps each file's answer under the contents of the file and of the files its bridge
+// read, so a change re-asks the rule only for the changed file and the files that read it, in any checkout.
+func TestARuleReadingAcrossFilesIsAskedAgainOnlyForTheChangedFileAndItsReaders(t *testing.T) {
+	memory := engine.Remembering(time.Now)
+	detector := &asking{}
+	cartReadsPrices := map[int][]int{1: {0}}
+	main, _ := treeReading(t, cartReadsPrices, "<?php prices", "<?php cart", "<?php orders")
+	worktree, _ := treeReading(t, cartReadsPrices, "<?php prices", "<?php cart", "<?php orders")
+	pricesChanged, _ := treeReading(t, cartReadsPrices, "<?php prices in cents", "<?php cart", "<?php orders")
+	ordersChanged, _ := treeReading(t, cartReadsPrices, "<?php prices in cents", "<?php cart", "<?php orders by date")
+
+	memory.FindAcross(main, detector.find)
+	if detector.asked != 3 {
+		t.Fatalf("the first run asked the rule about %d files, not all 3", detector.asked)
+	}
+
+	memory.FindAcross(worktree, detector.find)
+	if detector.asked != 3 {
+		t.Errorf("a worktree holding the same contents asked the rule about %d more files", detector.asked-3)
+	}
+
+	memory.FindAcross(pricesChanged, detector.find)
+	if detector.asked != 5 {
+		t.Errorf("a change to prices asked the rule about %d files, not prices and cart, which reads it", detector.asked-3)
+	}
+
+	memory.FindAcross(ordersChanged, detector.find)
+	if detector.asked != 6 {
+		t.Errorf("a change to orders, which nothing reads, asked the rule about %d files, not orders alone", detector.asked-5)
 	}
 }
 

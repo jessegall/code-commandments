@@ -433,7 +433,9 @@ func (f *File) fingerprint() (uint64, bool) {
 
 type printsAcrossKey struct{}
 
-// printsAcross is what a rule that reads across files remembers a file under: the file's own print combined with the print of every file in the tree, and with its place among files of the same bytes, whose answers can differ.
+// printsAcross is what a rule that reads across files remembers a file under: the file's own print combined with the
+// prints of the files its bridge read (the print of every file in the tree when the bridge names none), and with its
+// place among files of the same bytes, whose answers can differ.
 type printsAcross struct {
 	whole bool
 	own   map[*contract.File]uint64
@@ -452,7 +454,7 @@ func printsAcrossOf(c *Codebase) printsAcross {
 		return printsAcross{}
 	}
 
-	return c.mixedUnder(combined(slices.Sorted(maps.Values(own))...), own)
+	return c.mixedUnder(combined(slices.Sorted(maps.Values(own))...), own, func(read *File) uint64 { return own[read.File] })
 }
 
 type printsForwardKey struct{}
@@ -469,20 +471,70 @@ func printsForwardOf(c *Codebase) printsAcross {
 	}
 	slices.Sort(outlines)
 
-	return c.mixedUnder(combined(outlines...), own)
+	return c.mixedUnder(combined(outlines...), own, (*File).outlined)
 }
 
-func (c *Codebase) mixedUnder(tree uint64, own map[*contract.File]uint64) printsAcross {
+func (c *Codebase) mixedUnder(tree uint64, own map[*contract.File]uint64, printOfRead func(*File) uint64) printsAcross {
+	standing := standingOn{tree: tree, printOfRead: printOfRead, byPath: make(map[string]*File, len(c.files)), outside: map[string]uint64{}}
+	for _, file := range c.files {
+		standing.byPath[file.Path] = file
+	}
 	mixed := make(map[*contract.File]uint64, len(c.files))
 	met := map[uint64]uint64{}
 
 	for _, file := range c.files {
 		print := own[file.File]
-		mixed[file.File] = combined(tree, print, met[print])
+		mixed[file.File] = combined(standing.of(file), print, met[print])
 		met[print]++
 	}
 
 	return printsAcross{true, own, mixed}
+}
+
+// standingOn is what a file's answer of a cross-file rule stands on besides its own contents: the contents of the
+// files its bridge read, wherever the checkout lies, so a change re-judges only the changed file and the files that
+// read it. A file whose bridge names no reads stands on the whole tree.
+type standingOn struct {
+	tree        uint64
+	printOfRead func(*File) uint64
+	byPath      map[string]*File
+	outside     map[string]uint64
+}
+
+func (s standingOn) of(file *File) uint64 {
+	if file.stream == nil || !file.stream.Header.Bridge.Reads {
+		return s.tree
+	}
+
+	prints := make([]uint64, 0, len(file.Reads))
+	for _, read := range file.Reads {
+		if held, inTree := s.byPath[read]; inTree {
+			prints = append(prints, s.printOfRead(held))
+
+			continue
+		}
+		prints = append(prints, s.outsidePrint(file, read))
+	}
+	slices.Sort(prints)
+
+	return combined(prints...)
+}
+
+// outsidePrint is the print of a file read from outside the tree, such as a lockfile; one that cannot be read prints
+// as nothing, so it never stands for one that is there.
+func (s standingOn) outsidePrint(file *File, path string) uint64 {
+	if print, held := s.outside[path]; held {
+		return print
+	}
+	source, err := file.read(path)
+	print := uint64(0)
+	if err == nil {
+		sum := sha256.Sum256(source)
+		print = binary.LittleEndian.Uint64(sum[:8])
+	}
+	s.outside[path] = print
+
+	return print
 }
 
 func (f *File) outlined() uint64 {

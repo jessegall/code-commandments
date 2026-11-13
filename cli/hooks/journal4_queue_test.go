@@ -87,7 +87,9 @@ func TestAFileEditedIsJudgedAndItsSinsGoToTheQueue(t *testing.T) {
 		"data": map[string]any{"path": "src/refund.py", "kind": "edit", "added": 1, "removed": 0, "tool_use": 41},
 	}
 
-	Judge4Into(line, data)
+	if code := Judge4Into(line, data); code != 1 {
+		t.Errorf("a judging that found a sin exited %d, so the run reads as completed", code)
+	}
 
 	queued := drained(t, data)
 	if len(queued) != 1 {
@@ -100,6 +102,22 @@ func TestAFileEditedIsJudgedAndItsSinsGoToTheQueue(t *testing.T) {
 
 	if queued[0]["env"] != "main" {
 		t.Errorf("the queued answer names the environment %v", queued[0]["env"])
+	}
+}
+
+func TestAJudgingThatFindsNoSinExitsCompleted(t *testing.T) {
+	root, _, data := projectWithASin(t)
+	t.Setenv("JOURNAL_ROOT", root)
+	if err := os.WriteFile(filepath.Join(root, "src", "clean.py"), []byte("def total() -> int:\n    return 3\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	line := map[string]any{
+		"v": 1, "event": "file_edited", "session": "s1", "environment": "main",
+		"data": map[string]any{"path": "src/clean.py", "kind": "create", "added": 2, "removed": 0, "tool_use": 42},
+	}
+
+	if code := Judge4Into(line, data); code != 0 {
+		t.Errorf("a judging that found no sin exited %d", code)
 	}
 }
 

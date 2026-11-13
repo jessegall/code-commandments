@@ -385,6 +385,12 @@ func (b Bridge) ReadShared(roots, files []string, tally func(), processes int) (
 	for range hits {
 		tally()
 	}
+	if cli.Timed() {
+		fmt.Fprintf(os.Stderr, "· %s: %d files from the cache, %d for the bridge to read\n", b.Kind, len(hits), len(misses))
+		for _, miss := range misses[:min(len(misses), 5)] {
+			fmt.Fprintf(os.Stderr, "  read by the bridge: %s\n", miss)
+		}
+	}
 	if len(misses) == 0 {
 		return &contract.Stream{Header: kept.standing(*header, resolved(roots)), Files: hits, Program: kept.program(nil),
 			Trailer: contract.Trailer{Files: len(hits)}}, nil

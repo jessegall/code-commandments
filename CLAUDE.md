@@ -50,7 +50,10 @@ Every checkout of a project, the main one and every worker's worktree, reads thr
 on a file's contents, never its location. A file any checkout already read is served from that cache
 in every other checkout, and a worktree's own changes never evict what the main checkout keeps (a
 cache a parser keys by module name, like mypy's, is held per checkout so versions never overwrite
-each other). A test that fails when a worktree run re-reads a file the main checkout already read
+each other). Judging is keyed the same way: a rule's answer for a file stands on the file's contents and the
+contents of the files its bridge read, so an edit re-judges only that file and the files that import it
+(`engine/remembered.go`, locked by `TestARuleReadingAcrossFilesIsAskedAgainOnlyForTheChangedFileAndItsReaders`).
+A test that fails when a worktree run re-reads a file the main checkout already read
 must exist and pass before ANY change to the reading path ships. Breaking this has made single-file
 edits take 40-60 s instead of seconds, more than once.
 

@@ -64,9 +64,7 @@ func (PluginHook) Help() help.Help {
 
 func (PluginHook) Run(in *cli.Input, console cli.Console) (int, error) {
 	if event, judges := in.Option(judgeEventOption); judges {
-		judgeTheEventIn(event, console)
-
-		return 0, nil
+		return judgeTheEventIn(event, console), nil
 	}
 
 	raw, _ := io.ReadAll(os.Stdin)
@@ -143,21 +141,22 @@ func Answer4Now(line map[string]any) string {
 	return JournalAnswer{}.Line()
 }
 
-func Judge4Into(line map[string]any, folder string) {
-	judgedInto([]map[string]any{line}, folder)
+func Judge4Into(line map[string]any, folder string) int {
+	return judgedInto([]map[string]any{line}, folder)
 }
 
 // judgedInto judges the events one queued run was handed, an agent's edits gathered by the plugin's script as one
-// batch, and leaves the answer where the script delivers it.
-func judgedInto(lines []map[string]any, folder string) {
+// batch, and leaves the answer where the script delivers it. Its exit code is 1 when the judging raised a sin, so the
+// run reads as failed wherever it is listed.
+func judgedInto(lines []map[string]any, folder string) int {
 	queue, queued := Queue4In(folder)
 	if !queued {
-		return
+		return 0
 	}
 
 	given, known := givenOf(lines)
 	if !known {
-		return
+		return 0
 	}
 
 	defer rememberedAround(servedRoot(), func(...string) {})()
@@ -167,10 +166,15 @@ func judgedInto(lines []map[string]any, folder string) {
 	line := lines[len(lines)-1]
 	data, _ := line["data"].(map[string]any)
 	if gone(asText(firstOf(data["cwd"], line["cwd"]))) {
-		return
+		return 0
 	}
 
 	_ = queue.Tell(answer, asText(line["environment"]), MomentOf(given).Agent)
+	if len(answer.Raises) > 0 {
+		return 1
+	}
+
+	return 0
 }
 
 // givenOf is the moment one run judges: the event it was handed, or an agent's events gathered into one batch.
@@ -202,7 +206,7 @@ func gone(cwd string) bool {
 	return err != nil || !info.IsDir()
 }
 
-func judgeTheEventIn(path string, console cli.Console) {
+func judgeTheEventIn(path string, console cli.Console) int {
 	raw, err := os.ReadFile(path)
 	os.Remove(path)
 
@@ -214,7 +218,7 @@ func judgeTheEventIn(path string, console cli.Console) {
 		}
 	}
 	if len(lines) == 0 {
-		return
+		return 0
 	}
 
 	switch line := lines[0]; namedAsTheKey(asText(line["event"])) {
@@ -224,8 +228,10 @@ func judgeTheEventIn(path string, console cli.Console) {
 		defer rememberedAround(servedRoot(), console.Warn)()
 		mergeOf(line).judgesAfterwards()
 	default:
-		judgedInto(lines, os.Getenv(pluginData))
+		return judgedInto(lines, os.Getenv(pluginData))
 	}
+
+	return 0
 }
 
 func tellsOfTheMerge(line map[string]any) {
