@@ -3,6 +3,7 @@ package engine
 import (
 	"path/filepath"
 	"strings"
+	"sync"
 )
 
 func (c *Codebase) Scanned(roots ...string) {
@@ -37,7 +38,20 @@ func (f *File) Judged() string {
 	return strings.TrimPrefix(path, strings.TrimSuffix(filepath.ToSlash(filepath.Dir(best)), "/")+"/")
 }
 
+// spelt holds each root's spellings once a process: a rule asks a file's judged path per file, and resolving a root's
+// links walks every folder above it.
+var spelt sync.Map
+
 func spellings(root string) []string {
+	held, ok := spelt.Load(root)
+	if !ok {
+		held, _ = spelt.LoadOrStore(root, spellingsOf(root))
+	}
+
+	return held.([]string)
+}
+
+func spellingsOf(root string) []string {
 	spelt := []string{root}
 	if absolute, err := filepath.Abs(root); err == nil {
 		spelt = append(spelt, absolute)

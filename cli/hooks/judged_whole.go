@@ -29,7 +29,7 @@ func judgedWhole(checkout string, project config.Config, rules []detectors.Detec
 	if codebase == nil || (err != nil && !errors.As(err, &incomplete)) {
 		return nil, judgedTimes{read: time.Since(reading)}, false
 	}
-	times := judgedTimes{files: len(codebase.Files()), kept: int(engine.Counted().Kept - keptBefore), read: time.Since(reading),
+	times := judgedTimes{files: len(codebase.Files()), asked: len(rules), kept: int(engine.Counted().Kept - keptBefore), read: time.Since(reading),
 		waited: scan.ReadingWaited() - waitedBefore}
 	judging := time.Now()
 
@@ -67,9 +67,10 @@ func judgedWhole(checkout string, project config.Config, rules []detectors.Detec
 }
 
 // judgedTimes is what a whole judging spent: the files it read and how many of them the cache served, the time
-// reading them and the part of it spent waiting for another run reading the same checkout, and the time its rules took.
+// reading them and the part of it spent waiting for another run reading the same checkout, and the time its rules took, and how many rules it asked.
 type judgedTimes struct {
 	files  int
+	asked  int
 	kept   int
 	read   time.Duration
 	waited time.Duration

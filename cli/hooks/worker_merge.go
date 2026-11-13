@@ -59,7 +59,7 @@ func (work merging) records(why Narrowed, sins int, waited string, times judgedT
 	Record(bookkeepingIn(project), Judged{
 		At: time.Now(), Event: deliveringEvent, Kind: "worktree", Checkout: work.worktree,
 		Held: why == "", Why: why, Sins: sins, Waited: waited, Said: "the hand-in",
-		Parsed: times.files, Kept: times.kept, ReadMs: times.read.Milliseconds(), ReadWaitMs: times.waited.Milliseconds(), RuleMs: times.rules.Milliseconds(),
+		Parsed: times.files, Kept: times.kept, ReadMs: times.read.Milliseconds(), ReadWaitMs: times.waited.Milliseconds(), RuleMs: times.rules.Milliseconds(), Asked: times.asked,
 	})
 }
 
