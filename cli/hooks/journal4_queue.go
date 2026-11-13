@@ -2,9 +2,9 @@ package hooks
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
-	"strconv"
 	"sync/atomic"
 	"time"
 
@@ -56,7 +56,8 @@ func (q Queue4) Tell(answer JournalAnswer, env string, agent int) error {
 		return err
 	}
 
-	name := strconv.FormatInt(time.Now().UnixMilli(), 10) + "-" + strconv.Itoa(os.Getpid()) + "-" + strconv.FormatUint(written.Add(1), 10) + ".json"
+	// the count is padded, so the answers of one millisecond sort in the order they were told
+	name := fmt.Sprintf("%d-%d-%012d.json", time.Now().UnixMilli(), os.Getpid(), written.Add(1))
 
 	return atomicfile.Write(filepath.Join(q.path, name), string(said)+"\n")
 }
