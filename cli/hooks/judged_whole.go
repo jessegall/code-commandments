@@ -23,13 +23,14 @@ func judgedWhole(checkout string, project config.Config, rules []detectors.Detec
 	if len(files) == 0 {
 		return nil, judgedTimes{}, true
 	}
-	reading := time.Now()
+	reading, keptBefore, waitedBefore := time.Now(), engine.Counted().Kept, scan.ReadingWaited()
 	codebase, err := readWhole(checkout, project, files)
 	var incomplete scan.Incomplete
 	if codebase == nil || (err != nil && !errors.As(err, &incomplete)) {
 		return nil, judgedTimes{read: time.Since(reading)}, false
 	}
-	times := judgedTimes{files: len(codebase.Files()), read: time.Since(reading)}
+	times := judgedTimes{files: len(codebase.Files()), kept: int(engine.Counted().Kept - keptBefore), read: time.Since(reading),
+		waited: scan.ReadingWaited() - waitedBefore}
 	judging := time.Now()
 
 	held := map[string]string{}
@@ -65,11 +66,14 @@ func judgedWhole(checkout string, project config.Config, rules []detectors.Detec
 	return marks, times, true
 }
 
-// judgedTimes is what a whole judging spent: the files it read, the time reading them and the time its rules took.
+// judgedTimes is what a whole judging spent: the files it read and how many of them the cache served, the time
+// reading them and the part of it spent waiting for another run reading the same checkout, and the time its rules took.
 type judgedTimes struct {
-	files int
-	read  time.Duration
-	rules time.Duration
+	files  int
+	kept   int
+	read   time.Duration
+	waited time.Duration
+	rules  time.Duration
 }
 
 // readWhole reads a checkout as judge reads it: its configured roots, without what it excludes, in the languages it

@@ -75,6 +75,15 @@ var theShop = []string{"src/shop/__init__.py", "src/shop/cart.py", "src/shop/pri
 // write.
 func askedOfABridge(t *testing.T, checkout string, relative ...string) []string {
 	t.Helper()
+	asked, _ := askedOf(t, Python, checkout, relative...)
+
+	return asked
+}
+
+// askedOf reads the checkout's files named through the funnel with the bridge and answers which files it was asked to
+// write, and the stream the read made.
+func askedOf(t *testing.T, b Bridge, checkout string, relative ...string) ([]string, *contract.Stream) {
+	t.Helper()
 
 	route := read
 	var asked []string
@@ -89,7 +98,7 @@ func askedOfABridge(t *testing.T, checkout string, relative ...string) []string 
 	for _, file := range relative {
 		files = append(files, filepath.Join(checkout, file))
 	}
-	stream, err := Python.ReadShared([]string{filepath.Join(checkout, "src")}, files, func() {}, 1)
+	stream, err := b.ReadShared([]string{filepath.Join(checkout, "src")}, files, func() {}, 1)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -98,7 +107,7 @@ func askedOfABridge(t *testing.T, checkout string, relative ...string) []string 
 	}
 	slices.Sort(asked)
 
-	return asked
+	return asked, stream
 }
 
 func journalDriven(t *testing.T, project string) {

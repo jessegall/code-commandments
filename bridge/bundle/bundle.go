@@ -14,7 +14,6 @@ import (
 	"path"
 	"path/filepath"
 	"sort"
-	"time"
 
 	"github.com/jessegall/code-commandments/cache"
 )
@@ -164,21 +163,6 @@ func heal(folder string, files map[string][]byte) error {
 	}
 
 	return os.WriteFile(filepath.Join(folder, wholeMark), nil, 0o644)
-}
-
-func TreesFolder(language string) (string, error) {
-	kept, err := KeptFolder()
-	if err != nil {
-		return "", err
-	}
-
-	folder := filepath.Join(kept, "trees", language)
-	if err := writable(folder); err != nil {
-		return "", err
-	}
-	Sweep(folder, time.Now())
-
-	return folder, nil
 }
 
 func writable(folder string) error {

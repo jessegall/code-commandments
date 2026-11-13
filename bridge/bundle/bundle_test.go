@@ -130,31 +130,6 @@ func TestAFolderThatLostItsFilesIsWrittenAgain(t *testing.T) {
 	}
 }
 
-func TestATreesFolderThatCannotBeMadeIsAnsweredAsNone(t *testing.T) {
-	cache := t.TempDir()
-	t.Setenv("XDG_CACHE_HOME", cache)
-
-	folder, err := TreesFolder("frontend")
-	if err != nil {
-		t.Fatalf("a cache folder the run may write answered %v", err)
-	}
-	if _, err := os.Stat(folder); err != nil {
-		t.Errorf("the trees folder is not there: %v", err)
-	}
-
-	inTheWay := filepath.Join(cache, "code-commandments", "trees", "php")
-	if err := os.MkdirAll(filepath.Dir(inTheWay), 0o755); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.WriteFile(inTheWay, nil, 0o644); err != nil {
-		t.Fatal(err)
-	}
-
-	if folder, err := TreesFolder("php"); err == nil {
-		t.Errorf("a folder that cannot be made was answered as %s", folder)
-	}
-}
-
 func TestAFolderWhoseWritesAreRefusedIsNotWritable(t *testing.T) {
 	if runtime.GOOS != "linux" {
 		t.Skip("a folder nobody may write a file into needs /proc, which only linux has")

@@ -9,25 +9,29 @@ import (
 )
 
 type Judged struct {
-	At        time.Time
-	Event     string
-	Checkout  string
-	Kind      string
-	Branch    string
-	Held      bool
-	Why       Narrowed
-	Parsed    int
-	ReadMs    int64
-	RuleMs    int64
-	Asked     int
-	NotAsked  int
-	Sins      int
-	Dropped   Dropped
-	Memory    Memory
-	Abandoned string
-	Said      string
-	Waited    string
-	Files     []string
+	At       time.Time
+	Event    string
+	Checkout string
+	Kind     string
+	Branch   string
+	Held     bool
+	Why      Narrowed
+	Parsed   int
+	// Kept is how many of the parsed files the cache served, and ReadWaitMs how long the read waited for another run
+	// reading the same checkout.
+	Kept       int
+	ReadWaitMs int64
+	ReadMs     int64
+	RuleMs     int64
+	Asked      int
+	NotAsked   int
+	Sins       int
+	Dropped    Dropped
+	Memory     Memory
+	Abandoned  string
+	Said       string
+	Waited     string
+	Files      []string
 }
 
 func (j Judged) Line() string {
@@ -42,7 +46,7 @@ func (j Judged) Line() string {
 		j.Kind + "=" + j.Checkout,
 		"branch=" + j.Branch,
 		"tree=" + held,
-		fmt.Sprintf("parsed=%d in %dms", j.Parsed, j.ReadMs),
+		fmt.Sprintf("parsed=%d in %dms", j.Parsed, j.ReadMs) + j.readFrom(),
 		fmt.Sprintf("rules=%d of %d in %dms", j.Asked, j.Asked+j.NotAsked, j.RuleMs),
 		fmt.Sprintf("sins=%d", j.Sins),
 	}
@@ -97,4 +101,13 @@ func Record(folder string, judged Judged) {
 	defer file.Close()
 
 	fmt.Fprintln(file, judged.Line())
+}
+
+// readFrom says how many parsed files the cache served and how long the read waited its turn, when either is known.
+func (j Judged) readFrom() string {
+	if j.Kept == 0 && j.ReadWaitMs == 0 {
+		return ""
+	}
+
+	return fmt.Sprintf(" (%d from the cache, %dms waiting for the checkout)", j.Kept, j.ReadWaitMs)
 }

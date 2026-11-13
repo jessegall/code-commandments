@@ -6,6 +6,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"io"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -13,11 +14,15 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 
+	"github.com/jessegall/code-commandments/bridge/bundle"
+	"github.com/jessegall/code-commandments/cache"
 	"github.com/jessegall/code-commandments/cli/atomic"
 	"github.com/jessegall/code-commandments/cli/git"
 	"github.com/jessegall/code-commandments/cli/workspace"
 	"github.com/jessegall/code-commandments/contract"
+	"github.com/jessegall/code-commandments/walk"
 )
 
 // keptLines is the one cache of every bridge's file lines, shared by every checkout of a project and keyed on contents
@@ -94,9 +99,39 @@ func (k *keptLines) split(files []string) (hits []*contract.File, header *contra
 	return hits, header, misses
 }
 
+// standingRecords answers the record of each file whose kept line still stands and the files a bridge must read, for a
+// run that takes each kept line from its record only when it reaches the file's project.
+func (k *keptLines) standingRecords(files []string) (records map[string]string, header *contract.Header, misses []string) {
+	records = map[string]string{}
+	header = k.header()
+	if header == nil {
+		return records, nil, files
+	}
+	for _, file := range files {
+		if record := k.standingRecord(file); record != "" {
+			records[file] = record
+
+			continue
+		}
+		misses = append(misses, file)
+	}
+
+	return records, header, misses
+}
+
+func (k *keptLines) standingRecord(file string) string {
+	for _, reads := range k.variants(file) {
+		if record := k.recordOf(file, reads); walk.IsFile(record) {
+			return record
+		}
+	}
+
+	return ""
+}
+
 func (k *keptLines) line(reader *contract.Kept, file string) *contract.File {
 	for _, reads := range k.variants(file) {
-		raw, err := os.ReadFile(k.recordOf(file, reads))
+		raw, err := used(k.recordOf(file, reads))
 		if err != nil {
 			continue
 		}
@@ -139,14 +174,21 @@ func (k *keptLines) keep(header contract.Header, file *contract.File, raw []byte
 	k.staging.Unlock()
 }
 
-// settle files every staged line under its key, now that the stream that wrote them has ended.
+// settle files every staged line under its key, now that the stream that wrote them has ended. A line whose file, or a
+// file its tree read, changed while the bridge read it is dropped: its tree may hold contents its key does not name.
 func (k *keptLines) settle() {
 	k.staging.Lock()
 	staged := k.staged
 	k.staged = nil
 	k.staging.Unlock()
 
+	now := map[string]string{}
 	for _, line := range staged {
+		if k.changedSince(line.path, now) || slices.ContainsFunc(line.reads, func(read string) bool { return k.changedSince(k.unmarkedPath(read), now) }) {
+			_ = os.Remove(line.held)
+
+			continue
+		}
 		if !slices.ContainsFunc(k.variants(line.path), func(known []string) bool { return slices.Equal(known, line.reads) }) {
 			k.addVariant(line.path, line.reads)
 		}
@@ -154,6 +196,41 @@ func (k *keptLines) settle() {
 			_ = os.Remove(line.held)
 		}
 	}
+	if k.folder != "" {
+		bundle.Sweep(k.folder, time.Now())
+	}
+}
+
+// printedFirst fingerprints every file before a bridge reads them, so a line is keyed on the contents its bridge read.
+func (k *keptLines) printedFirst(files []string) {
+	if k.folder == "" {
+		return
+	}
+	next := make(chan string)
+	var printing sync.WaitGroup
+	for range runtime.GOMAXPROCS(0) {
+		printing.Add(1)
+		go func() {
+			defer printing.Done()
+			for file := range next {
+				k.print(file)
+			}
+		}()
+	}
+	for _, file := range files {
+		next <- file
+	}
+	close(next)
+	printing.Wait()
+}
+
+// changedSince says whether a file's contents differ from the print this run took of it, read once into now.
+func (k *keptLines) changedSince(file string, now map[string]string) bool {
+	if _, known := now[file]; !known {
+		now[file] = printOf(file)
+	}
+
+	return now[file] != k.print(file)
 }
 
 // keepOutline keeps what a file declares for the files that read it, under its contents.
@@ -174,7 +251,7 @@ func (k *keptLines) outlineOf(file string) string {
 		return held.(string)
 	}
 	print := k.print(file)
-	kept, err := os.ReadFile(k.outlinePath(file, print))
+	kept, err := used(k.outlinePath(file, print))
 	if err != nil || print == "" {
 		return "contents " + print
 	}
@@ -215,14 +292,13 @@ func (k *keptLines) deferred(misses []string) (first, later []string) {
 // variants are the sets of files the trees kept for this file's contents read, one per line of its index: a file
 // whose imports differ between checkouts keeps a line for each.
 func (k *keptLines) variants(file string) [][]string {
-	index, err := os.Open(k.indexOf(file))
+	index, err := used(k.indexOf(file))
 	if err != nil {
 		return nil
 	}
-	defer index.Close()
 
 	var found [][]string
-	lines := bufio.NewScanner(index)
+	lines := bufio.NewScanner(bytes.NewReader(index))
 	lines.Buffer(make([]byte, 0, 64<<10), 16<<20)
 	for lines.Scan() {
 		var reads []string
@@ -260,22 +336,27 @@ func (k *keptLines) print(file string) string {
 	if held, ok := k.prints.Load(file); ok {
 		return held.(string)
 	}
-	text, err := os.ReadFile(file)
-	printed := ""
-	if err == nil {
-		sum := sha256.Sum256(text)
-		printed = hex.EncodeToString(sum[:])
-	}
+	printed := printOf(file)
 	k.prints.Store(file, printed)
 
 	return printed
+}
+
+func printOf(file string) string {
+	text, err := os.ReadFile(file)
+	if err != nil {
+		return ""
+	}
+	sum := sha256.Sum256(text)
+
+	return hex.EncodeToString(sum[:])
 }
 
 func (k *keptLines) header() *contract.Header {
 	if k.folder == "" {
 		return nil
 	}
-	raw, err := os.ReadFile(k.headerPath())
+	raw, err := used(k.headerPath())
 	if err != nil {
 		return nil
 	}
@@ -315,7 +396,7 @@ func (k *keptLines) program(fresh *contract.Program) *contract.Program {
 	}
 	defer atomic.Hold(k.programPath() + ".lock")()
 	var kept contract.Program
-	if raw, err := os.ReadFile(k.programPath()); err == nil {
+	if raw, err := used(k.programPath()); err == nil {
 		_ = json.Unmarshal(k.unmarked(raw), &kept)
 	}
 	joined := joinedPrograms(kept, fresh)
@@ -335,28 +416,23 @@ func joinedPrograms(kept contract.Program, fresh *contract.Program) contract.Pro
 	if fresh == nil {
 		return kept
 	}
-	joined := contract.Program{
-		Symbols:    onceOf(kept.Symbols, fresh.Symbols),
-		Unreadable: onceOf(kept.Unreadable, fresh.Unreadable),
-		Packages:   onceOf(kept.Packages, fresh.Packages),
-		Aliases:    onceOf(kept.Aliases, fresh.Aliases),
-		Loader:     kept.Loader,
+	return contract.Program{
+		Symbols:    onceBy(kept.Symbols, fresh.Symbols, func(symbol contract.OutsideSymbol) string { return symbol.Symbol }),
+		Unreadable: onceBy(kept.Unreadable, fresh.Unreadable, func(symbol contract.UnreadableSymbol) string { return symbol.Symbol }),
+		Packages:   onceBy(kept.Packages, fresh.Packages, func(name string) string { return name }),
+		Aliases:    onceBy(kept.Aliases, fresh.Aliases, func(alias contract.Alias) string { return alias.Prefix }),
+		Loader:     fresh.Loader,
 	}
-	if fresh.Loader != "" {
-		joined.Loader = fresh.Loader
-	}
-
-	return joined
 }
 
-// onceOf is every entry of both, the fresh one standing where both hold the same.
-func onceOf[T any](kept, fresh []T) []T {
+// onceBy is every entry of both, one per key, the fresh one standing where both name the same: a symbol read again
+// replaces what an earlier run read of it.
+func onceBy[T any](kept, fresh []T, keyOf func(T) string) []T {
 	seen := map[string]bool{}
 	var joined []T
 	for _, entry := range append(slices.Clone(fresh), kept...) {
-		key, _ := json.Marshal(entry)
-		if !seen[string(key)] {
-			seen[string(key)] = true
+		if key := keyOf(entry); !seen[key] {
+			seen[key] = true
 			joined = append(joined, entry)
 		}
 	}
@@ -384,4 +460,24 @@ func named(parts ...string) string {
 	}
 
 	return hex.EncodeToString(digest.Sum(nil))[:40]
+}
+
+// used reads a file of the cache and renews its clock when a good part of the time it is kept has gone by, so the sweep
+// removes only what no run used for the whole time.
+func used(path string) ([]byte, error) {
+	file, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+	info, err := file.Stat()
+	if err != nil {
+		return nil, err
+	}
+	if time.Since(info.ModTime()) > cache.KeptFor()/4 {
+		now := time.Now()
+		_ = os.Chtimes(path, now, now)
+	}
+
+	return io.ReadAll(file)
 }

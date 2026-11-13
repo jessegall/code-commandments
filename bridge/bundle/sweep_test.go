@@ -47,33 +47,6 @@ func TestASweepLetsGoOfTreesNotUsedForTheTimeACacheIsKept(t *testing.T) {
 	}
 }
 
-func TestASweepKeepsTheCacheUnderItsSizeByLettingTheOldestTreesGo(t *testing.T) {
-	folder := t.TempDir()
-	now := time.Now()
-
-	for age, name := range []string{"newest.tree", "middle.tree", "oldest.tree"} {
-		path := filepath.Join(folder, name)
-		if err := os.WriteFile(path, make([]byte, 100), 0o644); err != nil {
-			t.Fatal(err)
-		}
-
-		written := now.Add(-time.Duration(age+1) * time.Hour)
-		if err := os.Chtimes(path, written, written); err != nil {
-			t.Fatal(err)
-		}
-	}
-
-	sweepKeeping(folder, now, 250)
-
-	for name, kept := range map[string]bool{"newest.tree": true, "middle.tree": true, "oldest.tree": false} {
-		_, err := os.Stat(filepath.Join(folder, name))
-		if (err == nil) != kept {
-			t.Errorf("after a sweep holding 300 bytes against a limit of 250, %s kept is %v, want %v: the "+
-				"oldest trees go first until the cache fits", name, err == nil, kept)
-		}
-	}
-}
-
 func TestAFolderNotTouchedForTheTimeACacheIsKeptIsForgottenAndATouchedOneKept(t *testing.T) {
 	parent := t.TempDir()
 	now := time.Now()

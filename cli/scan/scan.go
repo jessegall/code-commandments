@@ -12,6 +12,7 @@ import (
 	"slices"
 	"strings"
 	"sync"
+	syncatomic "sync/atomic"
 	"time"
 
 	"github.com/jessegall/code-commandments/bridge"
@@ -360,10 +361,18 @@ func (s Sources) readingTurn() (release func()) {
 		fmt.Fprintln(os.Stderr, "· another run is reading this checkout, so this one waits for it and then reads from the cache")
 	}, readingWaitedAtMost)
 	if waited {
+		readingWaited.Add(int64(time.Since(began)))
 		fmt.Fprintf(os.Stderr, "· waited %s for the other run's read\n", time.Since(began).Round(time.Second))
 	}
 
 	return release
+}
+
+var readingWaited syncatomic.Int64
+
+// ReadingWaited is how long this process's reads waited for another run reading the same checkout.
+func ReadingWaited() time.Duration {
+	return time.Duration(readingWaited.Load())
 }
 
 // ReadingTurn is the file the runs of one checkout take turns on while they read it, so the second finds the first's

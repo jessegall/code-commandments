@@ -8,6 +8,6 @@ declarations it reads from the referenced assemblies — is written there, in ea
 | Invocation | What it writes |
 |---|---|
 | `roslyn-bridge <path>...` | every C# file under the roots, or the files named, compiled together without building the project, one project at a time, its compilation let go once written |
-| `roslyn-bridge --serve` | the same, kept warm: a request per line on stdin, `{"paths": [...]}`, answered with its lines; `"write": [...]` limits the files written in full, the rest written with `context: true` |
+| `roslyn-bridge --serve` | the same, kept warm: a request per line on stdin, `{"paths": [...]}`, answered with its lines; `"write": [...]` limits the files written to those, the rest compiled beside them and not written; each line names in `reads` the other files that shaped it |
 | `roslyn-bridge --listen <port>` | `--serve` over a TCP socket, a connection at a time: the service a session keeps up |
 | `--diagnose` | the compiler's most common errors on stderr first: why a call did not resolve |

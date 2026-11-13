@@ -187,7 +187,7 @@ func TestAJournalProjectAndItsWorktreesKeepTheirParsedTreesAtTheJournal(t *testi
 	for _, root := range []string{project, worktree} {
 		RememberedFor(root, func(...string) {})
 
-		trees, err := bundle.TreesFolder("python")
+		trees, err := bundle.KeptFolder()
 		if err != nil {
 			t.Fatal(err)
 		}

@@ -11,8 +11,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
-
-	"github.com/jessegall/code-commandments/bridge/bundle"
+	"sync"
 )
 
 var Release = "dev"
@@ -55,23 +54,9 @@ func (e RoslynFailed) Error() string {
 func (RoslynFailed) unavailable() {}
 
 func Roslyn(roots ...string) ([]string, error) {
-	trees, err := bundle.TreesFolder("csharp")
-	if err != nil {
-		return roslynFor(roots)
-	}
-
-	command, err := roslynFor(roots, trees)
-	if err != nil {
-		return nil, err
-	}
-
-	return append(command, "--cache="+trees), nil
-}
-
-func roslynFor(roots []string, written ...string) ([]string, error) {
 	switch named := os.Getenv(roslynVariable); named {
 	case "docker":
-		return RoslynInDocker(roots, written...)
+		return RoslynInDocker(roots)
 	case "":
 		executable, _, err := RoslynExecutable()
 		if err != nil {
@@ -86,6 +71,22 @@ func roslynFor(roots []string, written ...string) ([]string, error) {
 		return []string{named}, nil
 	}
 }
+
+// RoslynIdentity names the C# bridge by the program that runs it, so a release that ships the same bridge keeps every
+// C# line, and one that ships a new bridge reads C# afresh.
+var RoslynIdentity = sync.OnceValue(func() string {
+	command, err := Roslyn()
+	if err != nil {
+		return Build()
+	}
+	program, err := os.ReadFile(command[0])
+	if err != nil {
+		return strings.Join(command, " ")
+	}
+	sum := sha256.Sum256(program)
+
+	return hex.EncodeToString(sum[:])
+})
 
 // FetchRoslyn fetches the C# bridge this release ships, unless a bridge of one's own is named, and says what it fetched.
 func FetchRoslyn() (string, error) {

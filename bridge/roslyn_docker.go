@@ -57,7 +57,7 @@ func RoslynSourcesImage(root string) (string, error) {
 	return roslynRepository + ":" + hex.EncodeToString(digest.Sum(nil))[:16], nil
 }
 
-func RoslynInDocker(roots []string, written ...string) ([]string, error) {
+func RoslynInDocker(roots []string) ([]string, error) {
 	if exec.Command("docker", "image", "inspect", RoslynImage()).Run() != nil {
 		return nil, RoslynUnavailable{"its development image " + RoslynImage() + " is not built: scripts/roslyn-image"}
 	}
@@ -66,7 +66,7 @@ func RoslynInDocker(roots []string, written ...string) ([]string, error) {
 		return nil, err
 	}
 
-	return append(append(append([]string{"bash", script}, readOnly(roots)...), written...), "--"), nil
+	return append(append([]string{"bash", script}, readOnly(roots)...), "--"), nil
 }
 
 func readOnly(roots []string) []string {

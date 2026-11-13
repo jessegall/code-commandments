@@ -16,7 +16,7 @@ namespace CodeCommandments.Bridge;
 /// It streams: one project at a time, each node written straight through as it is read, nothing of a project kept
 /// once its files are written but the plain text of the outside declarations it reached.
 /// </summary>
-public sealed class ContractWriter(IReadOnlyList<string> roots, IReadOnlySet<string>? written = null, TreeCache? cache = null, IReadOnlyList<string>? support = null)
+public sealed class ContractWriter(IReadOnlyList<string> roots, IReadOnlySet<string>? written = null, IReadOnlyList<string>? support = null)
 {
     public const int Version = 3;
 
@@ -35,9 +35,6 @@ public sealed class ContractWriter(IReadOnlyList<string> roots, IReadOnlySet<str
 
     private int files;
 
-    /// <summary>The outside declarations the file being written reaches, which its kept line carries for a later run.</summary>
-    private HashSet<string>? reaching;
-
     public void Write(Stream output, Workspace workspace)
     {
         Line(output, json =>
@@ -49,6 +46,7 @@ public sealed class ContractWriter(IReadOnlyList<string> roots, IReadOnlySet<str
             json.WriteStartObject("bridge");
             json.WriteString("name", "roslyn-bridge");
             json.WriteString("version", BridgeVersion);
+            json.WriteBoolean("reads", true);
             json.WriteEndObject();
             json.WriteStartArray("roots");
 
@@ -61,7 +59,7 @@ public sealed class ContractWriter(IReadOnlyList<string> roots, IReadOnlySet<str
             json.WriteEndObject();
         });
 
-        workspace.Stream(roots, support ?? [], asked => WriteProject(output, asked));
+        workspace.Stream(roots, support ?? [], written ?? new HashSet<string>(), asked => WriteProject(output, asked));
 
         Line(output, json =>
         {
@@ -88,149 +86,19 @@ public sealed class ContractWriter(IReadOnlyList<string> roots, IReadOnlySet<str
         });
     }
 
-    /// <summary>
-    /// A line for each of the project's asked files that exists, in order: a file whose line is kept is written from the
-    /// cache, and the project is compiled only when one is not, each line it writes then kept for the next run.
-    /// </summary>
+    /// <summary>A line for each of the project's asked files that exists, in order, naming the other files its tree read.</summary>
     private void WriteProject(Stream output, Asked asked)
     {
-        var kept = asked.Files.Where(File.Exists).Select(file => (File: file, Line: KeptLine(asked, file))).ToList();
-        var project = kept.Any(each => each.Line is null) ? asked.Read() : null;
-        var readings = project is null ? null : new Readings(project);
-        var trees = project?.Trees.ToDictionary(tree => tree.FilePath, StringComparer.Ordinal);
+        var project = asked.Read();
+        var readings = new Readings(project);
+        var trees = project.Trees.ToDictionary(tree => tree.FilePath, StringComparer.Ordinal);
 
-        foreach (var (file, line) in kept)
+        foreach (var file in asked.Files.Where(trees.ContainsKey))
         {
-            if (line is not null)
-            {
-                output.Write(Encoding.UTF8.GetBytes(IsContext(file) ? Marked(line) : line));
-                files++;
-
-                continue;
-            }
-
-            if (trees is null || readings is null || project is null || !trees.TryGetValue(file, out var tree))
-            {
-                continue;
-            }
-
-            var writer = new FileWriter(this, readings, project, tree, project.Model(tree));
-            var (callsBefore, resolvedBefore) = (calls, resolved);
-            reaching = [];
-
-            using (var buffer = new MemoryStream())
-            {
-                Line(buffer, json => writer.Write(json, false));
-                var written = Encoding.UTF8.GetString(buffer.ToArray());
-                output.Write(Encoding.UTF8.GetBytes(IsContext(file) ? Marked(written) : written));
-                files++;
-
-                if (cache is not null)
-                {
-                    cache.Keep(KeyOf(asked, file), Meta(calls - callsBefore, resolved - resolvedBefore), written, Real(file));
-                }
-            }
-
-            reaching = null;
-        }
-    }
-
-    private bool IsContext(string file) => written is { Count: > 0 } && !written.Contains(file);
-
-    private string KeyOf(Asked asked, string file) => TreeCache.KeyOf(asked.Key, TreeCache.KeyOf(File.ReadAllText(file)));
-
-    /// <summary>A file line written as judged, marked as context: the mark goes right after its error count, where a line written as context holds it.</summary>
-    private static string Marked(string line)
-    {
-        var errors = line.IndexOf(",\"errors\":", StringComparison.Ordinal);
-        if (errors < 0)
-        {
-            return line;
-        }
-
-        var end = line.IndexOfAny([',', '}'], errors + ",\"errors\":".Length);
-
-        return end < 0 ? line : line.Insert(end, ",\"context\":true");
-    }
-
-    /// <summary>The line kept for <paramref name="file"/>, its outside declarations and counts taken into this run; null when none is kept or it cannot be read.</summary>
-    private string? KeptLine(Asked asked, string file)
-    {
-        if (cache?.Read(KeyOf(asked, file), Real(file)) is not { } entry)
-        {
-            return null;
-        }
-
-        try
-        {
-            using var meta = JsonDocument.Parse(entry.Meta);
-            var root = meta.RootElement;
-
-            foreach (var symbol in root.GetProperty("outside").EnumerateArray())
-            {
-                var kept = OutsideSymbol.Read(symbol);
-                outside.TryAdd(kept.Symbol, kept);
-            }
-
-            calls += root.GetProperty("calls").GetInt32();
-            resolved += root.GetProperty("resolved").GetInt32();
-
-            return entry.Line;
-        }
-        catch (Exception failure) when (failure is JsonException or KeyNotFoundException or InvalidOperationException)
-        {
-            return null;
-        }
-    }
-
-    /// <summary>What a kept line carries beside it: the calls it holds, how many resolved, and every outside declaration it reaches with their ancestors.</summary>
-    private string Meta(int lineCalls, int lineResolved)
-    {
-        using var buffer = new MemoryStream();
-
-        using (var json = new Utf8JsonWriter(buffer, Json))
-        {
-            json.WriteStartObject();
-            json.WriteNumber("calls", lineCalls);
-            json.WriteNumber("resolved", lineResolved);
-            json.WriteStartArray("outside");
-
-            foreach (var symbol in Reached(reaching ?? []))
-            {
-                symbol.Write(json);
-            }
-
-            json.WriteEndArray();
-            json.WriteEndObject();
-        }
-
-        return Encoding.UTF8.GetString(buffer.ToArray());
-    }
-
-    /// <summary>The outside declarations of <paramref name="ids"/> and every ancestor of theirs the run knows.</summary>
-    private IEnumerable<OutsideSymbol> Reached(IEnumerable<string> ids)
-    {
-        var pending = new Stack<string>(ids);
-        var seen = new HashSet<string>(StringComparer.Ordinal);
-
-        while (pending.TryPop(out var id))
-        {
-            if (!seen.Add(id) || !outside.TryGetValue(id, out var symbol))
-            {
-                continue;
-            }
-
-            yield return symbol;
-
-            if (symbol.Extends is not null)
-            {
-                pending.Push(symbol.Extends);
-            }
-
-            foreach (var face in symbol.Implements)
-            {
-                pending.Push(face);
-            }
+            var tree = trees[file];
+            var reads = asked.Reads.Where(read => read != file).Select(Real).ToList();
+            Line(output, json => new FileWriter(this, readings, project, tree, project.Model(tree), reads).Write(json));
+            files++;
         }
     }
 
@@ -268,7 +136,6 @@ public sealed class ContractWriter(IReadOnlyList<string> roots, IReadOnlySet<str
         }
 
         var id = original.ToDisplayString(Readings.Qualified);
-        reaching?.Add(id);
 
         if (outside.ContainsKey(id))
         {
@@ -336,7 +203,7 @@ public sealed class ContractWriter(IReadOnlyList<string> roots, IReadOnlySet<str
     }
 
     /// <summary>One file's line: its nodes numbered in pre-order, then its comments attached to them.</summary>
-    private sealed class FileWriter(ContractWriter run, Readings readings, Project project, SyntaxTree tree, SemanticModel model)
+    private sealed class FileWriter(ContractWriter run, Readings readings, Project project, SyntaxTree tree, SemanticModel model, IReadOnlyList<string> reads)
     {
         private static readonly ConcurrentDictionary<Type, PropertyInfo[]> Properties = new();
 
@@ -353,17 +220,20 @@ public sealed class ContractWriter(IReadOnlyList<string> roots, IReadOnlySet<str
 
         private int next;
 
-        public void Write(Utf8JsonWriter json, bool context)
+        public void Write(Utf8JsonWriter json)
         {
             json.WriteStartObject("file");
             json.WriteString("path", Real(tree.FilePath));
             json.WriteString("language", "csharp");
             json.WriteNumber("errors", tree.GetDiagnostics().Count(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error));
+            json.WriteStartArray("reads");
 
-            if (context)
+            foreach (var read in reads)
             {
-                json.WriteBoolean("context", true);
+                json.WriteStringValue(read);
             }
+
+            json.WriteEndArray();
 
             if (project.IsTest(tree))
             {

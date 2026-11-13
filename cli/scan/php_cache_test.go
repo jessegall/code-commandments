@@ -26,47 +26,19 @@ func TestPHPReadsThroughTheOneCache(t *testing.T) {
 	t.Cleanup(func() { cache.KeepIn(held) })
 
 	shop := []string{"src/Cart.php", "src/Order.php"}
-	if asked, _ := askedOfPHP(t, project, shop...); len(asked) != 2 {
+	if asked, _ := askedOf(t, PHPBridge, project, shop...); len(asked) != 2 {
 		t.Fatalf("the first run asked the bridge for %v, not both files", asked)
 	}
-	if asked, _ := askedOfPHP(t, project, shop...); len(asked) != 0 {
+	if asked, _ := askedOf(t, PHPBridge, project, shop...); len(asked) != 0 {
 		t.Errorf("a second run of unchanged files asked the bridge for %v", asked)
 	}
 
 	written(t, project, "src/Cart.php", "<?php\n\nnamespace Shop;\n\nfinal class Cart { public function __construct(public ?Order $order) {} }\n")
-	asked, stream := askedOfPHP(t, project, shop...)
+	asked, stream := askedOf(t, PHPBridge, project, shop...)
 	if !slices.Equal(asked, []string{filepath.Join(project, "src/Cart.php")}) {
 		t.Errorf("an edit to Cart.php asked the bridge for %v, not Cart.php alone", asked)
 	}
 	if stream.Program != nil && slices.ContainsFunc(stream.Program.Symbols, func(symbol contract.OutsideSymbol) bool { return symbol.Symbol == `Shop\Order` }) {
 		t.Errorf("Order, which a file of the scan declares, reads as outside it: %v", stream.Program.Symbols)
 	}
-}
-
-func askedOfPHP(t *testing.T, checkout string, relative ...string) ([]string, *contract.Stream) {
-	t.Helper()
-
-	route := read
-	var asked []string
-	read = func(b Bridge, roots, files, written []string, tally func()) (*contract.Stream, error) {
-		asked = append(asked, written...)
-
-		return route(b, roots, files, written, tally)
-	}
-	defer func() { read = route }()
-
-	var files []string
-	for _, file := range relative {
-		files = append(files, filepath.Join(checkout, file))
-	}
-	stream, err := PHPBridge.ReadShared([]string{filepath.Join(checkout, "src")}, files, func() {}, 1)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if len(stream.Files) != len(files) {
-		t.Fatalf("the read of %s holds %d files, not %d", checkout, len(stream.Files), len(files))
-	}
-	slices.Sort(asked)
-
-	return asked, stream
 }

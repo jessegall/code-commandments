@@ -22,7 +22,7 @@ public sealed class Project(IReadOnlyList<SyntaxTree> trees, IReadOnlyDictionary
 }
 
 /// <summary>
-/// The asked files of one project, under the key that stands for everything their lines are made from, and the project
-/// read only when a writer asks for it: a run whose files are all kept never compiles it.
+/// The files of one project to write, every other file whose contents shape their lines (the project's files and
+/// settings, and those of every project it reaches), and the project read only when a writer asks for it.
 /// </summary>
-public sealed record Asked(string Key, IReadOnlyList<string> Files, Func<Project> Read);
+public sealed record Asked(IReadOnlyList<string> Reads, IReadOnlyList<string> Files, Func<Project> Read);

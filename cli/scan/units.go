@@ -4,10 +4,13 @@ import (
 	"bufio"
 	"bytes"
 	"compress/gzip"
+	"encoding/json"
 	"fmt"
 	"io"
+	"maps"
 	"os"
 	"path/filepath"
+	"slices"
 
 	"github.com/jessegall/code-commandments/bridge"
 	"github.com/jessegall/code-commandments/contract"
@@ -73,30 +76,69 @@ func readUnits(held Bridge, roots, files []string, complete func(*engine.Codebas
 	return askUnits(held, roots, files, complete)
 }
 
+// askUnits reads the files through the one cache: each project's kept lines are cut into its unit beside the lines the
+// bridge writes for its misses, and a run whose files all stand starts no bridge.
 func askUnits(held Bridge, roots, files []string, complete func(*engine.Codebase) error) (*Units, error) {
-	asker, err := held.Reach.Open(held, roots)
-	if err != nil {
-		return nil, err
+	kept := linesKeptFor(held, roots)
+	records, header, misses := kept.standingRecords(files)
+	if first, later := kept.deferred(misses); len(later) > 0 {
+		if _, err := held.ask(roots, files, first, func() {}); err != nil {
+			return nil, err
+		}
+		records, header, misses = kept.standingRecords(files)
 	}
-	defer asker.Close()
+
 	folder, err := os.MkdirTemp("", "commandments-units-")
 	if err != nil {
 		return nil, err
 	}
 	units := &Units{folder: folder}
-	cutter := &cutter{units: units, projects: held.Projects, owners: map[string]string{}, complete: complete}
-	if err := asker.AskEach(held.Request(files), cutter.take); err != nil {
-		units.Close()
-
-		return nil, err
+	cutter := &cutter{units: units, projects: held.Projects, owners: map[string]string{}, complete: complete, kept: kept, standing: map[string][]string{}}
+	for file, record := range records {
+		owner := cutter.ownerOf(file)
+		cutter.standing[owner] = append(cutter.standing[owner], record)
 	}
-	if err := cutter.close(); err != nil {
+	if err := cutter.read(held, roots, files, misses, header); err != nil {
 		units.Close()
 
 		return nil, err
 	}
 
 	return units, nil
+}
+
+// read has the bridge write the misses, cut as they come, then cuts the projects none of whose files missed.
+func (c *cutter) read(held Bridge, roots, files, misses []string, header *contract.Header) error {
+	if len(misses) == 0 {
+		c.header = c.kept.standing(*header, roots)
+		c.units.header, _ = json.Marshal(contract.Line{Header: &c.header})
+		c.units.header = append(c.units.header, '\n')
+		c.joinProgram(nil)
+	} else {
+		asker, err := held.Reach.Open(held, roots)
+		if err != nil {
+			return err
+		}
+		defer asker.Close()
+		c.kept.printedFirst(files)
+		defer c.kept.settle()
+		if err := asker.AskEach(bridge.AskedOf(held.Projects, files, misses).Request(), c.take); err != nil {
+			return err
+		}
+	}
+	if err := c.close(); err != nil {
+		return err
+	}
+	for _, owner := range slices.Sorted(maps.Keys(c.standing)) {
+		if err := c.start(owner); err != nil {
+			return err
+		}
+		if err := c.close(); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (u *Units) Count() int {
@@ -148,6 +190,9 @@ type cutter struct {
 	zipped   *gzip.Writer
 	buffered *bufio.Writer
 	files    []*contract.File
+	kept     *keptLines
+	// standing are the records of each project's files whose kept line still stands, cut into its unit as it starts.
+	standing map[string][]string
 }
 
 func (c *cutter) take(line contract.Line, raw []byte) error {
@@ -164,14 +209,11 @@ func (c *cutter) take(line contract.Line, raw []byte) error {
 				return err
 			}
 		}
-		c.files = append(c.files, line.File)
-		if _, err := c.buffered.Write(raw); err != nil {
-			return err
-		}
+		c.kept.keep(c.header, line.File, raw)
 
-		return c.buffered.WriteByte('\n')
+		return c.cut(line.File, raw)
 	case line.Program != nil:
-		c.units.program = append(bytes.Clone(raw), '\n')
+		c.joinProgram(line.Program)
 	}
 
 	return nil
@@ -187,7 +229,47 @@ func (c *cutter) start(owner string) error {
 	c.buffered = bufio.NewWriter(c.zipped)
 	c.units.units = append(c.units.units, unit{owner: owner, path: disk.Name()})
 
+	return c.cutStanding(owner)
+}
+
+// cutStanding cuts the kept lines of the project just started into its unit, read from their records.
+func (c *cutter) cutStanding(owner string) error {
+	if len(c.standing[owner]) == 0 {
+		return nil
+	}
+	decoder := contract.KeptUnder(c.header)
+	for _, record := range c.standing[owner] {
+		held, err := used(record)
+		if err != nil {
+			continue
+		}
+		raw := c.kept.unmarked(held)
+		file, err := decoder.File(raw)
+		if err != nil {
+			continue
+		}
+		if err := c.cut(file, raw); err != nil {
+			return err
+		}
+	}
+	delete(c.standing, owner)
+
 	return nil
+}
+
+func (c *cutter) cut(file *contract.File, raw []byte) error {
+	c.files = append(c.files, file)
+	if _, err := c.buffered.Write(raw); err != nil {
+		return err
+	}
+
+	return c.buffered.WriteByte('\n')
+}
+
+// joinProgram holds the program line every kept run wrote, joined with the one this run's bridge wrote.
+func (c *cutter) joinProgram(fresh *contract.Program) {
+	raw, _ := json.Marshal(contract.Line{Program: c.kept.program(fresh)})
+	c.units.program = append(raw, '\n')
 }
 
 func (c *cutter) close() error {

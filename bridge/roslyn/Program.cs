@@ -7,7 +7,7 @@ using CodeCommandments.Bridge;
 //
 // roslyn-bridge --serve    — the same, kept warm: one request per line on stdin, {"paths": [...]}, each answered with
 // its lines, only loaded references kept between requests. "write": [...] limits the answer to those files; the rest
-// are written too, marked as context.
+// are compiled beside them and not written.
 //
 // roslyn-bridge --listen <port> — --serve over a TCP socket, one connection at a time: the service a session keeps up.
 //
@@ -40,13 +40,11 @@ static int Run(string[] args, Workspace workspace)
         return 0;
     }
 
-    var cached = args.FirstOrDefault(arg => arg.StartsWith("--cache=", StringComparison.Ordinal))?["--cache=".Length..];
-
     if (args.Contains("--serve"))
     {
         Parent.LeaveWithIt();
         using var output = Console.OpenStandardOutput();
-        Serve(Console.In, output, workspace, cached);
+        Serve(Console.In, output, workspace);
 
         return 0;
     }
@@ -61,7 +59,7 @@ static int Run(string[] args, Workspace workspace)
             using var client = listener.AcceptTcpClient();
             using var stream = client.GetStream();
             using var reader = new StreamReader(stream);
-            Serve(reader, stream, workspace, cached);
+            Serve(reader, stream, workspace);
         }
     }
 
@@ -89,19 +87,19 @@ static int Run(string[] args, Workspace workspace)
 
     using (var tree = Console.OpenStandardOutput())
     {
-        new ContractWriter(roots, null, Checkout.Cache(cached, roots), support).Write(tree, workspace);
+        new ContractWriter(roots, null, support).Write(tree, workspace);
     }
 
     return 0;
 }
 
 // Answers every request line from input with its lines on output, until input ends.
-static void Serve(TextReader input, Stream output, Workspace workspace, string? cached)
+static void Serve(TextReader input, Stream output, Workspace workspace)
 {
     while (input.ReadLine() is { } line)
     {
         var request = Request.Of(line);
-        new ContractWriter(request.Paths, request.Written, Checkout.Cache(cached, request.Paths), request.Support).Write(output, workspace);
+        new ContractWriter(request.Paths, request.Written, request.Support).Write(output, workspace);
         output.Flush();
     }
 }
@@ -132,24 +130,6 @@ internal static class Parent
 
     [System.Runtime.InteropServices.DllImport("libc")]
     private static extern int getppid();
-}
-
-// The checkout a run reads: the folder holding the repository of its first path, which every kept line is relative to.
-internal static class Checkout
-{
-    public static TreeCache? Cache(string? folder, IReadOnlyList<string> roots) =>
-        folder is { Length: > 0 } && roots.Count > 0 ? new TreeCache(folder, Of(roots[0])) : null;
-
-    private static string Of(string path)
-    {
-        var full = new FileInfo(Path.GetFullPath(path));
-        var start = Directory.Exists(full.FullName) ? new DirectoryInfo(full.FullName) : full.Directory!;
-
-        return RepositoryAround(start)?.FullName ?? start.FullName;
-    }
-
-    private static DirectoryInfo? RepositoryAround(DirectoryInfo? folder) =>
-        folder is null || Path.Exists(Path.Combine(folder.FullName, ".git")) ? folder : RepositoryAround(folder.Parent);
 }
 
 // A request line: the files to compile, the files among them to write, and the files read beside them.

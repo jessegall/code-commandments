@@ -119,10 +119,11 @@ class AnAgentsWindowStandsExactlyAsLongAsItsRunLives(unittest.TestCase):
     def test_a_live_run_holds_the_window_however_long_it_waits_and_a_killed_one_frees_it_at_once(self) -> None:
         with tempfile.TemporaryDirectory() as data:
             window = hook.EditWindow(Path(data), 7)
-            self.assertTrue(window.gather(b'{"n":1}'))
+            token = window.gather(b'{"n":1}')
+            self.assertTrue(token)
             holder = subprocess.Popen(["sleep", "30"])
             try:
-                window.names(holder.pid)
+                window.names(holder.pid, token)
                 long_ago = time.time() - 3600
                 os.utime(window.path(".open"), (long_ago, long_ago))
                 self.assertFalse(window.gather(b'{"n":2}'), "a second judging was queued beside one still waiting")
@@ -135,18 +136,18 @@ class AnAgentsWindowStandsExactlyAsLongAsItsRunLives(unittest.TestCase):
     def test_a_window_the_run_already_closed_is_not_opened_again_by_naming_it(self) -> None:
         with tempfile.TemporaryDirectory() as data:
             window = hook.EditWindow(Path(data), 7)
-            window.gather(b'{"n":1}')
+            token = window.gather(b'{"n":1}')
             window.path(".open").unlink()
-            window.names(os.getpid())
+            window.names(os.getpid(), token)
 
             self.assertFalse(window.path(".open").exists())
 
 
 class AJudgingIsQueuedThroughTheJournal(unittest.TestCase):
     def test_the_line_runs_the_binary_on_the_kept_event_in_the_agents_checkout(self) -> None:
-        line = hook.judging_line("/bin/journal", 7, Path("/plugin/.journal-plugin/hook"))
+        line = hook.judging_line("/bin/journal", 7, "a1b2", Path("/plugin/.journal-plugin/hook"))
         self.assertEqual(line, ["/bin/journal", "plugin", "run", "--kind", "judge", "--agent", "7", "--",
-                                "/plugin/.journal-plugin/hook", "--judge-agent=7"])
+                                "/plugin/.journal-plugin/hook", "--judge-agent=7:a1b2"])
         self.assertNotIn("--agent", hook.judging_line("/bin/journal", 0))
 
     def test_an_edit_keeps_its_event_and_starts_one_run(self) -> None:
@@ -256,7 +257,7 @@ class NothingAfterTheAnswerStopsAnEvent(unittest.TestCase):
             self.assertEqual(list((data / "told").iterdir()), [])
 
     def test_a_failure_between_gathering_and_naming_reopens_the_window(self) -> None:
-        def failing(agent: int) -> Path:
+        def failing(agent: int, token: str = "") -> Path:
             raise OSError("no room for the event")
 
         with tempfile.TemporaryDirectory() as data:
@@ -479,10 +480,10 @@ class EveryJudgingOfAnAgentWaitsInOneRun(unittest.TestCase):
     def test_a_hand_in_takes_over_the_agents_waiting_run(self) -> None:
         with tempfile.TemporaryDirectory() as data:
             window = hook.EditWindow(Path(data), 7)
-            self.assertTrue(window.gather(b'{"n":1}'))
-            holder = subprocess.Popen(["sleep", "30"], start_new_session=True)
+            token = window.gather(b'{"n":1}')
+            holder = waiting_run(f"{hook.JUDGE_AGENT}7:{token}")
             try:
-                window.names(holder.pid)
+                window.names(holder.pid, token)
                 window.superseded()
                 holder.wait(timeout=5)
             finally:
@@ -490,6 +491,31 @@ class EveryJudgingOfAnAgentWaitsInOneRun(unittest.TestCase):
                     holder.kill()
             self.assertEqual(window.pending(), [], "the hand-in left the agent's edits waiting for a second run")
             self.assertTrue(window.gather(b'{"n":2}'), "the agent's window stayed held by the run the hand-in took over")
+
+    def test_a_hand_in_never_stops_a_process_that_is_not_the_agents_run(self) -> None:
+        with tempfile.TemporaryDirectory() as data:
+            window = hook.EditWindow(Path(data), 7)
+            token = window.gather(b'{"n":1}')
+            stranger = waiting_run(f"{hook.JUDGE_AGENT}8:{token}")
+            try:
+                window.names(stranger.pid, token)
+                window.superseded()
+                time.sleep(0.2)
+                self.assertIsNone(stranger.poll(), "the hand-in stopped a process that reused the run's pid")
+            finally:
+                stranger.kill()
+                stranger.wait()
+
+    def test_a_run_that_lost_its_window_takes_and_closes_nothing(self) -> None:
+        with tempfile.TemporaryDirectory() as data:
+            window = hook.EditWindow(Path(data), 7)
+            old = window.gather(b'{"n":1}')
+            window.path(".open").unlink()
+            new = window.gather(b'{"n":2}')
+            self.assertIsNone(window.take(old), "a run that lost the window took the next run's events")
+            self.assertTrue(window.closed_when_empty(old), "a run that lost the window kept judging")
+            self.assertTrue(window.holds(new), "a run that lost the window closed the next run's window")
+            self.assertIsNotNone(window.take(new))
 
     def test_the_edit_window_is_the_setting_the_last_edit_carried(self) -> None:
         line = lambda event, seconds: json.dumps({"event": event, "settings": {"judge_edit_window": seconds}}).encode()
@@ -520,10 +546,10 @@ class EveryJudgingOfAnAgentWaitsInOneRun(unittest.TestCase):
     def test_a_holder_of_another_user_or_past_two_hours_frees_the_window(self) -> None:
         with tempfile.TemporaryDirectory() as data:
             window = hook.EditWindow(Path(data), 7)
-            window.gather(b'{"n":1}')
-            window.names(1)
-            self.assertTrue(window.gather(b'{"n":2}'), "launchd, a process of another user, held the window")
-            window.names(os.getpid())
+            window.names(1, window.gather(b'{"n":1}'))
+            token = window.gather(b'{"n":2}')
+            self.assertTrue(token, "launchd, a process of another user, held the window")
+            window.names(os.getpid(), token)
             long_ago = time.time() - 2 * hook.HELD_AT_MOST
             os.utime(window.path(".open"), (long_ago, long_ago))
             self.assertTrue(window.gather(b'{"n":3}'), "a holder named two hours ago still held the window")
@@ -544,6 +570,10 @@ class patched_environment:
                 os.environ.pop(name, None)
             else:
                 os.environ[name] = value
+
+def waiting_run(argument: str) -> subprocess.Popen:
+    """A process standing in for the journal's run, started with the argument the run carries, in its own group."""
+    return subprocess.Popen([sys.executable, "-c", "import time; time.sleep(30)", argument], start_new_session=True)
 
 
 if __name__ == "__main__":

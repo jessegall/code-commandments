@@ -385,6 +385,7 @@ var CSharp = Bridge{Kind: "roslyn", Word: "csharp", Languages: []source.Language
 	Reach:      Process{Command: func(roots []string) ([]string, error) { return bridge.Roslyn(roots...) }, Named: bridge.RoslynFailure},
 	Notice:     bridge.RoslynNotice,
 	Prepare:    bridge.FetchRoslyn,
+	Identity:   bridge.RoslynIdentity,
 }
 
 var GoBridge = Bridge{Kind: "go", Word: "go", Languages: []source.Language{source.Go}, Label: "Go",
@@ -471,12 +472,12 @@ func (b Bridge) ReadShared(roots, files []string, tally func(), processes int) (
 			stream, err = joined(stream, rest), errors.Join(err, restErr)
 		}
 	}
-	if stream == nil || len(hits) == 0 {
+	if stream == nil {
 		return stream, err
 	}
 	stream.Files = append(hits, stream.Files...)
 	stream.Trailer.Files = len(stream.Files)
-	stream.Program = outsideOnly(kept.program(stream.Program), stream.Files)
+	stream.Program = outsideOnly(kept.program(outsideOnly(stream.Program, stream.Files)), stream.Files)
 
 	return stream, err
 }
@@ -581,6 +582,7 @@ func (b Bridge) ask(roots, files, written []string, tally func()) (*contract.Str
 	defer asker.Close()
 
 	kept := linesKeptFor(b, roots)
+	kept.printedFirst(files)
 	defer kept.settle()
 	stream := &contract.Stream{}
 	err = asker.AskEach(bridge.AskedOf(b.Projects, files, written).Request(), func(line contract.Line, raw []byte) error {
@@ -595,7 +597,7 @@ func (b Bridge) ask(roots, files, written []string, tally func()) (*contract.Str
 				tally()
 			}
 		case line.Program != nil:
-			stream.Program = kept.program(line.Program)
+			stream.Program = line.Program
 		case line.Trailer != nil:
 			stream.Trailer = *line.Trailer
 		}
@@ -619,6 +621,12 @@ func joined(read, rest *contract.Stream) *contract.Stream {
 
 	read.Files = append(read.Files, rest.Files...)
 	read.Trailer.Files = len(read.Files)
+	if read.Program == nil {
+		read.Program = rest.Program
+	} else if rest.Program != nil {
+		program := joinedPrograms(*read.Program, rest.Program)
+		read.Program = &program
+	}
 
 	return read
 }

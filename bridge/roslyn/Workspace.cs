@@ -60,18 +60,20 @@ public sealed class Workspace
 
     /// <summary>
     /// The run as a stream, one project at a time, holding no source between runs: each project is parsed and compiled
-    /// when it is reached, dependencies first, its asked files handed to <paramref name="write"/>, and its compilation
-    /// let go once no project still to be written reaches it. An assembly is loaded once for the workspace and shared
-    /// by every project and every run that reaches it. Files outside every project come last, compiled alone.
+    /// when it is reached, dependencies first, its files to write handed to <paramref name="write"/>, and its compilation
+    /// let go once no project still to be written reaches it. A project with no file to write is never compiled. An
+    /// assembly is loaded once for the workspace and shared by every project and every run that reaches it. Files outside
+    /// every project come last, compiled alone. <paramref name="written"/> names the files to write; empty, every one.
     /// </summary>
-    public void Stream(IReadOnlyList<string> paths, IReadOnlyList<string> support, Action<Asked> write)
+    public void Stream(IReadOnlyList<string> paths, IReadOnlyList<string> support, IReadOnlySet<string> written, Action<Asked> write)
     {
-        var asked = Sources.Under(paths).ToHashSet(StringComparer.Ordinal);
+        var named = Sources.Under(paths);
+        var asked = named.Where(file => written.Count == 0 || written.Contains(file)).ToHashSet(StringComparer.Ordinal);
         var solution = Solution.Of(support);
         var owned = new Dictionary<string, List<string>>(StringComparer.Ordinal);
         var loose = new List<string>();
 
-        foreach (var file in solution.Files().Concat(asked).Distinct())
+        foreach (var file in solution.Files().Concat(named).Distinct())
         {
             if (solution.Owner(file) is { } owner)
             {
@@ -94,7 +96,7 @@ public sealed class Workspace
 
         var readers = order.SelectMany(csproj => reach[csproj]).GroupBy(other => other).ToDictionary(group => group.Key, group => group.Count());
         var compilations = new Dictionary<string, Lazy<(List<SyntaxTree> Sources, CSharpCompilation Compilation)>>(StringComparer.Ordinal);
-        var keys = new Dictionary<string, string>(StringComparer.Ordinal);
+        var reads = new Dictionary<string, List<string>>(StringComparer.Ordinal);
 
         foreach (var csproj in order)
         {
@@ -102,7 +104,7 @@ public sealed class Workspace
             var usings = GlobalUsings.Of(csproj, solution.GeneratedUsingsOf(csproj));
             var own = References.Of(csproj);
             var reached = reach[csproj].Where(compilations.ContainsKey).ToList();
-            keys[csproj] = KeyOf(csproj, files, usings, own, reach[csproj].Select(other => keys.GetValueOrDefault(other) ?? ""));
+            reads[csproj] = [..Settings(csproj, solution), ..files, ..reach[csproj].SelectMany(other => reads[other])];
             compilations[csproj] = new(() =>
             {
                 var sources = files.Select(Parse).ToList();
@@ -112,7 +114,7 @@ public sealed class Workspace
                 return (sources, CSharpCompilation.Create(Path.GetFileNameWithoutExtension(csproj), [..sources, CSharpSyntaxTree.ParseText(usings, Options)], [..assemblies, ..projects], Compiled));
             });
             var compiled = compilations[csproj];
-            WriteAsked(keys[csproj], files, () => compiled.Value, asked, solution.Projects[csproj].IsTestProject(), write);
+            WriteAsked(reads[csproj], files, () => compiled.Value, asked, solution.Projects[csproj].IsTestProject(), write);
 
             foreach (var other in reach[csproj].Where(readers.ContainsKey))
             {
@@ -136,12 +138,12 @@ public sealed class Workspace
 
                 return (sources, CSharpCompilation.Create("loose", sources, References.Loose(loaded), Compiled));
             });
-            WriteAsked(KeyOf("", loose, "", null, []), loose, () => compiled.Value, asked, false, write);
+            WriteAsked(loose, loose, () => compiled.Value, asked, false, write);
         }
     }
 
-    /// <summary>Hands the asked files among <paramref name="files"/> to <paramref name="write"/> under the project's key, the project compiled only when the writer asks for it.</summary>
-    private static void WriteAsked(string key, List<string> files, Func<(List<SyntaxTree> Sources, CSharpCompilation Compilation)> compiled, HashSet<string> asked, bool test, Action<Asked> write)
+    /// <summary>Hands the asked files among <paramref name="files"/> to <paramref name="write"/> with what their lines read, the project compiled only when the writer asks for it.</summary>
+    private static void WriteAsked(List<string> reads, List<string> files, Func<(List<SyntaxTree> Sources, CSharpCompilation Compilation)> compiled, HashSet<string> asked, bool test, Action<Asked> write)
     {
         var wanted = files.Where(asked.Contains).ToList();
 
@@ -150,7 +152,7 @@ public sealed class Workspace
             return;
         }
 
-        write(new Asked(key, wanted, () =>
+        write(new Asked(reads.Distinct().ToList(), wanted, () =>
         {
             var (sources, compilation) = compiled();
             var trees = sources.Where(tree => asked.Contains(tree.FilePath)).ToList();
@@ -159,53 +161,16 @@ public sealed class Workspace
         }));
     }
 
-    /// <summary>
-    /// The key of a project as one file's semantic facts see it, made of contents alone and never a path: its project
-    /// file, its global usings, what it references, the keys of the projects it reaches, and every source's
-    /// declarations with the bodies of its members cut out. A change inside a body keeps every other file's line; a
-    /// changed declaration starts them over.
-    /// </summary>
-    private static string KeyOf(string csproj, List<string> files, string usings, Reach? own, IEnumerable<string> reached)
+    /// <summary>The files besides its sources that shape <paramref name="csproj"/>'s compilation: the project file, what NuGet restored for it and its generated global usings.</summary>
+    private static IEnumerable<string> Settings(string csproj, Solution solution)
     {
-        var parts = new List<string> { File.Exists(csproj) ? File.ReadAllText(csproj) : "", usings };
+        yield return csproj;
+        yield return Path.Combine(solution.Projects[csproj].Intermediate(), "project.assets.json");
 
-        if (own is not null)
+        if (solution.GeneratedUsingsOf(csproj) is { } usings)
         {
-            parts.AddRange([own.Tfm, ..own.Frameworks, ..own.Packages]);
+            yield return usings;
         }
-
-        parts.AddRange(reached);
-        parts.AddRange(files.Select(Declarations).Order(StringComparer.Ordinal));
-
-        return TreeCache.KeyOf(parts);
-    }
-
-    /// <summary>What <paramref name="file"/> declares, as its text with every member body cut out: all one file's types can see of another.</summary>
-    private static string Declarations(string file)
-    {
-        var text = File.ReadAllText(file);
-        var bodies = CSharpSyntaxTree.ParseText(text, Options).GetRoot().DescendantNodes()
-            .Select(node => node switch
-            {
-                BaseMethodDeclarationSyntax method => (SyntaxNode?)method.Body ?? method.ExpressionBody,
-                AccessorDeclarationSyntax accessor => (SyntaxNode?)accessor.Body ?? accessor.ExpressionBody,
-                _ => null,
-            })
-            .OfType<SyntaxNode>()
-            .Select(body => body.Span)
-            .OrderBy(span => span.Start)
-            .ToList();
-
-        var kept = new System.Text.StringBuilder();
-        var from = 0;
-
-        foreach (var span in bodies.Where(span => span.Start >= from))
-        {
-            kept.Append(text, from, span.Start - from);
-            from = span.End;
-        }
-
-        return TreeCache.KeyOf(kept.Append(text, from, text.Length - from).ToString());
     }
 
     /// <summary>Puts <paramref name="csproj"/> in <paramref name="order"/> after every project it reaches, and keeps what it reaches in <paramref name="reach"/>.</summary>
