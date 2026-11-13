@@ -31,7 +31,6 @@ const (
 	parallelKey      = "judge_parallel"
 	readAtOnceKey    = "judge_read_at_once"
 	recordKey        = "judge_record"
-	ceilingKey       = "judge_nodes_held"
 	workersKey       = "judge_workers"
 	workerEditsKey   = "judge_worker_edits"
 	liveEditsKey     = "judge_edits"

@@ -16,7 +16,7 @@ func TestTheNewSettingsAreNotProjectConfigAndTheSchemaSaysSo(t *testing.T) {
 
 	schema := string(config.Schema(root))
 
-	for _, key := range []string{workersKey, mergesKey, ceilingKey} {
+	for _, key := range []string{workersKey, mergesKey} {
 		if strings.Contains(schema, key) {
 			t.Errorf("the project's config schema declares %s, and it is a setting of the service rather than of the project: a command-line run has no worker, no merge key and no held tree", key)
 		}

@@ -174,13 +174,6 @@
             "default": "168",
             "group": "Performance"
         },
-        "judge_nodes_held": {
-            "title": "Most of the project the service holds",
-            "help": "A ceiling, counted in parsed nodes, over everything the service keeps in memory for this project. Past it no new checkout is held and the answer says so instead of the service growing. Zero holds nothing back.",
-            "type": "number",
-            "default": "0",
-            "group": "Performance"
-        },
         "workers_cli": {
             "title": "Helpers may run the commandments CLI",
             "help": "On, any helper (a worker, a reviewer, a researcher, the merger) may run the commandments program, `journal sins` and the plugin's other aliases. Off, such a command is refused at once with a line saying so, however it is written: through a variable, in a subshell or behind env, nice or timeout. Their work is still judged when it is handed in and merged, and the main agent is not affected.",

@@ -15,7 +15,7 @@ func TestThePluginsOwnSwitchesAreNotProjectConfig(t *testing.T) {
 
 	schema := s.Asks("rules", "schema")
 
-	s.Never(schema, "judge_workers", "judge_merges", "judge_nodes_held", "judge_files_at_once")
+	s.Never(schema, "judge_workers", "judge_merges", "judge_files_at_once")
 }
 
 func TestAWorkerRunsTheCommandmentsCliWhenTheSettingAllowsIt(t *testing.T) {

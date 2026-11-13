@@ -120,14 +120,6 @@
         "help": "How long anything kept between runs stays once nothing uses it: the parsed trees of every language, what each rule answered per file and mypy's cache. Every use resets the clock, so only what went untouched for the whole time is removed."
     },
     {
-        "key": "judge_nodes_held",
-        "title": "Most of the project the service holds",
-        "type": "number",
-        "kind": "number",
-        "default": 0,
-        "help": "A ceiling, counted in parsed nodes, over everything the service keeps in memory for this project. Past it no new checkout is held and the answer says so instead of the service growing. Zero holds nothing back."
-    },
-    {
         "key": "workers_cli",
         "title": "Helpers may run the commandments CLI",
         "type": "flag",

@@ -4,7 +4,6 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
-	"strconv"
 	"strings"
 	"time"
 
@@ -108,25 +107,6 @@ func recordJudging(moment Moment, event Event, merged Response, answer JournalAn
 		ReadMs: merged.ReadMs, RuleMs: milliseconds(spent) - merged.ReadMs, Asked: asked, NotAsked: notAsked,
 		Sins: len(merged.Activity), Dropped: DroppedSoFar(), Memory: MemoryNow(), Said: moment.CheckoutSaid, Files: merged.Judged,
 	})
-}
-
-func ceilingChosen() int {
-	chosen, given := chosenSettings()
-	if !given {
-		return 0
-	}
-
-	said, named := chosen[ceilingKey]
-	if !named {
-		return 0
-	}
-
-	nodes, err := strconv.Atoi(strings.TrimSpace(asText(said)))
-	if err != nil || nodes < 0 {
-		return 0
-	}
-
-	return nodes
 }
 
 func notForThisRole(moment Moment) string {

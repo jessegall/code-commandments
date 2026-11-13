@@ -337,7 +337,7 @@ func TestTheSettingsFileCarriesEverySettingTheCodeReads(t *testing.T) {
 		keys = append(keys, setting.Key)
 	}
 
-	for _, named := range []string{"folders_judged", "folders_skipped", "judge_parallel", "judge_record", "judge_workers", "judge_nodes_held"} {
+	for _, named := range []string{"folders_judged", "folders_skipped", "judge_parallel", "judge_record", "judge_workers"} {
 		if !slices.Contains(keys, named) {
 			t.Errorf("the settings file declares no %s, so a person cannot switch it and the code reads a setting nobody can set", named)
 		}
