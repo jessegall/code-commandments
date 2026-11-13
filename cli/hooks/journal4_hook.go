@@ -22,32 +22,12 @@ const (
 
 const updatedEvent = "plugin.updated"
 
-var theSameEvent = map[string]string{
-	"plugin.update":         updatedEvent,
-	"worker_worktree.merge": landedEvent,
-	"merge_request.create":  requestedEvent,
-
-	"suites.coding.workers.worker_delivering": deliveringEvent,
-}
-
 func namedAsTheKey(event string) string {
-	if same, known := theSameEvent[event]; known {
-		return same
+	if kind, known := kindNamed(event); known {
+		return kind.Key
 	}
 
 	return event
-}
-
-var hooksOf4 = map[string]string{
-	"command_starting": "PreToolUse",
-	"file_edited":      "PostToolUse",
-	"tool_starting":    "PreToolUse",
-	"idle":             "Stop",
-	"session_started":  "SessionStart",
-	"subagent_started": "SubagentStart",
-	"prompt_submitted": "UserPromptSubmit",
-	"compacting":       "PreCompact",
-	"ticked":           "Stop",
 }
 
 // PluginHook is `plugin-hook`: the program the agent journal's plugin runs for every event it hears, one JSON line in and one out.
@@ -122,12 +102,9 @@ const (
 )
 
 func judgedAfter(event string) bool {
-	switch event {
-	case heldEvent, editedEvent, tickedEvent, idleEvent:
-		return true
-	}
+	kind, known := kindNamed(event)
 
-	return false
+	return known && kind.JudgedLater
 }
 
 func Answer4Now(line map[string]any) string {
@@ -258,10 +235,11 @@ func Answer4Of(line map[string]any) string {
 }
 
 func Moment4Of(line map[string]any) (map[string]any, bool) {
-	hook, known := hooksOf4[asText(line["event"])]
-	if !known {
+	kind, known := kindNamed(asText(line["event"]))
+	if !known || kind.Hook == "" {
 		return nil, false
 	}
+	hook := kind.Hook
 
 	data, _ := line["data"].(map[string]any)
 	input, _ := data["input"].(map[string]any)

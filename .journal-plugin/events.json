@@ -1,0 +1,110 @@
+[
+  {
+    "key": "command_starting",
+    "names": [
+      "command_starting"
+    ],
+    "hook": "PreToolUse",
+    "judged_later": true,
+    "answered_here": true
+  },
+  {
+    "key": "file_edited",
+    "names": [
+      "file_edited"
+    ],
+    "hook": "PostToolUse",
+    "judged_later": true,
+    "edits": true
+  },
+  {
+    "key": "tool_starting",
+    "names": [
+      "tool_starting"
+    ],
+    "hook": "PreToolUse"
+  },
+  {
+    "key": "idle",
+    "names": [
+      "idle"
+    ],
+    "hook": "Stop",
+    "judged_later": true,
+    "answered_here": true
+  },
+  {
+    "key": "ticked",
+    "names": [
+      "ticked"
+    ],
+    "hook": "Stop",
+    "judged_later": true
+  },
+  {
+    "key": "session_started",
+    "names": [
+      "session_started"
+    ],
+    "hook": "SessionStart"
+  },
+  {
+    "key": "subagent_started",
+    "names": [
+      "subagent_started"
+    ],
+    "hook": "SubagentStart"
+  },
+  {
+    "key": "prompt_submitted",
+    "names": [
+      "prompt_submitted"
+    ],
+    "hook": "UserPromptSubmit"
+  },
+  {
+    "key": "compacting",
+    "names": [
+      "compacting"
+    ],
+    "hook": "PreCompact"
+  },
+  {
+    "key": "plugin.updated",
+    "names": [
+      "plugin.updated",
+      "plugin.update"
+    ]
+  },
+  {
+    "key": "worker_delivering",
+    "names": [
+      "worker_delivering",
+      "suites.coding.workers.worker_delivering"
+    ],
+    "guarded_by": "judge_hand_ins",
+    "handed_in": true
+  },
+  {
+    "key": "suites.coding.workers.worker_worktree.merge",
+    "names": [
+      "suites.coding.workers.worker_worktree.merge",
+      "worker_worktree.merge"
+    ],
+    "merged": true
+  },
+  {
+    "key": "suites.coding.workers.merge_request.created",
+    "names": [
+      "suites.coding.workers.merge_request.created",
+      "merge_request.create"
+    ],
+    "guarded_by": "judge_before_merge"
+  },
+  {
+    "key": "suites.coding.workers.worker_worktree.cut",
+    "names": [
+      "suites.coding.workers.worker_worktree.cut"
+    ]
+  }
+]

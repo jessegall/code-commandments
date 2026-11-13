@@ -13,7 +13,11 @@ import (
 func TestEachVersion4EventIsReadAsTheMomentItStandsFor(t *testing.T) {
 	t.Setenv("JOURNAL_ROOT", "/the/project")
 	tools := map[string]string{"command_starting": "Bash", "file_edited": "Write"}
-	for event, hook := range hooksOf4 {
+	for _, kind := range EventKinds {
+		if kind.Hook == "" {
+			continue
+		}
+		event, hook := kind.Key, kind.Hook
 		line := map[string]any{"v": 1, "event": event, "session": "s1", "environment": "main", "data": map[string]any{"tool": "Edit", "input": map[string]any{"file_path": "src/A.php", "command": "ls"}}}
 		given, known := Moment4Of(line)
 		if !known {

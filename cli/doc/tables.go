@@ -293,6 +293,9 @@ const Journal4Plugin = "journal-plugin.json"
 
 const Journal5Plugin = "journal-plugin.5.json"
 
+// EventKindsFile is the event table the plugin's script reads, written from cli/hooks.EventKinds.
+const EventKindsFile = ".journal-plugin/events.json"
+
 const JournalBriefing = "instructions/briefing.md"
 
 const WorkerBriefing = "instructions/worker-briefing.md"
@@ -383,6 +386,7 @@ func Generated(root string) (map[string]string, error) {
 		}
 	}
 	documents["README.md"] = updated
+	documents[EventKindsFile] = hooks.EventKindsJSON()
 	manifest, read := jsonfile.Read(filepath.Join(root, Plugin))
 	if !read {
 		return nil, fmt.Errorf("%s is not a JSON object", Plugin)

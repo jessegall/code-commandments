@@ -17,17 +17,24 @@ from pathlib import Path
 PLUGIN = Path(__file__).resolve().parent.parent
 BINARY = PLUGIN / "bin" / "commandments-release"
 
-JUDGED_LATER = {"command_starting", "file_edited", "ticked", "idle"}
-HANDED_IN = {"worker_delivering", "suites.coding.workers.worker_delivering"}
-MERGED = {"worker_worktree.merge", "suites.coding.workers.worker_worktree.merge"}
-EDITED = "file_edited"
+# Every event kind, stated once in the binary's table (cli/hooks.EventKinds) and written beside this script.
+EVENT_KINDS = json.loads((Path(__file__).resolve().parent / "events.json").read_text())
+
+
+def names_where(fact: str) -> set:
+    return {name for kind in EVENT_KINDS if kind.get(fact) for name in kind["names"]}
+
+
+JUDGED_LATER = names_where("judged_later")
+HANDED_IN = names_where("handed_in")
+MERGED = names_where("merged")
+EDITED = next(kind["key"] for kind in EVENT_KINDS if kind.get("edits"))
 WORKER_ROLES = {"worker", "helper", "medior", "senior", "builder"}
 
 LIVE_EDITS, WORKERS, WORKER_EDITS = "judge_edits", "judge_workers", "judge_worker_edits"
 HAND_INS, HAND_INS_AFTER = "judge_hand_ins", "judge_hand_ins_after"
 # The guards that hold a step on a judging, each with the setting that asks for it.
-GUARDED = {"worker_delivering": HAND_INS, "suites.coding.workers.worker_delivering": HAND_INS,
-           "suites.coding.workers.merge_request.created": "judge_before_merge"}
+GUARDED = {name: kind["guarded_by"] for kind in EVENT_KINDS if kind.get("guarded_by") for name in kind["names"]}
 EVENTS, WINDOWS, TOLD, QUEUE = "events", "windows", "told", "queue"
 JUDGE_EVENT, JUDGE_GUARD, JUDGE_AGENT = "--judge-event=", "--judge-guard=", "--judge-agent="
 EDIT_WINDOW, DEFAULT_EDIT_WINDOW = "judge_edit_window", 5.0
@@ -211,7 +218,7 @@ COMMAND_SEPARATORS = ("&&", "||", ";", "|", "(", ")", "{", "}", "`", '"', "'")
 COMMAND_WRAPPERS = {"env", "nice", "nohup", "exec", "command", "time", "timeout", "xargs", "sudo", "caffeinate"}
 COMMAND_STARTING = "command_starting"
 # Events the binary has nothing to add to once the script has refused what it refuses: answered at once, judged later.
-ANSWERED_HERE = {COMMAND_STARTING, "idle"}
+ANSWERED_HERE = names_where("answered_here")
 
 
 def is_assignment(word: str) -> bool:
