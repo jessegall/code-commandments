@@ -15,7 +15,8 @@ jobs:
   # builds that binary here; a tag that pins an earlier release changed only the plugin's own files, runs the binary
   # that release built, and publishes nothing, so a change to how the plugin handles events ships in seconds.
   pin:
-    runs-on: ubuntu-latest
+    # 24.04: the newest runner that still offers the Python 3.9 macOS runs the plugin's script under.
+    runs-on: ubuntu-24.04
     outputs:
       # Whether this tag builds its binary: false when it runs an earlier release's.
       builds: ${{ steps.pin.outputs.builds }}
