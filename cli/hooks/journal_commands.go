@@ -28,13 +28,13 @@ const (
 	judgedKey        = "folders_judged"
 	skippedKey       = "folders_skipped"
 	parallelKey      = "judge_parallel"
+	readAtOnceKey    = "judge_read_at_once"
 	recordKey        = "judge_record"
 	ceilingKey       = "judge_nodes_held"
 	workersKey       = "judge_workers"
 	workerEditsKey   = "judge_worker_edits"
 	liveEditsKey     = "judge_edits"
 	mergesKey        = "judge_merges"
-	filesInOneGoKey  = "judge_files_at_once"
 	editWindowKey    = "judge_edit_window"
 	cacheHoursKey    = "cache_hours"
 	skillsFolder     = "journal-skills"
@@ -286,6 +286,14 @@ func (JournalConfig) Apply(in *cli.Input, console cli.Console) ([]string, int, e
 
 	if parallel, err := strconv.Atoi(strings.TrimSpace(fmt.Sprint(chosen[parallelKey]))); err == nil && parallel >= 1 {
 		if did, err := editor.RunWith(parallel); err != nil {
+			return nil, 0, err
+		} else if did {
+			changed++
+		}
+	}
+
+	if atOnce, err := strconv.Atoi(strings.TrimSpace(fmt.Sprint(chosen[readAtOnceKey]))); err == nil && atOnce >= 1 {
+		if did, err := editor.ReadWith(atOnce); err != nil {
 			return nil, 0, err
 		} else if did {
 			changed++

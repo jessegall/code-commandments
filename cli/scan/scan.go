@@ -26,6 +26,14 @@ type Sources struct {
 	roots      []string
 	tooLarge   []string
 	read       func(done, total int)
+	atOnce     int
+}
+
+// ReadingAtOnce is these sources read by as many bridge processes per language side by side, each a share of the files.
+func (s Sources) ReadingAtOnce(processes int) Sources {
+	s.atOnce = processes
+
+	return s
 }
 
 const largestSource = 2 << 20
@@ -228,7 +236,7 @@ func (s Sources) bridge() map[int]bridged {
 		go func() {
 			slots <- struct{}{}
 			defer func() { <-slots }()
-			stream, err := read.Read(s.roots, s.Files(read.Languages...), tally)
+			stream, err := read.ReadShared(s.roots, s.Files(read.Languages...), tally, s.atOnce)
 			finished <- bridged{index, stream, err}
 		}()
 	}

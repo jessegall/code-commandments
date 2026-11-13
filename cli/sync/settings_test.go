@@ -42,7 +42,7 @@ func TestEverySettingThisPlanAddsSaysWhatItIsAndWhatItDefaultsTo(t *testing.T) {
 		"judge_before_merge":   false,
 		"workers_cli":          false,
 		"judge_nodes_held":     float64(0),
-		"judge_files_at_once":  float64(0),
+		"judge_read_at_once":   float64(1),
 		"judge_edit_window":    float64(5),
 	}
 

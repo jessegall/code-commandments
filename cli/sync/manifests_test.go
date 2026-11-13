@@ -53,7 +53,7 @@ func TestNoManifestKeepsAServiceRunning(t *testing.T) {
 	}
 }
 
-func TestBothPluginManifestsPinTheSameRelease(t *testing.T) {
+func TestTheVersionedPluginManifestPinsTheSourcesRelease(t *testing.T) {
 	read := func(name ...string) pins {
 		content, err := os.ReadFile(filepath.Join(append([]string{"..", ".."}, name...)...))
 		if err != nil {
@@ -66,17 +66,18 @@ func TestBothPluginManifestsPinTheSameRelease(t *testing.T) {
 
 		return read
 	}
-	held, offered := read(".journal-plugin", "plugin.json"), read("journal-plugin.json")
+	// journal-plugin.json is frozen for journals before version 5; the versioned manifest follows the pin.
+	held, offered := read(".journal-plugin", "plugin.json"), read("journal-plugin.5.json")
 
 	fetched := regexp.MustCompile(`^COMMANDMENTS_RELEASE=(v\d+\.\d+\.\d+) `).FindStringSubmatch(offered.Setup[0].Run)
 	if fetched == nil {
-		t.Fatalf("journal-plugin.json's first setup step pins no release: %q", offered.Setup[0].Run)
+		t.Fatalf("journal-plugin.5.json's first setup step pins no release: %q", offered.Setup[0].Run)
 	}
 	if pinned := held.Env["COMMANDMENTS_RELEASE"]; pinned != fetched[1] {
-		t.Errorf(".journal-plugin/plugin.json pins %s and journal-plugin.json fetches %s", pinned, fetched[1])
+		t.Errorf(".journal-plugin/plugin.json pins %s and journal-plugin.5.json fetches %s", pinned, fetched[1])
 	}
 	if held.Version != offered.Version {
-		t.Errorf(".journal-plugin/plugin.json is version %s and journal-plugin.json is %s", held.Version, offered.Version)
+		t.Errorf(".journal-plugin/plugin.json is version %s and journal-plugin.5.json is %s", held.Version, offered.Version)
 	}
 }
 

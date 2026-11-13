@@ -831,10 +831,6 @@ const (
 )
 
 func readsInOneGo(files int) int {
-	if chosen := filesInOneGoChosen(); chosen > 0 {
-		return chosen
-	}
-
 	return min(mostReadInOneGo, max(leastReadInOneGo, files/partOfTheTree))
 }
 

@@ -257,7 +257,7 @@ func (c Command) judge(options options, selected []detectors.Detector, judged co
 	progress.Status("parsing")
 	parsing := time.Now()
 
-	sources := scan.Walk(roots, judged.Exclusions(options.path)).Only(languages...)
+	sources := scan.Walk(roots, judged.Exclusions(options.path)).Only(languages...).ReadingAtOnce(judged.ReadAtOnce)
 
 	if len(targets.Files()) > 0 {
 		if across := readAcrossFiles(selected); len(across) > 0 {

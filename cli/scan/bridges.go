@@ -16,7 +16,7 @@ import (
 	"github.com/jessegall/code-commandments/engine/php"
 )
 
-// Bridge is one language's bridge: the name its socket and its service carry, the word its has- verb uses, the languages it reads, the name a reader of a report sees, how it is reached, and what it must be told once where reaching it says something a person should know.
+// Bridge is one language's bridge: the name its socket and its service carry, the word its has- verb uses, the languages it reads, the name a reader of a report sees, how it is reached, whether its files may be read in shares, and what it must be told once where reaching it says something a person should know.
 type Bridge struct {
 	Kind       string
 	Word       string
@@ -24,8 +24,11 @@ type Bridge struct {
 	Label      string
 	Projects   *bridge.Projects
 	InOwnOrder bool
-	Reach      Reach
-	Notice     func() string
+	// ReadsInShares says a file's tree is the same whatever other files one read was asked for, proven by
+	// TestFilesReadInSharesWriteWhatOneReadWrites, so its files may be read by several processes side by side.
+	ReadsInShares bool
+	Reach         Reach
+	Notice        func() string
 }
 
 // Reach is how a bridge is reached.
@@ -343,9 +346,10 @@ var CSharp = Bridge{Kind: "roslyn", Word: "csharp", Languages: []source.Language
 }
 
 var GoBridge = Bridge{Kind: "go", Word: "go", Languages: []source.Language{source.Go}, Label: "Go",
-	InOwnOrder: true,
-	Reach:      InProcess{Stream: gotree.Stream},
-	Notice:     nothingToSay,
+	InOwnOrder:    true,
+	ReadsInShares: true,
+	Reach:         InProcess{Stream: gotree.Stream},
+	Notice:        nothingToSay,
 }
 
 var Python = Bridge{Kind: "mypy", Word: "python", Languages: []source.Language{source.Python}, Label: "Python",
@@ -382,6 +386,71 @@ func (b Bridge) read(roots, files []string, tally func()) (*contract.Stream, err
 }
 
 const halvingsAtMost = 8
+
+// ReadShared reads the files in as many shares as processes, each by a bridge process of its own side by side, and
+// joins what they write in the files' order; one process, or a single file, is one read.
+func (b Bridge) ReadShared(roots, files []string, tally func(), processes int) (*contract.Stream, error) {
+	if processes <= 1 || len(files) < 2 || !b.ReadsInShares {
+		return b.Read(roots, files, tally)
+	}
+
+	shares := min(processes, len(files))
+	streams := make([]*contract.Stream, shares)
+	failures := make([]error, shares)
+	var reading sync.WaitGroup
+	for share := range shares {
+		reading.Add(1)
+		go func() {
+			defer reading.Done()
+			from, to := share*len(files)/shares, (share+1)*len(files)/shares
+			streams[share], failures[share] = b.readShare(roots, files, files[from:to], tally)
+		}()
+	}
+	reading.Wait()
+
+	var whole *contract.Stream
+	for _, stream := range streams {
+		whole = joined(whole, stream)
+	}
+
+	return onceEach(whole), errors.Join(failures...)
+}
+
+// readShare asks one bridge process to read every file, so each tree resolves as in one read, and to write only its share.
+func (b Bridge) readShare(roots, files, share []string, tally func()) (*contract.Stream, error) {
+	roots, files, share = resolved(roots), resolved(files), resolved(share)
+	asker, err := b.Reach.Open(b, roots)
+	if err != nil {
+		return nil, err
+	}
+	defer asker.Close()
+
+	return asker.AskTallied(bridge.AskedOf(b.Projects, files, share).Request(), tally)
+}
+
+// onceEach keeps one line per file: a share writes the files it was asked for and reads others beside them as
+// context, so a file one share wrote and another read is kept as written.
+func onceEach(stream *contract.Stream) *contract.Stream {
+	if stream == nil {
+		return nil
+	}
+
+	at := map[string]int{}
+	var kept []*contract.File
+	for _, file := range stream.Files {
+		earlier, met := at[file.Path]
+		switch {
+		case !met:
+			at[file.Path] = len(kept)
+			kept = append(kept, file)
+		case kept[earlier].Context && !file.Context:
+			kept[earlier] = file
+		}
+	}
+	stream.Files, stream.Trailer.Files = kept, len(kept)
+
+	return stream
+}
 
 func (b Bridge) readHalving(roots, files []string, tally func(), halvings int) (*contract.Stream, error) {
 	stream, err := read(b, roots, files, tally)

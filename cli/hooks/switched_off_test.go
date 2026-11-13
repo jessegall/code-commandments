@@ -73,8 +73,7 @@ func TestEachPieceCanBeSwitchedOffByItself(t *testing.T) {
 		}
 	})
 
-	t.Run("the files at once at zero works it out as before", func(t *testing.T) {
-		settingsOf(t, map[string]any{filesInOneGoKey: "0"})
+	t.Run("the files read in one go are worked out from the tree", func(t *testing.T) {
 
 		for _, files := range []int{40, 800, 5000, 20000} {
 			if readsInOneGo(files) != min(mostReadInOneGo, max(leastReadInOneGo, files/partOfTheTree)) {

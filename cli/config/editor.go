@@ -322,6 +322,7 @@ type Switches interface {
 	JudgeFolders(folders []string) error
 	SkipFolders(folders []string) error
 	RunWith(parallel int) (bool, error)
+	ReadWith(atOnce int) (bool, error)
 	KeepCachesFor(hours float64) (bool, error)
 }
 
@@ -371,6 +372,20 @@ func (j jsonConfig) RunWith(parallel int) (bool, error) {
 	return j.edit(func(config *Config) bool {
 		changed := config.Parallel != parallel
 		config.Parallel = parallel
+
+		return changed
+	})
+}
+
+// ReadWith sets how many bridge processes read one language's files side by side.
+func (j jsonConfig) ReadWith(atOnce int) (bool, error) {
+	if _, err := j.Scaffold(DetectRoots(j.root())); err != nil {
+		return false, err
+	}
+
+	return j.edit(func(config *Config) bool {
+		changed := config.ReadAtOnce != atOnce
+		config.ReadAtOnce = atOnce
 
 		return changed
 	})
