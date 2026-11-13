@@ -521,8 +521,8 @@ func writtenIn(engines []catalog.Engine) []source.Language {
 
 func readAlongside(engines []catalog.Engine) []source.Language {
 	languages := writtenIn(engines)
-	for _, engine := range engines {
-		for _, language := range publishers[engine] {
+	for _, written := range writtenIn(engines) {
+		for _, language := range written.ReadAlongside() {
 			if !slices.Contains(languages, language) {
 				languages = append(languages, language)
 			}
@@ -530,12 +530,6 @@ func readAlongside(engines []catalog.Engine) []source.Language {
 	}
 
 	return languages
-}
-
-var publishers = map[catalog.Engine][]source.Language{
-	catalog.PHP:        {source.Vue, source.TypeScript},
-	catalog.Vue:        {source.PHP},
-	catalog.TypeScript: {source.PHP},
 }
 
 func languagesFor(selected []detectors.Detector, project config.Config, root string) []source.Language {
@@ -596,20 +590,9 @@ func reaching(targets scope.Scope, languages []source.Language) []source.Languag
 	return reads
 }
 
+// publishesFor says whether a changed language reads this one alongside it, for the facts it publishes.
 func publishesFor(language source.Language, changed []source.Language) bool {
-	for engine, published := range publishers {
-		if !slices.Contains(published, language) {
-			continue
-		}
-
-		for _, reads := range source.OfEngine(engine) {
-			if slices.Contains(changed, reads) {
-				return true
-			}
-		}
-	}
-
-	return false
+	return slices.ContainsFunc(changed, func(reads source.Language) bool { return slices.Contains(reads.ReadAlongside(), language) })
 }
 
 func ofNoLanguage(targets scope.Scope, languages []source.Language) bool {

@@ -27,17 +27,19 @@ const (
 var Languages = []Language{PHP, Vue, TypeScript, Python, CSharp, Go}
 
 // facts is what the CLI knows of a language beyond the contract's own facts of it: the name its stream writes, the
-// engines that judge it, and the files that declare a project of it where only such a project is read.
+// engines that judge it, the files that declare a project of it where only such a project is read, and the languages
+// read alongside it because they publish facts its rules use (a server type a frontend mirrors, and back).
 type facts struct {
 	written   contract.Language
 	engines   []catalog.Engine
 	manifests []string
+	alongside []Language
 }
 
 var described = map[Language]facts{
-	PHP:        {written: contract.PHP, engines: []catalog.Engine{catalog.PHP}},
-	Vue:        {written: contract.Vue, engines: []catalog.Engine{catalog.Vue, catalog.TypeScript}},
-	TypeScript: {written: contract.TypeScript, engines: []catalog.Engine{catalog.Vue, catalog.TypeScript}},
+	PHP:        {written: contract.PHP, engines: []catalog.Engine{catalog.PHP}, alongside: []Language{Vue, TypeScript}},
+	Vue:        {written: contract.Vue, engines: []catalog.Engine{catalog.Vue, catalog.TypeScript}, alongside: []Language{PHP}},
+	TypeScript: {written: contract.TypeScript, engines: []catalog.Engine{catalog.Vue, catalog.TypeScript}, alongside: []Language{PHP}},
 	Python:     {written: contract.Python, engines: []catalog.Engine{catalog.Python}},
 	CSharp:     {written: contract.CSharp, engines: []catalog.Engine{catalog.CSharp}},
 	Go:         {written: contract.Go, engines: []catalog.Engine{catalog.Go}, manifests: []string{"go.mod"}},
@@ -123,6 +125,11 @@ func (l Language) Engines() []catalog.Engine {
 
 func (l Language) Comment(text string) string {
 	return contract.CommentOf(l.Written(), text)
+}
+
+// ReadAlongside are the languages read with this one because they publish facts its rules use.
+func (l Language) ReadAlongside() []Language {
+	return described[l].alongside
 }
 
 func (l Language) Label() string {
