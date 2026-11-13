@@ -95,6 +95,16 @@ def shaped(fields: dict) -> dict:
     return answer
 
 
+def told_after(fields: dict) -> dict:
+    """An answer given after its event can no longer refuse it, so a refusal is told, with its note beside it."""
+    refuse = fields.get("refuse")
+    if refuse is None:
+        return fields
+    whisper = fields.get("whisper")
+    told = refuse if whisper is None or whisper == refuse else f"{refuse}\n\n{whisper}"
+    return {**{key: value for key, value in fields.items() if key != "refuse"}, "whisper": told}
+
+
 def delivered(data: Path) -> None:
     """Moves every answer a judging told after its event into the journal's queue, in the journal's words. A file is
     taken by renaming it first, so two scripts never deliver one answer twice."""
@@ -118,7 +128,7 @@ def delivered(data: Path) -> None:
         if not isinstance(fields, dict):
             taken.unlink(missing_ok=True)
             continue
-        answer = shaped(fields)
+        answer = shaped(told_after(fields))
         for routing in ("env", "agent"):
             if routing in fields:
                 answer[routing] = fields[routing]
@@ -194,7 +204,7 @@ def judged_after_the_merge(event: dict) -> bool:
 
 HELPERS_CLI, HELPERS_CLI_TITLE = "workers_cli", "Helpers may run the commandments CLI"
 CLI_PROGRAMS = {"commandments", "commandments-go", "commandments-release"}
-CLI_ALIASES = {"journal commandments", "journal sins", "journal commandments-judge-changes", "journal rules"}
+MANIFEST = PLUGIN / "journal-plugin.5.json"
 COMMAND_SEPARATORS = ("&&", "||", ";", "|", "(", ")", "{", "}", "`", '"', "'")
 COMMAND_WRAPPERS = {"env", "nice", "nohup", "exec", "command", "time", "timeout", "xargs", "sudo", "caffeinate"}
 COMMAND_STARTING = "command_starting"
@@ -223,14 +233,24 @@ def program_of(words: list) -> str:
     return words[0]
 
 
+def cli_aliases(manifest: Path = MANIFEST) -> set[str]:
+    """The journal lines that run the CLI by an alias this plugin declares, read from its manifest."""
+    try:
+        declared = json.loads(manifest.read_text()).get("aliases") or []
+    except (OSError, ValueError):
+        return set()
+    return {f"journal {alias['name']}" for alias in declared if isinstance(alias, dict) and alias.get("name")}
+
+
 def runs_the_cli(command: str) -> bool:
     """Whether a shell line runs the commandments CLI anywhere in it: by a journal alias, by its program, through a
     wrapper such as env or nice, or by a path to it."""
     for separator in COMMAND_SEPARATORS:
         command = command.replace(separator, "\n")
+    aliases = cli_aliases()
     for part in command.split("\n"):
         words = part.split()
-        if " ".join(words[:2]) in CLI_ALIASES:
+        if " ".join(words[:2]) in aliases:
             return True
         while words and is_assignment(words[0]):
             if names_the_cli(words[0].split("=", 1)[1]):
@@ -431,6 +451,9 @@ def main() -> int:
     if isinstance(event, dict) and (judged_after_the_hand_in(event) or judged_after_the_merge(event)):
         sys.stdout.write(json.dumps(shaped({})) + "\n")
         queued(line, event.get("agent") if isinstance(event.get("agent"), int) else 0)
+        return 0
+    if isinstance(event, dict) and (event.get("event") in GUARDED or event.get("event") in MERGED):
+        sys.stdout.write(json.dumps(shaped({})) + "\n")
         return 0
     answer, code = answered(line)
     sys.stdout.buffer.write(answer)

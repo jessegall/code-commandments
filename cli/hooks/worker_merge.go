@@ -28,10 +28,6 @@ const (
 // DeliveryHeld judges a hand-in before it goes through, when that is chosen. A hand-in judged after it is answered
 // and queued by the plugin's script, and reaches this binary only as the kept event of that run.
 func DeliveryHeld(line map[string]any) string {
-	if !handInsJudged(line) {
-		return ""
-	}
-
 	return mergeOf(line).answered()
 }
 
@@ -140,13 +136,7 @@ func (m merging) tells(marks []SinMark, why Narrowed, about string) {
 	said := mergeTold(m.worker, about, m.worktree, marks)
 
 	m.keeps(said)
-
-	queue, queued := Queue4In(os.Getenv(pluginData))
-	if !queued {
-		return
-	}
-
-	_ = queue.Tell(JournalAnswer{Whisper: &said}, m.env, m.agent)
+	toldLater(JournalAnswer{Whisper: &said}, m.env, m.agent)
 }
 
 // merging is a worker's merge as the event describes it: who it is, where its work stands, what its branch was cut from, and the files it names.

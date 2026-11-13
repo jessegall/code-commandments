@@ -231,13 +231,9 @@ func judgeTheEventIn(path string, console cli.Console) {
 }
 
 func tellsOfTheMerge(line map[string]any) {
-	said := landedSaid(line)
-	queue, queued := Queue4In(os.Getenv(pluginData))
-	if said == "" || !queued {
-		return
+	if said := landedSaid(line); said != "" {
+		toldLater(JournalAnswer{Whisper: &said}, asText(line["environment"]), asAgent(line["agent"]))
 	}
-
-	_ = queue.Tell(JournalAnswer{Whisper: &said}, asText(line["environment"]), asAgent(line["agent"]))
 }
 
 func Answer4Of(line map[string]any) string {

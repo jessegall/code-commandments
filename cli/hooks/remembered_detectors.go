@@ -16,13 +16,9 @@ func rememberedAround(root string, warn func(...string)) (saved func()) {
 		return func() {}
 	}
 
-	release := remembered.TakeTurn()
 	remembered.Load()
 
-	return func() {
-		remembered.Save()
-		release()
-	}
+	return remembered.Save
 }
 
 func remembersAcrossRestarts(console cli.Console) (saved func()) {

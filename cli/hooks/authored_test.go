@@ -10,20 +10,6 @@ import (
 	"github.com/jessegall/code-commandments/cli/workspace"
 )
 
-func TestAQueuedRefusalSaysItsWordsOnce(t *testing.T) {
-	reason := "before you wrap up"
-
-	told := told(JournalAnswer{Refuse: &reason, Whisper: &reason})
-
-	if told.Whisper == nil || *told.Whisper != reason {
-		t.Errorf("the queued words are %v, and the reason was given once", told.Whisper)
-	}
-
-	if fields := (JournalAnswer{Refuse: &reason, Whisper: &reason}).Fields(); fields["refuse"] != reason || fields["whisper"] != reason {
-		t.Errorf("the answer reads %v, not the one reason the script says once", fields)
-	}
-}
-
 func TestEveryFileOfABatchedEditIsCounted(t *testing.T) {
 	root, err := filepath.EvalSymlinks(t.TempDir())
 	if err != nil {

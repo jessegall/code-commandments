@@ -48,7 +48,7 @@ func requestedOf(line map[string]any) requested {
 func MergeRequested(line map[string]any) string {
 	asked := requestedOf(line)
 
-	if !mergesJudgedBeforeTheyLand(line) || !asked.readable() {
+	if !asked.readable() {
 		return ""
 	}
 
@@ -76,22 +76,6 @@ func (r requested) sinsItWouldBringIn() []SinMark {
 
 	return marks
 }
-
-func mergesJudgedBeforeTheyLand(line map[string]any) bool {
-	chosen, _ := chosenOn(line)
-
-	return workersChose(chosen, beforeMergeKey)
-}
-
-const beforeMergeKey = "judge_before_merge"
-
-func handInsJudged(line map[string]any) bool {
-	chosen, _ := chosenOn(line)
-
-	return workersChose(chosen, handInsKey)
-}
-
-const handInsKey = "judge_hand_ins"
 
 func orNothing(said string) string {
 	if said == "" {

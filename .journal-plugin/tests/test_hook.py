@@ -304,6 +304,9 @@ class NoToldAnswerIsLost(unittest.TestCase):
 
 
 class AHelperIsRefusedTheCLIOnlyWhenTheSettingDeniesIt(unittest.TestCase):
+    def test_the_aliases_are_the_ones_the_manifest_declares(self) -> None:
+        self.assertEqual(hook.cli_aliases(), {"journal sins", "journal commandments-judge-changes", "journal rules", "journal commandments"})
+
     def test_every_case_the_binary_refused_the_script_refuses(self) -> None:
         cli = "bin/commandments info redundant-else"
         cases = {
@@ -374,6 +377,26 @@ class ALandedMergeIsJudgedAfter(unittest.TestCase):
         self.assertTrue(hook.judged_after_the_merge({**merged, "settings": {"judge_workers": True, "judge_merges": True}}))
         self.assertFalse(hook.judged_after_the_merge({**merged, "settings": {"judge_workers": True}}))
         self.assertFalse(hook.judged_after_the_merge({"event": "file_edited", "settings": {"judge_workers": True, "judge_merges": True}}))
+
+
+class AnAnswerAfterItsEventOnlyTells(unittest.TestCase):
+    def test_a_refusal_is_told_and_its_words_said_once(self) -> None:
+        self.assertEqual(hook.told_after({"refuse": "a sin", "whisper": "a sin", "agent": 7}), {"whisper": "a sin", "agent": 7})
+        self.assertEqual(hook.told_after({"refuse": "a sin", "whisper": "not whole"}), {"whisper": "a sin\n\nnot whole"})
+        self.assertEqual(hook.told_after({"whisper": "fine"}), {"whisper": "fine"})
+
+
+class AGuardNotChosenIsAnsweredWithoutTheBinary(unittest.TestCase):
+    def test_each_guard_and_landed_merge_with_its_setting_off_lets_the_step_through(self) -> None:
+        with tempfile.TemporaryDirectory() as folder, patched_environment(JOURNAL_PLUGIN_DATA=folder, JOURNAL_SETTINGS=""):
+            for event in ("suites.coding.workers.worker_delivering", "suites.coding.workers.merge_request.created",
+                          "suites.coding.workers.worker_worktree.merge"):
+                line = json.dumps({"event": event, "agent": 7, "settings": {"judge_workers": True}}).encode()
+                with mock.patch.object(hook, "answered", side_effect=AssertionError("the binary was started")), \
+                        mock.patch.object(sys, "stdin", io.TextIOWrapper(io.BytesIO(line))), \
+                        mock.patch.object(sys, "stdout", io.StringIO()) as said:
+                    self.assertEqual(hook.main(), 0)
+                self.assertEqual(json.loads(said.getvalue()), {"v": 1}, event)
 
 
 class patched_environment:

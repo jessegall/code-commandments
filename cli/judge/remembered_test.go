@@ -11,7 +11,9 @@ import (
 	"github.com/jessegall/code-commandments/bridge/bundle"
 	"github.com/jessegall/code-commandments/cache"
 	"github.com/jessegall/code-commandments/cli"
+	"github.com/jessegall/code-commandments/cli/atomic"
 	"github.com/jessegall/code-commandments/cli/ledger"
+	"github.com/jessegall/code-commandments/cli/scan"
 )
 
 func TestAPluginRunAndARunByHandRememberInOnePlace(t *testing.T) {
@@ -86,8 +88,7 @@ func TestAJudgeWaitsWhileAnotherRunReadsTheProjectThenRuns(t *testing.T) {
 	t.Chdir(root)
 
 	t.Setenv("XDG_CACHE_HOME", t.TempDir())
-	remembered, _ := RememberedFor(root, func(...string) {})
-	release := remembered.TakeTurn()
+	release := atomic.Hold(scan.ReadingTurn(root))
 
 	var out, errs strings.Builder
 	ended := make(chan int, 1)
@@ -149,43 +150,6 @@ func TestAJournalProjectAndItsWorktreesRememberAtTheJournal(t *testing.T) {
 
 	if !strings.HasPrefix(atTheRoot.Memories.Path, filepath.Join(project, ".journal", "plugin-data")) {
 		t.Errorf("a journal project remembers at %q, not at its journal", atTheRoot.Memories.Path)
-	}
-}
-
-func TestASecondJudgeWaitsItsTurnInsteadOfRunningBesideTheFirst(t *testing.T) {
-	t.Setenv("XDG_CACHE_HOME", t.TempDir())
-	t.Setenv(pluginData, "")
-
-	waited := make(chan bool, 1)
-	first, _ := RememberedFor("/a/project", func(...string) {})
-	second, _ := RememberedFor("/another/project", func(...string) { waited <- true })
-
-	release := first.TakeTurn()
-
-	ran := make(chan bool, 1)
-	go func() {
-		second.TakeTurn()()
-		ran <- true
-	}()
-
-	select {
-	case <-waited:
-	case <-time.After(5 * time.Second):
-		t.Fatal("the second judge was never told it waits")
-	}
-
-	select {
-	case <-ran:
-		t.Fatal("the second judge ran beside the first")
-	case <-time.After(200 * time.Millisecond):
-	}
-
-	release()
-
-	select {
-	case <-ran:
-	case <-time.After(5 * time.Second):
-		t.Fatal("the second judge never got its turn after the first ended")
 	}
 }
 

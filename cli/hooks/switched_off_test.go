@@ -4,8 +4,6 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
-
-	"github.com/jessegall/code-commandments/cli/git"
 )
 
 func TestEachPieceCanBeSwitchedOffByItself(t *testing.T) {
@@ -38,31 +36,6 @@ func TestEachPieceCanBeSwitchedOffByItself(t *testing.T) {
 		if !strings.Contains(main, "redundant-python-else") && !strings.Contains(main, "documented-anywhere") {
 			t.Errorf("the main agent's own edit found nothing with workers switched off: %s", main)
 		}
-	})
-
-	t.Run("the merge judging off leaves an edit judged", func(t *testing.T) {
-		root, data := mergeOffProject(t)
-		settingsOf(t, map[string]any{mergesKey: "false"})
-
-		before := git.Head(root)
-
-		wroteInto(t, filepath.Join(root, "src", "brought.py"), olderSin)
-		commitIn(t, root, "work a merge brought in")
-
-		if said := MergeLanded(mergeLine(root, "main", before, git.Head(root))); said != "" {
-			t.Errorf("a merge was judged with the merge judging switched off: %s", said)
-		}
-
-		edit := Answer4Of(map[string]any{
-			"v": 1, "event": "file_edited", "agent": 1, "cwd": root, "role": "main",
-			"data": map[string]any{"cwd": root, "kind": "create", "path": filepath.Join("src", "brought.py")},
-		})
-
-		if edit == "" {
-			t.Error("switching the merge judging off also stopped an ordinary edit being judged")
-		}
-
-		_ = data
 	})
 
 	t.Run("the memory ceiling at zero holds nothing back", func(t *testing.T) {

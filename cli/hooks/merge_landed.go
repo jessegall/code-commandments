@@ -66,7 +66,7 @@ func firstText(said ...string) string {
 // landedSaid judges what a merge brought in and is what the main agent is told of it, nothing when there is nothing to tell.
 func landedSaid(line map[string]any) string {
 	work := landedOf(line)
-	if !mergesJudged(line) || work.project == "" || work.after == "" {
+	if work.project == "" || work.after == "" {
 		return ""
 	}
 
@@ -244,12 +244,6 @@ func (l landed) saidAbout(marks []SinMark, why Narrowed) string {
 	}
 
 	return said
-}
-
-func mergesJudged(line map[string]any) bool {
-	chosen, _ := chosenOn(line)
-
-	return workersChose(chosen, mergesKey)
 }
 
 const mostFilesAMergeBringsIn = 200

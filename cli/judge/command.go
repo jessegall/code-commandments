@@ -139,7 +139,6 @@ func (c Command) Run(in *cli.Input, console cli.Console) (int, error) {
 	}
 
 	if remembered, keeps := RememberedFor(space.Root(), console.Warn); keeps && c.Reading == nil {
-		defer remembered.TakeTurn()()
 		remembered.Load()
 		defer remembered.Save()
 	}

@@ -10,8 +10,10 @@ import (
 	"slices"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/jessegall/code-commandments/bridge"
+	"github.com/jessegall/code-commandments/cli/atomic"
 	"github.com/jessegall/code-commandments/cli/git"
 	"github.com/jessegall/code-commandments/cli/source"
 	"github.com/jessegall/code-commandments/cli/workspace"
@@ -223,7 +225,11 @@ func stayedWithin(stream *contract.Stream, given int, label string) {
 	}
 }
 
+// bridge reads every language's files, one project's reads one run at a time so each run finds in the cache what
+// the run before it read; judging runs after, outside the turn, so runs judge side by side.
 func (s Sources) bridge() map[int]bridged {
+	defer s.readingTurn()()
+
 	finished := make(chan bridged)
 	slots := make(chan struct{}, bridgesAtOnce)
 	running := 0
@@ -335,6 +341,35 @@ func keptFor(kind string, roots []string) (*bridge.Server, bool) {
 	}
 
 	return bridge.Service(kind, project)
+}
+
+func (s Sources) readingTurn() (release func()) {
+	project, found := projectOf(s.roots)
+	turn := ReadingTurn(project)
+	if !found || turn == "" {
+		return func() {}
+	}
+
+	return atomic.HoldInTurn(turn, sayWaitingToRead, readingWaitedAtMost)
+}
+
+// ReadingTurn is the file a project's runs take turns on while they read it, the same for every worktree of it.
+func ReadingTurn(project string) string {
+	folder := workspace.SharedFolder(project)
+	if folder == "" {
+		return ""
+	}
+
+	return filepath.Join(folder, readingTurnFile)
+}
+
+const (
+	readingTurnFile     = "reading.lock"
+	readingWaitedAtMost = 10 * time.Minute
+)
+
+func sayWaitingToRead() {
+	fmt.Fprintln(os.Stderr, "· another run is reading this project, so this one waits for it and then reads from its cache")
 }
 
 func projectOf(roots []string) (string, bool) {

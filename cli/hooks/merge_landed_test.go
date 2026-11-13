@@ -114,16 +114,6 @@ func TestTheFirstMergeWeEverSeeJudgesItsOwnRangeAlone(t *testing.T) {
 	}
 }
 
-func TestAMergeIsNotJudgedWhenTheSettingIsOff(t *testing.T) {
-	root, before, after := mergedProject(t)
-
-	settingsOf(t, map[string]any{mergesKey: "false"})
-
-	if said := MergeLanded(mergeLine(root, "main", before, after)); said != "" {
-		t.Errorf("a merge was judged although the setting is off: %s", said)
-	}
-}
-
 func TestAMergeNeverReadsTheWorktreeFolder(t *testing.T) {
 	root, before, after := mergedProject(t)
 

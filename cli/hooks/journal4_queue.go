@@ -7,6 +7,8 @@ import (
 	"strconv"
 	"sync/atomic"
 	"time"
+
+	atomicfile "github.com/jessegall/code-commandments/cli/atomic"
 )
 
 // toldFolder holds the answers a judging gives after its event, in the binary's own fields; the plugin's script shapes
@@ -30,8 +32,15 @@ func (q Queue4) Path() string {
 	return q.path
 }
 
+// toldLater leaves an answer a judging gives after its event where the plugin's script delivers it.
+func toldLater(answer JournalAnswer, env string, agent int) {
+	if queue, queued := Queue4In(os.Getenv(pluginData)); queued {
+		_ = queue.Tell(answer, env, agent)
+	}
+}
+
 func (q Queue4) Tell(answer JournalAnswer, env string, agent int) error {
-	shape := told(answer).Fields()
+	shape := answer.Fields()
 	if len(shape) == 0 {
 		return nil
 	}
@@ -46,29 +55,8 @@ func (q Queue4) Tell(answer JournalAnswer, env string, agent int) error {
 	if err != nil {
 		return err
 	}
-	if err := os.MkdirAll(q.path, 0o755); err != nil {
-		return err
-	}
 
-	name := filepath.Join(q.path, strconv.FormatInt(time.Now().UnixMilli(), 10)+"-"+strconv.Itoa(os.Getpid())+"-"+strconv.FormatUint(written.Add(1), 10))
-	if err := os.WriteFile(name+".tmp", append(said, '\n'), 0o644); err != nil {
-		return err
-	}
+	name := strconv.FormatInt(time.Now().UnixMilli(), 10) + "-" + strconv.Itoa(os.Getpid()) + "-" + strconv.FormatUint(written.Add(1), 10) + ".json"
 
-	return os.Rename(name+".tmp", name+".json")
-}
-
-func told(answer JournalAnswer) JournalAnswer {
-	if answer.Refuse == nil {
-		return answer
-	}
-
-	words := *answer.Refuse
-	if answer.Whisper != nil && *answer.Whisper != words {
-		words += "\n\n" + *answer.Whisper
-	}
-
-	answer.Refuse, answer.Whisper = nil, &words
-
-	return answer
+	return atomicfile.Write(filepath.Join(q.path, name), string(said)+"\n")
 }
