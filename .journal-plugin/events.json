@@ -22,7 +22,14 @@
     "names": [
       "tool_starting"
     ],
-    "hook": "PreToolUse"
+    "hook": "PreToolUse",
+    "tools": [
+      "Agent",
+      "Bash",
+      "Edit",
+      "MultiEdit",
+      "Write"
+    ]
   },
   {
     "key": "idle",
@@ -39,7 +46,8 @@
       "ticked"
     ],
     "hook": "Stop",
-    "judged_later": true
+    "judged_later": true,
+    "binary_every_minutes": 5
   },
   {
     "key": "session_started",

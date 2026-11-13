@@ -42,6 +42,10 @@ LIVE_EDITS, WORKERS, WORKER_EDITS = SETTINGS["live_edits"], SETTINGS["workers"],
 HAND_INS, HAND_INS_AFTER = SETTINGS["hand_ins"], SETTINGS["hand_ins_after"]
 # The guards that hold a step on a judging, each with the setting that asks for it.
 GUARDED = {name: kind["guarded_by"] for kind in EVENT_KINDS if kind.get("guarded_by") for name in kind["names"]}
+# The tools a hook of the binary acts on, for an event about whichever tool starts; and how often an event reaches the
+# binary at most.
+TOOLS_ACTED_ON = {name: set(kind["tools"]) for kind in EVENT_KINDS if kind.get("tools") for name in kind["names"]}
+BINARY_EVERY = {name: 60 * kind["binary_every_minutes"] for kind in EVENT_KINDS if kind.get("binary_every_minutes") for name in kind["names"]}
 EVENTS, WINDOWS, TOLD, QUEUE = "events", "windows", "told", "queue"
 JUDGE_EVENT, JUDGE_GUARD, JUDGE_AGENT = "--judge-event=", "--judge-guard=", "--judge-agent="
 EDIT_WINDOW, DEFAULT_EDIT_WINDOW = SETTINGS["edit_window"], float(FACTS["edit_window"])
@@ -226,6 +230,25 @@ COMMAND_WRAPPERS = {"env", "nice", "nohup", "exec", "command", "time", "timeout"
 COMMAND_STARTING = "command_starting"
 # Events the binary has nothing to add to once the script has refused what it refuses: answered at once, judged later.
 ANSWERED_HERE = names_where("answered_here")
+
+
+def binary_has_nothing_to_do(event: dict, data: Path) -> bool:
+    """An event the binary would only answer with nothing: about a tool no hook of it acts on, or one it was passed
+    less than its interval ago. Starting the binary costs more than half a second, on every tool an agent starts."""
+    name = event.get("event")
+    if name in TOOLS_ACTED_ON:
+        given = event.get("data")
+        return (given.get("tool") if isinstance(given, dict) else None) not in TOOLS_ACTED_ON[name]
+    if name not in BINARY_EVERY:
+        return False
+    mark = data / f"{name}.passed"
+    try:
+        if time.time() - mark.stat().st_mtime < BINARY_EVERY[name]:
+            return True
+    except OSError:
+        pass
+    mark.touch()
+    return False
 
 
 def is_assignment(word: str) -> bool:
@@ -658,7 +681,7 @@ def main() -> int:
         afterwards(lambda: judge_later(line))
         return 0
     data = os.environ.get("JOURNAL_PLUGIN_DATA", "")
-    if data and isinstance(event, dict) and event.get("event") in ANSWERED_HERE:
+    if data and isinstance(event, dict) and (event.get("event") in ANSWERED_HERE or binary_has_nothing_to_do(event, Path(data))):
         sys.stdout.write(json.dumps(shaped({})) + "\n")
         afterwards(lambda: judge_later(line))
         afterwards(lambda: delivered(Path(data)))

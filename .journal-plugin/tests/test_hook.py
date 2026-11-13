@@ -43,6 +43,27 @@ class TheHookHandsEveryEventToTheBinary(unittest.TestCase):
 
 
 
+class TheBinaryStartsOnlyForWhatItActsOn(unittest.TestCase):
+    def test_a_tool_no_hook_acts_on_is_answered_without_the_binary(self) -> None:
+        with tempfile.TemporaryDirectory() as folder:
+            for tool, nothing in (("Read", True), ("Grep", True), (None, True), ("Edit", False), ("Agent", False), ("Bash", False)):
+                event = {"event": "tool_starting", "data": {"tool": tool}}
+                self.assertEqual(hook.binary_has_nothing_to_do(event, Path(folder)), nothing, tool)
+
+    def test_a_tick_reaches_the_binary_at_most_once_in_its_interval(self) -> None:
+        with tempfile.TemporaryDirectory() as folder:
+            tick = {"event": "ticked"}
+            self.assertFalse(hook.binary_has_nothing_to_do(tick, Path(folder)))
+            self.assertTrue(hook.binary_has_nothing_to_do(tick, Path(folder)))
+            long_ago = time.time() - hook.BINARY_EVERY["ticked"] - 1
+            os.utime(Path(folder) / "ticked.passed", (long_ago, long_ago))
+            self.assertFalse(hook.binary_has_nothing_to_do(tick, Path(folder)))
+
+    def test_any_other_event_reaches_the_binary(self) -> None:
+        with tempfile.TemporaryDirectory() as folder:
+            self.assertFalse(hook.binary_has_nothing_to_do({"event": "session_started"}, Path(folder)))
+
+
 def edited(**settings: object) -> dict:
     return {"v": 1, "event": "file_edited", "agent": 7, "role": "main", "settings": settings, "data": {"path": "order.py"}}
 
