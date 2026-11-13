@@ -1,11 +1,6 @@
 package source
 
-import (
-	"path/filepath"
-	"strings"
-
-	"github.com/jessegall/code-commandments/walk"
-)
+import "github.com/jessegall/code-commandments/walk"
 
 type Excluded = walk.Excluded
 
@@ -22,8 +17,7 @@ func Sources(path string, excluded Excluded) []string {
 	return walk.Files(path, excluded, Judges)
 }
 
-func FilesIn(path, extension string, excluded Excluded) []string {
-	return walk.Files(path, excluded, func(file string) bool {
-		return strings.TrimPrefix(filepath.Ext(file), ".") == extension
-	})
+// FilesIn is every file of the language under the path, by each extension the language is written in.
+func FilesIn(path string, language Language, excluded Excluded) []string {
+	return walk.Files(path, excluded, func(file string) bool { return OfFile(file) == language })
 }

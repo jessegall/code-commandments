@@ -124,7 +124,7 @@ func CustomDir(dir string) string {
 }
 
 func CustomFiles(dir string) []string {
-	files := source.FilesIn(CustomDir(dir), "php", source.Under(CustomDir(dir), []string{Samples}))
+	files := source.FilesIn(CustomDir(dir), source.PHP, source.Under(CustomDir(dir), []string{Samples}))
 	sort.Strings(files)
 
 	return files

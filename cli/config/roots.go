@@ -226,11 +226,7 @@ func kindsUnder(root string) map[string]bool {
 
 func WritesLanguage(root string, language source.Language) bool {
 	for _, dir := range DetectRoots(root) {
-		found := len(walk.Files(root+"/"+dir, walk.Excluded{}, func(path string) bool {
-			return strings.TrimPrefix(filepath.Ext(path), ".") == string(language)
-		})) > 0
-
-		if found {
+		if len(source.FilesIn(root+"/"+dir, language, walk.Excluded{})) > 0 {
 			return true
 		}
 	}

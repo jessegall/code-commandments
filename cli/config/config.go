@@ -203,7 +203,7 @@ func (c Config) Writes(language source.Language) bool {
 }
 
 func (c Config) Holds(root string, language source.Language) bool {
-	return c.Reads(root, language) && len(source.FilesIn(root, string(language), source.Under(root, c.Excluded))) > 0
+	return c.Reads(root, language) && len(source.FilesIn(root, language, source.Under(root, c.Excluded))) > 0
 }
 
 func (c Config) Reads(root string, language source.Language) bool {
