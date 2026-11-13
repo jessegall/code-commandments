@@ -20,6 +20,7 @@ type Judged struct {
 	// Kept is how many of the parsed files the cache served, and ReadWaitMs how long the read waited for another run
 	// reading the same checkout.
 	Kept       int
+	Missed     []string
 	ReadWaitMs int64
 	ReadMs     int64
 	RuleMs     int64
@@ -109,5 +110,23 @@ func (j Judged) readFrom() string {
 		return ""
 	}
 
-	return fmt.Sprintf(" (%d from the cache, %dms waiting for the checkout)", j.Kept, j.ReadWaitMs)
+	return fmt.Sprintf(" (%d from the cache, %dms waiting for the checkout)", j.Kept, j.ReadWaitMs) + j.missedFiles()
+}
+
+// missedFilesShown is how many of the files the cache missed a line names, so a churning cache can be traced.
+const missedFilesShown = 12
+
+func (j Judged) missedFiles() string {
+	if len(j.Missed) == 0 {
+		return ""
+	}
+	var named []string
+	for _, file := range j.Missed[:min(len(j.Missed), missedFilesShown)] {
+		named = append(named, strings.TrimPrefix(file, strings.TrimRight(j.Checkout, "/")+"/"))
+	}
+	if more := len(j.Missed) - len(named); more > 0 {
+		named = append(named, fmt.Sprintf("and %d more", more))
+	}
+
+	return " missed " + strings.Join(named, ", ")
 }

@@ -365,6 +365,26 @@ func (s Sources) readingTurn() (release func()) {
 
 var readingWaited syncatomic.Int64
 
+// missed is every file this process's reads asked a bridge for, its kept line not standing.
+var missed struct {
+	sync.Mutex
+	files []string
+}
+
+// Missed is every file this process's reads asked a bridge for, in the order they were asked.
+func Missed() []string {
+	missed.Lock()
+	defer missed.Unlock()
+
+	return slices.Clone(missed.files)
+}
+
+func keptMissed(files []string) {
+	missed.Lock()
+	defer missed.Unlock()
+	missed.files = append(missed.files, files...)
+}
+
 // ReadingWaited is how long this process's reads waited for another run reading the same checkout.
 func ReadingWaited() time.Duration {
 	return time.Duration(readingWaited.Load())

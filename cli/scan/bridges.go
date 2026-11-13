@@ -524,6 +524,7 @@ func outsideOnly(program *contract.Program, files []*contract.File) *contract.Pr
 // readMisses has the bridge write the misses, in shares side by side. The caller settles the lines once every share has
 // ended, so a line is keyed on the outline another share kept of a file it read.
 func (b Bridge) readMisses(kept *keptLines, roots, files, misses []string, tally func(), processes int) (*contract.Stream, error) {
+	keptMissed(misses)
 	if processes <= 1 || len(misses) < 2 {
 		return b.readHalving(kept, roots, files, misses, tally, halvingsAtMost)
 	}
