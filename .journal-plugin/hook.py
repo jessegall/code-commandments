@@ -183,6 +183,67 @@ def judged_after_the_hand_in(event: dict) -> bool:
     return event.get("event") in HANDED_IN and workers_chose(chosen, HAND_INS_AFTER) and not workers_chose(chosen, HAND_INS)
 
 
+HELPERS_CLI, HELPERS_CLI_TITLE = "workers_cli", "Helpers may run the commandments CLI"
+CLI_PROGRAMS = {"commandments", "commandments-go", "commandments-release"}
+CLI_ALIASES = {"journal commandments", "journal sins", "journal commandments-judge-changes", "journal rules"}
+COMMAND_SEPARATORS = ("&&", "||", ";", "|", "(", ")", "{", "}", "`", '"', "'")
+COMMAND_WRAPPERS = {"env", "nice", "nohup", "exec", "command", "time", "timeout", "xargs", "sudo", "caffeinate"}
+COMMAND_STARTING = "command_starting"
+# Events the binary has nothing to add to once the script has refused what it refuses: answered at once, judged later.
+ANSWERED_HERE = {COMMAND_STARTING, "idle"}
+
+
+def is_assignment(word: str) -> bool:
+    name, assigns, _ = word.partition("=")
+    return bool(assigns) and name != "" and not any(mark in name for mark in "/-.$")
+
+
+def is_number(word: str) -> bool:
+    return word.strip("0123456789.smhd") == ""
+
+
+def names_the_cli(program: str) -> bool:
+    return Path(program).name in CLI_PROGRAMS
+
+
+def program_of(words: list) -> str:
+    while len(words) > 1 and Path(words[0]).name in COMMAND_WRAPPERS:
+        words = words[1:]
+        while len(words) > 1 and (words[0].startswith("-") or is_assignment(words[0]) or is_number(words[0])):
+            words = words[1:]
+    return words[0]
+
+
+def runs_the_cli(command: str) -> bool:
+    """Whether a shell line runs the commandments CLI anywhere in it: by a journal alias, by its program, through a
+    wrapper such as env or nice, or by a path to it."""
+    for separator in COMMAND_SEPARATORS:
+        command = command.replace(separator, "\n")
+    for part in command.split("\n"):
+        words = part.split()
+        if " ".join(words[:2]) in CLI_ALIASES:
+            return True
+        while words and is_assignment(words[0]):
+            if names_the_cli(words[0].split("=", 1)[1]):
+                return True
+            words = words[1:]
+        if words and (names_the_cli(program_of(words)) or any("/" in word and names_the_cli(word) for word in words)):
+            return True
+    return False
+
+
+def cli_refused(event: dict) -> str:
+    """The refusal of a helper's command that runs the commandments CLI while the setting keeps helpers from it."""
+    data = event.get("data") if isinstance(event.get("data"), dict) else {}
+    command, role = data.get("text") or "", role_of(event)
+    if event.get("event") != COMMAND_STARTING or role not in WORKER_ROLES or switched_on(settings_of(event).get(HELPERS_CLI)):
+        return ""
+    if not runs_the_cli(str(command)):
+        return ""
+    return (f"Code Commandments — a {role} may not run the commandments CLI or the judge here: the setting "
+            f"\"{HELPERS_CLI_TITLE}\" ({HELPERS_CLI}) is off. Your work is judged when it is handed in and when it is merged.")
+
+
 class EditWindow:
     """One agent's live edits gathered on disk while its window is open: the first edit opens it and queues the one
     run that judges them, every later edit only joins it, and that run (the binary's) closes it when it starts and
@@ -309,6 +370,17 @@ def main() -> int:
         event = json.loads(line)
     except ValueError:
         event = None
+    refusal = cli_refused(event) if isinstance(event, dict) else ""
+    if refusal:
+        sys.stdout.write(json.dumps(shaped({"refuse": refusal}), ensure_ascii=False) + "\n")
+        afterwards(lambda: judge_later(line))
+        return 0
+    data = os.environ.get("JOURNAL_PLUGIN_DATA", "")
+    if data and isinstance(event, dict) and event.get("event") in ANSWERED_HERE:
+        sys.stdout.write(json.dumps(shaped({})) + "\n")
+        afterwards(lambda: judge_later(line))
+        afterwards(lambda: delivered(Path(data)))
+        return 0
     if isinstance(event, dict) and judged_after_the_hand_in(event):
         sys.stdout.write(json.dumps(shaped({})) + "\n")
         queued(line, event.get("agent") if isinstance(event.get("agent"), int) else 0)

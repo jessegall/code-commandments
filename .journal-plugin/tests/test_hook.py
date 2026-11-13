@@ -1,3 +1,4 @@
+import io
 import json
 import os
 import stat
@@ -6,6 +7,7 @@ import sys
 import tempfile
 import time
 import unittest
+from unittest import mock
 from pathlib import Path
 
 PLUGIN = Path(__file__).resolve().parent.parent
@@ -299,6 +301,48 @@ class NoToldAnswerIsLost(unittest.TestCase):
             event.write_text("{}")
             self.assertEqual(hook.judged(str(event), Path(folder) / "no-binary"), 1)
             self.assertFalse(event.exists())
+
+
+class AHelperIsRefusedTheCLIOnlyWhenTheSettingDeniesIt(unittest.TestCase):
+    def test_every_case_the_binary_refused_the_script_refuses(self) -> None:
+        cli = "bin/commandments info redundant-else"
+        cases = {
+            "the setting is left alone": ("worker", cli, None, True),
+            "the setting allows it": ("worker", cli, {"workers_cli": True}, False),
+            "the setting denies it": ("worker", cli, {"workers_cli": False}, True),
+            "the setting says false as words": ("senior", cli, {"workers_cli": "false"}, True),
+            "the main agent is not affected": ("main", cli, {"workers_cli": False}, False),
+            "another command is not affected": ("worker", "git status", {"workers_cli": False}, False),
+            "judging through the journal": ("worker", "journal sins --changes", {"workers_cli": False}, True),
+            "after an environment and a chain": ("worker", "cd x && FOO=1 .journal/plugins/code-commandments/bin/commandments-release judge", {"workers_cli": False}, True),
+            "through the journal's alias": ("worker", "journal commandments info x", {"workers_cli": False}, True),
+            "a project's own rules": ("worker", "journal rules try x", {"workers_cli": False}, True),
+            "only named in an argument": ("worker", "grep commandments README.md", {"workers_cli": False}, False),
+            "a reviewer or researcher": ("helper", cli, {"workers_cli": False}, True),
+            "through a variable": ("worker", "B=/p/.journal/plugins/code-commandments/bin/commandments-release; T=/tmp/w; (cd $T; $B rule explain a.py) 2>&1 | tail -15", {"workers_cli": False}, True),
+            "behind env and nice": ("helper", "env -C /p COMMANDMENTS_TIMING=1 nice -n 15 /p/bin/commandments-release judge --no-checklist", {"workers_cli": False}, True),
+            "behind timeout in a shell": ("worker", "sh -c 'timeout 60 bin/commandments judge src'", {"workers_cli": False}, True),
+            "the custom folder named": ("worker", "T=.commandments/custom; ls $T", {"workers_cli": False}, False),
+        }
+        with patched_environment(JOURNAL_SETTINGS=""):
+            for name, (role, command, settings, refused) in cases.items():
+                event = {"event": "command_starting", "role": role, "settings": settings or {}, "data": {"text": command}}
+                said = hook.cli_refused(event)
+                self.assertEqual(bool(said), refused, name)
+                if refused:
+                    self.assertIn("workers_cli", said, name)
+
+
+class ACommandAndAStopAreAnsweredWithoutTheBinary(unittest.TestCase):
+    def test_each_is_answered_with_nothing_and_the_binary_never_starts(self) -> None:
+        with tempfile.TemporaryDirectory() as folder, patched_environment(JOURNAL_PLUGIN_DATA=folder, JOURNAL_SETTINGS=""):
+            for event in ("command_starting", "idle"):
+                line = json.dumps({"event": event, "agent": 7, "role": "main", "data": {"text": "git status"}}).encode()
+                with mock.patch.object(hook, "answered", side_effect=AssertionError("the binary was started")), \
+                        mock.patch.object(sys, "stdin", io.TextIOWrapper(io.BytesIO(line))), \
+                        mock.patch.object(sys, "stdout", io.StringIO()) as said:
+                    self.assertEqual(hook.main(), 0)
+                self.assertEqual(json.loads(said.getvalue()), {"v": 1}, event)
 
 
 class patched_environment:

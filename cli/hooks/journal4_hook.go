@@ -140,12 +140,8 @@ func judgedAfter(event string) bool {
 }
 
 func Answer4Now(line map[string]any) string {
-	moment, known := Moment4Of(line)
-	if !known {
+	if _, known := Moment4Of(line); !known {
 		return ""
-	}
-	if refusal := cliRefusedTo(MomentOf(moment)); refusal != "" {
-		return JournalAnswer{Refuse: &refusal}.Line()
 	}
 	if _, queued := Queue4In(os.Getenv(pluginData)); !queued {
 		return Answer4Of(line)
