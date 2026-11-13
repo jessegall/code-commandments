@@ -208,9 +208,7 @@ func (k *keptLines) settle() {
 
 			continue
 		}
-		if !slices.ContainsFunc(k.variants(line.path), func(known []string) bool { return slices.Equal(known, line.reads) }) {
-			k.addVariant(line.path, line.reads)
-		}
+		k.addVariant(line.path, line.reads)
 		if os.Rename(line.held, k.recordOf(line.path, line.reads)) != nil {
 			_ = os.Remove(line.held)
 		}
@@ -365,8 +363,13 @@ func (k *keptLines) variants(file string) [][]string {
 	return found
 }
 
+// addVariant adds the files a tree read to its file's index, once: the check and the write share the lock, so two runs
+// settling the same line never write it twice.
 func (k *keptLines) addVariant(file string, reads []string) {
 	defer atomic.Hold(filepath.Join(k.folder, "index.lock"))()
+	if slices.ContainsFunc(k.variants(file), func(known []string) bool { return slices.Equal(known, reads) }) {
+		return
+	}
 	line, _ := json.Marshal(reads)
 	known, _ := os.ReadFile(k.indexOf(file))
 	_ = atomic.Write(k.indexOf(file), string(known)+string(line)+"\n")
@@ -423,11 +426,27 @@ func (k *keptLines) header() *contract.Header {
 	return &header
 }
 
-// standing is the kept header as this run's stream carries it: its own roots.
-func (k *keptLines) standing(header contract.Header, roots []string) contract.Header {
+// standing is the kept header as this run's stream carries it: its own roots, and named for the files it serves.
+func (k *keptLines) standing(header contract.Header, roots []string, files []*contract.File) contract.Header {
 	header.Roots = roots
+	header.Language = languageOf(header, files)
 
 	return header
+}
+
+// languageOf is the language a stream holding these files is named for, whichever request first kept its header.
+func languageOf(header contract.Header, files []*contract.File) contract.Language {
+	var languages []contract.Language
+	for _, file := range files {
+		if !slices.Contains(languages, file.Language) {
+			languages = append(languages, file.Language)
+		}
+	}
+	if len(languages) == 0 {
+		return header.Language
+	}
+
+	return contract.StreamLanguage(languages)
 }
 
 func (k *keptLines) keepHeader(header contract.Header) {
@@ -444,12 +463,15 @@ func (k *keptLines) headerPath() string {
 }
 
 // program is the program line every kept run of this bridge wrote, joined: a run that reads only the files that
-// changed writes the facts those files reached, and the rest stand from before.
+// changed writes the facts those files reached, and the rest stand from before. Only a run that joins a fresh program
+// takes the lock: the file is replaced whole, so a run that only reads it never sees half of it.
 func (k *keptLines) program(fresh *contract.Program) *contract.Program {
 	if k.folder == "" {
 		return fresh
 	}
-	defer atomic.Hold(k.programPath() + ".lock")()
+	if fresh != nil {
+		defer atomic.Hold(k.programPath() + ".lock")()
+	}
 	var kept contract.Program
 	if raw, err := used(k.programPath()); err == nil {
 		_ = json.Unmarshal(k.unmarked(raw), &kept)

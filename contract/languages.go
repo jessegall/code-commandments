@@ -18,11 +18,14 @@ type facts struct {
 	generatedNames    []string
 	generatedHeadings []string
 	openings          []string
+	// holds is the languages a stream of this one carries files of too: a Vue stream holds the TypeScript its
+	// components import.
+	holds []Language
 }
 
 var described = map[Language]facts{
 	PHP:        {extensions: []string{"php"}, label: "PHP", comment: [2]string{"// ", ""}, commentOpeners: []string{"//", "/*", "*"}, openings: []string{"<?php"}},
-	Vue:        {extensions: []string{"vue"}, label: "Vue", comment: [2]string{"<!-- ", " -->"}, commentOpeners: []string{"<!--"}},
+	Vue:        {extensions: []string{"vue"}, label: "Vue", comment: [2]string{"<!-- ", " -->"}, commentOpeners: []string{"<!--"}, holds: []Language{TypeScript}},
 	TypeScript: {extensions: []string{"ts", "tsx", "mts", "cts", "js", "jsx", "mjs", "cjs"}, label: "TypeScript", comment: [2]string{"// ", ""}, commentOpeners: []string{"//", "/*", "*"}},
 	Python:     {extensions: []string{"py"}, label: "Python", comment: [2]string{"# ", ""}, commentOpeners: []string{"#"}},
 	CSharp: {extensions: []string{"cs"}, label: "C#", comment: [2]string{"// ", ""}, commentOpeners: []string{"//", "/*", "*"},
@@ -74,4 +77,21 @@ func LanguageOfPath(path string) (Language, bool) {
 	}
 
 	return "", false
+}
+
+// StreamLanguage is the language a stream of files in these languages is named for: the one that holds every other,
+// as a bridge names a stream of Vue components and the TypeScript they import Vue, else the first.
+func StreamLanguage(languages []Language) Language {
+	for _, candidate := range languages {
+		if !slices.ContainsFunc(languages, func(other Language) bool {
+			return other != candidate && !slices.Contains(described[candidate].holds, other)
+		}) {
+			return candidate
+		}
+	}
+	if len(languages) == 0 {
+		return ""
+	}
+
+	return languages[0]
 }

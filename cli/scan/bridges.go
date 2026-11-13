@@ -459,7 +459,7 @@ func (b Bridge) ReadShared(roots, files []string, tally func(), processes int) (
 		}
 	}
 	if len(misses) == 0 {
-		return &contract.Stream{Header: kept.standing(*header, resolved(roots)), Files: hits, Program: outsideOnly(kept.program(nil), hits),
+		return &contract.Stream{Header: kept.standing(*header, resolved(roots), hits), Files: hits, Program: outsideOnly(kept.program(nil), hits),
 			Trailer: contract.Trailer{Files: len(hits)}}, nil
 	}
 
@@ -488,6 +488,7 @@ func (b Bridge) ReadShared(roots, files []string, tally func(), processes int) (
 		return stream, err
 	}
 	stream.Files = append(hits, stream.Files...)
+	stream.Header.Language = languageOf(stream.Header, stream.Files)
 	stream.Trailer.Files = len(stream.Files)
 	stream.Program = outsideOnly(kept.program(outsideOnly(stream.Program, stream.Files)), stream.Files)
 

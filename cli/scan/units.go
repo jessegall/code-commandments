@@ -115,7 +115,7 @@ func askUnits(held Bridge, roots, files []string, complete func(*engine.Codebase
 // read has the bridge write the misses, cut as they come, then cuts the projects none of whose files missed.
 func (c *cutter) read(held Bridge, roots, files, misses []string, header *contract.Header) error {
 	if len(misses) == 0 {
-		c.header = c.kept.standing(*header, roots)
+		c.header = c.kept.standing(*header, roots, nil)
 		c.units.header, _ = json.Marshal(contract.Line{Header: &c.header})
 		c.units.header = append(c.units.header, '\n')
 		c.joinProgram(nil)
