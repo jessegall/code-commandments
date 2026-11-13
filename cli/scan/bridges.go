@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"slices"
 	"sync"
+	"time"
 
 	"github.com/jessegall/code-commandments/bridge"
 	"github.com/jessegall/code-commandments/bridge/gotree"
@@ -461,7 +462,7 @@ const halvingsAtMost = 8
 // wavesAtMost is how many times a read starts the bridge for its misses: each wave reads the misses that import no
 // other miss, and the next takes what still misses once those stand, so a change spreads only as far as an outline
 // changed. The last wave reads whatever is left.
-const wavesAtMost = 6
+const wavesAtMost = 12
 
 // ReadShared serves every file whose kept line still stands from the one cache every checkout shares, and has the
 // bridge read the rest, in as many shares as processes side by side; one process, or a single file, is one read.
@@ -484,7 +485,12 @@ func (b Bridge) ReadShared(roots, files []string, tally func(), processes int) (
 	}
 
 	first, later := kept.deferred(misses)
+	if len(first) == 0 {
+		first, later = later, nil
+	}
+	started := time.Now()
 	stream, err := b.readMisses(kept, roots, files, first, tally, processes)
+	b.timedWave(1, len(first), started)
 	kept.settle()
 	kept.forget(first)
 	for wave := 2; len(later) > 0 && stream != nil; wave++ {
@@ -495,11 +501,23 @@ func (b Bridge) ReadShared(roots, files []string, tally func(), processes int) (
 		engine.CountedKept(len(standing))
 		hits = append(hits, standing...)
 		next, rest := kept.deferred(still)
-		if wave == wavesAtMost {
+		switch {
+		case wave == wavesAtMost:
 			next, rest = still, nil
+		case len(next) == 0:
+			var standing []*contract.File
+			standing, next = kept.ownLines(rest)
+			rest = nil
+			for range standing {
+				tally()
+			}
+			engine.CountedKept(len(standing))
+			hits = append(hits, standing...)
 		}
 		if len(next) > 0 {
+			started := time.Now()
 			read, readErr := b.readMisses(kept, roots, files, next, tally, processes)
+			b.timedWave(wave, len(next), started)
 			stream, err = joined(stream, read), errors.Join(err, readErr)
 			kept.settle()
 			kept.forget(next)
@@ -515,6 +533,13 @@ func (b Bridge) ReadShared(roots, files []string, tally func(), processes int) (
 	stream.Program = outsideOnly(kept.program(outsideOnly(stream.Program, stream.Files)), stream.Files)
 
 	return stream, err
+}
+
+// timedWave says, on a timed run, how long a wave of misses took the bridge.
+func (b Bridge) timedWave(wave, misses int, started time.Time) {
+	if cli.Timed() {
+		fmt.Fprintf(os.Stderr, "· %s: wave %d read %d files in %s\n", b.Kind, wave, misses, time.Since(started).Round(time.Millisecond))
+	}
 }
 
 // outsideOnly is the program line without what a file of the stream declares: a program symbol is a declaration

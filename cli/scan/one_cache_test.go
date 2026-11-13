@@ -342,3 +342,32 @@ func TestAReleaseThatLeavesTheGoBridgeAloneKeepsItsLines(t *testing.T) {
 		t.Errorf("a release that left the Go bridge alone asked it for %v again", asked)
 	}
 }
+
+// Files that import each other are read again only where they must be: a change to what prices.py declares reads it
+// and cart.py, which imports it, again, while ledger.py and receipt.py, which import cart.py and each other but not
+// prices.py, stand from the cache once cart.py still declares what it did.
+func TestFilesThatImportEachOtherAreReadAgainOnlyWhereTheyMustBe(t *testing.T) {
+	if _, err := bridge.Mypy(); err != nil {
+		t.Skipf("no Python bridge here: %v", err)
+	}
+	project := repository(t)
+	journalDriven(t, project)
+	written(t, project, "src/shop/__init__.py", "")
+	written(t, project, "src/shop/prices.py", "def price() -> int:\n    return 3\n")
+	written(t, project, "src/shop/cart.py", "from shop import ledger\nfrom shop.prices import price\n\n\ndef total() -> int:\n    return price() * 2\n")
+	written(t, project, "src/shop/ledger.py", "from shop import cart, receipt\n\n\ndef book() -> int:\n    return cart.total()\n")
+	written(t, project, "src/shop/receipt.py", "from shop import ledger\n\n\ndef print_it() -> int:\n    return ledger.book()\n")
+
+	held := cache.KeptIn()
+	cache.KeepIn(t.TempDir())
+	t.Cleanup(func() { cache.KeepIn(held) })
+
+	files := []string{"src/shop/__init__.py", "src/shop/prices.py", "src/shop/cart.py", "src/shop/ledger.py", "src/shop/receipt.py"}
+	askedOfABridge(t, project, files...)
+	written(t, project, "src/shop/prices.py", "def price() -> int:\n    return 3\n\n\ndef tax() -> int:\n    return 1\n")
+	asked := askedOfABridge(t, project, files...)
+	want := []string{filepath.Join(project, "src/shop/cart.py"), filepath.Join(project, "src/shop/prices.py")}
+	if slices.Sort(asked); !slices.Equal(asked, want) {
+		t.Errorf("a new function in prices.py asked the bridge for %v, not prices.py and cart.py alone", asked)
+	}
+}

@@ -354,7 +354,9 @@ func (k *keptLines) outlinePath(file, print string) string {
 }
 
 // deferred splits the files a bridge must read into those to read first and those that read one of them: an edit
-// inside a body leaves its outline as it was, so once the first are read the others may stand from the cache.
+// inside a body leaves its outline as it was, so once the first are read the others may stand from the cache. Where
+// every miss reads another, as files that import each other do, the first are those with no kept line for what they
+// read now, and none when every one has: then each stands on its own line, for nothing it reads will be read again.
 func (k *keptLines) deferred(misses []string) (first, later []string) {
 	missed := map[string]bool{}
 	for _, miss := range misses {
@@ -372,10 +374,47 @@ func (k *keptLines) deferred(misses []string) (first, later []string) {
 		first = append(first, miss)
 	}
 	if len(first) == 0 {
-		return later, nil
+		return k.withoutALineOfTheirOwn(later)
 	}
 
 	return first, later
+}
+
+// withoutALineOfTheirOwn splits files into those with no kept line for what they read now and those with one.
+func (k *keptLines) withoutALineOfTheirOwn(files []string) (without, with []string) {
+	for _, file := range files {
+		if k.ownLine(file) == nil {
+			without = append(without, file)
+			continue
+		}
+		with = append(with, file)
+	}
+
+	return without, with
+}
+
+// ownLines are the kept lines of files that stand on lines of their own, each read for what it reads now, and the
+// files whose line went in the meantime, for the bridge to read.
+func (k *keptLines) ownLines(files []string) (lines []*contract.File, without []string) {
+	for _, file := range files {
+		if found := k.ownLine(file); found != nil {
+			lines = append(lines, found)
+			continue
+		}
+		without = append(without, file)
+	}
+
+	return lines, without
+}
+
+func (k *keptLines) ownLine(file string) *contract.File {
+	header := k.header()
+	if header == nil {
+		return nil
+	}
+	found, _ := k.line(contract.KeptUnder(*header), file)
+
+	return found
 }
 
 // variants are the sets of files the trees kept for this file's contents read, one per line of its index: a file
