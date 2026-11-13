@@ -112,7 +112,7 @@ func Sync(root string, console cli.Console) error {
 	removeHostRoslynBuilds(console)
 	console.Warn(custom.InForce(root).ClassWarnings()...)
 	console.Warn(agents.Unshipped(project)...)
-	fetchRoslyn(root, project, console)
+	prepareBridges(root, project, console)
 
 	if converted := Migrate(workspace.At(root, "")); len(converted) > 0 {
 		console.Say("↻ session state upgraded — carried over " + strings.Join(converted, ", ") + ".")

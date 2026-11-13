@@ -30,6 +30,14 @@ type Bridge struct {
 	InUnits bool
 	Reach   Reach
 	Notice  func() string
+	// Prepare readies the bridge on this machine, as fetching the one a release ships, and says what it did; nil
+	// when the binary carries everything the bridge needs.
+	Prepare func() (string, error)
+}
+
+// HeldIn says whether a project holds any language this bridge reads.
+func (b Bridge) HeldIn(holds func(source.Language) bool) bool {
+	return slices.ContainsFunc(b.Languages, holds)
 }
 
 // ReadInUnits says whether a language's bridge reads it a project at a time rather than file by file.
@@ -352,6 +360,7 @@ var CSharp = Bridge{Kind: "roslyn", Word: "csharp", Languages: []source.Language
 	InUnits:    true,
 	Reach:      Process{Command: func(roots []string) ([]string, error) { return bridge.Roslyn(roots...) }, Named: bridge.RoslynFailure},
 	Notice:     bridge.RoslynNotice,
+	Prepare:    bridge.FetchRoslyn,
 }
 
 var GoBridge = Bridge{Kind: "go", Word: "go", Languages: []source.Language{source.Go}, Label: "Go",

@@ -3,9 +3,7 @@ package sync
 import (
 	"os"
 	"path/filepath"
-	"slices"
 
-	"github.com/jessegall/code-commandments/bridge"
 	"github.com/jessegall/code-commandments/cli"
 	"github.com/jessegall/code-commandments/cli/config"
 	"github.com/jessegall/code-commandments/cli/scan"
@@ -31,21 +29,23 @@ func removeHostRoslynBuilds(console cli.Console) {
 	console.Say("↻ removed the C# bridge the PHP tool built on this machine (" + builds + "): C# is read by the bridge each release ships now.")
 }
 
-func fetchRoslyn(root string, project config.Config, console cli.Console) {
-	if !slices.ContainsFunc(scan.CSharp.Languages, func(language source.Language) bool { return project.Holds(root, language) }) ||
-		os.Getenv("COMMANDMENTS_ROSLYN") != "" {
-		return
-	}
-	executable, fetched, err := bridge.RoslynExecutable()
-	if err != nil {
-		console.Warn(err.Error())
+// prepareBridges readies every bridge the project holds a language of, and passes on what each says.
+func prepareBridges(root string, project config.Config, console cli.Console) {
+	for _, held := range scan.Bridges {
+		if held.Prepare == nil || !held.HeldIn(func(language source.Language) bool { return project.Holds(root, language) }) {
+			continue
+		}
+		said, err := held.Prepare()
+		if err != nil {
+			console.Warn(err.Error())
 
-		return
-	}
-	if fetched {
-		console.Say("↓ fetched the C# bridge for " + bridge.Release + " (" + executable + ").")
-	}
-	if notice := bridge.RoslynNotice(); notice != "" {
-		console.Warn(notice)
+			continue
+		}
+		if said != "" {
+			console.Say(said)
+		}
+		if notice := held.Notice(); notice != "" {
+			console.Warn(notice)
+		}
 	}
 }

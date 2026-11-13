@@ -69,12 +69,12 @@ func project(t *testing.T, files ...string) string {
 func TestSyncFetchesTheCSharpBridgeForAProjectThatWritesCSharp(t *testing.T) {
 	asked := fakeRelease(t, true)
 	var out bytes.Buffer
-	fetchRoslyn(project(t, "Shop/Cart.cs"), config.Config{}, cli.Console{Out: &out, Err: &out})
+	prepareBridges(project(t, "Shop/Cart.cs"), config.Config{}, cli.Console{Out: &out, Err: &out})
 	if len(*asked) != 2 || !strings.Contains(out.String(), "fetched the C# bridge for v9.9.9") {
 		t.Errorf("the release was asked %v and sync said %q", *asked, out.String())
 	}
 	out.Reset()
-	fetchRoslyn(project(t, "Shop/Cart.cs"), config.Config{}, cli.Console{Out: &out, Err: &out})
+	prepareBridges(project(t, "Shop/Cart.cs"), config.Config{}, cli.Console{Out: &out, Err: &out})
 	if len(*asked) != 2 || strings.Contains(out.String(), "fetched") {
 		t.Errorf("a bridge already fetched was fetched again: %v, %q", *asked, out.String())
 	}
@@ -82,7 +82,7 @@ func TestSyncFetchesTheCSharpBridgeForAProjectThatWritesCSharp(t *testing.T) {
 
 func TestSyncFetchesNothingForAProjectWithoutCSharp(t *testing.T) {
 	asked := fakeRelease(t, true)
-	fetchRoslyn(project(t, "src/Cart.php"), config.Config{}, cli.Console{Out: &bytes.Buffer{}, Err: &bytes.Buffer{}})
+	prepareBridges(project(t, "src/Cart.php"), config.Config{}, cli.Console{Out: &bytes.Buffer{}, Err: &bytes.Buffer{}})
 	if len(*asked) != 0 {
 		t.Errorf("a project with no C# fetched %v", *asked)
 	}
@@ -91,7 +91,7 @@ func TestSyncFetchesNothingForAProjectWithoutCSharp(t *testing.T) {
 func TestABridgeWhoseSumDoesNotMatchIsNeverWritten(t *testing.T) {
 	fakeRelease(t, false)
 	var out bytes.Buffer
-	fetchRoslyn(project(t, "Shop/Cart.cs"), config.Config{}, cli.Console{Out: &out, Err: &out})
+	prepareBridges(project(t, "Shop/Cart.cs"), config.Config{}, cli.Console{Out: &out, Err: &out})
 	if !strings.Contains(out.String(), "does not match its SHA256SUMS") || !strings.Contains(out.String(), "C# is not judged; everything else is") {
 		t.Errorf("sync said %q", out.String())
 	}

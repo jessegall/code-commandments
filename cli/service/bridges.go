@@ -6,6 +6,7 @@ import (
 
 	"github.com/jessegall/code-commandments/cli/config"
 	"github.com/jessegall/code-commandments/cli/scan"
+	"github.com/jessegall/code-commandments/cli/source"
 	"github.com/jessegall/code-commandments/cli/workspace"
 )
 
@@ -24,11 +25,5 @@ func here(b Bridge) (string, bool, error) {
 		return project, false, err
 	}
 
-	for _, language := range b.Languages {
-		if settings.Holds(project, language) {
-			return project, true, nil
-		}
-	}
-
-	return project, false, nil
+	return project, b.HeldIn(func(language source.Language) bool { return settings.Holds(project, language) }), nil
 }

@@ -87,6 +87,19 @@ func roslynFor(roots []string, written ...string) ([]string, error) {
 	}
 }
 
+// FetchRoslyn fetches the C# bridge this release ships, unless a bridge of one's own is named, and says what it fetched.
+func FetchRoslyn() (string, error) {
+	if os.Getenv(roslynVariable) != "" {
+		return "", nil
+	}
+	executable, fetched, err := RoslynExecutable()
+	if err != nil || !fetched {
+		return "", err
+	}
+
+	return "↓ fetched the C# bridge for " + Release + " (" + executable + ").", nil
+}
+
 func RoslynExecutable() (executable string, fetched bool, err error) {
 	if Release == "dev" {
 		return "", false, RoslynUnavailable{"a development build has no release to fetch it from; name one in $" + roslynVariable}
