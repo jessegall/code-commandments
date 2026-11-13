@@ -18,10 +18,12 @@ PLUGIN = Path(__file__).resolve().parent.parent
 BINARY = PLUGIN / "bin" / "commandments-release"
 
 JUDGED_LATER = {"command_starting", "file_edited", "ticked", "idle"}
+HANDED_IN = {"worker_delivering", "suites.coding.workers.worker_delivering"}
 EDITED = "file_edited"
 WORKER_ROLES = {"worker", "helper", "medior", "senior", "builder"}
 
-LIVE_EDITS, WORKERS, WORKER_EDITS = "judge_edits", "judge_worker_edits", "judge_workers"
+LIVE_EDITS, WORKERS, WORKER_EDITS = "judge_edits", "judge_workers", "judge_worker_edits"
+HAND_INS, HAND_INS_AFTER = "judge_hand_ins", "judge_hand_ins_after"
 EVENTS, WINDOWS, TOLD, QUEUE = "events", "windows", "told", "queue"
 JUDGE_EVENT = "--judge-event="
 NEW_CARD_EACH_TIME = {"sin-found", "sin-resolved"}
@@ -146,7 +148,18 @@ def judged_later(event: dict) -> bool:
     chosen = settings_of(event)
     if not switched_on(chosen.get(LIVE_EDITS)):
         return False
-    return event.get("role") not in WORKER_ROLES or switched_on(chosen.get(WORKER_EDITS)) and switched_on(chosen.get(WORKERS))
+    return event.get("role") not in WORKER_ROLES or workers_chose(chosen, WORKER_EDITS)
+
+
+def workers_chose(chosen: dict, key: str) -> bool:
+    return switched_on(chosen.get(WORKERS)) and switched_on(chosen.get(key))
+
+
+def judged_after_the_hand_in(event: dict) -> bool:
+    """A worker's hand-in that goes through at once and is judged after, the worker told what was found: judging
+    after it chosen, and judging before it not."""
+    chosen = settings_of(event)
+    return event.get("event") in HANDED_IN and workers_chose(chosen, HAND_INS_AFTER) and not workers_chose(chosen, HAND_INS)
 
 
 class EditWindow:
@@ -261,6 +274,14 @@ def main() -> int:
     if judging:
         return judged(judging[0])
     line = sys.stdin.buffer.read()
+    try:
+        event = json.loads(line)
+    except ValueError:
+        event = None
+    if isinstance(event, dict) and judged_after_the_hand_in(event):
+        sys.stdout.write(json.dumps(shaped({})) + "\n")
+        queued(line, event.get("agent") if isinstance(event.get("agent"), int) else 0)
+        return 0
     answer, code = answered(line)
     sys.stdout.buffer.write(answer)
     sys.stdout.buffer.flush()

@@ -1,12 +1,12 @@
 package hooks
 
 import (
+	"encoding/json"
 	"io"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/jessegall/code-commandments/cli"
 )
@@ -29,22 +29,15 @@ func TestAHandInJudgedAfterGoesThroughUnheldAndTheWorkerIsToldItsSinAfterwards(t
 		t.Fatal("judging after a hand-in is chosen and the hand-in is not judged after")
 	}
 
-	journal := filepath.Join(t.TempDir(), "journal")
-	if err := os.WriteFile(journal, []byte("#!/bin/sh\nexit 0\n"), 0o755); err != nil {
-		t.Fatal(err)
-	}
-	t.Setenv("JOURNAL_BIN", journal)
-
 	if held := DeliveryHeld(line); held != "" {
 		t.Fatalf("the hand-in was held though judging after it was chosen: %q", held)
 	}
 
-	var kept []string
-	for until := time.Now().Add(10 * time.Second); len(kept) == 0 && time.Now().Before(until); time.Sleep(50 * time.Millisecond) {
-		kept, _ = filepath.Glob(filepath.Join(data, eventsFolder, "event-*.json"))
-	}
-	if len(kept) != 1 {
-		t.Fatalf("the hand-in was not handed to the journal's queue to judge: %v", kept)
+	raw, _ := json.Marshal(line)
+	kept := []string{filepath.Join(data, eventsFolder, "event-1.json")}
+	os.MkdirAll(filepath.Dir(kept[0]), 0o755)
+	if err := os.WriteFile(kept[0], raw, 0o644); err != nil {
+		t.Fatal(err)
 	}
 
 	judgeTheEventIn(kept[0], cli.Console{Out: io.Discard, Err: io.Discard})

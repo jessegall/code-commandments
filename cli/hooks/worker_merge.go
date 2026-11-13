@@ -38,24 +38,14 @@ func MergeHeld(line map[string]any) string {
 	return workHeld(line)
 }
 
+// DeliveryHeld judges a hand-in before it goes through, when that is chosen. A hand-in judged after it is answered
+// and queued by the plugin's script, and reaches this binary only as the kept event of that run.
 func DeliveryHeld(line map[string]any) string {
-	if handInsJudgedAfter(line) {
-		judgedAfterTheHandIn(line)
-
-		return ""
-	}
-
 	if !handInsJudged(line) {
 		return ""
 	}
 
 	return mergeOf(line).answered()
-}
-
-func judgedAfterTheHandIn(line map[string]any) {
-	if raw, err := json.Marshal(line); err == nil {
-		judgeDetached(raw)
-	}
 }
 
 func workHeld(line map[string]any) string {

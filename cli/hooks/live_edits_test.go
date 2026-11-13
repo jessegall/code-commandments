@@ -102,29 +102,14 @@ func TestWithLiveJudgingOffAnEditIsNotEvenRecorded(t *testing.T) {
 	}
 }
 
-func TestABackgroundJudgingIsStartedThroughTheJournalsQueue(t *testing.T) {
-	said := strings.Join(judgingThrough(pluginScriptBeside("/plugin/bin/commandments-release"), "/data/events/event-1.json", 7), " ")
-
-	if want := "plugin run --kind judge --agent 7 -- /plugin/.journal-plugin/hook --judge-event=/data/events/event-1.json"; said != want {
-		t.Errorf("the plugin starts its judging as %q, want %q", said, want)
-	}
-
-	if said := strings.Join(judgingThrough("/bin/c", "/e.json", 0), " "); strings.Contains(said, "--agent") {
-		t.Errorf("an event of no agent names one: %q", said)
-	}
-}
-
 func TestTheEventABackgroundJudgingReadsIsKeptInAFileAndRemovedOnceRead(t *testing.T) {
 	data := t.TempDir()
 	t.Setenv(pluginData, data)
 
-	event, err := keptEventIn(data, []byte(`{"v":1,"event":"idle","agent":7}`))
-	if err != nil {
+	event := filepath.Join(data, eventsFolder, "event-1.json")
+	os.MkdirAll(filepath.Dir(event), 0o755)
+	if err := os.WriteFile(event, []byte(`{"v":1,"event":"idle","agent":7}`), 0o644); err != nil {
 		t.Fatal(err)
-	}
-
-	if filepath.Dir(event) != filepath.Join(data, eventsFolder) {
-		t.Errorf("the event is kept at %s, outside the plugin's events folder", event)
 	}
 
 	judgeTheEventIn(event, cli.Console{Out: io.Discard, Err: io.Discard})

@@ -5,13 +5,11 @@ import (
 	"encoding/json"
 	"io"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
 
-	"github.com/jessegall/code-commandments/bridge/bundle"
 	"github.com/jessegall/code-commandments/cli"
 	"github.com/jessegall/code-commandments/cli/help"
 )
@@ -224,79 +222,6 @@ func gatheredIn(window EditWindow, given map[string]any) (map[string]any, [][]by
 	}
 
 	return batched(batch).given, edits
-}
-
-func judgeDetached(raw []byte) bool {
-	data := os.Getenv(pluginData)
-	journal := journalBinary()
-	if data == "" || journal == "" {
-		return false
-	}
-
-	self, err := os.Executable()
-	if err != nil {
-		return false
-	}
-
-	event, err := keptEventIn(data, raw)
-	if err != nil {
-		return false
-	}
-
-	run := exec.Command(journal, judgingThrough(pluginScriptBeside(self), event, agentOfEvent(raw))...)
-	detach(run)
-
-	if run.Start() != nil {
-		os.Remove(event)
-
-		return false
-	}
-	run.Process.Release()
-
-	return true
-}
-
-// judgingThrough is the journal command that queues the judging of a kept event, run by the plugin's script, which
-// hands it to this binary and shapes what the judging tells.
-func judgingThrough(script, event string, agent int) []string {
-	arguments := []string{"plugin", "run", "--kind", judgeKind}
-	if agent != 0 {
-		arguments = append(arguments, "--agent", strconv.Itoa(agent))
-	}
-
-	return append(arguments, "--", script, "--"+judgeEventOption+"="+event)
-}
-
-// pluginScriptBeside is the plugin's program in the plugin folder the release binary was fetched into.
-func pluginScriptBeside(binary string) string {
-	return filepath.Join(filepath.Dir(filepath.Dir(binary)), ".journal-plugin", "hook")
-}
-
-func keptEventIn(data string, raw []byte) (string, error) {
-	folder := filepath.Join(data, eventsFolder)
-	bundle.Sweep(folder, time.Now())
-	if err := os.MkdirAll(folder, 0o755); err != nil {
-		return "", err
-	}
-
-	file, err := os.CreateTemp(folder, "event-*.json")
-	if err != nil {
-		return "", err
-	}
-	defer file.Close()
-
-	_, err = file.Write(raw)
-
-	return file.Name(), err
-}
-
-func agentOfEvent(raw []byte) int {
-	var line map[string]any
-	if json.Unmarshal(bytes.TrimSpace(raw), &line) != nil {
-		return 0
-	}
-
-	return asAgent(line["agent"])
 }
 
 func judgeTheEventIn(path string, console cli.Console) {

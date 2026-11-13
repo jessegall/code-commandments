@@ -80,6 +80,34 @@ class OneAgentsEditsGatherInOneWindow(unittest.TestCase):
             self.assertTrue(window.gather(b'{"n":2}'))
 
 
+class AHandInJudgedAfterGoesThroughAtOnce(unittest.TestCase):
+    def test_only_judging_after_without_judging_before_lets_it_through_to_be_judged_later(self) -> None:
+        handed_in = {"event": "suites.coding.workers.worker_delivering", "agent": 7}
+        self.assertTrue(hook.judged_after_the_hand_in({**handed_in, "settings": {"judge_workers": True, "judge_hand_ins_after": True}}))
+        for chosen in ({"judge_workers": False, "judge_hand_ins_after": True},
+                       {"judge_workers": True, "judge_hand_ins_after": True, "judge_hand_ins": True},
+                       {"judge_workers": True}):
+            self.assertFalse(hook.judged_after_the_hand_in({**handed_in, "settings": chosen}), chosen)
+        self.assertFalse(hook.judged_after_the_hand_in({"event": "file_edited", "settings": {"judge_workers": True, "judge_hand_ins_after": True}}))
+
+    def test_it_is_answered_with_nothing_and_its_judging_is_queued_for_the_worker(self) -> None:
+        with tempfile.TemporaryDirectory() as folder:
+            data, asked = Path(folder) / "data", Path(folder) / "asked"
+            journal = stand_in(Path(folder), f'echo "$@" >> {asked}')
+            line = json.dumps({"event": "worker_delivering", "agent": 7, "settings": {"judge_workers": True, "judge_hand_ins_after": True}})
+            program = subprocess.run([sys.executable, str(PLUGIN / "hook.py")], input=line.encode(), stdout=subprocess.PIPE,
+                                     env={**os.environ, "JOURNAL_PLUGIN_DATA": str(data), "JOURNAL_BIN": str(journal)})
+            deadline = time.time() + 5
+            while not asked.exists() and time.time() < deadline:
+                time.sleep(0.05)
+
+            self.assertEqual(json.loads(program.stdout), {"v": 1})
+            kept = list((data / "events").glob("event-*.json"))
+            self.assertEqual(len(kept), 1)
+            self.assertIn("--agent 7", asked.read_text())
+            self.assertIn(f"--judge-event={kept[0]}", asked.read_text())
+
+
 class AnAgentHasAtMostOneLiveEditJudgingWaiting(unittest.TestCase):
     def test_a_window_whose_run_still_waits_takes_every_edit_however_long_it_waits(self) -> None:
         with tempfile.TemporaryDirectory() as data:
