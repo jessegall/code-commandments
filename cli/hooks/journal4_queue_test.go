@@ -169,7 +169,7 @@ func cardsOf(said map[string]any) []map[string]any {
 
 func settles(cards []map[string]any, key string) bool {
 	for _, card := range cards {
-		if asText(card["key"]) == key && asText(card["kind"]) == "sin-resolved" {
+		if strings.HasPrefix(asText(card["key"]), key+"@") && asText(card["kind"]) == "sin-resolved" {
 			return true
 		}
 	}
@@ -356,7 +356,7 @@ func TestTheEditTheJournalHandsUsDecidesWhichSinsAreFresh(t *testing.T) {
 	}
 }
 
-func TestASinRepentedTurnsItsCardGreenOnTheEventThatRepentsIt(t *testing.T) {
+func TestASinRepentedRaisesACleanCardOfItsOwnOnTheEventThatRepentsIt(t *testing.T) {
 	root, file, data := projectWithASin(t)
 	t.Setenv("JOURNAL_ROOT", root)
 
@@ -364,10 +364,11 @@ func TestASinRepentedTurnsItsCardGreenOnTheEventThatRepentsIt(t *testing.T) {
 	if len(raised) != 1 {
 		t.Fatalf("the sinful edit raised %v", raised)
 	}
-	key := asText(raised[0]["key"])
-	if key == "" {
+	found := asText(raised[0]["key"])
+	if found == "" {
 		t.Fatal("the card raised carries no key, so nothing can settle it")
 	}
+	key := fileKey("src/refund.py")
 
 	righteous := "def refund(order) -> int:\n    if order.late:\n        raise ValueError(order)\n    return order.total\n"
 	if err := os.WriteFile(file, []byte(righteous), 0o644); err != nil {
@@ -377,6 +378,11 @@ func TestASinRepentedTurnsItsCardGreenOnTheEventThatRepentsIt(t *testing.T) {
 	settled := cardsOf(saidAfter(t, data, eventOf("file_edited", "src/refund.py")))
 	if !settles(settled, key) {
 		t.Errorf("the repenting edit raised %v, none of it settling %s", settled, key)
+	}
+	for _, card := range settled {
+		if asText(card["key"]) == found {
+			t.Errorf("the clean card reuses the found card's key %s, so it replaces that card instead of following it", found)
+		}
 	}
 }
 
@@ -388,7 +394,7 @@ func TestASinGoneOutsideTheEditIsStillRepented(t *testing.T) {
 	if len(raised) != 1 {
 		t.Fatalf("the sinful edit raised %v", raised)
 	}
-	key := asText(raised[0]["key"])
+	key := fileKey("src/refund.py")
 
 	repaired := "def refund(order) -> int:\n    if order.late:\n        raise ValueError(order)\n    return order.total\n\n\ndef total(order) -> int:\n    return order.total\n"
 	if err := os.WriteFile(file, []byte(repaired), 0o644); err != nil {

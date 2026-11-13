@@ -88,3 +88,24 @@ func TestOneRunFillsOneBarOnce(t *testing.T) {
 		t.Errorf("the run ends at %d/%d, want 22/22: ten files and four detectors, then six and two", last[0], last[1])
 	}
 }
+
+func TestAPlainProgressLineReadsBackAsTheBarItCounts(t *testing.T) {
+	t.Setenv(cli.PlainProgress, "1")
+
+	for _, phase := range []string{"judging", "reading"} {
+		written := &strings.Builder{}
+		progress := cli.NewProgress(written)
+		progress.At(phase, 3, 12)
+
+		read, done, total, isProgress := cli.PlainProgressOf(written.String())
+		if !isProgress || read != phase || done != 3 || total != 12 {
+			t.Errorf("%q reads back as %q %d/%d (%v), want %s 3/12", written.String(), read, done, total, isProgress, phase)
+		}
+	}
+
+	for _, line := range []string{"1 sin in src/order.py", "waiting: 2 ahead of you", "reading 3/12 files", "judging 3/x"} {
+		if _, _, _, isProgress := cli.PlainProgressOf(line); isProgress {
+			t.Errorf("%q reads as a progress line", line)
+		}
+	}
+}

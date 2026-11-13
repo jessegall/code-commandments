@@ -181,6 +181,40 @@ func (p *Progress) render(phase, label string) {
 	fmt.Fprintf(p.stream, "\r\033[2K\033[2m%s\033[0m [%s] %d/%d \033[2m%s\033[0m", phase, bar, p.current, p.total, label)
 }
 
+// Live is a bar drawn in place on a terminal, not written as lines.
+func (p *Progress) Live() bool {
+	return p.enabled && !p.plain
+}
+
+// At draws the bar where another run's plain progress line said it stands.
+func (p *Progress) At(phase string, done, total int) {
+	if !p.enabled {
+		return
+	}
+
+	p.total, p.active = max(1, total), true
+	p.current = min(p.total, max(0, done))
+	p.render(phase, "")
+}
+
+// PlainProgressOf reads a line a plain progress wrote back into its phase and count.
+func PlainProgressOf(line string) (phase string, done, total int, read bool) {
+	word, count, spaced := strings.Cut(strings.TrimSpace(line), " ")
+	if !spaced {
+		return "", 0, 0, false
+	}
+
+	if _, err := fmt.Sscanf(count, "%d/%d", &done, &total); err != nil || fmt.Sprintf("%d/%d", done, total) != count {
+		return "", 0, 0, false
+	}
+
+	if word == counting("judging") {
+		word = "judging"
+	}
+
+	return word, done, total, true
+}
+
 func isTerminal(stream io.Writer) bool {
 	file, isFile := stream.(*os.File)
 

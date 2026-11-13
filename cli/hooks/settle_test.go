@@ -31,7 +31,7 @@ func TestARepentedSinSettlesTheMarkItWasFoundUnder(t *testing.T) {
 
 	found := AnnouncedIn(data, Moment{}).Settle(root, []string{file}, marks)
 	raised := found.Raises(root)
-	if len(found.Found) != 1 || len(raised) != 1 || raised[0].Key != "sins:shop/refund.py" || len(found.Settles()) != 0 {
+	if len(found.Found) != 1 || len(raised) != 1 || !strings.HasPrefix(raised[0].Key, "sins:shop/refund.py@") || len(found.Settles()) != 0 {
 		t.Fatalf("the sinful edit raised %+v and settles %v", raised, found.Settles())
 	}
 
@@ -46,8 +46,13 @@ func TestARepentedSinSettlesTheMarkItWasFoundUnder(t *testing.T) {
 	}
 
 	repented := AnnouncedIn(data, Moment{}).Settle(root, []string{file}, nil)
-	if !slices.Equal(repented.Settles(), []string{raised[0].Key}) {
-		t.Errorf("the repenting edit settles %v, want %v", repented.Settles(), raised[0].Key)
+	if !slices.Equal(repented.Settles(), []string{fileKey("shop/refund.py")}) {
+		t.Errorf("the repenting edit settles %v, want %v", repented.Settles(), fileKey("shop/refund.py"))
+	}
+
+	clean := repented.Raises(root)
+	if len(clean) != 1 || clean[0].Event != "sin-resolved" || !strings.HasPrefix(clean[0].Key, "sins:shop/refund.py@") || clean[0].Key == raised[0].Key {
+		t.Errorf("the clean card is %+v, want a card of its own beside the found card %q, which it must never replace", clean, raised[0].Key)
 	}
 
 	if again := AnnouncedIn(data, Moment{}).Settle(root, []string{file}, nil); len(again.Settles()) != 0 {
@@ -88,7 +93,7 @@ func TestAWriteThatRepentsASinSettlesItThroughTheHook(t *testing.T) {
 	}
 
 	righteous := write("def refund(order) -> int:\n    if order.late:\n        raise ValueError(order)\n    return order.total\n")
-	if len(righteous.Raises) != 1 || righteous.Raises[0].Event != "sin-resolved" || !slices.Equal(righteous.Settles, []string{sinful.Raises[0].Key}) {
+	if len(righteous.Raises) != 1 || righteous.Raises[0].Event != "sin-resolved" || !slices.Equal(righteous.Settles, []string{fileKey("src/probe.py")}) || righteous.Raises[0].Key == sinful.Raises[0].Key {
 		t.Errorf("the righteous write raised %+v and settles %v", righteous.Raises, righteous.Settles)
 	}
 }

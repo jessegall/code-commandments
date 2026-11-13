@@ -40,7 +40,7 @@ func TestAJudgeInAJournalsProjectRunsInItsQueueAndStreamsTheRunBack(t *testing.T
 
 	self, _ := os.Executable()
 	line, _ := os.ReadFile(asked)
-	if want := "plugin queue code-commandments --kind judge --checkout " + root + " -- env " + queuedMark + "=1 " + self + " judge --changes"; strings.TrimSpace(string(line)) != want {
+	if want := "plugin queue code-commandments --kind judge --checkout " + root + " -- env " + queuedMark + "=1 " + cli.PlainProgress + "=1 " + self + " judge --changes"; strings.TrimSpace(string(line)) != want {
 		t.Errorf("the journal was asked %q, want %q", strings.TrimSpace(string(line)), want)
 	}
 }
