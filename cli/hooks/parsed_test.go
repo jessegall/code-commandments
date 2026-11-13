@@ -44,7 +44,10 @@ func parsedFiles(files []string) []*contract.File {
 }
 
 func TestAHalfWrittenFileDoesNotLoseTheGroupsParse(t *testing.T) {
-	folder := t.TempDir()
+	folder, err := filepath.EvalSymlinks(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	whole := filepath.Join(folder, "order.py")
 	if err := os.WriteFile(whole, []byte("class Order:\n    pass\n"), 0o644); err != nil {

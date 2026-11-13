@@ -11,11 +11,14 @@ import (
 )
 
 func TestARuleOfTheTypeScriptEngineJudgesAnEditedTypeScriptFile(t *testing.T) {
-	root := t.TempDir()
+	root, err := filepath.EvalSymlinks(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
 	file := filepath.Join(root, "late.ts")
 	sample := "export function drain(items: string[]): void {\n  for (const item of items) {\n    items.shift()\n  }\n}\n"
 
-	if err := os.WriteFile(file, []byte(sample), 0o644); err != nil {
+	if err = os.WriteFile(file, []byte(sample), 0o644); err != nil {
 		t.Fatal(err)
 	}
 
