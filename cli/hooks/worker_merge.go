@@ -165,13 +165,14 @@ func mergeOf(line map[string]any) merging {
 	}
 }
 
-var workerRoles = map[string]bool{
-	"worker":  true,
-	"helper":  true,
-	"medior":  true,
-	"senior":  true,
-	"builder": true,
-}
+var workerRoles = func() map[string]bool {
+	roles := map[string]bool{}
+	for _, role := range scriptFacts.WorkerRoles {
+		roles[role] = true
+	}
+
+	return roles
+}()
 
 func roleIn(fields map[string]any) string {
 	return strings.ToLower(strings.TrimSpace(asText(firstOf(fields["role"], fields["agent_role"]))))

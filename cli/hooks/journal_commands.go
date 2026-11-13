@@ -35,6 +35,8 @@ const (
 	workerEditsKey   = "judge_worker_edits"
 	liveEditsKey     = "judge_edits"
 	mergesKey        = "judge_merges"
+	handInsKey       = "judge_hand_ins"
+	handInsAfterKey  = "judge_hand_ins_after"
 	cacheHoursKey    = "cache_hours"
 	skillsFolder     = "journal-skills"
 )

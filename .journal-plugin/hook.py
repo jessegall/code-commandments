@@ -4,6 +4,7 @@ the binary gives into the journal's words, so a change to any of it ships withou
 
 from __future__ import annotations
 
+import contextlib
 import fcntl
 import json
 import os
@@ -15,12 +16,15 @@ import sys
 import tempfile
 import time
 from pathlib import Path
+from typing import Iterator
 
 PLUGIN = Path(__file__).resolve().parent.parent
 BINARY = PLUGIN / "bin" / "commandments-release"
 
-# Every event kind, stated once in the binary's table (cli/hooks.EventKinds) and written beside this script.
+# Every event kind, and the settings, worker roles and edit window the script decides by, each stated once in the
+# binary's tables (cli/hooks.EventKinds, cli/hooks.scriptFacts) and written beside this script.
 EVENT_KINDS = json.loads((Path(__file__).resolve().parent / "events.json").read_text())
+FACTS = json.loads((Path(__file__).resolve().parent / "script-facts.json").read_text())
 
 
 def names_where(fact: str) -> set:
@@ -31,21 +35,22 @@ JUDGED_LATER = names_where("judged_later")
 HANDED_IN = names_where("handed_in")
 MERGED = names_where("merged")
 EDITED = next(kind["key"] for kind in EVENT_KINDS if kind.get("edits"))
-WORKER_ROLES = {"worker", "helper", "medior", "senior", "builder"}
+WORKER_ROLES = set(FACTS["worker_roles"])
 
-LIVE_EDITS, WORKERS, WORKER_EDITS = "judge_edits", "judge_workers", "judge_worker_edits"
-HAND_INS, HAND_INS_AFTER = "judge_hand_ins", "judge_hand_ins_after"
+SETTINGS = FACTS["settings"]
+LIVE_EDITS, WORKERS, WORKER_EDITS = SETTINGS["live_edits"], SETTINGS["workers"], SETTINGS["worker_edits"]
+HAND_INS, HAND_INS_AFTER = SETTINGS["hand_ins"], SETTINGS["hand_ins_after"]
 # The guards that hold a step on a judging, each with the setting that asks for it.
 GUARDED = {name: kind["guarded_by"] for kind in EVENT_KINDS if kind.get("guarded_by") for name in kind["names"]}
 EVENTS, WINDOWS, TOLD, QUEUE = "events", "windows", "told", "queue"
 JUDGE_EVENT, JUDGE_GUARD, JUDGE_AGENT = "--judge-event=", "--judge-guard=", "--judge-agent="
-EDIT_WINDOW, DEFAULT_EDIT_WINDOW = "judge_edit_window", 5.0
+EDIT_WINDOW, DEFAULT_EDIT_WINDOW = SETTINGS["edit_window"], float(FACTS["edit_window"])
 FAULTS = "hook-faults.log"
 TAKING_AT_MOST = 60
 NEW_CARD_EACH_TIME = {"sin-found", "sin-resolved"}
 UNNAMED_WINDOW_STANDS = 30
 HELD_AT_MOST = 2 * 60 * 60
-EDIT_WINDOW_AT_MOST = 60.0
+EDIT_WINDOW_AT_MOST = float(FACTS["edit_window_at_most"])
 EVENT_KEPT_AT_MOST = 24 * 60 * 60
 
 
@@ -213,7 +218,7 @@ def judged_after_the_merge(event: dict) -> bool:
     return event.get("event") in MERGED and workers_chose(settings_of(event), "judge_merges")
 
 
-HELPERS_CLI, HELPERS_CLI_TITLE = "workers_cli", "Helpers may run the commandments CLI"
+HELPERS_CLI, HELPERS_CLI_TITLE = SETTINGS["helpers_cli"], "Helpers may run the commandments CLI"
 CLI_PROGRAMS = {"commandments", "commandments-go", "commandments-release"}
 MANIFEST = PLUGIN / "journal-plugin.5.json"
 COMMAND_SEPARATORS = ("&&", "||", ";", "|", "(", ")", "{", "}", "`", '"', "'")
@@ -301,13 +306,19 @@ class EditWindow:
     def path(self, suffix: str) -> Path:
         return self.folder / f"{self.agent}{suffix}"
 
+    @contextlib.contextmanager
+    def locked(self) -> Iterator[None]:
+        """Holds the agent's window lock, which every change to its events, takings and opening is made under."""
+        with open(self.path(".lock"), "a") as lock:
+            fcntl.flock(lock, fcntl.LOCK_EX)
+            yield
+
     def gather(self, line: bytes) -> str:
         """Keeps the event for the agent's run, and answers the token of a window it opened, empty when a run already
         holds the window."""
         self.folder.mkdir(parents=True, exist_ok=True)
         swept(self.folder)
-        with open(self.path(".lock"), "a") as lock:
-            fcntl.flock(lock, fcntl.LOCK_EX)
+        with self.locked():
             self.restore_abandoned()
             with open(self.path(".events"), "ab") as events:
                 events.write(line.strip() + b"\n")
@@ -341,14 +352,12 @@ class EditWindow:
         return not token or self.holder()[1] == token
 
     def names(self, holder: int, token: str) -> None:
-        with open(self.path(".lock"), "a") as lock:
-            fcntl.flock(lock, fcntl.LOCK_EX)
+        with self.locked():
             if self.path(".open").exists() and self.holds(token):
                 self.path(".open").write_text(f"{holder} {token}")
 
     def reopen(self) -> None:
-        with open(self.path(".lock"), "a") as lock:
-            fcntl.flock(lock, fcntl.LOCK_EX)
+        with self.locked():
             self.path(".open").unlink(missing_ok=True)
 
     def pending(self) -> list[bytes]:
@@ -358,8 +367,7 @@ class EditWindow:
         """The events gathered so far, moved aside for this run, the window still held by it so a later event joins
         it; the run removes the file once it has judged them. A run that no longer holds the window takes nothing."""
         self.folder.mkdir(parents=True, exist_ok=True)
-        with open(self.path(".lock"), "a") as lock:
-            fcntl.flock(lock, fcntl.LOCK_EX)
+        with self.locked():
             if not self.holds(token):
                 return None
             self.restore_abandoned()
@@ -373,8 +381,7 @@ class EditWindow:
     def closed_when_empty(self, token: str = "") -> bool:
         """Closes the window when no event came while the run judged, so the next event queues a run of its own. A run
         that no longer holds the window ends, leaving it to the run that does."""
-        with open(self.path(".lock"), "a") as lock:
-            fcntl.flock(lock, fcntl.LOCK_EX)
+        with self.locked():
             if not self.holds(token):
                 return True
             if self.pending():
@@ -386,8 +393,7 @@ class EditWindow:
         """Drops the events still waiting for a run that has not started, and that run: a hand-in judges the agent's
         whole work, those edits with it. A run already judging is left to finish."""
         self.folder.mkdir(parents=True, exist_ok=True)
-        with open(self.path(".lock"), "a") as lock:
-            fcntl.flock(lock, fcntl.LOCK_EX)
+        with self.locked():
             self.restore_abandoned()
             if any(self.folder.glob(f"{self.agent}.taking.*")):
                 return
@@ -421,9 +427,12 @@ def lines_of(path: Path) -> list[bytes]:
         return []
 
 
-def swept(folder: Path) -> None:
-    """Drops what an agent left in its window a day ago and nothing touched since."""
-    for left in folder.iterdir():
+def swept(folder: Path, pattern: str = "*") -> None:
+    """Drops what was left in the folder a day ago and nothing touched since. A lock stays: a run may hold it however
+    old it is, and a new file beside it would not shut that run out."""
+    for left in folder.glob(pattern):
+        if left.suffix == ".lock":
+            continue
         try:
             if time.time() - left.stat().st_mtime > EVENT_KEPT_AT_MOST:
                 left.unlink(missing_ok=True)
@@ -469,12 +478,7 @@ def kept_event(data: Path, line: bytes) -> Path:
     folder = data / EVENTS
     folder.mkdir(parents=True, exist_ok=True)
     # shortcut: a kept event no run read is dropped after a day; upgrade to the project's cache_hours if that matters
-    for old in folder.glob("event-*.json"):
-        try:
-            if time.time() - old.stat().st_mtime > EVENT_KEPT_AT_MOST:
-                old.unlink(missing_ok=True)
-        except OSError:
-            continue
+    swept(folder, "event-*.json")
     handle, name = tempfile.mkstemp(prefix="event-", suffix=".json", dir=folder)
     with os.fdopen(handle, "wb") as kept:
         kept.write(line)

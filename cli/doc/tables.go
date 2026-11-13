@@ -248,7 +248,7 @@ func PluginSettings() *jsonfile.Object {
 		"judge_hand_ins_after", setting("Judge after a hand-in goes through", "Only with Judge workers on and Judge before a hand-in goes through off. On, a worker's hand-in goes through at once, unheld, and the plugin judges the files it changed afterwards with no time limit, then tells that worker each sin it finds, naming the file, the line and the skill. Off, a hand-in is not judged afterwards.", "flag", "false", "Workers"),
 		"judge_merges", setting("Judge what a merge brings in", "Only with Judge workers on. On, a worker's merge is judged in a run the journal queues the moment it lands, over the commits it brought in, and the main agent is told what came in without having to remember. Off, nothing is judged at a merge and what came in is judged whenever somebody next judges those files.", "flag", "false", "Workers"),
 		"judge_before_merge", setting("Refuse a merge that would bring in sins", "Only with Judge workers on. On, a worker's merge is judged BEFORE it lands, over what its branch adds on top of the branch it merges into, and a merge that would bring in sins is refused: the work goes back to that worker with the findings and the merger is told it was not allowed. Off, a merge lands and is judged afterwards. The merge waits, with no time limit, on a judging run the journal queues.", "flag", "false", "Workers"),
-		"judge_edit_window", setting("Seconds to gather live edits", "How long one agent's live edits are gathered before they are judged together as a group. An edit alone in that time is judged by itself. Zero judges each edit as it comes; more than 60 counts as 60.", "number", "5", "Performance"),
+		"judge_edit_window", setting("Seconds to gather live edits", "How long one agent's live edits are gathered before they are judged together as a group. An edit alone in that time is judged by itself. Zero judges each edit as it comes; more than "+strconv.Itoa(hooks.EditWindowAtMost)+" counts as "+strconv.Itoa(hooks.EditWindowAtMost)+".", "number", strconv.Itoa(hooks.DefaultEditWindow), "Performance"),
 		"judge_at_once", setting("Judging runs at once", "How many judging runs the plugin starts may run side by side. Each one the plugin starts goes through the journal's process queue, which holds the next back until fewer than this many run.", "number", "1", "Performance"),
 		"cache_hours", setting("Hours an unused cache is kept", "How long anything kept between runs stays once nothing uses it: the parsed trees of every language, what each rule answered per file and mypy's cache. Every use resets the clock, so only what went untouched for the whole time is removed.", "number", strconv.Itoa(cache.DefaultHours), "Performance"),
 		"workers_cli", setting("Helpers may run the commandments CLI", "On, any helper (a worker, a reviewer, a researcher, the merger) may run the commandments program, `journal sins` and the plugin's other aliases. Off, such a command is refused at once with a line saying so, however it is written: through a variable, in a subshell or behind env, nice or timeout. Their work is still judged when it is handed in and merged, and the main agent is not affected.", "flag", "false", "Workers"),
@@ -295,6 +295,9 @@ const Journal5Plugin = "journal-plugin.5.json"
 
 // EventKindsFile is the event table the plugin's script reads, written from cli/hooks.EventKinds.
 const EventKindsFile = ".journal-plugin/events.json"
+
+// ScriptFactsFile is the settings, worker roles and edit window the plugin's script reads, written from cli/hooks.
+const ScriptFactsFile = ".journal-plugin/script-facts.json"
 
 const JournalBriefing = "instructions/briefing.md"
 
@@ -387,6 +390,7 @@ func Generated(root string) (map[string]string, error) {
 	}
 	documents["README.md"] = updated
 	documents[EventKindsFile] = hooks.EventKindsJSON()
+	documents[ScriptFactsFile] = hooks.ScriptFactsJSON()
 	manifest, read := jsonfile.Read(filepath.Join(root, Plugin))
 	if !read {
 		return nil, fmt.Errorf("%s is not a JSON object", Plugin)

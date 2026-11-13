@@ -1,0 +1,20 @@
+{
+  "settings": {
+    "edit_window": "judge_edit_window",
+    "hand_ins": "judge_hand_ins",
+    "hand_ins_after": "judge_hand_ins_after",
+    "helpers_cli": "workers_cli",
+    "live_edits": "judge_edits",
+    "worker_edits": "judge_worker_edits",
+    "workers": "judge_workers"
+  },
+  "worker_roles": [
+    "worker",
+    "helper",
+    "medior",
+    "senior",
+    "builder"
+  ],
+  "edit_window": 5,
+  "edit_window_at_most": 60
+}

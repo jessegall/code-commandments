@@ -35,7 +35,7 @@ var EventKinds = []EventKind{
 	{Key: "prompt_submitted", Names: []string{"prompt_submitted"}, Hook: "UserPromptSubmit"},
 	{Key: "compacting", Names: []string{"compacting"}, Hook: "PreCompact"},
 	{Key: updatedEvent, Names: []string{updatedEvent, "plugin.update"}},
-	{Key: deliveringEvent, Names: []string{deliveringEvent, "suites.coding.workers.worker_delivering"}, GuardedBy: "judge_hand_ins", HandedIn: true},
+	{Key: deliveringEvent, Names: []string{deliveringEvent, "suites.coding.workers.worker_delivering"}, GuardedBy: handInsKey, HandedIn: true},
 	{Key: landedEvent, Names: []string{landedEvent, "worker_worktree.merge"}, Merged: true},
 	{Key: requestedEvent, Names: []string{requestedEvent, "merge_request.create"}, GuardedBy: "judge_before_merge"},
 	{Key: cutEvent, Names: []string{cutEvent}},
@@ -49,6 +49,40 @@ func kindNamed(name string) (EventKind, bool) {
 	}
 
 	return EventKinds[at], true
+}
+
+// ScriptFacts are what the plugin's script decides by besides the event kinds, stated once here: the setting each
+// switch is read under, the roles a worker runs as, and how long an agent's edits gather. The script reads them from
+// .journal-plugin/script-facts.json, which `go run ./cli/doc/readme` writes from this table.
+type ScriptFacts struct {
+	Settings    map[string]string `json:"settings"`
+	WorkerRoles []string          `json:"worker_roles"`
+	// EditWindow is the seconds an agent's edits gather when the setting names none, and the most it may name.
+	EditWindow       float64 `json:"edit_window"`
+	EditWindowAtMost float64 `json:"edit_window_at_most"`
+}
+
+const (
+	editWindowKey     = "judge_edit_window"
+	DefaultEditWindow = 5
+	EditWindowAtMost  = 60
+)
+
+var scriptFacts = ScriptFacts{
+	Settings: map[string]string{
+		"live_edits": liveEditsKey, "workers": workersKey, "worker_edits": workerEditsKey, "hand_ins": handInsKey,
+		"hand_ins_after": handInsAfterKey, "edit_window": editWindowKey, "helpers_cli": helpersCLIKey,
+	},
+	WorkerRoles:      []string{"worker", "helper", "medior", "senior", "builder"},
+	EditWindow:       DefaultEditWindow,
+	EditWindowAtMost: EditWindowAtMost,
+}
+
+// ScriptFactsJSON is the table as the plugin's script reads it.
+func ScriptFactsJSON() string {
+	written, _ := json.MarshalIndent(scriptFacts, "", "  ")
+
+	return string(written) + "\n"
 }
 
 // EventKindsJSON is the table as the plugin's script reads it.
