@@ -171,14 +171,14 @@ func (c Config) Exclusions(root string) source.Excluded {
 func isWithin(folder, root string) bool {
 	root = strings.TrimRight(root, "/")
 
-	return folder == root || strings.HasPrefix(folder, root+"/")
+	return walk.Within(root, folder)
 }
 
 func ToParse(project, path string) ([]string, error) {
 	target := strings.TrimRight(walk.Real(path), "/")
 	home := strings.TrimRight(walk.Real(project), "/")
 
-	if target != home && !strings.HasPrefix(target, home+"/") {
+	if !walk.Within(home, target) {
 		return []string{target}, nil
 	}
 
@@ -190,7 +190,7 @@ func ToParse(project, path string) ([]string, error) {
 	for _, root := range roots {
 		real := strings.TrimRight(walk.Real(root), "/")
 
-		if target == real || strings.HasPrefix(target, real+"/") {
+		if walk.Within(real, target) {
 			return roots, nil
 		}
 	}

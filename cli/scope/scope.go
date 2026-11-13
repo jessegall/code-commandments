@@ -546,7 +546,7 @@ func (p Path) Includes(file string) bool {
 		real = file
 	}
 
-	return real == p.root || strings.HasPrefix(real, p.root+"/")
+	return walk.Within(p.root, real)
 }
 
 // Excluded leaves out what the project excluded.

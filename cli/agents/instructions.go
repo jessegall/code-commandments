@@ -115,7 +115,7 @@ func (i Instructions) insideTheProject() bool {
 		resolved, err = walk.Resolved(filepath.Dir(i.path))
 	}
 
-	return err == nil && (resolved == root || strings.HasPrefix(resolved, root+string(filepath.Separator)))
+	return err == nil && walk.Within(root, resolved)
 }
 
 func (i Instructions) save(original []byte, updated string) error {

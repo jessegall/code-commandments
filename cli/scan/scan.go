@@ -499,7 +499,7 @@ func isUnavailable(err error) bool {
 
 func within(project string, roots []string) bool {
 	for _, root := range roots {
-		if root != project && !strings.HasPrefix(root, project+string(filepath.Separator)) {
+		if !walk.Within(project, root) {
 			return false
 		}
 	}

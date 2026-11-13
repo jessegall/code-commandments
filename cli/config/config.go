@@ -10,6 +10,7 @@ import (
 	"github.com/jessegall/code-commandments/catalog"
 	"github.com/jessegall/code-commandments/cli/source"
 	"github.com/jessegall/code-commandments/cli/workspace"
+	"github.com/jessegall/code-commandments/walk"
 )
 
 // Config is what a project declares about how it is judged.
@@ -190,7 +191,7 @@ func (c Config) IsJudged(root, file string) bool {
 			dir = home
 		}
 
-		if absolute == dir || strings.HasPrefix(absolute, dir+"/") {
+		if walk.Within(dir, absolute) {
 			return true
 		}
 	}

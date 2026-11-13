@@ -25,7 +25,7 @@ func journalSaysOf(path string) (journaled, bool) {
 	}
 
 	top := Root(path)
-	if top == "" && within(walk.Real(path), walk.Real(said.checkout)) {
+	if top == "" && walk.Within(walk.Real(said.checkout), walk.Real(path)) {
 		return said, true
 	}
 

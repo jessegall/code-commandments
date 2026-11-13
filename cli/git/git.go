@@ -69,7 +69,7 @@ func BelongsTo(root, project string) bool {
 		return false
 	}
 
-	return within(gitdir, project)
+	return walk.Within(project, gitdir)
 }
 
 func ProjectRoot(path string) string {
@@ -606,10 +606,6 @@ func (c ChangedLines) Covers(line int) bool {
 	}
 
 	return false
-}
-
-func within(path, parent string) bool {
-	return path == parent || strings.HasPrefix(path, strings.TrimRight(parent, "/")+"/")
 }
 
 func ask(dir string, args ...string) string {

@@ -6,6 +6,7 @@ import (
 
 	"github.com/jessegall/code-commandments/catalog"
 	"github.com/jessegall/code-commandments/detectors"
+	"github.com/jessegall/code-commandments/walk"
 )
 
 const Judges = "judges"
@@ -110,7 +111,7 @@ func (c Config) judgedFolderOf(root, file string) string {
 
 	for _, folder := range c.JudgedDespiteExclusion() {
 		dir := home + "/" + folder
-		if absolute == dir || strings.HasPrefix(absolute, dir+"/") {
+		if walk.Within(dir, absolute) {
 			return folder
 		}
 	}

@@ -12,6 +12,14 @@ func Same(one, two string) bool {
 	return Real(one) == Real(two)
 }
 
+// Within says whether the path is the folder or lies under it, both as written: no link is resolved, so it is for
+// paths that are already real. Inside resolves both first.
+func Within(folder, path string) bool {
+	folder = strings.TrimRight(folder, "/"+string(filepath.Separator))
+
+	return path == folder || strings.HasPrefix(path, folder+"/") || strings.HasPrefix(path, folder+string(filepath.Separator))
+}
+
 func Inside(folder, path string) (string, bool) {
 	under, err := filepath.Rel(Real(folder), Real(path))
 	if err != nil || strings.HasPrefix(under, "..") {

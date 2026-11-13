@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/jessegall/code-commandments/engine"
+	"github.com/jessegall/code-commandments/walk"
 )
 
 // Contract is one published fact.
@@ -91,7 +92,7 @@ func (GeneratedTypes) published() {}
 func (g GeneratedTypes) Covers(file string) bool {
 	location := filepath.Clean(g.Location)
 
-	return file == location || strings.HasPrefix(file, location+string(filepath.Separator))
+	return walk.Within(location, file)
 }
 
 var separators = strings.NewReplacer("_", "", "-", "")
