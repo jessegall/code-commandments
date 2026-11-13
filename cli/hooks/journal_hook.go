@@ -261,8 +261,6 @@ type asked struct {
 	given map[string]any
 }
 
-const batchedWithin = 5 * time.Second
-
 const (
 	batchedKey      = "commandments_batched"
 	batchedLinesKey = "commandments_batched_lines"

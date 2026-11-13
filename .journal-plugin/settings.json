@@ -117,7 +117,7 @@
         "type": "number",
         "kind": "number",
         "default": 12,
-        "help": "How long anything kept between runs stays once nothing uses it: the parsed trees of every language, what each rule answered per file, mypy's cache and the edit windows. Every use resets the clock, so only what went untouched for the whole time is removed."
+        "help": "How long anything kept between runs stays once nothing uses it: the parsed trees of every language, what each rule answered per file and mypy's cache. Every use resets the clock, so only what went untouched for the whole time is removed."
     },
     {
         "key": "judge_nodes_held",

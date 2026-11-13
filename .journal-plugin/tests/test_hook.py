@@ -110,10 +110,8 @@ class AHandInJudgedAfterGoesThroughAtOnce(unittest.TestCase):
                 time.sleep(0.05)
 
             self.assertEqual(json.loads(program.stdout), {"v": 1})
-            kept = list((data / "events").glob("event-*.json"))
-            self.assertEqual(len(kept), 1)
             self.assertIn("--agent 7", asked.read_text())
-            self.assertIn(f"--judge-agent={kept[0]}", asked.read_text())
+            self.assertIn("--judge-agent=7", asked.read_text())
             self.assertEqual(hook.EditWindow(data, 7).pending(), [line.encode()])
 
 
@@ -124,7 +122,7 @@ class AnAgentsWindowStandsExactlyAsLongAsItsRunLives(unittest.TestCase):
             self.assertTrue(window.gather(b'{"n":1}'))
             holder = subprocess.Popen(["sleep", "30"])
             try:
-                window.names(holder.pid, Path(data) / "event-1.json")
+                window.names(holder.pid)
                 long_ago = time.time() - 3600
                 os.utime(window.path(".open"), (long_ago, long_ago))
                 self.assertFalse(window.gather(b'{"n":2}'), "a second judging was queued beside one still waiting")
@@ -139,17 +137,17 @@ class AnAgentsWindowStandsExactlyAsLongAsItsRunLives(unittest.TestCase):
             window = hook.EditWindow(Path(data), 7)
             window.gather(b'{"n":1}')
             window.path(".open").unlink()
-            window.names(os.getpid(), Path(data) / "event-1.json")
+            window.names(os.getpid())
 
             self.assertFalse(window.path(".open").exists())
 
 
 class AJudgingIsQueuedThroughTheJournal(unittest.TestCase):
     def test_the_line_runs_the_binary_on_the_kept_event_in_the_agents_checkout(self) -> None:
-        line = hook.judging_line("/bin/journal", Path("/data/events/event-1.json"), 7, Path("/plugin/.journal-plugin/hook"))
+        line = hook.judging_line("/bin/journal", 7, Path("/plugin/.journal-plugin/hook"))
         self.assertEqual(line, ["/bin/journal", "plugin", "run", "--kind", "judge", "--agent", "7", "--",
-                                "/plugin/.journal-plugin/hook", "--judge-agent=/data/events/event-1.json"])
-        self.assertNotIn("--agent", hook.judging_line("/bin/journal", Path("/e.json"), 0))
+                                "/plugin/.journal-plugin/hook", "--judge-agent=7"])
+        self.assertNotIn("--agent", hook.judging_line("/bin/journal", 0))
 
     def test_an_edit_keeps_its_event_and_starts_one_run(self) -> None:
         with tempfile.TemporaryDirectory() as folder:
@@ -162,11 +160,8 @@ class AJudgingIsQueuedThroughTheJournal(unittest.TestCase):
             deadline = time.time() + 5
             while not asked.exists() and time.time() < deadline:
                 time.sleep(0.05)
-            kept = list((data / "events").glob("event-*.json"))
-
-            self.assertEqual(len(kept), 1, "the second edit inside the window started a run of its own")
-            self.assertEqual(json.loads(kept[0].read_bytes()), {"agent": 7})
-            self.assertIn(f"--judge-agent={kept[0]}", asked.read_text())
+            self.assertEqual(len(asked.read_text().splitlines()), 1, "the second edit inside the window started a run of its own")
+            self.assertIn("--judge-agent=7", asked.read_text())
             self.assertEqual(hook.EditWindow(data, 7).pending(), [line, line])
 
     def test_an_edit_whose_judging_cannot_start_leaves_no_window_open(self) -> None:
@@ -445,13 +440,12 @@ class EveryJudgingOfAnAgentWaitsInOneRun(unittest.TestCase):
             binary.chmod(0o755)
             with patched_environment(JOURNAL_PLUGIN_DATA=str(data), JOURNAL_BIN=str(journal), JOURNAL_SETTINGS=""):
                 queue_every_kind(7)
-                marker = Path(hook.EditWindow(data, 7).path(".open").read_text().split()[1])
-                self.assertEqual(hook.judged_agent(str(marker), binary), 0)
+                self.assertEqual(hook.judged_agent("7", binary), 0)
             judged = [batch.strip().splitlines() for batch in calls.read_text().split("-----") if batch.strip()]
             kinds = every_kind(7)
             self.assertEqual(judged[0], [line.decode() for line in kinds[:2]], "the edits were not judged as one batch")
             self.assertEqual([batch for batch in judged[1:]], [[line.decode()] for line in kinds[2:]])
-            self.assertFalse(marker.exists())
+            self.assertEqual(list((data / "windows").glob("7.taking.*")), [], "the run kept the events it judged")
             self.assertFalse(hook.EditWindow(data, 7).path(".open").exists(), "the run left the agent's window open")
             self.assertEqual(hook.EditWindow(data, 7).pending(), [])
 
@@ -461,7 +455,7 @@ class EveryJudgingOfAnAgentWaitsInOneRun(unittest.TestCase):
             journal = stand_in(Path(folder), f'echo "$@" >> {asked}; sleep 3')
             with patched_environment(JOURNAL_PLUGIN_DATA=str(data), JOURNAL_BIN=str(journal), JOURNAL_SETTINGS=""):
                 queue_every_kind(7)
-                self.assertEqual(len(hook.EditWindow(data, 7).take()), len(every_kind(7)))
+                self.assertEqual(len(hook.lines_of(hook.EditWindow(data, 7).take())), len(every_kind(7)))
                 queue_every_kind(7)
             self.assertEqual(len(self.runs(asked)), 2)
 
@@ -470,6 +464,37 @@ class EveryJudgingOfAnAgentWaitsInOneRun(unittest.TestCase):
         self.assertEqual(hook.edit_window_of([line("file_edited", 2), line("file_edited", 3), line("idle", 9)]), 3.0)
         self.assertEqual(hook.edit_window_of([json.dumps({"event": "file_edited", "settings": {}}).encode()]), 5.0)
         self.assertEqual(hook.edit_window_of([line("idle", 9)]), 0.0)
+        self.assertEqual(hook.edit_window_of([line("file_edited", 1e9)]), hook.EDIT_WINDOW_AT_MOST)
+        self.assertEqual(hook.edit_window_of([json.dumps({"event": "file_edited", "settings": {"judge_edit_window": "inf"}}).encode()]), hook.EDIT_WINDOW_AT_MOST)
+
+    def test_a_backlog_judges_only_the_latest_of_each_moment_judged_later(self) -> None:
+        line = lambda event, n: json.dumps({"event": event, "n": n}).encode()
+        lines = [line("idle", 1), line("file_edited", 2), line("idle", 3), line("command_starting", 4), line("ticked", 5),
+                 line("command_starting", 6), line("suites.coding.workers.worker_delivering", 7),
+                 line("suites.coding.workers.worker_delivering", 8), line("file_edited", 9)]
+        self.assertEqual(hook.batches_of(lines), [[lines[1], lines[8]], [lines[2]], [lines[4]], [lines[5]], [lines[6]], [lines[7]]])
+
+    def test_events_a_run_took_and_died_before_judging_wait_for_the_next_run(self) -> None:
+        with tempfile.TemporaryDirectory() as data:
+            window = hook.EditWindow(Path(data), 7)
+            window.gather(b'{"n":1}')
+            dead = subprocess.Popen(["true"])
+            dead.wait()
+            window.path(".events").rename(window.path(f".taking.{dead.pid}"))
+            window.path(".open").unlink()
+            self.assertTrue(window.gather(b'{"n":2}'))
+            self.assertEqual(window.pending(), [b'{"n":1}', b'{"n":2}'])
+
+    def test_a_holder_of_another_user_or_past_two_hours_frees_the_window(self) -> None:
+        with tempfile.TemporaryDirectory() as data:
+            window = hook.EditWindow(Path(data), 7)
+            window.gather(b'{"n":1}')
+            window.names(1)
+            self.assertTrue(window.gather(b'{"n":2}'), "launchd, a process of another user, held the window")
+            window.names(os.getpid())
+            long_ago = time.time() - 2 * hook.HELD_AT_MOST
+            os.utime(window.path(".open"), (long_ago, long_ago))
+            self.assertTrue(window.gather(b'{"n":3}'), "a holder named two hours ago still held the window")
 
 
 class patched_environment:

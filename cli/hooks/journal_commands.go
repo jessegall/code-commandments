@@ -35,7 +35,6 @@ const (
 	workerEditsKey   = "judge_worker_edits"
 	liveEditsKey     = "judge_edits"
 	mergesKey        = "judge_merges"
-	editWindowKey    = "judge_edit_window"
 	cacheHoursKey    = "cache_hours"
 	skillsFolder     = "journal-skills"
 )
@@ -360,15 +359,6 @@ func chosenSettings() (map[string]any, bool) {
 	}
 
 	return settingsAsText(chosen), true
-}
-
-func chosenOn(line map[string]any) (map[string]any, bool) {
-	settings := settingsOn(line)
-	if settings == nil {
-		return chosenSettings()
-	}
-
-	return settingsAsText(settings), true
 }
 
 func settingsAsText(chosen map[string]any) map[string]any {
