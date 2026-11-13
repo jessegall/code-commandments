@@ -26,29 +26,35 @@ const (
 
 var Languages = []Language{PHP, Vue, TypeScript, Python, CSharp, Go}
 
-var written = map[contract.Language]Language{
-	contract.PHP:        PHP,
-	contract.Vue:        Vue,
-	contract.TypeScript: TypeScript,
-	contract.Python:     Python,
-	contract.CSharp:     CSharp,
-	contract.Go:         Go,
+// facts is what the CLI knows of a language beyond the contract's own facts of it: the name its stream writes, the
+// engines that judge it, and the files that declare a project of it where only such a project is read.
+type facts struct {
+	written   contract.Language
+	engines   []catalog.Engine
+	manifests []string
+}
+
+var described = map[Language]facts{
+	PHP:        {written: contract.PHP, engines: []catalog.Engine{catalog.PHP}},
+	Vue:        {written: contract.Vue, engines: []catalog.Engine{catalog.Vue, catalog.TypeScript}},
+	TypeScript: {written: contract.TypeScript, engines: []catalog.Engine{catalog.Vue, catalog.TypeScript}},
+	Python:     {written: contract.Python, engines: []catalog.Engine{catalog.Python}},
+	CSharp:     {written: contract.CSharp, engines: []catalog.Engine{catalog.CSharp}},
+	Go:         {written: contract.Go, engines: []catalog.Engine{catalog.Go}, manifests: []string{"go.mod"}},
 }
 
 func Of(stream contract.Language) (Language, bool) {
-	named, known := written[stream]
-
-	return named, known
-}
-
-func (l Language) Written() contract.Language {
-	for stream, named := range written {
-		if named == l {
-			return stream
+	for named, held := range described {
+		if held.written == stream {
+			return named, true
 		}
 	}
 
-	return contract.PHP
+	return "", false
+}
+
+func (l Language) Written() contract.Language {
+	return described[l].written
 }
 
 func (l Language) Extensions() []string {
@@ -56,20 +62,17 @@ func (l Language) Extensions() []string {
 }
 
 func OfFile(path string) Language {
-	stream, named := contract.LanguageOfPath(path)
-	if !named {
+	stream, known := contract.LanguageOfPath(path)
+	if !known {
 		return PHP
 	}
+	named, _ := Of(stream)
 
-	return written[stream]
-}
-
-var manifests = map[Language][]string{
-	Go: {"go.mod"},
+	return named
 }
 
 func (l Language) DeclaredIn(root string) bool {
-	named := manifests[l]
+	named := described[l].manifests
 	if len(named) == 0 {
 		return true
 	}
@@ -117,58 +120,15 @@ func Judges(path string) bool {
 }
 
 func (l Language) Engines() []catalog.Engine {
-	switch l {
-	case Vue, TypeScript:
-		return []catalog.Engine{catalog.Vue, catalog.TypeScript}
-	case Python:
-		return []catalog.Engine{catalog.Python}
-	case CSharp:
-		return []catalog.Engine{catalog.CSharp}
-	case Go:
-		return []catalog.Engine{catalog.Go}
-	default:
-		return []catalog.Engine{catalog.PHP}
-	}
+	return described[l].engines
 }
 
 func (l Language) Comment(text string) string {
-	switch l {
-	case Vue:
-		return "<!-- " + text + " -->"
-	case Python:
-		return "# " + text
-	default:
-		return "// " + text
-	}
-}
-
-func (l Language) IsCommentLine(line string) bool {
-	opened := strings.TrimLeft(line, " \t\n\r\x00\x0B")
-	switch l {
-	case Vue:
-		return strings.HasPrefix(opened, "<!--")
-	case Python:
-		return strings.HasPrefix(opened, "#")
-	default:
-		return strings.HasPrefix(opened, "//") || strings.HasPrefix(opened, "/*") || strings.HasPrefix(opened, "*")
-	}
+	return contract.CommentOf(l.Written(), text)
 }
 
 func (l Language) Label() string {
-	switch l {
-	case PHP:
-		return "PHP"
-	case Vue:
-		return "Vue"
-	case TypeScript:
-		return "TypeScript"
-	case Python:
-		return "Python"
-	case Go:
-		return "Go"
-	default:
-		return "C#"
-	}
+	return contract.Label(l.Written())
 }
 
 func NamedIn(text string) (Language, bool) {
@@ -197,7 +157,8 @@ func Real(path string) string {
 func OfEngine(engine catalog.Engine) []Language {
 	var read []Language
 	for _, language := range catalog.LanguagesOf(engine) {
-		read = append(read, written[language])
+		named, _ := Of(language)
+		read = append(read, named)
 	}
 
 	return read

@@ -2,6 +2,7 @@ package report
 
 import (
 	"fmt"
+	"github.com/jessegall/code-commandments/contract"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -97,17 +98,13 @@ func Snippet(ref Reference) (string, bool) {
 	return "**Code** (`" + ref.Shown() + "`):\n\n```" + fence(ref.Path) + "\n" + strings.Join(rows, "\n") + "\n```\n", true
 }
 
+// fence is the Markdown name of the code block a file is shown in: its language's first extension, none for a file
+// of no language the tool reads.
 func fence(path string) string {
-	switch strings.ToLower(strings.TrimPrefix(filepath.Ext(path), ".")) {
-	case "php":
-		return "php"
-	case "vue":
-		return "vue"
-	case "ts", "mts", "cts":
-		return "ts"
-	case "js", "mjs", "cjs":
-		return "js"
-	default:
+	language, known := contract.LanguageOfPath(path)
+	if !known {
 		return ""
 	}
+
+	return contract.ExtensionsOf(language)[0]
 }
