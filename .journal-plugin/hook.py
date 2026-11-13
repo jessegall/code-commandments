@@ -46,7 +46,7 @@ GUARDED = {name: kind["guarded_by"] for kind in EVENT_KINDS if kind.get("guarded
 # binary at most.
 TOOLS_ACTED_ON = {name: set(kind["tools"]) for kind in EVENT_KINDS if kind.get("tools") for name in kind["names"]}
 BINARY_EVERY = {name: 60 * kind["binary_every_minutes"] for kind in EVENT_KINDS if kind.get("binary_every_minutes") for name in kind["names"]}
-EVENTS, WINDOWS, TOLD, QUEUE = "events", "windows", "told", "queue"
+EVENTS, WINDOWS, TOLD, QUEUE = "events", "windows", FACTS["told_folder"], "queue"
 JUDGE_EVENT, JUDGE_GUARD, JUDGE_AGENT = "--judge-event=", "--judge-guard=", "--judge-agent="
 EDIT_WINDOW, DEFAULT_EDIT_WINDOW = SETTINGS["edit_window"], float(FACTS["edit_window"])
 FAULTS = "hook-faults.log"

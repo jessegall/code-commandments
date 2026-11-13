@@ -13,7 +13,7 @@ type ResponseSurface struct {
 	bound map[string]bool
 }
 
-var responseSurfaces = php.Memoised(readResponseSurface)
+var responseSurfaces = engine.Memoised(readResponseSurface)
 
 func ResponseSurfaceOf(codebase *engine.Codebase) *ResponseSurface {
 	return responseSurfaces.Of(codebase)

@@ -84,16 +84,12 @@ func (d *deferredFill) fill(paths []string) {
 // Filler fills the facts the engine owns for one language, once every file of the codebase has been read.
 type Filler func(*Codebase, []string)
 
-var fillers = map[contract.Language]Filler{}
-
 func Fills(language contract.Language, fill Filler) {
-	fillers[language] = fill
+	registers(language, func(row *spoken) { row.fill = fill })
 }
 
 func FillsFor(language contract.Language) bool {
-	_, registered := fillers[language]
-
-	return registered
+	return spokenIn(language).fill != nil
 }
 
 func Untouched() {
@@ -295,7 +291,7 @@ func Filling(changed []string, streams ...*contract.Stream) *Codebase {
 func (c *Codebase) fill(changed []string) {
 	filled := map[contract.Language]bool{}
 	for _, stream := range c.streams {
-		if fill, ok := fillers[stream.Header.Language]; ok && !filled[stream.Header.Language] {
+		if fill := spokenIn(stream.Header.Language).fill; fill != nil && !filled[stream.Header.Language] {
 			filled[stream.Header.Language] = true
 			fill(c, changed)
 		}

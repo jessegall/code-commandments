@@ -11,7 +11,7 @@ import (
 
 const cloneWith = "8.5"
 
-var targets = Memoised(func(codebase *engine.Codebase) string {
+var targets = engine.Memoised(func(codebase *engine.Codebase) string {
 	for _, file := range codebase.Files() {
 		for dir := path.Dir(file.Path); ; dir = path.Dir(dir) {
 			if manifest, err := codebase.Read(path.Join(dir, "composer.json")); err == nil {

@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"slices"
 	"strings"
-	"sync"
 
 	"github.com/jessegall/code-commandments/contract"
 )
@@ -97,8 +96,8 @@ func (m Match) Location() string {
 
 func (m Match) Scope() string {
 	if m.file != nil {
-		if namer, named := scopeNamers.Load(m.file.Language()); named {
-			return namer.(func(Match) string)(m)
+		if namer := spokenIn(m.file.Language()).namesScope; namer != nil {
+			return namer(m)
 		}
 	}
 
@@ -517,22 +516,18 @@ func (m Match) Span() (Span, error) {
 	return Span{Path: m.file.Path, Source: source, Start: m.node.Span.Start, End: m.node.Span.End}, nil
 }
 
-var scopeNamers sync.Map
-
 func NameScopes(language contract.Language, namer func(Match) string) {
-	scopeNamers.Store(language, namer)
+	registers(language, func(row *spoken) { row.namesScope = namer })
 }
 
-var bodyRunners sync.Map
-
 func RunBodiesAs(language contract.Language, runs func(Match) bool) {
-	bodyRunners.Store(language, runs)
+	registers(language, func(row *spoken) { row.runsBody = runs })
 }
 
 func (m Match) RunsABody() bool {
 	if m.file != nil {
-		if runs, counted := bodyRunners.Load(m.file.Language()); counted {
-			return runs.(func(Match) bool)(m)
+		if runs := spokenIn(m.file.Language()).runsBody; runs != nil {
+			return runs(m)
 		}
 	}
 

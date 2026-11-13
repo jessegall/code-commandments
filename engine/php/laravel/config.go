@@ -20,7 +20,7 @@ type ConfigKeys struct {
 
 var literalsInAFile = new(int)
 
-var configKeys = php.Memoised(func(codebase *engine.Codebase) *ConfigKeys {
+var configKeys = engine.Memoised(func(codebase *engine.Codebase) *ConfigKeys {
 	keys := &ConfigKeys{declared: map[*contract.Node]string{}, files: map[string]bool{}, defaults: map[string]bool{}}
 	var declaredKeys []string
 	vendored := vendorConfigs{}
@@ -184,7 +184,7 @@ type construction struct {
 	built    map[string]bool
 }
 
-var constructions = php.Memoised(func(codebase *engine.Codebase) *construction {
+var constructions = engine.Memoised(func(codebase *engine.Codebase) *construction {
 	made := &construction{injected: map[string]bool{}, built: map[string]bool{}}
 	program := php.ProgramOf(codebase)
 	for _, param := range php.In(codebase).WhereKind("Param").Where(func(m engine.Match) bool { return php.EnclosingFunctionName(m) == "__construct" }).Get() {

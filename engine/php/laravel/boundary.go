@@ -24,7 +24,7 @@ type boundaryEntry struct {
 	calls []string
 }
 
-var boundaryOperations = php.Memoised(readBoundaryOperations)
+var boundaryOperations = engine.Memoised(readBoundaryOperations)
 
 func BoundaryOperationsOf(codebase *engine.Codebase) *BoundaryOperations {
 	return boundaryOperations.Of(codebase)

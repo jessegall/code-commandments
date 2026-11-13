@@ -16,7 +16,7 @@ type Index struct {
 	byName  map[string][]engine.Match
 }
 
-var indexes = Memoised(buildIndex)
+var indexes = engine.Memoised(buildIndex)
 
 func IndexOf(codebase *engine.Codebase) *Index {
 	return indexes.Of(codebase)

@@ -17,7 +17,7 @@ type Envy struct {
 	parents   map[string]string
 }
 
-var envies = Memoised(func(codebase *engine.Codebase) *Envy {
+var envies = engine.Memoised(func(codebase *engine.Codebase) *Envy {
 	envy := &Envy{codebase: codebase, owned: map[string]bool{}, contracts: map[string]map[string]bool{}, parents: map[string]string{}}
 	for _, declaration := range In(codebase).Where(isClassLike).Get() {
 		name := declaration.Node().Symbol

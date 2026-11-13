@@ -13,7 +13,7 @@ type Vocabulary struct {
 	namesByClass  map[string]map[string]string
 }
 
-var vocabularies = Memoised(func(codebase *engine.Codebase) Vocabulary {
+var vocabularies = engine.Memoised(func(codebase *engine.Codebase) Vocabulary {
 	vocabulary := Vocabulary{classesBySlot: map[string][]string{}, namesByClass: map[string]map[string]string{}}
 	for _, declaration := range codebase.Where(func(m engine.Match) bool { return isClassLike(m) }).Get() {
 		owner := declaration.Node().Symbol

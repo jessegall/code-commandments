@@ -15,7 +15,7 @@ type RouteActions struct {
 	registered map[string]bool
 }
 
-var routeActions = php.Memoised(readRouteActions)
+var routeActions = engine.Memoised(readRouteActions)
 
 func RouteActionsOf(codebase *engine.Codebase) *RouteActions {
 	return routeActions.Of(codebase)
@@ -159,7 +159,7 @@ type RouteNames struct {
 	dynamic  bool
 }
 
-var routeNames = php.Memoised(readRouteNames)
+var routeNames = engine.Memoised(readRouteNames)
 
 func RouteNamesOf(codebase *engine.Codebase) *RouteNames {
 	return routeNames.Of(codebase)

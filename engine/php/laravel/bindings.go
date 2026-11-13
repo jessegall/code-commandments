@@ -15,7 +15,7 @@ type ContainerBindings struct {
 	declared   map[string]bool
 }
 
-var containerBindings = php.Memoised(readContainerBindings)
+var containerBindings = engine.Memoised(readContainerBindings)
 
 func ContainerBindingsOf(codebase *engine.Codebase) *ContainerBindings {
 	return containerBindings.Of(codebase)

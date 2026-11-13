@@ -38,7 +38,7 @@ type ValueFlow struct {
 	verdicts map[string]FlowVerdict
 }
 
-var flows = Memoised(gatherFlow)
+var flows = engine.Memoised(gatherFlow)
 
 func ValueFlowOf(codebase *engine.Codebase) *ValueFlow {
 	return flows.Of(codebase)

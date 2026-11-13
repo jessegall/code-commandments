@@ -58,7 +58,8 @@ func kindNamed(name string) (EventKind, bool) {
 }
 
 // ScriptFacts are what the plugin's script decides by besides the event kinds, stated once here: the setting each
-// switch is read under, the roles a worker runs as, and how long an agent's edits gather. The script reads them from
+// switch is read under, the roles a worker runs as, how long an agent's edits gather and the folder the answers given
+// after their event wait in. The script reads them from
 // .journal-plugin/script-facts.json, which `go run ./cli/doc/readme` writes from this table.
 type ScriptFacts struct {
 	Settings    map[string]string `json:"settings"`
@@ -66,6 +67,7 @@ type ScriptFacts struct {
 	// EditWindow is the seconds an agent's edits gather when the setting names none, and the most it may name.
 	EditWindow       float64 `json:"edit_window"`
 	EditWindowAtMost float64 `json:"edit_window_at_most"`
+	ToldFolder       string  `json:"told_folder"`
 }
 
 const (
@@ -82,6 +84,7 @@ var scriptFacts = ScriptFacts{
 	WorkerRoles:      []string{"worker", "helper", "medior", "senior", "builder"},
 	EditWindow:       DefaultEditWindow,
 	EditWindowAtMost: EditWindowAtMost,
+	ToldFolder:       toldFolder,
 }
 
 // ScriptFactsJSON is the table as the plugin's script reads it.

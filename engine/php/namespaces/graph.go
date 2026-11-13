@@ -17,7 +17,7 @@ type NamespaceGraph struct {
 	targets    map[string][]string
 }
 
-var graphs = php.Memoised(func(codebase *engine.Codebase) *NamespaceGraph {
+var graphs = engine.Memoised(func(codebase *engine.Codebase) *NamespaceGraph {
 	graph := &NamespaceGraph{references: map[string]map[string]bool{}, arrows: map[string]map[string][]engine.Match{}, targets: map[string][]string{}}
 	program := php.ProgramOf(codebase)
 	for _, reference := range codebase.Where(engine.As(php.Node.IsClassReference)).Get() {

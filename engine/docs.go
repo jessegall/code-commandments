@@ -66,7 +66,7 @@ func (f *File) isTest() bool {
 		return true
 	}
 
-	grammar, listed := grammars.Load(f.Language())
+	grammar := spokenIn(f.Language()).grammar
 
-	return listed && grammar.(Grammar).TestFile != nil && grammar.(Grammar).TestFile(f.Judged(), f.Path)
+	return grammar != nil && grammar.TestFile != nil && grammar.TestFile(f.Judged(), f.Path)
 }

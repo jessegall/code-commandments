@@ -166,7 +166,7 @@ type Chains struct {
 	returns    map[string]map[string]string
 }
 
-var chains = Memoised(indexChains)
+var chains = engine.Memoised(indexChains)
 
 func ChainsOf(codebase *engine.Codebase) *Chains {
 	return chains.Of(codebase)

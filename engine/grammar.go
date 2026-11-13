@@ -2,7 +2,6 @@ package engine
 
 import (
 	"slices"
-	"sync"
 
 	"github.com/jessegall/code-commandments/contract"
 )
@@ -55,10 +54,8 @@ type Grammar struct {
 
 var TypeKinds = []string{"class", "interface", "enum", "trait", "record", "struct", "protocol"}
 
-var grammars sync.Map
-
 func ReadAs(language contract.Language, read Grammar) {
-	grammars.Store(language, read)
+	registers(language, func(row *spoken) { row.grammar = &read })
 }
 
 func InFields(fields ...string) func(Match) []Match {
@@ -123,12 +120,12 @@ func (m Match) grammar() Grammar {
 		return Grammar{}
 	}
 
-	read, listed := grammars.Load(m.file.Language())
-	if !listed {
+	read := spokenIn(m.file.Language()).grammar
+	if read == nil {
 		return Grammar{}
 	}
 
-	return read.(Grammar)
+	return *read
 }
 
 func (m Match) listed(read func(Match) []Match) []Match {

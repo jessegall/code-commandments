@@ -257,7 +257,7 @@ func (n Node) IsThisCall() bool {
 // Enums is every backed enum of two or more literal cases a codebase declares, by name.
 type Enums map[string][]string
 
-var enums = Memoised(func(codebase *engine.Codebase) Enums {
+var enums = engine.Memoised(func(codebase *engine.Codebase) Enums {
 	indexed := Enums{}
 	for _, declaration := range codebase.WhereKind("Stmt_Enum").Get() {
 		name := declaration.Node().Symbol

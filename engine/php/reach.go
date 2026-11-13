@@ -18,7 +18,7 @@ type ResourceReach struct {
 	codebase *engine.Codebase
 }
 
-var reaches = Memoised(func(codebase *engine.Codebase) *ResourceReach {
+var reaches = engine.Memoised(func(codebase *engine.Codebase) *ResourceReach {
 	byClass, byScope := map[string]map[string]bool{}, map[string]map[string]bool{}
 	link := func(edges map[string]map[string]bool, from, target string) {
 		if from == "" || target == "" || from == target {

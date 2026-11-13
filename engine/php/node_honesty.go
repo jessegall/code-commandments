@@ -286,7 +286,7 @@ func assignedIn(method engine.Match, named map[string]bool) map[string]bool {
 	return assigned
 }
 
-var transientNullables = Memoised(func(codebase *engine.Codebase) map[string]map[string]bool {
+var transientNullables = engine.Memoised(func(codebase *engine.Codebase) map[string]map[string]bool {
 	byClass := map[string]map[string]bool{}
 	for _, class := range codebase.WhereKind("Stmt_Class").Get() {
 		name := class.Node().Symbol

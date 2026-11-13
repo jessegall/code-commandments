@@ -10,13 +10,13 @@ func TwinUnits(codebase *engine.Codebase) []engine.ReachedUnit {
 	return units.Of(codebase)
 }
 
-var units = Memoised(twinUnits)
+var units = engine.Memoised(twinUnits)
 
 func Divergences(codebase *engine.Codebase) []engine.Divergence {
 	return divergences.Of(codebase)
 }
 
-var divergences = Memoised(func(codebase *engine.Codebase) []engine.Divergence {
+var divergences = engine.Memoised(func(codebase *engine.Codebase) []engine.Divergence {
 	return engine.DivergentTwins(Twins(codebase), TwinUnits(codebase))
 })
 
@@ -81,7 +81,7 @@ func (j TwinJudge) ResultsAreIncomparable(poorer, richer engine.ReachedUnit) boo
 	return !Overlaps(one, other)
 }
 
-var methods = Memoised(func(codebase *engine.Codebase) map[string]engine.Match {
+var methods = engine.Memoised(func(codebase *engine.Codebase) map[string]engine.Match {
 	byScope := map[string]engine.Match{}
 	for _, method := range In(codebase).WhereKind("Stmt_ClassMethod").Get() {
 		byScope[ScopeOf(method)] = method

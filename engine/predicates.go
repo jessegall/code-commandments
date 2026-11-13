@@ -3,7 +3,6 @@ package engine
 import (
 	"slices"
 	"strings"
-	"sync"
 
 	"github.com/jessegall/code-commandments/contract"
 )
@@ -15,20 +14,12 @@ type Predicate struct {
 	Holds func(Match) bool
 }
 
-var offered sync.Map
-
 func Offers(language contract.Language, predicates ...Predicate) {
-	held, _ := offered.Load(language)
-	previous, _ := held.([]Predicate)
-
-	offered.Store(language, append(slices.Clone(previous), predicates...))
+	registers(language, func(row *spoken) { row.predicates = append(slices.Clone(row.predicates), predicates...) })
 }
 
 func PredicatesOf(language contract.Language) []Predicate {
-	held, _ := offered.Load(language)
-	predicates, _ := held.([]Predicate)
-
-	sorted := slices.Clone(predicates)
+	sorted := slices.Clone(spokenIn(language).predicates)
 	slices.SortFunc(sorted, func(a, b Predicate) int { return strings.Compare(a.Name, b.Name) })
 
 	return sorted

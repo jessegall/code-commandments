@@ -16,5 +16,6 @@
     "builder"
   ],
   "edit_window": 5,
-  "edit_window_at_most": 60
+  "edit_window_at_most": 60,
+  "told_folder": "told"
 }

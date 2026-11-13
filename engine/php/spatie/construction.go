@@ -676,7 +676,7 @@ type DataConstructions struct {
 	sites   map[string][]engine.Match
 }
 
-var dataConstructions = php.Memoised(readDataConstructions)
+var dataConstructions = engine.Memoised(readDataConstructions)
 
 func DataConstructionsOf(codebase *engine.Codebase) *DataConstructions {
 	return dataConstructions.Of(codebase)

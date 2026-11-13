@@ -319,7 +319,7 @@ func (n Node) isInvoked(name string) bool {
 	return false
 }
 
-var renderings = Memoised(func(*engine.Codebase) *sync.Map { return &sync.Map{} })
+var renderings = engine.Memoised(func(*engine.Codebase) *sync.Map { return &sync.Map{} })
 
 func RendersBlank(codebase *engine.Codebase, class string) bool {
 	rendered, ok := RenderingOf(codebase, class)

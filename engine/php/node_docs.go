@@ -10,7 +10,7 @@ import (
 	"github.com/jessegall/code-commandments/prose"
 )
 
-var parserComments = Memoised(func(codebase *engine.Codebase) map[*contract.Node][]contract.Comment {
+var parserComments = engine.Memoised(func(codebase *engine.Codebase) map[*contract.Node][]contract.Comment {
 	owned := map[*contract.Node][]contract.Comment{}
 	for _, file := range codebase.Files() {
 		starts := map[int]*contract.Node{}

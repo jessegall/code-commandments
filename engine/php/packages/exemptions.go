@@ -123,7 +123,7 @@ func For(consumers ...Package) *Exemptions {
 	return exemptions
 }
 
-var inForce = php.Memoised(func(*engine.Codebase) *Exemptions { return For() })
+var inForce = engine.Memoised(func(*engine.Codebase) *Exemptions { return For() })
 
 func Of(codebase *engine.Codebase) *Exemptions {
 	return inForce.Of(codebase)

@@ -23,7 +23,7 @@ type DataClassShape struct {
 	classes map[string]engine.Match
 }
 
-var shapes = php.Memoised(readShapes)
+var shapes = engine.Memoised(readShapes)
 
 func DataClassShapeOf(codebase *engine.Codebase) *DataClassShape {
 	return shapes.Of(codebase)

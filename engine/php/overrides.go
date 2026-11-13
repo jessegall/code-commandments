@@ -8,7 +8,7 @@ import (
 	"github.com/jessegall/code-commandments/engine"
 )
 
-var outsideSymbols = Memoised(func(codebase *engine.Codebase) map[string]contract.OutsideSymbol {
+var outsideSymbols = engine.Memoised(func(codebase *engine.Codebase) map[string]contract.OutsideSymbol {
 	symbols := map[string]contract.OutsideSymbol{}
 	if program, ok := codebase.Program(contract.PHP); ok {
 		for _, symbol := range program.Symbols {

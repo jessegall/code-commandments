@@ -27,7 +27,7 @@ type Program struct {
 	traitUsers   map[string][]string
 }
 
-var programs = Memoised(readProgram)
+var programs = engine.Memoised(readProgram)
 
 func ProgramOf(codebase *engine.Codebase) *Program {
 	return programs.Of(codebase)

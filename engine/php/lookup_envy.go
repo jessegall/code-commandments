@@ -19,7 +19,7 @@ type LookupEnvy struct {
 	owned    map[string]bool
 }
 
-var lookupEnvies = Memoised(func(codebase *engine.Codebase) *LookupEnvy {
+var lookupEnvies = engine.Memoised(func(codebase *engine.Codebase) *LookupEnvy {
 	envy := &LookupEnvy{codebase: codebase, owned: map[string]bool{}}
 	for _, declaration := range In(codebase).Where(isClassLike).Get() {
 		if name := declaration.Node().Symbol; name != "" {

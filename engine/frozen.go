@@ -19,12 +19,10 @@ var frozenTag = regexp.MustCompile(`(?i)@frozen\b`)
 // Freezer says whether a file's own syntax declares it frozen, beyond a comment that says so.
 type Freezer func(*File) bool
 
-var freezers = map[contract.Language][]Freezer{}
-
 var hints []func(path string, source []byte) bool
 
 func Freezes(language contract.Language, freezer Freezer, hint func(path string, source []byte) bool) {
-	freezers[language] = append(freezers[language], freezer)
+	registers(language, func(row *spoken) { row.freezers = append(row.freezers, freezer) })
 	hints = append(hints, hint)
 }
 
@@ -42,7 +40,7 @@ func (f *File) declaresItselfFrozen() bool {
 		return false
 	}
 	language := languageOfPath(f.Path)
-	for _, freezer := range freezers[language] {
+	for _, freezer := range spokenIn(language).freezers {
 		if freezer(f) {
 			return true
 		}
@@ -74,9 +72,7 @@ func MayBeFrozen(path string, source []byte) bool {
 }
 
 func FreezeReadsATree(path string) bool {
-	_, declared := freezers[languageOfPath(path)]
-
-	return declared
+	return spokenIn(languageOfPath(path)).freezers != nil
 }
 
 // languageOfPath is the file's language by its extension; none for a file of no language the tool reads.

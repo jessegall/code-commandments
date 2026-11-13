@@ -37,7 +37,7 @@ func typed(written TypeName) held {
 	return held{class: typeName(written), written: written.written}
 }
 
-var resolvers = Memoised(indexTypes)
+var resolvers = engine.Memoised(indexTypes)
 
 func TypesOf(codebase *engine.Codebase) *Types {
 	return resolvers.Of(codebase)
