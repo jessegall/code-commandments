@@ -30,6 +30,7 @@ func (NearDuplicateFunctionDetector) Find(codebase *engine.Codebase) []engine.Ma
 		Reject(engine.As(py.Node.IsSoleReturnExpression)).
 		Reject(engine.As(py.Node.IsSoleExpressionStatement)).
 		Reject(engine.As(py.Node.IsLiteralLookup)).
+		Reject(engine.As(py.Node.IsDeclarationTable)).
 		Reject(engine.As(py.Node.IsStub)).
 		Get()
 

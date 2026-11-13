@@ -1,6 +1,7 @@
 # Look-alikes that are NOT near-copies. Two lookup tables share a skeleton by construction — they call
 # nothing and hand back constants, so they are data, not procedure. Two stubs leave the body to their
-# subclasses. And two classes each set their own state in `__init__`.
+# subclasses. Two classes each set their own state in `__init__`. And two commands declare their arguments, one
+# call per argument with nothing computed: a table written as calls.
 
 
 # @righteous NearDuplicateFunction
@@ -53,3 +54,19 @@ class Ribbon:
     def render(self, order, context, options) -> str:
         """Render the ribbon: each kind decides how."""
         raise NotImplementedError(f"{type(self).__name__} draws {order.number} in {context.name} as {options.mode} for {self.label}")
+
+
+class RefundCommand:
+    # @righteous NearDuplicateFunction
+    def arguments(self, parser) -> None:
+        parser.add_argument("order_number", type=int)
+        parser.add_argument("--reason", required=True, choices=["damaged", "late", "lost"])
+        parser.add_argument("--note", default="")
+
+
+class ShipCommand:
+    # @righteous NearDuplicateFunction
+    def arguments(self, parser) -> None:
+        parser.add_argument("parcel_id", type=str)
+        parser.add_argument("--carrier", required=True, choices=["post", "courier", "freight"])
+        parser.add_argument("--label", default="standard")

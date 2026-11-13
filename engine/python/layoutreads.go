@@ -145,6 +145,38 @@ func (n Node) IsSoleExpressionStatement() bool {
 	return ok && only.Kind() == "Expr"
 }
 
+func (n Node) IsDeclarationTable() bool {
+	body := n.StatementsBeyondText()
+	if len(body) < 2 {
+		return false
+	}
+
+	row := body[0].Child("value").Callee()
+	for _, statement := range body {
+		call := statement.Child("value")
+		if statement.Kind() != "Expr" || !call.IsCall() || !call.Callee().SameSyntax(row.Match) || !call.handsOnlyDeclaredValues() {
+			return false
+		}
+	}
+
+	return true
+}
+
+func (n Node) handsOnlyDeclaredValues() bool {
+	return !slices.ContainsFunc(append(n.Arguments(), n.Keywords()...), func(argument Node) bool { return !argument.argumentValue().isDeclaredValue() })
+}
+
+func (n Node) isDeclaredValue() bool {
+	switch n.Kind() {
+	case "Constant", "Name", "Attribute":
+		return true
+	case "List", "Tuple", "Set":
+		return !slices.ContainsFunc(n.ChildrenIn("elts"), func(element Node) bool { return !element.isDeclaredValue() })
+	}
+
+	return false
+}
+
 func (n Node) IsLiteralLookup() bool {
 	var returns []Node
 	for _, statement := range n.ChildrenIn("body") {
