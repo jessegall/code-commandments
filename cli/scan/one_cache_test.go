@@ -296,3 +296,26 @@ func written(t *testing.T, root, relative, text string) {
 		t.Fatal(err)
 	}
 }
+
+// The Go bridge, which the binary carries and answers in this very process, keeps its lines in the one cache as every
+// other bridge does: a second run of unchanged files starts no read of them.
+func TestTheGoBridgeKeepsTheLinesItReads(t *testing.T) {
+	project := repository(t)
+	journalDriven(t, project)
+	written(t, project, "src/go.mod", "module shop\n\ngo 1.22\n")
+	written(t, project, "src/prices.go", "package shop\n\nfunc price() int { return 3 }\n")
+	written(t, project, "src/cart.go", "package shop\n\nfunc total() int { return price() * 2 }\n")
+	inRepository(t, project, "add", "-A")
+	inRepository(t, project, "commit", "-m", "the shop")
+
+	held := cache.KeptIn()
+	cache.KeepIn(t.TempDir())
+	t.Cleanup(func() { cache.KeepIn(held) })
+
+	if asked, _ := askedOf(t, GoBridge, project, "src/cart.go", "src/prices.go"); len(asked) != 2 {
+		t.Fatalf("the first run asked the Go bridge for %v, not both files", asked)
+	}
+	if asked, _ := askedOf(t, GoBridge, project, "src/cart.go", "src/prices.go"); len(asked) != 0 {
+		t.Errorf("a second run of unchanged files asked the Go bridge for %v again: its lines were never kept", asked)
+	}
+}

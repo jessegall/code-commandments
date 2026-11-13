@@ -144,12 +144,17 @@ func (p inProcess) AskEach(request bridge.Request, each func(line contract.Line,
 	if err != nil {
 		return err
 	}
+	lines := []contract.Line{{Header: &stream.Header}}
 	for _, file := range stream.Files {
-		raw, err := json.Marshal(map[string]any{"file": file})
+		lines = append(lines, contract.Line{File: file})
+	}
+	lines = append(lines, contract.Line{Program: stream.Program}, contract.Line{Trailer: &stream.Trailer})
+	for _, line := range lines {
+		raw, err := json.Marshal(line)
 		if err != nil {
 			return err
 		}
-		if err := each(contract.Line{File: file}, raw); err != nil {
+		if err := each(line, raw); err != nil {
 			return err
 		}
 	}
