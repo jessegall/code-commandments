@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace CodeCommandments\PhpBridge;
 
+use Composer\Autoload\ClassLoader;
 use ReflectionClass;
 use ReflectionClassConstant;
 use ReflectionIntersectionType;
@@ -43,10 +44,12 @@ final class OutsideSymbols
     private readonly bool $internalOnly;
 
     /**
-     * @param  array<string, string>  $declared  class-likes the scan declares, never reflected
+     * @param  array<string, string>  $declared  class-likes the written files declare, never reflected
      * @param  array<string, string>  $referenced  classes the scan names
+     * @param  array<string, int>  $scanned  every file of the scan, written or not, by its real path: a class the
+     *                                        project's loader finds in one is the scan's own, never loaded
      */
-    public function __construct(?string $autoload, private readonly array $declared, array $referenced)
+    public function __construct(?string $autoload, private readonly array $declared, array $referenced, private readonly array $scanned = [])
     {
         $this->internalOnly = $autoload === null;
         if ($autoload !== null) {
@@ -84,7 +87,7 @@ final class OutsideSymbols
     private function add(string $class): void
     {
         $key = strtolower(ltrim($class, '\\'));
-        if (isset($this->symbols[$key]) || isset($this->declared[$key])) {
+        if (isset($this->symbols[$key]) || isset($this->declared[$key]) || $this->inTheScan($class)) {
             return;
         }
         if (! $this->exists($class)) {
@@ -128,6 +131,24 @@ final class OutsideSymbols
             $symbol['members'] = $members;
         }
         unset($symbol);
+    }
+
+    /**
+     * Whether the project's loader finds the class in a file of the scan, asked without loading it.
+     */
+    private function inTheScan(string $class): bool
+    {
+        if ($this->scanned === [] || ! class_exists(ClassLoader::class, false)) {
+            return false;
+        }
+        foreach (ClassLoader::getRegisteredLoaders() as $loader) {
+            $file = $loader->findFile($class);
+            if (is_string($file) && isset($this->scanned[realpath($file) ?: $file])) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private function exists(string $class): bool

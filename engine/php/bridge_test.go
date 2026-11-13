@@ -368,3 +368,29 @@ func TestAProjectWithUninstalledDependenciesSaysWhyNoPackageIsRead(t *testing.T)
 		t.Errorf("a project that declares no dependency is told its loader was not used: %q", program.Loader)
 	}
 }
+
+// A class a file of the scan declares is never loaded through the project's autoloader, written or not: the scan holds
+// it, so the bridge has no reason to run its file, and a read of one file in a large project loads none of the rest.
+func TestAClassAFileOfTheScanDeclaresIsNeverLoaded(t *testing.T) {
+	composer, err := exec.LookPath("composer")
+	if err != nil {
+		t.Skip("no composer here to write the project's autoloader")
+	}
+	project := written(t, map[string]string{
+		"composer.json": `{"name":"acme/app","autoload":{"psr-4":{"App\\":"src/"}}}`,
+		"src/Order.php": "<?php\nnamespace App;\ntouch(__DIR__ . '/../loaded');\nfinal class Order {}\n",
+		"src/Cart.php":  "<?php\nnamespace App;\nfinal class Cart {\n    public function __construct(public Order $order) {}\n}\n",
+	})
+	if out, err := exec.Command(composer, "dump-autoload", "--working-dir="+project, "--quiet").CombinedOutput(); err != nil {
+		t.Fatalf("composer dump-autoload: %v %s", err, out)
+	}
+	cart, order := filepath.Join(project, "src", "Cart.php"), filepath.Join(project, "src", "Order.php")
+
+	stream := bridged(t, cart, order, "--write="+cart)
+	if _, err := os.Stat(filepath.Join(project, "loaded")); err == nil {
+		t.Error("the bridge loaded Order.php, a file of the scan it was not asked to write")
+	}
+	if stream.Program != nil && slices.ContainsFunc(stream.Program.Symbols, func(symbol contract.OutsideSymbol) bool { return symbol.Symbol == `App\Order` }) {
+		t.Errorf("Order, which a file of the scan declares, is named outside it")
+	}
+}

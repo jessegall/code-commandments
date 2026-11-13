@@ -145,6 +145,13 @@ final readonly class Stream
      */
     private function loadFailure(string $autoload): string
     {
+        static $tried = [];
+
+        return $tried[$autoload] ??= $this->triedLoading($autoload);
+    }
+
+    private function triedLoading(string $autoload): string
+    {
         $tried = proc_open([PHP_BINARY, '-d', 'display_errors=stderr', '-r', 'require $argv[1];', $autoload], [1 => ['file', PHP_OS_FAMILY === 'Windows' ? 'NUL' : '/dev/null', 'w'], 2 => ['pipe', 'w']], $pipes);
         if ($tried === false) {
             return 'it could not be tried here';
@@ -172,7 +179,8 @@ final readonly class Stream
     {
         $autoload = $this->autoload();
         $failure = $autoload === null ? '' : $this->loadFailure($autoload);
-        $outside = new OutsideSymbols($autoload !== null && $failure === '' ? $autoload : null, $declared, $referenced);
+        $scanned = array_flip(array_map(static fn (string $path): string => realpath($path) ?: $path, $this->request->paths));
+        $outside = new OutsideSymbols($autoload !== null && $failure === '' ? $autoload : null, $declared, $referenced, $scanned);
         $program = array_filter([
             'symbols' => $outside->all(),
             'unreadable' => $outside->unreadable(),
