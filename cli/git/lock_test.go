@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/jessegall/code-commandments/cli/git"
+	"github.com/jessegall/code-commandments/walk"
 )
 
 const flag = "--no-optional-locks"
@@ -78,32 +79,22 @@ func TestEveryReadCarriesTheFlag(t *testing.T) {
 }
 
 func TestNothingElseRunsGitItself(t *testing.T) {
-	funnel := filepath.Join("git", "git.go")
-
-	err := filepath.WalkDir("..", func(path string, entry os.DirEntry, err error) error {
-		if err != nil || entry.IsDir() || !strings.HasSuffix(path, ".go") {
-			return err
-		}
-
-		if strings.HasSuffix(path, funnel) || strings.HasSuffix(path, "_test.go") {
-			return nil
-		}
-
+	module, _ := filepath.Abs(filepath.Join("..", ".."))
+	funnel := filepath.Join(module, "cli", "git", "git.go")
+	written := func(path string) bool {
+		return strings.HasSuffix(path, ".go") && !strings.HasSuffix(path, "_test.go") && path != funnel
+	}
+	// the story harness builds throwaway projects of its own, and bin holds built copies
+	for _, path := range walk.Files(module, walk.Under(module, []string{"bin", "story"}), written) {
 		source, err := os.ReadFile(path)
 		if err != nil {
-			return err
+			t.Fatal(err)
 		}
-
 		for number, line := range strings.Split(string(source), "\n") {
 			if strings.Contains(line, `exec.Command("git"`) {
 				t.Errorf("%s:%d runs git itself; ask the git package, which keeps every read off the index lock", path, number+1)
 			}
 		}
-
-		return nil
-	})
-	if err != nil {
-		t.Fatalf("reading the commands: %v", err)
 	}
 }
 

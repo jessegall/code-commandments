@@ -4,6 +4,7 @@ package scope
 import (
 	"encoding/json"
 	"errors"
+	"maps"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -474,9 +475,10 @@ func checklist(id string, space workspace.Workspace) (map[string]bool, error) {
 func changedLinesOf(root string, files map[string]bool) map[string]git.ChangedLines {
 	since := git.WorkStart(root)
 
+	changed := git.ChangedLinesSinceEach(root, since, slices.Collect(maps.Keys(files)))
 	lines := map[string]git.ChangedLines{}
 	for file := range files {
-		lines[file] = git.ChangedLinesSince(root, since, file)
+		lines[file] = changed(file)
 	}
 
 	return lines

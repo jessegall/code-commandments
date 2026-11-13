@@ -3,6 +3,7 @@ package git
 
 import (
 	"errors"
+	"fmt"
 	"io/fs"
 	"os"
 	"os/exec"
@@ -12,6 +13,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/jessegall/code-commandments/cli/source"
 	"github.com/jessegall/code-commandments/walk"
@@ -355,9 +357,7 @@ func IsAncestor(root, older, newer string) bool {
 }
 
 func succeeded(dir string, args ...string) bool {
-	counted()
-
-	return exec.Command("git", append([]string{"--no-optional-locks", "-C", dir}, args...)...).Run() == nil
+	return reading(dir, args...).Run() == nil
 }
 
 func ChangedBetween(root, before, after string) []string {
@@ -391,6 +391,16 @@ func StillChanged(root string, relative []string) []string {
 	})
 }
 
+// Tracked is every file git tracks under the folders, named relative to the checkout.
+func Tracked(root string, folders ...string) ([]string, error) {
+	listed, err := reading(root, append([]string{"ls-files", "-z", "--"}, folders...)...).Output()
+	if err != nil {
+		return nil, fmt.Errorf("git ls-files: %w", err)
+	}
+
+	return strings.Split(strings.TrimRight(string(listed), "\x00"), "\x00"), nil
+}
+
 func ChangedLinesOf(root, file string) ChangedLines {
 	return ChangedLinesSince(root, "HEAD", file)
 }
@@ -405,6 +415,107 @@ func ChangedLinesSince(root, commit, file string) ChangedLines {
 
 func ChangedLinesBetween(root, before, after, file string) ChangedLines {
 	return FromDiff(run(root, "diff", "-U0", before, after, "--", file))
+}
+
+// ChangedLinesSinceEach answers each named file's changed lines since the commit from one listing of what git tracks
+// and one diff of them all, asked at the first question; a file not named is asked on its own.
+func ChangedLinesSinceEach(root, commit string, files []string) func(file string) ChangedLines {
+	var once sync.Once
+	var named changedEach
+	return func(file string) ChangedLines {
+		once.Do(func() {
+			named = diffedEach(root, files, commit)
+			named.everywhereUntracked(root)
+		})
+		if lines, held := named.of(file); held {
+			return lines
+		}
+
+		return ChangedLinesSince(root, commit, file)
+	}
+}
+
+// ChangedLinesBetweenEach answers each named file's lines changed between two commits from one diff of them all.
+func ChangedLinesBetweenEach(root, before, after string, files []string) func(file string) ChangedLines {
+	var once sync.Once
+	var named changedEach
+	return func(file string) ChangedLines {
+		once.Do(func() { named = diffedEach(root, files, before, after) })
+		if lines, held := named.of(file); held {
+			return lines
+		}
+
+		return ChangedLinesBetween(root, before, after, file)
+	}
+}
+
+// changedEach is the changed lines of each file a diff named, by its path relative to the checkout.
+type changedEach struct {
+	relative map[string]string
+	lines    map[string]ChangedLines
+}
+
+func (c changedEach) of(file string) (ChangedLines, bool) {
+	relative, named := c.relative[file]
+	if !named {
+		return ChangedLines{}, false
+	}
+
+	return c.lines[relative], true
+}
+
+// everywhereUntracked marks every named file git does not track as changed everywhere; when git cannot say, each
+// stands as tracked.
+func (c changedEach) everywhereUntracked(root string) {
+	listed, err := reading(root, "ls-files", "-z").Output()
+	if err != nil {
+		return
+	}
+	tracked := map[string]bool{}
+	for _, relative := range strings.Split(string(listed), "\x00") {
+		tracked[relative] = true
+	}
+	for _, relative := range c.relative {
+		if !tracked[relative] {
+			c.lines[relative] = Everywhere()
+		}
+	}
+}
+
+// diffedEach asks git for one diff of the checkout, whose cost follows what changed, and cuts it into the hunks of each
+// named file.
+func diffedEach(root string, files []string, revisions ...string) changedEach {
+	named := changedEach{relative: map[string]string{}, lines: map[string]ChangedLines{}}
+	for _, file := range files {
+		if relative, inside := walk.Inside(root, file); inside {
+			named.relative[file] = filepath.ToSlash(relative)
+		}
+	}
+	if len(named.relative) == 0 {
+		return named
+	}
+	arguments := append([]string{"-c", "core.quotePath=false", "diff", "-U0", "--no-renames", "--relative", "--src-prefix=a/", "--dst-prefix=b/"}, revisions...)
+	diff, _ := reading(root, arguments...).Output()
+
+	hunks := map[string]*strings.Builder{}
+	current := ""
+	for _, line := range strings.Split(string(diff), "\n") {
+		switch {
+		case strings.HasPrefix(line, "+++ "):
+			// git ends the name with a tab when it holds a space
+			current = strings.TrimSuffix(strings.TrimPrefix(strings.TrimPrefix(line, "+++ "), "b/"), "\t")
+			if hunks[current] == nil {
+				hunks[current] = &strings.Builder{}
+			}
+		case strings.HasPrefix(line, "@@ ") && hunks[current] != nil:
+			hunks[current].WriteString(line + "\n")
+		}
+	}
+	for relative, hunk := range hunks {
+		named.lines[relative] = FromDiff(hunk.String())
+	}
+
+	return named
 }
 
 var anyLineBreak = regexp.MustCompile(`\r\n|[\n\r\x0B\f]`)
@@ -506,22 +617,45 @@ func ask(dir string, args ...string) string {
 }
 
 func wrote(dir string, args ...string) (string, error) {
-	counted()
-
-	out, err := exec.Command("git", append([]string{"-C", dir}, args...)...).CombinedOutput()
+	out, err := writing(dir, args...).CombinedOutput()
 
 	return strings.TrimSpace(string(out)), err
 }
 
 func run(dir string, args ...string) string {
-	counted()
-
-	out, err := exec.Command("git", append([]string{"--no-optional-locks", "-C", dir}, args...)...).Output()
+	out, err := reading(dir, args...).Output()
 	if err != nil && len(out) == 0 {
 		return ""
 	}
 
 	return string(out)
+}
+
+// reading starts a git that only reads: it takes no optional lock, so it never blocks the checkout's own git.
+func reading(dir string, args ...string) *exec.Cmd {
+	return started(append([]string{"--no-optional-locks", "-C", dir}, args...))
+}
+
+// writing starts a git that may change the checkout.
+func writing(dir string, args ...string) *exec.Cmd {
+	return started(append([]string{"-C", dir}, args...))
+}
+
+// started is the one place this package starts git, counted once a start.
+func started(arguments []string) *exec.Cmd {
+	counted()
+
+	return exec.Command("git", arguments...)
+}
+
+// literal names the paths a command reads from its input, each taken as written, never as a pattern.
+func literal(command *exec.Cmd, env, paths []string) *exec.Cmd {
+	command.Env = append(append(os.Environ(), "GIT_LITERAL_PATHSPECS=1"), env...)
+	if paths != nil {
+		command.Stdin = strings.NewReader(strings.Join(paths, "\x00") + "\x00")
+	}
+
+	return command
 }
 
 func trim(text string) string {
@@ -547,9 +681,7 @@ func Tracks(root, path string) bool {
 }
 
 func tracking(root, path string) (tracked, known bool) {
-	counted()
-
-	err := exec.Command("git", "--no-optional-locks", "-C", root, "ls-files", "--error-unmatch", "--", path).Run()
+	err := reading(root, "ls-files", "--error-unmatch", "--", path).Run()
 
 	var untracked *exec.ExitError
 	if errors.As(err, &untracked) && untracked.ExitCode() == 1 {
@@ -560,15 +692,7 @@ func tracking(root, path string) (tracked, known bool) {
 }
 
 func literally(dir string, env, paths []string, args ...string) (string, error) {
-	counted()
-
-	command := exec.Command("git", append([]string{"-C", dir}, args...)...)
-	command.Env = append(append(os.Environ(), "GIT_LITERAL_PATHSPECS=1"), env...)
-	if paths != nil {
-		command.Stdin = strings.NewReader(strings.Join(paths, "\x00") + "\x00")
-	}
-
-	out, err := command.CombinedOutput()
+	out, err := literal(writing(dir, args...), env, paths).CombinedOutput()
 
 	return strings.TrimSpace(string(out)), err
 }

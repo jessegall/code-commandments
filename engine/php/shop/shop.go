@@ -11,7 +11,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"runtime"
 	"slices"
@@ -20,6 +19,7 @@ import (
 	"testing"
 
 	"github.com/jessegall/code-commandments/bridge/bundle"
+	"github.com/jessegall/code-commandments/cli/git"
 	"github.com/jessegall/code-commandments/contract"
 	"github.com/jessegall/code-commandments/engine"
 )
@@ -47,14 +47,12 @@ func Digest() (string, error) {
 }
 
 func DigestOf(inputs ...string) (string, error) {
-	listing := exec.Command("git", append([]string{"ls-files", "-z", "--"}, inputs...)...)
-	listing.Dir = Repository()
-	tracked, err := listing.Output()
+	tracked, err := git.Tracked(Repository(), inputs...)
 	if err != nil {
-		return "", fmt.Errorf("git ls-files: %w", err)
+		return "", err
 	}
 	var paths []string
-	for _, path := range strings.Split(strings.TrimRight(string(tracked), "\x00"), "\x00") {
+	for _, path := range tracked {
 		if slices.Contains([]string{".php", ".txt", ".ts", ".vue", ".mjs"}, filepath.Ext(path)) || filepath.Base(path) == "composer.json" {
 			paths = append(paths, path)
 		}
