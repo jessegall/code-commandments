@@ -102,7 +102,8 @@ func TestThePluginOffersTheJournalTheBriefingItWouldOtherwiseWrite(t *testing.T)
 func TestEachPluginManifestNamesTheReleaseItPins(t *testing.T) {
 	root := filepath.Join("..", "..")
 
-	for _, name := range []string{doc.Plugin, doc.Journal4Plugin} {
+	releases := map[string]bool{}
+	for _, name := range []string{doc.Plugin, doc.Journal4Plugin, doc.Journal5Plugin} {
 		text, err := os.ReadFile(filepath.Join(root, name))
 		if err != nil {
 			t.Fatal(err)
@@ -122,6 +123,11 @@ func TestEachPluginManifestNamesTheReleaseItPins(t *testing.T) {
 		if fmt.Sprint(version) != pinned[1] {
 			t.Errorf("%s says version %v and fetches v%s: run composer sins", name, version, pinned[1])
 		}
+		releases[pinned[1]] = true
+	}
+
+	if len(releases) > 1 {
+		t.Errorf("the plugin manifests pin different releases %v, so a journal that reads one of them fetches an old binary: run composer sins", releases)
 	}
 }
 

@@ -291,11 +291,13 @@ const PluginSchema = ".journal-plugin/settings.json"
 
 const Journal4Plugin = "journal-plugin.json"
 
+const Journal5Plugin = "journal-plugin.5.json"
+
 const JournalBriefing = "instructions/briefing.md"
 
 const WorkerBriefing = "instructions/worker-briefing.md"
 
-var pinned = regexp.MustCompile(`COMMANDMENTS_RELEASE(?:=|": ")v([0-9]+\.[0-9]+\.[0-9]+)`)
+var pinned = regexp.MustCompile(`(COMMANDMENTS_RELEASE(?:=|": ")v)([0-9]+\.[0-9]+\.[0-9]+)`)
 
 func released(path string) (string, error) {
 	text, err := os.ReadFile(path)
@@ -308,7 +310,11 @@ func released(path string) (string, error) {
 		return "", fmt.Errorf("no COMMANDMENTS_RELEASE is pinned, so the manifest cannot name its version")
 	}
 
-	return release[1], nil
+	return release[2], nil
+}
+
+func repinned(text, release string) string {
+	return pinned.ReplaceAllString(text, "${1}"+release)
 }
 
 func renamedVersion(text, release string) (string, error) {
@@ -391,19 +397,17 @@ func Generated(root string) (map[string]string, error) {
 	manifest.Set("version", release)
 	documents[Plugin] = jsonfile.Text(manifest)
 
-	four, err := os.ReadFile(filepath.Join(root, Journal4Plugin))
-	if err != nil {
-		return nil, err
+	for _, journal := range []string{Journal4Plugin, Journal5Plugin} {
+		text, err := os.ReadFile(filepath.Join(root, journal))
+		if err != nil {
+			return nil, err
+		}
+
+		if documents[journal], err = renamedVersion(repinned(string(text), release), release); err != nil {
+			return nil, fmt.Errorf("%s: %w", journal, err)
+		}
 	}
 
-	fourth, err := released(filepath.Join(root, Journal4Plugin))
-	if err != nil {
-		return nil, fmt.Errorf("%s: %w", Journal4Plugin, err)
-	}
-
-	if documents[Journal4Plugin], err = renamedVersion(string(four), fourth); err != nil {
-		return nil, fmt.Errorf("%s: %w", Journal4Plugin, err)
-	}
 	schema, err := jsonfile.Pretty(SettingsSchema(), true)
 	if err != nil {
 		return nil, err

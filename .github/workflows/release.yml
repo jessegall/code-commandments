@@ -31,11 +31,13 @@ jobs:
             echo ".journal-plugin/plugin.json pins $pinned in COMMANDMENTS_RELEASE, not $GITHUB_REF_NAME" >&2
             exit 1
           fi
-          fetched="$(jq -r '.setup[0].run' journal-plugin.json | sed -n 's/^COMMANDMENTS_RELEASE=\([^ ]*\) .*/\1/p')"
-          if [ "$fetched" != "$GITHUB_REF_NAME" ]; then
-            echo "journal-plugin.json fetches $fetched in its first setup step, not $GITHUB_REF_NAME" >&2
-            exit 1
-          fi
+          for manifest in journal-plugin*.json; do
+            fetched="$(jq -r '.setup[] | .run' "$manifest" | sed -n 's/^COMMANDMENTS_RELEASE=\([^ ]*\) .*/\1/p' | head -1)"
+            if [ "$fetched" != "$GITHUB_REF_NAME" ]; then
+              echo "$manifest fetches $fetched, not $GITHUB_REF_NAME" >&2
+              exit 1
+            fi
+          done
 
       - name: Take the C# bridges from the last release where nothing of them changed
         id: bridges
