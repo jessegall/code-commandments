@@ -4,6 +4,7 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
+	"strings"
 	"testing"
 
 	"github.com/jessegall/code-commandments/bridge"
@@ -93,6 +94,71 @@ func TestAChangeTwoImportsAwayReadsTheTopFileAgain(t *testing.T) {
 	if !slices.Contains(asked, filepath.Join(project, "src/shop/checkout.py")) {
 		t.Errorf("a change to what prices.py declares asked the bridge for %v, leaving checkout.py, two imports up, as it was", asked)
 	}
+}
+
+// A file whose contents outline differently in two checkouts, because what it imports differs, never hands one
+// checkout's reader the other's tree: cart.py's limit is an int in the project and a str in the worktree, and
+// checkout.py, alike in both, is served the tree that knows its own checkout's limit.
+func TestAFileOutlinedDifferentlyInTwoCheckoutsNeverServesTheOthersReader(t *testing.T) {
+	if _, err := bridge.Mypy(); err != nil {
+		t.Skipf("no Python bridge here: %v", err)
+	}
+	project := repository(t)
+	journalDriven(t, project)
+	written(t, project, "src/shop/__init__.py", "")
+	written(t, project, "src/shop/prices.py", "def price() -> int:\n    return 3\n")
+	written(t, project, "src/shop/cart.py", "from shop.prices import price\n\nlimit = price()\n")
+	written(t, project, "src/shop/checkout.py", "from shop.cart import limit\n\n\ndef pay() -> None:\n    print(limit)\n")
+	inRepository(t, project, "add", "-A")
+	inRepository(t, project, "commit", "-m", "the shop")
+	worktree := filepath.Join(project, ".journal", "worktrees", "worker-1")
+	inRepository(t, project, "worktree", "add", "-b", "a-worker", worktree)
+
+	held := cache.KeptIn()
+	cache.KeepIn(t.TempDir())
+	t.Cleanup(func() { cache.KeepIn(held) })
+
+	chain := append(slices.Clone(theShop), "src/shop/checkout.py")
+	askedOf(t, Python, project, chain...)
+	written(t, worktree, "src/shop/prices.py", "def price() -> str:\n    return 'three'\n")
+	if _, stream := askedOf(t, Python, worktree, chain...); !limitIs(stream, "str") {
+		t.Fatalf("the worktree's checkout.py does not read limit as a str: %v", limitsIn(stream))
+	}
+
+	if _, stream := askedOf(t, Python, project, chain...); !limitIs(stream, "int") {
+		t.Errorf("the project's checkout.py was served the worktree's tree, where limit is %v, not an int", limitsIn(stream))
+	}
+	if _, stream := askedOf(t, Python, worktree, chain...); !limitIs(stream, "str") {
+		t.Errorf("the worktree's checkout.py was served the project's tree, where limit is %v, not a str", limitsIn(stream))
+	}
+}
+
+// limitIs says whether every limit checkout.py names resolves to the named builtin type.
+func limitIs(stream *contract.Stream, builtin string) bool {
+	limits := limitsIn(stream)
+
+	return len(limits) > 0 && !slices.ContainsFunc(limits, func(resolved string) bool { return !strings.Contains(resolved, builtin) })
+}
+
+// limitsIn is the resolved type of every limit checkout.py names.
+func limitsIn(stream *contract.Stream) []string {
+	var limits []string
+	var visit func(node *contract.Node)
+	visit = func(node *contract.Node) {
+		if node.Name == "limit" && node.Resolved != nil {
+			limits = append(limits, node.Resolved.Text)
+		}
+		for _, child := range node.Children {
+			visit(child)
+		}
+	}
+	for _, file := range stream.Files {
+		if filepath.Base(file.Path) == "checkout.py" && file.Root != nil {
+			visit(file.Root)
+		}
+	}
+
+	return limits
 }
 
 var theShop = []string{"src/shop/__init__.py", "src/shop/cart.py", "src/shop/prices.py"}

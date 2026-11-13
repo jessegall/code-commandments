@@ -265,31 +265,74 @@ func (k *keptLines) changedSince(file string, now map[string]string) bool {
 	return now[file] != k.print(file)
 }
 
-// keepOutline keeps what a file declares for the files that read it, under its contents.
+// keepOutline keeps what a file declares for the files that read it, under its contents. An outline holds types its
+// imports resolved, so when two checkouts outline the same contents differently the slot is marked contested for good,
+// and the file's readers are keyed on what it read instead.
 func (k *keptLines) keepOutline(file *contract.File) {
 	print := k.print(file.Path)
 	if print == "" {
 		return
 	}
 	outline := strconv.FormatUint(file.Outline(k.marked), 16)
-	k.outlines.Store(file.Path, outline)
-	_ = atomic.Write(k.outlinePath(file.Path, print), outline)
+	path := k.outlinePath(file.Path, print)
+	defer atomic.Hold(filepath.Join(k.folder, "index.lock"))()
+	if kept, err := os.ReadFile(path); err == nil && string(kept) != outline {
+		outline = contested
+	}
+	_ = atomic.Write(path, outline)
+	k.outlines.Delete(file.Path)
 }
 
+// contested is what an outline slot holds once two checkouts kept different outlines for the same contents.
+const contested = "contested"
+
 // outlineOf is what a key holds for a file a tree read: the outline kept for its contents, else the contents
-// themselves, so a file whose outline was never kept stands by its every byte.
+// themselves, so a file whose outline was never kept stands by its every byte. A contested outline stands for the
+// contents and the outlines of every file it read.
 func (k *keptLines) outlineOf(file string) string {
 	if held, ok := k.outlines.Load(file); ok {
 		return held.(string)
 	}
+	outline := k.ownOutline(file)
+	if outline == contested {
+		return k.contestedOutline(file)
+	}
+	if !strings.HasPrefix(outline, "contents ") {
+		k.outlines.Store(file, outline)
+	}
+
+	return outline
+}
+
+// ownOutline is the outline kept for a file's contents, contested, or its contents when none was kept.
+func (k *keptLines) ownOutline(file string) string {
 	print := k.print(file)
 	kept, err := used(k.outlinePath(file, print))
 	if err != nil || print == "" {
 		return "contents " + print
 	}
-	k.outlines.Store(file, string(kept))
 
 	return string(kept)
+}
+
+// contestedOutline names a contested file by its contents and each file any of its kept lines read, by that file's own
+// outline, or its contents when that is contested too, so no file is outlined through a chain of others.
+func (k *keptLines) contestedOutline(file string) string {
+	var reads []string
+	for _, variant := range k.variants(file) {
+		reads = append(reads, variant...)
+	}
+	slices.Sort(reads)
+	parts := []string{contested, k.print(file)}
+	for _, read := range slices.Compact(reads) {
+		outline := k.ownOutline(k.unmarkedPath(read))
+		if outline == contested {
+			outline = "contents " + k.print(k.unmarkedPath(read))
+		}
+		parts = append(parts, read, outline)
+	}
+
+	return named(parts...)
 }
 
 func (k *keptLines) outlinePath(file, print string) string {
