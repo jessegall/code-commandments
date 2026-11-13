@@ -62,10 +62,12 @@ def cache_folder(paths: list[str], base: str | None) -> str:
 
 def options(cache: str) -> Options:
     """How mypy reads a consumer's project: every body checked, imports it cannot find left untyped, and what it
-    checked kept in $cache so a later request compiles only the files it names."""
+    checked kept in $cache, one file per module so several processes reading side by side share it, so a later request compiles only
+    the files it names."""
     chosen = Options()
     chosen.incremental = True
     chosen.cache_dir = cache
+    chosen.sqlite_cache = False
     chosen.preserve_asts = True
     chosen.export_types = True
     chosen.check_untyped_defs = True

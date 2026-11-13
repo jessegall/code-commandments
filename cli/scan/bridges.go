@@ -24,11 +24,8 @@ type Bridge struct {
 	Label      string
 	Projects   *bridge.Projects
 	InOwnOrder bool
-	// ReadsInShares says a file's tree is the same whatever other files one read was asked for, proven by
-	// TestFilesReadInSharesWriteWhatOneReadWrites, so its files may be read by several processes side by side.
-	ReadsInShares bool
-	Reach         Reach
-	Notice        func() string
+	Reach      Reach
+	Notice     func() string
 }
 
 // Reach is how a bridge is reached.
@@ -334,9 +331,8 @@ var PHPBridge = Bridge{Kind: "php", Word: "php", Languages: []source.Language{so
 }
 
 var Frontend = Bridge{Kind: "frontend", Word: "frontend", Languages: []source.Language{source.Vue, source.TypeScript}, Label: "Vue and TypeScript",
-	ReadsInShares: true,
-	Reach:         Process{Command: func([]string) ([]string, error) { return frontend.Here().Cached().Command() }},
-	Notice:        nothingToSay,
+	Reach:  Process{Command: func([]string) ([]string, error) { return frontend.Here().Cached().Command() }},
+	Notice: nothingToSay,
 }
 
 var CSharp = Bridge{Kind: "roslyn", Word: "csharp", Languages: []source.Language{source.CSharp}, Label: "C#",
@@ -347,10 +343,9 @@ var CSharp = Bridge{Kind: "roslyn", Word: "csharp", Languages: []source.Language
 }
 
 var GoBridge = Bridge{Kind: "go", Word: "go", Languages: []source.Language{source.Go}, Label: "Go",
-	InOwnOrder:    true,
-	ReadsInShares: true,
-	Reach:         InProcess{Stream: gotree.Stream},
-	Notice:        nothingToSay,
+	InOwnOrder: true,
+	Reach:      InProcess{Stream: gotree.Stream},
+	Notice:     nothingToSay,
 }
 
 var Python = Bridge{Kind: "mypy", Word: "python", Languages: []source.Language{source.Python}, Label: "Python",
@@ -391,7 +386,7 @@ const halvingsAtMost = 8
 // ReadShared reads the files in as many shares as processes, each by a bridge process of its own side by side, and
 // joins what they write in the files' order; one process, or a single file, is one read.
 func (b Bridge) ReadShared(roots, files []string, tally func(), processes int) (*contract.Stream, error) {
-	if processes <= 1 || len(files) < 2 || !b.ReadsInShares {
+	if processes <= 1 || len(files) < 2 {
 		return b.Read(roots, files, tally)
 	}
 
