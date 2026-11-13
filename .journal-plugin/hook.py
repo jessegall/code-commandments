@@ -2,6 +2,8 @@
 judges; this script decides which events are judged later, queues that judging in the journal, and shapes every answer
 the binary gives into the journal's words, so a change to any of it ships without a build."""
 
+from __future__ import annotations
+
 import fcntl
 import json
 import os
