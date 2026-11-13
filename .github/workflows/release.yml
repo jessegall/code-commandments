@@ -27,6 +27,13 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      # The plugin's script runs under whatever python3 the hooks find, which on macOS is 3.9; its tests run there
+      # before anything is published, so a tag that changes only the script is still proven.
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.9"
+      - name: The plugin's script passes its tests on Python 3.9
+        run: python -m unittest discover -v -s .journal-plugin/tests
       - name: The plugin is this version, and fetches a binary built here or already released
         id: pin
         env:
