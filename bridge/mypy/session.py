@@ -5,6 +5,7 @@ by its span. tree.py writes them into the generic tree.
 
 from __future__ import annotations
 
+import functools
 import gc
 import hashlib
 import os
@@ -92,6 +93,11 @@ def base_folders(found: list[str]) -> list[str]:
     return sorted(bases)
 
 
+# real_path is os.path.realpath held once a process: a read resolves the same module paths for every file that imports
+# them, and each resolution asks the file system about every folder above the file.
+real_path = functools.lru_cache(maxsize=None)(os.path.realpath)
+
+
 def options(cache: str) -> Options:
     """How mypy reads a consumer's project: every body checked, imports it cannot find left untyped, and what it
     checked kept in $cache, one file per module so several processes reading side by side share it, so a later request compiles only
@@ -123,7 +129,7 @@ def read_afresh(found: list[BuildSource], only: set[str] | None = None) -> list[
     with no file of its own is kept as it is."""
     kept: list[BuildSource] = []
     for source in found:
-        if not source.path or (only is not None and os.path.realpath(source.path) not in only):
+        if not source.path or (only is not None and real_path(source.path) not in only):
             kept.append(source)
             continue
         try:
@@ -242,7 +248,7 @@ def described(typ: Type) -> ResolvedType | None:
 
 def states(graph: dict[str, State], wanted: set[str]) -> dict[str, State]:
     """The checked modules in $wanted, by their resolved path."""
-    return {os.path.realpath(state.path): state for state in graph.values() if state.path and os.path.realpath(state.path) in wanted}
+    return {real_path(state.path): state for state in graph.values() if state.path and real_path(state.path) in wanted}
 
 
 def spans(path: str, state: State, types: dict[Expression, Type]) -> TypedModule:

@@ -23,7 +23,7 @@ from typing import Iterator
 from mypy.build import State
 from mypy.version import __version__ as MYPY_VERSION
 
-from session import ResolvedType, Session, TypedModule, checkout_of, spans, states
+from session import ResolvedType, Session, TypedModule, checkout_of, real_path, spans, states
 
 OPERATORS = {
     ast.Add: "+", ast.Sub: "-", ast.Mult: "*", ast.Div: "/", ast.FloorDiv: "//", ast.Mod: "%", ast.Pow: "**",
@@ -237,6 +237,7 @@ class ModuleLine:
 class TreeWriter:
     def __init__(self, source: bytes, module: str, types: dict[tuple[int, int], ResolvedType]) -> None:
         self.source = source
+        self.lines: list[bytes] | None = None
         self.module = module
         self.types = types
         self.joined: set[tuple[int, int]] = set()
@@ -480,8 +481,20 @@ class TreeWriter:
             flags.append("group")
         return flags
 
+    def segment(self, node: ast.expr) -> str | None:
+        """The text $node was written as, cut as ast.get_source_segment cuts it, from the file's lines split once."""
+        if node.end_lineno is None or node.end_col_offset is None:
+            return None
+        if self.lines is None:
+            self.lines = self.source.splitlines(keepends=True)
+        first, last = node.lineno - 1, node.end_lineno - 1
+        if first == last:
+            return self.lines[first][node.col_offset:node.end_col_offset].decode()
+        return (self.lines[first][node.col_offset:] + b"".join(self.lines[first + 1:last])
+                + self.lines[last][:node.end_col_offset]).decode()
+
     def type(self, annotation: ast.expr, quoted: bool = False) -> WrittenType:
-        text = ast.unparse(annotation) if quoted else (ast.get_source_segment(self.source.decode(), annotation) or ast.unparse(annotation))
+        text = ast.unparse(annotation) if quoted else (self.segment(annotation) or ast.unparse(annotation))
         if isinstance(annotation, ast.Constant) and annotation.value is None:
             return WrittenType(text, "keyword", "None", nullable=True)
         if isinstance(annotation, ast.Constant) and isinstance(annotation.value, str):
@@ -679,7 +692,7 @@ def stream(session: Session, paths: list[str], write: list[str]) -> Iterator[dic
     judged = {os.path.realpath(p) for p in write}
     asked = [path for path in found if path in judged] if write else found
     project = session.compiled(asked, found)
-    named = {os.path.realpath(s.path): s.module for s in project.sources if s.path}
+    named = {real_path(s.path): s.module for s in project.sources if s.path}
     checked = states(project.graph, set(named))
     checkout = checkout_of(paths)
     pins = pinned(checkout)
@@ -716,7 +729,7 @@ def reads_of(state: State | None, graph: dict[str, State], checkout: str, path: 
     reads: list[str] = []
     for dependency in sorted(set(state.dependencies)) if state is not None else []:
         held = graph.get(dependency)
-        read = os.path.realpath(held.path) if held is not None and held.path else None
+        read = real_path(held.path) if held is not None and held.path else None
         if read is not None and read != path and read.startswith(checkout + os.sep):
             reads.append(read)
     return reads
