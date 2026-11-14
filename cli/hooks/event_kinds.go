@@ -20,8 +20,8 @@ type EventKind struct {
 	Edits bool `json:"edits,omitempty"`
 	// AnsweredAtOnce is a step the script lets through at once: a judging of it never holds it, and runs after when chosen.
 	AnsweredAtOnce bool `json:"answered_at_once,omitempty"`
-	HandedIn  bool   `json:"handed_in,omitempty"`
-	Merged    bool   `json:"merged,omitempty"`
+	HandedIn       bool `json:"handed_in,omitempty"`
+	Merged         bool `json:"merged,omitempty"`
 	// Tools is every tool a hook of this tool acts on when the event names one; the script answers any other itself.
 	Tools []string `json:"tools,omitempty"`
 	// BinaryEveryMinutes is how often the event is passed to the binary at most; the script answers it in between.

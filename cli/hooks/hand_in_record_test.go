@@ -23,10 +23,10 @@ func TestAHandInJudgedInFullIsRecorded(t *testing.T) {
 	root, data := workerProject(t)
 	forgetBookkeeping(t)
 
-	merging{worker: "worker 7", worktree: root}.answered()
+	merging{worker: "worker 7", worktree: root}.judgesAfterwards()
 
 	said := handInLog(t, data)
-	for _, named := range []string{deliveringEvent, "tree=held", "waited "} {
+	for _, named := range []string{deliveringEvent, string(judgedAfterHandIn)} {
 		if !strings.Contains(said, named) {
 			t.Errorf("the log does not say %q: %s", named, said)
 		}

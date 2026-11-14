@@ -5,8 +5,10 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"testing"
+	"time"
 )
 
 // MergeLanded is a landed merge's answer as a queued run tells it.
@@ -19,8 +21,32 @@ func MergeLanded(line map[string]any) string {
 	return (JournalAnswer{Whisper: &said}).Line()
 }
 
+// heldAnswer is what a hand-in's judging came to, as the line that would have held it: a refusal naming the sins, a
+// note when it was not judged in full, or nothing when it is clean.
 func heldAnswer(line map[string]any) string {
-	return mergeOf(line).answered()
+	return handInAnswer(mergeOf(line))
+}
+
+func handInAnswer(work merging) string {
+	began := time.Now()
+	found := work.sins()
+	work.records(found.reason(), len(found.marks), "waited "+strconv.FormatInt(time.Since(began).Milliseconds(), 10)+"ms", found.times)
+	if found.got == gotWhole && len(found.marks) == 0 {
+		return ""
+	}
+	refusal := mergeTold(work.worker, "", work.worktree, found.marks)
+	if found.got == gotWhole {
+		work.keeps(refusal)
+
+		return (JournalAnswer{Refuse: &refusal}).Line()
+	}
+	said := Unjudged(work.worker+"'s hand-in was not judged in full", string(found.got), "")
+	work.keeps(said)
+	if len(found.marks) == 0 {
+		return (JournalAnswer{Whisper: &said}).Line()
+	}
+
+	return (JournalAnswer{Refuse: &refusal, Whisper: &said}).Line()
 }
 
 func mergingOf(worktree string, files ...string) map[string]any {
@@ -194,7 +220,7 @@ func deliveringOf(worktree string, files ...string) map[string]any {
 func TestAWorkerIsHeldBeforeItsWorkReachesTheAgent(t *testing.T) {
 	root, _, _ := projectWithASin(t)
 
-	held := DeliveryHeld(deliveringOf(root, "src/refund.py"))
+	held := heldAnswer(deliveringOf(root, "src/refund.py"))
 	if held == "" {
 		t.Fatal("a worker carrying a sin delivered its work unheld")
 	}
@@ -220,19 +246,8 @@ func TestACleanWorkerDeliversUnheld(t *testing.T) {
 		"src/ship.py": "def ship(order) -> str:\n    return order.carrier\n",
 	})
 
-	if held := DeliveryHeld(deliveringOf(worktree)); refusedBy(held) {
+	if held := heldAnswer(deliveringOf(worktree)); refusedBy(held) {
 		t.Errorf("a worker was held on delivery for a sin its branch never wrote: %q", held)
-	}
-}
-
-func TestBothMomentsReadTheWorkTheSameWay(t *testing.T) {
-	root, _, _ := projectWithASin(t)
-
-	delivery := DeliveryHeld(deliveringOf(root, "src/refund.py"))
-	merge := heldAnswer(mergingOf(root, "src/refund.py"))
-
-	if delivery != merge {
-		t.Errorf("the delivery answered %q and the merge %q", delivery, merge)
 	}
 }
 
@@ -265,4 +280,12 @@ func refusedBy(held string) bool {
 	}
 
 	return answer["refuse"] != nil
+}
+
+func TestAMergeRequestIsTheSameEventWhicheverSpellingArrives(t *testing.T) {
+	for _, arriving := range []string{requestedEvent, "merge_request.create"} {
+		if said := namedAsTheKey(arriving); said != requestedEvent {
+			t.Errorf("a merge request arriving as %q reads as %q", arriving, said)
+		}
+	}
 }

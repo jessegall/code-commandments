@@ -8,7 +8,7 @@ import (
 func TestAHandInThatWasJudgedInFullSaysNothingExtra(t *testing.T) {
 	root, _ := workerProject(t)
 
-	said := merging{worker: "worker 7", worktree: root}.answered()
+	said := handInAnswer(merging{worker: "worker 7", worktree: root})
 
 	if strings.Contains(said, "was not judged in full") {
 		t.Errorf("a hand-in that was judged in full carries the words of one that was not: %s", said)

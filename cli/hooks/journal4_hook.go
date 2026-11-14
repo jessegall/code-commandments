@@ -78,10 +78,6 @@ func Apart4(in *cli.Input, console cli.Console, line map[string]any) (string, bo
 		said, code, err := JournalConfig{}.Apply(in, console)
 
 		return Configured4(said), true, code, err
-	case deliveringEvent:
-		return DeliveryHeld(line), true, 0, nil
-	case requestedEvent:
-		return MergeRequested(line), true, 0, nil
 	case cutEvent:
 		return WorktreeCut(line), true, 0, nil
 	case tickedEvent:

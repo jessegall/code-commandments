@@ -4,7 +4,6 @@ import (
 	"maps"
 	"os"
 	"slices"
-	"strconv"
 	"strings"
 	"time"
 
@@ -20,13 +19,8 @@ import (
 
 const (
 	deliveringEvent = "worker_delivering"
+	requestedEvent  = "suites.coding.workers.merge_request.created"
 )
-
-// DeliveryHeld judges a hand-in before it goes through, when that is chosen. A hand-in judged after it is answered
-// and queued by the plugin's script, and reaches this binary only as the kept event of that run.
-func DeliveryHeld(line map[string]any) string {
-	return mergeOf(line).answered()
-}
 
 func (work merging) keeps(said string) {
 	project := projectOf(work.worktree)
@@ -61,39 +55,6 @@ func (work merging) records(why Narrowed, sins int, waited string, times judgedT
 		Held: why == "", Why: why, Sins: sins, Waited: waited, Said: "the hand-in",
 		Parsed: times.files, Kept: times.kept, Missed: times.missed, ReadMs: times.read.Milliseconds(), ReadWaitMs: times.waited.Milliseconds(), RuleMs: times.rules.Milliseconds(), Asked: times.asked,
 	})
-}
-
-func (work merging) waited(since time.Time) string {
-	return "waited " + strconv.FormatInt(time.Since(since).Milliseconds(), 10) + "ms"
-}
-
-func (work merging) answered() string {
-	began := time.Now()
-	found := work.sins()
-
-	work.records(found.reason(), len(found.marks), work.waited(began), found.times)
-
-	if found.got == gotWhole && len(found.marks) == 0 {
-		return ""
-	}
-
-	if found.got == gotWhole {
-		refusal := mergeReason(work.worker, found.marks, work.worktree)
-		work.keeps(refusal)
-
-		return (JournalAnswer{Refuse: &refusal}).Line()
-	}
-
-	said := Unjudged(work.worker+"'s hand-in was not judged in full", string(found.got), "")
-	work.keeps(said)
-
-	if len(found.marks) == 0 {
-		return (JournalAnswer{Whisper: &said}).Line()
-	}
-
-	refusal := mergeReason(work.worker, found.marks, work.worktree)
-
-	return (JournalAnswer{Refuse: &refusal, Whisper: &said}).Line()
 }
 
 // handIn is what a hand-in's judging came to: the marks it found, and how far it got, which a slice of marks alone cannot say.
@@ -326,10 +287,6 @@ func (m merging) marks(codebase *engine.Codebase, rules []detectors.Detector, ch
 	}
 
 	return marks
-}
-
-func mergeReason(worker string, marks []SinMark, root string) string {
-	return mergeTold(worker, "", root, marks)
 }
 
 func worker4Of(fields map[string]any) string {

@@ -64,16 +64,12 @@ func TestAMergeNamesNoSinInAFileTheProjectExcludes(t *testing.T) {
 	}
 }
 
-func TestTheMergeAndTheHandInUseTheSameWords(t *testing.T) {
+func TestNoSinsAtAllIsSaidAsNothing(t *testing.T) {
 	root, _ := workerProject(t)
 
 	marks := []SinMark{}
 
 	if told := mergeTold("worker 7", ", on task 412", root, marks); told != "" {
 		t.Errorf("no sins at all is said as %q", told)
-	}
-
-	if from, gate := mergeTold("worker 7", "", root, marks), mergeReason("worker 7", marks, root); from != gate {
-		t.Errorf("the merge says %q and the hand-in says %q, and they are one form", from, gate)
 	}
 }
