@@ -45,14 +45,10 @@ func (f *File) declaresItselfFrozen() bool {
 			return true
 		}
 	}
-	if language == contract.PHP {
-		for _, comment := range f.File.Comments {
-			if declaresFreeze(comment.Text) {
-				return true
-			}
+	for _, comment := range f.File.Comments {
+		if declaresFreeze(comment.Text) {
+			return true
 		}
-
-		return false
 	}
 	for _, line := range strings.Split(string(source), "\n") {
 		if contract.IsCommentLine(language, line) && declaresFreeze(line) {
@@ -64,7 +60,8 @@ func (f *File) declaresItselfFrozen() bool {
 }
 
 func MayBeFrozen(path string, source []byte) bool {
-	if languageOfPath(path) == contract.CSharp || bytes.Contains(bytes.ToLower(source), []byte("frozen")) || bytes.Contains(source, []byte(GeneratedMarker)) {
+	lowered := bytes.ToLower(source)
+	if bytes.Contains(lowered, []byte("frozen")) || bytes.Contains(source, []byte(GeneratedMarker)) || contract.IsGenerated(languageOfPath(path), path, string(lowered)) {
 		return true
 	}
 
