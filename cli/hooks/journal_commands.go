@@ -38,6 +38,7 @@ const (
 	mergesKey        = "judge_merges"
 	handInsKey       = "judge_hand_ins"
 	handInsAfterKey  = "judge_hand_ins_after"
+	beforeMergeKey   = "judge_before_merge"
 	cacheHoursKey    = "cache_hours"
 	skillsFolder     = "journal-skills"
 )

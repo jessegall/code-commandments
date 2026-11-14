@@ -99,7 +99,7 @@
       "worker_delivering",
       "suites.coding.workers.worker_delivering"
     ],
-    "guarded_by": "judge_hand_ins",
+    "answered_at_once": true,
     "handed_in": true
   },
   {
@@ -116,7 +116,7 @@
       "suites.coding.workers.merge_request.created",
       "merge_request.create"
     ],
-    "guarded_by": "judge_before_merge"
+    "answered_at_once": true
   },
   {
     "key": "suites.coding.workers.worker_worktree.cut",

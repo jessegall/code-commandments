@@ -1,5 +1,6 @@
 {
   "settings": {
+    "before_merge": "judge_before_merge",
     "edit_window": "judge_edit_window",
     "hand_ins": "judge_hand_ins",
     "hand_ins_after": "judge_hand_ins_after",

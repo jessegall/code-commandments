@@ -18,8 +18,8 @@ type EventKind struct {
 	AnsweredHere bool `json:"answered_here,omitempty"`
 	// Edits is the event of a file the agent edited, gathered into one batch per agent.
 	Edits bool `json:"edits,omitempty"`
-	// GuardedBy is the setting that holds the event on a judging before it goes through.
-	GuardedBy string `json:"guarded_by,omitempty"`
+	// AnsweredAtOnce is a step the script lets through at once: a judging of it never holds it, and runs after when chosen.
+	AnsweredAtOnce bool `json:"answered_at_once,omitempty"`
 	HandedIn  bool   `json:"handed_in,omitempty"`
 	Merged    bool   `json:"merged,omitempty"`
 	// Tools is every tool a hook of this tool acts on when the event names one; the script answers any other itself.
@@ -41,9 +41,9 @@ var EventKinds = []EventKind{
 	{Key: "prompt_submitted", Names: []string{"prompt_submitted"}, Hook: "UserPromptSubmit"},
 	{Key: "compacting", Names: []string{"compacting"}, Hook: "PreCompact"},
 	{Key: updatedEvent, Names: []string{updatedEvent, "plugin.update", "core.plugins.plugin_setting.created", "core.plugins.plugin_setting.updated", "core.plugins.plugin_setting.deleted", "plugin_setting.created", "plugin_setting.updated", "plugin_setting.deleted", "plugin_setting.create", "plugin_setting.update", "plugin_setting.delete"}},
-	{Key: deliveringEvent, Names: []string{deliveringEvent, "suites.coding.workers.worker_delivering"}, GuardedBy: handInsKey, HandedIn: true},
+	{Key: deliveringEvent, Names: []string{deliveringEvent, "suites.coding.workers.worker_delivering"}, AnsweredAtOnce: true, HandedIn: true},
 	{Key: landedEvent, Names: []string{landedEvent, "worker_worktree.merge"}, Merged: true},
-	{Key: requestedEvent, Names: []string{requestedEvent, "merge_request.create"}, GuardedBy: "judge_before_merge"},
+	{Key: requestedEvent, Names: []string{requestedEvent, "merge_request.create"}, AnsweredAtOnce: true},
 	{Key: cutEvent, Names: []string{cutEvent}},
 }
 
@@ -80,6 +80,7 @@ var scriptFacts = ScriptFacts{
 	Settings: map[string]string{
 		"live_edits": liveEditsKey, "workers": workersKey, "worker_edits": workerEditsKey, "hand_ins": handInsKey,
 		"hand_ins_after": handInsAfterKey, "edit_window": editWindowKey, "helpers_cli": helpersCLIKey, "merges": mergesKey,
+		"before_merge": beforeMergeKey,
 	},
 	WorkerRoles:      []string{"worker", "helper", "medior", "senior", "builder"},
 	EditWindow:       DefaultEditWindow,

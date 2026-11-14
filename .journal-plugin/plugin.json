@@ -126,15 +126,15 @@
             "group": "Workers"
         },
         "judge_hand_ins": {
-            "title": "Judge before a hand-in goes through",
-            "help": "Only with Judge workers on. On, a worker's hand-in waits, with no time limit, on a judging run the journal queues over the files it changed since its worktree was cut, answered from the tree already held, and a sin sends the work back to that worker naming the file, the line and the skill. When no tree is held, only the rules that read one file are asked and the hand-in says what was not judged; the project is never read whole for it. Off, hand-ins are not held.",
+            "title": "Judge a hand-in",
+            "help": "Only with Judge workers on. On, a worker's hand-in goes through at once, never held, and the plugin judges the files it changed since its worktree was cut afterwards, with no time limit, then tells that worker each sin it finds, naming the file, the line and the skill. Off, a hand-in is judged only with Judge after a hand-in goes through on.",
             "type": "flag",
             "default": "false",
             "group": "Workers"
         },
         "judge_hand_ins_after": {
             "title": "Judge after a hand-in goes through",
-            "help": "Only with Judge workers on and Judge before a hand-in goes through off. On, a worker's hand-in goes through at once, unheld, and the plugin judges the files it changed afterwards with no time limit, then tells that worker each sin it finds, naming the file, the line and the skill. Off, a hand-in is not judged afterwards.",
+            "help": "Only with Judge workers on. The same as Judge a hand-in: on, a worker's hand-in goes through at once, unheld, and the plugin judges the files it changed afterwards with no time limit, then tells that worker each sin it finds, naming the file, the line and the skill. Off, a hand-in is not judged afterwards.",
             "type": "flag",
             "default": "false",
             "group": "Workers"
@@ -147,8 +147,8 @@
             "group": "Workers"
         },
         "judge_before_merge": {
-            "title": "Refuse a merge that would bring in sins",
-            "help": "Only with Judge workers on. On, a worker's merge is judged BEFORE it lands, over what its branch adds on top of the branch it merges into, and a merge that would bring in sins is refused: the work goes back to that worker with the findings and the merger is told it was not allowed. Off, a merge lands and is judged afterwards. The merge waits, with no time limit, on a judging run the journal queues.",
+            "title": "Judge a merge once it lands",
+            "help": "Only with Judge workers on. The same as Judge what a merge brings in: a merge is never held on a judging; it lands at once and what it brought in is judged afterwards and told.",
             "type": "flag",
             "default": "false",
             "group": "Workers"

@@ -110,11 +110,12 @@ class OneAgentsEditsGatherInOneWindow(unittest.TestCase):
 
 
 class AHandInJudgedAfterGoesThroughAtOnce(unittest.TestCase):
-    def test_only_judging_after_without_judging_before_lets_it_through_to_be_judged_later(self) -> None:
+    def test_either_hand_in_setting_lets_it_through_to_be_judged_later(self) -> None:
         handed_in = {"event": "suites.coding.workers.worker_delivering", "agent": 7}
-        self.assertTrue(hook.judged_after_the_hand_in({**handed_in, "settings": {"judge_workers": True, "judge_hand_ins_after": True}}))
-        for chosen in ({"judge_workers": False, "judge_hand_ins_after": True},
-                       {"judge_workers": True, "judge_hand_ins_after": True, "judge_hand_ins": True},
+        for chosen in ({"judge_workers": True, "judge_hand_ins_after": True}, {"judge_workers": True, "judge_hand_ins": True},
+                       {"judge_workers": True, "judge_hand_ins_after": True, "judge_hand_ins": True}):
+            self.assertTrue(hook.judged_after_the_hand_in({**handed_in, "settings": chosen}), chosen)
+        for chosen in ({"judge_workers": False, "judge_hand_ins_after": True}, {"judge_workers": False, "judge_hand_ins": True},
                        {"judge_workers": True}):
             self.assertFalse(hook.judged_after_the_hand_in({**handed_in, "settings": chosen}), chosen)
         self.assertFalse(hook.judged_after_the_hand_in({"event": "file_edited", "settings": {"judge_workers": True, "judge_hand_ins_after": True}}))
@@ -357,33 +358,29 @@ class ACommandAndAStopAreAnsweredWithoutTheBinary(unittest.TestCase):
                 self.assertEqual(json.loads(said.getvalue()), {"v": 1}, event)
 
 
-class AGuardHoldsItsStepOnAQueuedJudging(unittest.TestCase):
-    def test_a_chosen_guard_is_answered_with_a_run_and_keeps_its_event(self) -> None:
+class NoStepIsEverHeldOnAJudging(unittest.TestCase):
+    def test_a_hand_in_and_a_merge_request_are_answered_at_once_whatever_is_chosen(self) -> None:
         with tempfile.TemporaryDirectory() as folder, patched_environment(JOURNAL_PLUGIN_DATA=folder, JOURNAL_SETTINGS=""):
             for name, key in (("suites.coding.workers.worker_delivering", "judge_hand_ins"),
                               ("suites.coding.workers.merge_request.created", "judge_before_merge")):
-                event = {"event": name, "agent": 7, "window_ms": 30000, "settings": {"judge_workers": True, key: True}}
-                said = hook.guard_queued(event, json.dumps(event).encode())
-                self.assertEqual(said["answer"], "queue", name)
-                self.assertEqual(said["run"]["kind"], "judge", name)
-                kept = Path(said["run"]["command"][1][len(hook.JUDGE_GUARD):])
-                self.assertEqual(json.loads(kept.read_text()), event, name)
-                self.assertIsNone(hook.guard_queued({**event, "settings": {"judge_workers": True}}, b"{}"), name)
+                line = json.dumps({"event": name, "agent": 7, "settings": {"judge_workers": True, key: True}}).encode()
+                with mock.patch.object(hook, "answered", side_effect=AssertionError("the step waited on the binary")), \
+                        mock.patch.object(hook, "judged_for_the_agent"), \
+                        mock.patch.object(sys, "stdin", io.TextIOWrapper(io.BytesIO(line))), \
+                        mock.patch.object(sys, "stdout", io.StringIO()) as said:
+                    self.assertEqual(hook.main(), 0)
+                self.assertEqual(json.loads(said.getvalue()), {"v": 1}, name)
 
-    def test_the_run_passes_on_nothing_found_and_refuses_with_the_reason(self) -> None:
-        with tempfile.TemporaryDirectory() as folder:
-            for printed, code in (("{}", 0), ('{\\"whisper\\":\\"allowed unjudged\\"}', 0), ('{\\"refuse\\":\\"one sin\\"}', 1)):
-                binary = stand_in(Path(folder), f'cat > /dev/null; echo "{printed}"')
-                kept = Path(folder) / "event.json"
-                kept.write_text("{}")
-                self.assertEqual(hook.guard_judged(str(kept), binary), code, printed)
-                self.assertFalse(kept.exists())
+    def test_a_run_an_older_release_queued_to_hold_a_step_passes_at_once(self) -> None:
+        with mock.patch.object(sys, "argv", ["hook", f"{hook.HELD_BEFORE}/gone/event.json"]):
+            self.assertEqual(hook.main(), 0)
 
 
 class ALandedMergeIsJudgedAfter(unittest.TestCase):
     def test_only_with_merge_judging_chosen(self) -> None:
         merged = {"event": "suites.coding.workers.worker_worktree.merge"}
         self.assertTrue(hook.judged_after_the_merge({**merged, "settings": {"judge_workers": True, "judge_merges": True}}))
+        self.assertTrue(hook.judged_after_the_merge({**merged, "settings": {"judge_workers": True, "judge_before_merge": True}}))
         self.assertFalse(hook.judged_after_the_merge({**merged, "settings": {"judge_workers": True}}))
         self.assertFalse(hook.judged_after_the_merge({"event": "file_edited", "settings": {"judge_workers": True, "judge_merges": True}}))
 
