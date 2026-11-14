@@ -16,9 +16,9 @@ import (
 
 const (
 	quietHooks  = "COMMANDMENTS_QUIET_HOOKS"
-	pluginData  = "JOURNAL_PLUGIN_DATA"
+	pluginData  = workspace.PluginDataVariable
 	advising    = "COMMANDMENTS_ADVISING"
-	journalRoot = "JOURNAL_ROOT"
+	journalRoot = workspace.JournalRootVariable
 )
 
 func answerWith(given map[string]any) JournalAnswer {

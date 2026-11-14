@@ -98,3 +98,42 @@ func kilobytesWritten(size string) int {
 
 	return count * unit
 }
+
+// Resident is the memory a process holds in RAM, in MB: cheaper to ask than its Footprint, which on macOS samples
+// the process for a second.
+func Resident(pid int) int {
+	if held := residentFromProc(pid); held > 0 {
+		return held
+	}
+
+	out, err := exec.Command("ps", "-o", "rss=", "-p", strconv.Itoa(pid)).Output()
+	if err != nil {
+		return 0
+	}
+
+	kilobytes, err := strconv.Atoi(strings.TrimSpace(string(out)))
+	if err != nil {
+		return 0
+	}
+
+	return kilobytes / 1024
+}
+
+func residentFromProc(pid int) int {
+	read, err := os.ReadFile("/proc/" + strconv.Itoa(pid) + "/statm")
+	if err != nil {
+		return 0
+	}
+
+	fields := strings.Fields(string(read))
+	if len(fields) < 2 {
+		return 0
+	}
+
+	pages, err := strconv.Atoi(fields[1])
+	if err != nil {
+		return 0
+	}
+
+	return pages * os.Getpagesize() >> 20
+}

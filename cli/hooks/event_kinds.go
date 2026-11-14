@@ -79,7 +79,7 @@ const (
 var scriptFacts = ScriptFacts{
 	Settings: map[string]string{
 		"live_edits": liveEditsKey, "workers": workersKey, "worker_edits": workerEditsKey, "hand_ins": handInsKey,
-		"hand_ins_after": handInsAfterKey, "edit_window": editWindowKey, "helpers_cli": helpersCLIKey,
+		"hand_ins_after": handInsAfterKey, "edit_window": editWindowKey, "helpers_cli": helpersCLIKey, "merges": mergesKey,
 	},
 	WorkerRoles:      []string{"worker", "helper", "medior", "senior", "builder"},
 	EditWindow:       DefaultEditWindow,

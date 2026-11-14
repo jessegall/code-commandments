@@ -14,10 +14,11 @@ import (
 	"github.com/jessegall/code-commandments/cli/health"
 	"github.com/jessegall/code-commandments/cli/help"
 	"github.com/jessegall/code-commandments/cli/hooks"
+	"github.com/jessegall/code-commandments/cli/workspace"
 )
 
 const (
-	pluginData         = "JOURNAL_PLUGIN_DATA"
+	pluginData         = workspace.PluginDataVariable
 	journalEnvironment = "JOURNAL_ENV"
 	stoppingWithin     = 3 * time.Second
 )

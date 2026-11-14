@@ -219,7 +219,7 @@ def judged_after_the_hand_in(event: dict) -> bool:
 
 def judged_after_the_merge(event: dict) -> bool:
     """A worker's merge that landed, judged after with merge judging chosen: what it brought in is told later."""
-    return event.get("event") in MERGED and workers_chose(settings_of(event), "judge_merges")
+    return event.get("event") in MERGED and workers_chose(settings_of(event), SETTINGS["merges"])
 
 
 HELPERS_CLI, HELPERS_CLI_TITLE = SETTINGS["helpers_cli"], "Helpers may run the commandments CLI"

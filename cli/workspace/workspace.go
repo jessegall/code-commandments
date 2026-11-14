@@ -65,8 +65,15 @@ func OfSession(fallback, sessionID string) Workspace {
 	return At(stated, sessionID)
 }
 
+// PluginDataVariable names the folder the journal gives a plugin for its data, and JournalRootVariable the project
+// the journal runs for: the two names every part of the tool reads them by.
+const (
+	PluginDataVariable  = "JOURNAL_PLUGIN_DATA"
+	JournalRootVariable = "JOURNAL_ROOT"
+)
+
 func JournalProject() (string, bool) {
-	record := os.Getenv("JOURNAL_ROOT")
+	record := os.Getenv(JournalRootVariable)
 	if record == "" {
 		return "", false
 	}

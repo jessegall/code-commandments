@@ -162,7 +162,12 @@ func (s *Server) renewedWhenGone(process *exec.Cmd, errs *stderr) {
 		return
 	}
 
-	fmt.Fprintf(os.Stderr, "the bridge %s is gone, so a new one is started before the next request\n", s.command[0])
+	s.renewed(fmt.Sprintf("the bridge %s is gone, so a new one is started before the next request", s.command[0]))
+}
+
+// renewed says why the bridge is replaced, stops it and starts a new one.
+func (s *Server) renewed(why string) {
+	fmt.Fprintln(os.Stderr, why)
 	s.ended()
 
 	if err := s.start(); err != nil {
@@ -205,12 +210,7 @@ func (s *Server) renewedWhenHeavy() {
 		return
 	}
 
-	fmt.Fprintf(os.Stderr, "the bridge %s held %d MB, past its limit of %d MB, so it is stopped and a new one answers the next request\n", s.command[0], held, s.heaviest)
-	s.ended()
-
-	if err := s.start(); err != nil {
-		fmt.Fprintln(os.Stderr, "the new bridge did not start: "+err.Error())
-	}
+	s.renewed(fmt.Sprintf("the bridge %s held %d MB, past its limit of %d MB, so it is stopped and a new one answers the next request", s.command[0], held, s.heaviest))
 }
 
 func (s *Server) Ask(request Request) (*contract.Stream, error) {

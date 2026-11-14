@@ -5,6 +5,7 @@
     "hand_ins_after": "judge_hand_ins_after",
     "helpers_cli": "workers_cli",
     "live_edits": "judge_edits",
+    "merges": "judge_merges",
     "worker_edits": "judge_worker_edits",
     "workers": "judge_workers"
   },

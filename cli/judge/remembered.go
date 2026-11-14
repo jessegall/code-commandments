@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	pluginData = "JOURNAL_PLUGIN_DATA"
+	pluginData = workspace.PluginDataVariable
 
 	rememberedDetectorsFile = "detector-memories.json"
 	rememberedWeighingsFile = "csharp-weighings.json"

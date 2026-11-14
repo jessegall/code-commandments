@@ -8,6 +8,8 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+
+	"github.com/jessegall/code-commandments/bridge"
 )
 
 const serviceMemoryLimit = 3 << 30
@@ -41,7 +43,7 @@ func MemoryNow() Memory {
 	runtime.ReadMemStats(&stats)
 
 	held := Memory{HeapMB: int(stats.HeapAlloc >> 20)}
-	held.ResidentMB = residentOf(os.Getpid())
+	held.ResidentMB = bridge.Resident(os.Getpid())
 	held.WithBridgesMB = held.ResidentMB + bridgesResident()
 
 	memoryNoted(held)
@@ -53,47 +55,10 @@ func (m Memory) Line() string {
 	return fmt.Sprintf("heap=%dMB resident=%dMB withBridges=%dMB", m.HeapMB, m.ResidentMB, m.WithBridgesMB)
 }
 
-func residentOf(pid int) int {
-	if held := residentFromProc(pid); held > 0 {
-		return held
-	}
-
-	out, err := exec.Command("ps", "-o", "rss=", "-p", strconv.Itoa(pid)).Output()
-	if err != nil {
-		return 0
-	}
-
-	kilobytes, err := strconv.Atoi(strings.TrimSpace(string(out)))
-	if err != nil {
-		return 0
-	}
-
-	return kilobytes / 1024
-}
-
-func residentFromProc(pid int) int {
-	read, err := os.ReadFile("/proc/" + strconv.Itoa(pid) + "/statm")
-	if err != nil {
-		return 0
-	}
-
-	fields := strings.Fields(string(read))
-	if len(fields) < 2 {
-		return 0
-	}
-
-	pages, err := strconv.Atoi(fields[1])
-	if err != nil {
-		return 0
-	}
-
-	return pages * os.Getpagesize() >> 20
-}
-
 func bridgesResident() int {
 	held := 0
 	for _, pid := range bridgePids() {
-		held += residentOf(pid)
+		held += bridge.Resident(pid)
 	}
 
 	return held

@@ -294,7 +294,7 @@ func (m merging) cutFrom() string {
 		return m.base
 	}
 
-	if branch := git.CurrentBranch(os.Getenv("JOURNAL_ROOT")); branch != "" {
+	if branch := git.CurrentBranch(os.Getenv(journalRoot)); branch != "" {
 		return branch
 	}
 
