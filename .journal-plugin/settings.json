@@ -125,7 +125,7 @@
         "type": "flag",
         "kind": "flag",
         "default": false,
-        "help": "On, any helper (a worker, a reviewer, a researcher, the merger) may run the commandments program, `journal sins` and the plugin's other aliases. Off, such a command is refused at once with a line saying so, however it is written: through a variable, in a subshell or behind env, nice or timeout. Their work is still judged when it is handed in and merged, and the main agent is not affected."
+        "help": "On, any helper (a worker, a reviewer, a researcher, the merger) may run the commandments program, `journal sins` and the plugin's other aliases. Off, the skills and reminders a helper reads name no such command; nothing is refused, since no hook waits on the plugin. Their work is still judged when it is handed in and merged, and the main agent is not affected."
     },
     {
         "key": "language_php",

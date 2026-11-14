@@ -1,6 +1,6 @@
 {
     "name": "code-commandments",
-    "version": "7.18.145",
+    "version": "7.18.146",
     "title": "Code Commandments",
     "description": "The static code checker judges the codebase, its hooks run inside the journal, and every rule and language is a switch in its settings",
     "journal": "2.267.16",
@@ -51,7 +51,7 @@
     },
     "env": {
         "CLAUDE_PROJECT_DIR": "{project}",
-        "COMMANDMENTS_RELEASE": "v7.18.145"
+        "COMMANDMENTS_RELEASE": "v7.18.146"
     },
     "setup": [
         {
@@ -176,7 +176,7 @@
         },
         "workers_cli": {
             "title": "Helpers may run the commandments CLI",
-            "help": "On, any helper (a worker, a reviewer, a researcher, the merger) may run the commandments program, `journal sins` and the plugin's other aliases. Off, such a command is refused at once with a line saying so, however it is written: through a variable, in a subshell or behind env, nice or timeout. Their work is still judged when it is handed in and merged, and the main agent is not affected.",
+            "help": "On, any helper (a worker, a reviewer, a researcher, the merger) may run the commandments program, `journal sins` and the plugin's other aliases. Off, the skills and reminders a helper reads name no such command; nothing is refused, since no hook waits on the plugin. Their work is still judged when it is handed in and merged, and the main agent is not affected.",
             "type": "flag",
             "default": "false",
             "group": "Workers"
