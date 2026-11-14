@@ -94,14 +94,8 @@ func TestEveryListenEntryFiresAfterTheFactSoTheJournalNeverWaits(t *testing.T) {
 		}
 
 		if _, guards := entry["guard"]; guards {
-			window, declared := entry["window_ms"].(float64)
-			if !declared || window <= 0 {
-				t.Errorf("%s guards the event without a window_ms: the journal then waits for our answer with no "+
-					"limit, so a hang of ours holds the change until a person switches the plugin off",
-					entry["event"])
-			}
-
-			continue
+			t.Errorf("%s is answered on its guard form, which holds the change until we answer: no hook, hand-in "+
+				"or merge waits on a judging. Only commit fires after the fact", entry["event"])
 		}
 
 		if _, after := entry["commit"]; !after {

@@ -17,23 +17,13 @@
     "ticked",
     "worker_delivering"
   ],
-  "holds": [
-    {
-      "event": "command_starting",
-      "window_ms": 1000
-    },
-    {
-      "event": "worker_delivering",
-      "window_ms": 180000
-    }
-  ],
+  "holds": [],
   "reaches": {
     "file_edited": [
       "workers"
     ],
     "command_starting": [
-      "workers",
-      "helpers"
+      "workers"
     ],
     "tool_starting": [
       "workers"

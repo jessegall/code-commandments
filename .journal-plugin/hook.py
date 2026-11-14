@@ -225,13 +225,7 @@ def judged_after_the_merge(event: dict) -> bool:
     return event.get("event") in MERGED and (workers_chose(chosen, SETTINGS["merges"]) or workers_chose(chosen, SETTINGS["before_merge"]))
 
 
-HELPERS_CLI, HELPERS_CLI_TITLE = SETTINGS["helpers_cli"], "Helpers may run the commandments CLI"
-CLI_PROGRAMS = {"commandments", "commandments-go", "commandments-release"}
-MANIFEST = PLUGIN / "journal-plugin.5.json"
-COMMAND_SEPARATORS = ("&&", "||", ";", "|", "(", ")", "{", "}", "`", '"', "'")
-COMMAND_WRAPPERS = {"env", "nice", "nohup", "exec", "command", "time", "timeout", "xargs", "sudo", "caffeinate"}
-COMMAND_STARTING = "command_starting"
-# Events the binary has nothing to add to once the script has refused what it refuses: answered at once, judged later.
+# Events the binary has nothing to add to: answered at once, judged later.
 ANSWERED_HERE = names_where("answered_here")
 
 
@@ -252,67 +246,6 @@ def binary_has_nothing_to_do(event: dict, data: Path) -> bool:
         pass
     mark.touch()
     return False
-
-
-def is_assignment(word: str) -> bool:
-    name, assigns, _ = word.partition("=")
-    return bool(assigns) and name != "" and not any(mark in name for mark in "/-.$")
-
-
-def is_number(word: str) -> bool:
-    return word.strip("0123456789.smhd") == ""
-
-
-def names_the_cli(program: str) -> bool:
-    return Path(program).name in CLI_PROGRAMS
-
-
-def program_of(words: list) -> str:
-    while len(words) > 1 and Path(words[0]).name in COMMAND_WRAPPERS:
-        words = words[1:]
-        while len(words) > 1 and (words[0].startswith("-") or is_assignment(words[0]) or is_number(words[0])):
-            words = words[1:]
-    return words[0]
-
-
-def cli_aliases(manifest: Path = MANIFEST) -> set[str]:
-    """The journal lines that run the CLI by an alias this plugin declares, read from its manifest."""
-    try:
-        declared = json.loads(manifest.read_text()).get("aliases") or []
-    except (OSError, ValueError):
-        return set()
-    return {f"journal {alias['name']}" for alias in declared if isinstance(alias, dict) and alias.get("name")}
-
-
-def runs_the_cli(command: str) -> bool:
-    """Whether a shell line runs the commandments CLI anywhere in it: by a journal alias, by its program, through a
-    wrapper such as env or nice, or by a path to it."""
-    for separator in COMMAND_SEPARATORS:
-        command = command.replace(separator, "\n")
-    aliases = cli_aliases()
-    for part in command.split("\n"):
-        words = part.split()
-        if " ".join(words[:2]) in aliases:
-            return True
-        while words and is_assignment(words[0]):
-            if names_the_cli(words[0].split("=", 1)[1]):
-                return True
-            words = words[1:]
-        if words and (names_the_cli(program_of(words)) or any("/" in word and names_the_cli(word) for word in words)):
-            return True
-    return False
-
-
-def cli_refused(event: dict) -> str:
-    """The refusal of a helper's command that runs the commandments CLI while the setting keeps helpers from it."""
-    data = event.get("data") if isinstance(event.get("data"), dict) else {}
-    command, role = data.get("text") or "", role_of(event)
-    if event.get("event") != COMMAND_STARTING or role not in WORKER_ROLES or switched_on(settings_of(event).get(HELPERS_CLI)):
-        return ""
-    if not runs_the_cli(str(command)):
-        return ""
-    return (f"Code Commandments — a {role} may not run the commandments CLI or the judge here: the setting "
-            f"\"{HELPERS_CLI_TITLE}\" ({HELPERS_CLI}) is off. Your work is judged when it is handed in and when it is merged.")
 
 
 class EditWindow:
@@ -643,11 +576,6 @@ def main() -> int:
         event = json.loads(line)
     except ValueError:
         event = None
-    refusal = cli_refused(event) if isinstance(event, dict) else ""
-    if refusal:
-        sys.stdout.write(json.dumps(shaped({"refuse": refusal}), ensure_ascii=False) + "\n")
-        afterwards(lambda: judge_later(line))
-        return 0
     data = os.environ.get("JOURNAL_PLUGIN_DATA", "")
     if data and isinstance(event, dict) and (event.get("event") in ANSWERED_HERE or binary_has_nothing_to_do(event, Path(data))):
         sys.stdout.write(json.dumps(shaped({})) + "\n")

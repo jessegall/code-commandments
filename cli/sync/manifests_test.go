@@ -79,44 +79,25 @@ func TestTheVersionedPluginManifestPinsTheSourcesRelease(t *testing.T) {
 	}
 }
 
-const startedWithinMs = 500
-
-const quickMs = 1_000
-
-const decidedMs = 180_000
-
-var decided = []string{"worker_delivering", "worker_merging"}
-
-func TestEveryHoldIsAnsweredFromWhatIsAlreadyKnown(t *testing.T) {
-	content, err := os.ReadFile(filepath.Join("..", "..", "journal-plugin.json"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	var manifest offered
-	if err := json.Unmarshal(content, &manifest); err != nil {
-		t.Fatal(err)
-	}
-
-	for _, held := range manifest.Holds {
-		longest := quickMs
-		if slices.Contains(decided, held.Event) {
-			longest = decidedMs
+// No event waits on the plugin: neither manifest holds one, so a hook never waits on a judging.
+func TestNoEventWaitsOnThePlugin(t *testing.T) {
+	for _, name := range []string{"journal-plugin.json", "journal-plugin.5.json"} {
+		content, err := os.ReadFile(filepath.Join("..", "..", name))
+		if err != nil {
+			t.Fatal(err)
+		}
+		var manifest offered
+		if err := json.Unmarshal(content, &manifest); err != nil {
+			t.Fatal(err)
 		}
 
-		if held.WindowMs < startedWithinMs || held.WindowMs > longest {
-			t.Errorf("%s is held for %dms: a hold of ours is answered by a process started for it, so its window is %dms to %dms", held.Event, held.WindowMs, startedWithinMs, longest)
+		for _, held := range manifest.Holds {
+			t.Errorf("%s holds %s: the hook waits on the plugin for it", name, held.Event)
 		}
-	}
-
-	for _, event := range []string{"command_starting", "file_edited"} {
-		if !slices.Contains(manifest.Hears, event) {
-			t.Errorf("the plugin no longer hears %s, so it cannot judge what a tool changed", event)
-		}
-	}
-
-	for _, held := range manifest.Holds {
-		if held.Event == "file_edited" {
-			t.Error("file_edited is held: an edit would wait on the judge of it, which is the fault all of this answers")
+		for _, event := range []string{"command_starting", "file_edited"} {
+			if !slices.Contains(manifest.Hears, event) {
+				t.Errorf("%s no longer hears %s, so it cannot judge what a tool changed", name, event)
+			}
 		}
 	}
 }
@@ -181,7 +162,6 @@ func TestNothingReachesAnAgentOtherThanTheMainOneOrAWorker(t *testing.T) {
 	var read struct {
 		Hears   []string            `json:"hears"`
 		Reaches map[string][]string `json:"reaches"`
-		Holds   []hold              `json:"holds"`
 		Aliases []struct {
 			Name    string `json:"name"`
 			Workers bool   `json:"workers"`
@@ -197,28 +177,11 @@ func TestNothingReachesAnAgentOtherThanTheMainOneOrAWorker(t *testing.T) {
 		}
 
 		for _, role := range roles {
-			if role == "helpers" && event == "command_starting" {
-				continue
-			}
-
 			if role != "workers" {
 				t.Errorf("%s reaches %s: only a worker's own work is judged for it, and only when the setting "+
-					"judge_workers is on; a helper is reached only at command_starting, where the setting "+
-					"workers_cli refuses its commandments commands", event, role)
+					"judge_workers is on", event, role)
 			}
 		}
-	}
-
-	if slices.Contains(read.Hears, "worker_delivering") {
-		for _, held := range read.Holds {
-			if held.Event != "worker_delivering" {
-				continue
-			}
-
-			return
-		}
-
-		t.Error("the plugin hears worker_delivering and asks for no hold on it, so a delivery has no time to be judged in")
 	}
 }
 

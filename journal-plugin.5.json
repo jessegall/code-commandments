@@ -43,12 +43,7 @@
     "session_started",
     "ticked"
   ],
-  "holds": [
-    {
-      "event": "command_starting",
-      "window_ms": 1000
-    }
-  ],
+  "holds": [],
   "processes": [
     {
       "kind": "judge",
@@ -62,8 +57,7 @@
       "workers"
     ],
     "command_starting": [
-      "workers",
-      "helpers"
+      "workers"
     ],
     "tool_starting": [
       "workers"
@@ -90,14 +84,8 @@
       "commit": ".journal-plugin/hook"
     },
     {
-      "event": "suites.coding.workers.merge_request.created",
-      "guard": ".journal-plugin/hook",
-      "window_ms": 30000
-    },
-    {
       "event": "suites.coding.workers.worker_delivering",
-      "guard": ".journal-plugin/hook",
-      "window_ms": 180000
+      "commit": ".journal-plugin/hook"
     },
     {
       "event": "core.plugins.plugin.config_changed",
