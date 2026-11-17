@@ -23,6 +23,23 @@ func TestEveryJudgingEndsSayingWhatItReadAndJudged(t *testing.T) {
 	}
 }
 
+func TestTheTimingLineCountsOnlyTheSinsTheRunReports(t *testing.T) {
+	project := sinfulProject(t)
+	inGit(t, project, "init", "-q", "-b", "main")
+	inGit(t, project, "add", "-A")
+	inGit(t, project, "-c", "user.email=t@t", "-c", "user.name=t", "commit", "-qm", "the project")
+	writeInto(t, project, "src/clean.py", "VALUE = 1\n")
+
+	_, said := judgedAt(t, project, false, "--changes", "--no-checklist", "--parallel=1")
+
+	if !strings.Contains(said, "No sins found") {
+		t.Fatalf("the clean change was not judged clean:\n%s", said)
+	}
+	if !strings.Contains(said, "): 0 sins") {
+		t.Errorf("the timing line counts sins the run does not report:\n%s", said)
+	}
+}
+
 func TestTheWorkIsSaidOnlyWhenAsked(t *testing.T) {
 	var unasked bytes.Buffer
 	t.Setenv(cli.Timing, "")

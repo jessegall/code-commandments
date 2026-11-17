@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/jessegall/code-commandments/cache"
 	"github.com/jessegall/code-commandments/cli/ledger"
 	"github.com/jessegall/code-commandments/story"
 )
@@ -41,11 +42,11 @@ public class %s
 }
 `
 
-	justInsideAMemory = 11*time.Hour + 59*time.Minute
-	justPastAMemory   = 12*time.Hour + time.Minute
-	longPastAMemory   = 13 * time.Hour
-	partOfAMemory     = 8 * time.Hour
-	aMemoryLasts      = 12 * time.Hour
+	justInsideAMemory = cache.Default - time.Minute
+	justPastAMemory   = cache.Default + time.Minute
+	longPastAMemory   = cache.Default + cache.Default/12
+	partOfAMemory     = cache.Default * 2 / 3
+	aMemoryLasts      = cache.Default
 
 	serviceComesUp = 90 * time.Second
 )
@@ -414,7 +415,7 @@ func TestAnExpiredMemoryIsDeletedFromTheFile(t *testing.T) {
 
 	reading := memory.Reads()
 	if age := time.Since(time.Unix(0, reading.Oldest)); age >= aMemoryLasts {
-		s.Fails(fmt.Sprintf("the memory file still holds an entry %v old, past its twelve hours: %+v", age, reading))
+		s.Fails(fmt.Sprintf("the memory file still holds an entry %v old, past the hours a memory lasts: %+v", age, reading))
 	}
 }
 

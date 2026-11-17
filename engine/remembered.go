@@ -16,8 +16,6 @@ import (
 )
 
 const (
-	sweptEvery = time.Hour
-
 	renewedAfter = 10
 )
 
@@ -275,7 +273,7 @@ func stale(at int64, now time.Time) bool {
 }
 
 func (m *Memory) sweep(now time.Time) {
-	if now.Sub(m.swept) < sweptEvery {
+	if now.Sub(m.swept) < cache.SweptEvery() {
 		return
 	}
 

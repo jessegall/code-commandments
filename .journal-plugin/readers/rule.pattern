@@ -1,4 +1,4 @@
-# each rule proved or failed, each match a rule found with the line it stands on, and the count a run ends on
+title: Working on a project rule
 ^(?:[✓✗⚠] |\S+:\d+  |\d+ match\(es\) of )
 label: Working on a rule of the project's own
 topic: rule (try|prove|explain|schema)

@@ -1,4 +1,4 @@
-# a sin said plainly, the count a run ends on, where its checklist is, a warning, and a run that ended early
+title: Judging the code
 ^(?:\S+, line \d+:|\d+ sins? across \d+ skills?\.$|\d+ sins? in \d+ files?$|[✓✗⚠] |↳ checklist written to )
 progress: ^(?:parsing|reading|detector) (\d+)/(\d+)$
 label: Judging the project against its commandments

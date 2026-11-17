@@ -1,6 +1,6 @@
 {
     "name": "code-commandments",
-    "version": "7.18.146",
+    "version": "7.18.147",
     "title": "Code Commandments",
     "description": "The static code checker judges the codebase, its hooks run inside the journal, and every rule and language is a switch in its settings",
     "journal": "2.267.16",
@@ -51,7 +51,7 @@
     },
     "env": {
         "CLAUDE_PROJECT_DIR": "{project}",
-        "COMMANDMENTS_RELEASE": "v7.18.146"
+        "COMMANDMENTS_RELEASE": "v7.18.147"
     },
     "setup": [
         {
@@ -171,7 +171,7 @@
             "title": "Hours an unused cache is kept",
             "help": "How long anything kept between runs stays once nothing uses it: the parsed trees of every language, what each rule answered per file and mypy's cache. Every use resets the clock, so only what went untouched for the whole time is removed.",
             "type": "number",
-            "default": "12",
+            "default": "1",
             "group": "Performance"
         },
         "workers_cli": {

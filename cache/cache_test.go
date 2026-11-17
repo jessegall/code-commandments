@@ -7,7 +7,7 @@ import (
 	"github.com/jessegall/code-commandments/cache"
 )
 
-func TestAnUnusedCacheIsKeptTwelveHoursUnlessTheProjectSaysOtherwise(t *testing.T) {
+func TestAnUnusedCacheIsKeptAnHourUnlessTheProjectSaysOtherwise(t *testing.T) {
 	for said, want := range map[string]time.Duration{
 		"":       cache.Default,
 		"3":      3 * time.Hour,
@@ -37,5 +37,13 @@ func TestTheHoursAProjectChoseReachEveryoneTheRunStarts(t *testing.T) {
 
 	if kept := cache.KeptFor(); kept != 2*time.Hour {
 		t.Errorf("a project that chose nothing undid the hours already chosen: %v", kept)
+	}
+}
+
+func TestWhatWentUnusedIsLookedForTwelveTimesInTheHoursTheCacheKeeps(t *testing.T) {
+	t.Setenv(cache.Variable, "2")
+
+	if every := cache.SweptEvery(); every != 10*time.Minute {
+		t.Errorf("a cache kept two hours is swept every %v, want every 10m", every)
 	}
 }

@@ -294,7 +294,7 @@ func (c Command) judge(options options, selected []detectors.Detector, judged co
 
 	judging := time.Now()
 	judgement := c.run(tasks, options, progress, parseSeconds, console)
-	cli.SayJudged(console.Err, judging.Sub(parsing), time.Since(judging), len(judgement.Findings), engine.Since(counted))
+	judgingTook, work := time.Since(judging), engine.Since(counted)
 	judgement.Skipped = joined(judgement.Skipped, incomplete.Bridges...)
 	judgement.Skipped = joined(judgement.Skipped, readNothing(read, codebase)...)
 	csharpFiles := 0
@@ -324,6 +324,7 @@ func (c Command) judge(options options, selected []detectors.Detector, judged co
 			"an active one. Put it back as the record it was, or delete it and report what is still wrong again.")
 	}
 	judgement.Findings = active
+	cli.SayJudged(console.Err, judging.Sub(parsing), judgingTook, len(judgement.Findings), work)
 
 	skipped := Skipped(joined(judgement.Skipped, options.unreadableRules...))
 

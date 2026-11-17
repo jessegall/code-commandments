@@ -17,10 +17,16 @@ const (
 
 	Folder = "COMMANDMENTS_CACHE_FOLDER"
 
-	DefaultHours = 12
+	DefaultHours = 1
 
 	Default = DefaultHours * time.Hour
+
+	sweepsPerLifetime = 12
 )
+
+func SweptEvery() time.Duration {
+	return KeptFor() / sweepsPerLifetime
+}
 
 func KeptFor() time.Duration {
 	hours, err := strconv.ParseFloat(os.Getenv(Variable), 64)

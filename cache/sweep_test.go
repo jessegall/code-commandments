@@ -35,13 +35,13 @@ func TestASweepLetsGoOfTreesNotUsedForTheTimeACacheIsKept(t *testing.T) {
 	if err := os.Chtimes(stale, old, old); err != nil {
 		t.Fatal(err)
 	}
-	Sweep(folder, now.Add(30*time.Minute))
+	Sweep(folder, now.Add(SweptEvery()/2))
 	if _, err := os.Stat(stale); err != nil {
-		t.Error("a folder swept within the hour was walked again")
+		t.Error("a folder swept within a sweep was walked again")
 	}
-	Sweep(folder, now.Add(61*time.Minute))
+	Sweep(folder, now.Add(SweptEvery()+time.Minute))
 	if _, err := os.Stat(stale); !os.IsNotExist(err) {
-		t.Error("the next hour's sweep kept a stale tree")
+		t.Error("the next sweep kept a stale tree")
 	}
 }
 
@@ -118,7 +118,7 @@ func TestASweepAndAForgettingKeepAsLongAsTheProjectChose(t *testing.T) {
 }
 
 // A folder in use is marked used, and the folders beside it that no run used for the time the cache keeps are let go
-// of, at most once an hour: the bridge unpacked for an older release, an older release's binary.
+// of, at most once a sweep: the bridge unpacked for an older release, an older release's binary.
 func TestUsingAFolderLetsGoOfTheUnusedFoldersBesideIt(t *testing.T) {
 	parent := t.TempDir()
 	used, old, recent := filepath.Join(parent, "v2"), filepath.Join(parent, "v1"), filepath.Join(parent, "v1b")

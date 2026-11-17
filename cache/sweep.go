@@ -9,11 +9,9 @@ import (
 	"github.com/jessegall/code-commandments/walk"
 )
 
-const sweptEvery = time.Hour
-
 const SweptMark = ".swept"
 
-// Sweep removes what no run used for the hours the cache keeps, at most once an hour.
+// Sweep removes what no run used for the hours the cache keeps, at most once a sweep.
 func Sweep(folder string, now time.Time) {
 	if !dueForSweep(folder, now) {
 		return
@@ -26,7 +24,7 @@ func Sweep(folder string, now time.Time) {
 	}
 }
 
-// Used marks a folder the run uses as used now, and once an hour forgets every folder beside it that no run used for
+// Used marks a folder the run uses as used now, and now and then forgets every folder beside it that no run used for
 // the hours the cache keeps: a bridge unpacked for an older release, an older release's binary, the shared folder of
 // a project no longer judged.
 func Used(folder string) {
@@ -37,10 +35,10 @@ func Used(folder string) {
 	}
 }
 
-// dueForSweep says whether the folder was last swept an hour ago or more, and marks it swept now when it was.
+// dueForSweep says whether the folder was last swept a sweep ago or more, and marks it swept now when it was.
 func dueForSweep(folder string, now time.Time) bool {
 	mark := filepath.Join(folder, SweptMark)
-	if info, err := os.Stat(mark); err == nil && now.Sub(info.ModTime()) < sweptEvery {
+	if info, err := os.Stat(mark); err == nil && now.Sub(info.ModTime()) < SweptEvery() {
 		return false
 	}
 	if atomic.Write(mark, "") == nil {

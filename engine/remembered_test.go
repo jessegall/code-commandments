@@ -207,7 +207,7 @@ func TestAFingerprintIsForgottenOnceUnusedForTheTimeACacheIsKept(t *testing.T) {
 	judge()
 
 	if detector.asked != 1 {
-		t.Fatalf("the detector was asked %d times inside the twelve hours", detector.asked)
+		t.Fatalf("the detector was asked %d times inside the hours a cache is kept", detector.asked)
 	}
 
 	now = now.Add(cache.KeptFor() + time.Minute)
@@ -309,9 +309,9 @@ func TestAHitRenewsAnEntry(t *testing.T) {
 	}
 
 	judge()
-	now = now.Add(cache.KeptFor() - time.Hour)
+	now = now.Add(cache.KeptFor() * 2 / 3)
 	judge()
-	now = now.Add(cache.KeptFor() - time.Hour)
+	now = now.Add(cache.KeptFor() * 2 / 3)
 	judge()
 
 	if detector.asked != 1 {
