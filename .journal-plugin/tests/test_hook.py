@@ -324,6 +324,17 @@ class ACommandAndAStopAreAnsweredWithoutTheBinary(unittest.TestCase):
                     self.assertEqual(hook.main(), 0)
                 self.assertEqual(json.loads(said.getvalue()), {"v": 1}, event)
 
+    def test_an_edit_with_live_edits_off_is_answered_with_nothing_and_kept_nowhere(self) -> None:
+        with tempfile.TemporaryDirectory() as folder, patched_environment(JOURNAL_PLUGIN_DATA=folder, JOURNAL_SETTINGS=""):
+            line = json.dumps(edited(judge_edits=False)).encode()
+            with mock.patch.object(hook, "answered", side_effect=AssertionError("the binary was started")), \
+                    mock.patch.object(hook, "judge_later", side_effect=AssertionError("the edit was kept for a judging")), \
+                    mock.patch.object(sys, "stdin", io.TextIOWrapper(io.BytesIO(line))), \
+                    mock.patch.object(sys, "stdout", io.StringIO()) as said:
+                self.assertEqual(hook.main(), 0)
+            self.assertEqual(json.loads(said.getvalue()), {"v": 1})
+            self.assertEqual(list(Path(folder).iterdir()), [])
+
 
 class NoStepIsEverHeldOnAJudging(unittest.TestCase):
     def test_a_hand_in_and_a_merge_request_are_answered_at_once_whatever_is_chosen(self) -> None:

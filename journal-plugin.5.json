@@ -1,6 +1,6 @@
 {
   "name": "code-commandments",
-  "version": "7.18.147",
+  "version": "7.18.148",
   "title": "Code Commandments",
   "description": "The static code checker judges the codebase, its hooks run inside the journal, and every rule and language is a switch in its settings",
   "journal": "5.0.0",
@@ -36,12 +36,7 @@
     "schema": ".commandments/config.schema.json"
   },
   "hears": [
-    "command_starting",
-    "file_edited",
-    "tool_starting",
-    "idle",
-    "session_started",
-    "ticked"
+    "file_edited"
   ],
   "holds": [],
   "processes": [
@@ -55,36 +50,11 @@
   "reaches": {
     "file_edited": [
       "workers"
-    ],
-    "command_starting": [
-      "workers"
-    ],
-    "tool_starting": [
-      "workers"
-    ],
-    "idle": [
-      "workers"
     ]
   },
   "listen": [
     {
-      "event": "suites.coding.workers.worker_worktree.merge",
-      "commit": ".journal-plugin/hook"
-    },
-    {
       "event": "core.plugins.plugin.updated",
-      "commit": ".journal-plugin/hook"
-    },
-    {
-      "event": "core.agents.agent.created",
-      "commit": ".journal-plugin/hook"
-    },
-    {
-      "event": "suites.coding.workers.worker_worktree.cut",
-      "commit": ".journal-plugin/hook"
-    },
-    {
-      "event": "suites.coding.workers.worker_delivering",
       "commit": ".journal-plugin/hook"
     },
     {
@@ -204,7 +174,7 @@
   "setup": [
     {
       "name": "Fetch the checker's release binary, checked against its SHA256SUMS",
-      "run": "COMMANDMENTS_RELEASE=v7.18.147 sh .journal-plugin/fetch"
+      "run": "COMMANDMENTS_RELEASE=v7.18.148 sh .journal-plugin/fetch"
     },
     {
       "name": "Write the chosen switches into config.json",

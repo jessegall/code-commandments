@@ -94,10 +94,8 @@ func TestNoEventWaitsOnThePlugin(t *testing.T) {
 		for _, held := range manifest.Holds {
 			t.Errorf("%s holds %s: the hook waits on the plugin for it", name, held.Event)
 		}
-		for _, event := range []string{"command_starting", "file_edited"} {
-			if !slices.Contains(manifest.Hears, event) {
-				t.Errorf("%s no longer hears %s, so it cannot judge what a tool changed", name, event)
-			}
+		if !slices.Contains(manifest.Hears, "file_edited") {
+			t.Errorf("%s no longer hears file_edited, so it cannot judge what an agent edited", name)
 		}
 	}
 }

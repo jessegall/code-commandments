@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
+	"strings"
 	"testing"
 )
 
@@ -52,7 +53,7 @@ func TestTheVersionFiveManifestDropsTheNamesThatJournalDoesNotDeclare(t *testing
 func TestTheFloorManifestKeepsWhatAVersionFourJournalNeeds(t *testing.T) {
 	floor := manifestNamed(t, "journal-plugin.json")
 
-	for _, needed := range []string{"subagent_started", "plugin.updated", "file_edited"} {
+	for _, needed := range []string{"plugin.updated", "file_edited"} {
 		if !slices.Contains(heardBy(floor), needed) {
 			t.Errorf("the floor manifest no longer hears %s, and a version four journal reads only that file", needed)
 		}
@@ -100,6 +101,22 @@ func TestEveryListenEntryFiresAfterTheFactSoTheJournalNeverWaits(t *testing.T) {
 
 		if _, after := entry["commit"]; !after {
 			t.Errorf("%s names no commit script, so nothing of it reaches us at all", entry["event"])
+		}
+	}
+}
+
+func TestTheVersionFiveManifestHearsOnlyAFileEdit(t *testing.T) {
+	five := manifestNamed(t, "journal-plugin.5.json")
+
+	if heard := heardBy(five); !slices.Equal(heard, []string{"file_edited"}) {
+		t.Errorf("the version five manifest hears %v: every event it hears starts the plugin's program, and only an "+
+			"edit can be judged live", heard)
+	}
+
+	for _, each := range five["listen"].([]any) {
+		if event := each.(map[string]any)["event"].(string); !strings.HasPrefix(event, "core.plugins.") {
+			t.Errorf("the version five manifest listens for %s, which starts a judging; only a change to the "+
+				"plugin's own settings is listened for", event)
 		}
 	}
 }

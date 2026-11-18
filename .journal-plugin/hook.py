@@ -576,6 +576,9 @@ def main() -> int:
         event = json.loads(line)
     except ValueError:
         event = None
+    if isinstance(event, dict) and event.get("event") in JUDGED_LATER and not judged_later(event):
+        sys.stdout.write(json.dumps(shaped({})) + "\n")
+        return 0
     data = os.environ.get("JOURNAL_PLUGIN_DATA", "")
     if data and isinstance(event, dict) and (event.get("event") in ANSWERED_HERE or binary_has_nothing_to_do(event, Path(data))):
         sys.stdout.write(json.dumps(shaped({})) + "\n")
