@@ -2,6 +2,39 @@
 
 One bad → good per rule this skill teaches, taken from the fixture that proves the detector, so every pair is code that really fires and really passes.
 
+### lone-implementer-interface
+
+An interface with one implementing class, named by nothing outside that class's own module: an indirection with one side
+
+```php
+----------[ Bad ]----------
+
+// Prints the label on a warehouse bin.
+
+interface BinLabeller
+{
+    public function label(string $bin): string;
+
+    public function reprint(string $bin, int $copies): string;
+
+    public function calibrate(float $darkness, int $speedInchesPerSecond): void;
+}
+
+----------[ Good ]----------
+
+// Replaces a lost voucher with a new code, depending on the one generator the shop has.
+
+final class VoucherReissuer
+{
+    public function __construct(private readonly RandomCodeGenerator $codes) {}
+
+    public function reissue(string $lost): string
+    {
+        return $lost.'-R-'.$this->codes->next();
+    }
+}
+```
+
 ### namespace-cycle
 
 two namespaces that reference each other — neither can be read, tested or moved alone

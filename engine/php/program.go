@@ -119,7 +119,11 @@ func (p *Program) Extends(class, parent string) bool {
 }
 
 func (p *Program) Implements(class, contract string) bool {
-	contract = strings.TrimLeft(contract, `\`)
+	return slices.Contains(p.Contracts(class), strings.TrimLeft(contract, `\`))
+}
+
+func (p *Program) Contracts(class string) []string {
+	var honoured []string
 	queue := []string{strings.TrimLeft(class, `\`)}
 	seen := map[string]bool{}
 	for len(queue) > 0 {
@@ -129,18 +133,22 @@ func (p *Program) Implements(class, contract string) bool {
 			continue
 		}
 		seen[current] = true
-		for _, honoured := range p.contractsOf(current) {
-			if honoured == contract {
-				return true
+		for _, contract := range p.contractsOf(current) {
+			if !slices.Contains(honoured, contract) {
+				honoured = append(honoured, contract)
 			}
-			queue = append(queue, honoured)
+			queue = append(queue, contract)
 		}
 		if parent, ok := p.parentOf(current); ok {
 			queue = append(queue, parent)
 		}
 	}
 
-	return false
+	return honoured
+}
+
+func (p *Program) Supertypes(class string) []string {
+	return append(p.Ancestors(class), p.Contracts(class)...)
 }
 
 func (p *Program) parentOf(class string) (string, bool) {

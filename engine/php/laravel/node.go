@@ -61,6 +61,8 @@ var BuilderTypes = []string{
 var (
 	RouteVerbs        = []string{"get", "post", "put", "patch", "delete", "options", "match", "any"}
 	RouterTypes       = []string{`Illuminate\Routing\Router`, `Illuminate\Contracts\Routing\Registrar`}
+	ContainerTypes    = []string{`Illuminate\Container\Container`, `Illuminate\Contracts\Container\Container`, `Illuminate\Foundation\Application`, `Illuminate\Contracts\Foundation\Application`}
+	ContainerResolvers = []string{"make", "makeWith", "get"}
 	BindingMethods    = []string{"bind", "bindIf", "singleton", "singletonIf", "scoped", "scopedIf", "instance"}
 	RelationMethods   = []string{"hasOne", "hasOneThrough", "hasMany", "hasManyThrough", "belongsTo", "belongsToMany", "morphOne", "morphMany", "morphToMany", "morphedByMany"}
 	QueueHooks        = []string{"failed", "middleware", "retryUntil", "backoff", "uniqueId", "tags", "displayName"}
@@ -244,6 +246,22 @@ func (n Node) ReceiverIsModel() bool {
 	return receiver != "" && php.ProgramOf(n.Codebase()).Extends(receiver, Model)
 }
 
+func (n Node) QueriedModel() string {
+	if n.Kind() != "Expr_MethodCall" || (n.Parent().Kind() == "Expr_MethodCall" && n.Node().Field == "var") {
+		return ""
+	}
+	calls, root := 1, n.Child("var")
+	for root.Kind() == "Expr_MethodCall" {
+		calls, root = calls+1, root.Child("var")
+	}
+	model := strings.TrimLeft(php.StaticCallClass(root), `\`)
+	if calls < 2 || model == "" || !php.ProgramOf(n.Codebase()).Extends(model, Model) {
+		return ""
+	}
+
+	return model
+}
+
 func (n Node) IsMassArrayUpdate() bool {
 	if name := n.Child("name"); n.Kind() != "Expr_MethodCall" || name.Kind() != "Identifier" || name.Name() != "update" {
 		return false
@@ -280,12 +298,7 @@ func ClassArgument(call engine.Match, position int) string {
 }
 
 func classConstant(fetch engine.Match) string {
-	class, name := fetch.Child("class"), fetch.Child("name")
-	if fetch.Kind() != "Expr_ClassConstFetch" || !isName(class) || name.Kind() != "Identifier" || name.Name() != "class" {
-		return ""
-	}
-
-	return strings.TrimLeft(class.Name(), `\`)
+	return php.ClassLiteral(fetch)
 }
 
 func CallName(node engine.Match) string {
@@ -302,6 +315,39 @@ func CallName(node engine.Match) string {
 	}
 
 	return ""
+}
+
+func (n Node) ResolvesFromContainer() bool {
+	call := php.Node{Match: n.Match}
+	if n.Kind() == "Expr_FuncCall" {
+		return (call.CallsFunction("app") || call.CallsFunction("resolve")) && call.FirstArgIsClassLiteral()
+	}
+	if n.Kind() != "Expr_MethodCall" || !slices.Contains(ContainerResolvers, call.MethodCallName()) {
+		return false
+	}
+
+	return isClassLiteral(call.Argument(0).Match) && n.isOnTheContainer()
+}
+
+func (n Node) DropsEveryGlobalScope() bool {
+	if n.Kind() != "Expr_MethodCall" && n.Kind() != "Expr_StaticCall" {
+		return false
+	}
+
+	return n.Child("name").Name() == "withoutGlobalScopes" && php.Node{Match: n.Match}.ArgumentCount() == 0
+}
+
+func (n Node) isOnTheContainer() bool {
+	receiver := n.Child("var")
+	if receiver.Kind() == "Expr_StaticCall" && receiver.Child("name").Name() == "getInstance" {
+		return slices.Contains(ContainerTypes, strings.TrimLeft(php.StaticCallClass(receiver), `\`))
+	}
+
+	return slices.Contains(ContainerTypes, strings.TrimLeft(php.ReceiverTypeOf(n.Match), `\`))
+}
+
+func isClassLiteral(value engine.Match) bool {
+	return php.ClassLiteral(value) != ""
 }
 
 func isName(node engine.Match) bool {
@@ -401,4 +447,20 @@ func (n Node) chainRoot() Node {
 		}
 		held = Node{Match: receiver}
 	}
+}
+
+func (n Node) SpellsANamedRoutePath() bool {
+	path := WrittenPath(n.Match)
+
+	return len(path) > 0 && RoutePathsOf(n.Codebase()).Matches(path)
+}
+
+func (n Node) IsRouterArgument() bool {
+	for at := n.Parent(); at.Exists() && !isFunctionLike(at); at = at.Parent() {
+		if at.Kind() == "Arg" && rootsAtRouter(at.Parent()) {
+			return true
+		}
+	}
+
+	return false
 }

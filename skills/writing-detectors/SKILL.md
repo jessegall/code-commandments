@@ -44,7 +44,10 @@ one. **Each step makes exactly one check**; a rule is only as good as the questi
 `function`, `type-declaration`, `assignment`, `loop`, `branch`, `return`, `throw`, `catch`,
 `comparison`, `literal`, `member-access`, `null-safe`, `identifier`, `import`, `parameter`, `block`,
 `bail-out`, `expression-statement`, `self-reference` — or `kind:<Kind>`, a language's own node kind
-(`kind:Expr_MethodCall`) when no neutral kind says it.
+(`kind:Expr_MethodCall`) when no neutral kind says it. `comment` selects comments rather than code, and
+`line` selects one node per line of code, the outermost that starts it, for a rule about the line
+itself: `{"select": "line", "where": [{"lineLonger": 120}]}` finds each line wider than 120 characters,
+and under `--changes` only the lines you changed.
 
 **A rule is built from other rules.** A check you have already written once is named, never written
 again: `{"rule": "ActionClass"}` passes when the rule of that name finds the node too, and a `find`
@@ -159,6 +162,7 @@ does not — which is how a `where` says what only a `reject` could.
 | `{"parameters": {"atLeast": 5}}` | a function declares that many parameters — a variadic, a defaulted one and Python's `self` count once each |
 | `{"arguments": {"atLeast": 4}}` | a call or construction is handed that many arguments — a named or a spread one counts once |
 | `{"lines": {"atLeast": 40}}` | it spans that many lines, its first and last among them |
+| `{"lineLonger": 120}` | the line it starts on holds more characters than that; with `"select": "line"`, each line of code longer than the limit is one finding |
 | `{"members": {"is": "function", "atLeast": 20}}` | a type declares that many members directly that pass the step (every member, with no check); with `"inherited": true`, the members its parents and traits declare in the scan count too |
 | `{"complexity": {"atLeast": 10}}` | one plus every branch, loop and catch in it, as its language marks them, is that many — a switch is one branch, `&&` and `\|\|` are not counted, and a function inside it is its own count |
 | `{"count": {"descendant": {"is": "return"}, "atLeast": 4}}` | that many of its descendants pass the step — or `"child"`, with `"field"` to count one field's children; with `"distinct": "child:var"` (any target `of` takes), the counted nodes whose target is written the same count once: `atMost: 1` is one receiver |

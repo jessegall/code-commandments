@@ -82,3 +82,11 @@ design worse. In order of preference:
 You are typing a `use` and the namespace you are importing is *above* the file you
 are typing it in. Stop and ask what value you actually need from up there — it is
 almost always something smaller than the class you were about to reach for.
+### An interface with one side
+
+An interface earns its place in one of two ways: it is a **port**, declared by the module that consumes it
+and filled by another, or it is a **seam** with a second implementation (a test double counts). An interface
+that one class implements, that no other module names, and that sits in the same module as that class is
+neither: every reader takes an extra hop to find the only code that runs. Type against the class and delete
+the interface. If another module really does need to depend on the behaviour, move the interface into that
+module, where it becomes that module's port.

@@ -2,6 +2,8 @@
 
 namespace Shop\Customers;
 
+use JesseGall\CodeCommandments\Sins\Backend\Laravel\RepeatedQueryChain;
+use JesseGall\CodeCommandments\Testing\Sinful;
 use JesseGall\PhpTypes\Option;
 use Shop\Exceptions\CustomerNotFoundException;
 use Shop\Models\Customer;
@@ -14,6 +16,7 @@ final class CustomerDirectory
     /**
      * Resolve-or-throw: presence is assumed, a miss is a broken state.
      */
+    #[Sinful(RepeatedQueryChain::class)]
     public function getByEmail(string $email): Customer
     {
         return Customer::query()->where('email', $email)->first()
@@ -25,6 +28,7 @@ final class CustomerDirectory
      *
      * @return Option<Customer>
      */
+    #[Sinful(RepeatedQueryChain::class)]
     public function search(string $email): Option
     {
         return Option::fromNullable(Customer::query()->where('email', $email)->first());

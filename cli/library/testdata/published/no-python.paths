@@ -55,6 +55,7 @@
 .agents/skills/commandments-php-repeated-call-helper/reference/examples.md
 .agents/skills/commandments-php-role-vocabulary/SKILL.md
 .agents/skills/commandments-php-role-vocabulary/reference/detectors.md
+.agents/skills/commandments-php-role-vocabulary/reference/examples.md
 .agents/skills/commandments-php-route-actions/SKILL.md
 .agents/skills/commandments-php-route-actions/evals/triggers.json
 .agents/skills/commandments-php-route-actions/reference/detectors.md
@@ -94,6 +95,9 @@
 .agents/skills/commandments-vue-mirrored-server-type/SKILL.md
 .agents/skills/commandments-vue-mirrored-server-type/reference/detectors.md
 .agents/skills/commandments-vue-mirrored-server-type/reference/examples.md
+.agents/skills/commandments-vue-server-calls/SKILL.md
+.agents/skills/commandments-vue-server-calls/reference/detectors.md
+.agents/skills/commandments-vue-server-calls/reference/examples.md
 .agents/skills/commandments-vue-vue-components/SKILL.md
 .agents/skills/commandments-vue-vue-components/reference/detectors.md
 .agents/skills/commandments-vue-vue-components/reference/examples.md

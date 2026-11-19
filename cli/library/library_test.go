@@ -23,7 +23,7 @@ func TestTheLibraryPublishesWhatThePHPToolPublishes(t *testing.T) {
 		"frontend-and-python": {source.CSharp, source.PHP},
 	} {
 		t.Run(name, func(t *testing.T) {
-			project := t.TempDir()
+			project := holdingEveryLanguage(t)
 			if err := os.WriteFile(filepath.Join(project, "composer.json"), []byte("{}"), 0o644); err != nil {
 				t.Fatal(err)
 			}
@@ -41,7 +41,9 @@ func TestTheLibraryPublishesWhatThePHPToolPublishes(t *testing.T) {
 
 			var paths []string
 			for path := range tree(t, project) {
-				paths = append(paths, path)
+				if !slices.Contains(everyLanguage, path) {
+					paths = append(paths, path)
+				}
 			}
 			slices.Sort(paths)
 
@@ -78,7 +80,7 @@ func recorded(t *testing.T, name string) []string {
 }
 
 func TestASkillTheLastSyncPublishedAndThisOneDoesNotIsTakenAway(t *testing.T) {
-	project := t.TempDir()
+	project := holdingEveryLanguage(t)
 
 	_, err := At(project, config.Config{DisabledLanguages: []source.Language{source.CSharp}}).Publish()
 	if err != nil {
@@ -121,7 +123,7 @@ func tree(t *testing.T, project string) map[string]string {
 }
 
 func TestAProjectsOwnSkillIsPublishedAndBriefedAsItsOwn(t *testing.T) {
-	project := t.TempDir()
+	project := holdingEveryLanguage(t)
 	dir := filepath.Join(project, ".commandments", "custom", "skills", "no-raw-sql")
 
 	if err := os.MkdirAll(filepath.Join(dir, "reference"), 0o755); err != nil {
@@ -154,7 +156,7 @@ func TestAProjectsOwnSkillIsPublishedAndBriefedAsItsOwn(t *testing.T) {
 }
 
 func TestAPageASkillNoLongerShipsIsTakenAway(t *testing.T) {
-	project := t.TempDir()
+	project := holdingEveryLanguage(t)
 	if _, err := At(project, config.Config{}).Publish(); err != nil {
 		t.Fatal(err)
 	}
@@ -177,7 +179,7 @@ func TestAPageASkillNoLongerShipsIsTakenAway(t *testing.T) {
 }
 
 func TestAProjectsOwnSkillIsPublishedIntoALibraryElsewhere(t *testing.T) {
-	project := t.TempDir()
+	project := holdingEveryLanguage(t)
 	plugin := t.TempDir()
 	dir := filepath.Join(project, ".commandments", "custom", "skills", "rows-through-their-repository")
 

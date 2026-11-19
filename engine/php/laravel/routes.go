@@ -262,6 +262,15 @@ func routesOfOneFile(file *engine.File) *RouteNames {
 
 func prefixOf(node engine.Match) string {
 	var segments []string
+	for _, group := range groupsAround(node) {
+		segments = append(segments, groupPrefix(group))
+	}
+
+	return strings.Join(segments, "")
+}
+
+func groupsAround(node engine.Match) []engine.Match {
+	var groups []engine.Match
 	for at := node; at.Exists(); at = at.Parent() {
 		if !isFunctionLike(at) {
 			continue
@@ -271,12 +280,12 @@ func prefixOf(node engine.Match) string {
 			group = group.Parent()
 		}
 		if isGroupCall(group) {
-			segments = append(segments, groupPrefix(group))
+			groups = append(groups, group)
 		}
 	}
-	slices.Reverse(segments)
+	slices.Reverse(groups)
 
-	return strings.Join(segments, "")
+	return groups
 }
 
 func groupPrefix(group engine.Match) string {

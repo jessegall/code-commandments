@@ -46,6 +46,14 @@ Now every site is `$element->withMetadata($payload)` — the `copyWith` mapping 
 wrap live in ONE place, named for what they do. The generic `copyWith` stays for the genuinely one-off
 change; the operation you kept repeating becomes first-class.
 
+### The same query, written at every site
+
+An Eloquent chain is an operation too. When `CommandRequest::query()->whereKey($id)->lockForUpdate()->sole()`
+is written in three handlers, the lookup has no name and no owner: the day the lock or the scope changes,
+one copy is missed. Name it once on the model, as a static finder or a scope
+(`CommandRequest::lockedFor($id)`), and call that from each site. A chain written once or twice, or a chain
+inside the model itself, is not this sin.
+
 ### When it is NOT this sin
 
 - **A one-off.** A `with`-call written once is exactly what the flexible API is for — no method needed.
@@ -56,6 +64,8 @@ change; the operation you kept repeating becomes first-class.
 
 ## Rules
 
+- [ ] A query several callers run is one named finder or scope on the model, written once.
+      _Add a named static finder or scope to the model (`CommandRequest::lockedFor($id)`) and call it from each site._
 - [ ] Promote a recurring compound guard to a named predicate. The same condition — however its conjuncts are ordered, and whether it reads `$obj->x` inline or a local aliased from it — belongs in ONE named method.
       _Extract the repeated condition into a named boolean method and call THAT at each site._
 - [ ] Promote a repeated `->with…(named: …)` call into a method on the receiver's type that hides the call and its construction boilerplate.
@@ -65,55 +75,44 @@ change; the operation you kept repeating becomes first-class.
 
 ## Worked example
 
-### repeated-guard
+### repeated-query-chain
 
-The SAME compound guard condition recurs in ≥2 places — the same check spelled differently (inline reaches vs locals) or reordered still counts, so a copied condition has no name
+One Eloquent query chain written alike at three or more sites outside its model
 
 ```php
 ----------[ Bad ]----------
 
-// in Shop\Domain\AccessPolicy
-public function allow($user, $account): bool
+public function redeem(int $cardId, int $amountCents): int
 {
-    return $user->active && $account->verified;
-}
+    $card = GiftCard::query()->whereKey($cardId)->lockForUpdate()->sole();
 
-// in Shop\Domain\AccessPolicy
-public function audit($user, $account): string
-{
-    $live = $user->active;
-    $ok = $account->verified;
-
-    return $live && $ok ? 'granted' : 'denied';
+    return min($amountCents, $card->balance_cents);
 }
 
 ----------[ Good ]----------
 
-// in Shop\Domain\AccessPolicy
-// The guard promoted to a NAME: `isLocked()` spells `$user->suspended && $account->frozen` once and
-// every site asks the predicate, so the condition has one home and moves in one place.
-
-public function review($user, $account): string
+// in Shop\Payments\GiftCardRedemption
+public function coverable(int $cardId, int $amountCents): int
 {
-    return $this->isLocked($user, $account) ? 'locked' : 'open';
+    return min($amountCents, GiftCard::lockedFor($cardId)->balance_cents);
 }
 
-// in Shop\Domain\AccessPolicy
-private function isLocked($user, $account): bool
+// in Shop\Models\GiftCard
+public static function lockedFor(int $cardId): self
 {
-    return $user->suspended && $account->frozen;
+    return self::query()->whereKey($cardId)->lockForUpdate()->sole();
 }
 ```
 
-The other 2 — one per rule — are in [`reference/examples.md`](reference/examples.md).
+The other 3 — one per rule — are in [`reference/examples.md`](reference/examples.md).
 
 ## Commands
 
 - `{{binary}} judge --skill=php/repeated-call-helper` — find every one of these in the codebase.
-- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `repeated-guard`, `repeated-named-call`, `repeated-type-guard`.
+- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `repeated-query-chain`, `repeated-guard`, `repeated-named-call`, `repeated-type-guard`.
 - `{{binary}} report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference
 
-- [Worked examples](reference/examples.md) — every rule's bad → good, 3 of them.
+- [Worked examples](reference/examples.md) — every rule's bad → good, 4 of them.
 - [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.

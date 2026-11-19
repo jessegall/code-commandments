@@ -102,6 +102,7 @@ var Checks = []Group{
 		{"parameters", `{"parameters": {"atLeast": 5}}`, "a function declares that many parameters — a variadic, a defaulted one and Python's `self` count once each"},
 		{"arguments", `{"arguments": {"atLeast": 4}}`, "a call or construction is handed that many arguments — a named or a spread one counts once"},
 		{"lines", `{"lines": {"atLeast": 40}}`, "it spans that many lines, its first and last among them"},
+		{"lineLonger", `{"lineLonger": 120}`, "the line it starts on holds more characters than that; with `\"select\": \"line\"`, each line of code longer than the limit is one finding"},
 		{"members", `{"members": {"is": "function", "atLeast": 20}}`, "a type declares that many members directly that pass the step (every member, with no check); with `\"inherited\": true`, the members its parents and traits declare in the scan count too"},
 		{"complexity", `{"complexity": {"atLeast": 10}}`, "one plus every branch, loop and catch in it, as its language marks them, is that many — a switch is one branch, `&&` and `||` are not counted, and a function inside it is its own count"},
 		{"count", `{"count": {"descendant": {"is": "return"}, "atLeast": 4}}`, "that many of its descendants pass the step — or `\"child\"`, with `\"field\"` to count one field's children; with `\"distinct\": \"child:var\"` (any target `of` takes), the counted nodes whose target is written the same count once: `atMost: 1` is one receiver"},

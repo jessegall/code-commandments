@@ -9,6 +9,7 @@ async function post(action: string): Promise<void> {
     if (props.pickListId === null) {
         return
     }
+    // @sin RawFetchInComponent
     const response = await fetch(`/api/pick-lists/${props.pickListId}/${action}`, { method: 'POST' })
     if (response.ok) {
         emit('done', action)

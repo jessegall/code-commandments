@@ -9,6 +9,7 @@ async function release(): Promise<void> {
     if (props.pickListId === null) {
         return
     }
+    // @sin RawFetchInComponent
     const response = await fetch(`/api/pick-lists/${props.pickListId}/release`, { method: 'POST' })
     if (response.ok) {
         emit('close')
@@ -20,6 +21,7 @@ async function pause(): Promise<void> {
     if (props.pickListId === null) {
         return
     }
+    // @sin RawFetchInComponent
     const response = await fetch(`/api/pick-lists/${props.pickListId}/pause`, { method: 'POST' })
     if (response.ok) {
         emit('close')

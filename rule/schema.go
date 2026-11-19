@@ -76,8 +76,8 @@ func Schema() []byte {
 				"oneOf":                []object{{"required": []string{"select"}}, {"required": []string{"from"}}},
 				"additionalProperties": false,
 				"properties": object{
-					"select": object{"type": "string", "description": "A neutral kind, \"comment\" to report on comments rather than code, or kind:<Kind> for a language's own.",
-						"anyOf": []object{{"enum": append(neutralNames(), commentSelector)}, {"pattern": "^kind:.+$"}}},
+					"select": object{"type": "string", "description": "A neutral kind, \"comment\" to report on comments rather than code, \"line\" for one node per line of code, or kind:<Kind> for a language's own.",
+						"anyOf": []object{{"enum": append(neutralNames(), commentSelector, lineSelector)}, {"pattern": "^kind:.+$"}}},
 					"from":   object{"type": "string", "description": "The rule whose findings this one narrows, in place of select: an inner detector."},
 					"where":  object{"type": "array", "items": object{"$ref": "#/definitions/step"}, "description": "Every step must pass."},
 					"reject": object{"type": "array", "items": object{"$ref": "#/definitions/step"}, "description": "Any step passing drops the node."},

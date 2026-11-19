@@ -48,19 +48,19 @@ func linesOf(file string) []string {
 func TestEveryShippedReaderIsReadableAsTheJournalReadsIt(t *testing.T) {
 	for name, file := range readerFiles(t) {
 		t.Run(name, func(t *testing.T) {
-			if !strings.HasPrefix(file, "# ") {
-				t.Error("it does not open with a line saying what it picks")
+			if !strings.HasPrefix(file, "title: ") {
+				t.Error("it does not open with the title its run's card is given")
 			}
 
 			lines := linesOf(file)
-			if len(lines) == 0 {
+			if len(lines) < 2 {
 				t.Fatal("it picks nothing")
 			}
-			if _, err := regexp.Compile(lines[0]); err != nil {
+			if _, err := regexp.Compile(lines[1]); err != nil {
 				t.Errorf("what it picks is no pattern: %v", err)
 			}
 
-			for _, line := range lines[1:] {
+			for _, line := range lines[2:] {
 				key, value, named := strings.Cut(line, ": ")
 				if !named {
 					t.Errorf("the line %q is neither a pattern nor a key", line)

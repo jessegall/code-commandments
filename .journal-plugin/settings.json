@@ -808,6 +808,14 @@
         "help": "Class `extends Concurrent` instead of composing `Concurrent<self>`"
     },
     {
+        "key": "sin_lone-implementer-interface",
+        "title": "LoneImplementerInterface",
+        "type": "flag",
+        "kind": "flag",
+        "default": true,
+        "help": "An interface with one implementing class, named by nothing outside that class's own module: an indirection with one side"
+    },
+    {
         "key": "sin_namespace-cycle",
         "title": "NamespaceCycle",
         "type": "flag",
@@ -1016,6 +1024,14 @@
         "help": "Copy-pasted code — two+ functions with an identical AST (formatting/comments aside)"
     },
     {
+        "key": "sin_list-mirrors-folder",
+        "title": "ListMirrorsFolder",
+        "type": "flag",
+        "kind": "flag",
+        "default": true,
+        "help": "A hand-written list of `X::class` entries that holds every class of one type in the folders it draws from: a second copy of what the folders already say"
+    },
+    {
         "key": "sin_manufactured-fake-fill",
         "title": "ManufacturedFakeFill",
         "type": "flag",
@@ -1152,6 +1168,14 @@
         "help": "A statement after a return, throw, break or continue in the same block: it can never run."
     },
     {
+        "key": "sin_bare-scope-escape",
+        "title": "BareScopeEscape",
+        "type": "flag",
+        "kind": "flag",
+        "default": true,
+        "help": "`withoutGlobalScopes()` with no arguments drops every global scope, including ones added later"
+    },
+    {
         "key": "sin_config-read",
         "title": "ConfigRead",
         "type": "flag",
@@ -1165,7 +1189,7 @@
         "type": "flag",
         "kind": "flag",
         "default": true,
-        "help": "`app()`/`resolve()` reach inside a container-resolved class"
+        "help": "`app()`, `resolve()` or a container's `make()` reach inside a container-resolved class"
     },
     {
         "key": "sin_dead-config-key",
@@ -1206,6 +1230,14 @@
         "kind": "flag",
         "default": true,
         "help": "a getter whose whole body returns the class's own `Collection`, untouched — a Collection is an object, so every caller holds the same one and may `push`, `forget` or `sort` it behind the class's back"
+    },
+    {
+        "key": "sin_hard-coded-route-path",
+        "title": "HardCodedRoutePath",
+        "type": "flag",
+        "kind": "flag",
+        "default": true,
+        "help": "A path written out by hand where a named route already declares it"
     },
     {
         "key": "sin_mass-update-at-call-site",
@@ -1368,12 +1400,28 @@
         "help": "The same `with`-style (variadic) method is called with the same named argument at 2+ sites, instead of a named helper on the type"
     },
     {
+        "key": "sin_repeated-query-chain",
+        "title": "RepeatedQueryChain",
+        "type": "flag",
+        "kind": "flag",
+        "default": true,
+        "help": "One Eloquent query chain written alike at three or more sites outside its model"
+    },
+    {
         "key": "sin_repeated-type-guard",
         "title": "RepeatedTypeGuard",
         "type": "flag",
         "kind": "flag",
         "default": true,
         "help": "The SAME multi-`instanceof` type-narrowing guard (`$x instanceof A && $x->y instanceof B`) is written verbatim in ≥2 places — a check with no name, copied instead of named"
+    },
+    {
+        "key": "sin_hand-rolled-registry",
+        "title": "HandRolledRegistry",
+        "type": "flag",
+        "kind": "flag",
+        "default": true,
+        "help": "A class writes its own keyed store (fill under a key, throw on a missing key) instead of extending the one Registry base"
     },
     {
         "key": "sin_nullable-registry-lookup",
@@ -1576,12 +1624,28 @@
         "help": "A nested `X::from([...])` fills a slot the parent `::from` already auto-hydrates from the array"
     },
     {
+        "key": "sin_capability-probe-hub",
+        "title": "CapabilityProbeHub",
+        "type": "flag",
+        "kind": "flag",
+        "default": true,
+        "help": "Three or more methods each ask whether one held object implements an interface, then call it or answer empty: one accessor per optional capability"
+    },
+    {
         "key": "sin_feature-envy",
         "title": "FeatureEnvy",
         "type": "flag",
         "kind": "flag",
         "default": true,
         "help": "Exiled behaviour / feature envy — a method operating on ONE other owned object's internals that belongs ON that object"
+    },
+    {
+        "key": "sin_guard-beside-transition",
+        "title": "GuardBesideTransition",
+        "type": "flag",
+        "kind": "flag",
+        "default": true,
+        "help": "A caller checks an object's state against an enum case and throws, then tells that object to change: the rule sits outside the transition it guards"
     },
     {
         "key": "sin_keyed-lookup-envy",
@@ -2480,6 +2544,22 @@
         "help": "A hand-written TypeScript type mirrors a backend `Data` class one-to-one — two sources of truth for one contract that drift the moment the server shape changes"
     },
     {
+        "key": "sin_hard-coded-server-url",
+        "title": "HardCodedServerURL",
+        "type": "flag",
+        "kind": "flag",
+        "default": true,
+        "help": "A string written out as the path of a route the server declares by name"
+    },
+    {
+        "key": "sin_raw-fetch-in-component",
+        "title": "RawFetchInComponent",
+        "type": "flag",
+        "kind": "flag",
+        "default": true,
+        "help": "A Vue component calls the global `fetch` itself instead of the one client module"
+    },
+    {
         "key": "sin_compound-inline-component",
         "title": "CompoundInlineComponent",
         "type": "flag",
@@ -2574,6 +2654,14 @@
         "kind": "flag",
         "default": true,
         "help": "`v-for` and `v-if`/`v-else-if` on the same element — the condition is re-evaluated every iteration."
+    },
+    {
+        "key": "sin_re-tested-switch-case",
+        "title": "RetestedSwitchCase",
+        "type": "flag",
+        "kind": "flag",
+        "default": true,
+        "help": "A `<SwitchCase>` case that tests again the value the `<SwitchCase>` already dispatched on"
     },
     {
         "key": "sin_switch-case",

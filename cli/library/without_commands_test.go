@@ -51,7 +51,7 @@ func TestTheBriefForEveryoneElseStillNamesTheCommands(t *testing.T) {
 }
 
 func TestTheIndexWithoutCommandsKeepsTheDisciplinesAndNamesNoCommand(t *testing.T) {
-	project := t.TempDir()
+	project := holdingEveryLanguage(t)
 	without := MapWithoutCommands(project, config.Config{})
 
 	namesNoCommand(t, "the index without commands", without)
@@ -77,7 +77,7 @@ func TestTheIndexWithoutCommandsKeepsTheDisciplinesAndNamesNoCommand(t *testing.
 
 func TestALibraryWithoutCommandsPublishesNoCommandsSection(t *testing.T) {
 	published := func(without bool) map[string]string {
-		project := t.TempDir()
+		project := holdingEveryLanguage(t)
 		library := At(project, config.Config{})
 		if without {
 			library = library.WithoutCommands()

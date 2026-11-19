@@ -12,6 +12,7 @@ const questionIds = ref<number[]>([])
 
 // @sin NearDuplicateFunction
 const loadQuestions = async (productId: number): Promise<number[]> => {
+    // @sin RawFetchInComponent
     const result = await fetch(`/api/products/${productId}/questions`)
     if (!result.ok) {
         throw new Error(result.statusText)

@@ -108,7 +108,7 @@
                 "declared",
                 "observed"
             ],
-            "example": "/shop/app/Providers/AuditServiceProvider.php:23"
+            "example": "/shop/app/Fulfillment/PickerShiftClosing.php:25"
         },
         {
             "kind": "Const",
@@ -171,7 +171,7 @@
                 "declared",
                 "observed"
             ],
-            "example": "/shop/app/Authoring/AssistantGateway.php:23"
+            "example": "/shop/app/Audit/Forwarding/AuditTrail.php:51"
         },
         {
             "kind": "Expr_ArrowFunction",
@@ -263,14 +263,24 @@
         {
             "kind": "Expr_AssignOp_Coalesce",
             "spells": "assign-op-coalesce",
-            "roles": null,
+            "roles": [
+                "expression"
+            ],
+            "is": [
+                "assignment"
+            ],
             "fields": [
                 "expr",
                 "var"
             ],
+            "operators": [
+                "??="
+            ],
             "vouched": [
-                "declared"
-            ]
+                "declared",
+                "observed"
+            ],
+            "example": "/shop/app/Shipping/QuoteMemo.php:25"
         },
         {
             "kind": "Expr_AssignOp_Concat",
@@ -292,7 +302,7 @@
                 "declared",
                 "observed"
             ],
-            "example": "/shop/app/Reporting/ReceiptLines.php:27"
+            "example": "/shop/app/Bins/BinPrintRun.php:16"
         },
         {
             "kind": "Expr_AssignOp_Div",
@@ -591,7 +601,7 @@
                 "declared",
                 "observed"
             ],
-            "example": "/shop/app/Catalog/PriceResolver.php:24"
+            "example": "/shop/app/Alerts/Rules/ChargebackRule.php:11"
         },
         {
             "kind": "Expr_BinaryOp_GreaterOrEqual",
@@ -635,7 +645,7 @@
                 "declared",
                 "observed"
             ],
-            "example": "/shop/app/Authoring/DraftAnnouncement.php:20"
+            "example": "/shop/app/Alerts/Rules/EmptyBasketRule.php:11"
         },
         {
             "kind": "Expr_BinaryOp_LogicalAnd",
@@ -743,14 +753,24 @@
         {
             "kind": "Expr_BinaryOp_NotEqual",
             "spells": "binary-op-not-equal",
-            "roles": null,
+            "roles": [
+                "expression"
+            ],
+            "is": [
+                "comparison"
+            ],
             "fields": [
                 "left",
                 "right"
             ],
+            "operators": [
+                "!="
+            ],
             "vouched": [
-                "declared"
-            ]
+                "declared",
+                "observed"
+            ],
+            "example": "/shop/app/Lockers/LockerDrop.php:19"
         },
         {
             "kind": "Expr_BinaryOp_NotIdentical",
@@ -868,7 +888,7 @@
                 "declared",
                 "observed"
             ],
-            "example": "/shop/app/Catalog/PriceResolver.php:25"
+            "example": "/shop/app/Alerts/Rules/LowStockRule.php:11"
         },
         {
             "kind": "Expr_BinaryOp_SmallerOrEqual",
@@ -895,14 +915,21 @@
         {
             "kind": "Expr_BinaryOp_Spaceship",
             "spells": "binary-op-spaceship",
-            "roles": null,
+            "roles": [
+                "expression"
+            ],
             "fields": [
                 "left",
                 "right"
             ],
+            "operators": [
+                "\u003c=\u003e"
+            ],
             "vouched": [
-                "declared"
-            ]
+                "declared",
+                "observed"
+            ],
+            "example": "/shop/app/Reporting/Unused/SalesDigest.php:53"
         },
         {
             "kind": "Expr_BitwiseNot",
@@ -1096,7 +1123,7 @@
                 "declared",
                 "observed"
             ],
-            "example": "/shop/app/Providers/AuditServiceProvider.php:23"
+            "example": "/shop/app/Fulfillment/PickerShiftClosing.php:25"
         },
         {
             "kind": "Expr_ConstFetch",
@@ -1471,7 +1498,7 @@
                 "declared",
                 "observed"
             ],
-            "example": "/shop/app/Billing/LedgerEntry.php:29"
+            "example": "/shop/app/Audit/ShipmentCensus.php:19"
         },
         {
             "kind": "Expr_StaticPropertyFetch",
@@ -1531,7 +1558,7 @@
                 "declared",
                 "observed"
             ],
-            "example": "/shop/app/Catalog/LanguageTexts.php:44"
+            "example": "/shop/app/Auth/Gates/RefundGates.php:27"
         },
         {
             "kind": "Expr_UnaryMinus",
@@ -1549,7 +1576,7 @@
                 "declared",
                 "observed"
             ],
-            "example": "/shop/app/Billing/LedgerEntry.php:34"
+            "example": "/shop/app/Alerts/Rules/PriceDropRule.php:11"
         },
         {
             "kind": "Expr_UnaryPlus",
@@ -1651,7 +1678,7 @@
                 "declared",
                 "observed"
             ],
-            "example": "/shop/app/Casts/EncryptedNote.php:25"
+            "example": "/shop/app/Auth/Gates/RefundGates.php:51"
         },
         {
             "kind": "IntersectionType",
@@ -1770,6 +1797,7 @@
                 "readonly"
             ],
             "flags": [
+                "by-ref",
                 "promoted",
                 "variadic"
             ],
@@ -1870,7 +1898,7 @@
                 "declared",
                 "observed"
             ],
-            "example": "/shop/app/Casts/EncryptedNote.php:25"
+            "example": "/shop/app/Auth/Gates/RefundGates.php:51"
         },
         {
             "kind": "Scalar_MagicConst_Class",
@@ -1883,10 +1911,17 @@
         {
             "kind": "Scalar_MagicConst_Dir",
             "spells": "magic-const-dir",
-            "roles": null,
+            "roles": [
+                "expression"
+            ],
+            "is": [
+                "literal"
+            ],
             "vouched": [
-                "declared"
-            ]
+                "declared",
+                "observed"
+            ],
+            "example": "/shop/app/Tills/TillStepFinder.php:18"
         },
         {
             "kind": "Scalar_MagicConst_File",
@@ -1923,10 +1958,17 @@
         {
             "kind": "Scalar_MagicConst_Namespace",
             "spells": "magic-const-namespace",
-            "roles": null,
+            "roles": [
+                "expression"
+            ],
+            "is": [
+                "literal"
+            ],
             "vouched": [
-                "declared"
-            ]
+                "declared",
+                "observed"
+            ],
+            "example": "/shop/app/Tills/TillStepFinder.php:17"
         },
         {
             "kind": "Scalar_MagicConst_Property",
@@ -2453,7 +2495,7 @@
                 "declared",
                 "observed"
             ],
-            "example": "/shop/app/Contracts/HttpClient.php:8"
+            "example": "/shop/app/Auth/Gates/RefundGates.php:11"
         },
         {
             "kind": "Stmt_Label",

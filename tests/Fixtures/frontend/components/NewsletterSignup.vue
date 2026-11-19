@@ -11,6 +11,7 @@ const failed = ref(false)
 async function subscribe(): Promise<void> {
     failed.value = false
     try {
+        // @sin RawFetchInComponent
         await fetch('/api/newsletter', { method: 'POST', body: JSON.stringify({ email: email.value }) })
     } catch {
         failed.value = true
@@ -21,6 +22,7 @@ async function subscribe(): Promise<void> {
 async function resubscribe(): Promise<void> {
     failed.value = false
     try {
+        // @sin RawFetchInComponent
         await fetch('/api/newsletter', { method: 'POST', body: JSON.stringify({ email: email.value }) })
     } catch {
         failed.value = true

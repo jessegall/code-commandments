@@ -55,6 +55,7 @@
 .agents/skills/commandments-php-repeated-call-helper/reference/examples.md
 .agents/skills/commandments-php-role-vocabulary/SKILL.md
 .agents/skills/commandments-php-role-vocabulary/reference/detectors.md
+.agents/skills/commandments-php-role-vocabulary/reference/examples.md
 .agents/skills/commandments-php-route-actions/SKILL.md
 .agents/skills/commandments-php-route-actions/evals/triggers.json
 .agents/skills/commandments-php-route-actions/reference/detectors.md

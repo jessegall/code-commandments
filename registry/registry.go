@@ -14,6 +14,7 @@ import (
 	_ "github.com/jessegall/code-commandments/detectors/go"
 	_ "github.com/jessegall/code-commandments/detectors/python"
 	_ "github.com/jessegall/code-commandments/detectors/typescript"
+	_ "github.com/jessegall/code-commandments/published/laravel"
 	_ "github.com/jessegall/code-commandments/published/spatie"
 	_ "github.com/jessegall/code-commandments/published/typescript"
 	_ "github.com/jessegall/code-commandments/sins/backend"

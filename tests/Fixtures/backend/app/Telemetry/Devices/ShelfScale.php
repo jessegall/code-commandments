@@ -2,12 +2,14 @@
 
 namespace Shop\Telemetry\Devices;
 
+use JesseGall\CodeCommandments\Sins\Backend\LoneImplementerInterface;
 use JesseGall\CodeCommandments\Sins\Backend\RefusedBequest;
 use JesseGall\CodeCommandments\Testing\Sinful;
 
 /**
  * A device on the shop floor that reports a reading and can be zeroed by staff.
  */
+#[Sinful(LoneImplementerInterface::class)]
 interface FloorDevice
 {
     public function reading(): float;

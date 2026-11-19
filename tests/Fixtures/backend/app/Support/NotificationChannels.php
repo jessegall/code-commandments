@@ -2,12 +2,14 @@
 
 namespace Shop\Support;
 
+use JesseGall\CodeCommandments\Sins\Backend\HandRolledRegistry;
 use JesseGall\CodeCommandments\Sins\Backend\NullableRegistryLookup;
 
 use JesseGall\CodeCommandments\Testing\Fixed;
 use JesseGall\CodeCommandments\Testing\Righteous;
 use JesseGall\CodeCommandments\Testing\Sinful;
 
+#[Sinful(HandRolledRegistry::class)]
 final class NotificationChannels
 {
     /**

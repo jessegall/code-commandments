@@ -112,6 +112,7 @@ type Step struct {
 	Parameters        *Bounds         `json:"parameters,omitempty"`
 	Arguments         *Bounds         `json:"arguments,omitempty"`
 	Lines             *Bounds         `json:"lines,omitempty"`
+	LineLonger        *int            `json:"lineLonger,omitempty"`
 	Members           *Tally          `json:"members,omitempty"`
 	Complexity        *Bounds         `json:"complexity,omitempty"`
 	Extends           string          `json:"extends,omitempty"`
@@ -779,6 +780,10 @@ func admits(named string, match engine.Match) bool {
 		return match.Kind() == engine.CommentKind
 	}
 
+	if named == lineSelector {
+		return match.OpensItsLine()
+	}
+
 	return match.Is(engine.Neutral(named))
 }
 
@@ -806,6 +811,10 @@ func selector(named string) (func(*engine.Codebase) *engine.Query, error) {
 		return func(c *engine.Codebase) *engine.Query { return c.WhereComment() }, nil
 	}
 
+	if named == lineSelector {
+		return func(c *engine.Codebase) *engine.Query { return c.Where(engine.Match.OpensItsLine) }, nil
+	}
+
 	if spelling, construct := strings.CutPrefix(named, constructSelector); construct && spelling != "" {
 		return func(c *engine.Codebase) *engine.Query {
 			return c.Where(func(match engine.Match) bool { return namesTheKind(spelling, match) })
@@ -813,7 +822,7 @@ func selector(named string) (func(*engine.Codebase) *engine.Query, error) {
 	}
 
 	if !slices.Contains(engine.Neutrals, engine.Neutral(named)) {
-		return nil, fmt.Errorf("select %q is neither a neutral kind (%s), nor %s, nor construct:<spelling>, nor kind:<Kind>%s", named, neutralList(), commentSelector, didYouMean(named, append(neutralNames(), commentSelector)))
+		return nil, fmt.Errorf("select %q is neither a neutral kind (%s), nor %s, nor %s, nor construct:<spelling>, nor kind:<Kind>%s", named, neutralList(), commentSelector, lineSelector, didYouMean(named, append(neutralNames(), commentSelector, lineSelector)))
 	}
 
 	return func(c *engine.Codebase) *engine.Query { return c.WhereIs(engine.Neutral(named)) }, nil
@@ -843,6 +852,8 @@ func selected(named string, judged []contract.Language) error {
 const constructSelector = "construct:"
 
 const commentSelector = "comment"
+
+const lineSelector = "line"
 
 func noneOf(key, value string, allowed []string, meant ...[]string) string {
 	nearest := allowed
@@ -884,7 +895,7 @@ func (s Step) checks() int {
 		s.Operator != "", len(s.OperatorIn) > 0, s.Type != "", s.TypeLike != "",
 		len(s.Value) > 0, s.Documented != nil, s.File != "", s.FileMatches != "", s.Position != "", s.Field != "", s.Role != "", s.TopLevel != nil, s.Descendant != nil, s.Child != nil, s.Body != nil, s.Inside != nil,
 		s.Documents != nil, s.Next != nil, s.Previous != nil, s.NestedAtLeast != nil, s.Counts != nil, s.Parameters != nil, s.Arguments != nil,
-		s.Lines != nil, s.Members != nil, s.Complexity != nil, s.Extends != "", s.ExtendsAny != "", s.Implements != "", s.Uses != "", s.All != nil, s.Any != nil, s.Not != nil, s.HasAttribute != "", s.Sibling != "", s.IsA != "",
+		s.Lines != nil, s.LineLonger != nil, s.Members != nil, s.Complexity != nil, s.Extends != "", s.ExtendsAny != "", s.Implements != "", s.Uses != "", s.All != nil, s.Any != nil, s.Not != nil, s.HasAttribute != "", s.Sibling != "", s.IsA != "",
 		s.TypeKind != "", s.HasAnnotation != "", s.ReturnType != "", s.ParameterType != "", s.Constructs != "", s.Unused != nil,
 		s.CalledFrom != "", s.ReferredFrom != nil, s.Calls != nil, s.Argument != nil, s.CommentIs != "", s.DocReference != nil, s.CommentLike != "", s.CommentMatches != "", s.DocTag != "", s.Duplicated != nil, s.Callers != nil, s.Repeated != nil, s.DeclaredBy != "", s.AnsweredBy != nil, s.DeclaredElsewhere != nil, s.SameAs != nil, s.Ancestors != nil, s.RedundantElse != nil, s.UnnamedCondition != nil, s.BindsItsOwnTest != nil, s.SoleLoopBodyGuard != nil, s.PassesItsElement != nil, s.LadderRungs != nil, s.Nullable != nil, s.TypeShape != "", s.TypeOrigin != "", s.ElementType != "",
 		s.TestCode != nil, s.Overrides != nil, s.Implicit != nil, s.PHP != "", s.Python != "", s.CSharp != "", s.TypeScript != "", s.Vue != "", s.Rule != ""} {
@@ -1255,6 +1266,8 @@ func (s Step) check(match engine.Match) bool {
 		return (subject.Is(engine.Call) || subject.Is(engine.Construction)) && s.Arguments.holds(len(subject.Arguments()))
 	case s.Lines != nil:
 		return s.Lines.holds(subject.Lines())
+	case s.LineLonger != nil:
+		return subject.LineLength() > *s.LineLonger
 	case s.Members != nil:
 		return subject.Is(engine.TypeDeclaration) && s.Members.holds(s.Members.tally(subject))
 	case s.Complexity != nil:

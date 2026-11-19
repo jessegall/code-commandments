@@ -24,9 +24,9 @@ func (ContainerReachDetector) Exemptions() []packages.Exemption {
 
 func (d ContainerReachDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return packages.Exempt(codebase, d, php.In(codebase).
-		Where(engine.As(func(n php.Node) bool { return n.CallsFunction("app") || n.CallsFunction("resolve") })).
+		Where(engine.As(laravelnode.Node.ResolvesFromContainer)).
 		Reject(engine.As(php.Node.IsInEnum)).
-		Where(engine.As(php.Node.FirstArgIsClassLiteral)).
+		Reject(engine.As(laravelnode.Node.InServiceProvider)).
 		Reject(engine.As(php.Node.IsEnclosingClassResolution)).
 		Where(func(n engine.Match) bool { return laravelnode.ContainerResolves(codebase, php.EnclosingClassName(n)) }).
 		Reject(engine.Match.IsTest).

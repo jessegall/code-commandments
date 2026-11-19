@@ -1,8 +1,8 @@
 # The readers the plugin ships, and the journal commands that use them
 
 A reader picks the lines of a command's output worth showing while it runs. The journal reads one
-from a `<name>.pattern` file: its first line says what it picks, its second is the regular expression
-that picks it, and `key: value` lines follow — `progress:`, whose groups are a count and a total,
+from a `<name>.pattern` file: its first line, `title:`, is the short title its run's card is given,
+its second is the regular expression that picks the lines, and `key: value` lines follow — `progress:`, whose groups are a count and a total,
 `label:`, the words the card is titled with, `commands:`, the commands a background run is watched
 through even when nothing names the reader, `finished:` and `failed:`, the lines a card settles
 on once the run ends, and `summary:`, the one line a closed card shows, whose last match in the

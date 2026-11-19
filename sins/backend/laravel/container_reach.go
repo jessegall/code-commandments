@@ -15,7 +15,7 @@ func (ContainerReach) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "container-reach",
 		Skill:       laravelskills.LaravelIdioms{},
-		Description: "`app()`/`resolve()` reach inside a container-resolved class",
+		Description: "`app()`, `resolve()` or a container's `make()` reach inside a container-resolved class",
 		Rule:        `Declare dependencies in the constructor; never reach into the container with ` + "`" + `app()` + "`" + `/` + "`" + `resolve()` + "`" + ` from a resolved class.`,
 		Suggestion:  "Declare the dependency as a constructor parameter.",
 		Requires:    requiresLaravel,

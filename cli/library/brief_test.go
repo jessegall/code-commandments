@@ -8,7 +8,7 @@ import (
 )
 
 func TestTheInjectedBriefNamesNoDisciplineButWhereToFindThem(t *testing.T) {
-	project := t.TempDir()
+	project := holdingEveryLanguage(t)
 	brief := Brief(project, config.Config{})
 
 	for _, want := range []string{"TRACE TO THE SOURCE", "judge` ONCE, scoped", "info <sin>", "Load `commandments` for the index"} {

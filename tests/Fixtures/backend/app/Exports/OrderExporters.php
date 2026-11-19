@@ -2,12 +2,14 @@
 
 namespace Shop\Exports;
 
+use JesseGall\CodeCommandments\Sins\Backend\LoneImplementerInterface;
 use JesseGall\CodeCommandments\Sins\Backend\RefusedBequest;
 use JesseGall\CodeCommandments\Testing\Sinful;
 
 /**
  * Writes orders out for another system, now or on a schedule.
  */
+#[Sinful(LoneImplementerInterface::class)]
 interface OrderExporter
 {
     public function export(array $orderIds): string;

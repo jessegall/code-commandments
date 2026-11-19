@@ -63,3 +63,7 @@ func (d Directive) Target() string {
 
 	return argument.Name()
 }
+
+func IsBoundValue(m engine.Match) bool {
+	return m.Parent().Kind() == "Directive" && m.Node().Field == "value"
+}

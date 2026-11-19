@@ -2,7 +2,10 @@
 
 namespace Shop\Dispatch;
 
+use JesseGall\CodeCommandments\Sins\Backend\DerivedArgument;
+use JesseGall\CodeCommandments\Sins\Backend\HandRolledRegistry;
 use JesseGall\CodeCommandments\Testing\Righteous;
+use JesseGall\CodeCommandments\Testing\Sinful;
 
 /**
  * A generic keyed store behind a typed façade — the righteous twin of a derived argument. `add()` takes
@@ -10,7 +13,8 @@ use JesseGall\CodeCommandments\Testing\Righteous;
  * looks like the sin: `register` accepts `mixed`, so it provably cannot derive anything from what it
  * holds, and the key beside the item is the only way the value gets there (#504).
  */
-#[Righteous]
+#[Righteous(DerivedArgument::class)]
+#[Sinful(HandRolledRegistry::class)]
 final class CarrierRegistry
 {
     /**

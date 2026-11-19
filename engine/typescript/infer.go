@@ -4,6 +4,8 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+
+	"github.com/jessegall/code-commandments/engine"
 )
 
 var comparisons = []string{"===", "!==", "==", "!=", "<", ">", "<=", ">=", "instanceof", "in"}
@@ -227,4 +229,69 @@ func (n Node) CalleeName() (string, bool) {
 	}
 
 	return callee.Name(), true
+}
+
+func (n Node) CallsStandardLibrary(function string) bool {
+	n = n.bare()
+	callee := Node{n.Child("expression")}.bare()
+
+	return n.Kind() == "CallExpression" && callee.Kind() == "Identifier" && callee.Refers() == function
+}
+
+func (n Node) SpelledPath() []string {
+	text, ok := n.spelledText()
+	if !ok {
+		return nil
+	}
+
+	return engine.WrittenPath(text)
+}
+
+func (n Node) IsJoinedIntoText() bool {
+	parent := Node{n.Parent()}.bare()
+
+	return parent.Kind() == "BinaryExpression" && parent.Operator() == "+"
+}
+
+func (n Node) spelledText() (string, bool) {
+	n = n.bare()
+	switch n.Kind() {
+	case "StringLiteral", "NoSubstitutionTemplateLiteral":
+		return n.Text()
+	case "TemplateExpression":
+		text := templatePart(n.Child("head"))
+		for _, span := range n.ChildrenIn("templateSpans") {
+			text += engine.AnySegment + templatePart(span.Child("literal"))
+		}
+
+		return text, true
+	case "BinaryExpression":
+		if n.Operator() != "+" {
+			return "", false
+		}
+		left, ok := n.Left().spelledText()
+		if !ok {
+			return "", false
+		}
+		right, ok := n.Right().spelledText()
+		if !ok {
+			right = engine.AnySegment
+		}
+
+		return left + right, true
+	}
+
+	return "", false
+}
+
+func templatePart(part engine.Match) string {
+	text := strings.TrimPrefix(strings.TrimPrefix(part.Written(), "`"), "}")
+
+	return strings.TrimSuffix(strings.TrimSuffix(text, "`"), "${")
+}
+
+func (n Node) IsCallArgument() bool {
+	parent := n.Parent()
+
+	return (parent.Kind() == "CallExpression" || parent.Kind() == "NewExpression") && n.Node().Field == "arguments"
 }

@@ -102,6 +102,13 @@ is born, and every `Command` that exists is real.
   quietly coerces the input (e.g. a `ValueBag` that accepts a looser key type to silence ~10 type errors),
   or scatter casts/`@phpstan-ignore`, to avoid touching them. That makes the code *pass* while growing it
   and hides the smell at the source. Fix the call sites — even the awkward one.
+### A second copy of what the code already says
+
+A hand-written list of `X::class` entries that holds every command, listener or handler a folder declares
+is a second source of truth: each new class must be added in two places, and a test usually exists only to
+keep the two equal. The folder, or the shared type, is the source. Discover the classes from it (scan the
+folder for implementers of the type, or let each class register itself) and delete the list and the test
+that guards it. A list that leaves classes out on purpose, such as an export list, is a decision, not a copy.
 
 ## Rules
 
@@ -110,6 +117,8 @@ is born, and every `Command` that exists is real.
 - [ ] Put shared behaviour in one place, so a step that must always happen can't be forgotten in a copy.
       _Make the shorter function call the longer one, or have both call one shared function._
 - [ ] Extract copy-pasted code — two functions with an identical AST must become one.
+- [ ] What the folders already declare has one source: discover the classes from the folder or their type instead of keeping a list in step by hand.
+      _Discover the classes (scan the folder for implementers of the shared type, or let each class register itself) and delete the list and any test that keeps it equal to the folder._
 - [ ] Fix an absent value at its source; never fill a required slot with a manufactured `?? ''`/`?? 0`/`?? []`.
       _Throw a named exception at the boundary, or bake a real default into the signature._
 - [ ] Hold changing state on an INSTANCE someone owns and passes; never write a static property.
@@ -159,17 +168,17 @@ final class LazyLedgerExport
 }
 ```
 
-The other 6 — one per rule — are in [`reference/examples.md`](reference/examples.md).
+The other 7 — one per rule — are in [`reference/examples.md`](reference/examples.md).
 
 ## Commands
 
 - `{{binary}} judge --skill=php/fix-at-the-source` — find every one of these in the codebase.
-- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `constructor-side-effect`, `divergent-twin`, `duplicate-function`, `manufactured-fake-fill`, `mutable-static-state`, `near-duplicate-function`, `unread-collaborator`.
+- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `constructor-side-effect`, `divergent-twin`, `duplicate-function`, `list-mirrors-folder`, `manufactured-fake-fill`, `mutable-static-state`, `near-duplicate-function`, `unread-collaborator`.
 - `{{binary}} report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference
 
-- [Worked examples](reference/examples.md) — every rule's bad → good, 7 of them.
+- [Worked examples](reference/examples.md) — every rule's bad → good, 8 of them.
 - [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills

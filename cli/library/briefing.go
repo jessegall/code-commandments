@@ -61,14 +61,15 @@ func BriefingWithoutCommands(root string, project config.Config) string {
 
 func renderedBriefing(root string, project config.Config, said phrases) string {
 	own := custom.InForce(root).Skills
+	holds := HeldIn(root, project)
 
 	return strings.NewReplacer(
 		"{{library}}", Dir,
 		Binary, binary.Invocation(root),
 		Judging, binary.Judging(root),
 		"{{finding}}", said.finding,
-		"{{mandatory}}", bullets(skill.Mandatory, project, own),
-		"{{keepInMind}}", bullets(skill.KeepInMind, project, own),
+		"{{mandatory}}", bullets(skill.Mandatory, holds, own),
+		"{{keepInMind}}", bullets(skill.KeepInMind, holds, own),
 	).Replace(briefing)
 }
 
@@ -140,15 +141,15 @@ func mapOf(trigger, body string) string {
 
 const ownMark = " _(this project's own — `.commandments/custom/`)_"
 
-func bullets(tier skill.Tier, project config.Config, own []custom.Skill) string {
+func bullets(tier skill.Tier, holds func(source.Language) bool, own []custom.Skill) string {
 	var lines []string
 
-	for _, each := range Written(skill.InTier(tier), project) {
+	for _, each := range Written(skill.InTier(tier), holds) {
 		lines = append(lines, each.Definition().Bullet())
 	}
 
 	for _, each := range own {
-		if each.Definition().Tier == tier && len(Written([]skill.Skill{each}, project)) > 0 {
+		if each.Definition().Tier == tier && len(Written([]skill.Skill{each}, holds)) > 0 {
 			lines = append(lines, each.Definition().Bullet()+ownMark)
 		}
 	}
@@ -156,12 +157,26 @@ func bullets(tier skill.Tier, project config.Config, own []custom.Skill) string 
 	return strings.Join(lines, "\n")
 }
 
-func Written(skills []skill.Skill, project config.Config) []skill.Skill {
+func HeldIn(root string, project config.Config) func(source.Language) bool {
+	known := map[source.Language]bool{}
+
+	return func(language source.Language) bool {
+		held, asked := known[language]
+		if !asked {
+			held = project.Holds(root, language)
+			known[language] = held
+		}
+
+		return held
+	}
+}
+
+func Written(skills []skill.Skill, holds func(source.Language) bool) []skill.Skill {
 	var kept []skill.Skill
 
 	for _, each := range skills {
 		for _, name := range each.Definition().Languages {
-			if language, known := LanguageOf(name); known && project.Writes(language) {
+			if language, known := LanguageOf(name); known && holds(language) {
 				kept = append(kept, each)
 
 				break
@@ -182,11 +197,7 @@ func LanguageOf(name string) (source.Language, bool) {
 	return "", false
 }
 
-func KeepSections(text string, project config.Config) string {
-	if len(project.DisabledLanguages) == 0 {
-		return text
-	}
-
+func KeepSections(text string, holds func(source.Language) bool) string {
 	var kept []string
 	dropping := false
 
@@ -194,7 +205,7 @@ func KeepSections(text string, project config.Config) string {
 		switch {
 		case strings.HasPrefix(line, "### "):
 			language, named := source.NamedIn(line)
-			dropping = named && !project.Writes(language)
+			dropping = named && !holds(language)
 		case strings.HasPrefix(line, "## "):
 			dropping = false
 		}

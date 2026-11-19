@@ -21,7 +21,7 @@ tree of parts** — to work out something the object should answer itself, while
 than its own (`$this`) state. The fix is Fowler's **Move Method**: the loop belongs on the object whose
 collection it walks, so `$node->edges()` replaces `EdgeDetector::detect($node)`.
 
-**Structure, not surface.** The tell is *operating on the object's internals* — four shapes:
+**Structure, not surface.** The tell is *operating on the object's internals* — six shapes:
 
 1. **Iterate** its collection — `foreach ($node->outputs …)`, a recursive walk of `$block->left`/`->right`.
 2. **Query** its collection from outside — `array_reduce($order->lines(), …)`,
@@ -53,6 +53,18 @@ A method that only reads the object's **flat scalar fields** to compute a value 
 yes/no — is an **external policy**, not envy. That's a *Strategy*, the documented exception: scoring,
 formatting, and classifying legitimately live in their own class, because the rule can vary independently of
 the data. Reading fields is fine; *operating on the object's internals* is the sin.
+
+5. **Guard its transition** — check its state against an enum case, throw, then tell it to change:
+   `if ($request->state !== RequestState::Open) { throw … } $request->approve();`. The rule for when
+   `approve()` may run lives outside `approve()`, so every other caller either copies the check or skips it.
+   Move the check and the throw into the transition (`approve()` throws `RequestNotOpen`) and the caller
+   reads "load, tell, return".
+
+6. **Probe it for capabilities** — a class holding one object grows an accessor per optional interface it
+   might implement: `return $this->driver instanceof Pausable ? $this->driver->pause() : null;`, then the
+   same for `Resumable`, `Inspectable`, and so on. Each new capability adds another `instanceof` accessor to
+   the hub. Ask for the capability by its contract in one place (`$this->driver->provided(Pausable::class)`),
+   or let the held object declare the capabilities it has as a typed list.
 
 **Why it's a sin:**
 
@@ -107,8 +119,12 @@ If yes — and you're reaching past its surface into its structure — that's wh
 
 ## Rules
 
+- [ ] An optional capability is asked for by its contract in one place; a hub does not grow an `instanceof` accessor for every capability added.
+      _Replace the accessors with one `provided(Contract::class)` lookup, or have the held object declare its capabilities as a typed list._
 - [ ] Behaviour belongs with its data — move a method that loops or queries one other owned object onto that object.
       _Move the method onto the object (`$node->edges()`)._
+- [ ] The method that changes an object's state carries the rule for when it may; a caller tells the object and lets it refuse.
+      _Move the check and the throw into the method the caller runs (`$request->approveSample()` throws `SampleRefused`), and delete the caller's copy._
 - [ ] Ask the object directly; don't use its identity as a key to look its own fact up through a collaborator.
       _Move the lookup onto the object that owns the identity._
 - [ ] A class earns its place by doing something; one that only forwards every call to one collaborator is a middle man — let callers talk to that collaborator.
@@ -120,51 +136,81 @@ If yes — and you're reaching past its surface into its structure — that's wh
 
 ## Worked example
 
-### feature-envy
+### capability-probe-hub
 
-Exiled behaviour / feature envy — a method operating on ONE other owned object's internals that belongs ON that object
+Three or more methods each ask whether one held object implements an interface, then call it or answer empty: one accessor per optional capability
 
 ```php
 ----------[ Bad ]----------
 
-public function suspend(Customer $customer, string $reason): void
+// One installed shop plugin, and what it adds to the admin screens.
+
+final class PluginSlot
 {
-    $customer->suspended = true;
-    $customer->suspended_reason = $reason;
-    $customer->save();
+    public function __construct(private readonly object $plugin) {}
+
+    public function widgetCount(): int
+    {
+        return $this->plugin instanceof ContributesWidgets ? $this->plugin->widgetCount() : 0;
+    }
+
+    public function routeCount(): int
+    {
+        return $this->plugin instanceof ContributesRoutes ? $this->plugin->routeCount() : 0;
+    }
+
+    public function menuCount(): int
+    {
+        return $this->plugin instanceof ContributesMenus ? $this->plugin->menuCount() : 0;
+    }
 }
 
 ----------[ Good ]----------
 
-// in Shop\Customers\CustomerUpdater
-public function suspendByTelling(Customer $customer, string $reason): void
+// One installed shop plugin, told for what it adds to the admin screens.
+
+final class PluginBay
 {
-    $customer->suspend($reason);
+    public function __construct(private readonly Plugin $plugin) {}
+
+    public function additions(): int
+    {
+        return $this->plugin->widgetCount() + $this->plugin->routeCount() + $this->plugin->menuCount();
+    }
 }
 
-// in Shop\Models\Customer
-// Where every call site's poking-and-saving went: the transition named once, on the model that
-// owns the columns it writes.
+// A shop plugin: it answers every contribution itself, none by default.
 
-public function suspend(string $reason): void
+abstract class Plugin
 {
-    $this->suspended = true;
-    $this->suspended_reason = $reason;
-    $this->save();
+    public function widgetCount(): int
+    {
+        return 0;
+    }
+
+    public function routeCount(): int
+    {
+        return 0;
+    }
+
+    public function menuCount(): int
+    {
+        return 0;
+    }
 }
 ```
 
-The other 4 — one per rule — are in [`reference/examples.md`](reference/examples.md).
+The other 6 — one per rule — are in [`reference/examples.md`](reference/examples.md).
 
 ## Commands
 
 - `{{binary}} judge --skill=php/tell-dont-ask` — find every one of these in the codebase.
-- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `feature-envy`, `keyed-lookup-envy`, `middle-man`, `train-wreck`, `type-switch`.
+- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `capability-probe-hub`, `feature-envy`, `guard-beside-transition`, `keyed-lookup-envy`, `middle-man`, `train-wreck`, `type-switch`.
 - `{{binary}} report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference
 
-- [Worked examples](reference/examples.md) — every rule's bad → good, 5 of them.
+- [Worked examples](reference/examples.md) — every rule's bad → good, 7 of them.
 - [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills

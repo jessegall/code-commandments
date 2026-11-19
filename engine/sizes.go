@@ -1,6 +1,9 @@
 package engine
 
-import "strings"
+import (
+	"strings"
+	"unicode/utf8"
+)
 
 func (m Match) Arguments() []Match {
 	return m.listed(m.grammar().Arguments)
@@ -90,4 +93,32 @@ func (m Match) OwnDescendants() []Match {
 	}
 
 	return own
+}
+
+func (m Match) LineLength() int {
+	if m.node == nil {
+		return 0
+	}
+	source, err := m.file.Source()
+	if err != nil || m.node.Span.Start > len(source) {
+		return 0
+	}
+	text := Source(source)
+	start := text.LineStartAt(m.node.Span.Start)
+	line := strings.TrimRight(string(text[start:text.LineEndAt(m.node.Span.Start)]), "\r\n")
+
+	return utf8.RuneCountInString(line)
+}
+
+func (m Match) OpensItsLine() bool {
+	if m.node == nil {
+		return false
+	}
+	source, err := m.file.Source()
+	if err != nil || m.node.Span.Start > len(source) {
+		return false
+	}
+	parent, err := m.Parent().Span()
+
+	return Source(source).StartsItsLine(m.node.Span.Start) && (err != nil || parent.Start != m.node.Span.Start)
 }

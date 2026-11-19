@@ -87,3 +87,14 @@ func (r canonicalRules) Leaf(node engine.Match) (string, bool) {
 func CanonicalHash(node engine.Match, aliases map[string]engine.Match) string {
 	return engine.SyntaxHash([]engine.Match{node}, canonicalRules{aliases: aliases}, false)
 }
+
+// literalRules keep every string and number as written while a hash blanks local variable names.
+type literalRules struct{ hashRules }
+
+func (r literalRules) Literal(node engine.Match, _ bool) (string, bool) {
+	return r.hashRules.Literal(node, false)
+}
+
+func LiteralHash(node engine.Match) string {
+	return engine.SyntaxHash([]engine.Match{node}, literalRules{}, true)
+}

@@ -89,3 +89,10 @@ is born, and every `Command` that exists is real.
   quietly coerces the input (e.g. a `ValueBag` that accepts a looser key type to silence ~10 type errors),
   or scatter casts/`@phpstan-ignore`, to avoid touching them. That makes the code *pass* while growing it
   and hides the smell at the source. Fix the call sites — even the awkward one.
+### A second copy of what the code already says
+
+A hand-written list of `X::class` entries that holds every command, listener or handler a folder declares
+is a second source of truth: each new class must be added in two places, and a test usually exists only to
+keep the two equal. The folder, or the shared type, is the source. Discover the classes from it (scan the
+folder for implementers of the type, or let each class register itself) and delete the list and the test
+that guards it. A list that leaves classes out on purpose, such as an export list, is a decision, not a copy.

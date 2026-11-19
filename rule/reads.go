@@ -21,7 +21,7 @@ var answeredFromTheFile = []string{
 
 	"testCode", "implicit",
 
-	"parameters", "arguments", "lines", "complexity", "members",
+	"parameters", "arguments", "lines", "lineLonger", "complexity", "members",
 
 	"typeKind", "extends", "hasAnnotation", "hasAttribute", "returnType", "parameterType", "value",
 

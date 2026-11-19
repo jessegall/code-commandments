@@ -2,6 +2,7 @@
 package library
 
 import (
+	"github.com/jessegall/code-commandments/cli/source"
 	_ "embed"
 	"errors"
 	"io/fs"
@@ -36,6 +37,7 @@ type Library struct {
 	project         config.Config
 	previous        []string
 	withoutCommands bool
+	holds func(source.Language) bool
 	// names puts the executable's invocation into a published skill, worked out once a publish: working it out asks git
 	// where the project is.
 	names *strings.Replacer
@@ -46,7 +48,7 @@ func At(root string, project config.Config) Library {
 }
 
 func For(root, judged string, project config.Config) Library {
-	return Library{root: root, judged: judged, project: project, previous: readManifest(root)}
+	return Library{root: root, judged: judged, project: project, previous: readManifest(root), holds: HeldIn(judged, project)}
 }
 
 func (l Library) WithoutCommands() Library {
@@ -71,7 +73,7 @@ func (l Library) Publish() ([]string, error) {
 		ids = append(ids, MapID)
 	}
 
-	for _, each := range Written(skill.Ordered(), l.project) {
+	for _, each := range Written(skill.Ordered(), l.holds) {
 		definition := each.Definition()
 		from := path.Join(generated, definition.Slug)
 
@@ -94,7 +96,7 @@ func (l Library) Publish() ([]string, error) {
 	for _, own := range custom.InForce(l.judged).Skills {
 		id := own.Definition().ID()
 
-		if len(Written([]skill.Skill{own}, l.project)) > 0 && copiedFrom(os.DirFS(own.Dir), ".", l.Path(id), l.naming) {
+		if len(Written([]skill.Skill{own}, l.holds)) > 0 && copiedFrom(os.DirFS(own.Dir), ".", l.Path(id), l.naming) {
 			ids = append(ids, id)
 		}
 	}
@@ -105,16 +107,12 @@ func (l Library) Publish() ([]string, error) {
 }
 
 func (l Library) keepWrittenLanguages(file string) {
-	if len(l.project.DisabledLanguages) == 0 {
-		return
-	}
-
 	text, err := os.ReadFile(file)
 	if err != nil {
 		return
 	}
 
-	atomic.Write(file, KeepSections(string(text), l.project))
+	atomic.Write(file, KeepSections(string(text), l.holds))
 }
 
 func (l Library) Reconcile(dir string, current []string) {

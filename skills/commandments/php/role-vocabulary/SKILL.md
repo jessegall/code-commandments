@@ -57,54 +57,73 @@ added; a marker interface is checked by the compiler.
 
 ## Rules
 
+- [ ] A keyed store extends the project's one `Registry` base and states only what it holds; the register/get/has plumbing is written once.
+      _Extend the `Registry` base (scaffold one if the project has none) and delete the class's own array, `register()` and `get()`._
 - [ ] A keyed store's `get()` resolves-or-throws on a miss; don't return `null`.
       _`get()` returns-or-throws a named `…NotFound::forKey($key)`._
 
 ## Worked example
 
-### nullable-registry-lookup
+### hand-rolled-registry
 
-A keyed-store `get()` that returns `null` on a miss (should resolve-or-throw)
+A class writes its own keyed store (fill under a key, throw on a missing key) instead of extending the one Registry base
 
 ```php
 ----------[ Bad ]----------
 
-public function get(string $key): ?object
+// A generic keyed store behind a typed façade — the righteous twin of a derived argument. `add()` takes
+// the subject once and derives the key itself, and the inner `register($carrier->key, $carrier)` only
+// looks like the sin: `register` accepts `mixed`, so it provably cannot derive anything from what it
+// holds, and the key beside the item is the only way the value gets there (#504).
+
+final class CarrierRegistry
 {
-    return $this->channels[$key] ?? null;
+    /**
+     * @var array<string, Carrier>
+     */
+    private array $carriers = [];
+
+    public function add(Carrier $carrier): static
+    {
+        return $this->register($carrier->key, $carrier);
+    }
+
+    public function get(string $key): Carrier
+    {
+        return $this->carriers[$key] ?? throw new UnknownCarrier($key);
+    }
+
+    /**
+     * The generic half: a store that knows nothing about what it stores.
+     */
+    private function register(string $key, mixed $item): static
+    {
+        $this->carriers[$key] = $item;
+
+        return $this;
+    }
 }
 
 ----------[ Good ]----------
 
-// in Shop\Support\NotificationChannels
-// The FIX: the store resolves-or-throws. A missing key is a named failure at the source
-// (`UnknownChannel::forKey($key)`), never a `null` every caller has to re-decide about.
+// The carriers the shop ships with, kept under their carrier codes by the shared Registry.
 
-public function resolve(string $key): object
+final class CarrierRoster extends Registry
 {
-    return $this->channels[$key] ?? throw UnknownChannel::forKey($key);
-}
-
-// The failure the nullable lookup used to hand back as null. Naming it is what lets the store
-// resolve-or-throw, so no caller re-decides what a missing channel means.
-
-final class UnknownChannel extends RuntimeException
-{
-    public static function forKey(string $key): self
-    {
-        return new self("No notification channel is registered under {$key}.");
-    }
 }
 ```
+
+The other 1 — one per rule — are in [`reference/examples.md`](reference/examples.md).
 
 ## Commands
 
 - `{{binary}} judge --skill=php/role-vocabulary` — find every one of these in the codebase.
-- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `nullable-registry-lookup`.
+- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `hand-rolled-registry`, `nullable-registry-lookup`.
 - `{{binary}} report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference
 
+- [Worked examples](reference/examples.md) — every rule's bad → good, 2 of them.
 - [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills

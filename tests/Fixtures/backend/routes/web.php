@@ -50,3 +50,8 @@ Route::group(['as' => 'kiosk.'], function () {
 // The HTTP face of the label-printing operation — registered here so the route table, not a
 // namespace segment, is what marks it as an entry point.
 Route::post('/labels/print/{sku}', [\Shop\Http\Controllers\LabelPrintController::class, 'store']);
+
+// A prefixed group: the paths HardCodedRoutePathDetector knows reach through the group's prefix and parameters.
+Route::prefix('gift-cards')->name('gift-cards.')->group(function () {
+    Route::get('/{card}/statement', fn (string $card) => $card)->name('statement');
+});

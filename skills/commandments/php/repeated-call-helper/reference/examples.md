@@ -2,6 +2,35 @@
 
 One bad → good per rule this skill teaches, taken from the fixture that proves the detector, so every pair is code that really fires and really passes.
 
+### repeated-query-chain
+
+One Eloquent query chain written alike at three or more sites outside its model
+
+```php
+----------[ Bad ]----------
+
+public function redeem(int $cardId, int $amountCents): int
+{
+    $card = GiftCard::query()->whereKey($cardId)->lockForUpdate()->sole();
+
+    return min($amountCents, $card->balance_cents);
+}
+
+----------[ Good ]----------
+
+// in Shop\Payments\GiftCardRedemption
+public function coverable(int $cardId, int $amountCents): int
+{
+    return min($amountCents, GiftCard::lockedFor($cardId)->balance_cents);
+}
+
+// in Shop\Models\GiftCard
+public static function lockedFor(int $cardId): self
+{
+    return self::query()->whereKey($cardId)->lockForUpdate()->sole();
+}
+```
+
 ### repeated-guard
 
 The SAME compound guard condition recurs in ≥2 places — the same check spelled differently (inline reaches vs locals) or reordered still counts, so a copied condition has no name

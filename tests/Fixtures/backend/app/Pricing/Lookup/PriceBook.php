@@ -2,6 +2,7 @@
 
 namespace Shop\Pricing\Lookup;
 
+use JesseGall\CodeCommandments\Sins\Backend\LoneImplementerInterface;
 use JesseGall\CodeCommandments\Sins\Backend\MiddleMan;
 use JesseGall\CodeCommandments\Testing\Righteous;
 use JesseGall\CodeCommandments\Testing\Sinful;
@@ -81,6 +82,7 @@ final class ListedPrices implements Prices
 /**
  * What the storefront asks of a price source.
  */
+#[Sinful(LoneImplementerInterface::class)]
 interface Prices
 {
     public function priceOf(string $sku, int $quantity): int;

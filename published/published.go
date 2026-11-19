@@ -121,3 +121,10 @@ func (BlanknessQuestion) published() {}
 func (q BlanknessQuestion) AskedOf(name, field string) bool {
 	return canonical(name) == canonical(q.Type) && canonical(field) == canonical(q.Field)
 }
+
+// ServerRoutes is every path the server answers under a route's name, asked of a path a client writes out by hand.
+type ServerRoutes struct {
+	Matches func(written []string) bool
+}
+
+func (ServerRoutes) published() {}

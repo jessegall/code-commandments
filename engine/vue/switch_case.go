@@ -125,3 +125,27 @@ func (e Element) ViewCases() []Element {
 
 	return views
 }
+
+func (e Element) RetestsItsSwitchSubject() bool {
+	test, tested := e.conditionTest()
+	if !tested {
+		return false
+	}
+	for at := e.Parent(); at.Exists(); at = at.Parent() {
+		if at.IsSwitchCase() {
+			return typescript.Of(at.Binding("value").Value()).Source() == test.Subject
+		}
+	}
+
+	return false
+}
+
+func (e Element) conditionTest() (EqualityTest, bool) {
+	for _, name := range []Name{If, ElseIf, Show} {
+		if test, ok := equality(e.Directive(name)); ok {
+			return test, true
+		}
+	}
+
+	return EqualityTest{}, false
+}

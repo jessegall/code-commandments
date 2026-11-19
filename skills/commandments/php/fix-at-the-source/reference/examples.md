@@ -147,6 +147,34 @@ public static function of(int $base, int $count): string
 }
 ```
 
+### list-mirrors-folder
+
+A hand-written list of `X::class` entries that holds every class of one type in the folders it draws from: a second copy of what the folders already say
+
+```php
+----------[ Bad ]----------
+
+public static function book(): ImportFormatBook
+{
+    return ImportFormatBook::of([CommaSeparated::class, SemicolonSeparated::class, TabSeparated::class, GoogleFeed::class, IcecatFeed::class, PlainCatalog::class]);
+}
+
+----------[ Good ]----------
+
+// Hands the till every step its Steps folder declares, so a new step needs no second edit.
+
+final class TillStepFinder
+{
+    public function wire(TillSteps $steps): void
+    {
+        $steps->addAll(array_map(
+            fn (string $file): string => __NAMESPACE__.'\\Steps\\'.basename($file, '.php'),
+            glob(__DIR__.'/Steps/*.php'),
+        ));
+    }
+}
+```
+
 ### manufactured-fake-fill
 
 `?? <empty literal>` filling a required slot (manufactured fake)

@@ -30,6 +30,14 @@ Now every site is `$element->withMetadata($payload)` — the `copyWith` mapping 
 wrap live in ONE place, named for what they do. The generic `copyWith` stays for the genuinely one-off
 change; the operation you kept repeating becomes first-class.
 
+### The same query, written at every site
+
+An Eloquent chain is an operation too. When `CommandRequest::query()->whereKey($id)->lockForUpdate()->sole()`
+is written in three handlers, the lookup has no name and no owner: the day the lock or the scope changes,
+one copy is missed. Name it once on the model, as a static finder or a scope
+(`CommandRequest::lockedFor($id)`), and call that from each site. A chain written once or twice, or a chain
+inside the model itself, is not this sin.
+
 ### When it is NOT this sin
 
 - **A one-off.** A `with`-call written once is exactly what the flexible API is for — no method needed.

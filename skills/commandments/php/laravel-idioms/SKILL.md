@@ -25,7 +25,21 @@ instead of re-coercing `mixed`. An MCP tool's input is a request like any other:
 named request class (the analogue of a `FormRequest`), with its keys, rules and types in one place, and
 read *that* — never the raw request inside `handle()`.
 
-Hold every dependency as a required constructor parameter, never resolved by hand from the container.
+Hold every dependency as a required constructor parameter, never resolved by hand from the container:
+not `app(X::class)`, not `Container::getInstance()->make(X::class)`, and not an injected container asked for a
+class it could have named in the constructor. A container that builds a class it was handed as data is a factory
+and is fine.
+
+A query that must read past a global scope names the one scope it steps out of
+(`withoutGlobalScope(OwnerScope::class)`); a bare `withoutGlobalScopes()` drops every scope, including one
+added next year for a different reason. When the code keeps stepping out of the same scope, the scope is
+ambient state that belongs as an argument: pass whose rows the query reads.
+
+A route's path is declared once, in its registration. Everywhere else, a redirect, an HTTP call to the
+app itself, or a link in a mail, builds it from the route's name: `route('shares.show', $share)`, never
+`"/sharing/shares/{$share->id}"`. A path written out by hand keeps working until the route moves, and then
+every copy breaks without an error.
+
 Express a query concept that recurs across call sites as a **named Eloquent scope**, so the column knowledge
 lives in one place instead of being re-typed wherever you query. And mutate a model through
 **intention-revealing methods** (`$order->markPaid()`) that say what changed and why — not a bare
@@ -33,6 +47,8 @@ lives in one place instead of being re-typed wherever you query. And mutate a mo
 
 ## Rules
 
+- [ ] Name the scope a query steps out of (`withoutGlobalScope(OwnerScope::class)`), or pass whose rows it reads as an argument; never drop every global scope at once.
+      _Name the one scope to drop, or give the query the owner it reads for explicitly._
 - [ ] Inject a typed config object; never read `config('…')` inside a class.
       _Inject a typed config value object._
 - [ ] Declare dependencies in the constructor; never reach into the container with `app()`/`resolve()` from a resolved class.
@@ -47,6 +63,8 @@ lives in one place instead of being re-typed wherever you query. And mutate a mo
       _Constructor-inject the dependency behind its interface._
 - [ ] A class keeps its own Collection: hand out something a caller cannot change, and give the class the methods callers were reaching in to use.
       _Return `$this->lines->collect()` or `$this->lines->all()` — a copy and a plain array, neither of which the caller can change on you — and add the methods the callers were doing by hand: `addLine()`, `totalFor()`, `without($line)`. A PHP array returned from a getter is already copied, which is why this is about a Collection and not about every getter._
+- [ ] A route's path is declared once, in its registration; everywhere else builds it from the route's name.
+      _Build the URL with `route('name', $parameters)` so a changed path changes every link with it._
 - [ ] Mutate a model through an intention method; never `$model->update([...])` an anonymous array of columns at a call site.
       _An intention method on the model (`$order->markPaid()`)._
 - [ ] Mutate a model through an intention method; don't set-property-then-`save()` at a call site.
@@ -62,56 +80,41 @@ lives in one place instead of being re-typed wherever you query. And mutate a mo
 
 ## Worked example
 
-### config-read
+### bare-scope-escape
 
-`config('…')` read inside a class
+`withoutGlobalScopes()` with no arguments drops every global scope, including ones added later
 
 ```php
 ----------[ Bad ]----------
 
-public function search(array $filters): array
+public function perMethod(): array
 {
-    $perPage = config('shop.catalog.per_page');
-
-    // formerly filtered in PHP; refactored into the query builder in v3
-    $term = $filters['q'];
-    $sort = $filters['sort'];
-
-    return $this->run($term, $sort, $perPage);
+    return Shipment::withoutGlobalScopes()
+        ->selectRaw('method, count(*) as total')
+        ->groupBy('method')
+        ->pluck('total', 'method')
+        ->all();
 }
 
 ----------[ Good ]----------
 
-// in Shop\Catalog\CatalogSearchService
-// Injects the typed settings object instead of reading config in the body.
-
-public function searchTop(string $term, string $sort): array
+public function total(): int
 {
-    return $this->run($term, $sort, $this->settings->perPage);
-}
-
-// The config values the catalog actually uses, read once at the edge and typed. Every body that
-// used to reach for `config()` takes this instead, and gets an `int` rather than a `mixed`.
-
-final class CatalogSettings
-{
-    public function __construct(
-        public readonly int $perPage = 24,
-    ) {}
+    return Shipment::withoutGlobalScope(CurrentShopScope::class)->count();
 }
 ```
 
-The other 12 — one per rule — are in [`reference/examples.md`](reference/examples.md).
+The other 14 — one per rule — are in [`reference/examples.md`](reference/examples.md).
 
 ## Commands
 
 - `{{binary}} judge --skill=php/laravel-idioms` — find every one of these in the codebase.
-- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `config-read`, `container-reach`, `dead-config-key`, `dead-event-wiring`, `duplicated-config-default`, `facade-call`, `handed-out-collection`, `mass-update-at-call-site`, `model-mutation-at-call-site`, `orphaned-binding`, `query-in-loop`, `raw-request-input`, `request-accessor-recast`.
+- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `bare-scope-escape`, `config-read`, `container-reach`, `dead-config-key`, `dead-event-wiring`, `duplicated-config-default`, `facade-call`, `handed-out-collection`, `hard-coded-route-path`, `mass-update-at-call-site`, `model-mutation-at-call-site`, `orphaned-binding`, `query-in-loop`, `raw-request-input`, `request-accessor-recast`.
 - `{{binary}} report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference
 
-- [Worked examples](reference/examples.md) — every rule's bad → good, 13 of them.
+- [Worked examples](reference/examples.md) — every rule's bad → good, 15 of them.
 - [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills

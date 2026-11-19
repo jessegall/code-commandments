@@ -13,6 +13,7 @@ const available = ref<number[]>([])
 
 // @sin DuplicateFunction
 const fetchAvailability = async (sku: string): Promise<number[]> => {
+    // @sin RawFetchInComponent
     const response = await fetch(`/api/stock/${sku}`)
     if (!response.ok) {
         throw new Error(response.statusText)

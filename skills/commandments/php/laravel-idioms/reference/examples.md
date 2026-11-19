@@ -2,6 +2,30 @@
 
 One bad → good per rule this skill teaches, taken from the fixture that proves the detector, so every pair is code that really fires and really passes.
 
+### bare-scope-escape
+
+`withoutGlobalScopes()` with no arguments drops every global scope, including ones added later
+
+```php
+----------[ Bad ]----------
+
+public function perMethod(): array
+{
+    return Shipment::withoutGlobalScopes()
+        ->selectRaw('method, count(*) as total')
+        ->groupBy('method')
+        ->pluck('total', 'method')
+        ->all();
+}
+
+----------[ Good ]----------
+
+public function total(): int
+{
+    return Shipment::withoutGlobalScope(CurrentShopScope::class)->count();
+}
+```
+
 ### config-read
 
 `config('…')` read inside a class
@@ -43,36 +67,21 @@ final class CatalogSettings
 
 ### container-reach
 
-`app()`/`resolve()` reach inside a container-resolved class
+`app()`, `resolve()` or a container's `make()` reach inside a container-resolved class
 
 ```php
 ----------[ Bad ]----------
 
-public function charge(string $token, int $amountCents): bool
+public function lineFromContainer(DeliveryInstruction $instruction): string
 {
-    $gateway = app(PaymentGatewayRegistry::class)->get('default');
-
-    if ($amountCents <= 0) {
-        throw new \RuntimeException("Cannot charge a non-positive amount: {$amountCents}");
-    }
-
-    Log::info('charging', ['amount' => $amountCents]);
-
-    return $gateway->send($token, $amountCents);
+    return $this->container->make(DeliveryNotePrinter::class)->line($instruction);
 }
 
 ----------[ Good ]----------
 
-// in Shop\Services\PaymentProcessor
-public function __construct(private readonly PaymentGatewayRegistry $gateways) {}
-
-// in Shop\Services\PaymentProcessor
-// The registry is a declared constructor parameter, so the class states what it needs and the
-// container hands it over — nothing reaches back into the container from the body.
-
-public function captureAuthorised(int $amountCents): void
+public function line(DeliveryInstruction $instruction): string
 {
-    $this->gateways->get('default')->capture($amountCents);
+    return $this->printer->line($instruction);
 }
 ```
 
@@ -250,6 +259,26 @@ public function listed(): Collection
 public function add(Crate $crate): void
 {
     $this->crates->push($crate);
+}
+```
+
+### hard-coded-route-path
+
+A path written out by hand where a named route already declares it
+
+```php
+----------[ Bad ]----------
+
+public function statementLink(GiftCard $card): string
+{
+    return "/gift-cards/{$card->id}/statement";
+}
+
+----------[ Good ]----------
+
+public function statementUrl(GiftCard $card): string
+{
+    return route('gift-cards.statement', $card->id);
 }
 ```
 

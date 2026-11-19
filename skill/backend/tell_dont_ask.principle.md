@@ -6,7 +6,7 @@ tree of parts** — to work out something the object should answer itself, while
 than its own (`$this`) state. The fix is Fowler's **Move Method**: the loop belongs on the object whose
 collection it walks, so `$node->edges()` replaces `EdgeDetector::detect($node)`.
 
-**Structure, not surface.** The tell is *operating on the object's internals* — four shapes:
+**Structure, not surface.** The tell is *operating on the object's internals* — six shapes:
 
 1. **Iterate** its collection — `foreach ($node->outputs …)`, a recursive walk of `$block->left`/`->right`.
 2. **Query** its collection from outside — `array_reduce($order->lines(), …)`,
@@ -38,6 +38,18 @@ A method that only reads the object's **flat scalar fields** to compute a value 
 yes/no — is an **external policy**, not envy. That's a *Strategy*, the documented exception: scoring,
 formatting, and classifying legitimately live in their own class, because the rule can vary independently of
 the data. Reading fields is fine; *operating on the object's internals* is the sin.
+
+5. **Guard its transition** — check its state against an enum case, throw, then tell it to change:
+   `if ($request->state !== RequestState::Open) { throw … } $request->approve();`. The rule for when
+   `approve()` may run lives outside `approve()`, so every other caller either copies the check or skips it.
+   Move the check and the throw into the transition (`approve()` throws `RequestNotOpen`) and the caller
+   reads "load, tell, return".
+
+6. **Probe it for capabilities** — a class holding one object grows an accessor per optional interface it
+   might implement: `return $this->driver instanceof Pausable ? $this->driver->pause() : null;`, then the
+   same for `Resumable`, `Inspectable`, and so on. Each new capability adds another `instanceof` accessor to
+   the hub. Ask for the capability by its contract in one place (`$this->driver->provided(Pausable::class)`),
+   or let the held object declare the capabilities it has as a typed list.
 
 **Why it's a sin:**
 

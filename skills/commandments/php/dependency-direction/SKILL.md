@@ -97,9 +97,19 @@ design worse. In order of preference:
 You are typing a `use` and the namespace you are importing is *above* the file you
 are typing it in. Stop and ask what value you actually need from up there — it is
 almost always something smaller than the class you were about to reach for.
+### An interface with one side
+
+An interface earns its place in one of two ways: it is a **port**, declared by the module that consumes it
+and filled by another, or it is a **seam** with a second implementation (a test double counts). An interface
+that one class implements, that no other module names, and that sits in the same module as that class is
+neither: every reader takes an extra hop to find the only code that runs. Type against the class and delete
+the interface. If another module really does need to depend on the behaviour, move the interface into that
+module, where it becomes that module's port.
 
 ## Rules
 
+- [ ] An interface earns its place as a port another module uses, or a seam with a second implementation; inside one module with one implementer, depend on the class.
+      _Type against the class and delete the interface, or move the interface to the module that consumes it, where it becomes that module's port._
 - [ ] Break every namespace cycle — dependencies point ONE way, so a namespace can always be lifted out on its own.
       _cut the weaker arrow: move the shared class down, or have the lower namespace own an interface the higher one implements_
 - [ ] Reference only DOWN the declared stack — a layer may use the layers it declared in `mayUse`, and nothing else that is declared.
@@ -107,63 +117,50 @@ almost always something smaller than the class you were about to reach for.
 
 ## Worked example
 
-### namespace-cycle
+### lone-implementer-interface
 
-two namespaces that reference each other — neither can be read, tested or moved alone
+An interface with one implementing class, named by nothing outside that class's own module: an indirection with one side
 
 ```php
 ----------[ Bad ]----------
 
-// Claims reads the policy from two places; this is the single arrow pointing back, and it is
-// what stops the warranty terms from being read, tested, or reused without the claims desk.
+// Prints the label on a warehouse bin.
 
-public function firstClaim(): Claim
+interface BinLabeller
 {
-    return new Claim($this->months);
+    public function label(string $bin): string;
+
+    public function reprint(string $bin, int $copies): string;
+
+    public function calibrate(float $darkness, int $speedInchesPerSecond): void;
 }
 
 ----------[ Good ]----------
 
-// in Shop\Warranty\WarrantyPolicy
-// The FIX: the arrow back into Claims is gone. The policy states its side of the relationship as a
-// contract it OWNS (`CoverageClaim`), the claims desk implements it, and Warranty can now be read,
-// tested and lifted out with nothing from the desk coming along.
+// Replaces a lost voucher with a new code, depending on the one generator the shop has.
 
-public function coveredMonthsOf(CoverageClaim $claim): int
+final class VoucherReissuer
 {
-    return min($claim->claimedMonths(), $this->months);
-}
+    public function __construct(private readonly RandomCodeGenerator $codes) {}
 
-// One warranty claim raised against a policy — and the claims desk's side of the cut: it implements
-// the contract Warranty declared, so the only arrow between the two runs Claims → Warranty.
-
-final class Claim implements CoverageClaim
-{
-    public function __construct(public readonly int $coveredMonths) {}
-
-    public function claimedMonths(): int
+    public function reissue(string $lost): string
     {
-        return $this->coveredMonths;
-    }
-
-    public function policy(): WarrantyPolicy
-    {
-        return new WarrantyPolicy($this->coveredMonths);
+        return $lost.'-R-'.$this->codes->next();
     }
 }
 ```
 
-The other 1 — one per rule — are in [`reference/examples.md`](reference/examples.md).
+The other 2 — one per rule — are in [`reference/examples.md`](reference/examples.md).
 
 ## Commands
 
 - `{{binary}} judge --skill=php/dependency-direction` — find every one of these in the codebase.
-- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `namespace-cycle`, `namespace-dependency`.
+- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `lone-implementer-interface`, `namespace-cycle`, `namespace-dependency`.
 - `{{binary}} report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference
 
-- [Worked examples](reference/examples.md) — every rule's bad → good, 2 of them.
+- [Worked examples](reference/examples.md) — every rule's bad → good, 3 of them.
 - [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills

@@ -2,6 +2,70 @@
 
 One bad → good per rule this skill teaches, taken from the fixture that proves the detector, so every pair is code that really fires and really passes.
 
+### capability-probe-hub
+
+Three or more methods each ask whether one held object implements an interface, then call it or answer empty: one accessor per optional capability
+
+```php
+----------[ Bad ]----------
+
+// One installed shop plugin, and what it adds to the admin screens.
+
+final class PluginSlot
+{
+    public function __construct(private readonly object $plugin) {}
+
+    public function widgetCount(): int
+    {
+        return $this->plugin instanceof ContributesWidgets ? $this->plugin->widgetCount() : 0;
+    }
+
+    public function routeCount(): int
+    {
+        return $this->plugin instanceof ContributesRoutes ? $this->plugin->routeCount() : 0;
+    }
+
+    public function menuCount(): int
+    {
+        return $this->plugin instanceof ContributesMenus ? $this->plugin->menuCount() : 0;
+    }
+}
+
+----------[ Good ]----------
+
+// One installed shop plugin, told for what it adds to the admin screens.
+
+final class PluginBay
+{
+    public function __construct(private readonly Plugin $plugin) {}
+
+    public function additions(): int
+    {
+        return $this->plugin->widgetCount() + $this->plugin->routeCount() + $this->plugin->menuCount();
+    }
+}
+
+// A shop plugin: it answers every contribution itself, none by default.
+
+abstract class Plugin
+{
+    public function widgetCount(): int
+    {
+        return 0;
+    }
+
+    public function routeCount(): int
+    {
+        return 0;
+    }
+
+    public function menuCount(): int
+    {
+        return 0;
+    }
+}
+```
+
 ### feature-envy
 
 Exiled behaviour / feature envy — a method operating on ONE other owned object's internals that belongs ON that object
@@ -32,6 +96,42 @@ public function suspend(string $reason): void
 {
     $this->suspended = true;
     $this->suspended_reason = $reason;
+    $this->save();
+}
+```
+
+### guard-beside-transition
+
+A caller checks an object's state against an enum case and throws, then tells that object to change: the rule sits outside the transition it guards
+
+```php
+----------[ Bad ]----------
+
+public function handBack(RepairTicket $ticket): void
+{
+    if ($ticket->state !== RepairState::Open) {
+        throw RepairNotOpen::forTicket($ticket->number);
+    }
+
+    $ticket->close();
+}
+
+----------[ Good ]----------
+
+// in Shop\Repairs\RepairDesk
+public function handOver(RepairTicket $ticket): void
+{
+    $ticket->closeOpen();
+}
+
+// in Shop\Repairs\RepairTicket
+public function closeOpen(): void
+{
+    if ($this->state !== RepairState::Open) {
+        throw RepairNotOpen::forTicket($this->number);
+    }
+
+    $this->state = RepairState::Fixed;
     $this->save();
 }
 ```

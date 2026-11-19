@@ -14,3 +14,10 @@ The element reads as one thing (content + styling), the `<template>` as another
 (when / how-many). `repent` auto-wraps these — a `v-for` takes its `:key` along.
 (`v-show` is exempt: it toggles `display` on a real node and can't live on a
 `<template>`, which renders nothing.)
+### A case that tests its value again
+
+Inside a `<SwitchCase :value="item.type">`, the `#text` slot already knows `item.type` is `'text'`. A
+`v-if="item.type === 'text'"` inside it is a second copy of the dispatch that drifts from the first the day a
+case is renamed. It is usually written to make TypeScript narrow `item`; the fix for that is a component per
+case whose prop is typed with the narrowed member (`<TextLocation :item="item" />` taking a `TextComment`),
+not a repeated test.

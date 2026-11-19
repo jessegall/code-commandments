@@ -30,12 +30,21 @@ The element reads as one thing (content + styling), the `<template>` as another
 (when / how-many). `repent` auto-wraps these — a `v-for` takes its `:key` along.
 (`v-show` is exempt: it toggles `display` on a real node and can't live on a
 `<template>`, which renders nothing.)
+### A case that tests its value again
+
+Inside a `<SwitchCase :value="item.type">`, the `#text` slot already knows `item.type` is `'text'`. A
+`v-if="item.type === 'text'"` inside it is a second copy of the dispatch that drifts from the first the day a
+case is renamed. It is usually written to make TypeScript narrow `item`; the fix for that is a component per
+case whose prop is typed with the narrowed member (`<TextLocation :item="item" />` taking a `TextComment`),
+not a repeated test.
 
 ## Rules
 
 - [ ] Put `v-if`/`v-for`/`v-else`/`v-else-if` on a `<template>`, never directly on an HTML or component tag.
 - [ ] Key a `v-for` by a stable identity (`:key="item.id"`), never the loop index — unless plain strings or numbers are rendered as markup that keeps no state, where the place is their only identity.
 - [ ] Never put `v-if` on a `v-for` element; filter in a computed, or wrap the `v-for` in a `<template>` and put the `v-if` on the child.
+- [ ] A `<SwitchCase>` slot already knows which case it is; a `v-if` on the same value inside it is a second, drifting copy of the dispatch.
+      _Give each value its own slot (`#paid`, `#refunded`) and drop the inner test._
 - [ ] Dispatch on a value with `<SwitchCase :value>` (a slot per case); never a `v-if`/`v-else-if` chain re-testing the same subject.
       _the `<SwitchCase :value>` component: `commandments scaffold --sin=switch-case`._
 
@@ -57,19 +66,19 @@ The element reads as one thing (content + styling), the `<template>` as another
 </template>
 ```
 
-The other 3 — one per rule — are in [`reference/examples.md`](reference/examples.md).
+The other 4 — one per rule — are in [`reference/examples.md`](reference/examples.md).
 
 ## Commands
 
 - `{{binary}} judge --skill=vue/vue-control-flow` — find every one of these in the codebase.
-- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `control-flow-on-element`, `index-as-key`, `loop-with-condition`, `switch-case`.
+- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `control-flow-on-element`, `index-as-key`, `loop-with-condition`, `re-tested-switch-case`, `switch-case`.
 - `{{binary}} repent --sin=<sin>` — auto-fix, for `control-flow-on-element`, `switch-case`. Review it with `--dry-run` first.
 - `{{binary}} scaffold --sin=<sin>` — generate the helper the fix reaches for, for `switch-case`.
 - `{{binary}} report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference
 
-- [Worked examples](reference/examples.md) — every rule's bad → good, 4 of them.
+- [Worked examples](reference/examples.md) — every rule's bad → good, 5 of them.
 - [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills

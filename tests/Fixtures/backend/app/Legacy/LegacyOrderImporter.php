@@ -2,6 +2,7 @@
 
 namespace Shop\Legacy;
 
+use JesseGall\CodeCommandments\Sins\Backend\Laravel\RepeatedQueryChain;
 use JesseGall\CodeCommandments\Sins\Backend\ArchaeologyComment;
 use JesseGall\CodeCommandments\Sins\Backend\BloatedDocblock;
 use JesseGall\CodeCommandments\Sins\Backend\DeNulledFinder;
@@ -28,6 +29,7 @@ final class LegacyOrderImporter
 {
     // previously this returned an array, now it returns a Customer or null
     #[Sinful(DeNulledFinder::class)]
+    #[Sinful(RepeatedQueryChain::class)]
     public function findCustomer(string $email): ?Customer
     {
         // loop over all customers and find the matching one

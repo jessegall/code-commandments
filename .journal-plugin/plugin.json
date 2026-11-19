@@ -1,6 +1,6 @@
 {
     "name": "code-commandments",
-    "version": "7.18.152",
+    "version": "7.18.153",
     "title": "Code Commandments",
     "description": "The static code checker judges the codebase, its hooks run inside the journal, and every rule and language is a switch in its settings",
     "journal": "2.267.16",
@@ -51,7 +51,7 @@
     },
     "env": {
         "CLAUDE_PROJECT_DIR": "{project}",
-        "COMMANDMENTS_RELEASE": "v7.18.152"
+        "COMMANDMENTS_RELEASE": "v7.18.153"
     },
     "setup": [
         {
@@ -1250,6 +1250,19 @@
             ],
             "detail": true
         },
+        "sin_lone-implementer-interface": {
+            "title": "LoneImplementerInterface",
+            "help": "An interface with one implementing class, named by nothing outside that class's own module: an indirection with one side",
+            "type": "flag",
+            "default": "true",
+            "group": "php/dependency-direction",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
+        },
         "sin_namespace-cycle": {
             "title": "NamespaceCycle",
             "help": "two namespaces that reference each other — neither can be read, tested or moved alone",
@@ -1588,6 +1601,19 @@
             ],
             "detail": true
         },
+        "sin_list-mirrors-folder": {
+            "title": "ListMirrorsFolder",
+            "help": "A hand-written list of `X::class` entries that holds every class of one type in the folders it draws from: a second copy of what the folders already say",
+            "type": "flag",
+            "default": "true",
+            "group": "php/fix-at-the-source",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
+        },
         "sin_manufactured-fake-fill": {
             "title": "ManufacturedFakeFill",
             "help": "`?? <empty literal>` filling a required slot (manufactured fake)",
@@ -1809,6 +1835,19 @@
             ],
             "detail": true
         },
+        "sin_bare-scope-escape": {
+            "title": "BareScopeEscape",
+            "help": "`withoutGlobalScopes()` with no arguments drops every global scope, including ones added later",
+            "type": "flag",
+            "default": "true",
+            "group": "php/laravel-idioms",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
+        },
         "sin_config-read": {
             "title": "ConfigRead",
             "help": "`config('…')` read inside a class",
@@ -1824,7 +1863,7 @@
         },
         "sin_container-reach": {
             "title": "ContainerReach",
-            "help": "`app()`/`resolve()` reach inside a container-resolved class",
+            "help": "`app()`, `resolve()` or a container's `make()` reach inside a container-resolved class",
             "type": "flag",
             "default": "true",
             "group": "php/laravel-idioms",
@@ -1890,6 +1929,19 @@
         "sin_handed-out-collection": {
             "title": "HandedOutCollection",
             "help": "a getter whose whole body returns the class's own `Collection`, untouched — a Collection is an object, so every caller holds the same one and may `push`, `forget` or `sort` it behind the class's back",
+            "type": "flag",
+            "default": "true",
+            "group": "php/laravel-idioms",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
+        },
+        "sin_hard-coded-route-path": {
+            "title": "HardCodedRoutePath",
+            "help": "A path written out by hand where a named route already declares it",
             "type": "flag",
             "default": "true",
             "group": "php/laravel-idioms",
@@ -2160,12 +2212,38 @@
             ],
             "detail": true
         },
+        "sin_repeated-query-chain": {
+            "title": "RepeatedQueryChain",
+            "help": "One Eloquent query chain written alike at three or more sites outside its model",
+            "type": "flag",
+            "default": "true",
+            "group": "php/repeated-call-helper",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
+        },
         "sin_repeated-type-guard": {
             "title": "RepeatedTypeGuard",
             "help": "The SAME multi-`instanceof` type-narrowing guard (`$x instanceof A && $x->y instanceof B`) is written verbatim in ≥2 places — a check with no name, copied instead of named",
             "type": "flag",
             "default": "true",
             "group": "php/repeated-call-helper",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
+        },
+        "sin_hand-rolled-registry": {
+            "title": "HandRolledRegistry",
+            "help": "A class writes its own keyed store (fill under a key, throw on a missing key) instead of extending the one Registry base",
+            "type": "flag",
+            "default": "true",
+            "group": "php/role-vocabulary",
             "when": [
                 {
                     "language_php": true
@@ -2498,9 +2576,35 @@
             ],
             "detail": true
         },
+        "sin_capability-probe-hub": {
+            "title": "CapabilityProbeHub",
+            "help": "Three or more methods each ask whether one held object implements an interface, then call it or answer empty: one accessor per optional capability",
+            "type": "flag",
+            "default": "true",
+            "group": "php/tell-dont-ask",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
+        },
         "sin_feature-envy": {
             "title": "FeatureEnvy",
             "help": "Exiled behaviour / feature envy — a method operating on ONE other owned object's internals that belongs ON that object",
+            "type": "flag",
+            "default": "true",
+            "group": "php/tell-dont-ask",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
+        },
+        "sin_guard-beside-transition": {
+            "title": "GuardBesideTransition",
+            "help": "A caller checks an object's state against an enum case and throws, then tells that object to change: the rule sits outside the transition it guards",
             "type": "flag",
             "default": "true",
             "group": "php/tell-dont-ask",
@@ -3982,6 +4086,38 @@
             ],
             "detail": true
         },
+        "sin_hard-coded-server-url": {
+            "title": "HardCodedServerURL",
+            "help": "A string written out as the path of a route the server declares by name",
+            "type": "flag",
+            "default": "true",
+            "group": "vue/server-calls",
+            "when": [
+                {
+                    "language_vue": true
+                },
+                {
+                    "language_ts": true
+                }
+            ],
+            "detail": true
+        },
+        "sin_raw-fetch-in-component": {
+            "title": "RawFetchInComponent",
+            "help": "A Vue component calls the global `fetch` itself instead of the one client module",
+            "type": "flag",
+            "default": "true",
+            "group": "vue/server-calls",
+            "when": [
+                {
+                    "language_vue": true
+                },
+                {
+                    "language_ts": true
+                }
+            ],
+            "detail": true
+        },
         "sin_compound-inline-component": {
             "title": "CompoundInlineComponent",
             "help": "A compound primitive (`Dialog`/`Card`/`Sheet`/`Tabs`…) assembled inline with a substantial body — extract it into its own named component.",
@@ -4128,6 +4264,19 @@
         "sin_loop-with-condition": {
             "title": "LoopWithCondition",
             "help": "`v-for` and `v-if`/`v-else-if` on the same element — the condition is re-evaluated every iteration.",
+            "type": "flag",
+            "default": "true",
+            "group": "vue/vue-control-flow",
+            "when": [
+                {
+                    "language_vue": true
+                }
+            ],
+            "detail": true
+        },
+        "sin_re-tested-switch-case": {
+            "title": "RetestedSwitchCase",
+            "help": "A `<SwitchCase>` case that tests again the value the `<SwitchCase>` already dispatched on",
             "type": "flag",
             "default": "true",
             "group": "vue/vue-control-flow",

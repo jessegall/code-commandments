@@ -2,6 +2,7 @@
 
 namespace Shop\Services;
 
+use JesseGall\CodeCommandments\Sins\Backend\Laravel\RepeatedQueryChain;
 use JesseGall\CodeCommandments\Sins\Backend\DeNulledFinder;
 use JesseGall\CodeCommandments\Sins\Backend\Laravel\FacadeCall;
 use JesseGall\CodeCommandments\Sins\Backend\Laravel\RawRequestInput;
@@ -14,6 +15,7 @@ use Shop\Models\Customer;
 final class CustomerService
 {
     #[Sinful(DeNulledFinder::class)]
+    #[Sinful(RepeatedQueryChain::class)]
     public function find(string $email): ?Customer
     {
         return Customer::query()->where('email', $email)->first();

@@ -9,6 +9,7 @@ const rejected = ref(false)
 // @fixed DuplicateFunction
 async function subscribe(): Promise<void> {
     rejected.value = false
+    // @sin RawFetchInComponent
     await fetch('/api/newsletter', { method: 'POST', body: JSON.stringify({ email: address.value }) })
         .catch(() => { rejected.value = true })
 }

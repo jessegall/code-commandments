@@ -54,6 +54,26 @@ One bad → good per rule this skill teaches, taken from the fixture that proves
 </template>
 ```
 
+### re-tested-switch-case
+
+A `<SwitchCase>` case that tests again the value the `<SwitchCase>` already dispatched on
+
+```vue
+----------[ Bad ]----------
+
+<template v-if="request.reason === 'damaged'">
+  <h3>Damaged on arrival</h3>
+  <p>{{ request.photos }} photos attached</p>
+</template>
+
+----------[ Good ]----------
+
+<SwitchCase :value="request.reason">
+  <template #damaged><ReturnDamagedNote :photos="request.photos" /></template>
+  <template #unwanted><h3>No longer wanted</h3></template>
+</SwitchCase>
+```
+
 ### switch-case
 
 A `v-if`/`v-else-if` chain re-testing the same subject (should be `<SwitchCase :value>`)
