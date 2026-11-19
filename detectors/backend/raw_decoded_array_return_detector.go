@@ -21,5 +21,6 @@ func (RawDecodedArrayReturnDetector) Find(codebase *engine.Codebase) []engine.Ma
 		Where(engine.As(func(n php.Node) bool { return n.CallsFunction("json_decode") })).
 		Where(engine.As(php.Node.IsReturnedValue)).
 		Reject(engine.As(php.Node.DecodesItsOwnEncoding)).
+		Reject(engine.As(php.Node.IsWithinInheritedMethod)).
 		Get()
 }

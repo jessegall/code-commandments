@@ -23,7 +23,7 @@ func (ArrayBagDetector) Exemptions() []packages.Exemption {
 
 func (d ArrayBagDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return packages.Exempt(codebase, d, codebase.
-		Where(engine.As(php.Node.ArrayKeyIsString)).
+		Where(engine.As(php.Node.ArrayKeyIsFieldName)).
 		Where(engine.As(func(n php.Node) bool { return n.EnclosingParamIsArray(n.ArrayBaseName()) })).
 		Reject(engine.As(php.Node.IsWithinSerializationBoundary)).
 		Reject(engine.As(php.Node.IsWithinNamedConstructor)).

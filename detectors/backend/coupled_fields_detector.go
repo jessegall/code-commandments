@@ -35,7 +35,7 @@ func isCoupled(codebase *engine.Codebase, class php.Node) bool {
 	program := php.ProgramOf(codebase)
 	values := map[string]bool{}
 	for _, field := range fields {
-		if program.IsValueType(field.Type) {
+		if program.IsValueType(field.Type) && !program.IsStateless(field.Type) {
 			values[field.Name] = true
 		}
 	}

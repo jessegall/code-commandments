@@ -18,11 +18,6 @@ final class RegionCoverage
 {
     public function __construct(private readonly ZoneTable $zones) {}
 
-    public function describe(): string
-    {
-        return 'region coverage via ' . ZoneTable::class;
-    }
-
     #[Sinful(KeyedLookupEnvy::class)]
     public function covers(Consignment $consignment, string $region): bool
     {

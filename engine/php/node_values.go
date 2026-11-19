@@ -293,8 +293,10 @@ func (n Node) IsNamedConstructor() bool {
 	return false
 }
 
-func (n Node) ArrayKeyIsString() bool {
-	return n.Kind() == "Expr_ArrayDimFetch" && n.Child("dim").Kind() == "Scalar_String"
+func (n Node) ArrayKeyIsFieldName() bool {
+	key, _ := n.Child("dim").Text()
+
+	return n.Kind() == "Expr_ArrayDimFetch" && n.Child("dim").Kind() == "Scalar_String" && fieldName.MatchString(key)
 }
 
 func (n Node) ArrayBaseName() string {

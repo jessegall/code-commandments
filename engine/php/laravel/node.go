@@ -327,16 +327,27 @@ func (n Node) RunsAQueryInALoop() bool {
 	if !inAForeach {
 		return false
 	}
-	if walked.isChunked() {
+	if walked.isChunked() || n.isInATransactionPerTurn() {
 		return false
 	}
 
 	return n.reachesTheDatabase()
 }
 
+func (n Node) isInATransactionPerTurn() bool {
+	for held := n.Parent(); held.Exists() && held.Kind() != "Stmt_Foreach"; held = held.Parent() {
+		call := held.Parent().Parent()
+		if (held.Kind() == "Expr_Closure" || held.Kind() == "Expr_ArrowFunction") && held.Parent().Kind() == "Arg" && call.Child("name").Name() == "transaction" {
+			return true
+		}
+	}
+
+	return false
+}
+
 func (n Node) foreachAround() (Node, bool) {
-	for held := n.Parent(); held.Exists(); held = held.Parent() {
-		if held.Kind() == "Stmt_Foreach" {
+	for from, held := n.Match, n.Parent(); held.Exists(); from, held = held, held.Parent() {
+		if held.Kind() == "Stmt_Foreach" && held.Child("expr").Node() != from.Node() {
 			return Node{Match: held.Child("expr")}, true
 		}
 	}

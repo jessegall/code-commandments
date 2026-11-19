@@ -459,3 +459,9 @@ func MutablePropertyNames(class engine.Match) []string {
 
 	return names
 }
+
+func (p *Program) IsStateless(written *contract.Type) bool {
+	declaration, ok := p.Declaration(Written(written).Class())
+
+	return ok && declaration.Kind() == "Stmt_Class" && len(Fields(declaration)) == 0
+}

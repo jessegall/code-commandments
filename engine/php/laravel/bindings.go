@@ -46,11 +46,11 @@ func readContainerBindings(codebase *engine.Codebase) *ContainerBindings {
 			bound = append(bound, abstract)
 		}
 		for _, node := range file.Nodes() {
-			named := namedClass(file.Match(node.ID))
-			if named == "" || within(node.Span.Start, registrations[named]) {
-				continue
+			for _, named := range []string{namedClass(file.Match(node.ID)), strings.TrimLeft(php.Written(node.Declared).Class(), `\`)} {
+				if named != "" && !within(node.Span.Start, registrations[named]) {
+					bindings.referenced[named] = true
+				}
 			}
-			bindings.referenced[named] = true
 		}
 	}
 	program := php.ProgramOf(codebase)
