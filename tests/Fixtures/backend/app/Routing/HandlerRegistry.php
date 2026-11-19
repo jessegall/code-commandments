@@ -2,6 +2,7 @@
 
 namespace Shop\Routing;
 
+use JesseGall\CodeCommandments\Sins\Backend\ReassignedParameter;
 use JesseGall\CodeCommandments\Sins\Backend\NullableRegistryLookup;
 
 use JesseGall\CodeCommandments\Testing\Sinful;
@@ -33,6 +34,7 @@ final class HandlerRegistry
     }
 
     #[Sinful(NullableRegistryLookup::class)]
+    #[Sinful(ReassignedParameter::class)]
     public function for(string $event): ?callable
     {
         foreach ($this->aliases as $alias => $canonical) {

@@ -2,6 +2,8 @@
 
 namespace Shop\Services;
 
+use JesseGall\CodeCommandments\Sins\Backend\UnusedParameter;
+use JesseGall\CodeCommandments\Testing\Sinful;
 use Shop\Exceptions\OrderNotFoundException;
 use Shop\Models\Order;
 
@@ -12,6 +14,7 @@ final class OrderService
     /**
      * @param  array<int, mixed>  $lines
      */
+    #[Sinful(UnusedParameter::class)]
     public function place(int $customerId, array $lines): Order
     {
         $order = new Order(['customer_id' => $customerId, 'status' => 'pending']);

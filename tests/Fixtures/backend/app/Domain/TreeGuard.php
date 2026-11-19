@@ -2,6 +2,7 @@
 
 namespace Shop\Domain;
 
+use JesseGall\CodeCommandments\Sins\Backend\UnusedParameter;
 use JesseGall\CodeCommandments\Sins\Backend\RepeatedTypeGuard;
 use JesseGall\CodeCommandments\Testing\Sinful;
 
@@ -18,6 +19,7 @@ final class TreeGuard
         return $node instanceof Leaf && $node->parent instanceof Branch;
     }
 
+    #[Sinful(UnusedParameter::class)]
     public function depth($node, int $from): int
     {
         return $from + 1;

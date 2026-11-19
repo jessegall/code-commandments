@@ -71,6 +71,8 @@ Reach for this the moment you are about to write:
 - [ ] Choose an action with `if`/`else`; a ternary chooses a VALUE, so never write one whose result nothing reads.
 - [ ] A condition that takes a reader more than a glance is a concept: give it a name and ask for it by that name.
       _Move the condition onto the class that owns most of it, as a method or a property whose name says what it decides — `if ($order->readyToShip($slot))` — and let each object answer for its own part._
+- [ ] Every statement in a block can run; code after the block has left is dead.
+      _Delete the statement, or move it before the statement that leaves the block if it was meant to run._
 
 ## Worked example
 
@@ -102,18 +104,18 @@ public function fanOutGuarded(string $carrier, array $manifest): void
 }
 ```
 
-The other 11 — one per rule — are in [`reference/examples.md`](reference/examples.md).
+The other 12 — one per rule — are in [`reference/examples.md`](reference/examples.md).
 
 ## Commands
 
 - `{{binary}} judge --skill=php/guard-clauses-and-flow` — find every one of these in the codebase.
-- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `coalesced-loop-subject`, `deep-nesting`, `duplicated-branch-tail`, `if-else-ladder`, `inline-throw`, `loop-inverted-guard`, `nested-ternary`, `non-counting-for`, `redundant-else`, `short-circuit-statement`, `ternary-statement`, `unnamed-condition`.
+- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `coalesced-loop-subject`, `deep-nesting`, `duplicated-branch-tail`, `if-else-ladder`, `inline-throw`, `loop-inverted-guard`, `nested-ternary`, `non-counting-for`, `redundant-else`, `short-circuit-statement`, `ternary-statement`, `unnamed-condition`, `unreachable-statement`.
 - `{{binary}} repent --sin=<sin>` — auto-fix, for `loop-inverted-guard`, `nested-ternary`, `redundant-else`, `short-circuit-statement`, `ternary-statement`. Review it with `--dry-run` first.
 - `{{binary}} report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference
 
-- [Worked examples](reference/examples.md) — every rule's bad → good, 12 of them.
+- [Worked examples](reference/examples.md) — every rule's bad → good, 13 of them.
 - [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills

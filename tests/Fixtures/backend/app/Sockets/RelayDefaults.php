@@ -2,6 +2,7 @@
 
 namespace Shop\Sockets;
 
+use JesseGall\CodeCommandments\Sins\Backend\UnusedParameter;
 use JesseGall\CodeCommandments\Sins\Backend\Laravel\DuplicatedConfigDefault;
 use JesseGall\CodeCommandments\Testing\Sinful;
 
@@ -21,6 +22,7 @@ final class RelayDefaults
         return max(1, $configured);
     }
 
+    #[Sinful(UnusedParameter::class)]
     private function setting(string $key, int $fallback): int
     {
         return $fallback;

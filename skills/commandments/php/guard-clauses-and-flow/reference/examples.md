@@ -385,3 +385,32 @@ public function readyFor(LoadingBay $bay): bool
     return $this->packed && $this->labelled && $bay->isFree();
 }
 ```
+
+### unreachable-statement
+
+A statement after a return, throw, break or continue in the same block: it can never run.
+
+```php
+----------[ Bad ]----------
+
+public function body(int $orders): string
+{
+    if ($orders === 0) {
+        return 'No orders today.';
+        error_log('empty digest');
+    }
+
+    return str_repeat('*', min($orders, 20));
+}
+
+----------[ Good ]----------
+
+public function summary(int $orders): string
+{
+    if ($orders === 0) {
+        return 'No orders today.';
+    }
+
+    return $orders === 1 ? 'one order' : "{$orders} orders";
+}
+```

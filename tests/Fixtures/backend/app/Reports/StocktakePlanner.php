@@ -2,6 +2,7 @@
 
 namespace Shop\Reports;
 
+use JesseGall\CodeCommandments\Sins\Backend\UnusedParameter;
 use DateTimeImmutable;
 use JesseGall\CodeCommandments\Sins\Backend\Laravel\DuplicatedConfigDefault;
 use JesseGall\CodeCommandments\Testing\Sinful;
@@ -32,6 +33,7 @@ final class StocktakePlanner
         return $this->planned;
     }
 
+    #[Sinful(UnusedParameter::class)]
     private function readInt(string $key, int $fallback): int
     {
         return $fallback;

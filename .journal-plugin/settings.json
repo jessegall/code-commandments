@@ -1144,6 +1144,14 @@
         "help": "`if ($order->isPaid() && $customer->trusted && $slot->open)` — three parts over two objects, so the reader works out what the condition MEANS instead of reading it"
     },
     {
+        "key": "sin_unreachable-statement",
+        "title": "UnreachableStatement",
+        "type": "flag",
+        "kind": "flag",
+        "default": true,
+        "help": "A statement after a return, throw, break or continue in the same block: it can never run."
+    },
+    {
         "key": "sin_config-read",
         "title": "ConfigRead",
         "type": "flag",
@@ -1656,6 +1664,14 @@
         "help": "A required non-nullable `string` slot handed `''` — the type promises a value that is always there and the caller has none"
     },
     {
+        "key": "sin_reassigned-parameter",
+        "title": "ReassignedParameter",
+        "type": "flag",
+        "kind": "flag",
+        "default": true,
+        "help": "A parameter overwritten inside its method, so one name holds the value the caller passed and later a different one."
+    },
+    {
         "key": "sin_redundant-arrow-return-type",
         "title": "RedundantArrowReturnType",
         "type": "flag",
@@ -1678,6 +1694,14 @@
         "kind": "flag",
         "default": true,
         "help": "Scratch state on `$this` — a method that saves one of its own fields to a local and restores it (`$prev = $this->scope; … $this->scope = $prev`), the field really a per-call input"
+    },
+    {
+        "key": "sin_unused-parameter",
+        "title": "UnusedParameter",
+        "type": "flag",
+        "kind": "flag",
+        "default": true,
+        "help": "A parameter of a method no subclass can override that its body never reads: every caller must pass a value nothing uses."
     },
     {
         "key": "sin_unused-private-member",

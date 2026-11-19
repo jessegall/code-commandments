@@ -2,6 +2,7 @@
 
 namespace Shop\Support;
 
+use JesseGall\CodeCommandments\Sins\Backend\UnusedParameter;
 use JesseGall\CodeCommandments\Sins\Backend\Laravel\DuplicatedConfigDefault;
 use JesseGall\CodeCommandments\Testing\Fixed;
 use JesseGall\CodeCommandments\Testing\Righteous;
@@ -46,11 +47,13 @@ final class ShopConfig
         return 0;
     }
 
+    #[Sinful(UnusedParameter::class)]
     private function intOr(string $key, int $fallback): int
     {
         return $fallback;
     }
 
+    #[Sinful(UnusedParameter::class)]
     private function stringOr(string $key, string $fallback): string
     {
         return $fallback;

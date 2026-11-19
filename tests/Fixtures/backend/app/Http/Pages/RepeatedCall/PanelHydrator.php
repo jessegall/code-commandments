@@ -2,6 +2,7 @@
 
 namespace Shop\Http\Pages\RepeatedCall;
 
+use JesseGall\CodeCommandments\Sins\Backend\ReassignedParameter;
 use JesseGall\CodeCommandments\Sins\Backend\RepeatedNamedCall;
 use JesseGall\CodeCommandments\Testing\Righteous;
 use JesseGall\CodeCommandments\Testing\Sinful;
@@ -16,6 +17,7 @@ final class PanelHydrator
     private const int MAX_HEADING = 40;
 
     #[Sinful(RepeatedNamedCall::class)]
+    #[Sinful(ReassignedParameter::class)]
     public function hydrate(UiNode $node, ?string $heading): UiNode
     {
         $heading = $this->normalise($heading);
@@ -23,6 +25,7 @@ final class PanelHydrator
         return $node->copyWith(metadata: PanelMeta::from(['heading' => $heading])->toArray());
     }
 
+    #[Sinful(ReassignedParameter::class)]
     private function normalise(?string $heading): string
     {
         $heading = trim((string) $heading);

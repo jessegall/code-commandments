@@ -47,6 +47,8 @@ field, or a value object, and delete the defence.
       _Delete the check when the type is right. When callers really do pass null, type the parameter `?Order` and let the reader see it, then decide absence once where the value is born._
 - [ ] Make an invariant certain (hold it non-nullable / assert it); don't mask it with `?->… ?? <fake>`.
 - [ ] If a nullable field is assumed present everywhere its value flows and guarded nowhere, the null is a lie — make it non-nullable and let it be required, failing hard at construction on a real miss.
+- [ ] A parameter keeps the value its caller passed; a new value gets a name of its own.
+      _Assign the new value to a local named for what it is ($trimmed = trim($name)), or ask the caller for the finished value._
 - [ ] Leave the return type off an arrow function whose expression already proves the type. Declare one when the type is genuinely ambiguous or you are narrowing it — never to restate a property or a method you can read from here.
       _drop the `: Type` — `repent` does this for you_
 - [ ] A subtype keeps every promise its parent makes; a method that only throws to refuse its inheritance says the class is not that type.
@@ -54,6 +56,8 @@ field, or a value object, and delete the defence.
 - [ ] Pass a per-call value as a parameter; don't save-and-restore one of your own fields as scratch state.
 - [ ] A required slot means the caller has the value. Filling it just to satisfy the type signature hides a missing value in a way no type check can catch.
       _Fetch the real value, or split off a narrower type that only promises the fields you actually have._
+- [ ] A signature asks only for what its body uses; a parameter no override can need and nothing reads is dead.
+      _Remove the parameter and the argument at each call site, or use it where it was meant to be used._
 - [ ] A class carries only what it uses; a private member nothing reads is dead and is deleted.
       _Delete the member, or call it from where it was meant to be used._
 - [ ] A property hook must EARN its hook: a `get` body that references no `$this` (and no `parent::`) computes nothing from the object — it yields the same value however the instance is configured, so it is a plain property in disguise. This usually happens when an interface declares `{ get; }` and the implementer mimics the syntax; a plain property satisfies a hooked interface property just as well.
@@ -88,18 +92,18 @@ private function countedRows(string $run): int
 }
 ```
 
-The other 9 — one per rule — are in [`reference/examples.md`](reference/examples.md).
+The other 11 — one per rule — are in [`reference/examples.md`](reference/examples.md).
 
 ## Commands
 
 - `{{binary}} judge --skill=php/type-honesty` — find every one of these in the codebase.
-- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `filled-parameter`, `impossible-guard`, `masked-invariant`, `phantom-nullable`, `redundant-arrow-return-type`, `refused-bequest`, `scratch-state-restore`, `placeholder-filled-data`, `unused-private-member`, `useless-property-hook`.
+- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `filled-parameter`, `impossible-guard`, `masked-invariant`, `phantom-nullable`, `reassigned-parameter`, `redundant-arrow-return-type`, `refused-bequest`, `scratch-state-restore`, `placeholder-filled-data`, `unused-parameter`, `unused-private-member`, `useless-property-hook`.
 - `{{binary}} repent --sin=<sin>` — auto-fix, for `redundant-arrow-return-type`. Review it with `--dry-run` first.
 - `{{binary}} report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference
 
-- [Worked examples](reference/examples.md) — every rule's bad → good, 10 of them.
+- [Worked examples](reference/examples.md) — every rule's bad → good, 12 of them.
 - [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills

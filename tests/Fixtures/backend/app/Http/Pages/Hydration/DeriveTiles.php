@@ -2,6 +2,7 @@
 
 namespace Shop\Http\Pages\Hydration;
 
+use JesseGall\CodeCommandments\Sins\Backend\ReassignedParameter;
 use JesseGall\CodeCommandments\Sins\Backend\Spatie\DerivedCollectionCast;
 use JesseGall\CodeCommandments\Testing\Righteous;
 use JesseGall\CodeCommandments\Testing\Sinful;
@@ -25,6 +26,7 @@ final class TileGridFactory
     private const int MAX = 64;
 
     #[Sinful(DerivedCollectionCast::class)]
+    #[Sinful(ReassignedParameter::class)]
     public function ofSize(int $size): TileGrid
     {
         $size = min($size, self::MAX);

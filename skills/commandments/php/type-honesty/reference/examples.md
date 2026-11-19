@@ -135,6 +135,28 @@ final class ConfirmedOrder
 }
 ```
 
+### reassigned-parameter
+
+A parameter overwritten inside its method, so one name holds the value the caller passed and later a different one.
+
+```php
+----------[ Bad ]----------
+
+public function record(string $sku, int $quantity): void
+{
+    $sku = strtoupper(trim($sku));
+    $this->counted[$sku] = $quantity;
+}
+
+----------[ Good ]----------
+
+public function recordScanned(string $scanned, int $quantity): void
+{
+    $sku = strtoupper(trim($scanned));
+    $this->counted[$sku] = $quantity;
+}
+```
+
 ### redundant-arrow-return-type
 
 An arrow function whose return type only repeats what its one expression provably yields — `fn (): string => $this->name` on a `string` property
@@ -259,6 +281,26 @@ final class WorkflowClock
     {
         return '2024-01-01T00:00:00Z';
     }
+}
+```
+
+### unused-parameter
+
+A parameter of a method no subclass can override that its body never reads: every caller must pass a value nothing uses.
+
+```php
+----------[ Bad ]----------
+
+private function variance(int $counted, int $expected, string $countedBy): int
+{
+    return $counted - $expected;
+}
+
+----------[ Good ]----------
+
+private function varianceOf(int $counted, int $expected): int
+{
+    return $counted - $expected;
 }
 ```
 

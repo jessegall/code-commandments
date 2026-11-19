@@ -2,6 +2,7 @@
 
 namespace Shop\Payments;
 
+use JesseGall\CodeCommandments\Sins\Backend\UnusedParameter;
 use JesseGall\CodeCommandments\Sins\Backend\WrappingWithoutCause;
 
 use JesseGall\CodeCommandments\Testing\Sinful;
@@ -23,6 +24,7 @@ final class PaymentGatewayClient
         }
     }
 
+    #[Sinful(UnusedParameter::class)]
     private function callSdk(string $token, int $amountCents): string
     {
         return "txn-{$token}";

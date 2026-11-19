@@ -2,6 +2,7 @@
 
 namespace Shop\Http\Pages\Hydration;
 
+use JesseGall\CodeCommandments\Sins\Backend\ReassignedParameter;
 use Shop\Enums\PaymentMethod;
 use JesseGall\CodeCommandments\Sins\Backend\Spatie\RedundantEnumUnwrap;
 use JesseGall\CodeCommandments\Testing\Sinful;
@@ -19,6 +20,7 @@ final class PaymentIntent extends Data
 final class PaymentIntentBuilder
 {
     #[Sinful(RedundantEnumUnwrap::class)]
+    #[Sinful(ReassignedParameter::class)]
     public function open(PaymentMethod $method, string $reference): PaymentIntent
     {
         if ($reference === '') {
