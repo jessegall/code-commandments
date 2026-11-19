@@ -312,9 +312,7 @@ func (n Node) EnclosingParamIsArray(name string) bool {
 	}
 	for _, param := range Params(n.EnclosingFunctionLike().Match) {
 		if variable := param.Child("var"); variable.Kind() == "Expr_Variable" && variable.Name() == name {
-			declared := param.Node().Declared
-
-			return declared != nil && declared.Kind == "keyword" && declared.Name == "array"
+			return Node{Match: param}.IsArrayParameter()
 		}
 	}
 
@@ -549,4 +547,26 @@ func readsFieldWhole(beyond engine.Match) bool {
 	}
 
 	return true
+}
+
+func (n Node) IsStringKeyedRecord() bool {
+	items := n.ChildrenIn("items")
+
+	return n.Kind() == "Expr_Array" && len(items) >= 2 && !slices.ContainsFunc(items, func(item engine.Match) bool {
+		key, _ := item.Child("key").Text()
+
+		return item.Kind() != "ArrayItem" || item.Child("key").Kind() != "Scalar_String" || !fieldName.MatchString(key)
+	})
+}
+
+var fieldName = regexp.MustCompile(`^[A-Za-z_][A-Za-z0-9_]*$`)
+
+func (n Node) IsArrayParameter() bool {
+	declared := n.Node().Declared
+
+	return n.Kind() == "Param" && declared != nil && declared.Kind == "keyword" && declared.Name == "array"
+}
+
+func (n Node) IsFilledWithRecords() bool {
+	return RecordParametersOf(n.Codebase()).Holds(n.Match)
 }

@@ -48,6 +48,43 @@ final class ImportRow extends Data
 }
 ```
 
+### array-bag-parameter
+
+A parameter declared `array` that callers fill with string-keyed records (`['mode' => …, 'plan' => …]`): the method never defined the type its fields belong to.
+
+```php
+----------[ Bad ]----------
+
+public function push(array $job): void
+{
+    $this->spool($job);
+}
+
+----------[ Good ]----------
+
+// in Shop\Courier\Printing\LabelQueue
+public function pushJob(LabelJob $job): void
+{
+    $this->spooled[] = $job->line();
+}
+
+// One label to print: the parcel it belongs to, how many copies and the printer's format.
+
+final readonly class LabelJob
+{
+    public function __construct(
+        public string $tracking,
+        public int $copies,
+        public string $format,
+    ) {}
+
+    public function line(): string
+    {
+        return sprintf('%s x%d (%s)', $this->tracking, $this->copies, $this->format);
+    }
+}
+```
+
 ### array-return-bag
 
 Returning a multi-field string-keyed array literal (a bag that should be a value object)

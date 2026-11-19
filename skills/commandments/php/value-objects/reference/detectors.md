@@ -3,6 +3,7 @@
 Each row is one rule: the sin's id, the symptom its detector flags, and the detector that flags it. The id is what `{{binary}} info <sin>` takes, and the detector name is what `--detector=` takes if the rule turns out to be wrong.
 
 - **`array-bag`** — String-indexing (`$arr['key']`) a structured array param instead of giving it a name — the type was never defined. — `ArrayBagDetector`
+- **`array-bag-parameter`** — A parameter declared `array` that callers fill with string-keyed records (`['mode' => …, 'plan' => …]`): the method never defined the type its fields belong to. — `ArrayBagParameterDetector`
 - **`array-return-bag`** — Returning a multi-field string-keyed array literal (a bag that should be a value object) — `ArrayReturnBagDetector`
 - **`coupled-fields`** — A class's own fields always change and get checked together — one concept split across several fields — and should be folded into a single value object. — `CoupledFieldsDetector`
 - **`data-clump`** — The same 3+ scalar params threaded through 2+ classes (a recurring data clump → one object) — `DataClumpDetector`

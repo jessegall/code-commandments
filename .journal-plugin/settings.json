@@ -1664,6 +1664,14 @@
         "help": "String-indexing (`$arr['key']`) a structured array param instead of giving it a name — the type was never defined."
     },
     {
+        "key": "sin_array-bag-parameter",
+        "title": "ArrayBagParameter",
+        "type": "flag",
+        "kind": "flag",
+        "default": true,
+        "help": "A parameter declared `array` that callers fill with string-keyed records (`['mode' => …, 'plan' => …]`): the method never defined the type its fields belong to."
+    },
+    {
         "key": "sin_array-return-bag",
         "title": "ArrayReturnBag",
         "type": "flag",

@@ -1,6 +1,6 @@
 {
     "name": "code-commandments",
-    "version": "7.18.148",
+    "version": "7.18.149",
     "title": "Code Commandments",
     "description": "The static code checker judges the codebase, its hooks run inside the journal, and every rule and language is a switch in its settings",
     "journal": "2.267.16",
@@ -51,7 +51,7 @@
     },
     "env": {
         "CLAUDE_PROJECT_DIR": "{project}",
-        "COMMANDMENTS_RELEASE": "v7.18.148"
+        "COMMANDMENTS_RELEASE": "v7.18.149"
     },
     "setup": [
         {
@@ -2631,6 +2631,19 @@
         "sin_array-bag": {
             "title": "ArrayBag",
             "help": "String-indexing (`$arr['key']`) a structured array param instead of giving it a name — the type was never defined.",
+            "type": "flag",
+            "default": "true",
+            "group": "php/value-objects",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
+        },
+        "sin_array-bag-parameter": {
+            "title": "ArrayBagParameter",
+            "help": "A parameter declared `array` that callers fill with string-keyed records (`['mode' => …, 'plan' => …]`): the method never defined the type its fields belong to.",
             "type": "flag",
             "default": "true",
             "group": "php/value-objects",

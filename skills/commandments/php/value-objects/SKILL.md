@@ -32,6 +32,8 @@ introduced late just relabels data everyone already mishandled. This is fix-at-t
 
 - [ ] Give a structured array a typed value object — never read a named field by string key off an `array` param.
       _A Spatie `Data` object built via `::from($array)`._
+- [ ] A method of your own takes values and objects, never an `array` of named fields — the definition is at fault, not the caller filling it.
+      _Type the parameter as a Spatie `Data` object or a final readonly value object, and have callers construct it._
 - [ ] Return a typed value object, not a multi-field string-keyed array literal.
       _Return a Spatie `Data` object via `::from(...)`._
 - [ ] Fields that always change together are really one type — extract them into a value object and use it directly; don't keep a field that just duplicates a nested object's property.
@@ -97,18 +99,18 @@ final class ImportRow extends Data
 }
 ```
 
-The other 8 — one per rule — are in [`reference/examples.md`](reference/examples.md).
+The other 9 — one per rule — are in [`reference/examples.md`](reference/examples.md).
 
 ## Commands
 
 - `{{binary}} judge --skill=php/value-objects` — find every one of these in the codebase.
-- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `array-bag`, `array-return-bag`, `coupled-fields`, `data-clump`, `hand-rolled-wither`, `mutable-value-object`, `positional-tuple-return`, `raw-decoded-array-return`, `flat-field-cluster`.
+- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `array-bag`, `array-bag-parameter`, `array-return-bag`, `coupled-fields`, `data-clump`, `hand-rolled-wither`, `mutable-value-object`, `positional-tuple-return`, `raw-decoded-array-return`, `flat-field-cluster`.
 - `{{binary}} repent --sin=<sin>` — auto-fix, for `hand-rolled-wither`. Review it with `--dry-run` first.
 - `{{binary}} report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference
 
-- [Worked examples](reference/examples.md) — every rule's bad → good, 9 of them.
+- [Worked examples](reference/examples.md) — every rule's bad → good, 10 of them.
 - [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills
