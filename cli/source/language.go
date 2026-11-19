@@ -28,17 +28,18 @@ var Languages = []Language{PHP, Vue, TypeScript, Python, CSharp, Go}
 // facts is what the CLI knows of a language beyond the contract's own facts of it: the name its stream writes, the
 // engines that judge it, the files that declare a project of it where only such a project is read, and the languages
 // read alongside it because they publish facts its rules use (a server type a frontend mirrors, and back), and the case
-// the PHP tool's Language enum named it by where that is not its label.
+// the PHP tool's Language enum named it by where that is not its label, and the folders its projects keep their tests in.
 type facts struct {
 	written    contract.Language
 	engines    []catalog.Engine
 	manifests  []string
 	alongside  []Language
 	legacyCase string
+	tests      func(root string) []string
 }
 
 var described = map[Language]facts{
-	PHP:        {written: contract.PHP, engines: []catalog.Engine{catalog.PHP}, alongside: []Language{Vue, TypeScript}},
+	PHP:        {written: contract.PHP, engines: []catalog.Engine{catalog.PHP}, alongside: []Language{Vue, TypeScript}, tests: composerTestFolders},
 	Vue:        {written: contract.Vue, engines: []catalog.Engine{catalog.Vue, catalog.TypeScript}, alongside: []Language{PHP}},
 	TypeScript: {written: contract.TypeScript, engines: []catalog.Engine{catalog.Vue, catalog.TypeScript}, alongside: []Language{PHP}, legacyCase: "TypeScript"},
 	Python:     {written: contract.Python, engines: []catalog.Engine{catalog.Python}},
@@ -54,6 +55,14 @@ func Of(stream contract.Language) (Language, bool) {
 	}
 
 	return "", false
+}
+
+func (l Language) TestFolders(root string) []string {
+	if described[l].tests == nil {
+		return nil
+	}
+
+	return described[l].tests(root)
 }
 
 func (l Language) Written() contract.Language {

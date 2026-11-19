@@ -9,7 +9,7 @@ import (
 	"github.com/jessegall/code-commandments/engine/php"
 )
 
-// ContainerBindings is what the container is asked for and what it is told: every class the codebase names outside its own registration, and the bound abstracts the codebase declares.
+// ContainerBindings is what the container is asked for and what it is told: every class the code outside its tests names outside its own registration, and the bound abstracts the codebase declares.
 type ContainerBindings struct {
 	referenced map[string]bool
 	declared   map[string]bool
@@ -46,6 +46,9 @@ func readContainerBindings(codebase *engine.Codebase) *ContainerBindings {
 			bound = append(bound, abstract)
 		}
 		for _, node := range file.Nodes() {
+			if file.Match(node.ID).IsTest() {
+				break
+			}
 			for _, named := range []string{namedClass(file.Match(node.ID)), strings.TrimLeft(php.Written(node.Declared).Class(), `\`)} {
 				if named != "" && !within(node.Span.Start, registrations[named]) {
 					bindings.referenced[named] = true

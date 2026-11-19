@@ -39,9 +39,18 @@ func (ConvertedArgumentDetector) Find(codebase *engine.Codebase) []engine.Match 
 	})
 }
 
+func evidencedCallee(call engine.Match, codebase *engine.Codebase) (owner, method string) {
+	owner, method = php.TypesOf(codebase).Callee(call)
+	if declaration, _ := php.ProgramOf(codebase).Declaration(owner); call.IsTestReaching(declaration) {
+		return "", ""
+	}
+
+	return owner, method
+}
+
 func conversionFingerprint(call engine.Match, codebase *engine.Codebase) string {
 	types := php.TypesOf(codebase)
-	owner, method := types.Callee(call)
+	owner, method := evidencedCallee(call, codebase)
 	if owner == "" {
 		return ""
 	}
@@ -83,10 +92,9 @@ func conversionIn(argument, call engine.Match) string {
 
 func suppliedSlots(codebase *engine.Codebase) map[string]int {
 	return engine.Analysis(codebase, "php/supplied-slots", func(codebase *engine.Codebase) map[string]int {
-		types := php.TypesOf(codebase)
 		counts := map[string]int{}
 		for _, call := range callSites(codebase) {
-			owner, method := types.Callee(call)
+			owner, method := evidencedCallee(call, codebase)
 			if owner == "" {
 				continue
 			}

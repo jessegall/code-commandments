@@ -284,6 +284,14 @@ func (c Command) judge(options options, selected []detectors.Detector, judged co
 		return 0, err
 	}
 
+	readOnly, err := readOnlyRoots(options, judged)
+	if err != nil {
+		progress.Finish()
+
+		return 0, err
+	}
+	codebase = reportingOutside(codebase, readOnly)
+
 	progress.Restart(len(whole))
 
 	tasks := make([]Task, len(whole))
@@ -310,7 +318,7 @@ func (c Command) judge(options options, selected []detectors.Detector, judged co
 		csharpFiles = files
 	}
 
-	judgement.Findings = keep(asWalked(judgement.Findings, sources.GivenOf()), options.exclude, targets, judged)
+	judgement.Findings = keep(asWalked(outside(judgement.Findings, readOnly), sources.GivenOf()), options.exclude, targets, judged)
 
 	if space.IsJournalDriven() {
 		if err := dashboard.Record(space, judgement.Findings, judgedPaths(targets, sources)); err != nil {
@@ -669,6 +677,40 @@ func sourceRoots(options options, judged config.Config) ([]string, error) {
 	}
 
 	return judged.WalkedRoots(options.path)
+}
+
+func readOnlyRoots(options options, judged config.Config) ([]string, error) {
+	if options.pathGiven {
+		return nil, nil
+	}
+	roots, err := judged.ReadOnlyRoots(options.path)
+	for at, root := range roots {
+		roots[at] = walk.Real(root)
+	}
+
+	return roots, err
+}
+
+func isReadOnly(path string, readOnly []string) bool {
+	return slices.ContainsFunc(readOnly, func(root string) bool { return walk.Within(root, path) })
+}
+
+func reportingOutside(codebase *engine.Codebase, readOnly []string) *engine.Codebase {
+	if len(readOnly) == 0 {
+		return codebase
+	}
+	var reported []string
+	for _, file := range codebase.Files() {
+		if !isReadOnly(file.Path, readOnly) {
+			reported = append(reported, file.Path)
+		}
+	}
+
+	return codebase.Reporting(reported...)
+}
+
+func outside(findings []engine.Finding, readOnly []string) []engine.Finding {
+	return slices.DeleteFunc(findings, func(finding engine.Finding) bool { return isReadOnly(finding.File, readOnly) })
 }
 
 func judgedPaths(targets scope.Scope, sources scan.Sources) map[string]bool {

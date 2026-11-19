@@ -38,7 +38,7 @@ func readRecordParameters(codebase *engine.Codebase) *RecordParameters {
 		next := carried[0]
 		carried = carried[1:]
 		parameter := ParameterFilled(codebase, next.argument)
-		if !parameter.Exists() {
+		if !parameter.Exists() || next.argument.IsTestReaching(parameter) {
 			continue
 		}
 		records.shapes[parameter.Node()] = append(records.shapes[parameter.Node()], next.keys)

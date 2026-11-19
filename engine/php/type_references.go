@@ -7,7 +7,7 @@ import (
 	"github.com/jessegall/code-commandments/engine"
 )
 
-// TypeReferences is, for every class the code names, the namespaces it is named in: a type hint, an `implements`, a `::class`, a `new`.
+// TypeReferences is, for every class the code outside its tests names, the namespaces it is named in: a type hint, an `implements`, a `::class`, a `new`.
 type TypeReferences struct {
 	namespaces map[string]map[string]bool
 }
@@ -29,7 +29,7 @@ func (r *TypeReferences) NamespacesNaming(class string) []string {
 
 func readTypeReferences(codebase *engine.Codebase) *TypeReferences {
 	read := &TypeReferences{namespaces: map[string]map[string]bool{}}
-	for _, reference := range In(codebase).Where(engine.As(Node.IsClassReference)).Get() {
+	for _, reference := range In(codebase).Where(engine.As(Node.IsClassReference)).Reject(engine.Match.IsTest).Get() {
 		class := strings.TrimLeft(reference.Name(), `\`)
 		if read.namespaces[class] == nil {
 			read.namespaces[class] = map[string]bool{}

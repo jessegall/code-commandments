@@ -59,7 +59,7 @@ func (p *Program) DerivedArgumentCalls() []Node {
 }
 
 func (p *Program) ConvertedArgumentCalls() []Node {
-	calls := p.evaluatedCalls()
+	calls := slices.DeleteFunc(p.evaluatedCalls(), p.isTestReachingProduction)
 	supplied := map[string]int{}
 	for _, call := range calls {
 		target, _ := p.TargetOf(call)
@@ -184,6 +184,9 @@ func (p *Program) ScalarArguments(call Node) map[string]Node {
 }
 
 func (p *Program) ConversionKey(call Node) (string, bool) {
+	if p.isTestReachingProduction(call) {
+		return "", false
+	}
 	target, _ := p.TargetOf(call)
 	bound := p.ScalarArguments(call)
 	names := slices.Collect(maps.Keys(bound))
@@ -288,4 +291,10 @@ func (p *Program) LayerViolations(stack engine.LayerStack) []Node {
 	}
 
 	return violations
+}
+
+func (p *Program) isTestReachingProduction(call Node) bool {
+	target, _ := p.TargetOf(call)
+
+	return call.IsTestReaching(target.Match)
 }

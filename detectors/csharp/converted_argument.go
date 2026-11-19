@@ -35,6 +35,9 @@ func (ConvertedArgumentDetector) Candidates(codebase *engine.Codebase) []detecto
 	var candidates []detectors.Candidate
 	for _, match := range cs.In(codebase).WhereCall().Get() {
 		call := cs.Node{Match: match}
+		if isTestReachingProduction(call) {
+			continue
+		}
 		for position := range call.Arguments() {
 			slot := call.Target().Symbol() + "#" + strconv.Itoa(position)
 			if counts[slot] == 0 {
@@ -68,7 +71,7 @@ func (ConvertedArgumentDetector) GroupKey(match engine.Match) (string, bool) {
 }
 
 func conversionSlot(call cs.Node, program *cs.Program) (string, bool) {
-	if !program.ReachesOwnSignature(call) {
+	if !program.ReachesOwnSignature(call) || isTestReachingProduction(call) {
 		return "", false
 	}
 	conversions := call.ScalarConversions()
@@ -85,3 +88,12 @@ func conversionSlot(call cs.Node, program *cs.Program) (string, bool) {
 }
 
 func (ConvertedArgumentDetector) CrossFile() {}
+
+func isTestReachingProduction(call cs.Node) bool {
+	var declaration engine.Match
+	if declared := call.Codebase().Declarations(call.Target().Symbol()); len(declared) > 0 {
+		declaration = declared[0]
+	}
+
+	return call.IsTestReaching(declaration)
+}

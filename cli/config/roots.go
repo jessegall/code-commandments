@@ -1,8 +1,6 @@
 package config
 
 import (
-	"encoding/json"
-	"os"
 	"path/filepath"
 	"slices"
 	"sort"
@@ -23,7 +21,7 @@ var (
 func DetectRoots(root string) []string {
 	found := map[string]bool{}
 
-	for _, dir := range psr4Dirs(root) {
+	for _, dir := range source.ComposerFolders(root, "autoload") {
 		top, _, _ := strings.Cut(dir, "/")
 
 		if !slices.Contains(notSource, top) && !strings.HasPrefix(top, ".") {
@@ -64,54 +62,6 @@ func DetectRoots(root string) []string {
 	return roots
 }
 
-func psr4Dirs(root string) []string {
-	raw, err := os.ReadFile(root + "/composer.json")
-	if err != nil {
-		return nil
-	}
-
-	var manifest struct {
-		Autoload struct {
-			PSR4 map[string]any `json:"psr-4"`
-		} `json:"autoload"`
-	}
-
-	if json.Unmarshal(raw, &manifest) != nil {
-		return nil
-	}
-
-	var dirs []string
-
-	for _, paths := range manifest.Autoload.PSR4 {
-		for _, dir := range listOf(paths) {
-			if dir = strings.Trim(dir, "/"); dir != "" {
-				dirs = append(dirs, dir)
-			}
-		}
-	}
-
-	return dirs
-}
-
-func listOf(value any) []string {
-	switch value := value.(type) {
-	case string:
-		return []string{value}
-	case []any:
-		var paths []string
-
-		for _, each := range value {
-			if path, isPath := each.(string); isPath {
-				paths = append(paths, path)
-			}
-		}
-
-		return paths
-	default:
-		return nil
-	}
-}
-
 func Absolute(root string, roots []string) []string {
 	root = strings.TrimRight(root, "/")
 	absolute := make([]string, len(roots))
@@ -149,6 +99,42 @@ func DeclaredRoots(root string) ([]string, error) {
 }
 
 func (c Config) WalkedRoots(root string) ([]string, error) {
+	judged, err := c.judgedRoots(root)
+	if err != nil {
+		return nil, err
+	}
+
+	return append(judged, c.testRoots(root, judged)...), nil
+}
+
+func (c Config) ReadOnlyRoots(root string) ([]string, error) {
+	judged, err := c.judgedRoots(root)
+	if err != nil {
+		return nil, err
+	}
+
+	return c.testRoots(root, judged), nil
+}
+
+func (c Config) testRoots(root string, judged []string) []string {
+	excluded := c.Exclusions(root)
+	var tests []string
+
+	for _, language := range source.Languages {
+		for _, folder := range language.TestFolders(root) {
+			full := strings.TrimRight(root, "/") + "/" + folder
+			read := append(slices.Clone(judged), tests...)
+
+			if walk.IsFolder(full) && !excluded.Covers(full) && !slices.ContainsFunc(read, func(walked string) bool { return isWithin(full, walked) }) {
+				tests = append(tests, full)
+			}
+		}
+	}
+
+	return tests
+}
+
+func (c Config) judgedRoots(root string) ([]string, error) {
 	roots, err := DeclaredRoots(root)
 	if err != nil {
 		return nil, err

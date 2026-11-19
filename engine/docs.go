@@ -61,6 +61,10 @@ func (m Match) IsTest() bool {
 	return m.file != nil && m.file.isTest()
 }
 
+func (m Match) IsTestReaching(declaration Match) bool {
+	return m.IsTest() && !declaration.IsTest()
+}
+
 func (f *File) isTest() bool {
 	if f.Test {
 		return true
