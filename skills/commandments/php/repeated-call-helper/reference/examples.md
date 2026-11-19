@@ -31,6 +31,54 @@ public static function lockedFor(int $cardId): self
 }
 ```
 
+### repeated-folder-path
+
+One folder is spelled as a path at three or more sites in different methods: it needs a single point of entry
+
+```php
+----------[ Bad ]----------
+
+public function purge(int $now): int
+{
+    $removed = 0;
+    $folder = storage_path('exports/payouts/');
+    foreach (scandir($folder) ?: [] as $name) {
+        $age = $now - (int) filemtime($folder . $name);
+        if ($age > $this->keepDays * 86400 && unlink($folder . $name)) {
+            $removed++;
+        }
+    }
+
+    return $removed;
+}
+
+----------[ Good ]----------
+
+// in Shop\Refunds\RefundFolder
+public function file(string $name): string
+{
+    return storage_path('refunds/receipts/' . $name);
+}
+
+// in Shop\Refunds\RefundReceipts
+public function store(string $refund, string $pdf): void
+{
+    file_put_contents($this->folder->file($refund . '.pdf'), $pdf);
+}
+
+// in Shop\Refunds\RefundReceipts
+public function exists(string $refund): bool
+{
+    return is_file($this->folder->file($refund . '.pdf'));
+}
+
+// in Shop\Refunds\RefundReceipts
+public function remove(string $refund): bool
+{
+    return unlink($this->folder->file($refund . '.pdf'));
+}
+```
+
 ### repeated-guard
 
 The SAME compound guard condition recurs in ≥2 places — the same check spelled differently (inline reaches vs locals) or reordered still counts, so a copied condition has no name

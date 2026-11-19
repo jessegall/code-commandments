@@ -45,3 +45,17 @@ inside the model itself, is not this sin.
   here, `copyWith(icon: …)` there), there is no single operation to name.
 - **Unrelated types.** Two different classes that both happen to have a `copyWith` are not one operation;
   only calls that resolve to the *same* method (the same class, or one it inherits) count as repetition.
+### The same folder, spelled at every site
+
+A folder the code reaches (`storage_path('exports/payouts/...')`, `__DIR__ . '/../stubs'`, `base_path('scripts/...')`)
+is a place the code depends on, and it belongs to one owner: a method that returns the folder or a file in it, or a
+constant. When three methods each spell the folder or a path inside it, moving or renaming the folder means finding
+every spelling, and the one that is missed fails only at run time.
+
+Give the folder one owner (`RefundFolder::file($name)`) and have every other site ask it. A path is grouped by the
+root it starts from (`storage_path()`, the file's own `__DIR__`, a variable) plus the folders written below it, so a
+nested folder counts with its parent.
+
+What is not this sin: a configuration file declaring paths, which is itself the owner; the same relative path under
+different roots (each package's own `__DIR__ . '/stubs'` is a different folder); and a file named next to the code
+that names it.

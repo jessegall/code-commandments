@@ -447,6 +447,10 @@ func (m Match) EnclosingFunction() Match {
 	return Match{}
 }
 
+func (m Match) IsWithinFunction() bool {
+	return m.Closest(Function).Exists()
+}
+
 func (m Match) IsWithinLoop() bool {
 	for ancestor := m.Parent(); ancestor.Exists() && !ancestor.Is(Function); ancestor = ancestor.Parent() {
 		if ancestor.Is(Loop) {

@@ -294,7 +294,7 @@ func isInteger(text string) bool {
 }
 
 func literalText(node engine.Match) (string, bool) {
-	if node.Node().Value == nil {
+	if node.Node() == nil || node.Node().Value == nil {
 		return "", false
 	}
 

@@ -61,11 +61,27 @@ inside the model itself, is not this sin.
   here, `copyWith(icon: …)` there), there is no single operation to name.
 - **Unrelated types.** Two different classes that both happen to have a `copyWith` are not one operation;
   only calls that resolve to the *same* method (the same class, or one it inherits) count as repetition.
+### The same folder, spelled at every site
+
+A folder the code reaches (`storage_path('exports/payouts/...')`, `__DIR__ . '/../stubs'`, `base_path('scripts/...')`)
+is a place the code depends on, and it belongs to one owner: a method that returns the folder or a file in it, or a
+constant. When three methods each spell the folder or a path inside it, moving or renaming the folder means finding
+every spelling, and the one that is missed fails only at run time.
+
+Give the folder one owner (`RefundFolder::file($name)`) and have every other site ask it. A path is grouped by the
+root it starts from (`storage_path()`, the file's own `__DIR__`, a variable) plus the folders written below it, so a
+nested folder counts with its parent.
+
+What is not this sin: a configuration file declaring paths, which is itself the owner; the same relative path under
+different roots (each package's own `__DIR__ . '/stubs'` is a different folder); and a file named next to the code
+that names it.
 
 ## Rules
 
 - [ ] A query several callers run is one named finder or scope on the model, written once.
       _Add a named static finder or scope to the model (`CommandRequest::lockedFor($id)`) and call it from each site._
+- [ ] A folder the code reaches is named in one place, a method or constant that owns it; every other site asks that owner.
+      _Give the folder one owner (a method that returns its path, or a constant), and have every site that spells the folder or a path inside it call that owner._
 - [ ] Promote a recurring compound guard to a named predicate. The same condition — however its conjuncts are ordered, and whether it reads `$obj->x` inline or a local aliased from it — belongs in ONE named method.
       _Extract the repeated condition into a named boolean method and call THAT at each site._
 - [ ] Promote a repeated `->with…(named: …)` call into a method on the receiver's type that hides the call and its construction boilerplate.
@@ -104,15 +120,15 @@ public static function lockedFor(int $cardId): self
 }
 ```
 
-The other 3 — one per rule — are in [`reference/examples.md`](reference/examples.md).
+The other 4 — one per rule — are in [`reference/examples.md`](reference/examples.md).
 
 ## Commands
 
 - `{{binary}} judge --skill=php/repeated-call-helper` — find every one of these in the codebase.
-- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `repeated-query-chain`, `repeated-guard`, `repeated-named-call`, `repeated-type-guard`.
+- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `repeated-query-chain`, `repeated-folder-path`, `repeated-guard`, `repeated-named-call`, `repeated-type-guard`.
 - `{{binary}} report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference
 
-- [Worked examples](reference/examples.md) — every rule's bad → good, 4 of them.
+- [Worked examples](reference/examples.md) — every rule's bad → good, 5 of them.
 - [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.

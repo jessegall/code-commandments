@@ -209,6 +209,18 @@ func ContainerResolves(codebase *engine.Codebase, class string) bool {
 	}
 	want := strings.TrimLeft(class, `\`)
 	made := constructions.Of(codebase)
+	if builtByEloquent(php.ProgramOf(codebase), want) {
+		return false
+	}
 
 	return made.injected[want] || !made.built[want]
+}
+
+func builtByEloquent(program *php.Program, class string) bool {
+	if program.Extends(class, Model) {
+		return true
+	}
+	users := program.UsersOfTrait(class)
+
+	return len(users) > 0 && !slices.ContainsFunc(users, func(user string) bool { return !builtByEloquent(program, user) })
 }

@@ -1,6 +1,6 @@
 {
     "name": "code-commandments",
-    "version": "7.18.156",
+    "version": "7.18.157",
     "title": "Code Commandments",
     "description": "The static code checker judges the codebase, its hooks run inside the journal, and every rule and language is a switch in its settings",
     "journal": "2.267.16",
@@ -51,7 +51,7 @@
     },
     "env": {
         "CLAUDE_PROJECT_DIR": "{project}",
-        "COMMANDMENTS_RELEASE": "v7.18.156"
+        "COMMANDMENTS_RELEASE": "v7.18.157"
     },
     "setup": [
         {
@@ -2192,6 +2192,19 @@
             "type": "flag",
             "default": "true",
             "group": "php/pass-the-object",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
+        },
+        "sin_repeated-folder-path": {
+            "title": "RepeatedFolderPath",
+            "help": "One folder is spelled as a path at three or more sites in different methods: it needs a single point of entry",
+            "type": "flag",
+            "default": "true",
+            "group": "php/repeated-call-helper",
             "when": [
                 {
                     "language_php": true

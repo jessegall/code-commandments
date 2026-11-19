@@ -1392,6 +1392,14 @@
         "help": "Unpacking the target out of a container parameter — a method takes `(Workflow $workflow, string $nodeId)` and resolves `$workflow->graph->nodeById($nodeId)` itself, when it could just receive the node directly."
     },
     {
+        "key": "sin_repeated-folder-path",
+        "title": "RepeatedFolderPath",
+        "type": "flag",
+        "kind": "flag",
+        "default": true,
+        "help": "One folder is spelled as a path at three or more sites in different methods: it needs a single point of entry"
+    },
+    {
         "key": "sin_repeated-guard",
         "title": "RepeatedGuard",
         "type": "flag",
