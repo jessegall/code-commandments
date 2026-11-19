@@ -197,7 +197,7 @@ _313 sins across 66 skills._
 
 | Sin | What it flags |
 |---|---|
-| `ConcreteCrossModuleDependency` | A constructor takes a service of another self-registered module by its concrete class instead of an interface |
+| `ConcreteCrossModuleDependency` | A constructor takes another module's service by its concrete class instead of an interface |
 | `LoneImplementerInterface` | An interface with one implementing class, named by nothing outside that class's own module: an indirection with one side |
 | `NamespaceCycle` | two namespaces that reference each other — neither can be read, tested or moved alone |
 | `NamespaceDependency` | a declared layer references a layer it may not use (the arrow points back up) |

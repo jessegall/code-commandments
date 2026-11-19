@@ -2,7 +2,7 @@
 
 namespace Shop\Irrigation;
 
-use JesseGall\CodeCommandments\Sins\Backend\Laravel\ConcreteCrossModuleDependency;
+use JesseGall\CodeCommandments\Sins\Backend\ConcreteCrossModuleDependency;
 use JesseGall\CodeCommandments\Testing\Fixed;
 
 #[Fixed(ConcreteCrossModuleDependency::class)]

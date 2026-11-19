@@ -1,6 +1,6 @@
 {
     "name": "code-commandments",
-    "version": "7.18.154",
+    "version": "7.18.155",
     "title": "Code Commandments",
     "description": "The static code checker judges the codebase, its hooks run inside the journal, and every rule and language is a switch in its settings",
     "journal": "2.267.16",
@@ -51,7 +51,7 @@
     },
     "env": {
         "CLAUDE_PROJECT_DIR": "{project}",
-        "COMMANDMENTS_RELEASE": "v7.18.154"
+        "COMMANDMENTS_RELEASE": "v7.18.155"
     },
     "setup": [
         {
@@ -1252,7 +1252,7 @@
         },
         "sin_concrete-cross-module-dependency": {
             "title": "ConcreteCrossModuleDependency",
-            "help": "A constructor takes a service of another self-registered module by its concrete class instead of an interface",
+            "help": "A constructor takes another module's service by its concrete class instead of an interface",
             "type": "flag",
             "default": "true",
             "group": "php/dependency-direction",

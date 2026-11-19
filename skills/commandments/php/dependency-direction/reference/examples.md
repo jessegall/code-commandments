@@ -4,7 +4,7 @@ One bad → good per rule this skill teaches, taken from the fixture that proves
 
 ### concrete-cross-module-dependency
 
-A constructor takes a service of another self-registered module by its concrete class instead of an interface
+A constructor takes another module's service by its concrete class instead of an interface
 
 ```php
 ----------[ Bad ]----------

@@ -108,8 +108,8 @@ module, where it becomes that module's port.
 
 ### A service from another module, by its class
 
-The other side of the same seam. When a project registers its modules one by one, each with a service provider of
-its own, a module that takes another module's service by its concrete class is coupled to how that module does
+The other side of the same seam. A module (a namespace under the project's root, such as `App\Billing` or
+`Channel\Shopify`) that takes another module's service by its concrete class is coupled to how that module does
 the work, not to what it promises. Rename a table, split the class, swap the storage, and every module that named
 the class changes with it.
 
@@ -137,7 +137,7 @@ object carries rather than a collaborator it calls.
 
 ### concrete-cross-module-dependency
 
-A constructor takes a service of another self-registered module by its concrete class instead of an interface
+A constructor takes another module's service by its concrete class instead of an interface
 
 ```php
 ----------[ Bad ]----------

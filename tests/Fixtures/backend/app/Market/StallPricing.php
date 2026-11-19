@@ -2,7 +2,7 @@
 
 namespace Shop\Market;
 
-use JesseGall\CodeCommandments\Sins\Backend\Laravel\ConcreteCrossModuleDependency;
+use JesseGall\CodeCommandments\Sins\Backend\ConcreteCrossModuleDependency;
 use JesseGall\CodeCommandments\Testing\Sinful;
 use Shop\Harvest\HarvestLedger;
 

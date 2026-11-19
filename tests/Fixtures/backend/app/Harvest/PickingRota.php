@@ -2,7 +2,7 @@
 
 namespace Shop\Harvest;
 
-use JesseGall\CodeCommandments\Sins\Backend\Laravel\ConcreteCrossModuleDependency;
+use JesseGall\CodeCommandments\Sins\Backend\ConcreteCrossModuleDependency;
 use JesseGall\CodeCommandments\Testing\Righteous;
 use Shop\Irrigation\FlowRate;
 use Shop\Irrigation\MoistureSensor;

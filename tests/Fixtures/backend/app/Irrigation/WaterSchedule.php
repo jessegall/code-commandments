@@ -3,7 +3,7 @@
 namespace Shop\Irrigation;
 
 use Illuminate\Database\ConnectionInterface;
-use JesseGall\CodeCommandments\Sins\Backend\Laravel\ConcreteCrossModuleDependency;
+use JesseGall\CodeCommandments\Sins\Backend\ConcreteCrossModuleDependency;
 use JesseGall\CodeCommandments\Testing\Fixed;
 
 final class WaterSchedule implements WateringCalendar
