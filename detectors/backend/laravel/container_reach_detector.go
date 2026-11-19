@@ -28,6 +28,7 @@ func (d ContainerReachDetector) Find(codebase *engine.Codebase) []engine.Match {
 		Reject(engine.As(php.Node.IsInEnum)).
 		Reject(engine.As(laravelnode.Node.InServiceProvider)).
 		Reject(engine.As(php.Node.IsEnclosingClassResolution)).
+		Reject(engine.As(laravelnode.Node.ResolvesLateInALongerLivedOwner)).
 		Where(func(n engine.Match) bool { return laravelnode.ContainerResolves(codebase, php.EnclosingClassName(n)) }).
 		Reject(engine.Match.IsTest).
 		Get())
