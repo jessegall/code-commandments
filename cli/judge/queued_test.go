@@ -14,9 +14,15 @@ import (
 func journalAnswering(t *testing.T, script string) string {
 	t.Helper()
 
+	return journalWithQueue(t, "exit 0", script)
+}
+
+func journalWithQueue(t *testing.T, help, script string) string {
+	t.Helper()
+
 	asked := filepath.Join(t.TempDir(), "asked")
 	journal := filepath.Join(t.TempDir(), "journal")
-	if err := os.WriteFile(journal, []byte("#!/bin/sh\necho \"$@\" > "+asked+"\n"+script+"\n"), 0o755); err != nil {
+	if err := os.WriteFile(journal, []byte("#!/bin/sh\nif [ \"$3\" = --help ]; then "+help+"; fi\necho \"$@\" > "+asked+"\n"+script+"\n"), 0o755); err != nil {
 		t.Fatal(err)
 	}
 	t.Setenv("JOURNAL_BIN", journal)
@@ -51,6 +57,23 @@ func TestAJudgeTheJournalRefusesRunsHere(t *testing.T) {
 
 	if _, taken := throughTheQueue(workspace.At(root, ""), root, cli.InputOf("judge"), cli.Console{Out: io.Discard, Err: io.Discard}); taken {
 		t.Error("a judge the journal refused counts as run, so nothing judges at all")
+	}
+}
+
+func TestAJudgeAnOlderJournalWithoutAQueueRunsHere(t *testing.T) {
+	root := t.TempDir()
+	refused := "echo \"journal plugin: error: argument verb: invalid choice: 'queue'\"; exit 2"
+	asked := journalWithQueue(t, refused, refused)
+
+	var said strings.Builder
+	if _, taken := throughTheQueue(workspace.At(root, ""), root, cli.InputOf("judge"), cli.Console{Out: io.Discard, Err: &said}); taken {
+		t.Error("a journal with no queue verb took the judge, so nothing judges at all")
+	}
+	if strings.Contains(said.String(), "invalid choice") {
+		t.Errorf("the older journal's usage error reached the terminal, which reads as a failed judge: %q", said.String())
+	}
+	if _, err := os.Stat(asked); err == nil {
+		t.Error("a journal with no queue verb was still asked to queue the judge")
 	}
 }
 

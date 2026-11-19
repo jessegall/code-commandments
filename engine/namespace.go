@@ -1,6 +1,10 @@
 package engine
 
-import "strings"
+import (
+	"strings"
+
+	"github.com/jessegall/code-commandments/contract"
+)
 
 func (m Match) Namespace() string {
 	if m.node == nil || m.file == nil {
@@ -49,4 +53,17 @@ func Before(symbol, separator string) string {
 	}
 
 	return symbol[:at]
+}
+
+func ModuleOf(language contract.Language, name string) string {
+	separator := grammarOf(language).NamespaceSeparator
+	if separator == "" {
+		return name
+	}
+	segments := strings.SplitN(strings.TrimLeft(name, separator), separator, 3)
+	if len(segments) < 2 {
+		return segments[0]
+	}
+
+	return segments[0] + separator + segments[1]
 }

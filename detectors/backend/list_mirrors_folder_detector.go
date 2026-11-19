@@ -20,7 +20,7 @@ func (ListMirrorsFolderDetector) Find(codebase *engine.Codebase) []engine.Match 
 	return php.In(codebase).
 		WhereKind("Expr_Array").
 		Where(engine.As(php.Node.IsHandedOver)).
-		Where(engine.As(php.Node.ListsEveryClassOfItsFolders)).
+		Where(engine.Match.ListsEveryClassOfItsFolders).
 		Reject(engine.Match.IsTest).
 		Get()
 }

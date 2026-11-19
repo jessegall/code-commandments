@@ -1,14 +1,10 @@
 package php
 
 import (
-	"path"
-	"slices"
 	"strings"
 
 	"github.com/jessegall/code-commandments/engine"
 )
-
-const leastListedClasses = 5
 
 func ClassLiteral(fetch engine.Match) string {
 	class, name := fetch.Child("class"), fetch.Child("name")
@@ -23,27 +19,8 @@ func (n Node) IsHandedOver() bool {
 	return n.Parent().Kind() == "Arg" || n.Parent().Kind() == "Stmt_Return"
 }
 
-func (n Node) ListsEveryClassOfItsFolders() bool {
-	listed := n.listedProjectClasses()
-	if len(listed) < leastListedClasses {
-		return false
-	}
-	program := ProgramOf(n.Codebase())
-	folders := map[string]bool{}
-	for _, class := range listed {
-		declaration, _ := program.Declaration(class)
-		folders[path.Dir(declaration.File())] = true
-	}
-	for _, shared := range sharedSupertypes(program, listed) {
-		if everyClassOfTheTypeIsListed(program, shared, folders, listed) {
-			return true
-		}
-	}
-
-	return false
-}
-
-func (n Node) listedProjectClasses() []string {
+func listedProjectClasses(list engine.Match) []string {
+	n := Node{Match: list}
 	if n.Kind() != "Expr_Array" {
 		return nil
 	}
@@ -58,27 +35,4 @@ func (n Node) listedProjectClasses() []string {
 	}
 
 	return listed
-}
-
-func sharedSupertypes(program *Program, classes []string) []string {
-	shared := program.Supertypes(classes[0])
-	for _, class := range classes[1:] {
-		supertypes := program.Supertypes(class)
-		shared = slices.DeleteFunc(shared, func(each string) bool { return !slices.Contains(supertypes, each) })
-	}
-
-	return shared
-}
-
-func everyClassOfTheTypeIsListed(program *Program, shared string, folders map[string]bool, listed []string) bool {
-	for class, declaration := range program.Declarations() {
-		if declaration.Kind() != "Stmt_Class" || declaration.HasModifier("abstract") || !folders[path.Dir(declaration.File())] {
-			continue
-		}
-		if program.IsA(class, shared) && !slices.Contains(listed, class) {
-			return false
-		}
-	}
-
-	return true
 }

@@ -195,7 +195,21 @@ func (n Node) ThinDelegationTarget() string {
 		return ""
 	}
 
-	return ActionKey(receiver, call.Child("name").Name())
+	return ActionKey(receiver, call.Child("name").Name()) + constructedArguments(call)
+}
+
+func constructedArguments(call engine.Match) string {
+	var built []string
+	for _, argument := range call.ChildrenIn("args") {
+		if class := (php.Node{Match: argument.Child("value")}).NewClassName(); class != "" {
+			built = append(built, class)
+		}
+	}
+	if len(built) == 0 {
+		return ""
+	}
+
+	return "(" + strings.Join(built, ",") + ")"
 }
 
 func (n Node) soleDelegationCall() (engine.Match, bool) {

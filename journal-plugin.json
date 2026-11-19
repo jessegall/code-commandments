@@ -1,6 +1,6 @@
 {
   "name": "code-commandments",
-  "version": "7.18.157",
+  "version": "7.18.158",
   "title": "Code Commandments",
   "description": "The static code checker judges the codebase, its hooks run inside the journal, and every rule and language is a switch in its settings",
   "journal": "4.62.0",
@@ -22,7 +22,8 @@
       "description": "Judge the project against its commandments and show each sin as it is found",
       "line": "bin/commandments-release judge {args}",
       "env": {
-        "COMMANDMENTS_PLAIN_PROGRESS": "1"
+        "COMMANDMENTS_PLAIN_PROGRESS": "1",
+        "JOURNAL_PLUGIN": "code-commandments"
       },
       "args": [
         "--changes",
@@ -38,7 +39,8 @@
       "description": "Judge what changed since the last commit against the project's commandments and show each sin as it is found",
       "line": "bin/commandments-release judge --changes",
       "env": {
-        "COMMANDMENTS_PLAIN_PROGRESS": "1"
+        "COMMANDMENTS_PLAIN_PROGRESS": "1",
+        "JOURNAL_PLUGIN": "code-commandments"
       },
       "reader": "judge",
       "background": true,
@@ -54,7 +56,10 @@
         "explain <file>",
         "schema"
       ],
-      "reader": "rule"
+      "reader": "rule",
+      "env": {
+        "JOURNAL_PLUGIN": "code-commandments"
+      }
     },
     {
       "name": "commandments",
@@ -67,7 +72,10 @@
         "info <sin>",
         "repent --dry-run",
         "judge --changes"
-      ]
+      ],
+      "env": {
+        "JOURNAL_PLUGIN": "code-commandments"
+      }
     }
   ],
   "cards": [
@@ -118,7 +126,7 @@
     },
     {
       "name": "Check for sins, on demand",
-      "run": "journal check list | grep -q \"Check for sins\" || journal check create \"Check for sins\" --command \"$JOURNAL_PLUGIN_DIR/bin/commandments-release judge\" --every 0 --brief \"Judges the whole project against its commandments; a failure lists each sin found, grouped by the skill that fixes it\""
+      "run": "line=\"env JOURNAL_PLUGIN=code-commandments $JOURNAL_PLUGIN_DIR/bin/commandments-release judge\"; id=$(journal check list | awk '/Check for sins/ { print $1; exit }'); if [ -n \"$id\" ]; then journal check edit \"$id\" --command \"$line\"; else journal check create \"Check for sins\" --command \"$line\" --every 0 --brief \"Judges the whole project against its commandments; a failure lists each sin found, grouped by the skill that fixes it\"; fi"
     }
   ],
   "installed": "bin/commandments-release journal-scan --settings-only",

@@ -29,7 +29,8 @@ func (DuplicateRouteActionDetector) Find(codebase *engine.Codebase) []engine.Mat
 		if target == "" {
 			continue
 		}
-		if class, method, _ := strings.Cut(target, "::"); routes.IsRegisteredAction(class, method) {
+		class, method, _ := strings.Cut(target, "::")
+		if method, _, _ = strings.Cut(method, "("); routes.IsRegisteredAction(class, method) {
 			continue
 		}
 		if byTarget[target] == nil {

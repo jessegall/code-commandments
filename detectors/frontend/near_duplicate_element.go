@@ -26,6 +26,7 @@ func (NearDuplicateElementDetector) Find(codebase *engine.Codebase) []engine.Mat
 	candidates := vue.In(codebase).
 		WhereElement().
 		Where(engine.As(func(e vue.Element) bool { return e.Size() >= nearDuplicateElements })).
+		Reject(engine.As(vue.Element.IsHandedToAComponent)).
 		Get()
 	repeated := repeatedKeys(candidates, shapeHash)
 	copies := map[string]int{}

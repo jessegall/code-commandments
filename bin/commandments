@@ -175,6 +175,11 @@ function binary(): string
 
     if (is_file(dirname(__DIR__) . '/scripts/dev')) {
         $built = __DIR__ . '/commandments-go';
+        $fetched = __DIR__ . '/commandments-release';
+
+        if (! is_file($built) && is_file($fetched)) {
+            return $fetched;
+        }
 
         if (! is_file($built)) {
             refuse("no binary at {$built}, and Go never runs on the host here. Build it in the capped dev container: scripts/build");

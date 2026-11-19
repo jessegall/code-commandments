@@ -15,8 +15,8 @@ func (NullableWireObject) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "nullable-wire-object",
 		Skill:       spatieskills.SpatieData{},
-		Description: `A nested object on a ` + "`" + `#[TypeScript]` + "`" + ` Data is typed ` + "`" + `T | null` + "`" + ` — it ships ` + "`" + `null` + "`" + ` on the wire where ` + "`" + `T | Optional` + "`" + ` would OMIT it (what the frontend's ` + "`" + `x?.` + "`" + ` reads for "absent")`,
-		Rule:        `On a ` + "`" + `#[TypeScript]` + "`" + ` (frontend-bound) Data, type a genuinely-absent nested object ` + "`" + `T | Optional = new Optional()` + "`" + `, not ` + "`" + `T | null` + "`" + ` — so the wire omits it rather than carrying a ` + "`" + `null` + "`" + `.`,
+		Description: `A nested Data or enum on a ` + "`" + `#[TypeScript]` + "`" + ` Data is typed ` + "`" + `T | null` + "`" + ` — it ships ` + "`" + `null` + "`" + ` on the wire where ` + "`" + `T | Optional` + "`" + ` would OMIT it (what the frontend's ` + "`" + `x?.` + "`" + ` reads for "absent")`,
+		Rule:        `On a ` + "`" + `#[TypeScript]` + "`" + ` (frontend-bound) Data, type a genuinely-absent nested Data or enum (a backed enum included: its absence is a missing key, not a null case) ` + "`" + `T | Optional = new Optional()` + "`" + `, not ` + "`" + `T | null` + "`" + ` — so the wire omits it rather than carrying a ` + "`" + `null` + "`" + `.`,
 		Suggestion:  `` + "`" + `public readonly UiChrome|Optional $chrome = new Optional();` + "`" + `, not ` + "`" + `public readonly UiChrome|null $chrome = null;` + "`" + `.`,
 		Requires:    requiresSpatieData,
 	}

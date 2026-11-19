@@ -259,7 +259,7 @@ if you think you need one, you probably want a typed accessor / method on the cl
 - [ ] Seal a Data class `final` with `readonly` promoted props — it's a leaf, not a base.
 - [ ] Map an absent value onto `Optional` in ONE named factory, not a ternary at every producer. Use the scaffolded `optionalOrMissing()` (null → `new Optional`, else `::from`), the omit-from-wire counterpart to Spatie's `optional()`.
       _Replace `$x === null ? new Optional : Foo::from($x)` / `expr() ?? new Optional` with `Foo::optionalOrMissing($x)` (scaffold the `OptionalOrMissing` trait)._
-- [ ] On a `#[TypeScript]` (frontend-bound) Data, type a genuinely-absent nested object `T | Optional = new Optional()`, not `T | null` — so the wire omits it rather than carrying a `null`.
+- [ ] On a `#[TypeScript]` (frontend-bound) Data, type a genuinely-absent nested Data or enum (a backed enum included: its absence is a missing key, not a null case) `T | Optional = new Optional()`, not `T | null` — so the wire omits it rather than carrying a `null`.
       _`public readonly UiChrome|Optional $chrome = new Optional();`, not `public readonly UiChrome|null $chrome = null;`._
 - [ ] Use `Optional::create()`, not `new Optional`, everywhere a static call is legal — a parameter/property default must stay `new Optional` (a factory call is illegal there), everywhere else prefer the factory.
       _Replace `new Optional` / `new Optional()` with `Optional::create()`._

@@ -37,6 +37,22 @@ func init() {
 		TestFile: testFile,
 		Implicit: magic,
 		Labels:   func(name engine.Match) bool { return name.Parent().Kind() == "Arg" && name.Node().Field == "name" },
+		IsConstructor: func(method engine.Match) bool {
+			return method.Kind() == "Stmt_ClassMethod" && method.Name() == "__construct"
+		},
+		HoldsPublicState: func(parameter engine.Match) bool { return parameter.HasModifier("public") },
+		DeclaredClass:    func(parameter engine.Match) string { return Written(parameter.Node().Declared).Class() },
+		IsRecord:         func(class engine.Match) bool { return ProgramOf(class.Codebase()).ClassIsRecord(class.Identity()) },
+		IsValueClass:     func(class engine.Match) bool { return ProgramOf(class.Codebase()).ClassIsValueType(class.Identity()) },
+		ListedClasses:    listedProjectClasses,
+		Types:            func(codebase *engine.Codebase) engine.TypeSystem { return ProgramOf(codebase) },
+		NamespacesNaming: func(contract engine.Match) []string {
+			return TypeReferencesOf(contract.Codebase()).NamespacesNaming(contract.Identity())
+		},
+		DeclaresMethods: func(declaration engine.Match) bool {
+			return slices.ContainsFunc(declaration.ChildrenIn("stmts"), func(member engine.Match) bool { return member.Kind() == "Stmt_ClassMethod" })
+		},
+		NamespaceSeparator: `\`,
 		NamespaceOf: func(symbol string) string {
 			class, _, _ := strings.Cut(symbol, "::")
 

@@ -10,7 +10,6 @@ from __future__ import annotations
 import fcntl
 import json
 import os
-import shutil
 import subprocess
 import sys
 import tempfile
@@ -251,27 +250,19 @@ def kept_event(data: Path, line: bytes) -> Path:
     return Path(name)
 
 
-def journal_program() -> str:
-    named = os.environ.get("JOURNAL_BIN") or shutil.which("journal")
-    if named:
-        return named
-    beside = Path(os.environ.get("JOURNAL_ROOT", "")) / ".journal" / "bin" / "journal"
-    return str(beside) if beside.is_file() else ""
+def judging_line(event: Path, program: Path = PLUGIN / ".journal-plugin" / "v4" / "hook") -> list[str]:
+    return [str(program), f"{JUDGE_EVENT}{event}"]
 
 
-def judging_line(journal: str, event: Path, agent: int, program: Path = PLUGIN / ".journal-plugin" / "v4" / "hook") -> list[str]:
-    agent_named = ["--agent", str(agent)] if agent else []
-    return [journal, "plugin", "run", "--kind", "judge", *agent_named, "--", str(program), f"{JUDGE_EVENT}{event}"]
-
-
-def queued(line: bytes, agent: int) -> Path | None:
-    """Keeps the event and starts the journal's run that judges it, detached, so the event's answer never waits."""
-    data, journal = os.environ.get("JOURNAL_PLUGIN_DATA", ""), journal_program()
-    if not data or not journal:
+def queued(line: bytes) -> Path | None:
+    """Keeps the event and starts the run that judges it, detached, so the event's answer never waits: a journal before
+    version 5 has no plugin run verb, so the script starts its own judging and the journal reads what it told."""
+    data = os.environ.get("JOURNAL_PLUGIN_DATA", "")
+    if not data:
         return None
     event = kept_event(Path(data), line)
     try:
-        subprocess.Popen(judging_line(journal, event, agent), stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
+        subprocess.Popen(judging_line(event), stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
                          stderr=subprocess.DEVNULL, start_new_session=True)
     except OSError:
         event.unlink(missing_ok=True)
@@ -293,7 +284,7 @@ def judge_later(line: bytes) -> None:
     if event_name == EDITED and not window.gather(line):
         return
     try:
-        event = queued(line, agent)
+        event = queued(line)
         if event is not None and event_name == EDITED:
             window.names(event)
     except Exception:
@@ -312,9 +303,12 @@ def main() -> int:
         event = json.loads(line)
     except ValueError:
         event = None
+    if isinstance(event, dict) and event.get("event") in JUDGED_LATER and not judged_later(event):
+        sys.stdout.write(json.dumps(shaped({})) + "\n")
+        return 0
     if isinstance(event, dict) and judged_after_the_hand_in(event):
         sys.stdout.write(json.dumps(shaped({})) + "\n")
-        queued(line, event.get("agent") if isinstance(event.get("agent"), int) else 0)
+        queued(line)
         return 0
     answer, code = answered(line)
     sys.stdout.buffer.write(answer)

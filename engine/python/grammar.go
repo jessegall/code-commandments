@@ -62,15 +62,16 @@ func init() {
 		NodeHash: func(node engine.Match, normalize bool) string {
 			return engine.SyntaxHash([]engine.Match{node}, hashing, normalize)
 		},
-		TestFile:    testFile,
-		Implicit:    implicit,
-		NamespaceOf: func(symbol string) string { return engine.Before(symbol, ".") },
-		Continues:   func(branch engine.Match) bool { return Node{Match: branch}.IsElif() },
-		Body:        engine.InFields("body"),
-		Otherwise:   engine.InFields("orelse"),
-		Condition:   condition,
-		ElementName: elementName,
-		Computes:    engine.KindIn("BinOp", "BoolOp", "Compare", "UnaryOp", "AugAssign"),
+		TestFile:           testFile,
+		Implicit:           implicit,
+		NamespaceSeparator: ".",
+		NamespaceOf:        func(symbol string) string { return engine.Before(symbol, ".") },
+		Continues:          func(branch engine.Match) bool { return Node{Match: branch}.IsElif() },
+		Body:               engine.InFields("body"),
+		Otherwise:          engine.InFields("orelse"),
+		Condition:          condition,
+		ElementName:        elementName,
+		Computes:           engine.KindIn("BinOp", "BoolOp", "Compare", "UnaryOp", "AugAssign"),
 		ComparisonSubject: func(held engine.Match) engine.Match {
 			subject, _ := Node{Match: held}.ComparisonSubject()
 

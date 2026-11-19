@@ -40,7 +40,7 @@ func insideTheJournal() bool {
 func throughTheQueue(space workspace.Workspace, cwd string, in *cli.Input, console cli.Console) (code int, taken bool) {
 	journal := space.Journal()
 	self, err := os.Executable()
-	if journal == "" || err != nil {
+	if journal == "" || err != nil || !queues(journal, cwd) {
 		return 0, false
 	}
 
@@ -91,6 +91,13 @@ func passedOn(client *os.Process) (*atomic.Bool, func()) {
 		signal.Stop(signals)
 		close(signals)
 	}
+}
+
+func queues(journal, cwd string) bool {
+	asked := exec.Command(journal, "plugin", "queue", "--help")
+	asked.Dir = cwd
+
+	return asked.Run() == nil
 }
 
 const queuedAhead = "waiting: "

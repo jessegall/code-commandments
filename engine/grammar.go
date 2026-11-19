@@ -23,33 +23,43 @@ type Grammar struct {
 
 	Documentable func(Match) bool
 
-	TypeOf            func(Match) string
-	Annotations       func(Match) []Match
-	TypeKind          func(Match) string
-	ReturnType        func(Match) Match
-	ParameterType     func(Match) Match
-	Constructs        func(Match) Match
-	Callers           func(Match) []Match
-	DocTags           func(Match) []string
-	BodyHash          func(Match) string
-	NodeHash          func(node Match, normalize bool) string
-	TestFile          func(judged, path string) bool
-	Implicit          func(Match) bool
-	NamespaceOf       func(symbol string) string
-	AnnotationNames   func(name string) []string
-	Inherited         func(Match) bool
-	Labels            func(Match) bool
-	Continues         func(Match) bool
-	Body              func(Match) []Match
-	Otherwise         func(Match) []Match
-	BindsItsOwnTest   func(Match) bool
-	Condition         func(Match) Match
-	ComparisonSubject func(Match) Match
-	Receiver          func(Match) Match
-	Declares          func(Match) bool
-	Computes          func(Match) bool
-	ElementName       func(Match) string
-	Binds             func(Match) bool
+	TypeOf             func(Match) string
+	Annotations        func(Match) []Match
+	TypeKind           func(Match) string
+	ReturnType         func(Match) Match
+	ParameterType      func(Match) Match
+	Constructs         func(Match) Match
+	Callers            func(Match) []Match
+	DocTags            func(Match) []string
+	BodyHash           func(Match) string
+	NodeHash           func(node Match, normalize bool) string
+	TestFile           func(judged, path string) bool
+	Implicit           func(Match) bool
+	NamespaceOf        func(symbol string) string
+	NamespaceSeparator string
+	IsConstructor      func(Match) bool
+	HoldsPublicState   func(Match) bool
+	DeclaredClass      func(Match) string
+	IsRecord           func(Match) bool
+	IsValueClass       func(Match) bool
+	Types              func(*Codebase) TypeSystem
+	ListedClasses      func(Match) []string
+	DeclaresMethods    func(Match) bool
+	NamespacesNaming   func(Match) []string
+	AnnotationNames    func(name string) []string
+	Inherited          func(Match) bool
+	Labels             func(Match) bool
+	Continues          func(Match) bool
+	Body               func(Match) []Match
+	Otherwise          func(Match) []Match
+	BindsItsOwnTest    func(Match) bool
+	Condition          func(Match) Match
+	ComparisonSubject  func(Match) Match
+	Receiver           func(Match) Match
+	Declares           func(Match) bool
+	Computes           func(Match) bool
+	ElementName        func(Match) string
+	Binds              func(Match) bool
 }
 
 var TypeKinds = []string{"class", "interface", "enum", "trait", "record", "struct", "protocol"}
@@ -120,7 +130,11 @@ func (m Match) grammar() Grammar {
 		return Grammar{}
 	}
 
-	read := spokenIn(m.file.Language()).grammar
+	return grammarOf(m.file.Language())
+}
+
+func grammarOf(language contract.Language) Grammar {
+	read := spokenIn(language).grammar
 	if read == nil {
 		return Grammar{}
 	}

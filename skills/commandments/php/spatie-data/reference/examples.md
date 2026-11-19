@@ -604,7 +604,7 @@ trait OptionalOrMissing
 
 ### nullable-wire-object
 
-A nested object on a `#[TypeScript]` Data is typed `T | null` — it ships `null` on the wire where `T | Optional` would OMIT it (what the frontend's `x?.` reads for "absent")
+A nested Data or enum on a `#[TypeScript]` Data is typed `T | null` — it ships `null` on the wire where `T | Optional` would OMIT it (what the frontend's `x?.` reads for "absent")
 
 ```php
 ----------[ Bad ]----------

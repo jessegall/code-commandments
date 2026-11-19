@@ -1,6 +1,6 @@
 {
     "name": "code-commandments",
-    "version": "7.18.157",
+    "version": "7.18.158",
     "title": "Code Commandments",
     "description": "The static code checker judges the codebase, its hooks run inside the journal, and every rule and language is a switch in its settings",
     "journal": "2.267.16",
@@ -51,7 +51,7 @@
     },
     "env": {
         "CLAUDE_PROJECT_DIR": "{project}",
-        "COMMANDMENTS_RELEASE": "v7.18.157"
+        "COMMANDMENTS_RELEASE": "v7.18.158"
     },
     "setup": [
         {
@@ -2500,7 +2500,7 @@
         },
         "sin_nullable-wire-object": {
             "title": "NullableWireObject",
-            "help": "A nested object on a `#[TypeScript]` Data is typed `T | null` — it ships `null` on the wire where `T | Optional` would OMIT it (what the frontend's `x?.` reads for \"absent\")",
+            "help": "A nested Data or enum on a `#[TypeScript]` Data is typed `T | null` — it ships `null` on the wire where `T | Optional` would OMIT it (what the frontend's `x?.` reads for \"absent\")",
             "type": "flag",
             "default": "true",
             "group": "php/spatie-data",

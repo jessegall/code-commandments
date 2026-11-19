@@ -14,13 +14,12 @@ type LoneImplementerInterfaceDetector struct{}
 
 func init() { detectors.Register(catalog.PHP, LoneImplementerInterfaceDetector{}) }
 
-
 func (LoneImplementerInterfaceDetector) Sin() sins.Sin { return backendsins.LoneImplementerInterface{} }
 
 func (LoneImplementerInterfaceDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return php.In(codebase).
 		WhereKind("Stmt_Interface").
-		Where(engine.As(php.Node.IsLoneAbstraction)).
+		Where(engine.Match.IsLoneAbstraction).
 		Reject(engine.Match.IsTest).
 		Get()
 }

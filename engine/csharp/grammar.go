@@ -35,7 +35,8 @@ func init() {
 		},
 		Implicit: engine.KindIn("ConstructorDeclaration", "DestructorDeclaration", "OperatorDeclaration",
 			"ConversionOperatorDeclaration"),
-		Inherited: func(member engine.Match) bool { return Node{Match: member}.IsInherited() },
+		Inherited:          func(member engine.Match) bool { return Node{Match: member}.IsInherited() },
+		NamespaceSeparator: ".",
 		NamespaceOf: func(symbol string) string {
 			member, _, _ := strings.Cut(strings.TrimPrefix(symbol, "global::"), "(")
 

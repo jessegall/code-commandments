@@ -34,6 +34,10 @@ func (e Element) IsComponent() bool {
 	return e.IsElement() && e.HasFlag("component")
 }
 
+func (e Element) IsHandedToAComponent() bool {
+	return e.IsComponent() || e.Tag() == "template" && e.Parent().IsComponent()
+}
+
 func (e Element) Writes(name string) bool {
 	_, plain := e.WrittenAttribute(name)
 

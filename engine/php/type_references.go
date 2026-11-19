@@ -3,6 +3,7 @@ package php
 import (
 	"strings"
 
+	"github.com/jessegall/code-commandments/contract"
 	"github.com/jessegall/code-commandments/engine"
 )
 
@@ -40,10 +41,5 @@ func readTypeReferences(codebase *engine.Codebase) *TypeReferences {
 }
 
 func ModuleOf(name string) string {
-	segments := strings.SplitN(strings.TrimLeft(name, `\`), `\`, 3)
-	if len(segments) < 2 {
-		return segments[0]
-	}
-
-	return segments[0] + `\` + segments[1]
+	return engine.ModuleOf(contract.PHP, name)
 }
