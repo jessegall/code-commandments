@@ -36,12 +36,12 @@ exit: 1
   [36mclient/stock-visibility.ts:10[0m  VariableDecl HIDDEN  [2m[SideTableTraitDetector][0m
   [36mclient/tag-speech.ts:11[0m  VariableDecl QUIET  [2m[SideTableTraitDetector][0m
   [36mcomponents/NewsletterSignup.vue:11[0m  FunctionDecl subscribe  [2m[DuplicateFunctionDetector][0m
-    [2m↳ same shape as: components/NewsletterSignup.vue:21[0m
-  [36mcomponents/NewsletterSignup.vue:21[0m  FunctionDecl resubscribe  [2m[DuplicateFunctionDetector][0m
+    [2m↳ same shape as: components/NewsletterSignup.vue:22[0m
+  [36mcomponents/NewsletterSignup.vue:22[0m  FunctionDecl resubscribe  [2m[DuplicateFunctionDetector][0m
     [2m↳ same shape as: components/NewsletterSignup.vue:11[0m
   [36mcomponents/PickListActions.vue:8[0m  FunctionDecl release  [2m[NearDuplicateFunctionDetector][0m
-    [2m↳ same shape as: components/PickListActions.vue:19[0m
-  [36mcomponents/PickListActions.vue:19[0m  FunctionDecl pause  [2m[NearDuplicateFunctionDetector][0m
+    [2m↳ same shape as: components/PickListActions.vue:20[0m
+  [36mcomponents/PickListActions.vue:20[0m  FunctionDecl pause  [2m[NearDuplicateFunctionDetector][0m
     [2m↳ same shape as: components/PickListActions.vue:8[0m
   [36mcomponents/QuestionFeed.vue:14[0m  VariableDecl loadQuestions  [2m[NearDuplicateFunctionDetector][0m
     [2m↳ same shape as: client/review-feed.ts:11[0m
@@ -60,7 +60,6 @@ exit: 1
 [1m29 sins[0m across 3 skills.
 
 --- stderr
-⚠ no class of a package is read: composer.json declares dependencies but vendor/autoload.php is not there: run composer install
-  ↳ a method a package's interface fixes reads as the class's own, so a rule that would excuse it cannot
+· read 101 files in <took> (0 from the cache, 101 by the bridges), judged in <took> (0 rule answers from memory, 606 asked): 29 sins
 
 --- files

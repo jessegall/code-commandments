@@ -1,5 +1,97 @@
 exit: 0
 --- stdout
+--- a/app/Data/CouponData.php
++++ b/app/Data/CouponData.php
+@@ -13,7 +13,6 @@
+  * Here the `@method` collides with the real static `rules()` — the collision sin
+  * is not specific to factories or to promoted-constructor classes.
+  *
+- * @method static array rules()
+  */
+ #[Sinful(DataMethodHintCollision::class)]
+ final class CouponData extends Data
+@@ -36,6 +35,7 @@
+  * never the concrete `fromCode()` factory it dispatches to — so nothing collides.
+  *
+  * @method static static from(string $code)
++ * @method static static from(array $payload)
+  */
+ #[Righteous(DataMethodHintCollision::class)]
+ final class VoucherData extends Data
+--- a/app/Data/CustomerData.php
++++ b/app/Data/CustomerData.php
+@@ -9,6 +9,8 @@
+ /**
+  * Typed view of a customer. The snake_case input map is what `::from()` runs and a
+  * raw `new` skips — so this class is RICH: `new CustomerData(...)` is a real sin.
++ *
++ * @method static ($items is \Illuminate\Support\Collection ? \Illuminate\Support\Collection<int, static> : array<int, static>) collect(iterable $items)
+  */
+ #[MapInputName(SnakeCaseMapper::class)]
+ final class CustomerData extends Data
+--- a/app/Data/InvoiceData.php
++++ b/app/Data/InvoiceData.php
+@@ -12,7 +12,8 @@
+ /**
+  * Typed invoice view, built from an order.
+  *
+- * @method static static fromOrder(Order $order)
++ * @method static static from(Order $order)
++ * @method static static from(array $payload)
+  */
+ #[Sinful(DataMethodHintCollision::class)]
+ final class InvoiceData extends Data
+@@ -39,7 +40,8 @@
+  * method the IDE cannot see — and says nothing about the concrete `fromOrder()` factory declared
+  * below it, so no hint re-declares a real method.
+  *
+- * @method static static from(mixed ...$payloads)
++ * @method static static from(Order $order)
++ * @method static static from(array $payload)
+  */
+ #[Fixed(DataMethodHintCollision::class)]
+ final class CreditNoteData extends Data
+--- a/app/Data/MembershipData.php
++++ b/app/Data/MembershipData.php
+@@ -11,6 +11,7 @@
+  * factory. No real method named `from` is declared here, so there is no collision.
+  *
+  * @method static static from(Customer $customer)
++ * @method static static from(array $payload)
+  */
+ final class MembershipData extends Data
+ {
+--- a/app/Data/ProductData.php
++++ b/app/Data/ProductData.php
+@@ -10,6 +10,8 @@
+ /**
+  * Typed view of a product. The `#[WithCast]` on `category` is work `::from()` runs
+  * and a raw `new` skips — so this class is RICH: `new ProductData(...)` is a real sin.
++ *
++ * @method static ($items is \Illuminate\Support\Collection ? \Illuminate\Support\Collection<int, static> : array<int, static>) collect(iterable $items)
+  */
+ final class ProductData extends Data
+ {
+--- a/app/Data/VoucherPanelData.php
++++ b/app/Data/VoucherPanelData.php
+@@ -10,7 +10,6 @@
+  * The voucher panel of the checkout page. A voucher that was never entered travels as a blank code,
+  * which the page then has to decode back into "no voucher".
+  *
+- * @method static self from(mixed ...$payload)
+  */
+ #[Sinful(BlankStringOnTheWire::class)]
+ final class VoucherPanelData extends Data
+--- a/app/Data/WarehouseStockData.php
++++ b/app/Data/WarehouseStockData.php
+@@ -12,7 +12,6 @@
+  * Stock-on-hand per warehouse. The conditional-return `@method` collides with the
+  * real `collect()` override below — the parens in the return type must not hide it.
+  *
+- * @method static ($items is \Illuminate\Support\Collection ? \Illuminate\Support\Collection<int, static> : array<int, static>) collect(iterable $items)
+  */
+ #[Sinful(DataMethodHintCollision::class)]
+ final class WarehouseStockData extends Data
 --- a/app/Http/Pages/CatalogPage.php
 +++ b/app/Http/Pages/CatalogPage.php
 @@ -14,6 +14,9 @@
@@ -40,40 +132,6 @@ exit: 0
      {
          return self::from(['category' => $category]);
      }
---- a/app/Http/Pages/Hydration/LazyRelationRow.php
-+++ b/app/Http/Pages/Hydration/LazyRelationRow.php
-@@ -13,6 +13,11 @@
-  * relation from the wire" pattern. It is NOT a hand-rolled null→Optional map (the scaffolded factory maps a
-  * null PAYLOAD via `::from`, which this isn't), so it must NOT flag. Only a null-guard ternary is the map.
-  */
-+/**
-+ *
-+ * @method static static from(object $row)
-+ * @method static static from(array $payload)
-+ */
- #[Righteous(NullToOptionalMap::class)]
- final class LazyRelationRow extends Data
- {
---- a/app/Http/Pages/Hydration/DeriveTiles.php
-+++ b/app/Http/Pages/Hydration/DeriveTiles.php
-@@ -33,7 +33,7 @@
-             return TileGrid::from(['tiles' => []]);
-         }
- 
--        return TileGrid::from(['tiles' => array_map(GridTile::make(...), range(0, $size - 1))]);
-+        return TileGrid::from(['tiles' => array_map(GridTile::from(...), range(0, $size - 1))]);
-     }
- 
-     public function capacity(): int
-@@ -78,7 +78,7 @@
-     #[Righteous(DerivedCollectionCast::class)]
-     public function build(): LabelStrip
-     {
--        $chips = [StateChip::for(ShipState::Pending), StateChip::for(ShipState::Shipped)];
-+        $chips = [StateChip::from(ShipState::Pending), StateChip::from(ShipState::Shipped)];
- 
-         return LabelStrip::from(['labels' => array_map(static fn (StateChip $c): string => $c->label, $chips)]);
-     }
 --- a/app/Http/Pages/Hydration/CollTypedFeed.php
 +++ b/app/Http/Pages/Hydration/CollTypedFeed.php
 @@ -29,6 +29,10 @@
@@ -107,6 +165,40 @@ exit: 0
      }
  
      /**
+--- a/app/Http/Pages/Hydration/DeriveTiles.php
++++ b/app/Http/Pages/Hydration/DeriveTiles.php
+@@ -35,7 +35,7 @@
+             return TileGrid::from(['tiles' => []]);
+         }
+ 
+-        return TileGrid::from(['tiles' => array_map(GridTile::make(...), range(0, $size - 1))]);
++        return TileGrid::from(['tiles' => array_map(GridTile::from(...), range(0, $size - 1))]);
+     }
+ 
+     public function capacity(): int
+@@ -80,7 +80,7 @@
+     #[Righteous(DerivedCollectionCast::class)]
+     public function build(): LabelStrip
+     {
+-        $chips = [StateChip::for(ShipState::Pending), StateChip::for(ShipState::Shipped)];
++        $chips = [StateChip::from(ShipState::Pending), StateChip::from(ShipState::Shipped)];
+ 
+         return LabelStrip::from(['labels' => array_map(static fn (StateChip $c): string => $c->label, $chips)]);
+     }
+--- a/app/Http/Pages/Hydration/LazyRelationRow.php
++++ b/app/Http/Pages/Hydration/LazyRelationRow.php
+@@ -13,6 +13,11 @@
+  * relation from the wire" pattern. It is NOT a hand-rolled null→Optional map (the scaffolded factory maps a
+  * null PAYLOAD via `::from`, which this isn't), so it must NOT flag. Only a null-guard ternary is the map.
+  */
++/**
++ *
++ * @method static static from(object $row)
++ * @method static static from(array $payload)
++ */
+ #[Righteous(NullToOptionalMap::class)]
+ final class LazyRelationRow extends Data
+ {
 --- a/app/Http/Pages/Hydration/Leaves.php
 +++ b/app/Http/Pages/Hydration/Leaves.php
 @@ -39,11 +39,16 @@
@@ -203,98 +295,6 @@ exit: 0
      {
          return self::from(['order' => $order]);
      }
---- a/app/Data/CouponData.php
-+++ b/app/Data/CouponData.php
-@@ -13,7 +13,6 @@
-  * Here the `@method` collides with the real static `rules()` — the collision sin
-  * is not specific to factories or to promoted-constructor classes.
-  *
-- * @method static array rules()
-  */
- #[Sinful(DataMethodHintCollision::class)]
- final class CouponData extends Data
-@@ -36,6 +35,7 @@
-  * never the concrete `fromCode()` factory it dispatches to — so nothing collides.
-  *
-  * @method static static from(string $code)
-+ * @method static static from(array $payload)
-  */
- #[Righteous(DataMethodHintCollision::class)]
- final class VoucherData extends Data
---- a/app/Data/InvoiceData.php
-+++ b/app/Data/InvoiceData.php
-@@ -12,7 +12,8 @@
- /**
-  * Typed invoice view, built from an order.
-  *
-- * @method static static fromOrder(Order $order)
-+ * @method static static from(Order $order)
-+ * @method static static from(array $payload)
-  */
- #[Sinful(DataMethodHintCollision::class)]
- final class InvoiceData extends Data
-@@ -39,7 +40,8 @@
-  * method the IDE cannot see — and says nothing about the concrete `fromOrder()` factory declared
-  * below it, so no hint re-declares a real method.
-  *
-- * @method static static from(mixed ...$payloads)
-+ * @method static static from(Order $order)
-+ * @method static static from(array $payload)
-  */
- #[Fixed(DataMethodHintCollision::class)]
- final class CreditNoteData extends Data
---- a/app/Data/WarehouseStockData.php
-+++ b/app/Data/WarehouseStockData.php
-@@ -12,7 +12,6 @@
-  * Stock-on-hand per warehouse. The conditional-return `@method` collides with the
-  * real `collect()` override below — the parens in the return type must not hide it.
-  *
-- * @method static ($items is \Illuminate\Support\Collection ? \Illuminate\Support\Collection<int, static> : array<int, static>) collect(iterable $items)
-  */
- #[Sinful(DataMethodHintCollision::class)]
- final class WarehouseStockData extends Data
---- a/app/Data/VoucherPanelData.php
-+++ b/app/Data/VoucherPanelData.php
-@@ -10,7 +10,6 @@
-  * The voucher panel of the checkout page. A voucher that was never entered travels as a blank code,
-  * which the page then has to decode back into "no voucher".
-  *
-- * @method static self from(mixed ...$payload)
-  */
- #[Sinful(BlankStringOnTheWire::class)]
- final class VoucherPanelData extends Data
---- a/app/Data/CustomerData.php
-+++ b/app/Data/CustomerData.php
-@@ -9,6 +9,8 @@
- /**
-  * Typed view of a customer. The snake_case input map is what `::from()` runs and a
-  * raw `new` skips — so this class is RICH: `new CustomerData(...)` is a real sin.
-+ *
-+ * @method static ($items is \Illuminate\Support\Collection ? \Illuminate\Support\Collection<int, static> : array<int, static>) collect(iterable $items)
-  */
- #[MapInputName(SnakeCaseMapper::class)]
- final class CustomerData extends Data
---- a/app/Data/MembershipData.php
-+++ b/app/Data/MembershipData.php
-@@ -11,6 +11,7 @@
-  * factory. No real method named `from` is declared here, so there is no collision.
-  *
-  * @method static static from(Customer $customer)
-+ * @method static static from(array $payload)
-  */
- final class MembershipData extends Data
- {
---- a/app/Data/ProductData.php
-+++ b/app/Data/ProductData.php
-@@ -10,6 +10,8 @@
- /**
-  * Typed view of a product. The `#[WithCast]` on `category` is work `::from()` runs
-  * and a raw `new` skips — so this class is RICH: `new ProductData(...)` is a real sin.
-+ *
-+ * @method static ($items is \Illuminate\Support\Collection ? \Illuminate\Support\Collection<int, static> : array<int, static>) collect(iterable $items)
-  */
- final class ProductData extends Data
- {
 --- a/app/Http/Controllers/PageController.php
 +++ b/app/Http/Controllers/PageController.php
 @@ -38,7 +38,7 @@
@@ -344,17 +344,6 @@ exit: 0
      }
  
      public function register(string $sku): void
---- a/app/Sockets/InputSocket.php
-+++ b/app/Sockets/InputSocket.php
-@@ -25,7 +25,7 @@
-     #[Sinful(HandRolledWither::class)]
-     public function withValue(?string $value): self
-     {
--        return new self($this->id, $this->label, $this->type, $this->required, $value, $this->order);
-+        return clone($this, ['value' => $value]);
-     }
- 
-     /**
 --- a/app/Sockets/CredentialField.php
 +++ b/app/Sockets/CredentialField.php
 @@ -38,12 +38,6 @@
@@ -371,6 +360,17 @@ exit: 0
 +        return clone($this, ['secret' => $secret, 'masked' => false]);
      }
  }
+--- a/app/Sockets/InputSocket.php
++++ b/app/Sockets/InputSocket.php
+@@ -25,7 +25,7 @@
+     #[Sinful(HandRolledWither::class)]
+     public function withValue(?string $value): self
+     {
+-        return new self($this->id, $this->label, $this->type, $this->required, $value, $this->order);
++        return clone($this, ['value' => $value]);
+     }
+ 
+     /**
 --- a/app/Sockets/StepEntry.php
 +++ b/app/Sockets/StepEntry.php
 @@ -24,14 +24,6 @@
@@ -389,24 +389,6 @@ exit: 0
 +        return clone($this, ['status' => $status]);
      }
  }
---- a/app/Reporting/RowProcessor.php
-+++ b/app/Reporting/RowProcessor.php
-@@ -21,10 +21,12 @@
-     public function process(array $rows): void
-     {
-         foreach ($rows as $row) {
--            if ($row->total > 0) {
--                $this->normalise($row);
--                $this->persist($row);
-+            if (! ($row->total > 0)) {
-+                continue;
-             }
-+
-+            $this->normalise($row);
-+            $this->persist($row);
-         }
-     }
- 
 --- a/app/Catalog/StockSweep.php
 +++ b/app/Catalog/StockSweep.php
 @@ -21,10 +21,12 @@
@@ -422,6 +404,24 @@ exit: 0
 +
 +            $this->raisePurchaseOrder($product);
 +            $this->notifyBuyer($product);
+         }
+     }
+ 
+--- a/app/Reporting/RowProcessor.php
++++ b/app/Reporting/RowProcessor.php
+@@ -21,10 +21,12 @@
+     public function process(array $rows): void
+     {
+         foreach ($rows as $row) {
+-            if ($row->total > 0) {
+-                $this->normalise($row);
+-                $this->persist($row);
++            if (! ($row->total > 0)) {
++                continue;
+             }
++
++            $this->normalise($row);
++            $this->persist($row);
          }
      }
  
@@ -515,7 +515,7 @@ exit: 0
  /**
 --- a/app/Reporting/LogLine.php
 +++ b/app/Reporting/LogLine.php
-@@ -8,20 +8,22 @@
+@@ -9,7 +9,9 @@
  use JesseGall\CodeCommandments\Testing\Fixed;
  use JesseGall\CodeCommandments\Testing\Sinful;
  
@@ -525,7 +525,8 @@ exit: 0
 + */
  #[Sinful(InlineDocblock::class)]
  #[Sinful(MemberOutOfOrder::class)]
- final class LogLine
+ #[Sinful(UnusedPrivateMember::class)]
+@@ -17,13 +19,13 @@
  {
      public string $level = 'info';
  
@@ -587,21 +588,6 @@ exit: 0
       * The second block PHP never hands to a reader.
       */
      #[Sinful(StackedDocblock::class)]
---- a/app/Reporting/GradeCalculator.php
-+++ b/app/Reporting/GradeCalculator.php
-@@ -25,7 +25,11 @@
-     #[Sinful(NestedTernary::class)]
-     private function band(int $score): string
-     {
--        return $score >= 90 ? 'A' : ($score >= 75 ? 'B' : 'C');
-+        return match (true) {
-+            $score >= 90 => 'A',
-+            $score >= 75 => 'B',
-+            default => 'C',
-+        };
-     }
- 
-     /**
 --- a/app/Pricing/DiscountLabel.php
 +++ b/app/Pricing/DiscountLabel.php
 @@ -11,6 +11,10 @@
@@ -616,17 +602,21 @@ exit: 0
 +        };
      }
  }
---- a/app/Reporting/WeightAggregator.php
-+++ b/app/Reporting/WeightAggregator.php
-@@ -53,7 +53,7 @@
-      */
-     public function unit(): callable
+--- a/app/Reporting/GradeCalculator.php
++++ b/app/Reporting/GradeCalculator.php
+@@ -26,7 +26,11 @@
+     #[Sinful(NestedTernary::class)]
+     private function band(int $score): string
      {
--        return fn (): string => 'g';
-+        return fn () => 'g';
+-        return $score >= 90 ? 'A' : ($score >= 75 ? 'B' : 'C');
++        return match (true) {
++            $score >= 90 => 'A',
++            $score >= 75 => 'B',
++            default => 'C',
++        };
      }
  
-     public function push(int $grams): void
+     /**
 --- a/app/Checkout/CouponDesk.php
 +++ b/app/Checkout/CouponDesk.php
 @@ -72,7 +72,7 @@
@@ -638,6 +628,17 @@ exit: 0
      }
  
      /**
+--- a/app/Reporting/WeightAggregator.php
++++ b/app/Reporting/WeightAggregator.php
+@@ -53,7 +53,7 @@
+      */
+     public function unit(): callable
+     {
+-        return fn (): string => 'g';
++        return fn () => 'g';
+     }
+ 
+     public function push(int $grams): void
 --- a/app/Support/FeatureGate.php
 +++ b/app/Support/FeatureGate.php
 @@ -17,7 +17,9 @@
@@ -660,20 +661,6 @@ exit: 0
      }
  
      /**
---- a/app/Dispatch/CrateInspector.php
-+++ b/app/Dispatch/CrateInspector.php
-@@ -29,9 +29,9 @@
-     {
-         if ($kind === null) {
-             return array_merge(...array_values($this->labels));
--        } else {
--            return $this->labels[$kind] ?? [];
-         }
-+
-+        return $this->labels[$kind] ?? [];
-     }
- 
-     /**
 --- a/app/Catalog/AvailabilityResolver.php
 +++ b/app/Catalog/AvailabilityResolver.php
 @@ -29,9 +29,9 @@
@@ -688,6 +675,33 @@ exit: 0
          }
  
          return $available;
+--- a/app/Dispatch/CrateInspector.php
++++ b/app/Dispatch/CrateInspector.php
+@@ -29,9 +29,9 @@
+     {
+         if ($kind === null) {
+             return array_merge(...array_values($this->labels));
+-        } else {
+-            return $this->labels[$kind] ?? [];
+         }
++
++        return $this->labels[$kind] ?? [];
+     }
+ 
+     /**
+--- a/app/Orders/RefundPolicy.php
++++ b/app/Orders/RefundPolicy.php
+@@ -18,8 +18,8 @@
+     {
+         if ($order->status === 'shipped') {
+             return '14 days';
+-        } else {
+-            return '30 days';
+         }
++
++        return '30 days';
+     }
+ }
 --- a/app/Support/AccessLevel.php
 +++ b/app/Support/AccessLevel.php
 @@ -17,9 +17,9 @@
@@ -702,32 +716,6 @@ exit: 0
      }
  
      public function level(bool $authenticated, int $role): int
---- a/app/Orders/RefundPolicy.php
-+++ b/app/Orders/RefundPolicy.php
-@@ -18,8 +18,8 @@
-     {
-         if ($order->status === 'shipped') {
-             return '14 days';
--        } else {
--            return '30 days';
-         }
-+
-+        return '30 days';
-     }
- }
---- a/app/Reporting/LedgerTotals.php
-+++ b/app/Reporting/LedgerTotals.php
-@@ -22,7 +22,9 @@
-         $totals = [];
- 
-         foreach ($entries as $entry) {
--            $entry['cents'] === 0 || $totals[$entry['account']] = ($totals[$entry['account']] ?? 0) + $entry['cents'];
-+            if ($entry['cents'] !== 0) {
-+                $totals[$entry['account']] = ($totals[$entry['account']] ?? 0) + $entry['cents'];
-+            }
-         }
- 
-         return $totals;
 --- a/app/Kiosk/IdleWatch.php
 +++ b/app/Kiosk/IdleWatch.php
 @@ -17,13 +17,17 @@
@@ -763,23 +751,19 @@ exit: 0
      }
  
      #[Fixed(ShortCircuitStatement::class)]
---- a/app/Ui/ShelfCollapse.php
-+++ b/app/Ui/ShelfCollapse.php
-@@ -24,9 +24,11 @@
-         $gone = [];
+--- a/app/Reporting/LedgerTotals.php
++++ b/app/Reporting/LedgerTotals.php
+@@ -22,7 +22,9 @@
+         $totals = [];
  
-         foreach ($below[$id] as $child) {
--            $this->isOpen($child->id)
--                ? array_push($gone, ...$this->collapsed($child->id, $below))
--                : $gone[] = $child->id;
-+            if ($this->isOpen($child->id)) {
-+                array_push($gone, ...$this->collapsed($child->id, $below));
-+            } else {
-+                $gone[] = $child->id;
+         foreach ($entries as $entry) {
+-            $entry['cents'] === 0 || $totals[$entry['account']] = ($totals[$entry['account']] ?? 0) + $entry['cents'];
++            if ($entry['cents'] !== 0) {
++                $totals[$entry['account']] = ($totals[$entry['account']] ?? 0) + $entry['cents'];
 +            }
          }
  
-         return $gone;
+         return $totals;
 --- a/app/Loyalty/BadgeToggle.php
 +++ b/app/Loyalty/BadgeToggle.php
 @@ -15,7 +15,11 @@
@@ -808,28 +792,23 @@ exit: 0
  
          $this->beats[] = $label;
      }
---- a/app/Reporting/ExportUploader.php
-+++ b/app/Reporting/ExportUploader.php
-@@ -21,7 +21,7 @@
-         try {
-             $this->pushToBucket($path);
-         } catch (\Throwable $storageError) {
--            throw new IntegrationException($path);
-+            throw new IntegrationException($path, previous: $storageError);
-         }
-     }
+--- a/app/Ui/ShelfCollapse.php
++++ b/app/Ui/ShelfCollapse.php
+@@ -24,9 +24,11 @@
+         $gone = [];
  
---- a/app/Payments/PaymentGatewayClient.php
-+++ b/app/Payments/PaymentGatewayClient.php
-@@ -19,7 +19,7 @@
-         try {
-             return $this->callSdk($token, $amountCents);
-         } catch (\Throwable $failure) {
--            throw new IntegrationException($token);
-+            throw new IntegrationException($token, previous: $failure);
+         foreach ($below[$id] as $child) {
+-            $this->isOpen($child->id)
+-                ? array_push($gone, ...$this->collapsed($child->id, $below))
+-                : $gone[] = $child->id;
++            if ($this->isOpen($child->id)) {
++                array_push($gone, ...$this->collapsed($child->id, $below));
++            } else {
++                $gone[] = $child->id;
++            }
          }
-     }
  
+         return $gone;
 --- a/app/Integrations/CourierApi.php
 +++ b/app/Integrations/CourierApi.php
 @@ -22,7 +22,7 @@
@@ -838,6 +817,28 @@ exit: 0
          } catch (\Throwable $e) {
 -            throw new IntegrationException($trackingCode);
 +            throw new IntegrationException($trackingCode, previous: $e);
+         }
+     }
+ 
+--- a/app/Payments/PaymentGatewayClient.php
++++ b/app/Payments/PaymentGatewayClient.php
+@@ -20,7 +20,7 @@
+         try {
+             return $this->callSdk($token, $amountCents);
+         } catch (\Throwable $failure) {
+-            throw new IntegrationException($token);
++            throw new IntegrationException($token, previous: $failure);
+         }
+     }
+ 
+--- a/app/Reporting/ExportUploader.php
++++ b/app/Reporting/ExportUploader.php
+@@ -21,7 +21,7 @@
+         try {
+             $this->pushToBucket($path);
+         } catch (\Throwable $storageError) {
+-            throw new IntegrationException($path);
++            throw new IntegrationException($path, previous: $storageError);
          }
      }
  

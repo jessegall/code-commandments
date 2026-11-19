@@ -1,6 +1,6 @@
 exit: 0
 --- stdout
-commandments judge — Scan a codebase and report its sins, grouped by the skill that fixes each. Exit code 1 when sins are found, 3 when a rule could not run.
+commandments judge — Scan a codebase and report its sins, grouped by the skill that fixes each. Exit code 1 when sins are found, 3 when a rule could not run, 4 when another run was already reading the project.
 
 Usage:
   commandments judge [path]  scan a folder, or one file read with the folder it sits in — or, with
@@ -52,6 +52,11 @@ Options:
   names the rules that could not run and exits 3 (rather than 0) when nothing else was found,
   because a run missing a rule has not judged what that rule judges. A bridge that stops partway is
   treated the same: the files it read and every other language are judged, and the run names it.
+
+  In a project whose agent journal has this plugin installed, a judge typed in a terminal runs in
+  the journal's queue (`journal plugin queue code-commandments --kind judge`) and prints the queued
+  run's output as it comes, ending with its exit code. A judge the journal itself started runs at
+  once, and one the journal will not queue runs here.
 
   Judge writes a Markdown checklist into your session folder (the run prints the exact path). A full
   scan is slow, so judge ONCE and work that file line-by-line, deleting each line as you fix its

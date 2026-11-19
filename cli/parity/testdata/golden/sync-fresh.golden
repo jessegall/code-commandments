@@ -1,487 +1,23 @@
 exit: 0
 --- stdout
 ↻ composer post-install/post-update now call `commandments sync`.
-↻ code-commandments synced — 68 skills published to .agents/skills, read by Claude Code, Codex.
+↻ code-commandments synced — 3 skills published to .agents/skills, read by Claude Code, Codex.
 
 --- stderr
 
 --- files
-=== created .agents/skills/commandments-csharp-absence/SKILL.md
-sha256 52fc28311384ef40ffc632230020dfde820b7f81e10f69f530ae028edb902ba7
-=== created .agents/skills/commandments-csharp-absence/evals/triggers.json
-sha256 486f118a9ba25698edd80e47d2e32843a2edd73069a8f700947e5a26c5967af5
-=== created .agents/skills/commandments-csharp-absence/reference/detectors.md
-sha256 42594d8b6a65b4a307ded1fc42f5ce1f84df803852145f3fe5219c65e2207410
-=== created .agents/skills/commandments-csharp-absence/reference/examples.md
-sha256 aa0a7c7e8d06eacd625792cee42f87380791739269b9b35d74a22266ab0b4bde
-=== created .agents/skills/commandments-csharp-behaviour-per-method/SKILL.md
-sha256 ded3925bdf886964f0dc5a8ccc9f2dcb37666c0048000ff95a84dd08c487503d
-=== created .agents/skills/commandments-csharp-behaviour-per-method/evals/triggers.json
-sha256 81021234a85e35e3aad38b245a7ca703b9b7dc1d81e1610530556ed17d42e86f
-=== created .agents/skills/commandments-csharp-behaviour-per-method/reference/detectors.md
-sha256 295d5121822ae72057893a35638b458ce41ec3efc6b72f8c20fbc329bc670108
-=== created .agents/skills/commandments-csharp-class-layout/SKILL.md
-sha256 68140387c9aca84ff5b1ee8ccce83729976e1a13203cc29028af081cbff2f51d
-=== created .agents/skills/commandments-csharp-class-layout/evals/triggers.json
-sha256 2d39de49b036ab639b1f74ad6d42c37f5a534bf48b8a5245cc09c65c0cafff60
-=== created .agents/skills/commandments-csharp-class-layout/reference/detectors.md
-sha256 852570a5d1af58aec83795c44687bfb51c03b4c024c74e090fa4894fc9161550
-=== created .agents/skills/commandments-csharp-class-layout/reference/examples.md
-sha256 0e8106bd2509b81e909a547991fc17ea9c937f37e4f84ff080ec20dc102edb4d
-=== created .agents/skills/commandments-csharp-dependency-direction/SKILL.md
-sha256 7b3e6a24d70620f1a0d6adecbe166421657580ff01da11150aebe83a955ebea5
-=== created .agents/skills/commandments-csharp-dependency-direction/reference/detectors.md
-sha256 5f2d2ddcdaee2d7d22e0a31ae136f4270e64c65d9d47453add660058ca38c7bc
-=== created .agents/skills/commandments-csharp-dependency-direction/reference/examples.md
-sha256 c985e349785f68b1f7121814284f67dc0e7a5037bf5ed69d257ac5c38a25837d
-=== created .agents/skills/commandments-csharp-documentation/SKILL.md
-sha256 45153c52e43c73612257c29091b0896e0481c1dd298174c2648d30bf2c2d133d
-=== created .agents/skills/commandments-csharp-documentation/evals/triggers.json
-sha256 ced328d409958baa0f5d6eb067fa5d3b60365035e35c3d66a34708b5cb55be5c
-=== created .agents/skills/commandments-csharp-documentation/reference/detectors.md
-sha256 b41e80eaaa48ca84e21d7e687aa1793c359315fa0f42eae723d210341c4fdf87
-=== created .agents/skills/commandments-csharp-documentation/reference/examples.md
-sha256 3e0f305467bcf367d48524b63edc44966b454b34d26cbe4c0e6561087d2e8ad2
-=== created .agents/skills/commandments-csharp-duplication/SKILL.md
-sha256 84da89ae401f225f3b8e84ba71ee03f97a52683017629077215336634857691b
-=== created .agents/skills/commandments-csharp-duplication/evals/triggers.json
-sha256 fa65d3221cf44c471a24cbfc5ff308bbcda3ec557c1d4090e698480a87820ac5
-=== created .agents/skills/commandments-csharp-duplication/reference/detectors.md
-sha256 2f3c9ce9d4ae8aa31778978397e2a928c4037f012261759f05c33238e91229a3
-=== created .agents/skills/commandments-csharp-duplication/reference/examples.md
-sha256 18594d0badbc3c1d7dbeffac5deba5616e35dc7a35ebff60e013db593afa9c17
-=== created .agents/skills/commandments-csharp-enums/SKILL.md
-sha256 01976c0360adf28105363df9233e190165ce224242bed5a1efcbc5f95b8f9a98
-=== created .agents/skills/commandments-csharp-enums/evals/triggers.json
-sha256 a9f583d31207154985eb355e747bf3c7f86857701ba50dfaccd7fb90988f8492
-=== created .agents/skills/commandments-csharp-enums/reference/detectors.md
-sha256 35a6cbb8607606603911038096b0e2bfb2c5980ab0aabf38287f365cfa5d7cae
-=== created .agents/skills/commandments-csharp-enums/reference/examples.md
-sha256 083d5d06e85755b0e58f4ff553c223b76e74c7f69023bf30c473eb97f033bff4
-=== created .agents/skills/commandments-csharp-exceptions/SKILL.md
-sha256 188f0d7fbd6d53b3750bab9341d9789dfd40810c86fea3be2481c19f04347051
-=== created .agents/skills/commandments-csharp-exceptions/evals/triggers.json
-sha256 8aa39d02dca93515191a843592640ed19ac9a21662b218db7d92f990c8d88c8c
-=== created .agents/skills/commandments-csharp-exceptions/reference/detectors.md
-sha256 d93068b635346da932dfee3cf32764dc549019450e0f91aa154a50b803120166
-=== created .agents/skills/commandments-csharp-exceptions/reference/examples.md
-sha256 d45371047ecb43b8154a4c3e23000188f03573026dacdf3c05e9d5bff92ce510
-=== created .agents/skills/commandments-csharp-fix-at-the-source/SKILL.md
-sha256 ffacf479f4655938492bb86dfee5d2a2cd8f724eead6d73c77191ce681c952aa
-=== created .agents/skills/commandments-csharp-fix-at-the-source/evals/triggers.json
-sha256 8c2f1dd0fbc17c78d65f8665e95eb513dfc318fe1843d3d51ed08a0523848f5f
-=== created .agents/skills/commandments-csharp-fix-at-the-source/reference/detectors.md
-sha256 6afb967e227c7a4d2ae860f9bd6b1d87bf0983bd2fb9f7c3479e8fd814c50344
-=== created .agents/skills/commandments-csharp-fix-at-the-source/reference/examples.md
-sha256 2064667495d2f084d2528f576f995a1aa87f7d9b80eed49d344cf56412a37b78
-=== created .agents/skills/commandments-csharp-flow/SKILL.md
-sha256 a964b22bdbb4f4b2676bdc0c9da1d64ff95413945ebe9832b042719e93630b00
-=== created .agents/skills/commandments-csharp-flow/evals/triggers.json
-sha256 a9182138fe4601cd05a262dd97848783883fd245ae22326c0cb21dd05155a2f1
-=== created .agents/skills/commandments-csharp-flow/reference/detectors.md
-sha256 dae0896af54c30f8538dbd1b0ffa7a8aa30dcd40e315dff948d314b50934d459
-=== created .agents/skills/commandments-csharp-flow/reference/examples.md
-sha256 a509741a91495eba9949b462cdcdcd8bcc5a061431eec9532ad94be449b6f03f
-=== created .agents/skills/commandments-csharp-method-mood/SKILL.md
-sha256 ec17d62a7c8848db7fa856018bac562393c1ea5c477b410a1bf463d8cba7f525
-=== created .agents/skills/commandments-csharp-method-mood/evals/triggers.json
-sha256 27868ccd396e52f059b548867b53756314e59f1ddbbb81fa5d89d3e277f24528
-=== created .agents/skills/commandments-csharp-method-mood/reference/detectors.md
-sha256 f8134d3b07cd23195ff9e078c0384337170334e714ccdbe401ef9d1e314d9f26
-=== created .agents/skills/commandments-csharp-pass-the-object/SKILL.md
-sha256 6bdb845bacccd1ccb41ab39f62cbf916e6327ea4397aaeffb203914866a906ff
-=== created .agents/skills/commandments-csharp-pass-the-object/reference/detectors.md
-sha256 51b7127fc8b10a6e8872f66910ca41edd1561910a366832a9ad4fc9bac7b25be
-=== created .agents/skills/commandments-csharp-pass-the-object/reference/examples.md
-sha256 b350a03eb65458916c6ec06b96c0e9d9f2d060907473597db982285dfbd51a7b
-=== created .agents/skills/commandments-csharp-repeated-call-helper/SKILL.md
-sha256 b7f84b289711b270b5b89671ec52544aac2c08c81df3f8ff110b7ac20e575ade
-=== created .agents/skills/commandments-csharp-repeated-call-helper/evals/triggers.json
-sha256 c914455dfa1e75267d6f724b635337d62b89c383782debfa3ff5971cb69d4108
-=== created .agents/skills/commandments-csharp-repeated-call-helper/reference/detectors.md
-sha256 fed6121b457df125fb6990b60bce86ffd0e8b0c7aae27e5da4db7b5562d5a365
-=== created .agents/skills/commandments-csharp-repeated-call-helper/reference/examples.md
-sha256 c6378ffcbce661a10b9afccc18c7e4ce64127799791beeb54251455bf5450437
-=== created .agents/skills/commandments-csharp-role-vocabulary/SKILL.md
-sha256 0fb876c9620263f7bfe6ea10e376f206c5a66aabc13275e8203794106e07bafa
-=== created .agents/skills/commandments-csharp-tell-dont-ask/SKILL.md
-sha256 a9fa17c120cae5e2f114d2a2e9e12f07687ae4eb05b3fb5e8a87d43f7f81053d
-=== created .agents/skills/commandments-csharp-tell-dont-ask/evals/triggers.json
-sha256 f3192247b1a8bf31f77fe6cb49f9b0add81c39ce84934582acf7b17a9fd20a63
-=== created .agents/skills/commandments-csharp-tell-dont-ask/reference/detectors.md
-sha256 b2ed5418d348f0a55c5be37a9b358622db3bf94117b1d2abd892c2db5f08e0ae
-=== created .agents/skills/commandments-csharp-tell-dont-ask/reference/examples.md
-sha256 87159236e130c4b6ab41b377aef031a88422c74bc0ece68192cf8e63bd192f89
-=== created .agents/skills/commandments-csharp-templates/SKILL.md
-sha256 47e654c971d3de770bc1dc8b49aceffad375299cc5517f1214bc04fd4edf984b
-=== created .agents/skills/commandments-csharp-templates/evals/triggers.json
-sha256 db87dbad982001be50b9295739e6c5c2a454e265084d5bc8b112b4e75b54c813
-=== created .agents/skills/commandments-csharp-templates/reference/detectors.md
-sha256 5e289ee9e4cf476a49e83edd251a0832eeca1714bd1a446a6b4bf2ac0030df27
-=== created .agents/skills/commandments-csharp-type-honesty/SKILL.md
-sha256 6ff3b4d81710680f61eafedb55e78e78d64fce2fa4a3862451313c52692c6e9e
-=== created .agents/skills/commandments-csharp-type-honesty/evals/triggers.json
-sha256 a7429b30b9d09758435cc5cc73137d9ed75073b190a47edeb1635fee97c6b319
-=== created .agents/skills/commandments-csharp-type-honesty/reference/detectors.md
-sha256 e8f93f1c3f70f6800ac7089b0e192d476d962261656a4da301f0c6081189a762
-=== created .agents/skills/commandments-csharp-type-honesty/reference/examples.md
-sha256 63a1e47839be7f898da1d732b3cb18f02417a460456e1965af008b56b63d7932
-=== created .agents/skills/commandments-csharp-value-objects/SKILL.md
-sha256 d01b549358d5e0a9ca2b2647ab88ec0d11941b80aa0b93a93a0f0b8001b8f2b0
-=== created .agents/skills/commandments-csharp-value-objects/evals/triggers.json
-sha256 36531d81899def3fb5108a4348958646129b5869c555ab2693c9e952f9cbc66f
-=== created .agents/skills/commandments-csharp-value-objects/reference/detectors.md
-sha256 ce8902d46333c0a3f297f8c14da4e17f5b75446e03b6131ef6f6eb27920a57d0
-=== created .agents/skills/commandments-csharp-value-objects/reference/examples.md
-sha256 aee787e70e4bef7a8bcf993dd71c188c052c3b8de5a083ab846436653ab1e719
-=== created .agents/skills/commandments-go-flow/SKILL.md
-sha256 b37d390f3c714fec79a3511a0e1b2293324d5d572f96efffffdeca1c0c57aa14
-=== created .agents/skills/commandments-go-flow/reference/detectors.md
-sha256 8be730e97a1eddad87d904a63774166d3fede8e1e106d21835c986148602a67e
-=== created .agents/skills/commandments-go-flow/reference/examples.md
-sha256 551d99b66e17fbe1ea4911f87eecb421110d50409af41a7a8d3f1435f9644d83
-=== created .agents/skills/commandments-php-absence/SKILL.md
-sha256 550a96594a668696e1abdf9f6a77f53d38422b82d60c911113827b95cc6b04e6
-=== created .agents/skills/commandments-php-absence/evals/triggers.json
-sha256 0d1ff2eaa3e50e7419bdabdded9a96fe61d78b0d27b72cdf3d2709e25cc72cee
-=== created .agents/skills/commandments-php-absence/reference/detectors.md
-sha256 2ef18a3ea8d52d8d15dbd49876d4abee305bf147753f16cc60622814ae300a6c
-=== created .agents/skills/commandments-php-absence/reference/examples.md
-sha256 b36829aade300aace6900a98840e55a0f5018e5dd07256c22d34e22d915e3e8f
-=== created .agents/skills/commandments-php-behaviour-per-method/SKILL.md
-sha256 4d4eb7b577f56bd9dbd5e42a6e36e919c1f907c3681830fc7f1d10e12cce079b
-=== created .agents/skills/commandments-php-behaviour-per-method/reference/detectors.md
-sha256 983aa7a0498d971d6666c915ff06e830b63fb9adddacf3cb65a31b9c198dab37
-=== created .agents/skills/commandments-php-class-layout/SKILL.md
-sha256 98d9f2eb2311440b371e07474203f919e418af22cf86653d2b767aaa9e0f664d
-=== created .agents/skills/commandments-php-class-layout/evals/triggers.json
-sha256 d4632886706279f968c199bec81276421dcbf0221d04dfedefe88405b7cc2e7a
-=== created .agents/skills/commandments-php-class-layout/reference/detectors.md
-sha256 50f5a748baf466e0f2c7becd556156c4a4e1f5ac02ded4c4af9afde22680fb0d
-=== created .agents/skills/commandments-php-class-layout/reference/examples.md
-sha256 c2eeff3123c7b4d3851ef52ca1076da3528d6d44f0d5e9e6d0442ae80df41cd4
-=== created .agents/skills/commandments-php-concurrent-state/SKILL.md
-sha256 e8d3efd07bb8b70a0200e77204bf879d99b5d8765b7f8b348aad8c5bf0eee051
-=== created .agents/skills/commandments-php-concurrent-state/reference/detectors.md
-sha256 b4cb157fee5cc4f1809331139cdf75a67d44d72d449445c26928bf84d343bb65
-=== created .agents/skills/commandments-php-dependency-direction/SKILL.md
-sha256 2e3347264324c0bed131fa44ee5203699960ec387982ed7b9804b7ac0d574204
-=== created .agents/skills/commandments-php-dependency-direction/reference/detectors.md
-sha256 23a6e94feb5b25b8fc44ec9dfb4e4c658e3fa288ffacce78fd634b98ecceec2d
-=== created .agents/skills/commandments-php-dependency-direction/reference/examples.md
-sha256 3fb68d39a94d21ff9bae7fe350e77e82db8e224ca951852d1634e96f5ab0de05
-=== created .agents/skills/commandments-php-documentation/SKILL.md
-sha256 6212d57424b70ed32a616011487ab3530f70e47f78d405209ca6a60fb009b937
-=== created .agents/skills/commandments-php-documentation/evals/triggers.json
-sha256 8f674155dc6959c83e8fec49b30d745f8547c18542856b13b87698f6a19ef3a7
-=== created .agents/skills/commandments-php-documentation/reference/detectors.md
-sha256 6d7d232a8c81c8f77cdd58b997cb7f8fbdf50e0258846ffe573c0481614c6ee4
-=== created .agents/skills/commandments-php-documentation/reference/examples.md
-sha256 a247887aafdb6753490666fd88cc97ce147657cb58796d1eaa1d69784c85caa1
-=== created .agents/skills/commandments-php-enums-with-behaviour/SKILL.md
-sha256 ba852a9f9e0adf0150c23e1a5c7984da03327f55a1baaad5deb795b5d88bf64a
-=== created .agents/skills/commandments-php-enums-with-behaviour/reference/detectors.md
-sha256 82effff8af90d928f718ba4a53140d113ca66cfb03159c0e32c4f61ab3b1958d
-=== created .agents/skills/commandments-php-enums-with-behaviour/reference/examples.md
-sha256 831738430fb436b66b476dae6490bf651fc1d88ac1546b4bc47c3c877c796cb3
-=== created .agents/skills/commandments-php-exceptions/SKILL.md
-sha256 b896a54f14f037cafe1677e42c4c348e198de0a78610c52d38638c0e4fa11a40
-=== created .agents/skills/commandments-php-exceptions/reference/detectors.md
-sha256 cfde23ec22e12ce1260ec195c05c9c6304dc92987d68a7d3b37a9d7f2b5b37d6
-=== created .agents/skills/commandments-php-exceptions/reference/examples.md
-sha256 0659317df186b791ddedbf94c8d50d707f875b380eddc3fb3d511fe56db2c379
-=== created .agents/skills/commandments-php-fix-at-the-source/SKILL.md
-sha256 328a379600f865373989100980c9d210f0433b9ee4c5ec509023201230e03d43
-=== created .agents/skills/commandments-php-fix-at-the-source/evals/triggers.json
-sha256 353f548c902f613b2474812df1b419cd59ebbfe23f9ca5ab0946f0885568e5d0
-=== created .agents/skills/commandments-php-fix-at-the-source/reference/detectors.md
-sha256 160b946b3937a08999649c54b2c7c1f90f2feafa6d7b5a2bc4e6f738a53dde78
-=== created .agents/skills/commandments-php-fix-at-the-source/reference/examples.md
-sha256 f147f8fd3c72eb59b3e32d747b9c4d1bfec2628a619f0451a2e6552870de8aa0
-=== created .agents/skills/commandments-php-guard-clauses-and-flow/SKILL.md
-sha256 e7934b6a0a9cabdb456ebce52210d7b7ab3b7dc32e564bbc6d60bb10d177acba
-=== created .agents/skills/commandments-php-guard-clauses-and-flow/evals/triggers.json
-sha256 78cdb5b117e3beac6f647e8f37b333dfefc9be3c595727fb44df650b82bc8f98
-=== created .agents/skills/commandments-php-guard-clauses-and-flow/reference/detectors.md
-sha256 da486aac3462ddf0eb4ee3c9d094b566271801bfcecf83e6dab4227fb2fc14e1
-=== created .agents/skills/commandments-php-guard-clauses-and-flow/reference/examples.md
-sha256 fb96007b3ba3e283c66041a872933bf68df58b7392fc90c266358c0984c41429
-=== created .agents/skills/commandments-php-laravel-idioms/SKILL.md
-sha256 3eb8b11803c2f045077b4793e47493ae4ebb1b2ab090bbf5f9b774efdd624b72
-=== created .agents/skills/commandments-php-laravel-idioms/evals/triggers.json
-sha256 f3673ef98b8ce1acab91f3ecc97301c16aa176283fa9a4af0069d55bd04467ec
-=== created .agents/skills/commandments-php-laravel-idioms/reference/detectors.md
-sha256 3bc10e0787c75f9c0a0b2dbe409cb36684a99c3c7913b14be4bcbb51d2ca71e3
-=== created .agents/skills/commandments-php-laravel-idioms/reference/examples.md
-sha256 bc55384bcd8a164e138f8cfbd8e4e4602736e0c0e02ecababcb65458fd41990f
-=== created .agents/skills/commandments-php-method-mood/SKILL.md
-sha256 427b16b439a91780994ca825f46c62d2de4a422682c8646bba8dac08a8dd2f02
-=== created .agents/skills/commandments-php-method-mood/evals/triggers.json
-sha256 757b9f25005a7289952f6ac141f4057fb4fbe51c1e06f93fe7095852a943b855
-=== created .agents/skills/commandments-php-method-mood/reference/detectors.md
-sha256 bb09b49e6aae8752272e6bfa1b19a1ebba47d2343c0ab4823498fcc77e57a203
-=== created .agents/skills/commandments-php-method-mood/reference/examples.md
-sha256 847da21ed5ca2f361c82c538b1d5361bd22744a78444ec45eb534aa37f9f542a
-=== created .agents/skills/commandments-php-page-objects/SKILL.md
-sha256 42448aafeba40826143a5d2cf4d97ac9fcaafd7333f1c1b17ace1658d63a0c69
-=== created .agents/skills/commandments-php-page-objects/evals/triggers.json
-sha256 4040e7acd3c965288c67657477bfbbc187c6631e7576de025acde9d72adaa5c8
-=== created .agents/skills/commandments-php-page-objects/reference/detectors.md
-sha256 1e2b41b8e51de4a77aa27d73f2cdd6a31d49ff0a93bfe578a89e44425f3f8cfe
-=== created .agents/skills/commandments-php-page-objects/reference/examples.md
-sha256 6bd42f867176d4bc07c9a16b97fe75215fec81dca3c4289d9e51d899198693f5
-=== created .agents/skills/commandments-php-pass-the-object/SKILL.md
-sha256 dba4da5ad3a81063ca3ecaa86ab9bc43d8cc2c16dafab23ae4f80aa97e87864c
-=== created .agents/skills/commandments-php-pass-the-object/reference/detectors.md
-sha256 c13d8fe4bc79cf9f8ecb22e821427cd283aeeb56581778af7b51da719ff9e6ea
-=== created .agents/skills/commandments-php-pass-the-object/reference/examples.md
-sha256 6188cb4b1a580e15bacf9a26b0643493dcc4312d88f969a70efbefa95aa76a48
-=== created .agents/skills/commandments-php-repeated-call-helper/SKILL.md
-sha256 bd7389d370f2362aa1c08d93218bfb85ea0ffa6964891c48432f2344bfc6039d
-=== created .agents/skills/commandments-php-repeated-call-helper/evals/triggers.json
-sha256 4bc1590caefff59e69d0411fae6bbd091b18079addd8c6faeac38c16f95d389e
-=== created .agents/skills/commandments-php-repeated-call-helper/reference/detectors.md
-sha256 044063234c894c44b9a08b09cd9393effa992dde6c756f105694a869501670f9
-=== created .agents/skills/commandments-php-repeated-call-helper/reference/examples.md
-sha256 9cc8c7cc01cc8e1b021a3bf2f5c3e8a6fb02a3cd38563ce39222df2b623a3723
-=== created .agents/skills/commandments-php-role-vocabulary/SKILL.md
-sha256 12fac166cd09ffe2e59351d4a35a5bd8b91f0f70a6c023a5ade39d5ad3355564
-=== created .agents/skills/commandments-php-role-vocabulary/reference/detectors.md
-sha256 1990ef20016407254fbf6818bdd684800a9e798bc834472b35ae183cc3dcf09b
-=== created .agents/skills/commandments-php-route-actions/SKILL.md
-sha256 595fceb39a263a488be29318153f532e0053d2944da11695fc42e8b3bf8f4b07
-=== created .agents/skills/commandments-php-route-actions/evals/triggers.json
-sha256 f340a04dc4342d4ebe63be2821a8328aa944a70a0760fba8fd8f0ac8a6f18331
-=== created .agents/skills/commandments-php-route-actions/reference/detectors.md
-sha256 5a307607a46d914d74286f7e6d1b4fd24958bf8b87290ca76c07b053162a599c
-=== created .agents/skills/commandments-php-route-actions/reference/examples.md
-sha256 53929353f82afb73beede32d155e2a1eaa436caf332636d7e73d5d142d89c6d3
-=== created .agents/skills/commandments-php-spatie-data-hydration/SKILL.md
-sha256 0802089e1ed25d11040ff96a546878b0e76ab1555dd1f56aeed2a5e6f33b46b2
-=== created .agents/skills/commandments-php-spatie-data-hydration/evals/triggers.json
-sha256 0f29b5a9810cb1a6a64c639e6c8306b672fe73ba17bad033e9c43857253e5201
-=== created .agents/skills/commandments-php-spatie-data-hydration/reference/detectors.md
-sha256 6bd22b8b047b8a9c5608c827714b909fd7c6e75dfe7ec0e2bd603cae934785db
-=== created .agents/skills/commandments-php-spatie-data-hydration/reference/examples.md
-sha256 d8733341b31ed8194d4729bda2ba67372ff5908210973d87258c92e0dfb8b544
-=== created .agents/skills/commandments-php-spatie-data-hydration/reference/mechanics.md
-sha256 518e19806a38bdc1ebe8033bcbd897a5fd2a5dd0a211704ac53fef7f2ef40ca6
-=== created .agents/skills/commandments-php-spatie-data/SKILL.md
-sha256 aa958b3eb5905393417e7c0943f020fc48c2cb03eee2f783cccba5843c03290f
-=== created .agents/skills/commandments-php-spatie-data/evals/triggers.json
-sha256 1a589fd51af9da85f7561b9dfacb0bf974e200ce7cafbfe910836114a63cb13d
-=== created .agents/skills/commandments-php-spatie-data/reference/detectors.md
-sha256 7c1a0da09a8db313b137ed6c3eaf0bb16dc904e8a7bfa2dc1a3ddec77a28ee1b
-=== created .agents/skills/commandments-php-spatie-data/reference/examples.md
-sha256 dc3394866f45f28453f0bd719c7ef089642b1f94087e9cba2f5c4dc4c4eb100f
-=== created .agents/skills/commandments-php-tell-dont-ask/SKILL.md
-sha256 3104e10bb9954ef3e62293029063677d23861de83f11979ebb2fc41ad5aa4b69
-=== created .agents/skills/commandments-php-tell-dont-ask/reference/detectors.md
-sha256 f05285324ba3314217b71ca55977eb477c37d2ae82dd4b94d7e19a267e5bbbea
-=== created .agents/skills/commandments-php-tell-dont-ask/reference/examples.md
-sha256 bd3a341716bf8c164ff6b07cdd5450b04ef5fd7a7865192e07fa98f1ba372aa2
-=== created .agents/skills/commandments-php-templates/SKILL.md
-sha256 b3590b0ad313e6f209135d8718054e957f772e7fa29e523dfb5b1cafb276a97d
-=== created .agents/skills/commandments-php-templates/reference/detectors.md
-sha256 172d0beeb842bb0c0d7d70c4bfc1b82f735384a3bd93b2cb972e2fb8f7393509
-=== created .agents/skills/commandments-php-type-honesty/SKILL.md
-sha256 a4e8f6c8b97aee0bd0eb8b75f9283662e90c70047c44add8bbe13c15406195ac
-=== created .agents/skills/commandments-php-type-honesty/evals/triggers.json
-sha256 6ae1a8224c4896470eff830f9b98fb735cde972605d29d8632e582f46cfa9342
-=== created .agents/skills/commandments-php-type-honesty/reference/detectors.md
-sha256 e910649a76fb6eec396e4ecf511fd1fec23c3dd262130d9d9fd3b4f4209bbddc
-=== created .agents/skills/commandments-php-type-honesty/reference/examples.md
-sha256 b11be38a340045df67c001783d3ec7bc4df897f81cd19eb3372053a3fc0ba05a
-=== created .agents/skills/commandments-php-value-objects/SKILL.md
-sha256 3604df8ce15d6bdab4035f1b272aae6bba1333fc7acc321a3e3dc7b2920a03ab
-=== created .agents/skills/commandments-php-value-objects/evals/triggers.json
-sha256 5d352efb68c25a9f70e4981ff9e3ce94927eff698da1aa4deca7e94b5e2ee238
-=== created .agents/skills/commandments-php-value-objects/reference/detectors.md
-sha256 6870e0df45c0957cebcf08027c1757be0408bfddc38716252ab66031edb40f39
-=== created .agents/skills/commandments-php-value-objects/reference/examples.md
-sha256 e36a3b0b5cdab03ee34d3dab76bdcc63d6fc14953d8ffc5dbcf4e406544ca196
-=== created .agents/skills/commandments-python-absence/SKILL.md
-sha256 1cb7cba3b5e205c67f74d6082fbe2cd0393dbd050823ed07a56b53e2b7d931f7
-=== created .agents/skills/commandments-python-absence/evals/triggers.json
-sha256 04a1a302e31f6a86ac93f9a8e306da499d80e9fe772f3b5d22a55d3eb94102e3
-=== created .agents/skills/commandments-python-absence/reference/detectors.md
-sha256 7c930f676e5dc6d6e38639752274a28e8c7a83129d4968eff89e386870972a21
-=== created .agents/skills/commandments-python-absence/reference/examples.md
-sha256 45f5bc7581403b623bf3c88eb864b5512cd1ebf3a01d0196c38e9c492fbe2b20
-=== created .agents/skills/commandments-python-behaviour-per-method/SKILL.md
-sha256 42b3b0d7b29e2435958aac3b8c8c67c96f01887c275cfe1695b56144eb5b457b
-=== created .agents/skills/commandments-python-behaviour-per-method/evals/triggers.json
-sha256 cf73524c09e481f83fd209d70910b23ec5e1eb671f8c07f26b4a0917b5a1694c
-=== created .agents/skills/commandments-python-behaviour-per-method/reference/detectors.md
-sha256 24156e8d972a9b00b0426cf0ae4a6247f6d02ff0dbd396e27457edf7608c1738
-=== created .agents/skills/commandments-python-class-layout/SKILL.md
-sha256 42d6307f42a63610ca0c05b9ef869fc414071482a4e51a07dab69a34e7debd06
-=== created .agents/skills/commandments-python-class-layout/evals/triggers.json
-sha256 1f5ae2de333950c95607e966113ee0d015b1aaf03f7e83ed8d7158214e139345
-=== created .agents/skills/commandments-python-class-layout/reference/detectors.md
-sha256 f0488f7525c2a19f2c4c64dc840a5bfce8c173c76d1e0ae429749b313c0dcc24
-=== created .agents/skills/commandments-python-class-layout/reference/examples.md
-sha256 d339a80d14e535a73e9335726b604cf9b43c45035ec6245d41d8f9d893c8bde9
-=== created .agents/skills/commandments-python-dependency-direction/SKILL.md
-sha256 295e1667523c8572add724b4d82015620b9ce62e443d226f790628e00c1dfbd1
-=== created .agents/skills/commandments-python-dependency-direction/evals/triggers.json
-sha256 4add8755fb0231cc1ab2438b571f8771da6e1ddd5cada17f16dbf827c8cbc0d7
-=== created .agents/skills/commandments-python-dependency-direction/reference/detectors.md
-sha256 072986582cedd1106bce6be2520075c98406cea1473ae4f350a38539fe74113d
-=== created .agents/skills/commandments-python-dependency-direction/reference/examples.md
-sha256 84354724a560927b3f175539518b6424d8b59286cca285ebf9b4a3f7f9ea9858
-=== created .agents/skills/commandments-python-documentation/SKILL.md
-sha256 20c04825a4ae7fb4bcdc5fd22ec26b0c8782388f684c5b4ebec9590cfa090e80
-=== created .agents/skills/commandments-python-documentation/evals/triggers.json
-sha256 4f41e9c3c4d84b8b5a4d2681ee74452eddab8c05e95298a60114bc55a7237003
-=== created .agents/skills/commandments-python-documentation/reference/detectors.md
-sha256 dbc0b2622fd8f199bb3f6a25ee38f200294deecdb43259354c6afd762e6a36ee
-=== created .agents/skills/commandments-python-documentation/reference/examples.md
-sha256 c6cf1ea1370d2502e615b3d26bc6e1a89cba8df0040e8a5c9881ac9e45e7eb04
-=== created .agents/skills/commandments-python-duplication/SKILL.md
-sha256 a2999f57fbf8aecc7ac6bad8d41e75c5131466a895988a7c7b25dcdbecfdeb28
-=== created .agents/skills/commandments-python-duplication/evals/triggers.json
-sha256 04962f99da2e3237b2ea094d0ef509c31e095e2f0d901307f488a2724b3fe1d7
-=== created .agents/skills/commandments-python-duplication/reference/detectors.md
-sha256 247f76b411b691e1ea9f9eb6aac3f05b355113d2869421225ed60080c2a80b02
-=== created .agents/skills/commandments-python-duplication/reference/examples.md
-sha256 785a98418701a385cc0df59e86ed591b103ff003cf411544f2c0d2542f371e7d
-=== created .agents/skills/commandments-python-enums/SKILL.md
-sha256 2ae270c7c4f1e6779e6e56371d45016cecf5804e2e78c9b0cd96b670300dcd02
-=== created .agents/skills/commandments-python-enums/evals/triggers.json
-sha256 626cf2d32c2ea6d868980e7400095ab0dc711104d1cc8c49c1b99a16a038ea0a
-=== created .agents/skills/commandments-python-enums/reference/detectors.md
-sha256 232b67e6411e7a29f4530d7b35409127a496bf4fe57c5a2125696cd7510cea95
-=== created .agents/skills/commandments-python-enums/reference/examples.md
-sha256 0fb70c93e4585fc2b1bc27b9efa27a9fd02c76bf23376bf63063035c9094908a
-=== created .agents/skills/commandments-python-exceptions/SKILL.md
-sha256 28bf388a82d778c63ef18f459e3ede84a19b02bd7fe455de39081d3c7ee839d3
-=== created .agents/skills/commandments-python-exceptions/evals/triggers.json
-sha256 88bead1d452302d389d59f2fe0538078ee04d69b5d129c321a061afae2adeb5c
-=== created .agents/skills/commandments-python-exceptions/reference/detectors.md
-sha256 187accb619b0b975314c69c41b2f8e3938f93ad1cdd406953bb59229dc5882fa
-=== created .agents/skills/commandments-python-exceptions/reference/examples.md
-sha256 941b58ff4ad432724caefc129f36028a763c02c29a056fc83e478bbb868750c6
-=== created .agents/skills/commandments-python-fix-at-the-source/SKILL.md
-sha256 160e04af893367ebdec8a62cb01ac14979f3bc16ee8701b130cc44e3b831643c
-=== created .agents/skills/commandments-python-fix-at-the-source/evals/triggers.json
-sha256 40f3c0ef66201a403bdd34663ed47e82c8c77a0981cdd8b6fb8b27b6f818e644
-=== created .agents/skills/commandments-python-fix-at-the-source/reference/detectors.md
-sha256 ef5695162d6176cc2158c43c4fffc37c2b99d18c380883eea9ff76b1ffdfc073
-=== created .agents/skills/commandments-python-fix-at-the-source/reference/examples.md
-sha256 47ed7a3d8bfac6b806c9efc46704bbea21318570f3a0ed047f5296468d638796
-=== created .agents/skills/commandments-python-flow/SKILL.md
-sha256 3117bbafa05bf21fc141d126068ce8b47770cc80bc1c08caa1920cc6318b6f0d
-=== created .agents/skills/commandments-python-flow/evals/triggers.json
-sha256 b6fc5e492ba1ab37cbe9445b72c22c54723582a1fbf1c485b479fbb6650c5934
-=== created .agents/skills/commandments-python-flow/reference/detectors.md
-sha256 4ca053a25b0df7b4eafa77d37f9a5cdb049e74847cdb6672989f9a5bdae03b48
-=== created .agents/skills/commandments-python-flow/reference/examples.md
-sha256 752423e4500abee60c32a2b543b796b5aae12e3b9ba2ec9202373440369d8765
-=== created .agents/skills/commandments-python-method-mood/SKILL.md
-sha256 4ef0589f7180f8fa8919a94fed917e5f7d6e425380e525f3ba4c8749ea4f4456
-=== created .agents/skills/commandments-python-method-mood/evals/triggers.json
-sha256 241873ab80ff7f49d7b67848c63e5816a45ce694b9a62435d1f2033f0d9744d5
-=== created .agents/skills/commandments-python-method-mood/reference/detectors.md
-sha256 923153c85d97f668db9c289a12b5e781c4035b698336a62a43e0ac49d8d86c08
-=== created .agents/skills/commandments-python-method-mood/reference/examples.md
-sha256 c55a68e502bf1c97279e1262a4053accac1ee0e28e6f8f13f7cbbc37ba00dbeb
-=== created .agents/skills/commandments-python-pass-the-object/SKILL.md
-sha256 e081ef3d06dd4e4b536f716d86fe7687983c4f3571b34d2c0069e79f14be48a5
-=== created .agents/skills/commandments-python-pass-the-object/evals/triggers.json
-sha256 e01dae9b52f73145183fae23936438ad4208b43c7bfc7536ebfec6f41cff4f1e
-=== created .agents/skills/commandments-python-pass-the-object/reference/detectors.md
-sha256 1592f5b0acb5b4e7448114efe971755a2a48559d312da2ccd6c04eb05f610c97
-=== created .agents/skills/commandments-python-pass-the-object/reference/examples.md
-sha256 6d83ec864d2c71663f742cd95eb0639f93c915daf80addf61ab59401fcfea5aa
-=== created .agents/skills/commandments-python-repeated-call-helper/SKILL.md
-sha256 4cd67f4392e647ab5efed6f6ba216201774d4d350c976a756882af16befa1bab
-=== created .agents/skills/commandments-python-repeated-call-helper/evals/triggers.json
-sha256 055040b7d28bd4b70afd273f8eb7f034185c7b8fbb22d83f1032cf2a7165243b
-=== created .agents/skills/commandments-python-repeated-call-helper/reference/detectors.md
-sha256 6f1733bd63641e1ba89bf1da9412c14fab266403807547f7c006c935338534db
-=== created .agents/skills/commandments-python-repeated-call-helper/reference/examples.md
-sha256 ec6b072e10dfd0268d72d4e93b529b6dd63c811be43e273847accc53660df41d
-=== created .agents/skills/commandments-python-role-vocabulary/SKILL.md
-sha256 1a82da6211b5e6f63e4e7772b00edac70e870edcf2c0ec064fab138efc306f4c
-=== created .agents/skills/commandments-python-role-vocabulary/evals/triggers.json
-sha256 d61a9bb1fa290a41353c36f41f271bade2d947942738fcbc26146a3c5f8f59fb
-=== created .agents/skills/commandments-python-role-vocabulary/reference/detectors.md
-sha256 0232ea4d0a819741c1445d11c8f8fc15843920256776191b268b5d70e23f21cf
-=== created .agents/skills/commandments-python-tell-dont-ask/SKILL.md
-sha256 f8c8feddadd16e0cea6f752b50d7020605080ff469a6c6678c2c2b15d57437d5
-=== created .agents/skills/commandments-python-tell-dont-ask/evals/triggers.json
-sha256 59b0817c6e9f0694f9b547839f1107c4ac85a49670fb6c0482377c447aa44b61
-=== created .agents/skills/commandments-python-tell-dont-ask/reference/detectors.md
-sha256 98b33776aaa15c1269b5db42c0116bc89323e074440dd1a468fca5af2a4c75cb
-=== created .agents/skills/commandments-python-tell-dont-ask/reference/examples.md
-sha256 0beb271e3eacea10105846c90bf6bd954357f86145f2b51c612466a080279876
-=== created .agents/skills/commandments-python-templates/SKILL.md
-sha256 5ef653af146dfadc25d6eec336fb1cc6ad3a114c6091e5b35a3071135d3a84b1
-=== created .agents/skills/commandments-python-templates/evals/triggers.json
-sha256 9683c432cb02155e65bf175d3e0573df942214901fdf7fb6df2008513898373c
-=== created .agents/skills/commandments-python-templates/reference/detectors.md
-sha256 e3a73de9c199a8e64420bd166273e6f8a17259f58e1d3779e824d8d108145627
-=== created .agents/skills/commandments-python-type-honesty/SKILL.md
-sha256 0287de738a71c0aa85aeacb9e6c9063e3f53dd87a483809c1b93d5dd316bec4f
-=== created .agents/skills/commandments-python-type-honesty/evals/triggers.json
-sha256 a572c11507b088bc4f53cafbf2319453888a256484df3bf7b8c662cddc79bedd
-=== created .agents/skills/commandments-python-type-honesty/reference/detectors.md
-sha256 7fe5283a384fa3832400fd51c37227372d4251c7d24a756773ce58aaf8704375
-=== created .agents/skills/commandments-python-type-honesty/reference/examples.md
-sha256 77d43c57a9ffbe062d4476022ef4159fcfedb93e5b38dae7750d3febd7d3b0b2
-=== created .agents/skills/commandments-python-value-objects/SKILL.md
-sha256 64a322e3e1da8fbda0bee49f77fecfa8a46ca34dbf3dbdcf436a1cb113db1dc9
-=== created .agents/skills/commandments-python-value-objects/evals/triggers.json
-sha256 8555b63298c2db187ae9e8640785a2d40221d03b767077f1cdf02fcc01be4cfc
-=== created .agents/skills/commandments-python-value-objects/reference/detectors.md
-sha256 cdf22cc3894e7cb55ad0620c32b2663af6d8ea8b8ee405c4059187fd073022c5
-=== created .agents/skills/commandments-python-value-objects/reference/examples.md
-sha256 4c63cd66daf255b3ffd0b72543c11cc65ada2a2f9a55d27665812e187d765852
-=== created .agents/skills/commandments-typescript-absence/SKILL.md
-sha256 ae493db1df89d9de26a1d19a6864422841ee5a44dccc73e3bfb8fc68e83ec7b4
-=== created .agents/skills/commandments-typescript-absence/evals/triggers.json
-sha256 6ef30a905658099f09e900ac015064bf758f0f6b4f856ff9fd2e3df9f400df10
-=== created .agents/skills/commandments-typescript-absence/reference/detectors.md
-sha256 dae489d7a1de27dcedbda4daf08149cc6b7fa7cc8a868d1fddce4d4892bcae97
-=== created .agents/skills/commandments-typescript-absence/reference/examples.md
-sha256 5f42bd8d0075640a6ffa3b7ae264ba19c545100e3bba413881c0acf5b26c64cf
-=== created .agents/skills/commandments-typescript-duplication/SKILL.md
-sha256 7077ea4f2ffb30e92d5118c19d9325be374e687226cfbe4ed29b5965b58d916b
-=== created .agents/skills/commandments-typescript-duplication/evals/triggers.json
-sha256 883009bdc125f06784d7386a09e678b6e689ed77f9278b2f9a6f013ab25aa655
-=== created .agents/skills/commandments-typescript-duplication/reference/detectors.md
-sha256 0dd7a04297682e342a2161485e0895cfb33fd79b3b3f7563bb61868efe260613
-=== created .agents/skills/commandments-typescript-duplication/reference/examples.md
-sha256 bad17b47d8dbe48dfdb6e083db02b7a7558fd916ceed728c2a69146b7ef4dc97
-=== created .agents/skills/commandments-typescript-flow/SKILL.md
-sha256 96ce6d0a0016a58a2cafbf305b85afb4f8a9817c14e9faf417b233e7f012551f
-=== created .agents/skills/commandments-typescript-flow/reference/detectors.md
-sha256 575f8a6a02fbf9a99f3feffa1437b21bb2cf54854692ae32bc0d8ceca7a92ec4
-=== created .agents/skills/commandments-vue-mirrored-server-type/SKILL.md
-sha256 48c3edbdcd7cc1637d8f52c50f10f224fe2f66af238c8aa6dbb9bb6ce315367a
-=== created .agents/skills/commandments-vue-mirrored-server-type/reference/detectors.md
-sha256 85d7b36a19ed1620c215e3e46b1eee833991088b395bcbbc3619bcbb1fd2275f
-=== created .agents/skills/commandments-vue-mirrored-server-type/reference/examples.md
-sha256 53fbe76ec0bbadca68e21997b5397e78f44f083a84a70c8839bb5ddb15eac2be
-=== created .agents/skills/commandments-vue-vue-components/SKILL.md
-sha256 806e7a752d2c9d547a15290778f281c5169b35daf3455d84f34deb3c3e088ba7
-=== created .agents/skills/commandments-vue-vue-components/reference/detectors.md
-sha256 374e8c6c079483d1238a24f9bdae8340b28839654612528dbaa220cdcf6fd556
-=== created .agents/skills/commandments-vue-vue-components/reference/examples.md
-sha256 01b8802ad60fdb9b0ea4cfb3f52121dc0b7517c718e01d3f0526dd39e91972dd
-=== created .agents/skills/commandments-vue-vue-control-flow/SKILL.md
-sha256 b55f3997f595b2602be6ad1b7b2dbd451eb7b04b7354188b1faaa77e7eaf7d06
-=== created .agents/skills/commandments-vue-vue-control-flow/reference/detectors.md
-sha256 cf8762933d2c807c4872e1558093d0f5797dca893320011a92d4210efc8aa656
-=== created .agents/skills/commandments-vue-vue-control-flow/reference/examples.md
-sha256 a3ab3bdd6342f9a4088b064c2a5a97451264f8785bdf101fa1c8c5ec73619b8e
+=== created .agents/skills/commandments-shared-flow/SKILL.md
+sha256 c8d79c3e0672d1c327609b5d2621c205e62d2754078227260a0b31405e4b8dcf
+=== created .agents/skills/commandments-shared-flow/reference/detectors.md
+sha256 4210669e05c1341a66098db194a25180bc4fa6d42577bc9387d6f6444c7ea74e
+=== created .agents/skills/commandments-shared-flow/reference/examples.md
+sha256 707886ae61ed99d8d7c010f2c52e582457096d76e9265724d736c0140955f5cc
 === created .agents/skills/commandments-writing-detectors/SKILL.md
-sha256 ebff81239687a5b3308a811490017c1af7a17bc7e315b639e60aa048866a8d06
+sha256 31cb3c597f71f960c06f07945c2a3736074248f2e93bb857741300c7144bc315
 === created .agents/skills/commandments-writing-detectors/reference/examples.md
 sha256 7ad4892a4d2564f8c19c4efb6062ed62a10b0b3321d619d0382fb6881cef4596
 === created .agents/skills/commandments/SKILL.md
-sha256 8cff41f56e043d5424538fb057080067bdbe05fd98cd89bb24325d6b72cb4a7a
+sha256 30c87a1247909197ee9a8a9aeab8ae994746973e4eb80370e6516790d7ccf3ea
 === created .claude/settings.json
 {
     "hooks": {
@@ -606,7 +142,7 @@ Safe to delete — the conversion simply runs again on the next `composer update
             "type": "string"
         },
         "cache_hours": {
-            "description": "How many hours anything kept between runs stays once nothing uses it: parsed trees, the rules' answers per file, mypy's cache and the edit windows. Every use resets the clock. Left out, 12.",
+            "description": "How many hours anything kept between runs stays once nothing uses it: parsed trees, the rules' answers per file, and mypy's cache. Every use resets the clock. Left out, 1.",
             "exclusiveMinimum": 0,
             "type": "number"
         },
@@ -663,6 +199,14 @@ Safe to delete — the conversion simply runs again on the next `composer update
                         "description": "Finds array-bag."
                     },
                     {
+                        "const": "php/ArrayBagParameterDetector",
+                        "description": "Finds array-bag-parameter."
+                    },
+                    {
+                        "const": "backend/ArrayBagParameterDetector",
+                        "description": "Finds array-bag-parameter."
+                    },
+                    {
                         "const": "php/ArrayReturnBagDetector",
                         "description": "Finds array-return-bag."
                     },
@@ -677,6 +221,14 @@ Safe to delete — the conversion simply runs again on the next `composer update
                     {
                         "const": "backend/AssembledTemplateDetector",
                         "description": "Finds assembled-template."
+                    },
+                    {
+                        "const": "php/BareScopeEscapeDetector",
+                        "description": "Finds bare-scope-escape."
+                    },
+                    {
+                        "const": "backend/BareScopeEscapeDetector",
+                        "description": "Finds bare-scope-escape."
                     },
                     {
                         "const": "php/BareStatePredicateDetector",
@@ -727,6 +279,14 @@ Safe to delete — the conversion simply runs again on the next `composer update
                         "description": "Finds cancelled-coalesce."
                     },
                     {
+                        "const": "php/CapabilityProbeHubDetector",
+                        "description": "Finds capability-probe-hub."
+                    },
+                    {
+                        "const": "backend/CapabilityProbeHubDetector",
+                        "description": "Finds capability-probe-hub."
+                    },
+                    {
                         "const": "php/CeremonyDocblockDetector",
                         "description": "Finds ceremony-docblock."
                     },
@@ -749,6 +309,14 @@ Safe to delete — the conversion simply runs again on the next `composer update
                     {
                         "const": "backend/ComputedBooleanArgumentDetector",
                         "description": "Finds computed-boolean-argument."
+                    },
+                    {
+                        "const": "php/ConcreteCrossModuleDependencyDetector",
+                        "description": "Finds concrete-cross-module-dependency."
+                    },
+                    {
+                        "const": "backend/ConcreteCrossModuleDependencyDetector",
+                        "description": "Finds concrete-cross-module-dependency."
                     },
                     {
                         "const": "php/ConcurrentSubclassDetector",
@@ -951,6 +519,14 @@ Safe to delete — the conversion simply runs again on the next `composer update
                         "description": "Finds duplicate-route."
                     },
                     {
+                        "const": "php/DuplicatedBranchTailDetector",
+                        "description": "Finds duplicated-branch-tail."
+                    },
+                    {
+                        "const": "backend/DuplicatedBranchTailDetector",
+                        "description": "Finds duplicated-branch-tail."
+                    },
+                    {
                         "const": "php/DuplicatedConfigDefaultDetector",
                         "description": "Finds duplicated-config-default."
                     },
@@ -989,6 +565,14 @@ Safe to delete — the conversion simply runs again on the next `composer update
                     {
                         "const": "backend/FacadeCallDetector",
                         "description": "Finds facade-call."
+                    },
+                    {
+                        "const": "php/FalseForNothingDetector",
+                        "description": "Finds false-for-nothing."
+                    },
+                    {
+                        "const": "backend/FalseForNothingDetector",
+                        "description": "Finds false-for-nothing."
                     },
                     {
                         "const": "php/FeatureEnvyDetector",
@@ -1031,12 +615,28 @@ Safe to delete — the conversion simply runs again on the next `composer update
                         "description": "Finds generic-exception."
                     },
                     {
+                        "const": "php/GuardBesideTransitionDetector",
+                        "description": "Finds guard-beside-transition."
+                    },
+                    {
+                        "const": "backend/GuardBesideTransitionDetector",
+                        "description": "Finds guard-beside-transition."
+                    },
+                    {
                         "const": "php/HandKeyRemapDetector",
                         "description": "Finds hand-key-remap."
                     },
                     {
                         "const": "backend/HandKeyRemapDetector",
                         "description": "Finds hand-key-remap."
+                    },
+                    {
+                        "const": "php/HandRolledRegistryDetector",
+                        "description": "Finds hand-rolled-registry."
+                    },
+                    {
+                        "const": "backend/HandRolledRegistryDetector",
+                        "description": "Finds hand-rolled-registry."
                     },
                     {
                         "const": "php/HandRolledWitherDetector",
@@ -1053,6 +653,14 @@ Safe to delete — the conversion simply runs again on the next `composer update
                     {
                         "const": "backend/HandedOutCollectionDetector",
                         "description": "Finds handed-out-collection."
+                    },
+                    {
+                        "const": "php/HardCodedRoutePathDetector",
+                        "description": "Finds hard-coded-route-path."
+                    },
+                    {
+                        "const": "backend/HardCodedRoutePathDetector",
+                        "description": "Finds hard-coded-route-path."
                     },
                     {
                         "const": "php/HookMissingComputedDetector",
@@ -1117,6 +725,22 @@ Safe to delete — the conversion simply runs again on the next `composer update
                     {
                         "const": "backend/KeyedLookupEnvyDetector",
                         "description": "Finds keyed-lookup-envy."
+                    },
+                    {
+                        "const": "php/ListMirrorsFolderDetector",
+                        "description": "Finds list-mirrors-folder."
+                    },
+                    {
+                        "const": "backend/ListMirrorsFolderDetector",
+                        "description": "Finds list-mirrors-folder."
+                    },
+                    {
+                        "const": "php/LoneImplementerInterfaceDetector",
+                        "description": "Finds lone-implementer-interface."
+                    },
+                    {
+                        "const": "backend/LoneImplementerInterfaceDetector",
+                        "description": "Finds lone-implementer-interface."
                     },
                     {
                         "const": "php/LoopInvertedGuardDetector",
@@ -1205,6 +829,14 @@ Safe to delete — the conversion simply runs again on the next `composer update
                     {
                         "const": "backend/MessageAtThrowDetector",
                         "description": "Finds message-at-throw."
+                    },
+                    {
+                        "const": "php/MiddleManDetector",
+                        "description": "Finds middle-man."
+                    },
+                    {
+                        "const": "backend/MiddleManDetector",
+                        "description": "Finds middle-man."
                     },
                     {
                         "const": "php/ModelMutationAtCallSiteDetector",
@@ -1431,6 +1063,14 @@ Safe to delete — the conversion simply runs again on the next `composer update
                         "description": "Finds raw-request-input."
                     },
                     {
+                        "const": "php/ReassignedParameterDetector",
+                        "description": "Finds reassigned-parameter."
+                    },
+                    {
+                        "const": "backend/ReassignedParameterDetector",
+                        "description": "Finds reassigned-parameter."
+                    },
+                    {
                         "const": "php/RedundantArrowReturnTypeDetector",
                         "description": "Finds redundant-arrow-return-type."
                     },
@@ -1471,6 +1111,22 @@ Safe to delete — the conversion simply runs again on the next `composer update
                         "description": "Finds redundant-nested-from."
                     },
                     {
+                        "const": "php/RefusedBequestDetector",
+                        "description": "Finds refused-bequest."
+                    },
+                    {
+                        "const": "backend/RefusedBequestDetector",
+                        "description": "Finds refused-bequest."
+                    },
+                    {
+                        "const": "php/RepeatedFolderPathDetector",
+                        "description": "Finds repeated-folder-path."
+                    },
+                    {
+                        "const": "backend/RepeatedFolderPathDetector",
+                        "description": "Finds repeated-folder-path."
+                    },
+                    {
                         "const": "php/RepeatedGuardDetector",
                         "description": "Finds repeated-guard."
                     },
@@ -1485,6 +1141,14 @@ Safe to delete — the conversion simply runs again on the next `composer update
                     {
                         "const": "backend/RepeatedNamedCallDetector",
                         "description": "Finds repeated-named-call."
+                    },
+                    {
+                        "const": "php/RepeatedQueryChainDetector",
+                        "description": "Finds repeated-query-chain."
+                    },
+                    {
+                        "const": "backend/RepeatedQueryChainDetector",
+                        "description": "Finds repeated-query-chain."
                     },
                     {
                         "const": "php/RepeatedTypeGuardDetector",
@@ -1631,12 +1295,36 @@ Safe to delete — the conversion simply runs again on the next `composer update
                         "description": "Finds unnamed-vocabulary-literal."
                     },
                     {
+                        "const": "php/UnreachableStatementDetector",
+                        "description": "Finds unreachable-statement."
+                    },
+                    {
+                        "const": "backend/UnreachableStatementDetector",
+                        "description": "Finds unreachable-statement."
+                    },
+                    {
                         "const": "php/UnreadCollaboratorDetector",
                         "description": "Finds unread-collaborator."
                     },
                     {
                         "const": "backend/UnreadCollaboratorDetector",
                         "description": "Finds unread-collaborator."
+                    },
+                    {
+                        "const": "php/UnusedParameterDetector",
+                        "description": "Finds unused-parameter."
+                    },
+                    {
+                        "const": "backend/UnusedParameterDetector",
+                        "description": "Finds unused-parameter."
+                    },
+                    {
+                        "const": "php/UnusedPrivateMemberDetector",
+                        "description": "Finds unused-private-member."
+                    },
+                    {
+                        "const": "backend/UnusedPrivateMemberDetector",
+                        "description": "Finds unused-private-member."
                     },
                     {
                         "const": "php/UselessPropertyHookDetector",
@@ -1703,6 +1391,14 @@ Safe to delete — the conversion simply runs again on the next `composer update
                         "description": "Finds duplicate-element."
                     },
                     {
+                        "const": "vue/HardCodedServerURLDetector",
+                        "description": "Finds hard-coded-server-url."
+                    },
+                    {
+                        "const": "frontend/HardCodedServerURLDetector",
+                        "description": "Finds hard-coded-server-url."
+                    },
+                    {
                         "const": "vue/IndexAsKeyDetector",
                         "description": "Finds index-as-key."
                     },
@@ -1759,6 +1455,22 @@ Safe to delete — the conversion simply runs again on the next `composer update
                         "description": "Finds prop-mutation."
                     },
                     {
+                        "const": "vue/RawFetchInComponentDetector",
+                        "description": "Finds raw-fetch-in-component."
+                    },
+                    {
+                        "const": "frontend/RawFetchInComponentDetector",
+                        "description": "Finds raw-fetch-in-component."
+                    },
+                    {
+                        "const": "vue/RetestedSwitchCaseDetector",
+                        "description": "Finds re-tested-switch-case."
+                    },
+                    {
+                        "const": "frontend/RetestedSwitchCaseDetector",
+                        "description": "Finds re-tested-switch-case."
+                    },
+                    {
                         "const": "vue/SwitchCaseDetector",
                         "description": "Finds switch-case."
                     },
@@ -1779,16 +1491,48 @@ Safe to delete — the conversion simply runs again on the next `composer update
                         "description": "Finds duplicate-typescript-function."
                     },
                     {
+                        "const": "typescript/DuplicatedBranchTailDetector",
+                        "description": "Finds duplicated-branch-tail."
+                    },
+                    {
                         "const": "typescript/FalselyOptionalFieldDetector",
                         "description": "Finds falsely-optional-field."
+                    },
+                    {
+                        "const": "typescript/LoopInvertedGuardDetector",
+                        "description": "Finds loop-inverted-guard."
                     },
                     {
                         "const": "typescript/NearDuplicateFunctionDetector",
                         "description": "Finds near-duplicate-typescript-function."
                     },
                     {
+                        "const": "typescript/NestedTernaryDetector",
+                        "description": "Finds nested-ternary."
+                    },
+                    {
+                        "const": "typescript/RedundantElseDetector",
+                        "description": "Finds redundant-else."
+                    },
+                    {
+                        "const": "typescript/ShortCircuitStatementDetector",
+                        "description": "Finds short-circuit-statement."
+                    },
+                    {
                         "const": "typescript/SideTableTraitDetector",
                         "description": "Finds typescript-side-table-trait."
+                    },
+                    {
+                        "const": "typescript/SubjectLadderDetector",
+                        "description": "Finds subject-ladder."
+                    },
+                    {
+                        "const": "typescript/TernaryStatementDetector",
+                        "description": "Finds ternary-statement."
+                    },
+                    {
+                        "const": "typescript/UnreachableStatementDetector",
+                        "description": "Finds unreachable-statement."
                     },
                     {
                         "const": "python/ArchaeologyCommentDetector",
@@ -1837,10 +1581,6 @@ Safe to delete — the conversion simply runs again on the next `composer update
                     {
                         "const": "python/ConditionalSpreadDetector",
                         "description": "Finds python-conditional-spread."
-                    },
-                    {
-                        "const": "python/ConditionalStatementDetector",
-                        "description": "Finds python-conditional-statement."
                     },
                     {
                         "const": "python/ConstantClassEnumDetector",
@@ -1899,6 +1639,10 @@ Safe to delete — the conversion simply runs again on the next `composer update
                         "description": "Finds duplicate-python-function."
                     },
                     {
+                        "const": "python/DuplicatedBranchTailDetector",
+                        "description": "Finds duplicated-branch-tail."
+                    },
+                    {
                         "const": "python/EnumCaseOrChainDetector",
                         "description": "Finds python-enum-case-or-chain."
                     },
@@ -1947,8 +1691,12 @@ Safe to delete — the conversion simply runs again on the next `composer update
                         "description": "Finds python-keyed-lookup-envy."
                     },
                     {
+                        "const": "python/LoopInvertedGuardDetector",
+                        "description": "Finds loop-inverted-guard."
+                    },
+                    {
                         "const": "python/LoopWrappedInIfDetector",
-                        "description": "Finds python-loop-wrapped-in-if."
+                        "description": "Finds loop-inverted-guard."
                     },
                     {
                         "const": "python/MaskedInvariantDetector",
@@ -2003,8 +1751,12 @@ Safe to delete — the conversion simply runs again on the next `composer update
                         "description": "Finds python-negative-space-comment."
                     },
                     {
+                        "const": "python/NestedTernaryDetector",
+                        "description": "Finds nested-ternary."
+                    },
+                    {
                         "const": "python/NestedConditionalDetector",
-                        "description": "Finds python-nested-conditional."
+                        "description": "Finds nested-ternary."
                     },
                     {
                         "const": "python/NullableCallbackDetector",
@@ -2040,7 +1792,7 @@ Safe to delete — the conversion simply runs again on the next `composer update
                     },
                     {
                         "const": "python/RedundantElseDetector",
-                        "description": "Finds redundant-python-else."
+                        "description": "Finds redundant-else."
                     },
                     {
                         "const": "python/RepeatedGuardDetector",
@@ -2068,7 +1820,7 @@ Safe to delete — the conversion simply runs again on the next `composer update
                     },
                     {
                         "const": "python/ShortCircuitStatementDetector",
-                        "description": "Finds python-short-circuit-statement."
+                        "description": "Finds short-circuit-statement."
                     },
                     {
                         "const": "python/SideTableTraitDetector",
@@ -2080,11 +1832,19 @@ Safe to delete — the conversion simply runs again on the next `composer update
                     },
                     {
                         "const": "python/SubjectLadderDetector",
-                        "description": "Finds python-subject-ladder."
+                        "description": "Finds subject-ladder."
                     },
                     {
                         "const": "python/SwallowedExceptionDetector",
                         "description": "Finds python-swallowed-exception."
+                    },
+                    {
+                        "const": "python/TernaryStatementDetector",
+                        "description": "Finds ternary-statement."
+                    },
+                    {
+                        "const": "python/ConditionalStatementDetector",
+                        "description": "Finds ternary-statement."
                     },
                     {
                         "const": "python/TypeSwitchDetector",
@@ -2097,6 +1857,10 @@ Safe to delete — the conversion simply runs again on the next `composer update
                     {
                         "const": "python/UnnamedVocabularyLiteralDetector",
                         "description": "Finds python-unnamed-vocabulary-literal."
+                    },
+                    {
+                        "const": "python/UnreachableStatementDetector",
+                        "description": "Finds unreachable-statement."
                     },
                     {
                         "const": "python/UnreadCollaboratorDetector",
@@ -2191,6 +1955,10 @@ Safe to delete — the conversion simply runs again on the next `composer update
                         "description": "Finds duplicate-csharp-method."
                     },
                     {
+                        "const": "csharp/DuplicatedBranchTailDetector",
+                        "description": "Finds duplicated-branch-tail."
+                    },
+                    {
                         "const": "csharp/EnumCaseOrChainDetector",
                         "description": "Finds csharp-enum-case-or-chain."
                     },
@@ -2231,8 +1999,12 @@ Safe to delete — the conversion simply runs again on the next `composer update
                         "description": "Finds csharp-invented-default."
                     },
                     {
+                        "const": "csharp/LoopInvertedGuardDetector",
+                        "description": "Finds loop-inverted-guard."
+                    },
+                    {
                         "const": "csharp/LoopWrappedInIfDetector",
-                        "description": "Finds csharp-loop-wrapped-in-if."
+                        "description": "Finds loop-inverted-guard."
                     },
                     {
                         "const": "csharp/MatchDefaultReturnsNullDetector",
@@ -2272,7 +2044,7 @@ Safe to delete — the conversion simply runs again on the next `composer update
                     },
                     {
                         "const": "csharp/NestedTernaryDetector",
-                        "description": "Finds csharp-nested-ternary."
+                        "description": "Finds nested-ternary."
                     },
                     {
                         "const": "csharp/NonCountingForDetector",
@@ -2296,7 +2068,7 @@ Safe to delete — the conversion simply runs again on the next `composer update
                     },
                     {
                         "const": "csharp/RedundantElseDetector",
-                        "description": "Finds redundant-csharp-else."
+                        "description": "Finds redundant-else."
                     },
                     {
                         "const": "csharp/RepeatedGuardDetector",
@@ -2328,7 +2100,7 @@ Safe to delete — the conversion simply runs again on the next `composer update
                     },
                     {
                         "const": "csharp/SubjectLadderDetector",
-                        "description": "Finds csharp-subject-ladder."
+                        "description": "Finds subject-ladder."
                     },
                     {
                         "const": "csharp/SwallowedExceptionDetector",
@@ -2347,6 +2119,10 @@ Safe to delete — the conversion simply runs again on the next `composer update
                         "description": "Finds csharp-unnamed-vocabulary-literal."
                     },
                     {
+                        "const": "csharp/UnreachableStatementDetector",
+                        "description": "Finds unreachable-statement."
+                    },
+                    {
                         "const": "csharp/UnreadCollaboratorDetector",
                         "description": "Finds csharp-unread-collaborator."
                     },
@@ -2359,12 +2135,28 @@ Safe to delete — the conversion simply runs again on the next `composer update
                         "description": "Finds deep-go-nesting."
                     },
                     {
+                        "const": "go/DuplicatedBranchTailDetector",
+                        "description": "Finds duplicated-branch-tail."
+                    },
+                    {
+                        "const": "go/LoopInvertedGuardDetector",
+                        "description": "Finds loop-inverted-guard."
+                    },
+                    {
                         "const": "go/LoopWrappedInIfDetector",
-                        "description": "Finds go-loop-wrapped-in-if."
+                        "description": "Finds loop-inverted-guard."
                     },
                     {
                         "const": "go/RedundantElseDetector",
-                        "description": "Finds redundant-go-else."
+                        "description": "Finds redundant-else."
+                    },
+                    {
+                        "const": "go/SubjectLadderDetector",
+                        "description": "Finds subject-ladder."
+                    },
+                    {
+                        "const": "go/UnreachableStatementDetector",
+                        "description": "Finds unreachable-statement."
                     },
                     {
                         "description": "A rule of the project's own, by name.",
@@ -2434,6 +2226,14 @@ Safe to delete — the conversion simply runs again on the next `composer update
                                 "description": "Finds array-bag."
                             },
                             {
+                                "const": "php/ArrayBagParameterDetector",
+                                "description": "Finds array-bag-parameter."
+                            },
+                            {
+                                "const": "backend/ArrayBagParameterDetector",
+                                "description": "Finds array-bag-parameter."
+                            },
+                            {
                                 "const": "php/ArrayReturnBagDetector",
                                 "description": "Finds array-return-bag."
                             },
@@ -2448,6 +2248,14 @@ Safe to delete — the conversion simply runs again on the next `composer update
                             {
                                 "const": "backend/AssembledTemplateDetector",
                                 "description": "Finds assembled-template."
+                            },
+                            {
+                                "const": "php/BareScopeEscapeDetector",
+                                "description": "Finds bare-scope-escape."
+                            },
+                            {
+                                "const": "backend/BareScopeEscapeDetector",
+                                "description": "Finds bare-scope-escape."
                             },
                             {
                                 "const": "php/BareStatePredicateDetector",
@@ -2498,6 +2306,14 @@ Safe to delete — the conversion simply runs again on the next `composer update
                                 "description": "Finds cancelled-coalesce."
                             },
                             {
+                                "const": "php/CapabilityProbeHubDetector",
+                                "description": "Finds capability-probe-hub."
+                            },
+                            {
+                                "const": "backend/CapabilityProbeHubDetector",
+                                "description": "Finds capability-probe-hub."
+                            },
+                            {
                                 "const": "php/CeremonyDocblockDetector",
                                 "description": "Finds ceremony-docblock."
                             },
@@ -2520,6 +2336,14 @@ Safe to delete — the conversion simply runs again on the next `composer update
                             {
                                 "const": "backend/ComputedBooleanArgumentDetector",
                                 "description": "Finds computed-boolean-argument."
+                            },
+                            {
+                                "const": "php/ConcreteCrossModuleDependencyDetector",
+                                "description": "Finds concrete-cross-module-dependency."
+                            },
+                            {
+                                "const": "backend/ConcreteCrossModuleDependencyDetector",
+                                "description": "Finds concrete-cross-module-dependency."
                             },
                             {
                                 "const": "php/ConcurrentSubclassDetector",
@@ -2722,6 +2546,14 @@ Safe to delete — the conversion simply runs again on the next `composer update
                                 "description": "Finds duplicate-route."
                             },
                             {
+                                "const": "php/DuplicatedBranchTailDetector",
+                                "description": "Finds duplicated-branch-tail."
+                            },
+                            {
+                                "const": "backend/DuplicatedBranchTailDetector",
+                                "description": "Finds duplicated-branch-tail."
+                            },
+                            {
                                 "const": "php/DuplicatedConfigDefaultDetector",
                                 "description": "Finds duplicated-config-default."
                             },
@@ -2760,6 +2592,14 @@ Safe to delete — the conversion simply runs again on the next `composer update
                             {
                                 "const": "backend/FacadeCallDetector",
                                 "description": "Finds facade-call."
+                            },
+                            {
+                                "const": "php/FalseForNothingDetector",
+                                "description": "Finds false-for-nothing."
+                            },
+                            {
+                                "const": "backend/FalseForNothingDetector",
+                                "description": "Finds false-for-nothing."
                             },
                             {
                                 "const": "php/FeatureEnvyDetector",
@@ -2802,12 +2642,28 @@ Safe to delete — the conversion simply runs again on the next `composer update
                                 "description": "Finds generic-exception."
                             },
                             {
+                                "const": "php/GuardBesideTransitionDetector",
+                                "description": "Finds guard-beside-transition."
+                            },
+                            {
+                                "const": "backend/GuardBesideTransitionDetector",
+                                "description": "Finds guard-beside-transition."
+                            },
+                            {
                                 "const": "php/HandKeyRemapDetector",
                                 "description": "Finds hand-key-remap."
                             },
                             {
                                 "const": "backend/HandKeyRemapDetector",
                                 "description": "Finds hand-key-remap."
+                            },
+                            {
+                                "const": "php/HandRolledRegistryDetector",
+                                "description": "Finds hand-rolled-registry."
+                            },
+                            {
+                                "const": "backend/HandRolledRegistryDetector",
+                                "description": "Finds hand-rolled-registry."
                             },
                             {
                                 "const": "php/HandRolledWitherDetector",
@@ -2824,6 +2680,14 @@ Safe to delete — the conversion simply runs again on the next `composer update
                             {
                                 "const": "backend/HandedOutCollectionDetector",
                                 "description": "Finds handed-out-collection."
+                            },
+                            {
+                                "const": "php/HardCodedRoutePathDetector",
+                                "description": "Finds hard-coded-route-path."
+                            },
+                            {
+                                "const": "backend/HardCodedRoutePathDetector",
+                                "description": "Finds hard-coded-route-path."
                             },
                             {
                                 "const": "php/HookMissingComputedDetector",
@@ -2888,6 +2752,22 @@ Safe to delete — the conversion simply runs again on the next `composer update
                             {
                                 "const": "backend/KeyedLookupEnvyDetector",
                                 "description": "Finds keyed-lookup-envy."
+                            },
+                            {
+                                "const": "php/ListMirrorsFolderDetector",
+                                "description": "Finds list-mirrors-folder."
+                            },
+                            {
+                                "const": "backend/ListMirrorsFolderDetector",
+                                "description": "Finds list-mirrors-folder."
+                            },
+                            {
+                                "const": "php/LoneImplementerInterfaceDetector",
+                                "description": "Finds lone-implementer-interface."
+                            },
+                            {
+                                "const": "backend/LoneImplementerInterfaceDetector",
+                                "description": "Finds lone-implementer-interface."
                             },
                             {
                                 "const": "php/LoopInvertedGuardDetector",
@@ -2976,6 +2856,14 @@ Safe to delete — the conversion simply runs again on the next `composer update
                             {
                                 "const": "backend/MessageAtThrowDetector",
                                 "description": "Finds message-at-throw."
+                            },
+                            {
+                                "const": "php/MiddleManDetector",
+                                "description": "Finds middle-man."
+                            },
+                            {
+                                "const": "backend/MiddleManDetector",
+                                "description": "Finds middle-man."
                             },
                             {
                                 "const": "php/ModelMutationAtCallSiteDetector",
@@ -3202,6 +3090,14 @@ Safe to delete — the conversion simply runs again on the next `composer update
                                 "description": "Finds raw-request-input."
                             },
                             {
+                                "const": "php/ReassignedParameterDetector",
+                                "description": "Finds reassigned-parameter."
+                            },
+                            {
+                                "const": "backend/ReassignedParameterDetector",
+                                "description": "Finds reassigned-parameter."
+                            },
+                            {
                                 "const": "php/RedundantArrowReturnTypeDetector",
                                 "description": "Finds redundant-arrow-return-type."
                             },
@@ -3242,6 +3138,22 @@ Safe to delete — the conversion simply runs again on the next `composer update
                                 "description": "Finds redundant-nested-from."
                             },
                             {
+                                "const": "php/RefusedBequestDetector",
+                                "description": "Finds refused-bequest."
+                            },
+                            {
+                                "const": "backend/RefusedBequestDetector",
+                                "description": "Finds refused-bequest."
+                            },
+                            {
+                                "const": "php/RepeatedFolderPathDetector",
+                                "description": "Finds repeated-folder-path."
+                            },
+                            {
+                                "const": "backend/RepeatedFolderPathDetector",
+                                "description": "Finds repeated-folder-path."
+                            },
+                            {
                                 "const": "php/RepeatedGuardDetector",
                                 "description": "Finds repeated-guard."
                             },
@@ -3256,6 +3168,14 @@ Safe to delete — the conversion simply runs again on the next `composer update
                             {
                                 "const": "backend/RepeatedNamedCallDetector",
                                 "description": "Finds repeated-named-call."
+                            },
+                            {
+                                "const": "php/RepeatedQueryChainDetector",
+                                "description": "Finds repeated-query-chain."
+                            },
+                            {
+                                "const": "backend/RepeatedQueryChainDetector",
+                                "description": "Finds repeated-query-chain."
                             },
                             {
                                 "const": "php/RepeatedTypeGuardDetector",
@@ -3402,12 +3322,36 @@ Safe to delete — the conversion simply runs again on the next `composer update
                                 "description": "Finds unnamed-vocabulary-literal."
                             },
                             {
+                                "const": "php/UnreachableStatementDetector",
+                                "description": "Finds unreachable-statement."
+                            },
+                            {
+                                "const": "backend/UnreachableStatementDetector",
+                                "description": "Finds unreachable-statement."
+                            },
+                            {
                                 "const": "php/UnreadCollaboratorDetector",
                                 "description": "Finds unread-collaborator."
                             },
                             {
                                 "const": "backend/UnreadCollaboratorDetector",
                                 "description": "Finds unread-collaborator."
+                            },
+                            {
+                                "const": "php/UnusedParameterDetector",
+                                "description": "Finds unused-parameter."
+                            },
+                            {
+                                "const": "backend/UnusedParameterDetector",
+                                "description": "Finds unused-parameter."
+                            },
+                            {
+                                "const": "php/UnusedPrivateMemberDetector",
+                                "description": "Finds unused-private-member."
+                            },
+                            {
+                                "const": "backend/UnusedPrivateMemberDetector",
+                                "description": "Finds unused-private-member."
                             },
                             {
                                 "const": "php/UselessPropertyHookDetector",
@@ -3474,6 +3418,14 @@ Safe to delete — the conversion simply runs again on the next `composer update
                                 "description": "Finds duplicate-element."
                             },
                             {
+                                "const": "vue/HardCodedServerURLDetector",
+                                "description": "Finds hard-coded-server-url."
+                            },
+                            {
+                                "const": "frontend/HardCodedServerURLDetector",
+                                "description": "Finds hard-coded-server-url."
+                            },
+                            {
                                 "const": "vue/IndexAsKeyDetector",
                                 "description": "Finds index-as-key."
                             },
@@ -3530,6 +3482,22 @@ Safe to delete — the conversion simply runs again on the next `composer update
                                 "description": "Finds prop-mutation."
                             },
                             {
+                                "const": "vue/RawFetchInComponentDetector",
+                                "description": "Finds raw-fetch-in-component."
+                            },
+                            {
+                                "const": "frontend/RawFetchInComponentDetector",
+                                "description": "Finds raw-fetch-in-component."
+                            },
+                            {
+                                "const": "vue/RetestedSwitchCaseDetector",
+                                "description": "Finds re-tested-switch-case."
+                            },
+                            {
+                                "const": "frontend/RetestedSwitchCaseDetector",
+                                "description": "Finds re-tested-switch-case."
+                            },
+                            {
                                 "const": "vue/SwitchCaseDetector",
                                 "description": "Finds switch-case."
                             },
@@ -3550,16 +3518,48 @@ Safe to delete — the conversion simply runs again on the next `composer update
                                 "description": "Finds duplicate-typescript-function."
                             },
                             {
+                                "const": "typescript/DuplicatedBranchTailDetector",
+                                "description": "Finds duplicated-branch-tail."
+                            },
+                            {
                                 "const": "typescript/FalselyOptionalFieldDetector",
                                 "description": "Finds falsely-optional-field."
+                            },
+                            {
+                                "const": "typescript/LoopInvertedGuardDetector",
+                                "description": "Finds loop-inverted-guard."
                             },
                             {
                                 "const": "typescript/NearDuplicateFunctionDetector",
                                 "description": "Finds near-duplicate-typescript-function."
                             },
                             {
+                                "const": "typescript/NestedTernaryDetector",
+                                "description": "Finds nested-ternary."
+                            },
+                            {
+                                "const": "typescript/RedundantElseDetector",
+                                "description": "Finds redundant-else."
+                            },
+                            {
+                                "const": "typescript/ShortCircuitStatementDetector",
+                                "description": "Finds short-circuit-statement."
+                            },
+                            {
                                 "const": "typescript/SideTableTraitDetector",
                                 "description": "Finds typescript-side-table-trait."
+                            },
+                            {
+                                "const": "typescript/SubjectLadderDetector",
+                                "description": "Finds subject-ladder."
+                            },
+                            {
+                                "const": "typescript/TernaryStatementDetector",
+                                "description": "Finds ternary-statement."
+                            },
+                            {
+                                "const": "typescript/UnreachableStatementDetector",
+                                "description": "Finds unreachable-statement."
                             },
                             {
                                 "const": "python/ArchaeologyCommentDetector",
@@ -3608,10 +3608,6 @@ Safe to delete — the conversion simply runs again on the next `composer update
                             {
                                 "const": "python/ConditionalSpreadDetector",
                                 "description": "Finds python-conditional-spread."
-                            },
-                            {
-                                "const": "python/ConditionalStatementDetector",
-                                "description": "Finds python-conditional-statement."
                             },
                             {
                                 "const": "python/ConstantClassEnumDetector",
@@ -3670,6 +3666,10 @@ Safe to delete — the conversion simply runs again on the next `composer update
                                 "description": "Finds duplicate-python-function."
                             },
                             {
+                                "const": "python/DuplicatedBranchTailDetector",
+                                "description": "Finds duplicated-branch-tail."
+                            },
+                            {
                                 "const": "python/EnumCaseOrChainDetector",
                                 "description": "Finds python-enum-case-or-chain."
                             },
@@ -3718,8 +3718,12 @@ Safe to delete — the conversion simply runs again on the next `composer update
                                 "description": "Finds python-keyed-lookup-envy."
                             },
                             {
+                                "const": "python/LoopInvertedGuardDetector",
+                                "description": "Finds loop-inverted-guard."
+                            },
+                            {
                                 "const": "python/LoopWrappedInIfDetector",
-                                "description": "Finds python-loop-wrapped-in-if."
+                                "description": "Finds loop-inverted-guard."
                             },
                             {
                                 "const": "python/MaskedInvariantDetector",
@@ -3774,8 +3778,12 @@ Safe to delete — the conversion simply runs again on the next `composer update
                                 "description": "Finds python-negative-space-comment."
                             },
                             {
+                                "const": "python/NestedTernaryDetector",
+                                "description": "Finds nested-ternary."
+                            },
+                            {
                                 "const": "python/NestedConditionalDetector",
-                                "description": "Finds python-nested-conditional."
+                                "description": "Finds nested-ternary."
                             },
                             {
                                 "const": "python/NullableCallbackDetector",
@@ -3811,7 +3819,7 @@ Safe to delete — the conversion simply runs again on the next `composer update
                             },
                             {
                                 "const": "python/RedundantElseDetector",
-                                "description": "Finds redundant-python-else."
+                                "description": "Finds redundant-else."
                             },
                             {
                                 "const": "python/RepeatedGuardDetector",
@@ -3839,7 +3847,7 @@ Safe to delete — the conversion simply runs again on the next `composer update
                             },
                             {
                                 "const": "python/ShortCircuitStatementDetector",
-                                "description": "Finds python-short-circuit-statement."
+                                "description": "Finds short-circuit-statement."
                             },
                             {
                                 "const": "python/SideTableTraitDetector",
@@ -3851,11 +3859,19 @@ Safe to delete — the conversion simply runs again on the next `composer update
                             },
                             {
                                 "const": "python/SubjectLadderDetector",
-                                "description": "Finds python-subject-ladder."
+                                "description": "Finds subject-ladder."
                             },
                             {
                                 "const": "python/SwallowedExceptionDetector",
                                 "description": "Finds python-swallowed-exception."
+                            },
+                            {
+                                "const": "python/TernaryStatementDetector",
+                                "description": "Finds ternary-statement."
+                            },
+                            {
+                                "const": "python/ConditionalStatementDetector",
+                                "description": "Finds ternary-statement."
                             },
                             {
                                 "const": "python/TypeSwitchDetector",
@@ -3868,6 +3884,10 @@ Safe to delete — the conversion simply runs again on the next `composer update
                             {
                                 "const": "python/UnnamedVocabularyLiteralDetector",
                                 "description": "Finds python-unnamed-vocabulary-literal."
+                            },
+                            {
+                                "const": "python/UnreachableStatementDetector",
+                                "description": "Finds unreachable-statement."
                             },
                             {
                                 "const": "python/UnreadCollaboratorDetector",
@@ -3962,6 +3982,10 @@ Safe to delete — the conversion simply runs again on the next `composer update
                                 "description": "Finds duplicate-csharp-method."
                             },
                             {
+                                "const": "csharp/DuplicatedBranchTailDetector",
+                                "description": "Finds duplicated-branch-tail."
+                            },
+                            {
                                 "const": "csharp/EnumCaseOrChainDetector",
                                 "description": "Finds csharp-enum-case-or-chain."
                             },
@@ -4002,8 +4026,12 @@ Safe to delete — the conversion simply runs again on the next `composer update
                                 "description": "Finds csharp-invented-default."
                             },
                             {
+                                "const": "csharp/LoopInvertedGuardDetector",
+                                "description": "Finds loop-inverted-guard."
+                            },
+                            {
                                 "const": "csharp/LoopWrappedInIfDetector",
-                                "description": "Finds csharp-loop-wrapped-in-if."
+                                "description": "Finds loop-inverted-guard."
                             },
                             {
                                 "const": "csharp/MatchDefaultReturnsNullDetector",
@@ -4043,7 +4071,7 @@ Safe to delete — the conversion simply runs again on the next `composer update
                             },
                             {
                                 "const": "csharp/NestedTernaryDetector",
-                                "description": "Finds csharp-nested-ternary."
+                                "description": "Finds nested-ternary."
                             },
                             {
                                 "const": "csharp/NonCountingForDetector",
@@ -4067,7 +4095,7 @@ Safe to delete — the conversion simply runs again on the next `composer update
                             },
                             {
                                 "const": "csharp/RedundantElseDetector",
-                                "description": "Finds redundant-csharp-else."
+                                "description": "Finds redundant-else."
                             },
                             {
                                 "const": "csharp/RepeatedGuardDetector",
@@ -4099,7 +4127,7 @@ Safe to delete — the conversion simply runs again on the next `composer update
                             },
                             {
                                 "const": "csharp/SubjectLadderDetector",
-                                "description": "Finds csharp-subject-ladder."
+                                "description": "Finds subject-ladder."
                             },
                             {
                                 "const": "csharp/SwallowedExceptionDetector",
@@ -4118,6 +4146,10 @@ Safe to delete — the conversion simply runs again on the next `composer update
                                 "description": "Finds csharp-unnamed-vocabulary-literal."
                             },
                             {
+                                "const": "csharp/UnreachableStatementDetector",
+                                "description": "Finds unreachable-statement."
+                            },
+                            {
                                 "const": "csharp/UnreadCollaboratorDetector",
                                 "description": "Finds csharp-unread-collaborator."
                             },
@@ -4130,12 +4162,28 @@ Safe to delete — the conversion simply runs again on the next `composer update
                                 "description": "Finds deep-go-nesting."
                             },
                             {
+                                "const": "go/DuplicatedBranchTailDetector",
+                                "description": "Finds duplicated-branch-tail."
+                            },
+                            {
+                                "const": "go/LoopInvertedGuardDetector",
+                                "description": "Finds loop-inverted-guard."
+                            },
+                            {
                                 "const": "go/LoopWrappedInIfDetector",
-                                "description": "Finds go-loop-wrapped-in-if."
+                                "description": "Finds loop-inverted-guard."
                             },
                             {
                                 "const": "go/RedundantElseDetector",
-                                "description": "Finds redundant-go-else."
+                                "description": "Finds redundant-else."
+                            },
+                            {
+                                "const": "go/SubjectLadderDetector",
+                                "description": "Finds subject-ladder."
+                            },
+                            {
+                                "const": "go/UnreachableStatementDetector",
+                                "description": "Finds unreachable-statement."
                             },
                             {
                                 "description": "A rule of the project's own, by name.",
@@ -4209,6 +4257,14 @@ Safe to delete — the conversion simply runs again on the next `composer update
                                 "description": "String-indexing (`$arr['key']`) a structured array param instead of giving it a name — the type was never defined."
                             },
                             {
+                                "const": "php/ArrayBagParameter",
+                                "description": "A parameter declared `array` that callers fill with string-keyed records (`['mode' => …, 'plan' => …]`): the method never defined the type its fields belong to."
+                            },
+                            {
+                                "const": "backend/ArrayBagParameter",
+                                "description": "A parameter declared `array` that callers fill with string-keyed records (`['mode' => …, 'plan' => …]`): the method never defined the type its fields belong to."
+                            },
+                            {
                                 "const": "php/ArrayReturnBag",
                                 "description": "Returning a multi-field string-keyed array literal (a bag that should be a value object)"
                             },
@@ -4223,6 +4279,14 @@ Safe to delete — the conversion simply runs again on the next `composer update
                             {
                                 "const": "backend/AssembledTemplate",
                                 "description": "A multi-line template assembled as an array of line fragments and joined with a newline — the output is unreadable in the source that emits it"
+                            },
+                            {
+                                "const": "php/BareScopeEscape",
+                                "description": "`withoutGlobalScopes()` with no arguments drops every global scope, including ones added later"
+                            },
+                            {
+                                "const": "backend/BareScopeEscape",
+                                "description": "`withoutGlobalScopes()` with no arguments drops every global scope, including ones added later"
                             },
                             {
                                 "const": "php/BareStatePredicate",
@@ -4273,6 +4337,14 @@ Safe to delete — the conversion simply runs again on the next `composer update
                                 "description": "`??` cancelled by the comparison it sits in — `($x ?? '') !== ''`"
                             },
                             {
+                                "const": "php/CapabilityProbeHub",
+                                "description": "Three or more methods each ask whether one held object implements an interface, then call it or answer empty: one accessor per optional capability"
+                            },
+                            {
+                                "const": "backend/CapabilityProbeHub",
+                                "description": "Three or more methods each ask whether one held object implements an interface, then call it or answer empty: one accessor per optional capability"
+                            },
+                            {
                                 "const": "php/CeremonyDocblock",
                                 "description": "Docblock that only restates the typed signature (`@param Type $x`, no description)"
                             },
@@ -4295,6 +4367,14 @@ Safe to delete — the conversion simply runs again on the next `composer update
                             {
                                 "const": "backend/ComputedBooleanArgument",
                                 "description": "A parameter that's just true/false, computed by every caller from the same object it could be given instead."
+                            },
+                            {
+                                "const": "php/ConcreteCrossModuleDependency",
+                                "description": "A constructor takes another module's service by its concrete class instead of an interface"
+                            },
+                            {
+                                "const": "backend/ConcreteCrossModuleDependency",
+                                "description": "A constructor takes another module's service by its concrete class instead of an interface"
                             },
                             {
                                 "const": "php/ConcurrentSubclass",
@@ -4346,11 +4426,11 @@ Safe to delete — the conversion simply runs again on the next `composer update
                             },
                             {
                                 "const": "php/ContainerReach",
-                                "description": "`app()`/`resolve()` reach inside a container-resolved class"
+                                "description": "`app()`, `resolve()` or a container's `make()` reach inside a container-resolved class"
                             },
                             {
                                 "const": "backend/ContainerReach",
-                                "description": "`app()`/`resolve()` reach inside a container-resolved class"
+                                "description": "`app()`, `resolve()` or a container's `make()` reach inside a container-resolved class"
                             },
                             {
                                 "const": "php/ConvertedArgument",
@@ -4537,6 +4617,14 @@ Safe to delete — the conversion simply runs again on the next `composer update
                                 "description": "Laravel facade call (`Cache::`, `Log::`, `Mail::` …)"
                             },
                             {
+                                "const": "php/FalseForNothing",
+                                "description": "A return typed `X|false`: `false` stands in for \"nothing\" or \"failed\", and every caller must test for it."
+                            },
+                            {
+                                "const": "backend/FalseForNothing",
+                                "description": "A return typed `X|false`: `false` stands in for \"nothing\" or \"failed\", and every caller must test for it."
+                            },
+                            {
                                 "const": "php/FeatureEnvy",
                                 "description": "Exiled behaviour / feature envy — a method operating on ONE other owned object's internals that belongs ON that object"
                             },
@@ -4577,12 +4665,28 @@ Safe to delete — the conversion simply runs again on the next `composer update
                                 "description": "`throw new <bare SPL>` (RuntimeException/LogicException/…) instead of a named type"
                             },
                             {
+                                "const": "php/GuardBesideTransition",
+                                "description": "A caller checks an object's state against an enum case and throws, then tells that object to change: the rule sits outside the transition it guards"
+                            },
+                            {
+                                "const": "backend/GuardBesideTransition",
+                                "description": "A caller checks an object's state against an enum case and throws, then tells that object to change: the rule sits outside the transition it guards"
+                            },
+                            {
                                 "const": "php/HandKeyRemap",
                                 "description": "A `::from([...])` mechanically renames `$src['snake_key']` → `camelKey` by hand, instead of a class-level `#[MapInputName]`"
                             },
                             {
                                 "const": "backend/HandKeyRemap",
                                 "description": "A `::from([...])` mechanically renames `$src['snake_key']` → `camelKey` by hand, instead of a class-level `#[MapInputName]`"
+                            },
+                            {
+                                "const": "php/HandRolledRegistry",
+                                "description": "A class writes its own keyed store (fill under a key, throw on a missing key) instead of extending the one Registry base"
+                            },
+                            {
+                                "const": "backend/HandRolledRegistry",
+                                "description": "A class writes its own keyed store (fill under a key, throw on a missing key) instead of extending the one Registry base"
                             },
                             {
                                 "const": "php/HandRolledWither",
@@ -4599,6 +4703,14 @@ Safe to delete — the conversion simply runs again on the next `composer update
                             {
                                 "const": "backend/HandedOutCollection",
                                 "description": "a getter whose whole body returns the class's own `Collection`, untouched — a Collection is an object, so every caller holds the same one and may `push`, `forget` or `sort` it behind the class's back"
+                            },
+                            {
+                                "const": "php/HardCodedRoutePath",
+                                "description": "A path written out by hand where a named route already declares it"
+                            },
+                            {
+                                "const": "backend/HardCodedRoutePath",
+                                "description": "A path written out by hand where a named route already declares it"
                             },
                             {
                                 "const": "php/HookMissingComputed",
@@ -4665,12 +4777,20 @@ Safe to delete — the conversion simply runs again on the next `composer update
                                 "description": "Indirect feature envy — a method that uses an owned object's IDENTITY as a key to look up a fact about it through a collaborator"
                             },
                             {
-                                "const": "php/LoopInvertedGuard",
-                                "description": "Loop body (multi-statement) wrapped in an `if` instead of `continue` guard"
+                                "const": "php/ListMirrorsFolder",
+                                "description": "A hand-written list of `X::class` entries that holds every class of one type in the folders it draws from: a second copy of what the folders already say"
                             },
                             {
-                                "const": "backend/LoopInvertedGuard",
-                                "description": "Loop body (multi-statement) wrapped in an `if` instead of `continue` guard"
+                                "const": "backend/ListMirrorsFolder",
+                                "description": "A hand-written list of `X::class` entries that holds every class of one type in the folders it draws from: a second copy of what the folders already say"
+                            },
+                            {
+                                "const": "php/LoneImplementerInterface",
+                                "description": "An interface with one implementing class, named by nothing outside that class's own module: an indirection with one side"
+                            },
+                            {
+                                "const": "backend/LoneImplementerInterface",
+                                "description": "An interface with one implementing class, named by nothing outside that class's own module: an indirection with one side"
                             },
                             {
                                 "const": "php/ManualHydrationLoop",
@@ -4753,6 +4873,14 @@ Safe to delete — the conversion simply runs again on the next `composer update
                                 "description": "Message string built at the throw site (no domain values / named factory)"
                             },
                             {
+                                "const": "php/MiddleMan",
+                                "description": "A class whose every public method only hands its arguments, unchanged, to the same field: it adds nothing between the caller and the object that does the work."
+                            },
+                            {
+                                "const": "backend/MiddleMan",
+                                "description": "A class whose every public method only hands its arguments, unchanged, to the same field: it adds nothing between the caller and the object that does the work."
+                            },
+                            {
                                 "const": "php/ModelMutationAtCallSite",
                                 "description": "Set-property-then-`save()` at a call site (should be an intention method)"
                             },
@@ -4817,14 +4945,6 @@ Safe to delete — the conversion simply runs again on the next `composer update
                                 "description": "A comment defending the code against a strawman (\"not random\", \"no magic\", \"not a coincidence\", \"not dead code\")"
                             },
                             {
-                                "const": "php/NestedTernary",
-                                "description": "Nested/chained ternary `$a ? $b : ($c ? $d : $e)` (hidden control flow)"
-                            },
-                            {
-                                "const": "backend/NestedTernary",
-                                "description": "Nested/chained ternary `$a ? $b : ($c ? $d : $e)` (hidden control flow)"
-                            },
-                            {
                                 "const": "php/NestedTypeMissingTypeScript",
                                 "description": "A `#[TypeScript]` Data has a property typed as a nested `Data` class that itself lacks `#[TypeScript]` — the transformer emits it as `undefined`, a silent hole in the generated type (a nested enum is fine; the enum collector auto-generates it)"
                             },
@@ -4882,11 +5002,11 @@ Safe to delete — the conversion simply runs again on the next `composer update
                             },
                             {
                                 "const": "php/NullableWireObject",
-                                "description": "A nested object on a `#[TypeScript]` Data is typed `T | null` — it ships `null` on the wire where `T | Optional` would OMIT it (what the frontend's `x?.` reads for \"absent\")"
+                                "description": "A nested Data or enum on a `#[TypeScript]` Data is typed `T | null` — it ships `null` on the wire where `T | Optional` would OMIT it (what the frontend's `x?.` reads for \"absent\")"
                             },
                             {
                                 "const": "backend/NullableWireObject",
-                                "description": "A nested object on a `#[TypeScript]` Data is typed `T | null` — it ships `null` on the wire where `T | Optional` would OMIT it (what the frontend's `x?.` reads for \"absent\")"
+                                "description": "A nested Data or enum on a `#[TypeScript]` Data is typed `T | null` — it ships `null` on the wire where `T | Optional` would OMIT it (what the frontend's `x?.` reads for \"absent\")"
                             },
                             {
                                 "const": "php/OptionAsNullable",
@@ -4977,20 +5097,20 @@ Safe to delete — the conversion simply runs again on the next `composer update
                                 "description": "Raw `->input()/->get()/->query()/->post()` on a Request"
                             },
                             {
+                                "const": "php/ReassignedParameter",
+                                "description": "A parameter overwritten inside its method, so one name holds the value the caller passed and later a different one."
+                            },
+                            {
+                                "const": "backend/ReassignedParameter",
+                                "description": "A parameter overwritten inside its method, so one name holds the value the caller passed and later a different one."
+                            },
+                            {
                                 "const": "php/RedundantArrowReturnType",
                                 "description": "An arrow function whose return type only repeats what its one expression provably yields — `fn (): string => $this->name` on a `string` property"
                             },
                             {
                                 "const": "backend/RedundantArrowReturnType",
                                 "description": "An arrow function whose return type only repeats what its one expression provably yields — `fn (): string => $this->name` on a `string` property"
-                            },
-                            {
-                                "const": "php/RedundantElse",
-                                "description": "`else` after an `if` branch that already returns/throws (redundant)"
-                            },
-                            {
-                                "const": "backend/RedundantElse",
-                                "description": "`else` after an `if` branch that already returns/throws (redundant)"
                             },
                             {
                                 "const": "php/RedundantEnumUnwrap",
@@ -5017,6 +5137,22 @@ Safe to delete — the conversion simply runs again on the next `composer update
                                 "description": "A nested `X::from([...])` fills a slot the parent `::from` already auto-hydrates from the array"
                             },
                             {
+                                "const": "php/RefusedBequest",
+                                "description": "A method that overrides or implements an inherited one only to throw: the class claims a contract it refuses to keep."
+                            },
+                            {
+                                "const": "backend/RefusedBequest",
+                                "description": "A method that overrides or implements an inherited one only to throw: the class claims a contract it refuses to keep."
+                            },
+                            {
+                                "const": "php/RepeatedFolderPath",
+                                "description": "One folder is spelled as a path at three or more sites in different methods: it needs a single point of entry"
+                            },
+                            {
+                                "const": "backend/RepeatedFolderPath",
+                                "description": "One folder is spelled as a path at three or more sites in different methods: it needs a single point of entry"
+                            },
+                            {
                                 "const": "php/RepeatedGuard",
                                 "description": "The SAME compound guard condition recurs in ≥2 places — the same check spelled differently (inline reaches vs locals) or reordered still counts, so a copied condition has no name"
                             },
@@ -5031,6 +5167,14 @@ Safe to delete — the conversion simply runs again on the next `composer update
                             {
                                 "const": "backend/RepeatedNamedCall",
                                 "description": "The same `with`-style (variadic) method is called with the same named argument at 2+ sites, instead of a named helper on the type"
+                            },
+                            {
+                                "const": "php/RepeatedQueryChain",
+                                "description": "One Eloquent query chain written alike at three or more sites outside its model"
+                            },
+                            {
+                                "const": "backend/RepeatedQueryChain",
+                                "description": "One Eloquent query chain written alike at three or more sites outside its model"
                             },
                             {
                                 "const": "php/RepeatedTypeGuard",
@@ -5089,14 +5233,6 @@ Safe to delete — the conversion simply runs again on the next `composer update
                                 "description": "A page object reaches into the container with `app()`/`resolve()` instead of injecting the collaborator via `#[FromContainer]`"
                             },
                             {
-                                "const": "php/ShortCircuitStatement",
-                                "description": "a bare `$a && $b->do();` statement — a short-circuit whose result nothing reads, so the operator is an `if` in disguise"
-                            },
-                            {
-                                "const": "backend/ShortCircuitStatement",
-                                "description": "a bare `$a && $b->do();` statement — a short-circuit whose result nothing reads, so the operator is an `if` in disguise"
-                            },
-                            {
                                 "const": "php/SideTableTrait",
                                 "description": "An enum holding a trait of some of its cases as a constant list of those cases, instead of as something each case answers for itself."
                             },
@@ -5127,14 +5263,6 @@ Safe to delete — the conversion simply runs again on the next `composer update
                             {
                                 "const": "backend/SwallowCatch",
                                 "description": "`catch` whose only effect is `return null/false/[]`; empty catch (silent swallow)"
-                            },
-                            {
-                                "const": "php/TernaryStatement",
-                                "description": "a bare `$cond ? doThis() : doThat();` statement — a ternary whose value nothing reads, so it is choosing an ACTION, not a value"
-                            },
-                            {
-                                "const": "backend/TernaryStatement",
-                                "description": "a bare `$cond ? doThis() : doThat();` statement — a ternary whose value nothing reads, so it is choosing an ACTION, not a value"
                             },
                             {
                                 "const": "php/TrainWreck",
@@ -5183,6 +5311,22 @@ Safe to delete — the conversion simply runs again on the next `composer update
                             {
                                 "const": "backend/UnreadCollaborator",
                                 "description": "a collaborator promoted into a private field by the constructor and never read anywhere in the class — the class asks for something it does not use, and only a search of the whole type says so"
+                            },
+                            {
+                                "const": "php/UnusedParameter",
+                                "description": "A parameter of a method no subclass can override that its body never reads: every caller must pass a value nothing uses."
+                            },
+                            {
+                                "const": "backend/UnusedParameter",
+                                "description": "A parameter of a method no subclass can override that its body never reads: every caller must pass a value nothing uses."
+                            },
+                            {
+                                "const": "php/UnusedPrivateMember",
+                                "description": "A private method nothing in its class calls, or a private property nothing in its class reads: dead code the class still carries."
+                            },
+                            {
+                                "const": "backend/UnusedPrivateMember",
+                                "description": "A private method nothing in its class calls, or a private property nothing in its class reads: dead code the class still carries."
                             },
                             {
                                 "const": "php/UselessPropertyHook",
@@ -5239,6 +5383,14 @@ Safe to delete — the conversion simply runs again on the next `composer update
                             {
                                 "const": "frontend/DuplicateElement",
                                 "description": "Identical markup (3+ elements) repeated 2+ times — within a template or across components — extract one component"
+                            },
+                            {
+                                "const": "vue/HardCodedServerURL",
+                                "description": "A string written out as the path of a route the server declares by name"
+                            },
+                            {
+                                "const": "frontend/HardCodedServerURL",
+                                "description": "A string written out as the path of a route the server declares by name"
                             },
                             {
                                 "const": "vue/IndexAsKey",
@@ -5303,6 +5455,22 @@ Safe to delete — the conversion simply runs again on the next `composer update
                             {
                                 "const": "frontend/PropMutation",
                                 "description": "A prop is written to — `v-model` bound to it, or `@event=\"prop = …\"` — but props are read-only (a build error or a silent no-op)."
+                            },
+                            {
+                                "const": "vue/RawFetchInComponent",
+                                "description": "A Vue component calls the global `fetch` itself instead of the one client module"
+                            },
+                            {
+                                "const": "frontend/RawFetchInComponent",
+                                "description": "A Vue component calls the global `fetch` itself instead of the one client module"
+                            },
+                            {
+                                "const": "vue/RetestedSwitchCase",
+                                "description": "A `<SwitchCase>` case that tests again the value the `<SwitchCase>` already dispatched on"
+                            },
+                            {
+                                "const": "frontend/RetestedSwitchCase",
+                                "description": "A `<SwitchCase>` case that tests again the value the `<SwitchCase>` already dispatched on"
                             },
                             {
                                 "const": "vue/SwitchCase",
@@ -5383,10 +5551,6 @@ Safe to delete — the conversion simply runs again on the next `composer update
                             {
                                 "const": "python/ConditionalSpread",
                                 "description": "`**({\"k\": v} if v else {})` / `*([x] if x else [])` — an entry is spread in only when present, using a conditional that turns absence into an empty collection."
-                            },
-                            {
-                                "const": "python/ConditionalStatement",
-                                "description": "a bare `a() if x else b()` statement — a conditional expression whose value nothing reads, so it chooses an action, not a value."
                             },
                             {
                                 "const": "python/ConstantClassEnum",
@@ -5493,10 +5657,6 @@ Safe to delete — the conversion simply runs again on the next `composer update
                                 "description": "a method that uses an object's key to fetch a fact about it through a collaborator — `self.registry.get(node.key).reserved` — treating the object as a key into its own data"
                             },
                             {
-                                "const": "python/LoopWrappedInIf",
-                                "description": "A `for` or `while` whose whole body is one `if` (no `else`) around real work — the iteration pushed a level deep behind a condition"
-                            },
-                            {
                                 "const": "python/MaskedInvariant",
                                 "description": "a literal answering for the object's own scratch state — `self.period.includes(day) if self.period else False` — where the field is only unset because an operation sets it part-way"
                             },
@@ -5549,10 +5709,6 @@ Safe to delete — the conversion simply runs again on the next `composer update
                                 "description": "a comment or docstring defending the code against a misunderstanding nobody actually had — what it is not, rather than what it is."
                             },
                             {
-                                "const": "python/NestedConditional",
-                                "description": "`a if x else b if y else c` — a conditional expression inside another's branch, a branching decision folded into one line"
-                            },
-                            {
                                 "const": "python/NullableCallback",
                                 "description": "`cb: Callable | None = None` asked `if cb is not None:` / `if cb:` / `cb or …` in the body — a no-op treated as if it might be missing."
                             },
@@ -5585,10 +5741,6 @@ Safe to delete — the conversion simply runs again on the next `composer update
                                 "description": "`return json.loads(…)` — decoded text from outside handed on as bare dicts and lists, its shape known to no type"
                             },
                             {
-                                "const": "python/RedundantElse",
-                                "description": "An `else:` after an `if` branch that already left — it ends in `return`, `raise`, `continue` or `break` — indenting the rest of the function for nothing"
-                            },
-                            {
                                 "const": "python/RepeatedGuard",
                                 "description": "the same compound `and` condition recurs in 2+ places — it still counts even when reordered, or read through a local variable — and nobody has named it."
                             },
@@ -5613,20 +5765,12 @@ Safe to delete — the conversion simply runs again on the next `composer update
                                 "description": "`previous = self.scope … self.scope = previous` — an attribute used as per-call scratch, saved and restored around the call"
                             },
                             {
-                                "const": "python/ShortCircuitStatement",
-                                "description": "a bare `a and b()` or `a or b()` statement — an `and`/`or` whose value nothing reads, so the operator is really acting as an `if`."
-                            },
-                            {
                                 "const": "python/SideTableTrait",
                                 "description": "a trait of a type kept in a collection of its instances' names beside the registry, rather than as a field each instance answers for itself"
                             },
                             {
                                 "const": "python/StringMatchMirrorsEnum",
                                 "description": "`match raw: case \"pending\": …` whose cases are an existing enum's values — dispatching on loose strings the enum already seals"
-                            },
-                            {
-                                "const": "python/SubjectLadder",
-                                "description": "An `if`/`elif` chain of four or more rungs that each test the same subject for equality with a constant — a dispatch written as a ladder."
                             },
                             {
                                 "const": "python/SwallowedException",
@@ -5777,10 +5921,6 @@ Safe to delete — the conversion simply runs again on the next `composer update
                                 "description": "`F(x ?? \"\")` — an empty string, `0` or `false` invented to fill an argument, or answered by a lookup helper on a miss, a stand-in the callee cannot tell from real data"
                             },
                             {
-                                "const": "csharp/LoopWrappedInIf",
-                                "description": "A `for`, `foreach` or `while` whose whole body is one `if` (no `else`) around real work — the iteration pushed a level deep behind a condition"
-                            },
-                            {
                                 "const": "csharp/MatchDefaultReturnsNull",
                                 "description": "a `switch` that names every member of an enum, then answers `null`, `default` or `false` in its `_` arm — the one value that arm can see is a bug, and it is answered as if it were fine"
                             },
@@ -5817,10 +5957,6 @@ Safe to delete — the conversion simply runs again on the next `composer update
                                 "description": "a comment defending the code against a reading nobody made — `// not magic, just a day`, `// deliberately not sorted` — saying what it is not instead of what it is"
                             },
                             {
-                                "const": "csharp/NestedTernary",
-                                "description": "a `?:` with another `?:` as one of its branches — several decisions packed into one expression"
-                            },
-                            {
                                 "const": "csharp/NonCountingFor",
                                 "description": "a `for` loop whose step assigns the next item instead of moving a counter — a walk written as a count"
                             },
@@ -5839,10 +5975,6 @@ Safe to delete — the conversion simply runs again on the next `composer update
                             {
                                 "const": "csharp/PositionalTupleReturn",
                                 "description": "a method that returns `(decimal, decimal, string)` — unnamed values the caller reads by position, where two of the same type can be swapped and nothing notices"
-                            },
-                            {
-                                "const": "csharp/RedundantElse",
-                                "description": "An `else` after an `if` branch that already left — it ends in `return`, `throw`, `continue` or `break` — indenting the rest of the method for nothing"
                             },
                             {
                                 "const": "csharp/RepeatedGuard",
@@ -5873,10 +6005,6 @@ Safe to delete — the conversion simply runs again on the next `composer update
                                 "description": "A `switch` or an `if` ladder dispatching on strings that are the names of an enum the codebase already declares — the enum, written out again as text"
                             },
                             {
-                                "const": "csharp/SubjectLadder",
-                                "description": "An `if`/`else if` chain of four or more rungs that each compare the same subject with a constant — a dispatch written as a ladder."
-                            },
-                            {
                                 "const": "csharp/SwallowedException",
                                 "description": "A bare `catch` or `catch (Exception)` whose body is empty, continues, or returns nothing — every failure, expected or not, made to vanish"
                             },
@@ -5905,12 +6033,48 @@ Safe to delete — the conversion simply runs again on the next `composer update
                                 "description": "An `if`, `for`, `switch` or `select` opening a fourth level of choices inside one Go function — a decision buried inside a decision"
                             },
                             {
-                                "const": "go/LoopWrappedInIf",
-                                "description": "A `for` whose whole body is one `if`, burying the work a level deep where `continue` past what does not apply would keep it flat"
+                                "const": "shared/DuplicatedBranchTail",
+                                "description": "Every branch of an `if`/`else` ends with the same statement: it runs whichever way the condition goes."
                             },
                             {
-                                "const": "go/RedundantElse",
-                                "description": "An `else` after an `if` branch that already left — it ends in `return`, `break`, `continue`, `goto` or `panic` — indenting the rest of the function for nothing"
+                                "const": "shared/LoopInvertedGuard",
+                                "description": "A loop whose whole body is one `if` (no `else`) around real work: the iteration pushed a level deep behind a condition"
+                            },
+                            {
+                                "const": "shared/LoopWrappedInIf",
+                                "description": "A loop whose whole body is one `if` (no `else`) around real work: the iteration pushed a level deep behind a condition"
+                            },
+                            {
+                                "const": "shared/NestedTernary",
+                                "description": "A conditional expression (`a ? b : c`, `b if a else c`) with another inside it: several decisions folded into one expression"
+                            },
+                            {
+                                "const": "shared/NestedConditional",
+                                "description": "A conditional expression (`a ? b : c`, `b if a else c`) with another inside it: several decisions folded into one expression"
+                            },
+                            {
+                                "const": "shared/RedundantElse",
+                                "description": "An `else` after an `if` branch that already left (it returns, throws, breaks or continues): it indents the rest for nothing"
+                            },
+                            {
+                                "const": "shared/ShortCircuitStatement",
+                                "description": "A bare `a && b()` or `a || b()` statement: a short-circuit whose value nothing reads, so the operator is an `if` in disguise"
+                            },
+                            {
+                                "const": "shared/SubjectLadder",
+                                "description": "An `if`/`else if` chain of four or more rungs that each test the same subject for equality with a constant: a dispatch written as a ladder"
+                            },
+                            {
+                                "const": "shared/TernaryStatement",
+                                "description": "A bare conditional expression as a statement (`cond ? doThis() : doThat()`): its value is never read, so it chooses an action, not a value"
+                            },
+                            {
+                                "const": "shared/ConditionalStatement",
+                                "description": "A bare conditional expression as a statement (`cond ? doThis() : doThat()`): its value is never read, so it chooses an action, not a value"
+                            },
+                            {
+                                "const": "shared/UnreachableStatement",
+                                "description": "A statement after a return, throw, break or continue in the same block: it can never run."
                             },
                             {
                                 "description": "A rule of the project's own, by name.",
@@ -6119,6 +6283,14 @@ Safe to delete — the conversion simply runs again on the next `composer update
                                 "description": "a hand-written TS type that mirrors a backend Data class is a duplicated contract — mark the Data class `#[TypeScript]`, generate the type, and import the generated one."
                             },
                             {
+                                "const": "vue/ServerCalls",
+                                "description": "reach the server through one client module and the generated routes; never `fetch` from a component or write a server path by hand."
+                            },
+                            {
+                                "const": "frontend/ServerCalls",
+                                "description": "reach the server through one client module and the generated routes; never `fetch` from a component or write a server path by hand."
+                            },
+                            {
                                 "const": "vue/VueComponents",
                                 "description": "extract a component when template markup REPEATS, or when an element reaches DEEP into nested data — pass it the mid-object as a prop."
                             },
@@ -6295,6 +6467,10 @@ Safe to delete — the conversion simply runs again on the next `composer update
                                 "description": "guard at the top and leave, keep the body flat, no `else` after a branch that already left, and a switch over a defined type rather than a ladder of comparisons on one subject, which no rule enforces and the skill says so."
                             },
                             {
+                                "const": "shared/Flow",
+                                "description": "guard at the top and leave, no `else` after a branch that left, a `continue` guard instead of a loop wrapped in an `if`, a dispatch instead of a ladder over one subject, one decision per conditional expression, an `if` for an action, a shared last statement written once after the branches, and no code after the block has left."
+                            },
+                            {
                                 "description": "A rule of the project's own, by name.",
                                 "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
                             }
@@ -6359,72 +6535,7 @@ Safe to delete — the conversion simply runs again on the next `composer update
 # The skills code-commandments published here, so it can retire its own and leave yours
 # alone. Regenerated on every sync; deleting it only means a retired skill lingers.
 commandments
-commandments-php-fix-at-the-source
-commandments-php-guard-clauses-and-flow
-commandments-php-value-objects
-commandments-php-spatie-data
-commandments-php-spatie-data-hydration
-commandments-php-laravel-idioms
-commandments-php-page-objects
-commandments-php-documentation
-commandments-php-absence
-commandments-php-class-layout
-commandments-php-exceptions
-commandments-php-method-mood
-commandments-php-enums-with-behaviour
-commandments-php-role-vocabulary
-commandments-php-tell-dont-ask
-commandments-php-type-honesty
-commandments-php-pass-the-object
-commandments-php-concurrent-state
-commandments-php-templates
-commandments-php-route-actions
-commandments-vue-vue-components
-commandments-php-repeated-call-helper
-commandments-vue-vue-control-flow
-commandments-php-dependency-direction
-commandments-php-behaviour-per-method
-commandments-vue-mirrored-server-type
-commandments-typescript-absence
-commandments-typescript-duplication
-commandments-typescript-flow
-commandments-python-duplication
-commandments-python-flow
-commandments-csharp-duplication
-commandments-python-exceptions
-commandments-csharp-flow
-commandments-python-absence
-commandments-csharp-exceptions
-commandments-python-value-objects
-commandments-csharp-absence
-commandments-python-enums
-commandments-csharp-value-objects
-commandments-python-fix-at-the-source
-commandments-csharp-enums
-commandments-python-type-honesty
-commandments-csharp-fix-at-the-source
-commandments-python-class-layout
-commandments-csharp-type-honesty
-commandments-python-method-mood
-commandments-csharp-class-layout
-commandments-python-behaviour-per-method
-commandments-csharp-method-mood
-commandments-python-repeated-call-helper
-commandments-csharp-behaviour-per-method
-commandments-python-templates
-commandments-csharp-repeated-call-helper
-commandments-python-tell-dont-ask
-commandments-csharp-templates
-commandments-go-flow
-commandments-python-documentation
-commandments-csharp-tell-dont-ask
-commandments-python-dependency-direction
-commandments-csharp-documentation
-commandments-python-pass-the-object
-commandments-csharp-dependency-direction
-commandments-python-role-vocabulary
-commandments-csharp-pass-the-object
-commandments-csharp-role-vocabulary
+commandments-shared-flow
 commandments-writing-detectors
 
 === created .gitignore

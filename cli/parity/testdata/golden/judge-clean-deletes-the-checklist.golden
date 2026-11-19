@@ -3,6 +3,7 @@ exit: 0
 [32m✓ No sins found in 0 files.[0m
 
 --- stderr
+· read 0 files in <took> (0 from the cache, 0 by the bridges), judged in <took> (0 rule answers from memory, 0 asked): 0 sins
 
 --- files
 === deleted .commandments/sessions/61bdc/sins/sins.md

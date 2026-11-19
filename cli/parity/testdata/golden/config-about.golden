@@ -5,14 +5,14 @@ exit: 0
 
   [36mConfig ...............[0m .commandments/config.json (not yet written)
   [36mSource roots .........[0m .
-  [36mPHP detectors ........[0m 85 running  ·  128 available
-  [36mVue detectors ........[0m 19 running  ·  20 available
-  [36mPython detectors .....[0m 78 running  ·  78 available
-  [36mC# detectors .........[0m 63 running  ·  63 available
-  [36mGo detectors .........[0m 3 running  ·  3 available
+  [36mPHP detectors ........[0m 101 running  ·  147 available
+  [36mVue detectors ........[0m 30 running  ·  31 available
+  [36mPython detectors .....[0m 80 running  ·  80 available
+  [36mC# detectors .........[0m 65 running  ·  65 available
+  [36mGo detectors .........[0m 6 running  ·  6 available
   [36mCustom detectors .....[0m 0
   [36mExemption packages ...[0m 3 built-in  ·  0 registered
-  [36mSkills ...............[0m 66
+  [36mSkills ...............[0m 68
 
   [2mRun `commandments config reindex` to re-detect the source roots.[0m
 

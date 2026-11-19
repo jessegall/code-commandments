@@ -1,5 +1,24 @@
 exit: 0
 --- stdout
+--- a/<project>/components/CheckoutStep.vue
++++ b/<project>/components/CheckoutStep.vue
+@@ -15,11 +15,11 @@
+     <section class="checkout__panel">
+       <!-- @sin SwitchCase -->
+       <!-- @sin ControlFlowOnElement -->
+-      <CartReview v-if="step === 1" />
+-      <!-- @sin ControlFlowOnElement -->
+-      <ShippingForm v-else-if="step === 2" />
+-      <!-- @sin ControlFlowOnElement -->
+-      <PaymentForm v-else-if="step === 3" />
++      <SwitchCase :value="step">
++          <template #1><CartReview /></template>
++          <template #2><ShippingForm /></template>
++          <template #3><PaymentForm /></template>
++      </SwitchCase>
+     </section>
+ 
+     <!-- Assigning the `dismissed` PROP in a handler — a silent no-op. -->
 --- a/<project>/components/OrderStatusBadge.vue
 +++ b/<project>/components/OrderStatusBadge.vue
 @@ -5,13 +5,12 @@
@@ -22,25 +41,29 @@ exit: 0
  
    <!-- @fixed SwitchCase -->
    <!-- @righteous SwitchCase -->
---- a/<project>/components/CheckoutStep.vue
-+++ b/<project>/components/CheckoutStep.vue
-@@ -15,11 +15,11 @@
-     <section class="checkout__panel">
-       <!-- @sin SwitchCase -->
-       <!-- @sin ControlFlowOnElement -->
--      <CartReview v-if="step === 1" />
--      <!-- @sin ControlFlowOnElement -->
--      <ShippingForm v-else-if="step === 2" />
--      <!-- @sin ControlFlowOnElement -->
--      <PaymentForm v-else-if="step === 3" />
-+      <SwitchCase :value="step">
-+          <template #1><CartReview /></template>
-+          <template #2><ShippingForm /></template>
-+          <template #3><PaymentForm /></template>
-+      </SwitchCase>
-     </section>
- 
-     <!-- Assigning the `dismissed` PROP in a handler — a silent no-op. -->
+--- a/<project>/components/ProductCell.vue
++++ b/<project>/components/ProductCell.vue
+@@ -5,15 +5,17 @@
+ <template>
+   <td class="cell">
+     <!-- @sin SwitchCase -->
+-    <template v-if="column === 'price'">
++    <SwitchCase :value="column">
++        <template #price>
+       <strong>{{ '$' }}</strong>
+       <PriceTag />
+     </template>
+-    <template v-else-if="column === 'stock'">
++        <template #stock>
+       <StockLevel />
+     </template>
+-    <template v-else>
++        <template #default>
+       <span class="muted">—</span>
+     </template>
++    </SwitchCase>
+   </td>
+ </template>
 --- a/<project>/components/RefundWizard.vue
 +++ b/<project>/components/RefundWizard.vue
 @@ -9,7 +9,8 @@
@@ -71,29 +94,6 @@ exit: 0
      <p>Your refund is on its way.</p>
    </template>
 +  </SwitchCase>
- </template>
---- a/<project>/components/ProductCell.vue
-+++ b/<project>/components/ProductCell.vue
-@@ -5,15 +5,17 @@
- <template>
-   <td class="cell">
-     <!-- @sin SwitchCase -->
--    <template v-if="column === 'price'">
-+    <SwitchCase :value="column">
-+        <template #price>
-       <strong>{{ '$' }}</strong>
-       <PriceTag />
-     </template>
--    <template v-else-if="column === 'stock'">
-+        <template #stock>
-       <StockLevel />
-     </template>
--    <template v-else>
-+        <template #default>
-       <span class="muted">—</span>
-     </template>
-+    </SwitchCase>
-   </td>
  </template>
 [2m↳ Judge THIS diff on its own. The auto-fixers change every release, so never skip a repent from a
   past result or a remembered "this fix is broken" — and don't record one as permanently broken;

@@ -9,10 +9,10 @@ Some of the rules there are:
   all-optional-data
   archaeology-comment
   array-bag
+  array-bag-parameter
   array-return-bag
   assembled-template
-  bare-state-predicate
-  blank-string-default
+  bare-scope-escape
 
 Run `commandments judge --list` for all of them.
 

@@ -1,6 +1,6 @@
 exit: 0
 --- stdout
-{"hookSpecificOutput":{"hookEventName":"PostToolUse","additionalContext":"Code Commandments — src/Order.php:7 narrated-command (hides) — load `commandments-php-method-mood`, then fix it at its source.\n\nCode Commandments: judged by the 167 rules that answer from one file, and the 80 that read across files were not asked, because an edit is judged on its own, and the whole tree is read only to judge the changes together, so this is not a clean answer, it is a smaller one. Run `commandments judge --changes` for the whole answer. (src/Order.php)"}}
+{"hookSpecificOutput":{"hookEventName":"PostToolUse","additionalContext":"Code Commandments — src/Order.php:7 narrated-command (hides) — load `commandments-php-method-mood`, then fix it at its source.\n\nCode Commandments: judged by the 194 rules that answer from one file, and the 87 that read across files were not asked, because an edit is judged on its own, and the whole tree is read only to judge the changes together, so this is not a clean answer, it is a smaller one. Run `commandments judge --changes` for the whole answer. (src/Order.php)"}}
 
 --- stderr
 

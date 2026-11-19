@@ -55,7 +55,7 @@ exit: 0
  {
 --- a/app/Http/Pages/Hydration/DeriveTiles.php
 +++ b/app/Http/Pages/Hydration/DeriveTiles.php
-@@ -33,7 +33,7 @@
+@@ -35,7 +35,7 @@
              return TileGrid::from(['tiles' => []]);
          }
  
@@ -64,7 +64,7 @@ exit: 0
      }
  
      public function capacity(): int
-@@ -78,7 +78,7 @@
+@@ -80,7 +80,7 @@
      #[Righteous(DerivedCollectionCast::class)]
      public function build(): LabelStrip
      {

@@ -1,8 +1,9 @@
 exit: 0
 --- stdout
-[32m✓ No sins found in 1 file, the lines changed in the working tree, of 302 read.[0m
+[32m✓ No sins found in 1 file, the lines changed in the working tree, of 305 read.[0m
 
 --- stderr
-· reading the whole path, not only the 1 file judged: 76 of the 247 rules read across files, so the scope chose what is reported, not what is read
+· reading the whole path, not only the 1 file judged: 83 of the 281 rules read across files, so the scope chose what is reported, not what is read
+· read 305 files in <took> (0 from the cache, 305 by the bridges), judged in <took> (1521 rule answers from memory, 53989 asked): 0 sins
 
 --- files

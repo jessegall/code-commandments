@@ -170,41 +170,21 @@ exit: 1
   [36mshop/tally_boards.py:10[0m  ExprStmt  [2m[MutableStaticStateDetector][0m
   [36mshop/tax_rates.py:11[0m  Assign  [2m[MutableStaticStateDetector][0m
 
-[1;33mpython/flow[0m  (33)
+[1;33mpython/flow[0m  (13)
   [1;36m↳ LOAD the skill `commandments-python-flow` before fixing[0m
   [36mshop/aisle_marks.py:10[0m  call  [2m[CollectionMutatedWhileIteratedDetector][0m
   [36mshop/aisle_marks.py:24[0m  call  [2m[CollectionMutatedWhileIteratedDetector][0m
   [36mshop/attachments.py:12[0m  binary  [2m[CoalescedLoopSubjectDetector][0m
-  [36mshop/audit.py:8[0m  conditional  [2m[ConditionalStatementDetector][0m
-  [36mshop/backups.py:9[0m  conditional  [2m[ConditionalStatementDetector][0m
   [36mshop/bay_clearance.py:15[0m  binary  [2m[UnnamedConditionDetector][0m
   [36mshop/bay_loading.py:34[0m  binary  [2m[UnnamedConditionDetector][0m
-  [36mshop/builds.py:7[0m  binary  [2m[ShortCircuitStatementDetector][0m
-  [36mshop/caches.py:11[0m  binary  [2m[ShortCircuitStatementDetector][0m
-  [36mshop/carriers.py:9[0m  IfStmt  [2m[SubjectLadderDetector][0m
   [36mshop/categories.py:10[0m  call  [2m[CoalescedLoopSubjectDetector][0m
   [36mshop/coupons.py:11[0m  IfStmt  [2m[DeepNestingDetector][0m
-  [36mshop/freight.py:9[0m  conditional  [2m[NestedConditionalDetector][0m
-  [36mshop/invoice_render.py:13[0m  IfStmt  [2m[RedundantElseDetector][0m
-  [36mshop/invoicing.py:9[0m  IfStmt  [2m[LoopWrappedInIfDetector][0m
-  [36mshop/labels.py:8[0m  IfStmt  [2m[LoopWrappedInIfDetector][0m
   [36mshop/packing.py:10[0m  MatchStmt  [2m[DeepNestingDetector][0m
   [36mshop/pending_orders.py:14[0m  call  [2m[CollectionMutatedWhileIteratedDetector][0m
-  [36mshop/picking.py:10[0m  IfStmt  [2m[RedundantElseDetector][0m
-  [36mshop/pricing.py:14[0m  IfStmt  [2m[RedundantElseDetector][0m
-  [36mshop/refunds.py:11[0m  IfStmt  [2m[RedundantElseDetector][0m
-  [36mshop/reminders.py:7[0m  IfStmt  [2m[LoopWrappedInIfDetector][0m
   [36mshop/reservation_sweep.py:11[0m  Simple  [2m[CollectionMutatedWhileIteratedDetector][0m
   [36mshop/restock.py:11[0m  ForLoop  [2m[DeepNestingDetector][0m
-  [36mshop/restock.py:13[0m  IfStmt  [2m[LoopWrappedInIfDetector][0m
-  [36mshop/returns_desk.py:6[0m  IfStmt  [2m[SubjectLadderDetector][0m
   [36mshop/shift_ticks.py:21[0m  binary  [2m[UnnamedConditionDetector][0m
   [36mshop/shipments.py:10[0m  conditional  [2m[CoalescedLoopSubjectDetector][0m
-  [36mshop/startup.py:13[0m  binary  [2m[ShortCircuitStatementDetector][0m
-  [36mshop/status_colours.py:7[0m  conditional  [2m[NestedConditionalDetector][0m
-  [36mshop/statuses.py:7[0m  IfStmt  [2m[SubjectLadderDetector][0m
-  [36mshop/subscriptions.py:11[0m  conditional  [2m[ConditionalStatementDetector][0m
-  [36mshop/tiers.py:11[0m  conditional  [2m[NestedConditionalDetector][0m
 
 [1;33mpython/method-mood[0m  (6)
   [1;36m↳ LOAD the skill `commandments-python-method-mood` before fixing[0m
@@ -382,11 +362,46 @@ exit: 1
   [36mshop/supplier_feed.py:9[0m  call  [2m[RawDecodedReturnDetector][0m
   [36mshop/wallet_balances.py:7[0m  ClassDef Balance  [2m[MutableValueObjectDetector][0m
 
+[1;33mshared/flow[0m  (26)
+  [1;36m↳ LOAD the skill `commandments-shared-flow` before fixing[0m
+  [36mshop/audit.py:8[0m  conditional  [2m[TernaryStatementDetector][0m
+  [36mshop/backups.py:9[0m  conditional  [2m[TernaryStatementDetector][0m
+  [36mshop/builds.py:7[0m  binary  [2m[ShortCircuitStatementDetector][0m
+  [36mshop/caches.py:11[0m  binary  [2m[ShortCircuitStatementDetector][0m
+  [36mshop/carriers.py:9[0m  IfStmt  [2m[SubjectLadderDetector][0m
+  [36mshop/freight.py:9[0m  conditional  [2m[NestedTernaryDetector][0m
+  [36mshop/invoice_render.py:13[0m  IfStmt  [2m[RedundantElseDetector][0m
+  [36mshop/invoicing.py:9[0m  IfStmt  [2m[LoopInvertedGuardDetector][0m
+  [36mshop/labels.py:8[0m  IfStmt  [2m[LoopInvertedGuardDetector][0m
+  [36mshop/member_points.py:12[0m  IfStmt  [2m[DuplicatedBranchTailDetector][0m
+  [36mshop/member_points.py:28[0m  Assign  [2m[UnreachableStatementDetector][0m
+  [36mshop/parcel_postage.py:13[0m  IfStmt  [2m[DuplicatedBranchTailDetector][0m
+  [36mshop/parcel_postage.py:31[0m  AugAssign  [2m[UnreachableStatementDetector][0m
+  [36mshop/parcel_refunds.py:19[0m  IfStmt  [2m[DuplicatedBranchTailDetector][0m
+  [36mshop/parcel_refunds.py:31[0m  Assign  [2m[UnreachableStatementDetector][0m
+  [36mshop/picking.py:10[0m  IfStmt  [2m[RedundantElseDetector][0m
+  [36mshop/pricing.py:14[0m  IfStmt  [2m[RedundantElseDetector][0m
+  [36mshop/refunds.py:11[0m  IfStmt  [2m[RedundantElseDetector][0m
+  [36mshop/reminders.py:7[0m  IfStmt  [2m[LoopInvertedGuardDetector][0m
+  [36mshop/restock.py:13[0m  IfStmt  [2m[LoopInvertedGuardDetector][0m
+  [36mshop/returns_desk.py:6[0m  IfStmt  [2m[SubjectLadderDetector][0m
+  [36mshop/startup.py:13[0m  binary  [2m[ShortCircuitStatementDetector][0m
+  [36mshop/status_colours.py:7[0m  conditional  [2m[NestedTernaryDetector][0m
+  [36mshop/statuses.py:7[0m  IfStmt  [2m[SubjectLadderDetector][0m
+  [36mshop/subscriptions.py:11[0m  conditional  [2m[TernaryStatementDetector][0m
+  [36mshop/tiers.py:11[0m  conditional  [2m[NestedTernaryDetector][0m
+  [32m↳ auto-fixable: commandments repent --repent=latest --sin=ternary-statement[0m
+  [32m↳ auto-fixable: commandments repent --repent=latest --sin=short-circuit-statement[0m
+  [32m↳ auto-fixable: commandments repent --repent=latest --sin=nested-ternary[0m
+  [32m↳ auto-fixable: commandments repent --repent=latest --sin=redundant-else[0m
+  [32m↳ auto-fixable: commandments repent --repent=latest --sin=loop-inverted-guard[0m
+
 [2m↳ the rule above all: trace each sin to where the value is BORN and fix it THERE — read fix-at-the-source.[0m
 [2m↳ don't recognise a rule above? `commandments info <sin>` — what it flags, why it is a sin, the fix, an example.[0m
 
-[1m283 sins[0m across 18 skills.
+[1m289 sins[0m across 19 skills.
 
 --- stderr
+· read 305 files in <took> (0 from the cache, 305 by the bridges), judged in <took> (1521 rule answers from memory, 53989 asked): 289 sins
 
 --- files

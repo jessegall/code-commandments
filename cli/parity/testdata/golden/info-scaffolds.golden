@@ -1,6 +1,49 @@
 exit: 0
 --- stdout
 
+[1mre-tested-switch-case[0m  [2mvue/vue-control-flow[0m
+  A `<SwitchCase>` case that tests again the value the `<SwitchCase>` already dispatched
+  on
+
+[33mWhy it is a sin[0m
+
+  A `v-if="status === 'paid'"` / `v-else-if="status === 'pending'"` / `v-else` chain
+  is a `switch` in disguise: one subject (`status`), tested case by case. Each
+  `v-else-if` restates the subject and reads as a fresh, independent decision when
+  there is really only one — *which case is this value?*
+
+[33mHow to fix it[0m
+
+  A `<SwitchCase>` slot already knows which case it is; a `v-if` on the same value inside
+  it is a second, drifting copy of the dispatch.
+  Give each value its own slot (`#paid`, `#refunded`) and drop the inner test.
+
+[33mExample[0m
+
+  ```vue
+  ----------[ Bad ]----------
+  
+  <template v-if="request.reason === 'damaged'">
+    <h3>Damaged on arrival</h3>
+    <p>{{ request.photos }} photos attached</p>
+  </template>
+  
+  ----------[ Good ]----------
+  
+  <SwitchCase :value="request.reason">
+    <template #damaged><ReturnDamagedNote :photos="request.photos" /></template>
+    <template #unwanted><h3>No longer wanted</h3></template>
+  </SwitchCase>
+  ```
+
+[33mCommands[0m
+
+  [36mLearn     [0m load the skill [1mcommandments-vue-vue-control-flow[0m
+  [36mFind it   [0m commandments judge --sin=re-tested-switch-case
+  [36mTurn off  [0m commandments disable re-tested-switch-case
+  [36mWrong?    [0m commandments report --detector=RetestedSwitchCaseDetector --reason="…" --ref=PATH:LINE
+
+
 [1mswitch-case[0m  [2mvue/vue-control-flow[0m
   A `v-if`/`v-else-if` chain re-testing the same subject (should be `<SwitchCase :value>`)
 

@@ -46,11 +46,7 @@ exit: 0
   CollectionMutatedWhileIteratedDetector
   DeepNestingDetector
   InlineThrowDetector
-  LoopWrappedInIfDetector
-  NestedTernaryDetector
   NonCountingForDetector
-  RedundantElseDetector
-  SubjectLadderDetector
   UnnamedConditionDetector
 [1;33mcsharp/method-mood[0m
   BareStatePredicateDetector
@@ -82,8 +78,6 @@ exit: 0
   PositionalTupleReturnDetector
 [1;33mgo/flow[0m
   DeepNestingDetector
-  LoopWrappedInIfDetector
-  RedundantElseDetector
 [1;33mphp/absence[0m
   BlankStringDefaultDetector
   BlankStringOnTheWireDetector
@@ -91,6 +85,7 @@ exit: 0
   ConditionalArraySpreadDetector
   DeNulledFinderDetector
   ErasedNullObjectDetector
+  FalseForNothingDetector
   NullableCallbackDetector
   OptionAsNullableDetector
 [1;33mphp/behaviour-per-method[0m
@@ -99,6 +94,8 @@ exit: 0
   MemberAfterMethodDetector
   MemberOutOfOrderDetector
 [1;33mphp/dependency-direction[0m
+  ConcreteCrossModuleDependencyDetector
+  LoneImplementerInterfaceDetector
   NamespaceCycleDetector
   NamespaceDependencyDetector
 [1;33mphp/documentation[0m
@@ -129,6 +126,7 @@ exit: 0
   ConstructorSideEffectDetector
   DivergentTwinDetector
   DuplicateFunctionDetector
+  ListMirrorsFolderDetector
   ManufacturedFakeFillDetector
   MutableStaticStateDetector
   NearDuplicateFunctionDetector
@@ -138,12 +136,7 @@ exit: 0
   DeepNestingDetector
   IfElseLadderDetector
   InlineThrowDetector
-  LoopInvertedGuardDetector
-  NestedTernaryDetector
   NonCountingForDetector
-  RedundantElseDetector
-  ShortCircuitStatementDetector
-  TernaryStatementDetector
   UnnamedConditionDetector
 [1;33mphp/laravel-idioms[0m
   HandedOutCollectionDetector
@@ -157,14 +150,19 @@ exit: 0
   DerivedArgumentDetector
   ParamResolvedFromParamDetector
 [1;33mphp/repeated-call-helper[0m
+  RepeatedFolderPathDetector
   RepeatedGuardDetector
   RepeatedNamedCallDetector
   RepeatedTypeGuardDetector
 [1;33mphp/role-vocabulary[0m
+  HandRolledRegistryDetector
   NullableRegistryLookupDetector
 [1;33mphp/tell-dont-ask[0m
+  CapabilityProbeHubDetector
   FeatureEnvyDetector
+  GuardBesideTransitionDetector
   KeyedLookupEnvyDetector
+  MiddleManDetector
   TrainWreckDetector
   TypeSwitchDetector
 [1;33mphp/templates[0m
@@ -174,12 +172,17 @@ exit: 0
   ImpossibleGuardDetector
   MaskedInvariantDetector
   PhantomNullableDetector
+  ReassignedParameterDetector
   RedundantArrowReturnTypeDetector
+  RefusedBequestDetector
   ScratchStateRestoreDetector
   PlaceholderFilledDataDetector
+  UnusedParameterDetector
+  UnusedPrivateMemberDetector
   UselessPropertyHookDetector
 [1;33mphp/value-objects[0m
   ArrayBagDetector
+  ArrayBagParameterDetector
   ArrayReturnBagDetector
   CoupledFieldsDetector
   DataClumpDetector
@@ -236,13 +239,7 @@ exit: 0
 [1;33mpython/flow[0m
   CoalescedLoopSubjectDetector
   CollectionMutatedWhileIteratedDetector
-  ConditionalStatementDetector
   DeepNestingDetector
-  LoopWrappedInIfDetector
-  NestedConditionalDetector
-  RedundantElseDetector
-  ShortCircuitStatementDetector
-  SubjectLadderDetector
   UnnamedConditionDetector
 [1;33mpython/method-mood[0m
   BareStatePredicateDetector
@@ -283,6 +280,15 @@ exit: 0
   MutableValueObjectDetector
   PositionalTupleReturnDetector
   RawDecodedReturnDetector
+[1;33mshared/flow[0m
+  DuplicatedBranchTailDetector
+  LoopInvertedGuardDetector
+  NestedTernaryDetector
+  RedundantElseDetector
+  ShortCircuitStatementDetector
+  TernaryStatementDetector
+  UnreachableStatementDetector
+  SubjectLadderDetector
 [1;33mtypescript/absence[0m
   DefendedCertainFieldDetector
   FalselyOptionalFieldDetector
@@ -292,6 +298,9 @@ exit: 0
   SideTableTraitDetector
 [1;33mtypescript/flow[0m
   CollectionMutatedWhileIteratedDetector
+[1;33mvue/server-calls[0m
+  HardCodedServerURLDetector
+  RawFetchInComponentDetector
 [1;33mvue/vue-components[0m
   ComponentBudgetDetector
   CompoundInlineComponentDetector
@@ -306,6 +315,7 @@ exit: 0
   ControlFlowOnElementDetector
   IndexAsKeyDetector
   LoopWithConditionDetector
+  RetestedSwitchCaseDetector
   SwitchCaseDetector
 
 [1;33mlanguages read here[0m

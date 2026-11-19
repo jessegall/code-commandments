@@ -2,6 +2,7 @@ exit: 0
 --- stdout
 [1mArrayBagDetector[0m honours:
   [36mno-container    [0m A type the framework instantiates itself, no container/DI (an Eloquent cast, a Spatie DataPipe/Cast) — a loose array parameter and per-call container reach are the framework's convention; exempt from array-bag and container-reach.
+[1mArrayBagParameterDetector[0m honours no exemptions.
 
 --- stderr
 
