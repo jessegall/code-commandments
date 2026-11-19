@@ -473,3 +473,18 @@ func (p *Program) IsStateless(written *contract.Type) bool {
 
 	return ok && declaration.Kind() == "Stmt_Class" && len(Fields(declaration)) == 0
 }
+
+func (p *Program) ClassIsRecord(fqcn string) bool {
+	declaration, ok := p.Class(fqcn)
+	fields := Fields(declaration)
+	if !ok || len(fields) == 0 {
+		return false
+	}
+	for _, field := range fields {
+		if !field.IsPublic {
+			return false
+		}
+	}
+
+	return declaration.HasModifier("readonly") || len(MutablePropertyNames(declaration)) == 0
+}

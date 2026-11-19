@@ -12,5 +12,5 @@ func (n Node) InjectsAnotherModulesConcreteService() bool {
 		return false
 	}
 
-	return !program.ClassIsValueType(class) && ModuleOf(class) != ModuleOf(EnclosingClassName(n.Match))
+	return !program.ClassIsValueType(class) && !program.ClassIsRecord(class) && ModuleOf(class) != ModuleOf(EnclosingClassName(n.Match))
 }
