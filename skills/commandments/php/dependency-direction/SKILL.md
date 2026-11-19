@@ -106,8 +106,26 @@ neither: every reader takes an extra hop to find the only code that runs. Type a
 the interface. If another module really does need to depend on the behaviour, move the interface into that
 module, where it becomes that module's port.
 
+### A service from another module, by its class
+
+The other side of the same seam. When a project registers its modules one by one, each with a service provider of
+its own, a module that takes another module's service by its concrete class is coupled to how that module does
+the work, not to what it promises. Rename a table, split the class, swap the storage, and every module that named
+the class changes with it.
+
+Type the constructor parameter on an interface the service implements: the providing module owns it when several
+modules use the service, and the using module owns it when only it needs the service. The concrete class then
+stays private to its module, and the binding of the interface is that module's own business.
+
+What is not this sin: a value from another module (a value object, an enum, a Data class), which is data and needs
+no interface; a class from the same module, where an interface would be one more hop to the only code that runs; an
+interface or an abstract class, which is already the seam; and a public promoted parameter, which is a record the
+object carries rather than a collaborator it calls.
+
 ## Rules
 
+- [ ] Code talks to an interface wherever a seam fits: a service from another module is reached through an interface, never its concrete class.
+      _Type the parameter on an interface the service implements, so this module depends on the contract and not on how the other module fills it._
 - [ ] An interface earns its place as a port another module uses, or a seam with a second implementation; inside one module with one implementer, depend on the class.
       _Type against the class and delete the interface, or move the interface to the module that consumes it, where it becomes that module's port._
 - [ ] Break every namespace cycle — dependencies point ONE way, so a namespace can always be lifted out on its own.
@@ -117,50 +135,46 @@ module, where it becomes that module's port.
 
 ## Worked example
 
-### lone-implementer-interface
+### concrete-cross-module-dependency
 
-An interface with one implementing class, named by nothing outside that class's own module: an indirection with one side
+A constructor takes a service of another self-registered module by its concrete class instead of an interface
 
 ```php
 ----------[ Bad ]----------
 
-// Prints the label on a warehouse bin.
-
-interface BinLabeller
-{
-    public function label(string $bin): string;
-
-    public function reprint(string $bin, int $copies): string;
-
-    public function calibrate(float $darkness, int $speedInchesPerSecond): void;
-}
+public function __construct(private CropCalendar $calendar, private int $openingHour = 7) {}
 
 ----------[ Good ]----------
 
-// Replaces a lost voucher with a new code, depending on the one generator the shop has.
+// in Shop\Harvest\YieldForecast
+public function __construct(
+    private CropCalendar $crops,
+    private WateringCalendar $water,
+) {}
 
-final class VoucherReissuer
+// in Shop\Irrigation\WaterSchedule
+public function litresDueOn(string $bed, int $day): int
 {
-    public function __construct(private readonly RandomCodeGenerator $codes) {}
+    return (int) $this->database->table('watering')->where('bed', $bed)->where('day', $day)->sum('litres');
+}
 
-    public function reissue(string $lost): string
-    {
-        return $lost.'-R-'.$this->codes->next();
-    }
+interface WateringCalendar
+{
+    public function litresDueOn(string $bed, int $day): int;
 }
 ```
 
-The other 2 — one per rule — are in [`reference/examples.md`](reference/examples.md).
+The other 3 — one per rule — are in [`reference/examples.md`](reference/examples.md).
 
 ## Commands
 
 - `{{binary}} judge --skill=php/dependency-direction` — find every one of these in the codebase.
-- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `lone-implementer-interface`, `namespace-cycle`, `namespace-dependency`.
+- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `concrete-cross-module-dependency`, `lone-implementer-interface`, `namespace-cycle`, `namespace-dependency`.
 - `{{binary}} report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference
 
-- [Worked examples](reference/examples.md) — every rule's bad → good, 3 of them.
+- [Worked examples](reference/examples.md) — every rule's bad → good, 4 of them.
 - [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills

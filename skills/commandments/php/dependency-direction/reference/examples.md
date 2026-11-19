@@ -2,6 +2,35 @@
 
 One bad → good per rule this skill teaches, taken from the fixture that proves the detector, so every pair is code that really fires and really passes.
 
+### concrete-cross-module-dependency
+
+A constructor takes a service of another self-registered module by its concrete class instead of an interface
+
+```php
+----------[ Bad ]----------
+
+public function __construct(private CropCalendar $calendar, private int $openingHour = 7) {}
+
+----------[ Good ]----------
+
+// in Shop\Harvest\YieldForecast
+public function __construct(
+    private CropCalendar $crops,
+    private WateringCalendar $water,
+) {}
+
+// in Shop\Irrigation\WaterSchedule
+public function litresDueOn(string $bed, int $day): int
+{
+    return (int) $this->database->table('watering')->where('bed', $bed)->where('day', $day)->sum('litres');
+}
+
+interface WateringCalendar
+{
+    public function litresDueOn(string $bed, int $day): int;
+}
+```
+
 ### lone-implementer-interface
 
 An interface with one implementing class, named by nothing outside that class's own module: an indirection with one side

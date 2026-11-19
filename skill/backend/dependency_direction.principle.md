@@ -90,3 +90,19 @@ that one class implements, that no other module names, and that sits in the same
 neither: every reader takes an extra hop to find the only code that runs. Type against the class and delete
 the interface. If another module really does need to depend on the behaviour, move the interface into that
 module, where it becomes that module's port.
+
+### A service from another module, by its class
+
+The other side of the same seam. When a project registers its modules one by one, each with a service provider of
+its own, a module that takes another module's service by its concrete class is coupled to how that module does
+the work, not to what it promises. Rename a table, split the class, swap the storage, and every module that named
+the class changes with it.
+
+Type the constructor parameter on an interface the service implements: the providing module owns it when several
+modules use the service, and the using module owns it when only it needs the service. The concrete class then
+stays private to its module, and the binding of the interface is that module's own business.
+
+What is not this sin: a value from another module (a value object, an enum, a Data class), which is data and needs
+no interface; a class from the same module, where an interface would be one more hop to the only code that runs; an
+interface or an abstract class, which is already the seam; and a public promoted parameter, which is a record the
+object carries rather than a collaborator it calls.

@@ -808,6 +808,14 @@
         "help": "Class `extends Concurrent` instead of composing `Concurrent<self>`"
     },
     {
+        "key": "sin_concrete-cross-module-dependency",
+        "title": "ConcreteCrossModuleDependency",
+        "type": "flag",
+        "kind": "flag",
+        "default": true,
+        "help": "A constructor takes a service of another self-registered module by its concrete class instead of an interface"
+    },
+    {
         "key": "sin_lone-implementer-interface",
         "title": "LoneImplementerInterface",
         "type": "flag",

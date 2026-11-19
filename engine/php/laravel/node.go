@@ -59,20 +59,20 @@ var BuilderTypes = []string{
 }
 
 var (
-	RouteVerbs        = []string{"get", "post", "put", "patch", "delete", "options", "match", "any"}
-	RouterTypes       = []string{`Illuminate\Routing\Router`, `Illuminate\Contracts\Routing\Registrar`}
-	ContainerTypes    = []string{`Illuminate\Container\Container`, `Illuminate\Contracts\Container\Container`, `Illuminate\Foundation\Application`, `Illuminate\Contracts\Foundation\Application`}
+	RouteVerbs         = []string{"get", "post", "put", "patch", "delete", "options", "match", "any"}
+	RouterTypes        = []string{`Illuminate\Routing\Router`, `Illuminate\Contracts\Routing\Registrar`}
+	ContainerTypes     = []string{`Illuminate\Container\Container`, `Illuminate\Contracts\Container\Container`, `Illuminate\Foundation\Application`, `Illuminate\Contracts\Foundation\Application`}
 	ContainerResolvers = []string{"make", "makeWith", "get"}
-	BindingMethods    = []string{"bind", "bindIf", "singleton", "singletonIf", "scoped", "scopedIf", "instance"}
-	RelationMethods   = []string{"hasOne", "hasOneThrough", "hasMany", "hasManyThrough", "belongsTo", "belongsToMany", "morphOne", "morphMany", "morphToMany", "morphedByMany"}
-	QueueHooks        = []string{"failed", "middleware", "retryUntil", "backoff", "uniqueId", "tags", "displayName"}
-	EventDispatchers  = []string{"dispatch", "dispatchIf", "dispatchUnless", "broadcast"}
-	RouteNameLookups  = []string{"route", "to_route", "signedRoute", "temporarySignedRoute"}
-	URLGenerators     = []string{`Illuminate\Support\Facades\URL`, "URL", `Illuminate\Support\Facades\Redirect`, "Redirect"}
-	URLHelpers        = []string{"redirect", "url"}
-	RequestTypes      = []string{Request, FormRequest, McpRequest}
-	CastContracts     = []string{`Illuminate\Contracts\Database\Eloquent\CastsAttributes`, `Illuminate\Contracts\Database\Eloquent\CastsInboundAttributes`}
-	BindingAttributes = []string{
+	BindingMethods     = []string{"bind", "bindIf", "singleton", "singletonIf", "scoped", "scopedIf", "instance"}
+	RelationMethods    = []string{"hasOne", "hasOneThrough", "hasMany", "hasManyThrough", "belongsTo", "belongsToMany", "morphOne", "morphMany", "morphToMany", "morphedByMany"}
+	QueueHooks         = []string{"failed", "middleware", "retryUntil", "backoff", "uniqueId", "tags", "displayName"}
+	EventDispatchers   = []string{"dispatch", "dispatchIf", "dispatchUnless", "broadcast"}
+	RouteNameLookups   = []string{"route", "to_route", "signedRoute", "temporarySignedRoute"}
+	URLGenerators      = []string{`Illuminate\Support\Facades\URL`, "URL", `Illuminate\Support\Facades\Redirect`, "Redirect"}
+	URLHelpers         = []string{"redirect", "url"}
+	RequestTypes       = []string{Request, FormRequest, McpRequest}
+	CastContracts      = []string{`Illuminate\Contracts\Database\Eloquent\CastsAttributes`, `Illuminate\Contracts\Database\Eloquent\CastsInboundAttributes`}
+	BindingAttributes  = []string{
 		`Illuminate\Database\Eloquent\Attributes\ObservedBy`,
 		`Illuminate\Database\Eloquent\Attributes\ScopedBy`,
 		`Illuminate\Database\Eloquent\Attributes\CollectedBy`,
