@@ -277,3 +277,15 @@ func DocblockWithoutTag(text, tag string) []string {
 
 	return kept
 }
+
+func DocumentedThrows(text string) []string {
+	var thrown []string
+	for _, line := range docblockContent(text) {
+		words := strings.Fields(line)
+		if len(words) > 1 && words[0] == "@throws" {
+			thrown = append(thrown, strings.Split(words[1], "|")...)
+		}
+	}
+
+	return thrown
+}

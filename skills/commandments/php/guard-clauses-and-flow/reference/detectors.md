@@ -4,6 +4,7 @@ Each row is one rule: the sin's id, the symptom its detector flags, and the dete
 
 - **`coalesced-loop-subject`** — `foreach ($x[$k] ?? [] as …)` — the absence check buried in the loop header instead of stated as a guard — `CoalescedLoopSubjectDetector`
 - **`deep-nesting`** — `if` nested 3-deep (a pyramid — hoist guards / extract) — `DeepNestingDetector`
+- **`duplicated-branch-tail`** — Every branch of an `if`/`else` ends with the same statement: it runs whichever way the condition goes. — `DuplicatedBranchTailDetector`
 - **`if-else-ladder`** — if/elseif ladder of 4+ branches (should be match/dispatch) — `IfElseLadderDetector`
 - **`inline-throw`** — `?? throw` fed into a call or dereferenced on the same line (inline throw mid-expression) — `InlineThrowDetector`
 - **`loop-inverted-guard`** — Loop body (multi-statement) wrapped in an `if` instead of `continue` guard — `LoopInvertedGuardDetector`

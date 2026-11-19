@@ -2,6 +2,7 @@
 
 namespace Shop\Reporting;
 
+use JesseGall\CodeCommandments\Sins\Backend\UnusedPrivateMember;
 use JesseGall\CodeCommandments\Sins\Backend\NegativeSpaceComment;
 use JesseGall\CodeCommandments\Sins\Backend\NestedTernary;
 
@@ -34,6 +35,7 @@ final class GradeCalculator
      */
     #[Fixed(NestedTernary::class)]
     #[Righteous(NestedTernary::class)]
+    #[Sinful(UnusedPrivateMember::class)]
     private function bandMatched(int $score): string
     {
         return match (true) {

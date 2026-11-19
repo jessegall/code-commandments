@@ -111,6 +111,8 @@ If yes — and you're reaching past its surface into its structure — that's wh
       _Move the method onto the object (`$node->edges()`)._
 - [ ] Ask the object directly; don't use its identity as a key to look its own fact up through a collaborator.
       _Move the lookup onto the object that owns the identity._
+- [ ] A class earns its place by doing something; one that only forwards every call to one collaborator is a middle man — let callers talk to that collaborator.
+      _Inject the collaborator where the middle man is used and delete the class, or move real behaviour into it._
 - [ ] Ask the object you have for the answer you want; never walk through its neighbours to find it.
       _Give the object you hold a method that answers the question, so the walk happens where the objects live: `$order->city()`, with each type asking only its own neighbour._
 - [ ] Let each type answer for itself; never branch on what a value IS when a method on it could say what it DOES.
@@ -152,17 +154,17 @@ public function suspend(string $reason): void
 }
 ```
 
-The other 3 — one per rule — are in [`reference/examples.md`](reference/examples.md).
+The other 4 — one per rule — are in [`reference/examples.md`](reference/examples.md).
 
 ## Commands
 
 - `{{binary}} judge --skill=php/tell-dont-ask` — find every one of these in the codebase.
-- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `feature-envy`, `keyed-lookup-envy`, `train-wreck`, `type-switch`.
+- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `feature-envy`, `keyed-lookup-envy`, `middle-man`, `train-wreck`, `type-switch`.
 - `{{binary}} report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference
 
-- [Worked examples](reference/examples.md) — every rule's bad → good, 4 of them.
+- [Worked examples](reference/examples.md) — every rule's bad → good, 5 of them.
 - [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills

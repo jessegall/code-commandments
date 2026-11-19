@@ -2,6 +2,7 @@
 
 namespace Shop\Catalog;
 
+use JesseGall\CodeCommandments\Sins\Backend\UnusedPrivateMember;
 use JesseGall\CodeCommandments\Sins\Backend\ArrayBag;
 use JesseGall\CodeCommandments\Sins\Backend\ManufacturedFakeFill;
 
@@ -14,6 +15,7 @@ use Shop\Repositories\ProductRepository;
  * Normalises a raw import row — string-indexing the loose array and papering over
  * every missing field with a fake empty value before persisting.
  */
+#[Sinful(UnusedPrivateMember::class)]
 final class ImportRowNormalizer
 {
     private string $pendingSku = '';

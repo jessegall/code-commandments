@@ -69,6 +69,33 @@ public function resolveFlat(Product $product, array $overrides, string $region):
 }
 ```
 
+### duplicated-branch-tail
+
+Every branch of an `if`/`else` ends with the same statement: it runs whichever way the condition goes.
+
+```php
+----------[ Bad ]----------
+
+public function refund(int $orderId, int $cents): void
+{
+    if ($cents <= 5000) {
+        $this->log[] = "card {$cents}";
+        $this->note($orderId);
+    } else {
+        $this->log[] = "credit {$cents}";
+        $this->note($orderId);
+    }
+}
+
+----------[ Good ]----------
+
+public function refundOnce(int $orderId, int $cents): void
+{
+    $this->log[] = ($cents <= 5000 ? 'card ' : 'credit ') . $cents;
+    $this->note($orderId);
+}
+```
+
 ### if-else-ladder
 
 if/elseif ladder of 4+ branches (should be match/dispatch)

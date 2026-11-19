@@ -752,6 +752,14 @@
         "help": "A blank-rendering Null Object written into a `string` slot — coerced back to `''`"
     },
     {
+        "key": "sin_false-for-nothing",
+        "title": "FalseForNothing",
+        "type": "flag",
+        "kind": "flag",
+        "default": true,
+        "help": "A return typed `X|false`: `false` stands in for \"nothing\" or \"failed\", and every caller must test for it."
+    },
+    {
         "key": "sin_nullable-callback",
         "title": "NullableCallback",
         "type": "flag",
@@ -1054,6 +1062,14 @@
         "kind": "flag",
         "default": true,
         "help": "`if` nested 3-deep (a pyramid — hoist guards / extract)"
+    },
+    {
+        "key": "sin_duplicated-branch-tail",
+        "title": "DuplicatedBranchTail",
+        "type": "flag",
+        "kind": "flag",
+        "default": true,
+        "help": "Every branch of an `if`/`else` ends with the same statement: it runs whichever way the condition goes."
     },
     {
         "key": "sin_if-else-ladder",
@@ -1568,6 +1584,14 @@
         "help": "Indirect feature envy — a method that uses an owned object's IDENTITY as a key to look up a fact about it through a collaborator"
     },
     {
+        "key": "sin_middle-man",
+        "title": "MiddleMan",
+        "type": "flag",
+        "kind": "flag",
+        "default": true,
+        "help": "A class whose every public method only hands its arguments, unchanged, to the same field: it adds nothing between the caller and the object that does the work."
+    },
+    {
         "key": "sin_train-wreck",
         "title": "TrainWreck",
         "type": "flag",
@@ -1640,12 +1664,28 @@
         "help": "An arrow function whose return type only repeats what its one expression provably yields — `fn (): string => $this->name` on a `string` property"
     },
     {
+        "key": "sin_refused-bequest",
+        "title": "RefusedBequest",
+        "type": "flag",
+        "kind": "flag",
+        "default": true,
+        "help": "A method that overrides or implements an inherited one only to throw: the class claims a contract it refuses to keep."
+    },
+    {
         "key": "sin_scratch-state-restore",
         "title": "ScratchStateRestore",
         "type": "flag",
         "kind": "flag",
         "default": true,
         "help": "Scratch state on `$this` — a method that saves one of its own fields to a local and restores it (`$prev = $this->scope; … $this->scope = $prev`), the field really a per-call input"
+    },
+    {
+        "key": "sin_unused-private-member",
+        "title": "UnusedPrivateMember",
+        "type": "flag",
+        "kind": "flag",
+        "default": true,
+        "help": "A private method nothing in its class calls, or a private property nothing in its class reads: dead code the class still carries."
     },
     {
         "key": "sin_useless-property-hook",

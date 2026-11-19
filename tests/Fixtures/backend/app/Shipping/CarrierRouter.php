@@ -2,11 +2,13 @@
 
 namespace Shop\Shipping;
 
+use JesseGall\CodeCommandments\Sins\Backend\UnusedPrivateMember;
 use JesseGall\CodeCommandments\Sins\Backend\EnumCaseOrChain;
 
 use Shop\Enums\ShippingMethod;
 use JesseGall\CodeCommandments\Testing\Sinful;
 
+#[Sinful(UnusedPrivateMember::class)]
 final class CarrierRouter
 {
     private string $depot = 'central';

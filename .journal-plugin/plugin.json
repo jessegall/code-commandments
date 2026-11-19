@@ -1,6 +1,6 @@
 {
     "name": "code-commandments",
-    "version": "7.18.149",
+    "version": "7.18.150",
     "title": "Code Commandments",
     "description": "The static code checker judges the codebase, its hooks run inside the journal, and every rule and language is a switch in its settings",
     "journal": "2.267.16",
@@ -51,7 +51,7 @@
     },
     "env": {
         "CLAUDE_PROJECT_DIR": "{project}",
-        "COMMANDMENTS_RELEASE": "v7.18.149"
+        "COMMANDMENTS_RELEASE": "v7.18.150"
     },
     "setup": [
         {
@@ -1159,6 +1159,19 @@
             ],
             "detail": true
         },
+        "sin_false-for-nothing": {
+            "title": "FalseForNothing",
+            "help": "A return typed `X|false`: `false` stands in for \"nothing\" or \"failed\", and every caller must test for it.",
+            "type": "flag",
+            "default": "true",
+            "group": "php/absence",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
+        },
         "sin_nullable-callback": {
             "title": "NullableCallback",
             "help": "Nullable callback normalised in the body instead of a Null Object default",
@@ -1643,6 +1656,19 @@
         "sin_deep-nesting": {
             "title": "DeepNesting",
             "help": "`if` nested 3-deep (a pyramid — hoist guards / extract)",
+            "type": "flag",
+            "default": "true",
+            "group": "php/guard-clauses-and-flow",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
+        },
+        "sin_duplicated-branch-tail": {
+            "title": "DuplicatedBranchTail",
+            "help": "Every branch of an `if`/`else` ends with the same statement: it runs whichever way the condition goes.",
             "type": "flag",
             "default": "true",
             "group": "php/guard-clauses-and-flow",
@@ -2485,6 +2511,19 @@
             ],
             "detail": true
         },
+        "sin_middle-man": {
+            "title": "MiddleMan",
+            "help": "A class whose every public method only hands its arguments, unchanged, to the same field: it adds nothing between the caller and the object that does the work.",
+            "type": "flag",
+            "default": "true",
+            "group": "php/tell-dont-ask",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
+        },
         "sin_train-wreck": {
             "title": "TrainWreck",
             "help": "`$order->customer()->address()->city()` — a chain crossing three of the project's own types, so a change three objects away reaches this caller",
@@ -2602,9 +2641,35 @@
             ],
             "detail": true
         },
+        "sin_refused-bequest": {
+            "title": "RefusedBequest",
+            "help": "A method that overrides or implements an inherited one only to throw: the class claims a contract it refuses to keep.",
+            "type": "flag",
+            "default": "true",
+            "group": "php/type-honesty",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
+        },
         "sin_scratch-state-restore": {
             "title": "ScratchStateRestore",
             "help": "Scratch state on `$this` — a method that saves one of its own fields to a local and restores it (`$prev = $this->scope; … $this->scope = $prev`), the field really a per-call input",
+            "type": "flag",
+            "default": "true",
+            "group": "php/type-honesty",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
+        },
+        "sin_unused-private-member": {
+            "title": "UnusedPrivateMember",
+            "help": "A private method nothing in its class calls, or a private property nothing in its class reads: dead code the class still carries.",
             "type": "flag",
             "default": "true",
             "group": "php/type-honesty",

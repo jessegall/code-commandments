@@ -178,6 +178,28 @@ public static function noted(string $consignment, ?string $complaint = null): se
 }
 ```
 
+### false-for-nothing
+
+A return typed `X|false`: `false` stands in for "nothing" or "failed", and every caller must test for it.
+
+```php
+----------[ Bad ]----------
+
+public function positionOf(string $sku): int|false
+{
+    return array_search($sku, $this->skus, true);
+}
+
+----------[ Good ]----------
+
+public function slotOf(string $sku): int
+{
+    $position = array_search($sku, $this->skus, true);
+
+    return is_int($position) ? $position : throw SkuNotIndexed::for($sku);
+}
+```
+
 ### nullable-callback
 
 Nullable callback normalised in the body instead of a Null Object default

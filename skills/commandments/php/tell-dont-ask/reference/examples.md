@@ -71,6 +71,45 @@ public function reservedSkus(): array
 }
 ```
 
+### middle-man
+
+A class whose every public method only hands its arguments, unchanged, to the same field: it adds nothing between the caller and the object that does the work.
+
+```php
+----------[ Bad ]----------
+
+// Asks the carrier where a parcel is. Every method hands its tracking code straight to the carrier client.
+
+final class ParcelTracker
+{
+    public function __construct(private readonly CarrierClient $client) {}
+
+    public function status(string $tracking): string
+    {
+        return $this->client->status($tracking);
+    }
+
+    public function hoursToDelivery(string $tracking): int
+    {
+        return $this->client->hoursToDelivery($tracking);
+    }
+}
+
+----------[ Good ]----------
+
+// The tracking page, asking the carrier client itself rather than a class that only passes the question on.
+
+final class TrackingPage
+{
+    public function __construct(private readonly CarrierClient $client) {}
+
+    public function headline(string $tracking): string
+    {
+        return sprintf('%s, %d hours to go', $this->client->status($tracking), $this->client->hoursToDelivery($tracking));
+    }
+}
+```
+
 ### train-wreck
 
 `$order->customer()->address()->city()` — a chain crossing three of the project's own types, so a change three objects away reaches this caller

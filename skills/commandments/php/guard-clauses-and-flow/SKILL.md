@@ -56,6 +56,8 @@ Reach for this the moment you are about to write:
 - [ ] State an absent collection at the top as a guard (early return); don't bury `?? []` in a `foreach` header.
       _An early `return` when the collection is absent, so the loop iterates something that is THERE._
 - [ ] Flatten with guard clauses — never nest `if`s three deep into a pyramid.
+- [ ] A statement every branch ends with belongs after the conditional, written once.
+      _Move the shared last statement below the `if`/`else`._
 - [ ] Replace a 4+ branch if/elseif ladder with a `match`, a method on the type, or polymorphic dispatch.
       _A `match`, a method on the type, or polymorphic dispatch._
 - [ ] Guard at the top with an early `throw`; don't bury a `?? throw` mid-expression feeding further work.
@@ -100,18 +102,18 @@ public function fanOutGuarded(string $carrier, array $manifest): void
 }
 ```
 
-The other 10 — one per rule — are in [`reference/examples.md`](reference/examples.md).
+The other 11 — one per rule — are in [`reference/examples.md`](reference/examples.md).
 
 ## Commands
 
 - `{{binary}} judge --skill=php/guard-clauses-and-flow` — find every one of these in the codebase.
-- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `coalesced-loop-subject`, `deep-nesting`, `if-else-ladder`, `inline-throw`, `loop-inverted-guard`, `nested-ternary`, `non-counting-for`, `redundant-else`, `short-circuit-statement`, `ternary-statement`, `unnamed-condition`.
+- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `coalesced-loop-subject`, `deep-nesting`, `duplicated-branch-tail`, `if-else-ladder`, `inline-throw`, `loop-inverted-guard`, `nested-ternary`, `non-counting-for`, `redundant-else`, `short-circuit-statement`, `ternary-statement`, `unnamed-condition`.
 - `{{binary}} repent --sin=<sin>` — auto-fix, for `loop-inverted-guard`, `nested-ternary`, `redundant-else`, `short-circuit-statement`, `ternary-statement`. Review it with `--dry-run` first.
 - `{{binary}} report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference
 
-- [Worked examples](reference/examples.md) — every rule's bad → good, 11 of them.
+- [Worked examples](reference/examples.md) — every rule's bad → good, 12 of them.
 - [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills

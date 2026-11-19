@@ -160,6 +160,33 @@ public function overridesReader(): callable
 }
 ```
 
+### refused-bequest
+
+A method that overrides or implements an inherited one only to throw: the class claims a contract it refuses to keep.
+
+```php
+----------[ Bad ]----------
+
+public function post(int $cents): void
+{
+    throw LedgerIsReadOnly::forPosting($cents);
+}
+
+----------[ Good ]----------
+
+// The report's view of a ledger: it holds one and offers only what a report may do, so it has nothing to refuse.
+
+final class LedgerReport
+{
+    public function __construct(private readonly LedgerBook $ledger) {}
+
+    public function balance(): int
+    {
+        return $this->ledger->balance();
+    }
+}
+```
+
 ### scratch-state-restore
 
 Scratch state on `$this` — a method that saves one of its own fields to a local and restores it (`$prev = $this->scope; … $this->scope = $prev`), the field really a per-call input
@@ -231,6 +258,36 @@ final class WorkflowClock
     public function stamp(): string
     {
         return '2024-01-01T00:00:00Z';
+    }
+}
+```
+
+### unused-private-member
+
+A private method nothing in its class calls, or a private property nothing in its class reads: dead code the class still carries.
+
+```php
+----------[ Bad ]----------
+
+private function average(): float
+{
+    return $this->sales === [] ? 0.0 : $this->total() / count($this->sales);
+}
+
+----------[ Good ]----------
+
+// The digest with only what it uses.
+
+final class SalesSummary
+{
+    /**
+     * @param  list<int>  $sales
+     */
+    public function __construct(private readonly array $sales) {}
+
+    public function total(): int
+    {
+        return array_sum($this->sales);
     }
 }
 ```
