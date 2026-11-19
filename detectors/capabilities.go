@@ -22,6 +22,20 @@ type Repentable interface {
 	Repentable()
 }
 
+// Repenting is a detector that answers for itself whether a scribe rewrites its sin away, as one bound from a shared rule does.
+type Repenting interface {
+	Repents() bool
+}
+
+func IsRepentable(detector Detector) bool {
+	if answers, states := detector.(Repenting); states {
+		return answers.Repents()
+	}
+	_, repentable := detector.(Repentable)
+
+	return repentable
+}
+
 // SelfFixing is a detector that states its own fix for each finding, as a project's rule with a fix does: the text to write in place of the node it found.
 type SelfFixing interface {
 	Fixes() bool

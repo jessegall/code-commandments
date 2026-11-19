@@ -69,10 +69,6 @@ function of its own, or name the inner block for what it decides.
 
 - [ ] Flatten with guards and extraction — never bury a choice four deep inside a function.
       _Guard the outer levels away (`return`, `break` or `continue` past what does not apply), or give the inner block a function of its own named for what it decides._
-- [ ] Invert a loop body wrapped in one `if` into a `continue` guard so the work sits at the loop's own level.
-      _Write `if !<condition> { continue }` as the loop's first statement and dedent the body under it._
-- [ ] Drop the `else` after a branch that returns, breaks, continues, goes to or panics — let the rest run at the function's own level.
-      _Delete the `else {` and its closing brace and dedent what was inside; the exit above it already says the rest only runs when the condition did not hold._
 
 ## Worked example
 
@@ -116,17 +112,14 @@ func (b *Bay) Sent(bays []*Bay) int {
 }
 ```
 
-The other 2 — one per rule — are in [`reference/examples.md`](reference/examples.md).
-
 ## Commands
 
 - `{{binary}} judge --skill=go/flow` — find every one of these in the codebase.
-- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `deep-go-nesting`, `go-loop-wrapped-in-if`, `redundant-go-else`.
+- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `deep-go-nesting`.
 - `{{binary}} report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference
 
-- [Worked examples](reference/examples.md) — every rule's bad → good, 3 of them.
 - [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills

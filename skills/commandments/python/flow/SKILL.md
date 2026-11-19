@@ -72,20 +72,8 @@ iteration, or extract the inner block into a function named for what it decides.
       _Return early when the collection is absent — or make the caller always hand one over — so the loop walks something that is there._
 - [ ] Never change the collection a loop walks while it walks it: decide inside the loop and change afterwards.
       _Collect what the loop decided in a list of its own and apply it after the loop, or walk a copy (`for item in list(items):`) when the change must happen as it goes._
-- [ ] Choose an action with `if`/`else`; a conditional expression chooses a value, so never write one whose value nothing reads.
-      _An `if x:` with each side as its own body — and no `else` at all when one side was `None`._
 - [ ] Flatten with guard clauses and extraction — never bury a choice four deep inside a function.
       _Guard the outer levels away (`return`/`continue` past what does not apply), let a comprehension do the inner iteration, or extract the inner block into a function named for what it decides._
-- [ ] Invert a loop body wrapped in one `if` into a `continue` guard so the work sits at the loop's own level.
-      _Write `if not <condition>: continue` as the first line of the loop and dedent the body under it._
-- [ ] Unfold a conditional expression nested in another's branch into a `match`, a lookup or guard clauses; don't chain `… if … else … if … else …`.
-      _A `match` over the subject, a dict lookup for a table of values, or a small function whose guards return early._
-- [ ] Drop the `else:` after a branch that returns, raises, continues or breaks — let the rest run at the function's own level.
-      _Delete the `else:` line and dedent its block; the exit above it already says the rest only runs when the condition was false._
-- [ ] Branch with an `if`; never run work off the right side of a bare `and`/`or` statement whose value nothing reads.
-      _Write the condition as an `if` and the right side as its body — `if not a: b()` for an `or`._
-- [ ] Dispatch on a value with an `Enum` that answers per case, a dict keyed by the value, or a `match` — never a ladder of `==` tests on one subject.
-      _Make the closed set an `Enum` and put the per-case answer on it, or look the answer up in a dict keyed by the value; a `match` fits a structural dispatch._
 - [ ] A condition that takes a reader more than a glance is a concept: give it a name and ask for it by that name.
       _Move the condition onto the class that owns most of it, as a method or a `@property` whose name says what it decides — `if self.should_announce(event):` — and let each object answer for its own part._
 
@@ -123,17 +111,17 @@ def descendants_of(below: defaultdict, parent: str) -> list:
     return found
 ```
 
-The other 9 — one per rule — are in [`reference/examples.md`](reference/examples.md).
+The other 3 — one per rule — are in [`reference/examples.md`](reference/examples.md).
 
 ## Commands
 
 - `{{binary}} judge --skill=python/flow` — find every one of these in the codebase.
-- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `python-coalesced-loop-subject`, `python-collection-mutated-while-iterated`, `python-conditional-statement`, `deep-python-nesting`, `python-loop-wrapped-in-if`, `python-nested-conditional`, `redundant-python-else`, `python-short-circuit-statement`, `python-subject-ladder`, `python-unnamed-condition`.
+- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `python-coalesced-loop-subject`, `python-collection-mutated-while-iterated`, `deep-python-nesting`, `python-unnamed-condition`.
 - `{{binary}} report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference
 
-- [Worked examples](reference/examples.md) — every rule's bad → good, 10 of them.
+- [Worked examples](reference/examples.md) — every rule's bad → good, 4 of them.
 - [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills

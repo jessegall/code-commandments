@@ -123,26 +123,6 @@ func (n Node) IsCallReceiver() bool {
 	return n.Exists() && isMethodSend(n.Parent()) && n.Node().Field == "var"
 }
 
-func (n Node) IsOutermostNestedTernary() bool {
-	if !n.IsTernary() {
-		return false
-	}
-	for at := n.Up(); at.Exists() && !at.IsFunctionLike(); at = at.Up() {
-		if at.IsTernary() {
-			return false
-		}
-	}
-	for _, branch := range []engine.Match{n.Child("if"), n.Child("else")} {
-		if branch.Exists() && slices.ContainsFunc(append([]engine.Match{branch}, descendantsOf(branch)...), func(m engine.Match) bool {
-			return m.Kind() == "Expr_Ternary"
-		}) {
-			return true
-		}
-	}
-
-	return false
-}
-
 var counterSteps = []string{"Expr_PostInc", "Expr_PreInc", "Expr_PostDec", "Expr_PreDec", "Expr_AssignOp_Plus", "Expr_AssignOp_Minus"}
 
 func (n Node) IsNonCountingFor() bool {
@@ -170,7 +150,7 @@ func (n Node) IsShortCircuit() bool {
 }
 
 func (n Node) ResultIsDiscarded() bool {
-	return n.Exists() && n.Parent().Kind() == "Stmt_Expression" && n.Node().Field == "expr"
+	return engine.ResultIsDiscarded(n.Match)
 }
 
 func isPropertyRead(node engine.Match) bool {

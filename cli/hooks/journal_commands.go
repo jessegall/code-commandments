@@ -345,7 +345,7 @@ func brief(root string) []string {
 func everySin() []sins.Sin {
 	var every []sins.Sin
 
-	for _, engine := range catalog.Engines {
+	for _, engine := range catalog.Curriculum {
 		every = append(every, sins.Every(engine)...)
 	}
 

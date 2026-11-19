@@ -1,7 +1,6 @@
 package fixture
 
 import (
-	"maps"
 	"path/filepath"
 
 	"github.com/jessegall/code-commandments/bridge"
@@ -36,10 +35,10 @@ func Curriculum(fixtures string) (render.Examples, error) {
 			return nil, err
 		}
 		if engine.fallback == source.PHP {
-			maps.Copy(examples, CarveDeclarations(root, codebase, engine.proven))
+			examples.Add(CarveDeclarations(root, codebase, engine.proven))
 			continue
 		}
-		maps.Copy(examples, CarveMarks(root, codebase, engine.proven, engine.fallback))
+		examples.Add(CarveMarks(root, codebase, engine.proven, engine.fallback))
 	}
 
 	return examples, nil

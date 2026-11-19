@@ -26,7 +26,7 @@ func TestAGateWithNoAgentToTellKeepsItsWordsWhereAPersonReadsThem(t *testing.T) 
 
 	last := found[len(found)-1]
 
-	if !strings.Contains(last, "redundant-python-else") {
+	if !strings.Contains(last, "redundant-else") {
 		t.Errorf("what is kept does not name the sin the hand-in carries: %s", last)
 	}
 

@@ -48,27 +48,27 @@ a `foreach` that adds to or removes from the very collection it walks — the en
 ```cs
 ----------[ Bad ]----------
 
-public static List<string> Restock(List<string> shelves, IReadOnlyCollection<string> below)
+public void Settle(IReadOnlyCollection<string> packed)
 {
-    foreach (var shelf in shelves)
+    foreach (var line in this.lines)
     {
-        if (below.Contains(shelf))
+        if (packed.Contains(line))
         {
-            shelves.Add($"{shelf}-reserve");
+            this.lines.Remove(line);
         }
     }
-
-    return shelves;
 }
 
 ----------[ Good ]----------
 
-public static List<string> Restocked(List<string> shelves, IReadOnlyCollection<string> below)
+public void SettlePacked(IReadOnlyCollection<string> packed)
 {
-    var reserves = shelves.Where(shelf => below.Contains(shelf)).Select(shelf => $"{shelf}-reserve").ToList();
-    shelves.AddRange(reserves);
+    var settled = this.lines.Where(line => packed.Contains(line)).ToList();
 
-    return shelves;
+    foreach (var line in settled)
+    {
+        this.lines.Remove(line);
+    }
 }
 ```
 
@@ -137,69 +137,6 @@ public static string CheckedUpper(string? country)
 }
 ```
 
-### csharp-loop-wrapped-in-if
-
-A `for`, `foreach` or `while` whose whole body is one `if` (no `else`) around real work — the iteration pushed a level deep behind a condition
-
-```cs
-----------[ Bad ]----------
-
-public long Bill(Order order, List<string> journal)
-{
-    long billed = 0;
-
-    foreach (var line in order.Lines)
-    {
-        if (line.Quantity > 0)
-        {
-            billed += line.Subtotal.Cents;
-            journal.Add($"{line.Sku}: {line.Subtotal.Cents}");
-        }
-    }
-
-    return billed;
-}
-
-----------[ Good ]----------
-
-public long BillFlat(Order order, List<string> journal)
-{
-    long billed = 0;
-
-    foreach (var line in order.Lines)
-    {
-        if (line.Quantity <= 0)
-        {
-            continue;
-        }
-
-        billed += line.Subtotal.Cents;
-        journal.Add($"{line.Sku}: {line.Subtotal.Cents}");
-    }
-
-    return billed;
-}
-```
-
-### csharp-nested-ternary
-
-a `?:` with another `?:` as one of its branches — several decisions packed into one expression
-
-```cs
-----------[ Bad ]----------
-
-public static string Of(int grams) => grams < 500 ? "small" : grams < 5000 ? "medium" : "large";
-
-----------[ Good ]----------
-
-public static string Classed(int grams) => grams switch
-{
-    < 500 => "small",
-    < 5000 => "medium",
-    _ => "large",
-};
-```
-
 ### csharp-non-counting-for
 
 a `for` loop whose step assigns the next item instead of moving a counter — a walk written as a count
@@ -235,84 +172,6 @@ public IEnumerable<Approval> Chain()
 
 // in Approvals.cs
 public static List<string> Signed(Approval first) => first.Chain().Select(step => step.Approver).ToList();
-```
-
-### redundant-csharp-else
-
-An `else` after an `if` branch that already left — it ends in `return`, `throw`, `continue` or `break` — indenting the rest of the method for nothing
-
-```cs
-----------[ Bad ]----------
-
-public Money Charge(Order order, string currency)
-{
-    if (order.Lines.Count == 0)
-    {
-        throw EmptyOrder.For(order);
-    }
-    else
-    {
-        var total = order.Total(currency);
-
-        return total with { Cents = total.Cents + 250 };
-    }
-}
-
-----------[ Good ]----------
-
-public Money ChargeFlat(Order order, string currency)
-{
-    if (order.Lines.Count == 0)
-    {
-        throw EmptyOrder.For(order);
-    }
-
-    var total = order.Total(currency);
-
-    return total with { Cents = total.Cents + 250 };
-}
-```
-
-### csharp-subject-ladder
-
-An `if`/`else if` chain of four or more rungs that each compare the same subject with a constant — a dispatch written as a ladder.
-
-```cs
-----------[ Bad ]----------
-
-public static string Colour(OrderStatus status)
-{
-    if (status == OrderStatus.Placed)
-    {
-        return "grey";
-    }
-    else if (status == OrderStatus.Paid)
-    {
-        return "blue";
-    }
-    else if (status == OrderStatus.Shipped)
-    {
-        return "orange";
-    }
-    else if (status == OrderStatus.Delivered)
-    {
-        return "green";
-    }
-
-    return "red";
-}
-
-----------[ Good ]----------
-
-public static string ColourOf(OrderStatus status) => status switch
-{
-    OrderStatus.Placed => "grey",
-    OrderStatus.Paid => "blue",
-    OrderStatus.Shipped => "orange",
-    OrderStatus.Delivered => "green",
-    OrderStatus.Cancelled => "red",
-    _ => throw new ArgumentOutOfRangeException(nameof(status)),
-};
 ```
 
 ### csharp-unnamed-condition

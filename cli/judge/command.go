@@ -841,7 +841,9 @@ func list(cwd string, console cli.Console) (int, error) {
 			name += " (custom)"
 		}
 
-		bySkill[slug] = append(bySkill[slug], name)
+		if !slices.Contains(bySkill[slug], name) {
+			bySkill[slug] = append(bySkill[slug], name)
+		}
 	}
 
 	skills := make([]string, 0, len(bySkill))

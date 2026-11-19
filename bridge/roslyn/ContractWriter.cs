@@ -120,7 +120,8 @@ public sealed class ContractWriter(IReadOnlyList<string> roots, IReadOnlySet<str
     {
         var full = Path.GetFullPath(path);
         var info = new FileInfo(full);
-        var target = info.Exists ? info.ResolveLinkTarget(true) : new DirectoryInfo(full).ResolveLinkTarget(true);
+        var folder = new DirectoryInfo(full);
+        var target = info.Exists ? info.ResolveLinkTarget(true) : folder.Exists ? folder.ResolveLinkTarget(true) : null;
 
         return target?.FullName ?? full;
     }

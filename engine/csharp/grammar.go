@@ -48,6 +48,7 @@ func init() {
 		},
 		Continues:         func(branch engine.Match) bool { return Node{Match: branch}.IsElseIf() },
 		Body:              body,
+		JumpTarget:        engine.KindIn("LabeledStatement"),
 		Otherwise:         otherwise,
 		Condition:         condition,
 		ComparisonSubject: func(held engine.Match) engine.Match { return Node{Match: held}.ComparisonSubject().Match },

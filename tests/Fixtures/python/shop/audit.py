@@ -4,19 +4,19 @@
 
 
 def audit(log, verbose: bool, event: str) -> None:
-    # @sin ConditionalStatement
+    # @sin TernaryStatement
     log.write(f"audit: {event}") if verbose else None
     log.flush()
 
 
-# @fixed ConditionalStatement
+# @fixed TernaryStatement
 def audit_event(log, verbose: bool, event: str) -> None:
     if verbose:
         log.write(f"audit: {event}")
     log.flush()
 
 
-# @righteous ConditionalStatement
+# @righteous TernaryStatement
 def audit_level(verbose: bool) -> str:
     level = "debug" if verbose else "info"
     return level

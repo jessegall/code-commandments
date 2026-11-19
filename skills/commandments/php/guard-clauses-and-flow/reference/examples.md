@@ -69,33 +69,6 @@ public function resolveFlat(Product $product, array $overrides, string $region):
 }
 ```
 
-### duplicated-branch-tail
-
-Every branch of an `if`/`else` ends with the same statement: it runs whichever way the condition goes.
-
-```php
-----------[ Bad ]----------
-
-public function refund(int $orderId, int $cents): void
-{
-    if ($cents <= 5000) {
-        $this->log[] = "card {$cents}";
-        $this->note($orderId);
-    } else {
-        $this->log[] = "credit {$cents}";
-        $this->note($orderId);
-    }
-}
-
-----------[ Good ]----------
-
-public function refundOnce(int $orderId, int $cents): void
-{
-    $this->log[] = ($cents <= 5000 ? 'card ' : 'credit ') . $cents;
-    $this->note($orderId);
-}
-```
-
 ### if-else-ladder
 
 if/elseif ladder of 4+ branches (should be match/dispatch)
@@ -153,65 +126,6 @@ public function carrierNameGuarded(Shipment $shipment): string
 }
 ```
 
-### loop-inverted-guard
-
-Loop body (multi-statement) wrapped in an `if` instead of `continue` guard
-
-```php
-----------[ Bad ]----------
-
-public function process(array $rows): void
-{
-    foreach ($rows as $row) {
-        if ($row->total > 0) {
-            $this->normalise($row);
-            $this->persist($row);
-        }
-    }
-}
-
-----------[ Good ]----------
-
-public function process(array $rows): void
-{
-    foreach ($rows as $row) {
-        if ($row->total <= 0) {
-            continue;
-        }
-
-        $this->normalise($row);
-        $this->persist($row);
-    }
-}
-```
-
-### nested-ternary
-
-Nested/chained ternary `$a ? $b : ($c ? $d : $e)` (hidden control flow)
-
-```php
-----------[ Bad ]----------
-
-private function band(int $score): string
-{
-    return $score >= 90 ? 'A' : ($score >= 75 ? 'B' : 'C');
-}
-
-----------[ Good ]----------
-
-// The same decision as a `match (true)` — each band reads on its own line, no
-// precedence trap.
-
-private function bandMatched(int $score): string
-{
-    return match (true) {
-        $score >= 90 => 'A',
-        $score >= 75 => 'B',
-        default => 'C',
-    };
-}
-```
-
 ### non-counting-for
 
 A `for` loop that looks like it's counting, but its step actually assigns the next item instead of incrementing a counter.
@@ -248,111 +162,6 @@ public function nearestWhile(object $widget): string
 }
 ```
 
-### redundant-else
-
-`else` after an `if` branch that already returns/throws (redundant)
-
-```php
-----------[ Bad ]----------
-
-public function inStock(array $products): array
-{
-    $available = [];
-
-    foreach ($products as $product) {
-        if ($product->stock <= 0) {
-            continue;
-        } else {
-            $available[] = $product;
-        }
-    }
-
-    return $available;
-}
-
-----------[ Good ]----------
-
-// The guard handles the absent case and `continue`s; the happy path runs
-// unindented with no redundant `else`.
-
-public function available(array $products): array
-{
-    $available = [];
-
-    foreach ($products as $product) {
-        if ($product->stock <= 0) {
-            continue;
-        }
-
-        $available[] = $product;
-    }
-
-    return $available;
-}
-```
-
-### short-circuit-statement
-
-a bare `$a && $b->do();` statement — a short-circuit whose result nothing reads, so the operator is an `if` in disguise
-
-```php
-----------[ Bad ]----------
-
-public function send(string $address, bool $subscribed): void
-{
-    $subscribed && $this->mailer->send($address, 'Your weekly digest', $this->digest());
-}
-
-----------[ Good ]----------
-
-public function sendGuarded(string $address, bool $subscribed): void
-{
-    if (! $subscribed) {
-        return;
-    }
-
-    $this->mailer->send($address, 'Your weekly digest', $this->digest());
-}
-```
-
-### ternary-statement
-
-a bare `$cond ? doThis() : doThat();` statement — a ternary whose value nothing reads, so it is choosing an ACTION, not a value
-
-```php
-----------[ Bad ]----------
-
-public function collapsed(string $id, array $below): array
-{
-    $gone = [];
-
-    foreach ($below[$id] as $child) {
-        $this->isOpen($child->id)
-            ? array_push($gone, ...$this->collapsed($child->id, $below))
-            : $gone[] = $child->id;
-    }
-
-    return $gone;
-}
-
-----------[ Good ]----------
-
-public function collapsedBranched(string $id, array $below): array
-{
-    $gone = [];
-
-    foreach ($below[$id] as $child) {
-        if ($this->isOpen($child->id)) {
-            array_push($gone, ...$this->collapsedBranched($child->id, $below));
-        } else {
-            $gone[] = $child->id;
-        }
-    }
-
-    return $gone;
-}
-```
-
 ### unnamed-condition
 
 `if ($order->isPaid() && $customer->trusted && $slot->open)` — three parts over two objects, so the reader works out what the condition MEANS instead of reading it
@@ -383,34 +192,5 @@ public function dispatchTold(Crate $crate): void
 public function readyFor(LoadingBay $bay): bool
 {
     return $this->packed && $this->labelled && $bay->isFree();
-}
-```
-
-### unreachable-statement
-
-A statement after a return, throw, break or continue in the same block: it can never run.
-
-```php
-----------[ Bad ]----------
-
-public function body(int $orders): string
-{
-    if ($orders === 0) {
-        return 'No orders today.';
-        error_log('empty digest');
-    }
-
-    return str_repeat('*', min($orders, 20));
-}
-
-----------[ Good ]----------
-
-public function summary(int $orders): string
-{
-    if ($orders === 0) {
-        return 'No orders today.';
-    }
-
-    return $orders === 1 ? 'one order' : "{$orders} orders";
 }
 ```

@@ -68,6 +68,10 @@ func Of(engine catalog.Engine) []Skill {
 	return skills.Of(engine)
 }
 
+func EngineOf(taught Skill) (catalog.Engine, bool) {
+	return skills.EngineOf(taught)
+}
+
 func InTier(tier Tier) []Skill {
 	var inTier []Skill
 	for _, skill := range Ordered() {

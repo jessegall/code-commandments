@@ -11,7 +11,6 @@ type LoneImplementerInterface struct{}
 
 func init() { sins.Register(catalog.PHP, LoneImplementerInterface{}) }
 
-
 func (LoneImplementerInterface) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "lone-implementer-interface",

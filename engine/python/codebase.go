@@ -44,14 +44,5 @@ func (n Node) IsStatement() bool {
 }
 
 func (n Node) IsEvaluated() bool {
-	if n.Node().Role != "expression" {
-		return false
-	}
-	for around := n.Parent(); around.Exists(); around = around.Parent() {
-		if around.Node().Role == "type" {
-			return false
-		}
-	}
-
-	return true
+	return engine.IsEvaluated(n.Match)
 }

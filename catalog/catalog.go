@@ -59,9 +59,13 @@ const (
 	Python     Engine = "python"
 	CSharp     Engine = "csharp"
 	Go         Engine = "go"
+	Shared     Engine = "shared"
 )
 
 var Engines = []Engine{PHP, Vue, TypeScript, Python, CSharp, Go}
+
+// Curriculum is every engine a rule registers under: each language's, and the shared one whose rules every language judges.
+var Curriculum = append(slices.Clone(Engines), Shared)
 
 var languages = map[Engine][]contract.Language{
 	PHP:        {contract.PHP},
@@ -70,6 +74,7 @@ var languages = map[Engine][]contract.Language{
 	Python:     {contract.Python},
 	CSharp:     {contract.CSharp},
 	Go:         {contract.Go},
+	Shared:     contract.Languages,
 }
 
 func LanguagesOf(engine Engine) []contract.Language {
@@ -105,7 +110,7 @@ func EngineNamed(name string) (Engine, bool) {
 	}
 
 	engine := Engine(strings.ToLower(name))
-	if slices.Contains(Engines, engine) {
+	if slices.Contains(Curriculum, engine) {
 		return engine, true
 	}
 
@@ -122,6 +127,10 @@ func (e Engine) Label() string {
 		return "Python"
 	case CSharp:
 		return "C#"
+	case Go:
+		return "Go"
+	case Shared:
+		return "Shared"
 	default:
 		return "PHP"
 	}
@@ -151,7 +160,7 @@ func (c *Catalog[T]) Register(engine Engine, rule T) {
 
 func (c *Catalog[T]) All() []T {
 	var all []T
-	for _, engine := range Engines {
+	for _, engine := range Curriculum {
 		all = append(all, c.Of(engine)...)
 	}
 
@@ -198,7 +207,15 @@ func (c *Catalog[T]) EngineOf(rule T) (Engine, bool) {
 	return "", false
 }
 
+// Publishing is a rule that answers for itself whether it is published, as a rule bound from a shared one does.
+type Publishing interface {
+	Published() bool
+}
+
 func IsUnpublished(rule any) bool {
+	if answers, states := rule.(Publishing); states {
+		return !answers.Published()
+	}
 	_, unpublished := rule.(Unpublished)
 
 	return unpublished
@@ -215,6 +232,20 @@ func Name(rule any) string {
 	}
 
 	return kind.Name()
+}
+
+// Renamed is a rule that still answers to the names it had before, as one merged into a shared rule does.
+type Renamed interface {
+	FormerNames() []string
+}
+
+func Names(rule any) []string {
+	names := []string{Name(rule)}
+	if renamed, was := rule.(Renamed); was {
+		names = append(names, renamed.FormerNames()...)
+	}
+
+	return names
 }
 
 func Normalise(value string) string {

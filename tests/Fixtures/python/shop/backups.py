@@ -5,11 +5,11 @@ from pathlib import Path
 
 
 def back_up(source: Path, target: Path) -> None:
-    # @sin ConditionalStatement
+    # @sin TernaryStatement
     shutil.copytree(source, target) if source.is_dir() else shutil.copy2(source, target)
 
 
-# @fixed ConditionalStatement
+# @fixed TernaryStatement
 def back_up_path(source: Path, target: Path) -> None:
     if source.is_dir():
         shutil.copytree(source, target)

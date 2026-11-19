@@ -95,8 +95,12 @@ func commentMarkers(codebase *engine.Codebase) []Marker {
 	var markers []Marker
 	for _, file := range codebase.Files() {
 		for _, comment := range file.File.Comments {
-			words := strings.TrimSpace(commentDelimiters.ReplaceAllString(strings.TrimSpace(comment.Text), ""))
-			for _, found := range commentMarker.FindAllStringSubmatch(words, -1) {
+			for _, line := range strings.Split(comment.Text, "\n") {
+				words := strings.TrimSpace(commentDelimiters.ReplaceAllString(strings.TrimSpace(line), ""))
+				found := commentMarker.FindStringSubmatch(words)
+				if found == nil {
+					continue
+				}
 				marked, ok := markedFor(file, comment, found[2])
 				if !ok {
 					continue

@@ -22,13 +22,13 @@ func TestAFileInAJudgedFolderIsMarkedByTheRuleLetInAlone(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	rules := []detectors.Detector{godetectors.RedundantElseDetector{}, godetectors.LoopWrappedInIfDetector{}}
+	rules := []detectors.Detector{godetectors.RedundantElseDetector, godetectors.LoopInvertedGuardDetector}
 
 	inTests := project.RulesFor(root, filepath.Join(root, "tests/ledger_test.go"), rules)
 	if len(inTests) != 1 {
 		t.Fatalf("%d rules may mark a file in the judged folder, want the one let in", len(inTests))
 	}
-	if _, isTheOne := inTests[0].(godetectors.RedundantElseDetector); !isTheOne {
+	if inTests[0] != detectors.Detector(godetectors.RedundantElseDetector) {
 		t.Errorf("the rule marking the judged folder is %T", inTests[0])
 	}
 
@@ -50,13 +50,13 @@ func TestAProjectsOwnRuleIsLetInByItsBareName(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	rules := []detectors.Detector{godetectors.RedundantElseDetector{}, godetectors.LoopWrappedInIfDetector{}}
+	rules := []detectors.Detector{godetectors.RedundantElseDetector, godetectors.LoopInvertedGuardDetector}
 
 	inTests := project.RulesFor(root, filepath.Join(root, "tests/ledger_test.go"), rules)
 	if len(inTests) != 1 {
 		t.Fatalf("%d rules may mark the judged folder, want the one named by its bare name", len(inTests))
 	}
-	if _, isTheOne := inTests[0].(godetectors.RedundantElseDetector); !isTheOne {
+	if inTests[0] != detectors.Detector(godetectors.RedundantElseDetector) {
 		t.Errorf("the rule marking the judged folder is %T", inTests[0])
 	}
 }

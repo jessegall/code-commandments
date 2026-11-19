@@ -93,29 +93,7 @@ func (n Node) handedIn() []string {
 }
 
 func (n Node) ResultIsDiscarded() bool {
-	parent := n.Parent()
-
-	return parent.Kind() == "Expr" && parent.Child("value") == n
-}
-
-func (n Node) IsOutermostNestedConditional() bool {
-	if n.Kind() != "IfExp" {
-		return false
-	}
-	var branches []Node
-	for _, branch := range []Node{n.Child("body"), n.Child("orelse")} {
-		branches = append(branches, append([]Node{branch}, branch.Descendants()...)...)
-	}
-	if !slices.ContainsFunc(branches, func(branch Node) bool { return branch.Kind() == "IfExp" }) {
-		return false
-	}
-	for around := n.wrapper(); around.Exists(); around = around.wrapper() {
-		if around.Kind() == "IfExp" {
-			return false
-		}
-	}
-
-	return true
+	return engine.ResultIsDiscarded(n.Match)
 }
 
 func (n Node) IsBranchingConstruct() bool {
@@ -143,15 +121,9 @@ func (n Node) ComparisonSubject() (Node, bool) {
 	if n.Kind() != "Compare" || n.Node().Operator != "==" || len(comparators) != 1 {
 		return Node{}, false
 	}
-	left, right := n.Child("left"), comparators[0]
-	switch {
-	case left.Kind() != "Constant" && right.Kind() == "Constant":
-		return left, true
-	case left.Kind() == "Constant" && right.Kind() != "Constant":
-		return right, true
-	}
+	subject := engine.VariedSide(n.Child("left").Match, comparators[0].Match, engine.KindIn("Constant"))
 
-	return Node{}, false
+	return Node{Match: subject}, subject.Exists()
 }
 
 var containerMutators = []string{"append", "extend", "insert", "remove", "pop", "clear", "add", "discard", "update", "setdefault", "popitem"}

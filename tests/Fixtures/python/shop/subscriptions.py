@@ -7,10 +7,10 @@ class Subscriptions:
         self.active: set = set()
 
     def toggle(self, customer: str) -> None:
-        # @sin ConditionalStatement
+        # @sin TernaryStatement
         self.active.discard(customer) if customer in self.active else self.active.add(customer)
 
-    # @fixed ConditionalStatement
+    # @fixed TernaryStatement
     def flip(self, customer: str) -> None:
         if customer in self.active:
             self.active.discard(customer)

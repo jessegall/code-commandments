@@ -23,7 +23,7 @@ func TestARepentedSinSettlesTheMarkItWasFoundUnder(t *testing.T) {
 	file := pythontest.File(t, codebase, "shop/refund.py").Path
 	root, data := filepath.Dir(filepath.Dir(file)), t.TempDir()
 
-	rule := pydetectors.RedundantElseDetector{}
+	rule := pydetectors.RedundantElseDetector
 	var marks []SinMark
 	for _, match := range rule.Find(codebase) {
 		marks = append(marks, SinMark{Rule: rule, Match: match, Touched: true})
@@ -36,7 +36,7 @@ func TestARepentedSinSettlesTheMarkItWasFoundUnder(t *testing.T) {
 	}
 
 	says := marks[0].Rule.Sin().Definition().Description
-	if raised[0].Brief != "1 sin in shop/refund.py" || raised[0].Detail != "redundant-python-else at line 2\n"+says {
+	if raised[0].Brief != "1 sin in shop/refund.py" || raised[0].Detail != "redundant-else at line 2\n"+says {
 		t.Errorf("the file's mark reads %q, listing %q", raised[0].Brief, raised[0].Detail)
 	}
 
@@ -102,7 +102,7 @@ func TestASinEditedInPlaceKeepsTheFilesOneMark(t *testing.T) {
 	codebase := pythontest.FromSource(t, map[string]string{"shop/refund.py": sinful})
 	file := pythontest.File(t, codebase, "shop/refund.py").Path
 	root, data := filepath.Dir(filepath.Dir(file)), t.TempDir()
-	rule := pydetectors.RedundantElseDetector{}
+	rule := pydetectors.RedundantElseDetector
 	marksIn := func(codebase *engine.Codebase) []SinMark {
 		var marks []SinMark
 		for _, match := range rule.Find(codebase) {
@@ -168,7 +168,7 @@ func TestAFilesMarkNamesItsSinsAndTheirLines(t *testing.T) {
 		}
 	}
 
-	rule, other := pydetectors.RedundantElseDetector{}, pydetectors.MutableDefaultDetector{}
+	rule, other := pydetectors.RedundantElseDetector, pydetectors.MutableDefaultDetector{}
 	marks := []SinMark{
 		{Rule: other, Match: at[52], Touched: true},
 		{Rule: rule, Match: at[53], Touched: true},
@@ -181,7 +181,7 @@ func TestAFilesMarkNamesItsSinsAndTheirLines(t *testing.T) {
 		t.Fatalf("one file raised %d marks", len(raised))
 	}
 
-	want := "redundant-python-else at lines 7, 8, 53\npython-mutable-default at line 52"
+	want := "redundant-else at lines 7, 8, 53\npython-mutable-default at line 52"
 	if raised[0].Detail != want {
 		t.Errorf("the mark's lines read %q, want %q", raised[0].Detail, want)
 	}
@@ -192,7 +192,7 @@ func TestAMarkWithOneSinStillOpens(t *testing.T) {
 	file := pythontest.File(t, codebase, "shop/orders.py")
 	root, data := filepath.Dir(filepath.Dir(file.Path)), t.TempDir()
 
-	rule := pydetectors.RedundantElseDetector{}
+	rule := pydetectors.RedundantElseDetector
 	mark := SinMark{Rule: rule, Match: codebase.WhereAssign().Get()[0], Touched: true}
 
 	raised := AnnouncedIn(data, Moment{}).Settle(root, []string{file.Path}, []SinMark{mark}).Raises(root)
@@ -202,7 +202,7 @@ func TestAMarkWithOneSinStillOpens(t *testing.T) {
 		t.Fatalf("the one-sin mark reads %q, which opens only at two lines or more", raised[0].Detail)
 	}
 
-	if lines[0] != "redundant-python-else at line 1" || lines[1] != rule.Sin().Definition().Description {
+	if lines[0] != "redundant-else at line 1" || lines[1] != rule.Sin().Definition().Description {
 		t.Errorf("the one-sin mark reads %q", raised[0].Detail)
 	}
 }
@@ -214,7 +214,7 @@ func TestAPartialJudgingNeverCallsAFileClean(t *testing.T) {
 	root, data := filepath.Dir(filepath.Dir(file)), t.TempDir()
 	named := source.Relative(root, file)
 
-	rule := pydetectors.RedundantElseDetector{}
+	rule := pydetectors.RedundantElseDetector
 	var marks []SinMark
 	for _, match := range rule.Find(codebase) {
 		marks = append(marks, SinMark{Rule: rule, Match: match, Touched: true})
@@ -243,7 +243,7 @@ func TestAPartialJudgingNeverCallsAFileClean(t *testing.T) {
 		t.Errorf("the sin was announced again as new: %+v", again.Found)
 	}
 
-	whole := Asked{named: {"redundant-python-else"}}
+	whole := Asked{named: {"redundant-else"}}
 	repented := AnnouncedIn(data, Moment{}).SettleAsked(root, []string{file}, nil, whole)
 	if !slices.Equal(repented.Settles(), []string{raised[0].Key}) {
 		t.Errorf("a judging that asked about the sin and found it gone settles %v, want %v", repented.Settles(), raised[0].Key)

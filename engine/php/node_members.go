@@ -336,29 +336,48 @@ func (n Node) EveryConstructorParamNullable() bool {
 }
 
 var (
-	methodTag  = regexp.MustCompile(`^\s*\*?\s*@method\b`)
-	methodName = regexp.MustCompile(`(\w+)\s*\(`)
+	methodTag              = regexp.MustCompile(`^\s*\*?\s*@method\b`)
+	methodName             = regexp.MustCompile(`(\w+)\s*\(`)
+	propertyTag            = regexp.MustCompile(`^\s*\*?\s*@property(-read|-write)?\b`)
+	documentedPropertyName = regexp.MustCompile(`\$(\w+)`)
 )
 
+func DocumentedMethods(declaration engine.Match) []string {
+	return documentedMembers(declaration, methodTag, methodName)
+}
+
+func DocumentedProperties(declaration engine.Match) []string {
+	return documentedMembers(declaration, propertyTag, documentedPropertyName)
+}
+
+func documentedMembers(declaration engine.Match, tag, name *regexp.Regexp) []string {
+	doc, ok := (Node{Match: declaration}).DocComment()
+	if !ok {
+		return nil
+	}
+	var names []string
+	for _, line := range prose.Lines(doc.Text) {
+		if !tag.MatchString(line) {
+			continue
+		}
+		if found := name.FindAllStringSubmatch(line, -1); len(found) > 0 {
+			names = append(names, found[len(found)-1][1])
+		}
+	}
+
+	return names
+}
+
 func (n Node) DocblockMethodTagRedeclaresRealMethod() bool {
-	doc, ok := n.DocComment()
-	if !n.IsClassLike() || !ok {
+	if !n.IsClassLike() {
 		return false
 	}
 	declared := map[string]bool{}
 	for _, method := range Methods(n.Match) {
 		declared[strings.ToLower(method.Name())] = true
 	}
-	for _, line := range prose.Lines(doc.Text) {
-		if !methodTag.MatchString(line) {
-			continue
-		}
-		if names := methodName.FindAllStringSubmatch(line, -1); len(names) > 0 && declared[strings.ToLower(names[len(names)-1][1])] {
-			return true
-		}
-	}
 
-	return false
+	return slices.ContainsFunc(DocumentedMethods(n.Match), func(name string) bool { return declared[strings.ToLower(name)] })
 }
 
 func (n Node) IsField() bool {

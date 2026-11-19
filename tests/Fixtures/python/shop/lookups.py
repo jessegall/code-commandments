@@ -2,7 +2,7 @@
 # a body that ends by leaving the loop — picks the one item it wanted.
 
 
-# @righteous LoopWrappedInIf
+# @righteous LoopInvertedGuard
 def paid_orders(orders) -> list:
     paid = []
     for order in orders:
@@ -11,7 +11,7 @@ def paid_orders(orders) -> list:
     return paid
 
 
-# @righteous LoopWrappedInIf
+# @righteous LoopInvertedGuard
 def first_open(orders):
     for order in orders:
         if order.open:

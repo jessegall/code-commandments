@@ -66,40 +66,30 @@ Copy-pasted code — two+ C# methods, accessors or local functions with an ident
 ```cs
 ----------[ Bad ]----------
 
-// in Invoice.cs
-public IReadOnlyList<string> Lines()
+// in Carriers.cs
+get
 {
-    var rows = new List<string>();
+    var cents = grams > 20_000 ? 1_500 : grams > 5_000 ? 700 : 0;
 
-    foreach (var line in order.Lines)
+    if (fragile)
     {
-        if (line.Quantity <= 0)
-        {
-            continue;
-        }
-
-        rows.Add($"{line.Quantity} x {line.Sku}: {line.Subtotal.Cents / 100m:0.00}");
+        cents += cents / 2 + 250;
     }
 
-    return rows;
+    return new Money(cents, "EUR");
 }
 
-// in PackingSlip.cs
-public IReadOnlyList<string> Rows()
+// in Carriers.cs
+get
 {
-    var rows = new List<string>();
+    var cents = grams > 20_000 ? 1_500 : grams > 5_000 ? 700 : 0;
 
-    foreach (var line in order.Lines)
+    if (fragile)
     {
-        if (line.Quantity <= 0)
-        {
-            continue;
-        }
-
-        rows.Add($"{line.Quantity} x {line.Sku}: {line.Subtotal.Cents / 100m:0.00}");
+        cents += cents / 2 + 250;
     }
 
-    return rows;
+    return new Money(cents, "EUR");
 }
 
 ----------[ Good ]----------

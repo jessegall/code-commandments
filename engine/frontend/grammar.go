@@ -44,6 +44,10 @@ func init() {
 			Continues: func(branch engine.Match) bool {
 				return branch.Kind() == "IfStatement" && branch.Node().Field == "elseStatement"
 			},
+			Body:              body,
+			Otherwise:         otherwise,
+			ComparisonSubject: comparisonSubject,
+			JumpTarget:        engine.KindIn("LabeledStatement"),
 		})
 
 	}
@@ -143,4 +147,57 @@ func condition(held engine.Match) engine.Match {
 	}
 
 	return held.Child(field)
+}
+
+var bodies = map[string]string{
+	"IfStatement":      "thenStatement",
+	"ForStatement":     "statement",
+	"ForInStatement":   "statement",
+	"ForOfStatement":   "statement",
+	"WhileStatement":   "statement",
+	"DoStatement":      "statement",
+	"CatchClause":      "block",
+	"TryStatement":     "tryBlock",
+	"LabeledStatement": "statement",
+}
+
+func body(held engine.Match) []engine.Match {
+	if field, holds := bodies[held.Kind()]; holds {
+		return statementsOf(held.Child(field))
+	}
+
+	return statementsOf(held.Child("body"))
+}
+
+func otherwise(branch engine.Match) []engine.Match {
+	if branch.Kind() != "IfStatement" {
+		return nil
+	}
+
+	return statementsOf(branch.Child("elseStatement"))
+}
+
+func statementsOf(held engine.Match) []engine.Match {
+	if held.Kind() == "Block" {
+		return held.ChildrenIn("statements")
+	}
+	if !held.Exists() {
+		return nil
+	}
+
+	return []engine.Match{held}
+}
+
+var equalities = []string{"===", "==", "!==", "!="}
+
+func comparisonSubject(held engine.Match) engine.Match {
+	if held.Kind() != "BinaryExpression" || !slices.Contains(equalities, held.Operator()) {
+		return engine.Match{}
+	}
+
+	return engine.VariedSide(held.Child("left"), held.Child("right"), isConstantSide)
+}
+
+func isConstantSide(side engine.Match) bool {
+	return side.Is(engine.Literal) || side.IsConstant()
 }

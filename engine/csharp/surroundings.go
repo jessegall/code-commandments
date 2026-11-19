@@ -416,13 +416,6 @@ func (n Node) IsReturned() bool {
 	return n.OutermostParentheses().Parent().Is("ReturnStatement", "ArrowExpressionClause")
 }
 
-func (n Node) IsConditionalBranch() bool {
-	inner := n.OutermostParentheses()
-	around := inner.Parent()
-
-	return around.Is("ConditionalExpression") && around.At(0).Node() != inner.Node()
-}
-
 func (n Node) IsInventingOnMiss() bool {
 	body := n.FunctionBody()
 	if !body.Exists() {

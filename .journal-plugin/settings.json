@@ -456,36 +456,12 @@
         "help": "a `?? throw` inside a call's argument or in front of a member call — the check that stops the method is hidden in the middle of the work"
     },
     {
-        "key": "sin_csharp-loop-wrapped-in-if",
-        "title": "LoopWrappedInIf",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "A `for`, `foreach` or `while` whose whole body is one `if` (no `else`) around real work — the iteration pushed a level deep behind a condition"
-    },
-    {
-        "key": "sin_csharp-nested-ternary",
-        "title": "NestedTernary",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "a `?:` with another `?:` as one of its branches — several decisions packed into one expression"
-    },
-    {
         "key": "sin_csharp-non-counting-for",
         "title": "NonCountingFor",
         "type": "flag",
         "kind": "flag",
         "default": true,
         "help": "a `for` loop whose step assigns the next item instead of moving a counter — a walk written as a count"
-    },
-    {
-        "key": "sin_csharp-subject-ladder",
-        "title": "SubjectLadder",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "An `if`/`else if` chain of four or more rungs that each compare the same subject with a constant — a dispatch written as a ladder."
     },
     {
         "key": "sin_csharp-unnamed-condition",
@@ -502,14 +478,6 @@
         "kind": "flag",
         "default": true,
         "help": "An `if`, loop or `switch` opening a fourth level of choices inside one C# method — an arrow of conditions and loops"
-    },
-    {
-        "key": "sin_redundant-csharp-else",
-        "title": "RedundantElse",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "An `else` after an `if` branch that already left — it ends in `return`, `throw`, `continue` or `break` — indenting the rest of the method for nothing"
     },
     {
         "key": "sin_csharp-bare-state-predicate",
@@ -686,22 +654,6 @@
         "kind": "flag",
         "default": true,
         "help": "An `if`, `for`, `switch` or `select` opening a fourth level of choices inside one Go function — a decision buried inside a decision"
-    },
-    {
-        "key": "sin_go-loop-wrapped-in-if",
-        "title": "LoopWrappedInIf",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "A `for` whose whole body is one `if`, burying the work a level deep where `continue` past what does not apply would keep it flat"
-    },
-    {
-        "key": "sin_redundant-go-else",
-        "title": "RedundantElse",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "An `else` after an `if` branch that already left — it ends in `return`, `break`, `continue`, `goto` or `panic` — indenting the rest of the function for nothing"
     },
     {
         "key": "sin_blank-string-default",
@@ -1088,14 +1040,6 @@
         "help": "`if` nested 3-deep (a pyramid — hoist guards / extract)"
     },
     {
-        "key": "sin_duplicated-branch-tail",
-        "title": "DuplicatedBranchTail",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "Every branch of an `if`/`else` ends with the same statement: it runs whichever way the condition goes."
-    },
-    {
         "key": "sin_if-else-ladder",
         "title": "IfElseLadder",
         "type": "flag",
@@ -1112,22 +1056,6 @@
         "help": "`?? throw` fed into a call or dereferenced on the same line (inline throw mid-expression)"
     },
     {
-        "key": "sin_loop-inverted-guard",
-        "title": "LoopInvertedGuard",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "Loop body (multi-statement) wrapped in an `if` instead of `continue` guard"
-    },
-    {
-        "key": "sin_nested-ternary",
-        "title": "NestedTernary",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "Nested/chained ternary `$a ? $b : ($c ? $d : $e)` (hidden control flow)"
-    },
-    {
         "key": "sin_non-counting-for",
         "title": "NonCountingFor",
         "type": "flag",
@@ -1136,44 +1064,12 @@
         "help": "A `for` loop that looks like it's counting, but its step actually assigns the next item instead of incrementing a counter."
     },
     {
-        "key": "sin_redundant-else",
-        "title": "RedundantElse",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "`else` after an `if` branch that already returns/throws (redundant)"
-    },
-    {
-        "key": "sin_short-circuit-statement",
-        "title": "ShortCircuitStatement",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "a bare `$a && $b->do();` statement — a short-circuit whose result nothing reads, so the operator is an `if` in disguise"
-    },
-    {
-        "key": "sin_ternary-statement",
-        "title": "TernaryStatement",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "a bare `$cond ? doThis() : doThat();` statement — a ternary whose value nothing reads, so it is choosing an ACTION, not a value"
-    },
-    {
         "key": "sin_unnamed-condition",
         "title": "UnnamedCondition",
         "type": "flag",
         "kind": "flag",
         "default": true,
         "help": "`if ($order->isPaid() && $customer->trusted && $slot->open)` — three parts over two objects, so the reader works out what the condition MEANS instead of reading it"
-    },
-    {
-        "key": "sin_unreachable-statement",
-        "title": "UnreachableStatement",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "A statement after a return, throw, break or continue in the same block: it can never run."
     },
     {
         "key": "sin_bare-scope-escape",
@@ -2200,60 +2096,12 @@
         "help": "a loop that appends to, removes from or deletes out of the very collection it walks — the iterator reads a sequence that moved under it, so an element is skipped or it raises"
     },
     {
-        "key": "sin_python-conditional-statement",
-        "title": "ConditionalStatement",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "a bare `a() if x else b()` statement — a conditional expression whose value nothing reads, so it chooses an action, not a value."
-    },
-    {
-        "key": "sin_python-loop-wrapped-in-if",
-        "title": "LoopWrappedInIf",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "A `for` or `while` whose whole body is one `if` (no `else`) around real work — the iteration pushed a level deep behind a condition"
-    },
-    {
-        "key": "sin_python-nested-conditional",
-        "title": "NestedConditional",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "`a if x else b if y else c` — a conditional expression inside another's branch, a branching decision folded into one line"
-    },
-    {
-        "key": "sin_python-short-circuit-statement",
-        "title": "ShortCircuitStatement",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "a bare `a and b()` or `a or b()` statement — an `and`/`or` whose value nothing reads, so the operator is really acting as an `if`."
-    },
-    {
-        "key": "sin_python-subject-ladder",
-        "title": "SubjectLadder",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "An `if`/`elif` chain of four or more rungs that each test the same subject for equality with a constant — a dispatch written as a ladder."
-    },
-    {
         "key": "sin_python-unnamed-condition",
         "title": "UnnamedCondition",
         "type": "flag",
         "kind": "flag",
         "default": true,
         "help": "`if settings.auto and not self.said and event.at > self.since:` — three parts over two objects, so the reader works out what the condition MEANS instead of reading it"
-    },
-    {
-        "key": "sin_redundant-python-else",
-        "title": "RedundantElse",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "An `else:` after an `if` branch that already left — it ends in `return`, `raise`, `continue` or `break` — indenting the rest of the function for nothing"
     },
     {
         "key": "sin_python-bare-state-predicate",
@@ -2502,6 +2350,70 @@
         "kind": "flag",
         "default": true,
         "help": "`return json.loads(…)` — decoded text from outside handed on as bare dicts and lists, its shape known to no type"
+    },
+    {
+        "key": "sin_duplicated-branch-tail",
+        "title": "DuplicatedBranchTail",
+        "type": "flag",
+        "kind": "flag",
+        "default": true,
+        "help": "Every branch of an `if`/`else` ends with the same statement: it runs whichever way the condition goes."
+    },
+    {
+        "key": "sin_loop-inverted-guard",
+        "title": "LoopInvertedGuard",
+        "type": "flag",
+        "kind": "flag",
+        "default": true,
+        "help": "A loop whose whole body is one `if` (no `else`) around real work: the iteration pushed a level deep behind a condition"
+    },
+    {
+        "key": "sin_nested-ternary",
+        "title": "NestedTernary",
+        "type": "flag",
+        "kind": "flag",
+        "default": true,
+        "help": "A conditional expression (`a ? b : c`, `b if a else c`) with another inside it: several decisions folded into one expression"
+    },
+    {
+        "key": "sin_redundant-else",
+        "title": "RedundantElse",
+        "type": "flag",
+        "kind": "flag",
+        "default": true,
+        "help": "An `else` after an `if` branch that already left (it returns, throws, breaks or continues): it indents the rest for nothing"
+    },
+    {
+        "key": "sin_short-circuit-statement",
+        "title": "ShortCircuitStatement",
+        "type": "flag",
+        "kind": "flag",
+        "default": true,
+        "help": "A bare `a && b()` or `a || b()` statement: a short-circuit whose value nothing reads, so the operator is an `if` in disguise"
+    },
+    {
+        "key": "sin_subject-ladder",
+        "title": "SubjectLadder",
+        "type": "flag",
+        "kind": "flag",
+        "default": true,
+        "help": "An `if`/`else if` chain of four or more rungs that each test the same subject for equality with a constant: a dispatch written as a ladder"
+    },
+    {
+        "key": "sin_ternary-statement",
+        "title": "TernaryStatement",
+        "type": "flag",
+        "kind": "flag",
+        "default": true,
+        "help": "A bare conditional expression as a statement (`cond ? doThis() : doThat()`): its value is never read, so it chooses an action, not a value"
+    },
+    {
+        "key": "sin_unreachable-statement",
+        "title": "UnreachableStatement",
+        "type": "flag",
+        "kind": "flag",
+        "default": true,
+        "help": "A statement after a return, throw, break or continue in the same block: it can never run."
     },
     {
         "key": "sin_defended-certain-field",

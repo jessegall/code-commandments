@@ -9,7 +9,7 @@ public sealed class Arrivals(Queue<(string Sku, int Units)> queue, Dictionary<st
         var booked = 0;
 
         while (queue.TryDequeue(out var arrival))
-            // @sin LoopWrappedInIf
+            // @sin LoopInvertedGuard
             if (arrival.Units > 0)
             {
                 stock[arrival.Sku] = stock.GetValueOrDefault(arrival.Sku) + arrival.Units;

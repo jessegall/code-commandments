@@ -3,6 +3,7 @@ package gotree
 import (
 	"go/ast"
 	"go/token"
+	"go/types"
 	"strconv"
 	"strings"
 
@@ -33,6 +34,26 @@ var typeFields = map[string]bool{"type": true, "key": false, "elt": false}
 
 func isTypeField(field string) bool {
 	return typeFields[field]
+}
+
+func (w *writer) panicking(held ast.Node) []string {
+	statement, isStatement := held.(*ast.ExprStmt)
+	if !isStatement || w.facts == nil {
+		return nil
+	}
+	call, isCall := statement.X.(*ast.CallExpr)
+	if !isCall {
+		return nil
+	}
+	called, isName := call.Fun.(*ast.Ident)
+	if !isName {
+		return nil
+	}
+	if builtin, isBuiltin := w.facts.Uses[called].(*types.Builtin); !isBuiltin || builtin.Name() != "panic" {
+		return nil
+	}
+
+	return []string{"throw", "bail-out"}
 }
 
 func neutralOf(held ast.Node) []string {

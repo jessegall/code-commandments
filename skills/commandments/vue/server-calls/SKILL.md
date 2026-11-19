@@ -58,7 +58,25 @@ A string written out as the path of a route the server declares by name
 const planAddress = route('plans.show', { plan: props.card.number })
 ```
 
-The other 2 — one per rule — are in [`reference/examples.md`](reference/examples.md).
+### hard-coded-server-url — in TypeScript
+
+A string written out as the path of a route the server declares by name
+
+```ts
+----------[ Bad ]----------
+
+// Asks the server to print a return's shipping label and reads back where the label was stored.
+export async function printReturnLabel(returnNumber: number, copies: number): Promise<string> {
+    const response = await fetch(`/returns/${returnNumber}/label`, {
+        method: 'POST',
+        body: JSON.stringify({ copies }),
+    })
+
+    return (await response.json()).location
+}
+```
+
+The other 1 — one per rule — are in [`reference/examples.md`](reference/examples.md).
 
 ## Commands
 

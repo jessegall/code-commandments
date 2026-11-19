@@ -50,7 +50,7 @@ func (p *Pricing) Banded(name string, bands []string) map[string]int {
 func (p *Pricing) Hours(tier Tier, hours map[string]int) int {
 	worked := 0
 	for band, count := range hours {
-		// @sin LoopWrappedInIf
+		// @sin LoopInvertedGuard
 		if tier.Bands[band] > 0 {
 			worked += count
 			delete(hours, band)

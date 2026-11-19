@@ -10,3 +10,43 @@ only Go: client/tag-speech.ts:11 SideTableTrait  # a rule written after the PHP 
 only Go: client/label-queue.ts:8 CollectionMutatedWhileIterated  # a rule written after the PHP tool was retired
 only Go: client/line-pruning.ts:8 CollectionMutatedWhileIterated  # a rule written after the PHP tool was retired
 only Go: client/shelf-tags.ts:7 CollectionMutatedWhileIterated  # a rule written after the PHP tool was retired
+only Go: client/loyalty-points.ts:133 NestedTernary  # a shared flow rule TypeScript gained in plan 9, on a fixture file written after the PHP tool was retired
+only Go: client/loyalty-points.ts:146 TernaryStatement  # a shared flow rule TypeScript gained in plan 9, on a fixture file written after the PHP tool was retired
+only Go: client/loyalty-points.ts:158 ShortCircuitStatement  # a shared flow rule TypeScript gained in plan 9, on a fixture file written after the PHP tool was retired
+only Go: client/loyalty-points.ts:16 SubjectLadder  # a shared flow rule TypeScript gained in plan 9, on a fixture file written after the PHP tool was retired
+only Go: client/loyalty-points.ts:31 DuplicatedBranchTail  # a shared flow rule TypeScript gained in plan 9, on a fixture file written after the PHP tool was retired
+only Go: client/loyalty-points.ts:31 RedundantElse  # a shared flow rule TypeScript gained in plan 9, on a fixture file written after the PHP tool was retired
+only Go: client/loyalty-points.ts:47 UnreachableStatement  # a shared flow rule TypeScript gained in plan 9, on a fixture file written after the PHP tool was retired
+only Go: client/loyalty-points.ts:63 RedundantElse  # a shared flow rule TypeScript gained in plan 9, on a fixture file written after the PHP tool was retired
+only Go: client/loyalty-points.ts:75 LoopInvertedGuard  # a shared flow rule TypeScript gained in plan 9, on a fixture file written after the PHP tool was retired
+only Go: client/parcel-postage.ts:11 SubjectLadder  # a shared flow rule TypeScript gained in plan 9, on a fixture file written after the PHP tool was retired
+only Go: client/parcel-postage.ts:114 NestedTernary  # a shared flow rule TypeScript gained in plan 9, on a fixture file written after the PHP tool was retired
+only Go: client/parcel-postage.ts:121 TernaryStatement  # a shared flow rule TypeScript gained in plan 9, on a fixture file written after the PHP tool was retired
+only Go: client/parcel-postage.ts:135 ShortCircuitStatement  # a shared flow rule TypeScript gained in plan 9, on a fixture file written after the PHP tool was retired
+only Go: client/parcel-postage.ts:31 DuplicatedBranchTail  # a shared flow rule TypeScript gained in plan 9, on a fixture file written after the PHP tool was retired
+only Go: client/parcel-postage.ts:62 UnreachableStatement  # a shared flow rule TypeScript gained in plan 9, on a fixture file written after the PHP tool was retired
+only Go: client/parcel-postage.ts:72 RedundantElse  # a shared flow rule TypeScript gained in plan 9, on a fixture file written after the PHP tool was retired
+only Go: client/parcel-postage.ts:92 LoopInvertedGuard  # a shared flow rule TypeScript gained in plan 9, on a fixture file written after the PHP tool was retired
+only Go: client/parcel-returns.ts:10 SubjectLadder  # a shared flow rule TypeScript gained in plan 9, on a fixture file written after the PHP tool was retired
+only Go: client/parcel-returns.ts:104 TernaryStatement  # a shared flow rule TypeScript gained in plan 9, on a fixture file written after the PHP tool was retired
+only Go: client/parcel-returns.ts:109 ShortCircuitStatement  # a shared flow rule TypeScript gained in plan 9, on a fixture file written after the PHP tool was retired
+only Go: client/parcel-returns.ts:32 DuplicatedBranchTail  # a shared flow rule TypeScript gained in plan 9, on a fixture file written after the PHP tool was retired
+only Go: client/parcel-returns.ts:45 UnreachableStatement  # a shared flow rule TypeScript gained in plan 9, on a fixture file written after the PHP tool was retired
+only Go: client/parcel-returns.ts:53 RedundantElse  # a shared flow rule TypeScript gained in plan 9, on a fixture file written after the PHP tool was retired
+only Go: client/parcel-returns.ts:66 LoopInvertedGuard  # a shared flow rule TypeScript gained in plan 9, on a fixture file written after the PHP tool was retired
+only Go: client/parcel-returns.ts:90 NestedTernary  # a shared flow rule TypeScript gained in plan 9, on a fixture file written after the PHP tool was retired
+only Go: components/NewsletterForm.vue:13 RawFetchInComponent  # a rule written after the PHP tool was retired (7.18.153)
+only Go: components/NewsletterSignup.vue:15 RawFetchInComponent  # a rule written after the PHP tool was retired (7.18.153)
+only Go: components/NewsletterSignup.vue:26 RawFetchInComponent  # a rule written after the PHP tool was retired (7.18.153)
+only Go: components/PickListActions.vue:13 RawFetchInComponent  # a rule written after the PHP tool was retired (7.18.153)
+only Go: components/PickListActions.vue:25 RawFetchInComponent  # a rule written after the PHP tool was retired (7.18.153)
+only Go: components/PickListToolbar.vue:13 RawFetchInComponent  # a rule written after the PHP tool was retired (7.18.153)
+only Go: components/QuestionFeed.vue:16 RawFetchInComponent  # a rule written after the PHP tool was retired (7.18.153)
+only Go: components/RestockNotice.vue:17 RawFetchInComponent  # a rule written after the PHP tool was retired (7.18.153)
+only Go: components/ParcelStageHint.vue:14 RetestedSwitchCase  # a rule written after the PHP tool was retired (7.18.153)
+only Go: components/PaymentMethodNote.vue:9 RetestedSwitchCase  # a rule written after the PHP tool was retired (7.18.153)
+only Go: components/ReturnReasonPanel.vue:12 RetestedSwitchCase  # a rule written after the PHP tool was retired (7.18.153)
+only PHP: components/NewsletterSignup.vue:21 DuplicateFunction  # 7.18.153 added a line above the function, so Go finds it one line down
+only Go: components/NewsletterSignup.vue:22 DuplicateFunction  # the same finding, one line down since 7.18.153
+only PHP: components/PickListActions.vue:19 NearDuplicateFunction  # 7.18.153 added a line above the function, so Go finds it one line down
+only Go: components/PickListActions.vue:20 NearDuplicateFunction  # the same finding, one line down since 7.18.153

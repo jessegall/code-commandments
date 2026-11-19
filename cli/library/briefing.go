@@ -4,6 +4,7 @@ import (
 	"bytes"
 	_ "embed"
 	"encoding/json"
+	"github.com/jessegall/code-commandments/catalog"
 	"github.com/jessegall/code-commandments/cli/binary"
 	"slices"
 	"strings"
@@ -175,6 +176,11 @@ func Written(skills []skill.Skill, holds func(source.Language) bool) []skill.Ski
 	var kept []skill.Skill
 
 	for _, each := range skills {
+		if engine, _ := skill.EngineOf(each); engine == catalog.Shared {
+			kept = append(kept, each)
+
+			continue
+		}
 		for _, name := range each.Definition().Languages {
 			if language, known := LanguageOf(name); known && holds(language) {
 				kept = append(kept, each)

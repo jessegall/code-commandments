@@ -75,7 +75,7 @@ func marksOfThreeSins(t *testing.T) (root string, marks []SinMark) {
 	}
 
 	edited := filepath.Join(root, "shop/ledger.go")
-	marks, _, _ = marksIn(Marks(root), edited, []detectors.Detector{godetectors.LoopWrappedInIfDetector{}}, git.ChangedLines{})
+	marks, _, _ = marksIn(Marks(root), edited, []detectors.Detector{godetectors.LoopInvertedGuardDetector}, git.ChangedLines{})
 
 	if len(marks) < 3 {
 		if _, err := scan.OneFile(edited).Load(); err != nil {
@@ -95,10 +95,10 @@ func TestOneSinInOneFileIsSaidOnceHoweverManyTimesItIsFound(t *testing.T) {
 	if found := strings.Count(said, "shop/ledger.go"); found != 1 {
 		t.Errorf("the file is named %d times:\n%s", found, said)
 	}
-	if found := strings.Count(said, "commandments-go-flow"); found != 1 {
+	if found := strings.Count(said, "commandments-shared-flow"); found != 1 {
 		t.Errorf("the skill is named %d times:\n%s", found, said)
 	}
-	if found := strings.Count(said, "go-loop-wrapped-in-if"); found != 1 {
+	if found := strings.Count(said, "loop-inverted-guard"); found != 1 {
 		t.Errorf("the sin is named %d times:\n%s", found, said)
 	}
 
@@ -129,7 +129,7 @@ func TestTheSkillIsNamedWithEverySinRaised(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			said := nudge(Event{Root: root}, raised)
 
-			if !strings.Contains(said, "commandments-go-flow") {
+			if !strings.Contains(said, "commandments-shared-flow") {
 				t.Errorf("it does not name the skill that teaches the fix:\n%s", said)
 			}
 			if !strings.Contains(said, "at its source") {

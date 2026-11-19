@@ -10,7 +10,7 @@ public static class PriceList
 
         for (var index = 0; index < rows.Length; index++)
         {
-            // @sin LoopWrappedInIf
+            // @sin LoopInvertedGuard
             if (!rows[index].StartsWith('#'))
             {
                 var cells = rows[index].Split(',');
@@ -21,7 +21,7 @@ public static class PriceList
         return prices;
     }
 
-    // @righteous LoopWrappedInIf
+    // @righteous LoopInvertedGuard
     public static int Comments(string[] rows)
     {
         var count = 0;

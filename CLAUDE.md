@@ -44,6 +44,17 @@ twice for two engines** — lift it into `engine/` or a shared package, paramete
 one hook that genuinely differs. A thing belongs in the engine folder of its concern:
 `engine/<lang>`, `detectors/<lang>`, `sins/<lang>`, `skill/<lang>`, `scribes/<lang>`.
 
+### 🌐 Every rule that can be shared is written ONCE, over the generic tree — non-negotiable
+
+A rule is a concept, not a language. Its predicate is written once in `engine/` over the
+generic tree (the neutral kinds `engine.Branch`, `engine.Loop`, `engine.Throw`, … and the
+grammar hooks), and every language it applies to judges it through that one predicate. A
+language keeps ONLY its own facts in its own package (`engine/<lang>`): how it spells a node
+kind, a comment, a module, a test file. "Build this rule for PHP" means focus on PHP, never
+write the concept only for PHP. A rule a second language reimplemented on its own decorator
+is a copy to merge into the shared predicate, never a third copy to add. Sir Jesse, messages
+19187, 19394, 19404, 19408.
+
 ### 🔒 One cache for every checkout, keyed on contents — locked by a test
 
 Every checkout of a project, the main one and every worker's worktree, reads through ONE cache keyed

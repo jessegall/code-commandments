@@ -10,7 +10,7 @@ import (
 )
 
 func init() {
-	scribes.Fixes(rules.ShortCircuitStatementDetector{}, func() scribes.Scribe { return ShortCircuitStatementScribe{} })
+	scribes.Fixes(rules.ShortCircuitStatementDetector, func() scribes.Scribe { return ShortCircuitStatementScribe{} })
 }
 
 // ShortCircuitStatementScribe rewrites `$cond && work();` standing alone as a statement into the if it means.

@@ -1,11 +1,11 @@
 package scribes
 
 import (
-	"reflect"
 	"slices"
 	"strings"
 
 	"github.com/jessegall/code-commandments/catalog"
+	"github.com/jessegall/code-commandments/cli/config"
 	"github.com/jessegall/code-commandments/detectors"
 	"github.com/jessegall/code-commandments/engine"
 )
@@ -48,7 +48,7 @@ func Steps(engine catalog.Engine, scanner *Scanner, given []detectors.Detector) 
 	}
 	var fixable []detectors.Detector
 	for _, detector := range given {
-		_, repentable := detector.(detectors.Repentable)
+		repentable := detectors.IsRepentable(detector)
 		if repentable && ofEngine[detectors.IdentityOf(detector)] && scribesOf[detectors.IdentityOf(detector)] != nil {
 			fixable = append(fixable, detector)
 		}
@@ -103,20 +103,7 @@ func (s SelfFixScribe) Rewrite(findings []engine.Match, _ *engine.Codebase) (Rew
 }
 
 func className(detector detectors.Detector) string {
-	kind := reflect.TypeOf(detector)
-	for kind.Kind() == reflect.Pointer {
-		kind = kind.Elem()
-	}
-	_, below, _ := strings.Cut(kind.PkgPath(), "/detectors/")
-	_, folder, _ := strings.Cut(below, "/")
-	var name strings.Builder
-	for _, segment := range strings.Split(strings.Trim(folder, "/"), "/") {
-		if segment != "" {
-			name.WriteString(strings.ToUpper(segment[:1]) + segment[1:] + `\`)
-		}
-	}
-
-	return name.String() + kind.Name()
+	return config.ClassOf(config.Detector, detector)
 }
 
 // DetectorStep runs one detector over the pass and hands the findings it may fix to the detector's scribe.

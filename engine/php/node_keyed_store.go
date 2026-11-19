@@ -86,4 +86,3 @@ func testsKeyPresence(node engine.Match, property string) bool {
 
 	return (Node{Match: node}).CallsFunction("array_key_exists") && len(arguments) == 2 && memberOnThis(arguments[1].Child("value")) == property
 }
-

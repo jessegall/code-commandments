@@ -3,7 +3,7 @@
 
 def send_reminders(queue, mailer) -> None:
     while queue:
-        # @sin LoopWrappedInIf
+        # @sin LoopInvertedGuard
         if queue.peek().overdue:
             customer = queue.pop()
             mailer.remind(customer.email, customer.balance)

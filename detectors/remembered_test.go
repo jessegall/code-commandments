@@ -9,8 +9,8 @@ import (
 
 type plainDetector struct{}
 
-func (plainDetector) Sin() sins.Sin                            { return nil }
-func (plainDetector) Find(*engine.Codebase) []engine.Match     { return nil }
+func (plainDetector) Sin() sins.Sin                        { return nil }
+func (plainDetector) Find(*engine.Codebase) []engine.Match { return nil }
 
 type wholeTreeDetector struct{ plainDetector }
 

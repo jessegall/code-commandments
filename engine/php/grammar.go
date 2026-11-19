@@ -63,6 +63,7 @@ func init() {
 		Otherwise:         otherwise,
 		Condition:         condition,
 		ComparisonSubject: comparisonSubject,
+		JumpTarget:        engine.KindIn("Stmt_Label"),
 		ElementName:       elementName,
 		Computes:          computes,
 	})
@@ -189,17 +190,7 @@ func comparisonSubject(held engine.Match) engine.Match {
 		return engine.Match{}
 	}
 
-	left, right := held.Child("left"), held.Child("right")
-	leftIsConstant, rightIsConstant := isConstantSide(left), isConstantSide(right)
-
-	switch {
-	case !leftIsConstant && rightIsConstant:
-		return left
-	case leftIsConstant && !rightIsConstant:
-		return right
-	}
-
-	return engine.Match{}
+	return engine.VariedSide(held.Child("left"), held.Child("right"), isConstantSide)
 }
 
 func isConstantSide(side engine.Match) bool {

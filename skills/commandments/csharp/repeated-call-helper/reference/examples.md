@@ -9,9 +9,6 @@ the same compound condition — `order.Paid && !order.Cancelled` — written at 
 ```cs
 ----------[ Bad ]----------
 
-// in Promises.cs
-public static bool CanPromiseToday(Dispatchable order) => !order.OnHold && order.Paid && order.Lines > 0;
-
 // in Dispatch.cs
 public static string Status(Dispatchable order)
 {
@@ -22,6 +19,9 @@ public static string Status(Dispatchable order)
 
     return "wait";
 }
+
+// in Promises.cs
+public static bool CanPromiseToday(Dispatchable order) => !order.OnHold && order.Paid && order.Lines > 0;
 
 ----------[ Good ]----------
 
@@ -39,17 +39,6 @@ the same `with` copy — `order with { Status = OrderStatus.Shipped }` — writt
 ```cs
 ----------[ Bad ]----------
 
-// in OrderStages.cs
-public static StagedOrder Dispatch(StagedOrder order) => order with { Stage = Stage.Shipped, Note = "on its way" };
-
-// in Backfills.cs
-public static IReadOnlyList<StagedOrder> Repaired(IEnumerable<StagedOrder> stuck, DateOnly today, IReadOnlyDictionary<string, DateOnly> packedOn)
-{
-    var overdue = stuck.Where(order => order.Stage == Stage.Packed && packedOn[order.Id].AddDays(14) < today);
-
-    return overdue.Select(order => order with { Stage = Stage.Shipped, Note = "on its way" }).ToList();
-}
-
 // in Handover.cs
 public StagedOrder Scanned(StagedOrder order, string courier)
 {
@@ -63,6 +52,17 @@ public StagedOrder Scanned(StagedOrder order, string courier)
     }
 
     return shipped;
+}
+
+// in OrderStages.cs
+public static StagedOrder Dispatch(StagedOrder order) => order with { Stage = Stage.Shipped, Note = "on its way" };
+
+// in Backfills.cs
+public static IReadOnlyList<StagedOrder> Repaired(IEnumerable<StagedOrder> stuck, DateOnly today, IReadOnlyDictionary<string, DateOnly> packedOn)
+{
+    var overdue = stuck.Where(order => order.Stage == Stage.Packed && packedOn[order.Id].AddDays(14) < today);
+
+    return overdue.Select(order => order with { Stage = Stage.Shipped, Note = "on its way" }).ToList();
 }
 
 ----------[ Good ]----------
@@ -80,19 +80,6 @@ the same chain of type checks — `node is Invocation call && call.Target is Mem
 
 ```cs
 ----------[ Bad ]----------
-
-// in Damage.cs
-public static int ToInspect(IEnumerable<Package> arrived, int alreadyChecked)
-{
-    var total = 0;
-
-    foreach (var package in arrived)
-    {
-        total += package is Crate crate && crate.Lid is ScrewLid ? 1 : 0;
-    }
-
-    return total - alreadyChecked;
-}
 
 // in Crates.cs
 public static string Instructions(Package package)
@@ -112,6 +99,19 @@ public int SlotsFor(Package package)
     var slots = needsRoom ? 2 : 1;
 
     return Math.Min(slots, slotsFree);
+}
+
+// in Damage.cs
+public static int ToInspect(IEnumerable<Package> arrived, int alreadyChecked)
+{
+    var total = 0;
+
+    foreach (var package in arrived)
+    {
+        total += package is Crate crate && crate.Lid is ScrewLid ? 1 : 0;
+    }
+
+    return total - alreadyChecked;
 }
 
 ----------[ Good ]----------

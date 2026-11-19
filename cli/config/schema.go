@@ -143,7 +143,7 @@ func languages() object {
 func skillRules() []named {
 	var rules []named
 
-	for _, engine := range catalog.Engines {
+	for _, engine := range catalog.Curriculum {
 		for _, each := range skill.Of(engine) {
 			rules = append(rules, named{Rule{Skill, engine, catalog.Name(each)}.ID(), each.Definition().Summary})
 		}
@@ -155,9 +155,11 @@ func skillRules() []named {
 func sinRules() []named {
 	var rules []named
 
-	for _, engine := range catalog.Engines {
+	for _, engine := range catalog.Curriculum {
 		for _, each := range sins.Of(engine) {
-			rules = append(rules, named{Rule{Sin, engine, catalog.Name(each)}.ID(), each.Definition().Description})
+			for _, name := range catalog.Names(each) {
+				rules = append(rules, named{Rule{Sin, engine, name}.ID(), each.Definition().Description})
+			}
 		}
 	}
 
@@ -167,9 +169,11 @@ func sinRules() []named {
 func detectorRules() []named {
 	var rules []named
 
-	for _, engine := range catalog.Engines {
+	for _, engine := range catalog.Curriculum {
 		for _, each := range detectors.Of(engine) {
-			rules = append(rules, named{Rule{Detector, engine, catalog.Name(each)}.ID(), "Finds " + each.Sin().Definition().Name + "."})
+			for _, name := range catalog.Names(each) {
+				rules = append(rules, named{Rule{Detector, engine, name}.ID(), "Finds " + each.Sin().Definition().Name + "."})
+			}
 		}
 	}
 

@@ -174,12 +174,6 @@ func (n Node) WithoutParentheses() Node {
 	return n
 }
 
-func (n Node) IsNestedConditional() bool {
-	return n.Is("ConditionalExpression") && slices.ContainsFunc(n.All()[1:], func(branch Node) bool {
-		return branch.WithoutParentheses().Is("ConditionalExpression")
-	})
-}
-
 func (n Node) IsEmptyCollection() bool {
 	switch {
 	case n.Is("CollectionExpression"):

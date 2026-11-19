@@ -45,7 +45,7 @@ func TestTheRoslynBridgeWritesAValidTreeOfTheCSharpFixture(t *testing.T) {
 	}
 }
 
-func TestAServedRoslynBridgeMarksTheFilesItWasNotAskedToWriteAsContext(t *testing.T) {
+func TestAServedRoslynBridgeWritesOnlyTheFilesItWasAskedToWrite(t *testing.T) {
 	root, err := filepath.Abs("../tests/Fixtures/csharp")
 	if err != nil {
 		t.Fatal(err)
@@ -60,14 +60,8 @@ func TestAServedRoslynBridgeMarksTheFilesItWasNotAskedToWriteAsContext(t *testin
 	if err != nil {
 		t.Fatal(err)
 	}
-	judged := 0
-	for _, file := range stream.Files {
-		if !file.Context {
-			judged++
-		}
-	}
-	if judged != 1 || len(stream.Files) < 2 {
-		t.Errorf("%d of %d files are judged; only the one asked for should be", judged, len(stream.Files))
+	if len(stream.Files) != 1 || stream.Files[0].Context || stream.Files[0].Path != written {
+		t.Errorf("the bridge wrote %d files where it was asked for %s alone", len(stream.Files), written)
 	}
 }
 

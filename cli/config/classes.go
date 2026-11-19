@@ -17,6 +17,12 @@ var namespaces = map[string]string{
 	"laravel":    "Laravel",
 	"phptypes":   "PhpTypes",
 	"spatie":     "Spatie",
+	"shared":     "Shared",
+}
+
+// Placed is a rule whose type lives in one package but which belongs to a language's namespace, as a shared rule bound by that language does.
+type Placed interface {
+	Language() any
 }
 
 func ClassOf(kind Kind, rule any) string {
@@ -25,7 +31,11 @@ func ClassOf(kind Kind, rule any) string {
 		declared = declared.Elem()
 	}
 
-	folders := strings.Split(declared.PkgPath(), "/")
+	home := declared.PkgPath()
+	if placed, isPlaced := rule.(Placed); isPlaced {
+		home = reflect.TypeOf(placed.Language()).PkgPath()
+	}
+	folders := strings.Split(home, "/")
 	var path []string
 
 	for _, folder := range folders[indexOfKind(folders)+1:] {

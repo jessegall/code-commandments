@@ -8,7 +8,7 @@ import (
 )
 
 func init() {
-	scribes.Fixes(rules.TernaryStatementDetector{}, func() scribes.Scribe { return TernaryStatementScribe{} })
+	scribes.Fixes(rules.TernaryStatementDetector, func() scribes.Scribe { return TernaryStatementScribe{} })
 }
 
 // TernaryStatementScribe rewrites a ternary standing alone as a statement into the if it means.

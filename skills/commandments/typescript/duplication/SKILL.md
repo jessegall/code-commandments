@@ -103,7 +103,74 @@ lineItems(lines: Line[]): string[] {
 }
 ```
 
-The other 4 — one per rule — are in [`reference/examples.md`](reference/examples.md).
+### duplicate-typescript-function — in Vue
+
+Copy-pasted code — two+ TypeScript functions (a `function`, a method, a `const` arrow; in a `.ts` module or a component's script) with an identical body, formatting and comments aside
+
+```vue
+----------[ Bad ]----------
+
+<!-- in components/NewsletterSignup.vue -->
+<script setup lang="ts">
+// Two handlers in one component with one body: subscribing and re-subscribing post the same
+// form and recover from the same failure, so the second is a copy of the first.
+import { ref } from 'vue'
+
+const email = ref('')
+const failed = ref(false)
+
+async function subscribe(): Promise<void> {
+    failed.value = false
+    try {
+        await fetch('/api/newsletter', { method: 'POST', body: JSON.stringify({ email: email.value }) })
+    } catch {
+        failed.value = true
+    }
+}
+
+async function resubscribe(): Promise<void> {
+    failed.value = false
+    try {
+        await fetch('/api/newsletter', { method: 'POST', body: JSON.stringify({ email: email.value }) })
+    } catch {
+        failed.value = true
+    }
+}
+</script>
+
+<template>
+    <form @submit.prevent="subscribe">
+        <input v-model="email" type="email" />
+        <button type="button" @click="resubscribe">Subscribe again</button>
+    </form>
+</template>
+
+----------[ Good ]----------
+
+<!-- in components/NewsletterForm.vue -->
+<script setup lang="ts">
+// The FIX: subscribing again is the same request, so there is one function and both buttons call it.
+import { ref } from 'vue'
+
+const address = ref('')
+const rejected = ref(false)
+
+async function subscribe(): Promise<void> {
+    rejected.value = false
+    await fetch('/api/newsletter', { method: 'POST', body: JSON.stringify({ email: address.value }) })
+        .catch(() => { rejected.value = true })
+}
+</script>
+
+<template>
+    <form @submit.prevent="subscribe">
+        <input v-model="address" type="email" />
+        <button type="button" @click="subscribe">Subscribe again</button>
+    </form>
+</template>
+```
+
+The other 3 — one per rule — are in [`reference/examples.md`](reference/examples.md).
 
 ## Commands
 

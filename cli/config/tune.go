@@ -10,6 +10,7 @@ import (
 	"github.com/jessegall/code-commandments/cli"
 	"github.com/jessegall/code-commandments/detectors"
 	"github.com/jessegall/code-commandments/sins"
+	"github.com/jessegall/code-commandments/skill"
 )
 
 func (c Config) Enabled(installed Installed) ([]detectors.Detector, error) {
@@ -53,11 +54,18 @@ func rulesOf(detector detectors.Detector) []Rule {
 	engine, _ := detectors.EngineOf(detector)
 	sin := detector.Sin()
 
-	return []Rule{
-		{Kind: Detector, Engine: engine, Name: catalog.Name(detector)},
-		{Kind: Sin, Engine: engine, Name: catalog.Name(sin)},
-		{Kind: Skill, Engine: engine, Name: catalog.Name(sin.Definition().Skill)},
+	taught := sin.Definition().Skill
+	sinEngine, _ := sins.EngineOf(sin)
+	skillEngine, _ := skill.EngineOf(taught)
+	var rules []Rule
+	for _, name := range catalog.Names(detector) {
+		rules = append(rules, Rule{Kind: Detector, Engine: engine, Name: name})
 	}
+	for _, name := range catalog.Names(sin) {
+		rules = append(rules, Rule{Kind: Sin, Engine: engine, Name: name}, Rule{Kind: Sin, Engine: sinEngine, Name: name})
+	}
+
+	return append(rules, Rule{Kind: Skill, Engine: engine, Name: catalog.Name(taught)}, Rule{Kind: Skill, Engine: skillEngine, Name: catalog.Name(taught)})
 }
 
 func tune(list []detectors.Detector, configurators []Configurator) ([]detectors.Detector, error) {
@@ -93,7 +101,7 @@ func indexOf(list []detectors.Detector, rule Rule) int {
 	for i, detector := range list {
 		engine, _ := detectors.EngineOf(detector)
 
-		if rule.Kind == Detector && rule.Engine == engine && rule.Name == catalog.Name(detector) {
+		if rule.Kind == Detector && rule.Engine == engine && slices.Contains(catalog.Names(detector), rule.Name) {
 			return i
 		}
 	}

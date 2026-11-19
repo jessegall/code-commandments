@@ -36,7 +36,7 @@ func TestAWorkersEditIsNotJudgedAndTheWorkerHearsNothing(t *testing.T) {
 		t.Fatalf("a worker with its judging off was told about it: %s", said)
 	}
 
-	if strings.Contains(said, "deep-python-nesting") || strings.Contains(said, "redundant-python-else") {
+	if strings.Contains(said, "deep-python-nesting") || strings.Contains(said, "redundant-else") {
 		t.Errorf("a worker's edit was judged although the setting is off: %s", said)
 	}
 

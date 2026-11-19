@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 
 	"github.com/jessegall/code-commandments/catalog"
@@ -24,6 +25,7 @@ type Definition struct {
 	Rule        string
 	Suggestion  string
 	Requires    Package
+	Formerly    []string
 }
 
 // Package is a dependency a project may declare.
@@ -60,18 +62,26 @@ func Of(engine catalog.Engine) []Sin {
 	return sins.Of(engine)
 }
 
+func EngineOf(sin Sin) (catalog.Engine, bool) {
+	return sins.EngineOf(sin)
+}
+
 func (d Definition) Slug() string {
 	return d.Skill.Definition().Slug
 }
 
 func (d Definition) Matches(query string) bool {
-	return strings.Contains(catalog.Normalise(d.Name), catalog.Normalise(query))
+	needle := catalog.Normalise(query)
+
+	return slices.ContainsFunc(d.Names(), func(name string) bool { return strings.Contains(catalog.Normalise(name), needle) })
 }
 
 func (d Definition) Scopes(query string) bool {
-	needle := catalog.Normalise(query)
+	return d.Matches(query) || strings.Contains(catalog.Normalise(d.Slug()), catalog.Normalise(query))
+}
 
-	return strings.Contains(catalog.Normalise(d.Name), needle) || strings.Contains(catalog.Normalise(d.Slug()), needle)
+func (d Definition) Names() []string {
+	return append([]string{d.Name}, d.Formerly...)
 }
 
 func (p Package) InstalledIn(root string) bool {

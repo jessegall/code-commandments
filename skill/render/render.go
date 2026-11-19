@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/jessegall/code-commandments/catalog"
@@ -33,6 +34,12 @@ type Example struct {
 
 // Examples are the worked examples of each detector, by its Key.
 type Examples map[string][]Example
+
+func (e Examples) Add(more Examples) {
+	for key, each := range more {
+		e[key] = append(e[key], each...)
+	}
+}
 
 func Key(detector detectors.Detector) string {
 	return detector.Sin().Definition().Slug() + ":" + catalog.Name(detector)
@@ -141,14 +148,18 @@ func commands(definition skill.Definition, taught []sins.Sin) string {
 	for _, sin := range taught {
 		name := sin.Definition().Name
 		names = append(names, name)
-		detector, _ := detectorOf(sin)
-		if _, repents := detector.(detectors.Repentable); repents {
+		finders := detectorsOf(sin)
+		if slices.ContainsFunc(finders, detectors.IsRepentable) {
 			fixable = append(fixable, name)
 		}
 		if scaffolding, helps := sin.(sins.Scaffolding); helps && len(scaffolding.Scaffolds()) > 0 {
 			scaffolds = append(scaffolds, name)
 		}
-		if _, demands := detector.(detectors.RequiresBestDesign); demands {
+		if slices.ContainsFunc(finders, func(detector detectors.Detector) bool {
+			_, demands := detector.(detectors.RequiresBestDesign)
+
+			return demands
+		}) {
 			bestDesign = true
 		}
 	}
@@ -208,13 +219,23 @@ func workedExample(examplesOf []worked) string {
 	if len(examplesOf) == 0 {
 		return ""
 	}
-	rendered := example(examplesOf[0], len(languagesOf(examplesOf)) > 1)
-	if rendered == "" {
+	named := len(languagesOf(examplesOf)) > 1
+	first := examplesOf[0].sins[0]
+	var shown []string
+	for _, each := range examplesOf {
+		if !slices.Contains(each.sins, first) {
+			continue
+		}
+		if rendered := example(each, named); rendered != "" {
+			shown = append(shown, rendered)
+		}
+	}
+	if len(shown) == 0 {
 		return ""
 	}
-	block := "## Worked example\n\n" + rendered
-	if len(examplesOf) > 1 {
-		block += fmt.Sprintf("\n\nThe other %d — one per rule — are in [`%s`](%s).", len(examplesOf)-1, path(examplesDoc), path(examplesDoc))
+	block := "## Worked example\n\n" + strings.Join(shown, "\n\n")
+	if others := len(examplesOf) - len(shown); others > 0 {
+		block += fmt.Sprintf("\n\nThe other %d — one per rule — are in [`%s`](%s).", others, path(examplesDoc), path(examplesDoc))
 	}
 
 	return block
@@ -367,11 +388,21 @@ func sinsOf(slug string) []sins.Sin {
 }
 
 func detectorOf(sin sins.Sin) (detectors.Detector, bool) {
+	finders := detectorsOf(sin)
+	if len(finders) == 0 {
+		return nil, false
+	}
+
+	return finders[0], true
+}
+
+func detectorsOf(sin sins.Sin) []detectors.Detector {
+	var finders []detectors.Detector
 	for _, detector := range detectors.All() {
 		if detector.Sin() == sin {
-			return detector, true
+			finders = append(finders, detector)
 		}
 	}
 
-	return nil, false
+	return finders
 }

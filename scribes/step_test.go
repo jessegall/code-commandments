@@ -15,7 +15,7 @@ const discoveredByPHP = "HandRolledWitherDetector InlineDocblockDetector LoopInv
 func TestRepentableDetectorsRunInThePHPToolsDiscoveryOrder(t *testing.T) {
 	var repentable []detectors.Detector
 	for _, detector := range detectors.Of(catalog.PHP) {
-		if _, ok := detector.(detectors.Repentable); ok {
+		if detectors.IsRepentable(detector) {
 			repentable = append(repentable, detector)
 		}
 	}

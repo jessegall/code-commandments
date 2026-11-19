@@ -95,7 +95,7 @@ func TestAFileEditedIsJudgedAndItsSinsGoToTheQueue(t *testing.T) {
 		t.Fatalf("the judge left %d file(s) in the queue", len(queued))
 	}
 
-	if !strings.Contains(asText(queued[0]["whisper"]), "redundant-python-else") {
+	if !strings.Contains(asText(queued[0]["whisper"]), "redundant-else") {
 		t.Errorf("the queue names no sin: %v", queued[0])
 	}
 
@@ -227,11 +227,11 @@ func TestAnEditIsAnsweredWithoutReadingTheFileAtAll(t *testing.T) {
 	if sinful != Answer4Now(eventOf("file_edited", "src/orders.py")) {
 		t.Errorf("an edit of a sinful file is answered %s and of a clean one %s", sinful, Answer4Now(eventOf("file_edited", "src/orders.py")))
 	}
-	if strings.Contains(sinful, "redundant-python-else") || strings.Contains(sinful, "sin-found") {
+	if strings.Contains(sinful, "redundant-else") || strings.Contains(sinful, "sin-found") {
 		t.Errorf("the edit's own answer carries what the judge found: %s", sinful)
 	}
 
-	if said := saidAfter(t, data, eventOf("file_edited", "src/refund.py")); !strings.Contains(asText(said["whisper"]), "redundant-python-else") {
+	if said := saidAfter(t, data, eventOf("file_edited", "src/refund.py")); !strings.Contains(asText(said["whisper"]), "redundant-else") {
 		t.Errorf("the queue the agent reads names no sin: %v", said)
 	}
 }
@@ -305,7 +305,7 @@ func TestTheEditTheJournalHandsUsDecidesWhichSinsAreFresh(t *testing.T) {
 			}, data)
 
 			queued := drained(t, data)
-			said := len(queued) == 1 && strings.Contains(asText(queued[0]["whisper"]), "redundant-python-else")
+			said := len(queued) == 1 && strings.Contains(asText(queued[0]["whisper"]), "redundant-else")
 			if said != test.said {
 				t.Errorf("the sin was said: %v, want %v (%v)", said, test.said, queued)
 			}
@@ -437,7 +437,7 @@ func TestAnEditNamesItsOwnLinesWhateverTheJournalCallsThem(t *testing.T) {
 				},
 			})
 
-			if strings.Contains(asText(said["whisper"]), "redundant-python-else") {
+			if strings.Contains(asText(said["whisper"]), "redundant-else") {
 				t.Errorf("the edit's own rows were not read, so a sin away from the edit was raised: %v", said)
 			}
 		})

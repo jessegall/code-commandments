@@ -2,9 +2,9 @@
 package library
 
 import (
-	"github.com/jessegall/code-commandments/cli/source"
 	_ "embed"
 	"errors"
+	"github.com/jessegall/code-commandments/cli/source"
 	"io/fs"
 	"os"
 	"path"
@@ -37,7 +37,7 @@ type Library struct {
 	project         config.Config
 	previous        []string
 	withoutCommands bool
-	holds func(source.Language) bool
+	holds           func(source.Language) bool
 	// names puts the executable's invocation into a published skill, worked out once a publish: working it out asks git
 	// where the project is.
 	names *strings.Replacer

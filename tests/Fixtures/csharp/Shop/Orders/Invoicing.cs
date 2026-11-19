@@ -11,7 +11,7 @@ public sealed class Invoicing
 
         foreach (var line in order.Lines)
         {
-            // @sin LoopWrappedInIf
+            // @sin LoopInvertedGuard
             if (line.Quantity > 0)
             {
                 billed += line.Subtotal.Cents;
@@ -22,7 +22,7 @@ public sealed class Invoicing
         return billed;
     }
 
-    // @fixed LoopWrappedInIf
+    // @fixed LoopInvertedGuard
     // @sin FeatureEnvy
     public long BillFlat(Order order, List<string> journal)
     {
@@ -42,7 +42,7 @@ public sealed class Invoicing
         return billed;
     }
 
-    // @righteous LoopWrappedInIf
+    // @righteous LoopInvertedGuard
     // @sin FeatureEnvy
     public string? FirstBackordered(Order order)
     {

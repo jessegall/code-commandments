@@ -8,10 +8,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/jessegall/code-commandments/cache"
 	"github.com/jessegall/code-commandments/contract"
 	"github.com/jessegall/code-commandments/detectors"
 	"github.com/jessegall/code-commandments/engine"
-	"github.com/jessegall/code-commandments/cache"
 )
 
 const savedDetector = "php\x00SomeRule\x00definition"

@@ -72,7 +72,7 @@ func Fixable(checklist string) map[string]string {
 	}
 
 	for _, detector := range detectors.All() {
-		if _, repentable := detector.(detectors.Repentable); repentable {
+		if detectors.IsRepentable(detector) {
 			name := detector.Sin().Definition().Name
 			commands[name] = binary.Here() + " repent" + where + " --sin=" + name
 		}
@@ -304,7 +304,7 @@ func scaffoldConstructs(files scribes.Rewrites, written []string, console cli.Co
 	}
 
 	for _, detector := range detectors.All() {
-		if _, repentable := detector.(detectors.Repentable); !repentable {
+		if !detectors.IsRepentable(detector) {
 			continue
 		}
 

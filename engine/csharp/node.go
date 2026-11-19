@@ -367,13 +367,6 @@ func (n Node) ComparisonSubject() Node {
 		return Node{}
 	}
 	expressions := n.Expressions()
-	left, right := expressions[0], expressions[1]
-	if left.IsConstant() == right.IsConstant() {
-		return Node{}
-	}
-	if left.IsConstant() {
-		return right
-	}
 
-	return left
+	return Node{Match: engine.VariedSide(expressions[0].Match, expressions[1].Match, engine.Match.IsConstant)}
 }

@@ -11,7 +11,6 @@ type ConcreteCrossModuleDependency struct{}
 
 func init() { sins.Register(catalog.PHP, ConcreteCrossModuleDependency{}) }
 
-
 func (ConcreteCrossModuleDependency) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "concrete-cross-module-dependency",

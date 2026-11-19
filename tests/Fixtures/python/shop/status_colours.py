@@ -3,11 +3,11 @@
 
 
 def badge(order) -> str:
-    # @sin NestedConditional
+    # @sin NestedTernary
     return "green" if order.status == "sent" else "amber" if order.status == "draft" else "red"
 
 
-# @fixed NestedConditional
+# @fixed NestedTernary
 def badge_for(order) -> str:
     match order.status:
         case "sent":

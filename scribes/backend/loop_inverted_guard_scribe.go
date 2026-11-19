@@ -8,7 +8,7 @@ import (
 )
 
 func init() {
-	scribes.Fixes(rules.LoopInvertedGuardDetector{}, func() scribes.Scribe { return LoopInvertedGuardScribe{} })
+	scribes.Fixes(rules.LoopInvertedGuardDetector, func() scribes.Scribe { return LoopInvertedGuardScribe{} })
 }
 
 // LoopInvertedGuardScribe turns an if wrapping a loop's whole body into a guard that continues, the body beneath it.

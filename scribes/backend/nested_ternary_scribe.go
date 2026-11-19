@@ -9,7 +9,7 @@ import (
 )
 
 func init() {
-	scribes.Fixes(rules.NestedTernaryDetector{}, func() scribes.Scribe { return NestedTernaryScribe{} })
+	scribes.Fixes(rules.NestedTernaryDetector, func() scribes.Scribe { return NestedTernaryScribe{} })
 }
 
 // NestedTernaryScribe rewrites a chain of ternaries nested in their else branches into one `match (true)`.

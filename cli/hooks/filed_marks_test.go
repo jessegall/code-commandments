@@ -21,7 +21,7 @@ func TestAReportedSinIsNotToldToTheAgent(t *testing.T) {
 	Judge4Into(editOf("src/refund.py"), data)
 
 	for _, queued := range drained(t, data) {
-		if strings.Contains(asText(queued["whisper"]), "redundant-python-else") {
+		if strings.Contains(asText(queued["whisper"]), "redundant-else") {
 			t.Errorf("the agent was told to fix a sin this project has reported: %v", queued["whisper"])
 		}
 	}
@@ -35,7 +35,7 @@ func TestASinNobodyReportedIsStillToldToTheAgent(t *testing.T) {
 
 	told := false
 	for _, queued := range drained(t, data) {
-		told = told || strings.Contains(asText(queued["whisper"]), "redundant-python-else")
+		told = told || strings.Contains(asText(queued["whisper"]), "redundant-else")
 	}
 
 	if !told {

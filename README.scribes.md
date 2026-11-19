@@ -31,11 +31,6 @@ A rule in `.commandments/custom/` that declares a `fix` is repented like a shipp
 | `InlineDocblock` | Write a docblock as a block: the opening delimiter on its own line, one star per line of content, the closing delimiter on its own line. |
 | `StackedDocblock` | One declaration carries ONE docblock — merge a stack into a single block, because the language hands only the last one to a reader's tooling. |
 | `WrappingWithoutCause` | When wrapping a caught exception, pass the original as `previous`/cause — never drop the stack trace. |
-| `LoopInvertedGuard` | Use a `continue` guard so the loop body stays flat; don't wrap the whole body in an `if`. |
-| `NestedTernary` | Unfold a nested/chained ternary into a `match` or guards; don't hide branching in `$a ? $b : ($c ? $d : $e)`. |
-| `RedundantElse` | Drop the `else` after an `if` branch that already returns/throws/continues/breaks. |
-| `ShortCircuitStatement` | Branch with an `if`; never run work off the right side of a bare `&&`/`\|\|` statement whose result nothing reads. |
-| `TernaryStatement` | Choose an action with `if`/`else`; a ternary chooses a VALUE, so never write one whose result nothing reads. |
 | `RedundantArrowReturnType` | Leave the return type off an arrow function whose expression already proves the type. Declare one when the type is genuinely ambiguous or you are narrowing it — never to restate a property or a method you can read from here. |
 | `HandRolledWither` | A wither should only say what changes: `clone($this, ['x' => $x])` states the intent, while re-listing every field just repeats the constructor in every wither. |
 | `ConstructorOrchestration` | Project each self-contained page-object slot in a `#[Computed]` get-hook, not an imperative constructor assignment. |
@@ -55,6 +50,16 @@ A rule in `.commandments/custom/` that declares a `fix` is repented like a shipp
 
 ### Python
 
+
+### Shared
+
+| Sin | The fix `repent` applies |
+|---|---|
+| `LoopInvertedGuard` | Use a `continue` guard so the loop body stays flat; don't wrap the whole body in an `if`. |
+| `NestedTernary` | Use one conditional expression for one choice; for more, use a `match`/`switch`, a lookup, or guards that return early. |
+| `RedundantElse` | Drop the `else` after a branch that returns, throws, continues or breaks; let the rest run at the function's own level. |
+| `ShortCircuitStatement` | Branch with an `if`; never run work off the right side of a bare `&&`/`\|\|` (`and`/`or`) whose value nothing reads. |
+| `TernaryStatement` | Choose an action with `if`/`else`; a conditional expression chooses a value, so never write one whose value nothing reads. |
 
 ### TypeScript
 

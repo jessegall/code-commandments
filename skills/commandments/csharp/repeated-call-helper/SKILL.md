@@ -72,9 +72,6 @@ the same compound condition — `order.Paid && !order.Cancelled` — written at 
 ```cs
 ----------[ Bad ]----------
 
-// in Promises.cs
-public static bool CanPromiseToday(Dispatchable order) => !order.OnHold && order.Paid && order.Lines > 0;
-
 // in Dispatch.cs
 public static string Status(Dispatchable order)
 {
@@ -85,6 +82,9 @@ public static string Status(Dispatchable order)
 
     return "wait";
 }
+
+// in Promises.cs
+public static bool CanPromiseToday(Dispatchable order) => !order.OnHold && order.Paid && order.Lines > 0;
 
 ----------[ Good ]----------
 

@@ -38,7 +38,7 @@ func TestTheGoFixtureCompilesOnItsOwnTerms(t *testing.T) {
 		t.Skipf("no go here: %v", err)
 	}
 
-	vet := exec.Command("go", "vet", "./...")
+	vet := exec.Command("go", "vet", "-unreachable=false", "./...")
 	vet.Dir = goFixture
 	if out, err := vet.CombinedOutput(); err != nil {
 		t.Errorf("the fixture does not pass its own vet: %v\n%s", err, out)

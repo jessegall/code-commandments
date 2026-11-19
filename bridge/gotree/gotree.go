@@ -163,7 +163,7 @@ func (w *writer) node(held ast.Node, field string, inType bool) *contract.Node {
 		ID:    w.next,
 		Kind:  kindOf(held),
 		Role:  roleOf(held, inType),
-		Is:    neutralOf(held),
+		Is:    append(neutralOf(held), w.panicking(held)...),
 		Span:  contract.Span{Start: start, End: end, Line: line},
 		Field: field,
 		Name:  nameOf(held),

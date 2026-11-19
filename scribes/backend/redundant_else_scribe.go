@@ -9,7 +9,7 @@ import (
 )
 
 func init() {
-	scribes.Fixes(rules.RedundantElseDetector{}, func() scribes.Scribe { return RedundantElseScribe{} })
+	scribes.Fixes(rules.RedundantElseDetector, func() scribes.Scribe { return RedundantElseScribe{} })
 }
 
 // RedundantElseScribe lifts an else's body out beneath the guard that already left.

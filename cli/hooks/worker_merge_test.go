@@ -86,7 +86,7 @@ func TestASinfulBranchHoldsItsOwnMerge(t *testing.T) {
 		t.Errorf("the reason reads %q, naming neither the worker nor what it carries", reason)
 	}
 
-	if !strings.Contains(reason, "redundant-python-else") {
+	if !strings.Contains(reason, "redundant-else") {
 		t.Errorf("the reason reads %q, naming no sin a reader could look up", reason)
 	}
 }

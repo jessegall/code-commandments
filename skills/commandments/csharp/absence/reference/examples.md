@@ -92,9 +92,24 @@ The null-forgiving `!` on a value declared nullable — the compiler told the ca
 ```cs
 ----------[ Bad ]----------
 
-public IReadOnlyList<string> Emails() => customers.Where(customer => customer.Email != null).Select(customer => customer.Email!).ToList();
+public Customer Named(string name)
+{
+    var found = all.FirstOrDefault(customer => customer.Name == name);
+
+    return found!;
+}
 
 ----------[ Good ]----------
 
-public IReadOnlyList<string> Addresses() => customers.Select(customer => customer.Email).OfType<string>().ToList();
+// in Customers.cs
+public Customer Existing(string name) =>
+    all.FirstOrDefault(customer => customer.Name == name) ?? throw UnknownCustomer.Named(name);
+
+// in Customers.cs
+public sealed class UnknownCustomer : InvalidOperationException
+{
+    private UnknownCustomer(string message) : base(message) {}
+
+    public static UnknownCustomer Named(string name) => new($"No customer is called '{name}'.");
+}
 ```

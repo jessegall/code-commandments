@@ -9,40 +9,30 @@ Copy-pasted code — two+ C# methods, accessors or local functions with an ident
 ```cs
 ----------[ Bad ]----------
 
-// in Invoice.cs
-public IReadOnlyList<string> Lines()
+// in Carriers.cs
+get
 {
-    var rows = new List<string>();
+    var cents = grams > 20_000 ? 1_500 : grams > 5_000 ? 700 : 0;
 
-    foreach (var line in order.Lines)
+    if (fragile)
     {
-        if (line.Quantity <= 0)
-        {
-            continue;
-        }
-
-        rows.Add($"{line.Quantity} x {line.Sku}: {line.Subtotal.Cents / 100m:0.00}");
+        cents += cents / 2 + 250;
     }
 
-    return rows;
+    return new Money(cents, "EUR");
 }
 
-// in PackingSlip.cs
-public IReadOnlyList<string> Rows()
+// in Carriers.cs
+get
 {
-    var rows = new List<string>();
+    var cents = grams > 20_000 ? 1_500 : grams > 5_000 ? 700 : 0;
 
-    foreach (var line in order.Lines)
+    if (fragile)
     {
-        if (line.Quantity <= 0)
-        {
-            continue;
-        }
-
-        rows.Add($"{line.Quantity} x {line.Sku}: {line.Subtotal.Cents / 100m:0.00}");
+        cents += cents / 2 + 250;
     }
 
-    return rows;
+    return new Money(cents, "EUR");
 }
 
 ----------[ Good ]----------
@@ -67,38 +57,46 @@ A near-copy — two+ C# methods, accessors or local functions with one control-f
 ```cs
 ----------[ Bad ]----------
 
-// in DeliveredMail.cs
-public string Compose(Order order)
+// in Ledgers.cs
+public IReadOnlyDictionary<string, int> Counts()
 {
-    var mail = new StringBuilder();
-    mail.AppendLine($"Hello {customer},");
-    mail.AppendLine($"Your order {order.Reference} was delivered.");
+    var found = new Dictionary<string, int>();
 
-    foreach (var item in order.Lines)
+    try
     {
-        mail.AppendLine($"- {item.Quantity} x {item.Sku}");
+        foreach (var row in File.ReadAllLines(Path.Combine(folder, "counts.csv")))
+        {
+            var cells = row.Split(';');
+            found[cells[0]] = int.Parse(cells[1]);
+        }
+    }
+    catch (FileNotFoundException)
+    {
+        return new Dictionary<string, int>();
     }
 
-    mail.AppendLine("Enjoy your purchase.");
-
-    return mail.ToString();
+    return found;
 }
 
-// in ShippedMail.cs
-public string Render(Order order)
+// in Ledgers.cs
+public IReadOnlyDictionary<string, int> Reservations()
 {
-    var body = new StringBuilder();
-    body.AppendLine($"Hello {customer},");
-    body.AppendLine($"Your order {order.Reference} has shipped.");
+    var held = new Dictionary<string, int>();
 
-    foreach (var line in order.Lines)
+    try
     {
-        body.AppendLine($"- {line.Quantity} x {line.Sku}");
+        foreach (var entry in File.ReadAllLines(Path.Combine(folder, "reservations.csv")))
+        {
+            var parts = entry.Split(';');
+            held[parts[0]] = int.Parse(parts[1]);
+        }
+    }
+    catch (FileNotFoundException)
+    {
+        return new Dictionary<string, int>();
     }
 
-    body.AppendLine("Thank you for shopping with us.");
-
-    return body.ToString();
+    return held;
 }
 
 ----------[ Good ]----------

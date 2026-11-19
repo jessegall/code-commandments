@@ -134,6 +134,18 @@ func TestTheNeutralQuestionsAnswerForGo(t *testing.T) {
 	}
 }
 
+func TestAPanicIsAThrowThatLeavesItsBlockAndALookAlikeIsNot(t *testing.T) {
+	builtin := streamOf(t, map[string]string{"go.mod": "module example.com/shop\n", "stop.go": "package shop\n\nfunc stop() {\n\tpanic(\"stopped\")\n}\n"}).Files[0]
+	if !answers(builtin, "throw") || !answers(builtin, "bail-out") {
+		t.Error("the builtin panic is not read as a throw that leaves its block")
+	}
+
+	shadowed := streamOf(t, map[string]string{"go.mod": "module example.com/shop\n", "stop.go": "package shop\n\nfunc panic(reason string) {}\n\nfunc stop() {\n\tpanic(\"stopped\")\n}\n"}).Files[0]
+	if answers(shadowed, "throw") {
+		t.Error("a function of the package's own named panic is read as a throw")
+	}
+}
+
 func TestALiteralCarriesWhatItDecodesTo(t *testing.T) {
 	file := streamOf(t, map[string]string{"values.go": "package shop\n\nvar (\n\tname = \"a \\\"quoted\\\" name\"\n\thex  = 0x1f\n\tmark = 'x'\n\trate = 1.5\n)\n"}).Files[0]
 

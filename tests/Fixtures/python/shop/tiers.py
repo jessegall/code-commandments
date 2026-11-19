@@ -7,10 +7,10 @@ class Loyalty:
         self.base = base
 
     def rate(self, member: bool, vip: bool) -> float:
-        # @sin NestedConditional
+        # @sin NestedTernary
         return (self.base * 2 if vip else self.base) if member else 0.0
 
-    # @fixed NestedConditional
+    # @fixed NestedTernary
     def rate_for(self, member: bool, vip: bool) -> float:
         if not member:
             return 0.0

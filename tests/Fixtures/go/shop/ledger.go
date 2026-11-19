@@ -17,7 +17,7 @@ type Ledger struct {
 // Post adds every entry that stands for money to the day's totals.
 func (l *Ledger) Post(entries []Entry) {
 	for _, entry := range entries {
-		// @sin LoopWrappedInIf
+		// @sin LoopInvertedGuard
 		if !entry.Void && entry.Cents != 0 {
 			l.totals[entry.Account] += entry.Cents
 			l.posted++
@@ -25,7 +25,7 @@ func (l *Ledger) Post(entries []Entry) {
 	}
 }
 
-// @fixed LoopWrappedInIf
+// @fixed LoopInvertedGuard
 
 // PostFlat posts the same entries with the work at the loop's own level: the loop says what it skips in its
 // first line, and everything after it is the posting.
@@ -39,7 +39,7 @@ func (l *Ledger) PostFlat(entries []Entry) {
 	}
 }
 
-// @righteous LoopWrappedInIf
+// @righteous LoopInvertedGuard
 
 // FirstVoid is the account of the first void entry worth a note. The body ends by leaving the loop, so the
 // condition is picking the one entry it wanted rather than guarding the loop's work.
@@ -55,7 +55,7 @@ func (l *Ledger) FirstVoid() string {
 	return ""
 }
 
-// @righteous LoopWrappedInIf
+// @righteous LoopInvertedGuard
 
 // Settle writes each account's total back as a single entry. The condition binds the total it tests, and Go
 // scopes that name to the branch, so inverting it into a guard would widen the name into the loop.

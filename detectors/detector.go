@@ -110,7 +110,7 @@ func EveryNamedIn(detectors []Detector, name string) []Detector {
 
 	var named []Detector
 	for _, detector := range detectors {
-		if catalog.Normalise(strings.TrimSuffix(catalog.Name(detector), "Detector")) != wanted {
+		if !slices.ContainsFunc(catalog.Names(detector), func(name string) bool { return catalog.Normalise(strings.TrimSuffix(name, "Detector")) == wanted }) {
 			continue
 		}
 
@@ -128,12 +128,23 @@ func EveryNamedIn(detectors []Detector, name string) []Detector {
 	}
 
 	for _, detector := range detectors {
-		if catalog.Normalise(detector.Sin().Definition().Name) == wanted {
+		if slices.ContainsFunc(detector.Sin().Definition().Names(), func(name string) bool { return catalog.Normalise(name) == wanted }) {
 			return []Detector{detector}
 		}
 	}
 
 	return nil
+}
+
+func OnePerSin(list []Detector) []Detector {
+	var kept []Detector
+	for _, detector := range list {
+		if !slices.ContainsFunc(kept, func(taken Detector) bool { return taken.Sin() == detector.Sin() }) {
+			kept = append(kept, detector)
+		}
+	}
+
+	return kept
 }
 
 // Grouped is a detector whose findings recur in groups: the key says which group a finding is in, so a report can name the other members as its twins.

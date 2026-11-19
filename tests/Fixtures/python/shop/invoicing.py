@@ -5,7 +5,7 @@
 def invoice_all(orders, ledger) -> int:
     sent = 0
     for order in orders:
-        # @sin LoopWrappedInIf
+        # @sin LoopInvertedGuard
         if order.delivered:
             invoice = ledger.draft(order.number, order.total())
             ledger.send(invoice)
@@ -13,7 +13,7 @@ def invoice_all(orders, ledger) -> int:
     return sent
 
 
-# @fixed LoopWrappedInIf
+# @fixed LoopInvertedGuard
 def invoice_delivered(orders, ledger) -> int:
     sent = 0
     for order in orders:

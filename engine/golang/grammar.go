@@ -20,6 +20,7 @@ func init() {
 		BindsItsOwnTest:   bindsItsOwnTest,
 		ElementName:       elementName,
 		ComparisonSubject: comparisonSubject,
+		JumpTarget:        engine.KindIn("LabeledStmt"),
 		NamespaceOf:       namespaceOf,
 		BodyHash:          BodyHash,
 		NodeHash:          NodeHash,
@@ -90,15 +91,7 @@ func comparisonSubject(held engine.Match) engine.Match {
 	if held.Kind() != "BinaryExpr" || held.Operator() != "==" {
 		return engine.Match{}
 	}
-	left, right := held.Child("x"), held.Child("y")
-	switch {
-	case !left.IsConstant() && right.IsConstant():
-		return left
-	case left.IsConstant() && !right.IsConstant():
-		return right
-	}
-
-	return engine.Match{}
+	return engine.VariedSide(held.Child("x"), held.Child("y"), engine.Match.IsConstant)
 }
 
 func bindsItsOwnTest(branch engine.Match) bool {

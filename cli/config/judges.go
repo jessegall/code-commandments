@@ -97,9 +97,12 @@ func (c Config) RulesFor(root, file string, rules []detectors.Detector) []detect
 
 func namesOf(detector detectors.Detector) []Rule {
 	engine, _ := detectors.EngineOf(detector)
-	name := catalog.Name(detector)
+	var rules []Rule
+	for _, name := range catalog.Names(detector) {
+		rules = append(rules, Rule{Kind: Detector, Engine: engine, Name: name}, Rule{Kind: Detector, Name: name})
+	}
 
-	return []Rule{{Kind: Detector, Engine: engine, Name: name}, {Kind: Detector, Name: name}}
+	return rules
 }
 
 func (c Config) judgedFolderOf(root, file string) string {

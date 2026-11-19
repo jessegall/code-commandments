@@ -4,7 +4,7 @@
 def print_labels(shipments, printer) -> None:
     for shipment in shipments:
         for parcel in shipment.parcels:
-            # @sin LoopWrappedInIf
+            # @sin LoopInvertedGuard
             if parcel.label is None:
                 parcel.label = printer.render(shipment.address, parcel.weight)
                 printer.print(parcel.label)

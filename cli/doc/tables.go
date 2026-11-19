@@ -74,7 +74,7 @@ func bound(sin sins.Sin) int {
 func sinsTable() Table {
 	bySkill := map[string][]detectors.Detector{}
 	var slugs []string
-	for _, detector := range config.InClassOrder(config.Detector, detectors.All()) {
+	for _, detector := range detectors.OnePerSin(config.InClassOrder(config.Detector, detectors.All())) {
 		slug := detector.Sin().Definition().Slug()
 		if _, seen := bySkill[slug]; !seen {
 			slugs = append(slugs, slug)
@@ -88,7 +88,7 @@ func sinsTable() Table {
 
 		return strings.Compare(a, b)
 	})
-	total := len(detectors.All())
+	total := len(detectors.OnePerSin(detectors.All()))
 	lines := []string{fmt.Sprintf("_%d sins across %d skills._\n", total, len(slugs))}
 	for _, engine := range engines() {
 		lines = append(lines, "### "+heading(engine)+"\n")
@@ -116,10 +116,11 @@ func sinsTable() Table {
 func scribesTable() Table {
 	var repentables []detectors.Detector
 	for _, detector := range detectors.All() {
-		if _, repents := detector.(detectors.Repentable); repents {
+		if detectors.IsRepentable(detector) {
 			repentables = append(repentables, detector)
 		}
 	}
+	repentables = detectors.OnePerSin(repentables)
 	slices.SortStableFunc(repentables, func(a, b detectors.Detector) int {
 		if first, second := bound(a.Sin()), bound(b.Sin()); first != second {
 			return first - second

@@ -26,8 +26,8 @@ func main() {
 
 	calibrating := []detectors.Detector{
 		godetectors.DeepNestingDetector{},
-		godetectors.RedundantElseDetector{},
-		godetectors.LoopWrappedInIfDetector{},
+		godetectors.RedundantElseDetector,
+		godetectors.LoopInvertedGuardDetector,
 	}
 	for _, detector := range calibrating {
 		found := unfrozen(detector.Find(codebase))

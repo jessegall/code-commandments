@@ -60,6 +60,7 @@ type Grammar struct {
 	Computes           func(Match) bool
 	ElementName        func(Match) string
 	Binds              func(Match) bool
+	JumpTarget         func(Match) bool
 }
 
 var TypeKinds = []string{"class", "interface", "enum", "trait", "record", "struct", "protocol"}

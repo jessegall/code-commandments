@@ -50,7 +50,7 @@ func TestAGoFileIsJudgedAsItIsEdited(t *testing.T) {
 		t.Fatal("a Go file a session edited raises no sin")
 	}
 	for _, mark := range marks {
-		if sin := mark.Rule.Sin().Definition().Name; sin != "go-loop-wrapped-in-if" {
+		if sin := mark.Rule.Sin().Definition().Name; sin != "loop-inverted-guard" {
 			t.Errorf("the Go file raises %s, which is another language's rule", sin)
 		}
 	}
@@ -102,7 +102,7 @@ func TestAWorkerCarryingAGoSinIsHeld(t *testing.T) {
 	if answer["refuse"] == nil {
 		t.Errorf("the hold answered %v, want a refusal", answer)
 	}
-	if reason := asText(answer["refuse"]); !strings.Contains(reason, "go-loop-wrapped-in-if") {
+	if reason := asText(answer["refuse"]); !strings.Contains(reason, "loop-inverted-guard") {
 		t.Errorf("the reason reads %q, naming no Go sin", reason)
 	}
 }
