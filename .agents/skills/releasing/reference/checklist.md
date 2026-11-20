@@ -8,6 +8,8 @@
 5. Commit on main — no attribution trailer.
 6. A release build can be tried locally without publishing anything:
    `scripts/dev scripts/release/build v0.0.0-try dist --tool-only` (the Go binaries, checked against their budgets).
-7. Bump the journal plugin, tag `vX.Y.Z` and push main and the tag, without asking: the tag runs the release
-   workflow, and the plugin is upgraded once it has run. Never the full suite — the tests of what the release
-   carries are its gate.
+7. Bump the journal plugin, regenerate the manifests, commit and push main. Dispatch
+   `gh workflow run release.yml --ref main -f version=vX.Y.Z -f commit="$(git rev-parse HEAD)"`.
+8. Wait for the workflow to finish. Verify that the build succeeded before the public tag was created, that the
+   tag points to the requested commit, and that the published assets match `SHA256SUMS`. For a plugin-only release,
+   verify the tag and the pinned release's assets. Upgrade the plugin once those checks pass.

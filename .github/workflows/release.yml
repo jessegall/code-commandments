@@ -1,14 +1,27 @@
-# A release, run only by a v* tag — and only Sir Jesse tags: the tool's binary for every platform and the C# bridge
-# beside it, each a plain executable a user runs with nothing else installed, with their SHA256SUMS, on the GitHub
-# release the tool fetches them from. Nothing else publishes, and no agent pushes a tag.
 name: Release
 
 on:
-  push:
-    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Plugin version with its v prefix
+        required: true
+        type: string
+      commit:
+        description: Full SHA of the release commit
+        required: true
+        type: string
 
 permissions:
-  contents: write
+  contents: read
+
+concurrency:
+  group: release-${{ inputs.version }}
+  cancel-in-progress: false
+
+env:
+  RELEASE_VERSION: ${{ inputs.version }}
+  RELEASE_COMMIT: ${{ inputs.commit }}
 
 jobs:
   # A tag is a version of the plugin. Its manifests fetch the binary COMMANDMENTS_RELEASE pins: a tag that pins itself
@@ -22,12 +35,27 @@ jobs:
       builds: ${{ steps.pin.outputs.builds }}
       # The release the C# bridges can be taken from, empty when they must be built. A bridge is a self-contained
       # runtime per platform, five of the six minutes a release takes and two of them on a macOS runner, and for a
-      # release that did not touch the bridge the six assets are byte for byte the last release's.
+      # release that did not touch the bridge the assets are byte for byte the last release's.
       bridges-from: ${{ steps.bridges.outputs.from }}
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      - name: Verify the release commit and unused version
+        run: |
+          if [[ "$RELEASE_COMMIT" != "$GITHUB_SHA" || "$RELEASE_COMMIT" != "$(git rev-parse HEAD)" ]]; then
+            echo "Expected release commit $RELEASE_COMMIT but checked out $(git rev-parse HEAD)" >&2
+            exit 1
+          fi
+          if [[ ! "$RELEASE_VERSION" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Expected a release version of the form vX.Y.Z" >&2
+            exit 1
+          fi
+          existing="$(git ls-remote --tags --refs origin "refs/tags/$RELEASE_VERSION")"
+          if [ -n "$existing" ]; then
+            echo "Version $RELEASE_VERSION already has a public tag" >&2
+            exit 1
+          fi
       # The plugin's script runs under whatever python3 the hooks find, which on macOS is 3.9; its tests run there
       # before anything is published, so a tag that changes only the script is still proven.
       - uses: actions/setup-python@v5
@@ -41,8 +69,8 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           version="v$(jq -r .version .journal-plugin/plugin.json)"
-          if [ "$version" != "$GITHUB_REF_NAME" ]; then
-            echo ".journal-plugin/plugin.json says version $version, not $GITHUB_REF_NAME" >&2
+          if [ "$version" != "$RELEASE_VERSION" ]; then
+            echo ".journal-plugin/plugin.json says version $version, expected $RELEASE_VERSION" >&2
             exit 1
           fi
 
@@ -56,48 +84,50 @@ jobs:
             fi
           done
 
-          if [ "$pinned" = "$GITHUB_REF_NAME" ]; then
+          if [ "$pinned" = "$RELEASE_VERSION" ]; then
             echo "builds=true" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
           # Only the plugin's own files may differ from the release whose binary this tag runs; anything else is
           # what the binary is built from, and then the tag must pin itself so it is built.
-          built_from="$(git diff --name-only "$pinned" "$GITHUB_REF_NAME" | grep -v -E '^(\.journal-plugin/|journal-plugin(\.[0-9]+)*\.json$)' || true)"
+          changed="$(git diff --name-only "refs/tags/$pinned" "$RELEASE_COMMIT")"
+          built_from="$(grep -v -E '^(\.journal-plugin/|journal-plugin(\.[0-9]+)*\.json$)' <<< "$changed" || true)"
           if [ -n "$built_from" ]; then
-            echo "$GITHUB_REF_NAME runs the binary of $pinned, but these files it is built from changed since; pin $GITHUB_REF_NAME so it is built:" >&2
+            echo "$RELEASE_VERSION runs the binary of $pinned, but these files it is built from changed since; pin $RELEASE_VERSION so it is built:" >&2
             echo "$built_from" >&2
             exit 1
           fi
 
           held="$(gh release view "$pinned" --json assets -q '.assets | length' 2>/dev/null || echo 0)"
           if [ "$held" = "0" ]; then
-            echo "$GITHUB_REF_NAME runs the binary of $pinned, which holds no assets to fetch" >&2
+            echo "$RELEASE_VERSION runs the binary of $pinned, which holds no assets to fetch" >&2
             exit 1
           fi
 
           echo "builds=false" >> "$GITHUB_OUTPUT"
-          echo "$GITHUB_REF_NAME changes only the plugin's files and runs the binary of $pinned, so nothing is built" >&2
+          echo "$RELEASE_VERSION changes only the plugin's files and runs the binary of $pinned, so nothing is built" >&2
       - name: Take the C# bridges from the last release where nothing of them changed
         id: bridges
         if: steps.pin.outputs.builds == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          previous="$(git tag --sort=-version:refname --list 'v*' | grep -v "^$GITHUB_REF_NAME$" | head -1)"
+          previous="$(gh release view --json tagName --jq '.tagName' 2>/dev/null || true)"
           [ -n "$previous" ] || exit 0
 
           # What a bridge is built from: its own sources, the script that publishes it, and this workflow, which
           # names the SDK it is built with. A change anywhere in them is a bridge that must be built; everything
           # else about a release leaves it identical.
-          if ! git diff --quiet "$previous" "$GITHUB_REF_NAME" -- bridge/roslyn scripts/release/roslyn .github/workflows/release.yml; then
+          if ! git diff --quiet "refs/tags/$previous" "$RELEASE_COMMIT" -- bridge/roslyn scripts/release/roslyn .github/workflows/release.yml; then
             echo "the bridge changed since $previous, so it is built" >&2
             exit 0
           fi
 
-          published="$(gh release view "$previous" --json assets -q '[.assets[] | select(.name | startswith("roslyn-bridge-"))] | length' 2>/dev/null || echo 0)"
-          if [ "$published" != "6" ]; then
-            echo "$previous publishes $published bridges, not six, so they are built" >&2
+          expected="$(jq -r '.budget | keys[] | select(startswith("roslyn-bridge-"))' scripts/release/size-budget.json)"
+          published="$(gh release view "$previous" --json assets -q '[.assets[].name | select(startswith("roslyn-bridge-"))] | sort[]' 2>/dev/null || true)"
+          if [ "$published" != "$expected" ]; then
+            echo "$previous does not have the expected bridge assets, so they are built" >&2
             exit 0
           fi
 
@@ -127,11 +157,13 @@ jobs:
         with:
           name: bridges-${{ matrix.runner }}
           path: dist/
+          retention-days: 1
+          if-no-files-found: error
 
   binaries:
     needs: [pin, bridges]
     # The bridges job is skipped where they are taken from the last release, and a skipped job must not skip this one.
-    if: always() && needs.pin.result == 'success' && needs.pin.outputs.builds == 'true' && (needs.bridges.result == 'success' || needs.bridges.result == 'skipped')
+    if: ${{ !cancelled() && needs.pin.result == 'success' && needs.pin.outputs.builds == 'true' && (needs.bridges.result == 'success' || needs.bridges.result == 'skipped') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -145,28 +177,64 @@ jobs:
         if: needs.pin.outputs.bridges-from != ''
         env:
           GH_TOKEN: ${{ github.token }}
+          BRIDGES_FROM: ${{ needs.pin.outputs.bridges-from }}
         run: |
           mkdir -p dist
-          gh release download "${{ needs.pin.outputs.bridges-from }}" --pattern 'roslyn-bridge-*' --dir dist
+          gh release download "$BRIDGES_FROM" --pattern 'roslyn-bridge-*' --dir dist
           ls -l dist
       - name: Cross-compile, check every binary against its budget, and sum them all
-        run: scripts/dev env GOMEMLIMIT=3GiB GOMAXPROCS=2 scripts/release/build "$GITHUB_REF_NAME" dist
-      - name: Publish the release
+        run: scripts/dev env GOMEMLIMIT=3GiB GOMAXPROCS=2 scripts/release/build "$RELEASE_VERSION" dist
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-${{ inputs.version }}
+          path: dist/
+          retention-days: 1
+          if-no-files-found: error
+
+  publish:
+    needs: [pin, binaries]
+    if: >-
+      ${{ !cancelled() && needs.pin.result == 'success' &&
+          (needs.binaries.result == 'success' ||
+           (needs.pin.outputs.builds == 'false' && needs.binaries.result == 'skipped')) }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        if: needs.pin.outputs.builds == 'true'
+        with:
+          name: release-${{ inputs.version }}
+          path: dist
+      - name: Verify the built assets
+        if: needs.pin.outputs.builds == 'true'
+        working-directory: dist
+        run: sha256sum --strict --check SHA256SUMS
+      - name: Create the public tag for the verified commit
         env:
           GH_TOKEN: ${{ github.token }}
-        # A tag can be delivered twice, and then the second run builds the same binaries and finds the release
-        # already there. Uploading them over it leaves the tag published either way, and heals a run that created
-        # the release and failed before every asset was on it.
         run: |
-          gh release create "$GITHUB_REF_NAME" dist/* --title "$GITHUB_REF_NAME" --generate-notes --verify-tag \
-            || gh release upload "$GITHUB_REF_NAME" dist/* --clobber
-      - name: Drop the assets of every release but the newest twenty
+          ref="refs/tags/$RELEASE_VERSION"
+          existing="$(git ls-remote --tags --refs origin "$ref")"
+          if [ "$GITHUB_RUN_ATTEMPT" -gt 1 ] && [ "$existing" = "$(printf '%s\t%s' "$RELEASE_COMMIT" "$ref")" ]; then
+            exit 0
+          fi
+          gh api --method POST "repos/$GITHUB_REPOSITORY/git/refs" -f ref="$ref" -f sha="$RELEASE_COMMIT"
+      - name: Publish the verified assets
+        if: needs.pin.outputs.builds == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
-        # The assets are what the storage is: a release carries six tool binaries, six C# bridges that each ship
-        # their own runtime, and the sums over them, about 350 MB. Nothing deleted them, so 192 releases held
-        # 63.6 GB. The tags and the notes stay, so the history reads as it did; only a version older than the
-        # twenty newest can no longer be installed, which a consumer answers by moving to one that is.
+        run: |
+          if [ "$GITHUB_RUN_ATTEMPT" -gt 1 ] && [ "$(gh release view "$RELEASE_VERSION" --json isDraft -q '.isDraft' 2>/dev/null || true)" = false ]; then
+            exit 0
+          fi
+          gh release create "$RELEASE_VERSION" dist/* --title "$RELEASE_VERSION" --generate-notes --verify-tag
+      - name: Drop the assets of every release but the newest twenty
+        if: needs.pin.outputs.builds == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        # Keep older tags and release notes after pruning their binaries.
         run: |
           # The release journal-plugin.json pins for journals before version 5 keeps its assets for good.
           frozen="$(jq -r '.setup[] | .run' journal-plugin.json | sed -n 's/^COMMANDMENTS_RELEASE=\([^ ]*\) .*/\1/p' | head -1)"
