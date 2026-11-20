@@ -18,10 +18,14 @@ func (m Match) IsNarratedCommand() bool {
 
 func (m Match) IsBareStatePredicate() bool {
 	if !m.ownsMethodName() || len(m.Parameters()) > 0 || !m.returnsBoolean() ||
-		!prose.IsThirdPerson(m.Name()) || prose.ReadsAsQuestion(m.Name()) {
+		!m.HasBareStatePredicateName() {
 		return false
 	}
 	return slices.ContainsFunc(m.OwnDescendants(), func(node Match) bool { return fieldOnSelf(node).Exists() })
+}
+
+func (m Match) HasBareStatePredicateName() bool {
+	return prose.IsBareStateName(m.Name())
 }
 
 func (m Match) ownsMethodName() bool {

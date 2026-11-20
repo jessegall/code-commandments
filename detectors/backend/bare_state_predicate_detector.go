@@ -5,7 +5,6 @@ import (
 	"github.com/jessegall/code-commandments/detectors"
 	"github.com/jessegall/code-commandments/engine"
 	"github.com/jessegall/code-commandments/engine/php"
-	"github.com/jessegall/code-commandments/prose"
 	"github.com/jessegall/code-commandments/sins"
 	backendsins "github.com/jessegall/code-commandments/sins/backend"
 )
@@ -17,6 +16,8 @@ func init() { detectors.Register(catalog.PHP, BareStatePredicateDetector{}) }
 
 func (BareStatePredicateDetector) Sin() sins.Sin { return backendsins.BareStatePredicate{} }
 
+func (BareStatePredicateDetector) CrossFile() {}
+
 func (BareStatePredicateDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return php.In(codebase).
 		WhereKind("Stmt_ClassMethod").
@@ -24,7 +25,6 @@ func (BareStatePredicateDetector) Find(codebase *engine.Codebase) []engine.Match
 		Reject(engine.As(php.Node.NameIsInherited)).
 		Where(engine.As(php.Node.ReturnsBool)).
 		Where(engine.As(php.Node.TakesNoArguments)).
-		Reject(engine.As(func(n php.Node) bool { return prose.ReadsAsQuestion(n.MethodName()) })).
-		Where(engine.As(func(n php.Node) bool { return prose.IsThirdPerson(n.MethodName()) })).
+		Where(engine.Match.HasBareStatePredicateName).
 		Get()
 }

@@ -38,6 +38,11 @@ var prepositions = []string{
 	"during", "until", "toward", "towards", "upon", "via", "per", "like", "as",
 }
 
+var stateVerbs = []string{
+	"admit", "alarm", "contain", "differ", "gate", "need", "overwrite", "permit",
+	"presume", "reference", "refuse", "staff", "stand", "state", "suggest", "support", "walk", "want", "work",
+}
+
 func IsRelationalCompound(name string) bool {
 	rest := afterLeadingWord(name)
 
@@ -53,9 +58,11 @@ func IsBareVerb(name string) bool {
 }
 
 func IsThirdPerson(name string) bool {
-	_, ok := stemOf(name)
+	return isThirdPersonOf(name, verbs)
+}
 
-	return ok
+func IsBareStateName(name string) bool {
+	return !ReadsAsQuestion(name) && (IsThirdPerson(name) || isThirdPersonOf(name, stateVerbs))
 }
 
 func ReadsAsQuestion(name string) bool {
@@ -64,10 +71,10 @@ func ReadsAsQuestion(name string) bool {
 	return token != "" && slices.Contains(questionWords, token)
 }
 
-func stemOf(name string) (string, bool) {
+func isThirdPersonOf(name string, verbs []string) bool {
 	token := strings.ToLower(leadingWord(name))
 	if !strings.HasSuffix(token, "s") {
-		return "", false
+		return false
 	}
 	candidates := []string{token[:len(token)-1]}
 	if strings.HasSuffix(token, "es") {
@@ -78,11 +85,11 @@ func stemOf(name string) (string, bool) {
 	}
 	for _, candidate := range candidates {
 		if slices.Contains(verbs, candidate) {
-			return candidate, true
+			return true
 		}
 	}
 
-	return "", false
+	return false
 }
 
 func leadingWord(name string) string {

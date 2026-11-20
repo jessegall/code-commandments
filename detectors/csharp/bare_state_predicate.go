@@ -24,8 +24,7 @@ func (BareStatePredicateDetector) Sin() sins.Sin {
 func (BareStatePredicateDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return cs.In(codebase).
 		Where(engine.As(cs.Node.IsStatePredicate)).
-		Where(engine.As(func(n cs.Node) bool { return prose.IsThirdPerson(n.Name()) })).
-		Reject(engine.As(func(n cs.Node) bool { return prose.ReadsAsQuestion(n.Name()) })).
+		Where(engine.Match.HasBareStatePredicateName).
 		Reject(engine.As(func(n cs.Node) bool { return n.Is("PropertyDeclaration") && !prose.IsBareVerb(n.Name()) })).
 		Reject(engine.As(cs.Node.IsInherited)).
 		Get()

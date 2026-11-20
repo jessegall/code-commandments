@@ -12,6 +12,7 @@ class GiftWrap:
     def card(self) -> str:
         return "(no card)" if self.note == "" else self.note
 
+    # @sin BareStatePredicate
     def needs_card(self) -> bool:
         return self.note != ""
 

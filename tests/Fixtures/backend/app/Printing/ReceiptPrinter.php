@@ -2,6 +2,7 @@
 
 namespace Shop\Printing;
 
+use JesseGall\CodeCommandments\Sins\Backend\BareStatePredicate;
 use JesseGall\CodeCommandments\Sins\Backend\CapabilityProbeHub;
 use JesseGall\CodeCommandments\Testing\Sinful;
 
@@ -31,6 +32,7 @@ final class ReceiptPrinter
         return false;
     }
 
+    #[Sinful(BareStatePredicate::class)]
     public function needsInk(): bool
     {
         if ($this->driver instanceof ReportsInk) {

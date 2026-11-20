@@ -101,7 +101,7 @@ func (n Node) isStateDeclaration() bool {
 
 func (p *Program) IsBareStatePredicate(n Node) bool {
 	return n.IsMethod() && len(n.Parameters()) == 1 && n.Child("returns").DottedName() == "bool" &&
-		!prose.ReadsAsQuestion(n.Name()) && prose.IsThirdPerson(n.Name()) && p.ownsItsName(n)
+		n.Match.HasBareStatePredicateName() && p.ownsItsName(n)
 }
 
 func (p *Program) IsNarratedCommand(n Node) bool {

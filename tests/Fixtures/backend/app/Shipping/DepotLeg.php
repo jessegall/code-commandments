@@ -2,8 +2,10 @@
 
 namespace Shop\Shipping;
 
+use JesseGall\CodeCommandments\Sins\Backend\BareStatePredicate;
 use JesseGall\CodeCommandments\Sins\Backend\DuplicateFunction;
 use JesseGall\CodeCommandments\Testing\Righteous;
+use JesseGall\CodeCommandments\Testing\Sinful;
 
 /**
  * A leg that ends at a depot.
@@ -28,6 +30,7 @@ final class DepotLeg extends Leg
     /**
      * Whether the leg needs a depot picked before it leaves.
      */
+    #[Sinful(BareStatePredicate::class)]
     public function needsDepot(): bool
     {
         return $this->stops > 0;

@@ -2,6 +2,7 @@
 
 namespace Shop\Shipping;
 
+use JesseGall\CodeCommandments\Sins\Backend\BareStatePredicate;
 use JesseGall\CodeCommandments\Sins\Backend\SideTableTrait;
 use JesseGall\CodeCommandments\Testing\Fixed;
 use JesseGall\CodeCommandments\Testing\Sinful;
@@ -21,6 +22,7 @@ enum CarrierService: string
 
     private const SIGNED_FOR = [self::Insured, self::Pallet];
 
+    #[Sinful(BareStatePredicate::class)]
     public function needsSignature(): bool
     {
         return in_array($this, self::SIGNED_FOR, true);

@@ -82,6 +82,10 @@ func TestBareScopeEscapeProvesItselfOnTheShop(t *testing.T) {
 	proveBackendDetector(t, laravel.BareScopeEscapeDetector{})
 }
 
+func TestBareStatePredicateProvesItselfOnTheShop(t *testing.T) {
+	proveBackendDetector(t, backend.BareStatePredicateDetector{})
+}
+
 func proveBackendDetector(t *testing.T, detector detectors.Detector) {
 	t.Helper()
 	fixturetest.Prove(t, fixture.Fixture{
