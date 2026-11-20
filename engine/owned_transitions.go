@@ -3,10 +3,7 @@ package engine
 import "slices"
 
 func (m Match) GuardsAnotherObjectsTransition() bool {
-	if !m.Is(Branch) || !m.OnlyThrows() || m.IsContinuation() || len(m.Otherwise()) > 0 {
-		return false
-	}
-	if alternative := m.grammar().HasAlternative; alternative != nil && alternative(m) {
+	if !m.Is(Branch) || !m.OnlyThrows() || m.IsContinuation() || m.hasAlternative() {
 		return false
 	}
 	receiver := stateComparedReceiver(m.Condition())
@@ -22,6 +19,11 @@ func (m Match) GuardsAnotherObjectsTransition() bool {
 		}
 	}
 	return false
+}
+
+func (m Match) hasAlternative() bool {
+	explicit := m.grammar().HasAlternative
+	return len(m.Otherwise()) > 0 || explicit != nil && explicit(m)
 }
 
 func (m Match) OnlyThrows() bool {

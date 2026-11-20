@@ -108,12 +108,16 @@ func init() {
 		ManufacturesFill:  manufacturesFill,
 		CoalescedLoop:     coalescedLoop,
 		ConditionalSpread: engine.As(Node.IsConditionalArraySpread),
-		CapabilityHub:     engine.As(Node.ProbesOneFieldForCapabilities),
-		PhantomFields:     phantomFields,
-		AbsenceTrace:      absenceTrace,
-		NullableLookup:    nullableLookup,
-		MaskedInvariant:   engine.As(Node.MasksOwnState),
-		NullableCallback:  engine.As(Node.HasNullNormalisedNullableCallback),
+		CapabilityTest: func(branch engine.Match) engine.CapabilityTest {
+			return engine.CapabilityTest{Subject: engine.OfKind("Expr_Instanceof", "expr")(branch.Condition())}
+		},
+		CapabilityFallback: func(node engine.Match) bool { return isBareValue(node) || node.Kind() == "Expr_Array" },
+		ConditionalArms:    engine.ReadPair("if", "else"),
+		PhantomFields:      phantomFields,
+		AbsenceTrace:       absenceTrace,
+		NullableLookup:     nullableLookup,
+		MaskedInvariant:    engine.As(Node.MasksOwnState),
+		NullableCallback:   engine.As(Node.HasNullNormalisedNullableCallback),
 		Decode: func(call engine.Match) bool {
 			node := Node{Match: call}
 			return node.CallsFunction("json_decode") && !node.DecodesItsOwnEncoding() && !node.IsWithinInheritedMethod()
