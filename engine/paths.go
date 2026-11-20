@@ -112,3 +112,12 @@ func InFolderNamed(file string, names ...string) bool {
 
 	return false
 }
+
+func IsDependencyFile(file string) bool {
+	return InFolderNamed(file, "vendor", "node_modules", "site-packages", "venv", ".venv", ".nuget") ||
+		strings.Contains(filepath.ToSlash(file), "/pkg/mod/")
+}
+
+func (m Match) IsInDependency() bool {
+	return m.file != nil && m.file.dependency
+}

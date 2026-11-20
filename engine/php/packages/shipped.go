@@ -18,6 +18,8 @@ func (Laravel) Register(exemptions *Exemptions) {
 		On(laravel.McpTool, "rules", "schema").
 		On(laravel.Model, "casts").
 		On(laravel.AuthGuard, "user").
+		On(`Illuminate\Database\Eloquent\Factories\Factory`, "definition").
+		On(`Laravel\Fortify\Contracts\ResetsUserPasswords`, "reset").
 		On(laravel.AuthUserProvider, "retrieveById", "retrieveByToken", "retrieveByCredentials").
 		On(laravel.Arrayable, "toArray")
 	exemptions.Exempt(ArrayReturning).Classes(laravel.FormRequest, laravel.McpRequest, laravel.McpTool)

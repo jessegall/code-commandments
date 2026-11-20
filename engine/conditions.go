@@ -28,6 +28,11 @@ func TestsAnUnnamedConcept(m Match) bool {
 
 func isDecisionCondition(m Match) bool {
 	parent := m.Parent()
+	if assertion := m.grammar().TestAssertion; assertion != nil && m.IsTest() {
+		if body := parent.Body(); len(body) == 1 && assertion(statementValue(body[0])) {
+			return false
+		}
+	}
 	if reads := m.grammar().RenderCondition; reads != nil && reads(parent).Node() == m.Node() {
 		return true
 	}

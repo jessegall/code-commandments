@@ -11,10 +11,10 @@ import (
 
 var history = []phrase{
 	{pattern: words(`formerly`), notAfter: endsWith(`a|an|the`)},
-	{pattern: words(`refactored|renamed from|ported from|is retired`)},
+	{pattern: words(`refactored|renamed from|ported from`)},
 	{pattern: words(`was extracted`), notBefore: regexp.MustCompile(`^\s+from`)},
 	{pattern: words(`used to (?:be|live|have|hold|contain|return|exist|sit|post|fire)`), notAfter: endsWith(`is|are|be|only`)},
-	{pattern: words(`no longer (?:an?|does|reads|runs|fires|handles|unwraps|posts|matters)`)},
+	{pattern: words(`(?:this|the) (?:code|helper|method|class|function|implementation|detector|rule) (?:is retired|no longer (?:an?|does|reads|runs|fires|handles|unwraps|posts|matters))`)},
 	{pattern: words(`now lives (?:in|inside)`)},
 	{pattern: words(`previously\s+(?:this|every|we|it)`)},
 	{pattern: words(`equivalent of the old`)},

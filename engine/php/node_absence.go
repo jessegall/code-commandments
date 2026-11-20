@@ -166,12 +166,45 @@ func (n Node) IsConditionalArraySpread() bool {
 	}
 	parent := n.Parent()
 	if parent.Kind() == "ArrayItem" && slices.Contains(parent.Node().Flags, "spread") && n.Node().Field == "value" {
-		return true
+		return !n.omitsJsonTestField(chosen, otherwise)
 	}
 	call := parent.Parent()
 
 	return parent.Kind() == "Arg" && n.Node().Field == "value" && call.Kind() == "Expr_FuncCall" &&
 		isName(call.Child("name")) && strings.EqualFold(call.Child("name").Name(), "array_merge")
+}
+
+func (n Node) omitsJsonTestField(chosen, otherwise engine.Match) bool {
+	if !n.IsTest() {
+		return false
+	}
+	items := append(chosen.ChildrenIn("items"), otherwise.ChildrenIn("items")...)
+	if len(items) != 1 || items[0].Child("key").Kind() != "Scalar_String" {
+		return false
+	}
+	for _, ancestor := range n.Ancestors() {
+		if ancestor.Is(engine.Function) {
+			return false
+		}
+		if ancestor.Kind() != "Arg" {
+			continue
+		}
+		call := ancestor.Parent()
+		receiver := call.Child("var")
+		if receiver.Kind() != "Expr_Variable" || receiver.Name() != "this" {
+			return false
+		}
+		if slices.Contains([]string{"postJson", "putJson", "patchJson", "deleteJson"}, CallName(call)) {
+			return true
+		}
+		owner, name := TypesOf(n.Codebase()).Callee(call)
+		declaration, _ := ProgramOf(n.Codebase()).Declaration(owner)
+		method, found := Method(declaration, name)
+
+		return found && Written(method.Node().Returns).Class() == `Illuminate\Testing\TestResponse`
+	}
+
+	return false
 }
 
 func (n Node) ReturnsNullableObject() bool {

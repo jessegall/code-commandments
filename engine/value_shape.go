@@ -107,7 +107,8 @@ func (m Match) LooksUpAnOwnedField() bool {
 }
 
 func (m Match) hasLocalTypeDeclaration() bool {
-	return m.typeDeclaration().Exists()
+	declaration := m.typeDeclaration()
+	return declaration.Exists() && !declaration.IsInDependency()
 }
 
 func (m Match) typeDeclaration() Match {

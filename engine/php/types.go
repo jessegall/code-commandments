@@ -435,6 +435,9 @@ func (t *Types) resolve(expr engine.Match, locals map[string]held, self string) 
 			return held{}
 		}
 		owner := strings.TrimLeft(class.Name(), `\`)
+		if isSelfReferential(owner) {
+			owner = self
+		}
 		returned := t.callReturn(expr, owner, method.Name())
 		if isSelfReferential(returned.class) || (returned.class == "" && strings.HasPrefix(method.Name(), "from")) {
 			return held{class: owner}

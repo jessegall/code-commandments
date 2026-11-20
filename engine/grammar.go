@@ -9,16 +9,19 @@ import (
 
 // Grammar is how a language holds what every language has in a place of its own: where its tree files a call's arguments or a type's parents, which declarations the language itself calls, what its test files are named.
 type Grammar struct {
-	Arguments       func(Match) []Match
-	Members         func(Match) []Match
-	Parameters      func(Match) []Match
-	Extends         func(Match) []Match
-	Implements      func(Match) []Match
-	WritesAttribute func(Match, string) bool
-	DeclaredName    func(Match) string
-	Traits          func(Match) []Match
-	ClassOf         func(Match) string
-	ElementOf       func(Match) *contract.Type
+	OwnsRecordBehavior func(Match) bool
+	ReactiveMember     func(Match) bool
+	PublishedContracts func(Match, []string) []string
+	Arguments          func(Match) []Match
+	Members            func(Match) []Match
+	Parameters         func(Match) []Match
+	Extends            func(Match) []Match
+	Implements         func(Match) []Match
+	WritesAttribute    func(Match, string) bool
+	DeclaredName       func(Match) string
+	Traits             func(Match) []Match
+	ClassOf            func(Match) string
+	ElementOf          func(Match) *contract.Type
 
 	CodeWords func(Match) []string
 
@@ -33,6 +36,7 @@ type Grammar struct {
 	Callers             func(Match) []Match
 	DocTags             func(Match) []string
 	TestFile            func(judged, path string) bool
+	TestAssertion       func(Match) bool
 	Implicit            func(Match) bool
 	NamespaceOf         func(symbol string) string
 	NamespaceSeparator  string
@@ -149,6 +153,7 @@ type Grammar struct {
 	InitializedValue    func(Match) Match
 	AssignmentSides     func(Match) (Match, Match)
 	RecordKeys          func(Match) []string
+	ReactiveRecord      func(Match) bool
 	StaticStorage       func(Match) bool
 	ImportModule        func(Match) string
 	ModuleKey           func(Match) string

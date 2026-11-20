@@ -105,8 +105,9 @@ func (n Node) OptionalPublicFieldNames() []string {
 }
 
 func (n Node) EveryConstructorParamOptional() bool {
+	class := php.EnclosingClass(n.Match)
 	var promoted []engine.Match
-	for _, param := range php.ConstructorParams(php.EnclosingClass(n.Match)) {
+	for _, param := range php.ConstructorParams(class) {
 		if slices.Contains(param.Node().Flags, "promoted") {
 			promoted = append(promoted, param)
 		}
@@ -120,7 +121,9 @@ func (n Node) EveryConstructorParamOptional() bool {
 		}
 	}
 
-	return true
+	return !classHasAttribute(class, "TypeScript") || slices.ContainsFunc(promoted, func(param engine.Match) bool {
+		return strings.TrimLeft((php.Node{Match: param.Child("default")}).NewClassName(), `\`) != Optional
+	})
 }
 
 func (n Node) HookMissingComputed() bool {
@@ -270,8 +273,10 @@ func (n Node) NullableWireObject() bool {
 		return false
 	}
 	inner := nullableClassName(n.Node().Declared)
+	enum, _ := n.program().Declaration(inner)
 
-	return inner != "" && (n.program().Extends(inner, Data) || n.program().IsEnum(inner))
+	return inner != "" && (n.program().Extends(inner, Data) ||
+		(n.program().IsEnum(inner) && !enum.Child("scalarType").Exists()))
 }
 
 func (n Node) isHookedProperty() bool {

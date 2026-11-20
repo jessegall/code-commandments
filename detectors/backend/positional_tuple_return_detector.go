@@ -20,6 +20,7 @@ func (PositionalTupleReturnDetector) Find(codebase *engine.Codebase) []engine.Ma
 	return php.In(codebase).
 		Where(engine.As(php.Node.IsPositionalTuple)).
 		Where(engine.As(php.Node.IsReturnExpression)).
+		Reject(func(n engine.Match) bool { return n.IsTest() && n.EnclosingFunction().HasModifier("private") }).
 		Reject(engine.As(php.Node.EnclosingFunctionReturnsSequence)).
 		Get()
 }

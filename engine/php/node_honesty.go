@@ -142,6 +142,9 @@ func (n Node) HasOwnStateSaveAndRestore() bool {
 				savedInto[source] = target.Name()
 			}
 			if property := selfPropertyOf(target); property != "" && value.Kind() == "Expr_Variable" && value.Name() != "" {
+				if restoresAKeyedGuard(n.Match, assign, property) {
+					continue
+				}
 				restoredFrom[property] = append(restoredFrom[property], value.Name())
 			}
 		}
@@ -149,6 +152,32 @@ func (n Node) HasOwnStateSaveAndRestore() bool {
 	for property, local := range savedInto {
 		if slices.Contains(restoredFrom[property], local) {
 			return true
+		}
+	}
+
+	return false
+}
+
+func restoresAKeyedGuard(method, restore engine.Match, property string) bool {
+	if !slices.ContainsFunc(restore.Ancestors(), engine.KindIn("Stmt_Finally")) {
+		return false
+	}
+	if !slices.ContainsFunc(method.OwnDescendants(), func(assign engine.Match) bool {
+		key := assign.Child("var")
+		return assign.Kind() == "Expr_Assign" && key.Kind() == "Expr_ArrayDimFetch" && selfPropertyOf(key.Child("var")) == property
+	}) {
+		return false
+	}
+	for _, sibling := range Methods(EnclosingClass(method)) {
+		if sibling.Node() == method.Node() {
+			continue
+		}
+		for _, check := range sibling.OwnDescendants() {
+			if check.Kind() == "Expr_Isset" && slices.ContainsFunc(check.ChildrenIn("vars"), func(key engine.Match) bool {
+				return key.Kind() == "Expr_ArrayDimFetch" && selfPropertyOf(key.Child("var")) == property
+			}) {
+				return true
+			}
 		}
 	}
 

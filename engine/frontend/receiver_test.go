@@ -133,3 +133,69 @@ if (till.ready) {
 		break
 	}
 }
+
+func TestVueSetupStateIsPerInstanceAndComposablesReturnRefs(t *testing.T) {
+	codebase := frontendtest.FromSource(t, map[string]string{
+		"src/Counter.vue": `<script setup lang="ts">
+let count = 0;
+function advance() { count += 1; }
+</script>
+`,
+		"src/counter.ts": `import { ref as vueRef } from "vue";
+let count = 0;
+export function advance() { count += 1; }
+const global = vueRef(false);
+export function useCounter() {
+    const current = vueRef(0);
+    return { current, global, advance };
+}
+export function totals() {
+    return { first: 1, second: 2 };
+}
+`,
+	})
+	static := codebase.Where(engine.Match.MutatesStaticState).Get()
+	if len(static) != 1 || static[0].Source().Language() == "vue" {
+		t.Fatalf("only the module assignment should be static, found %v", static)
+	}
+	records := codebase.WhereIs(engine.Return).Where(engine.Match.ReturnsRecordBag).Get()
+	if len(records) != 1 || records[0].EnclosingFunction().Name() != "totals" {
+		t.Fatalf("only the ordinary record should be reported, found %v", records)
+	}
+}
+
+func TestTypescriptNamedCallbacksAndModuleOwnedRecordBehavior(t *testing.T) {
+	codebase := frontendtest.FromSource(t, map[string]string{
+		"src/panes.ts": `import type { Ref, ComputedRef } from "vue";
+export type Pane = { id: string; label: string; children: string[] };
+export function close(pane: Pane) {
+    const first = pane.children.length;
+    return pane.id + pane.label + first;
+}
+export function drag(store: { a: Ref<string>; b: ComputedRef<string>; c: Ref<string> }) {
+    return store.a.value + store.b.value + store.c.value;
+}
+type Report = { index: number; label: string };
+export const reports = ["one"].map((label, index): Report => {
+    return { index, label };
+});
+export function loose() { return { index: 1, label: "one" }; }
+`,
+		"src/caller.ts": `import type { Pane } from "./panes";
+export function summary(pane: Pane) {
+    return pane.id + pane.label + pane.children.length;
+}
+`,
+	})
+	records := codebase.WhereIs(engine.Return).Where(engine.Match.ReturnsRecordBag).Get()
+	if len(records) != 1 || records[0].EnclosingFunction().Name() != "loose" {
+		t.Fatalf("only the loose record should be reported, found %v", records)
+	}
+	envy := codebase.WhereFunction().Where(engine.Match.EnviesAnotherObject).Get()
+	if len(envy) != 1 || envy[0].Name() != "summary" {
+		for _, found := range envy {
+			t.Logf("%s is reported", found.Name())
+		}
+		t.Fatal("only the operation outside the source module should be reported")
+	}
+}

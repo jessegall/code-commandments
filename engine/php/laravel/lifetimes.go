@@ -1,6 +1,7 @@
 package laravel
 
 import (
+	"slices"
 	"strings"
 
 	"github.com/jessegall/code-commandments/contract"
@@ -22,6 +23,7 @@ var lifetimeOfBinding = map[string]string{
 // Lifetimes is how long the container keeps each class it is told about: one for the whole run (a singleton) or one per scope, and which classes reset the scope themselves.
 type Lifetimes struct {
 	kept     map[string]string
+	aliases  map[string]string
 	resets   map[string]bool
 	holds    map[string][]string
 	outlives map[string]bool
@@ -34,7 +36,19 @@ func LifetimesOf(codebase *engine.Codebase) *Lifetimes {
 }
 
 func (l *Lifetimes) IsSingleton(class string) bool {
-	return l.kept[strings.TrimLeft(class, `\`)] == singletonAttribute
+	return l.lifetime(class) == singletonAttribute
+}
+
+func (l *Lifetimes) lifetime(class string) string {
+	seen := map[string]bool{}
+	for class = strings.TrimLeft(class, `\`); class != "" && !seen[class]; class = l.aliases[class] {
+		if kept := l.kept[class]; kept != "" {
+			return kept
+		}
+		seen[class] = true
+	}
+
+	return ""
 }
 
 func (l *Lifetimes) OutlivesAScope(class string) bool {
@@ -63,13 +77,22 @@ func (l *Lifetimes) heldThroughOwnersThatOutliveAScope() {
 }
 
 func readLifetimes(codebase *engine.Codebase) *Lifetimes {
-	read := &Lifetimes{kept: map[string]string{}, resets: map[string]bool{}, holds: map[string][]string{}, outlives: map[string]bool{}}
+	read := &Lifetimes{kept: map[string]string{}, aliases: map[string]string{}, resets: map[string]bool{}, holds: map[string][]string{}, outlives: map[string]bool{}}
 	for _, file := range codebase.Of(contract.PHP).Files() {
 		for _, node := range file.Nodes() {
 			match := file.Match(node.ID)
 			if kept, bound := lifetimeOfBinding[CallName(match)]; bound {
 				if abstract := BoundAbstractOf(match); abstract != "" {
 					read.kept[strings.TrimLeft(abstract, `\`)] = kept
+					if concrete := ClassArgument(match, 1); concrete != "" && kept == singletonAttribute {
+						read.holds[abstract] = append(read.holds[abstract], concrete)
+					}
+				}
+			}
+			if CallName(match) == "alias" {
+				original, alias := ClassArgument(match, 0), ClassArgument(match, 1)
+				if original != "" && alias != "" {
+					read.aliases[alias] = original
 				}
 			}
 			if node.Kind == "Expr_MethodCall" && CallName(match) == scopeReset {
@@ -97,6 +120,58 @@ func readLifetimes(codebase *engine.Codebase) *Lifetimes {
 
 func (n Node) ResolvesLateInALongerLivedOwner() bool {
 	lifetimes := LifetimesOf(n.Codebase())
+	class := php.EnclosingClassName(n.Match)
+	target := ClassArgument(n.Match, 0)
+	function := n.Closest(engine.Function)
+	program := php.ProgramOf(n.Codebase())
 
-	return lifetimes.OutlivesAScope(php.EnclosingClassName(n.Match)) && !lifetimes.IsSingleton(ClassArgument(n.Match, 0))
+	return (lifetimes.OutlivesAScope(class) && !lifetimes.IsSingleton(target)) ||
+		(lifetimes.lifetime(target) == scopedAttribute && (function.HasModifier("static") || n.Parent().Kind() == "Stmt_Return")) ||
+		(function.HasModifier("static") && (function.Name() == "render" || function.Kind() == "Expr_ArrowFunction")) ||
+		program.Extends(class, `Illuminate\Database\Eloquent\Factories\Factory`) ||
+		isArtisanTrait(program, class, map[string]bool{}) || resolvesInEventListener(n.Match) || n.replacesResolvedInstance(function, target)
+}
+
+func isArtisanTrait(program *php.Program, class string, seen map[string]bool) bool {
+	if seen[class] {
+		return false
+	}
+	seen[class] = true
+	defer delete(seen, class)
+	users := program.UsersOfTrait(class)
+
+	return len(users) > 0 && !slices.ContainsFunc(users, func(user string) bool {
+		return !program.Extends(user, ConsoleCommand) && !isArtisanTrait(program, user, seen)
+	})
+}
+
+func resolvesInEventListener(resolve engine.Match) bool {
+	closure := resolve.Closest(engine.Function)
+	if closure.Kind() != "Expr_Closure" && closure.Kind() != "Expr_ArrowFunction" {
+		return false
+	}
+	call := closure.Parent().Parent()
+	if closure.Parent().Kind() != "Arg" || CallName(call) != "listen" {
+		return false
+	}
+	dispatcher := php.ReceiverTypeOf(call)
+
+	return dispatcher == `Illuminate\Contracts\Events\Dispatcher` || dispatcher == `Illuminate\Events\Dispatcher`
+}
+
+func (n Node) replacesResolvedInstance(function engine.Match, target string) bool {
+	receiver := php.ReceiverTypeOf(n.Match)
+	if receiver == "" || target == "" {
+		return false
+	}
+	receiverText, _ := n.Child("var").Text()
+	for _, candidate := range function.Descendants() {
+		candidateReceiver, _ := candidate.Child("var").Text()
+		if CallName(candidate) == "instance" && php.ReceiverTypeOf(candidate) == receiver &&
+			candidateReceiver == receiverText && ClassArgument(candidate, 0) == target {
+			return true
+		}
+	}
+
+	return false
 }

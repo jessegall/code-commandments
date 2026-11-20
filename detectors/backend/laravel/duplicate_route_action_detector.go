@@ -25,7 +25,7 @@ func (DuplicateRouteActionDetector) Find(codebase *engine.Codebase) []engine.Mat
 	var targets []string
 	actions := php.In(codebase).WhereKind("Stmt_ClassMethod").Where(engine.As(laravelnode.Node.IsRouteAction)).Get()
 	for _, action := range actions {
-		target := (laravelnode.Node{Match: action}).ThinDelegationTarget()
+		target := (laravelnode.Node{Match: action}).DelegatedOperation()
 		if target == "" {
 			continue
 		}

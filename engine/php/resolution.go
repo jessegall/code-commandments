@@ -22,7 +22,7 @@ func (n Node) UnpacksTargetFromContainerParam() bool {
 				continue
 			}
 			local := capturedLocal(call)
-			if local == "" || n.isTheResolver(local) {
+			if local == "" || n.isTheResolver(local) || returnsScalar(call) {
 				continue
 			}
 			if n.ownerIsPureEncapsulator(chainRoot(call.Child("var"))) {
@@ -32,6 +32,20 @@ func (n Node) UnpacksTargetFromContainerParam() bool {
 	}
 
 	return false
+}
+
+func returnsScalar(call engine.Match) bool {
+	owner, name := TypesOf(call.Codebase()).Callee(call)
+	declaration, _ := ProgramOf(call.Codebase()).Declaration(owner)
+	method, found := Method(declaration, name)
+	if !found {
+		return false
+	}
+	names := typeNames(method.Node().Returns)
+
+	return len(names) > 0 && !slices.ContainsFunc(names, func(name string) bool {
+		return !slices.Contains([]string{"string", "int", "float", "bool", "null", "true", "false", "never", "void"}, name)
+	})
 }
 
 func baseType(written *contract.Type) *contract.Type {

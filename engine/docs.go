@@ -1,5 +1,10 @@
 package engine
 
+import (
+	"path/filepath"
+	"strings"
+)
+
 func (m Match) DocTags() []string {
 	if read := m.grammar().DocTags; read != nil && m.node != nil {
 		return read(m)
@@ -56,6 +61,12 @@ func bodies(c *Codebase) map[string]int {
 
 func (m Match) IsTest() bool {
 	return m.file != nil && m.file.isTest()
+}
+
+func (m Match) IsTestFixture() bool {
+	path := "/" + strings.ToLower(filepath.ToSlash(m.FromProject()))
+
+	return strings.Contains(path, "/tests/fixtures/") || strings.Contains(path, "/test/fixtures/")
 }
 
 func (m Match) IsTestReaching(declaration Match) bool {

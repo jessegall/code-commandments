@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"maps"
 	"reflect"
 	"slices"
 	"unicode"
@@ -15,7 +16,7 @@ import (
 
 type publicContractDetector interface {
 	detectors.Detector
-	WithPublicContracts([]string) detectors.Detector
+	WithPublicContracts([]string, []string) detectors.Detector
 }
 
 func (c Config) Enabled(installed Installed) ([]detectors.Detector, error) {
@@ -25,8 +26,9 @@ func (c Config) Enabled(installed Installed) ([]detectors.Detector, error) {
 		if !c.Disables(rulesOf(detector)...) {
 			if accepts, ok := detector.(publicContractDetector); ok {
 				engine, _ := detectors.EngineOf(detector)
-				if contracts := c.PublicContracts[engine]; len(contracts) > 0 {
-					detector = accepts.WithPublicContracts(contracts)
+				contracts := slices.AppendSeq(slices.Clone(c.PublicContracts[engine]), maps.Keys(c.ContractReasons[engine]))
+				if registrars := c.ContractRegistrars[engine]; len(contracts) > 0 || len(registrars) > 0 {
+					detector = accepts.WithPublicContracts(contracts, registrars)
 				}
 			}
 			kept = append(kept, detector)

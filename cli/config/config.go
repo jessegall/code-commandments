@@ -13,20 +13,22 @@ import (
 
 // Config is what a project declares about how it is judged.
 type Config struct {
-	Paths             []string
-	Excluded          []string
-	Base              string
-	Disabled          []Rule
-	DisabledLanguages []source.Language
-	Detectors         []string
-	Packages          []string
-	Hooks             []string
-	Agents            []string
-	Parallel          int
-	ReadAtOnce        int
-	CacheHours        float64
-	PublicContracts   map[catalog.Engine][]string
-	Configurators     []Configurator
+	Paths              []string
+	Excluded           []string
+	Base               string
+	Disabled           []Rule
+	DisabledLanguages  []source.Language
+	Detectors          []string
+	Packages           []string
+	Hooks              []string
+	Agents             []string
+	Parallel           int
+	ReadAtOnce         int
+	CacheHours         float64
+	PublicContracts    map[catalog.Engine][]string
+	ContractRegistrars map[catalog.Engine][]string
+	ContractReasons    map[catalog.Engine]map[string]string
+	Configurators      []Configurator
 }
 
 func Load(dir string) (Config, error) {

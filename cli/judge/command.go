@@ -193,6 +193,16 @@ func (c Command) Run(in *cli.Input, console cli.Console) (int, error) {
 
 		return 2, nil
 	}
+	for _, detector := range selected {
+		if detector.Sin().Definition().Name != "lone-implementer-interface" {
+			continue
+		}
+		detectorEngine, _ := detectors.EngineOf(detector)
+		reasons := project.ContractReasons[detectorEngine]
+		for _, name := range slices.Sorted(maps.Keys(reasons)) {
+			fmt.Fprintf(console.Err, "Public contract %s: %s\n", name, reasons[name])
+		}
+	}
 
 	configuredAt := options.path
 	if c.In != "" {
@@ -718,7 +728,7 @@ func readOnlyRoots(options options, judged config.Config) ([]string, error) {
 }
 
 func isReadOnly(path string, readOnly []string) bool {
-	return slices.ContainsFunc(readOnly, func(root string) bool { return walk.Within(root, path) })
+	return engine.IsDependencyFile(path) || slices.ContainsFunc(readOnly, func(root string) bool { return walk.Within(root, path) })
 }
 
 func reportingOutside(codebase *engine.Codebase, readOnly []string) *engine.Codebase {

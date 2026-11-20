@@ -58,6 +58,20 @@ func Schema(root string) []byte {
 				"propertyNames":        object{"enum": catalog.Engines},
 				"additionalProperties": list("Fully qualified interface identities.", object{"type": "string", "minLength": 1}),
 			},
+			"public_contract_registrars": object{
+				"type":                 "object",
+				"propertyNames":        object{"enum": catalog.Engines},
+				"additionalProperties": list("Methods that publish interface arguments, as fully qualified Type::method.", object{"type": "string", "minLength": 1}),
+			},
+			"public_contract_reasons": object{
+				"type":          "object",
+				"propertyNames": object{"enum": catalog.Engines},
+				"additionalProperties": object{
+					"type":                 "object",
+					"description":          "Public interface identities and the reasons they are boundaries.",
+					"additionalProperties": object{"type": "string", "minLength": 1},
+				},
+			},
 			"hooks":  list("Hooks turned on beyond the ones every project runs, by name.", object{"type": "string"}),
 			"agents": list("Agents a config from the PHP tool turned on by name. Every project runs both agents the tool ships and it ships no other, so each name here is skipped, and said so.", object{"type": "string"}),
 			"configure": object{

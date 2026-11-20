@@ -112,7 +112,11 @@ func (m Match) ReachesThroughOwnedTypes() bool {
 	owner := m.EnclosingFunction().methodOwner()
 	seen := map[string]bool{}
 	for receiver := m.Receiver(); receiver.Exists(); receiver = receiver.Receiver() {
-		if typed := receiver.typeDeclaration(); typed.Exists() && typed.Identity() != owner {
+		typed := receiver.typeDeclaration()
+		if typed.IsInDependency() {
+			break
+		}
+		if typed.Exists() && typed.Identity() != owner {
 			seen[typed.Identity()] = true
 		}
 	}

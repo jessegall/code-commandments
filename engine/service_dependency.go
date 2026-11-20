@@ -21,6 +21,6 @@ func (m Match) InjectsAnotherModulesConcreteService() bool {
 func (m Match) IsConcreteService() bool {
 	read := m.grammar()
 	kind := m.TypeKind()
-	return (kind == "class" || kind == "struct") && !m.HasModifier("abstract") &&
+	return (kind == "class" || kind == "struct") && !m.IsInDependency() && !m.HasModifier("abstract") &&
 		(read.IsValueClass == nil || !read.IsValueClass(m)) && (read.IsRecord == nil || !read.IsRecord(m))
 }

@@ -187,6 +187,14 @@ func (n Node) DelegatesToRouteAction() bool {
 }
 
 func (n Node) ThinDelegationTarget() string {
+	return n.delegationTarget(false)
+}
+
+func (n Node) DelegatedOperation() string {
+	return n.delegationTarget(true)
+}
+
+func (n Node) delegationTarget(includeCalls bool) string {
 	call, ok := n.soleDelegationCall()
 	if !ok || call.Child("name").Kind() != "Identifier" {
 		return ""
@@ -196,14 +204,17 @@ func (n Node) ThinDelegationTarget() string {
 		return ""
 	}
 
-	return ActionKey(receiver, call.Child("name").Name()) + constructedArguments(call)
+	return ActionKey(receiver, call.Child("name").Name()) + delegationArguments(call, includeCalls)
 }
 
-func constructedArguments(call engine.Match) string {
+func delegationArguments(call engine.Match, includeCalls bool) string {
 	var built []string
 	for _, argument := range call.ChildrenIn("args") {
-		if class := (php.Node{Match: argument.Child("value")}).NewClassName(); class != "" {
+		value := argument.Child("value")
+		if class := (php.Node{Match: value}).NewClassName(); class != "" {
 			built = append(built, class)
+		} else if receiver := php.ReceiverTypeOf(value); includeCalls && receiver != "" && value.Child("name").Kind() == "Identifier" {
+			built = append(built, ActionKey(receiver, value.Child("name").Name()))
 		}
 	}
 	if len(built) == 0 {
@@ -237,6 +248,32 @@ func (n Node) soleDelegationCall() (engine.Match, bool) {
 
 func (n Node) InServiceProvider() bool {
 	return php.ProgramOf(n.Codebase()).Extends(php.EnclosingClassName(n.Match), ServiceProvider)
+}
+
+func (n Node) ReplacesUnboundedBuilderRead() bool {
+	if !slices.Contains([]string{"chunk", "each", "chunkById", "lazy", "lazyById"}, n.Name()) {
+		return false
+	}
+	class := php.EnclosingClass(n.Match)
+	if !php.ProgramOf(n.Codebase()).Extends(php.EnclosingClassName(n.Match), `Illuminate\Database\Eloquent\Builder`) {
+		return false
+	}
+	for _, statement := range n.ChildrenIn("stmts") {
+		throw := statement.Child("expr")
+		call := throw.Child("expr")
+		arguments := php.Arguments(call)
+		if throw.Kind() != "Expr_Throw" || call.Kind() != "Expr_StaticCall" || len(arguments) != 2 {
+			continue
+		}
+		refused, _ := arguments[0].Child("value").Node().Value.Text()
+		replacement, _ := arguments[1].Child("value").Node().Value.Text()
+		name, _, _ := strings.Cut(replacement, "(")
+		if _, declared := php.Method(class, name); refused == n.Name() && name != refused && declared {
+			return true
+		}
+	}
+
+	return false
 }
 
 func (n Node) IsEloquentCast() bool {

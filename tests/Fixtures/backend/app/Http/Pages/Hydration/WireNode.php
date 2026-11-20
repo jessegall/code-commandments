@@ -46,11 +46,11 @@ final class WireNode extends Data
     }
 }
 
-enum Band: string
+enum Band
 {
-    case Ok = 'ok';
-    case Warn = 'warn';
-    case Danger = 'danger';
+    case Ok;
+    case Warn;
+    case Danger;
 }
 
 /**

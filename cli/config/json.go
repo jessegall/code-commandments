@@ -17,20 +17,22 @@ const SchemaFile = "config.schema.json"
 
 // document is config.json as it is written: every key optional, in the order a reader meets them.
 type document struct {
-	Schema          string                        `json:"$schema,omitempty"`
-	Paths           []string                      `json:"paths,omitempty"`
-	Exclude         []string                      `json:"exclude,omitempty"`
-	Base            string                        `json:"base,omitempty"`
-	Disable         *disabled                     `json:"disable,omitempty"`
-	Detectors       []string                      `json:"detectors,omitempty"`
-	Packages        []string                      `json:"packages,omitempty"`
-	Hooks           []string                      `json:"hooks,omitempty"`
-	Agents          []string                      `json:"agents,omitempty"`
-	Parallel        int                           `json:"parallel,omitempty"`
-	ReadAtOnce      int                           `json:"read_at_once,omitempty"`
-	CacheHours      float64                       `json:"cache_hours,omitempty"`
-	PublicContracts map[catalog.Engine][]string   `json:"public_contracts,omitempty"`
-	Configure       map[string][]map[string][]any `json:"configure,omitempty"`
+	Schema             string                               `json:"$schema,omitempty"`
+	Paths              []string                             `json:"paths,omitempty"`
+	Exclude            []string                             `json:"exclude,omitempty"`
+	Base               string                               `json:"base,omitempty"`
+	Disable            *disabled                            `json:"disable,omitempty"`
+	Detectors          []string                             `json:"detectors,omitempty"`
+	Packages           []string                             `json:"packages,omitempty"`
+	Hooks              []string                             `json:"hooks,omitempty"`
+	Agents             []string                             `json:"agents,omitempty"`
+	Parallel           int                                  `json:"parallel,omitempty"`
+	ReadAtOnce         int                                  `json:"read_at_once,omitempty"`
+	CacheHours         float64                              `json:"cache_hours,omitempty"`
+	PublicContracts    map[catalog.Engine][]string          `json:"public_contracts,omitempty"`
+	ContractRegistrars map[catalog.Engine][]string          `json:"public_contract_registrars,omitempty"`
+	ContractReasons    map[catalog.Engine]map[string]string `json:"public_contract_reasons,omitempty"`
+	Configure          map[string][]map[string][]any        `json:"configure,omitempty"`
 }
 
 // disabled is what config.json turns off, by kind.
@@ -67,6 +69,7 @@ func ParsedJSON(text []byte) (Config, error) {
 
 func (d document) config() (Config, error) {
 	config := Config{Paths: d.Paths, Excluded: d.Exclude, Base: d.Base, Detectors: d.Detectors, Packages: d.Packages, Hooks: d.Hooks, Agents: d.Agents, Parallel: d.Parallel, ReadAtOnce: d.ReadAtOnce, CacheHours: d.CacheHours, PublicContracts: d.PublicContracts}
+	config.ContractRegistrars, config.ContractReasons = d.ContractRegistrars, d.ContractReasons
 
 	if d.Disable != nil {
 		languages, err := languagesNamed(d.Disable.Languages)
@@ -191,6 +194,7 @@ func literal(value any) (any, error) {
 
 func (c Config) JSON() []byte {
 	written := document{Schema: "./" + SchemaFile, Paths: c.Paths, Exclude: c.Excluded, Base: c.Base, Detectors: c.Detectors, Packages: c.Packages, Hooks: c.Hooks, Agents: c.Agents, Parallel: c.Parallel, ReadAtOnce: c.ReadAtOnce, CacheHours: c.CacheHours, PublicContracts: c.PublicContracts}
+	written.ContractRegistrars, written.ContractReasons = c.ContractRegistrars, c.ContractReasons
 
 	if len(c.Disabled) > 0 || len(c.DisabledLanguages) > 0 {
 		written.Disable = &disabled{}

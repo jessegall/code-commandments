@@ -27,20 +27,31 @@ func findLoneInterfaces(codebase *engine.Codebase, public []string) []engine.Mat
 // LoneInterfaces judges one language with its declared public contracts.
 type LoneInterfaces struct {
 	Detector
-	public []string
+	public     []string
+	registrars []string
 }
 
 func BindLoneInterfaces[L Language]() LoneInterfaces {
 	return register(LoneInterfaces{Detector: bound[LoneImplementerInterface, L](nil)})
 }
 
-func (d LoneInterfaces) WithPublicContracts(symbols []string) detectors.Detector {
+func (d LoneInterfaces) WithPublicContracts(symbols, registrars []string) detectors.Detector {
 	d.public = slices.Clone(symbols)
+	d.registrars = slices.Clone(registrars)
 	return d
 }
 
 func (d LoneInterfaces) Find(codebase *engine.Codebase) []engine.Match {
-	return findLoneInterfaces(codebase.Of(catalog.LanguagesOf(d.Engine())...), d.public)
+	codebase = codebase.Of(catalog.LanguagesOf(d.Engine())...)
+	public := d.public
+	if len(d.registrars) > 0 {
+		public = slices.Clone(public)
+		for _, call := range codebase.WhereCall().Get() {
+			public = append(public, call.PublishedContracts(d.registrars)...)
+		}
+	}
+
+	return findLoneInterfaces(codebase, public)
 }
 func (LoneImplementerInterface) Sin() Text {
 	return Text{Name: "lone-implementer-interface", Skill: skills.Dependencies{}, Description: "An interface has only one local implementation", Rule: "Use the implementation directly unless the interface is a boundary.", Suggestion: "Use the implementation directly unless the interface is a boundary."}

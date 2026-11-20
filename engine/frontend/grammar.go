@@ -14,13 +14,15 @@ import (
 func init() {
 	for _, language := range []contract.Language{contract.Vue, contract.TypeScript} {
 		engine.ReadAs(language, engine.Grammar{
-			Arguments:   engine.InFields("arguments"),
-			Members:     typescript.MembersWithParameterFields,
-			Parameters:  engine.InFields("parameters"),
-			Extends:     heritage("extends"),
-			Implements:  heritage("implements"),
-			Annotations: decorators,
-			TypeKind:    engine.Kinds(map[string]string{"ClassDeclaration": "class", "ClassExpression": "class", "InterfaceDeclaration": "interface", "EnumDeclaration": "enum"}),
+			Arguments:          engine.InFields("arguments"),
+			Members:            typescript.MembersWithParameterFields,
+			Parameters:         engine.InFields("parameters"),
+			OwnsRecordBehavior: engine.KindIn("TypeAliasDeclaration"),
+			ReactiveMember:     typescript.ReactiveMember,
+			Extends:            heritage("extends"),
+			Implements:         heritage("implements"),
+			Annotations:        decorators,
+			TypeKind:           engine.Kinds(map[string]string{"ClassDeclaration": "class", "ClassExpression": "class", "InterfaceDeclaration": "interface", "EnumDeclaration": "enum"}),
 			DeclaresMethods: func(declared engine.Match) bool {
 				return slices.ContainsFunc(declared.Members(), engine.KindIn("MethodSignature"))
 			},
@@ -73,6 +75,7 @@ func init() {
 			InitializedValue:  engine.OfKind("VariableDeclaration", "initializer"),
 			AssignmentSides:   engine.ReadPair("left", "right"),
 			RecordKeys:        typescript.RecordKeys,
+			ReactiveRecord:    typescript.ReturnsVueState,
 			MemberOrder:       typescript.MemberOrder,
 			JoinedLines:       typescript.JoinedLines,
 			TupleSlots:        typescript.TupleSlots,

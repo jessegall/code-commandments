@@ -20,6 +20,7 @@ func (ArrayBagParameterDetector) Find(codebase *engine.Codebase) []engine.Match 
 	return php.In(codebase).
 		WhereKind("Param").
 		Where(engine.As(php.Node.IsArrayParameter)).
+		Reject(engine.As(php.Node.CarriesOpenMap)).
 		Where(engine.As(php.Node.IsFilledWithRecords)).
 		Reject(engine.As(php.Node.IsWithinInheritedMethod)).
 		Reject(engine.Match.IsTest).

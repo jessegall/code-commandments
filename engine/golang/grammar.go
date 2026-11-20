@@ -31,6 +31,8 @@ func init() {
 		Continues:          continues,
 		Steps:              engine.InFields("post"),
 		TestFile:           testFile,
+		TestAssertion:      testAssertion,
+		HoldsPublicState:   passesPublicStruct,
 		Body:               body,
 		Otherwise:          otherwise,
 		Condition:          condition,

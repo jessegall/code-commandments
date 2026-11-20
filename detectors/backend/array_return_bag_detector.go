@@ -30,6 +30,8 @@ func (d ArrayReturnBagDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return packages.Exempt(codebase, d, codebase.
 		Where(engine.As(func(n php.Node) bool { return len(n.StringKeys()) >= 2 })).
 		Where(engine.As(php.Node.IsReturnedValue)).
+		Reject(engine.Match.IsTest).
+		Reject(engine.As(php.Node.ReturnsProcessEnvironment)).
 		Reject(engine.As(func(n php.Node) bool { return !n.EnclosingFunctionLike().Exists() })).
 		Reject(engine.As(php.Node.HasNestedArrayValue)).
 		Reject(engine.As(php.Node.SpreadsAnotherArray)).

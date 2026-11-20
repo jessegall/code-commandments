@@ -572,3 +572,84 @@ func (n Node) IsArrayParameter() bool {
 func (n Node) IsFilledWithRecords() bool {
 	return RecordParametersOf(n.Codebase()).Holds(n.Match)
 }
+
+func (n Node) CarriesOpenMap() bool {
+	if !slices.Contains(n.Node().Flags, "promoted") {
+		return false
+	}
+	function := n.EnclosingFunctionLike()
+	field := n.Child("var").Name()
+	doc, ok := function.DocComment()
+	if !ok || !slices.ContainsFunc(docblockContent(doc.Text), func(line string) bool {
+		tag := "@paramarray<string,mixed>$" + field
+		return strings.Join(strings.Fields(line), "") == tag
+	}) {
+		return false
+	}
+	return !slices.ContainsFunc(EnclosingClass(n.Match).Descendants(), func(read engine.Match) bool {
+		base := read.Child("var")
+		return read.Kind() == "Expr_ArrayDimFetch" && ((base.Kind() == "Expr_Variable" && base.Name() == field) ||
+			selfPropertyOf(base) == field)
+	})
+}
+
+func (n Node) ReturnsProcessEnvironment() bool {
+	keys := n.StringKeys()
+	return slices.Contains(keys, "PATH") && slices.Contains(keys, "HOME") &&
+		!slices.ContainsFunc(keys, func(key string) bool { return key != strings.ToUpper(key) || !fieldName.MatchString(key) })
+}
+
+func (n Node) ReadsRelayedJSON() bool {
+	method := n.EnclosingFunctionLike()
+	if !method.HasModifier("private") {
+		return false
+	}
+	for at, parameter := range Params(method.Match) {
+		if parameter.Child("var").Name() != n.ArrayBaseName() {
+			continue
+		}
+		callers := IndexOf(n.Codebase()).CallersOf(EnclosingClassName(method.Match), method.Name())
+		return len(callers) > 0 && !slices.ContainsFunc(callers, func(call engine.Match) bool {
+			arguments := Arguments(call)
+			if at >= len(arguments) {
+				return true
+			}
+			var decoded, encoded bool
+			for _, step := range Trace(arguments[at].Child("value")) {
+				held := Node{Match: step.Node.Parent()}
+				decoded = decoded || step.Kind == Assigned && (Node{Match: held.Child("expr")}).CallsFunction("json_decode")
+				encoded = encoded || step.Kind == Argument && (Node{Match: held.Parent()}).CallsFunction("json_encode")
+			}
+			return !decoded || !encoded
+		})
+	}
+
+	return false
+}
+
+func (n Node) ParsesArrayField() bool {
+	method := n.EnclosingFunctionLike()
+	if !method.HasModifier("static") {
+		return false
+	}
+	typeName := Written(method.Node().Returns).Class()
+	if _, known := ProgramOf(n.Codebase()).Class(typeName); !known {
+		return false
+	}
+	field := n.Written()
+	var validates, converts bool
+	for _, node := range method.OwnDescendants() {
+		if (Node{Match: node}).CallsFunction("is_array") {
+			validates = slices.ContainsFunc(Arguments(node), func(argument engine.Match) bool {
+				return argument.Child("value").Written() == field
+			}) || validates
+		}
+		if node.Kind() == "Expr_StaticCall" && node.Parent().Kind() == "Stmt_Return" && StaticCallClass(node) == typeName {
+			converts = slices.ContainsFunc(Arguments(node), func(argument engine.Match) bool {
+				return argument.Child("value").Written() == field
+			}) || converts
+		}
+	}
+
+	return validates && converts
+}

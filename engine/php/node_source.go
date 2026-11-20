@@ -134,9 +134,26 @@ func copyExclusions(match engine.Match) engine.CopyExclusions {
 	common := function.IsGuardedAccessor() || function.IsSelfSeedingFactory() || function.IsDeprecated()
 
 	return engine.CopyExclusions{
-		Exact: common || function.IsParentForwardingConstructor() || function.IsSoleReturnExpression(),
+		Exact: common || function.IsParentForwardingConstructor() || function.IsSoleReturnExpression() || function.forwardsToField(),
 		Near:  common || function.ReturnsArrayLiteralOnly() || function.YieldsEntriesOnly(),
 	}
+}
+
+func (n Node) forwardsToField() bool {
+	body := n.ChildrenIn("stmts")
+	if len(body) != 1 || body[0].Kind() != "Stmt_Expression" {
+		return false
+	}
+	call := body[0].Child("expr")
+	if call.Kind() != "Expr_MethodCall" || selfPropertyOf(call.Child("var")) == "" {
+		return false
+	}
+	return !slices.ContainsFunc(Arguments(call), func(argument engine.Match) bool {
+		value := chainRoot(argument.Child("value"))
+		return value.Kind() != "Expr_Variable" || !slices.ContainsFunc(Params(n.Match), func(parameter engine.Match) bool {
+			return parameter.Child("var").Name() == value.Name()
+		})
+	})
 }
 
 func (n Node) IsGuardedAccessor() bool {

@@ -18,7 +18,10 @@ func init() { detectors.Register(catalog.PHP, ArrayBagDetector{}) }
 func (ArrayBagDetector) Sin() sins.Sin { return backendsins.ArrayBag{} }
 
 func (ArrayBagDetector) Exemptions() []packages.Exemption {
-	return []packages.Exemption{{Tag: packages.NoContainer, By: []packages.By{packages.EnclosingClass}}}
+	return []packages.Exemption{
+		{Tag: packages.NoContainer, By: []packages.By{packages.EnclosingClass}},
+		{Tag: packages.ContractMethod, By: []packages.By{packages.EnclosingMethod}},
+	}
 }
 
 func (d ArrayBagDetector) Find(codebase *engine.Codebase) []engine.Match {
@@ -26,6 +29,8 @@ func (d ArrayBagDetector) Find(codebase *engine.Codebase) []engine.Match {
 		Where(engine.As(php.Node.ArrayKeyIsFieldName)).
 		Where(engine.As(func(n php.Node) bool { return n.EnclosingParamIsArray(n.ArrayBaseName()) })).
 		Reject(engine.As(php.Node.IsWithinSerializationBoundary)).
+		Reject(engine.As(php.Node.ReadsRelayedJSON)).
+		Reject(engine.As(php.Node.ParsesArrayField)).
 		Reject(engine.As(php.Node.IsWithinNamedConstructor)).
 		Reject(engine.As(php.Node.IsWithinInheritedMethod)).
 		Reject(engine.As(php.Node.IsWithinADataFile)).

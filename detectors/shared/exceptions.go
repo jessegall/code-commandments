@@ -12,6 +12,7 @@ type SwallowCatch struct{}
 func (SwallowCatch) Find(codebase *engine.Codebase) []engine.Match {
 	return codebase.
 		Where(engine.Match.HandlesFailure).
+		Reject(engine.Match.IsTestFixture).
 		Where(engine.IsSwallowedCatch).
 		Get()
 }

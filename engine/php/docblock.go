@@ -51,7 +51,16 @@ func DocLines(text string) []string {
 }
 
 func DocParagraphs(text string) int {
-	return prose.Paragraphs(DocLines(text), func(line string) bool { return !strings.HasPrefix(line, "@") })
+	return prose.Paragraphs(docDescription(text), func(string) bool { return true })
+}
+
+func docDescription(text string) []string {
+	lines := DocLines(text)
+	if tags := slices.IndexFunc(lines, func(line string) bool { return strings.HasPrefix(line, "@") }); tags >= 0 {
+		return lines[:tags]
+	}
+
+	return lines
 }
 
 var docReference = regexp.MustCompile(`\{@(?:see|link)\s+\\?([A-Za-z_][\w\\]*\\[\w\\]+)`)

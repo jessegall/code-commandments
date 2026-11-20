@@ -13,6 +13,10 @@ func TestHistoryIsToldFromARuntimeCondition(t *testing.T) {
 		"Mirrors the switch the registration used to hold.":                          true,
 		"This helper now lives in the Pricing module.":                               true,
 		"Reports whether the job was extracted into the queue.":                      false,
+		"The agent holds work until it is retired.":                                  false,
+		"Ends attempts the host took but no longer runs.":                            false,
+		"A column that no longer reads fails the read.":                              false,
+		"This method no longer reads the legacy format.":                             true,
 	} {
 		if NarratesHistory(text) != narrates {
 			t.Errorf("%q narrates history: %v", text, !narrates)

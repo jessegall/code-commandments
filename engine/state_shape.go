@@ -37,7 +37,7 @@ func (m Match) HoldsCoupledFields() bool {
 }
 
 func (m Match) EnviesAnotherObject() bool {
-	if !m.Is(Function) || m.IsConstructor() {
+	if !m.Is(Function) || m.IsConstructor() || m.IsTest() {
 		return false
 	}
 	groups := map[string]map[string]bool{}
@@ -53,6 +53,9 @@ func (m Match) EnviesAnotherObject() bool {
 			continue
 		}
 		subject := read.Receiver()
+		if reactive := m.grammar().ReactiveMember; reactive != nil && reactive(read) {
+			continue
+		}
 		name := subject.Name()
 		subjects[name] = subject
 		fields := groups[name]
@@ -66,11 +69,36 @@ func (m Match) EnviesAnotherObject() bool {
 		}
 	}
 	for name, fields := range groups {
-		if len(fields) >= 3 && structural[name] && subjects[name].hasLocalTypeDeclaration() {
+		subject := subjects[name]
+		if len(fields) >= 3 && structural[name] && subject.hasLocalTypeDeclaration() &&
+			!m.ownsRecordBehavior(subject) && !m.translatesBetweenModules(subject) {
 			return true
 		}
 	}
 	return false
+}
+
+func (m Match) ownsRecordBehavior(subject Match) bool {
+	owns := m.grammar().OwnsRecordBehavior
+	if owns == nil {
+		return false
+	}
+	declaration := subject.typeDeclaration()
+
+	return declaration.Source() == m.Source() && owns(declaration)
+}
+
+func (m Match) translatesBetweenModules(subject Match) bool {
+	owner := m.moduleName()
+	from := subject.typeDeclaration().moduleName()
+	result := m.declaresType(m.ResultType())
+	to := result.moduleName()
+	if owner == "" || from == "" || to == "" || from == owner || to == owner || from == to {
+		return false
+	}
+	return slices.ContainsFunc(m.OwnDescendants(), func(node Match) bool {
+		return node.Is(Construction) && node.typeDeclaration().Identity() == result.Identity()
+	})
 }
 
 func (m Match) HandsOutCollection() bool {

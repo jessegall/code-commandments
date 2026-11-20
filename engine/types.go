@@ -63,7 +63,7 @@ func TypeLacksMember(types TypeSystem, symbol string, providesMember func(string
 	}
 	owners := append([]string{symbol}, Supertypes(types, symbol)...)
 	for _, owner := range owners {
-		if _, known := types.Declaration(owner); !known || providesMember(owner) {
+		if declaration, known := types.Declaration(owner); !known || declaration.IsInDependency() || providesMember(owner) {
 			return false
 		}
 	}
@@ -84,4 +84,13 @@ func Implementers(types TypeSystem, contract string) []Match {
 	}
 
 	return honouring
+}
+
+func (m Match) PublishedContracts(registrars []string) []string {
+	read := m.grammar().PublishedContracts
+	if read == nil {
+		return nil
+	}
+
+	return read(m, registrars)
 }

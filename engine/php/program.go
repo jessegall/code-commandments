@@ -3,6 +3,7 @@ package php
 import (
 	"maps"
 	"slices"
+	"strconv"
 	"strings"
 
 	"github.com/jessegall/code-commandments/contract"
@@ -58,6 +59,10 @@ func readProgram(codebase *engine.Codebase) *Program {
 func (p *Program) declare(declaration engine.Match) {
 	node := declaration.Node()
 	name := node.Symbol
+	anonymous := node.Kind == "Stmt_Class" && name == ""
+	if anonymous {
+		name = declaration.File() + ":" + strconv.Itoa(node.ID)
+	}
 	if node.Kind == "Stmt_Class" {
 		if parent := child(node, "extends"); parent.Name != "" {
 			p.subclassed[parent.Name] = true
@@ -72,7 +77,9 @@ func (p *Program) declare(declaration engine.Match) {
 	p.declarations[name] = declaration
 	switch node.Kind {
 	case "Stmt_Class":
-		p.classes[name] = declaration
+		if !anonymous {
+			p.classes[name] = declaration
+		}
 		p.contracts[name] = names(node, "implements")
 	case "Stmt_Enum":
 		p.enums[name] = true

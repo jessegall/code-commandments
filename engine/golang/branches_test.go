@@ -138,6 +138,28 @@ func TestGosBranchesAreReadByTheEnginesOwnReadings(t *testing.T) {
 	}
 }
 
+func TestCompoundTestAssertionsKeepTheirComparisonsTogether(t *testing.T) {
+	codebase := codebaseOf(t, map[string]string{
+		"go.mod": "module example.com/shop\n",
+		"order_test.go": `package shop
+import "testing"
+type Report struct { Count int; Ready bool }
+func TestOrder(t *testing.T) {
+    left, right := Report{}, Report{}
+    if left.Count != 1 || right.Count != 2 || !left.Ready { t.Errorf("got %v and %v", left, right) }
+    if left.Count != 1 || right.Count != 2 || !left.Ready { println(left, right) }
+}
+`,
+	})
+	found := codebase.Where(engine.TestsAnUnnamedConcept).Get()
+	if len(found) != 1 || found[0].Parent().Body()[0].Written() != "println(left, right)" {
+		for _, call := range codebase.WhereCall().Get() {
+			t.Logf("%q has target %q and test=%v", call.Written(), call.TargetSymbol(), call.IsTest())
+		}
+		t.Fatalf("only the ordinary branch should need a name, found %v", found)
+	}
+}
+
 func TestALadderRungIsCountedOnceFromItsTop(t *testing.T) {
 	codebase := codebaseOf(t, flows)
 

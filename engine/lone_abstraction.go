@@ -10,7 +10,7 @@ func (m Match) IsLoneAbstraction() bool {
 	}
 	implementers := Implementers(types, m.Identity())
 	implementers = slices.DeleteFunc(implementers, Match.IsInterfaceType)
-	if len(implementers) != 1 || implementers[0].IsTest() {
+	if len(implementers) != 1 || implementers[0].IsTest() || implementers[0].IsInDependency() {
 		return false
 	}
 	module := implementers[0].moduleName()

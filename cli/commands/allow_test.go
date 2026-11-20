@@ -57,3 +57,52 @@ func TestAllowResolvesAnInterfaceFromAGoFile(t *testing.T) {
 		t.Fatalf("expected a Go contract declaration, read %s (%v)", raw, err)
 	}
 }
+
+func TestJudgeReadsPublicContractsFromFluentRegistrarsAndShowsReasons(t *testing.T) {
+	t.Chdir(t.TempDir())
+	if err := os.Mkdir(".commandments", 0o755); err != nil {
+		t.Fatal(err)
+	}
+	for path, text := range map[string]string{
+		".commandments/config.json": `{
+  "public_contract_registrars": {"php": ["Shop\\Billing\\ExportBuilder::contracts"]},
+  "public_contract_reasons": {"php": {"Shop\\Billing\\Reasoned": "Boundary for the billing domain"}}
+}`,
+		"Exports.php": `<?php
+namespace Shop\Billing;
+interface Published { public function read(): int; }
+interface Reasoned { public function read(): int; }
+interface Internal { public function read(): int; }
+interface Replaced { public function read(): int; }
+final class Live implements Published, Reasoned, Internal, Replaced {
+    public function read(): int { return 1; }
+}
+final class Exports {
+    public static function make(): ExportBuilder { return new ExportBuilder(); }
+    public function exports(): ExportBuilder {
+        return self::make()->events()->contracts(Published::class);
+    }
+    public function replacement(): Replaced {
+        return new class implements Replaced { public function read(): int { return 2; } };
+    }
+}
+final class ExportBuilder {
+    public function events(): self { return $this; }
+    public function contracts(string ...$names): self { return $this; }
+}
+final class Other {
+    public function contracts(string ...$names): void {}
+    public function export(): void { $this->contracts(Internal::class); }
+}
+`,
+	} {
+		if err := os.WriteFile(path, []byte(text), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	code, out, err := ran("judge", ".", "--sin=lone-implementer-interface", "--no-checklist", "--parallel=2")
+	if code != 1 || !strings.Contains(out+err, "Exports.php:5") || !strings.Contains(out+err, "1 sin") ||
+		!strings.Contains(err, "Public contract Shop\\Billing\\Reasoned: Boundary for the billing domain") {
+		t.Fatalf("judge returned %d, %s %s", code, out, err)
+	}
+}

@@ -21,6 +21,7 @@ func (MutableValueObjectDetector) Find(codebase *engine.Codebase) []engine.Match
 
 	return php.In(codebase).
 		WhereKind("Stmt_Class").
+		Reject(engine.Match.IsTest).
 		Where(func(n engine.Match) bool { return program.ClassIsValueType(php.EnclosingClassName(n)) }).
 		Where(engine.As(func(n php.Node) bool {
 			return n.MutatesOwnFieldsAfterConstruction(program.TraitMethodsOf(php.EnclosingClassName(n.Match)))

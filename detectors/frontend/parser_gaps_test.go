@@ -27,3 +27,23 @@ func TestAnIndexedAccessToAnObjectTypeIsNoArray(t *testing.T) {
 		t.Errorf("a key over an object is read as an index at %s", found[0].Location())
 	}
 }
+
+func TestIndexKeysDistinguishStatelessTextFromInputs(t *testing.T) {
+	codebase := frontendtest.FromSource(t, map[string]string{
+		"src/TerminalRow.vue": `<script setup lang="ts">
+defineProps<{ runs: { text: string }[] }>();
+</script>
+<template>
+  <template v-for="(run, index) in runs" :key="index">
+    <span>{{ run.text }}</span>
+  </template>
+  <template v-for="(run, index) in runs" :key="index">
+    <input :value="run.text" />
+  </template>
+</template>
+`,
+	})
+	if found := (frontend.IndexAsKeyDetector{}).Find(codebase); len(found) != 1 || found[0].Line() != 8 {
+		t.Fatalf("only the index key on the input should be reported, found %v", found)
+	}
+}

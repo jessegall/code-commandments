@@ -18,6 +18,9 @@ func IsUntypedCollection(typed *contract.Type) bool {
 }
 
 func (m Match) ReturnsRawDecodedValue() bool {
+	if m.IsTest() {
+		return false
+	}
 	grammar := m.grammar()
 	if grammar.DecodedDestination != nil {
 		return m.returnsDecodedDestination(grammar)

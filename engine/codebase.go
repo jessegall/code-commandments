@@ -179,19 +179,20 @@ func (c *Codebase) Carries(over *Codebase, keys ...any) {
 // File is one source file of a stream, with its bytes read on first need.
 type File struct {
 	*contract.File
-	codebase *Codebase
-	stream   *contract.Stream
-	read     func(path string) ([]byte, error)
-	once     sync.Once
-	source   []byte
-	err      error
-	lines    sync.Once
-	own      map[int]contract.Comment
-	attached sync.Once
-	byNode   map[int][]contract.Comment
-	printing sync.Once
-	contents uint64
-	printed  bool
+	dependency bool
+	codebase   *Codebase
+	stream     *contract.Stream
+	read       func(path string) ([]byte, error)
+	once       sync.Once
+	source     []byte
+	err        error
+	lines      sync.Once
+	own        map[int]contract.Comment
+	attached   sync.Once
+	byNode     map[int][]contract.Comment
+	printing   sync.Once
+	contents   uint64
+	printed    bool
 
 	outlining sync.Once
 	outline   uint64
@@ -274,7 +275,7 @@ func built(read func(path string) ([]byte, error), streams ...*contract.Stream) 
 	for _, stream := range streams {
 		for _, file := range stream.Files {
 			_ = file.Linked()
-			codebase.files = append(codebase.files, &File{File: file, codebase: codebase, stream: stream, read: read})
+			codebase.files = append(codebase.files, &File{File: file, codebase: codebase, stream: stream, read: read, dependency: IsDependencyFile(file.Path)})
 		}
 	}
 
@@ -383,14 +384,19 @@ func (c *Codebase) Reporting(paths ...string) *Codebase {
 }
 
 func (c *Codebase) opened() []*File {
-	CountedWalk(len(c.files))
-
+	owned := Analysis(c, reportingFiles{}, func(c *Codebase) []*File {
+		if !slices.ContainsFunc(c.files, func(file *File) bool { return file.dependency }) {
+			return c.files
+		}
+		return slices.DeleteFunc(slices.Clone(c.files), func(file *File) bool { return file.dependency })
+	})
+	CountedWalk(len(owned))
 	if len(c.reporting) == 0 {
-		return c.files
+		return owned
 	}
 
 	var narrowed []*File
-	for _, file := range c.files {
+	for _, file := range owned {
 		if c.reporting[file.Path] {
 			narrowed = append(narrowed, file)
 		}
@@ -398,6 +404,8 @@ func (c *Codebase) opened() []*File {
 
 	return narrowed
 }
+
+type reportingFiles struct{}
 
 func (c *Codebase) Declarations(symbol string) []Match {
 	return Analysis(c, "declarations", declarationsOf)[symbol]

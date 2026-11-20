@@ -1,6 +1,8 @@
 package frontend
 
 import (
+	"slices"
+
 	"github.com/jessegall/code-commandments/catalog"
 	"github.com/jessegall/code-commandments/detectors"
 	"github.com/jessegall/code-commandments/engine"
@@ -57,7 +59,18 @@ func aliasIsAnIndex(codebase *engine.Codebase, element vue.Element) bool {
 }
 
 func listsPlainValues(codebase *engine.Codebase, element vue.Element) bool {
-	return iteratesPrimitives(codebase, element) && !element.HoldsState()
+	if element.HoldsState() {
+		return false
+	}
+	if iteratesPrimitives(codebase, element) {
+		return true
+	}
+	return len(element.Directive(vue.For).Aliases()) == 2 && inlineText(element) &&
+		!slices.ContainsFunc(element.DescendantElements(), func(child vue.Element) bool { return !inlineText(child) })
+}
+
+func inlineText(element vue.Element) bool {
+	return slices.Contains([]string{"template", "span", "b", "strong", "i", "em", "mark", "code", "small"}, element.Tag())
 }
 
 func iteratesPrimitives(codebase *engine.Codebase, element vue.Element) bool {
