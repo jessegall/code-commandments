@@ -1,8 +1,4 @@
 #!/bin/sh
-# Fetches the release binary the plugin pins in COMMANDMENTS_RELEASE into bin/commandments-release, checked against
-# the release's SHA256SUMS before it is written; any failure writes nothing and never builds. Needs only sh, curl and
-# sha256sum or shasum, and falls back to the GitHub CLI where curl is refused. COMMANDMENTS_RELEASES names another place to fetch releases from. No release is built
-# for Windows; under WSL, which is Linux here, the Linux one is fetched.
 set -eu
 
 refuse() {
@@ -44,7 +40,8 @@ base="${COMMANDMENTS_RELEASES:-https://github.com/jessegall/code-commandments/re
 base="${base%/}/$version"
 target="$root/bin/commandments-release"
 draft="$target.$$"
-trap 'rm -f "$draft"' EXIT
+expanded="$draft.expanded"
+trap 'rm -f "$draft" "$expanded"' EXIT
 
 fetched() {
     curl -fsSL --connect-timeout 20 -o "$2" "$base/$1" && return 0
@@ -54,13 +51,30 @@ fetched() {
 
 fetched SHA256SUMS "$draft" || refuse "could not fetch $base/SHA256SUMS"
 sums="$(cat "$draft")"
-wanted="$(printf '%s\n' "$sums" | awk -v name="$name" '$2 == name || $2 == "*" name { print $1; exit }')"
-[ -n "$wanted" ] || refuse "the $version release lists no $name"
+listed_checksum() {
+    printf '%s\n' "$sums" | awk -v name="$1" '$2 == name || $2 == "*" name { print $1; exit }'
+}
 
-fetched "$name" "$draft" || refuse "could not fetch $base/$name"
+asset="$name.gz"
+wanted="$(listed_checksum "$asset")"
+if [ -z "$wanted" ]; then
+    asset="$name"
+    wanted="$(listed_checksum "$asset")"
+fi
+[ -n "$wanted" ] || refuse "the $version release lists no $name or $name.gz"
+
+fetched "$asset" "$draft" || refuse "could not fetch $base/$asset"
 [ "$(digest "$draft" | awk '{ print $1 }')" = "$wanted" ] ||
-    refuse "the $name fetched for $version does not match its SHA256SUMS, so it is not installed"
+    refuse "the $asset fetched for $version does not match its SHA256SUMS, so it is not installed"
+
+if [ "$asset" = "$name.gz" ]; then
+    python3 -c 'import gzip, shutil, sys
+with gzip.open(sys.argv[1], "rb") as archive:
+    shutil.copyfileobj(archive, sys.stdout.buffer)' "$draft" > "$expanded" ||
+        refuse "could not unpack $asset for $version"
+    mv -f "$expanded" "$draft"
+fi
 
 chmod 755 "$draft"
 mv -f "$draft" "$target"
-echo "fetched $name $version, checked against its SHA256SUMS"
+echo "fetched $asset $version, checked against its SHA256SUMS"

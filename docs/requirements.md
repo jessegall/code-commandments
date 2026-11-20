@@ -20,7 +20,7 @@ ways, and each needs its own few things beside the languages above:
 | Installed through | Runs on | What the machine needs |
 |---|---|---|
 | Composer, `composer require --dev jessegall/code-commandments` | macOS and Linux | PHP 8.3 or later and composer; the shim fetches the binary for the platform on its first run, checked against `SHA256SUMS`, into its cache (`$XDG_CACHE_HOME`, else `~/.cache`) |
-| The agent journal, `journal plugin install` | macOS and Linux | `sh`, `curl`, and `sha256sum` or `shasum`; no PHP, composer, Go or Docker |
+| The agent journal, `journal plugin install` | macOS and Linux | `sh`, `curl`, Python 3.9 or later, and `sha256sum` or `shasum`. Setup checks the release archive's SHA-256 and unpacks the executable into the plugin's `bin` folder. |
 
 ## When something is missing
 

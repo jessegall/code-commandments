@@ -34,16 +34,18 @@ manifest fetches in `env.COMMANDMENTS_RELEASE`. The generator (`composer sins`, 
   outside the plugin's own files needs one. `.github/workflows/release.yml` publishes the C# bridge for every platform
   (`scripts/release/roslyn`, reused from the last release when the bridge did not change), cross-compiles the tool's
   static binary for every platform (`scripts/release/build`), holds each binary to its budget in
-  `scripts/release/size-budget.json` and writes `SHA256SUMS` (`scripts/release/check`). A separate job verifies the
-  checksums of those artifacts before creating the tag and GitHub release.
+  `scripts/release/size-budget.json` and writes `SHA256SUMS` (`scripts/release/check`). It compresses each command
+  binary for plugin setup and checks that it unpacks to the original executable. A separate job verifies the
+  checksums of all assets before creating the tag and GitHub release.
 - **A plugin-only release** bumps only `version` and keeps pinning the last release that built. The workflow
   checks that nothing but `.journal-plugin/` and the `journal-plugin*.json` manifests changed since that release, and
   checks that the pinned release has assets before creating the new tag. The journal reads plugin versions from tags,
   and the plugin fetches the pinned binary.
   It is done in seconds, so a change to how the plugin handles events never waits for a build.
 
-Composer's shim fetches the binary the package's manifest pins, and the tool fetches the C# bridge beside itself, each
-checked against `SHA256SUMS`. A budget is raised only by hand, with the reason in the commit.
+Plugin setup verifies and unpacks the gzip archive. Composer's shim fetches the executable the package's manifest
+pins, and the tool fetches the C# bridge beside itself. Each download is checked against `SHA256SUMS`. A budget is
+raised only by hand, with the reason in the commit.
 
 ## What to read when
 

@@ -184,6 +184,15 @@ jobs:
           ls -l dist
       - name: Cross-compile, check every binary against its budget, and sum them all
         run: scripts/dev env GOMEMLIMIT=3GiB GOMAXPROCS=2 scripts/release/build "$RELEASE_VERSION" dist
+      - name: Compress and verify the command binaries for plugin setup
+        working-directory: dist
+        shell: bash
+        run: |
+          for binary in commandments-*; do
+            gzip -n -9 -k "$binary"
+            gzip -dc "$binary.gz" | cmp "$binary" -
+          done
+          sha256sum commandments-*.gz >> SHA256SUMS
       - uses: actions/upload-artifact@v4
         with:
           name: release-${{ inputs.version }}
