@@ -365,6 +365,49 @@ func (h receiptHistory) Tag(key string) (string, bool) {
 }
 ```
 
+### interface-overlap — in PHP
+
+An interface repeats the signatures of a contract it can reuse.
+
+```php
+----------[ Bad ]----------
+
+interface StockFiltersWithLabels
+{
+    public function region(): ?string;
+    public function warehouses(): array;
+    public function labels(int $warehouse, \DateTimeImmutable $countedOn, array $availableBrands = []): array;
+}
+
+----------[ Good ]----------
+
+interface WarehouseStockFilters extends StockFilters
+{
+    public function labels(int $warehouse, \DateTimeImmutable $countedOn, array $availableBrands = []): array;
+}
+```
+
+### interface-overlap — in Go
+
+An interface repeats the signatures of a contract it can reuse.
+
+```go
+----------[ Bad ]----------
+
+type LabeledInvoiceTotals interface {
+	Taxes(number int) map[string]int
+	Label(number int) string
+	Net(number int) int
+}
+
+----------[ Good ]----------
+
+type NamedInvoiceTotals interface {
+	InvoiceTotals
+	Label(invoice int) string
+}
+```
+
 ### lone-implementer-interface — in PHP
 
 An interface has only one local implementation

@@ -28,7 +28,11 @@ func (r Report) Journal() []byte {
 	for _, slug := range r.skills {
 		for _, finding := range r.bySkill[slug] {
 			file, line := splitLocation(finding.Location)
-			findings = append(findings, journalFinding{Name: finding.Sin, File: file, Line: line, Where: finding.Scope, Text: finding.Rule(), Group: slug})
+			description := finding.Rule()
+			if finding.Advice != "" {
+				description += "\n" + finding.Advice
+			}
+			findings = append(findings, journalFinding{Name: finding.Sin, File: file, Line: line, Where: finding.Scope, Text: description, Group: slug})
 		}
 	}
 	summary := strconv.Itoa(r.total) + " " + plural(r.total, "sin", "sins") + " across " + strconv.Itoa(len(r.skills)) + " " + plural(len(r.skills), "skill", "skills")

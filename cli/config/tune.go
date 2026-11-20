@@ -19,11 +19,19 @@ type publicContractDetector interface {
 	WithPublicContracts([]string, []string) detectors.Detector
 }
 
+type layeredDetector interface {
+	WithLayers(map[string][]string) detectors.Detector
+}
+
 func (c Config) Enabled(installed Installed) ([]detectors.Detector, error) {
 	var kept []detectors.Detector
 
 	for _, detector := range Packaged(detectors.All(), installed) {
 		if !c.Disables(rulesOf(detector)...) {
+			if marks, ok := detector.(layeredDetector); ok {
+				engine, _ := detectors.EngineOf(detector)
+				detector = marks.WithLayers(c.Layers(engine))
+			}
 			if accepts, ok := detector.(publicContractDetector); ok {
 				engine, _ := detectors.EngineOf(detector)
 				contracts := slices.AppendSeq(slices.Clone(c.PublicContracts[engine]), maps.Keys(c.ContractReasons[engine]))

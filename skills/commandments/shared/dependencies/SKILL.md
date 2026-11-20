@@ -21,6 +21,8 @@ When two modules need the same contract, give that contract a home both may impo
       _Put the guard inside the transition that owns the state._
 - [ ] Use the project's registry abstraction for keyed storage.
       _Use the project's registry abstraction for keyed storage._
+- [ ] Use the accessible contract for identical signatures. Extend it to add the remaining signatures.
+      _Check that the contracts promise the same behaviour before reusing the existing one._
 - [ ] Use the implementation directly unless the interface is a boundary.
       _Use the implementation directly unless the interface is a boundary._
 - [ ] Give callers the type that owns the operations.
@@ -173,15 +175,15 @@ func NewReceiptJob(
 }
 ```
 
-The other 35 — one per rule — are in [`reference/examples.md`](reference/examples.md).
+The other 37 — one per rule — are in [`reference/examples.md`](reference/examples.md).
 
 ## Commands
 
 - `{{binary}} judge --skill=shared/dependencies` — find every one of these in the codebase.
-- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `concrete-cross-module-dependency`, `guard-beside-transition`, `hand-rolled-registry`, `lone-implementer-interface`, `middle-man`, `namespace-cycle`, `namespace-dependency`, `refused-bequest`, `train-wreck`, `undeclared-member`, `unread-collaborator`, `unused-private-member`, `useless-property-hook`.
+- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `concrete-cross-module-dependency`, `guard-beside-transition`, `hand-rolled-registry`, `interface-overlap`, `lone-implementer-interface`, `middle-man`, `namespace-cycle`, `namespace-dependency`, `refused-bequest`, `train-wreck`, `undeclared-member`, `unread-collaborator`, `unused-private-member`, `useless-property-hook`.
 - `{{binary}} report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference
 
-- [Worked examples](reference/examples.md) — every rule's bad → good, 40 of them.
+- [Worked examples](reference/examples.md) — every rule's bad → good, 42 of them.
 - [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.

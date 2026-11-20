@@ -103,6 +103,9 @@ func (r Report) Console() string {
 			if len(finding.Twins) > 0 {
 				lines = append(lines, "    \033[2m↳ same shape as: "+r.twins(finding)+"\033[0m")
 			}
+			if finding.Advice != "" {
+				lines = append(lines, "    \033[2m↳ "+finding.Advice+"\033[0m")
+			}
 		}
 
 		for _, command := range commandsFor(findings, r.fixable) {
@@ -159,6 +162,9 @@ func (r Report) Checklist() string {
 
 			if len(finding.Twins) > 0 {
 				out.WriteString(" — same shape as " + r.twins(finding))
+			}
+			if finding.Advice != "" {
+				out.WriteString(" — " + finding.Advice)
 			}
 
 			out.WriteString("\n")

@@ -57,6 +57,11 @@ type ChainDetector interface {
 	ChainPath(finding engine.Match, codebase *engine.Codebase) []string
 }
 
+// AdvisingDetector names the concrete source change a finding suggests.
+type AdvisingDetector interface {
+	AdviceFor(finding engine.Match) string
+}
+
 // ConsumesContracts marks a detector whose verdict reads what another engine publishes about the codebase.
 type ConsumesContracts interface {
 	ConsumesContracts()

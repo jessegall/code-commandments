@@ -13,6 +13,7 @@ type Finding struct {
 	Twins    []string
 	Custom   bool
 	Group    string
+	Advice   string `json:",omitempty"`
 }
 
 func (f Finding) Rule() string {

@@ -16,6 +16,7 @@ func (language) Engine() catalog.Engine {
 var (
 	MatchDefaultReturnsNullDetector       = shared.Bind[shared.MatchDefaultReturnsNull, language]()
 	LoneImplementerInterfaceDetector      = shared.BindLoneInterfaces[language]()
+	InterfaceOverlapDetector              = shared.BindInterfaceOverlaps[language]("/", true)
 	ConcreteCrossModuleDependencyDetector = shared.Bind[shared.ConcreteCrossModuleDependency, language]()
 	MiddleManDetector                     = shared.Bind[shared.MiddleMan, language]()
 	HandRolledRegistryDetector            = shared.Bind[shared.HandRolledRegistry, language]()

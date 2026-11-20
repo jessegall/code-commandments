@@ -115,6 +115,10 @@ func findings(detector detectors.Detector, matches []engine.Match) []engine.Find
 				group = key
 			}
 		}
+		advice := ""
+		if advises, ok := detector.(detectors.AdvisingDetector); ok {
+			advice = advises.AdviceFor(match)
+		}
 
 		found = append(found, engine.Finding{
 			Group:    group,
@@ -128,6 +132,7 @@ func findings(detector detectors.Detector, matches []engine.Match) []engine.Find
 			Scope:    match.Scope(),
 			Twins:    twins,
 			Custom:   custom.Owns(detector),
+			Advice:   advice,
 		})
 	}
 

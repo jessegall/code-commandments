@@ -2,6 +2,7 @@ package shared
 
 import (
 	"slices"
+	"strings"
 
 	"github.com/jessegall/code-commandments/catalog"
 	"github.com/jessegall/code-commandments/detectors"
@@ -43,15 +44,23 @@ func (d LoneInterfaces) WithPublicContracts(symbols, registrars []string) detect
 
 func (d LoneInterfaces) Find(codebase *engine.Codebase) []engine.Match {
 	codebase = codebase.Of(catalog.LanguagesOf(d.Engine())...)
-	public := d.public
-	if len(d.registrars) > 0 {
-		public = slices.Clone(public)
-		for _, call := range codebase.WhereCall().Get() {
-			public = append(public, call.PublishedContracts(d.registrars)...)
-		}
-	}
+	return findLoneInterfaces(codebase, publishedInterfaces(codebase, d.public, d.registrars))
+}
 
-	return findLoneInterfaces(codebase, public)
+type interfacePublications struct{ symbols, registrars string }
+
+func publishedInterfaces(codebase *engine.Codebase, symbols, registrars []string) []string {
+	if len(registrars) == 0 {
+		return symbols
+	}
+	key := interfacePublications{strings.Join(symbols, "\x00"), strings.Join(registrars, "\x00")}
+	return engine.Analysis(codebase, key, func(codebase *engine.Codebase) []string {
+		public := slices.Clone(symbols)
+		for _, call := range codebase.Reporting().WhereCall().Get() {
+			public = append(public, call.PublishedContracts(registrars)...)
+		}
+		return public
+	})
 }
 func (LoneImplementerInterface) Sin() Text {
 	return Text{Name: "lone-implementer-interface", Skill: skills.Dependencies{}, Description: "An interface has only one local implementation", Rule: "Use the implementation directly unless the interface is a boundary.", Suggestion: "Use the implementation directly unless the interface is a boundary."}

@@ -21,6 +21,7 @@ var (
 	ConcreteCrossModuleDependencyDetector = shared.Bind[shared.ConcreteCrossModuleDependency, language]()
 	UndeclaredMemberDetector              = shared.Bind[shared.UndeclaredMember, language](shared.Excusing(usesDynamicMembers, packages.Exemption{Tag: packages.DynamicMembers}))
 	LoneImplementerInterfaceDetector      = shared.BindLoneInterfaces[language]()
+	InterfaceOverlapDetector              = shared.BindInterfaceOverlaps[language](`\`, false)
 	MatchDefaultReturnsNullDetector       = shared.Bind[shared.MatchDefaultReturnsNull, language]()
 	RedundantArrowReturnTypeDetector      = shared.Bind[shared.RedundantArrowReturnType, language](shared.Repentable)
 	ConvertedArgumentDetector             = shared.BindGrouped[shared.ConvertedArgument, language]()

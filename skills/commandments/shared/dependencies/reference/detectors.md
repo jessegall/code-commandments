@@ -5,6 +5,7 @@ Each row is one rule: the sin's id, the symptom its detector flags, and the dete
 - **`concrete-cross-module-dependency`** — A constructor takes another module's concrete service — `ConcreteCrossModuleDependencyDetector`
 - **`guard-beside-transition`** — A caller checks another object's state before telling it to act — `GuardBesideTransitionDetector`
 - **`hand-rolled-registry`** — A type repeats a checked keyed store — `HandRolledRegistryDetector`
+- **`interface-overlap`** — An interface repeats the signatures of a contract it can reuse. — `InterfaceOverlapDetector`
 - **`lone-implementer-interface`** — An interface has only one local implementation — `LoneImplementerInterfaceDetector`
 - **`middle-man`** — A type forwards its methods to one field — `MiddleManDetector`
 - **`namespace-cycle`** — Two independent modules import each other — `NamespaceCycleDetector`
