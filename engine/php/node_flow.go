@@ -54,7 +54,11 @@ func (n Node) isShortTernary() bool {
 
 func (n Node) FallsBackToEmptyCollection() bool {
 	if n.IsCoalesce() {
-		return n.CoalesceRight().IsEmptyArrayLiteral()
+		fallback := n.CoalesceRight()
+		for fallback.IsCoalesce() {
+			fallback = fallback.CoalesceRight()
+		}
+		return fallback.IsEmptyArrayLiteral()
 	}
 
 	return n.isShortTernary() && Node{Match: n.Child("else")}.IsEmptyArrayLiteral()
@@ -72,15 +76,19 @@ func (n Node) FallbackSubject() Node {
 }
 
 func (n Node) RootVariableName() string {
+	return n.inputVariable().Name()
+}
+
+func (n Node) inputVariable() engine.Match {
 	at := n.Match
 	for at.Kind() == "Expr_ArrayDimFetch" || isPropertyRead(at) {
 		at = at.Child("var")
 	}
 	if at.Kind() != "Expr_Variable" || at.Name() == "this" {
-		return ""
+		return engine.Match{}
 	}
 
-	return at.Name()
+	return at
 }
 
 func (n Node) ReachesIntoParameter() bool {
@@ -95,6 +103,41 @@ func (n Node) ReachesIntoParameter() bool {
 	}
 
 	return false
+}
+
+func (n Node) reachesIterationElement() bool {
+	read := n.inputVariable()
+	if !read.Exists() || read == n.Match {
+		return false
+	}
+	function := n.EnclosingFunctionLike().Match
+	for _, loop := range n.Ancestors() {
+		if loop == function {
+			break
+		}
+		if loop.ElementName() != read.Name() {
+			continue
+		}
+		binding := loop.Child("valueVar")
+		if !binding.EndsBefore(read) {
+			continue
+		}
+		return !readsOwnedCollection(loop.Child("expr")) && !writesLocalBetween(function, binding, read, read.Name())
+	}
+	return false
+}
+
+func readsOwnedCollection(collection engine.Match) bool {
+	source := collection
+	if collection.Kind() == "Expr_Variable" {
+		if assigned := LocalValueAt(collection); assigned.Exists() {
+			source = assigned
+		}
+	}
+	if subject := (Node{Match: source}).FallbackSubject(); subject.Exists() {
+		source = subject.Match
+	}
+	return variableRoot(source) == "this"
 }
 
 func (n Node) IsIfElseLadder() bool {

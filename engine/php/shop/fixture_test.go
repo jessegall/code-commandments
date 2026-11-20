@@ -114,6 +114,10 @@ func TestCeremonyDocblockProvesItselfOnTheShop(t *testing.T) {
 	proveBackendDetector(t, backend.CeremonyDocblockDetector)
 }
 
+func TestCoalescedLoopSubjectProvesItselfOnTheShop(t *testing.T) {
+	proveBackendDetector(t, backend.CoalescedLoopSubjectDetector)
+}
+
 func proveBackendDetector(t *testing.T, detector detectors.Detector) {
 	t.Helper()
 	fixturetest.Prove(t, fixture.Fixture{

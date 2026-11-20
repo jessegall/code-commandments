@@ -55,5 +55,9 @@ func manufacturesFill(match engine.Match) bool {
 }
 func coalescedLoop(match engine.Match) bool {
 	n := Node{Match: match}
-	return n.IsLoopSubject() && n.FallsBackToEmptyCollection() && n.FallbackSubject().ReachesIntoParameter()
+	if !n.IsLoopSubject() || !n.FallsBackToEmptyCollection() {
+		return false
+	}
+	input := n.FallbackSubject()
+	return input.ReachesIntoParameter() || input.reachesIterationElement()
 }
