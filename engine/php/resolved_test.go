@@ -58,7 +58,10 @@ func TestMemberReadsUseSpecializedPropertiesAndClassStringReturns(t *testing.T) 
 namespace Shop;
 
 interface Client {}
-final class DispatchClient implements Client { public string $manifest; }
+final class DispatchClient implements Client {
+    public const KEY = 'dispatch';
+    public string $manifest;
+}
 class Scope { public Client $client; }
 
 /** @property DispatchClient $client */
@@ -73,7 +76,9 @@ final class Registry {
     public function find(string $type): Client { return new $type; }
 }
 
-function manifest(DispatchScope $scope, Registry $registry, Client $client): void {
+function manifest(DispatchScope $scope, Registry $registry, Client $client, string $type): void {
+    $fromVariable = $registry->find(type: $type);
+    $fromKey = $registry->find(type: DispatchClient::KEY);
     echo $scope->client->manifest;
     echo $registry->find(type: DispatchClient::class)->manifest;
     echo $client->manifest;
@@ -82,6 +87,11 @@ function manifest(DispatchScope $scope, Registry $registry, Client $client): voi
 	reads := codebase.Where(engine.Match.ReadsUndeclaredMember).Get()
 	if len(reads) != 1 || reads[0].Written() != "$client->manifest" {
 		t.Fatalf("got %v, want only the missing property on the unqualified Client", reads)
+	}
+	for _, call := range []string{"$registry->find(type: $type)", "$registry->find(type: DispatchClient::KEY)"} {
+		if got := resolvedAt(t, codebase, call).Class(); got != `Shop\Client` {
+			t.Errorf("%s resolved to %q, want Shop\\Client", call, got)
+		}
 	}
 }
 

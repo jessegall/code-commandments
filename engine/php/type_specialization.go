@@ -65,7 +65,10 @@ func (t *Types) callReturn(call engine.Match, class, name string) held {
 			continue
 		}
 		value := arg.Child("value")
-		if actual := value.Class(); value.Kind() == "Expr_ClassConstFetch" && engine.IsA(t.program, actual, native.class) && actual != native.class {
+		if !isNamedClassLiteral(value) {
+			return native
+		}
+		if actual := value.Class(); actual != native.class && engine.IsA(t.program, actual, native.class) {
 			return held{class: actual}
 		}
 		return native

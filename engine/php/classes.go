@@ -36,7 +36,7 @@ func classOf(node engine.Match) string {
 		return strings.TrimLeft(namedClass(node, node), `\`)
 	case node.Kind() == "Expr_New" && isName(node.Child("class")):
 		return strings.TrimLeft(namedClass(node, node.Child("class")), `\`)
-	case node.Kind() == "Expr_ClassConstFetch" && strings.EqualFold(node.Child("name").Name(), "class") && isName(node.Child("class")):
+	case isNamedClassLiteral(node):
 		return strings.TrimLeft(namedClass(node, node.Child("class")), `\`)
 	}
 	held := strings.TrimLeft(TypesOf(node.Codebase()).TypeOf(node), `?\`)
@@ -45,6 +45,10 @@ func classOf(node engine.Match) string {
 	}
 
 	return held
+}
+
+func isNamedClassLiteral(node engine.Match) bool {
+	return node.Kind() == "Expr_ClassConstFetch" && strings.EqualFold(node.Child("name").Name(), "class") && isName(node.Child("class"))
 }
 
 func propertyName(statement engine.Match) string {
