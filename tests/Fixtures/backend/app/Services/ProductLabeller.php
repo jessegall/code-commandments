@@ -12,6 +12,6 @@ final class ProductLabeller
     #[Sinful(RequestAccessorRecast::class)]
     public function label(CreateProductRequest $request): string
     {
-        return sprintf('PRODUCT: %s', $request->string('name')->toString());
+        return sprintf('PRODUCT: %s', (string) $request->string('name'));
     }
 }

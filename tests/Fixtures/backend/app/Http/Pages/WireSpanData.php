@@ -4,6 +4,7 @@ namespace Shop\Http\Pages;
 
 use JesseGall\CodeCommandments\Sins\Backend\Spatie\TransformerWithoutTsType;
 use JesseGall\CodeCommandments\Testing\Sinful;
+use Spatie\TypeScriptTransformer\Attributes\TypeScript;
 use Spatie\LaravelData\Attributes\WithTransformer;
 use Spatie\LaravelData\Data;
 use Spatie\LaravelData\Attributes\Computed;
@@ -13,6 +14,7 @@ use Spatie\LaravelData\Attributes\Computed;
  * `#[TypeScriptType]` declares it — the frontend type stays `DateRange`. Pair the transformer with the
  * transformed shape.
  */
+#[TypeScript]
 final class WireSpanData extends Data
 {
     #[Computed]

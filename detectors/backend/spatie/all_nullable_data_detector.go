@@ -22,6 +22,7 @@ func (AllNullableDataDetector) Find(codebase *engine.Codebase) []engine.Match {
 		WhereKind("Stmt_Class").
 		Where(engine.As(spatienode.Node.IsDataClass)).
 		Where(engine.As(php.Node.EveryConstructorParamNullable)).
+		Reject(engine.As(spatienode.Node.HasOneOptionalValidatedField)).
 		Get()
 }
 

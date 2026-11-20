@@ -69,10 +69,6 @@ func (n Node) ArgumentCount() int {
 
 func (n Node) IsReCoercedToString() bool {
 	parent := n.Parent()
-	if name := parent.Child("name"); parent.Kind() == "Expr_MethodCall" && n.Node().Field == "var" && name.Kind() == "Identifier" && name.Name() == "toString" {
-		return true
-	}
-
 	return parent.Kind() == "Expr_Cast_String" && n.Node().Field == "expr"
 }
 

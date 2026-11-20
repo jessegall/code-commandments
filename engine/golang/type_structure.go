@@ -89,7 +89,8 @@ func isConstructor(function engine.Match) bool {
 }
 
 func privateMember(member engine.Match) bool {
-	field := member.Kind() == "Field" && member.Parent().Parent().Kind() == "StructType"
+	structure := member.Parent().Parent()
+	field := member.Kind() == "Field" && structure.Kind() == "StructType" && structure.Parent().Kind() == "TypeSpec"
 	if !field && (Node{Match: member}).OwnerSymbol() == "" {
 		return false
 	}

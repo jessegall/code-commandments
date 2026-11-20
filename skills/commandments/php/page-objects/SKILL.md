@@ -134,7 +134,7 @@ page object — the composed thing on the wire — is exactly where they earn th
       _Add `#[TypeScript]` above the page-object class (`use Spatie\TypeScriptTransformer\Attributes\TypeScript;`)._
 - [ ] A page object pulls every collaborator through `#[FromContainer]` (hidden), never `app()`/`resolve()` inside a getter.
       _Inject it as a `#[Hidden] #[FromContainer(Service::class)]` constructor property._
-- [ ] Pair every custom `#[WithTransformer]` with a `#[TypeScriptType]` / `#[LiteralTypeScriptType]` that declares the transformed wire shape.
+- [ ] On Data classes exported to TypeScript, pair a custom `#[WithTransformer]` with `#[TypeScriptType]` or `#[LiteralTypeScriptType]` that declares the wire shape.
       _Add `#[TypeScriptType('...')]` (or `#[LiteralTypeScriptType(...)]`) stating the type the transformer serializes to, so the generated frontend type matches the wire._
 
 ## Worked example

@@ -16,4 +16,4 @@ Each row is one rule: the sin's id, the symptom its detector flags, and the dete
 - **`orphaned-binding`** — A container binding whose abstract nothing ever resolves — dead wiring that reads as load-bearing and survives every refactor — `OrphanedBindingDetector`
 - **`query-in-loop`** — a query run inside a loop — one query per turn, so the work grows with the data while the code reads as though it were one call — `QueryInLoopDetector`
 - **`raw-request-input`** — Raw `->input()/->get()/->query()/->post()` on a Request — `RawRequestInputDetector`
-- **`request-accessor-recast`** — Re-coercing a typed request accessor at a call site — `$request->string('id')->toString()` or `(string) $request->string('id')` instead of a named getter on a request class — `RequestAccessorRecastDetector`
+- **`request-accessor-recast`** — Casting the Stringable returned by a typed request accessor instead of using its `toString()` method. — `RequestAccessorRecastDetector`

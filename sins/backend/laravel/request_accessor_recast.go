@@ -15,9 +15,9 @@ func (RequestAccessorRecast) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "request-accessor-recast",
 		Skill:       laravelskills.LaravelIdioms{},
-		Description: `Re-coercing a typed request accessor at a call site — ` + "`" + `$request->string('id')->toString()` + "`" + ` or ` + "`" + `(string) $request->string('id')` + "`" + ` instead of a named getter on a request class`,
-		Rule:        `Expose a named getter on a typed request class; don't re-coerce a typed accessor (` + "`" + `$request->string('id')->toString()` + "`" + `) at a call site.`,
-		Suggestion:  "A named getter on a typed request class returning the coerced value.",
+		Description: "Casting the Stringable returned by a typed request accessor instead of using its `toString()` method.",
+		Rule:        "Use `toString()` to read a plain string from the typed request accessor.",
+		Suggestion:  "Call `$request->string('id')->toString()` for the string value.",
 		Requires:    requiresLaravel,
 	}
 }

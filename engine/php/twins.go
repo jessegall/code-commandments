@@ -65,8 +65,15 @@ func (j TwinJudge) ArePolymorphicSiblings(poorer, richer engine.ReachedUnit) boo
 
 func (j TwinJudge) ResultsAreIncomparable(poorer, richer engine.ReachedUnit) bool {
 	one, other := Node{Match: poorer.Match}.ReturnTypeName(), Node{Match: richer.Match}.ReturnTypeName()
-	if one == "" || other == "" || one == other {
+	if one == "" || other == "" {
 		return false
+	}
+	if one == other {
+		firstFactory, firstKeys := returnedSections(poorer.Match)
+		otherFactory, otherKeys := returnedSections(richer.Match)
+
+		return firstFactory != "" && firstFactory == otherFactory && len(firstKeys) > 0 && len(otherKeys) > 0 &&
+			!slices.ContainsFunc(firstKeys, func(key string) bool { return slices.Contains(otherKeys, key) })
 	}
 	program := ProgramOf(j.codebase)
 	_, oneIsObject := program.Declaration(one)
@@ -79,6 +86,57 @@ func (j TwinJudge) ResultsAreIncomparable(poorer, richer engine.ReachedUnit) boo
 	}
 
 	return !Overlaps(one, other)
+}
+
+func returnedSections(method engine.Match) (string, []string) {
+	var factory string
+	var keys []string
+	for _, node := range method.OwnDescendants() {
+		if node.Kind() != "Stmt_Return" {
+			continue
+		}
+		call := node.Child("expr")
+		arguments := Arguments(call)
+		if call.Kind() != "Expr_StaticCall" || len(arguments) == 0 || arguments[0].Child("value").Kind() != "Expr_Array" {
+			continue
+		}
+		name := staticFactoryOf(call)
+		if name == "" || factory != "" && factory != name {
+			return "", nil
+		}
+		factory = name
+		payload := arguments[0].Child("value")
+		sections := (Node{Match: payload}).StringKeys()
+		if len(sections) == 0 {
+			sections = spreadSections(method, payload)
+		}
+		keys = append(keys, sections...)
+	}
+
+	return factory, keys
+}
+
+func spreadSections(method, payload engine.Match) []string {
+	var sections []string
+	for _, item := range payload.ChildrenIn("items") {
+		spread := item.Child("value")
+		if !item.HasFlag("spread") {
+			continue
+		}
+		if spread.Kind() == "Expr_Variable" {
+			spread = localValueBefore(method, payload, spread.Name())
+		}
+		if spread.Kind() == "Expr_MethodCall" && spread.Child("var").Name() == "this" {
+			if declaration, found := Method(EnclosingClass(method), CallName(spread)); found {
+				if body := declaration.ChildrenIn("stmts"); len(body) == 1 && body[0].Kind() == "Stmt_Return" {
+					spread = body[0].Child("expr")
+				}
+			}
+		}
+		sections = append(sections, (Node{Match: spread}).StringKeys()...)
+	}
+
+	return sections
 }
 
 var methods = engine.Memoised(func(codebase *engine.Codebase) map[string]engine.Match {

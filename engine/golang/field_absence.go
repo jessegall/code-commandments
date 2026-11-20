@@ -23,3 +23,27 @@ func nullableDataField(field engine.Match) bool {
 	}
 	return false
 }
+
+func passesFieldPointer(read engine.Match) bool {
+	call := read.Parent()
+	if !call.Is(engine.Call) || read.Field() != "args" || call.TargetSymbol() == "" {
+		return false
+	}
+	position := slices.IndexFunc(call.Arguments(), func(argument engine.Match) bool { return argument.Node() == read.Node() })
+	if position < 0 {
+		return false
+	}
+	for _, function := range read.Codebase().Declarations(call.TargetSymbol()) {
+		for _, parameter := range function.Parameters() {
+			count := max(1, len(parameter.ChildrenIn("names")))
+			if position >= count {
+				position -= count
+				continue
+			}
+			typed := parameter.Typed()
+			return typed != nil && typed.Kind == "pointer"
+		}
+	}
+
+	return false
+}

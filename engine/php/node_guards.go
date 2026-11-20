@@ -211,12 +211,40 @@ func (n Node) TypeSwitchTranslatesEveryArm() bool {
 	if len(arms) < 2 {
 		return false
 	}
+	firstFactory := armProjectionFactory(arms[0])
+	if firstFactory != "" && !slices.ContainsFunc(arms[1:], func(arm engine.Match) bool {
+		return armProjectionFactory(arm) != firstFactory
+	}) {
+		return true
+	}
 
 	return !slices.ContainsFunc(arms, func(arm engine.Match) bool {
 		result := armResultOf(arm)
 
 		return !result.Exists() || !isTranslationOf(result, subject)
 	})
+}
+
+func armProjectionFactory(arm engine.Match) string {
+	body := arm.ChildrenIn("stmts")
+	if len(body) == 0 || body[len(body)-1].Kind() != "Stmt_Return" {
+		return ""
+	}
+	items := body[len(body)-1].Child("expr").ChildrenIn("items")
+	if len(items) != 1 || items[0].Child("key").Exists() {
+		return ""
+	}
+
+	return staticFactoryOf(items[0].Child("value"))
+}
+
+func staticFactoryOf(call engine.Match) string {
+	class, method := classNameOf(call.Child("class")), call.Child("name")
+	if call.Kind() != "Expr_StaticCall" || class == "" || method.Kind() != "Identifier" {
+		return ""
+	}
+
+	return class + "::" + method.Name()
 }
 
 func armResultOf(arm engine.Match) engine.Match {

@@ -42,6 +42,7 @@ func (m Match) EnviesAnotherObject() bool {
 	}
 	groups := map[string]map[string]bool{}
 	structural := map[string]bool{}
+	iterated := map[string]bool{}
 	subjects := map[string]Match{}
 	for _, read := range m.OwnDescendants() {
 		if fieldOnSelf(read).Exists() {
@@ -67,9 +68,15 @@ func (m Match) EnviesAnotherObject() bool {
 		if parent.Is(Loop) || parent.Is(MemberAccess) && parent.Receiver().node == read.node {
 			structural[name] = true
 		}
+		if parent.Is(Loop) {
+			iterated[name] = true
+		}
 	}
 	for name, fields := range groups {
 		subject := subjects[name]
+		if data := m.grammar().HoldsPublicState; data != nil && !iterated[name] && data(subject) {
+			continue
+		}
 		if len(fields) >= 3 && structural[name] && subject.hasLocalTypeDeclaration() &&
 			!m.ownsRecordBehavior(subject) && !m.translatesBetweenModules(subject) {
 			return true

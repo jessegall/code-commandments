@@ -46,10 +46,15 @@ func readContainerBindings(codebase *engine.Codebase) *ContainerBindings {
 			bound = append(bound, abstract)
 		}
 		for _, node := range file.Nodes() {
-			if file.Match(node.ID).IsTest() {
-				break
+			match := file.Match(node.ID)
+			if match.IsTest() {
+				if abstract := ClassArgument(match, 0); abstract != "" &&
+					((Node{Match: match}).ResolvesFromContainer() || testContainerResolution(match)) {
+					bindings.referenced[abstract] = true
+				}
+				continue
 			}
-			for _, named := range []string{namedClass(file.Match(node.ID)), strings.TrimLeft(php.Written(node.Declared).Class(), `\`)} {
+			for _, named := range []string{namedClass(match), strings.TrimLeft(php.Written(node.Declared).Class(), `\`)} {
 				if named != "" && !within(node.Span.Start, registrations[named]) {
 					bindings.referenced[named] = true
 				}
@@ -64,6 +69,12 @@ func readContainerBindings(codebase *engine.Codebase) *ContainerBindings {
 	}
 
 	return bindings
+}
+
+func testContainerResolution(call engine.Match) bool {
+	receiver := call.Child("var")
+	return call.Kind() == "Expr_MethodCall" && slices.Contains(ContainerResolvers, CallName(call)) &&
+		receiver.Kind() == "Expr_PropertyFetch" && receiver.Child("var").Name() == "this" && receiver.Child("name").Name() == "app"
 }
 
 func namedClass(node engine.Match) string {

@@ -17,6 +17,7 @@ func (Laravel) Register(exemptions *Exemptions) {
 		On(laravel.McpRequest, "rules").
 		On(laravel.McpTool, "rules", "schema").
 		On(laravel.Model, "casts").
+		On(`Illuminate\Foundation\Auth\User`, "casts").
 		On(laravel.AuthGuard, "user").
 		On(`Illuminate\Database\Eloquent\Factories\Factory`, "definition").
 		On(`Laravel\Fortify\Contracts\ResetsUserPasswords`, "reset").
@@ -35,6 +36,7 @@ type Spatie struct{}
 
 func (Spatie) Register(exemptions *Exemptions) {
 	exemptions.Exempt(NoContainer).Classes(spatie.NoContainerContracts...)
+	exemptions.Exempt(ContractMethod).On(`Spatie\LaravelData\Contracts\PropertyMorphableData`, "morph")
 }
 
 // LaravelActions excuses an action's rules(), the validation the package runs, as FormRequest::rules is.

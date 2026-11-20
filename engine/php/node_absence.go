@@ -236,13 +236,34 @@ func (n Node) ResultIsDeNulled() bool {
 	if assigned.Kind() != "Expr_Assign" || assigned.Child("var").Kind() != "Expr_Variable" {
 		return false
 	}
-	for _, interaction := range Trace(assigned.Child("var")) {
+	uses := Trace(assigned.Child("var"))
+	if slices.ContainsFunc(uses, func(use Interaction) bool { return use.Kind == NullChecked && propagatesNull(use.Node.Parent()) }) {
+		return false
+	}
+	for _, interaction := range uses {
 		if interaction.Kind.DeNulls() {
 			return true
 		}
 	}
 
 	return false
+}
+
+func propagatesNull(test engine.Match) bool {
+	parent := test.Parent()
+	if test.Field() != "cond" {
+		return false
+	}
+	if parent.Kind() == "Expr_Ternary" {
+		branch := parent.Child("if")
+		if test.Kind() == "Expr_BinaryOp_NotIdentical" {
+			branch = parent.Child("else")
+		}
+		return IsNullConstant(branch)
+	}
+	body := parent.ChildrenIn("stmts")
+	return parent.Kind() == "Stmt_If" && test.Kind() == "Expr_BinaryOp_Identical" && len(body) == 1 &&
+		body[0].Kind() == "Stmt_Return" && IsNullConstant(body[0].Child("expr"))
 }
 
 func (n Node) HasNullNormalisedNullableCallback() bool {

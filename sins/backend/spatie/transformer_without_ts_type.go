@@ -15,8 +15,8 @@ func (TransformerWithoutTsType) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "transformer-without-ts-type",
 		Skill:       spatieskills.PageObjects{},
-		Description: `A ` + "`" + `#[WithTransformer]` + "`" + ` changes a property's wire shape but has no paired ` + "`" + `#[TypeScriptType]` + "`" + `/` + "`" + `#[LiteralTypeScriptType]` + "`" + `, so the generated TypeScript keeps the wrong (PHP) type`,
-		Rule:        `Pair every custom ` + "`" + `#[WithTransformer]` + "`" + ` with a ` + "`" + `#[TypeScriptType]` + "`" + ` / ` + "`" + `#[LiteralTypeScriptType]` + "`" + ` that declares the transformed wire shape.`,
+		Description: "On a Data class exported with `#[TypeScript]`, a custom `#[WithTransformer]` changes the wire shape and the generated type still describes the PHP value.",
+		Rule:        "On Data classes exported to TypeScript, pair a custom `#[WithTransformer]` with `#[TypeScriptType]` or `#[LiteralTypeScriptType]` that declares the wire shape.",
 		Suggestion:  `Add ` + "`" + `#[TypeScriptType('...')]` + "`" + ` (or ` + "`" + `#[LiteralTypeScriptType(...)]` + "`" + `) stating the type the transformer serializes to, so the generated frontend type matches the wire.`,
 		Requires:    requiresSpatieData,
 	}

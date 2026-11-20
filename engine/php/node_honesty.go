@@ -130,8 +130,7 @@ func (n Node) HasOwnStateSaveAndRestore() bool {
 	if !n.IsFunctionDeclaration() || n.hasCallableParam() {
 		return false
 	}
-	savedInto := map[string]string{}
-	restoredFrom := map[string][]string{}
+	savedInto := map[string]engine.Match{}
 	for _, statement := range n.ChildrenIn("stmts") {
 		for _, assign := range withDescendants(statement) {
 			if assign.Kind() != "Expr_Assign" {
@@ -139,23 +138,40 @@ func (n Node) HasOwnStateSaveAndRestore() bool {
 			}
 			target, value := assign.Child("var"), assign.Child("expr")
 			if source := selfPropertyOf(value); source != "" && target.Kind() == "Expr_Variable" && target.Name() != "" {
-				savedInto[source] = target.Name()
+				savedInto[source] = assign
 			}
 			if property := selfPropertyOf(target); property != "" && value.Kind() == "Expr_Variable" && value.Name() != "" {
-				if restoresAKeyedGuard(n.Match, assign, property) {
-					continue
+				saved := savedInto[property]
+				if saved.Exists() && saved.Child("var").Name() == value.Name() &&
+					!writesLocalBetween(n.Match, saved, assign, value.Name()) && !restoresAKeyedGuard(n.Match, assign, property) {
+					return true
 				}
-				restoredFrom[property] = append(restoredFrom[property], value.Name())
 			}
-		}
-	}
-	for property, local := range savedInto {
-		if slices.Contains(restoredFrom[property], local) {
-			return true
 		}
 	}
 
 	return false
+}
+
+func writesLocalBetween(method, saved, restored engine.Match, name string) bool {
+	return slices.ContainsFunc(method.OwnDescendants(), func(write engine.Match) bool {
+		start := write.Node().Span.Start
+		return start > saved.Node().Span.Start && start < restored.Node().Span.Start &&
+			strings.HasPrefix(write.Kind(), "Expr_Assign") && variableRoot(write.Child("var")) == name
+	})
+}
+
+func localValueBefore(method, site engine.Match, name string) engine.Match {
+	for _, statement := range method.ChildrenIn("stmts") {
+		assign := statement.Child("expr")
+		target := assign.Child("var")
+		if statement.Kind() == "Stmt_Expression" && assign.Kind() == "Expr_Assign" && target.Kind() == "Expr_Variable" && target.Name() == name &&
+			assign.Node().Span.Start < site.Node().Span.Start && !writesLocalBetween(method, assign, site, name) {
+			return assign.Child("expr")
+		}
+	}
+
+	return engine.Match{}
 }
 
 func restoresAKeyedGuard(method, restore engine.Match, property string) bool {

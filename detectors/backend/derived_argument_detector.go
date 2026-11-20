@@ -27,6 +27,8 @@ func (DerivedArgumentDetector) Find(codebase *engine.Codebase) []engine.Match {
 	redundant := map[string][]engine.Match{}
 	var slots []string
 	supplied, named, unresolved := map[string]int{}, map[string]string{}, map[string]bool{}
+	sources := map[string]string{}
+	differentSources := map[string]bool{}
 	for _, call := range callSites(codebase) {
 		owner, method := types.Callee(call)
 		if owner == "" {
@@ -38,14 +40,19 @@ func (DerivedArgumentDetector) Find(codebase *engine.Codebase) []engine.Match {
 		if buildsItsOwnType(codebase, call, owner, method) {
 			continue
 		}
+		derived := redundantPositions(codebase, call, owner, method)
 		for position := range php.Arguments(call) {
-			supplied[slotName(owner, method, position)]++
-		}
-		for _, position := range redundantPositions(codebase, call, owner, method) {
 			slot := slotName(owner, method, position)
+			supplied[slot]++
+			source, redundantHere := derived[position]
+			if !redundantHere {
+				continue
+			}
 			if redundant[slot] == nil {
 				slots = append(slots, slot)
+				sources[slot] = source
 			}
+			differentSources[slot] = differentSources[slot] || sources[slot] != source
 			redundant[slot] = append(redundant[slot], call)
 			named[slot] = method
 		}
@@ -53,7 +60,7 @@ func (DerivedArgumentDetector) Find(codebase *engine.Codebase) []engine.Match {
 	var findings []engine.Match
 	for _, slot := range slots {
 		calls := redundant[slot]
-		if len(calls) != supplied[slot] || unresolved[named[slot]] {
+		if len(calls) != supplied[slot] || unresolved[named[slot]] || differentSources[slot] {
 			continue
 		}
 		for _, call := range calls {
@@ -70,11 +77,11 @@ func slotName(owner, method string, position int) string {
 	return owner + "::" + method + "#" + strconv.Itoa(position)
 }
 
-func redundantPositions(codebase *engine.Codebase, call engine.Match, owner, method string) []int {
+func redundantPositions(codebase *engine.Codebase, call engine.Match, owner, method string) map[int]string {
 	types := php.TypesOf(codebase)
 	whole := map[string]bool{}
 	flattened := map[string][]int{}
-	var hashes []string
+	sources := map[string]string{}
 	for position, argument := range php.Arguments(call) {
 		subject := subjectOf(argument)
 		if !subject.Exists() || describesItself(codebase, subject, call) || wouldInvertADependency(codebase, owner, subject, call) || adapts(codebase, owner, subject, call) {
@@ -85,21 +92,21 @@ func redundantPositions(codebase *engine.Codebase, call engine.Match, owner, met
 			return nil
 		}
 		hash := php.StructuralHash(subject)
+		sources[hash] = types.TypeOf(subject)
 		if subject.Node() == argument.Child("value").Node() {
 			whole[hash] = true
 			continue
 		}
 		if !php.IsClassName(declared) {
-			if flattened[hash] == nil {
-				hashes = append(hashes, hash)
-			}
 			flattened[hash] = append(flattened[hash], position)
 		}
 	}
-	var positions []int
-	for _, hash := range hashes {
-		if whole[hash] || len(flattened[hash]) >= reassembled {
-			positions = append(positions, flattened[hash]...)
+	positions := map[int]string{}
+	for hash, derived := range flattened {
+		if whole[hash] || len(derived) >= reassembled {
+			for _, position := range derived {
+				positions[position] = sources[hash]
+			}
 		}
 	}
 

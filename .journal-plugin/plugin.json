@@ -1,6 +1,6 @@
 {
     "name": "code-commandments",
-    "version": "7.20.10",
+    "version": "7.20.11",
     "title": "Code Commandments",
     "description": "The static code checker judges the codebase, its hooks run inside the journal, and every rule and language is a switch in its settings",
     "journal": "2.267.16",
@@ -51,7 +51,7 @@
     },
     "env": {
         "CLAUDE_PROJECT_DIR": "{project}",
-        "COMMANDMENTS_RELEASE": "v7.20.10"
+        "COMMANDMENTS_RELEASE": "v7.20.11"
     },
     "setup": [
         {
@@ -1181,7 +1181,7 @@
         },
         "sin_request-accessor-recast": {
             "title": "RequestAccessorRecast",
-            "help": "Re-coercing a typed request accessor at a call site — `$request->string('id')->toString()` or `(string) $request->string('id')` instead of a named getter on a request class",
+            "help": "Casting the Stringable returned by a typed request accessor instead of using its `toString()` method.",
             "type": "flag",
             "default": "true",
             "group": "php/laravel-idioms",
@@ -1315,7 +1315,7 @@
         },
         "sin_transformer-without-ts-type": {
             "title": "TransformerWithoutTsType",
-            "help": "A `#[WithTransformer]` changes a property's wire shape but has no paired `#[TypeScriptType]`/`#[LiteralTypeScriptType]`, so the generated TypeScript keeps the wrong (PHP) type",
+            "help": "On a Data class exported with `#[TypeScript]`, a custom `#[WithTransformer]` changes the wire shape and the generated type still describes the PHP value.",
             "type": "flag",
             "default": "true",
             "group": "php/page-objects",

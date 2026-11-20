@@ -5,11 +5,107 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/jessegall/code-commandments/detectors/backend"
+	backendlaravel "github.com/jessegall/code-commandments/detectors/backend/laravel"
 	"github.com/jessegall/code-commandments/engine"
 	"github.com/jessegall/code-commandments/engine/php"
 	"github.com/jessegall/code-commandments/engine/php/laravel"
 	"github.com/jessegall/code-commandments/engine/php/spatie"
 )
+
+func TestCachedPipesAndEloquentModelsResolveAtCallTime(t *testing.T) {
+	codebase := phpSource(t, `<?php
+namespace App\Site;
+use Illuminate\Container\Attributes\Singleton;
+use Illuminate\Container\Container;
+use Illuminate\Database\Eloquent\Relations\MorphPivot;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+interface Pipe {}
+#[Singleton]
+final class Runner {
+    private array $steps = [];
+    public function __construct(private Container $container) {}
+    /** @param class-string<Pipe> $type */
+    public function step(string $type): object {
+        return $this->steps[$type] ??= $this->container->make($type);
+    }
+}
+final class CachedPipe implements Pipe {
+    public function __construct(private Container $container) {}
+    public function run(): string { return $this->container->make(Context::class)->name(); }
+}
+trait ReadsContext {
+    public function read(): object { return Container::getInstance()->make(Context::class); }
+}
+trait ReadsIdentity { use ReadsContext; }
+final class Account extends Authenticatable { use ReadsIdentity; }
+final class Link extends MorphPivot { use ReadsContext; }
+final class TransientService {
+    public function __construct(private Container $container) {}
+    public function run(): string { return $this->container->make(Context::class)->name(); }
+}
+`)
+	if found := (backendlaravel.ContainerReachDetector{}).Find(codebase); len(found) != 1 || php.EnclosingClassName(found[0]) != `App\Site\TransientService` {
+		t.Fatalf("only the transient service should inject its dependency, found %v", found)
+	}
+}
+
+func TestWireProjectionsAndSharedOperationsKeepTheirBoundaries(t *testing.T) {
+	codebase := phpSource(t, `<?php
+namespace App\Site;
+final readonly class Setting {
+    public function __construct(public string $name, public object $operand) {}
+    public function stored(): array {
+        $operand = $this->operand;
+        return ['name' => $this->name, 'operand' => $operand, 'amount' => $operand instanceof Amount ? $operand->number : null];
+    }
+    public function mixed(object $another): array {
+        $operand = $this->operand;
+        $operand = $another;
+        return ['name' => $this->name, 'operand' => $operand];
+    }
+}
+final class Projection {
+    /** @param list<Amount> $amounts */
+    public function __construct(private array $amounts, private int $position) {}
+    public function current(): ?Amount { return $this->amounts[$this->position] ?? null; }
+    public function operations(object $subject): array {
+        if ($subject instanceof Amount) {
+            $number = $subject->number;
+            return [Operation::write($number)];
+        }
+        if ($subject instanceof Limit) {
+            $limit = $subject->limit;
+            return [Operation::write($limit)];
+        }
+        return [];
+    }
+}
+final readonly class Form {
+    public function __construct(public int $one, public int $two, public int $three) {}
+}
+final readonly class Import {
+    public function __construct(public int $one, public int $two, public int $three) {}
+}
+final class SharedWrite {
+    public function fromForm(Form $form): void { $this->write($form->one, $form->two, $form->three); }
+    public function fromImport(Import $import): void { $this->write($import->one, $import->two, $import->three); }
+    public function write(int $first, int $second, int $third): void {}
+}
+`)
+	if projected := codebase.WhereKind("Expr_Array").Where(engine.As(php.Node.ProjectsTypedObject)).Get(); len(projected) != 1 || projected[0].EnclosingFunction().Name() != "stored" {
+		t.Fatalf("only the stored shape projects one object, found %v", projected)
+	}
+	if findings := backend.NullableRegistryLookupDetector.Find(codebase); len(findings) != 0 {
+		t.Fatalf("a list cursor can reach the end, found %v", findings)
+	}
+	if findings := backend.TypeSwitchDetector.Find(codebase); len(findings) != 0 {
+		t.Fatalf("the operation projection belongs at its destination, found %v", findings)
+	}
+	if findings := (backend.DerivedArgumentDetector{}).Find(codebase); len(findings) != 0 {
+		t.Fatalf("the shared operation accepts two inputs, found %v", findings)
+	}
+}
 
 func TestDependencyDeclarationsAreReadWithoutReportingThem(t *testing.T) {
 	root := t.TempDir()

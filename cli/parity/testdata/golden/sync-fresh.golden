@@ -5186,11 +5186,11 @@ Safe to delete — the conversion simply runs again on the next `composer update
                             },
                             {
                                 "const": "php/RequestAccessorRecast",
-                                "description": "Re-coercing a typed request accessor at a call site — `$request->string('id')->toString()` or `(string) $request->string('id')` instead of a named getter on a request class"
+                                "description": "Casting the Stringable returned by a typed request accessor instead of using its `toString()` method."
                             },
                             {
                                 "const": "backend/RequestAccessorRecast",
-                                "description": "Re-coercing a typed request accessor at a call site — `$request->string('id')->toString()` or `(string) $request->string('id')` instead of a named getter on a request class"
+                                "description": "Casting the Stringable returned by a typed request accessor instead of using its `toString()` method."
                             },
                             {
                                 "const": "php/RestatedComment",
@@ -5274,11 +5274,11 @@ Safe to delete — the conversion simply runs again on the next `composer update
                             },
                             {
                                 "const": "php/TransformerWithoutTsType",
-                                "description": "A `#[WithTransformer]` changes a property's wire shape but has no paired `#[TypeScriptType]`/`#[LiteralTypeScriptType]`, so the generated TypeScript keeps the wrong (PHP) type"
+                                "description": "On a Data class exported with `#[TypeScript]`, a custom `#[WithTransformer]` changes the wire shape and the generated type still describes the PHP value."
                             },
                             {
                                 "const": "backend/TransformerWithoutTsType",
-                                "description": "A `#[WithTransformer]` changes a property's wire shape but has no paired `#[TypeScriptType]`/`#[LiteralTypeScriptType]`, so the generated TypeScript keeps the wrong (PHP) type"
+                                "description": "On a Data class exported with `#[TypeScript]`, a custom `#[WithTransformer]` changes the wire shape and the generated type still describes the PHP value."
                             },
                             {
                                 "const": "php/TypeSwitch",

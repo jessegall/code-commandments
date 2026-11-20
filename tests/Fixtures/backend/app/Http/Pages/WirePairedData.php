@@ -4,6 +4,7 @@ namespace Shop\Http\Pages;
 
 use JesseGall\CodeCommandments\Sins\Backend\Spatie\TransformerWithoutTsType;
 use JesseGall\CodeCommandments\Testing\Righteous;
+use Spatie\TypeScriptTransformer\Attributes\TypeScript;
 use Spatie\LaravelData\Attributes\WithTransformer;
 use Spatie\LaravelData\Data;
 use Spatie\LaravelData\Transformers\DateTimeInterfaceTransformer;
@@ -16,6 +17,7 @@ use Spatie\TypeScriptTransformer\Attributes\TypeScriptType;
  * transformer whose target type the generator already knows.
  */
 #[Righteous(TransformerWithoutTsType::class)]
+#[TypeScript]
 final class WirePairedData extends Data
 {
     public function __construct(

@@ -491,7 +491,11 @@ func (n Node) arrayProjectionSource() string {
 	for _, value := range values {
 		for _, node := range expressionNodes(value) {
 			if node.Kind() == "Expr_Variable" && node.Name() != "" {
-				sources[node.Name()] = true
+				if !n.isOwnFieldAlias(node) {
+					sources[node.Name()] = true
+					continue
+				}
+				sources["this"] = true
 			}
 		}
 	}
@@ -509,6 +513,15 @@ func (n Node) arrayProjectionSource() string {
 	}
 
 	return source
+}
+
+func (n Node) isOwnFieldAlias(variable engine.Match) bool {
+	if variable.Name() == "this" || variable.Parent().Kind() == "Expr_ArrayDimFetch" {
+		return false
+	}
+	function := n.EnclosingFunctionLike()
+
+	return selfPropertyOf(localValueBefore(function.Match, n.Match, variable.Name())) != ""
 }
 
 func expressionNodes(node engine.Match) []engine.Match {
@@ -574,22 +587,32 @@ func (n Node) IsFilledWithRecords() bool {
 }
 
 func (n Node) CarriesOpenMap() bool {
-	if !slices.Contains(n.Node().Flags, "promoted") {
-		return false
-	}
 	function := n.EnclosingFunctionLike()
 	field := n.Child("var").Name()
 	doc, ok := function.DocComment()
-	if !ok || !slices.ContainsFunc(docblockContent(doc.Text), func(line string) bool {
-		tag := "@paramarray<string,mixed>$" + field
-		return strings.Join(strings.Fields(line), "") == tag
-	}) {
+	if !ok || !documentsOpenStringMap(doc.Text, field) {
 		return false
 	}
-	return !slices.ContainsFunc(EnclosingClass(n.Match).Descendants(), func(read engine.Match) bool {
+	promoted := slices.Contains(n.Node().Flags, "promoted")
+	scope := function.Match
+	if promoted {
+		scope = EnclosingClass(n.Match)
+	}
+	return !slices.ContainsFunc(scope.Descendants(), func(read engine.Match) bool {
 		base := read.Child("var")
-		return read.Kind() == "Expr_ArrayDimFetch" && ((base.Kind() == "Expr_Variable" && base.Name() == field) ||
-			selfPropertyOf(base) == field)
+		return read.Kind() == "Expr_ArrayDimFetch" && read.Child("dim").Kind() == "Scalar_String" &&
+			((base.Kind() == "Expr_Variable" && base.Name() == field && enclosingFunction(read).Node() == function.Node()) ||
+				promoted && selfPropertyOf(base) == field)
+	})
+}
+
+func documentsOpenStringMap(doc, field string) bool {
+	return field != "" && slices.ContainsFunc(docblockContent(doc), func(line string) bool {
+		before, after, found := strings.Cut(line, "$")
+		words := strings.Fields(after)
+		declared := strings.Join(strings.Fields(before), "")
+		return found && len(words) > 0 && words[0] == field &&
+			strings.HasPrefix(declared, "@paramarray<string,") && strings.HasSuffix(declared, ">")
 	})
 }
 

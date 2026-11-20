@@ -126,6 +126,16 @@ func (n Node) EveryConstructorParamOptional() bool {
 	})
 }
 
+func (n Node) HasOneOptionalValidatedField() bool {
+	params := php.ConstructorParams(n.Match)
+	if len(params) != 1 || !php.IsNullConstant(params[0].Child("default")) {
+		return false
+	}
+	return slices.ContainsFunc(php.AttributeNames(params[0]), func(name string) bool {
+		return strings.HasPrefix(strings.TrimLeft(name, `\`), `Spatie\LaravelData\Attributes\Validation\`)
+	})
+}
+
 func (n Node) HookMissingComputed() bool {
 	if n.Kind() != "PropertyHook" || !n.program().Extends(php.EnclosingClassName(n.Match), Data) {
 		return false

@@ -677,7 +677,7 @@
         "type": "flag",
         "kind": "flag",
         "default": true,
-        "help": "Re-coercing a typed request accessor at a call site — `$request->string('id')->toString()` or `(string) $request->string('id')` instead of a named getter on a request class"
+        "help": "Casting the Stringable returned by a typed request accessor instead of using its `toString()` method."
     },
     {
         "key": "sin_bare-state-predicate",
@@ -741,7 +741,7 @@
         "type": "flag",
         "kind": "flag",
         "default": true,
-        "help": "A `#[WithTransformer]` changes a property's wire shape but has no paired `#[TypeScriptType]`/`#[LiteralTypeScriptType]`, so the generated TypeScript keeps the wrong (PHP) type"
+        "help": "On a Data class exported with `#[TypeScript]`, a custom `#[WithTransformer]` changes the wire shape and the generated type still describes the PHP value."
     },
     {
         "key": "sin_computed-boolean-argument",

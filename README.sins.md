@@ -254,7 +254,7 @@ _273 sins across 63 skills._
 | `OrphanedBinding` | A container binding whose abstract nothing ever resolves — dead wiring that reads as load-bearing and survives every refactor |
 | `QueryInLoop` | a query run inside a loop — one query per turn, so the work grows with the data while the code reads as though it were one call |
 | `RawRequestInput` | Raw `->input()/->get()/->query()/->post()` on a Request |
-| `RequestAccessorRecast` | Re-coercing a typed request accessor at a call site — `$request->string('id')->toString()` or `(string) $request->string('id')` instead of a named getter on a request class |
+| `RequestAccessorRecast` | Casting the Stringable returned by a typed request accessor instead of using its `toString()` method. |
 
 #### `php/page-objects`
 
@@ -265,7 +265,7 @@ _273 sins across 63 skills._
 | `ManualOutputTransform` | A `Data` computed slot hand-flattens a value object into a wire array, instead of a `#[WithTransformer]` that owns the serialized shape |
 | `PageObjectMissingTypeScript` | A page object travels back in a response but carries no `#[TypeScript]` — the `.vue` page reads it as untyped `any`, so the whole page-prop contract goes unchecked |
 | `ServiceLocationInPageObject` | A page object reaches into the container with `app()`/`resolve()` instead of injecting the collaborator via `#[FromContainer]` |
-| `TransformerWithoutTsType` | A `#[WithTransformer]` changes a property's wire shape but has no paired `#[TypeScriptType]`/`#[LiteralTypeScriptType]`, so the generated TypeScript keeps the wrong (PHP) type |
+| `TransformerWithoutTsType` | On a Data class exported with `#[TypeScript]`, a custom `#[WithTransformer]` changes the wire shape and the generated type still describes the PHP value. |
 
 #### `php/repeated-call-helper`
 

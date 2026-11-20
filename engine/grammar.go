@@ -45,6 +45,8 @@ type Grammar struct {
 	NamespaceSeparator  string
 	IsConstructor       func(Match) bool
 	HoldsPublicState    func(Match) bool
+	PreservesPointer    func(Match) bool
+	ValidatesRecord     func(Match) bool
 	DeclaredClass       func(Match) string
 	IsRecord            func(Match) bool
 	IsValueClass        func(Match) bool

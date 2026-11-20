@@ -20,7 +20,9 @@ func (TransformerWithoutTsTypeDetector) Sin() sins.Sin { return backendsins.Tran
 func (TransformerWithoutTsTypeDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return php.In(codebase).
 		Where(engine.As(func(n php.Node) bool { return n.IsAttributeNamed("WithTransformer") })).
-		Where(engine.As(spatienode.Node.IsDataClass)).
+		Where(func(attribute engine.Match) bool {
+			return (spatienode.Node{Match: php.EnclosingClass(attribute)}).IsTypeScriptData()
+		}).
 		Where(engine.As(spatienode.Node.TransformerLacksTsType)).
 		Get()
 }

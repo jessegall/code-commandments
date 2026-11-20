@@ -19,7 +19,7 @@ class TermController extends Controller
     #[Sinful(RequestAccessorRecast::class)]
     public function search(Request $request): array
     {
-        $term = $request->string('q')->toString();
+        $term = (string) $request->string('q');
 
         return Product::query()
             ->where('name', 'like', "%{$term}%")

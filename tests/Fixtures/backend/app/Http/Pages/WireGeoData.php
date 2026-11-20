@@ -4,6 +4,7 @@ namespace Shop\Http\Pages;
 
 use JesseGall\CodeCommandments\Sins\Backend\Spatie\TransformerWithoutTsType;
 use JesseGall\CodeCommandments\Testing\Sinful;
+use Spatie\TypeScriptTransformer\Attributes\TypeScript;
 use Spatie\LaravelData\Attributes\WithTransformer;
 use Spatie\LaravelData\Data;
 use Spatie\LaravelData\Attributes\Computed;
@@ -13,6 +14,7 @@ use Spatie\LaravelData\Attributes\Computed;
  * `#[TypeScriptType]` / `#[LiteralTypeScriptType]` — so the frontend type is wrong. Declared on a
  * property here rather than a promoted param, to vary the shape.
  */
+#[TypeScript]
 final class WireGeoData extends Data
 {
     #[Sinful(TransformerWithoutTsType::class)]

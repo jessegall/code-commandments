@@ -463,14 +463,14 @@ public function term(): string
 
 ### request-accessor-recast
 
-Re-coercing a typed request accessor at a call site — `$request->string('id')->toString()` or `(string) $request->string('id')` instead of a named getter on a request class
+Casting the Stringable returned by a typed request accessor instead of using its `toString()` method.
 
 ```php
 ----------[ Bad ]----------
 
 public function search(Request $request): array
 {
-    $term = $request->string('q')->toString();
+    $term = (string) $request->string('q');
 
     return Product::query()
         ->where('name', 'like', "%{$term}%")

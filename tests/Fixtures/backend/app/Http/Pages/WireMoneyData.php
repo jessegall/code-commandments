@@ -5,6 +5,7 @@ namespace Shop\Http\Pages;
 use JesseGall\CodeCommandments\Sins\Backend\Spatie\TransformerWithoutTsType;
 use JesseGall\CodeCommandments\Testing\Fixed;
 use JesseGall\CodeCommandments\Testing\Sinful;
+use Spatie\TypeScriptTransformer\Attributes\TypeScript;
 use Spatie\LaravelData\Attributes\WithTransformer;
 use Spatie\LaravelData\Data;
 use Spatie\TypeScriptTransformer\Attributes\TypeScriptType;
@@ -14,6 +15,7 @@ use Spatie\TypeScriptTransformer\Attributes\TypeScriptType;
  * so — the generated TS keeps `Money` while the wire carries a string. The transformer needs a paired
  * `#[TypeScriptType('string')]`.
  */
+#[TypeScript]
 final class WireMoneyData extends Data
 {
     #[Sinful(TransformerWithoutTsType::class)]
@@ -32,6 +34,7 @@ final class WireMoneyData extends Data
  * The FIX for the same money slot: the custom transformer is PAIRED with a `#[TypeScriptType('string')]`
  * declaring the shape it serializes to, so the generated frontend type matches what the wire carries.
  */
+#[TypeScript]
 final class WirePricedData extends Data
 {
     #[Fixed(TransformerWithoutTsType::class)]

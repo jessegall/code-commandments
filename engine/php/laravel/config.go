@@ -217,10 +217,28 @@ func ContainerResolves(codebase *engine.Codebase, class string) bool {
 }
 
 func builtByEloquent(program *php.Program, class string) bool {
-	if program.Extends(class, Model) {
+	return modelOrModelTrait(program, class, map[string]bool{})
+}
+
+func modelOrModelTrait(program *php.Program, class string, seen map[string]bool) bool {
+	if slices.ContainsFunc(eloquentBases, func(base string) bool { return program.Extends(class, base) }) {
 		return true
 	}
+	if seen[class] {
+		return false
+	}
+	seen[class] = true
+	defer delete(seen, class)
 	users := program.UsersOfTrait(class)
 
-	return len(users) > 0 && !slices.ContainsFunc(users, func(user string) bool { return !builtByEloquent(program, user) })
+	return len(users) > 0 && !slices.ContainsFunc(users, func(user string) bool {
+		return !modelOrModelTrait(program, user, seen)
+	})
+}
+
+var eloquentBases = []string{
+	Model,
+	`Illuminate\Foundation\Auth\User`,
+	`Illuminate\Database\Eloquent\Relations\Pivot`,
+	`Illuminate\Database\Eloquent\Relations\MorphPivot`,
 }

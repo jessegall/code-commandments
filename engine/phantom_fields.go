@@ -32,7 +32,7 @@ func (owner Match) fieldVerdict(field Match) FlowVerdict {
 		}
 		parent := read.Grouped().Parent()
 		switch {
-		case read.acknowledgesAbsence():
+		case read.acknowledgesAbsence() || read.grammar().PreservesPointer != nil && read.grammar().PreservesPointer(read):
 			verdict.Guard++
 		case parent.Is(Assignment) && len(parent.Children()) == 2 && parent.Children()[0].node == read.node:
 			if parent.Children()[1].IsNullish() {

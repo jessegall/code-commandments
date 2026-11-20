@@ -284,7 +284,7 @@ final class InjectedStatusPage extends Data
 
 ### transformer-without-ts-type
 
-A `#[WithTransformer]` changes a property's wire shape but has no paired `#[TypeScriptType]`/`#[LiteralTypeScriptType]`, so the generated TypeScript keeps the wrong (PHP) type
+On a Data class exported with `#[TypeScript]`, a custom `#[WithTransformer]` changes the wire shape and the generated type still describes the PHP value.
 
 ```php
 ----------[ Bad ]----------

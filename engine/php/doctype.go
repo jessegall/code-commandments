@@ -48,6 +48,22 @@ func ElementNamed(docblock, variable string) string {
 	return ""
 }
 
+func ClassStringBound(function engine.Match, variable string) string {
+	doc, ok := DocComment(function)
+	if !ok {
+		return ""
+	}
+	for _, tag := range docTag.FindAllStringSubmatch(doc.Text, -1) {
+		if tag[2] == variable && strings.HasPrefix(tag[1], "class-string<") {
+			if bound := ElementOf(tag[1]); bound != "" {
+				return Resolve(bound, function.Source())
+			}
+		}
+	}
+
+	return ""
+}
+
 func ElementOf(written string) string {
 	open := strings.Index(written, "<")
 	switch {

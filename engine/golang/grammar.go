@@ -35,6 +35,8 @@ func init() {
 		TestFile:            testFile,
 		TestAssertion:       testAssertion,
 		HoldsPublicState:    passesPublicStruct,
+		PreservesPointer:    passesFieldPointer,
+		ValidatesRecord:     validatesRecord,
 		Body:                body,
 		Otherwise:           otherwise,
 		Condition:           condition,

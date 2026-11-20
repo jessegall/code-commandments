@@ -75,8 +75,8 @@ lives in one place instead of being re-typed wherever you query. And mutate a mo
       _Load what the loop needs in one query before it: eager-load the relation with `with()`, or fetch the rows by their keys and index them, then let the loop read what is already in memory._
 - [ ] Read request input through a typed accessor (`$request->string('x')`); never raw `->input()`/`->get()`/`->query()`.
       _A named getter on a `FormRequest` subclass (`$request->productId()`)._
-- [ ] Expose a named getter on a typed request class; don't re-coerce a typed accessor (`$request->string('id')->toString()`) at a call site.
-      _A named getter on a typed request class returning the coerced value._
+- [ ] Use `toString()` to read a plain string from the typed request accessor.
+      _Call `$request->string('id')->toString()` for the string value._
 
 ## Worked example
 

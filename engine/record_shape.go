@@ -10,6 +10,9 @@ func (m Match) ReadsRecordBag() bool {
 	if !m.Is(Parameter) || lookup == nil || !m.isLooseRecord() {
 		return false
 	}
+	if validates := m.grammar().ValidatesRecord; validates != nil && validates(m) {
+		return false
+	}
 	keys := map[string]bool{}
 	for _, node := range m.DeclaringFunction().OwnDescendants() {
 		container, key := lookup(node)

@@ -1,6 +1,11 @@
 package php
 
-import "github.com/jessegall/code-commandments/engine"
+import (
+	"slices"
+	"strings"
+
+	"github.com/jessegall/code-commandments/engine"
+)
 
 func nullableFieldDeclarations(class engine.Match) []engine.Match {
 	var fields []engine.Match
@@ -56,5 +61,36 @@ func absenceTrace(finding engine.Match) []string {
 }
 func nullableLookup(match engine.Match) bool {
 	node := Node{Match: match}
-	return node.IsCoalesce() && node.IsReturnedValue() && node.CoalesceRight().IsNull() && node.CoalesceLeft().IsOwnedKeyedLookup() && !node.IsFallbackOfAFirstMatch() && !ProgramOf(match.Codebase()).OverridesMethod(EnclosingClassName(match), EnclosingFunctionName(match))
+	return node.IsCoalesce() && node.IsReturnedValue() && node.CoalesceRight().IsNull() && node.CoalesceLeft().IsOwnedKeyedLookup() &&
+		!isSequenceCursor(match.Child("left")) && !node.IsFallbackOfAFirstMatch() && !ProgramOf(match.Codebase()).OverridesMethod(EnclosingClassName(match), EnclosingFunctionName(match))
+}
+
+func isSequenceCursor(lookup engine.Match) bool {
+	fields := Fields(EnclosingClass(lookup))
+	index := lookup.Child("dim")
+	if Written(index.Typed()).Render() != "int" && !slices.ContainsFunc(fields, func(field Field) bool {
+		return field.Name == selfPropertyOf(index) && Written(field.Type).Render() == "int"
+	}) {
+		return false
+	}
+	field := selfPropertyOf(lookup.Child("var"))
+	for _, declared := range fields {
+		if declared.Name != field {
+			continue
+		}
+		doc := declared.Declaration
+		if declared.Promoted {
+			doc = enclosingFunction(doc)
+		}
+		comment, ok := DocComment(doc)
+		if !ok {
+			return false
+		}
+		for _, tag := range docTag.FindAllStringSubmatch(comment.Text, -1) {
+			if strings.HasPrefix(tag[1], "list<") && (tag[2] == field || !declared.Promoted && tag[2] == "") {
+				return true
+			}
+		}
+	}
+	return false
 }

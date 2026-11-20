@@ -78,9 +78,14 @@ func (l *Lifetimes) heldThroughOwnersThatOutliveAScope() {
 
 func readLifetimes(codebase *engine.Codebase) *Lifetimes {
 	read := &Lifetimes{kept: map[string]string{}, aliases: map[string]string{}, resets: map[string]bool{}, holds: map[string][]string{}, outlives: map[string]bool{}}
+	var classes []string
+	var caches []engine.Match
 	for _, file := range codebase.Of(contract.PHP).Files() {
 		for _, node := range file.Nodes() {
 			match := file.Match(node.ID)
+			if match.IsTest() {
+				break
+			}
 			if kept, bound := lifetimeOfBinding[CallName(match)]; bound {
 				if abstract := BoundAbstractOf(match); abstract != "" {
 					read.kept[strings.TrimLeft(abstract, `\`)] = kept
@@ -99,6 +104,7 @@ func readLifetimes(codebase *engine.Codebase) *Lifetimes {
 				read.resets[strings.TrimLeft(php.EnclosingClassName(match), `\`)] = true
 			}
 			if node.Kind == "Stmt_Class" && node.Symbol != "" {
+				classes = append(classes, strings.TrimLeft(node.Symbol, `\`))
 				for _, parameter := range php.ConstructorParams(match) {
 					if held := strings.TrimLeft(php.Written(parameter.Node().Declared).Class(), `\`); held != "" {
 						owner := strings.TrimLeft(node.Symbol, `\`)
@@ -111,11 +117,45 @@ func readLifetimes(codebase *engine.Codebase) *Lifetimes {
 					}
 				}
 			}
+			if match.Kind() == "Expr_AssignOp_Coalesce" {
+				caches = append(caches, match)
+			}
+		}
+	}
+	program := php.ProgramOf(codebase)
+	for _, cache := range caches {
+		if bound := cachedClassBound(cache); bound != "" {
+			owner := php.EnclosingClassName(cache)
+			for _, class := range classes {
+				if program.IsA(class, bound) {
+					read.holds[owner] = append(read.holds[owner], class)
+				}
+			}
 		}
 	}
 	read.heldThroughOwnersThatOutliveAScope()
 
 	return read
+}
+
+func cachedClassBound(cache engine.Match) string {
+	index := cache.Child("var")
+	key := index.Child("dim")
+	if index.Kind() != "Expr_ArrayDimFetch" || key.Kind() != "Expr_Variable" || key.Name() == "" ||
+		!(php.Node{Match: index.Child("var")}).IsOwnPropertyRead() {
+		return ""
+	}
+	value := cache.Child("expr")
+	resolvesKey := slices.ContainsFunc(append([]engine.Match{value}, value.OwnDescendants()...), func(call engine.Match) bool {
+		argument := (php.Node{Match: call}).Argument(0)
+
+		return call.Kind() == "Expr_MethodCall" && argument.Kind() == "Expr_Variable" && argument.Name() == key.Name() &&
+			slices.Contains(ContainerResolvers, CallName(call)) && (Node{Match: call}).isOnTheContainer()
+	})
+	if !resolvesKey {
+		return ""
+	}
+	return php.ClassStringBound((php.Node{Match: cache}).EnclosingFunctionLike().Match, key.Name())
 }
 
 func (n Node) ResolvesLateInALongerLivedOwner() bool {
