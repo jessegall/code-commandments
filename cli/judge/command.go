@@ -87,7 +87,7 @@ func (Command) Help() help.Help {
 		Form("judge --list", "list every detector, grouped by skill").
 		Option("--list", "list every detector grouped by the skill that fixes it, and run none of them").
 		Option("--skill=NAME", "only run detectors for one skill (group), e.g. spatie-data").
-		Option("--sin=NAME", "only run detectors for one sin (lenient name match), e.g. nullable-callback").
+		Option("--sin=NAME", "only run detectors matching any named sin (lenient match), repeated or comma-separated").
 		Option("--tag=TAG", "only run the project's own rules carrying one of these tags, repeated or comma-separated, e.g. --tag testing").
 		Option("--exclude=A,B", "skip findings in paths containing any fragment").
 		Option("--one-file-rules", "run only the rules that answer from one file, naming the rest as not asked; "+
@@ -182,14 +182,14 @@ func (c Command) Run(in *cli.Input, console cli.Console) (int, error) {
 	enabled = append(enabled, own.Enabled(project)...)
 	options.unreadableRules = own.Unreadable
 
-	selected := selectFrom(enabled, options.skill, options.sin, options.tags)
+	selected := selectFrom(enabled, options.skill, options.sinQueries, options.tags)
 
 	if options.oneFileRules {
 		selected = slices.DeleteFunc(slices.Clone(selected), detectors.ReadsBeyondOneFile)
 	}
 
 	if len(selected) == 0 {
-		console.Warn("✗ No detector matched --skill=" + options.skill + " --sin=" + options.sin + " --tag=" + strings.Join(options.tags, ","))
+		console.Warn("✗ No detector matched --skill=" + options.skill + " --sin=" + strings.Join(options.sinQueries, ",") + " --tag=" + strings.Join(options.tags, ","))
 
 		return 2, nil
 	}
@@ -488,7 +488,7 @@ func (c Command) run(tasks []Task, options options, progress *cli.Progress, pars
 	return judgement
 }
 
-func selectFrom(list []detectors.Detector, skill, sin string, tags []string) []detectors.Detector {
+func selectFrom(list []detectors.Detector, skill string, sinQueries, tags []string) []detectors.Detector {
 	var kept []detectors.Detector
 
 	for _, detector := range list {
@@ -498,7 +498,7 @@ func selectFrom(list []detectors.Detector, skill, sin string, tags []string) []d
 			continue
 		}
 
-		if sin != "" && !definition.Scopes(sin) {
+		if len(sinQueries) > 0 && !slices.ContainsFunc(sinQueries, definition.Scopes) {
 			continue
 		}
 
@@ -529,6 +529,19 @@ func matchesSkill(detector detectors.Detector, query string) bool {
 	return slices.ContainsFunc(teaching.Related, func(related skill.Relation) bool {
 		return strings.HasPrefix(related.Slug, string(engine)+"/") && catalog.Normalise(related.Slug) == needle
 	})
+}
+
+func sinQueriesOf(in *cli.Input) []string {
+	var queries []string
+	for _, option := range in.Repeated("sin") {
+		for part := range strings.SplitSeq(option, ",") {
+			if query := strings.TrimSpace(part); query != "" {
+				queries = append(queries, query)
+			}
+		}
+	}
+
+	return queries
 }
 
 func tagsOf(in *cli.Input) []string {
@@ -920,7 +933,7 @@ type options struct {
 	path            string
 	pathGiven       bool
 	skill           string
-	sin             string
+	sinQueries      []string
 	list            bool
 	exclude         []string
 	checklist       []string
@@ -957,7 +970,6 @@ func optionsOf(in *cli.Input, space workspace.Workspace) options {
 	}
 
 	skill, _ := in.Option("skill")
-	sin, _ := in.Option("sin")
 	parallel := defaultParallel
 	value, parallelGiven := in.Option("parallel")
 
@@ -980,7 +992,7 @@ func optionsOf(in *cli.Input, space workspace.Workspace) options {
 		path:          strings.TrimRight(path, "/"),
 		pathGiven:     given,
 		skill:         skill,
-		sin:           sin,
+		sinQueries:    sinQueriesOf(in),
 		list:          in.HasFlag("list"),
 		exclude:       in.List("exclude"),
 		checklist:     targets,

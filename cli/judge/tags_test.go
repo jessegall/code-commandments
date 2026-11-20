@@ -19,7 +19,7 @@ func ownRule(t *testing.T, name, tags string) detectors.Detector {
 		t.Fatal(err)
 	}
 
-	return found
+	return &found
 }
 
 func TestATagRunsOnlyTheRulesCarryingIt(t *testing.T) {
@@ -41,13 +41,13 @@ func TestATagRunsOnlyTheRulesCarryingIt(t *testing.T) {
 	}
 
 	for _, each := range cases {
-		if got := selectFrom(all, "", "", each.tags); len(got) != each.want {
+		if got := selectFrom(all, "", nil, each.tags); len(got) != each.want {
 			t.Errorf("--tag %v ran %d rules, want %d", each.tags, len(got), each.want)
 		}
 	}
 
-	if got := selectFrom(all, "", "", []string{"testing"}); len(got) == 2 && got[0].Sin().Definition().Name != "sleep-in-a-test" {
-		t.Errorf("--tag testing kept %v first, where the rules keep their order", got[0].Sin().Definition().Name)
+	if got := selectFrom(all, "", nil, []string{"testing"}); len(got) == 2 && got[0] != all[0] {
+		t.Error("--tag testing changed the order of the rules")
 	}
 }
 

@@ -11,8 +11,8 @@ Options:
   --list                         list every detector grouped by the skill that fixes it, and run
                                  none of them
   --skill=NAME                   only run detectors for one skill (group), e.g. spatie-data
-  --sin=NAME                     only run detectors for one sin (lenient name match), e.g.
-                                 nullable-callback
+  --sin=NAME                     only run detectors matching any named sin (lenient match), repeated
+                                 or comma-separated
   --tag=TAG                      only run the project's own rules carrying one of these tags,
                                  repeated or comma-separated, e.g. --tag testing
   --exclude=A,B                  skip findings in paths containing any fragment
