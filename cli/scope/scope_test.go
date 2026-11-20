@@ -8,6 +8,8 @@ import (
 	"testing"
 
 	"github.com/jessegall/code-commandments/cli/workspace"
+	"github.com/jessegall/code-commandments/contract"
+	"github.com/jessegall/code-commandments/engine"
 )
 
 func project(t *testing.T) string {
@@ -87,6 +89,25 @@ func TestNoFlagTakesEveryFileLessTheFrozenAndTheExcluded(t *testing.T) {
 		t.Error("a frozen file is in")
 	case scope.Includes(root + "/generated/G.php"):
 		t.Error("an excluded file is in")
+	}
+}
+
+func TestFrozenRestrictionUsesParsedFilesAndFallsBackForOtherFiles(t *testing.T) {
+	root := t.TempDir()
+	frozen, live, unread := filepath.Join(root, "Frozen.php"), filepath.Join(root, "Live.php"), filepath.Join(root, "Unread.php")
+	write(t, root, "Frozen.php", "<?php class FrozenFile {}")
+	write(t, root, "Live.php", "<?php // @code-commandments-frozen\nclass LiveFile {}")
+	write(t, root, "Unread.php", "<?php\n#[Frozen]\nclass UnreadFile {}")
+	codebase := engine.New(func(string) ([]byte, error) { return []byte("<?php class File {}"), nil }, &contract.Stream{
+		Header: contract.Header{Language: contract.PHP},
+		Files: []*contract.File{
+			{Path: frozen, Comments: []contract.Comment{{Text: "@code-commandments-frozen"}}},
+			{Path: live},
+		},
+	})
+	targets := Everything().WithParsedFiles(codebase.Files())
+	if targets.Includes(frozen) || !targets.Includes(live) || targets.Includes(unread) {
+		t.Error("the scope must use each parsed snapshot, and read the file when it has no tree")
 	}
 }
 

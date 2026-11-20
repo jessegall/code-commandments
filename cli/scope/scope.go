@@ -19,6 +19,7 @@ import (
 	"github.com/jessegall/code-commandments/cli/scan"
 	"github.com/jessegall/code-commandments/cli/source"
 	"github.com/jessegall/code-commandments/cli/workspace"
+	"github.com/jessegall/code-commandments/engine"
 	"github.com/jessegall/code-commandments/walk"
 )
 
@@ -295,6 +296,20 @@ func (s Scope) And(restriction FileScope) Scope {
 	return s
 }
 
+func (s Scope) WithParsedFiles(files []*engine.File) Scope {
+	s.restrictions = slices.Clone(s.restrictions)
+	for at, restriction := range s.restrictions {
+		if frozen, ok := restriction.(*Frozen); ok {
+			parsed := make(map[string]*engine.File, len(files))
+			for _, file := range files {
+				parsed[walk.Real(file.Path)] = file
+			}
+			s.restrictions[at] = &Frozen{parsed: parsed, earlier: frozen}
+		}
+	}
+	return s
+}
+
 func (s Scope) Includes(file string) bool {
 	for _, restriction := range s.restrictions {
 		if !restriction.Includes(file) {
@@ -560,7 +575,9 @@ func (e Excluded) Includes(file string) bool {
 
 // Frozen leaves out every frozen file, reading each file's mark once, safely from several goroutines.
 type Frozen struct {
-	seen sync.Map
+	seen    sync.Map
+	parsed  map[string]*engine.File
+	earlier *Frozen
 }
 
 func (f *Frozen) Includes(file string) bool {
@@ -569,6 +586,12 @@ func (f *Frozen) Includes(file string) bool {
 		return true
 	}
 
+	if parsed := f.parsed[real]; parsed != nil {
+		return !parsed.IsFrozen()
+	}
+	if f.earlier != nil {
+		return f.earlier.Includes(real)
+	}
 	if frozen, known := f.seen.Load(real); known {
 		return !frozen.(bool)
 	}

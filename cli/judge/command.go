@@ -319,6 +319,7 @@ func (c Command) judge(options options, selected []detectors.Detector, judged co
 		csharpFiles = files
 	}
 
+	targets = targets.WithParsedFiles(codebase.Files())
 	judgement.Findings = keep(asWalked(outside(judgement.Findings, readOnly), sources.GivenOf()), options.exclude, targets, judged)
 
 	if space.IsJournalDriven() {
