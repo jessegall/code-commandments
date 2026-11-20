@@ -51,8 +51,6 @@ func excused(codebase *engine.Codebase, detector Exemptable, finding engine.Matc
 func matchesExemption(codebase *engine.Codebase, finding engine.Match, tag Tag, by By) bool {
 	node := php.Node{Match: finding}
 	switch by {
-	case EnclosingMethod:
-		return Excuses(codebase, tag, php.EnclosingClassName(finding), php.EnclosingFunctionName(finding))
 	case ReturnConsumer:
 		return returnOnlyUsedInContract(codebase, finding, tag)
 	case CallbackConsumer:
@@ -64,7 +62,17 @@ func matchesExemption(codebase *engine.Codebase, finding engine.Match, tag Tag, 
 		return takesArrayInput(codebase, tag, laravel.CollectionMapConsumer(node.CallbackConsumer()))
 	}
 
-	return Excuses(codebase, tag, php.EnclosingClassName(finding), "")
+	return excusesEnclosing(codebase, tag, finding, by)
+}
+
+func excusesEnclosing(codebase *engine.Codebase, tag Tag, finding engine.Match, by By) bool {
+	class := php.EnclosingClassName(finding)
+	method := ""
+	if by == EnclosingMethod {
+		method = php.EnclosingFunctionName(finding)
+	}
+
+	return Excuses(codebase, tag, class, method)
 }
 
 func requiredCallbackArray(codebase *engine.Codebase, node php.Node, tag Tag) bool {
@@ -116,7 +124,7 @@ func belongsToContractArray(codebase *engine.Codebase, item engine.Match) bool {
 	}
 
 	return node.OverridesReturnSignature() ||
-		Excuses(codebase, ArrayReturnContract, php.EnclosingClassName(record), php.EnclosingFunctionName(record))
+		excusesEnclosing(codebase, ArrayReturnContract, record, EnclosingMethod)
 }
 
 func takesArrayInput(codebase *engine.Codebase, tag Tag, call engine.Match) bool {

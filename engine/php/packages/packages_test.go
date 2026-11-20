@@ -12,7 +12,7 @@ import (
 
 func TestTheShippedPackagesExcuseWhatPhpsExcuse(t *testing.T) {
 	codebase := shop.Codebase(t)
-	shop.Parity(t, "exemptions", func(answer shop.Answer, node engine.Match) any {
+	shop.Parity(t, "exemptions", func(answer shop.Answer, _ engine.Match) any {
 		asked := map[string]bool{}
 		if err := json.Unmarshal(answer.Answer, &asked); err != nil {
 			t.Fatal(err)
