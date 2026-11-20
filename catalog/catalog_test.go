@@ -25,6 +25,17 @@ type Draft struct{}
 func (Draft) Rule()        {}
 func (Draft) Unpublished() {}
 
+type Binding struct {
+	name   string
+	engine catalog.Engine
+}
+
+func (Binding) Rule() {}
+
+func (b Binding) Name() string { return b.name }
+
+func (b Binding) Engine() catalog.Engine { return b.engine }
+
 func names(rules []Rule) []string {
 	var named []string
 	for _, rule := range rules {
@@ -63,6 +74,20 @@ func TestARuleRegisteredTwicePanics(t *testing.T) {
 		}
 	}()
 	rules.Register(catalog.Vue, Apple{})
+}
+
+func TestBindingsKeepTheirRuleAndEngineWhenTheyShareAType(t *testing.T) {
+	var rules catalog.Catalog[Rule]
+	bindings := []Binding{{"One", catalog.PHP}, {"Two", catalog.PHP}, {"One", catalog.Python}}
+	for _, binding := range bindings {
+		rules.Register(binding.Engine(), binding)
+	}
+	if got := names(rules.Of(catalog.PHP)); !slices.Equal(got, []string{"One", "Two"}) {
+		t.Fatalf("PHP has %v, want One and Two", got)
+	}
+	if got, known := rules.EngineOf(Binding{"One", catalog.Python}); !known || got != catalog.Python {
+		t.Fatalf("the Python binding belongs to %q, known: %t", got, known)
+	}
 }
 
 func TestNameIsTheShortTypeName(t *testing.T) {

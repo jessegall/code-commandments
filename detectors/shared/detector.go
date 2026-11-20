@@ -43,11 +43,17 @@ type Rule interface {
 }
 
 // Sin is a shared rule's one sin, whatever language found it.
-type Sin[R Rule] struct{}
+type Sin struct {
+	rule Rule
+	name string
+}
 
-func (Sin[R]) Definition() sins.Definition {
-	var rule R
-	text := rule.Sin()
+func SinOf(rule Rule) Sin {
+	return Sin{rule: rule, name: reflect.TypeOf(rule).Name()}
+}
+
+func (s Sin) Definition() sins.Definition {
+	text := s.rule.Sin()
 
 	return sins.Definition{
 		Name:        text.Name,
@@ -59,29 +65,29 @@ func (Sin[R]) Definition() sins.Definition {
 	}
 }
 
-func (Sin[R]) Name() string {
-	return reflect.TypeFor[R]().Name()
+func (s Sin) Name() string {
+	return s.name
 }
 
-func (Sin[R]) FormerNames() []string {
-	var rule R
-
-	return formerNames(rule.Sin(), func(former Former) string { return strings.TrimSuffix(former.Detector, "Detector") })
+func (s Sin) Engine() catalog.Engine {
+	return catalog.Shared
 }
 
-func (Sin[R]) Published() bool {
-	var rule R
+func (s Sin) FormerNames() []string {
+	return formerNames(s.rule.Sin(), func(former Former) string { return strings.TrimSuffix(former.Detector, "Detector") })
+}
 
-	return !catalog.IsUnpublished(rule)
+func (s Sin) Published() bool {
+	return !catalog.IsUnpublished(s.rule)
 }
 
 // Detector judges one language by a shared rule and names what it finds by that rule's one sin.
-type Detector[R Rule, L Language] struct {
-	repentable  bool
-	unpublished bool
-	excused     func(*engine.Codebase, engine.Match) bool
-	exemptions  []packages.Exemption
-	reject      engine.Check
+type Detector struct {
+	rule     Rule
+	sin      Sin
+	language Language
+	name     string
+	binding
 }
 
 // Option is what a language states about its binding of a shared rule.
@@ -125,25 +131,20 @@ func Excusing(excused func(*engine.Codebase, engine.Match) bool, exemptions ...p
 
 var registered sync.Map
 
-func Bind[R Rule, L Language](options ...Option) Detector[R, L] {
-	detector := bound[R, L](options)
-	register[L](detector)
-
-	return detector
+func Bind[R Rule, L Language](options ...Option) Detector {
+	return register(bound[R, L](options))
 }
 
 // LastDetector runs a repair after the other fixes settle its source.
-type LastDetector[R Rule, L Language] struct {
-	Detector[R, L]
+type LastDetector struct {
+	Detector
 }
 
-func BindLast[R Rule, L Language](options ...Option) LastDetector[R, L] {
-	detector := LastDetector[R, L]{bound[R, L](options)}
-	register[L](detector)
-	return detector
+func BindLast[R Rule, L Language](options ...Option) LastDetector {
+	return register(LastDetector{bound[R, L](options)})
 }
 
-func (LastDetector[R, L]) RunsLast() {}
+func (LastDetector) RunsLast() {}
 
 // TracedRule can describe the value flow behind a finding.
 type TracedRule interface {
@@ -152,19 +153,19 @@ type TracedRule interface {
 }
 
 // TracedDetector attaches a rule's value-flow evidence to its findings.
-type TracedDetector[R TracedRule, L Language] struct {
-	Detector[R, L]
+type TracedDetector struct {
+	Detector
+	traced TracedRule
 }
 
-func BindTraced[R TracedRule, L Language](options ...Option) TracedDetector[R, L] {
-	detector := TracedDetector[R, L]{bound[R, L](options)}
-	register[L](detector)
-	return detector
-}
-
-func (TracedDetector[R, L]) ChainPath(finding engine.Match, codebase *engine.Codebase) []string {
+func BindTraced[R TracedRule, L Language](options ...Option) TracedDetector {
 	var rule R
-	return rule.ChainPath(finding, codebase)
+
+	return register(TracedDetector{bound[R, L](options), rule})
+}
+
+func (d TracedDetector) ChainPath(finding engine.Match, codebase *engine.Codebase) []string {
+	return d.traced.ChainPath(finding, codebase)
 }
 
 // GroupedRule is a shared rule whose findings recur in groups: the key says which group a finding is in, the same in every language.
@@ -174,52 +175,59 @@ type GroupedRule interface {
 }
 
 // GroupedDetector judges one language by a grouped shared rule, so a report names each finding's twins.
-type GroupedDetector[R GroupedRule, L Language] struct {
-	Detector[R, L]
+type GroupedDetector struct {
+	Detector
+	grouped GroupedRule
 }
 
-func BindGrouped[R GroupedRule, L Language](options ...Option) GroupedDetector[R, L] {
-	detector := GroupedDetector[R, L]{bound[R, L](options)}
-	register[L](detector)
-
-	return detector
-}
-
-func (GroupedDetector[R, L]) GroupKey(match engine.Match) (string, bool) {
+func BindGrouped[R GroupedRule, L Language](options ...Option) GroupedDetector {
 	var rule R
 
-	return rule.GroupKey(match)
+	return register(GroupedDetector{bound[R, L](options), rule})
 }
 
-func bound[R Rule, L Language](options []Option) Detector[R, L] {
+func (d GroupedDetector) GroupKey(match engine.Match) (string, bool) {
+	return d.grouped.GroupKey(match)
+}
+
+func bound[R Rule, L Language](options []Option) Detector {
+	var rule R
+	var language L
+
+	return bind(rule, language, options)
+}
+
+func bind(rule Rule, language Language, options []Option) Detector {
 	var settings binding
 	for _, option := range options {
 		option(&settings)
 	}
-	if _, already := registered.LoadOrStore(reflect.TypeFor[R](), true); !already {
-		sins.Register(catalog.Shared, Sin[R]{})
+	sin := SinOf(rule)
+	if _, already := registered.LoadOrStore(reflect.TypeOf(rule), true); !already {
+		sins.Register(catalog.Shared, sin)
 	}
 
-	return Detector[R, L]{repentable: settings.repentable, unpublished: settings.unpublished, excused: settings.excused, exemptions: settings.exemptions, reject: settings.reject}
+	return Detector{rule: rule, sin: sin, language: language, name: catalog.Name(sin) + "Detector", binding: settings}
 }
 
-func register[L Language](detector detectors.Detector) {
-	var language L
-	detectors.Register(language.Engine(), detector)
+func register[D interface {
+	detectors.Detector
+	detectors.Engined
+}](detector D) D {
+	detectors.Register(detector.Engine(), detector)
+	return detector
 }
 
-func (Detector[R, L]) Sin() sins.Sin {
-	return Sin[R]{}
+func (d Detector) Sin() sins.Sin {
+	return d.sin
 }
 
-func (d Detector[R, L]) Find(codebase *engine.Codebase) []engine.Match {
-	var rule R
-	var language L
-	part := codebase.Of(catalog.LanguagesOf(language.Engine())...)
-	if candidates, ok := any(rule).(CandidateRule); ok && d.reject != nil {
+func (d Detector) Find(codebase *engine.Codebase) []engine.Match {
+	part := codebase.Of(catalog.LanguagesOf(d.Engine())...)
+	if candidates, ok := d.rule.(CandidateRule); ok && d.reject != nil {
 		return candidates.FindRejecting(part, d.reject)
 	}
-	found := rule.Find(part)
+	found := d.rule.Find(part)
 	if d.excused == nil {
 		return found
 	}
@@ -227,55 +235,44 @@ func (d Detector[R, L]) Find(codebase *engine.Codebase) []engine.Match {
 	return slices.DeleteFunc(found, func(finding engine.Match) bool { return d.excused(codebase, finding) })
 }
 
-func (d Detector[R, L]) Exemptions() []packages.Exemption {
+func (d Detector) Exemptions() []packages.Exemption {
 	return d.exemptions
 }
 
-func (Detector[R, L]) Name() string {
-	return reflect.TypeFor[R]().Name() + "Detector"
+func (d Detector) Name() string {
+	return d.name
 }
 
-func (Detector[R, L]) FormerNames() []string {
-	var rule R
-	var language L
-	if name := rule.Sin().Formerly[language.Engine()].Detector; name != "" {
+func (d Detector) FormerNames() []string {
+	if name := d.rule.Sin().Formerly[d.Engine()].Detector; name != "" {
 		return []string{name}
 	}
 
 	return nil
 }
 
-func (Detector[R, L]) Language() any {
-	var language L
-
-	return language
+func (d Detector) Language() any {
+	return d.language
 }
 
-func (Detector[R, L]) Engine() catalog.Engine {
-	var language L
-	return language.Engine()
+func (d Detector) Engine() catalog.Engine {
+	return d.language.Engine()
 }
 
-func (d Detector[R, L]) Repents() bool {
+func (d Detector) Repents() bool {
 	return d.repentable
 }
 
-func (d Detector[R, L]) Published() bool {
-	var rule R
-
-	return !d.unpublished && !catalog.IsUnpublished(rule)
+func (d Detector) Published() bool {
+	return !d.unpublished && !catalog.IsUnpublished(d.rule)
 }
 
-func (Detector[R, L]) ReadsAcrossFiles() bool {
-	var rule R
-
-	return catalog.IsCrossFile(rule)
+func (d Detector) ReadsAcrossFiles() bool {
+	return catalog.IsCrossFile(d.rule)
 }
 
-func (Detector[R, L]) ReadsForward() bool {
-	var rule R
-
-	return catalog.IsForward(rule)
+func (d Detector) ReadsForward() bool {
+	return catalog.IsForward(d.rule)
 }
 
 func formerNames(text Text, part func(Former) string) []string {

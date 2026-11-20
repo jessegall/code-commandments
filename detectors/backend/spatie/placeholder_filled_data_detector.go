@@ -16,7 +16,7 @@ type PlaceholderFilledDataDetector struct{}
 func init() { detectors.Register(catalog.PHP, PlaceholderFilledDataDetector{}) }
 
 func (PlaceholderFilledDataDetector) Sin() sins.Sin {
-	return shared.Sin[shared.PlaceholderFilledData]{}
+	return shared.SinOf(shared.PlaceholderFilledData{})
 }
 
 func (PlaceholderFilledDataDetector) Find(codebase *engine.Codebase) []engine.Match {

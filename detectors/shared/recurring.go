@@ -13,25 +13,23 @@ type RecurringRule interface {
 }
 
 // RecurringDetector judges occurrences together even when their trees arrive separately.
-type RecurringDetector[R RecurringRule, L Language] struct {
-	GroupedDetector[R, L]
+type RecurringDetector struct {
+	GroupedDetector
+	recurring RecurringRule
 }
 
-func BindRecurring[R RecurringRule, L Language](options ...Option) RecurringDetector[R, L] {
-	detector := RecurringDetector[R, L]{GroupedDetector[R, L]{bound[R, L](options)}}
-	register[L](detector)
-	return detector
+func BindRecurring[R RecurringRule, L Language](options ...Option) RecurringDetector {
+	var rule R
+	return register(RecurringDetector{GroupedDetector{bound[R, L](options), rule}, rule})
 }
 
-func (d RecurringDetector[R, L]) Find(codebase *engine.Codebase) []engine.Match {
+func (d RecurringDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return detectors.Aggregate(d, codebase)
 }
 
-func (d RecurringDetector[R, L]) Candidates(codebase *engine.Codebase) []detectors.Candidate {
-	var rule R
-	var language L
+func (d RecurringDetector) Candidates(codebase *engine.Codebase) []detectors.Candidate {
 	var candidates []detectors.Candidate
-	for _, match := range rule.Occurrences(codebase.Of(catalog.LanguagesOf(language.Engine())...)) {
+	for _, match := range d.recurring.Occurrences(codebase.Of(catalog.LanguagesOf(d.Engine())...)) {
 		if key, ok := d.GroupKey(match); ok {
 			candidates = append(candidates, detectors.Candidate{At: match, Record: key})
 		}
@@ -39,7 +37,7 @@ func (d RecurringDetector[R, L]) Candidates(codebase *engine.Codebase) []detecto
 	return candidates
 }
 
-func (RecurringDetector[R, L]) Decide(candidates []detectors.Candidate) []int {
+func (RecurringDetector) Decide(candidates []detectors.Candidate) []int {
 	groups := engine.Recurring(len(candidates), func(at int) (string, bool) {
 		key, ok := candidates[at].Record.(string)
 		return key, ok

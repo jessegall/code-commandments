@@ -17,7 +17,7 @@ func init() {
 }
 
 func (ConvertedArgumentDetector) Sin() sins.Sin {
-	return shared.Sin[shared.ConvertedArgument]{}
+	return shared.SinOf(shared.ConvertedArgument{})
 }
 
 func (d ConvertedArgumentDetector) Find(codebase *engine.Codebase) []engine.Match {

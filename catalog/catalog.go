@@ -151,7 +151,7 @@ func (c *Catalog[T]) Register(engine Engine, rule T) {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
 	for _, registered := range c.entries {
-		if reflect.TypeOf(registered.rule) == reflect.TypeOf(rule) {
+		if sameRegistration(registered.rule, rule) {
 			panic(fmt.Sprintf("%s is registered twice", Name(rule)))
 		}
 	}
@@ -199,12 +199,27 @@ func (c *Catalog[T]) EngineOf(rule T) (Engine, bool) {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
 	for _, registered := range c.entries {
-		if reflect.TypeOf(registered.rule) == reflect.TypeOf(rule) && !IsUnpublished(rule) {
+		if sameRegistration(registered.rule, rule) && !IsUnpublished(rule) {
 			return registered.engine, true
 		}
 	}
 
 	return "", false
+}
+
+func sameRegistration(left, right any) bool {
+	if reflect.TypeOf(left) != reflect.TypeOf(right) {
+		return false
+	}
+	type namedRule interface {
+		Name() string
+		Engine() Engine
+	}
+	if named, hasName := left.(namedRule); hasName {
+		other := right.(namedRule)
+		return named.Name() == other.Name() && named.Engine() == other.Engine()
+	}
+	return true
 }
 
 // Publishing is a rule that answers for itself whether it is published, as a rule bound from a shared one does.

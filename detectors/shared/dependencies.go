@@ -33,18 +33,16 @@ func (NamespaceDependency) Sin() Text {
 func (NamespaceDependency) CrossFile() {}
 
 // LayerDependency judges imports using the layers configured for one language.
-type LayerDependency[L Language] struct {
-	Detector[NamespaceDependency, L]
+type LayerDependency struct {
+	Detector
 	layers map[string][]string
 }
 
-func BindLayerDependency[L Language]() LayerDependency[L] {
-	detector := LayerDependency[L]{Detector: bound[NamespaceDependency, L](nil)}
-	register[L](detector)
-	return detector
+func BindLayerDependency[L Language]() LayerDependency {
+	return register(LayerDependency{Detector: bound[NamespaceDependency, L](nil)})
 }
 
-func (d LayerDependency[L]) Layer(name string, mayUse ...string) LayerDependency[L] {
+func (d LayerDependency) Layer(name string, mayUse ...string) LayerDependency {
 	layers := make(map[string][]string, len(d.layers)+1)
 	maps.Copy(layers, d.layers)
 	layers[name] = mayUse
@@ -52,11 +50,10 @@ func (d LayerDependency[L]) Layer(name string, mayUse ...string) LayerDependency
 	return d
 }
 
-func (d LayerDependency[L]) Find(codebase *engine.Codebase) []engine.Match {
+func (d LayerDependency) Find(codebase *engine.Codebase) []engine.Match {
 	if len(d.layers) == 0 {
 		return nil
 	}
-	var language L
-	part := codebase.Of(catalog.LanguagesOf(language.Engine())...)
+	part := codebase.Of(catalog.LanguagesOf(d.Engine())...)
 	return engine.ImportArrows(part).LayerViolations(engine.Layers(d.layers, "/", true))
 }
