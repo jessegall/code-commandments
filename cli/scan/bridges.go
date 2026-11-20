@@ -20,27 +20,24 @@ import (
 	"github.com/jessegall/code-commandments/engine"
 	"github.com/jessegall/code-commandments/engine/frontend"
 	"github.com/jessegall/code-commandments/engine/php"
+	"github.com/jessegall/code-commandments/engine/php/laravel"
 	"github.com/jessegall/code-commandments/walk"
 )
 
-// Bridge is one language's bridge: the name its socket and its service carry, the word its has- verb uses, the languages it reads, the name a reader of a report sees, how it is reached, whether its files may be read in shares, and what it must be told once where reaching it says something a person should know.
+// Bridge describes the parser, its source context, and how a scan reaches and caches it.
 type Bridge struct {
-	Kind       string
-	Word       string
-	Languages  []source.Language
-	Label      string
-	Projects   *bridge.Projects
-	InOwnOrder bool
-	// InUnits says the bridge reads a whole solution and is judged a project at a time, never file by file.
-	InUnits bool
-	Reach   Reach
-	Notice  func() string
-	// Prepare readies the bridge on this machine, as fetching the one a release ships, and says what it did; nil
-	// when the binary carries everything the bridge needs.
-	Prepare func() (string, error)
-	// Identity names the code that writes the bridge's lines, so lines it kept stand across releases that leave it
-	// alone; nil when only the whole binary can say.
-	Identity func() string
+	Kind         string
+	Word         string
+	Languages    []source.Language
+	Label        string
+	Projects     *bridge.Projects
+	InOwnOrder   bool
+	InUnits      bool
+	Reach        Reach
+	Notice       func() string
+	ContextFiles func(string) []string
+	Prepare      func() (string, error)
+	Identity     func() string
 }
 
 // identity is what the bridge's kept lines are keyed on: its own code where it can name it, else the whole binary.
@@ -375,9 +372,10 @@ func (p *process) Close() error {
 var Bridges = []Bridge{PHPBridge, Frontend, CSharp, Python, GoBridge}
 
 var PHPBridge = Bridge{Kind: "php", Word: "php", Languages: []source.Language{source.PHP}, Label: "PHP",
-	Reach:    Process{Command: func([]string) ([]string, error) { return php.Here().Command() }},
-	Notice:   nothingToSay,
-	Identity: bridge.PHPIdentity,
+	Reach:        Process{Command: func([]string) ([]string, error) { return php.Here().Command() }},
+	Notice:       nothingToSay,
+	ContextFiles: laravel.RouteContextFiles,
+	Identity:     bridge.PHPIdentity,
 }
 
 var Frontend = Bridge{Kind: "frontend", Word: "frontend", Languages: []source.Language{source.Vue, source.TypeScript}, Label: "Vue and TypeScript",

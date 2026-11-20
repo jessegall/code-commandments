@@ -76,25 +76,40 @@ func (s Sources) GivenOf() Given {
 func Walk(roots []string, excluded source.Excluded) Sources {
 	sources := Sources{byLanguage: map[source.Language][]string{}, roots: roots}
 	seen := map[string]bool{}
-
 	for _, root := range roots {
-		for _, file := range source.Sources(root, excluded) {
-			if seen[file] {
-				continue
-			}
-
-			seen[file] = true
-			if info, err := os.Stat(file); err == nil && unreadable(file, info.Size()) {
-				sources.tooLarge = append(sources.tooLarge, file)
-
-				continue
-			}
-			language := source.OfFile(file)
-			sources.byLanguage[language] = append(sources.byLanguage[language], file)
+		sources.readRoot(root, excluded, seen)
+	}
+	for _, bridge := range Bridges {
+		if bridge.ContextFiles == nil || sources.Count(bridge.Languages...) == 0 {
+			continue
+		}
+		project := sources.project()
+		if project == "" && len(roots) > 0 {
+			project = walk.Real(roots[0])
+		}
+		for _, path := range bridge.ContextFiles(project) {
+			sources.readRoot(path, excluded, seen)
 		}
 	}
 
 	return sources
+}
+
+func (s *Sources) readRoot(root string, excluded source.Excluded, seen map[string]bool) {
+	for _, file := range source.Sources(root, excluded) {
+		if seen[file] {
+			continue
+		}
+
+		seen[file] = true
+		if info, err := os.Stat(file); err == nil && unreadable(file, info.Size()) {
+			s.tooLarge = append(s.tooLarge, file)
+
+			continue
+		}
+		language := source.OfFile(file)
+		s.byLanguage[language] = append(s.byLanguage[language], file)
+	}
 }
 
 func OneFile(path string) Sources {

@@ -27,12 +27,16 @@ func PathFits(route, written []string) bool {
 	if len(route) != len(written) {
 		return false
 	}
+	literalMatched := false
 	for at, segment := range route {
-		parameter := strings.HasPrefix(segment, "{") && strings.HasSuffix(segment, "}")
-		if !parameter && segment != written[at] {
+		if strings.HasPrefix(segment, "{") && strings.HasSuffix(segment, "}") {
+			continue
+		}
+		if segment != written[at] {
 			return false
 		}
+		literalMatched = true
 	}
 
-	return true
+	return literalMatched
 }

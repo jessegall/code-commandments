@@ -32,6 +32,9 @@ func (r *RoutePaths) Matches(written []string) bool {
 func readRoutePaths(codebase *engine.Codebase) *RoutePaths {
 	read := &RoutePaths{}
 	for _, file := range codebase.Of(contract.PHP).Files() {
+		if isFortifyRouteFile(file) {
+			continue
+		}
 		for _, node := range file.Nodes() {
 			call := file.Match(node.ID)
 			if VerbOf(call) == "" || !rootsAtRouter(call) || !isNamedRegistration(call) {

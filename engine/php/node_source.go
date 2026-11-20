@@ -24,8 +24,26 @@ func (n Node) ConstructorHasSideEffect() bool {
 		}
 	}
 	for _, call := range withDescendants(constructor) {
-		if isMethodSend(call) && asksACollaborator(call, parameters) && (Node{Match: call}).ResultIsDiscarded() {
+		node := Node{Match: call}
+		if isMethodSend(call) && asksACollaborator(call, parameters) && node.ResultIsDiscarded() && node.executesIn(constructor) {
 			return true
+		}
+	}
+
+	return false
+}
+
+func (n Node) executesIn(function engine.Match) bool {
+	for _, enclosing := range n.Ancestors() {
+		if enclosing == function {
+			return true
+		}
+		if !(Node{Match: enclosing}).IsFunctionLike() {
+			continue
+		}
+		call := enclosing.Parent()
+		if call.Kind() != "Expr_FuncCall" || call.Child("name") != enclosing || call.Child("args").Kind() == "VariadicPlaceholder" {
+			return false
 		}
 	}
 

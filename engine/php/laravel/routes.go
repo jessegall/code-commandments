@@ -92,6 +92,9 @@ func readRouteActions(codebase *engine.Codebase) *RouteActions {
 	program := php.ProgramOf(codebase)
 	surface := ResponseSurfaceOf(codebase)
 	for _, file := range codebase.Of(contract.PHP).Files() {
+		if isFortifyRouteFile(file) {
+			continue
+		}
 		for _, node := range file.Nodes() {
 			registration := file.Match(node.ID)
 			if !IsRegistration(registration) {
@@ -198,28 +201,49 @@ var routesInAFile = new(int)
 
 func readRouteNames(codebase *engine.Codebase) *RouteNames {
 	read := &RouteNames{names: map[string]bool{}}
+	var installed *engine.File
 
 	for _, file := range codebase.Of(contract.PHP).Files() {
-		held := engine.Contribution(routesInAFile, file, routesOfOneFile)
-
-		for name := range held.names {
-			read.names[name] = true
+		if isFortifyRouteFile(file) {
+			installed = file
+			continue
 		}
+		read.merge(engine.Contribution(routesInAFile, file, routesOfOneFile))
+	}
 
-		read.families = append(read.families, held.families...)
-		read.dynamic = read.dynamic || held.dynamic
+	if read.HasAny() && installed != nil && !fortifyRoutesIgnored(codebase) {
+		read.addNames(routesPermittedInFile(installed, readFortifyRouteSettings(codebase, installed).includes))
 	}
 
 	return read
 }
 
+func (r *RouteNames) merge(held *RouteNames) {
+	r.addNames(held)
+	r.families = append(r.families, held.families...)
+	r.dynamic = r.dynamic || held.dynamic
+}
+
+func (r *RouteNames) addNames(held *RouteNames) {
+	for name := range held.names {
+		r.names[name] = true
+	}
+}
+
 func routesOfOneFile(file *engine.File) *RouteNames {
+	return routesPermittedInFile(file, nil)
+}
+
+func routesPermittedInFile(file *engine.File, includes func(engine.Match) bool) *RouteNames {
 	read := &RouteNames{names: map[string]bool{}}
 
 	{
 		var matches []engine.Match
 		for _, node := range file.Nodes() {
-			matches = append(matches, file.Match(node.ID))
+			match := file.Match(node.ID)
+			if includes == nil || includes(match) {
+				matches = append(matches, match)
+			}
 		}
 		for _, call := range matches {
 			if !isRouteChainCall(call, "name") || isGroupCall(call.Parent()) {

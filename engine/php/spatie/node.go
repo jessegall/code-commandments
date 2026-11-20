@@ -316,10 +316,11 @@ func (n Node) NullableWireObject() bool {
 	if !class.Exists() || !n.program().Extends(php.EnclosingClassName(n.Match), Data) || !classHasAttribute(class, "TypeScript") {
 		return false
 	}
-	if n.isHookedProperty() || (n.Kind() != "Param" && n.Kind() != "Stmt_Property") {
+	field, ok := php.AsField(n.Match)
+	if !ok || !field.IsPublicInstance() || field.HasAttribute(hidden) || n.isHookedProperty() {
 		return false
 	}
-	inner := nullableClassName(n.Node().Declared)
+	inner := nullableClassName(field.Type)
 	enum, _ := n.program().Declaration(inner)
 
 	return inner != "" && (n.program().Extends(inner, Data) ||

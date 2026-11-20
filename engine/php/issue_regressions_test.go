@@ -158,7 +158,11 @@ final class Setting extends Data {
 }
 #[TypeScript]
 final class Status extends Data {
-    public function __construct(public readonly ?Phase $phase, public readonly ?Category $category) {}
+    private ?Category $cache = null;
+    public static ?Category $shared = null;
+    public ?Category $visible = null;
+    public function __construct(public readonly ?Phase $phase, public readonly ?Category $category,
+        ?Category $input, private ?Category $internal, #[\Spatie\LaravelData\Attributes\Hidden] public ?Category $hidden) {}
 }
 final class Request extends Data {
     public function __construct(public readonly string|Optional $name = new Optional()) {}
@@ -176,9 +180,74 @@ final class Request extends Data {
 		}
 		t.Fatal("only the non-wire input should be reported")
 	}
-	wire := codebase.WhereKind("Param").Where(engine.As(spatie.Node.NullableWireObject)).Get()
-	if len(wire) != 1 || wire[0].Child("var").Name() != "category" {
-		t.Fatalf("only the unbacked enum should be reported, found %v", wire)
+	for kind, fieldName := range map[string]string{"Param": "category", "Stmt_Property": "visible"} {
+		wire := codebase.WhereKind(kind).Where(engine.As(spatie.Node.NullableWireObject)).Get()
+		if len(wire) != 1 {
+			t.Errorf("expected one nullable wire field of kind %s, found %v", kind, wire)
+			continue
+		}
+		field, _ := php.AsField(wire[0])
+		if field.Name != fieldName {
+			t.Errorf("a field outside the wire shape was reported: %s", field.Name)
+		}
+	}
+}
+
+func TestConstructorSideEffectsFollowExecution(t *testing.T) {
+	codebase := phpSource(t, `<?php
+namespace App;
+class Direct {
+    public function __construct(Service $service) { $service->warm(); }
+}
+class Deferred {
+    public function __construct(Service $service) {
+        $this->middleware(function () use ($service) { $service->warm(); });
+    }
+}
+class Immediate {
+    public function __construct(Service $service) {
+        (function () use ($service) { $service->warm(); })();
+    }
+}
+`)
+	effects := codebase.WhereKind("Stmt_Class").Where(engine.As(php.Node.ConstructorHasSideEffect)).Get()
+	if len(effects) != 2 || effects[0].Name() != "Direct" || effects[1].Name() != "Immediate" {
+		t.Fatalf("expected the direct and immediately invoked effects, found %v", effects)
+	}
+}
+
+func TestMatchDefaultsDistinguishEnumAnswersFromMissingValues(t *testing.T) {
+	codebase := phpSource(t, `<?php
+namespace App;
+enum Status {
+    case Open;
+    case Closed;
+    public function isOpen(): bool {
+        return match ($this) { self::Open => true, default => false };
+    }
+    public function labels(): array {
+        return match ($this) { self::Open => ['open'], default => [] };
+    }
+    public function label(): ?string {
+        return match ($this) { self::Open => 'open', default => null };
+    }
+}
+function enabled(string $feature): bool {
+    return match ($feature) { 'ready' => true, default => false };
+}
+function rates(string $country): array {
+    return match ($country) { 'NL' => [10], default => [] };
+}
+`)
+	reported := codebase.WhereKind("Expr_Match").Where(engine.As(php.Node.IsMatchWithAbsenceDefault)).Get()
+	if len(reported) != 3 {
+		t.Fatalf("expected the nullable enum answer and two open-input defaults, found %v", reported)
+	}
+	for _, match := range reported {
+		method := (php.Node{Match: match}).EnclosingFunctionLike().Name()
+		if method != "label" && method != "enabled" && method != "rates" {
+			t.Errorf("an ordinary answer on an enum was reported: %s", method)
+		}
 	}
 }
 

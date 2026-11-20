@@ -190,8 +190,14 @@ func (n Node) IsMatchWithAbsenceDefault() bool {
 		return false
 	}
 	arm := n.defaultArm()
+	if !arm.Exists() {
+		return false
+	}
+	answer := Node{Match: arm.Child("body")}
+	ordinaryAnswer := (answer.IsFalse() && n.FillsSlotTyped("bool")) ||
+		(answer.IsEmptyArrayLiteral() && n.FillsSlotTyped("array"))
 
-	return arm.Exists() && Node{Match: arm.Child("body")}.IsAbsenceValue()
+	return answer.IsAbsenceValue() && !(ordinaryAnswer && n.matchSubjectIsEnum())
 }
 
 func (n Node) MatchHandledArmsAdmitNull() bool {
