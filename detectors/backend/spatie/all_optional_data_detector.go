@@ -21,6 +21,9 @@ func (AllOptionalDataDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return php.In(codebase).
 		WhereKind("Stmt_Class").
 		Where(engine.As(spatienode.Node.IsDataClass)).
-		Where(engine.As(spatienode.Node.EveryConstructorParamOptional)).
+		Where(engine.As(spatienode.Node.ModelsOmissionOnEveryDataField)).
+		Where(engine.As(spatienode.Node.DeclaresDataFields)).
+		Reject(engine.As(spatienode.Node.HasOptionalTypeScriptDefaults)).
+		Reject(engine.As(spatienode.Node.IsSparseUpdate)).
 		Get()
 }

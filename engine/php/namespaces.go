@@ -27,33 +27,40 @@ func slicesContainsFold(values []string, value string) bool {
 }
 
 func (n Node) NamespaceName() string {
-	for at := n; at.Exists(); at = at.Up() {
-		if at.Kind() == "Stmt_Namespace" {
-			return at.Child("name").Name()
-		}
+	return n.namespaceDeclaration().Child("name").Name()
+}
+
+func (n Node) namespaceDeclaration() Node {
+	ancestor := n
+	for ancestor.Exists() && ancestor.Kind() != "Stmt_Namespace" {
+		ancestor = ancestor.Up()
 	}
 
-	return ""
+	return ancestor
 }
 
 func (n Node) ArgumentOfCall() string {
-	for at := n; at.Exists(); at = at.Up() {
+	at := n
+	for at.Exists() {
 		if at.Kind() == "Arg" {
 			return at.Up().CallName()
 		}
 		if at.Node() != n.Node() && at.CallName() != "" {
 			return ""
 		}
+		at = at.Up()
 	}
 
 	return ""
 }
 
 func (n Node) EnclosingAttributeName() string {
-	for at := n; at.Exists(); at = at.Up() {
+	at := n
+	for at.Exists() {
 		if at.Kind() == "Attribute" {
 			return at.Child("name").Name()
 		}
+		at = at.Up()
 	}
 
 	return ""

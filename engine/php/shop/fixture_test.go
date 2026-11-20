@@ -61,6 +61,10 @@ func TestAllNullableDataProvesItselfOnTheShop(t *testing.T) {
 	proveBackendDetector(t, spatie.AllNullableDataDetector{})
 }
 
+func TestAllOptionalDataProvesItselfOnTheShop(t *testing.T) {
+	proveBackendDetector(t, spatie.AllOptionalDataDetector{})
+}
+
 func proveBackendDetector(t *testing.T, detector detectors.Detector) {
 	t.Helper()
 	fixturetest.Prove(t, fixture.Fixture{

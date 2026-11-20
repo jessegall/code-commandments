@@ -35,6 +35,23 @@ var docScalars = []string{
 
 var docTag = regexp.MustCompile(`@(?:var|param)\s+([^\s]+)(?:\s+\$([A-Za-z_]\w*))?`)
 
+func DocumentedParamClass(function engine.Match, variable string) string {
+	doc, ok := DocComment(function)
+	if !ok {
+		return ""
+	}
+	for _, tag := range docTag.FindAllStringSubmatch(doc.Text, -1) {
+		if tag[2] == variable && strings.HasPrefix(tag[0], "@param") {
+			owner := (Node{Match: function}).namespaceDeclaration()
+			if owner.Exists() {
+				return resolveName(tag[1], owner.Child("name").Name(), importsIn(owner.Node().Children))
+			}
+			return Resolve(tag[1], function.Source())
+		}
+	}
+	return ""
+}
+
 func ElementNamed(docblock, variable string) string {
 	for _, tag := range docTag.FindAllStringSubmatch(docblock, -1) {
 		if variable != "" && tag[2] != "" && tag[2] != variable {
@@ -84,14 +101,18 @@ func ElementOf(written string) string {
 }
 
 func Resolve(written string, file *engine.File) string {
+	return resolveName(written, Namespace(file), Imports(file))
+}
+
+func resolveName(written, namespace string, imports map[string]string) string {
 	if strings.HasPrefix(written, `\`) {
 		return strings.TrimLeft(written, `\`)
 	}
 	root, _, _ := strings.Cut(written, `\`)
-	if imported, ok := Imports(file)[root]; ok {
+	if imported, ok := imports[root]; ok {
 		return imported + written[len(root):]
 	}
-	if namespace := Namespace(file); namespace != "" {
+	if namespace != "" {
 		return namespace + `\` + written
 	}
 
@@ -99,8 +120,12 @@ func Resolve(written string, file *engine.File) string {
 }
 
 func Imports(file *engine.File) map[string]string {
+	return importsIn(file.Nodes())
+}
+
+func importsIn(nodes []*contract.Node) map[string]string {
 	imports := map[string]string{}
-	for _, node := range file.Nodes() {
+	for _, node := range nodes {
 		if node.Kind != "Stmt_Use" || len(node.Modifiers) > 0 {
 			continue
 		}
@@ -110,7 +135,7 @@ func Imports(file *engine.File) map[string]string {
 			}
 		}
 	}
-	for _, node := range file.Nodes() {
+	for _, node := range nodes {
 		if node.Kind != "Stmt_GroupUse" {
 			continue
 		}

@@ -121,8 +121,18 @@ func (n Node) EveryConstructorParamOptional() bool {
 	}
 
 	return !classHasAttribute(class, "TypeScript") || slices.ContainsFunc(promoted, func(param engine.Match) bool {
-		return strings.TrimLeft((php.Node{Match: param.Child("default")}).NewClassName(), `\`) != Optional
+		return !hasOptionalDefault(param)
 	})
+}
+
+func (n Node) HasOptionalTypeScriptDefaults() bool {
+	return classHasAttribute(n.Match, "TypeScript") && !slices.ContainsFunc(php.PublicInstanceFields(n.Match), func(field php.Field) bool {
+		return !hasOptionalDefault(field.Node)
+	})
+}
+
+func hasOptionalDefault(field engine.Match) bool {
+	return strings.TrimLeft((php.Node{Match: field.Child("default")}).NewClassName(), `\`) == Optional
 }
 
 func (n Node) HasOneOptionalValidatedField() bool {
