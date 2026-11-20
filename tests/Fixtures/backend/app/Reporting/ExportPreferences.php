@@ -1,6 +1,6 @@
 <?php
 
-namespace Shop\Exports;
+namespace Shop\Reporting;
 
 use JesseGall\CodeCommandments\Sins\Backend\CapabilityProbeHub;
 use JesseGall\CodeCommandments\Testing\Sinful;

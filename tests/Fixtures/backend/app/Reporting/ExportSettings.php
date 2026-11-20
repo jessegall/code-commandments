@@ -1,6 +1,6 @@
 <?php
 
-namespace Shop\Exports;
+namespace Shop\Reporting;
 
 final class ExportSettings
 {
