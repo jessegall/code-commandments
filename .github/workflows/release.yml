@@ -192,7 +192,10 @@ jobs:
             gzip -n -9 -k "$binary"
             gzip -dc "$binary.gz" | cmp "$binary" -
           done
-          sha256sum commandments-*.gz >> SHA256SUMS
+          sums="$(mktemp SHA256SUMS.XXXXXX)"
+          cat SHA256SUMS > "$sums"
+          sha256sum commandments-*.gz >> "$sums"
+          mv -f "$sums" SHA256SUMS
       - uses: actions/upload-artifact@v4
         with:
           name: release-${{ inputs.version }}
