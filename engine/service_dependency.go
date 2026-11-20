@@ -16,6 +16,12 @@ func (m Match) InjectsAnotherModulesConcreteService() bool {
 	if owner == "" || supplier == "" || owner == supplier {
 		return false
 	}
+	if read.ModuleLayer == nil && read.NamespaceOf != nil && read.NamespaceSeparator != "" {
+		separator := read.NamespaceSeparator
+		if owner+separator+constructor.EnclosingType().Name() == supplier || supplier+separator+class.Name() == owner {
+			return false
+		}
+	}
 	if read.SameModule != nil && read.SameModule(constructor, class) {
 		return false
 	}

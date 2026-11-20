@@ -115,9 +115,16 @@ final class LogPurger {
     public function __construct(private Logs\LogStore $store) {}
     public function purge(string $path): void { $this->store->remove($path); }
 }
+final class Logs {
+    public function __construct(private Logs\LogStore $writer) {}
+    public function purge(string $path): void { $this->writer->remove($path); }
+}
 namespace Shop\Logs;
 final class LogStore {
     public function remove(string $path): void { unlink($path); }
+}
+final class LogHistory {
+    public function __construct(private \Shop\Logs $logs) {}
 }
 namespace Shop\Customers;
 use Illuminate\Database\Eloquent\Model;
