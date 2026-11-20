@@ -37,6 +37,34 @@ func (m Match) TestsBlankDefault() bool {
 	})
 }
 
+type blankField [2]string
+
+func (m Match) HasFieldBlankReplacement(name string) bool {
+	return fieldsWhoseBlankIsReplaced(m.Codebase())[blankField{m.EnclosingType().Identity(), name}]
+}
+
+func fieldsWhoseBlankIsReplaced(codebase *Codebase) map[blankField]bool {
+	return Analysis(codebase, "fields-whose-blank-is-replaced", func(codebase *Codebase) map[blankField]bool {
+		fields := map[blankField]bool{}
+		for _, read := range codebase.WhereIs(MemberAccess).Get() {
+			replacement := read.grammar().BlankReplacement
+			if replacement == nil {
+				continue
+			}
+			grouped := read.Grouped()
+			subject, fallback := replacement(grouped.Parent())
+			if subject.node != grouped.node || !fallback.Exists() || fallback.IsBlankString() || subject.SameSyntax(fallback) {
+				continue
+			}
+			owner := read.Declaring().Identity()
+			if owner != "" {
+				fields[blankField{owner, read.NameRead()}] = true
+			}
+		}
+		return fields
+	})
+}
+
 func (m Match) ManufacturesArgument() bool {
 	if read := m.grammar().ManufacturesFill; read != nil {
 		return read(m)

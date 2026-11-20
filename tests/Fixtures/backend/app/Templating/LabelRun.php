@@ -30,4 +30,11 @@ final class LabelRun
     {
         return $this->buffer;
     }
+
+    public function display(string $suffix = ''): string
+    {
+        $heading = static fn (string $suffix): string => $suffix === '' ? 'Labels' : $suffix;
+
+        return $heading($this->buffer) . $suffix;
+    }
 }

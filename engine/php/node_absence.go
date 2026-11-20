@@ -62,7 +62,15 @@ func (n Node) DefaultedNameTestedForBlankness() bool {
 	if n.DeclarationBecomesProperty() {
 		tested = n.EnclosingClassLike().testedForBlankness(selfPropertyOf, true)
 	} else {
-		tested = n.EnclosingFunctionLike().testedForBlankness(variableName, true)
+		function := n.EnclosingFunctionLike()
+		tested = function.testedForBlankness(func(node engine.Match) string {
+			name := variableName(node)
+			if name == "" || node.IsShadowedIn(function.Match) {
+				return ""
+			}
+
+			return name
+		}, true)
 	}
 
 	return slices.Contains(tested, n.DeclaredName())

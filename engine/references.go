@@ -104,7 +104,7 @@ func (m Match) IsUnread() bool {
 
 	for _, below := range function.Descendants() {
 		if below.Is(Identifier) && below.Name() == m.Name() && below.node != m.node && !m.isAbove(below) &&
-			!below.isSelector() && !below.isShadowed(function) {
+			!below.isSelector() && !below.IsShadowedIn(function) {
 			return false
 		}
 	}
@@ -128,7 +128,7 @@ func (m Match) isSelector() bool {
 	return read != nil && read(m)
 }
 
-func (m Match) isShadowed(outer Match) bool {
+func (m Match) IsShadowedIn(outer Match) bool {
 	for ancestor := m.Parent(); ancestor.Exists() && ancestor.node != outer.node; ancestor = ancestor.Parent() {
 		if ancestor.Is(Function) && slices.ContainsFunc(ancestor.Parameters(), func(parameter Match) bool { return parameter.Name() == m.Name() }) {
 			return true

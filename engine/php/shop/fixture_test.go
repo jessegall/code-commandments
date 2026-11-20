@@ -86,6 +86,10 @@ func TestBareStatePredicateProvesItselfOnTheShop(t *testing.T) {
 	proveBackendDetector(t, backend.BareStatePredicateDetector{})
 }
 
+func TestBlankStringDefaultProvesItselfOnTheShop(t *testing.T) {
+	proveBackendDetector(t, backend.BlankStringDefaultDetector)
+}
+
 func proveBackendDetector(t *testing.T, detector detectors.Detector) {
 	t.Helper()
 	fixturetest.Prove(t, fixture.Fixture{

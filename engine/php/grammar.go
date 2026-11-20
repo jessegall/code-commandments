@@ -115,6 +115,7 @@ func init() {
 			return n.ArmConditionLiterals()
 		},
 		BlankDefault:      blankDefault,
+		BlankReplacement:  blankReplacement,
 		DeNulledFinder:    deNulledFinder,
 		ManufacturesFill:  manufacturesFill,
 		CoalescedLoop:     coalescedLoop,

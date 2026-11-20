@@ -130,6 +130,7 @@ type Grammar struct {
 	ConditionalArms     func(Match) (Match, Match)
 	Spreads             func(Match) bool
 	BlankDefault        func(Match) bool
+	BlankReplacement    func(Match) (Match, Match)
 	DeNulledFinder      func(Match) bool
 	ManufacturesFill    func(Match) bool
 	PlaceholderData     func(Match) bool

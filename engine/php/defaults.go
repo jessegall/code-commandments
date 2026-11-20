@@ -8,7 +8,19 @@ import (
 
 func blankDefault(match engine.Match) bool {
 	n := Node{Match: match}
-	return n.IsBlankString() && n.IsDeclarationDefault() && Written(n.DeclaredType()).Render() == "string" && n.DefaultedNameTestedForBlankness()
+	if !n.IsBlankString() || !n.IsDeclarationDefault() || Written(n.DeclaredType()).Render() != "string" {
+		return false
+	}
+
+	return n.DefaultedNameTestedForBlankness() || n.DeclarationBecomesProperty() && match.HasFieldBlankReplacement(n.DeclaredName())
+}
+
+func blankReplacement(match engine.Match) (engine.Match, engine.Match) {
+	if (Node{Match: match}).isShortTernary() {
+		return match.Child("cond"), match.Child("else")
+	}
+
+	return engine.Match{}, engine.Match{}
 }
 func deNulledFinder(match engine.Match) bool {
 	n := Node{Match: match}
