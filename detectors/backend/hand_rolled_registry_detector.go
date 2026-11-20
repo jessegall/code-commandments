@@ -19,7 +19,7 @@ func (HandRolledRegistryDetector) Sin() sins.Sin { return backendsins.HandRolled
 func (HandRolledRegistryDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return php.In(codebase).
 		WhereKind("Stmt_Class").
-		Where(engine.As(php.Node.HandRollsAKeyedStore)).
+		Where(engine.Match.HandRollsRegistry).
 		Reject(engine.Match.IsTest).
 		Get()
 }

@@ -141,6 +141,10 @@ type Grammar struct {
 	ScalarTypes         []string
 	BooleanTypes        []string
 	ArgumentLookup      func(Match) (Match, Match)
+	RegistryFields      func(Match) []string
+	KeyedWrite          func(Match) Match
+	VariableKey         func(Match) bool
+	MissingKeys         func(Match) []Match
 	ReturnedValue       func(Match) Match
 	InitializedValue    func(Match) Match
 	AssignmentSides     func(Match) (Match, Match)
