@@ -302,7 +302,7 @@ language through this one list.
 | `packages` | the folders the language treats as packages (Python: folders holding `__init__.py`), absolute |
 | `aliases` | TypeScript and Vue: `[{"prefix", "path"}]`, the module path aliases the bridge resolved imports through |
 
-An outside declaration is `{"symbol", "kind", "name", "extends"?, "implements"?, "uses"?, "modifiers"?,
+An outside declaration is `{"symbol", "kind", "name", "file"?, "internal"?, "extends"?, "implements"?, "uses"?, "modifiers"?,
 "members"?}`. `kind` is `class`, `interface`, `trait`, `enum` or `struct`; `extends`, `implements` and
 `uses` are symbol ids; `members` are `[{"symbol", "name", "kind", "modifiers"?, "declared"?,
 "returns"?, "documented"?, "parameters"?}]`, where `kind` is `method`, `property`, `field` or
@@ -310,6 +310,8 @@ An outside declaration is `{"symbol", "kind", "name", "extends"?, "implements"?,
 parameter is `{"name", "declared"?, "flags"?}`. The set is closed: every ancestor of an outside
 declaration, and every class an outside member's type names, is in it too, so a chain such as
 `$a->foo()->bar()` resolves as far as the types reach.
+
+`file` names the declaration's source when the bridge knows it. `internal` marks a declaration from the language runtime. An outside declaration can also refer to a project file outside the scanned paths.
 
 A hierarchy inside the scanned files is not listed here. The engine builds it from the nodes.
 

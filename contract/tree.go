@@ -449,6 +449,8 @@ type OutsideSymbol struct {
 	Symbol     string          `json:"symbol"`
 	Kind       string          `json:"kind"`
 	Name       string          `json:"name"`
+	File       string          `json:"file,omitempty"`
+	Internal   bool            `json:"internal,omitempty"`
 	Extends    []string        `json:"extends,omitempty"`
 	Implements []string        `json:"implements,omitempty"`
 	Uses       []string        `json:"uses,omitempty"`

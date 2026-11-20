@@ -3,6 +3,7 @@ package detectors
 import (
 	"testing"
 
+	"github.com/jessegall/code-commandments/contract"
 	"github.com/jessegall/code-commandments/engine"
 	"github.com/jessegall/code-commandments/sins"
 )
@@ -32,6 +33,30 @@ type changingDetector struct {
 }
 
 func (d changingDetector) Fingerprint() string { return d.definition }
+
+type contextDetector struct {
+	plainDetector
+	matches []engine.Match
+}
+
+func (d contextDetector) Find(*engine.Codebase) []engine.Match { return d.matches }
+
+func TestTheReportingFunnelLeavesLibraryLocationsOutOfFindings(t *testing.T) {
+	codebase := engine.Load(&contract.Stream{Files: []*contract.File{
+		{Path: "/shop/app/Checkout.php", Language: contract.PHP, Root: &contract.Node{}},
+		{Path: "/shop/vendor/package/Schema.php", Language: contract.PHP, Root: &contract.Node{}},
+	}})
+	files := codebase.Files()
+	local, library := files[0].Match(0), files[1].Match(0)
+	detector := contextDetector{matches: []engine.Match{local, library}}
+	findings := FindRemembering(detector, codebase)
+	if len(findings) != 1 || findings[0].File() != local.File() {
+		t.Fatalf("want only the project location, got %v", findings)
+	}
+	if detector.matches[1].File() != library.File() {
+		t.Fatal("the detector's library context was changed by reporting")
+	}
+}
 
 func TestADetectorThatReadsOneFileRemembers(t *testing.T) {
 	if !remembers(plainDetector{}) {

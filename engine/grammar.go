@@ -43,6 +43,7 @@ type Grammar struct {
 	Implicit            func(Match) bool
 	NamespaceOf         func(symbol string) string
 	NamespaceSeparator  string
+	QualifiedNameKey    func(string) string
 	IsConstructor       func(Match) bool
 	HoldsPublicState    func(Match) bool
 	ReceivesContext     func(Match, Match) bool

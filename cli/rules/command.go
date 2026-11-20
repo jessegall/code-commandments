@@ -136,7 +136,7 @@ func (c Command) try(in *cli.Input, root string, console cli.Console) (int, erro
 	}
 
 	before := engine.Counted()
-	found := tried.Find(codebase)
+	found := engine.ProjectMatches(tried.Find(codebase))
 	work := engine.Since(before)
 	for _, match := range found {
 		console.Write(fmt.Sprintf("%s:%d  %s\n", match.Judged(), match.Line(), sourceLine(match)))

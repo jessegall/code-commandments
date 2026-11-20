@@ -53,6 +53,10 @@ const forwardOverTheTree = "\x00forward"
 const mostRememberedAcross = 20_000
 
 func FindRemembering(detector Detector, codebase *engine.Codebase) []engine.Match {
+	return engine.ProjectMatches(findRemembering(detector, codebase))
+}
+
+func findRemembering(detector Detector, codebase *engine.Codebase) []engine.Match {
 	if !remembers(detector) {
 		codebase.Filled()
 

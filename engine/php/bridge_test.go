@@ -265,6 +265,53 @@ func TestOutsideSymbolsAreClosed(t *testing.T) {
 	}
 }
 
+func TestTheSharedTreeKnowsWhichResolvedTypesComeFromLibraries(t *testing.T) {
+	folder := written(t, map[string]string{
+		"app/Checkout.php": `<?php
+namespace App;
+use Acme\Billing\Customer as BillingCustomer;
+final class Customer {}
+final class Checkout implements \Acme\Billing\Schema {
+    public function __construct(
+        private BillingCustomer $billing,
+        private \Acme\Local\Reader $reader,
+        private \DateTimeInterface $clock,
+    ) {}
+    public function schema(): array { return []; }
+}
+`,
+		"modules/Reader.php": `<?php namespace Acme\Local; final class Reader {}`,
+		"vendor/Billing.php": `<?php namespace Acme\Billing; final class Customer {} interface Schema { public function schema(): array; }`,
+		"vendor/Parsed.php":  `<?php namespace Packaged; final class Parsed {}`,
+		"vendor/autoload.php": `<?php
+require __DIR__ . '/Billing.php';
+require dirname(__DIR__) . '/modules/Reader.php';
+`,
+	})
+	codebase := engine.Load(bridged(t, "--autoload="+filepath.Join(folder, "vendor", "autoload.php"), filepath.Join(folder, "app"), filepath.Join(folder, "vendor", "Parsed.php")))
+	billing := codebase.WhereIs(engine.Parameter).Where(func(parameter engine.Match) bool { return parameter.Name() == "billing" }).First()
+	if typed := billing.Typed(); typed == nil || !codebase.IsLibraryType(contract.PHP, typed.Name) {
+		t.Fatalf("the resolved BillingCustomer alias should come from a library, got %v", typed)
+	}
+	for _, name := range []string{`\acme\BILLING\customer`, `DateTimeInterface`, `Packaged\Parsed`} {
+		if !codebase.IsLibraryType(contract.PHP, name) {
+			t.Errorf("%s should be a library type", name)
+		}
+	}
+	for _, name := range []string{`App\Customer`, `Acme\Local\Reader`, `Acme\Billing\Missing`} {
+		if codebase.IsLibraryType(contract.PHP, name) {
+			t.Errorf("%s should stay eligible as a project or unknown type", name)
+		}
+	}
+	if !codebase.IsLibraryNamespace(contract.PHP, `Acme\Billing`) || codebase.IsLibraryNamespace(contract.PHP, `Acme`) ||
+		codebase.IsLibraryNamespace(contract.PHP, `Acme\Billing\Unknown`) {
+		t.Fatal("the library namespace should be known without treating the mixed parent or an unknown child as a library")
+	}
+	if !ProgramOf(codebase).OverridesMethod(`App\Checkout`, "schema") {
+		t.Fatal("the library interface must still provide its required signature")
+	}
+}
+
 func TestServingAnswersEveryRequestWithAWholeStream(t *testing.T) {
 	needsPHP(t)
 	folder := written(t, map[string]string{"A.php": "<?php class A {}\n", "B.php": "<?php class B {}\n"})

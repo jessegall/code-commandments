@@ -57,6 +57,7 @@ func init() {
 			return slices.ContainsFunc(declaration.ChildrenIn("stmts"), func(member engine.Match) bool { return member.Kind() == "Stmt_ClassMethod" })
 		},
 		NamespaceSeparator: `\`,
+		QualifiedNameKey:   func(name string) string { return strings.ToLower(strings.TrimLeft(name, `\`)) },
 		NamespaceOf: func(symbol string) string {
 			class, _, _ := strings.Cut(symbol, "::")
 

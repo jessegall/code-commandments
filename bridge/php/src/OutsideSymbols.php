@@ -101,7 +101,13 @@ final class OutsideSymbols
 
             return;
         }
-        $symbol = ['symbol' => $reflection->getName(), 'kind' => $this->kind($reflection), 'name' => $reflection->getShortName()];
+        $symbol = array_filter([
+            'symbol' => $reflection->getName(),
+            'kind' => $this->kind($reflection),
+            'name' => $reflection->getShortName(),
+            'file' => $reflection->getFileName(),
+            'internal' => $reflection->isInternal(),
+        ]);
         $this->symbols[$key] = &$symbol;
         $parent = $reflection->getParentClass();
         $ancestry = [
