@@ -17,6 +17,9 @@ func TestHistoryIsToldFromARuntimeCondition(t *testing.T) {
 		"Ends attempts the host took but no longer runs.":                            false,
 		"A column that no longer reads fails the read.":                              false,
 		"This method no longer reads the legacy format.":                             true,
+		"Similarity matching no longer offers up a claimed candidate.":               true,
+		"The executor no longer does instanceof unwraps.":                            true,
+		"Mark a reader unhealthy when it no longer does its checks.":                 false,
 	} {
 		if NarratesHistory(text) != narrates {
 			t.Errorf("%q narrates history: %v", text, !narrates)

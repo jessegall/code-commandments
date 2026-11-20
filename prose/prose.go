@@ -14,7 +14,8 @@ var history = []phrase{
 	{pattern: words(`refactored|renamed from|ported from`)},
 	{pattern: words(`was extracted`), notBefore: regexp.MustCompile(`^\s+from`)},
 	{pattern: words(`used to (?:be|live|have|hold|contain|return|exist|sit|post|fire)`), notAfter: endsWith(`is|are|be|only`)},
-	{pattern: words(`(?:this|the) (?:code|helper|method|class|function|implementation|detector|rule) (?:is retired|no longer (?:an?|does|reads|runs|fires|handles|unwraps|posts|matters))`)},
+	{pattern: words(`(?:this|the) (?:code|helper|method|class|function|implementation|detector|rule) (?:is retired|no longer (?:an?|reads|runs|fires|handles|unwraps|posts|matters))`)},
+	{pattern: words(`no longer (?:does|offers up)`)},
 	{pattern: words(`now lives (?:in|inside)`)},
 	{pattern: words(`previously\s+(?:this|every|we|it)`)},
 	{pattern: words(`equivalent of the old`)},
@@ -97,23 +98,24 @@ func Words(text string) []string {
 }
 
 func Stem(word string) string {
+	stem := word
 	for _, ending := range []string{"ing", "ies", "ed", "es", "s"} {
 		if !strings.HasSuffix(word, ending) || len(word)-len(ending) < 3 {
 			continue
 		}
 		if ending == "ies" {
-			word = word[:len(word)-3] + "y"
+			stem = word[:len(word)-3] + "y"
 		} else {
-			word = word[:len(word)-len(ending)]
+			stem = word[:len(word)-len(ending)]
 		}
 
 		break
 	}
-	if strings.HasSuffix(word, "e") && len(word) >= 4 {
-		return word[:len(word)-1]
+	if strings.HasSuffix(stem, "e") && len(stem) >= 4 {
+		return stem[:len(stem)-1]
 	}
 
-	return word
+	return stem
 }
 
 func spaceCamelCase(text string) string {
