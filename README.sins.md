@@ -240,7 +240,7 @@ _273 sins across 63 skills._
 
 | Sin | What it flags |
 |---|---|
-| `BareScopeEscape` | `withoutGlobalScopes()` with no arguments drops every global scope, including ones added later |
+| `BareScopeEscape` | an Eloquent query drops every global scope, including ones added later |
 | `ConfigRead` | `config('…')` read inside a class |
 | `ContainerReach` | `app()`, `resolve()` or a container's `make()` reach inside a container-resolved class |
 | `DeadConfigKey` | A config key nothing reads — dead surface left behind by a deleted feature, which new code may wrongly adopt |

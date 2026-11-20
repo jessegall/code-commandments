@@ -565,7 +565,7 @@
         "type": "flag",
         "kind": "flag",
         "default": true,
-        "help": "`withoutGlobalScopes()` with no arguments drops every global scope, including ones added later"
+        "help": "an Eloquent query drops every global scope, including ones added later"
     },
     {
         "key": "sin_config-read",

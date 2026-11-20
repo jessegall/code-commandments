@@ -4,7 +4,7 @@ One bad → good per rule this skill teaches, taken from the fixture that proves
 
 ### bare-scope-escape
 
-`withoutGlobalScopes()` with no arguments drops every global scope, including ones added later
+an Eloquent query drops every global scope, including ones added later
 
 ```php
 ----------[ Bad ]----------

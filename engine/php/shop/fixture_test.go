@@ -6,6 +6,7 @@ import (
 	"github.com/jessegall/code-commandments/catalog"
 	"github.com/jessegall/code-commandments/detectors"
 	"github.com/jessegall/code-commandments/detectors/backend"
+	"github.com/jessegall/code-commandments/detectors/backend/laravel"
 	"github.com/jessegall/code-commandments/detectors/backend/spatie"
 	"github.com/jessegall/code-commandments/engine/php/shop"
 	"github.com/jessegall/code-commandments/fixture"
@@ -75,6 +76,10 @@ func TestAllNullableDataProvesItselfOnTheShop(t *testing.T) {
 
 func TestAllOptionalDataProvesItselfOnTheShop(t *testing.T) {
 	proveBackendDetector(t, spatie.AllOptionalDataDetector{})
+}
+
+func TestBareScopeEscapeProvesItselfOnTheShop(t *testing.T) {
+	proveBackendDetector(t, laravel.BareScopeEscapeDetector{})
 }
 
 func proveBackendDetector(t *testing.T, detector detectors.Detector) {

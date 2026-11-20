@@ -4282,11 +4282,11 @@ Safe to delete — the conversion simply runs again on the next `composer update
                             },
                             {
                                 "const": "php/BareScopeEscape",
-                                "description": "`withoutGlobalScopes()` with no arguments drops every global scope, including ones added later"
+                                "description": "an Eloquent query drops every global scope, including ones added later"
                             },
                             {
                                 "const": "backend/BareScopeEscape",
-                                "description": "`withoutGlobalScopes()` with no arguments drops every global scope, including ones added later"
+                                "description": "an Eloquent query drops every global scope, including ones added later"
                             },
                             {
                                 "const": "php/BareStatePredicate",

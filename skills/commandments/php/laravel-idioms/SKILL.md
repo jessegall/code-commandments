@@ -82,7 +82,7 @@ lives in one place instead of being re-typed wherever you query. And mutate a mo
 
 ### bare-scope-escape
 
-`withoutGlobalScopes()` with no arguments drops every global scope, including ones added later
+an Eloquent query drops every global scope, including ones added later
 
 ```php
 ----------[ Bad ]----------

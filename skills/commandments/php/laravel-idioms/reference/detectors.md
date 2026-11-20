@@ -2,7 +2,7 @@
 
 Each row is one rule: the sin's id, the symptom its detector flags, and the detector that flags it. The id is what `{{binary}} info <sin>` takes, and the detector name is what `--detector=` takes if the rule turns out to be wrong.
 
-- **`bare-scope-escape`** — `withoutGlobalScopes()` with no arguments drops every global scope, including ones added later — `BareScopeEscapeDetector`
+- **`bare-scope-escape`** — an Eloquent query drops every global scope, including ones added later — `BareScopeEscapeDetector`
 - **`config-read`** — `config('…')` read inside a class — `ConfigReadDetector`
 - **`container-reach`** — `app()`, `resolve()` or a container's `make()` reach inside a container-resolved class — `ContainerReachDetector`
 - **`dead-config-key`** — A config key nothing reads — dead surface left behind by a deleted feature, which new code may wrongly adopt — `DeadConfigKeyDetector`

@@ -969,7 +969,7 @@
         },
         "sin_bare-scope-escape": {
             "title": "BareScopeEscape",
-            "help": "`withoutGlobalScopes()` with no arguments drops every global scope, including ones added later",
+            "help": "an Eloquent query drops every global scope, including ones added later",
             "type": "flag",
             "default": "true",
             "group": "php/laravel-idioms",

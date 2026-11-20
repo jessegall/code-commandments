@@ -17,6 +17,8 @@ func init() { detectors.Register(catalog.PHP, BareScopeEscapeDetector{}) }
 
 func (BareScopeEscapeDetector) Sin() sins.Sin { return backendsins.BareScopeEscape{} }
 
+func (BareScopeEscapeDetector) CrossFile() {}
+
 func (BareScopeEscapeDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return php.In(codebase).
 		Where(engine.As(laravelnode.Node.DropsEveryGlobalScope)).

@@ -19,7 +19,7 @@ final class RetirePickersCommand extends Command
     #[Sinful(BareScopeEscape::class)]
     public function handle(): int
     {
-        Picker::query()->withoutGlobalScopes()->whereNotNull('left_at')->delete();
+        Picker::query()->withoutGlobalScopesExcept([])->whereNotNull('left_at')->delete();
 
         return self::SUCCESS;
     }

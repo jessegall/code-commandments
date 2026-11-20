@@ -15,7 +15,7 @@ func (BareScopeEscape) Definition() sins.Definition {
 	return sins.Definition{
 		Name:        "bare-scope-escape",
 		Skill:       laravelskills.LaravelIdioms{},
-		Description: "`withoutGlobalScopes()` with no arguments drops every global scope, including ones added later",
+		Description: "an Eloquent query drops every global scope, including ones added later",
 		Rule:        "Name the scope a query steps out of (`withoutGlobalScope(OwnerScope::class)`), or pass whose rows it reads as an argument; never drop every global scope at once.",
 		Suggestion:  "Name the one scope to drop, or give the query the owner it reads for explicitly.",
 		Requires:    requiresLaravel,

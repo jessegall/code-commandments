@@ -16,7 +16,7 @@ final class ChurnedSubscriptions
     public function endedBetween(Builder $subscriptions, string $from, string $until): Collection
     {
         return $subscriptions
-            ->withoutGlobalScopes()
+            ->withoutGlobalScopes(scopes: null)
             ->whereBetween('ended_at', [$from, $until])
             ->get();
     }

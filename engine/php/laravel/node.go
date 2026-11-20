@@ -25,6 +25,7 @@ const (
 	Event               = `Illuminate\Support\Facades\Event`
 	ConsoleCommand      = `Illuminate\Console\Command`
 	EloquentBuilder     = `Illuminate\Database\Eloquent\Builder`
+	EloquentRelation    = `Illuminate\Database\Eloquent\Relations\Relation`
 	Factory             = `Illuminate\Database\Eloquent\Factories\Factory`
 	AuthGuard           = `Illuminate\Contracts\Auth\Guard`
 	AuthUserProvider    = `Illuminate\Contracts\Auth\UserProvider`
@@ -55,7 +56,7 @@ func (n Node) HandsOutItsOwnCollection(typeOf func(engine.Match) string) bool {
 var BuilderTypes = []string{
 	EloquentBuilder,
 	`Illuminate\Database\Query\Builder`,
-	`Illuminate\Database\Eloquent\Relations\Relation`,
+	EloquentRelation,
 	`Illuminate\Database\Eloquent\Relations\HasMany`,
 	`Illuminate\Database\Eloquent\Relations\BelongsTo`,
 	`Illuminate\Database\Eloquent\Relations\BelongsToMany`,
@@ -426,11 +427,33 @@ func (n Node) ResolvesFromContainer() bool {
 }
 
 func (n Node) DropsEveryGlobalScope() bool {
-	if n.Kind() != "Expr_MethodCall" && n.Kind() != "Expr_StaticCall" {
+	name := strings.ToLower(php.CallName(n.Match))
+	if name != "withoutglobalscopes" && name != "withoutglobalscopesexcept" {
 		return false
 	}
+	if !n.hasEloquentScopeReceiver() {
+		return false
+	}
+	arguments := n.ChildrenIn("args")
+	if len(arguments) == 0 {
+		return true
+	}
+	if len(arguments) != 1 || arguments[0].Kind() != "Arg" {
+		return false
+	}
+	value := php.Node{Match: arguments[0].Child("value")}
+	if name == "withoutglobalscopes" {
+		return value.IsNull()
+	}
 
-	return n.Child("name").Name() == "withoutGlobalScopes" && php.Node{Match: n.Match}.ArgumentCount() == 0
+	return value.IsEmptyArrayLiteral()
+}
+
+func (n Node) hasEloquentScopeReceiver() bool {
+	class := strings.TrimLeft(CallReceiverClass(n.Match), `\`)
+	program := php.ProgramOf(n.Codebase())
+
+	return program.IsA(class, Model) || program.IsA(class, EloquentBuilder) || program.IsA(class, EloquentRelation)
 }
 
 func isClassLiteral(value engine.Match) bool {
