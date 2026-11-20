@@ -1,6 +1,10 @@
 package shared
 
 import (
+	"slices"
+
+	"github.com/jessegall/code-commandments/catalog"
+	"github.com/jessegall/code-commandments/detectors"
 	"github.com/jessegall/code-commandments/engine"
 	skills "github.com/jessegall/code-commandments/skill/shared"
 )
@@ -9,9 +13,35 @@ import (
 type LoneImplementerInterface struct{}
 
 func (LoneImplementerInterface) Find(codebase *engine.Codebase) []engine.Match {
-	return codebase.WhereTypeDeclaration().Reject(engine.Match.IsTest).Where(engine.Match.IsLoneAbstraction).Get()
+	return findLoneInterfaces(codebase, nil)
 }
 
+func findLoneInterfaces(codebase *engine.Codebase, public []string) []engine.Match {
+	return codebase.WhereTypeDeclaration().
+		Reject(engine.Match.IsTest).
+		Reject(func(declaration engine.Match) bool { return slices.Contains(public, declaration.Identity()) }).
+		Where(engine.Match.IsLoneAbstraction).
+		Get()
+}
+
+// LoneInterfaces judges one language with its declared public contracts.
+type LoneInterfaces struct {
+	Detector
+	public []string
+}
+
+func BindLoneInterfaces[L Language]() LoneInterfaces {
+	return register(LoneInterfaces{Detector: bound[LoneImplementerInterface, L](nil)})
+}
+
+func (d LoneInterfaces) WithPublicContracts(symbols []string) detectors.Detector {
+	d.public = slices.Clone(symbols)
+	return d
+}
+
+func (d LoneInterfaces) Find(codebase *engine.Codebase) []engine.Match {
+	return findLoneInterfaces(codebase.Of(catalog.LanguagesOf(d.Engine())...), d.public)
+}
 func (LoneImplementerInterface) Sin() Text {
 	return Text{Name: "lone-implementer-interface", Skill: skills.Dependencies{}, Description: "An interface has only one local implementation", Rule: "Use the implementation directly unless the interface is a boundary.", Suggestion: "Use the implementation directly unless the interface is a boundary."}
 }

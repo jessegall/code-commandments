@@ -13,11 +13,22 @@ import (
 	"github.com/jessegall/code-commandments/skill"
 )
 
+type publicContractDetector interface {
+	detectors.Detector
+	WithPublicContracts([]string) detectors.Detector
+}
+
 func (c Config) Enabled(installed Installed) ([]detectors.Detector, error) {
 	var kept []detectors.Detector
 
 	for _, detector := range Packaged(detectors.All(), installed) {
 		if !c.Disables(rulesOf(detector)...) {
+			if accepts, ok := detector.(publicContractDetector); ok {
+				engine, _ := detectors.EngineOf(detector)
+				if contracts := c.PublicContracts[engine]; len(contracts) > 0 {
+					detector = accepts.WithPublicContracts(contracts)
+				}
+			}
 			kept = append(kept, detector)
 		}
 	}

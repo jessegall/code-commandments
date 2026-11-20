@@ -44,6 +44,7 @@ Commands:
   disable          Toggle a rule in the project's .commandments/config.json, leaving the rest of the
                    file as you wrote it — or in a config.php from an earlier version, through its
                    tree, so your own lines are untouched.
+  allow            Publish a public interface for the lone-implementer rule.
   config           Inspect and manage .commandments/config.json — what is configured, and what is
                    actually running.
   layers           Read the dependency stack this project ALREADY has and propose the layer

@@ -170,6 +170,7 @@ Exit code is non-zero when sins are found.
 | `commandments journal-skills` | Render the skills into the agent journal plugin's folder, for the journal to publish. |
 | `commandments hook <Name>` | Run ONE hook directly, by name — the form every wired hook is written as. |
 | `commandments disable <sin\|skill>` | Toggle a rule in the project's .commandments/config.json, leaving the rest of the file as you wrote it — or in a config.php from an earlier version, through its tree, so your own lines are untouched. |
+| `commandments allow lone-implementer-interface <path-or-symbol>` | Publish a public interface for the lone-implementer rule. |
 | `commandments config` | Inspect and manage .commandments/config.json — what is configured, and what is actually running. |
 | `commandments layers [path]` | Read the dependency stack this project ALREADY has and propose the layer declaration for it — the rule is inert until one is declared, and nobody writes that from a blank file. |
 | `commandments rule explain <file> [--line=N]` | Work on a rule of your own: see the tree it reads, try it on a path, prove it on the samples that mark it, and print the schema an editor checks it by. |

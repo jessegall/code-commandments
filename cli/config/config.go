@@ -25,6 +25,7 @@ type Config struct {
 	Parallel          int
 	ReadAtOnce        int
 	CacheHours        float64
+	PublicContracts   map[catalog.Engine][]string
 	Configurators     []Configurator
 }
 

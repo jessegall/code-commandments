@@ -2,6 +2,7 @@ package config
 
 import (
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"slices"
@@ -26,6 +27,7 @@ type Editor interface {
 	RewriteLayers(layers []Layer) (bool, error)
 	EnsureLayers(layers []Layer) (bool, error)
 	RegisterDetector(class string) (bool, error)
+	AllowContract(engine catalog.Engine, identity string) (bool, error)
 	Declaration(layers []Layer) string
 }
 
@@ -50,6 +52,10 @@ type phpConfig struct {
 
 func (phpConfig) Name() string {
 	return ".commandments/config.php"
+}
+
+func (phpConfig) AllowContract(catalog.Engine, string) (bool, error) {
+	return false, fmt.Errorf("run commandments sync to migrate config.php to config.json before publishing a contract")
 }
 
 func (phpConfig) Declaration(layers []Layer) string {
@@ -202,6 +208,25 @@ func (j jsonConfig) RegisterDetector(class string) (bool, error) {
 
 		config.Detectors = append(config.Detectors, name)
 
+		return true
+	})
+}
+
+func (j jsonConfig) AllowContract(engine catalog.Engine, identity string) (bool, error) {
+	release := atomic.Hold(j.path + ".lock")
+	defer release()
+
+	if _, err := j.Scaffold(DetectRoots(j.root())); err != nil {
+		return false, err
+	}
+	return j.edit(func(config *Config) bool {
+		if slices.Contains(config.PublicContracts[engine], identity) {
+			return false
+		}
+		if config.PublicContracts == nil {
+			config.PublicContracts = map[catalog.Engine][]string{}
+		}
+		config.PublicContracts[engine] = append(config.PublicContracts[engine], identity)
 		return true
 	})
 }

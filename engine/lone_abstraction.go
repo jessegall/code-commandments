@@ -5,11 +5,11 @@ import "slices"
 func (m Match) IsLoneAbstraction() bool {
 	read := m.grammar()
 	types, typed := m.Types()
-	if !m.isInterfaceType() || !typed || !m.declaresMethods() {
+	if !m.IsInterfaceType() || !typed || !m.declaresMethods() {
 		return false
 	}
 	implementers := Implementers(types, m.Identity())
-	implementers = slices.DeleteFunc(implementers, Match.isInterfaceType)
+	implementers = slices.DeleteFunc(implementers, Match.IsInterfaceType)
 	if len(implementers) != 1 || implementers[0].IsTest() {
 		return false
 	}
@@ -33,7 +33,7 @@ func (m Match) IsLoneAbstraction() bool {
 	return true
 }
 
-func (m Match) isInterfaceType() bool {
+func (m Match) IsInterfaceType() bool {
 	kind := m.TypeKind()
 	return kind == "interface" || kind == "protocol"
 }

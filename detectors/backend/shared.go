@@ -20,7 +20,7 @@ func (language) Engine() catalog.Engine {
 var (
 	ConcreteCrossModuleDependencyDetector = shared.Bind[shared.ConcreteCrossModuleDependency, language]()
 	UndeclaredMemberDetector              = shared.Bind[shared.UndeclaredMember, language](shared.Excusing(usesDynamicMembers, packages.Exemption{Tag: packages.DynamicMembers}))
-	LoneImplementerInterfaceDetector      = shared.Bind[shared.LoneImplementerInterface, language]()
+	LoneImplementerInterfaceDetector      = shared.BindLoneInterfaces[language]()
 	MatchDefaultReturnsNullDetector       = shared.Bind[shared.MatchDefaultReturnsNull, language]()
 	RedundantArrowReturnTypeDetector      = shared.Bind[shared.RedundantArrowReturnType, language](shared.Repentable)
 	ConvertedArgumentDetector             = shared.BindGrouped[shared.ConvertedArgument, language]()

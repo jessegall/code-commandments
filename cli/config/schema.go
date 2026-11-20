@@ -52,8 +52,14 @@ func Schema(root string) []byte {
 			},
 			"detectors": list("The project's own detectors in .commandments/custom/, by name, turned on.", object{"type": "string", "pattern": ownRule}),
 			"packages":  list("The project's own exemption packages in .commandments/custom/, by name.", object{"type": "string", "pattern": ownRule}),
-			"hooks":     list("Hooks turned on beyond the ones every project runs, by name.", object{"type": "string"}),
-			"agents":    list("Agents a config from the PHP tool turned on by name. Every project runs both agents the tool ships and it ships no other, so each name here is skipped, and said so.", object{"type": "string"}),
+			"public_contracts": object{
+				"type":                 "object",
+				"description":          "Public interface identities by engine. The lone-implementer-interface rule treats these as boundaries before they have consumers.",
+				"propertyNames":        object{"enum": catalog.Engines},
+				"additionalProperties": list("Fully qualified interface identities.", object{"type": "string", "minLength": 1}),
+			},
+			"hooks":  list("Hooks turned on beyond the ones every project runs, by name.", object{"type": "string"}),
+			"agents": list("Agents a config from the PHP tool turned on by name. Every project runs both agents the tool ships and it ships no other, so each name here is skipped, and said so.", object{"type": "string"}),
 			"configure": object{
 				"description":   "Detectors tuned, keyed by engine/Name for a shipped rule or by name for one of the project's own. Each step calls one of the detector's methods with its arguments in order, as {\"layer\": [\"App\\\\Http\", [\"App\\\\Domain\"]]}. One step is the config's own rather than the detector's: {\"judges\": [\"tests\"]} lets this one rule judge a folder the project excludes, which stays excluded for every other rule.",
 				"type":          "object",

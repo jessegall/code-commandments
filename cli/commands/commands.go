@@ -54,6 +54,7 @@ func Kernel(version string) *cli.Kernel {
 		hooks.JournalSkills{},
 		hooks.Runner{},
 		config.Toggle{},
+		config.Allow{},
 		config.Command{Version: version},
 		layers.Command{},
 		rules.Command{},
