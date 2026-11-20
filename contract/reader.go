@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/json"
-	"flag"
 	"fmt"
 	"io"
 	"slices"
@@ -28,10 +27,6 @@ type Stream struct {
 	Files   []*File
 	Program *Program
 	Trailer Trailer
-}
-
-func checksSchema() bool {
-	return flag.Lookup("test.v") != nil
 }
 
 // Reader reads a stream line by line and refuses one that breaks the contract.

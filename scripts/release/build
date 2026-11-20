@@ -15,6 +15,7 @@ version="${arguments[0]:?usage: scripts/release/build <version> [out] [--tool-on
 out="${arguments[1]:-dist}"
 root="$(cd "$(dirname "$0")/../.." && pwd -P)"
 platforms=(linux/amd64 linux/arm64 darwin/amd64 darwin/arm64)
+build_tag=commandments_release
 
 cd "$root"
 mkdir -p "$out"
@@ -22,7 +23,18 @@ for platform in "${platforms[@]}"; do
     os="${platform%/*}"
     arch="${platform#*/}"
     binary="$out/commandments-$os-$arch"
-    CGO_ENABLED=0 GOOS="$os" GOARCH="$arch" GOFLAGS=-p=2 \
-        go build -trimpath -ldflags "-s -w -X main.version=$version" -o "$binary" ./cmd/commandments
+    (
+        export CGO_ENABLED=0 GOOS="$os" GOARCH="$arch" GOFLAGS=-p=2
+        sources=$(go list -tags "$build_tag" -f '{{range .GoFiles}}{{println .}}{{end}}' ./bridge/gotree)
+        source_digest=$(
+            while IFS= read -r source; do
+                sha256sum "bridge/gotree/$source" || exit 1
+            done <<<"$sources" | sha256sum
+        )
+        source_digest=${source_digest%% *}
+        go build -tags "$build_tag" -trimpath \
+            -ldflags "-s -w -X main.version=$version -X github.com/jessegall/code-commandments/bridge/gotree.releaseSourceDigest=$source_digest" \
+            -o "$binary" ./cmd/commandments
+    )
 done
 go run ./scripts/release/check "${only[@]}" "$out"
