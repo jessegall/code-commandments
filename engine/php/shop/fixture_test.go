@@ -52,6 +52,14 @@ func TestUndeclaredMemberRecognizesTheDeclaredContract(t *testing.T) {
 	})
 }
 
+func TestArrayReturnBagProvesItselfOnTheShop(t *testing.T) {
+	fixturetest.Prove(t, fixture.Fixture{
+		Codebase:  shop.Project(t),
+		Detectors: []detectors.Detector{backend.ArrayReturnBagDetector{}},
+		Known:     detectors.Every(catalog.PHP),
+	})
+}
+
 func TestEveryBackendDetectorFlagsWhatItsPhpTwinFlags(t *testing.T) {
 	shop.SameFindings(t, tuned(t, detectors.Every(catalog.PHP))...)
 }

@@ -37,6 +37,20 @@ func ReceiverTypeOf(call engine.Match) string {
 	return ""
 }
 
+func CallReceiverClass(call engine.Match) string {
+	if class := ReceiverTypeOf(call); class != "" {
+		return class
+	}
+	if class := StaticCallClass(call); class != "" {
+		return class
+	}
+	receiver := call.Child("var")
+	if !receiver.Exists() {
+		return ""
+	}
+	return TypesOf(call.Codebase()).heldBy(receiver).class
+}
+
 func receiverParamType(call engine.Match, variable string) string {
 	function := enclosingFunction(call)
 	if variable == "" || !function.Exists() {
@@ -159,6 +173,10 @@ func functionCalled(call engine.Match) string {
 	}
 
 	return function
+}
+
+func CallsGlobalFunction(call engine.Match, name string) bool {
+	return strings.EqualFold(functionCalled(call), name)
 }
 
 func EnclosingClass(node engine.Match) engine.Match {

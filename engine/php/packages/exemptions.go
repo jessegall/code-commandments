@@ -112,7 +112,7 @@ type Package interface {
 	Register(exemptions *Exemptions)
 }
 
-var Shipped = []Package{Laravel{}, Spatie{}, LaravelActions{}}
+var Shipped = []Package{Laravel{}, Spatie{}, LaravelActions{}, Dompdf{}, Fractal{}}
 
 func For(consumers ...Package) *Exemptions {
 	exemptions := &Exemptions{}

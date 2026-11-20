@@ -219,8 +219,8 @@ func dataCollectionOfElement(node engine.Match) string {
 		if name != "DataCollectionOf" && !strings.HasSuffix(name, `\DataCollectionOf`) {
 			continue
 		}
-		if value := firstArgument(attribute).Child("value"); value.Kind() == "Expr_ClassConstFetch" && isName(value.Child("class")) {
-			return strings.TrimLeft(value.Child("class").Name(), `\`)
+		if owner := php.ClassConstantOwner(firstArgument(attribute).Child("value")); owner != "" {
+			return strings.TrimLeft(owner, `\`)
 		}
 	}
 

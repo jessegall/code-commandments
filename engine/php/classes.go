@@ -6,6 +6,15 @@ import (
 	"github.com/jessegall/code-commandments/engine"
 )
 
+func ClassConstantOwner(node engine.Match) string {
+	class := node.Child("class")
+	if node.Kind() != "Expr_ClassConstFetch" || !isName(class) {
+		return ""
+	}
+
+	return class.Name()
+}
+
 func traitNames(declaration engine.Match) []engine.Match {
 	var traits []engine.Match
 	for _, member := range declaration.ChildrenIn("stmts") {

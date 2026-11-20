@@ -54,14 +54,21 @@ func (m Match) ReceivesRecordBag() bool {
 }
 
 func (m Match) ReturnsRecordBag() bool {
+	value := m.returnedValue()
 	function := m.Closest(Function)
+	if owner := m.grammar().RecordReturnOwner; owner != nil {
+		function = owner(m)
+		if !function.Exists() {
+			return false
+		}
+		value = m
+	}
 	if function.ReturnType().Exists() && !function.ReturnType().isLooseRecord() {
 		return false
 	}
 	if typed := function.ResultType(); typed != nil && typed.Kind == "map" && len(typed.Args) == 2 && typed.Args[1].Kind == "named" {
 		return false
 	}
-	value := m.returnedValue()
 	if len(value.recordKeys()) < 2 {
 		return false
 	}
@@ -80,6 +87,9 @@ func (m Match) recordKeys() []string {
 }
 
 func (m Match) isLooseRecord() bool {
+	if accepts := m.grammar().LooseRecordType; accepts != nil {
+		return accepts(m)
+	}
 	typed := m.Typed()
 	if typed == nil {
 		return false

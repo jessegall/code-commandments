@@ -160,6 +160,8 @@ type Grammar struct {
 	InitializedValue    func(Match) Match
 	AssignmentSides     func(Match) (Match, Match)
 	RecordKeys          func(Match) []string
+	RecordReturnOwner   func(Match) Match
+	LooseRecordType     func(Match) bool
 	ReactiveRecord      func(Match) bool
 	StaticStorage       func(Match) bool
 	ImportModule        func(Match) string

@@ -19,30 +19,27 @@ func (ArrayReturnBagDetector) Sin() sins.Sin { return backendsins.ArrayReturnBag
 
 func (ArrayReturnBagDetector) Exemptions() []packages.Exemption {
 	return []packages.Exemption{
+		{Tag: packages.ArrayReturnContract, By: []packages.By{packages.EnclosingMethod}},
+		{Tag: packages.ArrayCallbackContract, By: []packages.By{packages.CallbackConsumer}},
+		{Tag: packages.ArrayInputContract, By: []packages.By{packages.CallbackResultConsumer, packages.ReturnConsumer}},
 		{Tag: packages.ArrayReturning, By: []packages.By{packages.EnclosingClass}},
 		{Tag: packages.ContractMethod, By: []packages.By{packages.EnclosingMethod}},
 	}
 }
 
 func (d ArrayReturnBagDetector) Find(codebase *engine.Codebase) []engine.Match {
-	program := php.ProgramOf(codebase)
-
 	return packages.Exempt(codebase, d, codebase.
-		Where(engine.As(func(n php.Node) bool { return len(n.StringKeys()) >= 2 })).
-		Where(engine.As(php.Node.IsReturnedValue)).
+		WhereKind("Expr_Array").
+		Where(engine.Match.ReturnsRecordBag).
 		Reject(engine.Match.IsTest).
 		Reject(engine.As(php.Node.ReturnsProcessEnvironment)).
-		Reject(engine.As(func(n php.Node) bool { return !n.EnclosingFunctionLike().Exists() })).
-		Reject(engine.As(php.Node.HasNestedArrayValue)).
 		Reject(engine.As(php.Node.SpreadsAnotherArray)).
 		Reject(engine.As(php.Node.IsWithinADataFile)).
 		Reject(engine.As(php.Node.LooksLikeJsonSchema)).
 		Reject(engine.As(php.Node.IsHomogeneousLookupTable)).
 		Reject(engine.As(php.Node.ProjectsTypedObject)).
 		Reject(engine.As(php.Node.EnclosingFunctionReturnsShapedArray)).
-		Reject(func(n engine.Match) bool {
-			return program.OverridesMethod(php.EnclosingClassName(n), php.EnclosingFunctionName(n))
-		}).
+		Reject(engine.As(php.Node.OverridesReturnSignature)).
 		Get())
 }
 

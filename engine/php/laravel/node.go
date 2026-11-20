@@ -24,6 +24,8 @@ const (
 	ShouldQueue         = `Illuminate\Contracts\Queue\ShouldQueue`
 	Event               = `Illuminate\Support\Facades\Event`
 	ConsoleCommand      = `Illuminate\Console\Command`
+	EloquentBuilder     = `Illuminate\Database\Eloquent\Builder`
+	Factory             = `Illuminate\Database\Eloquent\Factories\Factory`
 	AuthGuard           = `Illuminate\Contracts\Auth\Guard`
 	AuthUserProvider    = `Illuminate\Contracts\Auth\UserProvider`
 	Arrayable           = `Illuminate\Contracts\Support\Arrayable`
@@ -51,12 +53,55 @@ func (n Node) HandsOutItsOwnCollection(typeOf func(engine.Match) string) bool {
 }
 
 var BuilderTypes = []string{
-	`Illuminate\Database\Eloquent\Builder`,
+	EloquentBuilder,
 	`Illuminate\Database\Query\Builder`,
 	`Illuminate\Database\Eloquent\Relations\Relation`,
 	`Illuminate\Database\Eloquent\Relations\HasMany`,
 	`Illuminate\Database\Eloquent\Relations\BelongsTo`,
 	`Illuminate\Database\Eloquent\Relations\BelongsToMany`,
+}
+
+func CallReceiverClass(call engine.Match) string {
+	if class := php.CallReceiverClass(call); class != "" {
+		return class
+	}
+	receiver := call.Child("var")
+	if !receiver.Exists() {
+		return ""
+	}
+	program := php.ProgramOf(call.Codebase())
+	if php.CallName(receiver) == "query" && program.IsA(php.StaticCallClass(receiver), Model) {
+		return EloquentBuilder
+	}
+	if php.CallName(receiver) == "state" {
+		if class := CallReceiverClass(receiver); program.IsA(class, Factory) {
+			return class
+		}
+	}
+
+	return ""
+}
+
+func CollectionMapConsumer(call engine.Match) engine.Match {
+	if php.CallName(call) != "map" {
+		return engine.Match{}
+	}
+	class := php.CallReceiverClass(call)
+	program := php.ProgramOf(call.Codebase())
+	if !slices.ContainsFunc(CollectionTypes, func(collection string) bool { return program.IsA(class, collection) }) {
+		return engine.Match{}
+	}
+
+	mapped := call
+	for mapped.Parent().Is(engine.Call) && mapped.Node().Field == "var" {
+		next := mapped.Parent()
+		if !slices.Contains([]string{"filter", "values", "all"}, php.CallName(next)) {
+			return engine.Match{}
+		}
+		mapped = next
+	}
+
+	return php.ArgumentConsumer(mapped)
 }
 
 var (

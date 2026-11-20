@@ -379,6 +379,59 @@ func (n Node) StringKeys() []string {
 	return keys
 }
 
+func recordReturnOwner(value engine.Match) engine.Match {
+	returned := value
+	for returned.Exists() {
+		parent := returned.Parent()
+		switch parent.Kind() {
+		case "Stmt_Return", "Expr_ArrowFunction":
+			if returned.Node().Field == "expr" {
+				return (Node{Match: parent}).EnclosingFunctionLike().Match
+			}
+			return engine.Match{}
+		case "Expr_Ternary", "Expr_Match":
+			if returned.Node().Field == "cond" {
+				return engine.Match{}
+			}
+		case "MatchArm":
+			if returned.Node().Field != "body" {
+				return engine.Match{}
+			}
+		default:
+			return engine.Match{}
+		}
+		returned = parent
+	}
+
+	return engine.Match{}
+}
+
+func looseRecordType(match engine.Match) bool {
+	return acceptsArrayRecord(Written(match.Typed()))
+}
+
+func acceptsArrayRecord(written TypeName) bool {
+	if written.isUnion() {
+		return slices.ContainsFunc(written.members(), acceptsArrayRecord)
+	}
+	switch strings.ToLower(written.SimpleName()) {
+	case "array", "iterable", "mixed":
+		return true
+	}
+
+	return false
+}
+
+func (n Node) OverridesReturnSignature() bool {
+	function := n.EnclosingFunctionLike()
+	if function.Kind() != "Stmt_ClassMethod" {
+		return false
+	}
+	program := ProgramOf(n.Codebase())
+	class, method := EnclosingClassName(function.Match), function.Name()
+	return program.OverridesMethod(class, method) || program.HasTraitArrayReturnContract(class, method)
+}
+
 func (n Node) HasNestedArrayValue() bool {
 	return n.Kind() == "Expr_Array" && slices.ContainsFunc(n.ChildrenIn("items"), func(item engine.Match) bool {
 		return item.Kind() == "ArrayItem" && item.Child("value").Kind() == "Expr_Array"
@@ -428,32 +481,185 @@ func (n Node) IsHomogeneousLookupTable() bool {
 	if n.Kind() != "Expr_Array" || len(items) < 2 {
 		return false
 	}
-	classes := map[string]bool{}
-	for _, item := range items {
-		value := item.Child("value")
-		if item.Kind() != "ArrayItem" || value.Kind() != "Expr_ClassConstFetch" || !isName(value.Child("class")) {
-			return false
-		}
-		classes[value.Child("class").Name()] = true
+	if repeatedMapValue(items) {
+		return true
 	}
-
-	return len(classes) == 1
+	class := constantLookupClass(items[0].Child("value"))
+	if class == "" {
+		return false
+	}
+	return !slices.ContainsFunc(items[1:], func(item engine.Match) bool {
+		return constantLookupClass(item.Child("value")) != class
+	})
 }
 
-var (
-	shapedReturn = regexp.MustCompile(`@return\s+\??array\s*\{`)
-	namedField   = regexp.MustCompile(`\{[^}]*[A-Za-z_]\w*\??\s*:`)
-)
+func repeatedMapValue(items []engine.Match) bool {
+	first := items[0].Child("value")
+	return !slices.ContainsFunc(items, func(item engine.Match) bool {
+		key := item.Child("key")
+		text, ok := key.Text()
+		return key.Kind() != "Scalar_String" || !ok || fieldName.MatchString(text) || !first.SameSyntax(item.Child("value"))
+	})
+}
+
+func constantLookupClass(value engine.Match) string {
+	if owner := ClassConstantOwner(value); owner != "" {
+		return owner
+	}
+	if value.Kind() != "Expr_Array" {
+		return ""
+	}
+	class := ""
+	items := value.ChildrenIn("items")
+	for _, item := range items {
+		owner := ClassConstantOwner(item.Child("value"))
+		if item.Child("key").Exists() || owner == "" {
+			return ""
+		}
+		if class != "" && class != owner {
+			return ""
+		}
+		class = owner
+	}
+
+	return class
+}
+
+var shapedReturn = regexp.MustCompile(`\barray\s*\{[^}]*[A-Za-z_]\w*\??\s*:`)
 
 func (n Node) EnclosingFunctionReturnsShapedArray() bool {
-	doc, ok := n.EnclosingFunctionLike().DocComment()
-	if !ok {
+	if shapedReturn.MatchString(documentedReturn(n.EnclosingFunctionLike().Match)) {
+		return true
+	}
+
+	call := n.CallbackConsumer()
+	for call.Exists() {
+		if owner := recordReturnOwner(call); owner.Exists() {
+			return shapedReturn.MatchString(documentedReturn(owner))
+		}
+		parent := call.Parent()
+		if parent.Kind() == "PropertyHook" && call.Node().Field == "body" {
+			return shapedReturn.MatchString(documentedReturn(parent))
+		}
+		if !parent.Is(engine.Call) || call.Node().Field != "var" {
+			return false
+		}
+		call = parent
+	}
+
+	return false
+}
+
+func documentedReturn(function engine.Match) string {
+	if !function.Exists() {
+		return ""
+	}
+	declaration := function
+	if declaration.Kind() == "PropertyHook" {
+		declaration = declaration.Parent()
+	}
+	doc, found := DocComment(declaration)
+	if !found {
+		return ""
+	}
+	var lines []string
+	for _, line := range docblockContent(doc.Text) {
+		if returnTag.MatchString(line) {
+			lines = append(lines, strings.TrimSpace(strings.TrimPrefix(line, "@return")))
+			continue
+		}
+		if len(lines) == 0 {
+			continue
+		}
+		if line == "" || strings.HasPrefix(line, "@") {
+			break
+		}
+		lines = append(lines, line)
+	}
+
+	return strings.Join(lines, " ")
+}
+
+func (n Node) CallbackConsumer() engine.Match {
+	callback := n.EnclosingFunctionLike().Match
+	argument := callback.Parent()
+	if argument.Kind() == "Arg" && callback.Node().Field == "value" && argument.Parent().Is(engine.Call) {
+		return argument.Parent()
+	}
+
+	return engine.Match{}
+}
+
+func (n Node) CallbackResultConsumer() engine.Match {
+	call := n.CallbackConsumer()
+	if !CallsGlobalFunction(call, "array_map") {
+		return engine.Match{}
+	}
+
+	return ArgumentConsumer(call)
+}
+
+func (n Node) ArrayReturnMethod() engine.Match {
+	function := n.EnclosingFunctionLike().Match
+	if call := n.CallbackConsumer(); CallsGlobalFunction(call, "array_map") && call.Parent().Is(engine.Return) {
+		function = call.EnclosingFunction()
+	}
+	if function.Kind() == "Stmt_ClassMethod" {
+		return function
+	}
+
+	return engine.Match{}
+}
+
+func ArgumentConsumer(value engine.Match) engine.Match {
+	parent := value.Parent()
+	if parent.Kind() == "Arg" && value.Node().Field == "value" && parent.Parent().Is(engine.Call) {
+		return parent.Parent()
+	}
+
+	return engine.Match{}
+}
+
+var arrayCallbackParam = regexp.MustCompile(`^@param\s+(?:\\?Closure|callable)\([^)]*\)\s*:\s*array(?:<[^>]+>)?\s+\$([a-zA-Z_]\w*)\b`)
+
+func (n Node) CallbackMustReturnArray(receiver string) bool {
+	call := n.CallbackConsumer()
+	if !call.Exists() || receiver == "" {
+		return false
+	}
+	name := CallName(call)
+	owner := TypesOf(n.Codebase()).DeclaringClassOfMethod(receiver, name)
+	declaration, found := ProgramOf(n.Codebase()).Declaration(owner)
+	if !found {
+		return false
+	}
+	method, found := Method(declaration, name)
+	if !found {
+		return false
+	}
+	doc, found := DocComment(method)
+	if !found {
 		return false
 	}
 
-	return slices.ContainsFunc(prose.Lines(doc.Text), func(line string) bool {
-		return shapedReturn.MatchString(line) && namedField.MatchString(line)
-	})
+	argument := n.EnclosingFunctionLike().Parent()
+	parameter := argument.Child("name").Name()
+	if parameter == "" {
+		index := slices.Index(Arguments(call), argument)
+		parameters := Params(method)
+		if index < 0 || index >= len(parameters) {
+			return false
+		}
+		parameter = parameters[index].Child("var").Name()
+	}
+
+	for _, line := range docblockContent(doc.Text) {
+		if match := arrayCallbackParam.FindStringSubmatch(line); len(match) == 2 && match[1] == parameter {
+			return true
+		}
+	}
+
+	return false
 }
 
 func (n Node) ProjectsTypedObject() bool {
@@ -506,8 +712,11 @@ func (n Node) arrayProjectionSource() string {
 	for name := range sources {
 		source = name
 	}
+	owner := n.EnclosingClassLike()
+	selfMethods := source == "this" && owner.HasModifier("readonly") &&
+		ProgramOf(n.Codebase()).ClassIsValueType(owner.Identity())
 	for _, value := range values {
-		if !readsOnlyOwnFieldsOf(value, source) {
+		if !readsOnlyOwnFieldsOf(value, source, selfMethods) {
 			return ""
 		}
 	}
@@ -536,12 +745,15 @@ func expressionNodes(node engine.Match) []engine.Match {
 	return nodes
 }
 
-func readsOnlyOwnFieldsOf(value engine.Match, source string) bool {
+func readsOnlyOwnFieldsOf(value engine.Match, source string, selfMethods bool) bool {
 	for _, node := range expressionNodes(value) {
 		if node.Kind() != "Expr_Variable" || node.Name() != source {
 			continue
 		}
 		field := node.Parent()
+		if selfMethods && field.Kind() == "Expr_MethodCall" && node.Node().Field == "var" && len(Arguments(field)) == 0 {
+			continue
+		}
 		if field.Kind() != "Expr_PropertyFetch" && field.Kind() != "Expr_NullsafePropertyFetch" {
 			return false
 		}

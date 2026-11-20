@@ -44,12 +44,22 @@ func buildIndex(codebase *engine.Codebase) *Index {
 }
 
 func (i *Index) CallersOf(fqcn, method string) []engine.Match {
+	return i.callersOf(fqcn, method, func(call engine.Match) string {
+		if receiver := StaticCallClass(call); receiver != "" {
+			return receiver
+		}
+		return ReceiverTypeOf(call)
+	})
+}
+
+func (i *Index) ResolvedCallersOf(fqcn, method string) []engine.Match {
+	return i.callersOf(fqcn, method, CallReceiverClass)
+}
+
+func (i *Index) callersOf(fqcn, method string, receiverOf func(engine.Match) string) []engine.Match {
 	var callers []engine.Match
 	for _, call := range i.byName[method] {
-		receiver := StaticCallClass(call)
-		if receiver == "" {
-			receiver = ReceiverTypeOf(call)
-		}
+		receiver := receiverOf(call)
 		if receiver != "" && (receiver == fqcn || i.program.Extends(receiver, fqcn)) {
 			callers = append(callers, call)
 		}

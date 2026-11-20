@@ -168,7 +168,7 @@ func (n Node) ResolvesLateInALongerLivedOwner() bool {
 	return (lifetimes.OutlivesAScope(class) && !lifetimes.IsSingleton(target)) ||
 		(lifetimes.lifetime(target) == scopedAttribute && (function.HasModifier("static") || n.Parent().Kind() == "Stmt_Return")) ||
 		(function.HasModifier("static") && (function.Name() == "render" || function.Kind() == "Expr_ArrowFunction")) ||
-		program.Extends(class, `Illuminate\Database\Eloquent\Factories\Factory`) ||
+		program.Extends(class, Factory) ||
 		isArtisanTrait(program, class, map[string]bool{}) || resolvesInEventListener(n.Match) || n.replacesResolvedInstance(function, target)
 }
 

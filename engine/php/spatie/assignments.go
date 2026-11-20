@@ -317,12 +317,8 @@ func (n Node) TransformerLacksTsType() bool {
 }
 
 func firstArgumentClassShortName(attribute engine.Match) string {
-	value := firstArgument(attribute).Child("value")
-	if class := value.Child("class"); value.Kind() == "Expr_ClassConstFetch" && isName(class) {
-		return php.ShortName(strings.TrimLeft(class.Name(), `\`))
-	}
-
-	return ""
+	owner := php.ClassConstantOwner(firstArgument(attribute).Child("value"))
+	return php.ShortName(strings.TrimLeft(owner, `\`))
 }
 
 func (n Node) FlattensValueObjectToArray() bool {
