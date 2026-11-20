@@ -2,9 +2,8 @@ A value that might not be there forces a question on every reader: *what does "n
 Answer it **once, in the type**, so no reader has to guess. There are four real kinds of absence and one
 honest use of `null` — pick deliberately; never default to a bare nullable.
 
-This is [`fix-at-the-source`](../fix-at-the-source/SKILL.md) applied to absence: model the absence **where
-the value is born**, not at every caller that de-nulls it. If several callers each `=== null` the same
-value, that is the producer's type lying — fix the producer.
+Model absence where the value is born. If several callers need a value that the producer sometimes
+leaves missing, fix the producer. See [`fix-at-the-source`](../fix-at-the-source/SKILL.md).
 
 ### The decision: what kind of absence is this?
 
@@ -54,6 +53,13 @@ Narrow, and almost always on an **input or a framework seam**, never on a domain
   `Option` would be ceremony for a one-caller local. Keep it local and obvious.
 
 If you can't point at one of those, you do **not** have an honest null — go back to the decision.
+
+### Boolean questions about an optional value
+
+When a value is genuinely optional and its absence answers a yes/no question, prefer
+`?->predicate() ?? false` over an explicit null check. For a route that may have no owner,
+`return $this->actor?->isSameAs($actor) ?? false;` answers whether it belongs to the given actor.
+Use `?? true` when the domain says absence answers yes. Throw at the source if the value is required.
 
 ### When `null` is a BUG
 

@@ -1,1 +1,1 @@
-`null` is not a way to model absence. It is the *absence of a decision* about absence. Make the decision.
+Decide what absence means in the domain. Let the type say when a value can genuinely be absent.
