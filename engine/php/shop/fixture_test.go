@@ -61,6 +61,10 @@ func TestArrayBagProvesItselfOnTheShop(t *testing.T) {
 	proveBackendDetector(t, backend.ArrayBagDetector{})
 }
 
+func TestArrayBagParameterProvesItselfOnTheShop(t *testing.T) {
+	proveBackendDetector(t, backend.ArrayBagParameterDetector{})
+}
+
 func TestAllNullableDataProvesItselfOnTheShop(t *testing.T) {
 	proveBackendDetector(t, spatie.AllNullableDataDetector{})
 }

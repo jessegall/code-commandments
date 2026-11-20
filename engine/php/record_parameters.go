@@ -82,8 +82,33 @@ func carriers(literal engine.Match) []engine.Match {
 	if holder.Kind() == "Expr_Assign" && literal.Node().Field == "expr" {
 		return passedOn(holder.Child("var"))
 	}
+	if holder.Kind() == "Stmt_Return" && literal.ReturnsRecordBag() {
+		return returnedRecordArguments(literal)
+	}
 
 	return nil
+}
+
+func returnedRecordArguments(literal engine.Match) []engine.Match {
+	function := literal.Closest(engine.Function)
+	if function.Kind() != "Stmt_ClassMethod" && function.Kind() != "Stmt_Function" {
+		return nil
+	}
+	index := IndexOf(literal.Codebase())
+	callers := index.ResolvedCallersOfMethod(function)
+	if function.Kind() == "Stmt_Function" {
+		callers = index.FunctionCallersOf(function)
+	}
+	var arguments []engine.Match
+	for _, call := range callers {
+		for _, argument := range carriers(call) {
+			value := argument.Child("value")
+			if value == call || LocalValueAt(value) == call {
+				arguments = append(arguments, argument)
+			}
+		}
+	}
+	return arguments
 }
 
 func passedOn(variable engine.Match) []engine.Match {

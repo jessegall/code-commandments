@@ -347,6 +347,18 @@ func ParameterFilled(codebase *engine.Codebase, argument engine.Match) engine.Ma
 	if class := call.Child("class"); owner == "" && call.Kind() == "Expr_New" && isName(class) {
 		owner, method = types.DeclaringClassOfMethod(namedClass(call, class), "__construct"), "__construct"
 	}
+	return parameterOfCall(codebase, argument, owner, method)
+}
+
+func ResolvedParameterFilled(argument engine.Match) engine.Match {
+	call := argument.Parent()
+	codebase := argument.Codebase()
+	method := CallName(call)
+	owner := TypesOf(codebase).DeclaringClassOfMethod(CallReceiverClass(call), method)
+	return parameterOfCall(codebase, argument, owner, method)
+}
+
+func parameterOfCall(codebase *engine.Codebase, argument engine.Match, owner, method string) engine.Match {
 	declaration, ok := ProgramOf(codebase).Declaration(owner)
 	if owner == "" || !ok {
 		return engine.Match{}
@@ -365,7 +377,7 @@ func ParameterFilled(codebase *engine.Codebase, argument engine.Match) engine.Ma
 
 		return engine.Match{}
 	}
-	position := slices.IndexFunc(Arguments(call), func(each engine.Match) bool { return each.Node() == argument.Node() })
+	position := slices.IndexFunc(Arguments(argument.Parent()), func(each engine.Match) bool { return each.Node() == argument.Node() })
 	if position < 0 || position >= len(parameters) {
 		return engine.Match{}
 	}
