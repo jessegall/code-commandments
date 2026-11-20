@@ -31,6 +31,10 @@ final class InvoiceNumberFormatter
         return sprintf('%s-%06d', $this->prefix, $sequence);
     }
 
+    /**
+     * @return self
+     */
+    #[Sinful(CeremonyDocblock::class)]
     public function withPrefix(string $prefix): self
     {
         $clone = clone $this;

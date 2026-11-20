@@ -42,14 +42,18 @@ func DocumentedParamClass(function engine.Match, variable string) string {
 	}
 	for _, tag := range docTag.FindAllStringSubmatch(doc.Text, -1) {
 		if tag[2] == variable && strings.HasPrefix(tag[0], "@param") {
-			owner := (Node{Match: function}).namespaceDeclaration()
-			if owner.Exists() {
-				return resolveName(tag[1], owner.Child("name").Name(), importsIn(owner.Node().Children))
-			}
-			return Resolve(tag[1], function.Source())
+			return resolveDocumentedClass(function, tag[1])
 		}
 	}
 	return ""
+}
+
+func resolveDocumentedClass(function engine.Match, name string) string {
+	namespace := (Node{Match: function}).namespaceDeclaration()
+	if namespace.Exists() {
+		return resolveName(name, namespace.Child("name").Name(), importsIn(namespace.Node().Children))
+	}
+	return Resolve(name, function.Source())
 }
 
 func ElementNamed(docblock, variable string) string {

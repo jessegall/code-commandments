@@ -173,8 +173,11 @@ func (n Node) IsArrayItem() bool {
 }
 
 func (n Node) HasCeremonyDocblock() bool {
+	if !n.IsFunctionDeclaration() {
+		return false
+	}
 	doc, ok := n.DocComment()
-	if !n.IsFunctionDeclaration() || !ok {
+	if !ok {
 		return false
 	}
 	native := map[string]string{}
@@ -185,9 +188,9 @@ func (n Node) HasCeremonyDocblock() bool {
 		}
 	}
 	nativeReturn := typeKeyOf(Written(n.Node().Returns))
-	restatements := 0
-	for _, line := range prose.Lines(doc.Text) {
-		line = prose.Trim(strings.TrimLeft(prose.Trim(line), "/*"))
+	resolve := func(name string) string { return resolveDocumentedClass(n.Match, name) }
+	restates := false
+	for _, line := range docblockContent(doc.Text) {
 		if line == "" {
 			continue
 		}
@@ -195,17 +198,18 @@ func (n Node) HasCeremonyDocblock() bool {
 			return false
 		}
 		if match := paramTag.FindStringSubmatch(line); match != nil {
-			if prose.Trim(match[3]) != "" || native[match[2]] == "" || typeKey(match[1]) != native[match[2]] {
+			if prose.Trim(match[3]) != "" || native[match[2]] == "" || typeKey(match[1], resolve) != native[match[2]] {
 				return false
 			}
-			restatements++
+			restates = true
 
 			continue
 		}
 		if match := returnTag.FindStringSubmatch(line); match != nil {
-			if prose.Trim(match[2]) != "" || nativeReturn == "" || typeKey(match[1]) != nativeReturn {
+			if prose.Trim(match[2]) != "" || nativeReturn == "" || typeKey(match[1], resolve) != nativeReturn {
 				return false
 			}
+			restates = true
 
 			continue
 		}
@@ -213,7 +217,7 @@ func (n Node) HasCeremonyDocblock() bool {
 		return false
 	}
 
-	return restatements >= 1
+	return restates
 }
 
 func (n Node) CodeWords() []string {
@@ -278,20 +282,20 @@ func typeKeyOf(declared TypeName) string {
 		return ""
 	}
 
-	return typeKey(rendered)
+	return typeKey(rendered, nil)
 }
 
-func typeKey(written string) string {
-	key := strings.ToLower(strings.TrimLeft(written, `?\`))
-	key = strings.ReplaceAll(strings.ReplaceAll(key, "|null", ""), "null|", "")
-	if !strings.Contains(key, "|") {
-		return key
-	}
-	var members []string
-	for _, member := range strings.Split(key, "|") {
-		if member = strings.TrimLeft(member, `\`); member != "" {
-			members = append(members, member)
+func typeKey(written string, resolve func(string) string) string {
+	written, nullable := strings.CutPrefix(written, "?")
+	members := strings.Split(written, "|")
+	for at, name := range members {
+		if resolve != nil && IsClassName(name) && !strings.ContainsAny(name, "&<([") {
+			name = resolve(name)
 		}
+		members[at] = strings.ToLower(strings.TrimLeft(name, `\`))
+	}
+	if nullable {
+		members = append(members, "null")
 	}
 	slices.Sort(members)
 

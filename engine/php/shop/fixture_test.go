@@ -110,6 +110,10 @@ func TestCapabilityProbeHubProvesItselfOnTheShop(t *testing.T) {
 	proveBackendDetector(t, backend.CapabilityProbeHubDetector)
 }
 
+func TestCeremonyDocblockProvesItselfOnTheShop(t *testing.T) {
+	proveBackendDetector(t, backend.CeremonyDocblockDetector)
+}
+
 func proveBackendDetector(t *testing.T, detector detectors.Detector) {
 	t.Helper()
 	fixturetest.Prove(t, fixture.Fixture{
