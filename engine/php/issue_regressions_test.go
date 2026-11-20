@@ -323,6 +323,23 @@ func TestDocParagraphsExcludeMultilineTypeTags(t *testing.T) {
 	}
 }
 
+func TestDocParagraphsExcludeFencedExamples(t *testing.T) {
+	const example = `/**
+ * A checkout card shows the current delivery address.
+ *
+ * ~~~blade
+ * @include('delivery.address')
+ *
+ * @include('delivery.phone')
+ * ~~~`
+	if paragraphs := php.DocParagraphs(example + "\n */"); paragraphs != 1 {
+		t.Fatalf("a fenced example should not add a paragraph, found %d", paragraphs)
+	}
+	if paragraphs := php.DocParagraphs(example + "\n * The checkout validates the address before shipping.\n */"); paragraphs != 2 {
+		t.Fatalf("prose after an example should still count, found %d", paragraphs)
+	}
+}
+
 func TestOpenMapsAndExternalPayloadsKeepTheirWireShapes(t *testing.T) {
 	codebase := phpSource(t, `<?php
 namespace App\Shop;

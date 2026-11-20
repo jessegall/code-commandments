@@ -212,6 +212,42 @@ func Paragraphs(lines []string, isProse func(string) bool) int {
 	return paragraphs
 }
 
+func WithoutFencedExamples(lines []string) []string {
+	var description []string
+	openFence := ""
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+		marker := fenceMarker(line)
+		if openFence != "" {
+			if strings.HasPrefix(marker, openFence) && strings.TrimSpace(line[len(marker):]) == "" {
+				openFence = ""
+			}
+			continue
+		}
+		if marker != "" {
+			openFence = marker
+			description = append(description, "")
+			continue
+		}
+		description = append(description, line)
+	}
+
+	return description
+}
+
+func fenceMarker(line string) string {
+	if line == "" || (line[0] != '`' && line[0] != '~') {
+		return ""
+	}
+	rest := strings.TrimLeft(line, line[:1])
+	length := len(line) - len(rest)
+	if length < 3 || (line[0] == '`' && strings.Contains(rest, "`")) {
+		return ""
+	}
+
+	return line[:length]
+}
+
 func History(text string) bool {
 	return slices.ContainsFunc(history, func(narration phrase) bool { return len(narration.starts(text)) > 0 })
 }

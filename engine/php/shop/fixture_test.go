@@ -94,6 +94,10 @@ func TestBlankStringOnTheWireProvesItselfOnTheShop(t *testing.T) {
 	proveBackendDetector(t, backend.BlankStringOnTheWireDetector{})
 }
 
+func TestBloatedDocblockProvesItselfOnTheShop(t *testing.T) {
+	proveBackendDetector(t, backend.BloatedDocblockDetector)
+}
+
 func proveBackendDetector(t *testing.T, detector detectors.Detector) {
 	t.Helper()
 	fixturetest.Prove(t, fixture.Fixture{

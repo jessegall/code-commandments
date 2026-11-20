@@ -55,7 +55,7 @@ func DocParagraphs(text string) int {
 }
 
 func docDescription(text string) []string {
-	lines := DocLines(text)
+	lines := prose.WithoutFencedExamples(DocLines(text))
 	if tags := slices.IndexFunc(lines, func(line string) bool { return strings.HasPrefix(line, "@") }); tags >= 0 {
 		return lines[:tags]
 	}

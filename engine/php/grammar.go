@@ -136,12 +136,6 @@ func init() {
 		},
 		CommentReferences: commentReferences,
 		CommentLocation:   engine.Commented.Documents,
-		DocumentedSubject: func(held engine.Match) engine.Match {
-			if held.Kind() == "Stmt_Class" {
-				return held
-			}
-			return engine.Match{}
-		},
 		DocParagraphs:     func(comment engine.Commented) int { return DocParagraphs(comment.Text) },
 		CeremonyDoc:       engine.As(Node.HasCeremonyDocblock),
 		CopyExclusions:    copyExclusions,

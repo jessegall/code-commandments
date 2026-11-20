@@ -143,7 +143,7 @@ func (cm Commented) IsBloatedDoc() bool {
 		return read(cm) >= 2
 	}
 
-	return prose.Paragraphs(cm.Description(), func(line string) bool { return line != "" }) >= 2
+	return prose.Paragraphs(prose.WithoutFencedExamples(cm.Description()), func(line string) bool { return line != "" }) >= 2
 }
 
 func (cm Commented) Words() []string {
