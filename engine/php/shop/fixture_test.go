@@ -102,6 +102,10 @@ func TestBoundaryDuplicatedOperationProvesItselfOnTheShop(t *testing.T) {
 	proveBackendDetector(t, laravel.BoundaryDuplicatedOperationDetector{})
 }
 
+func TestCancelledCoalesceProvesItselfOnTheShop(t *testing.T) {
+	proveBackendDetector(t, backend.CancelledCoalesceDetector)
+}
+
 func proveBackendDetector(t *testing.T, detector detectors.Detector) {
 	t.Helper()
 	fixturetest.Prove(t, fixture.Fixture{

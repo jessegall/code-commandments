@@ -34,4 +34,10 @@ final class SessionGate
         // the comparison asks something the coalesce does not answer.
         return ($currency ?? 'EUR') === '';
     }
+
+    #[Sinful(CancelledCoalesce::class)]
+    public function selectsNonDefaultTimezone(?string $timezone): bool
+    {
+        return ($timezone ?? 'UTC') !== 'UTC';
+    }
 }

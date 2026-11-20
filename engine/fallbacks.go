@@ -4,6 +4,8 @@ import "slices"
 
 var equalities = []string{"==", "!=", "===", "!==", "is", "is not"}
 
+var orderComparisons = []string{"<", "<=", ">", ">="}
+
 func (m Match) Fallback() Match {
 	if m.operator() == "??" {
 		written := m.Children()
@@ -41,7 +43,8 @@ func IsComparedToItsFallback(m Match) bool {
 	}
 	compared := m.Grouped()
 	comparison := compared.Parent()
-	if !comparison.Is(Comparison) || !slices.Contains(equalities, comparison.operator()) {
+	operator := comparison.operator()
+	if !comparison.Is(Comparison) || !(slices.Contains(equalities, operator) || slices.Contains(orderComparisons, operator)) {
 		return false
 	}
 

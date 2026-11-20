@@ -72,7 +72,6 @@ func init() {
 		Steps:           engine.InFields("loop"),
 		Thrown:          engine.OfKind("Expr_Throw", "expr"),
 		FailureLocation: engine.Match.Thrown,
-		StableFallback:  engine.Match.IsEmptyScalar,
 		SwallowedExit: func(statement engine.Match) bool {
 			return statement.Is(engine.Return) && statement.Child("expr").Exists()
 		},

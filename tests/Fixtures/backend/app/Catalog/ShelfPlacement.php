@@ -4,6 +4,7 @@ namespace Shop\Catalog;
 
 use JesseGall\CodeCommandments\Sins\Backend\CancelledCoalesce;
 
+use JesseGall\CodeCommandments\Testing\Righteous;
 use JesseGall\CodeCommandments\Testing\Sinful;
 
 /**
@@ -16,5 +17,17 @@ final class ShelfPlacement
     public function isAtTheFront(?int $position): bool
     {
         return ($position ?? 0) === 0;
+    }
+
+    #[Sinful(CancelledCoalesce::class)]
+    public function isBehindFront(?int $position): bool
+    {
+        return ($position ?? 0) > 0;
+    }
+
+    #[Righteous(CancelledCoalesce::class)]
+    public function reachesBackShelf(?int $position): bool
+    {
+        return ($position ?? 0) > 4;
     }
 }
