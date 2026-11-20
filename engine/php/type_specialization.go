@@ -3,6 +3,7 @@ package php
 import (
 	"strings"
 
+	"github.com/jessegall/code-commandments/contract"
 	"github.com/jessegall/code-commandments/engine"
 )
 
@@ -32,6 +33,9 @@ func (t *Types) propertyRead(class, field string) held {
 	native := t.fieldType[declaring][field]
 	if actual := t.propertyTypes[class][field]; class != declaring && native.class != "" && engine.IsA(t.program, actual, native.class) && actual != native.class {
 		return held{class: actual}
+	}
+	if declaring == "" {
+		return typed(Written(t.program.codebase.PropertyType(contract.PHP, class, field)))
 	}
 	return native
 }

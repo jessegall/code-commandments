@@ -18,7 +18,7 @@ func init() { detectors.Register(catalog.PHP, ConfigReadDetector{}) }
 func (ConfigReadDetector) Sin() sins.Sin { return backendsins.ConfigRead{} }
 
 func (ConfigReadDetector) Exemptions() []packages.Exemption {
-	return []packages.Exemption{{Tag: packages.CompositionRoot, By: []packages.By{packages.EnclosingClass}}}
+	return []packages.Exemption{{Tag: packages.CompositionRoot, By: []packages.By{packages.EnclosingMethod}}}
 }
 
 func (d ConfigReadDetector) Find(codebase *engine.Codebase) []engine.Match {

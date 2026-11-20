@@ -42,8 +42,7 @@ func (n Node) IsHandedConstructedData() bool {
 	}
 	fqcn := newClassName(n.Match)
 	class, ok := DataClassShapeOf(n.Codebase()).ClassFor(fqcn)
-	function := enclosingFunction(n.Match)
-	if !ok || !function.Exists() {
+	if !ok {
 		return false
 	}
 	params := php.ConstructorParams(class)
@@ -52,7 +51,7 @@ func (n Node) IsHandedConstructedData() bool {
 		if argument.Node().Field != "args" {
 			continue
 		}
-		if argument.Kind() == "Arg" && n.argumentIsAlready(argument, index, fqcn, params, function) {
+		if argument.Kind() == "Arg" && n.argumentIsAlready(argument, index, fqcn, params) {
 			return true
 		}
 		index++
@@ -61,7 +60,7 @@ func (n Node) IsHandedConstructedData() bool {
 	return false
 }
 
-func (n Node) argumentIsAlready(argument engine.Match, index int, fqcn string, params []engine.Match, function engine.Match) bool {
+func (n Node) argumentIsAlready(argument engine.Match, index int, fqcn string, params []engine.Match) bool {
 	name := argument.Child("name").Name()
 	if !argument.Child("name").Exists() {
 		name = promotedParamName(params, index)
@@ -70,10 +69,21 @@ func (n Node) argumentIsAlready(argument engine.Match, index int, fqcn string, p
 	if name != "" {
 		declared = n.types().PropertyTypeOf(fqcn, name)
 	}
-	if !php.IsClassName(declared) || constructsInPlace(argument.Child("value"), declared) {
+	value := argument.Child("value")
+	if !php.IsClassName(declared) || constructsInPlace(value, declared) {
 		return false
 	}
-	actual := n.types().TypeIn(argument.Child("value"), function, php.EnclosingClassName(n.Match))
+	if value.AdmitsAbsence() {
+		position := slices.IndexFunc(params, func(parameter engine.Match) bool { return parameter.Name() == name })
+		if position < 0 {
+			return false
+		}
+		nullable, _ := n.types().ParamIsNullable(fqcn, "__construct", position)
+		if !nullable {
+			return false
+		}
+	}
+	actual := n.types().TypeOf(value)
 
 	return actual != "" && strings.TrimLeft(actual, `\`) == strings.TrimLeft(declared, `\`)
 }

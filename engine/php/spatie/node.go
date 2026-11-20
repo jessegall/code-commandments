@@ -11,13 +11,14 @@ import (
 )
 
 const (
-	Data           = `Spatie\LaravelData\Data`
-	DataPipe       = `Spatie\LaravelData\DataPipes\DataPipe`
-	Cast           = `Spatie\LaravelData\Casts\Cast`
-	Optional       = `Spatie\LaravelData\Optional`
-	TypeScript     = `Spatie\TypeScriptTransformer\Attributes\TypeScript`
-	DataCollection = `Spatie\LaravelData\DataCollection`
-	hidden         = "Hidden"
+	Data                 = `Spatie\LaravelData\Data`
+	InjectsPropertyValue = `Spatie\LaravelData\Attributes\InjectsPropertyValue`
+	DataPipe             = `Spatie\LaravelData\DataPipes\DataPipe`
+	Cast                 = `Spatie\LaravelData\Casts\Cast`
+	Optional             = `Spatie\LaravelData\Optional`
+	TypeScript           = `Spatie\TypeScriptTransformer\Attributes\TypeScript`
+	DataCollection       = `Spatie\LaravelData\DataCollection`
+	hidden               = "Hidden"
 )
 
 var (

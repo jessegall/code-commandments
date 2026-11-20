@@ -73,3 +73,67 @@ function commented(Origin $origin): bool { return $origin /* compare with the pu
 		}
 	}
 }
+
+func TestRepentCompareSelfReadsEloquentEnumCasts(t *testing.T) {
+	t.Chdir(t.TempDir())
+	source := `<?php
+namespace Illuminate\Database\Eloquent {
+    abstract class Model {}
+}
+namespace Illuminate\Database\Eloquent\Casts {
+    class Attribute {}
+}
+namespace Shop\Orders {
+    use Illuminate\Database\Eloquent\Casts\Attribute;
+    use Illuminate\Database\Eloquent\Model;
+
+    enum Origin: string {
+        case Shipped = 'shipped';
+        case Stored = 'stored';
+        public function equals(self $other): bool { return $this === $other; }
+    }
+
+    final class Record extends Model {
+        protected function casts(): array { return ['origin' => Origin::class]; }
+        public function shipped(): bool { return $this->origin === Origin::Shipped; }
+        public function differs(): bool { return $this->origin !== Origin::Stored; }
+    }
+
+    final class LegacyRecord extends Model {
+        protected $casts = ['origin' => Origin::class];
+        public function shipped(): bool { return $this->origin === Origin::Shipped; }
+    }
+
+    final class PlainClass {
+        protected function casts(): array { return ['origin' => Origin::class]; }
+        public function unchanged(): bool { return $this->origin === Origin::Shipped; }
+    }
+
+    final class AccessorRecord extends Model {
+        protected function casts(): array { return ['origin' => Origin::class]; }
+        protected function origin(): Attribute { return new Attribute(); }
+        public function unchanged(): bool { return $this->origin === Origin::Shipped; }
+    }
+}
+`
+	if err := os.WriteFile("Origin.php", []byte(source), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	code, out, warned := ran("repent", ".", "--sin=compare-self")
+	if code != 0 {
+		t.Fatalf("repent exited %d: %s %s", code, out, warned)
+	}
+	rewritten, err := os.ReadFile("Origin.php")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for want, count := range map[string]int{
+		"return ($this->origin?->equals(Origin::Shipped) === true);": 2,
+		"return ($this->origin?->equals(Origin::Stored) !== true);":  1,
+		"return $this->origin === Origin::Shipped;":                  2,
+	} {
+		if actual := strings.Count(string(rewritten), want); actual != count {
+			t.Errorf("want %d occurrences of %q, got %d\n%s", count, want, actual, rewritten)
+		}
+	}
+}

@@ -89,8 +89,16 @@ func (d CompareSelfDetector) FixFor(finding engine.Match) (string, bool) {
 		return "", false
 	}
 	method := d.method(first.Negated, len(comparisons))
+	negate := false
 	if !php.EnumComparisonMethod(finding.Codebase(), first.Enum, d.trait, method, len(comparisons)) {
-		return "", false
+		if !first.Negated || len(comparisons) != 1 || d.notEquals != "" {
+			return "", false
+		}
+		method = d.method(false, 1)
+		if !php.EnumComparisonMethod(finding.Codebase(), first.Enum, d.trait, method, 1) {
+			return "", false
+		}
+		negate = true
 	}
 	cases := make([]string, 0, len(comparisons))
 	for _, compared := range comparisons {
@@ -102,12 +110,18 @@ func (d CompareSelfDetector) FixFor(finding engine.Match) (string, bool) {
 	}
 	call := method + "(" + strings.Join(cases, ", ") + ")"
 	if php.Written(first.Subject.Typed()).IsNullable() {
+		if negate {
+			return "(" + receiver + "?->" + call + " !== true)", true
+		}
 		if first.Negated {
 			return "(" + receiver + "?->" + call + " !== false)", true
 		}
 		return "(" + receiver + "?->" + call + " === true)", true
 	}
 
+	if negate {
+		return "!" + receiver + "->" + call, true
+	}
 	return receiver + "->" + call, true
 }
 

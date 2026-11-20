@@ -33,7 +33,9 @@ func (Laravel) Register(exemptions *Exemptions) {
 	exemptions.Exempt(NoContainer).Classes(laravel.CastContracts...)
 	exemptions.Exempt(Association).Methods(laravel.RelationMethods...)
 	exemptions.Exempt(Association).Attributes(laravel.BindingAttributes...)
-	exemptions.Exempt(CompositionRoot).Classes(laravel.ServiceProvider)
+	exemptions.Exempt(CompositionRoot).
+		Classes(laravel.ServiceProvider).
+		On(laravel.Factory, "definition")
 	exemptions.Exempt(ValidationResponse).On(laravel.ValidationException, "withMessages")
 }
 
@@ -44,6 +46,7 @@ func (Spatie) Register(exemptions *Exemptions) {
 	exemptions.Exempt(NoContainer).Classes(spatie.NoContainerContracts...)
 	exemptions.Exempt(ContractMethod).On(`Spatie\LaravelData\Contracts\PropertyMorphableData`, "morph")
 	exemptions.Exempt(ArrayReturnContract).On(spatie.Data, "rules")
+	exemptions.Exempt(CompositionRoot).On(spatie.InjectsPropertyValue, "resolve")
 }
 
 // LaravelActions excuses an action's rules(), the validation the package runs, as FormRequest::rules is.

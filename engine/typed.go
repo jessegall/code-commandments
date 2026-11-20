@@ -1,6 +1,25 @@
 package engine
 
-import "github.com/jessegall/code-commandments/contract"
+import (
+	"slices"
+
+	"github.com/jessegall/code-commandments/contract"
+)
+
+type PropertyTypes func(*Codebase, string, string) *contract.Type
+
+func OffersPropertyTypes(language contract.Language, read PropertyTypes) {
+	registers(language, func(row *spoken) { row.properties = append(slices.Clone(row.properties), read) })
+}
+
+func (c *Codebase) PropertyType(language contract.Language, class, field string) *contract.Type {
+	for _, read := range spokenIn(language).properties {
+		if inferred := read(c, class, field); inferred != nil {
+			return inferred
+		}
+	}
+	return nil
+}
 
 func (m Match) ResultType() *contract.Type {
 	if m.node == nil || !m.Is(Function) {

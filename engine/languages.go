@@ -16,6 +16,7 @@ type spoken struct {
 	fill       Filler
 	freezers   []Freezer
 	predicates []Predicate
+	properties []PropertyTypes
 }
 
 // languages holds each language's row. A change copies the row and stores the copy, so a read never sees one half
