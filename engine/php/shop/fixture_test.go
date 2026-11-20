@@ -98,6 +98,10 @@ func TestBloatedDocblockProvesItselfOnTheShop(t *testing.T) {
 	proveBackendDetector(t, backend.BloatedDocblockDetector)
 }
 
+func TestBoundaryDuplicatedOperationProvesItselfOnTheShop(t *testing.T) {
+	proveBackendDetector(t, laravel.BoundaryDuplicatedOperationDetector{})
+}
+
 func proveBackendDetector(t *testing.T, detector detectors.Detector) {
 	t.Helper()
 	fixturetest.Prove(t, fixture.Fixture{

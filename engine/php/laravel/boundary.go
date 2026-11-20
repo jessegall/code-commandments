@@ -22,6 +22,13 @@ type BoundaryOperations struct {
 type boundaryEntry struct {
 	kind  string
 	calls []string
+	flows []callFlow
+}
+
+// callFlow is an ordered pair of calls where one supplies an argument to the other.
+type callFlow struct {
+	producer string
+	consumer string
 }
 
 var boundaryOperations = engine.Memoised(readBoundaryOperations)
@@ -38,7 +45,7 @@ func (b *BoundaryOperations) TwinsOf(fqcn, method string) []string {
 	var twins []string
 	for _, id := range b.order {
 		entry := b.entries[id]
-		if entry.kind != subject.kind && len(b.shared(subject.calls, entry.calls)) >= MinSharedCalls {
+		if entry.kind != subject.kind && b.sharesOperation(subject, entry) {
 			twins = append(twins, id)
 		}
 	}
@@ -46,15 +53,23 @@ func (b *BoundaryOperations) TwinsOf(fqcn, method string) []string {
 	return twins
 }
 
-func (b *BoundaryOperations) shared(one, other []string) []string {
+func (b *BoundaryOperations) sharesOperation(one, other boundaryEntry) bool {
 	var shared []string
-	for _, call := range one {
-		if slices.Contains(other, call) && b.usage[call] <= infrastructureThreshold {
+	for _, call := range one.calls {
+		if slices.Contains(other.calls, call) && b.usage[call] <= infrastructureThreshold {
 			shared = append(shared, call)
 		}
 	}
+	if len(shared) >= MinSharedCalls {
+		return true
+	}
+	if len(shared) != 2 {
+		return false
+	}
 
-	return shared
+	return slices.ContainsFunc(one.flows, func(flow callFlow) bool {
+		return slices.Contains(shared, flow.producer) && slices.Contains(shared, flow.consumer) && slices.Contains(other.flows, flow)
+	})
 }
 
 func readBoundaryOperations(codebase *engine.Codebase) *BoundaryOperations {
@@ -69,19 +84,19 @@ func readBoundaryOperations(codebase *engine.Codebase) *BoundaryOperations {
 			}
 			method := file.Match(node.ID)
 			kind := kindOf(program, actions, method)
-			if kind == "" || !php.IsPublic(node) {
+			if kind == "" || !php.IsPublic(node) || method.IsInDependency() {
 				continue
 			}
-			calls := domainCalls(program, types, method)
-			if len(calls) < MinSharedCalls {
+			entry := readBoundaryEntry(program, types, method, kind)
+			if len(entry.calls) < 2 {
 				continue
 			}
 			id := php.EnclosingClassName(method) + "::" + php.EnclosingFunctionName(method)
 			if _, known := operations.entries[id]; !known {
 				operations.order = append(operations.order, id)
 			}
-			operations.entries[id] = boundaryEntry{kind: kind, calls: calls}
-			for _, call := range calls {
+			operations.entries[id] = entry
+			for _, call := range entry.calls {
 				operations.usage[call]++
 			}
 		}
@@ -104,8 +119,9 @@ func kindOf(program *php.Program, actions *RouteActions, method engine.Match) st
 	return ""
 }
 
-func domainCalls(program *php.Program, types *php.Types, method engine.Match) []string {
-	calls := []string{}
+func readBoundaryEntry(program *php.Program, types *php.Types, method engine.Match, kind string) boundaryEntry {
+	entry := boundaryEntry{kind: kind}
+	targets := map[engine.Match]string{}
 	self := php.EnclosingClassName(method)
 	for _, statement := range method.Children() {
 		if statement.Node().Field != "stmts" {
@@ -117,14 +133,29 @@ func domainCalls(program *php.Program, types *php.Types, method engine.Match) []
 				continue
 			}
 			class := types.TypeIn(receiver, method, self)
-			if _, declared := program.Declaration(class); class == "" || !declared {
+			if declaration, declared := program.Declaration(class); !declared || declaration.IsInDependency() {
 				continue
 			}
-			if key := class + "::" + name.Name(); !slices.Contains(calls, key) {
-				calls = append(calls, key)
+			key := class + "::" + name.Name()
+			targets[call] = key
+			if !slices.Contains(entry.calls, key) {
+				entry.calls = append(entry.calls, key)
 			}
 		}
 	}
 
-	return calls
+	for call, consumer := range targets {
+		for _, argument := range php.Arguments(call) {
+			value := argument.Child("value")
+			if value.Kind() == "Expr_Variable" {
+				value = php.LocalValueAt(value)
+			}
+			producer := targets[value]
+			if producer != "" && producer != consumer {
+				entry.flows = append(entry.flows, callFlow{producer: producer, consumer: consumer})
+			}
+		}
+	}
+
+	return entry
 }
