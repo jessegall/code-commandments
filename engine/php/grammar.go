@@ -38,10 +38,14 @@ func init() {
 		IsConstructor: func(method engine.Match) bool {
 			return method.Kind() == "Stmt_ClassMethod" && method.Name() == "__construct"
 		},
-		HoldsPublicState:   func(parameter engine.Match) bool { return parameter.HasModifier("public") },
+		HoldsPublicState: func(parameter engine.Match) bool {
+			return parameter.HasModifier("public") && !HasDataInjection(parameter)
+		},
+		ReceivesContext:    receivesContext,
+		SameModule:         sameModule,
 		DeclaredClass:      func(parameter engine.Match) string { return Written(parameter.Node().Declared).Class() },
 		IsRecord:           func(class engine.Match) bool { return ProgramOf(class.Codebase()).ClassIsRecord(class.Identity()) },
-		IsValueClass:       func(class engine.Match) bool { return ProgramOf(class.Codebase()).ClassIsValueType(class.Identity()) },
+		IsValueClass:       isValueDependency,
 		ListedClasses:      listedProjectClasses,
 		PublishedContracts: publishedContracts,
 		Types:              func(codebase *engine.Codebase) engine.TypeSystem { return ProgramOf(codebase) },

@@ -45,6 +45,7 @@ type Grammar struct {
 	NamespaceSeparator  string
 	IsConstructor       func(Match) bool
 	HoldsPublicState    func(Match) bool
+	ReceivesContext     func(Match, Match) bool
 	PreservesPointer    func(Match) bool
 	ValidatesRecord     func(Match) bool
 	DeclaredClass       func(Match) string
@@ -163,6 +164,7 @@ type Grammar struct {
 	ImportModule        func(Match) string
 	ModuleKey           func(Match) string
 	ModuleLayer         func(Match) string
+	SameModule          func(Match, Match) bool
 	MemberOrder         func(Match) int
 	JoinedLines         func(Match) []Match
 	TupleSlots          func(Match) []Match

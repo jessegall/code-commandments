@@ -2,6 +2,7 @@
 
 namespace Shop\Docs;
 
+use JesseGall\CodeCommandments\Sins\Backend\ConcreteCrossModuleDependency;
 use JesseGall\CodeCommandments\Sins\Backend\DivergentTwin;
 use JesseGall\CodeCommandments\Testing\Fixed;
 use JesseGall\CodeCommandments\Testing\Sinful;
@@ -14,6 +15,7 @@ use Shop\Labels\SpoolArchive;
  */
 final class GuideExport
 {
+    #[Sinful(ConcreteCrossModuleDependency::class)]
     public function __construct(private readonly SpoolArchive $archive) {}
 
     #[Sinful(DivergentTwin::class)]

@@ -12,10 +12,15 @@ func (m Match) InjectsAnotherModulesConcreteService() bool {
 			class, _ = types.Declaration(read.DeclaredClass(m))
 		}
 	}
-	if !class.IsConcreteService() {
+	owner, supplier := constructor.moduleName(), class.moduleName()
+	if owner == "" || supplier == "" || owner == supplier {
 		return false
 	}
-	return class.moduleName() != constructor.moduleName()
+	if read.SameModule != nil && read.SameModule(constructor, class) {
+		return false
+	}
+
+	return class.IsConcreteService() && (read.ReceivesContext == nil || !read.ReceivesContext(m, class))
 }
 
 func (m Match) IsConcreteService() bool {

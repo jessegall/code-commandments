@@ -150,7 +150,7 @@ func cachedClassBound(cache engine.Match) string {
 		argument := (php.Node{Match: call}).Argument(0)
 
 		return call.Kind() == "Expr_MethodCall" && argument.Kind() == "Expr_Variable" && argument.Name() == key.Name() &&
-			slices.Contains(ContainerResolvers, CallName(call)) && (Node{Match: call}).isOnTheContainer()
+			slices.Contains(ContainerResolvers, CallName(call)) && php.IsContainerCall(call)
 	})
 	if !resolvesKey {
 		return ""

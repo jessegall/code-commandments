@@ -9,7 +9,10 @@ A constructor takes another module's concrete service
 ```php
 ----------[ Bad ]----------
 
-public function __construct(private CropCalendar $calendar, private int $openingHour = 7) {}
+public function __construct(
+    private CropCalendar $crops,
+    private WaterSchedule $water,
+) {}
 
 ----------[ Good ]----------
 

@@ -2,6 +2,7 @@
 
 namespace Shop\Checkout;
 
+use JesseGall\CodeCommandments\Sins\Backend\ConcreteCrossModuleDependency;
 use JesseGall\CodeCommandments\Sins\Backend\ArrayReturnBag;
 
 use JesseGall\CodeCommandments\Testing\Sinful;
@@ -12,6 +13,7 @@ use Shop\Repositories\OrderRepository;
  */
 final class PricingService
 {
+    #[Sinful(ConcreteCrossModuleDependency::class)]
     public function __construct(private readonly OrderRepository $orders) {}
 
     /**

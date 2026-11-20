@@ -2,6 +2,7 @@
 
 namespace Shop\Loyalty;
 
+use JesseGall\CodeCommandments\Sins\Backend\ConcreteCrossModuleDependency;
 use JesseGall\CodeCommandments\Sins\Backend\DivergentTwin;
 use JesseGall\CodeCommandments\Testing\Fixed;
 use JesseGall\CodeCommandments\Testing\Sinful;
@@ -13,6 +14,7 @@ use Shop\Catalog\SupplierFeed;
  */
 final class MemberRoster
 {
+    #[Sinful(ConcreteCrossModuleDependency::class)]
     public function __construct(private readonly SupplierFeed $feed) {}
 
     #[Sinful(DivergentTwin::class)]

@@ -62,7 +62,6 @@ var BuilderTypes = []string{
 var (
 	RouteVerbs         = []string{"get", "post", "put", "patch", "delete", "options", "match", "any"}
 	RouterTypes        = []string{`Illuminate\Routing\Router`, `Illuminate\Contracts\Routing\Registrar`}
-	ContainerTypes     = []string{`Illuminate\Container\Container`, `Illuminate\Contracts\Container\Container`, `Illuminate\Foundation\Application`, `Illuminate\Contracts\Foundation\Application`}
 	ContainerResolvers = []string{"make", "makeWith", "get"}
 	BindingMethods     = []string{"bind", "bindIf", "singleton", "singletonIf", "scoped", "scopedIf", "instance"}
 	RelationMethods    = []string{"hasOne", "hasOneThrough", "hasMany", "hasManyThrough", "belongsTo", "belongsToMany", "morphOne", "morphMany", "morphToMany", "morphedByMany"}
@@ -378,7 +377,7 @@ func (n Node) ResolvesFromContainer() bool {
 		return false
 	}
 
-	return isClassLiteral(call.Argument(0).Match) && n.isOnTheContainer()
+	return isClassLiteral(call.Argument(0).Match) && php.IsContainerCall(n.Match)
 }
 
 func (n Node) DropsEveryGlobalScope() bool {
@@ -387,15 +386,6 @@ func (n Node) DropsEveryGlobalScope() bool {
 	}
 
 	return n.Child("name").Name() == "withoutGlobalScopes" && php.Node{Match: n.Match}.ArgumentCount() == 0
-}
-
-func (n Node) isOnTheContainer() bool {
-	receiver := n.Child("var")
-	if receiver.Kind() == "Expr_StaticCall" && receiver.Child("name").Name() == "getInstance" {
-		return slices.Contains(ContainerTypes, strings.TrimLeft(php.StaticCallClass(receiver), `\`))
-	}
-
-	return slices.Contains(ContainerTypes, strings.TrimLeft(php.ReceiverTypeOf(n.Match), `\`))
 }
 
 func isClassLiteral(value engine.Match) bool {

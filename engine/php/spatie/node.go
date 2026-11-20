@@ -21,10 +21,9 @@ const (
 )
 
 var (
-	NoContainerContracts         = []string{DataPipe, Cast}
-	containerInjectionAttributes = []string{"FromContainer", "FromContainerProperty"}
-	nativeCastTypes              = []string{"DateTimeInterface", "DateTime", "DateTimeImmutable", "Carbon", "CarbonImmutable"}
-	knownTsTransformers          = []string{"DateTimeInterfaceTransformer", "ArrayableTransformer"}
+	NoContainerContracts = []string{DataPipe, Cast}
+	nativeCastTypes      = []string{"DateTimeInterface", "DateTime", "DateTimeImmutable", "Carbon", "CarbonImmutable"}
+	knownTsTransformers  = []string{"DateTimeInterfaceTransformer", "ArrayableTransformer"}
 )
 
 // Node is a match read in spatie/laravel-data's terms.
@@ -79,7 +78,7 @@ func (n Node) IsPageObject() bool {
 
 func (n Node) HasUnhiddenInjectedService() bool {
 	for _, field := range php.Fields(php.EnclosingClass(n.Match)) {
-		if field.IsPublic && field.HasAttribute(containerInjectionAttributes...) && !field.HasAttribute(hidden) && !n.typeIsData(field.Type) {
+		if field.IsPublic && php.HasDataInjection(field.Declaration) && !field.HasAttribute(hidden) && !n.typeIsData(field.Type) {
 			return true
 		}
 	}

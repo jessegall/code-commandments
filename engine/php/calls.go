@@ -8,6 +8,17 @@ import (
 	"github.com/jessegall/code-commandments/engine"
 )
 
+var containerTypes = []string{`Illuminate\Container\Container`, `Illuminate\Contracts\Container\Container`, `Illuminate\Foundation\Application`, `Illuminate\Contracts\Foundation\Application`}
+
+func IsContainerCall(call engine.Match) bool {
+	receiver := call.Child("var")
+	if receiver.Kind() == "Expr_StaticCall" && receiver.Child("name").Name() == "getInstance" {
+		return slices.Contains(containerTypes, strings.TrimLeft(StaticCallClass(receiver), `\`))
+	}
+
+	return slices.Contains(containerTypes, strings.TrimLeft(ReceiverTypeOf(call), `\`))
+}
+
 func ReceiverTypeOf(call engine.Match) string {
 	if call.Kind() != "Expr_MethodCall" && call.Kind() != "Expr_NullsafeMethodCall" {
 		return ""

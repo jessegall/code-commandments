@@ -72,7 +72,10 @@ a collaborator promoted into a private field by the constructor and never read a
 ```php
 ----------[ Bad ]----------
 
-public function __construct(private readonly SlugText $slugs) {}
+public function __construct(
+    private readonly Mailer $mailer,
+    private readonly CarrierRegistry $carriers,
+) {}
 
 ----------[ Good ]----------
 

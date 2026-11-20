@@ -1862,7 +1862,7 @@
                 "declared",
                 "observed"
             ],
-            "example": "/shop/app/Checkout/PricingService.php:27"
+            "example": "/shop/app/Checkout/PricingService.php:29"
         },
         {
             "kind": "Scalar_Int",

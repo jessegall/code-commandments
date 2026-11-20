@@ -2,6 +2,7 @@
 
 namespace Shop\Catalog;
 
+use JesseGall\CodeCommandments\Sins\Backend\ConcreteCrossModuleDependency;
 use JesseGall\CodeCommandments\Sins\Backend\UnusedPrivateMember;
 use JesseGall\CodeCommandments\Sins\Backend\ArrayBag;
 use JesseGall\CodeCommandments\Sins\Backend\ManufacturedFakeFill;
@@ -22,6 +23,7 @@ final class ImportRowNormalizer
 
     private int $pendingStock = 0;
 
+    #[Sinful(ConcreteCrossModuleDependency::class)]
     public function __construct(private readonly ProductRepository $products) {}
 
     /**

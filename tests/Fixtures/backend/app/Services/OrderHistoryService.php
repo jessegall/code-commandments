@@ -2,6 +2,8 @@
 
 namespace Shop\Services;
 
+use JesseGall\CodeCommandments\Sins\Backend\ConcreteCrossModuleDependency;
+use JesseGall\CodeCommandments\Testing\Sinful;
 use Shop\Models\Customer;
 use Shop\Models\Order;
 use Shop\Repositories\OrderRepository;
@@ -12,6 +14,7 @@ use Shop\ValueObjects\Money;
  */
 final class OrderHistoryService
 {
+    #[Sinful(ConcreteCrossModuleDependency::class)]
     public function __construct(private readonly OrderRepository $orders) {}
 
     /**

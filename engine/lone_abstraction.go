@@ -52,5 +52,8 @@ func (m Match) moduleName() string {
 	if read := m.grammar().ModuleLayer; read != nil {
 		return read(m.Root())
 	}
+	if m.grammar().NamespaceOf != nil {
+		return ModuleOf(m.file.Language(), m.Namespace())
+	}
 	return ModuleOf(m.file.Language(), outermostSymbol(m))
 }

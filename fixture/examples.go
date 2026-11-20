@@ -20,12 +20,13 @@ import (
 
 // Marked is one marked piece of a fixture as a worked example shows it: the code, the file it is in, the lines it spans there, the comment line that names where it came from (none when empty), and what a Bad and a Good must share to be one before and after — the type for PHP, else the file.
 type Marked struct {
-	File     string
-	Source   string
-	Heading  string
-	Scenario string
-	First    int
-	Last     int
+	File        string
+	Source      string
+	Heading     string
+	Scenario    string
+	First       int
+	Last        int
+	Constructor bool
 }
 
 func (m Marked) shows(file string, line int) bool {
@@ -199,7 +200,8 @@ func declarationSources(codebase *engine.Codebase, tag Tag) sources {
 			shown = attribute.Parent()
 		}
 		text, first, last := declarationText(shown)
-		marked[named] = append(marked[named], Marked{File: attribute.File(), Source: text, Heading: heading, Scenario: scenario, First: first, Last: last})
+		marked[named] = append(marked[named], Marked{File: attribute.File(), Source: text, Heading: heading, Scenario: scenario,
+			First: first, Last: last, Constructor: shown.IsConstructor()})
 	}
 
 	return marked
@@ -563,6 +565,13 @@ func answered(bad []Marked, resolution Marked, resolves bool) (Marked, bool) {
 		for _, shared := range sharing {
 			for _, one := range bad {
 				if shared(one, resolution) {
+					return one, true
+				}
+			}
+		}
+		if resolution.Constructor {
+			for _, one := range bad {
+				if one.Constructor && filepath.Dir(one.File) == filepath.Dir(resolution.File) {
 					return one, true
 				}
 			}
