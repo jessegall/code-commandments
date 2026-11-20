@@ -112,8 +112,9 @@ func canonicalSet(names []string) map[string]bool {
 
 // BlanknessQuestion is a frontend asking whether one field of a server type is blank: the server sends a blank where it means absent, and the page decodes it.
 type BlanknessQuestion struct {
-	Type  string
-	Field string
+	Type                 string
+	Field                string
+	RequiresBlankDefault bool
 }
 
 func (BlanknessQuestion) published() {}

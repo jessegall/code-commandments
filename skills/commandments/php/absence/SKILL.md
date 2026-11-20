@@ -99,7 +99,7 @@ Use `?? true` when the domain says absence answers yes. Throw at the source if t
 
 ### blank-string-on-the-wire
 
-A `string` field sent over the wire whose TypeScript reader has to check `=== ''` to mean "missing" — only that reader knows the blank stands for absence.
+A string sent over the wire that the frontend reads as absent when it is blank.
 
 ```php
 ----------[ Bad ]----------

@@ -4,7 +4,7 @@ One bad → good per rule this skill teaches, taken from the fixture that proves
 
 ### blank-string-on-the-wire
 
-A `string` field sent over the wire whose TypeScript reader has to check `=== ''` to mean "missing" — only that reader knows the blank stands for absence.
+A string sent over the wire that the frontend reads as absent when it is blank.
 
 ```php
 ----------[ Bad ]----------

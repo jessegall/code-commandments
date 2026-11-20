@@ -615,7 +615,7 @@
         },
         "sin_blank-string-on-the-wire": {
             "title": "BlankStringOnTheWire",
-            "help": "A `string` field sent over the wire whose TypeScript reader has to check `=== ''` to mean \"missing\" — only that reader knows the blank stands for absence.",
+            "help": "A string sent over the wire that the frontend reads as absent when it is blank.",
             "type": "flag",
             "default": "true",
             "group": "php/absence",

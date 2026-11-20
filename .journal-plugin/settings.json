@@ -421,7 +421,7 @@
         "type": "flag",
         "kind": "flag",
         "default": true,
-        "help": "A `string` field sent over the wire whose TypeScript reader has to check `=== ''` to mean \"missing\" — only that reader knows the blank stands for absence."
+        "help": "A string sent over the wire that the frontend reads as absent when it is blank."
     },
     {
         "key": "sin_erased-null-object",

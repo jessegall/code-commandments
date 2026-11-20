@@ -41,11 +41,15 @@ func (BlankStringOnTheWireDetector) Find(codebase *engine.Codebase) []engine.Mat
 		Where(func(n engine.Match) bool {
 			field, _ := php.AsField(n)
 			class := php.EnclosingClassName(n)
-			if !field.IsPublic || php.Written(field.Type).Render() != "string" || class == "" {
+			if !field.IsPublicInstance() || php.Written(field.Type).Render() != "string" || class == "" {
 				return false
 			}
 
 			return slices.ContainsFunc(questions, func(question published.BlanknessQuestion) bool {
+				if question.RequiresBlankDefault && !(php.Node{Match: field.Node.Child("default")}).IsEmptyString() {
+					return false
+				}
+
 				return question.AskedOf(php.ShortName(class), field.Name)
 			})
 		}).

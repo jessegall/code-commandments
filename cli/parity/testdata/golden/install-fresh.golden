@@ -4307,11 +4307,11 @@ Safe to delete — the conversion simply runs again on the next `composer update
                             },
                             {
                                 "const": "php/BlankStringOnTheWire",
-                                "description": "A `string` field sent over the wire whose TypeScript reader has to check `=== ''` to mean \"missing\" — only that reader knows the blank stands for absence."
+                                "description": "A string sent over the wire that the frontend reads as absent when it is blank."
                             },
                             {
                                 "const": "backend/BlankStringOnTheWire",
-                                "description": "A `string` field sent over the wire whose TypeScript reader has to check `=== ''` to mean \"missing\" — only that reader knows the blank stands for absence."
+                                "description": "A string sent over the wire that the frontend reads as absent when it is blank."
                             },
                             {
                                 "const": "php/BloatedDocblock",

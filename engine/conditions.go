@@ -33,11 +33,26 @@ func isDecisionCondition(m Match) bool {
 			return false
 		}
 	}
-	if reads := m.grammar().RenderCondition; reads != nil && reads(parent).Node() == m.Node() {
+	if m.IsRenderCondition() {
 		return true
 	}
 
 	return m.EnclosingFunction().Exists() && (parent.Is(Branch) || parent.Is(Loop)) && !guardsFromTheTop(parent)
+}
+
+func (m Match) IsRenderCondition() bool {
+	reads := m.grammar().RenderCondition
+
+	return m.Exists() && reads != nil && reads(m.Parent()).node == m.node
+}
+
+func (m Match) IsRenderConditionPart() bool {
+	part := m.Grouped()
+	for part.Parent().Is(Conjunction) {
+		part = part.Parent().Grouped()
+	}
+
+	return part.IsRenderCondition()
 }
 
 func guardsFromTheTop(branch Match) bool {

@@ -114,7 +114,7 @@ _273 sins across 63 skills._
 
 | Sin | What it flags |
 |---|---|
-| `BlankStringOnTheWire` | A `string` field sent over the wire whose TypeScript reader has to check `=== ''` to mean "missing" — only that reader knows the blank stands for absence. |
+| `BlankStringOnTheWire` | A string sent over the wire that the frontend reads as absent when it is blank. |
 | `ErasedNullObject` | A blank-rendering Null Object written into a `string` slot — coerced back to `''` |
 | `FalseForNothing` | A return typed `X\|false`: `false` stands in for "nothing" or "failed", and every caller must test for it. |
 | `OptionAsNullable` | `Option<T>` used as if it were nullable — `?Option`, `Option \| null`, `unwrapOr(null)` |
