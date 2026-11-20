@@ -90,6 +90,35 @@ func TestARunReplacesOnlyTheFindingsOfTheFilesItJudged(t *testing.T) {
 	}
 }
 
+func TestRecordingReturnsBeforeRenderingAndRefreshUsesLatestFindings(t *testing.T) {
+	space := workspace.At(t.TempDir(), "")
+	path := filepath.Join(space.Root(), "Order.php")
+	for _, name := range []string{"old-finding", "latest-finding"} {
+		if err := Record(space, []engine.Finding{{Sin: name, File: path, Location: path + ":1"}}, nil); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if _, err := os.Stat(space.Cache(File)); !os.IsNotExist(err) {
+		t.Fatalf("recording should save only the findings, dashboard stat error: %v", err)
+	}
+	if err := refresh(space); err != nil {
+		t.Fatal(err)
+	}
+	raw, err := os.ReadFile(space.Cache(File))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var dashboard struct {
+		Pages map[string]json.RawMessage
+	}
+	if err := json.Unmarshal(raw, &dashboard); err != nil {
+		t.Fatal(err)
+	}
+	if dashboard.Pages["sin/latest-finding"] == nil || dashboard.Pages["sin/old-finding"] != nil {
+		t.Fatal("refresh did not use the latest saved findings")
+	}
+}
+
 func TestAWorktreesFindingsAreNeverTheProjects(t *testing.T) {
 	root, err := filepath.EvalSymlinks(t.TempDir())
 	if err != nil {

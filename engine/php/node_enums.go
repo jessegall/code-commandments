@@ -257,6 +257,18 @@ type Enums = engine.Enums
 
 func EnumsOf(codebase *engine.Codebase) Enums { return engine.EnumsOf(codebase.Of(contract.PHP)) }
 
+func enumCase(node engine.Match) (string, string) {
+	class := node.Child("class")
+	if node.Kind() != "Expr_ClassConstFetch" || !isName(class) {
+		return "", ""
+	}
+	owner := namedClass(node, class)
+	if !ProgramOf(node.Codebase()).IsEnum(owner) {
+		return "", ""
+	}
+	return owner, node.Child("name").Name()
+}
+
 func enumValues(declaration engine.Match) []string {
 	if declaration.Kind() != "Stmt_Enum" {
 		return nil

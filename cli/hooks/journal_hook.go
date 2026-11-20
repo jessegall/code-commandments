@@ -198,7 +198,10 @@ func settled(moment Moment, root string, marks []SinMark, read []string, asked A
 		judged[resolved(moment.Cwd, mark.Match.File())] = true
 	}
 
-	dashboard.Record(workspace.At(root, ""), findings, judged)
+	space := workspace.At(root, "")
+	if err := dashboard.Record(space, findings, judged); err == nil && space.IsJournalDriven() {
+		_ = dashboard.Schedule(space)
+	}
 
 	return record.SettleAsked(root, reconsidered, marks, asked)
 }

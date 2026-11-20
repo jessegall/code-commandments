@@ -325,6 +325,11 @@ func (c Command) judge(options options, selected []detectors.Detector, judged co
 		if err := dashboard.Record(space, judgement.Findings, judgedPaths(targets, sources)); err != nil {
 			return 0, err
 		}
+		defer func() {
+			if err := dashboard.Schedule(space); err != nil {
+				console.Warn("· could not start the dashboard refresh: " + err.Error())
+			}
+		}()
 	}
 
 	active, filed, readRecord := apart(space.Root(), judgement.Findings)

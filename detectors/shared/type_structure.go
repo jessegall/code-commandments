@@ -144,8 +144,15 @@ func (UselessPropertyHook) CrossFile() {}
 // GuardBesideTransition finds a caller checks another object's state before telling it to act.
 type GuardBesideTransition struct{}
 
-func (GuardBesideTransition) Find(codebase *engine.Codebase) []engine.Match {
-	return codebase.WhereIs(engine.Branch).Where(engine.Match.GuardsAnotherObjectsTransition).Get()
+func (rule GuardBesideTransition) Find(codebase *engine.Codebase) []engine.Match {
+	return rule.FindInBranches(codebase.WhereIs(engine.Branch))
+}
+
+func (GuardBesideTransition) FindInBranches(branches *engine.Query) []engine.Match {
+	return branches.
+		Where(engine.Match.GuardsAnotherObjectsTransition).
+		Reject(engine.Match.IsTest).
+		Get()
 }
 
 func (GuardBesideTransition) Sin() Text {

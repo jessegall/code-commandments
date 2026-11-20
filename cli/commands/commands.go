@@ -4,6 +4,7 @@ package commands
 import (
 	"github.com/jessegall/code-commandments/cli"
 	"github.com/jessegall/code-commandments/cli/config"
+	"github.com/jessegall/code-commandments/cli/dashboard"
 	"github.com/jessegall/code-commandments/cli/exemptions"
 	"github.com/jessegall/code-commandments/cli/freeze"
 	"github.com/jessegall/code-commandments/cli/hints"
@@ -42,6 +43,7 @@ func Kernel(version string) *cli.Kernel {
 		task.Command{},
 		hooks.Dispatch{},
 		hooks.PluginHook{},
+		dashboard.RefreshCommand{},
 	}
 	commands = append(commands, bridgeServices()...)
 	commands = append(commands,

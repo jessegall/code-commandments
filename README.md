@@ -153,6 +153,7 @@ Exit code is non-zero when sins are found.
 | `commandments task` | The work in front of this session — numbered tasks, one markdown file each, moved between queue, active and history. |
 | `commandments hooks` | The wired hook entry point — reads one hook payload from stdin, runs every registered handler, and merges their responses into one. |
 | `commandments plugin-hook` | The agent journal plugin's program — reads one event line from stdin and answers it at once: an edit, a command and a stop with nothing, and every other event with what its handlers found. |
+| `commandments dashboard-refresh` | Refresh the journal dashboard from saved findings. |
 | `commandments php-serve` | Keep the PHP bridge running for this project, answering each run of the tool over a socket named for the project. |
 | `commandments frontend-serve` | Keep the Vue and TypeScript bridge running for this project, answering each run of the tool over a socket named for the project. |
 | `commandments roslyn-serve` | Keep the C# bridge running for this project, answering each run of the tool over a socket named for the project. |

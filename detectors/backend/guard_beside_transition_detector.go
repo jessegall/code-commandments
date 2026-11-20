@@ -3,6 +3,7 @@ package backend
 import (
 	"github.com/jessegall/code-commandments/catalog"
 	"github.com/jessegall/code-commandments/detectors"
+	"github.com/jessegall/code-commandments/detectors/shared"
 	"github.com/jessegall/code-commandments/engine"
 	"github.com/jessegall/code-commandments/engine/php"
 	"github.com/jessegall/code-commandments/sins"
@@ -17,11 +18,7 @@ func init() { detectors.Register(catalog.PHP, GuardBesideTransitionDetector{}) }
 func (GuardBesideTransitionDetector) Sin() sins.Sin { return backendsins.GuardBesideTransition{} }
 
 func (GuardBesideTransitionDetector) Find(codebase *engine.Codebase) []engine.Match {
-	return php.In(codebase).
-		WhereKind("Stmt_If").
-		Where(engine.As(php.Node.GuardsAheadOfItsTransition)).
-		Reject(engine.Match.IsTest).
-		Get()
+	return (shared.GuardBesideTransition{}).FindInBranches(php.In(codebase).WhereKind("Stmt_If"))
 }
 
 func (GuardBesideTransitionDetector) CrossFile() {}

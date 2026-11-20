@@ -58,6 +58,9 @@ func StoredOf(finding engine.Finding, root string) Stored {
 }
 
 func Record(space workspace.Workspace, findings []engine.Finding, judged map[string]bool) error {
+	release := atomic.Hold(space.Cache(findingsFile + ".lock"))
+	defer release()
+
 	var all []Stored
 
 	if judged != nil {
@@ -83,16 +86,7 @@ func Record(space workspace.Workspace, findings []engine.Finding, judged map[str
 		return err
 	}
 
-	if err := atomic.Write(space.Cache(findingsFile), store); err != nil {
-		return err
-	}
-
-	dashboard, err := jsonfile.Pretty(RenderWith(all, space.Root(), Unjudgeable(space)), true)
-	if err != nil {
-		return err
-	}
-
-	return atomic.Write(space.Cache(File), dashboard)
+	return atomic.Write(space.Cache(findingsFile), store)
 }
 
 func storedIn(space workspace.Workspace) []Stored {

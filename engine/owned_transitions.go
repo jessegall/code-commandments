@@ -3,24 +3,30 @@ package engine
 import "slices"
 
 func (m Match) GuardsAnotherObjectsTransition() bool {
-	if !m.Is(Branch) || len(m.Otherwise()) > 0 {
+	if !m.Is(Branch) || !m.OnlyThrows() || m.IsContinuation() || len(m.Otherwise()) > 0 {
 		return false
 	}
-	body := m.Body()
-	if len(body) != 1 || !statementThrows(body[0]) {
+	if alternative := m.grammar().HasAlternative; alternative != nil && alternative(m) {
 		return false
 	}
 	receiver := stateComparedReceiver(m.Condition())
 	if !receiver.Exists() || receiver.isSelfReceiver() {
 		return false
 	}
-	for _, sibling := range m.Parent().Children() {
+	for _, sibling := range m.Siblings() {
 		if sibling.node.Span.Start >= m.node.Span.End {
 			call := statementValue(sibling)
-			return call.Is(Call) && call.Receiver().SameSyntax(receiver)
+			if call.Is(Call) && !call.Is(NullSafe) && call.Receiver().SameSyntax(receiver) {
+				return true
+			}
 		}
 	}
 	return false
+}
+
+func (m Match) OnlyThrows() bool {
+	body := m.Body()
+	return len(body) == 1 && statementThrows(body[0])
 }
 
 func stateComparedReceiver(condition Match) Match {
@@ -34,11 +40,11 @@ func stateComparedReceiver(condition Match) Match {
 			return left
 		}
 	}
-	if !condition.Is(Comparison) {
+	if !condition.Is(Comparison) || !slices.Contains([]string{"==", "===", "!=", "!==", "<>", "is", "is not"}, condition.Operator()) {
 		return Match{}
 	}
 	for at, field := range parts {
-		if field.Is(MemberAccess) && readsStateCase(parts[1-at]) {
+		if field.Is(MemberAccess) && !field.Is(NullSafe) && readsStateCase(parts[1-at]) {
 			return field.Receiver()
 		}
 	}
@@ -77,7 +83,7 @@ func (m Match) HandRollsRegistry() bool {
 					written[store.MemberName()] = true
 				}
 			}
-			if node.Is(Branch) && len(node.Body()) == 1 && statementThrows(node.Body()[0]) {
+			if node.Is(Branch) && node.OnlyThrows() {
 				for _, lookup := range node.OwnDescendants() {
 					if store, key := read(lookup); store.Is(MemberAccess) && store.Receiver().isSelfReceiver() && key.Is(Identifier) {
 						guarded[store.MemberName()] = true

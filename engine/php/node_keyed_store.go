@@ -63,7 +63,7 @@ func (n Node) throwsOnAMissingKey(property string) bool {
 			if node.Kind() == "Expr_BinaryOp_Coalesce" && keyedRead(node.Child("left"), property) && node.Child("right").Kind() == "Expr_Throw" {
 				return true
 			}
-			if node.Kind() == "Stmt_If" && (Node{Match: node}).onlyThrows() && testsKeyAbsence(node.Child("cond"), property) {
+			if node.Kind() == "Stmt_If" && node.OnlyThrows() && testsKeyAbsence(node.Child("cond"), property) {
 				return true
 			}
 		}

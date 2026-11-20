@@ -53,6 +53,7 @@ type Grammar struct {
 	NestingLimit        int
 	Body                func(Match) []Match
 	Otherwise           func(Match) []Match
+	HasAlternative      func(Match) bool
 	BindsItsOwnTest     func(Match) bool
 	Condition           func(Match) Match
 	RenderCondition     func(Match) Match
