@@ -201,6 +201,7 @@ exit: 0
 [1;33mshared/dependencies[0m
   ConcreteCrossModuleDependencyDetector
   LoneImplementerInterfaceDetector
+  UndeclaredMemberDetector
   GuardBesideTransitionDetector
   HandRolledRegistryDetector
   MiddleManDetector

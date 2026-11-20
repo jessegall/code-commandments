@@ -102,8 +102,6 @@ func (UndeclaredMember) Sin() Text {
 
 func (UndeclaredMember) CrossFile() {}
 
-func (UndeclaredMember) Unpublished() {}
-
 // UnusedPrivateMember finds a private member has no readers.
 type UnusedPrivateMember struct{}
 

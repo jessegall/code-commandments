@@ -2,6 +2,7 @@ package php
 
 import (
 	"slices"
+	"strings"
 
 	"github.com/jessegall/code-commandments/engine"
 )
@@ -16,40 +17,51 @@ func memberLookup(match engine.Match) (string, func(string) bool) {
 		return "", nil
 	}
 	name, receiver := n.Child("name"), n.Child("var")
-	if name.Kind() != "Identifier" || variableName(receiver) == "this" || n.isNarrowedByInstanceof(receiver) {
+	if name.Kind() != "Identifier" || variableName(receiver) == "this" || isAssignmentTarget(n.Match) || n.isNarrowedByInstanceof(receiver) {
 		return "", nil
 	}
-	class := receiver.TypeName()
+	types := TypesOf(n.Codebase())
+	class := types.TypeAtRead(receiver)
 	if class == "" || ProgramOf(n.Codebase()).IsEnum(class) {
 		return "", nil
 	}
+	member, magic := n.declaresMethod(name.Name()), n.declaresMethod("__call")
 	if memberReads[n.Kind()] {
-		property, magic := n.declaresProperty(name.Name()), n.declaresMethod("__get")
-
-		return class, func(owner string) bool { return property(owner) || magic(owner) }
+		member, magic = n.declaresProperty(name.Name()), n.declaresMethod("__get")
 	}
-	method, magic := n.declaresMethod(name.Name()), n.declaresMethod("__call")
 
-	return class, func(owner string) bool { return method(owner) || magic(owner) }
+	return class, func(owner string) bool {
+		return member(owner) || magic(owner) || types.hasUnreadTrait(owner)
+	}
 }
 
 func (n Node) declaresMethod(method string) func(string) bool {
+	types, program := TypesOf(n.Codebase()), ProgramOf(n.Codebase())
+	sameName := func(written string) bool { return strings.EqualFold(written, method) }
+
+	return func(class string) bool {
+		return types.memberDeclaredBy(class, map[string]bool{}, func(owner string) bool {
+			if _, declared := types.returnType[owner][method]; declared {
+				return true
+			}
+			for written := range types.returnType[owner] {
+				if sameName(written) {
+					return true
+				}
+			}
+			declaration, _ := program.Declaration(owner)
+			return slices.ContainsFunc(DocumentedMethods(declaration), sameName)
+		}) != ""
+	}
+}
+
+func (n Node) declaresProperty(field string) func(string) bool {
 	types, program := TypesOf(n.Codebase()), ProgramOf(n.Codebase())
 
 	return func(class string) bool {
 		declaration, _ := program.Declaration(class)
 
-		return types.methodDeclaredBy(class, method, map[string]bool{}) != "" || slices.Contains(DocumentedMethods(declaration), method)
-	}
-}
-
-func (n Node) declaresProperty(field string) func(string) bool {
-	program := ProgramOf(n.Codebase())
-
-	return func(class string) bool {
-		declaration, _ := program.Declaration(class)
-
-		return slices.ContainsFunc(Fields(declaration), func(declared Field) bool { return declared.Name == field }) || slices.Contains(DocumentedProperties(declaration), field)
+		return types.fieldDeclaredBy(class, field) != "" || slices.Contains(DocumentedProperties(declaration), field)
 	}
 }
 

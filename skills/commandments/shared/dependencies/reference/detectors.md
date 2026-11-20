@@ -11,6 +11,7 @@ Each row is one rule: the sin's id, the symptom its detector flags, and the dete
 - **`namespace-dependency`** — An import crosses a layer boundary its source may not use — `NamespaceDependencyDetector`
 - **`refused-bequest`** — An override only throws — `RefusedBequestDetector`
 - **`train-wreck`** — A chain reaches through three local types — `TrainWreckDetector`
+- **`undeclared-member`** — A member access the receiver's declared type neither declares nor inherits — `UndeclaredMemberDetector`
 - **`unread-collaborator`** — A collaborator is stored and never read — `UnreadCollaboratorDetector`
 - **`unused-private-member`** — A private member has no readers — `UnusedPrivateMemberDetector`
 - **`useless-property-hook`** — A getter reads no state on its object — `UselessPropertyHookDetector`

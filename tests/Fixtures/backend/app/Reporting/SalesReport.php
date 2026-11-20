@@ -8,7 +8,17 @@ use JesseGall\CodeCommandments\Sins\Backend\Laravel\ConfigRead;
 use JesseGall\CodeCommandments\Testing\Fixed;
 use JesseGall\CodeCommandments\Testing\Righteous;
 use JesseGall\CodeCommandments\Testing\Sinful;
-use Shop\Repositories\OrderRepository;
+
+interface OrderFigures
+{
+    public function grossForDay(int $day): int;
+
+    public function countSince(int $window): int;
+
+    public function revenueSince(int $window): int;
+
+    public function topProductIds(int $limit): array;
+}
 
 /**
  * Messy analytics — reads config in the body and hands back loose string-keyed
@@ -16,7 +26,7 @@ use Shop\Repositories\OrderRepository;
  */
 final class SalesReport
 {
-    public function __construct(private readonly OrderRepository $orders) {}
+    public function __construct(private readonly OrderFigures $orders) {}
 
     /**
      * @return array<string, int|string>

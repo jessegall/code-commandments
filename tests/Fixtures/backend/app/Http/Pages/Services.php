@@ -6,13 +6,41 @@ namespace Shop\Http\Pages;
  * The container-resolved collaborators a page object injects to project its slots — services, not
  * page data. A page object pulls these in via `#[FromContainer]` and MUST `#[Hidden]` them.
  */
-final class SalesReporter {}
+interface SalesReporter
+{
+    public function primaryLink(): MenuLink;
 
-final class CartReader {}
+    public function secondaryLink(): MenuLink;
+
+    public function featuredLine(): CartLine;
+
+    public function totals(): WarehouseTotals;
+
+    public function movers(): array;
+}
+
+interface WarehouseTotals
+{
+    public function summary(): StatCard;
+
+    public function homeLink(): MenuLink;
+}
+
+interface CartReader
+{
+    public function firstLine(): CartLine;
+
+    public function backLink(): MenuLink;
+}
 
 final class CatalogReader {}
 
-final class FacetBuilder {}
+interface FacetBuilder
+{
+    public function headline(): StatCard;
+
+    public function cards(): array;
+}
 
 final class AiService
 {

@@ -19,7 +19,7 @@ var (
 	RefusedBequestDetector                = shared.Bind[shared.RefusedBequest, language]()
 	HandRolledRegistryDetector            = shared.Bind[shared.HandRolledRegistry, language]()
 	TrainWreckDetector                    = shared.Bind[shared.TrainWreck, language]()
-	UndeclaredMemberDetector              = shared.Bind[shared.UndeclaredMember, language]()
+	UndeclaredMemberDetector              = shared.Bind[shared.UndeclaredMember, language](shared.Unpublished)
 	UnusedPrivateMemberDetector           = shared.Bind[shared.UnusedPrivateMember, language]()
 	GuardBesideTransitionDetector         = shared.Bind[shared.GuardBesideTransition, language]()
 	QueryInLoopDetector                   = shared.Bind[shared.QueryInLoop, language]()

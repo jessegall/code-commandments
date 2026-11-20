@@ -19,6 +19,93 @@ func resolvedAt(t *testing.T, codebase *engine.Codebase, written string) engine.
 	return engine.Match{}
 }
 
+func TestMemberUsesTheTypeAtTheReadAndFindsNestedTraitProperties(t *testing.T) {
+	codebase := phpSource(t, `<?php
+namespace Shop;
+
+trait HasSlot { public string $slot; }
+trait HasLabel { use HasSlot; }
+final class RegisteredPage { use HasLabel; }
+final class RegisteredSection {}
+
+function addRoutes(): void {
+    $registered = new RegisteredPage;
+    echo $registered->slot;
+    $registered = new RegisteredSection;
+    echo $registered->slot;
+}
+
+function skipSection(bool $section): void {
+    $registered = new RegisteredPage;
+    if ($section) {
+        $registered = new RegisteredSection;
+        return;
+    }
+    echo $registered->slot;
+}
+`)
+	var lines []int
+	for _, read := range codebase.Where(engine.Match.ReadsUndeclaredMember).Get() {
+		lines = append(lines, read.Line())
+	}
+	if len(lines) != 1 || lines[0] != 13 {
+		t.Fatalf("got findings on %v, want only the section's missing slot on line 13", lines)
+	}
+}
+
+func TestMemberReadsUseSpecializedPropertiesAndClassStringReturns(t *testing.T) {
+	codebase := phpSource(t, `<?php
+namespace Shop;
+
+interface Client {}
+final class DispatchClient implements Client { public string $manifest; }
+class Scope { public Client $client; }
+
+/** @property DispatchClient $client */
+final class DispatchScope extends Scope {}
+
+final class Registry {
+    /**
+     * @template T of Client
+     * @param class-string<T> $type
+     * @return T
+     */
+    public function find(string $type): Client { return new $type; }
+}
+
+function manifest(DispatchScope $scope, Registry $registry, Client $client): void {
+    echo $scope->client->manifest;
+    echo $registry->find(type: DispatchClient::class)->manifest;
+    echo $client->manifest;
+}
+`)
+	reads := codebase.Where(engine.Match.ReadsUndeclaredMember).Get()
+	if len(reads) != 1 || reads[0].Written() != "$client->manifest" {
+		t.Fatalf("got %v, want only the missing property on the unqualified Client", reads)
+	}
+}
+
+func TestMemberReadsLeaveWritesAndOutsideTraitsAlone(t *testing.T) {
+	codebase := phpSource(t, `<?php
+namespace Shop;
+
+trait Dispatch { use \Outside\Delivery; }
+final class DeliveryDesk { use Dispatch; }
+final class CustomerRecord { public function beforeDue(): void {} }
+
+function deliver(DeliveryDesk $desk, CustomerRecord $record): void {
+    $desk->arrive();
+    $record->BeforeDue();
+    $record->delivered = true;
+    $record->attempts += 1;
+}
+`)
+	reads := codebase.Where(engine.Match.ReadsUndeclaredMember).Get()
+	if len(reads) != 1 || reads[0].Written() != "$record->attempts" {
+		t.Fatalf("got %v, want only the missing property the update reads", reads)
+	}
+}
+
 func TestAResolvedTypeKeepsTheTypeItWasReadOff(t *testing.T) {
 	codebase := phpSource(t, `<?php
 

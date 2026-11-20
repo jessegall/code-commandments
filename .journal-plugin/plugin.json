@@ -1,6 +1,6 @@
 {
     "name": "code-commandments",
-    "version": "7.20.0",
+    "version": "7.20.1",
     "title": "Code Commandments",
     "description": "The static code checker judges the codebase, its hooks run inside the journal, and every rule and language is a switch in its settings",
     "journal": "2.267.16",
@@ -51,7 +51,7 @@
     },
     "env": {
         "CLAUDE_PROJECT_DIR": "{project}",
-        "COMMANDMENTS_RELEASE": "v7.20.0"
+        "COMMANDMENTS_RELEASE": "v7.20.1"
     },
     "setup": [
         {
@@ -3268,6 +3268,34 @@
         "sin_lone-implementer-interface": {
             "title": "LoneImplementerInterface",
             "help": "An interface has only one local implementation",
+            "type": "flag",
+            "default": "true",
+            "group": "shared/dependencies",
+            "when": [
+                {
+                    "language_php": true
+                },
+                {
+                    "language_vue": true
+                },
+                {
+                    "language_ts": true
+                },
+                {
+                    "language_py": true
+                },
+                {
+                    "language_cs": true
+                },
+                {
+                    "language_go": true
+                }
+            ],
+            "detail": true
+        },
+        "sin_undeclared-member": {
+            "title": "UndeclaredMember",
+            "help": "A member access the receiver's declared type neither declares nor inherits",
             "type": "flag",
             "default": "true",
             "group": "shared/dependencies",

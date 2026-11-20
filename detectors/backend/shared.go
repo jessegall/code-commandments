@@ -77,7 +77,7 @@ var (
 )
 
 func usesDynamicMembers(codebase *engine.Codebase, access engine.Match) bool {
-	return packages.Excuses(codebase, packages.DynamicMembers, access.Receiver().TypeName(), "")
+	return packages.Excuses(codebase, packages.DynamicMembers, php.TypesOf(codebase).TypeAtRead(access.Receiver()), "")
 }
 
 func catchesOnlyControlSignals(codebase *engine.Codebase, catch engine.Match) bool {

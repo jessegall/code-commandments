@@ -718,6 +718,32 @@ func readParcelGraph(shelf ParcelGraphShelf) string {
 func checkoutReceiptCaption(job *receiptJob) string { return job.Caption() }
 ```
 
+### undeclared-member — in PHP
+
+A member access the receiver's declared type neither declares nor inherits
+
+```php
+----------[ Bad ]----------
+
+public function copy(BinLabel $label): string
+{
+    return $label->text().' ('.$label->barcode.')';
+}
+
+----------[ Good ]----------
+
+// in Shop\Bins\BinLabelCopies
+public function copyScannable(ScannableBinLabel $label): string
+{
+    return $label->text().' ('.$label->barcode.')';
+}
+
+interface ScannableBinLabel extends BinLabel
+{
+    public string $barcode { get; }
+}
+```
+
 ### unread-collaborator — in TypeScript
 
 A collaborator is stored and never read

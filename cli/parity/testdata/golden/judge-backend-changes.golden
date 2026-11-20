@@ -3,7 +3,7 @@ exit: 0
 [32m✓ No sins found in 2 files, the lines changed in the working tree, of 802 read.[0m
 
 --- stderr
-· reading the whole path, not only the 2 files judged: 182 of the 455 rules read across files, so the scope chose what is reported, not what is read
+· reading the whole path, not only the 2 files judged: 183 of the 456 rules read across files, so the scope chose what is reported, not what is read
 ⚠ no class of a package is read: composer.json declares dependencies but vendor/autoload.php is not there: run composer install
   ↳ a method a package's interface fixes reads as the class's own, so a rule that would excuse it cannot
 · read 802 files in <took> (0 from the cache, 802 by the bridges), judged in <took> (0 rule answers from memory, 76992 asked): 0 sins

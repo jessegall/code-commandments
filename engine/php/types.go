@@ -13,15 +13,17 @@ var functionLikes = []string{"Stmt_ClassMethod", "Stmt_Function", "Expr_Closure"
 
 // Types resolves the class an expression holds, as far as the program declares it: a variable through the assignments and parameters of its function, a construction, a static call through its declared return, a property or a method send through the receiver's declarations.
 type Types struct {
-	program    *Program
-	fieldType  map[string]map[string]held
-	returnType map[string]map[string]held
-	nullable   map[string]map[string][]bool
-	paramType  map[string]map[string][]string
-	variadic   map[string]map[string]bool
-	element    map[string]map[string]*contract.Type
-	parentOf   map[string]string
-	traitsOf   map[string][]string
+	program            *Program
+	fieldType          map[string]map[string]held
+	returnType         map[string]map[string]held
+	nullable           map[string]map[string][]bool
+	paramType          map[string]map[string][]string
+	variadic           map[string]map[string]bool
+	element            map[string]map[string]*contract.Type
+	parentOf           map[string]string
+	traitsOf           map[string][]string
+	propertyTypes      map[string]map[string]string
+	classStringReturns map[string]map[string]classStringParameter
 
 	mutex  sync.Mutex
 	locals map[scope]map[string]held
@@ -45,16 +47,18 @@ func TypesOf(codebase *engine.Codebase) *Types {
 
 func indexTypes(codebase *engine.Codebase) *Types {
 	types := &Types{
-		program:    ProgramOf(codebase),
-		fieldType:  map[string]map[string]held{},
-		returnType: map[string]map[string]held{},
-		nullable:   map[string]map[string][]bool{},
-		paramType:  map[string]map[string][]string{},
-		variadic:   map[string]map[string]bool{},
-		element:    map[string]map[string]*contract.Type{},
-		parentOf:   map[string]string{},
-		traitsOf:   map[string][]string{},
-		locals:     map[scope]map[string]held{},
+		program:            ProgramOf(codebase),
+		fieldType:          map[string]map[string]held{},
+		returnType:         map[string]map[string]held{},
+		nullable:           map[string]map[string][]bool{},
+		paramType:          map[string]map[string][]string{},
+		variadic:           map[string]map[string]bool{},
+		element:            map[string]map[string]*contract.Type{},
+		parentOf:           map[string]string{},
+		traitsOf:           map[string][]string{},
+		propertyTypes:      map[string]map[string]string{},
+		classStringReturns: map[string]map[string]classStringParameter{},
+		locals:             map[scope]map[string]held{},
 	}
 	for _, file := range codebase.Of(contract.PHP).Files() {
 		for _, node := range file.Nodes() {
@@ -114,6 +118,7 @@ func (t *Types) index(declaration engine.Match) {
 		t.parentOf[class] = parent.Name
 	}
 	t.traitsOf[class] = append(t.traitsOf[class], traitsOf(node)...)
+	t.indexDocumentedProperties(class, declaration)
 	constructorDoc := ""
 	if constructor, ok := Method(declaration, "__construct"); ok && node.Kind == "Stmt_Class" {
 		if doc, ok := DocComment(constructor); ok {
@@ -153,6 +158,7 @@ func (t *Types) index(declaration engine.Match) {
 	for _, method := range Methods(declaration) {
 		name := method.Name()
 		set(t.returnType, class, name, typed(Written(method.Node().Returns)))
+		t.indexClassStringReturn(class, method)
 		var nullable []bool
 		var written []string
 		variadic := false
@@ -307,8 +313,8 @@ func resolvedType(resolved held) *contract.Type {
 
 func (t *Types) DeclaringClassOf(fqcn, field string) string {
 	for _, class := range t.ancestry(fqcn) {
-		if _, ok := t.fieldType[class][field]; ok {
-			return class
+		if owner := t.fieldDeclaredBy(class, field); owner != "" {
+			return owner
 		}
 	}
 
@@ -371,15 +377,36 @@ func (t *Types) ancestry(fqcn string) []string {
 }
 
 func (t *Types) methodDeclaredBy(class, method string, seen map[string]bool) string {
+	return t.memberDeclaredBy(class, seen, func(owner string) bool {
+		_, declared := t.returnType[owner][method]
+		return declared
+	})
+}
+
+func (t *Types) fieldDeclaredBy(class, field string) string {
+	return t.memberDeclaredBy(class, map[string]bool{}, func(owner string) bool {
+		_, declared := t.fieldType[owner][field]
+		return declared
+	})
+}
+
+func (t *Types) hasUnreadTrait(class string) bool {
+	return t.memberDeclaredBy(class, map[string]bool{}, func(owner string) bool {
+		_, inspected := t.traitsOf[owner]
+		return !inspected
+	}) != ""
+}
+
+func (t *Types) memberDeclaredBy(class string, seen map[string]bool, declares func(string) bool) string {
 	if seen[class] {
 		return ""
 	}
 	seen[class] = true
-	if _, ok := t.returnType[class][method]; ok {
+	if declares(class) {
 		return class
 	}
 	for _, trait := range t.traitsOf[class] {
-		if owner := t.methodDeclaredBy(trait, method, seen); owner != "" {
+		if owner := t.memberDeclaredBy(trait, seen, declares); owner != "" {
 			return owner
 		}
 	}
@@ -408,7 +435,7 @@ func (t *Types) resolve(expr engine.Match, locals map[string]held, self string) 
 			return held{}
 		}
 		owner := strings.TrimLeft(class.Name(), `\`)
-		returned := t.returnType[owner][method.Name()]
+		returned := t.callReturn(expr, owner, method.Name())
 		if isSelfReferential(returned.class) || (returned.class == "" && strings.HasPrefix(method.Name(), "from")) {
 			return held{class: owner}
 		}
@@ -424,7 +451,7 @@ func (t *Types) resolve(expr engine.Match, locals map[string]held, self string) 
 			return held{}
 		}
 
-		return t.fieldType[t.DeclaringClassOf(receiver.class, name.Name())][name.Name()]
+		return t.propertyRead(receiver.class, name.Name())
 	case "Expr_MethodCall", "Expr_NullsafeMethodCall":
 		name := expr.Child("name")
 		if name.Kind() != "Identifier" {
@@ -434,7 +461,7 @@ func (t *Types) resolve(expr engine.Match, locals map[string]held, self string) 
 		if receiver.class == "" {
 			return held{}
 		}
-		returned := t.returnType[receiver.class][name.Name()]
+		returned := t.callReturn(expr, receiver.class, name.Name())
 		if isSelfReferential(returned.class) {
 			return held{class: receiver.class}
 		}
@@ -482,34 +509,7 @@ func (t *Types) localTypes(function engine.Match, self string) map[string]held {
 	if ok {
 		return cached
 	}
-	locals := t.capturedTypes(function, self)
-	for _, param := range Params(function) {
-		if variable := param.Child("var"); variable.Kind() == "Expr_Variable" && variable.Name() != "" {
-			locals[variable.Name()] = typed(Written(param.Node().Declared))
-		}
-	}
-	descendants := descendantsOf(function)
-	for _, node := range descendants {
-		if node.Kind() != "Expr_Assign" {
-			continue
-		}
-		if variable := node.Child("var"); variable.Kind() == "Expr_Variable" && variable.Name() != "" {
-			locals[variable.Name()] = t.resolve(node.Child("expr"), locals, self)
-		}
-	}
-	for _, node := range descendants {
-		if node.Kind() != "Stmt_Foreach" {
-			continue
-		}
-		value, collection := node.Child("valueVar"), node.Child("expr")
-		if value.Kind() != "Expr_Variable" || value.Name() == "" || collection.Kind() != "Expr_PropertyFetch" || collection.Child("name").Kind() != "Identifier" {
-			continue
-		}
-		owner := t.resolve(collection.Child("var"), locals, self)
-		if element := t.element[owner.class][collection.Child("name").Name()]; owner.class != "" && element != nil {
-			locals[value.Name()] = held{class: element.Name}
-		}
-	}
+	locals := t.localTypesThrough(function, self, function.Node().Span.End, engine.Match{})
 	t.mutex.Lock()
 	defer t.mutex.Unlock()
 	if cached, ok := t.locals[scope{function.Node(), self}]; ok {
@@ -518,6 +518,70 @@ func (t *Types) localTypes(function engine.Match, self string) map[string]held {
 	t.locals[scope{function.Node(), self}] = locals
 
 	return locals
+}
+
+func (t *Types) TypeAtRead(expr engine.Match) string {
+	function := enclosingFunction(expr)
+	if !function.Exists() {
+		return ""
+	}
+	self := EnclosingClassName(expr)
+	locals := t.localTypesThrough(function, self, expr.Node().Span.Start, expr)
+	return t.resolve(expr, locals, self).class
+}
+
+func (t *Types) localTypesThrough(function engine.Match, self string, through int, read engine.Match) map[string]held {
+	locals := t.capturedTypes(function, self)
+	for _, param := range Params(function) {
+		if variable := param.Child("var"); variable.Kind() == "Expr_Variable" && variable.Name() != "" {
+			locals[variable.Name()] = typed(Written(param.Node().Declared))
+		}
+	}
+	descendants := descendantsOf(function)
+	for _, node := range descendants {
+		if node.Kind() != "Expr_Assign" || node.Node().Span.End > through {
+			continue
+		}
+		if variable := node.Child("var"); variable.Kind() == "Expr_Variable" && variable.Name() != "" {
+			assigned := t.resolve(node.Child("expr"), locals, self)
+			if read.Exists() && !branchContainsRead(node, read) && assigned.class != locals[variable.Name()].class {
+				assigned = held{}
+			}
+			locals[variable.Name()] = assigned
+		}
+	}
+	for _, node := range descendants {
+		if node.Kind() != "Stmt_Foreach" {
+			continue
+		}
+		value, collection := node.Child("valueVar"), node.Child("expr")
+		if value.Kind() != "Expr_Variable" || value.Name() == "" || value.Node().Span.End > through || collection.Kind() != "Expr_PropertyFetch" || collection.Child("name").Kind() != "Identifier" {
+			continue
+		}
+		owner := t.resolve(collection.Child("var"), locals, self)
+		if element := t.element[owner.class][collection.Child("name").Name()]; owner.class != "" && element != nil && (!read.Exists() || bodyContainsRead(node, read)) {
+			locals[value.Name()] = held{class: element.Name}
+		}
+	}
+	return locals
+}
+
+func branchContainsRead(write, read engine.Match) bool {
+	for at := write; at.Exists(); at = at.Parent() {
+		if at.Node().Field == "stmts" {
+			return bodyContainsRead(at.Parent(), read)
+		}
+	}
+	return false
+}
+
+func bodyContainsRead(owner, read engine.Match) bool {
+	for at := read; at.Exists(); at = at.Parent() {
+		if at.Parent().Node() == owner.Node() {
+			return at.Node().Field == "stmts"
+		}
+	}
+	return false
 }
 
 func (t *Types) capturedTypes(function engine.Match, self string) map[string]held {

@@ -1576,6 +1576,14 @@
         "help": "An interface has only one local implementation"
     },
     {
+        "key": "sin_undeclared-member",
+        "title": "UndeclaredMember",
+        "type": "flag",
+        "kind": "flag",
+        "default": true,
+        "help": "A member access the receiver's declared type neither declares nor inherits"
+    },
+    {
         "key": "sin_archaeology-comment",
         "title": "ArchaeologyComment",
         "type": "flag",

@@ -11,6 +11,11 @@ use Shop\Models\Product;
  */
 final class ProductRepository
 {
+    public function upsert(string $sku, string $name, int $stock): Product
+    {
+        return Product::query()->updateOrCreate(['sku' => $sku], ['name' => $name, 'stock' => $stock]);
+    }
+
     public function findOrFail(int $id): Product
     {
         return Product::query()->find($id) ?? throw ProductNotFoundException::forId($id);
