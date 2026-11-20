@@ -119,8 +119,8 @@ func init() {
 		ManufacturesFill:  manufacturesFill,
 		CoalescedLoop:     coalescedLoop,
 		ConditionalSpread: engine.As(Node.IsConditionalArraySpread),
-		CapabilityTest: func(branch engine.Match) engine.CapabilityTest {
-			return engine.CapabilityTest{Subject: engine.OfKind("Expr_Instanceof", "expr")(branch.Condition())}
+		CapabilityTest: func(_, condition engine.Match) engine.CapabilityTest {
+			return engine.CapabilityTest{Subject: engine.OfKind("Expr_Instanceof", "expr")(condition)}
 		},
 		CapabilityFallback: func(node engine.Match) bool { return isBareValue(node) || node.Kind() == "Expr_Array" },
 		ConditionalArms:    engine.ReadPair("if", "else"),

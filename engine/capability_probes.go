@@ -47,11 +47,40 @@ func probedCapability(method Match, grammar *Grammar) string {
 	if !method.Is(Function) || method.IsConstructor() {
 		return ""
 	}
-	test, answer, alternative := capabilityReturns(method.Body(), grammar.ConditionalArms)
-	if !test.Exists() || !answer.Is(Call) || answer.Is(NullSafe) || !capabilityFallback(alternative, grammar) {
+	body := method.Body()
+	if len(body) == 1 {
+		if field := guardedCapability(body[0].returnedValue(), grammar); field != "" {
+			return field
+		}
+	}
+	test, answer, alternative := capabilityReturns(body, grammar.ConditionalArms)
+	if !test.Exists() || !capabilityFallback(alternative, grammar) {
 		return ""
 	}
-	probe := grammar.CapabilityTest(test)
+	return capabilityField(grammar.CapabilityTest(test, test.Condition()), answer)
+}
+
+func guardedCapability(value Match, grammar *Grammar) string {
+	if !value.isAnd() {
+		return ""
+	}
+	parts := value.andParts()
+	if len(parts) < 2 {
+		return ""
+	}
+	probe := grammar.CapabilityTest(Match{}, parts[0])
+	for _, answer := range parts[1:] {
+		if field := capabilityField(probe, answer); field != "" {
+			return field
+		}
+	}
+	return ""
+}
+
+func capabilityField(probe CapabilityTest, answer Match) string {
+	if (!answer.Is(Call) && !answer.Is(MemberAccess)) || answer.Is(NullSafe) {
+		return ""
+	}
 	field := fieldOnSelf(probe.Subject).NameRead()
 	receiver := answer.Receiver()
 	if field == "" || fieldOnSelf(receiver).NameRead() != field && (probe.Alias == "" || receiver.Name() != probe.Alias) {

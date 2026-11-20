@@ -106,6 +106,10 @@ func TestCancelledCoalesceProvesItselfOnTheShop(t *testing.T) {
 	proveBackendDetector(t, backend.CancelledCoalesceDetector)
 }
 
+func TestCapabilityProbeHubProvesItselfOnTheShop(t *testing.T) {
+	proveBackendDetector(t, backend.CapabilityProbeHubDetector)
+}
+
 func proveBackendDetector(t *testing.T, detector detectors.Detector) {
 	t.Helper()
 	fixturetest.Prove(t, fixture.Fixture{

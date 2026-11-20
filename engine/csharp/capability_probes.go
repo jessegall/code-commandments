@@ -2,8 +2,8 @@ package csharp
 
 import "github.com/jessegall/code-commandments/engine"
 
-func capabilityTest(branch engine.Match) engine.CapabilityTest {
-	test := Node{Match: branch.Condition()}
+func capabilityTest(_, condition engine.Match) engine.CapabilityTest {
+	test := Node{Match: condition}
 	if !test.IsTypeCheck() {
 		return engine.CapabilityTest{}
 	}

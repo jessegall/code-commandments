@@ -101,8 +101,7 @@ func init() {
 			LiteralCollection: engine.KindIn("ArrayLiteralExpression", "ObjectLiteralExpression"),
 			Iterated:          iterated,
 			NullForgiving:     engine.KindIn("NonNullExpression"),
-			CapabilityTest: func(branch engine.Match) engine.CapabilityTest {
-				test := branch.Condition()
+			CapabilityTest: func(_, test engine.Match) engine.CapabilityTest {
 				if test.Operator() == "instanceof" {
 					return engine.CapabilityTest{Subject: test.Child("left")}
 				}

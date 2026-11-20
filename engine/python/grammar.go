@@ -130,8 +130,8 @@ func init() {
 		ManufacturesFill:  manufacturesFill,
 		CoalescedLoop:     coalescedLoop,
 		ConditionalSpread: engine.As(Node.IsConditionalSpread),
-		CapabilityTest: func(branch engine.Match) engine.CapabilityTest {
-			test := Node{Match: branch.Condition()}
+		CapabilityTest: func(_, condition engine.Match) engine.CapabilityTest {
+			test := Node{Match: condition}
 			if !test.IsInstanceCheck() {
 				return engine.CapabilityTest{}
 			}

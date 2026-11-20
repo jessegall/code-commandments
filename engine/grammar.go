@@ -123,7 +123,7 @@ type Grammar struct {
 	NullableFields      func(Match) []Match
 	PhantomFields       func(Match) []Match
 	AbsenceTrace        func(Match) []string
-	CapabilityTest      func(Match) CapabilityTest
+	CapabilityTest      func(branch, condition Match) CapabilityTest
 	CapabilityFallback  func(Match) bool
 	SelfReceiver        func(Match) bool
 	Iterated            func(Match) Match

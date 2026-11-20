@@ -32,7 +32,7 @@ func (m Match) Guard() Guard {
 }
 
 func (m Match) isAnd() bool {
-	return m.Is(Conjunction) && m.Operator() == "&&"
+	return m.Is(Conjunction) && (m.Operator() == "&&" || m.Operator() == "and")
 }
 
 func (m Match) andParts() []Match {
