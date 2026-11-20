@@ -56,6 +56,10 @@ func (i *Index) ResolvedCallersOf(fqcn, method string) []engine.Match {
 	return i.callersOf(fqcn, method, CallReceiverClass)
 }
 
+func (i *Index) ResolvedCallersOfMethod(method engine.Match) []engine.Match {
+	return i.ResolvedCallersOf(EnclosingClassName(method), method.Name())
+}
+
 func (i *Index) callersOf(fqcn, method string, receiverOf func(engine.Match) string) []engine.Match {
 	var callers []engine.Match
 	for _, call := range i.byName[method] {

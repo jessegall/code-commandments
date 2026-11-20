@@ -25,6 +25,7 @@ func (Laravel) Register(exemptions *Exemptions) {
 		On(laravel.Arrayable, "toArray")
 	exemptions.Exempt(ArrayReturning).Classes(laravel.FormRequest, laravel.McpRequest, laravel.McpTool)
 	exemptions.Exempt(ArrayCallbackContract).On(laravel.Factory, "state")
+	exemptions.Exempt(ArrayCallbackInputContract).On(laravel.Factory, "state")
 	arrayInputs := exemptions.Exempt(ArrayInputContract).On(laravel.ConsoleCommand, "table")
 	for _, builder := range laravel.BuilderTypes {
 		arrayInputs.On(builder, "insert", "insertOrIgnore", "update", "upsert")

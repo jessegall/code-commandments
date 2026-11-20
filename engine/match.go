@@ -491,6 +491,10 @@ func (m Match) SameSyntax(other Match) bool {
 	return m.Exists() && other.Exists() && sameSyntax(m.node, other.node, true)
 }
 
+func (m Match) EndsBefore(other Match) bool {
+	return m.Exists() && other.Exists() && m.file == other.file && m.node.Span.End < other.node.Span.Start
+}
+
 func sameSyntax(a, b *contract.Node, root bool) bool {
 	if a.Kind != b.Kind || !root && a.Field != b.Field || a.Name != b.Name || a.Literal != b.Literal || a.Operator != b.Operator ||
 		!slices.Equal(a.Modifiers, b.Modifiers) || !slices.Equal(a.Flags, b.Flags) || len(a.Children) != len(b.Children) {

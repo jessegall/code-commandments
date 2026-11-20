@@ -58,11 +58,7 @@ func readProgram(codebase *engine.Codebase) *Program {
 
 func (p *Program) declare(declaration engine.Match) {
 	node := declaration.Node()
-	name := node.Symbol
-	anonymous := node.Kind == "Stmt_Class" && name == ""
-	if anonymous {
-		name = declaration.File() + ":" + strconv.Itoa(node.ID)
-	}
+	name := ClassDeclarationName(declaration)
 	if node.Kind == "Stmt_Class" {
 		if parent := child(node, "extends"); parent.Name != "" {
 			p.subclassed[parent.Name] = true
@@ -77,7 +73,7 @@ func (p *Program) declare(declaration engine.Match) {
 	p.declarations[name] = declaration
 	switch node.Kind {
 	case "Stmt_Class":
-		if !anonymous {
+		if node.Symbol != "" {
 			p.classes[name] = declaration
 		}
 		p.contracts[name] = names(node, "implements")
@@ -90,6 +86,13 @@ func (p *Program) declare(declaration engine.Match) {
 	for _, trait := range traitsOf(node) {
 		p.traitUsers[trait] = append(p.traitUsers[trait], name)
 	}
+}
+
+func ClassDeclarationName(declaration engine.Match) string {
+	if declaration.Kind() == "Stmt_Class" && declaration.Node().Symbol == "" {
+		return declaration.File() + ":" + strconv.Itoa(declaration.Node().ID)
+	}
+	return declaration.Identity()
 }
 
 func (p *Program) Declaration(fqcn string) (engine.Match, bool) {

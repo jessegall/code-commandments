@@ -6,8 +6,7 @@ import (
 )
 
 func (m Match) ReadsRecordBag() bool {
-	lookup := m.grammar().ArgumentLookup
-	if !m.Is(Parameter) || lookup == nil || !m.isLooseRecord() {
+	if !m.Is(Parameter) || !m.isLooseRecord() {
 		return false
 	}
 	if validates := m.grammar().ValidatesRecord; validates != nil && validates(m) {
@@ -15,13 +14,38 @@ func (m Match) ReadsRecordBag() bool {
 	}
 	keys := map[string]bool{}
 	for _, node := range m.DeclaringFunction().OwnDescendants() {
-		container, key := lookup(node)
-		if container.Is(Identifier) && container.Name() == m.Name() && key.LiteralKind() == "string" {
+		container, key := node.recordFieldLookup()
+		if key.Exists() && container.Name() == m.Name() {
 			name, _ := key.Text()
 			keys[name] = true
 		}
 	}
 	return len(keys) >= 2
+}
+
+func (m Match) RecordBagParameter() Match {
+	container, key := m.recordFieldLookup()
+	if !key.Exists() {
+		return Match{}
+	}
+	for _, parameter := range m.Closest(Function).Parameters() {
+		if parameter.Name() == container.Name() && parameter.isLooseRecord() {
+			return parameter
+		}
+	}
+	return Match{}
+}
+
+func (m Match) recordFieldLookup() (Match, Match) {
+	lookup := m.grammar().ArgumentLookup
+	if lookup == nil {
+		return Match{}, Match{}
+	}
+	container, key := lookup(m)
+	if container.Is(Identifier) && key.LiteralKind() == "string" {
+		return container, key
+	}
+	return Match{}, Match{}
 }
 
 func (m Match) ReceivesRecordBag() bool {

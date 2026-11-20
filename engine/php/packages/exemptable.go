@@ -66,7 +66,7 @@ func matchesExemption(codebase *engine.Codebase, finding engine.Match, tag Tag, 
 }
 
 func excusesEnclosing(codebase *engine.Codebase, tag Tag, finding engine.Match, by By) bool {
-	class := php.EnclosingClassName(finding)
+	class := php.ClassDeclarationName(php.EnclosingClass(finding))
 	method := ""
 	if by == EnclosingMethod {
 		method = php.EnclosingFunctionName(finding)
@@ -90,7 +90,7 @@ func returnOnlyUsedInContract(codebase *engine.Codebase, finding engine.Match, t
 	if !function.Exists() {
 		return false
 	}
-	callers := php.IndexOf(codebase).ResolvedCallersOf(php.EnclosingClassName(finding), function.Name())
+	callers := php.IndexOf(codebase).ResolvedCallersOfMethod(function)
 	return len(callers) > 0 && !slices.ContainsFunc(callers, func(caller engine.Match) bool {
 		if belongsToContractArray(codebase, caller.Parent()) {
 			return false

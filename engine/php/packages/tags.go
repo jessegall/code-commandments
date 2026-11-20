@@ -22,7 +22,9 @@ var (
 	ValidationResponse    = Tag{"validation-response", "A framework factory builds a validation response from field messages and has no parameter for the caught failure."}
 )
 
-var Tags = []Tag{ArrayCallbackContract, ArrayInputContract, ArrayReturnContract, ArrayReturning, Association, Boundary, CompositionRoot, ContractMethod, ControlSignal, DynamicMembers, NoContainer, ValidationResponse}
+var ArrayCallbackInputContract = Tag{"array-callback-input-contract", "The framework supplies an array to this method's callback."}
+
+var Tags = []Tag{ArrayCallbackContract, ArrayCallbackInputContract, ArrayInputContract, ArrayReturnContract, ArrayReturning, Association, Boundary, CompositionRoot, ContractMethod, ControlSignal, DynamicMembers, NoContainer, ValidationResponse}
 
 func Tagged(slug string) (Tag, bool) {
 	for _, tag := range Tags {

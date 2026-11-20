@@ -293,10 +293,18 @@ func (n Node) IsNamedConstructor() bool {
 	return false
 }
 
-func (n Node) ArrayKeyIsFieldName() bool {
+func (n Node) IsArrayParameterFieldRead() bool {
 	key, _ := n.Child("dim").Text()
+	if !fieldName.MatchString(key) {
+		return false
+	}
+	parameter := n.RecordBagParameter()
+	if !parameter.Exists() {
+		return false
+	}
 
-	return n.Kind() == "Expr_ArrayDimFetch" && n.Child("dim").Kind() == "Scalar_String" && fieldName.MatchString(key)
+	written := Written(parameter.Node().Declared)
+	return Node{Match: parameter}.IsArrayParameter() || written.IsNullableArray() && (!written.isUnion() || len(written.members()) == 2)
 }
 
 func (n Node) ArrayBaseName() string {
@@ -306,19 +314,6 @@ func (n Node) ArrayBaseName() string {
 	}
 
 	return base.Name()
-}
-
-func (n Node) EnclosingParamIsArray(name string) bool {
-	if name == "" {
-		return false
-	}
-	for _, param := range Params(n.EnclosingFunctionLike().Match) {
-		if variable := param.Child("var"); variable.Kind() == "Expr_Variable" && variable.Name() == name {
-			return Node{Match: param}.IsArrayParameter()
-		}
-	}
-
-	return false
 }
 
 func (n Node) IsWithinNamedConstructor() bool {

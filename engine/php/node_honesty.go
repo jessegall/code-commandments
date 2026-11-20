@@ -155,10 +155,13 @@ func (n Node) HasOwnStateSaveAndRestore() bool {
 
 func writesLocalBetween(method, saved, restored engine.Match, name string) bool {
 	return slices.ContainsFunc(method.OwnDescendants(), func(write engine.Match) bool {
-		start := write.Node().Span.Start
-		return start > saved.Node().Span.Start && start < restored.Node().Span.Start &&
+		return saved.EndsBefore(write) && write.EndsBefore(restored) &&
 			strings.HasPrefix(write.Kind(), "Expr_Assign") && variableRoot(write.Child("var")) == name
 	})
+}
+
+func LocalValueAt(read engine.Match) engine.Match {
+	return localValueBefore(enclosingFunction(read), read, read.Name())
 }
 
 func localValueBefore(method, site engine.Match, name string) engine.Match {
@@ -166,7 +169,7 @@ func localValueBefore(method, site engine.Match, name string) engine.Match {
 		assign := statement.Child("expr")
 		target := assign.Child("var")
 		if statement.Kind() == "Stmt_Expression" && assign.Kind() == "Expr_Assign" && target.Kind() == "Expr_Variable" && target.Name() == name &&
-			assign.Node().Span.Start < site.Node().Span.Start && !writesLocalBetween(method, assign, site, name) {
+			assign.EndsBefore(site) && !writesLocalBetween(method, assign, site, name) {
 			return assign.Child("expr")
 		}
 	}
