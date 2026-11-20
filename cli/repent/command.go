@@ -55,6 +55,7 @@ func (Command) Help() help.Help {
 		Adopt(scope.Options()).
 		Option("--dry-run[=FILE]", "preview the rewrite as a unified diff instead of applying it").
 		Option("--only=NAME", "run one rewriter only (alias: --sin=NAME)").
+		Option("--sin=NAME", "run one rewriter only (alias for --only)").
 		Option("--ignore-package-requirements", "keep package-gated scribes even if this project lacks the package").
 		Note("Rewrites only within the source roots `judge` reads (the config's paths), so it never touches " +
 			"tests/ or anything judge would not flag. A broken or incorrect repent result is a BUG — report it with `" + binary.Here() + " report`, referencing both the source and the broken output.").
@@ -138,7 +139,11 @@ func (c Command) Run(in *cli.Input, console cli.Console) (int, error) {
 		installed = config.Everything
 	}
 
-	fixers := append(config.Packaged(detectors.All(), installed), custom.InForce(project).Enabled(judged)...)
+	fixers, err := judged.Enabled(installed)
+	if err != nil {
+		return 0, err
+	}
+	fixers = append(fixers, custom.InForce(project).Enabled(judged)...)
 
 	converged, err := run.Run(roots, targets, filedIn(project), fixers, only)
 	if err != nil {

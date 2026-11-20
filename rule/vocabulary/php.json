@@ -2396,7 +2396,7 @@
                 "declared",
                 "observed"
             ],
-            "example": "/shop/bootstrap/helpers.php:7"
+            "example": "/shop/app/CompareSelf/DispatchCheck.php:22"
         },
         {
             "kind": "Stmt_Global",

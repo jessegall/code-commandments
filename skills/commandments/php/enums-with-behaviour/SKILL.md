@@ -37,65 +37,45 @@ Reach for this the moment you write:
 
 ## Rules
 
+- [ ] Use the enum's comparison method when the comparison carries no type narrowing.
+      _Ask the enum to compare itself with the case._
 - [ ] Put per-case behaviour on the enum; never `match`/`switch` over its `->value` at a call site.
       _A method on the backed enum (`$x->label()`, `$x->isPaid()`)._
 
 ## Worked example
 
-### enum-value-match
+### compare-self
 
-A `match`/`switch` over an enum's `->value` at the call site — logic that belongs on the enum but lives elsewhere instead.
+A strict comparison bypasses an enum's verified comparison method.
 
 ```php
 ----------[ Bad ]----------
 
-public function colour(Product $product): string
+function hasDispatched(Dispatch $dispatch): bool
 {
-    switch ($product->category->value) {
-        case 'food':
-            return 'green';
-        case 'electronics':
-            return 'blue';
-        case 'clothing':
-            return 'purple';
-        default:
-            return 'grey';
-    }
+    return $dispatch !== Dispatch::Draft && $dispatch !== Dispatch::Pending;
 }
 
 ----------[ Good ]----------
 
-// in Shop\Catalog\StockBadge
-// The mapping lives ON the enum; the call site just asks for the colour.
-
-public function colourViaEnum(Product $product): string
+function alreadyDispatched(Dispatch $dispatch): bool
 {
-    return $product->category->badgeColour();
-}
-
-// in Shop\Enums\ProductCategory
-// Where the call site's re-match went. The knowledge is keyed off the cases, so it belongs
-// with them — and a case added here cannot be forgotten at a call site that no longer decides.
-
-public function badgeColour(): string
-{
-    return match ($this) {
-        self::Food => 'green',
-        self::Electronics => 'blue',
-        self::Clothing => 'purple',
-        self::Apparel => 'grey',
-    };
+    return $dispatch->notEqualsAny(Dispatch::Draft, Dispatch::Pending);
 }
 ```
+
+The other 1 — one per rule — are in [`reference/examples.md`](reference/examples.md).
 
 ## Commands
 
 - `{{binary}} judge --skill=php/enums-with-behaviour` — find every one of these in the codebase.
-- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `enum-value-match`.
+- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `compare-self`, `enum-value-match`.
+- `{{binary}} repent --sin=<sin>` — auto-fix, for `compare-self`. Review it with `--dry-run` first.
 - `{{binary}} report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference
 
+- [Worked examples](reference/examples.md) — every rule's bad → good, 2 of them.
 - [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills

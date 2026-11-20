@@ -2,4 +2,5 @@
 
 Each row is one rule: the sin's id, the symptom its detector flags, and the detector that flags it. The id is what `{{binary}} info <sin>` takes, and the detector name is what `--detector=` takes if the rule turns out to be wrong.
 
+- **`compare-self`** — A strict comparison bypasses an enum's verified comparison method. — `CompareSelfDetector`
 - **`enum-value-match`** — A `match`/`switch` over an enum's `->value` at the call site — logic that belongs on the enum but lives elsewhere instead. — `EnumValueMatchDetector`

@@ -504,6 +504,14 @@
         "help": "A docblock whose delimiter shares a line with its text — a one-liner, or a block that opens or closes next to content"
     },
     {
+        "key": "sin_compare-self",
+        "title": "CompareSelf",
+        "type": "flag",
+        "kind": "flag",
+        "default": true,
+        "help": "A strict comparison bypasses an enum's verified comparison method."
+    },
+    {
         "key": "sin_enum-value-match",
         "title": "EnumValueMatch",
         "type": "flag",
