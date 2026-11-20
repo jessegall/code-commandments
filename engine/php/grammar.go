@@ -161,6 +161,7 @@ func init() {
 		ComparisonSubject: comparisonSubject,
 		EnumCase:          enumCase,
 		ArgumentLookup:    indexedRegistryRead,
+		JoinedLines:       joinedLines,
 		RegistryFields:    registryFields,
 		KeyedWrite:        engine.OfKind("Expr_Assign", "var"),
 		VariableKey:       func(key engine.Match) bool { return !isBareValue(key) },

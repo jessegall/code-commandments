@@ -168,18 +168,6 @@ func (n Node) IsNewlineSeparator() bool {
 	return n.Kind() == "Scalar_String" && ok && value != "" && strings.Trim(value, "\r\n") == ""
 }
 
-func (n Node) LiteralItems() []string {
-	var literals []string
-	for _, item := range n.ChildrenIn("items") {
-		if value := item.Child("value"); item.Kind() == "ArrayItem" && value.Kind() == "Scalar_String" {
-			text, _ := value.Text()
-			literals = append(literals, text)
-		}
-	}
-
-	return literals
-}
-
 func (n Node) IsReturnedValue() bool {
 	return n.Exists() && n.Parent().Kind() == "Stmt_Return"
 }
@@ -291,24 +279,6 @@ func isBareValue(expression engine.Match) bool {
 
 func (n Node) CallsFunction(name string) bool {
 	return n.Kind() == "Expr_FuncCall" && isName(n.Child("name")) && n.Child("name").Name() == name
-}
-
-func (n Node) ArgumentArrayLiteral(position int) Node {
-	argument := n.Argument(position)
-	if argument.Kind() == "Expr_Array" {
-		return argument
-	}
-	if argument.Kind() != "Expr_Variable" {
-		return Node{}
-	}
-	for _, interaction := range Trace(argument.Match) {
-		assigned := interaction.Node.Parent()
-		if value := assigned.Child("expr"); assigned.Kind() == "Expr_Assign" && value.Kind() == "Expr_Array" {
-			return Node{Match: value}
-		}
-	}
-
-	return Node{}
 }
 
 func (n Node) IsNonFinalClass() bool {

@@ -25,14 +25,15 @@ func (AssembledTemplateDetector) Sin() sins.Sin {
 func (AssembledTemplateDetector) Find(codebase *engine.Codebase) []engine.Match {
 	joins := cs.In(codebase).
 		WhereCall().
-		Where(engine.As(func(n cs.Node) bool { return len(n.JoinedLines()) >= 3 })).
 		Where(engine.As(func(n cs.Node) bool {
-			return len(slices.DeleteFunc(n.JoinedLines(), func(line cs.Node) bool { return !line.IsFixedText() })) >= 2
+			lines := n.JoinedLines()
+			fixed := slices.DeleteFunc(lines, func(line cs.Node) bool { return !line.IsFixedText() })
+			return engine.HasTemplateLayout(len(lines), len(fixed))
 		})).
 		Get()
 	runs := cs.In(codebase).
 		WhereStatement().
-		Where(engine.As(func(n cs.Node) bool { return n.StartsAppendLineRun(3, 2) })).
+		Where(engine.As(cs.Node.IsAppendLineRunStart)).
 		Get()
 
 	return append(joins, runs...)

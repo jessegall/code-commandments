@@ -67,15 +67,19 @@ func (m Match) AssemblesTemplate() bool {
 	if read == nil || !m.Is(Call) {
 		return false
 	}
-	lines := read(m)
-	if len(lines) < 3 {
-		return false
-	}
+	return HasTemplateLines(read(m))
+}
+
+func HasTemplateLines(lines []Match) bool {
 	fixed := 0
 	for _, line := range lines {
 		if line.LiteralKind() == "string" {
 			fixed++
 		}
 	}
-	return fixed >= 2
+	return HasTemplateLayout(len(lines), fixed)
+}
+
+func HasTemplateLayout(lines, written int) bool {
+	return lines >= 3 && written >= 2
 }

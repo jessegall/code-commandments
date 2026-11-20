@@ -9,10 +9,6 @@ import (
 	pysins "github.com/jessegall/code-commandments/sins/python"
 )
 
-const templateLines = 3
-
-const templateFixedLines = 2
-
 // AssembledTemplateDetector finds a multi-line string assembled by joining a list of lines with a newline.
 type AssembledTemplateDetector struct{}
 
@@ -29,7 +25,8 @@ func (AssembledTemplateDetector) Find(codebase *engine.Codebase) []engine.Match 
 		WhereCall().
 		Where(engine.As(py.Node.IsEvaluated)).
 		Where(engine.As(py.Node.IsNewlineJoin)).
-		Where(engine.As(func(n py.Node) bool { return len(n.JoinedLines()) >= templateLines })).
-		Where(engine.As(func(n py.Node) bool { return n.FixedLineCount() >= templateFixedLines })).
+		Where(engine.As(func(n py.Node) bool {
+			return engine.HasTemplateLayout(len(n.JoinedLines()), n.FixedLineCount())
+		})).
 		Get()
 }

@@ -333,7 +333,7 @@ func (n Node) IsStoredValue() bool {
 	return n.OutermostParentheses().Parent().Is("EqualsValueClause", "SimpleAssignmentExpression")
 }
 
-func (n Node) StartsAppendLineRun(lines, fixed int) bool {
+func (n Node) IsAppendLineRunStart() bool {
 	block := n.Parent()
 	if !n.IsAppendLine() || !block.Exists() {
 		return false
@@ -355,7 +355,7 @@ func (n Node) StartsAppendLineRun(lines, fixed int) bool {
 		}
 	}
 
-	return run >= lines && written >= fixed
+	return engine.HasTemplateLayout(run, written)
 }
 
 func (n Node) IsReturned() bool {
