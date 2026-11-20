@@ -1,6 +1,6 @@
 ---
 name: commandments-shared-flow
-description: "Shaping a function body in any language: an `if` that decides whether the rest runs, an `else` after a branch that already returned, a loop whose whole body sits under one `if`, an if/else-if chain over one value, a ternary inside a ternary, a ternary or `&&` used as a statement, a statement every branch repeats, or code after a `return`. Read this BEFORE writing any of them, and when a flow finding points here."
+description: "Shaping a function body in any language: an `if` that decides whether the rest runs, an `else` after a branch that already returned, a loop whose whole body sits under one `if`, an if/else-if chain over one value, a ternary inside a ternary, a ternary or `&&` used as a statement, a statement every branch repeats, code after a `return`, or a parameter given a new value. Read this BEFORE writing any of them, and when a flow finding points here."
 ---
 
 # Flow — guard at the top, keep the body flat
@@ -11,7 +11,6 @@ description: "Shaping a function body in any language: an `if` that decides whet
 > function's own level. A reader then reads a function top to bottom: here is what would stop us, here
 > is the work. These rules hold the same in every language, so every language is judged by them the
 > same way.
-> 
 
 ## The principle
 
@@ -57,14 +56,28 @@ after the conditional, written once.
 A statement after a `return`, `throw`, `break` or `continue` in the same block can never run. Delete
 it, or move it above the exit if it was meant to run.
 
+### A parameter keeps the value it was given
+
+A parameter names what the caller passed. Overwriting it makes one name mean two values, and a
+reader below the assignment has to look up which one it holds now. Give the new value a local of
+its own, named for what it is, or ask the caller for the finished value.
+
 ## Rules
 
+- [ ] Flatten with guards that leave early, or extract the inner decision into a function of its own.
+      _Turn the outer conditions into guards that return or `continue`, or move the innermost block into a well-named function._
 - [ ] A statement every branch ends with belongs after the conditional, written once.
       _Move the shared last statement below the `if`/`else`._
 - [ ] Use a `continue` guard so the loop body stays flat; don't wrap the whole body in an `if`.
       _Make the negated condition the loop's first line, followed by `continue`, and dedent the body under it._
 - [ ] Use one conditional expression for one choice; for more, use a `match`/`switch`, a lookup, or guards that return early.
       _A `match`/`switch` over the subject, a lookup for a table of values, or a small function whose guards return early._
+- [ ] Keep `for` for a counted loop, whose step advances a counter; walk with a `while`, or let the type hand out its own sequence.
+      _A `while` over an explicit cursor, or better, an iterator on the type being walked, so the caller never holds the cursor at all._
+- [ ] Load the rows before iterating over them.
+      _Fetch the required rows in one query before the loop._
+- [ ] A parameter keeps the value its caller passed; a new value gets a name of its own.
+      _Assign the new value to a local named for what it is (`trimmed = trim(name)`), or ask the caller for the finished value._
 - [ ] Drop the `else` after a branch that returns, throws, continues or breaks; let the rest run at the function's own level.
       _Delete the `else` and dedent what was inside it; the exit above already says the rest only runs when the condition did not hold._
 - [ ] Branch with an `if`; never run work off the right side of a bare `&&`/`||` (`and`/`or`) whose value nothing reads.
@@ -73,184 +86,205 @@ it, or move it above the exit if it was meant to run.
       _Make the closed set an enum and put the per-case answer on it, or key a lookup by the value; a `switch`/`match` fits a structural dispatch._
 - [ ] Choose an action with `if`/`else`; a conditional expression chooses a value, so never write one whose value nothing reads.
       _An `if` with each side as its own body, and no `else` at all when one side did nothing._
+- [ ] Give a compound condition a name that says what it decides.
+      _Put the condition on the type that owns the decision, or give a template condition a named computed value._
 - [ ] Every statement in a block can run; code after the block has left is dead.
       _Delete the statement, or move it before the statement that leaves the block if it was meant to run._
 
 ## Worked example
 
-### duplicated-branch-tail — in PHP
+### deep-nesting — in PHP
 
-Every branch of an `if`/`else` ends with the same statement: it runs whichever way the condition goes.
+A decision sits deep inside other decisions in one function
 
 ```php
 ----------[ Bad ]----------
 
-public function refund(int $orderId, int $cents): void
+public function resolve(Product $product, array $overrides, string $region): int
 {
-    if ($cents <= 5000) {
-        $this->log[] = "card {$cents}";
-        $this->note($orderId);
-    } else {
-        $this->log[] = "credit {$cents}";
-        $this->note($orderId);
+    if (array_key_exists($region, $overrides)) {
+        if ($product->price_cents > 0) {
+            if ($overrides[$region] < $product->price_cents) {
+                return $overrides[$region];
+            }
+        }
     }
+
+    return $product->price_cents;
 }
 
 ----------[ Good ]----------
 
-public function refundOnce(int $orderId, int $cents): void
+// The same resolution flattened: preconditions become guard clauses, so the
+// happy path runs unindented at the top level.
+
+public function resolveFlat(Product $product, array $overrides, string $region): int
 {
-    $this->log[] = ($cents <= 5000 ? 'card ' : 'credit ') . $cents;
-    $this->note($orderId);
+    if (! array_key_exists($region, $overrides)) {
+        return $product->price_cents;
+    }
+
+    if ($product->price_cents <= 0) {
+        return $product->price_cents;
+    }
+
+    return min($overrides[$region], $product->price_cents);
 }
 ```
 
-### duplicated-branch-tail — in TypeScript
+### deep-nesting — in TypeScript
 
-Every branch of an `if`/`else` ends with the same statement: it runs whichever way the condition goes.
+A decision sits deep inside other decisions in one function
 
 ```ts
 ----------[ Bad ]----------
 
-export function label(parcel: Parcel): Parcel {
-    if (parcel.grams > 2000) {
-        parcel.labels.push('heavy')
-        parcel.zone = Math.max(parcel.zone, 1)
-    } else if (parcel.grams > 500) {
-        parcel.labels.push('medium')
-        parcel.zone = Math.max(parcel.zone, 1)
-    } else {
-        parcel.zone = Math.max(parcel.zone, 1)
+export function sortIntoBins(parcels: Parcel[], bins: Map<number, Parcel[]>): void {
+    for (const parcel of parcels) {
+        if (parcel.grams > 0) {
+            if (bins.has(parcel.zone)) {
+                if (parcel.labels.length > 0) {
+                    bins.get(parcel.zone)?.push(parcel)
+                }
+            }
+        }
     }
-
-    return parcel
 }
 
 ----------[ Good ]----------
 
-export function labelOnce(parcel: Parcel): Parcel {
-    if (parcel.grams > 2000) {
-        parcel.labels.push('heavy')
-    } else if (parcel.grams > 500) {
-        parcel.labels.push('medium')
+export function sortLabelledIntoBins(parcels: Parcel[], bins: Map<number, Parcel[]>): void {
+    for (const parcel of parcels) {
+        if (parcel.grams <= 0 || parcel.labels.length === 0) {
+            continue
+        }
+        bins.get(parcel.zone)?.push(parcel)
     }
-    parcel.zone = Math.max(parcel.zone, 1)
-
-    return parcel
 }
 ```
 
-### duplicated-branch-tail — in Python
+### deep-nesting — in Python
 
-Every branch of an `if`/`else` ends with the same statement: it runs whichever way the condition goes.
+A decision sits deep inside other decisions in one function
 
 ```py
 ----------[ Bad ]----------
 
-def restock(item: ParcelReturn, shelf: Shelf, log: list[str]) -> None:
-    if item.opened:
-        shelf.seconds += 1
-        log.append(item.reason)
-    else:
-        shelf.fresh += 1
-        log.append(item.reason)
+def usable_coupon(coupons, customer, today):
+    for coupon in coupons:
+        if coupon.customer == customer.id:
+            if coupon.starts <= today <= coupon.ends:
+                if coupon.uses_left > 0:
+                    if not coupon.revoked:
+                        return coupon
+    return None
 
 ----------[ Good ]----------
 
-def restock_once(item: ParcelReturn, shelf: Shelf, log: list[str]) -> None:
-    if item.opened:
-        shelf.seconds += 1
-    else:
-        shelf.fresh += 1
-    log.append(item.reason)
+def first_usable_coupon(coupons, customer, today):
+    for coupon in coupons:
+        if coupon.customer != customer.id or coupon.revoked:
+            continue
+        if coupon.starts <= today <= coupon.ends and coupon.uses_left > 0:
+            return coupon
+    return None
 ```
 
-### duplicated-branch-tail — in C#
+### deep-nesting — in C#
 
-Every branch of an `if`/`else` ends with the same statement: it runs whichever way the condition goes.
+A decision sits deep inside other decisions in one function
 
 ```cs
 ----------[ Bad ]----------
 
-public void Restock(ReturnedParcel parcel)
+public IReadOnlyList<string> Reorders()
 {
-    if (parcel.Opened)
+    var reorders = new List<string>();
+
+    foreach (var (warehouse, shelves) in warehouses)
     {
-        Seconds++;
-        Log.Add(parcel.Reason);
+        foreach (var shelf in shelves)
+        {
+            if (shelf.OnHand < shelf.Minimum)
+            {
+                if (shelf.Supplier is not null)
+                {
+                    reorders.Add($"{warehouse}: {shelf.Minimum - shelf.OnHand} x {shelf.Sku} from {shelf.Supplier}");
+                }
+            }
+        }
     }
-    else
-    {
-        Fresh++;
-        Log.Add(parcel.Reason);
-    }
+
+    return reorders;
 }
 
 ----------[ Good ]----------
 
-public void RestockOnce(ReturnedParcel parcel)
-{
-    if (parcel.Opened)
-    {
-        Seconds++;
-    }
-    else
-    {
-        Fresh++;
-    }
-    Log.Add(parcel.Reason);
-}
+// in Restock.cs
+public IReadOnlyList<string> ReordersFlat() =>
+    warehouses
+        .SelectMany(warehouse => warehouse.Value.Select(shelf => (Warehouse: warehouse.Key, Shelf: shelf)))
+        .Where(entry => entry.Shelf.OnHand < entry.Shelf.Minimum && entry.Shelf.Supplier is not null)
+        .Select(entry => Reorder(entry.Warehouse, entry.Shelf))
+        .ToList();
+
+// in Restock.cs
+private static string Reorder(string warehouse, Shelf shelf) =>
+    $"{warehouse}: {shelf.Minimum - shelf.OnHand} x {shelf.Sku} from {shelf.Supplier}";
 ```
 
-### duplicated-branch-tail — in Go
+### deep-nesting — in Go
 
-Every branch of an `if`/`else` ends with the same statement: it runs whichever way the condition goes.
+A decision sits deep inside other decisions in one function
 
 ```go
 ----------[ Bad ]----------
 
-// Label names a parcel heavy or light on its last label.
-func Label(parcel Parcel) Parcel {
-	if parcel.Grams > 2000 {
-		parcel.Labels = append(parcel.Labels, "heavy")
-		parcel.Zone = normalZone(parcel.Zone)
-	} else if parcel.Grams > 500 {
-		parcel.Labels = append(parcel.Labels, "medium")
-		parcel.Zone = normalZone(parcel.Zone)
-	} else {
-		parcel.Zone = normalZone(parcel.Zone)
+// Dispatch sends out every crate the bay is holding.
+func (b *Bay) Dispatch(bays []*Bay) int {
+	sent := 0
+	for _, bay := range bays {
+		if !bay.closed {
+			for _, crate := range bay.crates {
+				if crate.Packed {
+					sent++
+				}
+			}
+		}
 	}
 
-	return parcel
+	return sent
 }
 
 ----------[ Good ]----------
 
-// LabelOnce labels by weight and settles the zone once, after the branches.
-func LabelOnce(parcel Parcel) Parcel {
-	if parcel.Grams > 2000 {
-		parcel.Labels = append(parcel.Labels, "heavy")
-	} else if parcel.Grams > 500 {
-		parcel.Labels = append(parcel.Labels, "medium")
-	}
-	parcel.Zone = normalZone(parcel.Zone)
+// Sent is what Dispatch counts, with each level guarded away instead of nested.
+func (b *Bay) Sent(bays []*Bay) int {
+	sent := 0
+	for _, bay := range bays {
+		if bay.closed {
+			continue
+		}
 
-	return parcel
+		sent += bay.packed()
+	}
+
+	return sent
 }
 ```
 
-The other 29 — one per rule — are in [`reference/examples.md`](reference/examples.md).
+The other 51 — one per rule — are in [`reference/examples.md`](reference/examples.md).
 
 ## Commands
 
 - `{{binary}} judge --skill=shared/flow` — find every one of these in the codebase.
-- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `duplicated-branch-tail`, `loop-inverted-guard`, `nested-ternary`, `redundant-else`, `short-circuit-statement`, `subject-ladder`, `ternary-statement`, `unreachable-statement`.
+- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `deep-nesting`, `duplicated-branch-tail`, `loop-inverted-guard`, `nested-ternary`, `non-counting-for`, `query-in-loop`, `reassigned-parameter`, `redundant-else`, `short-circuit-statement`, `subject-ladder`, `ternary-statement`, `unnamed-condition`, `unreachable-statement`.
 - `{{binary}} repent --sin=<sin>` — auto-fix, for `loop-inverted-guard`, `nested-ternary`, `redundant-else`, `short-circuit-statement`, `ternary-statement`. Review it with `--dry-run` first.
 - `{{binary}} report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference
 
-- [Worked examples](reference/examples.md) — every rule's bad → good, 34 of them.
+- [Worked examples](reference/examples.md) — every rule's bad → good, 56 of them.
 - [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills

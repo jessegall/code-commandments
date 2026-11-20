@@ -20,6 +20,16 @@ func (n Node) isOutermostAnd() bool {
 	return n.Kind() == "Expr_BinaryOp_BooleanAnd" && n.Parent().Kind() != "Expr_BinaryOp_BooleanAnd"
 }
 
+func guard(match engine.Match) engine.Guard {
+	node := Node{Match: match}
+	substantive, narrows := node.IsSubstantiveGuard(), node.IsTypeNarrowingGuard()
+	if !substantive && !narrows {
+		return engine.Guard{}
+	}
+
+	return engine.ReadGuard(node.CanonicalGuardHash(), substantive, narrows)
+}
+
 func (n Node) localAliases() map[string]engine.Match {
 	function := n.EnclosingFunctionLike()
 	if !function.Exists() {

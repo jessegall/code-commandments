@@ -49,60 +49,33 @@ place it lands.
 
 ## Rules
 
-- [ ] If a value can be missing, say so in its type with `string?`; don't default it to `""` and then check for the blank.
-      _Make it `string? note = null` and check `note is null`, so nobody has to know that `""` means "not given"._
-- [ ] Check for null directly (`name is not null`); don't fall back to a value only to compare against that same value.
-      _Write both checks out — `name is not null && name != ""` — or make the value non-nullable where it comes from, so only one check is left._
-- [ ] Decide absence where the value is found — if every caller treats a `T?` finder's miss as impossible, give it a resolve-or-throw form instead of re-asserting at each call site.
-      _Add a resolve-or-throw `Get(id)` beside `Find(id)` and call it where the callers de-null, or make the finder throw on a miss._
-- [ ] Never fill a value with an invented `""`, `0` or `false` on absence — handle the missing case, or make the value certain at the point it is created.
-      _Decide at the source: throw when the value must be there, or pass the absence on to a parameter typed to admit it (`T?`, `TryGetValue`). A real default (`?? "EUR"`) is a choice, not an invention._
 - [ ] Never silence a nullable warning with `!` — decide the missing case where the value is created, or handle it here.
       _Make the value non-nullable at its source, throw a named exception where it must exist, handle the null branch, or narrow it honestly (`OfType<T>()`, a pattern, `TryGetValue`)._
 
 ## Worked example
 
-### csharp-blank-string-default
+### csharp-null-forgiven
 
-a `string` parameter or property defaulted to `""` and then checked with `== ""` or `string.IsNullOrEmpty` — the blank is being used to mean "missing"
+The null-forgiving `!` on a value declared nullable — the compiler told the caller it may be null, and `!` silences it instead of deciding
 
 ```cs
 ----------[ Bad ]----------
 
-public static string Of(string heading, string strapline = "")
-{
-    if (strapline == "")
-    {
-        return heading;
-    }
-
-    return $"{heading} — {strapline}";
-}
+public IReadOnlyList<string> Emails() => customers.Where(customer => customer.Email != null).Select(customer => customer.Email!).ToList();
 
 ----------[ Good ]----------
 
-public static string Lined(string heading, string? strapline = null)
-{
-    if (strapline is null)
-    {
-        return heading;
-    }
-
-    return $"{heading} — {strapline}";
-}
+public IReadOnlyList<string> Addresses() => customers.Select(customer => customer.Email).OfType<string>().ToList();
 ```
-
-The other 4 — one per rule — are in [`reference/examples.md`](reference/examples.md).
 
 ## Commands
 
 - `{{binary}} judge --skill=csharp/absence` — find every one of these in the codebase.
-- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `csharp-blank-string-default`, `csharp-cancelled-coalesce`, `csharp-de-nulled-finder`, `csharp-invented-default`, `csharp-null-forgiven`.
+- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `csharp-null-forgiven`.
 - `{{binary}} report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference
 
-- [Worked examples](reference/examples.md) — every rule's bad → good, 5 of them.
 - [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills

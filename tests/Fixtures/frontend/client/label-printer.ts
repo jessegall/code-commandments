@@ -26,4 +26,8 @@ export class LabelPrinter {
         // @righteous DefendedCertainField
         return this.lastError?.trim() ?? ''
     }
+
+    labelsWaiting(): number {
+        return this.queue.length
+    }
 }

@@ -63,8 +63,6 @@ the parameter to the resolved type.
 
 - [ ] Take the SUBJECT and ask it — never a bool every caller derives from that same object.
       _swap the flags for the object the callers already hold: `CornerInset::for($editor)`_
-- [ ] Declare the parameter in the form callers already have, and do the conversion inside the callee — so the conversion rule lives in one place.
-      _Move the wrapper into the callee and widen the parameter to the type being wrapped; every call site then passes the value it means, and a site that forgets the conversion stops compiling._
 - [ ] Pass the object itself, not values derived from it — if a callee needs several pieces off one object, give it the object once and let it work out the rest.
       _Give the parameter the subject's type and move the derivations inside the callee; the call site then says what it means instead of spelling out the pieces._
 - [ ] Demand the resolved object you need; don't take a container + key and unpack the target yourself — the caller resolves once and passes it.
@@ -107,17 +105,17 @@ public function inZenMode(): bool
 }
 ```
 
-The other 3 — one per rule — are in [`reference/examples.md`](reference/examples.md).
+The other 2 — one per rule — are in [`reference/examples.md`](reference/examples.md).
 
 ## Commands
 
 - `{{binary}} judge --skill=php/pass-the-object` — find every one of these in the codebase.
-- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `computed-boolean-argument`, `converted-argument`, `derived-argument`, `param-resolved-from-param`.
+- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `computed-boolean-argument`, `derived-argument`, `param-resolved-from-param`.
 - `{{binary}} report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference
 
-- [Worked examples](reference/examples.md) — every rule's bad → good, 4 of them.
+- [Worked examples](reference/examples.md) — every rule's bad → good, 3 of them.
 - [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills

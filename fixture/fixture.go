@@ -219,7 +219,7 @@ func pairedIn(classes map[string]map[Tag]bool) int {
 }
 
 func keys(detector detectors.Detector) []string {
-	return []string{catalog.Name(detector), catalog.Name(detector.Sin()), detector.Sin().Definition().Name}
+	return slices.Concat(catalog.Names(detector), catalog.Names(detector.Sin()), []string{detector.Sin().Definition().Name})
 }
 
 func Marking(markers []Marker, tag Tag, detector detectors.Detector) []Marker {

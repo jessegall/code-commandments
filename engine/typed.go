@@ -2,6 +2,16 @@ package engine
 
 import "github.com/jessegall/code-commandments/contract"
 
+func (m Match) ResultType() *contract.Type {
+	if m.node == nil || !m.Is(Function) {
+		return nil
+	}
+	if typed := m.node.Returns; typed != nil {
+		return typed
+	}
+	return m.ReturnType().Typed()
+}
+
 func (m Match) Typed() *contract.Type {
 	if m.node == nil {
 		return nil
@@ -58,6 +68,12 @@ func (m Match) elementItsLanguageKnows() *contract.Type {
 }
 
 func (m Match) AdmitsAbsence() bool {
+	if m.HasFlag("optional") {
+		return true
+	}
+	if m.node != nil && m.node.Declared != nil {
+		return m.node.Declared.Nullable
+	}
 	typed := m.Typed()
 
 	return typed != nil && typed.Nullable

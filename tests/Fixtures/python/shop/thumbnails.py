@@ -4,6 +4,6 @@
 def make_thumbnail(image, size) -> None:
     try:
         image.resize(size).save(image.thumbnail_path)
-    # @sin SwallowedException
+    # @sin SwallowCatch
     except:
         pass

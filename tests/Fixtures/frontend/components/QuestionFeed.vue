@@ -15,6 +15,7 @@ const loadQuestions = async (productId: number): Promise<number[]> => {
     // @sin RawFetchInComponent
     const result = await fetch(`/api/products/${productId}/questions`)
     if (!result.ok) {
+        // @sin GenericException
         throw new Error(result.statusText)
     }
     const questions: Entry[] = await result.json()

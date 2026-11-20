@@ -40,6 +40,9 @@ func (n Node) DeclaredName() string {
 	if n.Name() != "" {
 		return n.Name()
 	}
+	if n.Is("CatchClause") {
+		return n.firstChild("CatchDeclaration").Name()
+	}
 
 	if only := n.OnlyDeclarator(); only.Exists() {
 		return only.Name()
@@ -164,67 +167,10 @@ func (n Node) OutermostParentheses() Node {
 	return inner
 }
 
-func (n Node) IsComparedToItsFallback() bool {
-	fallback := n.Fallback()
-	compared := n.OutermostParentheses()
-	comparison := compared.Parent()
-	if !fallback.Exists() || !comparison.Is("EqualsExpression", "NotEqualsExpression") {
-		return false
-	}
-
-	return slices.ContainsFunc(comparison.All(), func(side Node) bool {
-		return side.Node() != compared.Node() && side.IsSameValueAs(fallback)
-	})
-}
-
-func (n Node) IsWrappingWithoutCause() bool {
-	if !n.Is("ThrowStatement", "ThrowExpression") {
-		return false
-	}
-	created := Node{}
-	for _, thrown := range n.Expressions() {
-		if thrown.Is("ObjectCreationExpression", "ImplicitObjectCreationExpression") {
-			created = thrown
-			break
-		}
-	}
-	if !created.Exists() {
-		return false
-	}
-	for _, ancestor := range n.Ancestors() {
-		if ancestor.IsFunction() {
-			return false
-		}
-		if ancestor.Is("CatchClause") {
-			caught := ancestor.firstChild("CatchDeclaration").Name()
-
-			return caught == "" || !handsOver(created, caught)
-		}
-	}
-
-	return false
-}
-
 func (n Node) FillsAnOutsideContract() bool {
 	for _, ancestor := range n.Ancestors() {
 		if ancestor.IsFunction() {
 			return ancestor.FillsOutsideTheSolution()
-		}
-	}
-
-	return false
-}
-
-func handsOver(created Node, caught string) bool {
-	for _, part := range append(created.Flatten(), created) {
-		if !part.IsCall() && !part.Is("ObjectCreationExpression", "ImplicitObjectCreationExpression") {
-			continue
-		}
-
-		for _, argument := range part.Arguments() {
-			if argument.WithoutParentheses().Is("IdentifierName") && argument.WithoutParentheses().Name() == caught {
-				return true
-			}
 		}
 	}
 
@@ -634,21 +580,6 @@ func (n Node) ComparedLiterals() []string {
 	}
 
 	return literals
-}
-
-func (n Node) BranchingDepth() int {
-	depth, child := 0, n
-	for _, parent := range n.Ancestors() {
-		if parent.IsFunction() {
-			break
-		}
-		if parent.IsBranchingConstruct() && !(child.Is("ElseClause") && len(child.Children()) > 0 && child.Children()[0].Is("IfStatement")) {
-			depth++
-		}
-		child = parent
-	}
-
-	return depth
 }
 
 func (n Node) IsInTest() bool {

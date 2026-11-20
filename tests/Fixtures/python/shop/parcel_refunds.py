@@ -26,6 +26,7 @@ def restock(item: ParcelReturn, shelf: Shelf, log: list[str]) -> None:
 
 def refund(item: ParcelReturn) -> int:
     if item.cents <= 0:
+        # @sin MessageAtThrow
         raise ValueError("nothing to refund")
         # @sin UnreachableStatement
         item.cents = 0
@@ -40,3 +41,9 @@ def restock_once(item: ParcelReturn, shelf: Shelf, log: list[str]) -> None:
     else:
         shelf.fresh += 1
     log.append(item.reason)
+
+
+def refund_note(reason: str) -> str:
+    # @sin ReassignedParameter
+    reason = reason.strip().lower()
+    return f"refund: {reason}"

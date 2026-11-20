@@ -27,7 +27,7 @@ def said(name: str) -> bool:
 `,
 	} {
 		t.Run(name, func(t *testing.T) {
-			found := SideTableTraitDetector{}.Find(pythontest.FromSource(t, map[string]string{"shop/mod.py": source}))
+			found := SideTableTraitDetector.Find(pythontest.FromSource(t, map[string]string{"shop/mod.py": source}))
 
 			if len(found) != 1 {
 				t.Fatalf("found %d side tables, want 1: %v", len(found), locations(found))
@@ -104,7 +104,7 @@ ORDER = ("reply", "log")
 `,
 	} {
 		t.Run(name, func(t *testing.T) {
-			found := SideTableTraitDetector{}.Find(pythontest.FromSource(t, map[string]string{"shop/mod.py": source}))
+			found := SideTableTraitDetector.Find(pythontest.FromSource(t, map[string]string{"shop/mod.py": source}))
 
 			if len(found) != 0 {
 				t.Errorf("flagged %d, want none: %v", len(found), locations(found))

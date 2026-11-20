@@ -39,3 +39,9 @@ after the conditional, written once.
 
 A statement after a `return`, `throw`, `break` or `continue` in the same block can never run. Delete
 it, or move it above the exit if it was meant to run.
+
+### A parameter keeps the value it was given
+
+A parameter names what the caller passed. Overwriting it makes one name mean two values, and a
+reader below the assignment has to look up which one it holds now. Give the new value a local of
+its own, named for what it is, or ask the caller for the finished value.

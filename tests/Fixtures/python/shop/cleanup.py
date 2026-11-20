@@ -10,7 +10,7 @@ log = logging.getLogger(__name__)
 def remove_upload(path: str) -> None:
     try:
         os.remove(path)
-    # @righteous SwallowedException
+    # @righteous SwallowCatch
     except FileNotFoundError:
         pass
 
@@ -19,6 +19,6 @@ def nightly(jobs) -> None:
     for job in jobs:
         try:
             job.run()
-        # @righteous SwallowedException
+        # @righteous SwallowCatch
         except Exception:
             log.exception("nightly job %s failed", job.name)

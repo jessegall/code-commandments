@@ -156,24 +156,6 @@ func (n Node) IsEmptyLiteral() bool {
 	return false
 }
 
-func (n Node) IsCancelledCoalesce() bool {
-	parent := n.Parent()
-	switch parent.Kind() {
-	case "Expr_BinaryOp_Identical", "Expr_BinaryOp_NotIdentical", "Expr_BinaryOp_Equal", "Expr_BinaryOp_NotEqual":
-	default:
-		return false
-	}
-	if !n.IsCoalesce() {
-		return false
-	}
-	other := parent.Child("left")
-	if n.Node().Field == "left" {
-		other = parent.Child("right")
-	}
-
-	return other.SameSyntax(n.Child("right"))
-}
-
 func (n Node) IsConditionalArraySpread() bool {
 	chosen, otherwise := n.Child("if"), n.Child("else")
 	if !n.IsTernary() || !chosen.Exists() || chosen.Kind() != "Expr_Array" || otherwise.Kind() != "Expr_Array" {

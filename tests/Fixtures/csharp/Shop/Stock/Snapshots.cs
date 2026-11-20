@@ -12,7 +12,7 @@ public sealed class Snapshots(string folder)
         {
             return JsonSerializer.Deserialize<Dictionary<string, int>>(File.ReadAllText(Path.Combine(folder, "stock.json")));
         }
-        // @sin SwallowedException
+        // @sin SwallowCatch
         catch (Exception)
         {
             return null;
@@ -25,7 +25,7 @@ public sealed class Snapshots(string folder)
         {
             return JsonSerializer.Deserialize<Dictionary<string, int>>(File.ReadAllText(Path.Combine(folder, "stock.json"))) ?? [];
         }
-        // @fixed SwallowedException
+        // @fixed SwallowCatch
         catch (FileNotFoundException)
         {
             return [];
@@ -38,7 +38,7 @@ public sealed class Snapshots(string folder)
         {
             return JsonSerializer.Deserialize<Dictionary<string, int>>(File.ReadAllText(Path.Combine(folder, "stock.json")));
         }
-        // @righteous SwallowedException
+        // @righteous SwallowCatch
         catch (Exception error) when (error is JsonException or FileNotFoundException)
         {
             return null;

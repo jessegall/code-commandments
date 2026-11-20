@@ -46,7 +46,9 @@ only Go: components/RestockNotice.vue:17 RawFetchInComponent  # a rule written a
 only Go: components/ParcelStageHint.vue:14 RetestedSwitchCase  # a rule written after the PHP tool was retired (7.18.153)
 only Go: components/PaymentMethodNote.vue:9 RetestedSwitchCase  # a rule written after the PHP tool was retired (7.18.153)
 only Go: components/ReturnReasonPanel.vue:12 RetestedSwitchCase  # a rule written after the PHP tool was retired (7.18.153)
-only PHP: components/NewsletterSignup.vue:21 DuplicateFunction  # 7.18.153 added a line above the function, so Go finds it one line down
-only Go: components/NewsletterSignup.vue:22 DuplicateFunction  # the same finding, one line down since 7.18.153
-only PHP: components/PickListActions.vue:19 NearDuplicateFunction  # 7.18.153 added a line above the function, so Go finds it one line down
-only Go: components/PickListActions.vue:20 NearDuplicateFunction  # the same finding, one line down since 7.18.153
+only Go: client/loyalty-points.ts:169 ReassignedParameter  # a shared rule TypeScript gained in plan 9, on a fixture file written after the PHP tool was retired
+only Go: client/parcel-postage.ts:147 ReassignedParameter  # a shared rule TypeScript gained in plan 9, on a fixture file written after the PHP tool was retired
+only Go: client/parcel-returns.ts:114 ReassignedParameter  # a shared rule TypeScript gained in plan 9, on a fixture file written after the PHP tool was retired
+only Go: client/loyalty-points.ts:182 DeepNesting  # a shared rule TypeScript gained in plan 9, on a fixture file written after the PHP tool was retired
+only Go: client/parcel-postage.ts:171 DeepNesting  # a shared rule TypeScript gained in plan 9, on a fixture file written after the PHP tool was retired
+only Go: client/parcel-returns.ts:126 DeepNesting  # a shared rule TypeScript gained in plan 9, on a fixture file written after the PHP tool was retired

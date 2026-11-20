@@ -2,20 +2,6 @@
 
 One bad → good per rule this skill teaches, taken from the fixture that proves the detector, so every pair is code that really fires and really passes.
 
-### hard-coded-server-url — in Vue
-
-A string written out as the path of a route the server declares by name
-
-```vue
-----------[ Bad ]----------
-
-<a :href="'/plans/' + card.id">{{ card.title }}</a>
-
-----------[ Good ]----------
-
-const planAddress = route('plans.show', { plan: props.card.number })
-```
-
 ### hard-coded-server-url — in TypeScript
 
 A string written out as the path of a route the server declares by name
@@ -34,6 +20,22 @@ export async function printReturnLabel(returnNumber: number, copies: number): Pr
 }
 ```
 
+### hard-coded-server-url — in Vue
+
+A string written out as the path of a route the server declares by name
+
+```vue
+----------[ Bad ]----------
+
+function openBoard(): void {
+    window.location.assign('/plans')
+}
+
+----------[ Good ]----------
+
+const planAddress = route('plans.show', { plan: props.card.number })
+```
+
 ### raw-fetch-in-component — in Vue
 
 A Vue component calls the global `fetch` itself instead of the one client module
@@ -42,12 +44,9 @@ A Vue component calls the global `fetch` itself instead of the one client module
 ----------[ Bad ]----------
 
 async function subscribe(): Promise<void> {
-    failed.value = false
-    try {
-        await fetch('/api/newsletter', { method: 'POST', body: JSON.stringify({ email: email.value }) })
-    } catch {
-        failed.value = true
-    }
+    rejected.value = false
+    await fetch('/api/newsletter', { method: 'POST', body: JSON.stringify({ email: address.value }) })
+        .catch(() => { rejected.value = true })
 }
 
 ----------[ Good ]----------

@@ -176,6 +176,23 @@ func TestTheHarnessFailsADetectorThatFlagsItsOwnFix(t *testing.T) {
 	}
 }
 
+func TestDiversityCountsFortyDistinctScenarios(t *testing.T) {
+	const count = 40
+	scenarios := make([]fixture.Scenario, count)
+	for at := range scenarios {
+		scenarios[at] = fixture.Scenario{
+			File:   fmt.Sprintf("/fixture/%d.php", at),
+			Source: strings.Repeat(string(rune('!'+at)), 16),
+		}
+	}
+	if found := fixture.LargestDiverseGroup(scenarios); found != count {
+		t.Fatalf("found %d mutually diverse scenarios, want %d", found, count)
+	}
+	if found := fixture.DiverseGroupUpTo(scenarios, fixture.MinScenarios); found != fixture.MinScenarios {
+		t.Fatalf("found %d mutually diverse scenarios, want %d", found, fixture.MinScenarios)
+	}
+}
+
 func TestTheHarnessFailsExactMarksWithTooFewDiverseScenarios(t *testing.T) {
 	shouting := proving(t, ShoutingDetector{})
 
@@ -262,6 +279,7 @@ func TestSimilarityIsPHPsSimilarText(t *testing.T) {
 		{"Hello World", "Hello  World", 100},
 		{"return new Item($row);", "return Item::many($rows);", 76.59574468085107},
 		{"abc", "xyz", 0},
+		{"// @sin Example\nreturn total", "# @fixed Example\nreturn total", 100},
 	} {
 		if got := fixture.Similarity(pair.a, pair.b); got != pair.want {
 			t.Errorf("%q ~ %q: got %v, want %v", pair.a, pair.b, got, pair.want)

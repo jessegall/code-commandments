@@ -30,6 +30,9 @@ func TestASinIsExplainedByItsOwnNameAndItsDetectors(t *testing.T) {
 			if !strings.Contains(said, "swallow-catch") {
 				t.Errorf("what it printed does not name the sin:\n%s", said)
 			}
+			if count := strings.Count(said, "\033[1mswallow-catch\033[0m"); count != 1 {
+				t.Errorf("shared swallow-catch was described %d times, want 1", count)
+			}
 			if !strings.Contains(said, "skill") && !strings.Contains(said, "Skill") {
 				t.Errorf("what it printed does not name the skill that teaches the fix:\n%s", said)
 			}

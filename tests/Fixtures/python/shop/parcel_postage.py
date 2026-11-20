@@ -41,3 +41,21 @@ def weigh(parcel: Parcel) -> Parcel:
     parcel.zone = max(parcel.zone, 1)
 
     return parcel
+
+
+def postage_cents(grams: int, zone: int) -> int:
+    # @sin ReassignedParameter
+    grams = max(grams, 100)
+    return grams * zone
+
+
+# @fixed ReassignedParameter
+def billed_postage_cents(grams: int, zone: int) -> int:
+    billed = max(grams, 100)
+    return billed * zone
+
+
+# @righteous ReassignedParameter
+def rezone(parcel: Parcel, zone: int) -> Parcel:
+    parcel.zone = max(zone, 1)
+    return parcel

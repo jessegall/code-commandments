@@ -14,11 +14,11 @@ def read_feed(client, url: str) -> bytes:
         return client.get(url, timeout=5).content
     except TimeoutError as timeout:
         client.close()
-        # @sin RaiseWithoutCause
+        # @sin WrappingWithoutCause
         raise FeedUnavailable.at(url)
 
 
-# @fixed RaiseWithoutCause
+# @fixed WrappingWithoutCause
 def read_feed_from(client, url: str) -> bytes:
     try:
         return client.get(url, timeout=5).content
@@ -27,7 +27,7 @@ def read_feed_from(client, url: str) -> bytes:
         raise FeedUnavailable.at(url) from timeout
 
 
-# @righteous RaiseWithoutCause
+# @righteous WrappingWithoutCause
 def read_or_reraise(client, url: str) -> bytes:
     try:
         return client.get(url, timeout=5).content
@@ -36,7 +36,7 @@ def read_or_reraise(client, url: str) -> bytes:
         raise
 
 
-# @righteous RaiseWithoutCause
+# @righteous WrappingWithoutCause
 def setting(settings: dict, name: str) -> str:
     try:
         return settings[name]
@@ -44,7 +44,7 @@ def setting(settings: dict, name: str) -> str:
         raise AttributeError(name) from None
 
 
-# @righteous RaiseWithoutCause
+# @righteous WrappingWithoutCause
 def read_chained_by_hand(client, url: str) -> bytes:
     try:
         return client.get(url, timeout=5).content

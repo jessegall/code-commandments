@@ -26,6 +26,9 @@ func (w *writer) typed(held ast.Node, built *contract.Node) {
 
 	switch node := held.(type) {
 	case *ast.Ident:
+		if _, absent := w.facts.Uses[node].(*types.Nil); absent {
+			built.Own().Literal = "null"
+		}
 		w.say(built, func(facts *contract.Facts) { facts.Refers = w.refers(node) })
 	case *ast.CallExpr:
 		if reached := w.target(node); reached != nil {
@@ -38,6 +41,7 @@ func (w *writer) typed(held ast.Node, built *contract.Node) {
 		w.sayType(built, func(facts *contract.Facts) { facts.Returns = w.resultType(node.Type) })
 	case *ast.TypeSpec:
 		w.say(built, func(facts *contract.Facts) { facts.Symbol = w.symbol(node.Name) })
+		w.readMethods(node, built)
 	case *ast.ValueSpec:
 		w.say(built, func(facts *contract.Facts) { facts.Symbol = w.oneSymbol(node.Names) })
 		w.sayType(built, func(facts *contract.Facts) { facts.Declared = w.writtenType(node.Type) })

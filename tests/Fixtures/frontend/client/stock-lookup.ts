@@ -10,6 +10,7 @@ interface StockLevel {
 export async function loadStockLevels(sku: string): Promise<number[]> {
     const response = await fetch(`/api/stock/${sku}`)
     if (!response.ok) {
+        // @sin GenericException
         throw new Error(response.statusText)
     }
     const levels: StockLevel[] = await response.json()

@@ -247,3 +247,17 @@ func readersOf(c *Codebase) map[string][]Match {
 		return index
 	})
 }
+
+func (m Match) ReassignsAParameter() bool {
+	if !m.Is(Assignment) || m.operator() == ":=" {
+		return false
+	}
+	written := m.Children()
+	if len(written) == 0 || !written[0].Is(Identifier) || written[0].Name() == "" {
+		return false
+	}
+
+	return slices.ContainsFunc(m.Closest(Function).Parameters(), func(parameter Match) bool {
+		return parameter.DeclaredName() == written[0].Name() && !parameter.HasFlag("by-ref")
+	})
+}

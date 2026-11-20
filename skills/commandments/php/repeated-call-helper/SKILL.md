@@ -80,14 +80,8 @@ that names it.
 
 - [ ] A query several callers run is one named finder or scope on the model, written once.
       _Add a named static finder or scope to the model (`CommandRequest::lockedFor($id)`) and call it from each site._
-- [ ] A folder the code reaches is named in one place, a method or constant that owns it; every other site asks that owner.
-      _Give the folder one owner (a method that returns its path, or a constant), and have every site that spells the folder or a path inside it call that owner._
-- [ ] Promote a recurring compound guard to a named predicate. The same condition — however its conjuncts are ordered, and whether it reads `$obj->x` inline or a local aliased from it — belongs in ONE named method.
-      _Extract the repeated condition into a named boolean method and call THAT at each site._
 - [ ] Promote a repeated `->with…(named: …)` call into a method on the receiver's type that hides the call and its construction boilerplate.
       _`$element->withMetadata($payload)` — a `withMetadata()` on the type doing `copyWith(metadata: $payload->toArray())`._
-- [ ] Promote a recurring `instanceof` chain to a named predicate (`$x->isNewOfNamedClass()`), so the intent has a name and the narrowing has ONE home.
-      _Extract the repeated `instanceof` chain into a named boolean method and call THAT at each site._
 
 ## Worked example
 
@@ -120,15 +114,15 @@ public static function lockedFor(int $cardId): self
 }
 ```
 
-The other 4 — one per rule — are in [`reference/examples.md`](reference/examples.md).
+The other 1 — one per rule — are in [`reference/examples.md`](reference/examples.md).
 
 ## Commands
 
 - `{{binary}} judge --skill=php/repeated-call-helper` — find every one of these in the codebase.
-- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `repeated-query-chain`, `repeated-folder-path`, `repeated-guard`, `repeated-named-call`, `repeated-type-guard`.
+- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `repeated-query-chain`, `repeated-named-call`.
 - `{{binary}} report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference
 
-- [Worked examples](reference/examples.md) — every rule's bad → good, 5 of them.
+- [Worked examples](reference/examples.md) — every rule's bad → good, 2 of them.
 - [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.

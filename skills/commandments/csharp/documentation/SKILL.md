@@ -45,52 +45,6 @@ leave a comment explaining what it used to be.
 `// not random`, `// no magic here` defend the code against a reading nobody made. Say what it IS, or make it
 obvious and write nothing.
 
-## Rules
-
-- [ ] Say what the code is now, never what it was; git keeps the history.
-      _Delete the history. If something about the present needs saying, say that instead._
-- [ ] Keep a type's doc comment to one short paragraph; if it needs more, the type is doing too much.
-      _Cut the comment to one sentence about what the type is, and split the type if the rest describes a second job._
-- [ ] A doc comment must say something the signature does not; drop tags that only repeat a name or a type.
-      _Delete the comment, or write the sentence that says what the member does and describe only what a name and a type cannot._
-- [ ] A `cref` must resolve: name what the code is called now, spelled so it reaches it from here, or delete it.
-      _Point the `cref` at what the name became, qualified or imported so it resolves here (the compiler warns CS1574 until it does); if nothing replaced it, drop the reference._
-- [ ] Say what the code is; a comment answering an objection nobody raised means the code should make itself plain.
-      _Name the thing so it explains itself (a named constant, a well-named method) and delete the comment, or say what it is instead._
-- [ ] A comment must say something the code does not; if every word of it is already in the code below, delete it.
-      _Delete the comment. If the statement is unclear, name it better (extract a well-named method or variable); keep a comment only for a reason the code cannot state._
-
-## Worked example
-
-### csharp-archaeology-comment
-
-a comment that tells the code's past — `// formerly lived in CheckoutService`, `// refactored to use the cache` — describing a version nobody is reading
-
-```cs
-----------[ Bad ]----------
-
-// formerly lived in the checkout service, and was extracted here
-public static int Days(bool member) => member ? 60 : 30;
-
-----------[ Good ]----------
-
-/// <summary>Members get longer to decide, since they return far less often.</summary>
-public static int DaysFor(bool member) => member ? 60 : 30;
-```
-
-The other 5 — one per rule — are in [`reference/examples.md`](reference/examples.md).
-
-## Commands
-
-- `{{binary}} judge --skill=csharp/documentation` — find every one of these in the codebase.
-- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `csharp-archaeology-comment`, `csharp-bloated-docblock`, `csharp-ceremony-docblock`, `csharp-dangling-doc-reference`, `csharp-negative-space-comment`, `csharp-restated-comment`.
-- `{{binary}} report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
-
-## Reference
-
-- [Worked examples](reference/examples.md) — every rule's bad → good, 6 of them.
-- [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
-
 ## Related skills
 
 - [`php/documentation`](../../php/documentation/SKILL.md) — the same discipline for PHP docblocks.

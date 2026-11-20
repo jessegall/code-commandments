@@ -31,94 +31,6 @@ public static function lockedFor(int $cardId): self
 }
 ```
 
-### repeated-folder-path
-
-One folder is spelled as a path at three or more sites in different methods: it needs a single point of entry
-
-```php
-----------[ Bad ]----------
-
-public function purge(int $now): int
-{
-    $removed = 0;
-    $folder = storage_path('exports/payouts/');
-    foreach (scandir($folder) ?: [] as $name) {
-        $age = $now - (int) filemtime($folder . $name);
-        if ($age > $this->keepDays * 86400 && unlink($folder . $name)) {
-            $removed++;
-        }
-    }
-
-    return $removed;
-}
-
-----------[ Good ]----------
-
-// in Shop\Refunds\RefundFolder
-public function file(string $name): string
-{
-    return storage_path('refunds/receipts/' . $name);
-}
-
-// in Shop\Refunds\RefundReceipts
-public function store(string $refund, string $pdf): void
-{
-    file_put_contents($this->folder->file($refund . '.pdf'), $pdf);
-}
-
-// in Shop\Refunds\RefundReceipts
-public function exists(string $refund): bool
-{
-    return is_file($this->folder->file($refund . '.pdf'));
-}
-
-// in Shop\Refunds\RefundReceipts
-public function remove(string $refund): bool
-{
-    return unlink($this->folder->file($refund . '.pdf'));
-}
-```
-
-### repeated-guard
-
-The SAME compound guard condition recurs in ≥2 places — the same check spelled differently (inline reaches vs locals) or reordered still counts, so a copied condition has no name
-
-```php
-----------[ Bad ]----------
-
-// in Shop\Domain\AccessPolicy
-public function allow($user, $account): bool
-{
-    return $user->active && $account->verified;
-}
-
-// in Shop\Domain\AccessPolicy
-public function audit($user, $account): string
-{
-    $live = $user->active;
-    $ok = $account->verified;
-
-    return $live && $ok ? 'granted' : 'denied';
-}
-
-----------[ Good ]----------
-
-// in Shop\Domain\AccessPolicy
-// The guard promoted to a NAME: `isLocked()` spells `$user->suspended && $account->frozen` once and
-// every site asks the predicate, so the condition has one home and moves in one place.
-
-public function review($user, $account): string
-{
-    return $this->isLocked($user, $account) ? 'locked' : 'open';
-}
-
-// in Shop\Domain\AccessPolicy
-private function isLocked($user, $account): bool
-{
-    return $user->suspended && $account->frozen;
-}
-```
-
 ### repeated-named-call
 
 The same `with`-style (variadic) method is called with the same named argument at 2+ sites, instead of a named helper on the type
@@ -126,12 +38,10 @@ The same `with`-style (variadic) method is called with the same named argument a
 ```php
 ----------[ Bad ]----------
 
-// in Shop\Http\Pages\RepeatedCall\PortHydrator
-public function hydrate(UiNode $node, string $name): UiNode
+// in Shop\Http\Pages\RepeatedCall\CardHydrator
+public function hydrate(UiNode $node, string $title, string $state): UiNode
 {
-    $required = in_array($name, $this->requiredPorts, true);
-
-    return $node->copyWith(metadata: PortMeta::from(['name' => $name, 'required' => $required])->toArray());
+    return $node->copyWith(metadata: CardMeta::from(['title' => $title, 'tone' => $this->tone($state)])->toArray());
 }
 
 // in Shop\Http\Pages\RepeatedCall\PanelHydrator
@@ -142,10 +52,12 @@ public function hydrate(UiNode $node, ?string $heading): UiNode
     return $node->copyWith(metadata: PanelMeta::from(['heading' => $heading])->toArray());
 }
 
-// in Shop\Http\Pages\RepeatedCall\CardHydrator
-public function hydrate(UiNode $node, string $title, string $state): UiNode
+// in Shop\Http\Pages\RepeatedCall\PortHydrator
+public function hydrate(UiNode $node, string $name): UiNode
 {
-    return $node->copyWith(metadata: CardMeta::from(['title' => $title, 'tone' => $this->tone($state)])->toArray());
+    $required = in_array($name, $this->requiredPorts, true);
+
+    return $node->copyWith(metadata: PortMeta::from(['name' => $name, 'required' => $required])->toArray());
 }
 
 ----------[ Good ]----------
@@ -166,48 +78,5 @@ public function decorate(UiNode $node, CardMeta $meta): UiNode
 public function withMetadata(Data $meta): static
 {
     return $this->copyWith(metadata: $meta->toArray());
-}
-```
-
-### repeated-type-guard
-
-The SAME multi-`instanceof` type-narrowing guard (`$x instanceof A && $x->y instanceof B`) is written verbatim in ≥2 places — a check with no name, copied instead of named
-
-```php
-----------[ Bad ]----------
-
-// in Shop\Domain\TokenScanner
-public function opens($t): bool
-{
-    return $t instanceof Bracket && $t->pair instanceof Bracket;
-}
-
-// in Shop\Domain\TokenScanner
-public function pairs(array $tokens): int
-{
-    $count = 0;
-
-    foreach ($tokens as $t) {
-        $count += $t instanceof Bracket && $t->pair instanceof Bracket ? 1 : 0;
-    }
-
-    return $count;
-}
-
-----------[ Good ]----------
-
-// in Shop\Domain\TokenScanner
-// The narrowing promoted to a NAME: `isBalancedBrace()` holds `$t instanceof Brace &&
-// $t->close instanceof Brace` once, and every site asks the predicate instead of copying the chain.
-
-public function balanced(array $tokens): int
-{
-    return count(array_filter($tokens, $this->isBalancedBrace(...)));
-}
-
-// in Shop\Domain\TokenScanner
-private function isBalancedBrace($t): bool
-{
-    return $t instanceof Brace && $t->close instanceof Brace;
 }
 ```

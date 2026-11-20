@@ -186,6 +186,9 @@ func (p *Program) refersTo(node Node, module *Module) (string, bool) {
 	case "alias":
 		return module.importedId(node)
 	case "Name":
+		if member := precedingClassMethod(node); member.Exists() {
+			return member.Node().Symbol, member.Node().Symbol != ""
+		}
 		if nested, ok := nestedIn(node.Name(), node); ok {
 			return nested.Node().Symbol, nested.Node().Symbol != ""
 		}
@@ -200,6 +203,30 @@ func (p *Program) refersTo(node Node, module *Module) (string, bool) {
 	}
 
 	return "", false
+}
+
+func precedingClassMethod(node Node) Node {
+	if !node.IsEvaluated() {
+		return Node{}
+	}
+	for scope := node.Parent(); scope.Exists() && !scope.IsFunction(); scope = scope.Parent() {
+		if scope.Kind() != "ClassDef" {
+			continue
+		}
+		var method Node
+		for _, statement := range scope.ChildrenIn("body") {
+			if statement.Node().Span.End > node.Node().Span.Start {
+				break
+			}
+			if statement.IsFunction() && statement.Name() == node.Name() {
+				method = statement
+			} else if slices.Contains(statement.writtenNames(), node.Name()) {
+				method = Node{}
+			}
+		}
+		return method
+	}
+	return Node{}
 }
 
 func (m *Module) importedId(alias Node) (string, bool) {

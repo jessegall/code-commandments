@@ -1,23 +1,29 @@
 exit: 0
 --- stdout
 
-[1mswallow-catch[0m  [2mphp/exceptions[0m
-  `catch` whose only effect is `return null/false/[]`; empty catch (silent swallow)
+[1mswallow-catch[0m  [2mshared/exceptions[0m
+  A `catch` whose body is empty, or only returns `null`/`false`/an empty value or moves
+  on: the failure becomes something that looks like an answer
 
 [33mWhy it is a sin[0m
 
-  **Fail hard, fix once** beats *fail gracefully, debug forever.* A loud, named,
-  contextual failure is a
-  five-minute fix. A swallowed one is a silent wrong result you chase for a week.
+  A failure is loud, named and carries its cause. Code that catches a failure does
+  something about it,
+  or does not catch it at all. These rules hold the same in every language, so every
+  language is judged
+  by them the same way.
 
 [33mHow to fix it[0m
 
-  Let a failure throw, or surface it named with the cause; never swallow a catch into
-  `null`/`false`/`[]`/`none()` or an empty body.
-  Rethrow wrapped (`previous: $e`), or catch-log-skip at one named boundary.
+  Let a failure throw, or surface it named with its cause; never swallow a catch into an
+  empty body or an absent value.
+  Rethrow it wrapped with the caught failure as its cause, or catch, log and skip at one
+  named boundary.
 
 [33mExample[0m
 
+  In PHP:
+  
   ```php
   ----------[ Bad ]----------
   
@@ -47,10 +53,125 @@ exit: 0
       }
   }
   ```
+  
+  In TypeScript:
+  
+  ```ts
+  ----------[ Bad ]----------
+  
+  export function parsedReturnReason(raw: string): unknown {
+      try {
+          return JSON.parse(raw)
+      }
+      catch {
+          return null
+      }
+  }
+  
+  ----------[ Good ]----------
+  
+  export function returnReason(raw: string): unknown {
+      return JSON.parse(raw)
+  }
+  ```
+  
+  In Python:
+  
+  ```py
+  ----------[ Bad ]----------
+  
+  def load_catalog(path: Path):
+      try:
+          return Catalog(json.loads(path.read_text()))
+      except Exception:
+          return {}
+  
+  ----------[ Good ]----------
+  
+  # in catalog_file.py
+  @dataclass(frozen=True)
+  class Catalog:
+      products: dict
+  
+  # in catalog_file.py
+  class CatalogUnreadable(Exception):
+      @classmethod
+      def at(cls, path: Path) -> "CatalogUnreadable":
+          return cls(f"the catalog at {path} is not valid JSON")
+  
+  # in catalog_file.py
+  def read_catalog(path: Path) -> Catalog:
+      try:
+          return Catalog(json.loads(path.read_text()))
+      except json.JSONDecodeError as error:
+          raise CatalogUnreadable.at(path) from error
+  ```
+  
+  In C#:
+  
+  ```cs
+  ----------[ Bad ]----------
+  
+  public Dictionary<string, int>? Load()
+  {
+      try
+      {
+          return JsonSerializer.Deserialize<Dictionary<string, int>>(File.ReadAllText(Path.Combine(folder, "stock.json")));
+      }
+      catch (Exception)
+      {
+          return null;
+      }
+  }
+  
+  ----------[ Good ]----------
+  
+  public Dictionary<string, int> LoadOrEmpty()
+  {
+      try
+      {
+          return JsonSerializer.Deserialize<Dictionary<string, int>>(File.ReadAllText(Path.Combine(folder, "stock.json"))) ?? [];
+      }
+      catch (FileNotFoundException)
+      {
+          return [];
+      }
+  }
+  ```
+  
+  In Go:
+  
+  ```go
+  ----------[ Bad ]----------
+  
+  func importBins(codes []string, read func(string) error) int {
+  	loaded := 0
+  	for _, code := range codes {
+  		if err := read(code); err != nil {
+  			continue
+  		}
+  		loaded++
+  	}
+  
+  	return loaded
+  }
+  
+  ----------[ Good ]----------
+  
+  func receiveAllBins(codes []string, read func(string) error) error {
+  	for _, code := range codes {
+  		if err := read(code); err != nil {
+  			return err
+  		}
+  	}
+  
+  	return nil
+  }
+  ```
 
 [33mCommands[0m
 
-  [36mLearn     [0m load the skill [1mcommandments-php-exceptions[0m
+  [36mLearn     [0m load the skill [1mcommandments-shared-exceptions[0m
   [36mExempts   [0m commandments exemptions swallow-catch
   [36mFind it   [0m commandments judge --sin=swallow-catch
   [36mTurn off  [0m commandments disable swallow-catch

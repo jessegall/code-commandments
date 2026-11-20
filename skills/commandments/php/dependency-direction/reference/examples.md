@@ -2,68 +2,6 @@
 
 One bad → good per rule this skill teaches, taken from the fixture that proves the detector, so every pair is code that really fires and really passes.
 
-### concrete-cross-module-dependency
-
-A constructor takes another module's service by its concrete class instead of an interface
-
-```php
-----------[ Bad ]----------
-
-public function __construct(private CropCalendar $calendar, private int $openingHour = 7) {}
-
-----------[ Good ]----------
-
-// in Shop\Harvest\YieldForecast
-public function __construct(
-    private CropCalendar $crops,
-    private WateringCalendar $water,
-) {}
-
-// in Shop\Irrigation\WaterSchedule
-public function litresDueOn(string $bed, int $day): int
-{
-    return (int) $this->database->table('watering')->where('bed', $bed)->where('day', $day)->sum('litres');
-}
-
-interface WateringCalendar
-{
-    public function litresDueOn(string $bed, int $day): int;
-}
-```
-
-### lone-implementer-interface
-
-An interface with one implementing class, named by nothing outside that class's own module: an indirection with one side
-
-```php
-----------[ Bad ]----------
-
-// Prints the label on a warehouse bin.
-
-interface BinLabeller
-{
-    public function label(string $bin): string;
-
-    public function reprint(string $bin, int $copies): string;
-
-    public function calibrate(float $darkness, int $speedInchesPerSecond): void;
-}
-
-----------[ Good ]----------
-
-// Replaces a lost voucher with a new code, depending on the one generator the shop has.
-
-final class VoucherReissuer
-{
-    public function __construct(private readonly RandomCodeGenerator $codes) {}
-
-    public function reissue(string $lost): string
-    {
-        return $lost.'-R-'.$this->codes->next();
-    }
-}
-```
-
 ### namespace-cycle
 
 two namespaces that reference each other — neither can be read, tested or moved alone

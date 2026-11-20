@@ -128,13 +128,6 @@ func (p *Program) IsParameterEveryCallFills(n Node) bool {
 	})
 }
 
-func (n Node) IsComparedToItsFallback() bool {
-	fallback, ok := n.Fallback()
-	left, right, compared := n.wrapper().comparedWith("==", "!=")
-
-	return ok && compared && ((left == n && right.IsSame(fallback)) || (right == n && left.IsSame(fallback)))
-}
-
 func (n Node) IsConditionalSpread() bool {
 	choice := n.spreadValue()
 	if choice.Kind() != "IfExp" {

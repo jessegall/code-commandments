@@ -68,60 +68,39 @@ iteration, or extract the inner block into a function named for what it decides.
 
 ## Rules
 
-- [ ] State an absent collection at the top as a guard; don't bury `or []` or `.get(k, [])` in a `for` header.
-      _Return early when the collection is absent — or make the caller always hand one over — so the loop walks something that is there._
 - [ ] Never change the collection a loop walks while it walks it: decide inside the loop and change afterwards.
       _Collect what the loop decided in a list of its own and apply it after the loop, or walk a copy (`for item in list(items):`) when the change must happen as it goes._
-- [ ] Flatten with guard clauses and extraction — never bury a choice four deep inside a function.
-      _Guard the outer levels away (`return`/`continue` past what does not apply), let a comprehension do the inner iteration, or extract the inner block into a function named for what it decides._
-- [ ] A condition that takes a reader more than a glance is a concept: give it a name and ask for it by that name.
-      _Move the condition onto the class that owns most of it, as a method or a `@property` whose name says what it decides — `if self.should_announce(event):` — and let each object answer for its own part._
 
 ## Worked example
 
-### python-coalesced-loop-subject
+### python-collection-mutated-while-iterated
 
-`for x in d.get(k, [])` / `for x in y or []` over a parameter — whether the caller handed anything over, decided in the loop header instead of stated as a guard
+a loop that appends to, removes from or deletes out of the very collection it walks — the iterator reads a sequence that moved under it, so an element is skipped or it raises
 
 ```py
 ----------[ Bad ]----------
 
-def descendants(below: dict, parent: str) -> list:
-    found = []
-    for child in below.get(parent, []):
-        found.append(child)
-        found.extend(descendants(below, child))
-    return found
+def unblock(blocked: set[str], opened: set[str]) -> None:
+    for aisle in blocked:
+        if aisle in opened:
+            blocked.discard(aisle)
 
 ----------[ Good ]----------
 
-# in categories.py
-def children_index(pairs) -> defaultdict:
-    below = defaultdict(list)
-    for parent, child in pairs:
-        below[parent].append(child)
-    return below
-
-# in categories.py
-def descendants_of(below: defaultdict, parent: str) -> list:
-    found = []
-    for child in below[parent]:
-        found.append(child)
-        found.extend(descendants_of(below, child))
-    return found
+def unblock_opened(blocked: set[str], opened: set[str]) -> None:
+    for aisle in list(blocked):
+        if aisle in opened:
+            blocked.discard(aisle)
 ```
-
-The other 3 — one per rule — are in [`reference/examples.md`](reference/examples.md).
 
 ## Commands
 
 - `{{binary}} judge --skill=python/flow` — find every one of these in the codebase.
-- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `python-coalesced-loop-subject`, `python-collection-mutated-while-iterated`, `deep-python-nesting`, `python-unnamed-condition`.
+- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `python-collection-mutated-while-iterated`.
 - `{{binary}} report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference
 
-- [Worked examples](reference/examples.md) — every rule's bad → good, 4 of them.
 - [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills

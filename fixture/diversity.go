@@ -1,10 +1,12 @@
 package fixture
 
 import (
+	"slices"
 	"strings"
 
 	"github.com/jessegall/code-commandments/detectors"
 	"github.com/jessegall/code-commandments/engine"
+	"github.com/jessegall/code-commandments/prose"
 )
 
 const MinScenarios = 3
@@ -38,18 +40,37 @@ func ScopeScenarios(codebase *engine.Codebase, detector detectors.Detector) ([]S
 
 			continue
 		}
-		scope := finding.EnclosingType()
-		if !scope.Exists() {
-			scope = finding.EnclosingFunction()
+		subject := finding
+		if comment, ok := finding.AsComment(); ok && comment.Documents().Exists() {
+			subject = comment.Documents()
+		}
+		scope := subject.DeclaringType()
+		if subject.Is(engine.TypeDeclaration) {
+			scope = subject
+		}
+		if subject.Is(engine.Import) {
+			scope = subject.Root()
 		}
 		if !scope.Exists() {
-			scope = finding
+			scope = subject.EnclosingFunction()
+		}
+		if !scope.Exists() {
+			scope = subject
 		}
 		span, err := scope.Span()
 		if err != nil {
 			return nil, err
 		}
-		scenarios = append(scenarios, Scenario{File: finding.File(), Source: span.Lines()})
+		text := span.Lines()
+		for _, method := range scope.Methods() {
+			if method.EnclosingType().Identity() == scope.Identity() {
+				continue
+			}
+			if body, err := method.Span(); err == nil {
+				text += "\n" + body.Lines()
+			}
+		}
+		scenarios = append(scenarios, Scenario{File: finding.File(), Source: text})
 	}
 
 	return scenarios, nil
@@ -69,15 +90,20 @@ func FileScenarios(codebase *engine.Codebase, detector detectors.Detector) ([]Sc
 }
 
 func LargestDiverseGroup(scenarios []Scenario) int {
+	return DiverseGroupUpTo(scenarios, len(scenarios))
+}
+
+func DiverseGroupUpTo(scenarios []Scenario, limit int) int {
 	count := len(scenarios)
 	diverse := make([][]bool, count)
+	texts := make([]string, count)
 	for i := range diverse {
 		diverse[i] = make([]bool, count)
+		texts[i] = fold(scenarios[i].Source)
 	}
 	for i := 0; i < count; i++ {
 		for j := i + 1; j < count; j++ {
-			apart := scenarios[i].File != scenarios[j].File &&
-				Likeness(scenarios[i].Source, scenarios[j].Source) < MaxSimilarity
+			apart := scenarios[i].File != scenarios[j].File && likeness(texts[i], texts[j]) < MaxSimilarity
 			diverse[i][j], diverse[j][i] = apart, apart
 		}
 	}
@@ -86,39 +112,52 @@ func LargestDiverseGroup(scenarios []Scenario) int {
 		candidates[i] = i
 	}
 
-	return growClique(candidates, 0, diverse)
+	return growClique(candidates, 0, 0, limit, diverse)
 }
 
-func growClique(candidates []int, size int, diverse [][]bool) int {
-	best := size
+func growClique(candidates []int, size, best, limit int, diverse [][]bool) int {
+	best = max(size, best)
 	for k, node := range candidates {
+		if best >= limit || size+len(candidates)-k <= best {
+			break
+		}
 		var rest []int
 		for _, other := range candidates[k+1:] {
 			if diverse[node][other] {
 				rest = append(rest, other)
 			}
 		}
-		best = max(best, growClique(rest, size+1, diverse))
+		best = growClique(rest, size+1, best, limit, diverse)
 	}
 
 	return best
 }
 
 func Likeness(a, b string) float64 {
-	return min(Similarity(a, b), Similarity(b, a))
+	return likeness(fold(a), fold(b))
+}
+
+func likeness(a, b string) float64 {
+	return min(similarity(a, b), similarity(b, a))
 }
 
 func Similarity(a, b string) float64 {
-	first, second := fold(a), fold(b)
-	if len(first)+len(second) == 0 {
+	return similarity(fold(a), fold(b))
+}
+
+func similarity(a, b string) float64 {
+	if len(a)+len(b) == 0 {
 		return 0
 	}
 
-	return float64(similar(first, second)) * 2 * 100 / float64(len(first)+len(second))
+	return float64(similar(a, b)) * 2 * 100 / float64(len(a)+len(b))
 }
 
 func fold(code string) string {
-	return strings.Join(strings.Fields(code), " ")
+	lines := slices.DeleteFunc(strings.Split(code, "\n"), func(line string) bool {
+		return prose.IsFixtureMarker(commentDelimiters.ReplaceAllString(strings.TrimSpace(line), ""))
+	})
+	return strings.Join(strings.Fields(strings.Join(lines, "\n")), " ")
 }
 
 func similar(a, b string) int {

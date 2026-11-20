@@ -60,60 +60,48 @@ declared once and every site asks for it by name.
 
 ## Rules
 
-- [ ] Name a compound condition you write twice — a property or method on the type it asks about — and ask it by name at every site.
-      _Move the condition onto the type as `is_…` / `can_…` and replace every copy with the call._
 - [ ] Name a keyword call you keep writing the same way: a method on the type — `node.with_meta(payload)` — that hides the call and the construction.
       _Add a method to the receiver's class that makes the call, and call that at every site._
-- [ ] Name a type narrowing you write twice — a method, a property or a `TypeGuard` function — and ask for the shape by name.
-      _Move the chain into one named predicate (a `TypeGuard` where the caller needs the narrowed type) and call it at every site._
 
 ## Worked example
 
-### python-repeated-guard
+### python-repeated-named-call
 
-the same compound `and` condition recurs in 2+ places — it still counts even when reordered, or read through a local variable — and nobody has named it.
+the same `**changes` call is built the same way with the same keyword at 2+ sites — an operation that has no name on the type it belongs to.
 
 ```py
 ----------[ Bad ]----------
 
-# in loyalty_points.py
-def redeem(member: Member, cost: int) -> int:
-    if member.points >= cost and not member.frozen:
-        return member.points - cost
-    raise ValueError(cost)
+# in cart_lines.py
+def mark_gift(line: CartLine) -> CartLine:
+    return line.amend(flags={"gift": True, "wrap": "paper"})
 
-# in loyalty_points.py
-def preview(member: Member, cost: int) -> str:
-    enough = member.points >= cost
-    return "redeemable" if not member.frozen and enough else "locked"
+# in cart_lines.py
+def mark_sample(line: CartLine) -> CartLine:
+    return line.amend(flags={"sample": True})
 
 ----------[ Good ]----------
 
-class Account:
-    def __init__(self, points: int, frozen: bool) -> None:
-        self.points = points
-        self.frozen = frozen
+class RoutedTicket:
+    def __init__(self, subject: str, meta: dict) -> None:
+        self.subject = subject
+        self.meta = meta
 
-    def can_redeem(self, cost: int) -> bool:
-        return self.points >= cost and not self.frozen
+    def evolve(self, **changes) -> "RoutedTicket":
+        return RoutedTicket(changes.get("subject", self.subject), changes.get("meta", self.meta))
 
-    def redeem(self, cost: int) -> int:
-        if self.can_redeem(cost):
-            return self.points - cost
-        raise ValueError(cost)
+    def escalated_to(self, level: int) -> "RoutedTicket":
+        return self.evolve(meta=TicketMeta.of(level).to_dict())
 ```
-
-The other 2 — one per rule — are in [`reference/examples.md`](reference/examples.md).
 
 ## Commands
 
 - `{{binary}} judge --skill=python/repeated-call-helper` — find every one of these in the codebase.
-- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `python-repeated-guard`, `python-repeated-named-call`, `python-repeated-type-guard`.
+- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `python-repeated-named-call`.
 - `{{binary}} report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference
 
-- [Worked examples](reference/examples.md) — every rule's bad → good, 3 of them.
 - [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills

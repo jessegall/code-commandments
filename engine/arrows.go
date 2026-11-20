@@ -16,6 +16,49 @@ type DependencyArrow struct {
 // DependencyArrows is the references between the parts of a codebase, in the order the files are written: which part uses which, and the pairs of parts that use each other.
 type DependencyArrows []DependencyArrow
 
+func ImportArrows(codebase *Codebase) DependencyArrows {
+	return Analysis(codebase, "import-arrows", readImportArrows)
+}
+
+func readImportArrows(codebase *Codebase) DependencyArrows {
+	modules := map[string]string{}
+	for _, file := range codebase.Files() {
+		root := file.Match(0)
+		read := root.grammar()
+		if read.ModuleKey != nil && read.ModuleLayer != nil {
+			if key := read.ModuleKey(root); key != "" {
+				modules[key] = read.ModuleLayer(root)
+			}
+		}
+	}
+	var arrows DependencyArrows
+	for _, imported := range codebase.WhereIs(Import).Get() {
+		read := imported.grammar()
+		if imported.IsTest() || read.ImportModule == nil || read.ModuleKey == nil {
+			continue
+		}
+		from, to := modules[read.ModuleKey(imported.Root())], modules[read.ImportModule(imported)]
+		if from != "" && to != "" && from != to {
+			arrows = append(arrows, DependencyArrow{At: imported, From: from, To: to})
+		}
+	}
+	return arrows
+}
+
+func (a DependencyArrows) LayerViolations(stack LayerStack) []Match {
+	if stack.IsEmpty() {
+		return nil
+	}
+	var findings []Match
+	for _, arrow := range a {
+		layer := stack.LayerOf(arrow.From)
+		if layer != "" && stack.LayerOf(arrow.To) != "" && !stack.MayReference(layer, arrow.To) {
+			findings = append(findings, arrow.At)
+		}
+	}
+	return findings
+}
+
 func Nests(outer, inner, separator string) bool {
 	return strings.HasPrefix(inner, outer+separator)
 }

@@ -183,7 +183,7 @@
                 "declared",
                 "observed"
             ],
-            "example": "/fixtures/python/shop/packing.py:15"
+            "example": "/fixtures/python/shop/order_numbers.py:14"
         },
         {
             "kind": "AugLoad",
@@ -540,7 +540,7 @@
                 "declared",
                 "observed"
             ],
-            "example": "/fixtures/python/shop/voucher_guards.py:8"
+            "example": "/fixtures/python/shop/order_numbers.py:15"
         },
         {
             "kind": "FunctionDef",
@@ -690,7 +690,7 @@
                 "declared",
                 "observed"
             ],
-            "example": "/fixtures/python/shop/cli.py:5"
+            "example": "/fixtures/python/shop/billing/invoice.py:2"
         },
         {
             "kind": "In",
@@ -773,7 +773,7 @@
                 "declared",
                 "observed"
             ],
-            "example": "/fixtures/python/shop/voucher_guards.py:8"
+            "example": "/fixtures/python/shop/order_numbers.py:15"
         },
         {
             "kind": "LShift",
@@ -1469,7 +1469,7 @@
                 "declared",
                 "observed"
             ],
-            "example": "/fixtures/python/shop/cli.py:4"
+            "example": "/fixtures/python/shop/billing/invoice.py:2"
         },
         {
             "kind": "arg",

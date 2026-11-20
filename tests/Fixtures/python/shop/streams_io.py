@@ -8,6 +8,7 @@ class LineStream:
 
     def read_line(self) -> str:
         if self.closed:
-            # @sin MessageStringRaise
+            # @sin GenericException
+            # @sin MessageAtThrow
             raise RuntimeError("Attempted to read from a closed line stream.")
         return self.source.readline()

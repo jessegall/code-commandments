@@ -30,6 +30,7 @@ public sealed class ParcelReturns
         {
             throw new NothingToRefund(cents);
             // @sin UnreachableStatement
+            // @sin ReassignedParameter
             cents = 0;
         }
 
@@ -48,6 +49,13 @@ public sealed class ParcelReturns
             Fresh++;
         }
         Log.Add(parcel.Reason);
+    }
+
+    public string RefundNote(string reason)
+    {
+        // @sin ReassignedParameter
+        reason = reason.Trim().ToLowerInvariant();
+        return $"refund: {reason}";
     }
 }
 

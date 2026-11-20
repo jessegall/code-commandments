@@ -19,17 +19,14 @@ func (m Match) DocComments() []string {
 	return texts
 }
 
-func (m Match) BodyHash() string {
-	if read := m.grammar().BodyHash; read != nil && m.Is(Function) {
-		return read(m)
-	}
-
-	return ""
+func (m Match) HasCeremonyDoc() bool {
+	read := m.grammar().CeremonyDoc
+	return read != nil && read(m)
 }
 
 func (m Match) NodeHash(normalize bool) string {
-	if read := m.grammar().NodeHash; read != nil {
-		return read(m, normalize)
+	if rules := m.grammar().Hashing; rules != nil {
+		return SyntaxHash([]Match{m}, rules, normalize)
 	}
 
 	return ""
@@ -72,5 +69,5 @@ func (f *File) isTest() bool {
 
 	grammar := spokenIn(f.Language()).grammar
 
-	return grammar != nil && grammar.TestFile != nil && grammar.TestFile(f.Judged(), f.Path)
+	return grammar != nil && grammar.TestFile != nil && grammar.TestFile(f.FromProject(), f.Path)
 }

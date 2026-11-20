@@ -1,6 +1,9 @@
 package shop
 
-import "errors"
+import (
+	"errors"
+	"strings"
+)
 
 // Return is a parcel a customer sends back.
 type Return struct {
@@ -44,17 +47,24 @@ func RefundShareBySwitch(item Return) int {
 }
 
 // Restock puts an unopened return back on the shelf and logs either way.
-func Restock(item Return, shelf map[string]int, log []string) []string {
+func Restock(item Return, shelf *ReturnShelf, log []string) []string {
 	// @sin DuplicatedBranchTail
 	if item.Opened {
-		shelf["seconds"]++
+		shelf.Seconds++
+		// @sin ReassignedParameter
 		log = append(log, item.Reason)
 	} else {
-		shelf["new"]++
+		shelf.New++
+		// @sin ReassignedParameter
 		log = append(log, item.Reason)
 	}
 
 	return log
+}
+
+type ReturnShelf struct {
+	Seconds int
+	New     int
 }
 
 // Refund pays a return out, refusing a parcel with nothing to pay.
@@ -81,4 +91,27 @@ func Triage(item Return) string {
 	}
 
 	return "shelf"
+}
+
+func refundNote(reason string) string {
+	// @sin ReassignedParameter
+	reason = strings.ToLower(strings.TrimSpace(reason))
+
+	return "refund: " + reason
+}
+
+// ReturnLink is one return in a chain of returns a customer sent together.
+type ReturnLink struct {
+	Reason string
+	Next   *ReturnLink
+}
+
+func reasonsAlong(first *ReturnLink) []string {
+	var reasons []string
+	// @sin NonCountingFor
+	for link := first; link != nil; link = link.Next {
+		reasons = append(reasons, link.Reason)
+	}
+
+	return reasons
 }

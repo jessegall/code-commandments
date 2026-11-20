@@ -194,6 +194,7 @@ A list drawn from this closed set. Each appears only where the language has the 
 | `shorthand` | a Vue directive written `:x`, `@x` or `#x` |
 | `component` | a Vue template element its compiler resolves to a component, not a native tag: `<Foo>`, `<my-widget>`, `<component :is>`, `<transition>` |
 | `nullable-sugar` | a type written `?T` rather than `T\|null` |
+| `constant` | a binding declared with `const` |
 | `group` | a Python `except*` |
 | `step` | an expression in a `for` loop's step list |
 | `elif` | a Python `if` written as the `elif` of the one before it, rather than an `if` inside an `else` |
@@ -321,6 +322,7 @@ language's keys are closed and typed in the schema, just as the generic ones are
 |---|---|---|---|
 | csharp | `forgivesNull` | a `SuppressNullableWarningExpression` | the `!`'s operand is declared nullable |
 | csharp | `code` | a comment | the comment parses as one C# statement |
+| go | `methods` | a named `TypeSpec` | method names and parameter and result types, without parameter names. Concrete types use their pointer method set; interfaces use their required methods. |
 | php | `code` | a line comment | its text, marker and trailing `,`/`;` stripped, parses as PHP inside `[…]` |
 | python | `code` | a `#` comment | the words after the `#` parse as one Python statement, end to end, that is not a lone name |
 | python | `operators` | a `Compare` | the chained comparison's operators, in order (`a < b <= c` → `["<", "<="]`) |
@@ -329,6 +331,7 @@ language's keys are closed and typed in the schema, just as the generic ones are
 | python | `names` | a `Global`, `Nonlocal` | the names it declares, in order |
 | vue | `directive` | a `Directive` | `{"name", "modifiers"}`: `v-model:title.lazy` is `{"name": "model", "modifiers": ["lazy"]}`. The argument is the child in field `arg`: an `Identifier` for a static `title`, an expression for a dynamic `[key]` |
 | typescript | `typeOnly` | an import | an `import type` |
+| typescript | `code` | a comment | the comment parses as one TypeScript statement |
 
 ## Languages
 

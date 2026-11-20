@@ -479,7 +479,7 @@ func (m Match) CommentsAbove() []contract.Comment {
 
 func (m Match) IsDocumented() bool {
 	for _, comment := range m.Comments() {
-		if comment.Kind == "doc" {
+		if comment.Kind == "doc" && (Commented{Comment: comment, File: m.file}).Prose() != "" {
 			return true
 		}
 	}

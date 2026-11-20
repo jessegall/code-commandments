@@ -93,3 +93,54 @@ func Weigh(parcel Parcel) Parcel {
 
 	return parcel
 }
+
+func postageCents(grams int, zone int) int {
+	// @sin ReassignedParameter
+	grams = max(grams, 100)
+
+	return grams * zone
+}
+
+// @fixed ReassignedParameter
+
+// billedPostageCents bills a parcel at no less than a hundred grams.
+func billedPostageCents(grams int, zone int) int {
+	billed := max(grams, 100)
+
+	return billed * zone
+}
+
+// @righteous ReassignedParameter
+
+// rezone moves a parcel to a zone no lower than the first.
+func rezone(parcel *Parcel, zone int) *Parcel {
+	parcel.Zone = max(zone, 1)
+
+	return parcel
+}
+
+func zonesHopped(start int, hops map[int]int) []int {
+	visited := make(map[int]bool, len(hops))
+	order := make([]int, 0, len(hops))
+	// @sin NonCountingFor
+	for zone := start; hops[zone] != 0; zone = hops[zone] {
+		if visited[zone] {
+			break
+		}
+		visited[zone] = true
+		order = append(order, zone)
+	}
+	return order
+}
+
+// @righteous NonCountingFor
+
+// everyOtherZone lists the odd zones up to the last one.
+func everyOtherZone(last int) []int {
+	var zones []int
+	for zone := 1; zone <= last; zone += 2 {
+		zones = append(zones, zone)
+	}
+
+	return zones
+}

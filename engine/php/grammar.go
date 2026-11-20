@@ -28,15 +28,11 @@ func init() {
 		Constructs:    constructed,
 		Callers:       callers,
 		DocTags:       phpDocTags,
-		BodyHash:      func(function engine.Match) string { return Node{Match: function}.BodyHash() },
 		CodeWords:     func(node engine.Match) []string { return Node{Match: node}.CodeWords() },
 		ElementOf:     func(node engine.Match) *contract.Type { return TypesOf(node.Codebase()).ElementOf(node) },
-		NodeHash: func(node engine.Match, normalize bool) string {
-			return engine.SyntaxHash([]engine.Match{node}, Hashing, normalize)
-		},
-		TestFile: testFile,
-		Implicit: magic,
-		Labels:   func(name engine.Match) bool { return name.Parent().Kind() == "Arg" && name.Node().Field == "name" },
+		TestFile:      testFile,
+		Implicit:      magic,
+		Labels:        func(name engine.Match) bool { return name.Parent().Kind() == "Arg" && name.Node().Field == "name" },
 		IsConstructor: func(method engine.Match) bool {
 			return method.Kind() == "Stmt_ClassMethod" && method.Name() == "__construct"
 		},
@@ -46,6 +42,7 @@ func init() {
 		IsValueClass:     func(class engine.Match) bool { return ProgramOf(class.Codebase()).ClassIsValueType(class.Identity()) },
 		ListedClasses:    listedProjectClasses,
 		Types:            func(codebase *engine.Codebase) engine.TypeSystem { return ProgramOf(codebase) },
+		MemberLookup:     memberLookup,
 		NamespacesNaming: func(contract engine.Match) []string {
 			return TypeReferencesOf(contract.Codebase()).NamespacesNaming(contract.Identity())
 		},
@@ -58,7 +55,90 @@ func init() {
 
 			return engine.Before(strings.TrimSuffix(class, "()"), `\`)
 		},
-		Continues:         engine.KindIn("Stmt_ElseIf"),
+		Continues:       engine.KindIn("Stmt_ElseIf"),
+		NestedChoice:    engine.KindIn("Stmt_If"),
+		NestingLimit:    2,
+		Steps:           engine.InFields("loop"),
+		Thrown:          engine.OfKind("Expr_Throw", "expr"),
+		FailureLocation: engine.Match.Thrown,
+		StableFallback:  engine.Match.IsEmptyScalar,
+		SwallowedExit: func(statement engine.Match) bool {
+			return statement.Is(engine.Return) && statement.Child("expr").Exists()
+		},
+		EmptyCollection: func(held engine.Match) bool { return Node{Match: held}.IsEmptyArrayLiteral() },
+		ConstructedType: func(held engine.Match) string { return strings.TrimLeft(Node{Match: held}.ConstructedClass(), `\`) },
+		GenericFailures: genericFailures,
+		Hashing:         Hashing,
+		CallConversion:  callConversion,
+		ArrowReturn: func(match engine.Match) bool {
+			node := Node{Match: match}
+			return match.Kind() == "Expr_ArrowFunction" && node.HasReturnType() && node.ReturnTypeRestatesItsExpression()
+		},
+		NullDefault: func(match engine.Match) bool {
+			node := Node{Match: match}
+			return node.IsMatchWithAbsenceDefault() && !node.MatchHandledArmsAdmitNull()
+		},
+		ConstClass:   func(m engine.Match) bool { n := Node{Match: m}; return n.IsScalarConstClass() && !n.ExtendsAClass() },
+		TypeDispatch: typeDispatch,
+		EnumTable:    engine.As(Node.ListsSomeOfItsCasesInAConstant),
+		EnumValues:   enumValues,
+		EnumChainOwner: func(match engine.Match) string {
+			owner := (Node{Match: match}).OrChainComparedClass()
+			if owner != "" && EnumsOf(match.Codebase()).IsIndexed(owner) {
+				return owner
+			}
+			return ""
+		},
+		EnumMembership: func(match engine.Match) []string {
+			n := Node{Match: match}
+			if n.CallsFunction("in_array") {
+				return n.ArgumentArrayLiterals(1)
+			}
+			return nil
+		},
+		EnumArms: func(match engine.Match) []string {
+			n := Node{Match: match}
+			if n.IsMatchOnEnumValue() {
+				return nil
+			}
+			return n.ArmConditionLiterals()
+		},
+		BlankDefault:      blankDefault,
+		DeNulledFinder:    deNulledFinder,
+		ManufacturesFill:  manufacturesFill,
+		CoalescedLoop:     coalescedLoop,
+		ConditionalSpread: engine.As(Node.IsConditionalArraySpread),
+		CapabilityHub:     engine.As(Node.ProbesOneFieldForCapabilities),
+		PhantomFields:     phantomFields,
+		AbsenceTrace:      absenceTrace,
+		NullableLookup:    nullableLookup,
+		MaskedInvariant:   engine.As(Node.MasksOwnState),
+		NullableCallback:  engine.As(Node.HasNullNormalisedNullableCallback),
+		Decode: func(call engine.Match) bool {
+			node := Node{Match: call}
+			return node.CallsFunction("json_decode") && !node.DecodesItsOwnEncoding() && !node.IsWithinInheritedMethod()
+		},
+		CommentReferences: commentReferences,
+		CommentLocation:   engine.Commented.Documents,
+		DocumentedSubject: func(held engine.Match) engine.Match {
+			if held.Kind() == "Stmt_Class" {
+				return held
+			}
+			return engine.Match{}
+		},
+		DocParagraphs:     func(comment engine.Commented) int { return DocParagraphs(comment.Text) },
+		CeremonyDoc:       engine.As(Node.HasCeremonyDocblock),
+		CopyExclusions:    copyExclusions,
+		UnnamedVocabulary: unnamedVocabulary,
+		TwinPairs: func(codebase *engine.Codebase) engine.TwinPairs {
+			return engine.TwinPairs{Units: TwinUnits(codebase), Pairs: Divergences(codebase)}
+		},
+		Guard: guard,
+		MechanismFacts: func(codebase *engine.Codebase) engine.MechanismFacts {
+			reach := ReachOf(codebase)
+			return engine.MechanismFacts{Classes: reach.Classes, IsType: reach.IsType, IsTerminal: reach.IsTerminal, Namespace: func(class engine.Match) string { return Node{Match: class}.NamespaceName() }}
+		},
+		SpelledFolder:     func(site engine.Match) (engine.SpelledFolder, bool) { return Node{Match: site}.SpelledFolder() },
 		Body:              engine.InFields("stmts"),
 		Otherwise:         otherwise,
 		Condition:         condition,

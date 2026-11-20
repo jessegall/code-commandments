@@ -54,4 +54,14 @@ public sealed class LoyaltyPoints
 
         static string Describe(string tier) => tier.ToUpperInvariant();
     }
+
+    public int PointsFor(IEnumerable<int> spent, int bonus)
+    {
+        foreach (var amount in spent)
+        {
+            // @sin ReassignedParameter
+            bonus += amount / 10;
+        }
+        return bonus;
+    }
 }

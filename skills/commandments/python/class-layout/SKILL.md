@@ -53,30 +53,25 @@ a constant, class attribute or field declared below a method — the class's sta
 ```py
 ----------[ Bad ]----------
 
-class SupplierClient:
-    def __init__(self, http) -> None:
-        self.http = http
+class ExportJob:
+    def __init__(self, target) -> None:
+        self.target = target
 
-    def fetch(self, path: str) -> bytes:
-        for _ in range(self.RETRIES):
-            response = self.http.get(path)
-            if response.ok:
-                return response.body
-        return b""
+    runs = 0
 
-    RETRIES = 3
+    def run(self, rows: list) -> None:
+        self.target.write(rows)
 
 ----------[ Good ]----------
 
-class PatientSupplierClient:
-    RETRIES = 3
+class ImportJob:
+    runs = 0
 
-    def __init__(self, http) -> None:
-        self.http = http
+    def __init__(self, source) -> None:
+        self.source = source
 
-    def fetch(self, path: str) -> bytes:
-        responses = (self.http.get(path) for _ in range(self.RETRIES))
-        return next((response.body for response in responses if response.ok), b"")
+    def run(self) -> list:
+        return self.source.read()
 ```
 
 The other 1 — one per rule — are in [`reference/examples.md`](reference/examples.md).

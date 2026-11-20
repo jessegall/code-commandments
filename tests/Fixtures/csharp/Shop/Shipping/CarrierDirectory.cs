@@ -8,7 +8,8 @@ public sealed class CarrierDirectory(IReadOnlyDictionary<string, string> account
     {
         if (!accounts.TryGetValue(carrier, out var account))
         {
-            // @sin GenericThrow
+            // @sin GenericException
+            // @sin MessageAtThrow
             throw new Exception($"No carrier is registered as '{carrier}'.");
         }
 
@@ -19,7 +20,7 @@ public sealed class CarrierDirectory(IReadOnlyDictionary<string, string> account
     {
         if (!accounts.TryGetValue(carrier, out var account))
         {
-            // @fixed GenericThrow
+            // @fixed GenericException
             throw UnknownCarrier.Named(carrier);
         }
 
@@ -30,7 +31,8 @@ public sealed class CarrierDirectory(IReadOnlyDictionary<string, string> account
     {
         if (string.IsNullOrWhiteSpace(carrier))
         {
-            // @righteous GenericThrow
+            // @righteous GenericException
+            // @sin MessageAtThrow
             throw new ArgumentException("A carrier needs a name.", nameof(carrier));
         }
 
@@ -38,7 +40,7 @@ public sealed class CarrierDirectory(IReadOnlyDictionary<string, string> account
     }
 }
 
-// @fixed GenericThrow
+// @fixed GenericException
 public sealed class UnknownCarrier : InvalidOperationException
 {
     private UnknownCarrier(string message) : base(message) {}

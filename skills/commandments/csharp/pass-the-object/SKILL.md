@@ -48,8 +48,6 @@ resolves once.
 
 ## Rules
 
-- [ ] Declare the parameter in the type callers actually hold and convert inside — one rule about the conversion, in one place.
-      _Move the conversion into the method and take what the callers had (`ReceiptFor(Order order)` or `ReceiptFor(int orderId)`); a caller that forgets the conversion can no longer pass the wrong thing._
 - [ ] Pass the object once and let the method read what it needs from it; a value the method can derive from an argument it already gets is one it should derive itself.
       _Drop the projected parameter and read it inside (`Persist(request)` reading `request.ChannelId`), or take the object in place of its pieces._
 - [ ] Take the object the method works on, not an id plus the container it lives in; the caller resolves it once and owns the not-found failure.
@@ -57,36 +55,31 @@ resolves once.
 
 ## Worked example
 
-### csharp-converted-argument
+### csharp-derived-argument
 
-a scalar parameter its callers keep filling with the same conversion — `ReceiptFor(order.Id.ToString())` call after call — because it asks for the converted form instead of the value
+a call that hands over an object and a projection of it — `Persist(request, request.ChannelId)` — or an object in three pieces, where the method could read them itself
 
 ```cs
 ----------[ Bad ]----------
 
-// in Barcodes.cs
-public string Top(Parcel parcel) => barcodes.Encode(parcel.Id.ToString());
-
-// in Barcodes.cs
-public IEnumerable<string> All(IEnumerable<Parcel> parcels) =>
-    parcels.Select(parcel => barcodes.Encode(parcel.Id.ToString()));
+public void Move(StockMove move) => log.Record(move, move.Sku);
 
 ----------[ Good ]----------
 
-public string Encode(Guid parcelId) => $"*{parcelId.ToString("N").ToUpperInvariant()}*";
+public void RecordMove(StockMove move) => lines.Add($"{move.Sku}: {move.Quantity} {move.FromBin}->{move.ToBin}");
 ```
 
-The other 2 — one per rule — are in [`reference/examples.md`](reference/examples.md).
+The other 1 — one per rule — are in [`reference/examples.md`](reference/examples.md).
 
 ## Commands
 
 - `{{binary}} judge --skill=csharp/pass-the-object` — find every one of these in the codebase.
-- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `csharp-converted-argument`, `csharp-derived-argument`, `csharp-param-resolved-from-param`.
+- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `csharp-derived-argument`, `csharp-param-resolved-from-param`.
 - `{{binary}} report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference
 
-- [Worked examples](reference/examples.md) — every rule's bad → good, 3 of them.
+- [Worked examples](reference/examples.md) — every rule's bad → good, 2 of them.
 - [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills

@@ -12,13 +12,7 @@ func TestsAnUnnamedConcept(m Match) bool {
 	if m.Parent().Is(Conjunction) {
 		return false
 	}
-	if !m.EnclosingFunction().Exists() {
-		return false
-	}
-	if !decidesABranch(m) {
-		return false
-	}
-	if guardsFromTheTop(m.Parent()) {
+	if !isDecisionCondition(m) {
 		return false
 	}
 	parts := conditionChainOf(m)
@@ -32,10 +26,13 @@ func TestsAnUnnamedConcept(m Match) bool {
 	return len(subjectsOf(parts)) >= conditionSubjects
 }
 
-func decidesABranch(m Match) bool {
+func isDecisionCondition(m Match) bool {
 	parent := m.Parent()
+	if reads := m.grammar().RenderCondition; reads != nil && reads(parent).Node() == m.Node() {
+		return true
+	}
 
-	return parent.Is(Branch) || parent.Is(Loop)
+	return m.EnclosingFunction().Exists() && (parent.Is(Branch) || parent.Is(Loop)) && !guardsFromTheTop(parent)
 }
 
 func guardsFromTheTop(branch Match) bool {

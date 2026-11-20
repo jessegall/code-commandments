@@ -13,7 +13,6 @@ description: "Shaping a function body in a `.ts` file or a `<script setup>`: a c
 > a branch at a time. TypeScript makes this worse than most, because a narrowing `if` is
 > how the compiler is told a value is there, so the arrow of conditions grows for a reason
 > and stays for none.
-> 
 
 ## The principle
 

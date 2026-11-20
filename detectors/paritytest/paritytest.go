@@ -21,6 +21,15 @@ import (
 )
 
 func Compare(t *testing.T, rules []catalog.Engine, command func(testing.TB, ...string) []string) {
+	compare(t, rules, command, nil)
+}
+
+func CompareRecordedFixture(t *testing.T, rules []catalog.Engine, command func(testing.TB, ...string) []string, sources []string) {
+	t.Helper()
+	compare(t, rules, command, sources)
+}
+
+func compare(t *testing.T, rules []catalog.Engine, command func(testing.TB, ...string) []string, sources []string) {
 	t.Helper()
 	project := os.Getenv("COMMANDMENTS_PARITY")
 	if project == "" {
@@ -46,19 +55,6 @@ func Compare(t *testing.T, rules []catalog.Engine, command func(testing.TB, ...s
 	if err != nil {
 		t.Fatalf("the PHP tool's recorded findings do not read: %v", err)
 	}
-	server, err := bridge.Serve(command(t, root))
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer server.Close()
-	found := map[string]bool{}
-	for _, part := range parts {
-		for _, finding := range goFindings(t, rules, server, root, part) {
-			found[finding] = true
-		}
-		runtime.GC()
-		debug.FreeOSMemory()
-	}
 	expected := map[string]bool{}
 	for _, line := range strings.Split(strings.TrimSpace(string(php)), "\n") {
 		if line != "" && !strings.HasPrefix(line, "#") {
@@ -66,6 +62,42 @@ func Compare(t *testing.T, rules []catalog.Engine, command func(testing.TB, ...s
 		}
 	}
 	explained := accounted(t)
+	var recordedRules map[string]bool
+	if sources != nil {
+		recordedRules = map[string]bool{}
+		for finding := range expected {
+			recordedRules[ruleName(finding)] = true
+		}
+		for finding := range explained {
+			_, at, _ := strings.Cut(finding, ": ")
+			file, _, _ := strings.Cut(at, ":")
+			if !recordedRules[ruleName(finding)] || !slices.Contains(sources, file) {
+				delete(explained, finding)
+			}
+		}
+	}
+	server, err := bridge.Serve(command(t, root))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer server.Close()
+	found := map[string]bool{}
+	for _, part := range parts {
+		var paths []string
+		if sources == nil {
+			paths = bridge.Listed(part)
+		} else {
+			paths = make([]string, 0, len(sources))
+			for _, source := range sources {
+				paths = append(paths, filepath.Join(part, source))
+			}
+		}
+		for _, finding := range goFindings(t, rules, server, root, paths, recordedRules) {
+			found[finding] = true
+		}
+		runtime.GC()
+		debug.FreeOSMemory()
+	}
 	for _, finding := range sorted(expected) {
 		if !found[finding] && !explained.pass("only PHP: "+finding) {
 			t.Errorf("only PHP: %s", finding)
@@ -80,6 +112,10 @@ func Compare(t *testing.T, rules []catalog.Engine, command func(testing.TB, ...s
 		t.Errorf("accounted for, but no longer found: %s", stale)
 	}
 	t.Logf("%d findings in PHP, %d in Go, over %d part(s)", len(expected), len(found), len(parts))
+}
+
+func ruleName(finding string) string {
+	return finding[strings.LastIndexByte(finding, ' ')+1:]
 }
 
 // explanations are the one-sided findings $COMMANDMENTS_PARITY_ACCOUNTED lists, each with its cause after a `#`: a difference whose cause is known and written down passes, and one listed that no longer happens fails.
@@ -126,9 +162,9 @@ func (e explanations) unused() []string {
 	return unused
 }
 
-func goFindings(t *testing.T, rules []catalog.Engine, server *bridge.Server, root, part string) []string {
+func goFindings(t *testing.T, rules []catalog.Engine, server *bridge.Server, root string, paths []string, recordedRules map[string]bool) []string {
 	t.Helper()
-	stream, err := server.Ask(bridge.Request{Paths: bridge.Listed(part)})
+	stream, err := server.Ask(bridge.Request{Paths: paths})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -140,6 +176,9 @@ func goFindings(t *testing.T, rules []catalog.Engine, server *bridge.Server, roo
 	}
 	for _, detector := range proven {
 		sin := strings.TrimSuffix(catalog.Name(detector), "Detector")
+		if recordedRules != nil && !recordedRules[sin] {
+			continue
+		}
 		for _, finding := range detector.Find(codebase) {
 			if file := strings.TrimPrefix(finding.File(), root+"/"); walked(file) {
 				found = append(found, file+":"+strconv.Itoa(finding.Line())+" "+sin)

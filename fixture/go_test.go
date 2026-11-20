@@ -13,6 +13,7 @@ import (
 	"github.com/jessegall/code-commandments/engine"
 	_ "github.com/jessegall/code-commandments/engine/golang"
 	"github.com/jessegall/code-commandments/fixture"
+	"github.com/jessegall/code-commandments/prose"
 )
 
 const goFixture = "../tests/Fixtures/go"
@@ -103,8 +104,11 @@ func documentedByAMarker(node engine.Match) bool {
 		if comment.Kind != "doc" {
 			continue
 		}
-		if !strings.Contains(comment.Text, "@sin") && !strings.Contains(comment.Text, "@fixed") && !strings.Contains(comment.Text, "@righteous") {
-			return false
+		for _, line := range strings.Split(comment.Text, "\n") {
+			words := strings.TrimSpace(strings.TrimPrefix(strings.TrimSpace(line), "//"))
+			if words != "" && !prose.IsFixtureMarker(words) {
+				return false
+			}
 		}
 	}
 

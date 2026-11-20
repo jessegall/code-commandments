@@ -29,7 +29,7 @@ public static class Tags
 `,
 	} {
 		t.Run(name, func(t *testing.T) {
-			found := SideTableTraitDetector{}.Find(csharptest.FromSource(t, map[string]string{"Shop/Tags.cs": source}))
+			found := SideTableTraitDetector.Find(csharptest.FromSource(t, map[string]string{"Shop/Tags.cs": source}))
 
 			if len(found) != 1 {
 				t.Fatalf("found %d side tables, want 1: %v", len(found), locations(found))
@@ -75,7 +75,7 @@ public static class Tags
 `,
 	} {
 		t.Run(name, func(t *testing.T) {
-			found := SideTableTraitDetector{}.Find(csharptest.FromSource(t, map[string]string{"Shop/Tags.cs": source}))
+			found := SideTableTraitDetector.Find(csharptest.FromSource(t, map[string]string{"Shop/Tags.cs": source}))
 
 			if len(found) != 0 {
 				t.Errorf("flagged %d, want none: %v", len(found), locations(found))

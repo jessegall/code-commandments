@@ -40,56 +40,6 @@ A single local lookup checked right where it is produced — one caller, one `is
 no ceremony. The smell is a `None` that **travels**: returned, passed on, and re-checked at every
 place it lands.
 
-## Rules
-
-- [ ] Say a value may be missing in its type; never default a `str` to `""` and read that blank back as "missing".
-      _`x: str | None = None`, asked `x is None` — so the blank is not a value every reader has to decode._
-- [ ] Ask about absence directly (`x is not None`); never default a value only to compare it against that same default.
-      _Write both checks explicitly — `x is not None and x != ""` — or make the value non-optional at its source so only one question is left._
-- [ ] Don't spread a conditional into an empty collection to include an entry; give the target a factory that drops what is absent, and pass the value by name.
-      _A `@classmethod` factory — `Payload.of(note=note)` — whose body drops `None` keyword arguments, so an absent value simply vanishes with no conditional._
-- [ ] A finder decides what a missing thing means once, where it looks: if every caller insists the value is there, say so in the signature and raise where it is not.
-      _Return `X` and raise a named exception when there is nothing to answer with — `raise OrderNotFound(order_id)` — and let the callers read it plainly. Keep the `| None` only where a caller really does have something else to do about the absence, and then let it do that instead of asserting._
-- [ ] Never fill an argument with an invented `""`, `0` or `False` on absence — handle the missing case, or make the value certain where it is born.
-      _Decide at the source: raise when the value must be there, or pass `None` on to a parameter that admits it. A real default (`or "EUR"`) is a choice, not an invention._
-- [ ] Default an optional callback to a no-op in the signature; don't take `None` and normalise it in the body.
-      _Default the parameter to a named no-op — `def ignore(*_): pass`, then `on_retry: Callable[[int], None] = ignore` — and call it unconditionally._
-
-## Worked example
-
-### python-blank-string-default
-
-`x: str = ""` standing in for absence — then asked `x == ""`, `not x` or `if x:` in its own scope
-
-```py
-----------[ Bad ]----------
-
-def book(self, parcel: str, tracking: str = "") -> str:
-    if not tracking:
-        tracking = self.api.issue(parcel)
-    return self.api.book(parcel, tracking)
-
-----------[ Good ]----------
-
-def book_tracked(self, parcel: str, tracking: str | None = None) -> str:
-    if tracking is None:
-        tracking = self.api.issue(parcel)
-    return self.api.book(parcel, tracking)
-```
-
-The other 5 — one per rule — are in [`reference/examples.md`](reference/examples.md).
-
-## Commands
-
-- `{{binary}} judge --skill=python/absence` — find every one of these in the codebase.
-- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `python-blank-string-default`, `python-cancelled-fallback`, `python-conditional-spread`, `python-de-nulled-finder`, `python-invented-default`, `python-nullable-callback`.
-- `{{binary}} report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
-
-## Reference
-
-- [Worked examples](reference/examples.md) — every rule's bad → good, 6 of them.
-- [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
-
 ## Related skills
 
 - [`php/absence`](../../php/absence/SKILL.md) — the same decision on the PHP backend, with `Option`.

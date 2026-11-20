@@ -56,56 +56,61 @@ and every site asks for it by name.
 
 ## Rules
 
-- [ ] Name a compound condition asked in more than one place once, on the type it is about, and ask it by that name.
-      _Add `public bool IsShippable => Paid && !Cancelled;` to the type and write `if (order.IsShippable)` at every site._
 - [ ] Name a copy written the same way at several sites as a method on the record, and call it by that name.
       _Add `public Order Shipped() => this with { Status = OrderStatus.Shipped };` to the record and write `order.Shipped()` at every site._
-- [ ] Name a shape checked the same way in more than one place once, as a member of the type, and ask for it by name.
-      _Add a method or property that answers the check — `node.IsMemberCall(out var call)` — and use it at every site._
 
 ## Worked example
 
-### csharp-repeated-guard
+### csharp-repeated-named-call
 
-the same compound condition — `order.Paid && !order.Cancelled` — written at two or more sites, a question with no name
+the same `with` copy — `order with { Status = OrderStatus.Shipped }` — written at two or more sites, an operation the record never named
 
 ```cs
 ----------[ Bad ]----------
 
-// in Dispatch.cs
-public static string Status(Dispatchable order)
-{
-    if (order.Paid && !order.OnHold && order.Lines > 0)
-    {
-        return "pick";
-    }
+// in OrderStages.cs
+public static StagedOrder Dispatch(StagedOrder order) => order with { Stage = Stage.Shipped, Note = "on its way" };
 
-    return "wait";
+// in Backfills.cs
+public static IReadOnlyList<StagedOrder> Repaired(IEnumerable<StagedOrder> stuck, DateOnly today, IReadOnlyDictionary<string, DateOnly> packedOn)
+{
+    var overdue = stuck.Where(order => order.Stage == Stage.Packed && packedOn[order.Id].AddDays(14) < today);
+
+    return overdue.Select(order => order with { Stage = Stage.Shipped, Note = "on its way" }).ToList();
 }
 
-// in Promises.cs
-public static bool CanPromiseToday(Dispatchable order) => !order.OnHold && order.Paid && order.Lines > 0;
+// in Handover.cs
+public StagedOrder Scanned(StagedOrder order, string courier)
+{
+    scanLog.Add($"{courier} scanned {order.Id}");
+
+    var shipped = order with { Note = "on its way", Stage = Stage.Shipped };
+
+    if (scanLog.Count > 100)
+    {
+        scanLog.RemoveAt(0);
+    }
+
+    return shipped;
+}
 
 ----------[ Good ]----------
 
-// in Dispatch.cs
-public bool IsReady => Paid && !OnHold && Lines > 0;
+// in OrderStages.cs
+public StagedOrder Shipped() => this with { Stage = Stage.Shipped, Note = "on its way" };
 
-// in Dispatch.cs
-public static string Label(Dispatchable order) => order.IsReady ? "pick" : "wait";
+// in OrderStages.cs
+public static StagedOrder Send(StagedOrder order) => order.Shipped();
 ```
-
-The other 2 — one per rule — are in [`reference/examples.md`](reference/examples.md).
 
 ## Commands
 
 - `{{binary}} judge --skill=csharp/repeated-call-helper` — find every one of these in the codebase.
-- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `csharp-repeated-guard`, `csharp-repeated-named-call`, `csharp-repeated-type-guard`.
+- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `csharp-repeated-named-call`.
 - `{{binary}} report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference
 
-- [Worked examples](reference/examples.md) — every rule's bad → good, 3 of them.
 - [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills

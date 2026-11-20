@@ -46,8 +46,6 @@ introduced late just relabels data everyone already mishandled. This is fix-at-t
       _`readonly` on the class, and a `with…()`/named derivation that returns a new instance (PHP 8.5's `clone with`)._
 - [ ] Return a typed object, not a positional tuple `[$a, $b, $c]` the caller destructures by position.
       _A small `readonly` result object._
-- [ ] Return a typed object from a decoded boundary; never hand back a raw `json_decode(...)` array.
-      _Decode into a Spatie `Data` object: `X::from(json_decode(...))`._
 - [ ] When scalar fields on a Data class share a prefix that names a value object the codebase already declares, they restate that object flat. Nest them into the existing sub-object and shed the prefix — `wireType`/`wireLabel` become `wire: Wire{type, label}`.
       _Replace the prefixed siblings with a single nested property typed as the existing value object, dropping the prefix from each member._
 
@@ -99,18 +97,18 @@ final class ImportRow extends Data
 }
 ```
 
-The other 9 — one per rule — are in [`reference/examples.md`](reference/examples.md).
+The other 8 — one per rule — are in [`reference/examples.md`](reference/examples.md).
 
 ## Commands
 
 - `{{binary}} judge --skill=php/value-objects` — find every one of these in the codebase.
-- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `array-bag`, `array-bag-parameter`, `array-return-bag`, `coupled-fields`, `data-clump`, `hand-rolled-wither`, `mutable-value-object`, `positional-tuple-return`, `raw-decoded-array-return`, `flat-field-cluster`.
+- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `array-bag`, `array-bag-parameter`, `array-return-bag`, `coupled-fields`, `data-clump`, `hand-rolled-wither`, `mutable-value-object`, `positional-tuple-return`, `flat-field-cluster`.
 - `{{binary}} repent --sin=<sin>` — auto-fix, for `hand-rolled-wither`. Review it with `--dry-run` first.
 - `{{binary}} report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference
 
-- [Worked examples](reference/examples.md) — every rule's bad → good, 10 of them.
+- [Worked examples](reference/examples.md) — every rule's bad → good, 9 of them.
 - [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills

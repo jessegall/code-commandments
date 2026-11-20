@@ -114,7 +114,7 @@ func frontmatter(definition skill.Definition) string {
 }
 
 func blockquote(text string) string {
-	lines := strings.Split(text, "\n")
+	lines := strings.Split(strings.TrimSpace(text), "\n")
 	for i, line := range lines {
 		lines[i] = "> " + line
 	}

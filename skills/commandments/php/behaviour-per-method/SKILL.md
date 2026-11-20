@@ -82,33 +82,33 @@ a method whose whole body branches on a `bool` parameter — or on whether a nul
 ```php
 ----------[ Bad ]----------
 
-// Two announcements sharing a name. At the call site this reads `announce($msg, true)` — true
-// what? Nobody can tell without opening this method.
+// The flag in its commonest disguise: `$kind` was required, then widened to nullable so that
+// leaving it out means "all of them". Two questions behind one name, and the call site that asks
+// the second one says nothing at all — `labels()` — which is even less than a bare `true`.
 
-public function announce(string $message, bool $urgent): void
+public function labels(?string $kind = null): array
 {
-    if ($urgent) {
-        $this->log->record('SIREN ' . strtoupper($message));
+    if ($kind === null) {
+        return array_merge(...array_values($this->labels));
     } else {
-        $this->log->record($message);
+        return $this->labels[$kind] ?? [];
     }
 }
 
 ----------[ Good ]----------
 
-// in Shop\Dispatch\ShiftAnnouncer
-// The same two announcements, named. The call site now says which one it wanted, and each half
-// is free to grow its own parameters without the other having to ignore them.
+// in Shop\Dispatch\CrateInspector
+// The same two questions, each with its own name, so the call site says which it asked.
 
-public function announceUrgently(string $message): void
+public function allLabels(): array
 {
-    $this->log->record('SIREN ' . strtoupper($message));
+    return array_merge(...array_values($this->labels));
 }
 
-// in Shop\Dispatch\ShiftAnnouncer
-public function announceQuietly(string $message): void
+// in Shop\Dispatch\CrateInspector
+public function labelsOfKind(string $kind): array
 {
-    $this->log->record($message);
+    return $this->labels[$kind] ?? [];
 }
 ```
 

@@ -38,54 +38,6 @@ code nobody is reading. Git holds the history. When you replace code, just repla
 `# not random`, `# no magic here` defend the code against a reading nobody made. State what it IS, or make it
 self-evident and write nothing.
 
-## Rules
-
-- [ ] Say what the code is now; the history lives in git, not in a comment or a docstring.
-      _Delete the history. If a reason still matters, state it in the present tense._
-- [ ] Keep a class docstring to one tight paragraph; sections for attributes and examples are fine, an essay is not.
-      _Cut the docstring to what the class is; if it takes an essay, split the class._
-- [ ] A docstring must add meaning beyond the signature; drop entries that only repeat an annotation.
-      _Delete the docstring, or write the sentence that says what the function does and describe only what a type cannot._
-- [ ] A cross-reference must resolve: point it at the name that exists now, or delete it.
-      _Repoint the reference at the current module or class, or remove it._
-- [ ] State what the code is; a comment defending it against an objection nobody raised means the code should make itself plain.
-      _Delete the defence. If the code needs it, make the code say what it is._
-- [ ] A comment must say something the code does not; one whose every word is in the line below is noise.
-      _Delete the comment, or replace it with the reason the code cannot state._
-
-## Worked example
-
-### python-archaeology-comment
-
-a comment or docstring narrating the code's history — where it lived, what it replaced, what it no longer is
-
-```py
-----------[ Bad ]----------
-
-# formerly lived in the checkout module, before invoices had their own
-def next_number(last: int, prefix: str) -> str:
-    return f"{prefix}-{last + 1:06d}"
-
-----------[ Good ]----------
-
-def next_invoice_number(last: int, prefix: str) -> str:
-    # six digits, because the accounting export pads to a fixed width
-    return f"{prefix}-{last + 1:06d}"
-```
-
-The other 5 — one per rule — are in [`reference/examples.md`](reference/examples.md).
-
-## Commands
-
-- `{{binary}} judge --skill=python/documentation` — find every one of these in the codebase.
-- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `python-archaeology-comment`, `python-bloated-docblock`, `python-ceremony-docblock`, `python-dangling-doc-reference`, `python-negative-space-comment`, `python-restated-comment`.
-- `{{binary}} report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
-
-## Reference
-
-- [Worked examples](reference/examples.md) — every rule's bad → good, 6 of them.
-- [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
-
 ## Related skills
 
 - [`php/documentation`](../../php/documentation/SKILL.md) — the same discipline for PHP docblocks.

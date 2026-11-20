@@ -16,11 +16,20 @@ import (
 func Detectors(query string) []detectors.Detector {
 	needle := normalise(query)
 	var found []detectors.Detector
+	shared := map[string]bool{}
 
 	for _, detector := range config.InClassOrder(config.Detector, detectors.All()) {
-		if matches(detector, query, needle) {
-			found = append(found, detector)
+		if !matches(detector, query, needle) {
+			continue
 		}
+		definition := detector.Sin().Definition()
+		if strings.HasPrefix(definition.Slug(), "shared/") {
+			if shared[definition.Name] {
+				continue
+			}
+			shared[definition.Name] = true
+		}
+		found = append(found, detector)
 	}
 
 	for _, own := range ownRules() {
@@ -33,7 +42,9 @@ func Detectors(query string) []detectors.Detector {
 }
 
 func matches(detector detectors.Detector, query, needle string) bool {
-	return detector.Sin().Definition().Matches(query) || strings.Contains(normalise(catalog.Name(detector)), needle)
+	return detector.Sin().Definition().Matches(query) || slices.ContainsFunc(catalog.Names(detector), func(name string) bool {
+		return strings.Contains(normalise(name), needle)
+	})
 }
 
 func ownRules() []detectors.Detector {

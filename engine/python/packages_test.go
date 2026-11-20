@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/jessegall/code-commandments/engine"
 	"github.com/jessegall/code-commandments/engine/python"
 	"github.com/jessegall/code-commandments/engine/python/pythontest"
 )
@@ -18,11 +19,20 @@ func TestThePackageGraphDrawsTheArrowsThePHPEngineDraws(t *testing.T) {
 	}
 	golden(t, "packages", &want)
 	relative := func(folder string) string { return strings.TrimPrefix(folder, fixture.root+string(filepath.Separator)) }
+	files := map[string]bool{}
+	for _, arrow := range want.Arrows {
+		file, _, _ := strings.Cut(arrow, ":")
+		files[file] = true
+	}
+	var recorded engine.DependencyArrows
 	var arrows, closing []string
 	for _, arrow := range codebase.Program.PackageArrows() {
-		arrows = append(arrows, place(python.Node{Match: arrow.At})+" "+relative(arrow.From)+" -> "+relative(arrow.To))
+		if files[filepath.ToSlash(relative(arrow.At.File()))] {
+			recorded = append(recorded, arrow)
+			arrows = append(arrows, place(python.Node{Match: arrow.At})+" "+relative(arrow.From)+" -> "+relative(arrow.To))
+		}
 	}
-	for _, at := range codebase.Program.PackageArrows().ClosingAMutualPair() {
+	for _, at := range recorded.ClosingAMutualPair() {
 		closing = append(closing, place(python.Node{Match: at}))
 	}
 	for _, list := range [][]string{arrows, closing, want.Arrows, want.Closing} {

@@ -6,6 +6,6 @@ def run_plugins(plugins, order) -> None:
     for plugin in plugins:
         try:
             plugin.on_checkout(order)
-        # @sin SwallowedException
+        # @sin SwallowCatch
         except Exception:
             continue

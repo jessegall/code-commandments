@@ -12,6 +12,7 @@ public static class StockImport
         catch (IOException e)
         {
             // @sin WrappingWithoutCause
+            // @sin MessageAtThrow
             throw new StockFileUnreadable($"Could not read the stock file: {e.Message}");
         }
     }
@@ -25,6 +26,7 @@ public static class StockImport
         }
         catch (IOException e)
         {
+            // @sin MessageAtThrow
             throw new StockFileUnreadable("Could not read the stock file.", e);
         }
     }

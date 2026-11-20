@@ -59,8 +59,6 @@ added; a marker interface is checked by the compiler.
 
 - [ ] A keyed store extends the project's one `Registry` base and states only what it holds; the register/get/has plumbing is written once.
       _Extend the `Registry` base (scaffold one if the project has none) and delete the class's own array, `register()` and `get()`._
-- [ ] A keyed store's `get()` resolves-or-throws on a miss; don't return `null`.
-      _`get()` returns-or-throws a named `…NotFound::forKey($key)`._
 
 ## Worked example
 
@@ -113,17 +111,14 @@ final class CarrierRoster extends Registry
 }
 ```
 
-The other 1 — one per rule — are in [`reference/examples.md`](reference/examples.md).
-
 ## Commands
 
 - `{{binary}} judge --skill=php/role-vocabulary` — find every one of these in the codebase.
-- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `hand-rolled-registry`, `nullable-registry-lookup`.
+- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `hand-rolled-registry`.
 - `{{binary}} report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference
 
-- [Worked examples](reference/examples.md) — every rule's bad → good, 2 of them.
 - [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills

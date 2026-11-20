@@ -7,7 +7,7 @@ interface Channel {
 }
 
 export class StockPoller {
-    private readonly channel: Channel = { id: '', push: () => {} }
+    private readonly channel: Channel = { id: 'offline', push: () => {} }
 
     // @sin FalselyOptionalField
     private attempts?: number = 0
@@ -17,7 +17,7 @@ export class StockPoller {
 
     poll(payload: string): void {
         // @sin DefendedCertainField
-        if (this.channel?.id === '') {
+        if (this.channel?.id === 'offline') {
             return
         }
 
@@ -30,5 +30,9 @@ export class StockPoller {
         if (this.paused?.valueOf()) {
             this.channel.push('resume')
         }
+    }
+
+    attemptCount(): number {
+        return this.attempts ?? 0
     }
 }

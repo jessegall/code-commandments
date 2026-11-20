@@ -10,6 +10,40 @@ type TypeSystem interface {
 	Contracts(symbol string) []string
 }
 
+// DeclarationTypes reads the type relationships supplied by the codebase's declarations.
+type DeclarationTypes map[string]Match
+
+func TypesFromDeclarations(codebase *Codebase) TypeSystem {
+	return Analysis(codebase, "declaration-types", func(codebase *Codebase) TypeSystem {
+		types := DeclarationTypes{}
+		for _, declaration := range codebase.Reporting().WhereTypeDeclaration().Get() {
+			if symbol := declaration.Identity(); symbol != "" {
+				types[symbol] = declaration
+			}
+		}
+
+		return types
+	})
+}
+
+func (types DeclarationTypes) Declaration(symbol string) (Match, bool) {
+	declaration, known := types[symbol]
+
+	return declaration, known
+}
+
+func (types DeclarationTypes) Declarations() map[string]Match {
+	return types
+}
+
+func (types DeclarationTypes) Ancestors(symbol string) []string {
+	return types[symbol].Lineage()
+}
+
+func (types DeclarationTypes) Contracts(symbol string) []string {
+	return types[symbol].Contracts()
+}
+
 func (m Match) Types() (TypeSystem, bool) {
 	read := m.grammar().Types
 	if read == nil || m.file == nil {
@@ -21,6 +55,20 @@ func (m Match) Types() (TypeSystem, bool) {
 
 func Supertypes(types TypeSystem, symbol string) []string {
 	return append(types.Ancestors(symbol), types.Contracts(symbol)...)
+}
+
+func TypeLacksMember(types TypeSystem, symbol string, providesMember func(string) bool) bool {
+	if symbol == "" {
+		return false
+	}
+	owners := append([]string{symbol}, Supertypes(types, symbol)...)
+	for _, owner := range owners {
+		if _, known := types.Declaration(owner); !known || providesMember(owner) {
+			return false
+		}
+	}
+
+	return true
 }
 
 func IsA(types TypeSystem, symbol, base string) bool {

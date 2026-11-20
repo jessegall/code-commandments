@@ -96,24 +96,8 @@ func (n Node) ResultIsDiscarded() bool {
 	return engine.ResultIsDiscarded(n.Match)
 }
 
-func (n Node) IsBranchingConstruct() bool {
-	return slices.Contains([]string{"If", "For", "AsyncFor", "While", "Match"}, n.Kind())
-}
-
 func (n Node) IsElif() bool {
 	return n.Kind() == "If" && slices.Contains(n.Node().Flags, "elif")
-}
-
-func (n Node) BranchingDepth() int {
-	depth := 0
-	for child, parent := n, n.Parent(); parent.Exists() && !parent.IsDefinition(); child, parent = parent, parent.Parent() {
-		field := child.Node().Field
-		if slices.Contains([]string{"If", "For", "AsyncFor", "While"}, parent.Kind()) && (field == "body" || field == "orelse") && !child.IsElif() {
-			depth++
-		}
-	}
-
-	return depth
 }
 
 func (n Node) ComparisonSubject() (Node, bool) {

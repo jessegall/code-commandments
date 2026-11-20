@@ -31,7 +31,7 @@ func TestNoRuleCostsMoreThanTheTreeItReadsGrewBy(t *testing.T) {
 // project again, so twice the tree costs four times the compute.
 type everyFileAgainstEveryOther struct{}
 
-func (everyFileAgainstEveryOther) Sin() sins.Sin { return backendsins.DeepNesting{} }
+func (everyFileAgainstEveryOther) Sin() sins.Sin { return backendsins.ArrayBag{} }
 
 func (everyFileAgainstEveryOther) Find(codebase *engine.Codebase) []engine.Match {
 	var found []engine.Match

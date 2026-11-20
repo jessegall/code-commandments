@@ -9,21 +9,62 @@ import (
 
 func init() {
 	engine.ReadAs(contract.Go, engine.Grammar{
-		Receiver:          receiver,
-		Parameters:        parameters,
-		ReturnType:        engine.InField("results"),
-		Continues:         continues,
-		TestFile:          testFile,
-		Body:              body,
-		Otherwise:         otherwise,
-		Condition:         condition,
-		BindsItsOwnTest:   bindsItsOwnTest,
-		ElementName:       elementName,
-		ComparisonSubject: comparisonSubject,
-		JumpTarget:        engine.KindIn("LabeledStmt"),
-		NamespaceOf:       namespaceOf,
-		BodyHash:          BodyHash,
-		NodeHash:          NodeHash,
+		SpelledFolder:      spelledFolder,
+		Receiver:           receiver,
+		ErrorHandler:       checkedError,
+		Thrown:             returnedFailure,
+		Cause:              wrappedFailure,
+		EmptyCollection:    emptyCollection,
+		TypeKind:           typeKind,
+		Types:              typeSystem,
+		MethodOwner:        func(method engine.Match) string { return (Node{Match: method}).OwnerSymbol() },
+		Declares:           shortDeclaration,
+		Binds:              shortDeclaration,
+		Parameters:         parameters,
+		Members:            members,
+		DeclaresMethods:    declaresMethods,
+		IsConstructor:      isConstructor,
+		PrivateMember:      privateMember,
+		Collaborator:       collaborator,
+		ParameterType:      engine.InField("type"),
+		ReturnType:         engine.InField("results"),
+		Continues:          continues,
+		Steps:              engine.InFields("post"),
+		TestFile:           testFile,
+		Body:               body,
+		Otherwise:          otherwise,
+		Condition:          condition,
+		BindsItsOwnTest:    bindsItsOwnTest,
+		ElementName:        elementName,
+		ComparisonSubject:  comparisonSubject,
+		JumpTarget:         engine.KindIn("LabeledStmt"),
+		NamespaceOf:        namespaceOf,
+		ImportModule:       importedModule,
+		ModuleKey:          packagePath,
+		ModuleLayer:        packagePath,
+		Hashing:            hashing,
+		ScalarTypes:        []string{"string", "bool", "int", "int8", "int16", "int32", "int64", "uint", "uint8", "uint16", "uint32", "uint64", "float32", "float64", "byte", "rune"},
+		BooleanTypes:       []string{"bool"},
+		ArgumentLookup:     engine.IndexedArgument("IndexExpr", "x", "index"),
+		InitializedValue:   engine.OfKind("AssignStmt", "rhs"),
+		AssignmentSides:    engine.ReadPair("lhs", "rhs"),
+		RecordKeys:         recordKeys,
+		JoinedLines:        joinedLines,
+		NullDefault:        nullSwitchDefault,
+		StaticStorage:      staticStorage,
+		IsValueClass:       engine.Match.DeclaresValueEquality,
+		CapabilityTest:     capabilityTest,
+		SelfReceiver:       selfReceiver,
+		NullableFields:     nullableFields,
+		Encode:             func(call engine.Match) bool { return call.TargetSymbol() == "encoding/json.Marshal" },
+		DecodedDestination: decodedDestination,
+		UntypedReturn:      returnsUntypedData,
+		CommentReferences:  commentReferences,
+		Keywords:           keywords,
+		DocumentedSubject:  documentedSubject,
+		CommentProse:       commentProse,
+		VocabularyWords:    vocabularyWords,
+		Arguments:          engine.InFields("args"),
 	})
 }
 
@@ -63,6 +104,18 @@ func namespaceOf(symbol string) string {
 	return symbol[:at]
 }
 
+func importedModule(node engine.Match) string {
+	name, _ := node.Child("path").Text()
+	return name
+}
+
+func packagePath(root engine.Match) string {
+	if file := root.Source(); file != nil {
+		return file.Module
+	}
+	return ""
+}
+
 func body(held engine.Match) []engine.Match {
 	return held.Child("body").Children()
 }
@@ -96,6 +149,10 @@ func comparisonSubject(held engine.Match) engine.Match {
 
 func bindsItsOwnTest(branch engine.Match) bool {
 	return branch.Kind() == "IfStmt" && branch.Child("init").Exists()
+}
+
+func shortDeclaration(statement engine.Match) bool {
+	return statement.Kind() == "AssignStmt" && statement.Operator() == ":="
 }
 
 func elementName(loop engine.Match) string {

@@ -60,77 +60,51 @@ behind an interface the lower layer owns and the upper layer implements.
 
 ## Rules
 
+- [ ] Declare the dependency in the constructor.
+      _Take the service directly and leave lookup to the composition root._
 - [ ] Keep references between the project's namespaces pointing one way; two namespaces that use each other are a cycle.
       _Cut the thinner direction: move what both need into the lower namespace, pass it in from above, or invert it behind an interface the lower one owns._
 - [ ] A declared layer may only use the namespaces it declared in its `mayUse` — down the stack, never back up or sideways.
       _Move what both need down into the lower layer, pass it in from above, or invert it behind an interface the lower layer owns — and if the declaration is what is wrong, say so rather than editing it quietly._
+- [ ] Remove registrations for services no production code uses.
+      _Remove the unused registration._
 
 ## Worked example
 
-### csharp-namespace-cycle
+### csharp-container-reach
 
-two of the project's namespaces that each use the other — a cycle that makes them one namespace split under two names
+A class locates a service through IServiceProvider
 
 ```cs
 ----------[ Bad ]----------
 
-// in Shop/Loyalty/Members.cs
-namespace Shop.Loyalty;
-
-using Shop.Rewards;
-
-// A loyalty member spends points on rewards; rewards reaches back for the member below.
-public sealed class Member(string id, int points)
+public bool PublishProjection(string gate)
 {
-    public string Id => id;
-
-    public int Points => points;
-
-    public Voucher Redeem(VoucherCatalog catalog) => catalog.Cheapest(points);
-
-    public IEnumerable<Voucher> Affordable(VoucherCatalog catalog) => catalog.All.Where(voucher => voucher.Cost <= points);
-
-    public bool CanRedeem(Voucher voucher) => voucher.Cost <= points;
-}
-
-// in Shop/Rewards/Vouchers.cs
-namespace Shop.Rewards;
-
-public sealed record Voucher(string Code, int Cost);
-
-public sealed class VoucherCatalog(IReadOnlyList<Voucher> all)
-{
-    public IReadOnlyList<Voucher> All => all;
-
-    public Voucher Cheapest(int budget) => all.Where(voucher => voucher.Cost <= budget).OrderBy(voucher => voucher.Cost).First();
-
-    public string IssueTo(Shop.Loyalty.Member member) => $"{member.Id}:{Cheapest(member.Points).Code}";
+    if (gate.Length == 0) return false;
+    var projection = this.intakeServices.GetRequiredService<ParcelSnapshotProjection>();
+    intake(gate + ": " + projection.GetType().Name);
+    return true;
 }
 
 ----------[ Good ]----------
 
-// in Shop/Rewards/Issuing.cs
-namespace Shop.Rewards;
-
-// Rewards issues a voucher from what it is handed — a member's id and points — and names nothing in
-// Loyalty, so the one arrow left between the two runs Loyalty → Rewards.
-public sealed class VoucherIssuer(VoucherCatalog catalog)
+public string ProjectionName(ParcelSnapshotProjection projection)
 {
-    public string IssueTo(string memberId, int points) => $"{memberId}:{catalog.Cheapest(points).Code}";
+    return projection.GetType().Name;
 }
 ```
 
-The other 1 — one per rule — are in [`reference/examples.md`](reference/examples.md).
+The other 3 — one per rule — are in [`reference/examples.md`](reference/examples.md).
 
 ## Commands
 
 - `{{binary}} judge --skill=csharp/dependency-direction` — find every one of these in the codebase.
-- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `csharp-namespace-cycle`, `csharp-namespace-dependency`.
+- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `csharp-container-reach`, `csharp-namespace-cycle`, `csharp-namespace-dependency`, `csharp-orphaned-binding`.
 - `{{binary}} report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference
 
-- [Worked examples](reference/examples.md) — every rule's bad → good, 2 of them.
+- [Worked examples](reference/examples.md) — every rule's bad → good, 4 of them.
 - [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills

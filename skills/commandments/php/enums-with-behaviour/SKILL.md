@@ -37,76 +37,65 @@ Reach for this the moment you write:
 
 ## Rules
 
-- [ ] Seal a closed set of values as a native backed enum, not a class of scalar `const`s or loose strings.
-      _A native `enum X: string` with the values as cases._
-- [ ] Put case-group membership on the enum (a method); don't hand-roll `$x === Enum::A || $x === Enum::B`.
-      _A membership method on the enum (`$x->isFinal()`)._
 - [ ] Put per-case behaviour on the enum; never `match`/`switch` over its `->value` at a call site.
       _A method on the backed enum (`$x->label()`, `$x->isPaid()`)._
-- [ ] Test membership against the enum (its `cases()`/`tryFrom`), not an `in_array` of literals that mirror its values.
-      _Use the enum (`Enum::tryFrom($x)` / a `cases()` check)._
-- [ ] A `match`/`switch` `default` for an unhandled case must throw, not return `null`/`false`/`[]`.
-      _`default => throw Unhandled::for($x)`._
-- [ ] A trait that is true of some cases is answered by the case, never kept beside them as a list of the ones it is true of.
-      _Give the enum a method that answers the trait per case (`match ($this) { self::Reply, self::Log => false, default => true }`), and delete the list — a case added later then has to answer, where a list leaves it silently taking the default with nowhere to say otherwise._
-- [ ] Dispatch over the enum's cases, not string/int literals that mirror its values.
-      _Dispatch via a method on the backed enum's cases._
-- [ ] Where a parameter is spelled from a named vocabulary, spell it that way EVERYWHERE — never the raw value at one call site and the constant at the next.
-      _The constant that already holds this value, referenced by name._
 
 ## Worked example
 
-### const-class-enum
+### enum-value-match
 
-A class of 2+ scalar `const`s and nothing else — a closed set hand-rolled as constants instead of a native enum
+A `match`/`switch` over an enum's `->value` at the call site — logic that belongs on the enum but lives elsewhere instead.
 
 ```php
 ----------[ Bad ]----------
 
-// VAT rates kept as floating-point constants instead of a typed TaxBand enum.
-
-final class TaxBands
+public function colour(Product $product): string
 {
-    /**
-     * The default rate applied to most goods.
-     */
-    const STANDARD = 0.21;
-
-    /**
-     * Food, books, and other reduced-rate categories.
-     */
-    const REDUCED = 0.09;
-
-    /**
-     * Exports and exempt supplies.
-     */
-    const ZERO = 0.0;
+    switch ($product->category->value) {
+        case 'food':
+            return 'green';
+        case 'electronics':
+            return 'blue';
+        case 'clothing':
+            return 'purple';
+        default:
+            return 'grey';
+    }
 }
 
 ----------[ Good ]----------
 
-// The sealed set as a native backed enum — the cases now have a home for behaviour
-// and the type proves only a real band can flow through. Rates as basis points.
+// in Shop\Catalog\StockBadge
+// The mapping lives ON the enum; the call site just asks for the colour.
 
-enum TaxBand: int
+public function colourViaEnum(Product $product): string
 {
-    case Standard = 2100;
-    case Reduced = 900;
-    case Zero = 0;
+    return $product->category->badgeColour();
+}
+
+// in Shop\Enums\ProductCategory
+// Where the call site's re-match went. The knowledge is keyed off the cases, so it belongs
+// with them — and a case added here cannot be forgotten at a call site that no longer decides.
+
+public function badgeColour(): string
+{
+    return match ($this) {
+        self::Food => 'green',
+        self::Electronics => 'blue',
+        self::Clothing => 'purple',
+        self::Apparel => 'grey',
+    };
 }
 ```
-
-The other 7 — one per rule — are in [`reference/examples.md`](reference/examples.md).
 
 ## Commands
 
 - `{{binary}} judge --skill=php/enums-with-behaviour` — find every one of these in the codebase.
-- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `const-class-enum`, `enum-case-or-chain`, `enum-value-match`, `in-array-mirrors-enum`, `match-default-returns-null`, `side-table-trait`, `string-match-mirrors-enum`, `unnamed-vocabulary-literal`.
+- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `enum-value-match`.
 - `{{binary}} report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference
 
-- [Worked examples](reference/examples.md) — every rule's bad → good, 8 of them.
 - [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills

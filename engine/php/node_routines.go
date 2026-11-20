@@ -67,30 +67,3 @@ func callsWithoutArguments(node engine.Match, method string) bool {
 		return argument.Kind() == "VariadicPlaceholder"
 	})
 }
-
-func (n Node) ReassignsAParameter() bool {
-	if !n.Is(engine.Assignment) {
-		return false
-	}
-	target := n.Child("var")
-	if target.Kind() != "Expr_Variable" || target.Name() == "" {
-		return false
-	}
-
-	return slices.ContainsFunc(Params(enclosingFunction(n.Match)), func(parameter engine.Match) bool {
-		return parameter.Child("var").Name() == target.Name() && !parameter.HasFlag("by-ref")
-	})
-}
-
-func (n Node) IsUnreachable() bool {
-	if n.Node() == nil || n.Node().Field != "stmts" || slices.Contains([]string{"Stmt_Nop", "Stmt_Label", "Stmt_Function", "Stmt_Class", "Stmt_Interface", "Stmt_Trait", "Stmt_Enum"}, n.Kind()) {
-		return false
-	}
-	siblings := n.Parent().ChildrenIn("stmts")
-	at := slices.IndexFunc(siblings, func(sibling engine.Match) bool { return sibling.Node() == n.Node() })
-	if at < 1 || slices.ContainsFunc(siblings, func(sibling engine.Match) bool { return sibling.Kind() == "Stmt_Label" }) {
-		return false
-	}
-
-	return (Node{Match: siblings[at-1]}).IsBailOut() && !(Node{Match: siblings[at-1]}).IsUnreachable()
-}

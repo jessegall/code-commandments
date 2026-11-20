@@ -3,7 +3,7 @@
 # with a factory that writes its message once.
 
 
-# @fixed MessageStringRaise
+# @fixed GenericException
 class NoActiveSession(LookupError):
     @classmethod
     def reading(cls, what: str) -> "NoActiveSession":
@@ -12,12 +12,13 @@ class NoActiveSession(LookupError):
 
 def basket(context):
     if context.session is None:
-        # @sin MessageStringRaise
+        # @sin GenericException
+        # @sin MessageAtThrow
         raise RuntimeError("There is no active session in this context.")
     return context.session.basket
 
 
-# @fixed MessageStringRaise
+# @fixed GenericException
 def current_basket(context):
     if context.session is None:
         raise NoActiveSession.reading("basket")

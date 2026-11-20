@@ -14,9 +14,11 @@ public static class RateFeed
             if (answer.Length == 0)
             {
                 // @sin WrappingWithoutCause
+                // @sin MessageAtThrow
                 throw new TimeoutException("The rate feed sent nothing.");
             }
 
+            // @sin MessageAtThrow
             throw new InvalidDataException($"The rate feed sent {answer}.", e);
         }
     }

@@ -44,3 +44,10 @@ def render(member: Member) -> str:
 
 def describe(tier: str) -> str:
     return tier.upper()
+
+
+def points_for(spent: list[int], bonus: int) -> int:
+    for amount in spent:
+        # @sin ReassignedParameter
+        bonus += amount // 10
+    return bonus

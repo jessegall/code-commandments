@@ -2,34 +2,6 @@
 
 One bad → good per rule this skill teaches, taken from the fixture that proves the detector, so every pair is code that really fires and really passes.
 
-### blank-string-default
-
-`string $x = ''` standing in for absence — then asked `$x === ''`
-
-```php
-----------[ Bad ]----------
-
-public static function of(string $heading, string $strapline = ''): string
-{
-    if ($strapline === '') {
-        return $heading;
-    }
-
-    return $heading . ' — ' . $strapline;
-}
-
-----------[ Good ]----------
-
-public static function lined(string $heading, ?string $strapline = null): string
-{
-    if ($strapline === null) {
-        return $heading;
-    }
-
-    return $heading . ' — ' . $strapline;
-}
-```
-
 ### blank-string-on-the-wire
 
 A `string` field sent over the wire whose TypeScript reader has to check `=== ''` to mean "missing" — only that reader knows the blank stands for absence.
@@ -37,11 +9,30 @@ A `string` field sent over the wire whose TypeScript reader has to check `=== ''
 ```php
 ----------[ Bad ]----------
 
-public function __construct(
-    public string $channel,
-    public string $socket,
-    public int $pollMs,
-) {}
+// The voucher panel of the checkout page. A voucher that was never entered travels as a blank code,
+// which the page then has to decode back into "no voucher".
+
+final class VoucherPanelData extends Data
+{
+    /**
+     * @param  array<int, string>  $rejectedCodes  every code the till turned away this basket
+     */
+    public function __construct(
+        public readonly string $appliedCode,
+        public readonly string $discountLabel,
+        public readonly array $rejectedCodes = [],
+    ) {}
+
+    public function rejections(): int
+    {
+        return count($this->rejectedCodes);
+    }
+
+    public function turnedAway(string $code): bool
+    {
+        return in_array($code, $this->rejectedCodes, true);
+    }
+}
 
 ----------[ Good ]----------
 
@@ -59,101 +50,6 @@ final readonly class StockFeed
     public function isSocketed(): bool
     {
         return $this->socket !== null;
-    }
-}
-```
-
-### cancelled-coalesce
-
-`??` cancelled by the comparison it sits in — `($x ?? '') !== ''`
-
-```php
-----------[ Bad ]----------
-
-public function hasSession(?string $sessionId): bool
-{
-    return ($sessionId ?? '') !== '';
-}
-
-----------[ Good ]----------
-
-public function hasSessionStated(?string $sessionId): bool
-{
-    return $sessionId !== null && $sessionId !== '';
-}
-```
-
-### conditional-array-spread
-
-An array built by spreading a conditional element — `...($x ? ['k' => $x] : [])` or `array_merge($base, $cond ? [...] : [])` — a ternary-and-empty-array trick that really just means "include this when the value is present."
-
-```php
-----------[ Bad ]----------
-
-public function toArray(): array
-{
-    return [
-        'key' => $this->key,
-        ...($this->label !== null ? ['label' => $this->label] : []),
-        ...($this->icon === null ? [] : ['icon' => $this->icon]),
-    ];
-}
-
-----------[ Good ]----------
-
-// in Shop\Domain\Descriptor
-public function toArray(): array
-{
-    return Payload::of(key: $this->key, label: $this->label, icon: $this->icon);
-}
-
-// in Shop\Domain\Payload
-public static function of(mixed ...$values): array
-{
-    $payload = [];
-
-    foreach ($values as $name => $value) {
-        if ($value !== null) {
-            $payload[$name] = $value;
-        }
-    }
-
-    return $payload;
-}
-```
-
-### de-nulled-finder
-
-A finder that returns `null` for both "missing" and "broken" instead of throwing — the kind of `?T` finder whose callers all end up de-nulling it.
-
-```php
-----------[ Bad ]----------
-
-public function byBarcode(string $barcode): ?Product
-{
-    return Product::query()->where('barcode', $barcode)->first();
-}
-
-----------[ Good ]----------
-
-// in Shop\Catalog\ProductFinder
-// Resolve-or-throw: a scanned barcode must exist, so the absence is decided
-// once at the source and the return type tells the truth.
-
-public function requireByBarcode(string $barcode): Product
-{
-    return Product::query()->where('barcode', $barcode)->first()
-        ?? throw ProductNotFound::forBarcode($barcode);
-}
-
-// The absence the finder used to hand back as null, decided once and named. Every caller that
-// de-nulled the `?Product` is now spared the question.
-
-final class ProductNotFound extends RuntimeException
-{
-    public static function forBarcode(string $barcode): self
-    {
-        return new self("No product is registered under barcode {$barcode}.");
     }
 }
 ```
@@ -197,52 +93,6 @@ public function slotOf(string $sku): int
     $position = array_search($sku, $this->skus, true);
 
     return is_int($position) ? $position : throw SkuNotIndexed::for($sku);
-}
-```
-
-### nullable-callback
-
-Nullable callback normalised in the body instead of a Null Object default
-
-```php
-----------[ Bad ]----------
-
-public function run(Closure $work, Closure | null $onRetry = null): mixed
-{
-    while (true) {
-        $this->attempts++;
-
-        try {
-            return $work();
-        } catch (\Throwable $e) {
-            if ($onRetry) {
-                $onRetry($this->attempts);
-            }
-
-            if ($this->attempts >= 3) {
-                throw $e;
-            }
-        }
-    }
-}
-
-----------[ Good ]----------
-
-public function runWith(Closure $work, Invokable $onRetry = new NoOp): mixed
-{
-    while (true) {
-        $this->attempts++;
-
-        try {
-            return $work();
-        } catch (\Throwable $e) {
-            $onRetry($this->attempts);
-
-            if ($this->attempts >= 3) {
-                throw $e;
-            }
-        }
-    }
 }
 ```
 

@@ -1,10 +1,9 @@
 package php
 
 import (
-	"regexp"
-	"slices"
 	"strings"
 
+	"github.com/jessegall/code-commandments/contract"
 	"github.com/jessegall/code-commandments/engine"
 )
 
@@ -254,64 +253,24 @@ func (n Node) IsThisCall() bool {
 	return n.Kind() == "Expr_MethodCall" && receiver.Kind() == "Expr_Variable" && receiver.Name() == "this"
 }
 
-// Enums is every backed enum of two or more literal cases a codebase declares, by name.
-type Enums map[string][]string
+type Enums = engine.Enums
 
-var enums = engine.Memoised(func(codebase *engine.Codebase) Enums {
-	indexed := Enums{}
-	for _, declaration := range codebase.WhereKind("Stmt_Enum").Get() {
-		name := declaration.Node().Symbol
-		if name == "" {
-			name = declaration.Name()
-		}
-		var values []string
-		for _, member := range (Node{Match: declaration}).ChildrenIn("stmts") {
-			if literal, ok := scalarLiteral(member.Child("expr")); member.Kind() == "Stmt_EnumCase" && ok {
-				values = append(values, literal)
-			}
-		}
-		if name != "" && len(values) >= 2 {
-			indexed[name] = values
+func EnumsOf(codebase *engine.Codebase) Enums { return engine.EnumsOf(codebase.Of(contract.PHP)) }
+
+func enumValues(declaration engine.Match) []string {
+	if declaration.Kind() != "Stmt_Enum" {
+		return nil
+	}
+	var values []string
+	for _, member := range declaration.ChildrenIn("stmts") {
+		if literal, ok := scalarLiteral(member.Child("expr")); member.Kind() == "Stmt_EnumCase" && ok {
+			values = append(values, literal)
 		}
 	}
-
-	return indexed
-})
-
-func EnumsOf(codebase *engine.Codebase) Enums {
-	return enums.Of(codebase)
+	return values
 }
 
-func (e Enums) IsIndexed(class string) bool {
-	_, ok := e[strings.TrimLeft(class, `\`)]
-
-	return class != "" && ok
-}
-
-func (e Enums) MirroredBy(literals []string) bool {
-	var distinct []string
-	for _, literal := range literals {
-		if !isNumeric(literal) && !slices.Contains(distinct, literal) {
-			distinct = append(distinct, literal)
-		}
-	}
-	if len(distinct) < 2 {
-		return false
-	}
-	for _, cases := range e {
-		if !slices.ContainsFunc(distinct, func(literal string) bool { return !slices.Contains(cases, literal) }) {
-			return true
-		}
-	}
-
-	return false
-}
-
-var numeric = regexp.MustCompile(`^[ \t\n\r\v\f]*[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?[ \t\n\r\v\f]*$`)
-
-func isNumeric(text string) bool {
-	return numeric.MatchString(text)
-}
+func isNumeric(text string) bool { return engine.IsNumericText(text) }
 
 func (n Node) CasesListedInAConstant() (string, []string) {
 	if n.Kind() != "Stmt_Enum" {

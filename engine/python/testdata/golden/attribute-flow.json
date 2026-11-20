@@ -60,7 +60,7 @@
         ]
     },
     "shop.badge_colours.PaymentStatus@shop/badge_colours.py:6": {},
-    "shop.badges.Badge@shop/badges.py:28": {
+    "shop.badges.Badge@shop/badges.py:29": {
         "label": [
             0,
             0
@@ -82,7 +82,7 @@
             0
         ]
     },
-    "shop.badges.Ribbon@shop/badges.py:43": {
+    "shop.badges.Ribbon@shop/badges.py:45": {
         "label": [
             0,
             0
@@ -1029,7 +1029,7 @@
         ],
         "step": [
             2,
-            0
+            4
         ]
     },
     "shop.payment_events.Challenge@shop/payment_events.py:6": {
@@ -1291,7 +1291,7 @@
     "shop.report_cells.Cell@shop/report_cells.py:10": {
         "content": [
             2,
-            0
+            2
         ]
     },
     "shop.report_cells.ReportRenderer@shop/report_cells.py:15": {},

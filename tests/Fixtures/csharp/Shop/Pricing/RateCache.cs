@@ -10,7 +10,7 @@ public sealed class RateCache(string path)
         {
             File.WriteAllLines(path, rates.Select(rate => $"{rate.Key};{rate.Value}"));
         }
-        // @sin SwallowedException
+        // @sin SwallowCatch
         catch
         {
         }

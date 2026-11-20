@@ -24,7 +24,6 @@ import (
 	_ "github.com/jessegall/code-commandments/sins/backend/spatie"
 	_ "github.com/jessegall/code-commandments/sins/csharp"
 	_ "github.com/jessegall/code-commandments/sins/frontend"
-	_ "github.com/jessegall/code-commandments/sins/go"
 	_ "github.com/jessegall/code-commandments/sins/python"
 	_ "github.com/jessegall/code-commandments/sins/typescript"
 	_ "github.com/jessegall/code-commandments/skill/backend"

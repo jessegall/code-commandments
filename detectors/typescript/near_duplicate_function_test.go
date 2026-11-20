@@ -35,7 +35,7 @@ func TestMigrationsThatFeedLiteralsToOneCalleeAreNoNearCopies(t *testing.T) {
 		}, 2},
 	} {
 		t.Run(name, func(t *testing.T) {
-			found := NearDuplicateFunctionDetector{}.Find(frontendtest.FromSource(t, map[string]string{
+			found := NearDuplicateFunctionDetector.Find(frontendtest.FromSource(t, map[string]string{
 				"src/migrations/brand.ts":  test.source("brand"),
 				"src/migrations/review.ts": test.source("review"),
 			}))

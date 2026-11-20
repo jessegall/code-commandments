@@ -2,70 +2,6 @@
 
 One bad → good per rule this skill teaches, taken from the fixture that proves the detector, so every pair is code that really fires and really passes.
 
-### capability-probe-hub
-
-Three or more methods each ask whether one held object implements an interface, then call it or answer empty: one accessor per optional capability
-
-```php
-----------[ Bad ]----------
-
-// One installed shop plugin, and what it adds to the admin screens.
-
-final class PluginSlot
-{
-    public function __construct(private readonly object $plugin) {}
-
-    public function widgetCount(): int
-    {
-        return $this->plugin instanceof ContributesWidgets ? $this->plugin->widgetCount() : 0;
-    }
-
-    public function routeCount(): int
-    {
-        return $this->plugin instanceof ContributesRoutes ? $this->plugin->routeCount() : 0;
-    }
-
-    public function menuCount(): int
-    {
-        return $this->plugin instanceof ContributesMenus ? $this->plugin->menuCount() : 0;
-    }
-}
-
-----------[ Good ]----------
-
-// One installed shop plugin, told for what it adds to the admin screens.
-
-final class PluginBay
-{
-    public function __construct(private readonly Plugin $plugin) {}
-
-    public function additions(): int
-    {
-        return $this->plugin->widgetCount() + $this->plugin->routeCount() + $this->plugin->menuCount();
-    }
-}
-
-// A shop plugin: it answers every contribution itself, none by default.
-
-abstract class Plugin
-{
-    public function widgetCount(): int
-    {
-        return 0;
-    }
-
-    public function routeCount(): int
-    {
-        return 0;
-    }
-
-    public function menuCount(): int
-    {
-        return 0;
-    }
-}
-```
-
 ### feature-envy
 
 Exiled behaviour / feature envy — a method operating on ONE other owned object's internals that belongs ON that object
@@ -240,55 +176,5 @@ public function town(): string
 public function town(): string
 {
     return $this->depot->town();
-}
-```
-
-### type-switch
-
-two or more `instanceof` tests on the same subject deciding different branches — asking a value what it IS instead of telling it what to do
-
-```php
-----------[ Bad ]----------
-
-public function price(Freightable $freight): int
-{
-    if ($freight instanceof ExpressFreight) {
-        return $freight->weightGrams() * 12 + 500;
-    } elseif ($freight instanceof PalletFreight) {
-        return $freight->pallets() * 4_000;
-    }
-
-    return $freight->weightGrams() * 3;
-}
-
-----------[ Good ]----------
-
-// in Shop\Shipping\ConsignmentFee
-// The FIX: one method on the shared interface, implemented per freight type. Each kind answers
-// for itself, so a new kind needs no edit here at all.
-
-public function priceTold(PricedFreight $freight): int
-{
-    return $freight->priceCents();
-}
-
-// What the caller actually wants to know. Each kind of freight answers it for itself, so pricing a
-// new kind adds a class rather than a branch.
-
-interface PricedFreight
-{
-    public function priceCents(): int;
-}
-
-// in Shop\Shipping\ExpressFreight
-public function priceCents(): int
-{
-    return $this->weightGrams() * 12 + 500;
-}
-
-// in Shop\Shipping\PalletFreight
-public function priceCents(): int
-{
-    return $this->pallets() * 4_000;
 }
 ```

@@ -1,6 +1,7 @@
 package fixture
 
 import (
+	"cmp"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -440,7 +441,11 @@ func isMarkerLine(line string, language source.Language) bool {
 func forKeys(marked sources, keys []string) []Marked {
 	for _, key := range keys {
 		if len(marked[key]) > 0 {
-			return marked[key]
+			chosen := slices.Clone(marked[key])
+			slices.SortFunc(chosen, func(a, b Marked) int {
+				return cmp.Or(cmp.Compare(a.File, b.File), cmp.Compare(a.First, b.First), cmp.Compare(a.Last, b.Last))
+			})
+			return chosen
 		}
 	}
 

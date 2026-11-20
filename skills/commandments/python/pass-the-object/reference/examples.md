@@ -9,49 +9,21 @@ a method taking only bools that every caller computes from the same object — t
 ```py
 ----------[ Bad ]----------
 
-def allows(self, expired: bool) -> bool:
-    return not expired
+def pick(self, fragile: bool, express: bool) -> str:
+    match (fragile, express):
+        case (True, True):
+            return "white-glove"
+        case (True, False):
+            return "careful"
+        case (False, True):
+            return "rush"
+        case _:
+            return "standard"
 
 ----------[ Good ]----------
 
-# in return_desk.py
-def allows_for(self, purchase: Purchase) -> bool:
-    return purchase.days_since <= 30
-
-# in return_desk.py
-def offers_honestly(self, purchases: list[Purchase]) -> list[Purchase]:
-    return [purchase for purchase in purchases if self.policy.allows_for(purchase)]
-```
-
-### python-converted-argument
-
-a scalar parameter its callers keep filling with the same conversion — `receipt_for(str(order.id))` call after call — because it asks for the converted form instead of the value
-
-```py
-----------[ Bad ]----------
-
-# in tip_cents.py
-def ring_up(jar: TipJar, typed: str) -> None:
-    jar.add(Cents.parse(typed))
-
-# in tip_cents.py
-def ring_up_all(jar: TipJar, entries: list[str]) -> None:
-    for typed in entries:
-        jar.add(cents=Cents.parse(typed))
-
-----------[ Good ]----------
-
-# in tip_cents.py
-def add_typed(self, typed: str) -> None:
-    self.total += Cents.parse(typed)
-
-# in tip_cents.py
-def ring_up_honestly(jar: TipJar, typed: str) -> None:
-    jar.add_typed(typed)
-
-# in ledger_lines.py
-def ledger_line_for(entry: LedgerEntry) -> str:
-    return f"#{str(entry.number).zfill(6)} {entry.amount}"
+def pick_for(self, consignment: Consignment) -> str:
+    return self.pick(consignment.contents in ("glass", "ceramic"), consignment.service == "next-day")
 ```
 
 ### python-derived-argument
@@ -77,18 +49,12 @@ a function that takes a container and a key and first resolves one against the o
 ```py
 ----------[ Bad ]----------
 
-def book(seat_map: SeatMap, number: int, guest: str) -> bool:
-    seat = seat_map.seats[number]
-    if seat.taken:
-        return False
-    seat.taken, seat.guest = True, guest
-    return True
+def relabel(plan: FloorPlan, bay_code: str, label: str) -> None:
+    bay = plan.bay(bay_code)
+    bay.label = label.upper()
 
 ----------[ Good ]----------
 
-def book_seat(seat: Seat, guest: str) -> bool:
-    if seat.taken:
-        return False
-    seat.taken, seat.guest = True, guest
-    return True
+def relabel_bay(bay: Bay, label: str) -> None:
+    bay.label = label.upper()
 ```

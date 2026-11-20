@@ -2085,85 +2085,85 @@
         "value": false,
         "inner": []
     },
-    "Shop/Documents/InvoiceArchive.cs@419:ObjectCreationExpression": {
+    "Shop/Documents/InvoiceArchive.cs@454:ObjectCreationExpression": {
         "name": "global::System.ArgumentException",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Documents/InvoiceArchive.cs@423:IdentifierName": {
+    "Shop/Documents/InvoiceArchive.cs@458:IdentifierName": {
         "name": "global::System.ArgumentException",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Documents/InvoiceArchive.cs@441:InterpolatedStringExpression": {
+    "Shop/Documents/InvoiceArchive.cs@476:InterpolatedStringExpression": {
         "name": "global::System.String",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Documents/InvoiceArchive.cs@444:IdentifierName": {
+    "Shop/Documents/InvoiceArchive.cs@479:IdentifierName": {
         "name": "global::System.String",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Documents/InvoiceArchive.cs@482:InvocationExpression": {
+    "Shop/Documents/InvoiceArchive.cs@517:InvocationExpression": {
         "name": "global::System.String",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Documents/InvoiceArchive.cs@489:IdentifierName": {
+    "Shop/Documents/InvoiceArchive.cs@524:IdentifierName": {
         "name": "global::System.String",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Documents/InvoiceArchive.cs@536:PredefinedType": {
+    "Shop/Documents/InvoiceArchive.cs@571:PredefinedType": {
         "name": "global::System.String",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Documents/InvoiceArchive.cs@552:Parameter": {
+    "Shop/Documents/InvoiceArchive.cs@587:Parameter": {
         "name": "global::System.String",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Documents/InvoiceArchive.cs@552:PredefinedType": {
+    "Shop/Documents/InvoiceArchive.cs@587:PredefinedType": {
         "name": "global::System.String",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Documents/InvoiceArchive.cs@616:IdentifierName": {
+    "Shop/Documents/InvoiceArchive.cs@651:IdentifierName": {
         "name": "global::System.IO.File",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Documents/InvoiceArchive.cs@616:InvocationExpression": {
+    "Shop/Documents/InvoiceArchive.cs@651:InvocationExpression": {
         "name": "global::System.String",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Documents/InvoiceArchive.cs@633:IdentifierName": {
+    "Shop/Documents/InvoiceArchive.cs@668:IdentifierName": {
         "name": "global::System.String",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Documents/InvoiceArchive.cs@702:CatchDeclaration": {
+    "Shop/Documents/InvoiceArchive.cs@737:CatchDeclaration": {
         "name": "global::System.IO.IOException",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Documents/InvoiceArchive.cs@703:IdentifierName": {
+    "Shop/Documents/InvoiceArchive.cs@738:IdentifierName": {
         "name": "global::System.IO.IOException",
         "nullable": false,
         "value": false,
@@ -6513,25 +6513,25 @@
         "value": false,
         "inner": []
     },
-    "Shop/Notifications/Outbox.cs@1013:IdentifierName": {
+    "Shop/Notifications/Outbox.cs@1001:IdentifierName": {
         "name": "global::System.Exception",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Notifications/Outbox.cs@1013:SimpleMemberAccessExpression": {
+    "Shop/Notifications/Outbox.cs@1001:SimpleMemberAccessExpression": {
         "name": "global::System.String",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Notifications/Outbox.cs@1019:IdentifierName": {
+    "Shop/Notifications/Outbox.cs@1007:IdentifierName": {
         "name": "global::System.String",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Notifications/Outbox.cs@1094:IdentifierName": {
+    "Shop/Notifications/Outbox.cs@1082:IdentifierName": {
         "name": "global::System.Int32",
         "nullable": false,
         "value": true,
@@ -6657,55 +6657,55 @@
         "value": true,
         "inner": []
     },
-    "Shop/Notifications/Outbox.cs@522:CatchDeclaration": {
+    "Shop/Notifications/Outbox.cs@516:CatchDeclaration": {
         "name": "global::System.Exception",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Notifications/Outbox.cs@523:QualifiedName": {
+    "Shop/Notifications/Outbox.cs@517:QualifiedName": {
         "name": "global::System.Exception",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Notifications/Outbox.cs@621:IdentifierName": {
+    "Shop/Notifications/Outbox.cs@615:IdentifierName": {
         "name": "global::System.Int32",
         "nullable": false,
         "value": true,
         "inner": []
     },
-    "Shop/Notifications/Outbox.cs@645:PredefinedType": {
+    "Shop/Notifications/Outbox.cs@639:PredefinedType": {
         "name": "global::System.Int32",
         "nullable": false,
         "value": true,
         "inner": []
     },
-    "Shop/Notifications/Outbox.cs@661:IdentifierName": {
+    "Shop/Notifications/Outbox.cs@655:IdentifierName": {
         "name": "global::System.IO.TextWriter",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Notifications/Outbox.cs@661:Parameter": {
+    "Shop/Notifications/Outbox.cs@655:Parameter": {
         "name": "global::System.IO.TextWriter",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Notifications/Outbox.cs@691:IdentifierName": {
+    "Shop/Notifications/Outbox.cs@685:IdentifierName": {
         "name": "global::System.Int32",
         "nullable": false,
         "value": true,
         "inner": []
     },
-    "Shop/Notifications/Outbox.cs@702:NumericLiteralExpression": {
+    "Shop/Notifications/Outbox.cs@696:NumericLiteralExpression": {
         "name": "global::System.Int32",
         "nullable": false,
         "value": true,
         "inner": []
     },
-    "Shop/Notifications/Outbox.cs@721:IdentifierName": {
+    "Shop/Notifications/Outbox.cs@715:IdentifierName": {
         "name": "global::System.Collections.Generic.Queue<global::System.String>",
         "nullable": false,
         "value": false,
@@ -6713,25 +6713,25 @@
             "global::System.String"
         ]
     },
-    "Shop/Notifications/Outbox.cs@721:InvocationExpression": {
+    "Shop/Notifications/Outbox.cs@715:InvocationExpression": {
         "name": "global::System.Boolean",
         "nullable": false,
         "value": true,
         "inner": []
     },
-    "Shop/Notifications/Outbox.cs@744:DeclarationExpression": {
+    "Shop/Notifications/Outbox.cs@738:DeclarationExpression": {
         "name": "global::System.String",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Notifications/Outbox.cs@744:IdentifierName": {
+    "Shop/Notifications/Outbox.cs@738:IdentifierName": {
         "name": "global::System.String?",
         "nullable": true,
         "value": false,
         "inner": []
     },
-    "Shop/Notifications/Outbox.cs@811:IdentifierName": {
+    "Shop/Notifications/Outbox.cs@805:IdentifierName": {
         "name": "global::System.Action<global::System.String>",
         "nullable": false,
         "value": false,
@@ -6739,55 +6739,55 @@
             "global::System.String"
         ]
     },
-    "Shop/Notifications/Outbox.cs@811:InvocationExpression": {
+    "Shop/Notifications/Outbox.cs@805:InvocationExpression": {
         "name": "global::System.Void",
         "nullable": false,
         "value": true,
         "inner": []
     },
-    "Shop/Notifications/Outbox.cs@816:IdentifierName": {
+    "Shop/Notifications/Outbox.cs@810:IdentifierName": {
         "name": "global::System.String",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Notifications/Outbox.cs@839:IdentifierName": {
+    "Shop/Notifications/Outbox.cs@833:IdentifierName": {
         "name": "global::System.Int32",
         "nullable": false,
         "value": true,
         "inner": []
     },
-    "Shop/Notifications/Outbox.cs@839:PostIncrementExpression": {
+    "Shop/Notifications/Outbox.cs@833:PostIncrementExpression": {
         "name": "global::System.Int32",
         "nullable": false,
         "value": true,
         "inner": []
     },
-    "Shop/Notifications/Outbox.cs@924:CatchDeclaration": {
+    "Shop/Notifications/Outbox.cs@912:CatchDeclaration": {
         "name": "global::System.Exception",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Notifications/Outbox.cs@925:IdentifierName": {
+    "Shop/Notifications/Outbox.cs@913:IdentifierName": {
         "name": "global::System.Exception",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Notifications/Outbox.cs@972:IdentifierName": {
+    "Shop/Notifications/Outbox.cs@960:IdentifierName": {
         "name": "global::System.IO.TextWriter",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Notifications/Outbox.cs@972:InvocationExpression": {
+    "Shop/Notifications/Outbox.cs@960:InvocationExpression": {
         "name": "global::System.Void",
         "nullable": false,
         "value": true,
         "inner": []
     },
-    "Shop/Notifications/Outbox.cs@986:InterpolatedStringExpression": {
+    "Shop/Notifications/Outbox.cs@974:InterpolatedStringExpression": {
         "name": "global::System.String",
         "nullable": false,
         "value": false,
@@ -11342,7 +11342,7 @@
         "value": true,
         "inner": []
     },
-    "Shop/Orders/Invoicing.cs@1001:IdentifierName": {
+    "Shop/Orders/Invoicing.cs@1005:IdentifierName": {
         "name": "global::System.Collections.Generic.List<global::System.String>",
         "nullable": false,
         "value": false,
@@ -11350,103 +11350,103 @@
             "global::System.String"
         ]
     },
-    "Shop/Orders/Invoicing.cs@1001:InvocationExpression": {
+    "Shop/Orders/Invoicing.cs@1005:InvocationExpression": {
         "name": "global::System.Void",
         "nullable": false,
         "value": true,
         "inner": []
     },
-    "Shop/Orders/Invoicing.cs@1013:InterpolatedStringExpression": {
+    "Shop/Orders/Invoicing.cs@1017:InterpolatedStringExpression": {
         "name": "global::System.String",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Orders/Invoicing.cs@1016:IdentifierName": {
+    "Shop/Orders/Invoicing.cs@1020:IdentifierName": {
         "name": "global::Shop.Orders.OrderLine",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Orders/Invoicing.cs@1016:SimpleMemberAccessExpression": {
+    "Shop/Orders/Invoicing.cs@1020:SimpleMemberAccessExpression": {
         "name": "global::System.String",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Orders/Invoicing.cs@1021:IdentifierName": {
+    "Shop/Orders/Invoicing.cs@1025:IdentifierName": {
         "name": "global::System.String",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Orders/Invoicing.cs@1028:IdentifierName": {
+    "Shop/Orders/Invoicing.cs@1032:IdentifierName": {
         "name": "global::Shop.Orders.OrderLine",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Orders/Invoicing.cs@1028:SimpleMemberAccessExpression": {
+    "Shop/Orders/Invoicing.cs@1032:SimpleMemberAccessExpression": {
         "name": "global::Shop.Orders.Money",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Orders/Invoicing.cs@1033:IdentifierName": {
+    "Shop/Orders/Invoicing.cs@1037:IdentifierName": {
         "name": "global::Shop.Orders.Money",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Orders/Invoicing.cs@1042:IdentifierName": {
+    "Shop/Orders/Invoicing.cs@1046:IdentifierName": {
         "name": "global::System.Int64",
         "nullable": false,
         "value": true,
         "inner": []
     },
-    "Shop/Orders/Invoicing.cs@1078:IdentifierName": {
+    "Shop/Orders/Invoicing.cs@1082:IdentifierName": {
         "name": "global::System.Int64",
         "nullable": false,
         "value": true,
         "inner": []
     },
-    "Shop/Orders/Invoicing.cs@1162:NullableType": {
+    "Shop/Orders/Invoicing.cs@1168:NullableType": {
         "name": "global::System.String",
         "nullable": true,
         "value": false,
         "inner": []
     },
-    "Shop/Orders/Invoicing.cs@1187:IdentifierName": {
+    "Shop/Orders/Invoicing.cs@1193:IdentifierName": {
         "name": "global::Shop.Orders.Order",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Orders/Invoicing.cs@1187:Parameter": {
+    "Shop/Orders/Invoicing.cs@1193:Parameter": {
         "name": "global::Shop.Orders.Order",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Orders/Invoicing.cs@1214:NullableType": {
+    "Shop/Orders/Invoicing.cs@1220:NullableType": {
         "name": "global::System.String",
         "nullable": true,
         "value": false,
         "inner": []
     },
-    "Shop/Orders/Invoicing.cs@1254:IdentifierName": {
+    "Shop/Orders/Invoicing.cs@1260:IdentifierName": {
         "name": "global::Shop.Orders.OrderLine?",
         "nullable": true,
         "value": false,
         "inner": []
     },
-    "Shop/Orders/Invoicing.cs@1266:IdentifierName": {
+    "Shop/Orders/Invoicing.cs@1272:IdentifierName": {
         "name": "global::Shop.Orders.Order",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Orders/Invoicing.cs@1266:SimpleMemberAccessExpression": {
+    "Shop/Orders/Invoicing.cs@1272:SimpleMemberAccessExpression": {
         "name": "global::System.Collections.Generic.IReadOnlyList<global::Shop.Orders.OrderLine>",
         "nullable": false,
         "value": false,
@@ -11454,7 +11454,7 @@
             "global::Shop.Orders.OrderLine"
         ]
     },
-    "Shop/Orders/Invoicing.cs@1272:IdentifierName": {
+    "Shop/Orders/Invoicing.cs@1278:IdentifierName": {
         "name": "global::System.Collections.Generic.IReadOnlyList<global::Shop.Orders.OrderLine>",
         "nullable": false,
         "value": false,
@@ -11462,67 +11462,67 @@
             "global::Shop.Orders.OrderLine"
         ]
     },
-    "Shop/Orders/Invoicing.cs@1305:GreaterThanExpression": {
+    "Shop/Orders/Invoicing.cs@1311:GreaterThanExpression": {
         "name": "global::System.Boolean",
         "nullable": false,
         "value": true,
         "inner": []
     },
-    "Shop/Orders/Invoicing.cs@1305:IdentifierName": {
+    "Shop/Orders/Invoicing.cs@1311:IdentifierName": {
         "name": "global::Shop.Orders.OrderLine",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Orders/Invoicing.cs@1305:SimpleMemberAccessExpression": {
+    "Shop/Orders/Invoicing.cs@1311:SimpleMemberAccessExpression": {
         "name": "global::System.Int32",
         "nullable": false,
         "value": true,
         "inner": []
     },
-    "Shop/Orders/Invoicing.cs@1310:IdentifierName": {
+    "Shop/Orders/Invoicing.cs@1316:IdentifierName": {
         "name": "global::System.Int32",
         "nullable": false,
         "value": true,
         "inner": []
     },
-    "Shop/Orders/Invoicing.cs@1321:NumericLiteralExpression": {
+    "Shop/Orders/Invoicing.cs@1327:NumericLiteralExpression": {
         "name": "global::System.Int32",
         "nullable": false,
         "value": true,
         "inner": []
     },
-    "Shop/Orders/Invoicing.cs@1355:IdentifierName": {
+    "Shop/Orders/Invoicing.cs@1361:IdentifierName": {
         "name": "global::System.String?",
         "nullable": true,
         "value": false,
         "inner": []
     },
-    "Shop/Orders/Invoicing.cs@1355:SimpleAssignmentExpression": {
+    "Shop/Orders/Invoicing.cs@1361:SimpleAssignmentExpression": {
         "name": "global::System.String",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Orders/Invoicing.cs@1363:IdentifierName": {
+    "Shop/Orders/Invoicing.cs@1369:IdentifierName": {
         "name": "global::Shop.Orders.OrderLine",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Orders/Invoicing.cs@1363:SimpleMemberAccessExpression": {
+    "Shop/Orders/Invoicing.cs@1369:SimpleMemberAccessExpression": {
         "name": "global::System.String",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Orders/Invoicing.cs@1368:IdentifierName": {
+    "Shop/Orders/Invoicing.cs@1374:IdentifierName": {
         "name": "global::System.String",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Orders/Invoicing.cs@1436:IdentifierName": {
+    "Shop/Orders/Invoicing.cs@1442:IdentifierName": {
         "name": "global::System.String?",
         "nullable": true,
         "value": false,
@@ -11608,73 +11608,73 @@
             "global::Shop.Orders.OrderLine"
         ]
     },
-    "Shop/Orders/Invoicing.cs@455:GreaterThanExpression": {
+    "Shop/Orders/Invoicing.cs@457:GreaterThanExpression": {
         "name": "global::System.Boolean",
         "nullable": false,
         "value": true,
         "inner": []
     },
-    "Shop/Orders/Invoicing.cs@455:IdentifierName": {
+    "Shop/Orders/Invoicing.cs@457:IdentifierName": {
         "name": "global::Shop.Orders.OrderLine",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Orders/Invoicing.cs@455:SimpleMemberAccessExpression": {
+    "Shop/Orders/Invoicing.cs@457:SimpleMemberAccessExpression": {
         "name": "global::System.Int32",
         "nullable": false,
         "value": true,
         "inner": []
     },
-    "Shop/Orders/Invoicing.cs@460:IdentifierName": {
+    "Shop/Orders/Invoicing.cs@462:IdentifierName": {
         "name": "global::System.Int32",
         "nullable": false,
         "value": true,
         "inner": []
     },
-    "Shop/Orders/Invoicing.cs@471:NumericLiteralExpression": {
+    "Shop/Orders/Invoicing.cs@473:NumericLiteralExpression": {
         "name": "global::System.Int32",
         "nullable": false,
         "value": true,
         "inner": []
     },
-    "Shop/Orders/Invoicing.cs@504:AddAssignmentExpression": {
+    "Shop/Orders/Invoicing.cs@506:AddAssignmentExpression": {
         "name": "global::System.Int64",
         "nullable": false,
         "value": true,
         "inner": []
     },
-    "Shop/Orders/Invoicing.cs@504:IdentifierName": {
+    "Shop/Orders/Invoicing.cs@506:IdentifierName": {
         "name": "global::System.Int64",
         "nullable": false,
         "value": true,
         "inner": []
     },
-    "Shop/Orders/Invoicing.cs@514:IdentifierName": {
+    "Shop/Orders/Invoicing.cs@516:IdentifierName": {
         "name": "global::Shop.Orders.OrderLine",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Orders/Invoicing.cs@514:SimpleMemberAccessExpression": {
+    "Shop/Orders/Invoicing.cs@516:SimpleMemberAccessExpression": {
         "name": "global::Shop.Orders.Money",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Orders/Invoicing.cs@519:IdentifierName": {
+    "Shop/Orders/Invoicing.cs@521:IdentifierName": {
         "name": "global::Shop.Orders.Money",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Orders/Invoicing.cs@528:IdentifierName": {
+    "Shop/Orders/Invoicing.cs@530:IdentifierName": {
         "name": "global::System.Int64",
         "nullable": false,
         "value": true,
         "inner": []
     },
-    "Shop/Orders/Invoicing.cs@551:IdentifierName": {
+    "Shop/Orders/Invoicing.cs@553:IdentifierName": {
         "name": "global::System.Collections.Generic.List<global::System.String>",
         "nullable": false,
         "value": false,
@@ -11682,85 +11682,85 @@
             "global::System.String"
         ]
     },
-    "Shop/Orders/Invoicing.cs@551:InvocationExpression": {
+    "Shop/Orders/Invoicing.cs@553:InvocationExpression": {
         "name": "global::System.Void",
         "nullable": false,
         "value": true,
         "inner": []
     },
-    "Shop/Orders/Invoicing.cs@563:InterpolatedStringExpression": {
+    "Shop/Orders/Invoicing.cs@565:InterpolatedStringExpression": {
         "name": "global::System.String",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Orders/Invoicing.cs@566:IdentifierName": {
+    "Shop/Orders/Invoicing.cs@568:IdentifierName": {
         "name": "global::Shop.Orders.OrderLine",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Orders/Invoicing.cs@566:SimpleMemberAccessExpression": {
+    "Shop/Orders/Invoicing.cs@568:SimpleMemberAccessExpression": {
         "name": "global::System.String",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Orders/Invoicing.cs@571:IdentifierName": {
+    "Shop/Orders/Invoicing.cs@573:IdentifierName": {
         "name": "global::System.String",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Orders/Invoicing.cs@578:IdentifierName": {
+    "Shop/Orders/Invoicing.cs@580:IdentifierName": {
         "name": "global::Shop.Orders.OrderLine",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Orders/Invoicing.cs@578:SimpleMemberAccessExpression": {
+    "Shop/Orders/Invoicing.cs@580:SimpleMemberAccessExpression": {
         "name": "global::Shop.Orders.Money",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Orders/Invoicing.cs@583:IdentifierName": {
+    "Shop/Orders/Invoicing.cs@585:IdentifierName": {
         "name": "global::Shop.Orders.Money",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Orders/Invoicing.cs@592:IdentifierName": {
+    "Shop/Orders/Invoicing.cs@594:IdentifierName": {
         "name": "global::System.Int64",
         "nullable": false,
         "value": true,
         "inner": []
     },
-    "Shop/Orders/Invoicing.cs@642:IdentifierName": {
+    "Shop/Orders/Invoicing.cs@644:IdentifierName": {
         "name": "global::System.Int64",
         "nullable": false,
         "value": true,
         "inner": []
     },
-    "Shop/Orders/Invoicing.cs@722:PredefinedType": {
+    "Shop/Orders/Invoicing.cs@726:PredefinedType": {
         "name": "global::System.Int64",
         "nullable": false,
         "value": true,
         "inner": []
     },
-    "Shop/Orders/Invoicing.cs@736:IdentifierName": {
+    "Shop/Orders/Invoicing.cs@740:IdentifierName": {
         "name": "global::Shop.Orders.Order",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Orders/Invoicing.cs@736:Parameter": {
+    "Shop/Orders/Invoicing.cs@740:Parameter": {
         "name": "global::Shop.Orders.Order",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Orders/Invoicing.cs@749:GenericName": {
+    "Shop/Orders/Invoicing.cs@753:GenericName": {
         "name": "global::System.Collections.Generic.List<global::System.String>",
         "nullable": false,
         "value": false,
@@ -11768,7 +11768,7 @@
             "global::System.String"
         ]
     },
-    "Shop/Orders/Invoicing.cs@749:Parameter": {
+    "Shop/Orders/Invoicing.cs@753:Parameter": {
         "name": "global::System.Collections.Generic.List<global::System.String>",
         "nullable": false,
         "value": false,
@@ -11776,37 +11776,37 @@
             "global::System.String"
         ]
     },
-    "Shop/Orders/Invoicing.cs@754:PredefinedType": {
+    "Shop/Orders/Invoicing.cs@758:PredefinedType": {
         "name": "global::System.String",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Orders/Invoicing.cs@785:PredefinedType": {
+    "Shop/Orders/Invoicing.cs@789:PredefinedType": {
         "name": "global::System.Int64",
         "nullable": false,
         "value": true,
         "inner": []
     },
-    "Shop/Orders/Invoicing.cs@799:NumericLiteralExpression": {
+    "Shop/Orders/Invoicing.cs@803:NumericLiteralExpression": {
         "name": "global::System.Int32",
         "nullable": false,
         "value": true,
         "inner": []
     },
-    "Shop/Orders/Invoicing.cs@820:IdentifierName": {
+    "Shop/Orders/Invoicing.cs@824:IdentifierName": {
         "name": "global::Shop.Orders.OrderLine?",
         "nullable": true,
         "value": false,
         "inner": []
     },
-    "Shop/Orders/Invoicing.cs@832:IdentifierName": {
+    "Shop/Orders/Invoicing.cs@836:IdentifierName": {
         "name": "global::Shop.Orders.Order",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Orders/Invoicing.cs@832:SimpleMemberAccessExpression": {
+    "Shop/Orders/Invoicing.cs@836:SimpleMemberAccessExpression": {
         "name": "global::System.Collections.Generic.IReadOnlyList<global::Shop.Orders.OrderLine>",
         "nullable": false,
         "value": false,
@@ -11814,7 +11814,7 @@
             "global::Shop.Orders.OrderLine"
         ]
     },
-    "Shop/Orders/Invoicing.cs@838:IdentifierName": {
+    "Shop/Orders/Invoicing.cs@842:IdentifierName": {
         "name": "global::System.Collections.Generic.IReadOnlyList<global::Shop.Orders.OrderLine>",
         "nullable": false,
         "value": false,
@@ -11822,67 +11822,67 @@
             "global::Shop.Orders.OrderLine"
         ]
     },
-    "Shop/Orders/Invoicing.cs@871:IdentifierName": {
+    "Shop/Orders/Invoicing.cs@875:IdentifierName": {
         "name": "global::Shop.Orders.OrderLine",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Orders/Invoicing.cs@871:LessThanOrEqualExpression": {
+    "Shop/Orders/Invoicing.cs@875:LessThanOrEqualExpression": {
         "name": "global::System.Boolean",
         "nullable": false,
         "value": true,
         "inner": []
     },
-    "Shop/Orders/Invoicing.cs@871:SimpleMemberAccessExpression": {
+    "Shop/Orders/Invoicing.cs@875:SimpleMemberAccessExpression": {
         "name": "global::System.Int32",
         "nullable": false,
         "value": true,
         "inner": []
     },
-    "Shop/Orders/Invoicing.cs@876:IdentifierName": {
+    "Shop/Orders/Invoicing.cs@880:IdentifierName": {
         "name": "global::System.Int32",
         "nullable": false,
         "value": true,
         "inner": []
     },
-    "Shop/Orders/Invoicing.cs@888:NumericLiteralExpression": {
+    "Shop/Orders/Invoicing.cs@892:NumericLiteralExpression": {
         "name": "global::System.Int32",
         "nullable": false,
         "value": true,
         "inner": []
     },
-    "Shop/Orders/Invoicing.cs@958:AddAssignmentExpression": {
+    "Shop/Orders/Invoicing.cs@962:AddAssignmentExpression": {
         "name": "global::System.Int64",
         "nullable": false,
         "value": true,
         "inner": []
     },
-    "Shop/Orders/Invoicing.cs@958:IdentifierName": {
+    "Shop/Orders/Invoicing.cs@962:IdentifierName": {
         "name": "global::System.Int64",
         "nullable": false,
         "value": true,
         "inner": []
     },
-    "Shop/Orders/Invoicing.cs@968:IdentifierName": {
+    "Shop/Orders/Invoicing.cs@972:IdentifierName": {
         "name": "global::Shop.Orders.OrderLine",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Orders/Invoicing.cs@968:SimpleMemberAccessExpression": {
+    "Shop/Orders/Invoicing.cs@972:SimpleMemberAccessExpression": {
         "name": "global::Shop.Orders.Money",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Orders/Invoicing.cs@973:IdentifierName": {
+    "Shop/Orders/Invoicing.cs@977:IdentifierName": {
         "name": "global::Shop.Orders.Money",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Orders/Invoicing.cs@982:IdentifierName": {
+    "Shop/Orders/Invoicing.cs@986:IdentifierName": {
         "name": "global::System.Int64",
         "nullable": false,
         "value": true,
@@ -11948,133 +11948,133 @@
         "value": true,
         "inner": []
     },
-    "Shop/Orders/Lifecycle.cs@395:ObjectCreationExpression": {
+    "Shop/Orders/Lifecycle.cs@434:ObjectCreationExpression": {
         "name": "global::System.InvalidOperationException",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Orders/Lifecycle.cs@399:IdentifierName": {
+    "Shop/Orders/Lifecycle.cs@438:IdentifierName": {
         "name": "global::System.InvalidOperationException",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Orders/Lifecycle.cs@425:InterpolatedStringExpression": {
+    "Shop/Orders/Lifecycle.cs@464:InterpolatedStringExpression": {
         "name": "global::System.String",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Orders/Lifecycle.cs@445:IdentifierName": {
+    "Shop/Orders/Lifecycle.cs@484:IdentifierName": {
         "name": "global::Shop.Orders.OrderStatus",
         "nullable": false,
         "value": true,
         "inner": []
     },
-    "Shop/Orders/Lifecycle.cs@494:IdentifierName": {
+    "Shop/Orders/Lifecycle.cs@533:IdentifierName": {
         "name": "global::Shop.Orders.OrderStatus",
         "nullable": false,
         "value": true,
         "inner": []
     },
-    "Shop/Orders/Lifecycle.cs@494:SimpleAssignmentExpression": {
+    "Shop/Orders/Lifecycle.cs@533:SimpleAssignmentExpression": {
         "name": "global::Shop.Orders.OrderStatus",
         "nullable": false,
         "value": true,
         "inner": []
     },
-    "Shop/Orders/Lifecycle.cs@503:IdentifierName": {
+    "Shop/Orders/Lifecycle.cs@542:IdentifierName": {
         "name": "global::Shop.Orders.OrderStatus",
         "nullable": false,
         "value": true,
         "inner": []
     },
-    "Shop/Orders/Lifecycle.cs@503:SimpleMemberAccessExpression": {
+    "Shop/Orders/Lifecycle.cs@542:SimpleMemberAccessExpression": {
         "name": "global::Shop.Orders.OrderStatus",
         "nullable": false,
         "value": true,
         "inner": []
     },
-    "Shop/Orders/Lifecycle.cs@515:IdentifierName": {
+    "Shop/Orders/Lifecycle.cs@554:IdentifierName": {
         "name": "global::Shop.Orders.OrderStatus",
         "nullable": false,
         "value": true,
         "inner": []
     },
-    "Shop/Orders/Lifecycle.cs@542:PredefinedType": {
+    "Shop/Orders/Lifecycle.cs@581:PredefinedType": {
         "name": "global::System.Void",
         "nullable": false,
         "value": true,
         "inner": []
     },
-    "Shop/Orders/Lifecycle.cs@571:IdentifierName": {
+    "Shop/Orders/Lifecycle.cs@610:IdentifierName": {
         "name": "global::Shop.Orders.OrderStatus",
         "nullable": false,
         "value": true,
         "inner": []
     },
-    "Shop/Orders/Lifecycle.cs@571:NotEqualsExpression": {
+    "Shop/Orders/Lifecycle.cs@610:NotEqualsExpression": {
         "name": "global::System.Boolean",
         "nullable": false,
         "value": true,
         "inner": []
     },
-    "Shop/Orders/Lifecycle.cs@581:IdentifierName": {
+    "Shop/Orders/Lifecycle.cs@620:IdentifierName": {
         "name": "global::Shop.Orders.OrderStatus",
         "nullable": false,
         "value": true,
         "inner": []
     },
-    "Shop/Orders/Lifecycle.cs@581:SimpleMemberAccessExpression": {
+    "Shop/Orders/Lifecycle.cs@620:SimpleMemberAccessExpression": {
         "name": "global::Shop.Orders.OrderStatus",
         "nullable": false,
         "value": true,
         "inner": []
     },
-    "Shop/Orders/Lifecycle.cs@593:IdentifierName": {
+    "Shop/Orders/Lifecycle.cs@632:IdentifierName": {
         "name": "global::Shop.Orders.OrderStatus",
         "nullable": false,
         "value": true,
         "inner": []
     },
-    "Shop/Orders/Lifecycle.cs@668:ObjectCreationExpression": {
+    "Shop/Orders/Lifecycle.cs@711:ObjectCreationExpression": {
         "name": "global::System.InvalidOperationException",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Orders/Lifecycle.cs@672:IdentifierName": {
+    "Shop/Orders/Lifecycle.cs@715:IdentifierName": {
         "name": "global::System.InvalidOperationException",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Orders/Lifecycle.cs@720:IdentifierName": {
+    "Shop/Orders/Lifecycle.cs@763:IdentifierName": {
         "name": "global::Shop.Orders.OrderStatus",
         "nullable": false,
         "value": true,
         "inner": []
     },
-    "Shop/Orders/Lifecycle.cs@720:SimpleAssignmentExpression": {
+    "Shop/Orders/Lifecycle.cs@763:SimpleAssignmentExpression": {
         "name": "global::Shop.Orders.OrderStatus",
         "nullable": false,
         "value": true,
         "inner": []
     },
-    "Shop/Orders/Lifecycle.cs@729:IdentifierName": {
+    "Shop/Orders/Lifecycle.cs@772:IdentifierName": {
         "name": "global::Shop.Orders.OrderStatus",
         "nullable": false,
         "value": true,
         "inner": []
     },
-    "Shop/Orders/Lifecycle.cs@729:SimpleMemberAccessExpression": {
+    "Shop/Orders/Lifecycle.cs@772:SimpleMemberAccessExpression": {
         "name": "global::Shop.Orders.OrderStatus",
         "nullable": false,
         "value": true,
         "inner": []
     },
-    "Shop/Orders/Lifecycle.cs@741:IdentifierName": {
+    "Shop/Orders/Lifecycle.cs@784:IdentifierName": {
         "name": "global::Shop.Orders.OrderStatus",
         "nullable": false,
         "value": true,
@@ -16749,25 +16749,25 @@
         "value": true,
         "inner": []
     },
-    "Shop/Pricing/Currencies.cs@475:ObjectCreationExpression": {
+    "Shop/Pricing/Currencies.cs@526:ObjectCreationExpression": {
         "name": "global::System.InvalidOperationException",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Pricing/Currencies.cs@479:IdentifierName": {
+    "Shop/Pricing/Currencies.cs@530:IdentifierName": {
         "name": "global::System.InvalidOperationException",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Pricing/Currencies.cs@505:InterpolatedStringExpression": {
+    "Shop/Pricing/Currencies.cs@556:InterpolatedStringExpression": {
         "name": "global::System.String",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Pricing/Currencies.cs@529:IdentifierName": {
+    "Shop/Pricing/Currencies.cs@580:IdentifierName": {
         "name": "global::System.String",
         "nullable": false,
         "value": false,
@@ -18642,19 +18642,19 @@
         "value": true,
         "inner": []
     },
-    "Shop/Pricing/PriceList.cs@461:LogicalNotExpression": {
+    "Shop/Pricing/PriceList.cs@463:LogicalNotExpression": {
         "name": "global::System.Boolean",
         "nullable": false,
         "value": true,
         "inner": []
     },
-    "Shop/Pricing/PriceList.cs@462:ElementAccessExpression": {
+    "Shop/Pricing/PriceList.cs@464:ElementAccessExpression": {
         "name": "global::System.String",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Pricing/PriceList.cs@462:IdentifierName": {
+    "Shop/Pricing/PriceList.cs@464:IdentifierName": {
         "name": "global::System.String[]",
         "nullable": false,
         "value": false,
@@ -18662,25 +18662,25 @@
             "global::System.String"
         ]
     },
-    "Shop/Pricing/PriceList.cs@462:InvocationExpression": {
+    "Shop/Pricing/PriceList.cs@464:InvocationExpression": {
         "name": "global::System.Boolean",
         "nullable": false,
         "value": true,
         "inner": []
     },
-    "Shop/Pricing/PriceList.cs@467:IdentifierName": {
+    "Shop/Pricing/PriceList.cs@469:IdentifierName": {
         "name": "global::System.Int32",
         "nullable": false,
         "value": true,
         "inner": []
     },
-    "Shop/Pricing/PriceList.cs@485:CharacterLiteralExpression": {
+    "Shop/Pricing/PriceList.cs@487:CharacterLiteralExpression": {
         "name": "global::System.Char",
         "nullable": false,
         "value": true,
         "inner": []
     },
-    "Shop/Pricing/PriceList.cs@521:IdentifierName": {
+    "Shop/Pricing/PriceList.cs@523:IdentifierName": {
         "name": "global::System.String[]?",
         "nullable": true,
         "value": false,
@@ -18688,13 +18688,13 @@
             "global::System.String"
         ]
     },
-    "Shop/Pricing/PriceList.cs@533:ElementAccessExpression": {
+    "Shop/Pricing/PriceList.cs@535:ElementAccessExpression": {
         "name": "global::System.String",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Pricing/PriceList.cs@533:IdentifierName": {
+    "Shop/Pricing/PriceList.cs@535:IdentifierName": {
         "name": "global::System.String[]",
         "nullable": false,
         "value": false,
@@ -18702,7 +18702,7 @@
             "global::System.String"
         ]
     },
-    "Shop/Pricing/PriceList.cs@533:InvocationExpression": {
+    "Shop/Pricing/PriceList.cs@535:InvocationExpression": {
         "name": "global::System.String[]",
         "nullable": false,
         "value": false,
@@ -18710,25 +18710,25 @@
             "global::System.String"
         ]
     },
-    "Shop/Pricing/PriceList.cs@538:IdentifierName": {
+    "Shop/Pricing/PriceList.cs@540:IdentifierName": {
         "name": "global::System.Int32",
         "nullable": false,
         "value": true,
         "inner": []
     },
-    "Shop/Pricing/PriceList.cs@551:CharacterLiteralExpression": {
+    "Shop/Pricing/PriceList.cs@553:CharacterLiteralExpression": {
         "name": "global::System.Char",
         "nullable": false,
         "value": true,
         "inner": []
     },
-    "Shop/Pricing/PriceList.cs@573:ElementAccessExpression": {
+    "Shop/Pricing/PriceList.cs@575:ElementAccessExpression": {
         "name": "global::System.Int64",
         "nullable": false,
         "value": true,
         "inner": []
     },
-    "Shop/Pricing/PriceList.cs@573:IdentifierName": {
+    "Shop/Pricing/PriceList.cs@575:IdentifierName": {
         "name": "global::System.Collections.Generic.Dictionary<global::System.String, global::System.Int64>",
         "nullable": false,
         "value": false,
@@ -18737,19 +18737,19 @@
             "global::System.Int64"
         ]
     },
-    "Shop/Pricing/PriceList.cs@573:SimpleAssignmentExpression": {
+    "Shop/Pricing/PriceList.cs@575:SimpleAssignmentExpression": {
         "name": "global::System.Int64",
         "nullable": false,
         "value": true,
         "inner": []
     },
-    "Shop/Pricing/PriceList.cs@580:ElementAccessExpression": {
+    "Shop/Pricing/PriceList.cs@582:ElementAccessExpression": {
         "name": "global::System.String",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Pricing/PriceList.cs@580:IdentifierName": {
+    "Shop/Pricing/PriceList.cs@582:IdentifierName": {
         "name": "global::System.String[]",
         "nullable": false,
         "value": false,
@@ -18757,37 +18757,37 @@
             "global::System.String"
         ]
     },
-    "Shop/Pricing/PriceList.cs@580:InvocationExpression": {
+    "Shop/Pricing/PriceList.cs@582:InvocationExpression": {
         "name": "global::System.String",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Pricing/PriceList.cs@586:NumericLiteralExpression": {
+    "Shop/Pricing/PriceList.cs@588:NumericLiteralExpression": {
         "name": "global::System.Int32",
         "nullable": false,
         "value": true,
         "inner": []
     },
-    "Shop/Pricing/PriceList.cs@599:InvocationExpression": {
+    "Shop/Pricing/PriceList.cs@601:InvocationExpression": {
         "name": "global::System.Int64",
         "nullable": false,
         "value": true,
         "inner": []
     },
-    "Shop/Pricing/PriceList.cs@599:PredefinedType": {
+    "Shop/Pricing/PriceList.cs@601:PredefinedType": {
         "name": "global::System.Int64",
         "nullable": false,
         "value": true,
         "inner": []
     },
-    "Shop/Pricing/PriceList.cs@610:ElementAccessExpression": {
+    "Shop/Pricing/PriceList.cs@612:ElementAccessExpression": {
         "name": "global::System.String",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Pricing/PriceList.cs@610:IdentifierName": {
+    "Shop/Pricing/PriceList.cs@612:IdentifierName": {
         "name": "global::System.String[]",
         "nullable": false,
         "value": false,
@@ -18795,13 +18795,13 @@
             "global::System.String"
         ]
     },
-    "Shop/Pricing/PriceList.cs@616:NumericLiteralExpression": {
+    "Shop/Pricing/PriceList.cs@618:NumericLiteralExpression": {
         "name": "global::System.Int32",
         "nullable": false,
         "value": true,
         "inner": []
     },
-    "Shop/Pricing/PriceList.cs@661:IdentifierName": {
+    "Shop/Pricing/PriceList.cs@663:IdentifierName": {
         "name": "global::System.Collections.Generic.Dictionary<global::System.String, global::System.Int64>",
         "nullable": false,
         "value": false,
@@ -18810,13 +18810,13 @@
             "global::System.Int64"
         ]
     },
-    "Shop/Pricing/PriceList.cs@728:PredefinedType": {
+    "Shop/Pricing/PriceList.cs@732:PredefinedType": {
         "name": "global::System.Int32",
         "nullable": false,
         "value": true,
         "inner": []
     },
-    "Shop/Pricing/PriceList.cs@741:ArrayType": {
+    "Shop/Pricing/PriceList.cs@745:ArrayType": {
         "name": "global::System.String[]",
         "nullable": false,
         "value": false,
@@ -18824,7 +18824,7 @@
             "global::System.String"
         ]
     },
-    "Shop/Pricing/PriceList.cs@741:Parameter": {
+    "Shop/Pricing/PriceList.cs@745:Parameter": {
         "name": "global::System.String[]",
         "nullable": false,
         "value": false,
@@ -18832,25 +18832,25 @@
             "global::System.String"
         ]
     },
-    "Shop/Pricing/PriceList.cs@770:IdentifierName": {
+    "Shop/Pricing/PriceList.cs@774:IdentifierName": {
         "name": "global::System.Int32",
         "nullable": false,
         "value": true,
         "inner": []
     },
-    "Shop/Pricing/PriceList.cs@782:NumericLiteralExpression": {
+    "Shop/Pricing/PriceList.cs@786:NumericLiteralExpression": {
         "name": "global::System.Int32",
         "nullable": false,
         "value": true,
         "inner": []
     },
-    "Shop/Pricing/PriceList.cs@803:IdentifierName": {
+    "Shop/Pricing/PriceList.cs@807:IdentifierName": {
         "name": "global::System.String?",
         "nullable": true,
         "value": false,
         "inner": []
     },
-    "Shop/Pricing/PriceList.cs@814:IdentifierName": {
+    "Shop/Pricing/PriceList.cs@818:IdentifierName": {
         "name": "global::System.String[]",
         "nullable": false,
         "value": false,
@@ -18858,37 +18858,37 @@
             "global::System.String"
         ]
     },
-    "Shop/Pricing/PriceList.cs@846:IdentifierName": {
+    "Shop/Pricing/PriceList.cs@850:IdentifierName": {
         "name": "global::System.String",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Pricing/PriceList.cs@846:InvocationExpression": {
+    "Shop/Pricing/PriceList.cs@850:InvocationExpression": {
         "name": "global::System.Boolean",
         "nullable": false,
         "value": true,
         "inner": []
     },
-    "Shop/Pricing/PriceList.cs@861:CharacterLiteralExpression": {
+    "Shop/Pricing/PriceList.cs@865:CharacterLiteralExpression": {
         "name": "global::System.Char",
         "nullable": false,
         "value": true,
         "inner": []
     },
-    "Shop/Pricing/PriceList.cs@897:IdentifierName": {
+    "Shop/Pricing/PriceList.cs@901:IdentifierName": {
         "name": "global::System.Int32",
         "nullable": false,
         "value": true,
         "inner": []
     },
-    "Shop/Pricing/PriceList.cs@897:PostIncrementExpression": {
+    "Shop/Pricing/PriceList.cs@901:PostIncrementExpression": {
         "name": "global::System.Int32",
         "nullable": false,
         "value": true,
         "inner": []
     },
-    "Shop/Pricing/PriceList.cs@946:IdentifierName": {
+    "Shop/Pricing/PriceList.cs@950:IdentifierName": {
         "name": "global::System.Int32",
         "nullable": false,
         "value": true,
@@ -20052,49 +20052,49 @@
         "value": true,
         "inner": []
     },
-    "Shop/Pricing/RateFeed.cs@498:ObjectCreationExpression": {
+    "Shop/Pricing/RateFeed.cs@537:ObjectCreationExpression": {
         "name": "global::System.TimeoutException",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Pricing/RateFeed.cs@502:IdentifierName": {
+    "Shop/Pricing/RateFeed.cs@541:IdentifierName": {
         "name": "global::System.TimeoutException",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Pricing/RateFeed.cs@519:StringLiteralExpression": {
+    "Shop/Pricing/RateFeed.cs@558:StringLiteralExpression": {
         "name": "global::System.String",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Pricing/RateFeed.cs@584:ObjectCreationExpression": {
+    "Shop/Pricing/RateFeed.cs@658:ObjectCreationExpression": {
         "name": "global::System.IO.InvalidDataException",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Pricing/RateFeed.cs@588:IdentifierName": {
+    "Shop/Pricing/RateFeed.cs@662:IdentifierName": {
         "name": "global::System.IO.InvalidDataException",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Pricing/RateFeed.cs@609:InterpolatedStringExpression": {
+    "Shop/Pricing/RateFeed.cs@683:InterpolatedStringExpression": {
         "name": "global::System.String",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Pricing/RateFeed.cs@631:IdentifierName": {
+    "Shop/Pricing/RateFeed.cs@705:IdentifierName": {
         "name": "global::System.String",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Pricing/RateFeed.cs@642:IdentifierName": {
+    "Shop/Pricing/RateFeed.cs@716:IdentifierName": {
         "name": "global::System.Exception",
         "nullable": false,
         "value": false,
@@ -25342,91 +25342,91 @@
         "value": false,
         "inner": []
     },
-    "Shop/Shipping/CarrierDirectory.cs@1003:StringLiteralExpression": {
+    "Shop/Shipping/CarrierDirectory.cs@1085:StringLiteralExpression": {
         "name": "global::System.String",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Shipping/CarrierDirectory.cs@1030:InvocationExpression": {
+    "Shop/Shipping/CarrierDirectory.cs@1112:InvocationExpression": {
         "name": "global::System.String",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Shipping/CarrierDirectory.cs@1037:IdentifierName": {
+    "Shop/Shipping/CarrierDirectory.cs@1119:IdentifierName": {
         "name": "global::System.String",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Shipping/CarrierDirectory.cs@1074:IdentifierName": {
+    "Shop/Shipping/CarrierDirectory.cs@1156:IdentifierName": {
         "name": "global::System.String",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Shipping/CarrierDirectory.cs@1074:InvocationExpression": {
+    "Shop/Shipping/CarrierDirectory.cs@1156:InvocationExpression": {
         "name": "global::System.String",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Shipping/CarrierDirectory.cs@1178:IdentifierName": {
+    "Shop/Shipping/CarrierDirectory.cs@1264:IdentifierName": {
         "name": "global::System.InvalidOperationException",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Shipping/CarrierDirectory.cs@1233:Parameter": {
+    "Shop/Shipping/CarrierDirectory.cs@1319:Parameter": {
         "name": "global::System.String",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Shipping/CarrierDirectory.cs@1233:PredefinedType": {
+    "Shop/Shipping/CarrierDirectory.cs@1319:PredefinedType": {
         "name": "global::System.String",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Shipping/CarrierDirectory.cs@1256:IdentifierName": {
+    "Shop/Shipping/CarrierDirectory.cs@1342:IdentifierName": {
         "name": "global::System.String",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Shipping/CarrierDirectory.cs@1287:IdentifierName": {
+    "Shop/Shipping/CarrierDirectory.cs@1373:IdentifierName": {
         "name": "global::Shop.Shipping.UnknownCarrier",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Shipping/CarrierDirectory.cs@1308:Parameter": {
+    "Shop/Shipping/CarrierDirectory.cs@1394:Parameter": {
         "name": "global::System.String",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Shipping/CarrierDirectory.cs@1308:PredefinedType": {
+    "Shop/Shipping/CarrierDirectory.cs@1394:PredefinedType": {
         "name": "global::System.String",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Shipping/CarrierDirectory.cs@1327:ImplicitObjectCreationExpression": {
+    "Shop/Shipping/CarrierDirectory.cs@1413:ImplicitObjectCreationExpression": {
         "name": "global::Shop.Shipping.UnknownCarrier",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Shipping/CarrierDirectory.cs@1331:InterpolatedStringExpression": {
+    "Shop/Shipping/CarrierDirectory.cs@1417:InterpolatedStringExpression": {
         "name": "global::System.String",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Shipping/CarrierDirectory.cs@1363:IdentifierName": {
+    "Shop/Shipping/CarrierDirectory.cs@1449:IdentifierName": {
         "name": "global::System.String",
         "nullable": false,
         "value": false,
@@ -25516,61 +25516,61 @@
         "value": false,
         "inner": []
     },
-    "Shop/Shipping/CarrierDirectory.cs@466:ObjectCreationExpression": {
+    "Shop/Shipping/CarrierDirectory.cs@505:ObjectCreationExpression": {
         "name": "global::System.Exception",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Shipping/CarrierDirectory.cs@470:IdentifierName": {
+    "Shop/Shipping/CarrierDirectory.cs@509:IdentifierName": {
         "name": "global::System.Exception",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Shipping/CarrierDirectory.cs@480:InterpolatedStringExpression": {
+    "Shop/Shipping/CarrierDirectory.cs@519:InterpolatedStringExpression": {
         "name": "global::System.String",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Shipping/CarrierDirectory.cs@512:IdentifierName": {
+    "Shop/Shipping/CarrierDirectory.cs@551:IdentifierName": {
         "name": "global::System.String",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Shipping/CarrierDirectory.cs@552:IdentifierName": {
+    "Shop/Shipping/CarrierDirectory.cs@591:IdentifierName": {
         "name": "global::System.String",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Shipping/CarrierDirectory.cs@579:PredefinedType": {
+    "Shop/Shipping/CarrierDirectory.cs@618:PredefinedType": {
         "name": "global::System.String",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Shipping/CarrierDirectory.cs@596:Parameter": {
+    "Shop/Shipping/CarrierDirectory.cs@635:Parameter": {
         "name": "global::System.String",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Shipping/CarrierDirectory.cs@596:PredefinedType": {
+    "Shop/Shipping/CarrierDirectory.cs@635:PredefinedType": {
         "name": "global::System.String",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Shipping/CarrierDirectory.cs@630:LogicalNotExpression": {
+    "Shop/Shipping/CarrierDirectory.cs@669:LogicalNotExpression": {
         "name": "global::System.Boolean",
         "nullable": false,
         "value": true,
         "inner": []
     },
-    "Shop/Shipping/CarrierDirectory.cs@631:IdentifierName": {
+    "Shop/Shipping/CarrierDirectory.cs@670:IdentifierName": {
         "name": "global::System.Collections.Generic.IReadOnlyDictionary<global::System.String, global::System.String>",
         "nullable": false,
         "value": false,
@@ -25578,97 +25578,97 @@
             "global::System.String"
         ]
     },
-    "Shop/Shipping/CarrierDirectory.cs@631:InvocationExpression": {
+    "Shop/Shipping/CarrierDirectory.cs@670:InvocationExpression": {
         "name": "global::System.Boolean",
         "nullable": false,
         "value": true,
         "inner": []
     },
-    "Shop/Shipping/CarrierDirectory.cs@652:IdentifierName": {
+    "Shop/Shipping/CarrierDirectory.cs@691:IdentifierName": {
         "name": "global::System.String",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Shipping/CarrierDirectory.cs@665:DeclarationExpression": {
+    "Shop/Shipping/CarrierDirectory.cs@704:DeclarationExpression": {
         "name": "global::System.String",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Shipping/CarrierDirectory.cs@665:IdentifierName": {
+    "Shop/Shipping/CarrierDirectory.cs@704:IdentifierName": {
         "name": "global::System.String?",
         "nullable": true,
         "value": false,
         "inner": []
     },
-    "Shop/Shipping/CarrierDirectory.cs@742:IdentifierName": {
+    "Shop/Shipping/CarrierDirectory.cs@785:IdentifierName": {
         "name": "global::Shop.Shipping.UnknownCarrier",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Shipping/CarrierDirectory.cs@742:InvocationExpression": {
+    "Shop/Shipping/CarrierDirectory.cs@785:InvocationExpression": {
         "name": "global::Shop.Shipping.UnknownCarrier",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Shipping/CarrierDirectory.cs@763:IdentifierName": {
+    "Shop/Shipping/CarrierDirectory.cs@806:IdentifierName": {
         "name": "global::System.String",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Shipping/CarrierDirectory.cs@799:IdentifierName": {
+    "Shop/Shipping/CarrierDirectory.cs@842:IdentifierName": {
         "name": "global::System.String",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Shipping/CarrierDirectory.cs@826:PredefinedType": {
+    "Shop/Shipping/CarrierDirectory.cs@869:PredefinedType": {
         "name": "global::System.String",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Shipping/CarrierDirectory.cs@844:Parameter": {
+    "Shop/Shipping/CarrierDirectory.cs@887:Parameter": {
         "name": "global::System.String",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Shipping/CarrierDirectory.cs@844:PredefinedType": {
+    "Shop/Shipping/CarrierDirectory.cs@887:PredefinedType": {
         "name": "global::System.String",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Shipping/CarrierDirectory.cs@878:InvocationExpression": {
+    "Shop/Shipping/CarrierDirectory.cs@921:InvocationExpression": {
         "name": "global::System.Boolean",
         "nullable": false,
         "value": true,
         "inner": []
     },
-    "Shop/Shipping/CarrierDirectory.cs@878:PredefinedType": {
+    "Shop/Shipping/CarrierDirectory.cs@921:PredefinedType": {
         "name": "global::System.String",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Shipping/CarrierDirectory.cs@904:IdentifierName": {
+    "Shop/Shipping/CarrierDirectory.cs@947:IdentifierName": {
         "name": "global::System.String",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Shipping/CarrierDirectory.cs@981:ObjectCreationExpression": {
+    "Shop/Shipping/CarrierDirectory.cs@1063:ObjectCreationExpression": {
         "name": "global::System.ArgumentException",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Shipping/CarrierDirectory.cs@985:IdentifierName": {
+    "Shop/Shipping/CarrierDirectory.cs@1067:IdentifierName": {
         "name": "global::System.ArgumentException",
         "nullable": false,
         "value": false,
@@ -30255,31 +30255,31 @@
         "value": false,
         "inner": []
     },
-    "Shop/Shipping/Webhooks.cs@485:ObjectCreationExpression": {
+    "Shop/Shipping/Webhooks.cs@524:ObjectCreationExpression": {
         "name": "global::System.Text.Json.JsonException",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Shipping/Webhooks.cs@489:IdentifierName": {
+    "Shop/Shipping/Webhooks.cs@528:IdentifierName": {
         "name": "global::System.Text.Json.JsonException",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Shipping/Webhooks.cs@503:StringLiteralExpression": {
+    "Shop/Shipping/Webhooks.cs@542:StringLiteralExpression": {
         "name": "global::System.String",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Shipping/Webhooks.cs@566:PredefinedType": {
+    "Shop/Shipping/Webhooks.cs@605:PredefinedType": {
         "name": "global::System.String",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Shipping/Webhooks.cs@580:GenericName": {
+    "Shop/Shipping/Webhooks.cs@619:GenericName": {
         "name": "global::System.Collections.Generic.IReadOnlyDictionary<global::System.String, global::System.String>",
         "nullable": false,
         "value": false,
@@ -30287,7 +30287,7 @@
             "global::System.String"
         ]
     },
-    "Shop/Shipping/Webhooks.cs@580:Parameter": {
+    "Shop/Shipping/Webhooks.cs@619:Parameter": {
         "name": "global::System.Collections.Generic.IReadOnlyDictionary<global::System.String, global::System.String>",
         "nullable": false,
         "value": false,
@@ -30295,25 +30295,25 @@
             "global::System.String"
         ]
     },
-    "Shop/Shipping/Webhooks.cs@600:PredefinedType": {
+    "Shop/Shipping/Webhooks.cs@639:PredefinedType": {
         "name": "global::System.String",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Shipping/Webhooks.cs@608:PredefinedType": {
+    "Shop/Shipping/Webhooks.cs@647:PredefinedType": {
         "name": "global::System.String",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Shipping/Webhooks.cs@675:InvocationExpression": {
+    "Shop/Shipping/Webhooks.cs@714:InvocationExpression": {
         "name": "global::System.String",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Shipping/Webhooks.cs@681:IdentifierName": {
+    "Shop/Shipping/Webhooks.cs@720:IdentifierName": {
         "name": "global::System.Collections.Generic.IReadOnlyDictionary<global::System.String, global::System.String>",
         "nullable": false,
         "value": false,
@@ -30321,19 +30321,19 @@
             "global::System.String"
         ]
     },
-    "Shop/Shipping/Webhooks.cs@689:StringLiteralExpression": {
+    "Shop/Shipping/Webhooks.cs@728:StringLiteralExpression": {
         "name": "global::System.String",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Shipping/Webhooks.cs@757:IdentifierName": {
+    "Shop/Shipping/Webhooks.cs@796:IdentifierName": {
         "name": "global::Shop.Shipping.CarrierEvent",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Shipping/Webhooks.cs@776:GenericName": {
+    "Shop/Shipping/Webhooks.cs@815:GenericName": {
         "name": "global::System.Collections.Generic.IReadOnlyDictionary<global::System.String, global::System.String>",
         "nullable": false,
         "value": false,
@@ -30341,7 +30341,7 @@
             "global::System.String"
         ]
     },
-    "Shop/Shipping/Webhooks.cs@776:Parameter": {
+    "Shop/Shipping/Webhooks.cs@815:Parameter": {
         "name": "global::System.Collections.Generic.IReadOnlyDictionary<global::System.String, global::System.String>",
         "nullable": false,
         "value": false,
@@ -30349,31 +30349,31 @@
             "global::System.String"
         ]
     },
-    "Shop/Shipping/Webhooks.cs@796:PredefinedType": {
+    "Shop/Shipping/Webhooks.cs@835:PredefinedType": {
         "name": "global::System.String",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Shipping/Webhooks.cs@804:PredefinedType": {
+    "Shop/Shipping/Webhooks.cs@843:PredefinedType": {
         "name": "global::System.String",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Shipping/Webhooks.cs@823:ImplicitObjectCreationExpression": {
+    "Shop/Shipping/Webhooks.cs@862:ImplicitObjectCreationExpression": {
         "name": "global::Shop.Shipping.CarrierEvent",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Shipping/Webhooks.cs@827:InvocationExpression": {
+    "Shop/Shipping/Webhooks.cs@866:InvocationExpression": {
         "name": "global::System.String",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Shipping/Webhooks.cs@833:IdentifierName": {
+    "Shop/Shipping/Webhooks.cs@872:IdentifierName": {
         "name": "global::System.Collections.Generic.IReadOnlyDictionary<global::System.String, global::System.String>",
         "nullable": false,
         "value": false,
@@ -30381,19 +30381,19 @@
             "global::System.String"
         ]
     },
-    "Shop/Shipping/Webhooks.cs@841:StringLiteralExpression": {
+    "Shop/Shipping/Webhooks.cs@880:StringLiteralExpression": {
         "name": "global::System.String",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Shipping/Webhooks.cs@852:InvocationExpression": {
+    "Shop/Shipping/Webhooks.cs@891:InvocationExpression": {
         "name": "global::System.String",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Shipping/Webhooks.cs@858:IdentifierName": {
+    "Shop/Shipping/Webhooks.cs@897:IdentifierName": {
         "name": "global::System.Collections.Generic.IReadOnlyDictionary<global::System.String, global::System.String>",
         "nullable": false,
         "value": false,
@@ -30413,19 +30413,19 @@
         "value": false,
         "inner": []
     },
-    "Shop/Shipping/Webhooks.cs@866:StringLiteralExpression": {
+    "Shop/Shipping/Webhooks.cs@905:StringLiteralExpression": {
         "name": "global::System.String",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Shipping/Webhooks.cs@898:PredefinedType": {
+    "Shop/Shipping/Webhooks.cs@937:PredefinedType": {
         "name": "global::System.String",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Shipping/Webhooks.cs@911:GenericName": {
+    "Shop/Shipping/Webhooks.cs@950:GenericName": {
         "name": "global::System.Collections.Generic.IReadOnlyDictionary<global::System.String, global::System.String>",
         "nullable": false,
         "value": false,
@@ -30433,7 +30433,7 @@
             "global::System.String"
         ]
     },
-    "Shop/Shipping/Webhooks.cs@911:Parameter": {
+    "Shop/Shipping/Webhooks.cs@950:Parameter": {
         "name": "global::System.Collections.Generic.IReadOnlyDictionary<global::System.String, global::System.String>",
         "nullable": false,
         "value": false,
@@ -30441,37 +30441,37 @@
             "global::System.String"
         ]
     },
-    "Shop/Shipping/Webhooks.cs@931:PredefinedType": {
+    "Shop/Shipping/Webhooks.cs@970:PredefinedType": {
         "name": "global::System.String",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Shipping/Webhooks.cs@939:PredefinedType": {
+    "Shop/Shipping/Webhooks.cs@978:PredefinedType": {
         "name": "global::System.String",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Shipping/Webhooks.cs@955:Parameter": {
+    "Shop/Shipping/Webhooks.cs@994:Parameter": {
         "name": "global::System.String",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Shipping/Webhooks.cs@955:PredefinedType": {
+    "Shop/Shipping/Webhooks.cs@994:PredefinedType": {
         "name": "global::System.String",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Shipping/Webhooks.cs@971:ElementAccessExpression": {
+    "Shop/Shipping/Webhooks.cs@1010:ElementAccessExpression": {
         "name": "global::System.String",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Shipping/Webhooks.cs@971:IdentifierName": {
+    "Shop/Shipping/Webhooks.cs@1010:IdentifierName": {
         "name": "global::System.Collections.Generic.IReadOnlyDictionary<global::System.String, global::System.String>",
         "nullable": false,
         "value": false,
@@ -30479,13 +30479,13 @@
             "global::System.String"
         ]
     },
-    "Shop/Shipping/Webhooks.cs@971:InvocationExpression": {
+    "Shop/Shipping/Webhooks.cs@1010:InvocationExpression": {
         "name": "global::System.String",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Shipping/Webhooks.cs@978:IdentifierName": {
+    "Shop/Shipping/Webhooks.cs@1017:IdentifierName": {
         "name": "global::System.String",
         "nullable": false,
         "value": false,
@@ -31120,13 +31120,13 @@
             "global::System.Int32"
         ]
     },
-    "Shop/Stock/Arrivals.cs@459:GreaterThanExpression": {
+    "Shop/Stock/Arrivals.cs@461:GreaterThanExpression": {
         "name": "global::System.Boolean",
         "nullable": false,
         "value": true,
         "inner": []
     },
-    "Shop/Stock/Arrivals.cs@459:IdentifierName": {
+    "Shop/Stock/Arrivals.cs@461:IdentifierName": {
         "name": "(global::System.String Sku, global::System.Int32 Units)",
         "nullable": false,
         "value": true,
@@ -31135,31 +31135,31 @@
             "global::System.Int32"
         ]
     },
-    "Shop/Stock/Arrivals.cs@459:SimpleMemberAccessExpression": {
+    "Shop/Stock/Arrivals.cs@461:SimpleMemberAccessExpression": {
         "name": "global::System.Int32",
         "nullable": false,
         "value": true,
         "inner": []
     },
-    "Shop/Stock/Arrivals.cs@467:IdentifierName": {
+    "Shop/Stock/Arrivals.cs@469:IdentifierName": {
         "name": "global::System.Int32",
         "nullable": false,
         "value": true,
         "inner": []
     },
-    "Shop/Stock/Arrivals.cs@475:NumericLiteralExpression": {
+    "Shop/Stock/Arrivals.cs@477:NumericLiteralExpression": {
         "name": "global::System.Int32",
         "nullable": false,
         "value": true,
         "inner": []
     },
-    "Shop/Stock/Arrivals.cs@508:ElementAccessExpression": {
+    "Shop/Stock/Arrivals.cs@510:ElementAccessExpression": {
         "name": "global::System.Int32",
         "nullable": false,
         "value": true,
         "inner": []
     },
-    "Shop/Stock/Arrivals.cs@508:IdentifierName": {
+    "Shop/Stock/Arrivals.cs@510:IdentifierName": {
         "name": "global::System.Collections.Generic.Dictionary<global::System.String, global::System.Int32>",
         "nullable": false,
         "value": false,
@@ -31168,13 +31168,13 @@
             "global::System.Int32"
         ]
     },
-    "Shop/Stock/Arrivals.cs@508:SimpleAssignmentExpression": {
+    "Shop/Stock/Arrivals.cs@510:SimpleAssignmentExpression": {
         "name": "global::System.Int32",
         "nullable": false,
         "value": true,
         "inner": []
     },
-    "Shop/Stock/Arrivals.cs@514:IdentifierName": {
+    "Shop/Stock/Arrivals.cs@516:IdentifierName": {
         "name": "(global::System.String Sku, global::System.Int32 Units)",
         "nullable": false,
         "value": true,
@@ -31183,25 +31183,25 @@
             "global::System.Int32"
         ]
     },
-    "Shop/Stock/Arrivals.cs@514:SimpleMemberAccessExpression": {
+    "Shop/Stock/Arrivals.cs@516:SimpleMemberAccessExpression": {
         "name": "global::System.String",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Stock/Arrivals.cs@522:IdentifierName": {
+    "Shop/Stock/Arrivals.cs@524:IdentifierName": {
         "name": "global::System.String",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Stock/Arrivals.cs@529:AddExpression": {
+    "Shop/Stock/Arrivals.cs@531:AddExpression": {
         "name": "global::System.Int32",
         "nullable": false,
         "value": true,
         "inner": []
     },
-    "Shop/Stock/Arrivals.cs@529:IdentifierName": {
+    "Shop/Stock/Arrivals.cs@531:IdentifierName": {
         "name": "global::System.Collections.Generic.Dictionary<global::System.String, global::System.Int32>",
         "nullable": false,
         "value": false,
@@ -31210,13 +31210,13 @@
             "global::System.Int32"
         ]
     },
-    "Shop/Stock/Arrivals.cs@529:InvocationExpression": {
+    "Shop/Stock/Arrivals.cs@531:InvocationExpression": {
         "name": "global::System.Int32",
         "nullable": false,
         "value": true,
         "inner": []
     },
-    "Shop/Stock/Arrivals.cs@553:IdentifierName": {
+    "Shop/Stock/Arrivals.cs@555:IdentifierName": {
         "name": "(global::System.String Sku, global::System.Int32 Units)",
         "nullable": false,
         "value": true,
@@ -31225,19 +31225,19 @@
             "global::System.Int32"
         ]
     },
-    "Shop/Stock/Arrivals.cs@553:SimpleMemberAccessExpression": {
+    "Shop/Stock/Arrivals.cs@555:SimpleMemberAccessExpression": {
         "name": "global::System.String",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Stock/Arrivals.cs@561:IdentifierName": {
+    "Shop/Stock/Arrivals.cs@563:IdentifierName": {
         "name": "global::System.String",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Stock/Arrivals.cs@568:IdentifierName": {
+    "Shop/Stock/Arrivals.cs@570:IdentifierName": {
         "name": "(global::System.String Sku, global::System.Int32 Units)",
         "nullable": false,
         "value": true,
@@ -31246,31 +31246,31 @@
             "global::System.Int32"
         ]
     },
-    "Shop/Stock/Arrivals.cs@568:SimpleMemberAccessExpression": {
+    "Shop/Stock/Arrivals.cs@570:SimpleMemberAccessExpression": {
         "name": "global::System.Int32",
         "nullable": false,
         "value": true,
         "inner": []
     },
-    "Shop/Stock/Arrivals.cs@576:IdentifierName": {
+    "Shop/Stock/Arrivals.cs@578:IdentifierName": {
         "name": "global::System.Int32",
         "nullable": false,
         "value": true,
         "inner": []
     },
-    "Shop/Stock/Arrivals.cs@599:AddAssignmentExpression": {
+    "Shop/Stock/Arrivals.cs@601:AddAssignmentExpression": {
         "name": "global::System.Int32",
         "nullable": false,
         "value": true,
         "inner": []
     },
-    "Shop/Stock/Arrivals.cs@599:IdentifierName": {
+    "Shop/Stock/Arrivals.cs@601:IdentifierName": {
         "name": "global::System.Int32",
         "nullable": false,
         "value": true,
         "inner": []
     },
-    "Shop/Stock/Arrivals.cs@609:IdentifierName": {
+    "Shop/Stock/Arrivals.cs@611:IdentifierName": {
         "name": "(global::System.String Sku, global::System.Int32 Units)",
         "nullable": false,
         "value": true,
@@ -31279,19 +31279,19 @@
             "global::System.Int32"
         ]
     },
-    "Shop/Stock/Arrivals.cs@609:SimpleMemberAccessExpression": {
+    "Shop/Stock/Arrivals.cs@611:SimpleMemberAccessExpression": {
         "name": "global::System.Int32",
         "nullable": false,
         "value": true,
         "inner": []
     },
-    "Shop/Stock/Arrivals.cs@617:IdentifierName": {
+    "Shop/Stock/Arrivals.cs@619:IdentifierName": {
         "name": "global::System.Int32",
         "nullable": false,
         "value": true,
         "inner": []
     },
-    "Shop/Stock/Arrivals.cs@654:IdentifierName": {
+    "Shop/Stock/Arrivals.cs@656:IdentifierName": {
         "name": "global::System.Int32",
         "nullable": false,
         "value": true,
@@ -37726,13 +37726,13 @@
         "value": true,
         "inner": []
     },
-    "Shop/Stock/Snapshots.cs@1005:IdentifierName": {
+    "Shop/Stock/Snapshots.cs@993:IdentifierName": {
         "name": "global::System.Text.Json.JsonSerializer",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Stock/Snapshots.cs@1005:InvocationExpression": {
+    "Shop/Stock/Snapshots.cs@993:InvocationExpression": {
         "name": "global::System.Collections.Generic.Dictionary<global::System.String, global::System.Int32>?",
         "nullable": true,
         "value": false,
@@ -37741,7 +37741,7 @@
             "global::System.Int32"
         ]
     },
-    "Shop/Stock/Snapshots.cs@1032:GenericName": {
+    "Shop/Stock/Snapshots.cs@1020:GenericName": {
         "name": "global::System.Collections.Generic.Dictionary<global::System.String, global::System.Int32>",
         "nullable": false,
         "value": false,
@@ -37750,85 +37750,85 @@
             "global::System.Int32"
         ]
     },
-    "Shop/Stock/Snapshots.cs@1043:PredefinedType": {
+    "Shop/Stock/Snapshots.cs@1031:PredefinedType": {
         "name": "global::System.String",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Stock/Snapshots.cs@1051:PredefinedType": {
+    "Shop/Stock/Snapshots.cs@1039:PredefinedType": {
         "name": "global::System.Int32",
         "nullable": false,
         "value": true,
         "inner": []
     },
-    "Shop/Stock/Snapshots.cs@1057:IdentifierName": {
+    "Shop/Stock/Snapshots.cs@1045:IdentifierName": {
         "name": "global::System.IO.File",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Stock/Snapshots.cs@1057:InvocationExpression": {
+    "Shop/Stock/Snapshots.cs@1045:InvocationExpression": {
         "name": "global::System.String",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Stock/Snapshots.cs@1074:IdentifierName": {
+    "Shop/Stock/Snapshots.cs@1062:IdentifierName": {
         "name": "global::System.IO.Path",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Stock/Snapshots.cs@1074:InvocationExpression": {
+    "Shop/Stock/Snapshots.cs@1062:InvocationExpression": {
         "name": "global::System.String",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Stock/Snapshots.cs@1087:IdentifierName": {
+    "Shop/Stock/Snapshots.cs@1075:IdentifierName": {
         "name": "global::System.String",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Stock/Snapshots.cs@1095:StringLiteralExpression": {
+    "Shop/Stock/Snapshots.cs@1083:StringLiteralExpression": {
         "name": "global::System.String",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Stock/Snapshots.cs@1177:CatchDeclaration": {
+    "Shop/Stock/Snapshots.cs@1159:CatchDeclaration": {
         "name": "global::System.Exception",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Stock/Snapshots.cs@1178:IdentifierName": {
+    "Shop/Stock/Snapshots.cs@1160:IdentifierName": {
         "name": "global::System.Exception",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Stock/Snapshots.cs@1201:IdentifierName": {
+    "Shop/Stock/Snapshots.cs@1183:IdentifierName": {
         "name": "global::System.Exception",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Stock/Snapshots.cs@1201:IsPatternExpression": {
+    "Shop/Stock/Snapshots.cs@1183:IsPatternExpression": {
         "name": "global::System.Boolean",
         "nullable": false,
         "value": true,
         "inner": []
     },
-    "Shop/Stock/Snapshots.cs@1210:IdentifierName": {
+    "Shop/Stock/Snapshots.cs@1192:IdentifierName": {
         "name": "global::System.Text.Json.JsonException",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Stock/Snapshots.cs@1227:IdentifierName": {
+    "Shop/Stock/Snapshots.cs@1209:IdentifierName": {
         "name": "global::System.IO.FileNotFoundException",
         "nullable": false,
         "value": false,
@@ -37939,19 +37939,19 @@
         "value": false,
         "inner": []
     },
-    "Shop/Stock/Snapshots.cs@497:CatchDeclaration": {
+    "Shop/Stock/Snapshots.cs@491:CatchDeclaration": {
         "name": "global::System.Exception",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Stock/Snapshots.cs@498:IdentifierName": {
+    "Shop/Stock/Snapshots.cs@492:IdentifierName": {
         "name": "global::System.Exception",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Stock/Snapshots.cs@572:GenericName": {
+    "Shop/Stock/Snapshots.cs@566:GenericName": {
         "name": "global::System.Collections.Generic.Dictionary<global::System.String, global::System.Int32>",
         "nullable": false,
         "value": false,
@@ -37960,19 +37960,19 @@
             "global::System.Int32"
         ]
     },
-    "Shop/Stock/Snapshots.cs@583:PredefinedType": {
+    "Shop/Stock/Snapshots.cs@577:PredefinedType": {
         "name": "global::System.String",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Stock/Snapshots.cs@591:PredefinedType": {
+    "Shop/Stock/Snapshots.cs@585:PredefinedType": {
         "name": "global::System.Int32",
         "nullable": false,
         "value": true,
         "inner": []
     },
-    "Shop/Stock/Snapshots.cs@657:CoalesceExpression": {
+    "Shop/Stock/Snapshots.cs@651:CoalesceExpression": {
         "name": "global::System.Collections.Generic.Dictionary<global::System.String, global::System.Int32>",
         "nullable": false,
         "value": false,
@@ -37981,13 +37981,13 @@
             "global::System.Int32"
         ]
     },
-    "Shop/Stock/Snapshots.cs@657:IdentifierName": {
+    "Shop/Stock/Snapshots.cs@651:IdentifierName": {
         "name": "global::System.Text.Json.JsonSerializer",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Stock/Snapshots.cs@657:InvocationExpression": {
+    "Shop/Stock/Snapshots.cs@651:InvocationExpression": {
         "name": "global::System.Collections.Generic.Dictionary<global::System.String, global::System.Int32>?",
         "nullable": true,
         "value": false,
@@ -37996,7 +37996,7 @@
             "global::System.Int32"
         ]
     },
-    "Shop/Stock/Snapshots.cs@684:GenericName": {
+    "Shop/Stock/Snapshots.cs@678:GenericName": {
         "name": "global::System.Collections.Generic.Dictionary<global::System.String, global::System.Int32>",
         "nullable": false,
         "value": false,
@@ -38005,67 +38005,67 @@
             "global::System.Int32"
         ]
     },
-    "Shop/Stock/Snapshots.cs@695:PredefinedType": {
+    "Shop/Stock/Snapshots.cs@689:PredefinedType": {
         "name": "global::System.String",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Stock/Snapshots.cs@703:PredefinedType": {
+    "Shop/Stock/Snapshots.cs@697:PredefinedType": {
         "name": "global::System.Int32",
         "nullable": false,
         "value": true,
         "inner": []
     },
-    "Shop/Stock/Snapshots.cs@709:IdentifierName": {
+    "Shop/Stock/Snapshots.cs@703:IdentifierName": {
         "name": "global::System.IO.File",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Stock/Snapshots.cs@709:InvocationExpression": {
+    "Shop/Stock/Snapshots.cs@703:InvocationExpression": {
         "name": "global::System.String",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Stock/Snapshots.cs@726:IdentifierName": {
+    "Shop/Stock/Snapshots.cs@720:IdentifierName": {
         "name": "global::System.IO.Path",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Stock/Snapshots.cs@726:InvocationExpression": {
+    "Shop/Stock/Snapshots.cs@720:InvocationExpression": {
         "name": "global::System.String",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Stock/Snapshots.cs@739:IdentifierName": {
+    "Shop/Stock/Snapshots.cs@733:IdentifierName": {
         "name": "global::System.String",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Stock/Snapshots.cs@747:StringLiteralExpression": {
+    "Shop/Stock/Snapshots.cs@741:StringLiteralExpression": {
         "name": "global::System.String",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Stock/Snapshots.cs@831:CatchDeclaration": {
+    "Shop/Stock/Snapshots.cs@819:CatchDeclaration": {
         "name": "global::System.IO.FileNotFoundException",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Stock/Snapshots.cs@832:IdentifierName": {
+    "Shop/Stock/Snapshots.cs@820:IdentifierName": {
         "name": "global::System.IO.FileNotFoundException",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Stock/Snapshots.cs@916:NullableType": {
+    "Shop/Stock/Snapshots.cs@904:NullableType": {
         "name": "global::System.Collections.Generic.Dictionary<global::System.String, global::System.Int32>",
         "nullable": true,
         "value": false,
@@ -38074,13 +38074,13 @@
             "global::System.Int32"
         ]
     },
-    "Shop/Stock/Snapshots.cs@927:PredefinedType": {
+    "Shop/Stock/Snapshots.cs@915:PredefinedType": {
         "name": "global::System.String",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Stock/Snapshots.cs@935:PredefinedType": {
+    "Shop/Stock/Snapshots.cs@923:PredefinedType": {
         "name": "global::System.Int32",
         "nullable": false,
         "value": true,
@@ -38134,169 +38134,169 @@
         "value": false,
         "inner": []
     },
-    "Shop/Stock/StockImport.cs@342:ObjectCreationExpression": {
+    "Shop/Stock/StockImport.cs@377:ObjectCreationExpression": {
         "name": "global::Shop.Stock.StockFileUnreadable",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Stock/StockImport.cs@346:IdentifierName": {
+    "Shop/Stock/StockImport.cs@381:IdentifierName": {
         "name": "global::Shop.Stock.StockFileUnreadable",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Stock/StockImport.cs@366:InterpolatedStringExpression": {
+    "Shop/Stock/StockImport.cs@401:InterpolatedStringExpression": {
         "name": "global::System.String",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Stock/StockImport.cs@400:IdentifierName": {
+    "Shop/Stock/StockImport.cs@435:IdentifierName": {
         "name": "global::System.IO.IOException",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Stock/StockImport.cs@400:SimpleMemberAccessExpression": {
+    "Shop/Stock/StockImport.cs@435:SimpleMemberAccessExpression": {
         "name": "global::System.String",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Stock/StockImport.cs@402:IdentifierName": {
+    "Shop/Stock/StockImport.cs@437:IdentifierName": {
         "name": "global::System.String",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Stock/StockImport.cs@484:PredefinedType": {
+    "Shop/Stock/StockImport.cs@519:PredefinedType": {
         "name": "global::System.String",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Stock/StockImport.cs@511:Parameter": {
+    "Shop/Stock/StockImport.cs@546:Parameter": {
         "name": "global::System.String",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Stock/StockImport.cs@511:PredefinedType": {
+    "Shop/Stock/StockImport.cs@546:PredefinedType": {
         "name": "global::System.String",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Stock/StockImport.cs@571:IdentifierName": {
+    "Shop/Stock/StockImport.cs@606:IdentifierName": {
         "name": "global::System.IO.File",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Stock/StockImport.cs@571:InvocationExpression": {
+    "Shop/Stock/StockImport.cs@606:InvocationExpression": {
         "name": "global::System.String",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Stock/StockImport.cs@588:IdentifierName": {
+    "Shop/Stock/StockImport.cs@623:IdentifierName": {
         "name": "global::System.String",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Stock/StockImport.cs@619:CatchDeclaration": {
+    "Shop/Stock/StockImport.cs@654:CatchDeclaration": {
         "name": "global::System.IO.IOException",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Stock/StockImport.cs@620:IdentifierName": {
+    "Shop/Stock/StockImport.cs@655:IdentifierName": {
         "name": "global::System.IO.IOException",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Stock/StockImport.cs@663:ObjectCreationExpression": {
+    "Shop/Stock/StockImport.cs@733:ObjectCreationExpression": {
         "name": "global::Shop.Stock.StockFileUnreadable",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Stock/StockImport.cs@667:IdentifierName": {
+    "Shop/Stock/StockImport.cs@737:IdentifierName": {
         "name": "global::Shop.Stock.StockFileUnreadable",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Stock/StockImport.cs@687:StringLiteralExpression": {
+    "Shop/Stock/StockImport.cs@757:StringLiteralExpression": {
         "name": "global::System.String",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Stock/StockImport.cs@721:IdentifierName": {
+    "Shop/Stock/StockImport.cs@791:IdentifierName": {
         "name": "global::System.IO.IOException",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Stock/StockImport.cs@786:IdentifierName": {
+    "Shop/Stock/StockImport.cs@856:IdentifierName": {
         "name": "global::System.Exception",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Stock/StockImport.cs@829:Parameter": {
+    "Shop/Stock/StockImport.cs@899:Parameter": {
         "name": "global::System.String",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Stock/StockImport.cs@829:PredefinedType": {
+    "Shop/Stock/StockImport.cs@899:PredefinedType": {
         "name": "global::System.String",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Stock/StockImport.cs@860:IdentifierName": {
+    "Shop/Stock/StockImport.cs@930:IdentifierName": {
         "name": "global::System.String",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Stock/StockImport.cs@913:Parameter": {
+    "Shop/Stock/StockImport.cs@983:Parameter": {
         "name": "global::System.String",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Stock/StockImport.cs@913:PredefinedType": {
+    "Shop/Stock/StockImport.cs@983:PredefinedType": {
         "name": "global::System.String",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Stock/StockImport.cs@929:IdentifierName": {
+    "Shop/Stock/StockImport.cs@999:IdentifierName": {
         "name": "global::System.Exception",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Stock/StockImport.cs@929:Parameter": {
+    "Shop/Stock/StockImport.cs@999:Parameter": {
         "name": "global::System.Exception",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Stock/StockImport.cs@961:IdentifierName": {
+    "Shop/Stock/StockImport.cs@1031:IdentifierName": {
         "name": "global::System.String",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Stock/StockImport.cs@970:IdentifierName": {
+    "Shop/Stock/StockImport.cs@1040:IdentifierName": {
         "name": "global::System.Exception",
         "nullable": false,
         "value": false,

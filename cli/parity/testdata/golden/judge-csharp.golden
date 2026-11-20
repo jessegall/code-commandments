@@ -1,26 +1,13 @@
 exit: 1
 --- stdout
 
-[1;33mcsharp/absence[0m  (20)
+[1;33mcsharp/absence[0m  (7)
   [1;36m↳ LOAD the skill `commandments-csharp-absence` before fixing[0m
-  [36mShop/Addresses/PostcodeChecks.cs:7[0m  CoalesceExpression  [2m[CancelledCoalesceDetector][0m
-  [36mShop/Documents/Headings.cs:7[0m  Parameter strapline  [2m[BlankStringDefaultDetector][0m
-  [36mShop/Documents/LabelTemplates.cs:10[0m  MethodDeclaration Named  [2m[DeNulledFinderDetector][0m
   [36mShop/Notifications/Mailing.cs:10[0m  SuppressNullableWarningExpression  [2m[NullForgivenDetector][0m
-  [36mShop/Notifications/Receipts.cs:10[0m  CoalesceExpression  [2m[InventedDefaultDetector][0m
-  [36mShop/Notifications/SmsSettings.cs:7[0m  PropertyDeclaration ApiKey  [2m[BlankStringDefaultDetector][0m
   [36mShop/Orders/Customers.cs:14[0m  SuppressNullableWarningExpression  [2m[NullForgivenDetector][0m
-  [36mShop/Orders/GiftMessages.cs:9[0m  CoalesceExpression  [2m[CancelledCoalesceDetector][0m
-  [36mShop/Pricing/CouponBooks.cs:10[0m  MethodDeclaration Find  [2m[DeNulledFinderDetector][0m
   [36mShop/Pricing/CouponBooks.cs:19[0m  SuppressNullableWarningExpression  [2m[NullForgivenDetector][0m
   [36mShop/Pricing/CouponBooks.cs:22[0m  SuppressNullableWarningExpression  [2m[NullForgivenDetector][0m
-  [36mShop/Pricing/DiscountCodes.cs:9[0m  CoalesceExpression  [2m[CancelledCoalesceDetector][0m
-  [36mShop/Pricing/Labels.cs:8[0m  MethodDeclaration For  [2m[InventedDefaultDetector][0m
-  [36mShop/Rarity/FacetScores.cs:37[0m  MethodDeclaration Weight  [2m[InventedDefaultDetector][0m
   [36mShop/Shipping/Tracking.cs:15[0m  SuppressNullableWarningExpression  [2m[NullForgivenDetector][0m
-  [36mShop/Stock/BinResolvers.cs:8[0m  MethodDeclaration Resolve  [2m[DeNulledFinderDetector][0m
-  [36mShop/Stock/Reservations.cs:10[0m  ConditionalExpression  [2m[InventedDefaultDetector][0m
-  [36mShop/Stock/ShelfNotes.cs:9[0m  Parameter remark  [2m[BlankStringDefaultDetector][0m
   [36mShop/Tagging/TagStore.cs:31[0m  SuppressNullableWarningExpression  [2m[NullForgivenDetector][0m
   [36mShop/Tagging/TagStore.cs:38[0m  SuppressNullableWarningExpression  [2m[NullForgivenDetector][0m
 
@@ -41,7 +28,7 @@ exit: 1
   [36mShop/Shipping/CourierAccounts.cs:16[0m  PropertyDeclaration CreditCents  [2m[MemberAfterMethodDetector][0m
   [36mShop/Stock/Reorders.cs:16[0m  FieldDeclaration SafetyDays  [2m[MemberOutOfOrderDetector][0m
 
-[1;33mcsharp/dependency-direction[0m  (7)
+[1;33mcsharp/dependency-direction[0m  (15)
   [1;36m↳ LOAD the skill `commandments-csharp-dependency-direction` before fixing[0m
   [36mShop/Catalog/Products.cs:8[0m  Parameter cart  [2m[NamespaceDependencyDetector][0m
   [36mShop/Checkout/Carts.cs:16[0m  Parameter page  [2m[NamespaceDependencyDetector][0m
@@ -49,92 +36,21 @@ exit: 1
   [36mShop/Rewards/Vouchers.cs:13[0m  Parameter member  [2m[NamespaceCycleDetector][0m
   [36mShop/Search/Indexes.cs:12[0m  Parameter pages  [2m[NamespaceDependencyDetector][0m
   [36mShop/Search/Rankings.cs:9[0m  Parameter shelf  [2m[NamespaceDependencyDetector][0m
+  [36mShop/Services/AccountStatementServices.cs:23[0m  InvocationExpression  [2m[ContainerReachDetector][0m
+  [36mShop/Services/AccountStatementServices.cs:47[0m  InvocationExpression  [2m[OrphanedBindingDetector][0m
+  [36mShop/Services/ParcelSnapshotServices.cs:19[0m  InvocationExpression  [2m[ContainerReachDetector][0m
+  [36mShop/Services/ParcelSnapshotServices.cs:55[0m  InvocationExpression  [2m[OrphanedBindingDetector][0m
+  [36mShop/Services/StockMovementServices.cs:23[0m  InvocationExpression  [2m[ContainerReachDetector][0m
+  [36mShop/Services/StockMovementServices.cs:48[0m  InvocationExpression  [2m[OrphanedBindingDetector][0m
+  [36mShop/Services/TillEntries.cs:28[0m  InvocationExpression  [2m[ContainerReachDetector][0m
+  [36mShop/Services/TillEntries.cs:50[0m  InvocationExpression  [2m[OrphanedBindingDetector][0m
   [36mShop/Warranty/Policies.cs:8[0m  Parameter claims  [2m[NamespaceCycleDetector][0m
 
-[1;33mcsharp/documentation[0m  (18)
-  [1;36m↳ LOAD the skill `commandments-csharp-documentation` before fixing[0m
-  [36mShop/Documents/Reprints.cs:14[0m  Documentation comment  [2m[CeremonyDocblockDetector][0m
-  [36mShop/Notifications/Broadcasts.cs:10[0m  Documentation comment  [2m[CeremonyDocblockDetector][0m
-  [36mShop/Orders/Checkouts.cs:10[0m  Documentation comment  [2m[BloatedDocblockDetector][0m
-  [36mShop/Orders/GiftWrapping.cs:5[0m  Documentation comment  [2m[DanglingDocReferenceDetector][0m
-  [36mShop/Orders/Gratuities.cs:9[0m  LocalDeclarationStatement  [2m[RestatedCommentDetector][0m
-  [36mShop/Orders/RefundWindows.cs:8[0m  Line comment  [2m[ArchaeologyCommentDetector][0m
-  [36mShop/Pricing/PrizeDraws.cs:9[0m  Line comment  [2m[NegativeSpaceCommentDetector][0m
-  [36mShop/Pricing/VolumeBands.cs:6[0m  Documentation comment  [2m[CeremonyDocblockDetector][0m
-  [36mShop/Reports/Rounding.cs:7[0m  Block comment  [2m[NegativeSpaceCommentDetector][0m
-  [36mShop/Shipping/ColdChain.cs:7[0m  Documentation comment  [2m[NegativeSpaceCommentDetector][0m
-  [36mShop/Shipping/Consignments.cs:10[0m  ReturnStatement  [2m[RestatedCommentDetector][0m
-  [36mShop/Shipping/Couriers.cs:9[0m  Documentation comment  [2m[BloatedDocblockDetector][0m
-  [36mShop/Shipping/FreightZones.cs:9[0m  Documentation comment  [2m[DanglingDocReferenceDetector][0m
-  [36mShop/Shipping/Surcharges.cs:8[0m  Block comment  [2m[ArchaeologyCommentDetector][0m
-  [36mShop/Stock/BinLocations.cs:5[0m  Documentation comment  [2m[ArchaeologyCommentDetector][0m
-  [36mShop/Stock/BinSweeps.cs:11[0m  ForEachStatement bin  [2m[RestatedCommentDetector][0m
-  [36mShop/Stock/ShelfAudits.cs:16[0m  Documentation comment  [2m[DanglingDocReferenceDetector][0m
-  [36mShop/Stock/Suppliers.cs:8[0m  Documentation comment  [2m[BloatedDocblockDetector][0m
-
-[1;33mcsharp/duplication[0m  (12)
-  [1;36m↳ LOAD the skill `commandments-csharp-duplication` before fixing[0m
-  [36mShop/Documents/Invoice.cs:12[0m  MethodDeclaration Lines  [2m[DuplicateMethodDetector][0m
-    [2m↳ same shape as: Shop/Documents/PackingSlip.cs:10[0m
-  [36mShop/Documents/PackingSlip.cs:10[0m  MethodDeclaration Rows  [2m[DuplicateMethodDetector][0m
-    [2m↳ same shape as: Shop/Documents/Invoice.cs:12[0m
-  [36mShop/Notifications/DeliveredMail.cs:11[0m  MethodDeclaration Compose  [2m[NearDuplicateMethodDetector][0m
-    [2m↳ same shape as: Shop/Notifications/ShippedMail.cs:11[0m
-  [36mShop/Notifications/ShippedMail.cs:11[0m  MethodDeclaration Render  [2m[NearDuplicateMethodDetector][0m
-    [2m↳ same shape as: Shop/Notifications/DeliveredMail.cs:11[0m
-  [36mShop/Pricing/Discounts.cs:10[0m  MethodDeclaration Wholesale  [2m[NearDuplicateMethodDetector][0m
-    [2m↳ same shape as: Shop/Pricing/Discounts.cs:32[0m
-  [36mShop/Pricing/Discounts.cs:32[0m  MethodDeclaration Retail  [2m[NearDuplicateMethodDetector][0m
-    [2m↳ same shape as: Shop/Pricing/Discounts.cs:10[0m
-  [36mShop/Shipping/Carriers.cs:12[0m  GetAccessorDeclaration Surcharge  [2m[DuplicateMethodDetector][0m
-    [2m↳ same shape as: Shop/Shipping/Carriers.cs:34[0m
-  [36mShop/Shipping/Carriers.cs:34[0m  GetAccessorDeclaration Surcharge  [2m[DuplicateMethodDetector][0m
-    [2m↳ same shape as: Shop/Shipping/Carriers.cs:12[0m
-  [36mShop/Stock/Ledgers.cs:8[0m  MethodDeclaration Counts  [2m[NearDuplicateMethodDetector][0m
-    [2m↳ same shape as: Shop/Stock/Ledgers.cs:29[0m
-  [36mShop/Stock/Ledgers.cs:29[0m  MethodDeclaration Reservations  [2m[NearDuplicateMethodDetector][0m
-    [2m↳ same shape as: Shop/Stock/Ledgers.cs:8[0m
-  [36mShop/Stock/Replenishment.cs:10[0m  LocalFunctionStatement Shortfall  [2m[DuplicateMethodDetector][0m
-    [2m↳ same shape as: Shop/Stock/Replenishment.cs:24[0m
-  [36mShop/Stock/Replenishment.cs:24[0m  LocalFunctionStatement Shortfall  [2m[DuplicateMethodDetector][0m
-    [2m↳ same shape as: Shop/Stock/Replenishment.cs:10[0m
-
-[1;33mcsharp/enums[0m  (19)
+[1;33mcsharp/enums[0m  (3)
   [1;36m↳ LOAD the skill `commandments-csharp-enums` before fixing[0m
-  [36mShop/Notifications/ChannelNames.cs:22[0m  StringLiteralExpression  [2m[UnnamedVocabularyLiteralDetector][0m
-  [36mShop/Notifications/Channels.cs:5[0m  ClassDeclaration ContactChannel  [2m[ConstClassEnumDetector][0m
-  [36mShop/Notifications/Quiet.cs:15[0m  OrPattern  [2m[EnumCaseOrChainDetector][0m
-  [36mShop/Orders/Fulfilment.cs:27[0m  LogicalOrExpression  [2m[EnumCaseOrChainDetector][0m
-  [36mShop/Orders/ParkedRuns.cs:22[0m  LogicalOrExpression  [2m[EnumCaseOrChainDetector][0m
-  [36mShop/Orders/PaymentStates.cs:4[0m  ClassDeclaration PaymentState  [2m[ConstClassEnumDetector][0m
-  [36mShop/Orders/PaymentWebhooks.cs:19[0m  InvocationExpression  [2m[InArrayMirrorsEnumDetector][0m
   [36mShop/Orders/RefundDesk.cs:10[0m  IfStatement  [2m[StringMirrorsEnumDetector][0m
   [36mShop/Orders/StatusFeed.cs:10[0m  SwitchStatement  [2m[StringMirrorsEnumDetector][0m
   [36mShop/Pricing/TierImport.cs:9[0m  SwitchExpression  [2m[StringMirrorsEnumDetector][0m
-  [36mShop/Reports/Closures.cs:9[0m  IsPatternExpression  [2m[InArrayMirrorsEnumDetector][0m
-  [36mShop/Reports/Granularity.cs:16[0m  SwitchStatement  [2m[MatchDefaultReturnsNullDetector][0m
-  [36mShop/Reports/ReportKinds.cs:19[0m  StringLiteralExpression  [2m[UnnamedVocabularyLiteralDetector][0m
-  [36mShop/Shipping/CarrierLogos.cs:14[0m  SwitchExpression  [2m[MatchDefaultReturnsNullDetector][0m
-  [36mShop/Shipping/ServiceLevels.cs:5[0m  ClassDeclaration ServiceLevel  [2m[ConstClassEnumDetector][0m
-  [36mShop/Stock/Batches.cs:16[0m  OrPattern  [2m[EnumCaseOrChainDetector][0m
-  [36mShop/Stock/Holds.cs:9[0m  InvocationExpression  [2m[InArrayMirrorsEnumDetector][0m
-  [36mShop/Stock/Shelving.cs:14[0m  SwitchExpression  [2m[MatchDefaultReturnsNullDetector][0m
-  [36mShop/Stock/StockZones.cs:32[0m  StringLiteralExpression  [2m[UnnamedVocabularyLiteralDetector][0m
-
-[1;33mcsharp/exceptions[0m  (12)
-  [1;36m↳ LOAD the skill `commandments-csharp-exceptions` before fixing[0m
-  [36mShop/Documents/InvoiceArchive.cs:15[0m  ThrowStatement  [2m[WrappingWithoutCauseDetector][0m
-  [36mShop/Documents/InvoiceArchive.cs:26[0m  CatchClause  [2m[RethrownUnchangedDetector][0m
-  [36mShop/Notifications/Outbox.cs:19[0m  CatchClause  [2m[SwallowedExceptionDetector][0m
-  [36mShop/Orders/Lifecycle.cs:14[0m  ThrowStatement  [2m[GenericThrowDetector][0m
-  [36mShop/Picking/CountSheets.cs:15[0m  CatchClause  [2m[RethrownUnchangedDetector][0m
-  [36mShop/Pricing/Currencies.cs:11[0m  ThrowExpression  [2m[GenericThrowDetector][0m
-  [36mShop/Pricing/RateCache.cs:14[0m  CatchClause  [2m[SwallowedExceptionDetector][0m
-  [36mShop/Pricing/RateFeed.cs:17[0m  ThrowStatement  [2m[WrappingWithoutCauseDetector][0m
-  [36mShop/Shipping/CarrierDirectory.cs:12[0m  ThrowStatement  [2m[GenericThrowDetector][0m
-  [36mShop/Stock/Snapshots.cs:16[0m  CatchClause  [2m[SwallowedExceptionDetector][0m
-  [36mShop/Stock/StockHolds.cs:15[0m  CatchClause  [2m[RethrownUnchangedDetector][0m
-  [36mShop/Stock/StockImport.cs:15[0m  ThrowStatement  [2m[WrappingWithoutCauseDetector][0m
 
 [1;33mcsharp/fix-at-the-source[0m  (15)
   [1;36m↳ LOAD the skill `commandments-csharp-fix-at-the-source` before fixing[0m
@@ -151,30 +67,18 @@ exit: 1
   [36mShop/Packing/StocktakeSheets.cs:9[0m  VariableDeclarator ledger  [2m[UnreadCollaboratorDetector][0m
   [36mShop/Pricing/PriceBoard.cs:25[0m  InvocationExpression  [2m[ConstructorSideEffectDetector][0m
   [36mShop/Pricing/TaxTable.cs:11[0m  CoalesceAssignmentExpression  [2m[MutableStaticStateDetector][0m
-  [36mShop/Shipping/LabelConverter.cs:25[0m  InvocationExpression  [2m[BlockedAwaitDetector][0m
+  [36mShop/Shipping/LabelConverter.cs:26[0m  InvocationExpression  [2m[BlockedAwaitDetector][0m
   [36mShop/Stock/ShelfSensors.cs:24[0m  InvocationExpression  [2m[ConstructorSideEffectDetector][0m
 
-[1;33mcsharp/flow[0m  (19)
+[1;33mcsharp/flow[0m  (7)
   [1;36m↳ LOAD the skill `commandments-csharp-flow` before fixing[0m
   [36mShop/Addresses/CountryCodes.cs:9[0m  CoalesceExpression  [2m[InlineThrowDetector][0m
   [36mShop/Documents/LabelTemplates.cs:19[0m  CoalesceExpression  [2m[InlineThrowDetector][0m
-  [36mShop/Loading/BayClearance.cs:15[0m  LogicalOrExpression  [2m[UnnamedConditionDetector][0m
-  [36mShop/Loading/BayLoading.cs:36[0m  LogicalAndExpression  [2m[UnnamedConditionDetector][0m
-  [36mShop/Loading/ShiftTicks.cs:24[0m  LogicalAndExpression  [2m[UnnamedConditionDetector][0m
-  [36mShop/Orders/Approvals.cs:30[0m  ForStatement  [2m[NonCountingForDetector][0m
   [36mShop/Orders/CouponRedeem.cs:11[0m  CoalesceExpression  [2m[InlineThrowDetector][0m
-  [36mShop/Orders/OrderNotes.cs:15[0m  ForEachStatement note  [2m[CoalescedLoopSubjectDetector][0m
-  [36mShop/Orders/Refunds.cs:22[0m  IfStatement  [2m[DeepNestingDetector][0m
   [36mShop/Picking/AisleBlocks.cs:14[0m  InvocationExpression  [2m[CollectionMutatedWhileIteratedDetector][0m
   [36mShop/Picking/PickLists.cs:16[0m  InvocationExpression  [2m[CollectionMutatedWhileIteratedDetector][0m
   [36mShop/Picking/ReservationSweeps.cs:14[0m  InvocationExpression  [2m[CollectionMutatedWhileIteratedDetector][0m
-  [36mShop/Reports/PageReader.cs:20[0m  ForStatement  [2m[NonCountingForDetector][0m
   [36mShop/Shipping/CarrierPick.cs:11[0m  CoalesceExpression  [2m[InlineThrowDetector][0m
-  [36mShop/Shipping/Dispatch.cs:20[0m  WhileStatement  [2m[DeepNestingDetector][0m
-  [36mShop/Shipping/ParcelLabels.cs:12[0m  ForEachStatement mark  [2m[CoalescedLoopSubjectDetector][0m
-  [36mShop/Stock/CategoryPaths.cs:15[0m  ForStatement  [2m[NonCountingForDetector][0m
-  [36mShop/Stock/PickLists.cs:11[0m  ForEachStatement sku  [2m[CoalescedLoopSubjectDetector][0m
-  [36mShop/Stock/Restock.cs:20[0m  IfStatement  [2m[DeepNestingDetector][0m
 
 [1;33mcsharp/method-mood[0m  (3)
   [1;36m↳ LOAD the skill `commandments-csharp-method-mood` before fixing[0m
@@ -182,61 +86,31 @@ exit: 1
   [36mShop/Pricing/PromotionRules.cs:7[0m  PropertyDeclaration Publishes  [2m[BareStatePredicateDetector][0m
   [36mShop/Shipping/Lockers.cs:7[0m  MethodDeclaration Accepts  [2m[BareStatePredicateDetector][0m
 
-[1;33mcsharp/pass-the-object[0m  (16)
+[1;33mcsharp/pass-the-object[0m  (9)
   [1;36m↳ LOAD the skill `commandments-csharp-pass-the-object` before fixing[0m
-  [36mShop/Documents/Barcodes.cs:13[0m  InvocationExpression  [2m[ConvertedArgumentDetector][0m
-    [2m↳ same shape as: Shop/Documents/Barcodes.cs:17[0m
-  [36mShop/Documents/Barcodes.cs:17[0m  InvocationExpression  [2m[ConvertedArgumentDetector][0m
-    [2m↳ same shape as: Shop/Documents/Barcodes.cs:13[0m
   [36mShop/Notifications/Campaigns.cs:15[0m  MethodDeclaration Send  [2m[ParamResolvedFromParamDetector][0m
   [36mShop/Notifications/InvoiceMailers.cs:20[0m  InvocationExpression  [2m[DerivedArgumentDetector][0m
   [36mShop/Notifications/InvoiceMailers.cs:26[0m  InvocationExpression  [2m[DerivedArgumentDetector][0m
-  [36mShop/Pricing/CreditNotes.cs:23[0m  InvocationExpression  [2m[ConvertedArgumentDetector][0m
-    [2m↳ same shape as: Shop/Pricing/CreditNotes.cs:33, Shop/Reports/CreditSummaries.cs:12[0m
-  [36mShop/Pricing/CreditNotes.cs:33[0m  InvocationExpression  [2m[ConvertedArgumentDetector][0m
-    [2m↳ same shape as: Shop/Pricing/CreditNotes.cs:23, Shop/Reports/CreditSummaries.cs:12[0m
   [36mShop/Pricing/PriceBooks.cs:13[0m  MethodDeclaration Quote  [2m[ParamResolvedFromParamDetector][0m
-  [36mShop/Reports/CreditSummaries.cs:12[0m  InvocationExpression  [2m[ConvertedArgumentDetector][0m
-    [2m↳ same shape as: Shop/Pricing/CreditNotes.cs:23, Shop/Pricing/CreditNotes.cs:33[0m
   [36mShop/Shipping/CourierBookings.cs:15[0m  InvocationExpression  [2m[DerivedArgumentDetector][0m
   [36mShop/Shipping/CourierBookings.cs:19[0m  InvocationExpression  [2m[DerivedArgumentDetector][0m
   [36mShop/Stock/Aisles.cs:22[0m  MethodDeclaration Reserve  [2m[ParamResolvedFromParamDetector][0m
-  [36mShop/Stock/BinImports.cs:17[0m  InvocationExpression  [2m[ConvertedArgumentDetector][0m
-    [2m↳ same shape as: Shop/Stock/BinImports.cs:21[0m
-  [36mShop/Stock/BinImports.cs:21[0m  InvocationExpression  [2m[ConvertedArgumentDetector][0m
-    [2m↳ same shape as: Shop/Stock/BinImports.cs:17[0m
   [36mShop/Stock/StockMoves.cs:18[0m  InvocationExpression  [2m[DerivedArgumentDetector][0m
   [36mShop/Stock/StockMoves.cs:24[0m  InvocationExpression  [2m[DerivedArgumentDetector][0m
 
-[1;33mcsharp/repeated-call-helper[0m  (10)
+[1;33mcsharp/repeated-call-helper[0m  (3)
   [1;36m↳ LOAD the skill `commandments-csharp-repeated-call-helper` before fixing[0m
-  [36mShop/Documents/LabelFooters.cs:9[0m  LogicalAndExpression  [2m[RepeatedGuardDetector][0m
-    [2m↳ same shape as: Shop/Shipping/TrackingLinks.cs:9[0m
-  [36mShop/Notifications/Promises.cs:9[0m  LogicalAndExpression  [2m[RepeatedGuardDetector][0m
-    [2m↳ same shape as: Shop/Orders/Dispatch.cs:21[0m
-  [36mShop/Orders/Dispatch.cs:21[0m  LogicalAndExpression  [2m[RepeatedGuardDetector][0m
-    [2m↳ same shape as: Shop/Notifications/Promises.cs:9[0m
   [36mShop/Orders/OrderStages.cs:20[0m  WithExpression  [2m[RepeatedNamedCallDetector][0m
     [2m↳ same shape as: Shop/Reports/Backfills.cs:13, Shop/Shipping/Handover.cs:13[0m
   [36mShop/Reports/Backfills.cs:13[0m  WithExpression  [2m[RepeatedNamedCallDetector][0m
     [2m↳ same shape as: Shop/Orders/OrderStages.cs:20, Shop/Shipping/Handover.cs:13[0m
-  [36mShop/Reports/Damage.cs:15[0m  LogicalAndExpression  [2m[RepeatedTypeGuardDetector][0m
-    [2m↳ same shape as: Shop/Shipping/Crates.cs:26, Shop/Stock/Palletising.cs:11[0m
-  [36mShop/Shipping/Crates.cs:26[0m  LogicalAndExpression  [2m[RepeatedTypeGuardDetector][0m
-    [2m↳ same shape as: Shop/Reports/Damage.cs:15, Shop/Stock/Palletising.cs:11[0m
   [36mShop/Shipping/Handover.cs:13[0m  WithExpression  [2m[RepeatedNamedCallDetector][0m
     [2m↳ same shape as: Shop/Orders/OrderStages.cs:20, Shop/Reports/Backfills.cs:13[0m
-  [36mShop/Shipping/TrackingLinks.cs:9[0m  LogicalAndExpression  [2m[RepeatedGuardDetector][0m
-    [2m↳ same shape as: Shop/Documents/LabelFooters.cs:9[0m
-  [36mShop/Stock/Palletising.cs:11[0m  LogicalAndExpression  [2m[RepeatedTypeGuardDetector][0m
-    [2m↳ same shape as: Shop/Reports/Damage.cs:15, Shop/Shipping/Crates.cs:26[0m
 
-[1;33mcsharp/tell-dont-ask[0m  (22)
+[1;33mcsharp/tell-dont-ask[0m  (15)
   [1;36m↳ LOAD the skill `commandments-csharp-tell-dont-ask` before fixing[0m
-  [36mShop/Checkout/SourceOwners.cs:19[0m  SwitchExpression  [2m[TypeSwitchDetector][0m
   [36mShop/Loyalty/PunchCards.cs:15[0m  MethodDeclaration Redeem  [2m[FeatureEnvyDetector][0m
   [36mShop/Orders/Approvals.cs:40[0m  MethodDeclaration Signed  [2m[FeatureEnvyDetector][0m
-  [36mShop/Orders/Discounting.cs:12[0m  SwitchStatement  [2m[TypeSwitchDetector][0m
   [36mShop/Orders/Invoicing.cs:8[0m  MethodDeclaration Bill  [2m[FeatureEnvyDetector][0m
   [36mShop/Orders/Invoicing.cs:27[0m  MethodDeclaration BillFlat  [2m[FeatureEnvyDetector][0m
   [36mShop/Orders/Invoicing.cs:47[0m  MethodDeclaration FirstBackordered  [2m[FeatureEnvyDetector][0m
@@ -248,13 +122,8 @@ exit: 1
   [36mShop/Packing/TillSlips.cs:20[0m  MethodDeclaration AddLines  [2m[FeatureEnvyDetector][0m
   [36mShop/Packing/TillSlips.cs:27[0m  MethodDeclaration AddTax  [2m[FeatureEnvyDetector][0m
   [36mShop/Packing/TillSlips.cs:34[0m  MethodDeclaration Seal  [2m[FeatureEnvyDetector][0m
-  [36mShop/Pricing/Promotions.cs:35[0m  SwitchExpression  [2m[TypeSwitchDetector][0m
-  [36mShop/Reports/PromotionReport.cs:17[0m  SwitchStatement  [2m[TypeSwitchDetector][0m
   [36mShop/Returns/ReturnInspections.cs:13[0m  MethodDeclaration NeedsRestocking  [2m[FeatureEnvyDetector][0m
-  [36mShop/Shipping/InsuredCouriers.cs:19[0m  VariableDeclarator Insured  [2m[SideTableTraitDetector][0m
-  [36mShop/Stock/HiddenStockSources.cs:17[0m  VariableDeclarator Hidden  [2m[SideTableTraitDetector][0m
   [36mShop/Stock/Totes.cs:16[0m  MethodDeclaration Weigh  [2m[FeatureEnvyDetector][0m
-  [36mShop/Tags/TagSpeech.cs:17[0m  VariableDeclarator Quiet  [2m[SideTableTraitDetector][0m
 
 [1;33mcsharp/templates[0m  (3)
   [1;36m↳ LOAD the skill `commandments-csharp-templates` before fixing[0m
@@ -262,20 +131,17 @@ exit: 1
   [36mShop/Reports/DailySummary.cs:7[0m  InvocationExpression  [2m[AssembledTemplateDetector][0m
   [36mShop/Shipping/CarrierConfig.cs:7[0m  InvocationExpression  [2m[AssembledTemplateDetector][0m
 
-[1;33mcsharp/type-honesty[0m  (12)
+[1;33mcsharp/type-honesty[0m  (9)
   [1;36m↳ LOAD the skill `commandments-csharp-type-honesty` before fixing[0m
   [36mShop/Boards/KioskScreens.cs:13[0m  EqualsExpression  [2m[ImpossibleGuardDetector][0m
   [36mShop/Boards/LanguageTexts.cs:12[0m  EqualsExpression  [2m[ImpossibleGuardDetector][0m
   [36mShop/Boards/QuoteSpeech.cs:11[0m  NotEqualsExpression  [2m[ImpossibleGuardDetector][0m
   [36mShop/Boards/QuoteSpeech.cs:17[0m  EqualsExpression  [2m[ImpossibleGuardDetector][0m
-  [36mShop/Notifications/Digests.cs:11[0m  ObjectCreationExpression  [2m[PlaceholderFilledDataDetector][0m
-  [36mShop/Orders/Payouts.cs:12[0m  ObjectCreationExpression  [2m[PlaceholderFilledDataDetector][0m
   [36mShop/Packing/DealerFacts.cs:20[0m  MethodDeclaration ApplyPlan  [2m[FilledParameterDetector][0m
   [36mShop/Packing/DealerFacts.cs:27[0m  MethodDeclaration ApplyLanguage  [2m[FilledParameterDetector][0m
   [36mShop/Packing/ShiftRosters.cs:20[0m  MethodDeclaration StampSlots  [2m[FilledParameterDetector][0m
   [36mShop/Packing/TillSlips.cs:20[0m  MethodDeclaration AddLines  [2m[FilledParameterDetector][0m
   [36mShop/Packing/TillSlips.cs:27[0m  MethodDeclaration AddTax  [2m[FilledParameterDetector][0m
-  [36mShop/Shipping/Pickups.cs:21[0m  ObjectCreationExpression  [2m[PlaceholderFilledDataDetector][0m
 
 [1;33mcsharp/value-objects[0m  (25)
   [1;36m↳ LOAD the skill `commandments-csharp-value-objects` before fixing[0m
@@ -300,7 +166,7 @@ exit: 1
   [36mShop/Reports/Snapshots.cs:11[0m  ObjectCreationExpression  [2m[ArrayReturnBagDetector][0m
   [36mShop/Shipping/DeliverySlots.cs:9[0m  ClassDeclaration DeliverySlot  [2m[CoupledFieldsDetector][0m
   [36mShop/Shipping/Webhooks.cs:14[0m  InvocationExpression  [2m[DictionaryBagDetector][0m
-  [36mShop/Shipping/Webhooks.cs:20[0m  InvocationExpression  [2m[DictionaryBagDetector][0m
+  [36mShop/Shipping/Webhooks.cs:22[0m  InvocationExpression  [2m[DictionaryBagDetector][0m
   [36mShop/Shipping/Weighings.cs:9[0m  SubtractAssignmentExpression  [2m[MutableValueObjectDetector][0m
   [36mShop/Shipping/Windows.cs:7[0m  PropertyDeclaration Today  [2m[PositionalTupleReturnDetector][0m
   [36mShop/Stock/Audits.cs:22[0m  ObjectCreationExpression  [2m[ArrayReturnBagDetector][0m
@@ -311,29 +177,296 @@ exit: 1
   [36mShop/Stock/Listings.cs:15[0m  MethodDeclaration Page  [2m[DataClumpDetector][0m
     [2m↳ same shape as: Shop/Stock/Listings.cs:8[0m
 
-[1;33mshared/flow[0m  (22)
+[1;33mshared/absence[0m  (37)
+  [1;36m↳ LOAD the skill `commandments-shared-absence` before fixing[0m
+  [36mShop/Addresses/PostcodeChecks.cs:7[0m  CoalesceExpression  [2m[CancelledCoalesceDetector][0m
+  [36mShop/Documents/Headings.cs:7[0m  Parameter strapline  [2m[BlankStringDefaultDetector][0m
+  [36mShop/Documents/LabelTemplates.cs:10[0m  MethodDeclaration Named  [2m[DeNulledFinderDetector][0m
+  [36mShop/Notifications/Digests.cs:11[0m  ObjectCreationExpression  [2m[PlaceholderFilledDataDetector][0m
+  [36mShop/Notifications/Receipts.cs:10[0m  CoalesceExpression  [2m[ManufacturedFakeFillDetector][0m
+  [36mShop/Notifications/SmsSettings.cs:7[0m  PropertyDeclaration ApiKey  [2m[BlankStringDefaultDetector][0m
+  [36mShop/Orders/GiftMessages.cs:9[0m  CoalesceExpression  [2m[CancelledCoalesceDetector][0m
+  [36mShop/Orders/OrderNotes.cs:15[0m  ForEachStatement note  [2m[CoalescedLoopSubjectDetector][0m
+  [36mShop/Orders/Payouts.cs:12[0m  ObjectCreationExpression  [2m[PlaceholderFilledDataDetector][0m
+  [36mShop/Pricing/CouponBooks.cs:10[0m  MethodDeclaration Find  [2m[DeNulledFinderDetector][0m
+  [36mShop/Pricing/DiscountCodes.cs:9[0m  CoalesceExpression  [2m[CancelledCoalesceDetector][0m
+  [36mShop/Pricing/Labels.cs:8[0m  MethodDeclaration For  [2m[ManufacturedFakeFillDetector][0m
+  [36mShop/Rarity/FacetScores.cs:37[0m  MethodDeclaration Weight  [2m[ManufacturedFakeFillDetector][0m
+  [36mShop/Shipping/BillingOptionalState.cs:13[0m  PropertyDeclaration Active  [2m[PhantomNullableDetector][0m
+  [36mShop/Shipping/BillingOptionalState.cs:24[0m  CoalesceExpression  [2m[MaskedInvariantDetector][0m
+  [36mShop/Shipping/BillingOptionalState.cs:33[0m  MethodDeclaration Announce  [2m[NullableCallbackDetector][0m
+  [36mShop/Shipping/BillingOptionalState.cs:44[0m  InvocationExpression  [2m[NullableRegistryLookupDetector][0m
+  [36mShop/Shipping/BillingOptionalState.cs:50[0m  InvocationExpression  [2m[RawDecodedArrayReturnDetector][0m
+  [36mShop/Shipping/BillingOptionalState.cs:65[0m  ClassDeclaration BillingProbe  [2m[CapabilityProbeHubDetector][0m
+  [36mShop/Shipping/DispatchOptionalState.cs:10[0m  PropertyDeclaration Active  [2m[PhantomNullableDetector][0m
+  [36mShop/Shipping/DispatchOptionalState.cs:25[0m  CoalesceExpression  [2m[MaskedInvariantDetector][0m
+  [36mShop/Shipping/DispatchOptionalState.cs:35[0m  MethodDeclaration SendToGate  [2m[NullableCallbackDetector][0m
+  [36mShop/Shipping/DispatchOptionalState.cs:51[0m  InvocationExpression  [2m[NullableRegistryLookupDetector][0m
+  [36mShop/Shipping/DispatchOptionalState.cs:57[0m  InvocationExpression  [2m[RawDecodedArrayReturnDetector][0m
+  [36mShop/Shipping/DispatchOptionalState.cs:72[0m  ClassDeclaration DispatchProbe  [2m[CapabilityProbeHubDetector][0m
+  [36mShop/Shipping/InventoryOptionalState.cs:12[0m  PropertyDeclaration InStock  [2m[PhantomNullableDetector][0m
+  [36mShop/Shipping/InventoryOptionalState.cs:28[0m  CoalesceExpression  [2m[MaskedInvariantDetector][0m
+  [36mShop/Shipping/InventoryOptionalState.cs:32[0m  MethodDeclaration Replay  [2m[NullableCallbackDetector][0m
+  [36mShop/Shipping/InventoryOptionalState.cs:46[0m  InvocationExpression  [2m[NullableRegistryLookupDetector][0m
+  [36mShop/Shipping/InventoryOptionalState.cs:52[0m  InvocationExpression  [2m[RawDecodedArrayReturnDetector][0m
+  [36mShop/Shipping/InventoryOptionalState.cs:61[0m  ClassDeclaration InventoryProbe  [2m[CapabilityProbeHubDetector][0m
+  [36mShop/Shipping/ParcelLabels.cs:12[0m  ForEachStatement mark  [2m[CoalescedLoopSubjectDetector][0m
+  [36mShop/Shipping/Pickups.cs:21[0m  ObjectCreationExpression  [2m[PlaceholderFilledDataDetector][0m
+  [36mShop/Stock/BinResolvers.cs:8[0m  MethodDeclaration Resolve  [2m[DeNulledFinderDetector][0m
+  [36mShop/Stock/PickLists.cs:11[0m  ForEachStatement sku  [2m[CoalescedLoopSubjectDetector][0m
+  [36mShop/Stock/Reservations.cs:10[0m  ConditionalExpression  [2m[ManufacturedFakeFillDetector][0m
+  [36mShop/Stock/ShelfNotes.cs:9[0m  Parameter remark  [2m[BlankStringDefaultDetector][0m
+
+[1;33mshared/arguments[0m  (24)
+  [1;36m↳ LOAD the skill `commandments-shared-arguments` before fixing[0m
+  [36mShop/Flow/ReceiptRouting.cs:28[0m  InvocationExpression  [2m[ComputedBooleanArgumentDetector][0m
+  [36mShop/Flow/ReceiptRouting.cs:30[0m  InvocationExpression  [2m[ComputedBooleanArgumentDetector][0m
+  [36mShop/Flow/ReceiptRouting.cs:36[0m  Parameter prefix  [2m[UnusedParameterDetector][0m
+  [36mShop/Flow/ReceiptRouting.cs:42[0m  MethodDeclaration Dispatches  [2m[NarratedCommandDetector][0m
+  [36mShop/Flow/ReceiptRouting.cs:48[0m  MethodDeclaration WithCounter  [2m[HandRolledWitherDetector][0m
+  [36mShop/Flow/ReceiptRouting.cs:54[0m  MethodDeclaration Owner  [2m[KeyedLookupEnvyDetector][0m
+  [36mShop/Flow/ReceiptRouting.cs:60[0m  MethodDeclaration Inspect  [2m[ScratchStateRestoreDetector][0m
+  [36mShop/Flow/StockRouting.cs:29[0m  InvocationExpression  [2m[ComputedBooleanArgumentDetector][0m
+  [36mShop/Flow/StockRouting.cs:43[0m  InvocationExpression  [2m[ComputedBooleanArgumentDetector][0m
+  [36mShop/Flow/StockRouting.cs:48[0m  Parameter format  [2m[UnusedParameterDetector][0m
+  [36mShop/Flow/StockRouting.cs:58[0m  MethodDeclaration Updates  [2m[NarratedCommandDetector][0m
+  [36mShop/Flow/StockRouting.cs:67[0m  MethodDeclaration WithReserve  [2m[HandRolledWitherDetector][0m
+  [36mShop/Flow/StockRouting.cs:73[0m  MethodDeclaration Rate  [2m[KeyedLookupEnvyDetector][0m
+  [36mShop/Flow/StockRouting.cs:79[0m  MethodDeclaration Inspect  [2m[ScratchStateRestoreDetector][0m
+  [36mShop/Flow/TransferRouting.cs:19[0m  InvocationExpression  [2m[ComputedBooleanArgumentDetector][0m
+  [36mShop/Flow/TransferRouting.cs:25[0m  InvocationExpression  [2m[ComputedBooleanArgumentDetector][0m
+  [36mShop/Flow/TransferRouting.cs:30[0m  Parameter endColumn  [2m[UnusedParameterDetector][0m
+  [36mShop/Flow/TransferRouting.cs:39[0m  MethodDeclaration Processes  [2m[NarratedCommandDetector][0m
+  [36mShop/Flow/TransferRouting.cs:46[0m  MethodDeclaration WithOffice  [2m[HandRolledWitherDetector][0m
+  [36mShop/Flow/TransferRouting.cs:52[0m  MethodDeclaration Track  [2m[KeyedLookupEnvyDetector][0m
+  [36mShop/Flow/TransferRouting.cs:58[0m  MethodDeclaration Inspect  [2m[ScratchStateRestoreDetector][0m
+  [36mShop/Reports/Granularity.cs:16[0m  SwitchStatement  [2m[MatchDefaultReturnsNullDetector][0m
+  [36mShop/Shipping/CarrierLogos.cs:14[0m  SwitchExpression  [2m[MatchDefaultReturnsNullDetector][0m
+  [36mShop/Stock/Shelving.cs:14[0m  SwitchExpression  [2m[MatchDefaultReturnsNullDetector][0m
+  [32m↳ auto-fixable: commandments repent --repent=latest --sin=hand-rolled-wither[0m
+
+[1;33mshared/dependencies[0m  (36)
+  [1;36m↳ LOAD the skill `commandments-shared-dependencies` before fixing[0m
+  [36mShop/Shipping/LabelConverter.cs:16[0m  InterfaceDeclaration ILabelPrinter  [2m[LoneImplementerInterfaceDetector][0m
+  [36mShop/TypeTree/ParcelSettingsTree.cs:8[0m  InterfaceDeclaration IParcelSettingsTreePort  [2m[LoneImplementerInterfaceDetector][0m
+  [36mShop/TypeTree/ParcelSettingsTree.cs:24[0m  Parameter reader  [2m[ConcreteCrossModuleDependencyDetector][0m
+  [36mShop/TypeTree/ParcelSettingsTree.cs:39[0m  ClassDeclaration ParcelSettingsTreeForwarder  [2m[MiddleManDetector][0m
+  [36mShop/TypeTree/ParcelSettingsTree.cs:50[0m  MethodDeclaration Read  [2m[RefusedBequestDetector][0m
+  [36mShop/TypeTree/ParcelSettingsTree.cs:54[0m  ClassDeclaration ParcelSettingsTreeRegistry  [2m[HandRolledRegistryDetector][0m
+  [36mShop/TypeTree/ParcelSettingsTree.cs:77[0m  SimpleMemberAccessExpression  [2m[TrainWreckDetector][0m
+  [36mShop/TypeTree/ParcelSettingsTree.cs:81[0m  MethodDeclaration Draft  [2m[UnusedPrivateMemberDetector][0m
+  [36mShop/TypeTree/ParcelSettingsTree.cs:86[0m  GetAccessorDeclaration Weight  [2m[UselessPropertyHookDetector][0m
+  [36mShop/TypeTree/ParcelSettingsTree.cs:103[0m  IfStatement  [2m[GuardBesideTransitionDetector][0m
+  [36mShop/TypeTree/StockSettingsTree.cs:8[0m  InterfaceDeclaration IStockSettingsTreePort  [2m[LoneImplementerInterfaceDetector][0m
+  [36mShop/TypeTree/StockSettingsTree.cs:34[0m  Parameter counted  [2m[ConcreteCrossModuleDependencyDetector][0m
+  [36mShop/TypeTree/StockSettingsTree.cs:65[0m  ClassDeclaration StockSettingsTreeForwarder  [2m[MiddleManDetector][0m
+  [36mShop/TypeTree/StockSettingsTree.cs:83[0m  MethodDeclaration Read  [2m[RefusedBequestDetector][0m
+  [36mShop/TypeTree/StockSettingsTree.cs:95[0m  ClassDeclaration StockSettingsTreeRegistry  [2m[HandRolledRegistryDetector][0m
+  [36mShop/TypeTree/StockSettingsTree.cs:125[0m  SimpleMemberAccessExpression  [2m[TrainWreckDetector][0m
+  [36mShop/TypeTree/StockSettingsTree.cs:130[0m  MethodDeclaration Draft  [2m[UnusedPrivateMemberDetector][0m
+  [36mShop/TypeTree/StockSettingsTree.cs:138[0m  GetAccessorDeclaration Weight  [2m[UselessPropertyHookDetector][0m
+  [36mShop/TypeTree/StockSettingsTree.cs:162[0m  IfStatement  [2m[GuardBesideTransitionDetector][0m
+  [36mShop/TypeTree/TillReconciliation.cs:13[0m  Parameter details  [2m[ConcreteCrossModuleDependencyDetector][0m
+  [36mShop/TypeTree/TillReconciliation.cs:41[0m  ClassDeclaration DrawerCounter  [2m[MiddleManDetector][0m
+  [36mShop/TypeTree/TillReconciliation.cs:64[0m  MethodDeclaration Total  [2m[RefusedBequestDetector][0m
+  [36mShop/TypeTree/TillReconciliation.cs:82[0m  ClassDeclaration CountedReceipts  [2m[HandRolledRegistryDetector][0m
+  [36mShop/TypeTree/TillReconciliation.cs:119[0m  SimpleMemberAccessExpression  [2m[TrainWreckDetector][0m
+  [36mShop/TypeTree/TillReconciliation.cs:126[0m  MethodDeclaration Report  [2m[UnusedPrivateMemberDetector][0m
+  [36mShop/TypeTree/TillReconciliation.cs:135[0m  GetAccessorDeclaration Format  [2m[UselessPropertyHookDetector][0m
+  [36mShop/TypeTree/TillReconciliation.cs:157[0m  IfStatement  [2m[GuardBesideTransitionDetector][0m
+  [36mShop/TypeTree/VoucherSettingsTree.cs:8[0m  InterfaceDeclaration IVoucherSettingsTreePort  [2m[LoneImplementerInterfaceDetector][0m
+  [36mShop/TypeTree/VoucherSettingsTree.cs:30[0m  Parameter issuer  [2m[ConcreteCrossModuleDependencyDetector][0m
+  [36mShop/TypeTree/VoucherSettingsTree.cs:64[0m  ClassDeclaration VoucherSettingsTreeForwarder  [2m[MiddleManDetector][0m
+  [36mShop/TypeTree/VoucherSettingsTree.cs:76[0m  MethodDeclaration Read  [2m[RefusedBequestDetector][0m
+  [36mShop/TypeTree/VoucherSettingsTree.cs:86[0m  ClassDeclaration VoucherSettingsTreeRegistry  [2m[HandRolledRegistryDetector][0m
+  [36mShop/TypeTree/VoucherSettingsTree.cs:115[0m  SimpleMemberAccessExpression  [2m[TrainWreckDetector][0m
+  [36mShop/TypeTree/VoucherSettingsTree.cs:120[0m  MethodDeclaration Draft  [2m[UnusedPrivateMemberDetector][0m
+  [36mShop/TypeTree/VoucherSettingsTree.cs:128[0m  GetAccessorDeclaration Prefix  [2m[UselessPropertyHookDetector][0m
+  [36mShop/TypeTree/VoucherSettingsTree.cs:149[0m  IfStatement  [2m[GuardBesideTransitionDetector][0m
+
+[1;33mshared/documentation[0m  (18)
+  [1;36m↳ LOAD the skill `commandments-shared-documentation` before fixing[0m
+  [36mShop/Documents/Reprints.cs:14[0m  MethodDeclaration Queue  [2m[CeremonyDocblockDetector][0m
+  [36mShop/Notifications/Broadcasts.cs:10[0m  MethodDeclaration SendMessage  [2m[CeremonyDocblockDetector][0m
+  [36mShop/Orders/Checkouts.cs:10[0m  Documentation comment  [2m[BloatedDocblockDetector][0m
+  [36mShop/Orders/GiftWrapping.cs:5[0m  Documentation comment  [2m[DanglingDocReferenceDetector][0m
+  [36mShop/Orders/Gratuities.cs:9[0m  Line comment  [2m[RestatedCommentDetector][0m
+  [36mShop/Orders/RefundWindows.cs:8[0m  Line comment  [2m[ArchaeologyCommentDetector][0m
+  [36mShop/Pricing/PrizeDraws.cs:9[0m  Line comment  [2m[NegativeSpaceCommentDetector][0m
+  [36mShop/Pricing/VolumeBands.cs:6[0m  RecordDeclaration VolumeBand  [2m[CeremonyDocblockDetector][0m
+  [36mShop/Reports/Rounding.cs:7[0m  Block comment  [2m[NegativeSpaceCommentDetector][0m
+  [36mShop/Shipping/ColdChain.cs:7[0m  Documentation comment  [2m[NegativeSpaceCommentDetector][0m
+  [36mShop/Shipping/Consignments.cs:10[0m  Line comment  [2m[RestatedCommentDetector][0m
+  [36mShop/Shipping/Couriers.cs:9[0m  Documentation comment  [2m[BloatedDocblockDetector][0m
+  [36mShop/Shipping/FreightZones.cs:9[0m  Documentation comment  [2m[DanglingDocReferenceDetector][0m
+  [36mShop/Shipping/Surcharges.cs:8[0m  Block comment  [2m[ArchaeologyCommentDetector][0m
+  [36mShop/Stock/BinLocations.cs:5[0m  Documentation comment  [2m[ArchaeologyCommentDetector][0m
+  [36mShop/Stock/BinSweeps.cs:11[0m  Line comment  [2m[RestatedCommentDetector][0m
+  [36mShop/Stock/ShelfAudits.cs:16[0m  Documentation comment  [2m[DanglingDocReferenceDetector][0m
+  [36mShop/Stock/Suppliers.cs:8[0m  Documentation comment  [2m[BloatedDocblockDetector][0m
+
+[1;33mshared/duplication[0m  (41)
+  [1;36m↳ LOAD the skill `commandments-shared-duplication` before fixing[0m
+  [36mShop/Documents/Barcodes.cs:13[0m  InvocationExpression  [2m[ConvertedArgumentDetector][0m
+    [2m↳ same shape as: Shop/Documents/Barcodes.cs:17[0m
+  [36mShop/Documents/Barcodes.cs:17[0m  InvocationExpression  [2m[ConvertedArgumentDetector][0m
+    [2m↳ same shape as: Shop/Documents/Barcodes.cs:13[0m
+  [36mShop/Documents/Invoice.cs:12[0m  MethodDeclaration Lines  [2m[DuplicateFunctionDetector][0m
+    [2m↳ same shape as: Shop/Documents/PackingSlip.cs:10[0m
+  [36mShop/Documents/LabelFooters.cs:9[0m  LogicalAndExpression  [2m[RepeatedGuardDetector][0m
+    [2m↳ same shape as: Shop/Shipping/TrackingLinks.cs:9[0m
+  [36mShop/Documents/PackingSlip.cs:10[0m  MethodDeclaration Rows  [2m[DuplicateFunctionDetector][0m
+    [2m↳ same shape as: Shop/Documents/Invoice.cs:12[0m
+  [36mShop/Notifications/ChannelNames.cs:22[0m  StringLiteralExpression  [2m[UnnamedVocabularyLiteralDetector][0m
+  [36mShop/Notifications/DeliveredMail.cs:11[0m  MethodDeclaration Compose  [2m[NearDuplicateFunctionDetector][0m
+    [2m↳ same shape as: Shop/Notifications/ShippedMail.cs:11[0m
+  [36mShop/Notifications/Promises.cs:9[0m  LogicalAndExpression  [2m[RepeatedGuardDetector][0m
+    [2m↳ same shape as: Shop/Orders/Dispatch.cs:21[0m
+  [36mShop/Notifications/ShippedMail.cs:11[0m  MethodDeclaration Render  [2m[NearDuplicateFunctionDetector][0m
+    [2m↳ same shape as: Shop/Notifications/DeliveredMail.cs:11[0m
+  [36mShop/Orders/Dispatch.cs:21[0m  LogicalAndExpression  [2m[RepeatedGuardDetector][0m
+    [2m↳ same shape as: Shop/Notifications/Promises.cs:9[0m
+  [36mShop/Pricing/CreditNotes.cs:23[0m  InvocationExpression  [2m[ConvertedArgumentDetector][0m
+    [2m↳ same shape as: Shop/Pricing/CreditNotes.cs:33, Shop/Reports/CreditSummaries.cs:12[0m
+  [36mShop/Pricing/CreditNotes.cs:33[0m  InvocationExpression  [2m[ConvertedArgumentDetector][0m
+    [2m↳ same shape as: Shop/Pricing/CreditNotes.cs:23, Shop/Reports/CreditSummaries.cs:12[0m
+  [36mShop/Pricing/Discounts.cs:10[0m  MethodDeclaration Wholesale  [2m[NearDuplicateFunctionDetector][0m
+    [2m↳ same shape as: Shop/Pricing/Discounts.cs:32[0m
+  [36mShop/Pricing/Discounts.cs:32[0m  MethodDeclaration Retail  [2m[NearDuplicateFunctionDetector][0m
+    [2m↳ same shape as: Shop/Pricing/Discounts.cs:10[0m
+  [36mShop/Reports/CreditSummaries.cs:12[0m  InvocationExpression  [2m[ConvertedArgumentDetector][0m
+    [2m↳ same shape as: Shop/Pricing/CreditNotes.cs:23, Shop/Pricing/CreditNotes.cs:33[0m
+  [36mShop/Reports/Damage.cs:15[0m  LogicalAndExpression  [2m[RepeatedTypeGuardDetector][0m
+    [2m↳ same shape as: Shop/Shipping/Crates.cs:26, Shop/Stock/Palletising.cs:11[0m
+  [36mShop/Reports/ReportKinds.cs:19[0m  StringLiteralExpression  [2m[UnnamedVocabularyLiteralDetector][0m
+  [36mShop/Shipping/Carriers.cs:12[0m  GetAccessorDeclaration Surcharge  [2m[DuplicateFunctionDetector][0m
+    [2m↳ same shape as: Shop/Shipping/Carriers.cs:34[0m
+  [36mShop/Shipping/Carriers.cs:34[0m  GetAccessorDeclaration Surcharge  [2m[DuplicateFunctionDetector][0m
+    [2m↳ same shape as: Shop/Shipping/Carriers.cs:12[0m
+  [36mShop/Shipping/CashReconcile.cs:15[0m  MethodDeclaration ReconcileTill  [2m[DivergentTwinDetector][0m
+    [2m↳ same shape as: Shop/Shipping/TillAudit.cs:6[0m
+  [36mShop/Shipping/CouponSourceCatalog.cs:40[0m  CollectionExpression  [2m[ListMirrorsFolderDetector][0m
+  [36mShop/Shipping/Crates.cs:26[0m  LogicalAndExpression  [2m[RepeatedTypeGuardDetector][0m
+    [2m↳ same shape as: Shop/Reports/Damage.cs:15, Shop/Stock/Palletising.cs:11[0m
+  [36mShop/Shipping/GiftwrapSizeCatalog.cs:41[0m  ImplicitArrayCreationExpression  [2m[ListMirrorsFolderDetector][0m
+  [36mShop/Shipping/LabelArchive.cs:12[0m  InvocationExpression  [2m[RepeatedFolderPathDetector][0m
+  [36mShop/Shipping/LabelPurge.cs:14[0m  InvocationExpression  [2m[RepeatedFolderPathDetector][0m
+  [36mShop/Shipping/LabelReprint.cs:10[0m  InvocationExpression  [2m[RepeatedFolderPathDetector][0m
+  [36mShop/Shipping/ParcelNoticeCatalog.cs:41[0m  CollectionExpression  [2m[ListMirrorsFolderDetector][0m
+  [36mShop/Shipping/ParcelReadiness.cs:15[0m  MethodDeclaration DispatchParcel  [2m[DivergentTwinDetector][0m
+    [2m↳ same shape as: Shop/Shipping/ParcelReadiness.cs:24[0m
+  [36mShop/Shipping/ParcelReadiness.cs:24[0m  MethodDeclaration DispatchInsuredParcel  [2m[DivergentTwinDetector][0m
+    [2m↳ same shape as: Shop/Shipping/ParcelReadiness.cs:15[0m
+  [36mShop/Shipping/StockDelivery.cs:15[0m  MethodDeclaration ReceiveStock  [2m[DivergentTwinDetector][0m
+    [2m↳ same shape as: Shop/Shipping/StockDelivery.cs:24[0m
+  [36mShop/Shipping/StockDelivery.cs:24[0m  MethodDeclaration ReceiveOrderStock  [2m[DivergentTwinDetector][0m
+    [2m↳ same shape as: Shop/Shipping/StockDelivery.cs:15[0m
+  [36mShop/Shipping/TillAudit.cs:6[0m  MethodDeclaration AuditTill  [2m[DivergentTwinDetector][0m
+    [2m↳ same shape as: Shop/Shipping/CashReconcile.cs:15[0m
+  [36mShop/Shipping/TrackingLinks.cs:9[0m  LogicalAndExpression  [2m[RepeatedGuardDetector][0m
+    [2m↳ same shape as: Shop/Documents/LabelFooters.cs:9[0m
+  [36mShop/Stock/BinImports.cs:17[0m  InvocationExpression  [2m[ConvertedArgumentDetector][0m
+    [2m↳ same shape as: Shop/Stock/BinImports.cs:21[0m
+  [36mShop/Stock/BinImports.cs:21[0m  InvocationExpression  [2m[ConvertedArgumentDetector][0m
+    [2m↳ same shape as: Shop/Stock/BinImports.cs:17[0m
+  [36mShop/Stock/Ledgers.cs:8[0m  MethodDeclaration Counts  [2m[NearDuplicateFunctionDetector][0m
+    [2m↳ same shape as: Shop/Stock/Ledgers.cs:29[0m
+  [36mShop/Stock/Ledgers.cs:29[0m  MethodDeclaration Reservations  [2m[NearDuplicateFunctionDetector][0m
+    [2m↳ same shape as: Shop/Stock/Ledgers.cs:8[0m
+  [36mShop/Stock/Palletising.cs:11[0m  LogicalAndExpression  [2m[RepeatedTypeGuardDetector][0m
+    [2m↳ same shape as: Shop/Reports/Damage.cs:15, Shop/Shipping/Crates.cs:26[0m
+  [36mShop/Stock/Replenishment.cs:10[0m  LocalFunctionStatement Shortfall  [2m[DuplicateFunctionDetector][0m
+    [2m↳ same shape as: Shop/Stock/Replenishment.cs:24[0m
+  [36mShop/Stock/Replenishment.cs:24[0m  LocalFunctionStatement Shortfall  [2m[DuplicateFunctionDetector][0m
+    [2m↳ same shape as: Shop/Stock/Replenishment.cs:10[0m
+  [36mShop/Stock/StockZones.cs:32[0m  StringLiteralExpression  [2m[UnnamedVocabularyLiteralDetector][0m
+
+[1;33mshared/enums[0m  (17)
+  [1;36m↳ LOAD the skill `commandments-shared-enums` before fixing[0m
+  [36mShop/Checkout/SourceOwners.cs:19[0m  SwitchExpression  [2m[TypeSwitchDetector][0m
+  [36mShop/Notifications/Channels.cs:5[0m  ClassDeclaration ContactChannel  [2m[ConstClassEnumDetector][0m
+  [36mShop/Notifications/Quiet.cs:15[0m  OrPattern  [2m[EnumCaseOrChainDetector][0m
+  [36mShop/Orders/Discounting.cs:12[0m  SwitchStatement  [2m[TypeSwitchDetector][0m
+  [36mShop/Orders/Fulfilment.cs:27[0m  LogicalOrExpression  [2m[EnumCaseOrChainDetector][0m
+  [36mShop/Orders/ParkedRuns.cs:22[0m  LogicalOrExpression  [2m[EnumCaseOrChainDetector][0m
+  [36mShop/Orders/PaymentStates.cs:4[0m  ClassDeclaration PaymentState  [2m[ConstClassEnumDetector][0m
+  [36mShop/Orders/PaymentWebhooks.cs:19[0m  InvocationExpression  [2m[InArrayMirrorsEnumDetector][0m
+  [36mShop/Pricing/Promotions.cs:35[0m  SwitchExpression  [2m[TypeSwitchDetector][0m
+  [36mShop/Reports/Closures.cs:9[0m  IsPatternExpression  [2m[InArrayMirrorsEnumDetector][0m
+  [36mShop/Reports/PromotionReport.cs:17[0m  SwitchStatement  [2m[TypeSwitchDetector][0m
+  [36mShop/Shipping/InsuredCouriers.cs:19[0m  VariableDeclarator Insured  [2m[SideTableTraitDetector][0m
+  [36mShop/Shipping/ServiceLevels.cs:5[0m  ClassDeclaration ServiceLevel  [2m[ConstClassEnumDetector][0m
+  [36mShop/Stock/Batches.cs:16[0m  OrPattern  [2m[EnumCaseOrChainDetector][0m
+  [36mShop/Stock/HiddenStockSources.cs:17[0m  VariableDeclarator Hidden  [2m[SideTableTraitDetector][0m
+  [36mShop/Stock/Holds.cs:9[0m  InvocationExpression  [2m[InArrayMirrorsEnumDetector][0m
+  [36mShop/Tags/TagSpeech.cs:17[0m  VariableDeclarator Quiet  [2m[SideTableTraitDetector][0m
+
+[1;33mshared/exceptions[0m  (22)
+  [1;36m↳ LOAD the skill `commandments-shared-exceptions` before fixing[0m
+  [36mShop/Documents/InvoiceArchive.cs:16[0m  ThrowStatement  [2m[MessageAtThrowDetector][0m
+  [36mShop/Documents/InvoiceArchive.cs:16[0m  ThrowStatement  [2m[WrappingWithoutCauseDetector][0m
+  [36mShop/Documents/InvoiceArchive.cs:27[0m  CatchClause  [2m[RethrownUnchangedDetector][0m
+  [36mShop/Notifications/Outbox.cs:19[0m  CatchClause  [2m[SwallowCatchDetector][0m
+  [36mShop/Orders/Lifecycle.cs:15[0m  ThrowStatement  [2m[GenericExceptionDetector][0m
+  [36mShop/Orders/Lifecycle.cs:15[0m  ThrowStatement  [2m[MessageAtThrowDetector][0m
+  [36mShop/Picking/CountSheets.cs:15[0m  CatchClause error  [2m[RethrownUnchangedDetector][0m
+  [36mShop/Pricing/Currencies.cs:13[0m  ThrowExpression  [2m[GenericExceptionDetector][0m
+  [36mShop/Pricing/Currencies.cs:13[0m  ThrowExpression  [2m[MessageAtThrowDetector][0m
+  [36mShop/Pricing/RateCache.cs:14[0m  CatchClause  [2m[SwallowCatchDetector][0m
+  [36mShop/Pricing/RateFeed.cs:18[0m  ThrowStatement  [2m[MessageAtThrowDetector][0m
+  [36mShop/Pricing/RateFeed.cs:18[0m  ThrowStatement  [2m[WrappingWithoutCauseDetector][0m
+  [36mShop/Pricing/RateFeed.cs:22[0m  ThrowStatement  [2m[MessageAtThrowDetector][0m
+  [36mShop/Shipping/CarrierDirectory.cs:13[0m  ThrowStatement  [2m[GenericExceptionDetector][0m
+  [36mShop/Shipping/CarrierDirectory.cs:13[0m  ThrowStatement  [2m[MessageAtThrowDetector][0m
+  [36mShop/Shipping/CarrierDirectory.cs:36[0m  ThrowStatement  [2m[MessageAtThrowDetector][0m
+  [36mShop/Shipping/Webhooks.cs:16[0m  ThrowExpression  [2m[MessageAtThrowDetector][0m
+  [36mShop/Stock/Snapshots.cs:16[0m  CatchClause  [2m[SwallowCatchDetector][0m
+  [36mShop/Stock/StockHolds.cs:15[0m  CatchClause  [2m[RethrownUnchangedDetector][0m
+  [36mShop/Stock/StockImport.cs:16[0m  ThrowStatement  [2m[MessageAtThrowDetector][0m
+  [36mShop/Stock/StockImport.cs:16[0m  ThrowStatement  [2m[WrappingWithoutCauseDetector][0m
+  [36mShop/Stock/StockImport.cs:30[0m  ThrowStatement  [2m[MessageAtThrowDetector][0m
+  [32m↳ auto-fixable: commandments repent --repent=latest --sin=wrapping-without-cause[0m
+
+[1;33mshared/flow[0m  (39)
   [1;36m↳ LOAD the skill `commandments-shared-flow` before fixing[0m
   [36mShop/Addresses/Quotes.cs:8[0m  ConditionalExpression  [2m[NestedTernaryDetector][0m
   [36mShop/Documents/Summaries.cs:10[0m  IfStatement  [2m[RedundantElseDetector][0m
   [36mShop/Flow/LoyaltyPoints.cs:14[0m  IfStatement  [2m[DuplicatedBranchTailDetector][0m
   [36mShop/Flow/LoyaltyPoints.cs:37[0m  ExpressionStatement  [2m[UnreachableStatementDetector][0m
+  [36mShop/Flow/LoyaltyPoints.cs:63[0m  AddAssignmentExpression  [2m[ReassignedParameterDetector][0m
   [36mShop/Flow/ParcelPostage.cs:13[0m  IfStatement  [2m[DuplicatedBranchTailDetector][0m
   [36mShop/Flow/ParcelPostage.cs:38[0m  ExpressionStatement  [2m[UnreachableStatementDetector][0m
+  [36mShop/Flow/ParcelPostage.cs:59[0m  SimpleAssignmentExpression  [2m[ReassignedParameterDetector][0m
   [36mShop/Flow/ParcelReturns.cs:15[0m  IfStatement  [2m[DuplicatedBranchTailDetector][0m
-  [36mShop/Flow/ParcelReturns.cs:33[0m  ExpressionStatement  [2m[UnreachableStatementDetector][0m
+  [36mShop/Flow/ParcelReturns.cs:34[0m  SimpleAssignmentExpression  [2m[ReassignedParameterDetector][0m
+  [36mShop/Flow/ParcelReturns.cs:34[0m  ExpressionStatement  [2m[UnreachableStatementDetector][0m
+  [36mShop/Flow/ParcelReturns.cs:57[0m  SimpleAssignmentExpression  [2m[ReassignedParameterDetector][0m
+  [36mShop/Loading/BayClearance.cs:15[0m  LogicalOrExpression  [2m[UnnamedConditionDetector][0m
+  [36mShop/Loading/BayLoading.cs:36[0m  LogicalAndExpression  [2m[UnnamedConditionDetector][0m
+  [36mShop/Loading/ShiftTicks.cs:24[0m  LogicalAndExpression  [2m[UnnamedConditionDetector][0m
+  [36mShop/Orders/Approvals.cs:30[0m  ForStatement  [2m[NonCountingForDetector][0m
   [36mShop/Orders/Checkout.cs:10[0m  IfStatement  [2m[RedundantElseDetector][0m
   [36mShop/Orders/Invoicing.cs:15[0m  IfStatement  [2m[LoopInvertedGuardDetector][0m
+  [36mShop/Orders/Refunds.cs:22[0m  IfStatement  [2m[DeepNestingDetector][0m
   [36mShop/Orders/StatusBadge.cs:12[0m  IfStatement  [2m[SubjectLadderDetector][0m
   [36mShop/Pricing/LoyaltyTiers.cs:9[0m  ConditionalExpression  [2m[NestedTernaryDetector][0m
   [36mShop/Pricing/PriceList.cs:14[0m  IfStatement  [2m[LoopInvertedGuardDetector][0m
   [36mShop/Pricing/Rounding.cs:9[0m  IfStatement  [2m[RedundantElseDetector][0m
   [36mShop/Pricing/Units.cs:18[0m  IfStatement  [2m[SubjectLadderDetector][0m
+  [36mShop/Reports/PageReader.cs:20[0m  ForStatement  [2m[NonCountingForDetector][0m
+  [36mShop/Services/AccountStatementServices.cs:33[0m  InvocationExpression  [2m[QueryInLoopDetector][0m
+  [36mShop/Services/ParcelSnapshotServices.cs:30[0m  InvocationExpression  [2m[QueryInLoopDetector][0m
+  [36mShop/Services/StockMovementServices.cs:33[0m  InvocationExpression  [2m[QueryInLoopDetector][0m
+  [36mShop/Services/TillEntries.cs:40[0m  InvocationExpression  [2m[QueryInLoopDetector][0m
   [36mShop/Shipping/CarrierCodes.cs:12[0m  IfStatement  [2m[SubjectLadderDetector][0m
   [36mShop/Shipping/Carriers.cs:15[0m  ConditionalExpression  [2m[NestedTernaryDetector][0m
   [36mShop/Shipping/Carriers.cs:37[0m  ConditionalExpression  [2m[NestedTernaryDetector][0m
+  [36mShop/Shipping/Dispatch.cs:20[0m  WhileStatement  [2m[DeepNestingDetector][0m
   [36mShop/Shipping/ParcelSizes.cs:7[0m  ConditionalExpression  [2m[NestedTernaryDetector][0m
   [36mShop/Stock/Arrivals.cs:13[0m  IfStatement  [2m[LoopInvertedGuardDetector][0m
+  [36mShop/Stock/CategoryPaths.cs:15[0m  ForStatement  [2m[NonCountingForDetector][0m
   [36mShop/Stock/Picking.cs:14[0m  IfStatement  [2m[RedundantElseDetector][0m
+  [36mShop/Stock/Restock.cs:20[0m  IfStatement  [2m[DeepNestingDetector][0m
   [36mShop/Stock/StockLevels.cs:9[0m  ConditionalExpression  [2m[NestedTernaryDetector][0m
   [32m↳ auto-fixable: commandments repent --repent=latest --sin=nested-ternary[0m
   [32m↳ auto-fixable: commandments repent --repent=latest --sin=redundant-else[0m
@@ -342,9 +475,9 @@ exit: 1
 [2m↳ the rule above all: trace each sin to where the value is BORN and fix it THERE — read fix-at-the-source.[0m
 [2m↳ don't recognise a rule above? `commandments info <sin>` — what it flags, why it is a sin, the fix, an example.[0m
 
-[1m246 sins[0m across 18 skills.
+[1m359 sins[0m across 22 skills.
 
 --- stderr
-· read 0 files in <took> (0 from the cache, 0 by the bridges), judged in <took> (0 rule answers from memory, 0 asked): 246 sins
+· read 0 files in <took> (0 from the cache, 0 by the bridges), judged in <took> (0 rule answers from memory, 0 asked): 359 sins
 
 --- files

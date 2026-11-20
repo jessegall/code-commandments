@@ -12,6 +12,7 @@ public interface ILabelStore
 
 // A label printer behind the shop's own interface. The interface is the shop's, so it can answer a task, and
 // blocking here holds the caller's thread for work the shop itself could have awaited.
+// @sin LoneImplementerInterface
 public interface ILabelPrinter
 {
     string Print(string id);

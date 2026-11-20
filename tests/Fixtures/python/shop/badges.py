@@ -38,6 +38,7 @@ class Badge:
     # @righteous NearDuplicateFunction
     def render(self, order, context, options) -> str:
         """Render the badge: each kind decides how."""
+        # @sin MessageAtThrow
         raise NotImplementedError(f"{type(self).__name__} renders {order.number} in {context.name} as {options.mode} for {self.label}")
 
 
@@ -53,6 +54,7 @@ class Ribbon:
     # @righteous NearDuplicateFunction
     def render(self, order, context, options) -> str:
         """Render the ribbon: each kind decides how."""
+        # @sin MessageAtThrow
         raise NotImplementedError(f"{type(self).__name__} draws {order.number} in {context.name} as {options.mode} for {self.label}")
 
 

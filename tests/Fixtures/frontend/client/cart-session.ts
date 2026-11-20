@@ -30,6 +30,14 @@ export class CartSession {
     couponCode(): string {
         return this.coupon?.code ?? 'none'
     }
+
+    currencyCode(): string {
+        return this.currency ?? 'EUR'
+    }
+
+    startedAt(): string {
+        return this.openedAt
+    }
 }
 
 // The FIX: a field initialised where it is declared is never absent, so it is declared without the `?`.

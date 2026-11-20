@@ -41,7 +41,7 @@ func TestAFinderEveryCallerDeNullsIsFoundAndOneWithARealChoiceIsNot(t *testing.T
 	} {
 		t.Run(name, func(t *testing.T) {
 			codebase := pythontest.FromSource(t, map[string]string{"shop/__init__.py": "", "shop/orders.py": orders, "shop/labels.py": test.callers})
-			found := (python.DeNulledFinderDetector{}).Find(codebase)
+			found := python.DeNulledFinderDetector.Find(codebase)
 
 			if len(found) != test.want {
 				t.Errorf("found %d, want %d: %v", len(found), test.want, found)

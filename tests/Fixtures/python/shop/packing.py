@@ -12,4 +12,5 @@ def pack(orders, attempts):
                         order.box(line)
                     case "pallet":
                         order.palletise(line)
+        # @sin ReassignedParameter
         attempts -= 1

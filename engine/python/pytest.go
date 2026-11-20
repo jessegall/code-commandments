@@ -4,7 +4,6 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
-	"slices"
 	"strings"
 	"sync"
 )
@@ -100,37 +99,3 @@ func patternsOf(value string) []string {
 }
 
 var raisesAssertions = []string{"raises", "assertRaises", "assertRaisesRegex"}
-
-func (n Node) IsStimulusOfAnExpectedRaise() bool {
-	if n.Kind() != "Raise" {
-		return false
-	}
-
-	for around := n.Parent(); around.Exists() && !around.IsDefinition(); around = around.Parent() {
-		if around.Kind() == "With" && around.assertsARaise() {
-			return true
-		}
-	}
-
-	return false
-}
-
-func (n Node) assertsARaise() bool {
-	for _, item := range n.ChildrenIn("items") {
-		for _, entered := range item.Children() {
-			if !entered.IsCall() {
-				continue
-			}
-
-			called := entered.Callee().DottedName()
-			if at := strings.LastIndex(called, "."); at >= 0 {
-				called = called[at+1:]
-			}
-			if slices.Contains(raisesAssertions, called) {
-				return true
-			}
-		}
-	}
-
-	return false
-}

@@ -10,7 +10,7 @@ interface Shipment {
 }
 
 export class OrderTracker {
-    private readonly customer: Customer = { name: '' }
+    private readonly customer: Customer = { name: 'Order desk' }
 
     private readonly reference: string = ''
 

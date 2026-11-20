@@ -1,11 +1,10 @@
 exit: 1
 --- stdout
 
-[1;33mpython/value-objects[0m  (40)
+[1;33mpython/value-objects[0m  (37)
   [1;36m↳ LOAD the skill `commandments-python-value-objects` before fixing[0m
   [36mshop/aisle_counts.py:24[0m  FunctionDef counted  [2m[HandedOutCollectionDetector][0m
   [36mshop/barcode_parsing.py:13[0m  tuple  [2m[PositionalTupleReturnDetector][0m
-  [36mshop/carrier_rates.py:14[0m  call  [2m[RawDecodedReturnDetector][0m
   [36mshop/cart_totals.py:9[0m  dict  [2m[DictReturnBagDetector][0m
   [36mshop/customer_profiles.py:22[0m  call  [2m[HandRolledReplaceDetector][0m
   [36mshop/customers.py:6[0m  FunctionDef subscribe  [2m[DataClumpDetector][0m
@@ -44,18 +43,16 @@ exit: 1
   [36mshop/stock_report.py:8[0m  subscript  [2m[DictBagDetector][0m
   [36mshop/stock_report.py:10[0m  subscript  [2m[DictBagDetector][0m
   [36mshop/stock_report.py:10[0m  subscript  [2m[DictBagDetector][0m
-  [36mshop/store_settings.py:15[0m  call  [2m[RawDecodedReturnDetector][0m
-  [36mshop/supplier_feed.py:9[0m  call  [2m[RawDecodedReturnDetector][0m
   [36mshop/wallet_balances.py:7[0m  ClassDef Balance  [2m[MutableValueObjectDetector][0m
 
 [2m↳ the rule above all: trace each sin to where the value is BORN and fix it THERE — read fix-at-the-source.[0m
 [2m↳ don't recognise a rule above? `commandments info <sin>` — what it flags, why it is a sin, the fix, an example.[0m
 
-[1m40 sins[0m across 1 skill.
+[1m37 sins[0m across 1 skill.
 [2m↳ checklist written to <project>/.commandments/sessions/61bdc/sins/sins.md — fix each item, then delete its line[0m
 
 --- stderr
-· read 305 files in <took> (0 from the cache, 305 by the bridges), judged in <took> (91 rule answers from memory, 2654 asked): 40 sins
+· read 328 files in <took> (0 from the cache, 328 by the bridges), judged in <took> (78 rule answers from memory, 2546 asked): 37 sins
 
 --- files
 === created .commandments/sessions/61bdc/sins/README.md
@@ -73,7 +70,7 @@ newest five are kept and older ones are rotated out on their own.
 The whole folder is generated and gitignored. Deleting it is safe — the next judge run
 writes it again.
 === created .commandments/sessions/61bdc/sins/sins.md
-# Code Commandments — 40 sins to fix
+# Code Commandments — 37 sins to fix
 
 > 🔱 **The rule above all — `fix-at-the-source`.** Every sin below is a SYMPTOM. Before you change a line, trace the value to where it is BORN and fix it there; the symptom (and often others) then disappears on its own. Never silence it with a `?? default`, a cast, or a null-check.
 
@@ -94,7 +91,6 @@ Work **wave by wave.** ONLY when this list is EMPTY, run `commandments judge` ag
 
 - `<project>/shop/aisle_counts.py:24`  FunctionDef counted  [HandedOutCollectionDetector]
 - `<project>/shop/barcode_parsing.py:13`  tuple  [PositionalTupleReturnDetector]
-- `<project>/shop/carrier_rates.py:14`  call  [RawDecodedReturnDetector]
 - `<project>/shop/cart_totals.py:9`  dict  [DictReturnBagDetector]
 - `<project>/shop/customer_profiles.py:22`  call  [HandRolledReplaceDetector]
 - `<project>/shop/customers.py:6`  FunctionDef subscribe  [DataClumpDetector] — same shape as shop/customers.py:12
@@ -129,7 +125,5 @@ Work **wave by wave.** ONLY when this list is EMPTY, run `commandments judge` ag
 - `<project>/shop/stock_report.py:8`  subscript  [DictBagDetector]
 - `<project>/shop/stock_report.py:10`  subscript  [DictBagDetector]
 - `<project>/shop/stock_report.py:10`  subscript  [DictBagDetector]
-- `<project>/shop/store_settings.py:15`  call  [RawDecodedReturnDetector]
-- `<project>/shop/supplier_feed.py:9`  call  [RawDecodedReturnDetector]
 - `<project>/shop/wallet_balances.py:7`  ClassDef Balance  [MutableValueObjectDetector]
 

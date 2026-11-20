@@ -129,7 +129,7 @@ func TestACatchThatOnlyThrowsAgainIsFoundAndOneThatWorksIsNotCS(t *testing.T) {
 	} {
 		t.Run(name, func(t *testing.T) {
 			codebase := csharptest.FromSource(t, map[string]string{"Shop/Desk.cs": held(test.body)})
-			found := RethrownUnchangedDetector{}.Find(codebase)
+			found := RethrownUnchangedDetector.Find(codebase)
 
 			if len(found) != test.want {
 				t.Errorf("found %d, want %d: %v", len(found), test.want, found)

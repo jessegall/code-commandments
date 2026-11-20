@@ -14,10 +14,10 @@ func TestATestsReadIsNoAssumption(t *testing.T) {
 	test := "from supervisor import Adopted\n\n\ndef test_saved() -> None:\n    adopted = Adopted(4, [1, 2])\n    assert adopted.saved[1] == 2\n"
 	used := "from supervisor import Adopted\n\n\ndef first(adopted: Adopted) -> int:\n    return adopted.saved[0]\n"
 
-	if found := (pydetectors.PhantomNullableDetector{}).Find(pythontest.FromSource(t, map[string]string{"supervisor.py": adopted, "test_supervisor.py": test})); len(found) != 0 {
+	if found := pydetectors.PhantomNullableDetector.Find(pythontest.FromSource(t, map[string]string{"supervisor.py": adopted, "test_supervisor.py": test})); len(found) != 0 {
 		t.Errorf("a test's read of the field was counted as an assumption: %v", found[0].Location())
 	}
-	if found := (pydetectors.PhantomNullableDetector{}).Find(pythontest.FromSource(t, map[string]string{"supervisor.py": adopted, "reader.py": used})); len(found) == 0 {
+	if found := pydetectors.PhantomNullableDetector.Find(pythontest.FromSource(t, map[string]string{"supervisor.py": adopted, "reader.py": used})); len(found) == 0 {
 		t.Error("the code indexing the field unguarded was not flagged")
 	}
 }
@@ -50,7 +50,7 @@ def row(task: Task) -> dict:
 `,
 	})
 
-	for _, found := range (pydetectors.PhantomNullableDetector{}).Find(codebase) {
+	for _, found := range pydetectors.PhantomNullableDetector.Find(codebase) {
 		t.Errorf("a field the class clears through its own mover is reported as phantom at %s", found.Location())
 	}
 }
@@ -82,7 +82,7 @@ def cached(rows: dict[int, Model], row_id: int) -> CachedRow:
 `,
 	})
 
-	for _, found := range (pydetectors.PhantomNullableDetector{}).Find(codebase) {
+	for _, found := range pydetectors.PhantomNullableDetector.Find(codebase) {
 		t.Errorf("a field every read guards with isinstance is reported as phantom at %s", found.Location())
 	}
 }

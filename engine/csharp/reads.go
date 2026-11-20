@@ -94,39 +94,6 @@ func (n Node) IsLoop() bool {
 	return n.Is("ForStatement", "ForEachStatement", "ForEachVariableStatement", "WhileStatement", "DoStatement")
 }
 
-func (n Node) IsNonCountingFor() bool {
-	if !n.Is("ForStatement") {
-		return false
-	}
-	var steps []Node
-	for _, child := range n.All() {
-		if child.IsStep() {
-			steps = append(steps, child)
-		}
-	}
-
-	return len(steps) > 0 && !slices.ContainsFunc(steps, Node.AdvancesACounter)
-}
-
-func (n Node) AdvancesACounter() bool {
-	if n.Is("PostIncrementExpression", "PreIncrementExpression", "PostDecrementExpression", "PreDecrementExpression", "AddAssignmentExpression", "SubtractAssignmentExpression") {
-		return true
-	}
-	if !n.Is("SimpleAssignmentExpression") {
-		return false
-	}
-	target, value := n.At(0), n.At(1)
-
-	return value.AdvancesACounter() || value.isFixedStepFrom(target)
-}
-
-func (n Node) isFixedStepFrom(start Node) bool {
-	arguments := n.Arguments()
-
-	return n.IsCall() && start.Is("IdentifierName") && n.At(0).Is("SimpleMemberAccessExpression") &&
-		n.At(0).At(0).names(start.Name()) && len(arguments) > 0 && !slices.ContainsFunc(arguments, func(argument Node) bool { return !argument.IsConstant() })
-}
-
 func (n Node) IsConstField() bool {
 	return n.Is("FieldDeclaration") && n.HasModifier("const")
 }

@@ -25,7 +25,7 @@ func main() {
 	}
 
 	calibrating := []detectors.Detector{
-		godetectors.DeepNestingDetector{},
+		godetectors.DeepNestingDetector,
 		godetectors.RedundantElseDetector,
 		godetectors.LoopInvertedGuardDetector,
 	}
@@ -51,7 +51,7 @@ func shapeOf(held engine.Match) string {
 		if held.Is(engine.Function) {
 			break
 		}
-		if (golang.Node{Match: held}).IsChoice() {
+		if engine.IsChoice(held) {
 			above = append(above, guarded(held))
 		}
 	}

@@ -50,21 +50,3 @@ public bool HasTranslation(Language language)
 
 public bool HasTextIn(Language language) => texts.ContainsKey(language.Code);
 ```
-
-### csharp-placeholder-filled-data
-
-`new Card(title, "")` — a record's required `string` filled with a blank so the record can be built, hiding a missing value no type check can see
-
-```cs
-----------[ Bad ]----------
-
-public static Payout Queued(string sellerId, int cents) => new Payout(sellerId, cents, "");
-
-----------[ Good ]----------
-
-// in Payouts.cs
-public sealed record PendingPayout(string SellerId, int Cents);
-
-// in Payouts.cs
-public static PendingPayout Queue(string sellerId, int cents) => new PendingPayout(sellerId, cents);
-```

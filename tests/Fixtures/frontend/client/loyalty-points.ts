@@ -22,6 +22,8 @@ export function bonus(member: Member): number {
     } else if ('platinum' === member.tier) {
         return member.points * 5
     }
+    // @sin GenericException
+    // @sin MessageAtThrow
     throw new Error('a member holds no tier')
 }
 
@@ -161,4 +163,113 @@ export function remind(member: Member, log: string[]): void {
 // @righteous ShortCircuitStatement
 export function eligible(member: Member): boolean {
     return member.points >= 100 && member.tier !== Tier.Bronze
+}
+
+export function pointsFor(spent: number[], bonus: number): number {
+    for (const amount of spent) {
+        // @sin ReassignedParameter
+        bonus += Math.floor(amount / 10)
+    }
+
+    return bonus
+}
+
+export function visitPoints(members: Member[], visits: Map<Tier, number[]>): number {
+    let earned = 0
+    members.forEach((member) => {
+        if (member.points > 0) {
+            // @sin CoalescedLoopSubject
+            for (const visit of visits.get(member.tier) ?? []) {
+                if (visit > 0) {
+                    // @sin DeepNesting
+                    if (visit < member.points) {
+                        earned += visit
+                    }
+                }
+            }
+        }
+    })
+
+    return earned
+}
+
+export function pointsAcrossDays(from: Date, until: Date, earned: Map<string, number>): number {
+    let points = 0
+    // @sin NonCountingFor
+    for (let day = from; day < until; day = new Date(day.getTime() + 86400000)) {
+        points += earned.get(day.toDateString()) ?? 0
+    }
+
+    return points
+}
+
+export function tierUnset(tiers: Map<string, Tier>, name: string): boolean {
+    const tier = tiers.get(name)
+    // @sin CancelledCoalesce
+    const unset = (tier ?? 'none') == 'none'
+
+    return unset
+}
+
+export class PointsLost extends Error {
+    static forMember(memberId: string): PointsLost {
+        return new PointsLost(`the points of member ${memberId} were lost`)
+    }
+}
+
+export function savedVisits(store: { visits(): string[] }): string[] {
+    try {
+        return store.visits()
+    }
+    // @sin SwallowCatch
+    catch (error) {
+        return []
+    }
+}
+
+export function awardedPoints(memberId: string, ledger: { award(id: string): number }): number {
+    try {
+        return ledger.award(memberId)
+    }
+    // @sin RethrownUnchanged
+    catch (reason) {
+        throw reason
+    }
+}
+
+export function redeemedPoints(memberId: string, ledger: { redeem(id: string): number }): number {
+    try {
+        return ledger.redeem(memberId)
+    } catch (error) {
+        // @sin WrappingWithoutCause
+        throw new PointsLost(memberId)
+    }
+}
+
+export function tierThreshold(tier: string, thresholds: Map<string, number>): number {
+    const threshold = thresholds.get(tier)
+    if (threshold === undefined) {
+        // @sin GenericException
+        throw new Error()
+    }
+
+    return threshold
+}
+
+export function spendablePoints(balance: number): number {
+    if (balance < 0) {
+        // @sin MessageAtThrow
+        throw new PointsLost('a balance cannot be negative')
+    }
+
+    return balance
+}
+
+// @fixed MessageAtThrow
+export function spendableBalance(balance: number, memberId: string): number {
+    if (balance < 0) {
+        throw PointsLost.forMember(memberId)
+    }
+
+    return balance
 }

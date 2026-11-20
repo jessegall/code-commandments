@@ -11,6 +11,7 @@ interface Entry {
 export async function loadReviews(productId: number): Promise<number[]> {
     const response = await fetch(`/api/products/${productId}/reviews`)
     if (!response.ok) {
+        // @sin GenericException
         throw new Error(response.statusText)
     }
     const reviews: Entry[] = await response.json()

@@ -80,67 +80,80 @@ If you can't point at one of those, you do **not** have an honest null — go ba
 
 ## Rules
 
-- [ ] Model a value that may not be there in the type; never default a total `string` to `''` and read that blank back as "missing".
-      _Say it in the type — `?string $x = null`, or an `Option<string>` — so the blank is not a value the reader has to decode._
 - [ ] A field that crosses the wire says absence in its TYPE; never ship a blank for the far side to decode as missing.
       _`?string $x = null` on the shape, and the reader asks `x == null` — one spelling of absence, agreed by both sides._
-- [ ] Ask about absence directly (`$x !== null`); never coalesce to a value only to compare against that same value.
-      _Say both halves out loud — `$x !== null && $x !== ''` — or make the value non-nullable at its source so only one question is left._
-- [ ] Don't spread a `cond ? [...] : []` to conditionally include a key. Give the target a null-dropping variadic factory (`::of(mixed ...$values)` that filters out nulls) and pass the value as a named arg — an absent one vanishes with no ternary.
-      _Replace `[...$base, ...($x !== null ? ['k' => $x] : [])]` with a `::of(k: $x, …)` factory that drops null-valued arguments._
-- [ ] Decide absence where the value is found — if every caller ends up de-nulling a `?T` finder, make it return a definite type instead (throw, `Option`, or empty).
-      _Add a resolve-or-throw `get()` beside `find()`, or return `Option<T>`._
 - [ ] A Null Object only models absence while the TYPE admits it; never hand one to a `string`-typed slot, which coerces it to `''` and erases it.
       _Widen the type to carry the object (`Stringable`, or the class itself) where the Null Object is the point; otherwise drop the wrapper — and where the blank meant "missing", say that in the type with `?string` or an `Option<string>`._
 - [ ] Never return `false` to say nothing was found or something failed — throw a named exception, return an empty value, or return an Option.
       _Throw a named exception for a failure, or return an empty collection or `Option` for a genuine absence._
-- [ ] Default an optional callback to a Null Object in the signature; don't null-normalise a `?callable` in the body.
-      _Create a reusable no-op invokable (`Invokable` + `NoOp`) and default the param to `new NoOp`._
 - [ ] Use `Option` as a real option (`some`/`none`/`match`); never `?Option`/`Option | null`/`unwrapOr(null)`.
       _Wrap at the seam with `Option::fromNullable($x)`, then consume with `match`/`unwrapOr`._
 
 ## Worked example
 
-### blank-string-default
+### blank-string-on-the-wire
 
-`string $x = ''` standing in for absence — then asked `$x === ''`
+A `string` field sent over the wire whose TypeScript reader has to check `=== ''` to mean "missing" — only that reader knows the blank stands for absence.
 
 ```php
 ----------[ Bad ]----------
 
-public static function of(string $heading, string $strapline = ''): string
+// The voucher panel of the checkout page. A voucher that was never entered travels as a blank code,
+// which the page then has to decode back into "no voucher".
+
+final class VoucherPanelData extends Data
 {
-    if ($strapline === '') {
-        return $heading;
+    /**
+     * @param  array<int, string>  $rejectedCodes  every code the till turned away this basket
+     */
+    public function __construct(
+        public readonly string $appliedCode,
+        public readonly string $discountLabel,
+        public readonly array $rejectedCodes = [],
+    ) {}
+
+    public function rejections(): int
+    {
+        return count($this->rejectedCodes);
     }
 
-    return $heading . ' — ' . $strapline;
+    public function turnedAway(string $code): bool
+    {
+        return in_array($code, $this->rejectedCodes, true);
+    }
 }
 
 ----------[ Good ]----------
 
-public static function lined(string $heading, ?string $strapline = null): string
-{
-    if ($strapline === null) {
-        return $heading;
-    }
+// Where the stock room's live counts come from. A shop with no socket has NO socket, and the type
+// says so — so the browser asks for absence instead of decoding a blank.
 
-    return $heading . ' — ' . $strapline;
+final readonly class StockFeed
+{
+    public function __construct(
+        public string $channel,
+        public ?string $socket = null,
+        public int $pollMs = 2000,
+    ) {}
+
+    public function isSocketed(): bool
+    {
+        return $this->socket !== null;
+    }
 }
 ```
 
-The other 8 — one per rule — are in [`reference/examples.md`](reference/examples.md).
+The other 3 — one per rule — are in [`reference/examples.md`](reference/examples.md).
 
 ## Commands
 
 - `{{binary}} judge --skill=php/absence` — find every one of these in the codebase.
-- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `blank-string-default`, `blank-string-on-the-wire`, `cancelled-coalesce`, `conditional-array-spread`, `de-nulled-finder`, `erased-null-object`, `false-for-nothing`, `nullable-callback`, `option-as-nullable`.
-- `{{binary}} scaffold --sin=<sin>` — generate the helper the fix reaches for, for `nullable-callback`.
+- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `blank-string-on-the-wire`, `erased-null-object`, `false-for-nothing`, `option-as-nullable`.
 - `{{binary}} report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference
 
-- [Worked examples](reference/examples.md) — every rule's bad → good, 9 of them.
+- [Worked examples](reference/examples.md) — every rule's bad → good, 4 of them.
 - [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills

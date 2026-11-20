@@ -25,7 +25,7 @@ export function postage(parcel: Parcel): number {
 
     return cents
 }
-
+// @sin FeatureEnvy
 export function label(parcel: Parcel): Parcel {
     // @sin DuplicatedBranchTail
     if (parcel.grams > 2000) {
@@ -40,7 +40,7 @@ export function label(parcel: Parcel): Parcel {
 
     return parcel
 }
-
+// @sin FeatureEnvy
 // @fixed DuplicatedBranchTail
 export function labelOnce(parcel: Parcel): Parcel {
     if (parcel.grams > 2000) {
@@ -70,6 +70,8 @@ export function sorted(parcels: Parcel[]): number {
 export function zoneName(parcel: Parcel): string {
     // @sin RedundantElse
     if (parcel.zone > 4) {
+        // @sin GenericException
+        // @sin MessageAtThrow
         throw new Error('no such zone')
     } else {
         return `zone ${parcel.zone}`
@@ -79,6 +81,8 @@ export function zoneName(parcel: Parcel): string {
 // @fixed RedundantElse
 export function zoneLabel(parcel: Parcel): string {
     if (parcel.zone > 4) {
+        // @sin GenericException
+        // @sin MessageAtThrow
         throw new Error('no such zone')
     }
 
@@ -97,7 +101,7 @@ export function weighAll(byZone: Record<string, Parcel>): number {
 
     return grams
 }
-
+// @sin FeatureEnvy
 // @righteous DuplicatedBranchTail
 export function weigh(parcel: Parcel): Parcel {
     if (parcel.grams > 2000) {
@@ -140,4 +144,154 @@ export function relabelEmpty(parcel: Parcel): void {
     if (parcel.labels.length === 0) {
         parcel.labels.push('unlabelled')
     }
+}
+
+export function postageCents(grams: number, zone: number): number {
+    // @sin ReassignedParameter
+    grams = Math.max(grams, 100)
+
+    return grams * zone
+}
+
+// @fixed ReassignedParameter
+export function billedPostageCents(grams: number, zone: number): number {
+    const billed = Math.max(grams, 100)
+
+    return billed * zone
+}
+
+// @righteous ReassignedParameter
+export function rezone(parcel: Parcel, zone: number): Parcel {
+    parcel.zone = Math.max(zone, 1)
+
+    return parcel
+}
+// @sin FeatureEnvy
+export function sortIntoBins(parcels: Parcel[], bins: Map<number, Parcel[]>): void {
+    for (const parcel of parcels) {
+        if (parcel.grams > 0) {
+            if (bins.has(parcel.zone)) {
+                // @sin DeepNesting
+                if (parcel.labels.length > 0) {
+                    bins.get(parcel.zone)?.push(parcel)
+                }
+            }
+        }
+    }
+}
+// @sin FeatureEnvy
+// @fixed DeepNesting
+export function sortLabelledIntoBins(parcels: Parcel[], bins: Map<number, Parcel[]>): void {
+    for (const parcel of parcels) {
+        if (parcel.grams <= 0 || parcel.labels.length === 0) {
+            continue
+        }
+        bins.get(parcel.zone)?.push(parcel)
+    }
+}
+
+export function zonesHopped(start: number, hops: Map<number, number>): number[] {
+    const zones: number[] = []
+    // @sin NonCountingFor
+    for (let zone = start; hops.has(zone); zone = hops.get(zone) ?? 0) {
+        zones.push(zone)
+    }
+
+    return zones
+}
+
+// @righteous NonCountingFor
+export function everyOtherZone(last: number): number[] {
+    const zones: number[] = []
+    for (let zone = 1; zone <= last; zone += 2) {
+        zones.push(zone)
+    }
+
+    return zones
+}
+
+export function unweighed(parcel: { grams?: number }): boolean {
+    // @sin CancelledCoalesce
+    if ((parcel.grams ?? 0) === 0) {
+        return true
+    }
+
+    return false
+}
+
+// @righteous CancelledCoalesce
+export function weightOrDefault(parcel: { grams?: number }, fallback: number): number {
+    return parcel.grams ?? fallback
+}
+
+export class PostageUnknown extends Error {
+    constructor(zone: string, options?: ErrorOptions) {
+        super(`no postage is known for zone ${zone}`, options)
+    }
+}
+
+export function weighedParcels(parcels: string[], scale: { weigh(parcel: string): number }): number[] {
+    const weights: number[] = []
+    for (const parcel of parcels) {
+        try {
+            weights.push(scale.weigh(parcel))
+        }
+        // @sin SwallowCatch
+        catch {
+            continue
+        }
+    }
+
+    return weights
+}
+
+export function stampedLabel(parcel: string, printer: { print(text: string): string; release(): void }): string {
+    try {
+        return printer.print(parcel)
+    }
+    // @sin RethrownUnchanged
+    catch (failure) {
+        throw failure
+    } finally {
+        printer.release()
+    }
+}
+
+// @righteous RethrownUnchanged
+export function printedManifest(lines: string[], printer: { print(text: string): string; reset(): void }): string {
+    try {
+        return printer.print(lines.join('\n'))
+    } catch (failure) {
+        printer.reset()
+        throw failure
+    }
+}
+
+export function zoneRate(zone: string, lookup: (zone: string) => number): number {
+    try {
+        return lookup(zone)
+    } catch {
+        // @sin WrappingWithoutCause
+        throw new PostageUnknown(zone)
+    }
+}
+
+export function postageFor(grams: number): number {
+    if (grams <= 0) {
+        // @sin GenericException
+        // @sin MessageAtThrow
+        throw new Error(`a parcel of ${grams} grams cannot be posted`)
+    }
+
+    return grams * 2
+}
+
+// @righteous GenericException
+// @righteous MessageAtThrow
+export function postageInZone(zone: string, rates: Record<string, number>): number {
+    if (!(zone in rates)) {
+        throw new PostageUnknown(zone)
+    }
+
+    return rates[zone]
 }

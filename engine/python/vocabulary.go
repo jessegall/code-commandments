@@ -5,6 +5,8 @@ import (
 	"slices"
 	"strings"
 	"sync"
+
+	"github.com/jessegall/code-commandments/engine"
 )
 
 var numeric = regexp.MustCompile(`^\s*[+-]?(?:\d+\.?\d*|\.\d+)(?:[eE][+-]?\d+)?\s*$`)
@@ -86,4 +88,15 @@ func (n Node) StringConstants() map[string]string {
 	}
 
 	return constants
+}
+
+func unnamedVocabulary(codebase *engine.Codebase) []engine.Match {
+	program := Of(codebase)
+	var findings []engine.Match
+	for _, call := range In(codebase).WhereCall().Where(engine.As(Node.IsEvaluated)).Get() {
+		for _, literal := range program.UnnamedVocabularyLiterals(Node{Match: call}) {
+			findings = append(findings, literal.Match)
+		}
+	}
+	return findings
 }

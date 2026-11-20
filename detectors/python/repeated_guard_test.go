@@ -27,7 +27,7 @@ func TestTwoTypesAskingOfThemselvesRepeatNothing(t *testing.T) {
 `,
 	})
 
-	found := (python.RepeatedGuardDetector{}).Find(codebase)
+	found := (python.RepeatedGuardDetector).Find(codebase)
 	if len(found) != 0 {
 		t.Errorf("two types asking of themselves were read as one repeated guard: %v", found)
 	}
@@ -50,7 +50,7 @@ def counted(row: Row) -> bool:
 `,
 	})
 
-	found := (python.RepeatedGuardDetector{}).Find(codebase)
+	found := (python.RepeatedGuardDetector).Find(codebase)
 	if len(found) != 2 {
 		t.Errorf("one type's question asked twice found %d times, want 2: %v", len(found), found)
 	}

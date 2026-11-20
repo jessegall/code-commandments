@@ -27,7 +27,7 @@ export function said(name: string): boolean {
 `,
 	} {
 		t.Run(name, func(t *testing.T) {
-			found := SideTableTraitDetector{}.Find(frontendtest.FromSource(t, map[string]string{"src/tags.ts": source}))
+			found := SideTableTraitDetector.Find(frontendtest.FromSource(t, map[string]string{"src/tags.ts": source}))
 
 			if len(found) != 1 {
 				t.Fatalf("found %d side tables, want 1: %v", len(found), locations(found))
@@ -74,7 +74,7 @@ const ORDER = ['reply', 'log']
 `,
 	} {
 		t.Run(name, func(t *testing.T) {
-			found := SideTableTraitDetector{}.Find(frontendtest.FromSource(t, map[string]string{"src/tags.ts": source}))
+			found := SideTableTraitDetector.Find(frontendtest.FromSource(t, map[string]string{"src/tags.ts": source}))
 
 			if len(found) != 0 {
 				t.Errorf("flagged %d, want none: %v", len(found), locations(found))

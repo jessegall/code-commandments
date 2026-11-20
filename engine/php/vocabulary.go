@@ -129,3 +129,8 @@ func slotOf(expression engine.Match) string {
 
 	return ""
 }
+
+func unnamedVocabulary(codebase *engine.Codebase) []engine.Match {
+	vocabulary := VocabularyOf(codebase)
+	return In(codebase).WhereKind("Scalar_String").Where(func(literal engine.Match) bool { return vocabulary.NameFor(literal) != "" }).Reject(engine.As(Node.IsParameterDefault)).Get()
+}

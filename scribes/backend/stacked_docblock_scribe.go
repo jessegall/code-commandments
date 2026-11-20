@@ -8,7 +8,7 @@ import (
 )
 
 func init() {
-	scribes.Fixes(rules.StackedDocblockDetector{}, func() scribes.Scribe { return StackedDocblockScribe{} })
+	scribes.Fixes(rules.StackedDocblockDetector, func() scribes.Scribe { return StackedDocblockScribe{} })
 }
 
 // StackedDocblockScribe folds a stack of docblocks over one declaration into one block.

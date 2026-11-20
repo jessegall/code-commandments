@@ -29,9 +29,6 @@ A rule in `.commandments/custom/` that declares a `fix` is repented like a shipp
 | `MemberAfterMethod` | Declare what a class HAS above what it DOES: trait uses, constants, properties and hooks stand at the top, above the constructor — never between two methods or appended at the bottom. |
 | `MemberOutOfOrder` | Order the head of a class the same way every time: trait uses, enum cases, constants, static properties, then instance properties public → protected → private, and hooked (derived) properties last, after the fields they read from. |
 | `InlineDocblock` | Write a docblock as a block: the opening delimiter on its own line, one star per line of content, the closing delimiter on its own line. |
-| `StackedDocblock` | One declaration carries ONE docblock — merge a stack into a single block, because the language hands only the last one to a reader's tooling. |
-| `WrappingWithoutCause` | When wrapping a caught exception, pass the original as `previous`/cause — never drop the stack trace. |
-| `RedundantArrowReturnType` | Leave the return type off an arrow function whose expression already proves the type. Declare one when the type is genuinely ambiguous or you are narrowing it — never to restate a property or a method you can read from here. |
 | `HandRolledWither` | A wither should only say what changes: `clone($this, ['x' => $x])` states the intent, while re-listing every field just repeats the constructor in every wither. |
 | `ConstructorOrchestration` | Project each self-contained page-object slot in a `#[Computed]` get-hook, not an imperative constructor assignment. |
 | `PageObjectMissingTypeScript` | Annotate every page object `#[TypeScript]` so it generates a frontend type the page binds against — a response-bound Data with no annotation is a type-safety hole. |
@@ -55,6 +52,9 @@ A rule in `.commandments/custom/` that declares a `fix` is repented like a shipp
 
 | Sin | The fix `repent` applies |
 |---|---|
+| `RedundantArrowReturnType` | Let the expression supply its return type. |
+| `StackedDocblock` | Keep one doc comment per declaration. |
+| `WrappingWithoutCause` | When wrapping a caught failure, hand the original over as its cause; never drop the trace. |
 | `LoopInvertedGuard` | Use a `continue` guard so the loop body stays flat; don't wrap the whole body in an `if`. |
 | `NestedTernary` | Use one conditional expression for one choice; for more, use a `match`/`switch`, a lookup, or guards that return early. |
 | `RedundantElse` | Drop the `else` after a branch that returns, throws, continues or breaks; let the rest run at the function's own level. |

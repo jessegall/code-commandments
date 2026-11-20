@@ -1,5 +1,6 @@
 /** How much source a file may hold for the checker to type its expressions: a larger one, generated code in practice, is read by its syntax alone. */
 const CHECKED_SOURCE = 1 << 20
+import ts from 'typescript'
 
 /** One file's nodes as they are numbered: pre-order ids, each node's byte span for attaching comments, and the resolver's counts. */
 export class Tree {
@@ -47,6 +48,7 @@ export class Tree {
         return sorted.map((comment, id) => {
             const [start, end] = [source.bytes[comment.start], source.bytes[comment.end]]
             const out = { id, kind: comment.kind, text: source.text.slice(comment.start, comment.end), span: source.span(comment.start, comment.end) }
+            if (comment.kind !== 'doc' && isCodeComment(out.text)) out.extras = { typescript: { code: true } }
             if (!source.leadsItsLine(comment.start)) {
                 const lineStart = source.bytes[lineStartOf(source.text, comment.start)]
                 const owner = this.outermost((span) => span.end <= start && span.end > lineStart)
@@ -68,6 +70,17 @@ export class Tree {
     outermost(check) {
         return this.spans.find(check)
     }
+}
+
+function isCodeComment(raw) {
+    if (!raw.startsWith('//') && !raw.startsWith('/*')) return false
+    const words = raw.replace(/^(?:\/\/|\/\*+)\s*/, '').replace(/\*\/$/, '').trim()
+    if (!words || words.includes('\n')) return false
+    const parsed = ts.createSourceFile('comment.ts', words, ts.ScriptTarget.ESNext, true)
+    if (parsed.parseDiagnostics.length || parsed.statements.length !== 1) return false
+    const statement = parsed.statements[0]
+
+    return !ts.isExpressionStatement(statement) || !(ts.isIdentifier(statement.expression) || ts.isLiteralExpression(statement.expression))
 }
 
 function lineStartOf(text, index) {

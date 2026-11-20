@@ -10,6 +10,7 @@ class LabelQueue:
         if not self.labels:
             # raise an error, the label queue is empty
             # @sin RestatedComment
+            # @sin MessageAtThrow
             raise IndexError("the label queue is empty")
         return self.labels.pop(0)
 

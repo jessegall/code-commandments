@@ -5,7 +5,6 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
-	"unicode"
 
 	"github.com/jessegall/code-commandments/engine"
 )
@@ -20,7 +19,7 @@ func (n Node) SpelledFolder() (engine.SpelledFolder, bool) {
 			return engine.SpelledFolder{}, false
 		}
 
-		return foldersBelow(n.pathFunctionRoot(), text)
+		return engine.FoldersBelow(n.pathFunctionRoot(), text)
 	}
 
 	return engine.SpelledFolder{}, false
@@ -52,11 +51,11 @@ func (n Node) concatenatedFolder() (engine.SpelledFolder, bool) {
 		case part.Kind() == "Expr_ConstFetch" && part.Child("name").Name() == "DIRECTORY_SEPARATOR":
 			written.WriteString("/")
 		default:
-			return foldersBelow(root, written.String())
+			return engine.FoldersBelow(root, written.String())
 		}
 	}
 
-	return foldersBelow(root, written.String())
+	return engine.FoldersBelow(root, written.String())
 }
 
 func pathRoot(part engine.Match) (string, bool) {
@@ -90,37 +89,10 @@ func resolvedDirectory(part engine.Match) (string, bool) {
 	return "", false
 }
 
-func foldersBelow(root, written string) (engine.SpelledFolder, bool) {
-	if !readsAsPath(written) {
-		return engine.SpelledFolder{}, false
-	}
-	segments := engine.PathSegments(written)
-	for len(segments) > 0 && segments[0] == ".." {
-		root, segments = path.Dir(root), segments[1:]
-	}
-	if !strings.HasSuffix(written, "/") {
-		segments = segments[:max(len(segments)-1, 0)]
-	}
-	folder := engine.CleanPath(segments)
-	if len(folder) == 0 {
-		return engine.SpelledFolder{}, false
-	}
-
-	return engine.SpelledFolder{Root: root, Folder: folder}, true
-}
-
 func concatenatedParts(node engine.Match) []engine.Match {
 	if node.Kind() != "Expr_BinaryOp_Concat" {
 		return []engine.Match{node}
 	}
 
 	return append(concatenatedParts(node.Child("left")), concatenatedParts(node.Child("right"))...)
-}
-
-func readsAsPath(text string) bool {
-	if strings.Contains(text, "://") || strings.IndexFunc(text, unicode.IsSpace) >= 0 || strings.ContainsAny(text, "?#=%@:<>|*\"'") {
-		return false
-	}
-
-	return strings.Contains(strings.Trim(text, "/"), "/") || strings.HasPrefix(text, "/") && len(text) > 1
 }

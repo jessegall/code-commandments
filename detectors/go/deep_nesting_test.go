@@ -9,7 +9,6 @@ import (
 	"github.com/jessegall/code-commandments/cli/source"
 	godetectors "github.com/jessegall/code-commandments/detectors/go"
 	"github.com/jessegall/code-commandments/engine"
-	_ "github.com/jessegall/code-commandments/engine/golang"
 )
 
 const nested = `package shop
@@ -89,7 +88,7 @@ func TestTheFirstGoRuleFiresThroughTheEngineItself(t *testing.T) {
 		t.Fatalf("the scan did not read the Go tree: %v", err)
 	}
 
-	found := godetectors.DeepNestingDetector{}.Find(codebase)
+	found := godetectors.DeepNestingDetector.Find(codebase)
 
 	if len(found) != 1 {
 		t.Fatalf("the rule found %d choices four deep: %v", len(found), locations(found))

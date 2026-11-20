@@ -10,7 +10,8 @@ public sealed class Lifecycle
     {
         if (status != OrderStatus.Paid)
         {
-            // @sin GenericThrow
+            // @sin GenericException
+            // @sin MessageAtThrow
             throw new InvalidOperationException($"An order that is {status} cannot be shipped.");
         }
 
@@ -21,7 +22,7 @@ public sealed class Lifecycle
     {
         if (status != OrderStatus.Placed)
         {
-            // @righteous GenericThrow
+            // @righteous GenericException
             throw new InvalidOperationException();
         }
 

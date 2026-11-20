@@ -85,7 +85,7 @@ func proveDiversity(t testing.TB, f fixture.Fixture, detector detectors.Detector
 
 		return
 	}
-	if largest := fixture.LargestDiverseGroup(scenarios); largest < fixture.MinScenarios {
+	if largest := fixture.DiverseGroupUpTo(scenarios, fixture.MinScenarios); largest < fixture.MinScenarios {
 		t.Errorf("%s: needs ≥%d mutually-DIVERSE scenarios (different files, <%.0f%% overlap) but the largest diverse group of its %d finding(s) is %d. Add genuinely different cases, not copies.",
 			catalog.Name(detector), fixture.MinScenarios, fixture.MaxSimilarity, len(scenarios), largest)
 	}

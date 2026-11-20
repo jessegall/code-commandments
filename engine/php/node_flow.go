@@ -97,20 +97,6 @@ func (n Node) ReachesIntoParameter() bool {
 	return false
 }
 
-func (n Node) IsDeeplyNestedIf() bool {
-	if n.Kind() != "Stmt_If" {
-		return false
-	}
-	depth := 0
-	for at := n.Up(); at.Exists() && !at.IsFunctionLike(); at = at.Up() {
-		if at.Kind() == "Stmt_If" {
-			depth++
-		}
-	}
-
-	return depth >= 2
-}
-
 func (n Node) IsIfElseLadder() bool {
 	return n.Kind() == "Stmt_If" && len(n.ChildrenIn("elseifs")) >= 2
 }
@@ -121,17 +107,6 @@ func (n Node) IsCallArgument() bool {
 
 func (n Node) IsCallReceiver() bool {
 	return n.Exists() && isMethodSend(n.Parent()) && n.Node().Field == "var"
-}
-
-var counterSteps = []string{"Expr_PostInc", "Expr_PreInc", "Expr_PostDec", "Expr_PreDec", "Expr_AssignOp_Plus", "Expr_AssignOp_Minus"}
-
-func (n Node) IsNonCountingFor() bool {
-	steps := n.ChildrenIn("loop")
-	if n.Kind() != "Stmt_For" || len(steps) == 0 {
-		return false
-	}
-
-	return !slices.ContainsFunc(steps, func(step engine.Match) bool { return slices.Contains(counterSteps, step.Kind()) })
 }
 
 func (n Node) IsBailOut() bool {

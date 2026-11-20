@@ -79,3 +79,22 @@ reset:
 
 	return member
 }
+
+func pointsFor(spent []int, bonus int) int {
+	for _, amount := range spent {
+		// @sin ReassignedParameter
+		bonus += amount / 10
+	}
+
+	return bonus
+}
+
+func codePrefixes(code string, known map[string]int) int {
+	matched := 0
+	// @sin NonCountingFor
+	for prefix := code; prefix != ""; prefix = prefix[:len(prefix)-1] {
+		matched += known[prefix]
+	}
+
+	return matched
+}

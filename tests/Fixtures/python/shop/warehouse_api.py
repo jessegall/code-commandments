@@ -6,5 +6,6 @@ def reserve(client, sku: str, quantity: int, retries: int = 3) -> str:
         reply = client.post("/reserve", sku=sku, quantity=quantity)
         if reply.ok:
             return reply.reference
-    # @sin MessageStringRaise
+    # @sin GenericException
+    # @sin MessageAtThrow
     raise Exception(f"the warehouse refused {quantity} x {sku} after {retries} attempts")

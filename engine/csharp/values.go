@@ -29,19 +29,6 @@ func isDictionary(name string) bool {
 	return slices.ContainsFunc(dictionaries, func(prefix string) bool { return strings.HasPrefix(name, prefix) })
 }
 
-func (n Node) IsBranchingConstruct() bool {
-	return n.Is("IfStatement", "ForStatement", "ForEachStatement", "ForEachVariableStatement", "WhileStatement", "DoStatement", "SwitchStatement")
-}
-
-func (n Node) IsBroadCatch() bool {
-	if !n.Is("CatchClause") || n.firstChild("CatchFilterClause").Exists() {
-		return false
-	}
-	declaration := n.firstChild("CatchDeclaration")
-
-	return !declaration.Exists() || declaration.Type().Name() == "global::System.Exception"
-}
-
 func (n Node) firstChild(kinds ...string) Node {
 	for _, child := range n.All() {
 		if child.Is(kinds...) {
@@ -52,24 +39,12 @@ func (n Node) firstChild(kinds ...string) Node {
 	return Node{}
 }
 
-func (n Node) Swallows() bool {
-	body := n.firstChild("Block")
-	if !body.Exists() {
+func (n Node) IsBroadCatch() bool {
+	if !n.Is("CatchClause") || n.firstChild("CatchFilterClause").Exists() {
 		return false
 	}
-	statements := body.Children()
-	switch {
-	case len(statements) > 1:
-		return false
-	case len(statements) == 0 || statements[0].Is("ContinueStatement"):
-		return true
-	case statements[0].Is("ReturnStatement"):
-		value := statements[0].ReturnedValue()
-
-		return !value.Exists() || value.IsAbsenceValue()
-	}
-
-	return false
+	declaration := n.firstChild("CatchDeclaration")
+	return !declaration.Exists() || declaration.Type().Name() == "global::System.Exception"
 }
 
 func (n Node) IsAbsenceValue() bool {
@@ -85,19 +60,6 @@ func (n Node) IsAbsenceValue() bool {
 	}
 
 	return false
-}
-
-func (n Node) IsGenericThrowWithMessage() bool {
-	if !n.Is("ThrowStatement", "ThrowExpression") {
-		return false
-	}
-	expressions := n.Expressions()
-	if len(expressions) == 0 || !expressions[0].Is("ObjectCreationExpression", "ImplicitObjectCreationExpression") {
-		return false
-	}
-	created := expressions[0]
-
-	return slices.Contains(genericExceptions, created.Target().Type()) && len(created.firstChild("ArgumentList").All()) > 0
 }
 
 func (n Node) IsEmptyScalar() bool {
@@ -187,14 +149,6 @@ func (n Node) IsEmptyCollection() bool {
 	return false
 }
 
-func (n Node) IsSameValueAs(other Node) bool {
-	if n.IsEmptyScalar() && other.IsEmptyScalar() {
-		return n.Type().Name() == other.Type().Name()
-	}
-
-	return n.IsLiteral() && n.Kind() == other.Kind() && n.Text() == other.Text()
-}
-
 func (n Node) Fallback() Node {
 	if n.Is("CoalesceExpression") {
 		return n.Expressions()[1]
@@ -238,33 +192,4 @@ func (n Node) Arguments() []Node {
 	}
 
 	return arguments
-}
-
-func (n Node) RethrowsUnchanged() bool {
-	body := n.firstChild("Block")
-	statements := body.Children()
-	if !n.Is("CatchClause") || len(statements) != 1 || !statements[0].Is("ThrowStatement") {
-		return false
-	}
-	if !n.isTheLastClause() {
-		return false
-	}
-
-	return statements[0].throwsWhatWasCaughtBy(n)
-}
-
-func (n Node) isTheLastClause() bool {
-	clauses := n.Parent().ChildrenIn("Catches")
-
-	return len(clauses) > 0 && clauses[len(clauses)-1].Node() == n.Node()
-}
-
-func (n Node) throwsWhatWasCaughtBy(clause Node) bool {
-	thrown := n.Expressions()
-	if len(thrown) == 0 {
-		return true
-	}
-	caught := clause.firstChild("CatchDeclaration").Name()
-
-	return len(thrown) == 1 && thrown[0].Is("IdentifierName") && caught != "" && thrown[0].Name() == caught
 }

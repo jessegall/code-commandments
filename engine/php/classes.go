@@ -39,6 +39,9 @@ func classOf(node engine.Match) string {
 }
 
 func propertyName(statement engine.Match) string {
+	if statement.Kind() == "Stmt_Catch" {
+		return statement.Child("var").Name()
+	}
 	properties := statement.ChildrenIn("props")
 	if statement.Kind() != "Stmt_Property" || len(properties) != 1 {
 		return ""

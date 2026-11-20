@@ -47,8 +47,6 @@ So the signature demands what it uses — `def rename(node: Node, title: str)` �
 
 - [ ] Hand the method the object that its callers keep asking about, and let the method ask it directly; a bool every caller computes the same way is a decision made in the wrong place.
       _Take the object (`text(order)`) and read `order.status`/`order.total` inside, so the rule lives once._
-- [ ] Declare the parameter in the type callers actually hold and convert inside — one rule about the conversion, in one place.
-      _Move the conversion into the function and take what the callers had (`receipt_for(order)` or `receipt_for(order_id: int)`); a caller that forgets the conversion can no longer pass the wrong thing._
 - [ ] Pass the object once and let the function read what it needs from it; if a value can be derived from an argument already passed in, the function should derive it itself.
       _Drop the projected parameter and read it inside (`persist(request)` reading `request.channel_id`), or take the object in place of its pieces._
 - [ ] Take the object the function works on, not an id plus the container it lives in; the caller resolves it once and owns the not-found failure.
@@ -63,31 +61,34 @@ a method taking only bools that every caller computes from the same object — t
 ```py
 ----------[ Bad ]----------
 
-def allows(self, expired: bool) -> bool:
-    return not expired
+def pick(self, fragile: bool, express: bool) -> str:
+    match (fragile, express):
+        case (True, True):
+            return "white-glove"
+        case (True, False):
+            return "careful"
+        case (False, True):
+            return "rush"
+        case _:
+            return "standard"
 
 ----------[ Good ]----------
 
-# in return_desk.py
-def allows_for(self, purchase: Purchase) -> bool:
-    return purchase.days_since <= 30
-
-# in return_desk.py
-def offers_honestly(self, purchases: list[Purchase]) -> list[Purchase]:
-    return [purchase for purchase in purchases if self.policy.allows_for(purchase)]
+def pick_for(self, consignment: Consignment) -> str:
+    return self.pick(consignment.contents in ("glass", "ceramic"), consignment.service == "next-day")
 ```
 
-The other 3 — one per rule — are in [`reference/examples.md`](reference/examples.md).
+The other 2 — one per rule — are in [`reference/examples.md`](reference/examples.md).
 
 ## Commands
 
 - `{{binary}} judge --skill=python/pass-the-object` — find every one of these in the codebase.
-- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `python-computed-boolean-argument`, `python-converted-argument`, `python-derived-argument`, `python-param-resolved-from-param`.
+- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `python-computed-boolean-argument`, `python-derived-argument`, `python-param-resolved-from-param`.
 - `{{binary}} report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference
 
-- [Worked examples](reference/examples.md) — every rule's bad → good, 4 of them.
+- [Worked examples](reference/examples.md) — every rule's bad → good, 3 of them.
 - [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills

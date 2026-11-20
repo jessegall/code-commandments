@@ -355,62 +355,6 @@ final readonly class CheckoutReference
 }
 ```
 
-### raw-decoded-array-return
-
-Returning a raw decoded boundary array (`json_decode(...)`) untyped
-
-```php
-----------[ Bad ]----------
-
-public function rates(string $base, array $symbols): array
-{
-    $query = http_build_query([
-        'base' => $base,
-        'symbols' => implode(',', $symbols),
-    ]);
-
-    return json_decode($this->http->get("https://fx.test/latest?{$query}"), true);
-}
-
-----------[ Good ]----------
-
-// in Shop\Integrations\ExchangeRateClient
-public function ratesTyped(string $base, array $symbols): RateTable
-{
-    $query = http_build_query([
-        'base' => $base,
-        'symbols' => implode(',', $symbols),
-    ]);
-
-    return RateTable::from(json_decode($this->http->get("https://fx.test/latest?{$query}"), true));
-}
-
-// The shape the wire actually has, declared. A decoded response handed back raw asks every caller
-// to know the payload's keys; this states them once, at the boundary that read them.
-
-final class RateTable
-{
-    /**
-     * @param  array<string, float>  $rates
-     */
-    public function __construct(
-        public readonly string $base,
-        public readonly array $rates,
-    ) {}
-
-    /**
-     * @param  array<string, mixed>  $payload
-     */
-    public static function from(array $payload): self
-    {
-        return new self(
-            base: (string) $payload['base'],
-            rates: $payload['rates'],
-        );
-    }
-}
-```
-
 ### flat-field-cluster
 
 A `#[TypeScript]` `Data` class spreads a value object it already models flat across sibling scalar fields sharing a camelCase prefix (`wireType` + `wireLabel`) instead of nesting the existing `Wire{type, label}`.

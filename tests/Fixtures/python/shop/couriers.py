@@ -9,14 +9,14 @@ class Courier:
     # @sin BlankStringDefault
     def book(self, parcel: str, tracking: str = "") -> str:
         if not tracking:
+            # @sin ReassignedParameter
             tracking = self.api.issue(parcel)
         return self.api.book(parcel, tracking)
 
     # @fixed BlankStringDefault
     def book_tracked(self, parcel: str, tracking: str | None = None) -> str:
-        if tracking is None:
-            tracking = self.api.issue(parcel)
-        return self.api.book(parcel, tracking)
+        issued = tracking if tracking is not None else self.api.issue(parcel)
+        return self.api.book(parcel, issued)
 
 
 # @righteous BlankStringDefault

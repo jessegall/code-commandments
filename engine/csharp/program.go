@@ -143,6 +143,16 @@ func (p *Program) EnumMembers(symbol string) []string {
 	return p.facts.enums[symbol]
 }
 
+func enumCatalog(codebase *engine.Codebase) engine.Enums {
+	values := engine.Enums{}
+	for symbol, members := range Of(codebase).facts.enums {
+		if len(members) >= 2 {
+			values[symbol] = lowerWords(members)
+		}
+	}
+	return values
+}
+
 func (p *Program) NamesEveryMember(switched Node) bool {
 	members := p.EnumMembers(switched.At(0).Type().Name())
 	named := switched.NamedCases()
@@ -181,4 +191,21 @@ func (p *Program) DeclaresType(symbol string) bool {
 	_, declared := p.facts.types[symbol]
 
 	return declared
+}
+
+func unnamedVocabulary(codebase *engine.Codebase) []engine.Match {
+	code := In(codebase)
+	var findings []engine.Match
+	for _, match := range code.WhereCall().Get() {
+		call := Node{Match: match}
+		if !call.PassesByPosition() || call.IsInTest() {
+			continue
+		}
+		for position, literal := range call.Arguments() {
+			if literal.Is("StringLiteralExpression") && code.Program.ConstantNaming(call, position, literal.Text()) != "" {
+				findings = append(findings, literal.Match)
+			}
+		}
+	}
+	return findings
 }

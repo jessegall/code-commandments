@@ -26,6 +26,7 @@ func (OrphanedBindingDetector) Find(codebase *engine.Codebase) []engine.Match {
 		Reject(engine.As(func(n laravelnode.Node) bool {
 			return laravelnode.ContainerBindingsOf(codebase).IsResolvedSomewhere(n.BoundAbstract())
 		})).
+		Reject(engine.Match.IsTest).
 		Get()
 }
 

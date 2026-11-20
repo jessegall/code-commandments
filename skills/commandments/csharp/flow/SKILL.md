@@ -76,71 +76,55 @@ or extract the inner block into a method named for what it decides.
 
 ## Rules
 
-- [ ] Check for a missing collection at the top with an early return, so the loop runs over something that is there.
-      _Write `if (items is null) { return; }` above the loop — or better, make the collection non-nullable where it comes from._
 - [ ] Never change the collection a `foreach` walks while it walks it: decide inside the loop and change afterwards.
       _Collect what the loop decided in a list of its own and apply it after the loop, or walk a copy (`foreach (var item in items.ToList())`) when the change must happen as it goes._
-- [ ] Flatten with guard clauses and extraction — never bury a choice four deep inside a method.
-      _Guard the outer levels away (`return`/`continue` past what does not apply), let LINQ do the inner iteration, or extract the inner block into a method named for what it decides._
 - [ ] Check at the top and throw there; don't hide a `?? throw` inside the expression that does the work.
       _Pull it out into its own line first — `var given = name ?? throw new …;` or an `is null` check with a throw — then do the work with the checked value._
-- [ ] Use `for` only to count; walk with a `while` loop, or let the type hand out its items as an `IEnumerable<T>`.
-      _Rewrite it as `while (link != null) { …; link = link.Next; }`, or give the type an iterator (`yield return`) and loop over it with `foreach`._
-- [ ] A condition that takes a reader more than a glance is a concept: give it a name and ask for it by that name.
-      _Move the condition onto the type that owns most of it, as a method or a property whose name says what it decides — `if (order.ReadyToShip(slot))` — and let each object answer for its own part._
 
 ## Worked example
 
-### csharp-coalesced-loop-subject
+### csharp-collection-mutated-while-iterated
 
-a `foreach` over `items ?? []` (or `Enumerable.Empty<T>()`, or a new empty list) — the check for a missing collection is hidden in the loop header
+a `foreach` that adds to or removes from the very collection it walks — the enumerator reads a collection that moved under it, which throws InvalidOperationException
 
 ```cs
 ----------[ Bad ]----------
 
-public static List<string> Lines(List<string>? skus)
+public static List<string> Restock(List<string> shelves, IReadOnlyCollection<string> below)
 {
-    var lines = new List<string>();
-
-    foreach (var sku in skus ?? [])
+    foreach (var shelf in shelves)
     {
-        lines.Add($"[ ] {sku}");
+        if (below.Contains(shelf))
+        {
+            shelves.Add($"{shelf}-reserve");
+        }
     }
 
-    return lines;
+    return shelves;
 }
 
 ----------[ Good ]----------
 
-public static List<string> GuardedLines(List<string>? skus)
+public static List<string> Restocked(List<string> shelves, IReadOnlyCollection<string> below)
 {
-    if (skus is null)
-    {
-        return [];
-    }
+    var reserves = shelves.Where(shelf => below.Contains(shelf)).Select(shelf => $"{shelf}-reserve").ToList();
+    shelves.AddRange(reserves);
 
-    var lines = new List<string>();
-
-    foreach (var sku in skus)
-    {
-        lines.Add($"[ ] {sku}");
-    }
-
-    return lines;
+    return shelves;
 }
 ```
 
-The other 5 — one per rule — are in [`reference/examples.md`](reference/examples.md).
+The other 1 — one per rule — are in [`reference/examples.md`](reference/examples.md).
 
 ## Commands
 
 - `{{binary}} judge --skill=csharp/flow` — find every one of these in the codebase.
-- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `csharp-coalesced-loop-subject`, `csharp-collection-mutated-while-iterated`, `deep-csharp-nesting`, `csharp-inline-throw`, `csharp-non-counting-for`, `csharp-unnamed-condition`.
+- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `csharp-collection-mutated-while-iterated`, `csharp-inline-throw`.
 - `{{binary}} report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference
 
-- [Worked examples](reference/examples.md) — every rule's bad → good, 6 of them.
+- [Worked examples](reference/examples.md) — every rule's bad → good, 2 of them.
 - [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills

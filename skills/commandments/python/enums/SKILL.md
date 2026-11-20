@@ -50,18 +50,10 @@ passes the enum, never the string.
 
 - [ ] Seal a closed set of values as an `Enum` or `StrEnum`, so the set is a type and its cases have a home for behaviour.
       _`class Status(StrEnum): PENDING = "pending"` — then give the per-case knowledge methods on the enum._
-- [ ] Name a group of an enum's members as a method or property on the enum; don't re-list the members in an `or` chain at every call site.
-      _A property on the enum — `def is_open(self) -> bool: return self in (Status.PENDING, Status.LATE)` — and `s.is_open` at the call site._
 - [ ] Put a mapping over an enum's cases on the enum, matching its members; never match its raw `.value` at a call site.
       _A method on the enum — `def badge(self) -> str: match self: case Status.PAID: …` — and `status.badge()` at the call site._
-- [ ] Test membership in an enum's group through the enum; never re-list its values as literals in an `in` test.
-      _A property on the enum naming the group — `Status(x).is_open` — or `x in (Status.PENDING, Status.LATE)` when the value is already the enum._
 - [ ] End a `match` over an enum's members with a `case _:` that raises, or handle every member; never let the wildcard return `None`.
       _`case _: raise UnhandledStatus.of(status)` — or `assert_never(status)` so the type checker names the member left out._
-- [ ] Dispatch on the enum, not on loose strings that mirror its values; turn the string into the enum where it arrives.
-      _`Status(raw)` at the boundary, then `match status: case Status.PENDING: …` — or a method on the enum._
-- [ ] Where a parameter is spelled from a named vocabulary, spell it that way everywhere — never the raw value at one call and the constant at the next.
-      _The constant that already holds this value, referenced by name._
 
 ## Worked example
 
@@ -83,17 +75,17 @@ class CarrierCode(StrEnum):
     DHL = "DHL"
 ```
 
-The other 6 — one per rule — are in [`reference/examples.md`](reference/examples.md).
+The other 2 — one per rule — are in [`reference/examples.md`](reference/examples.md).
 
 ## Commands
 
 - `{{binary}} judge --skill=python/enums` — find every one of these in the codebase.
-- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `python-constant-class-enum`, `python-enum-case-or-chain`, `python-enum-value-match`, `python-in-literals-mirrors-enum`, `python-match-wildcard-returns-none`, `python-string-match-mirrors-enum`, `python-unnamed-vocabulary-literal`.
+- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `python-constant-class-enum`, `python-enum-value-match`, `python-match-wildcard-returns-none`.
 - `{{binary}} report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference
 
-- [Worked examples](reference/examples.md) — every rule's bad → good, 7 of them.
+- [Worked examples](reference/examples.md) — every rule's bad → good, 3 of them.
 - [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills

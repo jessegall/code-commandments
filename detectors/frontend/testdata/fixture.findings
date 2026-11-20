@@ -43,7 +43,7 @@ components/InventoryFilterPanel.vue:16 CompoundInlineComponent
 components/InventoryFilterPanel.vue:29 ControlFlowOnElement
 components/InventoryFilterPanel.vue:29 LoopWithCondition
 components/NewsletterSignup.vue:11 DuplicateFunction
-components/NewsletterSignup.vue:21 DuplicateFunction
+components/NewsletterSignup.vue:22 DuplicateFunction
 components/OrderDetailPanel.vue:17 DeepDataReach
 components/OrderDetailPanel.vue:39 ControlFlowOnElement
 components/OrderDetailPanel.vue:51 IndexAsKey
@@ -58,7 +58,7 @@ components/OrderStatusBadge.vue:8 ControlFlowOnElement
 components/OrderStatusBadge.vue:8 SwitchCase
 components/OrderSummaryPanel.vue:13 CompoundInlineComponent
 components/OrderSummaryPanel.vue:36 PropDrilling
-components/PickListActions.vue:19 NearDuplicateFunction
+components/PickListActions.vue:20 NearDuplicateFunction
 components/PickListActions.vue:8 NearDuplicateFunction
 components/ProductCell.vue:8 SwitchCase
 components/ProductReviewList.vue:17 DuplicateElement

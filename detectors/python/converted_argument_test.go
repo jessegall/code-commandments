@@ -21,7 +21,7 @@ func TestATestConvertingWhatItHandsProductionCodeSaysNothingAboutItsParameter(t 
 	} {
 		t.Run(name, func(t *testing.T) {
 			codebase := pythontest.FromSource(t, map[string]string{"app/__init__.py": "", "app/tips.py": tipJar, test.caller: convertingCalls})
-			found := (python.ConvertedArgumentDetector{}).Find(codebase)
+			found := python.ConvertedArgumentDetector.Find(codebase)
 
 			if len(found) != test.want {
 				t.Errorf("found %d, want %d: %v", len(found), test.want, found)

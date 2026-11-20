@@ -40,13 +40,22 @@ The same three or more scalar parameters (`street: str, city: str, postcode: str
 ```py
 ----------[ Bad ]----------
 
+# in customers.py
+def subscribe(self, name: str, email: str, phone: str, opt_in: bool) -> None:
+    self.list.add(email, name)
+
+# in customers.py
+def enrol(self, phone: str, name: str, email: str, opt_in: bool = False) -> None:
+    self.members.add(name, email, phone, opt_in)
+
 # in delivery.py
 def book_delivery(street: str, city: str, postcode: str, carrier) -> str:
     return carrier.book(f"{street}, {postcode} {city}")
 
 # in quotes.py
 def quote(postcode: str, street: str, city: str, weight_kg) -> int:
-    return 495 if postcode.startswith("1") else 695
+    central = postcode.startswith("1") and street.strip() and city == "Amsterdam"
+    return (495 if central else 695) + int(weight_kg * 20)
 
 ----------[ Good ]----------
 
@@ -99,20 +108,22 @@ class Parcel:
 ```py
 ----------[ Bad ]----------
 
-def progress(self, done: int, failed: int) -> dict:
-    return {"done": done, "failed": failed, "left": len(self.rows) - done - failed}
+def parse_line(raw: str) -> dict:
+    sku, _, quantity = raw.partition("x")
+    return {"sku": sku.strip(), "quantity": int(quantity)}
 
 ----------[ Good ]----------
 
+# in cart_totals.py
 @dataclass(frozen=True)
-class ImportProgress:
-    done: int
-    failed: int
-    total: int
+class BasketLine:
+    sku: str
+    quantity: int
 
-    @property
-    def left(self) -> int:
-        return self.total - self.done - self.failed
+# in cart_totals.py
+def parse_basket_line(raw: str) -> BasketLine:
+    sku, _, quantity = raw.partition("x")
+    return BasketLine(sku=sku.strip(), quantity=int(quantity))
 ```
 
 ### python-hand-rolled-replace
@@ -122,13 +133,13 @@ class ImportProgress:
 ```py
 ----------[ Bad ]----------
 
-def rerated(self, factor: float) -> "PriceRule":
-    return type(self)(self.sku, min(self.rate * factor, 0.9), self.starts, self.ends)
+def with_email(self, email: str) -> "Profile":
+    return Profile(name=self.name, email=email, phone=self.phone, newsletter=self.newsletter)
 
 ----------[ Good ]----------
 
-def extended(self, ends: str) -> "PriceRule":
-    return replace(self, ends=ends)
+def with_phone(self, phone: str) -> "Profile":
+    return replace(self, phone=phone)
 ```
 
 ### python-handed-out-collection
@@ -216,31 +227,4 @@ class NamedScanner:
     def parse(self, code: str) -> Scan:
         prefix, _, serial = code.partition("-")
         return Scan(prefix, serial, self.catalog.sku_for(prefix))
-```
-
-### python-raw-decoded-return
-
-`return json.loads(…)` — decoded text from outside handed on as bare dicts and lists, its shape known to no type
-
-```py
-----------[ Bad ]----------
-
-def fetch_prices(client, supplier: str):
-    return json.loads(client.get(f"/suppliers/{supplier}/prices"))
-
-----------[ Good ]----------
-
-# in supplier_feed.py
-@dataclass(frozen=True)
-class SupplierPrice:
-    sku: str
-    cents: int
-
-    @classmethod
-    def from_json(cls, raw: dict) -> "SupplierPrice":
-        return cls(sku=raw["sku"], cents=int(raw["cents"]))
-
-# in supplier_feed.py
-def fetch_supplier_prices(client, supplier: str) -> list:
-    return [SupplierPrice.from_json(raw) for raw in json.loads(client.get(f"/suppliers/{supplier}/prices"))]
 ```

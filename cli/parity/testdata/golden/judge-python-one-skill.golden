@@ -1,35 +1,58 @@
 exit: 1
 --- stdout
 
-[1;33mpython/absence[0m  (20)
-  [1;36m↳ LOAD the skill `commandments-python-absence` before fixing[0m
-  [36mshop/basket_codes.py:8[0m  conditional  [2m[CancelledFallbackDetector][0m
+[1;33mshared/absence[0m  (43)
+  [1;36m↳ LOAD the skill `commandments-shared-absence` before fixing[0m
+  [36mshop/attachments.py:12[0m  binary  [2m[CoalescedLoopSubjectDetector][0m
+  [36mshop/basket_codes.py:8[0m  conditional  [2m[CancelledCoalesceDetector][0m
   [36mshop/bay_roster.py:23[0m  FunctionDef numbered  [2m[DeNulledFinderDetector][0m
-  [36mshop/charges.py:6[0m  binary  [2m[InventedDefaultDetector][0m
+  [36mshop/billing_probe.py:13[0m  ClassDef BillingProbe  [2m[CapabilityProbeHubDetector][0m
+  [36mshop/carrier_rates.py:14[0m  call  [2m[RawDecodedArrayReturnDetector][0m
+  [36mshop/categories.py:10[0m  call  [2m[CoalescedLoopSubjectDetector][0m
+  [36mshop/charges.py:6[0m  binary  [2m[ManufacturedFakeFillDetector][0m
   [36mshop/closing.py:11[0m  FunctionDef close_till  [2m[NullableCallbackDetector][0m
   [36mshop/couriers.py:10[0m  Param tracking  [2m[BlankStringDefaultDetector][0m
   [36mshop/crate_registry.py:33[0m  FunctionDef find  [2m[DeNulledFinderDetector][0m
-  [36mshop/exports.py:7[0m  binary  [2m[InventedDefaultDetector][0m
+  [36mshop/crate_registry.py:35[0m  call  [2m[NullableRegistryLookupDetector][0m
+  [36mshop/dispatch_probe.py:17[0m  ClassDef DispatchProbe  [2m[CapabilityProbeHubDetector][0m
+  [36mshop/exports.py:7[0m  binary  [2m[ManufacturedFakeFillDetector][0m
   [36mshop/gift_notes.py:10[0m  AnnAssign  [2m[BlankStringDefaultDetector][0m
   [36mshop/headlines.py:6[0m  Param strapline  [2m[BlankStringDefaultDetector][0m
   [36mshop/imports_progress.py:11[0m  FunctionDef run  [2m[NullableCallbackDetector][0m
-  [36mshop/mailer_options.py:8[0m  starred  [2m[ConditionalSpreadDetector][0m
-  [36mshop/notes.py:12[0m  binary  [2m[CancelledFallbackDetector][0m
-  [36mshop/payload_fields.py:11[0m  Return_  [2m[InventedDefaultDetector][0m
-  [36mshop/payload_fields.py:21[0m  conditional  [2m[InventedDefaultDetector][0m
-  [36mshop/printer_commands.py:12[0m  starred  [2m[ConditionalSpreadDetector][0m
-  [36mshop/quantities.py:14[0m  call  [2m[CancelledFallbackDetector][0m
-  [36mshop/receipts.py:15[0m  binary  [2m[InventedDefaultDetector][0m
+  [36mshop/inventory_probe.py:18[0m  ClassDef InventoryProbe  [2m[CapabilityProbeHubDetector][0m
+  [36mshop/mailer_options.py:8[0m  starred  [2m[ConditionalArraySpreadDetector][0m
+  [36mshop/markdown_runs.py:19[0m  conditional  [2m[MaskedInvariantDetector][0m
+  [36mshop/notes.py:12[0m  binary  [2m[CancelledCoalesceDetector][0m
+  [36mshop/order_cards.py:14[0m  call  [2m[PlaceholderFilledDataDetector][0m
+  [36mshop/owner_contracts.py:58[0m  call  [2m[NullableRegistryLookupDetector][0m
+  [36mshop/payload_fields.py:11[0m  Return_  [2m[ManufacturedFakeFillDetector][0m
+  [36mshop/payload_fields.py:21[0m  conditional  [2m[ManufacturedFakeFillDetector][0m
+  [36mshop/picking_waves.py:18[0m  conditional  [2m[MaskedInvariantDetector][0m
+  [36mshop/price_tags.py:10[0m  AnnAssign  [2m[PhantomNullableDetector][0m
+  [36mshop/printer_commands.py:12[0m  starred  [2m[ConditionalArraySpreadDetector][0m
+  [36mshop/printer_pool.py:24[0m  call  [2m[NullableRegistryLookupDetector][0m
+  [36mshop/product_teasers.py:16[0m  call  [2m[PlaceholderFilledDataDetector][0m
+  [36mshop/quantities.py:14[0m  call  [2m[CancelledCoalesceDetector][0m
+  [36mshop/queue_tickets.py:8[0m  Assign  [2m[PhantomNullableDetector][0m
+  [36mshop/receipts.py:15[0m  binary  [2m[ManufacturedFakeFillDetector][0m
   [36mshop/retries.py:7[0m  FunctionDef with_retries  [2m[NullableCallbackDetector][0m
   [36mshop/run_ledger.py:29[0m  FunctionDef referenced  [2m[DeNulledFinderDetector][0m
-  [36mshop/webhook_payloads.py:8[0m  starred  [2m[ConditionalSpreadDetector][0m
+  [36mshop/scale_readers.py:11[0m  AnnAssign  [2m[PhantomNullableDetector][0m
+  [36mshop/shipments.py:10[0m  conditional  [2m[CoalescedLoopSubjectDetector][0m
+  [36mshop/shipping_notices.py:20[0m  call  [2m[PlaceholderFilledDataDetector][0m
+  [36mshop/store_settings.py:15[0m  call  [2m[RawDecodedArrayReturnDetector][0m
+  [36mshop/supplier_feed.py:9[0m  call  [2m[RawDecodedArrayReturnDetector][0m
+  [36mshop/tax_bands.py:17[0m  call  [2m[NullableRegistryLookupDetector][0m
+  [36mshop/till_sessions.py:17[0m  call  [2m[MaskedInvariantDetector][0m
+  [36mshop/voucher_book.py:18[0m  call  [2m[NullableRegistryLookupDetector][0m
+  [36mshop/webhook_payloads.py:8[0m  starred  [2m[ConditionalArraySpreadDetector][0m
 
 [2m↳ the rule above all: trace each sin to where the value is BORN and fix it THERE — read fix-at-the-source.[0m
 [2m↳ don't recognise a rule above? `commandments info <sin>` — what it flags, why it is a sin, the fix, an example.[0m
 
-[1m20 sins[0m across 1 skill.
+[1m43 sins[0m across 1 skill.
 
 --- stderr
-· read 305 files in <took> (0 from the cache, 305 by the bridges), judged in <took> (65 rule answers from memory, 1765 asked): 20 sins
+· read 328 files in <took> (0 from the cache, 328 by the bridges), judged in <took> (0 rule answers from memory, 0 asked): 43 sins
 
 --- files

@@ -7,7 +7,7 @@ import (
 )
 
 func init() {
-	scribes.Fixes(rules.WrappingWithoutCauseDetector{}, func() scribes.Scribe { return WrappingWithoutCauseScribe{} })
+	scribes.Fixes(rules.WrappingWithoutCauseDetector, func() scribes.Scribe { return WrappingWithoutCauseScribe{} })
 }
 
 // WrappingWithoutCauseScribe hands the exception a catch caught to the one it throws in its place, as its cause.
@@ -15,8 +15,9 @@ type WrappingWithoutCauseScribe struct{}
 
 func (WrappingWithoutCauseScribe) Rewrite(findings []engine.Match, _ *engine.Codebase) (scribes.Rewrites, error) {
 	draft := scribes.NewDraft()
-	for _, finding := range findings {
-		caught := caughtVariable(finding)
+	for _, throw := range findings {
+		finding := throw.Thrown()
+		caught := throw.EnclosingCatch().DeclaredName()
 		if finding.Kind() != "Expr_New" || caught == "" {
 			continue
 		}
@@ -33,14 +34,4 @@ func (WrappingWithoutCauseScribe) Rewrite(findings []engine.Match, _ *engine.Cod
 	}
 
 	return draft.Rewrites(), nil
-}
-
-func caughtVariable(node engine.Match) string {
-	for ancestor := node.Parent(); ancestor.Exists(); ancestor = ancestor.Parent() {
-		if variable := ancestor.Child("var"); ancestor.Kind() == "Stmt_Catch" && variable.Kind() == "Expr_Variable" && variable.Name() != "" {
-			return variable.Name()
-		}
-	}
-
-	return ""
 }

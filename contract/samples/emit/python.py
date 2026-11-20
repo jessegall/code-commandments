@@ -25,7 +25,7 @@ import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../../bridge/mypy"))
 
-from bridge import Session  # noqa: E402
+from session import Session  # noqa: E402
 from tree import stream  # noqa: E402
 
 
@@ -54,7 +54,8 @@ def main(argv: list[str]) -> int:
             write.append(path)
         rest = rest[2:]
     folders = shown_folders(shown)
-    for line in stream(Session(), list(shown), write, None):
+    for row in stream(Session(), list(shown), write):
+        line = json.loads(row) if isinstance(row, str) else row
         if "header" in line:
             line["header"]["bridge"] = {"name": "contract/samples/emit/python.py", "version": "1"}
             line["header"]["roots"] = [shown[path] for path in line["header"]["roots"]]

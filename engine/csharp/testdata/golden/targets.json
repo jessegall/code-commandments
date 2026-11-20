@@ -184,7 +184,7 @@
             "global::System.String?"
         ]
     },
-    "Shop/Documents/InvoiceArchive.cs@419:ObjectCreationExpression": {
+    "Shop/Documents/InvoiceArchive.cs@454:ObjectCreationExpression": {
         "type": "global::System.ArgumentException",
         "name": ".ctor",
         "parameters": [
@@ -192,7 +192,7 @@
             "global::System.String?"
         ]
     },
-    "Shop/Documents/InvoiceArchive.cs@616:InvocationExpression": {
+    "Shop/Documents/InvoiceArchive.cs@651:InvocationExpression": {
         "type": "global::System.IO.File",
         "name": "ReadAllText",
         "parameters": [
@@ -572,21 +572,21 @@
             "global::System.String"
         ]
     },
-    "Shop/Notifications/Outbox.cs@721:InvocationExpression": {
+    "Shop/Notifications/Outbox.cs@715:InvocationExpression": {
         "type": "global::System.Collections.Generic.Queue<global::System.String>",
         "name": "TryDequeue",
         "parameters": [
             "global::System.String"
         ]
     },
-    "Shop/Notifications/Outbox.cs@811:InvocationExpression": {
+    "Shop/Notifications/Outbox.cs@805:InvocationExpression": {
         "type": "global::System.Action<global::System.String>",
         "name": "Invoke",
         "parameters": [
             "global::System.String"
         ]
     },
-    "Shop/Notifications/Outbox.cs@972:InvocationExpression": {
+    "Shop/Notifications/Outbox.cs@960:InvocationExpression": {
         "type": "global::System.IO.TextWriter",
         "name": "WriteLine",
         "parameters": [
@@ -904,28 +904,28 @@
         "name": "Next",
         "parameters": []
     },
-    "Shop/Orders/Invoicing.cs@1001:InvocationExpression": {
+    "Shop/Orders/Invoicing.cs@1005:InvocationExpression": {
         "type": "global::System.Collections.Generic.List<global::System.String>",
         "name": "Add",
         "parameters": [
             "global::System.String"
         ]
     },
-    "Shop/Orders/Invoicing.cs@551:InvocationExpression": {
+    "Shop/Orders/Invoicing.cs@553:InvocationExpression": {
         "type": "global::System.Collections.Generic.List<global::System.String>",
         "name": "Add",
         "parameters": [
             "global::System.String"
         ]
     },
-    "Shop/Orders/Lifecycle.cs@395:ObjectCreationExpression": {
+    "Shop/Orders/Lifecycle.cs@434:ObjectCreationExpression": {
         "type": "global::System.InvalidOperationException",
         "name": ".ctor",
         "parameters": [
             "global::System.String?"
         ]
     },
-    "Shop/Orders/Lifecycle.cs@668:ObjectCreationExpression": {
+    "Shop/Orders/Lifecycle.cs@711:ObjectCreationExpression": {
         "type": "global::System.InvalidOperationException",
         "name": ".ctor",
         "parameters": []
@@ -1230,7 +1230,7 @@
             "global::System.Decimal"
         ]
     },
-    "Shop/Pricing/Currencies.cs@475:ObjectCreationExpression": {
+    "Shop/Pricing/Currencies.cs@526:ObjectCreationExpression": {
         "type": "global::System.InvalidOperationException",
         "name": ".ctor",
         "parameters": [
@@ -1285,14 +1285,14 @@
         "name": ".ctor",
         "parameters": []
     },
-    "Shop/Pricing/PriceList.cs@462:InvocationExpression": {
+    "Shop/Pricing/PriceList.cs@464:InvocationExpression": {
         "type": "global::System.String",
         "name": "StartsWith",
         "parameters": [
             "global::System.Char"
         ]
     },
-    "Shop/Pricing/PriceList.cs@533:InvocationExpression": {
+    "Shop/Pricing/PriceList.cs@535:InvocationExpression": {
         "type": "global::System.String",
         "name": "Split",
         "parameters": [
@@ -1300,19 +1300,19 @@
             "global::System.StringSplitOptions"
         ]
     },
-    "Shop/Pricing/PriceList.cs@580:InvocationExpression": {
+    "Shop/Pricing/PriceList.cs@582:InvocationExpression": {
         "type": "global::System.String",
         "name": "Trim",
         "parameters": []
     },
-    "Shop/Pricing/PriceList.cs@599:InvocationExpression": {
+    "Shop/Pricing/PriceList.cs@601:InvocationExpression": {
         "type": "global::System.Int64",
         "name": "Parse",
         "parameters": [
             "global::System.String"
         ]
     },
-    "Shop/Pricing/PriceList.cs@846:InvocationExpression": {
+    "Shop/Pricing/PriceList.cs@850:InvocationExpression": {
         "type": "global::System.String",
         "name": "StartsWith",
         "parameters": [
@@ -1389,14 +1389,14 @@
             "global::System.String"
         ]
     },
-    "Shop/Pricing/RateFeed.cs@498:ObjectCreationExpression": {
+    "Shop/Pricing/RateFeed.cs@537:ObjectCreationExpression": {
         "type": "global::System.TimeoutException",
         "name": ".ctor",
         "parameters": [
             "global::System.String?"
         ]
     },
-    "Shop/Pricing/RateFeed.cs@584:ObjectCreationExpression": {
+    "Shop/Pricing/RateFeed.cs@658:ObjectCreationExpression": {
         "type": "global::System.IO.InvalidDataException",
         "name": ".ctor",
         "parameters": [
@@ -1649,12 +1649,12 @@
             "global::System.String?[]"
         ]
     },
-    "Shop/Shipping/CarrierDirectory.cs@1074:InvocationExpression": {
+    "Shop/Shipping/CarrierDirectory.cs@1156:InvocationExpression": {
         "type": "global::System.String",
         "name": "Trim",
         "parameters": []
     },
-    "Shop/Shipping/CarrierDirectory.cs@1327:ImplicitObjectCreationExpression": {
+    "Shop/Shipping/CarrierDirectory.cs@1413:ImplicitObjectCreationExpression": {
         "type": "global::Shop.Shipping.UnknownCarrier",
         "name": ".ctor",
         "parameters": [
@@ -1669,14 +1669,14 @@
             "global::System.String"
         ]
     },
-    "Shop/Shipping/CarrierDirectory.cs@466:ObjectCreationExpression": {
+    "Shop/Shipping/CarrierDirectory.cs@505:ObjectCreationExpression": {
         "type": "global::System.Exception",
         "name": ".ctor",
         "parameters": [
             "global::System.String?"
         ]
     },
-    "Shop/Shipping/CarrierDirectory.cs@631:InvocationExpression": {
+    "Shop/Shipping/CarrierDirectory.cs@670:InvocationExpression": {
         "type": "global::System.Collections.Generic.IReadOnlyDictionary<global::System.String, global::System.String>",
         "name": "TryGetValue",
         "parameters": [
@@ -1684,21 +1684,21 @@
             "global::System.String"
         ]
     },
-    "Shop/Shipping/CarrierDirectory.cs@742:InvocationExpression": {
+    "Shop/Shipping/CarrierDirectory.cs@785:InvocationExpression": {
         "type": "global::Shop.Shipping.UnknownCarrier",
         "name": "Named",
         "parameters": [
             "global::System.String"
         ]
     },
-    "Shop/Shipping/CarrierDirectory.cs@878:InvocationExpression": {
+    "Shop/Shipping/CarrierDirectory.cs@921:InvocationExpression": {
         "type": "global::System.String",
         "name": "IsNullOrWhiteSpace",
         "parameters": [
             "global::System.String?"
         ]
     },
-    "Shop/Shipping/CarrierDirectory.cs@981:ObjectCreationExpression": {
+    "Shop/Shipping/CarrierDirectory.cs@1063:ObjectCreationExpression": {
         "type": "global::System.ArgumentException",
         "name": ".ctor",
         "parameters": [
@@ -1959,14 +1959,14 @@
             "global::System.String"
         ]
     },
-    "Shop/Shipping/Webhooks.cs@485:ObjectCreationExpression": {
+    "Shop/Shipping/Webhooks.cs@524:ObjectCreationExpression": {
         "type": "global::System.Text.Json.JsonException",
         "name": ".ctor",
         "parameters": [
             "global::System.String?"
         ]
     },
-    "Shop/Shipping/Webhooks.cs@675:InvocationExpression": {
+    "Shop/Shipping/Webhooks.cs@714:InvocationExpression": {
         "type": "global::Shop.Shipping.Webhooks",
         "name": "Field",
         "parameters": [
@@ -1974,7 +1974,7 @@
             "global::System.String"
         ]
     },
-    "Shop/Shipping/Webhooks.cs@823:ImplicitObjectCreationExpression": {
+    "Shop/Shipping/Webhooks.cs@862:ImplicitObjectCreationExpression": {
         "type": "global::Shop.Shipping.CarrierEvent",
         "name": ".ctor",
         "parameters": [
@@ -1982,7 +1982,7 @@
             "global::System.String"
         ]
     },
-    "Shop/Shipping/Webhooks.cs@827:InvocationExpression": {
+    "Shop/Shipping/Webhooks.cs@866:InvocationExpression": {
         "type": "global::Shop.Shipping.Webhooks",
         "name": "Field",
         "parameters": [
@@ -1990,7 +1990,7 @@
             "global::System.String"
         ]
     },
-    "Shop/Shipping/Webhooks.cs@852:InvocationExpression": {
+    "Shop/Shipping/Webhooks.cs@891:InvocationExpression": {
         "type": "global::Shop.Shipping.Webhooks",
         "name": "Field",
         "parameters": [
@@ -1998,7 +1998,7 @@
             "global::System.String"
         ]
     },
-    "Shop/Shipping/Webhooks.cs@971:InvocationExpression": {
+    "Shop/Shipping/Webhooks.cs@1010:InvocationExpression": {
         "type": "global::System.String",
         "name": "Trim",
         "parameters": []
@@ -2043,7 +2043,7 @@
             "(global::System.String Sku, global::System.Int32 Units)"
         ]
     },
-    "Shop/Stock/Arrivals.cs@529:InvocationExpression": {
+    "Shop/Stock/Arrivals.cs@531:InvocationExpression": {
         "type": "global::System.Collections.Generic.CollectionExtensions",
         "name": "GetValueOrDefault",
         "parameters": [
@@ -2571,7 +2571,7 @@
             "global::System.String"
         ]
     },
-    "Shop/Stock/Snapshots.cs@1005:InvocationExpression": {
+    "Shop/Stock/Snapshots.cs@993:InvocationExpression": {
         "type": "global::System.Text.Json.JsonSerializer",
         "name": "Deserialize",
         "parameters": [
@@ -2579,14 +2579,14 @@
             "global::System.Text.Json.JsonSerializerOptions?"
         ]
     },
-    "Shop/Stock/Snapshots.cs@1057:InvocationExpression": {
+    "Shop/Stock/Snapshots.cs@1045:InvocationExpression": {
         "type": "global::System.IO.File",
         "name": "ReadAllText",
         "parameters": [
             "global::System.String"
         ]
     },
-    "Shop/Stock/Snapshots.cs@1074:InvocationExpression": {
+    "Shop/Stock/Snapshots.cs@1062:InvocationExpression": {
         "type": "global::System.IO.Path",
         "name": "Combine",
         "parameters": [
@@ -2617,7 +2617,7 @@
             "global::System.String"
         ]
     },
-    "Shop/Stock/Snapshots.cs@657:InvocationExpression": {
+    "Shop/Stock/Snapshots.cs@651:InvocationExpression": {
         "type": "global::System.Text.Json.JsonSerializer",
         "name": "Deserialize",
         "parameters": [
@@ -2625,14 +2625,14 @@
             "global::System.Text.Json.JsonSerializerOptions?"
         ]
     },
-    "Shop/Stock/Snapshots.cs@709:InvocationExpression": {
+    "Shop/Stock/Snapshots.cs@703:InvocationExpression": {
         "type": "global::System.IO.File",
         "name": "ReadAllText",
         "parameters": [
             "global::System.String"
         ]
     },
-    "Shop/Stock/Snapshots.cs@726:InvocationExpression": {
+    "Shop/Stock/Snapshots.cs@720:InvocationExpression": {
         "type": "global::System.IO.Path",
         "name": "Combine",
         "parameters": [
@@ -2647,21 +2647,21 @@
             "global::System.String"
         ]
     },
-    "Shop/Stock/StockImport.cs@342:ObjectCreationExpression": {
+    "Shop/Stock/StockImport.cs@377:ObjectCreationExpression": {
         "type": "global::Shop.Stock.StockFileUnreadable",
         "name": ".ctor",
         "parameters": [
             "global::System.String"
         ]
     },
-    "Shop/Stock/StockImport.cs@571:InvocationExpression": {
+    "Shop/Stock/StockImport.cs@606:InvocationExpression": {
         "type": "global::System.IO.File",
         "name": "ReadAllText",
         "parameters": [
             "global::System.String"
         ]
     },
-    "Shop/Stock/StockImport.cs@663:ObjectCreationExpression": {
+    "Shop/Stock/StockImport.cs@733:ObjectCreationExpression": {
         "type": "global::Shop.Stock.StockFileUnreadable",
         "name": ".ctor",
         "parameters": [

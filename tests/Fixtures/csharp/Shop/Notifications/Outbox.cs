@@ -15,7 +15,7 @@ public sealed class Outbox(Queue<string> waiting, Action<string> send)
                 send(mail);
                 sent++;
             }
-            // @sin SwallowedException
+            // @sin SwallowCatch
             catch (System.Exception)
             {
                 continue;
@@ -36,7 +36,7 @@ public sealed class Outbox(Queue<string> waiting, Action<string> send)
                 send(mail);
                 sent++;
             }
-            // @righteous SwallowedException
+            // @righteous SwallowCatch
             catch (Exception error)
             {
                 log.WriteLine($"Mail could not be sent: {error.Message}");

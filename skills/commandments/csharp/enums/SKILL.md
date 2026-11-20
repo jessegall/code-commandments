@@ -52,68 +52,55 @@ the code passes the enum, never the string.
 
 ## Rules
 
-- [ ] Make a closed set of values an `enum`, not a class of `const` strings or numbers.
-      _Declare `public enum Status { Pending, Paid }`, and serialise it by name with `JsonStringEnumConverter` where it must still read as its string._
-- [ ] Give a group of enum cases a name on the enum — an extension method with a `switch` — instead of listing the cases wherever the group is needed.
-      _Add `public static bool IsSettled(this Status status) => status switch { Status.Paid or Status.Refunded => true, _ => false };` beside the enum, and call `s.IsSettled()`._
-- [ ] Parse the string into the enum once and test the enum; don't test it against a list of strings that repeats the enum's members.
-      _Read it with `Enum.TryParse<Status>(value, ignoreCase: true, out var status)` where it comes in, then ask the enum (`status.IsSettled()`)._
-- [ ] When a switch names every member of an enum, make its `_` arm throw.
-      _Write `_ => throw new ArgumentOutOfRangeException(nameof(status), status, null)`._
 - [ ] Dispatch on the enum, never on strings that spell its members — parse the string into the enum where it enters.
       _Parse the string into the enum at the edge (`Enum.Parse<T>` or the JSON converter), switch on the enum, and put the per-case answer beside it._
-- [ ] Where a parameter is spelled from a named vocabulary, spell it that way everywhere — never the raw value at one call and the constant at the next.
-      _Replace the literal with the constant that names it (`Token.BraceOpen`); better still, make the vocabulary an enum and the parameter take it._
 
 ## Worked example
 
-### csharp-const-class-enum
+### csharp-string-mirrors-enum
 
-a class that holds nothing but `const` strings or numbers — a closed set of values written as constants instead of an `enum`
+A `switch` or an `if` ladder dispatching on strings that are the names of an enum the codebase already declares — the enum, written out again as text
 
 ```cs
 ----------[ Bad ]----------
 
-public static class PaymentState
+public void Handle(string reference, string status)
 {
-    public const string Pending = "pending";
-    public const string Captured = "captured";
-    public const string Refunded = "refunded";
+    switch (status)
+    {
+        case "shipped":
+            notify($"{reference} is on its way");
+            break;
+        case "delivered":
+            notify($"{reference} has arrived");
+            break;
+    }
 }
 
 ----------[ Good ]----------
 
-// in PaymentStates.cs
-public enum PaymentStatus
+public void HandleParsed(string reference, string status)
 {
-    Pending,
-    Captured,
-    Refunded,
-}
-
-// in PaymentStates.cs
-public static class PaymentStatusRules
-{
-    public static bool IsSettled(this PaymentStatus status) => status switch
+    switch (Enum.Parse<OrderStatus>(status, ignoreCase: true))
     {
-        PaymentStatus.Pending => false,
-        PaymentStatus.Captured => true,
-        PaymentStatus.Refunded => true,
-    };
+        case OrderStatus.Shipped:
+            notify($"{reference} is on its way");
+            break;
+        case OrderStatus.Delivered:
+            notify($"{reference} has arrived");
+            break;
+    }
 }
 ```
-
-The other 5 — one per rule — are in [`reference/examples.md`](reference/examples.md).
 
 ## Commands
 
 - `{{binary}} judge --skill=csharp/enums` — find every one of these in the codebase.
-- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `csharp-const-class-enum`, `csharp-enum-case-or-chain`, `csharp-in-array-mirrors-enum`, `csharp-match-default-returns-null`, `csharp-string-mirrors-enum`, `csharp-unnamed-vocabulary-literal`.
+- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `csharp-string-mirrors-enum`.
 - `{{binary}} report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference
 
-- [Worked examples](reference/examples.md) — every rule's bad → good, 6 of them.
 - [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills

@@ -124,10 +124,6 @@ object carries rather than a collaborator it calls.
 
 ## Rules
 
-- [ ] Code talks to an interface wherever a seam fits: a service from another module is reached through an interface, never its concrete class.
-      _Type the parameter on an interface the service implements, so this module depends on the contract and not on how the other module fills it._
-- [ ] An interface earns its place as a port another module uses, or a seam with a second implementation; inside one module with one implementer, depend on the class.
-      _Type against the class and delete the interface, or move the interface to the module that consumes it, where it becomes that module's port._
 - [ ] Break every namespace cycle — dependencies point ONE way, so a namespace can always be lifted out on its own.
       _cut the weaker arrow: move the shared class down, or have the lower namespace own an interface the higher one implements_
 - [ ] Reference only DOWN the declared stack — a layer may use the layers it declared in `mayUse`, and nothing else that is declared.
@@ -135,46 +131,63 @@ object carries rather than a collaborator it calls.
 
 ## Worked example
 
-### concrete-cross-module-dependency
+### namespace-cycle
 
-A constructor takes another module's service by its concrete class instead of an interface
+two namespaces that reference each other — neither can be read, tested or moved alone
 
 ```php
 ----------[ Bad ]----------
 
-public function __construct(private CropCalendar $calendar, private int $openingHour = 7) {}
+// Claims reads the policy from two places; this is the single arrow pointing back, and it is
+// what stops the warranty terms from being read, tested, or reused without the claims desk.
+
+public function firstClaim(): Claim
+{
+    return new Claim($this->months);
+}
 
 ----------[ Good ]----------
 
-// in Shop\Harvest\YieldForecast
-public function __construct(
-    private CropCalendar $crops,
-    private WateringCalendar $water,
-) {}
+// in Shop\Warranty\WarrantyPolicy
+// The FIX: the arrow back into Claims is gone. The policy states its side of the relationship as a
+// contract it OWNS (`CoverageClaim`), the claims desk implements it, and Warranty can now be read,
+// tested and lifted out with nothing from the desk coming along.
 
-// in Shop\Irrigation\WaterSchedule
-public function litresDueOn(string $bed, int $day): int
+public function coveredMonthsOf(CoverageClaim $claim): int
 {
-    return (int) $this->database->table('watering')->where('bed', $bed)->where('day', $day)->sum('litres');
+    return min($claim->claimedMonths(), $this->months);
 }
 
-interface WateringCalendar
+// One warranty claim raised against a policy — and the claims desk's side of the cut: it implements
+// the contract Warranty declared, so the only arrow between the two runs Claims → Warranty.
+
+final class Claim implements CoverageClaim
 {
-    public function litresDueOn(string $bed, int $day): int;
+    public function __construct(public readonly int $coveredMonths) {}
+
+    public function claimedMonths(): int
+    {
+        return $this->coveredMonths;
+    }
+
+    public function policy(): WarrantyPolicy
+    {
+        return new WarrantyPolicy($this->coveredMonths);
+    }
 }
 ```
 
-The other 3 — one per rule — are in [`reference/examples.md`](reference/examples.md).
+The other 1 — one per rule — are in [`reference/examples.md`](reference/examples.md).
 
 ## Commands
 
 - `{{binary}} judge --skill=php/dependency-direction` — find every one of these in the codebase.
-- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `concrete-cross-module-dependency`, `lone-implementer-interface`, `namespace-cycle`, `namespace-dependency`.
+- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `namespace-cycle`, `namespace-dependency`.
 - `{{binary}} report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference
 
-- [Worked examples](reference/examples.md) — every rule's bad → good, 4 of them.
+- [Worked examples](reference/examples.md) — every rule's bad → good, 2 of them.
 - [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills

@@ -45,17 +45,9 @@ field, or a value object, and delete the defence.
       _Return what the method works out and let the caller assign it, or ask the object to change itself, so the signature says what happens._
 - [ ] A guard answers a question the type leaves open: if the type says the value is there, delete the guard; if the value really can be missing, say so in the type.
       _Delete the check when the type is right. When callers really do pass null, type the parameter `?Order` and let the reader see it, then decide absence once where the value is born._
-- [ ] Make an invariant certain (hold it non-nullable / assert it); don't mask it with `?->… ?? <fake>`.
-- [ ] If a nullable field is assumed present everywhere its value flows and guarded nowhere, the null is a lie — make it non-nullable and let it be required, failing hard at construction on a real miss.
-- [ ] A parameter keeps the value its caller passed; a new value gets a name of its own.
-      _Assign the new value to a local named for what it is ($trimmed = trim($name)), or ask the caller for the finished value._
-- [ ] Leave the return type off an arrow function whose expression already proves the type. Declare one when the type is genuinely ambiguous or you are narrowing it — never to restate a property or a method you can read from here.
-      _drop the `: Type` — `repent` does this for you_
 - [ ] A subtype keeps every promise its parent makes; a method that only throws to refuse its inheritance says the class is not that type.
       _Split the contract so the class implements only what it can do, or compose the parent instead of extending it._
 - [ ] Pass a per-call value as a parameter; don't save-and-restore one of your own fields as scratch state.
-- [ ] A required slot means the caller has the value. Filling it just to satisfy the type signature hides a missing value in a way no type check can catch.
-      _Fetch the real value, or split off a narrower type that only promises the fields you actually have._
 - [ ] A signature asks only for what its body uses; a parameter no override can need and nothing reads is dead.
       _Remove the parameter and the argument at each call site, or use it where it was meant to be used._
 - [ ] A class carries only what it uses; a private member nothing reads is dead and is deleted.
@@ -92,18 +84,17 @@ private function countedRows(string $run): int
 }
 ```
 
-The other 11 — one per rule — are in [`reference/examples.md`](reference/examples.md).
+The other 6 — one per rule — are in [`reference/examples.md`](reference/examples.md).
 
 ## Commands
 
 - `{{binary}} judge --skill=php/type-honesty` — find every one of these in the codebase.
-- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `filled-parameter`, `impossible-guard`, `masked-invariant`, `phantom-nullable`, `reassigned-parameter`, `redundant-arrow-return-type`, `refused-bequest`, `scratch-state-restore`, `placeholder-filled-data`, `unused-parameter`, `unused-private-member`, `useless-property-hook`.
-- `{{binary}} repent --sin=<sin>` — auto-fix, for `redundant-arrow-return-type`. Review it with `--dry-run` first.
+- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `filled-parameter`, `impossible-guard`, `refused-bequest`, `scratch-state-restore`, `unused-parameter`, `unused-private-member`, `useless-property-hook`.
 - `{{binary}} report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference
 
-- [Worked examples](reference/examples.md) — every rule's bad → good, 12 of them.
+- [Worked examples](reference/examples.md) — every rule's bad → good, 7 of them.
 - [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills

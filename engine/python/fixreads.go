@@ -8,67 +8,8 @@ import (
 )
 
 var (
-	genericExceptions = []string{"Exception", "BaseException", "RuntimeError"}
-	rootExceptions    = []string{"Exception", "BaseException"}
+	genericExceptions = []string{"Exception", "BaseException", "RuntimeError", "builtins.Exception", "builtins.BaseException", "builtins.RuntimeError"}
 )
-
-func (n Node) IsGenericWithMessage() bool {
-	raised := n.Child("exc")
-	arguments := append(raised.Arguments(), raised.Keywords()...)
-	if n.Kind() != "Raise" || !raised.IsCall() || !slices.Contains(genericExceptions, raised.Callee().DottedName()) || len(arguments) == 0 {
-		return false
-	}
-	slices.SortFunc(arguments, func(a, b Node) int { return a.Node().Span.Start - b.Node().Span.Start })
-	message := arguments[0]
-
-	return message.Kind() == "JoinedStr" || message.Node().Literal == "string"
-}
-
-func (n Node) IsRaiseWithoutCause() bool {
-	raised := n.Child("exc")
-	if n.Kind() != "Raise" || !raised.Exists() || n.Child("cause").Exists() {
-		return false
-	}
-	handler := n.enclosingHandler()
-	dotted := raised.DottedName()
-
-	return handler.Exists() && (handler.Name() == "" || dotted != handler.Name()) && !handler.setsCauseOf(dotted)
-}
-
-func (n Node) enclosingHandler() Node {
-	for around := n.Parent(); around.Exists() && !around.IsDefinition(); around = around.Parent() {
-		if around.Kind() == "ExceptHandler" {
-			return around
-		}
-	}
-
-	return Node{}
-}
-
-func (n Node) setsCauseOf(raised string) bool {
-	return raised != "" && slices.ContainsFunc(n.Descendants(), func(assign Node) bool {
-		return assign.Kind() == "Assign" && slices.ContainsFunc(assign.ChildrenIn("targets"), func(target Node) bool { return target.DottedName() == raised+".__cause__" })
-	})
-}
-
-func (n Node) IsBroad() bool {
-	caught := n.Child("type")
-	if !caught.Exists() {
-		return true
-	}
-	types := []Node{caught}
-	if caught.Kind() == "Tuple" {
-		types = caught.ChildrenIn("elts")
-	}
-
-	return slices.ContainsFunc(types, func(kind Node) bool { return slices.Contains(rootExceptions, kind.DottedName()) })
-}
-
-func (n Node) Swallows() bool {
-	body := n.ChildrenIn("body")
-
-	return len(body) == 1 && body[0].isNoOp()
-}
 
 func (n Node) ConstructorHasSideEffect() bool {
 	init := n.Initializer()
@@ -263,36 +204,6 @@ func (n Node) LooksUpOwnDict() bool {
 	}
 
 	return ok && slices.Contains(dictTypes, named.DottedName())
-}
-
-func (n Node) RethrowsUnchanged() bool {
-	body := n.ChildrenIn("body")
-	if n.Kind() != "ExceptHandler" || len(body) != 1 || body[0].Kind() != "Raise" {
-		return false
-	}
-	if !n.isTheLastClause() {
-		return false
-	}
-
-	return body[0].raisesWhatWasCaughtBy(n)
-}
-
-func (n Node) isTheLastClause() bool {
-	clauses := n.Parent().ChildrenIn("handlers")
-
-	return len(clauses) > 0 && clauses[len(clauses)-1].Node() == n.Node()
-}
-
-func (n Node) raisesWhatWasCaughtBy(handler Node) bool {
-	raised := n.Child("exc")
-	if n.Child("cause").Exists() {
-		return false
-	}
-	if !raised.Exists() {
-		return true
-	}
-
-	return raised.Kind() == "Name" && raised.Name() == handler.Name()
 }
 
 func (n Node) IsUnreadCollaborator(codebase *engine.Codebase) bool {

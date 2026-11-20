@@ -10,7 +10,6 @@ description: "You are about to call `fetch(` in a component, write a server path
 > The server declares every address it answers and every header it expects. A component that writes a path by
 > hand, or calls `fetch` with its own headers, keeps a **second copy** of those facts. The copies drift: a
 > route is renamed and a link breaks without an error, a header is added and the hand-rolled calls forget it.
-> 
 
 ## The principle
 
@@ -44,20 +43,6 @@ generated route or the client instead.
 
 ## Worked example
 
-### hard-coded-server-url — in Vue
-
-A string written out as the path of a route the server declares by name
-
-```vue
-----------[ Bad ]----------
-
-<a :href="'/plans/' + card.id">{{ card.title }}</a>
-
-----------[ Good ]----------
-
-const planAddress = route('plans.show', { plan: props.card.number })
-```
-
 ### hard-coded-server-url — in TypeScript
 
 A string written out as the path of a route the server declares by name
@@ -74,6 +59,22 @@ export async function printReturnLabel(returnNumber: number, copies: number): Pr
 
     return (await response.json()).location
 }
+```
+
+### hard-coded-server-url — in Vue
+
+A string written out as the path of a route the server declares by name
+
+```vue
+----------[ Bad ]----------
+
+function openBoard(): void {
+    window.location.assign('/plans')
+}
+
+----------[ Good ]----------
+
+const planAddress = route('plans.show', { plan: props.card.number })
 ```
 
 The other 1 — one per rule — are in [`reference/examples.md`](reference/examples.md).

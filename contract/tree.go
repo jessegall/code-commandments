@@ -355,9 +355,15 @@ type Ref struct {
 // NodeExtras holds the facts only one language has on a node.
 type NodeExtras struct {
 	CSharp     *CSharpNode     `json:"csharp,omitempty"`
+	Go         *GoNode         `json:"go,omitempty"`
 	Python     *PythonNode     `json:"python,omitempty"`
 	Vue        *VueNode        `json:"vue,omitempty"`
 	TypeScript *TypeScriptNode `json:"typescript,omitempty"`
+}
+
+// GoNode records the method set the Go compiler gives a named type.
+type GoNode struct {
+	Methods []string `json:"methods,omitempty"`
 }
 
 // CSharpNode is what only C# says about a node.
@@ -391,10 +397,16 @@ type TypeScriptNode struct {
 
 // CommentExtras holds the facts only one language has on a comment.
 type CommentExtras struct {
-	CSharp *CSharpComment `json:"csharp,omitempty"`
-	PHP    *PHPComment    `json:"php,omitempty"`
-	Python *PythonComment `json:"python,omitempty"`
-	Go     *GoComment     `json:"go,omitempty"`
+	CSharp     *CSharpComment     `json:"csharp,omitempty"`
+	PHP        *PHPComment        `json:"php,omitempty"`
+	Python     *PythonComment     `json:"python,omitempty"`
+	Go         *GoComment         `json:"go,omitempty"`
+	TypeScript *TypeScriptComment `json:"typescript,omitempty"`
+}
+
+// TypeScriptComment marks a comment that parses as code.
+type TypeScriptComment struct {
+	Code bool `json:"code,omitempty"`
 }
 
 // GoComment is what only Go says about a comment.

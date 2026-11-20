@@ -10,7 +10,7 @@ import (
 // rules is how TypeScript code is fingerprinted: every node counts, a written type reads whole, a name read or a local's declared name is a name while a called name and a member's name are kept, a string or number is data.
 type rules struct{}
 
-var hashing engine.HashRules = rules{}
+var Hashing engine.HashRules = rules{}
 
 var declaresName = []string{"VariableDeclaration", "Parameter", "BindingElement", "FunctionDeclaration"}
 
@@ -115,9 +115,27 @@ func (n Node) Body() Node {
 	return Node{}
 }
 
+func CopyBody(match engine.Match) []engine.Match {
+	function := Of(match)
+	if !function.IsFunction() {
+		return nil
+	}
+	if body := function.Body(); body.Exists() {
+		return []engine.Match{body.Match}
+	}
+
+	return nil
+}
+
+func CopyExclusions(match engine.Match) engine.CopyExclusions {
+	function := Of(match)
+
+	return engine.CopyExclusions{Exact: match.IsConstructor() || match.IsSoleStatement(), Near: function.IsLiteralLookup() || function.IsLiteralScript()}
+}
+
 func (n Node) BodyHash() string {
 	if body := n.Body(); body.Exists() {
-		return engine.SyntaxHash([]engine.Match{body.Match}, hashing, false)
+		return engine.SyntaxHash([]engine.Match{body.Match}, Hashing, false)
 	}
 
 	return ""
@@ -125,7 +143,7 @@ func (n Node) BodyHash() string {
 
 func (n Node) BodyShape() string {
 	if body := n.Body(); body.Exists() {
-		return engine.SyntaxHash([]engine.Match{body.Match}, hashing, true)
+		return engine.SyntaxHash([]engine.Match{body.Match}, Hashing, true)
 	}
 
 	return ""
@@ -137,7 +155,7 @@ func (n Node) BodyWeight() int {
 		return 0
 	}
 
-	return engine.SyntaxWeight([]engine.Match{body.Match}, hashing)
+	return engine.SyntaxWeight([]engine.Match{body.Match}, Hashing)
 }
 
 func (n Node) SoleStatement() Node {
@@ -229,5 +247,5 @@ func callsAName(expression engine.Match) bool {
 }
 
 func (n Node) NodeHash(normalize bool) string {
-	return engine.SyntaxHash([]engine.Match{n.Match}, hashing, normalize)
+	return engine.SyntaxHash([]engine.Match{n.Match}, Hashing, normalize)
 }

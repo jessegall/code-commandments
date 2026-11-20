@@ -10,13 +10,13 @@ class MissingQuantity(Exception):
 
 def stock_rows(rows: list, stock) -> None:
     for row in rows:
-        # @sin CancelledFallback
+        # @sin CancelledCoalesce
         if row.get("qty", 0) == 0:
             continue
         stock.add(row["sku"], row["qty"])
 
 
-# @fixed CancelledFallback
+# @fixed CancelledCoalesce
 def stock_counted(rows: list, stock) -> None:
     for row in rows:
         if "qty" not in row:

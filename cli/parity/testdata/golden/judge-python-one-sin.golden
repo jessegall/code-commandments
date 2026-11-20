@@ -25,6 +25,6 @@ exit: 1
 [1m15 sins[0m across 1 skill.
 
 --- stderr
-· read 305 files in <took> (0 from the cache, 305 by the bridges), judged in <took> (13 rule answers from memory, 292 asked): 15 sins
+· read 328 files in <took> (0 from the cache, 328 by the bridges), judged in <took> (13 rule answers from memory, 315 asked): 15 sins
 
 --- files

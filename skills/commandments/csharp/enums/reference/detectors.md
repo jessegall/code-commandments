@@ -2,9 +2,4 @@
 
 Each row is one rule: the sin's id, the symptom its detector flags, and the detector that flags it. The id is what `{{binary}} info <sin>` takes, and the detector name is what `--detector=` takes if the rule turns out to be wrong.
 
-- **`csharp-const-class-enum`** — a class that holds nothing but `const` strings or numbers — a closed set of values written as constants instead of an `enum` — `ConstClassEnumDetector`
-- **`csharp-enum-case-or-chain`** — `s == Status.Paid || s == Status.Refunded` (or `s is Status.Paid or Status.Refunded`) — a group of enum cases tested by hand at the call site — `EnumCaseOrChainDetector`
-- **`csharp-in-array-mirrors-enum`** — `new[] { "paid", "refunded" }.Contains(status)` or `status is "paid" or "refunded"` — a list of strings that repeats the members of an enum the code already has — `InArrayMirrorsEnumDetector`
-- **`csharp-match-default-returns-null`** — a `switch` that names every member of an enum, then answers `null`, `default` or `false` in its `_` arm — the one value that arm can see is a bug, and it is answered as if it were fine — `MatchDefaultReturnsNullDetector`
 - **`csharp-string-mirrors-enum`** — A `switch` or an `if` ladder dispatching on strings that are the names of an enum the codebase already declares — the enum, written out again as text — `StringMirrorsEnumDetector`
-- **`csharp-unnamed-vocabulary-literal`** — a raw string handed to a parameter the codebase elsewhere fills from a named constant — `Expect("{")` beside `Expect(Token.Colon)`, where `Token.BraceOpen` already names it — `UnnamedVocabularyLiteralDetector`

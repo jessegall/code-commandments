@@ -7,7 +7,7 @@ import (
 )
 
 func init() {
-	scribes.Fixes(rules.RedundantArrowReturnTypeDetector{}, func() scribes.Scribe { return RedundantArrowReturnTypeScribe{} })
+	scribes.Fixes(rules.RedundantArrowReturnTypeDetector, func() scribes.Scribe { return RedundantArrowReturnTypeScribe{} })
 }
 
 // RedundantArrowReturnTypeScribe takes the return type off an arrow function whose body already says it.

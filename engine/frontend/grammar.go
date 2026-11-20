@@ -14,35 +14,115 @@ import (
 func init() {
 	for _, language := range []contract.Language{contract.Vue, contract.TypeScript} {
 		engine.ReadAs(language, engine.Grammar{
-			Arguments:     engine.InFields("arguments"),
-			Members:       engine.InFields("members"),
-			Parameters:    engine.InFields("parameters"),
-			Extends:       heritage("extends"),
-			Implements:    heritage("implements"),
-			Annotations:   decorators,
-			TypeKind:      engine.Kinds(map[string]string{"ClassDeclaration": "class", "ClassExpression": "class", "InterfaceDeclaration": "interface", "EnumDeclaration": "enum"}),
-			ReturnType:    engine.InField("type"),
-			ParameterType: engine.InField("type"),
-			Constructs:    engine.OfKind("NewExpression", "expression"),
-			TypeOf:        func(node engine.Match) string { return typescript.Of(node).TypeName() },
-			Receiver:      receiver,
-			Condition:     condition,
-			DocTags:       jsDocTags,
+			Arguments:   engine.InFields("arguments"),
+			Members:     typescript.MembersWithParameterFields,
+			Parameters:  engine.InFields("parameters"),
+			Extends:     heritage("extends"),
+			Implements:  heritage("implements"),
+			Annotations: decorators,
+			TypeKind:    engine.Kinds(map[string]string{"ClassDeclaration": "class", "ClassExpression": "class", "InterfaceDeclaration": "interface", "EnumDeclaration": "enum"}),
+			DeclaresMethods: func(declared engine.Match) bool {
+				return slices.ContainsFunc(declared.Members(), engine.KindIn("MethodSignature"))
+			},
+			ReturnType:      engine.InField("type"),
+			ParameterType:   engine.InField("type"),
+			Constructs:      engine.OfKind("NewExpression", "expression"),
+			TypeOf:          func(node engine.Match) string { return typescript.Of(node).TypeName() },
+			Receiver:        receiver,
+			Condition:       condition,
+			RenderCondition: renderCondition,
+			TypeTest:        typeTest,
+			Declares:        engine.KindIn("VariableDeclaration", "Parameter", "BindingElement"),
+			Binds:           engine.KindIn("VariableStatement"),
+			DocTags:         jsDocTags,
 			WritesAttribute: func(element engine.Match, name string) bool {
 				return vue.Of(element).Writes(name)
 			},
-			BodyHash: func(function engine.Match) string { return typescript.Of(function).BodyHash() },
-			NodeHash: func(node engine.Match, normalize bool) string {
-				return typescript.Of(node).NodeHash(normalize)
-			},
-			TestFile:    testFile,
-			Implicit:    engine.KindIn("Constructor"),
-			NamespaceOf: func(symbol string) string { return engine.Before(symbol, "#") },
+			TestFile:      testFile,
+			Implicit:      engine.KindIn("Constructor"),
+			IsConstructor: engine.KindIn("Constructor"),
+			NamespaceOf:   func(symbol string) string { return engine.Before(symbol, "#") },
+			ImportModule:  engine.Match.Resolves,
+			ModuleKey:     engine.Match.File,
+			ModuleLayer:   func(root engine.Match) string { return path.Dir(root.FromProject()) },
 			Labels: func(name engine.Match) bool {
 				return name.Parent().Kind() == "PropertyAssignment" && name.Node().Field == "name"
 			},
 			Continues: func(branch engine.Match) bool {
 				return branch.Kind() == "IfStatement" && branch.Node().Field == "elseStatement"
+			},
+			Steps:    engine.InFields("incrementor"),
+			Grouping: engine.KindIn("ParenthesizedExpression"),
+			Thrown:   engine.OfKind("ThrowStatement", "expression"),
+			DeclaredName: func(declaration engine.Match) string {
+				if declaration.Kind() != "CatchClause" {
+					return ""
+				}
+
+				return declaration.Child("variableDeclaration").Name()
+			},
+			EmptyCollection: func(held engine.Match) bool {
+				return held.Kind() == "ArrayLiteralExpression" && len(held.Children()) == 0
+			},
+			ConstructedType:   func(construction engine.Match) string { return construction.Constructed().Name() },
+			GenericFailures:   []string{"Error"},
+			Hashing:           typescript.Hashing,
+			ScalarTypes:       []string{"string", "number", "boolean", "bigint"},
+			BooleanTypes:      []string{"boolean"},
+			ArgumentLookup:    engine.IndexedArgument("ElementAccessExpression", "expression", "argumentExpression"),
+			InitializedValue:  engine.OfKind("VariableDeclaration", "initializer"),
+			AssignmentSides:   engine.ReadPair("left", "right"),
+			RecordKeys:        typescript.RecordKeys,
+			MemberOrder:       typescript.MemberOrder,
+			JoinedLines:       typescript.JoinedLines,
+			TupleSlots:        typescript.TupleSlots,
+			StaticStorage:     typescript.StaticStorage,
+			IsValueClass:      engine.Match.DeclaresValueEquality,
+			PrivateMember:     typescript.PrivateMember,
+			Getter:            engine.KindIn("GetAccessor"),
+			Collaborator:      typescript.ConstructorCollaborator,
+			ArrowReturn:       typescript.RedundantArrowReturn,
+			NullDefault:       typescript.NullSwitchDefault,
+			DispatchTest:      typescript.DispatchTest,
+			ConstClass:        typescript.IsConstClassEnum,
+			EnumTable:         typescript.KeepsEnumSideTable,
+			SideTables:        typescript.SideTables,
+			EnumValues:        typescript.EnumValues,
+			EnumCase:          typescript.EnumCase,
+			EnumMembership:    typescript.EnumMembership,
+			EnumArms:          typescript.EnumArms,
+			PlaceholderData:   typescript.FillsDataWithPlaceholder,
+			Fallback:          fallback,
+			ConditionalArms:   conditionalArms,
+			Spreads:           engine.KindIn("SpreadElement", "SpreadAssignment"),
+			LiteralCollection: engine.KindIn("ArrayLiteralExpression", "ObjectLiteralExpression"),
+			Iterated:          iterated,
+			NullForgiving:     engine.KindIn("NonNullExpression"),
+			CapabilityTest: func(branch engine.Match) engine.CapabilityTest {
+				test := branch.Condition()
+				if test.Operator() == "instanceof" {
+					return engine.CapabilityTest{Subject: test.Child("left")}
+				}
+				return engine.CapabilityTest{}
+			},
+			KeyedStore:        typescript.KeyedStore,
+			DefaultValue:      engine.InField("initializer"),
+			Decode:            typescript.DecodesJSON,
+			Encode:            typescript.EncodesJSON,
+			UntypedReturn:     typescript.ReturnsUntypedData,
+			CommentReferences: commentReferences,
+			Keywords:          keywords,
+			CeremonyDoc:       ceremonyDoc,
+			VocabularyWords:   typescript.VocabularyWords,
+			CopyBody:          typescript.CopyBody,
+			CopyExclusions:    typescript.CopyExclusions,
+			TwinPairs: func(codebase *engine.Codebase) engine.TwinPairs {
+				return engine.ResolvedTwinPairs(typescript.In(codebase).Codebase)
+			},
+			SpelledFolder: typescript.SpelledFolder,
+			ListedClasses: typescript.ListedClasses,
+			Types: func(codebase *engine.Codebase) engine.TypeSystem {
+				return engine.TypesFromDeclarations(typescript.In(codebase).Codebase)
 			},
 			Body:              body,
 			Otherwise:         otherwise,
@@ -149,6 +229,34 @@ func condition(held engine.Match) engine.Match {
 	return held.Child(field)
 }
 
+func renderCondition(node engine.Match) engine.Match {
+	if node.Kind() != "Directive" {
+		return engine.Match{}
+	}
+	directive := vue.Directive{Match: node}
+	if !directive.Named(vue.If) && !directive.Named(vue.ElseIf) {
+		return engine.Match{}
+	}
+
+	return directive.Value()
+}
+
+func typeTest(node engine.Match) bool {
+	if node.Kind() != "BinaryExpression" {
+		return false
+	}
+	switch node.Operator() {
+	case "instanceof":
+		return true
+	case "===", "!==", "==", "!=":
+		left, right := node.Child("left"), node.Child("right")
+
+		return left.Kind() == "TypeOfExpression" && right.Kind() == "StringLiteral" || right.Kind() == "TypeOfExpression" && left.Kind() == "StringLiteral"
+	}
+
+	return false
+}
+
 var bodies = map[string]string{
 	"IfStatement":      "thenStatement",
 	"ForStatement":     "statement",
@@ -162,6 +270,9 @@ var bodies = map[string]string{
 }
 
 func body(held engine.Match) []engine.Match {
+	if held.Kind() == "VariableDeclaration" && held.Child("initializer").Kind() == "ArrowFunction" {
+		return body(held.Child("initializer"))
+	}
 	if field, holds := bodies[held.Kind()]; holds {
 		return statementsOf(held.Child(field))
 	}

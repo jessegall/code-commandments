@@ -34,9 +34,9 @@ func (Flow) Definition() skill.Definition {
 		Tier:      skill.Mandatory,
 		Order:     1,
 		Title:     "Flow — guard at the top, keep the body flat",
-		Trigger:   "Shaping a function body in any language: an `if` that decides whether the rest runs, an `else` after a branch that already returned, a loop whose whole body sits under one `if`, an if/else-if chain over one value, a ternary inside a ternary, a ternary or `&&` used as a statement, a statement every branch repeats, or code after a `return`. Read this BEFORE writing any of them, and when a flow finding points here.",
+		Trigger:   "Shaping a function body in any language: an `if` that decides whether the rest runs, an `else` after a branch that already returned, a loop whose whole body sits under one `if`, an if/else-if chain over one value, a ternary inside a ternary, a ternary or `&&` used as a statement, a statement every branch repeats, code after a `return`, or a parameter given a new value. Read this BEFORE writing any of them, and when a flow finding points here.",
 		Intro:     flowIntro,
-		Summary:   "guard at the top and leave, no `else` after a branch that left, a `continue` guard instead of a loop wrapped in an `if`, a dispatch instead of a ladder over one subject, one decision per conditional expression, an `if` for an action, a shared last statement written once after the branches, and no code after the block has left.",
+		Summary:   "guard at the top and leave, no `else` after a branch that left, a `continue` guard instead of a loop wrapped in an `if`, a dispatch instead of a ladder over one subject, one decision per conditional expression, an `if` for an action, a shared last statement written once after the branches, no code after the block has left, and a parameter that keeps the value it was given.",
 		Principle: flowPrinciple,
 		Languages: languages,
 		Related: []skill.Relation{

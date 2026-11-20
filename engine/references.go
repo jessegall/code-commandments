@@ -113,7 +113,13 @@ func (m Match) IsUnread() bool {
 }
 
 func (m Match) isSelector() bool {
-	if parent := m.Parent(); parent.Is(MemberAccess) && parent.Children()[0].node != m.node {
+	if parent := m.Parent(); parent.Is(MemberAccess) && parent.Receiver().node != m.node {
+		if lookup := m.grammar().ArgumentLookup; lookup != nil {
+			_, key := lookup(parent)
+			if key.node == m.node {
+				return false
+			}
+		}
 		return true
 	}
 

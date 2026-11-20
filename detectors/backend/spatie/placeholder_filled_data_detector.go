@@ -3,11 +3,11 @@ package spatie
 import (
 	"github.com/jessegall/code-commandments/catalog"
 	"github.com/jessegall/code-commandments/detectors"
+	"github.com/jessegall/code-commandments/detectors/shared"
 	"github.com/jessegall/code-commandments/engine"
 	"github.com/jessegall/code-commandments/engine/php"
 	spatienode "github.com/jessegall/code-commandments/engine/php/spatie"
 	"github.com/jessegall/code-commandments/sins"
-	spatiesins "github.com/jessegall/code-commandments/sins/backend/spatie"
 )
 
 // PlaceholderFilledDataDetector finds a Data object built with ” in a slot typed string: a placeholder standing in for a value the type says is always there.
@@ -15,7 +15,9 @@ type PlaceholderFilledDataDetector struct{}
 
 func init() { detectors.Register(catalog.PHP, PlaceholderFilledDataDetector{}) }
 
-func (PlaceholderFilledDataDetector) Sin() sins.Sin { return spatiesins.PlaceholderFilledData{} }
+func (PlaceholderFilledDataDetector) Sin() sins.Sin {
+	return shared.Sin[shared.PlaceholderFilledData]{}
+}
 
 func (PlaceholderFilledDataDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return php.In(codebase).

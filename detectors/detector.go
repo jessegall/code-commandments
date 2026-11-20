@@ -107,17 +107,18 @@ func EveryNamedIn(detectors []Detector, name string) []Detector {
 
 	wanted := catalog.Normalise(strings.TrimSuffix(bare, "Detector"))
 	asked := catalog.Normalise(engine)
+	matchesEngine := func(detector Detector) bool {
+		own, _ := EngineOf(detector)
+		return asked == "" || catalog.Normalise(string(own)) == asked
+	}
 
 	var named []Detector
 	for _, detector := range detectors {
-		if !slices.ContainsFunc(catalog.Names(detector), func(name string) bool { return catalog.Normalise(strings.TrimSuffix(name, "Detector")) == wanted }) {
+		if !matchesEngine(detector) {
 			continue
 		}
-
-		if asked != "" {
-			if own, _ := EngineOf(detector); catalog.Normalise(string(own)) != asked {
-				continue
-			}
+		if !slices.ContainsFunc(catalog.Names(detector), func(name string) bool { return catalog.Normalise(strings.TrimSuffix(name, "Detector")) == wanted }) {
+			continue
 		}
 
 		named = append(named, detector)
@@ -128,7 +129,7 @@ func EveryNamedIn(detectors []Detector, name string) []Detector {
 	}
 
 	for _, detector := range detectors {
-		if slices.ContainsFunc(detector.Sin().Definition().Names(), func(name string) bool { return catalog.Normalise(name) == wanted }) {
+		if matchesEngine(detector) && slices.ContainsFunc(detector.Sin().Definition().Names(), func(name string) bool { return catalog.Normalise(name) == wanted }) {
 			return []Detector{detector}
 		}
 	}

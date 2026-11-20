@@ -7,13 +7,13 @@ from dataclasses import dataclass
 from pathlib import Path
 
 
-# @fixed SwallowedException
+# @fixed SwallowCatch
 @dataclass(frozen=True)
 class Catalog:
     products: dict
 
 
-# @fixed SwallowedException
+# @fixed SwallowCatch
 class CatalogUnreadable(Exception):
     @classmethod
     def at(cls, path: Path) -> "CatalogUnreadable":
@@ -23,12 +23,12 @@ class CatalogUnreadable(Exception):
 def load_catalog(path: Path):
     try:
         return Catalog(json.loads(path.read_text()))
-    # @sin SwallowedException
+    # @sin SwallowCatch
     except Exception:
         return {}
 
 
-# @fixed SwallowedException
+# @fixed SwallowCatch
 def read_catalog(path: Path) -> Catalog:
     try:
         return Catalog(json.loads(path.read_text()))

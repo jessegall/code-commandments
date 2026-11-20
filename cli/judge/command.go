@@ -31,6 +31,7 @@ import (
 	"github.com/jessegall/code-commandments/contract"
 	"github.com/jessegall/code-commandments/detectors"
 	"github.com/jessegall/code-commandments/engine"
+	"github.com/jessegall/code-commandments/skill"
 	"github.com/jessegall/code-commandments/walk"
 )
 
@@ -477,7 +478,7 @@ func selectFrom(list []detectors.Detector, skill, sin string, tags []string) []d
 	for _, detector := range list {
 		definition := detector.Sin().Definition()
 
-		if skill != "" && !strings.Contains(catalog.Normalise(definition.Slug()), catalog.Normalise(skill)) {
+		if skill != "" && !matchesSkill(detector, skill) {
 			continue
 		}
 
@@ -493,6 +494,25 @@ func selectFrom(list []detectors.Detector, skill, sin string, tags []string) []d
 	}
 
 	return kept
+}
+
+func matchesSkill(detector detectors.Detector, query string) bool {
+	teaching := detector.Sin().Definition().Skill.Definition()
+	needle := catalog.Normalise(query)
+	if strings.Contains(catalog.Normalise(teaching.Slug), needle) {
+		return true
+	}
+	subject, shared := strings.CutPrefix(teaching.Slug, "shared/")
+	engine, known := detectors.EngineOf(detector)
+	if !shared || !known {
+		return false
+	}
+	if strings.Contains(catalog.Normalise(string(engine)+"/"+subject), needle) {
+		return true
+	}
+	return slices.ContainsFunc(teaching.Related, func(related skill.Relation) bool {
+		return strings.HasPrefix(related.Slug, string(engine)+"/") && catalog.Normalise(related.Slug) == needle
+	})
 }
 
 func tagsOf(in *cli.Input) []string {

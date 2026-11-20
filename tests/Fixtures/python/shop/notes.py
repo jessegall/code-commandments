@@ -8,9 +8,9 @@ class Order:
         self.note = note
 
     def has_note(self) -> bool:
-        # @sin CancelledFallback
+        # @sin CancelledCoalesce
         return (self.note or "") != ""
 
-    # @fixed CancelledFallback
+    # @fixed CancelledCoalesce
     def is_noted(self) -> bool:
         return self.note is not None

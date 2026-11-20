@@ -110,7 +110,9 @@ var project = sync.OnceValues(func() (*engine.Codebase, error) {
 		return nil, err
 	}
 
-	return engine.New(readFixture, backend, frontend), nil
+	codebase := engine.New(readFixture, backend, frontend)
+	codebase.Rooted(Root)
+	return codebase, nil
 })
 
 var oracleProject = sync.OnceValues(func() (*engine.Codebase, error) {

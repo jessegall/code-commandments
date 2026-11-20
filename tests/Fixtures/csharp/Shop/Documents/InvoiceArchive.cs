@@ -12,6 +12,7 @@ public static class InvoiceArchive
         catch (FormatException)
         {
             // @sin WrappingWithoutCause
+            // @sin MessageAtThrow
             throw new ArgumentException($"{fileName} is not an invoice number.", nameof(fileName));
         }
     }

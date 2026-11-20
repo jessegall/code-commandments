@@ -15,13 +15,12 @@ func ClassLiteral(fetch engine.Match) string {
 	return strings.TrimLeft(class.Name(), `\`)
 }
 
-func (n Node) IsHandedOver() bool {
-	return n.Parent().Kind() == "Arg" || n.Parent().Kind() == "Stmt_Return"
-}
-
 func listedProjectClasses(list engine.Match) []string {
 	n := Node{Match: list}
 	if n.Kind() != "Expr_Array" {
+		return nil
+	}
+	if parent := n.Parent().Kind(); parent != "Arg" && parent != "Stmt_Return" {
 		return nil
 	}
 	program := ProgramOf(n.Codebase())

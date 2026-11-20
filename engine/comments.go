@@ -27,6 +27,33 @@ func (c *Codebase) Comments() []Commented {
 	return comments
 }
 
+func (c *Codebase) CommentRuns() []Commented {
+	var comments []Commented
+	for _, file := range c.opened() {
+		for _, comment := range file.File.Comments {
+			current := Commented{Comment: comment, File: file}
+			if current.Prose() == "" {
+				continue
+			}
+			if at := len(comments) - 1; at >= 0 && comments[at].continuesWith(current) {
+				comments[at].Text += "\n" + current.Text
+				comments[at].Span.End = current.Span.End
+				comments[at].Refs = append(slices.Clone(comments[at].Refs), current.Refs...)
+				continue
+			}
+			comments = append(comments, current)
+		}
+	}
+
+	return comments
+}
+
+func (cm Commented) continuesWith(next Commented) bool {
+	return cm.File == next.File && cm.Kind == "line" && next.Kind == "line" && !cm.Trailing && !next.Trailing &&
+		!cm.IsCode() && !next.IsCode() && next.Span.Line == cm.Span.Line+strings.Count(cm.Text, "\n")+1 &&
+		cm.Attached != nil && next.Attached != nil && *cm.Attached == *next.Attached
+}
+
 func (c *Codebase) WhereComment() *Query {
 	queries.Add(1)
 
@@ -49,10 +76,14 @@ var closer = regexp.MustCompile("(\\*+/|\"\"\"|'''|-->)$")
 
 func (cm Commented) ProseLines() []string {
 	var lines []string
-	for _, line := range lineBreak.Split(markup.ReplaceAllString(cm.Text, ""), -1) {
+	for _, line := range lineBreak.Split(cm.Text, -1) {
 		said := strings.TrimSpace(line)
+		said = strings.TrimSpace(closer.ReplaceAllString(said, ""))
 		said = strings.TrimSpace(opener.ReplaceAllString(said, ""))
-		lines = append(lines, strings.TrimSpace(closer.ReplaceAllString(said, "")))
+		said = strings.TrimSpace(markup.ReplaceAllString(said, ""))
+		if !prose.IsFixtureMarker(said) {
+			lines = append(lines, said)
+		}
 	}
 
 	return lines
@@ -67,6 +98,52 @@ func (cm Commented) Prose() string {
 	}
 
 	return strings.Join(said, " ")
+}
+
+func (cm Commented) Description() []string {
+	if read := grammarOf(cm.File.Language()).CommentProse; read != nil {
+		return read(cm)
+	}
+	return slices.DeleteFunc(cm.ProseLines(), func(line string) bool { return strings.HasPrefix(line, "@") })
+}
+
+func (cm Commented) NarratesHistory() bool {
+	return prose.NarratesHistory(strings.Join(cm.Description(), " "))
+}
+
+func (cm Commented) DefendsAgainstStrawman() bool {
+	return prose.DefendsAgainstStrawman(strings.Join(cm.Description(), " "))
+}
+
+func (cm Commented) IsCode() bool {
+	extra := cm.Extras
+	return extra != nil && (extra.PHP != nil && extra.PHP.Code || extra.Python != nil && extra.Python.Code ||
+		extra.CSharp != nil && extra.CSharp.Code || extra.Go != nil && extra.Go.Code || extra.TypeScript != nil && extra.TypeScript.Code)
+}
+
+func (cm Commented) RestatesStatement() bool {
+	owner := cm.Documents()
+	return cm.Kind != "doc" && !cm.IsCode() && owner.Exists() && !owner.Is(Block) && !owner.Is(Function) &&
+		!owner.Is(TypeDeclaration) && owner.IsWithinFunction() && cm.Restates()
+}
+
+func (cm Commented) IsBloatedDoc() bool {
+	if cm.Kind != "doc" {
+		return false
+	}
+	documented := cm.Documents()
+	grammar := grammarOf(cm.File.Language())
+	if read := grammar.DocumentedSubject; read != nil {
+		documented = read(documented)
+	}
+	if !documented.Is(TypeDeclaration) {
+		return false
+	}
+	if read := grammar.DocParagraphs; read != nil {
+		return read(cm) >= 2
+	}
+
+	return prose.Paragraphs(cm.Description(), func(line string) bool { return line != "" }) >= 2
 }
 
 func (cm Commented) Words() []string {
@@ -95,7 +172,11 @@ func (m Match) AsComment() (Commented, bool) {
 }
 
 func (cm Commented) Dangling() bool {
-	return slices.ContainsFunc(cm.Refs, Dangling)
+	if slices.ContainsFunc(cm.Refs, Dangling) {
+		return true
+	}
+	read := grammarOf(cm.File.Language()).CommentReferences
+	return cm.Kind == "doc" && read != nil && slices.ContainsFunc(read(cm), Dangling)
 }
 
 func Dangling(ref contract.Ref) bool {
@@ -103,8 +184,8 @@ func Dangling(ref contract.Ref) bool {
 		return false
 	}
 
-	if ref.OwnedHere != nil && *ref.OwnedHere {
-		return true
+	if ref.OwnedHere != nil {
+		return *ref.OwnedHere
 	}
 
 	return ref.Owner == "" && !ref.Blind
@@ -163,6 +244,13 @@ func (cm Commented) Line() int {
 
 func (cm Commented) Match() Match {
 	return cm.File.CommentMatch(cm.Comment, cm.Line())
+}
+
+func (cm Commented) Location() Match {
+	if read := grammarOf(cm.File.Language()).CommentLocation; read != nil {
+		return read(cm)
+	}
+	return cm.Match()
 }
 
 func documentableIn(file *File) []Match {

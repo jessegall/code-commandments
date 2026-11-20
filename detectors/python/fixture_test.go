@@ -63,6 +63,19 @@ func TestEveryPythonDetectorFlagsExactlyWhatTheFixtureMarks(t *testing.T) {
 	fixturetest.Prove(t, fixture.Fixture{Codebase: shop(t), Detectors: configured(), Known: detectors.Of(catalog.Python), Resolver: fixture.FileScenarios})
 }
 
+func TestUndeclaredMemberRecognizesTheDeclaredContract(t *testing.T) {
+	stream, err := bridge.Once(bridgetest.Mypy(t), bridge.Listed("testdata/undeclared_member")...)
+	if err != nil {
+		t.Fatal(err)
+	}
+	fixturetest.Prove(t, fixture.Fixture{
+		Codebase:  engine.Load(stream),
+		Detectors: []detectors.Detector{pydetectors.UndeclaredMemberDetector},
+		Known:     detectors.Every(catalog.Python),
+		Resolver:  fixture.FileScenarios,
+	})
+}
+
 func TestEverySinTheFixtureMarksHasADetector(t *testing.T) {
 	codebase := shop(t)
 	registered := detectors.Of(catalog.Python)

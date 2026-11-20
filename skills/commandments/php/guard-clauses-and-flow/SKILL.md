@@ -53,58 +53,56 @@ Reach for this the moment you are about to write:
 
 ## Rules
 
-- [ ] State an absent collection at the top as a guard (early return); don't bury `?? []` in a `foreach` header.
-      _An early `return` when the collection is absent, so the loop iterates something that is THERE._
-- [ ] Flatten with guard clauses — never nest `if`s three deep into a pyramid.
 - [ ] Replace a 4+ branch if/elseif ladder with a `match`, a method on the type, or polymorphic dispatch.
       _A `match`, a method on the type, or polymorphic dispatch._
 - [ ] Guard at the top with an early `throw`; don't bury a `?? throw` mid-expression feeding further work.
-- [ ] Keep `for` for a counted loop, whose step advances a counter; walk with a `while`, or let the type hand out its own sequence.
-      _A `while` over an explicit cursor — or better, an iterator on the type being walked, so the caller never holds the cursor at all._
-- [ ] A condition that takes a reader more than a glance is a concept: give it a name and ask for it by that name.
-      _Move the condition onto the class that owns most of it, as a method or a property whose name says what it decides — `if ($order->readyToShip($slot))` — and let each object answer for its own part._
 
 ## Worked example
 
-### coalesced-loop-subject
+### if-else-ladder
 
-`foreach ($x[$k] ?? [] as …)` — the absence check buried in the loop header instead of stated as a guard
+if/elseif ladder of 4+ branches (should be match/dispatch)
 
 ```php
 ----------[ Bad ]----------
 
-public function fanOut(string $carrier, array $manifest): void
+public function band(int $grams): string
 {
-    foreach ($manifest[$carrier] ?? [] as $parcel) {
-        $this->queued[$carrier][] = $parcel;
+    if ($grams < 250) {
+        return 'letter';
+    } elseif ($grams < 2_000) {
+        return 'parcel-s';
+    } elseif ($grams < 10_000) {
+        return 'parcel-m';
+    } else {
+        return 'parcel-l';
     }
 }
 
 ----------[ Good ]----------
 
-public function fanOutGuarded(string $carrier, array $manifest): void
+public function bandByMatch(int $grams): string
 {
-    if (! isset($manifest[$carrier])) {
-        return;
-    }
-
-    foreach ($manifest[$carrier] as $parcel) {
-        $this->queued[$carrier][] = $parcel;
-    }
+    return match (true) {
+        $grams < 250 => 'letter',
+        $grams < 2_000 => 'parcel-s',
+        $grams < 10_000 => 'parcel-m',
+        default => 'parcel-l',
+    };
 }
 ```
 
-The other 5 — one per rule — are in [`reference/examples.md`](reference/examples.md).
+The other 1 — one per rule — are in [`reference/examples.md`](reference/examples.md).
 
 ## Commands
 
 - `{{binary}} judge --skill=php/guard-clauses-and-flow` — find every one of these in the codebase.
-- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `coalesced-loop-subject`, `deep-nesting`, `if-else-ladder`, `inline-throw`, `non-counting-for`, `unnamed-condition`.
+- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `if-else-ladder`, `inline-throw`.
 - `{{binary}} report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference
 
-- [Worked examples](reference/examples.md) — every rule's bad → good, 6 of them.
+- [Worked examples](reference/examples.md) — every rule's bad → good, 2 of them.
 - [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills

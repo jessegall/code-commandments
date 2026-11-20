@@ -226,6 +226,14 @@ A dispatch whose cases each render a whole view inline — one component doing a
   <template #default><p>Delivered</p></template>
 </SwitchCase>
 
+<!-- in ShipmentInTransit.vue -->
+<article class="in-transit">
+  <h4>{{ carrier }}, arriving <time>{{ eta }}</time></h4>
+  <template v-for="stop in stops" :key="stop">
+    <span class="stop">{{ stop }}</span>
+  </template>
+</article>
+
 <!-- in ShipmentPacking.vue -->
 <section class="packing">
   <h3>Packing</h3>
@@ -234,14 +242,6 @@ A dispatch whose cases each render a whole view inline — one component doing a
   </template>
   <footer>Packed by {{ packer }}</footer>
 </section>
-
-<!-- in ShipmentInTransit.vue -->
-<article class="in-transit">
-  <h4>{{ carrier }}, arriving <time>{{ eta }}</time></h4>
-  <template v-for="stop in stops" :key="stop">
-    <span class="stop">{{ stop }}</span>
-  </template>
-</article>
 ```
 
 ### near-duplicate-element
@@ -250,18 +250,6 @@ Markup with one skeleton repeated 2+ times — the same tags, attributes and nes
 
 ```vue
 ----------[ Bad ]----------
-
-<!-- in ShippingAddressPage.vue -->
-<section class="address-page">
-    <header class="address-head">
-        <h2>Shipping address</h2>
-        <p>Where we deliver your order.</p>
-    </header>
-    <form class="address-form">
-        <label class="address-field">Street<input v-model="shipping.street" name="shipping-street" /></label>
-        <label class="address-field">City<input v-model="shipping.city" name="shipping-city" /></label>
-    </form>
-</section>
 
 <!-- in BillingAddressPage.vue -->
 <section class="address-page billing">
@@ -275,13 +263,19 @@ Markup with one skeleton repeated 2+ times — the same tags, attributes and nes
     </form>
 </section>
 
-----------[ Good ]----------
+<!-- in ShippingAddressPage.vue -->
+<section class="address-page">
+    <header class="address-head">
+        <h2>Shipping address</h2>
+        <p>Where we deliver your order.</p>
+    </header>
+    <form class="address-form">
+        <label class="address-field">Street<input v-model="shipping.street" name="shipping-street" /></label>
+        <label class="address-field">City<input v-model="shipping.city" name="shipping-city" /></label>
+    </form>
+</section>
 
-<!-- in DeliveryOptions.vue -->
-<div class="slots">
-    <DeliveryOptionCard :option="standard" />
-    <DeliveryOptionCard :option="express" />
-</div>
+----------[ Good ]----------
 
 <!-- in DeliveryOptionCard.vue -->
 <article class="slot">
@@ -294,6 +288,12 @@ Markup with one skeleton repeated 2+ times — the same tags, attributes and nes
     </ul>
     <button type="button" @click="emit('choose', option.key)">Choose {{ option.title }}</button>
 </article>
+
+<!-- in DeliveryOptions.vue -->
+<div class="slots">
+    <DeliveryOptionCard :option="standard" />
+    <DeliveryOptionCard :option="express" />
+</div>
 ```
 
 ### oversized-component
@@ -371,6 +371,13 @@ A component whose template renders more elements than the project's declared bud
 
 ----------[ Good ]----------
 
+<!-- in AccountHistory.vue -->
+<ol class="history">
+  <template v-for="order in orders" :key="order.reference">
+    <li>{{ order.reference }}</li>
+  </template>
+</ol>
+
 <!-- in AccountIdentity.vue -->
 <dl class="identity">
   <dt>Name</dt>
@@ -379,19 +386,6 @@ A component whose template renders more elements than the project's declared bud
   <dd><a :href="`mailto:${customer.email}`">{{ customer.email }}</a></dd>
 </dl>
 
-<!-- in AccountPlan.vue -->
-<aside class="plan">
-  <strong>{{ billing.plan }}</strong>
-  <small>{{ billing.amount }}, renews {{ billing.renewsAt }}</small>
-</aside>
-
-<!-- in AccountHistory.vue -->
-<ol class="history">
-  <template v-for="order in orders" :key="order.reference">
-    <li>{{ order.reference }}</li>
-  </template>
-</ol>
-
 <!-- in AccountOverview.vue -->
 <section class="account">
   <h1 class="account__title">My account</h1>
@@ -399,6 +393,12 @@ A component whose template renders more elements than the project's declared bud
   <AccountPlan :billing="customer.billing" />
   <AccountHistory :orders="orders" />
 </section>
+
+<!-- in AccountPlan.vue -->
+<aside class="plan">
+  <strong>{{ billing.plan }}</strong>
+  <small>{{ billing.amount }}, renews {{ billing.renewsAt }}</small>
+</aside>
 ```
 
 ### prop-drilling

@@ -1,6 +1,8 @@
 package frontend_test
 
 import (
+	"os"
+	"strings"
 	"testing"
 
 	"github.com/jessegall/code-commandments/catalog"
@@ -25,5 +27,9 @@ func TestTheGoDetectorsFindWhatThePHPOnesFoundInTheFixture(t *testing.T) {
 	t.Setenv("COMMANDMENTS_PARITY", "../../tests/Fixtures/frontend")
 	t.Setenv("COMMANDMENTS_PARITY_FINDINGS", "testdata/fixture.findings")
 	t.Setenv("COMMANDMENTS_PARITY_ACCOUNTED", "testdata/fixture.accounted")
-	paritytest.Compare(t, []catalog.Engine{catalog.Vue, catalog.TypeScript}, served)
+	sources, err := os.ReadFile("testdata/fixture.sources")
+	if err != nil {
+		t.Fatal(err)
+	}
+	paritytest.CompareRecordedFixture(t, []catalog.Engine{catalog.Vue, catalog.TypeScript}, served, strings.Fields(string(sources)))
 }

@@ -5,6 +5,8 @@ import (
 	"encoding/hex"
 	"slices"
 	"strings"
+
+	"github.com/jessegall/code-commandments/engine"
 )
 
 func (n Node) IsTypeTest() bool {
@@ -84,6 +86,19 @@ func (n Node) TypeSwitchTranslatesEveryArm() bool {
 
 func (n Node) IsAnd() bool {
 	return n.Kind() == "BoolOp" && n.Node().Operator == "and"
+}
+
+func guard(match engine.Match) engine.Guard {
+	node := Node{Match: match}
+	if !node.IsAnd() || !node.IsEvaluated() {
+		return engine.Guard{}
+	}
+	substantive, narrows := !node.IsAssignedValue() && node.IsSubstantiveGuard(), node.IsTypeNarrowingGuard()
+	if !substantive && !narrows {
+		return engine.Guard{}
+	}
+
+	return engine.ReadGuard(node.GuardFingerprint(), substantive, narrows)
 }
 
 func (n Node) isOutermostAnd() bool {

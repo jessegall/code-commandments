@@ -185,10 +185,32 @@ func (w *writer) node(held ast.Node, field string, inType bool) *contract.Node {
 	w.typed(held, built)
 
 	for _, slot := range w.slots(held) {
-		built.Children = append(built.Children, w.node(slot.held, slot.field, inType || isTypeField(slot.field)))
+		if parameter, ok := slot.held.(*ast.Field); ok && field == "params" {
+			built.Children = append(built.Children, w.parameters(parameter, slot.field, inType)...)
+			continue
+		}
+		child := w.node(slot.held, slot.field, inType || isTypeField(slot.field))
+		built.Children = append(built.Children, child)
 	}
 
 	return built
+}
+
+func (w *writer) parameters(field *ast.Field, slot string, inType bool) []*contract.Node {
+	if len(field.Names) <= 1 {
+		parameter := w.node(field, slot, inType)
+		parameter.Is = append(parameter.Is, "parameter")
+		return []*contract.Node{parameter}
+	}
+	var parameters []*contract.Node
+	for _, name := range field.Names {
+		written := *field
+		written.Names = []*ast.Ident{name}
+		parameter := w.node(&written, slot, inType)
+		parameter.Is = append(parameter.Is, "parameter")
+		parameters = append(parameters, parameter)
+	}
+	return parameters
 }
 
 // slot is one child and the field of its parent it fills.

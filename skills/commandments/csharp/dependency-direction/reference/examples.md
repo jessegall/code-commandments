@@ -2,6 +2,29 @@
 
 One bad → good per rule this skill teaches, taken from the fixture that proves the detector, so every pair is code that really fires and really passes.
 
+### csharp-container-reach
+
+A class locates a service through IServiceProvider
+
+```cs
+----------[ Bad ]----------
+
+public bool PublishProjection(string gate)
+{
+    if (gate.Length == 0) return false;
+    var projection = this.intakeServices.GetRequiredService<ParcelSnapshotProjection>();
+    intake(gate + ": " + projection.GetType().Name);
+    return true;
+}
+
+----------[ Good ]----------
+
+public string ProjectionName(ParcelSnapshotProjection projection)
+{
+    return projection.GetType().Name;
+}
+```
+
 ### csharp-namespace-cycle
 
 two of the project's namespaces that each use the other — a cycle that makes them one namespace split under two names
@@ -85,5 +108,33 @@ namespace Shop.Storefront;
 public sealed class PageList(IReadOnlyList<ProductPage> pages)
 {
     public ISet<string> Slugs() => pages.Select(page => page.Slug).ToHashSet();
+}
+```
+
+### csharp-orphaned-binding
+
+A registered service has no production consumer
+
+```cs
+----------[ Bad ]----------
+
+public static void Register(IServiceCollection services, bool importStoredStatements)
+{
+    if (importStoredStatements)
+    {
+        services.AddSingleton<StatementArchive>();
+    }
+    services.AddSingleton<AccountStatementProjection>();
+}
+
+----------[ Good ]----------
+
+public static void Register(IServiceCollection services, bool importStoredStatements)
+{
+    if (importStoredStatements)
+    {
+        services.AddSingleton<StatementArchive>();
+    }
+    services.AddSingleton<AccountStatementProjection>();
 }
 ```

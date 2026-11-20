@@ -148,9 +148,12 @@ export class TypeScriptWriter {
 
     /** The symbol id a name or an import binding names, when it resolves to a declaration the contract names. */
     refersOf(node) {
-        if (!ts.isIdentifier(node) || isDeclarationName(node)) return undefined
-        if (!(isNameRead(node) || isImportBinding(node))) return undefined
-        let symbol = this.checker.getSymbolAtLocation(node)
+        const property = ts.isPropertyAccessExpression(node)
+        if (!property && (!ts.isIdentifier(node) || !(isNameRead(node) || isImportBinding(node)))) return undefined
+        const shorthand = node.parent && ts.isShorthandPropertyAssignment(node.parent) && node.parent.name === node
+        let symbol = shorthand
+            ? this.checker.getShorthandAssignmentValueSymbol(node.parent)
+            : this.checker.getSymbolAtLocation(property ? node.name : node)
         if (!symbol) return undefined
         if (symbol.flags & ts.SymbolFlags.Alias) symbol = this.checker.getAliasedSymbol(symbol)
         const declaration = symbol.declarations?.find(declaresSymbol)
@@ -356,6 +359,7 @@ function literal(node) {
 
 function flagsOf(node, modifiers) {
     const flags = []
+    if (ts.isVariableDeclaration(node) && ts.isVariableDeclarationList(node.parent) && (node.parent.flags & ts.NodeFlags.Const)) flags.push('constant')
     if (ts.isParameter(node) && node.dotDotDotToken) flags.push('variadic')
     if ((ts.isParameter(node) || ts.isPropertySignature(node) || ts.isPropertyDeclaration(node) || ts.isMethodSignature(node)
         || ts.isMethodDeclaration(node)) && node.questionToken) flags.push('optional')
@@ -374,6 +378,7 @@ function declaresType(node) {
 /** Whether `node` is a declaration the contract gives a symbol id: a type, a function, a member, a module-level variable. */
 function declaresSymbol(node) {
     if (MEMBERS.has(node.kind)) return declaredName(node) !== undefined || isDefaultExport(node)
+    if (ts.isParameter(node) && ts.isParameterPropertyDeclaration(node, node.parent)) return true
     if (ts.isVariableDeclaration(node)) return ts.isIdentifier(node.name) && ts.isVariableDeclarationList(node.parent)
         && ts.isVariableStatement(node.parent.parent) && ts.isSourceFile(node.parent.parent.parent)
     if (ts.isConstructSignatureDeclaration(node)) return true
@@ -401,6 +406,7 @@ function isDefaultExport(node) {
 
 function isDeclarationName(node) {
     return node.parent && ts.isDeclaration(node.parent) && node.parent.name === node
+        && !ts.isShorthandPropertyAssignment(node.parent)
 }
 
 /** Whether an identifier is a bare name read: not a member name after a dot, not a property key, not a label. */

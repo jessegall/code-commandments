@@ -58,7 +58,7 @@ func findingsIn(t *testing.T, files map[string]string) []string {
 		t.Fatal(err)
 	}
 	var found []string
-	for _, match := range (backend.DuplicateFunctionDetector{}).Find(codebase) {
+	for _, match := range backend.DuplicateFunctionDetector.Find(codebase) {
 		found = append(found, match.Location())
 	}
 

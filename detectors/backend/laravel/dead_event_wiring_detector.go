@@ -28,6 +28,7 @@ func (DeadEventWiringDetector) Find(codebase *engine.Codebase) []engine.Match {
 		Reject(engine.As(func(n laravelnode.Node) bool {
 			return php.IsEverProduced(codebase, n.ListenedEventClass(), laravelnode.EventDispatchers...)
 		})).
+		Reject(engine.Match.IsTest).
 		Get()
 }
 

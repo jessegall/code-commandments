@@ -19,11 +19,11 @@ class PriceList:
         except KeyError as missing:
             self.prices = refresh(self.supplier)
             if sku not in self.prices:
-                # @sin RaiseWithoutCause
+                # @sin WrappingWithoutCause
                 raise UnknownSku.at(self.supplier, sku)
             return self.prices[sku]
 
-    # @fixed RaiseWithoutCause
+    # @fixed WrappingWithoutCause
     def price_of(self, sku: str, refresh) -> int:
         try:
             return self.prices[sku]

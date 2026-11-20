@@ -12,11 +12,11 @@ use JesseGall\CodeCommandments\Testing\Righteous;
  */
 final class ReceiptHeaders
 {
-    public function __construct(private readonly Container $container) {}
+    public function __construct(private readonly Container $container, private readonly ReceiptFooters $footers) {}
 
     #[Righteous(ContainerReach::class)]
     public function header(int $receipt): string
     {
-        return sprintf('Receipt %d, served by %s', $receipt, $this->container->make(CashierOnDuty::class)->name);
+        return sprintf('Receipt %d, served by %s. %s', $receipt, $this->container->make(CashierOnDuty::class)->name, $this->footers->footer());
     }
 }

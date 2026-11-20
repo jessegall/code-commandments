@@ -10,38 +10,27 @@ var memberReads = map[string]bool{"Expr_PropertyFetch": true, "Expr_NullsafeProp
 
 var memberCalls = map[string]bool{"Expr_MethodCall": true, "Expr_NullsafeMethodCall": true}
 
-func (n Node) ReachesAMemberItsTypeLacks() bool {
+func memberLookup(match engine.Match) (string, func(string) bool) {
+	n := Node{Match: match}
 	if !memberReads[n.Kind()] && !memberCalls[n.Kind()] {
-		return false
+		return "", nil
 	}
 	name, receiver := n.Child("name"), n.Child("var")
 	if name.Kind() != "Identifier" || variableName(receiver) == "this" || n.isNarrowedByInstanceof(receiver) {
-		return false
+		return "", nil
 	}
-	class := TypesOf(n.Codebase()).TypeOf(receiver)
-	owners, known := n.wholeTypeOf(class)
-	if !known {
-		return false
+	class := receiver.TypeName()
+	if class == "" || ProgramOf(n.Codebase()).IsEnum(class) {
+		return "", nil
 	}
 	if memberReads[n.Kind()] {
-		return !slices.ContainsFunc(owners, n.declaresProperty(name.Name())) && !slices.ContainsFunc(owners, n.declaresMethod("__get"))
+		property, magic := n.declaresProperty(name.Name()), n.declaresMethod("__get")
+
+		return class, func(owner string) bool { return property(owner) || magic(owner) }
 	}
+	method, magic := n.declaresMethod(name.Name()), n.declaresMethod("__call")
 
-	return !slices.ContainsFunc(owners, n.declaresMethod(name.Name())) && !slices.ContainsFunc(owners, n.declaresMethod("__call"))
-}
-
-func (n Node) wholeTypeOf(class string) ([]string, bool) {
-	program := ProgramOf(n.Codebase())
-	if class == "" || program.IsEnum(class) {
-		return nil, false
-	}
-	owners := append([]string{class}, engine.Supertypes(program, class)...)
-
-	return owners, !slices.ContainsFunc(owners, func(named string) bool {
-		_, declared := program.Declaration(named)
-
-		return !declared
-	})
+	return class, func(owner string) bool { return method(owner) || magic(owner) }
 }
 
 func (n Node) declaresMethod(method string) func(string) bool {

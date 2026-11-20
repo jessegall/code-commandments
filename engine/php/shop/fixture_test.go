@@ -33,7 +33,23 @@ func tuned(t *testing.T, registered []detectors.Detector) []detectors.Detector {
 }
 
 func TestEveryBackendDetectorProvesItselfOnTheShop(t *testing.T) {
-	fixturetest.Prove(t, fixture.Fixture{Codebase: shop.Project(t), Detectors: tuned(t, detectors.Of(catalog.PHP))})
+	fixturetest.Prove(t, fixture.Fixture{
+		Codebase:  shop.Project(t),
+		Detectors: tuned(t, detectors.Of(catalog.PHP)),
+		Known:     detectors.Every(catalog.PHP),
+	})
+}
+
+func TestUndeclaredMemberRecognizesTheDeclaredContract(t *testing.T) {
+	fixturetest.Prove(t, fixture.Fixture{
+		Codebase: shop.Project(t).Reporting(
+			shop.Root+"/app/Bins/BinLabelCopies.php",
+			shop.Root+"/app/Exports/ExportRun.php",
+			shop.Root+"/app/Vouchers/VoucherReceipt.php",
+		),
+		Detectors: []detectors.Detector{backend.UndeclaredMemberDetector},
+		Known:     detectors.Every(catalog.PHP),
+	})
 }
 
 func TestEveryBackendDetectorFlagsWhatItsPhpTwinFlags(t *testing.T) {

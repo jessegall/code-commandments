@@ -4,20 +4,20 @@
 
 
 def has_coupon(basket) -> bool:
-    # @sin CancelledFallback
+    # @sin CancelledCoalesce
     return (basket.coupon if basket.coupon is not None else "") != ""
 
 
-# @fixed CancelledFallback
+# @fixed CancelledCoalesce
 def carries_coupon(basket) -> bool:
     return basket.coupon is not None
 
 
-# @righteous CancelledFallback
+# @righteous CancelledCoalesce
 def is_staff_coupon(basket) -> bool:
     return (basket.coupon or "") == "STAFF"
 
 
-# @righteous CancelledFallback
+# @righteous CancelledCoalesce
 def lacks_referrer(order) -> bool:
     return order.meta.get("referrer", None) is None

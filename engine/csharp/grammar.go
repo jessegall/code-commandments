@@ -6,15 +6,23 @@ import (
 
 	"github.com/jessegall/code-commandments/contract"
 	"github.com/jessegall/code-commandments/engine"
+	"github.com/jessegall/code-commandments/engine/csharp/efcore"
 )
 
 func init() {
 	engine.ReadAs(contract.CSharp, engine.Grammar{
-		Arguments: arguments,
-		Receiver:  receiver,
-		Declares:  engine.KindIn("SingleVariableDesignation", "DeclarationPattern"),
-		Binds:     engine.KindIn("LocalDeclarationStatement"),
-		Members:   engine.InFields("Members"),
+		ExecutesQuery: efcore.ExecutesQuery,
+		NullDefault:   nullSwitchDefault,
+		ListedClasses: listedClasses,
+		Types: func(codebase *engine.Codebase) engine.TypeSystem {
+			return engine.TypesFromDeclarations(codebase.Of(contract.CSharp))
+		},
+		SpelledFolder: spelledFolder,
+		Arguments:     arguments,
+		Receiver:      receiver,
+		Declares:      engine.KindIn("SingleVariableDesignation", "DeclarationPattern"),
+		Binds:         engine.KindIn("LocalDeclarationStatement"),
+		Members:       engine.InFields("Members"),
 		DeclaredName: func(declaration engine.Match) string {
 			return Node{Match: declaration}.DeclaredName()
 		},
@@ -25,14 +33,13 @@ func init() {
 		TypeOf:      func(node engine.Match) string { return Node{Match: node}.Type().Name() },
 		TypeKind: engine.Kinds(map[string]string{"ClassDeclaration": "class", "InterfaceDeclaration": "interface",
 			"EnumDeclaration": "enum", "RecordDeclaration": "record", "RecordStructDeclaration": "record", "StructDeclaration": "struct"}),
+		DeclaresMethods: func(declared engine.Match) bool {
+			return slices.ContainsFunc(declared.Members(), engine.KindIn("MethodDeclaration"))
+		},
 		ReturnType:    engine.InField("ReturnType"),
 		ParameterType: engine.InField("Type"),
 		Constructs:    engine.OfKind("ObjectCreationExpression", "Type"),
 		DocTags:       xmlTags,
-		BodyHash:      func(function engine.Match) string { return Node{Match: function}.BodyHash() },
-		NodeHash: func(node engine.Match, normalize bool) string {
-			return engine.SyntaxHash([]engine.Match{node}, hashing, normalize)
-		},
 		Implicit: engine.KindIn("ConstructorDeclaration", "DestructorDeclaration", "OperatorDeclaration",
 			"ConversionOperatorDeclaration"),
 		Inherited:          func(member engine.Match) bool { return Node{Match: member}.IsInherited() },
@@ -46,7 +53,91 @@ func init() {
 		Labels: func(name engine.Match) bool {
 			return name.Parent().Kind() == "NameColon" || name.Parent().Kind() == "NameEquals"
 		},
-		Continues:         func(branch engine.Match) bool { return Node{Match: branch}.IsElseIf() },
+		Continues: func(branch engine.Match) bool { return Node{Match: branch}.IsElseIf() },
+		Steps:     steps,
+		Fallback:  func(held engine.Match) engine.Match { return Node{Match: held}.Fallback().Match },
+		StableFallback: func(held engine.Match) bool {
+			return held.Is(engine.Literal) || held.IsConstant() || (Node{Match: held}).IsEmptyScalar()
+		},
+		Grouping:            engine.KindIn("ParenthesizedExpression"),
+		Thrown:              thrown,
+		EmptyCollection:     func(held engine.Match) bool { return Node{Match: held}.IsEmptyCollection() },
+		ConstructedType:     func(held engine.Match) string { return Node{Match: held}.Target().Type() },
+		GenericFailures:     genericExceptions,
+		GenericMessage:      true,
+		TakesFailureMessage: takesFailureMessage,
+		BroadCatch:          engine.As(Node.IsBroadCatch),
+		Hashing:             hashing,
+		CallConversion:      callConversion,
+		BooleanTypes:        []string{"bool", "System.Boolean", "global::System.Boolean"},
+		ArgumentLookup:      argumentLookup,
+		ReturnedValue:       engine.InField("Expression"),
+		InitializedValue:    initializedValue,
+		AssignmentSides:     engine.ReadPair("Left", "Right"),
+		Getter:              getterWithoutCapturedParameters,
+		TypeDispatch:        typeDispatch,
+		SideTables:          sideTables,
+		ConstClass: func(m engine.Match) bool {
+			n := Node{Match: m}
+			return n.IsConstClassEnum() && Of(m.Codebase()).ComparesAsACase(n.Symbol())
+		},
+		EnumValues: func(match engine.Match) []string {
+			if match.TypeKind() != "enum" {
+				return nil
+			}
+			return lowerWords(Of(match.Codebase()).EnumMembers(match.Identity()))
+		},
+		EnumCatalog: enumCatalog,
+		EnumMembership: func(match engine.Match) []string {
+			n := Node{Match: match}
+			if !n.Is("InvocationExpression", "IsPatternExpression") {
+				return nil
+			}
+			return lowerWords(n.MembershipLiterals())
+		},
+		EnumChainOwner: func(match engine.Match) string {
+			n := Node{Match: match}
+			if !n.Is("LogicalOrExpression", "OrPattern") || !n.IsGroupTestRoot() || n.SitsInAnExpressionTree() {
+				return ""
+			}
+			program := Of(match.Codebase())
+			for _, group := range n.EnumsTestedAsAGroup() {
+				if program.DeclaresEnum(group) {
+					return group
+				}
+			}
+			return ""
+		},
+		PlaceholderData: func(match engine.Match) bool {
+			n := Node{Match: match}
+			return n.Is("ObjectCreationExpression", "ImplicitObjectCreationExpression") && !n.IsNullObjectOfItsType() && !n.IsInTest() && Of(match.Codebase()).FillsRecordWithBlank(n)
+		},
+		BlankDefault:     blankDefault,
+		DeNulledFinder:   deNulledFinder,
+		ManufacturesFill: manufacturesFill,
+		CoalescedLoop:    coalescedLoop,
+		NullForgiving:    engine.KindIn("SuppressNullableWarningExpression"),
+		CapabilityTest:   capabilityTest,
+		NullableFields:   nullableFields,
+		KeyedStore:       keyedStore,
+		DefaultValue:     defaultValue,
+		CallbackTarget:   callbackTarget,
+		CallableTypes:    []string{"global::System.Action", "global::System.Func"},
+		Decode:           decodesJSON,
+		Encode:           encodesJSON,
+		UntypedReturn:    returnsUntypedData,
+		CeremonyDoc:      ceremonyDoc,
+		DocParagraphs:    func(comment engine.Commented) int { return (Comment{Commented: comment}).Paragraphs() },
+		CopyBody: func(match engine.Match) []engine.Match {
+			function := Node{Match: match}
+			if function.RunsABody() && function.FunctionBody().Exists() {
+				return []engine.Match{function.FunctionBody().Match}
+			}
+			return nil
+		},
+		UnnamedVocabulary: unnamedVocabulary,
+		Guard:             guard,
+		IsConstructor:     func(held engine.Match) bool { return held.Kind() == "ConstructorDeclaration" },
 		Body:              body,
 		JumpTarget:        engine.KindIn("LabeledStatement"),
 		Otherwise:         otherwise,
@@ -60,7 +151,21 @@ func init() {
 
 }
 
-var sentTo = []string{"SimpleMemberAccessExpression", "PointerMemberAccessExpression", "ElementAccessExpression"}
+var sentTo = []string{"SimpleMemberAccessExpression", "PointerMemberAccessExpression", "ElementAccessExpression", "ConditionalAccessExpression"}
+
+func argumentLookup(node engine.Match) (engine.Match, engine.Match) {
+	if node.Kind() != "ElementAccessExpression" {
+		return engine.Match{}, engine.Match{}
+	}
+	return node.Receiver(), node.Child("ArgumentList").Child("Arguments").Child("Expression")
+}
+
+func initializedValue(node engine.Match) engine.Match {
+	if node.Kind() != "VariableDeclarator" {
+		return engine.Match{}
+	}
+	return node.Child("Initializer").Child("Value")
+}
 
 func receiver(node engine.Match) engine.Match {
 	if slices.Contains(sentTo, node.Kind()) {
@@ -226,4 +331,46 @@ func computes(held engine.Match) bool {
 		"AndAssignmentExpression", "OrAssignmentExpression", "ExclusiveOrAssignmentExpression",
 		"LeftShiftAssignmentExpression", "RightShiftAssignmentExpression", "CoalesceAssignmentExpression",
 	)
+}
+
+func steps(loop engine.Match) []engine.Match {
+	var found []engine.Match
+	for _, child := range loop.Children() {
+		if (Node{Match: child}).IsStep() {
+			found = append(found, child)
+		}
+	}
+
+	return found
+}
+
+func takesFailureMessage(construction engine.Match) bool {
+	for _, declaration := range construction.Codebase().Declarations(construction.TargetSymbol()) {
+		if parameters := declaration.Parameters(); len(parameters) > 0 {
+			return parameters[0].Name() == "message"
+		}
+	}
+	for _, declaration := range construction.Codebase().Declarations(construction.ConstructedType()) {
+		if parameters := declaration.Child("ParameterList").ChildrenIn("Parameters"); len(parameters) > 0 {
+			return parameters[0].Name() == "message"
+		}
+	}
+	return true
+}
+
+func thrown(throw engine.Match) engine.Match {
+	expressions := Node{Match: throw}.Expressions()
+	if !throw.Is(engine.Throw) || len(expressions) == 0 {
+		return engine.Match{}
+	}
+
+	return expressions[0].Match
+}
+
+func lowerWords(words []string) []string {
+	var lower []string
+	for _, word := range words {
+		lower = append(lower, strings.ToLower(word))
+	}
+	return lower
 }

@@ -25,7 +25,7 @@ func TestACatchThatOnlyRaisesAgainIsFoundAndOneThatWorksIsNot(t *testing.T) {
 	} {
 		t.Run(name, func(t *testing.T) {
 			codebase := pythontest.FromSource(t, map[string]string{"app/thing.py": test.source})
-			found := (python.RethrownUnchangedDetector{}).Find(codebase)
+			found := python.RethrownUnchangedDetector.Find(codebase)
 
 			if len(found) != test.want {
 				t.Errorf("found %d, want %d: %v", len(found), test.want, found)

@@ -18,6 +18,7 @@ export interface OrderData {
 }
 
 export function orderChannelLabel(channel: OrderChannel): string {
+  // @sin StringMatchMirrorsEnum
   switch (channel) {
     case 'web':
       return 'Online'

@@ -9,8 +9,8 @@ import (
 
 func TestEveryRecurringDetectorSaysWhichGroupAFindingIsIn(t *testing.T) {
 	for _, detector := range []detectors.Detector{
-		csdetectors.RepeatedGuardDetector{}, csdetectors.RepeatedTypeGuardDetector{}, csdetectors.RepeatedNamedCallDetector{},
-		csdetectors.DuplicateMethodDetector{}, csdetectors.NearDuplicateMethodDetector{}, csdetectors.ConvertedArgumentDetector{},
+		csdetectors.RepeatedGuardDetector, csdetectors.RepeatedTypeGuardDetector, csdetectors.RepeatedNamedCallDetector{},
+		csdetectors.DuplicateMethodDetector, csdetectors.NearDuplicateMethodDetector, csdetectors.ConvertedArgumentDetector{},
 		csdetectors.DataClumpDetector{},
 	} {
 		if _, ok := detector.(detectors.Grouped); !ok {

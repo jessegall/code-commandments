@@ -139,7 +139,7 @@
                 "declared",
                 "observed"
             ],
-            "example": "/fixtures/frontend/client/stock-lookup.ts:16"
+            "example": "/fixtures/frontend/client/stock-lookup.ts:17"
         },
         {
             "kind": "AsExpression",
@@ -364,7 +364,7 @@
                 "declared",
                 "observed"
             ],
-            "example": "/fixtures/frontend/client/stock-lookup.ts:20"
+            "example": "/fixtures/frontend/client/stock-lookup.ts:21"
         },
         {
             "kind": "BreakKeyword",
@@ -2108,7 +2108,7 @@
                 "declared",
                 "observed"
             ],
-            "example": "/fixtures/frontend/client/stock-lookup.ts:13"
+            "example": "/fixtures/frontend/client/stock-lookup.ts:14"
         },
         {
             "kind": "NewKeyword",
@@ -2206,7 +2206,7 @@
                 "declared",
                 "observed"
             ],
-            "example": "/fixtures/frontend/client/stock-lookup.ts:21"
+            "example": "/fixtures/frontend/client/stock-lookup.ts:22"
         },
         {
             "kind": "ObjectBindingPattern",
@@ -2976,7 +2976,7 @@
                 "declared",
                 "observed"
             ],
-            "example": "/fixtures/frontend/client/stock-lookup.ts:13"
+            "example": "/fixtures/frontend/client/stock-lookup.ts:14"
         },
         {
             "kind": "TildeToken",
@@ -3180,6 +3180,9 @@
                 "initializer",
                 "name",
                 "type"
+            ],
+            "flags": [
+                "constant"
             ],
             "vouched": [
                 "declared",

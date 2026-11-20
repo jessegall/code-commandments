@@ -10,6 +10,7 @@ import (
 	"github.com/jessegall/code-commandments/catalog"
 	"github.com/jessegall/code-commandments/detectors"
 	"github.com/jessegall/code-commandments/engine"
+	"github.com/jessegall/code-commandments/engine/php/packages"
 	"github.com/jessegall/code-commandments/sins"
 	"github.com/jessegall/code-commandments/skill"
 )
@@ -76,46 +77,158 @@ func (Sin[R]) Published() bool {
 
 // Detector judges one language by a shared rule and names what it finds by that rule's one sin.
 type Detector[R Rule, L Language] struct {
-	repentable bool
+	repentable  bool
+	unpublished bool
+	excused     func(*engine.Codebase, engine.Match) bool
+	exemptions  []packages.Exemption
+	reject      engine.Check
 }
 
 // Option is what a language states about its binding of a shared rule.
 type Option func(*binding)
 
 type binding struct {
-	repentable bool
+	repentable  bool
+	unpublished bool
+	excused     func(*engine.Codebase, engine.Match) bool
+	exemptions  []packages.Exemption
+	reject      engine.Check
+}
+
+func Rejecting(reject engine.Check, exemptions ...packages.Exemption) Option {
+	return func(bound *binding) {
+		bound.reject = reject
+		bound.exemptions = exemptions
+	}
+}
+
+// CandidateRule can apply an exemption before evaluating a group of candidates.
+type CandidateRule interface {
+	FindRejecting(*engine.Codebase, engine.Check) []engine.Match
 }
 
 func Repentable(bound *binding) {
 	bound.repentable = true
 }
 
+func Unpublished(bound *binding) {
+	bound.unpublished = true
+}
+
+// Excusing is a language's own exemption from a shared rule: the package tags it honours, and the finding they excuse.
+func Excusing(excused func(*engine.Codebase, engine.Match) bool, exemptions ...packages.Exemption) Option {
+	return func(bound *binding) {
+		bound.excused = excused
+		bound.exemptions = exemptions
+	}
+}
+
 var registered sync.Map
 
 func Bind[R Rule, L Language](options ...Option) Detector[R, L] {
-	var bound binding
+	detector := bound[R, L](options)
+	register[L](detector)
+
+	return detector
+}
+
+// LastDetector runs a repair after the other fixes settle its source.
+type LastDetector[R Rule, L Language] struct {
+	Detector[R, L]
+}
+
+func BindLast[R Rule, L Language](options ...Option) LastDetector[R, L] {
+	detector := LastDetector[R, L]{bound[R, L](options)}
+	register[L](detector)
+	return detector
+}
+
+func (LastDetector[R, L]) RunsLast() {}
+
+// TracedRule can describe the value flow behind a finding.
+type TracedRule interface {
+	Rule
+	ChainPath(engine.Match, *engine.Codebase) []string
+}
+
+// TracedDetector attaches a rule's value-flow evidence to its findings.
+type TracedDetector[R TracedRule, L Language] struct {
+	Detector[R, L]
+}
+
+func BindTraced[R TracedRule, L Language](options ...Option) TracedDetector[R, L] {
+	detector := TracedDetector[R, L]{bound[R, L](options)}
+	register[L](detector)
+	return detector
+}
+
+func (TracedDetector[R, L]) ChainPath(finding engine.Match, codebase *engine.Codebase) []string {
+	var rule R
+	return rule.ChainPath(finding, codebase)
+}
+
+// GroupedRule is a shared rule whose findings recur in groups: the key says which group a finding is in, the same in every language.
+type GroupedRule interface {
+	Rule
+	GroupKey(match engine.Match) (string, bool)
+}
+
+// GroupedDetector judges one language by a grouped shared rule, so a report names each finding's twins.
+type GroupedDetector[R GroupedRule, L Language] struct {
+	Detector[R, L]
+}
+
+func BindGrouped[R GroupedRule, L Language](options ...Option) GroupedDetector[R, L] {
+	detector := GroupedDetector[R, L]{bound[R, L](options)}
+	register[L](detector)
+
+	return detector
+}
+
+func (GroupedDetector[R, L]) GroupKey(match engine.Match) (string, bool) {
+	var rule R
+
+	return rule.GroupKey(match)
+}
+
+func bound[R Rule, L Language](options []Option) Detector[R, L] {
+	var settings binding
 	for _, option := range options {
-		option(&bound)
+		option(&settings)
 	}
 	if _, already := registered.LoadOrStore(reflect.TypeFor[R](), true); !already {
 		sins.Register(catalog.Shared, Sin[R]{})
 	}
-	var language L
-	detector := Detector[R, L]{repentable: bound.repentable}
-	detectors.Register(language.Engine(), detector)
 
-	return detector
+	return Detector[R, L]{repentable: settings.repentable, unpublished: settings.unpublished, excused: settings.excused, exemptions: settings.exemptions, reject: settings.reject}
+}
+
+func register[L Language](detector detectors.Detector) {
+	var language L
+	detectors.Register(language.Engine(), detector)
 }
 
 func (Detector[R, L]) Sin() sins.Sin {
 	return Sin[R]{}
 }
 
-func (Detector[R, L]) Find(codebase *engine.Codebase) []engine.Match {
+func (d Detector[R, L]) Find(codebase *engine.Codebase) []engine.Match {
 	var rule R
 	var language L
+	part := codebase.Of(catalog.LanguagesOf(language.Engine())...)
+	if candidates, ok := any(rule).(CandidateRule); ok && d.reject != nil {
+		return candidates.FindRejecting(part, d.reject)
+	}
+	found := rule.Find(part)
+	if d.excused == nil {
+		return found
+	}
 
-	return rule.Find(codebase.Of(catalog.LanguagesOf(language.Engine())...))
+	return slices.DeleteFunc(found, func(finding engine.Match) bool { return d.excused(codebase, finding) })
+}
+
+func (d Detector[R, L]) Exemptions() []packages.Exemption {
+	return d.exemptions
 }
 
 func (Detector[R, L]) Name() string {
@@ -138,14 +251,19 @@ func (Detector[R, L]) Language() any {
 	return language
 }
 
+func (Detector[R, L]) Engine() catalog.Engine {
+	var language L
+	return language.Engine()
+}
+
 func (d Detector[R, L]) Repents() bool {
 	return d.repentable
 }
 
-func (Detector[R, L]) Published() bool {
+func (d Detector[R, L]) Published() bool {
 	var rule R
 
-	return !catalog.IsUnpublished(rule)
+	return !d.unpublished && !catalog.IsUnpublished(rule)
 }
 
 func (Detector[R, L]) ReadsAcrossFiles() bool {

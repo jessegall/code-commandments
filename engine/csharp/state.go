@@ -6,7 +6,24 @@ import (
 	"slices"
 	"sort"
 	"strings"
+
+	"github.com/jessegall/code-commandments/engine"
 )
+
+func getterWithoutCapturedParameters(member engine.Match) bool {
+	if member.Kind() != "GetAccessorDeclaration" || !member.Child("Body").Exists() && !member.Child("ExpressionBody").Exists() {
+		return false
+	}
+	parameters := member.EnclosingType().Child("ParameterList").ChildrenIn("Parameters")
+	if len(parameters) == 0 {
+		return true
+	}
+	return !slices.ContainsFunc(member.OwnDescendants(), func(read engine.Match) bool {
+		return read.Is(engine.Identifier) && read.Field() != "Name" && slices.ContainsFunc(parameters, func(parameter engine.Match) bool {
+			return parameter.Name() == read.Name()
+		})
+	})
+}
 
 func (n Node) isNullPattern() bool {
 	switch {
@@ -242,6 +259,19 @@ func (n Node) Conjuncts() []Node {
 	}
 
 	return conjuncts
+}
+
+func guard(match engine.Match) engine.Guard {
+	node := Node{Match: match}
+	if !node.IsOutermostAnd() {
+		return engine.Guard{}
+	}
+	substantive, narrows := !node.IsStoredValue() && node.IsSubstantiveGuard(), node.IsTypeNarrowingGuard()
+	if !substantive && !narrows {
+		return engine.Guard{}
+	}
+
+	return engine.ReadGuard(node.GuardFingerprint(), substantive, narrows)
 }
 
 func (n Node) IsSubstantiveGuard() bool {

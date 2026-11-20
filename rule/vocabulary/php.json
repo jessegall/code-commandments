@@ -171,7 +171,7 @@
                 "declared",
                 "observed"
             ],
-            "example": "/shop/app/Audit/Forwarding/AuditTrail.php:51"
+            "example": "/shop/app/Assistant/ToolCalls.php:40"
         },
         {
             "kind": "Expr_ArrowFunction",
@@ -280,7 +280,7 @@
                 "declared",
                 "observed"
             ],
-            "example": "/shop/app/Shipping/QuoteMemo.php:25"
+            "example": "/shop/app/Models/TillShift.php:23"
         },
         {
             "kind": "Expr_AssignOp_Concat",
@@ -929,7 +929,7 @@
                 "declared",
                 "observed"
             ],
-            "example": "/shop/app/Reporting/Unused/SalesDigest.php:53"
+            "example": "/shop/app/Harvest/YieldForecast.php:23"
         },
         {
             "kind": "Expr_BitwiseNot",
@@ -1296,7 +1296,7 @@
                 "declared",
                 "observed"
             ],
-            "example": "/fixtures/backend/app/Reporting/GradeCalculator.php:39"
+            "example": "/fixtures/backend/app/Reporting/GradeCalculator.php:41"
         },
         {
             "kind": "Expr_MethodCall",
@@ -1705,7 +1705,7 @@
                 "declared",
                 "observed"
             ],
-            "example": "/fixtures/backend/app/Reporting/GradeCalculator.php:40"
+            "example": "/fixtures/backend/app/Reporting/GradeCalculator.php:42"
         },
         {
             "kind": "Name",
@@ -1921,7 +1921,7 @@
                 "declared",
                 "observed"
             ],
-            "example": "/shop/app/Tills/TillStepFinder.php:18"
+            "example": "/shop/app/Lockers/LockerNotice.php:13"
         },
         {
             "kind": "Scalar_MagicConst_File",

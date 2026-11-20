@@ -37,45 +37,6 @@ public function inZenMode(): bool
 }
 ```
 
-### converted-argument
-
-A parameter typed as the already-converted form instead of the raw value, so every call site repeats the same conversion before calling it (e.g. `Raises::of(ClassAlias::of($interaction), …)`).
-
-```php
-----------[ Bad ]----------
-
-// in Shop\Wire\HotkeyBinding
-public function bind(string $node): WireMessage
-{
-    return WireMessage::raise(SignalAlias::of(HotkeyPressed::class), $node);
-}
-
-// in Shop\Wire\PointerBinding
-public function bind(string $node): WireMessage
-{
-    $this->bound[] = $node;
-
-    return WireMessage::raise(SignalAlias::of(PointerReleased::class), $node);
-}
-
-----------[ Good ]----------
-
-// in Shop\Wire\HotkeyBinding
-// The FIX: the parameter is declared in the currency the caller holds, and the conversion lives on
-// the far side of the call.
-
-public function bindDirect(string $node): WireMessage
-{
-    return WireMessage::raiseFor(HotkeyPressed::class, $node);
-}
-
-// in Shop\Wire\WireMessage
-public static function raiseFor(string $signal, string $target): self
-{
-    return new self(SignalAlias::of($signal), $target);
-}
-```
-
 ### derived-argument
 
 Passing the same object twice — once whole and once broken into a piece (`persist($request, $request->shopId())`), or broken into several pieces at once (`new AgentTurn($r->output(), $r->failed(), $r->errorOutput())`) — when the callee could derive each piece itself from the one object.

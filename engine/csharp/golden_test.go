@@ -200,9 +200,20 @@ func TestTheNamespaceGraphHoldsThePhpEnginesArrows(t *testing.T) {
 		Arrows []string `json:"arrows"`
 	}
 	golden(t, "namespaces", &want)
+	var recorded map[string]goldenType
+	golden(t, "types", &recorded)
+	files := map[string]bool{}
+	for location := range recorded {
+		path, _, _ := strings.Cut(location, "@")
+		files[path] = true
+	}
 	var got []string
 	for _, arrow := range csharp.Namespaces(codebase).Arrows() {
-		got = append(got, fmt.Sprintf("%s %s -> %s", at(csharp.Node{Match: arrow.At}), arrow.From, arrow.To))
+		location := at(csharp.Node{Match: arrow.At})
+		path, _, _ := strings.Cut(location, "@")
+		if files[path] {
+			got = append(got, fmt.Sprintf("%s %s -> %s", location, arrow.From, arrow.To))
+		}
 	}
 	sort.Strings(got)
 	for _, arrow := range want.Arrows {

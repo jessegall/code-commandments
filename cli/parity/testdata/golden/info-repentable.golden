@@ -84,18 +84,6 @@ exit: 0
   ```vue
   ----------[ Bad ]----------
   
-  <!-- in ShippingAddressPage.vue -->
-  <section class="address-page">
-      <header class="address-head">
-          <h2>Shipping address</h2>
-          <p>Where we deliver your order.</p>
-      </header>
-      <form class="address-form">
-          <label class="address-field">Street<input v-model="shipping.street" name="shipping-street" /></label>
-          <label class="address-field">City<input v-model="shipping.city" name="shipping-city" /></label>
-      </form>
-  </section>
-  
   <!-- in BillingAddressPage.vue -->
   <section class="address-page billing">
       <header class="address-head">
@@ -108,13 +96,19 @@ exit: 0
       </form>
   </section>
   
-  ----------[ Good ]----------
+  <!-- in ShippingAddressPage.vue -->
+  <section class="address-page">
+      <header class="address-head">
+          <h2>Shipping address</h2>
+          <p>Where we deliver your order.</p>
+      </header>
+      <form class="address-form">
+          <label class="address-field">Street<input v-model="shipping.street" name="shipping-street" /></label>
+          <label class="address-field">City<input v-model="shipping.city" name="shipping-city" /></label>
+      </form>
+  </section>
   
-  <!-- in DeliveryOptions.vue -->
-  <div class="slots">
-      <DeliveryOptionCard :option="standard" />
-      <DeliveryOptionCard :option="express" />
-  </div>
+  ----------[ Good ]----------
   
   <!-- in DeliveryOptionCard.vue -->
   <article class="slot">
@@ -127,6 +121,12 @@ exit: 0
       </ul>
       <button type="button" @click="emit('choose', option.key)">Choose {{ option.title }}</button>
   </article>
+  
+  <!-- in DeliveryOptions.vue -->
+  <div class="slots">
+      <DeliveryOptionCard :option="standard" />
+      <DeliveryOptionCard :option="express" />
+  </div>
   ```
 
 [33mCommands[0m

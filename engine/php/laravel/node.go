@@ -10,23 +10,24 @@ import (
 )
 
 const (
-	FacadeNamespace  = `Illuminate\Support\Facades\`
-	ServiceProvider  = `Illuminate\Support\ServiceProvider`
-	Model            = `Illuminate\Database\Eloquent\Model`
-	Request          = `Illuminate\Http\Request`
-	FormRequest      = `Illuminate\Foundation\Http\FormRequest`
-	McpRequest       = `Laravel\Mcp\Request`
-	McpTool          = `Laravel\Mcp\Server\Tool`
-	Inertia          = `Inertia\Inertia`
-	InertiaHelper    = "inertia"
-	Controller       = `Illuminate\Routing\Controller`
-	Route            = `Illuminate\Support\Facades\Route`
-	ShouldQueue      = `Illuminate\Contracts\Queue\ShouldQueue`
-	Event            = `Illuminate\Support\Facades\Event`
-	ConsoleCommand   = `Illuminate\Console\Command`
-	AuthGuard        = `Illuminate\Contracts\Auth\Guard`
-	AuthUserProvider = `Illuminate\Contracts\Auth\UserProvider`
-	Arrayable        = `Illuminate\Contracts\Support\Arrayable`
+	FacadeNamespace     = `Illuminate\Support\Facades\`
+	ServiceProvider     = `Illuminate\Support\ServiceProvider`
+	Model               = `Illuminate\Database\Eloquent\Model`
+	Request             = `Illuminate\Http\Request`
+	FormRequest         = `Illuminate\Foundation\Http\FormRequest`
+	McpRequest          = `Laravel\Mcp\Request`
+	McpTool             = `Laravel\Mcp\Server\Tool`
+	Inertia             = `Inertia\Inertia`
+	InertiaHelper       = "inertia"
+	Controller          = `Illuminate\Routing\Controller`
+	Route               = `Illuminate\Support\Facades\Route`
+	ShouldQueue         = `Illuminate\Contracts\Queue\ShouldQueue`
+	Event               = `Illuminate\Support\Facades\Event`
+	ConsoleCommand      = `Illuminate\Console\Command`
+	AuthGuard           = `Illuminate\Contracts\Auth\Guard`
+	AuthUserProvider    = `Illuminate\Contracts\Auth\UserProvider`
+	Arrayable           = `Illuminate\Contracts\Support\Arrayable`
+	ValidationException = `Illuminate\Validation\ValidationException`
 )
 
 var CollectionTypes = []string{

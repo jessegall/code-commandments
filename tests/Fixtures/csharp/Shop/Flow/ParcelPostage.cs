@@ -52,4 +52,25 @@ public sealed class ParcelPostage
         }
         Zone = Math.Max(Zone, 1);
     }
+
+    public int PostageCents(int grams, int zone)
+    {
+        // @sin ReassignedParameter
+        grams = Math.Max(grams, 100);
+        return grams * zone;
+    }
+
+    // @fixed ReassignedParameter
+    public int BilledPostageCents(int grams, int zone)
+    {
+        var billed = Math.Max(grams, 100);
+        return billed * zone;
+    }
+
+    // @righteous ReassignedParameter
+    public bool TryWeigh(string label, out int grams)
+    {
+        grams = label.Length * 100;
+        return grams > 0;
+    }
 }

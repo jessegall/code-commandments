@@ -21,8 +21,10 @@ var lifetimeOfBinding = map[string]string{
 
 // Lifetimes is how long the container keeps each class it is told about: one for the whole run (a singleton) or one per scope, and which classes reset the scope themselves.
 type Lifetimes struct {
-	kept   map[string]string
-	resets map[string]bool
+	kept     map[string]string
+	resets   map[string]bool
+	holds    map[string][]string
+	outlives map[string]bool
 }
 
 var lifetimes = engine.Memoised(readLifetimes)
@@ -36,13 +38,32 @@ func (l *Lifetimes) IsSingleton(class string) bool {
 }
 
 func (l *Lifetimes) OutlivesAScope(class string) bool {
-	class = strings.TrimLeft(class, `\`)
+	return l.outlives[strings.TrimLeft(class, `\`)]
+}
 
-	return l.kept[class] == singletonAttribute || l.resets[class]
+func (l *Lifetimes) heldThroughOwnersThatOutliveAScope() {
+	var waiting []string
+	for class, kept := range l.kept {
+		if kept == singletonAttribute {
+			waiting = append(waiting, class)
+		}
+	}
+	for class := range l.resets {
+		waiting = append(waiting, class)
+	}
+	for len(waiting) > 0 {
+		class := waiting[0]
+		waiting = waiting[1:]
+		if l.outlives[class] {
+			continue
+		}
+		l.outlives[class] = true
+		waiting = append(waiting, l.holds[class]...)
+	}
 }
 
 func readLifetimes(codebase *engine.Codebase) *Lifetimes {
-	read := &Lifetimes{kept: map[string]string{}, resets: map[string]bool{}}
+	read := &Lifetimes{kept: map[string]string{}, resets: map[string]bool{}, holds: map[string][]string{}, outlives: map[string]bool{}}
 	for _, file := range codebase.Of(contract.PHP).Files() {
 		for _, node := range file.Nodes() {
 			match := file.Match(node.ID)
@@ -55,6 +76,12 @@ func readLifetimes(codebase *engine.Codebase) *Lifetimes {
 				read.resets[strings.TrimLeft(php.EnclosingClassName(match), `\`)] = true
 			}
 			if node.Kind == "Stmt_Class" && node.Symbol != "" {
+				for _, parameter := range php.ConstructorParams(match) {
+					if held := strings.TrimLeft(php.Written(parameter.Node().Declared).Class(), `\`); held != "" {
+						owner := strings.TrimLeft(node.Symbol, `\`)
+						read.holds[owner] = append(read.holds[owner], held)
+					}
+				}
 				for _, attribute := range php.AttributeNames(match) {
 					if attribute := strings.TrimLeft(attribute, `\`); attribute == singletonAttribute || attribute == scopedAttribute {
 						read.kept[strings.TrimLeft(node.Symbol, `\`)] = attribute
@@ -63,6 +90,7 @@ func readLifetimes(codebase *engine.Codebase) *Lifetimes {
 			}
 		}
 	}
+	read.heldThroughOwnersThatOutliveAScope()
 
 	return read
 }

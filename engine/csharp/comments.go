@@ -176,3 +176,13 @@ func (c *Codebase) WhereComment(check func(Comment) bool) []engine.Match {
 
 	return found
 }
+
+func ceremonyDoc(documented engine.Match) bool {
+	for _, comment := range documented.Comments() {
+		read := Comment{Commented: engine.Commented{Comment: comment, File: documented.Source()}}
+		if read.IsDoc() && read.RestatesOnly((Node{Match: documented}).SignatureWords()) {
+			return true
+		}
+	}
+	return false
+}

@@ -7,6 +7,7 @@ import (
 
 	"github.com/jessegall/code-commandments/contract"
 	"github.com/jessegall/code-commandments/engine"
+	"github.com/jessegall/code-commandments/engine/python/orm"
 )
 
 func typeName(node engine.Match) string {
@@ -40,38 +41,152 @@ var abstractions = []string{"abc.ABC"}
 
 func init() {
 	engine.ReadAs(contract.Python, engine.Grammar{
-		Arguments:     values,
-		Receiver:      receiver,
-		Declares:      engine.KindIn("NamedExpr"),
-		Binds:         engine.KindIn("Assign", "AnnAssign", "NamedExpr"),
-		Members:       members,
-		Parameters:    parameters,
-		Extends:       bases,
-		Implements:    contracts,
-		Annotations:   decorators,
-		TypeKind:      classKind,
-		TypeOf:        typeName,
-		DeclaredName:  assignedName,
-		ReturnType:    engine.InField("returns"),
-		ParameterType: engine.InField("annotation"),
-		Constructs:    constructed,
-		Callers:       callers,
-		DocTags:       docTags,
-		BodyHash:      func(def engine.Match) string { return Node{Match: def}.BodyHash() },
-		CodeWords:     func(node engine.Match) []string { return Node{Match: node}.CodeWords() },
-		NodeHash: func(node engine.Match, normalize bool) string {
-			return engine.SyntaxHash([]engine.Match{node}, hashing, normalize)
+		ExecutesQuery: orm.ExecutesQuery,
+		ListedClasses: listedClasses,
+		Types: func(codebase *engine.Codebase) engine.TypeSystem {
+			return engine.TypesFromDeclarations(codebase.Of(contract.Python))
 		},
+		SpelledFolder:      spelledFolder,
+		Arguments:          values,
+		Receiver:           receiver,
+		ArgumentLookup:     engine.IndexedArgument("Subscript", "value", "slice"),
+		ReturnedValue:      engine.InField("value"),
+		AssignmentSides:    engine.ReadPair("targets", "value"),
+		SelfReceiver:       selfReceiver,
+		PrivateMember:      privateMember,
+		OwnsSignature:      ownsSignature,
+		ModuleLayer:        func(root engine.Match) string { return filepath.ToSlash(filepath.Dir(root.FromProject())) },
+		DynamicMembers:     hasDynamicMembers,
+		Declares:           engine.KindIn("NamedExpr"),
+		Binds:              engine.KindIn("Assign", "AnnAssign", "NamedExpr"),
+		Members:            members,
+		Parameters:         parameters,
+		Extends:            bases,
+		Implements:         contracts,
+		Annotations:        decorators,
+		TypeKind:           classKind,
+		TypeOf:             typeName,
+		DeclaredName:       assignedName,
+		ReturnType:         engine.InField("returns"),
+		ParameterType:      engine.InField("annotation"),
+		Constructs:         constructed,
+		Callers:            callers,
+		DocTags:            docTags,
+		CodeWords:          func(node engine.Match) []string { return Node{Match: node}.CodeWords() },
 		TestFile:           testFile,
 		Implicit:           implicit,
 		NamespaceSeparator: ".",
 		NamespaceOf:        func(symbol string) string { return engine.Before(symbol, ".") },
 		Continues:          func(branch engine.Match) bool { return Node{Match: branch}.IsElif() },
-		Body:               engine.InFields("body"),
-		Otherwise:          engine.InFields("orelse"),
-		Condition:          condition,
-		ElementName:        elementName,
-		Computes:           engine.KindIn("BinOp", "BoolOp", "Compare", "UnaryOp", "AugAssign"),
+		Thrown:             engine.OfKind("Raise", "exc"),
+		Cause:              engine.OfKind("Raise", "cause"),
+		Inert:              inert,
+		EmptyCollection:    func(held engine.Match) bool { return Node{Match: held}.IsEmptyCollection() },
+		ConstructedType:    constructedType,
+		GenericFailures:    genericExceptions,
+		Hashing:            hashing,
+		CallConversion: func(match engine.Match) engine.CallConversion {
+			return Of(match.Codebase()).conversionEvidence(Node{Match: match})
+		},
+		TypeDispatch: typeDispatch,
+		SideTables:   sideTables,
+		EnumValues: func(match engine.Match) []string {
+			n := Node{Match: match}
+			if !Of(match.Codebase()).IsEnumClass(n) {
+				return nil
+			}
+			return stringKeys(n.MemberValueKeys())
+		},
+		EnumMembership: func(match engine.Match) []string {
+			n := Node{Match: match}
+			if match.Kind() != "Compare" || !n.IsEvaluated() {
+				return nil
+			}
+			return stringKeys(n.MembershipLiteralKeys())
+		},
+		EnumChainOwner: func(match engine.Match) string {
+			n := Node{Match: match}
+			if match.Kind() != "BoolOp" || !n.IsEvaluated() || n.IsInsideOr() {
+				return ""
+			}
+			return Of(match.Codebase()).OrChainedCaseClass(n)
+		},
+		EnumArms: func(match engine.Match) []string {
+			if match.Kind() != "Match" {
+				return nil
+			}
+			subject := match.Child("subject")
+			if subject.Kind() == "Attribute" && subject.Name() == "value" {
+				return nil
+			}
+			return stringKeys((Node{Match: match}).caseKeys(isTextPattern))
+		},
+		PlaceholderData: func(match engine.Match) bool {
+			n := Node{Match: match}
+			return n.IsCall() && Of(match.Codebase()).FillsRequiredTextWithBlank(n)
+		},
+		BlankDefault:      blankDefault,
+		DeNulledFinder:    deNulledFinder,
+		ManufacturesFill:  manufacturesFill,
+		CoalescedLoop:     coalescedLoop,
+		ConditionalSpread: engine.As(Node.IsConditionalSpread),
+		CapabilityTest: func(branch engine.Match) engine.CapabilityTest {
+			test := Node{Match: branch.Condition()}
+			if !test.IsInstanceCheck() {
+				return engine.CapabilityTest{}
+			}
+			arguments := test.Match.Arguments()
+			if len(arguments) == 0 {
+				return engine.CapabilityTest{}
+			}
+			return engine.CapabilityTest{Subject: arguments[0]}
+		},
+		PhantomFields:   phantomFields,
+		NullableLookup:  nullableLookup,
+		MaskedInvariant: engine.As(Node.MasksOwnState),
+		BroadCatch: func(handler engine.Match) bool {
+			caught := handler.Child("type")
+			return !caught.Exists() || slices.Contains([]string{"Exception", "BaseException", "builtins.Exception", "builtins.BaseException"}, (Node{Match: caught}).DottedName())
+		},
+		NullableCallback: engine.As(Node.HasNullNormalisedOptionalCallback),
+		Decode: func(call engine.Match) bool {
+			node := Node{Match: call}
+			return node.IsEvaluated() && node.IsJSONDecode() && !node.DecodesItsOwnEncoding() && !Of(call.Codebase()).IsInContractMethod(node)
+		},
+		UntypedReturn: func(function engine.Match) bool {
+			written := Node{Match: function.Child("returns")}
+			return !written.Exists() || !Of(function.Codebase()).IsTypedDict(written)
+		},
+		CeremonyDoc: engine.As(Node.HasCeremonyDocstring),
+		CommentProse: func(comment engine.Commented) []string {
+			return strings.Split(WithoutVersionNotes(strings.Join(comment.ProseLines(), "\n")), "\n")
+		},
+		DocParagraphs: func(comment engine.Commented) int {
+			text, _ := (Node{Match: comment.Documents()}).Docstring()
+			return ProseParagraphs(text)
+		},
+		CopyExclusions: func(match engine.Match) engine.CopyExclusions {
+			function := Node{Match: match}
+			return engine.CopyExclusions{Exact: match.IsConstructor() || match.IsSoleStatement() || function.IsStub(), Near: function.IsStub() || function.IsLiteralLookup() || function.IsDeclarationTable()}
+		},
+		UnnamedVocabulary: unnamedVocabulary,
+		TwinPairs: func(codebase *engine.Codebase) engine.TwinPairs {
+			program := Of(codebase)
+			return engine.TwinPairs{Units: program.TwinUnits(), Pairs: program.Divergences()}
+		},
+		Guard:          guard,
+		MechanismFacts: mechanismFacts,
+		IsConstructor:  func(held engine.Match) bool { return Node{Match: held}.IsConstructorDeclaration() },
+		Fallback: func(held engine.Match) engine.Match {
+			fallback, _ := Node{Match: held}.Fallback()
+
+			return fallback.Match
+		},
+		Body:        engine.InFields("body"),
+		Otherwise:   engine.InFields("orelse"),
+		Condition:   condition,
+		ElementName: elementName,
+		Computes:    engine.KindIn("BinOp", "BoolOp", "Compare", "UnaryOp", "AugAssign"),
 		ComparisonSubject: func(held engine.Match) engine.Match {
 			subject, _ := Node{Match: held}.ComparisonSubject()
 
@@ -288,4 +403,26 @@ func elementName(loop engine.Match) string {
 	}
 
 	return target.Name()
+}
+
+func inert(statement engine.Match) bool {
+	return statement.Kind() == "Pass" || statement.Kind() == "Expr" && statement.Child("value").LiteralKind() == "ellipsis"
+}
+
+func constructedType(call engine.Match) string {
+	if resolved := call.Child("func").Node().Resolved; resolved != nil && resolved.Constructs != "" {
+		return resolved.Constructs
+	}
+
+	return Node{Match: call}.Callee().DottedName()
+}
+
+func stringKeys(keys []string) []string {
+	var words []string
+	for _, key := range keys {
+		if word, text := strings.CutPrefix(key, "string:"); text {
+			words = append(words, word)
+		}
+	}
+	return words
 }

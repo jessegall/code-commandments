@@ -11,6 +11,7 @@ type Laravel struct{}
 
 func (Laravel) Register(exemptions *Exemptions) {
 	exemptions.Exempt(Boundary).Classes(laravel.RequestTypes...)
+	exemptions.Exempt(DynamicMembers).Classes(laravel.Model)
 	exemptions.Exempt(ContractMethod).
 		On(laravel.FormRequest, "rules").
 		On(laravel.McpRequest, "rules").
@@ -24,6 +25,7 @@ func (Laravel) Register(exemptions *Exemptions) {
 	exemptions.Exempt(Association).Methods(laravel.RelationMethods...)
 	exemptions.Exempt(Association).Attributes(laravel.BindingAttributes...)
 	exemptions.Exempt(CompositionRoot).Classes(laravel.ServiceProvider)
+	exemptions.Exempt(ValidationResponse).On(laravel.ValidationException, "withMessages")
 }
 
 // Spatie excuses the Data package's pipes and casts, which it builds without the container.

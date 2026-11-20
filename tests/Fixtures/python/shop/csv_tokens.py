@@ -16,6 +16,7 @@ class PriceListReader:
 
     def expect(self, token: str) -> None:
         if not self.text.startswith(token, self.at):
+            # @sin MessageAtThrow
             raise ValueError(f"expected {token!r} at {self.at}")
         self.at += len(token)
 

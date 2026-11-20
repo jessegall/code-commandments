@@ -129,6 +129,16 @@ func (n Node) BodyHash() string {
 	return engine.SyntaxHash(body, Hashing, false)
 }
 
+func copyExclusions(match engine.Match) engine.CopyExclusions {
+	function := Node{Match: match}
+	common := function.IsGuardedAccessor() || function.IsSelfSeedingFactory() || function.IsDeprecated()
+
+	return engine.CopyExclusions{
+		Exact: common || function.IsParentForwardingConstructor() || function.IsSoleReturnExpression(),
+		Near:  common || function.ReturnsArrayLiteralOnly() || function.YieldsEntriesOnly(),
+	}
+}
+
 func (n Node) IsGuardedAccessor() bool {
 	body := n.ChildrenIn("stmts")
 	if n.Kind() != "Stmt_ClassMethod" || len(body) < 2 {

@@ -17,7 +17,7 @@ def test_a_failure_inside_the_block_leaves_the_stream_closed() -> None:
 
     with pytest.raises(RuntimeError):
         stream.closed = True
-        # @righteous MessageStringRaise
+        # @righteous GenericException
         raise RuntimeError("stop here, nothing catches this by name")
 
     assert stream.closed

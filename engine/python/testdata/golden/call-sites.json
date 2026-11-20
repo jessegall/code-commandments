@@ -88,7 +88,7 @@
         },
         "literalKey": false
     },
-    "shop/catalog_file.py@1013-1039": {
+    "shop/catalog_file.py@989-1015": {
         "target": "shop.catalog_file.CatalogUnreadable.at",
         "arguments": {
             "path": "path"
@@ -190,28 +190,28 @@
         },
         "literalKey": false
     },
-    "shop/csv_tokens.py@524-556": {
+    "shop/csv_tokens.py@558-590": {
         "target": "shop.csv_tokens.PriceListReader.expect",
         "arguments": {
             "token": "Punctuation.NEWLINE"
         },
         "literalKey": false
     },
-    "shop/csv_tokens.py@639-655": {
+    "shop/csv_tokens.py@673-689": {
         "target": "shop.csv_tokens.PriceListReader.expect",
         "arguments": {
             "token": "\",\""
         },
         "literalKey": false
     },
-    "shop/csv_tokens.py@699-729": {
+    "shop/csv_tokens.py@733-763": {
         "target": "shop.csv_tokens.PriceListReader.expect",
         "arguments": {
             "token": "Punctuation.QUOTE"
         },
         "literalKey": false
     },
-    "shop/csv_tokens.py@914-944": {
+    "shop/csv_tokens.py@948-978": {
         "target": "shop.csv_tokens.PriceListReader.expect",
         "arguments": {
             "token": "Punctuation.COMMA"
@@ -296,21 +296,21 @@
         },
         "literalKey": false
     },
-    "shop/feed_reader.py@1499-1522": {
+    "shop/feed_reader.py@1514-1537": {
         "target": "shop.feed_reader.FeedUnavailable.at",
         "arguments": {
             "url": "url"
         },
         "literalKey": false
     },
-    "shop/feed_reader.py@640-663": {
+    "shop/feed_reader.py@643-666": {
         "target": "shop.feed_reader.FeedUnavailable.at",
         "arguments": {
             "url": "url"
         },
         "literalKey": false
     },
-    "shop/feed_reader.py@872-895": {
+    "shop/feed_reader.py@878-901": {
         "target": "shop.feed_reader.FeedUnavailable.at",
         "arguments": {
             "url": "url"
@@ -564,7 +564,7 @@
         },
         "literalKey": false
     },
-    "shop/price_lists.py@1130-1163": {
+    "shop/price_lists.py@1136-1169": {
         "target": "shop.price_lists.UnknownSku.at",
         "arguments": {
             "supplier": "self.supplier",
@@ -572,7 +572,7 @@
         },
         "literalKey": false
     },
-    "shop/price_lists.py@783-816": {
+    "shop/price_lists.py@786-819": {
         "target": "shop.price_lists.UnknownSku.at",
         "arguments": {
             "supplier": "self.supplier",
@@ -599,14 +599,14 @@
         },
         "literalKey": false
     },
-    "shop/quantity_parsing.py@469-488": {
+    "shop/quantity_parsing.py@472-491": {
         "target": "shop.quantity_parsing.BadQuantity.of",
         "arguments": {
             "raw": "raw"
         },
         "literalKey": false
     },
-    "shop/quantity_parsing.py@631-650": {
+    "shop/quantity_parsing.py@637-656": {
         "target": "shop.quantity_parsing.BadQuantity.of",
         "arguments": {
             "raw": "raw"
@@ -715,7 +715,7 @@
         "arguments": {},
         "literalKey": false
     },
-    "shop/sessions.py@763-796": {
+    "shop/sessions.py@787-820": {
         "target": "shop.sessions.NoActiveSession.reading",
         "arguments": {
             "what": "\"basket\""

@@ -69,20 +69,22 @@ exit: 0
   ```py
   ----------[ Bad ]----------
   
-  def progress(self, done: int, failed: int) -> dict:
-      return {"done": done, "failed": failed, "left": len(self.rows) - done - failed}
+  def parse_line(raw: str) -> dict:
+      sku, _, quantity = raw.partition("x")
+      return {"sku": sku.strip(), "quantity": int(quantity)}
   
   ----------[ Good ]----------
   
+  # in cart_totals.py
   @dataclass(frozen=True)
-  class ImportProgress:
-      done: int
-      failed: int
-      total: int
+  class BasketLine:
+      sku: str
+      quantity: int
   
-      @property
-      def left(self) -> int:
-          return self.total - self.done - self.failed
+  # in cart_totals.py
+  def parse_basket_line(raw: str) -> BasketLine:
+      sku, _, quantity = raw.partition("x")
+      return BasketLine(sku=sku.strip(), quantity=int(quantity))
   ```
 
 [33mCommands[0m

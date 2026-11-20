@@ -13,7 +13,7 @@ func found(t *testing.T, sources map[string]string) string {
 	codebase := pythontest.FromSource(t, sources)
 
 	var lines []string
-	for _, match := range (detectors.InventedDefaultDetector{}).Find(codebase) {
+	for _, match := range detectors.ManufacturedFakeFillDetector.Find(codebase) {
 		lines = append(lines, match.Location())
 	}
 

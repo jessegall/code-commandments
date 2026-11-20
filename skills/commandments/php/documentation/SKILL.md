@@ -30,61 +30,78 @@ if the codebase already uses them — structural, not narrative.) Everything els
 
 ## Rules
 
-- [ ] Comment what the code IS now, never its history — no "formerly/used to be/refactored/no longer an X" archaeology; git holds the past.
-- [ ] Keep a class docblock to one tight paragraph — a multi-paragraph essay means the class does too much.
-- [ ] A docblock must add meaning beyond the signature — drop `@param Type $x` lines that only restate an already-typed parameter.
-- [ ] A `{@see}`/`{@link}` must resolve to a real class. A cross-reference to a first-party class the codebase no longer declares is stale documentation — repoint it at the current class or delete it. (References into another vendor namespace are left alone; they can't be verified here.)
 - [ ] Write a docblock as a block: the opening delimiter on its own line, one star per line of content, the closing delimiter on its own line.
       _expand it — `repent` does this for you_
-- [ ] State what the code IS, affirmatively — a comment that defends it against a strawman (that it is "not random", "no magic", "not a typo") is negative space; make the code self-evident and delete the comment.
-- [ ] An inline comment must say something the code does not — never narrate the statement below it; if every word of the comment is already a word of the code, delete the comment.
-- [ ] One declaration carries ONE docblock — merge a stack into a single block, because the language hands only the last one to a reader's tooling.
-      _merge them into one block — `repent` does this for you_
 
 ## Worked example
 
-### archaeology-comment
+### inline-docblock
 
-History/archaeology comments ("formerly / used to be / refactored / no longer an X / was extracted")
+A docblock whose delimiter shares a line with its text — a one-liner, or a block that opens or closes next to content
 
 ```php
 ----------[ Bad ]----------
 
-/**
- * @param  array<string, mixed>  $event
- */
-public function handle(array $event): void
+/** A node in a test log tree — it holds its own children, so a failure is knowledge it could answer. */
+final class LogLine
 {
-    // formerly lived inline in the StripeController; was extracted here
-    $type = $event['type'];
+    public string $level = 'info';
 
-    $this->record($type, $event['id'] ?? throw new \InvalidArgumentException('event id is required'));
+    private int $depth = 0;
+
+    /**
+     * @var list<LogLine>
+     */
+    public array $children = [];
+
+    /**
+     * A bool about the line itself, named as a claim instead of a question.
+     */
+    public function reports(): bool
+    {
+        return $this->level === 'error';
+    }
+
+    /**
+     * The FIX is the NAME: same body, same class, asked as a question. `if ($line->isErrored())`
+     * reads as English at the call site, where `if ($line->reports())` reads as a claim.
+     */
+    public function isErrored(): bool
+    {
+        return $this->level === 'error';
+    }
 }
 
 ----------[ Good ]----------
 
 /**
- * @param  array<string, mixed>  $event
+ * A node in a test log tree — it holds its own children, so a failure is knowledge it could answer.
  */
-public function handleRefund(array $event): void
+final class LogEntry
 {
-    // a refund carries no id of its own, so the charge reference identifies the row
-    $this->record('refund', $this->reference($event));
+    public string $level = 'info';
+
+    /**
+     * @var list<LogEntry>
+     */
+    public array $children = [];
+
+    public function isError(): bool
+    {
+        return $this->level === 'error';
+    }
 }
 ```
-
-The other 7 — one per rule — are in [`reference/examples.md`](reference/examples.md).
 
 ## Commands
 
 - `{{binary}} judge --skill=php/documentation` — find every one of these in the codebase.
-- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `archaeology-comment`, `bloated-docblock`, `ceremony-docblock`, `dangling-doc-reference`, `inline-docblock`, `negative-space-comment`, `restated-comment`, `stacked-docblock`.
-- `{{binary}} repent --sin=<sin>` — auto-fix, for `inline-docblock`, `stacked-docblock`. Review it with `--dry-run` first.
+- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `inline-docblock`.
+- `{{binary}} repent --sin=<sin>` — auto-fix, for `inline-docblock`. Review it with `--dry-run` first.
 - `{{binary}} report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference
 
-- [Worked examples](reference/examples.md) — every rule's bad → good, 8 of them.
 - [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills

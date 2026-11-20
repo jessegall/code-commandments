@@ -40,7 +40,12 @@ func structureHash(m engine.Match) string {
 
 func repeatedKeys(candidates []engine.Match, key func(engine.Match) string) map[string]bool {
 	repeated := map[string]bool{}
-	for _, group := range detectors.Recurring(candidates, key) {
+	groups := engine.RecurringBuckets(candidates, func(match engine.Match) (string, bool) {
+		hash := key(match)
+
+		return hash, hash != ""
+	}, 2)
+	for _, group := range groups {
 		repeated[key(group[0])] = true
 	}
 

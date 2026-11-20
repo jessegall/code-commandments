@@ -16,6 +16,7 @@ const fetchAvailability = async (sku: string): Promise<number[]> => {
     // @sin RawFetchInComponent
     const response = await fetch(`/api/stock/${sku}`)
     if (!response.ok) {
+        // @sin GenericException
         throw new Error(response.statusText)
     }
     const levels: StockLevel[] = await response.json()

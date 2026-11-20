@@ -11,7 +11,6 @@ description: "Shaping a Go function body: an error check at the top, an `if` tha
 > function's own indentation. Go writes the guard as its own idiom — `if err != nil { return err }` is
 > the first thing in half the functions ever written in it — so a function reads top to bottom: here is
 > what would stop us, here is the work.
-> 
 
 ## The principle
 
@@ -64,63 +63,6 @@ ladder is. It is here because the advice holds and because the habit travels in 
 Every `if`, `for`, `switch` and `select` is one more choice the reader holds open. Four deep means a
 decision is buried inside another decision: guard the outer one away, let the inner iteration be a
 function of its own, or name the inner block for what it decides.
-
-## Rules
-
-- [ ] Flatten with guards and extraction — never bury a choice four deep inside a function.
-      _Guard the outer levels away (`return`, `break` or `continue` past what does not apply), or give the inner block a function of its own named for what it decides._
-
-## Worked example
-
-### deep-go-nesting
-
-An `if`, `for`, `switch` or `select` opening a fourth level of choices inside one Go function — a decision buried inside a decision
-
-```go
-----------[ Bad ]----------
-
-// Dispatch sends out every crate the bay is holding.
-func (b *Bay) Dispatch(bays []*Bay) int {
-	sent := 0
-	for _, bay := range bays {
-		if !bay.closed {
-			for _, crate := range bay.crates {
-				if crate.Packed {
-					sent++
-				}
-			}
-		}
-	}
-
-	return sent
-}
-
-----------[ Good ]----------
-
-// Sent is what Dispatch counts, with each level guarded away instead of nested.
-func (b *Bay) Sent(bays []*Bay) int {
-	sent := 0
-	for _, bay := range bays {
-		if bay.closed {
-			continue
-		}
-
-		sent += bay.packed()
-	}
-
-	return sent
-}
-```
-
-## Commands
-
-- `{{binary}} judge --skill=go/flow` — find every one of these in the codebase.
-- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `deep-go-nesting`.
-- `{{binary}} report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
-
-## Reference
-
-- [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills
 

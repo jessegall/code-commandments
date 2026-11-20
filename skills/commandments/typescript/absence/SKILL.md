@@ -57,15 +57,31 @@ An `?.` on a field the class declares as always present — a defence against a 
 ```ts
 ----------[ Bad ]----------
 
-customerName(): string {
-    return this.customer?.name
+target(): string {
+    return this.printer?.id
 }
 
 ----------[ Good ]----------
 
-// The FIX: `customer` is always set, so it is read plainly.
-displayName(): string {
-    return this.customer.name
+// in label-printer.ts
+export class LabelPrinter {
+    private queue?: string[] = []
+
+    private readonly printer: Printer = { id: 'default' }
+
+    private lastError?: string
+
+    target(): string {
+        return this.printer?.id
+    }
+
+    lastFailure(): string {
+        return this.lastError?.trim() ?? ''
+    }
+
+    labelsWaiting(): number {
+        return this.queue.length
+    }
 }
 ```
 

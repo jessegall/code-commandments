@@ -17,7 +17,7 @@ def quote(parcel: Parcel, zone: str) -> int:
     Returns:
         int
     """
-    return 500 + parcel.weight_grams // 100
+    return 500 + parcel.weight_grams // 100 + (200 if zone == "EU-1" else 0)
 
 
 # @fixed CeremonyDocblock
@@ -27,4 +27,5 @@ def quote_cents(parcel: Parcel, zone: str) -> int:
     Args:
         zone: a carrier zone code, such as "EU-1".
     """
-    return 500 + parcel.weight_grams // 100
+    supplement = 200 if zone == "EU-1" else 0
+    return supplement + 500 + parcel.weight_grams // 100

@@ -12,11 +12,11 @@ def quantity(raw: str) -> int:
     try:
         return int(raw)
     except ValueError:
-        # @sin RaiseWithoutCause
+        # @sin WrappingWithoutCause
         raise BadQuantity.of(raw)
 
 
-# @fixed RaiseWithoutCause
+# @fixed WrappingWithoutCause
 def quantity_of(raw: str) -> int:
     try:
         return int(raw)

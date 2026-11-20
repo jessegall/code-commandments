@@ -7,6 +7,8 @@ public static class Currencies
     public static decimal Rate(IReadOnlyDictionary<string, decimal> rates, string currency) =>
         rates.TryGetValue(currency, out var rate)
             ? rate
-            // @sin GenericThrow
-            : throw new InvalidOperationException($"There is no rate for {currency} today.");
+            // @sin GenericException
+            :
+            // @sin MessageAtThrow
+            throw new InvalidOperationException($"There is no rate for {currency} today.");
 }

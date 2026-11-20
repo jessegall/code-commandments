@@ -9,8 +9,7 @@ import (
 )
 
 const (
-	reassembled    = 3
-	convertedShare = 0.5
+	reassembled = 3
 )
 
 func (p *Program) DerivedArgumentCalls() []Node {
@@ -59,24 +58,20 @@ func (p *Program) DerivedArgumentCalls() []Node {
 }
 
 func (p *Program) ConvertedArgumentCalls() []Node {
-	calls := slices.DeleteFunc(p.evaluatedCalls(), p.isTestReachingProduction)
-	supplied := map[string]int{}
-	for _, call := range calls {
-		target, _ := p.TargetOf(call)
-		for name := range p.ScalarArguments(call) {
-			supplied[slotOf(target, name)]++
-		}
-	}
-	var converted []Node
-	key := func(match engine.Match) (string, bool) { return p.ConversionKey(Node{match}) }
-	for _, bucket := range engine.RecurringBuckets(nodeMatches(calls), key, 2) {
-		read, _ := key(bucket[0])
-		if float64(len(bucket))/float64(supplied[strings.SplitN(read, "=", 2)[0]]) >= convertedShare {
-			converted = append(converted, nodes(bucket)...)
-		}
-	}
+	return nodes(engine.ConvertedCalls(nodeMatches(p.evaluatedCalls()), func(match engine.Match) engine.CallConversion { return p.conversionEvidence(Node{Match: match}) }))
+}
 
-	return converted
+func (p *Program) conversionEvidence(call Node) engine.CallConversion {
+	if call.IsTest() || !call.IsEvaluated() || p.isTestReachingProduction(call) {
+		return engine.CallConversion{}
+	}
+	target, _ := p.TargetOf(call)
+	key, _ := p.ConversionKey(call)
+	result := engine.CallConversion{Key: key}
+	for name := range p.ScalarArguments(call) {
+		result.Slots = append(result.Slots, slotOf(target, name))
+	}
+	return result
 }
 
 func (p *Program) evaluatedCalls() []Node {

@@ -1581,8 +1581,8 @@
         "assigned": {
             "status": [
                 "Shop/Orders/Lifecycle.cs@244:SimpleMemberAccessExpression",
-                "Shop/Orders/Lifecycle.cs@503:SimpleMemberAccessExpression",
-                "Shop/Orders/Lifecycle.cs@729:SimpleMemberAccessExpression"
+                "Shop/Orders/Lifecycle.cs@542:SimpleMemberAccessExpression",
+                "Shop/Orders/Lifecycle.cs@772:SimpleMemberAccessExpression"
             ]
         },
         "reads": {
@@ -3272,7 +3272,7 @@
         "reads": {},
         "coupled": false
     },
-    "Shop/Shipping/CarrierDirectory.cs@1141:ClassDeclaration": {
+    "Shop/Shipping/CarrierDirectory.cs@1227:ClassDeclaration": {
         "state": {},
         "readsByMember": {},
         "nullable": [],
@@ -4911,7 +4911,7 @@
         },
         "coupled": false
     },
-    "Shop/Stock/StockImport.cs@744:ClassDeclaration": {
+    "Shop/Stock/StockImport.cs@814:ClassDeclaration": {
         "state": {},
         "readsByMember": {},
         "nullable": [],

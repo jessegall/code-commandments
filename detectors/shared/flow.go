@@ -189,3 +189,69 @@ func (ShortCircuitStatement) Sin() Text {
 		},
 	}
 }
+
+// ReassignedParameter is a parameter given a new value inside its own function.
+type ReassignedParameter struct{}
+
+func (ReassignedParameter) Find(codebase *engine.Codebase) []engine.Match {
+	return codebase.
+		Where(engine.Match.ReassignsAParameter).
+		Reject(engine.Match.IsTest).
+		Get()
+}
+
+func (ReassignedParameter) Sin() Text {
+	return Text{
+		Name:        "reassigned-parameter",
+		Skill:       skills.Flow{},
+		Description: "A parameter overwritten inside its function, so one name holds the value the caller passed and later a different one.",
+		Rule:        "A parameter keeps the value its caller passed; a new value gets a name of its own.",
+		Suggestion:  "Assign the new value to a local named for what it is (`trimmed = trim(name)`), or ask the caller for the finished value.",
+	}
+}
+
+// DeepNesting is a choice opening a fourth level of choices inside one function.
+type DeepNesting struct{}
+
+func (DeepNesting) Find(codebase *engine.Codebase) []engine.Match {
+	return codebase.
+		Where(engine.Match.IsDeeplyNested).
+		Get()
+}
+
+func (DeepNesting) Sin() Text {
+	return Text{
+		Name:        "deep-nesting",
+		Skill:       skills.Flow{},
+		Description: "A decision sits deep inside other decisions in one function",
+		Rule:        "Flatten with guards that leave early, or extract the inner decision into a function of its own.",
+		Suggestion:  "Turn the outer conditions into guards that return or `continue`, or move the innermost block into a well-named function.",
+		Formerly: map[catalog.Engine]Former{
+			catalog.Python: {Sin: "deep-python-nesting"},
+			catalog.CSharp: {Sin: "deep-csharp-nesting"},
+			catalog.Go:     {Sin: "deep-go-nesting"},
+		},
+	}
+}
+
+// NonCountingFor is a counting loop whose step moves to the next item instead of a counter.
+type NonCountingFor struct{}
+
+func (NonCountingFor) Find(codebase *engine.Codebase) []engine.Match {
+	return codebase.
+		Where(engine.IsNonCountingFor).
+		Get()
+}
+
+func (NonCountingFor) Sin() Text {
+	return Text{
+		Name:        "non-counting-for",
+		Skill:       skills.Flow{},
+		Description: "A `for` loop whose step assigns the next item instead of moving a counter: a walk written as a count",
+		Rule:        "Keep `for` for a counted loop, whose step advances a counter; walk with a `while`, or let the type hand out its own sequence.",
+		Suggestion:  "A `while` over an explicit cursor, or better, an iterator on the type being walked, so the caller never holds the cursor at all.",
+		Formerly: map[catalog.Engine]Former{
+			catalog.CSharp: {Sin: "csharp-non-counting-for"},
+		},
+	}
+}
