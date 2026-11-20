@@ -298,6 +298,10 @@ func (f Field) HasAttribute(shortNames ...string) bool {
 	return HasAttribute(f.Declaration, shortNames...)
 }
 
+func (f Field) IsPublicInstance() bool {
+	return f.IsPublic && !f.Declaration.HasModifier("static")
+}
+
 func AsField(node engine.Match) (Field, bool) {
 	switch node.Kind() {
 	case "Param":
@@ -367,6 +371,19 @@ func Fields(declaration engine.Match) []Field {
 	}
 
 	return fields
+}
+
+func PublicInstanceFields(declaration engine.Match) []Field {
+	fields := Fields(declaration)
+	for _, member := range engine.ProjectMatches(declaration.InheritedMembers()) {
+		if field, found := AsField(member); found {
+			fields = append(fields, field)
+		}
+	}
+
+	return slices.DeleteFunc(fields, func(field Field) bool {
+		return !field.IsPublicInstance()
+	})
 }
 
 func Methods(declaration engine.Match) []engine.Match {

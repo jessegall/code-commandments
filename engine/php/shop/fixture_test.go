@@ -6,6 +6,7 @@ import (
 	"github.com/jessegall/code-commandments/catalog"
 	"github.com/jessegall/code-commandments/detectors"
 	"github.com/jessegall/code-commandments/detectors/backend"
+	"github.com/jessegall/code-commandments/detectors/backend/spatie"
 	"github.com/jessegall/code-commandments/engine/php/shop"
 	"github.com/jessegall/code-commandments/fixture"
 	"github.com/jessegall/code-commandments/fixture/fixturetest"
@@ -53,9 +54,18 @@ func TestUndeclaredMemberRecognizesTheDeclaredContract(t *testing.T) {
 }
 
 func TestArrayReturnBagProvesItselfOnTheShop(t *testing.T) {
+	proveBackendDetector(t, backend.ArrayReturnBagDetector{})
+}
+
+func TestAllNullableDataProvesItselfOnTheShop(t *testing.T) {
+	proveBackendDetector(t, spatie.AllNullableDataDetector{})
+}
+
+func proveBackendDetector(t *testing.T, detector detectors.Detector) {
+	t.Helper()
 	fixturetest.Prove(t, fixture.Fixture{
 		Codebase:  shop.Project(t),
-		Detectors: []detectors.Detector{backend.ArrayReturnBagDetector{}},
+		Detectors: []detectors.Detector{detector},
 		Known:     detectors.Every(catalog.PHP),
 	})
 }

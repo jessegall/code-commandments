@@ -317,22 +317,11 @@ func (n Node) IsNonFinalClass() bool {
 	return n.Kind() == "Stmt_Class" && !slices.Contains(modifiers, "final") && !slices.Contains(modifiers, "abstract")
 }
 
-func (n Node) EveryConstructorParamNullable() bool {
-	if n.Kind() != "Stmt_Class" {
-		return false
-	}
-	promoted := 0
-	for _, param := range ConstructorParams(n.Match) {
-		if len(param.Node().Modifiers) == 0 {
-			continue
-		}
-		promoted++
-		if !Written(param.Node().Declared).IsNullable() {
-			return false
-		}
-	}
-
-	return promoted > 0
+func (n Node) HasOnlyNullablePublicFields() bool {
+	fields := PublicInstanceFields(n.Match)
+	return len(fields) > 0 && !slices.ContainsFunc(fields, func(field Field) bool {
+		return !Written(field.Type).IsNullable()
+	})
 }
 
 var (

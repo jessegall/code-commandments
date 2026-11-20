@@ -135,6 +135,33 @@ func (n Node) HasOneOptionalValidatedField() bool {
 	})
 }
 
+func (n Node) DeclaresDataFields() bool {
+	if slices.ContainsFunc(php.Fields(n.Match), php.Field.IsPublicInstance) {
+		return true
+	}
+
+	return slices.ContainsFunc(n.Traits(), func(trait engine.Match) bool {
+		declaration, found := n.program().Declaration(trait.Name())
+		if !found || n.Codebase().IsLibraryType(contract.PHP, trait.Name()) {
+			return false
+		}
+
+		return len(php.PublicInstanceFields(declaration)) > 0
+	})
+}
+
+func (n Node) HasOneRequiredDataField() bool {
+	fields := php.PublicInstanceFields(n.Match)
+	return len(fields) == 1 && !fields[0].Node.Child("default").Exists()
+}
+
+func (n Node) ModelsOmissionOnEveryDataField() bool {
+	fields := php.PublicInstanceFields(n.Match)
+	return len(fields) > 0 && !slices.ContainsFunc(fields, func(field php.Field) bool {
+		return !typeIncludesOptional(field.Type)
+	})
+}
+
 func (n Node) HookMissingComputed() bool {
 	if n.Kind() != "PropertyHook" || !n.program().Extends(php.EnclosingClassName(n.Match), Data) {
 		return false

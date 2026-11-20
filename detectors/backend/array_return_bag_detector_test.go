@@ -11,7 +11,7 @@ import (
 )
 
 func TestArrayReturnBagFindsNestedRecordsAndArrowResults(t *testing.T) {
-	codebase := arrayReturnProject(t, `<?php
+	codebase := phpProject(t, `<?php
 abstract class Command {
     abstract public function handle(): int;
 }
@@ -38,7 +38,7 @@ final class Cleanup extends Command {
 }
 
 func TestArrayReturnBagRespectsTraitContracts(t *testing.T) {
-	codebase := arrayReturnProject(t, `<?php
+	codebase := phpProject(t, `<?php
 abstract class Tool {
     abstract protected function writeSchema(): array;
 }
@@ -87,7 +87,7 @@ final class ShadowingTool extends Tool {
 }
 
 func TestArrayReturnBagRespectsFactoryCallbackAndDeclaredShapes(t *testing.T) {
-	codebase := arrayReturnProject(t, `<?php
+	codebase := phpProject(t, `<?php
 namespace Illuminate\Database\Eloquent\Factories {
     abstract class Factory {
         abstract public function definition(): array;
@@ -158,7 +158,7 @@ namespace Reports {
 }
 
 func TestArrayReturnBagLeavesDatabaseInputRowsAtTheirBoundary(t *testing.T) {
-	codebase := arrayReturnProject(t, `<?php
+	codebase := phpProject(t, `<?php
 namespace Illuminate\Database\Query {
     class Builder {
         public function insert(array $rows): bool { return true; }
@@ -196,7 +196,7 @@ namespace Reports {
 }
 
 func TestArrayReturnBagRespectsFractalTransformerContract(t *testing.T) {
-	codebase := arrayReturnProject(t, `<?php
+	codebase := phpProject(t, `<?php
 namespace Reports;
 use League\Fractal\TransformerAbstract;
 abstract class ReportTransformer extends TransformerAbstract {}
@@ -219,7 +219,7 @@ final class InvoiceTransformer extends ReportTransformer {
 }
 
 func TestArrayReturnBagKeepsTemplateContextAsArray(t *testing.T) {
-	codebase := arrayReturnProject(t, `<?php
+	codebase := phpProject(t, `<?php
 namespace Reports;
 use Barryvdh\DomPDF\Facade\Pdf;
 final class ReportLabel {
@@ -250,9 +250,9 @@ final class ReportLabel {
 	}
 }
 
-func arrayReturnProject(t *testing.T, source string) *engine.Codebase {
+func phpProject(t *testing.T, source string) *engine.Codebase {
 	t.Helper()
-	path := filepath.Join(t.TempDir(), "ArrayReturns.php")
+	path := filepath.Join(t.TempDir(), "Fixture.php")
 	if err := os.WriteFile(path, []byte(source), 0o600); err != nil {
 		t.Fatal(err)
 	}
