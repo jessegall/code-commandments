@@ -68,7 +68,6 @@ func init() {
 		TypeOf:             typeName,
 		DeclaredName:       assignedName,
 		ReturnType:         engine.InField("returns"),
-		ParameterType:      engine.InField("annotation"),
 		Constructs:         constructed,
 		Callers:            callers,
 		DocTags:            docTags,

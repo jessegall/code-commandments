@@ -34,7 +34,6 @@ type Grammar struct {
 	Annotations         func(Match) []Match
 	TypeKind            func(Match) string
 	ReturnType          func(Match) Match
-	ParameterType       func(Match) Match
 	Constructs          func(Match) Match
 	Callers             func(Match) []Match
 	DocTags             func(Match) []string

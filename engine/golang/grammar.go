@@ -28,7 +28,6 @@ func init() {
 		IsConstructor:       isConstructor,
 		PrivateMember:       privateMember,
 		Collaborator:        collaborator,
-		ParameterType:       engine.InField("type"),
 		ReturnType:          engine.InField("results"),
 		Continues:           continues,
 		Steps:               engine.InFields("post"),

@@ -37,7 +37,6 @@ func init() {
 			return slices.ContainsFunc(declared.Members(), engine.KindIn("MethodDeclaration"))
 		},
 		ReturnType:    engine.InField("ReturnType"),
-		ParameterType: engine.InField("Type"),
 		Constructs:    engine.OfKind("ObjectCreationExpression", "Type"),
 		DocTags:       xmlTags,
 		Implicit: engine.KindIn("ConstructorDeclaration", "DestructorDeclaration", "OperatorDeclaration",

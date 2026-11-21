@@ -35,12 +35,13 @@ func (m Match) ReturnType() Match {
 	return Match{}
 }
 
+// ParameterType is the type a parameter declares, in every language the parameter's declaredType.
 func (m Match) ParameterType() Match {
-	if read := m.grammar().ParameterType; read != nil && m.Is(Parameter) {
-		return read(m)
+	if !m.Is(Parameter) {
+		return Match{}
 	}
 
-	return Match{}
+	return m.Child("declaredType")
 }
 
 func (m Match) IsAnnotated(want string) bool {

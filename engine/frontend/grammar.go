@@ -27,7 +27,6 @@ func init() {
 				return slices.ContainsFunc(declared.Members(), engine.KindIn("MethodSignature"))
 			},
 			ReturnType:      engine.InField("type"),
-			ParameterType:   engine.InField("type"),
 			Constructs:      engine.OfKind("NewExpression", "expression"),
 			TypeOf:          func(node engine.Match) string { return typescript.Of(node).TypeName() },
 			Receiver:        receiver,

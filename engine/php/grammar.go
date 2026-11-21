@@ -29,7 +29,6 @@ func init() {
 		RecordKeys:          func(match engine.Match) []string { return (Node{Match: match}).StringKeys() },
 		RecordReturnOwner:   recordReturnOwner,
 		LooseRecordType:     looseRecordType,
-		ParameterType:       engine.InField("type"),
 		Constructs:          constructed,
 		Callers:             callers,
 		DocTags:             phpDocTags,
