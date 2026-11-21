@@ -10,6 +10,7 @@ import (
 	"github.com/jessegall/code-commandments/engine"
 	"github.com/jessegall/code-commandments/engine/php"
 	"github.com/jessegall/code-commandments/engine/php/laravel"
+	"github.com/jessegall/code-commandments/engine/php/namespaces"
 	"github.com/jessegall/code-commandments/engine/php/spatie"
 )
 
@@ -248,6 +249,123 @@ function rates(string $country): array {
 		if method != "label" && method != "enabled" && method != "rates" {
 			t.Errorf("an ordinary answer on an enum was reported: %s", method)
 		}
+	}
+}
+
+func TestDatabaseFacadeQueriesInsideLoops(t *testing.T) {
+	codebase := phpSource(t, `<?php
+namespace App;
+use Illuminate\Support\Facades\DB as Database;
+function check(iterable $products): void {
+    foreach ($products as $product) {
+        Database::table('products')->where('id', $product)->exists();
+        Database::table('history')->insert(['product' => $product]);
+        Catalog::table('products')->exists();
+    }
+    $chunks = array_chunk($products, 500);
+    foreach ($chunks as $chunk) {
+        Database::table('history')->whereIn('product', $chunk)->delete();
+    }
+    foreach (['products', 'history'] as $table) {
+        Database::table($table)->max('id');
+    }
+}
+`)
+	queries := codebase.Where(engine.As(laravel.Node.RunsAQueryInALoop)).Get()
+	if len(queries) != 2 || php.CallName(queries[0]) != "exists" || php.CallName(queries[1]) != "insert" {
+		t.Fatalf("expected both database queries inside the loop, found %d", len(queries))
+	}
+}
+
+func TestThrowMessagesWrittenThroughComposition(t *testing.T) {
+	codebase := phpSource(t, `<?php
+namespace App;
+function fail(string $id, string $format): void {
+    throw new \RuntimeException('Bad record');
+    throw new \RuntimeException(sprintf('Bad record %s', $id));
+    throw new \RuntimeException('Bad record ' . $id);
+    throw new \RuntimeException(sprintf($format, $id));
+    throw \RuntimeException::for($id);
+}
+`)
+	messages := codebase.Where(engine.HasMessageAtThrow).Get()
+	if len(messages) != 3 {
+		t.Fatalf("expected three messages written at the throw, found %d", len(messages))
+	}
+}
+
+func TestPointThresholdsAreNotEnumCases(t *testing.T) {
+	codebase := phpSource(t, `<?php
+namespace App;
+abstract class Rank {
+    const MIN_POINTS = 250;
+    const MIN_TRUE_POINTS = 1250;
+}
+abstract class Preference {
+    const OFF = 0;
+    const ON = 1;
+}
+function qualifies(int $points): bool { return $points >= Rank::MIN_POINTS; }
+function thresholds(): array { return [Rank::MIN_POINTS, Rank::MIN_TRUE_POINTS]; }
+function enabled(int $choice): bool { return $choice === Preference::ON; }
+`)
+	found := codebase.WhereTypeDeclaration().Where(engine.Match.IsConstClassEnum).Get()
+	if len(found) != 1 || found[0].Name() != "Preference" {
+		t.Fatalf("expected the preference cases only, found %v", found)
+	}
+}
+
+func TestExpectedTestFailuresRejectBroadCatches(t *testing.T) {
+	root := t.TempDir()
+	file := filepath.Join(root, "CheckoutTest.php")
+	if err := os.WriteFile(file, []byte(`<?php
+namespace App;
+final class CheckoutTest extends \PHPUnit\Framework\TestCase {
+    public function testExpectedFailure(): void {
+        try { $this->checkout(); $this->fail('Expected payment failure'); }
+        catch (PaymentFailure) {}
+    }
+    public function testTooBroad(): void {
+        try { $this->checkout(); $this->fail('Expected payment failure'); }
+        catch (\RuntimeException) {}
+    }
+    public function testNoAssertion(): void {
+        try { $this->checkout(); }
+        catch (PaymentFailure) {}
+    }
+}
+`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	codebase, err := php.Here().Scan(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	found := codebase.WhereKind("Stmt_Catch").Where(engine.IsSwallowedCatch).Get()
+	if len(found) != 2 {
+		t.Fatalf("expected the broad catch and the catch without an assertion, found %d", len(found))
+	}
+}
+
+func TestEloquentFactoryBindingDoesNotCloseNamespaceCycle(t *testing.T) {
+	codebase := phpSource(t, `<?php
+namespace App\Models;
+use App\Factories\CustomerFactory;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+class Customer extends Model {
+    use HasFactory;
+    protected static function newFactory(): CustomerFactory { return CustomerFactory::new(); }
+}
+namespace App\Factories;
+use App\Models\Customer;
+use Illuminate\Database\Eloquent\Factories\Factory;
+class CustomerFactory extends Factory {
+    protected $model = Customer::class;
+}
+`)
+	if cycle := namespaces.Of(codebase).ArrowsClosingAMutualPair(); len(cycle) != 0 {
+		t.Fatalf("an Eloquent model-to-factory association closed a cycle: %v", cycle)
 	}
 }
 

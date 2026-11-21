@@ -1096,7 +1096,7 @@
                 "declared",
                 "observed"
             ],
-            "example": "/shop/app/Reporting/InvoiceNumberFormatter.php:36"
+            "example": "/shop/app/Reporting/InvoiceNumberFormatter.php:40"
         },
         {
             "kind": "Expr_Closure",

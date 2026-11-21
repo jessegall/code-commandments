@@ -13,6 +13,7 @@ const (
 	FacadeNamespace     = `Illuminate\Support\Facades\`
 	ServiceProvider     = `Illuminate\Support\ServiceProvider`
 	Model               = `Illuminate\Database\Eloquent\Model`
+	DatabaseFacade      = FacadeNamespace + `DB`
 	Request             = `Illuminate\Http\Request`
 	FormRequest         = `Illuminate\Foundation\Http\FormRequest`
 	McpRequest          = `Laravel\Mcp\Request`
@@ -27,11 +28,59 @@ const (
 	EloquentBuilder     = `Illuminate\Database\Eloquent\Builder`
 	EloquentRelation    = `Illuminate\Database\Eloquent\Relations\Relation`
 	Factory             = `Illuminate\Database\Eloquent\Factories\Factory`
+	HasFactory          = `Illuminate\Database\Eloquent\Factories\HasFactory`
 	AuthGuard           = `Illuminate\Contracts\Auth\Guard`
 	AuthUserProvider    = `Illuminate\Contracts\Auth\UserProvider`
 	Arrayable           = `Illuminate\Contracts\Support\Arrayable`
 	ValidationException = `Illuminate\Validation\ValidationException`
 )
+
+func BindsModelFactory(reference engine.Match) bool {
+	if reference.Parent().Kind() == "UseItem" {
+		return importsOnlyAFactoryBinding(reference)
+	}
+
+	return returnsBoundFactory(reference)
+}
+
+func importsOnlyAFactoryBinding(reference engine.Match) bool {
+	program := php.ProgramOf(reference.Codebase())
+	if !program.IsA(reference.Name(), Factory) {
+		return false
+	}
+	bound := false
+	for _, use := range reference.Root().Descendants() {
+		if use.Name() != reference.Name() || use.Parent().Kind() == "UseItem" || !(php.Node{Match: use}).IsClassReference() {
+			continue
+		}
+		if !returnsBoundFactory(use) {
+			return false
+		}
+		bound = true
+	}
+
+	return bound
+}
+
+func returnsBoundFactory(reference engine.Match) bool {
+	method := (php.Node{Match: reference}).EnclosingFunctionLike()
+	if method.Kind() != "Stmt_ClassMethod" || method.Name() != "newFactory" || !method.HasModifier("static") || !method.HasModifier("protected") {
+		return false
+	}
+	statements := method.Body()
+	if len(statements) != 1 || !statements[0].Is(engine.Return) {
+		return false
+	}
+	call := statements[0].Child("expr")
+	factory := strings.TrimLeft(php.StaticCallClass(call), `\`)
+	if factory != strings.TrimLeft(reference.Name(), `\`) || php.CallName(call) != "new" || len(php.Arguments(call)) != 0 {
+		return false
+	}
+	program := php.ProgramOf(reference.Codebase())
+	model := php.EnclosingClassName(method.Match)
+
+	return program.IsA(factory, Factory) && program.IsA(model, Model) && program.Uses(model, HasFactory)
+}
 
 var CollectionTypes = []string{
 	`Illuminate\Support\Collection`,
@@ -483,11 +532,44 @@ func (n Node) RunsAQueryInALoop() bool {
 	if !inAForeach {
 		return false
 	}
-	if walked.isChunked() || n.isInATransactionPerTurn() {
+	if walked.isChunked() || n.loadsAWholeChunk(walked) || n.isInATransactionPerTurn() || n.queriesTheTableItWalks(walked) {
 		return false
 	}
 
 	return n.reachesTheDatabase()
+}
+
+func (n Node) queriesTheTableItWalks(walked Node) bool {
+	root := n.chainRoot()
+
+	return root.Kind() == "Expr_StaticCall" && php.CallName(root.Match) == "table" && (php.Node{Match: root.Match}).Argument(0).SameSyntax(walked.Parent().Child("valueVar"))
+}
+
+func (n Node) loadsAWholeChunk(walked Node) bool {
+	loop := walked.Parent()
+	chunk := loop.Child("valueVar")
+	if chunk.Kind() != "Expr_Variable" {
+		return false
+	}
+	for call := n.Match; call.Kind() == "Expr_MethodCall"; {
+		method := php.Node{Match: call}
+		if php.CallName(call) == "whereIn" && method.Argument(1).SameSyntax(chunk) {
+			return walked.readsAssignedChunks(loop)
+		}
+		call = call.Child("var")
+	}
+	return false
+}
+
+func (n Node) readsAssignedChunks(loop engine.Match) bool {
+	for _, use := range slices.Backward(php.Trace(n.Match)) {
+		assignment := use.Node.Parent()
+		if !use.IsWrite() || !assignment.EndsBefore(loop) {
+			continue
+		}
+		return assignment.Kind() == "Expr_Assign" && assignment.Parent().Parent() == loop.Parent() && isArrayChunk(assignment.Child("expr"))
+	}
+	return false
 }
 
 func (n Node) isInATransactionPerTurn() bool {
@@ -512,7 +594,7 @@ func (n Node) foreachAround() (Node, bool) {
 }
 
 func (n Node) isChunked() bool {
-	if n.Kind() == "Expr_FuncCall" && isName(n.Child("name")) && strings.TrimLeft(n.Child("name").Name(), `\`) == "array_chunk" {
+	if isArrayChunk(n.Match) {
 		return true
 	}
 	held := n
@@ -529,13 +611,21 @@ func (n Node) isChunked() bool {
 	return false
 }
 
+func isArrayChunk(call engine.Match) bool {
+	return call.Kind() == "Expr_FuncCall" && isName(call.Child("name")) && strings.TrimLeft(call.Child("name").Name(), `\`) == "array_chunk"
+}
+
 func (n Node) reachesTheDatabase() bool {
 	root := n.chainRoot()
 	program := php.ProgramOf(n.Codebase())
 	if root.Kind() == "Expr_StaticCall" {
 		class := root.Child("class")
+		if !isName(class) {
+			return false
+		}
+		name := strings.TrimLeft(class.Name(), `\`)
 
-		return isName(class) && program.Extends(strings.TrimLeft(class.Name(), `\`), Model)
+		return program.Extends(name, Model) || name == DatabaseFacade && php.CallName(root.Match) == "table"
 	}
 	held := strings.TrimLeft(php.TypesOf(n.Codebase()).TypeOf(root.Match), `?\`)
 	if held == "" {

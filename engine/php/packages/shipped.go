@@ -33,6 +33,7 @@ func (Laravel) Register(exemptions *Exemptions) {
 	exemptions.Exempt(NoContainer).Classes(laravel.CastContracts...)
 	exemptions.Exempt(Association).Methods(laravel.RelationMethods...)
 	exemptions.Exempt(Association).Attributes(laravel.BindingAttributes...)
+	exemptions.Exempt(Association).References(laravel.BindsModelFactory)
 	exemptions.Exempt(CompositionRoot).
 		Classes(laravel.ServiceProvider).
 		On(laravel.Factory, "definition")

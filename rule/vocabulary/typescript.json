@@ -317,7 +317,6 @@
                 "right"
             ],
             "operators": [
-                "!==",
                 "===",
                 "??"
             ],
@@ -926,20 +925,10 @@
         {
             "kind": "ExpressionStatement",
             "spells": "expression",
-            "roles": [
-                "statement"
-            ],
-            "is": [
-                "expression-statement"
-            ],
-            "fields": [
-                "expression"
-            ],
+            "roles": null,
             "vouched": [
-                "declared",
-                "observed"
-            ],
-            "example": "/shop/client/kiosk.ts:7"
+                "declared"
+            ]
         },
         {
             "kind": "ExpressionWithTypeArguments",
@@ -3231,14 +3220,10 @@
         {
             "kind": "VoidKeyword",
             "spells": "void-keyword",
-            "roles": [
-                "type"
-            ],
+            "roles": null,
             "vouched": [
-                "declared",
-                "observed"
-            ],
-            "example": "/shop/client/kiosk.ts:5"
+                "declared"
+            ]
         },
         {
             "kind": "WhileKeyword",

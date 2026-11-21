@@ -75,7 +75,8 @@ func (g *NamespaceGraph) WouldCoupleIndependent(caller, referrer, target string)
 
 func declaresAnAssociation(codebase *engine.Codebase, reference php.Node) bool {
 	return packages.Excuses(codebase, packages.Association, "", reference.ArgumentOfCall()) ||
-		packages.ExcusesAttribute(codebase, packages.Association, reference.EnclosingAttributeName())
+		packages.ExcusesAttribute(codebase, packages.Association, reference.EnclosingAttributeName()) ||
+		packages.ExcusesReference(packages.Association, reference.Match)
 }
 
 func (g *NamespaceGraph) ArrowsClosingAMutualPair() []engine.Match {

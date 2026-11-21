@@ -14,12 +14,13 @@ type Ancestry interface {
 	Uses(class, trait string) bool
 }
 
-// Clause is what one tag excuses: whole classes, methods of a class, methods by name anywhere, and attributes.
+// Clause specifies which classes, methods, attributes, and references a tag excuses.
 type Clause struct {
 	classes      []string
 	classMethods map[string][]string
 	methods      []string
 	attributes   []string
+	references   []engine.Check
 }
 
 func (c *Clause) Classes(classes ...string) *Clause {
@@ -48,6 +49,12 @@ func (c *Clause) Methods(methods ...string) *Clause {
 
 func (c *Clause) Attributes(attributes ...string) *Clause {
 	c.attributes = append(c.attributes, attributes...)
+
+	return c
+}
+
+func (c *Clause) References(checks ...engine.Check) *Clause {
+	c.references = append(c.references, checks...)
 
 	return c
 }
@@ -139,4 +146,10 @@ func Excuses(codebase *engine.Codebase, tag Tag, class, method string) bool {
 
 func ExcusesAttribute(codebase *engine.Codebase, tag Tag, attribute string) bool {
 	return Of(codebase).HasAttribute(tag, php.ProgramOf(codebase), attribute)
+}
+
+func ExcusesReference(tag Tag, reference engine.Match) bool {
+	clause, ok := Of(reference.Codebase()).clauses[tag.Slug]
+
+	return ok && slices.ContainsFunc(clause.references, func(check engine.Check) bool { return check(reference) })
 }

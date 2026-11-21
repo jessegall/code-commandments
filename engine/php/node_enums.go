@@ -25,7 +25,7 @@ func (n Node) IsScalarConstClass() bool {
 	if n.Kind() != "Stmt_Class" {
 		return false
 	}
-	constants := 0
+	constants, numeric := 0, 0
 	for _, member := range n.ChildrenIn("stmts") {
 		if member.Kind() != "Stmt_ClassConst" {
 			return false
@@ -36,10 +36,35 @@ func (n Node) IsScalarConstClass() bool {
 				return false
 			}
 			constants++
+			if value.Kind() == "Scalar_Int" || value.Kind() == "Scalar_Float" {
+				numeric++
+			}
 		}
 	}
 
-	return constants >= 2
+	return constants >= 2 && (numeric != constants || !n.usesConstantsAsBounds())
+}
+
+func (n Node) usesConstantsAsBounds() bool {
+	class := n.Node().Symbol
+	usedAsBound := false
+	for _, reference := range In(n.Codebase()).WhereKind("Expr_ClassConstFetch").Get() {
+		if strings.TrimLeft(reference.Child("class").Name(), `\`) != class {
+			continue
+		}
+		parent := reference.Parent()
+		if parent.Kind() == "MatchArm" || parent.Kind() == "Stmt_Case" {
+			return false
+		}
+		switch parent.Operator() {
+		case "<", "<=", ">", ">=":
+			usedAsBound = true
+		case "==", "===", "!=", "!==":
+			return false
+		}
+	}
+
+	return usedAsBound
 }
 
 func (n Node) ExtendsAClass() bool {

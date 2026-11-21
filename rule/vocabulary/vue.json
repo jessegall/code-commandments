@@ -4,7 +4,8 @@
         "bridge/frontend 1"
     ],
     "sources": [
-        "contract/samples/vue.jsonl"
+        "contract/samples/vue.jsonl",
+        "engine/php/testdata/shop-frontend.jsonl.gz"
     ],
     "parser": "@vue/compiler-sfc with typescript 6.0.3",
     "declares": "this bridge's own writer table in vue.mjs for the markup, and its kind table over ts.SyntaxKind for everything a \u003cscript\u003e block or a template expression holds, since a block's content is one TypeScript SourceFile among its children",
@@ -1335,10 +1336,21 @@
         {
             "kind": "InterfaceDeclaration",
             "spells": "interface",
-            "roles": null,
+            "roles": [
+                "member"
+            ],
+            "is": [
+                "type-declaration"
+            ],
+            "fields": [
+                "members",
+                "name"
+            ],
             "vouched": [
-                "declared"
-            ]
+                "declared",
+                "observed"
+            ],
+            "example": "/shop/client/KioskNote.vue:2"
         },
         {
             "kind": "InterfaceKeyword",
@@ -1919,10 +1931,17 @@
         {
             "kind": "LiteralType",
             "spells": "literal-type",
-            "roles": null,
+            "roles": [
+                "type"
+            ],
+            "fields": [
+                "literal"
+            ],
             "vouched": [
-                "declared"
-            ]
+                "declared",
+                "observed"
+            ],
+            "example": "/shop/client/KioskNote.vue:3"
         },
         {
             "kind": "MappedType",
@@ -2166,10 +2185,17 @@
         {
             "kind": "NullKeyword",
             "spells": "null-keyword",
-            "roles": null,
+            "roles": [
+                "expression"
+            ],
+            "is": [
+                "literal"
+            ],
             "vouched": [
-                "declared"
-            ]
+                "declared",
+                "observed"
+            ],
+            "example": "/shop/client/KioskNote.vue:3"
         },
         {
             "kind": "NumberKeyword",
@@ -2405,7 +2431,8 @@
                 "expression"
             ],
             "is": [
-                "member-access"
+                "member-access",
+                "null-safe"
             ],
             "fields": [
                 "expression",
@@ -3058,10 +3085,17 @@
         {
             "kind": "UnionType",
             "spells": "union-type",
-            "roles": null,
+            "roles": [
+                "type"
+            ],
+            "fields": [
+                "types"
+            ],
             "vouched": [
-                "declared"
-            ]
+                "declared",
+                "observed"
+            ],
+            "example": "/shop/client/KioskNote.vue:3"
         },
         {
             "kind": "UniqueKeyword",

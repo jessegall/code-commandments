@@ -88,7 +88,9 @@ type Grammar struct {
 	GenericFailures     []string
 	GenericMessage      bool
 	TakesFailureMessage func(Match) bool
+	MessageParts        func(Match) []Match
 	BroadCatch          func(Match) bool
+	ExpectedTestCatch   func(Match) bool
 	SwallowedExit       func(Match) bool
 	Hashing             HashRules
 	SpelledFolder       FolderSpelling

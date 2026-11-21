@@ -66,12 +66,14 @@ func init() {
 
 			return engine.Before(strings.TrimSuffix(class, "()"), `\`)
 		},
-		Continues:       engine.KindIn("Stmt_ElseIf"),
-		NestedChoice:    engine.KindIn("Stmt_If"),
-		NestingLimit:    2,
-		Steps:           engine.InFields("loop"),
-		Thrown:          engine.OfKind("Expr_Throw", "expr"),
-		FailureLocation: engine.Match.Thrown,
+		Continues:         engine.KindIn("Stmt_ElseIf"),
+		NestedChoice:      engine.KindIn("Stmt_If"),
+		NestingLimit:      2,
+		Steps:             engine.InFields("loop"),
+		Thrown:            engine.OfKind("Expr_Throw", "expr"),
+		FailureLocation:   engine.Match.Thrown,
+		MessageParts:      messageParts,
+		ExpectedTestCatch: expectsTestFailure,
 		SwallowedExit: func(statement engine.Match) bool {
 			return statement.Is(engine.Return) && statement.Child("expr").Exists()
 		},
@@ -278,6 +280,41 @@ func condition(held engine.Match) engine.Match {
 	}
 
 	return held.Child("cond")
+}
+
+func expectsTestFailure(caught engine.Match) bool {
+	if caught.Kind() != "Stmt_Catch" || len(caught.Body()) != 0 {
+		return false
+	}
+	program := ProgramOf(caught.Codebase())
+	if !program.IsA(EnclosingClassName(caught), `PHPUnit\Framework\TestCase`) {
+		return false
+	}
+	if slices.ContainsFunc(caught.ChildrenIn("types"), func(held engine.Match) bool {
+		class := strings.TrimLeft(held.Name(), `\`)
+		return slices.Contains([]string{"Throwable", "Exception", "RuntimeException", `PHPUnit\Exception`}, class) ||
+			program.IsA(`PHPUnit\Framework\AssertionFailedError`, class)
+	}) {
+		return false
+	}
+	statements := caught.Parent().ChildrenIn("stmts")
+	if len(statements) == 0 {
+		return false
+	}
+	call := statements[len(statements)-1].Child("expr")
+	return call.Kind() == "Expr_MethodCall" && variableName(call.Child("var")) == "this" && CallName(call) == "fail"
+}
+
+func messageParts(message engine.Match) []engine.Match {
+	if message.Kind() == "Expr_BinaryOp_Concat" {
+		return []engine.Match{message.Child("left"), message.Child("right")}
+	}
+	call := Node{Match: message}
+	if call.CallsFunction("sprintf") {
+		return []engine.Match{call.Argument(0).Match}
+	}
+
+	return nil
 }
 
 var constantSides = []string{"Scalar_String", "Scalar_Int", "Scalar_Float", "Expr_ClassConstFetch", "Expr_ConstFetch"}

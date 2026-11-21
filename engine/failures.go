@@ -127,6 +127,9 @@ func IsSwallowedCatch(m Match) bool {
 		}
 	}
 	if len(body) == 0 {
+		if expects := m.grammar().ExpectedTestCatch; expects != nil && m.IsTest() && expects(m) {
+			return false
+		}
 		return true
 	}
 	if len(body) > 1 || !body[0].Is(BailOut) || body[0].ThrowWithin().Exists() {
@@ -212,5 +215,19 @@ func HasMessageAtThrow(m Match) bool {
 	}
 	arguments := thrown.Arguments()
 
-	return len(arguments) > 0 && slices.Contains([]string{"string", "interpolated"}, arguments[0].LiteralKind())
+	return len(arguments) > 0 && writesMessage(arguments[0], m.grammar().MessageParts)
+}
+
+func writesMessage(message Match, parts func(Match) []Match) bool {
+	if !message.Exists() {
+		return false
+	}
+	if message.LiteralKind() == "string" || message.LiteralKind() == "interpolated" {
+		return true
+	}
+	if parts == nil {
+		return false
+	}
+
+	return slices.ContainsFunc(parts(message), func(part Match) bool { return writesMessage(part, parts) })
 }
