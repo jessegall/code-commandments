@@ -1,3 +1,5 @@
+// Package laravel holds what a scan reads from a Laravel project beyond its own sources: the routes an installed
+// package registers.
 package laravel
 
 import (
@@ -5,11 +7,6 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
-	"strings"
-
-	"github.com/jessegall/code-commandments/contract"
-	"github.com/jessegall/code-commandments/engine"
-	"github.com/jessegall/code-commandments/engine/php"
 )
 
 const (
@@ -29,6 +26,8 @@ type composerDiscovery struct {
 	} `json:"extra"`
 }
 
+// RouteContextFiles are the route files of the packages a Laravel project discovers, read beside its own sources as
+// context: Fortify's routes when the project installs it and does not opt out of its discovery.
 func RouteContextFiles(root string) []string {
 	if root == "" {
 		return nil
@@ -43,10 +42,6 @@ func RouteContextFiles(root string) []string {
 	}
 
 	return []string{filepath.Join(root, fortifyRoutesFile), filepath.Join(root, fortifyPackageConfig)}
-}
-
-func isFortifyRouteFile(file *engine.File) bool {
-	return strings.HasSuffix(filepath.ToSlash(file.Path), "/"+fortifyRoutesFile)
 }
 
 func readComposerDiscovery(path string) (composerDiscovery, bool) {
