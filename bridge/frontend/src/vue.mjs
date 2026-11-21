@@ -46,15 +46,54 @@ export class VueWriter {
     }
 
     file() {
+        const blocks = this.sfc.root.children
+        const scripts = new Map(blocks.filter((child) => child.type === dom.NodeTypes.ELEMENT && child.tag === 'script' && !hasAttribute(child, 'src'))
+            .map((child) => [child, this.script(child)]))
+        this.scope = this.setupScope()
         const modules = []
-        for (const child of this.sfc.root.children) {
+        for (const child of blocks) {
             if (child.type === dom.NodeTypes.COMMENT) this.comment(child)
             if (child.type !== dom.NodeTypes.ELEMENT) continue
-            if (child.tag === 'script' && !hasAttribute(child, 'src')) modules.push(this.script(child))
+            if (scripts.has(child)) modules.push(scripts.get(child))
             if (child.tag === 'template' && !hasAttribute(child, 'lang')) modules.push(this.markup(child))
         }
 
         return new Node('file', 0, this.source.text.length).holdsAll('modules', modules.filter(Boolean))
+    }
+
+    /** A translator for template code, which reads a name the script declares as that declaration. */
+    templateTranslator(sourceFile, offset) {
+        const translator = new Translator(this.tree, sourceFile, offset)
+        translator.scope = this.scope
+
+        return translator
+    }
+
+    /**
+     * The names a template reads from the script, each to the node written for its declaration: every top-level
+     * variable of the script, and every prop `defineProps<…>()` declares, by the compiler's reading of its type.
+     */
+    setupScope() {
+        const scope = new Map()
+        const bindings = this.tree.bindings ?? new Map()
+        const declare = (name) => {
+            if (name && bindings.has(name)) scope.set(name.text, bindings.get(name))
+        }
+        for (const statement of this.sourceFile.statements) {
+            if (ts.isVariableStatement(statement)) statement.declarationList.declarations.forEach((declaration) => declare(declaration.name))
+        }
+        const checker = this.program?.checker
+        const visit = (node) => {
+            if (ts.isCallExpression(node) && ts.isIdentifier(node.expression) && node.expression.text === 'defineProps' && node.typeArguments?.length && checker) {
+                for (const property of checker.getTypeFromTypeNode(node.typeArguments[0]).getProperties()) {
+                    for (const declaration of property.declarations ?? []) declare(declaration.name)
+                }
+            }
+            ts.forEachChild(node, visit)
+        }
+        visit(this.sourceFile)
+
+        return scope
     }
 
     /** A script block's module, spanning its first statement to its last. */
@@ -133,11 +172,11 @@ export class VueWriter {
         const wrapped = ts.createSourceFile('expression.ts', `(${text})`, ts.ScriptTarget.ESNext, true)
         const statement = wrapped.statements[0]
         if (!wrapped.parseDiagnostics.length && wrapped.statements.length === 1 && ts.isExpressionStatement(statement)) {
-            return new Translator(this.tree, wrapped, start - 1).expression(statement.expression.expression)
+            return this.templateTranslator(wrapped, start - 1).expression(statement.expression.expression)
         }
         const statements = ts.createSourceFile('handler.ts', text, ts.ScriptTarget.ESNext, true)
         this.errors += handler ? statements.parseDiagnostics.length : wrapped.parseDiagnostics.length
-        const translator = new Translator(this.tree, statements, start)
+        const translator = this.templateTranslator(statements, start)
         this.found.push(...scriptComments(statements, start))
 
         return new Node('block', start, start + text.length).holdsAll('statements', statements.statements.map((each) => translator.statement(each)))

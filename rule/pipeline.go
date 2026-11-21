@@ -47,6 +47,9 @@ type relation struct {
 
 	// definitions are those a shared relation's file declares, under the names it is brought in with.
 	definitions map[string]definition
+	// languages are those a shared relation's file judges: its rows are read from them, whatever the rule reading
+	// them judges.
+	languages []contract.Language
 }
 
 // mapped is the relation with every expression it writes passed through change.
@@ -204,6 +207,8 @@ func (r rows) relationRows(name string) []value {
 	var items []value
 	program, isProgram := programRelations[name]
 	switch defined, isRelation := r.relations[name]; {
+	case isRelation && len(defined.languages) > 0:
+		items = r.over(r.codebase.Whole().Of(defined.languages...)).build(defined)
 	case isRelation:
 		items = r.build(defined)
 	case isProgram:
@@ -217,6 +222,15 @@ func (r rows) relationRows(name string) []value {
 	r.built[name] = items
 
 	return items
+}
+
+// over is the same run over another part of the codebase, its kinds read afresh there.
+func (r rows) over(codebase *engine.Codebase) rows {
+	other := rows{r.evaluation, codebase, r.relations, map[string][]value{}}
+	other.evaluation.codebase = codebase
+	other.evaluation.relations = other.relationRows
+
+	return other
 }
 
 func (r rows) build(defined relation) []value {

@@ -15,8 +15,6 @@ func init() {
 		Binds:             binding,
 		Members:           declaredMembers,
 		Parameters:        engine.InFields("params"),
-		Extends:           engine.InFields("extends"),
-		Implements:        engine.InFields("implements"),
 		Traits:            traitNames,
 		DeclaredName:      propertyName,
 		ClassOf:           classOf,

@@ -99,7 +99,7 @@ export class Translator {
     /** The reference, linked to the binding written in this file for the local name the compiler resolves it to. */
     linkedToBinding(name, reference) {
         const declaration = this.checker?.getSymbolAtLocation(name)?.declarations?.[0]
-        const bound = declaration?.name && this.tree.bindings?.get(declaration.name)
+        const bound = (declaration?.name && this.tree.bindings?.get(declaration.name)) || (!this.checker && this.scope?.get(name.text))
 
         return bound ? reference.link('binding', bound) : reference
     }
@@ -277,6 +277,10 @@ export class Translator {
         if (!this.checker || !this.tree.checked) return out
         const type = this.checker.getTypeFromTypeNode(node)
         if (type.flags & ts.TypeFlags.Any || isErrorType(type)) return out
+        // A literal { … } is its own shape even where an alias names it, so it is described by its fields.
+        if (ts.isTypeLiteralNode(node)) {
+            return out.fact('resolvedType', this.tree.typeIndex(node, () => ({ text: this.program.printed(type), ...this.shapeOf(type, 'compiler', 1), nullable: nullable(type), origin: 'compiler' })))
+        }
 
         return out.fact('resolvedType', this.tree.typeIndex(type, () => this.describedType(type, 'compiler')))
     }
@@ -323,7 +327,7 @@ export class Translator {
                 .holdsAll('attributes', this.attributes(member))
                 .holds('declaredType', member.type && this.type(member.type))
                 .holdsAll('declarators', [this.between('declarator', member.name.getStart(this.sourceFile), end)
-                    .holds('binding', this.new('binding', member.name).fact('name', ts.isComputedPropertyName(member.name) ? undefined : member.name.text).fact('symbol', this.checker ? this.symbolOf(member) : undefined))
+                    .holds('binding', this.bound(member.name, this.new('binding', member.name).fact('name', ts.isComputedPropertyName(member.name) ? undefined : member.name.text).fact('symbol', this.checker ? this.symbolOf(member) : undefined)))
                     .holds('initializer', member.initializer && this.expression(member.initializer))])
         }
         if (ts.isEnumMember(member)) {
@@ -472,7 +476,8 @@ export class Translator {
         }
         if (ts.isCallExpression(node)) {
             return this.new('call', node).fact('target', this.checker ? this.target(node) : undefined)
-                .holds('callee', this.expression(node.expression)).holdsAll('arguments', node.arguments.map((argument) => this.argument(argument)))
+                .holds('callee', this.expression(node.expression)).holdsAll('typeArguments', (node.typeArguments ?? []).map((argument) => this.type(argument)))
+                .holdsAll('arguments', node.arguments.map((argument) => this.argument(argument)))
         }
         if (ts.isNewExpression(node)) {
             const named = ts.isIdentifier(node.expression) || ts.isPropertyAccessExpression(node.expression)
@@ -630,6 +635,18 @@ export class Translator {
         return this.typeOf(type, origin, depth)
     }
 
+    /** An object type as its fields, each named and typed, optional where it may be left out. */
+    shapeOf(type, origin, depth) {
+        const fields = type.getProperties().map((property) => {
+            const field = { name: this.fieldName(property), type: this.typeOf(this.checker.getTypeOfSymbol(property), origin, depth) }
+            if (property.flags & ts.SymbolFlags.Optional) field.optional = true
+
+            return field
+        })
+
+        return { kind: 'object', fields }
+    }
+
     /** The symbol id this node declares, when it is a declaration the contract names. */
     symbolOf(node) {
         if (!declaresSymbol(node)) return undefined
@@ -758,14 +775,8 @@ export class Translator {
             // shape the code writes — an object literal, a mapped type, a spread, an inferred return — is declared
             // in a file the project wrote, so it is described as before.
             if (ambient(type)) return { kind: 'opaque' }
-            const fields = type.getProperties().map((property) => {
-                const field = { name: this.fieldName(property), type: this.typeOf(this.checker.getTypeOfSymbol(property), origin, depth) }
-                if (property.flags & ts.SymbolFlags.Optional) field.optional = true
 
-                return field
-            })
-
-            return { kind: 'object', fields }
+            return this.shapeOf(type, origin, depth)
         }
 
         return { kind: 'opaque' }

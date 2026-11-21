@@ -1,0 +1,101 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "php"
+  ],
+  "relation": {
+    "from": "call",
+    "as": "c",
+    "pipeline": [
+      {
+        "where": [
+          "and",
+          [
+            "=",
+            "$c.callee.kind",
+            "access"
+          ],
+          [
+            "in",
+            "$c.callee.member.name",
+            "name",
+            "as"
+          ],
+          [
+            "laravel.routed",
+            "$c"
+          ]
+        ]
+      },
+      {
+        "project": {
+          "anchor": "$c",
+          "v": [
+            "laravel.registration",
+            "$c"
+          ]
+        }
+      },
+      {
+        "where": [
+          "exists",
+          "$v"
+        ]
+      },
+      {
+        "project": {
+          "uri": [
+            "laravel.firstLiteral",
+            "$v"
+          ],
+          "groups": [
+            "laravel.pathOf",
+            "$v"
+          ]
+        }
+      },
+      {
+        "where": [
+          "nonempty",
+          "$uri"
+        ]
+      },
+      {
+        "project": {
+          "template": [
+            "concat",
+            "$groups",
+            "/",
+            "$uri"
+          ]
+        }
+      },
+      {
+        "where": [
+          "some",
+          [
+            "pathSegments",
+            "$template"
+          ],
+          "s",
+          [
+            "not",
+            [
+              "and",
+              [
+                "startsWith",
+                "$s",
+                "{"
+              ],
+              [
+                "endsWith",
+                "$s",
+                "}"
+              ]
+            ]
+          ]
+        ]
+      }
+    ]
+  }
+}

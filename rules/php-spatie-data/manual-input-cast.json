@@ -21,5 +21,611 @@
       "crossFile": true
     }
   },
-  "find": {}
+  "find": {
+    "select": [
+      "field",
+      "parameter"
+    ],
+    "as": "s",
+    "where": [
+      "and",
+      [
+        "some",
+        "$s.modifiers",
+        "x",
+        [
+          "=",
+          "$x",
+          "public"
+        ]
+      ],
+      [
+        "none",
+        "$s.modifiers",
+        "x",
+        [
+          "=",
+          "$x",
+          "static"
+        ]
+      ],
+      [
+        "none",
+        "$s.attributes",
+        "a",
+        [
+          "in",
+          "$a.refers",
+          "Spatie\\LaravelData\\Attributes\\WithCast",
+          "Spatie\\LaravelData\\Attributes\\WithCastAndTransformer",
+          "Spatie\\LaravelData\\Attributes\\WithCastable"
+        ]
+      ]
+    ],
+    "let": [
+      [
+        "t",
+        [
+          "enclosing",
+          "$s",
+          "type"
+        ]
+      ],
+      [
+        "class",
+        [
+          "spatie.soleRefers",
+          "$s.declaredType"
+        ]
+      ]
+    ],
+    "having": [
+      "and",
+      [
+        "plainValue",
+        "$class"
+      ],
+      [
+        "spatie.isData",
+        "$t"
+      ],
+      [
+        "some",
+        [
+          "slotNames",
+          "$s"
+        ],
+        "n",
+        [
+          "and",
+          [
+            ">",
+            [
+              "count",
+              [
+                "rowsOf",
+                "fromSites",
+                [
+                  "record",
+                  "owner",
+                  "$t.symbol"
+                ]
+              ]
+            ],
+            0
+          ],
+          [
+            "every",
+            [
+              "rowsOf",
+              "fromSites",
+              [
+                "record",
+                "owner",
+                "$t.symbol"
+              ]
+            ],
+            "r",
+            [
+              "handBuilt",
+              "$r.call",
+              "$n",
+              "$class"
+            ]
+          ]
+        ]
+      ]
+    ],
+    "emit": "$s",
+    "relations": {
+      "fromSites": {
+        "from": "call",
+        "as": "c",
+        "pipeline": [
+          {
+            "where": [
+              "and",
+              [
+                "spatie.isFrom",
+                "$c"
+              ],
+              [
+                "spatie.isData",
+                [
+                  "spatie.ownerOf",
+                  "$c"
+                ]
+              ]
+            ]
+          },
+          {
+            "project": {
+              "owner": "$c.callee.subject.refers",
+              "call": "$c"
+            }
+          }
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "shortName": {
+      "args": [
+        "n"
+      ],
+      "expr": [
+        "last",
+        [
+          "split",
+          "$n",
+          "\\"
+        ]
+      ]
+    },
+    "slotNames": {
+      "args": [
+        "s"
+      ],
+      "expr": [
+        "case",
+        "$s.kind",
+        {
+          "parameter": [
+            "list",
+            "$s.binding.name"
+          ],
+          "field": [
+            "map",
+            "$s.declarators",
+            "d",
+            "$d.binding.name"
+          ]
+        },
+        [
+          "list"
+        ]
+      ]
+    },
+    "fetchOf": {
+      "args": [
+        "v"
+      ],
+      "expr": [
+        "or",
+        [
+          "and",
+          [
+            "=",
+            "$v.kind",
+            "access"
+          ],
+          [
+            "=",
+            "$v.form",
+            "instance"
+          ]
+        ],
+        [
+          "and",
+          [
+            "=",
+            "$v.kind",
+            "call"
+          ],
+          [
+            "=",
+            "$v.callee.kind",
+            "access"
+          ],
+          [
+            "=",
+            "$v.callee.form",
+            "instance"
+          ]
+        ]
+      ]
+    },
+    "fetchReceiver": {
+      "args": [
+        "v"
+      ],
+      "expr": [
+        "case",
+        "$v.kind",
+        {
+          "access": "$v.subject",
+          "call": "$v.callee.subject"
+        },
+        null
+      ]
+    },
+    "sharedReceiver": {
+      "args": [
+        "arr"
+      ],
+      "expr": [
+        "and",
+        [
+          "=",
+          "$arr.kind",
+          "collection"
+        ],
+        [
+          ">=",
+          [
+            "count",
+            "$arr.entries"
+          ],
+          2
+        ],
+        [
+          "every",
+          "$arr.entries",
+          "e",
+          [
+            "fetchOf",
+            "$e.value"
+          ]
+        ],
+        [
+          "=",
+          [
+            "distinctCount",
+            [
+              "map",
+              "$arr.entries",
+              "e",
+              [
+                "fingerprint",
+                [
+                  "fetchReceiver",
+                  "$e.value"
+                ],
+                "exact"
+              ]
+            ]
+          ],
+          1
+        ]
+      ]
+    },
+    "plainValue": {
+      "args": [
+        "class"
+      ],
+      "expr": [
+        "and",
+        [
+          "nonempty",
+          "$class"
+        ],
+        [
+          "not",
+          [
+            "proven",
+            [
+              "isSubtype",
+              "$class",
+              "Spatie\\LaravelData\\Data"
+            ]
+          ]
+        ],
+        [
+          "not",
+          [
+            "proven",
+            [
+              "=",
+              [
+                "typeKind",
+                [
+                  "typeDeclaration",
+                  "$class"
+                ]
+              ],
+              "enum"
+            ]
+          ]
+        ],
+        [
+          "not",
+          [
+            "in",
+            [
+              "shortName",
+              "$class"
+            ],
+            "DateTimeInterface",
+            "DateTime",
+            "DateTimeImmutable",
+            "Carbon",
+            "CarbonImmutable"
+          ]
+        ],
+        [
+          "not",
+          [
+            "proven",
+            [
+              "isSubtype",
+              "$class",
+              "DateTimeInterface"
+            ]
+          ]
+        ]
+      ]
+    },
+    "producing": {
+      "args": [
+        "a",
+        "b"
+      ],
+      "expr": [
+        "or",
+        [
+          "=",
+          "$a",
+          "$b"
+        ],
+        [
+          "proven",
+          [
+            "isSubtype",
+            "$a",
+            "$b"
+          ]
+        ]
+      ]
+    },
+    "localValue": {
+      "args": [
+        "v"
+      ],
+      "expr": [
+        "case",
+        [
+          "and",
+          [
+            "=",
+            "$v.kind",
+            "reference"
+          ],
+          [
+            "=",
+            "$v.form",
+            "name"
+          ],
+          [
+            "exists",
+            [
+              "enclosing",
+              "$v",
+              "function"
+            ]
+          ]
+        ],
+        {
+          "true": [
+            "coalesce",
+            [
+              "last",
+              [
+                "map",
+                [
+                  "filter",
+                  [
+                    "ownDescendants",
+                    [
+                      "enclosing",
+                      "$v",
+                      "function"
+                    ],
+                    "assignment"
+                  ],
+                  "a",
+                  [
+                    "and",
+                    [
+                      "assigns",
+                      "$a",
+                      "$v"
+                    ],
+                    [
+                      "<",
+                      "$a.span.start",
+                      "$v.span.start"
+                    ]
+                  ]
+                ],
+                "a",
+                [
+                  "at",
+                  "$a.values",
+                  0
+                ]
+              ]
+            ],
+            "$v"
+          ]
+        },
+        "$v"
+      ]
+    },
+    "entryNamed": {
+      "args": [
+        "arr",
+        "n"
+      ],
+      "expr": [
+        "case",
+        [
+          "=",
+          "$arr.kind",
+          "collection"
+        ],
+        {
+          "true": [
+            "first",
+            [
+              "map",
+              [
+                "filter",
+                "$arr.entries",
+                "e",
+                [
+                  "and",
+                  [
+                    "literalIs",
+                    "$e.key",
+                    "string"
+                  ],
+                  [
+                    "=",
+                    "$e.key.value",
+                    "$n"
+                  ]
+                ]
+              ],
+              "e",
+              "$e.value"
+            ]
+          ]
+        },
+        null
+      ]
+    },
+    "built": {
+      "args": [
+        "v",
+        "class"
+      ],
+      "expr": [
+        "case",
+        "$v.kind",
+        {
+          "construction": [
+            "producing",
+            "$v.type.refers",
+            "$class"
+          ],
+          "call": [
+            "and",
+            [
+              "=",
+              "$v.callee.kind",
+              "access"
+            ],
+            [
+              "=",
+              "$v.callee.form",
+              "static"
+            ],
+            [
+              "or",
+              [
+                "producing",
+                "$v.callee.subject.refers",
+                "$class"
+              ],
+              [
+                "producing",
+                "$v.resolved.name",
+                "$class"
+              ]
+            ]
+          ],
+          "collection": [
+            "sharedReceiver",
+            "$v"
+          ]
+        },
+        false
+      ]
+    },
+    "handBuilt": {
+      "args": [
+        "site",
+        "n",
+        "class"
+      ],
+      "expr": [
+        "some",
+        [
+          "list",
+          [
+            "entryNamed",
+            [
+              "localValue",
+              [
+                "tree.valueAt",
+                "$site",
+                0
+              ]
+            ],
+            "$n"
+          ]
+        ],
+        "v",
+        [
+          "and",
+          [
+            "exists",
+            "$v"
+          ],
+          [
+            "built",
+            [
+              "localValue",
+              "$v"
+            ],
+            "$class"
+          ]
+        ]
+      ]
+    },
+    "assigns": {
+      "args": [
+        "a",
+        "v"
+      ],
+      "expr": [
+        "some",
+        "$a.targets",
+        "t",
+        [
+          "and",
+          [
+            "=",
+            "$t.kind",
+            "reference"
+          ],
+          [
+            "=",
+            "$t.name",
+            "$v.name"
+          ]
+        ]
+      ]
+    }
+  }
 }

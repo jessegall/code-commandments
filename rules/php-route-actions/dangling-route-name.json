@@ -21,5 +21,301 @@
       "crossFile": true
     }
   },
-  "find": {}
+  "find": {
+    "relations": {
+      "route-name-calls": {
+        "from": "call",
+        "as": "c",
+        "pipeline": [
+          {
+            "where": [
+              "and",
+              [
+                "=",
+                "$c.callee.kind",
+                "access"
+              ],
+              [
+                "=",
+                "$c.callee.member.name",
+                "name"
+              ],
+              [
+                "laravel.routed",
+                "$c"
+              ],
+              [
+                "not",
+                [
+                  "laravel.opensGroup",
+                  "$c"
+                ]
+              ]
+            ]
+          },
+          {
+            "project": {
+              "anchor": "$c",
+              "prefix": [
+                "laravel.prefixOf",
+                "$c"
+              ],
+              "first": [
+                "laravel.firstValue",
+                "$c"
+              ]
+            }
+          },
+          {
+            "project": {
+              "kind": [
+                "laravel.nameKind",
+                "$first"
+              ],
+              "name": [
+                "concat",
+                "$prefix",
+                [
+                  "laravel.nameText",
+                  "$first"
+                ]
+              ]
+            }
+          }
+        ]
+      },
+      "route-groups": {
+        "from": "call",
+        "as": "g",
+        "pipeline": [
+          {
+            "where": [
+              "laravel.groupCall",
+              "$g"
+            ]
+          },
+          {
+            "project": {
+              "anchor": "$g",
+              "name": [
+                "stripSuffix",
+                [
+                  "concat",
+                  [
+                    "laravel.prefixOf",
+                    "$g"
+                  ],
+                  [
+                    "laravel.groupPrefix",
+                    "$g"
+                  ]
+                ],
+                "."
+              ]
+            }
+          },
+          {
+            "where": [
+              "nonempty",
+              "$name"
+            ]
+          },
+          {
+            "project": {
+              "kind": "exact"
+            }
+          }
+        ]
+      },
+      "route-resources": {
+        "from": "call",
+        "as": "c",
+        "pipeline": [
+          {
+            "where": [
+              "and",
+              [
+                "=",
+                "$c.callee.kind",
+                "access"
+              ],
+              [
+                "in",
+                "$c.callee.member.name",
+                "resource",
+                "apiResource"
+              ],
+              [
+                "laravel.routed",
+                "$c"
+              ]
+            ]
+          },
+          {
+            "project": {
+              "anchor": "$c",
+              "prefix": [
+                "laravel.prefixOf",
+                "$c"
+              ],
+              "first": [
+                "laravel.firstValue",
+                "$c"
+              ]
+            }
+          },
+          {
+            "project": {
+              "kind": [
+                "case",
+                [
+                  "literalIs",
+                  "$first",
+                  "string"
+                ],
+                {
+                  "true": "family"
+                },
+                "dynamic"
+              ],
+              "name": [
+                "concat",
+                "$prefix",
+                [
+                  "laravel.nameText",
+                  "$first"
+                ],
+                "."
+              ]
+            }
+          }
+        ]
+      },
+      "route-names": {
+        "from": [
+          "unionAll",
+          "route-name-calls",
+          "route-groups",
+          "route-resources"
+        ],
+        "as": "r"
+      }
+    },
+    "select": "call",
+    "as": "c",
+    "where": [
+      "and",
+      [
+        "laravel.routeLookup",
+        "$c"
+      ],
+      [
+        "nonempty",
+        [
+          "laravel.firstLiteral",
+          "$c"
+        ]
+      ]
+    ],
+    "let": [
+      [
+        "name",
+        [
+          "laravel.firstLiteral",
+          "$c"
+        ]
+      ]
+    ],
+    "having": [
+      "and",
+      [
+        ">",
+        [
+          "countOf",
+          "route-names",
+          [
+            "record",
+            "kind",
+            "exact"
+          ]
+        ],
+        0
+      ],
+      [
+        "not",
+        [
+          "or",
+          [
+            "hasRow",
+            "route-names",
+            [
+              "record",
+              "kind",
+              "dynamic"
+            ]
+          ],
+          [
+            "hasRow",
+            "route-names",
+            [
+              "record",
+              "kind",
+              "exact",
+              "name",
+              "$name"
+            ]
+          ],
+          [
+            "some",
+            [
+              "rowsOf",
+              "route-names",
+              [
+                "record",
+                "kind",
+                "family"
+              ]
+            ],
+            "r",
+            [
+              "startsWith",
+              "$name",
+              [
+                "get",
+                "$r",
+                "name"
+              ]
+            ]
+          ],
+          [
+            "some",
+            [
+              "rowsOf",
+              "route-names",
+              [
+                "record",
+                "kind",
+                "exact"
+              ]
+            ],
+            "r",
+            [
+              "endsWith",
+              "$name",
+              [
+                "concat",
+                ".",
+                [
+                  "get",
+                  "$r",
+                  "name"
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ],
+    "emit": "$c"
+  }
 }

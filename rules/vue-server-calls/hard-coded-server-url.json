@@ -1,7 +1,8 @@
 {
   "$schema": "commandments:neutral-rule/v2",
   "engine": [
-    "vue"
+    "vue",
+    "typescript"
   ],
   "sin": {
     "name": "hard-coded-server-url",
@@ -17,5 +18,126 @@
       "crossFile": true
     }
   },
-  "find": {}
+  "find": {
+    "select": [
+      "literal",
+      "interpolation",
+      "binary"
+    ],
+    "as": "x",
+    "where": [
+      "and",
+      [
+        "in",
+        "$x.file.language",
+        "typescript",
+        "vue"
+      ],
+      [
+        "not",
+        "$x.file.test"
+      ],
+      [
+        "not",
+        [
+          "and",
+          [
+            "=",
+            "$x.parent.kind",
+            "binary"
+          ],
+          [
+            "in",
+            "$x.parent.operator",
+            "add",
+            "concatenate"
+          ]
+        ]
+      ],
+      [
+        "or",
+        [
+          "and",
+          [
+            "=",
+            "$x.parent.kind",
+            "argument"
+          ],
+          [
+            "in",
+            "$x.parent.parent.kind",
+            "call",
+            "construction"
+          ]
+        ],
+        [
+          "and",
+          [
+            "=",
+            "$x.parent.kind",
+            "directive"
+          ],
+          [
+            "=",
+            "$x.role",
+            "value"
+          ]
+        ]
+      ]
+    ],
+    "let": [
+      [
+        "text",
+        [
+          "typescript.spelled",
+          "$x"
+        ]
+      ]
+    ],
+    "having": [
+      "and",
+      [
+        "startsWith",
+        "$text",
+        "/"
+      ],
+      [
+        "not",
+        [
+          "startsWith",
+          "$text",
+          "//"
+        ]
+      ],
+      [
+        "some",
+        [
+          "rowsOf",
+          "laravel-named-routes"
+        ],
+        "r",
+        [
+          "pathFits",
+          "$text",
+          [
+            "templateOf",
+            "$r"
+          ]
+        ]
+      ]
+    ],
+    "emit": "$x"
+  },
+  "definitions": {
+    "templateOf": {
+      "args": [
+        "r"
+      ],
+      "expr": [
+        "get",
+        "$r",
+        "template"
+      ]
+    }
+  }
 }

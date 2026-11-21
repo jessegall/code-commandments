@@ -13,5 +13,99 @@
     "description": "A group of elements in a sizeable template that all reach deep into the same nested object (≥2 distinct fields) — extract the shared mid-object into a component that takes it as a prop.",
     "rule": "Pass the mid-object as a prop; don't reach deep into nested data from the template."
   },
-  "find": {}
+  "find": {
+    "from": "element",
+    "as": "e",
+    "pipeline": [
+      {
+        "where": [
+          ">=",
+          [
+            "add",
+            [
+              "lineCount",
+              [
+                "enclosing",
+                "$e",
+                "module"
+              ]
+            ],
+            2
+          ],
+          "$param.templateLines"
+        ]
+      },
+      {
+        "project": {
+          "anchor": "$e",
+          "chains": [
+            "vue.deepChains",
+            "$e"
+          ]
+        }
+      },
+      {
+        "expand": "$chains"
+      },
+      {
+        "project": {
+          "chain": "$row",
+          "key": [
+            "concat",
+            "$anchor.file.path",
+            "|",
+            [
+              "join",
+              [
+                "take",
+                [
+                  "split",
+                  "$row",
+                  "."
+                ],
+                2
+              ],
+              "."
+            ]
+          ]
+        }
+      },
+      {
+        "groupBy": "$key"
+      },
+      {
+        "having": [
+          ">=",
+          [
+            "distinctCount",
+            [
+              "map",
+              "$rows",
+              "r",
+              "$r.chain"
+            ]
+          ],
+          2
+        ]
+      },
+      {
+        "emit": [
+          "vue.commonElement",
+          [
+            "map",
+            "$rows",
+            "r",
+            "$r.anchor"
+          ]
+        ]
+      }
+    ]
+  },
+  "parameters": {
+    "templateLines": {
+      "type": "number",
+      "default": 50,
+      "description": "How many lines a template spans at least before its deep reaches are looked at."
+    }
+  }
 }

@@ -7,12 +7,22 @@ import (
 	"github.com/jessegall/code-commandments/contract"
 )
 
+// Extends is what a type declaration extends, as written: its bases, or what its language reads as them.
 func (m Match) Extends() []Match {
-	return m.listed(m.grammar().Extends)
+	if read := m.grammar().Extends; read != nil {
+		return m.listed(read)
+	}
+
+	return m.ChildrenIn("bases")
 }
 
+// Implements is what a type declaration implements, as written: its interfaces, or what its language reads as them.
 func (m Match) Implements() []Match {
-	return m.listed(m.grammar().Implements)
+	if read := m.grammar().Implements; read != nil {
+		return m.listed(read)
+	}
+
+	return m.ChildrenIn("interfaces")
 }
 
 func (m Match) Annotations() []Match {

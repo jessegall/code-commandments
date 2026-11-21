@@ -1,7 +1,8 @@
 {
   "$schema": "commandments:neutral-rule/v2",
   "engine": [
-    "vue"
+    "vue",
+    "typescript"
   ],
   "sin": {
     "name": "mirrored-server-type",
@@ -20,5 +21,288 @@
       "crossFile": true
     }
   },
-  "find": {}
+  "find": {
+    "select": [
+      "type",
+      "alias"
+    ],
+    "as": "t",
+    "where": [
+      "and",
+      [
+        "in",
+        "$t.file.language",
+        "typescript",
+        "vue"
+      ],
+      [
+        "or",
+        [
+          "and",
+          [
+            "=",
+            "$t.kind",
+            "type"
+          ],
+          [
+            "=",
+            "$t.form",
+            "interface"
+          ]
+        ],
+        [
+          "=",
+          "$t.kind",
+          "alias"
+        ]
+      ]
+    ],
+    "let": [
+      [
+        "names",
+        [
+          "typescript.fieldNames",
+          "$t"
+        ]
+      ],
+      [
+        "namespace",
+        [
+          "typescript.namespaceOf",
+          "$t"
+        ]
+      ]
+    ],
+    "having": [
+      "and",
+      [
+        ">=",
+        [
+          "count",
+          "$names"
+        ],
+        "$param.fields"
+      ],
+      [
+        "not",
+        [
+          "some",
+          [
+            "rowsOf",
+            "typescript-generated-outputs"
+          ],
+          "o",
+          [
+            "startsWith",
+            "$t.file.path",
+            [
+              "field",
+              "$o",
+              "path"
+            ]
+          ]
+        ]
+      ],
+      [
+        "not",
+        [
+          "some",
+          [
+            "rowsOf",
+            "spatie-data-contracts"
+          ],
+          "c",
+          [
+            "and",
+            [
+              "nonempty",
+              "$namespace"
+            ],
+            [
+              "=",
+              [
+                "field",
+                "$c",
+                "name"
+              ],
+              "$t.name"
+            ],
+            [
+              "=",
+              [
+                "field",
+                "$c",
+                "namespace"
+              ],
+              "$namespace"
+            ]
+          ]
+        ]
+      ],
+      [
+        "some",
+        [
+          "rowsOf",
+          "spatie-data-contracts"
+        ],
+        "c",
+        [
+          "mirrors",
+          "$c",
+          "$t.name",
+          "$names",
+          "$param.overlap"
+        ]
+      ]
+    ],
+    "emit": "$t"
+  },
+  "definitions": {
+    "canon": {
+      "args": [
+        "x"
+      ],
+      "expr": [
+        "lower",
+        [
+          "replace",
+          [
+            "replace",
+            "$x",
+            "_",
+            ""
+          ],
+          "-",
+          ""
+        ]
+      ]
+    },
+    "canonSet": {
+      "args": [
+        "l"
+      ],
+      "expr": [
+        "distinct",
+        [
+          "map",
+          "$l",
+          "x",
+          [
+            "canon",
+            "$x"
+          ]
+        ]
+      ]
+    },
+    "field": {
+      "args": [
+        "c",
+        "n"
+      ],
+      "expr": [
+        "get",
+        "$c",
+        "$n"
+      ]
+    },
+    "mirrors": {
+      "args": [
+        "c",
+        "name",
+        "names",
+        "overlap"
+      ],
+      "expr": [
+        "and",
+        [
+          "=",
+          [
+            "canon",
+            "$name"
+          ],
+          [
+            "canon",
+            [
+              "field",
+              "$c",
+              "name"
+            ]
+          ]
+        ],
+        [
+          ">=",
+          [
+            "divide",
+            [
+              "count",
+              [
+                "intersect",
+                [
+                  "canonSet",
+                  [
+                    "field",
+                    "$c",
+                    "fields"
+                  ]
+                ],
+                [
+                  "canonSet",
+                  "$names"
+                ]
+              ]
+            ],
+            [
+              "count",
+              [
+                "difference",
+                [
+                  "union",
+                  [
+                    "canonSet",
+                    [
+                      "field",
+                      "$c",
+                      "fields"
+                    ]
+                  ],
+                  [
+                    "canonSet",
+                    "$names"
+                  ]
+                ],
+                [
+                  "difference",
+                  [
+                    "canonSet",
+                    [
+                      "field",
+                      "$c",
+                      "optional"
+                    ]
+                  ],
+                  [
+                    "canonSet",
+                    "$names"
+                  ]
+                ]
+              ]
+            ]
+          ],
+          "$overlap"
+        ]
+      ]
+    }
+  },
+  "parameters": {
+    "fields": {
+      "type": "number",
+      "default": 3,
+      "description": "How many members a hand-written type has at least before it can be a copy of a server type."
+    },
+    "overlap": {
+      "type": "number",
+      "default": 0.8,
+      "description": "How much of its fields a type shares with a server type, from 0 to 1, before it is a copy."
+    }
+  }
 }

@@ -21,5 +21,322 @@
       "crossFile": true
     }
   },
-  "find": {}
+  "find": {
+    "select": [
+      "call",
+      "access"
+    ],
+    "as": "c",
+    "where": [
+      "case",
+      "$c.kind",
+      {
+        "call": [
+          "hydrates",
+          "$c"
+        ]
+      },
+      [
+        "callableFrom",
+        "$c"
+      ]
+    ],
+    "having": [
+      "and",
+      [
+        "not",
+        [
+          "conditional",
+          "$c"
+        ]
+      ],
+      [
+        "not",
+        [
+          "tolerantTry",
+          [
+            "enclosing",
+            "$c",
+            "try"
+          ]
+        ]
+      ],
+      [
+        "not",
+        [
+          "keyedStore",
+          "$c"
+        ]
+      ],
+      [
+        "or",
+        [
+          "=",
+          "$c.kind",
+          "access"
+        ],
+        [
+          "not",
+          [
+            "inline",
+            "$c"
+          ]
+        ]
+      ]
+    ],
+    "emit": "$c"
+  },
+  "definitions": {
+    "mapped": {
+      "args": [
+        "x"
+      ],
+      "expr": [
+        "and",
+        [
+          "=",
+          "$x.parent.kind",
+          "argument"
+        ],
+        [
+          "=",
+          "$x.parent.parent.kind",
+          "call"
+        ],
+        [
+          "=",
+          "$x.parent.parent.callee.kind",
+          "reference"
+        ],
+        [
+          "=",
+          "$x.parent.parent.callee.refers",
+          "array_map"
+        ]
+      ]
+    },
+    "callableFrom": {
+      "args": [
+        "a"
+      ],
+      "expr": [
+        "and",
+        [
+          "=",
+          "$a.member.name",
+          "from"
+        ],
+        [
+          "=",
+          "$a.subject.kind",
+          "reference"
+        ],
+        [
+          "mapped",
+          "$a"
+        ],
+        [
+          "spatie.isData",
+          [
+            "typeDeclaration",
+            "$a.subject.refers"
+          ]
+        ]
+      ]
+    },
+    "hydrates": {
+      "args": [
+        "c"
+      ],
+      "expr": [
+        "and",
+        [
+          "spatie.isFrom",
+          "$c"
+        ],
+        [
+          "spatie.isData",
+          [
+            "spatie.ownerOf",
+            "$c"
+          ]
+        ],
+        [
+          "spatie.perItem",
+          "$c"
+        ]
+      ]
+    },
+    "conditional": {
+      "args": [
+        "c"
+      ],
+      "expr": [
+        "some",
+        [
+          "ancestors",
+          "$c"
+        ],
+        "a",
+        [
+          "and",
+          [
+            "within",
+            "$a",
+            [
+              "enclosing",
+              "$c",
+              "loop"
+            ]
+          ],
+          [
+            "or",
+            [
+              "in",
+              "$a.kind",
+              "if",
+              "conditional"
+            ],
+            [
+              "and",
+              [
+                "=",
+                "$a.kind",
+                "dispatch"
+              ],
+              [
+                "=",
+                "$a.form",
+                "match"
+              ]
+            ],
+            [
+              "and",
+              [
+                "=",
+                "$a.kind",
+                "fallback"
+              ],
+              [
+                "=",
+                "$a.trigger",
+                "falsy"
+              ]
+            ]
+          ]
+        ]
+      ]
+    },
+    "tolerantTry": {
+      "args": [
+        "t"
+      ],
+      "expr": [
+        "and",
+        [
+          "exists",
+          "$t"
+        ],
+        [
+          "some",
+          [
+            "ancestors",
+            "$t"
+          ],
+          "a",
+          [
+            "=",
+            "$a.kind",
+            "loop"
+          ]
+        ],
+        [
+          "some",
+          "$t.handlers",
+          "h",
+          [
+            "some",
+            [
+              "descendants",
+              "$h"
+            ],
+            "d",
+            [
+              "in",
+              "$d.kind",
+              "continue",
+              "return"
+            ]
+          ]
+        ]
+      ]
+    },
+    "keyedStore": {
+      "args": [
+        "c"
+      ],
+      "expr": [
+        "some",
+        [
+          "list",
+          [
+            "enclosing",
+            "$c",
+            "assignment"
+          ]
+        ],
+        "a",
+        [
+          "and",
+          [
+            "exists",
+            "$a"
+          ],
+          [
+            "some",
+            "$a.targets",
+            "t",
+            [
+              "and",
+              [
+                "=",
+                "$t.kind",
+                "index"
+              ],
+              [
+                "exists",
+                "$t.key"
+              ]
+            ]
+          ]
+        ]
+      ]
+    },
+    "inline": {
+      "args": [
+        "c"
+      ],
+      "expr": [
+        "some",
+        "$c.arguments",
+        "a",
+        [
+          "and",
+          [
+            "=",
+            [
+              "position",
+              "$a"
+            ],
+            0
+          ],
+          [
+            "=",
+            "$a.value.kind",
+            "collection"
+          ]
+        ]
+      ]
+    }
+  }
 }

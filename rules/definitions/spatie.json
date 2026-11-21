@@ -666,22 +666,26 @@
           ],
           "s",
           [
-            "or",
-            [
-              "=",
-              "$s.binding.name",
-              "$n"
-            ],
-            [
-              "some",
-              "$s.declarators",
-              "d",
-              [
+            "case",
+            "$s.kind",
+            {
+              "parameter": [
                 "=",
-                "$d.binding.name",
+                "$s.binding.name",
                 "$n"
+              ],
+              "field": [
+                "some",
+                "$s.declarators",
+                "x",
+                [
+                  "=",
+                  "$x.binding.name",
+                  "$n"
+                ]
               ]
-            ]
+            },
+            false
           ]
         ],
         0

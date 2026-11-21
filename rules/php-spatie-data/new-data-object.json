@@ -10,7 +10,7 @@
       "NewDataObject"
     ],
     "skill": "php/spatie-data",
-    "description": "`new \u003cData subclass\u003e` instead of `::from()` / a `fromX()` factory",
+    "description": "`new <Data subclass>` instead of `::from()` / a `fromX()` factory",
     "rule": "Build a rich `Data` object via `::from()`/a `fromX()` factory, never `new`.",
     "suggestion": "`X::from(...)` (or a `fromY()` factory).",
     "requires": {
@@ -21,5 +21,396 @@
       "crossFile": true
     }
   },
-  "find": {}
+  "find": {
+    "select": "construction",
+    "as": "c",
+    "where": [
+      "and",
+      [
+        "spatie.isData",
+        [
+          "typeDeclaration",
+          "$c.type.refers"
+        ]
+      ],
+      [
+        "not",
+        [
+          "and",
+          [
+            "=",
+            "$c.role",
+            "default"
+          ],
+          [
+            "=",
+            "$c.parent.kind",
+            "parameter"
+          ]
+        ]
+      ],
+      [
+        "rich",
+        [
+          "typeDeclaration",
+          "$c.type.refers"
+        ]
+      ],
+      [
+        "not",
+        [
+          "some",
+          [
+            "list",
+            [
+              "enclosing",
+              "$c",
+              "type"
+            ]
+          ],
+          "t",
+          [
+            "=",
+            "$t.symbol",
+            "$c.type.refers"
+          ]
+        ]
+      ]
+    ],
+    "having": [
+      "none",
+      "$c.arguments",
+      "a",
+      [
+        "proven",
+        [
+          "handedArg",
+          "$a"
+        ]
+      ]
+    ],
+    "emit": "$c"
+  },
+  "definitions": {
+    "shortName": {
+      "args": [
+        "n"
+      ],
+      "expr": [
+        "last",
+        [
+          "split",
+          "$n",
+          "\\"
+        ]
+      ]
+    },
+    "richAttribute": {
+      "args": [
+        "a"
+      ],
+      "expr": [
+        "in",
+        "$a.refers",
+        "Spatie\\LaravelData\\Attributes\\WithCast",
+        "Spatie\\LaravelData\\Attributes\\WithCastable",
+        "Spatie\\LaravelData\\Attributes\\WithTransformer",
+        "Spatie\\LaravelData\\Attributes\\MapInputName",
+        "Spatie\\LaravelData\\Attributes\\MapName",
+        "Spatie\\LaravelData\\Attributes\\DataCollectionOf"
+      ]
+    },
+    "castable": {
+      "args": [
+        "m"
+      ],
+      "expr": [
+        "or",
+        [
+          "contains",
+          [
+            "shortName",
+            "$m.name"
+          ],
+          "DataCollection"
+        ],
+        [
+          "in",
+          [
+            "shortName",
+            "$m.name"
+          ],
+          "Optional",
+          "Lazy"
+        ],
+        [
+          "proven",
+          [
+            "isSubtype",
+            "$m.name",
+            "Spatie\\LaravelData\\Data"
+          ]
+        ]
+      ]
+    },
+    "richDecl": {
+      "args": [
+        "d"
+      ],
+      "expr": [
+        "or",
+        [
+          "some",
+          "$d.attributes",
+          "a",
+          [
+            "richAttribute",
+            "$a"
+          ]
+        ],
+        [
+          "some",
+          "$d.writtenMembers",
+          "m",
+          [
+            "and",
+            [
+              "=",
+              "$m.kind",
+              "function"
+            ],
+            [
+              "or",
+              [
+                "=",
+                "$m.name",
+                "casts"
+              ],
+              [
+                "matchesText",
+                "$m.name",
+                "^from[A-Z]"
+              ]
+            ]
+          ]
+        ],
+        [
+          "some",
+          "$d.implicitMembers",
+          "p",
+          [
+            "or",
+            [
+              "some",
+              "$p.attributes",
+              "a",
+              [
+                "richAttribute",
+                "$a"
+              ]
+            ],
+            [
+              "some",
+              [
+                "typeMembers",
+                [
+                  "typeOf",
+                  "$p"
+                ]
+              ],
+              "m",
+              [
+                "castable",
+                "$m"
+              ]
+            ]
+          ]
+        ]
+      ]
+    },
+    "rich": {
+      "args": [
+        "t"
+      ],
+      "expr": [
+        "some",
+        [
+          "append",
+          [
+            "list",
+            "$t"
+          ],
+          [
+            "map",
+            [
+              "knownSupertypes",
+              "$t"
+            ],
+            "s",
+            [
+              "typeDeclaration",
+              "$s"
+            ]
+          ]
+        ],
+        "d",
+        [
+          "and",
+          [
+            "exists",
+            "$d"
+          ],
+          [
+            "richDecl",
+            "$d"
+          ]
+        ]
+      ]
+    },
+    "declaredClass": {
+      "args": [
+        "a"
+      ],
+      "expr": [
+        "case",
+        [
+          "=",
+          [
+            "count",
+            [
+              "filter",
+              [
+                "typeMembers",
+                [
+                  "typeOf",
+                  [
+                    "parameterOf",
+                    "$a"
+                  ]
+                ]
+              ],
+              "m",
+              [
+                "=",
+                "$m.kind",
+                "named"
+              ]
+            ]
+          ],
+          1
+        ],
+        {
+          "true": [
+            "first",
+            [
+              "map",
+              [
+                "filter",
+                [
+                  "typeMembers",
+                  [
+                    "typeOf",
+                    [
+                      "parameterOf",
+                      "$a"
+                    ]
+                  ]
+                ],
+                "m",
+                [
+                  "=",
+                  "$m.kind",
+                  "named"
+                ]
+              ],
+              "m",
+              "$m.name"
+            ]
+          ]
+        },
+        ""
+      ]
+    },
+    "handedArg": {
+      "args": [
+        "a"
+      ],
+      "expr": [
+        "and",
+        [
+          "nonempty",
+          [
+            "declaredClass",
+            "$a"
+          ]
+        ],
+        [
+          "!=",
+          "$a.value.kind",
+          "construction"
+        ],
+        [
+          "not",
+          [
+            "and",
+            [
+              "=",
+              "$a.value.kind",
+              "call"
+            ],
+            [
+              "=",
+              "$a.value.callee.kind",
+              "access"
+            ],
+            [
+              "=",
+              "$a.value.callee.subject.refers",
+              [
+                "declaredClass",
+                "$a"
+              ]
+            ]
+          ]
+        ],
+        [
+          "=",
+          "$a.value.resolved.name",
+          [
+            "declaredClass",
+            "$a"
+          ]
+        ],
+        [
+          "or",
+          [
+            "not",
+            [
+              "proven",
+              [
+                "isNullable",
+                [
+                  "typeOf",
+                  "$a.value"
+                ]
+              ]
+            ]
+          ],
+          [
+            "proven",
+            [
+              "isNullable",
+              [
+                "typeOf",
+                [
+                  "parameterOf",
+                  "$a"
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  }
 }

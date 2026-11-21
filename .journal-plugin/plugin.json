@@ -263,7 +263,7 @@
             "detail": true
         },
         "sin_blank-string-on-the-wire": {
-            "title": "BlankStringOnTheWire",
+            "title": "blank-string-on-the-wire",
             "help": "A string sent over the wire that the frontend reads as absent when it is blank.",
             "type": "flag",
             "default": "true",
@@ -588,7 +588,7 @@
             "detail": true
         },
         "sin_hard-coded-route-path": {
-            "title": "HardCodedRoutePath",
+            "title": "hard-coded-route-path",
             "help": "A path written out by hand where a named route already declares it",
             "type": "flag",
             "default": "true",
@@ -705,7 +705,7 @@
             "detail": true
         },
         "sin_constructor-orchestration": {
-            "title": "ConstructorOrchestration",
+            "title": "constructor-orchestration",
             "help": "A page object fills a public slot imperatively in the constructor (`$this->x = $this->projector->…()`) where a `#[Computed]` property hook would describe it in place",
             "type": "flag",
             "default": "true",
@@ -731,7 +731,7 @@
             "detail": true
         },
         "sin_manual-output-transform": {
-            "title": "ManualOutputTransform",
+            "title": "manual-output-transform",
             "help": "A `Data` computed slot hand-flattens a value object into a wire array, instead of a `#[WithTransformer]` that owns the serialized shape",
             "type": "flag",
             "default": "true",
@@ -861,7 +861,7 @@
             "detail": true
         },
         "sin_boundary-duplicated-operation": {
-            "title": "BoundaryDuplicatedOperation",
+            "title": "boundary-duplicated-operation",
             "help": "The same domain operation hand-rolled at two DIFFERENT entry boundaries (a console command and an MCP tool, a controller and a command) — one operation with two implementations that drift",
             "type": "flag",
             "default": "true",
@@ -874,7 +874,7 @@
             "detail": true
         },
         "sin_dangling-route-name": {
-            "title": "DanglingRouteName",
+            "title": "dangling-route-name",
             "help": "A `route('x')` lookup naming a route no registration mints — a stringly cross-reference that only fails at runtime, as a 500",
             "type": "flag",
             "default": "true",
@@ -965,7 +965,7 @@
             "detail": true
         },
         "sin_data-method-hint-collision": {
-            "title": "DataMethodHintCollision",
+            "title": "data-method-hint-collision",
             "help": "`@method` tag that re-declares a real method (names the concrete factory, not the magic `from`/`collect`)",
             "type": "flag",
             "default": "true",
@@ -991,7 +991,7 @@
             "detail": true
         },
         "sin_manual-hydration-loop": {
-            "title": "ManualHydrationLoop",
+            "title": "manual-hydration-loop",
             "help": "Collections hydrated with `::from()` per item instead of `#[DataCollectionOf]` + `::collect()`",
             "type": "flag",
             "default": "true",
@@ -1004,7 +1004,7 @@
             "detail": true
         },
         "sin_manual-input-cast": {
-            "title": "ManualInputCast",
+            "title": "manual-input-cast",
             "help": "A `Data` value-object property is hand-built at every construction site, instead of a `#[WithCast]` / `Castable` that owns the hydration once",
             "type": "flag",
             "default": "true",
@@ -1030,7 +1030,7 @@
             "detail": true
         },
         "sin_new-data-object": {
-            "title": "NewDataObject",
+            "title": "new-data-object",
             "help": "`new <Data subclass>` instead of `::from()` / a `fromX()` factory",
             "type": "flag",
             "default": "true",
@@ -1108,7 +1108,7 @@
             "detail": true
         },
         "sin_derived-collection-cast": {
-            "title": "DerivedCollectionCast",
+            "title": "derived-collection-cast",
             "help": "A `#[DataCollectionOf]` is filled by mapping a factory over inputs at the call site, where a `#[WithCast]` should own the derivation",
             "type": "flag",
             "default": "true",
@@ -1394,7 +1394,7 @@
             "detail": true
         },
         "sin_flat-field-cluster": {
-            "title": "FlatFieldCluster",
+            "title": "flat-field-cluster",
             "help": "A `#[TypeScript]` `Data` class spreads a value object it already models flat across sibling scalar fields sharing a camelCase prefix (`wireType` + `wireLabel`) instead of nesting the existing `Wire{type, label}`.",
             "type": "flag",
             "default": "true",
@@ -3232,7 +3232,7 @@
             "detail": true
         },
         "sin_mirrored-server-type": {
-            "title": "MirroredServerType",
+            "title": "mirrored-server-type",
             "help": "A hand-written TypeScript type mirrors a backend `Data` class one-to-one — two sources of truth for one contract that drift the moment the server shape changes",
             "type": "flag",
             "default": "true",
@@ -3248,7 +3248,7 @@
             "detail": true
         },
         "sin_hard-coded-server-url": {
-            "title": "HardCodedServerURL",
+            "title": "hard-coded-server-url",
             "help": "A string written out as the path of a route the server declares by name",
             "type": "flag",
             "default": "true",
@@ -3293,7 +3293,7 @@
             "detail": true
         },
         "sin_deep-data-reach": {
-            "title": "DeepDataReach",
+            "title": "deep-data-reach",
             "help": "A group of elements in a sizeable template that all reach deep into the same nested object (≥2 distinct fields) — extract the shared mid-object into a component that takes it as a prop.",
             "type": "flag",
             "default": "true",
@@ -3306,7 +3306,7 @@
             "detail": true
         },
         "sin_deep-nested": {
-            "title": "DeepNested",
+            "title": "deep-nested",
             "help": "Template markup nested far too deep — extract a subtree as its own component",
             "type": "flag",
             "default": "true",
@@ -3371,7 +3371,7 @@
             "detail": true
         },
         "sin_prop-drilling": {
-            "title": "PropDrilling",
+            "title": "prop-drilling",
             "help": "A prop forwarded through a chain of 2+ components, none of which read it — passed down through components that only pass it further.",
             "type": "flag",
             "default": "true",
@@ -3384,7 +3384,7 @@
             "detail": true
         },
         "sin_prop-mutation": {
-            "title": "PropMutation",
+            "title": "prop-mutation",
             "help": "A prop is written to — `v-model` bound to it, or `@event=\"prop = …\"` — but props are read-only (a build error or a silent no-op).",
             "type": "flag",
             "default": "true",

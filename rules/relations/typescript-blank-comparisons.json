@@ -1,0 +1,123 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "vue",
+    "typescript"
+  ],
+  "relation": {
+    "from": "comparison",
+    "as": "c",
+    "pipeline": [
+      {
+        "where": [
+          "and",
+          [
+            "in",
+            "$c.operator",
+            "equal",
+            "not-equal",
+            "identical",
+            "not-identical"
+          ],
+          [
+            "=",
+            [
+              "count",
+              "$c.operands"
+            ],
+            2
+          ]
+        ]
+      },
+      {
+        "project": {
+          "anchor": "$c",
+          "blank": [
+            "filter",
+            "$c.operands",
+            "o",
+            [
+              "tree.isBlank",
+              "$o"
+            ]
+          ],
+          "other": [
+            "filter",
+            "$c.operands",
+            "o",
+            [
+              "not",
+              [
+                "tree.isBlank",
+                "$o"
+              ]
+            ]
+          ]
+        }
+      },
+      {
+        "where": [
+          "and",
+          [
+            "=",
+            [
+              "count",
+              "$blank"
+            ],
+            1
+          ],
+          [
+            "=",
+            [
+              "count",
+              "$other"
+            ],
+            1
+          ]
+        ]
+      },
+      {
+        "project": {
+          "s": [
+            "first",
+            "$other"
+          ]
+        }
+      },
+      {
+        "where": [
+          "tree.isPlainAccess",
+          "$s"
+        ]
+      },
+      {
+        "project": {
+          "typeName": [
+            "tree.holderType",
+            "$s.subject"
+          ],
+          "fieldName": "$s.member.name"
+        }
+      },
+      {
+        "where": [
+          "nonempty",
+          "$typeName"
+        ]
+      },
+      {
+        "project": {
+          "type": [
+            "tree.canon",
+            "$typeName"
+          ],
+          "field": [
+            "tree.canon",
+            "$fieldName"
+          ],
+          "strict": false
+        }
+      }
+    ]
+  }
+}

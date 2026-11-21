@@ -168,6 +168,9 @@ func sharedRelation(each Source) (relation, bool, error) {
 	prefix := each.name() + "."
 	brought := read.Relation.mapped(func(expression Expr) Expr { return renamed(expression, prefix, read.Definitions) })
 	brought.definitions = map[string]definition{}
+	if judged, err := enginesOf(read.Engine); err == nil {
+		brought.languages = judgedLanguages(judged)
+	}
 	for name, defined := range read.Definitions {
 		brought.definitions[prefix+name] = definition{defined.Args, renamed(defined.Expr, prefix, read.Definitions)}
 	}

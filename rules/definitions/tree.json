@@ -366,6 +366,167 @@
         },
         null
       ]
+    },
+    "canon": {
+      "args": [
+        "s"
+      ],
+      "expr": [
+        "replace",
+        [
+          "replace",
+          [
+            "lower",
+            "$s"
+          ],
+          "_",
+          ""
+        ],
+        "-",
+        ""
+      ]
+    },
+    "declaredTypeOf": {
+      "args": [
+        "d"
+      ],
+      "expr": [
+        "case",
+        "$d.kind",
+        {
+          "parameter": "$d.declaredType",
+          "field": "$d.declaredType",
+          "binding": [
+            "case",
+            "$d.parent.kind",
+            {
+              "parameter": "$d.parent.declaredType",
+              "declarator": "$d.parent.parent.declaredType"
+            },
+            null
+          ]
+        },
+        null
+      ]
+    },
+    "namedIn": {
+      "args": [
+        "t"
+      ],
+      "expr": [
+        "filter",
+        [
+          "flatten",
+          [
+            "list",
+            [
+              "list",
+              "$t"
+            ],
+            [
+              "descendants",
+              "$t",
+              "type-expression"
+            ]
+          ]
+        ],
+        "x",
+        [
+          "=",
+          "$x.form",
+          "named"
+        ]
+      ]
+    },
+    "typeNameOf": {
+      "args": [
+        "t"
+      ],
+      "expr": [
+        "case",
+        [
+          "=",
+          [
+            "count",
+            [
+              "namedIn",
+              "$t"
+            ]
+          ],
+          1
+        ],
+        {
+          "true": [
+            "first",
+            [
+              "map",
+              [
+                "namedIn",
+                "$t"
+              ],
+              "x",
+              "$x.name"
+            ]
+          ]
+        },
+        ""
+      ]
+    },
+    "holderType": {
+      "args": [
+        "h"
+      ],
+      "expr": [
+        "typeNameOf",
+        [
+          "declaredTypeOf",
+          [
+            "declarationOf",
+            "$h"
+          ]
+        ]
+      ]
+    },
+    "isPlainAccess": {
+      "args": [
+        "s"
+      ],
+      "expr": [
+        "and",
+        [
+          "=",
+          "$s.kind",
+          "access"
+        ],
+        [
+          "=",
+          "$s.subject.kind",
+          "reference"
+        ],
+        [
+          "=",
+          "$s.member.kind",
+          "reference"
+        ]
+      ]
+    },
+    "isBlank": {
+      "args": [
+        "o"
+      ],
+      "expr": [
+        "and",
+        [
+          "literalIs",
+          "$o",
+          "string"
+        ],
+        [
+          "literalEquals",
+          "$o",
+          ""
+        ]
+      ]
     }
   }
 }

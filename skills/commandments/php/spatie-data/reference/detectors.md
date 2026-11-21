@@ -5,12 +5,12 @@ Each row is one rule: the sin's id, the symptom its detector flags, and the dete
 - **`all-nullable-data`** — All-nullable "god" DTO — every field `?T`/defaulted (type doesn't tell the truth) — `all-nullable-data`
 - **`all-optional-data`** — Every field of a `Data` object is `T|Optional` — the type promises nothing is ever present; the absence belongs on the CONTAINER field where it's used — `all-optional-data`
 - **`data-collection-type`** — A `Data` property is TYPED as `DataCollection` — it should be `array` (or `Collection`) with `#[DataCollectionOf(X)]`; the `DataCollection` type emits malformed TypeScript and skips element-typed hydration — `data-collection-type`
-- **`data-method-hint-collision`** — `@method` tag that re-declares a real method (names the concrete factory, not the magic `from`/`collect`) — `DataMethodHintCollisionDetector`
+- **`data-method-hint-collision`** — `@method` tag that re-declares a real method (names the concrete factory, not the magic `from`/`collect`) — `data-method-hint-collision`
 - **`hook-missing-computed`** — A get-only property HOOK on a `Data` class lacks `#[Computed]` — Spatie reads the virtual property as a hydration INPUT, expects it in `::from()`, and crashes or silently drops it — `hook-missing-computed`
-- **`manual-hydration-loop`** — Collections hydrated with `::from()` per item instead of `#[DataCollectionOf]` + `::collect()` — `ManualHydrationLoopDetector`
-- **`manual-input-cast`** — A `Data` value-object property is hand-built at every construction site, instead of a `#[WithCast]` / `Castable` that owns the hydration once — `ManualInputCastDetector`
+- **`manual-hydration-loop`** — Collections hydrated with `::from()` per item instead of `#[DataCollectionOf]` + `::collect()` — `manual-hydration-loop`
+- **`manual-input-cast`** — A `Data` value-object property is hand-built at every construction site, instead of a `#[WithCast]` / `Castable` that owns the hydration once — `manual-input-cast`
 - **`nested-type-missing-typescript`** — A `#[TypeScript]` Data has a property typed as a nested `Data` class that itself lacks `#[TypeScript]` — the transformer emits it as `undefined`, a silent hole in the generated type (a nested enum is fine; the enum collector auto-generates it) — `nested-type-missing-typescript`
-- **`new-data-object`** — `new <Data subclass>` instead of `::from()` / a `fromX()` factory — `NewDataObjectDetector`
+- **`new-data-object`** — `new <Data subclass>` instead of `::from()` / a `fromX()` factory — `new-data-object`
 - **`non-final-data`** — Data class not `final` / props not `readonly` promoted — `non-final-data`
 - **`null-to-optional-map`** — A producer hand-maps null→`new Optional` — `$x === null ? new Optional : Foo::from($x)` or `expr() ?? new Optional` — instead of one named factory (Spatie's `optional()` maps null→null, the opposite of what a `T|Optional` slot needs) — `null-to-optional-map`
 - **`nullable-wire-object`** — A nested Data or enum on a `#[TypeScript]` Data is typed `T | null` — it ships `null` on the wire where `T | Optional` would OMIT it (what the frontend's `x?.` reads for "absent") — `nullable-wire-object`

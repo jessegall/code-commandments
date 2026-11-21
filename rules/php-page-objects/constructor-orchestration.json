@@ -10,9 +10,9 @@
       "ConstructorOrchestration"
     ],
     "skill": "php/page-objects",
-    "description": "A page object fills a public slot imperatively in the constructor (`$this-\u003ex = $this-\u003eprojector-\u003e…()`) where a `#[Computed]` property hook would describe it in place",
+    "description": "A page object fills a public slot imperatively in the constructor (`$this->x = $this->projector->…()`) where a `#[Computed]` property hook would describe it in place",
     "rule": "Project each self-contained page-object slot in a `#[Computed]` get-hook, not an imperative constructor assignment.",
-    "suggestion": "Replace `$this-\u003ex = expr;` with `#[Computed] public T $x { get =\u003e expr; }`. Pin a deliberately-eager slot (one that must capture request-scoped state at build time) with `#[Eager]` — the scaffolded escape hatch.",
+    "suggestion": "Replace `$this->x = expr;` with `#[Computed] public T $x { get => expr; }`. Pin a deliberately-eager slot (one that must capture request-scoped state at build time) with `#[Eager]` — the scaffolded escape hatch.",
     "requires": {
       "name": "spatie/laravel-data",
       "ecosystem": "composer"
@@ -27,5 +27,587 @@
       "crossFile": true
     }
   },
-  "find": {}
+  "find": {
+    "from": "assignment",
+    "as": "a",
+    "pipeline": [
+      {
+        "where": [
+          "and",
+          [
+            "=",
+            "$a.mode",
+            "assign"
+          ],
+          [
+            "nonempty",
+            [
+              "assignedName",
+              "$a"
+            ]
+          ],
+          [
+            "inConstructor",
+            "$a"
+          ],
+          [
+            "publicOwnSlot",
+            "$a"
+          ],
+          [
+            "not",
+            [
+              "deferredValue",
+              "$a"
+            ]
+          ],
+          [
+            "not",
+            [
+              "deferredSlot",
+              "$a"
+            ]
+          ],
+          [
+            "not",
+            [
+              "readsLocal",
+              "$a"
+            ]
+          ],
+          [
+            "not",
+            [
+              "branched",
+              "$a"
+            ]
+          ],
+          [
+            "not",
+            [
+              "repeated",
+              "$a"
+            ]
+          ],
+          [
+            "spatie.composes",
+            [
+              "enclosing",
+              "$a",
+              "type"
+            ]
+          ]
+        ]
+      },
+      {
+        "project": {
+          "anchor": "$a",
+          "symbol": [
+            "symbolOfType",
+            [
+              "enclosing",
+              "$a",
+              "type"
+            ]
+          ]
+        }
+      },
+      {
+        "join": "laravel-response-types",
+        "as": "rendered",
+        "on": {
+          "type": "$symbol"
+        }
+      },
+      {
+        "join": "laravel-controller-returns",
+        "as": "returned",
+        "on": {
+          "type": "$symbol"
+        }
+      },
+      {
+        "where": [
+          "or",
+          [
+            "exists",
+            "$rendered"
+          ],
+          [
+            "exists",
+            "$returned"
+          ]
+        ]
+      },
+      {
+        "emit": "$anchor"
+      }
+    ]
+  },
+  "definitions": {
+    "shortName": {
+      "args": [
+        "n"
+      ],
+      "expr": [
+        "last",
+        [
+          "split",
+          "$n",
+          "\\"
+        ]
+      ]
+    },
+    "assignedName": {
+      "args": [
+        "a"
+      ],
+      "expr": [
+        "first",
+        [
+          "map",
+          [
+            "filter",
+            "$a.targets",
+            "t",
+            [
+              "and",
+              [
+                "tree.selfField",
+                "$t"
+              ],
+              [
+                "=",
+                "$t.form",
+                "instance"
+              ]
+            ]
+          ],
+          "t",
+          "$t.member.name"
+        ]
+      ]
+    },
+    "slotOf": {
+      "args": [
+        "a"
+      ],
+      "expr": [
+        "spatie.slotNamed",
+        [
+          "enclosing",
+          "$a",
+          "type"
+        ],
+        [
+          "assignedName",
+          "$a"
+        ]
+      ]
+    },
+    "inConstructor": {
+      "args": [
+        "a"
+      ],
+      "expr": [
+        "some",
+        [
+          "list",
+          [
+            "enclosing",
+            "$a",
+            "function"
+          ]
+        ],
+        "f",
+        [
+          "and",
+          [
+            "exists",
+            "$f"
+          ],
+          [
+            "=",
+            "$f.form",
+            "constructor"
+          ]
+        ]
+      ]
+    },
+    "publicOwnSlot": {
+      "args": [
+        "a"
+      ],
+      "expr": [
+        "some",
+        [
+          "list",
+          [
+            "slotOf",
+            "$a"
+          ]
+        ],
+        "s",
+        [
+          "and",
+          [
+            "exists",
+            "$s"
+          ],
+          [
+            "=",
+            "$s.kind",
+            "field"
+          ],
+          [
+            "some",
+            "$s.modifiers",
+            "m",
+            [
+              "=",
+              "$m",
+              "public"
+            ]
+          ],
+          [
+            "none",
+            "$s.modifiers",
+            "m",
+            [
+              "=",
+              "$m",
+              "static"
+            ]
+          ]
+        ]
+      ]
+    },
+    "deferredValue": {
+      "args": [
+        "a"
+      ],
+      "expr": [
+        "some",
+        "$a.values",
+        "v",
+        [
+          "or",
+          [
+            "and",
+            [
+              "=",
+              "$v.kind",
+              "call"
+            ],
+            [
+              "=",
+              "$v.callee.kind",
+              "access"
+            ],
+            [
+              "=",
+              "$v.callee.form",
+              "static"
+            ],
+            [
+              "=",
+              "$v.callee.subject.kind",
+              "reference"
+            ],
+            [
+              "=",
+              [
+                "shortName",
+                "$v.callee.subject.refers"
+              ],
+              "Lazy"
+            ]
+          ],
+          [
+            "and",
+            [
+              "=",
+              "$v.kind",
+              "construction"
+            ],
+            [
+              "contains",
+              [
+                "shortName",
+                "$v.type.refers"
+              ],
+              "Prop"
+            ]
+          ]
+        ]
+      ]
+    },
+    "deferredSlot": {
+      "args": [
+        "a"
+      ],
+      "expr": [
+        "some",
+        [
+          "list",
+          [
+            "slotOf",
+            "$a"
+          ]
+        ],
+        "s",
+        [
+          "and",
+          [
+            "exists",
+            "$s"
+          ],
+          [
+            "some",
+            [
+              "writtenTypes",
+              "$s.declaredType"
+            ],
+            "m",
+            [
+              "and",
+              [
+                "=",
+                "$m.form",
+                "named"
+              ],
+              [
+                "or",
+                [
+                  "=",
+                  [
+                    "shortName",
+                    "$m.name"
+                  ],
+                  "Lazy"
+                ],
+                [
+                  "endsWith",
+                  [
+                    "shortName",
+                    "$m.name"
+                  ],
+                  "Prop"
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    },
+    "readsLocal": {
+      "args": [
+        "a"
+      ],
+      "expr": [
+        "some",
+        "$a.values",
+        "v",
+        [
+          "some",
+          [
+            "flatten",
+            [
+              "list",
+              [
+                "list",
+                "$v"
+              ],
+              [
+                "descendants",
+                "$v"
+              ]
+            ]
+          ],
+          "d",
+          [
+            "and",
+            [
+              "=",
+              "$d.kind",
+              "reference"
+            ],
+            [
+              "=",
+              "$d.form",
+              "name"
+            ],
+            [
+              "not",
+              [
+                "in",
+                "$d.role",
+                "member",
+                "callee"
+              ]
+            ],
+            [
+              "not",
+              [
+                "staticSubject",
+                "$d"
+              ]
+            ],
+            [
+              "not",
+              [
+                "proven",
+                [
+                  "nonempty",
+                  "$d.refers"
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    },
+    "branched": {
+      "args": [
+        "a"
+      ],
+      "expr": [
+        "some",
+        [
+          "ownAncestors",
+          "$a"
+        ],
+        "n",
+        [
+          "or",
+          [
+            "in",
+            "$n.kind",
+            "if",
+            "conditional",
+            "loop"
+          ],
+          [
+            "and",
+            [
+              "=",
+              "$n.kind",
+              "dispatch"
+            ],
+            [
+              "=",
+              "$n.form",
+              "match"
+            ]
+          ],
+          [
+            "and",
+            [
+              "=",
+              "$n.kind",
+              "fallback"
+            ],
+            [
+              "=",
+              "$n.trigger",
+              "falsy"
+            ]
+          ]
+        ]
+      ]
+    },
+    "repeated": {
+      "args": [
+        "a"
+      ],
+      "expr": [
+        ">",
+        [
+          "count",
+          [
+            "filter",
+            [
+              "descendants",
+              [
+                "enclosing",
+                "$a",
+                "function"
+              ],
+              "assignment"
+            ],
+            "x",
+            [
+              "and",
+              [
+                "=",
+                "$x.mode",
+                "assign"
+              ],
+              [
+                "=",
+                [
+                  "assignedName",
+                  "$x"
+                ],
+                [
+                  "assignedName",
+                  "$a"
+                ]
+              ]
+            ]
+          ]
+        ],
+        1
+      ]
+    },
+    "staticSubject": {
+      "args": [
+        "d"
+      ],
+      "expr": [
+        "and",
+        [
+          "=",
+          "$d.role",
+          "subject"
+        ],
+        [
+          "=",
+          "$d.parent.kind",
+          "access"
+        ],
+        [
+          "=",
+          "$d.parent.form",
+          "static"
+        ]
+      ]
+    },
+    "writtenTypes": {
+      "args": [
+        "t"
+      ],
+      "expr": [
+        "flatten",
+        [
+          "list",
+          [
+            "list",
+            "$t"
+          ],
+          [
+            "descendants",
+            "$t",
+            "type-expression"
+          ]
+        ]
+      ]
+    },
+    "symbolOfType": {
+      "args": [
+        "t"
+      ],
+      "expr": "$t.symbol"
+    }
+  }
 }

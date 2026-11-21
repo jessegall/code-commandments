@@ -16,5 +16,92 @@
       "crossFile": true
     }
   },
-  "find": {}
+  "find": {
+    "relations": {
+      "forwards": {
+        "from": "element",
+        "as": "e",
+        "pipeline": [
+          {
+            "where": [
+              "=",
+              "$e.form",
+              "component"
+            ]
+          },
+          {
+            "project": {
+              "anchor": "$e",
+              "file": "$e.file.path",
+              "child": "$e.resolves",
+              "binds": [
+                "vue.bareBinds",
+                "$e"
+              ]
+            }
+          },
+          {
+            "expand": "$binds"
+          },
+          {
+            "project": {
+              "prop": "$row.prop",
+              "as": "$row.as"
+            }
+          },
+          {
+            "join": "vue-component-props",
+            "on": {
+              "file": "$anchor.file.path"
+            },
+            "as": "p",
+            "mode": "inner"
+          },
+          {
+            "where": [
+              "and",
+              [
+                "has",
+                "$p.props",
+                "$prop"
+              ],
+              [
+                "vue.onlyForwarded",
+                "$anchor",
+                "$prop"
+              ],
+              [
+                "not",
+                [
+                  "vue.readThrough",
+                  "$anchor",
+                  "$p.holder",
+                  "$prop"
+                ]
+              ]
+            ]
+          }
+        ]
+      }
+    },
+    "from": "forwards",
+    "as": "f",
+    "pipeline": [
+      {
+        "join": "forwards",
+        "on": {
+          "file": "$f.child",
+          "prop": "$f.as"
+        },
+        "as": "next",
+        "mode": "semi"
+      },
+      {
+        "distinct": "$f.anchor"
+      },
+      {
+        "emit": "$f.anchor"
+      }
+    ]
+  }
 }

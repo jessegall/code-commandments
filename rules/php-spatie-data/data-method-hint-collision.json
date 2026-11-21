@@ -17,5 +17,117 @@
       "ecosystem": "composer"
     }
   },
-  "find": {}
+  "find": {
+    "select": "comment",
+    "as": "c",
+    "where": [
+      "and",
+      [
+        "=",
+        "$c.form",
+        "doc"
+      ],
+      [
+        "=",
+        "$c.documents.kind",
+        "type"
+      ],
+      [
+        "=",
+        "$c.documents.form",
+        "class"
+      ]
+    ],
+    "having": [
+      "and",
+      [
+        "some",
+        "$c.tags",
+        "g",
+        [
+          "and",
+          [
+            "=",
+            "$g.name",
+            "method"
+          ],
+          [
+            "declares",
+            "$c.documents",
+            "$g"
+          ]
+        ]
+      ],
+      [
+        "spatie.isData",
+        "$c.documents"
+      ]
+    ],
+    "emit": "$c.documents"
+  },
+  "definitions": {
+    "tagWords": {
+      "args": [
+        "g"
+      ],
+      "expr": [
+        "lower",
+        [
+          "concat",
+          " ",
+          [
+            "coalesce",
+            "$g.type",
+            ""
+          ],
+          " ",
+          [
+            "coalesce",
+            "$g.subject",
+            ""
+          ],
+          " ",
+          [
+            "coalesce",
+            "$g.text",
+            ""
+          ]
+        ]
+      ]
+    },
+    "declares": {
+      "args": [
+        "t",
+        "g"
+      ],
+      "expr": [
+        "some",
+        "$t.writtenMembers",
+        "m",
+        [
+          "and",
+          [
+            "=",
+            "$m.kind",
+            "function"
+          ],
+          [
+            "contains",
+            [
+              "tagWords",
+              "$g"
+            ],
+            [
+              "lower",
+              [
+                "concat",
+                "$m.name",
+                "("
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  }
 }

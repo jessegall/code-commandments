@@ -25,8 +25,6 @@ func init() {
 			return Node{Match: declaration}.DeclaredName()
 		},
 		Parameters:  parameters,
-		Extends:     func(declaration engine.Match) []engine.Match { return basesWhere(declaration, false) },
-		Implements:  func(declaration engine.Match) []engine.Match { return basesWhere(declaration, true) },
 		Annotations: attributes,
 		TypeOf:      func(node engine.Match) string { return Node{Match: node}.Type().Name() },
 		TypeKind: engine.Kinds(map[string]string{"ClassDeclaration": "class", "InterfaceDeclaration": "interface",
@@ -200,31 +198,6 @@ func arguments(match engine.Match) []engine.Match {
 	}
 
 	return handed
-}
-
-func basesWhere(declaration engine.Match, interfaces bool) []engine.Match {
-	extendsAll := declaration.TypeKind() == "interface"
-	if extendsAll && interfaces {
-		return nil
-	}
-
-	var named []engine.Match
-	for _, base := range declaration.Child("BaseList").ChildrenIn("Types") {
-		if written := base.Child("Type"); extendsAll || namesInterface(written) == interfaces {
-			named = append(named, written)
-		}
-	}
-
-	return named
-}
-
-func namesInterface(written engine.Match) bool {
-	symbol := written.Refers()
-	if declarations := written.Codebase().Declarations(symbol); len(declarations) > 0 {
-		return declarations[0].TypeKind() == "interface"
-	}
-
-	return written.OutsideKind(symbol) == "interface"
 }
 
 func attributes(declaration engine.Match) []engine.Match {

@@ -1,6 +1,7 @@
 package scan
 
 import (
+	"path/filepath"
 	"os/exec"
 	"slices"
 	"strings"
@@ -28,6 +29,9 @@ func TestTheScanFindsWhatTheFrontendParityToolFinds(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	// The fixture is judged as the project it is, never as test files of this checkout.
+	project, _ := filepath.Abs(root)
+	codebase.Rooted(project)
 
 	var found []string
 
@@ -47,5 +51,6 @@ func TestTheScanFindsWhatTheFrontendParityToolFinds(t *testing.T) {
 
 	if want := strings.Split(strings.TrimSpace(string(out)), "\n"); len(found) != len(want) {
 		t.Errorf("scan found %d, the parity tool %d", len(found), len(want))
+
 	}
 }

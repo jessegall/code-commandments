@@ -13,5 +13,70 @@
     "description": "Template markup nested far too deep — extract a subtree as its own component",
     "rule": "Extract a far-too-deeply-nested subtree into its own component."
   },
-  "find": {}
+  "find": {
+    "from": "element",
+    "as": "e",
+    "pipeline": [
+      {
+        "where": [
+          "and",
+          [
+            ">",
+            [
+              "vue.depth",
+              "$e"
+            ],
+            "$param.depth"
+          ],
+          [
+            ">",
+            [
+              "subtract",
+              [
+                "vue.deepest",
+                "$e"
+              ],
+              [
+                "vue.depth",
+                "$e"
+              ]
+            ],
+            "$param.below"
+          ]
+        ]
+      },
+      {
+        "project": {
+          "anchor": [
+            "vue.boundary",
+            "$e"
+          ]
+        }
+      },
+      {
+        "where": [
+          "vue.extractable",
+          "$anchor"
+        ]
+      },
+      {
+        "distinct": "$anchor"
+      },
+      {
+        "emit": "$anchor"
+      }
+    ]
+  },
+  "parameters": {
+    "depth": {
+      "type": "number",
+      "default": 8,
+      "description": "How deep an element lies, the template root being 1, before the markup above it is read as too deep."
+    },
+    "below": {
+      "type": "number",
+      "default": 3,
+      "description": "How many element levels must still lie under a deep element for it to count."
+    }
+  }
 }

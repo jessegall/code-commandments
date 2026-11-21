@@ -32,7 +32,7 @@ _178 sins across 40 skills._
 
 | Sin | What it flags |
 |---|---|
-| `BlankStringOnTheWire` | A string sent over the wire that the frontend reads as absent when it is blank. |
+| `blank-string-on-the-wire` | A string sent over the wire that the frontend reads as absent when it is blank. |
 | `erased-null-object` | A blank-rendering Null Object written into a `string` slot — coerced back to `''` |
 | `false-for-nothing` | A return typed `X\|false`: `false` stands in for "nothing" or "failed", and every caller must test for it. |
 | `option-as-nullable` | `Option<T>` used as if it were nullable — `?Option`, `Option \| null`, `unwrapOr(null)` |
@@ -140,6 +140,19 @@ _178 sins across 40 skills._
 | `unused-private-member` | A private method nothing in its class calls, or a private property nothing in its class reads: dead code the class still carries. |
 | `useless-property-hook` | A `get` hook that reads nothing from `$this` — a stored property wearing computed syntax |
 
+#### `php/value-objects`
+
+| Sin | What it flags |
+|---|---|
+| `array-bag` | String-indexing (`$arr['key']`) a structured array param instead of giving it a name — the type was never defined. |
+| `array-bag-parameter` | A parameter declared `array` that callers fill with string-keyed records (`['mode' => …, 'plan' => …]`): the method never defined the type its fields belong to. |
+| `array-return-bag` | Returning a multi-field string-keyed array literal (a bag that should be a value object) |
+| `coupled-fields` | A class's own fields always change and get checked together — one concept split across several fields — and should be folded into a single value object. |
+| `flat-field-cluster` | A `#[TypeScript]` `Data` class spreads a value object it already models flat across sibling scalar fields sharing a camelCase prefix (`wireType` + `wireLabel`) instead of nesting the existing `Wire{type, label}`. |
+| `hand-rolled-wither` | A wither method rebuilds the whole object by re-listing every constructor field, so adding a new field means updating every wither in the class. |
+| `mutable-value-object` | A value type that mutates its own field after construction, so two things holding what should be the same value can end up different — one changes without the other knowing. |
+| `positional-tuple-return` | Returning a positional TUPLE — `return [$node, $key, $inputs, $outputs]` — bundling independent values as a keyless list the caller destructures by position |
+
 #### `php/concurrent-state`
 
 | Sin | What it flags |
@@ -150,7 +163,6 @@ _178 sins across 40 skills._
 
 | Sin | What it flags |
 |---|---|
-| `HardCodedRoutePath` | A path written out by hand where a named route already declares it |
 | `bare-scope-escape` | an Eloquent query drops every global scope, including ones added later |
 | `config-read` | `config('…')` read inside a class |
 | `container-reach` | `app()`, `resolve()` or a container's `make()` reach inside a container-resolved class |
@@ -159,6 +171,7 @@ _178 sins across 40 skills._
 | `duplicated-config-default` | A config key whose default is stated TWICE — once in the config file, again as the reader's inline fallback — two sources of truth that drift silently |
 | `facade-call` | Laravel facade call (`Cache::`, `Log::`, `Mail::` …) |
 | `handed-out-collection` | a getter whose whole body returns the class's own `Collection`, untouched — a Collection is an object, so every caller holds the same one and may `push`, `forget` or `sort` it behind the class's back |
+| `hard-coded-route-path` | A path written out by hand where a named route already declares it |
 | `mass-update-at-call-site` | Bare `$model->update([...])` mass-array update at a call site |
 | `model-mutation-at-call-site` | Set-property-then-`save()` at a call site (should be an intention method) |
 | `orphaned-binding` | A container binding whose abstract nothing ever resolves — dead wiring that reads as load-bearing and survives every refactor |
@@ -170,9 +183,9 @@ _178 sins across 40 skills._
 
 | Sin | What it flags |
 |---|---|
-| `ConstructorOrchestration` | A page object fills a public slot imperatively in the constructor (`$this->x = $this->projector->…()`) where a `#[Computed]` property hook would describe it in place |
-| `ManualOutputTransform` | A `Data` computed slot hand-flattens a value object into a wire array, instead of a `#[WithTransformer]` that owns the serialized shape |
+| `constructor-orchestration` | A page object fills a public slot imperatively in the constructor (`$this->x = $this->projector->…()`) where a `#[Computed]` property hook would describe it in place |
 | `injected-service-not-hidden` | A page object injects a service (`#[FromContainer]`, …) into a public property without `#[Hidden]` — it leaks into the generated TypeScript type |
+| `manual-output-transform` | A `Data` computed slot hand-flattens a value object into a wire array, instead of a `#[WithTransformer]` that owns the serialized shape |
 | `page-object-missing-typescript` | A page object travels back in a response but carries no `#[TypeScript]` — the `.vue` page reads it as untyped `any`, so the whole page-prop contract goes unchecked |
 | `service-location-in-page-object` | A page object reaches into the container with `app()`/`resolve()` instead of injecting the collaborator via `#[FromContainer]` |
 | `transformer-without-ts-type` | On a Data class exported with `#[TypeScript]`, a custom `#[WithTransformer]` changes the wire shape and the generated type still describes the PHP value. |
@@ -181,8 +194,8 @@ _178 sins across 40 skills._
 
 | Sin | What it flags |
 |---|---|
-| `BoundaryDuplicatedOperation` | The same domain operation hand-rolled at two DIFFERENT entry boundaries (a console command and an MCP tool, a controller and a command) — one operation with two implementations that drift |
-| `DanglingRouteName` | A `route('x')` lookup naming a route no registration mints — a stringly cross-reference that only fails at runtime, as a 500 |
+| `boundary-duplicated-operation` | The same domain operation hand-rolled at two DIFFERENT entry boundaries (a console command and an MCP tool, a controller and a command) — one operation with two implementations that drift |
+| `dangling-route-name` | A `route('x')` lookup naming a route no registration mints — a stringly cross-reference that only fails at runtime, as a 500 |
 | `duplicate-route` | Two route registrations of the same verb bind different URLs to the SAME `[Controller, method]` — two names for one handler (invokable single-action controllers, commonly aliased to several canonical URLs, are exempt) |
 | `duplicate-route-action` | Two route actions in different controllers thinly delegate to the SAME operation (`return $this->exporter->export(...)`) — the same entry point twice |
 | `route-delegates-to-controller` | A route action forwards to ANOTHER controller's action (`return $this->otherController->action(...)`) — a redundant entry point onto an operation that already has one |
@@ -191,15 +204,15 @@ _178 sins across 40 skills._
 
 | Sin | What it flags |
 |---|---|
-| `DataMethodHintCollision` | `@method` tag that re-declares a real method (names the concrete factory, not the magic `from`/`collect`) |
-| `ManualHydrationLoop` | Collections hydrated with `::from()` per item instead of `#[DataCollectionOf]` + `::collect()` |
-| `ManualInputCast` | A `Data` value-object property is hand-built at every construction site, instead of a `#[WithCast]` / `Castable` that owns the hydration once |
-| `NewDataObject` | `new <Data subclass>` instead of `::from()` / a `fromX()` factory |
 | `all-nullable-data` | All-nullable "god" DTO — every field `?T`/defaulted (type doesn't tell the truth) |
 | `all-optional-data` | Every field of a `Data` object is `T\|Optional` — the type promises nothing is ever present; the absence belongs on the CONTAINER field where it's used |
 | `data-collection-type` | A `Data` property is TYPED as `DataCollection` — it should be `array` (or `Collection`) with `#[DataCollectionOf(X)]`; the `DataCollection` type emits malformed TypeScript and skips element-typed hydration |
+| `data-method-hint-collision` | `@method` tag that re-declares a real method (names the concrete factory, not the magic `from`/`collect`) |
 | `hook-missing-computed` | A get-only property HOOK on a `Data` class lacks `#[Computed]` — Spatie reads the virtual property as a hydration INPUT, expects it in `::from()`, and crashes or silently drops it |
+| `manual-hydration-loop` | Collections hydrated with `::from()` per item instead of `#[DataCollectionOf]` + `::collect()` |
+| `manual-input-cast` | A `Data` value-object property is hand-built at every construction site, instead of a `#[WithCast]` / `Castable` that owns the hydration once |
 | `nested-type-missing-typescript` | A `#[TypeScript]` Data has a property typed as a nested `Data` class that itself lacks `#[TypeScript]` — the transformer emits it as `undefined`, a silent hole in the generated type (a nested enum is fine; the enum collector auto-generates it) |
+| `new-data-object` | `new <Data subclass>` instead of `::from()` / a `fromX()` factory |
 | `non-final-data` | Data class not `final` / props not `readonly` promoted |
 | `null-to-optional-map` | A producer hand-maps null→`new Optional` — `$x === null ? new Optional : Foo::from($x)` or `expr() ?? new Optional` — instead of one named factory (Spatie's `optional()` maps null→null, the opposite of what a `T\|Optional` slot needs) |
 | `nullable-wire-object` | A nested Data or enum on a `#[TypeScript]` Data is typed `T \| null` — it ships `null` on the wire where `T \| Optional` would OMIT it (what the frontend's `x?.` reads for "absent") |
@@ -209,25 +222,12 @@ _178 sins across 40 skills._
 
 | Sin | What it flags |
 |---|---|
-| `DerivedCollectionCast` | A `#[DataCollectionOf]` is filled by mapping a factory over inputs at the call site, where a `#[WithCast]` should own the derivation |
 | `data-to-array-roundtrip` | A `X::from(...)->toArray()` sits in a `::from` slot typed `X` that re-hydrates it — build → array → build |
+| `derived-collection-cast` | A `#[DataCollectionOf]` is filled by mapping a factory over inputs at the call site, where a `#[WithCast]` should own the derivation |
 | `hand-key-remap` | A `::from([...])` mechanically renames `$src['snake_key']` → `camelKey` by hand, instead of a class-level `#[MapInputName]` |
 | `redundant-enum-unwrap` | An enum is unwrapped to `->value` at a hydration site (`'status' => $order->status->value`) where the property is typed as that enum — Spatie re-casts the scalar straight back to the enum |
 | `redundant-native-cast` | An enum / date is constructed at a hydration site (`Enum::from($x)`, `new DateTime($x)`) where the property auto-casts the raw scalar |
 | `redundant-nested-from` | A nested `X::from([...])` fills a slot the parent `::from` already auto-hydrates from the array |
-
-#### `php/value-objects`
-
-| Sin | What it flags |
-|---|---|
-| `FlatFieldCluster` | A `#[TypeScript]` `Data` class spreads a value object it already models flat across sibling scalar fields sharing a camelCase prefix (`wireType` + `wireLabel`) instead of nesting the existing `Wire{type, label}`. |
-| `array-bag` | String-indexing (`$arr['key']`) a structured array param instead of giving it a name — the type was never defined. |
-| `array-bag-parameter` | A parameter declared `array` that callers fill with string-keyed records (`['mode' => …, 'plan' => …]`): the method never defined the type its fields belong to. |
-| `array-return-bag` | Returning a multi-field string-keyed array literal (a bag that should be a value object) |
-| `coupled-fields` | A class's own fields always change and get checked together — one concept split across several fields — and should be folded into a single value object. |
-| `hand-rolled-wither` | A wither method rebuilds the whole object by re-listing every constructor field, so adding a new field means updating every wither in the class. |
-| `mutable-value-object` | A value type that mutates its own field after construction, so two things holding what should be the same value can end up different — one changes without the other knowing. |
-| `positional-tuple-return` | Returning a positional TUPLE — `return [$node, $key, $inputs, $outputs]` — bundling independent values as a keyless list the caller destructures by position |
 
 ### Python
 
@@ -363,22 +363,22 @@ _178 sins across 40 skills._
 
 | Sin | What it flags |
 |---|---|
-| `HardCodedServerURL` | A string written out as the path of a route the server declares by name |
+| `hard-coded-server-url` | A string written out as the path of a route the server declares by name |
 | `raw-fetch-in-component` | A Vue component calls the global `fetch` itself instead of the one client module |
 
 #### `vue/vue-components`
 
 | Sin | What it flags |
 |---|---|
-| `DeepDataReach` | A group of elements in a sizeable template that all reach deep into the same nested object (≥2 distinct fields) — extract the shared mid-object into a component that takes it as a prop. |
-| `DeepNested` | Template markup nested far too deep — extract a subtree as its own component |
-| `PropDrilling` | A prop forwarded through a chain of 2+ components, none of which read it — passed down through components that only pass it further. |
-| `PropMutation` | A prop is written to — `v-model` bound to it, or `@event="prop = …"` — but props are read-only (a build error or a silent no-op). |
 | `compound-inline-component` | A compound primitive (`Dialog`/`Card`/`Sheet`/`Tabs`…) assembled inline with a substantial body — extract it into its own named component. |
+| `deep-data-reach` | A group of elements in a sizeable template that all reach deep into the same nested object (≥2 distinct fields) — extract the shared mid-object into a component that takes it as a prop. |
+| `deep-nested` | Template markup nested far too deep — extract a subtree as its own component |
 | `duplicate-element` | Identical markup (3+ elements) repeated 2+ times — within a template or across components — extract one component |
 | `inline-case-views` | A dispatch whose cases each render a whole view inline — one component doing a job per case |
 | `near-duplicate-element` | Markup with one skeleton repeated 2+ times — the same tags, attributes and nesting binding different data — within a template, across components, or as two components' whole templates |
 | `oversized-component` | A component whose template renders more elements than the project's declared budget — one component doing several jobs |
+| `prop-drilling` | A prop forwarded through a chain of 2+ components, none of which read it — passed down through components that only pass it further. |
+| `prop-mutation` | A prop is written to — `v-model` bound to it, or `@event="prop = …"` — but props are read-only (a build error or a silent no-op). |
 
 #### `vue/vue-control-flow`
 
@@ -394,5 +394,5 @@ _178 sins across 40 skills._
 
 | Sin | What it flags |
 |---|---|
-| `MirroredServerType` | A hand-written TypeScript type mirrors a backend `Data` class one-to-one — two sources of truth for one contract that drift the moment the server shape changes |
+| `mirrored-server-type` | A hand-written TypeScript type mirrors a backend `Data` class one-to-one — two sources of truth for one contract that drift the moment the server shape changes |
 

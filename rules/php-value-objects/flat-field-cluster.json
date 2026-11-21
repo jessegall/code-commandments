@@ -21,5 +21,424 @@
       "crossFile": true
     }
   },
-  "find": {}
+  "find": {
+    "select": "type",
+    "as": "t",
+    "where": [
+      "and",
+      [
+        "=",
+        "$t.form",
+        "class"
+      ],
+      [
+        "spatie.typescript",
+        "$t"
+      ]
+    ],
+    "having": [
+      "and",
+      [
+        "some",
+        [
+          "groupItems",
+          [
+            "scalarSlots",
+            "$t"
+          ],
+          "s",
+          [
+            "token",
+            "$s"
+          ]
+        ],
+        "g",
+        [
+          "restates",
+          "$g"
+        ]
+      ],
+      [
+        "spatie.isData",
+        "$t"
+      ]
+    ],
+    "emit": "$t",
+    "relations": {
+      "shapes": {
+        "from": "type",
+        "as": "t",
+        "pipeline": [
+          {
+            "where": [
+              "and",
+              [
+                "=",
+                "$t.form",
+                "class"
+              ],
+              [
+                ">=",
+                [
+                  "count",
+                  [
+                    "flatten",
+                    [
+                      "map",
+                      [
+                        "spatie.publicSlots",
+                        "$t"
+                      ],
+                      "s",
+                      [
+                        "slotNames",
+                        "$s"
+                      ]
+                    ]
+                  ]
+                ],
+                1
+              ],
+              [
+                "<=",
+                [
+                  "count",
+                  [
+                    "flatten",
+                    [
+                      "map",
+                      [
+                        "spatie.publicSlots",
+                        "$t"
+                      ],
+                      "s",
+                      [
+                        "slotNames",
+                        "$s"
+                      ]
+                    ]
+                  ]
+                ],
+                6
+              ]
+            ]
+          },
+          {
+            "project": {
+              "short": [
+                "lower",
+                [
+                  "shortName",
+                  "$t.symbol"
+                ]
+              ],
+              "stripped": [
+                "stripSuffix",
+                [
+                  "lower",
+                  [
+                    "shortName",
+                    "$t.symbol"
+                  ]
+                ],
+                "data"
+              ],
+              "fields": [
+                "map",
+                [
+                  "flatten",
+                  [
+                    "map",
+                    [
+                      "spatie.publicSlots",
+                      "$t"
+                    ],
+                    "s",
+                    [
+                      "slotNames",
+                      "$s"
+                    ]
+                  ]
+                ],
+                "n",
+                [
+                  "lower",
+                  "$n"
+                ]
+              ]
+            }
+          }
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "shortName": {
+      "args": [
+        "n"
+      ],
+      "expr": [
+        "last",
+        [
+          "split",
+          "$n",
+          "\\"
+        ]
+      ]
+    },
+    "slotNames": {
+      "args": [
+        "s"
+      ],
+      "expr": [
+        "case",
+        "$s.kind",
+        {
+          "parameter": [
+            "list",
+            "$s.binding.name"
+          ],
+          "field": [
+            "map",
+            "$s.declarators",
+            "d",
+            "$d.binding.name"
+          ]
+        },
+        [
+          "list"
+        ]
+      ]
+    },
+    "slotName": {
+      "args": [
+        "s"
+      ],
+      "expr": [
+        "first",
+        [
+          "slotNames",
+          "$s"
+        ]
+      ]
+    },
+    "scalarName": {
+      "args": [
+        "s"
+      ],
+      "expr": [
+        "lower",
+        [
+          "case",
+          "$s.declaredType.form",
+          {
+            "keyword": "$s.declaredType.name",
+            "nullable": "$s.declaredType.element.name"
+          },
+          ""
+        ]
+      ]
+    },
+    "token": {
+      "args": [
+        "s"
+      ],
+      "expr": [
+        "first",
+        [
+          "words",
+          [
+            "slotName",
+            "$s"
+          ]
+        ]
+      ]
+    },
+    "afterToken": {
+      "args": [
+        "s"
+      ],
+      "expr": [
+        "join",
+        [
+          "rest",
+          [
+            "words",
+            [
+              "slotName",
+              "$s"
+            ]
+          ]
+        ],
+        ""
+      ]
+    },
+    "scalarSlots": {
+      "args": [
+        "t"
+      ],
+      "expr": [
+        "filter",
+        [
+          "spatie.publicSlots",
+          "$t"
+        ],
+        "s",
+        [
+          "and",
+          [
+            "in",
+            [
+              "scalarName",
+              "$s"
+            ],
+            "string",
+            "int",
+            "float",
+            "bool"
+          ],
+          [
+            "nonempty",
+            [
+              "afterToken",
+              "$s"
+            ]
+          ]
+        ]
+      ]
+    },
+    "restates": {
+      "args": [
+        "g"
+      ],
+      "expr": [
+        "and",
+        [
+          ">=",
+          [
+            "count",
+            [
+              "get",
+              "$g",
+              "items"
+            ]
+          ],
+          2
+        ],
+        [
+          "not",
+          [
+            "every",
+            [
+              "get",
+              "$g",
+              "items"
+            ],
+            "s",
+            [
+              "=",
+              [
+                "scalarName",
+                "$s"
+              ],
+              "bool"
+            ]
+          ]
+        ],
+        [
+          "none",
+          [
+            "get",
+            "$g",
+            "items"
+          ],
+          "s",
+          [
+            "or",
+            [
+              "endsWith",
+              [
+                "slotName",
+                "$s"
+              ],
+              "Id"
+            ],
+            [
+              "endsWith",
+              [
+                "slotName",
+                "$s"
+              ],
+              "Uuid"
+            ]
+          ]
+        ],
+        [
+          "not",
+          [
+            "reads",
+            [
+              "get",
+              "$g",
+              "key"
+            ],
+            "non-entity"
+          ]
+        ],
+        [
+          "some",
+          [
+            "append",
+            [
+              "rowsOf",
+              "shapes",
+              [
+                "record",
+                "stripped",
+                [
+                  "get",
+                  "$g",
+                  "key"
+                ]
+              ]
+            ],
+            [
+              "rowsOf",
+              "shapes",
+              [
+                "record",
+                "short",
+                [
+                  "get",
+                  "$g",
+                  "key"
+                ]
+              ]
+            ]
+          ],
+          "r",
+          [
+            "every",
+            [
+              "get",
+              "$g",
+              "items"
+            ],
+            "s",
+            [
+              "has",
+              "$r.fields",
+              [
+                "lower",
+                [
+                  "afterToken",
+                  "$s"
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  }
 }

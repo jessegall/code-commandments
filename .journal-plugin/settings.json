@@ -201,7 +201,7 @@
     },
     {
         "key": "sin_blank-string-on-the-wire",
-        "title": "BlankStringOnTheWire",
+        "title": "blank-string-on-the-wire",
         "type": "flag",
         "kind": "flag",
         "default": true,
@@ -401,7 +401,7 @@
     },
     {
         "key": "sin_hard-coded-route-path",
-        "title": "HardCodedRoutePath",
+        "title": "hard-coded-route-path",
         "type": "flag",
         "kind": "flag",
         "default": true,
@@ -473,7 +473,7 @@
     },
     {
         "key": "sin_constructor-orchestration",
-        "title": "ConstructorOrchestration",
+        "title": "constructor-orchestration",
         "type": "flag",
         "kind": "flag",
         "default": true,
@@ -489,7 +489,7 @@
     },
     {
         "key": "sin_manual-output-transform",
-        "title": "ManualOutputTransform",
+        "title": "manual-output-transform",
         "type": "flag",
         "kind": "flag",
         "default": true,
@@ -569,7 +569,7 @@
     },
     {
         "key": "sin_boundary-duplicated-operation",
-        "title": "BoundaryDuplicatedOperation",
+        "title": "boundary-duplicated-operation",
         "type": "flag",
         "kind": "flag",
         "default": true,
@@ -577,7 +577,7 @@
     },
     {
         "key": "sin_dangling-route-name",
-        "title": "DanglingRouteName",
+        "title": "dangling-route-name",
         "type": "flag",
         "kind": "flag",
         "default": true,
@@ -633,7 +633,7 @@
     },
     {
         "key": "sin_data-method-hint-collision",
-        "title": "DataMethodHintCollision",
+        "title": "data-method-hint-collision",
         "type": "flag",
         "kind": "flag",
         "default": true,
@@ -649,7 +649,7 @@
     },
     {
         "key": "sin_manual-hydration-loop",
-        "title": "ManualHydrationLoop",
+        "title": "manual-hydration-loop",
         "type": "flag",
         "kind": "flag",
         "default": true,
@@ -657,7 +657,7 @@
     },
     {
         "key": "sin_manual-input-cast",
-        "title": "ManualInputCast",
+        "title": "manual-input-cast",
         "type": "flag",
         "kind": "flag",
         "default": true,
@@ -673,7 +673,7 @@
     },
     {
         "key": "sin_new-data-object",
-        "title": "NewDataObject",
+        "title": "new-data-object",
         "type": "flag",
         "kind": "flag",
         "default": true,
@@ -721,7 +721,7 @@
     },
     {
         "key": "sin_derived-collection-cast",
-        "title": "DerivedCollectionCast",
+        "title": "derived-collection-cast",
         "type": "flag",
         "kind": "flag",
         "default": true,
@@ -897,7 +897,7 @@
     },
     {
         "key": "sin_flat-field-cluster",
-        "title": "FlatFieldCluster",
+        "title": "flat-field-cluster",
         "type": "flag",
         "kind": "flag",
         "default": true,
@@ -1465,7 +1465,7 @@
     },
     {
         "key": "sin_mirrored-server-type",
-        "title": "MirroredServerType",
+        "title": "mirrored-server-type",
         "type": "flag",
         "kind": "flag",
         "default": true,
@@ -1473,7 +1473,7 @@
     },
     {
         "key": "sin_hard-coded-server-url",
-        "title": "HardCodedServerURL",
+        "title": "hard-coded-server-url",
         "type": "flag",
         "kind": "flag",
         "default": true,
@@ -1497,7 +1497,7 @@
     },
     {
         "key": "sin_deep-data-reach",
-        "title": "DeepDataReach",
+        "title": "deep-data-reach",
         "type": "flag",
         "kind": "flag",
         "default": true,
@@ -1505,7 +1505,7 @@
     },
     {
         "key": "sin_deep-nested",
-        "title": "DeepNested",
+        "title": "deep-nested",
         "type": "flag",
         "kind": "flag",
         "default": true,
@@ -1545,7 +1545,7 @@
     },
     {
         "key": "sin_prop-drilling",
-        "title": "PropDrilling",
+        "title": "prop-drilling",
         "type": "flag",
         "kind": "flag",
         "default": true,
@@ -1553,7 +1553,7 @@
     },
     {
         "key": "sin_prop-mutation",
-        "title": "PropMutation",
+        "title": "prop-mutation",
         "type": "flag",
         "kind": "flag",
         "default": true,

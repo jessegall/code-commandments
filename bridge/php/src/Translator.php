@@ -64,6 +64,14 @@ final class Translator
      */
     private array $scopes = [];
 
+    /**
+     * The classes around the code being translated, innermost last, each its symbol and its parent's: what self,
+     * static and parent name.
+     *
+     * @var list<array{self: ?string, parent: ?string}>
+     */
+    private array $classes = [];
+
     private const COMPARISONS = [
         'Expr_BinaryOp_Identical' => 'identical', 'Expr_BinaryOp_NotIdentical' => 'not-identical', 'Expr_BinaryOp_Equal' => 'equal',
         'Expr_BinaryOp_NotEqual' => 'not-equal', 'Expr_BinaryOp_Smaller' => 'less', 'Expr_BinaryOp_SmallerOrEqual' => 'less-or-equal',
@@ -471,6 +479,7 @@ final class Translator
         $parts['attributes'] = $this->attributes($type->attrGroups);
         $members = [];
         $promoted = [];
+        $this->classes[] = ['self' => $symbol, 'parent' => $type instanceof Stmt\Class_ ? $type->extends?->toString() : null];
         foreach ($type->stmts as $member) {
             if ($member instanceof Stmt\TraitUse) {
                 array_push($parts['mixins'], ...array_map($this->writtenType(...), $member->traits));
@@ -485,6 +494,7 @@ final class Translator
                 array_push($members, ...$hooks);
             }
         }
+        array_pop($this->classes);
         $parts['writtenMembers'] = $members;
         $made->parts = array_filter($parts, static fn (array $held): bool => $held !== []);
         if ($promoted !== []) {
@@ -797,7 +807,22 @@ final class Translator
             return $made;
         }
 
-        return $this->of('type-expression', $type, ['form' => 'keyword', 'name' => $type->toString()]);
+        return $this->of('type-expression', $type, ['form' => 'keyword', 'name' => $type->toString(),
+            'refers' => $type instanceof Node\Name ? $this->namedClass($type) : null]);
+    }
+
+    /**
+     * The class `self`, `static` or `parent` names where it is written: the enclosing class, or the one it extends.
+     */
+    private function namedClass(Node\Name $name): ?string
+    {
+        $around = $this->classes === [] ? null : $this->classes[array_key_last($this->classes)];
+
+        return match ($name->toLowerString()) {
+            'self', 'static' => $around['self'] ?? null,
+            'parent' => $around['parent'] ?? null,
+            default => null,
+        };
     }
 
     private function refers(Node\Name $name): ?string
@@ -1034,7 +1059,9 @@ final class Translator
         };
         $written = $name->getAttribute('originalName') ?? $name;
 
-        return $this->of('reference', $name, ['name' => $written->toString(), 'form' => $form, 'refers' => $form === 'name' ? $this->refers($name) : null]);
+        $refers = $form === 'name' ? $this->refers($name) : $this->namedClass($name);
+
+        return $this->of('reference', $name, ['name' => $written->toString(), 'form' => $form, 'refers' => $refers]);
     }
 
     private function access(Expr $access, Node $subject, Node $member, string $form, bool $nullConditional): TreeNode

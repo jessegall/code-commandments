@@ -35,6 +35,14 @@
         "=",
         "$c.callee.subject.kind",
         "reference"
+      ],
+      [
+        "not",
+        [
+          "=",
+          "$c.callee.subject.form",
+          "self"
+        ]
       ]
     ],
     "having": [
@@ -82,6 +90,57 @@
                 "=",
                 "$g.subject.name",
                 "$c.callee.subject.name"
+              ]
+            ]
+          ]
+        ]
+      ],
+      [
+        "not",
+        [
+          "some",
+          [
+            "ownDescendants",
+            [
+              "enclosing",
+              "$c",
+              "function"
+            ]
+          ],
+          "n",
+          [
+            "and",
+            [
+              "=",
+              "$n.kind",
+              "assignment"
+            ],
+            [
+              "some",
+              "$n.targets",
+              "g",
+              [
+                "and",
+                [
+                  "=",
+                  "$g.kind",
+                  "reference"
+                ],
+                [
+                  "=",
+                  "$g.name",
+                  "$c.callee.subject.name"
+                ]
+              ]
+            ],
+            [
+              "some",
+              "$n.values",
+              "v",
+              [
+                "=",
+                "$v.kind",
+                "construction"
               ]
             ]
           ]

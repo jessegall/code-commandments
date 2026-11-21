@@ -245,6 +245,10 @@ func parse(name string, text []byte, skills Skills, outside outsideDefinitions, 
 		return Rule{}, fmt.Errorf("%s: %w", name, err)
 	}
 	read.bringRelations(shared)
+	// A shared relation may call another file's definitions too, so they are brought in again once it is here.
+	if err := read.bringIn(outside); err != nil {
+		return Rule{}, fmt.Errorf("%s: %w", name, err)
+	}
 
 	judges, err := enginesOf(read.Engine)
 	if err != nil {
@@ -396,6 +400,9 @@ func (f *file) bringRelations(shared map[string]relation) {
 	want(f.rowsRead()...)
 	for _, defined := range f.Find.Relations {
 		want(defined.From...)
+		for _, step := range defined.Pipeline {
+			want(step.Join)
+		}
 	}
 	for len(wanted) > 0 {
 		name := wanted[0]

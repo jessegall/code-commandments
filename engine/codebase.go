@@ -28,6 +28,7 @@ type Codebase struct {
 	project   string
 	reporting map[string]bool
 	fills     *deferredFill
+	whole     *Codebase
 }
 
 // deferredFill is the filling a codebase read for judging puts off until a rule is really asked: a run whose every answer is remembered never fills at all.
@@ -350,10 +351,19 @@ func partNamed(languages []contract.Language) partOf {
 	return partOf(named)
 }
 
+// Whole is the codebase a part was narrowed from, every language in it; the codebase itself when it is whole.
+func (c *Codebase) Whole() *Codebase {
+	if c.whole != nil {
+		return c.whole
+	}
+
+	return c
+}
+
 func (c *Codebase) narrowedTo(languages []contract.Language) *Codebase {
 	CountedWalk(len(c.files))
 
-	part := &Codebase{read: c.read, print: c.print, analyses: &sync.Map{}, fills: c.fills}
+	part := &Codebase{read: c.read, print: c.print, analyses: &sync.Map{}, fills: c.fills, whole: c.Whole(), project: c.project}
 	for _, stream := range c.streams {
 		if slices.Contains(languages, stream.Header.Language) {
 			part.streams = append(part.streams, stream)

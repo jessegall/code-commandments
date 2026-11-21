@@ -1,0 +1,220 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "description": "Definitions over TypeScript and Vue script code that their rules share: the path a string, template or + chain spells.",
+  "definitions": {
+    "piece": {
+      "args": [
+        "p"
+      ],
+      "expr": [
+        "case",
+        "$p.kind",
+        {
+          "literal": [
+            "case",
+            [
+              "literalIs",
+              "$p",
+              "string"
+            ],
+            {
+              "true": "$p.value"
+            },
+            "\u0000"
+          ],
+          "interpolation": [
+            "join",
+            [
+              "map",
+              "$p.parts",
+              "q",
+              [
+                "case",
+                "$q.kind",
+                {
+                  "text": "$q.value"
+                },
+                "\u0000"
+              ]
+            ],
+            ""
+          ]
+        },
+        "\u0000"
+      ]
+    },
+    "firstIsText": {
+      "args": [
+        "x"
+      ],
+      "expr": [
+        "some",
+        [
+          "list",
+          [
+            "first",
+            [
+              "leaves",
+              "$x",
+              "binary"
+            ]
+          ]
+        ],
+        "f",
+        [
+          "or",
+          [
+            "literalIs",
+            "$f",
+            "string"
+          ],
+          [
+            "=",
+            "$f.kind",
+            "interpolation"
+          ]
+        ]
+      ]
+    },
+    "spelled": {
+      "args": [
+        "x"
+      ],
+      "expr": [
+        "case",
+        "$x.kind",
+        {
+          "literal": [
+            "case",
+            [
+              "literalIs",
+              "$x",
+              "string"
+            ],
+            {
+              "true": "$x.value"
+            },
+            ""
+          ],
+          "interpolation": [
+            "piece",
+            "$x"
+          ],
+          "binary": [
+            "case",
+            [
+              "firstIsText",
+              "$x"
+            ],
+            {
+              "true": [
+                "join",
+                [
+                  "map",
+                  [
+                    "leaves",
+                    "$x",
+                    "binary"
+                  ],
+                  "p",
+                  [
+                    "piece",
+                    "$p"
+                  ]
+                ],
+                ""
+              ]
+            },
+            ""
+          ]
+        },
+        ""
+      ]
+    },
+    "fieldNames": {
+      "args": [
+        "t"
+      ],
+      "expr": [
+        "case",
+        "$t.kind",
+        {
+          "type": [
+            "map",
+            [
+              "filter",
+              "$t.writtenMembers",
+              "m",
+              [
+                "=",
+                "$m.kind",
+                "field"
+              ]
+            ],
+            "m",
+            [
+              "at",
+              [
+                "map",
+                "$m.declarators",
+                "d",
+                "$d.binding.name"
+              ],
+              0
+            ]
+          ],
+          "alias": [
+            "map",
+            [
+              "fieldsOf",
+              "$t.underlyingType"
+            ],
+            "f",
+            "$f.name"
+          ]
+        },
+        [
+          "list"
+        ]
+      ]
+    },
+    "namespaceOf": {
+      "args": [
+        "t"
+      ],
+      "expr": [
+        "join",
+        [
+          "reverse",
+          [
+            "map",
+            [
+              "filter",
+              [
+                "ancestors",
+                "$t"
+              ],
+              "a",
+              [
+                "and",
+                [
+                  "=",
+                  "$a.kind",
+                  "type"
+                ],
+                [
+                  "=",
+                  "$a.form",
+                  "object"
+                ]
+              ]
+            ],
+            "a",
+            "$a.name"
+          ]
+        ],
+        "."
+      ]
+    }
+  }
+}

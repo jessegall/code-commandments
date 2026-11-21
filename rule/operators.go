@@ -117,7 +117,7 @@ var operators = map[string]operator{
 	"ownAncestors":    {operands: []valueType{node}, gives: list, says: "every node above the node, nearest first, up to the function it is written in"},
 	"trailingCount":   {operands: []valueType{list, iteratorName, truth}, gives: number, says: "how many items at the end of the list the body holds for, back to the first it does not"},
 	"flatten":         {operands: []valueType{list}, gives: list, says: "the items of a list of lists, as one list"},
-	"reads":           {operands: []valueType{text, text}, gives: truth, says: "whether a name or text reads as the judgement named: third-person, question, bare-state, bare-verb, relational-compound, history, strawman, fixture-marker"},
+	"reads":           {operands: []valueType{text, text}, gives: truth, says: "whether a name or text reads as the judgement named: third-person, question, bare-state, bare-verb, relational-compound, history, strawman, fixture-marker, non-entity (a word that names no thing of its own)"},
 	"startsWith":      {operands: []valueType{text, text}, gives: truth, says: "whether a text begins with another"},
 	"keys":            {operands: []valueType{anyValue}, gives: list, says: "the field names of a record, such as a map parameter, sorted"},
 	"get":             {operands: []valueType{anyValue, text}, gives: anyValue, says: "a record's field by its name; none when it has no such field"},

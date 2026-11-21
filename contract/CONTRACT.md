@@ -244,7 +244,8 @@ ordered list of zero or more), its links, its facts, and when its parts are eval
 ### Expressions
 
 - **`reference`**: a name read or written. Facts `name`, `form` (`name`; `self` for `$this`, `this`, `self`;
-  `parent` for `parent`, `super`, `base`; `static`), `refers`. Link `binding?` (the local `binding` it names, or the `import-binding` of a name imported under its own name,
+  `parent` for `parent`, `super`, `base`; `static`), `refers` (for a class named as `self`, `static` or `parent`, the
+  class it names: the enclosing one, or the one it extends). Link `binding?` (the local `binding` it names, or the `import-binding` of a name imported under its own name,
   where it is in the same file).
 - **`call`**: `callee` (the expression called: a `reference`, or an `access` for a method), `typeArguments[]`,
   `arguments[]`. Link `receiver?` (the `access`'s subject, for a method call). Facts `nullConditional`
@@ -310,7 +311,8 @@ ordered list of zero or more), its links, its facts, and when its parts are eval
   `form` (`named`, `keyword`, `union`, `intersection`, `nullable`, `array`, `function`, `literal`,
   `parameter`, `pointer`, `map`, `object`, `opaque`; `object` is an inline object type, its fields in its resolvedType), `refers` (a named type's id), `written` (the type as structure, see
   *Types*). `?T` is form `nullable`. A `keyword` type carries the keyword as written as its `name` (`int`, `void`,
-  `string`, `None`), so two keyword types are told apart without a resolver.
+  `string`, `None`), so two keyword types are told apart without a resolver; a keyword naming a class (`self`,
+  `static`, `parent`) also `refers` to that class.
 - **`tuple-type`**: `elements[]` (`tuple-element`). Separate from a `return` of several values, so a single
   tuple-valued expression and two result expressions stay distinguishable.
 - **`tuple-element`**: `type`. Fact `label?`.

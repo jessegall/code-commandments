@@ -234,7 +234,7 @@ does not — which is how a `where` says what only a `reject` could.
 | `reachableFrom` | list, value, number | list | every value the edges lead to from the one given, in at most the steps given (0 for no limit), nearest first |
 | `reached` | node | list | the symbols a function or type calls, constructs and names, each once: the resources it reaches |
 | `reaches` | list, value, value | truth | whether edges, each a record of from and to, lead from the first value to the second |
-| `reads` | text, text | truth | whether a name or text reads as the judgement named: third-person, question, bare-state, bare-verb, relational-compound, history, strawman, fixture-marker |
+| `reads` | text, text | truth | whether a name or text reads as the judgement named: third-person, question, bare-state, bare-verb, relational-compound, history, strawman, fixture-marker, non-entity (a word that names no thing of its own) |
 | `receiverChain` | node | list | the links of a chain a.b().c, the root first, each a record of node, member, owner (the type declaring the member) and nullConditional |
 | `record` | value, value, … | value | a record of the fields named and their values, written name, value, name, value |
 | `referrers` | node | list | every node in the program that refers to the declaration: its calls and reads |

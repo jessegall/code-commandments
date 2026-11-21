@@ -41,42 +41,6 @@ generated route or the client instead.
 - [ ] Components never talk to the server with `fetch`; one client module owns the headers, the errors and the parsing.
       _Call the project's client module (or `router` / `useForm`) and move any headers the component sets into that module._
 
-## Worked example
-
-### hard-coded-server-url — in TypeScript
-
-A string written out as the path of a route the server declares by name
-
-```ts
-----------[ Bad ]----------
-
-// Asks the server to print a return's shipping label and reads back where the label was stored.
-export async function printReturnLabel(returnNumber: number, copies: number): Promise<string> {
-    const response = await fetch(`/returns/${returnNumber}/label`, {
-        method: 'POST',
-        body: JSON.stringify({ copies }),
-    })
-
-    return (await response.json()).location
-}
-```
-
-### hard-coded-server-url — in Vue
-
-A string written out as the path of a route the server declares by name
-
-```vue
-----------[ Bad ]----------
-
-<a :href="'/plans/' + card.id">{{ card.title }}</a>
-
-----------[ Good ]----------
-
-<a href="https://help.example.com/plans/archive">Help</a>
-```
-
-The other 1 — one per rule — are in [`reference/examples.md`](reference/examples.md).
-
 ## Commands
 
 - `{{binary}} judge --skill=vue/server-calls` — find every one of these in the codebase.
@@ -85,7 +49,7 @@ The other 1 — one per rule — are in [`reference/examples.md`](reference/exam
 
 ## Reference
 
-- [Worked examples](reference/examples.md) — every rule's bad → good, 3 of them.
+- [Worked examples](reference/examples.md) — every rule's bad → good, 2 of them.
 - [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills

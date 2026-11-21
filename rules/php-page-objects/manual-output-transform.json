@@ -21,5 +21,465 @@
       "crossFile": true
     }
   },
-  "find": {}
+  "find": {
+    "select": [
+      "function",
+      "assignment"
+    ],
+    "as": "n",
+    "where": [
+      "case",
+      "$n.kind",
+      {
+        "function": [
+          "or",
+          [
+            "=",
+            "$n.form",
+            "get"
+          ],
+          [
+            "and",
+            [
+              "=",
+              "$n.form",
+              "method"
+            ],
+            [
+              "nonempty",
+              [
+                "annotated",
+                "$n",
+                "Spatie\\LaravelData\\Attributes\\Computed"
+              ]
+            ]
+          ]
+        ],
+        "assignment": [
+          "and",
+          [
+            "=",
+            "$n.mode",
+            "assign"
+          ],
+          [
+            "publicOwnSlot",
+            "$n"
+          ]
+        ]
+      },
+      false
+    ],
+    "having": [
+      "and",
+      [
+        "flattens",
+        "$n"
+      ],
+      [
+        "spatie.isData",
+        [
+          "enclosing",
+          "$n",
+          "type"
+        ]
+      ]
+    ],
+    "emit": "$n"
+  },
+  "definitions": {
+    "fetchOf": {
+      "args": [
+        "v"
+      ],
+      "expr": [
+        "or",
+        [
+          "and",
+          [
+            "=",
+            "$v.kind",
+            "access"
+          ],
+          [
+            "=",
+            "$v.form",
+            "instance"
+          ]
+        ],
+        [
+          "and",
+          [
+            "=",
+            "$v.kind",
+            "call"
+          ],
+          [
+            "=",
+            "$v.callee.kind",
+            "access"
+          ],
+          [
+            "=",
+            "$v.callee.form",
+            "instance"
+          ]
+        ]
+      ]
+    },
+    "fetchReceiver": {
+      "args": [
+        "v"
+      ],
+      "expr": [
+        "case",
+        "$v.kind",
+        {
+          "access": "$v.subject",
+          "call": "$v.callee.subject"
+        },
+        null
+      ]
+    },
+    "sharedReceiver": {
+      "args": [
+        "arr"
+      ],
+      "expr": [
+        "and",
+        [
+          "=",
+          "$arr.kind",
+          "collection"
+        ],
+        [
+          ">=",
+          [
+            "count",
+            "$arr.entries"
+          ],
+          2
+        ],
+        [
+          "every",
+          "$arr.entries",
+          "e",
+          [
+            "fetchOf",
+            "$e.value"
+          ]
+        ],
+        [
+          "=",
+          [
+            "distinctCount",
+            [
+              "map",
+              "$arr.entries",
+              "e",
+              [
+                "fingerprint",
+                [
+                  "fetchReceiver",
+                  "$e.value"
+                ],
+                "exact"
+              ]
+            ]
+          ],
+          1
+        ]
+      ]
+    },
+    "assignedSlot": {
+      "args": [
+        "a"
+      ],
+      "expr": [
+        "spatie.slotNamed",
+        [
+          "enclosing",
+          "$a",
+          "type"
+        ],
+        [
+          "first",
+          [
+            "map",
+            [
+              "filter",
+              "$a.targets",
+              "t",
+              [
+                "and",
+                [
+                  "tree.selfField",
+                  "$t"
+                ],
+                [
+                  "=",
+                  "$t.form",
+                  "instance"
+                ]
+              ]
+            ],
+            "t",
+            "$t.member.name"
+          ]
+        ]
+      ]
+    },
+    "publicOwnSlot": {
+      "args": [
+        "a"
+      ],
+      "expr": [
+        "some",
+        [
+          "list",
+          [
+            "assignedSlot",
+            "$a"
+          ]
+        ],
+        "s",
+        [
+          "and",
+          [
+            "exists",
+            "$s"
+          ],
+          [
+            "=",
+            "$s.kind",
+            "field"
+          ],
+          [
+            "some",
+            "$s.modifiers",
+            "m",
+            [
+              "=",
+              "$m",
+              "public"
+            ]
+          ],
+          [
+            "none",
+            "$s.modifiers",
+            "m",
+            [
+              "=",
+              "$m",
+              "static"
+            ]
+          ]
+        ]
+      ]
+    },
+    "soleArray": {
+      "args": [
+        "f"
+      ],
+      "expr": [
+        "case",
+        [
+          "=",
+          "$f.body.kind",
+          "collection"
+        ],
+        {
+          "true": "$f.body"
+        },
+        [
+          "case",
+          [
+            "and",
+            [
+              "=",
+              "$f.body.kind",
+              "block"
+            ],
+            [
+              "=",
+              [
+                "count",
+                [
+                  "tree.effective",
+                  "$f.body"
+                ]
+              ],
+              1
+            ]
+          ],
+          {
+            "true": [
+              "first",
+              [
+                "map",
+                [
+                  "filter",
+                  [
+                    "tree.effective",
+                    "$f.body"
+                  ],
+                  "s",
+                  [
+                    "=",
+                    "$s.kind",
+                    "return"
+                  ]
+                ],
+                "s",
+                [
+                  "at",
+                  "$s.values",
+                  0
+                ]
+              ]
+            ]
+          },
+          null
+        ]
+      ]
+    },
+    "outputArray": {
+      "args": [
+        "n"
+      ],
+      "expr": [
+        "case",
+        "$n.kind",
+        {
+          "assignment": [
+            "first",
+            [
+              "filter",
+              "$n.values",
+              "v",
+              [
+                "=",
+                "$v.kind",
+                "collection"
+              ]
+            ]
+          ],
+          "function": [
+            "soleArray",
+            "$n"
+          ]
+        },
+        null
+      ]
+    },
+    "receiverType": {
+      "args": [
+        "r"
+      ],
+      "expr": "$r.resolved.name"
+    },
+    "valueObjectReceiver": {
+      "args": [
+        "arr"
+      ],
+      "expr": [
+        "some",
+        [
+          "list",
+          [
+            "first",
+            [
+              "map",
+              "$arr.entries",
+              "e",
+              [
+                "fetchReceiver",
+                "$e.value"
+              ]
+            ]
+          ]
+        ],
+        "r",
+        [
+          "and",
+          [
+            "exists",
+            "$r"
+          ],
+          [
+            "nonempty",
+            [
+              "receiverType",
+              "$r"
+            ]
+          ],
+          [
+            "not",
+            [
+              "proven",
+              [
+                "isSubtype",
+                [
+                  "receiverType",
+                  "$r"
+                ],
+                "Spatie\\LaravelData\\Data"
+              ]
+            ]
+          ],
+          [
+            "not",
+            [
+              "proven",
+              [
+                "=",
+                [
+                  "typeKind",
+                  [
+                    "typeDeclaration",
+                    [
+                      "receiverType",
+                      "$r"
+                    ]
+                  ]
+                ],
+                "enum"
+              ]
+            ]
+          ]
+        ]
+      ]
+    },
+    "flattens": {
+      "args": [
+        "n"
+      ],
+      "expr": [
+        "some",
+        [
+          "list",
+          [
+            "outputArray",
+            "$n"
+          ]
+        ],
+        "arr",
+        [
+          "and",
+          [
+            "exists",
+            "$arr"
+          ],
+          [
+            "sharedReceiver",
+            "$arr"
+          ],
+          [
+            "valueObjectReceiver",
+            "$arr"
+          ]
+        ]
+      ]
+    }
+  }
 }

@@ -1,0 +1,80 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "vue"
+  ],
+  "relation": {
+    "from": "directive",
+    "as": "d",
+    "pipeline": [
+      {
+        "where": [
+          "in",
+          "$d.name",
+          "if",
+          "else-if"
+        ]
+      },
+      {
+        "expand": [
+          "case",
+          [
+            "=",
+            "$d.value.kind",
+            "logical"
+          ],
+          {
+            "true": [
+              "leaves",
+              "$d.value",
+              "logical"
+            ]
+          },
+          [
+            "list",
+            "$d.value"
+          ]
+        ]
+      },
+      {
+        "project": {
+          "s": "$row"
+        }
+      },
+      {
+        "where": [
+          "tree.isPlainAccess",
+          "$s"
+        ]
+      },
+      {
+        "project": {
+          "typeName": [
+            "tree.holderType",
+            "$s.subject"
+          ],
+          "fieldName": "$s.member.name"
+        }
+      },
+      {
+        "where": [
+          "nonempty",
+          "$typeName"
+        ]
+      },
+      {
+        "project": {
+          "type": [
+            "tree.canon",
+            "$typeName"
+          ],
+          "field": [
+            "tree.canon",
+            "$fieldName"
+          ],
+          "strict": true
+        }
+      }
+    ]
+  }
+}

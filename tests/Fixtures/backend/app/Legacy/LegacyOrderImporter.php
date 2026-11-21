@@ -2,6 +2,7 @@
 
 namespace Shop\Legacy;
 
+use JesseGall\CodeCommandments\Sins\Backend\Laravel\ModelMutationAtCallSite;
 use JesseGall\CodeCommandments\Sins\Backend\Laravel\RepeatedQueryChain;
 use JesseGall\CodeCommandments\Sins\Backend\ArchaeologyComment;
 use JesseGall\CodeCommandments\Sins\Backend\BloatedDocblock;
@@ -41,6 +42,7 @@ final class LegacyOrderImporter
      */
     #[Sinful(ManufacturedFakeFill::class)]
     #[Sinful(QueryInLoop::class)]
+    #[Sinful(ModelMutationAtCallSite::class)]
     public function import(array $rows): void
     {
         foreach ($rows as $row) {

@@ -4,19 +4,9 @@
 package registry
 
 import (
-	_ "github.com/jessegall/code-commandments/detectors/backend"
-	_ "github.com/jessegall/code-commandments/detectors/backend/laravel"
-	_ "github.com/jessegall/code-commandments/detectors/backend/spatie"
-	_ "github.com/jessegall/code-commandments/detectors/frontend"
-	_ "github.com/jessegall/code-commandments/published/laravel"
-	_ "github.com/jessegall/code-commandments/published/spatie"
-	_ "github.com/jessegall/code-commandments/published/typescript"
 	_ "github.com/jessegall/code-commandments/rules"
 	_ "github.com/jessegall/code-commandments/sins/backend"
-	_ "github.com/jessegall/code-commandments/sins/backend/laravel"
-	_ "github.com/jessegall/code-commandments/sins/backend/spatie"
 	_ "github.com/jessegall/code-commandments/sins/csharp"
-	_ "github.com/jessegall/code-commandments/sins/frontend"
 	_ "github.com/jessegall/code-commandments/skill/backend"
 	_ "github.com/jessegall/code-commandments/skill/backend/concurrent"
 	_ "github.com/jessegall/code-commandments/skill/backend/laravel"

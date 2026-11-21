@@ -1,0 +1,112 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "php"
+  ],
+  "definitions": {
+    "slotName": {
+      "args": [
+        "s"
+      ],
+      "expr": [
+        "case",
+        "$s.kind",
+        {
+          "parameter": "$s.binding.name",
+          "field": [
+            "at",
+            [
+              "map",
+              "$s.declarators",
+              "d",
+              "$d.binding.name"
+            ],
+            0
+          ]
+        },
+        ""
+      ]
+    }
+  },
+  "relation": {
+    "from": "type",
+    "as": "t",
+    "pipeline": [
+      {
+        "where": [
+          "spatie.isData",
+          "$t"
+        ]
+      },
+      {
+        "project": {
+          "name": "$t.name",
+          "namespace": [
+            "replace",
+            [
+              "at",
+              [
+                "map",
+                [
+                  "list",
+                  [
+                    "enclosing",
+                    "$t",
+                    "module"
+                  ]
+                ],
+                "m",
+                "$m.name"
+              ],
+              0
+            ],
+            "\\",
+            "."
+          ],
+          "fields": [
+            "map",
+            [
+              "spatie.publicSlots",
+              "$t"
+            ],
+            "s",
+            [
+              "slotName",
+              "$s"
+            ]
+          ],
+          "optional": [
+            "map",
+            [
+              "filter",
+              [
+                "spatie.publicSlots",
+                "$t"
+              ],
+              "s",
+              [
+                "spatie.optional",
+                "$s.declaredType"
+              ]
+            ],
+            "s",
+            [
+              "slotName",
+              "$s"
+            ]
+          ]
+        }
+      },
+      {
+        "where": [
+          ">",
+          [
+            "count",
+            "$fields"
+          ],
+          0
+        ]
+      }
+    ]
+  }
+}

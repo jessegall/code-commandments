@@ -2,7 +2,7 @@
 
 Each row is one rule: the sin's id, the symptom its detector flags, and the detector that flags it. The id is what `{{binary}} info <sin>` takes, and the detector name is what `--detector=` takes if the rule turns out to be wrong.
 
-- **`blank-string-on-the-wire`** — A string sent over the wire that the frontend reads as absent when it is blank. — `BlankStringOnTheWireDetector`
+- **`blank-string-on-the-wire`** — A string sent over the wire that the frontend reads as absent when it is blank. — `blank-string-on-the-wire`
 - **`erased-null-object`** — A blank-rendering Null Object written into a `string` slot — coerced back to `''` — `erased-null-object`
 - **`false-for-nothing`** — A return typed `X|false`: `false` stands in for "nothing" or "failed", and every caller must test for it. — `false-for-nothing`
 - **`option-as-nullable`** — `Option<T>` used as if it were nullable — `?Option`, `Option | null`, `unwrapOr(null)` — `option-as-nullable`

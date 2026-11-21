@@ -40,15 +40,15 @@ func judgedIn(t *testing.T, each project) (*engine.Codebase, []fixture.Rule, []f
 	if err != nil {
 		t.Fatal(err)
 	}
-	var languages []source.Language
 	var known []fixture.Rule
 	for _, judged := range each.engines {
-		languages = append(languages, source.OfEngine(judged)...)
 		for _, shipped := range rules.Of(judged) {
 			known = append(known, shipped)
 		}
 	}
-	codebase, err := scan.Walk([]string{root}, source.Excluded{}).Only(languages...).Load()
+	// The project is read whole, as the judge reads it: a rule narrows to its own languages, and a relation it reads
+	// from another language's code still finds that code.
+	codebase, err := scan.Walk([]string{root}, source.Excluded{}).Load()
 	if err != nil {
 		t.Fatal(err)
 	}

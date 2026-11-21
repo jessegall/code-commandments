@@ -21,5 +21,475 @@
       "crossFile": true
     }
   },
-  "find": {}
+  "find": {
+    "select": "call",
+    "as": "x",
+    "where": [
+      "exists",
+      [
+        "mapCall",
+        "$x"
+      ]
+    ],
+    "let": [
+      [
+        "m",
+        [
+          "mapCall",
+          "$x"
+        ]
+      ],
+      [
+        "v",
+        [
+          "tree.valueAt",
+          "$m",
+          0
+        ]
+      ],
+      [
+        "f",
+        [
+          "factoryOf",
+          "$v"
+        ]
+      ],
+      [
+        "slot",
+        [
+          "spatie.slotOf",
+          "$x"
+        ]
+      ]
+    ],
+    "having": [
+      "and",
+      [
+        "exists",
+        "$f"
+      ],
+      [
+        "not",
+        [
+          "in",
+          [
+            "methodName",
+            "$f"
+          ],
+          "from",
+          "collect"
+        ]
+      ],
+      [
+        "not",
+        [
+          "closesOver",
+          "$v"
+        ]
+      ],
+      [
+        "spatie.isData",
+        [
+          "typeDeclaration",
+          [
+            "ownerSymbol",
+            "$f"
+          ]
+        ]
+      ],
+      [
+        "spatie.isCollectionSlot",
+        "$slot"
+      ],
+      [
+        "=",
+        [
+          "madeClass",
+          "$f"
+        ],
+        [
+          "spatie.slotElementType",
+          "$slot"
+        ]
+      ]
+    ],
+    "emit": "$m"
+  },
+  "definitions": {
+    "isStaticCall": {
+      "args": [
+        "e"
+      ],
+      "expr": [
+        "and",
+        [
+          "=",
+          "$e.kind",
+          "call"
+        ],
+        [
+          "=",
+          "$e.callee.kind",
+          "access"
+        ],
+        [
+          "=",
+          "$e.callee.form",
+          "static"
+        ],
+        [
+          "=",
+          "$e.callee.subject.kind",
+          "reference"
+        ]
+      ]
+    },
+    "isStaticCallable": {
+      "args": [
+        "e"
+      ],
+      "expr": [
+        "and",
+        [
+          "=",
+          "$e.kind",
+          "access"
+        ],
+        [
+          "=",
+          "$e.form",
+          "static"
+        ],
+        [
+          "=",
+          "$e.subject.kind",
+          "reference"
+        ],
+        [
+          "exists",
+          "$e.member.refers"
+        ]
+      ]
+    },
+    "staticOf": {
+      "args": [
+        "e"
+      ],
+      "expr": [
+        "case",
+        [
+          "or",
+          [
+            "isStaticCall",
+            "$e"
+          ],
+          [
+            "isStaticCallable",
+            "$e"
+          ]
+        ],
+        {
+          "true": "$e"
+        },
+        null
+      ]
+    },
+    "methodName": {
+      "args": [
+        "f"
+      ],
+      "expr": [
+        "case",
+        "$f.kind",
+        {
+          "access": "$f.member.name"
+        },
+        "$f.callee.member.name"
+      ]
+    },
+    "ownerSymbol": {
+      "args": [
+        "f"
+      ],
+      "expr": [
+        "case",
+        "$f.kind",
+        {
+          "access": "$f.subject.refers"
+        },
+        "$f.callee.subject.refers"
+      ]
+    },
+    "returnClass": {
+      "args": [
+        "fn"
+      ],
+      "expr": "$fn.returnType.refers"
+    },
+    "madeClass": {
+      "args": [
+        "f"
+      ],
+      "expr": [
+        "case",
+        "$f.kind",
+        {
+          "access": [
+            "returnClass",
+            [
+              "declarationOf",
+              "$f.member"
+            ]
+          ]
+        },
+        "$f.resolved.name"
+      ]
+    },
+    "isMap": {
+      "args": [
+        "c"
+      ],
+      "expr": [
+        "and",
+        [
+          "=",
+          "$c.kind",
+          "call"
+        ],
+        [
+          "laravel.named",
+          "$c",
+          "map"
+        ]
+      ]
+    },
+    "innerMap": {
+      "args": [
+        "r"
+      ],
+      "expr": [
+        "case",
+        [
+          "isMap",
+          "$r"
+        ],
+        {
+          "true": "$r"
+        },
+        [
+          "case",
+          [
+            "and",
+            [
+              "=",
+              "$r.kind",
+              "call"
+            ],
+            [
+              "laravel.named",
+              "$r",
+              "values"
+            ],
+            [
+              "isMap",
+              "$r.callee.subject"
+            ]
+          ],
+          {
+            "true": "$r.callee.subject"
+          },
+          null
+        ]
+      ]
+    },
+    "mapCall": {
+      "args": [
+        "x"
+      ],
+      "expr": [
+        "case",
+        [
+          "and",
+          [
+            "=",
+            "$x.kind",
+            "call"
+          ],
+          [
+            "=",
+            "$x.callee.kind",
+            "reference"
+          ],
+          [
+            "=",
+            "$x.callee.refers",
+            "array_map"
+          ]
+        ],
+        {
+          "true": "$x"
+        },
+        [
+          "case",
+          [
+            "and",
+            [
+              "=",
+              "$x.kind",
+              "call"
+            ],
+            [
+              "laravel.named",
+              "$x",
+              "all"
+            ]
+          ],
+          {
+            "true": [
+              "innerMap",
+              "$x.callee.subject"
+            ]
+          },
+          null
+        ]
+      ]
+    },
+    "factoryOf": {
+      "args": [
+        "v"
+      ],
+      "expr": [
+        "case",
+        "$v.kind",
+        {
+          "call": [
+            "staticOf",
+            "$v"
+          ],
+          "access": [
+            "staticOf",
+            "$v"
+          ],
+          "function": [
+            "case",
+            "$v.form",
+            {
+              "arrow": [
+                "staticOf",
+                "$v.body"
+              ],
+              "closure": [
+                "case",
+                [
+                  "and",
+                  [
+                    "=",
+                    [
+                      "count",
+                      "$v.captures"
+                    ],
+                    0
+                  ],
+                  [
+                    "=",
+                    [
+                      "count",
+                      [
+                        "descendants",
+                        "$v.body",
+                        "return"
+                      ]
+                    ],
+                    1
+                  ]
+                ],
+                {
+                  "true": [
+                    "staticOf",
+                    [
+                      "first",
+                      [
+                        "map",
+                        [
+                          "descendants",
+                          "$v.body",
+                          "return"
+                        ],
+                        "r",
+                        [
+                          "at",
+                          "$r.values",
+                          0
+                        ]
+                      ]
+                    ]
+                  ]
+                },
+                null
+              ]
+            },
+            null
+          ]
+        },
+        null
+      ]
+    },
+    "closesOver": {
+      "args": [
+        "v"
+      ],
+      "expr": [
+        "and",
+        [
+          "=",
+          "$v.kind",
+          "function"
+        ],
+        [
+          "some",
+          [
+            "tree.insideOf",
+            [
+              "factoryOf",
+              "$v"
+            ]
+          ],
+          "d",
+          [
+            "and",
+            [
+              "=",
+              "$d.kind",
+              "reference"
+            ],
+            [
+              "or",
+              [
+                "=",
+                "$d.name",
+                "this"
+              ],
+              [
+                "and",
+                [
+                  "exists",
+                  "$d.binding"
+                ],
+                [
+                  "none",
+                  "$v.parameters",
+                  "p",
+                  [
+                    "=",
+                    "$p.binding",
+                    "$d.binding"
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  }
 }

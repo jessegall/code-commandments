@@ -295,8 +295,11 @@ func (e evaluation) apply(expression Expr, bound bindings) value {
 		return known(declared[0])
 	case "typeDeclaration":
 		symbol, isSymbol := operand(0).held.(string)
-		if !operand(0).known || !isSymbol || symbol == "" {
+		if !operand(0).known {
 			return unknown
+		}
+		if !isSymbol || symbol == "" {
+			return known(nil)
 		}
 		for _, declared := range e.codebase.Declarations(symbol) {
 			if declared.Node().Kind == "type" {
@@ -1008,7 +1011,7 @@ func encloses(outer, inner value) engine.Truth {
 var proseJudgements = map[string]func(string) bool{
 	"third-person": prose.IsThirdPerson, "question": prose.ReadsAsQuestion, "bare-state": prose.IsBareStateName,
 	"bare-verb": prose.IsBareVerb, "relational-compound": prose.IsRelationalCompound, "history": prose.NarratesHistory,
-	"strawman": prose.DefendsAgainstStrawman, "fixture-marker": prose.IsFixtureMarker,
+	"strawman": prose.DefendsAgainstStrawman, "fixture-marker": prose.IsFixtureMarker, "non-entity": prose.IsNonEntity,
 }
 
 func stringOf(v value) string {

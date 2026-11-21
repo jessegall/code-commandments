@@ -1,18 +1,192 @@
 {
   "$schema": "commandments:neutral-rule/v2",
-  "engine": ["php"],
+  "engine": [
+    "php"
+  ],
   "definitions": {
-    "typesIn": {"args": ["x"], "expr": ["filter", ["map", ["flatten", ["list", ["list", "$x"], ["ownDescendants", "$x"]]], "d", "$d.resolved.name"], "n", ["nonempty", "$n"]]},
-    "publicControllerMethod": {"args": ["f"], "expr": ["and", ["exists", "$f"], ["=", "$f.form", "method"], ["none", "$f.modifiers", "m", ["in", "$m", "private", "protected"]],
-      ["some", ["list", ["enclosing", "$f", "type"]], "t", ["and", ["exists", "$t"], ["assignable", "$t", "controller"]]]]}
+    "typesIn": {
+      "args": [
+        "x"
+      ],
+      "expr": [
+        "map",
+        [
+          "filter",
+          [
+            "flatten",
+            [
+              "list",
+              [
+                "list",
+                "$x"
+              ],
+              [
+                "ownDescendants",
+                "$x"
+              ]
+            ]
+          ],
+          "d",
+          [
+            "proven",
+            [
+              "nonempty",
+              "$d.resolved.name"
+            ]
+          ]
+        ],
+        "d",
+        "$d.resolved.name"
+      ]
+    },
+    "publicControllerMethod": {
+      "args": [
+        "f"
+      ],
+      "expr": [
+        "and",
+        [
+          "exists",
+          "$f"
+        ],
+        [
+          "=",
+          "$f.form",
+          "method"
+        ],
+        [
+          "none",
+          "$f.modifiers",
+          "m",
+          [
+            "in",
+            "$m",
+            "private",
+            "protected"
+          ]
+        ],
+        [
+          "some",
+          [
+            "list",
+            [
+              "enclosing",
+              "$f",
+              "type"
+            ]
+          ],
+          "t",
+          [
+            "and",
+            [
+              "exists",
+              "$t"
+            ],
+            [
+              "assignable",
+              "$t",
+              "controller"
+            ]
+          ]
+        ]
+      ]
+    },
+    "declaredTypes": {
+      "args": [
+        "f"
+      ],
+      "expr": [
+        "map",
+        [
+          "filter",
+          [
+            "flatten",
+            [
+              "list",
+              [
+                "list",
+                "$f.returnType"
+              ],
+              [
+                "descendants",
+                "$f.returnType",
+                "type-expression"
+              ]
+            ]
+          ],
+          "t",
+          [
+            "and",
+            [
+              "exists",
+              "$t"
+            ],
+            [
+              "=",
+              "$t.form",
+              "named"
+            ],
+            [
+              "proven",
+              [
+                "nonempty",
+                "$t.refers"
+              ]
+            ]
+          ]
+        ],
+        "t",
+        "$t.refers"
+      ]
+    }
   },
   "relation": {
     "from": "return",
     "as": "r",
     "pipeline": [
-      {"where": ["publicControllerMethod", ["enclosing", "$r", "function"]]},
-      {"expand": ["flatten", ["map", "$r.values", "v", ["typesIn", "$v"]]]},
-      {"project": {"type": "$row"}}
+      {
+        "where": [
+          "publicControllerMethod",
+          [
+            "enclosing",
+            "$r",
+            "function"
+          ]
+        ]
+      },
+      {
+        "expand": [
+          "distinct",
+          [
+            "append",
+            [
+              "flatten",
+              [
+                "map",
+                "$r.values",
+                "v",
+                [
+                  "typesIn",
+                  "$v"
+                ]
+              ]
+            ],
+            [
+              "declaredTypes",
+              [
+                "enclosing",
+                "$r",
+                "function"
+              ]
+            ]
+          ]
+        ]
+      },
+      {
+        "project": {
+          "type": "$row"
+        }
+      }
     ]
   }
 }

@@ -21,5 +21,92 @@
       "crossFile": true
     }
   },
-  "find": {}
+  "find": {
+    "select": [
+      "literal",
+      "interpolation"
+    ],
+    "as": "n",
+    "where": [
+      "and",
+      [
+        "not",
+        "$n.file.test"
+      ],
+      [
+        "startsWith",
+        [
+          "laravel.pathText",
+          "$n"
+        ],
+        "/"
+      ],
+      [
+        "not",
+        [
+          "startsWith",
+          [
+            "laravel.pathText",
+            "$n"
+          ],
+          "//"
+        ]
+      ],
+      [
+        "not",
+        [
+          "some",
+          [
+            "ownAncestors",
+            "$n"
+          ],
+          "a",
+          [
+            "and",
+            [
+              "=",
+              "$a.kind",
+              "argument"
+            ],
+            [
+              "laravel.routed",
+              "$a.parent"
+            ]
+          ]
+        ]
+      ]
+    ],
+    "having": [
+      "some",
+      [
+        "rowsOf",
+        "laravel-named-routes"
+      ],
+      "r",
+      [
+        "pathFits",
+        [
+          "laravel.pathText",
+          "$n"
+        ],
+        [
+          "templateOf",
+          "$r"
+        ]
+      ]
+    ],
+    "emit": "$n"
+  },
+  "definitions": {
+    "templateOf": {
+      "args": [
+        "r"
+      ],
+      "expr": [
+        "get",
+        "$r",
+        "template"
+      ]
+    }
+  }
 }

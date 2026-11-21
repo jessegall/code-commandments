@@ -19,8 +19,6 @@ func init() {
 			Parameters:         engine.InFields("parameters"),
 			OwnsRecordBehavior: engine.KindIn("TypeAliasDeclaration"),
 			ReactiveMember:     typescript.ReactiveMember,
-			Extends:            heritage("extends"),
-			Implements:         heritage("implements"),
 			Annotations:        decorators,
 			TypeKind:           engine.Kinds(map[string]string{"ClassDeclaration": "class", "ClassExpression": "class", "InterfaceDeclaration": "interface", "EnumDeclaration": "enum"}),
 			DeclaresMethods: func(declared engine.Match) bool {
@@ -129,23 +127,6 @@ func testFile(file, _ string) bool {
 
 	return strings.Contains(name, ".test.") || strings.Contains(name, ".spec.") ||
 		engine.InFolderNamed(file, "__tests__", "tests", "test")
-}
-
-func heritage(keyword string) func(engine.Match) []engine.Match {
-	return func(declaration engine.Match) []engine.Match {
-		var named []engine.Match
-		for _, clause := range declaration.ChildrenIn("heritageClauses") {
-			if clause.Node().Operator != keyword {
-				continue
-			}
-
-			for _, written := range clause.ChildrenIn("types") {
-				named = append(named, written.Child("expression"))
-			}
-		}
-
-		return named
-	}
 }
 
 func decorators(declaration engine.Match) []engine.Match {

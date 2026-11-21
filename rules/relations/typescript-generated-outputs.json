@@ -1,0 +1,90 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "php"
+  ],
+  "definitions": {
+    "outputPath": {
+      "args": [
+        "v",
+        "file"
+      ],
+      "expr": [
+        "case",
+        "$v.kind",
+        {
+          "literal": "$v.value",
+          "binary": [
+            "join",
+            [
+              "map",
+              [
+                "leaves",
+                "$v",
+                "binary"
+              ],
+              "p",
+              [
+                "case",
+                "$p.kind",
+                {
+                  "literal": "$p.value",
+                  "reference": [
+                    "case",
+                    [
+                      "=",
+                      "$p.name",
+                      "__DIR__"
+                    ],
+                    {
+                      "true": [
+                        "dirName",
+                        "$file"
+                      ]
+                    },
+                    ""
+                  ]
+                },
+                ""
+              ]
+            ],
+            ""
+          ]
+        },
+        ""
+      ]
+    }
+  },
+  "relation": {
+    "from": "entry",
+    "as": "e",
+    "pipeline": [
+      {
+        "where": [
+          "literalEquals",
+          "$e.key",
+          "output_file"
+        ]
+      },
+      {
+        "project": {
+          "path": [
+            "concat",
+            "/",
+            [
+              "cleanPath",
+              [
+                "pathSegments",
+                [
+                  "outputPath",
+                  "$e.value",
+                  "$e.file.path"
+                ]
+              ]
+            ]
+          ]
+        }
+      }
+    ]
+  }
+}

@@ -21,5 +21,258 @@
       "crossFile": true
     }
   },
-  "find": {}
+  "find": {
+    "relations": {
+      "entries": {
+        "from": "function",
+        "as": "f",
+        "pipeline": [
+          {
+            "where": [
+              "and",
+              [
+                "=",
+                "$f.form",
+                "method"
+              ],
+              [
+                "none",
+                "$f.modifiers",
+                "m",
+                [
+                  "in",
+                  "$m",
+                  "private",
+                  "protected"
+                ]
+              ],
+              [
+                "reportable",
+                "$f"
+              ],
+              [
+                "exists",
+                [
+                  "enclosing",
+                  "$f",
+                  "type"
+                ]
+              ]
+            ]
+          },
+          {
+            "project": {
+              "anchor": "$f",
+              "every": true,
+              "pre": [
+                "laravel.boundaryKind",
+                "$f"
+              ],
+              "key": [
+                "concat",
+                [
+                  "tree.ownSymbol",
+                  [
+                    "enclosing",
+                    "$f",
+                    "type"
+                  ]
+                ],
+                "::",
+                "$f.name"
+              ]
+            }
+          },
+          {
+            "join": "laravel-route-actions",
+            "as": "own",
+            "on": {
+              "action": "$key"
+            }
+          },
+          {
+            "project": {
+              "kind": [
+                "case",
+                [
+                  "nonempty",
+                  "$pre"
+                ],
+                {
+                  "true": "$pre"
+                },
+                [
+                  "case",
+                  [
+                    "or",
+                    [
+                      "exists",
+                      "$own"
+                    ],
+                    [
+                      "laravel.handlesRequest",
+                      "$f"
+                    ]
+                  ],
+                  {
+                    "true": "http"
+                  },
+                  ""
+                ]
+              ]
+            }
+          },
+          {
+            "where": [
+              "nonempty",
+              "$kind"
+            ]
+          },
+          {
+            "project": {
+              "calls": [
+                "laravel.boundaryCalls",
+                "$f"
+              ],
+              "flows": [
+                "laravel.boundaryFlows",
+                "$f"
+              ]
+            }
+          },
+          {
+            "where": [
+              ">=",
+              [
+                "count",
+                "$calls"
+              ],
+              2
+            ]
+          }
+        ]
+      },
+      "entry-calls": {
+        "from": "entries",
+        "as": "e",
+        "pipeline": [
+          {
+            "expand": "$e.calls"
+          },
+          {
+            "project": {
+              "call": "$row"
+            }
+          }
+        ]
+      }
+    },
+    "from": "entries",
+    "as": "e",
+    "pipeline": [
+      {
+        "join": "entries",
+        "as": "o",
+        "on": {
+          "every": "$e.every"
+        },
+        "mode": "all"
+      },
+      {
+        "where": [
+          "!=",
+          "$o.kind",
+          "$e.kind"
+        ]
+      },
+      {
+        "project": {
+          "shared": [
+            "filter",
+            "$e.calls",
+            "k",
+            [
+              "and",
+              [
+                "has",
+                "$o.calls",
+                "$k"
+              ],
+              [
+                "<=",
+                [
+                  "countOf",
+                  "entry-calls",
+                  [
+                    "record",
+                    "call",
+                    "$k"
+                  ]
+                ],
+                3
+              ]
+            ]
+          ]
+        }
+      },
+      {
+        "where": [
+          "or",
+          [
+            ">=",
+            [
+              "count",
+              "$shared"
+            ],
+            3
+          ],
+          [
+            "and",
+            [
+              "=",
+              [
+                "count",
+                "$shared"
+              ],
+              2
+            ],
+            [
+              "some",
+              "$e.flows",
+              "fl",
+              [
+                "and",
+                [
+                  "has",
+                  "$o.flows",
+                  "$fl"
+                ],
+                [
+                  "has",
+                  "$shared",
+                  [
+                    "get",
+                    "$fl",
+                    "producer"
+                  ]
+                ],
+                [
+                  "has",
+                  "$shared",
+                  [
+                    "get",
+                    "$fl",
+                    "consumer"
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      },
+      {
+        "emit": "$e.anchor"
+      }
+    ]
+  }
 }

@@ -1,0 +1,185 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "vue"
+  ],
+  "definitions": {
+    "topLevelBinding": {
+      "args": [
+        "b"
+      ],
+      "expr": [
+        "some",
+        [
+          "ancestors",
+          "$b"
+        ],
+        "a",
+        [
+          "and",
+          [
+            "=",
+            "$a.kind",
+            "variable"
+          ],
+          [
+            "=",
+            "$a.parent.kind",
+            "module"
+          ]
+        ]
+      ]
+    },
+    "locals": {
+      "args": [
+        "c"
+      ],
+      "expr": [
+        "append",
+        [
+          "map",
+          [
+            "filter",
+            [
+              "descendants",
+              [
+                "last",
+                [
+                  "ancestors",
+                  "$c"
+                ]
+              ],
+              "binding"
+            ],
+            "b",
+            [
+              "topLevelBinding",
+              "$b"
+            ]
+          ],
+          "b",
+          "$b.name"
+        ],
+        [
+          "map",
+          [
+            "filter",
+            [
+              "descendants",
+              [
+                "last",
+                [
+                  "ancestors",
+                  "$c"
+                ]
+              ],
+              "function"
+            ],
+            "f",
+            [
+              "and",
+              [
+                "=",
+                "$f.parent.kind",
+                "module"
+              ],
+              [
+                "exists",
+                "$f.name"
+              ]
+            ]
+          ],
+          "f",
+          "$f.name"
+        ]
+      ]
+    },
+    "holderOf": {
+      "args": [
+        "c"
+      ],
+      "expr": [
+        "at",
+        [
+          "map",
+          [
+            "list",
+            [
+              "enclosing",
+              "$c",
+              "declarator",
+              "function"
+            ]
+          ],
+          "d",
+          "$d.binding.name"
+        ],
+        0
+      ]
+    }
+  },
+  "relation": {
+    "from": "call",
+    "as": "c",
+    "pipeline": [
+      {
+        "where": [
+          "and",
+          [
+            "=",
+            "$c.callee.kind",
+            "reference"
+          ],
+          [
+            "=",
+            "$c.callee.name",
+            "defineProps"
+          ]
+        ]
+      },
+      {
+        "project": {
+          "file": "$c.file.path",
+          "holder": [
+            "holderOf",
+            "$c"
+          ],
+          "names": [
+            "map",
+            [
+              "fieldsOf",
+              [
+                "at",
+                "$c.typeArguments",
+                0
+              ]
+            ],
+            "f",
+            "$f.name"
+          ],
+          "locals": [
+            "locals",
+            "$c"
+          ]
+        }
+      },
+      {
+        "project": {
+          "props": [
+            "filter",
+            "$names",
+            "n",
+            [
+              "not",
+              [
+                "has",
+                "$locals",
+                "$n"
+              ]
+            ]
+          ]
+        }
+      }
+    ]
+  }
+}
