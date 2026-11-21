@@ -1,6 +1,7 @@
 package rule_test
 
 import (
+	_ "github.com/jessegall/code-commandments/rules"
 	"fmt"
 	"os"
 	"path/filepath"

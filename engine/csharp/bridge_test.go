@@ -22,7 +22,7 @@ func TestTheBridgeScansCSharpIntoACodebase(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if types := csharp.In(codebase).WhereType().Count(); types != 1 {
+	if types := codebase.WhereKind("type").Count(); types != 1 {
 		t.Errorf("the scan holds %d types, not the Cart", types)
 	}
 }

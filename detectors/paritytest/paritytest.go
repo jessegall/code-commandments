@@ -174,6 +174,7 @@ func goFindings(t *testing.T, rules []catalog.Engine, server *bridge.Server, roo
 	for _, each := range rules {
 		proven = append(proven, detectors.Of(each)...)
 	}
+	proven = detectors.OnePerSin(proven)
 	for _, detector := range proven {
 		sin := strings.TrimSuffix(catalog.Name(detector), "Detector")
 		if recordedRules != nil && !recordedRules[sin] {

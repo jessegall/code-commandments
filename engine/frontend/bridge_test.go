@@ -186,7 +186,7 @@ func TestAnImportReachesAComponentOutsideTheScan(t *testing.T) {
 			}
 		}
 	}
-	if !resolved["ImportDeclaration "+want] || !resolved["Element "+want] {
+	if !resolved["import "+want] || !resolved["element "+want] {
 		t.Errorf("the import and the tag do not reach %s: %v", want, resolved)
 	}
 }

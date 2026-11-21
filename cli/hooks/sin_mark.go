@@ -55,7 +55,7 @@ func (m Marking) CutFrom(cut string) Marking {
 
 func (m Marking) Of(rule detectors.Detector, match engine.Match, changed git.ChangedLines) SinMark {
 	mark := SinMark{Rule: rule, Match: match, Touched: changed.Covers(match.Line())}
-	mark.Filed, _ = m.record.Reported(catalog.Name(rule), m.root, match.File(), match.Line())
+	mark.Filed, _ = m.record.Reported(append([]string{catalog.Name(rule)}, rule.Sin().Definition().Names()...), m.root, match.File(), match.Line())
 
 	return mark
 }

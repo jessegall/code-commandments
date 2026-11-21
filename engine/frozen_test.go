@@ -36,8 +36,8 @@ func TestAFileOutsidePHPIsFrozenAsThePHPToolReadsIt(t *testing.T) {
 func streamOf(path, source string) string {
 	quoted, _ := json.Marshal(path)
 
-	return fmt.Sprintf(`{"header": {"contract": "tree", "version": 1, "language": "python", "bridge": {"name": "test", "version": "1"}, "roots": ["/p"]}}
-{"file": {"path": %s, "language": "python", "errors": 0, "root": {"id": 0, "kind": "File", "role": "other", "span": [0, %d, 1]}, "comments": []}}
+	return fmt.Sprintf(`{"header": {"contract": "tree", "version": 5, "language": "python", "bridge": {"name": "test", "version": "1"}, "roots": ["/p"]}}
+{"file": {"path": %s, "language": "python", "errors": 0, "module": "p", "resolver": {"tool": "mypy", "ran": true}, "root": {"id": 0, "kind": "file", "span": [0, %d, 1]}, "comments": []}}
 {"trailer": {"files": 1}}
 `, quoted, len(source))
 }

@@ -31,7 +31,7 @@ func main() {
 	}
 	codebase := engine.Load(scripts, server)
 	var lines []string
-	for _, detector := range append(detectors.Of(catalog.Vue), detectors.Of(catalog.TypeScript)...) {
+	for _, detector := range detectors.OnePerSin(append(detectors.Of(catalog.Vue), detectors.Of(catalog.TypeScript)...)) {
 		for _, finding := range detector.Find(codebase) {
 			lines = append(lines, fmt.Sprintf("%s [%s]", finding.Location(), catalog.Name(detector)))
 		}

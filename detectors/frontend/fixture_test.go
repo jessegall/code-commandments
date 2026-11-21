@@ -29,7 +29,7 @@ func TestTheFrontendFixtureProvesEveryDetector(t *testing.T) {
 	fixturetest.Prove(t, fixture.Fixture{
 		Codebase:  codebase,
 		Detectors: fixture.Proven(configured(t)),
-		Known:     fixture.Proven(append(detectors.Of(catalog.Vue), detectors.Of(catalog.TypeScript)...)),
+		Known:     fixture.Proven(detectors.OnePerSin(append(detectors.Of(catalog.Vue), detectors.Of(catalog.TypeScript)...))),
 		Resolver:  fixture.FileScenarios,
 	})
 }
@@ -52,5 +52,5 @@ func TestNoFrontendRuleCostsMoreThanTheTreeItReadsGrewBy(t *testing.T) {
 }
 
 func configured(t testing.TB) []detectors.Detector {
-	return fixturetest.Configured(t, shop, append(detectors.Of(catalog.Vue), detectors.Of(catalog.TypeScript)...))
+	return fixturetest.Configured(t, shop, detectors.OnePerSin(append(detectors.Of(catalog.Vue), detectors.Of(catalog.TypeScript)...)))
 }

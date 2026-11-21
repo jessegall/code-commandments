@@ -2,6 +2,7 @@ package judge
 
 import (
 	"github.com/jessegall/code-commandments/cli/reported"
+	"github.com/jessegall/code-commandments/detectors"
 	"github.com/jessegall/code-commandments/engine"
 )
 
@@ -19,7 +20,7 @@ func apart(root string, findings []engine.Finding) (active []engine.Finding, fil
 
 	for _, finding := range findings {
 		_, line := splitLocation(finding.Location)
-		row, isReported := record.Reported(finding.Detector, root, finding.File, line)
+		row, isReported := record.Reported(answeredNames(finding.Detector), root, finding.File, line)
 
 		if !isReported {
 			active = append(active, finding)
@@ -31,4 +32,14 @@ func apart(root string, findings []engine.Finding) (active []engine.Finding, fil
 	}
 
 	return active, filed, read
+}
+
+// answeredNames is every name the rule a finding names answers to, so a report filed under a former name still holds.
+func answeredNames(detector string) []string {
+	names := []string{detector}
+	for _, each := range detectors.EveryNamedIn(detectors.All(), detector) {
+		names = append(names, each.Sin().Definition().Names()...)
+	}
+
+	return names
 }

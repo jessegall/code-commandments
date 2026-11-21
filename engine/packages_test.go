@@ -24,19 +24,19 @@ func packaged(t *testing.T, language, manifest, written string, targets ...map[s
 	var statements []string
 	for at, target := range targets {
 		call, _ := json.Marshal(map[string]any{
-			"id": 3 + 3*at, "kind": "expression-statement", "span": []int{at, at + 1, at + 1},
+			"id": 2 + 3*at, "kind": "expression-statement", "span": []int{at, at + 1, at + 1},
 			"parts": map[string]any{"expression": map[string]any{
-				"id": 4 + 3*at, "kind": "call", "span": []int{at, at + 1, at + 1}, "target": target,
-				"parts": map[string]any{"callee": map[string]any{"id": 5 + 3*at, "kind": "reference", "span": []int{at, at + 1, at + 1}, "name": target["name"]}},
+				"id": 3 + 3*at, "kind": "call", "span": []int{at, at + 1, at + 1}, "target": target,
+				"parts": map[string]any{"callee": map[string]any{"id": 4 + 3*at, "kind": "reference", "span": []int{at, at + 1, at + 1}, "name": target["name"]}},
 			}},
 		})
 		statements = append(statements, string(call))
 	}
 	path := filepath.Join(root, "probe.source")
 	stream := fmt.Sprintf(`{"header": {"contract": "tree", "version": 5, "language": %q, "bridge": {"name": "probe", "version": "8.0.0"}, "roots": [%q]}}
-{"file": {"path": %q, "language": %q, "errors": 0, "module": "probe", "resolver": {"tool": "probe", "ran": true}, "root": {"id": 0, "kind": "file", "span": [0, 99, 1], "parts": {"modules": [{"id": 1, "kind": "module", "span": [0, 99, 1], "name": "probe", "parts": {"statements": [%s]}}]}}, "comments": []}}
+{"file": {"path": %q, "language": %q, "errors": 0, "module": "probe", "resolver": {"tool": %q, "ran": true}, "root": {"id": 0, "kind": "file", "span": [0, 99, 1], "parts": {"modules": [{"id": 1, "kind": "module", "span": [0, 99, 1], "name": "probe", "parts": {"statements": [%s]}}]}}, "comments": []}}
 {"trailer": {"files": 1}}
-`, language, root, path, language, strings.Join(statements, ", "))
+`, language, root, path, language, map[string]string{"php": "php-parser", "csharp": "roslyn", "python": "mypy", "typescript": "tsc", "go": "go/types"}[language], strings.Join(statements, ", "))
 	codebase, err := engine.FromString(stream, nil)
 	if err != nil {
 		t.Fatal(err)

@@ -108,8 +108,7 @@ func EveryNamedIn(detectors []Detector, name string) []Detector {
 	wanted := catalog.Normalise(strings.TrimSuffix(bare, "Detector"))
 	asked := catalog.Normalise(engine)
 	matchesEngine := func(detector Detector) bool {
-		own, _ := EngineOf(detector)
-		return asked == "" || catalog.Normalise(string(own)) == asked
+		return asked == "" || slices.ContainsFunc(EnginesOf(detector), func(own catalog.Engine) bool { return catalog.Normalise(string(own)) == asked })
 	}
 
 	var named []Detector
@@ -140,7 +139,7 @@ func EveryNamedIn(detectors []Detector, name string) []Detector {
 func OnePerSin(list []Detector) []Detector {
 	var kept []Detector
 	for _, detector := range list {
-		if !slices.ContainsFunc(kept, func(taken Detector) bool { return taken.Sin() == detector.Sin() }) {
+		if !slices.ContainsFunc(kept, func(taken Detector) bool { return SameSin(taken, detector) }) {
 			kept = append(kept, detector)
 		}
 	}
@@ -173,4 +172,13 @@ func Aggregate(detector Aggregating, codebase *engine.Codebase) []engine.Match {
 	}
 
 	return sins
+}
+
+// SameSin says whether two detectors find one sin: the same name under the same engine. A sin is compared by what
+// it is, never by its value, since a rule's sin holds lists.
+func SameSin(one, other Detector) bool {
+	oneEngine, _ := EngineOf(one)
+	otherEngine, _ := EngineOf(other)
+
+	return one.Sin().Definition().Name == other.Sin().Definition().Name && oneEngine == otherEngine
 }

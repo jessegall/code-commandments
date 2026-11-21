@@ -25,7 +25,7 @@ func Curriculum(fixtures string) (render.Examples, error) {
 		fallback  source.Language
 	}{
 		{"backend", []source.Language{source.PHP}, Proven(rules.Of(catalog.PHP)), source.PHP},
-		{"frontend", []source.Language{source.Vue, source.TypeScript}, Proven(append(rules.Of(catalog.Vue), rules.Of(catalog.TypeScript)...)), source.Vue},
+		{"frontend", []source.Language{source.Vue, source.TypeScript}, Proven(detectors.OnePerSin(append(rules.Of(catalog.Vue), rules.Of(catalog.TypeScript)...))), source.Vue},
 		{"python", []source.Language{source.Python}, Proven(rules.Of(catalog.Python)), source.Python},
 		{"csharp", []source.Language{source.CSharp}, Proven(rules.Of(catalog.CSharp)), source.CSharp},
 		{"go", []source.Language{source.Go}, Proven(rules.Of(catalog.Go)), source.Go},

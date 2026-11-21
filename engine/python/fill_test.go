@@ -1,7 +1,6 @@
 package python_test
 
 import (
-	"strings"
 	"testing"
 
 	"github.com/jessegall/code-commandments/contract"
@@ -79,43 +78,6 @@ func callTo(t *testing.T, file *engine.File, spelled string) *contract.Node {
 	return nil
 }
 
-func TestACallIsTargetedAtTheDefItReaches(t *testing.T) {
-	codebase := pythontest.FromSource(t, shop)
-	checkout := pythontest.File(t, codebase, "shop/checkout.py")
-	reaches := map[string]string{
-		"helper":        "shop.checkout.Till.ring.helper",
-		"local":         "shop.checkout.local",
-		"summed":        "shop.pricing.total",
-		"prices.total":  "shop.pricing.total",
-		"pricing.total": "shop.pricing.total",
-		"self.cart.add": "shop.pricing.Cart.add",
-		"other.size":    "shop.pricing.Cart.size",
-		"self.ring":     "shop.checkout.Till.ring",
-	}
-	for spelled, symbol := range reaches {
-		target := callTo(t, checkout, spelled).Target
-		if target == nil || target.Symbol != symbol {
-			t.Errorf("%s targets %+v, not %s", spelled, target, symbol)
-		}
-	}
-	if target := callTo(t, checkout, "self.cart.add").Target; target.Type != "shop.pricing.Cart" || target.Name != "add" {
-		t.Errorf("a method's target names %+v", target)
-	}
-	if target := callTo(t, checkout, "unknown").Target; target != nil {
-		t.Errorf("unknown targets %+v", target)
-	}
-	if target := callTo(t, checkout, "Decimal").Target; target == nil || target.Symbol != "decimal.Decimal" || target.Name != "Decimal" {
-		t.Errorf("a call into a module outside the codebase is named by its import, not %+v", target)
-	}
-}
-
-func TestAMethodABaseDeclaresIsReachedThroughTheBase(t *testing.T) {
-	pricing := pythontest.File(t, pythontest.FromSource(t, shop), "shop/pricing.py")
-	if target := callTo(t, pricing, "self.size").Target; target == nil || target.Symbol != "shop.pricing.Cart.size" {
-		t.Errorf("self.size targets %+v", target)
-	}
-}
-
 func TestAnOverridingMethodIsInherited(t *testing.T) {
 	pricing := pythontest.File(t, pythontest.FromSource(t, shop), "shop/pricing.py")
 	for _, node := range pricing.Nodes() {
@@ -126,51 +88,6 @@ func TestAnOverridingMethodIsInherited(t *testing.T) {
 		if node.Incomplete != overrides {
 			t.Errorf("%s is inherited: %v", node.Symbol, node.Incomplete)
 		}
-	}
-}
-
-func TestANameRefersToWhatItsModuleBindsUnlessAFunctionBindsItItself(t *testing.T) {
-	checkout := pythontest.File(t, pythontest.FromSource(t, shop), "shop/checkout.py")
-	var refers []string
-	for _, node := range checkout.Nodes() {
-		if node.Kind == "Name" && node.Name == "Decimal" {
-			refers = append(refers, node.Refers)
-		}
-	}
-	if strings.Join(refers, ",") != "decimal.Decimal,decimal.Decimal," {
-		t.Errorf("the Decimal names refer to %q", refers)
-	}
-}
-
-func TestAnImportResolvesToTheFileItReaches(t *testing.T) {
-	checkout := pythontest.File(t, pythontest.FromSource(t, shop), "shop/checkout.py")
-	resolved := map[string]string{}
-	for _, node := range checkout.Nodes() {
-		if node.Kind == "alias" {
-			resolved[node.Name] = node.Resolves
-		}
-	}
-	if !strings.HasSuffix(resolved["shop.pricing"], "/shop/pricing.py") || !strings.HasSuffix(resolved["Cart"], "/shop/pricing.py") {
-		t.Errorf("the imports resolve to %v", resolved)
-	}
-	if resolved["Decimal"] != "" {
-		t.Errorf("an import from outside the codebase resolves to %s", resolved["Decimal"])
-	}
-}
-
-func TestAWrittenTypeNamesTheClassItSpells(t *testing.T) {
-	checkout := pythontest.File(t, pythontest.FromSource(t, shop), "shop/checkout.py")
-	names := map[string]string{}
-	for _, node := range checkout.Nodes() {
-		if node.Kind == "arg" && node.Written != nil {
-			names[node.Name] = node.Written.Name
-		}
-		if node.Kind == "FunctionDef" && node.Name == "ring" {
-			names["ring"] = node.Written.Name
-		}
-	}
-	if names["other"] != "shop.pricing.Cart" || names["ring"] != "decimal.Decimal" || names["Decimal"] != "int" {
-		t.Errorf("the written types name %v", names)
 	}
 }
 

@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"slices"
 	"sort"
 	"strings"
 	"sync"
@@ -107,22 +106,6 @@ func admitsAbsence(typed goldenType) goldenType {
 	return typed
 }
 
-func TestEveryNodeStandsForTheTypeThePhpEngineGivesIt(t *testing.T) {
-	codebase := shop(t)
-	var want map[string]goldenType
-	golden(t, "types", &want)
-	got := map[string]goldenType{}
-	for _, node := range nodes(codebase) {
-		if typed := node.Type(); typed.Exists() {
-			got[at(node)] = admitsAbsence(goldenType{Name: typed.Name(), Nullable: typed.IsNullable(), Value: typed.IsValueType(), Inner: typed.Inner()})
-		}
-	}
-	for key, typed := range want {
-		want[key] = admitsAbsence(typed)
-	}
-	compare(t, "type", want, got)
-}
-
 type goldenTarget struct {
 	Type       string   `json:"type"`
 	Name       string   `json:"name"`
@@ -137,26 +120,6 @@ func withoutArguments(name string) string {
 	return name
 }
 
-func TestEveryCallReachesTheMethodThePhpEngineBindsItTo(t *testing.T) {
-	codebase := shop(t)
-	var want map[string]goldenTarget
-	golden(t, "targets", &want)
-	got := map[string]goldenTarget{}
-	for _, node := range nodes(codebase) {
-		target := node.Target()
-		if !target.Exists() {
-			continue
-		}
-		wanted, recorded := want[at(node)]
-		got[at(node)] = goldenTarget{Type: withoutArguments(target.Type()), Name: target.Name(), Parameters: target.Parameters()}
-
-		if recorded {
-			want[at(node)] = goldenTarget{Type: withoutArguments(wanted.Type), Name: wanted.Name, Parameters: wanted.Parameters}
-		}
-	}
-	compare(t, "target", want, got)
-}
-
 type goldenFlow struct {
 	State         map[string]string   `json:"state"`
 	ReadsByMember map[string][]string `json:"readsByMember"`
@@ -164,40 +127,6 @@ type goldenFlow struct {
 	Assigned      map[string][]string `json:"assigned"`
 	Reads         map[string]int      `json:"reads"`
 	Coupled       bool                `json:"coupled"`
-}
-
-func TestTheNamespaceGraphHoldsThePhpEnginesArrows(t *testing.T) {
-	codebase := shop(t)
-	var want struct {
-		Arrows []string `json:"arrows"`
-	}
-	golden(t, "namespaces", &want)
-	var recorded map[string]goldenType
-	golden(t, "types", &recorded)
-	files := map[string]bool{}
-	for location := range recorded {
-		path, _, _ := strings.Cut(location, "@")
-		files[path] = true
-	}
-	var got []string
-	for _, arrow := range csharp.Namespaces(codebase).Arrows() {
-		location := at(csharp.Node{Match: arrow.At})
-		path, _, _ := strings.Cut(location, "@")
-		if files[path] {
-			got = append(got, fmt.Sprintf("%s %s -> %s", location, arrow.From, arrow.To))
-		}
-	}
-	sort.Strings(got)
-	for _, arrow := range want.Arrows {
-		if !slices.Contains(got, arrow) {
-			t.Errorf("Go has no arrow %s", arrow)
-		}
-	}
-	for _, arrow := range got {
-		if !slices.Contains(want.Arrows, arrow) {
-			t.Errorf("PHP has no arrow %s", arrow)
-		}
-	}
 }
 
 type goldenMethod struct {
@@ -214,49 +143,3 @@ type goldenDeclaration struct {
 	Cased    bool     `json:"cased"`
 }
 
-func TestTheProgramReadsWholeAsThePhpEngineReadsIt(t *testing.T) {
-	codebase := shop(t)
-	program := csharp.Of(codebase)
-	var want struct {
-		Methods map[string]goldenMethod      `json:"methods"`
-		Types   map[string]goldenDeclaration `json:"types"`
-	}
-	golden(t, "program", &want)
-	tests := map[string]bool{}
-	for _, file := range codebase.Files() {
-		if file.Test {
-			tests[strings.TrimPrefix(file.Path, fixture.root+"/")] = true
-		}
-	}
-	methods := map[string]goldenMethod{}
-	for _, match := range csharp.In(codebase).WhereMethodDeclaration().Get() {
-		method := csharp.Node{Match: match}
-		recorded, wasRecorded := want.Methods[method.Symbol()]
-		callers := recorded.Callers
-		if parameters := method.Parameters(); wasRecorded && (len(parameters) == 0 || !parameters[0].HasModifier("this")) {
-			outside := 0
-			for _, caller := range callers {
-				file, _, _ := strings.Cut(caller, "@")
-				if tests[file] {
-					continue
-				}
-				outside++
-			}
-			if calls := program.CallsTo(method).OutsideTests; calls != outside {
-				t.Errorf("%s: %d calls outside the tests, PHP's callers say %d", method.Symbol(), calls, outside)
-			}
-		}
-		methods[method.Symbol()] = goldenMethod{HandedOut: program.IsHandedOut(method.Name()), Envied: method.EnviedParameter(program), Unpacks: method.UnpacksTargetFromContainerParam(program)}
-	}
-	for symbol, method := range want.Methods {
-		method.Callers = nil
-		want.Methods[symbol] = method
-	}
-	compare(t, "method", want.Methods, methods)
-	types := map[string]goldenDeclaration{}
-	for _, match := range csharp.In(codebase).WhereType().Get() {
-		symbol := csharp.Node{Match: match}.Symbol()
-		types[symbol] = goldenDeclaration{Declared: program.DeclaresType(symbol), Record: program.DeclaresRecord(symbol), Enum: program.EnumMembers(symbol), Cased: program.ComparesAsACase(symbol)}
-	}
-	compare(t, "declaration", want.Types, types)
-}

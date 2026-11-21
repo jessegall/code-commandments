@@ -25,7 +25,7 @@ func TestAReportIsReadBackAtTheSinItWasAbout(t *testing.T) {
 		t.Fatal("the record it just wrote does not read")
 	}
 
-	found, ok := held.Reported("InventedDefaultDetector", root, file, 2)
+	found, ok := held.Reported([]string{"InventedDefaultDetector"}, root, file, 2)
 	if !ok {
 		t.Fatal("the sin that was reported reads as active")
 	}
@@ -38,17 +38,17 @@ func TestAReportIsReadBackAtTheSinItWasAbout(t *testing.T) {
 		t.Errorf("the row names the file as %q, and a record two checkouts share names it under the root", found.File)
 	}
 
-	if _, ok := held.Reported("RedundantElseDetector", root, file, 2); ok {
+	if _, ok := held.Reported([]string{"RedundantElseDetector"}, root, file, 2); ok {
 		t.Error("another rule's finding on the same line reads as reported, and nobody has answered that one")
 	}
 
 	write(t, file, "# moved down\n\ndef refund(order):\n    return order.total\n")
-	if _, ok := held.Reported("InventedDefaultDetector", root, file, 4); !ok {
+	if _, ok := held.Reported([]string{"InventedDefaultDetector"}, root, file, 4); !ok {
 		t.Error("a sin an edit above it moved reads as active again, and the issue is still open")
 	}
 
 	write(t, file, "def refund(order):\n    return order.total or 0\n")
-	if _, ok := held.Reported("InventedDefaultDetector", root, file, 2); ok {
+	if _, ok := held.Reported([]string{"InventedDefaultDetector"}, root, file, 2); ok {
 		t.Error("a line written anew still reads as reported, so the report covers code nobody reported")
 	}
 }
@@ -164,7 +164,7 @@ func TestForgettingAReportMakesItsSinOrdinaryAgain(t *testing.T) {
 	}
 
 	held, _ := reported.Of(root)
-	if _, reported := held.Reported("InventedDefaultDetector", root, file, 1); reported {
+	if _, reported := held.Reported([]string{"InventedDefaultDetector"}, root, file, 1); reported {
 		t.Error("the sin still reads as reported after its report was forgotten")
 	}
 

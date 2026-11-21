@@ -218,7 +218,7 @@ func workedExample(examplesOf []worked) string {
 	first := examplesOf[0].sins[0]
 	var shown []string
 	for _, each := range examplesOf {
-		if !slices.Contains(each.sins, first) {
+		if !slices.ContainsFunc(each.sins, func(sin sins.Sin) bool { return sin.Definition().Name == first.Definition().Name }) {
 			continue
 		}
 		if rendered := example(each, named); rendered != "" {
@@ -394,7 +394,7 @@ func detectorOf(sin sins.Sin) (detectors.Detector, bool) {
 func detectorsOf(sin sins.Sin) []detectors.Detector {
 	var finders []detectors.Detector
 	for _, detector := range detectors.All() {
-		if detector.Sin() == sin {
+		if detector.Sin().Definition().Name == sin.Definition().Name {
 			finders = append(finders, detector)
 		}
 	}

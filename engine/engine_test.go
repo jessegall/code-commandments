@@ -8,25 +8,24 @@ import (
 
 	"github.com/jessegall/code-commandments/contract"
 	"github.com/jessegall/code-commandments/engine"
+	"github.com/jessegall/code-commandments/engine/php/shop"
 )
 
-const slack = "/fixtures/backend/app/Notifications/SlackNotifier.php"
+var slack = shop.Root + "/app/Notifications/SlackNotifier.php"
+
+// sampled are the ten shop files the engine's own tests ask about.
+var sampled = []string{"Billing/Checkout.php", "Fulfillment/LabelPrintDefaults.php", "Fulfillment/LegChain.php",
+	"Http/Pages/Hydration/OptCoords.php", "Notifications/SlackNotifier.php", "Orders/BasketTotaller.php",
+	"Orders/DiscountTier.php", "Reporting/AccessAuditor.php", "Reporting/GradeCalculator.php", "Shipping/CarrierPicker.php"}
 
 func sample(t *testing.T) *engine.Codebase {
 	t.Helper()
-	file, err := os.Open("../contract/samples/php.jsonl")
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer file.Close()
-	stream, err := contract.ReadAll(file)
-	if err != nil {
-		t.Fatal(err)
+	paths := make([]string, len(sampled))
+	for at, each := range sampled {
+		paths[at] = "app/" + each
 	}
 
-	return engine.New(func(path string) ([]byte, error) {
-		return os.ReadFile("../tests/Fixtures/" + strings.TrimPrefix(path, "/fixtures/"))
-	}, stream)
+	return shop.Files(t, paths...)
 }
 
 // Facades is a toy package node, standing in for the decorators the language layers declare.
@@ -39,7 +38,7 @@ func (Facades) Decorate(m engine.Match) Facades {
 }
 
 func (f Facades) IsFunctionCall() bool {
-	return f.Kind() == "Expr_FuncCall"
+	return f.Kind() == "call" && f.Child("callee").Kind() == "reference"
 }
 
 func TestWhereKeepsWhatEveryCheckAnswersYesTo(t *testing.T) {
@@ -143,20 +142,21 @@ func TestOfKeepsOneLanguage(t *testing.T) {
 }
 
 func TestFromStringReadsSourcesByPath(t *testing.T) {
-	stream, err := os.ReadFile("../contract/samples/php.jsonl")
+	stream, err := os.ReadFile("../contract/samples/testdata/expected/elif/php.jsonl")
 	if err != nil {
 		t.Fatal(err)
 	}
 	given := strings.Repeat("\n", 100_000)
+	const elif = "/expected/elif/php.php"
 
-	codebase, err := engine.FromString(string(stream), map[string]string{slack: given})
+	codebase, err := engine.FromString(string(stream), map[string]string{elif: given})
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	for _, file := range codebase.Files() {
 		source, err := file.Source()
-		if (file.Path == slack) != (err == nil) || (err == nil && string(source) != given) {
+		if (file.Path == elif) != (err == nil) || (err == nil && string(source) != given) {
 			t.Fatalf("%s: got %d bytes, %v", file.Path, len(source), err)
 		}
 	}

@@ -1059,12 +1059,12 @@ func (w *writer) typeExpression(written ast.Expr) *contract.Node {
 	case *ast.ParenExpr:
 		return w.typeExpression(held.X)
 	case *ast.Ident:
-		node.Own().Form = "named"
+		node.Own().Form, node.Own().Name = "named", held.Name
 		if w.facts != nil {
 			node.Own().Refers = w.refers(held)
 		}
 	case *ast.SelectorExpr:
-		node.Own().Form = "named"
+		node.Own().Form, node.Own().Name = "named", types.ExprString(held)
 		if w.facts != nil {
 			node.Own().Refers = w.refers(held.Sel)
 		}
@@ -1104,6 +1104,11 @@ func (w *writer) typeExpression(written ast.Expr) *contract.Node {
 		holdAll(node, "typeArguments", arguments)
 	default:
 		node.Own().Form = "opaque"
+	}
+	if w.facts != nil {
+		if stands, found := w.facts.Types[written]; found && stands.IsType() && stands.Type != nil {
+			node.Resolved = w.resolved(stands.Type)
+		}
 	}
 
 	return node

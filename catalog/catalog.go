@@ -158,21 +158,32 @@ func (c *Catalog[T]) Register(engine Engine, rule T) {
 	c.entries = append(c.entries, entry[T]{engine, rule})
 }
 
+// All is every published rule once, listed under the engine it is registered for, engines in curriculum order.
 func (c *Catalog[T]) All() []T {
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
 	var all []T
 	for _, engine := range Curriculum {
-		all = append(all, c.Of(engine)...)
+		var rules []T
+		for _, registered := range c.entries {
+			if registered.engine == engine && !IsUnpublished(registered.rule) {
+				rules = append(rules, registered.rule)
+			}
+		}
+		slices.SortFunc(rules, func(a, b T) int { return strings.Compare(Name(a), Name(b)) })
+		all = append(all, rules...)
 	}
 
 	return all
 }
 
+// Of is every published rule that judges the engine: registered for it, or a rule of several engines naming it.
 func (c *Catalog[T]) Of(engine Engine) []T {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
 	var rules []T
 	for _, registered := range c.entries {
-		if registered.engine != engine || IsUnpublished(registered.rule) {
+		if !judges(registered, engine) || IsUnpublished(registered.rule) {
 			continue
 		}
 		rules = append(rules, registered.rule)
@@ -182,17 +193,32 @@ func (c *Catalog[T]) Of(engine Engine) []T {
 	return rules
 }
 
+// Every is every rule that judges the engine, published or not.
 func (c *Catalog[T]) Every(engine Engine) []T {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
 	var rules []T
 	for _, registered := range c.entries {
-		if registered.engine == engine {
+		if judges(registered, engine) {
 			rules = append(rules, registered.rule)
 		}
 	}
 
 	return rules
+}
+
+// severalEngines is a rule that states every engine it judges, as a rule file does.
+type severalEngines interface {
+	Engines() []Engine
+}
+
+func judges[T any](registered entry[T], engine Engine) bool {
+	if registered.engine == engine {
+		return true
+	}
+	several, states := any(registered.rule).(severalEngines)
+
+	return states && slices.Contains(several.Engines(), engine)
 }
 
 func (c *Catalog[T]) EngineOf(rule T) (Engine, bool) {

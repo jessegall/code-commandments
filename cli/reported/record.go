@@ -64,15 +64,20 @@ func Of(root string) (held Record, read bool) {
 	return held, true
 }
 
-func (r Record) Reported(rule, root, file string, line int) (Row, bool) {
-	id, read := Identity(rule, root, file, line)
-	if !read {
-		return Row{}, false
+// Reported is the report filed for a finding at a line, under any name its rule answers to: a report filed before a
+// rule was renamed names it by its former name.
+func (r Record) Reported(names []string, root, file string, line int) (Row, bool) {
+	for _, rule := range names {
+		id, read := Identity(rule, root, file, line)
+		if !read {
+			continue
+		}
+		if held, reported := r.Reports[id]; reported {
+			return held, true
+		}
 	}
 
-	held, reported := r.Reports[id]
-
-	return held, reported
+	return Row{}, false
 }
 
 func (r Row) Where() string {

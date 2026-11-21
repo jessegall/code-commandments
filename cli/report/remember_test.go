@@ -23,7 +23,7 @@ func TestADetectorReportRecordsTheSinItWasAbout(t *testing.T) {
 	}
 
 	held, _ := reported.Of(root)
-	row, found := held.Reported("InventedDefaultDetector", root, filepath.Join(root, "src/refund.py"), 2)
+	row, found := held.Reported([]string{"InventedDefaultDetector"}, root, filepath.Join(root, "src/refund.py"), 2)
 	if !found {
 		t.Fatal("the line the report was about is not recorded as reported")
 	}
@@ -83,7 +83,7 @@ func TestASinAlreadyReportedIsSaidOutLoudAndNotForgotten(t *testing.T) {
 	}
 
 	held, _ := reported.Of(root)
-	if row, _ := held.Reported("InventedDefaultDetector", root, filepath.Join(root, "src/refund.py"), 1); row.Issue != 814 {
+	if row, _ := held.Reported([]string{"InventedDefaultDetector"}, root, filepath.Join(root, "src/refund.py"), 1); row.Issue != 814 {
 		t.Errorf("the row now names issue %d, and the first issue is forgotten", row.Issue)
 	}
 }

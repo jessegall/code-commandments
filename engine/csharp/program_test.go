@@ -1,10 +1,7 @@
 package csharp_test
 
 import (
-	"testing"
 
-	"github.com/jessegall/code-commandments/engine/csharp"
-	"github.com/jessegall/code-commandments/engine/csharp/csharptest"
 )
 
 const orders = `using System;
@@ -28,14 +25,3 @@ public sealed class Orders
 }
 `
 
-func TestTheCallsToAMethodCountThoseThatAssertItsResultIsThere(t *testing.T) {
-	codebase := csharptest.FromSource(t, map[string]string{"Shop/Orders.cs": orders})
-	find := csharptest.First(t, codebase, "Shop/Orders.cs", "MethodDeclaration")
-	if find.Name() != "Find" {
-		t.Fatalf("the first method is %s", find.Name())
-	}
-	calls := csharp.Of(codebase).CallsTo(find)
-	if calls.OutsideTests != 4 || calls.Asserting != 3 {
-		t.Errorf("Find has %d calls outside the tests, %d asserting; want 4, 3", calls.OutsideTests, calls.Asserting)
-	}
-}

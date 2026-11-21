@@ -166,6 +166,27 @@ func readFixture(path string) ([]byte, error) {
 	return os.ReadFile(filepath.Join(Fixture(), strings.TrimPrefix(path, Root+"/")))
 }
 
+// Files is a codebase of only the shop files at the paths given under the fixture, from the committed stream.
+func Files(t testing.TB, paths ...string) *engine.Codebase {
+	t.Helper()
+	stream, err := readStream("shop.jsonl.gz")
+	if err != nil {
+		t.Fatalf("the committed shop stream does not load (run go generate ./engine/php): %v", err)
+	}
+	var kept []*contract.File
+	for _, file := range stream.Files {
+		if slices.Contains(paths, strings.TrimPrefix(file.Path, Root+"/")) {
+			kept = append(kept, file)
+		}
+	}
+	if len(kept) != len(paths) {
+		t.Fatalf("the shop stream holds %d of the %d files asked for", len(kept), len(paths))
+	}
+	stream.Files = kept
+
+	return engine.New(readFixture, stream)
+}
+
 func Project(t testing.TB) *engine.Codebase {
 	t.Helper()
 	codebase, err := project()

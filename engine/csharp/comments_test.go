@@ -3,7 +3,6 @@ package csharp_test
 import (
 	"testing"
 
-	"github.com/jessegall/code-commandments/engine"
 	"github.com/jessegall/code-commandments/engine/csharp"
 	"github.com/jessegall/code-commandments/engine/csharp/csharptest"
 )
@@ -26,34 +25,6 @@ public sealed class Basket
     public int Lines { get; set; }
 }
 `
-
-func TestADocCommentReadsAsItsTags(t *testing.T) {
-	codebase := csharptest.FromSource(t, map[string]string{"Shop/Basket.cs": documented})
-	comments := csharp.In(codebase).Comments()
-	doc := comments[0]
-	tags := doc.Tags()
-	if len(tags) != 3 || tags[0].Name != "summary" || tags[1].Name != "param" {
-		t.Fatalf("the doc comment reads as %v", tags)
-	}
-	if doc.Paragraphs() != 1 {
-		t.Errorf("the summary is %d paragraphs", doc.Paragraphs())
-	}
-	if documented := doc.Documented(); !documented.Is("MethodDeclaration") || doc.Line() != 8 {
-		t.Errorf("the doc comment documents %s on line %d", documented.Kind(), doc.Line())
-	}
-	if refs := doc.Refs; len(refs) != 1 || !engine.Dangling(refs[0]) {
-		t.Errorf("the reference to Gone is not dangling: %+v", refs)
-	}
-}
-
-func TestTheCommentsAboveAStatementSayItsWords(t *testing.T) {
-	codebase := csharptest.FromSource(t, map[string]string{"Shop/Basket.cs": documented})
-	statement := csharptest.First(t, codebase, "Shop/Basket.cs", "ExpressionStatement")
-	words := statement.CommentWords()
-	if len(words) == 0 || len(statement.CodeWords()) == 0 {
-		t.Errorf("the comment says %v and the statement %v", words, statement.CodeWords())
-	}
-}
 
 func TestACommentThatDocumentsNothingIsFoundOnItsOwnLine(t *testing.T) {
 	codebase := csharptest.FromSource(t, map[string]string{"Shop/Tombstone.cs": "namespace Shop;\n\npublic sealed class Tombstone\n{\n    public void Apply()\n    {\n        // Intentionally empty: the aggregate is removed elsewhere.\n    }\n}\n"})

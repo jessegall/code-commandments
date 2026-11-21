@@ -491,7 +491,7 @@ class Translator:
 
     def named_type(self, annotation: ast.expr, refers: str | None) -> Node:
         """A written type naming a class: when mypy resolved the name, it stands for an instance of that class."""
-        node = self.of("type-expression", annotation, form="named", refers=refers)
+        node = self.of("type-expression", annotation, form="named", name=written_name(annotation), refers=refers)
         if refers is not None:
             node.facts["resolvedType"] = self.typed({"text": ast.unparse(annotation), "kind": "named", "name": refers, "nullable": False,
                                                       "origin": "compiler"})
@@ -885,3 +885,12 @@ def wire(node: Node, starts: list[int]) -> dict[str, object]:
     if node.links:
         out["links"] = {name: [each.id for each in target] if isinstance(target, list) else target.id for name, target in node.links.items()}
     return out
+
+
+def written_name(annotation: ast.expr) -> str:
+    """The name a written type gives its class as written: the subscripted name of a generic, the text of a quoted one."""
+    if isinstance(annotation, ast.Subscript):
+        return ast.unparse(annotation.value)
+    if isinstance(annotation, ast.Constant) and isinstance(annotation.value, str):
+        return annotation.value
+    return ast.unparse(annotation)

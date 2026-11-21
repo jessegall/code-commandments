@@ -73,7 +73,7 @@ func TestTheShopStreamsWholeAndPointsIntoItsSources(t *testing.T) {
 		if file.Errors != 0 {
 			t.Errorf("%s parsed with %d errors", file.Path, file.Errors)
 		}
-		if file.Root.Kind != "File" || file.Root.Span.End != len(source) {
+		if file.Root.Kind != "file" || file.Root.Span.End != len(source) {
 			t.Errorf("%s's root is %s over %v, not the whole file", file.Path, file.Root.Kind, file.Root.Span)
 		}
 		for _, node := range file.Nodes() {
