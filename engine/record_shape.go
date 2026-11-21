@@ -124,41 +124,68 @@ func (m Match) isLooseRecord() bool {
 	return strings.HasPrefix(typed.Text, "Record<string,")
 }
 
+// DataClumps is every method taking the same three or more scalar values as a method of another owner: one concept
+// travelling as loose parameters. A constructor, an override and a named constructor take the shape their role or
+// their parent gives them, so none of them counts.
 func DataClumps(codebase *Codebase) []Match {
-	functions := codebase.WhereFunction().Where(func(method Match) bool { return method.methodOwner() != "" }).Get()
-	clumps := map[string][]Match{}
-	for _, method := range functions {
-		var parts []string
-		for _, parameter := range method.Parameters() {
-			if parameter.isScalarType() && parameter.Name() != "" {
-				parts = append(parts, parameter.Name()+":"+parameter.Typed().Text)
-			}
-		}
-		slices.Sort(parts)
-		for first := 0; first+2 < len(parts); first++ {
-			for second := first + 1; second+1 < len(parts); second++ {
-				for third := second + 1; third < len(parts); third++ {
-					key := strings.Join([]string{parts[first], parts[second], parts[third]}, ",")
-					clumps[key] = append(clumps[key], method)
-				}
-			}
-		}
-	}
-	found := map[Match]bool{}
-	for _, methods := range clumps {
-		owner := methods[0].methodOwner()
-		if !slices.ContainsFunc(methods, func(method Match) bool { return method.methodOwner() != owner }) {
+	var signatures []string
+	bySignature := map[string][]Match{}
+	for _, method := range codebase.WhereFunction().
+		Reject(Match.IsConstructor).
+		Reject(Match.IsOverride).
+		Reject(Match.IsNamedConstructor).
+		Get() {
+		signature := method.ValueSignature()
+		if len(signature) < 3 {
 			continue
 		}
-		for _, method := range methods {
-			found[method] = true
+		key := strings.Join(signature, ", ")
+		if bySignature[key] == nil {
+			signatures = append(signatures, key)
 		}
+		bySignature[key] = append(bySignature[key], method)
 	}
 	var findings []Match
-	for _, method := range functions {
-		if found[method] {
-			findings = append(findings, method)
+	for _, signature := range signatures {
+		owners := map[string]bool{}
+		for _, method := range bySignature[signature] {
+			owners[method.clumpOwner()] = true
+		}
+		if len(owners) >= 2 {
+			findings = append(findings, bySignature[signature]...)
 		}
 	}
+
 	return findings
+}
+
+// ValueSignature is a function's scalar parameters, each as its type and name, in sorted order.
+func (m Match) ValueSignature() []string {
+	if read := m.grammar().ValueParameters; read != nil {
+		return read(m)
+	}
+	var parts []string
+	for _, parameter := range m.Parameters() {
+		if parameter.isScalarType() && parameter.Name() != "" {
+			parts = append(parts, parameter.Typed().Text+" "+parameter.Name())
+		}
+	}
+	slices.Sort(parts)
+
+	return parts
+}
+
+// IsNamedConstructor is a static method that builds its own type under a name: the parameters are the type's own.
+func (m Match) IsNamedConstructor() bool {
+	read := m.grammar().NamedConstructor
+
+	return read != nil && read(m)
+}
+
+func (m Match) clumpOwner() string {
+	if owner := m.methodOwner(); owner != "" {
+		return owner
+	}
+
+	return m.File()
 }

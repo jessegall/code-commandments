@@ -113,11 +113,8 @@ func redundantMirror(codebase *engine.Codebase, class php.Node, fields []php.Fie
 	for _, object := range fields {
 		written := php.Written(object.Type)
 		held := written.Class()
-		if held == "" {
-			held = written.NullableClass()
-		}
 		declaration, declared := program.Declaration(held)
-		if held == "" || !declared {
+		if held == "" || !declared || written.IsNullable() {
 			continue
 		}
 		for _, inner := range php.Fields(declaration) {

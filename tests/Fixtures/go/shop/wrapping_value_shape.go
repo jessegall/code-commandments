@@ -81,6 +81,12 @@ func (WrappingShapeValidator) Fits(height int, width int, depth int) bool {
 	return height < width+5 && depth > 0
 }
 
+// The receipt's copies, counter and store travel here too: one group across two files.
+// @sin DataClump
+func (WrappingShapePrinter) Slip(copies int, counter int, store string) string {
+	return store + " wrapped for counter " + strings.Repeat("|", counter) + strings.Repeat("*", copies)
+}
+
 type WrappingShapeState struct {
 	width   int
 	checked bool

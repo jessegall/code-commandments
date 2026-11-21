@@ -21,7 +21,7 @@ func (DerivedCollectionShouldCastDetector) Sin() sins.Sin {
 
 func (DerivedCollectionShouldCastDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return php.In(codebase).
-		Where(engine.As(func(n php.Node) bool { return n.CallsFunction("array_map") })).
+		Where(engine.As(spatienode.Node.MapsIntoAList)).
 		Where(engine.As(spatienode.Node.MappedFactoryDerivesElement)).
 		Get()
 }

@@ -489,7 +489,7 @@ func (n Node) HydrationSlotHasCast() bool {
 
 func (n Node) MappedFactory() (FactoryRef, bool) {
 	arguments := php.Arguments(n.Match)
-	if callName(n.Match) != "array_map" || len(arguments) == 0 || !arguments[0].Child("value").Exists() {
+	if !n.MapsIntoAList() || len(arguments) == 0 || !arguments[0].Child("value").Exists() {
 		return FactoryRef{}, false
 	}
 	call, closesOver := factoryCallOf(arguments[0].Child("value"))
@@ -517,9 +517,40 @@ func (n Node) MappedFactoryDerivesElement() bool {
 	if !ok || factory.Method == "from" || factory.Method == "collect" || factory.ClosesOverContext || !n.program().Extends(factory.Class, Data) {
 		return false
 	}
-	slot, ok := n.HydrationSlot()
+	slot, ok := Node{Match: n.mappedList()}.HydrationSlot()
 
 	return ok && slot.IsCollection && slot.ElementType != "" && factory.ReturnsType == slot.ElementType
+}
+
+// MapsIntoAList is a call that maps each element into a plain list: `array_map($f, $items)`, or a collection's
+// `->map($f)` whose chain ends in `->all()`, optionally through `->values()`.
+func (n Node) MapsIntoAList() bool {
+	if n.Kind() == "Expr_FuncCall" {
+		return callName(n.Match) == "array_map"
+	}
+
+	return n.Kind() == "Expr_MethodCall" && callName(n.Match) == "map" && n.mappedList().Node() != n.Node()
+}
+
+// mappedList is the expression that holds the mapped list: the call itself for array_map, the closing `->all()` of a
+// collection's chain.
+func (n Node) mappedList() engine.Match {
+	if n.Kind() == "Expr_FuncCall" {
+		return n.Match
+	}
+	current := n.Match
+	for _, step := range []string{"values", "all"} {
+		parent := current.Parent()
+		if parent.Kind() != "Expr_MethodCall" || parent.Child("var").Node() != current.Node() || callName(parent) != step {
+			continue
+		}
+		current = parent
+	}
+	if callName(current) != "all" {
+		return n.Match
+	}
+
+	return current
 }
 
 func factoryCallOf(callable engine.Match) (engine.Match, bool) {
@@ -674,9 +705,29 @@ func (n Node) IsRedundantToArrayRoundtrip() bool {
 	if receiver == "" || !n.program().Extends(receiver, Data) {
 		return false
 	}
+	if mapped, each := n.mappedEach(); each {
+		slot, ok := Node{Match: mapped}.HydrationSlot()
+
+		return ok && slot.IsCollection && slot.ElementType == receiver
+	}
 	slot, ok := n.HydrationSlot()
 
 	return ok && slot.ElementType == receiver
+}
+
+// mappedEach is the `array_map` whose arrow callback is this expression: the list it builds holds this value for each
+// element.
+func (n Node) mappedEach() (engine.Match, bool) {
+	callback := n.Parent()
+	argument := callback.Parent()
+	call := argument.Parent()
+	if callback.Kind() != "Expr_ArrowFunction" || n.Node().Field != "expr" || argument.Kind() != "Arg" ||
+		call.Kind() != "Expr_FuncCall" || callName(call) != "array_map" || len(php.Arguments(call)) == 0 ||
+		php.Arguments(call)[0].Node() != argument.Node() {
+		return engine.Match{}, false
+	}
+
+	return call, true
 }
 
 // DataConstructions is every `::from` of a Data class, by the class it builds.

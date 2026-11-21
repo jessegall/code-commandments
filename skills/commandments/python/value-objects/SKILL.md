@@ -54,8 +54,6 @@ waiting to be named. Give them one type and pass that.
 
 - [ ] Fields that move as a unit are one type: hold the value object, not its parts; never keep a second copy of what a sibling field already holds.
       _Fold the fields into one frozen dataclass (reuse one that already matches, if one exists) and drop a field that just mirrors a sibling's attribute._
-- [ ] Give values that always travel together one type, and pass that instead of the loose values.
-      _Declare a frozen dataclass with those fields and take it as one parameter wherever the loose values travelled together._
 - [ ] Give a record a type — a frozen dataclass — instead of a dict read by string keys.
       _Declare the keys as fields of a frozen dataclass, build it where the data enters (a `from_payload` classmethod), and take that type as the parameter._
 - [ ] Return a typed value — a frozen dataclass — not a dict of several named fields.
@@ -102,17 +100,17 @@ class OpenWeekday:
         return f"{self.name}: {self.hours.opens}-{self.hours.closes}"
 ```
 
-The other 7 — one per rule — are in [`reference/examples.md`](reference/examples.md).
+The other 6 — one per rule — are in [`reference/examples.md`](reference/examples.md).
 
 ## Commands
 
 - `{{binary}} judge --skill=python/value-objects` — find every one of these in the codebase.
-- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `python-coupled-fields`, `python-data-clump`, `python-dict-bag`, `python-dict-return-bag`, `python-hand-rolled-replace`, `python-handed-out-collection`, `python-mutable-value-object`, `python-positional-tuple-return`.
+- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `python-coupled-fields`, `python-dict-bag`, `python-dict-return-bag`, `python-hand-rolled-replace`, `python-handed-out-collection`, `python-mutable-value-object`, `python-positional-tuple-return`.
 - `{{binary}} report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference
 
-- [Worked examples](reference/examples.md) — every rule's bad → good, 8 of them.
+- [Worked examples](reference/examples.md) — every rule's bad → good, 7 of them.
 - [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills

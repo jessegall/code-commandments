@@ -38,6 +38,8 @@ func init() {
 		TestFile:            testFile,
 		Implicit:            magic,
 		Labels:              func(name engine.Match) bool { return name.Parent().Kind() == "Arg" && name.Node().Field == "name" },
+		NamedConstructor: func(method engine.Match) bool { return Node{Match: method}.IsNamedConstructor() },
+		ValueParameters:  func(method engine.Match) []string { return Node{Match: method}.ValueParamSignature() },
 		IsConstructor: func(method engine.Match) bool {
 			return method.Kind() == "Stmt_ClassMethod" && method.Name() == "__construct"
 		},

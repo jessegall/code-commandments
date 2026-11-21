@@ -376,14 +376,6 @@
         "help": "a type whose own fields always travel together — assembled into one value again and again, null-checked together, or one copying what a sibling field already holds — one concept held as several fields"
     },
     {
-        "key": "sin_csharp-data-clump",
-        "title": "DataClump",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "The same three or more string, number, date or id parameters threaded through methods of two or more types — values that always travel together but have no type of their own."
-    },
-    {
         "key": "sin_csharp-dictionary-bag",
         "title": "DictionaryBag",
         "type": "flag",
@@ -1120,14 +1112,6 @@
         "help": "An operation changes and checks the same fields together"
     },
     {
-        "key": "sin_data-clump",
-        "title": "DataClump",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "The same group of scalar parameters appears on different types"
-    },
-    {
         "key": "sin_flat-field-cluster",
         "title": "FlatFieldCluster",
         "type": "flag",
@@ -1392,14 +1376,6 @@
         "help": "a class whose own fields always travel together — assembled into one value again and again, guarded together, or one copying a sibling field's value — one concept held as several fields."
     },
     {
-        "key": "sin_python-data-clump",
-        "title": "DataClump",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "The same three or more scalar parameters (`street: str, city: str, postcode: str`) threaded through functions in two or more classes or modules — one concept with no type of its own."
-    },
-    {
         "key": "sin_python-dict-bag",
         "title": "DictBag",
         "type": "flag",
@@ -1550,6 +1526,14 @@
         "kind": "flag",
         "default": true,
         "help": "A function returns decoded data before checking and giving it a type"
+    },
+    {
+        "key": "sin_data-clump",
+        "title": "DataClump",
+        "type": "flag",
+        "kind": "flag",
+        "default": true,
+        "help": "The same group of scalar parameters appears on different types"
     },
     {
         "key": "sin_match-default-returns-null",

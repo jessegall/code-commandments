@@ -15,7 +15,7 @@ type DataToArrayRoundtripScribe struct{}
 
 func (DataToArrayRoundtripScribe) Rewrite(findings []engine.Match, _ *engine.Codebase) (scribes.Rewrites, error) {
 	return replaceEach(findings, func(finding engine.Match) (string, bool) {
-		if finding.Kind() != "Expr_MethodCall" {
+		if finding.Kind() != "Expr_MethodCall" || finding.Parent().Kind() == "Expr_ArrowFunction" {
 			return "", false
 		}
 

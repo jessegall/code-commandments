@@ -36,7 +36,7 @@ func (DuplicateRouteDetector) Find(codebase *engine.Codebase) []engine.Match {
 			if strings.HasSuffix(action, "::__invoke") {
 				continue
 			}
-			route := verb + " " + action
+			route := strings.Join(append([]string{verb, action}, laravelnode.DefaultsOf(registration)...), " ")
 			if byRoute[route] == nil {
 				routes = append(routes, route)
 			}

@@ -475,6 +475,12 @@ func (n Node) ResolvesFromContainer() bool {
 	return isClassLiteral(call.Argument(0).Match) && php.IsContainerCall(n.Match)
 }
 
+// BuildsWithParameters is a container resolution handed the constructor's runtime values, `make(X::class, [...])`: the
+// container is used as a factory, since no constructor could be injected with values known only at the call.
+func (n Node) BuildsWithParameters() bool {
+	return php.Node{Match: n.Match}.ArgumentCount() >= 2
+}
+
 func (n Node) DropsEveryGlobalScope() bool {
 	name := strings.ToLower(php.CallName(n.Match))
 	if name != "withoutglobalscopes" && name != "withoutglobalscopesexcept" {

@@ -182,42 +182,6 @@ final class BandedPrice
 }
 ```
 
-### data-clump
-
-The same 3+ scalar params threaded through 2+ classes (a recurring data clump → one object)
-
-```php
-----------[ Bad ]----------
-
-public function record(string $shopId, string $userId, string $channelId): string
-{
-    return implode(self::SEPARATOR, [$shopId, $userId, $channelId]);
-}
-
-----------[ Good ]----------
-
-// in Shop\Reporting\AccessAuditor
-// The clump named: one value object carries the three fields that travelled
-// together.
-
-public function recordAccess(AccessContext $context): string
-{
-    return implode(self::SEPARATOR, [$context->shopId, $context->userId, $context->channelId]);
-}
-
-// The three ids that always travelled together, named once. Signatures shrink to one parameter and
-// nothing can pass them in the wrong order any more.
-
-final class AccessContext
-{
-    public function __construct(
-        public readonly string $shopId,
-        public readonly string $userId,
-        public readonly string $channelId,
-    ) {}
-}
-```
-
 ### hand-rolled-wither
 
 A wither method rebuilds the whole object by re-listing every constructor field, so adding a new field means updating every wither in the class.

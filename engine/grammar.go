@@ -45,6 +45,8 @@ type Grammar struct {
 	NamespaceSeparator  string
 	QualifiedNameKey    func(string) string
 	IsConstructor       func(Match) bool
+	NamedConstructor    func(Match) bool
+	ValueParameters     func(Match) []string
 	HoldsPublicState    func(Match) bool
 	ReceivesContext     func(Match, Match) bool
 	PreservesPointer    func(Match) bool

@@ -22,7 +22,7 @@ const (
 )
 
 var (
-	NoContainerContracts = []string{DataPipe, Cast}
+	NoContainerContracts = []string{DataPipe, Cast, InjectsPropertyValue}
 	nativeCastTypes      = []string{"DateTimeInterface", "DateTime", "DateTimeImmutable", "Carbon", "CarbonImmutable"}
 	knownTsTransformers  = []string{"DateTimeInterfaceTransformer", "ArrayableTransformer"}
 )

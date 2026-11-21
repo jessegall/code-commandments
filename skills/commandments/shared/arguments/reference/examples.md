@@ -345,6 +345,64 @@ func (a *addressCounter) Rename(label string, active int) int {
 }
 ```
 
+### data-clump — in PHP
+
+The same group of scalar parameters appears on different types
+
+```php
+----------[ Bad ]----------
+
+// in Shop\Integrations\InventoryReconciler
+public function reconcile(string $shopId, string $userId, string $channelId): bool
+{
+    foreach ($this->chunks() as $chunk) {
+        if ($chunk > $this->batchSize) {
+            return false;
+        }
+    }
+
+    return $shopId !== '' && $userId !== '' && $channelId !== '';
+}
+
+// in Shop\Reporting\AccessAuditor
+public function record(string $shopId, string $userId, string $channelId): string
+{
+    return implode(self::SEPARATOR, [$shopId, $userId, $channelId]);
+}
+
+// in Shop\Webhooks\OrderFeedPublisher
+public function publish(string $shopId, string $userId, string $channelId): int
+{
+    $sent = count($this->pending);
+    $this->pending = [];
+
+    return $sent + strlen($shopId . $userId . $channelId);
+}
+
+----------[ Good ]----------
+
+// in Shop\Reporting\AccessAuditor
+// The clump named: one value object carries the three fields that travelled
+// together.
+
+public function recordAccess(AccessContext $context): string
+{
+    return implode(self::SEPARATOR, [$context->shopId, $context->userId, $context->channelId]);
+}
+
+// The three ids that always travelled together, named once. Signatures shrink to one parameter and
+// nothing can pass them in the wrong order any more.
+
+final class AccessContext
+{
+    public function __construct(
+        public readonly string $shopId,
+        public readonly string $userId,
+        public readonly string $channelId,
+    ) {}
+}
+```
+
 ### data-clump — in TypeScript
 
 The same group of scalar parameters appears on different types
@@ -352,8 +410,17 @@ The same group of scalar parameters appears on different types
 ```ts
 ----------[ Bad ]----------
 
+// in receipt-value-shape.ts
 print(copies: number, counterId: number, store: string): string[] {
     return Array.from({ length: copies }, (_, at) => store + '/' + counterId + '/' + at)
+}
+
+// in receipt-value-shape.ts
+canSend(counterId: number, copies: number, store: string): boolean {
+    if (store.length === 0 || copies < 1) {
+        return false
+    }
+    return counterId >= 10
 }
 
 ----------[ Good ]----------
@@ -363,6 +430,62 @@ current(parts: AddressParts): string {
 }
 ```
 
+### data-clump — in Python
+
+The same group of scalar parameters appears on different types
+
+```py
+----------[ Bad ]----------
+
+# in delivery.py
+def book_delivery(street: str, city: str, postcode: str, carrier) -> str:
+    return carrier.book(f"{street}, {postcode} {city}")
+
+# in quotes.py
+def quote(postcode: str, street: str, city: str, weight_kg) -> int:
+    central = postcode.startswith("1") and street.strip() and city == "Amsterdam"
+    return (495 if central else 695) + int(weight_kg * 20)
+
+----------[ Good ]----------
+
+# in delivery.py
+@dataclass(frozen=True)
+class Address:
+    street: str
+    city: str
+    postcode: str
+
+    def line(self) -> str:
+        return f"{self.street}, {self.postcode} {self.city}"
+
+# in delivery.py
+def schedule_delivery(address: Address, carrier) -> str:
+    return carrier.book(address.line())
+```
+
+### data-clump — in C#
+
+The same group of scalar parameters appears on different types
+
+```cs
+----------[ Bad ]----------
+
+// in LabelPrinter.cs
+public string Print(string street, string city, string postcode) => $"{street}\n{postcode} {city}";
+
+// in Quotes.cs
+public decimal Price(string postcode, string city, string street) =>
+    street.Length + city.Length > 40 ? perKilometre * 2 : postcode.StartsWith('1') ? perKilometre : perKilometre * 1.5m;
+
+----------[ Good ]----------
+
+// in LabelPrinter.cs
+public string PrintFor(Address address) => $"{address.Street}\n{address.Postcode} {address.City}";
+
+// in LabelPrinter.cs
+public sealed record Address(string Street, string City, string Postcode);
+```
+
 ### data-clump — in Go
 
 The same group of scalar parameters appears on different types
@@ -370,8 +493,23 @@ The same group of scalar parameters appears on different types
 ```go
 ----------[ Bad ]----------
 
+// in receipt_value_shape.go
 func (ReceiptShapePrinter) Print(copies int, counter int, store string) string {
 	return fmt.Sprintf("%s counter %d, %d copies", store, counter, copies)
+}
+
+// in receipt_value_shape.go
+func (ReceiptShapeValidator) Check(copies int, counter int, store string) bool {
+	if store == "" || counter < 1 {
+		return false
+	}
+	return copies > 0 && copies < 20
+}
+
+// in wrapping_value_shape.go
+// The receipt's copies, counter and store travel here too: one group across two files.
+func (WrappingShapePrinter) Slip(copies int, counter int, store string) string {
+	return store + " wrapped for counter " + strings.Repeat("|", counter) + strings.Repeat("*", copies)
 }
 
 ----------[ Good ]----------

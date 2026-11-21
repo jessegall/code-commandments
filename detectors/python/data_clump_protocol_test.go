@@ -22,7 +22,7 @@ class HttpAiClient:
 `,
 	})
 
-	if found := (python.DataClumpDetector{}).Find(answering); len(found) != 0 {
+	if found := python.DataClumpDetector.Find(answering); len(found) != 0 {
 		t.Errorf("a class answering a Protocol was asked to change the protocol's signature: %v", found)
 	}
 
@@ -38,7 +38,7 @@ class Courier:
 `,
 	})
 
-	if found := (python.DataClumpDetector{}).Find(alone); len(found) == 0 {
+	if found := python.DataClumpDetector.Find(alone); len(found) == 0 {
 		t.Error("three parameters travelling together with no protocol behind them are still a clump")
 	}
 }

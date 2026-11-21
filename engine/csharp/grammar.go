@@ -138,6 +138,8 @@ func init() {
 		UnnamedVocabulary: unnamedVocabulary,
 		Guard:             guard,
 		IsConstructor:     func(held engine.Match) bool { return held.Kind() == "ConstructorDeclaration" },
+		NamedConstructor:  func(held engine.Match) bool { return Node{Match: held}.IsNamedConstructor() },
+		ValueParameters:   func(held engine.Match) []string { return Node{Match: held}.ValueParamSignature() },
 		Body:              body,
 		JumpTarget:        engine.KindIn("LabeledStatement"),
 		Otherwise:         otherwise,

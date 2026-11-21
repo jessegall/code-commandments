@@ -1,6 +1,10 @@
 package shared
 
-import "github.com/jessegall/code-commandments/engine"
+import (
+	"strings"
+
+	"github.com/jessegall/code-commandments/engine"
+)
 
 // NarratedCommand finds this value-shape problem in a declaration.
 type NarratedCommand struct{}
@@ -161,6 +165,12 @@ type DataClump struct{}
 
 func (DataClump) Find(codebase *engine.Codebase) []engine.Match {
 	return engine.DataClumps(codebase)
+}
+
+func (DataClump) GroupKey(method engine.Match) (string, bool) {
+	signature := method.ValueSignature()
+
+	return strings.Join(signature, ", "), len(signature) >= 3
 }
 
 func (DataClump) Sin() Text {

@@ -177,6 +177,13 @@ func init() {
 		Guard:          guard,
 		MechanismFacts: mechanismFacts,
 		IsConstructor:  func(held engine.Match) bool { return Node{Match: held}.IsConstructorDeclaration() },
+		NamedConstructor: func(held engine.Match) bool { return Node{Match: held}.IsNamedConstructor() },
+		Inherited: func(held engine.Match) bool {
+			program := In(held.Codebase()).Program
+
+			return program.IsOverride(Node{Match: held}) || program.AnswersAProtocol(Node{Match: held})
+		},
+		ValueParameters:  func(held engine.Match) []string { return Node{Match: held}.ValueParamSignature() },
 		Fallback: func(held engine.Match) engine.Match {
 			fallback, _ := Node{Match: held}.Fallback()
 

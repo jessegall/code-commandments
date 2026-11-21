@@ -91,9 +91,9 @@ func EndsEveryBranchAlike(branch Match) bool {
 		return false
 	}
 	rungs := LadderRungs(branch)
-	arms := [][]Match{rungs[len(rungs)-1].Otherwise()}
+	arms := [][]Match{withoutInertTail(rungs[len(rungs)-1].Otherwise())}
 	for _, rung := range rungs {
-		arms = append(arms, rung.Body())
+		arms = append(arms, withoutInertTail(rung.Body()))
 	}
 	if slices.ContainsFunc(arms, func(arm []Match) bool { return len(arm) == 0 }) {
 		return false
@@ -101,6 +101,16 @@ func EndsEveryBranchAlike(branch Match) bool {
 	tail := arms[0][len(arms[0])-1]
 
 	return !slices.ContainsFunc(arms[1:], func(arm []Match) bool { return !arm[len(arm)-1].SameSyntax(tail) })
+}
+
+// withoutInertTail is an arm without the empty statements that close it, such as the one a parser keeps for a comment
+// before the closing brace: the arm ends where its last real statement does.
+func withoutInertTail(arm []Match) []Match {
+	for len(arm) > 0 && arm[len(arm)-1].isInert() {
+		arm = arm[:len(arm)-1]
+	}
+
+	return arm
 }
 
 func IsUnreachable(statement Match) bool {

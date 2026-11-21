@@ -131,6 +131,15 @@ func (r *Remembered) FindAcross(codebase *Codebase, find func(*Codebase) []Match
 	return r.finding(codebase, find, across.of)
 }
 
+func (r *Remembered) FindOverTheTree(codebase *Codebase, find func(*Codebase) []Match) []Match {
+	over := Analysis(codebase, printsOverTheTreeKey{}, printsOverTheTreeOf)
+	if !over.whole {
+		return find(codebase)
+	}
+
+	return r.finding(codebase, find, over.of)
+}
+
 func (r *Remembered) FindForward(codebase *Codebase, find func(*Codebase) []Match) []Match {
 	forward := Analysis(codebase, printsForwardKey{}, printsForwardOf)
 	if !forward.whole {
@@ -148,6 +157,12 @@ func (r *Remembered) KnownCleanAcross(codebase *Codebase) bool {
 	across := Analysis(codebase, printsAcrossKey{}, printsAcrossOf)
 
 	return across.whole && r.knownCleanUnder(codebase, across.of)
+}
+
+func (r *Remembered) KnownCleanOverTheTree(codebase *Codebase) bool {
+	over := Analysis(codebase, printsOverTheTreeKey{}, printsOverTheTreeOf)
+
+	return over.whole && r.knownCleanUnder(codebase, over.of)
 }
 
 func (r *Remembered) KnownCleanForward(codebase *Codebase) bool {
@@ -460,6 +475,19 @@ func printsAcrossOf(c *Codebase) printsAcross {
 	return c.mixedUnder(combined(slices.Sorted(maps.Values(own))...), own, func(read *File) uint64 { return own[read.File] })
 }
 
+type printsOverTheTreeKey struct{}
+
+// printsOverTheTreeOf is what a rule whose answer for a file can turn on any file of the tree remembers it under: the
+// file's own print combined with the print of the whole tree, whatever its bridge read.
+func printsOverTheTreeOf(c *Codebase) printsAcross {
+	own, whole := c.ownPrints()
+	if !whole {
+		return printsAcross{}
+	}
+
+	return c.mixedUnder(combined(slices.Sorted(maps.Values(own))...), own, nil)
+}
+
 type printsForwardKey struct{}
 
 func printsForwardOf(c *Codebase) printsAcross {
@@ -496,7 +524,8 @@ func (c *Codebase) mixedUnder(tree uint64, own map[*contract.File]uint64, printO
 
 // standingOn is what a file's answer of a cross-file rule stands on besides its own contents: the contents of the
 // files its bridge read, wherever the checkout lies, so a change re-judges only the changed file and the files that
-// read it. A file whose bridge names no reads stands on the whole tree.
+// read it. A file whose bridge names no reads stands on the whole tree, and so does every file when no print of a read
+// is given.
 type standingOn struct {
 	tree        uint64
 	printOfRead func(*File) uint64
@@ -505,7 +534,7 @@ type standingOn struct {
 }
 
 func (s standingOn) of(file *File) uint64 {
-	if file.stream == nil || !file.stream.Header.Bridge.Reads {
+	if s.printOfRead == nil || file.stream == nil || !file.stream.Header.Bridge.Reads {
 		return s.tree
 	}
 

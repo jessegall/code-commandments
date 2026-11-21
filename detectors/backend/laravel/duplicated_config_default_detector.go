@@ -30,3 +30,5 @@ func (DuplicatedConfigDefaultDetector) Find(codebase *engine.Codebase) []engine.
 }
 
 func (DuplicatedConfigDefaultDetector) CrossFile() {}
+
+func (DuplicatedConfigDefaultDetector) WholeTree() {}

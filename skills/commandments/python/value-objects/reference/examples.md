@@ -33,47 +33,6 @@ class OpenWeekday:
         return f"{self.name}: {self.hours.opens}-{self.hours.closes}"
 ```
 
-### python-data-clump
-
-The same three or more scalar parameters (`street: str, city: str, postcode: str`) threaded through functions in two or more classes or modules — one concept with no type of its own.
-
-```py
-----------[ Bad ]----------
-
-# in customers.py
-def subscribe(self, name: str, email: str, phone: str, opt_in: bool) -> None:
-    self.list.add(email, name)
-
-# in customers.py
-def enrol(self, phone: str, name: str, email: str, opt_in: bool = False) -> None:
-    self.members.add(name, email, phone, opt_in)
-
-# in delivery.py
-def book_delivery(street: str, city: str, postcode: str, carrier) -> str:
-    return carrier.book(f"{street}, {postcode} {city}")
-
-# in quotes.py
-def quote(postcode: str, street: str, city: str, weight_kg) -> int:
-    central = postcode.startswith("1") and street.strip() and city == "Amsterdam"
-    return (495 if central else 695) + int(weight_kg * 20)
-
-----------[ Good ]----------
-
-# in delivery.py
-@dataclass(frozen=True)
-class Address:
-    street: str
-    city: str
-    postcode: str
-
-    def line(self) -> str:
-        return f"{self.street}, {self.postcode} {self.city}"
-
-# in delivery.py
-def schedule_delivery(address: Address, carrier) -> str:
-    return carrier.book(address.line())
-```
-
 ### python-dict-bag
 
 A parameter typed as a dict read by string keys — `row["sku"]`, `row.get("quantity")` — a record nobody declared

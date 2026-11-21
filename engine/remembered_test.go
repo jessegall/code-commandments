@@ -487,6 +487,31 @@ func TestARuleReadingAcrossFilesIsAskedAgainOnlyForTheChangedFileAndItsReaders(t
 	}
 }
 
+// A rule whose answer for a file can turn on any file, as a config key named by a string does, keeps each answer under
+// the whole tree: a change to a file nothing read still asks it again about every file, and the same tree does not.
+func TestARuleStandingOnTheWholeTreeIsAskedAgainForEveryFileWhenAnyFileChanges(t *testing.T) {
+	memory := engine.Remembering(time.Now)
+	detector := &asking{}
+	cartReadsPrices := map[int][]int{1: {0}}
+	main, _ := treeReading(t, cartReadsPrices, "<?php prices", "<?php cart", "<?php config")
+	worktree, _ := treeReading(t, cartReadsPrices, "<?php prices", "<?php cart", "<?php config")
+	configChanged, _ := treeReading(t, cartReadsPrices, "<?php prices", "<?php cart", "<?php config with a default")
+
+	memory.FindOverTheTree(main, detector.find)
+	memory.FindOverTheTree(worktree, detector.find)
+	if detector.asked != 3 {
+		t.Fatalf("the same tree twice asked the rule about %d files, not 3 once", detector.asked)
+	}
+
+	memory.FindOverTheTree(configChanged, detector.find)
+	if detector.asked != 6 {
+		t.Errorf("a change to a file nothing read asked the rule about %d files, not all 3", detector.asked-3)
+	}
+	if !memory.KnownCleanOverTheTree(configChanged) {
+		t.Error("a tree whose every answer is clean and held is not known clean")
+	}
+}
+
 func TestTheSameTreeInAnotherCheckoutSharesTheCombinedPrint(t *testing.T) {
 	memory := engine.Remembering(time.Now)
 	detector := &asking{}

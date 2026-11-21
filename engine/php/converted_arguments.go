@@ -1,6 +1,7 @@
 package php
 
 import (
+	"github.com/jessegall/code-commandments/contract"
 	"github.com/jessegall/code-commandments/engine"
 	"slices"
 	"strconv"
@@ -22,6 +23,9 @@ func callConversion(call engine.Match) engine.CallConversion {
 
 func evidencedCallee(call engine.Match, codebase *engine.Codebase) (owner, method string) {
 	owner, method = TypesOf(codebase).Callee(call)
+	if codebase.IsLibraryType(contract.PHP, owner) {
+		return "", ""
+	}
 	if declaration, _ := ProgramOf(codebase).Declaration(owner); call.IsTestReaching(declaration) {
 		return "", ""
 	}

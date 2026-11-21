@@ -25,3 +25,5 @@ func (DeadConfigKeyDetector) Find(codebase *engine.Codebase) []engine.Match {
 }
 
 func (DeadConfigKeyDetector) CrossFile() {}
+
+func (DeadConfigKeyDetector) WholeTree() {}

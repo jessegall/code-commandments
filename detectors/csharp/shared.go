@@ -65,6 +65,7 @@ var (
 	RedundantElseDetector                 = shared.Bind[shared.RedundantElse, language]()
 	CancelledCoalesceDetector             = shared.Bind[shared.CancelledCoalesce, language]()
 	NonCountingForDetector                = shared.Bind[shared.NonCountingFor, language]()
+	DataClumpDetector                     = shared.BindGrouped[shared.DataClump, language]()
 	DeepNestingDetector                   = shared.Bind[shared.DeepNesting, language]()
 	ReassignedParameterDetector           = shared.Bind[shared.ReassignedParameter, language]()
 	LoopInvertedGuardDetector             = shared.Bind[shared.LoopInvertedGuard, language]()

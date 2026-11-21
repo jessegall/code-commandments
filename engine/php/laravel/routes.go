@@ -46,6 +46,22 @@ func VerbOf(node engine.Match) string {
 	return name.Name()
 }
 
+// DefaultsOf is what a registration's chained `->defaults(...)` calls hand its action, as written: two registrations of
+// one action with different defaults are two operations on one parameterised handler.
+func DefaultsOf(registration engine.Match) []string {
+	var defaults []string
+	for current, parent := registration, registration.Parent(); parent.Kind() == "Expr_MethodCall" &&
+		parent.Child("var").Node() == current.Node(); current, parent = parent, parent.Parent() {
+		if name := parent.Child("name"); name.Kind() == "Identifier" && name.Name() == "defaults" {
+			for _, argument := range parent.ChildrenIn("args") {
+				defaults = append(defaults, argument.Written())
+			}
+		}
+	}
+
+	return defaults
+}
+
 func ActionsOf(node engine.Match) []string {
 	actions := []string{}
 	for _, argument := range node.Children() {

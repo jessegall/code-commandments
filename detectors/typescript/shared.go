@@ -39,7 +39,7 @@ var (
 	HandedOutCollectionDetector           = shared.Bind[shared.HandedOutCollection, language]()
 	MutableValueObjectDetector            = shared.Bind[shared.MutableValueObject, language]()
 	MutableStaticStateDetector            = shared.Bind[shared.MutableStaticState, language]()
-	DataClumpDetector                     = shared.Bind[shared.DataClump, language]()
+	DataClumpDetector                     = shared.BindGrouped[shared.DataClump, language]()
 	BareStatePredicateDetector            = shared.Bind[shared.BareStatePredicate, language]()
 	NarratedCommandDetector               = shared.Bind[shared.NarratedCommand, language]()
 	KeyedLookupEnvyDetector               = shared.Bind[shared.KeyedLookupEnvy, language]()

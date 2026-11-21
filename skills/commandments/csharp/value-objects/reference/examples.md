@@ -51,29 +51,6 @@ public sealed class BookedSlot(TimeRange window, string driver)
 }
 ```
 
-### csharp-data-clump
-
-The same three or more string, number, date or id parameters threaded through methods of two or more types — values that always travel together but have no type of their own.
-
-```cs
-----------[ Bad ]----------
-
-// in LabelPrinter.cs
-public string Print(string street, string city, string postcode) => $"{street}\n{postcode} {city}";
-
-// in Quotes.cs
-public decimal Price(string postcode, string city, string street) =>
-    street.Length + city.Length > 40 ? perKilometre * 2 : postcode.StartsWith('1') ? perKilometre : perKilometre * 1.5m;
-
-----------[ Good ]----------
-
-// in LabelPrinter.cs
-public string PrintFor(Address address) => $"{address.Street}\n{address.Postcode} {address.City}";
-
-// in LabelPrinter.cs
-public sealed record Address(string Street, string City, string Postcode);
-```
-
 ### csharp-dictionary-bag
 
 A string-keyed dictionary or JSON object read by keys written in the source — `row["sku"]`, `json.GetProperty("name")` — a record nobody declared

@@ -5,7 +5,7 @@ import (
 	"github.com/jessegall/code-commandments/engine"
 )
 
-// WholeTree marks a detector whose verdict needs the whole tree: shown one file it can find the wrong thing, so a per-file check must not ask it.
+// WholeTree marks a detector whose verdict needs the whole tree: shown one file it can find the wrong thing, so a per-file check must not ask it, and a change to any file asks it again.
 type WholeTree interface {
 	WholeTree()
 }

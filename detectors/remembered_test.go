@@ -70,6 +70,15 @@ func TestADetectorThatReadsBeyondOneFileRemembersAcrossTheTree(t *testing.T) {
 	}
 }
 
+func TestOnlyAWholeTreeDetectorStandsOnTheWholeTree(t *testing.T) {
+	if !standsOnTheTree(wholeTreeDetector{}) {
+		t.Error("a whole-tree answer must be asked again when any file changes")
+	}
+	if standsOnTheTree(plainDetector{}) || standsOnTheTree(weighingDetector{}) {
+		t.Error("a rule that is not whole-tree keeps its answers under the files it read")
+	}
+}
+
 func TestADetectorThatWeighsItsCandidatesRemembersAcrossTheTree(t *testing.T) {
 	if !remembers(weighingDetector{}) || !readsAcross(weighingDetector{}) {
 		t.Error("a weighed answer holds as long as the tree's contents do")

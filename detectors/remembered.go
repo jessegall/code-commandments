@@ -50,6 +50,8 @@ const acrossTheTree = "\x00across"
 
 const forwardOverTheTree = "\x00forward"
 
+const standingOnTheTree = "\x00tree"
+
 const mostRememberedAcross = 20_000
 
 func FindRemembering(detector Detector, codebase *engine.Codebase) []engine.Match {
@@ -61,6 +63,10 @@ func findRemembering(detector Detector, codebase *engine.Codebase) []engine.Matc
 		codebase.Filled()
 
 		return detector.Find(codebase)
+	}
+
+	if standsOnTheTree(detector) {
+		return memories.Of(identified(detector)+standingOnTheTree).FindOverTheTree(codebase, detector.Find)
 	}
 
 	if readsAcross(detector) && catalog.IsForward(detector) {
@@ -78,6 +84,8 @@ func KnownClean(detector Detector, codebase *engine.Codebase) bool {
 	switch {
 	case !remembers(detector):
 		return false
+	case standsOnTheTree(detector):
+		return memories.Of(identified(detector) + standingOnTheTree).KnownCleanOverTheTree(codebase)
 	case readsAcross(detector) && catalog.IsForward(detector):
 		return memories.Of(identified(detector) + forwardOverTheTree + acrossTheTree).KnownCleanForward(codebase)
 	case readsAcross(detector):
@@ -91,6 +99,14 @@ func readsAcross(detector Detector) bool {
 	_, weighs := detector.(Aggregating)
 
 	return weighs || ReadsBeyondOneFile(detector)
+}
+
+// standsOnTheTree is a rule whose answer for a file can turn on any file of the tree, not only the files that file read,
+// so a change anywhere asks it again.
+func standsOnTheTree(detector Detector) bool {
+	_, whole := detector.(WholeTree)
+
+	return whole
 }
 
 func remembers(detector Detector) bool {

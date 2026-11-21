@@ -1,6 +1,6 @@
 {
     "name": "code-commandments",
-    "version": "7.20.29",
+    "version": "7.20.30",
     "title": "Code Commandments",
     "description": "The static code checker judges the codebase, its hooks run inside the journal, and every rule and language is a switch in its settings",
     "journal": "2.267.16",
@@ -51,7 +51,7 @@
     },
     "env": {
         "CLAUDE_PROJECT_DIR": "{project}",
-        "COMMANDMENTS_RELEASE": "v7.20.29"
+        "COMMANDMENTS_RELEASE": "v7.20.30"
     },
     "setup": [
         {
@@ -538,19 +538,6 @@
         "sin_csharp-coupled-fields": {
             "title": "CoupledFields",
             "help": "a type whose own fields always travel together — assembled into one value again and again, null-checked together, or one copying what a sibling field already holds — one concept held as several fields",
-            "type": "flag",
-            "default": "true",
-            "group": "csharp/value-objects",
-            "when": [
-                {
-                    "language_cs": true
-                }
-            ],
-            "detail": true
-        },
-        "sin_csharp-data-clump": {
-            "title": "DataClump",
-            "help": "The same three or more string, number, date or id parameters threaded through methods of two or more types — values that always travel together but have no type of their own.",
             "type": "flag",
             "default": "true",
             "group": "csharp/value-objects",
@@ -2237,34 +2224,6 @@
             ],
             "detail": true
         },
-        "sin_data-clump": {
-            "title": "DataClump",
-            "help": "The same group of scalar parameters appears on different types",
-            "type": "flag",
-            "default": "true",
-            "group": "shared/arguments",
-            "when": [
-                {
-                    "language_php": true
-                },
-                {
-                    "language_vue": true
-                },
-                {
-                    "language_ts": true
-                },
-                {
-                    "language_py": true
-                },
-                {
-                    "language_cs": true
-                },
-                {
-                    "language_go": true
-                }
-            ],
-            "detail": true
-        },
         "sin_flat-field-cluster": {
             "title": "FlatFieldCluster",
             "help": "A `#[TypeScript]` `Data` class spreads a value object it already models flat across sibling scalar fields sharing a camelCase prefix (`wireType` + `wireLabel`) instead of nesting the existing `Wire{type, label}`.",
@@ -2739,19 +2698,6 @@
             ],
             "detail": true
         },
-        "sin_python-data-clump": {
-            "title": "DataClump",
-            "help": "The same three or more scalar parameters (`street: str, city: str, postcode: str`) threaded through functions in two or more classes or modules — one concept with no type of its own.",
-            "type": "flag",
-            "default": "true",
-            "group": "python/value-objects",
-            "when": [
-                {
-                    "language_py": true
-                }
-            ],
-            "detail": true
-        },
         "sin_python-dict-bag": {
             "title": "DictBag",
             "help": "A parameter typed as a dict read by string keys — `row[\"sku\"]`, `row.get(\"quantity\")` — a record nobody declared",
@@ -3172,6 +3118,34 @@
             "type": "flag",
             "default": "true",
             "group": "shared/absence",
+            "when": [
+                {
+                    "language_php": true
+                },
+                {
+                    "language_vue": true
+                },
+                {
+                    "language_ts": true
+                },
+                {
+                    "language_py": true
+                },
+                {
+                    "language_cs": true
+                },
+                {
+                    "language_go": true
+                }
+            ],
+            "detail": true
+        },
+        "sin_data-clump": {
+            "title": "DataClump",
+            "help": "The same group of scalar parameters appears on different types",
+            "type": "flag",
+            "default": "true",
+            "group": "shared/arguments",
             "when": [
                 {
                     "language_php": true
