@@ -69,6 +69,7 @@ func init() {
 		"pathSegments":   {operands: []valueType{text}, gives: list, says: "the segments of a path, . left out and .. taking the segment before it away"},
 		"cleanPath":      {operands: []valueType{list}, gives: text, says: "the segments joined into one path by slashes"},
 		"writtenPath":    {operands: []valueType{node}, gives: anyValue, says: "the path a text literal, or a joining of text literals, writes, as a record of root (a slash or nothing) and segments; unknown where a part is computed"},
+		"spelledFolder":  {operands: []valueType{anyValue}, gives: anyValue, says: "the folder a path expression or an argument writes, or a list of them joined by slashes: a record of base (the written text of the computed parts it starts from, empty when it starts with text), start (the first of those parts) and folder (the segments written up to the next computed part, the last one only when a slash follows it); no value when the text does not read as a relative path"},
 		"pathFits":       {operands: []valueType{text, text}, gives: truth, says: "whether a path fits a route template, a {name} segment standing for any one segment"},
 	}, map[string]computation{
 		"versionAtLeast": func(_ evaluation, operands []value) value {
@@ -330,6 +331,57 @@ func init() {
 			}
 
 			return known(record{"root": known(root), "segments": known(textValues(pathSegments(written)))})
+		},
+		"spelledFolder": func(_ evaluation, operands []value) value {
+			if !operands[0].known {
+				return unknown
+			}
+			parts, joined := []engine.Match{}, "/"
+			if site, isNode := nodeOf(operands[0]); isNode {
+				if !site.Exists() {
+					return known(nil)
+				}
+				parts, joined = concatenated(site), ""
+			} else if items, isList := operands[0].held.([]value); isList {
+				for _, item := range items {
+					site, isNode := nodeOf(item)
+					if !isNode {
+						return unknown
+					}
+					parts = append(parts, argumentValue(site))
+				}
+			}
+			var base []string
+			start := value(known(nil))
+			for len(parts) > 0 {
+				if _, read := writtenText(parts[0]); read {
+					break
+				}
+				if len(base) == 0 {
+					start = known(parts[0])
+				}
+				base, parts = append(base, parts[0].Written()), parts[1:]
+			}
+			var written []string
+			for _, part := range parts {
+				text, read := writtenText(part)
+				if !read {
+					written = append(written, "")
+
+					break
+				}
+				written = append(written, text)
+			}
+			path := strings.Join(written, joined)
+			if strings.HasPrefix(path, "/") && len(base) > 0 {
+				path = path[1:]
+			}
+			folder, spelled := engine.FoldersBelow(path)
+			if !spelled || strings.HasPrefix(path, "/") {
+				return known(nil)
+			}
+
+			return known(record{"base": known(strings.Join(base, joined)), "start": start, "folder": known(textValues(folder))})
 		},
 		"pathFits": func(_ evaluation, operands []value) value {
 			written, template, read := texts2(operands)
@@ -889,4 +941,24 @@ func pathFits(written, template string) bool {
 	}
 
 	return true
+}
+
+// concatenated is an expression's parts in order when it joins texts with a concatenation, or the expression alone.
+func concatenated(site engine.Match) []engine.Match {
+	site = argumentValue(site)
+	node := site.Node()
+	if node.Kind == "binary" && (node.Operator == "concatenate" || node.Operator == "add") {
+		return append(concatenated(site.Child("left")), concatenated(site.Child("right"))...)
+	}
+
+	return []engine.Match{site}
+}
+
+// argumentValue is the expression an argument passes, or the node itself when it is no argument.
+func argumentValue(site engine.Match) engine.Match {
+	if site.Node().Kind == "argument" {
+		return site.Child("value")
+	}
+
+	return site
 }

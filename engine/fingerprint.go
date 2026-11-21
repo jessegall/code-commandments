@@ -203,12 +203,8 @@ func (m Match) signature() (string, bool) {
 		if !written.Exists() {
 			return "", true
 		}
-		resolved := written.Typed()
-		if resolved == nil {
-			return "", false
-		}
 
-		return resolved.Text, true
+		return signatureType(written)
 	}
 	var parameters []string
 	for _, parameter := range m.ChildrenIn("parameters") {
@@ -221,6 +217,91 @@ func (m Match) signature() (string, bool) {
 	returned, resolved := typeOf(m.Child("returnType"))
 
 	return m.node.Name + "(" + strings.Join(parameters, ",") + "):" + returned, resolved
+}
+
+// signatureType is a written type as a signature compares it: a tuple by its elements' types, labels left out, a
+// keyword by its name, a named type by the declaration it refers to, a compound type by its form and its parts, and
+// anything else by the type the compiler resolved; not read where none of these is known.
+func signatureType(written Match) (string, bool) {
+	node := written.Node()
+	parts := func(role, open, separator, close string) (string, bool) {
+		var read []string
+		for _, part := range written.ChildrenIn(role) {
+			if part.Node().Kind == "tuple-element" {
+				part = part.Child("type")
+			}
+			text, known := signatureType(part)
+			if !known {
+				return "", false
+			}
+			read = append(read, text)
+		}
+
+		return open + strings.Join(read, separator) + close, true
+	}
+	switch {
+	case node.Kind == "tuple-type":
+		return parts("elements", "(", ",", ")")
+	case node.Form == "keyword" && node.Name != "":
+		return node.Name, true
+	case node.Form == "named" && node.Refers != "" && len(written.ChildrenIn("typeArguments")) == 0:
+		return node.Refers, true
+	case node.Form == "nullable" || node.Form == "union":
+		members, known := unionMembers(written)
+		if !known {
+			return "", false
+		}
+		slices.Sort(members)
+
+		return "union(" + strings.Join(slices.Compact(members), "|") + ")", true
+	case node.Form == "intersection":
+		return parts("members", node.Form+"(", "|", ")")
+	}
+	if children := written.Children(); node.Kind == "type-expression" && node.Form != "named" && len(children) > 0 {
+		var read []string
+		for _, child := range children {
+			text, known := signatureType(child)
+			if !known {
+				return "", false
+			}
+			read = append(read, child.Node().InRole()+":"+text)
+		}
+
+		return node.Form + "(" + strings.Join(read, ",") + ")", true
+	}
+	if resolved := written.Typed(); resolved != nil {
+		return resolved.Text, true
+	}
+
+	return "", false
+}
+
+// unionMembers are the types a union or a nullable type admits, nested unions flattened, null spelled as the
+// keyword it is: ?T and T|null admit the same.
+func unionMembers(written Match) ([]string, bool) {
+	node := written.Node()
+	switch node.Form {
+	case "nullable":
+		element, known := unionMembers(written.Child("element"))
+		return append(element, "null"), known
+	case "union":
+		var members []string
+		for _, member := range written.ChildrenIn("members") {
+			read, known := unionMembers(member)
+			if !known {
+				return nil, false
+			}
+			members = append(members, read...)
+		}
+
+		return members, true
+	}
+	if node.Form == "keyword" && strings.EqualFold(node.Name, "null") {
+		return []string{"null"}, true
+	}
+	text, known := signatureType(written)
+
+	return []string{text}, known
 }
 
 // Reports says whether a finding in the file is reported: every file of the codebase, or the files a run narrowed it to.

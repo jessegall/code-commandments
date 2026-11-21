@@ -184,6 +184,11 @@ func (c checker) find(written find) error {
 			return err
 		}
 	}
+	if written.Advice != nil {
+		if _, err := c.expr(*written.Advice, "find.advice", scope{bound: map[string][]string{written.As: kinds}}); err != nil {
+			return err
+		}
+	}
 
 	return nil
 }

@@ -82,6 +82,22 @@ func (r Rule) Judge(codebase *engine.Codebase) Judged {
 	return judged
 }
 
+// AdviceFor is the line the rule's advice expression writes for a finding, read with the finding bound as the
+// selected node; empty when the rule writes none or it says nothing.
+func (r Rule) AdviceFor(finding engine.Match) string {
+	asked := r.compiled()
+	if asked.Find.Advice == nil || !finding.Exists() {
+		return ""
+	}
+	advice := evaluation{definitions: asked.Definitions, site: finding, parameters: r.parameters(), codebase: finding.Codebase()}
+	written, isText := advice.evaluate(*asked.Find.Advice, bindings{asked.Find.As: known(finding)}).held.(string)
+	if !isText {
+		return ""
+	}
+
+	return written
+}
+
 func (r Rule) evaluate(codebase *engine.Codebase) []engine.Match {
 	return r.Judge(codebase).Found
 }
@@ -264,6 +280,9 @@ func (e evaluation) apply(expression Expr, bound bindings) value {
 		symbol := site.TargetSymbol()
 		if symbol == "" {
 			symbol = site.Node().Refers
+		}
+		if bound := site.Node().Linked("binding"); symbol == "" && len(bound) == 1 {
+			return known(site.Source().Match(bound[0]))
 		}
 		if symbol == "" {
 			return unknown

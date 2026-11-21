@@ -4,6 +4,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/jessegall/code-commandments/engine"
 	"github.com/jessegall/code-commandments/engine/frontend/frontendtest"
 )
 
@@ -45,4 +46,13 @@ func TestMigrationsThatFeedLiteralsToOneCalleeAreNoNearCopies(t *testing.T) {
 			}
 		})
 	}
+}
+
+func locations(found []engine.Match) []string {
+	where := make([]string, 0, len(found))
+	for _, match := range found {
+		where = append(where, match.Location())
+	}
+
+	return where
 }

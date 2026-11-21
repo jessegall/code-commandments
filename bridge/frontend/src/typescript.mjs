@@ -83,9 +83,25 @@ export class Translator {
     }
 
     binding(name) {
-        if (ts.isIdentifier(name) || ts.isPrivateIdentifier(name)) return this.new('binding', name).fact('name', name.text)
+        if (ts.isIdentifier(name) || ts.isPrivateIdentifier(name)) return this.bound(name, this.new('binding', name).fact('name', name.text))
 
         return this.pattern(name)
+    }
+
+    /** Keeps the node written for a declared name, so a read of that name links to it. */
+    bound(name, node) {
+        this.tree.bindings ??= new Map()
+        this.tree.bindings.set(name, node)
+
+        return node
+    }
+
+    /** The reference, linked to the binding written in this file for the local name the compiler resolves it to. */
+    linkedToBinding(name, reference) {
+        const declaration = this.checker?.getSymbolAtLocation(name)?.declarations?.[0]
+        const bound = declaration?.name && this.tree.bindings?.get(declaration.name)
+
+        return bound ? reference.link('binding', bound) : reference
     }
 
     // The module ------------------------------------------------------------------------------------------------
@@ -120,6 +136,7 @@ export class Translator {
             for (const element of named.elements) {
                 const binding = this.new('import-binding', element).fact('name', (element.propertyName ?? element.name).text).fact('refers', this.refersOf(element.name))
                 if (element.propertyName) binding.holds('alias', this.binding(element.name))
+                else this.bound(element.name, binding)
                 bindings.push(binding)
             }
         }
@@ -439,7 +456,7 @@ export class Translator {
         if (ts.isIdentifier(node)) {
             if (node.text === 'undefined') return this.new('literal', node).fact('literalKind', 'undefined')
 
-            return this.new('reference', node).fact('name', node.text).fact('form', 'name').fact('refers', this.checker ? this.refersOf(node) : undefined)
+            return this.linkedToBinding(node, this.new('reference', node).fact('name', node.text).fact('form', 'name').fact('refers', this.checker ? this.refersOf(node) : undefined))
         }
         if (ts.isPrivateIdentifier(node)) return this.new('reference', node).fact('name', node.text).fact('form', 'name')
         if (node.kind === ts.SyntaxKind.ThisKeyword) return this.new('reference', node).fact('name', 'this').fact('form', 'self')

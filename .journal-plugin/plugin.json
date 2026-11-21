@@ -1974,7 +1974,7 @@
             "detail": true
         },
         "sin_interface-overlap": {
-            "title": "InterfaceOverlap",
+            "title": "interface-overlap",
             "help": "An interface repeats the signatures of a contract it can reuse.",
             "type": "flag",
             "default": "true",
@@ -2310,7 +2310,7 @@
             "detail": true
         },
         "sin_divergent-twin": {
-            "title": "DivergentTwin",
+            "title": "divergent-twin",
             "help": "Two functions share most of their uncommon steps, but one misses a step the other takes",
             "type": "flag",
             "default": "true",
@@ -2366,7 +2366,7 @@
             "detail": true
         },
         "sin_list-mirrors-folder": {
-            "title": "ListMirrorsFolder",
+            "title": "list-mirrors-folder",
             "help": "A hand-written class list repeats every concrete class of one type in its folders",
             "type": "flag",
             "default": "true",
@@ -2422,7 +2422,7 @@
             "detail": true
         },
         "sin_repeated-folder-path": {
-            "title": "RepeatedFolderPath",
+            "title": "repeated-folder-path",
             "help": "One folder is spelled out at three or more sites across separate scopes",
             "type": "flag",
             "default": "true",
@@ -2618,7 +2618,7 @@
             "detail": true
         },
         "sin_side-table-trait": {
-            "title": "SideTableTrait",
+            "title": "side-table-trait",
             "help": "A separate list repeats which cases have a trait",
             "type": "flag",
             "default": "true",

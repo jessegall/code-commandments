@@ -9,7 +9,7 @@ const (
 	TwinMinShared    = 4
 	TwinMaxShare     = 0.01
 	twinMinCoreVerbs = 2
-	twinMaxExtra     = 2
+	twinMaxExtra     = 3
 	twinMaxDiverge   = 1
 	twinCallDepth    = 2
 )

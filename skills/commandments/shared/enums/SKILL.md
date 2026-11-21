@@ -36,5 +36,5 @@ Translate strings to the declared type at the boundary. Keep shared behavior key
 
 ## Reference
 
-- [Worked examples](reference/examples.md) — every rule's bad → good, 9 of them.
+- [Worked examples](reference/examples.md) — every rule's bad → good, 6 of them.
 - [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.

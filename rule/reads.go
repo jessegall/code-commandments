@@ -52,7 +52,7 @@ func (f file) expressions() []Expr {
 	for _, defined := range f.Definitions {
 		all = append(all, defined.Expr)
 	}
-	written := []*Expr{f.Find.Where, f.Find.Having, f.Find.Emit}
+	written := []*Expr{f.Find.Where, f.Find.Having, f.Find.Emit, f.Find.Advice}
 	for _, each := range f.Find.Let {
 		all = append(all, each.Expr)
 	}

@@ -51,9 +51,10 @@ class Translator:
     `types` is mypy's type of each expression by its byte span, and `targets` the declaration each call binds to."""
 
     def __init__(self, source: bytes, module: str, resolve, types: dict[tuple[int, int], ResolvedType],
-                 targets: dict[tuple[int, int], dict[str, str]] | None = None) -> None:
+                 targets: dict[tuple[int, int], dict[str, str]] | None = None, names: dict[tuple[int, int], str] | None = None) -> None:
         self.source = source
         self.targets = targets or {}
+        self.names = names or {}
         self.module = module
         self.resolve = resolve
         self.types = types
@@ -533,7 +534,8 @@ class Translator:
         return node
 
     def expr_Name(self, expression: ast.Name) -> Node:
-        return self.of("reference", expression, name=expression.id, form="self" if expression.id in ("self", "cls") else "name")
+        return self.of("reference", expression, name=expression.id, form="self" if expression.id in ("self", "cls") else "name",
+                       refers=self.names.get(self.span(expression)))
 
     def expr_Constant(self, expression: ast.Constant) -> Node:
         value = expression.value

@@ -19,17 +19,19 @@ func (m Match) Annotations() []Match {
 	return m.listed(m.grammar().Annotations)
 }
 
+// TypeKind is a type declaration's form: class, interface, trait, enum, struct, record or object.
 func (m Match) TypeKind() string {
-	if read := m.grammar().TypeKind; read != nil && m.Is(TypeDeclaration) {
-		return read(m)
+	if m.node == nil || !m.Is(TypeDeclaration) {
+		return ""
 	}
 
-	return ""
+	return m.node.Form
 }
 
+// ReturnType is the result type a function declares.
 func (m Match) ReturnType() Match {
-	if read := m.grammar().ReturnType; read != nil && m.Is(Function) {
-		return read(m)
+	if m.Is(Function) {
+		return m.Child("returnType")
 	}
 
 	return Match{}

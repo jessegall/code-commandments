@@ -244,7 +244,7 @@ ordered list of zero or more), its links, its facts, and when its parts are eval
 ### Expressions
 
 - **`reference`**: a name read or written. Facts `name`, `form` (`name`; `self` for `$this`, `this`, `self`;
-  `parent` for `parent`, `super`, `base`; `static`), `refers`. Link `binding?` (the local `binding` it names,
+  `parent` for `parent`, `super`, `base`; `static`), `refers`. Link `binding?` (the local `binding` it names, or the `import-binding` of a name imported under its own name,
   where it is in the same file).
 - **`call`**: `callee` (the expression called: a `reference`, or an `access` for a method), `typeArguments[]`,
   `arguments[]`. Link `receiver?` (the `access`'s subject, for a method call). Facts `nullConditional`
@@ -274,7 +274,8 @@ ordered list of zero or more), its links, its facts, and when its parts are eval
   (`and`, `or`). Its own kind: a `binary` would say both sides always run.
 - **`unary`**: `operand`. Fact `operator` (`not`, `negate`, `plus`, `bit-not`, `typeof`, `delete`, `void`,
   `reference-of`, `dereference`, `receive` for Go's `<-ch`, `assert-present` for C# and TypeScript's
-  `x!`, which only tells the checker the value is there).
+  `x!`, which only tells the checker the value is there). C#'s `typeof(T)` is a `typeof` whose operand is the
+  `type-expression` written.
 - **`fallback`**: `subject`, `replacement` (evaluated only when the trigger holds). Fact `trigger` (`null` for
   `??`, `falsy` for PHP's short ternary `a ?: b`).
 - **`conditional`**: `condition`, `consequent`, `alternative`.

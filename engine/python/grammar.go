@@ -42,11 +42,9 @@ var abstractions = []string{"abc.ABC"}
 func init() {
 	engine.ReadAs(contract.Python, engine.Grammar{
 		ExecutesQuery: orm.ExecutesQuery,
-		ListedClasses: listedClasses,
 		Types: func(codebase *engine.Codebase) engine.TypeSystem {
 			return engine.TypesFromDeclarations(codebase.Of(contract.Python))
 		},
-		SpelledFolder:      spelledFolder,
 		Arguments:          values,
 		Receiver:           receiver,
 		ArgumentLookup:     engine.IndexedArgument("Subscript", "value", "slice"),
@@ -87,7 +85,6 @@ func init() {
 			return Of(match.Codebase()).conversionEvidence(Node{Match: match})
 		},
 		TypeDispatch: typeDispatch,
-		SideTables:   sideTables,
 		EnumValues: func(match engine.Match) []string {
 			n := Node{Match: match}
 			if !Of(match.Codebase()).IsEnumClass(n) {
@@ -156,14 +153,9 @@ func init() {
 			return engine.CopyExclusions{Exact: match.IsConstructor() || match.IsSoleStatement() || function.IsStub(), Near: function.IsStub() || function.IsLiteralLookup() || function.IsDeclarationTable()}
 		},
 		UnnamedVocabulary: unnamedVocabulary,
-		TwinPairs: func(codebase *engine.Codebase) engine.TwinPairs {
-			program := Of(codebase)
-			return engine.TwinPairs{Units: program.TwinUnits(), Pairs: program.Divergences()}
-		},
-		Guard:            guard,
-		MechanismFacts:   mechanismFacts,
-		IsConstructor:    func(held engine.Match) bool { return Node{Match: held}.IsConstructorDeclaration() },
-		NamedConstructor: func(held engine.Match) bool { return Node{Match: held}.IsNamedConstructor() },
+		Guard:             guard,
+		IsConstructor:     func(held engine.Match) bool { return Node{Match: held}.IsConstructorDeclaration() },
+		NamedConstructor:  func(held engine.Match) bool { return Node{Match: held}.IsNamedConstructor() },
 		Inherited: func(held engine.Match) bool {
 			program := In(held.Codebase()).Program
 

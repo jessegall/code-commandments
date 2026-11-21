@@ -1,7 +1,6 @@
 package csharp
 
-import (
-)
+import ()
 
 // keyed is the record of a candidate a rule groups: the key it reads as, when it reads as one, its exact reading, and the owner it is declared in.
 type keyed struct {
@@ -21,4 +20,3 @@ type supply struct {
 type unresolved struct {
 	name string
 }
-

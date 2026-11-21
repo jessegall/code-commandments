@@ -25,11 +25,10 @@ func interfacesOf(codebase *Codebase) interfaceIndex {
 	return Analysis(codebase, "interface-methods", func(codebase *Codebase) interfaceIndex {
 		index := interfaceIndex{map[string]interfaceMethods{}, map[string][]interfaceMethods{}}
 		for _, declaration := range codebase.Reporting().WhereTypeDeclaration().Where(Match.IsInterfaceType).Reject(Match.IsTest).Get() {
-			read := declaration.grammar().InterfaceSignatures
-			if read == nil || declaration.Identity() == "" {
+			if declaration.Identity() == "" {
 				continue
 			}
-			methods := read(declaration)
+			methods := interfaceSignatures(declaration)
 			if len(methods) < 2 {
 				continue
 			}
@@ -78,10 +77,6 @@ func (m Match) ReusableInterface(layers LayerStack, public map[string]bool) Inte
 }
 
 func separateContractRoles(left, right Match) bool {
-	uses := left.grammar().UsesContract
-	if uses == nil {
-		return false
-	}
 	types, known := left.Types()
 	if !known {
 		return false
@@ -96,7 +91,7 @@ func separateContractRoles(left, right Match) bool {
 		other Match
 	}{{leftImplementations, right}, {rightImplementations, left}} {
 		if slices.ContainsFunc(implementations.own, func(one Match) bool {
-			return !slices.Contains(types.Contracts(one.Identity()), implementations.other.Identity()) && uses(one, implementations.other)
+			return !slices.Contains(types.Contracts(one.Identity()), implementations.other.Identity()) && usesContract(one, implementations.other)
 		}) {
 			return true
 		}
@@ -120,7 +115,7 @@ func (s LayerStack) canReuseInterface(from, target Match, published, exact bool)
 	if !equalNamespace && s.within(destination, source) {
 		return false
 	}
-	if visible := target.grammar().InterfaceVisible; visible != nil && !visible(target, from) {
+	if !visibleFrom(target, from) {
 		return false
 	}
 	sourceLayer, destinationLayer := s.LayerOf(source), s.LayerOf(destination)
@@ -141,5 +136,50 @@ func (s LayerStack) canReuseInterface(from, target Match, published, exact bool)
 func (s LayerStack) allowsContractLayer(from, namespace, layer string) bool {
 	return slices.ContainsFunc(s.layers[from], func(allowed string) bool {
 		return allowed != "" && s.LayerOf(allowed) == layer && s.within(namespace, allowed)
+	})
+}
+
+// interfaceSignatures are the signatures an interface promises, each method's name and the resolved types of its
+// parameters and result: none for an interface that extends another, takes type parameters, declares anything but
+// methods, or has a signature the compiler did not resolve.
+func interfaceSignatures(declaration Match) []string {
+	if declaration.Node().Form != "interface" || len(declaration.ChildrenIn("bases")) > 0 || len(declaration.ChildrenIn("interfaces")) > 0 ||
+		len(declaration.ChildrenIn("typeParameters")) > 0 {
+		return nil
+	}
+	var signatures []string
+	for _, member := range declaration.ChildrenIn("writtenMembers") {
+		if member.Node().Kind != "function" {
+			return nil
+		}
+		signature, resolved := member.signature()
+		if !resolved {
+			return nil
+		}
+		signatures = append(signatures, signature)
+	}
+
+	return signatures
+}
+
+// visibleFrom says whether code in one module can name an interface: always within its own module, and elsewhere
+// only when the interface and every method it declares are visible outside it.
+func visibleFrom(target, from Match) bool {
+	if target.Namespace() == from.Namespace() {
+		return true
+	}
+	hidden := func(declared Match) bool {
+		effective := declared.Node().Effective
+		return effective != nil && effective.Visibility != "" && effective.Visibility != "public"
+	}
+
+	return !hidden(target) && !slices.ContainsFunc(target.ChildrenIn("writtenMembers"), hidden)
+}
+
+// usesContract says whether an implementation names the other contract itself, so the two contracts play separate
+// roles in it.
+func usesContract(implementation, contract Match) bool {
+	return slices.ContainsFunc(implementation.Descendants(), func(reference Match) bool {
+		return reference.Node().Refers == contract.Identity()
 	})
 }

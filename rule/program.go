@@ -3,19 +3,21 @@ package rule
 import (
 	"slices"
 
+	"github.com/jessegall/code-commandments/contract"
 	"github.com/jessegall/code-commandments/engine"
 )
 
 // programRelations are the relations every find may read without defining them: rows built once from the whole
 // program, each row carrying the file it lies in, whether that file is a test, and whether it is held for report.
 var programRelations = map[string]func(*engine.Codebase) []value{
-	importsSource:  importRecords,
-	"declarations": declarationRecords,
-	"references":   referenceRecords,
-	"calls":        callRecords,
-	"inherits":     inheritRecords,
-	"overrides":    overrideRecords,
-	"files":        fileRecords,
+	importsSource:    importRecords,
+	"declarations":   declarationRecords,
+	"references":     referenceRecords,
+	"calls":          callRecords,
+	"inherits":       inheritRecords,
+	"overrides":      overrideRecords,
+	"files":          fileRecords,
+	"divergentTwins": twinRecords,
 }
 
 // programRelationNames are the program relations by name, in order, for a diagnostic.
@@ -93,8 +95,12 @@ func referenceRecords(codebase *engine.Codebase) []value {
 		if !owner.Exists() {
 			owner = site.EnclosingType()
 		}
+		ownerSymbol := ""
+		if owner.Exists() {
+			ownerSymbol = owner.Node().Symbol
+		}
 		records = append(records, placed(site, record{"site": known(site), "symbol": known(node.Refers), "use": known(referenceUse(site)),
-			"owner": known(owner), "ownerSymbol": known(owner.Node().Symbol)}))
+			"owner": known(owner), "ownerSymbol": known(ownerSymbol)}))
 	}
 
 	return records
@@ -150,6 +156,36 @@ func fileRecords(codebase *engine.Codebase) []value {
 		records = append(records, known(record{"path": known(file.Path), "module": known(file.Module), "purpose": known(string(file.Purpose())),
 			"language": known(string(file.Language())), "held": known(codebase.Reports(file)), "resolved": known(file.Knows("refers")),
 			"fileOrder": known(float64(at)), "test": known(file.Purpose() != engine.Ordinary)}))
+	}
+
+	return records
+}
+
+// twinRecords are the functions of each language found to do one job twice, the poorer of a pair missing a step
+// the richer takes: one row per function, with the pair it belongs to as its group.
+func twinRecords(codebase *engine.Codebase) []value {
+	var records []value
+	var languages []contract.Language
+	for _, file := range codebase.Files() {
+		if !slices.Contains(languages, file.Language()) {
+			languages = append(languages, file.Language())
+		}
+	}
+	for _, language := range languages {
+		twins := engine.ResolvedTwinPairs(codebase.Of(language))
+		byKey := map[string]engine.Match{}
+		for _, unit := range twins.Units {
+			byKey[unit.Key] = unit.Match
+		}
+		for _, pair := range twins.Pairs {
+			group := engine.PairOf(twins.Pairs, pair.Poorer)
+			for _, key := range []string{pair.Poorer, pair.Richer} {
+				if function, found := byKey[key]; found {
+					records = append(records, placed(function, record{"function": known(function), "group": known(group),
+						"poorer": known(key == pair.Poorer), "missing": known(textValues(pair.Missing))}))
+				}
+			}
+		}
 	}
 
 	return records

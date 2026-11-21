@@ -21,5 +21,404 @@
       "crossFile": true
     }
   },
-  "find": {}
+  "find": {
+    "from": [
+      "unionAll",
+      "call",
+      "binary"
+    ],
+    "as": "c",
+    "pipeline": [
+      {
+        "where": [
+          "and",
+          [
+            "not",
+            "$c.file.test"
+          ],
+          [
+            "exists",
+            [
+              "enclosing",
+              "$c",
+              "function"
+            ]
+          ],
+          [
+            "candidate",
+            "$c"
+          ]
+        ]
+      },
+      {
+        "project": {
+          "anchor": "$c",
+          "scope": [
+            "enclosing",
+            "$c",
+            "function"
+          ],
+          "spelled": [
+            "pathParts",
+            "$c"
+          ]
+        }
+      },
+      {
+        "where": [
+          "and",
+          [
+            "exists",
+            "$spelled"
+          ],
+          [
+            ">",
+            [
+              "count",
+              "$spelled.folder"
+            ],
+            0
+          ],
+          [
+            "rooted",
+            "$anchor",
+            "$spelled"
+          ]
+        ]
+      },
+      {
+        "project": {
+          "anchor": "$anchor",
+          "scope": "$scope",
+          "keys": [
+            "map",
+            [
+              "range",
+              1,
+              [
+                "count",
+                "$spelled.folder"
+              ]
+            ],
+            "d",
+            [
+              "concat",
+              [
+                "rootOf",
+                "$anchor",
+                "$spelled"
+              ],
+              "|",
+              [
+                "join",
+                [
+                  "take",
+                  "$spelled.folder",
+                  "$d"
+                ],
+                "/"
+              ]
+            ]
+          ]
+        }
+      },
+      {
+        "expand": "$keys"
+      },
+      {
+        "project": {
+          "anchor": "$anchor",
+          "scope": "$scope",
+          "key": "$row"
+        }
+      },
+      {
+        "groupBy": "$key"
+      },
+      {
+        "having": [
+          "and",
+          [
+            ">=",
+            [
+              "count",
+              "$rows"
+            ],
+            3
+          ],
+          [
+            ">=",
+            [
+              "distinctCount",
+              "$rows.scope"
+            ],
+            2
+          ]
+        ]
+      },
+      {
+        "expand": "$rows"
+      },
+      {
+        "emit": "$anchor"
+      }
+    ]
+  },
+  "definitions": {
+    "joinsPaths": {
+      "args": [
+        "c"
+      ],
+      "expr": [
+        "or",
+        [
+          "in",
+          [
+            "symbolOf",
+            "$c"
+          ],
+          "path/filepath.Join",
+          "path.Join",
+          "posixpath.join",
+          "ntpath.join",
+          "os.path.join"
+        ],
+        [
+          "startsWith",
+          [
+            "coalesce",
+            [
+              "symbolOf",
+              "$c"
+            ],
+            ""
+          ],
+          "global::System.IO.Path.Combine("
+        ],
+        [
+          "fromPathModule",
+          [
+            "enclosing",
+            [
+              "declarationOf",
+              [
+                "coalesce",
+                "$c.callee.subject",
+                "$c.callee"
+              ]
+            ],
+            "import"
+          ]
+        ]
+      ]
+    },
+    "pathParts": {
+      "args": [
+        "c"
+      ],
+      "expr": [
+        "case",
+        "$c.kind",
+        {
+          "binary": [
+            "spelledFolder",
+            "$c"
+          ]
+        },
+        [
+          "case",
+          [
+            "joinsPaths",
+            "$c"
+          ],
+          {
+            "true": [
+              "spelledFolder",
+              "$c.arguments"
+            ]
+          },
+          [
+            "spelledFolder",
+            [
+              "first",
+              "$c.arguments"
+            ]
+          ]
+        ]
+      ]
+    },
+    "rootOf": {
+      "args": [
+        "c",
+        "spelled"
+      ],
+      "expr": [
+        "case",
+        [
+          "nonempty",
+          [
+            "get",
+            "$spelled",
+            "base"
+          ]
+        ],
+        {
+          "true": [
+            "case",
+            [
+              "is",
+              [
+                "get",
+                "$spelled",
+                "start"
+              ],
+              "call"
+            ],
+            {
+              "true": [
+                "coalesce",
+                [
+                  "symbolOf",
+                  [
+                    "get",
+                    "$spelled",
+                    "start"
+                  ]
+                ],
+                [
+                  "get",
+                  "$spelled",
+                  "base"
+                ]
+              ]
+            },
+            [
+              "concat",
+              [
+                "dirName",
+                "$c.file.path"
+              ],
+              "|",
+              [
+                "get",
+                "$spelled",
+                "base"
+              ]
+            ]
+          ]
+        },
+        [
+          "case",
+          [
+            "joinsPaths",
+            "$c"
+          ],
+          {
+            "true": "."
+          },
+          [
+            "coalesce",
+            [
+              "symbolOf",
+              "$c"
+            ],
+            ""
+          ]
+        ]
+      ]
+    },
+    "candidate": {
+      "args": [
+        "c"
+      ],
+      "expr": [
+        "case",
+        "$c.kind",
+        {
+          "binary": [
+            "and",
+            [
+              "in",
+              "$c.operator",
+              "concatenate",
+              "add"
+            ],
+            [
+              "not",
+              [
+                "and",
+                [
+                  "is",
+                  "$c.parent",
+                  "binary"
+                ],
+                [
+                  "in",
+                  "$c.parent.operator",
+                  "concatenate",
+                  "add"
+                ]
+              ]
+            ]
+          ]
+        },
+        [
+          ">",
+          [
+            "count",
+            "$c.arguments"
+          ],
+          0
+        ]
+      ]
+    },
+    "rooted": {
+      "args": [
+        "c",
+        "spelled"
+      ],
+      "expr": [
+        "or",
+        [
+          "joinsPaths",
+          "$c"
+        ],
+        [
+          "case",
+          "$c.kind",
+          {
+            "binary": [
+              "nonempty",
+              [
+                "get",
+                "$spelled",
+                "base"
+              ]
+            ]
+          },
+          [
+            "=",
+            [
+              "get",
+              "$spelled",
+              "base"
+            ],
+            ""
+          ]
+        ]
+      ]
+    },
+    "fromPathModule": {
+      "args": [
+        "i"
+      ],
+      "expr": [
+        "in",
+        "$i.source",
+        "path",
+        "node:path",
+        "path/posix"
+      ]
+    }
+  }
 }

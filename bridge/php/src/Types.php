@@ -100,6 +100,17 @@ final class Types
                 $properties[$declared->name->toString()] = $this->written($property->type, $name);
             }
         }
+        $constants = [];
+        foreach ($class->stmts as $statement) {
+            if ($statement instanceof Stmt\ClassConst) {
+                foreach ($statement->consts as $constant) {
+                    $constants[$constant->name->toString()] = true;
+                }
+            }
+            if ($statement instanceof Stmt\EnumCase) {
+                $constants[$statement->name->toString()] = true;
+            }
+        }
         $traits = [];
         foreach ($class->getTraitUses() as $use) {
             foreach ($use->traits as $trait) {
@@ -118,6 +129,7 @@ final class Types
             'traits' => $traits,
             'methods' => $methods,
             'properties' => $properties,
+            'constants' => $constants,
         ];
     }
 
@@ -230,7 +242,11 @@ final class Types
             $expression instanceof Expr\StaticPropertyFetch => $expression->class instanceof Node\Name && $expression->name instanceof Node\VarLikeIdentifier
                 ? $this->property($expression, $this->named($expression->class, $class), $expression->name->toString())
                 : null,
-            $expression instanceof Expr\ClassConstFetch => $expression->name instanceof Node\Identifier && $expression->name->toLowerString() === 'class' ? ['keyword' => 'string'] : null,
+            $expression instanceof Expr\ClassConstFetch => $expression->name instanceof Node\Identifier && $expression->name->toLowerString() === 'class'
+                ? ['keyword' => 'string']
+                : ($expression->class instanceof Node\Name && $expression->name instanceof Node\Identifier
+                    ? $this->constant($expression, $this->named($expression->class, $class), $expression->name->toString())
+                    : null),
             $expression instanceof Expr\Assign => $expression->expr->getAttribute('type'),
             $expression instanceof Node\Scalar\String_, $expression instanceof Node\Scalar\InterpolatedString => ['keyword' => 'string'],
             $expression instanceof Node\Scalar\Int_ => ['keyword' => 'int'],
@@ -331,6 +347,32 @@ final class Types
         $global = $call->name->getLast();
         if (function_exists($global) || $call->name->isUnqualified()) {
             $call->setAttribute('target', ['symbol' => $global, 'name' => $global]);
+        }
+
+        return null;
+    }
+
+    /** A class constant or enum case read: the member names it, `Class::NAME`, and an enum case is of its enum's type. */
+    private function constant(Expr\ClassConstFetch $fetch, ?string $class, string $name): ?array
+    {
+        $seen = [];
+        $pending = $class !== null ? [$class] : [];
+        while ($pending !== []) {
+            $at = array_shift($pending);
+            if (isset($seen[strtolower($at)])) {
+                continue;
+            }
+            $seen[strtolower($at)] = true;
+            $declared = $this->declaration($at);
+            if ($declared === null) {
+                continue;
+            }
+            if (isset($declared['constants'][$name])) {
+                $fetch->setAttribute('member', "{$declared['name']}::{$name}");
+
+                return null;
+            }
+            array_push($pending, ...array_filter([$declared['parent'] ?? null, ...($declared['interfaces'] ?? [])]));
         }
 
         return null;
@@ -451,6 +493,12 @@ final class Types
                 $properties[$property->getName()] = $this->reflectedType($property->getType(), $name);
             }
         }
+        $constants = [];
+        foreach ($reflection->getReflectionConstants() as $constant) {
+            if ($constant->getDeclaringClass()->getName() === $name) {
+                $constants[$constant->getName()] = true;
+            }
+        }
         $parent = $reflection->getParentClass();
 
         return [
@@ -461,6 +509,7 @@ final class Types
             'traits' => $reflection->getTraitNames(),
             'methods' => $methods,
             'properties' => $properties,
+            'constants' => $constants,
         ];
     }
 

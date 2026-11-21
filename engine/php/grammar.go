@@ -10,34 +10,32 @@ import (
 
 func init() {
 	engine.ReadAs(contract.PHP, engine.Grammar{
-		Arguments:           values,
-		Receiver:            engine.InAnyField("var", "class"),
-		Binds:               binding,
-		Members:             declaredMembers,
-		InterfaceSignatures: interfaceSignatures,
-		UsesContract:        usesContract,
-		Parameters:          engine.InFields("params"),
-		Extends:             engine.InFields("extends"),
-		Implements:          engine.InFields("implements"),
-		Traits:              traitNames,
-		DeclaredName:        propertyName,
-		ClassOf:             classOf,
-		TypeOf:              typeOf,
-		Annotations:         attributes,
-		TypeKind:            engine.Kinds(map[string]string{"Stmt_Class": "class", "Stmt_Interface": "interface", "Stmt_Enum": "enum", "Stmt_Trait": "trait"}),
-		ReturnType:          engine.InField("returnType"),
-		RecordKeys:          func(match engine.Match) []string { return (Node{Match: match}).StringKeys() },
-		RecordReturnOwner:   recordReturnOwner,
-		LooseRecordType:     looseRecordType,
-		Constructs:          constructed,
-		Callers:             callers,
-		CodeWords:           func(node engine.Match) []string { return Node{Match: node}.CodeWords() },
-		ElementOf:           func(node engine.Match) *contract.Type { return TypesOf(node.Codebase()).ElementOf(node) },
-		TestFile:            testFile,
-		Implicit:            magic,
-		Labels:              func(name engine.Match) bool { return name.Parent().Kind() == "Arg" && name.Node().InRole() == "name" },
-		NamedConstructor:    func(method engine.Match) bool { return Node{Match: method}.IsNamedConstructor() },
-		ValueParameters:     func(method engine.Match) []string { return Node{Match: method}.ValueParamSignature() },
+		Arguments:         values,
+		Receiver:          engine.InAnyField("var", "class"),
+		Binds:             binding,
+		Members:           declaredMembers,
+		Parameters:        engine.InFields("params"),
+		Extends:           engine.InFields("extends"),
+		Implements:        engine.InFields("implements"),
+		Traits:            traitNames,
+		DeclaredName:      propertyName,
+		ClassOf:           classOf,
+		TypeOf:            typeOf,
+		Annotations:       attributes,
+		TypeKind:          engine.Kinds(map[string]string{"Stmt_Class": "class", "Stmt_Interface": "interface", "Stmt_Enum": "enum", "Stmt_Trait": "trait"}),
+		ReturnType:        engine.InField("returnType"),
+		RecordKeys:        func(match engine.Match) []string { return (Node{Match: match}).StringKeys() },
+		RecordReturnOwner: recordReturnOwner,
+		LooseRecordType:   looseRecordType,
+		Constructs:        constructed,
+		Callers:           callers,
+		CodeWords:         func(node engine.Match) []string { return Node{Match: node}.CodeWords() },
+		ElementOf:         func(node engine.Match) *contract.Type { return TypesOf(node.Codebase()).ElementOf(node) },
+		TestFile:          testFile,
+		Implicit:          magic,
+		Labels:            func(name engine.Match) bool { return name.Parent().Kind() == "Arg" && name.Node().InRole() == "name" },
+		NamedConstructor:  func(method engine.Match) bool { return Node{Match: method}.IsNamedConstructor() },
+		ValueParameters:   func(method engine.Match) []string { return Node{Match: method}.ValueParamSignature() },
 		IsConstructor: func(method engine.Match) bool {
 			return method.Kind() == "Stmt_ClassMethod" && method.Name() == "__construct"
 		},
@@ -49,7 +47,6 @@ func init() {
 		DeclaredClass:      func(parameter engine.Match) string { return Written(parameter.Node().Written).Class() },
 		IsRecord:           func(class engine.Match) bool { return ProgramOf(class.Codebase()).ClassIsRecord(class.Identity()) },
 		IsValueClass:       isValueDependency,
-		ListedClasses:      listedProjectClasses,
 		PublishedContracts: publishedContracts,
 		Types: func(codebase *engine.Codebase) engine.TypeSystem {
 			return engine.TypesFromDeclarations(codebase.Of(contract.PHP))
@@ -90,7 +87,6 @@ func init() {
 		},
 		ConstClass:   func(m engine.Match) bool { n := Node{Match: m}; return n.IsScalarConstClass() && !n.ExtendsAClass() },
 		TypeDispatch: typeDispatch,
-		EnumTable:    engine.As(Node.ListsSomeOfItsCasesInAConstant),
 		EnumValues:   enumValues,
 		EnumChainOwner: func(match engine.Match) string {
 			owner := (Node{Match: match}).OrChainComparedClass()
@@ -135,15 +131,7 @@ func init() {
 		},
 		CopyExclusions:    copyExclusions,
 		UnnamedVocabulary: unnamedVocabulary,
-		TwinPairs: func(codebase *engine.Codebase) engine.TwinPairs {
-			return engine.TwinPairs{Units: TwinUnits(codebase), Pairs: Divergences(codebase)}
-		},
-		Guard: guard,
-		MechanismFacts: func(codebase *engine.Codebase) engine.MechanismFacts {
-			reach := ReachOf(codebase)
-			return engine.MechanismFacts{Classes: reach.Classes, IsType: reach.IsType, IsTerminal: reach.IsTerminal, Namespace: func(class engine.Match) string { return Node{Match: class}.NamespaceName() }}
-		},
-		SpelledFolder:     func(site engine.Match) (engine.SpelledFolder, bool) { return Node{Match: site}.SpelledFolder() },
+		Guard:             guard,
 		Body:              engine.InFields("stmts"),
 		Otherwise:         otherwise,
 		HasAlternative:    func(branch engine.Match) bool { return branch.Child("else").Exists() },

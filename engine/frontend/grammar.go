@@ -86,8 +86,6 @@ func init() {
 			NullDefault:       typescript.NullSwitchDefault,
 			DispatchTest:      typescript.DispatchTest,
 			ConstClass:        typescript.IsConstClassEnum,
-			EnumTable:         typescript.KeepsEnumSideTable,
-			SideTables:        typescript.SideTables,
 			EnumValues:        typescript.EnumValues,
 			EnumCase:          typescript.EnumCase,
 			EnumMembership:    typescript.EnumMembership,
@@ -114,11 +112,6 @@ func init() {
 			VocabularyWords: typescript.VocabularyWords,
 			CopyBody:        typescript.CopyBody,
 			CopyExclusions:  typescript.CopyExclusions,
-			TwinPairs: func(codebase *engine.Codebase) engine.TwinPairs {
-				return engine.ResolvedTwinPairs(typescript.In(codebase).Codebase)
-			},
-			SpelledFolder: typescript.SpelledFolder,
-			ListedClasses: typescript.ListedClasses,
 			Types: func(codebase *engine.Codebase) engine.TypeSystem {
 				return engine.TypesFromDeclarations(typescript.In(codebase).Codebase)
 			},

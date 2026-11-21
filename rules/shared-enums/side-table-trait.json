@@ -23,5 +23,650 @@
       "crossFile": true
     }
   },
-  "find": {}
+  "find": {
+    "from": [
+      "unionAll",
+      "declarator",
+      "assignment"
+    ],
+    "as": "x",
+    "pipeline": [
+      {
+        "where": [
+          "and",
+          [
+            "not",
+            "$x.file.test"
+          ],
+          [
+            "not",
+            [
+              "exists",
+              [
+                "enclosing",
+                "$x",
+                "function"
+              ]
+            ]
+          ]
+        ]
+      },
+      {
+        "project": {
+          "anchor": "$x",
+          "table": [
+            "unwrapped",
+            [
+              "written",
+              "$x"
+            ]
+          ]
+        }
+      },
+      {
+        "where": [
+          "and",
+          [
+            "is",
+            "$table",
+            "collection"
+          ],
+          [
+            "in",
+            "$table.form",
+            "list",
+            "array",
+            "set",
+            "tuple"
+          ],
+          [
+            ">=",
+            [
+              "count",
+              "$table.entries"
+            ],
+            2
+          ]
+        ]
+      },
+      {
+        "project": {
+          "anchor": "$anchor",
+          "table": "$table",
+          "values": [
+            "map",
+            "$table.entries",
+            "e",
+            "$e.value"
+          ]
+        }
+      },
+      {
+        "where": [
+          "or",
+          [
+            "and",
+            [
+              "every",
+              "$values",
+              "v",
+              [
+                "enumCase",
+                "$v"
+              ]
+            ],
+            [
+              "=",
+              [
+                "count",
+                [
+                  "distinct",
+                  [
+                    "map",
+                    "$values",
+                    "v",
+                    [
+                      "enumOf",
+                      "$v"
+                    ]
+                  ]
+                ]
+              ],
+              1
+            ],
+            [
+              "is",
+              "$table.parent",
+              "declarator"
+            ],
+            [
+              "<",
+              [
+                "count",
+                [
+                  "distinct",
+                  [
+                    "map",
+                    "$values",
+                    "v",
+                    [
+                      "caseOf",
+                      "$v"
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "caseCount",
+                [
+                  "enumOf",
+                  [
+                    "first",
+                    "$values"
+                  ]
+                ]
+              ]
+            ]
+          ],
+          [
+            "and",
+            [
+              "every",
+              "$values",
+              "v",
+              [
+                "literalIs",
+                "$v",
+                "string"
+              ]
+            ],
+            [
+              "subset",
+              [
+                "map",
+                "$values",
+                "v",
+                [
+                  "literalValue",
+                  "$v"
+                ]
+              ],
+              [
+                "registered",
+                "$anchor"
+              ]
+            ]
+          ]
+        ]
+      },
+      {
+        "where": [
+          "and",
+          [
+            "nonempty",
+            [
+              "symbolOfTable",
+              "$anchor"
+            ]
+          ],
+          [
+            "some",
+            [
+              "rowsOf",
+              "references",
+              [
+                "record",
+                "symbol",
+                [
+                  "symbolOfTable",
+                  "$anchor"
+                ]
+              ]
+            ],
+            "row",
+            [
+              "readForMembership",
+              "$row.site"
+            ]
+          ]
+        ]
+      },
+      {
+        "emit": [
+          "case",
+          [
+            "and",
+            [
+              "enumCase",
+              [
+                "first",
+                "$values"
+              ]
+            ],
+            [
+              "exists",
+              [
+                "enclosing",
+                "$anchor",
+                "type"
+              ]
+            ],
+            [
+              "=",
+              [
+                "get",
+                [
+                  "enclosing",
+                  "$anchor",
+                  "type"
+                ],
+                "form"
+              ],
+              "enum"
+            ]
+          ],
+          {
+            "true": [
+              "enclosing",
+              "$anchor",
+              "type"
+            ]
+          },
+          "$anchor"
+        ]
+      }
+    ]
+  },
+  "definitions": {
+    "written": {
+      "args": [
+        "x"
+      ],
+      "expr": [
+        "case",
+        "$x.kind",
+        {
+          "declarator": "$x.initializer",
+          "assignment": [
+            "first",
+            "$x.values"
+          ]
+        },
+        "$x"
+      ]
+    },
+    "unwrapped": {
+      "args": [
+        "v"
+      ],
+      "expr": [
+        "case",
+        [
+          "is",
+          "$v",
+          "collection"
+        ],
+        {
+          "true": "$v"
+        },
+        [
+          "case",
+          [
+            "and",
+            [
+              "is",
+              "$v",
+              "construction"
+            ],
+            [
+              "exists",
+              "$v.initializer"
+            ],
+            [
+              "=",
+              [
+                "count",
+                "$v.arguments"
+              ],
+              0
+            ]
+          ],
+          {
+            "true": "$v.initializer"
+          },
+          [
+            "case",
+            [
+              "and",
+              [
+                "in",
+                "$v.kind",
+                "call",
+                "construction"
+              ],
+              [
+                "=",
+                [
+                  "count",
+                  "$v.arguments"
+                ],
+                1
+              ]
+            ],
+            {
+              "true": [
+                "argumentValue",
+                [
+                  "first",
+                  "$v.arguments"
+                ]
+              ]
+            },
+            "$v"
+          ]
+        ]
+      ]
+    },
+    "caseOf": {
+      "args": [
+        "v"
+      ],
+      "expr": [
+        "declarationOf",
+        [
+          "case",
+          "$v.kind",
+          {
+            "access": "$v.member"
+          },
+          "$v"
+        ]
+      ]
+    },
+    "enumCase": {
+      "args": [
+        "v"
+      ],
+      "expr": [
+        "is",
+        [
+          "caseOf",
+          "$v"
+        ],
+        "enum-case"
+      ]
+    },
+    "enumOf": {
+      "args": [
+        "v"
+      ],
+      "expr": [
+        "enclosing",
+        [
+          "caseOf",
+          "$v"
+        ],
+        "type"
+      ]
+    },
+    "caseCount": {
+      "args": [
+        "t"
+      ],
+      "expr": [
+        "count",
+        [
+          "filter",
+          [
+            "children",
+            "$t"
+          ],
+          "m",
+          [
+            "is",
+            "$m",
+            "enum-case"
+          ]
+        ]
+      ]
+    },
+    "namesOf": {
+      "args": [
+        "v"
+      ],
+      "expr": [
+        "case",
+        "$v.kind",
+        {
+          "call": [
+            "map",
+            "$v.arguments",
+            "a",
+            [
+              "literalValue",
+              "$a.value"
+            ]
+          ],
+          "construction": [
+            "map",
+            "$v.arguments",
+            "a",
+            [
+              "literalValue",
+              "$a.value"
+            ]
+          ],
+          "collection": [
+            "map",
+            "$v.entries",
+            "e",
+            [
+              "literalValue",
+              "$e.value"
+            ]
+          ]
+        },
+        [
+          "list"
+        ]
+      ]
+    },
+    "instanceEntry": {
+      "args": [
+        "v"
+      ],
+      "expr": [
+        "or",
+        [
+          "in",
+          "$v.kind",
+          "call",
+          "construction"
+        ],
+        [
+          "and",
+          [
+            "is",
+            "$v",
+            "collection"
+          ],
+          [
+            "=",
+            "$v.form",
+            "object"
+          ]
+        ]
+      ]
+    },
+    "registered": {
+      "args": [
+        "x"
+      ],
+      "expr": [
+        "flatten",
+        [
+          "map",
+          [
+            "filter",
+            [
+              "descendants",
+              [
+                "enclosing",
+                "$x",
+                "module"
+              ],
+              "collection"
+            ],
+            "c",
+            [
+              "and",
+              [
+                ">=",
+                [
+                  "count",
+                  "$c.entries"
+                ],
+                2
+              ],
+              [
+                "every",
+                "$c.entries",
+                "e",
+                [
+                  "instanceEntry",
+                  "$e.value"
+                ]
+              ]
+            ]
+          ],
+          "c",
+          [
+            "flatten",
+            [
+              "map",
+              "$c.entries",
+              "e",
+              [
+                "namesOf",
+                "$e.value"
+              ]
+            ]
+          ]
+        ]
+      ]
+    },
+    "readForMembership": {
+      "args": [
+        "r"
+      ],
+      "expr": [
+        "or",
+        [
+          "and",
+          [
+            "is",
+            "$r.parent",
+            "comparison"
+          ],
+          [
+            "in",
+            "$r.parent.operator",
+            "in",
+            "not-in"
+          ]
+        ],
+        [
+          "and",
+          [
+            "is",
+            "$r.parent",
+            "access"
+          ],
+          [
+            "is",
+            "$r.parent.parent",
+            "call"
+          ],
+          [
+            "hasEffect",
+            "$r.parent.parent",
+            "tests-membership"
+          ]
+        ],
+        [
+          "and",
+          [
+            "is",
+            "$r.parent",
+            "argument"
+          ],
+          [
+            "is",
+            "$r.parent.parent",
+            "call"
+          ],
+          [
+            "hasEffect",
+            "$r.parent.parent",
+            "tests-membership"
+          ]
+        ],
+        [
+          "and",
+          [
+            "is",
+            "$r.parent",
+            "access"
+          ],
+          [
+            "is",
+            "$r.parent.parent",
+            "argument"
+          ],
+          [
+            "hasEffect",
+            "$r.parent.parent.parent",
+            "tests-membership"
+          ]
+        ]
+      ]
+    },
+    "argumentValue": {
+      "args": [
+        "a"
+      ],
+      "expr": "$a.value"
+    },
+    "symbolOfTable": {
+      "args": [
+        "x"
+      ],
+      "expr": [
+        "case",
+        "$x.kind",
+        {
+          "declarator": "$x.binding.symbol",
+          "assignment": [
+            "targetSymbol",
+            [
+              "first",
+              "$x.targets"
+            ]
+          ]
+        },
+        ""
+      ]
+    },
+    "targetSymbol": {
+      "args": [
+        "t"
+      ],
+      "expr": [
+        "coalesce",
+        "$t.refers",
+        "$t.symbol",
+        ""
+      ]
+    }
+  }
 }

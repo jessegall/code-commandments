@@ -2,10 +2,85 @@
   "package": "collections",
   "ecosystem": "standard",
   "versions": "",
-  "provenance": "each language's own membership test over a list: PHP in_array, JavaScript Array.prototype.includes, .NET Enumerable.Contains",
+  "provenance": "each language's own membership test over a list or set: PHP in_array, JavaScript Array.prototype.includes and Set.prototype.has, .NET Enumerable.Contains, MemoryExtensions.Contains (an array's Contains) and the collections' own Contains",
   "entries": [
-    {"type": "", "name": "in_array", "effect": "tests-membership", "execution": "call"},
-    {"type": "Array", "name": "includes", "effect": "tests-membership", "execution": "call"},
-    {"type": "System.Linq.Enumerable", "name": "Contains", "effect": "tests-membership", "execution": "call"}
+    {
+      "type": "",
+      "name": "in_array",
+      "effect": "tests-membership",
+      "execution": "call"
+    },
+    {
+      "type": "Array",
+      "name": "includes",
+      "effect": "tests-membership",
+      "execution": "call"
+    },
+    {
+      "type": "ReadonlyArray",
+      "name": "includes",
+      "effect": "tests-membership",
+      "execution": "call"
+    },
+    {
+      "type": "Set",
+      "name": "has",
+      "effect": "tests-membership",
+      "execution": "call"
+    },
+    {
+      "type": "ReadonlySet",
+      "name": "has",
+      "effect": "tests-membership",
+      "execution": "call"
+    },
+    {
+      "type": "global::System.Linq.Enumerable",
+      "name": "Contains",
+      "effect": "tests-membership",
+      "execution": "call"
+    },
+    {
+      "type": "global::System.Collections.Generic.HashSet<T>",
+      "name": "Contains",
+      "effect": "tests-membership",
+      "execution": "call"
+    },
+    {
+      "type": "global::System.Collections.Generic.SortedSet<T>",
+      "name": "Contains",
+      "effect": "tests-membership",
+      "execution": "call"
+    },
+    {
+      "type": "global::System.Collections.Generic.List<T>",
+      "name": "Contains",
+      "effect": "tests-membership",
+      "execution": "call"
+    },
+    {
+      "type": "global::System.Collections.Generic.ICollection<T>",
+      "name": "Contains",
+      "effect": "tests-membership",
+      "execution": "call"
+    },
+    {
+      "type": "global::System.Collections.Generic.ISet<T>",
+      "name": "Contains",
+      "effect": "tests-membership",
+      "execution": "call"
+    },
+    {
+      "type": "global::System.Collections.Generic.IReadOnlySet<T>",
+      "name": "Contains",
+      "effect": "tests-membership",
+      "execution": "call"
+    },
+    {
+      "type": "global::System.MemoryExtensions",
+      "name": "Contains",
+      "effect": "tests-membership",
+      "execution": "call"
+    }
   ]
 }

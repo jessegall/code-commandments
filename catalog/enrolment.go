@@ -92,57 +92,8 @@ func enrolsRules(dir string) (bool, error) {
 			if function, ok := declaration.(*ast.FuncDecl); ok && function.Recv == nil && function.Name.Name == "init" {
 				return true, nil
 			}
-			if bindsSharedRule(declaration, file.Imports) {
-				return true, nil
-			}
 		}
 	}
 
 	return false, nil
-}
-
-func bindsSharedRule(declaration ast.Decl, imports []*ast.ImportSpec) bool {
-	binding, ok := declaration.(*ast.GenDecl)
-	if !ok || binding.Tok != token.VAR {
-		return false
-	}
-	alias := sharedImport(imports)
-	if alias == "" {
-		return false
-	}
-	for _, spec := range binding.Specs {
-		for _, initial := range spec.(*ast.ValueSpec).Values {
-			if call, ok := initial.(*ast.CallExpr); ok && callsBinding(call.Fun, alias) {
-				return true
-			}
-		}
-	}
-	return false
-}
-
-func sharedImport(imports []*ast.ImportSpec) string {
-	for _, imported := range imports {
-		if strings.Trim(imported.Path.Value, "\"`") == Module+"/detectors/shared" {
-			if imported.Name != nil {
-				return imported.Name.Name
-			}
-			return "shared"
-		}
-	}
-	return ""
-}
-
-func callsBinding(callee ast.Expr, alias string) bool {
-	switch indexed := callee.(type) {
-	case *ast.IndexExpr:
-		callee = indexed.X
-	case *ast.IndexListExpr:
-		callee = indexed.X
-	}
-	selector, ok := callee.(*ast.SelectorExpr)
-	if !ok || !strings.HasPrefix(selector.Sel.Name, "Bind") {
-		return false
-	}
-	packageName, ok := selector.X.(*ast.Ident)
-	return ok && packageName.Name == alias
 }

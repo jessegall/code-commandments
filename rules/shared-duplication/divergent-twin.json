@@ -22,5 +22,20 @@
       "crossFile": true
     }
   },
-  "find": {}
+  "find": {
+    "from": "divergentTwins",
+    "as": "t",
+    "pipeline": [
+      {
+        "where": [
+          "not",
+          "$t.test"
+        ]
+      },
+      {
+        "emit": "$t.function",
+        "group": "$t.group"
+      }
+    ]
+  }
 }

@@ -4,8 +4,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/jessegall/code-commandments/rule"
 	"github.com/jessegall/code-commandments/engine/python/pythontest"
+	"github.com/jessegall/code-commandments/rule"
 )
 
 func TestATestModuleIsNoPartOfTheLayerItTests(t *testing.T) {

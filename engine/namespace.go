@@ -10,6 +10,9 @@ func (m Match) Namespace() string {
 	if m.node == nil || m.file == nil {
 		return ""
 	}
+	if m.file.Module != "" {
+		return m.file.Module
+	}
 
 	symbol := outermostSymbol(m)
 	if symbol == "" {

@@ -3,6 +3,8 @@ package engine
 import (
 	"slices"
 	"strings"
+
+	"github.com/jessegall/code-commandments/contract"
 )
 
 const typeResourcePrefix = "type:"
@@ -47,29 +49,6 @@ func (pairs TwinPairs) Key(match Match) (string, bool) {
 	return "", false
 }
 
-func TwinsOf(codebase *Codebase) TwinPairs {
-	for _, file := range codebase.Files() {
-		grammar := spokenIn(file.Language()).grammar
-		if grammar != nil && grammar.TwinPairs != nil {
-			return grammar.TwinPairs(codebase)
-		}
-	}
-
-	return ResolvedTwinPairs(codebase)
-}
-
-func (m Match) TwinGroup() (string, bool) {
-	if m.file == nil {
-		return "", false
-	}
-	codebase := m.file.Codebase()
-	if read := m.grammar().TwinPairs; read != nil {
-		return read(codebase).Key(m)
-	}
-
-	return ResolvedTwinPairs(codebase.Of(m.file.Language())).Key(m)
-}
-
 func ResolvedTwinPairs(codebase *Codebase) TwinPairs {
 	return Analysis(codebase, "resolved-twin-pairs", resolveTwins)
 }
@@ -80,7 +59,7 @@ func resolveTwins(codebase *Codebase) TwinPairs {
 	functions := codebase.Reporting().WhereFunction().Reject(Match.IsTest).Get()
 	for _, function := range functions {
 		key := function.Node().Symbol
-		if key == "" || len(function.Body()) == 0 {
+		if key == "" || !function.Child("body").Exists() {
 			continue
 		}
 		matches[key], reach[key] = function, reachedSymbols(function)
@@ -109,7 +88,7 @@ func reachIn(unit Match, nodes []Match) map[string]bool {
 			continue
 		}
 		if target := node.TargetSymbol(); node.Is(Call) && target != "" && target != unit.Identity() {
-			resources["call:"+target] = true
+			resources["call:"+methodOf(node.Node().Target, target)] = true
 		}
 	}
 
@@ -132,12 +111,17 @@ func (resolvedTwinJudge) ArePolymorphicSiblings(poorer, richer ReachedUnit) bool
 	if poorer.Match.IsOverride() && richer.Match.IsOverride() {
 		return true
 	}
-	if owner := poorer.Match.grammar().MethodOwner; owner != nil {
-		one, other := owner(poorer.Match), owner(richer.Match)
-		return one != "" && other != "" && one != other
+	one, other := poorer.Match.EnclosingType(), richer.Match.EnclosingType()
+	if !one.Exists() || !other.Exists() || one.Node().Symbol == other.Node().Symbol {
+		return false
 	}
+	types, known := poorer.Match.Types()
+	if !known {
+		return false
+	}
+	shared := types.Contracts(other.Node().Symbol)
 
-	return false
+	return slices.ContainsFunc(types.Contracts(one.Node().Symbol), func(contract string) bool { return slices.Contains(shared, contract) })
 }
 
 func (resolvedTwinJudge) ResultsAreIncomparable(poorer, richer ReachedUnit) bool {
@@ -165,4 +149,14 @@ func (judge resolvedTwinJudge) CallersOf(key string) []string {
 	}
 
 	return callers
+}
+
+// methodOf is the method a call reaches, its overloads one: the declaring type and the name, where the target names
+// both, so a call of AppendLine() and one of AppendLine(string) take the same step.
+func methodOf(target *contract.Target, symbol string) string {
+	if target == nil || target.Type == "" || target.Name == "" {
+		return symbol
+	}
+
+	return target.Type + "." + target.Name
 }

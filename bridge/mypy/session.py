@@ -18,7 +18,7 @@ from mypy.find_sources import InvalidSourceList, create_source_list
 from mypy.modulefinder import BuildSource
 from mypy.build import BuildResult, State
 from mypy.errors import CompileError
-from mypy.nodes import CallExpr, Decorator, Expression, FakeInfo, FuncBase, MemberExpr, MypyFile, OverloadedFuncDef, RefExpr, TypeInfo
+from mypy.nodes import GDEF, CallExpr, Decorator, Expression, FakeInfo, FuncBase, MemberExpr, MypyFile, NameExpr, OverloadedFuncDef, RefExpr, TypeInfo
 from mypy.options import Options
 from mypy.server.subexpr import get_subexpressions
 from mypy.types import AnyType, FunctionLike, Instance, NoneType, ProperType, Type, UnionType, get_proper_type
@@ -207,11 +207,13 @@ class ResolvedType:
 @dataclass(frozen=True)
 class TypedModule:
     """How many of a module's expressions mypy typed, what each typed one resolved to by its `[start, end)` byte span
-    (the first expression at a span wins), and the declaration each call binds to by the call's span."""
+    (the first expression at a span wins), the declaration each call binds to by the call's span, and the module-level
+    declaration each name read refers to by the name's span."""
 
     expressions: int
     by_span: dict[tuple[int, int], ResolvedType]
     targets: dict[tuple[int, int], dict[str, str]] | None = None
+    names: dict[tuple[int, int], str] | None = None
 
 
 def described(typ: Type) -> ResolvedType | None:
@@ -255,7 +257,12 @@ def spans(path: str, state: State, types: dict[Expression, Type]) -> TypedModule
         target = target_of(call, types)
         if target is not None and span not in bound:
             bound[span] = target
-    return TypedModule(len(written), found, bound)
+    names: dict[tuple[int, int], str] = {}
+    for name in (e for e in get_subexpressions(state.tree) if isinstance(e, NameExpr)) if state.tree is not None else []:
+        if name.kind != GDEF or not name.fullname or name.line < 1 or name.end_line is None or name.end_column is None or name.end_line > len(starts):
+            continue
+        names.setdefault((starts[name.line - 1] + name.column, starts[name.end_line - 1] + name.end_column), name.fullname)
+    return TypedModule(len(written), found, bound, names)
 
 
 def target_of(call: CallExpr, types: dict[Expression, Type]) -> dict[str, str] | None:

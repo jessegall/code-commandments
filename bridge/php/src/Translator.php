@@ -551,6 +551,11 @@ final class Translator
         if ($member instanceof Stmt\ClassConst) {
             $made = $this->of('constant', $member, ['modifiers' => $this->modifiers($member)]);
             $made->parts = ['declarators' => array_map($this->constantDeclarator(...), $member->consts)];
+            foreach ($made->parts['declarators'] as $declarator) {
+                if ($class !== null) {
+                    $declarator->parts['binding']->facts['symbol'] = "{$class}::{$declarator->parts['binding']->facts['name']}";
+                }
+            }
             if ($member->type !== null) {
                 $made->parts['declaredType'] = $this->writtenType($member->type);
             }

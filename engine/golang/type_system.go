@@ -2,22 +2,10 @@ package golang
 
 import (
 	"slices"
-	"strings"
 
 	"github.com/jessegall/code-commandments/contract"
 	"github.com/jessegall/code-commandments/engine"
 )
-
-func interfaceSignatures(declaration engine.Match) []string {
-	if declaration.Child("typeParams").Exists() ||
-		slices.ContainsFunc(declaration.Members(), func(field engine.Match) bool {
-			return len(field.ChildrenIn("names")) == 0
-		}) {
-		return nil
-	}
-
-	return methodNames(declaration)
-}
 
 // methodNames are the names of the methods a type declares as written.
 func methodNames(declaration engine.Match) []string {
@@ -29,23 +17,6 @@ func methodNames(declaration engine.Match) []string {
 	}
 
 	return names
-}
-
-func interfaceVisible(target, from engine.Match) bool {
-	source, destination := from.Namespace(), target.Namespace()
-	if source == destination {
-		return true
-	}
-	if !(Node{Match: target}).IsExported() ||
-		slices.ContainsFunc(target.Members(), func(member engine.Match) bool { return !(Node{Match: member}).IsExported() }) {
-		return false
-	}
-	parent, internal := strings.CutSuffix(destination, "/internal")
-	if at := strings.LastIndex(destination, "/internal/"); !internal && at >= 0 {
-		parent, internal = destination[:at], true
-	}
-
-	return !internal || source == parent || strings.HasPrefix(source, parent+"/")
 }
 
 // implementedTypes adds the contracts satisfied by Go method sets to the declared types.

@@ -9,22 +9,19 @@ import (
 
 // Grammar is how a language holds what every language has in a place of its own: where its tree files a call's arguments or a type's parents, which declarations the language itself calls, what its test files are named.
 type Grammar struct {
-	InterfaceSignatures func(Match) []string
-	InterfaceVisible    func(target, from Match) bool
-	UsesContract        func(implementation, contract Match) bool
-	OwnsRecordBehavior  func(Match) bool
-	ReactiveMember      func(Match) bool
-	PublishedContracts  func(Match, []string) []string
-	Arguments           func(Match) []Match
-	Members             func(Match) []Match
-	Parameters          func(Match) []Match
-	Extends             func(Match) []Match
-	Implements          func(Match) []Match
-	WritesAttribute     func(Match, string) bool
-	DeclaredName        func(Match) string
-	Traits              func(Match) []Match
-	ClassOf             func(Match) string
-	ElementOf           func(Match) *contract.Type
+	OwnsRecordBehavior func(Match) bool
+	ReactiveMember     func(Match) bool
+	PublishedContracts func(Match, []string) []string
+	Arguments          func(Match) []Match
+	Members            func(Match) []Match
+	Parameters         func(Match) []Match
+	Extends            func(Match) []Match
+	Implements         func(Match) []Match
+	WritesAttribute    func(Match, string) bool
+	DeclaredName       func(Match) string
+	Traits             func(Match) []Match
+	ClassOf            func(Match) string
+	ElementOf          func(Match) *contract.Type
 
 	CodeWords func(Match) []string
 
@@ -53,7 +50,6 @@ type Grammar struct {
 	IsRecord            func(Match) bool
 	IsValueClass        func(Match) bool
 	Types               func(*Codebase) TypeSystem
-	ListedClasses       func(Match) []string
 	DeclaresMethods     func(Match) bool
 	NamespacesNaming    func(Match) []string
 	AnnotationNames     func(name string) []string
@@ -90,11 +86,8 @@ type Grammar struct {
 	TakesFailureMessage func(Match) bool
 	MessageParts        func(Match) []Match
 	Hashing             HashRules
-	SpelledFolder       FolderSpelling
 	TypeTest            func(Match) bool
 	Guard               func(Match) Guard
-	TwinPairs           func(*Codebase) TwinPairs
-	MechanismFacts      func(*Codebase) MechanismFacts
 	VocabularyWords     func(Match) []string
 	UnnamedVocabulary   func(*Codebase) []Match
 	CopyBody            func(Match) []Match
@@ -140,8 +133,6 @@ type Grammar struct {
 	TypeDispatch        func(Match) bool
 	DispatchTest        func(Match) (Match, string)
 	ConstClass          func(Match) bool
-	EnumTable           func(Match) bool
-	SideTables          func(*Codebase) []Match
 	CallConversion      func(Match) CallConversion
 	ScalarTypes         []string
 	BooleanTypes        []string

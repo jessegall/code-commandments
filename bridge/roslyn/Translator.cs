@@ -599,6 +599,7 @@ public sealed partial class ContractWriter
                     .Holds("guard", arm.WhenClause is null ? null : Expression(arm.WhenClause.Condition))
                     .Holds("body", Expression(arm.Expression)))),
             DefaultExpressionSyntax @default => New("default-value", @default).Holds("writtenType", TypeExpression(@default.Type)),
+            TypeOfExpressionSyntax typeOf => New("unary", typeOf).Fact("operator", "typeof").Holds("operand", TypeExpression(typeOf.Type)),
             DeclarationExpressionSyntax { Designation: SingleVariableDesignationSyntax single } => Binding(single.Identifier),
             TypeSyntax type => TypeExpression(type),
             _ => Unsupported(expression, expression.Kind().ToString()),

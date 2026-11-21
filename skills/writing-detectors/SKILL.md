@@ -110,7 +110,7 @@ does not — which is how a `where` says what only a `reject` could.
 | `contentWords` | text | list | the stems of a text's content words, the small words left out |
 | `count` | list | number | how many items a list holds; unknown when the list is |
 | `countOf` | text, value | number | how many rows of one of the find's relations have fields equal to a record's |
-| `declarationOf` | node | node | the declaration a call's target or a reference resolves to; unknown when the compiler did not resolve it |
+| `declarationOf` | node | node | the declaration a call's target or a reference resolves to, or the local binding a name is linked to; unknown when neither is known |
 | `declarationsOf` | value | list | every declaration of a symbol, or of what a node names: partial classes and overloads each once |
 | `declaredIn` | node | list | the bindings written directly in a node, not inside a block, function, type, loop, handler or comprehension written in it |
 | `defaultOf` | node | node | the value an expression falls back to when its subject is absent: the right side of ?? or ?:, the default a library's lookup is given; no node when it has none |
@@ -179,6 +179,7 @@ does not — which is how a `where` says what only a `reject` could.
 | `keyType` | value | value | the type of a map's keys; no value for a type that is no map |
 | `keyedStoreRead` | node | value | the store and key an index or a library's keyed read reads, as a record of store and key; no value for another expression |
 | `keys` | value | list | the field names of a record, such as a map parameter, sorted |
+| `knownSupertypes` | value | list | the symbols of every type a type declaration extends, implements or mixes in, nearest first, as far as the codebase declares them: a type it does not declare is listed and not walked past |
 | `last` | list | value | the last item of a list; no value for an empty one |
 | `layerOf` | text | text | the layer the project's configuration places a module in; unknown for a module in no layer |
 | `leaves` | node, text, text | list | what a run of nested nodes of the kind named holds that is not of that kind, only through the role named when one is: the parts of a && b && c |
@@ -241,6 +242,7 @@ does not — which is how a `where` says what only a `reject` could.
 | `replace` | text, text, text | text | the text with every occurrence of the second replaced by the third |
 | `reportable` | node | truth | whether a finding on the node can be reported: it is in code the project can change |
 | `rest` | list | list | the list without its first item |
+| `reusableInterface` | node | value | the contract an interface could reuse instead: one of its own language with no signature it lacks, more than half of its signatures, that it may depend on under the project's layers, as a record of contract and exact (whether the signatures are the same); no value when there is none |
 | `reverse` | list | list | the list's items, last first |
 | `round` | number | number | the nearest whole number, a half rounded away from zero |
 | `rowOf` | text, value | value | the one row of a relation whose fields equal a record's; unknown when none or several do |
@@ -257,6 +259,7 @@ does not — which is how a `where` says what only a `reject` could.
 | `some` | list, name, truth | truth | whether the body is true for at least one item |
 | `sort` | list | list | the list's items in order: numbers by size, anything else by its written form |
 | `sortBy` | list, name, value | list | the items ordered by the key the body gives: numbers by size, anything else by its written form |
+| `spelledFolder` | value | value | the folder a path expression or an argument writes, or a list of them joined by slashes: a record of base (the written text of the computed parts it starts from, empty when it starts with text), start (the first of those parts) and folder (the segments written up to the next computed part, the last one only when a slash follows it); no value when the text does not read as a relative path |
 | `split` | text, text | list | the pieces of the text between each separator |
 | `startsWith` | text, text | truth | whether a text begins with another |
 | `stem` | text | text | the stem the prose package compares a word by |

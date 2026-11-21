@@ -1097,7 +1097,7 @@
     },
     {
         "key": "sin_interface-overlap",
-        "title": "InterfaceOverlap",
+        "title": "interface-overlap",
         "type": "flag",
         "kind": "flag",
         "default": true,
@@ -1193,7 +1193,7 @@
     },
     {
         "key": "sin_divergent-twin",
-        "title": "DivergentTwin",
+        "title": "divergent-twin",
         "type": "flag",
         "kind": "flag",
         "default": true,
@@ -1209,7 +1209,7 @@
     },
     {
         "key": "sin_list-mirrors-folder",
-        "title": "ListMirrorsFolder",
+        "title": "list-mirrors-folder",
         "type": "flag",
         "kind": "flag",
         "default": true,
@@ -1225,7 +1225,7 @@
     },
     {
         "key": "sin_repeated-folder-path",
-        "title": "RepeatedFolderPath",
+        "title": "repeated-folder-path",
         "type": "flag",
         "kind": "flag",
         "default": true,
@@ -1281,7 +1281,7 @@
     },
     {
         "key": "sin_side-table-trait",
-        "title": "SideTableTrait",
+        "title": "side-table-trait",
         "type": "flag",
         "kind": "flag",
         "default": true,

@@ -34,7 +34,6 @@ func TestTheFrontendFixtureProvesEveryDetector(t *testing.T) {
 	})
 }
 
-
 func TestNoFrontendRuleCostsMoreThanTheTreeItReadsGrewBy(t *testing.T) {
 	frontend, err := bridge.Here().Stream(shop)
 	if err != nil {

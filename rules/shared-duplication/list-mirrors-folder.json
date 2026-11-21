@@ -20,5 +20,275 @@
       "crossFile": true
     }
   },
-  "find": {}
+  "find": {
+    "select": "collection",
+    "as": "c",
+    "where": [
+      "and",
+      [
+        "in",
+        "$c.form",
+        "list",
+        "array"
+      ],
+      [
+        "or",
+        [
+          "is",
+          "$c.parent",
+          "argument"
+        ],
+        [
+          "is",
+          "$c.parent",
+          "return"
+        ]
+      ],
+      [
+        "not",
+        "$c.file.test"
+      ],
+      [
+        ">=",
+        [
+          "count",
+          "$c.entries"
+        ],
+        5
+      ],
+      [
+        "every",
+        "$c.entries",
+        "e",
+        [
+          "listedClass",
+          "$e"
+        ]
+      ]
+    ],
+    "let": [
+      [
+        "listed",
+        [
+          "map",
+          "$c.entries",
+          "e",
+          [
+            "classOf",
+            "$e.value"
+          ]
+        ]
+      ],
+      [
+        "folders",
+        [
+          "distinct",
+          [
+            "map",
+            "$listed",
+            "s",
+            [
+              "folderOf",
+              [
+                "typeDeclaration",
+                "$s"
+              ]
+            ]
+          ]
+        ]
+      ]
+    ],
+    "having": [
+      "some",
+      [
+        "knownSupertypes",
+        [
+          "typeDeclaration",
+          [
+            "first",
+            "$listed"
+          ]
+        ]
+      ],
+      "s",
+      [
+        "and",
+        [
+          "every",
+          "$listed",
+          "l",
+          [
+            "has",
+            [
+              "knownSupertypes",
+              [
+                "typeDeclaration",
+                "$l"
+              ]
+            ],
+            "$s"
+          ]
+        ],
+        [
+          "every",
+          [
+            "subtypes",
+            "$s"
+          ],
+          "d",
+          [
+            "or",
+            [
+              "not",
+              [
+                "concrete",
+                "$d"
+              ]
+            ],
+            [
+              "not",
+              [
+                "has",
+                "$folders",
+                [
+                  "folderOf",
+                  "$d"
+                ]
+              ]
+            ],
+            [
+              "has",
+              "$listed",
+              "$d.symbol"
+            ]
+          ]
+        ]
+      ]
+    ],
+    "emit": "$c"
+  },
+  "definitions": {
+    "classOf": {
+      "args": [
+        "v"
+      ],
+      "expr": [
+        "case",
+        "$v.kind",
+        {
+          "reference": [
+            "coalesce",
+            "$v.refers",
+            ""
+          ],
+          "access": [
+            "case",
+            [
+              "=",
+              "$v.member.name",
+              "class"
+            ],
+            {
+              "true": [
+                "coalesce",
+                "$v.subject.refers",
+                ""
+              ]
+            },
+            ""
+          ],
+          "unary": [
+            "case",
+            [
+              "=",
+              "$v.operator",
+              "typeof"
+            ],
+            {
+              "true": [
+                "coalesce",
+                "$v.operand.refers",
+                ""
+              ]
+            },
+            ""
+          ]
+        },
+        ""
+      ]
+    },
+    "concrete": {
+      "args": [
+        "d"
+      ],
+      "expr": [
+        "and",
+        [
+          "is",
+          "$d",
+          "type"
+        ],
+        [
+          "in",
+          "$d.form",
+          "class",
+          "record"
+        ],
+        [
+          "not",
+          [
+            "some",
+            "$d.modifiers",
+            "m",
+            [
+              "=",
+              "$m",
+              "abstract"
+            ]
+          ]
+        ]
+      ]
+    },
+    "folderOf": {
+      "args": [
+        "d"
+      ],
+      "expr": [
+        "dirName",
+        "$d.file.path"
+      ]
+    },
+    "listedClass": {
+      "args": [
+        "e"
+      ],
+      "expr": [
+        "and",
+        [
+          "not",
+          [
+            "exists",
+            "$e.key"
+          ]
+        ],
+        [
+          "nonempty",
+          [
+            "classOf",
+            "$e.value"
+          ]
+        ],
+        [
+          "concrete",
+          [
+            "typeDeclaration",
+            [
+              "classOf",
+              "$e.value"
+            ]
+          ]
+        ]
+      ]
+    }
+  }
 }

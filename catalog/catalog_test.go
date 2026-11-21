@@ -114,7 +114,6 @@ func TestEnrolmentImportsEveryRuleFolderOnly(t *testing.T) {
 	write("sins/sin.go", enrols)
 	write("sins/backend/array_bag.go", enrols)
 	write("detectors/backend/laravel/facade.go", enrols)
-	write("detectors/go/shared.go", "package golang\n\nimport rules \""+catalog.Module+"/detectors/shared\"\n\nvar one = rules.Bind[Rule, Language]()\n")
 	write("detectors/backend/testdata/toy.go", enrols)
 	write("detectors/_draft/draft.go", enrols)
 	write("detectors/paritytest/paritytest.go", "package paritytest\n\nfunc Compare() {}\n")
@@ -130,13 +129,13 @@ func TestEnrolmentImportsEveryRuleFolderOnly(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	for _, want := range []string{`"github.com/jessegall/code-commandments/detectors/backend/laravel"`, `"github.com/jessegall/code-commandments/detectors/go"`, `"github.com/jessegall/code-commandments/sins/backend"`, `"github.com/jessegall/code-commandments/published/spatie"`} {
+	for _, want := range []string{`"github.com/jessegall/code-commandments/detectors/backend/laravel"`, `"github.com/jessegall/code-commandments/sins/backend"`, `"github.com/jessegall/code-commandments/published/spatie"`} {
 		if !strings.Contains(string(source), want) {
 			t.Fatalf("%s is not imported:\n%s", want, source)
 		}
 	}
-	if strings.Count(string(source), "_ \"") != 4 {
-		t.Fatalf("only the four rule packages are imported:\n%s", source)
+	if strings.Count(string(source), "_ \"") != 5 {
+		t.Fatalf("only the five rule packages are imported:\n%s", source)
 	}
 }
 

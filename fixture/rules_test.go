@@ -52,6 +52,9 @@ func judgedIn(t *testing.T, each project) (*engine.Codebase, []fixture.Rule, []f
 	if err != nil {
 		t.Fatal(err)
 	}
+	// A fixture project is judged as the project it is, never as test fixtures of this checkout, so a rule that
+	// leaves tests out still reads its marked code.
+	codebase.Rooted(root)
 	configured, err := config.Load(root)
 	if err != nil {
 		t.Fatal(err)

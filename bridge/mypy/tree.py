@@ -198,7 +198,7 @@ def line_of(text: bytes, module: str, state: State | None, types: dict, path: st
     """A module's file line with its path and context left out, and the counts the trailer adds up for it."""
     typed = spans(path, state, types) if state is not None else TypedModule(0, {})
     ran = state is not None and state.tree is not None
-    translator = Translator(text, module, resolver(state if ran else None), typed.by_span, typed.targets or {})
+    translator = Translator(text, module, resolver(state if ran else None), typed.by_span, typed.targets or {}, typed.names or {})
     try:
         root = translator.file(ast.parse(text))
     except SyntaxError:

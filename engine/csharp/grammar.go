@@ -13,16 +13,14 @@ func init() {
 	engine.ReadAs(contract.CSharp, engine.Grammar{
 		ExecutesQuery: efcore.ExecutesQuery,
 		NullDefault:   nullSwitchDefault,
-		ListedClasses: listedClasses,
 		Types: func(codebase *engine.Codebase) engine.TypeSystem {
 			return engine.TypesFromDeclarations(codebase.Of(contract.CSharp))
 		},
-		SpelledFolder: spelledFolder,
-		Arguments:     arguments,
-		Receiver:      receiver,
-		Declares:      engine.KindIn("SingleVariableDesignation", "DeclarationPattern"),
-		Binds:         engine.KindIn("LocalDeclarationStatement"),
-		Members:       engine.InFields("Members"),
+		Arguments: arguments,
+		Receiver:  receiver,
+		Declares:  engine.KindIn("SingleVariableDesignation", "DeclarationPattern"),
+		Binds:     engine.KindIn("LocalDeclarationStatement"),
+		Members:   engine.InFields("Members"),
 		DeclaredName: func(declaration engine.Match) string {
 			return Node{Match: declaration}.DeclaredName()
 		},
@@ -73,7 +71,6 @@ func init() {
 		AssignmentSides:     engine.ReadPair("Left", "Right"),
 		Getter:              getterWithoutCapturedParameters,
 		TypeDispatch:        typeDispatch,
-		SideTables:          sideTables,
 		ConstClass: func(m engine.Match) bool {
 			n := Node{Match: m}
 			return n.IsConstClassEnum() && Of(m.Codebase()).ComparesAsACase(n.Symbol())

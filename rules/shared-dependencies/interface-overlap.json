@@ -19,5 +19,84 @@
       "advice": true
     }
   },
-  "find": {}
+  "find": {
+    "select": "type",
+    "as": "t",
+    "where": [
+      "and",
+      [
+        "=",
+        "$t.form",
+        "interface"
+      ],
+      [
+        "not",
+        "$t.file.test"
+      ],
+      [
+        "exists",
+        [
+          "reusableInterface",
+          "$t"
+        ]
+      ]
+    ],
+    "advice": [
+      "case",
+      [
+        "get",
+        [
+          "reusableInterface",
+          "$t"
+        ],
+        "exact"
+      ],
+      {
+        "true": [
+          "concat",
+          "Reuse ",
+          [
+            "symbolOf",
+            [
+              "get",
+              [
+                "reusableInterface",
+                "$t"
+              ],
+              "contract"
+            ]
+          ],
+          " if it promises the same behaviour."
+        ]
+      },
+      [
+        "concat",
+        "Extend ",
+        [
+          "symbolOf",
+          [
+            "get",
+            [
+              "reusableInterface",
+              "$t"
+            ],
+            "contract"
+          ]
+        ],
+        " and declare only the added methods if the shared methods promise the same behaviour."
+      ]
+    ]
+  },
+  "parameters": {
+    "layers": {
+      "type": "map",
+      "default": {},
+      "description": "The layers the project declares under configure, each to the layers it may use."
+    },
+    "publicContracts": {
+      "type": "list",
+      "default": [],
+      "description": "The types the project publishes as contracts, from configure's public contracts."
+    }
+  }
 }

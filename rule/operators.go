@@ -108,7 +108,7 @@ var operators = map[string]operator{
 	"exemptedBy":      {operands: []valueType{text, node}, gives: truth, says: "whether a library the project holds excuses the node under the exemption tag named, by its resolved symbol"},
 	"identity":        {operands: []valueType{text}, gives: text, says: "the type a library names by the identity given, such as \"option\"; unknown when no library names it"},
 	"referrers":       {operands: []valueType{node}, gives: list, says: "every node in the program that refers to the declaration: its calls and reads"},
-	"declarationOf":   {operands: []valueType{node}, gives: node, says: "the declaration a call's target or a reference resolves to; unknown when the compiler did not resolve it"},
+	"declarationOf":   {operands: []valueType{node}, gives: node, says: "the declaration a call's target or a reference resolves to, or the local binding a name is linked to; unknown when neither is known"},
 	"typeDeclaration": {operands: []valueType{text}, gives: node, says: "the project's declaration of the type a symbol or resolved name names; none when the project declares no such type"},
 	"position":        {operands: []valueType{node}, gives: number, says: "the node's place among the nodes in the same role of its parent, counted from 0"},
 	"programEnums":    {operands: []valueType{}, gives: list, says: "the case values of every enum the program declares, one list per enum of two or more cases"},

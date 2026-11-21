@@ -35,6 +35,7 @@ var layered = map[catalog.Engine]layerSpelling{
 	catalog.PHP:    {`\`, false},
 	catalog.Python: {".", true},
 	catalog.CSharp: {".", true},
+	catalog.Go:     {"/", true},
 }
 
 // layerSpelling is how one engine spells a namespace: the separator between its parts, and whether its case matters.
@@ -126,6 +127,7 @@ type find struct {
 	Let       []binding           `json:"let,omitempty"`
 	Having    *Expr               `json:"having,omitempty"`
 	Emit      *Expr               `json:"emit,omitempty"`
+	Advice    *Expr               `json:"advice,omitempty"`
 	From      source              `json:"from,omitempty"`
 	Pipeline  []stage             `json:"pipeline,omitempty"`
 	Relations map[string]relation `json:"relations,omitempty"`
@@ -427,7 +429,7 @@ func (f file) rowsRead() []string {
 
 		return expression
 	}
-	for _, written := range []*Expr{f.Find.Where, f.Find.Having, f.Find.Emit} {
+	for _, written := range []*Expr{f.Find.Where, f.Find.Having, f.Find.Emit, f.Find.Advice} {
 		if written != nil {
 			note(*written)
 		}
@@ -591,6 +593,17 @@ func (r Rule) Engine() catalog.Engine {
 
 func (r Rule) Engines() []catalog.Engine {
 	return r.engines
+}
+
+// spellingOf is how the engine a language is judged under spells its namespaces, where it declares layers.
+func spellingOf(language contract.Language) (layerSpelling, bool) {
+	for engine, judged := range languages {
+		if spelling, declares := layered[engine]; declares && slices.Contains(judged, language) {
+			return spelling, true
+		}
+	}
+
+	return layerSpelling{}, false
 }
 
 func firstLayered(engines []catalog.Engine) (layerSpelling, bool) {
