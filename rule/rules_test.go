@@ -213,3 +213,29 @@ func TestRelationOfLaravelRouteRegistrations(t *testing.T) {
 		t.Errorf("the route table holds the registrations on lines %v, and 6 and 7 are right", lines)
 	}
 }
+
+// A throw that builds a generic failure with its message written at the throw is both sins; a named failure of the
+// project, built by its own factory, is neither.
+func TestAThrowOfAGenericFailureWithAWrittenMessageIsFound(t *testing.T) {
+	sources := map[string]string{
+		"src/Formatter.php": "<?php\nnamespace Shop;\n\nfinal class Formatter\n{\n    public function name(?string $carrier): string\n    {\n        return $carrier ?? throw new \\RuntimeException('no carrier');\n    }\n\n    public function named(?string $carrier): string\n    {\n        return $carrier ?? throw MissingCarrier::make();\n    }\n}\n",
+		"src/MissingCarrier.php": "<?php\nnamespace Shop;\n\nfinal class MissingCarrier extends \\DomainException\n{\n    public static function make(): self\n    {\n        return new self();\n    }\n}\n",
+	}
+	expect(t, "php", judged(t, "shared-exceptions/message-at-throw.json", sources), "src/Formatter.php:8")
+	expect(t, "php", judged(t, "shared-exceptions/generic-exception.json", sources), "src/Formatter.php:8")
+}
+
+// A promoted constructor parameter is a field, and a parameter a closure reads is read; only the parameter nothing
+// reads is unused.
+func TestAPromotedOrCapturedParameterIsNotUnused(t *testing.T) {
+	expect(t, "php", judged(t, "php-type-honesty/unused-parameter.json", map[string]string{
+		"src/Address.php": "<?php\nnamespace Shop;\n\nfinal class Address\n{\n    public function __construct(\n        private string $line,\n        private string $city,\n    ) {}\n\n    public function move(string $line, string $city): callable\n    {\n        return fn () => $line;\n    }\n}\n",
+	}), "src/Address.php:11")
+}
+
+// A private method a call reaches is used: the call's target names the method's own symbol.
+func TestAPrivateMethodACallReachesIsUsed(t *testing.T) {
+	expect(t, "php", judged(t, "php-type-honesty/unused-private-member.json", map[string]string{
+		"src/Directory.php": "<?php\nnamespace Shop;\n\nfinal class Directory\n{\n    public function latest(): int\n    {\n        return $this->draft();\n    }\n\n    private function draft(): int\n    {\n        return 1;\n    }\n\n    private function never(): int\n    {\n        return 2;\n    }\n}\n",
+	}), "src/Directory.php:16")
+}

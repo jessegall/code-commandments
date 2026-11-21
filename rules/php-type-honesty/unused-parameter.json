@@ -78,12 +78,20 @@
           "virtual",
           "abstract"
         ]
+      ],
+      [
+        "=",
+        [
+          "count",
+          "$p.modifiers"
+        ],
+        0
       ]
     ],
     "having": [
       "none",
       [
-        "ownDescendants",
+        "descendants",
         "$p.parent.body"
       ],
       "x",

@@ -286,7 +286,7 @@ final class Types
             return null;
         }
         $declaring = $this->declaring($made, '__construct') ?? $made;
-        $new->setAttribute('target', ['symbol' => "{$declaring}::__construct()", 'type' => $declaring, 'name' => '__construct']);
+        $new->setAttribute('target', ['symbol' => "{$declaring}::__construct", 'type' => $declaring, 'name' => '__construct']);
 
         return ['name' => $made];
     }
@@ -302,7 +302,7 @@ final class Types
             return null;
         }
         $method = $this->methods($declaring)[strtolower($name)];
-        $call->setAttribute('target', ['symbol' => "{$declaring}::{$method['name']}()", 'type' => $declaring, 'name' => $method['name']]);
+        $call->setAttribute('target', ['symbol' => "{$declaring}::{$method['name']}", 'type' => $declaring, 'name' => $method['name']]);
         $returns = $method['returns'];
         if ($returns !== null && isset($returns['keyword']) && in_array($returns['keyword'], ['self', 'static'], true)) {
             return ['name' => $receiver] + array_intersect_key($returns, ['nullable' => true]);
@@ -320,13 +320,13 @@ final class Types
         $declared = ($written !== null ? $this->functions[strtolower($written)] ?? null : null) ?? $this->functions[$call->name->toLowerString()] ?? null;
         if ($declared !== null) {
             $this->reads($declared['file']);
-            $call->setAttribute('target', ['symbol' => "{$declared['name']}()", 'name' => $declared['name']]);
+            $call->setAttribute('target', ['symbol' => $declared['name'], 'name' => $declared['name']]);
 
             return $declared['returns'];
         }
         $global = $call->name->getLast();
         if (function_exists($global)) {
-            $call->setAttribute('target', ['symbol' => "{$global}()", 'name' => $global]);
+            $call->setAttribute('target', ['symbol' => $global, 'name' => $global]);
         }
 
         return null;

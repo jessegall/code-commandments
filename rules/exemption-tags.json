@@ -44,10 +44,6 @@
     "why": "A type whose framework supplies members at runtime."
   },
   {
-    "tag": "generic-failure",
-    "why": "The language's catch-all failure type: throwing it names nothing a caller can catch."
-  },
-  {
     "tag": "no-container",
     "why": "A type the framework instantiates itself, without the container."
   },

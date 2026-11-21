@@ -43,17 +43,108 @@
       ]
     ],
     "having": [
-      "none",
+      "and",
       [
-        "ownDescendants",
-        "$f.body"
+        "none",
+        [
+          "ownDescendants",
+          "$f.body"
+        ],
+        "x",
+        [
+          "isSelf",
+          "$x"
+        ]
       ],
-      "x",
       [
-        "isSelf",
-        "$x"
+        "none",
+        "$field.hooks",
+        "x",
+        [
+          "=",
+          "$x.form",
+          "set"
+        ]
+      ],
+      [
+        "none",
+        [
+          "ownDescendants",
+          "$f.body"
+        ],
+        "x",
+        [
+          "and",
+          [
+            "=",
+            "$x.kind",
+            "reference"
+          ],
+          [
+            "=",
+            "$x.form",
+            "parent"
+          ]
+        ]
+      ],
+      [
+        "not",
+        [
+          "spatie.isData",
+          [
+            "enclosing",
+            "$f",
+            "type"
+          ]
+        ]
       ]
     ],
-    "emit": "$f"
+    "emit": "$f",
+    "let": [
+      [
+        "field",
+        [
+          "fieldOf",
+          "$f"
+        ]
+      ]
+    ]
+  },
+  "definitions": {
+    "fieldOf": {
+      "args": [
+        "h"
+      ],
+      "expr": [
+        "at",
+        [
+          "filter",
+          [
+            "siblings",
+            "$h"
+          ],
+          "f",
+          [
+            "and",
+            [
+              "=",
+              "$f.kind",
+              "field"
+            ],
+            [
+              "some",
+              "$f.hooks",
+              "x",
+              [
+                "=",
+                "$x",
+                "$h"
+              ]
+            ]
+          ]
+        ],
+        0
+      ]
+    }
   }
 }

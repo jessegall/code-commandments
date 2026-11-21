@@ -197,9 +197,9 @@
         "construction"
       ],
       [
-        "exemptedBy",
-        "generic-failure",
-        "$t.value"
+        "failureType",
+        "$t.value",
+        "generic"
       ],
       [
         "case",
