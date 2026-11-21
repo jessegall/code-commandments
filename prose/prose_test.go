@@ -20,6 +20,9 @@ func TestHistoryIsToldFromARuntimeCondition(t *testing.T) {
 		"Similarity matching no longer offers up a claimed candidate.":               true,
 		"The executor no longer does instanceof unwraps.":                            true,
 		"Mark a reader unhealthy when it no longer does its checks.":                 false,
+		"// no longer an array":                                                      true,
+		"No longer a singleton: each request builds its own.":                        true,
+		"Drops a session that is no longer a member of the pool.":                    false,
 	} {
 		if NarratesHistory(text) != narrates {
 			t.Errorf("%q narrates history: %v", text, !narrates)

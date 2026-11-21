@@ -90,6 +90,9 @@ func (n Node) IsTypeNarrowingGuard() bool {
 	}
 	count := 0
 	for _, conjunct := range flattenConjuncts(n.Match) {
+		if conjunct.Kind() == "Expr_BooleanNot" {
+			conjunct = conjunct.Child("expr")
+		}
 		if conjunct.Kind() == "Expr_Instanceof" {
 			count++
 		}

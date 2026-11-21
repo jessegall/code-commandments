@@ -69,18 +69,33 @@ var sequenceReturns = []*regexp.Regexp{
 	regexp.MustCompile(`@return\s+\??[\\\w|]+\[\]`),
 }
 
+// EnclosingFunctionReturnsSequence reports a function documented as returning a list, by its own docblock or by the
+// docblock of the method it overrides.
 func (n Node) EnclosingFunctionReturnsSequence() bool {
-	doc, ok := n.EnclosingFunctionLike().DocComment()
-	if !ok {
-		return false
+	function := n.EnclosingFunctionLike()
+	if documentsSequence(function) {
+		return true
 	}
-	for _, line := range prose.Lines(doc.Text) {
-		if slices.ContainsFunc(sequenceReturns, func(pattern *regexp.Regexp) bool { return pattern.MatchString(line) }) {
+	program := ProgramOf(n.Codebase())
+	for _, ancestor := range program.Ancestors(EnclosingClassName(n.Match)) {
+		declaration, declared := program.Declaration(ancestor)
+		if overridden, found := Method(declaration, function.Name()); declared && found && documentsSequence(Node{Match: overridden}) {
 			return true
 		}
 	}
 
 	return false
+}
+
+func documentsSequence(function Node) bool {
+	doc, ok := function.DocComment()
+	if !ok {
+		return false
+	}
+
+	return slices.ContainsFunc(prose.Lines(doc.Text), func(line string) bool {
+		return slices.ContainsFunc(sequenceReturns, func(pattern *regexp.Regexp) bool { return pattern.MatchString(line) })
+	})
 }
 
 func (n Node) DecodesItsOwnEncoding() bool {

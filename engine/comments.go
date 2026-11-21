@@ -124,7 +124,25 @@ func (cm Commented) IsCode() bool {
 func (cm Commented) RestatesStatement() bool {
 	owner := cm.Documents()
 	return cm.Kind != "doc" && !cm.IsCode() && owner.Exists() && !owner.Is(Block) && !owner.Is(Function) &&
-		!owner.Is(TypeDeclaration) && owner.IsWithinFunction() && cm.Restates()
+		!owner.Is(TypeDeclaration) && owner.IsWithinFunction() && !cm.headsASection(owner) && cm.Restates()
+}
+
+// headsASection reports a comment a blank line keeps apart from the statement after it: it labels what follows, not
+// that one statement.
+func (cm Commented) headsASection(owner Match) bool {
+	source, err := cm.File.Source()
+	if err != nil || cm.Span.End > owner.node.Span.Start {
+		return false
+	}
+
+	return HasBlankLine(string(source[cm.Span.End:owner.node.Span.Start]))
+}
+
+var blankLine = regexp.MustCompile(`\n[ \t]*\r?\n`)
+
+// HasBlankLine reports text holding an empty line: one with nothing on it but whitespace.
+func HasBlankLine(text string) bool {
+	return blankLine.MatchString(text)
 }
 
 func (cm Commented) IsBloatedDoc() bool {

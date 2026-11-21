@@ -22,7 +22,7 @@ func (n Node) UnpacksTargetFromContainerParam() bool {
 				continue
 			}
 			local := capturedLocal(call)
-			if local == "" || n.isTheResolver(local) || returnsScalar(call) {
+			if local == "" || n.isTheResolver(local) || returnsScalar(call) || n.readsKeyOutside(call) {
 				continue
 			}
 			if n.ownerIsPureEncapsulator(chainRoot(call.Child("var"))) {
@@ -80,6 +80,22 @@ func (n Node) scalarKeyParams() []string {
 	}
 
 	return names
+}
+
+// readsKeyOutside reports a method that reads the lookup's key again beyond the lookup, so it needs the key itself and
+// not only what the key names.
+func (n Node) readsKeyOutside(lookup engine.Match) bool {
+	var key string
+	for _, child := range lookup.Children() {
+		if child.Node().Field == "args" {
+			key = variableName(child.Child("value"))
+		}
+	}
+
+	return slices.ContainsFunc(n.OwnDescendants(), func(read engine.Match) bool {
+		return read.Kind() == "Expr_Variable" && read.Name() == key && read.Parent().Kind() != "Param" &&
+			(read.EndsBefore(lookup) || lookup.EndsBefore(read))
+	})
 }
 
 func keyedSolelyBy(call engine.Match, keys []string) bool {

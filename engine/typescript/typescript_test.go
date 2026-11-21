@@ -1,12 +1,32 @@
 package typescript_test
 
 import (
+	"os"
 	"slices"
 	"testing"
 
 	"github.com/jessegall/code-commandments/engine/frontend/frontendtest"
 	"github.com/jessegall/code-commandments/engine/typescript"
 )
+
+func TestAVariableWhoseSourceChangedSinceItWasParsedIsNotRead(t *testing.T) {
+	codebase := frontendtest.FromSource(t, map[string]string{"state.ts": `
+export function useCart() {
+    const items = []
+    return { items }
+}
+`})
+	records := codebase.WhereKind("ObjectLiteralExpression").Get()
+	if len(records) != 1 {
+		t.Fatalf("expected the returned record, found %d", len(records))
+	}
+	if err := os.WriteFile(codebase.Files()[0].Path, []byte("export {}\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if typescript.ReturnsVueState(records[0]) {
+		t.Error("a record whose file can no longer be read was read as Vue state")
+	}
+}
 
 func TestAnExpressionKnowsItsChainsAndHowDeepItReaches(t *testing.T) {
 	codebase := frontendtest.FromSource(t, map[string]string{"reach.ts": `

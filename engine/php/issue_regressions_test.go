@@ -3,6 +3,7 @@ package php_test
 import (
 	"os"
 	"path/filepath"
+	"slices"
 	"testing"
 
 	"github.com/jessegall/code-commandments/detectors/backend"
@@ -424,6 +425,257 @@ final class TopicController {
 	found := (backendlaravel.RawRequestInputDetector{}).Find(codebase)
 	if len(found) != 2 {
 		t.Fatalf("expected the two keyed reads and not the whole-bag reads, found %v", found)
+	}
+}
+
+func TestTheRequestHelperYieldsTheRequest(t *testing.T) {
+	codebase := phpSource(t, `<?php
+namespace App\Http;
+final class LeaderboardController {
+    public function index(): array {
+        $page = request()->input('page');
+        $tier = request()->get('tier');
+        $sort = request('sort');
+        $rows = collect()->get('rows');
+        return [$page, $tier, $sort, $rows];
+    }
+}
+`)
+	found := (backendlaravel.RawRequestInputDetector{}).Find(codebase)
+	if len(found) != 2 || found[0].Line() != 5 || found[1].Line() != 6 {
+		t.Fatalf("expected the two raw reads through request(), found %v", found)
+	}
+}
+
+func TestOnlyAContiguousRunOfDocCommentsOnADeclarationIsAStack(t *testing.T) {
+	codebase := phpSource(t, `<?php
+/**
+ * Licensed under the GPL.
+ */
+
+namespace App;
+
+/**
+ * A ledger of entries.
+ */
+final class Ledger {
+    /** The entries. */
+    /** Keyed by id. */
+    private array $entries = [];
+
+    /**
+     * Totals the entries.
+     */
+    /**
+     * @return int
+     */
+    public function total(): int {
+        /** @var int $sum */
+        /** @var int $count */
+        [$sum, $count] = [0, 0];
+        return $sum + $count;
+    }
+
+    /**
+     * The removed archive helper.
+     */
+
+    /**
+     * Counts the entries.
+     */
+    public function count(): int { return count($this->entries); }
+
+    /**
+     * The type of the entry, detected from the column.
+     */
+    // protected $type = 'number';
+
+    /**
+     * The name of the ledger.
+     */
+    public string $name = 'ledger';
+}
+`)
+	found := backend.StackedDocblockDetector.Find(codebase)
+	var lines []int
+	for _, each := range found {
+		lines = append(lines, each.Line())
+	}
+	if !slices.Equal(lines, []int{14, 22, 36}) {
+		t.Fatalf("expected the stacked property, method and orphaned docs only, found %v", lines)
+	}
+}
+
+func TestAWriteBackOrALibraryFieldIsNotAScratchRestore(t *testing.T) {
+	codebase := phpSource(t, `<?php
+namespace App;
+final class Renderer extends \Vendor\Cache\FileBackend {
+    private int $depth = 0;
+    private int $cursor = 0;
+    private string $content = '';
+    public function renderNested(array $rows): string {
+        $depth = $this->depth;
+        $this->depth = 5;
+        $out = $this->render($rows);
+        $this->depth = $depth;
+        return $out;
+    }
+    public function advance(): void {
+        $cursor = $this->cursor;
+        $cursor++;
+        $this->cursor = $cursor;
+    }
+    public function filter(): void {
+        $content = $this->content;
+        \Events::post('filter', array(&$content));
+        $this->content = $content;
+    }
+    public function deleteIn(string $dir, string $id): void {
+        $initial = $this->directory;
+        $this->directory = $dir;
+        parent::doDelete($id);
+        $this->directory = $initial;
+    }
+    private function render(array $rows): string { return ''; }
+}
+`)
+	found := (backend.ScratchStateRestoreDetector{}).Find(codebase)
+	if len(found) != 1 || php.EnclosingFunctionName(found[0]) != "renderNested" {
+		var methods []string
+		for _, each := range found {
+			methods = append(methods, php.EnclosingFunctionName(each))
+		}
+		t.Fatalf("expected only the depth swap in renderNested, found %v", methods)
+	}
+}
+
+func TestAKeyReadAgainIsNotOnlyForResolving(t *testing.T) {
+	codebase := phpSource(t, `<?php
+namespace App;
+final class Variation { public string $id = ''; }
+final class Variations {
+    /** @return list<Variation> */
+    public function list(string $productId): array { return []; }
+    public function batch(string $productId, array $delete): void {}
+    public function find(string $variationId): Variation { return new Variation(); }
+}
+final class SyncPipe {
+    public function prepare(Variations $variations, string $productId): void {
+        $found = $variations->list($productId);
+        $variations->batch($productId, delete: $found);
+    }
+    public function rename(Variations $variations, string $variationId): string {
+        $variation = $variations->find($variationId);
+        return $variation->id;
+    }
+}
+`)
+	found := (backend.ParamResolvedFromParamDetector{}).Find(codebase)
+	if len(found) != 1 || php.EnclosingFunctionName(found[0]) != "rename" {
+		t.Fatalf("expected only rename, which wants the variation, found %d", len(found))
+	}
+}
+
+func TestATestAskingWhetherAFieldIsThereGuardsIt(t *testing.T) {
+	codebase := phpSource(t, `<?php
+namespace App;
+final class Stamp { public function format(): string { return ''; } }
+final class Record {
+    public ?Stamp $createdAt = null;
+    public ?Stamp $closedAt = null;
+}
+final class RecordTest extends \PHPUnit\Framework\TestCase {
+    public function testCreated(): void {
+        $record = new Record();
+        $this->assertNull($record->createdAt);
+        $record->createdAt = new Stamp();
+        $this->assertNotNull($record->createdAt);
+        $this->assertSame('', $record->createdAt->format());
+    }
+    public function testClosed(): void {
+        $record = new Record();
+        $this->assertSame('', $record->closedAt->format());
+    }
+}
+`)
+	found := backend.PhantomNullableDetector.Find(codebase)
+	if len(found) != 1 || found[0].Line() != 6 {
+		t.Fatalf("expected only closedAt, which no test asks about, found %v", found)
+	}
+}
+
+func TestAnOverrideOfADocumentedListReturnsAList(t *testing.T) {
+	codebase := phpSource(t, `<?php
+namespace App;
+class Migration {}
+class Updates {
+    /** @return Migration[] */
+    public function migrations(Factory $factory) { return array(); }
+}
+final class Factory { public function make(string $name): Migration { return new Migration(); } }
+final class Update_3_8 extends Updates {
+    public function migrations(Factory $factory) {
+        $users = $factory->make('users');
+        $codes = $factory->make('codes');
+        $auth = $factory->make('auth');
+        return array($users, $codes, $auth);
+    }
+    public function bind(Factory $factory, Migration $migration, int $order) {
+        return [$factory->make('bind'), $migration, $order];
+    }
+}
+`)
+	found := (backend.PositionalTupleReturnDetector{}).Find(codebase)
+	if len(found) != 1 || php.EnclosingFunctionName(found[0]) != "bind" {
+		t.Fatalf("expected only bind's tuple, found %d", len(found))
+	}
+}
+
+func TestACommentABlankLineAboveItsStatementHeadsASection(t *testing.T) {
+	codebase := phpSource(t, `<?php
+namespace App;
+final class Paginator {}
+final class Report {
+    public function build(array $rows): array {
+        // make paginator
+        $paginator = new Paginator();
+        // totals
+
+        $totals = array_sum($rows);
+        // loop each row
+        /** @var array $row */
+        foreach ($rows as $row) { $totals += count($row); }
+        return [$paginator, $totals];
+    }
+}
+`)
+	found := backend.RestatedCommentDetector.Find(codebase)
+	if len(found) != 2 || found[0].Line() != 7 || found[1].Line() != 13 {
+		t.Fatalf("expected the comments right above the paginator and the loop, found %v", found)
+	}
+}
+
+func TestANegatedTypeGuardRepeatedAcrossSitesIsFound(t *testing.T) {
+	codebase := phpSource(t, `<?php
+namespace App;
+final class Stamp {}
+final class Reconcile {
+    public function overview(mixed $start, mixed $end): string {
+        if (!$start instanceof Stamp && !$end instanceof Stamp) { return 'none'; }
+        return 'range';
+    }
+    public function transactions(mixed $start, mixed $end): string {
+        if (!$start instanceof Stamp && !$end instanceof Stamp) { return 'none'; }
+        return 'list';
+    }
+    public function limits(mixed $start, mixed $end): string {
+        if (!$end instanceof Stamp && !$start instanceof Stamp) { return 'none'; }
+        return 'limits';
+    }
+}
+`)
+	if found := backend.RepeatedTypeGuardDetector.Find(codebase); len(found) != 3 {
+		t.Fatalf("expected the negated guard at all three sites, found %d", len(found))
 	}
 }
 

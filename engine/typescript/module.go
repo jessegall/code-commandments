@@ -162,12 +162,13 @@ func (v Variable) Render() string {
 func variableOf(statement Node) (Variable, bool) {
 	list := Node{statement.Child("declarationList")}
 	declarations := list.ChildrenIn("declarations")
-	if statement.Kind() != "VariableStatement" || len(declarations) == 0 {
+	keyword := strings.Fields(list.Written())
+	if statement.Kind() != "VariableStatement" || len(declarations) == 0 || len(keyword) == 0 {
 		return Variable{}, false
 	}
 	declaration := Node{declarations[0]}
 	name := Node{declaration.Child("name")}
-	variable := Variable{Keyword: strings.Fields(list.Written())[0]}
+	variable := Variable{Keyword: keyword[0]}
 	variable.Pattern, variable.Names = Pattern(name)
 	variable.ObjectPattern = name.Kind() == "ObjectBindingPattern"
 	variable.NamePattern = name.Kind() == "Identifier"

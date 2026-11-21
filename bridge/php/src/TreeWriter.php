@@ -418,6 +418,9 @@ final class TreeWriter
         if ($node instanceof Node\ArrayItem && $node->unpack) {
             $flags[] = 'spread';
         }
+        if ($node instanceof Node\ArrayItem && $node->byRef) {
+            $flags[] = 'by-ref';
+        }
         if ($node instanceof Node\NullableType) {
             $flags[] = 'nullable-sugar';
         }

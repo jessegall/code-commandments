@@ -510,9 +510,21 @@ func isTypeInterrogated(node engine.Match) bool {
 		return true
 	}
 	call := node.Parent().Parent()
+	if node.Parent().Kind() != "Arg" {
+		return false
+	}
 
-	return node.Parent().Kind() == "Arg" && call.Kind() == "Expr_FuncCall" && isName(call.Child("name")) &&
-		slices.Contains(typePredicates, strings.ToLower(call.Child("name").Name()))
+	return call.Kind() == "Expr_FuncCall" && isName(call.Child("name")) && slices.Contains(typePredicates, strings.ToLower(call.Child("name").Name())) ||
+		isAbsenceAssertion(call)
+}
+
+// isAbsenceAssertion reports a PHPUnit test asking outright whether a value is there: assertNull or assertNotNull.
+func isAbsenceAssertion(call engine.Match) bool {
+	if call.Kind() != "Expr_MethodCall" && call.Kind() != "Expr_StaticCall" || !slices.Contains([]string{"assertNull", "assertNotNull"}, CallName(call)) {
+		return false
+	}
+
+	return ProgramOf(call.Codebase()).IsA(EnclosingClassName(call), `PHPUnit\Framework\TestCase`)
 }
 
 func isGatedByOwnerPredicate(node engine.Match) bool {

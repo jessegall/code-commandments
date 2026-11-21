@@ -32,6 +32,8 @@ func ReceiverTypeOf(call engine.Match) string {
 	case receiver.Kind() == "Expr_PropertyFetch" && receiver.Child("var").Kind() == "Expr_Variable" &&
 		receiver.Child("var").Name() == "this" && receiver.Child("name").Kind() == "Identifier":
 		return receiverPropertyType(call, receiver.Child("name").Name())
+	case receiver.Kind() == "Expr_FuncCall":
+		return typeName(Written(call.Codebase().CallResult(contract.PHP, receiver)))
 	}
 
 	return ""

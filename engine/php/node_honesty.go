@@ -142,7 +142,7 @@ func (n Node) HasOwnStateSaveAndRestore() bool {
 			}
 			if property := selfPropertyOf(target); property != "" && value.Kind() == "Expr_Variable" && value.Name() != "" {
 				saved := savedInto[property]
-				if saved.Exists() && saved.Child("var").Name() == value.Name() &&
+				if saved.Exists() && saved.Child("var").Name() == value.Name() && n.projectDeclaresProperty(property) &&
 					!writesLocalBetween(n.Match, saved, assign, value.Name()) && !restoresAKeyedGuard(n.Match, assign, property) {
 					return true
 				}
@@ -153,11 +153,39 @@ func (n Node) HasOwnStateSaveAndRestore() bool {
 	return false
 }
 
+// projectDeclaresProperty reports a property the enclosing class or one of its project ancestors declares; one only a
+// library parent declares belongs to that library's contract.
+func (n Node) projectDeclaresProperty(property string) bool {
+	program := ProgramOf(n.Codebase())
+	class := EnclosingClassName(n.Match)
+	for _, owner := range append([]string{class}, program.Ancestors(class)...) {
+		declaration, ok := program.Class(owner)
+		if ok && slices.ContainsFunc(Fields(declaration), func(field Field) bool { return field.Name == property }) {
+			return true
+		}
+	}
+
+	return false
+}
+
 func writesLocalBetween(method, saved, restored engine.Match, name string) bool {
 	return slices.ContainsFunc(method.OwnDescendants(), func(write engine.Match) bool {
-		return saved.EndsBefore(write) && write.EndsBefore(restored) &&
-			strings.HasPrefix(write.Kind(), "Expr_Assign") && variableRoot(write.Child("var")) == name
+		return saved.EndsBefore(write) && write.EndsBefore(restored) && writesLocal(write, name)
 	})
+}
+
+// writesLocal reports a node that changes the named local: an assignment, an increment or decrement, or handing it on
+// by reference.
+func writesLocal(write engine.Match, name string) bool {
+	switch {
+	case strings.HasPrefix(write.Kind(), "Expr_Assign"),
+		slices.Contains([]string{"Expr_PreInc", "Expr_PostInc", "Expr_PreDec", "Expr_PostDec"}, write.Kind()):
+		return variableRoot(write.Child("var")) == name
+	case write.Kind() == "Arg" || write.Kind() == "ArrayItem":
+		return write.HasFlag("by-ref") && variableRoot(write.Child("value")) == name
+	}
+
+	return false
 }
 
 func LocalValueAt(read engine.Match) engine.Match {

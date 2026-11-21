@@ -135,7 +135,7 @@ func (CeremonyDocblock) Sin() Text {
 type StackedDocblock struct{}
 
 func (StackedDocblock) Find(codebase *engine.Codebase) []engine.Match {
-	return codebase.Where(func(match engine.Match) bool { return len(match.DocComments()) > 1 }).Get()
+	return codebase.Where(engine.Match.StacksDocComments).Get()
 }
 
 func (StackedDocblock) Sin() Text {

@@ -429,6 +429,10 @@ func (t *Types) resolve(expr engine.Match, locals map[string]held, self string) 
 		if class := expr.Child("class"); isName(class) {
 			return held{class: strings.TrimLeft(class.Name(), `\`)}
 		}
+	case "Expr_FuncCall":
+		if offered := expr.Codebase().CallResult(contract.PHP, expr); offered != nil {
+			return typed(Written(offered))
+		}
 	case "Expr_StaticCall":
 		class, method := expr.Child("class"), expr.Child("name")
 		if !isName(class) || method.Kind() != "Identifier" {
