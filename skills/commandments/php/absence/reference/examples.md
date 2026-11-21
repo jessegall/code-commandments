@@ -9,6 +9,9 @@ A string sent over the wire that the frontend reads as absent when it is blank.
 ```php
 ----------[ Bad ]----------
 
+// The voucher panel of the checkout page. A voucher that was never entered travels as a blank code,
+// which the page then has to decode back into "no voucher".
+
 final class VoucherPanelData extends Data
 {
     /**
@@ -32,6 +35,9 @@ final class VoucherPanelData extends Data
 }
 
 ----------[ Good ]----------
+
+// Where the stock room's live counts come from. A shop with no socket has NO socket, and the type
+// says so — so the browser asks for absence instead of decoding a blank.
 
 final readonly class StockFeed
 {

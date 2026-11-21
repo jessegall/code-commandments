@@ -1,9 +1,9 @@
 package registry_test
 
 import (
-	"slices"
 	"bytes"
 	"os"
+	"slices"
 	"testing"
 
 	"github.com/jessegall/code-commandments/catalog"

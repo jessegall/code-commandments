@@ -17,10 +17,16 @@ public function build(): ShipStatusLegend
 ----------[ Good ]----------
 
 // in Shop\Http\Pages\Hydration\ShipStatusLegendBuilder
+// The FIX: the raw enum cases are passed straight in — the `#[WithCast(StateChipCast::class)]` on the
+// `chips` property derives each `StateChip`, so there is no `array_map` at the call site.
+
 public function buildCast(): CastShipStatusLegend
 {
     return CastShipStatusLegend::from(['chips' => ShipState::cases()]);
 }
+
+// The cast that OWNS the `ShipState → StateChip` derivation — declared once on the collection property,
+// so every call site hands over the raw enum cases.
 
 final class StateChipCast
 {

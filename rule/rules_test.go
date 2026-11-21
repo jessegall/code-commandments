@@ -1,8 +1,8 @@
 package rule_test
 
 import (
-	_ "github.com/jessegall/code-commandments/rules"
 	"fmt"
+	_ "github.com/jessegall/code-commandments/rules"
 	"os"
 	"path/filepath"
 	"slices"
@@ -106,23 +106,23 @@ func TestDuplicateFunctionFindsEveryCopyOfOneBody(t *testing.T) {
 		return fmt.Sprintf("<?php\nnamespace Shop;\n\nfunction %s(array $items): int\n{\n    $%s = 0;\n    foreach ($items as $item) {\n        $%s = $%s + $item->price * $item->count;\n    }\n\n    return $%s;\n}\n", name, local, local, local, local)
 	}
 	expect(t, "php", judged(t, "shared-duplication/duplicate-function.json", map[string]string{
-		"src/a.php":            php("totalA", "sum"),
-		"src/b.php":            php("totalB", "sum"),
-		"src/c.php":            php("totalC", "sum"),
-		"src/d.php":            php("totalD", "acc"),
-		"tests/TotalTest.php":  php("totalTest", "sum"),
-		"src/stub.php":         "<?php\nnamespace Shop;\n\nfunction stub(): int\n{\n    throw new \\LogicException('later');\n}\n",
+		"src/a.php":           php("totalA", "sum"),
+		"src/b.php":           php("totalB", "sum"),
+		"src/c.php":           php("totalC", "sum"),
+		"src/d.php":           php("totalD", "acc"),
+		"tests/TotalTest.php": php("totalTest", "sum"),
+		"src/stub.php":        "<?php\nnamespace Shop;\n\nfunction stub(): int\n{\n    throw new \\LogicException('later');\n}\n",
 	}), "src/a.php:4", "src/b.php:4", "src/c.php:4")
 
 	python := func(name, local string) string {
 		return fmt.Sprintf("def %s(items):\n    %s = 0\n    for item in items:\n        %s = %s + item.price * item.count\n    return %s\n", name, local, local, local, local)
 	}
 	expect(t, "python", judged(t, "shared-duplication/duplicate-function.json", map[string]string{
-		"shop/__init__.py":   "",
-		"shop/a.py":          python("total_a", "total"),
-		"shop/b.py":          python("total_b", "total"),
-		"shop/c.py":          python("total_c", "total"),
-		"shop/d.py":          python("total_d", "acc"),
+		"shop/__init__.py":    "",
+		"shop/a.py":           python("total_a", "total"),
+		"shop/b.py":           python("total_b", "total"),
+		"shop/c.py":           python("total_c", "total"),
+		"shop/d.py":           python("total_d", "acc"),
 		"tests/test_total.py": python("total_test", "total"),
 	}), "shop/a.py:1", "shop/b.py:1", "shop/c.py:1")
 
@@ -141,12 +141,12 @@ func TestDuplicateFunctionFindsEveryCopyOfOneBody(t *testing.T) {
 		return fmt.Sprintf("package shop\n\ntype Item struct{ Price, Count int }\n\nfunc %s(items []Item) int {\n\t%s := 0\n\tfor _, item := range items {\n\t\t%s = %s + item.Price*item.Count\n\t}\n\treturn %s\n}\n", name, local, local, local, local)
 	}
 	expect(t, "go", judged(t, "shared-duplication/duplicate-function.json", map[string]string{
-		"go.mod":       "module example.com/shop\n\ngo 1.22\n",
-		"a.go":         golang("totalA", "sum"),
-		"b/b.go":       strings.Replace(golang("totalB", "sum"), "package shop", "package b", 1),
-		"c/c.go":       strings.Replace(golang("totalC", "sum"), "package shop", "package c", 1),
-		"d/d.go":       strings.Replace(golang("totalD", "acc"), "package shop", "package d", 1),
-		"a_test.go":    strings.Replace(golang("totalTest", "sum"), "type Item struct{ Price, Count int }\n", "", 1),
+		"go.mod":    "module example.com/shop\n\ngo 1.22\n",
+		"a.go":      golang("totalA", "sum"),
+		"b/b.go":    strings.Replace(golang("totalB", "sum"), "package shop", "package b", 1),
+		"c/c.go":    strings.Replace(golang("totalC", "sum"), "package shop", "package c", 1),
+		"d/d.go":    strings.Replace(golang("totalD", "acc"), "package shop", "package d", 1),
+		"a_test.go": strings.Replace(golang("totalTest", "sum"), "type Item struct{ Price, Count int }\n", "", 1),
 	}), "a.go:5", "b/b.go:5", "c/c.go:5")
 }
 
@@ -218,7 +218,7 @@ func TestRelationOfLaravelRouteRegistrations(t *testing.T) {
 // project, built by its own factory, is neither.
 func TestAThrowOfAGenericFailureWithAWrittenMessageIsFound(t *testing.T) {
 	sources := map[string]string{
-		"src/Formatter.php": "<?php\nnamespace Shop;\n\nfinal class Formatter\n{\n    public function name(?string $carrier): string\n    {\n        return $carrier ?? throw new \\RuntimeException('no carrier');\n    }\n\n    public function named(?string $carrier): string\n    {\n        return $carrier ?? throw MissingCarrier::make();\n    }\n}\n",
+		"src/Formatter.php":      "<?php\nnamespace Shop;\n\nfinal class Formatter\n{\n    public function name(?string $carrier): string\n    {\n        return $carrier ?? throw new \\RuntimeException('no carrier');\n    }\n\n    public function named(?string $carrier): string\n    {\n        return $carrier ?? throw MissingCarrier::make();\n    }\n}\n",
 		"src/MissingCarrier.php": "<?php\nnamespace Shop;\n\nfinal class MissingCarrier extends \\DomainException\n{\n    public static function make(): self\n    {\n        return new self();\n    }\n}\n",
 	}
 	expect(t, "php", judged(t, "shared-exceptions/message-at-throw.json", sources), "src/Formatter.php:8")

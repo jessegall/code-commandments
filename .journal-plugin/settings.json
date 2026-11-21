@@ -177,235 +177,27 @@
     },
     {
         "key": "sin_csharp-null-forgiven",
-        "title": "NullForgiven",
+        "title": "csharp-null-forgiven",
         "type": "flag",
         "kind": "flag",
         "default": true,
         "help": "The null-forgiving `!` on a value declared nullable — the compiler told the caller it may be null, and `!` silences it instead of deciding"
     },
     {
-        "key": "sin_csharp-flag-argument",
-        "title": "FlagArgument",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "a method whose whole body branches on a `bool` parameter — `if (compact) … else …` — two methods sharing one name"
-    },
-    {
-        "key": "sin_csharp-member-after-method",
-        "title": "MemberAfterMethod",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "a field, constant or stored property declared below a constructor or a method — the type's state hidden among its behaviour"
-    },
-    {
-        "key": "sin_csharp-member-out-of-order",
-        "title": "MemberOutOfOrder",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "a `const` or `static readonly` value declared below a field or a stored property — the top of the type read in no particular order"
-    },
-    {
-        "key": "sin_csharp-container-reach",
-        "title": "ContainerReach",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "A class locates a service through IServiceProvider"
-    },
-    {
-        "key": "sin_csharp-namespace-cycle",
-        "title": "NamespaceCycle",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "two of the project's namespaces that each use the other — a cycle that makes them one namespace split under two names"
-    },
-    {
-        "key": "sin_csharp-namespace-dependency",
-        "title": "NamespaceDependency",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "a reference out of a declared layer into a namespace that layer did not declare it may use"
-    },
-    {
-        "key": "sin_csharp-orphaned-binding",
-        "title": "OrphanedBinding",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "A registered service has no production consumer"
-    },
-    {
-        "key": "sin_csharp-string-mirrors-enum",
-        "title": "StringMirrorsEnum",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "A `switch` or an `if` ladder dispatching on strings that are the names of an enum the codebase already declares — the enum, written out again as text"
-    },
-    {
         "key": "sin_csharp-blocked-await",
-        "title": "BlockedAwait",
+        "title": "csharp-blocked-await",
         "type": "flag",
         "kind": "flag",
         "default": true,
         "help": "`.Result`, `.Wait()` or `.GetAwaiter().GetResult()` on a task — the thread it blocks is the one the work needed back, so it deadlocks under load and nowhere else"
     },
     {
-        "key": "sin_csharp-constructor-side-effect",
-        "title": "ConstructorSideEffect",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "a constructor that calls a method on something it was handed and ignores the result — just creating the object changes something outside it"
-    },
-    {
-        "key": "sin_csharp-mutable-static-state",
-        "title": "MutableStaticState",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "a `static` field that methods write to — state no instance owns, changed by whichever code ran last"
-    },
-    {
-        "key": "sin_csharp-unread-collaborator",
-        "title": "UnreadCollaborator",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "a private readonly field, or a primary constructor parameter, that nothing in the type reads — the type asks for something it does not use"
-    },
-    {
-        "key": "sin_csharp-collection-mutated-while-iterated",
-        "title": "CollectionMutatedWhileIterated",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "a `foreach` that adds to or removes from the very collection it walks — the enumerator reads a collection that moved under it, which throws InvalidOperationException"
-    },
-    {
         "key": "sin_csharp-inline-throw",
-        "title": "InlineThrow",
+        "title": "csharp-inline-throw",
         "type": "flag",
         "kind": "flag",
         "default": true,
         "help": "a `?? throw` inside a call's argument or in front of a member call — the check that stops the method is hidden in the middle of the work"
-    },
-    {
-        "key": "sin_csharp-bare-state-predicate",
-        "title": "BareStatePredicate",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "a `bool` about the object's own state named as a claim — `Binds()`, `Spins` — where a question belongs"
-    },
-    {
-        "key": "sin_csharp-derived-argument",
-        "title": "DerivedArgument",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "a call that hands over an object and a projection of it — `Persist(request, request.ChannelId)` — or an object in three pieces, where the method could read them itself"
-    },
-    {
-        "key": "sin_csharp-param-resolved-from-param",
-        "title": "ParamResolvedFromParam",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "a method that takes a container and a key and first resolves one against the other — `Rename(Workflow workflow, string nodeId)` doing `workflow.Graph.Node(nodeId)` — when it only wanted what the key names"
-    },
-    {
-        "key": "sin_csharp-repeated-named-call",
-        "title": "RepeatedNamedCall",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "the same `with` copy — `order with { Status = OrderStatus.Shipped }` — written at two or more sites, an operation the record never named"
-    },
-    {
-        "key": "sin_csharp-feature-envy",
-        "title": "FeatureEnvy",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "a method that loops another object's collection or writes its members, reaching into it more than into its own state — behaviour exiled from the object it works on"
-    },
-    {
-        "key": "sin_csharp-assembled-template",
-        "title": "AssembledTemplate",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "`string.Join(\"\\n\", new[] { \"public class X\", \"{\", \"}\" })` or `sb.AppendLine(\"…\")` line after line — a multi-line text built from line fragments, so its shape cannot be seen in the source"
-    },
-    {
-        "key": "sin_csharp-filled-parameter",
-        "title": "FilledParameter",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "a method returning nothing that writes a property of an object it was handed, whose caller then reads what it handed over — the signature says the object goes in and nothing says it comes out changed"
-    },
-    {
-        "key": "sin_csharp-impossible-guard",
-        "title": "ImpossibleGuard",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "`if (order == null)` where `order` is typed `Order` and not `Order?` — one of the two is wrong, and both are worth knowing"
-    },
-    {
-        "key": "sin_csharp-array-return-bag",
-        "title": "ArrayReturnBag",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "a method that returns `new Dictionary<string, object> { [\"sku\"] = …, [\"qty\"] = … }` — a record with fixed fields, handed back as a dictionary"
-    },
-    {
-        "key": "sin_csharp-coupled-fields",
-        "title": "CoupledFields",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "a type whose own fields always travel together — assembled into one value again and again, null-checked together, or one copying what a sibling field already holds — one concept held as several fields"
-    },
-    {
-        "key": "sin_csharp-dictionary-bag",
-        "title": "DictionaryBag",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "A string-keyed dictionary or JSON object read by keys written in the source — `row[\"sku\"]`, `json.GetProperty(\"name\")` — a record nobody declared"
-    },
-    {
-        "key": "sin_csharp-handed-out-collection",
-        "title": "HandedOutCollection",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "a property or method whose whole body returns the type's own `List`, `Dictionary` or `HashSet`, untouched — every caller holds the insides and may add to or take from them without the type knowing"
-    },
-    {
-        "key": "sin_csharp-mutable-value-object",
-        "title": "MutableValueObject",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "a record that can change after it is built — a `set` accessor, or a method that writes its own state — so two holders of the same value can end up seeing different things"
-    },
-    {
-        "key": "sin_csharp-positional-tuple-return",
-        "title": "PositionalTupleReturn",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "a method that returns `(decimal, decimal, string)` — unnamed values the caller reads by position, where two of the same type can be swapped and nothing notices"
     },
     {
         "key": "sin_blank-string-on-the-wire",
@@ -417,7 +209,7 @@
     },
     {
         "key": "sin_erased-null-object",
-        "title": "ErasedNullObject",
+        "title": "erased-null-object",
         "type": "flag",
         "kind": "flag",
         "default": true,
@@ -425,7 +217,7 @@
     },
     {
         "key": "sin_false-for-nothing",
-        "title": "FalseForNothing",
+        "title": "false-for-nothing",
         "type": "flag",
         "kind": "flag",
         "default": true,
@@ -433,7 +225,7 @@
     },
     {
         "key": "sin_option-as-nullable",
-        "title": "OptionAsNullable",
+        "title": "option-as-nullable",
         "type": "flag",
         "kind": "flag",
         "default": true,
@@ -441,55 +233,47 @@
     },
     {
         "key": "sin_flag-argument",
-        "title": "FlagArgument",
+        "title": "flag-argument",
         "type": "flag",
         "kind": "flag",
         "default": true,
-        "help": "A Boolean parameter selects which operation runs"
+        "help": "a method whose whole body branches on a `bool` parameter — or on whether a nullable one was given — two methods sharing one name"
     },
     {
         "key": "sin_member-after-method",
-        "title": "MemberAfterMethod",
+        "title": "member-after-method",
         "type": "flag",
         "kind": "flag",
         "default": true,
-        "help": "A field is declared below a method"
+        "help": "A trait use, constant, property, property hook, or enum case declared below a method — so the reader only meets that state after seeing the behaviour that uses it."
     },
     {
         "key": "sin_member-out-of-order",
-        "title": "MemberOutOfOrder",
+        "title": "member-out-of-order",
         "type": "flag",
         "kind": "flag",
         "default": true,
-        "help": "A constant is declared below an instance field"
+        "help": "A declaration in the head of a class that arrives after something belonging below it — a constant under a property, a public field under a private one, a hook above the fields it reads"
     },
     {
         "key": "sin_concurrent-subclass",
-        "title": "ConcurrentSubclass",
+        "title": "concurrent-subclass",
         "type": "flag",
         "kind": "flag",
         "default": true,
         "help": "Class `extends Concurrent` instead of composing `Concurrent<self>`"
     },
     {
-        "key": "sin_namespace-cycle",
-        "title": "NamespaceCycle",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "Two independent modules import each other"
-    },
-    {
         "key": "sin_namespace-dependency",
-        "title": "NamespaceDependency",
+        "title": "namespace-dependency",
         "type": "flag",
         "kind": "flag",
         "default": true,
-        "help": "An import crosses a layer boundary its source may not use"
+        "help": "a declared layer references a layer it may not use (the arrow points back up)"
     },
     {
         "key": "sin_inline-docblock",
-        "title": "InlineDocblock",
+        "title": "inline-docblock",
         "type": "flag",
         "kind": "flag",
         "default": true,
@@ -497,7 +281,7 @@
     },
     {
         "key": "sin_compare-self",
-        "title": "CompareSelf",
+        "title": "compare-self",
         "type": "flag",
         "kind": "flag",
         "default": true,
@@ -505,7 +289,7 @@
     },
     {
         "key": "sin_enum-value-match",
-        "title": "EnumValueMatch",
+        "title": "enum-value-match",
         "type": "flag",
         "kind": "flag",
         "default": true,
@@ -513,31 +297,31 @@
     },
     {
         "key": "sin_constructor-side-effect",
-        "title": "ConstructorSideEffect",
+        "title": "constructor-side-effect",
         "type": "flag",
         "kind": "flag",
         "default": true,
-        "help": "A constructor calls a collaborator and drops the result"
+        "help": "A constructor that performs a side effect on a collaborator and throws away the result, so simply creating the object changes something outside it."
     },
     {
         "key": "sin_mutable-static-state",
-        "title": "MutableStaticState",
+        "title": "mutable-static-state",
         "type": "flag",
         "kind": "flag",
         "default": true,
-        "help": "An operation writes shared static state"
+        "help": "A write to a static property — really a global variable with a namespace attached — where whichever write happens last wins, so the order code runs in changes the result."
     },
     {
         "key": "sin_unread-collaborator",
-        "title": "UnreadCollaborator",
+        "title": "unread-collaborator",
         "type": "flag",
         "kind": "flag",
         "default": true,
-        "help": "A collaborator is stored and never read"
+        "help": "a collaborator promoted into a private field by the constructor and never read anywhere in the class — the class asks for something it does not use, and only a search of the whole type says so"
     },
     {
         "key": "sin_if-else-ladder",
-        "title": "IfElseLadder",
+        "title": "if-else-ladder",
         "type": "flag",
         "kind": "flag",
         "default": true,
@@ -545,7 +329,7 @@
     },
     {
         "key": "sin_inline-throw",
-        "title": "InlineThrow",
+        "title": "inline-throw",
         "type": "flag",
         "kind": "flag",
         "default": true,
@@ -553,7 +337,7 @@
     },
     {
         "key": "sin_bare-scope-escape",
-        "title": "BareScopeEscape",
+        "title": "bare-scope-escape",
         "type": "flag",
         "kind": "flag",
         "default": true,
@@ -561,7 +345,7 @@
     },
     {
         "key": "sin_config-read",
-        "title": "ConfigRead",
+        "title": "config-read",
         "type": "flag",
         "kind": "flag",
         "default": true,
@@ -569,7 +353,7 @@
     },
     {
         "key": "sin_container-reach",
-        "title": "ContainerReach",
+        "title": "container-reach",
         "type": "flag",
         "kind": "flag",
         "default": true,
@@ -577,7 +361,7 @@
     },
     {
         "key": "sin_dead-config-key",
-        "title": "DeadConfigKey",
+        "title": "dead-config-key",
         "type": "flag",
         "kind": "flag",
         "default": true,
@@ -585,7 +369,7 @@
     },
     {
         "key": "sin_dead-event-wiring",
-        "title": "DeadEventWiring",
+        "title": "dead-event-wiring",
         "type": "flag",
         "kind": "flag",
         "default": true,
@@ -593,7 +377,7 @@
     },
     {
         "key": "sin_duplicated-config-default",
-        "title": "DuplicatedConfigDefault",
+        "title": "duplicated-config-default",
         "type": "flag",
         "kind": "flag",
         "default": true,
@@ -601,7 +385,7 @@
     },
     {
         "key": "sin_facade-call",
-        "title": "FacadeCall",
+        "title": "facade-call",
         "type": "flag",
         "kind": "flag",
         "default": true,
@@ -609,11 +393,11 @@
     },
     {
         "key": "sin_handed-out-collection",
-        "title": "HandedOutCollection",
+        "title": "handed-out-collection",
         "type": "flag",
         "kind": "flag",
         "default": true,
-        "help": "A routine exposes its own mutable collection"
+        "help": "a getter whose whole body returns the class's own `Collection`, untouched — a Collection is an object, so every caller holds the same one and may `push`, `forget` or `sort` it behind the class's back"
     },
     {
         "key": "sin_hard-coded-route-path",
@@ -625,7 +409,7 @@
     },
     {
         "key": "sin_mass-update-at-call-site",
-        "title": "MassUpdateAtCallSite",
+        "title": "mass-update-at-call-site",
         "type": "flag",
         "kind": "flag",
         "default": true,
@@ -633,7 +417,7 @@
     },
     {
         "key": "sin_model-mutation-at-call-site",
-        "title": "ModelMutationAtCallSite",
+        "title": "model-mutation-at-call-site",
         "type": "flag",
         "kind": "flag",
         "default": true,
@@ -641,7 +425,7 @@
     },
     {
         "key": "sin_orphaned-binding",
-        "title": "OrphanedBinding",
+        "title": "orphaned-binding",
         "type": "flag",
         "kind": "flag",
         "default": true,
@@ -649,15 +433,15 @@
     },
     {
         "key": "sin_query-in-loop",
-        "title": "QueryInLoop",
+        "title": "query-in-loop",
         "type": "flag",
         "kind": "flag",
         "default": true,
-        "help": "A database query runs on each iteration"
+        "help": "a query run inside a loop — one query per turn, so the work grows with the data while the code reads as though it were one call"
     },
     {
         "key": "sin_raw-request-input",
-        "title": "RawRequestInput",
+        "title": "raw-request-input",
         "type": "flag",
         "kind": "flag",
         "default": true,
@@ -665,7 +449,7 @@
     },
     {
         "key": "sin_request-accessor-recast",
-        "title": "RequestAccessorRecast",
+        "title": "request-accessor-recast",
         "type": "flag",
         "kind": "flag",
         "default": true,
@@ -673,19 +457,19 @@
     },
     {
         "key": "sin_bare-state-predicate",
-        "title": "BareStatePredicate",
+        "title": "bare-state-predicate",
         "type": "flag",
         "kind": "flag",
         "default": true,
-        "help": "A Boolean method about its own state has the name of an action"
+        "help": "A `bool` about the object's own state named as a bare verb — `binds()`, `spins()` — where a question belongs"
     },
     {
         "key": "sin_narrated-command",
-        "title": "NarratedCommand",
+        "title": "narrated-command",
         "type": "flag",
         "kind": "flag",
         "default": true,
-        "help": "A command method is named in the third person"
+        "help": "A command named in the third person — `hides()`, `entersTestMode()` — where a call is an order, not a description of one"
     },
     {
         "key": "sin_constructor-orchestration",
@@ -697,7 +481,7 @@
     },
     {
         "key": "sin_injected-service-not-hidden",
-        "title": "InjectedServiceNotHidden",
+        "title": "injected-service-not-hidden",
         "type": "flag",
         "kind": "flag",
         "default": true,
@@ -713,7 +497,7 @@
     },
     {
         "key": "sin_page-object-missing-typescript",
-        "title": "PageObjectMissingTypeScript",
+        "title": "page-object-missing-typescript",
         "type": "flag",
         "kind": "flag",
         "default": true,
@@ -721,7 +505,7 @@
     },
     {
         "key": "sin_service-location-in-page-object",
-        "title": "ServiceLocationInPageObject",
+        "title": "service-location-in-page-object",
         "type": "flag",
         "kind": "flag",
         "default": true,
@@ -729,7 +513,7 @@
     },
     {
         "key": "sin_transformer-without-ts-type",
-        "title": "TransformerWithoutTsType",
+        "title": "transformer-without-ts-type",
         "type": "flag",
         "kind": "flag",
         "default": true,
@@ -737,31 +521,31 @@
     },
     {
         "key": "sin_computed-boolean-argument",
-        "title": "ComputedBooleanArgument",
+        "title": "computed-boolean-argument",
         "type": "flag",
         "kind": "flag",
         "default": true,
-        "help": "Callers repeatedly compute Boolean arguments from one object"
+        "help": "A parameter that's just true/false, computed by every caller from the same object it could be given instead."
     },
     {
         "key": "sin_derived-argument",
-        "title": "DerivedArgument",
+        "title": "derived-argument",
         "type": "flag",
         "kind": "flag",
         "default": true,
-        "help": "Callers repeatedly pass pieces of the same object"
+        "help": "Passing the same object twice — once whole and once broken into a piece (`persist($request, $request->shopId())`), or broken into several pieces at once (`new AgentTurn($r->output(), $r->failed(), $r->errorOutput())`) — when the callee could derive each piece itself from the one object."
     },
     {
         "key": "sin_param-resolved-from-param",
-        "title": "ParamResolvedFromParam",
+        "title": "param-resolved-from-param",
         "type": "flag",
         "kind": "flag",
         "default": true,
-        "help": "One parameter is only used to resolve another parameter"
+        "help": "Unpacking the target out of a container parameter — a method takes `(Workflow $workflow, string $nodeId)` and resolves `$workflow->graph->nodeById($nodeId)` itself, when it could just receive the node directly."
     },
     {
         "key": "sin_repeated-named-call",
-        "title": "RepeatedNamedCall",
+        "title": "repeated-named-call",
         "type": "flag",
         "kind": "flag",
         "default": true,
@@ -769,7 +553,7 @@
     },
     {
         "key": "sin_repeated-query-chain",
-        "title": "RepeatedQueryChain",
+        "title": "repeated-query-chain",
         "type": "flag",
         "kind": "flag",
         "default": true,
@@ -777,11 +561,11 @@
     },
     {
         "key": "sin_hand-rolled-registry",
-        "title": "HandRolledRegistry",
+        "title": "hand-rolled-registry",
         "type": "flag",
         "kind": "flag",
         "default": true,
-        "help": "A type repeats a checked keyed store"
+        "help": "A class writes its own keyed store (fill under a key, throw on a missing key) instead of extending the one Registry base"
     },
     {
         "key": "sin_boundary-duplicated-operation",
@@ -801,7 +585,7 @@
     },
     {
         "key": "sin_duplicate-route",
-        "title": "DuplicateRoute",
+        "title": "duplicate-route",
         "type": "flag",
         "kind": "flag",
         "default": true,
@@ -809,7 +593,7 @@
     },
     {
         "key": "sin_duplicate-route-action",
-        "title": "DuplicateRouteAction",
+        "title": "duplicate-route-action",
         "type": "flag",
         "kind": "flag",
         "default": true,
@@ -817,7 +601,7 @@
     },
     {
         "key": "sin_route-delegates-to-controller",
-        "title": "RouteDelegatesToController",
+        "title": "route-delegates-to-controller",
         "type": "flag",
         "kind": "flag",
         "default": true,
@@ -825,7 +609,7 @@
     },
     {
         "key": "sin_all-nullable-data",
-        "title": "AllNullableData",
+        "title": "all-nullable-data",
         "type": "flag",
         "kind": "flag",
         "default": true,
@@ -833,7 +617,7 @@
     },
     {
         "key": "sin_all-optional-data",
-        "title": "AllOptionalData",
+        "title": "all-optional-data",
         "type": "flag",
         "kind": "flag",
         "default": true,
@@ -841,7 +625,7 @@
     },
     {
         "key": "sin_data-collection-type",
-        "title": "DataCollectionType",
+        "title": "data-collection-type",
         "type": "flag",
         "kind": "flag",
         "default": true,
@@ -857,7 +641,7 @@
     },
     {
         "key": "sin_hook-missing-computed",
-        "title": "HookMissingComputed",
+        "title": "hook-missing-computed",
         "type": "flag",
         "kind": "flag",
         "default": true,
@@ -881,7 +665,7 @@
     },
     {
         "key": "sin_nested-type-missing-typescript",
-        "title": "NestedTypeMissingTypeScript",
+        "title": "nested-type-missing-typescript",
         "type": "flag",
         "kind": "flag",
         "default": true,
@@ -897,7 +681,7 @@
     },
     {
         "key": "sin_non-final-data",
-        "title": "NonFinalData",
+        "title": "non-final-data",
         "type": "flag",
         "kind": "flag",
         "default": true,
@@ -905,7 +689,7 @@
     },
     {
         "key": "sin_null-to-optional-map",
-        "title": "NullToOptionalMap",
+        "title": "null-to-optional-map",
         "type": "flag",
         "kind": "flag",
         "default": true,
@@ -913,7 +697,7 @@
     },
     {
         "key": "sin_nullable-wire-object",
-        "title": "NullableWireObject",
+        "title": "nullable-wire-object",
         "type": "flag",
         "kind": "flag",
         "default": true,
@@ -921,7 +705,7 @@
     },
     {
         "key": "sin_prefer-optional-create",
-        "title": "PreferOptionalCreate",
+        "title": "prefer-optional-create",
         "type": "flag",
         "kind": "flag",
         "default": true,
@@ -929,7 +713,7 @@
     },
     {
         "key": "sin_data-to-array-roundtrip",
-        "title": "DataToArrayRoundtrip",
+        "title": "data-to-array-roundtrip",
         "type": "flag",
         "kind": "flag",
         "default": true,
@@ -945,7 +729,7 @@
     },
     {
         "key": "sin_hand-key-remap",
-        "title": "HandKeyRemap",
+        "title": "hand-key-remap",
         "type": "flag",
         "kind": "flag",
         "default": true,
@@ -953,7 +737,7 @@
     },
     {
         "key": "sin_redundant-enum-unwrap",
-        "title": "RedundantEnumUnwrap",
+        "title": "redundant-enum-unwrap",
         "type": "flag",
         "kind": "flag",
         "default": true,
@@ -961,7 +745,7 @@
     },
     {
         "key": "sin_redundant-native-cast",
-        "title": "RedundantNativeCast",
+        "title": "redundant-native-cast",
         "type": "flag",
         "kind": "flag",
         "default": true,
@@ -969,7 +753,7 @@
     },
     {
         "key": "sin_redundant-nested-from",
-        "title": "RedundantNestedFrom",
+        "title": "redundant-nested-from",
         "type": "flag",
         "kind": "flag",
         "default": true,
@@ -977,63 +761,63 @@
     },
     {
         "key": "sin_feature-envy",
-        "title": "FeatureEnvy",
+        "title": "feature-envy",
         "type": "flag",
         "kind": "flag",
         "default": true,
-        "help": "An operation reads several pieces of another local type"
+        "help": "Exiled behaviour / feature envy — a method operating on ONE other owned object's internals that belongs ON that object"
     },
     {
         "key": "sin_guard-beside-transition",
-        "title": "GuardBesideTransition",
+        "title": "guard-beside-transition",
         "type": "flag",
         "kind": "flag",
         "default": true,
-        "help": "A caller checks another object's state before telling it to act"
+        "help": "A caller checks an object's state against an enum case and throws, then tells that object to change: the rule sits outside the transition it guards"
     },
     {
         "key": "sin_keyed-lookup-envy",
-        "title": "KeyedLookupEnvy",
+        "title": "keyed-lookup-envy",
         "type": "flag",
         "kind": "flag",
         "default": true,
-        "help": "A routine looks up a value using a field of another local type"
+        "help": "Indirect feature envy — a method that uses an owned object's IDENTITY as a key to look up a fact about it through a collaborator"
     },
     {
         "key": "sin_middle-man",
-        "title": "MiddleMan",
+        "title": "middle-man",
         "type": "flag",
         "kind": "flag",
         "default": true,
-        "help": "A type forwards its methods to one field"
+        "help": "A class whose every public method only hands its arguments, unchanged, to the same field: it adds nothing between the caller and the object that does the work."
     },
     {
         "key": "sin_train-wreck",
-        "title": "TrainWreck",
+        "title": "train-wreck",
         "type": "flag",
         "kind": "flag",
         "default": true,
-        "help": "A chain reaches through three local types"
+        "help": "`$order->customer()->address()->city()` — a chain crossing three of the project's own types, so a change three objects away reaches this caller"
     },
     {
         "key": "sin_assembled-template",
-        "title": "AssembledTemplate",
+        "title": "assembled-template",
         "type": "flag",
         "kind": "flag",
         "default": true,
-        "help": "A multiline template is split into lines and joined"
+        "help": "A multi-line template assembled as an array of line fragments and joined with a newline — the output is unreadable in the source that emits it"
     },
     {
         "key": "sin_filled-parameter",
-        "title": "FilledParameter",
+        "title": "filled-parameter",
         "type": "flag",
         "kind": "flag",
         "default": true,
-        "help": "The caller reads the result from a parameter the function filled"
+        "help": "a `void` method that writes a property of an object it was handed, whose caller then reads what it handed over — the signature says the object goes in and nothing says it comes out changed"
     },
     {
         "key": "sin_impossible-guard",
-        "title": "ImpossibleGuard",
+        "title": "impossible-guard",
         "type": "flag",
         "kind": "flag",
         "default": true,
@@ -1041,75 +825,75 @@
     },
     {
         "key": "sin_refused-bequest",
-        "title": "RefusedBequest",
+        "title": "refused-bequest",
         "type": "flag",
         "kind": "flag",
         "default": true,
-        "help": "An override only throws"
+        "help": "A method that overrides or implements an inherited one only to throw: the class claims a contract it refuses to keep."
     },
     {
         "key": "sin_scratch-state-restore",
-        "title": "ScratchStateRestore",
+        "title": "scratch-state-restore",
         "type": "flag",
         "kind": "flag",
         "default": true,
-        "help": "A method saves a field, changes it, and restores it"
+        "help": "Scratch state on `$this` — a method that saves one of its own fields to a local and restores it (`$prev = $this->scope; … $this->scope = $prev`), the field really a per-call input"
     },
     {
         "key": "sin_unused-parameter",
-        "title": "UnusedParameter",
+        "title": "unused-parameter",
         "type": "flag",
         "kind": "flag",
         "default": true,
-        "help": "The function never reads a declared parameter"
+        "help": "A parameter of a method no subclass can override that its body never reads: every caller must pass a value nothing uses."
     },
     {
         "key": "sin_unused-private-member",
-        "title": "UnusedPrivateMember",
+        "title": "unused-private-member",
         "type": "flag",
         "kind": "flag",
         "default": true,
-        "help": "A private member has no readers"
+        "help": "A private method nothing in its class calls, or a private property nothing in its class reads: dead code the class still carries."
     },
     {
         "key": "sin_useless-property-hook",
-        "title": "UselessPropertyHook",
+        "title": "useless-property-hook",
         "type": "flag",
         "kind": "flag",
         "default": true,
-        "help": "A getter reads no state on its object"
+        "help": "A `get` hook that reads nothing from `$this` — a stored property wearing computed syntax"
     },
     {
         "key": "sin_array-bag",
-        "title": "ArrayBag",
+        "title": "array-bag",
         "type": "flag",
         "kind": "flag",
         "default": true,
-        "help": "A loose map is read through fixed keys"
+        "help": "String-indexing (`$arr['key']`) a structured array param instead of giving it a name — the type was never defined."
     },
     {
         "key": "sin_array-bag-parameter",
-        "title": "ArrayBagParameter",
+        "title": "array-bag-parameter",
         "type": "flag",
         "kind": "flag",
         "default": true,
-        "help": "Callers pass a loose map with the same fields"
+        "help": "A parameter declared `array` that callers fill with string-keyed records (`['mode' => …, 'plan' => …]`): the method never defined the type its fields belong to."
     },
     {
         "key": "sin_array-return-bag",
-        "title": "ArrayReturnBag",
+        "title": "array-return-bag",
         "type": "flag",
         "kind": "flag",
         "default": true,
-        "help": "A routine returns a loose map with fixed fields"
+        "help": "Returning a multi-field string-keyed array literal (a bag that should be a value object)"
     },
     {
         "key": "sin_coupled-fields",
-        "title": "CoupledFields",
+        "title": "coupled-fields",
         "type": "flag",
         "kind": "flag",
         "default": true,
-        "help": "An operation changes and checks the same fields together"
+        "help": "A class's own fields always change and get checked together — one concept split across several fields — and should be folded into a single value object."
     },
     {
         "key": "sin_flat-field-cluster",
@@ -1121,111 +905,39 @@
     },
     {
         "key": "sin_hand-rolled-wither",
-        "title": "HandRolledWither",
+        "title": "hand-rolled-wither",
         "type": "flag",
         "kind": "flag",
         "default": true,
-        "help": "A wither repeats fields from its type's constructor"
+        "help": "A wither method rebuilds the whole object by re-listing every constructor field, so adding a new field means updating every wither in the class."
     },
     {
         "key": "sin_mutable-value-object",
-        "title": "MutableValueObject",
+        "title": "mutable-value-object",
         "type": "flag",
         "kind": "flag",
         "default": true,
-        "help": "A value type changes a field after construction"
+        "help": "A value type that mutates its own field after construction, so two things holding what should be the same value can end up different — one changes without the other knowing."
     },
     {
         "key": "sin_positional-tuple-return",
-        "title": "PositionalTupleReturn",
+        "title": "positional-tuple-return",
         "type": "flag",
         "kind": "flag",
         "default": true,
-        "help": "A return tuple has interchangeable unnamed slots"
-    },
-    {
-        "key": "sin_python-flag-argument",
-        "title": "FlagArgument",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "a function whose whole body branches on a `bool` parameter — or on whether an optional one was given — two functions sharing one name"
-    },
-    {
-        "key": "sin_python-member-after-method",
-        "title": "MemberAfterMethod",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "a constant, class attribute or field declared below a method — the class's state hidden among its behaviour"
-    },
-    {
-        "key": "sin_python-member-out-of-order",
-        "title": "MemberOutOfOrder",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "a constant declared below a field in the head of a class — the inventory read in an ad-hoc order"
-    },
-    {
-        "key": "sin_python-namespace-cycle",
-        "title": "NamespaceCycle",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "two of the project's packages import each other — a cycle that makes them one package split under two names."
-    },
-    {
-        "key": "sin_python-namespace-dependency",
-        "title": "NamespaceDependency",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "an import out of a declared layer into a package that layer did not declare it may use"
-    },
-    {
-        "key": "sin_python-constant-class-enum",
-        "title": "ConstantClassEnum",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "a class that is nothing but `PENDING = \"pending\"` constants — a closed set of values written out by hand instead of an `Enum`"
-    },
-    {
-        "key": "sin_python-enum-value-match",
-        "title": "EnumValueMatch",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "`match status.value: case \"paid\": …` at a call site — the enum's raw values matched again where the enum could answer"
-    },
-    {
-        "key": "sin_python-match-wildcard-returns-none",
-        "title": "MatchWildcardReturnsNone",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "a `match` over an enum's members whose `case _:` returns `None` — a member nobody handled answers nothing instead of failing"
+        "help": "Returning a positional TUPLE — `return [$node, $key, $inputs, $outputs]` — bundling independent values as a keyless list the caller destructures by position"
     },
     {
         "key": "sin_python-blocked-await",
-        "title": "BlockedAwait",
+        "title": "python-blocked-await",
         "type": "flag",
         "kind": "flag",
         "default": true,
         "help": "`time.sleep`, `requests.get` or `subprocess.run` inside an `async def` — the thread it stops is the event loop, so every coroutine waiting on it stops too"
     },
     {
-        "key": "sin_python-constructor-side-effect",
-        "title": "ConstructorSideEffect",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "an `__init__` that tells a collaborator to act and throws the answer away — merely building the object has an effect outside it."
-    },
-    {
         "key": "sin_python-frozen-default",
-        "title": "FrozenDefault",
+        "title": "python-frozen-default",
         "type": "flag",
         "kind": "flag",
         "default": true,
@@ -1233,199 +945,23 @@
     },
     {
         "key": "sin_python-mutable-default",
-        "title": "MutableDefault",
+        "title": "python-mutable-default",
         "type": "flag",
         "kind": "flag",
         "default": true,
         "help": "a parameter defaulted to a `[]`, `{}` or `set()` — one container, made once, shared by every call that omits it"
     },
     {
-        "key": "sin_python-mutable-static-state",
-        "title": "MutableStaticState",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "a `global` written from a function, or a class attribute set from a method — state no instance owns, changed by whoever ran last"
-    },
-    {
-        "key": "sin_python-unread-collaborator",
-        "title": "UnreadCollaborator",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "a collaborator `__init__` keeps as an attribute of its own, `self._mailer = mailer`, that nothing anywhere reads — the class asks for something it does not use"
-    },
-    {
-        "key": "sin_python-collection-mutated-while-iterated",
-        "title": "CollectionMutatedWhileIterated",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "a loop that appends to, removes from or deletes out of the very collection it walks — the iterator reads a sequence that moved under it, so an element is skipped or it raises"
-    },
-    {
-        "key": "sin_python-bare-state-predicate",
-        "title": "BareStatePredicate",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "a `bool` about the object's own state named as a bare verb — `binds()`, `spins` — where a question belongs"
-    },
-    {
-        "key": "sin_python-narrated-command",
-        "title": "NarratedCommand",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "a command named in the third person — `hides()`, `locks_for_night()` — where a call is an order, not a description of one"
-    },
-    {
-        "key": "sin_python-computed-boolean-argument",
-        "title": "ComputedBooleanArgument",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "a method taking only bools that every caller computes from the same object — the decision re-derived at each call site"
-    },
-    {
-        "key": "sin_python-derived-argument",
-        "title": "DerivedArgument",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "a call that hands over an object and a projection of it — `persist(request, request.channel_id)` — or an object in three pieces, where the function could read them itself"
-    },
-    {
-        "key": "sin_python-param-resolved-from-param",
-        "title": "ParamResolvedFromParam",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "a function that takes a container and a key and first resolves one against the other — `def rename(workflow, node_id)` doing `workflow.graph.node(node_id)` — when it only wanted what the key names"
-    },
-    {
-        "key": "sin_python-repeated-named-call",
-        "title": "RepeatedNamedCall",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "the same `**changes` call is built the same way with the same keyword at 2+ sites — an operation that has no name on the type it belongs to."
-    },
-    {
-        "key": "sin_python-feature-envy",
-        "title": "FeatureEnvy",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "a method that loops another object's collection or writes its fields, reaching into it more than into its own state — behaviour exiled from the object it works on"
-    },
-    {
-        "key": "sin_python-keyed-lookup-envy",
-        "title": "KeyedLookupEnvy",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "a method that uses an object's key to fetch a fact about it through a collaborator — `self.registry.get(node.key).reserved` — treating the object as a key into its own data"
-    },
-    {
-        "key": "sin_python-assembled-template",
-        "title": "AssembledTemplate",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "a multi-line string built as a list of line fragments and `\"\\n\".join(...)`-ed, instead of a triple-quoted f-string that shows its output"
-    },
-    {
         "key": "sin_python-constant-property",
-        "title": "ConstantProperty",
+        "title": "python-constant-property",
         "type": "flag",
         "kind": "flag",
         "default": true,
         "help": "an `@property` whose body never reads `self` — `return \"box\"` — a stored value made to look like a computed one."
     },
     {
-        "key": "sin_python-filled-parameter",
-        "title": "FilledParameter",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "a def returning `None` that writes an attribute of an object it was handed, whose caller then reads what it handed over — the signature says the object goes in and nothing says it comes out changed"
-    },
-    {
-        "key": "sin_python-impossible-guard",
-        "title": "ImpossibleGuard",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "`if order is None` where `order` is annotated as a class with no `| None` — one of the two is wrong, and both are worth knowing"
-    },
-    {
-        "key": "sin_python-scratch-state-restore",
-        "title": "ScratchStateRestore",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "`previous = self.scope … self.scope = previous` — an attribute used as per-call scratch, saved and restored around the call"
-    },
-    {
-        "key": "sin_python-coupled-fields",
-        "title": "CoupledFields",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "a class whose own fields always travel together — assembled into one value again and again, guarded together, or one copying a sibling field's value — one concept held as several fields."
-    },
-    {
-        "key": "sin_python-dict-bag",
-        "title": "DictBag",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "A parameter typed as a dict read by string keys — `row[\"sku\"]`, `row.get(\"quantity\")` — a record nobody declared"
-    },
-    {
-        "key": "sin_python-dict-return-bag",
-        "title": "DictReturnBag",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "`return {\"total\": …, \"tax\": …}` — a record of several fields handed back as a dict its callers read by string key"
-    },
-    {
-        "key": "sin_python-hand-rolled-replace",
-        "title": "HandRolledReplace",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "`return Order(self.number, self.lines, self.note, \"paid\")` in a dataclass — every field re-listed to change one"
-    },
-    {
-        "key": "sin_python-handed-out-collection",
-        "title": "HandedOutCollection",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "a getter whose whole body returns the class's own `list`, `dict` or `set`, untouched — every caller holds the insides and may add to or take from them without the class knowing"
-    },
-    {
-        "key": "sin_python-mutable-value-object",
-        "title": "MutableValueObject",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "a dataclass whose own methods write the fields it was built from after construction — a value that changes under everyone holding it"
-    },
-    {
-        "key": "sin_python-positional-tuple-return",
-        "title": "PositionalTupleReturn",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "`return net, vat, currency` — a bundle of different things the caller must unpack by position, where a reordering breaks silently"
-    },
-    {
         "key": "sin_blank-string-default",
-        "title": "BlankStringDefault",
+        "title": "blank-string-default",
         "type": "flag",
         "kind": "flag",
         "default": true,
@@ -1433,7 +969,7 @@
     },
     {
         "key": "sin_cancelled-coalesce",
-        "title": "CancelledCoalesce",
+        "title": "cancelled-coalesce",
         "type": "flag",
         "kind": "flag",
         "default": true,
@@ -1441,7 +977,7 @@
     },
     {
         "key": "sin_capability-probe-hub",
-        "title": "CapabilityProbeHub",
+        "title": "capability-probe-hub",
         "type": "flag",
         "kind": "flag",
         "default": true,
@@ -1449,7 +985,7 @@
     },
     {
         "key": "sin_coalesced-loop-subject",
-        "title": "CoalescedLoopSubject",
+        "title": "coalesced-loop-subject",
         "type": "flag",
         "kind": "flag",
         "default": true,
@@ -1457,7 +993,7 @@
     },
     {
         "key": "sin_conditional-array-spread",
-        "title": "ConditionalArraySpread",
+        "title": "conditional-array-spread",
         "type": "flag",
         "kind": "flag",
         "default": true,
@@ -1465,7 +1001,7 @@
     },
     {
         "key": "sin_de-nulled-finder",
-        "title": "DeNulledFinder",
+        "title": "de-nulled-finder",
         "type": "flag",
         "kind": "flag",
         "default": true,
@@ -1473,7 +1009,7 @@
     },
     {
         "key": "sin_manufactured-fake-fill",
-        "title": "ManufacturedFakeFill",
+        "title": "manufactured-fake-fill",
         "type": "flag",
         "kind": "flag",
         "default": true,
@@ -1481,7 +1017,7 @@
     },
     {
         "key": "sin_masked-invariant",
-        "title": "MaskedInvariant",
+        "title": "masked-invariant",
         "type": "flag",
         "kind": "flag",
         "default": true,
@@ -1489,7 +1025,7 @@
     },
     {
         "key": "sin_nullable-callback",
-        "title": "NullableCallback",
+        "title": "nullable-callback",
         "type": "flag",
         "kind": "flag",
         "default": true,
@@ -1497,7 +1033,7 @@
     },
     {
         "key": "sin_nullable-registry-lookup",
-        "title": "NullableRegistryLookup",
+        "title": "nullable-registry-lookup",
         "type": "flag",
         "kind": "flag",
         "default": true,
@@ -1505,7 +1041,7 @@
     },
     {
         "key": "sin_phantom-nullable",
-        "title": "PhantomNullable",
+        "title": "phantom-nullable",
         "type": "flag",
         "kind": "flag",
         "default": true,
@@ -1513,7 +1049,7 @@
     },
     {
         "key": "sin_placeholder-filled-data",
-        "title": "PlaceholderFilledData",
+        "title": "placeholder-filled-data",
         "type": "flag",
         "kind": "flag",
         "default": true,
@@ -1521,7 +1057,7 @@
     },
     {
         "key": "sin_raw-decoded-array-return",
-        "title": "RawDecodedArrayReturn",
+        "title": "raw-decoded-array-return",
         "type": "flag",
         "kind": "flag",
         "default": true,
@@ -1529,7 +1065,7 @@
     },
     {
         "key": "sin_data-clump",
-        "title": "DataClump",
+        "title": "data-clump",
         "type": "flag",
         "kind": "flag",
         "default": true,
@@ -1537,7 +1073,7 @@
     },
     {
         "key": "sin_match-default-returns-null",
-        "title": "MatchDefaultReturnsNull",
+        "title": "match-default-returns-null",
         "type": "flag",
         "kind": "flag",
         "default": true,
@@ -1545,7 +1081,7 @@
     },
     {
         "key": "sin_redundant-arrow-return-type",
-        "title": "RedundantArrowReturnType",
+        "title": "redundant-arrow-return-type",
         "type": "flag",
         "kind": "flag",
         "default": true,
@@ -1553,7 +1089,7 @@
     },
     {
         "key": "sin_concrete-cross-module-dependency",
-        "title": "ConcreteCrossModuleDependency",
+        "title": "concrete-cross-module-dependency",
         "type": "flag",
         "kind": "flag",
         "default": true,
@@ -1569,15 +1105,23 @@
     },
     {
         "key": "sin_lone-implementer-interface",
-        "title": "LoneImplementerInterface",
+        "title": "lone-implementer-interface",
         "type": "flag",
         "kind": "flag",
         "default": true,
         "help": "An interface has only one local implementation"
     },
     {
+        "key": "sin_namespace-cycle",
+        "title": "namespace-cycle",
+        "type": "flag",
+        "kind": "flag",
+        "default": true,
+        "help": "Two independent modules import each other"
+    },
+    {
         "key": "sin_undeclared-member",
-        "title": "UndeclaredMember",
+        "title": "undeclared-member",
         "type": "flag",
         "kind": "flag",
         "default": true,
@@ -1585,7 +1129,7 @@
     },
     {
         "key": "sin_archaeology-comment",
-        "title": "ArchaeologyComment",
+        "title": "archaeology-comment",
         "type": "flag",
         "kind": "flag",
         "default": true,
@@ -1593,7 +1137,7 @@
     },
     {
         "key": "sin_bloated-docblock",
-        "title": "BloatedDocblock",
+        "title": "bloated-docblock",
         "type": "flag",
         "kind": "flag",
         "default": true,
@@ -1601,7 +1145,7 @@
     },
     {
         "key": "sin_ceremony-docblock",
-        "title": "CeremonyDocblock",
+        "title": "ceremony-docblock",
         "type": "flag",
         "kind": "flag",
         "default": true,
@@ -1609,7 +1153,7 @@
     },
     {
         "key": "sin_dangling-doc-reference",
-        "title": "DanglingDocReference",
+        "title": "dangling-doc-reference",
         "type": "flag",
         "kind": "flag",
         "default": true,
@@ -1617,7 +1161,7 @@
     },
     {
         "key": "sin_negative-space-comment",
-        "title": "NegativeSpaceComment",
+        "title": "negative-space-comment",
         "type": "flag",
         "kind": "flag",
         "default": true,
@@ -1625,7 +1169,7 @@
     },
     {
         "key": "sin_restated-comment",
-        "title": "RestatedComment",
+        "title": "restated-comment",
         "type": "flag",
         "kind": "flag",
         "default": true,
@@ -1633,7 +1177,7 @@
     },
     {
         "key": "sin_stacked-docblock",
-        "title": "StackedDocblock",
+        "title": "stacked-docblock",
         "type": "flag",
         "kind": "flag",
         "default": true,
@@ -1641,7 +1185,7 @@
     },
     {
         "key": "sin_converted-argument",
-        "title": "ConvertedArgument",
+        "title": "converted-argument",
         "type": "flag",
         "kind": "flag",
         "default": true,
@@ -1657,7 +1201,7 @@
     },
     {
         "key": "sin_duplicate-function",
-        "title": "DuplicateFunction",
+        "title": "duplicate-function",
         "type": "flag",
         "kind": "flag",
         "default": true,
@@ -1673,7 +1217,7 @@
     },
     {
         "key": "sin_near-duplicate-function",
-        "title": "NearDuplicateFunction",
+        "title": "near-duplicate-function",
         "type": "flag",
         "kind": "flag",
         "default": true,
@@ -1689,7 +1233,7 @@
     },
     {
         "key": "sin_repeated-guard",
-        "title": "RepeatedGuard",
+        "title": "repeated-guard",
         "type": "flag",
         "kind": "flag",
         "default": true,
@@ -1697,7 +1241,7 @@
     },
     {
         "key": "sin_repeated-type-guard",
-        "title": "RepeatedTypeGuard",
+        "title": "repeated-type-guard",
         "type": "flag",
         "kind": "flag",
         "default": true,
@@ -1705,7 +1249,7 @@
     },
     {
         "key": "sin_unnamed-vocabulary-literal",
-        "title": "UnnamedVocabularyLiteral",
+        "title": "unnamed-vocabulary-literal",
         "type": "flag",
         "kind": "flag",
         "default": true,
@@ -1713,7 +1257,7 @@
     },
     {
         "key": "sin_const-class-enum",
-        "title": "ConstClassEnum",
+        "title": "const-class-enum",
         "type": "flag",
         "kind": "flag",
         "default": true,
@@ -1721,7 +1265,7 @@
     },
     {
         "key": "sin_enum-case-or-chain",
-        "title": "EnumCaseOrChain",
+        "title": "enum-case-or-chain",
         "type": "flag",
         "kind": "flag",
         "default": true,
@@ -1729,7 +1273,7 @@
     },
     {
         "key": "sin_in-array-mirrors-enum",
-        "title": "InArrayMirrorsEnum",
+        "title": "in-array-mirrors-enum",
         "type": "flag",
         "kind": "flag",
         "default": true,
@@ -1745,7 +1289,7 @@
     },
     {
         "key": "sin_string-match-mirrors-enum",
-        "title": "StringMatchMirrorsEnum",
+        "title": "string-match-mirrors-enum",
         "type": "flag",
         "kind": "flag",
         "default": true,
@@ -1753,7 +1297,7 @@
     },
     {
         "key": "sin_type-switch",
-        "title": "TypeSwitch",
+        "title": "type-switch",
         "type": "flag",
         "kind": "flag",
         "default": true,
@@ -1761,7 +1305,7 @@
     },
     {
         "key": "sin_generic-exception",
-        "title": "GenericException",
+        "title": "generic-exception",
         "type": "flag",
         "kind": "flag",
         "default": true,
@@ -1769,7 +1313,7 @@
     },
     {
         "key": "sin_message-at-throw",
-        "title": "MessageAtThrow",
+        "title": "message-at-throw",
         "type": "flag",
         "kind": "flag",
         "default": true,
@@ -1777,7 +1321,7 @@
     },
     {
         "key": "sin_rethrown-unchanged",
-        "title": "RethrownUnchanged",
+        "title": "rethrown-unchanged",
         "type": "flag",
         "kind": "flag",
         "default": true,
@@ -1785,7 +1329,7 @@
     },
     {
         "key": "sin_swallow-catch",
-        "title": "SwallowCatch",
+        "title": "swallow-catch",
         "type": "flag",
         "kind": "flag",
         "default": true,
@@ -1793,15 +1337,23 @@
     },
     {
         "key": "sin_wrapping-without-cause",
-        "title": "WrappingWithoutCause",
+        "title": "wrapping-without-cause",
         "type": "flag",
         "kind": "flag",
         "default": true,
         "help": "A new failure thrown inside a `catch` without the caught one as its cause: the trace of where it started is lost"
     },
     {
+        "key": "sin_collection-mutated-while-iterated",
+        "title": "collection-mutated-while-iterated",
+        "type": "flag",
+        "kind": "flag",
+        "default": true,
+        "help": "a `foreach` that adds to or removes from the very collection it walks — the enumerator reads a collection that moved under it, which throws InvalidOperationException"
+    },
+    {
         "key": "sin_deep-nesting",
-        "title": "DeepNesting",
+        "title": "deep-nesting",
         "type": "flag",
         "kind": "flag",
         "default": true,
@@ -1809,7 +1361,7 @@
     },
     {
         "key": "sin_duplicated-branch-tail",
-        "title": "DuplicatedBranchTail",
+        "title": "duplicated-branch-tail",
         "type": "flag",
         "kind": "flag",
         "default": true,
@@ -1817,7 +1369,7 @@
     },
     {
         "key": "sin_loop-inverted-guard",
-        "title": "LoopInvertedGuard",
+        "title": "loop-inverted-guard",
         "type": "flag",
         "kind": "flag",
         "default": true,
@@ -1825,7 +1377,7 @@
     },
     {
         "key": "sin_nested-ternary",
-        "title": "NestedTernary",
+        "title": "nested-ternary",
         "type": "flag",
         "kind": "flag",
         "default": true,
@@ -1833,7 +1385,7 @@
     },
     {
         "key": "sin_non-counting-for",
-        "title": "NonCountingFor",
+        "title": "non-counting-for",
         "type": "flag",
         "kind": "flag",
         "default": true,
@@ -1841,7 +1393,7 @@
     },
     {
         "key": "sin_reassigned-parameter",
-        "title": "ReassignedParameter",
+        "title": "reassigned-parameter",
         "type": "flag",
         "kind": "flag",
         "default": true,
@@ -1849,7 +1401,7 @@
     },
     {
         "key": "sin_redundant-else",
-        "title": "RedundantElse",
+        "title": "redundant-else",
         "type": "flag",
         "kind": "flag",
         "default": true,
@@ -1857,7 +1409,7 @@
     },
     {
         "key": "sin_short-circuit-statement",
-        "title": "ShortCircuitStatement",
+        "title": "short-circuit-statement",
         "type": "flag",
         "kind": "flag",
         "default": true,
@@ -1865,7 +1417,7 @@
     },
     {
         "key": "sin_subject-ladder",
-        "title": "SubjectLadder",
+        "title": "subject-ladder",
         "type": "flag",
         "kind": "flag",
         "default": true,
@@ -1873,7 +1425,7 @@
     },
     {
         "key": "sin_ternary-statement",
-        "title": "TernaryStatement",
+        "title": "ternary-statement",
         "type": "flag",
         "kind": "flag",
         "default": true,
@@ -1881,7 +1433,7 @@
     },
     {
         "key": "sin_unnamed-condition",
-        "title": "UnnamedCondition",
+        "title": "unnamed-condition",
         "type": "flag",
         "kind": "flag",
         "default": true,
@@ -1889,15 +1441,15 @@
     },
     {
         "key": "sin_unreachable-statement",
-        "title": "UnreachableStatement",
+        "title": "unreachable-statement",
         "type": "flag",
         "kind": "flag",
         "default": true,
-        "help": "A statement after a return, throw, break or continue in the same block: it can never run."
+        "help": "A statement after one that never completes (a return, throw, break or continue, an if whose every arm leaves, a loop that never ends): it can never run."
     },
     {
         "key": "sin_defended-certain-field",
-        "title": "DefendedCertainField",
+        "title": "defended-certain-field",
         "type": "flag",
         "kind": "flag",
         "default": true,
@@ -1905,19 +1457,11 @@
     },
     {
         "key": "sin_falsely-optional-field",
-        "title": "FalselyOptionalField",
+        "title": "falsely-optional-field",
         "type": "flag",
         "kind": "flag",
         "default": true,
         "help": "A field declared optional (`x?: T`, `T | null`) that is initialised where it is declared — it is never absent, and every `?.` and `??` downstream defends a case that cannot happen"
-    },
-    {
-        "key": "sin_typescript-collection-mutated-while-iterated",
-        "title": "CollectionMutatedWhileIterated",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "a `for…of` or `forEach` that splices, shifts, sorts or pops the very array it walks — every element after the change has moved, so the walk skips one or reads one twice"
     },
     {
         "key": "sin_mirrored-server-type",
@@ -1937,7 +1481,7 @@
     },
     {
         "key": "sin_raw-fetch-in-component",
-        "title": "RawFetchInComponent",
+        "title": "raw-fetch-in-component",
         "type": "flag",
         "kind": "flag",
         "default": true,
@@ -1945,7 +1489,7 @@
     },
     {
         "key": "sin_compound-inline-component",
-        "title": "CompoundInlineComponent",
+        "title": "compound-inline-component",
         "type": "flag",
         "kind": "flag",
         "default": true,
@@ -1969,7 +1513,7 @@
     },
     {
         "key": "sin_duplicate-element",
-        "title": "DuplicateElement",
+        "title": "duplicate-element",
         "type": "flag",
         "kind": "flag",
         "default": true,
@@ -1977,7 +1521,7 @@
     },
     {
         "key": "sin_inline-case-views",
-        "title": "InlineCaseViews",
+        "title": "inline-case-views",
         "type": "flag",
         "kind": "flag",
         "default": true,
@@ -1985,7 +1529,7 @@
     },
     {
         "key": "sin_near-duplicate-element",
-        "title": "NearDuplicateElement",
+        "title": "near-duplicate-element",
         "type": "flag",
         "kind": "flag",
         "default": true,
@@ -1993,7 +1537,7 @@
     },
     {
         "key": "sin_oversized-component",
-        "title": "OversizedComponent",
+        "title": "oversized-component",
         "type": "flag",
         "kind": "flag",
         "default": true,
@@ -2017,7 +1561,7 @@
     },
     {
         "key": "sin_control-flow-on-element",
-        "title": "ControlFlowOnElement",
+        "title": "control-flow-on-element",
         "type": "flag",
         "kind": "flag",
         "default": true,
@@ -2025,7 +1569,7 @@
     },
     {
         "key": "sin_index-as-key",
-        "title": "IndexAsKey",
+        "title": "index-as-key",
         "type": "flag",
         "kind": "flag",
         "default": true,
@@ -2033,7 +1577,7 @@
     },
     {
         "key": "sin_loop-with-condition",
-        "title": "LoopWithCondition",
+        "title": "loop-with-condition",
         "type": "flag",
         "kind": "flag",
         "default": true,
@@ -2041,7 +1585,7 @@
     },
     {
         "key": "sin_re-tested-switch-case",
-        "title": "RetestedSwitchCase",
+        "title": "re-tested-switch-case",
         "type": "flag",
         "kind": "flag",
         "default": true,
@@ -2049,7 +1593,7 @@
     },
     {
         "key": "sin_switch-case",
-        "title": "SwitchCase",
+        "title": "switch-case",
         "type": "flag",
         "kind": "flag",
         "default": true,

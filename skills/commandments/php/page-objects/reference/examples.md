@@ -21,6 +21,10 @@ public function __construct(
 
 ----------[ Good ]----------
 
+// The FIX for the same overview: every slot is a `#[Computed]` get-hook that projects itself from the
+// injected reporter, so the class declares WHAT each field is next to HOW it is projected — and the
+// constructor is left holding nothing but the seed.
+
 #[TypeScript]
 final class ComputedOverviewPage extends Data
 {
@@ -83,6 +87,10 @@ public function __construct(
     public readonly string $sku,
     public readonly int $quantity,
 ) {}
+
+// Tiny custom output transformers — each reshapes a value object into a different wire type, so the
+// generated TypeScript must be told the new shape with a `#[TypeScriptType]`. The generator cannot infer
+// a custom transformer's output; only the built-ins (`DateTimeInterfaceTransformer`, …) are known to it.
 
 final class MoneyTransformer implements Transformer
 {

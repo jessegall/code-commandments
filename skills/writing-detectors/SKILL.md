@@ -64,192 +64,237 @@ does not — which is how a `where` says what only a `reject` could.
 **A step's one check** — every one there is, generated from the tool itself:
 
 <!-- BEGIN: rule-checks (auto-generated, run `composer sins`) -->
-**What it is and what it is called**
-
-| Check | Keeps the node when |
-|---|---|
-| `{"is": "loop"}` | it answers the neutral kind |
-| `{"kind": "Expr_StaticCall"}` | it is the language's own kind, written as the language writes it or as the vocabulary spells it: `Expr_StaticCall` and `static-call` are one construct. The spellings are derived from the kinds, so the editor's own completion lists what a language really emits, and a spelling two kinds share is the spelling of neither |
-| `{"name": "select"}` | its name — a call's or an access's is its name child's — is it |
-| `{"nameIn": ["select", "statement"]}` | its name is one of them |
-| `{"nameLike": "get*"}` | its name matches the glob, `*` any run of characters and `?` one |
-| `{"nameMatches": "^(get\|set)[A-Z]"}` | its name matches the regular expression |
-| `{"nameMood": "question"}` | its name is in that linguistic mood: `bare-verb` is the verb and nothing else (`holds`, `ships`), `third-person` narrates a verb (`entersTestMode`), and `question` opens with a question word (`is`, `has`, `can`, `should`). It reads the mood, never a list of words a rule writes. It is the one check here that judges a NAME, and it answers only whether the name READS a certain way: what makes that a sin is the mood against what the thing DOES, so pair it with what the member answers or whether it changes anything, as the shipped rules do |
-| `{"nameCase": "snake"}` | its name, less a leading `$` or `_`, is written `camel`, `pascal`, `snake`, `upper` or `kebab` case |
-| `{"hasModifier": "static"}` | it carries the modifier |
-| `{"hasFlag": "byRef"}` | it carries the flag its language's tree sets |
-| `{"operator": "*"}` | its operator is exactly it: `*` and `??` tell two binary expressions apart, `+=` an assignment, `!` a unary one, `extends` a heritage clause |
-| `{"operatorIn": ["*", "/"]}` | its operator is one of them |
-
-**What it says**
-
-| Check | Keeps the node when |
-|---|---|
-| `{"text": "select * from users"}` | a literal's text is exactly it |
-| `{"textLike": "*where id*"}` | a literal's text matches the glob |
-| `{"textMatches": "(?i)^select"}` | a literal's text matches the regular expression |
-| `{"commentIs": "history"}` | a comment is one of the calibrated readings of prose: `history` narrates why the code was CHANGED rather than what it does, `strawman` defends against a mistake nobody was going to make, and `restates` says nothing the code it documents does not. The readings are the prose package's own, measured by its tests in every language, and the set is closed: a rule asks for a judgement that was calibrated, never for prose matching words it writes itself. Asked of a comment (`"select": "comment"`) it judges that comment, and asked of code it judges the comments written for it |
-| `{"docReference": {"resolves": false}}` | a doc comment names code that is GONE: a reference it makes (`<see cref>`, `{@see}`, `@see`, Sphinx `:class:`) resolves to nothing, and the project would have had to own it. Two references are left alone, which is the whole difference between this and a broken-link scanner: one the compiler could never have resolved anyway, and one whose owner is declared outside the scan, since nothing here can say whether that owner still has the member. The resolving is the bridge's own |
-| `{"commentLike": "*TODO*"}` | a comment on it, or in the run of comments directly above it, matches the glob - and, asked of a comment itself (`"select": "comment"`), what THAT comment says, so one key reads a comment however a rule reached it |
-| `{"commentMatches": "(?i)\\b(TODO\|FIXME)\\b"}` | a comment on it, or the comment itself, matches the regular expression, read as commentLike reads one |
-| `{"docTag": "deprecated"}` | its documentation carries the tag: `@tag` in PHPDoc and JSDoc, an XML element in C#, a Sphinx field or directive or a Google/NumPy section in a Python docstring |
-| `{"documented": false}` | it carries a doc comment, or not with `false` |
-
-**What it refers to**
-
-| Check | Keeps the node when |
-|---|---|
-| `{"resolves": "App\\Models\\User"}` | what its name refers to, resolved, is that — or, for a value that names nothing (a variable, a property), the class it holds: that exact class, not one extending it |
-| `{"resolvesLike": "App\\Models\\*"}` | what its name refers to, resolved, matches the glob, or the class a value holds does: `{"resolvesLike": "*Service", "of": "child:var"}` is a receiver of any *Service |
-| `{"targets": "path/filepath.Walk*"}` | the call reaches a declaration whose symbol, as the language's own compiler resolved it, matches the glob, in the scan or outside it: a call named by what it reaches, not by what it is called, so a method of the project's own that happens to share the name never matches. Go, TypeScript and C# carry the target |
-| `{"declaredBy": "App\\Models\\*"}` | the member it reads is declared by a class the glob names: the class its receiver holds, followed up its own parents until one declares that member. It is whose field this is, which no name can say, and it is empty — so the step keeps nothing — where the receiver has no type in the scan or no declaration of it declares the member |
-| `{"answeredBy": false}` | the type that declares what it reads already names the question it asks — a method of that type whose whole body returns the same thing, read either way round — or does NOT with `false`. It is what tells `use the name that exists` from `give it a name`, and a question asked by the very method that names it is never one of the places asking it |
-| `{"sameAs": {"of": "closest:loop", "target": "child:iter"}}` | it names the same thing as another node of the same file, reached by following `of` from it and then `target` from there — the one question a rule could not ask: a `remove` on the very collection its loop walks, an argument that is the field it was just read from. The two must be written the same, else read as the same tree; no node at the end of the path is no pass |
-| `{"declaredElsewhere": true}` | what it names is declared in another FILE than the one it sits in, or is not with `false`. A field set from outside the file that declares it has gone around the methods its class wrote for changing itself, which is the question a rule about a type's own business asks; it holds nothing where no declaration in the scan declares what it names, so a rule says the owner too |
-| `{"type": "number"}` | the type the expression has, as its language reads it: what a checker gave it, what its shape says, or the type its declaration writes — a primitive among them, where `resolves` answers a class alone |
-| `{"typeLike": "Money*"}` | the type the expression has matches the glob |
-| `{"calls": {"name": "dd"}}` | a call of its own — not one inside a function nested in it — passes the step |
-| `{"argument": {"at": 0, "is": "literal"}}` | the argument at that place passes the step; a negative `at` counts from the end, `-1` the last, and none there passes nothing. With no `at` at all, ANY argument passing the step is enough, which is how a rule asks about one passed by name, whose place is not what identifies it |
-| `{"constructs": "Date*"}` | a construction, or on anything else one of its own, creates an instance of a type the glob names — in Python, a call of a class |
-| `{"unused": true}` | nothing refers to it: a function or type from outside itself, through the names and calls the scan resolves and its language's call graph; a parameter, by its name read in its function; a field or property, by what reaches its declaration through the type its receiver holds, since a field refers to no symbol in most languages. A member the language itself reaches by name, and one that overrides, are not this: nothing the project writes has to name them |
-| `{"referredFrom": {"is": "parameter"}}` | something referring to it — a call, a name, a written type — passes the step. It is `calledFrom` asking about the REFERENCE rather than the file it sits in, which is what tells one side of a thing from another: an event class named by a dispatch and by no listener's parameter is heard by nobody, and `{"not": {"referredFrom": …}}` says exactly that |
-| `{"calledFrom": "app/Http/**"}` | something referring to it — a call, most often — sits in a file the glob matches, read as `file` reads one |
-
-**Where it sits**
-
-| Check | Keeps the node when |
-|---|---|
-| `{"file": "*Repository.php"}` | its path from the project (the repository it lies in, else the folder judged), or any tail of it, matches the glob: `*` stays within a folder and `**` crosses them, as in .gitignore |
-| `{"fileMatches": "(^\|/)pages/.*(Create\|Edit)\\.vue$"}` | its path from the project (the repository it lies in, else the folder judged) matches the regular expression, for paths a glob cannot say, such as alternatives |
-| `{"namespaceLike": "App\\Http\\*"}` | the namespace, package or module it is declared in matches the glob |
-| `{"layer": "App\\Domain"}` | it sits in that layer of the stack the project declares (backend, Python, C#) |
-| `{"topLevel": true}` | it sits outside every function, closures too, and every type — code that runs when its file loads |
-| `{"withinLoop": true}` | it sits inside a loop, or not with `false` |
-| `{"position": "first"}` | it is the `first`, `last` or `only` one of its siblings (an only one is also first and last) |
-| `{"field": "cond"}` | it fills that slot of its parent in the tree — the language's own name for the slot, such as `cond`, `body`, `else`, `args` — which is the one axis of place the other checks never ask: a call standing AS a condition rather than one handed as an argument. The names are its language's, so a rule written with one judges that language |
-| `{"role": "member"}` | it is that kind of thing, in the words every bridge writes: `statement`, `expression`, `member` (any declaration of a type, a function, a property or an enum case), `type` (a type as written), `pattern`, `markup` or `other`. It is how a rule says `a declaration` without naming a kind per language, which is what a rule about the order or the company of members needs |
-| `{"descendant": {"is": "return"}}` | some node inside it passes the step; with `"within": "ownBody"` only the nodes it holds ITSELF are stepped onto, stopping at a function nested in it, which is the difference between a method that saves and one that hands a closure holding the save to a queue |
-| `{"child": {"is": "return"}}` | some node one level inside it passes the step, which `descendant` at any depth cannot say: a function whose own body returns, and nothing for one that returns only inside an `if`. With `"field"` only the children filling that field of the tree are stepped onto, as a count's field narrows what it counts |
-| `{"body": {"is": "branch"}}` | some statement of its BODY passes the step, read through whatever its language wraps a body in: C# writes a block statement and Python writes bare statements, so `child` answers them differently and this answers them alike. It is how one rule about a loop or a function's body is written once for every language |
-| `{"inside": {"is": "catch"}}` | some node above it, up to the file's root, passes the step |
-| `{"documents": {"is": "type-declaration"}}` | asked of a comment (`"select": "comment"`), the declaration the comment is written for passes the step: the node it sits above, or the node whose line it ends. A comment that documents nothing passes no step, so a rule can find the comments that are written about something and the ones that are written about nothing |
-| `{"all": [{"name": "store"}, {"hasModifier": "public"}]}` | it passes every step listed, as one node: a public `store`, where a step alone makes one check |
-| `{"any": [{"is": "loop"}, {"is": "branch"}]}` | it passes one of the steps listed, so a rule says `either of these` without a second rule |
-| `{"not": {"hasModifier": "final"}}` | it does NOT pass the step, so a `where` can hold what only a `reject` could say |
-| `{"rule": "ActionClass"}` | the rule of that name finds it too, so one rule is built from another instead of repeating its checks |
-| `{"next": {"is": "return"}}` | the sibling right after it passes the step |
-| `{"previous": {"is": "branch"}}` | the sibling right before it passes the step |
-| `{"unnamedCondition": true}` | it is a logical chain standing for a concept nobody named: three parts or more asking something of two or more different OBJECTS, where a branch or a loop decides by it. It counts the objects and never the parts, since three tests of one subject are a range check; a chain a function returns is already the name that was asked for, and a guard that leaves the body says what it means by leaving |
-| `{"bindsItsOwnTest": true}` | the branch binds a name in its header for its own body to read: Go's `if v, ok := m[k]; ok`, C#'s `is T v` and `out var`, Python's `:=`. It is the exemption a rule about conditions needs: such a test cannot move behind a name without widening what the branch alone was entitled to read |
-| `{"redundantElse": true}` | its `else` stands though the taken path already left, so the else's statements can sit after it at the enclosing level; a branch whose else is the next rung of a ladder is not this. Every language answers it, from the neutral kinds and its own grammar |
-| `{"soleLoopBodyGuard": true}` | it is the WHOLE body of a loop, burying two statements or more behind its condition where a `continue` past what does not apply would keep them flat. A body that ends by leaving the loop is picking an item, and a branch that binds a name for its own body is pardoned, since inverting it would widen that name |
-| `{"ladderRungs": {"atLeast": 3}}` | its ladder has that many rungs AND every one compares the same subject with a constant, which is the shape whose answer is a dispatch on that subject or a lookup keyed by it. Nothing for a ladder of unrelated tests, and nothing for a branch that is itself a rung, so one ladder is counted once |
-| `{"passesItsElementOn": true}` | a loop hands its item on to something else, every use of it; a loop whose item reaches nothing, and one that only hands the item to the method it stands in, answer no. It is the pardon the walk-the-collection rules share |
-| `{"nestedAtLeast": {"is": "loop", "count": 3}}` | it and the nodes above it that pass the step number at least `count` |
-
-**Whether it is ours to judge**
-
-| Check | Keeps the node when |
-|---|---|
-| `{"testCode": true}` | it is test code, as its bridge marks it or its language names test files |
-| `{"overrides": true}` | a function is a member its type owes a supertype: its language's compiler says so, or one of the same name is declared by a type it extends or a contract it honours, in the scan or outside it. It is the exemption every rule about a signature needs, since the signature is not the overriding method's to change — and it is what a name check gets wrong, where a method merely SHARING a name with another class's is nobody's to answer for |
-| `{"implicit": true}` | the language itself calls the declaration or binds the parameter: a constructor, a magic or dunder method, Python's `self` and `cls`. Nothing the project writes calls it by that name, so a rule about how a thing is called, named or reached has nothing to say about it |
-
-**How big it is**
-
-| Check | Keeps the node when |
-|---|---|
-| `{"parameters": {"atLeast": 5}}` | a function declares that many parameters — a variadic, a defaulted one and Python's `self` count once each |
-| `{"arguments": {"atLeast": 4}}` | a call or construction is handed that many arguments — a named or a spread one counts once |
-| `{"lines": {"atLeast": 40}}` | it spans that many lines, its first and last among them |
-| `{"lineLonger": 120}` | the line it starts on holds more characters than that; with `"select": "line"`, each line of code longer than the limit is one finding |
-| `{"members": {"is": "function", "atLeast": 20}}` | a type declares that many members directly that pass the step (every member, with no check); with `"inherited": true`, the members its parents and traits declare in the scan count too |
-| `{"complexity": {"atLeast": 10}}` | one plus every branch, loop and catch in it, as its language marks them, is that many — a switch is one branch, `&&` and `\|\|` are not counted, and a function inside it is its own count |
-| `{"count": {"descendant": {"is": "return"}, "atLeast": 4}}` | that many of its descendants pass the step — or `"child"`, with `"field"` to count one field's children; with `"distinct": "child:var"` (any target `of` takes), the counted nodes whose target is written the same count once: `atMost: 1` is one receiver |
-| `{"ancestors": {"atMost": 2, "within": "App\\*"}}` | its class's own line of parents runs that long, followed through the scan and the declarations outside it; `within` counts only the parents a glob names, so a project bounds the levels of its OWN and says nothing about the framework class underneath them |
-| `{"duplicated": {"atLeast": 2}}` | that many functions of the codebase, it among them, have its body, read from the tree, blind to spacing and comments |
-| `{"callers": {"atLeast": 2}}` | that many calls of the codebase reach the declaration, each resolved through the tree: `atMost: 0` is a declaration nothing calls |
-| `{"repeated": {"atLeast": 3, "files": 2}}` | that many PLACES of the codebase hold a node reading as this one does, spread over at least `files` of them (one when it says none). A place is the function the node sits in, or, where no function does, the type declaration it sits in, so a value a class declares about itself - the event a listener says it hears - is a place and two classes declaring one event are two, read from the tree as `duplicated` reads a body: blind to what a local is called and which datum a literal holds. `"exact": true` keeps both, which a repeated string literal needs; `"eitherWay": true` reads a question and its negation as one (`==` with `!=`, `is` with `is not`, `in` with `not in`); `"by": "owner"` groups by the type that declares what the left side reads, so one question about the fields of two classes that share a name is two. Anything is counted, not only a comparison: a member access of a chain counts the reach `event.data.part(X).tasks` written again and again |
-
-**Its type**
-
-| Check | Keeps the node when |
-|---|---|
-| `{"typeKind": "interface"}` | a type declaration declares a `class`, `interface`, `enum`, `trait`, `record`, `struct` or `protocol` |
-| `{"extends": "Controller"}` | its class extends the type directly. Its class is the one a type declaration declares, else the one the node names (`X`, `X::class`), constructs (`new X`) or holds a value of (`$this->service`, a typed parameter) |
-| `{"extendsAny": "Exception"}` | the type is anywhere in its class's chain of parents, followed through the scan and the declarations outside it the language knows; a glob (`*Service`, `[A-Z]*Repository`) matches a parent's whole name or its last part |
-| `{"implements": "ShouldQueue"}` | its class honours the contract: its own, its parents', and the contracts those extend |
-| `{"uses": "AsAction"}` | its class uses the trait: itself, through a parent, or through a trait it uses |
-| `{"isA": "Illuminate\\Http\\Request"}` | its class is the type, extends it or honours it, as PHP's `instanceof` reads it; a glob matches any of them |
-| `{"hasAnnotation": "Route"}` | a declaration carries the attribute or decorator |
-| `{"hasAttribute": "data-dusk"}` | a template element writes the attribute, plain or bound: `data-dusk` or `:data-dusk` |
-| `{"sibling": "{folder}.php"}` | a file the scan read matches the pattern, read from its file's folder: `{folder}.php` beside it, `../{folder}.php` one folder up, `{folder}` standing for the name of that folder |
-| `{"value": true}` | it is a literal of that very value, kind and all: the decoded value its language folded, read as the rule wrote it. `{"value": true}` is a bare `true` and NOT the string "true" nor the number 1, `{"value": 0}` is the number zero read as a number, so `0` and `0.0` are one value, and `{"value": null}` is the literal null. It is what a rule about a flag handed to a call needs, where `{"is": "literal"}` cannot tell a boolean from a label and `{"text": "true"}` matches a string that merely says so |
-| `{"nullable": true}` | its type admits absence, however its language spells it: `?Money`, `Money\|null`, `str \| None`, `string?`, `number \| undefined`. It reads the TYPE, so a union of two real types is not it and neither is a type merely named like one (`Maybe<T>`), which a glob over the text cannot tell apart. Asked of an expression it is the type the value holds, of a declaration the type it writes, and of a type node the type of the declaration it is written on; a node whose type the engine cannot read keeps nothing either way, since nothing known about a type says nothing about absence |
-| `{"typeShape": "tuple"}` | its type has that shape, read from the type itself: `named`, `keyword`, `parameter`, `union`, `intersection`, `array`, `tuple`, `object`, `function`, `literal`, `pointer`, `map` or `opaque`. It is how a rule says `this answers a positional tuple` or `this hands back a bare array` without reading a type's text, and `opaque` is the honest answer for a type its bridge does not model |
-| `{"typeOrigin": "docblock"}` | its type came from there: `written` (the source's own annotation), `docblock`, `attribute`, `inferred` (the engine's own sound inference) or `compiler` (Roslyn, mypy, tsc). It is two rules nothing else can say: a type a docblock carries where the signature carries none, and the exemption `do not judge a type nobody wrote` — a reject on `inferred` leaves the engine's own reading alone |
-| `{"elementType": "App\\Models\\*"}` | its type is a collection OF that type, read from a generic argument, a docblock `list<X>`, or an attribute such as `#[DataCollectionOf(X::class)]`. A collection whose element nothing says keeps nothing, since a bag of unknowns is not a bag of the type asked about |
-| `{"returnType": "?*"}` | a function's written return type matches the pattern, spaces dropped, or the type it names resolves to; it reads the text, so `*\|null` finds `int\|null` — for absence itself ask `nullable` of the type, which every language answers the same way |
-| `{"parameterType": "array"}` | a parameter's written type matches the pattern, read as returnType reads one |
-
-**Its language's own**
-
-| Check | Keeps the node when |
-|---|---|
-| `{"php": "facadeCall"}` | PHP's own check of the name holds — one of the checks listed below |
-| `{"python": "constructor"}` | Python's own check of the name holds |
-| `{"csharp": "inherited"}` | C#'s own check of the name holds |
-| `{"typescript": "optional"}` | TypeScript's own check of the name holds |
-| `{"vue": "component"}` | a Vue component's own check of the name holds — its template's, and its script's TypeScript ones |
-
-**Each language's own checks**, named under its key — a small set that grows on request, each name kept when the code behind it changes:
-
-| Check | Keeps the node when |
-|---|---|
-| `{"php": "coalesce"}` | it is a `??` expression |
-| `{"php": "constructor"}` | it declares a constructor |
-| `{"php": "divergentTwin"}` | it is one of two methods doing one job where one does less of it: a step the other takes and it forgot |
-| `{"php": "facadeCall"}` | it is a static call on a Laravel facade |
-| `{"php": "inDataClass"}` | it sits in a Spatie Data class |
-| `{"php": "inNamedConstructor"}` | the function around it builds an instance of its own class |
-| `{"php": "inPageObject"}` | it sits in a Data class that is a page object |
-| `{"php": "returnedValue"}` | it is the value a return statement returns |
-| `{"php": "typeNarrowingGuard"}` | it is an outermost `&&` of two or more instanceof checks |
-| `{"python": "constructor"}` | it is a class's __init__ |
-| `{"python": "divergentTwin"}` | it is one of two defs doing one job where one does less of it: a step the other takes and it forgot |
-| `{"python": "evaluated"}` | it is an expression the code evaluates, outside every type annotation |
-| `{"python": "inNamedConstructor"}` | it sits in a named constructor, where loose data becomes the class |
-| `{"python": "returnedValue"}` | it is what a return statement returns |
-| `{"python": "typeNarrowingGuard"}` | it is an outermost `and` of two or more isinstance checks |
-| `{"csharp": "buildingAnObject"}` | it feeds straight into an object being created in the same function |
-| `{"csharp": "inNamedConstructor"}` | the function around it builds an instance of its own type |
-| `{"csharp": "inOverride"}` | it sits in a member that overrides or implements a contract, whose signature the contract decided |
-| `{"csharp": "inherited"}` | the member overrides or implements another, decided against the whole hierarchy |
-| `{"typescript": "absence"}` | it is the literal null or undefined |
-| `{"typescript": "optional"}` | a field or parameter may be missing: written `x?`, or typed to admit null or undefined |
-| `{"vue": "absence"}` | it is the literal null or undefined |
-| `{"vue": "component"}` | the element is a component, as Vue's compiler resolves its tag: `<Foo>`, `<my-widget>`, `<component :is>`, `<transition>` |
-| `{"vue": "optional"}` | a field or parameter may be missing: written `x?`, or typed to admit null or undefined |
-| `{"vue": "templateRoot"}` | the element is the template's only top-level element |
-
-**What `"of"` can name**
-
-| Target | The step judges |
-|---|---|
-| `parent` | the node whose children hold it |
-| `enclosingFunction` | the named function it sits in; a closure is passed over |
-| `enclosingType` | the type declaration it sits in |
-| `closest:<kind>` | the nearest node above it of the neutral kind, such as `closest:loop` |
-| `root` | its file's root |
-| `child:<field>` | its child filling the field, such as `child:class` |
-| `annotation:<name>` | the annotation of that name the declaration carries: the attribute, the decorator. `hasAnnotation` says one is THERE, where this asks what it was handed — `{"of": "annotation:Route", "argument": {"at": 0, "textLike": "/admin*"}}` is a route under /admin. No node where the declaration carries no annotation of that name |
-| `returnType` | the type NODE a function writes as its return, so everything a rule asks of a type composes on it: `{"of": "returnType", "isA": "Collection"}` is a function answering a collection, where globbing the type's text could only match its spelling. No node for a function that writes none, which is no pass but no answer |
-| `parameterType` | the type NODE a parameter writes, read as `returnType` reads a function's |
-| `condition` | the question it decides by: the test of an `if`, a `while` or a conditional expression, so `{"of": "condition", "is": "call"}` is a branch deciding by what a call answers. No node for what decides nothing, a `for` over a collection among them, which walks what it is given |
-| `subject` | what a comparison tests against a constant: the side that is no constant, when the other one is. It is what a ladder over ONE subject is told by, and it answers nothing where neither side is a constant or both are, since two values compared test no subject and two constants decide nothing about one |
-| `receiver` | the object it is sent to: the `$order` of `$order->ship()` and the `order` of `order.ship()`, whether the step is asked of the read or of the call around it, so `{"of": "receiver", "resolvesLike": "*Repository"}` is anything sent to a repository. No node for a call of a bare name, which is sent to nobody |
-| `declaration` | the declaration of the member it reaches: the method a call runs, the field an access reads, the field a named argument sets. The resolver's own answer where its bridge followed the call, and the declaring type's own members otherwise, so `{"of": "declaration", "hasModifier": "static"}` is a call of a static method wherever it was written |
-| `declaredBy` | the declaration of the type that declares the member it reads, so every check composes on whose field it is: `{"of": "declaredBy", "file": "app/Models/**"}` is a field of a model, read from anywhere |
+| Operator | Operands | Gives | What it says |
+|---|---|---|---|
+| `!=` | value, value | truth | whether two values differ; unknown when either is unresolved |
+| `<` | number, number | truth | whether the first number is less than the second |
+| `<=` | number, number | truth | whether the first number is at most the second |
+| `=` | value, value | truth | whether two values are equal; unknown when either is unresolved |
+| `>` | number, number | truth | whether the first number is greater than the second |
+| `>=` | number, number | truth | whether the first number is at least the second |
+| `abs` | number | number | the number without its sign |
+| `accessMode` | node | text | whether a reference reads, writes, or reads and writes the name: read, write or readwrite |
+| `add` | number, number, … | number | the sum of the numbers |
+| `after` | node | list | the nodes after the node in the same role of its parent, in order |
+| `ancestors` | node | list | every node above the node, nearest first, up to the file, across functions |
+| `and` | truth, truth, … | truth | true when every operand is true; false when one is false; unknown otherwise |
+| `annotated` | node, text | list | the attributes, annotations or decorators on a declaration that name the symbol given, by what they resolve to |
+| `append` | list, list, … | list | the lists one after another |
+| `assignable` | value, text | truth | whether a resolved type is assignable to the type named; unknown when it is unresolved |
+| `at` | list, number | value | the item of a list at a position, counted from 0; no value past its end |
+| `average` | list | number | the mean of a list of numbers; unknown for an empty one |
+| `baseName` | text | text | a path's last segment without its extension: config/app.php reads app |
+| `before` | node | list | the siblings ahead of the node, in order |
+| `between` | number, number, number | truth | whether a number lies from the low to the high one, both included |
+| `buildsText` | node | truth | whether an expression writes text on the spot: a text literal, an interpolation, or a joining or format call with a text part |
+| `carriesCause` | node | truth | whether a throw inside a handler carries the failure it caught: a rethrow, a raise from, or a new failure built from the caught one |
+| `case` | value, arms, value | value | the arm the value names, evaluated alone; the last operand when no arm names it |
+| `caseStyle` | text | text | how a name is written: camel, pascal, snake, screaming-snake, kebab, lower, upper or mixed; a one-word lower-case name is lower |
+| `catchesAll` | node | truth | whether a handler catches every failure: a catch-all, or one whose caught type is the language's root failure type |
+| `ceil` | number | number | the smallest whole number not below it |
+| `childToward` | node, node | node | the node the ancestor holds directly on the way down to the node, whose role says which arm it lies in; none when the first is not above the second |
+| `children` | node | list | every node the node holds directly, in source order |
+| `childrenIn` | node, text | list | the nodes the role named holds; unknown for a role the node's kind does not have, or one the parser recovered from |
+| `cleanPath` | list | text | the segments joined into one path by slashes |
+| `coalesce` | value, value, … | value | the first value that is known and not absent; unknown when none is |
+| `commentsOf` | node | list | the comments of a node, the ones above it and inside it, each a comment record as select comment reads them |
+| `commonAncestor` | node, node | node | the nearest node that holds both nodes, or is one of them; unknown for nodes of two files |
+| `commonPrefix` | list | text | the words every name of a list starts with, joined in lower case by spaces; empty when they share none |
+| `completes` | node | truth | whether control can leave a statement by running off its end: false when every path through it returns, throws, breaks, continues or jumps, and for a loop that never ends without a break; unknown under a node the parser recovered from |
+| `complexity` | node, text | number | the node's cyclomatic complexity (one plus each decision: if, loop, case, handler, ternary, and, or) or cognitive complexity (each break in the flow, weighed by how deeply it is nested) |
+| `components` | list | list | the cycles of a graph of edges, each a list of the values that reach one another, a value alone only when it has an edge to itself |
+| `concat` | text, text, … | text | the texts written one after another |
+| `constant` | node | value | the value a literal writes or the compiler folded an expression to; unknown where neither says |
+| `consumer` | node | value | how an expression's value is used, as a record of use and node: discarded, returned, assigned, argument, receiver, null-safe-receiver, called, condition, compared-to-nothing, coalesced, asserted-present, thrown, yielded or operand |
+| `contains` | text, text | truth | whether a text holds another |
+| `contentWords` | text | list | the stems of a text's content words, the small words left out |
+| `count` | list | number | how many items a list holds; unknown when the list is |
+| `countOf` | text, value | number | how many rows of one of the find's relations have fields equal to a record's |
+| `declarationOf` | node | node | the declaration a call's target or a reference resolves to; unknown when the compiler did not resolve it |
+| `declarationsOf` | value | list | every declaration of a symbol, or of what a node names: partial classes and overloads each once |
+| `declaredIn` | node | list | the bindings written directly in a node, not inside a block, function, type, loop, handler or comprehension written in it |
+| `defaultOf` | node | node | the value an expression falls back to when its subject is absent: the right side of ?? or ?:, the default a library's lookup is given; no node when it has none |
+| `descendants` | node, text | list | every node under the node in source order, into the functions and types written inside it, only those of the kind or category named when one is; unknown under a node the parser recovered from |
+| `diff` | node, node, text | list | the pairs of corresponding nodes where two subtrees differ in the fingerprint mode named, the shallowest first, each a record of left and right |
+| `difference` | list, list | list | the items of the first list the second does not hold; unknown when an item of either is |
+| `dirName` | text | text | a path without its last segment |
+| `disjoint` | list, list | truth | whether no item of the first list is in the second |
+| `dispatchArms` | node | list | the arms of a choice, each a record of tests, body and isDefault: a dispatch's arms, or an if with each of its else-ifs and its final else |
+| `distance` | text, text | number | how many characters must be added, removed or changed to turn one text into the other |
+| `distinct` | list | list | the first of each equal item, in order |
+| `distinctBy` | list, name, value | list | the first item of each key the body gives, in order; unknown when a key is |
+| `distinctCount` | list | number | how many different values a list holds; unknown when one of them is |
+| `divide` | number, number | number | the first number divided by the second; unknown for a zero divisor |
+| `docTags` | value | list | the tags of a doc comment, or of its raw text, each a record of tag, type, name and text: @param int $count the count |
+| `dominant` | list, number | value | the value at least the share given of a list's items hold; unknown when none does |
+| `dominates` | node, node | truth | whether every path to the second node passes the first: the first runs on every path through what holds both, before the part that holds the second; unknown for nodes of two functions |
+| `drop` | list, number | list | the list without its first n items |
+| `elementType` | value | value | the type of what a list, set, array, iterator or map holds; no value for a type that holds nothing |
+| `emptyValue` | node, text | truth | whether a literal is empty in the sense named: nothing (null or undefined), blank-string, zero, false, empty-collection, or empty-scalar (any of the blank string, zero and false) |
+| `encloses` | text, text | truth | whether the first module holds the second: the second goes on from the first past a separator |
+| `enclosing` | node, text, text | node | the nearest node above that is of the kind or category named, across functions; none when nothing above is, or when a node of the stop kind or category comes first |
+| `endsWith` | text, text | truth | whether the text ends with the part |
+| `equivalent` | node, node, text | truth | whether two subtrees are the same in the fingerprint mode named |
+| `every` | list, name, truth | truth | whether the body is true for every item |
+| `exclusive` | node, node | truth | whether no run executes both nodes: they lie in different arms of one if, ternary or dispatch whose arms do not fall through |
+| `exemptedBy` | text, node | truth | whether a library the project holds excuses the node under the exemption tag named, by its resolved symbol |
+| `exists` | value | truth | whether a role, link or fact holds something |
+| `exitsOf` | node | list | the returns and throws under a node, and the breaks, continues and gotos under it that leave it, its own functions left out |
+| `extension` | text | text | the part of a path's last segment after its last dot, without the dot; empty when there is none |
+| `failureType` | value, text | truth | whether a type is one of the language's failure types of the class named: root (Throwable, BaseException, System.Exception, Error) or generic (Exception, RuntimeError, ApplicationException and the like); unknown for a type the compiler did not resolve |
+| `fieldType` | value, text | value | the type of the field named; no value when there is no such field |
+| `fieldsOf` | value | list | the fields of an object type or a type declaration, each a record of name, type and optional |
+| `filter` | list, name, truth | list | the items for which the body, with the name bound to each, is true |
+| `fingerprint` | node, text, list | text | a subtree's structure hashed, in a mode: exact, normalized, renamed, shape, calls, signature or text; with the options literals (a literal read as its kind) and commutative (operands of an order-free operator sorted); unknown where a mode cannot be taken |
+| `first` | list | value | the first item of a list; no value for an empty one |
+| `flatten` | list | list | the items of a list of lists, as one list |
+| `floor` | number | number | the largest whole number not above it |
+| `follow` | node, text, text | list | the node and each node its role or link holds in turn, while it is of the kind or category named when one is: an if with its else-ifs, a call with its receivers |
+| `freeVariables` | node | list | the bindings a function reads or writes that are declared outside it, each once |
+| `functionRole` | node | list | the roles a function plays: constructor, named-constructor, getter, setter, override, test, sole-statement |
+| `gap` | node, node | number | how many blank lines lie between the end of the first node and the start of the second; unknown for nodes of two files |
+| `get` | value, text | value | a record's field by its name; none when it has no such field |
+| `groupItems` | list, name, value | list | the items grouped by the key the body gives, each group a record of key and items, in the order each key first appears; unknown when a key is |
+| `has` | list, value | truth | whether a list holds a value equal to the one given |
+| `hasEffect` | node, text | truth | whether the library a call's resolved target belongs to states the effect named for it, at the version the project's lock file holds; unknown when the target or the version is. The effects are those the package files under rules/packages state: executes-query, database-read, deferred-query, mutates-receiver, iterates-receiver, builds-mutable, fresh-every-call, live-view, tests-membership, decodes-untyped, cast-result-type, blocks-thread, blocks-on-task, completed-task and runs-on-thread |
+| `hasField` | value, text | truth | whether a type has the field named |
+| `hasRow` | text, value | truth | whether one of the find's relations holds a row whose fields equal a record's |
+| `height` | node | number | how many nodes lie on the longest path down from the node to a leaf, the node included |
+| `identity` | text | text | the type a library names by the identity given, such as "option"; unknown when no library names it |
+| `in` | value, value, … | truth | whether the first value equals any of the values written after it; for a list held in a value, use has |
+| `inCycle` | list, value | truth | whether a value lies on a cycle of the edges |
+| `indexOf` | value, value | number | the position of the first item equal to the value, or of the first place a text holds the part; no value when there is none |
+| `intersect` | list, list | list | the items of the first list the second holds too |
+| `is` | node, text | truth | whether a node is of the kind, or in the category, named |
+| `isCase` | text, text | truth | whether a name is written in the style named, a one-word name counting where the style allows it |
+| `isCollection` | value | truth | whether a type's category is list, set, map, tuple or iterator |
+| `isConstant` | node | truth | whether a value is fixed before the program runs: a literal, a folded expression, or a reference to an enum case or a constant; false only where the compiler ran and folded nothing |
+| `isElseIf` | node | truth | whether an if continues another as its else-if: else if, elif, elseif |
+| `isNullable` | value | truth | whether a type admits absence: a nullable type, a union holding null, or one the compiler states is nullable; false only where the compiler says so |
+| `isOdd` | number | truth | whether a whole number is odd |
+| `isSelf` | node | truth | whether a node is the instance the method runs on: this, self, $this, or a Go method's receiver |
+| `isSubtype` | value, value | truth | whether the first type is the second or reaches it through what it extends, implements or mixes in; unknown past a type the codebase does not declare |
+| `isUnknown` | value | truth | whether the value is one the tree cannot state; always known |
+| `jaccard` | list, list | number | how many items two lists share against how many they hold together, from 0 to 1 |
+| `join` | list, text | text | the texts of a list written one after another with the separator between each two |
+| `keyType` | value | value | the type of a map's keys; no value for a type that is no map |
+| `keyedStoreRead` | node | value | the store and key an index or a library's keyed read reads, as a record of store and key; no value for another expression |
+| `keys` | value | list | the field names of a record, such as a map parameter, sorted |
+| `last` | list | value | the last item of a list; no value for an empty one |
+| `layerOf` | text | text | the layer the project's configuration places a module in; unknown for a module in no layer |
+| `leaves` | node, text, text | list | what a run of nested nodes of the kind named holds that is not of that kind, only through the role named when one is: the parts of a && b && c |
+| `length` | text | number | how many characters a text holds |
+| `lexLess` | text, text | truth | whether the first text sorts before the second |
+| `lineCount` | node | number | how many lines the node spans |
+| `lines` | text | list | each line of the text |
+| `list` | value, … | list | the values given, as one list |
+| `literalEquals` | value, value | truth | whether a node is a literal whose value is the value given |
+| `literalIs` | value, text | truth | whether a node is a literal of the kind named: null, undefined, boolean, integer, float, string |
+| `literalValue` | node | value | the value a wholly literal expression writes: a literal's value, a list for a list literal, a record for a keyed one; unknown where any part is computed |
+| `lower` | text | text | the text in lower case |
+| `map` | list, name, value | list | the body's value for each item, with the name bound to it |
+| `matchesShape` | node, arms | value | the captures of a pattern the node matches, as a record; no value when it does not match. A pattern names a kind and the roles and facts it requires: a nested pattern for a role holding one node, positions for a role holding many, ?name to capture what is there (twice: the same subtree twice), _ for anything |
+| `matchesText` | text, text | truth | whether the text matches a pattern, written in Go's regular expressions and checked when the rule loads |
+| `max` | value, … | number | the largest of a list of numbers, or of the numbers given |
+| `maxBy` | list, name, number | value | the item whose body gives the largest number; no value for an empty list |
+| `median` | list | number | the middle of a list of numbers, the mean of the two middle ones for an even count; unknown for an empty one |
+| `memberGroup` | node | text | the group a member belongs to in a type's layout: enum-case, constant, static-field, field-public, field-protected, field-private, field-hooked, constructor or method |
+| `membershipTest` | node | value | what a membership test compares, as a record of subject and candidates: in, a library's contains or includes, case a, b:, and an or of equalities over one subject; no value for another expression, unknown where a candidate is computed |
+| `min` | value, … | number | the smallest of a list of numbers, or of the numbers given |
+| `minBy` | list, name, number | value | the item whose body gives the smallest number; no value for an empty list |
+| `moduleOf` | value | text | the module of a node, or of the declaration a symbol names: its namespace, package or folder; no value for a symbol the project does not declare |
+| `mood` | text | text | what the prose package reads a name's leading word as: imperative, third-person, question, state or non-entity; unknown for a word it does not know |
+| `multiply` | number, number, … | number | the product of the numbers |
+| `next` | node | node | the node right after the node in the same role of its parent; none at the end |
+| `none` | list, name, truth | truth | whether the body is true for no item |
+| `nonempty` | value | truth | whether a value holds something: a non-empty text, list or node |
+| `not` | truth | truth | the operand's truth turned over; unknown stays unknown |
+| `nullForgiving` | node | truth | whether an expression only tells the checker a value is there: x! or a TypeScript assertion cast |
+| `occurs` | node, node, text | truth | whether a subtree the same as the second, in the fingerprint mode named, lies under the first, the second itself left out |
+| `or` | truth, truth, … | truth | true when one operand is true; false when every operand is false; unknown otherwise |
+| `origin` | value | text | where a node's declaration lies: project, library or unknown |
+| `originRank` | value | number | how much a type's origin is to be trusted: compiler 4, written 3, attribute 2, documented 1, inferred 0 |
+| `ownAncestors` | node | list | every node above the node, nearest first, up to the function it is written in |
+| `ownDescendants` | node, text | list | every node under the node, leaving out what a function, type or comprehension written inside it holds, only those of the kind or category named when one is; empty for no node, unknown for a node the parser recovered from |
+| `pair` | value, value | list | the two values as one, to compare or sort together |
+| `parameterOf` | node | node | the parameter of the called declaration an argument binds to, by its label or its position; unknown where the call's target is not resolved |
+| `pathConditions` | node | list | the conditions that must hold for a node to run, each a record of condition and holds (true or false): the if, else, loop, ternary, and and or around it, and each guard before it that returns when its condition holds; unknown in a function with a goto |
+| `pathFits` | text, text | truth | whether a path fits a route template, a {name} segment standing for any one segment |
+| `pathSegments` | text | list | the segments of a path, . left out and .. taking the segment before it away |
+| `paths` | value, text | list | the path of every value a record holds nested, each key joined by the separator: app.name for {app: {name: …}} |
+| `position` | node | number | the node's place among the nodes in the same role of its parent, counted from 0 |
+| `possible` | truth | truth | true unless the truth is proven false: unknown reads as true, the opposite of proven |
+| `precedes` | node, node | truth | whether on some path the first node runs before the second: written before it and not in another arm of one choice, or both inside one loop; unknown for nodes of two functions |
+| `previous` | node | node | the node right before the node in the same role of its parent; none at the start |
+| `programEnums` |  | list | the case values of every enum the program declares, one list per enum of two or more cases |
+| `programTexts` |  | list | the value of every string literal the program writes, once each |
+| `proven` | truth | truth | true only when the truth is proven true: an unknown reads as false, for an exclusion that must not hide what it cannot prove |
+| `range` | number, number | list | the whole numbers from the first up to the second, both included |
+| `reachable` | node | truth | whether some path from the start of its function reaches the node: false after a statement that never completes, and in the arm of an if whose condition is a literal that rules it out |
+| `reachableFrom` | list, value, number | list | every value the edges lead to from the one given, in at most the steps given (0 for no limit), nearest first |
+| `reached` | node | list | the symbols a function or type calls, constructs and names, each once: the resources it reaches |
+| `reaches` | list, value, value | truth | whether edges, each a record of from and to, lead from the first value to the second |
+| `reads` | text, text | truth | whether a name or text reads as the judgement named: third-person, question, bare-state, bare-verb, relational-compound, history, strawman, fixture-marker |
+| `receiverChain` | node | list | the links of a chain a.b().c, the root first, each a record of node, member, owner (the type declaring the member) and nullConditional |
+| `record` | value, value, … | value | a record of the fields named and their values, written name, value, name, value |
+| `referrers` | node | list | every node in the program that refers to the declaration: its calls and reads |
+| `remainder` | number, number | number | what is left of the first number after dividing it by the second; unknown for a zero divisor |
+| `replace` | text, text, text | text | the text with every occurrence of the second replaced by the third |
+| `reportable` | node | truth | whether a finding on the node can be reported: it is in code the project can change |
+| `rest` | list | list | the list without its first item |
+| `reverse` | list | list | the list's items, last first |
+| `round` | number | number | the nearest whole number, a half rounded away from zero |
+| `rowOf` | text, value | value | the one row of a relation whose fields equal a record's; unknown when none or several do |
+| `rowsOf` | text, value | list | the rows of one of the find's relations whose fields equal a record's: every row when no record is given |
+| `sameItems` | list, list | truth | whether two lists hold the same items, order and repeats aside |
+| `sameModule` | value, value | truth | whether two nodes or symbols lie in one module |
+| `sameSymbol` | value, value | truth | whether two nodes or symbols name the same declaration: for local names by the binding they reach, never by spelling |
+| `sameType` | value, value | truth | whether two types are the same by their shape, however each is spelled and wherever it came from |
+| `selfMember` | node | node | the member declaration a node reads or writes through the instance the method runs on; none when it reads none, unknown when the member is not resolved |
+| `siblings` | node | list | every node in the same role of the node's parent, the node too, in order; empty for no node, unknown under a parent the parser recovered from |
+| `similarity` | node, node | number | how much of the larger subtree a common run of the kinds and roles of both matches, from 0 to 1 |
+| `slice` | value, number, number | value | the items or characters from the first position up to the second, a negative one counted from the end, positions past the end clamped |
+| `snakeCase` | text | text | a camelCase name in snake_case: postalCode reads postal_code |
+| `some` | list, name, truth | truth | whether the body is true for at least one item |
+| `sort` | list | list | the list's items in order: numbers by size, anything else by its written form |
+| `sortBy` | list, name, value | list | the items ordered by the key the body gives: numbers by size, anything else by its written form |
+| `split` | text, text | list | the pieces of the text between each separator |
+| `startsWith` | text, text | truth | whether a text begins with another |
+| `stem` | text | text | the stem the prose package compares a word by |
+| `stripPrefix` | text, text | text | the text without the part at its start; unchanged when it does not start with it |
+| `stripSuffix` | text, text | text | the text without the part at its end; unchanged when it does not end with it |
+| `subset` | list, list | truth | whether every item of the first list is in the second, order and repeats aside |
+| `subtract` | number, number | number | the first number less the second |
+| `subtypes` | value | list | every type declaration of the codebase that extends, implements or mixes in the type, at any depth |
+| `sum` | list | number | the sum of a list of numbers |
+| `supertypes` | value | list | the symbols of every type a type declaration extends, implements or mixes in, nearest first, through the declarations the codebase holds |
+| `symbolOf` | node | text | the symbol a node is or names: its own symbol, what it refers to, or its call's target; unknown where none is resolved |
+| `syntaxWeight` | node | number | how many nodes a subtree holds, no-op statements left out |
+| `take` | list, number | list | the first n items of a list |
+| `testsType` | node | value | what a type test tests, as a record of subject, types and negated: instanceof, is, isinstance, a type switch's case; no value for another expression |
+| `text` | value | text | a text, number, truth or no value written as text: 3 reads "3", for building a message |
+| `toCase` | text, text | text | a name written again in the style named: camel, pascal, snake, screaming-snake or kebab |
+| `toNumber` | text | number | a number written as text, in decimal, hexadecimal, octal or binary, with digit separators; unknown for text that is no number |
+| `trailingCount` | list, name, truth | number | how many items at the end of the list the body holds for, back to the first it does not |
+| `trim` | text | text | the text without the white space around it |
+| `typeArgument` | value, number | value | the type argument at a position, counted from 0; no value past the end |
+| `typeArguments` | value | list | the type arguments of a generic type, in order; empty for one with none |
+| `typeCategory` | value | text | the neutral category of a type, the same in every language: text, integer, float, boolean, null, void, never, any, bytes, list, set, map, tuple, function, iterator, object or named; unknown for an unresolved or opaque type |
+| `typeDeclaration` | text | node | the project's declaration of the type a symbol or resolved name names; none when the project declares no such type |
+| `typeKind` | node | text | what a type declaration declares: class, interface, enum, record, struct, trait, protocol, object or alias |
+| `typeMembers` | value | list | the alternatives of a union or intersection, nested ones flattened, a nullable type as its type and null; the type itself for any other |
+| `typeOf` | node | value | a node's type: an expression's resolved type, a declaration's declared type, a function's return type; unknown where the compiler gave none |
+| `union` | list, list | list | every item of either list once, in order: values by equality, nodes by identity |
+| `upper` | text | text | the text in upper case |
+| `valueKind` | value | text | what a known value is: text, number, truth, list, node, record, type or null |
+| `versionAtLeast` | text, text | truth | whether a version is the one given or later: 10.2.1 is at least 10.2 |
+| `width` | node | number | how many bytes the longest line the node spans holds |
+| `windows` | list, number | list | every run of n items in a row, each a list |
+| `within` | node, node | truth | whether the first node is the second or lies under it |
+| `withinModule` | text, text | truth | whether a module is the one named or inside it, whatever separator the language spells modules with |
+| `words` | text | list | the words of a name in lower case, split at camel case, snake case, kebab case and acronyms: HTTPServerError reads http, server, error |
+| `writtenPath` | node | value | the path a text literal, or a joining of text literals, writes, as a record of root (a slash or nothing) and segments; unknown where a part is computed |
+| `zip` | list, list | list | each item paired with the item at its position in the other list, as a record of left and right, for as long as the shorter list |
 <!-- END: rule-checks -->
 
 **A list of words, named once.** Several rules often check against the same words, and editing that list in four
@@ -567,7 +612,9 @@ never against what the code happens to do today.
 | `commandments rule explain <file> [--line=N]` | print the tree a rule reads in the file: every node's line, kind, neutral kinds, field, name and what it resolves to |
 | `commandments rule try <Rule> <path>…` | run one rule over the paths without turning it on, and print each match with its line: a folder, or the files a change touched |
 | `commandments rule prove [path]` | check every rule of the project flags exactly the code its samples mark, and nothing else |
+| `commandments rule prove --all [path]` | check every shipped rule and every rule of the project against each fixture project under the path (tests/Fixtures by default): what each missed, flagged unmarked, flagged as righteous and flagged as fixed |
 | `commandments rule schema` | print the JSON Schema of a rule file |
+| `commandments rule export <folder>` | write the installed rules into a folder, to edit them: a file there at the same path replaces the installed one when COMMANDMENTS_RULES names the folder or it sits beside the binary as rules/ |
 | `commandments rule migrate [--dry-run]` | bring your own rules up to this release: merge the copies that differ only in the engine they judge into one rule naming them all, and name every rule this release no longer reads, with the reason |
 
 <!-- END: commands:make,rule -->

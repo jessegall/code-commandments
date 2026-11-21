@@ -9,6 +9,10 @@ A `#[TypeScript]` `Data` class spreads a value object it already models flat acr
 ```php
 ----------[ Bad ]----------
 
+/*
+ * PortView restates the existing Wire value object FLAT as wire{Type,Socket,Label} instead of nesting a
+ * single `wire: Wire`. The flat trio travels to the frontend and should be one depth-nested sub-object.
+ */
 #[TypeScript]
 final class PortView extends Data
 {
@@ -46,6 +50,9 @@ final class PortView extends Data
 
 ----------[ Good ]----------
 
+// The same view with its depth restored: the wire{Type,Socket,Label} trio is NESTED as the one `Wire` the
+// codebase already declares, so each member sheds the prefix and the value object is modelled once.
+
 #[TypeScript]
 final class NestedPortView extends Data
 {
@@ -55,6 +62,7 @@ final class NestedPortView extends Data
     ) {}
 }
 
+/* The Wire value object: a port's wiring identity, {type, socket, label}. */
 #[TypeScript]
 final class Wire extends Data
 {

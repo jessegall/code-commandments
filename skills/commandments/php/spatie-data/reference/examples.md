@@ -9,6 +9,8 @@ One bad → good per rule this skill teaches, taken from the fixture that proves
 ```php
 ----------[ Bad ]----------
 
+// Typed invoice view, built from an order.
+
 final class InvoiceData extends Data
 {
     public function __construct(
@@ -29,6 +31,10 @@ final class InvoiceData extends Data
 }
 
 ----------[ Good ]----------
+
+// The FIX for {@see InvoiceData}: the `@method` tag names the INVISIBLE magic `from()` — the one
+// method the IDE cannot see — and says nothing about the concrete `fromOrder()` factory declared
+// below it, so no hint re-declares a real method.
 
 final class CreditNoteData extends Data
 {
@@ -70,10 +76,16 @@ public function map(array $rows): array
 ----------[ Good ]----------
 
 // in Shop\Catalog\ProductImportMapper
+// The FIX for {@see map()}: one pass, no loop — `::collect()` maps every row itself, and the
+// element type is declared once on the receiving `#[DataCollectionOf(ProductData::class)]` slot.
+
 public function collectAll(array $rows): mixed
 {
     return ProductData::collect($rows);
 }
+
+// The slot `collectAll()` fills. The element type is declared ONCE, here, which is what lets
+// `::collect()` map every row without a loop naming `ProductData` again at the call site.
 
 final class ProductImportBatch extends Data
 {
@@ -100,6 +112,10 @@ public function __construct(
 
 ----------[ Good ]----------
 
+// The FIX for {@see InboundOrderData}: the `simple → complex` mapping moves ONTO the property as a
+// `#[WithCast(MoneyCast::class)]`, so every call site hands `::from()` the RAW cents (see
+// {@see InboundControllers::castOrder()}) and the cast builds the `Money` in one place.
+
 final class CastInboundOrderData extends Data
 {
     public function __construct(
@@ -112,6 +128,8 @@ final class CastInboundOrderData extends Data
         return $this->price->formatted();
     }
 }
+
+// The one home of the raw → `Money` mapping.
 
 final class MoneyCast
 {
@@ -142,10 +160,15 @@ public function legacyPresent(Order $order): OrderData
 ----------[ Good ]----------
 
 // in Shop\Http\Presenters\OrderPresenter
+// The FIX for {@see legacyPresent()}: the same order presented through the magic factory —
+// `OrderData::from($order)` runs the casts, mappers and validation a raw `new` skips.
+
 public function present(Order $order): OrderData
 {
     return OrderData::from($order);
 }
+
+// Typed view of an order for the API.
 
 final class OrderData extends Data
 {

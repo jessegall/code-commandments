@@ -158,6 +158,10 @@ public function __construct(
 
 ----------[ Good ]----------
 
+// The FIX for the same overview: every slot is a `#[Computed]` get-hook that projects itself from the
+// injected reporter, so the class declares WHAT each field is next to HOW it is projected — and the
+// constructor is left holding nothing but the seed.
+
 #[TypeScript]
 final class ComputedOverviewPage extends Data
 {

@@ -95,6 +95,8 @@ public function rows(string $path): array
 
 ----------[ Good ]----------
 
+// The same question, asked through the one place that knows a root has to be resolved first.
+
 public function evidenceUnder(string $file, string $root): string
 {
     return $this->assets->relativeTo($file, $root);
@@ -387,6 +389,8 @@ public function daily(): array
 }
 
 ----------[ Good ]----------
+
+// Hands the till every step its Steps folder declares, so a new step needs no second edit.
 
 final class TillStepFinder
 {

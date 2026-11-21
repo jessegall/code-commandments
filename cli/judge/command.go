@@ -41,7 +41,6 @@ const aRuleCouldNotRun = 3
 
 // Command is `judge`: scan a codebase and report its sins, grouped by the skill that fixes each.
 type Command struct {
-
 	Scaffoldable map[string]string
 
 	In string

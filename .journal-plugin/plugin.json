@@ -224,7 +224,7 @@
             "group": "Languages"
         },
         "sin_csharp-null-forgiven": {
-            "title": "NullForgiven",
+            "title": "csharp-null-forgiven",
             "help": "The null-forgiving `!` on a value declared nullable — the compiler told the caller it may be null, and `!` silences it instead of deciding",
             "type": "flag",
             "default": "true",
@@ -236,112 +236,8 @@
             ],
             "detail": true
         },
-        "sin_csharp-flag-argument": {
-            "title": "FlagArgument",
-            "help": "a method whose whole body branches on a `bool` parameter — `if (compact) … else …` — two methods sharing one name",
-            "type": "flag",
-            "default": "true",
-            "group": "csharp/behaviour-per-method",
-            "when": [
-                {
-                    "language_cs": true
-                }
-            ],
-            "detail": true
-        },
-        "sin_csharp-member-after-method": {
-            "title": "MemberAfterMethod",
-            "help": "a field, constant or stored property declared below a constructor or a method — the type's state hidden among its behaviour",
-            "type": "flag",
-            "default": "true",
-            "group": "csharp/class-layout",
-            "when": [
-                {
-                    "language_cs": true
-                }
-            ],
-            "detail": true
-        },
-        "sin_csharp-member-out-of-order": {
-            "title": "MemberOutOfOrder",
-            "help": "a `const` or `static readonly` value declared below a field or a stored property — the top of the type read in no particular order",
-            "type": "flag",
-            "default": "true",
-            "group": "csharp/class-layout",
-            "when": [
-                {
-                    "language_cs": true
-                }
-            ],
-            "detail": true
-        },
-        "sin_csharp-container-reach": {
-            "title": "ContainerReach",
-            "help": "A class locates a service through IServiceProvider",
-            "type": "flag",
-            "default": "true",
-            "group": "csharp/dependency-direction",
-            "when": [
-                {
-                    "language_cs": true
-                }
-            ],
-            "detail": true
-        },
-        "sin_csharp-namespace-cycle": {
-            "title": "NamespaceCycle",
-            "help": "two of the project's namespaces that each use the other — a cycle that makes them one namespace split under two names",
-            "type": "flag",
-            "default": "true",
-            "group": "csharp/dependency-direction",
-            "when": [
-                {
-                    "language_cs": true
-                }
-            ],
-            "detail": true
-        },
-        "sin_csharp-namespace-dependency": {
-            "title": "NamespaceDependency",
-            "help": "a reference out of a declared layer into a namespace that layer did not declare it may use",
-            "type": "flag",
-            "default": "true",
-            "group": "csharp/dependency-direction",
-            "when": [
-                {
-                    "language_cs": true
-                }
-            ],
-            "detail": true
-        },
-        "sin_csharp-orphaned-binding": {
-            "title": "OrphanedBinding",
-            "help": "A registered service has no production consumer",
-            "type": "flag",
-            "default": "true",
-            "group": "csharp/dependency-direction",
-            "when": [
-                {
-                    "language_cs": true
-                }
-            ],
-            "detail": true
-        },
-        "sin_csharp-string-mirrors-enum": {
-            "title": "StringMirrorsEnum",
-            "help": "A `switch` or an `if` ladder dispatching on strings that are the names of an enum the codebase already declares — the enum, written out again as text",
-            "type": "flag",
-            "default": "true",
-            "group": "csharp/enums",
-            "when": [
-                {
-                    "language_cs": true
-                }
-            ],
-            "detail": true
-        },
         "sin_csharp-blocked-await": {
-            "title": "BlockedAwait",
+            "title": "csharp-blocked-await",
             "help": "`.Result`, `.Wait()` or `.GetAwaiter().GetResult()` on a task — the thread it blocks is the one the work needed back, so it deadlocks under load and nowhere else",
             "type": "flag",
             "default": "true",
@@ -353,246 +249,12 @@
             ],
             "detail": true
         },
-        "sin_csharp-constructor-side-effect": {
-            "title": "ConstructorSideEffect",
-            "help": "a constructor that calls a method on something it was handed and ignores the result — just creating the object changes something outside it",
-            "type": "flag",
-            "default": "true",
-            "group": "csharp/fix-at-the-source",
-            "when": [
-                {
-                    "language_cs": true
-                }
-            ],
-            "detail": true
-        },
-        "sin_csharp-mutable-static-state": {
-            "title": "MutableStaticState",
-            "help": "a `static` field that methods write to — state no instance owns, changed by whichever code ran last",
-            "type": "flag",
-            "default": "true",
-            "group": "csharp/fix-at-the-source",
-            "when": [
-                {
-                    "language_cs": true
-                }
-            ],
-            "detail": true
-        },
-        "sin_csharp-unread-collaborator": {
-            "title": "UnreadCollaborator",
-            "help": "a private readonly field, or a primary constructor parameter, that nothing in the type reads — the type asks for something it does not use",
-            "type": "flag",
-            "default": "true",
-            "group": "csharp/fix-at-the-source",
-            "when": [
-                {
-                    "language_cs": true
-                }
-            ],
-            "detail": true
-        },
-        "sin_csharp-collection-mutated-while-iterated": {
-            "title": "CollectionMutatedWhileIterated",
-            "help": "a `foreach` that adds to or removes from the very collection it walks — the enumerator reads a collection that moved under it, which throws InvalidOperationException",
-            "type": "flag",
-            "default": "true",
-            "group": "csharp/flow",
-            "when": [
-                {
-                    "language_cs": true
-                }
-            ],
-            "detail": true
-        },
         "sin_csharp-inline-throw": {
-            "title": "InlineThrow",
+            "title": "csharp-inline-throw",
             "help": "a `?? throw` inside a call's argument or in front of a member call — the check that stops the method is hidden in the middle of the work",
             "type": "flag",
             "default": "true",
             "group": "csharp/flow",
-            "when": [
-                {
-                    "language_cs": true
-                }
-            ],
-            "detail": true
-        },
-        "sin_csharp-bare-state-predicate": {
-            "title": "BareStatePredicate",
-            "help": "a `bool` about the object's own state named as a claim — `Binds()`, `Spins` — where a question belongs",
-            "type": "flag",
-            "default": "true",
-            "group": "csharp/method-mood",
-            "when": [
-                {
-                    "language_cs": true
-                }
-            ],
-            "detail": true
-        },
-        "sin_csharp-derived-argument": {
-            "title": "DerivedArgument",
-            "help": "a call that hands over an object and a projection of it — `Persist(request, request.ChannelId)` — or an object in three pieces, where the method could read them itself",
-            "type": "flag",
-            "default": "true",
-            "group": "csharp/pass-the-object",
-            "when": [
-                {
-                    "language_cs": true
-                }
-            ],
-            "detail": true
-        },
-        "sin_csharp-param-resolved-from-param": {
-            "title": "ParamResolvedFromParam",
-            "help": "a method that takes a container and a key and first resolves one against the other — `Rename(Workflow workflow, string nodeId)` doing `workflow.Graph.Node(nodeId)` — when it only wanted what the key names",
-            "type": "flag",
-            "default": "true",
-            "group": "csharp/pass-the-object",
-            "when": [
-                {
-                    "language_cs": true
-                }
-            ],
-            "detail": true
-        },
-        "sin_csharp-repeated-named-call": {
-            "title": "RepeatedNamedCall",
-            "help": "the same `with` copy — `order with { Status = OrderStatus.Shipped }` — written at two or more sites, an operation the record never named",
-            "type": "flag",
-            "default": "true",
-            "group": "csharp/repeated-call-helper",
-            "when": [
-                {
-                    "language_cs": true
-                }
-            ],
-            "detail": true
-        },
-        "sin_csharp-feature-envy": {
-            "title": "FeatureEnvy",
-            "help": "a method that loops another object's collection or writes its members, reaching into it more than into its own state — behaviour exiled from the object it works on",
-            "type": "flag",
-            "default": "true",
-            "group": "csharp/tell-dont-ask",
-            "when": [
-                {
-                    "language_cs": true
-                }
-            ],
-            "detail": true
-        },
-        "sin_csharp-assembled-template": {
-            "title": "AssembledTemplate",
-            "help": "`string.Join(\"\\n\", new[] { \"public class X\", \"{\", \"}\" })` or `sb.AppendLine(\"…\")` line after line — a multi-line text built from line fragments, so its shape cannot be seen in the source",
-            "type": "flag",
-            "default": "true",
-            "group": "csharp/templates",
-            "when": [
-                {
-                    "language_cs": true
-                }
-            ],
-            "detail": true
-        },
-        "sin_csharp-filled-parameter": {
-            "title": "FilledParameter",
-            "help": "a method returning nothing that writes a property of an object it was handed, whose caller then reads what it handed over — the signature says the object goes in and nothing says it comes out changed",
-            "type": "flag",
-            "default": "true",
-            "group": "csharp/type-honesty",
-            "when": [
-                {
-                    "language_cs": true
-                }
-            ],
-            "detail": true
-        },
-        "sin_csharp-impossible-guard": {
-            "title": "ImpossibleGuard",
-            "help": "`if (order == null)` where `order` is typed `Order` and not `Order?` — one of the two is wrong, and both are worth knowing",
-            "type": "flag",
-            "default": "true",
-            "group": "csharp/type-honesty",
-            "when": [
-                {
-                    "language_cs": true
-                }
-            ],
-            "detail": true
-        },
-        "sin_csharp-array-return-bag": {
-            "title": "ArrayReturnBag",
-            "help": "a method that returns `new Dictionary<string, object> { [\"sku\"] = …, [\"qty\"] = … }` — a record with fixed fields, handed back as a dictionary",
-            "type": "flag",
-            "default": "true",
-            "group": "csharp/value-objects",
-            "when": [
-                {
-                    "language_cs": true
-                }
-            ],
-            "detail": true
-        },
-        "sin_csharp-coupled-fields": {
-            "title": "CoupledFields",
-            "help": "a type whose own fields always travel together — assembled into one value again and again, null-checked together, or one copying what a sibling field already holds — one concept held as several fields",
-            "type": "flag",
-            "default": "true",
-            "group": "csharp/value-objects",
-            "when": [
-                {
-                    "language_cs": true
-                }
-            ],
-            "detail": true
-        },
-        "sin_csharp-dictionary-bag": {
-            "title": "DictionaryBag",
-            "help": "A string-keyed dictionary or JSON object read by keys written in the source — `row[\"sku\"]`, `json.GetProperty(\"name\")` — a record nobody declared",
-            "type": "flag",
-            "default": "true",
-            "group": "csharp/value-objects",
-            "when": [
-                {
-                    "language_cs": true
-                }
-            ],
-            "detail": true
-        },
-        "sin_csharp-handed-out-collection": {
-            "title": "HandedOutCollection",
-            "help": "a property or method whose whole body returns the type's own `List`, `Dictionary` or `HashSet`, untouched — every caller holds the insides and may add to or take from them without the type knowing",
-            "type": "flag",
-            "default": "true",
-            "group": "csharp/value-objects",
-            "when": [
-                {
-                    "language_cs": true
-                }
-            ],
-            "detail": true
-        },
-        "sin_csharp-mutable-value-object": {
-            "title": "MutableValueObject",
-            "help": "a record that can change after it is built — a `set` accessor, or a method that writes its own state — so two holders of the same value can end up seeing different things",
-            "type": "flag",
-            "default": "true",
-            "group": "csharp/value-objects",
-            "when": [
-                {
-                    "language_cs": true
-                }
-            ],
-            "detail": true
-        },
-        "sin_csharp-positional-tuple-return": {
-            "title": "PositionalTupleReturn",
-            "help": "a method that returns `(decimal, decimal, string)` — unnamed values the caller reads by position, where two of the same type can be swapped and nothing notices",
-            "type": "flag",
-            "default": "true",
-            "group": "csharp/value-objects",
             "when": [
                 {
                     "language_cs": true
@@ -614,7 +276,7 @@
             "detail": true
         },
         "sin_erased-null-object": {
-            "title": "ErasedNullObject",
+            "title": "erased-null-object",
             "help": "A blank-rendering Null Object written into a `string` slot — coerced back to `''`",
             "type": "flag",
             "default": "true",
@@ -627,7 +289,7 @@
             "detail": true
         },
         "sin_false-for-nothing": {
-            "title": "FalseForNothing",
+            "title": "false-for-nothing",
             "help": "A return typed `X|false`: `false` stands in for \"nothing\" or \"failed\", and every caller must test for it.",
             "type": "flag",
             "default": "true",
@@ -640,7 +302,7 @@
             "detail": true
         },
         "sin_option-as-nullable": {
-            "title": "OptionAsNullable",
+            "title": "option-as-nullable",
             "help": "`Option<T>` used as if it were nullable — `?Option`, `Option | null`, `unwrapOr(null)`",
             "type": "flag",
             "default": "true",
@@ -653,91 +315,46 @@
             "detail": true
         },
         "sin_flag-argument": {
-            "title": "FlagArgument",
-            "help": "A Boolean parameter selects which operation runs",
+            "title": "flag-argument",
+            "help": "a method whose whole body branches on a `bool` parameter — or on whether a nullable one was given — two methods sharing one name",
             "type": "flag",
             "default": "true",
-            "group": "shared/arguments",
+            "group": "php/behaviour-per-method",
             "when": [
                 {
                     "language_php": true
-                },
-                {
-                    "language_vue": true
-                },
-                {
-                    "language_ts": true
-                },
-                {
-                    "language_py": true
-                },
-                {
-                    "language_cs": true
-                },
-                {
-                    "language_go": true
                 }
             ],
             "detail": true
         },
         "sin_member-after-method": {
-            "title": "MemberAfterMethod",
-            "help": "A field is declared below a method",
+            "title": "member-after-method",
+            "help": "A trait use, constant, property, property hook, or enum case declared below a method — so the reader only meets that state after seeing the behaviour that uses it.",
             "type": "flag",
             "default": "true",
-            "group": "shared/arguments",
+            "group": "php/class-layout",
             "when": [
                 {
                     "language_php": true
-                },
-                {
-                    "language_vue": true
-                },
-                {
-                    "language_ts": true
-                },
-                {
-                    "language_py": true
-                },
-                {
-                    "language_cs": true
-                },
-                {
-                    "language_go": true
                 }
             ],
             "detail": true
         },
         "sin_member-out-of-order": {
-            "title": "MemberOutOfOrder",
-            "help": "A constant is declared below an instance field",
+            "title": "member-out-of-order",
+            "help": "A declaration in the head of a class that arrives after something belonging below it — a constant under a property, a public field under a private one, a hook above the fields it reads",
             "type": "flag",
             "default": "true",
-            "group": "shared/arguments",
+            "group": "php/class-layout",
             "when": [
                 {
                     "language_php": true
-                },
-                {
-                    "language_vue": true
-                },
-                {
-                    "language_ts": true
-                },
-                {
-                    "language_py": true
-                },
-                {
-                    "language_cs": true
-                },
-                {
-                    "language_go": true
                 }
             ],
             "detail": true
         },
         "sin_concurrent-subclass": {
-            "title": "ConcurrentSubclass",
+            "title": "concurrent-subclass",
             "help": "Class `extends Concurrent` instead of composing `Concurrent<self>`",
             "type": "flag",
             "default": "true",
@@ -749,64 +366,21 @@
             ],
             "detail": true
         },
-        "sin_namespace-cycle": {
-            "title": "NamespaceCycle",
-            "help": "Two independent modules import each other",
-            "type": "flag",
-            "default": "true",
-            "group": "shared/dependencies",
-            "when": [
-                {
-                    "language_php": true
-                },
-                {
-                    "language_vue": true
-                },
-                {
-                    "language_ts": true
-                },
-                {
-                    "language_py": true
-                },
-                {
-                    "language_cs": true
-                },
-                {
-                    "language_go": true
-                }
-            ],
-            "detail": true
-        },
         "sin_namespace-dependency": {
-            "title": "NamespaceDependency",
-            "help": "An import crosses a layer boundary its source may not use",
+            "title": "namespace-dependency",
+            "help": "a declared layer references a layer it may not use (the arrow points back up)",
             "type": "flag",
             "default": "true",
-            "group": "shared/dependencies",
+            "group": "php/dependency-direction",
             "when": [
                 {
                     "language_php": true
-                },
-                {
-                    "language_vue": true
-                },
-                {
-                    "language_ts": true
-                },
-                {
-                    "language_py": true
-                },
-                {
-                    "language_cs": true
-                },
-                {
-                    "language_go": true
                 }
             ],
             "detail": true
         },
         "sin_inline-docblock": {
-            "title": "InlineDocblock",
+            "title": "inline-docblock",
             "help": "A docblock whose delimiter shares a line with its text — a one-liner, or a block that opens or closes next to content",
             "type": "flag",
             "default": "true",
@@ -819,7 +393,7 @@
             "detail": true
         },
         "sin_compare-self": {
-            "title": "CompareSelf",
+            "title": "compare-self",
             "help": "A strict comparison bypasses an enum's verified comparison method.",
             "type": "flag",
             "default": "true",
@@ -832,7 +406,7 @@
             "detail": true
         },
         "sin_enum-value-match": {
-            "title": "EnumValueMatch",
+            "title": "enum-value-match",
             "help": "A `match`/`switch` over an enum's `->value` at the call site — logic that belongs on the enum but lives elsewhere instead.",
             "type": "flag",
             "default": "true",
@@ -845,91 +419,46 @@
             "detail": true
         },
         "sin_constructor-side-effect": {
-            "title": "ConstructorSideEffect",
-            "help": "A constructor calls a collaborator and drops the result",
+            "title": "constructor-side-effect",
+            "help": "A constructor that performs a side effect on a collaborator and throws away the result, so simply creating the object changes something outside it.",
             "type": "flag",
             "default": "true",
-            "group": "shared/arguments",
+            "group": "php/fix-at-the-source",
             "when": [
                 {
                     "language_php": true
-                },
-                {
-                    "language_vue": true
-                },
-                {
-                    "language_ts": true
-                },
-                {
-                    "language_py": true
-                },
-                {
-                    "language_cs": true
-                },
-                {
-                    "language_go": true
                 }
             ],
             "detail": true
         },
         "sin_mutable-static-state": {
-            "title": "MutableStaticState",
-            "help": "An operation writes shared static state",
+            "title": "mutable-static-state",
+            "help": "A write to a static property — really a global variable with a namespace attached — where whichever write happens last wins, so the order code runs in changes the result.",
             "type": "flag",
             "default": "true",
-            "group": "shared/arguments",
+            "group": "php/fix-at-the-source",
             "when": [
                 {
                     "language_php": true
-                },
-                {
-                    "language_vue": true
-                },
-                {
-                    "language_ts": true
-                },
-                {
-                    "language_py": true
-                },
-                {
-                    "language_cs": true
-                },
-                {
-                    "language_go": true
                 }
             ],
             "detail": true
         },
         "sin_unread-collaborator": {
-            "title": "UnreadCollaborator",
-            "help": "A collaborator is stored and never read",
+            "title": "unread-collaborator",
+            "help": "a collaborator promoted into a private field by the constructor and never read anywhere in the class — the class asks for something it does not use, and only a search of the whole type says so",
             "type": "flag",
             "default": "true",
-            "group": "shared/dependencies",
+            "group": "php/fix-at-the-source",
             "when": [
                 {
                     "language_php": true
-                },
-                {
-                    "language_vue": true
-                },
-                {
-                    "language_ts": true
-                },
-                {
-                    "language_py": true
-                },
-                {
-                    "language_cs": true
-                },
-                {
-                    "language_go": true
                 }
             ],
             "detail": true
         },
         "sin_if-else-ladder": {
-            "title": "IfElseLadder",
+            "title": "if-else-ladder",
             "help": "if/elseif ladder of 4+ branches (should be match/dispatch)",
             "type": "flag",
             "default": "true",
@@ -942,7 +471,7 @@
             "detail": true
         },
         "sin_inline-throw": {
-            "title": "InlineThrow",
+            "title": "inline-throw",
             "help": "`?? throw` fed into a call or dereferenced on the same line (inline throw mid-expression)",
             "type": "flag",
             "default": "true",
@@ -955,7 +484,7 @@
             "detail": true
         },
         "sin_bare-scope-escape": {
-            "title": "BareScopeEscape",
+            "title": "bare-scope-escape",
             "help": "an Eloquent query drops every global scope, including ones added later",
             "type": "flag",
             "default": "true",
@@ -968,7 +497,7 @@
             "detail": true
         },
         "sin_config-read": {
-            "title": "ConfigRead",
+            "title": "config-read",
             "help": "`config('…')` read inside a class",
             "type": "flag",
             "default": "true",
@@ -981,7 +510,7 @@
             "detail": true
         },
         "sin_container-reach": {
-            "title": "ContainerReach",
+            "title": "container-reach",
             "help": "`app()`, `resolve()` or a container's `make()` reach inside a container-resolved class",
             "type": "flag",
             "default": "true",
@@ -994,7 +523,7 @@
             "detail": true
         },
         "sin_dead-config-key": {
-            "title": "DeadConfigKey",
+            "title": "dead-config-key",
             "help": "A config key nothing reads — dead surface left behind by a deleted feature, which new code may wrongly adopt",
             "type": "flag",
             "default": "true",
@@ -1007,7 +536,7 @@
             "detail": true
         },
         "sin_dead-event-wiring": {
-            "title": "DeadEventWiring",
+            "title": "dead-event-wiring",
             "help": "An `Event::listen` on an event class no live code path can fire — a listener chain that dead-ends but reads as live wiring",
             "type": "flag",
             "default": "true",
@@ -1020,7 +549,7 @@
             "detail": true
         },
         "sin_duplicated-config-default": {
-            "title": "DuplicatedConfigDefault",
+            "title": "duplicated-config-default",
             "help": "A config key whose default is stated TWICE — once in the config file, again as the reader's inline fallback — two sources of truth that drift silently",
             "type": "flag",
             "default": "true",
@@ -1033,7 +562,7 @@
             "detail": true
         },
         "sin_facade-call": {
-            "title": "FacadeCall",
+            "title": "facade-call",
             "help": "Laravel facade call (`Cache::`, `Log::`, `Mail::` …)",
             "type": "flag",
             "default": "true",
@@ -1046,29 +575,14 @@
             "detail": true
         },
         "sin_handed-out-collection": {
-            "title": "HandedOutCollection",
-            "help": "A routine exposes its own mutable collection",
+            "title": "handed-out-collection",
+            "help": "a getter whose whole body returns the class's own `Collection`, untouched — a Collection is an object, so every caller holds the same one and may `push`, `forget` or `sort` it behind the class's back",
             "type": "flag",
             "default": "true",
-            "group": "shared/arguments",
+            "group": "php/laravel-idioms",
             "when": [
                 {
                     "language_php": true
-                },
-                {
-                    "language_vue": true
-                },
-                {
-                    "language_ts": true
-                },
-                {
-                    "language_py": true
-                },
-                {
-                    "language_cs": true
-                },
-                {
-                    "language_go": true
                 }
             ],
             "detail": true
@@ -1087,7 +601,7 @@
             "detail": true
         },
         "sin_mass-update-at-call-site": {
-            "title": "MassUpdateAtCallSite",
+            "title": "mass-update-at-call-site",
             "help": "Bare `$model->update([...])` mass-array update at a call site",
             "type": "flag",
             "default": "true",
@@ -1100,7 +614,7 @@
             "detail": true
         },
         "sin_model-mutation-at-call-site": {
-            "title": "ModelMutationAtCallSite",
+            "title": "model-mutation-at-call-site",
             "help": "Set-property-then-`save()` at a call site (should be an intention method)",
             "type": "flag",
             "default": "true",
@@ -1113,7 +627,7 @@
             "detail": true
         },
         "sin_orphaned-binding": {
-            "title": "OrphanedBinding",
+            "title": "orphaned-binding",
             "help": "A container binding whose abstract nothing ever resolves — dead wiring that reads as load-bearing and survives every refactor",
             "type": "flag",
             "default": "true",
@@ -1126,35 +640,20 @@
             "detail": true
         },
         "sin_query-in-loop": {
-            "title": "QueryInLoop",
-            "help": "A database query runs on each iteration",
+            "title": "query-in-loop",
+            "help": "a query run inside a loop — one query per turn, so the work grows with the data while the code reads as though it were one call",
             "type": "flag",
             "default": "true",
-            "group": "shared/flow",
+            "group": "php/laravel-idioms",
             "when": [
                 {
                     "language_php": true
-                },
-                {
-                    "language_vue": true
-                },
-                {
-                    "language_ts": true
-                },
-                {
-                    "language_py": true
-                },
-                {
-                    "language_cs": true
-                },
-                {
-                    "language_go": true
                 }
             ],
             "detail": true
         },
         "sin_raw-request-input": {
-            "title": "RawRequestInput",
+            "title": "raw-request-input",
             "help": "Raw `->input()/->get()/->query()/->post()` on a Request",
             "type": "flag",
             "default": "true",
@@ -1167,7 +666,7 @@
             "detail": true
         },
         "sin_request-accessor-recast": {
-            "title": "RequestAccessorRecast",
+            "title": "request-accessor-recast",
             "help": "Casting the Stringable returned by a typed request accessor instead of using its `toString()` method.",
             "type": "flag",
             "default": "true",
@@ -1180,57 +679,27 @@
             "detail": true
         },
         "sin_bare-state-predicate": {
-            "title": "BareStatePredicate",
-            "help": "A Boolean method about its own state has the name of an action",
+            "title": "bare-state-predicate",
+            "help": "A `bool` about the object's own state named as a bare verb — `binds()`, `spins()` — where a question belongs",
             "type": "flag",
             "default": "true",
-            "group": "shared/arguments",
+            "group": "php/method-mood",
             "when": [
                 {
                     "language_php": true
-                },
-                {
-                    "language_vue": true
-                },
-                {
-                    "language_ts": true
-                },
-                {
-                    "language_py": true
-                },
-                {
-                    "language_cs": true
-                },
-                {
-                    "language_go": true
                 }
             ],
             "detail": true
         },
         "sin_narrated-command": {
-            "title": "NarratedCommand",
-            "help": "A command method is named in the third person",
+            "title": "narrated-command",
+            "help": "A command named in the third person — `hides()`, `entersTestMode()` — where a call is an order, not a description of one",
             "type": "flag",
             "default": "true",
-            "group": "shared/arguments",
+            "group": "php/method-mood",
             "when": [
                 {
                     "language_php": true
-                },
-                {
-                    "language_vue": true
-                },
-                {
-                    "language_ts": true
-                },
-                {
-                    "language_py": true
-                },
-                {
-                    "language_cs": true
-                },
-                {
-                    "language_go": true
                 }
             ],
             "detail": true
@@ -1249,7 +718,7 @@
             "detail": true
         },
         "sin_injected-service-not-hidden": {
-            "title": "InjectedServiceNotHidden",
+            "title": "injected-service-not-hidden",
             "help": "A page object injects a service (`#[FromContainer]`, …) into a public property without `#[Hidden]` — it leaks into the generated TypeScript type",
             "type": "flag",
             "default": "true",
@@ -1275,7 +744,7 @@
             "detail": true
         },
         "sin_page-object-missing-typescript": {
-            "title": "PageObjectMissingTypeScript",
+            "title": "page-object-missing-typescript",
             "help": "A page object travels back in a response but carries no `#[TypeScript]` — the `.vue` page reads it as untyped `any`, so the whole page-prop contract goes unchecked",
             "type": "flag",
             "default": "true",
@@ -1288,7 +757,7 @@
             "detail": true
         },
         "sin_service-location-in-page-object": {
-            "title": "ServiceLocationInPageObject",
+            "title": "service-location-in-page-object",
             "help": "A page object reaches into the container with `app()`/`resolve()` instead of injecting the collaborator via `#[FromContainer]`",
             "type": "flag",
             "default": "true",
@@ -1301,7 +770,7 @@
             "detail": true
         },
         "sin_transformer-without-ts-type": {
-            "title": "TransformerWithoutTsType",
+            "title": "transformer-without-ts-type",
             "help": "On a Data class exported with `#[TypeScript]`, a custom `#[WithTransformer]` changes the wire shape and the generated type still describes the PHP value.",
             "type": "flag",
             "default": "true",
@@ -1314,91 +783,46 @@
             "detail": true
         },
         "sin_computed-boolean-argument": {
-            "title": "ComputedBooleanArgument",
-            "help": "Callers repeatedly compute Boolean arguments from one object",
+            "title": "computed-boolean-argument",
+            "help": "A parameter that's just true/false, computed by every caller from the same object it could be given instead.",
             "type": "flag",
             "default": "true",
-            "group": "shared/arguments",
+            "group": "php/pass-the-object",
             "when": [
                 {
                     "language_php": true
-                },
-                {
-                    "language_vue": true
-                },
-                {
-                    "language_ts": true
-                },
-                {
-                    "language_py": true
-                },
-                {
-                    "language_cs": true
-                },
-                {
-                    "language_go": true
                 }
             ],
             "detail": true
         },
         "sin_derived-argument": {
-            "title": "DerivedArgument",
-            "help": "Callers repeatedly pass pieces of the same object",
+            "title": "derived-argument",
+            "help": "Passing the same object twice — once whole and once broken into a piece (`persist($request, $request->shopId())`), or broken into several pieces at once (`new AgentTurn($r->output(), $r->failed(), $r->errorOutput())`) — when the callee could derive each piece itself from the one object.",
             "type": "flag",
             "default": "true",
-            "group": "shared/arguments",
+            "group": "php/pass-the-object",
             "when": [
                 {
                     "language_php": true
-                },
-                {
-                    "language_vue": true
-                },
-                {
-                    "language_ts": true
-                },
-                {
-                    "language_py": true
-                },
-                {
-                    "language_cs": true
-                },
-                {
-                    "language_go": true
                 }
             ],
             "detail": true
         },
         "sin_param-resolved-from-param": {
-            "title": "ParamResolvedFromParam",
-            "help": "One parameter is only used to resolve another parameter",
+            "title": "param-resolved-from-param",
+            "help": "Unpacking the target out of a container parameter — a method takes `(Workflow $workflow, string $nodeId)` and resolves `$workflow->graph->nodeById($nodeId)` itself, when it could just receive the node directly.",
             "type": "flag",
             "default": "true",
-            "group": "shared/arguments",
+            "group": "php/pass-the-object",
             "when": [
                 {
                     "language_php": true
-                },
-                {
-                    "language_vue": true
-                },
-                {
-                    "language_ts": true
-                },
-                {
-                    "language_py": true
-                },
-                {
-                    "language_cs": true
-                },
-                {
-                    "language_go": true
                 }
             ],
             "detail": true
         },
         "sin_repeated-named-call": {
-            "title": "RepeatedNamedCall",
+            "title": "repeated-named-call",
             "help": "The same `with`-style (variadic) method is called with the same named argument at 2+ sites, instead of a named helper on the type",
             "type": "flag",
             "default": "true",
@@ -1411,7 +835,7 @@
             "detail": true
         },
         "sin_repeated-query-chain": {
-            "title": "RepeatedQueryChain",
+            "title": "repeated-query-chain",
             "help": "One Eloquent query chain written alike at three or more sites outside its model",
             "type": "flag",
             "default": "true",
@@ -1424,29 +848,14 @@
             "detail": true
         },
         "sin_hand-rolled-registry": {
-            "title": "HandRolledRegistry",
-            "help": "A type repeats a checked keyed store",
+            "title": "hand-rolled-registry",
+            "help": "A class writes its own keyed store (fill under a key, throw on a missing key) instead of extending the one Registry base",
             "type": "flag",
             "default": "true",
-            "group": "shared/dependencies",
+            "group": "php/role-vocabulary",
             "when": [
                 {
                     "language_php": true
-                },
-                {
-                    "language_vue": true
-                },
-                {
-                    "language_ts": true
-                },
-                {
-                    "language_py": true
-                },
-                {
-                    "language_cs": true
-                },
-                {
-                    "language_go": true
                 }
             ],
             "detail": true
@@ -1478,7 +887,7 @@
             "detail": true
         },
         "sin_duplicate-route": {
-            "title": "DuplicateRoute",
+            "title": "duplicate-route",
             "help": "Two route registrations of the same verb bind different URLs to the SAME `[Controller, method]` — two names for one handler (invokable single-action controllers, commonly aliased to several canonical URLs, are exempt)",
             "type": "flag",
             "default": "true",
@@ -1491,7 +900,7 @@
             "detail": true
         },
         "sin_duplicate-route-action": {
-            "title": "DuplicateRouteAction",
+            "title": "duplicate-route-action",
             "help": "Two route actions in different controllers thinly delegate to the SAME operation (`return $this->exporter->export(...)`) — the same entry point twice",
             "type": "flag",
             "default": "true",
@@ -1504,7 +913,7 @@
             "detail": true
         },
         "sin_route-delegates-to-controller": {
-            "title": "RouteDelegatesToController",
+            "title": "route-delegates-to-controller",
             "help": "A route action forwards to ANOTHER controller's action (`return $this->otherController->action(...)`) — a redundant entry point onto an operation that already has one",
             "type": "flag",
             "default": "true",
@@ -1517,7 +926,7 @@
             "detail": true
         },
         "sin_all-nullable-data": {
-            "title": "AllNullableData",
+            "title": "all-nullable-data",
             "help": "All-nullable \"god\" DTO — every field `?T`/defaulted (type doesn't tell the truth)",
             "type": "flag",
             "default": "true",
@@ -1530,7 +939,7 @@
             "detail": true
         },
         "sin_all-optional-data": {
-            "title": "AllOptionalData",
+            "title": "all-optional-data",
             "help": "Every field of a `Data` object is `T|Optional` — the type promises nothing is ever present; the absence belongs on the CONTAINER field where it's used",
             "type": "flag",
             "default": "true",
@@ -1543,7 +952,7 @@
             "detail": true
         },
         "sin_data-collection-type": {
-            "title": "DataCollectionType",
+            "title": "data-collection-type",
             "help": "A `Data` property is TYPED as `DataCollection` — it should be `array` (or `Collection`) with `#[DataCollectionOf(X)]`; the `DataCollection` type emits malformed TypeScript and skips element-typed hydration",
             "type": "flag",
             "default": "true",
@@ -1569,7 +978,7 @@
             "detail": true
         },
         "sin_hook-missing-computed": {
-            "title": "HookMissingComputed",
+            "title": "hook-missing-computed",
             "help": "A get-only property HOOK on a `Data` class lacks `#[Computed]` — Spatie reads the virtual property as a hydration INPUT, expects it in `::from()`, and crashes or silently drops it",
             "type": "flag",
             "default": "true",
@@ -1608,7 +1017,7 @@
             "detail": true
         },
         "sin_nested-type-missing-typescript": {
-            "title": "NestedTypeMissingTypeScript",
+            "title": "nested-type-missing-typescript",
             "help": "A `#[TypeScript]` Data has a property typed as a nested `Data` class that itself lacks `#[TypeScript]` — the transformer emits it as `undefined`, a silent hole in the generated type (a nested enum is fine; the enum collector auto-generates it)",
             "type": "flag",
             "default": "true",
@@ -1634,7 +1043,7 @@
             "detail": true
         },
         "sin_non-final-data": {
-            "title": "NonFinalData",
+            "title": "non-final-data",
             "help": "Data class not `final` / props not `readonly` promoted",
             "type": "flag",
             "default": "true",
@@ -1647,7 +1056,7 @@
             "detail": true
         },
         "sin_null-to-optional-map": {
-            "title": "NullToOptionalMap",
+            "title": "null-to-optional-map",
             "help": "A producer hand-maps null→`new Optional` — `$x === null ? new Optional : Foo::from($x)` or `expr() ?? new Optional` — instead of one named factory (Spatie's `optional()` maps null→null, the opposite of what a `T|Optional` slot needs)",
             "type": "flag",
             "default": "true",
@@ -1660,7 +1069,7 @@
             "detail": true
         },
         "sin_nullable-wire-object": {
-            "title": "NullableWireObject",
+            "title": "nullable-wire-object",
             "help": "A nested Data or enum on a `#[TypeScript]` Data is typed `T | null` — it ships `null` on the wire where `T | Optional` would OMIT it (what the frontend's `x?.` reads for \"absent\")",
             "type": "flag",
             "default": "true",
@@ -1673,7 +1082,7 @@
             "detail": true
         },
         "sin_prefer-optional-create": {
-            "title": "PreferOptionalCreate",
+            "title": "prefer-optional-create",
             "help": "A raw `new Optional` is constructed in a runtime expression where Spatie's built-in `Optional::create()` factory reads clearer",
             "type": "flag",
             "default": "true",
@@ -1686,7 +1095,7 @@
             "detail": true
         },
         "sin_data-to-array-roundtrip": {
-            "title": "DataToArrayRoundtrip",
+            "title": "data-to-array-roundtrip",
             "help": "A `X::from(...)->toArray()` sits in a `::from` slot typed `X` that re-hydrates it — build → array → build",
             "type": "flag",
             "default": "true",
@@ -1712,7 +1121,7 @@
             "detail": true
         },
         "sin_hand-key-remap": {
-            "title": "HandKeyRemap",
+            "title": "hand-key-remap",
             "help": "A `::from([...])` mechanically renames `$src['snake_key']` → `camelKey` by hand, instead of a class-level `#[MapInputName]`",
             "type": "flag",
             "default": "true",
@@ -1725,7 +1134,7 @@
             "detail": true
         },
         "sin_redundant-enum-unwrap": {
-            "title": "RedundantEnumUnwrap",
+            "title": "redundant-enum-unwrap",
             "help": "An enum is unwrapped to `->value` at a hydration site (`'status' => $order->status->value`) where the property is typed as that enum — Spatie re-casts the scalar straight back to the enum",
             "type": "flag",
             "default": "true",
@@ -1738,7 +1147,7 @@
             "detail": true
         },
         "sin_redundant-native-cast": {
-            "title": "RedundantNativeCast",
+            "title": "redundant-native-cast",
             "help": "An enum / date is constructed at a hydration site (`Enum::from($x)`, `new DateTime($x)`) where the property auto-casts the raw scalar",
             "type": "flag",
             "default": "true",
@@ -1751,7 +1160,7 @@
             "detail": true
         },
         "sin_redundant-nested-from": {
-            "title": "RedundantNestedFrom",
+            "title": "redundant-nested-from",
             "help": "A nested `X::from([...])` fills a slot the parent `::from` already auto-hydrates from the array",
             "type": "flag",
             "default": "true",
@@ -1764,203 +1173,98 @@
             "detail": true
         },
         "sin_feature-envy": {
-            "title": "FeatureEnvy",
-            "help": "An operation reads several pieces of another local type",
+            "title": "feature-envy",
+            "help": "Exiled behaviour / feature envy — a method operating on ONE other owned object's internals that belongs ON that object",
             "type": "flag",
             "default": "true",
-            "group": "shared/arguments",
+            "group": "php/tell-dont-ask",
             "when": [
                 {
                     "language_php": true
-                },
-                {
-                    "language_vue": true
-                },
-                {
-                    "language_ts": true
-                },
-                {
-                    "language_py": true
-                },
-                {
-                    "language_cs": true
-                },
-                {
-                    "language_go": true
                 }
             ],
             "detail": true
         },
         "sin_guard-beside-transition": {
-            "title": "GuardBesideTransition",
-            "help": "A caller checks another object's state before telling it to act",
+            "title": "guard-beside-transition",
+            "help": "A caller checks an object's state against an enum case and throws, then tells that object to change: the rule sits outside the transition it guards",
             "type": "flag",
             "default": "true",
-            "group": "shared/dependencies",
+            "group": "php/tell-dont-ask",
             "when": [
                 {
                     "language_php": true
-                },
-                {
-                    "language_vue": true
-                },
-                {
-                    "language_ts": true
-                },
-                {
-                    "language_py": true
-                },
-                {
-                    "language_cs": true
-                },
-                {
-                    "language_go": true
                 }
             ],
             "detail": true
         },
         "sin_keyed-lookup-envy": {
-            "title": "KeyedLookupEnvy",
-            "help": "A routine looks up a value using a field of another local type",
+            "title": "keyed-lookup-envy",
+            "help": "Indirect feature envy — a method that uses an owned object's IDENTITY as a key to look up a fact about it through a collaborator",
             "type": "flag",
             "default": "true",
-            "group": "shared/arguments",
+            "group": "php/tell-dont-ask",
             "when": [
                 {
                     "language_php": true
-                },
-                {
-                    "language_vue": true
-                },
-                {
-                    "language_ts": true
-                },
-                {
-                    "language_py": true
-                },
-                {
-                    "language_cs": true
-                },
-                {
-                    "language_go": true
                 }
             ],
             "detail": true
         },
         "sin_middle-man": {
-            "title": "MiddleMan",
-            "help": "A type forwards its methods to one field",
+            "title": "middle-man",
+            "help": "A class whose every public method only hands its arguments, unchanged, to the same field: it adds nothing between the caller and the object that does the work.",
             "type": "flag",
             "default": "true",
-            "group": "shared/dependencies",
+            "group": "php/tell-dont-ask",
             "when": [
                 {
                     "language_php": true
-                },
-                {
-                    "language_vue": true
-                },
-                {
-                    "language_ts": true
-                },
-                {
-                    "language_py": true
-                },
-                {
-                    "language_cs": true
-                },
-                {
-                    "language_go": true
                 }
             ],
             "detail": true
         },
         "sin_train-wreck": {
-            "title": "TrainWreck",
-            "help": "A chain reaches through three local types",
+            "title": "train-wreck",
+            "help": "`$order->customer()->address()->city()` — a chain crossing three of the project's own types, so a change three objects away reaches this caller",
             "type": "flag",
             "default": "true",
-            "group": "shared/dependencies",
+            "group": "php/tell-dont-ask",
             "when": [
                 {
                     "language_php": true
-                },
-                {
-                    "language_vue": true
-                },
-                {
-                    "language_ts": true
-                },
-                {
-                    "language_py": true
-                },
-                {
-                    "language_cs": true
-                },
-                {
-                    "language_go": true
                 }
             ],
             "detail": true
         },
         "sin_assembled-template": {
-            "title": "AssembledTemplate",
-            "help": "A multiline template is split into lines and joined",
+            "title": "assembled-template",
+            "help": "A multi-line template assembled as an array of line fragments and joined with a newline — the output is unreadable in the source that emits it",
             "type": "flag",
             "default": "true",
-            "group": "shared/arguments",
+            "group": "php/templates",
             "when": [
                 {
                     "language_php": true
-                },
-                {
-                    "language_vue": true
-                },
-                {
-                    "language_ts": true
-                },
-                {
-                    "language_py": true
-                },
-                {
-                    "language_cs": true
-                },
-                {
-                    "language_go": true
                 }
             ],
             "detail": true
         },
         "sin_filled-parameter": {
-            "title": "FilledParameter",
-            "help": "The caller reads the result from a parameter the function filled",
+            "title": "filled-parameter",
+            "help": "a `void` method that writes a property of an object it was handed, whose caller then reads what it handed over — the signature says the object goes in and nothing says it comes out changed",
             "type": "flag",
             "default": "true",
-            "group": "shared/arguments",
+            "group": "php/type-honesty",
             "when": [
                 {
                     "language_php": true
-                },
-                {
-                    "language_vue": true
-                },
-                {
-                    "language_ts": true
-                },
-                {
-                    "language_py": true
-                },
-                {
-                    "language_cs": true
-                },
-                {
-                    "language_go": true
                 }
             ],
             "detail": true
         },
         "sin_impossible-guard": {
-            "title": "ImpossibleGuard",
+            "title": "impossible-guard",
             "help": "`if ($order === null)` where `$order` is typed `Order`, with no `?` — one of the two is wrong, and both are worth knowing",
             "type": "flag",
             "default": "true",
@@ -1973,253 +1277,118 @@
             "detail": true
         },
         "sin_refused-bequest": {
-            "title": "RefusedBequest",
-            "help": "An override only throws",
+            "title": "refused-bequest",
+            "help": "A method that overrides or implements an inherited one only to throw: the class claims a contract it refuses to keep.",
             "type": "flag",
             "default": "true",
-            "group": "shared/dependencies",
+            "group": "php/type-honesty",
             "when": [
                 {
                     "language_php": true
-                },
-                {
-                    "language_vue": true
-                },
-                {
-                    "language_ts": true
-                },
-                {
-                    "language_py": true
-                },
-                {
-                    "language_cs": true
-                },
-                {
-                    "language_go": true
                 }
             ],
             "detail": true
         },
         "sin_scratch-state-restore": {
-            "title": "ScratchStateRestore",
-            "help": "A method saves a field, changes it, and restores it",
+            "title": "scratch-state-restore",
+            "help": "Scratch state on `$this` — a method that saves one of its own fields to a local and restores it (`$prev = $this->scope; … $this->scope = $prev`), the field really a per-call input",
             "type": "flag",
             "default": "true",
-            "group": "shared/arguments",
+            "group": "php/type-honesty",
             "when": [
                 {
                     "language_php": true
-                },
-                {
-                    "language_vue": true
-                },
-                {
-                    "language_ts": true
-                },
-                {
-                    "language_py": true
-                },
-                {
-                    "language_cs": true
-                },
-                {
-                    "language_go": true
                 }
             ],
             "detail": true
         },
         "sin_unused-parameter": {
-            "title": "UnusedParameter",
-            "help": "The function never reads a declared parameter",
+            "title": "unused-parameter",
+            "help": "A parameter of a method no subclass can override that its body never reads: every caller must pass a value nothing uses.",
             "type": "flag",
             "default": "true",
-            "group": "shared/arguments",
+            "group": "php/type-honesty",
             "when": [
                 {
                     "language_php": true
-                },
-                {
-                    "language_vue": true
-                },
-                {
-                    "language_ts": true
-                },
-                {
-                    "language_py": true
-                },
-                {
-                    "language_cs": true
-                },
-                {
-                    "language_go": true
                 }
             ],
             "detail": true
         },
         "sin_unused-private-member": {
-            "title": "UnusedPrivateMember",
-            "help": "A private member has no readers",
+            "title": "unused-private-member",
+            "help": "A private method nothing in its class calls, or a private property nothing in its class reads: dead code the class still carries.",
             "type": "flag",
             "default": "true",
-            "group": "shared/dependencies",
+            "group": "php/type-honesty",
             "when": [
                 {
                     "language_php": true
-                },
-                {
-                    "language_vue": true
-                },
-                {
-                    "language_ts": true
-                },
-                {
-                    "language_py": true
-                },
-                {
-                    "language_cs": true
-                },
-                {
-                    "language_go": true
                 }
             ],
             "detail": true
         },
         "sin_useless-property-hook": {
-            "title": "UselessPropertyHook",
-            "help": "A getter reads no state on its object",
+            "title": "useless-property-hook",
+            "help": "A `get` hook that reads nothing from `$this` — a stored property wearing computed syntax",
             "type": "flag",
             "default": "true",
-            "group": "shared/dependencies",
+            "group": "php/type-honesty",
             "when": [
                 {
                     "language_php": true
-                },
-                {
-                    "language_vue": true
-                },
-                {
-                    "language_ts": true
-                },
-                {
-                    "language_py": true
-                },
-                {
-                    "language_cs": true
-                },
-                {
-                    "language_go": true
                 }
             ],
             "detail": true
         },
         "sin_array-bag": {
-            "title": "ArrayBag",
-            "help": "A loose map is read through fixed keys",
+            "title": "array-bag",
+            "help": "String-indexing (`$arr['key']`) a structured array param instead of giving it a name — the type was never defined.",
             "type": "flag",
             "default": "true",
-            "group": "shared/arguments",
+            "group": "php/value-objects",
             "when": [
                 {
                     "language_php": true
-                },
-                {
-                    "language_vue": true
-                },
-                {
-                    "language_ts": true
-                },
-                {
-                    "language_py": true
-                },
-                {
-                    "language_cs": true
-                },
-                {
-                    "language_go": true
                 }
             ],
             "detail": true
         },
         "sin_array-bag-parameter": {
-            "title": "ArrayBagParameter",
-            "help": "Callers pass a loose map with the same fields",
+            "title": "array-bag-parameter",
+            "help": "A parameter declared `array` that callers fill with string-keyed records (`['mode' => …, 'plan' => …]`): the method never defined the type its fields belong to.",
             "type": "flag",
             "default": "true",
-            "group": "shared/arguments",
+            "group": "php/value-objects",
             "when": [
                 {
                     "language_php": true
-                },
-                {
-                    "language_vue": true
-                },
-                {
-                    "language_ts": true
-                },
-                {
-                    "language_py": true
-                },
-                {
-                    "language_cs": true
-                },
-                {
-                    "language_go": true
                 }
             ],
             "detail": true
         },
         "sin_array-return-bag": {
-            "title": "ArrayReturnBag",
-            "help": "A routine returns a loose map with fixed fields",
+            "title": "array-return-bag",
+            "help": "Returning a multi-field string-keyed array literal (a bag that should be a value object)",
             "type": "flag",
             "default": "true",
-            "group": "shared/arguments",
+            "group": "php/value-objects",
             "when": [
                 {
                     "language_php": true
-                },
-                {
-                    "language_vue": true
-                },
-                {
-                    "language_ts": true
-                },
-                {
-                    "language_py": true
-                },
-                {
-                    "language_cs": true
-                },
-                {
-                    "language_go": true
                 }
             ],
             "detail": true
         },
         "sin_coupled-fields": {
-            "title": "CoupledFields",
-            "help": "An operation changes and checks the same fields together",
+            "title": "coupled-fields",
+            "help": "A class's own fields always change and get checked together — one concept split across several fields — and should be folded into a single value object.",
             "type": "flag",
             "default": "true",
-            "group": "shared/arguments",
+            "group": "php/value-objects",
             "when": [
                 {
                     "language_php": true
-                },
-                {
-                    "language_vue": true
-                },
-                {
-                    "language_ts": true
-                },
-                {
-                    "language_py": true
-                },
-                {
-                    "language_cs": true
-                },
-                {
-                    "language_go": true
                 }
             ],
             "detail": true
@@ -2238,195 +1407,46 @@
             "detail": true
         },
         "sin_hand-rolled-wither": {
-            "title": "HandRolledWither",
-            "help": "A wither repeats fields from its type's constructor",
+            "title": "hand-rolled-wither",
+            "help": "A wither method rebuilds the whole object by re-listing every constructor field, so adding a new field means updating every wither in the class.",
             "type": "flag",
             "default": "true",
-            "group": "shared/arguments",
+            "group": "php/value-objects",
             "when": [
                 {
                     "language_php": true
-                },
-                {
-                    "language_vue": true
-                },
-                {
-                    "language_ts": true
-                },
-                {
-                    "language_py": true
-                },
-                {
-                    "language_cs": true
-                },
-                {
-                    "language_go": true
                 }
             ],
             "detail": true
         },
         "sin_mutable-value-object": {
-            "title": "MutableValueObject",
-            "help": "A value type changes a field after construction",
+            "title": "mutable-value-object",
+            "help": "A value type that mutates its own field after construction, so two things holding what should be the same value can end up different — one changes without the other knowing.",
             "type": "flag",
             "default": "true",
-            "group": "shared/arguments",
+            "group": "php/value-objects",
             "when": [
                 {
                     "language_php": true
-                },
-                {
-                    "language_vue": true
-                },
-                {
-                    "language_ts": true
-                },
-                {
-                    "language_py": true
-                },
-                {
-                    "language_cs": true
-                },
-                {
-                    "language_go": true
                 }
             ],
             "detail": true
         },
         "sin_positional-tuple-return": {
-            "title": "PositionalTupleReturn",
-            "help": "A return tuple has interchangeable unnamed slots",
+            "title": "positional-tuple-return",
+            "help": "Returning a positional TUPLE — `return [$node, $key, $inputs, $outputs]` — bundling independent values as a keyless list the caller destructures by position",
             "type": "flag",
             "default": "true",
-            "group": "shared/arguments",
+            "group": "php/value-objects",
             "when": [
                 {
                     "language_php": true
-                },
-                {
-                    "language_vue": true
-                },
-                {
-                    "language_ts": true
-                },
-                {
-                    "language_py": true
-                },
-                {
-                    "language_cs": true
-                },
-                {
-                    "language_go": true
-                }
-            ],
-            "detail": true
-        },
-        "sin_python-flag-argument": {
-            "title": "FlagArgument",
-            "help": "a function whose whole body branches on a `bool` parameter — or on whether an optional one was given — two functions sharing one name",
-            "type": "flag",
-            "default": "true",
-            "group": "python/behaviour-per-method",
-            "when": [
-                {
-                    "language_py": true
-                }
-            ],
-            "detail": true
-        },
-        "sin_python-member-after-method": {
-            "title": "MemberAfterMethod",
-            "help": "a constant, class attribute or field declared below a method — the class's state hidden among its behaviour",
-            "type": "flag",
-            "default": "true",
-            "group": "python/class-layout",
-            "when": [
-                {
-                    "language_py": true
-                }
-            ],
-            "detail": true
-        },
-        "sin_python-member-out-of-order": {
-            "title": "MemberOutOfOrder",
-            "help": "a constant declared below a field in the head of a class — the inventory read in an ad-hoc order",
-            "type": "flag",
-            "default": "true",
-            "group": "python/class-layout",
-            "when": [
-                {
-                    "language_py": true
-                }
-            ],
-            "detail": true
-        },
-        "sin_python-namespace-cycle": {
-            "title": "NamespaceCycle",
-            "help": "two of the project's packages import each other — a cycle that makes them one package split under two names.",
-            "type": "flag",
-            "default": "true",
-            "group": "python/dependency-direction",
-            "when": [
-                {
-                    "language_py": true
-                }
-            ],
-            "detail": true
-        },
-        "sin_python-namespace-dependency": {
-            "title": "NamespaceDependency",
-            "help": "an import out of a declared layer into a package that layer did not declare it may use",
-            "type": "flag",
-            "default": "true",
-            "group": "python/dependency-direction",
-            "when": [
-                {
-                    "language_py": true
-                }
-            ],
-            "detail": true
-        },
-        "sin_python-constant-class-enum": {
-            "title": "ConstantClassEnum",
-            "help": "a class that is nothing but `PENDING = \"pending\"` constants — a closed set of values written out by hand instead of an `Enum`",
-            "type": "flag",
-            "default": "true",
-            "group": "python/enums",
-            "when": [
-                {
-                    "language_py": true
-                }
-            ],
-            "detail": true
-        },
-        "sin_python-enum-value-match": {
-            "title": "EnumValueMatch",
-            "help": "`match status.value: case \"paid\": …` at a call site — the enum's raw values matched again where the enum could answer",
-            "type": "flag",
-            "default": "true",
-            "group": "python/enums",
-            "when": [
-                {
-                    "language_py": true
-                }
-            ],
-            "detail": true
-        },
-        "sin_python-match-wildcard-returns-none": {
-            "title": "MatchWildcardReturnsNone",
-            "help": "a `match` over an enum's members whose `case _:` returns `None` — a member nobody handled answers nothing instead of failing",
-            "type": "flag",
-            "default": "true",
-            "group": "python/enums",
-            "when": [
-                {
-                    "language_py": true
                 }
             ],
             "detail": true
         },
         "sin_python-blocked-await": {
-            "title": "BlockedAwait",
+            "title": "python-blocked-await",
             "help": "`time.sleep`, `requests.get` or `subprocess.run` inside an `async def` — the thread it stops is the event loop, so every coroutine waiting on it stops too",
             "type": "flag",
             "default": "true",
@@ -2438,21 +1458,8 @@
             ],
             "detail": true
         },
-        "sin_python-constructor-side-effect": {
-            "title": "ConstructorSideEffect",
-            "help": "an `__init__` that tells a collaborator to act and throws the answer away — merely building the object has an effect outside it.",
-            "type": "flag",
-            "default": "true",
-            "group": "python/fix-at-the-source",
-            "when": [
-                {
-                    "language_py": true
-                }
-            ],
-            "detail": true
-        },
         "sin_python-frozen-default": {
-            "title": "FrozenDefault",
+            "title": "python-frozen-default",
             "help": "a parameter defaulted to `datetime.now()`, `uuid4()` or another call that answers differently each time — it runs once when the def is defined, so every call that omits it gets the moment the module was imported",
             "type": "flag",
             "default": "true",
@@ -2465,7 +1472,7 @@
             "detail": true
         },
         "sin_python-mutable-default": {
-            "title": "MutableDefault",
+            "title": "python-mutable-default",
             "help": "a parameter defaulted to a `[]`, `{}` or `set()` — one container, made once, shared by every call that omits it",
             "type": "flag",
             "default": "true",
@@ -2477,164 +1484,8 @@
             ],
             "detail": true
         },
-        "sin_python-mutable-static-state": {
-            "title": "MutableStaticState",
-            "help": "a `global` written from a function, or a class attribute set from a method — state no instance owns, changed by whoever ran last",
-            "type": "flag",
-            "default": "true",
-            "group": "python/fix-at-the-source",
-            "when": [
-                {
-                    "language_py": true
-                }
-            ],
-            "detail": true
-        },
-        "sin_python-unread-collaborator": {
-            "title": "UnreadCollaborator",
-            "help": "a collaborator `__init__` keeps as an attribute of its own, `self._mailer = mailer`, that nothing anywhere reads — the class asks for something it does not use",
-            "type": "flag",
-            "default": "true",
-            "group": "python/fix-at-the-source",
-            "when": [
-                {
-                    "language_py": true
-                }
-            ],
-            "detail": true
-        },
-        "sin_python-collection-mutated-while-iterated": {
-            "title": "CollectionMutatedWhileIterated",
-            "help": "a loop that appends to, removes from or deletes out of the very collection it walks — the iterator reads a sequence that moved under it, so an element is skipped or it raises",
-            "type": "flag",
-            "default": "true",
-            "group": "python/flow",
-            "when": [
-                {
-                    "language_py": true
-                }
-            ],
-            "detail": true
-        },
-        "sin_python-bare-state-predicate": {
-            "title": "BareStatePredicate",
-            "help": "a `bool` about the object's own state named as a bare verb — `binds()`, `spins` — where a question belongs",
-            "type": "flag",
-            "default": "true",
-            "group": "python/method-mood",
-            "when": [
-                {
-                    "language_py": true
-                }
-            ],
-            "detail": true
-        },
-        "sin_python-narrated-command": {
-            "title": "NarratedCommand",
-            "help": "a command named in the third person — `hides()`, `locks_for_night()` — where a call is an order, not a description of one",
-            "type": "flag",
-            "default": "true",
-            "group": "python/method-mood",
-            "when": [
-                {
-                    "language_py": true
-                }
-            ],
-            "detail": true
-        },
-        "sin_python-computed-boolean-argument": {
-            "title": "ComputedBooleanArgument",
-            "help": "a method taking only bools that every caller computes from the same object — the decision re-derived at each call site",
-            "type": "flag",
-            "default": "true",
-            "group": "python/pass-the-object",
-            "when": [
-                {
-                    "language_py": true
-                }
-            ],
-            "detail": true
-        },
-        "sin_python-derived-argument": {
-            "title": "DerivedArgument",
-            "help": "a call that hands over an object and a projection of it — `persist(request, request.channel_id)` — or an object in three pieces, where the function could read them itself",
-            "type": "flag",
-            "default": "true",
-            "group": "python/pass-the-object",
-            "when": [
-                {
-                    "language_py": true
-                }
-            ],
-            "detail": true
-        },
-        "sin_python-param-resolved-from-param": {
-            "title": "ParamResolvedFromParam",
-            "help": "a function that takes a container and a key and first resolves one against the other — `def rename(workflow, node_id)` doing `workflow.graph.node(node_id)` — when it only wanted what the key names",
-            "type": "flag",
-            "default": "true",
-            "group": "python/pass-the-object",
-            "when": [
-                {
-                    "language_py": true
-                }
-            ],
-            "detail": true
-        },
-        "sin_python-repeated-named-call": {
-            "title": "RepeatedNamedCall",
-            "help": "the same `**changes` call is built the same way with the same keyword at 2+ sites — an operation that has no name on the type it belongs to.",
-            "type": "flag",
-            "default": "true",
-            "group": "python/repeated-call-helper",
-            "when": [
-                {
-                    "language_py": true
-                }
-            ],
-            "detail": true
-        },
-        "sin_python-feature-envy": {
-            "title": "FeatureEnvy",
-            "help": "a method that loops another object's collection or writes its fields, reaching into it more than into its own state — behaviour exiled from the object it works on",
-            "type": "flag",
-            "default": "true",
-            "group": "python/tell-dont-ask",
-            "when": [
-                {
-                    "language_py": true
-                }
-            ],
-            "detail": true
-        },
-        "sin_python-keyed-lookup-envy": {
-            "title": "KeyedLookupEnvy",
-            "help": "a method that uses an object's key to fetch a fact about it through a collaborator — `self.registry.get(node.key).reserved` — treating the object as a key into its own data",
-            "type": "flag",
-            "default": "true",
-            "group": "python/tell-dont-ask",
-            "when": [
-                {
-                    "language_py": true
-                }
-            ],
-            "detail": true
-        },
-        "sin_python-assembled-template": {
-            "title": "AssembledTemplate",
-            "help": "a multi-line string built as a list of line fragments and `\"\\n\".join(...)`-ed, instead of a triple-quoted f-string that shows its output",
-            "type": "flag",
-            "default": "true",
-            "group": "python/templates",
-            "when": [
-                {
-                    "language_py": true
-                }
-            ],
-            "detail": true
-        },
         "sin_python-constant-property": {
-            "title": "ConstantProperty",
+            "title": "python-constant-property",
             "help": "an `@property` whose body never reads `self` — `return \"box\"` — a stored value made to look like a computed one.",
             "type": "flag",
             "default": "true",
@@ -2646,138 +1497,8 @@
             ],
             "detail": true
         },
-        "sin_python-filled-parameter": {
-            "title": "FilledParameter",
-            "help": "a def returning `None` that writes an attribute of an object it was handed, whose caller then reads what it handed over — the signature says the object goes in and nothing says it comes out changed",
-            "type": "flag",
-            "default": "true",
-            "group": "python/type-honesty",
-            "when": [
-                {
-                    "language_py": true
-                }
-            ],
-            "detail": true
-        },
-        "sin_python-impossible-guard": {
-            "title": "ImpossibleGuard",
-            "help": "`if order is None` where `order` is annotated as a class with no `| None` — one of the two is wrong, and both are worth knowing",
-            "type": "flag",
-            "default": "true",
-            "group": "python/type-honesty",
-            "when": [
-                {
-                    "language_py": true
-                }
-            ],
-            "detail": true
-        },
-        "sin_python-scratch-state-restore": {
-            "title": "ScratchStateRestore",
-            "help": "`previous = self.scope … self.scope = previous` — an attribute used as per-call scratch, saved and restored around the call",
-            "type": "flag",
-            "default": "true",
-            "group": "python/type-honesty",
-            "when": [
-                {
-                    "language_py": true
-                }
-            ],
-            "detail": true
-        },
-        "sin_python-coupled-fields": {
-            "title": "CoupledFields",
-            "help": "a class whose own fields always travel together — assembled into one value again and again, guarded together, or one copying a sibling field's value — one concept held as several fields.",
-            "type": "flag",
-            "default": "true",
-            "group": "python/value-objects",
-            "when": [
-                {
-                    "language_py": true
-                }
-            ],
-            "detail": true
-        },
-        "sin_python-dict-bag": {
-            "title": "DictBag",
-            "help": "A parameter typed as a dict read by string keys — `row[\"sku\"]`, `row.get(\"quantity\")` — a record nobody declared",
-            "type": "flag",
-            "default": "true",
-            "group": "python/value-objects",
-            "when": [
-                {
-                    "language_py": true
-                }
-            ],
-            "detail": true
-        },
-        "sin_python-dict-return-bag": {
-            "title": "DictReturnBag",
-            "help": "`return {\"total\": …, \"tax\": …}` — a record of several fields handed back as a dict its callers read by string key",
-            "type": "flag",
-            "default": "true",
-            "group": "python/value-objects",
-            "when": [
-                {
-                    "language_py": true
-                }
-            ],
-            "detail": true
-        },
-        "sin_python-hand-rolled-replace": {
-            "title": "HandRolledReplace",
-            "help": "`return Order(self.number, self.lines, self.note, \"paid\")` in a dataclass — every field re-listed to change one",
-            "type": "flag",
-            "default": "true",
-            "group": "python/value-objects",
-            "when": [
-                {
-                    "language_py": true
-                }
-            ],
-            "detail": true
-        },
-        "sin_python-handed-out-collection": {
-            "title": "HandedOutCollection",
-            "help": "a getter whose whole body returns the class's own `list`, `dict` or `set`, untouched — every caller holds the insides and may add to or take from them without the class knowing",
-            "type": "flag",
-            "default": "true",
-            "group": "python/value-objects",
-            "when": [
-                {
-                    "language_py": true
-                }
-            ],
-            "detail": true
-        },
-        "sin_python-mutable-value-object": {
-            "title": "MutableValueObject",
-            "help": "a dataclass whose own methods write the fields it was built from after construction — a value that changes under everyone holding it",
-            "type": "flag",
-            "default": "true",
-            "group": "python/value-objects",
-            "when": [
-                {
-                    "language_py": true
-                }
-            ],
-            "detail": true
-        },
-        "sin_python-positional-tuple-return": {
-            "title": "PositionalTupleReturn",
-            "help": "`return net, vat, currency` — a bundle of different things the caller must unpack by position, where a reordering breaks silently",
-            "type": "flag",
-            "default": "true",
-            "group": "python/value-objects",
-            "when": [
-                {
-                    "language_py": true
-                }
-            ],
-            "detail": true
-        },
         "sin_blank-string-default": {
-            "title": "BlankStringDefault",
+            "title": "blank-string-default",
             "help": "A blank string default stands for a missing required value",
             "type": "flag",
             "default": "true",
@@ -2805,7 +1526,7 @@
             "detail": true
         },
         "sin_cancelled-coalesce": {
-            "title": "CancelledCoalesce",
+            "title": "cancelled-coalesce",
             "help": "A fallback compared against the same value it falls back to (`(name ?? '') !== ''`, `(name or \"\") != \"\"`): missing and empty end up in one branch without saying so",
             "type": "flag",
             "default": "true",
@@ -2833,7 +1554,7 @@
             "detail": true
         },
         "sin_capability-probe-hub": {
-            "title": "CapabilityProbeHub",
+            "title": "capability-probe-hub",
             "help": "Several methods each ask the same field if it has a capability before using it",
             "type": "flag",
             "default": "true",
@@ -2861,7 +1582,7 @@
             "detail": true
         },
         "sin_coalesced-loop-subject": {
-            "title": "CoalescedLoopSubject",
+            "title": "coalesced-loop-subject",
             "help": "The loop header replaces a missing collection with an empty one",
             "type": "flag",
             "default": "true",
@@ -2889,7 +1610,7 @@
             "detail": true
         },
         "sin_conditional-array-spread": {
-            "title": "ConditionalArraySpread",
+            "title": "conditional-array-spread",
             "help": "A spread branch supplies an empty collection as a placeholder",
             "type": "flag",
             "default": "true",
@@ -2917,7 +1638,7 @@
             "detail": true
         },
         "sin_de-nulled-finder": {
-            "title": "DeNulledFinder",
+            "title": "de-nulled-finder",
             "help": "Every caller takes a nullable result as present",
             "type": "flag",
             "default": "true",
@@ -2945,7 +1666,7 @@
             "detail": true
         },
         "sin_manufactured-fake-fill": {
-            "title": "ManufacturedFakeFill",
+            "title": "manufactured-fake-fill",
             "help": "An empty scalar fills a slot that expects a meaningful value",
             "type": "flag",
             "default": "true",
@@ -2973,7 +1694,7 @@
             "detail": true
         },
         "sin_masked-invariant": {
-            "title": "MaskedInvariant",
+            "title": "masked-invariant",
             "help": "Masking an optional field behind a literal hides a value the design requires",
             "type": "flag",
             "default": "true",
@@ -3001,7 +1722,7 @@
             "detail": true
         },
         "sin_nullable-callback": {
-            "title": "NullableCallback",
+            "title": "nullable-callback",
             "help": "A callback is declared optional, checked for absence, and then invoked",
             "type": "flag",
             "default": "true",
@@ -3029,7 +1750,7 @@
             "detail": true
         },
         "sin_nullable-registry-lookup": {
-            "title": "NullableRegistryLookup",
+            "title": "nullable-registry-lookup",
             "help": "A keyed store returns absence on a miss",
             "type": "flag",
             "default": "true",
@@ -3057,7 +1778,7 @@
             "detail": true
         },
         "sin_phantom-nullable": {
-            "title": "PhantomNullable",
+            "title": "phantom-nullable",
             "help": "Every dereference assumes the declared optional value is present",
             "type": "flag",
             "default": "true",
@@ -3085,7 +1806,7 @@
             "detail": true
         },
         "sin_placeholder-filled-data": {
-            "title": "PlaceholderFilledData",
+            "title": "placeholder-filled-data",
             "help": "A blank string fills a required string field in a data type",
             "type": "flag",
             "default": "true",
@@ -3113,7 +1834,7 @@
             "detail": true
         },
         "sin_raw-decoded-array-return": {
-            "title": "RawDecodedArrayReturn",
+            "title": "raw-decoded-array-return",
             "help": "A function returns decoded data before checking and giving it a type",
             "type": "flag",
             "default": "true",
@@ -3141,7 +1862,7 @@
             "detail": true
         },
         "sin_data-clump": {
-            "title": "DataClump",
+            "title": "data-clump",
             "help": "The same group of scalar parameters appears on different types",
             "type": "flag",
             "default": "true",
@@ -3169,7 +1890,7 @@
             "detail": true
         },
         "sin_match-default-returns-null": {
-            "title": "MatchDefaultReturnsNull",
+            "title": "match-default-returns-null",
             "help": "The default arm silently returns an absent value",
             "type": "flag",
             "default": "true",
@@ -3197,7 +1918,7 @@
             "detail": true
         },
         "sin_redundant-arrow-return-type": {
-            "title": "RedundantArrowReturnType",
+            "title": "redundant-arrow-return-type",
             "help": "An arrow repeats the type already inferred from its expression",
             "type": "flag",
             "default": "true",
@@ -3225,7 +1946,7 @@
             "detail": true
         },
         "sin_concrete-cross-module-dependency": {
-            "title": "ConcreteCrossModuleDependency",
+            "title": "concrete-cross-module-dependency",
             "help": "A constructor takes another module's concrete service",
             "type": "flag",
             "default": "true",
@@ -3281,7 +2002,7 @@
             "detail": true
         },
         "sin_lone-implementer-interface": {
-            "title": "LoneImplementerInterface",
+            "title": "lone-implementer-interface",
             "help": "An interface has only one local implementation",
             "type": "flag",
             "default": "true",
@@ -3308,8 +2029,36 @@
             ],
             "detail": true
         },
+        "sin_namespace-cycle": {
+            "title": "namespace-cycle",
+            "help": "Two independent modules import each other",
+            "type": "flag",
+            "default": "true",
+            "group": "shared/dependencies",
+            "when": [
+                {
+                    "language_php": true
+                },
+                {
+                    "language_vue": true
+                },
+                {
+                    "language_ts": true
+                },
+                {
+                    "language_py": true
+                },
+                {
+                    "language_cs": true
+                },
+                {
+                    "language_go": true
+                }
+            ],
+            "detail": true
+        },
         "sin_undeclared-member": {
-            "title": "UndeclaredMember",
+            "title": "undeclared-member",
             "help": "A member access the receiver's declared type neither declares nor inherits",
             "type": "flag",
             "default": "true",
@@ -3337,7 +2086,7 @@
             "detail": true
         },
         "sin_archaeology-comment": {
-            "title": "ArchaeologyComment",
+            "title": "archaeology-comment",
             "help": "A comment narrates the history of the code",
             "type": "flag",
             "default": "true",
@@ -3365,7 +2114,7 @@
             "detail": true
         },
         "sin_bloated-docblock": {
-            "title": "BloatedDocblock",
+            "title": "bloated-docblock",
             "help": "A type has several paragraphs of description",
             "type": "flag",
             "default": "true",
@@ -3393,7 +2142,7 @@
             "detail": true
         },
         "sin_ceremony-docblock": {
-            "title": "CeremonyDocblock",
+            "title": "ceremony-docblock",
             "help": "A doc comment repeats the function signature",
             "type": "flag",
             "default": "true",
@@ -3421,7 +2170,7 @@
             "detail": true
         },
         "sin_dangling-doc-reference": {
-            "title": "DanglingDocReference",
+            "title": "dangling-doc-reference",
             "help": "A document reference points at a declaration the project does not have",
             "type": "flag",
             "default": "true",
@@ -3449,7 +2198,7 @@
             "detail": true
         },
         "sin_negative-space-comment": {
-            "title": "NegativeSpaceComment",
+            "title": "negative-space-comment",
             "help": "A comment defends the code against an assumption the reader has no reason to make",
             "type": "flag",
             "default": "true",
@@ -3477,7 +2226,7 @@
             "detail": true
         },
         "sin_restated-comment": {
-            "title": "RestatedComment",
+            "title": "restated-comment",
             "help": "A comment repeats the words of the statement it documents",
             "type": "flag",
             "default": "true",
@@ -3505,7 +2254,7 @@
             "detail": true
         },
         "sin_stacked-docblock": {
-            "title": "StackedDocblock",
+            "title": "stacked-docblock",
             "help": "Several doc comments describe one declaration",
             "type": "flag",
             "default": "true",
@@ -3533,7 +2282,7 @@
             "detail": true
         },
         "sin_converted-argument": {
-            "title": "ConvertedArgument",
+            "title": "converted-argument",
             "help": "Most callers convert a value the same way for one parameter",
             "type": "flag",
             "default": "true",
@@ -3589,7 +2338,7 @@
             "detail": true
         },
         "sin_duplicate-function": {
-            "title": "DuplicateFunction",
+            "title": "duplicate-function",
             "help": "Two functions repeat the same body",
             "type": "flag",
             "default": "true",
@@ -3645,7 +2394,7 @@
             "detail": true
         },
         "sin_near-duplicate-function": {
-            "title": "NearDuplicateFunction",
+            "title": "near-duplicate-function",
             "help": "Two functions run the same code with different names or data",
             "type": "flag",
             "default": "true",
@@ -3701,7 +2450,7 @@
             "detail": true
         },
         "sin_repeated-guard": {
-            "title": "RepeatedGuard",
+            "title": "repeated-guard",
             "help": "A compound condition about an object is written out at more than one site",
             "type": "flag",
             "default": "true",
@@ -3729,7 +2478,7 @@
             "detail": true
         },
         "sin_repeated-type-guard": {
-            "title": "RepeatedTypeGuard",
+            "title": "repeated-type-guard",
             "help": "The same compound type check is written out at more than one site",
             "type": "flag",
             "default": "true",
@@ -3757,7 +2506,7 @@
             "detail": true
         },
         "sin_unnamed-vocabulary-literal": {
-            "title": "UnnamedVocabularyLiteral",
+            "title": "unnamed-vocabulary-literal",
             "help": "A string literal fills a parameter that already has a named constant for that value",
             "type": "flag",
             "default": "true",
@@ -3785,7 +2534,7 @@
             "detail": true
         },
         "sin_const-class-enum": {
-            "title": "ConstClassEnum",
+            "title": "const-class-enum",
             "help": "A class of constants defines a closed set of cases",
             "type": "flag",
             "default": "true",
@@ -3813,7 +2562,7 @@
             "detail": true
         },
         "sin_enum-case-or-chain": {
-            "title": "EnumCaseOrChain",
+            "title": "enum-case-or-chain",
             "help": "An or-chain asks about several cases of one enum",
             "type": "flag",
             "default": "true",
@@ -3841,7 +2590,7 @@
             "detail": true
         },
         "sin_in-array-mirrors-enum": {
-            "title": "InArrayMirrorsEnum",
+            "title": "in-array-mirrors-enum",
             "help": "A literal membership check repeats declared enum values",
             "type": "flag",
             "default": "true",
@@ -3897,7 +2646,7 @@
             "detail": true
         },
         "sin_string-match-mirrors-enum": {
-            "title": "StringMatchMirrorsEnum",
+            "title": "string-match-mirrors-enum",
             "help": "A switch repeats literal values already declared as cases",
             "type": "flag",
             "default": "true",
@@ -3925,7 +2674,7 @@
             "detail": true
         },
         "sin_type-switch": {
-            "title": "TypeSwitch",
+            "title": "type-switch",
             "help": "Dispatch branches test the same value against several concrete types",
             "type": "flag",
             "default": "true",
@@ -3953,7 +2702,7 @@
             "detail": true
         },
         "sin_generic-exception": {
-            "title": "GenericException",
+            "title": "generic-exception",
             "help": "A throw of the language's catch-all failure (`Exception`, `RuntimeException`, `Error`, `RuntimeError`) instead of a named one",
             "type": "flag",
             "default": "true",
@@ -3981,7 +2730,7 @@
             "detail": true
         },
         "sin_message-at-throw": {
-            "title": "MessageAtThrow",
+            "title": "message-at-throw",
             "help": "A failure's message written as a string at the throw, not by a named constructor given the values involved",
             "type": "flag",
             "default": "true",
@@ -4009,7 +2758,7 @@
             "detail": true
         },
         "sin_rethrown-unchanged": {
-            "title": "RethrownUnchanged",
+            "title": "rethrown-unchanged",
             "help": "A `catch` whose whole body throws back the failure it caught: it adds nothing, which is what writing no clause does",
             "type": "flag",
             "default": "true",
@@ -4037,7 +2786,7 @@
             "detail": true
         },
         "sin_swallow-catch": {
-            "title": "SwallowCatch",
+            "title": "swallow-catch",
             "help": "A `catch` whose body is empty, or only returns `null`/`false`/an empty value or moves on: the failure becomes something that looks like an answer",
             "type": "flag",
             "default": "true",
@@ -4065,7 +2814,7 @@
             "detail": true
         },
         "sin_wrapping-without-cause": {
-            "title": "WrappingWithoutCause",
+            "title": "wrapping-without-cause",
             "help": "A new failure thrown inside a `catch` without the caught one as its cause: the trace of where it started is lost",
             "type": "flag",
             "default": "true",
@@ -4092,8 +2841,36 @@
             ],
             "detail": true
         },
+        "sin_collection-mutated-while-iterated": {
+            "title": "collection-mutated-while-iterated",
+            "help": "a `foreach` that adds to or removes from the very collection it walks — the enumerator reads a collection that moved under it, which throws InvalidOperationException",
+            "type": "flag",
+            "default": "true",
+            "group": "shared/flow",
+            "when": [
+                {
+                    "language_php": true
+                },
+                {
+                    "language_vue": true
+                },
+                {
+                    "language_ts": true
+                },
+                {
+                    "language_py": true
+                },
+                {
+                    "language_cs": true
+                },
+                {
+                    "language_go": true
+                }
+            ],
+            "detail": true
+        },
         "sin_deep-nesting": {
-            "title": "DeepNesting",
+            "title": "deep-nesting",
             "help": "A decision sits deep inside other decisions in one function",
             "type": "flag",
             "default": "true",
@@ -4121,7 +2898,7 @@
             "detail": true
         },
         "sin_duplicated-branch-tail": {
-            "title": "DuplicatedBranchTail",
+            "title": "duplicated-branch-tail",
             "help": "Every branch of an `if`/`else` ends with the same statement: it runs whichever way the condition goes.",
             "type": "flag",
             "default": "true",
@@ -4149,7 +2926,7 @@
             "detail": true
         },
         "sin_loop-inverted-guard": {
-            "title": "LoopInvertedGuard",
+            "title": "loop-inverted-guard",
             "help": "A loop whose whole body is one `if` (no `else`) around real work: the iteration pushed a level deep behind a condition",
             "type": "flag",
             "default": "true",
@@ -4177,7 +2954,7 @@
             "detail": true
         },
         "sin_nested-ternary": {
-            "title": "NestedTernary",
+            "title": "nested-ternary",
             "help": "A conditional expression (`a ? b : c`, `b if a else c`) with another inside it: several decisions folded into one expression",
             "type": "flag",
             "default": "true",
@@ -4205,7 +2982,7 @@
             "detail": true
         },
         "sin_non-counting-for": {
-            "title": "NonCountingFor",
+            "title": "non-counting-for",
             "help": "A `for` loop whose step assigns the next item instead of moving a counter: a walk written as a count",
             "type": "flag",
             "default": "true",
@@ -4233,7 +3010,7 @@
             "detail": true
         },
         "sin_reassigned-parameter": {
-            "title": "ReassignedParameter",
+            "title": "reassigned-parameter",
             "help": "A parameter overwritten inside its function, so one name holds the value the caller passed and later a different one.",
             "type": "flag",
             "default": "true",
@@ -4261,7 +3038,7 @@
             "detail": true
         },
         "sin_redundant-else": {
-            "title": "RedundantElse",
+            "title": "redundant-else",
             "help": "An `else` after an `if` branch that already left (it returns, throws, breaks or continues): it indents the rest for nothing",
             "type": "flag",
             "default": "true",
@@ -4289,7 +3066,7 @@
             "detail": true
         },
         "sin_short-circuit-statement": {
-            "title": "ShortCircuitStatement",
+            "title": "short-circuit-statement",
             "help": "A bare `a && b()` or `a || b()` statement: a short-circuit whose value nothing reads, so the operator is an `if` in disguise",
             "type": "flag",
             "default": "true",
@@ -4317,7 +3094,7 @@
             "detail": true
         },
         "sin_subject-ladder": {
-            "title": "SubjectLadder",
+            "title": "subject-ladder",
             "help": "An `if`/`else if` chain of four or more rungs that each test the same subject for equality with a constant: a dispatch written as a ladder",
             "type": "flag",
             "default": "true",
@@ -4345,7 +3122,7 @@
             "detail": true
         },
         "sin_ternary-statement": {
-            "title": "TernaryStatement",
+            "title": "ternary-statement",
             "help": "A bare conditional expression as a statement (`cond ? doThis() : doThat()`): its value is never read, so it chooses an action, not a value",
             "type": "flag",
             "default": "true",
@@ -4373,7 +3150,7 @@
             "detail": true
         },
         "sin_unnamed-condition": {
-            "title": "UnnamedCondition",
+            "title": "unnamed-condition",
             "help": "A condition of three or more parts over two or more objects whose decision has no name",
             "type": "flag",
             "default": "true",
@@ -4401,8 +3178,8 @@
             "detail": true
         },
         "sin_unreachable-statement": {
-            "title": "UnreachableStatement",
-            "help": "A statement after a return, throw, break or continue in the same block: it can never run.",
+            "title": "unreachable-statement",
+            "help": "A statement after one that never completes (a return, throw, break or continue, an if whose every arm leaves, a loop that never ends): it can never run.",
             "type": "flag",
             "default": "true",
             "group": "shared/flow",
@@ -4429,7 +3206,7 @@
             "detail": true
         },
         "sin_defended-certain-field": {
-            "title": "DefendedCertainField",
+            "title": "defended-certain-field",
             "help": "An `?.` on a field the class declares as always present — a defence against a case the type says cannot happen, so the code doubts something the design already rules out.",
             "type": "flag",
             "default": "true",
@@ -4442,7 +3219,7 @@
             "detail": true
         },
         "sin_falsely-optional-field": {
-            "title": "FalselyOptionalField",
+            "title": "falsely-optional-field",
             "help": "A field declared optional (`x?: T`, `T | null`) that is initialised where it is declared — it is never absent, and every `?.` and `??` downstream defends a case that cannot happen",
             "type": "flag",
             "default": "true",
@@ -4450,22 +3227,6 @@
             "when": [
                 {
                     "language_ts": true
-                }
-            ],
-            "detail": true
-        },
-        "sin_typescript-collection-mutated-while-iterated": {
-            "title": "CollectionMutatedWhileIterated",
-            "help": "a `for…of` or `forEach` that splices, shifts, sorts or pops the very array it walks — every element after the change has moved, so the walk skips one or reads one twice",
-            "type": "flag",
-            "default": "true",
-            "group": "typescript/flow",
-            "when": [
-                {
-                    "language_ts": true
-                },
-                {
-                    "language_vue": true
                 }
             ],
             "detail": true
@@ -4503,7 +3264,7 @@
             "detail": true
         },
         "sin_raw-fetch-in-component": {
-            "title": "RawFetchInComponent",
+            "title": "raw-fetch-in-component",
             "help": "A Vue component calls the global `fetch` itself instead of the one client module",
             "type": "flag",
             "default": "true",
@@ -4519,7 +3280,7 @@
             "detail": true
         },
         "sin_compound-inline-component": {
-            "title": "CompoundInlineComponent",
+            "title": "compound-inline-component",
             "help": "A compound primitive (`Dialog`/`Card`/`Sheet`/`Tabs`…) assembled inline with a substantial body — extract it into its own named component.",
             "type": "flag",
             "default": "true",
@@ -4558,7 +3319,7 @@
             "detail": true
         },
         "sin_duplicate-element": {
-            "title": "DuplicateElement",
+            "title": "duplicate-element",
             "help": "Identical markup (3+ elements) repeated 2+ times — within a template or across components — extract one component",
             "type": "flag",
             "default": "true",
@@ -4571,7 +3332,7 @@
             "detail": true
         },
         "sin_inline-case-views": {
-            "title": "InlineCaseViews",
+            "title": "inline-case-views",
             "help": "A dispatch whose cases each render a whole view inline — one component doing a job per case",
             "type": "flag",
             "default": "true",
@@ -4584,7 +3345,7 @@
             "detail": true
         },
         "sin_near-duplicate-element": {
-            "title": "NearDuplicateElement",
+            "title": "near-duplicate-element",
             "help": "Markup with one skeleton repeated 2+ times — the same tags, attributes and nesting binding different data — within a template, across components, or as two components' whole templates",
             "type": "flag",
             "default": "true",
@@ -4597,7 +3358,7 @@
             "detail": true
         },
         "sin_oversized-component": {
-            "title": "OversizedComponent",
+            "title": "oversized-component",
             "help": "A component whose template renders more elements than the project's declared budget — one component doing several jobs",
             "type": "flag",
             "default": "true",
@@ -4636,7 +3397,7 @@
             "detail": true
         },
         "sin_control-flow-on-element": {
-            "title": "ControlFlowOnElement",
+            "title": "control-flow-on-element",
             "help": "`v-if`/`v-for`/`v-else`/`v-else-if` on an HTML/component tag instead of a `<template>`",
             "type": "flag",
             "default": "true",
@@ -4649,7 +3410,7 @@
             "detail": true
         },
         "sin_index-as-key": {
-            "title": "IndexAsKey",
+            "title": "index-as-key",
             "help": "`:key` bound to the `v-for` index — a positional key corrupts state when the list reorders or an item is inserted",
             "type": "flag",
             "default": "true",
@@ -4662,7 +3423,7 @@
             "detail": true
         },
         "sin_loop-with-condition": {
-            "title": "LoopWithCondition",
+            "title": "loop-with-condition",
             "help": "`v-for` and `v-if`/`v-else-if` on the same element — the condition is re-evaluated every iteration.",
             "type": "flag",
             "default": "true",
@@ -4675,7 +3436,7 @@
             "detail": true
         },
         "sin_re-tested-switch-case": {
-            "title": "RetestedSwitchCase",
+            "title": "re-tested-switch-case",
             "help": "A `<SwitchCase>` case that tests again the value the `<SwitchCase>` already dispatched on",
             "type": "flag",
             "default": "true",
@@ -4688,7 +3449,7 @@
             "detail": true
         },
         "sin_switch-case": {
-            "title": "SwitchCase",
+            "title": "switch-case",
             "help": "A `v-if`/`v-else-if` chain re-testing the same subject (should be `<SwitchCase :value>`)",
             "type": "flag",
             "default": "true",
