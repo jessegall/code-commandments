@@ -10,12 +10,12 @@ import (
 func nullableFieldDeclarations(class engine.Match) []engine.Match {
 	var fields []engine.Match
 	for _, param := range ConstructorParams(class) {
-		if len(param.Node().Modifiers) > 0 && Written(param.Node().Declared).IsNullable() && phantomFieldName(param) != "" {
+		if len(param.Node().Modifiers) > 0 && Written(param.Node().Written).IsNullable() && phantomFieldName(param) != "" {
 			fields = append(fields, param)
 		}
 	}
 	for _, member := range (Node{Match: class}).ChildrenIn("stmts") {
-		if member.Kind() != "Stmt_Property" || !Written(member.Node().Declared).IsNullable() {
+		if member.Kind() != "Stmt_Property" || !Written(member.Node().Written).IsNullable() {
 			continue
 		}
 		fields = append(fields, (Node{Match: member}).ChildrenIn("props")...)

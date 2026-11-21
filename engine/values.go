@@ -12,7 +12,7 @@ func (m Match) LiteralKind() string {
 		return ""
 	}
 
-	return m.node.Literal
+	return m.node.LiteralKind
 }
 
 func (m Match) CodeWords() []string {

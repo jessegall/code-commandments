@@ -21,7 +21,7 @@ func (n Node) IsBlankString() bool {
 }
 
 func (n Node) IsParameterDefault() bool {
-	return n.Exists() && n.Parent().Kind() == "Param" && n.Node().Field == "default"
+	return n.Exists() && n.Parent().Kind() == "Param" && n.Node().InRole() == "default"
 }
 
 func (n Node) IsDeclarationDefault() bool {
@@ -30,10 +30,10 @@ func (n Node) IsDeclarationDefault() bool {
 
 func (n Node) DeclaredType() *contract.Type {
 	if parent := n.Parent(); parent.Kind() == "Param" {
-		return parent.Node().Declared
+		return parent.Node().Written
 	}
 	if property := n.Parent().Parent(); property.Kind() == "Stmt_Property" {
-		return property.Node().Declared
+		return property.Node().Written
 	}
 
 	return nil
@@ -173,12 +173,12 @@ func (n Node) IsConditionalArraySpread() bool {
 		return false
 	}
 	parent := n.Parent()
-	if parent.Kind() == "ArrayItem" && slices.Contains(parent.Node().Flags, "spread") && n.Node().Field == "value" {
+	if parent.Kind() == "ArrayItem" && slices.Contains(parent.Node().Modifiers, "spread") && n.Node().InRole() == "value" {
 		return !n.omitsJsonTestField(chosen, otherwise)
 	}
 	call := parent.Parent()
 
-	return parent.Kind() == "Arg" && n.Node().Field == "value" && call.Kind() == "Expr_FuncCall" &&
+	return parent.Kind() == "Arg" && n.Node().InRole() == "value" && call.Kind() == "Expr_FuncCall" &&
 		isName(call.Child("name")) && strings.EqualFold(call.Child("name").Name(), "array_merge")
 }
 
@@ -209,14 +209,14 @@ func (n Node) omitsJsonTestField(chosen, otherwise engine.Match) bool {
 		declaration, _ := ProgramOf(n.Codebase()).Declaration(owner)
 		method, found := Method(declaration, name)
 
-		return found && Written(method.Node().Returns).Class() == `Illuminate\Testing\TestResponse`
+		return found && Written(method.Node().Written).Class() == `Illuminate\Testing\TestResponse`
 	}
 
 	return false
 }
 
 func (n Node) ReturnsNullableObject() bool {
-	return n.IsFunctionDeclaration() && Written(n.Node().Returns).NullableClass() != ""
+	return n.IsFunctionDeclaration() && Written(n.Node().Written).NullableClass() != ""
 }
 
 func (n Node) FillsSlotTyped(written string) bool {
@@ -224,7 +224,7 @@ func (n Node) FillsSlotTyped(written string) bool {
 		return Written(n.DeclaredType()).Render() == written
 	}
 
-	return n.IsReturnedValue() && Written(n.EnclosingFunctionLike().Node().Returns).Render() == written
+	return n.IsReturnedValue() && Written(n.EnclosingFunctionLike().Node().Written).Render() == written
 }
 
 func (n Node) FillsArgument() bool {
@@ -295,7 +295,7 @@ func isNullableCallbackWithNullDefault(param engine.Match) bool {
 	if !isNullFetch(param.Child("default")) {
 		return false
 	}
-	declared := param.Node().Declared
+	declared := param.Node().Written
 	if declared == nil {
 		return false
 	}
@@ -325,7 +325,7 @@ func (n Node) normalisesNullFor(name string) bool {
 		case "Expr_BinaryOp_Identical", "Expr_BinaryOp_NotIdentical", "Expr_BooleanNot", "Expr_BinaryOp_BooleanAnd", "Expr_BinaryOp_BooleanOr":
 			return true
 		case "Expr_BinaryOp_Coalesce":
-			if variable.Node().Field == "left" {
+			if variable.Node().InRole() == "left" {
 				return true
 			}
 		}
@@ -339,11 +339,11 @@ func (n Node) normalisesNullFor(name string) bool {
 
 func isConditionOf(parent, subject engine.Match) bool {
 	if parent.Kind() == "MatchArm" {
-		return subject.Node().Field == "conds"
+		return subject.Node().InRole() == "conds"
 	}
 	switch parent.Kind() {
 	case "Stmt_If", "Stmt_ElseIf", "Stmt_While", "Stmt_Do", "Expr_Ternary", "Expr_Match":
-		return subject.Node().Field == "cond"
+		return subject.Node().InRole() == "cond"
 	}
 
 	return false
@@ -553,7 +553,7 @@ func (n Node) declaredTypeOf(name string) (*contract.Type, bool) {
 		if parameter.Child("var").Name() != name {
 			continue
 		}
-		declared := parameter.Node().Declared
+		declared := parameter.Node().Written
 		defaulted := parameter.Child("default")
 
 		return declared, declared != nil && !(defaulted.Exists() && IsNullConstant(defaulted))

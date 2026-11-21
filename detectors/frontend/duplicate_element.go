@@ -77,6 +77,4 @@ func (DuplicateElementDetector) GroupKey(match engine.Match) (string, bool) {
 	return structureHash(match), true
 }
 
-func (DuplicateElementDetector) Repentable() {}
-
 func (DuplicateElementDetector) CrossFile() {}

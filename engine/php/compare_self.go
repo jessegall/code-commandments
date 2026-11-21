@@ -129,7 +129,7 @@ func EnumComparisonMethod(codebase *engine.Codebase, enum, trait, name string, c
 	if !known || !magic.HasModifier("public") || magic.HasModifier("static") || !documented {
 		return false
 	}
-	returned := Written(magic.Node().Returns)
+	returned := Written(magic.Node().Written)
 	return returned.SimpleName() == "bool" && !returned.IsNullable() &&
 		slices.ContainsFunc(DocLines(doc.Text), func(line string) bool {
 			fields := strings.Fields(line)
@@ -139,7 +139,7 @@ func EnumComparisonMethod(codebase *engine.Codebase, enum, trait, name string, c
 
 func acceptsEnumCases(method engine.Match, enum string, count int) bool {
 	if !method.HasModifier("public") || method.HasModifier("static") ||
-		Written(method.Node().Returns).SimpleName() != "bool" || Written(method.Node().Returns).IsNullable() {
+		Written(method.Node().Written).SimpleName() != "bool" || Written(method.Node().Written).IsNullable() {
 		return false
 	}
 	params := Params(method)
@@ -150,10 +150,10 @@ func acceptsEnumCases(method engine.Match, enum string, count int) bool {
 	if param.HasFlag("by-ref") || count > 1 && !param.HasFlag("variadic") {
 		return false
 	}
-	if param.Node().Declared == nil {
+	if param.Node().Written == nil {
 		return true
 	}
-	switch strings.TrimLeft(Written(param.Node().Declared).SimpleName(), `\`) {
+	switch strings.TrimLeft(Written(param.Node().Written).SimpleName(), `\`) {
 	case "self", "static", "mixed", "object", "UnitEnum":
 		return true
 	case "BackedEnum":
@@ -161,5 +161,5 @@ func acceptsEnumCases(method engine.Match, enum string, count int) bool {
 		return class.Child("scalarType").Exists()
 	}
 
-	return strings.TrimLeft(Written(param.Node().Declared).Class(), `\`) == enum
+	return strings.TrimLeft(Written(param.Node().Written).Class(), `\`) == enum
 }

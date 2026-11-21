@@ -16,19 +16,19 @@ func interfaceSignatures(declaration engine.Match) []string {
 	}
 	var signatures []string
 	for _, method := range Methods(declaration) {
-		result := interfaceTypeKey(method.Node().Returns)
+		result := interfaceTypeKey(method.Node().Written)
 		if result == "" || hasTemplate(method) {
 			return nil
 		}
 		parts := []string{strings.ToLower(method.Name()), result,
 			strconv.FormatBool(method.HasModifier("static")), strconv.FormatBool(method.HasFlag("by-ref"))}
 		for _, param := range Params(method) {
-			typed := interfaceTypeKey(param.Node().Declared)
+			typed := interfaceTypeKey(param.Node().Written)
 			defaultValue, known := interfaceDefaultKey(param.Child("default"))
 			if typed == "" || !known {
 				return nil
 			}
-			parts = append(parts, param.Child("var").Name(), typed, strings.Join(param.Node().Flags, ","), defaultValue)
+			parts = append(parts, param.Child("var").Name(), typed, strings.Join(param.Node().Modifiers, ","), defaultValue)
 		}
 		signatures = append(signatures, strings.Join(parts, "\x00"))
 	}
@@ -60,7 +60,7 @@ func interfaceDefaultKey(value engine.Match) (string, bool) {
 		text, known := value.Text()
 		return value.Kind() + strconv.Quote(text), known
 	case "Expr_ConstFetch":
-		literal := strings.ToLower(value.Node().Literal)
+		literal := strings.ToLower(value.Node().LiteralKind)
 		return literal, slices.Contains([]string{"null", "true", "false"}, literal)
 	case "Expr_Array":
 		return "[]", len(value.ChildrenIn("items")) == 0

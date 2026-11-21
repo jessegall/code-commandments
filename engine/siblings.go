@@ -25,7 +25,7 @@ func (m Match) Siblings() []Match {
 		return []Match{m}
 	}
 
-	return parent.ChildrenIn(m.node.Field)
+	return parent.ChildrenIn(m.node.InRole())
 }
 
 func (m Match) Next() Match {

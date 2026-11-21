@@ -196,6 +196,10 @@ type File struct {
 
 	outlining sync.Once
 	outline   uint64
+	purposing sync.Once
+	purpose   Purpose
+	indexing  sync.Once
+	byKind    map[string][]*contract.Node
 	freezing  sync.Once
 	frozen    bool
 }
@@ -484,7 +488,7 @@ func (f *File) CommentMatch(comment contract.Comment, line int) Match {
 	span := comment.Span
 	span.Line = line
 
-	return Match{node: contract.NewNode(contract.Node{ID: -1, Kind: CommentKind, Role: "other", Span: span, Name: comment.Kind}), file: f}
+	return Match{node: contract.NewNode(contract.Node{ID: -1, Kind: CommentKind, Span: span, Facts: &contract.Facts{Name: comment.Form}}), file: f}
 }
 
 func (f *File) Comments(node *contract.Node) []contract.Comment {

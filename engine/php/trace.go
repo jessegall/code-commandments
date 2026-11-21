@@ -86,7 +86,7 @@ func isDeNulled(node engine.Match) bool {
 		return false
 	}
 	other := parent.Child("left")
-	if node.Node().Field == "left" {
+	if node.Node().InRole() == "left" {
 		other = parent.Child("right")
 	}
 
@@ -102,7 +102,7 @@ func isNullsafeReceiver(node engine.Match) bool {
 }
 
 func isChild(node engine.Match, kind, field string) bool {
-	return node.Exists() && node.Parent().Kind() == kind && node.Node().Field == field
+	return node.Exists() && node.Parent().Kind() == kind && node.Node().InRole() == field
 }
 
 func ParameterPosition(function engine.Match, name string) int {
@@ -139,12 +139,12 @@ func ArgumentIsReadAfterTheCall(call engine.Match, at int) bool {
 func sharesABlock(one, other engine.Match) bool {
 	mine, theirs := ownStatement(one), ownStatement(other)
 
-	return mine.Exists() && theirs.Exists() && mine.Parent().Node() == theirs.Parent().Node() && mine.Node().Field == theirs.Node().Field
+	return mine.Exists() && theirs.Exists() && mine.Parent().Node() == theirs.Parent().Node() && mine.Node().InRole() == theirs.Node().InRole()
 }
 
 func ownStatement(node engine.Match) engine.Match {
 	for held := node; held.Exists(); held = held.Parent() {
-		if slices.Contains([]string{"stmts", "finally"}, held.Node().Field) {
+		if slices.Contains([]string{"stmts", "finally"}, held.Node().InRole()) {
 			return held
 		}
 	}

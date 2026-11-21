@@ -12,7 +12,7 @@ var constantName = regexp.MustCompile(`^_*[A-Z][A-Z0-9_]*$`)
 
 func (p *Program) membersAbove(n Node) ([]Node, bool) {
 	class := n.Parent()
-	if class.Kind() != "ClassDef" || n.Node().Field != "body" || p.IsEnumClass(class) {
+	if class.Kind() != "ClassDef" || n.Node().InRole() != "body" || p.IsEnumClass(class) {
 		return nil, false
 	}
 	body := class.ChildrenIn("body")

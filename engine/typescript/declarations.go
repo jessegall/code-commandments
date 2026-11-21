@@ -20,7 +20,7 @@ func (n Node) Binds(name string) Node {
 		}
 	case "ImportDeclaration":
 		for _, node := range n.Descendants() {
-			if node.Node().Field == "name" && node.Name() == name {
+			if node.Node().InRole() == "name" && node.Name() == name {
 				return Node{node.Parent()}
 			}
 		}

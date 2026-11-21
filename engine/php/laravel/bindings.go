@@ -54,7 +54,7 @@ func readContainerBindings(codebase *engine.Codebase) *ContainerBindings {
 				}
 				continue
 			}
-			for _, named := range []string{namedClass(match), strings.TrimLeft(php.Written(node.Declared).Class(), `\`)} {
+			for _, named := range []string{namedClass(match), strings.TrimLeft(php.Written(node.Written).Class(), `\`)} {
 				if named != "" && !within(node.Span.Start, registrations[named]) {
 					bindings.referenced[named] = true
 				}

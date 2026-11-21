@@ -59,7 +59,7 @@ func (p *Program) HasTraitArrayReturnContract(class, method string) bool {
 		seen[owner] = true
 		if declaration, found := p.Declaration(owner); found {
 			if candidate, found := Method(declaration, method); found && candidate.HasModifier("abstract") &&
-				Written(candidate.Node().Returns).SimpleName() == "array" {
+				Written(candidate.Node().Written).SimpleName() == "array" {
 				return true
 			}
 		} else if symbol, found := p.outside(owner); found {

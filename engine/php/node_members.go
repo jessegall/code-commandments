@@ -118,7 +118,7 @@ func (n Node) ReturnTypeName() string {
 		return ""
 	}
 
-	return Written(n.Node().Returns).Render()
+	return Written(n.Node().Written).Render()
 }
 
 func (n Node) DeclaredReturnType() string {
@@ -186,7 +186,7 @@ func (n Node) SwitchesEntirelyOnABoolParam() bool {
 	for _, param := range Params(n.Match) {
 		variable := param.Child("var")
 		if variable.Kind() == "Expr_Variable" && variable.Name() != "" &&
-			strings.EqualFold(Written(param.Node().Declared).SimpleName(), "bool") && n.bodyIsTwoWayBranchOn(variable.Name(), testsVariable) {
+			strings.EqualFold(Written(param.Node().Written).SimpleName(), "bool") && n.bodyIsTwoWayBranchOn(variable.Name(), testsVariable) {
 			return true
 		}
 	}
@@ -201,7 +201,7 @@ func (n Node) SwitchesEntirelyOnAnAbsentParam() bool {
 	for _, param := range Params(n.Match) {
 		variable := param.Child("var")
 		if variable.Kind() == "Expr_Variable" && variable.Name() != "" &&
-			Written(param.Node().Declared).IsNullable() && n.bodyIsTwoWayBranchOn(variable.Name(), testsAbsence) {
+			Written(param.Node().Written).IsNullable() && n.bodyIsTwoWayBranchOn(variable.Name(), testsAbsence) {
 			return true
 		}
 	}
@@ -382,7 +382,7 @@ func PromotedParamName(params []engine.Match, index int) (string, bool) {
 	}
 	param := params[index]
 	name := variableName(param.Child("var"))
-	if len(param.Node().Modifiers) == 0 || slices.Contains(param.Node().Flags, "variadic") || name == "" {
+	if len(param.Node().Modifiers) == 0 || slices.Contains(param.Node().Modifiers, "variadic") || name == "" {
 		return "", false
 	}
 

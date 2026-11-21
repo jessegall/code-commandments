@@ -23,7 +23,6 @@
     <text x="24" y="146"><tspan class="dim">      ↳ read the backend/guard-clauses-and-flow skill before fixing</tspan></text>
     <text x="24" y="166"><tspan class="cyn">      app/Orders/OrderCloser.php:27</tspan><tspan class="t">  Shop\Orders\OrderCloser::close  </tspan><tspan class="dim">[RedundantElseDetector]</tspan></text>
     <text x="24" y="186"><tspan class="cyn">      app/Orders/RefundService.php:41</tspan><tspan class="t">  Shop\Orders\RefundService::refund  </tspan><tspan class="dim">[RedundantElseDetector]</tspan></text>
-    <text x="24" y="206"><tspan class="grn">      ↳ auto-fixable: vendor/bin/commandments repent --repent=latest --sin=redundant-else</tspan></text>
 
     <text x="24" y="246"><tspan class="yel">    backend/tell-dont-ask</tspan><tspan class="t">  (1)</tspan></text>
     <text x="24" y="266"><tspan class="dim">      ↳ read the backend/tell-dont-ask skill before fixing</tspan></text>
@@ -37,10 +36,10 @@
     <text x="24" y="426"><tspan class="dim">    ↳ trace each sin to where it is BORN and fix it THERE — read fix-at-the-source.</tspan></text>
     <text x="24" y="446"><tspan class="dim">    ↳ checklist written to .commandments/sins.md — fix each item, then delete its line</tspan></text>
 
-    <text x="24" y="486"><tspan class="t">⏺ Four sins. Two are auto-fixable — repenting those first.</tspan></text>
+    <text x="24" y="486"><tspan class="t">⏺ Four sins. Both redundant elses follow a return: dropping each else.</tspan></text>
 
-    <text x="24" y="526"><tspan class="grn">⏺ </tspan><tspan class="t b">Bash</tspan><tspan class="dim">(vendor/bin/commandments repent --repent=latest)</tspan></text>
-    <text x="24" y="546"><tspan class="dim">  ⎿ </tspan><tspan class="grn">✓ Repented 2 files.</tspan></text>
+    <text x="24" y="526"><tspan class="grn">⏺ </tspan><tspan class="t b">Update</tspan><tspan class="dim">(app/Orders/OrderCloser.php)</tspan></text>
+    <text x="24" y="546"><tspan class="grn">⏺ </tspan><tspan class="t b">Update</tspan><tspan class="dim">(app/Orders/RefundService.php)</tspan></text>
 
     <text x="24" y="586"><tspan class="grn">⏺ </tspan><tspan class="t b">Skill</tspan><tspan class="dim">(commandments-backend-tell-dont-ask)</tspan></text>
     <text x="24" y="606"><tspan class="dim">  ⎿ Launching skill: commandments-backend-tell-dont-ask</tspan></text>
@@ -62,6 +61,6 @@
     <text x="24" y="926"><tspan class="grn">⏺ </tspan><tspan class="t b">Bash</tspan><tspan class="dim">(vendor/bin/commandments judge src --branch)</tspan></text>
     <text x="24" y="946"><tspan class="dim">  ⎿ </tspan><tspan class="grn">✓ No sins found.</tspan></text>
 
-    <text x="24" y="986"><tspan class="grn">⏺ </tspan><tspan class="t b">Bash</tspan><tspan class="dim">(git commit -am "refactor: repent 2 sins, move heaviest parcel onto Order, type DailySales")</tspan></text>
+    <text x="24" y="986"><tspan class="grn">⏺ </tspan><tspan class="t b">Bash</tspan><tspan class="dim">(git commit -am "refactor: drop 2 redundant elses, move heaviest parcel onto Order, type DailySales")</tspan></text>
   </g>
 </svg>

@@ -17,7 +17,7 @@ func UnnamedVocabularyLiterals(codebase *Codebase) []Match {
 	var findings []Match
 	for _, call := range codebase.WhereCall().Reject(Match.IsTest).Get() {
 		for position, argument := range call.Arguments() {
-			if argument.Node().Literal != "string" {
+			if argument.LiteralKind() != "string" {
 				continue
 			}
 			word, ok := argument.Text()

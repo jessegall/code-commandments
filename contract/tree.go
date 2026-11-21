@@ -2,9 +2,11 @@
 package contract
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"reflect"
+	"slices"
 	"strings"
 )
 
@@ -91,6 +93,16 @@ func (f *File) Nodes() []*Node {
 	return f.nodes
 }
 
+// Knows says whether the file's evidence for a fact is complete enough to read it: a compiler fact is unknown on every
+// node of a file whose resolver did not run.
+func (f *File) Knows(fact string) bool {
+	if Provenance(fact) != "compiler" {
+		return true
+	}
+
+	return f.Resolver != nil && f.Resolver.Ran
+}
+
 func (f *File) Reaches() int {
 	return f.reaches
 }
@@ -104,31 +116,26 @@ func (f *File) CopiedTo(path string, moved func(string) string) *File {
 	walk = func(node, parent *Node) *Node {
 		own := *node
 		own.parent = parent
-
-		if node.Facts != none {
+		if node.Facts != none && node.Resolves != "" {
 			facts := *node.Facts
-			if facts.Resolves != "" {
-				facts.Resolves = moved(facts.Resolves)
-			}
-
+			facts.Resolves = moved(facts.Resolves)
 			own.Facts = &facts
 		}
-
 		copied.nodes = append(copied.nodes, &own)
-
-		if len(node.Children) > 0 {
-			own.Children = make([]*Node, len(node.Children))
-			for at, child := range node.Children {
-				own.Children[at] = walk(child, &own)
+		own.Parts = make(Parts, len(node.Parts))
+		for at, part := range node.Parts {
+			own.Parts[at] = Part{Role: part.Role, List: part.List, Nodes: make([]*Node, len(part.Nodes))}
+			for index, child := range part.Nodes {
+				own.Parts[at].Nodes[index] = walk(child, &own)
 			}
 		}
 
 		return &own
 	}
-
 	if f.Root != nil {
 		copied.Root = walk(f.Root, nil)
 	}
+	slices.SortFunc(copied.nodes, func(a, b *Node) int { return a.ID - b.ID })
 
 	return &copied
 }
@@ -157,42 +164,298 @@ func (s *Span) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-// Node is one syntax node.
+// Node is one operation of the language, translated: its kind, its span, the nodes it owns under named roles, the
+// nodes it points at without owning, and the facts its kind declares (contract/CONTRACT.md, A node).
 type Node struct {
-	ID           int      `json:"id"`
-	Kind         string   `json:"kind"`
-	Role         string   `json:"role"`
-	Is           []string `json:"is,omitempty"`
-	Span         Span     `json:"span"`
-	Field        string   `json:"field,omitempty"`
-	Children     []*Node  `json:"children,omitempty"`
-	Name         string   `json:"name,omitempty"`
-	Resolved     *Type    `json:"resolved,omitempty"`
-	ResolvedType *int     `json:"resolvedType,omitempty"`
+	ID    int    `json:"id"`
+	Kind  string `json:"kind"`
+	Span  Span   `json:"span"`
+	Parts Parts  `json:"parts,omitempty"`
+	Links Links  `json:"links,omitempty"`
 	*Facts
+	Resolved *Type `json:"-"`
 
 	parent *Node
+	role   string
 }
 
-// Facts are what only some nodes carry: a literal and its value, an operator, modifiers and flags, types written or returned, a symbol, a reference, a call's target, the file an import resolves to, and what the engine fills.
+// Facts are a node's facts, every one optional; a compiler fact that is absent is unknown, never known-empty.
 type Facts struct {
-	Literal   string   `json:"literal,omitempty"`
-	Value     *Value   `json:"value,omitempty"`
-	Operator  string   `json:"operator,omitempty"`
-	Modifiers []string `json:"modifiers,omitempty"`
-	Flags     []string `json:"flags,omitempty"`
-	Declared  *Type    `json:"declared,omitempty"`
-	Returns   *Type    `json:"returns,omitempty"`
-	Symbol    string   `json:"symbol,omitempty"`
-	Refers    string   `json:"refers,omitempty"`
-	Target    *Target  `json:"target,omitempty"`
-	Resolves  string   `json:"resolves,omitempty"`
-	Constant  bool     `json:"constant,omitempty"`
-	Inherited bool     `json:"inherited,omitempty"`
+	Name          string         `json:"name,omitempty"`
+	Symbol        string         `json:"symbol,omitempty"`
+	Refers        string         `json:"refers,omitempty"`
+	Target        *Target        `json:"target,omitempty"`
+	ResolvedType  *int           `json:"resolvedType,omitempty"`
+	ConstantValue *ConstantValue `json:"constantValue,omitempty"`
+	Modifiers     []string       `json:"modifiers,omitempty"`
+	Effective     *Effective     `json:"effective,omitempty"`
+	Obligations   []Obligation   `json:"obligations,omitempty"`
+	Incomplete    bool           `json:"incomplete,omitempty"`
 
-	FillsOutside bool `json:"fills-outside,omitempty"`
+	Source          string   `json:"source,omitempty"`
+	Form            string   `json:"form,omitempty"`
+	TypeOnly        bool     `json:"typeOnly,omitempty"`
+	RelativeLevel   int      `json:"relativeLevel,omitempty"`
+	Resolves        string   `json:"resolves,omitempty"`
+	Written         *Type    `json:"written,omitempty"`
+	Async           bool     `json:"async,omitempty"`
+	Generator       bool     `json:"generator,omitempty"`
+	Passing         string   `json:"passing,omitempty"`
+	Collects        string   `json:"collects,omitempty"`
+	Position        string   `json:"position,omitempty"`
+	Optional        bool     `json:"optional,omitempty"`
+	Evaluated       string   `json:"evaluated,omitempty"`
+	Exhaustive      *bool    `json:"exhaustive,omitempty"`
+	Default         bool     `json:"default,omitempty"`
+	FallsThrough    bool     `json:"fallsThrough,omitempty"`
+	Depth           int      `json:"depth,omitempty"`
+	CatchForm       string   `json:"catchForm,omitempty"`
+	Group           bool     `json:"group,omitempty"`
+	NamedResults    *bool    `json:"namedResults,omitempty"`
+	NullConditional bool     `json:"nullConditional,omitempty"`
+	Label           string   `json:"label,omitempty"`
+	Spread          string   `json:"spread,omitempty"`
+	Mode            string   `json:"mode,omitempty"`
+	Operator        string   `json:"operator,omitempty"`
+	Operators       []string `json:"operators,omitempty"`
+	Prefix          bool     `json:"prefix,omitempty"`
+	Trigger         string   `json:"trigger,omitempty"`
+	Negated         bool     `json:"negated,omitempty"`
+	Delegates       bool     `json:"delegates,omitempty"`
+	LiteralKind     string   `json:"literalKind,omitempty"`
+	Value           *Value   `json:"value,omitempty"`
+	Expansion       string   `json:"expansion,omitempty"`
+	Conversion      string   `json:"conversion,omitempty"`
+	Tag             string   `json:"tag,omitempty"`
+	Shorthand       bool     `json:"shorthand,omitempty"`
+	Construct       string   `json:"construct,omitempty"`
+}
 
-	Extras *NodeExtras `json:"extras,omitempty"`
+// ConstantValue is the compile-time value of an expression the compiler folds; a null constant has type "null" and no value.
+type ConstantValue struct {
+	Type  string `json:"type"`
+	Value *Value `json:"value,omitempty"`
+}
+
+// Effective is what the language makes of a declaration's modifiers, its implicit defaults included.
+type Effective struct {
+	Visibility string `json:"visibility,omitempty"`
+	Static     bool   `json:"static,omitempty"`
+	Abstract   bool   `json:"abstract,omitempty"`
+	Final      bool   `json:"final,omitempty"`
+	Readonly   bool   `json:"readonly,omitempty"`
+}
+
+// Obligation is a declaration a member overrides or implements, and whether its signature is fixed outside the project.
+type Obligation struct {
+	Symbol string `json:"symbol"`
+	Origin string `json:"origin"`
+}
+
+// Part is the nodes one role of a node holds: one node, or an ordered list when its role is a list.
+type Part struct {
+	Role  string
+	Nodes []*Node
+	List  bool
+}
+
+// Parts are a node's owning roles, in the order the stream wrote them.
+type Parts []Part
+
+func (p Parts) MarshalJSON() ([]byte, error) {
+	var out bytes.Buffer
+	out.WriteByte('{')
+	for at, part := range p {
+		if at > 0 {
+			out.WriteByte(',')
+		}
+		role, _ := json.Marshal(part.Role)
+		out.Write(role)
+		out.WriteByte(':')
+		var held any = part.Nodes
+		if !part.List {
+			held = part.Nodes[0]
+		}
+		written, err := json.Marshal(held)
+		if err != nil {
+			return nil, err
+		}
+		out.Write(written)
+	}
+	out.WriteByte('}')
+
+	return out.Bytes(), nil
+}
+
+func (p *Parts) UnmarshalJSON(data []byte) error {
+	return orderedObject(data, func(role string, value json.RawMessage) error {
+		part := Part{Role: role}
+		if trimmed := bytes.TrimSpace(value); len(trimmed) > 0 && trimmed[0] == '[' {
+			part.List = true
+			if err := strictly(value, &part.Nodes); err != nil {
+				return fmt.Errorf("role %s: %w", role, err)
+			}
+		} else {
+			var node Node
+			if err := strictly(value, &node); err != nil {
+				return fmt.Errorf("role %s: %w", role, err)
+			}
+			part.Nodes = []*Node{&node}
+		}
+		*p = append(*p, part)
+
+		return nil
+	})
+}
+
+// Link is the node ids one link of a node points at: one id, or an ordered list.
+type Link struct {
+	Name string
+	IDs  []int
+	List bool
+}
+
+// Links are a node's non-owning edges, in the order the stream wrote them.
+type Links []Link
+
+func (l Links) MarshalJSON() ([]byte, error) {
+	held := map[string]any{}
+	for _, link := range l {
+		if link.List {
+			held[link.Name] = link.IDs
+		} else {
+			held[link.Name] = link.IDs[0]
+		}
+	}
+
+	return json.Marshal(held)
+}
+
+func (l *Links) UnmarshalJSON(data []byte) error {
+	return orderedObject(data, func(name string, value json.RawMessage) error {
+		link := Link{Name: name}
+		if trimmed := bytes.TrimSpace(value); len(trimmed) > 0 && trimmed[0] == '[' {
+			link.List = true
+			if err := json.Unmarshal(value, &link.IDs); err != nil {
+				return fmt.Errorf("link %s: %w", name, err)
+			}
+		} else {
+			var id int
+			if err := json.Unmarshal(value, &id); err != nil {
+				return fmt.Errorf("link %s: %w", name, err)
+			}
+			link.IDs = []int{id}
+		}
+		*l = append(*l, link)
+
+		return nil
+	})
+}
+
+func orderedObject(data []byte, each func(key string, value json.RawMessage) error) error {
+	decoder := json.NewDecoder(bytes.NewReader(data))
+	opened, err := decoder.Token()
+	if err != nil {
+		return err
+	}
+	if opened != json.Delim('{') {
+		return fmt.Errorf("an object, not %v", opened)
+	}
+	for decoder.More() {
+		key, err := decoder.Token()
+		if err != nil {
+			return err
+		}
+		var value json.RawMessage
+		if err := decoder.Decode(&value); err != nil {
+			return err
+		}
+		if err := each(key.(string), value); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func strictly(data []byte, into any) error {
+	decoder := json.NewDecoder(bytes.NewReader(data))
+	decoder.DisallowUnknownFields()
+
+	return decoder.Decode(into)
+}
+
+// Answer is what a node says about one of its roles: present, known to be empty, unknown because the evidence is
+// incomplete, or inapplicable because its kind has no such role.
+type Answer int
+
+const (
+	Present Answer = iota
+	KnownEmpty
+	Unknown
+	Inapplicable
+)
+
+// Role is the nodes a role holds and the answer they make. An incomplete node, one the parser recovered from an error,
+// answers unknown for every role it does not hold.
+func (n *Node) Role(role string) ([]*Node, Answer) {
+	if _, err := RoleArity(n.Kind, role); err != nil {
+		return nil, Inapplicable
+	}
+	for _, part := range n.Parts {
+		if part.Role == role {
+			if len(part.Nodes) == 0 && n.Incomplete {
+				return nil, Unknown
+			}
+			if len(part.Nodes) == 0 {
+				return nil, KnownEmpty
+			}
+
+			return part.Nodes, Present
+		}
+	}
+	if n.Incomplete {
+		return nil, Unknown
+	}
+
+	return nil, KnownEmpty
+}
+
+// Child is the one node a role holds, when it holds one.
+func (n *Node) Child(role string) (*Node, bool) {
+	held, answer := n.Role(role)
+
+	return firstOf(held), answer == Present
+}
+
+func firstOf(nodes []*Node) *Node {
+	if len(nodes) == 0 {
+		return nil
+	}
+
+	return nodes[0]
+}
+
+// Children are every node a node owns, in source order.
+func (n *Node) Children() []*Node {
+	var children []*Node
+	for _, part := range n.Parts {
+		children = append(children, part.Nodes...)
+	}
+	slices.SortStableFunc(children, func(a, b *Node) int { return a.ID - b.ID })
+
+	return children
+}
+
+// Linked is the ids a link of a node points at.
+func (n *Node) Linked(name string) []int {
+	for _, link := range n.Links {
+		if link.Name == name {
+			return link.IDs
+		}
+	}
+
+	return nil
 }
 
 var none = &Facts{}
@@ -221,14 +484,14 @@ func (n *Node) Parent() (*Node, bool) {
 	return n.parent, n.parent != nil
 }
 
-func (n *Node) Answers(neutral string) bool {
-	for _, is := range n.Is {
-		if is == neutral {
-			return true
-		}
-	}
+// InRole is the name of the role this node fills in its parent: "" for a file's root.
+func (n *Node) InRole() string {
+	return n.role
+}
 
-	return false
+// Is says whether the node belongs to a category (contract/CONTRACT.md, Categories) or is of the kind named.
+func (n *Node) Is(kindOrCategory string) bool {
+	return n.Kind == kindOrCategory || InCategory(n.Kind, kindOrCategory)
 }
 
 // Value is a literal's decoded value: a string, a boolean or null.
@@ -334,13 +597,22 @@ type Target struct {
 // Comment is one comment, attached to the node it belongs to.
 type Comment struct {
 	ID       int            `json:"id"`
-	Kind     string         `json:"kind"`
+	Form     string         `json:"form"`
 	Text     string         `json:"text"`
 	Span     Span           `json:"span"`
 	Attached *int           `json:"attached,omitempty"`
 	Trailing bool           `json:"trailing,omitempty"`
 	Refs     []Ref          `json:"refs,omitempty"`
-	Extras   *CommentExtras `json:"extras,omitempty"`
+	Fragment *Fragment      `json:"fragment,omitempty"`
+}
+
+// Fragment is what the bridge's parser made of a comment's words read as code; whether that is commented-out code is
+// the shared rule's decision.
+type Fragment struct {
+	Context        string `json:"context"`
+	Diagnostics    int    `json:"diagnostics"`
+	Statements     int    `json:"statements"`
+	ExpressionKind string `json:"expressionKind,omitempty"`
 }
 
 // Ref is a reference a doc comment makes to code.
@@ -352,90 +624,21 @@ type Ref struct {
 	Blind     bool   `json:"blind,omitempty"`
 }
 
-// NodeExtras holds the facts only one language has on a node.
-type NodeExtras struct {
-	CSharp     *CSharpNode     `json:"csharp,omitempty"`
-	Go         *GoNode         `json:"go,omitempty"`
-	Python     *PythonNode     `json:"python,omitempty"`
-	Vue        *VueNode        `json:"vue,omitempty"`
-	TypeScript *TypeScriptNode `json:"typescript,omitempty"`
-}
-
-// GoNode records the method set the Go compiler gives a named type.
-type GoNode struct {
-	Methods []string `json:"methods,omitempty"`
-}
-
-// CSharpNode is what only C# says about a node.
-type CSharpNode struct {
-	ForgivesNull bool `json:"forgivesNull,omitempty"`
-}
-
-// PythonNode is what only Python says about a node.
-type PythonNode struct {
-	Operators []string `json:"operators,omitempty"`
-	Level     int      `json:"level,omitempty"`
-	As        string   `json:"as,omitempty"`
-	Names     []string `json:"names,omitempty"`
-}
-
-// VueNode is what only Vue says about a node.
-type VueNode struct {
-	Directive *Directive `json:"directive,omitempty"`
-}
-
-// Directive is a Vue directive's name and modifiers; its argument and value are children.
-type Directive struct {
-	Name      string   `json:"name"`
-	Modifiers []string `json:"modifiers"`
-}
-
-// TypeScriptNode is what only TypeScript says about a node.
-type TypeScriptNode struct {
-	TypeOnly bool `json:"typeOnly,omitempty"`
-}
-
-// CommentExtras holds the facts only one language has on a comment.
-type CommentExtras struct {
-	CSharp     *CSharpComment     `json:"csharp,omitempty"`
-	PHP        *PHPComment        `json:"php,omitempty"`
-	Python     *PythonComment     `json:"python,omitempty"`
-	Go         *GoComment         `json:"go,omitempty"`
-	TypeScript *TypeScriptComment `json:"typescript,omitempty"`
-}
-
-// TypeScriptComment marks a comment that parses as code.
-type TypeScriptComment struct {
-	Code bool `json:"code,omitempty"`
-}
-
-// GoComment is what only Go says about a comment.
-type GoComment struct {
-	Code bool `json:"code,omitempty"`
-}
-
-// PHPComment is what only PHP says about a comment.
-type PHPComment struct {
-	Code bool `json:"code,omitempty"`
-}
-
-// PythonComment is what only Python says about a comment.
-type PythonComment struct {
-	Code bool `json:"code,omitempty"`
-}
-
-// CSharpComment is what only C# says about a comment.
-type CSharpComment struct {
-	Code bool `json:"code,omitempty"`
-}
-
 // Program holds the facts about the whole program that no file carries.
 type Program struct {
 	Symbols    []OutsideSymbol    `json:"symbols,omitempty"`
 	Unreadable []UnreadableSymbol `json:"unreadable,omitempty"`
-	Packages   []string           `json:"packages,omitempty"`
-	Aliases    []Alias            `json:"aliases,omitempty"`
+	Packages       []Package          `json:"packages,omitempty"`
+	PackageFolders []string           `json:"packageFolders,omitempty"`
+	Aliases        []Alias            `json:"aliases,omitempty"`
 	Loader     string             `json:"loader,omitempty"`
+}
+
+// Package is one installed package and its version, which package facts are keyed by.
+type Package struct {
+	Name      string `json:"name"`
+	Version   string `json:"version"`
+	Ecosystem string `json:"ecosystem"`
 }
 
 // UnreadableSymbol is a class the scan names that the scanned project's own loader failed on, and why: it stays outside the scan, said rather than dropped.

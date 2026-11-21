@@ -41,37 +41,27 @@ func (m Match) ResultType() *contract.Type {
 	if m.node == nil || !m.Is(Function) {
 		return nil
 	}
-	if typed := m.node.Returns; typed != nil {
-		return typed
-	}
-	return m.ReturnType().Typed()
+
+	return m.Child("returnType").Typed()
 }
 
+// Typed is the type of the node: the one the compiler resolved, else the one written on it, else the one written in
+// its declared type or, for a function, its return type.
 func (m Match) Typed() *contract.Type {
 	if m.node == nil {
 		return nil
 	}
-
 	switch {
 	case m.node.Resolved != nil:
 		return m.node.Resolved
-	case m.node.Declared != nil:
-		return m.node.Declared
-	case m.node.Returns != nil:
-		return m.node.Returns
+	case m.node.Written != nil:
+		return m.node.Written
 	}
-
-	return m.writtenFor()
-}
-
-func (m Match) writtenFor() *contract.Type {
-	declaration := m.Parent()
-	if returned := declaration.ReturnType(); returned.node == m.node {
-		return declaration.node.Returns
+	if declared := m.Child("declaredType"); declared.Exists() {
+		return declared.Typed()
 	}
-
-	if written := declaration.ParameterType(); written.node == m.node {
-		return declaration.node.Declared
+	if m.Kind() == "function" {
+		return m.Child("returnType").Typed()
 	}
 
 	return nil
@@ -106,8 +96,8 @@ func (m Match) AdmitsAbsence() bool {
 	if m.HasFlag("optional") {
 		return true
 	}
-	if m.node != nil && m.node.Declared != nil {
-		return m.node.Declared.Nullable
+	if declared := m.Child("declaredType").Typed(); declared != nil {
+		return declared.Nullable
 	}
 	typed := m.Typed()
 

@@ -108,7 +108,7 @@ func (n Node) EveryConstructorParamOptional() bool {
 	class := php.EnclosingClass(n.Match)
 	var promoted []engine.Match
 	for _, param := range php.ConstructorParams(class) {
-		if slices.Contains(param.Node().Flags, "promoted") {
+		if slices.Contains(param.Node().Modifiers, "promoted") {
 			promoted = append(promoted, param)
 		}
 	}
@@ -116,7 +116,7 @@ func (n Node) EveryConstructorParamOptional() bool {
 		return false
 	}
 	for _, param := range promoted {
-		if !typeIncludesOptional(param.Node().Declared) {
+		if !typeIncludesOptional(param.Node().Written) {
 			return false
 		}
 	}
@@ -248,7 +248,7 @@ func (n Node) NestedWireTypeFqcn() string {
 		return element
 	}
 
-	return soleClassNameOfType(n.Node().Declared)
+	return soleClassNameOfType(n.Node().Written)
 }
 
 func dataCollectionOfElement(node engine.Match) string {
@@ -288,7 +288,7 @@ func (n Node) PropertyTypedAsDataCollection() bool {
 	if !n.program().Extends(php.EnclosingClassName(n.Match), Data) || (n.Kind() != "Param" && n.Kind() != "Stmt_Property") {
 		return false
 	}
-	written := n.Node().Declared
+	written := n.Node().Written
 	if written == nil {
 		return false
 	}

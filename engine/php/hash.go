@@ -22,7 +22,7 @@ func (hashRules) IsName(node engine.Match) bool {
 func (hashRules) Declares(node engine.Match) bool {
 	named := Node{Match: node}
 
-	return named.IsFunctionLike() || node.Kind() == "Param" || node.Node().Field == "name" && named.Up().IsFunctionLike()
+	return named.IsFunctionLike() || node.Kind() == "Param" || node.Node().InRole() == "name" && named.Up().IsFunctionLike()
 }
 
 func (hashRules) IsCallee(engine.Match) bool { return false }

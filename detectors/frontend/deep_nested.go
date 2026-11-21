@@ -43,5 +43,3 @@ func (d *DeepNestedDetector) Find(codebase *engine.Codebase) []engine.Match {
 
 	return boundaries
 }
-
-func (DeepNestedDetector) Repentable() {}

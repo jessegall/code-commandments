@@ -94,7 +94,6 @@ type Detector struct {
 type Option func(*binding)
 
 type binding struct {
-	repentable  bool
 	unpublished bool
 	excused     func(*engine.Codebase, engine.Match) bool
 	exemptions  []packages.Exemption
@@ -111,10 +110,6 @@ func Rejecting(reject engine.Check, exemptions ...packages.Exemption) Option {
 // CandidateRule can apply an exemption before evaluating a group of candidates.
 type CandidateRule interface {
 	FindRejecting(*engine.Codebase, engine.Check) []engine.Match
-}
-
-func Repentable(bound *binding) {
-	bound.repentable = true
 }
 
 func Unpublished(bound *binding) {
@@ -134,17 +129,6 @@ var registered sync.Map
 func Bind[R Rule, L Language](options ...Option) Detector {
 	return register(bound[R, L](options))
 }
-
-// LastDetector runs a repair after the other fixes settle its source.
-type LastDetector struct {
-	Detector
-}
-
-func BindLast[R Rule, L Language](options ...Option) LastDetector {
-	return register(LastDetector{bound[R, L](options)})
-}
-
-func (LastDetector) RunsLast() {}
 
 // TracedRule can describe the value flow behind a finding.
 type TracedRule interface {
@@ -257,10 +241,6 @@ func (d Detector) Language() any {
 
 func (d Detector) Engine() catalog.Engine {
 	return d.language.Engine()
-}
-
-func (d Detector) Repents() bool {
-	return d.repentable
 }
 
 func (d Detector) Published() bool {

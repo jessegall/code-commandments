@@ -19,7 +19,7 @@ func TestAStringIsNamedByTheConstantThePHPEngineNamesItBy(t *testing.T) {
 			arguments = append(arguments, keyword.Child("value"))
 		}
 		for _, literal := range arguments {
-			if name, ok := codebase.Program.ConstantFor(call, literal); ok && literal.Node().Literal == "string" {
+			if name, ok := codebase.Program.ConstantFor(call, literal); ok && literal.Node().LiteralKind == "string" {
 				named[strings.TrimPrefix(match.File(), fixture.root+"/")+"@"+itoa(literal.Node().Span.Start)+"-"+itoa(literal.Node().Span.End)] = name
 			}
 		}

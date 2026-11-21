@@ -48,11 +48,11 @@ func (s *ResponseSurface) collectControllerReturns(controller engine.Match, type
 		if !php.IsPublic(method.Node()) {
 			continue
 		}
-		if returned := php.Written(method.Node().Returns).Class(); returned != "" {
+		if returned := php.Written(method.Node().Written).Class(); returned != "" {
 			s.bound[strings.TrimLeft(returned, `\`)] = true
 		}
 		for _, statement := range method.Children() {
-			if statement.Node().Field != "stmts" {
+			if statement.Node().InRole() != "stmts" {
 				continue
 			}
 			for _, node := range append([]engine.Match{statement}, descendants(statement)...) {
@@ -90,13 +90,13 @@ func candidateExpressions(node engine.Match) []engine.Match {
 	case node.Kind() == "Expr_Array":
 		var expressions []engine.Match
 		for _, item := range node.Children() {
-			if item.Node().Field == "items" {
+			if item.Node().InRole() == "items" {
 				expressions = append(expressions, candidateExpressions(item.Child("value"))...)
 			}
 		}
 
 		return expressions
-	case node.Exists() && node.Node().Role == "expression":
+	case node.Exists() && node.Role() == "expression":
 		return []engine.Match{node}
 	}
 

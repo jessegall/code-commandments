@@ -176,10 +176,10 @@ func (w *writer) node(held ast.Node, field string, inType bool) *contract.Node {
 		built.Own().Operator = operator
 	}
 	if flags := flagsOf(held); len(flags) > 0 {
-		built.Own().Flags = flags
+		built.Own().Modifiers = flags
 	}
 	if literal, value := literalOf(held); literal != "" {
-		built.Own().Literal = literal
+		built.Own().LiteralKind = literal
 		built.Own().Value = value
 	}
 	w.typed(held, built)

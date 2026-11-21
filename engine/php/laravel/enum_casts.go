@@ -86,6 +86,6 @@ func hasAccessor(model engine.Match, field string) bool {
 		}
 		name := strings.ToLower(method.Name())
 		return name == "get"+accessor+"attribute" ||
-			name == accessor && php.Written(method.Node().Returns).Class() == attributeCast
+			name == accessor && php.Written(method.Node().Written).Class() == attributeCast
 	})
 }

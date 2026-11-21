@@ -10,6 +10,7 @@ import (
 
 	"github.com/jessegall/code-commandments/cache"
 	"github.com/jessegall/code-commandments/contract"
+	"github.com/jessegall/code-commandments/contract/samples"
 	"github.com/jessegall/code-commandments/detectors"
 	"github.com/jessegall/code-commandments/engine"
 )
@@ -19,13 +20,7 @@ const savedDetector = "php\x00SomeRule\x00definition"
 func aTreeHolding(t *testing.T, content string) (*engine.Codebase, string) {
 	t.Helper()
 
-	sampled, err := os.Open("../contract/samples/php.jsonl")
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer sampled.Close()
-
-	stream, err := contract.ReadAll(sampled)
+	stream, err := samples.Merged("../contract/samples/testdata/expected", contract.PHP)
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -26,8 +26,6 @@ const suggested = 8
 
 // Command is `info`: explain one rule.
 type Command struct {
-	Fixable map[string]string
-
 	Scaffoldable map[string]string
 }
 
@@ -117,10 +115,6 @@ func (c Command) describe(detector detectors.Detector, full bool, console cli.Co
 
 	heading(console, "Commands")
 	row(console, "Learn", "load the skill \033[1m"+teaching.ID()+"\033[0m")
-
-	if _, fixable := c.Fixable[sin.Name]; fixable {
-		row(console, "Auto-fix", binary.Here()+" repent --sin="+sin.Name)
-	}
 
 	if _, scaffolds := c.Scaffoldable[sin.Name]; scaffolds {
 		row(console, "Scaffold", binary.Here()+" scaffold --sin="+sin.Name)

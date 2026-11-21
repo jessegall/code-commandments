@@ -18,7 +18,7 @@ func DocComment(m engine.Match) (contract.Comment, bool) {
 	start := m.Node().Span.Start
 	for at := m; at.Exists() && at.Node().Span.Start == start; at = at.Parent() {
 		for _, comment := range at.Comments() {
-			if comment.Kind == "doc" && !comment.Trailing && (!found || comment.Span.Start > doc.Span.Start) {
+			if comment.Form == "doc" && !comment.Trailing && (!found || comment.Span.Start > doc.Span.Start) {
 				doc, found = comment, true
 			}
 		}
@@ -51,7 +51,7 @@ func DocumentedParamClass(function engine.Match, variable string) string {
 func resolveDocumentedClass(function engine.Match, name string) string {
 	namespace := (Node{Match: function}).namespaceDeclaration()
 	if namespace.Exists() {
-		return resolveName(name, namespace.Child("name").Name(), importsIn(namespace.Node().Children))
+		return resolveName(name, namespace.Child("name").Name(), importsIn(namespace.Node().Children()))
 	}
 	return Resolve(name, function.Source())
 }
@@ -164,8 +164,8 @@ func Namespace(file *engine.File) string {
 
 func imported(use *contract.Node) map[string]string {
 	imports := map[string]string{}
-	for _, item := range use.Children {
-		if item.Field != "uses" {
+	for _, item := range use.Children() {
+		if item.InRole() != "uses" {
 			continue
 		}
 		name := child(item, "name").Name
@@ -180,8 +180,8 @@ func imported(use *contract.Node) map[string]string {
 }
 
 func child(node *contract.Node, field string) *contract.Node {
-	for _, child := range node.Children {
-		if child.Field == field {
+	for _, child := range node.Children() {
+		if child.InRole() == field {
 			return child
 		}
 	}

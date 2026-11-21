@@ -44,7 +44,7 @@ func scopeOf(match engine.Match) string {
 		return named(declared, match.Name())
 	}
 
-	if match.Node().Role == "expression" {
+	if match.Role() == "expression" {
 		return match.Written()
 	}
 

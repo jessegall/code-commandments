@@ -27,5 +27,3 @@ func (SwitchCaseDetector) Find(codebase *engine.Codebase) []engine.Match {
 		Where(engine.As(vue.Element.HeadsSwitchCase)).
 		Get()
 }
-
-func (SwitchCaseDetector) Repentable() {}

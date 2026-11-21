@@ -59,7 +59,7 @@ func guardsFromTheTop(branch Match) bool {
 	if !onlyLeaves(branch) {
 		return false
 	}
-	for _, statement := range branch.Parent().ChildrenIn(branch.Node().Field) {
+	for _, statement := range branch.Parent().ChildrenIn(branch.Field()) {
 		if statement.Node() == branch.Node() {
 			return true
 		}

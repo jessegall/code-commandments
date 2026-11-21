@@ -134,7 +134,7 @@ func fortifyRoutesIgnored(codebase *engine.Codebase) bool {
 func (settings fortifyRouteSettings) includes(route engine.Match) bool {
 	child := route
 	for _, parent := range route.Ancestors() {
-		if parent.Kind() == "Stmt_If" && (child.Node().Field != "stmts" || !settings.allows(parent.Child("cond"))) {
+		if parent.Kind() == "Stmt_If" && (child.Node().InRole() != "stmts" || !settings.allows(parent.Child("cond"))) {
 			return false
 		}
 		child = parent

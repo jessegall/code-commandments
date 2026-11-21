@@ -23,7 +23,7 @@ func (n Node) IsWireArrayRead() bool {
 	if len(callers) == 0 {
 		return false
 	}
-	if n.Parent().Kind() == "Expr_Isset" && php.Written(method.Node().Returns).SimpleName() == "bool" {
+	if n.Parent().Kind() == "Expr_Isset" && php.Written(method.Node().Written).SimpleName() == "bool" {
 		return !slices.ContainsFunc(callers, func(call engine.Match) bool {
 			return !choosesDecoder(call, position)
 		})

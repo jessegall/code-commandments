@@ -29,7 +29,7 @@ func nullSwitchDefault(arm engine.Match) bool {
 	for _, sibling := range arm.Parent().ChildrenIn("list") {
 		for _, value := range sibling.ChildrenIn("list") {
 			typed := value.Typed()
-			if typed == nil || typed.Name != subject.Name || value.Node().Facts == nil || !value.Node().Constant {
+			if typed == nil || typed.Name != subject.Name || value.Node().Facts == nil || !value.Node().Incomplete {
 				return false
 			}
 			cases++

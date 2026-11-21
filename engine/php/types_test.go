@@ -28,7 +28,7 @@ func TestTypesResolveEveryExpressionAsPhpDoes(t *testing.T) {
 		case "call":
 			arity := 0
 			for _, arg := range node.Children() {
-				if arg.Node().Field == "args" {
+				if arg.Node().InRole() == "args" {
 					arity++
 				}
 			}

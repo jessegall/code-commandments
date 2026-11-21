@@ -21,7 +21,7 @@ func (n Node) EnclosingFunctionLike() Node {
 }
 
 func (n Node) IsLoopSubject() bool {
-	return n.Exists() && n.Parent().Kind() == "Stmt_Foreach" && n.Node().Field == "expr"
+	return n.Exists() && n.Parent().Kind() == "Stmt_Foreach" && n.Node().InRole() == "expr"
 }
 
 func (n Node) IsCoalesce() bool {
@@ -149,7 +149,7 @@ func (n Node) IsCallArgument() bool {
 }
 
 func (n Node) IsCallReceiver() bool {
-	return n.Exists() && isMethodSend(n.Parent()) && n.Node().Field == "var"
+	return n.Exists() && isMethodSend(n.Parent()) && n.Node().InRole() == "var"
 }
 
 func (n Node) IsBailOut() bool {

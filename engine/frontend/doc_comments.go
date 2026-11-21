@@ -67,7 +67,7 @@ func ceremonyDoc(function engine.Match) bool {
 		return false
 	}
 	for _, comment := range function.Comments() {
-		if comment.Kind == "doc" && signatureTagsOnly(function, (engine.Commented{Comment: comment}).ProseLines()) {
+		if comment.Form == "doc" && signatureTagsOnly(function, (engine.Commented{Comment: comment}).ProseLines()) {
 			return true
 		}
 	}

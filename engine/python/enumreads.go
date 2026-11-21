@@ -22,7 +22,7 @@ func (n Node) IsScalarConstantClass() bool {
 }
 
 func (n Node) isScalarValue() bool {
-	literal := n.Node().Literal
+	literal := n.Node().LiteralKind
 	text, _ := n.Text()
 
 	return n.Kind() == "Constant" && (literal == "string" || literal == "int" || literal == "float") && !strings.Contains(text, "\n")
@@ -92,7 +92,7 @@ func (n Node) MembershipLiteralKeys() []string {
 	elements := set.Children()
 	var keys []string
 	for _, element := range elements {
-		if element.Node().Literal != "string" {
+		if element.Node().LiteralKind != "string" {
 			return nil
 		}
 		keys = append(keys, element.LiteralKey())
@@ -161,7 +161,7 @@ func isLiteralPattern(n Node) bool {
 }
 
 func isTextPattern(n Node) bool {
-	return n.Kind() == "MatchValue" && n.Child("value").Node().Literal == "string"
+	return n.Kind() == "MatchValue" && n.Child("value").Node().LiteralKind == "string"
 }
 
 func (n Node) patternKey() string {
@@ -224,5 +224,5 @@ func (n Node) returnsAbsence() bool {
 	}
 	value := n.ReturnedValue()
 
-	return !value.Exists() || value.IsNone() || value.IsEmptyCollection() || (value.Node().Literal == "bool" && value.Written() == "False") || value.IsBlankString()
+	return !value.Exists() || value.IsNone() || value.IsEmptyCollection() || (value.Node().LiteralKind == "bool" && value.Written() == "False") || value.IsBlankString()
 }

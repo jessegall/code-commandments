@@ -76,7 +76,7 @@ func TestTheJournalsReportCountsOnlyWhatIsStillToAnswerFor(t *testing.T) {
 	})
 
 	var read journalReport
-	if err := json.Unmarshal(NewReport(root, active, nil, nil, Skipped{}).Reporting(filed).Journal(), &read); err != nil {
+	if err := json.Unmarshal(NewReport(root, active, nil, Skipped{}).Reporting(filed).Journal(), &read); err != nil {
 		t.Fatal(err)
 	}
 
@@ -92,7 +92,7 @@ func TestTheChecklistKeepsAReportedLineWhereNobodyWillFixIt(t *testing.T) {
 		finding("RedundantElseDetector", file, 1),
 	})
 
-	checklist := NewReport(root, active, nil, nil, Skipped{}).Reporting(filed).Checklist()
+	checklist := NewReport(root, active, nil, Skipped{}).Reporting(filed).Checklist()
 
 	if !strings.HasPrefix(checklist, "# Code Commandments — 1 sins to fix") {
 		t.Errorf("the checklist's heading counts the reported line as work: %q", strings.SplitN(checklist, "\n", 2)[0])
@@ -119,7 +119,7 @@ func TestTheConsoleNamesWhatIsReportedAndWhereToReadIt(t *testing.T) {
 		finding("RedundantElseDetector", file, 1),
 	})
 
-	console := NewReport(root, active, nil, nil, Skipped{}).Reporting(filed).Console()
+	console := NewReport(root, active, nil, Skipped{}).Reporting(filed).Console()
 
 	if !strings.Contains(console, "1 finding reported and left out of the count") {
 		t.Errorf("the run does not say what it set aside:\n%s", console)

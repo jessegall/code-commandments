@@ -26,7 +26,6 @@ type Report struct {
 	skills       []string
 	bySkill      map[string][]engine.Finding
 	total        int
-	fixable      map[string]string
 	scaffoldable map[string]string
 	skipped      Skipped
 	says         map[string]string
@@ -47,10 +46,10 @@ func (r Report) Reporting(filed []Reported) Report {
 	return r
 }
 
-func NewReport(path string, findings []engine.Finding, fixable, scaffoldable map[string]string, skipped Skipped) Report {
+func NewReport(path string, findings []engine.Finding, scaffoldable map[string]string, skipped Skipped) Report {
 	// A finding names its file by its real path, as the bridges read it, so the path it is told against is real too.
 	path = walk.Real(path)
-	report := Report{path: path, bySkill: map[string][]engine.Finding{}, total: len(findings), fixable: fixable, scaffoldable: scaffoldable, skipped: skipped, mirrors: mirrored(path), worktree: git.Root(path)}
+	report := Report{path: path, bySkill: map[string][]engine.Finding{}, total: len(findings), scaffoldable: scaffoldable, skipped: skipped, mirrors: mirrored(path), worktree: git.Root(path)}
 
 	for _, finding := range findings {
 		if _, seen := report.bySkill[finding.Skill]; !seen {
@@ -108,10 +107,6 @@ func (r Report) Console() string {
 			}
 		}
 
-		for _, command := range commandsFor(findings, r.fixable) {
-			lines = append(lines, "  \033[32m↳ auto-fixable: "+command+"\033[0m")
-		}
-
 		for _, command := range commandsFor(findings, r.scaffoldable) {
 			lines = append(lines, "  \033[32m↳ scaffold the helper: "+command+"\033[0m")
 		}
@@ -144,10 +139,6 @@ func (r Report) Checklist() string {
 		findings := r.bySkill[slug]
 		out.WriteString("\n## " + slug + "\n\n> ▶ **" + loadInstruction(slug) + ".** " +
 			"It teaches every fix below.\n\n")
-
-		for _, command := range commandsFor(findings, r.fixable) {
-			out.WriteString("> ✎ Auto-fixable — run `" + command + "` to repent these for you.\n\n")
-		}
 
 		for _, command := range commandsFor(findings, r.scaffoldable) {
 			out.WriteString("> 🛠 Scaffold the helper its fix uses — run `" + command + "`.\n\n")

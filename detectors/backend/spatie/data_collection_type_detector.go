@@ -23,5 +23,3 @@ func (DataCollectionTypeDetector) Find(codebase *engine.Codebase) []engine.Match
 		Where(engine.As(spatienode.Node.PropertyTypedAsDataCollection)).
 		Get()
 }
-
-func (DataCollectionTypeDetector) Repentable() {}

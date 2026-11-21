@@ -47,7 +47,7 @@ func TestATwinInAnotherCheckoutIsToldWhereThisOneHasIt(t *testing.T) {
 		Location: filepath.Join(worktree, "src", "made.py") + ":3",
 		Twins:    []string{filepath.Join(project, "src", "order.py") + ":1"},
 		Skill:    "python/duplication",
-	}}, nil, nil, Skipped{})
+	}}, nil, Skipped{})
 
 	if said := report.relative(filepath.Join(project, "src", "order.py") + ":1"); said != "src/order.py:1" {
 		t.Errorf("a twin in the project's own checkout is told as %q, which the worker cannot open; it holds that "+

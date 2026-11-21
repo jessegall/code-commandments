@@ -188,7 +188,7 @@ var constructions = engine.Memoised(func(codebase *engine.Codebase) *constructio
 	made := &construction{injected: map[string]bool{}, built: map[string]bool{}}
 	program := php.ProgramOf(codebase)
 	for _, param := range php.In(codebase).WhereKind("Param").Where(func(m engine.Match) bool { return php.EnclosingFunctionName(m) == "__construct" }).Get() {
-		for _, name := range php.Written(param.Node().Declared).Names() {
+		for _, name := range php.Written(param.Node().Written).Names() {
 			made.injected[name] = true
 		}
 	}

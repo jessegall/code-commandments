@@ -40,7 +40,7 @@ func (c *Codebase) WhereCall() *engine.Query {
 }
 
 func (n Node) IsStatement() bool {
-	return n.Node().Role == "statement" || n.IsDefinition()
+	return n.Role() == "statement" || n.IsDefinition()
 }
 
 func (n Node) IsEvaluated() bool {

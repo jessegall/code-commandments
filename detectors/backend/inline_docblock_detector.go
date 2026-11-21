@@ -22,7 +22,3 @@ func (InlineDocblockDetector) Find(codebase *engine.Codebase) []engine.Match {
 		Where(engine.As(php.Node.HasInlineDocblock)).
 		Get()
 }
-
-func (InlineDocblockDetector) Repentable() {}
-
-func (InlineDocblockDetector) RunsLast() {}

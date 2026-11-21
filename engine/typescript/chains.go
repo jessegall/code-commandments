@@ -57,7 +57,7 @@ func (n Node) Chains() [][]string {
 	}
 	var chains [][]string
 	for _, child := range n.Children() {
-		if child.Node().Role != "type" {
+		if child.Role() != "type" {
 			chains = append(chains, Node{child}.Chains()...)
 		}
 	}
@@ -136,7 +136,7 @@ func (n Node) Roots() []string {
 		}
 	default:
 		for _, child := range n.Children() {
-			if child.Node().Role != "type" {
+			if child.Role() != "type" {
 				roots = append(roots, Node{child}.Roots()...)
 			}
 		}

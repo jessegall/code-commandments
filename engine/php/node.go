@@ -55,7 +55,7 @@ func (n Node) CaughtTypes() []string {
 	}
 	var types []string
 	for _, child := range n.Children() {
-		if child.Node().Field == "types" {
+		if child.Node().InRole() == "types" {
 			types = append(types, child.Name())
 		}
 	}

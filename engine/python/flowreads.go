@@ -97,7 +97,7 @@ func (n Node) ResultIsDiscarded() bool {
 }
 
 func (n Node) IsElif() bool {
-	return n.Kind() == "If" && slices.Contains(n.Node().Flags, "elif")
+	return n.Kind() == "If" && slices.Contains(n.Node().Modifiers, "elif")
 }
 
 func (n Node) ComparisonSubject() (Node, bool) {
@@ -153,7 +153,7 @@ var collectionViews, mappingViews = []string{"enumerate", "reversed", "iter"}, [
 func (n Node) loopWalking(collection Node) (Node, bool) {
 	for held, loop := n, n.Parent(); loop.Exists(); held, loop = loop, loop.Parent() {
 		walked, walks := loop.Child("iter").collectionWalkedLive()
-		if walks && held.Node().Field == "body" && walked.SameSyntax(collection.Match) {
+		if walks && held.Node().InRole() == "body" && walked.SameSyntax(collection.Match) {
 			return loop, true
 		}
 	}
@@ -172,7 +172,7 @@ func (n Node) leavesThatLoopAtOnce(loop Node) bool {
 
 func (n Node) blockHolding() []Node {
 	for held := n; held.Exists(); held = held.Parent() {
-		if field := held.Node().Field; slices.Contains([]string{"body", "orelse", "finalbody"}, field) {
+		if field := held.Node().InRole(); slices.Contains([]string{"body", "orelse", "finalbody"}, field) {
 			return held.Parent().ChildrenIn(field)
 		}
 	}

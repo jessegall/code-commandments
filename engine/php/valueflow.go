@@ -250,7 +250,7 @@ func (f *ValueFlow) viaArrayElement(occurrence engine.Match, key string) []reach
 		return nil
 	case isChild(occurrence, "Stmt_Foreach", "expr") && parent.Child("valueVar").Kind() == "Expr_Variable" && parent.Child("valueVar").Name() != "":
 		return keyed(readsOf(parent.Child("valueVar").Name(), enclosingFunction(occurrence)), "element", nil)
-	case parent.Kind() == "ArrayItem" && slices.Contains(parent.Node().Flags, "spread") && parent.Parent().Kind() == "Expr_Array":
+	case parent.Kind() == "ArrayItem" && slices.Contains(parent.Node().Modifiers, "spread") && parent.Parent().Kind() == "Expr_Array":
 		return []reached{{node: parent.Parent(), edge: "spread", key: &key}}
 	}
 
@@ -322,7 +322,7 @@ func (f *ValueFlow) readsReachedThrough(target paramTarget, slots map[string]boo
 	if _, known := f.files[target.class]; known {
 		downstream = readsOf(name, method)
 	}
-	if !slices.Contains(target.param.Node().Flags, "promoted") {
+	if !slices.Contains(target.param.Node().Modifiers, "promoted") {
 		return downstream
 	}
 
@@ -434,11 +434,11 @@ func positionOf(call, arg engine.Match) (int, bool) {
 	}
 	position := 0
 	for _, candidate := range call.Children() {
-		if candidate.Node().Field != "args" {
+		if candidate.Node().InRole() != "args" {
 			continue
 		}
 		if candidate.Node() == arg.Node() {
-			return position, !slices.Contains(arg.Node().Flags, "spread")
+			return position, !slices.Contains(arg.Node().Modifiers, "spread")
 		}
 		position++
 	}
@@ -566,7 +566,7 @@ func isSelfReadGuardedByStateClause(node engine.Match) bool {
 func bodyOf(function engine.Match) []engine.Match {
 	var body []engine.Match
 	for _, statement := range function.Children() {
-		if (statement.Node().Field == "stmts" || statement.Node().Field == "body") && statement.Node().Role == "statement" {
+		if (statement.Node().InRole() == "stmts" || statement.Node().InRole() == "body") && statement.Role() == "statement" {
 			body = append(body, statement)
 		}
 	}
@@ -580,7 +580,7 @@ func isStateGuardClause(statement engine.Match) bool {
 	}
 	var last engine.Match
 	for _, child := range statement.Children() {
-		if child.Node().Field == "stmts" {
+		if child.Node().InRole() == "stmts" {
 			last = child
 		}
 	}

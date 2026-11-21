@@ -41,7 +41,6 @@ const aRuleCouldNotRun = 3
 
 // Command is `judge`: scan a codebase and report its sins, grouped by the skill that fixes each.
 type Command struct {
-	Fixable map[string]string
 
 	Scaffoldable map[string]string
 
@@ -372,7 +371,7 @@ func (c Command) judge(options options, selected []detectors.Detector, judged co
 
 		for _, target := range options.checklist {
 			if len(filed) > 0 {
-				write(target, NewReport(options.path, nil, c.Fixable, c.Scaffoldable, skipped).Reporting(filed).Checklist(), space, console)
+				write(target, NewReport(options.path, nil, c.Scaffoldable, skipped).Reporting(filed).Checklist(), space, console)
 			}
 		}
 
@@ -385,7 +384,7 @@ func (c Command) judge(options options, selected []detectors.Detector, judged co
 		return aRuleCouldNotRun, nil
 	}
 
-	report := NewReport(options.path, judgement.Findings, c.Fixable, c.Scaffoldable, skipped).Saying(saying(selected)).Reporting(filed)
+	report := NewReport(options.path, judgement.Findings, c.Scaffoldable, skipped).Saying(saying(selected)).Reporting(filed)
 	if cli.Watched() {
 		console.Say(report.Said())
 	} else {
@@ -979,7 +978,7 @@ func optionsOf(in *cli.Input, space workspace.Workspace) options {
 
 	var targets []string
 
-	if _, repenting := scope.Repent(in.Raw()); !in.HasFlag("no-checklist") && !repenting {
+	if !in.HasFlag("no-checklist") {
 		target, set := in.Option("checklist")
 		if !set {
 			target = space.Checklist()

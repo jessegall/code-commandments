@@ -197,7 +197,7 @@ func (n Node) IsInFromSourceFactory() bool {
 	if function.Kind() != "Stmt_ClassMethod" || !slices.Contains(function.Node().Modifiers, "static") {
 		return false
 	}
-	returns := Written(function.Node().Returns).Render()
+	returns := Written(function.Node().Written).Render()
 	class := EnclosingClassName(n.Match)
 
 	return returns == "self" || returns == "static" || class != "" && strings.TrimLeft(returns, `\`) == strings.TrimLeft(class, `\`)

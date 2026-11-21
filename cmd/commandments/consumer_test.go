@@ -257,9 +257,4 @@ func TestAProjectWithNoJournalIsUntouchedByTheWorkerJudging(t *testing.T) {
 	if !strings.Contains(why, "nothing has been judged in this session") && !strings.Contains(why, "judged by nobody") {
 		t.Errorf("a project with no journal cannot read its own record back: %s", why)
 	}
-
-	repented := c.run(0, "commandments", "repent", "--dry-run")
-	if strings.Contains(repented, "lane") || strings.Contains(repented, "worker") {
-		t.Errorf("repent speaks of lanes and workers in a project that has neither: %s", repented)
-	}
 }

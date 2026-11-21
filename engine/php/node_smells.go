@@ -106,7 +106,7 @@ var contractOutcomes = engine.Memoised(func(codebase *engine.Codebase) map[strin
 })
 
 func (n Node) ReturnsFalseForNothing() bool {
-	declared := n.Node().Returns
+	declared := n.Node().Written
 	if !n.IsFunctionLike() || declared == nil || declared.Kind != "union" {
 		return false
 	}

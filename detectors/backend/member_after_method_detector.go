@@ -22,5 +22,3 @@ func (MemberAfterMethodDetector) Find(codebase *engine.Codebase) []engine.Match 
 		Where(engine.As(php.Node.IsBelowAMethodInItsClass)).
 		Get()
 }
-
-func (MemberAfterMethodDetector) Repentable() {}

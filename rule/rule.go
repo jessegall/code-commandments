@@ -45,7 +45,6 @@ type file struct {
 	Engine engines  `json:"engine"`
 	Sin    sinFile  `json:"sin"`
 	Find   find     `json:"find"`
-	Fix    *Fix     `json:"fix,omitempty"`
 	Judges []string `json:"judges,omitempty"`
 	Tags   []string `json:"tags,omitempty"`
 }
@@ -338,7 +337,6 @@ type Rule struct {
 	engines []catalog.Engine
 	sin     ownSin
 	find    find
-	fix     *Fix
 	judges  []string
 	tags    []string
 	written []byte
@@ -455,19 +453,13 @@ func Parse(name string, text []byte, skills Skills) (Rule, error) {
 		}
 	}
 
-	if read.Fix != nil {
-		if err := read.Fix.prepare(); err != nil {
-			return Rule{}, fmt.Errorf("%s: %w", name, err)
-		}
-	}
-
 	return Rule{name, judges, ownSin{sins.Definition{
 		Name:        read.Sin.Name,
 		Skill:       taught,
 		Description: read.Sin.Description,
 		Rule:        read.Sin.Rule,
 		Suggestion:  read.Sin.Suggestion,
-	}}, read.Find.compiled(), read.Fix, folders(read.Judges), read.Tags, text, ""}, nil
+	}}, read.Find.compiled(), folders(read.Judges), read.Tags, text, ""}, nil
 }
 
 func folders(named []string) []string {

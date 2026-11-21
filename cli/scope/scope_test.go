@@ -48,8 +48,6 @@ func TestEachFlagNarrowsToItsFiles(t *testing.T) {
 		"--changes":         {"src/Edited.vue", "src/Untracked.py"},
 		"--branch":          {"src/Added.ts", "src/Branched.php", "src/Edited.vue", "src/Untracked.py"},
 		"--branch=feature":  {"src/Edited.vue", "src/Untracked.py"},
-		"--repent":          {"src/Kept.php"},
-		"--repent=nowhere?": nil,
 	} {
 		scope, err := FromArgs([]string{flags}, root, space, nil)
 
@@ -122,7 +120,6 @@ func TestAScopeThatCannotBeWorkedOutSaysWhy(t *testing.T) {
 	}{
 		{[]string{"--changes"}, outside, "Not a git repository (or git unavailable): " + outside},
 		{[]string{"--branch=nope"}, root, "Base ref 'nope' not found: " + root},
-		{[]string{"--repent=20260101"}, root, "No checklist for --repent=20260101 (looked for " + workspace.At(root, "s").ChecklistArchive("20260101") + ")."},
 	} {
 		if _, err := FromArgs(c.args, c.path, workspace.At(root, "s"), nil); err == nil || err.Error() != c.want {
 			t.Errorf("%v: %v", c.args, err)

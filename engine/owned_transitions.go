@@ -64,7 +64,7 @@ func readsStateCase(node Match) bool {
 		return true
 	}
 	typed := node.Typed()
-	return node.Node() != nil && node.Node().Facts != nil && node.Node().Constant && typed != nil && typed.Kind == "named"
+	return node.IsConstant() && typed != nil && typed.Kind == "named"
 }
 
 func (m Match) HandRollsRegistry() bool {

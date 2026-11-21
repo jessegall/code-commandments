@@ -1,10 +1,5 @@
 package engine
 
-import (
-	"path/filepath"
-	"strings"
-)
-
 func (m Match) DocTags() []string {
 	if read := m.grammar().DocTags; read != nil && m.node != nil {
 		return read(m)
@@ -16,7 +11,7 @@ func (m Match) DocTags() []string {
 func (m Match) DocComments() []string {
 	var texts []string
 	for _, comment := range m.Comments() {
-		if comment.Kind == "doc" {
+		if comment.Form == "doc" {
 			texts = append(texts, comment.Text)
 		}
 	}
@@ -50,7 +45,7 @@ func (m Match) StacksDocComments() bool {
 	for at := len(above) - 1; at >= 0; at-- {
 		comment := comments[above[at]]
 		header := comment.Span.End <= code && HasBlankLine(string(source[comment.Span.End:end]))
-		if comment.Kind != "doc" || header {
+		if comment.Form != "doc" || header {
 			break
 		}
 		run, end = run+1, comment.Span.Start
@@ -95,25 +90,15 @@ func bodies(c *Codebase) map[string]int {
 }
 
 func (m Match) IsTest() bool {
-	return m.file != nil && m.file.isTest()
+	return m.file != nil && m.file.Purpose() != Ordinary
 }
 
 func (m Match) IsTestFixture() bool {
-	path := "/" + strings.ToLower(filepath.ToSlash(m.FromProject()))
-
-	return strings.Contains(path, "/tests/fixtures/") || strings.Contains(path, "/test/fixtures/")
+	return m.file != nil && m.file.Purpose() == TestFixture
 }
 
 func (m Match) IsTestReaching(declaration Match) bool {
 	return m.IsTest() && !declaration.IsTest()
 }
 
-func (f *File) isTest() bool {
-	if f.Test {
-		return true
-	}
 
-	grammar := spokenIn(f.Language()).grammar
-
-	return grammar != nil && grammar.TestFile != nil && grammar.TestFile(f.FromProject(), f.Path)
-}

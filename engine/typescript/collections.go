@@ -130,7 +130,7 @@ func (n Node) mutatedCollection() (Node, bool) {
 func (n Node) loopWalking(collection Node) (Node, bool) {
 	for held := n.Match; held.Exists(); held = held.Parent() {
 		loop := held.Parent()
-		if !loop.Is(engine.Loop) || loop.Kind() != "ForOfStatement" || held.Node().Field != "statement" {
+		if !loop.Is(engine.Loop) || loop.Kind() != "ForOfStatement" || held.Node().InRole() != "statement" {
 			continue
 		}
 		if walked := loop.Child("expression"); walked.SameSyntax(collection.Match) {
@@ -144,7 +144,7 @@ func (n Node) loopWalking(collection Node) (Node, bool) {
 func (n Node) insideEachOver(collection Node) bool {
 	for held := n.Match; held.Exists(); held = held.Parent() {
 		each := Node{held.Parent()}
-		if each.Kind() != "CallExpression" || held.Node().Field != "arguments" {
+		if each.Kind() != "CallExpression" || held.Node().InRole() != "arguments" {
 			continue
 		}
 		callee := each.Child("expression")

@@ -93,7 +93,7 @@ func (n Node) isMatchedOn() bool {
 		subject = around
 	}
 
-	return subject.Parent().Kind() == "Match" && subject.Node().Field == "subject"
+	return subject.Parent().Kind() == "Match" && subject.Node().InRole() == "subject"
 }
 
 func (n Node) SwitchesEntirelyOnAParameter() bool {

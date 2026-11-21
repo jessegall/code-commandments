@@ -31,7 +31,7 @@ func (ParamResolvedFromParamDetector) Find(codebase *engine.Codebase) []engine.M
 
 func takesABoundary(codebase *engine.Codebase, method engine.Match) bool {
 	for _, param := range php.Params(method) {
-		written := param.Node().Declared
+		written := param.Node().Written
 		if written != nil && written.Kind == "named" && packages.Excuses(codebase, packages.Boundary, written.Name, "") {
 			return true
 		}

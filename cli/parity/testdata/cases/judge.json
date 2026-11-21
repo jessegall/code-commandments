@@ -84,14 +84,6 @@
     ]
   },
   {
-    "name": "judge-repent-without-checklist",
-    "args": [
-      "judge",
-      ".",
-      "--repent"
-    ]
-  },
-  {
     "name": "judge-changes-nothing-changed",
     "args": [
       "judge",

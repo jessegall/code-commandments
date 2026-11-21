@@ -15,7 +15,7 @@ func vocabularyWords(argument engine.Match) []string {
 			continue
 		}
 		values := declared.ChildrenIn("values")
-		if len(values) != 1 || values[0].Node().Literal != "string" {
+		if len(values) != 1 || values[0].Node().LiteralKind != "string" {
 			continue
 		}
 		if word, known := values[0].Text(); known {

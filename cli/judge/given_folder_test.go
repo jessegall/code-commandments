@@ -71,7 +71,7 @@ func TestAJudgeGivenNoFolderReportsTheWholeTree(t *testing.T) {
 }
 
 func TestALocationOutsideTheFolderKeepsItsWholePath(t *testing.T) {
-	report := NewReport("/project/src", nil, nil, nil, Skipped{})
+	report := NewReport("/project/src", nil, nil, Skipped{})
 
 	if got := report.relative("/elsewhere/twin.py:3"); got != "/elsewhere/twin.py:3" {
 		t.Errorf("a location outside the folder printed as %q", got)

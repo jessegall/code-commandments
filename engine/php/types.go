@@ -126,11 +126,11 @@ func (t *Types) index(declaration engine.Match) {
 		}
 	}
 	for _, param := range ConstructorParams(declaration) {
-		if !slices.Contains(param.Node().Flags, "promoted") {
+		if !slices.Contains(param.Node().Modifiers, "promoted") {
 			continue
 		}
 		field := param.Name()
-		set(t.fieldType, class, field, typed(Written(param.Node().Declared)))
+		set(t.fieldType, class, field, typed(Written(param.Node().Written)))
 		t.recordCollectionElement(class, field, param)
 		doc := constructorDoc
 		if own, ok := DocComment(param); ok {
@@ -147,25 +147,25 @@ func (t *Types) index(declaration engine.Match) {
 			doc = own.Text
 		}
 		for _, item := range member.Children() {
-			if item.Node().Field != "props" {
+			if item.Node().InRole() != "props" {
 				continue
 			}
-			set(t.fieldType, class, item.Name(), typed(Written(member.Node().Declared)))
+			set(t.fieldType, class, item.Name(), typed(Written(member.Node().Written)))
 			t.recordCollectionElement(class, item.Name(), member)
 			t.recordDocumentedElement(class, item.Name(), doc, "", member.Source())
 		}
 	}
 	for _, method := range Methods(declaration) {
 		name := method.Name()
-		set(t.returnType, class, name, typed(Written(method.Node().Returns)))
+		set(t.returnType, class, name, typed(Written(method.Node().Written)))
 		t.indexClassStringReturn(class, method)
 		var nullable []bool
 		var written []string
 		variadic := false
 		for _, param := range Params(method) {
 			nullable = append(nullable, acceptsNull(param))
-			written = append(written, Written(param.Node().Declared).SimpleName())
-			variadic = variadic || slices.Contains(param.Node().Flags, "variadic")
+			written = append(written, Written(param.Node().Written).SimpleName())
+			variadic = variadic || slices.Contains(param.Node().Modifiers, "variadic")
 		}
 		set(t.nullable, class, name, nullable)
 		set(t.paramType, class, name, written)
@@ -197,7 +197,7 @@ func elementType(class, origin string) *contract.Type {
 
 func firstArgument(attribute engine.Match) engine.Match {
 	for _, arg := range attribute.Children() {
-		if arg.Node().Field != "args" {
+		if arg.Node().InRole() != "args" {
 			continue
 		}
 
@@ -277,7 +277,7 @@ func (t *Types) fill(codebase *engine.Codebase, changed []string) {
 		}
 
 		for _, node := range file.Nodes() {
-			if node.Role != "expression" {
+			if !node.Is("expression") {
 				continue
 			}
 			expression := file.Match(node.ID)
@@ -541,7 +541,7 @@ func (t *Types) localTypesThrough(function engine.Match, self string, through in
 	locals := t.capturedTypes(function, self)
 	for _, param := range Params(function) {
 		if variable := param.Child("var"); variable.Kind() == "Expr_Variable" && variable.Name() != "" {
-			locals[variable.Name()] = typed(Written(param.Node().Declared))
+			locals[variable.Name()] = typed(Written(param.Node().Written))
 		}
 	}
 	descendants := descendantsOf(function)
@@ -575,7 +575,7 @@ func (t *Types) localTypesThrough(function engine.Match, self string, through in
 
 func branchContainsRead(write, read engine.Match) bool {
 	for at := write; at.Exists(); at = at.Parent() {
-		if at.Node().Field == "stmts" {
+		if at.Node().InRole() == "stmts" {
 			return bodyContainsRead(at.Parent(), read)
 		}
 	}
@@ -585,7 +585,7 @@ func branchContainsRead(write, read engine.Match) bool {
 func bodyContainsRead(owner, read engine.Match) bool {
 	for at := read; at.Exists(); at = at.Parent() {
 		if at.Parent().Node() == owner.Node() {
-			return at.Node().Field == "stmts"
+			return at.Node().InRole() == "stmts"
 		}
 	}
 	return false
@@ -634,7 +634,7 @@ func typeName(written TypeName) string {
 }
 
 func acceptsNull(param engine.Match) bool {
-	declared := Written(param.Node().Declared)
+	declared := Written(param.Node().Written)
 
 	return declared.written == nil || declared.isSugared() ||
 		(declared.written.Kind == "keyword" && strings.ToLower(declared.written.Name) == "mixed") ||
@@ -642,7 +642,7 @@ func acceptsNull(param engine.Match) bool {
 }
 
 func IsNullConstant(node engine.Match) bool {
-	return node.Exists() && node.Node().Literal == "null"
+	return node.Exists() && node.Node().LiteralKind == "null"
 }
 
 func isSelfReferential(class string) bool {
@@ -663,7 +663,7 @@ func set[V any](index map[string]map[string]V, class, member string, value V) {
 func Arguments(call engine.Match) []engine.Match {
 	var arguments []engine.Match
 	for _, argument := range call.Children() {
-		if argument.Node().Field == "args" && argument.Kind() == "Arg" {
+		if argument.Node().InRole() == "args" && argument.Kind() == "Arg" {
 			arguments = append(arguments, argument)
 		}
 	}
@@ -674,7 +674,7 @@ func Arguments(call engine.Match) []engine.Match {
 func Params(function engine.Match) []engine.Match {
 	var params []engine.Match
 	for _, param := range function.Children() {
-		if param.Node().Field == "params" {
+		if param.Node().InRole() == "params" {
 			params = append(params, param)
 		}
 	}

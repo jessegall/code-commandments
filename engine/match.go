@@ -131,20 +131,34 @@ func (m Match) Identity() string {
 	return m.node.Name
 }
 
+// Field is the name of the role the node fills in its parent: "" for a file's root.
 func (m Match) Field() string {
 	if m.node == nil {
 		return ""
 	}
 
-	return m.node.Field
+	return m.node.InRole()
 }
 
+// Role is the broad part the node plays: a member of a type, a statement, an expression, a type as written, markup,
+// or other.
 func (m Match) Role() string {
-	if m.node == nil {
+	switch {
+	case m.node == nil:
 		return ""
+	case m.node.Is("declaration") && m.Parent().Kind() == "type":
+		return "member"
+	case m.node.Kind == "type-expression" || m.node.Kind == "tuple-type":
+		return "type"
+	case m.node.Is("statement"):
+		return "statement"
+	case m.node.Is("expression"):
+		return "expression"
+	case m.node.Is("markup"):
+		return "markup"
 	}
 
-	return m.node.Role
+	return "other"
 }
 
 func (m Match) Kind() string {
@@ -279,8 +293,52 @@ func (m Match) TargetSymbol() string {
 	return m.node.Target.Symbol
 }
 
+// HasFlag answers the syntax facts the old tree spelled as flags, read from the facts version 5 states them as.
 func (m Match) HasFlag(flag string) bool {
-	return m.node != nil && slices.Contains(m.node.Flags, flag)
+	if m.node == nil {
+		return false
+	}
+	node := m.node
+	switch flag {
+	case "variadic":
+		return node.Collects == "rest"
+	case "keywords":
+		return node.Collects == "keywords"
+	case "by-ref":
+		return node.Passing == "reference"
+	case "promoted":
+		return m.Kind() == "parameter" && m.isImplicitMemberOf(m.Parent().EnclosingType())
+	case "keyword-only":
+		return node.Position == "keyword"
+	case "optional":
+		return node.Optional
+	case "spread":
+		return node.Spread != "" && node.Spread != "none" || node.Expansion != "" && node.Expansion != "none"
+	case "named":
+		return node.Kind == "argument" && node.Label != ""
+	case "async":
+		return node.Async
+	case "generator":
+		return node.Generator
+	case "short-ternary":
+		return node.Kind == "fallback" && node.Trigger == "falsy"
+	case "shorthand":
+		return node.Shorthand
+	case "component":
+		return node.Kind == "element" && node.Form == "component"
+	case "nullable-sugar":
+		return node.Kind == "type-expression" && node.Form == "nullable"
+	case "constant":
+		return node.Kind == "variable" && node.Form == "const"
+	case "group":
+		return node.Group
+	case "step":
+		return node.InRole() == "steps"
+	case "elif":
+		return node.Kind == "if" && node.InRole() == "else"
+	}
+
+	return false
 }
 
 func (m Match) Operator() string {
@@ -333,7 +391,7 @@ func (m Match) Written() string {
 }
 
 func (m Match) IsConstant() bool {
-	return m.node != nil && m.node.Constant
+	return m.node != nil && m.node.ConstantValue != nil
 }
 
 func (m Match) Text() (string, bool) {
@@ -344,9 +402,42 @@ func (m Match) Text() (string, bool) {
 	return m.node.Value.Text()
 }
 
-func (m Match) Is(neutral Neutral) bool {
-	return m.node != nil && m.node.Answers(string(neutral))
+func (m Match) isImplicitMemberOf(owner Match) bool {
+	return owner.Exists() && slices.Contains(owner.node.Linked("implicitMembers"), m.node.ID)
 }
+
+// Is answers a neutral question by the version 5 kind and facts that state it.
+func (m Match) Is(neutral Neutral) bool {
+	if m.node == nil {
+		return false
+	}
+	node := m.node
+	switch neutral {
+	case Function:
+		return node.Kind == "function"
+	case TypeDeclaration:
+		return node.Kind == "type" || node.Kind == "alias"
+	case Branch:
+		return node.Kind == "if" || node.Kind == "dispatch" || node.Kind == "select" || node.Kind == "conditional"
+	case BailOut:
+		return node.Is("exit") && node.Kind != "goto"
+	case MemberAccess:
+		return node.Kind == "access"
+	case NullSafe:
+		return node.NullConditional
+	case SelfReference:
+		return node.Kind == "reference" && node.Form == "self"
+	case Identifier:
+		return node.Kind == "reference" && node.Form != "self"
+	case Conjunction:
+		return node.Kind == "logical"
+	case Catch:
+		return node.Kind == "handler"
+	}
+
+	return node.Kind == string(neutral)
+}
+
 
 func (m Match) Parent() Match {
 	if m.node == nil {
@@ -367,8 +458,9 @@ func (m Match) Children() []Match {
 
 	CountedVisit()
 
-	children := make([]Match, 0, len(m.node.Children))
-	for _, child := range m.node.Children {
+	owned := m.node.Children()
+	children := make([]Match, 0, len(owned))
+	for _, child := range owned {
 		children = append(children, Match{node: child, file: m.file})
 	}
 
@@ -376,10 +468,11 @@ func (m Match) Children() []Match {
 }
 
 func (m Match) Child(field string) Match {
-	for _, child := range m.Children() {
-		if child.node.Field == field {
-			return child
-		}
+	if m.node == nil {
+		return Match{}
+	}
+	if child, present := m.node.Child(field); present {
+		return Match{node: child, file: m.file}
 	}
 
 	return Match{}
@@ -396,7 +489,7 @@ func (m Match) Descendants() []Match {
 func (m Match) below(found []Match) []Match {
 	CountedVisit()
 
-	for _, child := range m.node.Children {
+	for _, child := range m.node.Children() {
 		under := Match{node: child, file: m.file}
 		found = under.below(append(found, under))
 	}
@@ -405,11 +498,13 @@ func (m Match) below(found []Match) []Match {
 }
 
 func (m Match) ChildrenIn(field string) []Match {
-	var filling []Match
-	for _, child := range m.Children() {
-		if child.node.Field == field {
-			filling = append(filling, child)
-		}
+	if m.node == nil {
+		return nil
+	}
+	held, _ := m.node.Role(field)
+	filling := make([]Match, 0, len(held))
+	for _, child := range held {
+		filling = append(filling, Match{node: child, file: m.file})
 	}
 
 	return filling
@@ -479,7 +574,7 @@ func (m Match) CommentsAbove() []contract.Comment {
 
 func (m Match) IsDocumented() bool {
 	for _, comment := range m.Comments() {
-		if comment.Kind == "doc" && (Commented{Comment: comment, File: m.file}).Prose() != "" {
+		if comment.Form == "doc" && (Commented{Comment: comment, File: m.file}).Prose() != "" {
 			return true
 		}
 	}
@@ -496,15 +591,16 @@ func (m Match) EndsBefore(other Match) bool {
 }
 
 func sameSyntax(a, b *contract.Node, root bool) bool {
-	if a.Kind != b.Kind || !root && a.Field != b.Field || a.Name != b.Name || a.Literal != b.Literal || a.Operator != b.Operator ||
-		!slices.Equal(a.Modifiers, b.Modifiers) || !slices.Equal(a.Flags, b.Flags) || len(a.Children) != len(b.Children) {
+	first, second := a.Children(), b.Children()
+	if a.Kind != b.Kind || !root && a.InRole() != b.InRole() || a.Name != b.Name || a.LiteralKind != b.LiteralKind || a.Operator != b.Operator ||
+		a.Form != b.Form || !slices.Equal(a.Modifiers, b.Modifiers) || len(first) != len(second) {
 		return false
 	}
 	if (a.Value == nil) != (b.Value == nil) || (a.Value != nil && !a.Value.Equal(*b.Value)) {
 		return false
 	}
-	for i := range a.Children {
-		if !sameSyntax(a.Children[i], b.Children[i], false) {
+	for i := range first {
+		if !sameSyntax(first[i], second[i], false) {
 			return false
 		}
 	}

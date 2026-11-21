@@ -94,7 +94,7 @@ func TestEveryTopLevelStatementLivesUnderTheRoot(t *testing.T) {
 	folder := written(t, map[string]string{"Cart.php": "<?php\n\ndeclare(strict_types=1);\n\nnamespace Shop;\n\nfinal class Cart {}\n"})
 	file := bridged(t, folder).Files[0]
 	var kinds []string
-	for _, child := range file.Root.Children {
+	for _, child := range file.Root.Children() {
 		kinds = append(kinds, child.Kind)
 	}
 	if !slices.Equal(kinds, []string{"Stmt_Declare", "Stmt_Namespace"}) {
@@ -158,7 +158,7 @@ final class Till
 		t.Errorf("sum returns %+v", returns)
 	}
 	promoted := find(file, func(n *contract.Node) bool { return n.Kind == "Param" && n.Name == "cash" })
-	if promoted.Symbol != `Shop\Till::$cash` || promoted.Declared.Name != `Money\Money` {
+	if promoted.Symbol != `Shop\Till::$cash` || promoted.Written.Name != `Money\Money` {
 		t.Errorf("the promoted parameter is %+v", promoted)
 	}
 }

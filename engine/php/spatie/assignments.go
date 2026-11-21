@@ -176,7 +176,7 @@ func (n Node) AssignedSlotIsEager() bool {
 		}
 		var items []engine.Match
 		for _, item := range property.Children() {
-			if item.Node().Field == "props" {
+			if item.Node().InRole() == "props" {
 				items = append(items, item)
 			}
 		}
@@ -202,7 +202,7 @@ func (n Node) PropertyAssignedMoreThanOnce() bool {
 	}
 	count := 0
 	for _, statement := range constructor.Children() {
-		if statement.Node().Field != "stmts" {
+		if statement.Node().InRole() != "stmts" {
 			continue
 		}
 		for _, assign := range append([]engine.Match{statement}, descendants(statement)...) {
@@ -231,13 +231,13 @@ func (n Node) IsOptionalNullFallback() bool {
 	parent := n.Parent()
 	switch parent.Kind() {
 	case "Expr_Ternary":
-		if n.Node().Field != "if" && n.Node().Field != "else" {
+		if n.Node().InRole() != "if" && n.Node().InRole() != "else" {
 			return false
 		}
 
 		return !parent.Child("if").Exists() || isNullComparison(parent.Child("cond"))
 	case "Expr_BinaryOp_Coalesce":
-		return n.Node().Field == "right"
+		return n.Node().InRole() == "right"
 	}
 
 	return false
@@ -261,10 +261,10 @@ func (n Node) IsSharedOptionalFactory() bool {
 	parent := n.Parent()
 	switch parent.Kind() {
 	case "Expr_BinaryOp_Coalesce":
-		return n.Node().Field == "right" && n.coalescesEnclosingParameter(parent.Child("left"))
+		return n.Node().InRole() == "right" && n.coalescesEnclosingParameter(parent.Child("left"))
 	case "Expr_Ternary":
 		present := parent.Child("if")
-		if n.Node().Field == "if" {
+		if n.Node().InRole() == "if" {
 			present = parent.Child("else")
 		}
 		class, name := present.Child("class"), present.Child("name")
@@ -364,7 +364,7 @@ func soleArrayLiteralOutput(node engine.Match) (engine.Match, bool) {
 func soleReturnedArray(node engine.Match, field string) (engine.Match, bool) {
 	var statements []engine.Match
 	for _, statement := range node.Children() {
-		if statement.Node().Field == field && statement.Node().Role == "statement" {
+		if statement.Node().InRole() == field && statement.Role() == "statement" {
 			statements = append(statements, statement)
 		}
 	}
@@ -457,7 +457,7 @@ func evaluateCall(call engine.Match, file string, assignments map[string]engine.
 	name := call.Child("name").Name()
 	var arguments []engine.Match
 	for _, argument := range call.Children() {
-		if argument.Node().Field == "args" {
+		if argument.Node().InRole() == "args" {
 			arguments = append(arguments, argument)
 		}
 	}

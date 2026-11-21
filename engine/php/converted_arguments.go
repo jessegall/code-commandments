@@ -48,7 +48,7 @@ func conversionFingerprint(call engine.Match, codebase *engine.Codebase, owner, 
 
 func conversionIn(argument, call engine.Match) string {
 	value := argument.Child("value")
-	if slices.Contains(argument.Node().Flags, "spread") || argument.Child("name").Exists() || value.Kind() != "Expr_StaticCall" {
+	if slices.Contains(argument.Node().Modifiers, "spread") || argument.Child("name").Exists() || value.Kind() != "Expr_StaticCall" {
 		return ""
 	}
 	class, name := value.Child("class"), value.Child("name")
@@ -57,7 +57,7 @@ func conversionIn(argument, call engine.Match) string {
 	}
 	passed := 0
 	for _, child := range value.Children() {
-		if child.Node().Field == "args" {
+		if child.Node().InRole() == "args" {
 			passed++
 		}
 	}

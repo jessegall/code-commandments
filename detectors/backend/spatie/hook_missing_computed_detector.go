@@ -24,5 +24,3 @@ func (HookMissingComputedDetector) Find(codebase *engine.Codebase) []engine.Matc
 		Where(engine.As(spatienode.Node.HookMissingComputed)).
 		Get()
 }
-
-func (HookMissingComputedDetector) Repentable() {}

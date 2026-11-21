@@ -16,8 +16,6 @@ func init() { detectors.Register(catalog.PHP, HandRolledWitherDetector{}) }
 
 func (HandRolledWitherDetector) Sin() sins.Sin { return backendsins.HandRolledWither{} }
 
-func (HandRolledWitherDetector) Repentable() {}
-
 func (HandRolledWitherDetector) Find(codebase *engine.Codebase) []engine.Match {
 	if !php.SupportsCloneWith(codebase) {
 		return nil

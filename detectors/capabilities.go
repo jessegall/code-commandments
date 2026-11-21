@@ -17,36 +17,6 @@ func ReadsBeyondOneFile(detector Detector) bool {
 	return wholeTree || grouped || catalog.IsCrossFile(detector)
 }
 
-// Repentable marks a detector whose sin a scribe rewrites away at the source.
-type Repentable interface {
-	Repentable()
-}
-
-// Repenting is a detector that answers for itself whether a scribe rewrites its sin away, as one bound from a shared rule does.
-type Repenting interface {
-	Repents() bool
-}
-
-func IsRepentable(detector Detector) bool {
-	if answers, states := detector.(Repenting); states {
-		return answers.Repents()
-	}
-	_, repentable := detector.(Repentable)
-
-	return repentable
-}
-
-// SelfFixing is a detector that states its own fix for each finding, as a project's rule with a fix does: the text to write in place of the node it found.
-type SelfFixing interface {
-	Fixes() bool
-	FixFor(finding engine.Match) (string, bool)
-}
-
-// RunsLast marks a repentable detector whose fix reshapes code the other fixes have settled, so it runs after them.
-type RunsLast interface {
-	RunsLast()
-}
-
 // RequiresBestDesign marks a design-smell detector: a report that it is wrong must name the cleanest design the reporter can conceive.
 type RequiresBestDesign interface {
 	RequiresBestDesign()

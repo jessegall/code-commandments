@@ -62,7 +62,7 @@ func (n Node) Declared() *contract.Type {
 		return nil
 	}
 
-	return n.Node().Declared
+	return n.Node().Written
 }
 
 func (n Node) TypeName() string {

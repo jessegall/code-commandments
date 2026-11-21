@@ -39,7 +39,7 @@ func (n Node) Right() Node {
 func (n Node) IsLiteral() bool {
 	node := n.Node()
 
-	return node != nil && node.Literal != "" && node.Literal != "interpolated"
+	return node != nil && node.LiteralKind != "" && node.LiteralKind != "interpolated"
 }
 
 func (n Node) IsReference() bool {

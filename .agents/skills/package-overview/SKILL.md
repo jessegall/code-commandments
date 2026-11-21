@@ -40,7 +40,6 @@ twin analyses, the syntax hash). Never write the same machinery twice.
 | Detectors · Sins · Skills | `detectors/<engine>` · `sins/<engine>` · `skill/<engine>` |
 | A package's own knowledge (stated once) | `engine/php/{laravel,spatie,concurrent,phptypes}`, its sins and detectors in `detectors/backend/<pkg>/` |
 | Exemptions (keep general rules framework-agnostic) | `engine/php/packages` |
-| Auto-fixers (the `repent`/`hints` scribes) | `scribes/` · `cli/hints` |
 | CLI commands | `cli/` (one package per verb), dispatched by `cli/commands` from `cmd/commandments` |
 | A consumer's own rules | `rule/` (a detector written as data), read from `.commandments/custom/` by `cli/custom` |
 | Self-checking fixtures | `tests/Fixtures/{backend,frontend,python,csharp}` |
@@ -49,7 +48,7 @@ twin analyses, the syntax hash). Never write the same machinery twice.
 ## CLI
 
 `commandments --help` lists every verb, grouped; `commandments <verb> --help` is its page. The ones in daily
-use: `judge`, `repent`, `hints`, `info`, `make`, `sync`, `disable`/`enable`, `report`, `feature-request`,
+use: `judge`, `info`, `make`, `sync`, `disable`/`enable`, `report`, `feature-request`,
 `layers`, and the service `roslyn-serve`.
 
 ## Read next

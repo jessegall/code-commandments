@@ -1,358 +1,2312 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/jessegall/code-commandments/contract/tree.schema.json",
-  "title": "One line of a generic tree stream, version 1",
-  "description": "contract/CONTRACT.md is the prose form of this schema; the two say the same thing.",
+  "title": "The generic tree contract, version 5",
+  "description": "contract/CONTRACT.md as data. The envelope is JSON Schema; kinds, facts and categories are the one table every node is checked against.",
   "oneOf": [
-    {"type": "object", "properties": {"header": {"$ref": "#/$defs/header"}}, "required": ["header"], "additionalProperties": false},
-    {"type": "object", "properties": {"file": {"$ref": "#/$defs/file"}}, "required": ["file"], "additionalProperties": false},
-    {"type": "object", "properties": {"program": {"$ref": "#/$defs/program"}}, "required": ["program"], "additionalProperties": false},
-    {"type": "object", "properties": {"trailer": {"$ref": "#/$defs/trailer"}}, "required": ["trailer"], "additionalProperties": false}
+    {
+      "type": "object",
+      "properties": {
+        "header": {
+          "$ref": "#/$defs/header"
+        }
+      },
+      "required": [
+        "header"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "file": {
+          "$ref": "#/$defs/file"
+        }
+      },
+      "required": [
+        "file"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "program": {
+          "$ref": "#/$defs/program"
+        }
+      },
+      "required": [
+        "program"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "trailer": {
+          "$ref": "#/$defs/trailer"
+        }
+      },
+      "required": [
+        "trailer"
+      ],
+      "additionalProperties": false
+    }
   ],
   "$defs": {
-    "language": {"enum": ["php", "vue", "typescript", "python", "csharp", "go"]},
-    "count": {"type": "integer", "minimum": 0},
-    "id": {"type": "integer", "minimum": 0},
-    "symbolId": {"type": "string", "minLength": 1},
-    "absolutePath": {"type": "string", "pattern": "^(/|[A-Za-z]:[\\\\/])"},
-    "names": {"type": "array", "items": {"type": "string", "minLength": 1}},
-
-    "header": {
-      "type": "object",
-      "properties": {
-        "contract": {"const": "tree"},
-        "version": {"type": "integer", "minimum": 1},
-        "language": {"$ref": "#/$defs/language"},
-        "bridge": {
-          "type": "object",
-          "properties": {"name": {"type": "string", "minLength": 1}, "version": {"type": "string", "minLength": 1}, "reads": {"const": true}},
-          "required": ["name", "version"],
-          "additionalProperties": false
-        },
-        "roots": {"type": "array", "items": {"$ref": "#/$defs/absolutePath"}}
-      },
-      "required": ["contract", "version", "language", "bridge", "roots"],
-      "additionalProperties": false
+    "language": {
+      "enum": [
+        "php",
+        "vue",
+        "typescript",
+        "python",
+        "csharp",
+        "go"
+      ]
     },
-
-    "file": {
-      "type": "object",
-      "properties": {
-        "path": {"$ref": "#/$defs/absolutePath"},
-        "language": {"$ref": "#/$defs/language"},
-        "errors": {"$ref": "#/$defs/count"},
-        "context": {"const": true},
-        "test": {"const": true},
-        "module": {"type": "string", "minLength": 1},
-        "reads": {"type": "array", "items": {"$ref": "#/$defs/absolutePath"}},
-        "resolver": {
-          "type": "object",
-          "properties": {"tool": {"enum": ["roslyn", "mypy", "tsc", "go/types"]}, "ran": {"type": "boolean"}},
-          "required": ["tool", "ran"],
-          "additionalProperties": false
-        },
-        "root": {"$ref": "#/$defs/node"},
-        "comments": {"type": "array", "items": {"$ref": "#/$defs/comment"}},
-        "types": {"type": "array", "items": {"$ref": "#/$defs/type"}}
-      },
-      "required": ["path", "language", "errors", "root", "comments"],
-      "additionalProperties": false
+    "count": {
+      "type": "integer",
+      "minimum": 0
     },
-
+    "id": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "symbolId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "absolutePath": {
+      "type": "string",
+      "pattern": "^(/|[A-Za-z]:[\\\\/])"
+    },
+    "names": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
     "span": {
       "type": "array",
-      "prefixItems": [{"$ref": "#/$defs/count"}, {"$ref": "#/$defs/count"}, {"type": "integer", "minimum": 1}],
+      "prefixItems": [
+        {
+          "$ref": "#/$defs/count"
+        },
+        {
+          "$ref": "#/$defs/count"
+        },
+        {
+          "type": "integer",
+          "minimum": 1
+        }
+      ],
       "minItems": 3,
       "maxItems": 3
     },
-
-    "node": {
-      "type": "object",
-      "properties": {
-        "id": {"$ref": "#/$defs/id"},
-        "kind": {"type": "string", "minLength": 1},
-        "role": {"enum": ["statement", "expression", "member", "type", "pattern", "markup", "other"]},
-        "is": {"type": "array", "uniqueItems": true, "items": {"enum": [
-          "function", "type-declaration", "parameter", "block", "branch", "loop", "return", "throw", "bail-out",
-          "expression-statement", "call", "construction", "member-access", "null-safe", "self-reference",
-          "identifier", "assignment", "comparison", "conjunction", "literal", "import", "catch"
-        ]}},
-        "span": {"$ref": "#/$defs/span"},
-        "field": {"type": "string", "minLength": 1},
-        "children": {"type": "array", "items": {"$ref": "#/$defs/node"}},
-        "name": {"type": "string", "minLength": 1},
-        "literal": {"enum": ["string", "int", "float", "bool", "null", "undefined", "bytes", "ellipsis", "interpolated", "format"]},
-        "value": {"type": ["string", "boolean", "null"]},
-        "operator": {"type": "string", "minLength": 1},
-        "modifiers": {"$ref": "#/$defs/names"},
-        "flags": {"type": "array", "uniqueItems": true, "items": {"enum": [
-          "variadic", "keywords", "by-ref", "promoted", "keyword-only", "optional", "spread", "named", "async",
-          "generator", "short-ternary", "shorthand", "nullable-sugar", "group", "step", "elif", "component", "constant"
-        ]}},
-        "declared": {"$ref": "#/$defs/type"},
-        "returns": {"$ref": "#/$defs/type"},
-        "resolved": {"$ref": "#/$defs/type"},
-        "resolvedType": {"type": "integer", "minimum": 0},
-        "symbol": {"$ref": "#/$defs/symbolId"},
-        "refers": {"$ref": "#/$defs/symbolId"},
-        "target": {"$ref": "#/$defs/target"},
-        "resolves": {"$ref": "#/$defs/absolutePath"},
-        "constant": {"const": true},
-        "inherited": {"const": true},
-        "fills-outside": {"const": true},
-        "extras": {"$ref": "#/$defs/nodeExtras"}
-      },
-      "required": ["id", "kind", "role", "span"],
-      "additionalProperties": false
-    },
-
     "type": {
       "type": "object",
       "properties": {
-        "text": {"type": "string", "minLength": 1},
-        "kind": {"enum": ["named", "keyword", "parameter", "union", "intersection", "array", "tuple", "object", "function", "literal", "pointer", "map", "opaque"]},
-        "name": {"type": "string", "minLength": 1},
-        "args": {"type": "array", "items": {"$ref": "#/$defs/type"}},
-        "members": {"type": "array", "items": {"$ref": "#/$defs/type"}},
-        "fields": {"type": "array", "items": {
-          "type": "object",
-          "properties": {"name": {"type": "string"}, "type": {"$ref": "#/$defs/type"}, "optional": {"const": true}},
-          "required": ["name"],
-          "additionalProperties": false
-        }},
-        "parameters": {"type": "array", "items": {"$ref": "#/$defs/type"}},
-        "returns": {"$ref": "#/$defs/type"},
-        "value": {"type": ["string", "boolean", "null"]},
-        "nullable": {"const": true},
-        "valueType": {"const": true},
-        "element": {"$ref": "#/$defs/type"},
-        "constructs": {"$ref": "#/$defs/symbolId"},
-        "origin": {"enum": ["written", "docblock", "attribute", "inferred", "compiler"]}
+        "text": {
+          "type": "string",
+          "minLength": 1
+        },
+        "kind": {
+          "enum": [
+            "named",
+            "keyword",
+            "parameter",
+            "union",
+            "intersection",
+            "array",
+            "tuple",
+            "object",
+            "function",
+            "literal",
+            "pointer",
+            "map",
+            "opaque"
+          ]
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "args": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/type"
+          }
+        },
+        "members": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/type"
+          }
+        },
+        "fields": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "type": {
+                "$ref": "#/$defs/type"
+              },
+              "optional": {
+                "const": true
+              }
+            },
+            "required": [
+              "name"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "parameters": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/type"
+          }
+        },
+        "returns": {
+          "$ref": "#/$defs/type"
+        },
+        "value": {
+          "type": [
+            "string",
+            "boolean",
+            "null"
+          ]
+        },
+        "nullable": {
+          "const": true
+        },
+        "valueType": {
+          "const": true
+        },
+        "element": {
+          "$ref": "#/$defs/type"
+        },
+        "constructs": {
+          "$ref": "#/$defs/symbolId"
+        },
+        "origin": {
+          "enum": [
+            "written",
+            "docblock",
+            "attribute",
+            "inferred",
+            "compiler"
+          ]
+        }
       },
-      "required": ["text", "kind", "origin"],
+      "required": [
+        "text",
+        "kind",
+        "origin"
+      ],
       "additionalProperties": false,
       "allOf": [
-        {"if": {"properties": {"kind": {"enum": ["named", "keyword", "parameter"]}}}, "then": {"required": ["name"]}},
-        {"if": {"properties": {"kind": {"enum": ["union", "intersection", "tuple"]}}}, "then": {"required": ["members"]}},
-        {"if": {"properties": {"kind": {"const": "literal"}}}, "then": {"required": ["value"]}},
-        {"if": {"properties": {"kind": {"const": "pointer"}}}, "then": {"required": ["element"]}},
-        {"if": {"properties": {"kind": {"const": "map"}}}, "then": {"required": ["element"]}},
-        {"if": {"properties": {"kind": {"const": "opaque"}}}, "then": {"properties": {"text": {}, "kind": {}, "origin": {}, "nullable": {}, "valueType": {}, "constructs": {}}, "additionalProperties": false}}
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "enum": [
+                  "named",
+                  "keyword",
+                  "parameter"
+                ]
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "name"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "enum": [
+                  "union",
+                  "intersection",
+                  "tuple"
+                ]
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "members"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "literal"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "value"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "pointer"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "element"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "map"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "element"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "opaque"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "text": {},
+              "kind": {},
+              "origin": {},
+              "nullable": {},
+              "valueType": {},
+              "constructs": {}
+            },
+            "additionalProperties": false
+          }
+        }
       ]
     },
-
     "target": {
       "type": "object",
       "properties": {
-        "symbol": {"$ref": "#/$defs/symbolId"},
-        "type": {"$ref": "#/$defs/symbolId"},
-        "name": {"type": "string", "minLength": 1},
-        "parameters": {"type": "array", "items": {"type": "string", "minLength": 1}}
+        "symbol": {
+          "$ref": "#/$defs/symbolId"
+        },
+        "type": {
+          "$ref": "#/$defs/symbolId"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "parameters": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
       },
-      "required": ["symbol", "name"],
+      "required": [
+        "symbol",
+        "name"
+      ],
       "additionalProperties": false
     },
-
-    "comment": {
-      "type": "object",
-      "properties": {
-        "id": {"$ref": "#/$defs/id"},
-        "kind": {"enum": ["line", "block", "doc", "markup"]},
-        "text": {"type": "string"},
-        "span": {"$ref": "#/$defs/span"},
-        "attached": {"$ref": "#/$defs/id"},
-        "trailing": {"const": true},
-        "refs": {"type": "array", "items": {"$ref": "#/$defs/ref"}},
-        "extras": {"$ref": "#/$defs/commentExtras"}
-      },
-      "required": ["id", "kind", "text", "span"],
-      "additionalProperties": false
-    },
-
     "ref": {
       "type": "object",
       "properties": {
-        "text": {"type": "string", "minLength": 1},
-        "symbol": {"$ref": "#/$defs/symbolId"},
-        "owner": {"$ref": "#/$defs/symbolId"},
-        "ownedHere": {"type": "boolean"},
-        "blind": {"const": true}
-      },
-      "required": ["text"],
-      "additionalProperties": false
-    },
-
-    "nodeExtras": {
-      "type": "object",
-      "properties": {
-        "csharp": {
-          "type": "object",
-          "properties": {"forgivesNull": {"const": true}},
-          "additionalProperties": false,
-          "minProperties": 1
+        "text": {
+          "type": "string",
+          "minLength": 1
         },
-        "go": {
-          "type": "object",
-          "properties": {"methods": {"$ref": "#/$defs/names", "minItems": 1}},
-          "required": ["methods"],
-          "additionalProperties": false
+        "symbol": {
+          "$ref": "#/$defs/symbolId"
         },
-        "python": {
-          "type": "object",
-          "properties": {
-            "operators": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
-            "level": {"type": "integer", "minimum": 1},
-            "as": {"type": "string", "minLength": 1},
-            "names": {"$ref": "#/$defs/names", "minItems": 1}
-          },
-          "additionalProperties": false,
-          "minProperties": 1
+        "owner": {
+          "$ref": "#/$defs/symbolId"
         },
-        "vue": {
-          "type": "object",
-          "properties": {
-            "directive": {
-              "type": "object",
-              "properties": {"name": {"type": "string", "minLength": 1}, "modifiers": {"$ref": "#/$defs/names"}},
-              "required": ["name", "modifiers"],
-              "additionalProperties": false
-            }
-          },
-          "additionalProperties": false,
-          "minProperties": 1
+        "ownedHere": {
+          "type": "boolean"
         },
-        "typescript": {
-          "type": "object",
-          "properties": {"typeOnly": {"const": true}},
-          "additionalProperties": false,
-          "minProperties": 1
+        "blind": {
+          "const": true
         }
       },
-      "additionalProperties": false,
-      "minProperties": 1
-    },
-
-    "commentExtras": {
-      "type": "object",
-      "properties": {
-        "csharp": {
-          "type": "object",
-          "properties": {"code": {"const": true}},
-          "additionalProperties": false,
-          "minProperties": 1
-        },
-        "php": {
-          "type": "object",
-          "properties": {"code": {"const": true}},
-          "additionalProperties": false,
-          "minProperties": 1
-        },
-        "go": {
-          "type": "object",
-          "properties": {"code": {"const": true}},
-          "additionalProperties": false,
-          "minProperties": 1
-        },
-        "typescript": {
-          "type": "object",
-          "properties": {"code": {"const": true}},
-          "additionalProperties": false,
-          "minProperties": 1
-        },
-        "python": {
-          "type": "object",
-          "properties": {"code": {"const": true}},
-          "additionalProperties": false,
-          "minProperties": 1
-        }
-      },
-      "additionalProperties": false,
-      "minProperties": 1
-    },
-
-    "program": {
-      "type": "object",
-      "properties": {
-        "symbols": {"type": "array", "items": {"$ref": "#/$defs/outsideSymbol"}},
-        "unreadable": {"type": "array", "items": {
-          "type": "object",
-          "properties": {"symbol": {"$ref": "#/$defs/symbolId"}, "reason": {"type": "string"}},
-          "required": ["symbol", "reason"],
-          "additionalProperties": false
-        }},
-        "packages": {"type": "array", "items": {"$ref": "#/$defs/absolutePath"}},
-        "aliases": {"type": "array", "items": {
-          "type": "object",
-          "properties": {"prefix": {"type": "string", "minLength": 1}, "path": {"$ref": "#/$defs/absolutePath"}},
-          "required": ["prefix", "path"],
-          "additionalProperties": false
-        }},
-        "loader": {"type": "string", "minLength": 1}
-      },
+      "required": [
+        "text"
+      ],
       "additionalProperties": false
     },
-
     "outsideSymbol": {
       "type": "object",
       "properties": {
-        "symbol": {"$ref": "#/$defs/symbolId"},
-        "kind": {"enum": ["class", "interface", "trait", "enum", "struct"]},
-        "name": {"type": "string", "minLength": 1},
-        "file": {"type": "string", "minLength": 1},
-        "internal": {"type": "boolean"},
-        "extends": {"type": "array", "items": {"$ref": "#/$defs/symbolId"}},
-        "implements": {"type": "array", "items": {"$ref": "#/$defs/symbolId"}},
-        "uses": {"type": "array", "items": {"$ref": "#/$defs/symbolId"}},
-        "modifiers": {"$ref": "#/$defs/names"},
-        "members": {"type": "array", "items": {"$ref": "#/$defs/outsideMember"}}
+        "symbol": {
+          "$ref": "#/$defs/symbolId"
+        },
+        "kind": {
+          "enum": [
+            "class",
+            "interface",
+            "trait",
+            "enum",
+            "struct"
+          ]
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "file": {
+          "type": "string",
+          "minLength": 1
+        },
+        "internal": {
+          "type": "boolean"
+        },
+        "extends": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/symbolId"
+          }
+        },
+        "implements": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/symbolId"
+          }
+        },
+        "uses": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/symbolId"
+          }
+        },
+        "modifiers": {
+          "$ref": "#/$defs/names"
+        },
+        "members": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/outsideMember"
+          }
+        }
       },
-      "required": ["symbol", "kind", "name"],
+      "required": [
+        "symbol",
+        "kind",
+        "name"
+      ],
       "additionalProperties": false
     },
-
     "outsideMember": {
       "type": "object",
       "properties": {
-        "symbol": {"$ref": "#/$defs/symbolId"},
-        "name": {"type": "string", "minLength": 1},
-        "kind": {"enum": ["method", "property", "field", "constant"]},
-        "modifiers": {"$ref": "#/$defs/names"},
-        "declared": {"$ref": "#/$defs/type"},
-        "returns": {"$ref": "#/$defs/type"},
-        "documented": {"$ref": "#/$defs/type"},
-        "parameters": {"type": "array", "items": {
-          "type": "object",
-          "properties": {
-            "name": {"type": "string", "minLength": 1},
-            "declared": {"$ref": "#/$defs/type"},
-            "flags": {"$ref": "#/$defs/node/properties/flags"}
-          },
-          "required": ["name"],
-          "additionalProperties": false
-        }}
+        "symbol": {
+          "$ref": "#/$defs/symbolId"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "kind": {
+          "enum": [
+            "method",
+            "property",
+            "field",
+            "constant"
+          ]
+        },
+        "modifiers": {
+          "$ref": "#/$defs/names"
+        },
+        "declared": {
+          "$ref": "#/$defs/type"
+        },
+        "returns": {
+          "$ref": "#/$defs/type"
+        },
+        "documented": {
+          "$ref": "#/$defs/type"
+        },
+        "parameters": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "minLength": 1
+              },
+              "declared": {
+                "$ref": "#/$defs/type"
+              },
+              "flags": {
+                "$ref": "#/$defs/node/properties/flags"
+              }
+            },
+            "required": [
+              "name"
+            ],
+            "additionalProperties": false
+          }
+        }
       },
-      "required": ["symbol", "name", "kind"],
+      "required": [
+        "symbol",
+        "name",
+        "kind"
+      ],
       "additionalProperties": false
     },
-
     "trailer": {
       "type": "object",
       "properties": {
-        "files": {"$ref": "#/$defs/count"},
+        "files": {
+          "$ref": "#/$defs/count"
+        },
         "resolution": {
           "type": "object",
           "properties": {
-            "expressions": {"$ref": "#/$defs/count"},
-            "typed": {"$ref": "#/$defs/count"},
-            "calls": {"$ref": "#/$defs/count"},
-            "resolved": {"$ref": "#/$defs/count"},
-            "unjoined": {"$ref": "#/$defs/count"}
+            "expressions": {
+              "$ref": "#/$defs/count"
+            },
+            "typed": {
+              "$ref": "#/$defs/count"
+            },
+            "calls": {
+              "$ref": "#/$defs/count"
+            },
+            "resolved": {
+              "$ref": "#/$defs/count"
+            },
+            "unjoined": {
+              "$ref": "#/$defs/count"
+            }
           },
           "additionalProperties": false
         }
       },
-      "required": ["files"],
+      "required": [
+        "files"
+      ],
+      "additionalProperties": false
+    },
+    "header": {
+      "type": "object",
+      "properties": {
+        "contract": {
+          "const": "tree"
+        },
+        "version": {
+          "const": 5
+        },
+        "language": {
+          "$ref": "#/$defs/language"
+        },
+        "bridge": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string",
+              "minLength": 1
+            },
+            "version": {
+              "type": "string",
+              "minLength": 1
+            },
+            "reads": {
+              "const": true
+            }
+          },
+          "required": [
+            "name",
+            "version"
+          ],
+          "additionalProperties": false
+        },
+        "roots": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/absolutePath"
+          }
+        }
+      },
+      "required": [
+        "contract",
+        "version",
+        "language",
+        "bridge",
+        "roots"
+      ],
+      "additionalProperties": false
+    },
+    "file": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "$ref": "#/$defs/absolutePath"
+        },
+        "language": {
+          "$ref": "#/$defs/language"
+        },
+        "errors": {
+          "$ref": "#/$defs/count"
+        },
+        "context": {
+          "const": true
+        },
+        "test": {
+          "const": true
+        },
+        "module": {
+          "type": "string",
+          "minLength": 1
+        },
+        "reads": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/absolutePath"
+          }
+        },
+        "resolver": {
+          "type": "object",
+          "properties": {
+            "tool": {
+              "enum": [
+                "php-parser",
+                "roslyn",
+                "mypy",
+                "tsc",
+                "go/types"
+              ]
+            },
+            "ran": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "tool",
+            "ran"
+          ],
+          "additionalProperties": false
+        },
+        "root": {
+          "$ref": "#/$defs/node"
+        },
+        "comments": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/comment"
+          }
+        },
+        "types": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/type"
+          }
+        }
+      },
+      "required": [
+        "path",
+        "language",
+        "errors",
+        "root",
+        "comments"
+      ],
+      "additionalProperties": false
+    },
+    "node": {
+      "type": "object",
+      "description": "One operation of the language. Its kind, roles, links and facts are checked against the kinds table of this schema.",
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "kind": {
+          "enum": [
+            "access",
+            "alias",
+            "annotation",
+            "argument",
+            "arm",
+            "assignment",
+            "attribute",
+            "await",
+            "binary",
+            "binding",
+            "block",
+            "break",
+            "call",
+            "cast",
+            "collection",
+            "comparison",
+            "comprehension",
+            "comprehension-clause",
+            "conditional",
+            "constant",
+            "construction",
+            "continue",
+            "declarator",
+            "default-value",
+            "defer",
+            "directive",
+            "dispatch",
+            "element",
+            "embedded-expression",
+            "entry",
+            "enum-case",
+            "expression-statement",
+            "fallback",
+            "field",
+            "file",
+            "function",
+            "goto",
+            "handler",
+            "if",
+            "import",
+            "import-binding",
+            "index",
+            "interpolation",
+            "label",
+            "literal",
+            "logical",
+            "loop",
+            "module",
+            "no-op",
+            "parameter",
+            "pattern",
+            "reference",
+            "resource-scope",
+            "return",
+            "scope-declaration",
+            "select",
+            "select-arm",
+            "text",
+            "throw",
+            "try",
+            "tuple-element",
+            "tuple-type",
+            "type",
+            "type-expression",
+            "type-parameter",
+            "type-test",
+            "unary",
+            "unsupported",
+            "variable",
+            "yield"
+          ]
+        },
+        "span": {
+          "$ref": "#/$defs/span"
+        },
+        "parts": {
+          "type": "object"
+        },
+        "links": {
+          "type": "object"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "symbol": {
+          "$ref": "#/$defs/symbolId"
+        },
+        "refers": {
+          "$ref": "#/$defs/symbolId"
+        },
+        "target": {
+          "$ref": "#/$defs/target"
+        },
+        "resolvedType": {
+          "$ref": "#/$defs/count"
+        },
+        "constantValue": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "minLength": 1
+            },
+            "value": {
+              "type": [
+                "string",
+                "boolean"
+              ]
+            }
+          },
+          "required": [
+            "type"
+          ],
+          "additionalProperties": false
+        },
+        "modifiers": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "effective": {
+          "type": "object",
+          "properties": {
+            "visibility": {
+              "enum": [
+                "public",
+                "protected",
+                "private",
+                "internal",
+                "package"
+              ]
+            },
+            "static": {
+              "type": "boolean"
+            },
+            "abstract": {
+              "type": "boolean"
+            },
+            "final": {
+              "type": "boolean"
+            },
+            "readonly": {
+              "type": "boolean"
+            }
+          },
+          "additionalProperties": false
+        },
+        "obligations": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "symbol": {
+                "$ref": "#/$defs/symbolId"
+              },
+              "origin": {
+                "enum": [
+                  "project",
+                  "external"
+                ]
+              }
+            },
+            "required": [
+              "symbol",
+              "origin"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "incomplete": {
+          "const": true
+        },
+        "source": {
+          "type": "string"
+        },
+        "form": {
+          "type": "string",
+          "minLength": 1
+        },
+        "typeOnly": {
+          "type": "boolean"
+        },
+        "relativeLevel": {
+          "$ref": "#/$defs/count"
+        },
+        "resolves": {
+          "$ref": "#/$defs/absolutePath"
+        },
+        "written": {
+          "$ref": "#/$defs/type"
+        },
+        "async": {
+          "type": "boolean"
+        },
+        "generator": {
+          "type": "boolean"
+        },
+        "passing": {
+          "enum": [
+            "value",
+            "reference",
+            "out",
+            "in"
+          ]
+        },
+        "collects": {
+          "enum": [
+            "none",
+            "rest",
+            "keywords"
+          ]
+        },
+        "position": {
+          "enum": [
+            "either",
+            "positional",
+            "keyword"
+          ]
+        },
+        "optional": {
+          "type": "boolean"
+        },
+        "evaluated": {
+          "enum": [
+            "call",
+            "definition"
+          ]
+        },
+        "exhaustive": {
+          "type": "boolean"
+        },
+        "default": {
+          "type": "boolean"
+        },
+        "fallsThrough": {
+          "type": "boolean"
+        },
+        "depth": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "catchForm": {
+          "enum": [
+            "typed",
+            "catch-all"
+          ]
+        },
+        "group": {
+          "type": "boolean"
+        },
+        "namedResults": {
+          "type": "boolean"
+        },
+        "nullConditional": {
+          "type": "boolean"
+        },
+        "label": {
+          "type": "string",
+          "minLength": 1
+        },
+        "spread": {
+          "enum": [
+            "none",
+            "positional",
+            "keyed"
+          ]
+        },
+        "mode": {
+          "enum": [
+            "assign",
+            "define",
+            "compound",
+            "fallback",
+            "increment",
+            "decrement"
+          ]
+        },
+        "operator": {
+          "type": "string",
+          "minLength": 1
+        },
+        "operators": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 1
+        },
+        "prefix": {
+          "type": "boolean"
+        },
+        "trigger": {
+          "enum": [
+            "null",
+            "falsy"
+          ]
+        },
+        "negated": {
+          "type": "boolean"
+        },
+        "delegates": {
+          "type": "boolean"
+        },
+        "literalKind": {
+          "enum": [
+            "string",
+            "integer",
+            "float",
+            "boolean",
+            "null",
+            "undefined",
+            "bytes",
+            "character",
+            "ellipsis"
+          ]
+        },
+        "value": {
+          "type": [
+            "string",
+            "boolean"
+          ]
+        },
+        "expansion": {
+          "enum": [
+            "none",
+            "positional",
+            "keyed"
+          ]
+        },
+        "conversion": {
+          "type": "string",
+          "minLength": 1
+        },
+        "tag": {
+          "type": "string",
+          "minLength": 1
+        },
+        "shorthand": {
+          "type": "boolean"
+        },
+        "construct": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "id",
+        "kind",
+        "span"
+      ],
+      "additionalProperties": false
+    },
+    "fragment": {
+      "type": "object",
+      "properties": {
+        "context": {
+          "type": "string",
+          "minLength": 1
+        },
+        "diagnostics": {
+          "$ref": "#/$defs/count"
+        },
+        "statements": {
+          "$ref": "#/$defs/count"
+        },
+        "expressionKind": {
+          "enum": [
+            "access",
+            "alias",
+            "annotation",
+            "argument",
+            "arm",
+            "assignment",
+            "attribute",
+            "await",
+            "binary",
+            "binding",
+            "block",
+            "break",
+            "call",
+            "cast",
+            "collection",
+            "comparison",
+            "comprehension",
+            "comprehension-clause",
+            "conditional",
+            "constant",
+            "construction",
+            "continue",
+            "declarator",
+            "default-value",
+            "defer",
+            "directive",
+            "dispatch",
+            "element",
+            "embedded-expression",
+            "entry",
+            "enum-case",
+            "expression-statement",
+            "fallback",
+            "field",
+            "file",
+            "function",
+            "goto",
+            "handler",
+            "if",
+            "import",
+            "import-binding",
+            "index",
+            "interpolation",
+            "label",
+            "literal",
+            "logical",
+            "loop",
+            "module",
+            "no-op",
+            "parameter",
+            "pattern",
+            "reference",
+            "resource-scope",
+            "return",
+            "scope-declaration",
+            "select",
+            "select-arm",
+            "text",
+            "throw",
+            "try",
+            "tuple-element",
+            "tuple-type",
+            "type",
+            "type-expression",
+            "type-parameter",
+            "type-test",
+            "unary",
+            "unsupported",
+            "variable",
+            "yield"
+          ]
+        }
+      },
+      "required": [
+        "context",
+        "diagnostics",
+        "statements"
+      ],
+      "additionalProperties": false
+    },
+    "comment": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "form": {
+          "enum": [
+            "line",
+            "block",
+            "doc",
+            "markup"
+          ]
+        },
+        "text": {
+          "type": "string"
+        },
+        "span": {
+          "$ref": "#/$defs/span"
+        },
+        "attached": {
+          "$ref": "#/$defs/id"
+        },
+        "trailing": {
+          "const": true
+        },
+        "refs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ref"
+          }
+        },
+        "fragment": {
+          "$ref": "#/$defs/fragment"
+        }
+      },
+      "required": [
+        "id",
+        "form",
+        "text",
+        "span"
+      ],
+      "additionalProperties": false
+    },
+    "program": {
+      "type": "object",
+      "properties": {
+        "symbols": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/outsideSymbol"
+          }
+        },
+        "unreadable": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "symbol": {
+                "$ref": "#/$defs/symbolId"
+              },
+              "reason": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "symbol",
+              "reason"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "aliases": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "prefix": {
+                "type": "string",
+                "minLength": 1
+              },
+              "path": {
+                "$ref": "#/$defs/absolutePath"
+              }
+            },
+            "required": [
+              "prefix",
+              "path"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "loader": {
+          "type": "string",
+          "minLength": 1
+        },
+        "packageFolders": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/absolutePath"
+          }
+        },
+        "packages": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "minLength": 1
+              },
+              "version": {
+                "type": "string",
+                "minLength": 1
+              },
+              "ecosystem": {
+                "enum": [
+                  "composer",
+                  "pip",
+                  "nuget",
+                  "npm",
+                  "go"
+                ]
+              }
+            },
+            "required": [
+              "name",
+              "version",
+              "ecosystem"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
       "additionalProperties": false
     }
+  },
+  "kinds": {
+    "file": {
+      "roles": {
+        "modules": "[]"
+      },
+      "links": {},
+      "facts": [],
+      "required": []
+    },
+    "module": {
+      "roles": {
+        "imports": "[]",
+        "declarations": "[]",
+        "statements": "[]"
+      },
+      "facts": [
+        "name"
+      ],
+      "links": {},
+      "required": []
+    },
+    "import": {
+      "roles": {
+        "bindings": "[]",
+        "alias": "?"
+      },
+      "facts": [
+        "source",
+        "form",
+        "typeOnly",
+        "relativeLevel",
+        "resolves",
+        "refers"
+      ],
+      "links": {},
+      "required": []
+    },
+    "import-binding": {
+      "roles": {
+        "alias": "?"
+      },
+      "facts": [
+        "name",
+        "refers"
+      ],
+      "links": {},
+      "required": []
+    },
+    "type": {
+      "roles": {
+        "bases": "[]",
+        "interfaces": "[]",
+        "mixins": "[]",
+        "typeParameters": "[]",
+        "attributes": "[]",
+        "writtenMembers": "[]"
+      },
+      "links": {
+        "implicitMembers": "[]",
+        "satisfies": "[]"
+      },
+      "facts": [
+        "name",
+        "symbol",
+        "form"
+      ],
+      "required": [
+        "form"
+      ]
+    },
+    "type-expression": {
+      "roles": {
+        "typeArguments": "[]",
+        "members": "[]",
+        "element": "?",
+        "parameters": "[]",
+        "returnType": "?"
+      },
+      "facts": [
+        "form",
+        "refers",
+        "written"
+      ],
+      "required": [
+        "form"
+      ],
+      "links": {}
+    },
+    "field": {
+      "roles": {
+        "declarators": "[]",
+        "declaredType": "?",
+        "attributes": "[]"
+      },
+      "links": {
+        "hooks": "[]"
+      },
+      "facts": [],
+      "required": []
+    },
+    "constant": {
+      "roles": {
+        "declarators": "[]",
+        "declaredType": "?",
+        "attributes": "[]"
+      },
+      "links": {},
+      "facts": [],
+      "required": []
+    },
+    "declarator": {
+      "roles": {
+        "binding": "?",
+        "initializer": "?"
+      },
+      "links": {},
+      "facts": [],
+      "required": []
+    },
+    "enum-case": {
+      "roles": {
+        "value": "?",
+        "attributes": "[]"
+      },
+      "facts": [
+        "name",
+        "symbol"
+      ],
+      "links": {},
+      "required": []
+    },
+    "alias": {
+      "roles": {
+        "typeParameters": "[]",
+        "underlyingType": "1"
+      },
+      "facts": [
+        "name",
+        "symbol"
+      ],
+      "links": {},
+      "required": []
+    },
+    "type-parameter": {
+      "roles": {
+        "constraint": "?",
+        "default": "?"
+      },
+      "facts": [
+        "name"
+      ],
+      "links": {},
+      "required": []
+    },
+    "function": {
+      "roles": {
+        "receiver": "?",
+        "typeParameters": "[]",
+        "parameters": "[]",
+        "returnType": "?",
+        "body": "?",
+        "attributes": "[]",
+        "captures": "[]"
+      },
+      "facts": [
+        "name",
+        "symbol",
+        "form",
+        "async",
+        "generator"
+      ],
+      "required": [
+        "form"
+      ],
+      "links": {}
+    },
+    "parameter": {
+      "roles": {
+        "binding": "1",
+        "declaredType": "?",
+        "default": "?",
+        "attributes": "[]"
+      },
+      "links": {},
+      "facts": [
+        "passing",
+        "collects",
+        "position",
+        "optional",
+        "evaluated"
+      ],
+      "required": []
+    },
+    "variable": {
+      "roles": {
+        "declarators": "[]",
+        "declaredType": "?"
+      },
+      "facts": [
+        "form"
+      ],
+      "links": {},
+      "required": []
+    },
+    "binding": {
+      "facts": [
+        "name",
+        "symbol"
+      ],
+      "roles": {},
+      "links": {},
+      "required": []
+    },
+    "annotation": {
+      "roles": {
+        "callee": "1",
+        "arguments": "[]"
+      },
+      "facts": [
+        "name",
+        "refers"
+      ],
+      "links": {},
+      "required": []
+    },
+    "scope-declaration": {
+      "roles": {
+        "bindings": "[]"
+      },
+      "facts": [
+        "form"
+      ],
+      "links": {},
+      "required": []
+    },
+    "block": {
+      "roles": {
+        "statements": "[]"
+      },
+      "links": {},
+      "facts": [],
+      "required": []
+    },
+    "expression-statement": {
+      "roles": {
+        "expression": "1"
+      },
+      "links": {},
+      "facts": [],
+      "required": []
+    },
+    "no-op": {
+      "roles": {},
+      "links": {},
+      "facts": [],
+      "required": []
+    },
+    "if": {
+      "roles": {
+        "initializer": "?",
+        "condition": "1",
+        "then": "1",
+        "else": "?"
+      },
+      "links": {},
+      "facts": [],
+      "required": []
+    },
+    "dispatch": {
+      "roles": {
+        "subject": "?",
+        "arms": "[]"
+      },
+      "facts": [
+        "form",
+        "exhaustive"
+      ],
+      "links": {},
+      "required": []
+    },
+    "arm": {
+      "roles": {
+        "patterns": "[]",
+        "guard": "?",
+        "body": "1"
+      },
+      "facts": [
+        "default",
+        "fallsThrough"
+      ],
+      "links": {},
+      "required": []
+    },
+    "select": {
+      "roles": {
+        "arms": "[]"
+      },
+      "links": {},
+      "facts": [],
+      "required": []
+    },
+    "select-arm": {
+      "roles": {
+        "communication": "?",
+        "body": "1"
+      },
+      "links": {},
+      "facts": [],
+      "required": []
+    },
+    "loop": {
+      "roles": {
+        "initializer": "[]",
+        "condition": "?",
+        "iterable": "?",
+        "bindings": "[]",
+        "body": "1",
+        "steps": "[]",
+        "normalCompletion": "?"
+      },
+      "facts": [
+        "form",
+        "async"
+      ],
+      "required": [
+        "form"
+      ],
+      "links": {}
+    },
+    "break": {
+      "roles": {
+        "label": "?"
+      },
+      "links": {
+        "destination": "?"
+      },
+      "facts": [
+        "depth"
+      ],
+      "required": []
+    },
+    "continue": {
+      "roles": {
+        "label": "?"
+      },
+      "links": {
+        "destination": "?"
+      },
+      "facts": [
+        "depth"
+      ],
+      "required": []
+    },
+    "goto": {
+      "roles": {
+        "destination": "1"
+      },
+      "links": {
+        "label": "?"
+      },
+      "facts": [],
+      "required": []
+    },
+    "label": {
+      "roles": {
+        "binding": "1",
+        "statement": "?"
+      },
+      "links": {},
+      "facts": [],
+      "required": []
+    },
+    "try": {
+      "roles": {
+        "body": "1",
+        "handlers": "[]",
+        "normalCompletion": "?",
+        "finally": "?"
+      },
+      "links": {},
+      "facts": [],
+      "required": []
+    },
+    "handler": {
+      "roles": {
+        "caughtTypes": "[]",
+        "binding": "?",
+        "filter": "?",
+        "body": "1"
+      },
+      "facts": [
+        "catchForm",
+        "group"
+      ],
+      "required": [
+        "catchForm"
+      ],
+      "links": {}
+    },
+    "throw": {
+      "roles": {
+        "value": "?",
+        "cause": "?"
+      },
+      "links": {},
+      "facts": [],
+      "required": []
+    },
+    "return": {
+      "roles": {
+        "values": "[]"
+      },
+      "facts": [
+        "namedResults"
+      ],
+      "links": {},
+      "required": []
+    },
+    "defer": {
+      "roles": {
+        "call": "1"
+      },
+      "links": {},
+      "facts": [],
+      "required": []
+    },
+    "resource-scope": {
+      "roles": {
+        "resources": "[]",
+        "body": "1"
+      },
+      "facts": [
+        "form",
+        "async"
+      ],
+      "links": {},
+      "required": []
+    },
+    "reference": {
+      "links": {
+        "binding": "?"
+      },
+      "facts": [
+        "name",
+        "form",
+        "refers"
+      ],
+      "roles": {},
+      "required": []
+    },
+    "call": {
+      "roles": {
+        "callee": "1",
+        "typeArguments": "[]",
+        "arguments": "[]"
+      },
+      "links": {
+        "receiver": "?"
+      },
+      "facts": [
+        "nullConditional",
+        "target"
+      ],
+      "required": []
+    },
+    "construction": {
+      "roles": {
+        "type": "?",
+        "callee": "?",
+        "typeArguments": "[]",
+        "arguments": "[]",
+        "initializer": "?"
+      },
+      "facts": [
+        "target"
+      ],
+      "links": {},
+      "required": []
+    },
+    "argument": {
+      "roles": {
+        "value": "1"
+      },
+      "facts": [
+        "label",
+        "passing",
+        "spread"
+      ],
+      "links": {},
+      "required": []
+    },
+    "access": {
+      "roles": {
+        "subject": "1",
+        "member": "1"
+      },
+      "facts": [
+        "form",
+        "nullConditional"
+      ],
+      "links": {},
+      "required": []
+    },
+    "index": {
+      "roles": {
+        "subject": "1",
+        "key": "?"
+      },
+      "facts": [
+        "nullConditional"
+      ],
+      "links": {},
+      "required": []
+    },
+    "assignment": {
+      "roles": {
+        "targets": "[]",
+        "values": "[]"
+      },
+      "facts": [
+        "mode",
+        "operator",
+        "prefix"
+      ],
+      "required": [
+        "mode"
+      ],
+      "links": {}
+    },
+    "binary": {
+      "roles": {
+        "left": "1",
+        "right": "1"
+      },
+      "facts": [
+        "operator"
+      ],
+      "required": [
+        "operator"
+      ],
+      "links": {}
+    },
+    "comparison": {
+      "roles": {
+        "operands": "[]"
+      },
+      "links": {
+        "left": "?",
+        "right": "?"
+      },
+      "facts": [
+        "operators",
+        "operator"
+      ],
+      "required": [
+        "operators"
+      ]
+    },
+    "logical": {
+      "roles": {
+        "left": "1",
+        "right": "1"
+      },
+      "facts": [
+        "operator"
+      ],
+      "required": [
+        "operator"
+      ],
+      "links": {}
+    },
+    "unary": {
+      "roles": {
+        "operand": "1"
+      },
+      "facts": [
+        "operator"
+      ],
+      "required": [
+        "operator"
+      ],
+      "links": {}
+    },
+    "fallback": {
+      "roles": {
+        "subject": "1",
+        "replacement": "1"
+      },
+      "facts": [
+        "trigger"
+      ],
+      "required": [
+        "trigger"
+      ],
+      "links": {}
+    },
+    "conditional": {
+      "roles": {
+        "condition": "1",
+        "consequent": "1",
+        "alternative": "1"
+      },
+      "links": {},
+      "facts": [],
+      "required": []
+    },
+    "type-test": {
+      "roles": {
+        "subject": "1",
+        "testedType": "1",
+        "binding": "?"
+      },
+      "facts": [
+        "negated",
+        "form"
+      ],
+      "links": {},
+      "required": []
+    },
+    "cast": {
+      "roles": {
+        "operand": "1",
+        "targetType": "1"
+      },
+      "facts": [
+        "form"
+      ],
+      "required": [
+        "form"
+      ],
+      "links": {}
+    },
+    "await": {
+      "roles": {
+        "operand": "1"
+      },
+      "links": {},
+      "facts": [],
+      "required": []
+    },
+    "yield": {
+      "roles": {
+        "value": "?"
+      },
+      "facts": [
+        "delegates"
+      ],
+      "links": {},
+      "required": []
+    },
+    "literal": {
+      "facts": [
+        "literalKind",
+        "value"
+      ],
+      "required": [
+        "literalKind"
+      ],
+      "roles": {},
+      "links": {}
+    },
+    "default-value": {
+      "roles": {
+        "writtenType": "?"
+      },
+      "links": {},
+      "facts": [],
+      "required": []
+    },
+    "collection": {
+      "roles": {
+        "entries": "[]"
+      },
+      "facts": [
+        "form"
+      ],
+      "required": [
+        "form"
+      ],
+      "links": {}
+    },
+    "entry": {
+      "roles": {
+        "key": "?",
+        "value": "1"
+      },
+      "facts": [
+        "expansion"
+      ],
+      "links": {},
+      "required": []
+    },
+    "interpolation": {
+      "roles": {
+        "parts": "[]"
+      },
+      "links": {},
+      "facts": [],
+      "required": []
+    },
+    "text": {
+      "facts": [
+        "value",
+        "conversion"
+      ],
+      "roles": {},
+      "links": {},
+      "required": []
+    },
+    "comprehension": {
+      "roles": {
+        "element": "?",
+        "key": "?",
+        "value": "?",
+        "clauses": "[]"
+      },
+      "facts": [
+        "form"
+      ],
+      "links": {},
+      "required": []
+    },
+    "comprehension-clause": {
+      "roles": {
+        "bindings": "[]",
+        "iterable": "?",
+        "condition": "?"
+      },
+      "facts": [
+        "form",
+        "async"
+      ],
+      "links": {},
+      "required": []
+    },
+    "tuple-type": {
+      "roles": {
+        "elements": "[]"
+      },
+      "links": {},
+      "facts": [],
+      "required": []
+    },
+    "tuple-element": {
+      "roles": {
+        "type": "1"
+      },
+      "facts": [
+        "label"
+      ],
+      "links": {},
+      "required": []
+    },
+    "pattern": {
+      "roles": {
+        "subpatterns": "[]",
+        "bindings": "[]",
+        "constrainedType": "?",
+        "value": "?"
+      },
+      "facts": [
+        "form"
+      ],
+      "required": [
+        "form"
+      ],
+      "links": {}
+    },
+    "element": {
+      "roles": {
+        "attributes": "[]",
+        "children": "[]"
+      },
+      "facts": [
+        "tag",
+        "form",
+        "resolves"
+      ],
+      "links": {},
+      "required": []
+    },
+    "attribute": {
+      "roles": {
+        "value": "?"
+      },
+      "facts": [
+        "name"
+      ],
+      "links": {},
+      "required": []
+    },
+    "directive": {
+      "roles": {
+        "argument": "?",
+        "value": "?",
+        "bindings": "[]",
+        "iterable": "?",
+        "pattern": "?"
+      },
+      "links": {
+        "body": "?"
+      },
+      "facts": [
+        "name",
+        "modifiers",
+        "shorthand"
+      ],
+      "required": []
+    },
+    "embedded-expression": {
+      "roles": {
+        "expression": "1"
+      },
+      "links": {},
+      "facts": [],
+      "required": []
+    },
+    "unsupported": {
+      "roles": {
+        "parts": "[]"
+      },
+      "facts": [
+        "construct"
+      ],
+      "required": [
+        "construct"
+      ],
+      "links": {}
+    }
+  },
+  "facts": {
+    "name": {
+      "provenance": "parser"
+    },
+    "symbol": {
+      "provenance": "parser"
+    },
+    "refers": {
+      "provenance": "compiler"
+    },
+    "target": {
+      "provenance": "compiler"
+    },
+    "resolvedType": {
+      "provenance": "compiler"
+    },
+    "constantValue": {
+      "provenance": "compiler"
+    },
+    "modifiers": {
+      "provenance": "parser"
+    },
+    "effective": {
+      "provenance": "parser"
+    },
+    "obligations": {
+      "provenance": "compiler"
+    },
+    "incomplete": {
+      "provenance": "parser"
+    },
+    "source": {
+      "provenance": "parser"
+    },
+    "form": {
+      "provenance": "parser"
+    },
+    "typeOnly": {
+      "provenance": "parser"
+    },
+    "relativeLevel": {
+      "provenance": "parser"
+    },
+    "resolves": {
+      "provenance": "index"
+    },
+    "written": {
+      "provenance": "parser"
+    },
+    "async": {
+      "provenance": "parser"
+    },
+    "generator": {
+      "provenance": "parser"
+    },
+    "passing": {
+      "provenance": "parser"
+    },
+    "collects": {
+      "provenance": "parser"
+    },
+    "position": {
+      "provenance": "parser"
+    },
+    "optional": {
+      "provenance": "parser"
+    },
+    "evaluated": {
+      "provenance": "parser"
+    },
+    "exhaustive": {
+      "provenance": "compiler"
+    },
+    "default": {
+      "provenance": "parser"
+    },
+    "fallsThrough": {
+      "provenance": "parser"
+    },
+    "depth": {
+      "provenance": "parser"
+    },
+    "catchForm": {
+      "provenance": "parser"
+    },
+    "group": {
+      "provenance": "parser"
+    },
+    "namedResults": {
+      "provenance": "compiler"
+    },
+    "nullConditional": {
+      "provenance": "parser"
+    },
+    "label": {
+      "provenance": "parser"
+    },
+    "spread": {
+      "provenance": "parser"
+    },
+    "mode": {
+      "provenance": "parser"
+    },
+    "operator": {
+      "provenance": "parser"
+    },
+    "operators": {
+      "provenance": "parser"
+    },
+    "prefix": {
+      "provenance": "parser"
+    },
+    "trigger": {
+      "provenance": "parser"
+    },
+    "negated": {
+      "provenance": "parser"
+    },
+    "delegates": {
+      "provenance": "parser"
+    },
+    "literalKind": {
+      "provenance": "parser"
+    },
+    "value": {
+      "provenance": "parser"
+    },
+    "expansion": {
+      "provenance": "parser"
+    },
+    "conversion": {
+      "provenance": "parser"
+    },
+    "tag": {
+      "provenance": "parser"
+    },
+    "shorthand": {
+      "provenance": "parser"
+    },
+    "construct": {
+      "provenance": "parser"
+    }
+  },
+  "universalFacts": [
+    "name",
+    "symbol",
+    "refers",
+    "target",
+    "resolvedType",
+    "constantValue",
+    "modifiers",
+    "effective",
+    "obligations",
+    "incomplete"
+  ],
+  "categories": {
+    "declaration": [
+      "module",
+      "type",
+      "field",
+      "constant",
+      "enum-case",
+      "alias",
+      "function",
+      "parameter",
+      "type-parameter",
+      "variable",
+      "declarator",
+      "binding",
+      "import",
+      "label"
+    ],
+    "function-like": [
+      "function",
+      "comprehension"
+    ],
+    "exit": [
+      "return",
+      "throw",
+      "break",
+      "continue",
+      "goto"
+    ],
+    "choice": [
+      "if",
+      "dispatch",
+      "select",
+      "conditional",
+      "fallback"
+    ],
+    "statement": [
+      "block",
+      "if",
+      "dispatch",
+      "select",
+      "loop",
+      "break",
+      "continue",
+      "goto",
+      "label",
+      "try",
+      "throw",
+      "return",
+      "defer",
+      "resource-scope",
+      "expression-statement",
+      "variable",
+      "scope-declaration",
+      "no-op"
+    ],
+    "expression": [
+      "reference",
+      "call",
+      "construction",
+      "access",
+      "index",
+      "assignment",
+      "binary",
+      "comparison",
+      "logical",
+      "unary",
+      "fallback",
+      "conditional",
+      "type-test",
+      "cast",
+      "await",
+      "yield",
+      "literal",
+      "default-value",
+      "collection",
+      "interpolation",
+      "function",
+      "comprehension"
+    ],
+    "markup": [
+      "element",
+      "text",
+      "attribute",
+      "directive",
+      "embedded-expression"
+    ]
   }
 }

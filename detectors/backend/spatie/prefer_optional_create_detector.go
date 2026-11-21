@@ -23,5 +23,3 @@ func (PreferOptionalCreateDetector) Find(codebase *engine.Codebase) []engine.Mat
 		Where(engine.As(spatienode.Node.IsReplaceableNewOptional)).
 		Get()
 }
-
-func (PreferOptionalCreateDetector) Repentable() {}

@@ -17,7 +17,8 @@ import (
 //go:embed tree.schema.json
 var schemaSource []byte
 
-var annotations = map[string]bool{"$schema": true, "$id": true, "title": true, "description": true, "$defs": true}
+var annotations = map[string]bool{"$schema": true, "$id": true, "title": true, "description": true, "$defs": true,
+	"kinds": true, "facts": true, "universalFacts": true, "categories": true}
 
 var keywords = map[string]bool{
 	"$ref": true, "type": true, "properties": true, "required": true, "additionalProperties": true, "enum": true, "const": true,
@@ -42,7 +43,11 @@ func Validate(line []byte) error {
 		return fmt.Errorf("not JSON: %w", err)
 	}
 
-	return check(root, root, instance, "")
+	if err := check(root, root, instance, ""); err != nil {
+		return err
+	}
+
+	return checkNodes(instance)
 }
 
 func loadedSchema() (map[string]any, error) {

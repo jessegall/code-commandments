@@ -25,31 +25,36 @@ func (in *interned) file(file *File) {
 		in.node(node)
 	}
 	for at := range file.Comments {
-		file.Comments[at].Kind = in.string(file.Comments[at].Kind)
+		file.Comments[at].Form = in.string(file.Comments[at].Form)
 	}
 }
 
 func (in *interned) node(node *Node) {
 	node.Kind = in.string(node.Kind)
-	node.Role = in.string(node.Role)
-	node.Field = in.string(node.Field)
-	node.Name = in.string(node.Name)
-	node.Is = in.list(node.Is)
+	node.role = in.string(node.role)
+	for at := range node.Parts {
+		node.Parts[at].Role = in.string(node.Parts[at].Role)
+	}
 	node.Resolved = in.typed(node.Resolved)
 	if node.Facts == none {
 		return
 	}
 	facts := node.Facts
-	facts.Literal = in.string(facts.Literal)
-	facts.Operator = in.string(facts.Operator)
-	facts.Modifiers = in.list(facts.Modifiers)
-	facts.Flags = in.list(facts.Flags)
-	facts.Declared = in.typed(facts.Declared)
-	facts.Returns = in.typed(facts.Returns)
+	facts.Name = in.string(facts.Name)
 	facts.Symbol = in.string(facts.Symbol)
 	facts.Refers = in.string(facts.Refers)
 	facts.Target = in.target(facts.Target)
+	facts.Modifiers = in.list(facts.Modifiers)
+	facts.Form = in.string(facts.Form)
+	facts.Operator = in.string(facts.Operator)
+	facts.Operators = in.list(facts.Operators)
+	facts.LiteralKind = in.string(facts.LiteralKind)
 	facts.Resolves = in.string(facts.Resolves)
+	facts.Written = in.typed(facts.Written)
+	facts.Source = in.string(facts.Source)
+	facts.Mode = in.string(facts.Mode)
+	facts.Passing = in.string(facts.Passing)
+	facts.Tag = in.string(facts.Tag)
 }
 
 func (in *interned) string(text string) string {

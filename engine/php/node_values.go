@@ -33,7 +33,7 @@ func (n Node) IsPositionalTuple() bool {
 	}
 	roots := map[string]bool{}
 	for _, item := range items {
-		if item.Kind() != "ArrayItem" || item.Child("key").Exists() || slices.Contains(item.Node().Flags, "spread") {
+		if item.Kind() != "ArrayItem" || item.Child("key").Exists() || slices.Contains(item.Node().Modifiers, "spread") {
 			return false
 		}
 		if root := variableRoot(item.Child("value")); root != "" {
@@ -60,7 +60,7 @@ func variableRoot(expr engine.Match) string {
 func (n Node) IsReturnExpression() bool {
 	parent := n.Parent()
 
-	return n.Exists() && (parent.Kind() == "Stmt_Return" || parent.Kind() == "Expr_ArrowFunction" && n.Node().Field == "expr")
+	return n.Exists() && (parent.Kind() == "Stmt_Return" || parent.Kind() == "Expr_ArrowFunction" && n.Node().InRole() == "expr")
 }
 
 var sequenceReturns = []*regexp.Regexp{
@@ -123,10 +123,10 @@ func (n Node) HandRolledWither() Node {
 	}
 	carried, changed := 0, 0
 	for _, argument := range built.Children() {
-		if argument.Node().Field != "args" {
+		if argument.Node().InRole() != "args" {
 			continue
 		}
-		if argument.Kind() != "Arg" || slices.Contains(argument.Node().Flags, "spread") {
+		if argument.Kind() != "Arg" || slices.Contains(argument.Node().Modifiers, "spread") {
 			return Node{}
 		}
 		if (Node{Match: argument.Child("value")}).IsOwnPropertyRead() {
@@ -176,7 +176,7 @@ func (n Node) ConstructorIsPromotionOnly() bool {
 		}
 
 		return !slices.ContainsFunc(params, func(param engine.Match) bool {
-			return len(param.Node().Modifiers) == 0 || slices.Contains(param.Node().Flags, "variadic")
+			return len(param.Node().Modifiers) == 0 || slices.Contains(param.Node().Modifiers, "variadic")
 		})
 	}
 
@@ -271,7 +271,7 @@ func (n Node) ValueParamSignature() []string {
 	}
 	var fields []string
 	for _, param := range Params(n.Match) {
-		declared, variable := param.Node().Declared, param.Child("var")
+		declared, variable := param.Node().Written, param.Child("var")
 		if declared == nil || declared.Kind != "keyword" || declared.Nullable || variable.Kind() != "Expr_Variable" || variable.Name() == "" {
 			continue
 		}
@@ -318,7 +318,7 @@ func (n Node) IsArrayParameterFieldRead() bool {
 		return false
 	}
 
-	written := Written(parameter.Node().Declared)
+	written := Written(parameter.Node().Written)
 	return Node{Match: parameter}.IsArrayParameter() || written.IsNullableArray() && (!written.isUnion() || len(written.members()) == 2)
 }
 
@@ -395,16 +395,16 @@ func recordReturnOwner(value engine.Match) engine.Match {
 		parent := returned.Parent()
 		switch parent.Kind() {
 		case "Stmt_Return", "Expr_ArrowFunction":
-			if returned.Node().Field == "expr" {
+			if returned.Node().InRole() == "expr" {
 				return (Node{Match: parent}).EnclosingFunctionLike().Match
 			}
 			return engine.Match{}
 		case "Expr_Ternary", "Expr_Match":
-			if returned.Node().Field == "cond" {
+			if returned.Node().InRole() == "cond" {
 				return engine.Match{}
 			}
 		case "MatchArm":
-			if returned.Node().Field != "body" {
+			if returned.Node().InRole() != "body" {
 				return engine.Match{}
 			}
 		default:
@@ -450,7 +450,7 @@ func (n Node) HasNestedArrayValue() bool {
 
 func (n Node) SpreadsAnotherArray() bool {
 	return n.Kind() == "Expr_Array" && slices.ContainsFunc(n.ChildrenIn("items"), func(item engine.Match) bool {
-		return item.Kind() == "ArrayItem" && slices.Contains(item.Node().Flags, "spread")
+		return item.Kind() == "ArrayItem" && slices.Contains(item.Node().Modifiers, "spread")
 	})
 }
 
@@ -548,10 +548,10 @@ func (n Node) EnclosingFunctionReturnsShapedArray() bool {
 			return shapedReturn.MatchString(documentedReturn(owner))
 		}
 		parent := call.Parent()
-		if parent.Kind() == "PropertyHook" && call.Node().Field == "body" {
+		if parent.Kind() == "PropertyHook" && call.Node().InRole() == "body" {
 			return shapedReturn.MatchString(documentedReturn(parent))
 		}
-		if !parent.Is(engine.Call) || call.Node().Field != "var" {
+		if !parent.Is(engine.Call) || call.Node().InRole() != "var" {
 			return false
 		}
 		call = parent
@@ -593,7 +593,7 @@ func documentedReturn(function engine.Match) string {
 func (n Node) CallbackConsumer() engine.Match {
 	callback := n.EnclosingFunctionLike().Match
 	argument := callback.Parent()
-	if argument.Kind() == "Arg" && callback.Node().Field == "value" && argument.Parent().Is(engine.Call) {
+	if argument.Kind() == "Arg" && callback.Node().InRole() == "value" && argument.Parent().Is(engine.Call) {
 		return argument.Parent()
 	}
 
@@ -623,7 +623,7 @@ func (n Node) ArrayReturnMethod() engine.Match {
 
 func ArgumentConsumer(value engine.Match) engine.Match {
 	parent := value.Parent()
-	if parent.Kind() == "Arg" && value.Node().Field == "value" && parent.Parent().Is(engine.Call) {
+	if parent.Kind() == "Arg" && value.Node().InRole() == "value" && parent.Parent().Is(engine.Call) {
 		return parent.Parent()
 	}
 
@@ -682,7 +682,7 @@ func (n Node) ProjectsTypedObject() bool {
 	}
 	for _, param := range Params(n.EnclosingFunctionLike().Match) {
 		if variable := param.Child("var"); variable.Kind() == "Expr_Variable" && variable.Name() == source {
-			declared := param.Node().Declared
+			declared := param.Node().Written
 
 			return Written(declared).Class() != "" && ProgramOf(n.Codebase()).IsValueType(declared)
 		}
@@ -761,7 +761,7 @@ func readsOnlyOwnFieldsOf(value engine.Match, source string, selfMethods bool) b
 			continue
 		}
 		field := node.Parent()
-		if selfMethods && field.Kind() == "Expr_MethodCall" && node.Node().Field == "var" && len(Arguments(field)) == 0 {
+		if selfMethods && field.Kind() == "Expr_MethodCall" && node.Node().InRole() == "var" && len(Arguments(field)) == 0 {
 			continue
 		}
 		if field.Kind() != "Expr_PropertyFetch" && field.Kind() != "Expr_NullsafePropertyFetch" {
@@ -799,7 +799,7 @@ func (n Node) IsStringKeyedRecord() bool {
 var fieldName = regexp.MustCompile(`^[A-Za-z_][A-Za-z0-9_]*$`)
 
 func (n Node) IsArrayParameter() bool {
-	declared := n.Node().Declared
+	declared := n.Node().Written
 
 	return n.Kind() == "Param" && declared != nil && declared.Kind == "keyword" && declared.Name == "array"
 }
@@ -815,7 +815,7 @@ func (n Node) CarriesOpenMap() bool {
 	if !ok || !documentsOpenStringMap(doc.Text, field) {
 		return false
 	}
-	promoted := slices.Contains(n.Node().Flags, "promoted")
+	promoted := slices.Contains(n.Node().Modifiers, "promoted")
 	scope := function.Match
 	if promoted {
 		scope = EnclosingClass(n.Match)
@@ -877,7 +877,7 @@ func (n Node) ParsesArrayField() bool {
 	if !method.HasModifier("static") {
 		return false
 	}
-	typeName := Written(method.Node().Returns).Class()
+	typeName := Written(method.Node().Written).Class()
 	if _, known := ProgramOf(n.Codebase()).Class(typeName); !known {
 		return false
 	}

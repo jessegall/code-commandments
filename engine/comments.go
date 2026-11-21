@@ -49,7 +49,7 @@ func (c *Codebase) CommentRuns() []Commented {
 }
 
 func (cm Commented) continuesWith(next Commented) bool {
-	return cm.File == next.File && cm.Kind == "line" && next.Kind == "line" && !cm.Trailing && !next.Trailing &&
+	return cm.File == next.File && cm.Form == "line" && next.Form == "line" && !cm.Trailing && !next.Trailing &&
 		!cm.IsCode() && !next.IsCode() && next.Span.Line == cm.Span.Line+strings.Count(cm.Text, "\n")+1 &&
 		cm.Attached != nil && next.Attached != nil && *cm.Attached == *next.Attached
 }
@@ -115,15 +115,20 @@ func (cm Commented) DefendsAgainstStrawman() bool {
 	return prose.DefendsAgainstStrawman(strings.Join(cm.Description(), " "))
 }
 
+// IsCode says whether the comment's words are commented-out code: the bridge's parser read them as code with no
+// diagnostic, and they are more than a lone word or a quoted phrase, which read as code in every language and are prose.
 func (cm Commented) IsCode() bool {
-	extra := cm.Extras
-	return extra != nil && (extra.PHP != nil && extra.PHP.Code || extra.Python != nil && extra.Python.Code ||
-		extra.CSharp != nil && extra.CSharp.Code || extra.Go != nil && extra.Go.Code || extra.TypeScript != nil && extra.TypeScript.Code)
+	fragment := cm.Fragment
+	if fragment == nil || fragment.Diagnostics > 0 || fragment.Statements == 0 {
+		return false
+	}
+
+	return fragment.Statements > 1 || fragment.ExpressionKind != "reference" && fragment.ExpressionKind != "literal"
 }
 
 func (cm Commented) RestatesStatement() bool {
 	owner := cm.Documents()
-	return cm.Kind != "doc" && !cm.IsCode() && owner.Exists() && !owner.Is(Block) && !owner.Is(Function) &&
+	return cm.Form != "doc" && !cm.IsCode() && owner.Exists() && !owner.Is(Block) && !owner.Is(Function) &&
 		!owner.Is(TypeDeclaration) && owner.IsWithinFunction() && !cm.headsASection(owner) && cm.Restates()
 }
 
@@ -146,7 +151,7 @@ func HasBlankLine(text string) bool {
 }
 
 func (cm Commented) IsBloatedDoc() bool {
-	if cm.Kind != "doc" {
+	if cm.Form != "doc" {
 		return false
 	}
 	documented := cm.Documents()
@@ -194,7 +199,7 @@ func (cm Commented) Dangling() bool {
 		return true
 	}
 	read := grammarOf(cm.File.Language()).CommentReferences
-	return cm.Kind == "doc" && read != nil && slices.ContainsFunc(read(cm), Dangling)
+	return cm.Form == "doc" && read != nil && slices.ContainsFunc(read(cm), Dangling)
 }
 
 func Dangling(ref contract.Ref) bool {

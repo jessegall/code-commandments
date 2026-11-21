@@ -172,12 +172,12 @@ func TestTwoNodesWrittenAlikeAreTheSameSyntaxWhereverTheySit(t *testing.T) {
 			seen[key] = node
 			continue
 		}
-		if earlier.Node().Field == node.Node().Field {
+		if earlier.Node().InRole() == node.Node().InRole() {
 			continue
 		}
 		compared++
 		if !earlier.SameSyntax(node) {
-			t.Errorf("%s in %s and in %s are not the same syntax", key, earlier.Node().Field, node.Node().Field)
+			t.Errorf("%s in %s and in %s are not the same syntax", key, earlier.Node().InRole(), node.Node().InRole())
 		}
 	}
 	if compared == 0 {

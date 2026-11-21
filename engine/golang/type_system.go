@@ -9,15 +9,26 @@ import (
 )
 
 func interfaceSignatures(declaration engine.Match) []string {
-	extra := declaration.Node().Extras
-	if extra == nil || extra.Go == nil || declaration.Child("typeParams").Exists() ||
-		slices.ContainsFunc(extra.Go.Methods, func(signature string) bool { return strings.Contains(signature, "invalid type") }) ||
+	if declaration.Child("typeParams").Exists() ||
 		slices.ContainsFunc(declaration.Members(), func(field engine.Match) bool {
 			return len(field.ChildrenIn("names")) == 0
 		}) {
 		return nil
 	}
-	return extra.Go.Methods
+
+	return methodNames(declaration)
+}
+
+// methodNames are the names of the methods a type declares as written.
+func methodNames(declaration engine.Match) []string {
+	var names []string
+	for _, member := range declaration.ChildrenIn("writtenMembers") {
+		if member.Kind() == "function" {
+			names = append(names, member.Name())
+		}
+	}
+
+	return names
 }
 
 func interfaceVisible(target, from engine.Match) bool {
@@ -68,12 +79,11 @@ func readTypeSystem(codebase *engine.Codebase) engine.TypeSystem {
 	owners := map[string][]string{}
 	var interfaces []string
 	for symbol, declaration := range declared.Declarations() {
-		extra := declaration.Node().Extras
-		if extra == nil || extra.Go == nil || len(extra.Go.Methods) == 0 {
+		if len(methodNames(declaration)) == 0 {
 			continue
 		}
 		set := map[string]bool{}
-		for _, method := range extra.Go.Methods {
+		for _, method := range methodNames(declaration) {
 			set[method] = true
 			owners[method] = append(owners[method], symbol)
 		}

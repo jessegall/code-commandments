@@ -27,9 +27,9 @@ func (n Node) DeclaresNullableOption() bool {
 	var written php.TypeName
 	switch n.Kind() {
 	case "Param", "Stmt_Property":
-		written = php.Written(n.Node().Declared)
+		written = php.Written(n.Node().Written)
 	case "Stmt_ClassMethod", "Stmt_Function":
-		written = php.Written(n.Node().Returns)
+		written = php.Written(n.Node().Written)
 	}
 
 	return IsOption(written.NullableClass())

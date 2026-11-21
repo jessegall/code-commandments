@@ -36,11 +36,11 @@ func insideAnExpression(node engine.Match) bool {
 }
 
 func (hashRules) IsName(node engine.Match) bool {
-	return node.Kind() == "IdentifierName" && node.Node().Role != "type" && !isAccessedMember(node)
+	return node.Kind() == "IdentifierName" && node.Role() != "type" && !isAccessedMember(node)
 }
 
 func isAccessedMember(node engine.Match) bool {
-	return node.Node().Field == "Name" && slices.Contains([]string{"SimpleMemberAccessExpression", "PointerMemberAccessExpression", "MemberBindingExpression"}, node.Parent().Kind())
+	return node.Node().InRole() == "Name" && slices.Contains([]string{"SimpleMemberAccessExpression", "PointerMemberAccessExpression", "MemberBindingExpression"}, node.Parent().Kind())
 }
 
 func (hashRules) Declares(node engine.Match) bool {
@@ -48,7 +48,7 @@ func (hashRules) Declares(node engine.Match) bool {
 }
 
 func (hashRules) IsCallee(node engine.Match) bool {
-	return node.Node().Field == "Expression" && node.Parent().Kind() == "InvocationExpression"
+	return node.Node().InRole() == "Expression" && node.Parent().Kind() == "InvocationExpression"
 }
 
 func (hashRules) Leaf(node engine.Match) (string, bool) {

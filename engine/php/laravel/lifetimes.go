@@ -106,7 +106,7 @@ func readLifetimes(codebase *engine.Codebase) *Lifetimes {
 			if node.Kind == "Stmt_Class" && node.Symbol != "" {
 				classes = append(classes, strings.TrimLeft(node.Symbol, `\`))
 				for _, parameter := range php.ConstructorParams(match) {
-					if held := strings.TrimLeft(php.Written(parameter.Node().Declared).Class(), `\`); held != "" {
+					if held := strings.TrimLeft(php.Written(parameter.Node().Written).Class(), `\`); held != "" {
 						owner := strings.TrimLeft(node.Symbol, `\`)
 						read.holds[owner] = append(read.holds[owner], held)
 					}

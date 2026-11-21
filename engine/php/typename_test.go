@@ -29,9 +29,9 @@ func TestTypeNameReadsEveryWrittenTypeAsPhpDoes(t *testing.T) {
 
 				return promises
 			case "declared":
-				return read(Written(node.Node().Declared))
+				return read(Written(node.Node().Written))
 			case "returns":
-				return read(Written(node.Node().Returns))
+				return read(Written(node.Node().Written))
 			}
 		}
 		t.Fatalf("an unknown ask %s", answer.Ask)

@@ -204,7 +204,7 @@ func InFields(fields ...string) func(Match) []Match {
 		var filling []Match
 		for _, child := range match.Children() {
 			for _, field := range fields {
-				if child.node.Field == field {
+				if child.node.InRole() == field {
 					filling = append(filling, child)
 				}
 			}
@@ -224,7 +224,7 @@ func InAnyField(fields ...string) func(Match) Match {
 	return func(match Match) Match {
 		for _, child := range match.Children() {
 			for _, field := range fields {
-				if child.node.Field == field {
+				if child.node.InRole() == field {
 					return child
 				}
 			}

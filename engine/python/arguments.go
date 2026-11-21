@@ -259,7 +259,7 @@ func (p *Program) UnnamedVocabularyLiterals(call Node) []Node {
 	var literals []Node
 	for _, argument := range append(call.Arguments(), call.Keywords()...) {
 		literal := argument.argumentValue()
-		if _, named := p.ConstantFor(call, literal); named && literal.Node().Literal == "string" {
+		if _, named := p.ConstantFor(call, literal); named && literal.Node().LiteralKind == "string" {
 			literals = append(literals, literal)
 		}
 	}

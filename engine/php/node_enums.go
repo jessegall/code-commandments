@@ -271,7 +271,7 @@ func methodReturnsNullable(codebase *engine.Codebase, class, method string) bool
 	}
 	for _, candidate := range Methods(declaration) {
 		if strings.EqualFold(candidate.Name(), method) {
-			return Written(candidate.Node().Returns).IsNullable()
+			return Written(candidate.Node().Written).IsNullable()
 		}
 	}
 

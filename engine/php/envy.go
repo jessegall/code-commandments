@@ -171,7 +171,7 @@ func isCollectionAccess(node engine.Match) bool {
 func allParamTypes(method engine.Match) map[string]string {
 	types := map[string]string{}
 	for _, param := range Params(method) {
-		if written, name := Written(param.Node().Declared).SimpleName(), variableName(param.Child("var")); written != "" && name != "" {
+		if written, name := Written(param.Node().Written).SimpleName(), variableName(param.Child("var")); written != "" && name != "" {
 			types[name] = written
 		}
 	}

@@ -28,8 +28,7 @@ const notesText = "# Judge checklists\n\n" +
 	"grouped under the skill that fixes it. Work it top to bottom, deleting each line as you\n" +
 	"fix its sin, and re-run judge only when the file is empty.\n\n" +
 	"`sins-<date>_<time>.md` are the runs before it. **They are kept deliberately** — each one\n" +
-	"is the record of what was true when it ran, and `commandments judge --repent=<date>_<time>`\n" +
-	"scopes a re-run or a `repent` to exactly what that run reported. Nothing here leaked: the\n" +
+	"is the record of what was true when it ran. Nothing here leaked: the\n" +
 	"newest five are kept and older ones are rotated out on their own.\n\n" +
 	"The whole folder is generated and gitignored. Deleting it is safe — the next judge run\n" +
 	"writes it again."

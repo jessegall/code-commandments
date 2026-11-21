@@ -293,5 +293,5 @@ func templatePart(part engine.Match) string {
 func (n Node) IsCallArgument() bool {
 	parent := n.Parent()
 
-	return (parent.Kind() == "CallExpression" || parent.Kind() == "NewExpression") && n.Node().Field == "arguments"
+	return (parent.Kind() == "CallExpression" || parent.Kind() == "NewExpression") && n.Node().InRole() == "arguments"
 }

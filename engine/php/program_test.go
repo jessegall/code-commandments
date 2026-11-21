@@ -33,7 +33,7 @@ func TestTheProgramKnowsItsDeclarationsAsPhpDoes(t *testing.T) {
 		}
 		switch ask {
 		case "isValueType":
-			return program.IsValueType(node.Node().Declared)
+			return program.IsValueType(node.Node().Written)
 		case "named":
 			_, declared := program.Declaration(node.Name())
 

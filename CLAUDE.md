@@ -39,10 +39,10 @@ like another's, the engine is wrong — fix the engine, not the detector.
 I parse / how do I detect / how do I fix" is engine-agnostic: the CLI (`cli/`), the report
 and checklist, the fixture harness (`fixture/`), the recurrence and twin analyses
 (`engine/recurrence.go`, `engine/twins.go`), the syntax hash (`engine/hash.go`, with each
-language's `HashRules`), the scribes' writer (`scribes/`). **NEVER write the same machinery
+language's `HashRules`). **NEVER write the same machinery
 twice for two engines** — lift it into `engine/` or a shared package, parameterised by the
 one hook that genuinely differs. A thing belongs in the engine folder of its concern:
-`engine/<lang>`, `detectors/<lang>`, `sins/<lang>`, `skill/<lang>`, `scribes/<lang>`.
+`engine/<lang>`, `detectors/<lang>`, `sins/<lang>`, `skill/<lang>`.
 
 ### 🌐 Every rule that can be shared is written ONCE, over the generic tree — non-negotiable
 
@@ -151,7 +151,7 @@ rows project from the registered sins.
 ## The engine arsenal — CHECK THIS BEFORE YOU IMPLEMENT ANYTHING
 
 The single most-repeated mistake is hand-rolling logic that already exists. **Before you
-implement ANY feature — a detector, a predicate, a scribe, a helper, a type read, a "does
+implement ANY feature — a detector, a predicate, a helper, a type read, a "does
 X reference Y" walk — find it here first.** Reuse it; if it's genuinely missing, ADD it to
 the right layer (never inline in the detector). This applies every time you start building.
 
@@ -187,10 +187,8 @@ sites), `engine.DivergentTwins`, the syntax hash (`engine.SyntaxHash`, with each
 `HashRules`), `engine.Layers` (a declared layer stack). `published` carries the facts one engine
 publishes for another's detectors (a server type the frontend mirrors).
 
-**Rewriting (`scribes/`):** one draft per file, each edit a half-open `[start, end)`
-(`scribes.Edit`), the source's offset math in `engine.Source`/`engine.Span` (incl.
-`BlockOpener` — a new block wears the FILE's brace style, never the scribe's). A scribe gathers
-what its fix needs from the finding's `engine.Match` and the codebase, never by scraping text.
+**No automatic fixes in version 8.** The scribes and `repent` are gone: an agent writes the fix
+from the finding and its skill. Automatic fixes may come back later, over the generic tree.
 
 ## Commands
 
@@ -200,7 +198,6 @@ README's command table is projected from the same help. The ones you use while w
 | Command | Purpose |
 |---|---|
 | `bin/commandments judge [path] [--sin=NAME] [--skill=NAME] [--changes\|--branch[=BASE]] [--parallel=N]` | Judge a tree: every engine over whatever the path holds; findings grouped by the skill that fixes them, and a checklist written for the session. `--changes`/`--branch` scope the report (the whole path is still read, so cross-file rules stay right); `--parallel` defaults to 2. Here, always scoped — a flag, or a path (rule 7). |
-| `bin/commandments repent [path] [--dry-run] [--only=NAME]` | Run the scribes: the auto-fixes of the `Repentable` detectors and the maintenance scribes. `--dry-run` previews a diff. |
 | `bin/commandments info <sin>` | What a rule flags, why, the fix, an example. |
 | `bin/commandments report --reason=… --ref=PATH:LINE` / `feature-request` | File a bug, a false positive, or a rule request through `gh`. |
 | `bin/commandments make <Name>` | Scaffold a consumer's own commandment in `.commandments/custom/`. |
@@ -290,13 +287,12 @@ deletes the file).
 
 - **AST/semantic detection over name matching** — always; derive the answer from
   the AST / resolved type, never a class/method/variable name or a hardcoded list.
-- **Use the whole arsenal — detectors AND scribes.** Before hand-rolling a scan, reach for the
+- **Use the whole arsenal.** Before hand-rolling a scan, reach for the
   engine tools you already have: the call graph (`php.IndexOf`), the type engine
   (`php.ExpressionType`/`ReceiverTypeOf` — a value's real type through the receiver chain and local
   assignments), the field-nil value flow (`php.ValueFlowOf`), the variable trace (`php.Trace`), the
-  field reader (`php.Fields`). This applies to **scribes too** — a scribe has the same arsenal (each
-  finding is an `engine.Match` with the whole codebase behind it); compose the engine to gather what
-  the fix needs, never scrape source with a regex. A missing predicate is a signal to extend the
+  field reader (`php.Fields`). Compose the engine to gather what a rule needs, never scrape
+  source with a regex. A missing predicate is a signal to extend the
   right engine layer.
 - **🔧 FIX THE TOOL, NEVER WORK AROUND IT.** When an engine tool gives the wrong answer, the
   bug is in the TOOL — fix it at the source (with a regression test) so every detector that

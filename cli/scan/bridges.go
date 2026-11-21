@@ -327,7 +327,17 @@ func (p *process) AskEach(request bridge.Request, each func(line contract.Line, 
 	if server, kept := p.warm(request); kept {
 		defer server.Close()
 
-		return p.reach.named(server.AskEach(request, each))
+		handed := false
+		err := server.AskEach(request, func(line contract.Line, raw []byte) error {
+			handed = true
+
+			return each(line, raw)
+		})
+		var refused *contract.VersionRefused
+		if handed || !errors.As(err, &refused) {
+			return p.reach.named(err)
+		}
+		p.sayWarmBridgeMissed(err)
 	}
 
 	server, err := p.start()

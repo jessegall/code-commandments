@@ -70,13 +70,6 @@
     ]
   },
   {
-    "name": "info-repentable",
-    "args": [
-      "info",
-      "duplicate-element"
-    ]
-  },
-  {
     "name": "info-scaffolds",
     "args": [
       "info",

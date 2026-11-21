@@ -8,7 +8,7 @@ import (
 	"github.com/jessegall/code-commandments/cli/config"
 )
 
-var commandNames = []string{"`judge`", "`info`", "`repent`", "`report`", "`make`", "info <sin>", "repent --", "scaffold --", "report --", "feature-request", "freeze", "the commands"}
+var commandNames = []string{"`judge`", "`info`", "`report`", "`make`", "info <sin>", "scaffold --", "report --", "feature-request", "freeze", "the commands"}
 
 func namesNoCommand(t *testing.T, what, text string) {
 	t.Helper()

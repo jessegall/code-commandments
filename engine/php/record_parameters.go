@@ -79,7 +79,7 @@ func carriers(literal engine.Match) []engine.Match {
 	if holder.Kind() == "Arg" {
 		return []engine.Match{holder}
 	}
-	if holder.Kind() == "Expr_Assign" && literal.Node().Field == "expr" {
+	if holder.Kind() == "Expr_Assign" && literal.Node().InRole() == "expr" {
 		return passedOn(holder.Child("var"))
 	}
 	if holder.Kind() == "Stmt_Return" && literal.ReturnsRecordBag() {

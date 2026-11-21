@@ -14,7 +14,6 @@ import (
 	"github.com/jessegall/code-commandments/cli/doc"
 	"github.com/jessegall/code-commandments/cli/jsonfile"
 	_ "github.com/jessegall/code-commandments/registry"
-	_ "github.com/jessegall/code-commandments/scribes/backend"
 )
 
 // frozenForJournal4 is the release every journal before version 5 runs: journal-plugin.json pins it for good, with the

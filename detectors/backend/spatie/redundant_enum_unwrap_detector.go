@@ -24,6 +24,4 @@ func (RedundantEnumUnwrapDetector) Find(codebase *engine.Codebase) []engine.Matc
 		Get()
 }
 
-func (RedundantEnumUnwrapDetector) Repentable() {}
-
 func (RedundantEnumUnwrapDetector) CrossFile() {}

@@ -90,7 +90,7 @@ func (p printer) construction(node engine.Match) (string, error) {
 		if name := argument.Child("name"); name.Exists() {
 			prefix = name.Name() + ": "
 		}
-		for _, flag := range argument.Node().Flags {
+		for _, flag := range argument.Node().Modifiers {
 			switch flag {
 			case "by-ref":
 				prefix += "&"

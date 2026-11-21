@@ -37,7 +37,7 @@ func init() {
 		ElementOf:           func(node engine.Match) *contract.Type { return TypesOf(node.Codebase()).ElementOf(node) },
 		TestFile:            testFile,
 		Implicit:            magic,
-		Labels:              func(name engine.Match) bool { return name.Parent().Kind() == "Arg" && name.Node().Field == "name" },
+		Labels:              func(name engine.Match) bool { return name.Parent().Kind() == "Arg" && name.Node().InRole() == "name" },
 		NamedConstructor: func(method engine.Match) bool { return Node{Match: method}.IsNamedConstructor() },
 		ValueParameters:  func(method engine.Match) []string { return Node{Match: method}.ValueParamSignature() },
 		IsConstructor: func(method engine.Match) bool {
@@ -48,7 +48,7 @@ func init() {
 		},
 		ReceivesContext:    receivesContext,
 		SameModule:         sameModule,
-		DeclaredClass:      func(parameter engine.Match) string { return Written(parameter.Node().Declared).Class() },
+		DeclaredClass:      func(parameter engine.Match) string { return Written(parameter.Node().Written).Class() },
 		IsRecord:           func(class engine.Match) bool { return ProgramOf(class.Codebase()).ClassIsRecord(class.Identity()) },
 		IsValueClass:       isValueDependency,
 		ListedClasses:      listedProjectClasses,
@@ -174,7 +174,7 @@ func init() {
 func declaredMembers(declaration engine.Match) []engine.Match {
 	declared := declaration.ChildrenIn("stmts")
 	for _, parameter := range ConstructorParams(declaration) {
-		if slices.Contains(parameter.Node().Flags, "promoted") {
+		if slices.Contains(parameter.Node().Modifiers, "promoted") {
 			declared = append(declared, parameter)
 		}
 	}

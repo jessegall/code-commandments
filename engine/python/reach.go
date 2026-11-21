@@ -120,24 +120,24 @@ func (n Node) OwnExpressions() []Node {
 			switch {
 			case child.IsDefinition():
 				continue
-			case child.Node().Role == "expression":
+			case child.Role() == "expression":
 				if child.IsEvaluated() {
 					own = append(own, child)
 				}
-			case child.Node().Role == "type" || child.Node().Field == "decorator_list":
+			case child.Role() == "type" || child.Node().InRole() == "decorator_list":
 				continue
 			}
 			walk(child)
 		}
 	}
 	for _, child := range n.Children() {
-		if child.Node().Field != "args" && child.Node().Field != "body" {
+		if child.Node().InRole() != "args" && child.Node().InRole() != "body" {
 			continue
 		}
 		if child.IsDefinition() {
 			continue
 		}
-		if child.Node().Role == "expression" && child.IsEvaluated() {
+		if child.Role() == "expression" && child.IsEvaluated() {
 			own = append(own, child)
 		}
 		walk(child)

@@ -94,7 +94,7 @@ func (p *Program) findClasses() {
 
 func (p *Program) dispatchedBy(call Node) (Node, bool) {
 	arguments := call.Arguments()
-	if !call.IsCall() || call.Callee().DottedName() != "getattr" || len(arguments) < 2 || arguments[1].Node().Literal != "" {
+	if !call.IsCall() || call.Callee().DottedName() != "getattr" || len(arguments) < 2 || arguments[1].Node().LiteralKind != "" {
 		return Node{}, false
 	}
 	receiver := arguments[0]

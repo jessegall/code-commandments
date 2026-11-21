@@ -57,11 +57,11 @@ func (node Node) IsImport() bool {
 }
 
 func (node Node) Level() int {
-	if extras := node.Node().Extras; extras != nil && extras.Python != nil {
-		return extras.Python.Level
+	if !node.Exists() {
+		return 0
 	}
 
-	return 0
+	return node.Node().RelativeLevel
 }
 
 func (alias Node) boundAs() string {
@@ -177,11 +177,11 @@ func (n Node) Keyword(name string) Node {
 }
 
 func (n Node) IsFalse() bool {
-	return n.Kind() == "Constant" && n.Node().Literal == "bool" && n.Written() == "False"
+	return n.Kind() == "Constant" && n.Node().LiteralKind == "bool" && n.Written() == "False"
 }
 
 func (n Node) IsNone() bool {
-	return n.Kind() == "Constant" && n.Node().Literal == "null"
+	return n.Kind() == "Constant" && n.Node().LiteralKind == "null"
 }
 
 func (alias Node) dottedBinding() string {

@@ -62,7 +62,7 @@ func (c *Codebase) librarySources(language contract.Language) librarySources {
 				continue
 			}
 			for _, node := range file.Nodes() {
-				if !node.Answers(string(TypeDeclaration)) || node.Symbol == "" {
+				if node.Kind != "type" && node.Kind != "alias" || node.Symbol == "" {
 					continue
 				}
 				match := Match{node: node, file: file}

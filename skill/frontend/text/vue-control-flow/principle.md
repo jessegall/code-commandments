@@ -11,7 +11,7 @@
 A `v-if` / `v-else-if` / `v-else` / `v-for` is STRUCTURE — which DOM renders — and it
 belongs on a `<template>` wrapper, not bolted onto the element it happens to guard.
 The element reads as one thing (content + styling), the `<template>` as another
-(when / how-many). `repent` auto-wraps these — a `v-for` takes its `:key` along.
+(when / how-many). Wrap the element in a `<template>` for the condition; a `v-for` takes its `:key` along.
 (`v-show` is exempt: it toggles `display` on a real node and can't live on a
 `<template>`, which renders nothing.)
 ### A case that tests its value again

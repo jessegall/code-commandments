@@ -63,7 +63,7 @@ func freeze(path, contents string, console cli.Console) (int, error) {
 		return 0, err
 	}
 
-	return console.Say("\033[32m✓ Frozen " + path + "\033[0m — scanned for resolution, but never flagged or repented."), nil
+	return console.Say("\033[32m✓ Frozen " + path + "\033[0m — scanned for resolution, but never flagged."), nil
 }
 
 func unfreeze(path, contents string, console cli.Console) (int, error) {
@@ -88,7 +88,7 @@ func unfreeze(path, contents string, console cli.Console) (int, error) {
 
 func stamped(contents string, language source.Language) string {
 	stamp := language.Comment(engine.FrozenMarker + " — deliberately immutable; excluded from code-commandments " +
-		"judging & repent (run `" + binary.Here() + " unfreeze` to lift).")
+		"judging (run `" + binary.Here() + " unfreeze` to lift).")
 
 	if !contract.OpensFirst(language.Written(), contents) {
 		return stamp + "\n" + contents

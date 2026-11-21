@@ -123,8 +123,8 @@ func TestAnOverridingMethodIsInherited(t *testing.T) {
 			continue
 		}
 		overrides := node.Symbol == "shop.pricing.BigCart.add"
-		if node.Inherited != overrides {
-			t.Errorf("%s is inherited: %v", node.Symbol, node.Inherited)
+		if node.Incomplete != overrides {
+			t.Errorf("%s is inherited: %v", node.Symbol, node.Incomplete)
 		}
 	}
 }
@@ -162,11 +162,11 @@ func TestAWrittenTypeNamesTheClassItSpells(t *testing.T) {
 	checkout := pythontest.File(t, pythontest.FromSource(t, shop), "shop/checkout.py")
 	names := map[string]string{}
 	for _, node := range checkout.Nodes() {
-		if node.Kind == "arg" && node.Declared != nil {
-			names[node.Name] = node.Declared.Name
+		if node.Kind == "arg" && node.Written != nil {
+			names[node.Name] = node.Written.Name
 		}
 		if node.Kind == "FunctionDef" && node.Name == "ring" {
-			names["ring"] = node.Returns.Name
+			names["ring"] = node.Written.Name
 		}
 	}
 	if names["other"] != "shop.pricing.Cart" || names["ring"] != "decimal.Decimal" || names["Decimal"] != "int" {
@@ -177,7 +177,7 @@ func TestAWrittenTypeNamesTheClassItSpells(t *testing.T) {
 func TestArithmeticOnLiteralsIsConstant(t *testing.T) {
 	checkout := pythontest.File(t, pythontest.FromSource(t, shop), "shop/checkout.py")
 	for _, node := range checkout.Nodes() {
-		if node.Kind == "BinOp" && !node.Constant {
+		if node.Kind == "BinOp" && !node.Incomplete {
 			t.Error("1 + 2 is not constant")
 		}
 	}

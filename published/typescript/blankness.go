@@ -121,7 +121,7 @@ func bindingTypes(file *engine.File) map[string]string {
 }
 
 func writtenTypeName(declaration engine.Match) string {
-	if !declaration.Exists() || declaration.Node().Declared == nil {
+	if !declaration.Exists() || declaration.Node().Written == nil {
 		return ""
 	}
 	annotation := declaration.Child("type")

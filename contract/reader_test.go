@@ -1,131 +1,144 @@
 package contract
 
 import (
+	"bytes"
+	"errors"
 	"strings"
 	"testing"
 )
 
-const phpFile = `{"file": {"path": "/abs/src/Cart.php", "language": "php", "errors": 0, "root": {"id": 0, "kind": "Stmt_Class", "role": "member", "is": ["type-declaration"], "span": [6, 80, 3], "name": "Cart", "symbol": "Shop\\Cart", "children": [{"id": 1, "kind": "Identifier", "role": "other", "span": [12, 16, 3], "field": "name", "name": "Cart"}]}, "comments": [{"id": 0, "kind": "doc", "text": "/** A cart. */", "span": [0, 5, 2], "attached": 0}]}}`
+const header = `{"header": {"contract": "tree", "version": 5, "language": "php", "bridge": {"name": "php-bridge", "version": "8.0.0", "reads": true}, "roots": ["/src"]}}`
 
-func stream(language string, lines ...string) string {
-	header := `{"header": {"contract": "tree", "version": 1, "language": "` + language + `", "bridge": {"name": "test", "version": "1"}, "roots": ["/abs/src"]}}`
+const handler = `{"file": {"path": "/src/Reader.php", "language": "php", "errors": 0, "test": true, "module": "App", "reads": ["/src/composer.lock"],
+"resolver": {"tool": "php-parser", "ran": true},
+"root": {"id": 0, "kind": "file", "span": [0, 60, 1], "parts": {"modules": [{"id": 1, "kind": "module", "span": [0, 60, 1], "name": "App", "parts": {"statements": [
+  {"id": 2, "kind": "try", "span": [6, 60, 1], "parts": {
+    "body": {"id": 3, "kind": "block", "span": [10, 20, 1], "parts": {"statements": []}},
+    "handlers": [{"id": 4, "kind": "handler", "span": [21, 60, 1], "catchForm": "typed", "parts": {
+      "caughtTypes": [{"id": 5, "kind": "type-expression", "span": [28, 39, 1], "form": "named", "refers": "App\\ReadFailure", "resolvedType": 0}],
+      "binding": {"id": 6, "kind": "binding", "span": [40, 42, 1], "name": "e"},
+      "body": {"id": 7, "kind": "block", "span": [44, 60, 1], "parts": {"statements": []}}}}]}}]}}]}},
+"comments": [{"id": 0, "form": "line", "text": "// read", "span": [0, 5, 1], "attached": 2}],
+"types": [{"text": "App\\ReadFailure", "kind": "named", "name": "App\\ReadFailure", "origin": "compiler"}]}}`
 
-	return strings.Join(append([]string{header}, lines...), "\n") + "\n"
-}
+const trailer = `{"trailer": {"files": 1}}`
 
-func trailer(files string) string {
-	return `{"trailer": {"files": ` + files + `}}`
-}
-
-func TestReadsAValidStreamPerLanguage(t *testing.T) {
-	files := map[string]string{
-		"php":        phpFile,
-		"python":     `{"file": {"path": "/abs/shop/cart.py", "language": "python", "errors": 0, "module": "shop.cart", "resolver": {"tool": "mypy", "ran": true}, "root": {"id": 0, "kind": "Module", "role": "other", "span": [0, 20, 1], "children": [{"id": 1, "kind": "Compare", "role": "expression", "is": ["comparison"], "span": [0, 9, 1], "field": "body", "extras": {"python": {"operators": ["<", "<="]}}, "resolved": {"text": "builtins.bool", "kind": "named", "name": "builtins.bool", "origin": "compiler"}}]}, "comments": []}}`,
-		"csharp":     `{"file": {"path": "/abs/Shop/Cart.cs", "language": "csharp", "errors": 0, "test": true, "root": {"id": 0, "kind": "CompilationUnit", "role": "other", "span": [0, 40, 1], "children": [{"id": 1, "kind": "InvocationExpression", "role": "expression", "is": ["call"], "span": [10, 20, 2], "field": "Members", "target": {"symbol": "global::Shop.Cart.Add(global::System.Int32)", "type": "global::Shop.Cart", "name": "Add"}}]}, "comments": [{"id": 0, "kind": "line", "text": "// x = 1;", "span": [0, 9, 1], "extras": {"csharp": {"code": true}}}]}}`,
-		"typescript": `{"file": {"path": "/abs/src/cart.ts", "language": "typescript", "errors": 0, "root": {"id": 0, "kind": "SourceFile", "role": "other", "span": [0, 30, 1], "children": [{"id": 1, "kind": "ImportDeclaration", "role": "statement", "is": ["import"], "span": [0, 29, 1], "field": "statements", "resolves": "/abs/src/money.ts", "extras": {"typescript": {"typeOnly": true}}}]}, "comments": []}}`,
-		"vue":        `{"file": {"path": "/abs/src/Cart.vue", "language": "vue", "errors": 0, "root": {"id": 0, "kind": "Component", "role": "markup", "span": [0, 60, 1], "children": [{"id": 1, "kind": "Directive", "role": "markup", "span": [20, 40, 2], "field": "attributes", "flags": ["shorthand"], "extras": {"vue": {"directive": {"name": "bind", "modifiers": []}}}}]}, "comments": []}}`,
+func stream(lines ...string) string {
+	var joined []string
+	for _, line := range lines {
+		joined = append(joined, strings.Join(strings.Fields(line), " "))
 	}
-	for language, file := range files {
-		t.Run(language, func(t *testing.T) {
-			read, err := ReadAll(strings.NewReader(stream(language, file, trailer("1"))))
-			if err != nil {
-				t.Fatalf("a valid %s stream is refused: %v", language, err)
-			}
-			if len(read.Files) != 1 {
-				t.Fatalf("read %d files, want 1", len(read.Files))
-			}
-		})
-	}
+
+	return strings.Join(joined, "\n") + "\n"
 }
 
-func TestLinksParents(t *testing.T) {
-	read, err := ReadAll(strings.NewReader(stream("php", phpFile, trailer("1"))))
+func TestAVersionFiveStreamReadsWithItsRolesFactsAndFileFacts(t *testing.T) {
+	read, err := ReadAll(strings.NewReader(stream(header, handler, trailer)))
 	if err != nil {
 		t.Fatal(err)
 	}
-	name, ok := read.Files[0].Node(1)
-	if !ok {
-		t.Fatal("node 1 is missing")
+	file := read.Files[0]
+	if !file.Test || file.Module != "App" || len(file.Reads) != 1 || file.Resolver.Tool != "php-parser" || !read.Header.Bridge.Reads {
+		t.Errorf("the file facts read as test %v, module %q, reads %v, resolver %v, bridge reads %v", file.Test, file.Module, file.Reads, file.Resolver, read.Header.Bridge.Reads)
 	}
-	parent, ok := name.Parent()
-	if !ok || parent.ID != 0 {
-		t.Fatalf("node 1's parent is not the root")
+	caught, _ := file.Node(4)
+	types, answer := caught.Role("caughtTypes")
+	if answer != Present || types[0].Refers != `App\ReadFailure` || types[0].Resolved == nil || types[0].Resolved.Name != `App\ReadFailure` {
+		t.Errorf("the handler's caught types read %v, %v", types, answer)
 	}
-	if !parent.Answers("type-declaration") {
-		t.Fatal("the class does not answer type-declaration")
+	body, _ := caught.Child("body")
+	if statements, answer := body.Role("statements"); len(statements) != 0 || answer != KnownEmpty {
+		t.Errorf("an empty body's statements answer %v, want known-empty", answer)
+	}
+	if _, answer := caught.Role("filter"); answer != KnownEmpty {
+		t.Errorf("an absent filter answers %v, want known-empty", answer)
+	}
+	if _, answer := caught.Role("then"); answer != Inapplicable {
+		t.Errorf("a handler's then answers %v, want inapplicable", answer)
+	}
+	if parent, _ := types[0].Parent(); parent != caught || types[0].InRole() != "caughtTypes" {
+		t.Errorf("a caught type's parent is %v in role %q", parent, types[0].InRole())
+	}
+	if !caught.Is("handler") || !file.Root.Is("file") {
+		t.Error("a node is not of its own kind")
 	}
 }
 
-func TestRefuses(t *testing.T) {
-	cases := map[string]string{
-		"an unknown key":                                stream("php", strings.Replace(phpFile, `"errors": 0`, `"errors": 0, "size": 9`, 1), trailer("1")),
-		"a stream with no trailer":                      stream("php", phpFile),
-		"a wrong trailer count":                         stream("php", phpFile, trailer("2")),
-		"an unknown version":                            strings.Replace(stream("php", trailer("0")), `"version": 1`, `"version": 9`, 1),
-		"ids out of pre-order":                          stream("php", strings.Replace(phpFile, `"id": 1,`, `"id": 5,`, 1), trailer("1")),
-		"a child with no field":                         stream("php", strings.Replace(phpFile, `"field": "name", `, ``, 1), trailer("1")),
-		"a comment attached to no node":                 stream("php", strings.Replace(phpFile, `"attached": 0`, `"attached": 7`, 1), trailer("1")),
-		"an engine fact in a php stream":                stream("php", strings.Replace(phpFile, `"name": "Cart", "symbol"`, `"name": "Cart", "constant": true, "symbol"`, 1), trailer("1")),
-		"an unknown extras key":                         stream("php", strings.Replace(phpFile, `"name": "Cart", "symbol"`, `"name": "Cart", "extras": {"php": {"x": true}}, "symbol"`, 1), trailer("1")),
-		"a neutral kind outside the set":                stream("php", strings.Replace(phpFile, `["type-declaration"]`, `["thing"]`, 1), trailer("1")),
-		"a line before the header":                      trailer("0") + "\n",
-		"a file after the program line":                 stream("php", `{"program": {}}`, phpFile, trailer("1")),
-		"a program fact the language has no source for": stream("php", `{"program": {"packages": ["/abs/src"]}}`, trailer("0")),
-		"a number as a literal value":                   stream("php", strings.Replace(phpFile, `"name": "Cart", "symbol"`, `"name": "Cart", "value": 3, "symbol"`, 1), trailer("1")),
-		"a span of two numbers":                         stream("php", strings.Replace(phpFile, `[6, 80, 3]`, `[6, 80]`, 1), trailer("1")),
+func TestAnIncompleteNodeAnswersUnknownAndItsSiblingsStayReadable(t *testing.T) {
+	recovered := strings.Replace(handler, `"kind": "handler", "span": [21, 60, 1], "catchForm": "typed"`, `"kind": "handler", "span": [21, 60, 1], "catchForm": "typed", "incomplete": true`, 1)
+	read, err := ReadAll(strings.NewReader(stream(header, recovered, trailer)))
+	if err != nil {
+		t.Fatal(err)
 	}
-	for name, input := range cases {
-		t.Run(name, func(t *testing.T) {
-			if _, err := ReadAll(strings.NewReader(input)); err == nil {
-				t.Fatalf("%s is read without complaint", name)
-			}
-		})
+	caught, _ := read.Files[0].Node(4)
+	if _, answer := caught.Role("filter"); answer != Unknown {
+		t.Errorf("an incomplete handler's absent filter answers %v, want unknown", answer)
+	}
+	tried, _ := read.Files[0].Node(3)
+	if _, answer := tried.Role("statements"); answer != KnownEmpty {
+		t.Errorf("the try body beside it answers %v, want known-empty", answer)
+	}
+}
+
+func TestAFileWhoseResolverDidNotRunKnowsNoCompilerFact(t *testing.T) {
+	unrun := strings.Replace(handler, `"resolver": {"tool": "php-parser", "ran": true}`, `"resolver": {"tool": "php-parser", "ran": false}`, 1)
+	read, err := ReadAll(strings.NewReader(stream(header, unrun, trailer)))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if file := read.Files[0]; file.Knows("refers") || file.Knows("resolvedType") || !file.Knows("name") {
+		t.Errorf("a file whose resolver did not run knows refers %v, resolvedType %v, name %v", file.Knows("refers"), file.Knows("resolvedType"), file.Knows("name"))
+	}
+}
+
+func TestAStreamOfAnotherVersionIsRefusedNamingTheStreamAndBothVersions(t *testing.T) {
+	old := strings.Replace(header, `"version": 5`, `"version": 4`, 1)
+	_, err := ReadAll(strings.NewReader(stream(old, handler, trailer)))
+	var refused *VersionRefused
+	if !errors.As(err, &refused) || !strings.Contains(err.Error(), "php-bridge stream is written in contract version 4, and this reader reads only version 5") {
+		t.Errorf("a version 4 stream was answered %v", err)
+	}
+}
+
+func TestRefusesAStreamThatBreaksTheContract(t *testing.T) {
+	for name, lines := range map[string][]string{
+		"no header":           {handler, trailer},
+		"no trailer":          {header, handler},
+		"a short trailer":     {header, handler, `{"trailer": {"files": 2}}`},
+		"a field it never had": {header, strings.Replace(handler, `"kind": "binding",`, `"kind": "binding", "field": "var",`, 1), trailer},
+		"a skipped number":    {header, strings.Replace(handler, `"id": 7,`, `"id": 9,`, 1), trailer},
+		"a root not a file":   {header, strings.Replace(handler, `"root": {"id": 0, "kind": "file"`, `"root": {"id": 0, "kind": "module"`, 1), trailer},
+	} {
+		if _, err := ReadAll(strings.NewReader(stream(lines...))); err == nil {
+			t.Errorf("%s was read", name)
+		}
 	}
 }
 
 func TestTheValidatorRefusesAKeywordItWouldIgnore(t *testing.T) {
-	schema := map[string]any{"properties": map[string]any{"x": map[string]any{"format": "uri"}}}
-	if err := known(schema, ""); err == nil {
-		t.Fatal("a schema using format loads, though nothing applies it")
+	if err := known(map[string]any{"format": "uri"}, ""); err == nil {
+		t.Error("a schema keyword the validator does not apply was accepted")
 	}
 }
 
-func TestTheSchemaAloneRefusesWhatDecodingWouldAccept(t *testing.T) {
-	lines := map[string]string{
-		"a neutral kind outside the set": strings.Replace(phpFile, `["type-declaration"]`, `["thing"]`, 1),
-		"a literal kind outside the set": strings.Replace(phpFile, `"name": "Cart", "symbol"`, `"name": "Cart", "literal": "decimal", "symbol"`, 1),
-		"a relative path":                strings.Replace(phpFile, `"/abs/src/Cart.php"`, `"src/Cart.php"`, 1),
-		"a line with two keys":           `{"trailer": {"files": 0}, "program": {}}`,
-		"a missing required key":         strings.Replace(phpFile, `"errors": 0, `, ``, 1),
-	}
-	for name, line := range lines {
-		t.Run(name, func(t *testing.T) {
-			if err := Validate([]byte(line)); err == nil {
-				t.Fatalf("the schema accepts %s", name)
-			}
-		})
-	}
-	if err := Validate([]byte(phpFile)); err != nil {
-		t.Fatalf("the schema refuses a valid file line: %v", err)
-	}
-}
-
-func TestATypeSaidOnceIsPutBackOnEveryNodeThatNamesIt(t *testing.T) {
-	file := `{"file": {"path": "/abs/src/cart.ts", "language": "typescript", "errors": 0, "root": {"id": 0, "kind": "SourceFile", "role": "other", "span": [0, 30, 1], "children": [` +
-		`{"id": 1, "kind": "Identifier", "role": "expression", "span": [0, 4, 1], "field": "statements", "resolvedType": 0},` +
-		`{"id": 2, "kind": "Identifier", "role": "expression", "span": [5, 9, 1], "field": "statements", "resolvedType": 0}]}, "comments": [],` +
-		`"types": [{"text": "string", "kind": "keyword", "name": "string", "origin": "compiler"}]}}`
-	read, err := ReadAll(strings.NewReader(stream("typescript", file, trailer("1"))))
+func TestAStreamWrittenBackReadsTheSameWithItsTypesStillShared(t *testing.T) {
+	read, err := ReadAll(strings.NewReader(stream(header, handler, trailer)))
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, id := range []int{1, 2} {
-		node, _ := read.Files[0].Node(id)
-		if node.Resolved == nil || node.Resolved.Text != "string" || node.ResolvedType != nil {
-			t.Errorf("node %d resolves to %+v", id, node.Resolved)
-		}
+	var written bytes.Buffer
+	if err := Write(&written, read); err != nil {
+		t.Fatal(err)
 	}
-	if _, err := ReadAll(strings.NewReader(stream("typescript", strings.Replace(file, `"resolvedType": 0}]`, `"resolvedType": 1}]`, 1), trailer("1")))); err == nil {
-		t.Error("a node naming a type the file does not hold is read")
+	again, err := ReadAll(&written)
+	if err != nil {
+		t.Fatalf("the stream written back does not read: %v\n%s", err, written.String())
+	}
+	if len(again.Files[0].Nodes()) != 8 {
+		t.Errorf("the stream written back holds %d nodes, want 8", len(again.Files[0].Nodes()))
+	}
+	caught, _ := again.Files[0].Node(5)
+	if caught.Resolved == nil || caught.Resolved.Name != `App\ReadFailure` {
+		t.Errorf("the caught type's resolved type came back as %v", caught.Resolved)
 	}
 }

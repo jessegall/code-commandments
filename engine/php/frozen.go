@@ -17,10 +17,10 @@ func declaresFrozen(file *engine.File) bool {
 		return false
 	}
 	for _, group := range file.File.Nodes() {
-		if group.Kind != "AttributeGroup" || len(group.Children) == 0 {
+		if group.Kind != "AttributeGroup" || len(group.Children()) == 0 {
 			continue
 		}
-		name := firstChildIn(group.Children[0], "name")
+		name := firstChildIn(group.Children()[0], "name")
 		if name == nil {
 			continue
 		}
@@ -34,8 +34,8 @@ func declaresFrozen(file *engine.File) bool {
 }
 
 func firstChildIn(node *contract.Node, field string) *contract.Node {
-	for _, child := range node.Children {
-		if child.Field == field {
+	for _, child := range node.Children() {
+		if child.InRole() == field {
 			return child
 		}
 	}

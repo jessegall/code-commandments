@@ -26,6 +26,4 @@ func (PageObjectMissingTypeScriptDetector) Find(codebase *engine.Codebase) []eng
 		Get()
 }
 
-func (PageObjectMissingTypeScriptDetector) Repentable() {}
-
 func (PageObjectMissingTypeScriptDetector) CrossFile() {}

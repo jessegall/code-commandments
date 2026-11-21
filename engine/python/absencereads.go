@@ -21,9 +21,9 @@ func (n Node) IsEmptyScalar() bool {
 	if n.Kind() != "Constant" {
 		return false
 	}
-	switch facts.Literal {
+	switch facts.LiteralKind {
 	case "string", "bytes":
-		return n.IsBlankString() || (facts.Literal == "bytes" && (n.Written() == `b""` || n.Written() == `b''`))
+		return n.IsBlankString() || (facts.LiteralKind == "bytes" && (n.Written() == `b""` || n.Written() == `b''`))
 	case "int", "float":
 		number, err := strconv.ParseFloat(n.Written(), 64)
 
@@ -142,7 +142,7 @@ func (n Node) spreadValue() Node {
 	switch {
 	case n.Kind() == "Starred" || (n.Kind() == "keyword" && n.Name() == ""):
 		return n.Child("value")
-	case slices.Contains(n.Node().Flags, "spread"):
+	case slices.Contains(n.Node().Modifiers, "spread"):
 		return n
 	}
 
@@ -207,7 +207,7 @@ func (n Node) IsBooleanAnswer() bool {
 
 		return len(parts) > 0 && !slices.ContainsFunc(parts, func(part Node) bool { return !part.IsBooleanAnswer() })
 	case "Constant":
-		return n.Node().Literal == "bool"
+		return n.Node().LiteralKind == "bool"
 	}
 
 	return false
@@ -313,7 +313,7 @@ func (n Node) IsPlaceholder() bool {
 		value := n.Child("value")
 		_, isText := value.Text()
 
-		return isText || value.Node().Literal == "ellipsis"
+		return isText || value.Node().LiteralKind == "ellipsis"
 	case "Raise":
 		raised := n.Child("exc")
 		if raised.IsCall() {

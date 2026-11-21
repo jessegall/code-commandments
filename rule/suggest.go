@@ -12,8 +12,6 @@ var outer = map[reflect.Type]string{
 	reflect.TypeFor[file]():         "the rule itself",
 	reflect.TypeFor[sinFile]():      `"sin"`,
 	reflect.TypeFor[find]():         `"find"`,
-	reflect.TypeFor[Fix]():          `"fix"`,
-	reflect.TypeFor[Substitution](): `"substitute"`,
 }
 
 func jsonKeys(written reflect.Type) []string {

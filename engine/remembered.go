@@ -439,7 +439,7 @@ func (f *File) fingerprint() (uint64, bool) {
 		if err != nil {
 			return
 		}
-		if f.isTest() {
+		if f.Purpose() != Ordinary {
 			print = sha256.Sum256(append(print[:], "\x00test"...))
 		}
 		f.contents = binary.LittleEndian.Uint64(print[:8])

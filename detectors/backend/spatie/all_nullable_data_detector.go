@@ -29,6 +29,4 @@ func (AllNullableDataDetector) Find(codebase *engine.Codebase) []engine.Match {
 		Get()
 }
 
-func (AllNullableDataDetector) Repentable() {}
-
 func (AllNullableDataDetector) RequiresBestDesign() {}

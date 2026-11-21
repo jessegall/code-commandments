@@ -60,7 +60,7 @@ func receiverParamType(call engine.Match, variable string) string {
 	}
 	for _, param := range Params(function) {
 		if own := param.Child("var"); own.Kind() == "Expr_Variable" && own.Name() == variable {
-			return writtenClass(param.Node().Declared)
+			return writtenClass(param.Node().Written)
 		}
 	}
 
@@ -73,8 +73,8 @@ func receiverPropertyType(call engine.Match, name string) string {
 		return ""
 	}
 	for _, param := range ConstructorParams(class) {
-		if own := param.Child("var"); slices.Contains(param.Node().Flags, "promoted") && own.Kind() == "Expr_Variable" && own.Name() == name {
-			return writtenClass(param.Node().Declared)
+		if own := param.Child("var"); slices.Contains(param.Node().Modifiers, "promoted") && own.Kind() == "Expr_Variable" && own.Name() == name {
+			return writtenClass(param.Node().Written)
 		}
 	}
 	for _, member := range class.Children() {
@@ -82,8 +82,8 @@ func receiverPropertyType(call engine.Match, name string) string {
 			continue
 		}
 		for _, item := range member.Children() {
-			if item.Node().Field == "props" && item.Name() == name {
-				return writtenClass(member.Node().Declared)
+			if item.Node().InRole() == "props" && item.Name() == name {
+				return writtenClass(member.Node().Written)
 			}
 		}
 	}
@@ -225,12 +225,12 @@ func (c *Chains) index(declaration engine.Match) {
 		if member.Kind() != "Stmt_Property" {
 			continue
 		}
-		class := writtenClass(member.Node().Declared)
+		class := writtenClass(member.Node().Written)
 		if class == "" {
 			continue
 		}
 		for _, item := range member.Children() {
-			if item.Node().Field != "props" {
+			if item.Node().InRole() != "props" {
 				continue
 			}
 			properties[item.Name()] = strings.TrimLeft(class, `\`)
@@ -238,12 +238,12 @@ func (c *Chains) index(declaration engine.Match) {
 	}
 	for _, param := range ConstructorParams(declaration) {
 		own := param.Child("var")
-		if class := writtenClass(param.Node().Declared); slices.Contains(param.Node().Flags, "promoted") && own.Kind() == "Expr_Variable" && own.Name() != "" && class != "" {
+		if class := writtenClass(param.Node().Written); slices.Contains(param.Node().Modifiers, "promoted") && own.Kind() == "Expr_Variable" && own.Name() != "" && class != "" {
 			properties[own.Name()] = strings.TrimLeft(class, `\`)
 		}
 	}
 	for _, method := range Methods(declaration) {
-		if class := writtenClass(method.Node().Returns); class != "" {
+		if class := writtenClass(method.Node().Written); class != "" {
 			returns[strings.ToLower(method.Name())] = strings.TrimLeft(class, `\`)
 		}
 	}
@@ -264,7 +264,7 @@ func (c *Chains) Resolve(expr engine.Match, variables map[string]string) string 
 		return c.properties[base][name.Name()]
 	case "Expr_MethodCall", "Expr_NullsafeMethodCall":
 		for _, arg := range expr.Children() {
-			if arg.Node().Field == "args" {
+			if arg.Node().InRole() == "args" {
 				return ""
 			}
 		}
@@ -283,7 +283,7 @@ func ParamTypes(function engine.Match) map[string]string {
 	types := map[string]string{}
 	for _, param := range Params(function) {
 		own := param.Child("var")
-		if written := Written(param.Node().Declared).SimpleName(); written != "" && own.Kind() == "Expr_Variable" && own.Name() != "" {
+		if written := Written(param.Node().Written).SimpleName(); written != "" && own.Kind() == "Expr_Variable" && own.Name() != "" {
 			types[own.Name()] = written
 		}
 	}
@@ -294,7 +294,7 @@ func ParamTypes(function engine.Match) map[string]string {
 func SharedFetchReceiver(array engine.Match) (engine.Match, bool) {
 	var items []engine.Match
 	for _, item := range array.Children() {
-		if item.Node().Field == "items" {
+		if item.Node().InRole() == "items" {
 			items = append(items, item)
 		}
 	}

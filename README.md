@@ -40,7 +40,6 @@ should be a value object, and here's the discipline that explains why*.
 - [How detectors are tested](#how-detectors-are-tested)
 - [Skills](#skills)
 - [Sins & detectors](#sins--detectors)
-- [Auto-fixing](#auto-fixing)
 - [Scaffolding](#scaffolding)
 - [Developing detectors](#developing-detectors)
 - [License](#license)
@@ -51,13 +50,13 @@ The loop is simple:
 
 1. **Judge**: `commandments judge` prints every sin as a `file:line`, grouped by skill.
 2. **Learn**: each sin names a **skill**; you (or your agent) read it.
-3. **Fix**: fix at the source, or let `commandments repent` [auto-fix](#auto-fixing).
+3. **Fix**: fix at the source.
 4. **Repeat**: re-run until clean (exit code `0`).
 
 One pass of that loop, with an agent driving:
 
 <p align="center">
-  <img src="docs/agent-loop-session.svg" width="880" alt="An agent running one pass of the loop in a terminal: judge finds four sins across three skills, repent auto-fixes two, the agent fixes feature envy and an array bag at the source, judge comes back clean." />
+  <img src="docs/agent-loop-session.svg" width="880" alt="An agent running one pass of the loop in a terminal: judge finds four sins across three skills, the agent drops two redundant elses, fixes feature envy and an array bag at the source, judge comes back clean." />
 </p>
 
 Under the hood there are three layers:
@@ -68,8 +67,7 @@ Under the hood there are three layers:
   skill that teaches the fix. It is what `--sin=` selects and what a finding is
   reported as.
 - **Sin detectors**: small finders that read the syntax tree. Each finds one sin
-  and names it. Detectors *find*, skills *teach*, scribes
-  *[auto-fix](#auto-fixing)*.
+  and names it. Detectors *find*, skills *teach*.
 
 **You don't need the packages a rule is about.** Detectors match on real *types*,
 so a rule for a package your project doesn't use never fires. Nothing to install
@@ -140,8 +138,6 @@ Exit code is non-zero when sins are found.
 |---|---|
 | `commandments judge [path]` | Scan a codebase and report its sins, grouped by the skill that fixes each. Exit code 1 when sins are found, 3 when a rule could not run, 4 when another run was already reading the project. |
 | `commandments make <Name>` | Scaffold a commandment of your own — a rule naming its sin, and the skill that teaches the fix, in `.commandments/custom/`, turned on in your config, with the rest of the process printed for you. |
-| `commandments hints [path]` | Auto-fix the Spatie Data magic surface — rename non-`from…` object factories to `from<Type>`, rewrite their call sites to `::from(...)`, and regenerate the `@method from(...)`/`collect(...)` docblock hints. |
-| `commandments repent [path]` | Auto-fix sins — run every Scribe: the maintenance rewriters (Spatie Data hints) and each Repentable detector's own fix, PHP, Vue and TypeScript, and the fix a project's own rule declares. |
 | `commandments scaffold` | Generate the reusable helper a sin's fix uses — written into your source root with its namespace injected. Idempotent: an existing file is skipped. |
 | `commandments report --reason="…" --ref=PATH:LINE` | File a GitHub issue about code-commandments itself (via `gh`) — a false positive, a wrong rule, or a bug. |
 | `commandments feature-request --title="…" --reason="…"` | File a [feature-request] GitHub issue (via `gh`) proposing a new or changed rule. |
@@ -210,7 +206,7 @@ A `.commandments/config.json` is scaffolded on install, with a schema beside it
 }
 ```
 
-- `paths`: the source roots judge and repent scan with no path given (auto-detected on first run).
+- `paths`: the source roots judge scans with no path given (auto-detected on first run).
 - `exclude`: paths judge does not read at all, so nothing in them is reported on or rewritten.
 - `judges`, written under a rule inside `configure`: that one rule reads an excluded folder anyway, and
   no other rule does. `"configure": {"NoRawSqlDetector": [{"judges": ["tests"]}]}` judges `tests/` for
@@ -289,9 +285,8 @@ by hand with a `#[Frozen]` attribute or an `@frozen` docblock tag.
 
 A frozen file is still **scanned** — the call graph, provenance and type resolution
 read it, so findings in *other* files stay correct — but it is never a **target**:
-it is never flagged by `judge`, and `repent` never rewrites it. Freezing is a scope,
-compounded into every scope the tools resolve, so a cross-file fix whose edits would
-touch a frozen file is dropped whole rather than half-applied.
+it is never flagged by `judge`. Freezing is a scope, compounded into every scope the
+tools resolve.
 
 Freeze only what is genuinely immutable. A finding you disagree with belongs in a
 `report`; a rule you want off belongs in `disable` — freezing is for files that by
@@ -338,7 +333,7 @@ That difference is worth being plain about, because it is the difference between
 discipline that is **enforced** and one that is merely **written down**. Under Claude
 Code the rule you just broke is named on the edit that broke it, `judge` is nudged
 before risky commands and on stop. Under any other agent all of that is still available —
-the skills, `AGENTS.md`, and `judge` / `repent` as ordinary CLI verbs — but nothing checks
+the skills, `AGENTS.md`, and `judge` as an ordinary CLI verb — but nothing checks
 that the agent used them.
 
 One further gap: session state is scoped by `CLAUDE_CODE_SESSION_ID`, so under another agent every run shares the
@@ -529,100 +524,6 @@ finds it, named `<Sin>Detector` (e.g. `SwallowCatch` → `SwallowCatchDetector`)
 _270 sins across 63 skills. Full tables in [README.sins.md](README.sins.md)._
 <!-- END: detectors -->
 
-## Auto-fixing
-
-Most fixes are domain-specific: the skill teaches, your agent applies the fix at
-the source. But some sins have a single mechanical fix, and for those the tool
-ships a **scribe**.
-
-A scribe is a small deterministic rewriter. It edits the parsed syntax tree, not
-the text, so the change is exact and formatting-safe. There are two kinds,
-*whole-tree maintenance passes* and *per-sin fixes*, both listed in
-[README.scribes.md](README.scribes.md). The `repent` command runs them all until
-nothing changes.
-
-For example, a PHP `LoopInvertedGuard` (a whole loop body wrapped in an `if`)
-is rewritten to a `continue` guard:
-
-```php
-// before                                    // after (repent)
-foreach ($rows as $row) {                     foreach ($rows as $row) {
-    if ($row->valid()) {                          if (! $row->valid()) {
-        $this->import($row);                          continue;
-    }                                             }
-}
-                                                  $this->import($row);
-                                              }
-```
-
-…and a Vue `SwitchCase` (a `v-if`/`v-else-if` chain re-testing one value) is
-hoisted into a `<SwitchCase>`, one slot per case:
-
-```vue
-<!-- before -->
-<span v-if="status === 'paid'" class="badge badge-green">Paid</span>
-<span v-else-if="status === 'pending'" class="badge badge-amber">Pending</span>
-<span v-else class="badge">Unknown</span>
-
-<!-- after (repent) -->
-<SwitchCase :value="status">
-  <template #paid>
-    <span class="badge badge-green">Paid</span>
-  </template>
-  <template #pending>
-    <span class="badge badge-amber">Pending</span>
-  </template>
-  <template #default>
-    <span class="badge">Unknown</span>
-  </template>
-</SwitchCase>
-```
-
-`<SwitchCase>` is a utility component the package provides; `repent` scaffolds it
-automatically when a fix introduces it, so the rewritten tree compiles (see
-[Scaffolding](#scaffolding)).
-
-### Running `repent`
-
-```bash
-# preview every auto-fix as a unified diff; nothing is written
-vendor/bin/commandments repent src --dry-run
-
-# apply them
-vendor/bin/commandments repent src
-vendor/bin/commandments repent resources/js
-```
-
-<!-- BEGIN: scribes (auto-generated, run `composer readme`) -->
-_`repent` auto-fixes 33 sins, plus 1 whole-tree maintenance passes. Full tables in [README.scribes.md](README.scribes.md)._
-<!-- END: scribes -->
-
-`repent` keeps applying scribes until nothing changes, so one run fully converges.
-
-It takes the same scope flags as `judge`:
-
-```bash
-vendor/bin/commandments repent src --changes            # only working-tree changes
-vendor/bin/commandments repent src --branch             # only branch changes vs main
-vendor/bin/commandments repent src --branch=develop     # ...vs a different base
-```
-
-Everything the scan reads is parsed (cross-file rewrites stay correct); only the
-files that get written are scoped.
-
-### Prop types when extracting components
-
-When an extract scribe lifts a chunk into its own component, it types every prop
-it generates. Types are resolved by sound AST inference first: a `ref`/`computed`
-literal, a homogeneous literal array (`[50, 100, 200]` → `number[]`), a
-destructured composable's return field, a loop variable's element type, a prop
-traced up the render tree. Nothing is guessed; what only a real type checker could
-resolve stays `unknown`.
-
-If the project already ships `vue-tsc`, a last rung asks it to resolve what the
-AST couldn't. It is never a dependency of the package. The checker runs
-`--incremental` with `--skipLibCheck`, batched to one run per component.
-
 ## Scaffolding
 
 Some fixes need a reusable construct to point at: a no-op invokable to default an
@@ -641,10 +542,6 @@ vendor/bin/commandments scaffold --sin=nullable-callback --dry-run
 A scaffold lands in the right root for its kind (a PHP helper under your PSR-4
 source root with your namespace injected, a Vue component under `resources/js`)
 and is never overwritten, so it's safe to re-run and safe to edit.
-
-`repent` runs `scaffold` for you: when a fix introduces a construct, it's minted
-in the same run. Run `scaffold` yourself only when you want the construct before
-repenting.
 
 ## Developing detectors
 

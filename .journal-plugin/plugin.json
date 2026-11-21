@@ -26,10 +26,10 @@
             }
         },
         "sin-resolved": {
-            "title": "Sin repented",
+            "title": "Sin fixed",
             "tone": "good",
             "card": {
-                "label": "Sin repented",
+                "label": "Sin fixed",
                 "icon": "check",
                 "collapsed": true
             }

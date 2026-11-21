@@ -53,7 +53,7 @@ func (n Node) ownExpressions() []Node {
 	var own []Node
 	for _, child := range n.Children() {
 		switch {
-		case child.Node().Role == "expression":
+		case child.Role() == "expression":
 			own = append(own, child)
 		case child.Kind() == "withitem":
 			own = append(own, child.ownExpressions()...)

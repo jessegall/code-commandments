@@ -44,7 +44,7 @@ func stringConstant(member engine.Match) (string, bool) {
 		return "", false
 	}
 	value := member.Child("initializer")
-	if !value.Exists() || value.Node().Literal != "string" {
+	if !value.Exists() || value.Node().LiteralKind != "string" {
 		return "", false
 	}
 

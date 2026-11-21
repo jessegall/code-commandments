@@ -77,7 +77,7 @@ func (n Node) StringConstants() map[string]string {
 	constants := map[string]string{}
 	for _, statement := range n.ChildrenIn("body") {
 		targets := statement.ChildrenIn("targets")
-		if statement.Kind() != "Assign" || len(targets) != 1 || targets[0].Kind() != "Name" || statement.Child("value").Node().Literal != "string" {
+		if statement.Kind() != "Assign" || len(targets) != 1 || targets[0].Kind() != "Name" || statement.Child("value").Node().LiteralKind != "string" {
 			continue
 		}
 		name := targets[0].Name()

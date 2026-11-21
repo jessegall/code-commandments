@@ -36,11 +36,11 @@ func (rules) Unwrap(node engine.Match) (engine.Match, bool) {
 
 func (rules) Weight(node engine.Match) int {
 	facts := node.Node()
-	if node.Kind() == "Identifier" && facts.Field == "name" {
+	if node.Kind() == "Identifier" && facts.InRole() == "name" {
 		return 0
 	}
 	weight := 0
-	if facts.Role == "statement" || facts.Role == "expression" || node.Is(engine.Block) || node.Is(engine.Catch) {
+	if facts.Is("statement") || facts.Is("expression") || node.Is(engine.Block) || node.Is(engine.Catch) {
 		weight = 1
 	}
 	if node.Kind() == "VariableDeclaration" && callsAName(node.Child("initializer")) {
@@ -57,7 +57,7 @@ func (rules) IsName(node engine.Match) bool {
 	if node.Kind() != "Identifier" || isUndefined(node) {
 		return false
 	}
-	if node.Node().Field == "name" {
+	if node.Node().InRole() == "name" {
 		return slices.Contains(declaresName, node.Parent().Kind())
 	}
 
@@ -69,7 +69,7 @@ func (rules) Declares(node engine.Match) bool {
 }
 
 func (rules) IsCallee(node engine.Match) bool {
-	return node.Node().Field == "expression" && node.Parent().Kind() == "CallExpression"
+	return node.Node().InRole() == "expression" && node.Parent().Kind() == "CallExpression"
 }
 
 func (rules) Literal(m engine.Match, shape bool) (string, bool) {
@@ -77,23 +77,23 @@ func (rules) Literal(m engine.Match, shape bool) (string, bool) {
 		return "lit:undefined", true
 	}
 	node := m.Node()
-	if node.Literal == "" {
+	if node.LiteralKind == "" {
 		return "", false
 	}
 	value := Node{m}.Source()
-	if node.Literal != "interpolated" {
+	if node.LiteralKind != "interpolated" {
 		value = Node{m}.LiteralValue()
 	}
-	data := node.Literal == "string" || node.Literal == "int" || node.Literal == "float" || node.Literal == "interpolated"
+	data := node.LiteralKind == "string" || node.LiteralKind == "int" || node.LiteralKind == "float" || node.LiteralKind == "interpolated"
 	if shape && data {
 		value = "_"
 	}
 
-	return "lit:" + node.Literal + ":" + value, true
+	return "lit:" + node.LiteralKind + ":" + value, true
 }
 
 func (rules) Leaf(m engine.Match) (string, bool) {
-	if m.Node().Role != "type" {
+	if m.Role() != "type" {
 		return "", false
 	}
 
@@ -235,7 +235,7 @@ func (n Node) IsFunction() bool {
 }
 
 func isUndefined(node engine.Match) bool {
-	return node.Kind() == "Identifier" && node.Name() == "undefined" && node.Node().Field != "name"
+	return node.Kind() == "Identifier" && node.Name() == "undefined" && node.Node().InRole() != "name"
 }
 
 func callsAName(expression engine.Match) bool {

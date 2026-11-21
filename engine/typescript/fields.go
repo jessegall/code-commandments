@@ -12,7 +12,7 @@ func (n Node) IsOptional() bool {
 		return false
 	}
 
-	return slices.Contains(node.Flags, "optional") || (node.Declared != nil && node.Declared.Nullable)
+	return slices.Contains(node.Modifiers, "optional") || (node.Written != nil && node.Written.Nullable)
 }
 
 func (n Node) Initializer() Node {
@@ -22,7 +22,7 @@ func (n Node) Initializer() Node {
 func (n Node) IsAbsence() bool {
 	node := n.unwrap().Node()
 
-	return node != nil && (node.Literal == "null" || node.Literal == "undefined")
+	return node != nil && (node.LiteralKind == "null" || node.LiteralKind == "undefined")
 }
 
 func (n Node) OwnFieldRead() string {

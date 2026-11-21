@@ -28,11 +28,11 @@ type Directive struct {
 
 func (d Directive) Name() Name {
 	node := d.Node()
-	if node == nil || node.Extras == nil || node.Extras.Vue == nil || node.Extras.Vue.Directive == nil {
+	if node == nil || node.Kind != "directive" {
 		return ""
 	}
 
-	return Name(node.Extras.Vue.Directive.Name)
+	return Name(node.Name)
 }
 
 func (d Directive) Named(name Name) bool {
@@ -57,7 +57,7 @@ func (d Directive) Aliases() []engine.Match {
 
 func (d Directive) Target() string {
 	argument := d.Argument()
-	if !argument.Exists() || argument.Node().Role != "other" {
+	if !argument.Exists() || argument.Role() != "other" {
 		return ""
 	}
 
@@ -65,5 +65,5 @@ func (d Directive) Target() string {
 }
 
 func IsBoundValue(m engine.Match) bool {
-	return m.Parent().Kind() == "Directive" && m.Node().Field == "value"
+	return m.Parent().Kind() == "Directive" && m.Node().InRole() == "value"
 }

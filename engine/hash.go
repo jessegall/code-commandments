@@ -83,7 +83,7 @@ func fingerprint(node Match, rules HashRules, normalize bool) string {
 	if !normalize || !rules.Declares(node) {
 		parts = append(parts, facts.Name)
 	}
-	parts = append(parts, facts.Operator, strings.Join(facts.Modifiers, " "), strings.Join(facts.Flags, " "))
+	parts = append(parts, facts.Operator, facts.Form, strings.Join(facts.Modifiers, " "))
 	if marking, ok := rules.(Marking); ok {
 		if mark := marking.Mark(node); mark != "" {
 			parts = append(parts, mark)
@@ -91,7 +91,7 @@ func fingerprint(node Match, rules HashRules, normalize bool) string {
 	}
 	for _, child := range node.Children() {
 		if inner := unwrapped(child, rules); rules.Counts(inner) {
-			parts = append(parts, child.Node().Field+"="+fingerprint(inner, rules, normalize))
+			parts = append(parts, child.Field()+"="+fingerprint(inner, rules, normalize))
 		}
 	}
 

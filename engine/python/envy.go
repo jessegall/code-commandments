@@ -145,7 +145,7 @@ func (n Node) ExpressionsIn() []Node {
 func (n Node) ExpressionsWithin() []Node {
 	var within []Node
 	for _, child := range n.Children() {
-		if !slices.Contains([]string{"decorator_list", "bases", "keywords"}, child.Node().Field) {
+		if !slices.Contains([]string{"decorator_list", "bases", "keywords"}, child.Node().InRole()) {
 			within = append(within, child.evaluatedIn()...)
 		}
 	}

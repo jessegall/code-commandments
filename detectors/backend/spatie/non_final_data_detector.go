@@ -25,5 +25,3 @@ func (NonFinalDataDetector) Find(codebase *engine.Codebase) []engine.Match {
 		Reject(func(n engine.Match) bool { return php.ProgramOf(codebase).HasSubclass(php.EnclosingClassName(n)) }).
 		Get()
 }
-
-func (NonFinalDataDetector) Repentable() {}

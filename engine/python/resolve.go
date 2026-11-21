@@ -288,7 +288,7 @@ func (function Node) statementsIn() []Node {
 	var statements []Node
 	for _, statement := range function.ChildrenIn("body") {
 		for _, inner := range append([]Node{statement}, statement.Descendants()...) {
-			if inner.Node().Role == "statement" || inner.IsDefinition() {
+			if inner.Role() == "statement" || inner.IsDefinition() {
 				statements = append(statements, inner)
 			}
 		}

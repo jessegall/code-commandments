@@ -44,7 +44,7 @@ func acceptsOpenMap(parameter engine.Match) bool {
 	if !parameter.Exists() {
 		return false
 	}
-	if Written(parameter.Node().Declared).Render() != "array|string" {
+	if Written(parameter.Node().Written).Render() != "array|string" {
 		return false
 	}
 	name := parameter.Child("var").Name()

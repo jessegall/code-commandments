@@ -143,7 +143,7 @@ func CollectionMapConsumer(call engine.Match) engine.Match {
 	}
 
 	mapped := call
-	for mapped.Parent().Is(engine.Call) && mapped.Node().Field == "var" {
+	for mapped.Parent().Is(engine.Call) && mapped.Node().InRole() == "var" {
 		next := mapped.Parent()
 		if !slices.Contains([]string{"filter", "values", "all"}, php.CallName(next)) {
 			return engine.Match{}
@@ -324,7 +324,7 @@ func (n Node) soleDelegationCall() (engine.Match, bool) {
 	}
 	var statements []engine.Match
 	for _, statement := range n.Children() {
-		if statement.Node().Field == "stmts" {
+		if statement.Node().InRole() == "stmts" {
 			statements = append(statements, statement)
 		}
 	}
@@ -393,7 +393,7 @@ func (n Node) ReceiverIsModel() bool {
 }
 
 func (n Node) QueriedModel() string {
-	if n.Kind() != "Expr_MethodCall" || (n.Parent().Kind() == "Expr_MethodCall" && n.Node().Field == "var") {
+	if n.Kind() != "Expr_MethodCall" || (n.Parent().Kind() == "Expr_MethodCall" && n.Node().InRole() == "var") {
 		return ""
 	}
 	calls, root := 1, n.Child("var")

@@ -27,11 +27,11 @@ type Comment struct {
 }
 
 func (c Comment) IsDoc() bool {
-	return c.Kind == "doc"
+	return c.Form == "doc"
 }
 
 func (c Comment) IsCode() bool {
-	return c.Extras != nil && c.Extras.CSharp != nil && c.Extras.CSharp.Code
+	return c.Fragment != nil && c.Fragment.Diagnostics == 0
 }
 
 func (c Comment) Paragraphs() int {

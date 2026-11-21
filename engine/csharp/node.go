@@ -64,15 +64,15 @@ func (n Node) Is(kinds ...string) bool {
 }
 
 func (n Node) IsExpression() bool {
-	return n.Exists() && n.Node().Role == "expression"
+	return n.Exists() && n.Role() == "expression"
 }
 
 func (n Node) IsStatement() bool {
-	return n.Exists() && (n.Node().Role == "statement" || n.Is("LocalFunctionStatement"))
+	return n.Exists() && (n.Role() == "statement" || n.Is("LocalFunctionStatement"))
 }
 
 func (n Node) IsTypeNode() bool {
-	return n.Exists() && n.Node().Role == "type"
+	return n.Exists() && n.Role() == "type"
 }
 
 func (n Node) Children() []Node {
@@ -200,7 +200,7 @@ func (n Node) IsCall() bool {
 }
 
 func (n Node) IsConstant() bool {
-	return n.Exists() && n.Node().Constant
+	return n.Exists() && n.Node().Incomplete
 }
 
 func (n Node) IsLiteral() bool {
@@ -227,13 +227,11 @@ func (n Node) Operator() string {
 }
 
 func (n Node) IsStep() bool {
-	return n.Exists() && slices.Contains(n.Node().Flags, "step")
+	return n.Exists() && slices.Contains(n.Node().Modifiers, "step")
 }
 
 func (n Node) ForgivesNull() bool {
-	extras := n.Node().Extras
-
-	return n.Exists() && extras != nil && extras.CSharp != nil && extras.CSharp.ForgivesNull
+	return n.Exists() && n.Kind() == "unary" && n.Node().Operator == "assert-present"
 }
 
 func (n Node) ForgivesAnOutOfATest() bool {
@@ -320,11 +318,11 @@ func (n Node) Symbol() string {
 }
 
 func (n Node) IsInherited() bool {
-	return n.Exists() && n.Node().Inherited
+	return n.Exists() && n.Node().Incomplete
 }
 
 func (n Node) FillsOutsideTheSolution() bool {
-	return n.Exists() && n.Node().FillsOutside
+	return n.Exists() && n.Node().Incomplete
 }
 
 func (n Node) Target() CallTarget {

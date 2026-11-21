@@ -155,7 +155,7 @@ func buildsItsOwnType(codebase *engine.Codebase, call engine.Match, owner, metho
 }
 
 func subjectOf(argument engine.Match) engine.Match {
-	if slices.Contains(argument.Node().Flags, "spread") || argument.Child("name").Exists() {
+	if slices.Contains(argument.Node().Modifiers, "spread") || argument.Child("name").Exists() {
 		return engine.Match{}
 	}
 	value := argument.Child("value")

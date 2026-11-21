@@ -13,7 +13,7 @@ func TestTheJournalReportListsEachFindingWithItsFileLineAndSkill(t *testing.T) {
 		{Detector: "ComponentBudgetDetector", Skill: "vue/vue-components", Sin: "oversized-component", Location: "src/Page.vue", Scope: "<section>"},
 	}
 	var got journalReport
-	if err := json.Unmarshal(NewReport(".", findings, nil, nil, Skipped{}).Journal(), &got); err != nil {
+	if err := json.Unmarshal(NewReport(".", findings, nil, Skipped{}).Journal(), &got); err != nil {
 		t.Fatal(err)
 	}
 	if got.Title != "Sins" || got.Summary != "2 sins across 2 skills" || len(got.Findings) != 2 {

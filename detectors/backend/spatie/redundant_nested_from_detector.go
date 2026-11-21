@@ -29,6 +29,4 @@ func (RedundantNestedFromDetector) Find(codebase *engine.Codebase) []engine.Matc
 		Get()
 }
 
-func (RedundantNestedFromDetector) Repentable() {}
-
 func (RedundantNestedFromDetector) CrossFile() {}

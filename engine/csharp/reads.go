@@ -99,7 +99,7 @@ func (n Node) IsConstField() bool {
 }
 
 func (n Node) IsMember() bool {
-	return n.Exists() && n.Node().Role == "member"
+	return n.Exists() && n.Role() == "member"
 }
 
 func (n Node) members() []Node {

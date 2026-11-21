@@ -171,7 +171,7 @@ func (n TypeName) Names() []string {
 }
 
 func PromisesScalar(param engine.Match, scalar string) bool {
-	declared := Written(param.Node().Declared)
+	declared := Written(param.Node().Written)
 
 	return param.Exists() && !param.Child("default").Exists() && declared.written != nil && !declared.isSugared() &&
 		declared.written.Kind == "keyword" && !declared.isWrittenAsName() &&

@@ -94,7 +94,7 @@ func (n Node) IsSignatureType() bool {
 		}
 	}
 	for at := n; at.Exists() && at.Node() != function.Node(); at = at.Up() {
-		if at.Node().Field == "returnType" && at.Up().Node() == function.Node() {
+		if at.Node().InRole() == "returnType" && at.Up().Node() == function.Node() {
 			return true
 		}
 	}

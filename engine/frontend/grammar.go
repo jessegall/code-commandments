@@ -48,10 +48,10 @@ func init() {
 			ModuleKey:     engine.Match.File,
 			ModuleLayer:   func(root engine.Match) string { return path.Dir(root.FromProject()) },
 			Labels: func(name engine.Match) bool {
-				return name.Parent().Kind() == "PropertyAssignment" && name.Node().Field == "name"
+				return name.Parent().Kind() == "PropertyAssignment" && name.Node().InRole() == "name"
 			},
 			Continues: func(branch engine.Match) bool {
-				return branch.Kind() == "IfStatement" && branch.Node().Field == "elseStatement"
+				return branch.Kind() == "IfStatement" && branch.Node().InRole() == "elseStatement"
 			},
 			Steps:    engine.InFields("incrementor"),
 			Grouping: engine.KindIn("ParenthesizedExpression"),

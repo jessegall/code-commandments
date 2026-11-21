@@ -20,7 +20,6 @@ import (
 	"github.com/jessegall/code-commandments/cli/source"
 	"github.com/jessegall/code-commandments/cli/workspace"
 	"github.com/jessegall/code-commandments/detectors"
-	"github.com/jessegall/code-commandments/scribes"
 	"github.com/jessegall/code-commandments/sins"
 	"github.com/jessegall/code-commandments/skill"
 )
@@ -39,7 +38,7 @@ func (t Table) Document() string {
 }
 
 func Tables() []Table {
-	return []Table{skillsTable(), sinsTable(), scribesTable()}
+	return []Table{skillsTable(), sinsTable()}
 }
 
 func engines() []string {
@@ -110,57 +109,6 @@ func sinsTable() Table {
 		Title:   "Sins & detectors",
 		Body:    "\n" + strings.Join(lines, "\n") + "\n",
 		Excerpt: fmt.Sprintf("_%d sins across %d skills. Full tables in [README.sins.md](README.sins.md)._", total, len(slugs)),
-	}
-}
-
-func scribesTable() Table {
-	var repentables []detectors.Detector
-	for _, detector := range detectors.All() {
-		if detectors.IsRepentable(detector) {
-			repentables = append(repentables, detector)
-		}
-	}
-	repentables = detectors.OnePerSin(repentables)
-	slices.SortStableFunc(repentables, func(a, b detectors.Detector) int {
-		if first, second := bound(a.Sin()), bound(b.Sin()); first != second {
-			return first - second
-		}
-		if order := strings.Compare(a.Sin().Definition().Slug(), b.Sin().Definition().Slug()); order != 0 {
-			return order
-		}
-
-		return strings.Compare(a.Sin().Definition().Name, b.Sin().Definition().Name)
-	})
-	maintainers := scribes.Maintainers()
-	counts := fmt.Sprintf("`repent` auto-fixes %d sins, plus %d whole-tree maintenance passes", len(repentables), len(maintainers))
-	lines := []string{"_" + counts + "._", "", "### Maintenance passes", "", "Whole-tree PHP rewrites, run on every `repent`:", "", "| Scribe | What it does |", "|---|---|"}
-	for _, maintainer := range maintainers {
-		lines = append(lines, "| `"+maintainer.Name()+"` | "+cell(maintainer.Summary())+" |")
-	}
-	lines = append(lines, "", "### A project's own rules", "",
-		"A rule in `.commandments/custom/` that declares a `fix` is repented like a shipped detector, for the PHP, Vue and TypeScript engines: "+
-			"`replace` writes a template in place of the found node, each `{child:left}`-style placeholder standing for a related node's source, "+
-			"and `substitute` rewrites the node's source with regular expressions. The writing-detectors skill shows both.", "")
-	for _, engine := range engines() {
-		lines = append(lines, "### "+heading(engine), "")
-		var rows []string
-		for _, detector := range repentables {
-			if strings.HasPrefix(detector.Sin().Definition().Slug(), engine+"/") {
-				rows = append(rows, "| `"+catalog.Name(detector.Sin())+"` | "+cell(detector.Sin().Definition().Rule)+" |")
-			}
-		}
-		if len(rows) > 0 {
-			lines = append(append(lines, "| Sin | The fix `repent` applies |", "|---|---|"), rows...)
-		}
-		lines = append(lines, "")
-	}
-
-	return Table{
-		Block:   "scribes",
-		File:    "README.scribes.md",
-		Title:   "Auto-fixing",
-		Body:    "\n" + strings.Join(lines, "\n") + "\n",
-		Excerpt: "_" + counts + ". Full tables in [README.scribes.md](README.scribes.md)._",
 	}
 }
 

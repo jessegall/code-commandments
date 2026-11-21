@@ -20,7 +20,7 @@ func commentBody(comment contract.Comment) string {
 }
 
 func isCodeComment(comment contract.Comment) bool {
-	return comment.Extras != nil && comment.Extras.Python != nil && comment.Extras.Python.Code
+	return comment.Fragment != nil && comment.Fragment.Diagnostics == 0
 }
 
 func (n Node) proseComments() []contract.Comment {
@@ -107,7 +107,7 @@ func (n Node) JoinedLines() []Node {
 }
 
 func (n Node) IsFixedText() bool {
-	return n.Node().Literal == "string" || n.Kind() == "JoinedStr"
+	return n.Node().LiteralKind == "string" || n.Kind() == "JoinedStr"
 }
 
 func (n Node) RestatesCode() bool {

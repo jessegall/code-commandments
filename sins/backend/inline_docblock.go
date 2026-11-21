@@ -17,6 +17,6 @@ func (InlineDocblock) Definition() sins.Definition {
 		Skill:       skills.Documentation{},
 		Description: `A docblock whose delimiter shares a line with its text — a one-liner, or a block that opens or closes next to content`,
 		Rule:        `Write a docblock as a block: the opening delimiter on its own line, one star per line of content, the closing delimiter on its own line.`,
-		Suggestion:  "expand it — `repent` does this for you",
+		Suggestion:  "expand it to a multi-line docblock",
 	}
 }

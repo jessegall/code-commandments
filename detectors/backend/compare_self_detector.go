@@ -25,8 +25,6 @@ func init() { detectors.Register(catalog.PHP, CompareSelfDetector{}) }
 func (CompareSelfDetector) Sin() sins.Sin         { return backendsins.CompareSelf{} }
 func (CompareSelfDetector) FormerNames() []string { return []string{"SuggestCompareSelfTraitProphet"} }
 func (CompareSelfDetector) CrossFile()            {}
-func (CompareSelfDetector) Fixes() bool           { return true }
-func (CompareSelfDetector) Repentable()           {}
 
 func (d CompareSelfDetector) Trait(name string) CompareSelfDetector {
 	d.trait = strings.TrimLeft(name, `\`)
@@ -68,13 +66,13 @@ func (d CompareSelfDetector) Find(codebase *engine.Codebase) []engine.Match {
 		WhereKind("Expr_BinaryOp_Identical", "Expr_BinaryOp_NotIdentical", "Expr_BinaryOp_BooleanOr",
 			"Expr_BinaryOp_BooleanAnd", "Expr_BinaryOp_LogicalOr", "Expr_BinaryOp_LogicalAnd").
 		Where(func(node engine.Match) bool {
-			_, fixes := d.FixFor(node)
-			return fixes
+			_, compares := d.replacementFor(node)
+			return compares
 		}).
 		Get()
 }
 
-func (d CompareSelfDetector) FixFor(finding engine.Match) (string, bool) {
+func (d CompareSelfDetector) replacementFor(finding engine.Match) (string, bool) {
 	if php.EnumComparisonKeepsNarrowing(finding) {
 		return "", false
 	}

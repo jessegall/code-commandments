@@ -10,8 +10,8 @@ func (c *Codebase) WhereKind(kinds ...string) *Query {
 	return &Query{selected: func(yield func(Match) bool) {
 		for _, kind := range kinds {
 			for _, file := range c.opened() {
-				for _, node := range file.Nodes() {
-					if node.Kind == kind && !yield(Match{node: node, file: file}) {
+				for _, node := range file.OfKind(kind) {
+					if !yield(Match{node: node, file: file}) {
 						return
 					}
 				}

@@ -110,5 +110,3 @@ func clusters(elements []vue.Element) [][]vue.Element {
 
 	return found
 }
-
-func (DeepDataReachDetector) Repentable() {}

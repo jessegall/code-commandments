@@ -89,7 +89,7 @@ func scopeOf(match engine.Match) string {
 		return statement
 	}
 
-	if slices.Contains(match.Node().Flags, "spread") {
+	if slices.Contains(match.Node().Modifiers, "spread") {
 		return "starred"
 	}
 
@@ -116,8 +116,8 @@ func declaredName(match engine.Match) string {
 			continue
 		}
 
-		if extras := alias.Node().Extras; extras != nil && extras.Python != nil && extras.Python.As != "" {
-			return extras.Python.As
+		if renamed := alias.Child("alias"); renamed.Exists() {
+			return renamed.Name()
 		}
 
 		if kind == "Import" {

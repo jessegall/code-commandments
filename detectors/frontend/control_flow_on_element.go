@@ -29,5 +29,3 @@ func (ControlFlowOnElementDetector) Find(codebase *engine.Codebase) []engine.Mat
 		Reject(engine.As(vue.Element.IsTransitionChild)).
 		Get()
 }
-
-func (ControlFlowOnElementDetector) Repentable() {}

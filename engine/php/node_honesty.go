@@ -9,14 +9,14 @@ import (
 )
 
 func (n Node) HasReturnType() bool {
-	return n.Kind() == "Expr_ArrowFunction" && n.Node().Returns != nil
+	return n.Kind() == "Expr_ArrowFunction" && n.Node().Written != nil
 }
 
 func (n Node) ReturnTypeRestatesItsExpression() bool {
 	if !n.HasReturnType() {
 		return false
 	}
-	declared := Written(n.Node().Returns).Render()
+	declared := Written(n.Node().Written).Render()
 	if lowered := strings.ToLower(declared); lowered == "self" || lowered == "static" || lowered == "parent" {
 		return false
 	}
@@ -86,8 +86,8 @@ func declaredPropertyType(codebase *engine.Codebase, class, field string) string
 			continue
 		}
 		for _, item := range (Node{Match: member}).ChildrenIn("props") {
-			if item.Name() == field && member.Node().Declared != nil {
-				return Written(member.Node().Declared).Render()
+			if item.Name() == field && member.Node().Written != nil {
+				return Written(member.Node().Written).Render()
 			}
 		}
 	}
@@ -97,8 +97,8 @@ func declaredPropertyType(codebase *engine.Codebase, class, field string) string
 		}
 		for _, param := range Params(method) {
 			variable := param.Child("var")
-			if len(param.Node().Modifiers) > 0 && variable.Kind() == "Expr_Variable" && variable.Name() == field && param.Node().Declared != nil {
-				return Written(param.Node().Declared).Render()
+			if len(param.Node().Modifiers) > 0 && variable.Kind() == "Expr_Variable" && variable.Name() == field && param.Node().Written != nil {
+				return Written(param.Node().Written).Render()
 			}
 		}
 	}
@@ -112,10 +112,10 @@ func declaredReturn(codebase *engine.Codebase, class, method, self string) strin
 		return ""
 	}
 	for _, candidate := range Methods(declaration) {
-		if !strings.EqualFold(candidate.Name(), method) || candidate.Node().Returns == nil {
+		if !strings.EqualFold(candidate.Name(), method) || candidate.Node().Written == nil {
 			continue
 		}
-		rendered := Written(candidate.Node().Returns).Render()
+		rendered := Written(candidate.Node().Written).Render()
 		if lowered := strings.ToLower(rendered); lowered == "self" || lowered == "static" {
 			return self
 		}
@@ -233,7 +233,7 @@ func restoresAKeyedGuard(method, restore engine.Match, property string) bool {
 
 func (n Node) hasCallableParam() bool {
 	return slices.ContainsFunc(Params(n.Match), func(param engine.Match) bool {
-		return slices.ContainsFunc(typeNames(param.Node().Declared), func(name string) bool { return name == "callable" || name == "Closure" })
+		return slices.ContainsFunc(typeNames(param.Node().Written), func(name string) bool { return name == "callable" || name == "Closure" })
 	})
 }
 
@@ -335,7 +335,7 @@ func privateNullablesOf(class engine.Match) map[string]bool {
 		if member.Kind() != "Stmt_Property" {
 			continue
 		}
-		if !slices.Contains(member.Node().Modifiers, "private") || !Written(member.Node().Declared).IsNullable() {
+		if !slices.Contains(member.Node().Modifiers, "private") || !Written(member.Node().Written).IsNullable() {
 			continue
 		}
 		for _, item := range (Node{Match: member}).ChildrenIn("props") {
@@ -450,7 +450,7 @@ func (n Node) DecidesOnBoolsAlone() bool {
 			continue
 		}
 		named++
-		if !strings.EqualFold(Written(param.Node().Declared).SimpleName(), "bool") || !n.readsAsCondition(variable.Name()) {
+		if !strings.EqualFold(Written(param.Node().Written).SimpleName(), "bool") || !n.readsAsCondition(variable.Name()) {
 			return false
 		}
 	}

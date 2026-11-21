@@ -118,7 +118,7 @@ func slotOf(expression engine.Match) string {
 	}
 	position := 0
 	for _, candidate := range call.Children() {
-		if candidate.Node().Field != "args" {
+		if candidate.Node().InRole() != "args" {
 			continue
 		}
 		if candidate.Node() == argument.Node() {

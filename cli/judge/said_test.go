@@ -19,7 +19,7 @@ func TestAWatchedRunSaysWhatItFoundAndWhichRuleFoundIt(t *testing.T) {
 			File: "/project/src/labels.py", Location: "/project/src/labels.py:10", Scope: "FunctionDef label"},
 	}
 
-	said := NewReport("/project", findings, nil, nil, Skipped{}).Saying(map[string]string{
+	said := NewReport("/project", findings, nil, Skipped{}).Saying(map[string]string{
 		"sentence-method-name": "A sentence used as a method name.",
 		"unnamed-condition":    "Three parts over two objects — the reader works out what the condition MEANS instead of reading it.",
 		"dict-bag":             "A parameter typed as a dict read by string keys, which is a record nobody declared, threaded through function after function.",

@@ -87,7 +87,7 @@ func (m Match) OwnDescendants() []Match {
 	var own []Match
 	for _, child := range m.Children() {
 		own = append(own, child)
-		if !child.Is(Function) {
+		if !child.node.Is("function-like") && child.node.Kind != "type" {
 			own = append(own, child.OwnDescendants()...)
 		}
 	}

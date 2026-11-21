@@ -41,7 +41,7 @@ func returnsScalar(call engine.Match) bool {
 	if !found {
 		return false
 	}
-	names := typeNames(method.Node().Returns)
+	names := typeNames(method.Node().Written)
 
 	return len(names) > 0 && !slices.ContainsFunc(names, func(name string) bool {
 		return !slices.Contains([]string{"string", "int", "float", "bool", "null", "true", "false", "never", "void"}, name)
@@ -59,7 +59,7 @@ func baseType(written *contract.Type) *contract.Type {
 func (n Node) objectParams() []string {
 	var names []string
 	for _, param := range Params(n.Match) {
-		written, variable := baseType(param.Node().Declared), param.Child("var")
+		written, variable := baseType(param.Node().Written), param.Child("var")
 		if variable.Kind() == "Expr_Variable" && variable.Name() != "" && written != nil && written.Kind == "named" &&
 			!strings.HasPrefix(ShortName(written.Name), "Reflection") && !ProgramOf(n.Codebase()).IsEnum(written.Name) {
 			names = append(names, variable.Name())
@@ -72,7 +72,7 @@ func (n Node) objectParams() []string {
 func (n Node) scalarKeyParams() []string {
 	var names []string
 	for _, param := range Params(n.Match) {
-		written, variable := baseType(param.Node().Declared), param.Child("var")
+		written, variable := baseType(param.Node().Written), param.Child("var")
 		if variable.Kind() == "Expr_Variable" && variable.Name() != "" && written != nil && written.Kind == "keyword" &&
 			(written.Name == "string" || written.Name == "int") {
 			names = append(names, variable.Name())
@@ -87,7 +87,7 @@ func (n Node) scalarKeyParams() []string {
 func (n Node) readsKeyOutside(lookup engine.Match) bool {
 	var key string
 	for _, child := range lookup.Children() {
-		if child.Node().Field == "args" {
+		if child.Node().InRole() == "args" {
 			key = variableName(child.Child("value"))
 		}
 	}
@@ -101,7 +101,7 @@ func (n Node) readsKeyOutside(lookup engine.Match) bool {
 func keyedSolelyBy(call engine.Match, keys []string) bool {
 	var passed []engine.Match
 	for _, child := range call.Children() {
-		if child.Node().Field == "args" {
+		if child.Node().InRole() == "args" {
 			passed = append(passed, child)
 		}
 	}
@@ -122,10 +122,10 @@ func chainRoot(node engine.Match) engine.Match {
 
 func capturedLocal(call engine.Match) string {
 	node, parent := call, call.Parent()
-	for isMethodSend(parent) && node.Node().Field == "var" {
+	for isMethodSend(parent) && node.Node().InRole() == "var" {
 		node, parent = parent, parent.Parent()
 	}
-	if parent.Kind() == "Expr_Assign" && node.Node().Field == "expr" {
+	if parent.Kind() == "Expr_Assign" && node.Node().InRole() == "expr" {
 		return variableName(parent.Child("var"))
 	}
 
@@ -159,7 +159,7 @@ func (n Node) ownerIsPureEncapsulator(root engine.Match) bool {
 			if variable.Kind() != "Expr_Variable" || variable.Name() != owner || variable.Node() == root.Node() {
 				continue
 			}
-			if !isPropertyRead(variable.Parent()) || variable.Node().Field != "var" {
+			if !isPropertyRead(variable.Parent()) || variable.Node().InRole() != "var" {
 				return false
 			}
 		}

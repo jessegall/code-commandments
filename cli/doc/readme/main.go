@@ -1,4 +1,4 @@
-// Command readme writes the generated tables: README.{sins,scribes,skills}.md, their excerpts and the hooks and agents tables in README.md, and the journal plugin's settings.
+// Command readme writes the generated tables: README.{sins,skills}.md, their excerpts and the hooks and agents tables in README.md, and the journal plugin's settings.
 package main
 
 import (
@@ -9,7 +9,6 @@ import (
 
 	"github.com/jessegall/code-commandments/cli/doc"
 	_ "github.com/jessegall/code-commandments/registry"
-	_ "github.com/jessegall/code-commandments/scribes/backend"
 )
 
 func main() {

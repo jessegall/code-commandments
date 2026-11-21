@@ -50,16 +50,14 @@ This is the rule the detectors exist to serve. Honour it on EVERY fix:
 <!-- commands -->
 **You are ENCOURAGED to make the tool better — not just when a finding is clearly
 wrong.** Surface every improvement idea: a rule that's missing or should catch more,
-a false positive, OR a `repent` auto-fix that did the wrong thing or left a rough
-edge. Two channels, and using them is expected, not exceptional:
+or a false positive. Two channels, and using them is expected, not exceptional:
 
 - `{{binary}} report --reason="…" --ref=PATH:LINE [--ref=…]` — a bug or
-  false positive (a wrong finding, or a broken/incorrect `repent` result). A broken
-  auto-fix is itself a bug: report it, referencing both the source and the bad output.
+  false positive (a wrong finding).
 - `{{binary}} feature-request --title="…" --reason="…"` — a new or
   changed rule.
 
-Reporting false positives, flagging bad auto-fixes, and requesting rules is how the
+Reporting false positives and requesting rules is how the
 disciplines get sharper — do it whenever something is wrong or could be better, don't
 just work around it.
 
@@ -70,9 +68,7 @@ checked into the tree. Mark such a file frozen:
 `{{binary}} freeze <path>` (or add `#[Frozen]` / an `@frozen`
 docblock tag by hand). A frozen file is still **scanned** — the call graph,
 provenance and type resolution read it, so cross-file findings elsewhere stay
-correct — but it is never a **target**: it is never flagged, and a repenter
-never rewrites it (a cross-file fix whose edits would touch a frozen file is
-dropped whole, never half-applied). Lift it with
+correct — but it is never a **target**: it is never flagged. Lift it with
 `{{binary}} unfreeze <path>`. **Freeze only what is genuinely
 immutable — never to silence a sin you could fix.** A real finding you disagree
 with is a `report`; a rule you want off is `disable`; freezing is for files that
@@ -130,17 +126,11 @@ file, not repeated scans, is how you work:
 nothing else, so when you do not recognise a rule — or are about to argue with one —
 run `{{binary}} info <sin>` before you touch the code. It prints what
 the rule flags, WHY it is a sin in the skill's own words, how it is fixed, a worked
-example, and the exact commands that act on it (fix it, find it, turn it off, report
+example, and the exact commands that act on it (learn it, find it, turn it off, report
 it). The name is matched leniently, so the detector name straight off the checklist
 works: `info ArrayBagDetector`, `info array-bag`, `info ArrayBag`. Add `--full` for
 the skill's whole principle. Guessing at a rule you have not read is how a finding
 gets "fixed" by silencing it.
-
-**Auto-fixable sins.** Some sins have a scribe that fixes them. The report
-advertises the command — typically `{{binary}} repent --repent=latest`
-(optionally `--sin=NAME` to fix just one). `--repent=latest` scopes repent to the
-last judge run's checklist, so it fixes exactly what was reported; review the diff
-with `--dry-run` first.
 
 **Write commandments of your OWN.** The shipped rules are not the ceiling. When
 this project has a discipline of its own — a convention you keep restating in
@@ -165,5 +155,4 @@ Reach for this whenever the user asks for a new rule, check, or detector.
 project may not have yet (e.g. a no-op invokable for a nullable callback). For
 those the report advertises `{{binary}} scaffold --sin=NAME`, which
 generates the helper into your source root with its namespace set. Scaffold the
-construct, then write the fix that uses it (`scaffold` creates the helper; `repent`
-fixes call sites).
+construct, then write the fix that uses it at each call site.

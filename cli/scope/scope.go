@@ -5,10 +5,8 @@ import (
 	"encoding/json"
 	"errors"
 	"maps"
-	"os"
 	"os/exec"
 	"path/filepath"
-	"regexp"
 	"slices"
 	"strings"
 	"sync"
@@ -22,8 +20,6 @@ import (
 	"github.com/jessegall/code-commandments/engine"
 	"github.com/jessegall/code-commandments/walk"
 )
-
-const Latest = "latest"
 
 const defaultBase = "main"
 
@@ -43,7 +39,6 @@ func Options() []help.Option {
 		{Spec: "--branch[=BASE]", Does: "only files new/changed on this branch vs BASE (default: the project's `base`, else main)"},
 		{Spec: "--branch=REPO:[BASE..]HEAD", Does: "only files HEAD changed since it left BASE (default: that repository's `base`, else main) in the repository REPO, a folder under the path with its own .git"},
 		{Spec: "--pr=REPO#N", Does: "only the files pull request N changes in the repository REPO, asked of GitHub with gh"},
-		{Spec: "--repent[=ID]", Does: "only the files listed in a past run's checklist (bare: the latest)"},
 	}
 }
 
@@ -126,12 +121,6 @@ type picked struct {
 }
 
 func restrictTo(args []string, path string, space workspace.Workspace, excluded []string) (picked, bool, error) {
-	if id, given := Repent(args); given {
-		files, err := checklist(id, space)
-
-		return picked{files: files, by: "the files checklist " + id + " lists"}, true, err
-	}
-
 	if number, given := optional(args, "--pr", ""); given {
 		chosen, err := pullRequestChanges(number, path)
 
@@ -443,10 +432,6 @@ func canonical(files map[string]bool) map[string]bool {
 	return set
 }
 
-func Repent(args []string) (string, bool) {
-	return optional(args, "--repent", Latest)
-}
-
 func branch(args []string, path string) (string, bool) {
 	return optional(args, "--branch", BaseOf(path))
 }
@@ -463,28 +448,6 @@ func optional(args []string, flag, bare string) (string, bool) {
 	}
 
 	return "", false
-}
-
-var checklistEntry = regexp.MustCompile("`([^`]+):\\d+`")
-
-func checklist(id string, space workspace.Workspace) (map[string]bool, error) {
-	path := space.ChecklistArchive(id)
-	if id == Latest {
-		path = space.Checklist()
-	}
-
-	raw, err := os.ReadFile(path)
-	if err != nil {
-		return nil, &Unavailable{"No checklist for --repent=" + id + " (looked for " + path + ")."}
-	}
-
-	files := map[string]bool{}
-
-	for _, match := range checklistEntry.FindAllStringSubmatch(string(raw), -1) {
-		files[match[1]] = true
-	}
-
-	return files, nil
 }
 
 func changedLinesOf(root string, files map[string]bool) map[string]git.ChangedLines {

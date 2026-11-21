@@ -182,26 +182,6 @@ func TestInfoWithNoNameSaysWhatItNeeds(t *testing.T) {
 	s.Never(explained, "Traceback")
 }
 
-func TestRepentWithDryRunPreviewsADiffAndChangesNothing(t *testing.T) {
-	s := held(t)
-	path := s.Writes(story.ElseAfterRaise, "order.py")
-
-	previewed := s.AsksIn(s.TestCheckout(), "commandments", "repent", "--dry-run", filepath.Dir(path))
-
-	s.Exits(previewed, 0)
-}
-
-func TestRepentFixesTheRepentableSinOnceAndDoesNothingTheSecondTime(t *testing.T) {
-	s := held(t)
-	path := s.Writes(story.ElseAfterRaise, "order.py")
-
-	first := s.AsksIn(s.TestCheckout(), "commandments", "repent", filepath.Dir(path))
-	second := s.AsksIn(s.TestCheckout(), "commandments", "repent", filepath.Dir(path))
-
-	s.Exits(first, 0)
-	s.Exits(second, 0)
-}
-
 func TestAReportAgainstARuleTheProjectDoesNotHaveIsRefused(t *testing.T) {
 	s := held(t)
 

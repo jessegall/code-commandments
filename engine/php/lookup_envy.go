@@ -44,7 +44,7 @@ func (e *LookupEnvy) EnviedOwner(method engine.Match) string {
 	if method.Kind() != "Stmt_ClassMethod" || !class.Exists() || len(body) == 0 && !hasStatements(method) {
 		return ""
 	}
-	returns := strings.ToLower(Written(method.Node().Returns).SimpleName())
+	returns := strings.ToLower(Written(method.Node().Written).SimpleName())
 	if !slices.Contains(factTypes, returns) || buildsSomething(body) {
 		return ""
 	}
@@ -62,7 +62,7 @@ func (e *LookupEnvy) EnviedOwner(method engine.Match) string {
 func (e *LookupEnvy) soleOwnedParam(method engine.Match, host string) (string, string) {
 	found, owner := "", ""
 	for _, param := range Params(method) {
-		written, name := Written(param.Node().Declared).SimpleName(), variableName(param.Child("var"))
+		written, name := Written(param.Node().Written).SimpleName(), variableName(param.Child("var"))
 		if written == "" || written == host || !e.owned[written] || name == "" {
 			continue
 		}
@@ -83,7 +83,7 @@ func usedOnlyViaMembers(body []engine.Match, param string) bool {
 				continue
 			}
 			used = true
-			if !isMemberAccess(variable.Parent()) || variable.Node().Field != "var" {
+			if !isMemberAccess(variable.Parent()) || variable.Node().InRole() != "var" {
 				return false
 			}
 		}

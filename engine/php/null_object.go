@@ -68,7 +68,7 @@ func nullObjectReturn(method, class engine.Match) (engine.Match, bool) {
 }
 
 func isRequiredParam(param engine.Match) bool {
-	return !param.Child("default").Exists() && !slices.Contains(param.Node().Flags, "variadic")
+	return !param.Child("default").Exists() && !slices.Contains(param.Node().Modifiers, "variadic")
 }
 
 func isSelfConstruction(expression engine.Match) bool {
@@ -95,7 +95,7 @@ func isInlinableConstant(expression, class engine.Match) bool {
 		return isName(owner) && strings.ToLower(owner.Name()) == "self" && constant.Kind() == "Identifier" && declaresPublicConst(class, constant.Name())
 	case isSelfConstruction(expression):
 		for _, argument := range expression.ChildrenIn("args") {
-			if argument.Kind() != "Arg" || slices.Contains(argument.Node().Flags, "spread") || !isInlinableConstant(argument.Child("value"), class) {
+			if argument.Kind() != "Arg" || slices.Contains(argument.Node().Modifiers, "spread") || !isInlinableConstant(argument.Child("value"), class) {
 				return false
 			}
 		}

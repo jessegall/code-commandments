@@ -22,7 +22,7 @@ func (n Node) DictEntries() []DictEntry {
 	var entries []DictEntry
 	var key Node
 	for _, child := range n.Children() {
-		if child.Node().Field == "keys" {
+		if child.Node().InRole() == "keys" {
 			key = child
 			continue
 		}
@@ -136,7 +136,7 @@ func (n Node) isSequenceType() bool {
 		index := n.Child("slice")
 		elements := index.ChildrenIn("elts")
 
-		return n.Kind() == "Subscript" && index.Kind() == "Tuple" && len(elements) > 0 && elements[len(elements)-1].Node().Literal == "ellipsis"
+		return n.Kind() == "Subscript" && index.Kind() == "Tuple" && len(elements) > 0 && elements[len(elements)-1].Node().LiteralKind == "ellipsis"
 	}
 
 	return slices.Contains(sequenceTypes, named.DottedName())
@@ -302,7 +302,7 @@ func (n Node) isMemoFill(name string) bool {
 	guard := n.Parent()
 	test := guard.Child("test")
 
-	return guard.Kind() == "If" && n.Node().Field == "body" && (test.testsNoneOf(name) || test.testsBlanknessOf(name) || test.testsEmptinessOf(name))
+	return guard.Kind() == "If" && n.Node().InRole() == "body" && (test.testsNoneOf(name) || test.testsBlanknessOf(name) || test.testsEmptinessOf(name))
 }
 
 func (n Node) testsEmptinessOf(dotted string) bool {
@@ -310,5 +310,5 @@ func (n Node) testsEmptinessOf(dotted string) bool {
 	arguments := measured.Arguments()
 
 	return ok && measured.IsCall() && measured.Callee().DottedName() == "len" && len(arguments) == 1 && arguments[0].DottedName() == dotted &&
-		zero.Node().Literal == "int" && strings.TrimSpace(zero.Written()) == "0"
+		zero.Node().LiteralKind == "int" && strings.TrimSpace(zero.Written()) == "0"
 }

@@ -54,7 +54,7 @@ func readRoutePaths(codebase *engine.Codebase) *RoutePaths {
 }
 
 func isNamedRegistration(call engine.Match) bool {
-	for link := call.Parent(); link.Kind() == "Expr_MethodCall" && call.Node().Field == "var"; call, link = link, link.Parent() {
+	for link := call.Parent(); link.Kind() == "Expr_MethodCall" && call.Node().InRole() == "var"; call, link = link, link.Parent() {
 		if name := routeCallName(link); name == "name" || name == "as" {
 			return true
 		}

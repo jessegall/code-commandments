@@ -18,7 +18,7 @@ var retiredCommandsIgnored = []string{
 }
 
 var staleRules = append([]string{
-	".commandments/", ".commandments/*", "!.commandments/config.php", "!.commandments/repent.php",
+	".commandments/", ".commandments/*", "!.commandments/config.php",
 	"!.commandments/config.json",
 	".claude/skills/commandments/", ".claude/skills/commandments-*/",
 }, retiredCommandsIgnored...)

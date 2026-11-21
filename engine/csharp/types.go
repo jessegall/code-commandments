@@ -115,7 +115,7 @@ func (n Node) Type() Type {
 	case n.IsExpression():
 		return typeOf(node.Resolved)
 	case n.Is("Parameter", "CatchDeclaration"):
-		return typeOf(node.Declared)
+		return typeOf(node.Written)
 	case n.IsTypeNode() && !n.Parent().IsTypeNode():
 		return n.writtenType().asWritten(n)
 	}
@@ -161,18 +161,18 @@ func (n Node) writtenType() Type {
 func (n Node) declaringType() Type {
 	parent := n.Parent()
 	switch {
-	case parent.Is("PropertyDeclaration", "IndexerDeclaration", "EventDeclaration", "Parameter", "CatchDeclaration", "ForEachStatement") && parent.Node().Declared != nil:
-		return typeOf(parent.Node().Declared)
-	case parent.Is("MethodDeclaration", "LocalFunctionStatement") && parent.Node().Returns != nil && n.Node().Field == "ReturnType":
-		return typeOf(parent.Node().Returns)
-	case parent.Is("DeclarationExpression", "DeclarationPattern") && parent.Child("Designation").Node().Declared != nil:
-		return typeOf(parent.Child("Designation").Node().Declared)
+	case parent.Is("PropertyDeclaration", "IndexerDeclaration", "EventDeclaration", "Parameter", "CatchDeclaration", "ForEachStatement") && parent.Node().Written != nil:
+		return typeOf(parent.Node().Written)
+	case parent.Is("MethodDeclaration", "LocalFunctionStatement") && parent.Node().Written != nil && n.Node().InRole() == "ReturnType":
+		return typeOf(parent.Node().Written)
+	case parent.Is("DeclarationExpression", "DeclarationPattern") && parent.Child("Designation").Node().Written != nil:
+		return typeOf(parent.Child("Designation").Node().Written)
 	case parent.Is("DeclarationExpression") && parent.Node().Resolved != nil:
 		return typeOf(parent.Node().Resolved)
 	case parent.Is("VariableDeclaration"):
 		for _, declarator := range parent.ChildrenIn("Variables") {
-			if declarator.Node().Declared != nil {
-				return typeOf(declarator.Node().Declared)
+			if declarator.Node().Written != nil {
+				return typeOf(declarator.Node().Written)
 			}
 		}
 	}

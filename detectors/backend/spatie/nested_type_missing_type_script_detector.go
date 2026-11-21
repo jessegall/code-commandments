@@ -25,5 +25,3 @@ func (NestedTypeMissingTypeScriptDetector) Find(codebase *engine.Codebase) []eng
 		Where(engine.As(spatienode.Node.NestedWireTypeMissingTypeScript)).
 		Get()
 }
-
-func (NestedTypeMissingTypeScriptDetector) Repentable() {}

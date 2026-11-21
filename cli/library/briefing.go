@@ -19,7 +19,7 @@ const MapID = "commandments"
 
 const mapTrigger = "The index of this project's architectural disciplines — every " +
 	"code-commandments skill, when each one fires, and the commands that find and fix sins " +
-	"(`judge`, `info`, `repent`, `report`, `make`). Load this when you start work in this " +
+	"(`judge`, `info`, `report`, `make`). Load this when you start work in this " +
 	"codebase, when you need to know WHICH discipline covers a subject you are about to write, " +
 	"or when a `judge` finding names a rule you do not recognise."
 

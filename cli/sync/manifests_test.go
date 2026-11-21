@@ -217,7 +217,7 @@ func TestEachAliasSaysWhatKindOfCommandItIs(t *testing.T) {
 	}
 
 	if declared["commandments"] != "" {
-		t.Errorf("the commandments alias declares %q, and it is the passthrough that also repents and reports", declared["commandments"])
+		t.Errorf("the commandments alias declares %q, and it is the passthrough that also reports", declared["commandments"])
 	}
 }
 

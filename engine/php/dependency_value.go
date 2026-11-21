@@ -73,7 +73,7 @@ func returnsQuery(program *Program, method engine.Match) bool {
 	if method.HasModifier("static") {
 		return false
 	}
-	name := Written(method.Node().Returns).Class()
+	name := Written(method.Node().Written).Class()
 
 	return program.IsA(name, `Illuminate\Database\Eloquent\Builder`) || program.IsA(name, `Illuminate\Database\Query\Builder`)
 }

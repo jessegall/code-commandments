@@ -140,11 +140,11 @@ func (n Node) LiteralKey() string {
 	if n.Kind() != "Constant" || facts == nil {
 		return ""
 	}
-	switch facts.Literal {
+	switch facts.LiteralKind {
 	case "string", "bytes":
 		text, _ := n.Text()
 
-		return facts.Literal + ":" + text
+		return facts.LiteralKind + ":" + text
 	case "int", "float":
 		return "number:" + n.Written()
 	case "bool":

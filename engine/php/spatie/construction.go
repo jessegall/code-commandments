@@ -48,7 +48,7 @@ func (n Node) IsHandedConstructedData() bool {
 	params := php.ConstructorParams(class)
 	index := 0
 	for _, argument := range n.Children() {
-		if argument.Node().Field != "args" {
+		if argument.Node().InRole() != "args" {
 			continue
 		}
 		if argument.Kind() == "Arg" && n.argumentIsAlready(argument, index, fqcn, params) {
@@ -94,7 +94,7 @@ func promotedParamName(params []engine.Match, index int) string {
 	}
 	param := params[index].Node()
 	variable := params[index].Child("var")
-	if !slices.Contains(param.Flags, "promoted") || slices.Contains(param.Flags, "variadic") || variable.Kind() != "Expr_Variable" {
+	if !slices.Contains(param.Modifiers, "promoted") || slices.Contains(param.Modifiers, "variadic") || variable.Kind() != "Expr_Variable" {
 		return ""
 	}
 
@@ -196,7 +196,7 @@ func (n Node) IsWithinTolerantCatch() bool {
 			continue
 		}
 		for _, statement := range catch.Children() {
-			if statement.Node().Field != "stmts" {
+			if statement.Node().InRole() != "stmts" {
 				continue
 			}
 			for _, node := range append([]engine.Match{statement}, descendants(statement)...) {
@@ -563,7 +563,7 @@ func factoryCallOf(callable engine.Match) (engine.Match, bool) {
 		}
 	case "Expr_Closure":
 		for _, use := range callable.Children() {
-			if use.Node().Field == "uses" {
+			if use.Node().InRole() == "uses" {
 				return engine.Match{}, true
 			}
 		}
@@ -594,7 +594,7 @@ func referencesBeyond(call, callback engine.Match) bool {
 func soleReturn(closure engine.Match) (engine.Match, bool) {
 	var returns []engine.Match
 	for _, statement := range closure.Children() {
-		if statement.Node().Field != "stmts" {
+		if statement.Node().InRole() != "stmts" {
 			continue
 		}
 		for _, node := range append([]engine.Match{statement}, descendants(statement)...) {
@@ -652,7 +652,7 @@ func (n Node) IsHandKeyRemap() bool {
 	}
 	var items []engine.Match
 	for _, item := range php.Arguments(n.Match)[0].Child("value").Children() {
-		if item.Node().Field == "items" {
+		if item.Node().InRole() == "items" {
 			items = append(items, item)
 		}
 	}
@@ -721,7 +721,7 @@ func (n Node) mappedEach() (engine.Match, bool) {
 	callback := n.Parent()
 	argument := callback.Parent()
 	call := argument.Parent()
-	if callback.Kind() != "Expr_ArrowFunction" || n.Node().Field != "expr" || argument.Kind() != "Arg" ||
+	if callback.Kind() != "Expr_ArrowFunction" || n.Node().InRole() != "expr" || argument.Kind() != "Arg" ||
 		call.Kind() != "Expr_FuncCall" || callName(call) != "array_map" || len(php.Arguments(call)) == 0 ||
 		php.Arguments(call)[0].Node() != argument.Node() {
 		return engine.Match{}, false
@@ -792,7 +792,7 @@ func (d *DataConstructions) sourceValueFor(site engine.Match, property string) (
 		return engine.Match{}, false
 	}
 	for _, item := range array.Children() {
-		if key := item.Child("key"); item.Node().Field == "items" && key.Kind() == "Scalar_String" {
+		if key := item.Child("key"); item.Node().InRole() == "items" && key.Kind() == "Scalar_String" {
 			if written, _ := key.Node().Value.Text(); written == property {
 				return item.Child("value"), true
 			}

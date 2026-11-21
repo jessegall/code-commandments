@@ -31,5 +31,3 @@ func (CompoundInlineComponentDetector) Find(codebase *engine.Codebase) []engine.
 		Reject(engine.As(vue.Element.IsTemplateRoot)).
 		Get()
 }
-
-func (CompoundInlineComponentDetector) Repentable() {}

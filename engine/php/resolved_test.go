@@ -9,7 +9,7 @@ import (
 func resolvedAt(t *testing.T, codebase *engine.Codebase, written string) engine.Match {
 	t.Helper()
 	for _, node := range codebase.Where(func(node engine.Match) bool { return node.Written() == written }).Get() {
-		if node.Node().Role == "expression" {
+		if node.Role() == "expression" {
 			return node
 		}
 	}

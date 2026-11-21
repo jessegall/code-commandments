@@ -13,7 +13,7 @@ Read the issue body AND every comment.
 ├─ Is the RULE wrong / mis-scoped for this case?
 │     → adjust the rule or its per-detector config; fixture; release; close.
 │
-├─ Did it CRASH / mis-fix (bad repent) / MISS something (false negative)?
+├─ Did it CRASH / MISS something (false negative)?
 │     → fix the engine / scribe / detection; fixture; release; close.
 │
 └─ Is the finding actually CORRECT (the reporter was wrong)?

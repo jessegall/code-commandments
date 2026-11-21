@@ -107,7 +107,7 @@ func directFieldsAndReaches(expression engine.Match) ([]string, [][2]string) {
 			continue
 		}
 		parent, base := fetch.Parent(), selfPropertyOf(fetch)
-		if parent.Kind() == "Expr_PropertyFetch" && fetch.Node().Field == "var" && base != "" && parent.Child("name").Kind() == "Identifier" {
+		if parent.Kind() == "Expr_PropertyFetch" && fetch.Node().InRole() == "var" && base != "" && parent.Child("name").Kind() == "Identifier" {
 			reaches = append(reaches, [2]string{base, parent.Child("name").Name()})
 		} else if base != "" && !slices.Contains(directs, base) {
 			directs = append(directs, base)
@@ -246,11 +246,11 @@ func (n Node) FilledParameter() (string, bool) {
 
 func AsParameterField(parameter engine.Match) (string, bool) {
 	variable := parameter.Child("var")
-	if slices.Contains(parameter.Node().Flags, "promoted") || variable.Kind() != "Expr_Variable" || variable.Name() == "" {
+	if slices.Contains(parameter.Node().Modifiers, "promoted") || variable.Kind() != "Expr_Variable" || variable.Name() == "" {
 		return "", false
 	}
 
-	return variable.Name(), Written(parameter.Node().Declared).Class() != ""
+	return variable.Name(), Written(parameter.Node().Written).Class() != ""
 }
 
 func (n Node) writesAPropertyOf(name string) bool {

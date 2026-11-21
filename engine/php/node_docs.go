@@ -69,7 +69,7 @@ func (n Node) Comments() []contract.Comment {
 func (n Node) DocComment() (contract.Comment, bool) {
 	comments := n.Comments()
 	for at := len(comments) - 1; at >= 0; at-- {
-		if comments[at].Kind == "doc" {
+		if comments[at].Form == "doc" {
 			return comments[at], true
 		}
 	}
@@ -85,7 +85,7 @@ func (n Node) HasDocComment() bool {
 
 func (n Node) HasLineComment() bool {
 	for _, comment := range n.Comments() {
-		if comment.Kind != "doc" {
+		if comment.Form != "doc" {
 			return true
 		}
 	}
@@ -117,7 +117,7 @@ func (n Node) Docblocks() []contract.Comment {
 func (n Node) LineComments() []contract.Comment {
 	var lines []contract.Comment
 	for _, comment := range n.Comments() {
-		if comment.Kind != "doc" && (strings.HasPrefix(comment.Text, "//") || strings.HasPrefix(comment.Text, "#")) {
+		if comment.Form != "doc" && (strings.HasPrefix(comment.Text, "//") || strings.HasPrefix(comment.Text, "#")) {
 			lines = append(lines, comment)
 		}
 	}
@@ -152,7 +152,7 @@ func (n Node) DocReferences() []string {
 
 func (n Node) HasCommentedOutCode() bool {
 	for _, comment := range n.LineComments() {
-		if comment.Extras != nil && comment.Extras.PHP != nil && comment.Extras.PHP.Code {
+		if comment.Fragment != nil && comment.Fragment.Diagnostics == 0 {
 			return true
 		}
 	}
@@ -183,11 +183,11 @@ func (n Node) HasCeremonyDocblock() bool {
 	native := map[string]string{}
 	for _, param := range Params(n.Match) {
 		variable := param.Child("var")
-		if rendered := typeKeyOf(Written(param.Node().Declared)); rendered != "" && variable.Kind() == "Expr_Variable" && variable.Name() != "" {
+		if rendered := typeKeyOf(Written(param.Node().Written)); rendered != "" && variable.Kind() == "Expr_Variable" && variable.Name() != "" {
 			native[variable.Name()] = rendered
 		}
 	}
-	nativeReturn := typeKeyOf(Written(n.Node().Returns))
+	nativeReturn := typeKeyOf(Written(n.Node().Written))
 	resolve := func(name string) string { return resolveDocumentedClass(n.Match, name) }
 	restates := false
 	for _, line := range docblockContent(doc.Text) {

@@ -17,6 +17,6 @@ func (HandRolledWither) Definition() sins.Definition {
 		Skill:       skills.ValueObjects{},
 		Description: `A wither method rebuilds the whole object by re-listing every constructor field, so adding a new field means updating every wither in the class.`,
 		Rule:        `A wither should only say what changes: ` + "`" + `clone($this, ['x' => $x])` + "`" + ` states the intent, while re-listing every field just repeats the constructor in every wither.`,
-		Suggestion:  `Replace ` + "`" + `new self($this->a, $this->b, $changed)` + "`" + ` with ` + "`" + `clone($this, ['c' => $changed])` + "`" + ` — ` + "`" + `repent` + "`" + ` does it for you.`,
+		Suggestion:  `Replace ` + "`" + `new self($this->a, $this->b, $changed)` + "`" + ` with ` + "`" + `clone($this, ['c' => $changed])` + "`" + `.`,
 	}
 }

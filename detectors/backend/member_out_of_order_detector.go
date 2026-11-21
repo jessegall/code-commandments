@@ -23,5 +23,3 @@ func (MemberOutOfOrderDetector) Find(codebase *engine.Codebase) []engine.Match {
 		Where(engine.As(php.Node.BreaksClassLayoutOrder)).
 		Get()
 }
-
-func (MemberOutOfOrderDetector) Repentable() {}

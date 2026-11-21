@@ -308,13 +308,13 @@ func (f Field) IsPublicInstance() bool {
 func AsField(node engine.Match) (Field, bool) {
 	switch node.Kind() {
 	case "Param":
-		if variable := node.Child("var"); slices.Contains(node.Node().Flags, "promoted") && variable.Kind() == "Expr_Variable" && variable.Name() != "" {
-			return Field{Name: variable.Name(), Type: node.Node().Declared, IsPublic: slices.Contains(node.Node().Modifiers, "public"), Promoted: true, Node: node, Declaration: node}, true
+		if variable := node.Child("var"); slices.Contains(node.Node().Modifiers, "promoted") && variable.Kind() == "Expr_Variable" && variable.Name() != "" {
+			return Field{Name: variable.Name(), Type: node.Node().Written, IsPublic: slices.Contains(node.Node().Modifiers, "public"), Promoted: true, Node: node, Declaration: node}, true
 		}
 	case "Stmt_Property":
 		for _, item := range node.Children() {
-			if item.Node().Field == "props" {
-				return Field{Name: item.Name(), Type: node.Node().Declared, IsPublic: IsPublic(node.Node()), Node: item, Declaration: node}, true
+			if item.Node().InRole() == "props" {
+				return Field{Name: item.Name(), Type: node.Node().Written, IsPublic: IsPublic(node.Node()), Node: item, Declaration: node}, true
 			}
 		}
 	}
@@ -356,10 +356,10 @@ func Fields(declaration engine.Match) []Field {
 	var fields []Field
 	for _, param := range ConstructorParams(declaration) {
 		node := param.Node()
-		if !slices.Contains(node.Flags, "promoted") {
+		if !slices.Contains(node.Modifiers, "promoted") {
 			continue
 		}
-		fields = append(fields, Field{Name: node.Name, Type: node.Declared, IsPublic: slices.Contains(node.Modifiers, "public"), Promoted: true, Node: param, Declaration: param})
+		fields = append(fields, Field{Name: node.Name, Type: node.Written, IsPublic: slices.Contains(node.Modifiers, "public"), Promoted: true, Node: param, Declaration: param})
 	}
 	for _, member := range declaration.Children() {
 		if member.Kind() != "Stmt_Property" {
@@ -367,8 +367,8 @@ func Fields(declaration engine.Match) []Field {
 		}
 		property := member.Node()
 		for _, item := range member.Children() {
-			if item.Node().Field == "props" {
-				fields = append(fields, Field{Name: item.Name(), Type: property.Declared, IsPublic: IsPublic(property), Node: item, Declaration: member})
+			if item.Node().InRole() == "props" {
+				fields = append(fields, Field{Name: item.Name(), Type: property.Written, IsPublic: IsPublic(property), Node: item, Declaration: member})
 			}
 		}
 	}
@@ -417,7 +417,7 @@ func ConstructorParams(declaration engine.Match) []engine.Match {
 	}
 	var params []engine.Match
 	for _, param := range constructor.Children() {
-		if param.Node().Field == "params" {
+		if param.Node().InRole() == "params" {
 			params = append(params, param)
 		}
 	}
@@ -432,7 +432,7 @@ func IsPublic(member *contract.Node) bool {
 
 func traitsOf(declaration *contract.Node) []string {
 	var traits []string
-	for _, member := range declaration.Children {
+	for _, member := range declaration.Children() {
 		if member.Kind == "Stmt_TraitUse" {
 			traits = append(traits, names(member, "traits")...)
 		}
@@ -443,8 +443,8 @@ func traitsOf(declaration *contract.Node) []string {
 
 func names(node *contract.Node, field string) []string {
 	var names []string
-	for _, child := range node.Children {
-		if child.Field == field {
+	for _, child := range node.Children() {
+		if child.InRole() == field {
 			names = append(names, child.Name)
 		}
 	}

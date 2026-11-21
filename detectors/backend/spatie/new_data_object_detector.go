@@ -27,6 +27,4 @@ func (NewDataObjectDetector) Find(codebase *engine.Codebase) []engine.Match {
 		Get()
 }
 
-func (NewDataObjectDetector) Repentable() {}
-
 func (NewDataObjectDetector) CrossFile() {}

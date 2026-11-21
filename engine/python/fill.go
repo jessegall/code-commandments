@@ -30,16 +30,16 @@ func fill(codebase *engine.Codebase, changed []string) {
 				facts.Own().Resolves = reached
 			}
 			if node.IsFunction() && program.IsOverride(node) {
-				facts.Own().Inherited = true
+				facts.Own().Incomplete = true
 			}
 			if node.isConstant() || program.isEnumCase(node) {
-				facts.Own().Constant = true
+				facts.Own().Incomplete = true
 			}
-			if declared := program.resolvedType(facts.Declared, module); declared != facts.Declared {
-				facts.Own().Declared = declared
+			if declared := program.resolvedType(facts.Written, module); declared != facts.Written {
+				facts.Own().Written = declared
 			}
-			if returns := program.resolvedType(facts.Returns, module); returns != facts.Returns {
-				facts.Own().Returns = returns
+			if returns := program.resolvedType(facts.Written, module); returns != facts.Written {
+				facts.Own().Written = returns
 			}
 		}
 	}
@@ -266,8 +266,8 @@ func (m *Module) importedName(dotted string) (string, bool) {
 }
 
 func (alias Node) renamedTo() (string, bool) {
-	if extras := alias.Node().Extras; extras != nil && extras.Python != nil && extras.Python.As != "" {
-		return extras.Python.As, true
+	if renamed := alias.Child("alias"); renamed.Exists() {
+		return renamed.Name(), true
 	}
 
 	return "", false
@@ -350,7 +350,7 @@ func (p *Program) resolvedTypes(written []*contract.Type, module *Module) []*con
 func (p *Program) fillRefs(module *Module) {
 	for at := range module.File.File.Comments {
 		comment := &module.File.File.Comments[at]
-		if comment.Kind != "doc" || comment.Attached == nil {
+		if comment.Form != "doc" || comment.Attached == nil {
 			continue
 		}
 		docstring, ok := Node{module.File.Match(*comment.Attached)}.Docstring()

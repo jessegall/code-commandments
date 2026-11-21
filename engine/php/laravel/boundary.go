@@ -124,7 +124,7 @@ func readBoundaryEntry(program *php.Program, types *php.Types, method engine.Mat
 	targets := map[engine.Match]string{}
 	self := php.EnclosingClassName(method)
 	for _, statement := range method.Children() {
-		if statement.Node().Field != "stmts" {
+		if statement.Node().InRole() != "stmts" {
 			continue
 		}
 		for _, call := range append([]engine.Match{statement}, descendants(statement)...) {

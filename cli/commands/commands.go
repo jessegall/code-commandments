@@ -7,13 +7,11 @@ import (
 	"github.com/jessegall/code-commandments/cli/dashboard"
 	"github.com/jessegall/code-commandments/cli/exemptions"
 	"github.com/jessegall/code-commandments/cli/freeze"
-	"github.com/jessegall/code-commandments/cli/hints"
 	"github.com/jessegall/code-commandments/cli/hooks"
 	"github.com/jessegall/code-commandments/cli/info"
 	"github.com/jessegall/code-commandments/cli/judge"
 	"github.com/jessegall/code-commandments/cli/layers"
 	makecommand "github.com/jessegall/code-commandments/cli/make"
-	"github.com/jessegall/code-commandments/cli/repent"
 	"github.com/jessegall/code-commandments/cli/report"
 	"github.com/jessegall/code-commandments/cli/rules"
 	"github.com/jessegall/code-commandments/cli/scaffold"
@@ -28,10 +26,8 @@ import (
 
 func Kernel(version string) *cli.Kernel {
 	commands := []cli.Command{
-		judge.Command{Fixable: repent.Fixable("latest"), Scaffoldable: scaffold.Scaffoldable()},
+		judge.Command{Scaffoldable: scaffold.Scaffoldable()},
 		makecommand.Command{},
-		hints.Command{},
-		repent.Command{},
 		scaffold.Command{},
 		report.Command{Version: version},
 		report.FeatureRequest{Version: version},

@@ -2,14 +2,11 @@ package registry_test
 
 import (
 	"bytes"
-	"fmt"
 	"os"
 	"testing"
 
 	"github.com/jessegall/code-commandments/catalog"
 	"github.com/jessegall/code-commandments/detectors"
-	"github.com/jessegall/code-commandments/scribes"
-	_ "github.com/jessegall/code-commandments/scribes/repent"
 )
 
 func TestTheRegistryEnrolsEveryRuleFolder(t *testing.T) {
@@ -49,32 +46,5 @@ func TestANameGivenItsEngineMeansThatEnginesRule(t *testing.T) {
 		if own, _ := detectors.EngineOf(rule); own != engine {
 			t.Fatalf("%s/DeepNestingDetector means the %s rule", engine, own)
 		}
-	}
-}
-
-func TestAScribeIsNeverHandedToAnotherEnginesRuleOfTheSameName(t *testing.T) {
-	fixed := 0
-	for _, rule := range detectors.All() {
-		scribe, fixes := scribes.ScribeFor(rule)
-		if !fixes {
-			continue
-		}
-		fixed++
-
-		engine, _ := detectors.EngineOf(rule)
-		for _, twin := range detectors.EveryNamedIn(detectors.All(), catalog.Name(rule)) {
-			own, _ := detectors.EngineOf(twin)
-			if own == engine {
-				continue
-			}
-
-			if theirs, also := scribes.ScribeFor(twin); also && fmt.Sprintf("%T", theirs) == fmt.Sprintf("%T", scribe) {
-				t.Fatalf("the %s %s scribe is handed to the %s rule of that name", engine, catalog.Name(rule), own)
-			}
-		}
-	}
-
-	if fixed == 0 {
-		t.Fatal("no rule has a scribe at all, so nothing was asked")
 	}
 }

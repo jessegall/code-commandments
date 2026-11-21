@@ -1,12 +1,12 @@
 package engine_test
 
 import (
-	"os"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/jessegall/code-commandments/contract"
+	"github.com/jessegall/code-commandments/contract/samples"
 	"github.com/jessegall/code-commandments/engine"
 )
 
@@ -51,12 +51,7 @@ func TestARuleReadingForwardKnowsTheSameFilesInAnotherCheckout(t *testing.T) {
 // file's path the way the TypeScript bridge names one.
 func checkoutAt(t *testing.T, root string) *engine.Codebase {
 	t.Helper()
-	sampled, err := os.Open("../contract/samples/php.jsonl")
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer sampled.Close()
-	stream, err := contract.ReadAll(sampled)
+	stream, err := samples.Merged("../contract/samples/testdata/expected", contract.PHP)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -70,7 +65,7 @@ func checkoutAt(t *testing.T, root string) *engine.Codebase {
 		if node.Facts != nil && node.Symbol != "" {
 			node.Symbol = `"` + path + `".` + node.Symbol
 		}
-		for _, child := range node.Children {
+		for _, child := range node.Children() {
 			named(child, path)
 		}
 	}

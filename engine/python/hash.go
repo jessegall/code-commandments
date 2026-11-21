@@ -13,7 +13,7 @@ var hashing engine.HashRules = hashRules{}
 
 func (hashRules) Counts(node engine.Match) bool {
 	facts := node.Node()
-	if facts.Role == "type" {
+	if facts.Kind == "type-expression" {
 		return false
 	}
 	value := Node{node}.Child("value")
@@ -32,7 +32,7 @@ func (hashRules) Weight(node engine.Match) int {
 			return 0
 		}
 	case "JoinedStr":
-		if facts.Field == "format_spec" {
+		if facts.InRole() == "format_spec" {
 			return 0
 		}
 	case "BoolOp":
@@ -42,7 +42,7 @@ func (hashRules) Weight(node engine.Match) int {
 	case "Dict":
 		return 1 + len(node.ChildrenIn("values")) - len(node.ChildrenIn("keys"))
 	case "Global", "Nonlocal":
-		return 1 + len(facts.Extras.Python.Names)
+		return 1 + len(node.ChildrenIn("bindings"))
 	case "MatchStar":
 		if facts.Name != "" {
 			return 2
@@ -50,7 +50,7 @@ func (hashRules) Weight(node engine.Match) int {
 	}
 	weight := 1
 	for _, field := range []string{"body", "orelse", "finalbody"} {
-		if statements := node.ChildrenIn(field); facts.Role != "expression" && len(statements) > 0 && !isElif(statements) {
+		if statements := node.ChildrenIn(field); !facts.Is("expression") && len(statements) > 0 && !isElif(statements) {
 			weight++
 		}
 	}
@@ -67,7 +67,7 @@ func (hashRules) Declares(node engine.Match) bool {
 }
 
 func (hashRules) IsCallee(node engine.Match) bool {
-	return node.Node().Field == "func" && node.Parent().Kind() == "Call"
+	return node.Node().InRole() == "func" && node.Parent().Kind() == "Call"
 }
 
 func (hashRules) Leaf(engine.Match) (string, bool) {
@@ -79,11 +79,11 @@ func (hashRules) Literal(node engine.Match, normalize bool) (string, bool) {
 	if facts.Kind != "Constant" {
 		return "", false
 	}
-	if normalize && slices.Contains([]string{"string", "bytes", "int", "float"}, facts.Literal) {
-		return "lit:" + facts.Literal + ":_", true
+	if normalize && slices.Contains([]string{"string", "bytes", "int", "float"}, facts.LiteralKind) {
+		return "lit:" + facts.LiteralKind + ":_", true
 	}
 
-	return "lit:" + facts.Literal + ":" + node.Written(), true
+	return "lit:" + facts.LiteralKind + ":" + node.Written(), true
 }
 
 func (n Node) BodyHash() string {
@@ -124,5 +124,5 @@ func (n Node) body() []engine.Match {
 }
 
 func isElif(statements []engine.Match) bool {
-	return len(statements) == 1 && slices.Contains(statements[0].Node().Flags, "elif")
+	return len(statements) == 1 && slices.Contains(statements[0].Node().Modifiers, "elif")
 }

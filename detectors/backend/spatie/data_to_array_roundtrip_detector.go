@@ -24,6 +24,4 @@ func (DataToArrayRoundtripDetector) Find(codebase *engine.Codebase) []engine.Mat
 		Get()
 }
 
-func (DataToArrayRoundtripDetector) Repentable() {}
-
 func (DataToArrayRoundtripDetector) CrossFile() {}

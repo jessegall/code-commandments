@@ -32,6 +32,4 @@ func (ConstructorOrchestrationDetector) Find(codebase *engine.Codebase) []engine
 		Get()
 }
 
-func (ConstructorOrchestrationDetector) Repentable() {}
-
 func (ConstructorOrchestrationDetector) CrossFile() {}

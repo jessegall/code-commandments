@@ -97,7 +97,7 @@ func (s *DataClassShape) isRich(fqcn string, seen map[string]bool) bool {
 		}
 	}
 	for _, param := range php.ConstructorParams(class) {
-		if slices.Contains(param.Node().Flags, "promoted") && (php.HasAttribute(param, richAttributes...) || s.isCastableType(param.Node().Declared)) {
+		if slices.Contains(param.Node().Modifiers, "promoted") && (php.HasAttribute(param, richAttributes...) || s.isCastableType(param.Node().Written)) {
 			return true
 		}
 	}
@@ -203,7 +203,7 @@ func attributes(declaration engine.Match) []engine.Match {
 
 func firstArgument(node engine.Match) engine.Match {
 	for _, argument := range node.Children() {
-		if argument.Node().Field == "args" {
+		if argument.Node().InRole() == "args" {
 			return argument
 		}
 	}

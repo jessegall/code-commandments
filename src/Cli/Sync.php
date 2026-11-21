@@ -327,7 +327,7 @@ final class Sync implements Command
         // ignoring them. It has to go rather than sit alongside the corrected form, because the
         // check below is a substring one — the old line would answer for the new.
         $stale = [
-            '.commandments/', '.commandments/*', '!.commandments/config.php', '!.commandments/repent.php',
+            '.commandments/', '.commandments/*', '!.commandments/config.php',
             '.claude/skills/commandments/', '.claude/skills/commandments-*/',
         ];
         $existing = implode("\n", array_filter(

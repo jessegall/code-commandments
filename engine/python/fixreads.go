@@ -31,7 +31,7 @@ func (n Node) owner() Node {
 func (n Node) isProbed() bool {
 	for statement := n.owner(); statement.Exists() && !statement.IsDefinition(); statement = statement.Parent() {
 		try := statement.Parent()
-		if (try.Kind() == "Try" || try.Kind() == "TryStar") && len(try.ChildrenIn("handlers")) > 0 && statement.Node().Field == "body" {
+		if (try.Kind() == "Try" || try.Kind() == "TryStar") && len(try.ChildrenIn("handlers")) > 0 && statement.Node().InRole() == "body" {
 			return true
 		}
 	}
@@ -47,7 +47,7 @@ func (n Node) actsOnCollaborator(init Node) bool {
 	receiver := callee.Child("value")
 	var handed []string
 	for at, parameter := range init.Parameters() {
-		if field := parameter.Node().Field; at > 0 && field != "vararg" && field != "kwarg" {
+		if field := parameter.Node().InRole(); at > 0 && field != "vararg" && field != "kwarg" {
 			handed = append(handed, parameter.Name())
 		}
 	}
@@ -163,8 +163,10 @@ func (n Node) writesStatic(target, function Node) bool {
 func (n Node) globalNames() []string {
 	var names []string
 	for _, statement := range n.statementsIn() {
-		if extras := statement.Node().Extras; statement.Kind() == "Global" && statement.EnclosingFunction() == n && extras != nil && extras.Python != nil {
-			names = append(names, extras.Python.Names...)
+		if statement.Kind() == "scope-declaration" && statement.EnclosingFunction() == n {
+			for _, bound := range statement.ChildrenIn("bindings") {
+				names = append(names, bound.Name())
+			}
 		}
 	}
 
@@ -271,7 +273,7 @@ func readsTheAttribute(codebase *engine.Codebase, name string) bool {
 }
 
 func (n Node) isAssigned() bool {
-	return n.Node().Field == "targets"
+	return n.Node().InRole() == "targets"
 }
 
 func (n Node) FilledParameter() (string, bool) {
@@ -317,12 +319,12 @@ func (n Node) ArgumentIsReadAfterTheCall(at int) bool {
 func (n Node) sharesABlockWith(other Node) bool {
 	mine, theirs := n.ownStatement(), other.ownStatement()
 
-	return mine.Exists() && theirs.Exists() && mine.Parent().Node() == theirs.Parent().Node() && mine.Node().Field == theirs.Node().Field
+	return mine.Exists() && theirs.Exists() && mine.Parent().Node() == theirs.Parent().Node() && mine.Node().InRole() == theirs.Node().InRole()
 }
 
 func (n Node) ownStatement() Node {
 	for held := n; held.Exists(); held = held.Parent() {
-		if slices.Contains([]string{"body", "orelse", "finalbody"}, held.Node().Field) {
+		if slices.Contains([]string{"body", "orelse", "finalbody"}, held.Node().InRole()) {
 			return held
 		}
 	}

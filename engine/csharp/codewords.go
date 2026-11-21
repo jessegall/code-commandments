@@ -71,9 +71,9 @@ func (n Node) hierarchyRole() string {
 		return "member"
 	case n.Is("LocalFunctionStatement"):
 		return "statement"
-	case strings.HasSuffix(n.Kind(), "AccessorDeclaration") || n.Node().Role == "pattern":
+	case strings.HasSuffix(n.Kind(), "AccessorDeclaration") || n.Role() == "pattern":
 		return "other"
 	}
 
-	return n.Node().Role
+	return n.Role()
 }

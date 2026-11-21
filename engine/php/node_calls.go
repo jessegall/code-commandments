@@ -73,7 +73,7 @@ func (n Node) ArgumentCount() int {
 
 func (n Node) IsReCoercedToString() bool {
 	parent := n.Parent()
-	return parent.Kind() == "Expr_Cast_String" && n.Node().Field == "expr"
+	return parent.Kind() == "Expr_Cast_String" && n.Node().InRole() == "expr"
 }
 
 func (n Node) ReceiverMutatedNearby() bool {

@@ -30,6 +30,4 @@ func (ManualHydrationLoopDetector) Find(codebase *engine.Codebase) []engine.Matc
 		Get()
 }
 
-func (ManualHydrationLoopDetector) Repentable() {}
-
 func (ManualHydrationLoopDetector) CrossFile() {}

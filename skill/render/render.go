@@ -143,15 +143,12 @@ func commands(definition skill.Definition, taught []sins.Sin) string {
 	if len(taught) == 0 {
 		return ""
 	}
-	var names, fixable, scaffolds []string
+	var names, scaffolds []string
 	bestDesign := false
 	for _, sin := range taught {
 		name := sin.Definition().Name
 		names = append(names, name)
 		finders := detectorsOf(sin)
-		if slices.ContainsFunc(finders, detectors.IsRepentable) {
-			fixable = append(fixable, name)
-		}
 		if scaffolding, helps := sin.(sins.Scaffolding); helps && len(scaffolding.Scaffolds()) > 0 {
 			scaffolds = append(scaffolds, name)
 		}
@@ -166,9 +163,6 @@ func commands(definition skill.Definition, taught []sins.Sin) string {
 	rows := []string{
 		"- `" + library.Binary + " judge --skill=" + definition.Slug + "` — find every one of these in the codebase.",
 		"- `" + info("<sin>") + "` — what one rule flags, why it is a sin, and the fix. The sins here: " + code(names) + ".",
-	}
-	if len(fixable) > 0 {
-		rows = append(rows, "- `"+library.Binary+" repent --sin=<sin>` — auto-fix, for "+code(fixable)+". Review it with `--dry-run` first.")
 	}
 	if len(scaffolds) > 0 {
 		rows = append(rows, "- `"+library.Binary+" scaffold --sin=<sin>` — generate the helper the fix reaches for, for "+code(scaffolds)+".")

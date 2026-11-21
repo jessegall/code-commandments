@@ -65,7 +65,7 @@ func DefaultsOf(registration engine.Match) []string {
 func ActionsOf(node engine.Match) []string {
 	actions := []string{}
 	for _, argument := range node.Children() {
-		if argument.Node().Field != "args" {
+		if argument.Node().InRole() != "args" {
 			continue
 		}
 		value := argument.Child("value")
@@ -139,15 +139,15 @@ func readRouteActions(codebase *engine.Codebase) *RouteActions {
 
 func isRequestHandler(method engine.Match, program *php.Program, surface *ResponseSurface) bool {
 	for _, param := range php.Params(method) {
-		if class := php.Written(param.Node().Declared).Class(); class != "" && isRequestType(class, program) {
+		if class := php.Written(param.Node().Written).Class(); class != "" && isRequestType(class, program) {
 			return true
 		}
 	}
-	if surface.IsResponseBound(php.Written(method.Node().Returns).Class()) {
+	if surface.IsResponseBound(php.Written(method.Node().Written).Class()) {
 		return true
 	}
 	for _, statement := range method.Children() {
-		if statement.Node().Field != "stmts" {
+		if statement.Node().InRole() != "stmts" {
 			continue
 		}
 		for _, node := range append([]engine.Match{statement}, descendants(statement)...) {
@@ -392,7 +392,7 @@ func isRouterVariable(variable engine.Match) bool {
 		}
 		for _, param := range php.Params(scope) {
 			if param.Child("var").Name() == variable.Name() {
-				return slices.Contains(RouterTypes, php.Written(param.Node().Declared).Class())
+				return slices.Contains(RouterTypes, php.Written(param.Node().Written).Class())
 			}
 		}
 	}
@@ -433,7 +433,7 @@ func literalPrefix(node engine.Match) string {
 
 func firstArgumentValue(node engine.Match) engine.Match {
 	for _, argument := range node.Children() {
-		if argument.Node().Field == "args" {
+		if argument.Node().InRole() == "args" {
 			return argument.Child("value")
 		}
 	}

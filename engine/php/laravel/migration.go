@@ -21,8 +21,8 @@ func declaresMigration(file *engine.File) bool {
 		if node.Kind != "Stmt_Class" {
 			continue
 		}
-		for _, child := range node.Children {
-			if child.Field == "extends" && strings.TrimLeft(child.Name, `\`) == Migration {
+		for _, child := range node.Children() {
+			if child.InRole() == "extends" && strings.TrimLeft(child.Name, `\`) == Migration {
 				return true
 			}
 		}

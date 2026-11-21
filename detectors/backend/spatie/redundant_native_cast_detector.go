@@ -34,6 +34,4 @@ func nativeCastGate(query *engine.Query) []engine.Match {
 		Get()
 }
 
-func (RedundantNativeCastDetector) Repentable() {}
-
 func (RedundantNativeCastDetector) CrossFile() {}

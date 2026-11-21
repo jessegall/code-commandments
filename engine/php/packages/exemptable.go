@@ -134,7 +134,7 @@ func takesArrayInput(codebase *engine.Codebase, tag Tag, call engine.Match) bool
 
 func onlyBatchesArrayInput(codebase *engine.Codebase, tag Tag, call, value engine.Match) bool {
 	loop := call.Parent()
-	if !php.CallsGlobalFunction(call, "array_chunk") || loop.Kind() != "Stmt_Foreach" || call.Node().Field != "expr" {
+	if !php.CallsGlobalFunction(call, "array_chunk") || loop.Kind() != "Stmt_Foreach" || call.Node().InRole() != "expr" {
 		return false
 	}
 	arguments := php.Arguments(call)

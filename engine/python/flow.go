@@ -87,7 +87,7 @@ func (n Node) SelfAttribute() string {
 
 func (n Node) wrapper() Node {
 	parent := n.Parent()
-	if parent.IsStatement() || parent.Node() == nil || parent.Node().Role == "type" {
+	if parent.IsStatement() || parent.Node() == nil || parent.Role() == "type" {
 		return Node{}
 	}
 
