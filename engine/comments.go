@@ -299,5 +299,12 @@ func documentable(match Match) bool {
 		return read(match)
 	}
 
+	if match.Is("declaration") && !slices.Contains(undocumented, match.Kind()) {
+		return true
+	}
+
 	return match.Role() != "expression" && match.Role() != "other"
 }
+
+// undocumented are the declarations a comment above never documents: what they declare is documented with its owner.
+var undocumented = []string{"module", "import", "import-binding", "binding", "declarator", "parameter"}

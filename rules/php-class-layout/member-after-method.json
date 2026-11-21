@@ -100,7 +100,19 @@
                   ]
                 ]
               ],
-              "function": 10
+              "function": [
+                "case",
+                [
+                  "in",
+                  "$m.form",
+                  "get",
+                  "set"
+                ],
+                {
+                  "true": 7
+                },
+                10
+              ]
             },
             0
           ]

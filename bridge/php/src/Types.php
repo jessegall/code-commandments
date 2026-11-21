@@ -221,10 +221,10 @@ final class Types
                 : $this->called($expression, $this->classOf($expression->class->getAttribute('type')), $class),
             $expression instanceof Expr\FuncCall => $this->function($expression),
             $expression instanceof Expr\PropertyFetch, $expression instanceof Expr\NullsafePropertyFetch => $expression->name instanceof Node\Identifier
-                ? $this->property($this->classOf($expression->var->getAttribute('type')), $expression->name->toString())
+                ? $this->property($expression, $this->classOf($expression->var->getAttribute('type')), $expression->name->toString())
                 : null,
             $expression instanceof Expr\StaticPropertyFetch => $expression->class instanceof Node\Name && $expression->name instanceof Node\VarLikeIdentifier
-                ? $this->property($this->named($expression->class, $class), $expression->name->toString())
+                ? $this->property($expression, $this->named($expression->class, $class), $expression->name->toString())
                 : null,
             $expression instanceof Expr\ClassConstFetch => $expression->name instanceof Node\Identifier && $expression->name->toLowerString() === 'class' ? ['keyword' => 'string'] : null,
             $expression instanceof Expr\Assign => $expression->expr->getAttribute('type'),
@@ -332,11 +332,13 @@ final class Types
         return null;
     }
 
-    private function property(?string $class, string $name): ?array
+    private function property(Expr $fetch, ?string $class, string $name): ?array
     {
         for ($at = $class; $at !== null; $at = $this->declaration($at)['parent'] ?? null) {
             $declared = $this->declaration($at);
             if ($declared !== null && array_key_exists($name, $declared['properties'])) {
+                $fetch->setAttribute('member', "{$at}::\${$name}");
+
                 return $declared['properties'][$name];
             }
         }

@@ -89,26 +89,139 @@
       ]
     ],
     "having": [
-      "none",
+      "and",
       [
-        "descendants",
-        "$p.parent.body"
-      ],
-      "x",
-      [
-        "and",
+        "none",
         [
-          "=",
-          "$x.kind",
-          "reference"
+          "descendants",
+          "$p.parent.body"
+        ],
+        "x",
+        [
+          "and",
+          [
+            "=",
+            "$x.kind",
+            "reference"
+          ],
+          [
+            "=",
+            "$x.name",
+            "$p.binding.name"
+          ]
+        ]
+      ],
+      [
+        "some",
+        "$p.parent.parameters",
+        "q",
+        [
+          "and",
+          [
+            "!=",
+            "$q",
+            "$p"
+          ],
+          [
+            "exists",
+            "$q.binding"
+          ],
+          [
+            "some",
+            [
+              "descendants",
+              "$p.parent.body"
+            ],
+            "x",
+            [
+              "and",
+              [
+                "=",
+                "$x.kind",
+                "reference"
+              ],
+              [
+                "=",
+                "$x.name",
+                "$q.binding.name"
+              ]
+            ]
+          ]
+        ]
+      ],
+      [
+        "or",
+        [
+          "some",
+          "$p.parent.modifiers",
+          "m",
+          [
+            "=",
+            "$m",
+            "private"
+          ]
         ],
         [
-          "=",
-          "$x.name",
-          "$p.binding.name"
+          "not",
+          [
+            "exists",
+            "$owner"
+          ]
+        ],
+        [
+          "and",
+          [
+            "=",
+            [
+              "count",
+              "$owner.bases"
+            ],
+            0
+          ],
+          [
+            "=",
+            [
+              "count",
+              "$owner.interfaces"
+            ],
+            0
+          ]
+        ]
+      ],
+      [
+        "none",
+        [
+          "descendants",
+          "$p.parent.body"
+        ],
+        "x",
+        [
+          "and",
+          [
+            "=",
+            "$x.kind",
+            "call"
+          ],
+          [
+            "in",
+            "$x.callee.name",
+            "compact",
+            "func_get_args",
+            "get_defined_vars"
+          ]
         ]
       ]
     ],
-    "emit": "$p"
+    "emit": "$p",
+    "let": [
+      [
+        "owner",
+        [
+          "enclosing",
+          "$p",
+          "type"
+        ]
+      ]
+    ]
   }
 }

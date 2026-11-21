@@ -521,6 +521,7 @@ final class Translator
             $made = $this->function($member, $member->name->toLowerString() === '__construct' ? 'constructor' : 'method', $class);
             foreach ($made->parts['parameters'] ?? [] as $index => $parameter) {
                 if ($member->params[$index]->flags !== 0) {
+                    $this->declares($parameter->parts['binding'], $class);
                     $promoted[] = $parameter;
                 }
             }
@@ -533,6 +534,9 @@ final class Translator
                 'attributes' => $this->attributes($member->attrGroups),
                 'declarators' => array_map(fn (Node\PropertyItem $item) => $this->declarator($item, $item, $item->default), $member->props),
             ]);
+            foreach ($made->parts['declarators'] as $declarator) {
+                $this->declares($declarator->parts['binding'], $class);
+            }
             if ($member->type !== null) {
                 $made->parts['declaredType'] = $this->writtenType($member->type);
             }
@@ -558,6 +562,16 @@ final class Translator
         }
 
         return $this->statement($member, $class);
+    }
+
+    /**
+     * A property's binding declares the property's symbol, Class::$name, which a fetch of it refers to.
+     */
+    private function declares(TreeNode $binding, ?string $class): void
+    {
+        if ($class !== null && isset($binding->facts['name'])) {
+            $binding->facts['symbol'] = "{$class}::\${$binding->facts['name']}";
+        }
     }
 
     private function declarator(Node $declared, Node $named, ?Expr $initializer): TreeNode
@@ -949,7 +963,7 @@ final class Translator
             'subject' => $subject instanceof Node\Name ? $this->name($subject) : $this->expression($subject),
             'member' => $member instanceof Expr
                 ? $this->expression($member)
-                : $this->of('reference', $member, ['name' => $member->toString(), 'form' => 'name']),
+                : $this->of('reference', $member, ['name' => $member->toString(), 'form' => 'name', 'refers' => $access->getAttribute('member')]),
         ];
 
         return $made;
@@ -1107,7 +1121,8 @@ final class Translator
                 return [null, false];
             }
             $after += $gap;
-            if (! str_starts_with(substr($this->code, $after, 2), '//') && ! str_starts_with(substr($this->code, $after, 1), '#') && ! str_starts_with(substr($this->code, $after, 2), '/*')) {
+            $attribute = str_starts_with(substr($this->code, $after, 2), '#[');
+            if (isset($starting[$after]) || $attribute || (! str_starts_with(substr($this->code, $after, 2), '//') && ! str_starts_with(substr($this->code, $after, 1), '#') && ! str_starts_with(substr($this->code, $after, 2), '/*'))) {
                 break;
             }
             $closing = str_starts_with(substr($this->code, $after, 2), '/*') ? strpos($this->code, '*/', $after) : strpos($this->code, "\n", $after);

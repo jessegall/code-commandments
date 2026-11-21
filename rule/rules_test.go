@@ -239,3 +239,10 @@ func TestAPrivateMethodACallReachesIsUsed(t *testing.T) {
 		"src/Directory.php": "<?php\nnamespace Shop;\n\nfinal class Directory\n{\n    public function latest(): int\n    {\n        return $this->draft();\n    }\n\n    private function draft(): int\n    {\n        return 1;\n    }\n\n    private function never(): int\n    {\n        return 2;\n    }\n}\n",
 	}), "src/Directory.php:16")
 }
+
+// A private field read through $this, or a promoted one, is used: the fetch refers to the property's own symbol.
+func TestAPrivateFieldAFetchReadsIsUsed(t *testing.T) {
+	expect(t, "php", judged(t, "php-type-honesty/unused-private-member.json", map[string]string{
+		"src/Digest.php": "<?php\nnamespace Shop;\n\nfinal class Digest\n{\n    private int $points = 0;\n\n    private int $never = 0;\n\n    public function __construct(private string $name) {}\n\n    public function add(): string\n    {\n        $this->points++;\n\n        return $this->name;\n    }\n}\n",
+	}), "src/Digest.php:8")
+}

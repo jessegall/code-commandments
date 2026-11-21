@@ -67,9 +67,17 @@
       [
         "or",
         [
-          "=",
-          "$i.parent.kind",
-          "return"
+          "and",
+          [
+            "=",
+            "$i.parent.kind",
+            "return"
+          ],
+          [
+            "=",
+            "$i.file.language",
+            "typescript"
+          ]
         ],
         [
           "and",
@@ -131,28 +139,63 @@
     "having": [
       "and",
       [
-        "tree.notOverriding",
-        "$function"
-      ],
-      [
-        "or",
+        "and",
         [
-          "=",
-          [
-            "count",
-            "$callers"
-          ],
-          0
+          "tree.notOverriding",
+          "$function"
         ],
         [
-          "some",
-          "$callers",
-          "c",
+          "or",
           [
-            "not",
+            "=",
             [
-              "handles",
-              "$c"
+              "count",
+              "$callers"
+            ],
+            0
+          ],
+          [
+            "some",
+            "$callers",
+            "c",
+            [
+              "not",
+              [
+                "handles",
+                "$c"
+              ]
+            ]
+          ]
+        ]
+      ],
+      [
+        "not",
+        [
+          "some",
+          [
+            "ownDescendants",
+            "$function"
+          ],
+          "r",
+          [
+            "and",
+            [
+              "=",
+              "$r.kind",
+              "return"
+            ],
+            [
+              "some",
+              [
+                "ownAncestors",
+                "$r"
+              ],
+              "a",
+              [
+                "=",
+                "$a.kind",
+                "loop"
+              ]
             ]
           ]
         ]

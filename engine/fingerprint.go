@@ -6,6 +6,8 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+
+	"github.com/jessegall/code-commandments/contract"
 )
 
 // Fingerprint is a subtree's structure, hashed: each node's kind, the role it fills, its name, operator, form and
@@ -96,6 +98,18 @@ type fingerprintWalk struct {
 	how       Fingerprinting
 	numbered  map[int]int
 	recovered bool
+	entered   bool
+}
+
+// role is the node's role in its parent, left out for the subtree's own root: where a subtree sits is not what it is.
+func (w *fingerprintWalk) role(node *contract.Node) string {
+	if !w.entered {
+		w.entered = true
+
+		return ""
+	}
+
+	return node.InRole()
 }
 
 // orderFree are the operators whose operands may be swapped without changing what they mean.
@@ -107,9 +121,10 @@ func (w *fingerprintWalk) structure(m Match) string {
 		w.recovered = true
 	}
 	normalize := w.how.Mode == "normalized"
+	role := w.role(node)
 	switch {
 	case w.how.Mode == "shape":
-		parts := []string{node.Kind, node.InRole()}
+		parts := []string{node.Kind, role}
 		for _, child := range m.Children() {
 			if child.node.Kind != "no-op" {
 				parts = append(parts, w.structure(child))
@@ -123,14 +138,14 @@ func (w *fingerprintWalk) structure(m Match) string {
 		written, _ := node.Value.MarshalJSON()
 
 		return "(literal|" + node.LiteralKind + "|" + string(written) + ")"
-	case node.Kind == "reference" && normalize && node.InRole() != "callee":
+	case node.Kind == "reference" && normalize && role != "callee":
 		return "(reference)"
 	case w.how.Mode == "renamed" && node.Kind == "binding":
-		return "(binding|" + node.InRole() + "|v" + w.number(node.ID) + ")"
+		return "(binding|" + role + "|v" + w.number(node.ID) + ")"
 	case w.how.Mode == "renamed" && node.Kind == "reference" && len(node.Linked("binding")) == 1:
-		return "(reference|" + node.InRole() + "|v" + w.number(node.Linked("binding")[0]) + ")"
+		return "(reference|" + role + "|v" + w.number(node.Linked("binding")[0]) + ")"
 	}
-	parts := []string{node.Kind, node.InRole()}
+	parts := []string{node.Kind, role}
 	if !normalize || !node.Is("declaration") {
 		parts = append(parts, node.Name)
 	}
