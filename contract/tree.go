@@ -120,9 +120,8 @@ func (f *File) CopiedTo(path string, moved func(string) string) *File {
 		own := *node
 		own.parent = parent
 		if node.Facts != none && node.Resolves != "" {
-			facts := *node.Facts
-			facts.Resolves = moved(facts.Resolves)
-			own.Facts = &facts
+			own.Facts = node.Facts.copied()
+			own.Resolves = moved(node.Resolves)
 		}
 		copied.nodes = append(copied.nodes, &own)
 		own.Parts = make(Parts, len(node.Parts))
@@ -174,7 +173,6 @@ type Node struct {
 	Kind  string `json:"kind"`
 	Span  Span   `json:"span"`
 	Parts Parts  `json:"parts,omitempty"`
-	Links Links  `json:"links,omitempty"`
 	*Facts
 	Resolved *Type `json:"-"`
 
@@ -182,56 +180,67 @@ type Node struct {
 	role   string
 }
 
-// Facts are a node's facts, every one optional; a compiler fact that is absent is unknown, never known-empty.
+// Facts are a node's facts, every one optional; a compiler fact that is absent is unknown, never known-empty. The facts
+// most nodes carry are held here; the rest are in RareFacts, which a node without any of them shares with every other.
 type Facts struct {
-	Name          string         `json:"name,omitempty"`
-	Symbol        string         `json:"symbol,omitempty"`
-	Refers        string         `json:"refers,omitempty"`
-	Target        *Target        `json:"target,omitempty"`
-	ResolvedType  *int           `json:"resolvedType,omitempty"`
-	ConstantValue *ConstantValue `json:"constantValue,omitempty"`
-	Modifiers     []string       `json:"modifiers,omitempty"`
-	Effective     *Effective     `json:"effective,omitempty"`
-	Obligations   []Obligation   `json:"obligations,omitempty"`
-	Incomplete    bool           `json:"incomplete,omitempty"`
+	// shared is facts the reader holds once for every node that reads alike; Own copies them before a write.
+	shared bool
+	// ownsRare is whether RareFacts are this node's own to write, not shared with another node.
+	ownsRare bool
 
-	Source          string   `json:"source,omitempty"`
-	Form            string   `json:"form,omitempty"`
-	TypeOnly        bool     `json:"typeOnly,omitempty"`
-	RelativeLevel   int      `json:"relativeLevel,omitempty"`
-	Resolves        string   `json:"resolves,omitempty"`
-	Written         *Type    `json:"written,omitempty"`
-	Async           bool     `json:"async,omitempty"`
-	Generator       bool     `json:"generator,omitempty"`
-	Passing         string   `json:"passing,omitempty"`
-	Collects        string   `json:"collects,omitempty"`
-	Position        string   `json:"position,omitempty"`
-	Optional        bool     `json:"optional,omitempty"`
-	Evaluated       string   `json:"evaluated,omitempty"`
-	Exhaustive      *bool    `json:"exhaustive,omitempty"`
-	Default         bool     `json:"default,omitempty"`
-	FallsThrough    bool     `json:"fallsThrough,omitempty"`
-	Depth           int      `json:"depth,omitempty"`
-	CatchForm       string   `json:"catchForm,omitempty"`
-	Group           bool     `json:"group,omitempty"`
-	NamedResults    *bool    `json:"namedResults,omitempty"`
-	NullConditional bool     `json:"nullConditional,omitempty"`
-	Label           string   `json:"label,omitempty"`
-	Spread          string   `json:"spread,omitempty"`
-	Mode            string   `json:"mode,omitempty"`
-	Operator        string   `json:"operator,omitempty"`
-	Operators       []string `json:"operators,omitempty"`
-	Prefix          bool     `json:"prefix,omitempty"`
-	Trigger         string   `json:"trigger,omitempty"`
-	Negated         bool     `json:"negated,omitempty"`
-	Delegates       bool     `json:"delegates,omitempty"`
-	LiteralKind     string   `json:"literalKind,omitempty"`
-	Value           *Value   `json:"value,omitempty"`
-	Expansion       string   `json:"expansion,omitempty"`
-	Conversion      string   `json:"conversion,omitempty"`
-	Tag             string   `json:"tag,omitempty"`
-	Shorthand       bool     `json:"shorthand,omitempty"`
-	Construct       string   `json:"construct,omitempty"`
+	Name        string   `json:"name,omitempty"`
+	Symbol      string   `json:"symbol,omitempty"`
+	Refers      string   `json:"refers,omitempty"`
+	Target      *Target  `json:"target,omitempty"`
+	Modifiers   []string `json:"modifiers,omitempty"`
+	Source      string   `json:"source,omitempty"`
+	Form        string   `json:"form,omitempty"`
+	LiteralKind string   `json:"literalKind,omitempty"`
+	Value       *Value   `json:"value,omitempty"`
+	*RareFacts
+}
+
+// RareFacts are the facts few nodes carry: a node without any shares one empty copy.
+type RareFacts struct {
+	ResolvedType    *int           `json:"resolvedType,omitempty"`
+	ConstantValue   *ConstantValue `json:"constantValue,omitempty"`
+	Effective       *Effective     `json:"effective,omitempty"`
+	Obligations     []Obligation   `json:"obligations,omitempty"`
+	Incomplete      bool           `json:"incomplete,omitempty"`
+	TypeOnly        bool           `json:"typeOnly,omitempty"`
+	RelativeLevel   int            `json:"relativeLevel,omitempty"`
+	Resolves        string         `json:"resolves,omitempty"`
+	Written         *Type          `json:"written,omitempty"`
+	Async           bool           `json:"async,omitempty"`
+	Generator       bool           `json:"generator,omitempty"`
+	Passing         string         `json:"passing,omitempty"`
+	Collects        string         `json:"collects,omitempty"`
+	Position        string         `json:"position,omitempty"`
+	Optional        bool           `json:"optional,omitempty"`
+	Evaluated       string         `json:"evaluated,omitempty"`
+	Exhaustive      *bool          `json:"exhaustive,omitempty"`
+	Default         bool           `json:"default,omitempty"`
+	FallsThrough    bool           `json:"fallsThrough,omitempty"`
+	Depth           int            `json:"depth,omitempty"`
+	CatchForm       string         `json:"catchForm,omitempty"`
+	Group           bool           `json:"group,omitempty"`
+	NamedResults    *bool          `json:"namedResults,omitempty"`
+	NullConditional bool           `json:"nullConditional,omitempty"`
+	Spread          string         `json:"spread,omitempty"`
+	Prefix          bool           `json:"prefix,omitempty"`
+	Trigger         string         `json:"trigger,omitempty"`
+	Negated         bool           `json:"negated,omitempty"`
+	Delegates       bool           `json:"delegates,omitempty"`
+	Expansion       string         `json:"expansion,omitempty"`
+	Conversion      string         `json:"conversion,omitempty"`
+	Tag             string         `json:"tag,omitempty"`
+	Shorthand       bool           `json:"shorthand,omitempty"`
+	Construct       string         `json:"construct,omitempty"`
+	Label           string         `json:"label,omitempty"`
+	Mode            string         `json:"mode,omitempty"`
+	Operator        string         `json:"operator,omitempty"`
+	Operators       []string       `json:"operators,omitempty"`
+	Links           Links          `json:"links,omitempty"`
 }
 
 // ConstantValue is the compile-time value of an expression the compiler folds; a null constant has type "null" and no value.
@@ -461,7 +470,17 @@ func (n *Node) Linked(name string) []int {
 	return nil
 }
 
-var none = &Facts{}
+var (
+	noRareFacts = &RareFacts{}
+	none        = &Facts{RareFacts: noRareFacts}
+)
+
+// settled gives facts without rare ones the shared empty rare facts, so reading a rare fact never meets nothing.
+func (f *Facts) settled() {
+	if f.RareFacts == nil {
+		f.RareFacts = noRareFacts
+	}
+}
 
 func NewNode(node Node) *Node {
 	if node.Facts == nil {
@@ -472,15 +491,34 @@ func NewNode(node Node) *Node {
 }
 
 func Untouched() bool {
-	return reflect.ValueOf(*none).IsZero()
+	common := *none
+	common.RareFacts = nil
+
+	return reflect.ValueOf(*noRareFacts).IsZero() && reflect.ValueOf(common).IsZero() && none.RareFacts == noRareFacts
 }
 
+// Own is the node's facts, its own to write: the shared empty facts and facts the reader shares between nodes that
+// read alike are copied first, so writing one node's never changes another's.
 func (n *Node) Own() *Facts {
-	if n.Facts == none {
-		n.Facts = &Facts{}
+	if n.Facts == nil || n.Facts == none || n.Facts.shared || !n.Facts.ownsRare {
+		n.Facts = n.Facts.copied()
 	}
 
 	return n.Facts
+}
+
+// copied is a copy of the facts and of their rare facts, both the caller's own to write.
+func (f *Facts) copied() *Facts {
+	owned, rare := Facts{}, RareFacts{}
+	if f != nil {
+		owned = *f
+	}
+	if owned.RareFacts != nil {
+		rare = *owned.RareFacts
+	}
+	owned.shared, owned.RareFacts, owned.ownsRare = false, &rare, true
+
+	return &owned
 }
 
 func (n *Node) Parent() (*Node, bool) {

@@ -163,12 +163,11 @@ func key(v value) (string, bool) {
 }
 
 // factFields is each fact of a node by the name the contract gives it, found once from the contract's own fields.
-var factFields = sync.OnceValue(func() map[string]int {
-	fields := map[string]int{}
-	written := reflect.TypeFor[contract.Facts]()
-	for at := range written.NumField() {
-		if name := jsonName(written.Field(at)); name != "" {
-			fields[name] = at
+var factFields = sync.OnceValue(func() map[string][]int {
+	fields := map[string][]int{}
+	for _, field := range reflect.VisibleFields(reflect.TypeFor[contract.Facts]()) {
+		if name := jsonName(field); name != "" && !field.Anonymous {
+			fields[name] = field.Index
 		}
 	}
 
@@ -204,7 +203,10 @@ func fact(site engine.Match, name string) value {
 	if !found || node.Facts == nil {
 		return unknown
 	}
-	field := reflect.ValueOf(node.Facts).Elem().Field(at)
+	field, err := reflect.ValueOf(node.Facts).Elem().FieldByIndexErr(at)
+	if err != nil {
+		return unknown
+	}
 	if field.IsZero() && !site.Source().Knows(name) {
 		return unknown
 	}

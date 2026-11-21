@@ -53,14 +53,16 @@ var packageFacts struct {
 func RegisterPackageFacts(facts PackageFacts) {
 	packageFacts.Lock()
 	defer packageFacts.Unlock()
-	packageFacts.held = append(packageFacts.held, facts)
+	packageFacts.held = append(slices.Clone(packageFacts.held), facts)
 }
 
+// registeredPackageFacts is every package's facts as registered; a reader only ranges over them. Registering appends a
+// copy under the lock, so a slice handed out before is never written to.
 func registeredPackageFacts() []PackageFacts {
 	packageFacts.Lock()
 	defer packageFacts.Unlock()
 
-	return slices.Clone(packageFacts.held)
+	return packageFacts.held
 }
 
 // HasEffect is whether a call or construction has the effect named by the library its resolved target belongs to.
@@ -80,10 +82,9 @@ func (m Match) HasEffect(effect string) Truth {
 	}
 	answer := False
 	for _, facts := range registeredPackageFacts() {
-		entries := slices.DeleteFunc(slices.Clone(facts.Entries), func(entry PackageEntry) bool {
-			return entry.Effect != effect || entry.Name != target.Name || !m.declaredBy(target.Type, entry.Type)
-		})
-		if len(entries) == 0 {
+		if !slices.ContainsFunc(facts.Entries, func(entry PackageEntry) bool {
+			return entry.Effect == effect && entry.Name == target.Name && m.declaredBy(target.Type, entry.Type)
+		}) {
 			continue
 		}
 		if held := m.file.codebase.holds(facts); held == True {
@@ -137,18 +138,30 @@ func (c *Codebase) PackageVersion(ecosystem, name string) (string, bool) {
 
 func readPackageVersions(c *Codebase) map[string]map[string]string {
 	versions := map[string]map[string]string{}
+	visited := map[string]bool{}
 	for _, stream := range c.streams {
 		for _, root := range stream.Header.Roots {
-			for folder := root; ; folder = filepath.Dir(folder) {
-				readManifests(folder, versions)
-				if parent := filepath.Dir(folder); parent == folder {
+			for _, folder := range foldersUpFrom(root) {
+				if visited[folder] {
 					break
 				}
+				visited[folder] = true
+				readManifests(folder, versions)
 			}
 		}
 	}
 
 	return versions
+}
+
+// foldersUpFrom is the folder and every folder above it, nearest first, up to the root of the file system.
+func foldersUpFrom(folder string) []string {
+	parent := filepath.Dir(folder)
+	if parent == folder {
+		return []string{folder}
+	}
+
+	return append([]string{folder}, foldersUpFrom(parent)...)
 }
 
 func readManifests(folder string, versions map[string]map[string]string) {

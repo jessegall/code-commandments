@@ -212,7 +212,7 @@ func (r rows) relationRows(name string) []value {
 	case isRelation:
 		items = r.build(defined)
 	case isProgram:
-		items = engine.Analysis(r.codebase, "rule-relation-"+name, program)
+		items = programRows(r.codebase, name, program)
 	default:
 		kinds, _ := selected([]string{name})
 		for _, site := range r.codebase.WhereKind(kinds...).Get() {
@@ -426,17 +426,10 @@ func (r rows) expanded(current []row, list Expr) []row {
 // binds unknown, which no comparison proves.
 func (r rows) joined(current []row, step stage) []row {
 	records := r.relationRows(step.Join)
+	index := indexJoin(records, step.On)
 	var joined []row
 	for _, each := range current {
-		var matched []value
-		for _, candidate := range records {
-			if r.agrees(candidate, step.On, each) {
-				matched = append(matched, candidate)
-				if step.Mode != "all" {
-					break
-				}
-			}
-		}
+		matched := index.matching(r, each, step.Mode == "all")
 		switch step.Mode {
 		case "", "first":
 			bound := unknown
@@ -464,16 +457,6 @@ func (r rows) joined(current []row, step stage) []row {
 	}
 
 	return joined
-}
-
-func (r rows) agrees(candidate value, on map[string]Expr, each row) bool {
-	for field, expression := range on {
-		if equal(read(candidate, field), r.evaluate(expression, each)) != engine.True {
-			return false
-		}
-	}
-
-	return true
 }
 
 func (r rows) order(by []Expr, a, b row) int {

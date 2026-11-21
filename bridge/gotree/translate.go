@@ -1138,7 +1138,8 @@ func (w *writer) numbered(root *contract.Node) []*contract.Node {
 		for _, target := range link.to {
 			ids = append(ids, target.ID)
 		}
-		link.from.Links = append(link.from.Links, contract.Link{Name: link.name, IDs: ids, List: link.list})
+		owned := link.from.Own()
+		owned.Links = append(owned.Links, contract.Link{Name: link.name, IDs: ids, List: link.list})
 	}
 
 	return order

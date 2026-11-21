@@ -217,6 +217,7 @@ func resolveTypes(file *File) error {
 		if node.Facts == nil {
 			node.Facts = none
 		}
+		node.Facts.settled()
 		if node.ResolvedType != nil {
 			if *node.ResolvedType < 0 || *node.ResolvedType >= len(file.Types) {
 				return fmt.Errorf("node %d resolves to type %d, and the file names %d", node.ID, *node.ResolvedType, len(file.Types))
@@ -264,6 +265,7 @@ func link(file *File) error {
 		if node.Facts == nil {
 			node.Facts = none
 		}
+		node.Facts.settled()
 		if node.Span.End > file.reaches {
 			file.reaches = node.Span.End
 		}

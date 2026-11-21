@@ -911,6 +911,7 @@ final class Translator
             $expression instanceof Expr\BinaryOp\BooleanAnd, $expression instanceof Expr\BinaryOp\LogicalAnd => $this->owning('logical', $expression, ['left' => $this->expression($expression->left), 'right' => $this->expression($expression->right)], ['operator' => 'and']),
             $expression instanceof Expr\BinaryOp\BooleanOr, $expression instanceof Expr\BinaryOp\LogicalOr => $this->owning('logical', $expression, ['left' => $this->expression($expression->left), 'right' => $this->expression($expression->right)], ['operator' => 'or']),
             $expression instanceof Expr\BinaryOp && isset(self::COMPARISONS[$expression->getType()]) => $this->comparison($expression),
+            $expression instanceof Expr\BinaryOp && $expression->getType() === 'Expr_BinaryOp_Pipe' => $this->pipe($expression),
             $expression instanceof Expr\BinaryOp => $this->owning('binary', $expression, ['left' => $this->expression($expression->left), 'right' => $this->expression($expression->right)],
                 ['operator' => self::BINARIES[substr($expression->getType(), strlen('Expr_BinaryOp_'))] ?? null]),
             $expression instanceof Expr\BooleanNot => $this->owning('unary', $expression, ['operand' => $this->expression($expression->expr)], ['operator' => 'not']),
@@ -1118,6 +1119,17 @@ final class Translator
     private function arguments(Expr\CallLike $call): array
     {
         return $call->isFirstClassCallable() ? [] : array_map($this->argument(...), $call->getArgs());
+    }
+
+    /**
+     * A pipe `value |> callable` calls the callable with the value as its one argument, so it is written as that call.
+     */
+    private function pipe(Expr\BinaryOp $pipe): TreeNode
+    {
+        $argument = $this->of('argument', $pipe->left, []);
+        $argument->parts = ['value' => $this->expression($pipe->left)];
+
+        return $this->owning('call', $pipe, ['callee' => $this->expression($pipe->right), 'arguments' => [$argument]]);
     }
 
     private function argument(Node\Arg $argument): TreeNode

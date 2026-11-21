@@ -20,6 +20,35 @@ var programRelations = map[string]func(*engine.Codebase) []value{
 	"divergentTwins": twinRecords,
 }
 
+// builtPerPart are the program relations a part of the codebase in fewer languages builds for itself: a twin row pairs
+// functions of several files, and a file row's order counts the part's own files.
+var builtPerPart = map[string]bool{"divergentTwins": true, "files": true}
+
+// programRows is a program relation's rows. A row of any other relation describes one site, so they are built once on the
+// whole codebase and a part in fewer languages reads the rows of its own files.
+func programRows(codebase *engine.Codebase, name string, program func(*engine.Codebase) []value) []value {
+	whole := codebase.Whole()
+	if whole == codebase || builtPerPart[name] {
+		return engine.Analysis(codebase, "rule-relation-"+name, program)
+	}
+	every := engine.Analysis(whole, "rule-relation-"+name, program)
+
+	return engine.Analysis(codebase, "rule-relation-of-part-"+name, func(part *engine.Codebase) []value {
+		held := map[string]bool{}
+		for _, file := range part.Files() {
+			held[file.Path] = true
+		}
+		var rows []value
+		for _, each := range every {
+			if path, _ := read(each, "file").held.(string); held[path] {
+				rows = append(rows, each)
+			}
+		}
+
+		return rows
+	})
+}
+
 // programRelationNames are the program relations by name, in order, for a diagnostic.
 func programRelationNames() []string {
 	names := make([]string, 0, len(programRelations))

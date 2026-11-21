@@ -119,6 +119,8 @@ var operators = map[string]operator{
 	"flatten":         {operands: []valueType{list}, gives: list, says: "the items of a list of lists, as one list"},
 	"reads":           {operands: []valueType{text, text}, gives: truth, says: "whether a name or text reads as the judgement named: third-person, question, bare-state, bare-verb, relational-compound, history, strawman, fixture-marker, non-entity (a word that names no thing of its own)"},
 	"startsWith":      {operands: []valueType{text, text}, gives: truth, says: "whether a text begins with another"},
+	"hasStartingWith": {operands: []valueType{list, text}, gives: truth, says: "whether a list holds a text that begins with the one given"},
+	"prefixes":        {operands: []valueType{text, text}, gives: list, says: "each part of a text that ends before one of its separators, shortest first: a.b.c with . reads a and a.b"},
 	"keys":            {operands: []valueType{anyValue}, gives: list, says: "the field names of a record, such as a map parameter, sorted"},
 	"get":             {operands: []valueType{anyValue, text}, gives: anyValue, says: "a record's field by its name; none when it has no such field"},
 	"withinModule":    {operands: []valueType{text, text}, gives: truth, says: "whether a module is the one named or inside it, whatever separator the language spells modules with"},

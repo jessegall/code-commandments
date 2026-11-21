@@ -250,7 +250,8 @@ ordered list of zero or more), its links, its facts, and when its parts are eval
 - **`call`**: `callee` (the expression called: a `reference`, or an `access` for a method), `typeArguments[]`,
   `arguments[]`. Link `receiver?` (the `access`'s subject, for a method call). Facts `nullConditional`
   (`?->`, `?.()`), `target`. A language construct that behaves as a function (`isset`, `empty`, `echo`,
-  `print`, `unset`) is a call whose callee refers to the language's own symbol for it.
+  `print`, `unset`) is a call whose callee refers to the language's own symbol for it. PHP's pipe
+  `value |> callable` is the call `callable(value)`: the callable its callee, the value its one argument.
 - **`construction`**: `type?` (the type written after `new`, or an anonymous class's `type`), `callee?` (a
   call of a class: Python `Money(...)`, which the compiler resolves to a construction), `typeArguments[]`,
   `arguments[]`, `initializer?` (a C# object or collection initializer, a `collection`). Fact `target`.

@@ -13,7 +13,32 @@ const commentSource = "comment"
 
 // commentsOf is every comment run of the codebase as the record a rule reads: its prose, its form, the node it
 // documents and that node's own words, whether its references dangle, and the node a finding about it reports at.
+// A part of the codebase in fewer languages reads the whole's records of its own files, so the records are built once
+// whatever languages the rules asking for them judge.
 func commentsOf(codebase *engine.Codebase) []record {
+	whole := codebase.Whole()
+	every := everyComment(whole)
+	if whole == codebase {
+		return every
+	}
+
+	return engine.Analysis(codebase, "rule-comments-of-part", func(part *engine.Codebase) []record {
+		held := map[*engine.File]bool{}
+		for _, file := range part.Files() {
+			held[file] = true
+		}
+		var comments []record
+		for _, comment := range every {
+			if located, _ := nodeOf(comment["location"]); held[located.Source()] {
+				comments = append(comments, comment)
+			}
+		}
+
+		return comments
+	})
+}
+
+func everyComment(codebase *engine.Codebase) []record {
 	return engine.Analysis(codebase, "rule-comments", func(codebase *engine.Codebase) []record {
 		runs := codebase.CommentRuns()
 		docs := map[engine.Match]int{}

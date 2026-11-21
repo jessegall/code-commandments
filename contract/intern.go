@@ -1,6 +1,7 @@
 package contract
 
 import (
+	"encoding/json"
 	"fmt"
 	"strconv"
 	"strings"
@@ -12,10 +13,11 @@ type interned struct {
 	lists   map[string][]string
 	types   map[string]*Type
 	targets map[string]*Target
+	facts   map[string]*Facts
 }
 
 func newInterned() *interned {
-	return &interned{strings: map[string]string{}, lists: map[string][]string{}, types: map[string]*Type{}, targets: map[string]*Target{}}
+	return &interned{strings: map[string]string{}, lists: map[string][]string{}, types: map[string]*Type{}, targets: map[string]*Target{}, facts: map[string]*Facts{}}
 }
 
 func (in *interned) file(file *File) {
@@ -55,6 +57,24 @@ func (in *interned) node(node *Node) {
 	facts.Mode = in.string(facts.Mode)
 	facts.Passing = in.string(facts.Passing)
 	facts.Tag = in.string(facts.Tag)
+	node.Facts = in.shared(facts)
+}
+
+// shared is one copy of facts every node that reads alike holds: most nodes carry only a form, a name or a symbol
+// they share with many others.
+func (in *interned) shared(facts *Facts) *Facts {
+	written, err := json.Marshal(facts)
+	if err != nil {
+		return facts
+	}
+	key := string(written)
+	if held, ok := in.facts[key]; ok {
+		return held
+	}
+	facts.shared = true
+	in.facts[key] = facts
+
+	return facts
 }
 
 func (in *interned) string(text string) string {

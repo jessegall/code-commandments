@@ -158,6 +158,7 @@ does not — which is how a `where` says what only a `reject` could.
 | `hasEffect` | node, text | truth | whether the library a call's resolved target belongs to states the effect named for it, at the version the project's lock file holds; unknown when the target or the version is. The effects are those the package files under rules/packages state: executes-query, database-read, deferred-query, mutates-receiver, iterates-receiver, builds-mutable, fresh-every-call, live-view, tests-membership, decodes-untyped, cast-result-type, blocks-thread, blocks-on-task, completed-task and runs-on-thread |
 | `hasField` | value, text | truth | whether a type has the field named |
 | `hasRow` | text, value | truth | whether one of the find's relations holds a row whose fields equal a record's |
+| `hasStartingWith` | list, text | truth | whether a list holds a text that begins with the one given |
 | `height` | node | number | how many nodes lie on the longest path down from the node to a leaf, the node included |
 | `identity` | text | text | the type a library names by the identity given, such as "option"; unknown when no library names it |
 | `in` | value, value, … | truth | whether the first value equals any of the values written after it; for a list held in a value, use has |
@@ -225,6 +226,7 @@ does not — which is how a `where` says what only a `reject` could.
 | `position` | node | number | the node's place among the nodes in the same role of its parent, counted from 0 |
 | `possible` | truth | truth | true unless the truth is proven false: unknown reads as true, the opposite of proven |
 | `precedes` | node, node | truth | whether on some path the first node runs before the second: written before it and not in another arm of one choice, or both inside one loop; unknown for nodes of two functions |
+| `prefixes` | text, text | list | each part of a text that ends before one of its separators, shortest first: a.b.c with . reads a and a.b |
 | `previous` | node | node | the node right before the node in the same role of its parent; none at the start |
 | `programEnums` |  | list | the case values of every enum the program declares, one list per enum of two or more cases |
 | `programTexts` |  | list | the value of every string literal the program writes, once each |

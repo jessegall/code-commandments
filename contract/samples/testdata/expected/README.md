@@ -68,6 +68,7 @@ validates against `contract/tree.schema.json` and that every span points into it
 | `handler-single-exit` | 30 | php | the story is PHP's |
 | `go-error-guards` | 31 | go | the story is Go's error guard |
 | `log-then-fallback` | 32 | python, typescript | the story holds in every language with a handler; these two show it |
+| `pipe-call` | 33 | php | only PHP writes a pipe `value \|> callable`, which is the call `callable(value)` |
 | `selectors` | section 19, selectors | php, python, csharp, typescript, go, vue | see below |
 | `flags` | section 19, flags | php, python, csharp, typescript, go, vue | see below |
 | `parse-failure` | unknown evidence | python | a file no parser could read, so mypy checks nothing (its resolver did not run) |

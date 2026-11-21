@@ -51,12 +51,9 @@ func nodeOnTheWire(node *Node, named map[*Type]int, types *[]*Type) *Node {
 			named[wire.Resolved] = index
 			*types = append(*types, wire.Resolved)
 		}
-		facts := Facts{}
-		if node.Facts != nil {
-			facts = *node.Facts
-		}
+		facts := node.Facts.copied()
 		facts.ResolvedType = &index
-		wire.Facts = &facts
+		wire.Facts = facts
 		wire.Resolved = nil
 	}
 	if wire.Facts == none {

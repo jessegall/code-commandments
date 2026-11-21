@@ -178,6 +178,7 @@ func factsOf(node *contract.Node) map[string]any {
 	}
 	json.Unmarshal(raw, &held)
 	delete(held, "resolvedType")
+	delete(held, "links")
 	for name, value := range defaults {
 		if held[name] == value {
 			delete(held, name)

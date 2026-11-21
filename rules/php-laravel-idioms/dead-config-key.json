@@ -36,33 +36,33 @@
       },
       {
         "reject": [
-          "some",
-          "$texts",
-          "t",
+          "or",
           [
-            "or",
+            "has",
+            "$texts",
+            "$key"
+          ],
+          [
+            "hasStartingWith",
+            "$texts",
             [
-              "=",
-              "$t",
-              "$key"
-            ],
-            [
-              "startsWith",
-              "$t",
-              [
-                "concat",
-                "$key",
-                "."
-              ]
-            ],
-            [
-              "startsWith",
+              "concat",
               "$key",
-              [
-                "concat",
-                "$t",
-                "."
-              ]
+              "."
+            ]
+          ],
+          [
+            "some",
+            [
+              "prefixes",
+              "$key",
+              "."
+            ],
+            "p",
+            [
+              "has",
+              "$texts",
+              "$p"
             ]
           ]
         ]

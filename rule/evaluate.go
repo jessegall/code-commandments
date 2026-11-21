@@ -413,6 +413,37 @@ func (e evaluation) apply(expression Expr, bound bindings) value {
 		}
 
 		return truthValue(engine.TruthOf(judged(text)))
+	case "hasStartingWith":
+		items, isList := listOf(operand(0))
+		part, isPart := operand(1).held.(string)
+		if !isList || !operand(1).known || !isPart {
+			return unknown
+		}
+		if index := e.textIndexOf(items); index != nil {
+			return truthValue(engine.TruthOf(index.holdsStartingWith(part)))
+		}
+		result := engine.False
+		for _, item := range items {
+			written, isText := item.held.(string)
+			if !item.known || !isText {
+				result = result.Or(engine.Unknown)
+
+				continue
+			}
+			if strings.HasPrefix(written, part) {
+				return truthValue(engine.True)
+			}
+		}
+
+		return truthValue(result)
+	case "prefixes":
+		text, isText := operand(0).held.(string)
+		separator, isSeparator := operand(1).held.(string)
+		if !operand(0).known || !operand(1).known || !isText || !isSeparator || separator == "" {
+			return unknown
+		}
+
+		return known(prefixesOf(text, separator))
 	case "startsWith":
 		text, isText := operand(0).held.(string)
 		part, isPart := operand(1).held.(string)
@@ -519,6 +550,11 @@ func (e evaluation) apply(expression Expr, bound bindings) value {
 		items, isList := listOf(operand(0))
 		if !isList {
 			return unknown
+		}
+		if written, isText := operand(1).held.(string); isText && operand(1).known {
+			if index := e.textIndexOf(items); index != nil {
+				return truthValue(engine.TruthOf(index.holds(written)))
+			}
 		}
 		result := engine.False
 		for _, item := range items {
