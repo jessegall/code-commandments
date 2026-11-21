@@ -281,10 +281,6 @@ type documentableOf struct {
 }
 
 func documentable(match Match) bool {
-	if read := match.grammar().Documentable; read != nil {
-		return read(match)
-	}
-
 	if match.Is("declaration") && !slices.Contains(undocumented, match.Kind()) {
 		return true
 	}

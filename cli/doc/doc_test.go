@@ -2,9 +2,10 @@ package doc
 
 import (
 	"errors"
-	"github.com/jessegall/code-commandments/cli/block"
 	"os"
 	"testing"
+
+	"github.com/jessegall/code-commandments/cli/block"
 
 	"github.com/jessegall/code-commandments/cli/commands"
 )

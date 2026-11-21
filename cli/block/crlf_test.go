@@ -1,8 +1,9 @@
 package block
 
-import "strings"
-
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 func TestABlockIsFoundInADocumentWrittenWithCarriageReturns(t *testing.T) {
 	document := "# Ours\r\n\r\nKeep this.\r\n\r\n" + Begin("test", "run it") + "\r\nold\r\n" + End("test") + "\r\n"

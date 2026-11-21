@@ -3,9 +3,10 @@ package config
 import (
 	"errors"
 	"fmt"
-	"github.com/jessegall/code-commandments/cli/binary"
 	"strconv"
 	"strings"
+
+	"github.com/jessegall/code-commandments/cli/binary"
 
 	"github.com/jessegall/code-commandments/bridge"
 	"github.com/jessegall/code-commandments/cli"

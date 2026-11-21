@@ -10,9 +10,7 @@ func (m Match) Ancestors() []Match {
 }
 
 func (m Match) IsContinuation() bool {
-	read := m.grammar().Continues
-
-	return read != nil && m.node != nil && read(m)
+	return false
 }
 
 func (m Match) Siblings() []Match {

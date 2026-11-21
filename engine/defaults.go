@@ -21,25 +21,7 @@ func (m Match) HasFieldBlankReplacement(name string) bool {
 }
 
 func fieldsWhoseBlankIsReplaced(codebase *Codebase) map[blankField]bool {
-	return Analysis(codebase, "fields-whose-blank-is-replaced", func(codebase *Codebase) map[blankField]bool {
-		fields := map[blankField]bool{}
-		for _, read := range codebase.WhereIs(MemberAccess).Get() {
-			replacement := read.grammar().BlankReplacement
-			if replacement == nil {
-				continue
-			}
-			grouped := read.Grouped()
-			subject, fallback := replacement(grouped.Parent())
-			if subject.node != grouped.node || !fallback.Exists() || fallback.IsBlankString() || subject.SameSyntax(fallback) {
-				continue
-			}
-			owner := read.Declaring().Identity()
-			if owner != "" {
-				fields[blankField{owner, read.NameRead()}] = true
-			}
-		}
-		return fields
-	})
+	return nil
 }
 
 func (m Match) IsEmptyScalar() bool {
@@ -61,26 +43,13 @@ func (m Match) IsEmptyScalar() bool {
 }
 
 func (m Match) IsConditionalSpread() bool {
-	grammar := m.grammar()
-	if grammar.ConditionalSpread != nil {
-		return grammar.ConditionalSpread(m)
-	}
-	if grammar.Spreads == nil || grammar.ConditionalArms == nil || !grammar.Spreads(m.Grouped().Parent()) {
-		return false
-	}
-	one, other := grammar.ConditionalArms(m)
-	if one.IsEmptyCollection() {
-		one, other = other, one
-	}
-	return other.IsEmptyCollection() && !one.IsEmptyCollection() && (one.IsLiteralCollection() || one.ElementType() != nil)
+	return false
 }
 
 func (m Match) IsLiteralCollection() bool {
-	read := m.grammar().LiteralCollection
-	return read != nil && read(m)
+	return false
 }
 
 func (m Match) FillsDataWithPlaceholder() bool {
-	read := m.grammar().PlaceholderData
-	return read != nil && read(m)
+	return false
 }

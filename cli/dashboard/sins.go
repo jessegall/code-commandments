@@ -3,15 +3,16 @@ package dashboard
 
 import (
 	"encoding/json"
-	"github.com/jessegall/code-commandments/cli/binary"
-	"github.com/jessegall/code-commandments/cli/jsonfile"
-	"github.com/jessegall/code-commandments/cli/reported"
-	"github.com/jessegall/code-commandments/rules"
 	"os"
 	"path/filepath"
 	"sort"
 	"strconv"
 	"strings"
+
+	"github.com/jessegall/code-commandments/cli/binary"
+	"github.com/jessegall/code-commandments/cli/jsonfile"
+	"github.com/jessegall/code-commandments/cli/reported"
+	"github.com/jessegall/code-commandments/rules"
 
 	"github.com/jessegall/code-commandments/cli/atomic"
 	"github.com/jessegall/code-commandments/cli/source"

@@ -11,17 +11,3 @@ type contribution struct {
 	analysis any
 	file     any
 }
-
-func Contribution[T any](key any, file *File, build func(*File) T) T {
-	at := contribution{analysis: key, file: file.File}
-
-	if held, ok := perFile.Load(at); ok {
-		return held.(T)
-	}
-
-	CountedContribution()
-
-	held, _ := perFile.LoadOrStore(at, build(file))
-
-	return held.(T)
-}

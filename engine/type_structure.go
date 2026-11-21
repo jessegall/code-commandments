@@ -6,27 +6,12 @@ func (m Match) Methods() []Match {
 	if !m.Is(TypeDeclaration) {
 		return nil
 	}
-	if m.grammar().MethodOwner == nil {
-		return slices.DeleteFunc(m.Members(), func(member Match) bool { return !member.Is(Function) })
-	}
-	return methodsByOwner(m.Codebase().Of(m.Source().Language()))[m.Identity()]
+	return slices.DeleteFunc(m.Members(), func(member Match) bool { return !member.Is(Function) })
 }
 
 func (m Match) DeclaringType() Match {
 	if owner := m.EnclosingType(); owner.Exists() {
 		return owner
-	}
-	method := m
-	if !method.Is(Function) {
-		method = m.EnclosingFunction()
-	}
-	if method.grammar().MethodOwner == nil {
-		return Match{}
-	}
-	for _, declaration := range method.Codebase().Declarations(method.methodOwner()) {
-		if declaration.Is(TypeDeclaration) {
-			return declaration
-		}
 	}
 	return Match{}
 }
@@ -127,11 +112,6 @@ func (m Match) ReadsUndeclaredMember() bool {
 	if !m.Is(MemberAccess) && !m.Is(Call) {
 		return false
 	}
-	if lookup := m.grammar().MemberLookup; lookup != nil {
-		symbol, grants := lookup(m)
-		types, known := m.Types()
-		return known && grants != nil && TypeLacksMember(types, symbol, grants)
-	}
 	if !m.Is(MemberAccess) || m.MemberName() == "" || m.Declared().Exists() {
 		return false
 	}
@@ -144,9 +124,6 @@ func (m Match) ReadsUndeclaredMember() bool {
 	name := m.MemberName()
 	return TypeLacksMember(types, declaration.Identity(), func(owner string) bool {
 		declared, _ := types.Declaration(owner)
-		if dynamic := declared.grammar().DynamicMembers; dynamic != nil && dynamic(declared) {
-			return true
-		}
 		if slices.ContainsFunc(declared.Members(), func(member Match) bool { return member.DeclaredName() == name }) {
 			return true
 		}
@@ -158,9 +135,6 @@ func (m Match) ReadsUndeclaredMember() bool {
 }
 
 func (m Match) isPrivateMember() bool {
-	if read := m.grammar().PrivateMember; read != nil {
-		return read(m)
-	}
 	return m.HasModifier("private")
 }
 
@@ -171,23 +145,13 @@ func (m Match) IsUnusedPrivateMember() bool {
 	if m.Is(Function) {
 		return m.methodOwner() != "" && len(m.Referrers()) == 0 && len(m.Readers()) == 0
 	}
-	if read := m.grammar().Collaborator; read != nil && read(m) {
-		return false
-	}
 	return m.IsUnreadMember()
 }
 
 func (m Match) IsUnreadCollaborator() bool {
-	read := m.grammar().Collaborator
-	return read != nil && read(m) && m.IsUnreadMember()
+	return false
 }
 
 func (m Match) IsStateFreeGetter() bool {
-	read := m.grammar().Getter
-	if read == nil || !read(m) || m.IsOverride() {
-		return false
-	}
-	return !slices.ContainsFunc(m.OwnDescendants(), func(node Match) bool {
-		return node.isSelfReceiver() || fieldOnSelf(node).Exists()
-	})
+	return false
 }

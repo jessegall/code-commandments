@@ -6,7 +6,7 @@ import (
 )
 
 func (m Match) Arguments() []Match {
-	return m.listed(m.grammar().Arguments)
+	return nil
 }
 
 func (m Match) InheritedMembers() []Match {
@@ -30,7 +30,7 @@ func (m Match) Members() []Match {
 		return nil
 	}
 
-	return m.listed(m.grammar().Members)
+	return nil
 }
 
 func (m Match) Parameters() []Match {
@@ -38,7 +38,7 @@ func (m Match) Parameters() []Match {
 		return nil
 	}
 
-	return m.listed(m.grammar().Parameters)
+	return nil
 }
 
 func (m Match) DeclaringFunction() Match {

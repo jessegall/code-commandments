@@ -1,10 +1,9 @@
-// Package namespaces reads which namespace of a PHP codebase references which: the graph the dependency-direction rules judge, and the cycles a new reference would close.
+// Package namespaces reads which namespace of a codebase references which, from every reference the compiler resolved
+// to a declared type: the graph the layers command proposes a layer stack from.
 package namespaces
 
 import (
 	"github.com/jessegall/code-commandments/engine"
-	"github.com/jessegall/code-commandments/engine/php"
-	"github.com/jessegall/code-commandments/engine/php/packages"
 )
 
 // NamespaceGraph is which namespace references which, read from every class reference to a declared class.
@@ -19,18 +18,12 @@ type NamespaceGraph struct {
 
 var graphs = engine.Memoised(func(codebase *engine.Codebase) *NamespaceGraph {
 	graph := &NamespaceGraph{references: map[string]map[string]bool{}, arrows: map[string]map[string][]engine.Match{}, targets: map[string][]string{}}
-	program := php.ProgramOf(codebase)
-	for _, reference := range codebase.Where(engine.As(php.Node.IsClassReference)).Get() {
-		node := php.Node{Match: reference}
-		from, target := node.NamespaceName(), reference.Name()
-		if _, declared := program.Declaration(target); from == "" || !declared {
+	for _, reference := range codebase.WhereKind("reference", "type-expression").Get() {
+		from, to := reference.Namespace(), declaredNamespace(codebase, reference.Refers())
+		if from == "" || to == "" {
 			continue
 		}
-		to := php.NamespaceOf(target)
 		graph.node(from)
-		if to == "" {
-			continue
-		}
 		graph.node(to)
 		if to != from {
 			if graph.references[from] == nil {
@@ -38,7 +31,7 @@ var graphs = engine.Memoised(func(codebase *engine.Codebase) *NamespaceGraph {
 			}
 			graph.references[from][to] = true
 		}
-		if php.Within(to, from) || php.Within(from, to) || declaresAnAssociation(codebase, node) {
+		if engine.Within(to, from) || engine.Within(from, to) {
 			continue
 		}
 		if graph.arrows[from] == nil {
@@ -54,29 +47,22 @@ var graphs = engine.Memoised(func(codebase *engine.Codebase) *NamespaceGraph {
 	return graph
 })
 
-func Of(codebase *engine.Codebase) *NamespaceGraph {
-	return graphs.Of(codebase)
-}
-
-func (g *NamespaceGraph) WouldCloseACycle(referrer, target string) bool {
-	from, to := php.NamespaceOf(referrer), php.NamespaceOf(target)
-
-	return from != "" && to != "" && from != to && g.references[to][from]
-}
-
-func (g *NamespaceGraph) WouldCoupleIndependent(caller, referrer, target string) bool {
-	at, from, to := php.NamespaceOf(caller), php.NamespaceOf(referrer), php.NamespaceOf(target)
-	if at == "" || from == "" || to == "" || at == from || at == to || from == to {
-		return false
+// declaredNamespace is the namespace of the type a symbol names when the codebase declares one, else none.
+func declaredNamespace(codebase *engine.Codebase, symbol string) string {
+	if symbol == "" {
+		return ""
+	}
+	for _, declared := range codebase.Declarations(symbol) {
+		if declared.Is(engine.TypeDeclaration) {
+			return declared.Namespace()
+		}
 	}
 
-	return !g.references[from][to] && !g.references[to][from] && g.references[at][from] && g.references[at][to]
+	return ""
 }
 
-func declaresAnAssociation(codebase *engine.Codebase, reference php.Node) bool {
-	return packages.Excuses(codebase, packages.Association, "", reference.ArgumentOfCall()) ||
-		packages.ExcusesAttribute(codebase, packages.Association, reference.EnclosingAttributeName()) ||
-		packages.ExcusesReference(packages.Association, reference.Match)
+func Of(codebase *engine.Codebase) *NamespaceGraph {
+	return graphs.Of(codebase)
 }
 
 func (g *NamespaceGraph) ArrowsClosingAMutualPair() []engine.Match {

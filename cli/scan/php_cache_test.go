@@ -3,13 +3,13 @@ package scan
 import (
 	"path/filepath"
 	"slices"
+	"strings"
 	"testing"
 
 	"github.com/jessegall/code-commandments/cache"
 	"github.com/jessegall/code-commandments/cli/source"
 	"github.com/jessegall/code-commandments/contract"
 	"github.com/jessegall/code-commandments/engine/php"
-	"github.com/jessegall/code-commandments/engine/php/laravel"
 )
 
 // PHP reads through the one cache like every language: a second run of unchanged files asks the bridge for nothing,
@@ -87,11 +87,18 @@ func TestFortifyRouteContextSharesTheCacheAcrossCheckouts(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		if !laravel.RouteNamesOf(codebase).IsRegistered("login.store") {
-			t.Error("the installed route was absent from the request context")
+		installed := 0
+		for _, call := range codebase.WhereKind("call").Get() {
+			fromPackage := strings.HasSuffix(filepath.ToSlash(call.File()), "vendor/laravel/fortify/routes/routes.php")
+			if fromPackage {
+				installed++
+			}
+			if call.IsInDependency() != fromPackage {
+				t.Errorf("only the installed route file is context, not judged: %s", call.Location())
+			}
 		}
-		if calls := codebase.WhereKind("Expr_StaticCall").Get(); len(calls) != 1 || calls[0].IsInDependency() {
-			t.Errorf("expected only the project route to be judgeable: %v", calls)
+		if installed == 0 {
+			t.Error("the installed route was absent from the request context")
 		}
 	}
 

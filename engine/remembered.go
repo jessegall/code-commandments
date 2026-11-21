@@ -54,17 +54,6 @@ func NewMemory(now func() time.Time) *Memory {
 	return &Memory{now: now, files: map[uint64]*Verdict{}, swept: now()}
 }
 
-func Remembering(now func() time.Time) *Remembered {
-	return NewMemory(now).Rule(0)
-}
-
-func RememberingFrom(now func() time.Time, verdicts []Verdict) *Remembered {
-	memory := NewMemory(now)
-	memory.Restore(verdicts)
-
-	return memory.Rule(0)
-}
-
 func (m *Memory) Rule(number int) *Remembered {
 	return &Remembered{m, number}
 }
@@ -198,7 +187,6 @@ func (r *Remembered) finding(codebase *Codebase, find func(*Codebase) []Match, p
 		return answered
 	}
 
-	codebase.FilledFor(slices.Collect(maps.Keys(asked)))
 	matches := find(codebase.Reporting(slices.Collect(maps.Keys(asked))...))
 	r.remember(asked, matches)
 	answered = append(answered, matches...)
@@ -654,4 +642,15 @@ func combined(prints ...uint64) uint64 {
 	sum := sha256.Sum256(written)
 
 	return binary.LittleEndian.Uint64(sum[:8])
+}
+
+func Remembering(now func() time.Time) *Remembered {
+	return NewMemory(now).Rule(0)
+}
+
+func RememberingFrom(now func() time.Time, verdicts []Verdict) *Remembered {
+	memory := NewMemory(now)
+	memory.Restore(verdicts)
+
+	return memory.Rule(0)
 }

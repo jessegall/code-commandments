@@ -6,7 +6,6 @@ import (
 	"github.com/jessegall/code-commandments/catalog"
 	"github.com/jessegall/code-commandments/detectors"
 	"github.com/jessegall/code-commandments/engine"
-	"github.com/jessegall/code-commandments/engine/php"
 	"github.com/jessegall/code-commandments/engine/php/shop"
 	"github.com/jessegall/code-commandments/fixture"
 	"github.com/jessegall/code-commandments/fixture/fixturetest"
@@ -36,8 +35,8 @@ func (everyFileAgainstEveryOther) Sin() sins.Sin { return backendsins.ArrayBag{}
 func (everyFileAgainstEveryOther) Find(codebase *engine.Codebase) []engine.Match {
 	var found []engine.Match
 
-	for _, class := range php.In(codebase).WhereKind("Stmt_Class").Get() {
-		for _, other := range php.In(codebase).WhereKind("Stmt_Class").Get() {
+	for _, class := range codebase.WhereKind("type").Get() {
+		for _, other := range codebase.WhereKind("type").Get() {
 			if class.Name() == other.Name() && class.File() != other.File() {
 				found = append(found, class)
 			}

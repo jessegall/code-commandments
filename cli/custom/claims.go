@@ -2,11 +2,12 @@ package custom
 
 import (
 	"fmt"
-	"github.com/jessegall/code-commandments/rules"
 	"os"
 	"regexp"
 	"slices"
 	"strings"
+
+	"github.com/jessegall/code-commandments/rules"
 
 	"github.com/jessegall/code-commandments/catalog"
 	"github.com/jessegall/code-commandments/skill"

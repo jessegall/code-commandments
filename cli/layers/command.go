@@ -2,18 +2,19 @@
 package layers
 
 import (
-	"github.com/jessegall/code-commandments/cli/binary"
 	"os"
 	"slices"
 	"strconv"
 	"strings"
+
+	"github.com/jessegall/code-commandments/cli/binary"
 
 	"github.com/jessegall/code-commandments/cli"
 	"github.com/jessegall/code-commandments/cli/config"
 	"github.com/jessegall/code-commandments/cli/help"
 	"github.com/jessegall/code-commandments/cli/scan"
 	"github.com/jessegall/code-commandments/cli/source"
-	"github.com/jessegall/code-commandments/engine/php/namespaces"
+	"github.com/jessegall/code-commandments/engine/namespaces"
 )
 
 // Command is `layers`.

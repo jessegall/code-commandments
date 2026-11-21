@@ -35,10 +35,7 @@ func (c *Codebase) IsLibraryNamespace(language contract.Language, name string) b
 }
 
 func qualifiedNameKey(language contract.Language, name string) string {
-	if key := grammarOf(language).QualifiedNameKey; key != nil {
-		return key(name)
-	}
-	return name
+	return contract.QualifiedNameKey(language, name)
 }
 
 type libraryLanguage struct{ language contract.Language }
@@ -46,15 +43,15 @@ type libraryLanguage struct{ language contract.Language }
 func (c *Codebase) librarySources(language contract.Language) librarySources {
 	return Analysis(c, libraryLanguage{language}, func(c *Codebase) librarySources {
 		sources := librarySources{types: map[string]sourceOrigin{}, namespaces: map[string]sourceOrigin{}}
-		read := grammarOf(language)
+		separator := contract.NamespaceSeparator(language)
 		add := func(name, namespace string, origin sourceOrigin) {
 			sources.types[qualifiedNameKey(language, name)] |= origin
 			for namespace != "" {
 				sources.namespaces[qualifiedNameKey(language, namespace)] |= origin
-				if read.NamespaceSeparator == "" {
+				if separator == "" {
 					break
 				}
-				namespace = Before(namespace, read.NamespaceSeparator)
+				namespace = Before(namespace, separator)
 			}
 		}
 		for _, file := range c.files {
@@ -75,8 +72,8 @@ func (c *Codebase) librarySources(language contract.Language) librarySources {
 		}
 		for _, symbol := range outsideSymbols(c, language) {
 			namespace := ""
-			if read.NamespaceOf != nil {
-				namespace = read.NamespaceOf(symbol.Symbol)
+			if separator != "" {
+				namespace = Before(symbol.Symbol, separator)
 			}
 			add(symbol.Symbol, namespace, outsideOrigin(symbol))
 		}

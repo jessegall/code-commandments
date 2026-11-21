@@ -3,9 +3,10 @@ package config
 import (
 	"bytes"
 	"encoding/json"
-	"github.com/jessegall/code-commandments/rules"
 	"strconv"
 	"strings"
+
+	"github.com/jessegall/code-commandments/rules"
 
 	"github.com/jessegall/code-commandments/cache"
 	"github.com/jessegall/code-commandments/cli/binary"

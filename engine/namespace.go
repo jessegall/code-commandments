@@ -14,35 +14,9 @@ func (m Match) Namespace() string {
 		return m.file.Module
 	}
 
-	symbol := outermostSymbol(m)
-	if symbol == "" {
-		symbol = firstSymbolOf(m.Root())
-	}
-
-	read := m.grammar().NamespaceOf
-	if read == nil || symbol == "" {
-		return ""
-	}
-
-	return read(symbol)
-}
-
-func outermostSymbol(m Match) string {
-	symbol := ""
-
 	for current := m; current.Exists(); current = current.Parent() {
-		if (current.Is(TypeDeclaration) || current.Is(Function)) && current.node.Symbol != "" {
-			symbol = current.node.Symbol
-		}
-	}
-
-	return symbol
-}
-
-func firstSymbolOf(root Match) string {
-	for _, node := range root.Descendants() {
-		if (node.Is(TypeDeclaration) || node.Is(Function)) && node.node.Symbol != "" {
-			return node.node.Symbol
+		if current.Kind() == "module" {
+			return current.Name()
 		}
 	}
 
@@ -59,7 +33,7 @@ func Before(symbol, separator string) string {
 }
 
 func ModuleOf(language contract.Language, name string) string {
-	separator := grammarOf(language).NamespaceSeparator
+	separator := contract.NamespaceSeparator(language)
 	if separator == "" {
 		return name
 	}
@@ -69,4 +43,15 @@ func ModuleOf(language contract.Language, name string) string {
 	}
 
 	return segments[0] + separator + segments[1]
+}
+
+// Within is whether a namespace is the one named or nested inside it, whatever separator the language writes: `App\Ui`
+// within `App`, `shop.cart` within `shop`; every namespace is within the empty one.
+func Within(name, namespace string) bool {
+	name, namespace = strings.ToLower(strings.TrimLeft(name, `\`)), strings.ToLower(strings.Trim(namespace, `\`))
+	if namespace == "" || name == namespace {
+		return true
+	}
+
+	return strings.HasPrefix(name, namespace) && strings.ContainsRune(`\./:`, rune(name[len(namespace)]))
 }

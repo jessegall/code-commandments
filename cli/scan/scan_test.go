@@ -1,8 +1,8 @@
 package scan
 
 import (
-	"path/filepath"
 	"os/exec"
+	"path/filepath"
 	"slices"
 	"strings"
 	"testing"

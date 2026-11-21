@@ -31,10 +31,6 @@ func (p ResourcePopulation) HoldersOf(resource string) int {
 	return p.holders[resource]
 }
 
-func (p ResourcePopulation) WeightOf(resource string) float64 {
-	return math.Log(float64(max(2, len(p.reach))) / float64(max(1, p.HoldersOf(resource))))
-}
-
 func (p ResourcePopulation) RareOf(unit string, maxShare float64) []string {
 	ceiling := max(2, int(math.Ceil(maxShare*float64(len(p.reach)))))
 	var rare []string

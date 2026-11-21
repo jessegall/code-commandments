@@ -1,11 +1,5 @@
 package engine
 
-import (
-	"cmp"
-	"slices"
-	"strings"
-)
-
 // DependencyArrow is one reference from a part of a codebase to another, where it is written.
 type DependencyArrow struct {
 	At   Match
@@ -16,50 +10,6 @@ type DependencyArrow struct {
 // DependencyArrows is the references between the parts of a codebase, in the order the files are written: which part uses which, and the pairs of parts that use each other.
 type DependencyArrows []DependencyArrow
 
-func (a DependencyArrows) LayerViolations(stack LayerStack) []Match {
-	if stack.IsEmpty() {
-		return nil
-	}
-	var findings []Match
-	for _, arrow := range a {
-		layer := stack.LayerOf(arrow.From)
-		if layer != "" && stack.LayerOf(arrow.To) != "" && !stack.MayReference(layer, arrow.To) {
-			findings = append(findings, arrow.At)
-		}
-	}
-	return findings
-}
-
-func Nests(outer, inner, separator string) bool {
-	return strings.HasPrefix(inner, outer+separator)
-}
-
-func (a DependencyArrows) Independent(separator string) DependencyArrows {
-	var independent DependencyArrows
-	for _, arrow := range a {
-		if !Nests(arrow.From, arrow.To, separator) && !Nests(arrow.To, arrow.From, separator) {
-			independent = append(independent, arrow)
-		}
-	}
-
-	return independent
-}
-
-func (a DependencyArrows) Has(from, to string) bool {
-	return slices.ContainsFunc(a, func(arrow DependencyArrow) bool { return arrow.From == from && arrow.To == to })
-}
-
-func (a DependencyArrows) References() map[string][]string {
-	references := map[string][]string{}
-	for _, arrow := range a {
-		if !slices.Contains(references[arrow.From], arrow.To) {
-			references[arrow.From] = append(references[arrow.From], arrow.To)
-		}
-	}
-
-	return references
-}
-
 // Pair is the two parts a reference joins: the part it is written in and the part it reaches.
 type Pair struct {
 	From string
@@ -68,32 +18,3 @@ type Pair struct {
 
 // ArrowCounts is references counted by the parts they join, without where they are written: the references of the parts of a program not held, beside the arrows of the part that is.
 type ArrowCounts map[Pair]int
-
-func (a DependencyArrows) ClosingAMutualPair() []Match {
-	return a.ClosingAMutualPairBeside(nil)
-}
-
-func (a DependencyArrows) ClosingAMutualPairBeside(elsewhere ArrowCounts) []Match {
-	type pair struct{ from, to string }
-	count := map[pair]int{}
-	for _, arrow := range a {
-		count[pair{arrow.From, arrow.To}]++
-	}
-	for held, references := range elsewhere {
-		count[pair{held.From, held.To}] += references
-	}
-	type place struct{ file, to string }
-	seen := map[place]bool{}
-	var closing []Match
-	for _, arrow := range a {
-		back := count[pair{arrow.To, arrow.From}]
-		thinner := cmp.Or(cmp.Compare(count[pair{arrow.From, arrow.To}], back), cmp.Compare(arrow.From, arrow.To)) <= 0
-		if back == 0 || !thinner || seen[place{arrow.At.File(), arrow.To}] {
-			continue
-		}
-		seen[place{arrow.At.File(), arrow.To}] = true
-		closing = append(closing, arrow.At)
-	}
-
-	return closing
-}

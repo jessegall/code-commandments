@@ -387,3 +387,23 @@ func PackageIdentityNamed(name string) (string, bool) {
 
 	return "", false
 }
+
+// ExemptionTag is one exemption a library registers: the tag a rule names, why it excuses, and the library.
+type ExemptionTag struct {
+	Package string
+	Tag     string
+	Why     string
+}
+
+// ExemptionTags are the exemptions every registered library states, by tag.
+func ExemptionTags() []ExemptionTag {
+	var tags []ExemptionTag
+	for _, facts := range registeredPackageFacts() {
+		for _, exemption := range facts.Exemptions {
+			tags = append(tags, ExemptionTag{facts.Package, exemption.Tag, exemption.Why})
+		}
+	}
+	slices.SortFunc(tags, func(a, b ExemptionTag) int { return strings.Compare(a.Tag+a.Package, b.Tag+b.Package) })
+
+	return tags
+}

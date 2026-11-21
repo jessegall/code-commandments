@@ -1,11 +1,12 @@
 package task
 
 import (
-	"github.com/jessegall/code-commandments/cli/binary"
 	"os"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/jessegall/code-commandments/cli/binary"
 
 	"github.com/jessegall/code-commandments/cli"
 	"github.com/jessegall/code-commandments/cli/help"

@@ -1,9 +1,6 @@
 package engine
 
 func (m Match) DefaultValue() Match {
-	if read := m.grammar().DefaultValue; read != nil {
-		return read(m)
-	}
 	return Match{}
 }
 

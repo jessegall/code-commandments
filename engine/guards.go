@@ -13,14 +13,7 @@ type Guard struct {
 	narrows     bool
 }
 
-func ReadGuard(fingerprint string, substantive, narrows bool) Guard {
-	return Guard{fingerprint: fingerprint, substantive: substantive, narrows: narrows}
-}
-
 func (m Match) Guard() Guard {
-	if read := m.grammar().Guard; read != nil {
-		return read(m)
-	}
 	if !m.isAnd() || m.Parent().isAnd() {
 		return Guard{}
 	}
@@ -101,7 +94,5 @@ func (guard Guard) Key() (string, bool) {
 }
 
 func (m Match) IsTypeTest() bool {
-	read := m.grammar().TypeTest
-
-	return read != nil && read(m)
+	return false
 }

@@ -95,12 +95,6 @@ func (m Match) Location() string {
 }
 
 func (m Match) Scope() string {
-	if m.file != nil {
-		if namer := spokenIn(m.file.Language()).namesScope; namer != nil {
-			return namer(m)
-		}
-	}
-
 	declaration, function := m.EnclosingType(), m.EnclosingFunction()
 	if m.Is(TypeDeclaration) {
 		declaration = m
@@ -207,26 +201,18 @@ func calleeOf(callee Match) string {
 }
 
 func (m Match) Receiver() Match {
-	if read := m.grammar().Receiver; read != nil {
-		return read(m)
-	}
-
 	return Match{}
 }
 
 func (m Match) Body() []Match {
-	return m.listed(m.grammar().Body)
+	return nil
 }
 
 func (m Match) Otherwise() []Match {
-	return m.listed(m.grammar().Otherwise)
+	return nil
 }
 
 func (m Match) Condition() Match {
-	if read := m.grammar().Condition; read != nil && m.node != nil {
-		return read(m)
-	}
-
 	return Match{}
 }
 
@@ -234,39 +220,24 @@ func (m Match) Computes() bool {
 	if m.Is(Assignment) || m.Is(Comparison) || m.Is(Conjunction) {
 		return true
 	}
-	if read := m.grammar().Computes; read != nil && m.node != nil {
-		return read(m)
-	}
 
 	return false
 }
 
 func (m Match) ElementName() string {
-	if read := m.grammar().ElementName; read != nil && m.node != nil {
-		return read(m)
-	}
-
 	return ""
 }
 
 func (m Match) ComparisonSubject() Match {
-	if read := m.grammar().ComparisonSubject; read != nil && m.node != nil {
-		return read(m)
-	}
-
 	return Match{}
 }
 
 func (m Match) Declares() bool {
-	read := m.grammar().Declares
-
-	return m.node != nil && read != nil && read(m)
+	return false
 }
 
 func (m Match) Binds() bool {
-	read := m.grammar().Binds
-
-	return m.node != nil && read != nil && read(m)
+	return false
 }
 
 func (m Match) Refers() string {
@@ -362,17 +333,12 @@ func (m Match) Name() string {
 }
 
 func (m Match) WritesAttribute(name string) bool {
-	read := m.grammar().WritesAttribute
-
-	return m.node != nil && read != nil && read(m, name)
+	return false
 }
 
 func (m Match) DeclaredName() string {
 	if name := m.Name(); name != "" || m.node == nil {
 		return name
-	}
-	if read := m.grammar().DeclaredName; read != nil {
-		return read(m)
 	}
 
 	return ""
@@ -654,20 +620,6 @@ func (m Match) Span() (Span, error) {
 	return Span{Path: m.file.Path, Source: source, Start: m.node.Span.Start, End: m.node.Span.End}, nil
 }
 
-func NameScopes(language contract.Language, namer func(Match) string) {
-	registers(language, func(row *spoken) { row.namesScope = namer })
-}
-
-func RunBodiesAs(language contract.Language, runs func(Match) bool) {
-	registers(language, func(row *spoken) { row.runsBody = runs })
-}
-
 func (m Match) RunsABody() bool {
-	if m.file != nil {
-		if runs := spokenIn(m.file.Language()).runsBody; runs != nil {
-			return runs(m)
-		}
-	}
-
 	return m.Is(Function)
 }

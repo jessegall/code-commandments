@@ -11,10 +11,7 @@ func (m Match) BodyShape() string {
 }
 
 func (m Match) hashBody(normalize bool) string {
-	rules := m.grammar().Hashing
-	if rules == nil {
-		return ""
-	}
+	rules := TreeHashing
 	body := m.copyBody()
 	if len(body) == 0 {
 		return ""
@@ -24,17 +21,10 @@ func (m Match) hashBody(normalize bool) string {
 }
 
 func (m Match) BodyWeight() int {
-	if rules := m.grammar().Hashing; rules != nil {
-		return SyntaxWeight(m.copyBody(), rules)
-	}
-
-	return 0
+	return SyntaxWeight(m.copyBody(), TreeHashing)
 }
 
 func (m Match) copyBody() []Match {
-	if read := m.grammar().CopyBody; read != nil {
-		return read(m)
-	}
 	if !m.Is(Function) {
 		return nil
 	}
@@ -49,22 +39,15 @@ type CopyExclusions struct {
 }
 
 func (m Match) ExcludesExactCopy() bool {
-	if read := m.grammar().CopyExclusions; read != nil {
-		return read(m).Exact
-	}
 	return m.IsConstructor() || m.IsSoleStatement()
 }
 
 func (m Match) ExcludesNearCopy() bool {
-	read := m.grammar().CopyExclusions
-
-	return read != nil && read(m).Near
+	return false
 }
 
 func (m Match) IsConstructor() bool {
-	read := m.grammar().IsConstructor
-
-	return read != nil && m.node != nil && read(m)
+	return false
 }
 
 func (m Match) IsSoleStatement() bool {

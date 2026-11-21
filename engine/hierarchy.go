@@ -9,24 +9,16 @@ import (
 
 // Extends is what a type declaration extends, as written: its bases, or what its language reads as them.
 func (m Match) Extends() []Match {
-	if read := m.grammar().Extends; read != nil {
-		return m.listed(read)
-	}
-
 	return m.ChildrenIn("bases")
 }
 
 // Implements is what a type declaration implements, as written: its interfaces, or what its language reads as them.
 func (m Match) Implements() []Match {
-	if read := m.grammar().Implements; read != nil {
-		return m.listed(read)
-	}
-
 	return m.ChildrenIn("interfaces")
 }
 
 func (m Match) Annotations() []Match {
-	return m.listed(m.grammar().Annotations)
+	return m.ChildrenIn("attributes")
 }
 
 // TypeKind is a type declaration's form: class, interface, trait, enum, struct, record or object.
@@ -62,9 +54,6 @@ func (m Match) IsAnnotated(want string) bool {
 
 func (m Match) Annotated(want string) Match {
 	names := []string{want}
-	if read := m.grammar().AnnotationNames; read != nil {
-		names = read(want)
-	}
 
 	for _, annotation := range m.Annotations() {
 		if annotation.writtenBy(names) {
@@ -163,10 +152,6 @@ func (m Match) Class() string {
 	if m.Is(TypeDeclaration) {
 		return m.Identity()
 	}
-	if read := m.grammar().ClassOf; read != nil {
-		return read(m)
-	}
-
 	return m.Refers()
 }
 
@@ -175,15 +160,11 @@ func (m Match) TypeName() string {
 		return ""
 	}
 
-	if read := m.grammar().TypeOf; read != nil {
-		return read(m)
-	}
-
 	return m.Class()
 }
 
 func (m Match) Traits() []Match {
-	return m.listed(m.grammar().Traits)
+	return m.ChildrenIn("mixins")
 }
 
 func (m Match) Lineage() []string {

@@ -10,7 +10,6 @@ import (
 	"github.com/jessegall/code-commandments/bridge"
 	"github.com/jessegall/code-commandments/bridge/bridgetest"
 	"github.com/jessegall/code-commandments/engine"
-	_ "github.com/jessegall/code-commandments/engine/python"
 )
 
 func FromSource(t testing.TB, sources map[string]string) *engine.Codebase {

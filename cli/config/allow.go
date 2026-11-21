@@ -93,7 +93,7 @@ func findContract(cwd, root, given string) (engine.Match, error) {
 }
 
 func oneContract(sources scan.Sources, given string, matches engine.Check) (engine.Match, error) {
-	codebase, err := sources.Unfilled()
+	codebase, err := sources.Load()
 	if err != nil {
 		return engine.Match{}, err
 	}

@@ -4,13 +4,14 @@ package scaffold
 import (
 	"bytes"
 	"encoding/json"
-	"github.com/jessegall/code-commandments/cli/atomic"
-	"github.com/jessegall/code-commandments/cli/binary"
-	"github.com/jessegall/code-commandments/rules"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
+
+	"github.com/jessegall/code-commandments/cli/atomic"
+	"github.com/jessegall/code-commandments/cli/binary"
+	"github.com/jessegall/code-commandments/rules"
 
 	"github.com/jessegall/code-commandments/cli"
 	"github.com/jessegall/code-commandments/cli/config"

@@ -4,13 +4,14 @@ package library
 import (
 	_ "embed"
 	"errors"
-	"github.com/jessegall/code-commandments/cli/source"
 	"io/fs"
 	"os"
 	"path"
 	"path/filepath"
 	"slices"
 	"strings"
+
+	"github.com/jessegall/code-commandments/cli/source"
 
 	"github.com/jessegall/code-commandments/cli/atomic"
 	"github.com/jessegall/code-commandments/cli/binary"

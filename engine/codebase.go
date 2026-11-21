@@ -27,70 +27,7 @@ type Codebase struct {
 	scanned   []string
 	project   string
 	reporting map[string]bool
-	fills     *deferredFill
 	whole     *Codebase
-}
-
-// deferredFill is the filling a codebase read for judging puts off until a rule is really asked: a run whose every answer is remembered never fills at all.
-type deferredFill struct {
-	mu     sync.Mutex
-	root   *Codebase
-	whole  bool
-	filled map[string]bool
-}
-
-func (d *deferredFill) fillAll() {
-	d.mu.Lock()
-	defer d.mu.Unlock()
-
-	if d.whole {
-		return
-	}
-	d.whole = true
-
-	if len(d.filled) == 0 {
-		d.root.fill(nil)
-
-		return
-	}
-
-	every := make([]string, 0, len(d.root.files))
-	for _, file := range d.root.files {
-		every = append(every, file.Path)
-	}
-	d.fill(every)
-}
-
-func (d *deferredFill) fillFor(paths []string) {
-	d.mu.Lock()
-	defer d.mu.Unlock()
-
-	if !d.whole {
-		d.fill(paths)
-	}
-}
-
-func (d *deferredFill) fill(paths []string) {
-	left := slices.DeleteFunc(slices.Clone(paths), func(path string) bool { return d.filled[path] })
-	if len(left) == 0 {
-		return
-	}
-
-	for _, path := range left {
-		d.filled[path] = true
-	}
-	d.root.fill(left)
-}
-
-// Filler fills the facts the engine owns for one language, once every file of the codebase has been read.
-type Filler func(*Codebase, []string)
-
-func Fills(language contract.Language, fill Filler) {
-	registers(language, func(row *spoken) { row.fill = fill })
-}
-
-func FillsFor(language contract.Language) bool {
-	return spokenIn(language).fill != nil
 }
 
 func Untouched() {
@@ -206,18 +143,7 @@ type File struct {
 }
 
 func Load(streams ...*contract.Stream) *Codebase {
-	codebase := onDisk(built(os.ReadFile, streams...))
-	codebase.fill(nil)
-
-	return codebase
-}
-
-// UnfilledOnDisk is a codebase of files read from disk, filled when a rule first asks.
-func UnfilledOnDisk(streams ...*contract.Stream) *Codebase {
-	codebase := onDisk(built(os.ReadFile, streams...))
-	codebase.fills = &deferredFill{root: codebase, filled: map[string]bool{}}
-
-	return codebase
+	return onDisk(built(os.ReadFile, streams...))
 }
 
 // onDisk takes each file's print from the walker, which read it once for every part of the run that asks.
@@ -239,40 +165,8 @@ func printedThrough(read func(path string) ([]byte, error)) func(path string) ([
 	}
 }
 
-func ReadThrough(contents map[string]string) func(path string) ([]byte, error) {
-	return func(path string) ([]byte, error) {
-		if drafted, ok := contents[path]; ok {
-			return []byte(drafted), nil
-		}
-
-		return os.ReadFile(path)
-	}
-}
-
 func New(read func(path string) ([]byte, error), streams ...*contract.Stream) *Codebase {
-	codebase := built(read, streams...)
-	codebase.fill(nil)
-
-	return codebase
-}
-
-func Unfilled(read func(path string) ([]byte, error), streams ...*contract.Stream) *Codebase {
-	codebase := built(read, streams...)
-	codebase.fills = &deferredFill{root: codebase, filled: map[string]bool{}}
-
-	return codebase
-}
-
-func (c *Codebase) Filled() {
-	if c.fills != nil {
-		c.fills.fillAll()
-	}
-}
-
-func (c *Codebase) FilledFor(paths []string) {
-	if c.fills != nil {
-		c.fills.fillFor(paths)
-	}
+	return built(read, streams...)
 }
 
 func built(read func(path string) ([]byte, error), streams ...*contract.Stream) *Codebase {
@@ -285,33 +179,6 @@ func built(read func(path string) ([]byte, error), streams ...*contract.Stream) 
 	}
 
 	return codebase
-}
-
-func (c *Codebase) fill(changed []string) {
-	filled := map[contract.Language]bool{}
-	for _, stream := range c.streams {
-		if fill := spokenIn(stream.Header.Language).fill; fill != nil && !filled[stream.Header.Language] {
-			filled[stream.Header.Language] = true
-			fill(c, changed)
-		}
-	}
-	Untouched()
-}
-
-func FromString(stream string, sources map[string]string) (*Codebase, error) {
-	read, err := contract.ReadAll(strings.NewReader(stream))
-	if err != nil {
-		return nil, err
-	}
-
-	return New(func(path string) ([]byte, error) {
-		source, ok := sources[path]
-		if !ok {
-			return nil, fmt.Errorf("no source given for %s", path)
-		}
-
-		return []byte(source), nil
-	}, read), nil
 }
 
 func (c *Codebase) Read(path string) ([]byte, error) {
@@ -363,7 +230,7 @@ func (c *Codebase) Whole() *Codebase {
 func (c *Codebase) narrowedTo(languages []contract.Language) *Codebase {
 	CountedWalk(len(c.files))
 
-	part := &Codebase{read: c.read, print: c.print, analyses: &sync.Map{}, fills: c.fills, whole: c.Whole(), project: c.project}
+	part := &Codebase{read: c.read, print: c.print, analyses: &sync.Map{}, whole: c.Whole(), project: c.project}
 	for _, stream := range c.streams {
 		if slices.Contains(languages, stream.Header.Language) {
 			part.streams = append(part.streams, stream)
@@ -549,8 +416,34 @@ func (f *File) findOwnLineComments() {
 
 var carried []func(changed []string) (any, bool)
 
+func FromString(stream string, sources map[string]string) (*Codebase, error) {
+	read, err := contract.ReadAll(strings.NewReader(stream))
+	if err != nil {
+		return nil, err
+	}
+
+	return New(func(path string) ([]byte, error) {
+		source, ok := sources[path]
+		if !ok {
+			return nil, fmt.Errorf("no source given for %s", path)
+		}
+
+		return []byte(source), nil
+	}, read), nil
+}
+
 func Carrying(over any, untouchedBy func(changed []string) bool) {
 	carried = append(carried, func(changed []string) (any, bool) { return over, untouchedBy(changed) })
+}
+
+func ReadThrough(contents map[string]string) func(path string) ([]byte, error) {
+	return func(path string) ([]byte, error) {
+		if drafted, ok := contents[path]; ok {
+			return []byte(drafted), nil
+		}
+
+		return os.ReadFile(path)
+	}
 }
 
 func CarriedOver(changed []string) []any {

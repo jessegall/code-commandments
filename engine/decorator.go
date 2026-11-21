@@ -4,9 +4,3 @@ package engine
 type Decorator[D any] interface {
 	Decorate(Match) D
 }
-
-func As[D Decorator[D]](check func(D) bool) Check {
-	var decorator D
-
-	return func(m Match) bool { return check(decorator.Decorate(m)) }
-}

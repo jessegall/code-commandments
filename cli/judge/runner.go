@@ -3,13 +3,14 @@ package judge
 
 import (
 	"fmt"
-	"github.com/jessegall/code-commandments/cli/custom"
 	"io"
 	"os"
 	"runtime"
 	"runtime/debug"
 	"slices"
 	"sync"
+
+	"github.com/jessegall/code-commandments/cli/custom"
 
 	"github.com/jessegall/code-commandments/catalog"
 	"github.com/jessegall/code-commandments/cli"
@@ -82,9 +83,6 @@ func try(task Task, warn io.Writer) (result attempt) {
 	}()
 
 	matches := detectors.FindRemembering(task.Detector, task.Codebase)
-	if _, grouped := task.Detector.(detectors.Grouped); grouped && len(matches) > 0 {
-		task.Codebase.Filled()
-	}
 
 	return attempt{findings: findings(task.Detector, matches)}
 }

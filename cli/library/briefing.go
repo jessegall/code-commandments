@@ -4,10 +4,11 @@ import (
 	"bytes"
 	_ "embed"
 	"encoding/json"
-	"github.com/jessegall/code-commandments/catalog"
-	"github.com/jessegall/code-commandments/cli/binary"
 	"slices"
 	"strings"
+
+	"github.com/jessegall/code-commandments/catalog"
+	"github.com/jessegall/code-commandments/cli/binary"
 
 	"github.com/jessegall/code-commandments/cli/config"
 	"github.com/jessegall/code-commandments/cli/custom"

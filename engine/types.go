@@ -44,13 +44,13 @@ func (types DeclarationTypes) Contracts(symbol string) []string {
 	return types[symbol].Contracts()
 }
 
+// Types is the type system of the node's language, read from the declarations the codebase holds: the same for every
+// language.
 func (m Match) Types() (TypeSystem, bool) {
-	read := m.grammar().Types
-	if read == nil || m.file == nil {
+	if m.file == nil {
 		return nil, false
 	}
-
-	return read(m.file.codebase), true
+	return TypesFromDeclarations(m.file.codebase.Of(m.file.Language())), true
 }
 
 func Supertypes(types TypeSystem, symbol string) []string {
@@ -84,13 +84,4 @@ func Implementers(types TypeSystem, contract string) []Match {
 	}
 
 	return honouring
-}
-
-func (m Match) PublishedContracts(registrars []string) []string {
-	read := m.grammar().PublishedContracts
-	if read == nil {
-		return nil
-	}
-
-	return read(m, registrars)
 }

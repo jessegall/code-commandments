@@ -1,13 +1,14 @@
 package service
 
 import (
-	"github.com/jessegall/code-commandments/cli/scan"
 	"os"
 	"strings"
 	"sync"
 	"syscall"
 	"testing"
 	"time"
+
+	"github.com/jessegall/code-commandments/cli/scan"
 
 	"github.com/jessegall/code-commandments/cli"
 )

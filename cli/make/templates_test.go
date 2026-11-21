@@ -2,11 +2,12 @@ package make
 
 import (
 	"fmt"
-	"github.com/jessegall/code-commandments/catalog"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/jessegall/code-commandments/catalog"
 
 	"github.com/jessegall/code-commandments/cli/scan"
 	"github.com/jessegall/code-commandments/engine"

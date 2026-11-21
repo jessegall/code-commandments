@@ -24,11 +24,7 @@ func (m Match) DocComments() []string {
 }
 
 func (m Match) NodeHash(normalize bool) string {
-	if rules := m.grammar().Hashing; rules != nil {
-		return SyntaxHash([]Match{m}, rules, normalize)
-	}
-
-	return ""
+	return SyntaxHash([]Match{m}, TreeHashing, normalize)
 }
 
 func (m Match) Copies() int {

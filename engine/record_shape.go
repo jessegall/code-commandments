@@ -19,27 +19,12 @@ func (m Match) RecordBagParameter() Match {
 }
 
 func (m Match) recordFieldLookup() (Match, Match) {
-	lookup := m.grammar().ArgumentLookup
-	if lookup == nil {
-		return Match{}, Match{}
-	}
-	container, key := lookup(m)
-	if container.Is(Identifier) && key.LiteralKind() == "string" {
-		return container, key
-	}
 	return Match{}, Match{}
 }
 
 func (m Match) ReturnsRecordBag() bool {
 	value := m.returnedValue()
 	function := m.Closest(Function)
-	if owner := m.grammar().RecordReturnOwner; owner != nil {
-		function = owner(m)
-		if !function.Exists() {
-			return false
-		}
-		value = m
-	}
 	if function.ReturnType().Exists() && !function.ReturnType().isLooseRecord() {
 		return false
 	}
@@ -49,24 +34,14 @@ func (m Match) ReturnsRecordBag() bool {
 	if len(value.recordKeys()) < 2 {
 		return false
 	}
-	reactive := m.grammar().ReactiveRecord
-	return reactive == nil || !reactive(value)
+	return true
 }
 
 func (m Match) recordKeys() []string {
-	read := m.grammar().RecordKeys
-	if read == nil || !m.Exists() {
-		return nil
-	}
-	keys := read(m)
-	slices.Sort(keys)
-	return slices.Compact(keys)
+	return nil
 }
 
 func (m Match) isLooseRecord() bool {
-	if accepts := m.grammar().LooseRecordType; accepts != nil {
-		return accepts(m)
-	}
 	typed := m.Typed()
 	if typed == nil {
 		return false
@@ -79,9 +54,6 @@ func (m Match) isLooseRecord() bool {
 
 // ValueSignature is a function's scalar parameters, each as its type and name, in sorted order.
 func (m Match) ValueSignature() []string {
-	if read := m.grammar().ValueParameters; read != nil {
-		return read(m)
-	}
 	var parts []string
 	for _, parameter := range m.Parameters() {
 		if parameter.isScalarType() && parameter.Name() != "" {
@@ -95,7 +67,5 @@ func (m Match) ValueSignature() []string {
 
 // IsNamedConstructor is a static method that builds its own type under a name: the parameters are the type's own.
 func (m Match) IsNamedConstructor() bool {
-	read := m.grammar().NamedConstructor
-
-	return read != nil && read(m)
+	return false
 }

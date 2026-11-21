@@ -1,13 +1,14 @@
 package session
 
 import (
-	"github.com/jessegall/code-commandments/cli/binary"
-	"github.com/jessegall/code-commandments/walk"
 	"math"
 	"os"
 	"path/filepath"
 	"strconv"
 	"time"
+
+	"github.com/jessegall/code-commandments/cli/binary"
+	"github.com/jessegall/code-commandments/walk"
 
 	"github.com/jessegall/code-commandments/cli"
 	"github.com/jessegall/code-commandments/cli/folder"

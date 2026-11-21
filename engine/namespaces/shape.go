@@ -4,7 +4,7 @@ import (
 	"maps"
 	"slices"
 
-	"github.com/jessegall/code-commandments/engine/php"
+	"github.com/jessegall/code-commandments/engine"
 )
 
 // Layer is one namespace of a shape and the namespaces it uses.
@@ -72,12 +72,12 @@ func (g *NamespaceGraph) FloorShape() []Layer {
 
 func (g *NamespaceGraph) subtreeReachesOut(namespace string) bool {
 	for from, targets := range g.references {
-		if !php.Within(from, namespace) {
+		if !engine.Within(from, namespace) {
 			continue
 		}
 
 		for to := range targets {
-			if !php.Within(to, namespace) {
+			if !engine.Within(to, namespace) {
 				return true
 			}
 		}

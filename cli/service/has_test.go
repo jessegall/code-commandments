@@ -2,11 +2,12 @@ package service
 
 import (
 	"bytes"
-	"github.com/jessegall/code-commandments/cli/scan"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/jessegall/code-commandments/cli/scan"
 
 	"github.com/jessegall/code-commandments/cli"
 )

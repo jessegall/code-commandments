@@ -2,10 +2,11 @@
 package make
 
 import (
-	"github.com/jessegall/code-commandments/contract"
 	"path/filepath"
 	"regexp"
 	"strings"
+
+	"github.com/jessegall/code-commandments/contract"
 
 	"github.com/jessegall/code-commandments/catalog"
 	"github.com/jessegall/code-commandments/skill"

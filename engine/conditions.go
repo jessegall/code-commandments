@@ -6,9 +6,7 @@ const (
 )
 
 func (m Match) IsRenderCondition() bool {
-	reads := m.grammar().RenderCondition
-
-	return m.Exists() && reads != nil && reads(m.Parent()).node == m.node
+	return false
 }
 
 func (m Match) IsRenderConditionPart() bool {

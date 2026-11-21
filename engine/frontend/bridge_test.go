@@ -3,12 +3,13 @@ package frontend
 import (
 	"bufio"
 	"encoding/json"
-	"github.com/jessegall/code-commandments/bridge"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/jessegall/code-commandments/bridge"
 
 	"github.com/jessegall/code-commandments/contract"
 )

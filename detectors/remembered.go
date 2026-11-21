@@ -60,8 +60,6 @@ func FindRemembering(detector Detector, codebase *engine.Codebase) []engine.Matc
 
 func findRemembering(detector Detector, codebase *engine.Codebase) []engine.Match {
 	if !remembers(detector) {
-		codebase.Filled()
-
 		return detector.Find(codebase)
 	}
 

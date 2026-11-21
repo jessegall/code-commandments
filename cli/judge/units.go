@@ -10,7 +10,6 @@ import (
 	"github.com/jessegall/code-commandments/cli/scan"
 	"github.com/jessegall/code-commandments/detectors"
 	"github.com/jessegall/code-commandments/engine"
-	cs "github.com/jessegall/code-commandments/engine/csharp"
 )
 
 // weighed is a candidate an aggregating rule read in one unit: its record, and its finding when the verdict picks it, made while its unit was held.
@@ -20,7 +19,6 @@ type weighed struct {
 }
 
 func (c Command) judgeUnits(sources scan.Sources, rules []detectors.Detector, options options, progress *cli.Progress, console cli.Console) (Judgement, int, error) {
-	var merged *cs.Summary
 	var clean []bool
 	set := newCSharpSet(sources.Checkout())
 	units, err := sources.Units(func(codebase *engine.Codebase) error {
@@ -30,12 +28,6 @@ func (c Command) judgeUnits(sources scan.Sources, rules []detectors.Detector, op
 
 			return !weighs && !detectors.KnownClean(rule, codebase)
 		}))
-
-		if summary := cs.Summarize(codebase); merged == nil {
-			merged = summary
-		} else {
-			merged.Merge(summary)
-		}
 
 		return nil
 	})
@@ -80,7 +72,6 @@ func (c Command) judgeUnits(sources scan.Sources, rules []detectors.Detector, op
 			return Judgement{}, 0, err
 		}
 		files += len(codebase.Files())
-		cs.Judge(codebase, merged)
 		tasks := make([]Task, len(ordinary))
 		for i, rule := range ordinary {
 			tasks[i] = Task{rule, codebase}

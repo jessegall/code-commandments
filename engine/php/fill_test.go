@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/jessegall/code-commandments/contract"
-	"github.com/jessegall/code-commandments/engine"
 	"github.com/jessegall/code-commandments/engine/php/shop"
 )
 
@@ -31,9 +30,5 @@ func TestPHPFillsWhereverTheCodebaseIsBuilt(t *testing.T) {
 
 	if targeted == 0 {
 		t.Error("no PHP call carries a target, so nothing filled them where this codebase was built")
-	}
-
-	if !engine.FillsFor(contract.PHP) {
-		t.Error("PHP fills through no registered filler, so a codebase built anywhere but a scan carries none of its facts")
 	}
 }

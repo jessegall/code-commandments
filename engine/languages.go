@@ -10,14 +10,7 @@ import (
 // reads, how it names a scope and counts a body, the facts it fills once the codebase is read, the checks that declare
 // a file frozen, and the predicates a rule may name.
 type spoken struct {
-	grammar    *Grammar
-	namesScope func(Match) string
-	runsBody   func(Match) bool
-	fill       Filler
-	freezers   []Freezer
-	predicates []Predicate
-	properties []PropertyTypes
-	results    []CallResults
+	freezers []Freezer
 }
 
 // languages holds each language's row. A change copies the row and stores the copy, so a read never sees one half

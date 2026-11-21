@@ -7,10 +7,6 @@ import (
 )
 
 func (m Match) Constructed() Match {
-	if read := m.grammar().Constructs; read != nil && m.node != nil {
-		return read(m)
-	}
-
 	return Match{}
 }
 
@@ -20,9 +16,6 @@ func (m Match) Referrers() []Match {
 	}
 
 	found := referrers(m.file.Codebase())[m.node.Symbol]
-	if read := m.grammar().Callers; read != nil {
-		found = append(found, read(m)...)
-	}
 
 	var outside []Match
 	seen := map[any]bool{}
@@ -49,9 +42,7 @@ func (m Match) isAbove(below Match) bool {
 }
 
 func (m Match) IsImplicit() bool {
-	read := m.grammar().Implicit
-
-	return read != nil && m.node != nil && read(m)
+	return false
 }
 
 func (m Match) IsOverride() bool {
@@ -62,10 +53,6 @@ func (m Match) IsOverride() bool {
 
 	if !m.Is(Function) || !owner.Is(TypeDeclaration) || m.Name() == "" {
 		return false
-	}
-
-	if read := m.grammar().Inherited; read != nil && read(m) {
-		return true
 	}
 
 	for _, supertype := range append(owner.Lineage(), owner.Contracts()...) {
@@ -114,18 +101,10 @@ func (m Match) IsUnread() bool {
 
 func (m Match) isSelector() bool {
 	if parent := m.Parent(); parent.Is(MemberAccess) && parent.Receiver().node != m.node {
-		if lookup := m.grammar().ArgumentLookup; lookup != nil {
-			_, key := lookup(parent)
-			if key.node == m.node {
-				return false
-			}
-		}
 		return true
 	}
 
-	read := m.grammar().Labels
-
-	return read != nil && read(m)
+	return false
 }
 
 func (m Match) IsShadowedIn(outer Match) bool {

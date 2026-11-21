@@ -2,11 +2,12 @@ package report
 
 import (
 	"fmt"
-	"github.com/jessegall/code-commandments/contract"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
+
+	"github.com/jessegall/code-commandments/contract"
 )
 
 // Reference is the code a report is about: a file, and a line or a range of lines in it.

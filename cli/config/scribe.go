@@ -1,11 +1,12 @@
 package config
 
 import (
-	"github.com/jessegall/code-commandments/cli/atomic"
-	"github.com/jessegall/code-commandments/cli/binary"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/jessegall/code-commandments/cli/atomic"
+	"github.com/jessegall/code-commandments/cli/binary"
 
 	"github.com/jessegall/code-commandments/cli/workspace"
 	"github.com/jessegall/code-commandments/engine"

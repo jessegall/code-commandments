@@ -53,10 +53,6 @@ func SyntaxHash(nodes []Match, rules HashRules, normalize bool) string {
 	return hex.EncodeToString(sum[:])
 }
 
-func SyntaxFingerprint(node Match, rules HashRules, normalize bool) string {
-	return fingerprint(node, rules, normalize)
-}
-
 func SyntaxWeight(nodes []Match, rules HashRules) int {
 	weight := 0
 	for _, node := range nodes {

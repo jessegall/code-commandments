@@ -72,7 +72,7 @@ func (c Command) read(sources scan.Sources) (*engine.Codebase, error) {
 		return c.Reading(sources)
 	}
 
-	return sources.Unfilled()
+	return sources.Load()
 }
 
 func (Command) Names() []string {

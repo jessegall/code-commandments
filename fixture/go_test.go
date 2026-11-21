@@ -11,7 +11,6 @@ import (
 	"github.com/jessegall/code-commandments/bridge/gotree"
 	"github.com/jessegall/code-commandments/contract"
 	"github.com/jessegall/code-commandments/engine"
-	_ "github.com/jessegall/code-commandments/engine/golang"
 	"github.com/jessegall/code-commandments/fixture"
 	"github.com/jessegall/code-commandments/prose"
 )

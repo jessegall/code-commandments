@@ -33,9 +33,6 @@ func (m Match) ownsMethodName() bool {
 }
 
 func (m Match) methodOwner() string {
-	if read := m.grammar().MethodOwner; read != nil {
-		return read(m)
-	}
 	return m.EnclosingType().Identity()
 }
 
@@ -47,16 +44,12 @@ func (m Match) hasNoResult() bool {
 }
 
 func (m Match) returnsBoolean() bool {
-	typed := m.ResultType()
-	return typed != nil && slices.Contains(m.grammar().BooleanTypes, typed.Text)
+	return false
 }
 
 func (m Match) returnedValue() Match {
 	if !m.Is(Return) {
 		return Match{}
-	}
-	if read := m.grammar().ReturnedValue; read != nil {
-		return read(m)
 	}
 	children := m.Children()
 	if len(children) == 1 {
@@ -104,16 +97,9 @@ func (m Match) assignmentSides() (Match, Match) {
 	if !m.Is(Assignment) {
 		return Match{}, Match{}
 	}
-	if read := m.grammar().AssignmentSides; read != nil {
-		return read(m)
-	}
 	parts := m.Children()
 	if len(parts) == 2 {
 		return parts[0], parts[1]
 	}
 	return Match{}, Match{}
-}
-
-func ReadPair(left, right string) func(Match) (Match, Match) {
-	return func(node Match) (Match, Match) { return node.Child(left), node.Child(right) }
 }

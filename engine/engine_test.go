@@ -28,19 +28,6 @@ func sample(t *testing.T) *engine.Codebase {
 	return shop.Files(t, paths...)
 }
 
-// Facades is a toy package node, standing in for the decorators the language layers declare.
-type Facades struct {
-	engine.Match
-}
-
-func (Facades) Decorate(m engine.Match) Facades {
-	return Facades{m}
-}
-
-func (f Facades) IsFunctionCall() bool {
-	return f.Kind() == "call" && f.Child("callee").Kind() == "reference"
-}
-
 func TestWhereKeepsWhatEveryCheckAnswersYesTo(t *testing.T) {
 	locations := sample(t).
 		WhereCall().
@@ -60,17 +47,6 @@ func TestRejectDropsWhatTheCheckAnswersYesTo(t *testing.T) {
 
 	if count != 6 {
 		t.Fatalf("got %d calls outside a loop, want 6", count)
-	}
-}
-
-func TestAsAsksInADecoratorsTerms(t *testing.T) {
-	count := sample(t).
-		WhereCall().
-		Where(engine.As(Facades.IsFunctionCall)).
-		Count()
-
-	if count != 4 {
-		t.Fatalf("got %d function calls, want 4", count)
 	}
 }
 

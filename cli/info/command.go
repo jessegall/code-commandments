@@ -1,11 +1,12 @@
 package info
 
 import (
-	"github.com/jessegall/code-commandments/cli/binary"
 	"io/fs"
 	"os"
 	"strconv"
 	"strings"
+
+	"github.com/jessegall/code-commandments/cli/binary"
 
 	"github.com/jessegall/code-commandments/catalog"
 	"github.com/jessegall/code-commandments/cli"
@@ -15,7 +16,6 @@ import (
 	"github.com/jessegall/code-commandments/cli/reported"
 	"github.com/jessegall/code-commandments/cli/workspace"
 	"github.com/jessegall/code-commandments/detectors"
-	"github.com/jessegall/code-commandments/engine/php/packages"
 	"github.com/jessegall/code-commandments/skill"
 	"github.com/jessegall/code-commandments/skills"
 )
@@ -120,7 +120,7 @@ func (c Command) describe(detector detectors.Detector, full bool, console cli.Co
 		row(console, "Scaffold", binary.Here()+" scaffold --sin="+sin.Name)
 	}
 
-	if exemptable, honours := detector.(packages.Exemptable); honours && len(exemptable.Exemptions()) > 0 {
+	if asks, honours := detector.(interface{ ExemptionTags() []string }); honours && len(asks.ExemptionTags()) > 0 {
 		row(console, "Exempts", binary.Here()+" exemptions "+sin.Name)
 	}
 

@@ -82,3 +82,21 @@ func (r Rule) Fingerprint() string {
 
 	return strings.Join([]string{r.CacheKey(), string(set), r.layers}, "\x00")
 }
+
+// ExemptionTags are the package exemption tags the rule honours: each tag an exemptedBy it asks names.
+func (r Rule) ExemptionTags() []string {
+	var tags []string
+	for _, expression := range r.compiled().expressions() {
+		expression.Each(func(each Expr) {
+			if each.Operator != "exemptedBy" || len(each.Operands) == 0 {
+				return
+			}
+			if tag, written := each.Operands[0].Value.(string); written && !slices.Contains(tags, tag) {
+				tags = append(tags, tag)
+			}
+		})
+	}
+	slices.Sort(tags)
+
+	return tags
+}

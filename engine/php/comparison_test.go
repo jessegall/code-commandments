@@ -21,7 +21,7 @@ func phpSource(t *testing.T, source string) *engine.Codebase {
 		t.Fatal(err)
 	}
 
-	return php.In(codebase)
+	return codebase
 }
 
 func TestAComparisonOfTwoValuesTestsNoSubject(t *testing.T) {

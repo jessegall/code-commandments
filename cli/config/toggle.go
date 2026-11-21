@@ -1,10 +1,11 @@
 package config
 
 import (
-	"github.com/jessegall/code-commandments/cli/binary"
-	"github.com/jessegall/code-commandments/rules"
 	"os"
 	"strings"
+
+	"github.com/jessegall/code-commandments/cli/binary"
+	"github.com/jessegall/code-commandments/rules"
 
 	"github.com/jessegall/code-commandments/cli"
 	"github.com/jessegall/code-commandments/cli/help"

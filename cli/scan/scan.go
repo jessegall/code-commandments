@@ -182,15 +182,6 @@ type bridged struct {
 }
 
 func (s Sources) Load() (*engine.Codebase, error) {
-	codebase, err := s.Unfilled()
-	if codebase != nil {
-		codebase.Filled()
-	}
-
-	return codebase, err
-}
-
-func (s Sources) Unfilled() (*engine.Codebase, error) {
 	var streams []*contract.Stream
 	var incomplete Incomplete
 	sayTooLarge(s.tooLarge)
@@ -221,7 +212,7 @@ func (s Sources) Unfilled() (*engine.Codebase, error) {
 		streams = append(streams, stream)
 	}
 
-	codebase := s.rooted(engine.UnfilledOnDisk(streams...))
+	codebase := s.rooted(engine.Load(streams...))
 	engine.CountedParsed(len(codebase.Files()))
 	sayUnreadable(streams)
 

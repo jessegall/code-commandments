@@ -1,17 +1,18 @@
 package config
 
 import (
-	"github.com/jessegall/code-commandments/cli/binary"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
 
+	"github.com/jessegall/code-commandments/cli/binary"
+	"github.com/jessegall/code-commandments/engine"
+
 	"github.com/jessegall/code-commandments/catalog"
 	"github.com/jessegall/code-commandments/cli"
 	"github.com/jessegall/code-commandments/cli/help"
 	"github.com/jessegall/code-commandments/detectors"
-	"github.com/jessegall/code-commandments/engine/php/packages"
 	"github.com/jessegall/code-commandments/skill"
 	"github.com/jessegall/code-commandments/walk"
 )
@@ -86,7 +87,7 @@ func (c Command) about(root string, console cli.Console) (int, error) {
 	}
 
 	row(console, "Custom detectors", strconv.Itoa(len(project.Detectors)))
-	row(console, "Exemption packages", strconv.Itoa(len(packages.Shipped))+" built-in  ·  "+strconv.Itoa(len(project.Packages))+" registered")
+	row(console, "Exemption packages", strconv.Itoa(exemptingPackages())+" built-in  ·  "+strconv.Itoa(len(project.Packages))+" registered")
 	row(console, "Skills", strconv.Itoa(len(skill.All())))
 	console.Write("\n  \033[2mRun `" + binary.Here() + " config reindex` to re-detect the source roots.\033[0m\n\n")
 
@@ -123,4 +124,14 @@ func countIn(list []detectors.Detector, engines []catalog.Engine) int {
 
 func row(console cli.Console, label, value string) {
 	console.Write("  \033[36m" + label + " " + strings.Repeat(".", max(0, 22-len(label)-1)) + "\033[0m " + value + "\n")
+}
+
+// exemptingPackages counts the libraries that register exemptions.
+func exemptingPackages() int {
+	named := map[string]bool{}
+	for _, tag := range engine.ExemptionTags() {
+		named[tag.Package] = true
+	}
+
+	return len(named)
 }

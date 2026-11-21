@@ -14,29 +14,3 @@ func PathSegments(path string) []string {
 
 	return segments
 }
-
-func WrittenPath(text string) []string {
-	if !strings.HasPrefix(text, "/") || strings.HasPrefix(text, "//") {
-		return nil
-	}
-
-	return PathSegments(text)
-}
-
-func PathFits(route, written []string) bool {
-	if len(route) != len(written) {
-		return false
-	}
-	literalMatched := false
-	for at, segment := range route {
-		if strings.HasPrefix(segment, "{") && strings.HasSuffix(segment, "}") {
-			continue
-		}
-		if segment != written[at] {
-			return false
-		}
-		literalMatched = true
-	}
-
-	return literalMatched
-}

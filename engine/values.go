@@ -16,16 +16,11 @@ func (m Match) LiteralKind() string {
 }
 
 func (m Match) CodeWords() []string {
-	if read := m.grammar().CodeWords; read != nil && m.node != nil {
-		return read(m)
-	}
-
 	return prose.Words(strings.Join(m.spelledWords(), " "))
 }
 
 func (m Match) spelledWords() []string {
-	words := m.grammar().Keywords[m.Kind()].Words()
-	words = append(words, m.Name())
+	words := []string{m.Name()}
 	if text, ok := m.Text(); ok {
 		words = append(words, text)
 	}

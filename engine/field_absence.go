@@ -13,6 +13,5 @@ func (m Match) isSelfReceiver() bool {
 	if m.Is(SelfReference) {
 		return true
 	}
-	read := m.grammar().SelfReceiver
-	return read != nil && read(m)
+	return false
 }

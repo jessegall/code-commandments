@@ -2,11 +2,12 @@
 package freeze
 
 import (
+	"os"
+	"strings"
+
 	"github.com/jessegall/code-commandments/cli/atomic"
 	"github.com/jessegall/code-commandments/cli/binary"
 	"github.com/jessegall/code-commandments/contract"
-	"os"
-	"strings"
 
 	"github.com/jessegall/code-commandments/cli"
 	"github.com/jessegall/code-commandments/cli/help"

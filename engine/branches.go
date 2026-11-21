@@ -2,36 +2,10 @@ package engine
 
 import "slices"
 
-func LadderRungs(branch Match) []Match {
-	rungs := []Match{branch}
-	for held := branch; ; {
-		otherwise := held.Otherwise()
-		if len(otherwise) != 1 || !otherwise[0].IsContinuation() {
-			return rungs
-		}
-		held = otherwise[0]
-		rungs = append(rungs, held)
-	}
-}
-
 func (m Match) BindsItsOwnTest() bool {
-	if read := m.grammar().BindsItsOwnTest; read != nil && m.node != nil {
-		return read(m)
-	}
 	condition := m.Condition()
 
 	return declaresAName(append(condition.Descendants(), condition))
-}
-
-func VariedSide(left, right Match, constant func(Match) bool) Match {
-	switch {
-	case !constant(left) && constant(right):
-		return left
-	case constant(left) && !constant(right):
-		return right
-	}
-
-	return Match{}
 }
 
 func IsEvaluated(m Match) bool {
@@ -45,10 +19,6 @@ func IsEvaluated(m Match) bool {
 	}
 
 	return true
-}
-
-func ResultIsDiscarded(m Match) bool {
-	return IsEvaluated(m) && m.Parent().Is(ExpressionStatement)
 }
 
 func IsChoice(m Match) bool {
@@ -74,10 +44,6 @@ func (m Match) choicesAbove(choice func(Match) bool) int {
 }
 
 func (m Match) Steps() []Match {
-	if read := m.grammar().Steps; read != nil && m.node != nil {
-		return read(m)
-	}
-
 	return nil
 }
 

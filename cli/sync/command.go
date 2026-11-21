@@ -2,11 +2,12 @@
 package sync
 
 import (
-	"github.com/jessegall/code-commandments/cli/hooks"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
+
+	"github.com/jessegall/code-commandments/cli/hooks"
 
 	"github.com/jessegall/code-commandments/cli"
 	"github.com/jessegall/code-commandments/cli/agents"

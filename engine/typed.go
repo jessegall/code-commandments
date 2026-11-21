@@ -1,41 +1,8 @@
 package engine
 
 import (
-	"slices"
-
 	"github.com/jessegall/code-commandments/contract"
 )
-
-type PropertyTypes func(*Codebase, string, string) *contract.Type
-
-func OffersPropertyTypes(language contract.Language, read PropertyTypes) {
-	registers(language, func(row *spoken) { row.properties = append(slices.Clone(row.properties), read) })
-}
-
-func (c *Codebase) PropertyType(language contract.Language, class, field string) *contract.Type {
-	for _, read := range spokenIn(language).properties {
-		if inferred := read(c, class, field); inferred != nil {
-			return inferred
-		}
-	}
-	return nil
-}
-
-// CallResults is what a package knows a call yields where its declaration states no type.
-type CallResults func(call Match) *contract.Type
-
-func OffersCallResults(language contract.Language, read CallResults) {
-	registers(language, func(row *spoken) { row.results = append(slices.Clone(row.results), read) })
-}
-
-func (c *Codebase) CallResult(language contract.Language, call Match) *contract.Type {
-	for _, read := range spokenIn(language).results {
-		if inferred := read(call); inferred != nil {
-			return inferred
-		}
-	}
-	return nil
-}
 
 func (m Match) ResultType() *contract.Type {
 	if m.node == nil || !m.Is(Function) {
@@ -85,10 +52,6 @@ func (m Match) ElementType() *contract.Type {
 }
 
 func (m Match) elementItsLanguageKnows() *contract.Type {
-	if read := m.grammar().ElementOf; read != nil && m.node != nil {
-		return read(m)
-	}
-
 	return nil
 }
 

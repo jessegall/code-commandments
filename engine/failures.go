@@ -3,45 +3,26 @@ package engine
 import "slices"
 
 func (m Match) Thrown() Match {
-	if read := m.grammar().Thrown; read != nil && m.node != nil {
-		return read(m)
-	}
-
 	return Match{}
 }
 
 func (m Match) FailureLocation() Match {
-	if read := m.grammar().FailureLocation; read != nil {
-		return read(m)
-	}
 	return m
 }
 
 func (m Match) Cause() Match {
-	if read := m.grammar().Cause; read != nil && m.node != nil {
-		return read(m)
-	}
-
 	return Match{}
 }
 
 func (m Match) IsInert() bool {
-	read := m.grammar().Inert
-
-	return read != nil && m.node != nil && read(m)
+	return false
 }
 
 func (m Match) IsEmptyCollection() bool {
-	read := m.grammar().EmptyCollection
-
-	return read != nil && m.node != nil && read(m)
+	return false
 }
 
 func (m Match) ConstructedType() string {
-	if read := m.grammar().ConstructedType; read != nil && m.node != nil {
-		return read(m)
-	}
-
 	return ""
 }
 
@@ -104,10 +85,6 @@ func (m Match) HandlesFailure() bool {
 }
 
 func (m Match) handledError() Match {
-	if read := m.grammar().ErrorHandler; read != nil && m.Exists() {
-		return read(m)
-	}
-
 	return Match{}
 }
 
